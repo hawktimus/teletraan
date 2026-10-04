@@ -19,7 +19,7 @@ export function start() {
     'bottom: 8px',
     'padding: 10px 16px',
     'background: #000',
-    'border: 4px solid var(--gold, #faca2a)',
+    'border: 4px solid var(--yellow, #faca2a)',
     'color: #fff',
     'font: 28px/36px monospace',
     'white-space: pre',

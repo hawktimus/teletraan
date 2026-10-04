@@ -42,7 +42,7 @@ received.
 - Custom Panels: a panel you build yourself from blocks (heading, text,
   number, list, image address, progress bar, countdown). About 3 blocks fit.
   A block that does not fit is left out. The title shows in capital letters,
-  8 at most.
+  7 at most.
 - Dashboard Settings: the settings for the whole screen, described below.
 
 Events are not edited here. They come from the team's BAND calendars. Add or
@@ -86,19 +86,33 @@ box.
 One page, with tabs along the top. It cannot be deleted or copied.
 
 - Screen: the team name, number and school in the banner. Motion is Full or
-  Calm (Calm only fades panels in and out). Speed is Very slow, Slow, Normal or
-  Fast. It changes how fast things move and how long each panel and ticker line
-  stays, but not announcements or alerts, which keep the seconds you give them.
-  The old TV effect plays now and then and can be turned off.
+  Calm (Calm only fades panels in and out, with no turning, glint or name
+  effect). Speed is Very slow, Slow, Normal or Fast. It changes how fast things
+  move and how long each panel and ticker line stays, but not announcements or
+  alerts, which keep the seconds you give them. Frame metal is Gold (warm
+  antique brass) or Silver (weathered steel) and sets the metal on the edges of
+  the frames. Glint is a bright spark that runs once around each frame every few
+  seconds. Turn it off for a calmer screen. Name effect makes the letters of the
+  team name split apart, turn and lock back together. "Name effect every
+  (seconds)" is how often, from 30 to 900. The starting value is 300, which is
+  every five minutes. The old TV effect plays now and then and can be turned off.
 - Countdown: the labels and dates for Kickoff and Rollout. The countdown counts
   to Kickoff, then to Rollout.
 - Alert: turn it on to cover the whole screen with a headline and a message.
   Turn it off to take it down, or set "Take down at" to do it automatically.
 - Panels: which panels appear, in what order and for how long. Drag a row to move
-  it. Turn off "Show on screen" to skip a panel. Seconds must be from 6 to 120.
-  This tab also has how long each ticker line stays up, how many days finished
-  tasks stay, and the date the safety day count starts. If you delete every row
-  of a list, nothing is shown in that part of the screen.
+  it. Turn off "Show on screen" to skip a panel. "Seconds per page" is at the
+  top. It is how long a large panel stays up, from 8 to 120, and the starting
+  value is 20. A small panel stays three quarters as long and a ticker line one
+  and a half times as long, so at 20 seconds a small panel stays 15 and a
+  ticker line 30. A row can have seconds of its own, from 6 to 120. Leave the
+  field empty and the row follows "Seconds per page". The ticker has its own
+  "Seconds per ticker line" that works the same way. A row that already has
+  seconds keeps them until you clear the field. Speed is applied after all of
+  this, so Slow makes every page stay longer than the number you typed. This tab
+  also has how many days finished tasks stay, and the date the safety day count
+  starts. If you delete every row of a list, nothing is shown in that part of
+  the screen.
 - Announcements: full screen messages at set times. Give the time in 24 hour
   form, such as 14:30, and tick the days it should play. Tick at least one day.
   The second line is optional: leave it empty and only the first line plays.

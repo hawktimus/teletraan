@@ -1,6 +1,6 @@
 // Coaches, captains and mentors, one card each.
 
-import { plateMarkup, scanMarkup, boltMarkup } from '../../core/plate.js';
+import { cardMarkup } from '../../core/plate.js';
 import { doubleSlash } from '../../core/marks.js';
 import { escapeHtml, hasText } from '../../core/text.js';
 import { visibleItems } from '../../core/content.js';
@@ -32,37 +32,30 @@ export function hasContent(content) {
 }
 
 export function mount(host, content) {
-  const cards = peopleFor(content).map((person, index) => cardMarkup(person, index)).join('');
+  const cards = peopleFor(content).map(personCard).join('');
 
   host.innerHTML = `
-    <section class="panel leadership" data-sequence="grid1">
-      ${plateMarkup('grid1')}
-      ${scanMarkup('grid1')}
-
+    <section class="page leadership">
       <div class="header">
-        <h2 class="title" data-part="title">LEADERS</h2>
-        <div data-part="tag">${doubleSlash()}</div>
+        <h2 class="title" data-slat="title">TEAM</h2>
+        <div class="tag" data-slat="tag">
+          <span class="tag-text">LEADERSHIP</span>
+          ${doubleSlash()}
+        </div>
       </div>
 
       <div class="cards">${cards}</div>
     </section>`;
 }
 
-// A pocket cut into the plate. Its bottom right corner is cut at the same
-// angle as the panel's. The first polygon is only the light edge that shows
-// below the pocket.
-function cardMarkup(person, index) {
+// Each card turns over as one piece: its purple plate, its metal edge and
+// its words
+function personCard(person) {
   const role = String(person.role || '').toUpperCase();
 
   return `
-    <div class="card" data-part="row" data-index="${index}">
-      <svg class="card-shape" width="538" height="168" viewBox="0 0 538 168">
-        <polygon class="pocket-lit" points="2,4 536,4 536,136 496,168 2,168"/>
-        <polygon class="pocket" points="2,2 536,2 536,134 496,166 2,166"/>
-        <rect class="card-cap" x="4" y="4" width="16" height="160"/>
-        <rect class="card-cap-edge" x="20" y="4" width="2" height="160"/>
-        ${boltMarkup(518, 20, 20)}
-      </svg>
+    <div class="card" data-slat="item">
+      ${cardMarkup(538, 168)}
       <div class="card-text">
         <div class="card-role">${escapeHtml(role)}</div>
         <div class="card-name">${escapeHtml(person.name)}</div>

@@ -54,6 +54,11 @@ const contract = {
     team: object({ name: text(16), number: text(5), school: text(30) }),
     motion: 'string',
     speed: 'string',
+    frameMetal: 'string',
+    glint: 'boolean',
+    pageSeconds: number(8, 120),
+    nameTransform: 'boolean',
+    nameEvery: number(30, 900),
     countdown: object({ kickoffLabel: text(12), kickoff: 'datetime', rolloutLabel: text(12), rollout: 'datetime' }),
     alert: object({ on: 'boolean', headline: text(24), message: text(90), until: 'datetime' }),
     rotation: object({ grid1: rows(panelStep), grid2: rows(panelStep), tickerSeconds: number(6, 120) }),
@@ -88,6 +93,7 @@ const choices = {
   'person.role': ['Coach', 'Captain', 'Mentor'],
   'dashboardSettings.motion': ['full', 'calm'],
   'dashboardSettings.speed': ['very-slow', 'slow', 'normal', 'fast'],
+  'dashboardSettings.frameMetal': ['gold', 'silver'],
 };
 
 // The panels that can be put in each area of the screen. The Studio lists and
@@ -565,6 +571,87 @@ function checkSpeed() {
   return problems;
 }
 
+// Frame metal, glint, seconds per page and the name effect. The Studio and
+// dashboard/config.js must agree on the choices, the limits and the defaults,
+// and a row or the ticker may leave seconds empty to follow Seconds per page.
+function checkLookAndTiming() {
+  const problems = [];
+  const config = world.dashboard;
+  const settings = config.defaultSettings;
+  const at = name => fieldAt('dashboardSettings.' + name);
+
+  const metal = at('frameMetal');
+  const metalRules = metal ? constraintsOf(metal) : [];
+  const allowed = constraintNamed(metalRules, 'valid');
+  const offered = choicesOf('dashboardSettings.frameMetal').map(item => item.value);
+  need(problems, config.metals.join() === 'gold,silver', 'metals in config.js should be gold and silver, not ' + config.metals.join());
+  need(problems, settings.frameMetal === 'gold', 'the default frame metal in config.js should be gold');
+  need(problems, offered.join() === config.metals.join(), 'frameMetal should offer the same names as metals in config.js: ' + config.metals.join(', '));
+  need(problems, metal && metal.options && metal.options.layout === 'radio', 'frameMetal should be a radio list');
+  need(problems, constraintNamed(metalRules, 'required'), 'frameMetal should be required');
+  need(problems, allowed && allowed.args[0].join() === config.metals.join(), 'frameMetal should only allow: ' + config.metals.join(', '));
+
+  ['glint', 'nameTransform'].forEach(name => {
+    const field = at(name);
+    const ok = field && field.type === 'boolean' && field.initialValue === true && settings[name] === true;
+    need(problems, ok, name + ' should be a switch that starts on, and so should its default in config.js');
+  });
+
+  // The numbers in a range: the same limits and starting value in both places
+  [['pageSeconds', 20], ['nameEvery', 300]].forEach(entry => {
+    const name = entry[0];
+    const field = at(name);
+    const limit = config.limits[name];
+    const rules = field ? constraintsOf(field) : [];
+    const low = constraintNamed(rules, 'min');
+    const high = constraintNamed(rules, 'max');
+
+    need(problems, settings[name] === entry[1], 'the default ' + name + ' in config.js should be ' + entry[1] + ', not ' + settings[name]);
+    need(problems, limit && low && high && low.args[0] === limit.min && high.args[0] === limit.max, name + ' should have the limits in config.js, ' + JSON.stringify(limit));
+    need(problems, constraintNamed(rules, 'required'), name + ' should be required');
+    need(problems, constraintNamed(rules, 'integer'), name + ' should be a whole number');
+  });
+
+  const pageWords = (at('pageSeconds') || {}).description || '';
+  need(problems, /three quarters/.test(pageWords) && /one and a half/.test(pageWords), 'the pageSeconds description should give the small panel and ticker times');
+
+  // Seconds in the lists and on the ticker are optional, and an empty field follows pageSeconds
+  [['rotation.grid1.seconds', 6, 120], ['rotation.grid2.seconds', 6, 120], ['rotation.tickerSeconds', 6, 120]].forEach(entry => {
+    const field = at(entry[0]);
+    const rules = field ? constraintsOf(field) : [];
+    const low = constraintNamed(rules, 'min');
+    const high = constraintNamed(rules, 'max');
+
+    need(problems, field && !constraintNamed(rules, 'required'), entry[0] + ' should be optional');
+    need(problems, field && field.initialValue === undefined, entry[0] + ' should start empty');
+    need(problems, low && high && low.args[0] === entry[1] && high.args[0] === entry[2], entry[0] + ' should allow ' + entry[1] + ' to ' + entry[2]);
+    need(problems, field && /Seconds per page/.test(field.description || ''), entry[0] + ' should say that empty follows Seconds per page');
+  });
+
+  rotationAreas.forEach(area => {
+    const withSeconds = settings.rotation[area].filter(step => step.seconds !== undefined);
+    need(problems, withSeconds.length === 0, 'defaultSettings.rotation.' + area + ' in config.js should have rows with no seconds, so they follow pageSeconds');
+  });
+  need(problems, settings.rotation.tickerSeconds === undefined, 'defaultSettings.rotation in config.js should have no tickerSeconds');
+
+  // The tabs: the look settings sit beside Motion and Speed, the page time with the lists
+  ['motion', 'speed', 'frameMetal', 'glint', 'nameTransform', 'nameEvery'].forEach(name => {
+    need(problems, at(name) && at(name).group === 'screen', name + ' should be in the Screen tab');
+  });
+  need(problems, at('pageSeconds') && at('pageSeconds').group === 'panels', 'pageSeconds should be in the Panels tab');
+
+  // The sample content carries the new settings, with values the dashboard accepts
+  const sample = world.sample.settings;
+  need(problems, config.metals.indexOf(sample.frameMetal) !== -1, 'the sample settings need a frameMetal of ' + config.metals.join(' or '));
+  need(problems, typeof sample.glint === 'boolean', 'the sample settings need glint, true or false');
+  need(problems, typeof sample.nameTransform === 'boolean', 'the sample settings need nameTransform, true or false');
+  ['pageSeconds', 'nameEvery'].forEach(name => {
+    const limit = config.limits[name];
+    need(problems, sample[name] >= limit.min && sample[name] <= limit.max, 'the sample settings need ' + name + ' from ' + limit.min + ' to ' + limit.max);
+  });
+  return problems;
+}
+
 // The values a new Studio starts with are copies of the dashboard's defaults
 function checkStartingValues() {
   const problems = [];
@@ -581,6 +668,11 @@ function checkStartingValues() {
   ['name', 'number', 'school'].forEach(name => expect('team.' + name, team[name]));
   expect('motion', settings.motion);
   expect('speed', settings.speed);
+  expect('frameMetal', settings.frameMetal);
+  expect('glint', settings.glint);
+  expect('pageSeconds', settings.pageSeconds);
+  expect('nameTransform', settings.nameTransform);
+  expect('nameEvery', settings.nameEvery);
   expect('countdown.kickoffLabel', settings.countdown.kickoffLabel);
   expect('countdown.rolloutLabel', settings.countdown.rolloutLabel);
   expect('alert.on', settings.alert.on);
@@ -762,6 +854,7 @@ async function main() {
   check('the panels editors can pick match dashboard/registry.js', checkPanelIds);
   check('the rules for announcement days and calendar codes work', checkRules);
   check('the Speed setting offers the speeds the dashboard has', checkSpeed);
+  check('frame metal, glint, seconds per page and the name effect agree with dashboard/config.js', checkLookAndTiming);
   check('starting values match dashboard/config.js', checkStartingValues);
   check('every name in config.js and the sample content has a field', checkDashboardNames);
   check('the sidebar is in the right order', checkSidebar);

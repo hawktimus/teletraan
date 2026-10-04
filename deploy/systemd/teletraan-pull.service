@@ -5,7 +5,9 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-User=teletraan
+# ACCOUNT is replaced by install-timers.sh with the account that owns the
+# repository, so this file does not depend on what the Mini's user is called.
+User=ACCOUNT
 WorkingDirectory=/opt/teletraan
 ExecStart=/opt/teletraan/deploy/scripts/pull.sh
 # A pull that hangs would block every pull after it, so it is stopped

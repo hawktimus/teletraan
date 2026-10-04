@@ -1,7 +1,7 @@
 // Features one sponsor: its name, a few words about it and its logo. Each
 // time the panel comes round it is the next sponsor in the list.
 
-import { plateMarkup, scanMarkup, boltMarkup } from '../../core/plate.js';
+import { cardMarkup } from '../../core/plate.js';
 import { doubleSlash } from '../../core/marks.js';
 import { escapeHtml, hasText } from '../../core/text.js';
 import { visibleItems } from '../../core/content.js';
@@ -17,26 +17,27 @@ export function hasContent(content) {
   return featurable(content).length > 0;
 }
 
+// The name is a card, and the blurb and the logo each turn over on their own,
+// so each is a slat.
 export function mount(host, content) {
   const sponsor = nextSponsor(featurable(content)) || {};
 
   const tier = sponsor.tier ? `<span class="tag-text">${escapeHtml(sponsor.tier)}</span>` : '';
 
   host.innerHTML = `
-    <section class="panel sponsor-feature" data-sequence="grid1">
-      ${plateMarkup('grid1')}
-      ${scanMarkup('grid1')}
-
+    <section class="page sponsor-feature">
       <div class="header">
-        <h2 class="title" data-part="title">SPONSOR</h2>
-        <div class="tag" data-part="tag">${tier}${doubleSlash()}</div>
+        <h2 class="title" data-slat="title">SPONSOR</h2>
+        <div class="tag" data-slat="tag">${tier}${doubleSlash()}</div>
       </div>
 
-      <div class="story" data-part="content">
-        <div class="name">${escapeHtml(sponsor.name)}</div>
-        <div class="rod"></div>
+      <div class="story">
+        <div class="name" data-slat="item">
+          ${cardMarkup(1096, 128)}
+          <div class="name-text">${escapeHtml(sponsor.name)}</div>
+        </div>
         <div class="lower">
-          <div class="blurb">${escapeHtml(sponsor.blurb)}</div>
+          <div class="blurb" data-slat="item">${escapeHtml(sponsor.blurb)}</div>
           ${logoMarkup(sponsor.logoAddress)}
         </div>
       </div>
@@ -45,24 +46,20 @@ export function mount(host, content) {
   hideBrokenLogo(host);
 }
 
-// The logo is mounted in a steel frame with a brass bolt in each corner
+// The logo sits on white, in a card with a thin metal edge
 function logoMarkup(address) {
   if (!address) return '';
 
-  const bolts = [[12, 12], [348, 12], [12, 268], [348, 268]]
-    .map(corner => boltMarkup(corner[0], corner[1], 24, 'brass'))
-    .join('');
-
-  return `<div class="logo">
-    <img src="${escapeHtml(address)}" alt="">
-    <svg class="logo-bolts" width="360" height="280" viewBox="0 0 360 280">${bolts}</svg>
+  return `<div class="logo-card" data-slat="item">
+    <div class="logo-card-picture"><img src="${escapeHtml(address)}" alt=""></div>
+    ${cardMarkup(360, 280)}
   </div>`;
 }
 
 // If the picture cannot be loaded, the empty box goes away and the text
 // takes the whole width
 function hideBrokenLogo(host) {
-  const logo = host.querySelector('.logo');
+  const logo = host.querySelector('.logo-card');
   if (!logo) return;
 
   logo.querySelector('img').addEventListener('error', () => logo.remove());

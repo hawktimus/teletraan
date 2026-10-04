@@ -20,6 +20,12 @@ const motions = [
   { title: 'Calm', value: 'calm' },
 ];
 
+// The values are the names in metals in dashboard/config.js
+const metals = [
+  { title: 'Gold', value: 'gold' },
+  { title: 'Silver', value: 'silver' },
+];
+
 // The values are the names in speeds in dashboard/config.js
 const speeds = [
   { title: 'Very slow', value: 'very-slow' },
@@ -72,7 +78,7 @@ const motionField = defineField({
   title: 'Motion',
   type: 'string',
   group: 'screen',
-  description: 'Full plays all the movement. Calm only fades panels in and out.',
+  description: 'Full plays all the movement. Calm only fades panels in and out, with no turning, glint or name effect.',
   options: { list: motions, layout: 'radio', direction: 'horizontal' },
   initialValue: 'full',
   validation: Rule => Rule.required().error('Pick full or calm.'),
@@ -89,6 +95,51 @@ const speedField = defineField({
   validation: Rule => [
     Rule.required().error('Pick a speed.'),
     Rule.valid(speeds.map(speed => speed.value)).error('Pick very slow, slow, normal or fast.'),
+  ],
+});
+
+const frameMetalField = defineField({
+  name: 'frameMetal',
+  title: 'Frame metal',
+  type: 'string',
+  group: 'screen',
+  description: 'The metal on the frame edges. Gold is warm antique brass, Silver is weathered steel.',
+  options: { list: metals, layout: 'radio', direction: 'horizontal' },
+  initialValue: 'gold',
+  validation: Rule => [
+    Rule.required().error('Pick gold or silver.'),
+    Rule.valid(metals.map(metal => metal.value)).error('Pick gold or silver.'),
+  ],
+});
+
+const glintField = defineField({
+  name: 'glint',
+  title: 'Glint',
+  type: 'boolean',
+  group: 'screen',
+  description: 'A bright spark runs once around each frame every few seconds. Turn it off for a calmer screen.',
+  initialValue: true,
+});
+
+const nameTransformField = defineField({
+  name: 'nameTransform',
+  title: 'Name effect',
+  type: 'boolean',
+  group: 'screen',
+  description: 'Now and then each letter of the team name splits apart, turns and locks back together. Turn it off to keep the name still.',
+  initialValue: true,
+});
+
+const nameEveryField = defineField({
+  name: 'nameEvery',
+  title: 'Name effect every (seconds)',
+  type: 'number',
+  group: 'screen',
+  description: 'How often the team name splits apart and locks back together, from 30 to 900 seconds.',
+  initialValue: 300,
+  validation: Rule => [
+    Rule.required().error('Enter the number of seconds.'),
+    Rule.integer().min(30).max(900).error('Use a whole number from 30 to 900.'),
   ],
 });
 
@@ -199,6 +250,22 @@ const alertField = defineField({
   ],
 });
 
+// A row in the Panels lists, or the ticker, can have seconds of its own. With
+// none it follows this. The small panel and ticker times are worked out from it
+// as described at defaultSettings in dashboard/config.js.
+const pageSecondsField = defineField({
+  name: 'pageSeconds',
+  title: 'Seconds per page',
+  type: 'number',
+  group: 'panels',
+  description: 'How long each page stays up when it has no seconds of its own. The small panel stays three quarters as long and the ticker one and a half times as long.',
+  initialValue: 20,
+  validation: Rule => [
+    Rule.required().error('Enter the number of seconds.'),
+    Rule.integer().min(8).max(120).error('Use a whole number from 8 to 120.'),
+  ],
+});
+
 const doneDaysField = defineField({
   name: 'doneDays',
   title: 'Days finished tasks stay',
@@ -283,8 +350,13 @@ export default defineType({
     teamField,
     motionField,
     speedField,
+    frameMetalField,
+    glintField,
+    nameTransformField,
+    nameEveryField,
     countdownField,
     alertField,
+    pageSecondsField,
     rotationField(),
     doneDaysField,
     safetyDaysField,

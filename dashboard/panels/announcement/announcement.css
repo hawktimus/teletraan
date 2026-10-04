@@ -3,9 +3,6 @@
   height: 1080px;
   overflow: hidden;
   background: var(--ground);
-  /* steel with a brass frame and brass bolts */
-  --panel-frame: var(--fill-brass);
-  --bolt-fill: var(--fill-brass);
 }
 
 /* warning tape along the top and bottom edges */
@@ -15,16 +12,17 @@
   width: 1920px;
   height: 48px;
   box-sizing: border-box;
-  background: repeating-linear-gradient(-45deg, var(--gold) 0, var(--gold) 24px, var(--groove) 24px, var(--groove) 48px);
+  background: repeating-linear-gradient(-45deg, var(--yellow) 0, var(--yellow) 24px, var(--ground) 24px, var(--ground) 48px);
 }
-.announcement .stripe-top {
-  top: 0;
-  border-bottom: 4px solid var(--rim);
-}
-.announcement .stripe-bottom {
-  bottom: 0;
-  border-top: 4px solid var(--rim);
-}
+.announcement .stripe-top { top: 0; }
+.announcement .stripe-bottom { bottom: 0; }
+
+/* The inner edge of each tape is a thin bar of the frame's metal (plate.js
+   rowBarMarkup), so it follows data-metal and the flat finish. The bar is
+   20px high with its line in the middle, so top is the line's place minus 10. */
+.announcement .stripe .row-bar { left: 0; }
+.announcement .stripe-top .row-bar { top: 35px; }
+.announcement .stripe-bottom .row-bar { top: -7px; }
 
 .announcement .words {
   position: absolute;
@@ -41,7 +39,7 @@
 .announcement .line {
   display: flex;
   justify-content: center;
-  color: var(--gold);
+  color: var(--yellow);
   font: 700 var(--size-announce)/1 var(--font-display);
 }
 .announcement .line + .line { color: var(--white); }
@@ -52,32 +50,22 @@
 .announcement .size-small .line { font-size: var(--size-announce-small); }
 .announcement .size-tiny .line { font-size: var(--size-announce-tiny); }
 
-/* the second announcement has the flying logo above the words */
+/* the second announcement has the flying logo above the words. The words sit
+   low, clear of the logo's box (it ends at 518px) and of the caption. */
 .announcement.follow-up .words {
   justify-content: flex-end;
-  padding-bottom: 170px;
+  padding-bottom: 230px;
 }
+/* The logo is drawn on a grid 1100 wide. --k is the box's width divided by
+   1100 (520 / 1100). Its colours and its flight are in frame.css. */
 .announcement .logo {
+  --k: .4727;
   position: absolute;
   left: 700px;
   top: 100px;
   width: 520px;
   height: 418px;
 }
-.announcement .logo svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-.announcement .logo .outline {
-  fill: var(--fill-logo-brass);
-  stroke: var(--fill-logo-brass);
-  stroke-width: 52px;
-  stroke-linejoin: round;
-}
-.announcement .logo .fill { fill: var(--fill-logo-tab); }
-.announcement .logo .slash { fill: var(--fill-logo-brass); }
 
 .announcement .caption {
   position: absolute;

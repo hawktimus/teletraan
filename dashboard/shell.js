@@ -5,9 +5,11 @@
 // Switches you can add to the address, for example index.html?motion=calm
 //   motion=full|calm|none             how much things move
 //   speed=very-slow|slow|normal|fast  how fast things move and how long panels stay
-//   finish=metal|flat                 gradients and brushed steel, or plain colours (to test speed)
+//   finish=metal|flat                 polished metal edges, or one plain colour (to test speed)
+//   metal=gold|silver                 the metal of the frame edges
+//   glint=on|off                      the bright dash that runs round the big frames
 //   draw=stroke|fade                  draw lines, or fade them in (to find out which is slower)
-//   stress                            show Grid 1, Grid 2 and the ticker together, leaving together
+//   stress                            show Grid 1, Grid 2 and the ticker together, changing together
 //   only=tasks                        show only the Tasks panel: no banner, countdown, small panels or ticker
 //   perf                              show the frame timing readout
 //   show=<panel id>                   show only that panel, for example show=events
@@ -15,7 +17,7 @@
 
 import * as frame from './frame.js';
 import { panels } from './registry.js';
-import { sampleMode, sampleFolder, liveFolder, defaultSettings, location as place } from './config.js';
+import { sampleMode, sampleFolder, liveFolder, defaultSettings, metals, location as place } from './config.js';
 import { startContent, withDefaults } from './core/content.js';
 import { loadPanel, mountPanel, updatePanel } from './core/panels.js';
 import { startRotation, startTicker, startTogether } from './core/schedule.js';
@@ -44,6 +46,13 @@ async function run() {
   // The finish in index.html is the default. The address overrides it for testing.
   const finish = params.get('finish');
   if (finish === 'flat' || finish === 'metal') document.documentElement.dataset.finish = finish;
+
+  // The metal of the frame edges and the glint. The address wins, then
+  // rebuild() applies the Dashboard Settings values to the same two attributes.
+  const metal = params.get('metal');
+  if (metals.includes(metal)) document.documentElement.dataset.metal = metal;
+  const glint = params.get('glint');
+  if (glint === 'on' || glint === 'off') document.documentElement.dataset.glint = glint;
 
   try {
     frame.start({ motion: params.get('motion') || 'full', speed: params.get('speed') || 'normal', draw: params.get('draw') });
@@ -97,12 +106,22 @@ function rebuild() {
   if (!params.has('motion')) frame.setMotion(content.settings.motion); // so a change in Dashboard Settings shows at once
   if (!params.has('speed')) frame.setSpeed(content.settings.speed);
   frame.setCrt(content.settings.crt.on ? content.settings.crt.everyMinutes : 0);
+  frame.setNameEffect(content.settings.nameTransform, content.settings.nameEvery);
+  if (!metals.includes(params.get('metal'))) setPageSwitch('metal', content.settings.frameMetal);
+  if (!['on', 'off'].includes(params.get('glint'))) setPageSwitch('glint', content.settings.glint ? 'on' : 'off');
   updatePanel('banner', content);
   updatePanel('countdown', content);
 
   // hiding, renaming or adding a calendar shows at once, not at the next 10 minute read
   const key = JSON.stringify(content.settings.calendars);
   if (rereadEvents && key !== calendarsKey) rereadEvents();
+}
+
+// An attribute on the html element that the stylesheets read. It is only
+// written when the value changes, so a rebuild does not make the browser
+// restyle the whole screen.
+function setPageSwitch(name, value) {
+  if (document.documentElement.dataset[name] !== value) document.documentElement.dataset[name] = value;
 }
 
 function getContent() {
@@ -146,7 +165,7 @@ function startWhatComesAndGoes() {
   startRotation('grid1', () => (onlyTasks ? [{ panel: 'tasks', show: true, seconds: 12 }] : rotation().grid1), getContent);
   if (!onlyTasks) {
     startRotation('grid2', () => rotation().grid2, getContent);
-    startTicker(() => rotation().tickerSeconds, getContent);
+    startTicker(getContent);
   }
 }
 
@@ -333,7 +352,7 @@ function showFatal(error) {
   const message = document.createElement('div');
   message.style.cssText = 'position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; z-index: 100;' +
     'display: flex; flex-direction: column; justify-content: center; align-items: center;' +
-    'background: var(--ground); color: var(--gold); font: 700 96px/120px sans-serif; text-align: center;';
+    'background: var(--ground); color: var(--yellow); font: 700 96px/120px sans-serif; text-align: center;';
   message.textContent = 'Teletraan I could not start. Trying again in 30 seconds.';
   screen.appendChild(message);
 

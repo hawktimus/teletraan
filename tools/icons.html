@@ -24,7 +24,7 @@
 
     .label small {
       display: block;
-      color: var(--gold);
+      color: var(--yellow);
       font-size: var(--size-label);
     }
 
@@ -70,9 +70,9 @@
       return '<div class="row">' +
         '<div class="label">' + info.condition + '<small>code ' + sample.code + ', ' + when + '</small></div>' +
         cell(weatherIcon(sample.code, sample.isDay, 44), '') +
-        cell(weatherIcon(sample.code, sample.isDay, 132), '') +
+        cell(weatherIcon(sample.code, sample.isDay, 112), '') +
         cell(weatherIcon(sample.code, sample.isDay, 44), 'plate') +
-        cell(weatherIcon(sample.code, sample.isDay, 132), 'plate') +
+        cell(weatherIcon(sample.code, sample.isDay, 112), 'plate') +
         '</div>';
     }
 

@@ -1,8 +1,4 @@
-.spotlight {
-  width: 1152px;
-  height: 708px;
-}
-
+/* The header sits on top of the two header plates of the area's frame */
 .spotlight .header {
   position: absolute;
   left: 0;
@@ -21,34 +17,52 @@
   font: 700 var(--size-heading)/96px var(--font-display);
 }
 
-/* The story is centred in the body. The right side stays clear of the cut corner. */
+/* The name is a card 28px in from the frame.
+   Below it the headline, the text and the lead share what is left, centred. */
 .spotlight .story {
   position: absolute;
   left: 0;
-  top: 124px;
-  box-sizing: border-box;
+  top: 142px;
   width: 1152px;
-  height: 576px;
-  padding: 0 88px 0 76px;
+  height: 550px;
+  display: flex;
+  flex-direction: column;
+}
+
+.spotlight .name {
+  position: relative;
+  flex: none;
+  box-sizing: border-box;
+  width: 1096px;
+  height: 128px;
+  margin-left: 28px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+}
+.spotlight .card-outline {
+  left: 0;
+  top: 0;
+}
+/* positioned, so the text is painted above the card's fill */
+.spotlight .name-text {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--yellow);
+  font: 700 var(--size-heading)/96px var(--font-display);
+}
+
+/* The right side stays clear of the cut corner at the bottom right */
+.spotlight .details {
+  flex: 1 1 0;
+  box-sizing: border-box;
+  padding: 0 80px 0 52px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 16px;
-}
-
-/* The name sits in a card sunk into the steel. The negative margins and the
-   padding cancel out, so the text stays where it was and only the card
-   reaches out to 16px from the frame. */
-.spotlight .name {
-  margin: 0 -72px -4px -60px;
-  padding: 0 68px 8px 56px; /* the letters sit low in their line, so the room is below */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  background: var(--card);
-  border: 4px solid var(--groove);
-  border-bottom: 2px solid var(--groove-lit);
-  color: var(--gold);
-  font: 700 var(--size-heading)/104px var(--font-display);
+  gap: 8px;
 }
 
 /* The headline and the text wrap, and are cut off after a set number of lines */
@@ -77,5 +91,6 @@
 }
 .spotlight .lead-label {
   margin-right: 20px;
+  color: var(--yellow);
   font: 600 var(--size-label)/52px var(--font-display);
 }

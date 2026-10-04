@@ -1,18 +1,8 @@
 .stand-in-ticker {
-  position: relative;
   display: flex;
   align-items: center;
   gap: 32px;
-  width: 1840px;
-  height: 72px;
 }
-
-/* Placed and drawn like the strip in ticker.css */
-.stand-in-ticker .strip {
-  left: 120px;
-  top: 4px;
-}
-.stand-in-ticker .strip .outline { stroke-width: var(--line-light); }
 
 .stand-in-ticker .ticker-tag {
   position: relative;
@@ -37,8 +27,7 @@
 }
 
 .stand-in-ticker .ticker-message {
-  position: relative; /* so it is painted above the steel strip */
-  width: 1500px; /* the room the real message has, clear of the slots at the end of the strip */
+  width: 1500px; /* about the longest message the line allows */
   overflow: hidden;
   text-overflow: ellipsis;
   font: 500 var(--size-body)/64px var(--font-text);

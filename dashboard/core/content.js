@@ -1,7 +1,7 @@
 // Where the screen gets what it shows: startContent() hands over the content
 // once it has it, and again every time it changes. Same shape as data/sample/content.json.
 
-import { defaultSettings, defaultTeam, dataFolder, sanity, sampleMode, speeds } from '../config.js';
+import { defaultSettings, defaultTeam, dataFolder, limits, metals, sanity, sampleMode, speeds } from '../config.js';
 import { parseLocalDateTime } from './time.js';
 import { fetchResult, liveEventsUrl, normalizeContent, normalizeSample } from './sanity.js';
 
@@ -40,8 +40,28 @@ export function withDefaults(raw) {
 
   // normalizeSettings in sanity.js already does this for the editors' content.
   // This covers content that did not come through it.
-  if (!Object.keys(speeds).includes(content.settings.speed)) content.settings.speed = defaultSettings.speed;
+  fixSettingValues(content.settings);
   return content;
+}
+
+// Settings that are one of a few words, an on/off switch, or a number in a
+// range. Anything that does not fit becomes the default, so the panels never
+// have to check. A number outside its range is moved to the nearest end.
+export function fixSettingValues(settings) {
+  if (!Object.keys(speeds).includes(settings.speed)) settings.speed = defaultSettings.speed;
+  if (!metals.includes(settings.frameMetal)) settings.frameMetal = defaultSettings.frameMetal;
+
+  ['glint', 'nameTransform'].forEach(name => {
+    if (typeof settings[name] !== 'boolean') settings[name] = defaultSettings[name];
+  });
+  ['pageSeconds', 'nameEvery'].forEach(name => {
+    settings[name] = keepInRange(settings[name], limits[name], defaultSettings[name]);
+  });
+}
+
+function keepInRange(value, limit, fallback) {
+  if (typeof value !== 'number' || !isFinite(value)) return fallback;
+  return Math.min(limit.max, Math.max(limit.min, value));
 }
 
 // Resolves with { content, status } as soon as there is something to show.

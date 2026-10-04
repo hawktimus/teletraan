@@ -30,11 +30,6 @@ export function formatDate(date) {
   return dayNames[date.getDay()] + ' ' + monthNames[date.getMonth()] + ' ' + date.getDate();
 }
 
-// JAN 9 2027
-export function formatLongDate(date) {
-  return monthNames[date.getMonth()] + ' ' + date.getDate() + ' ' + date.getFullYear();
-}
-
 export function dayName(date) {
   return dayNames[date.getDay()];
 }

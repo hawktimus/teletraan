@@ -2,7 +2,7 @@
 // the set times: the first line, then the second line with the logo flying.
 
 import * as frame from '../../frame.js';
-import { frameMarkup } from '../../core/plate.js';
+import { frameMarkup, rowBarMarkup } from '../../core/plate.js';
 import { escapeHtml } from '../../core/text.js';
 import { logoMarkup } from '../../core/logo.js';
 
@@ -84,8 +84,8 @@ export function mount(host, content) {
       <div class="scan-clip" style="width: 1920px; height: 1080px;">
         <div class="scan" data-part="scan" style="height: 1080px; --sweep: 1920px;"></div>
       </div>
-      <div class="stripe stripe-top" data-part="stripe"></div>
-      <div class="stripe stripe-bottom" data-part="stripe"></div>
+      <div class="stripe stripe-top" data-part="stripe">${rowBarMarkup(1920)}</div>
+      <div class="stripe stripe-bottom" data-part="stripe">${rowBarMarkup(1920)}</div>
 
       ${logo}
       <div class="words size-${size}">${words}</div>

@@ -1,35 +1,30 @@
-// A picture at a time from the photo list, and the next one each time the
-// panel comes round.
+// A picture at a time from the photo list, a random one each time the panel
+// comes round.
 
-import { plateMarkup, scanMarkup, boltMarkup } from '../../core/plate.js';
+import { cardMarkup } from '../../core/plate.js';
 import { doubleSlash } from '../../core/marks.js';
 import { escapeHtml, hasText } from '../../core/text.js';
-import { makeTurns } from '../../core/turns.js';
 
 const missingMarkup = '<div class="missing">[Photo not available]</div>';
 
-const nextPhoto = makeTurns();
+let lastIndex = -1;
 
-// The picture is set into a sunk window with a bolt in each corner. It is
-// drawn over the picture, and not inside it, so it stays when a picture
-// cannot be loaded. The light line is just below the picture.
-const windowMarkup = `
-  <svg class="window" width="1120" height="480" viewBox="0 0 1120 480">
-    <line class="pocket-lit" x1="0" y1="474" x2="1120" y2="474"/>
-    <rect class="pocket" x="2" y="2" width="1116" height="468"/>
-    ${boltMarkup(22, 22, 28)}
-    ${boltMarkup(1098, 22, 28)}
-    ${boltMarkup(22, 450, 28)}
-    ${boltMarkup(1098, 450, 28)}
-  </svg>`;
+// Never the same picture twice in a row, unless there is only one
+function pickPhoto(list) {
+  if (list.length === 0) return null;
 
-// The caption sits in a sunk slot. Its right end is cut at the same angle as
-// the corner of the plate and stays 8px clear of it.
-const captionSlot = `
-  <svg class="caption-slot" width="1120" height="80" viewBox="0 0 1120 80">
-    <polygon class="pocket-lit" points="2,6 1112,6 1112,21 1045,74 2,74"/>
-    <polygon class="pocket" points="2,4 1112,4 1112,19 1045,72 2,72"/>
-  </svg>`;
+  let index = Math.floor(Math.random() * list.length);
+  if (list.length > 1 && index === lastIndex) index = (index + 1) % list.length;
+  lastIndex = index;
+  return list[index];
+}
+
+// The picture sits in a card 1096px wide. With a caption under it the card is
+// shorter. With no caption it is as tall as the cut corner of the frame
+// allows. Both heights are used for the card's outline and for its box.
+const CARD_WIDTH = 1096;
+const CARD_HEIGHT_WITH_CAPTION = 464;
+const CARD_HEIGHT_NO_CAPTION = 514;
 
 function usablePhotos(content) {
   const photos = Array.isArray(content.photos) ? content.photos : [];
@@ -40,24 +35,26 @@ export function hasContent(content) {
   return usablePhotos(content).length > 0;
 }
 
+// The picture card and the caption each turn over on their own, so each is a slat.
 export function mount(host, content) {
-  const photo = nextPhoto(usablePhotos(content));
+  const photo = pickPhoto(usablePhotos(content));
   const picture = photo ? `<img src="${escapeHtml(photo.address)}" alt="">` : missingMarkup;
+  const hasCaption = photo !== null && hasText(photo.caption);
+  const cardHeight = hasCaption ? CARD_HEIGHT_WITH_CAPTION : CARD_HEIGHT_NO_CAPTION;
+  const caption = hasCaption ? `<div class="caption" data-slat="item">${escapeHtml(photo.caption)}</div>` : '';
 
   host.innerHTML = `
-    <section class="panel photo" data-sequence="grid1">
-      ${plateMarkup('grid1')}
-      ${scanMarkup('grid1')}
-
+    <section class="page photo">
       <div class="header">
-        <h2 class="title" data-part="title">PHOTOS</h2>
-        <div data-part="tag">${doubleSlash()}</div>
+        <h2 class="title" data-slat="title">PHOTOS</h2>
+        <div data-slat="tag">${doubleSlash()}</div>
       </div>
 
-      <div class="picture" data-part="content">${picture}</div>
-      <div class="picture-window" data-part="content">${windowMarkup}</div>
-      <div class="caption-slot-box" data-part="content">${captionSlot}</div>
-      <div class="caption" data-part="content">${escapeHtml(photo && photo.caption)}</div>
+      <div class="card" data-slat="item" style="width: ${CARD_WIDTH}px; height: ${cardHeight}px">
+        <div class="picture">${picture}</div>
+        ${cardMarkup(CARD_WIDTH, cardHeight)}
+      </div>
+      ${caption}
     </section>`;
 
   const image = host.querySelector('.picture img');

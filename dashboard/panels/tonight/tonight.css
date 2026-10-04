@@ -1,8 +1,4 @@
-.tonight {
-  width: 1152px;
-  height: 708px;
-}
-
+/* The header sits on top of the two header plates of the area's frame */
 .tonight .header {
   position: absolute;
   left: 0;
@@ -23,88 +19,78 @@
 .tonight .tag {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: var(--gold);
+  gap: 24px;
+  color: var(--yellow);
   font: 600 var(--size-label)/44px var(--font-display);
 }
-/* The date sits in a sunk slot. The slot is a fixed width and is drawn over
-   the vents in the header strip, so no half of a vent shows beside it and a
-   long date is still easy to read. It stays clear of the bolt in the
+/* The date is cut off with an ellipsis before it can reach the bolt in the
    middle of the header. */
 .tonight .tag-text {
-  flex: none;
-  box-sizing: content-box;
-  width: 316px;
-  padding: 4px 14px;
+  min-width: 0;
+  max-width: 316px;
   overflow: hidden;
-  text-align: center;
   text-overflow: ellipsis;
-  background: var(--card);
-  border: 4px solid var(--groove);
-  border-bottom: 2px solid var(--groove-lit);
 }
+.tonight .tag .double-slash { flex: none; }
 
+/* The heading and place are a card, 28px in from the frame. The picture of the card is placed at the top left of its box,
+   and the text is positioned so it is painted above the card's fill. */
 .tonight .plan {
   position: absolute;
-  z-index: 0; /* so the card behind the text stays above the steel */
-  left: 0;
-  top: 124px;
+  left: 28px;
+  top: 142px;
   box-sizing: border-box;
-  width: 1152px;
-  height: 148px;
-  padding: 12px 48px 0;
+  width: 1096px;
+  height: 140px;
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
-/* the heading and place sit in a card sunk into the steel */
-.tonight .plan::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  left: 16px;
-  right: 16px;
-  top: 8px;
-  bottom: 8px;
-  background: var(--card);
-  border: 4px solid var(--groove);
-  border-bottom: 2px solid var(--groove-lit);
+.tonight .card-outline {
+  left: 0;
+  top: 0;
 }
 .tonight .heading {
+  position: relative;
   overflow: hidden;
   text-overflow: ellipsis;
-  font: 700 var(--size-body-large)/72px var(--font-display);
+  font: 700 var(--size-body-large)/64px var(--font-display);
 }
 .tonight .location {
+  position: relative;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--gold);
-  font: 600 var(--size-label)/48px var(--font-display);
+  color: var(--yellow);
+  font: 600 var(--size-label)/44px var(--font-display);
 }
 
-/* Up to five rows of 80px. The thin lines above them come from plate.js. */
+/* Up to five rows share 396px. Fewer than five are taller, up to 112px. Each
+   row carries the thin metal bar under it. */
 .tonight .rows {
   position: absolute;
   left: 0;
-  top: 272px;
+  top: 296px;
   width: 1152px;
-  height: 400px;
+  height: 396px;
+  display: flex;
+  flex-direction: column;
 }
 .tonight .row {
   position: relative;
+  flex: 1 1 0;
+  max-height: 112px;
   display: flex;
   align-items: center;
   box-sizing: border-box;
-  height: 80px;
-  padding: 0 56px 0 48px; /* the right side stays clear of the cut corner */
+  padding: 0 80px 0 52px; /* the right side stays clear of the cut corner */
 }
-/* a purple tab at the left end of each row, the same colour as the header tab */
-.tonight .row::before {
-  content: '';
-  position: absolute;
-  left: 20px;
-  top: 14px;
-  bottom: 12px;
-  width: 8px;
-  background: var(--purple);
-  border-top: 2px solid var(--bevel-lit);
+/* The line of the bar runs through the middle of its 20px high picture, so the
+   picture is centred on the bottom edge of the row. The bar stops 14px short of
+   the frame on each side. */
+.tonight .row-bar {
+  left: 14px;
+  bottom: -10px;
 }
 .tonight .time {
   flex: none;
@@ -113,7 +99,7 @@
   padding-right: 16px; /* so a time that is cut off still does not touch the text */
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--gold);
+  color: var(--yellow);
   font: 700 var(--size-body)/64px var(--font-text);
 }
 .tonight .text {

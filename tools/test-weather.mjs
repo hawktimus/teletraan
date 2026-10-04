@@ -548,7 +548,7 @@ test('weatherIcon never prints undefined, null or NaN', () => {
 });
 
 test('weatherIcon draws only straight shapes in token colours', () => {
-  const colors = /^fill: var\(--(gold|white|status-progress|status-next)\)$/;
+  const colors = /^fill: var\(--(yellow|white|status-progress|status-next)\)$/;
 
   everyCode.forEach(code => {
     [true, false].forEach(isDay => {

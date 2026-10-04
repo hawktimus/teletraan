@@ -262,6 +262,11 @@ function sanityFixture() {
       team: { name: '[Team name]', number: 1234, school: null },
       motion: 'calm',
       speed: 'slow',
+      frameMetal: 'silver',
+      glint: false,
+      pageSeconds: 30,
+      nameTransform: false,
+      nameEvery: 120,
       countdown: {
         kickoffLabel: '[Kickoff label]',
         kickoff: '2027-01-09T17:00:00.000Z',
@@ -374,6 +379,11 @@ test('normalizeContent turns a full Sanity result into the sample content shape'
   const settings = content.settings;
   assert.equal(settings.motion, 'calm');
   assert.equal(settings.speed, 'slow');
+  assert.equal(settings.frameMetal, 'silver');
+  assert.equal(settings.glint, false);
+  assert.equal(settings.pageSeconds, 30);
+  assert.equal(settings.nameTransform, false);
+  assert.equal(settings.nameEvery, 120);
   assert.deepEqual(settings.countdown, {
     kickoffLabel: '[Kickoff label]',
     kickoff: '2027-01-09T17:00:00.000Z',
@@ -385,7 +395,7 @@ test('normalizeContent turns a full Sanity result into the sample content shape'
     grid1: [
       { panel: 'events', show: true, seconds: 20 },
       { panel: 'tasks', show: false, seconds: 16 },
-      { panel: 'photo', show: true, seconds: 16 },
+      { panel: 'photo', show: true },
     ],
     grid2: [{ panel: 'forecast', show: true, seconds: 10 }],
     tickerSeconds: 30,
@@ -569,9 +579,12 @@ test('normalizeContent fills gaps in settings from the defaults', () => {
   const defaults = live.config.defaultSettings;
 
   assert.deepEqual(settings.countdown, Object.assign({}, defaults.countdown, { kickoff: '2027-01-09T17:00:00.000Z' }));
-  assert.deepEqual(settings.rotation.grid1, [{ panel: 'events', show: true, seconds: 16 }]);
-  assert.deepEqual(settings.rotation.grid2, [{ panel: 'forecast', show: true, seconds: 12 }]);
-  assert.equal(settings.rotation.tickerSeconds, defaults.rotation.tickerSeconds);
+  assert.deepEqual(settings.rotation.grid1, [{ panel: 'events', show: true }]);
+  assert.deepEqual(settings.rotation.grid2, [{ panel: 'forecast', show: true }]);
+  assert.equal('tickerSeconds' in settings.rotation, false);
+  ['frameMetal', 'glint', 'pageSeconds', 'nameTransform', 'nameEvery'].forEach(name => {
+    assert.equal(settings[name], defaults[name], name + ' is missing, so it is the default');
+  });
   assert.deepEqual(settings.announcements, [
     { time: '9:05', title: '[Title]', followUp: '', titleSeconds: 12, followUpSeconds: 10, days: [] },
   ]);
@@ -662,7 +675,7 @@ test('an announcement that is switched off is left out, and one with no switch i
   assert.deepEqual(normalizeSample(result).settings.announcements, []);
 });
 
-test('seconds that are zero, negative or not numbers become the defaults', () => {
+test('seconds on a row or the ticker that are zero, negative or not numbers are left out, and announcements get their defaults', () => {
   const bad = [0, -5, 'abc', '12', NaN, Infinity, true, {}, [8]];
 
   bad.forEach(value => {
@@ -678,9 +691,9 @@ test('seconds that are zero, negative or not numbers become the defaults', () =>
     };
     [normalizeContent(result), normalizeSample(result)].forEach(content => {
       const rotation = content.settings.rotation;
-      assert.equal(rotation.grid1[0].seconds, 16, 'grid1 with ' + String(value));
-      assert.equal(rotation.grid2[0].seconds, 12, 'grid2 with ' + String(value));
-      assert.equal(rotation.tickerSeconds, 24, 'ticker with ' + String(value));
+      assert.deepEqual(rotation.grid1, [{ panel: 'tasks', show: true }], 'grid1 with ' + String(value));
+      assert.deepEqual(rotation.grid2, [{ panel: 'forecast', show: true }], 'grid2 with ' + String(value));
+      assert.equal('tickerSeconds' in rotation, false, 'ticker with ' + String(value));
       assert.equal(content.settings.announcements[0].titleSeconds, 12);
       assert.equal(content.settings.announcements[0].followUpSeconds, 10);
     });
@@ -740,6 +753,140 @@ test('speed is one of four names, and anything else becomes normal', () => {
 
   assert.equal(normalizeContent({ settings: null }).settings.speed, 'normal');
   assert.equal(withDefaults(null).settings.speed, 'normal');
+});
+
+// The three ways content reaches the screen: from Sanity, from the sample
+// file, and straight into withDefaults. Each must treat settings the same way.
+function settingsThrough(settings) {
+  return [
+    normalizeContent({ settings: settings }).settings,
+    normalizeSample({ settings: settings }).settings,
+    withDefaults({ settings: settings }).settings,
+  ];
+}
+
+test('the new settings have the defaults the Studio starts with', () => {
+  const defaults = live.config.defaultSettings;
+
+  assert.deepEqual(live.config.metals, ['gold', 'silver']);
+  assert.equal(defaults.frameMetal, 'gold');
+  assert.equal(defaults.glint, true);
+  assert.equal(defaults.pageSeconds, 20);
+  assert.equal(defaults.nameTransform, true);
+  assert.equal(defaults.nameEvery, 300);
+  assert.deepEqual(live.config.limits, { pageSeconds: { min: 8, max: 120 }, nameEvery: { min: 30, max: 900 } });
+
+  // the starting rows follow pageSeconds, so they carry no seconds of their own
+  ['grid1', 'grid2'].forEach(area => {
+    assert.ok(defaults.rotation[area].length > 0);
+    defaults.rotation[area].forEach(step => assert.equal('seconds' in step, false, step.panel));
+  });
+  assert.equal('tickerSeconds' in defaults.rotation, false);
+
+  const empty = withDefaults({}).settings;
+  ['frameMetal', 'glint', 'pageSeconds', 'nameTransform', 'nameEvery'].forEach(name => {
+    assert.equal(empty[name], defaults[name], name);
+  });
+});
+
+test('frame metal is gold or silver, and anything else becomes gold', () => {
+  live.config.metals.forEach(name => {
+    settingsThrough({ frameMetal: name }).forEach(settings => assert.equal(settings.frameMetal, name));
+  });
+
+  [undefined, null, '', 'Gold', 'SILVER', 'bronze', 'toString', 0, true, ['gold'], {}].forEach(value => {
+    settingsThrough({ frameMetal: value }).forEach(settings => {
+      assert.equal(settings.frameMetal, 'gold', JSON.stringify(value));
+    });
+  });
+  assert.equal(normalizeContent({ settings: null }).settings.frameMetal, 'gold');
+  assert.equal(withDefaults(null).settings.frameMetal, 'gold');
+});
+
+test('glint and the name effect are switches, and anything but true or false becomes on', () => {
+  ['glint', 'nameTransform'].forEach(name => {
+    [true, false].forEach(value => {
+      settingsThrough({ [name]: value }).forEach(settings => assert.equal(settings[name], value, name));
+    });
+
+    [undefined, null, '', 'false', 'off', 'yes', 0, 1, [], {}].forEach(value => {
+      settingsThrough({ [name]: value }).forEach(settings => {
+        assert.equal(settings[name], true, name + ' with ' + JSON.stringify(value));
+      });
+    });
+  });
+});
+
+// a good number stays, a number outside the range moves to the nearest end,
+// and anything that is not a finite number becomes the default
+function checkRange(name, min, max, fallback, inside) {
+  inside.concat([min, max]).forEach(value => {
+    settingsThrough({ [name]: value }).forEach(settings => assert.equal(settings[name], value, name + ' ' + value));
+  });
+
+  [[min - 1, min], [0, min], [-3, min], [-1e9, min], [max + 1, max], [1e9, max]].forEach(pair => {
+    settingsThrough({ [name]: pair[0] }).forEach(settings => {
+      assert.equal(settings[name], pair[1], name + ' with ' + pair[0]);
+    });
+  });
+
+  [undefined, null, '', 'abc', String(min + 1), NaN, Infinity, -Infinity, true, false, [min + 1], {}].forEach(value => {
+    settingsThrough({ [name]: value }).forEach(settings => {
+      assert.equal(settings[name], fallback, name + ' with ' + String(value));
+    });
+  });
+}
+
+test('seconds per page is a number from 8 to 120, and anything else is moved into range or becomes 20', () => {
+  checkRange('pageSeconds', 8, 120, 20, [9, 20, 45, 119]);
+});
+
+test('the name effect every so many seconds is a number from 30 to 900, and anything else is moved into range or becomes 300', () => {
+  checkRange('nameEvery', 30, 900, 300, [31, 300, 600, 899]);
+});
+
+test('a row can leave seconds empty to follow seconds per page, and a good number is kept', () => {
+  const result = {
+    settings: {
+      pageSeconds: 40,
+      rotation: {
+        grid1: [{ panel: 'tasks' }, { panel: 'events', show: true, seconds: 25 }, { panel: 'photo', show: false, seconds: null }, { panel: 'tonight', seconds: '' }],
+        grid2: [{ panel: 'forecast', seconds: 6 }, { panel: 'next-event' }],
+        tickerSeconds: 45,
+      },
+    },
+  };
+
+  [normalizeContent(result), normalizeSample(result)].forEach(content => {
+    const rotation = content.settings.rotation;
+    assert.equal(content.settings.pageSeconds, 40);
+    assert.deepEqual(rotation.grid1, [
+      { panel: 'tasks', show: true },
+      { panel: 'events', show: true, seconds: 25 },
+      { panel: 'photo', show: false },
+      { panel: 'tonight', show: true },
+    ]);
+    assert.deepEqual(rotation.grid2, [{ panel: 'forecast', show: true, seconds: 6 }, { panel: 'next-event', show: true }]);
+    assert.equal(rotation.tickerSeconds, 45);
+  });
+
+  // with no ticker seconds of its own the ticker follows seconds per page
+  const noTicker = normalizeContent({ settings: { rotation: { grid1: [{ panel: 'tasks' }] } } });
+  assert.equal('tickerSeconds' in noTicker.settings.rotation, false);
+  assert.equal(noTicker.settings.rotation.tickerSeconds, undefined);
+
+  // a fraction of a second is a number, so it is kept
+  assert.equal(normalizeContent({ settings: { rotation: { tickerSeconds: 7.5 } } }).settings.rotation.tickerSeconds, 7.5);
+});
+
+test('the sample content file carries the new settings and they come through unchanged', () => {
+  const file = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const settings = normalizeSample(file).settings;
+
+  ['frameMetal', 'glint', 'pageSeconds', 'nameTransform', 'nameEvery'].forEach(name => {
+    assert.ok(name in file.settings, 'the sample content has no ' + name);
+    assert.equal(settings[name], file.settings[name], name);
+  });
 });
 
 test('sample content is used when the project ID is empty or useSampleContent is on', () => {
@@ -802,7 +949,7 @@ test('sample content is cleaned the same way as content from Sanity', async () =
   };
   const fromSanity = normalizeContent({ settings: settings });
   assert.deepEqual(normalizeSample({ settings: settings }).settings, fromSanity.settings);
-  assert.equal(fromSanity.settings.rotation.tickerSeconds, 24);
+  assert.equal('tickerSeconds' in fromSanity.settings.rotation, false);
 
   await inWorld(async world => {
     const file = {
@@ -824,9 +971,9 @@ test('sample content is cleaned the same way as content from Sanity', async () =
     assert.deepEqual(content.subteams, []);
     assert.deepEqual(content.customPanels, [{ title: '[Panel]', blocks: [{ type: 'text', text: '[Text]' }] }]);
     assert.deepEqual(content.plan, { heading: '[Plan]', rows: [{ time: '[6 PM]', text: '[Do it]' }] });
-    assert.deepEqual(content.settings.rotation.grid1, [{ panel: 'tasks', show: true, seconds: 16 }]);
+    assert.deepEqual(content.settings.rotation.grid1, [{ panel: 'tasks', show: true }]);
     assert.deepEqual(content.settings.rotation.grid2, live.config.defaultSettings.rotation.grid2);
-    assert.equal(content.settings.rotation.tickerSeconds, 24);
+    assert.equal('tickerSeconds' in content.settings.rotation, false);
     assert.deepEqual(content.settings.announcements, []);
     assert.deepEqual(content.settings.calendars, [{ id: 'team', name: '[Team]' }]);
     assert.equal(world.errors.length, 0);

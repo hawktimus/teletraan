@@ -1,166 +1,67 @@
 # Teletraan I
 
-The wall dashboard for FRC Team 3229, Hawktimus Prime, at Holly Springs High
-School. It runs full screen on a 70 inch TV, driven by a 2011 Mac Mini that
-runs Debian Linux. These docs call it the Mini. It shows the team name, the
-date, time and weather, a countdown to Kickoff, the team's tasks, upcoming
-events, sponsors, photos and more, and it takes over the whole screen for
-alerts and for the announcements (at 2:30 and 5:00 to begin with). The team
-mentor, [name of the team mentor], is the adult who holds the team's accounts
-and passwords and says yes to anything new on the Mini. Ask them before you
-install software or when a step needs a login or a key.
+The wall dashboard for Hawktimus Prime, FRC Team 3229 at Holly Springs High School.
 
-It is plain HTML, CSS and JavaScript. There is nothing to install and there is
-no build step. Edit a file, refresh the page, see the change.
+This is intended to run on the TV in the classroom for robotics and will be running off of a device connected to the back. Currently, we are using a Mac mini 2014 which has Debian 13 installed on it and set for auto-login and auto-launch.
 
-## Try it on your computer
+It is also programmed to make an announcement at the beginning of the meeting at 2:30pm and at 5:00pm.
 
-You need Python 3. Check with `python3 --version`. It should print a number.
+The interface uses plain HTML, CSS, and JavaScript. Nothing needs to be installed. If the code needs to be edited, just edit the file and refresh the page.
 
-Open a terminal in this folder. On a Mac, type `cd ` (with a space) and drag
-the folder into the terminal window, then press Enter. On Debian, right click
-the folder and choose Open in Terminal. Then run:
+For adjusting the content that gets displayed, Sanity will be used.
+
+## Editing the content in Sanity Studio
+
+Almost everything on the screen is typed into the Studio, which is the editing page for the dashboard. Open it at [Studio address] and sign in.
+
+The list on the left is what you can change: Tasks, Tonight's Plan, Sponsors, Tips and News, Subteams, Leadership, Custom Panels, and Dashboard Settings. Click the one you want, change it, and press **Publish**. Nothing shows on the TV until it is published, and it gets there within a few seconds.
+
+- Every item has a **Show on screen** switch and an optional **Hide after** date, so things come down on their own.
+- Every field says how many characters fit on the screen. Studio will not let you publish text that is too long.
+- **Dashboard Settings** is the one page for the whole board: which boards show and in what order, how long each stays, the countdown dates, the announcement times and words, an alert, and the look and the speed.
+- Events are not typed in here. They come from the team's BAND calendars.
+
+More detail is in docs/editing-content.md.
+
+## Running it on your computer
+
+You need Python 3. In a terminal, from this folder:
 
     python3 tools/serve.py
 
-The terminal will say `Serving HTTP on 127.0.0.1 port 8080`. That is normal.
-Leave it open. Then open http://localhost:8080/dashboard/ in a browser. Press
-Ctrl+C in the terminal to stop the server. This server is for trying things
-on a computer. On the Mini the web server in `deploy/` does the same job.
+Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh the page, and you will see the change. The screen shows sample content (everything in [square brackets]) until it is switched over to the real content, which is covered in studio/README.md.
 
-The screen starts out showing sample content, so it works before the editing
-screen has anything in it. Every piece of sample text is in [square brackets].
-It stays that way until `useSampleContent` in `dashboard/config.js` is changed
-to `false`, which is step 8 of the setup in studio/README.md. The browser
-console shows a few 404 lines for files under `data/live/`. That is expected:
-the Mini downloads those files, so on your computer the dashboard uses the
-ones in `data/sample/` instead.
+## What's included
 
-## The editing screen (Studio)
+- Team name, number, and school, with the animated hawk logo
+- Date, time, and weather for Holly Springs
+- Countdown timer to FRC Kickoff (January 9, 2027), then to Rollout
+- Team tasks
+- Tonight's plan
+- Upcoming events and the next event, from the team's BAND calendars
+- Sponsors, with sponsor logos and thank-yous
+- Photos, randomized
+- Subteam spotlight, leadership, and team leads
+- Task counts and safety days
+- Custom boards that can be built in Studio
+- A ticker along the bottom for tips, news, reminders, and sponsor thanks
+- Announcements at 2:30pm and 5:00pm ("WHAT TIME IS IT?", then "PRIMETIME"), with the times and words set in Studio
+- Full-screen alerts that take over the whole screen
+- The old-TV effect every few minutes
+- Calm mode, which turns the effects off
+- A speed setting for the whole board, and seconds per page that can be set for the whole board or for each board
+- Polished gold or silver frame edges, picked in Studio
+- Pages that flip like slats while the frames stay in place
+- The animated hawk logo, and a team name that splits apart and locks back together every few minutes
 
-The Sanity project exists. Its ID, `ybfqe345`, is in `studio/project.js` and in
-`dashboard/config.js`, and its dataset is called `production`. What is left is
-to run the Studio on a Mac, let the dashboard read from it, type some content
-and switch the screen over from the sample. studio/README.md has every step.
-In short, from the `studio` folder in the Terminal app: `npm install`,
-`npx sanity login`, `npm run dev`, then add `http://localhost:8080` as a CORS
-origin in the Sanity project settings, publish some content, set
-`useSampleContent` to `false`, and run `npm run deploy` so the editors can
-sign in from anywhere.
+## More guides
 
-## What is where
+- docs/editing-content.md: using the Studio
+- docs/adding-a-field.md: adding a field to something editors fill in
+- docs/adding-a-panel.md: adding a new board
+- docs/rebuilding-the-mini.md: setting up the Mini from scratch
+- docs/where-things-are.md: what each folder is for, where the settings live, and how to check your work
+- docs/try-it-on-the-mini.md: testing speed on the Mini
+- docs/the-logo.md: how the hawk logo moves
 
-    dashboard/
-      index.html, shell.js    starts everything. index.html also draws the metal gradients
-      registry.js             the list of every panel
-      config.js               the weather location, the content source, the speeds, the defaults
-      frame.js, frame.css     everything that moves, including the logo's show
-      perf.js                 the frame-rate readout, shown with ?perf (the P key hides it)
-      tokens.css              colours, the metal finish, sizes and timings
-      base.css                the 1920x1080 screen and the shared metal shapes
-      core/                   helpers used by several panels, including plate.js, which draws a plate
-      panels/                 one folder per panel: a script and a stylesheet
-      fonts/, assets/         fonts and pictures, all served from here
-      data/sample/            sample content with marked placeholders
-      data/live/              files the Mini downloads (never committed)
-    studio/                   the Sanity editing screen, and check-schemas.mjs
-    deploy/                   how the Mini runs it: web server, timers, scripts
-    tools/
-      serve.py                the server above
-      test-calendar.mjs       checks for the calendar reader
-      test-weather.mjs        checks for the weather reader and its pictures
-      test-content.mjs        checks for the code that reads the editors' content
-      testdata/               the calendar files test-calendar.mjs reads
-      icons.html              every weather picture on one page, at
-                              http://localhost:8080/tools/icons.html
-      logo.html               the hawk logo large, with every act and key pose, at
-                              http://localhost:8080/tools/logo.html
-      perf/                   the comparison page for the speed test: the Tasks panel built
-                              from plain plates, in metal or flat, at
-                              http://localhost:8080/tools/perf/plates.html
-    docs/                     how-to guides
-
-## Changing things
-
-Values saved in Dashboard Settings (in the editing screen) win. The file
-`dashboard/config.js` only fills in what the editors have not set. The Studio
-has a copy of each starting value in `studio/schemas/`, and
-`studio/check-schemas.mjs` fails if the two copies differ, so change both. To
-change what is on the TV today, use Dashboard Settings and leave the files
-alone.
-
-- **The Kickoff date.** Dashboard Settings, Countdown tab. The starting value
-  is `defaultSettings.countdown.kickoff` in `dashboard/config.js`, written like
-  `2027-01-09T12:00`, and its copy `initialValue` in
-  `studio/schemas/dashboardSettings.js`, written in UTC. The countdown counts
-  to 12:00 noon on that day, on the Mini's clock, which is set to Eastern
-  time. Noon is a guess and not the real start time of the event, so set the
-  real time in Dashboard Settings.
-- **How long a panel stays, and in what order.** Dashboard Settings, Panels
-  tab. The starting values are `defaultSettings.rotation` in
-  `dashboard/config.js` and the lists in `studio/schemas/settingsRotation.js`.
-- **The announcement times and words.** Dashboard Settings, Announcements
-  tab. The starting values are `defaultSettings.announcements` in
-  `dashboard/config.js` and `startingList` in
-  `studio/schemas/settingsAnnouncements.js`. The announcement panel keeps
-  one more copy of the first line, for an announcement that has none.
-- **Where the weather is taken from.** `location` in `dashboard/config.js`
-  only. Editors cannot change it. Use latitude and longitude: in the United
-  States latitude is positive and longitude is negative. Temperatures are
-  shown in Fahrenheit.
-- **How fast a panel arrives.** The start times are the tables at the top of
-  `dashboard/frame.js`. How long each move takes is in `dashboard/tokens.css`.
-  Both are written for normal speed.
-- **How fast everything goes.** Dashboard Settings, Screen tab, Speed: Very
-  slow, Slow, Normal or Fast. It makes every move, and how long each panel and
-  ticker line stays, 2, 1.5, 1 or 0.75 times as long. A panel never stays less
-  than 5 seconds. The announcements and alerts, the clock, the countdown and
-  the weather and calendar updates do not change. The numbers are `speeds` in
-  `dashboard/config.js`. The starting value is `defaultSettings.speed` there,
-  and its copy in `studio/schemas/dashboardSettings.js`.
-- **The logo's show.** The hawk's wingbeats, its glide and its wing stretch. See
-  docs/the-logo.md.
-- **A new panel, or the metal look.** See docs/adding-a-panel.md. The metal is
-  made from the colours in `dashboard/tokens.css`, so change those to restyle it.
-- **A new field on something editors fill in.** See docs/adding-a-field.md.
-
-## Checking your work
-
-Run these in the terminal, from this folder. They need Node.js, the same
-version as the Studio (22.12 or newer), and nothing else installed.
-
-    node tools/test-calendar.mjs
-    node tools/test-weather.mjs
-    node tools/test-content.mjs
-    node studio/check-schemas.mjs
-
-Each one ends with a total such as `24 of 24 passed` and says FAIL beside
-anything that went wrong. If anything fails, the command ends with an error.
-Run all four after you change code under `dashboard/core/` or a file under
-`studio/schemas/`.
-
-## Special effects
-
-- The old television effect plays every few minutes. Add `?demo=crt` to the
-  address to see it now.
-- The announcements can be tried with `?demo=announcement`, and an alert with
-  `?demo=alert`.
-- Calm mode (`?motion=calm`, or Motion in Dashboard Settings) switches off
-  every effect and leaves only short fades.
-- Speed can be tried with `?speed=very-slow`, `?speed=slow`, `?speed=normal`
-  or `?speed=fast`. The address wins over Dashboard Settings.
-- The screen is dressed as gunmetal: steel plates with gradients, bevelled
-  edges, brushed streaks and bolts. That is `?finish=metal`, the normal look.
-  `?finish=flat` shows the same screen in plain colours, with no gradients,
-  bevel lines or streaks. Comparing the two on the Mini shows what the metal
-  costs.
-
-## Testing speed on the Mini
-
-See docs/try-it-on-the-mini.md. It also compares the metal finish with the
-flat one.
-
-## Credits
-
-The weather comes from Open-Meteo (open-meteo.com), a free service that needs
-no key.
+The weather comes from Open-Meteo (open-meteo.com), a free service that needs no key.

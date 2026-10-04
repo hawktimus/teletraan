@@ -1,12 +1,12 @@
 // Days since the last incident, counted from the date set in Dashboard
 // Settings.
 
-import { plateMarkup, scanMarkup } from '../../core/plate.js';
+import { rowBarMarkup } from '../../core/plate.js';
 import { parseLocalDateTime, daysBetween } from '../../core/time.js';
 
-// Three digits do not fit beside the caption, so from 100 up the number is
-// smaller and the caption goes under it
-const BIG_NUMBER_LIMIT = 100;
+// Two digits do not fit beside the caption with any room to spare, so from 10
+// up the number is smaller and the caption goes under it
+const BIG_NUMBER_LIMIT = 10;
 const PLACEHOLDER = '[00]';
 
 function sinceDate(content) {
@@ -35,22 +35,25 @@ export function mount(host, content) {
   const number = days === null ? PLACEHOLDER : String(days);
   const caption = (days === 1 ? 'DAY' : 'DAYS') + ' SINCE<br>LAST INCIDENT';
 
+  const stacked = days === null || days >= BIG_NUMBER_LIMIT;
+
   // The placeholder's brackets are tall, so it gets a smaller number still
   let layout = '';
-  if (days === null) layout = ' stacked placeholder';
-  else if (days >= BIG_NUMBER_LIMIT) layout = ' stacked';
+  if (stacked) layout = ' stacked';
+  if (days === null) layout += ' placeholder';
+
+  // A thin metal bar goes between the number and the caption, but only when
+  // the caption is under the number
+  const bar = stacked ? rowBarMarkup(628) : '';
 
   host.innerHTML = `
-    <section class="panel safety-days" data-sequence="grid2">
-      ${plateMarkup('grid2')}
-      ${scanMarkup('grid2')}
+    <section class="page safety-days">
+      <div class="label" data-slat="label">SAFETY</div>
+      <div class="tape" data-slat="tag"></div>
 
-      <div class="label" data-part="label">SAFETY</div>
-      <div class="tape" data-part="label"></div>
-
-      <div class="content${layout}" data-part="content">
+      <div class="content${layout}" data-slat="content">
         <div class="number">${number}</div>
-        <div class="caption">${caption}</div>
+        <div class="caption">${bar}${caption}</div>
       </div>
     </section>`;
 }

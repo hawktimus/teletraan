@@ -7,6 +7,11 @@
 
   "settings": {
     "speed": "normal",
+    "frameMetal": "gold",
+    "glint": true,
+    "pageSeconds": 20,
+    "nameTransform": true,
+    "nameEvery": 300,
     "calendars": [
       { "id": "team", "name": "[Team calendar]", "show": true }
     ]

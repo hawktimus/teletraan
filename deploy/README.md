@@ -2,7 +2,7 @@
 
 Everything that puts the dashboard on the TV. The steps to set up a Mini from
 nothing are in `docs/rebuilding-the-mini.md`. This page says what each file
-is for. Ask the team mentor (see the README in the top folder) before
+is for. Ask the team mentor (see docs/where-things-are.md) before
 installing anything on the Mini, and whenever a step needs a login or a key.
 
 ## How it fits together
@@ -41,8 +41,8 @@ to attach the data folder to.
 ## local.env
 
 The real settings file is `local.env`. It holds the calendar feed addresses,
-which are secrets, so it is never committed and only the `teletraan` account
-may read it:
+which are secrets, so it is never committed and only the Mini's account (the
+one that owns the repository) may read it:
 
     cp local.example.env local.env
     chmod 600 local.env
@@ -94,6 +94,9 @@ the step that uses each one, is the table at the top of
 
 ## Names this folder assumes
 
-The unit files use the repository location `/opt/teletraan` and a user called
-`teletraan`. `install-timers.sh` stops with an explanation if either is
-different. To use other names, change them in every file in `systemd/`.
+The unit files use the repository location `/opt/teletraan`.
+`install-timers.sh` stops with an explanation if the repository is somewhere
+else. The account is not named in the unit files: they say `ACCOUNT`, and
+`install-timers.sh` fills in the account that owns the repository, so it works
+whatever the Mini's user is called. The repository must not be owned by root.
+To use another location, change it in every file in `systemd/`.

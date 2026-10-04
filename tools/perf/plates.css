@@ -12,6 +12,7 @@ html, body {
   height: 1080px;
   background: var(--ground);
   color: var(--white);
+  font-family: var(--font-text);
   white-space: nowrap;
   transform-origin: 0 0;
 }
@@ -27,155 +28,166 @@ html, body {
 }
 
 .stack {
+  position: relative;
+  width: 1152px;
+  height: 708px;
+
+  /* The metal: banded light and dark with a few grimy streaks, made from the
+     same colours as the dashboard's edges (tokens.css), with a short list of
+     stops. The thin bars use it too. */
+  --metal-band: repeating-linear-gradient(100deg,
+    var(--metal-1) 0, var(--metal-3) 20px, var(--metal-5) 25px, var(--metal-3) 32px, var(--metal-grime) 52px,
+    var(--metal-3) 56px, var(--metal-2) 72px, var(--metal-7) 100px, var(--metal-4) 140px, var(--metal-grime) 160px,
+    var(--metal-4) 175px, var(--metal-6) 210px, var(--metal-3) 250px, var(--metal-1) 280px);
+}
+
+
+/* Plates. A plate is a box cut with clip-path. plates.js gives each its
+   position, size and cut from the same points as dashboard/core/plate.js. */
+.fill,
+.edge {
+  position: absolute;
+}
+.fill-body { background: var(--plate); }
+.fill-header-left { background: var(--purple); }
+.fill-header-right { background: var(--plate); }
+
+/* Edges: every frame line is four bands, a shadow, a rim, the face and a
+   ridge. They sit in one group, so the group fades in as one piece. */
+.edges {
+  position: absolute;
+  left: 0;
+  top: 0;
   width: 1152px;
   height: 708px;
 }
+.edge-shadow { background: var(--edge-shadow); }
+.edge-rim { background: var(--metal-rim); }
+.edge-face { background: var(--metal-band); }
+.edge-ridge { background: var(--metal-ridge); }
 
-/* Header: a gold plate and a purple strip that overlaps it a little. The
-   gap between them is the dark seam. Every shape is a rectangle with its
-   corners cut by clip-path. */
+/* A bolt is a hexagon cut with clip-path, four times: a shadow, a rim, the
+   face and a dark socket */
+.bolt {
+  position: absolute;
+  width: 42px;
+  height: 36px;
+}
+.bolt div {
+  position: absolute;
+  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+}
+.bolt-shadow { left: 5px; top: 6px; width: 42px; height: 36px; background: var(--edge-shadow); }
+.bolt-rim { left: 0; top: 0; width: 42px; height: 36px; background: var(--metal-rim); }
+.bolt-face { left: 5px; top: 5px; width: 32px; height: 26px; background: var(--metal-band); }
+.bolt-core { left: 14px; top: 10px; width: 14px; height: 16px; background: var(--metal-rim); }
+
+/* The flat finish: one plain colour for every edge and bolt, nothing else */
+[data-finish="flat"] .edge-shadow,
+[data-finish="flat"] .edge-rim,
+[data-finish="flat"] .edge-ridge,
+[data-finish="flat"] .bolt-shadow { display: none; }
+[data-finish="flat"] .edge-face,
+[data-finish="flat"] .bolt-face { background: var(--metal-flat); }
+
+
+/* Header: the title and the double slash sit on the two header plates */
 .header {
-  display: flex;
-  height: 120px;
-}
-.gold-plate {
-  width: 384px;
-  padding-left: 32px;
+  position: absolute;
+  left: 0;
+  top: 4px;
   box-sizing: border-box;
-  background: var(--gold);
-  color: var(--ground);
-  clip-path: polygon(0 0, 360px 0, 344px 40%, 384px 40%, 360px 100%, 0 100%);
-  font: 800 116px/120px 'Saira Condensed', sans-serif;
-  letter-spacing: 2px;
-}
-.strip {
-  flex-grow: 1;
-  margin-left: -40px;
-  padding-right: 36px;
+  width: 1152px;
+  height: 116px;
+  padding: 0 40px 0 76px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
-  background: var(--purple);
-  clip-path: polygon(28px 0, 100% 0, 100% 100%, 28px 100%, 56px 30%, 16px 30%);
 }
-.strip svg {
-  width: 62px;
-  height: 84px;
+.title {
+  margin: 0;
+  font: 700 var(--size-heading)/96px var(--font-display);
 }
-.strip .double-slash polygon { fill: var(--gold); }
+.double-slash { display: block; }
+.double-slash polygon { fill: var(--yellow); }
 
-.body {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 12px;
+/* Three rows of 192px. A thin metal bar under each one but the last. */
+.rows {
+  position: absolute;
+  left: 0;
+  top: 124px;
+  width: 1152px;
+  height: 576px;
 }
-.stack-row {
+.row {
+  position: relative;
   display: flex;
-  height: 184px;
-}
-
-.tab {
-  width: 336px;
+  align-items: center;
   box-sizing: border-box;
-  padding-left: 32px;
+  height: 192px;
+  padding-right: 40px;
+}
+.row-bar {
+  position: absolute;
+  left: 14px;
+  bottom: -4px;
+  width: 1124px;
+  height: 8px;
+  background:
+    linear-gradient(180deg, var(--metal-rim) 0, var(--metal-rim) 1px, var(--metal-ridge) 1px, var(--metal-ridge) 3px, transparent 3px, transparent 5px, var(--metal-shade) 5px, var(--metal-shade) 7px, var(--metal-rim) 7px, var(--metal-rim) 8px),
+    var(--metal-band);
+}
+[data-finish="flat"] .row-bar { background: var(--metal-flat); }
+
+.row-mark {
   display: flex;
-  flex-direction: column;
   justify-content: center;
-  gap: 12px;
-  clip-path: polygon(0 0, 100% 0, calc(100% - 61px) 100%, 0 100%);
-  color: var(--ground);
-  font: 800 var(--size-label)/48px 'Saira Condensed', sans-serif;
-  letter-spacing: 1px;
+  width: 152px;
 }
-.tab svg {
-  width: 64px;
-  height: 64px;
+.row-mark svg {
+  width: 80px;
+  height: 80px;
 }
-.tab svg polygon,
-.tab svg rect { fill: var(--ground); }
-.tab svg .outlined {
-  fill: none;
-  stroke: var(--ground);
-  stroke-width: 6px;
-}
-.tab .mark-done .outlined { stroke-width: 9px; }
+.row-text { width: 960px; }
 
-.status-in-progress { --status: var(--status-progress); }
-.status-up-next { --status: var(--status-next); }
-.status-done { --status: var(--status-done); }
-.tab { background: var(--status); }
+/* The cut corner at the bottom right crosses the last line of the third row */
+.row:nth-child(3) .row-text { width: 900px; }
 
-/* The plates sit slightly under the tab so the dark seam stays 12px wide
-   along the whole slanted edge. */
-.plates {
-  width: 869px;
-  margin-left: -53px;
+.row-label { font: 600 var(--size-label)/46px var(--font-display); }
+.task-line {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  align-items: center;
+  gap: 16px;
 }
-.task-plate {
-  height: 86px;
-  padding-left: 100px;
+.task-title {
+  flex: 1 1 0;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  background: var(--purple);
-  font: 500 var(--size-body-large)/86px 'Barlow Semi Condensed', sans-serif;
+  font: 500 var(--size-body)/64px var(--font-text);
 }
-.plate-1 { clip-path: polygon(65px 0, 100% 0, 100% 100%, 36.3px 100%); }
-.plate-2 { clip-path: polygon(32.3px 0, 100% 0, 100% 100%, 4px 100%); }
-
-/* The one cut corner of the whole panel, bottom right */
-.stack-row:last-child .plate-2 {
-  clip-path: polygon(32.3px 0, 100% 0, 100% calc(100% - 48px), calc(100% - 60px) 100%, 4px 100%);
-}
-
-/* The metal finish, which is the default, as on the dashboard. Everything
-   above is the flat finish: plain colours. This block repaints the same
-   shapes with a gradient, a light line along the top, a dark line along the
-   bottom, and faint brushed streaks. The plates here are ordinary boxes, so
-   they cannot use the SVG gradients drawn in dashboard/index.html. Their
-   gradients are written once, here, and read the colours in tokens.css. */
-:root[data-finish="metal"] {
-  --face-brass: linear-gradient(var(--brass-top), var(--brass-middle));
-  --face-purple: linear-gradient(var(--purple-top), var(--purple-middle) 45%, var(--purple-bottom));
-  --face-steel: linear-gradient(var(--plate-top), var(--plate) 30%, var(--plate-bottom));
-  --metal-lines:
-    linear-gradient(var(--bevel-lit), var(--bevel-lit)) top / 100% 2px no-repeat,
-    linear-gradient(var(--steel-dark), var(--steel-dark)) bottom / 100% 2px no-repeat,
-    repeating-linear-gradient(transparent 0, transparent 8px, var(--sheen) 8px, var(--sheen) 9px, transparent 9px, transparent 17px),
-    repeating-linear-gradient(transparent 0, transparent 19px, var(--sheen) 19px, var(--sheen) 20px, transparent 20px, transparent 29px);
+.subteam {
+  flex: none;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--lilac);
+  font: 500 var(--size-label)/64px var(--font-text);
 }
 
-[data-finish="metal"] .gold-plate { background: var(--metal-lines), var(--face-brass); }
-[data-finish="metal"] .strip { background: var(--metal-lines), var(--face-purple); }
-[data-finish="metal"] .task-plate { background: var(--metal-lines), var(--face-purple); }
+.status-in-progress .row-label { color: var(--status-progress); }
+.status-up-next .row-label { color: var(--status-next); }
+.status-done .row-label { color: var(--status-done); }
 
-/* A status tab is steel with a bar of its colour down the left edge. The
-   words and the picture take the colour too, instead of black on a colour. */
-[data-finish="metal"] .tab {
-  background:
-    linear-gradient(var(--status), var(--status)) left / 8px 100% no-repeat,
-    var(--metal-lines),
-    var(--face-steel);
-  color: var(--status);
-}
-[data-finish="metal"] .tab svg polygon { fill: currentColor; }
-[data-finish="metal"] .tab svg .outlined {
+/* The status pictures, as in dashboard/base.css */
+.mark-in-progress polygon { fill: var(--status-progress); }
+.mark-up-next .outlined {
   fill: none;
-  stroke: currentColor;
+  stroke: var(--status-next);
+  stroke-width: 6px;
 }
-
-/* Header swings down from the slash angle, pinned at its lower left corner.
-   This is the one effect this page needs that frame.css does not have. */
-[data-state="in"] [data-fx="hinge"] {
-  transform-origin: left bottom;
-  animation: hinge-in 400ms cubic-bezier(.3, 0, .2, 1) var(--delay, 0ms) backwards;
+.mark-done .outlined {
+  fill: none;
+  stroke: var(--status-done);
+  stroke-width: 9px;
 }
-[data-state="out"] [data-fx="hinge"] {
-  transform-origin: left bottom;
-  animation: hinge-out 350ms linear forwards;
-}
-@keyframes hinge-in  { from { transform: rotate(-38.66deg); opacity: 0; } }
-@keyframes hinge-out { to   { transform: rotate(-38.66deg); opacity: 0; } }

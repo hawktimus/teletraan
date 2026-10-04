@@ -1,6 +1,12 @@
 /* Everything that moves is defined here and in frame.js. Only transform,
    opacity and line drawing are animated.
 
+   There are two ways a screen area moves. The large panel, the small panel
+   and the ticker keep their frame and only swap the page inside it: see
+   "Persistent frames and the page change" below. Everything else (the
+   banner, the countdown, the alert and the announcement, which draw their
+   own frame) works like this:
+
    A panel labels its parts with data-part. When the panel enters or leaves,
    frame.js gives each part an effect (data-fx) and a start time (--delay)
    and sets the panel's data-state to "in", then "shown", then "out".
@@ -27,11 +33,9 @@ svg [data-fx] { transform-box: fill-box; }
 
 /* Coming in */
 
-[data-state="in"] [data-fx="slide-left"]  { animation: slide-left-in var(--time-move-in) var(--ease-in) var(--delay, 0ms) backwards; }
-[data-state="in"] [data-fx="slide-right"] { animation: slide-right-in var(--time-move-in) var(--ease-in) var(--delay, 0ms) backwards; }
 [data-state="in"] [data-fx="latch-left"]  { animation: latch-left-in var(--time-latch-in) var(--ease-hard) var(--delay, 0ms) backwards; }
 [data-state="in"] [data-fx="latch-right"] { animation: latch-right-in var(--time-latch-in) var(--ease-hard) var(--delay, 0ms) backwards; }
-[data-state="in"] [data-fx="unfold"]      { animation: unfold-in var(--time-move-in) var(--ease-hard) var(--delay, 0ms) backwards; }
+[data-state="in"] [data-fx="unfold"]      { animation: unfold-down-in var(--time-move-in) var(--ease-hard) var(--delay, 0ms) backwards; }
 [data-state="in"] [data-fx="fade"]        { animation: fade-in var(--time-fade-in) linear var(--delay, 0ms) backwards; }
 [data-state="in"] [data-fx="pop"]         { animation: pop-in var(--time-pop-in) var(--ease-in) var(--delay, 0ms) backwards; }
 [data-state="in"] [data-fx="servo"]       { animation: servo-in var(--time-servo-in) steps(5, end) var(--delay, 0ms) backwards; }
@@ -42,11 +46,9 @@ svg [data-fx] { transform-box: fill-box; }
 
 /* Going out. Everything leaves at once. */
 
-[data-state="out"] [data-fx="slide-left"],
 [data-state="out"] [data-fx="latch-left"]  { animation: slide-left-out var(--time-move-out) var(--ease-out) forwards; }
-[data-state="out"] [data-fx="slide-right"],
 [data-state="out"] [data-fx="latch-right"] { animation: slide-right-out var(--time-move-out) var(--ease-out) forwards; }
-[data-state="out"] [data-fx="unfold"]      { animation: unfold-out var(--time-move-out) var(--ease-out) forwards; }
+[data-state="out"] [data-fx="unfold"]      { animation: unfold-down-out var(--time-move-out) var(--ease-out) forwards; }
 [data-state="out"] [data-fx="fade"],
 [data-state="out"] [data-fx="slam"]        { animation: fade-out var(--time-fade-out) linear forwards; }
 [data-state="out"] [data-fx="pop"],
@@ -67,8 +69,8 @@ svg [data-fx] { transform-box: fill-box; }
 @keyframes pop-out         { to   { transform: scale(0); opacity: 0; } }
 @keyframes grow-in         { from { transform: scaleX(0); } }
 @keyframes grow-out        { to   { transform: scaleX(0); } }
-@keyframes unfold-in       { from { transform: scaleY(0); opacity: 0; } }
-@keyframes unfold-out      { to   { transform: scaleY(0); opacity: 0; } }
+@keyframes unfold-down-in  { from { transform: scaleY(0); opacity: 0; } }
+@keyframes unfold-down-out { to   { transform: scaleY(0); opacity: 0; } }
 @keyframes servo-in        { from { transform: rotate(-180deg) scale(0); opacity: 0; } }
 @keyframes slam-in         { from { transform: translateY(-48px) scale(1.5); opacity: 0; } }
 
@@ -113,131 +115,671 @@ svg [data-fx] { transform-box: fill-box; }
 }
 
 
+/* The glint. A short bright dash runs once round each large frame, then waits.
+   plate.js draws it on its own svg and sets --glint-delay, the wait in
+   seconds before the first run. Only line drawing and opacity change. It is
+   off in calm and none motion, in the flat finish, and with data-glint="off"
+   (?glint=off). */
+
+.glint {
+  fill: none;
+  stroke: var(--edge-glint);
+  stroke-width: 7px;
+  stroke-linecap: round;
+  stroke-dasharray: .07 .93; /* a dash 7% of the way round, then 93% gap. pathLength="1" on the shape makes that work. */
+  stroke-dashoffset: 1;
+  opacity: 0;
+}
+/* The glint is in an svg of its own (class glint-layer), so while the dash moves
+   only that svg is redrawn, not the plate and the text under it. Measured over
+   one 9 second cycle in Chromium on a Mac, the three glints cost about 80 ms
+   of drawing and 70 ms of style work in all. Measure it again on the Mini with
+   ?glint=off. */
+[data-state="shown"] .glint {
+  animation: glint var(--time-glint) linear calc(var(--glint-delay, 2s) * var(--pace)) infinite;
+}
+@keyframes glint {
+  0%        { stroke-dashoffset: 1; opacity: 0; }
+  3%        { stroke-dashoffset: .82; opacity: .95; }
+  16%       { stroke-dashoffset: 0; opacity: .95; }
+  18%, 100% { stroke-dashoffset: 0; opacity: 0; }
+}
+[data-glint="off"] .glint-layer,
+[data-motion="calm"] .glint-layer,
+[data-motion="none"] .glint-layer,
+[data-finish="flat"] .glint-layer { display: none; }
+
+
+/* Persistent frames and the page change.
+
+   The large panel, the small panel and the ticker are areas (core/areas.js).
+   An area keeps its frame and swaps the page inside it. It carries a state in
+   data-state, and everything below is chosen by that state:
+
+     in     the first page of the area: the frame assembles (plates slide in,
+            lines draw, bolts pop in), then the slats turn in
+     xo     the old page's last second: the bolts turn a quarter to release
+            the frame, the two halves of the frame lift off and pull apart,
+            and the slats pull back and turn edge-on
+     xi     the new page arriving: the slats turn in, the halves drop back,
+            the bolts turn back and lock
+     shown  at rest. Nothing here moves. Only the glint does.
+     out    the whole area fades away
+
+   A slat is a piece of page content marked data-slat. frame.js gives each its
+   order (--n) and, for every second one, data-turn="other" so it turns the
+   other way. The page content has no animation code of its own.
+
+   Every time is written as calc(<normal time> * var(--pace)), so the Speed
+   setting stretches it. Every move of a page change fits inside one second,
+   which is how long turnMs() in frame.js waits.
+
+   Only transform, opacity and line drawing change. 3D transforms
+   (perspective, translateZ, rotateX) are used for the slats here, and for the
+   logo and the team name below, and nowhere else.
+
+   Full motion is written for html[data-motion="full"]. Calm swaps the page
+   with a short fade and nothing else moves. None has no rules at all. */
+
+.area {
+  --ease-turn: cubic-bezier(.5, 0, .2, 1);
+  /* how the frame assembles the first time, in seconds at normal speed */
+  --assemble-header: .15s;
+  --assemble-draw: .55s;
+  --assemble-bolts: 1.25s;
+}
+.area[data-area="grid2"] {
+  --assemble-header: .1s;
+  --assemble-draw: .45s;
+  --assemble-bolts: .95s;
+}
+
+/* A slat in its resting place has no transform. --turn is which way it turns
+   edge-on, and --n its turn in the order. frame.js sets both. */
+[data-slat] {
+  --turn: 90deg;
+  --n: 0;
+}
+[data-slat][data-turn="other"] { --turn: -90deg; }
+
+/* Bolts and their shadows move about their own middle */
+.area [data-part="stud"],
+.area .bolt {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* The shadows are only there in the metal finish */
+[data-finish="flat"] .shadow-layer { display: none; }
+
+
+/* First assembly: the area is new (state "in"). */
+
+[data-motion="full"] .area[data-state="in"] [data-part="body"] {
+  animation: rise-in var(--time-move-in) var(--ease-in) backwards;
+}
+[data-motion="full"] .area[data-state="in"] [data-part="header-left"] {
+  animation: slide-left-in var(--time-move-in) var(--ease-in) calc(var(--assemble-header) * var(--pace)) backwards;
+}
+[data-motion="full"] .area[data-state="in"] [data-part="header-right"] {
+  animation: slide-right-in var(--time-move-in) var(--ease-in) calc(var(--assemble-header) * var(--pace)) backwards;
+}
+/* the frame lines, and the seams under the header, are drawn */
+[data-motion="full"] .area[data-state="in"] [data-part="outline"],
+[data-motion="full"] .area[data-state="in"] [data-part="seam"] {
+  animation: draw-in var(--time-draw-in) linear calc(var(--assemble-draw) * var(--pace)) backwards;
+}
+/* the four bolts pop in one after another. --n is the bolt's number. */
+[data-motion="full"] .area[data-state="in"] [data-part="stud"] {
+  animation: pop-in var(--time-pop-in) var(--ease-in) calc((var(--assemble-bolts) + var(--n) * .05s) * var(--pace)) backwards;
+}
+[data-motion="full"] .area[data-state="in"] [data-slat] {
+  animation: slat-in calc(.5s * var(--pace)) var(--ease-turn) calc((1s + var(--n) * 90ms) * var(--pace)) both;
+}
+
+@keyframes rise-in { from { transform: translateY(var(--move)); opacity: 0; } }
+
+/* ?draw=fade: the frame lines fade in instead of being drawn, to find out
+   whether line drawing is the slow part */
+[data-motion="full"][data-draw="fade"] .area[data-state="in"] [data-part="outline"],
+[data-motion="full"][data-draw="fade"] .area[data-state="in"] [data-part="seam"] {
+  animation: fade-in var(--time-draw-in) linear calc(var(--assemble-draw) * var(--pace)) backwards;
+}
+
+
+/* The page change. A slat pulls back, then turns edge-on. The next slat turns
+   in, pushes forward a little and locks. Neighbours turn opposite ways. */
+
+@keyframes slat-out {
+  0%   { transform: perspective(1600px) translateZ(0px) rotateX(0deg); opacity: 1; }
+  40%  { transform: perspective(1600px) translateZ(-70px) rotateX(0deg); }
+  96%  { opacity: 1; }
+  100% { transform: perspective(1600px) translateZ(-70px) rotateX(var(--turn)); opacity: 0; }
+}
+@keyframes slat-in {
+  0%   { transform: perspective(1600px) translateZ(-70px) rotateX(calc(var(--turn) * -1)); opacity: 0; }
+  4%   { opacity: 1; }
+  55%  { transform: perspective(1600px) translateZ(-70px) rotateX(0deg); }
+  85%  { transform: perspective(1600px) translateZ(14px) rotateX(0deg); }
+  100% { transform: none; opacity: 1; }
+}
+
+[data-motion="full"] .area[data-state="xo"] [data-slat] {
+  animation: slat-out calc(.3s * var(--pace)) var(--ease-turn) calc((.25s + var(--n) * 50ms) * var(--pace)) both;
+}
+[data-motion="full"] .area[data-state="xi"] [data-slat] {
+  animation: slat-in calc(.5s * var(--pace)) var(--ease-turn) calc(var(--n) * 60ms * var(--pace)) both;
+}
+
+
+/* The bolts make a quarter turn to release the frame, and turn back to lock it.
+   Only the head turns. Its shadow stays. */
+
+@keyframes bolt-out { to { transform: rotate(90deg); } }
+@keyframes bolt-in {
+  0%   { transform: rotate(90deg); }
+  70%  { transform: rotate(-10deg); }
+  100% { transform: rotate(0deg); }
+}
+
+[data-motion="full"] .area[data-state="xo"] .bolt {
+  animation: bolt-out calc(.28s * var(--pace)) var(--ease-turn) both;
+}
+[data-motion="full"] .area[data-state="xi"] .bolt {
+  animation: bolt-in calc(.34s * var(--pace)) var(--ease-turn) calc(.62s * var(--pace)) both;
+}
+
+
+/* The frame halves lift off the panel and pull apart, then drop back and lock.
+   Each half is an svg of its own and is moved as a whole, so the browser moves
+   a picture and does not draw the lines again. Its shadow is another svg that
+   travels further, and that growing gap reads as depth. --lift-x and --lift-y
+   are how far each svg travels. frame-a is the left side, top left corner and
+   top. frame-b is the right side, bottom right corner and bottom. will-change
+   is set only while they move. */
+
+[data-part="frame-a"]  { --lift-x: -8px; --lift-y: -6px; }
+[data-part="frame-b"]  { --lift-x: 8px;  --lift-y: 6px; }
+[data-part="shadow-a"] { --lift-x: -2px; --lift-y: 1px; }
+[data-part="shadow-b"] { --lift-x: 14px; --lift-y: 13px; }
+
+@keyframes lift { to { transform: translate(var(--lift-x), var(--lift-y)); } }
+@keyframes drop {
+  0%   { transform: translate(var(--lift-x), var(--lift-y)); }
+  70%  { transform: translate(calc(var(--lift-x) * -.2), calc(var(--lift-y) * -.2)); }
+  100% { transform: translate(0px, 0px); }
+}
+
+[data-motion="full"] .area[data-state="xo"] [data-part="frame-a"],
+[data-motion="full"] .area[data-state="xo"] [data-part="frame-b"],
+[data-motion="full"] .area[data-state="xo"] [data-part="shadow-a"],
+[data-motion="full"] .area[data-state="xo"] [data-part="shadow-b"] {
+  animation: lift calc(.25s * var(--pace)) var(--ease-turn) calc(.2s * var(--pace)) both;
+  will-change: transform;
+}
+[data-motion="full"] .area[data-state="xi"] [data-part="frame-a"],
+[data-motion="full"] .area[data-state="xi"] [data-part="frame-b"],
+[data-motion="full"] .area[data-state="xi"] [data-part="shadow-a"],
+[data-motion="full"] .area[data-state="xi"] [data-part="shadow-b"] {
+  animation: drop calc(.32s * var(--pace)) var(--ease-turn) calc(.4s * var(--pace)) both;
+  will-change: transform;
+}
+
+
+/* The area goes away: its frame and page fade together */
+
+.area[data-state="out"] { animation: fade-out var(--time-fade-out) linear forwards; }
+
+
+/* Calm: the frame stays still and the page content swaps with a short fade,
+   0.3 seconds out and 0.3 seconds in. The first assembly is a plain fade. */
+
+[data-motion="calm"] .area[data-state="in"] { animation: fade-in var(--time-calm) linear backwards; }
+[data-motion="calm"] .area[data-state="xo"] [data-slat] {
+  animation: fade-out var(--time-calm) linear calc(.7s * var(--pace)) both;
+}
+[data-motion="calm"] .area[data-state="xi"] [data-slat] {
+  animation: fade-in var(--time-calm) linear both;
+}
+
+/* None: nothing moves, so there is nothing to wait for */
+[data-motion="none"] .area[data-state="out"] { animation: none; }
+
+
 /* The logo. px in this section means the logo's own 1100 x 884 drawing
-   units, not screen pixels (the banner shows it about a fifth of that size).
+   units, not screen pixels: the banner shows it about a fifth of that size.
    Every time is multiplied by --pace, so the Speed setting changes it too.
-   frame.js sets data-act on the logo and each act below is the set of rules
-   for one name. fly is hover for as long as the logo is on screen. With no
-   act the logo is a still hawk. See docs/the-logo.md. */
+   3D turns are allowed here, as they are in the page change, the frame
+   halves, the bolts and the team name below, and nowhere else.
 
-.logo {
-  --beat: calc(.9s * var(--pace)); /* one wingbeat: a quick down and a slower up */
+   The logo is the emblem (four purple plates) and, hidden until its turn, a
+   side view of a hawk. frame.js plays a show on it by changing its data-act,
+   and each act below is the set of rules for one name:
+
+     rest      the emblem, still
+     boot      the plates fly in when the page starts
+     turn      one full turn, drawn flat
+     robot     the wings fold down into legs, the face and jaw rise into a
+               body, the head lifts clear
+     hawk-in   the plates break away and the hawk turns in (2 s)
+     flight    the hawk beats its wings five times
+     hawk-out  the hawk turns back into the plates (2 s)
+     fly       a flight with no end, for the announcement
+
+   With no data-act, and in calm and none motion, the logo is the still
+   emblem. The times of the acts are the list logoShow in frame.js, and an
+   act has to be at least as long as the animations in it. See
+   docs/the-logo.md. */
+
+
+/* How the logo is drawn. core/logo.js builds the markup. The host (.logo) is
+   positioned (relative or absolute) and sets the size, and --k in its
+   stylesheet is that width divided by 1100. The drawing is the full 1100 x 884
+   shrunk by --k from its top left corner. */
+
+.logo .drawing {
+  --lens: perspective(2400px);
+  --view: rotateX(-14deg) rotateY(-24deg); /* the angle the hawk is seen from: a little above and to the side */
+  --logo-edge: url(#logo-metal);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1100px;
+  height: 884px;
+  transform-origin: 0 0;
+  transform: scale(var(--k, .1991));
+}
+.logo .bob,
+.logo .hawk,
+.logo .emblem,
+.logo .hawk-part {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1100px;
+  height: 884px;
+}
+.logo svg {
+  display: block;
+  width: 1100px;
+  height: 884px;
+  overflow: visible;
 }
 
-/* A wing turns on its shoulder and the head on its neck */
-.logo .wing-left  { transform-origin: 442px 430px; }
-.logo .wing-right { transform-origin: 658px 430px; }
-.logo .head       { transform-origin: 550px 461px; }
-.logo .face       { transform-origin: 550px 700px; }
-.logo .jaw        { transform-origin: 550px 800px; }
-.logo .figure     { transform-origin: 550px 442px; }
-
-
-/* Hover. A beat starts and ends with the wings up, the pose of the emblem.
-   The down stroke is the first third and is quick and strong. The up stroke
-   is slower, with the wing a little smaller, as a bird folds it. The body
-   rises as the wings go down and the head lags a little behind the body.
-   The wings are scaled a little smaller while they are level, because that
-   is when they are widest and would otherwise touch the team plate. */
-
-.logo[data-act="hover"] { --beats: 7; }
-.logo[data-act="fly"]   { --beats: infinite; }
-
-.logo[data-act="hover"] .figure,
-.logo[data-act="fly"] .figure     { animation: hover-body var(--beat) linear var(--beats); }
-.logo[data-act="hover"] .wing-left,
-.logo[data-act="fly"] .wing-left  { animation: hover-wing-left var(--beat) linear var(--beats); }
-.logo[data-act="hover"] .wing-right,
-.logo[data-act="fly"] .wing-right { animation: hover-wing-right var(--beat) linear var(--beats); }
-.logo[data-act="hover"] .head,
-.logo[data-act="fly"] .head       { animation: hover-head var(--beat) ease-in-out var(--beats); }
-
-@keyframes hover-wing-left {
-  0%   { transform: rotate(0deg) scale(1);     animation-timing-function: ease-in; }
-  14%  { transform: rotate(-38deg) scale(.86); animation-timing-function: ease-out; }
-  32%  { transform: rotate(-72deg) scale(.88); animation-timing-function: ease-in-out; }
-  68%  { transform: rotate(-28deg) scale(.82); animation-timing-function: ease-in-out; }
-  100% { transform: rotate(0deg) scale(1); }
+/* The outline and the stripes are the frame metal, so they follow data-metal.
+   The plates are flat purple. */
+.logo .shadow {
+  fill: var(--metal-rim);
+  stroke: var(--metal-rim);
+  stroke-linejoin: round;
 }
-@keyframes hover-wing-right {
-  0%   { transform: rotate(0deg) scale(1);    animation-timing-function: ease-in; }
-  14%  { transform: rotate(38deg) scale(.86); animation-timing-function: ease-out; }
-  32%  { transform: rotate(72deg) scale(.88); animation-timing-function: ease-in-out; }
-  68%  { transform: rotate(28deg) scale(.82); animation-timing-function: ease-in-out; }
-  100% { transform: rotate(0deg) scale(1); }
+.logo .outline {
+  fill: var(--logo-edge);
+  stroke: var(--logo-edge);
+  stroke-linejoin: round;
 }
-@keyframes hover-body {
-  0%   { transform: translateY(0);      animation-timing-function: ease-out; }
-  32%  { transform: translateY(-48px);  animation-timing-function: ease-in-out; }
-  100% { transform: translateY(0); }
+.logo .slash { fill: var(--logo-edge); }
+.logo .fill-purple { fill: var(--purple); }
+.logo .fill-tail { fill: var(--purple-dark); }
+.logo .fill-far { fill: var(--card); } /* the far wing is the darkest because it is the furthest away */
+
+.logo .emblem .shadow,
+.logo .emblem .outline { stroke-width: 52px; }
+.logo .emblem .shadow { transform: translate(12px, 18px); }
+.logo .hawk-part .shadow,
+.logo .hawk-part .outline { stroke-width: 40px; }
+.logo .hawk-part .shadow { transform: translate(10px, 14px); }
+
+/* The flat finish: one plain colour and no shadow copy */
+:root[data-finish="flat"] .logo .drawing { --logo-edge: var(--metal-flat); }
+:root[data-finish="flat"] .logo .shadow { display: none; }
+
+
+/* Rest. Each plate is in its drawn place and turns about the point named by
+   transform-origin. Every transform on a plate has the same five parts in the
+   same order (lens, move, spin, size, flip), because the browser can only
+   blend two transforms that have the same parts. The flip is how a plate turns
+   edge-on when it leaves. */
+
+.logo .wing-left {
+  transform-origin: 346px 430px;
+  transform: var(--lens) translate(0px, 0px) rotate(0deg) scale(1) rotate3d(1, 0, 0, 0deg);
 }
-@keyframes hover-head {
-  0%, 100% { transform: translateY(0); }
-  45%      { transform: translateY(16px); }
+.logo .wing-right {
+  transform-origin: 754px 430px;
+  transform: var(--lens) translate(0px, 0px) rotate(0deg) scale(1) rotate3d(1, 0, 0, 0deg);
 }
-
-
-/* The entrance. The plates fly in once when the page starts and latch. */
-
-.logo[data-act="assemble"] .wing-left  { animation: wing-left-in calc(.7s * var(--pace)) var(--ease-in) calc(.35s * var(--pace)) backwards; }
-.logo[data-act="assemble"] .wing-right { animation: wing-right-in calc(.7s * var(--pace)) var(--ease-in) calc(.35s * var(--pace)) backwards; }
-.logo[data-act="assemble"] .head       { animation: head-in calc(.6s * var(--pace)) var(--ease-in) calc(.15s * var(--pace)) backwards; }
-.logo[data-act="assemble"] .face       { animation: face-in calc(.6s * var(--pace)) var(--ease-in) 0s backwards; }
-.logo[data-act="assemble"] .jaw        { animation: jaw-in calc(.6s * var(--pace)) var(--ease-in) calc(.55s * var(--pace)) backwards; }
-
-@keyframes wing-left-in  { from { transform: translate(-300px, -140px) rotate(-32deg); opacity: 0; } }
-@keyframes wing-right-in { from { transform: translate(300px, -140px) rotate(32deg); opacity: 0; } }
-@keyframes head-in       { from { transform: translate(0, -340px); opacity: 0; } }
-@keyframes face-in       { from { transform: translate(0, 280px); opacity: 0; } }
-@keyframes jaw-in        { from { transform: translate(0, 420px); opacity: 0; } }
-
-
-/* Soar. The wings spread wide and the hawk glides, rocking gently from side
-   to side. The wings stay inside the page margin and short of the team
-   plate, so the spread and the rocking are small. */
-
-.logo[data-act="soar"] .wing-left  { animation: soar-wing-left calc(7s * var(--pace)) linear; }
-.logo[data-act="soar"] .wing-right { animation: soar-wing-right calc(7s * var(--pace)) linear; }
-.logo[data-act="soar"] .figure     { animation: soar-body calc(7s * var(--pace)) ease-in-out; }
-
-@keyframes soar-wing-left {
-  0%   { transform: none; animation-timing-function: ease-in-out; }
-  16%  { transform: rotate(-34deg) scale(.88); }
-  84%  { transform: rotate(-34deg) scale(.88); animation-timing-function: ease-in-out; }
-  100% { transform: none; }
+.logo .body {
+  transform-origin: 550px 659px;
+  transform: var(--lens) translate(0px, 0px) rotate(0deg) scale(1) rotate3d(1, 0, 0, 0deg);
 }
-@keyframes soar-wing-right {
-  0%   { transform: none; animation-timing-function: ease-in-out; }
-  16%  { transform: rotate(34deg) scale(.88); }
-  84%  { transform: rotate(34deg) scale(.88); animation-timing-function: ease-in-out; }
-  100% { transform: none; }
-}
-@keyframes soar-body {
-  0%   { transform: none; }
-  28%  { transform: translate(-8px, -12px) rotate(-5deg); }
-  56%  { transform: translate(0, -20px) rotate(0deg); }
-  80%  { transform: translate(8px, -12px) rotate(5deg); }
-  100% { transform: none; }
+.logo .head {
+  transform-origin: 550px 461px;
+  transform: var(--lens) translate(0px, 0px) rotate(0deg) scale(1) rotate3d(0, 1, 0, 0deg);
 }
 
-
-/* Flex. Both wings stretch out in three jerks, like a servo, hold, and come
-   back the same way. */
-
-.logo[data-act="flex"] .wing-left  { animation: flex-wing-left calc(2.4s * var(--pace)) linear; }
-.logo[data-act="flex"] .wing-right { animation: flex-wing-right calc(2.4s * var(--pace)) linear; }
-
-@keyframes flex-wing-left {
-  0%   { transform: none; animation-timing-function: steps(3, end); }
-  30%  { transform: rotate(-30deg); }
-  60%  { transform: rotate(-30deg); animation-timing-function: steps(3, end); }
-  90%  { transform: none; }
+/* The hawk is hidden until an act shows it, and sits 40 units lower than the
+   emblem so it is centred in the box. Every part is seen from the same angle.
+   The wings turn about their shoulder, so they are moved to the shoulder,
+   turned and moved back. */
+.logo .hawk { transform: translateY(40px); }
+.logo .hawk-part {
+  transform-origin: 550px 442px;
+  opacity: 0;
+  transform: var(--lens) var(--view);
 }
-@keyframes flex-wing-right {
-  0%   { transform: none; animation-timing-function: steps(3, end); }
-  30%  { transform: rotate(30deg); }
-  60%  { transform: rotate(30deg); animation-timing-function: steps(3, end); }
-  90%  { transform: none; }
+.logo .hawk-body { transform: var(--lens) translate(-9px, -101px) rotate3d(1, 0, 0, 0deg) translate(9px, 101px) var(--view); }
+.logo .hawk-head { transform: var(--lens) translate(287px, -161px) rotate3d(0, 1, 0, 0deg) translate(-287px, 161px) var(--view); }
+.logo .hawk-near-wing { transform: var(--lens) var(--view) translate(-30px, -137px) rotate3d(320, -50, 0, -18deg) translate(30px, 137px); }
+.logo .hawk-far-wing { transform: var(--lens) var(--view) translate(140px, -161px) rotate3d(160, -18, 0, 18deg) translate(-140px, 161px); }
+.logo .near-panel-2 { transform-origin: 560px 500px; }
+.logo .near-panel-3 { transform-origin: 586px 668px; }
+.logo .beak { transform-origin: 930px 272px; }
+
+.logo[data-act="hawk-in"] .hawk-part,
+.logo[data-act="flight"] .hawk-part,
+.logo[data-act="hawk-out"] .hawk-part,
+.logo[data-act="fly"] .hawk-part { opacity: 1; }
+
+
+/* Boot. Each plate flies in to its place. */
+
+.logo[data-act="boot"] .wing-left  { animation: boot-wing-left calc(.7s * var(--pace)) cubic-bezier(.2, .8, .2, 1) calc(.35s * var(--pace)) backwards; }
+.logo[data-act="boot"] .wing-right { animation: boot-wing-right calc(.7s * var(--pace)) cubic-bezier(.2, .8, .2, 1) calc(.35s * var(--pace)) backwards; }
+.logo[data-act="boot"] .head       { animation: boot-head calc(.6s * var(--pace)) cubic-bezier(.2, .8, .2, 1) calc(.15s * var(--pace)) backwards; }
+.logo[data-act="boot"] .body       { animation: boot-body calc(.6s * var(--pace)) cubic-bezier(.2, .8, .2, 1) 0s backwards; }
+
+@keyframes boot-wing-left  { from { transform: var(--lens) translate(-300px, -140px) rotate(-32deg) scale(1) rotate3d(1, 0, 0, 0deg); opacity: 0; } }
+@keyframes boot-wing-right { from { transform: var(--lens) translate(300px, -140px) rotate(32deg) scale(1) rotate3d(1, 0, 0, 0deg); opacity: 0; } }
+@keyframes boot-head       { from { transform: var(--lens) translate(0px, -340px) rotate(0deg) scale(1) rotate3d(0, 1, 0, 0deg); opacity: 0; } }
+@keyframes boot-body       { from { transform: var(--lens) translate(0px, 300px) rotate(0deg) scale(1) rotate3d(1, 0, 0, 0deg); opacity: 0; } }
+
+
+/* Turn. One full turn, drawn flat: the width follows the cosine of the
+   angle, so it narrows to nothing, shows its back, and comes round again. */
+
+.logo[data-act="turn"] { animation: logo-turn calc(1.6s * var(--pace)) linear; }
+
+@keyframes logo-turn {
+  0%   { transform: scaleX(1);  animation-timing-function: cubic-bezier(.47, 0, .745, .715); }
+  25%  { transform: scaleX(0);  animation-timing-function: cubic-bezier(.39, .575, .565, 1); }
+  50%  { transform: scaleX(-1); animation-timing-function: cubic-bezier(.47, 0, .745, .715); }
+  75%  { transform: scaleX(0);  animation-timing-function: cubic-bezier(.39, .575, .565, 1); }
+  100% { transform: scaleX(1); }
+}
+
+
+/* Robot. The wings swing down into legs, the face and jaw rise into a body
+   and the head lifts clear. The pose is set below. The plates get there from
+   the rest pose by the animations at the end of this part, which only say
+   where they start and so end in the pose. The pose stays on while the
+   plates leave (hawk-in), so they start from where they are.
+
+   These are animations and not transitions on purpose. A plate that has
+   had a transition cannot run the leaving and returning animations that
+   come later on the graphics chip, and a plate on the main thread can stutter. */
+
+.logo[data-act="robot"] .wing-left,
+.logo[data-act="hawk-in"] .wing-left {
+  transform: var(--lens) translate(23px, 92px) rotate(-153.4deg) scale(.7) rotate3d(1, 0, 0, 0deg);
+}
+.logo[data-act="robot"] .wing-right,
+.logo[data-act="hawk-in"] .wing-right {
+  transform: var(--lens) translate(-23px, 92px) rotate(153.4deg) scale(.7) rotate3d(1, 0, 0, 0deg);
+}
+.logo[data-act="robot"] .body,
+.logo[data-act="hawk-in"] .body {
+  transform: var(--lens) translate(0px, -351px) rotate(0deg) scale(1) rotate3d(1, 0, 0, 0deg);
+}
+.logo[data-act="robot"] .head,
+.logo[data-act="hawk-in"] .head {
+  transform: var(--lens) translate(0px, -330px) rotate(0deg) scale(.72) rotate3d(0, 1, 0, 0deg);
+}
+
+.logo[data-act="robot"] .wing-left,
+.logo[data-act="robot"] .wing-right { animation: robot-wing calc(1s * var(--pace)) cubic-bezier(.6, 0, .2, 1) 0s backwards; }
+.logo[data-act="robot"] .body { animation: robot-body calc(.8s * var(--pace)) cubic-bezier(.6, 0, .2, 1) calc(.15s * var(--pace)) backwards; }
+.logo[data-act="robot"] .head { animation: robot-head calc(.8s * var(--pace)) cubic-bezier(.6, 0, .2, 1) calc(.2s * var(--pace)) backwards; }
+
+@keyframes robot-wing { from { transform: var(--lens) translate(0px, 0px) rotate(0deg) scale(1) rotate3d(1, 0, 0, 0deg); } }
+@keyframes robot-body { from { transform: var(--lens) translate(0px, 0px) rotate(0deg) scale(1) rotate3d(1, 0, 0, 0deg); } }
+@keyframes robot-head { from { transform: var(--lens) translate(0px, 0px) rotate(0deg) scale(1) rotate3d(0, 1, 0, 0deg); } }
+
+
+/* Hawk in (2 s). Nothing fades. Each plate pulls back, travels to where its
+   hawk part will be and turns edge-on, so it is gone. Then the hawk turns in
+   part by part: the body turns flat, the wings swing down from edge-on, the
+   head turns to face you, and last the smaller parts: the tail slides out in
+   two pieces, the near wing unfolds panel by panel and the beak snaps out. */
+
+.logo[data-act="hawk-in"] .body       { animation: leave-body calc(.6s * var(--pace)) cubic-bezier(.6, -.3, .4, 1) 0s both; }
+.logo[data-act="hawk-in"] .wing-left  { animation: leave-wing-left calc(.62s * var(--pace)) cubic-bezier(.6, -.3, .4, 1) calc(.08s * var(--pace)) both; }
+.logo[data-act="hawk-in"] .wing-right { animation: leave-wing-right calc(.62s * var(--pace)) cubic-bezier(.6, -.3, .4, 1) calc(.16s * var(--pace)) both; }
+.logo[data-act="hawk-in"] .head       { animation: leave-head calc(.56s * var(--pace)) cubic-bezier(.6, -.3, .4, 1) calc(.24s * var(--pace)) both; }
+
+@keyframes leave-wing-left  { 96% { opacity: 1; } to { transform: var(--lens) translate(175px, -85px) rotate(-100deg) scale(.6) rotate3d(1, 0, 0, 90deg); opacity: 0; } }
+@keyframes leave-wing-right { 96% { opacity: 1; } to { transform: var(--lens) translate(-64px, -109px) rotate(100deg) scale(.5) rotate3d(1, 0, 0, -90deg); opacity: 0; } }
+@keyframes leave-body       { 96% { opacity: 1; } to { transform: var(--lens) translate(-10px, -279px) rotate(90deg) scale(.6) rotate3d(1, 0, 0, 90deg); opacity: 0; } }
+@keyframes leave-head       { 96% { opacity: 1; } to { transform: var(--lens) translate(293px, -164px) rotate(90deg) scale(.5) rotate3d(0, 1, 0, 90deg); opacity: 0; } }
+
+.logo[data-act="hawk-in"] .hawk-body      { animation: hawk-body-in calc(.45s * var(--pace)) cubic-bezier(.3, 0, .3, 1) calc(.55s * var(--pace)) both; }
+.logo[data-act="hawk-in"] .hawk-near-wing { animation: hawk-near-wing-in calc(.5s * var(--pace)) cubic-bezier(.3, 0, .3, 1) calc(.7s * var(--pace)) both; }
+.logo[data-act="hawk-in"] .hawk-far-wing  { animation: hawk-far-wing-in calc(.45s * var(--pace)) cubic-bezier(.3, 0, .3, 1) calc(.78s * var(--pace)) both; }
+.logo[data-act="hawk-in"] .hawk-head      { animation: hawk-head-in calc(.4s * var(--pace)) cubic-bezier(.3, 0, .3, 1) calc(.8s * var(--pace)) both; }
+.logo[data-act="hawk-in"] .tail-base      { animation: tail-base-in calc(.3s * var(--pace)) cubic-bezier(.3, 0, .3, 1) calc(1s * var(--pace)) both; }
+.logo[data-act="hawk-in"] .near-panel-2   { animation: unfold-in calc(.28s * var(--pace)) cubic-bezier(.4, 0, .3, 1) calc(1.15s * var(--pace)) both; }
+.logo[data-act="hawk-in"] .beak           { animation: beak-in calc(.25s * var(--pace)) cubic-bezier(.3, 0, .3, 1) calc(1.2s * var(--pace)) both; }
+.logo[data-act="hawk-in"] .tail-tip       { animation: tail-tip-in calc(.25s * var(--pace)) cubic-bezier(.3, 0, .3, 1) calc(1.28s * var(--pace)) both; }
+.logo[data-act="hawk-in"] .near-panel-3   { animation: unfold-in calc(.28s * var(--pace)) cubic-bezier(.4, 0, .3, 1) calc(1.38s * var(--pace)) both; }
+
+/* The big parts start edge-on and invisible, overshoot a little and settle */
+@keyframes hawk-body-in {
+  0%   { transform: var(--lens) translate(-9px, -101px) rotate3d(1, 0, 0, -76deg) translate(9px, 101px) var(--view); opacity: 0; }
+  4%   { opacity: 1; }
+  70%  { transform: var(--lens) translate(-9px, -101px) rotate3d(1, 0, 0, 10deg) translate(9px, 101px) var(--view); }
+  100% { transform: var(--lens) translate(-9px, -101px) rotate3d(1, 0, 0, 0deg) translate(9px, 101px) var(--view); opacity: 1; }
+}
+@keyframes hawk-near-wing-in {
+  0%   { transform: var(--lens) var(--view) translate(-30px, -137px) rotate3d(320, -50, 0, 101.36deg) translate(30px, 137px); opacity: 0; }
+  4%   { opacity: 1; }
+  70%  { transform: var(--lens) var(--view) translate(-30px, -137px) rotate3d(320, -50, 0, -32deg) translate(30px, 137px); }
+  100% { transform: var(--lens) var(--view) translate(-30px, -137px) rotate3d(320, -50, 0, -18deg) translate(30px, 137px); opacity: 1; }
+}
+@keyframes hawk-far-wing-in {
+  0%   { transform: var(--lens) var(--view) translate(140px, -161px) rotate3d(160, -18, 0, -77.51deg) translate(-140px, 161px); opacity: 0; }
+  4%   { opacity: 1; }
+  70%  { transform: var(--lens) var(--view) translate(140px, -161px) rotate3d(160, -18, 0, 32deg) translate(-140px, 161px); }
+  100% { transform: var(--lens) var(--view) translate(140px, -161px) rotate3d(160, -18, 0, 18deg) translate(-140px, 161px); opacity: 1; }
+}
+@keyframes hawk-head-in {
+  0%   { transform: var(--lens) translate(287px, -161px) rotate3d(0, 1, 0, -65.35deg) translate(-287px, 161px) var(--view); opacity: 0; }
+  4%   { opacity: 1; }
+  70%  { transform: var(--lens) translate(287px, -161px) rotate3d(0, 1, 0, 10deg) translate(-287px, 161px) var(--view); }
+  100% { transform: var(--lens) translate(287px, -161px) rotate3d(0, 1, 0, 0deg) translate(-287px, 161px) var(--view); opacity: 1; }
+}
+
+/* The smaller parts slide, unfold or snap out. A panel unfolds by turning
+   over about the lower edge of the panel before it. */
+@keyframes unfold-in { 0% { transform: scaleY(-1); } 75% { transform: scaleY(1.07); } 100% { transform: scaleY(1); } }
+@keyframes tail-base-in {
+  0%   { transform: translateX(190px); opacity: 0; }
+  2%   { transform: translateX(190px); opacity: 1; }
+  80%  { transform: translateX(-10px); opacity: 1; }
+  100% { transform: translateX(0px); opacity: 1; }
+}
+@keyframes tail-tip-in {
+  0%   { transform: translateX(130px); opacity: 0; }
+  2%   { transform: translateX(130px); opacity: 1; }
+  80%  { transform: translateX(-8px); opacity: 1; }
+  100% { transform: translateX(0px); opacity: 1; }
+}
+@keyframes beak-in { 0% { transform: scale(0); } 75% { transform: scale(1.25); } 100% { transform: scale(1); } }
+
+
+/* Flight. Each wing turns about its shoulder line and the whole bird rides up
+   and down. One beat is 0.8 s. The wings are in their resting pose at the start
+   and end of a beat, so the show can stop after any whole number of beats
+   (flight is five) and the hawk is where the next act expects it. */
+
+.logo[data-act="flight"] { --beats: 5; }
+.logo[data-act="fly"] { --beats: infinite; }
+
+.logo[data-act="flight"] .hawk-near-wing,
+.logo[data-act="fly"] .hawk-near-wing { animation: flap-near calc(.8s * var(--pace)) cubic-bezier(.45, 0, .55, 1) var(--beats); }
+.logo[data-act="flight"] .hawk-far-wing,
+.logo[data-act="fly"] .hawk-far-wing { animation: flap-far calc(.8s * var(--pace)) cubic-bezier(.45, 0, .55, 1) var(--beats); }
+.logo[data-act="flight"] .bob,
+.logo[data-act="fly"] .bob { animation: bob calc(.8s * var(--pace)) cubic-bezier(.45, 0, .55, 1) var(--beats); }
+
+/* The emblem is gone while the hawk flies */
+.logo[data-act="flight"] .emblem,
+.logo[data-act="fly"] .emblem { opacity: 0; }
+
+@keyframes flap-near {
+  0%, 100% { transform: var(--lens) var(--view) translate(-30px, -137px) rotate3d(320, -50, 0, -18deg) translate(30px, 137px); }
+  58%      { transform: var(--lens) var(--view) translate(-30px, -137px) rotate3d(320, -50, 0, 138deg) translate(30px, 137px); }
+}
+@keyframes flap-far {
+  0%, 100% { transform: var(--lens) var(--view) translate(140px, -161px) rotate3d(160, -18, 0, 18deg) translate(-140px, 161px); }
+  58%      { transform: var(--lens) var(--view) translate(140px, -161px) rotate3d(160, -18, 0, -138deg) translate(-140px, 161px); }
+}
+@keyframes bob {
+  0%, 100% { transform: translateY(0px); }
+  58%      { transform: translateY(52px); }
+}
+
+
+/* Hawk out (2 s). The same steps backwards: the small parts fold away, the
+   wings, head and body turn edge-on, then each plate comes back from where it
+   left and locks home with a small overshoot. */
+
+.logo[data-act="hawk-out"] .near-panel-3   { animation: unfold-out calc(.25s * var(--pace)) cubic-bezier(.5, 0, .7, .4) 0s both; }
+.logo[data-act="hawk-out"] .tail-tip       { animation: tail-tip-out calc(.2s * var(--pace)) cubic-bezier(.5, 0, .7, .4) calc(.1s * var(--pace)) both; }
+.logo[data-act="hawk-out"] .beak           { animation: beak-out calc(.2s * var(--pace)) cubic-bezier(.5, 0, .7, .4) calc(.15s * var(--pace)) both; }
+.logo[data-act="hawk-out"] .near-panel-2   { animation: unfold-out calc(.25s * var(--pace)) cubic-bezier(.5, 0, .7, .4) calc(.2s * var(--pace)) both; }
+.logo[data-act="hawk-out"] .tail-base      { animation: tail-base-out calc(.25s * var(--pace)) cubic-bezier(.5, 0, .7, .4) calc(.3s * var(--pace)) both; }
+.logo[data-act="hawk-out"] .hawk-near-wing { animation: hawk-near-wing-out calc(.4s * var(--pace)) cubic-bezier(.5, 0, .7, .4) calc(.45s * var(--pace)) both; }
+.logo[data-act="hawk-out"] .hawk-far-wing  { animation: hawk-far-wing-out calc(.35s * var(--pace)) cubic-bezier(.5, 0, .7, .4) calc(.5s * var(--pace)) both; }
+.logo[data-act="hawk-out"] .hawk-head      { animation: hawk-head-out calc(.3s * var(--pace)) cubic-bezier(.5, 0, .7, .4) calc(.55s * var(--pace)) both; }
+.logo[data-act="hawk-out"] .hawk-body      { animation: hawk-body-out calc(.35s * var(--pace)) cubic-bezier(.5, 0, .7, .4) calc(.6s * var(--pace)) both; }
+
+.logo[data-act="hawk-out"] .wing-left  { animation: return-wing-left calc(.7s * var(--pace)) cubic-bezier(.3, 1.35, .5, 1) calc(.85s * var(--pace)) both; }
+.logo[data-act="hawk-out"] .wing-right { animation: return-wing-right calc(.7s * var(--pace)) cubic-bezier(.3, 1.35, .5, 1) calc(.93s * var(--pace)) both; }
+.logo[data-act="hawk-out"] .head       { animation: return-head calc(.65s * var(--pace)) cubic-bezier(.3, 1.35, .5, 1) calc(.95s * var(--pace)) both; }
+.logo[data-act="hawk-out"] .body       { animation: return-body calc(.7s * var(--pace)) cubic-bezier(.3, 1.35, .5, 1) calc(1s * var(--pace)) both; }
+
+@keyframes unfold-out { 0% { transform: scaleY(1); } 100% { transform: scaleY(-1); } }
+@keyframes tail-tip-out {
+  0%   { transform: translateX(0px); opacity: 1; }
+  98%  { transform: translateX(130px); opacity: 1; }
+  100% { transform: translateX(130px); opacity: 0; }
+}
+@keyframes tail-base-out {
+  0%   { transform: translateX(0px); opacity: 1; }
+  98%  { transform: translateX(190px); opacity: 1; }
+  100% { transform: translateX(190px); opacity: 0; }
+}
+@keyframes beak-out { 0% { transform: scale(1); } 100% { transform: scale(0); } }
+
+@keyframes hawk-near-wing-out {
+  0%   { transform: var(--lens) var(--view) translate(-30px, -137px) rotate3d(320, -50, 0, -18deg) translate(30px, 137px); opacity: 1; }
+  96%  { opacity: 1; }
+  100% { transform: var(--lens) var(--view) translate(-30px, -137px) rotate3d(320, -50, 0, 101.36deg) translate(30px, 137px); opacity: 0; }
+}
+@keyframes hawk-far-wing-out {
+  0%   { transform: var(--lens) var(--view) translate(140px, -161px) rotate3d(160, -18, 0, 18deg) translate(-140px, 161px); opacity: 1; }
+  96%  { opacity: 1; }
+  100% { transform: var(--lens) var(--view) translate(140px, -161px) rotate3d(160, -18, 0, -77.51deg) translate(-140px, 161px); opacity: 0; }
+}
+@keyframes hawk-head-out {
+  0%   { transform: var(--lens) translate(287px, -161px) rotate3d(0, 1, 0, 0deg) translate(-287px, 161px) var(--view); opacity: 1; }
+  96%  { opacity: 1; }
+  100% { transform: var(--lens) translate(287px, -161px) rotate3d(0, 1, 0, -65.35deg) translate(-287px, 161px) var(--view); opacity: 0; }
+}
+@keyframes hawk-body-out {
+  0%   { transform: var(--lens) translate(-9px, -101px) rotate3d(1, 0, 0, 0deg) translate(9px, 101px) var(--view); opacity: 1; }
+  96%  { opacity: 1; }
+  100% { transform: var(--lens) translate(-9px, -101px) rotate3d(1, 0, 0, -76deg) translate(9px, 101px) var(--view); opacity: 0; }
+}
+
+/* A plate comes back from where it left. The place it ends in is the rest pose. */
+@keyframes return-wing-left  { 0% { transform: var(--lens) translate(175px, -85px) rotate(-100deg) scale(.6) rotate3d(1, 0, 0, 90deg); opacity: 0; } 5% { opacity: 1; } }
+@keyframes return-wing-right { 0% { transform: var(--lens) translate(-64px, -109px) rotate(100deg) scale(.5) rotate3d(1, 0, 0, -90deg); opacity: 0; } 5% { opacity: 1; } }
+@keyframes return-body       { 0% { transform: var(--lens) translate(-10px, -279px) rotate(90deg) scale(.6) rotate3d(1, 0, 0, 90deg); opacity: 0; } 5% { opacity: 1; } }
+@keyframes return-head       { 0% { transform: var(--lens) translate(293px, -164px) rotate(90deg) scale(.5) rotate3d(0, 1, 0, 90deg); opacity: 0; } 5% { opacity: 1; } }
+
+
+/* Calm and none: the logo is the still emblem, and nothing in it moves. A
+   logo asked to fly (the announcement) shows the hawk still, with its wings
+   up. The selector says "any motion but full" so it beats the rules above. */
+
+html:not([data-motion="full"]) .logo[data-act] * { animation: none; }
+html:not([data-motion="full"]) .logo[data-act="fly"] .hawk-near-wing { transform: var(--lens) var(--view) translate(-30px, -137px) rotate3d(320, -50, 0, 134deg) translate(30px, 137px); }
+html:not([data-motion="full"]) .logo[data-act="fly"] .hawk-far-wing { transform: var(--lens) var(--view) translate(140px, -161px) rotate3d(160, -18, 0, -134deg) translate(-140px, 161px); }
+
+
+/* The team name. Every few minutes (frame.js, Dashboard Settings) each letter
+   splits along two slanted cuts into three pieces. The pieces pull apart,
+   turn once and lock back, one letter after another. core/name.js builds
+   the letters. The whole letter is shown the rest of the time. While the
+   effect plays, frame.js gives the name the class splitting.
+
+   The three pieces draw the same letter as the whole one, through
+   data-letter, each clipped to its own slice. The top and bottom slices
+   reach 1.5 percent (about a pixel) into the middle one, so no hairline of
+   background shows along the cuts while the pieces sit together. */
+
+[data-name-effect] .cut {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+}
+[data-name-effect] .cut::before { content: attr(data-letter); }
+[data-name-effect] .cut-1 { clip-path: polygon(-10% -30%, 110% -30%, 110% 24.3%, -10% 62.7%); }
+[data-name-effect] .cut-2 { clip-path: polygon(-10% 61.2%, 110% 22.8%, 110% 46.8%, -10% 85.2%); }
+[data-name-effect] .cut-3 { clip-path: polygon(-10% 83.7%, 110% 45.3%, 110% 130%, -10% 130%); }
+
+/* Each letter starts 45 ms after the one before it. --i is its place in the name. */
+[data-motion="full"] [data-name-effect].splitting .whole {
+  animation: name-whole calc(.8s * var(--pace)) linear calc(var(--i) * 45ms * var(--pace)) forwards;
+}
+[data-motion="full"] [data-name-effect].splitting .cut-1 {
+  animation: name-top calc(.8s * var(--pace)) cubic-bezier(.5, 0, .2, 1) calc(var(--i) * 45ms * var(--pace)) forwards;
+}
+[data-motion="full"] [data-name-effect].splitting .cut-2 {
+  animation: name-middle calc(.8s * var(--pace)) cubic-bezier(.5, 0, .2, 1) calc(var(--i) * 45ms * var(--pace)) forwards;
+}
+[data-motion="full"] [data-name-effect].splitting .cut-3 {
+  animation: name-bottom calc(.8s * var(--pace)) cubic-bezier(.5, 0, .2, 1) calc(var(--i) * 45ms * var(--pace)) forwards;
+}
+
+/* The whole letter is hidden while the pieces are out, and back at the very end */
+@keyframes name-whole { 0%, 99.9% { opacity: 0; } 100% { opacity: 1; } }
+
+/* The top piece moves up and left, turns once about its upright middle and comes back */
+@keyframes name-top {
+  0%   { transform: perspective(500px) translate(0px, 0px) rotateY(0deg); opacity: 1; }
+  28%  { transform: perspective(500px) translate(-7px, -11px) rotateY(0deg); }
+  72%  { transform: perspective(500px) translate(-7px, -11px) rotateY(360deg); }
+  99.9% { opacity: 1; }
+  100% { transform: perspective(500px) translate(0px, 0px) rotateY(360deg); opacity: 0; }
+}
+/* The middle piece stays and turns over once about its length */
+@keyframes name-middle {
+  0%   { transform: perspective(500px) rotateX(0deg); opacity: 1; }
+  28%  { transform: perspective(500px) rotateX(0deg); }
+  72%  { transform: perspective(500px) rotateX(-360deg); }
+  99.9% { opacity: 1; }
+  100% { transform: perspective(500px) rotateX(-360deg); opacity: 0; }
+}
+/* The bottom piece moves down and right and turns the other way */
+@keyframes name-bottom {
+  0%   { transform: perspective(500px) translate(0px, 0px) rotateY(0deg); opacity: 1; }
+  28%  { transform: perspective(500px) translate(7px, 11px) rotateY(0deg); }
+  72%  { transform: perspective(500px) translate(7px, 11px) rotateY(-360deg); }
+  99.9% { opacity: 1; }
+  100% { transform: perspective(500px) translate(0px, 0px) rotateY(-360deg); opacity: 0; }
 }
 
 
@@ -271,7 +813,7 @@ svg [data-fx] { transform-box: fill-box; }
   top: -160px;
   width: 1920px;
   height: 160px;
-  background: var(--gold-faint);
+  background: var(--yellow-faint);
 }
 
 #crt.playing { animation: crt-flicker var(--time-crt) steps(1) forwards; }
@@ -325,7 +867,6 @@ svg [data-fx] { transform-box: fill-box; }
 [data-motion="calm"] .panel [data-idle] { animation: none; }
 [data-motion="calm"] #crt { display: none; }
 [data-motion="calm"] .banner .logo { animation: fade-in var(--time-calm) linear backwards; }
-[data-motion="calm"] .logo[data-act] * { animation: none; }
 
 
 /* No motion at all, for measuring the cost of the still picture */
@@ -334,4 +875,3 @@ svg [data-fx] { transform-box: fill-box; }
 [data-motion="none"] .panel [data-idle] { animation: none; }
 [data-motion="none"] .panel[data-state="out"] [data-part] { opacity: 0; }
 [data-motion="none"] #crt { display: none; }
-[data-motion="none"] .logo[data-act] * { animation: none; }

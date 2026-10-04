@@ -54,6 +54,24 @@ html, body {
 }
 #region-ticker { grid-column: 1 / 3; grid-row: 3; }
 
+/* The large panel, the small panel and the ticker each keep one area for as
+   long as the screen is up (core/areas.js makes it the first time a page
+   needs it). The area holds the frame and, in .page-host, the page of the
+   panel that is on screen. A panel's root is .page, and it fills the area, so a panel's own absolute positions count from the area's top
+   left corner. The sizes are repeated in plate.js. */
+.area { position: relative; }
+.area[data-area="grid1"] { width: 1152px; height: 708px; }
+.area[data-area="grid2"] { width: 656px; height: 372px; }
+.area[data-area="ticker"] { width: 1840px; height: 72px; }
+.page-host,
+.page {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+
 /* Full screen panels (alerts, announcements) sit on top of everything */
 #overlay {
   position: absolute;
@@ -65,39 +83,19 @@ html, body {
 
 .panel { position: relative; }
 
-/* The metal kit. The gradients are drawn once in index.html and named in
-   tokens.css. This is where each shape class gets its paint. A panel changes
-   its look by setting --panel-face, --panel-frame or --bolt-fill, not by
-   writing its own colours. */
 .metal-defs {
   position: absolute;
   width: 0;
   height: 0;
   overflow: hidden;
 }
-.corner-screws {
-  position: absolute;
-  left: 0;
-  top: 0;
-}
-.streak-light { fill: url(#streak-light); }
-.streak-dark { fill: url(#streak-dark); }
 
-/* A bolt is a washer, a head, and a slot with a light edge below it. */
-.bolt-base {
-  fill: var(--rim-bottom);
-  stroke: var(--groove);
-  stroke-width: 2px;
-}
-.bolt-head { fill: var(--bolt-fill); }
-.bolt-slot { fill: var(--groove); }
-.bolt-slot-lit { fill: var(--groove-lit); }
-.brass { --bolt-fill: var(--fill-brass); }
 
-/* Plates: the steel shapes that panels are built from. Each piece is its
-   colour (.body, .header-left, .header-right) with the brushed streaks
-   (.brush) painted over it. The big frame behind an alert or an announcement
-   is a plate too. */
+/* Plates. A plate is flat purple. Only its edges are metal. plate.js builds
+   every plate from the shapes below, and every part is labelled with
+   data-part so frame.css can move it. The frame round a plate is drawn in two
+   halves, each in its own svg (class plate, data-part frame-a and frame-b),
+   so each can lift off the plate on its own. */
 .plate {
   position: absolute;
   left: 0;
@@ -105,90 +103,127 @@ html, body {
   overflow: visible;
 }
 .plate .body { fill: var(--panel-face); }
-.plate .header-right { fill: var(--fill-header); }
-.plate .header-left { fill: var(--fill-tab); }
-.plate .brush { fill: var(--fill-brush); }
+.plate .header-left { fill: var(--purple); }
+.plate .header-right { fill: var(--plate); }
 
-/* slots cut into the header strip, each with a light edge below it */
-.plate .vent { fill: var(--pocket); }
-.plate .vent-lit { fill: var(--groove-lit); }
+/* The edge. One shape is drawn five times, back to front, with a class for
+   each layer: edge-shadow, edge-rim, edge-face, edge-shade and edge-ridge.
 
-.plate .outline,
-.plate .bevel,
-.plate .well,
-.plate .seam,
-.plate .seam-body,
-.plate .seam-lit,
-.plate .divider,
-.plate .divider-lit { fill: none; }
+     shadow  a dark copy moved down and right
+     rim     the dark edge on both sides
+     face    the banded metal
+     shade   soft dark patches of grime on the lower half of the face
+     ridge   a bright line on the lit upper left edge, worn in places
 
-/* the bright frame, and a thin line just inside it that is lit along the top
-   and dark along the bottom */
-.plate .outline {
-  stroke: var(--panel-frame);
-  stroke-width: var(--line-heavy);
-}
-.plate .bevel {
-  stroke: var(--fill-edge);
-  stroke-width: 2px;
-}
+   The colours are the --edge tokens, which follow html[data-metal]. A frame
+   with class red-metal uses the red ones. The shade and the ridge are
+   gradients that fade in and out, which is what makes the metal look worn.
+   None of the five layers has a dash pattern of its own, because the line
+   drawing in frame.css sets one on the group that holds them. */
+.edge-shadow, .edge-rim, .edge-face, .edge-shade, .edge-ridge { fill: none; }
 
-/* the face of the body sits a little below its frame: dark along the top,
-   light along the bottom */
-.plate .well {
-  stroke: var(--fill-well);
-  stroke-width: 2px;
+.edge-shadow {
+  stroke: var(--edge-shadow);
+  stroke-width: 16px;
+  transform: translate(5px, 6px);
 }
-
-/* A seam is a rod of brass: dark underneath, the brass, then a bright line
-   along its upper side. A divider is a groove with a light edge below it. */
-.plate .seam {
-  stroke: var(--trim-dark);
-  stroke-width: var(--line-heavy);
+.edge-rim {
+  stroke: var(--edge-rim);
+  stroke-width: 16px;
 }
-.plate .seam-body {
-  stroke: var(--trim);
-  stroke-width: 5px;
+.edge-face {
+  stroke: var(--edge-face);
+  stroke-width: 12px;
 }
-.plate .seam-lit {
-  stroke: var(--trim-lit);
-  stroke-width: 2px;
+.edge-shade {
+  stroke: var(--edge-shade);
+  stroke-width: 4px;
+  transform: translate(3.5px, 3.5px);
 }
-.plate .divider {
-  stroke: var(--groove);
-  stroke-width: var(--line-light);
-}
-.plate .divider-lit {
-  stroke: var(--groove-lit);
-  stroke-width: 2px;
+.edge-ridge {
+  stroke: var(--edge-ridge);
+  stroke-width: 3px;
+  transform: translate(-4px, -4px);
 }
 
-/* A card or tray sunk into the steel, as an SVG shape. Draw the shape with
-   class pocket, and before it a copy moved 2px down with class pocket-lit,
-   so a light edge shows below it. */
-.pocket {
-  fill: var(--card);
-  stroke: var(--groove);
-  stroke-width: var(--line-light);
+/* The thin edge, for row bars and cards. Put class thin on the svg or group. */
+.thin .edge-shadow, .thin .edge-rim { stroke-width: 10px; }
+.thin .edge-face { stroke-width: 6px; }
+.thin .edge-shade {
+  stroke-width: 3px;
+  transform: translate(2px, 2px);
 }
-.pocket-lit {
+.thin .edge-ridge { transform: translate(-2.5px, -2.5px); }
+
+/* Bolts. The shapes are in index.html. A rule here for a shape inside a
+   <use> cannot depend on where the <use> sits, so the colours come from
+   variables, which do pass through. */
+.bolt-rim { fill: var(--bolt-rim); }
+.bolt-face { fill: var(--bolt-face); }
+.bolt-ridge {
   fill: none;
-  stroke: var(--groove-lit);
-  stroke-width: 2px;
+  stroke: var(--bolt-ridge);
+  stroke-width: 3px;
 }
+.bolt-core { fill: var(--bolt-core); }
+.bolt-shadow { fill: var(--edge-shadow); }
 
-/* a small purple tab with a brass edge, for a label (the ticker tag) */
-.tag-plate polygon {
-  fill: var(--fill-tab);
-  stroke: var(--fill-brass);
-  stroke-width: var(--line-heavy);
-  stroke-linejoin: miter;
+/* The flat finish: one plain stroke and one plain bolt, nothing else */
+[data-finish="flat"] .edge-shadow,
+[data-finish="flat"] .edge-rim,
+[data-finish="flat"] .edge-shade,
+[data-finish="flat"] .edge-ridge,
+[data-finish="flat"] .bolt-shadow { display: none; }
+[data-finish="flat"] .edge-face { stroke: var(--edge-flat); }
+
+/* A straight metal bar made from a plain box, with the same banding as the
+   edges: the dark rim, the bright ridge, the banded face, and the shaded
+   lower half. The banner rule is one. Give it a width and it is 16px high, or
+   8px with class bar-thin.
+
+   --bar-face is the banded metal. It repeats every 380px, so every bar has the
+   same grain whatever its length. Its stops are the ones in the edge-metal
+   gradient in index.html, each offset multiplied by 380. It is set on :root
+   because html[data-metal] is the same element, so it follows the metal. */
+:root {
+  --bar-face: repeating-linear-gradient(100deg,
+    var(--metal-1) 0px, var(--metal-2) 11.4px, var(--metal-3) 19px, var(--metal-3) 22px, var(--metal-5) 22.8px,
+    var(--metal-3) 24.3px, var(--metal-3) 38px, var(--metal-grime) 41px, var(--metal-grime) 46.4px, var(--metal-3) 49.4px,
+    var(--metal-2) 53.2px, var(--metal-7) 68.4px, var(--metal-3) 83.6px, var(--metal-4) 102.6px, var(--metal-3) 114px,
+    var(--metal-2) 125.4px, var(--metal-1) 131.1px, var(--metal-3) 136.8px, var(--metal-4) 152px, var(--metal-grime) 155.8px,
+    var(--metal-grime) 167.2px, var(--metal-4) 172.9px, var(--metal-3) 178.6px, var(--metal-4) 197.6px, var(--metal-5) 212.8px,
+    var(--metal-6) 228px, var(--metal-5) 235.6px, var(--metal-4) 250.8px, var(--metal-6) 266px, var(--metal-3) 285px,
+    var(--metal-7) 296.4px, var(--metal-3) 311.6px, var(--metal-7) 326.8px, var(--metal-grime) 332.5px, var(--metal-grime) 338.2px,
+    var(--metal-4) 342px, var(--metal-4) 349.6px, var(--metal-3) 361px, var(--metal-1) 380px);
 }
-.tag-plate .tag-lit {
-  fill: none;
-  stroke: var(--bevel-lit);
-  stroke-width: 2px;
+.bar {
+  height: 16px;
+  background:
+    linear-gradient(180deg, var(--metal-rim) 0, var(--metal-rim) 2px, var(--metal-ridge) 2px, var(--metal-ridge) 5px, transparent 5px, transparent 9px, var(--metal-shade) 9px, var(--metal-shade) 14px, var(--metal-rim) 14px, var(--metal-rim) 16px),
+    var(--bar-face);
 }
+.bar.bar-thin {
+  height: 8px;
+  background:
+    linear-gradient(180deg, var(--metal-rim) 0, var(--metal-rim) 1px, var(--metal-ridge) 1px, var(--metal-ridge) 3px, transparent 3px, transparent 5px, var(--metal-shade) 5px, var(--metal-shade) 7px, var(--metal-rim) 7px, var(--metal-rim) 8px),
+    var(--bar-face);
+}
+[data-finish="flat"] .bar { background: var(--metal-flat); }
+
+/* Things placed by a panel's own stylesheet: a thin metal bar between rows
+   (rowBarMarkup, which the panel gives a left and a top) and a card with a
+   metal edge (cardMarkup, which sits in the top left corner of its box) */
+.row-bar,
+.card-outline {
+  position: absolute;
+  overflow: visible;
+  pointer-events: none;
+}
+.card-outline {
+  left: 0;
+  top: 0;
+}
+.card-fill { fill: var(--card); }
 
 /* The sweeping bar of light. plate.js sets its size. */
 .scan-clip {
@@ -202,12 +237,18 @@ html, body {
   left: 0;
   top: 0;
   width: 140px;
-  background: var(--sheen);
+  background: var(--yellow-faint);
 }
+
+/* The team plate in the banner and the tag at the start of the ticker */
+.team-plate-art,
+.tag-plate { overflow: visible; }
+.team-fill,
+.tag-fill { fill: var(--purple); }
 
 /* Small pictures */
 .double-slash { display: block; }
-.double-slash polygon { fill: var(--fill-brass); }
+.double-slash polygon { fill: var(--yellow); }
 
 .mark-in-progress polygon { fill: var(--status-progress); }
 .mark-blocked polygon { fill: var(--status-blocked); }

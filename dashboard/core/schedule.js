@@ -1,20 +1,29 @@
-// Decides which panel is on screen in each region, and for how long.
+// Decides which page is on screen in each region, and for how long.
 //
 // Each region (grid1, grid2, ticker) steps through its list on its own timer.
 // One rule links them: Grid 1 and Grid 2 never show the same topic at the
 // same moment, so while Tasks is on the left, the task counts are skipped.
 //
-// How long a panel stays and the pause between panels follow the Speed
+// A region keeps its frame and swaps only the page (areas.js). A page's
+// seconds count from the moment it starts to arrive until it has left: the
+// time it takes to arrive (about a second), the time it is held still, and
+// the last second, when it leaves. The next page is chosen when the old one
+// starts to leave, so the frame always knows what comes next.
+//
+// How long a page stays and the pause between pages follow the Speed
 // setting (frame.pace()). Announcements and alerts do not: the editors give
 // their seconds directly.
 
 import * as frame from '../frame.js';
-import { canShow, mountPanel, moduleOf, regionOf, topicOf } from './panels.js';
+import { defaultSettings } from '../config.js';
+import { buildPage, canShow, moduleOf, regionOf, topicOf } from './panels.js';
+import { changePage, clearRegion } from './areas.js';
 
-// The topic on screen in each grid region right now
-const onScreen = { grid1: null, grid2: null };
-const defaultSeconds = { grid1: 16, grid2: 12, ticker: 24 };
+// The topics on screen in each grid region right now. While a page is
+// leaving it holds two: the one going and the one coming.
+const onScreen = { grid1: [], grid2: [] };
 const shortestStay = 5; // seconds
+const shortestHold = 1000; // milliseconds
 let paused = false;
 
 // While an alert or announcement covers the screen, the rotation stops
@@ -41,13 +50,29 @@ async function waitWhilePaused() {
   while (paused) await frame.wait(250);
 }
 
-// How long a panel stays, in milliseconds, with the Speed setting applied.
-// Fast never takes a panel below 5 seconds, unless the editors asked for
-// less than that to begin with.
-function stayFor(value, region) {
-  const number = Number(value);
-  const seconds = number > 0 ? number : defaultSeconds[region];
+// How long a page stays, in milliseconds, with the Speed setting applied.
+// A row's own seconds win. Otherwise the whole board follows Seconds per
+// page in Dashboard Settings: the small panel stays three quarters as long
+// and the ticker one and a half times as long. The ticker's own seconds
+// (Dashboard Settings, Panels) come in as ownSeconds too. Fast never takes a
+// page below 5 seconds, unless the editors asked for less than that to begin
+// with. The settings are read each time, so a change applies at the next page.
+function stayFor(region, ownSeconds, settings) {
+  const board = Number(settings.pageSeconds) > 0 ? Number(settings.pageSeconds) : defaultSettings.pageSeconds;
+  const automatic = {
+    grid1: board,
+    grid2: Math.max(6, Math.round(board * 0.75)),
+    ticker: Math.max(8, Math.round(board * 1.5)),
+  };
+
+  const seconds = Number(ownSeconds) > 0 ? Number(ownSeconds) : automatic[region];
   return Math.max(seconds * frame.pace(), Math.min(seconds, shortestStay)) * 1000;
+}
+
+// How long the page is held still: its stay, less the time it took to arrive
+// and the second it will take to leave
+function holdFor(stay, arrivedAfter) {
+  return Math.max(stay - arrivedAfter - frame.turnMs(), shortestHold);
 }
 
 // region is 'grid1' or 'grid2'
@@ -56,8 +81,9 @@ function stayFor(value, region) {
 export function startRotation(region, getPlaylist, getContent) {
   const otherRegion = region === 'grid1' ? 'grid2' : 'grid1';
   let position = -1;
+  let somePanelFailed = false; // set by pickPage when a panel could not be drawn
 
-  // The next panel in the list that is allowed on screen right now
+  // The next step in the list that is allowed on screen right now
   function chooseNext() {
     const playlist = getPlaylist();
     const content = getContent();
@@ -70,24 +96,36 @@ export function startRotation(region, getPlaylist, getContent) {
       if (!canShow(step.panel, content)) continue;
 
       const topic = topicOf(step.panel);
-      if (topic && topic === onScreen[otherRegion]) continue;
+      if (topic && onScreen[otherRegion].includes(topic)) continue;
 
       position = index;
-      onScreen[region] = topic; // set at once, so the other region sees it
       return step;
     }
     return null;
   }
 
-  async function showOne(step) {
-    const element = mountPanel(step.panel, getContent());
-    try {
-      await frame.enter(element);
-      await hold(stayFor(step.seconds, region));
-      await frame.exit(element);
-    } finally {
-      element.remove();
+  // The next page, built and ready, or null when nothing can be shown. A
+  // panel that fails to draw is skipped and the one after it is tried, so
+  // one bad panel can neither stop the region nor spin it.
+  function pickPage() {
+    const attempts = getPlaylist().length;
+    somePanelFailed = false;
+
+    for (let attempt = 0; attempt < attempts; attempt++) {
+      const step = chooseNext();
+      if (!step) return null;
+
+      try {
+        const page = buildPage(step.panel, getContent());
+        const topic = topicOf(step.panel);
+        if (topic) onScreen[region].push(topic); // at once, so the other region sees it
+        return { page: page, step: step, topic: topic };
+      } catch (error) {
+        somePanelFailed = true;
+        console.error('Panel "' + step.panel + '" could not be drawn and is skipped', error);
+      }
     }
+    return null;
   }
 
   // not awaited by the caller: this runs in the background and never ends
@@ -95,21 +133,29 @@ export function startRotation(region, getPlaylist, getContent) {
     while (true) {
       try {
         await waitWhilePaused();
-        const step = chooseNext();
+        const next = pickPage();
 
-        if (step) {
-          await showOne(step);
+        // Nothing could be drawn: leave the page that is on screen and try again
+        if (!next && somePanelFailed) {
+          await frame.wait(5000);
+          continue;
+        }
+
+        // the old page leaves and the next arrives, or the region empties
+        const arrivedAfter = await changePage(region, next ? next.page : null);
+        onScreen[region] = next && next.topic ? [next.topic] : [];
+
+        if (next) {
+          await hold(holdFor(stayFor(region, next.step.seconds, getContent().settings), arrivedAfter));
         } else {
-          await frame.wait(1000);
+          await frame.wait(1000); // nothing to show right now
         }
       } catch (error) {
         console.error('The ' + region + ' rotation hit a problem and will try again', error);
+        clearRegion(region);
+        onScreen[region] = [];
         await frame.wait(5000);
       }
-
-      onScreen[region] = null;
-      // a short pause, so the other region gets a turn at choosing too
-      await frame.wait(500 * frame.pace());
     }
   }
 
@@ -118,7 +164,7 @@ export function startRotation(region, getPlaylist, getContent) {
 
 // The ticker shows one line at a time, swapped in place. The ticker panel
 // supplies the list of lines with items(content).
-export function startTicker(getSeconds, getContent) {
+export function startTicker(getContent) {
   let position = -1;
 
   async function loop() {
@@ -126,25 +172,30 @@ export function startTicker(getSeconds, getContent) {
       try {
         await waitWhilePaused();
 
+        const content = getContent();
         const module = moduleOf('ticker');
-        const lines = module && module.items ? module.items(getContent()) : [];
+        const lines = module && module.items ? module.items(content) : [];
         if (lines.length === 0) {
+          await changePage('ticker', null);
           await frame.wait(5000);
           continue;
         }
 
         position = (position + 1) % lines.length;
-        const content = Object.assign({}, getContent(), { tickerLine: lines[position] });
-        const element = mountPanel('ticker', content);
+        let page;
         try {
-          await frame.enter(element);
-          await hold(stayFor(getSeconds(), 'ticker'));
-          await frame.exit(element);
-        } finally {
-          element.remove();
+          page = buildPage('ticker', Object.assign({}, content, { tickerLine: lines[position] }));
+        } catch (error) {
+          // the line on screen stays and the next line is tried
+          console.error('A ticker line could not be drawn and is skipped', error);
+          await frame.wait(5000);
+          continue;
         }
+        const arrivedAfter = await changePage('ticker', page);
+        await hold(holdFor(stayFor('ticker', content.settings.rotation.tickerSeconds, content.settings), arrivedAfter));
       } catch (error) {
         console.error('The ticker hit a problem and will try again', error);
+        clearRegion('ticker');
         await frame.wait(5000);
       }
     }
@@ -153,22 +204,19 @@ export function startTicker(getSeconds, getContent) {
   loop();
 }
 
-// Used by the hardware test (?stress): several panels arrive together, are
-// held, and leave together.
+// Used by the hardware test (?stress) and by ?show=<panel id>: several
+// panels arrive together, are held, and change together, over and over. The
+// time given is how long each is held still.
 export function startTogether(ids, getContent, holdSeconds) {
   async function loop() {
     while (true) {
       try {
-        const shown = ids.map(id => mountPanel(id, getContent()));
-        try {
-          await Promise.all(shown.map(element => frame.enter(element)));
-          await hold(holdSeconds * 1000);
-          await Promise.all(shown.map(element => frame.exit(element)));
-        } finally {
-          shown.forEach(element => element.remove());
-        }
+        const pages = ids.map(id => buildPage(id, getContent()));
+        await Promise.all(pages.map(page => changePage(page.region, page)));
+        await hold(holdSeconds * 1000);
       } catch (error) {
         console.error('The stress test hit a problem', error);
+        ids.filter(id => regionOf(id)).forEach(id => clearRegion(regionOf(id)));
         await frame.wait(5000);
       }
     }

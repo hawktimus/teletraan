@@ -1,6 +1,6 @@
 // Title, day, time and place of the first event that has not finished yet.
 
-import { plateMarkup, scanMarkup } from '../../core/plate.js';
+import { rowBarMarkup } from '../../core/plate.js';
 import { escapeHtml } from '../../core/text.js';
 import { asDate, formatDate, formatTimeOfDay } from '../../core/time.js';
 
@@ -24,13 +24,10 @@ export function mount(host, content) {
   const event = nextEvent(content);
 
   host.innerHTML = `
-    <section class="panel next-event" data-sequence="grid2">
-      ${plateMarkup('grid2')}
-      ${scanMarkup('grid2')}
+    <section class="page next-event">
+      <div class="label" data-slat="label">NEXT EVENT</div>
 
-      <div class="label" data-part="label">NEXT EVENT</div>
-
-      <div class="content" data-part="content">${event ? eventMarkup(event) : ''}</div>
+      <div class="content" data-slat="content">${event ? eventMarkup(event) : ''}</div>
     </section>`;
 }
 
@@ -41,7 +38,7 @@ function eventMarkup(event) {
 
   return `
     <div class="title">${escapeHtml(event.title)}</div>
-    <div class="groove"></div>
+    <div class="bar-slot">${rowBarMarkup(628)}</div>
     <div class="when">${formatDate(start)} · ${time}</div>
     ${location}`;
 }

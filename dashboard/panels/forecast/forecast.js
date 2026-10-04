@@ -1,12 +1,12 @@
 // The weather now and today's high and low, in the small panel under the
 // countdown.
 
-import { plateMarkup, scanMarkup } from '../../core/plate.js';
+import { rowBarMarkup } from '../../core/plate.js';
 import { weatherIcon } from '../../core/weather-icons.js';
 import { escapeHtml } from '../../core/text.js';
 
 // Keep in step with the .icon size in forecast.css
-const ICON_SIZE = 120;
+const ICON_SIZE = 112;
 
 export function hasContent(content) {
   return Boolean(content.weather);
@@ -16,13 +16,10 @@ export function mount(host, content) {
   const weather = content.weather;
 
   host.innerHTML = `
-    <section class="panel forecast" data-sequence="grid2">
-      ${plateMarkup('grid2')}
-      ${scanMarkup('grid2')}
+    <section class="page forecast">
+      <div class="label" data-slat="label">FORECAST</div>
 
-      <div class="label" data-part="label">FORECAST</div>
-
-      <div class="content" data-part="content">${weather ? weatherMarkup(weather) : ''}</div>
+      <div class="content" data-slat="content">${weather ? weatherMarkup(weather) : ''}</div>
     </section>`;
 }
 
@@ -31,6 +28,8 @@ function degrees(value) {
   return typeof value === 'number' && !isNaN(value) ? Math.round(value) + '°' : '--°';
 }
 
+// The metal bar is 628 long, 14px short of the frame on each side. It belongs
+// to the range row so it turns over with the rest of the content.
 function weatherMarkup(weather) {
   const condition = weather.condition ? `<div class="condition">${escapeHtml(weather.condition)}</div>` : '';
 
@@ -41,6 +40,7 @@ function weatherMarkup(weather) {
     </div>
     ${condition}
     <div class="range">
+      ${rowBarMarkup(628)}
       <span>H ${degrees(weather.high)}</span>
       <span>L ${degrees(weather.low)}</span>
     </div>`;

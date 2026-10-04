@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-motion="full" data-draw="stroke" data-finish="metal">
+<html lang="en" data-motion="full" data-draw="stroke" data-finish="metal" data-metal="gold" data-glint="on">
 <head>
   <meta charset="utf-8">
   <title>Teletraan I</title>
@@ -9,129 +9,230 @@
   <link rel="stylesheet" href="frame.css">
 </head>
 <body>
-  <!-- The metal kit. Every gradient, the brushed texture and the bolt are drawn
-       here once, and the rest of the screen points at them by name. Their
-       colours are the tokens in tokens.css. Nothing here is shown by itself. -->
+  <!-- The metal kit. The gradients and the bolt are drawn here once, and every
+       frame points at them with <use>. The colours are the --metal and --red
+       tokens in tokens.css, so changing html[data-metal] recolours every edge.
+       plate.js adds each frame's shapes to the empty group at the end, the first
+       time that kind of frame is built. Nothing here is shown by itself. -->
   <svg class="metal-defs" width="0" height="0" aria-hidden="true">
     <defs>
-      <linearGradient id="steel-plate" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" style="stop-color: var(--plate-top)"/>
-        <stop offset=".3" style="stop-color: var(--plate)"/>
-        <stop offset="1" style="stop-color: var(--plate-bottom)"/>
+      <!-- The face of an edge: banded light and dark, like polished metal. The
+           stops are uneven on purpose, with narrow dark and bright streaks and
+           a few streaks of grime, so it looks worn and not new. The numbers are
+           the --metal colours in tokens.css: 1 is the brightest and 5 the
+           darkest. The gradient is measured from the top left corner of the
+           drawing it is used in, so the edges of one frame carry on the same
+           bands. It repeats by reflecting, so it never shows a seam. -->
+      <linearGradient id="edge-metal" gradientUnits="userSpaceOnUse" spreadMethod="reflect" x1="0" y1="0" x2="420" y2="260">
+        <stop offset="0" style="stop-color: var(--metal-1)"/>
+        <stop offset=".03" style="stop-color: var(--metal-2)"/>
+        <stop offset=".05" style="stop-color: var(--metal-3)"/>
+        <stop offset=".058" style="stop-color: var(--metal-3)"/>
+        <stop offset=".06" style="stop-color: var(--metal-5)"/>
+        <stop offset=".064" style="stop-color: var(--metal-3)"/>
+        <stop offset=".1" style="stop-color: var(--metal-3)"/>
+        <stop offset=".108" style="stop-color: var(--metal-grime)"/>
+        <stop offset=".122" style="stop-color: var(--metal-grime)"/>
+        <stop offset=".13" style="stop-color: var(--metal-3)"/>
+        <stop offset=".14" style="stop-color: var(--metal-2)"/>
+        <stop offset=".18" style="stop-color: var(--metal-7)"/>
+        <stop offset=".22" style="stop-color: var(--metal-3)"/>
+        <stop offset=".27" style="stop-color: var(--metal-4)"/>
+        <stop offset=".3" style="stop-color: var(--metal-3)"/>
+        <stop offset=".33" style="stop-color: var(--metal-2)"/>
+        <stop offset=".345" style="stop-color: var(--metal-1)"/>
+        <stop offset=".36" style="stop-color: var(--metal-3)"/>
+        <stop offset=".4" style="stop-color: var(--metal-4)"/>
+        <stop offset=".41" style="stop-color: var(--metal-grime)"/>
+        <stop offset=".44" style="stop-color: var(--metal-grime)"/>
+        <stop offset=".455" style="stop-color: var(--metal-4)"/>
+        <stop offset=".47" style="stop-color: var(--metal-3)"/>
+        <stop offset=".52" style="stop-color: var(--metal-4)"/>
+        <stop offset=".56" style="stop-color: var(--metal-5)"/>
+        <stop offset=".6" style="stop-color: var(--metal-6)"/>
+        <stop offset=".62" style="stop-color: var(--metal-5)"/>
+        <stop offset=".66" style="stop-color: var(--metal-4)"/>
+        <stop offset=".7" style="stop-color: var(--metal-6)"/>
+        <stop offset=".75" style="stop-color: var(--metal-3)"/>
+        <stop offset=".78" style="stop-color: var(--metal-7)"/>
+        <stop offset=".82" style="stop-color: var(--metal-3)"/>
+        <stop offset=".86" style="stop-color: var(--metal-7)"/>
+        <stop offset=".875" style="stop-color: var(--metal-grime)"/>
+        <stop offset=".89" style="stop-color: var(--metal-grime)"/>
+        <stop offset=".9" style="stop-color: var(--metal-4)"/>
+        <stop offset=".92" style="stop-color: var(--metal-4)"/>
+        <stop offset=".95" style="stop-color: var(--metal-3)"/>
+        <stop offset="1" style="stop-color: var(--metal-8)"/>
       </linearGradient>
-      <linearGradient id="steel-header" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" style="stop-color: var(--header-top)"/>
-        <stop offset="1" style="stop-color: var(--header-bottom)"/>
+      <linearGradient id="edge-red" gradientUnits="userSpaceOnUse" spreadMethod="reflect" x1="0" y1="0" x2="420" y2="260">
+        <stop offset="0" style="stop-color: var(--red-1)"/>
+        <stop offset=".03" style="stop-color: var(--red-2)"/>
+        <stop offset=".05" style="stop-color: var(--red-3)"/>
+        <stop offset=".058" style="stop-color: var(--red-3)"/>
+        <stop offset=".06" style="stop-color: var(--red-5)"/>
+        <stop offset=".064" style="stop-color: var(--red-3)"/>
+        <stop offset=".1" style="stop-color: var(--red-3)"/>
+        <stop offset=".108" style="stop-color: var(--red-grime)"/>
+        <stop offset=".122" style="stop-color: var(--red-grime)"/>
+        <stop offset=".13" style="stop-color: var(--red-3)"/>
+        <stop offset=".14" style="stop-color: var(--red-2)"/>
+        <stop offset=".18" style="stop-color: var(--red-7)"/>
+        <stop offset=".22" style="stop-color: var(--red-3)"/>
+        <stop offset=".27" style="stop-color: var(--red-4)"/>
+        <stop offset=".3" style="stop-color: var(--red-3)"/>
+        <stop offset=".33" style="stop-color: var(--red-2)"/>
+        <stop offset=".345" style="stop-color: var(--red-1)"/>
+        <stop offset=".36" style="stop-color: var(--red-3)"/>
+        <stop offset=".4" style="stop-color: var(--red-4)"/>
+        <stop offset=".41" style="stop-color: var(--red-grime)"/>
+        <stop offset=".44" style="stop-color: var(--red-grime)"/>
+        <stop offset=".455" style="stop-color: var(--red-4)"/>
+        <stop offset=".47" style="stop-color: var(--red-3)"/>
+        <stop offset=".52" style="stop-color: var(--red-4)"/>
+        <stop offset=".56" style="stop-color: var(--red-5)"/>
+        <stop offset=".6" style="stop-color: var(--red-6)"/>
+        <stop offset=".62" style="stop-color: var(--red-5)"/>
+        <stop offset=".66" style="stop-color: var(--red-4)"/>
+        <stop offset=".7" style="stop-color: var(--red-6)"/>
+        <stop offset=".75" style="stop-color: var(--red-3)"/>
+        <stop offset=".78" style="stop-color: var(--red-7)"/>
+        <stop offset=".82" style="stop-color: var(--red-3)"/>
+        <stop offset=".86" style="stop-color: var(--red-7)"/>
+        <stop offset=".875" style="stop-color: var(--red-grime)"/>
+        <stop offset=".89" style="stop-color: var(--red-grime)"/>
+        <stop offset=".9" style="stop-color: var(--red-4)"/>
+        <stop offset=".92" style="stop-color: var(--red-4)"/>
+        <stop offset=".95" style="stop-color: var(--red-3)"/>
+        <stop offset="1" style="stop-color: var(--red-8)"/>
       </linearGradient>
-      <linearGradient id="steel-rim" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" style="stop-color: var(--rim-top)"/>
-        <stop offset=".4" style="stop-color: var(--rim)"/>
-        <stop offset="1" style="stop-color: var(--rim-bottom)"/>
-      </linearGradient>
-      <linearGradient id="steel-edge" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" style="stop-color: var(--steel-light)"/>
-        <stop offset=".12" style="stop-color: var(--steel-light); stop-opacity: .35"/>
-        <stop offset=".5" style="stop-color: var(--steel-dark); stop-opacity: .3"/>
-        <stop offset="1" style="stop-color: var(--steel-dark); stop-opacity: .9"/>
-      </linearGradient>
-      <linearGradient id="steel-well" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" style="stop-color: var(--steel-dark); stop-opacity: .9"/>
-        <stop offset=".5" style="stop-color: var(--steel-dark); stop-opacity: .3"/>
-        <stop offset="1" style="stop-color: var(--steel-light); stop-opacity: .45"/>
-      </linearGradient>
-      <linearGradient id="anodised-purple" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" style="stop-color: var(--purple-top)"/>
-        <stop offset=".45" style="stop-color: var(--purple-middle)"/>
-        <stop offset="1" style="stop-color: var(--purple-bottom)"/>
-      </linearGradient>
-      <linearGradient id="brass" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" style="stop-color: var(--brass-top)"/>
-        <stop offset=".5" style="stop-color: var(--brass-middle)"/>
-        <stop offset="1" style="stop-color: var(--brass-bottom)"/>
-      </linearGradient>
-      <linearGradient id="red-plate" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" style="stop-color: var(--danger-plate-top)"/>
-        <stop offset=".35" style="stop-color: var(--danger-plate)"/>
-        <stop offset="1" style="stop-color: var(--danger-plate-bottom)"/>
-      </linearGradient>
-      <linearGradient id="red-plate-hot" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" style="stop-color: var(--danger-hot-top)"/>
-        <stop offset=".4" style="stop-color: var(--danger-hot)"/>
-        <stop offset="1" style="stop-color: var(--danger-hot-bottom)"/>
-      </linearGradient>
-      <linearGradient id="red-rim" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" style="stop-color: var(--danger-rim-top)"/>
-        <stop offset=".4" style="stop-color: var(--danger)"/>
-        <stop offset="1" style="stop-color: var(--danger-rim-bottom)"/>
-      </linearGradient>
-      <!-- The hawk logo uses the same two finishes, but measured over the whole
-           drawing (1100 x 884) instead of over each plate. That way a plate that
-           sits inside another one has the same colour where they overlap, and
-           no seam shows at the joints. -->
-      <linearGradient id="logo-purple" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="884">
-        <stop offset="0" style="stop-color: var(--purple-top)"/>
-        <stop offset=".45" style="stop-color: var(--purple-middle)"/>
-        <stop offset="1" style="stop-color: var(--purple-bottom)"/>
-      </linearGradient>
-      <linearGradient id="logo-brass" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="884">
-        <stop offset="0" style="stop-color: var(--brass-top)"/>
-        <stop offset=".5" style="stop-color: var(--brass-middle)"/>
-        <stop offset="1" style="stop-color: var(--brass-bottom)"/>
-      </linearGradient>
-      <radialGradient id="bolt-head" cx=".38" cy=".3" r=".8">
-        <stop offset="0" style="stop-color: var(--steel-light)"/>
-        <stop offset=".5" style="stop-color: var(--rim)"/>
-        <stop offset="1" style="stop-color: var(--rim-bottom)"/>
-      </radialGradient>
 
-      <!-- Brushed steel: a tile of faint horizontal streaks painted over a plate.
-           Each streak fades out at both ends so the tile edges do not show. -->
-      <linearGradient id="streak-light" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0" style="stop-color: var(--streak-light); stop-opacity: 0"/>
-        <stop offset=".5" style="stop-color: var(--streak-light); stop-opacity: var(--streak-light-alpha)"/>
-        <stop offset="1" style="stop-color: var(--streak-light); stop-opacity: 0"/>
+      <!-- The ridge, the bright line on the lit edge. It is a gradient at another
+           angle than the face, and it fades in places, like polished metal that
+           has been handled. -->
+      <linearGradient id="edge-ridge-metal" gradientUnits="userSpaceOnUse" spreadMethod="reflect" x1="0" y1="0" x2="330" y2="150">
+        <stop offset="0" style="stop-color: var(--metal-ridge)" stop-opacity="1"/>
+        <stop offset=".12" style="stop-color: var(--metal-ridge)" stop-opacity=".45"/>
+        <stop offset=".2" style="stop-color: var(--metal-2)" stop-opacity=".9"/>
+        <stop offset=".34" style="stop-color: var(--metal-1)" stop-opacity="1"/>
+        <stop offset=".46" style="stop-color: var(--metal-1)" stop-opacity=".35"/>
+        <stop offset=".58" style="stop-color: var(--metal-3)" stop-opacity=".8"/>
+        <stop offset=".74" style="stop-color: var(--metal-ridge)" stop-opacity="1"/>
+        <stop offset=".82" style="stop-color: var(--metal-ridge)" stop-opacity=".5"/>
+        <stop offset=".9" style="stop-color: var(--metal-2)" stop-opacity=".95"/>
+        <stop offset="1" style="stop-color: var(--metal-ridge)" stop-opacity="1"/>
       </linearGradient>
-      <linearGradient id="streak-dark" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0" style="stop-color: var(--streak-dark); stop-opacity: 0"/>
-        <stop offset=".5" style="stop-color: var(--streak-dark); stop-opacity: var(--streak-dark-alpha)"/>
-        <stop offset="1" style="stop-color: var(--streak-dark); stop-opacity: 0"/>
+      <linearGradient id="edge-ridge-red" gradientUnits="userSpaceOnUse" spreadMethod="reflect" x1="0" y1="0" x2="330" y2="150">
+        <stop offset="0" style="stop-color: var(--red-ridge)" stop-opacity="1"/>
+        <stop offset=".12" style="stop-color: var(--red-ridge)" stop-opacity=".45"/>
+        <stop offset=".2" style="stop-color: var(--red-2)" stop-opacity=".9"/>
+        <stop offset=".34" style="stop-color: var(--red-1)" stop-opacity="1"/>
+        <stop offset=".46" style="stop-color: var(--red-1)" stop-opacity=".35"/>
+        <stop offset=".58" style="stop-color: var(--red-3)" stop-opacity=".8"/>
+        <stop offset=".74" style="stop-color: var(--red-ridge)" stop-opacity="1"/>
+        <stop offset=".82" style="stop-color: var(--red-ridge)" stop-opacity=".5"/>
+        <stop offset=".9" style="stop-color: var(--red-2)" stop-opacity=".95"/>
+        <stop offset="1" style="stop-color: var(--red-ridge)" stop-opacity="1"/>
       </linearGradient>
-      <pattern id="brushed" width="320" height="30" patternUnits="userSpaceOnUse">
-        <rect class="streak-light" x="10" y="2" width="190" height="1"/>
-        <rect class="streak-dark" x="140" y="6" width="170" height="1"/>
-        <rect class="streak-light" x="200" y="9" width="110" height="1"/>
-        <rect class="streak-dark" x="20" y="12" width="120" height="1"/>
-        <rect class="streak-light" x="70" y="15" width="200" height="1"/>
-        <rect class="streak-dark" x="230" y="18" width="90" height="1"/>
-        <rect class="streak-light" x="0" y="22" width="110" height="1"/>
-        <rect class="streak-dark" x="100" y="26" width="160" height="1"/>
-      </pattern>
 
-      <!-- A hex bolt with a slot, drawn once. Place it with
-           <use href="#bolt" x="10" y="10" width="24" height="24"/>, which gives it
-           any size. The head takes its colour from --bolt-fill, so a bolt with
-           class="brass" is brass. -->
-      <symbol id="bolt" viewBox="-16 -16 32 32">
-        <polygon class="bolt-base" points="-16,0 -8,-13.9 8,-13.9 16,0 8,13.9 -8,13.9"/>
-        <polygon class="bolt-head" points="-12,0 -6,-10.4 6,-10.4 12,0 6,10.4 -6,10.4"/>
-        <g transform="rotate(-35)">
-          <rect class="bolt-slot" x="-8" y="-2" width="16" height="4"/>
-          <rect class="bolt-slot-lit" x="-8" y="2" width="16" height="1.5"/>
-        </g>
-      </symbol>
+      <!-- The shade, soft dark patches of grime on the lower half of the edge.
+           The colour is the same everywhere. Only the opacity changes, so the
+           patches fade in and out and are never the same length. -->
+      <linearGradient id="edge-shade-metal" gradientUnits="userSpaceOnUse" spreadMethod="reflect" x1="0" y1="0" x2="260" y2="170">
+        <stop offset="0" style="stop-color: var(--metal-shade)" stop-opacity="0"/>
+        <stop offset=".08" style="stop-color: var(--metal-shade)" stop-opacity="0"/>
+        <stop offset=".12" style="stop-color: var(--metal-shade)" stop-opacity=".9"/>
+        <stop offset=".2" style="stop-color: var(--metal-shade)" stop-opacity=".35"/>
+        <stop offset=".26" style="stop-color: var(--metal-shade)" stop-opacity="0"/>
+        <stop offset=".38" style="stop-color: var(--metal-shade)" stop-opacity="0"/>
+        <stop offset=".41" style="stop-color: var(--metal-shade)" stop-opacity="1"/>
+        <stop offset=".44" style="stop-color: var(--metal-shade)" stop-opacity=".15"/>
+        <stop offset=".5" style="stop-color: var(--metal-shade)" stop-opacity="0"/>
+        <stop offset=".62" style="stop-color: var(--metal-shade)" stop-opacity="0"/>
+        <stop offset=".67" style="stop-color: var(--metal-shade)" stop-opacity=".8"/>
+        <stop offset=".74" style="stop-color: var(--metal-shade)" stop-opacity=".2"/>
+        <stop offset=".8" style="stop-color: var(--metal-shade)" stop-opacity="0"/>
+        <stop offset=".9" style="stop-color: var(--metal-shade)" stop-opacity="0"/>
+        <stop offset=".93" style="stop-color: var(--metal-shade)" stop-opacity="1"/>
+        <stop offset="1" style="stop-color: var(--metal-shade)" stop-opacity="0"/>
+      </linearGradient>
+      <linearGradient id="edge-shade-red" gradientUnits="userSpaceOnUse" spreadMethod="reflect" x1="0" y1="0" x2="260" y2="170">
+        <stop offset="0" style="stop-color: var(--red-shade)" stop-opacity="0"/>
+        <stop offset=".08" style="stop-color: var(--red-shade)" stop-opacity="0"/>
+        <stop offset=".12" style="stop-color: var(--red-shade)" stop-opacity=".9"/>
+        <stop offset=".2" style="stop-color: var(--red-shade)" stop-opacity=".35"/>
+        <stop offset=".26" style="stop-color: var(--red-shade)" stop-opacity="0"/>
+        <stop offset=".38" style="stop-color: var(--red-shade)" stop-opacity="0"/>
+        <stop offset=".41" style="stop-color: var(--red-shade)" stop-opacity="1"/>
+        <stop offset=".44" style="stop-color: var(--red-shade)" stop-opacity=".15"/>
+        <stop offset=".5" style="stop-color: var(--red-shade)" stop-opacity="0"/>
+        <stop offset=".62" style="stop-color: var(--red-shade)" stop-opacity="0"/>
+        <stop offset=".67" style="stop-color: var(--red-shade)" stop-opacity=".8"/>
+        <stop offset=".74" style="stop-color: var(--red-shade)" stop-opacity=".2"/>
+        <stop offset=".8" style="stop-color: var(--red-shade)" stop-opacity="0"/>
+        <stop offset=".9" style="stop-color: var(--red-shade)" stop-opacity="0"/>
+        <stop offset=".93" style="stop-color: var(--red-shade)" stop-opacity="1"/>
+        <stop offset="1" style="stop-color: var(--red-shade)" stop-opacity="0"/>
+      </linearGradient>
+
+      <!-- The two parts of a bolt: the outer head, and the pit in the middle,
+           which is lit the other way round. The head starts at colour 2, not the
+           brightest, so a bolt looks old. -->
+      <linearGradient id="bolt-face-metal" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" style="stop-color: var(--metal-2)"/>
+        <stop offset=".4" style="stop-color: var(--metal-3)"/>
+        <stop offset=".72" style="stop-color: var(--metal-6)"/>
+        <stop offset="1" style="stop-color: var(--metal-4)"/>
+      </linearGradient>
+      <linearGradient id="bolt-core-metal" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" style="stop-color: var(--metal-5)"/>
+        <stop offset=".55" style="stop-color: var(--metal-6)"/>
+        <stop offset="1" style="stop-color: var(--metal-7)"/>
+      </linearGradient>
+      <linearGradient id="bolt-face-red" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" style="stop-color: var(--red-2)"/>
+        <stop offset=".4" style="stop-color: var(--red-3)"/>
+        <stop offset=".72" style="stop-color: var(--red-6)"/>
+        <stop offset="1" style="stop-color: var(--red-4)"/>
+      </linearGradient>
+      <linearGradient id="bolt-core-red" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" style="stop-color: var(--red-5)"/>
+        <stop offset=".55" style="stop-color: var(--red-6)"/>
+        <stop offset="1" style="stop-color: var(--red-7)"/>
+      </linearGradient>
+
+      <!-- The logo's outline and stripes. The gradient is measured over the
+           whole drawing (1100 x 884), so every plate and part carries on the same
+           light: bright at the top left, dark lower down, then a hard bright band
+           where the light catches, then dark again. The colours are the --metal
+           tokens, so html[data-metal] recolours it. -->
+      <linearGradient id="logo-metal" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="260" y2="884">
+        <stop offset="0" style="stop-color: var(--metal-1)"/>
+        <stop offset=".3" style="stop-color: var(--metal-3)"/>
+        <stop offset=".52" style="stop-color: var(--metal-4)"/>
+        <stop offset=".56" style="stop-color: var(--metal-2)"/>
+        <stop offset="1" style="stop-color: var(--metal-4)"/>
+      </linearGradient>
+
+      <!-- A bolt is centred on 0,0. The shadow is the same head moved 5 right
+           and 7 down. The colours are set in base.css. -->
+      <polygon id="bolt-shadow-shape" points="-6,-10 16,-10 26,-2 26,14 16,22 -6,22 -16,14 -16,-2"/>
+      <g id="bolt-shape">
+        <polygon class="bolt-rim" points="-11,-17 11,-17 21,-9 21,9 11,17 -11,17 -21,9 -21,-9"/>
+        <polygon class="bolt-face" points="-9,-14 9,-14 18,-7 18,7 9,14 -9,14 -18,7 -18,-7"/>
+        <polyline class="bolt-ridge" points="-17,7 -17,-7 -9,-13 9,-13"/>
+        <polygon class="bolt-rim" points="-6,-9 6,-9 11,-5 11,5 6,9 -6,9 -11,5 -11,-5"/>
+        <polygon class="bolt-core" points="-4,-6 4,-6 8,-3 8,3 4,6 -4,6 -8,3 -8,-3"/>
+      </g>
+      <g id="metal-shapes"></g>
     </defs>
   </svg>
 
   <div id="screen">
     <div id="world">
-      <!-- screws in the corners of the screen. They never move. -->
-      <svg class="corner-screws" width="1920" height="1080" viewBox="0 0 1920 1080" aria-hidden="true">
-        <use href="#bolt" x="6" y="6" width="20" height="20"/>
-        <use href="#bolt" x="1894" y="6" width="20" height="20"/>
-        <use href="#bolt" x="6" y="1054" width="20" height="20"/>
-        <use href="#bolt" x="1894" y="1054" width="20" height="20"/>
-      </svg>
       <div id="stage">
+        <!-- The banner and the countdown draw themselves into their regions. The
+             large panel, the small panel and the ticker each get an area, with
+             its frame, the first time a page needs it (core/areas.js). -->
         <div id="region-banner"></div>
         <div id="region-grid1"></div>
         <div id="region-right">
@@ -154,7 +255,7 @@
     setTimeout(function () {
       if (window.teletraanStarted) return;
 
-      document.body.innerHTML = '<div style="width: 1920px; height: 1080px; display: flex; align-items: center; justify-content: center; background: #0b0e11; color: #faca2a; font: 700 96px/120px sans-serif; text-align: center;">Teletraan I could not start. Trying again in 30 seconds.</div>';
+      document.body.innerHTML = '<div style="width: 1920px; height: 1080px; display: flex; align-items: center; justify-content: center; background: #09060f; color: #faca2a; font: 700 96px/120px sans-serif; text-align: center;">Teletraan I could not start. Trying again in 30 seconds.</div>';
       setTimeout(function () { window.location.reload(); }, 30000);
     }, 25000);
   </script>

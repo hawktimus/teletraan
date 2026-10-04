@@ -1,10 +1,11 @@
 # Trying the dashboard on the Mini
 
 This is a speed test. The aim is to find out how smoothly the Mini and the TV
-can move the screen, and whether the metal look (gradients, bevel lines and
-brushed streaks) slows it down. It is run on the real Mini and the real TV, and
-through the same browser command the kiosk uses, so the result includes the
-graphics settings the kiosk uses.
+can move the screen, and whether the metal edges (banded gradients, shadows and
+the glint) and the page change (frame halves lifting, rows turning over) slow
+it down. It is run on the real Mini and the real TV, and through the same
+browser command the kiosk uses, so the result includes the graphics settings
+the kiosk uses.
 
 ## 1. Check the Mini has the code
 
@@ -19,7 +20,7 @@ the screen reloads itself on every update, and the readout starts again.
 
 The kiosk service owns the Mini's screen, so stop it first. At the Mini's own
 keyboard, press Ctrl+Alt+F1 (with the Fn key too on a Mac keyboard) to get the
-text screen, log in as `teletraan`, stop the service, and start the kiosk
+text screen, log in as `hawktimus`, stop the service, and start the kiosk
 script with an address that ends in `?perf`:
 
     sudo systemctl stop teletraan-kiosk.service
@@ -47,7 +48,7 @@ seconds after the page started, so a long run gives a fair picture.
 | frame ms p95 | the slow end: 95 out of 100 refreshes were faster than this |
 | worst | the single slowest refresh after the first 3 seconds |
 | late | how many refreshes took longer than 25 ms, which you can see as a stutter |
-| animations running | how many things are moving right now. In normal mode it is usually 5 to 25, and it reaches 40 to 55 for a second or two when panels come and go or an announcement plays. While the hawk hovers (6 seconds out of every 32) about 11 of them are its wings. `stress` reaches about 70. Calm mode stays at 6 or fewer and `motion=none` at 0. A number that stays far above these for many seconds means something is wrong |
+| animations running | how many things are moving right now. In normal mode it is usually 5 to 30, and it reaches 40 to 60 for a second or two when pages change at the same time or the logo changes. One page change of the large panel is about 13 at a time, and the three glints are always 3 of the count. While the hawk flies (4 seconds out of every 24) about 3 are on the hawk, and the changes into it and back start about 13 for 2 seconds each. `stress` reaches about 80. Calm mode stays at about 11 or fewer and `motion=none` at 0. A number that stays far above these for many seconds means something is wrong |
 | memory | how much memory the page uses (Chromium browsers only) |
 
 ## 3. Switches
@@ -59,15 +60,17 @@ for example `?perf&stress`.
 |--------|--------------|
 | `perf` | shows the readout |
 | `motion=full` | all the movement (the normal setting) |
-| `motion=calm` | no travel, drawing or effects, panels just fade |
+| `motion=calm` | no travel, drawing or effects. The frames stay still and each page fades out and the next fades in |
 | `motion=none` | nothing moves, to see how hard the still picture is on its own |
 | `speed=very-slow`, `slow`, `normal`, `fast` | the Speed setting from Dashboard Settings, for this page only. Moves take 2, 1.5, 1 or 0.75 times as long, and so do the panels' time on screen. The address wins over Dashboard Settings |
-| `finish=metal` | the normal look: steel plates painted with gradients, bevel lines and brushed streaks |
-| `finish=flat` | the same screen in plain colours, with no metal gradients, bevel lines or streaks (the yellow and black hazard tape stays striped). The shapes, text and movement do not change, so any difference in the numbers is the cost of the metal |
-| `stress` | shows the left panel, the small panel and the ticker together and takes them all away together every few seconds. The banner and countdown stay |
-| `draw=fade` | fades lines in instead of drawing them, to find out whether drawing is the slow part |
+| `finish=metal` | the normal look: purple plates with polished metal edges (a banded gradient, a shadow, a shade and a ridge on every line) |
+| `finish=flat` | the same screen with every edge one plain colour, no shadow, shade, ridge or glint. The shapes, text and movement do not change (the rows still turn over and the frame halves still lift), so any difference in the numbers is the cost of the metal |
+| `metal=gold`, `silver` | the metal of the frame edges, for this page only. The address wins over Dashboard Settings |
+| `glint=on`, `off` | the bright dash that runs round each big frame every few seconds, for this page only. Off shows what the glint costs |
+| `stress` | shows the left panel, the small panel and the ticker together. Each is held for 3 seconds, then all three turn their pages over together, about every 5 seconds. The frames stay. The banner and countdown stay |
+| `draw=fade` | fades the frame lines in instead of drawing them when the frames assemble, to find out whether drawing is the slow part. The assembly happens once, when the page loads |
 | `only=tasks` | shows only the Tasks panel, with no banner, countdown, small panels or ticker, for a fair comparison with the next page |
-| `show=events` | shows only that panel. Use any panel name from `registry.js` |
+| `show=events` | shows only that panel, with the banner and the countdown. The panel is held for 30 seconds, then its page turns over and arrives again. Use any panel name from `registry.js` |
 | `demo=announcement` | plays the first announcement from Dashboard Settings 4 seconds after the page loads |
 | `demo=alert` | shows a sample alert |
 | `demo=crt` | plays the old television effect every 8 seconds |
@@ -75,16 +78,23 @@ for example `?perf&stress`.
 To compare the finishes, run the same address twice, once as it is and once
 with `finish=flat` added. Keep every other switch the same, run both for the
 same length of time, and compare the numbers. The readout does not say which
-finish is running, so write the address down beside each result.
+finish is running, so write the address down beside each result. Do the same
+with `glint=off` to see what the glint costs on its own.
+
+The page change is the heaviest thing the screen does, and `stress` makes it
+happen every 5 seconds, so a `stress` run shows it best. Watch the `late`
+count: a late refresh while the rows turn over or the frame halves lift is the
+stutter to look for.
 
 ## 4. The comparison page
 
 A second page shows the same Tasks panel built a different way, with solid
-plates and no drawn lines. It takes the same `perf`, `motion`, `stress` and
-`finish` switches as the dashboard. Like the dashboard it shows the metal
-finish unless it is given `finish=flat`, which is the plain colours the page
-started with. Its metal is CSS gradients on the plates, where the
-dashboard's is SVG gradients, so the page times both ways of painting it.
+plates and no drawn lines. It takes the same `perf`, `motion`, `stress`,
+`finish` and `metal` switches as the dashboard (it has no `speed` or
+`glint`). Like the dashboard it shows the metal finish unless it is given
+`finish=flat`, which is the plain colours the page started with. Its metal is
+CSS gradients on the plates, where the dashboard's is SVG gradients, so the
+page times both ways of painting it.
 
 The web server on the Mini only shows the `dashboard` folder, so this page
 needs the small server in `tools`. Open a second text screen with Ctrl+Alt+F2,
@@ -128,9 +138,10 @@ Stop the small server with Ctrl+C in the second text screen when you are done.
    - `?perf` (normal)
    - `?perf&finish=flat`
    - `?perf&motion=calm`
+   - `?perf&glint=off`
    - `?perf&stress`
    - `?perf&stress&finish=flat`
-   - `?perf&stress&draw=fade`
+   - `?perf&stress&glint=off`
    - the comparison page, `plates.html?perf`
    - the comparison page in plain colours, `plates.html?perf&finish=flat`
 4. Run `?perf&motion=none` and `?perf&motion=none&finish=flat` for 10 minutes
@@ -162,6 +173,8 @@ These are starting points, not rules:
 - the numbers do not get worse overnight
 - the metal finish only a little slower than `finish=flat` on the same
   address. If flat is clearly smoother, the metal is too heavy for the Mini.
+  If only the glint is the difference, turn it off in Dashboard Settings
+  (Glint) and keep the metal.
   Ask whoever looks after the code to make flat the starting finish: it is set
   by `data-finish` on the `html` line of `dashboard/index.html` and by the line
   in `dashboard/shell.js` that sets `dataset.finish`

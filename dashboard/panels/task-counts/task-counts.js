@@ -1,7 +1,6 @@
 // How many tasks are not finished, and how they split between in progress,
 // up next and blocked.
 
-import { plateMarkup, scanMarkup } from '../../core/plate.js';
 import { visibleItems } from '../../core/content.js';
 
 // A status name must match task-counts.css (.line-...). Colours are in tokens.css
@@ -39,15 +38,11 @@ export function mount(host, content) {
     .join('');
 
   host.innerHTML = `
-    <section class="panel task-counts" data-sequence="grid2">
-      ${plateMarkup('grid2')}
-      ${scanMarkup('grid2')}
+    <section class="page task-counts">
+      <div class="label" data-slat="label">OPEN TASKS</div>
 
-      <div class="label" data-part="label">OPEN TASKS</div>
-
-      <div class="content" data-part="content">
+      <div class="content" data-slat="content">
         <div class="count${size}">${open}</div>
-        ${lines ? '<div class="groove"></div>' : ''}
         <div class="lines">${lines}</div>
       </div>
     </section>`;

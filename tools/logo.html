@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-motion="full">
+<html lang="en" data-motion="full" data-metal="gold" data-finish="metal">
 <head>
   <meta charset="utf-8">
   <title>Logo</title>
@@ -16,67 +16,60 @@
       font: 600 22px/32px var(--font-display);
     }
     h1 { margin: 0 0 4px; font-size: 40px; line-height: 48px; }
-    h2 { margin: 36px 0 12px; color: var(--gold); font-size: 28px; line-height: 36px; }
+    h2 { margin: 36px 0 12px; color: var(--yellow); font-size: 28px; line-height: 36px; }
     p { max-width: 900px; margin: 0 0 8px; color: var(--lilac); }
 
-    /* The page borrows the banner's colour rules, so it only has to say how big the logo is */
+    /* The page borrows the banner's rules for the logo and the name, so it
+       only has to say how big they are. --k is the width divided by 1100. */
     .banner { display: block; height: auto; }
-    .big .logo { width: 660px; height: 531px; }
-    .still .logo { width: 190px; height: 153px; }
+    .big { padding: 100px 120px 90px; background: var(--plate); }
+    .big .logo { --k: .6; width: 660px; height: 531px; }
+    .still .logo { --k: .3; width: 330px; height: 265px; }
+    .real .logo { --k: .1991; width: 219px; height: 176px; }
 
-    .top { display: flex; gap: 90px; align-items: flex-start; }
-    .controls { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+    .top { display: flex; gap: 60px; align-items: flex-start; flex-wrap: wrap; }
+    .controls { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; max-width: 640px; }
     .controls .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-    button, select {
+    button, select, input[type="text"] {
       padding: 6px 14px;
-      border: 3px solid var(--gold);
+      border: 3px solid var(--yellow);
       background: var(--plate);
       color: var(--white);
       font: inherit;
       cursor: pointer;
     }
-    input[type="range"] { width: 360px; }
+    input[type="text"] { width: 330px; cursor: text; }
+    input[type="range"] { width: 300px; }
+    .note { color: var(--lilac); font-size: 20px; line-height: 26px; }
 
-    /* The wings reach past the edge of the logo while it moves, so each pose has room at the sides */
+    .name-row { margin-top: 36px; padding: 30px 40px 40px; background: var(--plate); max-width: 1100px; }
+    .name-row .team-name { width: 1020px; }
+
+    /* The parts reach past the edge of the logo while it moves, so each pose has room at the sides */
     .stills { display: flex; flex-wrap: wrap; gap: 36px 0; }
-    .still { width: 190px; margin: 0 22px; }
-    .still .name { margin-top: 6px; color: var(--lilac); font-size: 20px; line-height: 26px; white-space: normal; }
+    .still { margin: 0 20px; padding: 40px 50px; width: 330px; background: var(--plate); }
+    .name { margin-top: 6px; color: var(--lilac); font-size: 20px; line-height: 26px; white-space: normal; }
 
-    /* The left end of the banner at its real size: the edge of the screen, the
-       logo's box, and the start of the TEAM plate. The logo must stay between
-       the two lines. */
+    /* The left end of the banner at its real size: the edge of the screen,
+       the logo's box, the page margin and the start of the TEAM plate. The
+       logo may reach the plate's frame for a moment, but never the name. */
     .rooms { display: flex; flex-wrap: wrap; gap: 36px 40px; }
     .room-wrap { width: 347px; }
-    .room.banner { position: relative; width: 347px; height: 212px; background: var(--plate); }
+    .room { position: relative; width: 347px; height: 212px; background: var(--plate); }
     .room .edge { position: absolute; left: 0; top: 0; bottom: 0; border-left: 3px dashed var(--danger-bright); }
     .room .margin { position: absolute; left: 40px; top: 0; bottom: 0; border-left: 2px dotted var(--lilac); }
-    .room .team-plate { position: absolute; left: 287px; top: 108px; width: 60px; height: 76px; box-sizing: border-box; background: var(--purple); border: 3px solid var(--gold); }
+    .room .team-plate-box { position: absolute; left: 287px; top: 108px; width: 60px; height: 76px; box-sizing: border-box; background: var(--purple); border: 3px solid var(--metal-3); }
     .room .logo { position: absolute; left: 40px; top: 18px; }
-    .room-wrap .name { margin-top: 6px; color: var(--lilac); font-size: 20px; line-height: 26px; }
+    .room-wrap .name { margin-top: 6px; }
   </style>
 </head>
 <body>
-  <!-- The logo is painted with the same two finishes as in dashboard/index.html -->
-  <svg width="0" height="0" style="position: absolute">
-    <defs>
-      <linearGradient id="logo-purple" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="884">
-        <stop offset="0" style="stop-color: var(--purple-top)"/>
-        <stop offset=".45" style="stop-color: var(--purple-middle)"/>
-        <stop offset="1" style="stop-color: var(--purple-bottom)"/>
-      </linearGradient>
-      <linearGradient id="logo-brass" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="884">
-        <stop offset="0" style="stop-color: var(--brass-top)"/>
-        <stop offset=".5" style="stop-color: var(--brass-middle)"/>
-        <stop offset="1" style="stop-color: var(--brass-bottom)"/>
-      </linearGradient>
-    </defs>
-  </svg>
-
-  <h1>The hawk logo</h1>
-  <p>The logo is drawn by dashboard/core/logo.js and moved by the logo section of
-     dashboard/frame.css. Its show is the list called logoShow in dashboard/frame.js.
-     Press a button to play one act, or drag the slider to stop an act at any moment.
-     The acts are explained in docs/the-logo.md.</p>
+  <h1>The hawk logo and the team name</h1>
+  <p>The logo is drawn by dashboard/core/logo.js and moved by the section "The logo" of
+     dashboard/frame.css. Its show is the list logoShow in dashboard/frame.js. The team name
+     is built by dashboard/core/name.js and split by the section "The team name" of frame.css.
+     Press a button to play one act, or drag the slider to stop an act at any moment. It is all
+     explained in docs/the-logo.md.</p>
 
   <div class="top">
     <div class="big banner"><div class="logo" id="big"></div></div>
@@ -84,8 +77,12 @@
     <div class="controls">
       <div class="row" id="act-buttons"></div>
       <div class="row">
+        <button id="show">Whole show</button>
+        <button id="stop">Stop</button>
+      </div>
+      <div class="row">
         <label>Moment in the act
-          <input type="range" id="moment" min="0" max="10" step="0.02" value="0">
+          <input type="range" id="moment" min="0" max="2" step="0.02" value="0">
         </label>
         <span id="moment-text"></span>
       </div>
@@ -107,27 +104,71 @@
         </label>
       </div>
       <div class="row">
-        <button id="show">Play the whole show</button>
-        <button id="stop">Stop</button>
+        <label>Metal
+          <select id="metal">
+            <option value="gold" selected>Gold</option>
+            <option value="silver">Silver</option>
+          </select>
+        </label>
+        <label>Finish
+          <select id="finish">
+            <option value="metal" selected>Metal</option>
+            <option value="flat">Flat</option>
+          </select>
+        </label>
       </div>
+      <p class="note">The whole show is the real thing: 24 seconds, the turn only every third time round.
+        It plays the name effect too, when it is due. In calm and none motion the logo stays the still
+        emblem.</p>
     </div>
   </div>
 
-  <h1 style="margin-top: 40px">Key poses</h1>
+  <div class="name-row banner">
+    <h1 class="team-name" id="name" data-name-effect></h1>
+    <div class="controls" style="margin-top: 20px">
+      <div class="row">
+        <label>Team name <input type="text" id="name-text" value="HAWKTIMUS PRIME" maxlength="16"></label>
+        <button id="name-play">Play the name effect</button>
+      </div>
+      <div class="row">
+        <label>Moment in the effect
+          <input type="range" id="name-moment" min="0" max="1500" step="20" value="0">
+        </label>
+        <span id="name-moment-text"></span>
+      </div>
+      <p class="note">The Studio allows 16 characters. Try a long name of wide letters: the letters squeeze
+        together so the name never runs into the clock.</p>
+    </div>
+  </div>
+
   <div id="stills-page"></div>
 
   <script type="module">
     import { logoMarkup } from '../dashboard/core/logo.js';
+    import { nameMarkup } from '../dashboard/core/name.js';
     import * as frame from '../dashboard/frame.js';
+
+    const root = document.documentElement;
+
+    // The colours of the logo's outline are drawn once, in dashboard/index.html. Borrow
+    // them from there, so this page can never differ from the real screen.
+    fetch('../dashboard/index.html')
+      .then(response => response.text())
+      .then(text => {
+        const defs = new DOMParser().parseFromString(text, 'text/html').querySelector('.metal-defs');
+        document.body.insertAdjacentHTML('afterbegin', defs.outerHTML.replace('class="metal-defs"', 'style="position: absolute"'));
+      });
 
     frame.start({ motion: 'full', speed: 'normal', draw: 'stroke' });
 
     const big = document.getElementById('big');
     big.innerHTML = logoMarkup();
 
-    // Freezes a logo at one moment of an act. Seconds are normal-speed
-    // seconds from the start of the act, which is how frame.css is written.
+    // Freezes a logo at one moment of an act. Seconds are normal-speed seconds
+    // from the start of the act, which is how frame.css is written.
     function showAt(logo, act, seconds) {
+      logo.dataset.act = 'rest';
+      void logo.getBoundingClientRect(); // so the act starts again from its beginning
       logo.dataset.act = act;
       logo.getAnimations({ subtree: true }).forEach(animation => {
         animation.pause();
@@ -135,42 +176,42 @@
       });
     }
 
-    // [name, how many seconds it lasts]. fly never ends, so it has no length.
-    const acts = [['assemble', frame.logoEntrance]];
-    frame.logoShow.forEach(entry => {
-      if (entry[0] !== 'rest') acts.push(entry);
-    });
-    acts.push(['fly', 0]);
+    // [name shown on the button, act, how many seconds to play, how many to scrub].
+    // The flight is shown for two beats. In the show it is five.
+    const acts = [
+      ['Boot', 'boot', 2, 1.2],
+      ['Robot', 'robot', 3, 1.2],
+      ['Change in', 'hawk-in', 2, 2],
+      ['Flight', 'flight', 4, 1.6],
+      ['Change back', 'hawk-out', 2, 2],
+      ['Turn', 'turn', 2, 1.6],
+    ];
 
     const moment = document.getElementById('moment');
     const momentText = document.getElementById('moment-text');
-    let chosen = acts[1];
+    let chosen = acts[2];
 
     function choose(act) {
       chosen = act;
-      moment.max = act[1] || 4;
+      moment.max = act[3];
       moment.value = 0;
       momentText.textContent = '';
     }
+    choose(chosen);
 
-    // Counts every press. An act that finishes later only puts the logo
-    // back to rest if nothing newer has been pressed since, so pressing
-    // buttons quickly does not cut the new act short.
+    // Counts every press. An act that finishes later only puts the logo back
+    // to rest if nothing newer has been pressed since, so pressing buttons
+    // quickly does not cut the new act short.
     let presses = 0;
 
     acts.forEach(act => {
       const button = document.createElement('button');
-      button.textContent = 'Play ' + act[0];
+      button.textContent = act[0];
       button.addEventListener('click', () => {
         const mine = ++presses;
         frame.stopLogo(big);
         choose(act);
-        if (act[0] === 'fly') {
-          void big.getBoundingClientRect();
-          frame.flyLogo(big);
-        } else {
-          frame.playLogoAct(big, act[0], act[1]).then(() => { if (presses === mine) big.dataset.act = 'rest'; });
-        }
+        frame.playLogoAct(big, act[1], act[2]).then(() => { if (presses === mine) big.dataset.act = 'rest'; });
       });
       document.getElementById('act-buttons').appendChild(button);
     });
@@ -178,12 +219,10 @@
     moment.addEventListener('input', () => {
       presses++;
       frame.stopLogo(big);
-      showAt(big, chosen[0], Number(moment.value));
-      momentText.textContent = Number(moment.value).toFixed(2) + ' s of ' + (chosen[1] || 'a loop');
+      showAt(big, chosen[1], Number(moment.value));
+      momentText.textContent = Number(moment.value).toFixed(2) + ' s of ' + chosen[2];
     });
 
-    document.getElementById('speed').addEventListener('change', event => frame.setSpeed(event.target.value));
-    document.getElementById('motion').addEventListener('change', event => frame.setMotion(event.target.value));
     document.getElementById('show').addEventListener('click', () => {
       presses++;
       frame.startLogo(big);
@@ -193,57 +232,112 @@
       frame.stopLogo(big);
     });
 
-    // The key poses: [label, act, seconds into the act], or just a heading.
-    // A wingbeat is 0.9 seconds and the down stroke ends 0.29 seconds in. The
-    // wings are widest at about 0.12 seconds, so that is the pose to check
-    // against the page margin and the team plate when you change a wingbeat.
+    // The team name
+    const nameBox = document.getElementById('name');
+    const nameText = document.getElementById('name-text');
+    const nameMoment = document.getElementById('name-moment');
+    const nameMomentText = document.getElementById('name-moment-text');
+
+    function drawName() {
+      nameBox.classList.remove('splitting');
+      nameBox.innerHTML = nameMarkup(nameText.value);
+      nameMoment.max = Math.round(Math.max(0, Array.from(nameText.value).length - 1) * 45 + 800);
+    }
+    drawName();
+    nameText.addEventListener('input', drawName);
+    document.getElementById('name-play').addEventListener('click', () => {
+      nameBox.classList.remove('splitting');
+      frame.playNameEffect();
+    });
+    nameMoment.addEventListener('input', () => {
+      nameBox.classList.remove('splitting');
+      void nameBox.getBoundingClientRect();
+      nameBox.classList.add('splitting');
+      nameBox.getAnimations({ subtree: true }).forEach(animation => {
+        animation.pause();
+        animation.currentTime = Number(nameMoment.value) * frame.pace();
+      });
+      nameMomentText.textContent = nameMoment.value + ' ms of ' + nameMoment.max;
+    });
+
+    // The settings that change the picture
+    document.getElementById('speed').addEventListener('change', event => { frame.setSpeed(event.target.value); drawPoses(); });
+    document.getElementById('motion').addEventListener('change', event => { frame.setMotion(event.target.value); drawPoses(); });
+    document.getElementById('metal').addEventListener('change', event => { root.dataset.metal = event.target.value; });
+    document.getElementById('finish').addEventListener('change', event => { root.dataset.finish = event.target.value; });
+
+    // The poses: [label, act, seconds into the act], or a heading with how to draw
+    // the poses under it. A pose frozen at 0 of rest is the emblem.
     const poses = [
-      ['Hover'],
-      ['Wings up, the emblem', 'rest', 0],
-      ['Down stroke, wings widest', 'hover', 0.12],
-      ['Bottom of the down stroke', 'hover', 0.29],
-      ['Up stroke, wings folding', 'hover', 0.45],
-      ['Up stroke, nearly at the top', 'hover', 0.7],
+      ['The emblem and the robot', 'big'],
+      ['Emblem at rest', 'rest', 0],
+      ['Robot: wings level', 'robot', 0.35],
+      ['Robot: wings halfway down', 'robot', 0.5],
+      ['Robot: wings nearly down, the body risen', 'robot', 0.65],
+      ['Robot: the pose it holds', 'robot', 1.4],
 
-      ['Soar and flex'],
-      ['Soar, rocking to the left', 'soar', 1.9],
-      ['Soar, rocking to the right', 'soar', 5.2],
-      ['Flex, wings out', 'flex', 0.9],
+      ['Change into the hawk (2 s)', 'big'],
+      ['Plates pulling back', 'hawk-in', 0.3],
+      ['Plates edge-on, the hawk not yet turned in', 'hawk-in', 0.65],
+      ['Body turning flat, head and wings next', 'hawk-in', 0.9],
+      ['Wings and tail coming out', 'hawk-in', 1.25],
+      ['Beak out, last panel unfolding', 'hawk-in', 1.55],
+      ['The hawk at rest', 'hawk-in', 2],
 
-      ['Entrance'],
-      ['Plates flying in', 'assemble', 0.45],
+      ['Flight (0.8 s a beat)', 'big'],
+      ['Start of a beat', 'flight', 0],
+      ['Wings level, going up', 'flight', 0.24],
+      ['Wings up, the top of the beat', 'flight', 0.44],
+      ['Coming down', 'flight', 0.64],
+
+      ['Change back (2 s)', 'big'],
+      ['Panels folding away', 'hawk-out', 0.4],
+      ['Wings and head turning edge-on', 'hawk-out', 0.9],
+      ['Plates returning', 'hawk-out', 1.05],
+      ['Plates locking home', 'hawk-out', 1.3],
+
+      ['Turn and boot', 'big'],
+      ['Turn: narrowing', 'turn', 0.3],
+      ['Turn: showing its back', 'turn', 0.6],
+      ['Boot: body and head arriving', 'boot', 0.3],
+      ['Boot: wings arriving', 'boot', 0.55],
 
       ['At banner size. The dashed line is the edge of the screen, the dotted line is the page margin, and the box on the right is the TEAM plate.', 'rooms'],
-      ['Wings up', 'rest', 0],
-      ['Down stroke, wings widest', 'hover', 0.12],
-      ['Bottom of the down stroke', 'hover', 0.29],
-      ['Soar', 'soar', 1.9],
-      ['Flex, wings out', 'flex', 0.9],
+      ['Emblem', 'rest', 0],
+      ['Robot, wings level', 'robot', 0.36],
+      ['Robot', 'robot', 1.4],
+      ['The hawk', 'hawk-in', 2],
+      ['Wings up', 'flight', 0.44],
+      ['Plates returning', 'hawk-out', 1.05],
     ];
 
-    const page = document.getElementById('stills-page');
-    let row = null;
-    let rooms = false;
-    poses.forEach(pose => {
-      if (pose.length <= 2) {
-        rooms = pose[1] === 'rooms';
-        page.insertAdjacentHTML('beforeend', '<h2>' + pose[0] + '</h2><div class="' + (rooms ? 'rooms' : 'stills') + '"></div>');
-        row = page.lastElementChild;
-        return;
-      }
-      if (rooms) {
-        row.insertAdjacentHTML('beforeend',
-          '<div class="room-wrap"><div class="room banner"><div class="edge"></div><div class="margin"></div>' +
-          '<div class="team-plate"></div><div class="logo">' + logoMarkup() + '</div></div>' +
-          '<div class="name">' + pose[0] + '</div></div>');
-      } else {
-        row.insertAdjacentHTML('beforeend',
-          '<div class="still"><div class="banner"><div class="logo">' + logoMarkup() + '</div></div>' +
-          '<div class="name">' + pose[0] + '</div></div>');
-      }
-      const logo = row.lastElementChild.querySelector('.logo');
-      showAt(logo, pose[1], pose[2]);
-    });
+    function drawPoses() {
+      const page = document.getElementById('stills-page');
+      page.innerHTML = '';
+      let row = null;
+      let rooms = false;
+
+      poses.forEach(pose => {
+        if (pose.length <= 2) {
+          rooms = pose[1] === 'rooms';
+          page.insertAdjacentHTML('beforeend', '<h2>' + pose[0] + '</h2><div class="' + (rooms ? 'rooms' : 'stills') + '"></div>');
+          row = page.lastElementChild;
+          return;
+        }
+        if (rooms) {
+          row.insertAdjacentHTML('beforeend',
+            '<div class="room-wrap"><div class="room real banner"><div class="edge"></div><div class="margin"></div>' +
+            '<div class="team-plate-box"></div><div class="logo">' + logoMarkup() + '</div></div>' +
+            '<div class="name">' + pose[0] + '</div></div>');
+        } else {
+          row.insertAdjacentHTML('beforeend',
+            '<div><div class="still banner"><div class="logo">' + logoMarkup() + '</div></div>' +
+            '<div class="name" style="margin-left: 20px">' + pose[0] + '</div></div>');
+        }
+        showAt(row.lastElementChild.querySelector('.logo'), pose[1], pose[2]);
+      });
+    }
+    drawPoses();
   </script>
 </body>
 </html>

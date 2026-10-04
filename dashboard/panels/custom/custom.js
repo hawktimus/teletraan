@@ -1,7 +1,7 @@
 // Panels the editors build from blocks. Each time this one comes round it
 // shows the next custom panel in the list. About three blocks fit.
 
-import { plateMarkup, scanMarkup, boltMarkup } from '../../core/plate.js';
+import { cardMarkup, rowBarMarkup } from '../../core/plate.js';
 import { doubleSlash } from '../../core/marks.js';
 import { escapeHtml, hasText } from '../../core/text.js';
 import { visibleItems } from '../../core/content.js';
@@ -10,14 +10,13 @@ import { makeTurns } from '../../core/turns.js';
 
 const MAX_LIST_ITEMS = 5;
 
-const nextCustomPanel = makeTurns();
+// The width of every block, and the height of the blocks that sit on a card.
+// custom.css has the same numbers. Change them together.
+const BLOCK_WIDTH = 1056;
+const CARD_HEIGHT = 184;
+const IMAGE_HEIGHT = 220;
 
-// The cap on the left of the stat and countdown blocks. It stretches to the
-// height of the block, so the drawing is only 100 units tall.
-const capMarkup = `<svg class="block-cap" width="14" height="100" viewBox="0 0 14 100" preserveAspectRatio="none">
-        <rect class="cap-body" width="12" height="100"/>
-        <rect class="cap-edge" x="12" width="2" height="100"/>
-      </svg>`;
+const nextCustomPanel = makeTurns();
 
 // The markup for one block, or '' when the block is of a type we do not
 // know or is missing what it needs. Those blocks are left out.
@@ -55,13 +54,10 @@ export function mount(host, content) {
   const blocks = customPanel ? blocksFor(customPanel, now) : [];
 
   host.innerHTML = `
-    <section class="panel custom" data-sequence="grid1">
-      ${plateMarkup('grid1')}
-      ${scanMarkup('grid1')}
-
+    <section class="page custom">
       <div class="header">
-        <h2 class="title" data-part="title">${escapeHtml(customPanel && customPanel.title)}</h2>
-        <div data-part="tag">${doubleSlash()}</div>
+        <h2 class="title" data-slat="title">${escapeHtml(customPanel && customPanel.title)}</h2>
+        <div data-slat="tag">${doubleSlash()}</div>
       </div>
 
       <div class="blocks">${blocks.join('')}</div>
@@ -73,24 +69,32 @@ export function mount(host, content) {
   });
 }
 
+// A heading has a thin metal bar under it
 function headingBlock(block) {
   if (!hasText(block.text)) return '';
-  return `<div class="block block-heading" data-part="content">${escapeHtml(block.text)}</div>`;
+
+  return `
+    <div class="block block-heading" data-slat="item">
+      <div class="heading-text">${escapeHtml(block.text)}</div>
+      ${rowBarMarkup(BLOCK_WIDTH)}
+    </div>`;
 }
 
 function textBlock(block) {
   if (!hasText(block.text)) return '';
-  return `<div class="block block-text" data-part="content">${escapeHtml(block.text)}</div>`;
+  return `<div class="block block-text" data-slat="item">${escapeHtml(block.text)}</div>`;
 }
 
 function statBlock(block) {
   if (!hasText(block.value) && !hasText(block.label)) return '';
 
   return `
-    <div class="block block-stat" data-part="content">
-      ${capMarkup}
-      <div class="stat-value">${escapeHtml(block.value)}</div>
-      <div class="stat-label">${escapeHtml(block.label)}</div>
+    <div class="block block-stat" data-slat="item">
+      ${cardMarkup(BLOCK_WIDTH, CARD_HEIGHT)}
+      <div class="card-text">
+        <div class="stat-value">${escapeHtml(block.value)}</div>
+        <div class="stat-label">${escapeHtml(block.label)}</div>
+      </div>
     </div>`;
 }
 
@@ -102,15 +106,21 @@ function listBlock(block) {
 
   const lines = items.map(item => `
       <div class="list-item">
-        <svg class="list-marker" width="32" height="32" viewBox="0 0 32 32">${boltMarkup(16, 16, 32, 'brass')}</svg>
+        <span class="list-marker">${doubleSlash()}</span>
         <span class="list-text">${escapeHtml(item)}</span>
       </div>`).join('');
-  return `<div class="block block-list" data-part="content">${lines}</div>`;
+  return `<div class="block block-list" data-slat="item">${lines}</div>`;
 }
 
 function imageBlock(block) {
   if (!hasText(block.address)) return '';
-  return `<div class="block block-image" data-part="content"><img src="${escapeHtml(block.address)}" alt=""></div>`;
+
+  // The picture sits inside a card, so its edge is metal like the others
+  return `
+    <div class="block block-image" data-slat="item">
+      ${cardMarkup(BLOCK_WIDTH, IMAGE_HEIGHT)}
+      <img src="${escapeHtml(block.address)}" alt="">
+    </div>`;
 }
 
 // A whole number from 0 to 100. Anything that is not a number counts as 0.
@@ -125,12 +135,12 @@ function progressBlock(block) {
   const percent = percentOf(block.percent);
 
   return `
-    <div class="block block-progress" data-part="content">
+    <div class="block block-progress" data-slat="item">
       <div class="progress-top">
         <div class="progress-label">${escapeHtml(block.label)}</div>
         <div class="progress-percent">${percent}%</div>
       </div>
-      <div class="progress-track"><div class="progress-fill" style="width: ${percent}%;"></div></div>
+      <div class="progress-track"><div class="progress-fill bar" style="width: ${percent}%;"></div></div>
     </div>`;
 }
 
@@ -149,9 +159,11 @@ function countdownBlock(block, now) {
   const time = left.total === 0 ? 'PASSED' : unit(left.days, 'DAY') + ' ' + unit(left.hours, 'HR');
 
   return `
-    <div class="block block-countdown" data-part="content">
-      ${capMarkup}
-      <div class="countdown-label">${escapeHtml(block.label)}</div>
-      <div class="countdown-time">${time}</div>
+    <div class="block block-countdown" data-slat="item">
+      ${cardMarkup(BLOCK_WIDTH, CARD_HEIGHT)}
+      <div class="card-text">
+        <div class="countdown-label">${escapeHtml(block.label)}</div>
+        <div class="countdown-time">${time}</div>
+      </div>
     </div>`;
 }

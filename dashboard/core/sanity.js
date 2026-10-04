@@ -1,9 +1,9 @@
 // Talks to Sanity: the one query, the addresses, and turning what comes back
 // into the content shape in data/sample/content.json. The sample is cleaned the same way.
 
-import { defaultSettings, speeds } from '../config.js';
+import { defaultSettings } from '../config.js';
 import { parseLocalDateTime, sameDay } from './time.js';
-import { visibleItems, withDefaults } from './content.js';
+import { fixSettingValues, visibleItems, withDefaults } from './content.js';
 
 // Everything the screen needs, in one request. Lists come back in the order
 // they were created, and normalizeContent puts the ones with an Order first.
@@ -193,8 +193,8 @@ function normalizeSettings(raw) {
   if (isRecord(settings.rotation)) settings.rotation = normalizeRotation(settings.rotation);
   else delete settings.rotation;
 
-  // Anything but one of the four names is dropped, and the default is used
-  if (!Object.keys(speeds).includes(settings.speed)) delete settings.speed;
+  // The choices, switches and numbers in a range are checked in content.js
+  fixSettingValues(settings);
 
   tidyList(settings, 'announcements', normalizeAnnouncements);
   tidyList(settings, 'calendars', calendars => calendars.filter(calendar => calendar.id));
@@ -209,30 +209,30 @@ function tidyList(settings, name, tidy) {
 }
 
 // Zero, a negative number or anything that is not a number would make the
-// schedule spin without waiting, so it is replaced by the default
+// schedule spin without waiting, so it is not used
 function isPositive(number) {
   return typeof number === 'number' && isFinite(number) && number > 0;
 }
 
-// The schedule needs a panel and a number of seconds from every step, so a
-// gap left by the editors is filled in here
+// The schedule needs a panel from every step. Seconds are optional: a row
+// with none, or with a number that cannot be used, has no seconds at all and
+// follows pageSeconds. The same goes for tickerSeconds.
 function normalizeRotation(rotation) {
   const result = Object.assign({}, rotation);
 
   ['grid1', 'grid2'].forEach(area => {
-    const fallback = defaultSettings.rotation[area][0].seconds;
     const steps = Array.isArray(result[area]) ? result[area] : defaultSettings.rotation[area];
 
     result[area] = steps
       .filter(step => step.panel)
-      .map(step => ({
-        panel: step.panel,
-        show: step.show !== false,
-        seconds: isPositive(step.seconds) ? step.seconds : fallback,
-      }));
+      .map(step => {
+        const row = { panel: step.panel, show: step.show !== false };
+        if (isPositive(step.seconds)) row.seconds = step.seconds;
+        return row;
+      });
   });
 
-  if (!isPositive(result.tickerSeconds)) result.tickerSeconds = defaultSettings.rotation.tickerSeconds;
+  if (!isPositive(result.tickerSeconds)) delete result.tickerSeconds;
   return result;
 }
 

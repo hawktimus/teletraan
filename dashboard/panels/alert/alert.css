@@ -3,8 +3,8 @@
   height: 1080px;
   overflow: hidden;
   background: var(--ground);
-  /* a red face on a steel frame, so the alert is the one red screen */
-  --panel-face: var(--fill-danger-hot);
+  /* a dark red face in a red metal frame, so the alert is the one red screen */
+  --panel-face: var(--danger-hot);
   --pulse-time: var(--time-pulse-fast);
 }
 
@@ -14,16 +14,17 @@
   width: 1920px;
   height: 48px;
   box-sizing: border-box;
-  background: repeating-linear-gradient(-45deg, var(--danger) 0, var(--danger) 24px, var(--groove) 24px, var(--groove) 48px);
+  background: repeating-linear-gradient(-45deg, var(--danger) 0, var(--danger) 24px, var(--ground) 24px, var(--ground) 48px);
 }
-.alert .stripe-top {
-  top: 0;
-  border-bottom: 4px solid var(--rim);
-}
-.alert .stripe-bottom {
-  bottom: 0;
-  border-top: 4px solid var(--rim);
-}
+.alert .stripe-top { top: 0; }
+.alert .stripe-bottom { bottom: 0; }
+
+/* The inner edge of each tape is a thin bar of red metal (plate.js
+   rowBarMarkup, red because the tape has class red-metal). The bar is 20px
+   high with its line in the middle, so top is the line's place minus 10. */
+.alert .stripe .row-bar { left: 0; }
+.alert .stripe-top .row-bar { top: 35px; }
+.alert .stripe-bottom .row-bar { top: -7px; }
 
 /* The lamp, headline and message are centred as one block inside the frame,
    so a short alert does not sit in the top corner. */
@@ -54,7 +55,8 @@
 }
 
 /* The words wrap onto more lines when they are long, and are cut off after
-   that. The padding is room for the tails of letters like g and y. */
+   that. The padding is room for the tails of letters like g and y. A long
+   headline (alert.js) is smaller, with room for three lines. */
 .alert .headline {
   max-height: 340px;
   padding-bottom: 12px;
@@ -64,11 +66,17 @@
   color: var(--white);
   font: 700 var(--size-stat)/170px var(--font-display);
 }
+.alert .headline.long {
+  max-height: 450px;
+  font-size: var(--size-announce-small);
+  line-height: 150px;
+}
 .alert .message {
   max-height: 280px;
   overflow: hidden;
+  overflow-wrap: break-word; /* so a very long word wraps and is not cut off at the edge */
   white-space: normal;
-  color: var(--gold);
+  color: var(--yellow);
   font: 500 var(--size-body-large)/70px var(--font-text);
 }
 .alert .message:empty { display: none; } /* so its gap does not leave a hole */

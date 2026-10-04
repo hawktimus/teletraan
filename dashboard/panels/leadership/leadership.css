@@ -1,8 +1,4 @@
-.leadership {
-  width: 1152px;
-  height: 708px;
-}
-
+/* The header sits on top of the two header plates of the area's frame */
 .leadership .header {
   position: absolute;
   left: 0;
@@ -19,9 +15,19 @@
   margin: 0;
   font: 700 var(--size-heading)/96px var(--font-display);
 }
+.leadership .tag {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.leadership .tag-text {
+  color: var(--yellow);
+  font: 600 var(--size-label)/44px var(--font-display);
+}
 
 /* Cards are 538x168. Columns start at x=28 and x=586, rows at y=144, 328
-   and 512. The cut corner of the last card runs parallel to the panel's. */
+   and 512, so every card is 16px from the frame. The cut corner of the last
+   card runs parallel to the frame's. */
 .leadership .cards {
   position: absolute;
   left: 28px;
@@ -36,21 +42,16 @@
   width: 538px;
   height: 168px;
 }
-.leadership .card-shape {
-  position: absolute;
-  left: 0;
-  top: 0;
-  overflow: visible; /* the light edge of the pocket is drawn 2px below the card */
-}
-.leadership .card-cap { fill: var(--fill-tab); }
-.leadership .card-cap-edge { fill: var(--fill-brass); }
 
+/* The text is positioned too, so it is drawn on top of the card's purple
+   plate, which is positioned. The bottom padding lifts it a little, to sit in
+   the middle of what is left under the cut corner. The right padding is small
+   so that a name of the 17 characters Studio allows fits on the line. */
 .leadership .card-text {
-  position: absolute;
-  left: 28px;
-  top: 0;
-  width: 480px;
-  height: 168px;
+  position: relative;
+  box-sizing: border-box;
+  height: 100%;
+  padding: 0 14px 10px 30px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -58,12 +59,12 @@
 .leadership .card-role {
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--gold);
-  font: 600 var(--size-label)/48px var(--font-display);
+  color: var(--yellow);
+  font: 600 var(--size-label)/46px var(--font-display);
 }
 .leadership .card-role:empty { display: none; } /* a person with no role has the name centred */
 .leadership .card-name {
   overflow: hidden;
   text-overflow: ellipsis;
-  font: 500 var(--size-body)/64px var(--font-text);
+  font: 500 var(--size-body)/68px var(--font-text);
 }

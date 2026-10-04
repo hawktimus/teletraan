@@ -1,10 +1,14 @@
 // Shows a sponsor's logo and name, the next sponsor each time the panel
 // comes round.
 
-import { plateMarkup, scanMarkup } from '../../core/plate.js';
+import { cardMarkup } from '../../core/plate.js';
 import { escapeHtml, hasText } from '../../core/text.js';
 import { visibleItems } from '../../core/content.js';
 import { makeTurns } from '../../core/turns.js';
+
+// Keep in step with .logo-card in sponsor-logo.css
+const CARD_WIDTH = 560;
+const CARD_HEIGHT = 176;
 
 const nextSponsor = makeTurns();
 
@@ -20,11 +24,8 @@ export function mount(host, content) {
   const sponsor = nextSponsor(namedSponsors(content));
 
   host.innerHTML = `
-    <section class="panel sponsor-logo" data-sequence="grid2">
-      ${plateMarkup('grid2')}
-      ${scanMarkup('grid2')}
-
-      <div class="label" data-part="label">SPONSOR</div>
+    <section class="page sponsor-logo">
+      <div class="label" data-slat="label">SPONSOR</div>
 
       ${sponsor ? sponsorMarkup(sponsor) : ''}
     </section>`;
@@ -35,13 +36,14 @@ export function mount(host, content) {
   if (image) image.addEventListener('error', () => showNameOnly(body));
 }
 
+// The logo sits in a purple card with a thin metal edge
 function sponsorMarkup(sponsor) {
   const logo = sponsor.logoAddress
-    ? `<div class="logo-slot"><img class="logo" src="${escapeHtml(sponsor.logoAddress)}" alt=""></div>`
+    ? `<div class="logo-card">${cardMarkup(CARD_WIDTH, CARD_HEIGHT)}<img class="logo" src="${escapeHtml(sponsor.logoAddress)}" alt=""></div>`
     : '';
 
   return `
-    <div class="content ${logo ? 'with-logo' : 'name-only'}" data-part="content">
+    <div class="content ${logo ? 'with-logo' : 'name-only'}" data-slat="content">
       ${logo}
       <div class="name">${escapeHtml(sponsor.name)}</div>
     </div>`;

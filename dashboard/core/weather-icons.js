@@ -7,7 +7,7 @@ const slope = 0.8;
 
 // colours come from tokens.css, and var() only works inside a style attribute
 const colors = {
-  sun: 'var(--gold)',
+  sun: 'var(--yellow)',
   cloud: 'var(--white)',
   rain: 'var(--status-progress)',
   snow: 'var(--white)',

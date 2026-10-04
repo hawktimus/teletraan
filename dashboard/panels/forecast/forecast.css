@@ -1,8 +1,3 @@
-.forecast {
-  width: 656px;
-  height: 372px;
-}
-
 .forecast .label {
   position: absolute;
   left: 60px;
@@ -13,60 +8,59 @@
   font: 600 var(--size-label)/44px var(--font-display);
 }
 
+/* The weather picture and the temperature, the condition, then a thin metal
+   bar and the high and low. The content box is 32px in from the frame on each
+   side. */
 .forecast .content {
   position: absolute;
-  left: 48px;
-  top: 98px;
-  width: 560px;
-  height: 248px;
+  left: 32px;
+  top: 96px;
+  width: 592px;
+  height: 264px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 18px;
 }
 
 .forecast .now {
   display: flex;
   align-items: center;
   gap: 24px;
-  height: 120px;
+  height: 112px;
 }
 .forecast .icon svg {
   display: block;
-  width: 120px;
-  height: 120px;
+  width: 112px;
+  height: 112px;
 }
 
 .forecast .temperature {
-  color: var(--gold);
-  font: 700 var(--size-stat)/120px var(--font-display);
+  color: var(--yellow);
+  font: 700 var(--size-stat)/112px var(--font-display);
 }
 
 .forecast .condition {
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-  font: 500 var(--size-body)/56px var(--font-text);
+  font: 500 var(--size-label)/44px var(--font-text);
 }
+
 .forecast .range {
   position: relative;
   display: flex;
   justify-content: center;
   gap: 40px;
   width: 100%;
-  font: 600 var(--size-body)/56px var(--font-display);
+  font: 600 var(--size-body)/52px var(--font-display);
 }
 
-/* A groove with a light edge below it, drawn in the gap above the row so no
-   text moves. It is the same cut as the dividers on the large panels, and
-   runs out to the edges of the body (the content box is 32px in from them). */
-.forecast .range::before {
-  content: '';
-  position: absolute;
-  left: -32px;
-  right: -32px;
-  top: -7px;
-  border-top: 4px solid var(--groove);
-  border-bottom: 2px solid var(--groove-lit);
+/* The bar runs through the middle of the 18px gap above the row, which is 9px
+   up from the row and 10px up again for the top of its 20px high picture. It
+   starts 14px from the frame, and the content box is 32px in. */
+.forecast .row-bar {
+  left: -18px;
+  top: -19px;
 }

@@ -44,10 +44,29 @@ export const threat = {
 // lasts, and how long a panel stays on screen.
 export const speeds = { 'very-slow': 2, 'slow': 1.5, 'normal': 1, 'fast': 0.75 };
 
+// The Frame metal setting in Dashboard Settings: the metal on the frame edges
+export const metals = ['gold', 'silver'];
+
+// The smallest and largest values the Studio accepts. A number outside them
+// is brought back to the nearest end, so one slip cannot break the screen.
+export const limits = {
+  pageSeconds: { min: 8, max: 120 },
+  nameEvery: { min: 30, max: 900 },
+};
+
 // Used for anything the editors have not filled in yet
 export const defaultSettings = {
   motion: 'full',
   speed: 'normal',
+  frameMetal: 'gold',
+  glint: true,
+  // How long a large panel stays. A small panel stays max(6, round(pageSeconds
+  // x 0.75)) and a ticker line max(8, round(pageSeconds x 1.5)). A row with
+  // seconds of its own, or a ticker with its own, uses those instead. The
+  // rows below have none, so they follow this.
+  pageSeconds: 20,
+  nameTransform: true,
+  nameEvery: 300,
   countdown: {
     kickoffLabel: 'KICKOFF IN',
     kickoff: '2027-01-09T12:00',
@@ -57,24 +76,23 @@ export const defaultSettings = {
   alert: { on: false, headline: '', message: '', until: '' },
   rotation: {
     grid1: [
-      { panel: 'tasks', show: true, seconds: 16 },
-      { panel: 'events', show: true, seconds: 16 },
-      { panel: 'tonight', show: true, seconds: 16 },
-      { panel: 'spotlight', show: true, seconds: 16 },
-      { panel: 'sponsor-feature', show: true, seconds: 16 },
-      { panel: 'photo', show: true, seconds: 16 },
-      { panel: 'leadership', show: true, seconds: 16 },
-      { panel: 'team-leads', show: true, seconds: 16 },
-      { panel: 'custom', show: true, seconds: 16 },
+      { panel: 'tasks', show: true },
+      { panel: 'events', show: true },
+      { panel: 'tonight', show: true },
+      { panel: 'spotlight', show: true },
+      { panel: 'sponsor-feature', show: true },
+      { panel: 'photo', show: true },
+      { panel: 'leadership', show: true },
+      { panel: 'team-leads', show: true },
+      { panel: 'custom', show: true },
     ],
     grid2: [
-      { panel: 'task-counts', show: true, seconds: 12 },
-      { panel: 'next-event', show: true, seconds: 12 },
-      { panel: 'forecast', show: true, seconds: 12 },
-      { panel: 'safety-days', show: true, seconds: 12 },
-      { panel: 'sponsor-logo', show: true, seconds: 12 },
+      { panel: 'task-counts', show: true },
+      { panel: 'next-event', show: true },
+      { panel: 'forecast', show: true },
+      { panel: 'safety-days', show: true },
+      { panel: 'sponsor-logo', show: true },
     ],
-    tickerSeconds: 24,
   },
   doneDays: 7,
   safetyDaysSince: '',

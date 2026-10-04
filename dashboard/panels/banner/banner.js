@@ -4,7 +4,8 @@ import * as frame from '../../frame.js';
 import { formatClock, formatDate } from '../../core/time.js';
 import { weatherIcon } from '../../core/weather-icons.js';
 import { logoMarkup } from '../../core/logo.js';
-import { boltMarkup } from '../../core/plate.js';
+import { nameMarkup } from '../../core/name.js';
+import { teamPlateMarkup } from '../../core/plate.js';
 
 export function mount(host, content) {
   host.innerHTML = `
@@ -14,13 +15,9 @@ export function mount(host, content) {
       <div class="banner-text">
         <div class="banner-top">
           <div class="banner-left">
-            <h1 class="team-name" data-part="title"></h1>
+            <h1 class="team-name" data-part="title" data-name-effect></h1>
             <div class="team-plate" data-part="team-plate">
-              <svg width="520" height="76" viewBox="0 0 520 76">
-                <polygon points="4,4 516,4 516,40 476,72 4,72"/>
-                <polyline class="tab-lit" points="12,11 510,11"/>
-                ${boltMarkup(494, 24, 24, 'brass')}
-              </svg>
+              ${teamPlateMarkup()}
               <span>TEAM <b class="team-number"></b></span>
             </div>
           </div>
@@ -31,6 +28,7 @@ export function mount(host, content) {
               <span class="suffix"></span>
             </div>
             <div class="date-row">
+              <span class="date-rule bar bar-thin"></span>
               <span class="date"></span>
               <span class="weather-icon"></span>
               <span class="temperature"></span>
@@ -41,7 +39,7 @@ export function mount(host, content) {
         <div class="banner-bottom">
           <img class="wordmark" data-part="wordmark" src="assets/teletraan-wordmark.svg" alt="Teletraan I">
           <span class="subtitle" data-part="subtitle">DASHBOARD</span>
-          <span class="rule" data-part="rule"></span>
+          <span class="rule bar" data-part="rule"></span>
           <span class="status" data-part="status"></span>
           <span class="school" data-part="school"></span>
         </div>
@@ -59,9 +57,20 @@ function setText(element, selector, text) {
   if (target.textContent !== text) target.textContent = text;
 }
 
+// The name is made of letters so the name effect can split each one. It is
+// only rebuilt when the name changes, because a rebuild in the middle of the
+// effect would start it again.
+function setName(element, name) {
+  const heading = element.querySelector('.team-name');
+  if (heading.dataset.name === name) return;
+
+  heading.dataset.name = name;
+  heading.innerHTML = nameMarkup(name);
+}
+
 // New content: the names, the weather, and whether the content is old
 export function update(element, content) {
-  setText(element, '.team-name', content.team.name);
+  setName(element, content.team.name);
   setText(element, '.team-number', content.team.number);
   setText(element, '.school', content.team.school);
 

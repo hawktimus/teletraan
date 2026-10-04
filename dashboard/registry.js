@@ -1,10 +1,14 @@
 // Every panel the dashboard can load. A panel is a folder under panels/
 // holding a script and a stylesheet.
 //
-//   region  where it appears: banner, countdown, grid1, grid2, ticker or overlay
-//   topic   what it is about. Grid 1 and Grid 2 never show the same topic
-//           at the same moment, so tasks and task-counts share one.
+//   region    where it appears: banner, countdown, grid1, grid2, ticker or overlay
+//   topic     what it is about. Grid 1 and Grid 2 never show the same topic
+//             at the same moment, so tasks and task-counts share one.
 //   testOnly  only used by the hardware test (?stress)
+//
+// A panel in grid1, grid2 or ticker draws only its page. The area it is shown
+// in supplies the frame and the page change (core/areas.js). The banner, the
+// countdown and the overlay panels draw their own frame.
 //
 // Which of the grid panels are shown, in what order and for how long is set
 // in Dashboard Settings (see defaultSettings in config.js). The fixed panels

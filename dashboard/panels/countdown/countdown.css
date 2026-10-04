@@ -1,16 +1,15 @@
 /* The look changes with data-level, which countdown.js sets from how many
    days are left. The urgent level gets white numbers, because red numbers
-   would melt into the red frame. */
+   would melt into the red frame. The frame itself is red metal (plate.js). */
 
 .countdown {
   width: 656px;
   height: 320px;
   --accent: var(--danger);
-  --count-color: var(--gold);
+  --count-color: var(--yellow);
   --pulse-time: var(--time-pulse-slow);
-  /* red-tinted steel with a red frame. In the last days the steel is a brighter red. */
-  --panel-face: var(--fill-danger-plate);
-  --panel-frame: var(--fill-danger-rim);
+  /* a dark red plate. In the last days it is a brighter red. */
+  --panel-face: var(--danger-plate);
 }
 .countdown[data-level="tense"] {
   --count-color: var(--danger-bright);
@@ -19,7 +18,7 @@
 .countdown[data-level="critical"] {
   --count-color: var(--white);
   --pulse-time: var(--time-pulse-fast);
-  --panel-face: var(--fill-danger-hot);
+  --panel-face: var(--danger-hot);
 }
 
 .countdown .top-line {
@@ -30,22 +29,22 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 24px;
-  font: 600 var(--size-label)/44px var(--font-display);
+  gap: 24px; /* LINE_GAP in countdown.js */
+  /* countdown.js measures this font and size to decide what fits. Change them together. */
+  font: 700 var(--size-label)/44px var(--font-display);
 }
 .countdown .label-group {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px; /* with the 20px lamp this leaves 528px, LINE_ROOM in countdown.js */
   min-width: 0;
   overflow: hidden;
-  color: var(--gold);
+  color: var(--yellow);
 }
 .countdown .label {
   min-width: 0;
   overflow: hidden;
-  text-overflow: ellipsis; /* a label that is too long is cut off before it reaches the date */
-  letter-spacing: -1px; /* just enough for COUNTDOWN COMPLETE to fit */
+  text-overflow: ellipsis; /* a label too long even without IN and the date is cut off */
 }
 .countdown .lamp {
   flex: none;
@@ -55,19 +54,17 @@
 }
 .countdown .date {
   flex: none;
-  color: var(--gold);
+  color: var(--yellow);
 }
 .countdown .date:empty { display: none; } /* so its gap does not take room from the label */
 
-/* warning tape */
+/* a row of slanted bars, drawn by countdown.js */
 .countdown .stripes {
   position: absolute;
   left: 64px;
   top: 70px;
-  width: 564px;
-  height: 12px;
-  background: repeating-linear-gradient(-45deg, var(--danger) 0, var(--danger) 12px, var(--groove) 12px, var(--groove) 24px);
 }
+.countdown .stripes path { fill: var(--accent); }
 
 .countdown .days-row {
   position: absolute;
@@ -135,21 +132,26 @@
 .countdown .digits span { display: block; }
 .countdown .unit {
   margin-right: 8px;
-  color: var(--gold);
+  color: var(--yellow);
   font: 600 var(--size-label)/60px var(--font-display);
 }
 
-/* a bar of 12 blocks that fills through each minute */
+/* a bar of 12 blocks that fills through each minute. It stops short of the
+   bolt at the cut corner. */
 .countdown .segments {
   position: absolute;
-  left: 64px;
+  left: 32px;
   top: 292px;
   display: flex;
   gap: 4px;
 }
 .countdown .segment {
-  width: 43px;
+  width: 38px;
   height: 12px;
-  background: var(--pocket);
+  background: var(--danger-dark);
 }
-.countdown .segment.lit { background: var(--accent); }
+/* a lit block has a pale top, the red, and a dark foot */
+.countdown .segment.lit {
+  background: linear-gradient(180deg, var(--red-ridge) 0, var(--red-ridge) 3px, var(--accent) 3px, var(--accent) 8px, var(--red-4) 8px, var(--red-4) 12px);
+}
+[data-finish="flat"] .countdown .segment.lit { background: var(--accent); }

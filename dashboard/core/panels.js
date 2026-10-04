@@ -1,12 +1,15 @@
-// Loads the panels listed in registry.js and draws them onto the screen.
-// A panel that fails to load or to draw is skipped and reported in the
-// console. It never stops the rest of the screen.
+// Loads the panels listed in registry.js and builds their pages. A panel that
+// fails to load or to draw is skipped and reported in the console. It never
+// stops the rest of the screen.
+//
+// Putting a page in its area, and taking it out again, is areas.js.
 
 import { panels } from '../registry.js';
+import * as frame from '../frame.js';
 
 const modules = {};
 
-export function findPanel(id) {
+function findPanel(id) {
   const panel = panels.find(item => item.id === id);
   if (!panel) throw new Error('No panel called "' + id + '" in registry.js');
   return panel;
@@ -50,9 +53,10 @@ export async function loadPanel(panel) {
   await stylesheetDone;
 }
 
-function hostFor(panel) {
-  const id = panel.region === 'overlay' ? 'overlay' : 'region-' + panel.region;
-  return document.getElementById(id);
+// The element a panel that has no area goes into: the banner, the countdown
+// and the full screen panels draw everything themselves
+export function hostFor(region) {
+  return document.getElementById(region === 'overlay' ? 'overlay' : 'region-' + region);
 }
 
 // True if the panel loaded and has something to show right now
@@ -69,10 +73,11 @@ export function canShow(id, content) {
   }
 }
 
-// Draws the panel into its area and returns the panel's own element.
-// It is built away from the screen first, so if it fails the old panel is
-// left alone.
-export function mountPanel(id, content) {
+// Builds a panel's page away from the screen and returns
+//   { id, region, element }
+// element is the panel's own root element, not on the screen yet. If the
+// panel fails, this throws and whatever is on screen is left alone.
+export function buildPage(id, content) {
   const panel = findPanel(id);
   const module = modules[id];
   if (!module) throw new Error('Panel "' + id + '" is not loaded');
@@ -81,16 +86,33 @@ export function mountPanel(id, content) {
   module.mount(workbench, content);
 
   const element = workbench.firstElementChild;
-  const host = hostFor(panel);
-  host.innerHTML = '';
-  host.appendChild(element);
-  return element;
+  if (!element) throw new Error('Panel "' + id + '" drew nothing');
+  element.dataset.panel = id; // updatePanel finds the panel by this
+
+  frame.numberSlats(element); // a panel with no slats, such as the banner, has nothing to number
+  return { id: id, region: panel.region, element: element };
 }
 
-// Tells a panel that stays on screen (banner, countdown) about new content
+// Puts a page that has no area into its region, alone
+export function placeWholePanel(page) {
+  const host = hostFor(page.region);
+  host.innerHTML = '';
+  host.appendChild(page.element);
+}
+
+// Builds a whole panel and puts it on the screen at once, for the banner,
+// the countdown and the alerts. Returns the panel's own element.
+export function mountPanel(id, content) {
+  const page = buildPage(id, content);
+  placeWholePanel(page);
+  return page.element;
+}
+
+// Tells a panel that is on screen (the banner, the countdown) about new
+// content. The panel's own update(element, content) does the work.
 export function updatePanel(id, content) {
   const module = modules[id];
-  const element = hostFor(findPanel(id)).firstElementChild;
+  const element = document.querySelector('[data-panel="' + id + '"]');
   if (!module || !module.update || !element) return;
 
   try {

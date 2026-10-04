@@ -1,6 +1,6 @@
 # Rebuilding the Mini
 
-How to take the Mac Mini (the Mini, see README.md) from a fresh Debian install
+How to take the Mac Mini (the Mini, see docs/where-things-are.md) from a fresh Debian install
 to a working screen. Allow an afternoon.
 
 Most of what the Mini shows comes back from somewhere else: the dashboard from
@@ -9,8 +9,8 @@ and the calendars from BAND. Four things live only on the Mini and are lost
 when its disk is wiped:
 
 - `deploy/local.env`, which holds the calendar feed addresses
-- the deploy key in `/home/teletraan/.ssh`, if the repository is private
-- the password of the `teletraan` account
+- the deploy key in `/home/hawktimus/.ssh`, if the repository is private
+- the password of the `hawktimus` account
 - `photos.json` in `/var/lib/teletraan/data`, the photo list (see Photos below)
 
 Before you wipe anything, keep a copy of each wherever the team mentor keeps
@@ -29,7 +29,7 @@ said yes.**
 
 | What | Why | Step |
 |------|-----|------|
-| Debian, and the `teletraan` account the installer creates | the operating system | 2 |
+| Debian, and the `hawktimus` account the installer creates | the operating system | 2 |
 | `openssh-server` (optional) | fix the Mini from another computer | 2 |
 | `systemd-timesyncd`, only if step 3 says the clock is not kept in sync: `sudo apt install systemd-timesyncd`, then `sudo timedatectl set-ntp true` | keep the clock right | 3 |
 | `git`, `curl`, `ca-certificates` | download the repository and the calendars | 4 |
@@ -55,8 +55,9 @@ see studio/README.md.
 
 2. **Install Debian.** Use a network cable. Put the installer stick in, hold
    the Option key while the Mini starts, and pick the stick (it may be called
-   "EFI Boot"). Name the first user `teletraan` and leave the root password
-   empty, so that user can run `sudo`. If the installer offers to install
+   "EFI Boot"). Name the first user `hawktimus` and leave the root password
+   empty, so that user can run `sudo`. (The scripts work with whatever the
+   user is called. They use the account that owns the repository.) If the installer offers to install
    the boot loader for EFI, accept. When asked what to install, tick
    "standard system utilities" and nothing else. Do not install a desktop.
    "SSH server" is the one extra to tick, if the team mentor approves it.
@@ -84,19 +85,20 @@ see studio/README.md.
 6. **Get the repository.** The unit files expect it in `/opt/teletraan`.
 
        sudo mkdir /opt/teletraan
-       sudo chown teletraan:teletraan /opt/teletraan
+       sudo chown hawktimus:hawktimus /opt/teletraan
        git clone [repository address] /opt/teletraan
 
    If the repository is private, the Mini needs a read-only deploy key. The
-   team mentor sets that up. The key stays in `/home/teletraan/.ssh` and is
-   never put in the repository. If `git clone` cannot connect, port 22 may be
+   team mentor sets that up. The key stays in `/home/hawktimus/.ssh` and is
+   never put in the repository. On Debian a user's group has the same name as
+   the user, so the group is `hawktimus` too. If `git clone` cannot connect, port 22 may be
    blocked on the school network. Ask the team mentor.
 
 7. **Make the data folder.** The calendars, `photos.json` and `version.txt` go
    here, outside the repository.
 
        sudo mkdir -p /var/lib/teletraan/data
-       sudo chown teletraan:teletraan /var/lib/teletraan/data
+       sudo chown hawktimus:hawktimus /var/lib/teletraan/data
 
 8. **Make local.env.** Lock the file before the addresses go in.
 
@@ -143,11 +145,16 @@ see studio/README.md.
     The screen runs as a kiosk: a browser that fills the screen with no
     address bar, tabs or menus. Try it by hand before turning on the service,
     which takes over the Mini's screen. At the Mini's own keyboard, log in as
-    `teletraan` on the text screen and run the command below. If the service
+    `hawktimus` on the text screen and run the command below. If the service
     is already running, stop it first with
     `sudo systemctl stop teletraan-kiosk.service`.
 
         xinit /opt/teletraan/deploy/scripts/kiosk.sh -- :1 vt8
+
+    If it says `Only console users are allowed to run the X server`, the
+    command was not run from the Mini's own text screen. It does not work over
+    SSH or from a terminal window inside a desktop. Type `tty` first. It
+    should print `/dev/tty1` (or tty2, tty3), not `/dev/pts/0`.
 
     The dashboard appears on the TV. If something is wrong, the terminal
     prints why. To stop it, press Ctrl+Alt+F1 to go back to the text screen
@@ -200,18 +207,25 @@ list again about every 10 minutes, so there is nothing to restart.
 
 ## Burn-in
 
-The screen has bright steel frames that never move. On an LCD or LED TV that
-does no harm and the code needs no change. On an OLED or plasma TV a still
-picture can leave a faint copy of the frames behind. Switch that kind of TV
-off at night with its own timer or schedule, in its settings. The Mini can
-keep running.
+The plates, the metal frames, the banner and the countdown stay in the same
+place all day. Only the pages inside the frames change, and the frames lift off
+for a moment at every page change and drop back to exactly where they were. On
+an LCD or LED TV that does no harm and the code needs no change. On an OLED or
+plasma TV a still picture can leave a faint copy of the frames and plates
+behind. Switch that kind of TV off at night with its own timer or schedule, in
+its settings. The Mini can keep running.
 
 ## What to check
 
 - The dashboard is on the screen within two minutes of the Mini starting.
 - The clock matches a phone, and the date is right.
 - All four sides of the frames and the whole ticker are visible. If
-  an edge is cut off, go back to step 13.
+  an edge is cut off, go back to step 13. The frames are metal, gold unless
+  Dashboard Settings says Silver (Screen, Frame metal), on purple plates.
+- Every 20 seconds or so the pages turn over: the rows flip, the frames lift a
+  little and drop back, and the bolts turn. A bright dash runs round each big
+  frame every few seconds. If that stutters, see `docs/try-it-on-the-mini.md`:
+  `?glint=off` and `?finish=flat` are the first things to try.
 - Events appear. `sudo journalctl -u teletraan-calendars.service -n 20`
   shows `updated` for every calendar. If a calendar says `updated` but its
   events never show, it has no row in Dashboard Settings, Calendars (step 8).
@@ -270,6 +284,7 @@ Start with the log for the part that is wrong.
 
 | What you see | What to try |
 |--------------|-------------|
+| `xinit` says "Only console users are allowed to run the X server" | You are not on a real text screen. Run `tty`: if it prints `/dev/pts/...` you are in SSH or in a terminal window. Go to the Mini's own keyboard, press Ctrl+Alt+F3 (hold the Fn key too on a Mac keyboard) and log in as `hawktimus` there. If it still says it on a real text screen, run `sudo dpkg-reconfigure x11-common` and choose "Anybody". If the Mini starts into a desktop with a login picture instead of a text login, it is not set up the way this page assumes: tell the team mentor. The kiosk service does not have this problem, because it starts X on the console itself. |
 | Black screen, nothing | `sudo journalctl -u teletraan-kiosk.service -n 50`. A line about X or a missing package means step 11 is not finished. `sudo systemctl restart teletraan-kiosk.service` starts it again. |
 | "Teletraan I could not start. Trying again in 30 seconds." | The browser works but the dashboard could not start, for example a file would not load or a panel failed. It retries by itself, and a fix that has been pulled is picked up on the next try. To see why, run the same commit on a laptop (`python3 tools/serve.py`) and read the browser console there. |
 | The browser says it cannot connect | `sudo docker compose ps` in `/opt/teletraan/deploy`. If it is not running, run step 9 again. |
@@ -301,7 +316,7 @@ The web server image is fixed to one version in `deploy/docker-compose.yml`.
 To move to a newer one, ask the team mentor first, change the tag, and run
 step 9 again.
 
-The `teletraan` account runs the browser and also owns `local.env`, so
+The `hawktimus` account runs the browser and also owns `local.env`, so
 `chmod 600` only keeps other accounts out. Do not use the Mini to browse the
 web.
 

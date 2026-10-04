@@ -1,8 +1,3 @@
-.safety-days {
-  width: 656px;
-  height: 372px;
-}
-
 .safety-days .label {
   position: absolute;
   left: 60px;
@@ -13,22 +8,23 @@
   font: 600 var(--size-label)/44px var(--font-display);
 }
 
-/* A band of warning tape in the header strip, under the slots and above the
-   brass seam. It fades in with the label. */
+/* A band of warning tape at the right end of the header, just above the
+   seam. It is tape, not metal, so it keeps the brand yellow, and it turns
+   over with the label. */
 .safety-days .tape {
   position: absolute;
   left: 484px;
   top: 68px;
   width: 156px;
   height: 8px;
-  background: repeating-linear-gradient(-45deg, var(--gold) 0, var(--gold) 8px, var(--groove) 8px, var(--groove) 16px);
+  background: repeating-linear-gradient(-45deg, var(--yellow) 0, var(--yellow) 8px, var(--ground) 8px, var(--ground) 16px);
 }
 
-/* The widest the body can be: 16px in from the outline on each side */
+/* The widest the body can be: 16px in from the frame on each side */
 .safety-days .content {
   position: absolute;
   left: 16px;
-  top: 96px;
+  top: 98px;
   width: 624px;
   height: 256px;
   display: flex;
@@ -43,16 +39,16 @@
 
 .safety-days .number {
   flex: none;
-  color: var(--gold);
+  color: var(--yellow);
   font: 700 var(--size-count)/216px var(--font-display);
 }
 .safety-days .stacked .number {
-  font-size: var(--size-count-long);
-  line-height: 172px;
+  font-size: var(--size-days);
+  line-height: 128px;
 }
 .safety-days .placeholder .number {
   font-size: var(--size-days-long);
-  line-height: 160px;
+  line-height: 120px;
 }
 
 /* normal lets the caption wrap. Beside a wide number it takes more lines. */
@@ -61,34 +57,20 @@
   white-space: normal;
   font: 600 var(--size-label)/48px var(--font-text);
 }
-/* stretch makes the caption as wide as the body, so the groove above it runs across */
+/* stretch makes the caption as wide as the body, so it is centred under the number */
 .safety-days .stacked .caption {
   align-self: stretch;
   text-align: center;
+  line-height: 44px;
 }
 
-/* A groove with a light edge beside it, drawn in the gap between the number
-   and the caption so no text moves. It stands between them when the caption
-   is beside the number, and lies across the caption's top when it is under
-   the number. */
-.safety-days .caption::before {
-  content: '';
-  position: absolute;
-  left: -13px;
-  top: 50%;
-  height: 176px;
-  margin-top: -88px;
-  border-left: 4px solid var(--groove);
-  border-right: 2px solid var(--groove-lit);
-}
-.safety-days .stacked .caption::before {
-  left: 0;
-  right: 0;
-  top: -1px;
-  height: 0;
-  margin-top: 0;
-  border-left: 0;
-  border-right: 0;
-  border-top: 4px solid var(--groove);
-  border-bottom: 2px solid var(--groove-lit);
+/* The thin metal bar between the number and the caption, which only exists
+   when the caption is under the number. It runs through the middle of the
+   28px gap above the caption: 14px up, and 10px up again for the top of its
+   20px high picture. The body is 16px in from the frame and the bar starts
+   14px from it, so it is 2px to the left of the caption. */
+.safety-days .stacked .caption { margin-top: 28px; }
+.safety-days .row-bar {
+  left: -2px;
+  top: -24px;
 }

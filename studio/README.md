@@ -27,8 +27,8 @@ is part of every address the dashboard asks for), so it is fine to keep it in
 the repository.
 
 Do these once, in order. Steps 3 and 4 install packages and sign in to the
-team's Sanity account, so they need the team mentor's yes first (see the
-README in the top folder).
+team's Sanity account, so they need the team mentor's yes first (see
+docs/where-things-are.md).
 
 1. Open the Terminal app: press Command+Space, type Terminal and press
    Enter.
@@ -63,9 +63,11 @@ README in the top folder).
 7. Type some content into the Studio. Open Dashboard Settings first and click
    Publish. Then check the Announcements tab: the two starting rows, 14:30 and
    17:00, must be there, because a settings page saved without them plays no
-   announcements. Add a few tasks, a sponsor and some tips, and click Publish
-   on each. Studio keeps what you type as a draft, and the dashboard only
-   reads what is published.
+   announcements. The Screen tab should show Frame metal on Gold, with Glint
+   and Name effect on, and the Panels tab should show Seconds per page at 20.
+   Add a few tasks, a sponsor and some tips, and click Publish on each.
+   Studio keeps what you type as a draft, and the dashboard only reads what is
+   published.
 8. Switch the dashboard over from the sample content. In dashboard/config.js
    change this line, save, and reload the dashboard:
 

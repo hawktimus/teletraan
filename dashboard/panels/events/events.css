@@ -1,8 +1,4 @@
-.events {
-  width: 1152px;
-  height: 708px;
-}
-
+/* The header sits on top of the two header plates of the area's frame */
 .events .header {
   position: absolute;
   left: 0;
@@ -20,7 +16,7 @@
   font: 700 var(--size-heading)/96px var(--font-display);
 }
 
-/* Four rows of 144px. The thin lines between them come from plate.js. */
+/* Four rows of 144px. Each row carries the thin metal bar under it. */
 .events .rows {
   position: absolute;
   left: 0;
@@ -29,49 +25,43 @@
   height: 576px;
 }
 .events .row {
+  position: relative;
   display: flex;
   align-items: center;
   box-sizing: border-box;
   height: 144px;
-  padding: 0 88px 0 48px; /* the right side stays clear of the cut corner */
+  padding-right: 40px;
+}
+/* The line of the bar runs through the middle of its 20px high picture, so the
+   picture starts 10px above the bottom of the row. The bar stops 14px short of
+   the frame on each side. */
+.events .row-bar {
+  left: 14px;
+  top: 134px;
 }
 
+/* The cut corner at the bottom right crosses the end of the last row's second
+   line, so that row stops sooner. */
+.events .row:nth-child(4) { padding-right: 88px; }
+
+/* The day and the date sit in a column of their own, centred */
 .events .date {
-  position: relative;
   flex: none;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  width: 136px;
-  height: 120px;
-  margin-right: 32px;
-  text-align: center;
+  align-items: center;
+  width: 220px;
+  color: var(--yellow);
+  font-family: var(--font-display);
+  font-weight: 700;
 }
-.events .date-tile {
-  position: absolute;
-  left: 0;
-  top: 0;
-}
-.events .date-band { fill: var(--fill-tab); }
-.events .date-band-lit {
-  fill: none;
-  stroke: var(--bevel-lit);
-  stroke-width: 2px;
-}
-.events .date-seam {
-  stroke: var(--trim);
-  stroke-width: 2px;
-}
-/* positioned, so the text is painted above the tile */
 .events .day-name {
-  position: relative;
-  color: var(--white); /* gold is only 5.5 to 1 on the lightest purple */
-  font: 600 var(--size-label)/48px var(--font-display);
+  font-size: var(--size-label);
+  line-height: 48px;
 }
 .events .day-number {
-  position: relative;
-  color: var(--gold);
-  font: 700 var(--size-body)/60px var(--font-display);
+  font-size: var(--size-body);
+  line-height: 56px;
 }
 
 .events .details {
@@ -81,11 +71,11 @@
 .events .event-title {
   overflow: hidden;
   text-overflow: ellipsis;
-  font: 500 var(--size-body)/60px var(--font-text);
+  font: 500 var(--size-body)/64px var(--font-text);
 }
 .events .event-when {
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--lilac);
-  font: 500 var(--size-label)/48px var(--font-text);
+  font: 500 var(--size-label)/52px var(--font-text);
 }

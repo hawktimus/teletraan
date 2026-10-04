@@ -1,7 +1,7 @@
 // What is blocked, what is being worked on, what is next and what just
 // finished, in groups of up to two tasks.
 
-import { plateMarkup, scanMarkup } from '../../core/plate.js';
+import { rowBarMarkup } from '../../core/plate.js';
 import { doubleSlash, statusMark } from '../../core/marks.js';
 import { escapeHtml, hasText } from '../../core/text.js';
 import { visibleItems } from '../../core/content.js';
@@ -21,10 +21,6 @@ const groups = [
   { status: 'up-next', label: 'UP NEXT' },
   { status: 'done', label: 'RECENTLY DONE' },
 ];
-
-// 316 and 508 are where rows 1 and 2 end: 124px (the top of .rows in
-// tasks.css) plus 192px for each row.
-const dividerHeights = [316, 508];
 
 const dayMs = 24 * 60 * 60 * 1000;
 
@@ -53,23 +49,22 @@ export function hasContent(content) {
 
 export function mount(host, content) {
   const rows = rowsFor(content);
-  const lines = rows.map((row, index) => rowMarkup(row, index)).join('');
+  const lines = rows.map((row, index) => rowMarkup(row, index === rows.length - 1)).join('');
 
   host.innerHTML = `
-    <section class="panel tasks" data-sequence="grid1">
-      ${plateMarkup('grid1', { dividers: dividerHeights.slice(0, rows.length - 1) })}
-      ${scanMarkup('grid1')}
-
+    <section class="page tasks">
       <div class="header">
-        <h2 class="title" data-part="title">TASKS</h2>
-        <div data-part="tag">${doubleSlash()}</div>
+        <h2 class="title" data-slat="title">TASKS</h2>
+        <div data-slat="tag">${doubleSlash()}</div>
       </div>
 
       <div class="rows">${lines}</div>
     </section>`;
 }
 
-function rowMarkup(row, index) {
+// Every row is a slat, and the thin metal bar under it turns over with it.
+// The last row has no bar under it, because the frame is there.
+function rowMarkup(row, isLast) {
   // Only the first two tasks of a group fit, as explained above
   const lines = row.tasks
     .slice(0, 2)
@@ -80,7 +75,8 @@ function rowMarkup(row, index) {
     .join('');
 
   return `
-    <div class="row status-${row.group.status}" data-part="row" data-index="${index}">
+    <div class="row status-${row.group.status}" data-slat="item">
+      ${isLast ? '' : rowBarMarkup(1124)}
       <div class="row-mark">${statusMark(row.group.status)}</div>
       <div class="row-text">
         <div class="row-label">${row.group.label}</div>

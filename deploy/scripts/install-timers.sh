@@ -9,9 +9,8 @@ units="$deploy/systemd"
 repo=$(cd "$deploy/.." && pwd -P)
 target=/etc/systemd/system
 
-# The unit files name these two things directly
+# The unit files name the repository location directly
 expected_repo=/opt/teletraan
-expected_user=teletraan
 
 if [ "$(id -u)" -ne 0 ]; then
   echo "This changes the system, so it has to run with sudo:" >&2
@@ -25,14 +24,19 @@ if [ "$repo" != "$expected_repo" ]; then
   exit 1
 fi
 
-if ! id "$expected_user" > /dev/null 2>&1; then
-  echo "The unit files run everything as a user called $expected_user, and there is none." >&2
-  echo "Create the user, or change User= in the files in $units first." >&2
+# Everything runs as the account that owns the repository, so the account's
+# name is not written in the unit files. They say ACCOUNT, and it is replaced
+# with the real name as each file is copied.
+account=$(stat -c %U "$repo")
+if [ "$account" = root ] || [ "$account" = UNKNOWN ] || ! id "$account" > /dev/null 2>&1; then
+  echo "The repository at $repo is owned by $account, and the timers should not run as that." >&2
+  echo "Give it to the account the Mini logs in with. If that account is called hawktimus:" >&2
+  echo "  sudo chown -R hawktimus:hawktimus $repo" >&2
   exit 1
 fi
 
 echo "This will:"
-echo "  1. copy these files to $target:"
+echo "  1. copy these files to $target, set to run as the account $account:"
 for unit in "$units"/teletraan-*; do
   echo "       $(basename "$unit")"
 done
@@ -46,9 +50,19 @@ echo
 printf 'Press Enter to go ahead, or Ctrl+C to stop. '
 read -r answer
 
+tmp=$(mktemp)
 for unit in "$units"/teletraan-*; do
-  install -m 644 "$unit" "$target/"
+  sed "s/^User=ACCOUNT\$/User=$account/" "$unit" > "$tmp"
+  install -m 644 "$tmp" "$target/$(basename "$unit")"
 done
+rm -f "$tmp"
+
+# The substitution does nothing if a unit file was edited, and the service would
+# then fail later with a confusing message
+if grep -q '^User=ACCOUNT$' "$target"/teletraan-*.service; then
+  echo "The account name was not filled in. Check the User= line in $units." >&2
+  exit 1
+fi
 
 systemctl daemon-reload
 systemctl enable --now teletraan-calendars.timer teletraan-pull.timer

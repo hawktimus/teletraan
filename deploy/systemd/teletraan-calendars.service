@@ -5,7 +5,9 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-User=teletraan
+# ACCOUNT is replaced by install-timers.sh with the account that owns the
+# repository, so this file does not depend on what the Mini's user is called.
+User=ACCOUNT
 ExecStart=/opt/teletraan/deploy/scripts/fetch-calendars.sh
 # Each download gives up after 60 seconds. This is for the whole run.
 TimeoutStartSec=10min

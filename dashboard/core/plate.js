@@ -1,16 +1,29 @@
-// Builds the SVG behind each panel: a steel body, a header with a purple
-// tab, a bevelled frame, brass seams and bolts. Measurements are pixels on
-// the 1920x1080 screen. The frame sits 4px inside the edge so its 8px
-// stroke fills the edge exactly.
+// Builds the plates that panels are made from: flat purple shapes with a
+// polished metal edge. Measurements are pixels on the 1920x1080 screen. The
+// frame line sits 4px inside the edge of its panel.
 //
-// Colours and gradients are not set here. base.css gives each class its
-// fill from tokens.css, and the gradients are drawn once in index.html.
-// A panel that wants another colour sets --panel-face, --panel-frame or
-// --bolt-fill on itself. See "The metal look" in docs/adding-a-panel.md.
+// An edge is one shape drawn five times (shadow, rim, face, shade, ridge),
+// and its colours come from tokens.css. The shape of each frame is added once
+// to the hidden defs in index.html, the first time a plate of that kind is
+// built, and every later plate points at it with <use>. The gradients and the
+// bolt are in index.html too. The five layer classes are described in
+// base.css.
 //
-// Every piece is labelled with data-part so frame.js can move it.
-// The panel sizes here are repeated in base.css and in each panel's own
-// stylesheet. Change them together.
+// The frame round a plate is drawn in two halves, each in its own svg:
+//   half a: the left side, the top left corner and the top
+//   half b: the right side, the bottom right corner and the bottom
+// They meet at the top right and the bottom left. Each half carries the bolts
+// of its own corners, so it can move on its own as one piece.
+//
+// Every piece is labelled with data-part so frame.js can move it. The panel
+// sizes here are repeated in base.css and in each panel's own stylesheet.
+// Change them together.
+//
+// There are three ways to get a frame. areaMarkup() is the frame of an area
+// that stays on screen while its pages change (the large panel and the small
+// panel). plateMarkup() is the whole plate of a panel that sits outside the
+// areas and draws its own, the countdown. frameMarkup() is the full screen
+// frame of the alert and the announcement.
 
 // the large panel on the left (1152 x 708)
 const grid1 = {
@@ -19,17 +32,18 @@ const grid1 = {
   body: [[4, 120], [1148, 120], [1148, 640], [1068, 704], [4, 704]],
   headerLeft: [[84, 4], [664, 4], [648, 52], [688, 52], [665.3, 120], [4, 120], [4, 68]],
   headerRight: [[664, 4], [1148, 4], [1148, 120], [665.3, 120], [688, 52], [648, 52]],
-  outline: [[4, 68], [84, 4], [1148, 4], [1148, 640], [1068, 704], [4, 704]],
-  // the bolt shape between the two header plates, and the line under the header
+  // The frame, clockwise from the bottom left. The halves meet at point
+  // number split (counting from 0) and at the first point.
+  outline: [[4, 704], [4, 68], [84, 4], [1148, 4], [1148, 640], [1068, 704]],
+  split: 3,
+  // the line under the header, and the bolt shape between the two header plates
   seams: [
+    [[4, 120], [1148, 120]],
     [[664, 4], [648, 52], [688, 52], [665.3, 120]],
-    [[8, 120], [1144, 120]],
   ],
-  // bolts on the ends of the cut corners and where the header plates meet
-  studs: [[84, 4], [4, 68], [1148, 640], [1068, 704], [664, 4]],
-  // slots in the header strip. The header text of some panels runs in from
-  // the right, so they stay close to the tab.
-  vents: { x: 728, y: 38, height: 46, count: 4 },
+  // bolts on the ends of the cut corners, shared out between the halves
+  bolts: { a: [[4, 68], [84, 4]], b: [[1148, 640], [1068, 704]] },
+  glintDelay: 2, // seconds after the panel has arrived
 };
 
 // the small panel under the countdown (656 x 372)
@@ -39,33 +53,39 @@ const grid2 = {
   body: [[4, 84], [652, 84], [652, 320], [592, 368], [4, 368]],
   headerLeft: [[64, 4], [480, 4], [453.3, 84], [4, 84], [4, 52]],
   headerRight: [[480, 4], [652, 4], [652, 84], [453.3, 84]],
-  outline: [[4, 52], [64, 4], [652, 4], [652, 320], [592, 368], [4, 368]],
+  outline: [[4, 368], [4, 52], [64, 4], [652, 4], [652, 320], [592, 368]],
+  split: 3,
   seams: [
-    [[8, 84], [648, 84]],
+    [[4, 84], [652, 84]],
     [[480, 4], [453.3, 84]],
   ],
-  studs: [[64, 4], [4, 52], [652, 320], [592, 368], [480, 4]],
-  vents: { x: 508, y: 26, height: 34, count: 3 },
+  bolts: { a: [[4, 52], [64, 4]], b: [[652, 320], [592, 368]] },
+  glintDelay: 8,
 };
 
-// the countdown (656 x 320). It has no header, and its top edge is cut
-// into 24 teeth like a jaw.
+// the countdown (656 x 320). It has no header, its frame is red, and its
+// top edge is cut into teeth like a jaw. The first tooth starts clear of the
+// bolt, which covers the top edge up to about x = 88.
 const countdown = (function () {
-  const teeth = [];
-  const toothWidth = (652 - 64) / 24;
-  for (let i = 0; i < 24; i++) {
-    teeth.push([64 + i * toothWidth, 4]);
-    teeth.push([64 + i * toothWidth + toothWidth / 2, 16]);
+  const top = [[64, 4]];
+  for (let x = 100; x < 628; x += 24) {
+    top.push([x, 4], [x + 12, 14]);
   }
-  const outline = [[4, 52]].concat(teeth, [[652, 4], [652, 268], [592, 316], [4, 316]]);
+  top.push([628, 4], [652, 4]);
+
+  const outline = [[4, 316], [4, 52]].concat(top, [[652, 268], [592, 316]]);
+  const split = outline.length - 3; // the top right corner, (652, 4)
 
   return {
     width: 656,
     height: 320,
-    body: outline,
+    red: true,
+    // the plate is flat along the top. The teeth are only in the frame.
+    body: [[64, 4], [652, 4], [652, 268], [592, 316], [4, 316], [4, 52]],
     outline: outline,
-    seams: [],
-    studs: [[64, 4], [4, 52], [652, 268], [592, 316]],
+    split: split,
+    bolts: { a: [[64, 4]], b: [[592, 316]] },
+    glintDelay: 5,
   };
 })();
 
@@ -73,8 +93,11 @@ const shapes = { grid1: grid1, grid2: grid2, countdown: countdown };
 
 // the frame of the full screen alert and announcement
 const screenFrame = {
-  outline: [[64, 120], [120, 72], [1856, 72], [1856, 960], [1800, 1008], [64, 1008]],
-  studs: [[64, 120], [120, 72], [1856, 72], [1856, 960], [1800, 1008], [64, 1008]],
+  width: 1920,
+  height: 1080,
+  outline: [[64, 1008], [64, 120], [120, 72], [1856, 72], [1856, 960], [1800, 1008]],
+  split: 3,
+  bolts: { a: [[64, 120], [120, 72]], b: [[1856, 960], [1800, 1008]] },
 };
 
 // [[1, 2], [3, 4]] becomes "1,2 3,4", which is how SVG wants a list of points
@@ -82,132 +105,194 @@ function toPoints(list) {
   return list.map(point => point.join(',')).join(' ');
 }
 
-function moved(list, dx, dy) {
-  return list.map(point => [point[0] + dx, point[1] + dy]);
+// A list of lines becomes one path: "M4 120L1148 120M664 4L648 52"
+function pathData(lines) {
+  return lines.map(points => 'M' + points.map(point => point.join(' ')).join('L')).join('');
 }
 
-// Moves every edge of a polygon inwards and returns the new corners. The
-// corners must run clockwise on the screen, as the ones above do.
-function inset(points, distance) {
-  const lines = points.map((from, index) => {
-    const to = points[(index + 1) % points.length];
-    const length = Math.hypot(to[0] - from[0], to[1] - from[1]);
-    const dx = (to[0] - from[0]) / length;
-    const dy = (to[1] - from[1]) / length;
-    // (-dy, dx) points to the inside of a clockwise polygon
-    return { x: from[0] - dy * distance, y: from[1] + dx * distance, dx: dx, dy: dy };
-  });
+// The two halves of an outline, each as a list of points
+function halves(shape) {
+  return {
+    a: shape.outline.slice(0, shape.split + 1),
+    b: shape.outline.slice(shape.split).concat([shape.outline[0]]),
+  };
+}
 
-  // each new corner is where an edge meets the edge before it
-  return lines.map((line, index) => {
-    const before = lines[(index + lines.length - 1) % lines.length];
-    const turn = before.dx * line.dy - before.dy * line.dx;
-    const along = ((line.x - before.x) * line.dy - (line.y - before.y) * line.dx) / turn;
-    return [before.x + before.dx * along, before.y + before.dy * along];
-  });
+
+// Shapes drawn once
+
+// Adds a shape to the hidden defs unless it is already there, and gives its id back
+function define(id, markup) {
+  if (!document.getElementById(id)) {
+    document.getElementById('metal-shapes').insertAdjacentHTML('beforeend', markup);
+  }
+  return id;
 }
 
 // pathLength="1" makes a line count as length 1 however long it really is.
-// frame.css relies on that to draw every line the same way.
-function drawnPolygon(className, part, points) {
-  return `<polygon class="${className}" data-part="${part}" pathLength="1" points="${toPoints(points)}"/>`;
-}
+// frame.css relies on that to draw every line, and to run the glint, the
+// same way. Square ends let the two halves of a frame meet in a clean corner.
+function defineFrame(kind, shape) {
+  const half = halves(shape);
 
-// A steel (or purple) piece: its colour, with the brushed streaks on top.
-// The streaks are their own shape so the colour can stay a plain gradient.
-function metalPiece(className, part, points, extra = '') {
-  return `<g data-part="${part}">
-    <polygon class="${className}" points="${toPoints(points)}"/>
-    <polygon class="brush" points="${toPoints(points)}"/>
-    ${extra}
-  </g>`;
-}
-
-// A row of slanted slots. Each has a light copy 2px below it, so it looks cut in.
-function vents(spec) {
-  let markup = '';
-  for (let i = 0; i < spec.count; i++) {
-    const x = spec.x + i * 22;
-    const slot = [[x + 16, spec.y], [x + 26, spec.y], [x + 10, spec.y + spec.height], [x, spec.y + spec.height]];
-    markup += `<polygon class="vent-lit" points="${toPoints(moved(slot, 2, 2))}"/>`;
-    markup += `<polygon class="vent" points="${toPoints(slot)}"/>`;
+  define(kind + '-a', `<polyline id="${kind}-a" pathLength="1" stroke-linecap="square" points="${toPoints(half.a)}"/>`);
+  define(kind + '-b', `<polyline id="${kind}-b" pathLength="1" stroke-linecap="square" points="${toPoints(half.b)}"/>`);
+  define(kind + '-outline', `<polygon id="${kind}-outline" pathLength="1" points="${toPoints(shape.outline)}"/>`);
+  if (shape.seams) {
+    define(kind + '-seams', `<path id="${kind}-seams" pathLength="1" d="${pathData(shape.seams)}"/>`);
   }
-  return markup;
 }
 
-// A hex bolt centred on x, y, size pixels wide. The bolt itself is drawn once
-// in index.html. For a brass one, pass the class name 'brass'.
-export function boltMarkup(x, y, size = 32, className = '') {
-  const half = size / 2;
-  const brass = className ? ` class="${className}"` : '';
-  return `<use href="#bolt"${brass} x="${x - half}" y="${y - half}" width="${size}" height="${size}"/>`;
+// A closed shape with a flat fill and a metal edge round it, as an svg. The
+// shape is drawn once, in the defs, and the edge points at it. A tag, the
+// team plate and a card are all made this way.
+function edgedShape(id, points, fillClass, svgClass, width, height) {
+  define(id, `<polygon id="${id}" points="${toPoints(points)}"/>`);
+
+  return `<svg class="${svgClass}" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+    <polygon class="${fillClass}" points="${toPoints(points)}"/>
+    ${edgeLayers(id)}
+  </svg>`;
 }
 
-// The outer group puts the bolt in place and the inner group is what turns
-// in, so the turn does not fight with the position.
-function bolt(center, index) {
-  return `<g transform="translate(${center[0]} ${center[1]})">
-    <g data-part="stud" data-index="${index}">${boltMarkup(0, 0)}</g>
-  </g>`;
+// A straight line of the given length, drawn once. A row bar points at it.
+function defineBar(length) {
+  return define('bar-' + length, `<line id="bar-${length}" pathLength="1" x1="0" y1="0" x2="${length}" y2="0"/>`);
 }
 
-// The bevelled frame: a bright steel line, and a thin line just inside it
-// that is lit at the top and dark at the bottom.
-function frameLines(outline, part) {
-  return drawnPolygon('outline', part, outline) + drawnPolygon('bevel', part, inset(outline, 5));
+
+// The five layers of an edge, back to front, all pointing at one shape. When
+// part is given they are wrapped in a group with that data-part, so frame.css
+// draws the five together as one animation. No layer sets a dash pattern of
+// its own, which is what lets the group's dash reach all of them. A frame
+// that keeps its shadow in an svg of its own asks for just some of the layers.
+const shadowOnly = ['edge-shadow'];
+const withoutShadow = ['edge-rim', 'edge-face', 'edge-shade', 'edge-ridge'];
+const allLayers = shadowOnly.concat(withoutShadow);
+
+function edgeLayers(id, part, names = allLayers) {
+  const layers = names
+    .map(layer => `<use class="${layer}" href="#${id}"/>`)
+    .join('');
+
+  return part ? `<g data-part="${part}">${layers}</g>` : layers;
 }
 
-// kind is 'grid1', 'grid2' or 'countdown'.
-// options.dividers is a list of heights for thin lines across the body.
-export function plateMarkup(kind, options = {}) {
-  const shape = shapes[kind];
-  let svg = `<svg class="plate" width="${shape.width}" height="${shape.height}" viewBox="0 0 ${shape.width} ${shape.height}">`;
+// A bolt centred on a corner: its shadow, and the head. Both pop in
+// together. The two are separate so a turning head never turns its shadow.
+// --n is the bolt's number, for the pop in delay in frame.css.
+function boltShadowMarkup(index) {
+  return `<use class="bolt-shadow" data-part="stud" data-index="${index}" style="--n: ${index}" href="#bolt-shadow-shape"/>`;
+}
 
-  svg += metalPiece('body', 'body', shape.body);
+function boltHeadMarkup(index) {
+  return `<use class="bolt" data-part="stud" data-index="${index}" style="--n: ${index}" href="#bolt-shape"/>`;
+}
+
+function boltPair(center, index) {
+  return `<g transform="translate(${center[0]} ${center[1]})">${boltShadowMarkup(index)}${boltHeadMarkup(index)}</g>`;
+}
+
+// One half of a frame: its five layers, then its bolts. drawPart is the
+// data-part that frame.js draws line by line.
+function halfMarkup(kind, side, shape, red, drawPart, firstBolt) {
+  const bolts = shape.bolts[side].map((center, index) => boltPair(center, firstBolt + index)).join('');
+
+  return `<svg class="plate${red}" data-part="frame-${side}" width="${shape.width}" height="${shape.height}" viewBox="0 0 ${shape.width} ${shape.height}">
+    ${edgeLayers(kind + '-' + side, drawPart)}
+    ${bolts}
+  </svg>`;
+}
+
+// The two halves of a frame, one after the other
+function frameHalves(kind, shape, red, drawPart) {
+  return halfMarkup(kind, 'a', shape, red, drawPart, 0) +
+    halfMarkup(kind, 'b', shape, red, drawPart, shape.bolts.a.length);
+}
+
+// One svg of the frame of an area that stays on screen: the shadow of one
+// half, or the bars and bolt heads of one half. There are four in all. When
+// the halves lift off, each shadow travels further than its bars, and that
+// growing gap is what reads as depth. Because each of the four is a whole
+// svg, the browser moves it as a picture and does not draw its lines again.
+// The shadows come first, so both shadows are under both halves' bars.
+function areaLayer(kind, shape, side, firstBolt, shadow) {
+  const bolts = shape.bolts[side].map((center, index) => {
+    const bolt = shadow ? boltShadowMarkup(firstBolt + index) : boltHeadMarkup(firstBolt + index);
+    return `<g transform="translate(${center[0]} ${center[1]})">${bolt}</g>`;
+  }).join('');
+  const layers = edgeLayers(kind + '-' + side, 'outline', shadow ? shadowOnly : withoutShadow);
+  const part = (shadow ? 'shadow-' : 'frame-') + side;
+
+  return `<svg class="plate${shadow ? ' shadow-layer' : ''}" data-part="${part}" width="${shape.width}" height="${shape.height}" viewBox="0 0 ${shape.width} ${shape.height}">
+    ${layers}
+    ${bolts}
+  </svg>`;
+}
+
+function areaHalves(kind, shape) {
+  const firstInB = shape.bolts.a.length;
+
+  return areaLayer(kind, shape, 'a', 0, true) +
+    areaLayer(kind, shape, 'b', firstInB, true) +
+    areaLayer(kind, shape, 'a', 0, false) +
+    areaLayer(kind, shape, 'b', firstInB, false);
+}
+
+// The bright dash that runs round a frame now and then. It is in an svg of
+// its own, so while it moves nothing else on the panel is redrawn.
+function glintMarkup(kind, shape, red) {
+  return `<svg class="plate glint-layer${red}" width="${shape.width}" height="${shape.height}" viewBox="0 0 ${shape.width} ${shape.height}">
+    <use class="glint" href="#${kind}-outline" style="--glint-delay: ${shape.glintDelay}s"/>
+  </svg>`;
+}
+
+// The fills of a plate and its seams, in one svg. They stay where they are
+// when the frame's halves lift.
+function fillsMarkup(kind, shape, red) {
+  let svg = `<svg class="plate${red}" width="${shape.width}" height="${shape.height}" viewBox="0 0 ${shape.width} ${shape.height}">`;
+  svg += `<polygon class="body" data-part="body" points="${toPoints(shape.body)}"/>`;
 
   if (shape.headerLeft) {
-    svg += metalPiece('header-left', 'header-left', shape.headerLeft);
-    svg += metalPiece('header-right', 'header-right', shape.headerRight, vents(shape.vents));
+    svg += `<polygon class="header-left" data-part="header-left" points="${toPoints(shape.headerLeft)}"/>`;
+    svg += `<polygon class="header-right" data-part="header-right" points="${toPoints(shape.headerRight)}"/>`;
   }
-
-  svg += frameLines(shape.outline, 'outline');
-  if (shape.headerLeft) svg += drawnPolygon('well', 'outline', inset(shape.body, 10));
-
-  // a seam is a rod of brass: dark underneath, then the brass, then a bright
-  // line along its upper side
-  shape.seams.forEach(points => {
-    svg += `<polyline class="seam" data-part="seam" pathLength="1" points="${toPoints(points)}"/>`;
-    svg += `<polyline class="seam-body" data-part="seam" pathLength="1" points="${toPoints(moved(points, -1, -1))}"/>`;
-    svg += `<polyline class="seam-lit" data-part="seam" pathLength="1" points="${toPoints(moved(points, -2, -2))}"/>`;
-  });
-
-  // a divider is a dark groove with a light line along its lower side
-  (options.dividers || []).forEach((y, index) => {
-    svg += `<line class="divider" data-part="divider" data-index="${index}" pathLength="1" x1="8" y1="${y}" x2="1144" y2="${y}"/>`;
-    svg += `<line class="divider-lit" data-part="divider" data-index="${index}" pathLength="1" x1="8" y1="${y + 3}" x2="1144" y2="${y + 3}"/>`;
-  });
-
-  shape.studs.forEach((center, index) => {
-    svg += bolt(center, index);
-  });
-
+  if (shape.seams) svg += edgeLayers(kind + '-seams', 'seam');
   return svg + '</svg>';
 }
 
-// The frame behind the full screen alert and announcement. It is a plate with
-// the same parts as the others, so a panel colours it the same way.
-export function frameMarkup() {
-  const points = toPoints(screenFrame.outline);
-  let svg = '<svg class="plate" width="1920" height="1080" viewBox="0 0 1920 1080">';
 
-  svg += `<polygon class="body" points="${points}"/>`;
-  svg += `<polygon class="brush" points="${points}"/>`;
-  svg += frameLines(screenFrame.outline, 'frame');
-  screenFrame.studs.forEach((center, index) => {
-    svg += bolt(center, index);
-  });
+// What panels call
 
-  return svg + '</svg>';
+// The whole plate of a panel that sits outside the areas and draws its own:
+// the fills, the frame in two halves that draw line by line, and the glint.
+// kind is 'countdown'.
+export function plateMarkup(kind) {
+  const shape = shapes[kind];
+  const red = shape.red ? ' red-metal' : '';
+  defineFrame(kind, shape);
+
+  return fillsMarkup(kind, shape, red) + frameHalves(kind, shape, red, 'outline') + glintMarkup(kind, shape, red);
+}
+
+// The frame of the large or the small panel area, drawn once for as long as
+// the screen is up. It holds no page content. kind is 'grid1' or 'grid2'.
+export function areaMarkup(kind) {
+  const shape = shapes[kind];
+  defineFrame(kind, shape);
+
+  return fillsMarkup(kind, shape, '') + areaHalves(kind, shape) + glintMarkup(kind, shape, '');
+}
+
+// The frame behind the full screen alert and announcement: the plate, then
+// the frame in two halves. options.red makes the frame red.
+export function frameMarkup(options = {}) {
+  const red = options.red ? ' red-metal' : '';
+  defineFrame('screen', screenFrame);
+
+  return `<svg class="plate${red}" width="1920" height="1080" viewBox="0 0 1920 1080">
+    <polygon class="body" points="${toPoints(screenFrame.outline)}"/>
+  </svg>` + frameHalves('screen', screenFrame, red, 'frame');
 }
 
 // A bar of light that sweeps across the panel once while it assembles.
@@ -221,14 +306,36 @@ export function scanMarkup(kind) {
   </div>`;
 }
 
+// A thin metal bar between two rows, as its own svg, for a panel that places
+// it with its own stylesheet. It is length wide and 20 high, and the line
+// runs through the middle. In the stylesheet, give .row-bar a left and a top
+// (it is positioned like a plate), for example 14px from the left and the
+// bottom of the row minus 10px. The bar is part of its row, so it turns over
+// with the row when the page changes.
+export function rowBarMarkup(length) {
+  return `<svg class="row-bar" width="${length}" height="20" viewBox="0 0 ${length} 20">
+    <g class="thin" transform="translate(0 10)">${edgeLayers(defineBar(length))}</g>
+  </svg>`;
+}
+
+// A card with a purple fill and a thin metal edge, and the bottom right
+// corner cut. It is placed like a plate: at the top left of its parent, which
+// should be position: relative and width by height big.
+export function cardMarkup(width, height) {
+  const points = [[2, 2], [width - 2, 2], [width - 2, height - 34], [width - 42, height - 2], [2, height - 2]];
+  return edgedShape('card-' + width + 'x' + height, points, 'card-fill', 'card-outline thin', width, height);
+}
+
+// The team plate in the banner (520 x 76)
+export function teamPlateMarkup() {
+  const points = [[4, 4], [516, 4], [516, 40], [476, 72], [4, 72]];
+  return edgedShape('team-plate-shape', points, 'team-fill', 'team-plate-art', 520, 76);
+}
+
 // The slanted label at the left end of the ticker. A longer word needs a
 // wider tag, so the width is passed in.
 export function tagMarkup(width = 208) {
   const right = width - 4;
-  const points = `25.3,4 ${right - 21.3},4 ${right},68 4,68`;
-
-  return `<svg class="tag-plate" width="${width}" height="72" viewBox="0 0 ${width} 72">
-    <polygon points="${points}"/>
-    <polyline class="tag-lit" points="30,11 ${right - 25},11"/>
-  </svg>`;
+  const points = [[25.3, 4], [right - 21.3, 4], [right, 68], [4, 68]];
+  return edgedShape('tag-' + width, points, 'tag-fill', 'tag-plate', width, 72);
 }

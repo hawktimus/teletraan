@@ -1,9 +1,4 @@
-.tasks {
-  width: 1152px;
-  height: 708px;
-}
-
-/* The header sits on top of the two header plates drawn by plate.js */
+/* The header sits on top of the two header plates of the area's frame */
 .tasks .header {
   position: absolute;
   left: 0;
@@ -21,7 +16,7 @@
   font: 700 var(--size-heading)/96px var(--font-display);
 }
 
-/* Three rows of 192px. The thin lines between them come from plate.js. */
+/* Three rows of 192px. Each row carries the thin metal bar under it. */
 .tasks .rows {
   position: absolute;
   left: 0;
@@ -30,11 +25,19 @@
   height: 576px;
 }
 .tasks .row {
+  position: relative;
   display: flex;
   align-items: center;
   box-sizing: border-box;
   height: 192px;
   padding-right: 40px;
+}
+/* The line of the bar runs through the middle of its 20px high picture, so the
+   picture starts 10px above the bottom of the row. The bar stops 14px short of
+   the frame on each side. */
+.tasks .row-bar {
+  left: 14px;
+  top: 182px;
 }
 .tasks .row-mark {
   display: flex;
@@ -77,13 +80,12 @@
   font: 500 var(--size-label)/64px var(--font-text);
 }
 
-/* A blocked row sits on red-tinted steel with a red bar at its left, so it
-   stands out across the room. The band stops short of the grooves above and
-   below it (drawn by plate.js). */
+/* A blocked row sits on a dark red band with a red bar at its left, so it
+   stands out across the room. The band stops short of the metal bar under it. */
 .tasks .status-blocked {
   background:
-    linear-gradient(var(--danger), var(--danger)) 8px 4px / 8px calc(100% - 8px) no-repeat,
-    linear-gradient(var(--danger-plate), var(--danger-plate)) 8px 4px / calc(100% - 16px) calc(100% - 8px) no-repeat;
+    linear-gradient(var(--danger), var(--danger)) 8px 4px / 8px calc(100% - 16px) no-repeat,
+    linear-gradient(var(--danger-plate), var(--danger-plate)) 8px 4px / calc(100% - 16px) calc(100% - 16px) no-repeat;
 }
 
 .tasks .status-in-progress .row-label { color: var(--status-progress); }

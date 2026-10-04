@@ -1,23 +1,6 @@
 // Small pictures used on more than one panel. Each function returns SVG
 // markup. The colours are set in base.css.
 
-// A recessed window cut into the steel of a Grid 2 panel (656 x 372). It sits
-// 16px inside the body, and its bottom right corner follows the panel's cut
-// corner. No real panel uses it, because it hides the brushed steel behind
-// the text. The ?stress stand-in tile still draws one.
-const bayCorners = [[20, 100], [636, 100], [636, 312.3], [586.4, 352], [20, 352]];
-
-function pointText(corners, down = 0) {
-  return corners.map(point => point[0] + ',' + (point[1] + down)).join(' ');
-}
-
-export function bayMarkup() {
-  return `<svg class="bay" data-part="content" width="656" height="372" viewBox="0 0 656 372" style="position: absolute; left: 0; top: 0">
-    <polygon class="pocket-lit" points="${pointText(bayCorners, 2)}"/>
-    <polygon class="pocket" points="${pointText(bayCorners)}"/>
-  </svg>`;
-}
-
 export function doubleSlash() {
   return `<svg class="double-slash" viewBox="0 0 70 94" width="54" height="72">
     <polygon points="0,56 70,0 70,16 0,72"/>
