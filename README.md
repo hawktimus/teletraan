@@ -1,14 +1,23 @@
 # Teletraan I
 
-The wall dashboard for FRC Team 3229, Hawktimus Prime, at Holly Springs High
-School. It runs full screen on a 70 inch TV, driven by a 2011 Mac Mini that
-runs Debian Linux. These docs call it the Mini. It shows the team name, the
-date, time and weather, a countdown to Kickoff, the team's tasks, upcoming
-events, sponsors, photos and more, and it takes over the whole screen for
-alerts and for the announcements (at 2:30 and 5:00 to begin with). The team
-mentor, [name of the team mentor], is the adult who holds the team's accounts
-and passwords and says yes to anything new on the Mini. Ask them before you
-install software or when a step needs a login or a key.
+The wall dashboard for Hawktimus Prime, FRC Team 3229 at Holly Springs High School.
+This is intended to run on the TV in the classroom for robotics and will be running off of a device connected to the back. Currently, we are using a Mac mini 2014 which has Debian 13 installed on it and set for auto-login and auto-launch.
+
+This dashboard should show the following items:
+Team Name
+Date/Time/Weather
+Countdown Timer
+Team Tasks
+Upcoming Events
+Sponsors
+Photos - Randomized
+A few other boards.
+
+It is also programmed to make an announcement at the beginning of the meeting at 2:30pm and at 5:00pm.
+
+The interface uses plain HTML, CSS, and Javascript. Nothing needs to be installed. If the code needs to be edited, just edit the file and refresh the page.
+
+For adjusting the content that gets displayed, Sanity will be used. 
 
 It is plain HTML, CSS and JavaScript. There is nothing to install and there is
 no build step. Edit a file, refresh the page, see the change.
