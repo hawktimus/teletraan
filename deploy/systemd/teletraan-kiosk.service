@@ -1,0 +1,31 @@
+[Unit]
+Description=Teletraan I screen (X server and browser)
+# The script waits for the web server itself, so this only has to start
+# after Docker has started
+After=docker.service systemd-user-sessions.service
+Wants=docker.service
+
+[Service]
+User=teletraan
+# These make systemd treat the service as a login on a console screen. X needs
+# that before it will start for a normal user.
+PAMName=login
+TTYPath=/dev/tty7
+StandardInput=tty
+UtmpIdentifier=tty7
+UtmpMode=user
+StandardOutput=journal
+StandardError=journal
+# Three things X usually needs when a service starts it instead of a person:
+# the session marked as X, the screen switched to its console first, and X
+# kept on that console (-keeptty, below).
+Environment=XDG_SESSION_TYPE=x11
+ExecStartPre=/usr/bin/chvt 7
+# xinit starts X and then kiosk.sh. When kiosk.sh ends, X stops and so does
+# this service. -nocursor hides the mouse pointer.
+ExecStart=/usr/bin/xinit /opt/teletraan/deploy/scripts/kiosk.sh -- :0 vt7 -keeptty -nocursor
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

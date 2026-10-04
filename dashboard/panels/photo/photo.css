@@ -1,0 +1,78 @@
+.photo {
+  width: 1152px;
+  height: 708px;
+}
+
+.photo .header {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  box-sizing: border-box;
+  width: 1152px;
+  height: 116px;
+  padding: 0 40px 0 76px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.photo .title {
+  margin: 0;
+  font: 700 var(--size-heading)/96px var(--font-display);
+}
+
+/* The picture is 16px in from the left, right and top of the body. The
+   caption lines up with the text of the other panels, 48px in, and stops at
+   x=1056 so it stays clear of the cut corner. */
+.photo .picture {
+  position: absolute;
+  left: 16px;
+  top: 132px;
+  width: 1120px;
+  height: 472px;
+  background: var(--ground);
+}
+.photo .picture img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.photo .missing {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  font: 500 var(--size-body)/64px var(--font-text);
+}
+
+/* The window is drawn over the picture, and the caption slot sits behind
+   its text. Both are 1120px wide and start 16px in from the left. */
+.photo .picture-window {
+  position: absolute;
+  left: 16px;
+  top: 132px;
+  width: 1120px;
+  height: 480px;
+  pointer-events: none;
+}
+.photo .window .pocket { fill: none; }
+
+.photo .caption-slot-box {
+  position: absolute;
+  left: 16px;
+  top: 608px;
+  width: 1120px;
+  height: 80px;
+}
+
+.photo .caption {
+  position: absolute;
+  left: 48px;
+  top: 614px;
+  width: 1008px;
+  height: 64px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font: 500 var(--size-body)/64px var(--font-text);
+}

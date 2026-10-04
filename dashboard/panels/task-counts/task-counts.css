@@ -1,0 +1,53 @@
+.task-counts {
+  width: 656px;
+  height: 372px;
+}
+
+.task-counts .label {
+  position: absolute;
+  left: 60px;
+  top: 4px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+
+.task-counts .content {
+  position: absolute;
+  left: 48px;
+  top: 96px;
+  width: 560px;
+  height: 256px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px; /* with the 6px groove this is the same 24px as before */
+}
+
+.task-counts .count {
+  flex: none;
+  color: var(--gold);
+  font: 700 var(--size-count)/216px var(--font-display);
+}
+.task-counts .count.long { font-size: var(--size-count-long); }
+
+/* a groove with a light edge to its right, like the dividers on the large panels */
+.task-counts .groove {
+  flex: none;
+  height: 176px;
+  border-left: 4px solid var(--groove);
+  border-right: 2px solid var(--groove-lit);
+}
+
+.task-counts .lines {
+  min-width: 0;
+  font: 600 var(--size-label)/48px var(--font-text);
+}
+.task-counts .line {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.task-counts .line-in-progress { color: var(--status-progress); }
+.task-counts .line-up-next { color: var(--status-next); }
+.task-counts .line-blocked { color: var(--status-blocked); }

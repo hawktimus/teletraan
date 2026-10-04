@@ -1,0 +1,66 @@
+.sponsor-logo {
+  width: 656px;
+  height: 372px;
+}
+
+.sponsor-logo .label {
+  position: absolute;
+  left: 60px;
+  top: 4px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+
+.sponsor-logo .content {
+  position: absolute;
+  left: 48px;
+  top: 96px;
+  width: 560px;
+  height: 256px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The logo sits in a slot cut into the steel, with a light edge below it. The
+   slot is the same 560 x 200 as the logo box was, so nothing else moves. */
+.sponsor-logo .logo-slot {
+  box-sizing: border-box;
+  width: 560px;
+  height: 200px;
+  background: var(--card);
+  border-top: 4px solid var(--groove);
+  border-bottom: 2px solid var(--groove-lit);
+}
+.sponsor-logo .logo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.sponsor-logo .name-only .logo-slot { display: none; }
+
+/* The name under a logo stays narrower than the logo box so it clears the
+   cut corner at the bottom right. 528px is room for 19 letters. */
+.sponsor-logo .name {
+  max-width: 528px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font: 600 var(--size-body)/56px var(--font-text);
+}
+
+/* Without a logo the name is bigger and may wrap onto two lines. normal lets
+   it wrap, and the clamp cuts anything after the second line. */
+.sponsor-logo .name-only .name {
+  max-width: 560px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
+  font: 700 var(--size-body-large)/68px var(--font-text);
+}

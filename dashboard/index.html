@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en" data-motion="full" data-draw="stroke" data-finish="metal">
+<head>
+  <meta charset="utf-8">
+  <title>Teletraan I</title>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="base.css">
+  <link rel="stylesheet" href="frame.css">
+</head>
+<body>
+  <!-- The metal kit. Every gradient, the brushed texture and the bolt are drawn
+       here once, and the rest of the screen points at them by name. Their
+       colours are the tokens in tokens.css. Nothing here is shown by itself. -->
+  <svg class="metal-defs" width="0" height="0" aria-hidden="true">
+    <defs>
+      <linearGradient id="steel-plate" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style="stop-color: var(--plate-top)"/>
+        <stop offset=".3" style="stop-color: var(--plate)"/>
+        <stop offset="1" style="stop-color: var(--plate-bottom)"/>
+      </linearGradient>
+      <linearGradient id="steel-header" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style="stop-color: var(--header-top)"/>
+        <stop offset="1" style="stop-color: var(--header-bottom)"/>
+      </linearGradient>
+      <linearGradient id="steel-rim" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style="stop-color: var(--rim-top)"/>
+        <stop offset=".4" style="stop-color: var(--rim)"/>
+        <stop offset="1" style="stop-color: var(--rim-bottom)"/>
+      </linearGradient>
+      <linearGradient id="steel-edge" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style="stop-color: var(--steel-light)"/>
+        <stop offset=".12" style="stop-color: var(--steel-light); stop-opacity: .35"/>
+        <stop offset=".5" style="stop-color: var(--steel-dark); stop-opacity: .3"/>
+        <stop offset="1" style="stop-color: var(--steel-dark); stop-opacity: .9"/>
+      </linearGradient>
+      <linearGradient id="steel-well" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style="stop-color: var(--steel-dark); stop-opacity: .9"/>
+        <stop offset=".5" style="stop-color: var(--steel-dark); stop-opacity: .3"/>
+        <stop offset="1" style="stop-color: var(--steel-light); stop-opacity: .45"/>
+      </linearGradient>
+      <linearGradient id="anodised-purple" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style="stop-color: var(--purple-top)"/>
+        <stop offset=".45" style="stop-color: var(--purple-middle)"/>
+        <stop offset="1" style="stop-color: var(--purple-bottom)"/>
+      </linearGradient>
+      <linearGradient id="brass" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style="stop-color: var(--brass-top)"/>
+        <stop offset=".5" style="stop-color: var(--brass-middle)"/>
+        <stop offset="1" style="stop-color: var(--brass-bottom)"/>
+      </linearGradient>
+      <linearGradient id="red-plate" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style="stop-color: var(--danger-plate-top)"/>
+        <stop offset=".35" style="stop-color: var(--danger-plate)"/>
+        <stop offset="1" style="stop-color: var(--danger-plate-bottom)"/>
+      </linearGradient>
+      <linearGradient id="red-plate-hot" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style="stop-color: var(--danger-hot-top)"/>
+        <stop offset=".4" style="stop-color: var(--danger-hot)"/>
+        <stop offset="1" style="stop-color: var(--danger-hot-bottom)"/>
+      </linearGradient>
+      <linearGradient id="red-rim" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style="stop-color: var(--danger-rim-top)"/>
+        <stop offset=".4" style="stop-color: var(--danger)"/>
+        <stop offset="1" style="stop-color: var(--danger-rim-bottom)"/>
+      </linearGradient>
+      <!-- The hawk logo uses the same two finishes, but measured over the whole
+           drawing (1100 x 884) instead of over each plate. That way a plate that
+           sits inside another one has the same colour where they overlap, and
+           no seam shows at the joints. -->
+      <linearGradient id="logo-purple" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="884">
+        <stop offset="0" style="stop-color: var(--purple-top)"/>
+        <stop offset=".45" style="stop-color: var(--purple-middle)"/>
+        <stop offset="1" style="stop-color: var(--purple-bottom)"/>
+      </linearGradient>
+      <linearGradient id="logo-brass" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="884">
+        <stop offset="0" style="stop-color: var(--brass-top)"/>
+        <stop offset=".5" style="stop-color: var(--brass-middle)"/>
+        <stop offset="1" style="stop-color: var(--brass-bottom)"/>
+      </linearGradient>
+      <radialGradient id="bolt-head" cx=".38" cy=".3" r=".8">
+        <stop offset="0" style="stop-color: var(--steel-light)"/>
+        <stop offset=".5" style="stop-color: var(--rim)"/>
+        <stop offset="1" style="stop-color: var(--rim-bottom)"/>
+      </radialGradient>
+
+      <!-- Brushed steel: a tile of faint horizontal streaks painted over a plate.
+           Each streak fades out at both ends so the tile edges do not show. -->
+      <linearGradient id="streak-light" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" style="stop-color: var(--streak-light); stop-opacity: 0"/>
+        <stop offset=".5" style="stop-color: var(--streak-light); stop-opacity: var(--streak-light-alpha)"/>
+        <stop offset="1" style="stop-color: var(--streak-light); stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="streak-dark" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" style="stop-color: var(--streak-dark); stop-opacity: 0"/>
+        <stop offset=".5" style="stop-color: var(--streak-dark); stop-opacity: var(--streak-dark-alpha)"/>
+        <stop offset="1" style="stop-color: var(--streak-dark); stop-opacity: 0"/>
+      </linearGradient>
+      <pattern id="brushed" width="320" height="30" patternUnits="userSpaceOnUse">
+        <rect class="streak-light" x="10" y="2" width="190" height="1"/>
+        <rect class="streak-dark" x="140" y="6" width="170" height="1"/>
+        <rect class="streak-light" x="200" y="9" width="110" height="1"/>
+        <rect class="streak-dark" x="20" y="12" width="120" height="1"/>
+        <rect class="streak-light" x="70" y="15" width="200" height="1"/>
+        <rect class="streak-dark" x="230" y="18" width="90" height="1"/>
+        <rect class="streak-light" x="0" y="22" width="110" height="1"/>
+        <rect class="streak-dark" x="100" y="26" width="160" height="1"/>
+      </pattern>
+
+      <!-- A hex bolt with a slot, drawn once. Place it with
+           <use href="#bolt" x="10" y="10" width="24" height="24"/>, which gives it
+           any size. The head takes its colour from --bolt-fill, so a bolt with
+           class="brass" is brass. -->
+      <symbol id="bolt" viewBox="-16 -16 32 32">
+        <polygon class="bolt-base" points="-16,0 -8,-13.9 8,-13.9 16,0 8,13.9 -8,13.9"/>
+        <polygon class="bolt-head" points="-12,0 -6,-10.4 6,-10.4 12,0 6,10.4 -6,10.4"/>
+        <g transform="rotate(-35)">
+          <rect class="bolt-slot" x="-8" y="-2" width="16" height="4"/>
+          <rect class="bolt-slot-lit" x="-8" y="2" width="16" height="1.5"/>
+        </g>
+      </symbol>
+    </defs>
+  </svg>
+
+  <div id="screen">
+    <div id="world">
+      <!-- screws in the corners of the screen. They never move. -->
+      <svg class="corner-screws" width="1920" height="1080" viewBox="0 0 1920 1080" aria-hidden="true">
+        <use href="#bolt" x="6" y="6" width="20" height="20"/>
+        <use href="#bolt" x="1894" y="6" width="20" height="20"/>
+        <use href="#bolt" x="6" y="1054" width="20" height="20"/>
+        <use href="#bolt" x="1894" y="1054" width="20" height="20"/>
+      </svg>
+      <div id="stage">
+        <div id="region-banner"></div>
+        <div id="region-grid1"></div>
+        <div id="region-right">
+          <div id="region-countdown"></div>
+          <div id="region-grid2"></div>
+        </div>
+        <div id="region-ticker"></div>
+      </div>
+      <div id="overlay"></div>
+    </div>
+    <div id="crt">
+      <div class="lines"></div>
+      <div class="bar"></div>
+    </div>
+  </div>
+
+  <!-- If a core file fails to load, shell.js never runs and the screen would stay
+       blank. This plain script waits 25 seconds, then says so and tries again. -->
+  <script>
+    setTimeout(function () {
+      if (window.teletraanStarted) return;
+
+      document.body.innerHTML = '<div style="width: 1920px; height: 1080px; display: flex; align-items: center; justify-content: center; background: #0b0e11; color: #faca2a; font: 700 96px/120px sans-serif; text-align: center;">Teletraan I could not start. Trying again in 30 seconds.</div>';
+      setTimeout(function () { window.location.reload(); }, 30000);
+    }, 25000);
+  </script>
+  <script type="module" src="shell.js"></script>
+</body>
+</html>

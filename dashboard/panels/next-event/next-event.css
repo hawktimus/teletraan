@@ -1,0 +1,61 @@
+.next-event {
+  width: 656px;
+  height: 372px;
+}
+
+.next-event .label {
+  position: absolute;
+  left: 60px;
+  top: 4px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+
+/* Up to two lines of title, then the day and time, then the place. They
+   stay clear of the cut corner at the bottom right. */
+.next-event .content {
+  position: absolute;
+  left: 48px;
+  top: 100px;
+  width: 552px;
+  height: 240px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Event titles come from the calendar and have no length limit, so a long
+   one wraps onto a second line and is cut off after that. */
+.next-event .title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  white-space: normal;
+  font: 700 var(--size-body)/60px var(--font-text);
+}
+
+/* A groove with a light edge below it, the same cut as the dividers on the
+   large panels. It runs out to the edges of the body: the content box is 32px
+   in from the left and 40px in from the right. */
+.next-event .groove {
+  margin: 4px -40px 4px -32px;
+  border-top: 4px solid var(--groove);
+  border-bottom: 2px solid var(--groove-lit);
+}
+
+.next-event .when {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--gold);
+  font: 600 var(--size-label)/48px var(--font-display);
+}
+.next-event .location {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--lilac);
+  font: 500 var(--size-label)/48px var(--font-text);
+}

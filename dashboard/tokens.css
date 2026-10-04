@@ -1,0 +1,189 @@
+/* Colours, the metal finish, text sizes, line widths and the standard
+   movement times. Change a value here and every panel that uses it follows.
+   The logo's own timing is in frame.css, and the digit roll and chevron nudge
+   are in frame.js.
+
+   Every time here is multiplied by --pace, which frame.js sets from the Speed
+   setting in Dashboard Settings (2, 1.5, 1 or .75). Keep calc(... * var(--pace))
+   around a new time so it follows the setting too. */
+
+:root {
+  /* colours: gunmetal steel, with anodised purple and brass as the team colours */
+  --ground: #0b0e11; /* behind everything */
+
+  /* Steel. A plate is a little lighter at the top and darker at the bottom,
+     so each steel has a top and a bottom shade. */
+  --plate: #2b323a; /* the main steel. Also the plain colour in the flat finish. */
+  --plate-top: #333b44;
+  --plate-bottom: #1f252b;
+  --header: #343d46; /* the strip beside a header tab */
+  --header-top: #3d4751;
+  --header-bottom: #2b333b;
+  --card: #1b2127; /* cards sit in the plate like recessed pockets (leadership, team leads) */
+  --pocket: #14181d; /* slots and vents cut into the steel */
+  --rim: #6c7783; /* the frame round a plate, bright at the top and dark at the bottom */
+  --rim-top: #a6b1bc;
+  --rim-bottom: #38414a;
+  --steel-light: #d3dbe2; /* the bright line of a bevel */
+  --steel-dark: #07090b; /* the dark line of a bevel */
+
+  /* Anodised purple. White text on the top of it is 8.6 to 1. */
+  --purple: #6c18b6; /* the team purple. The plain colour in the flat finish. */
+  --purple-top: var(--purple);
+  --purple-middle: #4f1089;
+  --purple-bottom: #34095c;
+
+  /* Brass. --gold is for text and is the plain colour of brass in the flat finish. */
+  --gold: #faca2a;
+  --brass-top: #ffe88a;
+  --brass-middle: #e3ac1e;
+  --brass-bottom: #8c600d;
+
+  --white: #ffffff;
+  --lilac: #d6c8f4;
+  --gold-faint: rgba(250, 202, 42, .16); /* the old television bar */
+  --sheen: rgba(214, 226, 238, .11); /* the glint that sweeps across a plate as it arrives */
+
+  /* red is used by the countdown, the alert, and blocked tasks */
+  --danger: #f2452f;
+  --danger-bright: #ff7a45;
+  --danger-plate: #2a1519; /* red-tinted steel */
+  --danger-plate-top: #3b2025;
+  --danger-plate-bottom: #1b0d10;
+  --danger-hot: #4a1210; /* red steel for the alert and for the countdown in its last days */
+  --danger-hot-top: #6e1710;
+  --danger-hot-bottom: #2f0d0f;
+  --danger-rim-top: #ff8c70;
+  --danger-rim-bottom: #94200f;
+
+  /* task status colours. Always shown with a shape and a word too. */
+  --status-progress: #5ccdf8;
+  --status-next: var(--lilac);
+  --status-done: #5cf1ac;
+  --status-blocked: #ff8a70;
+
+  /* The metal finish.
+
+     Plates, tabs, trim and bolts are painted with gradients. Each gradient is
+     drawn once, in the hidden SVG at the top of index.html, and has an id such
+     as steel-plate. The --fill-... tokens below are those gradients by name,
+     so a shape says fill: var(--fill-plate) and never repeats any colours.
+     The stops of every gradient read the colour tokens above, so to restyle
+     the metal, change the colours. Do not write a hex colour or a gradient
+     into a panel's own stylesheet for metal.
+
+     The tokens after the --fill ones are plain colours for the lines drawn on
+     top of the metal: grooves, bevels, brass seams and brushed streaks.
+
+     The flat finish at the bottom of this file swaps every gradient for a
+     plain colour and drops the bevels and streaks. Turn it on with ?finish=flat
+     on the address, or data-finish="flat" on the html element. The Mini is an
+     old machine, so if the screen is slow, try the flat finish first. */
+  --fill-plate: url(#steel-plate);
+  --fill-header: url(#steel-header);
+  --fill-rim: url(#steel-rim);
+  --fill-edge: url(#steel-edge);
+  --fill-well: url(#steel-well);
+  --fill-tab: url(#anodised-purple);
+  --fill-brass: url(#brass);
+  --fill-bolt: url(#bolt-head);
+  --fill-logo-tab: url(#logo-purple); /* the logo's purple and brass, which are measured over the whole logo */
+  --fill-logo-brass: url(#logo-brass);
+  --fill-brush: url(#brushed);
+  --fill-danger-plate: url(#red-plate);
+  --fill-danger-hot: url(#red-plate-hot);
+  --fill-danger-rim: url(#red-rim);
+
+  --groove: #0b0e11; /* the dark line of a groove or a slot, and the dark bars of hazard tape */
+  --groove-lit: #7d8a97; /* the light edge just below a groove */
+  --trim: var(--brass-middle); /* brass seams and rules */
+  --trim-dark: var(--brass-bottom);
+  --trim-lit: var(--brass-top);
+  --bevel-lit: rgba(255, 255, 255, .4); /* the lit edge along the top of a tab */
+  --streak-light: #ffffff; /* brushed streaks: light ones and dark ones, both very faint */
+  --streak-light-alpha: .05;
+  --streak-dark: #000000;
+  --streak-dark-alpha: .16;
+
+  /* What a panel can change about its own plate. Set these on the panel in its
+     own stylesheet, for example .countdown { --panel-face: var(--fill-danger-plate); },
+     and the plate, the frame and the bolts inside it follow. */
+  --panel-face: var(--fill-plate); /* the body of a plate, and the face of a full screen frame */
+  --panel-frame: var(--fill-rim); /* the 8px frame line round a plate or a full screen frame */
+  --bolt-fill: var(--fill-bolt); /* the head of every bolt. Add class="brass" to a bolt for a brass one. */
+
+  /* fonts */
+  --font-display: 'Tomorrow', 'Trebuchet MS', sans-serif;
+  --font-text: 'Atkinson Hyperlegible Next', 'Verdana', sans-serif;
+
+  /* text sizes, for a 1920x1080 screen read from 20 feet away.
+     Nothing on the screen is smaller than the label size. */
+  --size-label: 44px;
+  --size-body: 56px;
+  --size-body-large: 64px;
+  --size-heading: 96px;
+  --size-days: 184px;
+  --size-days-long: 132px;
+  --size-count: 264px;
+  --size-count-long: 200px;
+  --size-stat: 160px;
+  --size-announce: 256px;
+  --size-announce-medium: 200px;
+  --size-announce-small: 144px;
+  --size-announce-tiny: 96px;
+
+  /* line widths */
+  --line-heavy: 8px;
+  --line-light: 4px;
+
+  /* movement. These are used by frame.css */
+  --move: 110px;
+  --ease-in: cubic-bezier(.2, .8, .2, 1);
+  --ease-out: cubic-bezier(.6, 0, .9, .4);
+  --ease-hard: cubic-bezier(.7, 0, .2, 1);
+  --pace: 1; /* 1 is normal speed. frame.js changes it when Speed is set */
+  --time-move-in: calc(550ms * var(--pace));
+  --time-move-out: calc(450ms * var(--pace));
+  --time-latch-in: calc(600ms * var(--pace));
+  --time-fade-in: calc(400ms * var(--pace));
+  --time-fade-out: calc(250ms * var(--pace));
+  --time-pop-in: calc(300ms * var(--pace));
+  --time-pop-out: calc(250ms * var(--pace));
+  --time-grow-in: calc(500ms * var(--pace));
+  --time-grow-out: calc(350ms * var(--pace));
+  --time-draw-in: calc(650ms * var(--pace));
+  --time-draw-out: calc(400ms * var(--pace));
+  --time-servo-in: calc(500ms * var(--pace));
+  --time-slam-in: calc(420ms * var(--pace));
+  --time-scan: calc(900ms * var(--pace));
+  --time-calm: calc(300ms * var(--pace));
+  --time-crt: calc(2.6s * var(--pace)); /* the old television effect, which frame.js times to match */
+  --time-crt-roll: calc(1.2s * var(--pace)); /* one pass of its bright bar, which plays twice */
+  --time-pulse-slow: calc(1.6s * var(--pace)); /* the lamp on the countdown, slowest to fastest as the date nears */
+  --time-pulse-medium: calc(1.1s * var(--pace));
+  --time-pulse-fast: calc(.7s * var(--pace));
+}
+
+/* The flat finish: no gradients, bevels or streaks. Every --fill token becomes a
+   plain colour taken from the colours at the top of this file. */
+:root[data-finish="flat"] {
+  --fill-plate: var(--plate);
+  --fill-header: var(--header);
+  --fill-rim: var(--rim);
+  --fill-edge: none;
+  --fill-well: none;
+  --fill-tab: var(--purple);
+  --fill-brass: var(--gold);
+  --fill-bolt: var(--rim);
+  --fill-logo-tab: var(--purple);
+  --fill-logo-brass: var(--gold);
+  --fill-brush: none;
+  --fill-danger-plate: var(--danger-plate);
+  --fill-danger-hot: var(--danger-hot);
+  --fill-danger-rim: var(--danger);
+  --groove-lit: transparent;
+  --trim: var(--gold);
+  --trim-dark: var(--gold);
+  --trim-lit: var(--gold);
+  --bevel-lit: transparent;
+}

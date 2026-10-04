@@ -1,0 +1,68 @@
+.team-leads {
+  width: 1152px;
+  height: 708px;
+}
+
+.team-leads .header {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  box-sizing: border-box;
+  width: 1152px;
+  height: 116px;
+  padding: 0 40px 0 76px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.team-leads .title {
+  margin: 0;
+  font: 700 var(--size-heading)/96px var(--font-display);
+}
+
+/* Cards are 538x168. Columns start at x=28 and x=586, rows at y=144, 328
+   and 512. The cut corner of the last card runs parallel to the panel's. */
+.team-leads .cards {
+  position: absolute;
+  left: 28px;
+  top: 144px;
+  display: grid;
+  grid-template-columns: 538px 538px;
+  grid-auto-rows: 168px;
+  gap: 16px 20px;
+}
+.team-leads .card {
+  position: relative;
+  width: 538px;
+  height: 168px;
+}
+.team-leads .card-shape {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible; /* the light edge of the pocket is drawn 2px below the card */
+}
+.team-leads .card-cap { fill: var(--fill-tab); }
+.team-leads .card-cap-edge { fill: var(--fill-brass); }
+
+.team-leads .card-text {
+  position: absolute;
+  left: 28px;
+  top: 0;
+  width: 480px;
+  height: 168px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.team-leads .card-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--gold);
+  font: 600 var(--size-label)/48px var(--font-display);
+}
+.team-leads .card-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font: 500 var(--size-body)/64px var(--font-text);
+}

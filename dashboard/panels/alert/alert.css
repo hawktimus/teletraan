@@ -1,0 +1,74 @@
+.alert {
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background: var(--ground);
+  /* a red face on a steel frame, so the alert is the one red screen */
+  --panel-face: var(--fill-danger-hot);
+  --pulse-time: var(--time-pulse-fast);
+}
+
+.alert .stripe {
+  position: absolute;
+  left: 0;
+  width: 1920px;
+  height: 48px;
+  box-sizing: border-box;
+  background: repeating-linear-gradient(-45deg, var(--danger) 0, var(--danger) 24px, var(--groove) 24px, var(--groove) 48px);
+}
+.alert .stripe-top {
+  top: 0;
+  border-bottom: 4px solid var(--rim);
+}
+.alert .stripe-bottom {
+  bottom: 0;
+  border-top: 4px solid var(--rim);
+}
+
+/* The lamp, headline and message are centred as one block inside the frame,
+   so a short alert does not sit in the top corner. */
+.alert .content {
+  position: absolute;
+  left: 140px;
+  top: 120px;
+  box-sizing: border-box;
+  width: 1640px;
+  height: 840px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 40px;
+}
+
+.alert .lamp-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  color: var(--white);
+  font: 700 var(--size-body-large)/64px var(--font-display);
+}
+.alert .lamp {
+  width: 36px;
+  height: 36px;
+  background: var(--danger);
+}
+
+/* The words wrap onto more lines when they are long, and are cut off after
+   that. The padding is room for the tails of letters like g and y. */
+.alert .headline {
+  max-height: 340px;
+  padding-bottom: 12px;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  white-space: normal;
+  color: var(--white);
+  font: 700 var(--size-stat)/170px var(--font-display);
+}
+.alert .message {
+  max-height: 280px;
+  overflow: hidden;
+  white-space: normal;
+  color: var(--gold);
+  font: 500 var(--size-body-large)/70px var(--font-text);
+}
+.alert .message:empty { display: none; } /* so its gap does not leave a hole */

@@ -1,0 +1,207 @@
+.custom {
+  width: 1152px;
+  height: 708px;
+}
+
+/* The title must stay left of the bolt shape at x=648, so it is cut off at
+   560px. It is shown in capitals because the tails of letters like g and y
+   would run into the gold line under the header. */
+.custom .header {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  box-sizing: border-box;
+  width: 1152px;
+  height: 116px;
+  padding: 0 40px 0 76px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.custom .title {
+  max-width: 560px;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  letter-spacing: -2px; /* the G in this font leaves a gap after it */
+  font: 700 var(--size-heading)/112px var(--font-display);
+}
+
+/* The blocks are stacked in a column that is exactly as tall as the room
+   there is, about three blocks. A block that does not fit moves into a
+   second column to the right, and overflow: hidden cuts that column off,
+   so nothing is ever half shown. The column ends at y=640 where the cut
+   corner starts, because the blocks reach almost to the right edge. */
+.custom .blocks {
+  position: absolute;
+  left: 48px;
+  top: 132px;
+  width: 1056px;
+  height: 508px;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 16px;
+  overflow: hidden;
+}
+.custom .block {
+  flex: none;
+  width: 1056px;
+}
+
+.custom .block-heading {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--gold);
+  font: 600 var(--size-body-large)/72px var(--font-display);
+}
+
+/* Three lines at most. The last visible line ends in an ellipsis. */
+.custom .block-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  white-space: normal;
+  font: 500 var(--size-body)/64px var(--font-text);
+}
+
+/* The big numbers have a purple end cap with a brass edge, like the cards on
+   the leadership panel. The cap is drawn in the left padding. There is no
+   box round the numbers: brackets and dollar signs at this size hang past
+   the line, and a border would cut across them. */
+.custom .block-stat,
+.custom .block-countdown {
+  box-sizing: border-box;
+  position: relative;
+  padding-left: 24px;
+}
+.custom .block-cap {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 14px;
+  height: 100%;
+}
+.custom .cap-body { fill: var(--fill-tab); }
+.custom .cap-edge { fill: var(--fill-brass); }
+
+.custom .block-stat {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  height: 160px;
+}
+.custom .stat-value {
+  flex: none;
+  max-width: 700px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--gold);
+  font: 700 var(--size-stat)/160px var(--font-display);
+}
+.custom .stat-label {
+  flex: 1;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  white-space: normal;
+  font: 500 var(--size-body)/64px var(--font-text);
+}
+
+.custom .list-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 64px;
+}
+.custom .list-marker {
+  flex: none;
+  width: 32px;
+  height: 32px;
+}
+.custom .list-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font: 500 var(--size-body)/64px var(--font-text);
+}
+
+.custom .block-image { height: 220px; }
+/* The picture is set into the plate like a window: a groove on the top and
+   sides, the light edge below */
+.custom .block-image img {
+  display: block;
+  box-sizing: border-box;
+  width: 1056px;
+  height: 220px;
+  object-fit: cover;
+  background: var(--ground);
+  border: 4px solid var(--groove);
+  border-bottom: 2px solid var(--groove-lit);
+}
+
+.custom .progress-top {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  height: 64px;
+}
+.custom .progress-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--gold);
+  font: 600 var(--size-label)/48px var(--font-display);
+}
+.custom .progress-percent {
+  flex: none;
+  font: 700 var(--size-body)/64px var(--font-display);
+}
+/* The bar is a slot with a brass bar in it. Ten dark marks cross it. Inside
+   the 4px borders the slot is 1048px wide, so a mark falls every 104.8px. */
+.custom .progress-track {
+  position: relative;
+  box-sizing: border-box;
+  height: 28px;
+  margin-top: 8px;
+  background: var(--pocket);
+  border: 4px solid var(--groove);
+  border-bottom: 2px solid var(--groove-lit);
+}
+.custom .progress-fill {
+  box-sizing: border-box;
+  height: 100%;
+  background: var(--trim);
+  border-top: 3px solid var(--trim-lit);
+  border-bottom: 3px solid var(--trim-dark);
+}
+.custom .progress-track::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(90deg, transparent 0, transparent 100.8px, var(--groove) 100.8px, var(--groove) 104.8px);
+}
+
+.custom .countdown-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--gold);
+  font: 600 var(--size-label)/48px var(--font-display);
+}
+.custom .countdown-time {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font: 700 var(--size-heading)/104px var(--font-display);
+}

@@ -1,0 +1,337 @@
+/* Everything that moves is defined here and in frame.js. Only transform,
+   opacity and line drawing are animated.
+
+   A panel labels its parts with data-part. When the panel enters or leaves,
+   frame.js gives each part an effect (data-fx) and a start time (--delay)
+   and sets the panel's data-state to "in", then "shown", then "out".
+
+   In the animation shorthand below, the first time is how long the move
+   takes and the second is how long it waits (--delay). "backwards" keeps a
+   part in its starting pose while it waits. "forwards" keeps it in its
+   ending pose after it has left. */
+
+/* A part is hidden until its panel is told to enter */
+.panel:not([data-state]) [data-part] { opacity: 0; }
+
+/* Shapes inside SVG move around their own middle, not the corner of the picture */
+svg [data-fx] { transform-box: fill-box; }
+[data-fx="pop"] { transform-origin: center; }
+[data-fx="servo"] { transform-origin: center; }
+[data-fx="grow"] { transform-origin: left center; }
+[data-fx="unfold"] { transform-origin: center top; }
+
+/* The scan bar: a thin bar that sweeps across its panel once. It is
+   invisible the rest of the time. --sweep is how far it travels. */
+.scan { opacity: 0; }
+
+
+/* Coming in */
+
+[data-state="in"] [data-fx="slide-left"]  { animation: slide-left-in var(--time-move-in) var(--ease-in) var(--delay, 0ms) backwards; }
+[data-state="in"] [data-fx="slide-right"] { animation: slide-right-in var(--time-move-in) var(--ease-in) var(--delay, 0ms) backwards; }
+[data-state="in"] [data-fx="latch-left"]  { animation: latch-left-in var(--time-latch-in) var(--ease-hard) var(--delay, 0ms) backwards; }
+[data-state="in"] [data-fx="latch-right"] { animation: latch-right-in var(--time-latch-in) var(--ease-hard) var(--delay, 0ms) backwards; }
+[data-state="in"] [data-fx="unfold"]      { animation: unfold-in var(--time-move-in) var(--ease-hard) var(--delay, 0ms) backwards; }
+[data-state="in"] [data-fx="fade"]        { animation: fade-in var(--time-fade-in) linear var(--delay, 0ms) backwards; }
+[data-state="in"] [data-fx="pop"]         { animation: pop-in var(--time-pop-in) var(--ease-in) var(--delay, 0ms) backwards; }
+[data-state="in"] [data-fx="servo"]       { animation: servo-in var(--time-servo-in) steps(5, end) var(--delay, 0ms) backwards; }
+[data-state="in"] [data-fx="slam"]        { animation: slam-in var(--time-slam-in) var(--ease-hard) var(--delay, 0ms) backwards; }
+[data-state="in"] [data-fx="grow"]        { animation: grow-in var(--time-grow-in) var(--ease-in) var(--delay, 0ms) backwards; }
+[data-state="in"] [data-fx="draw"]        { animation: draw-in var(--time-draw-in) linear var(--delay, 0ms) backwards; }
+[data-state="in"] [data-fx="scan"]        { animation: scan-sweep var(--time-scan) linear var(--delay, 0ms) backwards; }
+
+/* Going out. Everything leaves at once. */
+
+[data-state="out"] [data-fx="slide-left"],
+[data-state="out"] [data-fx="latch-left"]  { animation: slide-left-out var(--time-move-out) var(--ease-out) forwards; }
+[data-state="out"] [data-fx="slide-right"],
+[data-state="out"] [data-fx="latch-right"] { animation: slide-right-out var(--time-move-out) var(--ease-out) forwards; }
+[data-state="out"] [data-fx="unfold"]      { animation: unfold-out var(--time-move-out) var(--ease-out) forwards; }
+[data-state="out"] [data-fx="fade"],
+[data-state="out"] [data-fx="slam"]        { animation: fade-out var(--time-fade-out) linear forwards; }
+[data-state="out"] [data-fx="pop"],
+[data-state="out"] [data-fx="servo"]       { animation: pop-out var(--time-pop-out) linear forwards; }
+[data-state="out"] [data-fx="grow"]        { animation: grow-out var(--time-grow-out) linear forwards; }
+[data-state="out"] [data-fx="draw"]        { animation: draw-out var(--time-draw-out) linear forwards; }
+[data-state="out"] [data-fx="scan"]        { animation: none; }
+
+/* Each keyframe only says where the move starts (in) or ends (out).
+   The other end is the part's normal place. */
+@keyframes slide-left-in   { from { transform: translateX(calc(var(--move) * -1)); opacity: 0; } }
+@keyframes slide-left-out  { to   { transform: translateX(calc(var(--move) * -1)); opacity: 0; } }
+@keyframes slide-right-in  { from { transform: translateX(var(--move)); opacity: 0; } }
+@keyframes slide-right-out { to   { transform: translateX(var(--move)); opacity: 0; } }
+@keyframes fade-in         { from { opacity: 0; } }
+@keyframes fade-out        { to   { opacity: 0; } }
+@keyframes pop-in          { from { transform: scale(0); opacity: 0; } }
+@keyframes pop-out         { to   { transform: scale(0); opacity: 0; } }
+@keyframes grow-in         { from { transform: scaleX(0); } }
+@keyframes grow-out        { to   { transform: scaleX(0); } }
+@keyframes unfold-in       { from { transform: scaleY(0); opacity: 0; } }
+@keyframes unfold-out      { to   { transform: scaleY(0); opacity: 0; } }
+@keyframes servo-in        { from { transform: rotate(-180deg) scale(0); opacity: 0; } }
+@keyframes slam-in         { from { transform: translateY(-48px) scale(1.5); opacity: 0; } }
+
+/* A plate slides in, overshoots a little, and locks with a small recoil */
+@keyframes latch-left-in {
+  0%   { transform: translateX(calc(var(--move) * -1)); opacity: 0; }
+  60%  { transform: translateX(9px); opacity: 1; }
+  80%  { transform: translateX(-4px); }
+  100% { transform: translateX(0); }
+}
+@keyframes latch-right-in {
+  0%   { transform: translateX(var(--move)); opacity: 0; }
+  60%  { transform: translateX(-9px); opacity: 1; }
+  80%  { transform: translateX(4px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes scan-sweep {
+  from { transform: translateX(-140px); opacity: .9; }
+  to   { transform: translateX(var(--sweep)); opacity: 0; }
+}
+
+/* A line is drawn by sliding its dash. pathLength="1" on the shape makes
+   "1" mean the whole line, whatever its real length. The dash is only set
+   while the line is moving, so a finished line is solid. */
+@keyframes draw-in {
+  from { stroke-dasharray: 1; stroke-dashoffset: 1; }
+  to   { stroke-dasharray: 1; stroke-dashoffset: 0; }
+}
+@keyframes draw-out {
+  from { stroke-dasharray: 1; stroke-dashoffset: 0; }
+  to   { stroke-dasharray: 1; stroke-dashoffset: 1; }
+}
+
+
+/* Things that keep moving while a panel is on screen (data-idle) */
+
+[data-state="shown"] [data-idle="pulse"] { animation: pulse var(--pulse-time, var(--time-pulse-slow)) linear infinite; }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: .25; }
+}
+
+
+/* The logo. px in this section means the logo's own 1100 x 884 drawing
+   units, not screen pixels (the banner shows it about a fifth of that size).
+   Every time is multiplied by --pace, so the Speed setting changes it too.
+   frame.js sets data-act on the logo and each act below is the set of rules
+   for one name. fly is hover for as long as the logo is on screen. With no
+   act the logo is a still hawk. See docs/the-logo.md. */
+
+.logo {
+  --beat: calc(.9s * var(--pace)); /* one wingbeat: a quick down and a slower up */
+}
+
+/* A wing turns on its shoulder and the head on its neck */
+.logo .wing-left  { transform-origin: 442px 430px; }
+.logo .wing-right { transform-origin: 658px 430px; }
+.logo .head       { transform-origin: 550px 461px; }
+.logo .face       { transform-origin: 550px 700px; }
+.logo .jaw        { transform-origin: 550px 800px; }
+.logo .figure     { transform-origin: 550px 442px; }
+
+
+/* Hover. A beat starts and ends with the wings up, the pose of the emblem.
+   The down stroke is the first third and is quick and strong. The up stroke
+   is slower, with the wing a little smaller, as a bird folds it. The body
+   rises as the wings go down and the head lags a little behind the body.
+   The wings are scaled a little smaller while they are level, because that
+   is when they are widest and would otherwise touch the team plate. */
+
+.logo[data-act="hover"] { --beats: 7; }
+.logo[data-act="fly"]   { --beats: infinite; }
+
+.logo[data-act="hover"] .figure,
+.logo[data-act="fly"] .figure     { animation: hover-body var(--beat) linear var(--beats); }
+.logo[data-act="hover"] .wing-left,
+.logo[data-act="fly"] .wing-left  { animation: hover-wing-left var(--beat) linear var(--beats); }
+.logo[data-act="hover"] .wing-right,
+.logo[data-act="fly"] .wing-right { animation: hover-wing-right var(--beat) linear var(--beats); }
+.logo[data-act="hover"] .head,
+.logo[data-act="fly"] .head       { animation: hover-head var(--beat) ease-in-out var(--beats); }
+
+@keyframes hover-wing-left {
+  0%   { transform: rotate(0deg) scale(1);     animation-timing-function: ease-in; }
+  14%  { transform: rotate(-38deg) scale(.86); animation-timing-function: ease-out; }
+  32%  { transform: rotate(-72deg) scale(.88); animation-timing-function: ease-in-out; }
+  68%  { transform: rotate(-28deg) scale(.82); animation-timing-function: ease-in-out; }
+  100% { transform: rotate(0deg) scale(1); }
+}
+@keyframes hover-wing-right {
+  0%   { transform: rotate(0deg) scale(1);    animation-timing-function: ease-in; }
+  14%  { transform: rotate(38deg) scale(.86); animation-timing-function: ease-out; }
+  32%  { transform: rotate(72deg) scale(.88); animation-timing-function: ease-in-out; }
+  68%  { transform: rotate(28deg) scale(.82); animation-timing-function: ease-in-out; }
+  100% { transform: rotate(0deg) scale(1); }
+}
+@keyframes hover-body {
+  0%   { transform: translateY(0);      animation-timing-function: ease-out; }
+  32%  { transform: translateY(-48px);  animation-timing-function: ease-in-out; }
+  100% { transform: translateY(0); }
+}
+@keyframes hover-head {
+  0%, 100% { transform: translateY(0); }
+  45%      { transform: translateY(16px); }
+}
+
+
+/* The entrance. The plates fly in once when the page starts and latch. */
+
+.logo[data-act="assemble"] .wing-left  { animation: wing-left-in calc(.7s * var(--pace)) var(--ease-in) calc(.35s * var(--pace)) backwards; }
+.logo[data-act="assemble"] .wing-right { animation: wing-right-in calc(.7s * var(--pace)) var(--ease-in) calc(.35s * var(--pace)) backwards; }
+.logo[data-act="assemble"] .head       { animation: head-in calc(.6s * var(--pace)) var(--ease-in) calc(.15s * var(--pace)) backwards; }
+.logo[data-act="assemble"] .face       { animation: face-in calc(.6s * var(--pace)) var(--ease-in) 0s backwards; }
+.logo[data-act="assemble"] .jaw        { animation: jaw-in calc(.6s * var(--pace)) var(--ease-in) calc(.55s * var(--pace)) backwards; }
+
+@keyframes wing-left-in  { from { transform: translate(-300px, -140px) rotate(-32deg); opacity: 0; } }
+@keyframes wing-right-in { from { transform: translate(300px, -140px) rotate(32deg); opacity: 0; } }
+@keyframes head-in       { from { transform: translate(0, -340px); opacity: 0; } }
+@keyframes face-in       { from { transform: translate(0, 280px); opacity: 0; } }
+@keyframes jaw-in        { from { transform: translate(0, 420px); opacity: 0; } }
+
+
+/* Soar. The wings spread wide and the hawk glides, rocking gently from side
+   to side. The wings stay inside the page margin and short of the team
+   plate, so the spread and the rocking are small. */
+
+.logo[data-act="soar"] .wing-left  { animation: soar-wing-left calc(7s * var(--pace)) linear; }
+.logo[data-act="soar"] .wing-right { animation: soar-wing-right calc(7s * var(--pace)) linear; }
+.logo[data-act="soar"] .figure     { animation: soar-body calc(7s * var(--pace)) ease-in-out; }
+
+@keyframes soar-wing-left {
+  0%   { transform: none; animation-timing-function: ease-in-out; }
+  16%  { transform: rotate(-34deg) scale(.88); }
+  84%  { transform: rotate(-34deg) scale(.88); animation-timing-function: ease-in-out; }
+  100% { transform: none; }
+}
+@keyframes soar-wing-right {
+  0%   { transform: none; animation-timing-function: ease-in-out; }
+  16%  { transform: rotate(34deg) scale(.88); }
+  84%  { transform: rotate(34deg) scale(.88); animation-timing-function: ease-in-out; }
+  100% { transform: none; }
+}
+@keyframes soar-body {
+  0%   { transform: none; }
+  28%  { transform: translate(-8px, -12px) rotate(-5deg); }
+  56%  { transform: translate(0, -20px) rotate(0deg); }
+  80%  { transform: translate(8px, -12px) rotate(5deg); }
+  100% { transform: none; }
+}
+
+
+/* Flex. Both wings stretch out in three jerks, like a servo, hold, and come
+   back the same way. */
+
+.logo[data-act="flex"] .wing-left  { animation: flex-wing-left calc(2.4s * var(--pace)) linear; }
+.logo[data-act="flex"] .wing-right { animation: flex-wing-right calc(2.4s * var(--pace)) linear; }
+
+@keyframes flex-wing-left {
+  0%   { transform: none; animation-timing-function: steps(3, end); }
+  30%  { transform: rotate(-30deg); }
+  60%  { transform: rotate(-30deg); animation-timing-function: steps(3, end); }
+  90%  { transform: none; }
+}
+@keyframes flex-wing-right {
+  0%   { transform: none; animation-timing-function: steps(3, end); }
+  30%  { transform: rotate(30deg); }
+  60%  { transform: rotate(30deg); animation-timing-function: steps(3, end); }
+  90%  { transform: none; }
+}
+
+
+/* The old television effect, played now and then (frame.js adds .crt-on to
+   #world). Scan lines stay still. A bright bar rolls down twice, the
+   picture jumps sideways a few times, and the lines flicker. Nothing here
+   flashes brighter than a dim bar, and nothing repeats faster than twice a
+   second. */
+
+#crt {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+}
+#crt .lines {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, .38) 0, rgba(0, 0, 0, .38) 2px, transparent 2px, transparent 4px);
+}
+#crt .bar {
+  position: absolute;
+  left: 0;
+  top: -160px;
+  width: 1920px;
+  height: 160px;
+  background: var(--gold-faint);
+}
+
+#crt.playing { animation: crt-flicker var(--time-crt) steps(1) forwards; }
+#crt.playing .bar { animation: crt-roll var(--time-crt-roll) linear 2; }
+.crt-on #stage,
+.crt-on #overlay { animation: crt-jump var(--time-crt) steps(1) forwards; }
+
+@keyframes crt-flicker {
+  0%   { opacity: 0; animation-timing-function: linear; }
+  4%   { opacity: 1; }
+  8%   { opacity: .55; }
+  14%  { opacity: 1; }
+  40%  { opacity: .8; }
+  46%  { opacity: 1; }
+  85%  { opacity: .6; }
+  92%  { opacity: 1; animation-timing-function: linear; }
+  100% { opacity: 0; }
+}
+@keyframes crt-roll {
+  from { transform: translateY(0); }
+  to   { transform: translateY(1240px); }
+}
+@keyframes crt-jump {
+  0%   { transform: translateX(0); }
+  5%   { transform: translateX(-7px); }
+  8%   { transform: translateX(5px); }
+  11%  { transform: translateX(0); }
+  44%  { transform: translateX(6px); }
+  46%  { transform: translateX(-4px); }
+  48%  { transform: translateX(0); }
+  88%  { transform: translateX(-5px); }
+  91%  { transform: translateX(3px); }
+  94%  { transform: translateX(0); }
+}
+
+
+/* A test switch: fade lines in instead of drawing them.
+   ?draw=fade finds out whether line drawing is what is slow. */
+
+[data-draw="fade"] [data-state="in"] [data-fx="draw"]  { animation: fade-in var(--time-draw-in) linear var(--delay, 0ms) backwards; }
+[data-draw="fade"] [data-state="out"] [data-fx="draw"] { animation: fade-out var(--time-draw-out) linear forwards; }
+
+
+/* Calm mode: no travel, no drawing, no effects. The whole panel fades as
+   one piece, which looks the same as fading every part but is one
+   animation instead of dozens. */
+
+[data-motion="calm"] .panel[data-state="in"]  { animation: fade-in var(--time-calm) linear backwards; }
+[data-motion="calm"] .panel[data-state="out"] { animation: fade-out var(--time-calm) linear forwards; }
+[data-motion="calm"] .panel [data-fx],
+[data-motion="calm"] .panel [data-idle] { animation: none; }
+[data-motion="calm"] #crt { display: none; }
+[data-motion="calm"] .banner .logo { animation: fade-in var(--time-calm) linear backwards; }
+[data-motion="calm"] .logo[data-act] * { animation: none; }
+
+
+/* No motion at all, for measuring the cost of the still picture */
+
+[data-motion="none"] .panel [data-fx],
+[data-motion="none"] .panel [data-idle] { animation: none; }
+[data-motion="none"] .panel[data-state="out"] [data-part] { opacity: 0; }
+[data-motion="none"] #crt { display: none; }
+[data-motion="none"] .logo[data-act] * { animation: none; }

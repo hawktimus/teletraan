@@ -1,0 +1,90 @@
+.announcement {
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background: var(--ground);
+  /* steel with a brass frame and brass bolts */
+  --panel-frame: var(--fill-brass);
+  --bolt-fill: var(--fill-brass);
+}
+
+/* warning tape along the top and bottom edges */
+.announcement .stripe {
+  position: absolute;
+  left: 0;
+  width: 1920px;
+  height: 48px;
+  box-sizing: border-box;
+  background: repeating-linear-gradient(-45deg, var(--gold) 0, var(--gold) 24px, var(--groove) 24px, var(--groove) 48px);
+}
+.announcement .stripe-top {
+  top: 0;
+  border-bottom: 4px solid var(--rim);
+}
+.announcement .stripe-bottom {
+  bottom: 0;
+  border-top: 4px solid var(--rim);
+}
+
+.announcement .words {
+  position: absolute;
+  left: 0;
+  top: 0;
+  box-sizing: border-box;
+  width: 1920px;
+  height: 1080px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.announcement .line {
+  display: flex;
+  justify-content: center;
+  color: var(--gold);
+  font: 700 var(--size-announce)/1 var(--font-display);
+}
+.announcement .line + .line { color: var(--white); }
+.announcement .letter { display: block; }
+.announcement .space { width: .3em; }
+
+.announcement .size-medium .line { font-size: var(--size-announce-medium); }
+.announcement .size-small .line { font-size: var(--size-announce-small); }
+.announcement .size-tiny .line { font-size: var(--size-announce-tiny); }
+
+/* the second announcement has the flying logo above the words */
+.announcement.follow-up .words {
+  justify-content: flex-end;
+  padding-bottom: 170px;
+}
+.announcement .logo {
+  position: absolute;
+  left: 700px;
+  top: 100px;
+  width: 520px;
+  height: 418px;
+}
+.announcement .logo svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.announcement .logo .outline {
+  fill: var(--fill-logo-brass);
+  stroke: var(--fill-logo-brass);
+  stroke-width: 52px;
+  stroke-linejoin: round;
+}
+.announcement .logo .fill { fill: var(--fill-logo-tab); }
+.announcement .logo .slash { fill: var(--fill-logo-brass); }
+
+.announcement .caption {
+  position: absolute;
+  left: 0;
+  top: 936px;
+  width: 1920px;
+  text-align: center;
+  color: var(--lilac);
+  font: 600 var(--size-label)/44px var(--font-display);
+}

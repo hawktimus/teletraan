@@ -1,0 +1,92 @@
+.tasks {
+  width: 1152px;
+  height: 708px;
+}
+
+/* The header sits on top of the two header plates drawn by plate.js */
+.tasks .header {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  box-sizing: border-box;
+  width: 1152px;
+  height: 116px;
+  padding: 0 40px 0 76px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.tasks .title {
+  margin: 0;
+  font: 700 var(--size-heading)/96px var(--font-display);
+}
+
+/* Three rows of 192px. The thin lines between them come from plate.js. */
+.tasks .rows {
+  position: absolute;
+  left: 0;
+  top: 124px;
+  width: 1152px;
+  height: 576px;
+}
+.tasks .row {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: 192px;
+  padding-right: 40px;
+}
+.tasks .row-mark {
+  display: flex;
+  justify-content: center;
+  width: 152px;
+}
+.tasks .row-mark svg {
+  width: 80px;
+  height: 80px;
+}
+
+.tasks .row-text { width: 960px; }
+
+/* The cut corner at the bottom right crosses the last line of the third
+   row, so that row is shorter and its text stays clear of the frame. */
+.tasks .row:nth-child(3) .row-text { width: 900px; }
+
+.tasks .row-label { font: 600 var(--size-label)/46px var(--font-display); }
+
+/* The title is on the left and the subteam in its own column on the right.
+   Either is cut off with an ellipsis instead of running off the panel. */
+.tasks .task-line {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.tasks .task-title {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font: 500 var(--size-body)/64px var(--font-text);
+}
+.tasks .subteam {
+  flex: none;
+  max-width: 300px; /* leaves about 640px for the title, room for 22 characters */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--lilac);
+  font: 500 var(--size-label)/64px var(--font-text);
+}
+
+/* A blocked row sits on red-tinted steel with a red bar at its left, so it
+   stands out across the room. The band stops short of the grooves above and
+   below it (drawn by plate.js). */
+.tasks .status-blocked {
+  background:
+    linear-gradient(var(--danger), var(--danger)) 8px 4px / 8px calc(100% - 8px) no-repeat,
+    linear-gradient(var(--danger-plate), var(--danger-plate)) 8px 4px / calc(100% - 16px) calc(100% - 8px) no-repeat;
+}
+
+.tasks .status-in-progress .row-label { color: var(--status-progress); }
+.tasks .status-up-next .row-label { color: var(--status-next); }
+.tasks .status-done .row-label { color: var(--status-done); }
+.tasks .status-blocked .row-label { color: var(--status-blocked); }

@@ -1,0 +1,25 @@
+/* Served from this folder so the screen never needs the internet for fonts.
+   font-display: block holds the text back until the font is ready, so the
+   wrong font is never flashed on the TV. */
+
+@font-face {
+  font-family: 'Tomorrow';
+  font-weight: 600;
+  font-display: block;
+  src: url('tomorrow-600.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Tomorrow';
+  font-weight: 700;
+  font-display: block;
+  src: url('tomorrow-700.woff2') format('woff2');
+}
+
+/* One file covers every weight from 200 to 800 */
+@font-face {
+  font-family: 'Atkinson Hyperlegible Next';
+  font-weight: 200 800;
+  font-display: block;
+  src: url('atkinson-hyperlegible-next.woff2') format('woff2');
+}

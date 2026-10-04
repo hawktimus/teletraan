@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Weather pictures</title>
+  <link rel="stylesheet" href="../dashboard/fonts/fonts.css">
+  <link rel="stylesheet" href="../dashboard/tokens.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 24px 40px;
+      background: var(--ground);
+      color: var(--white);
+      font: 600 var(--size-label)/52px var(--font-display);
+      white-space: nowrap;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 560px 220px 220px 220px 220px;
+      align-items: center;
+      height: 156px;
+    }
+
+    .label small {
+      display: block;
+      color: var(--gold);
+      font-size: var(--size-label);
+    }
+
+    /* the same icon on the dark ground, and on the plate colour that Grid 2 uses */
+    .cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 148px;
+    }
+    .cell.plate { background: var(--plate); }
+  </style>
+</head>
+<body>
+  <div id="rows"></div>
+
+  <script type="module">
+    import { weatherIcon } from '../dashboard/core/weather-icons.js';
+    import { describeWeather } from '../dashboard/core/weather.js';
+
+    // one code for each picture, and both day and night where they differ
+    const samples = [
+      { code: 0, isDay: true },
+      { code: 0, isDay: false },
+      { code: 2, isDay: true },
+      { code: 2, isDay: false },
+      { code: 3, isDay: true },
+      { code: 45, isDay: true },
+      { code: 51, isDay: true },
+      { code: 61, isDay: true },
+      { code: 71, isDay: true },
+      { code: 95, isDay: true },
+      { code: 999, isDay: true },
+    ];
+
+    function cell(markup, className) {
+      return '<div class="cell ' + className + '">' + markup + '</div>';
+    }
+
+    function row(sample) {
+      const info = describeWeather(sample.code);
+      const when = sample.isDay ? 'day' : 'night';
+      return '<div class="row">' +
+        '<div class="label">' + info.condition + '<small>code ' + sample.code + ', ' + when + '</small></div>' +
+        cell(weatherIcon(sample.code, sample.isDay, 44), '') +
+        cell(weatherIcon(sample.code, sample.isDay, 132), '') +
+        cell(weatherIcon(sample.code, sample.isDay, 44), 'plate') +
+        cell(weatherIcon(sample.code, sample.isDay, 132), 'plate') +
+        '</div>';
+    }
+
+    document.getElementById('rows').innerHTML = samples.map(row).join('');
+  </script>
+</body>
+</html>

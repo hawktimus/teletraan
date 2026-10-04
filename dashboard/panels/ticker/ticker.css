@@ -1,0 +1,45 @@
+.ticker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  width: 1840px;
+  height: 72px;
+}
+
+/* The steel bar behind the message is drawn by ticker.js. A plate is placed at
+   the top left, so this moves it in behind the tag, which sits on top. */
+.ticker .strip {
+  left: 120px;
+  top: 4px;
+}
+.ticker .strip .outline { stroke-width: var(--line-light); }
+
+.ticker .tag {
+  position: relative;
+  flex: none;
+  height: 72px;
+}
+/* The picture sets the tag's width, so a wider tag needs no change here */
+.ticker .tag svg { display: block; }
+.ticker .tag span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 700 var(--size-label)/44px var(--font-display);
+}
+
+.ticker .message {
+  position: relative; /* so it is painted above the steel strip */
+  flex: 1;
+  min-width: 0;
+  margin-right: 40px; /* keeps the text clear of the bolt at the end of the strip */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font: 500 var(--size-body)/64px var(--font-text);
+}

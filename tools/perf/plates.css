@@ -1,0 +1,181 @@
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+  cursor: none;
+}
+
+#stage {
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  background: var(--ground);
+  color: var(--white);
+  white-space: nowrap;
+  transform-origin: 0 0;
+}
+
+/* the same place the Tasks panel has on the real dashboard:
+   24 (page margin) + 212 (banner) + 20 (gap) = 256 down, 40 across */
+#region {
+  position: absolute;
+  left: 40px;
+  top: 256px;
+  width: 1152px;
+  height: 708px;
+}
+
+.stack {
+  width: 1152px;
+  height: 708px;
+}
+
+/* Header: a gold plate and a purple strip that overlaps it a little. The
+   gap between them is the dark seam. Every shape is a rectangle with its
+   corners cut by clip-path. */
+.header {
+  display: flex;
+  height: 120px;
+}
+.gold-plate {
+  width: 384px;
+  padding-left: 32px;
+  box-sizing: border-box;
+  background: var(--gold);
+  color: var(--ground);
+  clip-path: polygon(0 0, 360px 0, 344px 40%, 384px 40%, 360px 100%, 0 100%);
+  font: 800 116px/120px 'Saira Condensed', sans-serif;
+  letter-spacing: 2px;
+}
+.strip {
+  flex-grow: 1;
+  margin-left: -40px;
+  padding-right: 36px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  background: var(--purple);
+  clip-path: polygon(28px 0, 100% 0, 100% 100%, 28px 100%, 56px 30%, 16px 30%);
+}
+.strip svg {
+  width: 62px;
+  height: 84px;
+}
+.strip .double-slash polygon { fill: var(--gold); }
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+.stack-row {
+  display: flex;
+  height: 184px;
+}
+
+.tab {
+  width: 336px;
+  box-sizing: border-box;
+  padding-left: 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 61px) 100%, 0 100%);
+  color: var(--ground);
+  font: 800 var(--size-label)/48px 'Saira Condensed', sans-serif;
+  letter-spacing: 1px;
+}
+.tab svg {
+  width: 64px;
+  height: 64px;
+}
+.tab svg polygon,
+.tab svg rect { fill: var(--ground); }
+.tab svg .outlined {
+  fill: none;
+  stroke: var(--ground);
+  stroke-width: 6px;
+}
+.tab .mark-done .outlined { stroke-width: 9px; }
+
+.status-in-progress { --status: var(--status-progress); }
+.status-up-next { --status: var(--status-next); }
+.status-done { --status: var(--status-done); }
+.tab { background: var(--status); }
+
+/* The plates sit slightly under the tab so the dark seam stays 12px wide
+   along the whole slanted edge. */
+.plates {
+  width: 869px;
+  margin-left: -53px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.task-plate {
+  height: 86px;
+  padding-left: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: var(--purple);
+  font: 500 var(--size-body-large)/86px 'Barlow Semi Condensed', sans-serif;
+}
+.plate-1 { clip-path: polygon(65px 0, 100% 0, 100% 100%, 36.3px 100%); }
+.plate-2 { clip-path: polygon(32.3px 0, 100% 0, 100% 100%, 4px 100%); }
+
+/* The one cut corner of the whole panel, bottom right */
+.stack-row:last-child .plate-2 {
+  clip-path: polygon(32.3px 0, 100% 0, 100% calc(100% - 48px), calc(100% - 60px) 100%, 4px 100%);
+}
+
+/* The metal finish, which is the default, as on the dashboard. Everything
+   above is the flat finish: plain colours. This block repaints the same
+   shapes with a gradient, a light line along the top, a dark line along the
+   bottom, and faint brushed streaks. The plates here are ordinary boxes, so
+   they cannot use the SVG gradients drawn in dashboard/index.html. Their
+   gradients are written once, here, and read the colours in tokens.css. */
+:root[data-finish="metal"] {
+  --face-brass: linear-gradient(var(--brass-top), var(--brass-middle));
+  --face-purple: linear-gradient(var(--purple-top), var(--purple-middle) 45%, var(--purple-bottom));
+  --face-steel: linear-gradient(var(--plate-top), var(--plate) 30%, var(--plate-bottom));
+  --metal-lines:
+    linear-gradient(var(--bevel-lit), var(--bevel-lit)) top / 100% 2px no-repeat,
+    linear-gradient(var(--steel-dark), var(--steel-dark)) bottom / 100% 2px no-repeat,
+    repeating-linear-gradient(transparent 0, transparent 8px, var(--sheen) 8px, var(--sheen) 9px, transparent 9px, transparent 17px),
+    repeating-linear-gradient(transparent 0, transparent 19px, var(--sheen) 19px, var(--sheen) 20px, transparent 20px, transparent 29px);
+}
+
+[data-finish="metal"] .gold-plate { background: var(--metal-lines), var(--face-brass); }
+[data-finish="metal"] .strip { background: var(--metal-lines), var(--face-purple); }
+[data-finish="metal"] .task-plate { background: var(--metal-lines), var(--face-purple); }
+
+/* A status tab is steel with a bar of its colour down the left edge. The
+   words and the picture take the colour too, instead of black on a colour. */
+[data-finish="metal"] .tab {
+  background:
+    linear-gradient(var(--status), var(--status)) left / 8px 100% no-repeat,
+    var(--metal-lines),
+    var(--face-steel);
+  color: var(--status);
+}
+[data-finish="metal"] .tab svg polygon { fill: currentColor; }
+[data-finish="metal"] .tab svg .outlined {
+  fill: none;
+  stroke: currentColor;
+}
+
+/* Header swings down from the slash angle, pinned at its lower left corner.
+   This is the one effect this page needs that frame.css does not have. */
+[data-state="in"] [data-fx="hinge"] {
+  transform-origin: left bottom;
+  animation: hinge-in 400ms cubic-bezier(.3, 0, .2, 1) var(--delay, 0ms) backwards;
+}
+[data-state="out"] [data-fx="hinge"] {
+  transform-origin: left bottom;
+  animation: hinge-out 350ms linear forwards;
+}
+@keyframes hinge-in  { from { transform: rotate(-38.66deg); opacity: 0; } }
+@keyframes hinge-out { to   { transform: rotate(-38.66deg); opacity: 0; } }

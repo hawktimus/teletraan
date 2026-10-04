@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en" data-motion="full">
+<head>
+  <meta charset="utf-8">
+  <title>Logo</title>
+  <link rel="stylesheet" href="../dashboard/fonts/fonts.css">
+  <link rel="stylesheet" href="../dashboard/tokens.css">
+  <link rel="stylesheet" href="../dashboard/frame.css">
+  <link rel="stylesheet" href="../dashboard/panels/banner/banner.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 24px 40px 60px;
+      background: var(--ground);
+      color: var(--white);
+      font: 600 22px/32px var(--font-display);
+    }
+    h1 { margin: 0 0 4px; font-size: 40px; line-height: 48px; }
+    h2 { margin: 36px 0 12px; color: var(--gold); font-size: 28px; line-height: 36px; }
+    p { max-width: 900px; margin: 0 0 8px; color: var(--lilac); }
+
+    /* The page borrows the banner's colour rules, so it only has to say how big the logo is */
+    .banner { display: block; height: auto; }
+    .big .logo { width: 660px; height: 531px; }
+    .still .logo { width: 190px; height: 153px; }
+
+    .top { display: flex; gap: 90px; align-items: flex-start; }
+    .controls { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+    .controls .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    button, select {
+      padding: 6px 14px;
+      border: 3px solid var(--gold);
+      background: var(--plate);
+      color: var(--white);
+      font: inherit;
+      cursor: pointer;
+    }
+    input[type="range"] { width: 360px; }
+
+    /* The wings reach past the edge of the logo while it moves, so each pose has room at the sides */
+    .stills { display: flex; flex-wrap: wrap; gap: 36px 0; }
+    .still { width: 190px; margin: 0 22px; }
+    .still .name { margin-top: 6px; color: var(--lilac); font-size: 20px; line-height: 26px; white-space: normal; }
+
+    /* The left end of the banner at its real size: the edge of the screen, the
+       logo's box, and the start of the TEAM plate. The logo must stay between
+       the two lines. */
+    .rooms { display: flex; flex-wrap: wrap; gap: 36px 40px; }
+    .room-wrap { width: 347px; }
+    .room.banner { position: relative; width: 347px; height: 212px; background: var(--plate); }
+    .room .edge { position: absolute; left: 0; top: 0; bottom: 0; border-left: 3px dashed var(--danger-bright); }
+    .room .margin { position: absolute; left: 40px; top: 0; bottom: 0; border-left: 2px dotted var(--lilac); }
+    .room .team-plate { position: absolute; left: 287px; top: 108px; width: 60px; height: 76px; box-sizing: border-box; background: var(--purple); border: 3px solid var(--gold); }
+    .room .logo { position: absolute; left: 40px; top: 18px; }
+    .room-wrap .name { margin-top: 6px; color: var(--lilac); font-size: 20px; line-height: 26px; }
+  </style>
+</head>
+<body>
+  <!-- The logo is painted with the same two finishes as in dashboard/index.html -->
+  <svg width="0" height="0" style="position: absolute">
+    <defs>
+      <linearGradient id="logo-purple" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="884">
+        <stop offset="0" style="stop-color: var(--purple-top)"/>
+        <stop offset=".45" style="stop-color: var(--purple-middle)"/>
+        <stop offset="1" style="stop-color: var(--purple-bottom)"/>
+      </linearGradient>
+      <linearGradient id="logo-brass" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="884">
+        <stop offset="0" style="stop-color: var(--brass-top)"/>
+        <stop offset=".5" style="stop-color: var(--brass-middle)"/>
+        <stop offset="1" style="stop-color: var(--brass-bottom)"/>
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <h1>The hawk logo</h1>
+  <p>The logo is drawn by dashboard/core/logo.js and moved by the logo section of
+     dashboard/frame.css. Its show is the list called logoShow in dashboard/frame.js.
+     Press a button to play one act, or drag the slider to stop an act at any moment.
+     The acts are explained in docs/the-logo.md.</p>
+
+  <div class="top">
+    <div class="big banner"><div class="logo" id="big"></div></div>
+
+    <div class="controls">
+      <div class="row" id="act-buttons"></div>
+      <div class="row">
+        <label>Moment in the act
+          <input type="range" id="moment" min="0" max="10" step="0.02" value="0">
+        </label>
+        <span id="moment-text"></span>
+      </div>
+      <div class="row">
+        <label>Speed
+          <select id="speed">
+            <option value="very-slow">Very slow</option>
+            <option value="slow">Slow</option>
+            <option value="normal" selected>Normal</option>
+            <option value="fast">Fast</option>
+          </select>
+        </label>
+        <label>Motion
+          <select id="motion">
+            <option value="full" selected>Full</option>
+            <option value="calm">Calm</option>
+            <option value="none">None</option>
+          </select>
+        </label>
+      </div>
+      <div class="row">
+        <button id="show">Play the whole show</button>
+        <button id="stop">Stop</button>
+      </div>
+    </div>
+  </div>
+
+  <h1 style="margin-top: 40px">Key poses</h1>
+  <div id="stills-page"></div>
+
+  <script type="module">
+    import { logoMarkup } from '../dashboard/core/logo.js';
+    import * as frame from '../dashboard/frame.js';
+
+    frame.start({ motion: 'full', speed: 'normal', draw: 'stroke' });
+
+    const big = document.getElementById('big');
+    big.innerHTML = logoMarkup();
+
+    // Freezes a logo at one moment of an act. Seconds are normal-speed
+    // seconds from the start of the act, which is how frame.css is written.
+    function showAt(logo, act, seconds) {
+      logo.dataset.act = act;
+      logo.getAnimations({ subtree: true }).forEach(animation => {
+        animation.pause();
+        animation.currentTime = seconds * 1000 * frame.pace();
+      });
+    }
+
+    // [name, how many seconds it lasts]. fly never ends, so it has no length.
+    const acts = [['assemble', frame.logoEntrance]];
+    frame.logoShow.forEach(entry => {
+      if (entry[0] !== 'rest') acts.push(entry);
+    });
+    acts.push(['fly', 0]);
+
+    const moment = document.getElementById('moment');
+    const momentText = document.getElementById('moment-text');
+    let chosen = acts[1];
+
+    function choose(act) {
+      chosen = act;
+      moment.max = act[1] || 4;
+      moment.value = 0;
+      momentText.textContent = '';
+    }
+
+    // Counts every press. An act that finishes later only puts the logo
+    // back to rest if nothing newer has been pressed since, so pressing
+    // buttons quickly does not cut the new act short.
+    let presses = 0;
+
+    acts.forEach(act => {
+      const button = document.createElement('button');
+      button.textContent = 'Play ' + act[0];
+      button.addEventListener('click', () => {
+        const mine = ++presses;
+        frame.stopLogo(big);
+        choose(act);
+        if (act[0] === 'fly') {
+          void big.getBoundingClientRect();
+          frame.flyLogo(big);
+        } else {
+          frame.playLogoAct(big, act[0], act[1]).then(() => { if (presses === mine) big.dataset.act = 'rest'; });
+        }
+      });
+      document.getElementById('act-buttons').appendChild(button);
+    });
+
+    moment.addEventListener('input', () => {
+      presses++;
+      frame.stopLogo(big);
+      showAt(big, chosen[0], Number(moment.value));
+      momentText.textContent = Number(moment.value).toFixed(2) + ' s of ' + (chosen[1] || 'a loop');
+    });
+
+    document.getElementById('speed').addEventListener('change', event => frame.setSpeed(event.target.value));
+    document.getElementById('motion').addEventListener('change', event => frame.setMotion(event.target.value));
+    document.getElementById('show').addEventListener('click', () => {
+      presses++;
+      frame.startLogo(big);
+    });
+    document.getElementById('stop').addEventListener('click', () => {
+      presses++;
+      frame.stopLogo(big);
+    });
+
+    // The key poses: [label, act, seconds into the act], or just a heading.
+    // A wingbeat is 0.9 seconds and the down stroke ends 0.29 seconds in. The
+    // wings are widest at about 0.12 seconds, so that is the pose to check
+    // against the page margin and the team plate when you change a wingbeat.
+    const poses = [
+      ['Hover'],
+      ['Wings up, the emblem', 'rest', 0],
+      ['Down stroke, wings widest', 'hover', 0.12],
+      ['Bottom of the down stroke', 'hover', 0.29],
+      ['Up stroke, wings folding', 'hover', 0.45],
+      ['Up stroke, nearly at the top', 'hover', 0.7],
+
+      ['Soar and flex'],
+      ['Soar, rocking to the left', 'soar', 1.9],
+      ['Soar, rocking to the right', 'soar', 5.2],
+      ['Flex, wings out', 'flex', 0.9],
+
+      ['Entrance'],
+      ['Plates flying in', 'assemble', 0.45],
+
+      ['At banner size. The dashed line is the edge of the screen, the dotted line is the page margin, and the box on the right is the TEAM plate.', 'rooms'],
+      ['Wings up', 'rest', 0],
+      ['Down stroke, wings widest', 'hover', 0.12],
+      ['Bottom of the down stroke', 'hover', 0.29],
+      ['Soar', 'soar', 1.9],
+      ['Flex, wings out', 'flex', 0.9],
+    ];
+
+    const page = document.getElementById('stills-page');
+    let row = null;
+    let rooms = false;
+    poses.forEach(pose => {
+      if (pose.length <= 2) {
+        rooms = pose[1] === 'rooms';
+        page.insertAdjacentHTML('beforeend', '<h2>' + pose[0] + '</h2><div class="' + (rooms ? 'rooms' : 'stills') + '"></div>');
+        row = page.lastElementChild;
+        return;
+      }
+      if (rooms) {
+        row.insertAdjacentHTML('beforeend',
+          '<div class="room-wrap"><div class="room banner"><div class="edge"></div><div class="margin"></div>' +
+          '<div class="team-plate"></div><div class="logo">' + logoMarkup() + '</div></div>' +
+          '<div class="name">' + pose[0] + '</div></div>');
+      } else {
+        row.insertAdjacentHTML('beforeend',
+          '<div class="still"><div class="banner"><div class="logo">' + logoMarkup() + '</div></div>' +
+          '<div class="name">' + pose[0] + '</div></div>');
+      }
+      const logo = row.lastElementChild.querySelector('.logo');
+      showAt(logo, pose[1], pose[2]);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,224 @@
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #000; /* only seen if the window is not 16:9 */
+  overflow: hidden;
+  cursor: none; /* wall display, no mouse pointer */
+}
+
+/* The screen is always drawn at 1920x1080. shell.js shrinks it if the
+   window is smaller. */
+#screen {
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background: var(--ground);
+  color: var(--white);
+  font-family: var(--font-text);
+  font-size: var(--size-body);
+  white-space: nowrap; /* every line stays one line, long text is cut off with an ellipsis */
+  transform-origin: 0 0;
+}
+
+/* Everything that can be shaken by the old television effect */
+#world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+}
+
+/* Panel sizes are repeated in core/plate.js and in each panel's stylesheet.
+   Change them together. */
+#stage {
+  box-sizing: border-box;
+  width: 1920px;
+  height: 1080px;
+  padding: 24px 40px;
+  display: grid;
+  grid-template-columns: 1152px 656px;
+  grid-template-rows: 212px 708px 72px;
+  gap: 20px 32px;
+}
+
+#region-banner { grid-column: 1 / 3; grid-row: 1; }
+#region-grid1 { grid-column: 1; grid-row: 2; }
+#region-right {
+  grid-column: 2;
+  grid-row: 2;
+  display: grid;
+  grid-template-rows: 320px 372px;
+  gap: 16px;
+}
+#region-ticker { grid-column: 1 / 3; grid-row: 3; }
+
+/* Full screen panels (alerts, announcements) sit on top of everything */
+#overlay {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+}
+
+.panel { position: relative; }
+
+/* The metal kit. The gradients are drawn once in index.html and named in
+   tokens.css. This is where each shape class gets its paint. A panel changes
+   its look by setting --panel-face, --panel-frame or --bolt-fill, not by
+   writing its own colours. */
+.metal-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+.corner-screws {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.streak-light { fill: url(#streak-light); }
+.streak-dark { fill: url(#streak-dark); }
+
+/* A bolt is a washer, a head, and a slot with a light edge below it. */
+.bolt-base {
+  fill: var(--rim-bottom);
+  stroke: var(--groove);
+  stroke-width: 2px;
+}
+.bolt-head { fill: var(--bolt-fill); }
+.bolt-slot { fill: var(--groove); }
+.bolt-slot-lit { fill: var(--groove-lit); }
+.brass { --bolt-fill: var(--fill-brass); }
+
+/* Plates: the steel shapes that panels are built from. Each piece is its
+   colour (.body, .header-left, .header-right) with the brushed streaks
+   (.brush) painted over it. The big frame behind an alert or an announcement
+   is a plate too. */
+.plate {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+}
+.plate .body { fill: var(--panel-face); }
+.plate .header-right { fill: var(--fill-header); }
+.plate .header-left { fill: var(--fill-tab); }
+.plate .brush { fill: var(--fill-brush); }
+
+/* slots cut into the header strip, each with a light edge below it */
+.plate .vent { fill: var(--pocket); }
+.plate .vent-lit { fill: var(--groove-lit); }
+
+.plate .outline,
+.plate .bevel,
+.plate .well,
+.plate .seam,
+.plate .seam-body,
+.plate .seam-lit,
+.plate .divider,
+.plate .divider-lit { fill: none; }
+
+/* the bright frame, and a thin line just inside it that is lit along the top
+   and dark along the bottom */
+.plate .outline {
+  stroke: var(--panel-frame);
+  stroke-width: var(--line-heavy);
+}
+.plate .bevel {
+  stroke: var(--fill-edge);
+  stroke-width: 2px;
+}
+
+/* the face of the body sits a little below its frame: dark along the top,
+   light along the bottom */
+.plate .well {
+  stroke: var(--fill-well);
+  stroke-width: 2px;
+}
+
+/* A seam is a rod of brass: dark underneath, the brass, then a bright line
+   along its upper side. A divider is a groove with a light edge below it. */
+.plate .seam {
+  stroke: var(--trim-dark);
+  stroke-width: var(--line-heavy);
+}
+.plate .seam-body {
+  stroke: var(--trim);
+  stroke-width: 5px;
+}
+.plate .seam-lit {
+  stroke: var(--trim-lit);
+  stroke-width: 2px;
+}
+.plate .divider {
+  stroke: var(--groove);
+  stroke-width: var(--line-light);
+}
+.plate .divider-lit {
+  stroke: var(--groove-lit);
+  stroke-width: 2px;
+}
+
+/* A card or tray sunk into the steel, as an SVG shape. Draw the shape with
+   class pocket, and before it a copy moved 2px down with class pocket-lit,
+   so a light edge shows below it. */
+.pocket {
+  fill: var(--card);
+  stroke: var(--groove);
+  stroke-width: var(--line-light);
+}
+.pocket-lit {
+  fill: none;
+  stroke: var(--groove-lit);
+  stroke-width: 2px;
+}
+
+/* a small purple tab with a brass edge, for a label (the ticker tag) */
+.tag-plate polygon {
+  fill: var(--fill-tab);
+  stroke: var(--fill-brass);
+  stroke-width: var(--line-heavy);
+  stroke-linejoin: miter;
+}
+.tag-plate .tag-lit {
+  fill: none;
+  stroke: var(--bevel-lit);
+  stroke-width: 2px;
+}
+
+/* The sweeping bar of light. plate.js sets its size. */
+.scan-clip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+.scan {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 140px;
+  background: var(--sheen);
+}
+
+/* Small pictures */
+.double-slash { display: block; }
+.double-slash polygon { fill: var(--fill-brass); }
+
+.mark-in-progress polygon { fill: var(--status-progress); }
+.mark-blocked polygon { fill: var(--status-blocked); }
+.mark-blocked .cut { fill: var(--ground); }
+.mark-up-next .outlined {
+  fill: none;
+  stroke: var(--status-next);
+  stroke-width: 6px;
+}
+.mark-done .outlined {
+  fill: none;
+  stroke: var(--status-done);
+  stroke-width: 9px;
+}

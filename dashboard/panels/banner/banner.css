@@ -1,0 +1,190 @@
+/* Every selector starts with .banner so none of this reaches another panel.
+   Long text is cut off with an ellipsis, so the clock never moves. */
+
+.banner {
+  display: grid;
+  grid-template-columns: 219px minmax(0, 1fr);
+  column-gap: 28px;
+  height: 212px;
+}
+
+/* The logo is drawn with room to spare, because its wings reach past its box
+   while it flies. Nothing around it may clip it. At the widest the wings
+   reach about 10 px past the box, which stays inside the 40 px page margin
+   and short of the team plate. If you make the gap smaller, check
+   tools/logo.html at the moment the wings are widest. */
+.banner .logo {
+  width: 219px;
+  height: 176px;
+  align-self: center;
+}
+.banner .logo svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.banner .logo .outline {
+  fill: var(--fill-logo-brass);
+  stroke: var(--fill-logo-brass);
+  stroke-width: 52px;
+  stroke-linejoin: round;
+}
+.banner .logo .fill { fill: var(--fill-logo-tab); }
+.banner .logo .slash { fill: var(--fill-logo-brass); }
+
+.banner .banner-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+  height: 212px;
+}
+
+.banner .banner-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 32px;
+  height: 160px;
+}
+
+.banner .banner-left {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* The bottom padding gives the tails of letters like g and y room, because
+   overflow: hidden would cut them off at the edge of the line. */
+.banner .team-name {
+  min-width: 0;
+  margin: 0 0 -16px;
+  padding-bottom: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font: 700 var(--size-heading)/76px var(--font-display);
+}
+
+.banner .team-plate {
+  position: relative;
+  flex: none;
+  width: 520px;
+  height: 76px;
+}
+.banner .team-plate svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.banner .team-plate polygon {
+  fill: var(--fill-tab);
+  stroke: var(--fill-brass);
+  stroke-width: var(--line-heavy);
+}
+.banner .team-plate .tab-lit {
+  fill: none;
+  stroke: var(--bevel-lit);
+  stroke-width: 2px;
+}
+.banner .team-plate span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 520px;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 700 var(--size-body-large)/64px var(--font-display);
+}
+.banner .team-plate b {
+  margin-left: 16px;
+  color: var(--gold);
+}
+
+.banner .banner-right {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 14px;
+}
+.banner .clock {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+.banner .time { font: 700 var(--size-heading)/80px var(--font-display); }
+.banner .suffix { font: 600 var(--size-label)/44px var(--font-display); }
+
+.banner .date-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font: 600 var(--size-label)/48px var(--font-display);
+}
+/* a brass rule between the clock and the date, in the gap above the row */
+.banner .date-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -7px;
+  height: 4px;
+  background: var(--trim);
+}
+.banner .date { color: var(--gold); }
+.banner .weather-icon { display: block; }
+
+.banner .banner-bottom {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  height: 44px;
+}
+.banner .wordmark {
+  flex: none;
+  height: 44px;
+}
+.banner .subtitle {
+  flex: none;
+  color: var(--gold);
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+.banner .rule {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: var(--line-heavy);
+  background: var(--trim);
+}
+/* a short band of hazard tape at the start of the rule */
+.banner .rule::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 48px;
+  height: var(--line-heavy);
+  background: repeating-linear-gradient(-45deg, var(--gold) 0, var(--gold) 8px, var(--groove) 8px, var(--groove) 16px);
+}
+.banner .school {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+
+/* OFFLINE is the one warning on the wall, so it uses the warning colour. */
+.banner .status {
+  flex: none;
+  color: var(--lilac);
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+.banner .status.offline { color: var(--danger-bright); }
+.banner .status:empty { display: none; }

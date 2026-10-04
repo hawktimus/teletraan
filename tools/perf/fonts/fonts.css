@@ -1,0 +1,15 @@
+/* Fonts for the comparison page only. The dashboard itself uses dashboard/fonts. */
+
+@font-face {
+  font-family: 'Saira Condensed';
+  font-weight: 800;
+  font-display: block;
+  src: url('saira-condensed-800.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  font-weight: 500;
+  font-display: block;
+  src: url('barlow-semi-condensed-500.woff2') format('woff2');
+}

@@ -1,0 +1,40 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Teletraan test data//EN
+BEGIN:VEVENT
+UID:text-folded-space
+DTSTART:20270201T150000Z
+DTEND:20270201T160000Z
+SUMMARY:[Folded inside the wo
+ rd and after a comma\,
+  then a space]
+END:VEVENT
+BEGIN:VEVENT
+UID:text-folded-tab
+DTSTART:20270201T170000Z
+DTEND:20270201T180000Z
+SUMMARY:[Folded with a tab]
+LOCATION:[Building one\, room
+	 two]
+END:VEVENT
+BEGIN:VEVENT
+UID:text-escapes
+DTSTART:20270202T150000Z
+DTEND:20270202T160000Z
+SUMMARY:[Line one\nLine two\, comma\; semicolon\\ backslash]
+LOCATION:[Back\\slash and \\n is not a newline]
+END:VEVENT
+BEGIN:VEVENT
+UID:text-language
+DTSTART:20270203T150000Z
+DTEND:20270203T160000Z
+SUMMARY;LANGUAGE=en-US:[Language parameter]
+LOCATION;X-NOTE="a;b:c":[Quoted parameter location]
+END:VEVENT
+BEGIN:VEVENT
+UID:text-quoted-zone
+DTSTART;TZID="America/New_York":20270203T180000
+DTEND;TZID="America/New_York":20270203T190000
+SUMMARY:[Quoted zone name]
+END:VEVENT
+END:VCALENDAR

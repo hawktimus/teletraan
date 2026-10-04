@@ -1,0 +1,155 @@
+/* The look changes with data-level, which countdown.js sets from how many
+   days are left. The urgent level gets white numbers, because red numbers
+   would melt into the red frame. */
+
+.countdown {
+  width: 656px;
+  height: 320px;
+  --accent: var(--danger);
+  --count-color: var(--gold);
+  --pulse-time: var(--time-pulse-slow);
+  /* red-tinted steel with a red frame. In the last days the steel is a brighter red. */
+  --panel-face: var(--fill-danger-plate);
+  --panel-frame: var(--fill-danger-rim);
+}
+.countdown[data-level="tense"] {
+  --count-color: var(--danger-bright);
+  --pulse-time: var(--time-pulse-medium);
+}
+.countdown[data-level="critical"] {
+  --count-color: var(--white);
+  --pulse-time: var(--time-pulse-fast);
+  --panel-face: var(--fill-danger-hot);
+}
+
+.countdown .top-line {
+  position: absolute;
+  left: 64px;
+  top: 22px;
+  width: 564px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+.countdown .label-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--gold);
+}
+.countdown .label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis; /* a label that is too long is cut off before it reaches the date */
+  letter-spacing: -1px; /* just enough for COUNTDOWN COMPLETE to fit */
+}
+.countdown .lamp {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  background: var(--accent);
+}
+.countdown .date {
+  flex: none;
+  color: var(--gold);
+}
+.countdown .date:empty { display: none; } /* so its gap does not take room from the label */
+
+/* warning tape */
+.countdown .stripes {
+  position: absolute;
+  left: 64px;
+  top: 70px;
+  width: 564px;
+  height: 12px;
+  background: repeating-linear-gradient(-45deg, var(--danger) 0, var(--danger) 12px, var(--groove) 12px, var(--groove) 24px);
+}
+
+.countdown .days-row {
+  position: absolute;
+  left: 28px;
+  top: 86px;
+  width: 600px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 20px;
+}
+
+/* The side padding leaves room for the two chevrons. The box clips them so
+   they slide out from its edges. */
+.countdown .days {
+  position: relative;
+  height: 136px;
+  padding: 0 56px;
+  overflow: hidden;
+}
+.countdown .days-window {
+  height: 136px;
+  overflow: hidden; /* a new number drops in from above and must not show outside */
+}
+.countdown .days-number {
+  color: var(--count-color);
+  font: 700 var(--size-days)/136px var(--font-display);
+}
+.countdown .days-number.long { font-size: var(--size-days-long); }
+
+.countdown .chevron {
+  position: absolute;
+  top: 0;
+}
+.countdown .chevron-left { left: 0; }
+.countdown .chevron-right { right: 0; }
+.countdown .chevron polyline {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 12px;
+}
+
+.countdown .days-word { font: 600 var(--size-label)/64px var(--font-display); }
+
+.countdown .time-row {
+  position: absolute;
+  left: 32px;
+  top: 226px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* The font's digits are different widths (a 1 is narrower than a 9), so each
+   number gets a box as wide as its widest value. Without it the labels
+   would jump sideways every second. */
+.countdown .digits {
+  display: block;
+  width: 82px;
+  height: 60px;
+  overflow: hidden;
+  text-align: right;
+  font: 700 var(--size-body)/60px var(--font-display);
+}
+.countdown .digits span { display: block; }
+.countdown .unit {
+  margin-right: 8px;
+  color: var(--gold);
+  font: 600 var(--size-label)/60px var(--font-display);
+}
+
+/* a bar of 12 blocks that fills through each minute */
+.countdown .segments {
+  position: absolute;
+  left: 64px;
+  top: 292px;
+  display: flex;
+  gap: 4px;
+}
+.countdown .segment {
+  width: 43px;
+  height: 12px;
+  background: var(--pocket);
+}
+.countdown .segment.lit { background: var(--accent); }

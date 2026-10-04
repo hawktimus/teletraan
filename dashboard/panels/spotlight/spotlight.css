@@ -1,0 +1,81 @@
+.spotlight {
+  width: 1152px;
+  height: 708px;
+}
+
+.spotlight .header {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  box-sizing: border-box;
+  width: 1152px;
+  height: 116px;
+  padding: 0 40px 0 76px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.spotlight .title {
+  margin: 0;
+  letter-spacing: -2px; /* without this the last letter touches the bolt in the header */
+  font: 700 var(--size-heading)/96px var(--font-display);
+}
+
+/* The story is centred in the body. The right side stays clear of the cut corner. */
+.spotlight .story {
+  position: absolute;
+  left: 0;
+  top: 124px;
+  box-sizing: border-box;
+  width: 1152px;
+  height: 576px;
+  padding: 0 88px 0 76px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+}
+
+/* The name sits in a card sunk into the steel. The negative margins and the
+   padding cancel out, so the text stays where it was and only the card
+   reaches out to 16px from the frame. */
+.spotlight .name {
+  margin: 0 -72px -4px -60px;
+  padding: 0 68px 8px 56px; /* the letters sit low in their line, so the room is below */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: var(--card);
+  border: 4px solid var(--groove);
+  border-bottom: 2px solid var(--groove-lit);
+  color: var(--gold);
+  font: 700 var(--size-heading)/104px var(--font-display);
+}
+
+/* The headline and the text wrap, and are cut off after a set number of lines */
+.spotlight .headline,
+.spotlight .text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+.spotlight .headline {
+  -webkit-line-clamp: 2;
+  font: 700 var(--size-body-large)/72px var(--font-text);
+}
+.spotlight .text {
+  -webkit-line-clamp: 3;
+  font: 500 var(--size-body)/64px var(--font-text);
+}
+
+.spotlight .lead {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--lilac);
+  font: 500 var(--size-label)/52px var(--font-text);
+}
+.spotlight .lead-label {
+  margin-right: 20px;
+  font: 600 var(--size-label)/52px var(--font-display);
+}

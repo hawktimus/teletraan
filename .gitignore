@@ -1,0 +1,19 @@
+.DS_Store
+node_modules/
+__pycache__/
+*.pyc
+
+# the local settings file holds secrets, so every name it could be saved under is ignored
+local.env*
+*.env
+.env
+.env.*
+*.save
+*~
+*.bak
+.*.swp
+!local.example.env
+!*.example.env
+
+dashboard/data/live/*
+!dashboard/data/live/.gitkeep

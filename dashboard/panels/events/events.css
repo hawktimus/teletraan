@@ -1,0 +1,91 @@
+.events {
+  width: 1152px;
+  height: 708px;
+}
+
+.events .header {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  box-sizing: border-box;
+  width: 1152px;
+  height: 116px;
+  padding: 0 40px 0 76px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.events .title {
+  margin: 0;
+  font: 700 var(--size-heading)/96px var(--font-display);
+}
+
+/* Four rows of 144px. The thin lines between them come from plate.js. */
+.events .rows {
+  position: absolute;
+  left: 0;
+  top: 124px;
+  width: 1152px;
+  height: 576px;
+}
+.events .row {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: 144px;
+  padding: 0 88px 0 48px; /* the right side stays clear of the cut corner */
+}
+
+.events .date {
+  position: relative;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 136px;
+  height: 120px;
+  margin-right: 32px;
+  text-align: center;
+}
+.events .date-tile {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.events .date-band { fill: var(--fill-tab); }
+.events .date-band-lit {
+  fill: none;
+  stroke: var(--bevel-lit);
+  stroke-width: 2px;
+}
+.events .date-seam {
+  stroke: var(--trim);
+  stroke-width: 2px;
+}
+/* positioned, so the text is painted above the tile */
+.events .day-name {
+  position: relative;
+  color: var(--white); /* gold is only 5.5 to 1 on the lightest purple */
+  font: 600 var(--size-label)/48px var(--font-display);
+}
+.events .day-number {
+  position: relative;
+  color: var(--gold);
+  font: 700 var(--size-body)/60px var(--font-display);
+}
+
+.events .details {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.events .event-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font: 500 var(--size-body)/60px var(--font-text);
+}
+.events .event-when {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--lilac);
+  font: 500 var(--size-label)/48px var(--font-text);
+}

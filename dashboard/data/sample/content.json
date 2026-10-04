@@ -1,0 +1,90 @@
+{
+  "team": {
+    "name": "HAWKTIMUS PRIME",
+    "number": "3229",
+    "school": "HOLLY SPRINGS HIGH SCHOOL"
+  },
+
+  "settings": {
+    "speed": "normal",
+    "calendars": [
+      { "id": "team", "name": "[Team calendar]", "show": true }
+    ]
+  },
+
+  "tasks": [
+    { "title": "[Task in progress]", "subteam": "[Subteam A]", "status": "in-progress" },
+    { "title": "[Second task]", "subteam": "[Subteam C]", "status": "in-progress" },
+    { "title": "[Next task]", "subteam": "[Subteam B]", "status": "up-next" },
+    { "title": "[Queued task]", "subteam": "[Subteam E]", "status": "up-next" },
+    { "title": "[Finished task]", "subteam": "[Subteam D]", "status": "done" },
+    { "title": "[Second finished task]", "subteam": "[Subteam F]", "status": "done" }
+  ],
+
+  "plan": {
+    "heading": "[Tonight's plan]",
+    "date": "",
+    "location": "[Room or place]",
+    "rows": [
+      { "time": "[6:00 PM]", "text": "[First thing]", "lead": "[Lead name]" },
+      { "time": "[6:30 PM]", "text": "[Second thing]", "lead": "[Lead name]" },
+      { "time": "[7:30 PM]", "text": "[Third thing]", "lead": "[Lead name]" },
+      { "time": "[8:30 PM]", "text": "[Clean up]", "lead": "" }
+    ]
+  },
+
+  "sponsors": [
+    {
+      "name": "[Sponsor name]",
+      "tier": "[Tier]",
+      "blurb": "[A short line about this sponsor and what they do for the team.]",
+      "thankYou": "[Thank you to our sponsor]",
+      "logoAddress": ""
+    },
+    {
+      "name": "[Second sponsor]",
+      "tier": "[Tier]",
+      "blurb": "[Another short line about a sponsor.]",
+      "thankYou": "[Thank you to our second sponsor]",
+      "logoAddress": ""
+    }
+  ],
+
+  "tipsAndNews": [
+    { "kind": "tip", "text": "[A tip for the team.]" },
+    { "kind": "news", "text": "[A piece of team news.]" },
+    { "kind": "reminder", "text": "[A reminder for everyone.]" }
+  ],
+
+  "subteams": [
+    { "name": "[Subteam A]", "lead": "[Lead name]", "spotlight": true, "spotlightHeadline": "[What this subteam did this week]", "spotlightText": "[Two or three short sentences about the subteam's work go here.]" },
+    { "name": "[Subteam B]", "lead": "[Lead name]" },
+    { "name": "[Subteam C]", "lead": "[Lead name]" },
+    { "name": "[Subteam D]", "lead": "[Lead name]" },
+    { "name": "[Subteam E]", "lead": "[Lead name]" },
+    { "name": "[Subteam F]", "lead": "[Lead name]" }
+  ],
+
+  "people": [
+    { "role": "Coach", "name": "[Coach name]" },
+    { "role": "Coach", "name": "[Coach name]" },
+    { "role": "Captain", "name": "[Captain name]" },
+    { "role": "Captain", "name": "[Captain name]" },
+    { "role": "Mentor", "name": "[Mentor name]" },
+    { "role": "Mentor", "name": "[Mentor name]" }
+  ],
+
+  "customPanels": [
+    {
+      "title": "[Panel]",
+      "blocks": [
+        { "type": "heading", "text": "[A heading]" },
+        { "type": "text", "text": "[A sentence or two of text.]" },
+        { "type": "stat", "value": "[00]", "label": "[What the number counts]" },
+        { "type": "progress", "label": "[Progress toward a goal]", "percent": 40 },
+        { "type": "list", "items": ["[First item]", "[Second item]", "[Third item]"] },
+        { "type": "image", "address": "data/sample/photo-1.svg" }
+      ]
+    }
+  ]
+}

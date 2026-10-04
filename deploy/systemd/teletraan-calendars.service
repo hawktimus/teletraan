@@ -1,0 +1,11 @@
+[Unit]
+Description=Download the team calendars for Teletraan I
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=teletraan
+ExecStart=/opt/teletraan/deploy/scripts/fetch-calendars.sh
+# Each download gives up after 60 seconds. This is for the whole run.
+TimeoutStartSec=10min
