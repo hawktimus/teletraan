@@ -3,7 +3,7 @@
 // sample content. Nothing here touches the page, so the tests can run it.
 
 import { defaultSettings } from '../config.js';
-import { visibleItems } from './content.js';
+import { tidyScale, visibleItems } from './content.js';
 
 // Photos that are switched on, have not expired and have a picture to show
 export function photosToShow(content, now = new Date()) {
@@ -30,6 +30,51 @@ export function newestFirst(list) {
       return a.position - b.position;
     })
     .map(entry => entry.photo);
+}
+
+// Where the Photo panel puts its picture card and the caption under it, in
+// pixels of the large panel (1152 wide). These are the sizes at 100 percent. The
+// card is 1096 wide, and 464 high with a caption under it or 514 without one.
+// With a caption, the card, a gap of 16 and the caption (64 high) are 544 tall
+// together, and they sit 142 from the top. The panel's header is above that, and
+// the frame's cut corner is below and to the right.
+const panelWidth = 1152;
+const fullCard = { width: 1096, heightWithCaption: 464, heightWithoutCaption: 514 };
+const boxTop = 142;
+const captionGap = 16;
+const captionHeight = 64;
+const captionIndent = 24; // from the left edge of the card to the left edge of the caption
+const captionRight = 1056; // where the caption stops, clear of the frame's cut corner
+
+// The Photo size setting makes the card smaller in proportion, and it stays in
+// the middle of the panel. percent is the setting. Gives
+//   card     { left, top, width, height }, to place the card and draw its edge
+//   caption  { left, top, width }, directly under the card
+// The caption's text size and height never change. It starts 24 in from the left
+// edge of the card, as it does at full size, and it always stops at x = 1056, so
+// it reaches the right of a smaller card, and a longer caption is not cut short.
+// The card and the caption are centred together, in the same space they use at
+// 100 percent, so at 100 nothing moves.
+export function photoLayout(percent, hasCaption) {
+  const factor = tidyScale('photoScale', percent) / 100;
+  const fullHeight = hasCaption ? fullCard.heightWithCaption : fullCard.heightWithoutCaption;
+  const width = Math.round(fullCard.width * factor);
+  const height = Math.round(fullHeight * factor);
+
+  const spaceHeight = fullHeight + (hasCaption ? captionGap + captionHeight : 0);
+  const usedHeight = height + (hasCaption ? captionGap + captionHeight : 0);
+  const left = Math.round((panelWidth - width) / 2);
+  const top = boxTop + Math.round((spaceHeight - usedHeight) / 2);
+
+  const captionLeft = left + captionIndent;
+  return {
+    card: { left: left, top: top, width: width, height: height },
+    caption: {
+      left: captionLeft,
+      top: top + height + captionGap,
+      width: captionRight - captionLeft,
+    },
+  };
 }
 
 // The credit is a first name. Studio refuses a space, but a credit that got in

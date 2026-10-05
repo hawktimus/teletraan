@@ -5,6 +5,11 @@
 //
 // The lists of themes and overlays come from ../themes.js, a copy of the
 // dashboard's registries that check-schemas.mjs keeps in step.
+//
+// The editors see an overlay as a "seasonal pack": its accent colours and,
+// for most of them, decorations along the edges of the screen
+// (docs/seasonal-packs.md). Only the titles and descriptions say so. The names
+// and stored values stay overlay and 'overlay', so nothing already saved changes.
 
 import { defineType, defineField, defineArrayMember } from 'sanity';
 import { tooLong } from './fields.js';
@@ -13,12 +18,12 @@ import { themes, overlays } from '../themes.js';
 const themeChoices = themes.map(theme => ({ title: theme.name, value: theme.id }));
 const overlayChoices = overlays.map(overlay => ({ title: overlay.name, value: overlay.id }));
 
-// "No overlay" is for Use a theme now only: it hides the overlay the schedule would show
-const noOverlay = { title: 'No overlay', value: 'none' };
+// "No seasonal pack" is for Use a theme now only: it hides the pack the schedule would show
+const noOverlay = { title: 'No seasonal pack', value: 'none' };
 
 const kinds = [
   { title: 'Theme', value: 'theme' },
-  { title: 'Holiday overlay', value: 'overlay' },
+  { title: 'Seasonal pack', value: 'overlay' },
 ];
 
 function ids(choices) {
@@ -73,7 +78,7 @@ const useNowField = defineField({
   name: 'useNow',
   title: 'Use a theme now',
   type: 'object',
-  description: 'Show a theme or an overlay at once. This wins over the schedule. Leave a part empty to let the schedule decide it.',
+  description: 'Show a theme or a seasonal pack at once. This wins over the schedule. Leave a part empty to let the schedule decide it.',
   fields: [
     defineField({
       name: 'theme',
@@ -85,11 +90,11 @@ const useNowField = defineField({
     }),
     defineField({
       name: 'overlay',
-      title: 'Holiday overlay',
+      title: 'Seasonal pack',
       type: 'string',
-      description: 'Optional. The overlay to show now, or No overlay to hide the scheduled one. Leave empty to follow the schedule.',
+      description: 'Optional. The pack to show now (its accent colours and decorations), or No seasonal pack to hide the scheduled one. Leave empty to follow the schedule.',
       options: { list: overlayChoices.concat([noOverlay]) },
-      validation: Rule => Rule.valid(ids(overlayChoices).concat([noOverlay.value])).error('Pick an overlay from the list.'),
+      validation: Rule => Rule.valid(ids(overlayChoices).concat([noOverlay.value])).error('Pick a seasonal pack from the list.'),
     }),
     defineField({
       name: 'until',
@@ -116,12 +121,12 @@ const ruleMember = defineArrayMember({
       name: 'kind',
       title: 'Kind',
       type: 'string',
-      description: 'A theme rule changes the whole look. A holiday overlay rule only changes the accent colours.',
+      description: 'A theme rule changes the whole look. A seasonal pack rule changes the accent colours and adds decorations along the edges of the screen.',
       options: { list: kinds, layout: 'radio', direction: 'horizontal' },
       initialValue: 'theme',
       validation: Rule => [
-        Rule.required().error('Pick a theme or a holiday overlay.'),
-        Rule.valid(ids(kinds)).error('Pick a theme or a holiday overlay.'),
+        Rule.required().error('Pick a theme or a seasonal pack.'),
+        Rule.valid(ids(kinds)).error('Pick a theme or a seasonal pack.'),
       ],
     }),
     defineField({
@@ -138,14 +143,14 @@ const ruleMember = defineArrayMember({
     }),
     defineField({
       name: 'overlay',
-      title: 'Holiday overlay',
+      title: 'Seasonal pack',
       type: 'string',
-      description: 'The overlay to show on these dates.',
+      description: 'The seasonal pack to show on these dates: its accent colours and its decorations.',
       options: { list: overlayChoices },
       hidden: ({ parent }) => !parent || parent.kind !== 'overlay',
       validation: Rule => [
-        Rule.custom(pickedFor('overlay', 'Pick an overlay.')),
-        Rule.valid(ids(overlayChoices)).error('Pick an overlay from the list.'),
+        Rule.custom(pickedFor('overlay', 'Pick a seasonal pack.')),
+        Rule.valid(ids(overlayChoices)).error('Pick a seasonal pack from the list.'),
       ],
     }),
     defineField({
@@ -184,7 +189,7 @@ const ruleMember = defineArrayMember({
       const dates = rule.start && rule.end ? rule.start + ' to ' + rule.end : '';
       return {
         title: rule.title || 'Rule with no name',
-        subtitle: [rule.kind === 'overlay' ? 'Holiday overlay' : 'Theme', picked, dates].filter(Boolean).join(' · '),
+        subtitle: [rule.kind === 'overlay' ? 'Seasonal pack' : 'Theme', picked, dates].filter(Boolean).join(' · '),
       };
     },
   },
@@ -194,7 +199,7 @@ const scheduleField = defineField({
   name: 'schedule',
   title: 'Schedule',
   type: 'array',
-  description: 'Rules that change the theme or add an overlay on certain dates. For each kind, the first rule that covers today is used.',
+  description: 'Rules that change the theme or add a seasonal pack on certain dates. For each kind, the first rule that covers today is used.',
   of: [ruleMember],
   validation: Rule => Rule.max(24).error('Too many rules. Up to 24 fit.'),
 });

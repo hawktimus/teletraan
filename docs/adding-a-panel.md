@@ -136,10 +136,16 @@ panel. A panel that needs a line, a card or a bar uses one of these:
   edge and the bottom right corner cut. Put it first inside a box of that
   size that is `position: relative`, then the text. The text needs
   `position: relative` too, so that it is drawn above the card. `spotlight.js`
-  uses cards.
-- **A portrait slot.** `slotMarkup({ name, role, address })` in
+  uses cards. The picture card of `photo.js` is one too, and its width and
+  height depend on the Photo size setting (`photoLayout` in `core/photos.js`),
+  1096 by 464 at 100 percent. `cardMarkup` takes the size, so a card of another
+  size is another call, drawn with the same corner and edge.
+- **A portrait slot.** `slotMarkup({ name, role, address, scale })` in
   `core/portrait.js` is a framed picture with a name and a role under it.
-  Leave `address` empty and it shows the silhouette. `leadership.js` and
+  Leave `address` empty and it shows the silhouette. `scale` is the Portrait
+  size setting, `content.settings.portraitScale`, a percent (leave it out for
+  100): the portrait is 292 square at 100 and gets smaller in proportion, and
+  every panel that draws a portrait should pass it. `leadership.js` and
   `team-leads.js` draw rows of up to three, and `roster.js` draws one as the
   team lead beside a list of names. `team-leads.js` gets a page of people at a
   time from `makePages(slotsPerPage)` in `core/turns.js`, which counts the

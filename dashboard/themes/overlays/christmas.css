@@ -1,0 +1,17 @@
+/* Overlay: Christmas. The accent colours of the Christmas seasonal pack: a
+   minty green for the accent and a pale rose for the quiet text, so the
+   screen reads green and red against the dark plates. Red itself is too dark
+   to read as text on these plates, so the red lives in the decorations
+   (dashboard/seasons/christmas.js) and not here. docs/seasonal-packs.md
+   explains how a pack is put together.
+
+   An overlay may set only the three variables below. --yellow and
+   --yellow-faint go together, because the second is the first at 16 percent
+   strength. tools/check-themes.mjs tries these colours on top of every theme
+   and fails if any text becomes hard to read. */
+
+html.overlay-christmas {
+  --yellow: #c8f8d2;
+  --yellow-faint: rgba(200, 248, 210, .16);
+  --lilac: #ffd9d4;
+}

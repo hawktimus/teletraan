@@ -266,9 +266,9 @@ are none, the panel is skipped.
 - Only upload a photo that may be shown. Photos in Studio can be opened by
   anyone who has their web address.
 
-### Order and time on screen
+### Order, time on screen and size
 
-Dashboard Settings has a Photos tab with two settings:
+Dashboard Settings has a Photos tab with four settings:
 
 - Photo order is Random (the default) or Newest first. Random never shows the
   same photo twice in a row. Newest first goes from the photo uploaded last to
@@ -279,6 +279,29 @@ Dashboard Settings has a Photos tab with two settings:
   starts at 16. A Photo row in the Panels tab that has seconds of its own wins
   over it. With the row's seconds empty, the Photo panel follows Seconds per
   photo and not Seconds per page.
+- Portrait size, percent is how big the portraits are on the Leadership and
+  Team Leads panels, and the team lead portrait on the Roster panel. It is a
+  whole number from 60 to 100 and starts at 100. 100 is the full size and the
+  largest that fits the frame. At 80 the portraits are four fifths as big in
+  both directions, frame and picture together. The names and roles under them
+  keep their size, and a page still holds three portraits. A smaller portrait
+  stays in the middle of its place, so the names move up with it. A person
+  with no photo, who shows the silhouette, follows the same size.
+- Photo size, percent is how big the picture in the Photo panel is, from 60 to
+  100, starting at 100. 100 is the full size and the largest that fits the
+  frame. A smaller picture is in the middle of the panel with its caption
+  directly under it. The caption and the "Photo:" credit keep their size. The
+  caption starts a little way in from the left edge of the picture and always
+  ends in the same place, so a smaller picture leaves it less room. At 80 or
+  more the longest caption Studio allows (36 characters) still fits. Below 80 a
+  caption of more than about 30 characters may be cut with three dots, so check
+  a long caption after you change the size.
+
+Studio only accepts whole numbers from 60 to 100 for the two sizes. If a value
+outside that range ever reaches the screen it uses the nearest end, and an
+empty or odd value is 100. To see a size, set it, click Publish, and wait for
+the panel to come round, or try it on the sample content first (Content
+source tab).
 
 While one photo is up, the screen starts downloading the next one, so it is
 ready at the page change. If a photo cannot be loaded, the card says so and the
@@ -298,7 +321,9 @@ page: the coaches come first, then the captains, then the mentors. A role with
 more than three people is shared out as evenly as possible over as many pages
 as it needs, so 4 people are 2 and 2, 5 are 3 and 2, and 6 are 3 and 3. A page
 with fewer than three people has portraits the same size as a full page, and
-they sit in the middle. The Team Leads panel fills each page with three leads.
+they sit in the middle. The size of all of them can be changed together with
+Portrait size, percent in the Photos tab of Dashboard Settings (see "Order,
+time on screen and size" above). The Team Leads panel fills each page with three leads.
 When there is more than one page, the panel shows the next page each time it
 comes round, and the text stays the same size. It never gets smaller to fit
 more people.
@@ -520,9 +545,11 @@ Announcements, Night mode, Hidden, Calendars, Content source and Connection.
   eyes chance (percent)" are how many page changes in 100 become that
   transition, from 0 to 100, and both start at 1, so about one page change in 50
   is a surprise. 0 is never. In the
-  desktop reveal the whole screen comes apart and shows a wallpaper for a moment
-  before it comes back with the next pages. In red eyes it glitches red, breaks
-  apart to black, shows a robot face with red eyes for 2 seconds and comes back.
+  desktop reveal the screen glitches blue, comes apart, cuts to a blue error
+  screen for 3 seconds and comes back with the next pages. In red eyes it
+  glitches red, breaks apart to black, shows a picture of two red eyes for a few
+  seconds and comes back. Each has two pictures that take turns, and they can be
+  swapped for others (docs/hidden-transitions.md).
   To play one now, open the menu next to Publish (the three dots) and click
   "Play desktop reveal" or "Play red eyes". Each publishes the page for you, and
   the TV plays it once within about 20 seconds, whatever the chances say. "Last

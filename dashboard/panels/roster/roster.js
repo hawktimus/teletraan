@@ -46,6 +46,7 @@ function leadMarkup(page, content) {
     name: page.lead,
     role: 'TEAM LEAD',
     address: photoAddress(personNamed(content.people, page.lead)),
+    scale: content.settings && content.settings.portraitScale,
   });
 }
 

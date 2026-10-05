@@ -78,7 +78,8 @@ docs/where-things-are.md).
    effect every 300 seconds, the Transitions tab should show Page change style
    on Alternate, Break and rebuild time 0.6, Frame finish on Mostly gold and
    Silver chance 10, the Panels tab should show Seconds per page at 20,
-   the Photos tab should show Photo order on Random and Seconds per photo 16,
+   the Photos tab should show Photo order on Random, Seconds per photo 16, and
+   Portrait size and Photo size at 100,
    the Night mode tab should show Use night mode on, Bouncing logo, 23:30 to
    11:30, Logo width 300 and Normal speed with the preview off,
    the Hidden tab should show Allow hidden transitions on and both chances at 1,
@@ -227,8 +228,9 @@ photo that asks Sanity for the part the editor kept, no wider than 1920 pixels,
 never enlarged, in a small format (`screenPhotoUrl` in
 `dashboard/core/images.js`), and needs no CORS origin beyond the one in step 6.
 The Photos tab of Dashboard Settings (`schemas/settingsPhotos.js`) has Photo
-order (Random or Newest first) and Seconds per photo (6 to 120, starting at
-16). Nothing needs setting up beyond the steps above. Run `npm run deploy`
+order (Random or Newest first), Seconds per photo (6 to 120, starting at
+16), Portrait size and Photo size (each a whole percent from 60 to 100,
+starting at 100, which is the full size). Nothing needs setting up beyond the steps above. Run `npm run deploy`
 after you change `schemas/photo.js` or `schemas/settingsPhotos.js`, so the
 editors see the change. docs/editing-content.md has the advice for the people
 who upload: first names only, no last names in captions, location tagging off

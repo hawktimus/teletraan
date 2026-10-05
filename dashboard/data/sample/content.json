@@ -28,6 +28,8 @@
     "silverChance": 10,
     "photoOrder": "random",
     "photoSeconds": 16,
+    "portraitScale": 100,
+    "photoScale": 100,
     "nightEnabled": true,
     "nightStyle": "bounce",
     "nightStart": "23:30",

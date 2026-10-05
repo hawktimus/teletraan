@@ -12,6 +12,10 @@
 // happens in the moment the frame is apart (areas.js calls
 // changeThemeNow() there). If no page change comes for a minute, for example
 // during an alert, it happens anyway. At boot it happens at once.
+//
+// An overlay may also have decorations (core/season.js). This file does not
+// know about them: it tells whoever asked (the onLook of startThemes) each time
+// a look goes on, and they follow the overlay from there.
 
 import * as frame from '../frame.js';
 import { themes } from '../themes/registry.js';
@@ -27,6 +31,7 @@ let readContent = null; // gives the newest content, set by startThemes
 let asked = { theme: null, overlay: null }; // ?theme= and ?overlay= in the address, for trying a theme
 let showing = { theme: '', overlay: '' }; // what the classes on the page say now
 let waiting = null; // { look, since }: a look that is not on screen yet
+let followLook = null; // called with the look each time it goes on the page. shell.js gives it, to show the overlay's decorations
 
 // The one stylesheet index.html links itself is hawktimus.css, because the
 // screen needs it before anything is drawn. Every other theme and overlay is
@@ -85,6 +90,16 @@ function applyLook(look) {
 
   showing = look;
   waiting = null;
+
+  // Told in the same step as the classes, so the decorations change with the colours.
+  // A problem there must never stop the colours going on.
+  if (followLook) {
+    try {
+      followLook(look);
+    } catch (error) {
+      console.error('Could not follow the theme change', error);
+    }
+  }
 }
 
 // Works out the look again and remembers a change, without showing it.
@@ -117,10 +132,13 @@ export function changeThemeNow() {
 }
 
 // getContent() gives the newest content. address is { theme, overlay } from
-// the address bar, or null. Resolves once the theme is on the page.
-export async function startThemes(getContent, address) {
+// the address bar, or null. onLook is optional: it is called with
+// { theme, overlay } each time a look goes on the page, the first time too.
+// Resolves once the theme is on the page.
+export async function startThemes(getContent, address, onLook) {
   readContent = getContent;
   asked = Object.assign(asked, address);
+  followLook = typeof onLook === 'function' ? onLook : null;
 
   await addStylesheets();
   showThemeNow();

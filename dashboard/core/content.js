@@ -92,6 +92,9 @@ export function fixSettingValues(settings) {
   ['pageSeconds', 'photoSeconds', 'nightLogoWidth'].concat(logoNumbers, transitionNumbers, hiddenNumbers).forEach(name => {
     settings[name] = keepInRange(settings[name], limits[name], defaultSettings[name]);
   });
+  ['portraitScale', 'photoScale'].forEach(name => {
+    settings[name] = tidyScale(name, settings[name]);
+  });
   settings.hiddenRequest = tidyHiddenRequest(settings.hiddenRequest);
   // The last click of Play announcements (Announcements tab, hidden from editors): a time, or empty
   settings.announceRequest = tidyAnnounceRequest(settings.announceRequest);
@@ -104,6 +107,13 @@ function keepInRange(value, limit, fallback) {
   if (typeof value !== 'number' || !isFinite(value)) return fallback;
   if (limit.shortest && value > limit.min && value < limit.shortest) return limit.shortest;
   return Math.min(limit.max, Math.max(limit.min, value));
+}
+
+// A size setting of the Photos tab (portraitScale or photoScale): a whole percent
+// from 60 to 100, so 79.6 is 80. Anything missing or odd is 100, the full size.
+// The portrait and Photo panel code calls it too, so a size is never odd there.
+export function tidyScale(name, value) {
+  return Math.round(keepInRange(value, limits[name], defaultSettings[name]));
 }
 
 // The screen glitch setting, always complete: on, everySeconds, durationSeconds.

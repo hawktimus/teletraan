@@ -8,6 +8,8 @@
   <link rel="stylesheet" href="tokens.css">
   <link rel="stylesheet" href="base.css">
   <link rel="stylesheet" href="frame.css">
+  <link rel="stylesheet" href="seasons/season.css">
+  <link rel="stylesheet" href="seasons/motion.css">
 </head>
 <body>
   <!-- The metal kit. The gradients and the screw are drawn here once, and every
@@ -244,10 +246,16 @@
 
   <div id="screen">
     <div id="world">
+      <!-- The decorations of a seasonal pack (core/season.js, docs/seasonal-packs.md)
+           are added here by the script while a pack is on, and are gone the rest of
+           the time: #season-back goes in just before #backdrop, so the backdrop
+           covers it, and #season-front goes in just after #stage, so everything
+           that takes over the screen covers it. -->
       <!-- What shows behind the stage while a hidden transition has the screen
-           apart (core/hidden-run.js, docs/hidden-transitions.md): black, the
-           wallpaper, or the red eyes. It is empty and hidden until a transition
-           plays, and it is before the stage so everything else covers it. -->
+           apart (core/hidden-run.js, docs/hidden-transitions.md): black, a deep
+           blue, or one of the four pictures, which the script adds to it. It is
+           hidden until a transition plays, and it is before the stage so
+           everything else covers it. -->
       <div id="backdrop" hidden></div>
       <div id="stage">
         <!-- The banner and the countdown draw themselves into their regions. The
@@ -266,6 +274,22 @@
       <!-- The flat red layer of the red glitches. It is above the stage and hidden
            except while that transition plays. -->
       <div id="red-wash" hidden></div>
+      <!-- The flat layers of the blue glitches: three washes that cover the whole
+           screen in different blues, and six torn pieces, thin bands that jump
+           sideways. Above the stage like the red layer, and hidden except while
+           that kind of glitch plays. Sizes and colours are in base.css and the
+           moves are in frame.css. -->
+      <div id="blue-glitch" hidden>
+        <div class="wash wash-old"></div>
+        <div class="wash wash-new"></div>
+        <div class="wash wash-pale"></div>
+        <div class="tear tear-1"></div>
+        <div class="tear tear-2"></div>
+        <div class="tear tear-3"></div>
+        <div class="tear tear-4"></div>
+        <div class="tear tear-5"></div>
+        <div class="tear tear-6"></div>
+      </div>
       <!-- The connection status text (core/connection.js): why Sanity cannot
            be reached, and the Mini's name and addresses (core/device.js), or
            the always-on text when Show connection status is switched on. Its

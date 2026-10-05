@@ -8,18 +8,25 @@
 // percent of page changes that play it. run(scene) is the whole show, one
 // line for each step, and the screen waits for each step before the next.
 //
-// scene is made by core/hidden-run.js. It has five steps:
-//   scene.glitch(seconds)             red glitches over the screen: the old television jumps
-//                                     and a flat red layer flickers
+// scene is made by core/hidden-run.js. It has these steps:
+//   scene.glitch(seconds, tint)       glitches over the screen. tint is 'red' (the default): the old
+//                                     television jumps and a flat red layer flickers. Or 'blue': a
+//                                     far rougher glitch with torn pieces of screen and flat blue
+//                                     layers that flicker, one of them almost solid for a moment
 //   scene.breakApart(backdrop)        the banner, the countdown, the two panels and the ticker
 //                                     fly apart in 3D. backdrop is what shows behind them:
-//                                     'wallpaper' or 'black'
+//                                     'black' or 'blue' (a deep blue)
 //   scene.wait(seconds)               nothing moves
-//   scene.show(look, seconds)         changes what the backdrop shows and waits: 'eyes' (two
-//                                     red eyes in the dark), 'face' (the face round them) or
-//                                     'gone' (all of it fades out)
+//   scene.pictureIn(set, seconds)     the next picture of the set fades in over these seconds
+//   scene.pictureCut(set, seconds)    the next picture of the set shows at once, with no fade,
+//                                     and stays for these seconds
+//   scene.pictureOut(seconds)         the picture fades out over these seconds
 //   scene.rebuild()                   swaps the pages while the blocks are apart, and the blocks
 //                                     fly back together showing the next screen
+// A set is a name in core/hidden-pictures.js, 'redEyes' or 'blueScreen'. Each play
+// takes the picture after the one used last, so the two pictures of a set take
+// turns. A picture that did not load is skipped, and with none to show the step still
+// takes its seconds, so the transition finishes and the screen comes back.
 // A show must always end with rebuild(), or the screen would stay apart. The
 // runner puts the screen back by itself if a show fails.
 //
@@ -27,30 +34,33 @@
 // can read it. Seconds are at normal speed: the Speed setting stretches them.
 
 export const hiddenTransitions = {
-  // The whole screen comes apart like a transformer and shows a plain wallpaper
-  // for a moment, then comes back together showing the next screen
+  // The screen glitches blue like a failing computer, the whole screen comes apart
+  // over a deep blue, glitches once more and cuts to a blue error screen for 3
+  // seconds, then comes back together showing the next screen
   desktop: {
     name: 'Desktop reveal',
     chanceField: 'desktopChance',
     async run(scene) {
-      await scene.breakApart('wallpaper');
-      await scene.wait(1.5);
+      await scene.glitch(2, 'blue');
+      await scene.breakApart('blue');
+      await scene.glitch(1, 'blue');
+      await scene.pictureCut('blueScreen', 3);
       await scene.rebuild();
     },
   },
 
-  // Red glitches, everything breaks apart to black, two red eyes open in the
-  // dark and a robot face shows round them for 2 seconds, then it all fades
-  // and the screen comes back together
+  // Red glitches, everything breaks apart to black, a picture of two red eyes
+  // fades in, stays for 2.5 seconds and fades out, and the screen comes back
+  // together
   redEyes: {
     name: 'Red eyes',
     chanceField: 'redEyesChance',
     async run(scene) {
       await scene.glitch(1.5);
       await scene.breakApart('black');
-      await scene.show('eyes', 0.9);
-      await scene.show('face', 2);
-      await scene.show('gone', 0.6);
+      await scene.pictureIn('redEyes', 0.6);
+      await scene.wait(2.5);
+      await scene.pictureOut(0.6);
       await scene.rebuild();
     },
   },

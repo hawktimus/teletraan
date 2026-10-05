@@ -1122,10 +1122,12 @@ html:not([data-motion="full"]) .logo[data-act="fly"] .hawk-far-wing { transform:
    they are. data-hidden goes through these values, and is not there at all the
    rest of the time:
 
-     glitch  red glitches: the screen jumps (the same keyframes as the old
-             television effect, played by frame.js) and #red-wash, a flat red
-             layer over the stage, flickers its opacity. At most two flashes
-             in any second and never brighter than .45, like the glitch.
+     glitch  glitches over the live screen. data-tint says which. Red: the
+             screen jumps (the same keyframes as the old television effect,
+             played by frame.js) and #red-wash, a flat red layer over the
+             stage, flickers its opacity. At most two flashes in any second
+             and never brighter than .45, like the glitch. Blue: see the
+             section "The blue glitch" below.
      break   the five blocks (the regions marked data-block in index.html) fly
              apart in 3D and fade out, with the same keyframes as the pieces of
              the mechanical page change (piece-break), and #backdrop, the layer
@@ -1135,10 +1137,10 @@ html:not([data-motion="full"]) .logo[data-act="fly"] .hawk-far-wing { transform:
      build   the blocks fly back together with the same overshoot and settle
              (piece-build) and #backdrop fades out at the end
 
-   #backdrop shows what data-look says: wallpaper, or (for the red eyes) black,
-   eyes, face or gone. The wallpaper and the face are drawn in
-   core/hidden-art.js. The eyes and the face come in and go out with opacity, and
-   are flat shapes: nothing glows and nothing is blurred.
+   #backdrop is black, a deep blue or the colour of the picture on it, as
+   data-look says (base.css). The pictures (core/hidden-pictures.js) come in
+   and go out with opacity, or are there at once: nothing glows and nothing is
+   blurred. See "What the pictures do" below.
 
    The blocks are only promoted to layers (will-change) and given a perspective
    while they fly, in break and build. At rest, and while they are out of sight,
@@ -1226,29 +1228,299 @@ html:not([data-motion="full"]) .logo[data-act="fly"] .hawk-far-wing { transform:
   100% { opacity: .3; }
 }
 
-/* What the backdrop shows. --look-seconds is the length of the step. The eyes
-   open with two flickers, the face comes in over the first fifth of its step and
-   stays, and gone fades both out. */
-#backdrop[data-look="wallpaper"] .wallpaper { opacity: 1; }
-#backdrop[data-look="eyes"] .face-eyes {
-  animation: eyes-on calc(var(--look-seconds) * 1s * var(--pace)) linear both;
-}
-#backdrop[data-look="face"] .face-eyes { opacity: 1; }
-#backdrop[data-look="face"] .face-plates {
+/* What the pictures do. hidden-run.js puts data-state on the one it shows. A
+   picture with no data-state is invisible (base.css).
+     in   fades in over --look-seconds
+     on   is there, and the step that shows a picture with no fade (the cut) goes
+          straight to this one, so the picture is on the very next frame
+     out  fades out over --look-seconds and stays gone */
+#backdrop .picture[data-state="in"] {
   opacity: 1;
-  animation: fade-in calc(var(--look-seconds) * .2s * var(--pace)) linear both;
+  animation: fade-in calc(var(--look-seconds) * 1s * var(--pace)) linear both;
 }
-#backdrop[data-look="gone"] .face-eyes,
-#backdrop[data-look="gone"] .face-plates {
+#backdrop .picture[data-state="on"] { opacity: 1; }
+#backdrop .picture[data-state="out"] {
   opacity: 1;
   animation: fade-out calc(var(--look-seconds) * 1s * var(--pace)) linear both;
 }
-@keyframes eyes-on {
+
+
+/* The blue glitch (scene.glitch(seconds, 'blue') in core/hidden-run.js, which sets
+   data-tint="blue" on #world and shows #blue-glitch). It is the red glitch made
+   rough. Everything jumps with steps(1), at moments that are not evenly spaced,
+   and nothing moves smoothly. The same keyframes run for as long as the glitch
+   lasts, so a short glitch is the same sequence faster. Four things happen:
+
+     the stage jumps sideways and a little up and down, by up to 100px, and now
+     and then is a few percent too big
+     each of the five blocks jumps by itself, sideways and sheared (skewX), and
+     starts a little later than the one before (--hold), so they come apart from
+     each other: the screen tears
+     six torn pieces, thin flat bands over the screen, jump sideways, flicker on
+     and off and are sometimes thicker for a moment
+     three flat layers over the whole screen flicker at several strengths, in
+     three blues. At three moments one of them is almost solid for about a tenth
+     of a second, so the screen is nearly all blue for an instant
+
+   Only transform and opacity change. At most three of the big jumps (.4 or more
+   of the screen turning blue at once) happen in any glitch, so at most three in
+   any second, and the palest of the washes is never more than .2 opaque. The
+   stage and the blocks only move while the live screen glitches
+   (data-hidden="glitch"). The layers also play when it glitches over the empty
+   backdrop, and the break makes them rest at .3 and fade out, like the red wash. */
+[data-motion="full"] #world[data-hidden="glitch"][data-tint="blue"] #stage {
+  animation: blue-jump calc(var(--glitch-seconds) * 1s * var(--pace)) steps(1) both;
+}
+[data-motion="full"] #world[data-hidden="glitch"][data-tint="blue"] [data-block] {
+  animation: blue-tear-a calc(var(--glitch-seconds) * 1s * var(--pace)) steps(1) calc(var(--glitch-seconds) * 1s * var(--pace) * var(--hold) * .4) both;
+}
+[data-motion="full"] #world[data-hidden="glitch"][data-tint="blue"] #region-grid1,
+[data-motion="full"] #world[data-hidden="glitch"][data-tint="blue"] #region-countdown {
+  animation-name: blue-tear-b;
+}
+
+[data-motion="full"] #world[data-tint="blue"] #blue-glitch .wash-old {
+  animation: blue-wash-old calc(var(--glitch-seconds) * 1s * var(--pace)) steps(1) both;
+}
+[data-motion="full"] #world[data-tint="blue"] #blue-glitch .wash-new {
+  animation: blue-wash-new calc(var(--glitch-seconds) * 1s * var(--pace)) steps(1) both;
+}
+[data-motion="full"] #world[data-tint="blue"] #blue-glitch .wash-pale {
+  animation: blue-wash-pale calc(var(--glitch-seconds) * 1s * var(--pace)) steps(1) both;
+}
+[data-motion="full"] #world[data-tint="blue"] #blue-glitch .tear {
+  animation: tear-a calc(var(--glitch-seconds) * 1s * var(--pace)) steps(1) both;
+}
+[data-motion="full"] #world[data-tint="blue"] #blue-glitch .tear-2,
+[data-motion="full"] #world[data-tint="blue"] #blue-glitch .tear-5 {
+  animation-name: tear-b;
+  animation-delay: calc(var(--glitch-seconds) * 1s * var(--pace) * .04);
+}
+[data-motion="full"] #world[data-tint="blue"] #blue-glitch .tear-3,
+[data-motion="full"] #world[data-tint="blue"] #blue-glitch .tear-6 {
+  animation-name: tear-c;
+  animation-delay: calc(var(--glitch-seconds) * 1s * var(--pace) * .02);
+}
+
+/* The break: the layers stop flickering, the old blue rests at .3 where its
+   keyframes ended, and the whole layer fades out with the blocks flying away */
+[data-motion="full"] #world[data-hidden="break"][data-tint="blue"] #blue-glitch {
+  animation: fade-out calc(var(--time-hidden) * .5) linear both;
+}
+[data-motion="full"] #world[data-hidden="break"][data-tint="blue"] #blue-glitch .wash-old {
+  animation-name: none;
+  opacity: .3;
+}
+[data-motion="full"] #world[data-hidden="break"][data-tint="blue"] #blue-glitch .wash-new,
+[data-motion="full"] #world[data-hidden="break"][data-tint="blue"] #blue-glitch .wash-pale,
+[data-motion="full"] #world[data-hidden="break"][data-tint="blue"] #blue-glitch .tear {
+  animation-name: none;
+}
+
+/* The three washes. Together they cover the screen (as layers over each other) .85
+   or more three times: at 26, 63 and 88 percent of the glitch. */
+@keyframes blue-wash-old {
   0%   { opacity: 0; }
-  28%  { opacity: 1; }
-  44%  { opacity: .25; }
-  60%  { opacity: 1; }
-  100% { opacity: 1; }
+  3%   { opacity: .25; }
+  6%   { opacity: 0; }
+  12%  { opacity: .45; }
+  16%  { opacity: .1; }
+  26%  { opacity: .85; }
+  31%  { opacity: .15; }
+  36%  { opacity: 0; }
+  40%  { opacity: .4; }
+  45%  { opacity: .2; }
+  52%  { opacity: .55; }
+  56%  { opacity: 0; }
+  63%  { opacity: .95; }
+  68%  { opacity: .3; }
+  72%  { opacity: 0; }
+  76%  { opacity: .5; }
+  81%  { opacity: .2; }
+  85%  { opacity: .1; }
+  88%  { opacity: .9; }
+  92%  { opacity: .25; }
+  96%  { opacity: .4; }
+  100% { opacity: .3; }
+}
+@keyframes blue-wash-new {
+  0%   { opacity: 0; }
+  9%   { opacity: .3; }
+  12%  { opacity: 0; }
+  20%  { opacity: .35; }
+  23%  { opacity: 0; }
+  33%  { opacity: .5; }
+  36%  { opacity: .2; }
+  48%  { opacity: .4; }
+  52%  { opacity: 0; }
+  60%  { opacity: .3; }
+  63%  { opacity: 0; }
+  72%  { opacity: .6; }
+  76%  { opacity: .1; }
+  81%  { opacity: .45; }
+  86%  { opacity: 0; }
+  92%  { opacity: .5; }
+  96%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+@keyframes blue-wash-pale {
+  0%   { opacity: 0; }
+  6%   { opacity: .15; }
+  9%   { opacity: 0; }
+  16%  { opacity: .2; }
+  20%  { opacity: 0; }
+  29%  { opacity: .2; }
+  33%  { opacity: 0; }
+  45%  { opacity: .15; }
+  48%  { opacity: 0; }
+  56%  { opacity: .2; }
+  60%  { opacity: 0; }
+  67%  { opacity: .18; }
+  72%  { opacity: 0; }
+  86%  { opacity: .2; }
+  92%  { opacity: 0; }
+  96%  { opacity: .12; }
+  100% { opacity: 0; }
+}
+
+/* The torn pieces. Each of the three sets has its own times and its own jumps, and the
+   pieces start a little apart (the delays above), so no two are alike. A piece is
+   invisible between its jumps, and scaleY makes it thick or thin for a moment. */
+@keyframes tear-a {
+  0%   { transform: translateX(0);                 opacity: 0; }
+  5%   { transform: translateX(-260px);            opacity: .9; }
+  8%   { transform: translateX(180px) scaleY(1.8); opacity: .9; }
+  10%  { transform: translateX(180px);             opacity: 0; }
+  24%  { transform: translateX(-90px);             opacity: .85; }
+  27%  { transform: translateX(310px) scaleY(.5);  opacity: .85; }
+  28%  { transform: translateX(310px);             opacity: 0; }
+  41%  { transform: translateX(120px) scaleY(2.4); opacity: .9; }
+  43%  { transform: translateX(-340px);            opacity: .9; }
+  47%  { transform: translateX(-340px);            opacity: 0; }
+  58%  { transform: translateX(-60px);             opacity: .8; }
+  60%  { transform: translateX(220px) scaleY(1.5); opacity: .8; }
+  62%  { transform: translateX(220px);             opacity: 0; }
+  74%  { transform: translateX(-200px);            opacity: .9; }
+  77%  { transform: translateX(90px) scaleY(2.2);  opacity: .9; }
+  79%  { transform: translateX(90px);              opacity: 0; }
+  89%  { transform: translateX(260px);             opacity: .85; }
+  92%  { transform: translateX(-120px) scaleY(.6); opacity: .85; }
+  94%  { transform: translateX(-120px);            opacity: 0; }
+  100% { transform: translateX(0);                 opacity: 0; }
+}
+@keyframes tear-b {
+  0%   { transform: translateX(0);                 opacity: 0; }
+  3%   { transform: translateX(340px);             opacity: .85; }
+  4%   { transform: translateX(-140px) scaleY(2);  opacity: .85; }
+  7%   { transform: translateX(-140px);            opacity: 0; }
+  18%  { transform: translateX(200px);             opacity: .9; }
+  21%  { transform: translateX(-280px) scaleY(.7); opacity: .9; }
+  22%  { transform: translateX(-280px);            opacity: 0; }
+  35%  { transform: translateX(-70px) scaleY(1.6); opacity: .8; }
+  39%  { transform: translateX(260px);             opacity: .8; }
+  42%  { transform: translateX(260px);             opacity: 0; }
+  52%  { transform: translateX(-310px);            opacity: .9; }
+  53%  { transform: translateX(100px) scaleY(2.6); opacity: .9; }
+  57%  { transform: translateX(100px);             opacity: 0; }
+  66%  { transform: translateX(150px);             opacity: .85; }
+  70%  { transform: translateX(-220px) scaleY(1.3); opacity: .85; }
+  71%  { transform: translateX(-220px);            opacity: 0; }
+  83%  { transform: translateX(-100px) scaleY(2);  opacity: .9; }
+  85%  { transform: translateX(300px);             opacity: .9; }
+  90%  { transform: translateX(300px);             opacity: 0; }
+  100% { transform: translateX(0);                 opacity: 0; }
+}
+@keyframes tear-c {
+  0%   { transform: translateX(0);                 opacity: 0; }
+  11%  { transform: translateX(-200px) scaleY(1.7); opacity: .9; }
+  13%  { transform: translateX(240px);             opacity: .9; }
+  16%  { transform: translateX(240px);             opacity: 0; }
+  26%  { transform: translateX(-330px);            opacity: .85; }
+  29%  { transform: translateX(60px) scaleY(.6);   opacity: .85; }
+  33%  { transform: translateX(60px);              opacity: 0; }
+  45%  { transform: translateX(280px) scaleY(2.3); opacity: .9; }
+  46%  { transform: translateX(-160px);            opacity: .9; }
+  50%  { transform: translateX(-160px);            opacity: 0; }
+  61%  { transform: translateX(-50px);             opacity: .8; }
+  64%  { transform: translateX(330px) scaleY(1.4); opacity: .8; }
+  65%  { transform: translateX(330px);             opacity: 0; }
+  75%  { transform: translateX(-240px) scaleY(2);  opacity: .9; }
+  78%  { transform: translateX(130px);             opacity: .9; }
+  81%  { transform: translateX(130px);             opacity: 0; }
+  91%  { transform: translateX(-90px) scaleY(1.9); opacity: .85; }
+  95%  { transform: translateX(210px);             opacity: .85; }
+  97%  { transform: translateX(210px);             opacity: 0; }
+  100% { transform: translateX(0);                 opacity: 0; }
+}
+
+/* The whole stage, and the blocks one by one */
+@keyframes blue-jump {
+  0%   { transform: translate(0, 0); }
+  4%   { transform: translate(-42px, 0); }
+  6%   { transform: translate(66px, 8px); }
+  7%   { transform: translate(0, 0); }
+  15%  { transform: translate(28px, -10px); }
+  17%  { transform: translate(-70px, 0); }
+  18%  { transform: translate(0, 0); }
+  26%  { transform: translate(90px, 0) scale(1.04); }
+  31%  { transform: translate(0, 0); }
+  38%  { transform: translate(-36px, 14px); }
+  39%  { transform: translate(52px, 0); }
+  42%  { transform: translate(0, 0); }
+  50%  { transform: translate(-80px, 0); }
+  51%  { transform: translate(30px, -16px); }
+  55%  { transform: translate(0, 0); }
+  63%  { transform: translate(60px, 0) scale(1.03); }
+  68%  { transform: translate(-34px, 0); }
+  70%  { transform: translate(0, 0); }
+  79%  { transform: translate(44px, 12px); }
+  80%  { transform: translate(-58px, 0); }
+  83%  { transform: translate(0, 0); }
+  88%  { transform: translate(-100px, 0) scale(1.05); }
+  92%  { transform: translate(20px, -8px); }
+  94%  { transform: translate(0, 0); }
+  100% { transform: translate(0, 0); }
+}
+@keyframes blue-tear-a {
+  0%   { transform: translateX(0); }
+  8%   { transform: translateX(70px) skewX(-3deg); }
+  10%  { transform: translateX(-110px); }
+  12%  { transform: translateX(0); }
+  27%  { transform: translateX(160px) skewX(5deg); }
+  29%  { transform: translateX(0); }
+  44%  { transform: translateX(-90px); }
+  46%  { transform: translateX(130px) skewX(-6deg); }
+  49%  { transform: translateX(0); }
+  61%  { transform: translateX(-150px) skewX(4deg); }
+  64%  { transform: translateX(40px); }
+  66%  { transform: translateX(0); }
+  78%  { transform: translateX(100px) skewX(-5deg); }
+  80%  { transform: translateX(-60px); }
+  83%  { transform: translateX(0); }
+  90%  { transform: translateX(-190px) skewX(6deg); }
+  93%  { transform: translateX(0); }
+  100% { transform: translateX(0); }
+}
+@keyframes blue-tear-b {
+  0%   { transform: translateX(0); }
+  5%   { transform: translateX(-130px) skewX(4deg); }
+  7%   { transform: translateX(90px); }
+  9%   { transform: translateX(0); }
+  21%  { transform: translateX(-60px); }
+  24%  { transform: translateX(180px) skewX(-5deg); }
+  26%  { transform: translateX(0); }
+  36%  { transform: translateX(120px) skewX(6deg); }
+  38%  { transform: translateX(-100px); }
+  41%  { transform: translateX(0); }
+  54%  { transform: translateX(-170px) skewX(-4deg); }
+  57%  { transform: translateX(0); }
+  69%  { transform: translateX(80px); }
+  71%  { transform: translateX(-140px) skewX(5deg); }
+  74%  { transform: translateX(0); }
+  85%  { transform: translateX(210px) skewX(-6deg); }
+  86%  { transform: translateX(-50px); }
+  89%  { transform: translateX(0); }
+  100% { transform: translateX(0); }
 }
 
 

@@ -32,7 +32,8 @@ moves nothing. Both ignore Page change style. The mechanical change only
 exists in full motion.
 
 Now and then a hidden transition replaces a page change of the large panel: the
-whole screen comes apart and rebuilds, with a wallpaper or a robot face behind it.
+whole screen comes apart and rebuilds, with a blue error screen or a picture of two
+red eyes behind it.
 It uses the same keyframes (`piece-break` and `piece-build`) as the pieces of the
 mechanical change, for five big blocks instead of a frame's pieces. See
 docs/hidden-transitions.md.

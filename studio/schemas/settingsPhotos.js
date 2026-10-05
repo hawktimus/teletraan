@@ -1,13 +1,16 @@
 // The Photos tab of Dashboard Settings: the order the Photo panel shows its
-// photos in, and how long it stays up. Two fields:
+// photos in, how long it stays up, and how big the pictures are. Four fields:
 //
-//   photoOrder    random (the default) or newest first
-//   photoSeconds  seconds the panel stays up, from 6 to 120, starting at 16
+//   photoOrder     random (the default) or newest first
+//   photoSeconds   seconds the panel stays up, from 6 to 120, starting at 16
+//   portraitScale  size of the portraits, in percent, from 60 to 100, starting at 100
+//   photoScale     size of the picture in the Photo panel, the same range
 //
 // The choices are the names in photoOrders in dashboard/config.js, and the
 // starting values and limits are the same as defaultSettings and limits there.
 // check-schemas.mjs fails if they differ. The photos themselves are in
-// photo.js.
+// photo.js. 100 percent is the full size, the largest that fits the frames
+// (core/portrait.js and core/photos.js work out the smaller sizes).
 //
 // To take the whole section out later: delete this file, remove its import and
 // the two lines that use photosGroup and photosFields in dashboardSettings.js,
@@ -50,6 +53,32 @@ export function photosFields() {
       validation: Rule => [
         Rule.required().error('Enter the number of seconds.'),
         Rule.integer().min(6).max(120).error('Use a whole number from 6 to 120.'),
+      ],
+    }),
+
+    defineField({
+      name: 'portraitScale',
+      title: 'Portrait size, percent',
+      type: 'number',
+      group: 'photos',
+      description: 'How big the portraits are on Leadership, Team Leads and Roster, from 60 to 100. 100 is the full size and the largest that fits the frame.',
+      initialValue: 100,
+      validation: Rule => [
+        Rule.required().error('Enter a percent from 60 to 100.'),
+        Rule.integer().min(60).max(100).error('Use a whole number from 60 to 100.'),
+      ],
+    }),
+
+    defineField({
+      name: 'photoScale',
+      title: 'Photo size, percent',
+      type: 'number',
+      group: 'photos',
+      description: 'How big the picture in the Photo panel is, from 60 to 100. 100 is the full size and the largest that fits the frame. Below 80, a long caption may be cut short.',
+      initialValue: 100,
+      validation: Rule => [
+        Rule.required().error('Enter a percent from 60 to 100.'),
+        Rule.integer().min(60).max(100).error('Use a whole number from 60 to 100.'),
       ],
     }),
   ];

@@ -106,6 +106,10 @@ export const limits = {
   silverChance: { min: 0, max: 100 },
   // The Photos tab. Below 6 seconds a photo is gone before it can be looked at.
   photoSeconds: { min: 6, max: 120 },
+  // The two size settings in the Photos tab, in percent. 100 is the full size, the largest that
+  // fits the frames. At 60 a picture is still easy to see from across the room.
+  portraitScale: { min: 60, max: 100 },
+  photoScale: { min: 60, max: 100 },
   // The Night mode tab. At 120 pixels the logo is still clear from across the room, and at 800 it
   // still fits the 1080 pixel height with the number under it.
   nightLogoWidth: { min: 120, max: 800 },
@@ -180,8 +184,15 @@ export const defaultSettings = {
   //   photoOrder    see photoOrders above
   //   photoSeconds  how long the Photo panel stays, when its row in the Panels
   //                 list has no seconds of its own. It is used instead of pageSeconds.
+  //   portraitScale how big the portraits are, as a percent of the full size: the Leadership and
+  //                 Team Leads portraits and the team lead portrait of the Roster. 100 is the
+  //                 full size (core/portrait.js). The names and roles keep their size.
+  //   photoScale    how big the picture in the Photo panel is, as a percent of the full size
+  //                 (core/photos.js). 100 fills the panel. The caption keeps its size.
   photoOrder: 'random',
   photoSeconds: 16,
+  portraitScale: 100,
+  photoScale: 100,
   // The Night mode tab in the Studio: the screensaver. The signal is never turned off. From
   // nightStart to nightEnd (24 hour time, in the time zone of the Theme page, and it may run past
   // midnight) the screen is black with the team logo and the team number under it.

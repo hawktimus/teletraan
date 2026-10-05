@@ -51,5 +51,6 @@ function leadSlot(subteam, content) {
     name: subteam.lead,
     role: labelFor(subteam),
     address: photoAddress(personNamed(content.people, subteam.lead)),
+    scale: content.settings && content.settings.portraitScale,
   });
 }

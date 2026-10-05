@@ -1,0 +1,15 @@
+/* Overlay: Valentine's Day. The accent colours of the Valentine's Day seasonal pack. This is a
+   first set of colours, ready to change. The decorations that go with it are
+   in dashboard/seasons/valentines-day.js, and docs/seasonal-packs.md explains how a pack
+   is put together.
+
+   An overlay may set only the three variables below. --yellow and
+   --yellow-faint go together, because the second is the first at 16 percent
+   strength. tools/check-themes.mjs tries these colours on top of every theme
+   and fails if any text becomes hard to read. */
+
+html.overlay-valentines-day {
+  --yellow: #ffc4d6;
+  --yellow-faint: rgba(255, 196, 214, .16);
+  --lilac: #ffd9e4;
+}

@@ -6,17 +6,72 @@ buttons for the transitions. See "Play announcements" below.
 A hidden transition is a rare surprise. Now and then, instead of an ordinary page
 change, the whole screen does something else. There are two:
 
-- **Desktop reveal.** The banner, the countdown, the large panel, the small panel
-  and the ticker come apart in 3D and fly away. For about a second and a half the
-  screen shows a plain wallpaper of blue and teal facets. Then the five blocks fly
-  back together and click into place, showing the next page of each panel.
+- **Desktop reveal.** The screen crashes like a computer with a blue screen. In order:
+  1. About 2 seconds of rough blue glitching over the live screen. The whole screen
+     jumps sideways, each block (the banner, the countdown, the large panel, the small
+     panel and the ticker) jumps and shears on its own so the picture tears, thin blue
+     bands jump across, and flat layers in three blues flicker at different strengths. Three
+     times the screen is almost solid blue for about a tenth of a second.
+  2. All five blocks come apart in 3D and fly away over a deep blue.
+  3. A second glitch, about a second long, over the empty blue.
+  4. A cut, with no fade, to a blue screen picture. It stays for 3 seconds.
+  5. The five blocks fly back together and click into place over the picture, showing
+     the next page of each panel.
 - **Red eyes.** The screen glitches with flat red flashes, then everything breaks
-  apart and the screen goes black. Two red eyes open in the dark and an angular
-  robot face shows round them for 2 seconds. It fades out and the screen comes back
-  together showing the next page of each panel.
+  apart and the screen goes black. A picture of two glowing red eyes fades in, stays
+  for 2.5 seconds and fades out. The five blocks fly back together showing the next
+  page of each panel.
 
-Both are drawn from plain polygons in the team's own faceted style. The wallpaper
-has no icons or windows, and the face is not taken from anywhere.
+The pictures are four files that the team supplied, in `dashboard/assets/hidden/`.
+Each transition has two, and they take turns (see "The pictures" below).
+
+## The pictures
+
+The four pictures are in `dashboard/assets/hidden/`:
+
+| File | Size | Used by | How it fills the screen |
+|------|------|---------|-------------------------|
+| `red-eyes-1.webp` | 1672 x 941 | Red eyes | covers the whole screen |
+| `red-eyes-2.webp` | 1920 x 1080 | Red eyes | covers the whole screen |
+| `blue-screen-1.png` | 700 x 394 | Desktop reveal | covers the whole screen |
+| `blue-screen-2.png` | 640 x 400 | Desktop reveal | shown whole, crisp, on its own blue |
+
+A picture is never stretched. The three that are 16:9 (the shape of the screen) use
+"cover": they fill the screen and, when the proportions are a hair off, cut off less than
+a pixel. The old text-mode blue screen is 16:10 and only 640 pixels wide, so it uses
+"contain": the whole picture is shown at the same proportions, as big as it can be (2.7
+times), with hard pixel edges (`image-rendering`) so the text stays sharp, and the rest of the
+screen is filled with the picture's own blue so there are no black bars. If it were cut to
+fill the screen, its top and bottom would be lost.
+
+**They take turns.** Each play of a transition takes the picture after the one it used last,
+and goes back to the first after the second. The last one used is kept in the browser's storage
+(`localStorage`, under `teletraan-hidden-picture-redEyes` and
+`teletraan-hidden-picture-blueScreen`), so a Mini that restarts carries on with the other one.
+If the storage cannot be used the pictures still take turns until the page is reloaded. The
+two transitions keep their own place.
+
+**They are loaded when the screen starts**, all four, and wait hidden in the backdrop, so the
+cut to the blue screen is one frame. If one fails to load (a missing or damaged file) a note
+goes to the browser console, the other picture of its set is used every time, and if none of
+the set loads the step just waits its seconds over the plain backdrop. The transition still
+ends and the screen comes back.
+
+### Swapping a picture for another
+
+1. Make the new picture with the same name as the old one and the same kind of size: 16:9
+   for the three that cover the screen (for example 1920 x 1080), and a small picture that is
+   already 16:10 for the old blue screen. A bigger picture is fine and looks sharper. Use
+   `webp` or `png`, keep it under 300 KB so the Mini loads it at once, and use your own
+   picture or one you have the right to use.
+2. Put it in `dashboard/assets/hidden/`, replacing the old file, and push. The Mini
+   pulls it on its next timer.
+3. If the size or the kind of picture is different (a different shape, or a new name), change its
+   line in `core/hidden-pictures.js` (`file`, `width`, `height`, `fit`, `fill` and `crisp`, which
+   the comment at the top of that file explains) and run `node tools/test-effects.mjs`. The test
+   checks that every file exists and is the size the list says.
+4. Try it with `?hidden=desktop` or `?hidden=redEyes` in the address (see "Try one"). The
+   address always plays the next picture, so add it twice to see both.
 
 ## The Hidden tab
 
@@ -145,20 +200,36 @@ When a transition plays, `core/hidden-run.js` sets `data-hidden` on `#world`, an
 
 | `data-hidden` | What happens                                                                  |
 |---------------|-------------------------------------------------------------------------------|
-| `glitch`      | Red eyes only. The screen jumps (the old television glitch) and a flat red layer flickers. At most two flashes in any second, and never brighter than .45 |
+| `glitch`      | Red: the screen jumps (the old television glitch) and a flat red layer flickers. At most two flashes in any second, and never brighter than .45. Blue: the blue glitch above |
 | `break`       | The blocks fly apart in 3D (`translate3d`, `rotateX`, `rotateY`, `rotateZ`) and fade. The backdrop layer fades in behind them |
 | `apart`       | The blocks are out of sight. The pages of all three areas are swapped now, so nobody sees it |
 | `build`       | The blocks fly back with the same overshoot and settle as the pieces of the mechanical page change, and the backdrop fades out |
 
-The backdrop is under the stage. It is black, and `data-look` says what is on it:
-`wallpaper`, or for red eyes `eyes`, `face` and `gone`. Everything moves with
-`transform` and `opacity` only, and the eyes are flat shapes whose opacity changes.
-Nothing glows or blurs.
+`data-tint` is on `#world` while a glitch plays: `red` or `blue`. A glitch can also
+play while the blocks are apart, and then `data-hidden` stays `apart` and only `data-tint`
+is there.
+
+The backdrop is under the stage. `data-look` says what it shows: black (the default),
+`blue` (a deep blue) or `picture`, which is the background colour of the picture on it.
+The pictures are `img` elements that `core/hidden-run.js` adds to it when the screen
+starts, each one invisible until a step gives it a `data-state`: `in` fades it in, `on`
+shows it at once and `out` fades it out. The cut to a blue screen is `on` straight away,
+so the picture is there on the next frame, with no fade. Everything moves with `transform`
+and `opacity` only. Nothing glows or blurs, and nothing is blended or filtered.
+
+The blue glitch (`scene.glitch(seconds, 'blue')`) is the red glitch made rough. It is in
+`frame.css` ("The blue glitch") and uses `#blue-glitch` in `index.html`: three flat washes
+(old blue, new blue and a pale blue) and six torn pieces, thin flat bands. All of it
+moves in steps, never in a smooth slide, at times that are not evenly spaced. At most three
+big flashes happen in one glitch, so never more than three in a second, and the pale blue
+is never more than a fifth opaque. A test in `tools/test-effects.mjs` counts them.
 
 The blocks are promoted to layers (`will-change`) and given a perspective only while
 they fly, in `break` and `build`. Between those, and the rest of the time, there is
-nothing extra for the Mini to hold. The five blocks, the backdrop and, for red eyes,
-the red layer are the only layers a hidden transition adds.
+nothing extra for the Mini to hold. The five blocks, the backdrop, the picture and, for the
+glitches, the red layer or the blue layers (three washes and six pieces, for about 2 and 1
+seconds) are the only layers a hidden transition adds. The four pictures wait in the
+backdrop, which is not drawn until a transition plays.
 
 Swapping the pages: when the large panel's page change comes up, it asks for a hidden
 transition (`core/areas.js`). If one plays, the transition first waits for the three
@@ -178,9 +249,12 @@ A transition is one entry in a list, plus a few lines to give it a chance settin
 1. Add an entry to `hiddenTransitions` in `dashboard/core/hidden-transitions.js`. The
    key is the id the Studio stores. `name` is the words on its Play button.
    `chanceField` is the name of its chance setting. `run(scene)` is the show, one line
-   for each step. The steps are `scene.glitch(seconds)`, `scene.breakApart('wallpaper')`
-   or `scene.breakApart('black')`, `scene.wait(seconds)`, `scene.show('eyes' | 'face' |
-   'gone', seconds)` and `scene.rebuild()`. It must end with `scene.rebuild()`.
+   for each step. The steps are `scene.glitch(seconds)` (red) or `scene.glitch(seconds,
+   'blue')`, `scene.breakApart('black')` or `scene.breakApart('blue')`,
+   `scene.wait(seconds)`, `scene.pictureIn(set, seconds)` (fades the next picture of the
+   set in), `scene.pictureCut(set, seconds)` (shows it at once and holds it),
+   `scene.pictureOut(seconds)` and `scene.rebuild()`. A set is `'redEyes'` or
+   `'blueScreen'`. It must end with `scene.rebuild()`.
 
        myTransition: {
          name: 'My transition',
@@ -192,8 +266,9 @@ A transition is one entry in a list, plus a few lines to give it a chance settin
          },
        },
 
-   A new picture is a new `data-look` in `frame.css` and a new function in
-   `core/hidden-art.js`, and a new step in `makeScene` in `core/hidden-run.js`.
+   A new set of pictures is a new list in `core/hidden-pictures.js`, and its files go in
+   `dashboard/assets/hidden/`. A new kind of step is a new function in `makeScene` in
+   `core/hidden-run.js` and its moves in `frame.css`.
 2. In `dashboard/config.js` add the chance to `defaultSettings` (`myChance: 1`) and to
    `limits` (`myChance: { min: 0, max: 100 }`).
 3. In `studio/hidden-transitions.js` add the same id, name and chance field, in the
@@ -216,7 +291,10 @@ A transition is one entry in a list, plus a few lines to give it a chance settin
   `tools/test-effects.mjs`.
 - `dashboard/core/hidden-run.js`: plays a transition: asks at each page change, sets
   the attributes, waits, and puts the screen back whatever happens.
-- `dashboard/core/hidden-art.js`: the wallpaper and the face, as polygons.
+- `dashboard/core/hidden-pictures.js`: the four pictures (file name, size, how each fills the
+  screen) and which one plays next. Plain functions, tested in `tools/test-effects.mjs`.
+- `dashboard/assets/hidden/`: the four picture files.
+- `dashboard/core/images.js`: `preloadImages`, which loads the four pictures when the screen starts.
 - `dashboard/core/announce.js`: the plain functions behind Play announcements, with no page
   in them: tidying `announceRequest`, which announcements play (`enabledAnnouncements`),
   playing them one after another (`playEach`), and the runner that applies the guard and
@@ -226,8 +304,9 @@ A transition is one entry in a list, plus a few lines to give it a chance settin
   `core/hidden-run.js` is how it knows a hidden transition has the screen.
 - `dashboard/core/areas.js` and `core/schedule.js`: the hook at the large panel's page
   change, the gate for the other areas, and `moveOn` (ask a region to change page now).
-- `dashboard/frame.css` ("Hidden transitions"), `base.css`, `tokens.css` (the colours
-  and times) and `index.html` (`#backdrop`, `#red-wash` and `data-block`).
+- `dashboard/frame.css` ("Hidden transitions" and "The blue glitch"), `base.css` (the
+  layers and the pictures), `tokens.css` (the colours and times) and `index.html`
+  (`#backdrop`, `#red-wash`, `#blue-glitch` and `data-block`).
 - `dashboard/frame.js`: `setHiddenPlaying` holds the logo effects and the screen glitch
   still while one plays, and `playGlitch` gives it its red glitches.
 - `studio/schemas/settingsAnnouncements.js` has the hidden `announceRequest` field

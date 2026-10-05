@@ -72,8 +72,8 @@
   --time-break: calc(var(--break-seconds) * 1s * var(--pace));
   --hidden-seconds: 1.6; /* core/hidden-run.js sets it, with the same number: the blocks of a hidden transition fly apart in this many seconds, and fly back in the same again */
   --time-hidden: calc(var(--hidden-seconds) * 1s * var(--pace));
-  --glitch-seconds: 1.5; /* the red glitches of the red eyes last this long. hidden-run.js sets it from the transition's list of steps */
-  --look-seconds: 1; /* how long the backdrop takes over a step of the red eyes. hidden-run.js sets it, step by step */
+  --glitch-seconds: 1.5; /* the glitches of a hidden transition last this long. hidden-run.js sets it from the transition's list of steps */
+  --look-seconds: 1; /* how long a picture takes to fade in or out in a hidden transition. hidden-run.js sets it, step by step */
   --crt-scale: 1; /* frame.js sets it from the Screen glitch duration: seconds divided by 2.7. 1 is the normal 2.7 seconds */
   --time-crt: calc(2.6s * var(--crt-scale) * var(--pace)); /* the old television effect, which frame.js times to match */
   --time-crt-roll: calc(1.2s * var(--crt-scale) * var(--pace)); /* one pass of its bright bar, which plays twice */
@@ -150,22 +150,18 @@
   --silver: #a4a7a8;
 }
 
-/* The hidden transitions (core/hidden-art.js, frame.css). The red eyes picture is
-   dark steel on black, in five flat tones, with a lighter edge on every plate,
-   and two flat reds for the eyes. The flat red of the red glitches is the
-   same kind of red. None of them follows a theme, so the surprise looks the same
-   whatever the season. */
+/* The hidden transitions (core/hidden-run.js, frame.css). The flat red of the red
+   glitches, and the flat blues of the blue glitches: the two blues of the blue
+   screen pictures, a deep blue for the backdrop behind the broken blocks, a
+   pale blue and a near black navy for the torn pieces. None of them follows a
+   theme, so the surprise looks the same whatever the season. */
 :root {
   --hidden-red: #c8141b;
-  --face-lit: #343a43;
-  --face-lit-2: #414853;
-  --face-shade: #252a31;
-  --face-shade-2: #2e343c;
-  --face-dark: #15181c;
-  --face-cut: #050607;
-  --face-edge: #5b6470;
-  --eye-red: #e0161d;
-  --eye-hot: #ff4a3a;
+  --hidden-blue-old: #0000aa;
+  --hidden-blue-new: #0177d7;
+  --hidden-blue-pale: #7fc4ff;
+  --hidden-blue-deep: #070b4a;
+  --hidden-blue-ink: #02041c;
 }
 
 /* The red metal of the countdown and the alert. It does not change with

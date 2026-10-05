@@ -102,7 +102,8 @@ editors can sign in from anywhere.
                               (docs/hidden-transitions.md),
                               hidden.js decides when a hidden transition replaces a page change,
                               hidden-transitions.js lists them, hidden-run.js plays them and
-                              hidden-art.js draws their wallpaper and face (docs/hidden-transitions.md),
+                              hidden-pictures.js lists their four pictures (in assets/hidden) and
+                              which one plays next (docs/hidden-transitions.md),
                               tick.js is the one clock of the screen: it tells every panel when a real
                               second starts by reading the time, not by counting, so the digits never
                               drift, and a panel should write to the page only what has changed
@@ -123,7 +124,9 @@ editors can sign in from anywhere.
                               for sanity dataset import (docs/importing-from-csv.md)
     deploy/                   how the Mini runs it: web server, timers, scripts. scripts/check-connection.sh
                               checks the Mini's connection to Sanity, BAND, Docker and the kiosk with one
-                              OK or FAIL line each (docs/rebuilding-the-mini.md, "Checking the connection")
+                              OK or FAIL line each (docs/rebuilding-the-mini.md, "Checking the connection").
+                              mac/ is for the Mac you work on: ship.sh commits, pushes, updates the Studio
+                              and tells the Mini to pull (docs/shipping-from-the-mac.md)
     tools/
       serve.py                the server above
       test-calendar.mjs       checks for the calendar reader
@@ -228,7 +231,9 @@ alone.
   `studio/hidden-transitions.js`, a copy of `hiddenTransitions` in
   `dashboard/core/hidden-transitions.js`. A new transition is one entry in each, plus a chance
   field. `core/hidden.js` decides, `core/hidden-run.js` plays, and `frame.css` ("Hidden
-  transitions") moves the five blocks. Try one with `?hidden=desktop` or `?hidden=redEyes`.
+  transitions" and "The blue glitch") moves the five blocks and the glitches. The four
+  pictures are in `dashboard/assets/hidden/`, and `core/hidden-pictures.js` says how each one
+  fills the screen and which one plays next. Try one with `?hidden=desktop` or `?hidden=redEyes`.
 - **Play announcements.** A button in the menu beside Publish on Dashboard Settings
   (docs/hidden-transitions.md) that plays every announcement that is switched on, once, whatever
   its time and days. It writes the hidden `announceRequest` field (`announceRequestField` in
@@ -279,13 +284,32 @@ alone.
   (`studio/schemas/photo.js`): a picture, an optional caption, a first name
   credit, "Show on screen" and "Hide after". Dashboard Settings, Photos tab: Photo
   order (random or newest first) and Seconds per photo (`photoOrder` and
-  `photoSeconds` in `dashboard/config.js`). The screen reads them with the rest of
+  `photoSeconds` in `dashboard/config.js`), and the two size settings below.
+  The screen reads them with the rest of
   the content (`photos` in `core/sanity.js`) and asks Sanity for each at no more
   than 1920 pixels wide (`screenPhotoUrl` in `core/images.js`). `core/photos.js`
   chooses the photo and the one after it, and the panel in `panels/photo/` starts
   loading the next one. docs/editing-content.md has the advice for the people who
   upload. The sample content's `photos` list is what shows on the sample. There is
   no photo list file on the Mini.
+- **How big the pictures are.** Dashboard Settings, Photos tab: "Portrait size,
+  percent" (`portraitScale`) and "Photo size, percent" (`photoScale`). Each is a
+  whole percent from 60 to 100, starting at 100, which is the full size and the
+  largest that fits the frames. The starting values and the limits are in
+  `dashboard/config.js` (`defaultSettings` and `limits`), and the Studio fields
+  in `studio/schemas/settingsPhotos.js`. `fixSettingValues` in
+  `core/content.js` rounds and clamps them (`tidyScale`), and anything missing
+  or odd is 100. The portraits: `portraitSizes` in `core/portrait.js` works out
+  the card, the photo and the space between them (292, 280 and 6 at 100) and
+  `slotMarkup` hands them to `base.css` as three variables on the `.portrait`
+  element. The card is always drawn 292 square and the browser draws it
+  smaller, which keeps its metal edge and cut corner in proportion. The slot
+  stays 352 wide and the text keeps its size, so a smaller portrait is only
+  centred in its slot. The Photo panel: `photoLayout` in `core/photos.js` works
+  out where the card and the caption go (1096 by 464, or 514 with no caption, at
+  100). `cardMarkup` draws the card at that size with the same cut corner and
+  edge, and the card sits in the middle of the panel with the caption directly
+  under it.
 - **Photos of people.** Leadership in Studio, Photo and "Show photo on
   screen" (docs/editing-content.md). The screen asks Sanity for each photo at
   the size it is shown, 280 by 280 pixels, in `core/portrait.js`. The silhouette
@@ -296,8 +320,10 @@ alone.
   role to a page (coaches, captains, mentors), and a role with more than three
   people is shared out evenly, so 4 are 2 and 2. A shorter page keeps the same
   portrait size and sits in the middle of the row (the section People
-  portraits in `dashboard/base.css`). The portrait is 292 pixels square with the
-  280 pixel photo 6 pixels in from the edge (`portraitSize` in `core/portrait.js`).
+  portraits in `dashboard/base.css`). At full size the portrait is 292 pixels
+  square with the 280 pixel photo 6 pixels in from the edge (`portraitSize` in
+  `core/portrait.js`). The photo is always asked for at 280, whatever the
+  Portrait size setting says, so the copy loaded ahead of time is the one shown.
   The starting value of the switch is `defaultPerson.showPhoto` in
   `dashboard/config.js` and its copy in `studio/schemas/person.js`.
 - **Subteam members.** The Members list of a subteam in Studio

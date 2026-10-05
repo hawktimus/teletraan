@@ -89,6 +89,8 @@ const contract = {
     silverChance: number(0, 100),
     photoOrder: 'string',
     photoSeconds: number(6, 120),
+    portraitScale: number(60, 100),
+    photoScale: number(60, 100),
     nightEnabled: 'boolean',
     nightStyle: 'string',
     nightStart: 'time',
@@ -739,7 +741,7 @@ function checkLogoTab(problems) {
 // and Silver chance. The section is all in schemas/settingsTransitions.js. The
 // number fields and their limits are compared with config.js in checkLookAndTiming.
 const transitionNames = ['pageChangeStyle', 'breakSeconds', 'frameFinish', 'silverChance'];
-const photoNames = ['photoOrder', 'photoSeconds'];
+const photoNames = ['photoOrder', 'photoSeconds', 'portraitScale', 'photoScale'];
 const nightNames = ['nightEnabled', 'nightStyle', 'nightStart', 'nightEnd', 'nightLogoWidth', 'nightSpeed', 'nightPreview'];
 const hiddenNames = ['hiddenEnabled', 'desktopChance', 'redEyesChance', 'hiddenRequest'];
 
@@ -837,6 +839,8 @@ function checkLookAndTiming() {
     ['breakSeconds', 'breakSeconds', 0.6, false],
     ['silverChance', 'silverChance', 10, true],
     ['photoSeconds', 'photoSeconds', 16, true],
+    ['portraitScale', 'portraitScale', 100, true],
+    ['photoScale', 'photoScale', 100, true],
     ['nightLogoWidth', 'nightLogoWidth', 300, true],
     ['desktopChance', 'desktopChance', 1, true],
     ['redEyesChance', 'redEyesChance', 1, true],
@@ -1576,6 +1580,19 @@ function checkPhotos() {
   need(problems, inTab.join() === photoNames.join(), 'the Photos tab should hold, in this order: ' + photoNames.join(', ') + ', not ' + inTab.join(', '));
   need(problems, setting('photoOrder') && setting('photoOrder').title === 'Photo order', 'photoOrder should be titled Photo order');
   need(problems, setting('photoSeconds') && setting('photoSeconds').title === 'Seconds per photo', 'photoSeconds should be titled Seconds per photo');
+  need(problems, setting('portraitScale') && setting('portraitScale').title === 'Portrait size, percent', 'portraitScale should be titled Portrait size, percent');
+  need(problems, setting('photoScale') && setting('photoScale').title === 'Photo size, percent', 'photoScale should be titled Photo size, percent');
+
+  // The two sizes: a whole percent from 60 to 100 that starts at 100, with a one line description that says what 100 is
+  ['portraitScale', 'photoScale'].forEach(name => {
+    const words = setting(name) ? setting(name).description || '' : '';
+    need(problems, words.length > 0 && words.indexOf('\n') === -1, name + ' needs a one-line description');
+    need(problems, /100 is the full size/.test(words) && /largest that fits/.test(words), name + ' description should say that 100 is the full size and the largest that fits the frame');
+    need(problems, /from 60 to 100/.test(words), name + ' description should give the range, from 60 to 100');
+    need(problems, config.limits[name] && config.limits[name].min === 60 && config.limits[name].max === 100, 'limits.' + name + ' in config.js should be 60 to 100');
+    need(problems, config.defaultSettings[name] === 100, 'the default ' + name + ' in config.js should be 100');
+    need(problems, world.sample.settings[name] === 100, 'the sample settings need ' + name + ' of 100');
+  });
 
   // The order is a radio list of the names in config.js, required, and random to start with
   const order = setting('photoOrder');
@@ -1694,7 +1711,9 @@ function sameRegistry(name, dashboardList, studioList, problems) {
     const copy = studioList[index];
     if (!copy) return problems.push('studio/themes.js is missing the ' + name + ' "' + entry.id + '"');
 
-    ['id', 'name', 'description'].forEach(key => {
+    // decorations is on the overlays only: whether the pack has a file in dashboard/seasons/
+    const keys = ['id', 'name', 'description'].concat(name === 'overlays' ? ['decorations'] : []);
+    keys.forEach(key => {
       if (copy[key] !== entry[key]) problems.push('the ' + name + ' number ' + (index + 1) + ' has ' + key + ' "' + copy[key] + '" in studio/themes.js but "' + entry[key] + '" in the dashboard registry');
     });
   });
@@ -1724,6 +1743,17 @@ function checkThemeLists() {
 
   const shown = choicesOf('theme.defaultTheme').map(item => item.title).join();
   need(problems, shown === world.themeRegistry.themes.map(entry => entry.name).join(), 'theme.defaultTheme should show the names in the dashboard registry');
+
+  // The editors see an overlay as a seasonal pack, which also brings decorations. The stored values stay as they are.
+  world.overlayRegistry.overlays.forEach(entry => need(problems, typeof entry.decorations === 'boolean', 'the overlay "' + entry.id + '" should say decorations: true or false in its registry entry'));
+  const packKind = choicesOf('theme.schedule.kind').filter(item => item.value === 'overlay')[0];
+  need(problems, packKind && packKind.title === 'Seasonal pack', 'the schedule kind stored as overlay should be shown as Seasonal pack');
+  ['theme.schedule.kind', 'theme.schedule.overlay', 'theme.useNow.overlay'].forEach(name => {
+    const field = fieldAt(name);
+    need(problems, field && /decoration/i.test(field.description || ''), name + ' should say in its description that a seasonal pack also adds decorations');
+  });
+  need(problems, fieldAt('theme.schedule.overlay') && fieldAt('theme.schedule.overlay').title === 'Seasonal pack', 'theme.schedule.overlay should be titled Seasonal pack');
+  need(problems, fieldAt('theme.useNow.overlay') && fieldAt('theme.useNow.overlay').title === 'Seasonal pack', 'theme.useNow.overlay should be titled Seasonal pack');
   return problems;
 }
 
@@ -2217,6 +2247,18 @@ function checkThemeGuard() {
   return ['tools/check-themes.mjs failed:'].concat(lines.map(line => '  ' + line));
 }
 
+// The seasonal packs (decorations) are checked by their own script too, so a
+// pack that is broken, or an overlay that says it has decorations and has no
+// file, fails this run as well.
+function checkSeasonGuard() {
+  const script = path.join(here, '..', 'tools', 'check-seasons.mjs');
+  const run = spawnSync(process.execPath, [script], { encoding: 'utf8' });
+  if (run.error) return ['the season check could not start: ' + run.error.message];
+  if (run.status === 0) return [];
+  const lines = (run.stdout + run.stderr).split('\n').filter(line => line.trim() !== '');
+  return ['tools/check-seasons.mjs failed:'].concat(lines.map(line => '  ' + line));
+}
+
 async function main() {
   const folder = makeSandbox();
   try {
@@ -2276,6 +2318,7 @@ async function main() {
   check('Dashboard Settings, Theme and Demo exist once and the project files agree', checkSettingsPage);
   check('the Publish all tool is in the top bar and keeps the pages that exist once on their fixed ids', checkPublishAll);
   check('every theme and overlay is complete and readable (tools/check-themes.mjs)', checkThemeGuard);
+  check('every seasonal pack is complete, and draws only in the empty places (tools/check-seasons.mjs)', checkSeasonGuard);
 
   process.exitCode = report() > 0 ? 1 : 0;
 }

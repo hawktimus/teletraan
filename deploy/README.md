@@ -12,6 +12,8 @@ installing anything on the Mini, and whenever a step needs a login or a key.
   `local.env`. It can only be reached from the Mini.
 - A timer runs `pull.sh` every 5 minutes. A pull is a deploy: the files in the
   repository are the files on the screen.
+- `mac/ship.sh` runs on the Mac you work on, not on the Mini. It pushes, updates
+  the Studio and tells the Mini to pull now (`docs/shipping-from-the-mac.md`).
 - A timer runs `fetch-calendars.sh` every 15 minutes. It saves the BAND
   calendars where the dashboard reads them.
 - The kiosk service starts a browser full screen when the Mini boots. A kiosk

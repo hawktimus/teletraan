@@ -169,10 +169,17 @@ function toPercent(fraction) {
 }
 
 // Starts downloading pictures nobody is looking at yet, so the browser has
-// them ready when the page that shows them comes round
+// them ready when the page that shows them comes round. Most callers ignore
+// the answer. It is a promise that is done when every picture has loaded or
+// failed, with one { address, image, ok } for each address that was not empty,
+// in the same order. image is the element that loaded it, so a caller can put
+// it on the page and the picture is already there.
 export function preloadImages(addresses) {
-  addresses.filter(address => address).forEach(address => {
+  const started = addresses.filter(address => address).map(address => new Promise(resolve => {
     const image = new Image();
+    image.onload = () => resolve({ address: address, image: image, ok: true });
+    image.onerror = () => resolve({ address: address, image: image, ok: false });
     image.src = address;
-  });
+  }));
+  return Promise.all(started);
 }

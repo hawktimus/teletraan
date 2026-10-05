@@ -30,7 +30,7 @@ const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url))
 const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-effects-'));
 fs.mkdirSync(path.join(workFolder, 'dashboard', 'core'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
-['config.js', 'frame.js', 'core/transitions.js', 'core/tick.js', 'core/demo.js', 'core/demo-screens.js', 'core/hidden.js', 'core/hidden-transitions.js', 'core/hidden-art.js', 'core/announce.js'].forEach(file => {
+['config.js', 'frame.js', 'core/transitions.js', 'core/tick.js', 'core/demo.js', 'core/demo-screens.js', 'core/hidden.js', 'core/hidden-transitions.js', 'core/hidden-pictures.js', 'core/images.js', 'core/announce.js'].forEach(file => {
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
 const frameUrl = pathToFileURL(path.join(workFolder, 'dashboard/frame.js')).href;
@@ -40,7 +40,8 @@ const demo = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/de
 const demoRegistry = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/demo-screens.js')).href);
 const hidden = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/hidden.js')).href);
 const hiddenRegistry = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/hidden-transitions.js')).href);
-const hiddenArt = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/hidden-art.js')).href);
+const hiddenPictures = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/hidden-pictures.js')).href);
+const imagesModule = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/images.js')).href);
 const announce = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/announce.js')).href);
 
 const realSetImmediate = globalThis.setImmediate;
@@ -1869,7 +1870,7 @@ test('the shell starts the demo runner after the takeovers, and only when the wh
   assert.ok(shell.lastIndexOf("if (!params.get('show') && !stress) {", takeovers) !== -1);
 });
 
-// The hidden transitions (dashboard/core/hidden.js, hidden-transitions.js, hidden-art.js,
+// The hidden transitions (dashboard/core/hidden.js, hidden-transitions.js, hidden-pictures.js,
 // and the parts of frame.js, frame.css and the other files that make room for them)
 
 const { chooseHidden, holdReason, pushedKind, tidyHiddenRequest, chanceFields, readHandledRequest, rememberHandledRequest } = hidden;
@@ -2095,29 +2096,51 @@ test('the registry has a name, a chance field and a run function for each hidden
 function recordingScene() {
   const steps = [];
   const scene = {};
-  ['glitch', 'breakApart', 'wait', 'show', 'rebuild'].forEach(name => {
+  ['glitch', 'breakApart', 'wait', 'pictureIn', 'pictureCut', 'pictureOut', 'rebuild'].forEach(name => {
     scene[name] = async (...args) => { steps.push([name].concat(args)); };
   });
   return { scene: scene, steps: steps };
 }
 
-test('the desktop reveal breaks apart over the wallpaper, waits 1.5 seconds and rebuilds', async () => {
+test('the desktop reveal glitches blue, breaks apart over a deep blue, glitches blue again, cuts to a blue screen for 3 seconds and rebuilds', async () => {
   const { scene, steps } = recordingScene();
   await hiddenRegistry.hiddenTransitions.desktop.run(scene);
-  assert.deepEqual(steps, [['breakApart', 'wallpaper'], ['wait', 1.5], ['rebuild']]);
+  assert.deepEqual(steps, [
+    ['glitch', 2, 'blue'],
+    ['breakApart', 'blue'],
+    ['glitch', 1, 'blue'],
+    ['pictureCut', 'blueScreen', 3],
+    ['rebuild'],
+  ]);
 });
 
-test('red eyes glitch, break apart to black, open the eyes, show the face for 2 seconds, fade it out and rebuild', async () => {
+test('red eyes glitch red, break apart to black, fade a red eyes picture in, hold it 2.5 seconds, fade it out and rebuild', async () => {
   const { scene, steps } = recordingScene();
   await hiddenRegistry.hiddenTransitions.redEyes.run(scene);
   assert.deepEqual(steps, [
     ['glitch', 1.5],
     ['breakApart', 'black'],
-    ['show', 'eyes', 0.9],
-    ['show', 'face', 2],
-    ['show', 'gone', 0.6],
+    ['pictureIn', 'redEyes', 0.6],
+    ['wait', 2.5],
+    ['pictureOut', 0.6],
     ['rebuild'],
   ]);
+  assert.equal(steps[0].length, 2, 'the red glitch is asked for with no tint, which is red');
+});
+
+test('the second blue glitch is shorter than the first, and the cut has no fade step before it', async () => {
+  const { scene, steps } = recordingScene();
+  await hiddenRegistry.hiddenTransitions.desktop.run(scene);
+  const glitches = steps.filter(step => step[0] === 'glitch');
+  assert.equal(glitches.length, 2);
+  assert.ok(glitches[1][1] < glitches[0][1], 'the second glitch is the short one');
+  glitches.forEach(step => assert.equal(step[2], 'blue'));
+
+  const names = steps.map(step => step[0]);
+  assert.equal(names[names.indexOf('pictureCut') - 1], 'glitch', 'the cut comes straight out of the second glitch');
+  assert.ok(!names.includes('pictureIn') && !names.includes('pictureOut'), 'no fade in the desktop reveal');
+  assert.equal(names[names.indexOf('pictureCut') + 1], 'rebuild', 'and the blocks come back right after the hold');
+  assert.ok(steps[names.indexOf('pictureCut')][2] >= 2.5 && steps[names.indexOf('pictureCut')][2] <= 4, 'held for about 3 seconds');
 });
 
 test('every transition ends with rebuild and breaks the screen apart before it, so the screen is never left apart', async () => {
@@ -2143,8 +2166,8 @@ test('the registry and the plain functions import nothing from the page, so they
     "import { readHandled, rememberHandled, shouldRunDemo } from './demo.js';",
     "import { hiddenTransitions } from './hidden-transitions.js';",
   ]);
-  assert.deepEqual(importsOf(read('core/hidden-art.js')), []);
-  ['core/hidden-transitions.js', 'core/hidden.js', 'core/hidden-art.js'].forEach(file => {
+  assert.deepEqual(importsOf(read('core/hidden-pictures.js')), []);
+  ['core/hidden-transitions.js', 'core/hidden.js', 'core/hidden-pictures.js'].forEach(file => {
     assert.ok(!/\bdocument\b|\bwindow\b/.test(code(read(file))), 'no page in ' + file);
   });
   assert.ok(!/\bimport\(/.test(code(read('core/hidden-transitions.js'))), 'the registry only describes the steps');
@@ -2158,43 +2181,259 @@ test('the Studio list of hidden transitions says the same as the dashboard regis
   );
 });
 
-test('the wallpaper and the face are plain polygons: no filter, blur, image, text or script, and nothing in them moves by itself', () => {
-  const wallpaper = hiddenArt.wallpaperMarkup();
-  const face = hiddenArt.redEyesMarkup();
-  [wallpaper, face, hiddenArt.backdropMarkup()].forEach(markup => {
-    ['<filter', 'blur', 'feGaussian', 'drop-shadow', '<image', '<text', '<script', '<animate', '<use', 'xlink:href', 'style='].forEach(word => {
-      assert.ok(markup.indexOf(word) === -1, 'the markup has ' + word);
-    });
-    assert.ok(markup.startsWith('<div') || markup.startsWith('<svg'));
+// The four pictures (dashboard/core/hidden-pictures.js) and the order they play in
+
+const { hiddenPictures: pictureSets, makePictureChooser, allPictures, pictureAddress, pictureAfter, lastPictureKey } = hiddenPictures;
+
+// The size of a PNG or a WebP from the first bytes of the file
+function pictureSize(buffer) {
+  if (buffer.toString('latin1', 1, 4) === 'PNG') return { width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20) };
+
+  assert.equal(buffer.toString('latin1', 0, 4), 'RIFF');
+  assert.equal(buffer.toString('latin1', 8, 12), 'WEBP');
+  const kind = buffer.toString('latin1', 12, 16);
+  if (kind === 'VP8 ') return { width: buffer.readUInt16LE(26) & 0x3fff, height: buffer.readUInt16LE(28) & 0x3fff };
+  if (kind === 'VP8L') {
+    const bits = buffer.readUInt32LE(21);
+    return { width: (bits & 0x3fff) + 1, height: ((bits >> 14) & 0x3fff) + 1 };
+  }
+  assert.equal(kind, 'VP8X');
+  return { width: buffer.readUIntLE(24, 3) + 1, height: buffer.readUIntLE(27, 3) + 1 };
+}
+
+test('there are two sets of two pictures, and each file is in the assets folder at the size the list says', () => {
+  assert.deepEqual(Object.keys(pictureSets), ['redEyes', 'blueScreen']);
+  Object.keys(pictureSets).forEach(set => assert.equal(pictureSets[set].length, 2, set));
+  assert.equal(allPictures().length, 4);
+  assert.deepEqual(allPictures().map(picture => picture.set), ['redEyes', 'redEyes', 'blueScreen', 'blueScreen']);
+
+  allPictures().forEach(picture => {
+    const file = path.join(dashboardFolder, pictureAddress(picture));
+    assert.ok(fs.existsSync(file), picture.file + ' is not in dashboard/assets/hidden');
+    assert.deepEqual(pictureSize(fs.readFileSync(file)), { width: picture.width, height: picture.height }, picture.file + ' is not the size the list says');
+    assert.ok(/^#[0-9a-f]{6}$/.test(picture.fill), picture.file + ' needs its own background colour');
+    assert.ok(picture.fit === 'cover' || picture.fit === 'contain', picture.file);
+  });
+  assert.equal(hiddenPictures.pictureFolder, 'assets/hidden/');
+});
+
+test('a picture is never stretched: the 16:9 ones cover the screen, and the old low resolution one is shown whole, crisp, on its own blue', () => {
+  const byFile = {};
+  allPictures().forEach(picture => { byFile[picture.file] = picture; });
+
+  // a cover picture is cut at most a sliver, so it has to be 16:9 to within a percent
+  ['red-eyes-1.webp', 'red-eyes-2.webp', 'blue-screen-1.png'].forEach(file => {
+    const picture = byFile[file];
+    assert.equal(picture.fit, 'cover', file);
+    assert.ok(Math.abs(picture.width / picture.height / (16 / 9) - 1) < 0.01, file + ' is not 16:9');
+    assert.equal(picture.crisp, false, file);
   });
 
-  assert.equal((wallpaper.match(/<svg /g) || []).length, 1);
-  assert.ok((wallpaper.match(/<polygon /g) || []).length >= 8, 'a wallpaper of several facets');
-  assert.ok(/width="1920" height="1080"/.test(wallpaper));
+  const old = byFile['blue-screen-2.png'];
+  assert.equal(old.fit, 'contain', 'it is 16:10, so cover would cut off its top and bottom');
+  assert.equal(old.crisp, true, 'enlarged without smoothing');
+  assert.equal(old.fill, '#0000aa', "the picture's own blue, so the rest of the screen has no black bars");
+  assert.equal(byFile['blue-screen-1.png'].fill, '#0177d7');
 
-  // the face: plates and eyes are separate groups, so the eyes can open on the black first
-  assert.equal((face.match(/class="face-plates"/g) || []).length, 1);
-  assert.equal((face.match(/class="face-eyes"/g) || []).length, 1);
-  assert.equal((face.match(/class="eye"/g) || []).length, 2, 'two eyes');
-  assert.equal((face.match(/class="eye-core"/g) || []).length, 2);
-  const eyesAt = face.indexOf('class="face-eyes"');
-  assert.ok(eyesAt > face.indexOf('class="face-plates"'), 'the eyes are drawn over the plates');
-  assert.ok(face.slice(face.indexOf('class="face-plates"'), eyesAt).indexOf('class="eye') === -1, 'no eye in the plates');
-  assert.ok(/viewBox="0 0 1100 884"/.test(face), 'the same grid as the hawk logo');
+  // the stylesheet says the same: contain and crisp are the exceptions
+  const pictureRule = baseCss.match(/#backdrop \.picture \{[^}]*\}/)[0];
+  ['object-fit: cover;', 'width: 1920px;', 'height: 1080px;', 'opacity: 0;'].forEach(line => assert.ok(pictureRule.includes(line), 'the picture rule lacks ' + line));
+  assert.ok(/#backdrop \.picture\[data-fit="contain"\] \{ object-fit: contain; \}/.test(baseCss));
+  assert.ok(/#backdrop \.picture\[data-crisp="on"\] \{\s*image-rendering: crisp-edges;\s*image-rendering: pixelated;\s*\}/.test(baseCss));
+  assert.ok(/#backdrop\[data-look="picture"\] \{ background: var\(--picture-fill, #000\); \}/.test(baseCss));
+});
 
-  // every point is a pair of numbers inside the grid, and the two halves mirror each other
-  const sides = (face.match(/points="[^"]+"/g) || []);
-  assert.ok(sides.length >= 20, 'a face of many plates');
-  sides.forEach(attribute => {
-    attribute.slice(8, -1).split(' ').forEach(pair => {
-      assert.ok(/^\d+(\.\d+)?,\d+(\.\d+)?$/.test(pair), pair);
-      const [x, y] = pair.split(',').map(Number);
-      assert.ok(x >= 0 && x <= 1100 && y >= 0 && y <= 884, pair);
+test('every set the transitions name is one that has pictures, and the pictures are preloaded in one list of all four', async () => {
+  for (const kind of hiddenKinds) {
+    const { scene, steps } = recordingScene();
+    await hiddenRegistry.hiddenTransitions[kind].run(scene);
+    steps.filter(step => step[0] === 'pictureIn' || step[0] === 'pictureCut').forEach(step => {
+      assert.ok(Array.isArray(pictureSets[step[1]]) && pictureSets[step[1]].length > 0, kind + ' names the set ' + step[1]);
     });
+  }
+  const shows = set => hiddenKinds.filter(kind => hiddenRegistry.hiddenTransitions[kind].run.toString().includes("'" + set + "'"));
+  assert.deepEqual(shows('blueScreen'), ['desktop']);
+  assert.deepEqual(shows('redEyes'), ['redEyes']);
+
+  assert.deepEqual(allPictures().map(pictureAddress), [
+    'assets/hidden/red-eyes-1.webp',
+    'assets/hidden/red-eyes-2.webp',
+    'assets/hidden/blue-screen-1.png',
+    'assets/hidden/blue-screen-2.png',
+  ]);
+  const run = fs.readFileSync(path.join(dashboardFolder, 'core/hidden-run.js'), 'utf8');
+  assert.ok(run.includes('preloadImages(pictures.map(pictureAddress))'), 'all four are preloaded');
+  assert.ok(run.indexOf('loadPictures();') !== -1 && run.indexOf('loadPictures();') < run.indexOf('setHiddenOffer(offer);'), 'when the hidden transitions start, before any can play');
+});
+
+test('each play of a set shows the picture after the last one, and the first again after the last, and the two sets keep their own place', () => {
+  const chooser = makePictureChooser(makeStorage({}));
+  const any = () => true;
+  const files = (set, plays) => Array.from({ length: plays }, () => chooser.next(set, any).file);
+
+  assert.deepEqual(files('blueScreen', 5), ['blue-screen-1.png', 'blue-screen-2.png', 'blue-screen-1.png', 'blue-screen-2.png', 'blue-screen-1.png']);
+  assert.deepEqual(files('redEyes', 4), ['red-eyes-1.webp', 'red-eyes-2.webp', 'red-eyes-1.webp', 'red-eyes-2.webp']);
+  assert.equal(chooser.next('blueScreen', any).file, 'blue-screen-2.png', 'the red eyes plays did not move the blue screens on');
+
+  const list = pictureSets.blueScreen;
+  assert.equal(pictureAfter(list, 'blue-screen-1.png').file, 'blue-screen-2.png');
+  assert.equal(pictureAfter(list, 'blue-screen-2.png').file, 'blue-screen-1.png');
+  ['', 'something-else.png', undefined, null].forEach(last => assert.equal(pictureAfter(list, last).file, 'blue-screen-1.png', String(last)));
+});
+
+test('the last picture of a set is kept in localStorage, so a Mini that restarts carries on with the other one', () => {
+  const store = {};
+  const first = makePictureChooser(makeStorage(store));
+  assert.equal(first.next('blueScreen', () => true).file, 'blue-screen-1.png');
+  assert.deepEqual(store, { 'teletraan-hidden-picture-blueScreen': 'blue-screen-1.png' });
+  assert.equal(lastPictureKey, 'teletraan-hidden-picture-');
+
+  // the page is reloaded: a new chooser with the same storage
+  const second = makePictureChooser(makeStorage(store));
+  assert.equal(second.next('blueScreen', () => true).file, 'blue-screen-2.png');
+  assert.equal(second.next('redEyes', () => true).file, 'red-eyes-1.webp', 'the red eyes have their own key');
+  assert.deepEqual(store, { 'teletraan-hidden-picture-blueScreen': 'blue-screen-2.png', 'teletraan-hidden-picture-redEyes': 'red-eyes-1.webp' });
+
+  const third = makePictureChooser(makeStorage(store));
+  assert.equal(third.next('blueScreen', () => true).file, 'blue-screen-1.png');
+  assert.equal(third.next('redEyes', () => true).file, 'red-eyes-2.webp');
+
+  // a name that is not in the list any more, or nothing, starts at the first
+  [{ 'teletraan-hidden-picture-blueScreen': 'old-name.png' }, { 'teletraan-hidden-picture-blueScreen': '' }].forEach(saved => {
+    assert.equal(makePictureChooser(makeStorage(saved)).next('blueScreen', () => true).file, 'blue-screen-1.png');
   });
-  const eyePoints = (face.match(/class="eye" points="[^"]+"/g) || []).map(text => text.replace(/.*points="/, '').replace('"', ''));
-  const mirrored = eyePoints[0].split(' ').map(pair => (1100 - Number(pair.split(',')[0])) + ',' + pair.split(',')[1]).join(' ');
-  assert.equal(eyePoints[1], mirrored, 'the right eye is the left one mirrored');
+});
+
+test('a storage that fails still lets the pictures take turns for as long as the page is open', () => {
+  const alternates = storage => {
+    const chooser = makePictureChooser(storage);
+    return [1, 2, 3, 4].map(() => chooser.next('blueScreen', () => true).file);
+  };
+  const turns = ['blue-screen-1.png', 'blue-screen-2.png', 'blue-screen-1.png', 'blue-screen-2.png'];
+
+  assert.deepEqual(alternates(brokenStorage), turns, 'storage switched off');
+  assert.deepEqual(alternates(null), turns, 'no storage at all');
+  assert.deepEqual(alternates(undefined), turns);
+
+  // one that can be read but not written would keep saying the old picture, if the page did not remember its own
+  const readOnly = { getItem: () => 'blue-screen-2.png', setItem() { throw new Error('storage is full'); } };
+  assert.deepEqual(alternates(readOnly), ['blue-screen-1.png', 'blue-screen-2.png', 'blue-screen-1.png', 'blue-screen-2.png']);
+  const writeOnly = { getItem() { throw new Error('no reading'); }, setItem() {} };
+  assert.deepEqual(alternates(writeOnly), turns);
+});
+
+test('a picture that did not load is skipped, and when none of the set can be shown there is no picture and nothing is remembered', () => {
+  const store = {};
+  const chooser = makePictureChooser(makeStorage(store));
+
+  // the second blue screen failed: the first plays every time
+  const onlyFirst = file => file !== 'blue-screen-2.png';
+  assert.deepEqual([1, 2, 3].map(() => chooser.next('blueScreen', onlyFirst).file), ['blue-screen-1.png', 'blue-screen-1.png', 'blue-screen-1.png']);
+  // and when it is back, the turns go on from the one shown last
+  assert.equal(chooser.next('blueScreen', () => true).file, 'blue-screen-2.png');
+
+  // the one that is next failed, so the one after it is shown
+  const redChooser = makePictureChooser(makeStorage({}));
+  assert.equal(redChooser.next('redEyes', file => file !== 'red-eyes-1.webp').file, 'red-eyes-2.webp');
+
+  // nothing of the set loaded
+  const before = JSON.stringify(store);
+  assert.equal(chooser.next('blueScreen', () => false), null);
+  assert.equal(JSON.stringify(store), before, 'a play with no picture is not a play');
+  assert.equal(chooser.next('noSuchSet', () => true), null);
+  assert.equal(chooser.next(undefined, () => true), null);
+});
+
+test('preloadImages answers when every picture has loaded or failed, in order, and says which failed', async () => {
+  const requested = [];
+  globalThis.Image = class {
+    set src(address) {
+      requested.push(address);
+      // a picture that cannot be found fails, the rest load, and either answer comes a moment later
+      setTimeout(() => (address.includes('red-eyes-2') ? this.onerror() : this.onload()), 1);
+    }
+  };
+
+  try {
+    const addresses = allPictures().map(pictureAddress);
+    const results = await imagesModule.preloadImages(addresses.concat(['']));
+    assert.deepEqual(requested, addresses, 'one request for each picture and none for the empty address');
+    assert.deepEqual(results.map(result => result.address), addresses);
+    assert.deepEqual(results.map(result => result.ok), [true, false, true, true]);
+    results.forEach(result => assert.equal(typeof result.image, 'object', 'the element that loaded it'));
+    assert.deepEqual(await imagesModule.preloadImages([]), []);
+  } finally {
+    delete globalThis.Image;
+  }
+});
+
+test('the runner skips a picture that is not loaded, still waits the step, and puts every picture and layer back when it is done', () => {
+  const run = fs.readFileSync(path.join(dashboardFolder, 'core/hidden-run.js'), 'utf8');
+  const code = run.split('\n').filter(line => !line.trim().startsWith('//')).join('\n');
+
+  // only a picture that loaded has an element, and only those can be chosen
+  assert.ok(code.includes('pictureElements[picture.file] = image;'));
+  assert.ok(code.includes('if (!result.ok) {'), 'a failure is skipped, with a note in the console');
+  assert.ok(code.includes('chooser.next(set, file => pictureElements[file] !== undefined)'));
+  assert.ok(/if \(!picture\) return;/.test(code), 'no picture: the backdrop stays as it is');
+  assert.ok(/const pictureElements = \{\};/.test(code));
+
+  // the steps wait their seconds whatever was shown, so the transition keeps its time and rebuild comes
+  assert.ok(/async pictureIn\(set, seconds\) \{[^}]*showPicture\(set, 'in'\);\s*await sleep\(seconds\);\s*if \(showing\) showing\.dataset\.state = 'on';/.test(code));
+  assert.ok(/async pictureCut\(set, seconds\) \{\s*showPicture\(set, 'on'\);\s*await sleep\(seconds\);\s*\}/.test(code), 'the cut shows the picture in its final state in one go, then holds');
+  assert.ok(/async pictureOut\(seconds\) \{[^}]*if \(showing\) showing\.dataset\.state = 'out';\s*await sleep\(seconds\);/.test(code));
+
+  // the backdrop is given the picture's own colour in the same step, so the cut is one frame with no black bars
+  const show = code.slice(code.indexOf('function showPicture('), code.indexOf('function makeScene('));
+  assert.ok(show.indexOf("setProperty('--picture-fill', picture.fill)") < show.indexOf("backdrop.dataset.look = 'picture'"));
+  assert.ok(!/await|setTimeout|requestAnimationFrame|frame\.wait/.test(show), 'nothing waits between the colour and the picture');
+
+  // putBack takes everything away, whatever happened
+  const putBack = code.slice(code.indexOf('function putBack('));
+  ['delete backdrop.dataset.look;', "backdrop.style.removeProperty('--picture-fill');", 'delete pictureElements[file].dataset.state', 'showing = null;', 'clearGlitch();', 'frame.stopGlitch();'].forEach(line => {
+    assert.ok(putBack.includes(line), 'putBack lacks ' + line);
+  });
+  assert.ok(/function clearGlitch\(\) \{\s*redWash\.hidden = true;\s*blueGlitch\.hidden = true;\s*delete world\.dataset\.tint;\s*\}/.test(code));
+});
+
+test('scene.glitch takes a tint: red is the default and plays the old television glitch with the red layer, blue shows the blue layers and does not', () => {
+  const run = fs.readFileSync(path.join(dashboardFolder, 'core/hidden-run.js'), 'utf8');
+  const start = run.indexOf("async glitch(seconds, tint = 'red') {");
+  assert.ok(start !== -1, "glitch(seconds, tint = 'red')");
+  const glitch = run.slice(start, run.indexOf('// The blocks fly apart', start));
+
+  assert.ok(glitch.includes("const blue = tint === 'blue';"), 'anything but blue is red');
+  assert.ok(glitch.includes("world.dataset.tint = blue ? 'blue' : 'red';"));
+  assert.ok(glitch.includes('(blue ? blueGlitch : redWash).hidden = false;'));
+  assert.ok(glitch.includes('if (!blue) frame.playGlitch(seconds);'), 'only the red glitch is the old television one');
+  assert.equal((glitch.match(/frame\.playGlitch/g) || []).length, 1);
+  assert.ok(glitch.includes("if (!world.dataset.hidden) world.dataset.hidden = 'glitch';"), 'a glitch while the screen is apart does not bring the blocks back');
+  assert.ok(glitch.includes("if (world.dataset.hidden === 'apart') clearGlitch();"), 'and takes its own layers away, as no break follows it');
+  assert.ok(glitch.indexOf("world.dataset.tint = ") < glitch.indexOf('await sleep(seconds);'));
+
+  // the break takes the glitch layers away when the blocks are apart, as it took the red wash
+  const breakApart = run.slice(run.indexOf('async breakApart(look) {'), run.indexOf('wait: seconds'));
+  assert.ok(breakApart.indexOf("world.dataset.hidden = 'apart';") < breakApart.indexOf('clearGlitch();'));
+  assert.ok(breakApart.indexOf('clearGlitch();') < breakApart.indexOf('swapPage();'));
+});
+
+test('the desktop reveal breaks apart over a deep blue and red eyes over black, and nothing of the drawn wallpaper or face is left', async () => {
+  assert.ok(/#backdrop \{ background: #000; \}/.test(baseCss));
+  assert.ok(/#backdrop\[data-look="blue"\] \{ background: var\(--hidden-blue-deep\); \}/.test(baseCss));
+  assert.ok(/--hidden-blue-deep: #[0-9a-f]{6};/.test(tokensCss));
+  const lookOf = async kind => {
+    const { scene, steps } = recordingScene();
+    await hiddenRegistry.hiddenTransitions[kind].run(scene);
+    return steps.find(step => step[0] === 'breakApart')[1];
+  };
+  assert.equal(await lookOf('desktop'), 'blue');
+  assert.equal(await lookOf('redEyes'), 'black');
+
+  const everything = ['dashboard/base.css', 'dashboard/frame.css', 'dashboard/tokens.css', 'dashboard/index.html', 'dashboard/core/hidden-run.js', 'dashboard/core/hidden-transitions.js', 'dashboard/core/hidden-pictures.js'].map(file => fs.readFileSync(fileURLToPath(new URL('../' + file, import.meta.url)), 'utf8')).join('\n');
+  ['wallpaper', 'redEyesMarkup', 'wallpaperMarkup', 'backdropMarkup', 'face-plates', 'face-eyes', '--face-', '--eye-', 'eyes-on', 'hidden-art'].forEach(word => {
+    assert.ok(!everything.includes(word), 'what is left of ' + word);
+  });
+  assert.ok(!fs.existsSync(path.join(dashboardFolder, 'core/hidden-art.js')), 'the drawing file is gone');
 });
 
 test('the repository never names the character the red eyes look like', () => {
@@ -2327,7 +2566,7 @@ test('every time in the hidden transitions comes from --time-hidden, --glitch-se
   const section = frameCss.slice(start, end).replace(/\/\*[\s\S]*?\*\//g, '');
 
   const timings = section.split('\n').filter(line => /animation: /.test(line));
-  assert.equal(timings.length, 9, 'the break, the build, the backdrop twice, the wash twice and the three looks, and gone');
+  assert.equal(timings.length, 15, 'the break, the build, the backdrop twice, the red wash twice, the picture in and out, the three blue washes, the torn pieces, the blue layer fading, the stage and the blocks');
   timings.forEach(line => {
     assert.ok(/var\(--(time-hidden|glitch-seconds|look-seconds)\)/.test(line), line);
     if (/--(glitch|look)-seconds/.test(line)) assert.ok(line.includes('var(--pace)'), 'the Speed setting stretches it: ' + line);
@@ -2335,17 +2574,41 @@ test('every time in the hidden transitions comes from --time-hidden, --glitch-se
     while (/\([^()]*\)/.test(bare)) bare = bare.replace(/\([^()]*\)/g, ''); // every bracket and what is in it, innermost first
     assert.ok(!/[^a-z-]\d+(\.\d+)?m?s\b/.test(bare), 'a plain time in ' + line);
   });
+
+  // the delays of the torn pieces are a share of the glitch, stretched by the Speed setting like the rest
+  const delays = section.split('\n').filter(line => /animation-delay: /.test(line));
+  assert.equal(delays.length, 2);
+  delays.forEach(line => assert.ok(line.includes('var(--glitch-seconds)') && line.includes('var(--pace)'), line));
 });
 
 test('the hidden transitions move only transform and opacity: their keyframes, their layers and what is promoted', () => {
   const css = frameCss.replace(/\/\*[\s\S]*?\*\//g, '');
-  ['wash-flicker', 'eyes-on'].forEach(name => {
+  // the red wash and the three blue washes change opacity and nothing else, the stage and the blocks only transform,
+  // and the torn pieces both
+  const onlyChanges = {
+    'wash-flicker': ['opacity'],
+    'blue-wash-old': ['opacity'],
+    'blue-wash-new': ['opacity'],
+    'blue-wash-pale': ['opacity'],
+    'tear-a': ['opacity', 'transform'],
+    'tear-b': ['opacity', 'transform'],
+    'tear-c': ['opacity', 'transform'],
+    'blue-jump': ['transform'],
+    'blue-tear-a': ['transform'],
+    'blue-tear-b': ['transform'],
+  };
+  Object.keys(onlyChanges).forEach(name => {
     const startAt = css.indexOf('@keyframes ' + name + ' {');
     assert.ok(startAt !== -1, name);
     const body = css.slice(startAt, css.indexOf('\n}', startAt));
     const properties = (body.match(/[a-z-]+(?=:)/g) || []);
-    properties.forEach(word => assert.equal(word, 'opacity', name + ' changes ' + word));
+    assert.ok(properties.length > 0, name);
+    properties.forEach(word => assert.ok(onlyChanges[name].includes(word), name + ' changes ' + word));
   });
+  // nothing in the hidden transitions blurs, glows, shades or filters, or blends one layer into another
+  const section = frameCss.slice(frameCss.indexOf('/* Hidden transitions.'), frameCss.indexOf('/* Night mode, the screensaver.')).replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.ok(section.includes('@keyframes blue-tear-b'), 'the whole section is looked at');
+  assert.ok(!/(filter|box-shadow|text-shadow|drop-shadow|blur\(|blend)/.test(section), 'a filter, blend, shadow or blur');
 
   // the layers are promoted only while the blocks fly (break and build)
   const promoted = css.match(/[^{}]*\{[^{}]*will-change: transform, opacity;[^{}]*\}/g) || [];
@@ -2388,9 +2651,108 @@ test('the red wash never flashes more than twice in any second, never brighter t
     const inThatSecond = flashTimes.filter(other => other >= time && other < time + 1).length;
     assert.ok(inThatSecond <= 2, inThatSecond + ' flashes in the second from ' + time);
   });
-  // the eyes open with at most two dips, so about two flickers a second
-  const eyes = css.slice(css.indexOf('@keyframes eyes-on {'));
-  assert.equal((eyes.slice(0, eyes.indexOf('\n}')).match(/opacity: \.25;/g) || []).length, 1);
+});
+
+// The steps of a keyframes block: [{ at, ... }] with at from 0 to 1, and the text inside each step
+function keyframeSteps(css, name) {
+  const startAt = css.indexOf('@keyframes ' + name + ' {');
+  assert.ok(startAt !== -1, name);
+  const body = css.slice(startAt, css.indexOf('\n}', startAt));
+  return (body.match(/\d+%\s*\{[^}]*\}/g) || []).map(step => ({ at: Number(step.match(/(\d+)%/)[1]) / 100, text: step }));
+}
+
+test('the blue glitch is rough and uneven, but never has more than three big flashes, and the washes are three different blues', () => {
+  const css = frameCss.replace(/\/\*[\s\S]*?\*\//g, '');
+  const washes = ['blue-wash-old', 'blue-wash-new', 'blue-wash-pale'].map(name => keyframeSteps(css, name).map(step => ({ at: step.at, opacity: Number(step.text.match(/opacity: ([0-9.]+)/)[1]) })));
+  const opacityAt = (wash, time) => wash.filter(step => step.at <= time).pop().opacity;
+
+  // each wash starts clear, and the old blue ends at .3 for the break to take over, like the red wash
+  washes.forEach(wash => { assert.equal(wash[0].opacity, 0); assert.equal(wash[0].at, 0); assert.equal(wash[wash.length - 1].at, 1); });
+  assert.equal(washes[0][washes[0].length - 1].opacity, 0.3);
+  assert.equal(washes[1][washes[1].length - 1].opacity, 0);
+  assert.equal(washes[2][washes[2].length - 1].opacity, 0);
+  assert.ok(Math.max(...washes[2].map(step => step.opacity)) <= 0.2, 'the palest blue is never more than a fifth opaque');
+
+  // how much of the screen is blue at each moment, with the layers over each other
+  const times = Array.from(new Set([].concat(...washes.map(wash => wash.map(step => step.at))))).sort((a, b) => a - b);
+  const covered = times.map(time => 1 - washes.reduce((left, wash) => left * (1 - opacityAt(wash, time)), 1));
+
+  // a big flash is a jump of .4 or more. The glitch has a few in all, so no second can have more than three, however long it is
+  const bigJumps = covered.filter((cover, index) => index > 0 && cover - covered[index - 1] >= 0.4).length;
+  assert.ok(bigJumps >= 2 && bigJumps <= 3, bigJumps + ' big flashes');
+  // and there are moments when the screen is almost solid blue
+  const solid = covered.filter((cover, index) => cover >= 0.85 && (index === 0 || covered[index - 1] < 0.85)).length;
+  assert.ok(solid >= 2 && solid <= 3, solid + ' almost solid moments');
+  assert.ok(Math.max(...covered) <= 0.97, 'never quite solid');
+  // the strengths are many: at least eight different amounts
+  assert.ok(new Set(covered.map(cover => Math.round(cover * 20))).size >= 8, 'several strengths of blue');
+
+  // the glitch is not a regular beat: the gaps between the moments of change are of many lengths
+  const gaps = new Set(times.slice(1).map((time, index) => Math.round((time - times[index]) * 100)));
+  assert.ok(gaps.size >= 4, 'the rhythm is irregular');
+
+  // every blue is a token of its own
+  ['old', 'new', 'pale'].forEach(name => assert.ok(new RegExp('--hidden-blue-' + name + ': #[0-9a-f]{6};').test(tokensCss), name));
+  const tokenOf = name => tokensCss.match(new RegExp('--hidden-blue-' + name + ': (#[0-9a-f]{6});'))[1];
+  assert.equal(new Set(['old', 'new', 'pale', 'deep', 'ink'].map(tokenOf)).size, 5, 'five different blues');
+  assert.equal(tokenOf('old'), '#0000aa', 'the blue of the old blue screen');
+  assert.equal(tokenOf('new'), '#0177d7', 'the blue of the new blue screen');
+});
+
+test('the blue glitch jumps the stage, each block and six torn pieces in steps, only while it glitches, and the break makes it rest', () => {
+  const css = frameCss.replace(/\/\*[\s\S]*?\*\//g, '');
+
+  // everything that moves is a jump and not a slide
+  const blueRules = css.split('\n').filter(line => /(blue-jump|blue-tear-a|blue-wash-|animation: tear-a)/.test(line) && /animation: /.test(line));
+  assert.equal(blueRules.length, 6);
+  blueRules.forEach(line => assert.ok(line.includes('steps(1)'), line));
+
+  // the stage jumps by up to 100 pixels sideways, the blocks by up to 200, and the blocks are sheared at times
+  const jumps = keyframeSteps(css, 'blue-jump').map(step => step.text);
+  const reach = texts => Math.max(...texts.map(text => Math.max(...(text.match(/translate(?:X)?\((-?\d+)/g) || ['translate(0']).map(part => Math.abs(Number(part.match(/-?\d+/)[0]))))));
+  assert.ok(reach(jumps) >= 60 && reach(jumps) <= 100, 'the stage jumps ' + reach(jumps));
+  const tearA = keyframeSteps(css, 'blue-tear-a').map(step => step.text);
+  const tearB = keyframeSteps(css, 'blue-tear-b').map(step => step.text);
+  assert.ok(reach(tearA) >= 100 && reach(tearA) <= 200 && reach(tearB) >= 100 && reach(tearB) <= 220);
+  assert.ok(tearA.some(text => text.includes('skewX(')) && tearB.some(text => text.includes('skewX(')), 'sheared');
+  // both ends are at rest, so the stage and the blocks are where they belong when the glitch ends
+  [jumps, tearA, tearB].forEach(list => {
+    assert.ok(/translate(X)?\(0(px)?(, 0(px)?)?\)/.test(list[0]) && /translate(X)?\(0(px)?(, 0(px)?)?\)/.test(list[list.length - 1]));
+  });
+
+  // the three sets of times for the torn pieces are different from each other, and each piece starts clear
+  const tears = ['tear-a', 'tear-b', 'tear-c'].map(name => keyframeSteps(css, name));
+  tears.forEach(list => {
+    assert.ok(list.length >= 15);
+    assert.ok(/opacity: 0;/.test(list[0].text) && /opacity: 0;/.test(list[list.length - 1].text), 'invisible at both ends');
+    assert.ok(list.some(step => /scaleY\(/.test(step.text)), 'thick and thin for a moment');
+  });
+  assert.notEqual(tears[0].map(step => step.at).join(), tears[1].map(step => step.at).join());
+  assert.notEqual(tears[1].map(step => step.at).join(), tears[2].map(step => step.at).join());
+  // the pale blue pieces are thin and the rest can be thick
+  ['tear-2', 'tear-6'].forEach(name => assert.ok(Number(baseCss.match(new RegExp('#blue-glitch \\.' + name + ' \\{[^}]*height: (\\d+)px')) [1]) <= 30, name + ' is a thin line'));
+
+  // the stage and the blocks only move while the live screen glitches blue, and every rule needs full motion
+  const glitching = css.split('\n').filter(line => /data-hidden="glitch"\]\[data-tint="blue"\]/.test(line));
+  assert.ok(glitching.length >= 4);
+  css.split('\n').filter(line => /data-tint="blue"/.test(line)).forEach(line => assert.ok(line.includes('[data-motion="full"]'), line));
+  assert.ok(!/data-hidden="apart"\]\[data-tint="blue"\] (#stage|\[data-block\])/.test(css), 'while the blocks are apart there is nothing to move');
+
+  // the break: the layer rests where the old blue ended and fades out, and nothing keeps flickering
+  assert.ok(/#world\[data-hidden="break"\]\[data-tint="blue"\] #blue-glitch \{\s*animation: fade-out calc\(var\(--time-hidden\) \* \.5\) linear both;/.test(css));
+  assert.ok(/#blue-glitch \.wash-old \{\s*animation-name: none;\s*opacity: \.3;/.test(css));
+  assert.ok(/#blue-glitch \.wash-new,[^{]*#blue-glitch \.wash-pale,[^{]*#blue-glitch \.tear \{\s*animation-name: none;/.test(css));
+  // the red wash is as it was: only while the live screen glitches, and resting at .3 for the break
+  assert.ok(/#world\[data-hidden="glitch"\] #red-wash \{\s*animation: wash-flicker calc\(var\(--glitch-seconds\) \* 1s \* var\(--pace\)\) steps\(1\) both;/.test(css));
+  assert.ok(/#world\[data-hidden="break"\] #red-wash \{\s*opacity: \.3;/.test(css));
+});
+
+test('the pictures show with data-state: in fades, on is there at once with no animation, out fades away', () => {
+  const css = frameCss.replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.ok(/#backdrop \.picture\[data-state="in"\] \{\s*opacity: 1;\s*animation: fade-in calc\(var\(--look-seconds\) \* 1s \* var\(--pace\)\) linear both;\s*\}/.test(css));
+  assert.ok(/#backdrop \.picture\[data-state="on"\] \{ opacity: 1; \}/.test(css), 'the cut: opacity 1 and nothing else');
+  assert.ok(/#backdrop \.picture\[data-state="out"\] \{\s*opacity: 1;\s*animation: fade-out calc\(var\(--look-seconds\) \* 1s \* var\(--pace\)\) linear both;\s*\}/.test(css));
+  assert.ok(/#backdrop \.picture \{[^}]*opacity: 0;/.test(baseCss), 'a picture with no state is invisible');
 });
 
 test('the backdrop and the wash are in index.html in the right order, hidden, and the stage is positioned so they stack by that order', () => {
@@ -2404,11 +2766,20 @@ test('the backdrop and the wash are in index.html in the right order, hidden, an
   assert.ok(/#stage \{ position: relative; \}/.test(baseCss));
 
   // both layers are the size of the screen and let every click and cursor through
-  const block = baseCss.match(/#backdrop,\s*#red-wash \{[^}]*\}/)[0];
+  const block = baseCss.match(/#backdrop,\s*#red-wash,\s*#blue-glitch \{[^}]*\}/)[0];
   assert.ok(block.includes('width: 1920px;') && block.includes('height: 1080px;') && block.includes('pointer-events: none;'));
-  const colours = tokensCss.match(/--(face-[a-z0-9-]+|eye-[a-z]+|hidden-red): #[0-9a-f]{6};/g) || [];
-  assert.equal(colours.length, 10, 'the red and the face colours are tokens');
-  assert.ok(!/(filter|box-shadow|text-shadow|blur\()/.test(baseCss.slice(baseCss.indexOf('#backdrop,'), baseCss.indexOf('Full screen panels'))), 'no blur, glow or shadow');
+  const colours = tokensCss.match(/--hidden-(red|blue-[a-z]+): #[0-9a-f]{6};/g) || [];
+  assert.equal(colours.length, 6, 'the red and the five blues are tokens');
+  assert.ok(!/(filter|box-shadow|text-shadow|blur\(|blend)/.test(baseCss.slice(baseCss.indexOf('#backdrop,'), baseCss.indexOf('Full screen panels'))), 'no blur, glow, shadow or blend');
+
+  // the blue glitch layer is over the stage like the red wash, under the connection text, hidden, with three washes and six pieces
+  assert.ok(at('<div id="blue-glitch" hidden>') > at('<div id="red-wash" hidden></div>'));
+  assert.ok(at('<div id="blue-glitch" hidden>') < at('<div id="connection-status" hidden>'));
+  const layer = indexHtml.slice(at('<div id="blue-glitch" hidden>'), at('<div id="connection-status" hidden>'));
+  assert.deepEqual(layer.match(/<div class="wash wash-[a-z]+"><\/div>/g).map(text => text.match(/wash-([a-z]+)/)[1]), ['old', 'new', 'pale']);
+  assert.equal((layer.match(/<div class="tear tear-\d"><\/div>/g) || []).length, 6);
+  ['old', 'new', 'pale'].forEach(name => assert.ok(baseCss.includes('#blue-glitch .wash-' + name + ' { background: var(--hidden-blue-'), 'the ' + name + ' wash has a blue'));
+  for (let number = 1; number <= 6; number++) assert.ok(new RegExp('#blue-glitch \\.tear-' + number + ' \\{[^}]*top: \\d+px;[^}]*height: \\d+px;[^}]*background: var\\(--hidden-blue-').test(baseCss), 'torn piece ' + number);
 });
 
 test('the shell starts the hidden transitions after the demo runner, with the address switch, and only when the whole screen runs', () => {

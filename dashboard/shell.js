@@ -50,6 +50,7 @@ let showingSample = false; // true while Dashboard Settings has the screen on th
 let extrasStarted = false; // the events are being read, so a change of source has to redo them
 let calendarsReadAt = null; // when every calendar file was last read well, for the connection status text
 let deviceText = []; // the Mini's name and ssh line, read only while Sanity cannot be reached
+let decorationsUsed = false; // core/season.js has been asked for a pack, so it has to be asked again when the pack goes
 
 window.teletraanStarted = true; // index.html reloads the page if this never happens
 run();
@@ -94,7 +95,7 @@ async function run() {
 
     // The theme goes on before the first panel is drawn, so nothing flashes in the wrong colours
     try {
-      await startThemes(getContent, { theme: params.get('theme'), overlay: params.get('overlay') });
+      await startThemes(getContent, { theme: params.get('theme'), overlay: params.get('overlay') }, showDecorations);
     } catch (error) {
       console.error('The theme could not be started. The screen keeps the default look.', error);
     }
@@ -349,6 +350,17 @@ async function readEvents(module) {
   } catch (error) {
     console.error('Could not read the calendars', error);
   }
+}
+
+// The decorations of the overlay's seasonal pack (core/season.js,
+// docs/seasonal-packs.md). theme-apply.js calls this each time a look goes on
+// the page. The module is read only when a pack is wanted, or when one has to be
+// taken away, and a problem in it is logged and never stops the colours.
+function showDecorations(look) {
+  if (!look.overlay && !decorationsUsed) return;
+
+  decorationsUsed = true;
+  startOptional('./core/season.js', module => module.showSeason(look.overlay));
 }
 
 // A module that is allowed to be missing or to fail without stopping the screen

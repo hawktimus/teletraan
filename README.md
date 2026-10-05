@@ -19,7 +19,7 @@ The list on the left is what you can change: Tasks, Tonight's Plan, Events Calen
 - Every item has a **Show on screen** switch and an optional **Hide after** date, so things come down on their own.
 - Every field says how many characters fit on the screen. Studio will not let you publish text that is too long.
 - **Publish all**, in the top bar, lists every document that has a draft and publishes the ticked ones in one go. Each is checked first with the same rules as its Publish button, and one that fails is skipped with the reason while the rest are published.
-- **Dashboard Settings** is the one page for the whole board: which boards show and in what order, how long each stays, the countdown dates, the announcement times and words, an alert, and the look and the speed.
+- **Dashboard Settings** is the one page for the whole board: which boards show and in what order, how long each stays, the countdown dates, the announcement times and words, an alert, how big the portraits and photos are, and the look and the speed.
 - BAND events are not typed in here. They come from the team's BAND calendars. Events that are not on BAND go in Events Calendar.
 - The order of the list on the left is one plain list in `studio/structure.js`. To change the order, move a line (docs/reordering-the-sidebar.md).
 
@@ -58,7 +58,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - The animated hawk logo, and a team name that splits apart and locks back together every few minutes
 - Night mode: from 11:30pm to 11:30am the screen goes black with a bouncing logo, and the picture is never turned off. The times are set in Studio
 - Mechanical page changes: the frame breaks into plates and bars that fold away and click back together around the next page, with screws that turn at the joints. Studio can use these, the slat flip, or take turns
-- Hidden transitions: now and then the whole screen comes apart to show a desktop, or a face with red eyes. They can be played on request from Studio
+- Hidden transitions: now and then the screen glitches blue, comes apart and cuts to a blue error screen, or glitches red and shows two red eyes in the dark. Each has two pictures that take turns. They can be played on request from Studio
 - A Play announcements button in Studio that plays every announcement that is switched on, once, without waiting for its time
 - A Publish all tool in the Studio's top bar that publishes all the drafts you tick, checking each one first and skipping any that would fail
 - A demo for visitors that plays the announcement and night mode on request from Studio
@@ -71,6 +71,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - docs/adding-a-field.md: adding a field to something editors fill in
 - docs/adding-a-panel.md: adding a new board
 - docs/rebuilding-the-mini.md: setting up the Mini from scratch
+- docs/shipping-from-the-mac.md: one window that commits, pushes, updates the Studio and tells the Mini to pull
 - docs/where-things-are.md: what each folder is for, where the settings live, and how to check your work
 - docs/try-it-on-the-mini.md: testing speed on the Mini
 - docs/the-logo.md: how the hawk logo moves

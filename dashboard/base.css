@@ -76,15 +76,21 @@ html, body {
   height: 100%;
 }
 
-/* Hidden transitions (core/hidden-run.js, docs/hidden-transitions.md). Two full
+/* Hidden transitions (core/hidden-run.js, docs/hidden-transitions.md). Three full
    screen layers that are hidden except while one plays. #backdrop is under the
-   stage and holds three things, shown one at a time by data-look (frame.css):
-   black (its own background), the wallpaper, and the red eyes picture.
+   stage. It is black, or a deep blue, or (data-look="picture") the background
+   colour of the picture on it, which hidden-run.js hands over as --picture-fill.
+   The pictures (core/hidden-pictures.js) are img elements that hidden-run.js adds
+   to it, each one invisible until a step shows it (frame.css).
    #red-wash is over the stage and is only a flat red colour whose opacity
-   flickers. The colours of the face are the --face and --eye tokens in
-   tokens.css. The wallpaper is drawn in its own colours (core/hidden-art.js). */
+   flickers. #blue-glitch is over the stage too and holds the flat layers of the
+   blue glitch: three washes that cover the whole screen in different blues, and
+   six torn pieces, thin bands that jump sideways. Where the pieces are, how big
+   and what blue is set here, and every move is in frame.css. The colours are
+   the --hidden tokens in tokens.css. */
 #backdrop,
-#red-wash {
+#red-wash,
+#blue-glitch {
   position: absolute;
   left: 0;
   top: 0;
@@ -94,34 +100,51 @@ html, body {
   pointer-events: none;
 }
 #backdrop { background: #000; }
+#backdrop[data-look="blue"] { background: var(--hidden-blue-deep); }
+#backdrop[data-look="picture"] { background: var(--picture-fill, #000); }
 #red-wash {
   background: var(--hidden-red);
   opacity: 0;
 }
-#backdrop .wallpaper,
-#backdrop .red-eyes {
+
+/* A picture fills the screen without being stretched. cover fills it all, and
+   contain shows the whole picture with the backdrop's colour round it. crisp is
+   for a small picture, so its pixels stay hard when it is enlarged. */
+#backdrop .picture {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  object-fit: cover;
+  opacity: 0;
+}
+#backdrop .picture[data-fit="contain"] { object-fit: contain; }
+#backdrop .picture[data-crisp="on"] {
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+}
+
+#blue-glitch .wash,
+#blue-glitch .tear {
   position: absolute;
   opacity: 0;
 }
-#backdrop .wallpaper { left: 0; top: 0; width: 1920px; height: 1080px; }
-#backdrop .red-eyes { left: 410px; top: 98px; width: 1100px; height: 884px; opacity: 1; }
-#backdrop .wallpaper svg,
-#backdrop .red-eyes svg { display: block; }
-#backdrop .face-plates,
-#backdrop .face-eyes { opacity: 0; }
-#backdrop .face-lit { fill: var(--face-lit); }
-#backdrop .face-lit-2 { fill: var(--face-lit-2); }
-#backdrop .face-shade { fill: var(--face-shade); }
-#backdrop .face-shade-2 { fill: var(--face-shade-2); }
-#backdrop .face-dark { fill: var(--face-dark); }
-#backdrop .face-cut { fill: var(--face-cut); }
-#backdrop .face-plates polygon {
-  stroke: var(--face-edge);
-  stroke-width: 3px;
-  stroke-linejoin: miter;
+#blue-glitch .wash {
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
 }
-#backdrop .eye { fill: var(--eye-red); }
-#backdrop .eye-core { fill: var(--eye-hot); }
+#blue-glitch .wash-old { background: var(--hidden-blue-old); }
+#blue-glitch .wash-new { background: var(--hidden-blue-new); }
+#blue-glitch .wash-pale { background: var(--hidden-blue-pale); }
+#blue-glitch .tear-1 { left: -200px; top: 96px;  width: 1400px; height: 64px;  background: var(--hidden-blue-new); }
+#blue-glitch .tear-2 { left: 0;      top: 238px; width: 1920px; height: 26px;  background: var(--hidden-blue-pale); }
+#blue-glitch .tear-3 { left: 300px;  top: 420px; width: 1100px; height: 120px; background: var(--hidden-blue-old); }
+#blue-glitch .tear-4 { left: -100px; top: 610px; width: 1700px; height: 36px;  background: var(--hidden-blue-ink); }
+#blue-glitch .tear-5 { left: 500px;  top: 760px; width: 1300px; height: 90px;  background: var(--hidden-blue-new); }
+#blue-glitch .tear-6 { left: 0;      top: 930px; width: 1920px; height: 22px;  background: var(--hidden-blue-pale); }
 
 /* Full screen panels (alerts, announcements) sit on top of everything */
 #overlay {
@@ -485,27 +508,39 @@ html[data-night="on"] #stage { visibility: hidden; }
 
 /* The portrait is a card (cardMarkup, 292 square) with the picture inside its
    edge. The picture is 280 square, 6px in. Its bottom right corner is cut to
-   run beside the card's own cut corner, about 4px inside it. */
+   run beside the card's own cut corner, about 4px inside it.
+
+   Those are the sizes at 100 percent. The Portrait size setting makes them
+   smaller, and portrait.js hands the three sizes over as variables on the
+   .portrait element. The numbers after the commas are the sizes at 100. The
+   card is drawn at 292 and the svg is stretched down to the variable, which
+   shrinks its metal edge and cut corner with it. The picture's cut corner is
+   in percent for the same reason: 10.786% of 280 is 30.2px and 13.464% is
+   37.7px. margin: 0 auto keeps a smaller portrait in the middle of its slot. */
 .portrait {
   position: relative;
-  width: 292px;
-  height: 292px;
+  width: var(--portrait-card, 292px);
+  height: var(--portrait-card, 292px);
   margin: 0 auto 8px;
+}
+.portrait .card-outline {
+  width: 100%;
+  height: 100%;
 }
 .portrait-photo {
   position: absolute;
-  left: 6px;
-  top: 6px;
-  width: 280px;
-  height: 280px;
+  left: var(--portrait-inset, 6px);
+  top: var(--portrait-inset, 6px);
+  width: var(--portrait-photo, 280px);
+  height: var(--portrait-photo, 280px);
   overflow: hidden;
-  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 30.2px), calc(100% - 37.7px) 100%, 0 100%);
+  clip-path: polygon(0 0, 100% 0, 100% 89.214%, 86.536% 100%, 0 100%);
 }
 .portrait-photo img,
 .silhouette {
   display: block;
-  width: 280px;
-  height: 280px;
+  width: 100%;
+  height: 100%;
 }
 
 /* A long name goes on a second line and is cut after that. The first three

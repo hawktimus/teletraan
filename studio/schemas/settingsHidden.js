@@ -43,7 +43,7 @@ export function hiddenFields() {
       title: 'Desktop reveal chance (percent)',
       type: 'number',
       group: 'hidden',
-      description: 'How many page changes in 100 become the desktop reveal: the screen comes apart, shows a wallpaper, and comes back together. 0 to 100, 0 is never.',
+      description: 'How many page changes in 100 become the desktop reveal: blue glitching, then a blue error screen for 3 seconds. From 0 to 100, 0 is never.',
       initialValue: 1,
       validation: Rule => [
         Rule.required().error('Enter a percent from 0 to 100, or 0 for never.'),
@@ -56,7 +56,7 @@ export function hiddenFields() {
       title: 'Red eyes chance (percent)',
       type: 'number',
       group: 'hidden',
-      description: 'How many page changes in 100 become red eyes: red glitches, the screen breaks apart to black, a robot face shows for 2 seconds. From 0 to 100, 0 is never.',
+      description: 'How many page changes in 100 become red eyes: red glitches, then a picture of two red eyes on black for a few seconds. From 0 to 100, 0 is never.',
       initialValue: 1,
       validation: Rule => [
         Rule.required().error('Enter a percent from 0 to 100, or 0 for never.'),

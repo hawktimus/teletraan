@@ -6,19 +6,12 @@ import { cardMarkup } from '../../core/plate.js';
 import { doubleSlash } from '../../core/marks.js';
 import { escapeHtml, hasText } from '../../core/text.js';
 import { preloadImages } from '../../core/images.js';
-import { creditText, makePhotoQueue, photosToShow } from '../../core/photos.js';
+import { creditText, makePhotoQueue, photoLayout, photosToShow } from '../../core/photos.js';
 
 const missingMarkup = '<div class="missing">[Photo not available]</div>';
 
 // The queue remembers the last photo shown, from one turn of the panel to the next
 const queue = makePhotoQueue();
-
-// The picture sits in a card 1096px wide. With a caption under it the card is
-// shorter. With no caption it is as tall as the cut corner of the frame
-// allows. Both heights are used for the card's outline and for its box.
-const CARD_WIDTH = 1096;
-const CARD_HEIGHT_WITH_CAPTION = 464;
-const CARD_HEIGHT_NO_CAPTION = 514;
 
 export function hasContent(content) {
   return photosToShow(content).length > 0;
@@ -40,8 +33,15 @@ export function mount(host, content) {
   const credit = photo ? creditText(photo) : '';
   const creditPlate = hasText(credit) ? `<div class="credit">Photo: ${escapeHtml(credit)}</div>` : '';
   const hasCaption = photo !== null && hasText(photo.caption);
-  const cardHeight = hasCaption ? CARD_HEIGHT_WITH_CAPTION : CARD_HEIGHT_NO_CAPTION;
-  const caption = hasCaption ? `<div class="caption" data-slat="item">${escapeHtml(photo.caption)}</div>` : '';
+
+  // The picture sits in a card, and where it goes and how big it is depends on the
+  // Photo size setting and on whether there is a caption (see photoLayout)
+  const layout = photoLayout(content.settings && content.settings.photoScale, hasCaption);
+  const card = layout.card;
+  const captionBox = layout.caption;
+  const caption = hasCaption
+    ? `<div class="caption" data-slat="item" style="left: ${captionBox.left}px; top: ${captionBox.top}px; width: ${captionBox.width}px">${escapeHtml(photo.caption)}</div>`
+    : '';
 
   host.innerHTML = `
     <section class="page photo">
@@ -50,10 +50,10 @@ export function mount(host, content) {
         <div data-slat="tag">${doubleSlash()}</div>
       </div>
 
-      <div class="card" data-slat="item" style="width: ${CARD_WIDTH}px; height: ${cardHeight}px">
+      <div class="card" data-slat="item" style="left: ${card.left}px; top: ${card.top}px; width: ${card.width}px; height: ${card.height}px">
         <div class="picture">${picture}</div>
         ${creditPlate}
-        ${cardMarkup(CARD_WIDTH, cardHeight)}
+        ${cardMarkup(card.width, card.height)}
       </div>
       ${caption}
     </section>`;

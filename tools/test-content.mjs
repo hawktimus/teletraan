@@ -42,8 +42,9 @@ async function loadCopy(name, changeConfig) {
     fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, 'dashboard', file));
   });
 
-  // the Events panel and the Next event tile draw the merged list, and the Roster panel draws the roster pages, so they are tested too
-  ['events/events.js', 'next-event/next-event.js', 'roster/roster.js', 'leadership/leadership.js'].forEach(file => {
+  // the Events panel and the Next event tile draw the merged list, and the Roster panel draws the roster pages, so they are tested too.
+  // The Photo and Team Leads panels are here to check that they follow the two size settings.
+  ['events/events.js', 'next-event/next-event.js', 'roster/roster.js', 'leadership/leadership.js', 'photo/photo.js', 'team-leads/team-leads.js'].forEach(file => {
     fs.mkdirSync(path.join(root, 'dashboard/panels', path.dirname(file)), { recursive: true });
     fs.copyFileSync(path.join(dashboardFolder, 'panels', file), path.join(root, 'dashboard/panels', file));
   });
@@ -59,6 +60,8 @@ async function loadCopy(name, changeConfig) {
     nextEventPanel: await import(base + 'panels/next-event/next-event.js'),
     rosterPanel: await import(base + 'panels/roster/roster.js'),
     leadershipPanel: await import(base + 'panels/leadership/leadership.js'),
+    photoPanel: await import(base + 'panels/photo/photo.js'),
+    teamLeadsPanel: await import(base + 'panels/team-leads/team-leads.js'),
     leadership: await import(base + 'core/leadership.js'),
     images: await import(base + 'core/images.js'),
     photos: await import(base + 'core/photos.js'),
@@ -890,6 +893,8 @@ test('the new settings have the defaults the Studio starts with', () => {
     breakSeconds: { min: 0.3, max: 2 },
     silverChance: { min: 0, max: 100 },
     photoSeconds: { min: 6, max: 120 },
+    portraitScale: { min: 60, max: 100 },
+    photoScale: { min: 60, max: 100 },
     nightLogoWidth: { min: 120, max: 800 },
     demoSeconds: { min: 5, max: 300 },
     desktopChance: { min: 0, max: 100 },
@@ -3538,17 +3543,224 @@ test('the portrait sizes in portrait.js, base.css and the text sizes agree', () 
   const base = fs.readFileSync(path.join(dashboardFolder, 'base.css'), 'utf8');
   const tokens = fs.readFileSync(path.join(dashboardFolder, 'tokens.css'), 'utf8');
 
-  // the photo is asked for at 280 and drawn at 280
+  // the photo is asked for at 280 and, at full size, drawn at 280. The sizes in base.css are the
+  // fallbacks of the variables that portrait.js sets, so they are the full size
   assert.ok(photoAddress({ photo: tidyPhoto(photoRecord()) }).includes('w=280&h=280'));
-  assert.ok(/\.portrait-photo\s*\{[^}]*width: 280px;[^}]*height: 280px;/.test(base));
-  assert.ok(/\.portrait\s*\{[^}]*width: 292px;[^}]*height: 292px;/.test(base));
-  // the picture sits 6px in from the card's edge, with its cut corner beside the card's
-  assert.ok(/\.portrait-photo\s*\{[^}]*left: 6px;[^}]*top: 6px;/.test(base));
-  assert.ok(base.includes('calc(100% - 30.2px), calc(100% - 37.7px) 100%'));
+  assert.ok(/\.portrait-photo\s*\{[^}]*width: var\(--portrait-photo, 280px\);[^}]*height: var\(--portrait-photo, 280px\);/.test(base));
+  assert.ok(/\.portrait\s*\{[^}]*width: var\(--portrait-card, 292px\);[^}]*height: var\(--portrait-card, 292px\);/.test(base));
+  // the picture sits 6px in from the card's edge, with its cut corner beside the card's.
+  // The cut is in percent, so it scales with the picture: 30.2px and 37.7px of 280px
+  assert.ok(/\.portrait-photo\s*\{[^}]*left: var\(--portrait-inset, 6px\);[^}]*top: var\(--portrait-inset, 6px\);/.test(base));
+  assert.ok(base.includes('polygon(0 0, 100% 0, 100% 89.214%, 86.536% 100%, 0 100%)'));
+  assert.equal(Math.round((1 - 30.2 / 280) * 100000) / 1000, 89.214);
+  assert.equal(Math.round((1 - 37.7 / 280) * 100000) / 1000, 86.536);
+  assert.ok(/\.portrait \.card-outline\s*\{[^}]*width: 100%;[^}]*height: 100%;/.test(base), 'the card is not drawn smaller with the portrait');
   assert.ok(/\.slot-name\s*\{ font: 500 var\(--size-body\)\//.test(base));
   assert.ok(/\.slot-role\s*\{[^}]*font: 600 var\(--size-label\)\//.test(base));
   assert.ok(tokens.includes('--size-body: 56px;') && tokens.includes('--size-label: 44px;'));
 });
+
+// The two size settings of the Photos tab: Portrait size and Photo size
+
+test('Portrait size and Photo size start at 100, are whole percents from 60 to 100, and anything odd is 100', () => {
+  const defaults = live.config.defaultSettings;
+  assert.equal(defaults.portraitScale, 100);
+  assert.equal(defaults.photoScale, 100);
+  assert.deepEqual(live.config.limits.portraitScale, { min: 60, max: 100 });
+  assert.deepEqual(live.config.limits.photoScale, { min: 60, max: 100 });
+
+  ['portraitScale', 'photoScale'].forEach(name => {
+    // in range stays, a fraction is rounded, and what is outside is brought to the nearest end
+    [[60, 60], [80, 80], [100, 100], [79.6, 80], [60.4, 60], [99.5, 100], [59, 60], [0, 60], [-5, 60], [101, 100], [500, 100]].forEach(([value, wanted]) => {
+      settingsThrough({ [name]: value }).forEach(settings => assert.equal(settings[name], wanted, name + ' ' + value));
+    });
+    // missing or not a number: the full size
+    [undefined, null, '', '80', NaN, Infinity, -Infinity, true, {}, [80]].forEach(value => {
+      settingsThrough({ [name]: value }).forEach(settings => assert.equal(settings[name], 100, name + ' ' + String(value)));
+    });
+    // no settings at all
+    settingsThrough({}).forEach(settings => assert.equal(settings[name], 100));
+  });
+
+  // each setting stands on its own
+  settingsThrough({ portraitScale: 70, photoScale: 90 }).forEach(settings => {
+    assert.equal(settings.portraitScale, 70);
+    assert.equal(settings.photoScale, 90);
+  });
+  settingsThrough({ portraitScale: 70 }).forEach(settings => assert.equal(settings.photoScale, 100));
+
+  // the panels call the same rule, so a size that did not come through the settings is still safe
+  assert.equal(live.content.tidyScale('photoScale', 72.4), 72);
+  assert.equal(live.content.tidyScale('portraitScale', 'big'), 100);
+});
+
+test('the sample content has both sizes at 100', () => {
+  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  assert.equal(raw.settings.portraitScale, 100);
+  assert.equal(raw.settings.photoScale, 100);
+
+  const settings = normalizeSample(raw).settings;
+  assert.deepEqual([settings.portraitScale, settings.photoScale], [100, 100]);
+});
+
+test('portraitSizes: the card, the photo and the space round it at 60, 80 and 100 percent', () => {
+  const { portraitSizes } = live.portrait;
+
+  // 100 is the size the portraits have always had
+  assert.deepEqual(portraitSizes(100), { card: 292, photo: 280, inset: 6 });
+  assert.deepEqual(portraitSizes(80), { card: 234, photo: 224, inset: 5 });
+  assert.deepEqual(portraitSizes(60), { card: 175, photo: 167, inset: 4 });
+
+  // no value, or one that is not allowed, is the same as the setting being fixed
+  assert.deepEqual(portraitSizes(), portraitSizes(100));
+  assert.deepEqual(portraitSizes('big'), portraitSizes(100));
+  assert.deepEqual(portraitSizes(30), portraitSizes(60));
+  assert.deepEqual(portraitSizes(250), portraitSizes(100));
+  assert.deepEqual(portraitSizes(79.6), portraitSizes(80));
+
+  // at every whole percent: whole pixels, the photo is the card less the space on both sides,
+  // and a bigger setting never gives a smaller portrait
+  let before = null;
+  for (let percent = 60; percent <= 100; percent++) {
+    const size = portraitSizes(percent);
+    [size.card, size.photo, size.inset].forEach(number => assert.ok(Number.isInteger(number) && number > 0, percent + ' gave ' + JSON.stringify(size)));
+    assert.equal(size.photo, size.card - 2 * size.inset, String(percent));
+    assert.ok(Math.abs(size.card - 292 * percent / 100) <= 0.5, 'the card is in proportion at ' + percent);
+    if (before) assert.ok(size.card >= before.card && size.photo >= before.photo && size.inset >= before.inset, 'sizes went down at ' + percent);
+    before = size;
+  }
+
+  // three slots of 352 and two gaps of 20 are the 1096 of the row, so a portrait never needs more than its slot
+  assert.ok(portraitSizes(100).card <= 352);
+});
+
+test('a slot follows the Portrait size, keeps the card shape and the text, and is the old markup at 100', () => withFakePage(drawn => {
+  const slot = { name: '[Alex]', role: 'CAPTAIN', address: photoBase + '?w=280&h=280', metal: 'gold' };
+  const full = slotMarkup(slot);
+  const same = slotMarkup(Object.assign({ scale: 100 }, slot));
+  const small = slotMarkup(Object.assign({ scale: 60 }, slot));
+  const medium = slotMarkup(Object.assign({ scale: 80 }, slot));
+
+  // no scale is 100, and 100 is exactly the sizes the slot had before the setting
+  assert.equal(same, full);
+  assert.ok(full.includes('<div class="portrait" style="--portrait-card: 292px; --portrait-photo: 280px; --portrait-inset: 6px">'));
+  assert.ok(full.includes('width="280" height="280" alt="">'));
+  assert.ok(medium.includes('--portrait-card: 234px; --portrait-photo: 224px; --portrait-inset: 5px'));
+  assert.ok(small.includes('<div class="portrait" style="--portrait-card: 175px; --portrait-photo: 167px; --portrait-inset: 4px">'));
+  assert.ok(small.includes('width="167" height="167" alt="">'));
+
+  // the card is always the one shape of 292, which the browser draws smaller: so the metal edge and the cut corner shrink with it
+  assert.deepEqual(Array.from(new Set(drawn)), ['card-292x292']);
+  assert.ok(small.includes('href="#card-292x292"'));
+
+  // only the three variables and the picture's size differ. The name, the role, the metal and the slat are the same.
+  const withoutSizes = markup => markup.replace(/ style="--portrait[^"]*"/, '').replace(/ width="\d+" height="\d+" alt=""/, '');
+  assert.equal(withoutSizes(small), withoutSizes(full));
+  assert.ok(small.includes('<div class="slot-name">[Alex]</div>') && small.includes('<div class="slot-role">CAPTAIN</div>'));
+
+  // the silhouette is drawn at its own size and the browser stretches it to the portrait
+  const noPhoto = slotMarkup({ name: '[Alex]', role: '', address: '', scale: 60 });
+  assert.ok(noPhoto.includes('<svg class="silhouette" width="280" height="280" viewBox="0 0 280 280">'));
+  assert.ok(noPhoto.includes('--portrait-card: 175px; --portrait-photo: 167px'));
+}));
+
+test('photoLayout: the card and the caption at 60, 80 and 100 percent, with and without a caption', () => {
+  const { photoLayout } = live.photos;
+
+  // 100 is where the Photo panel always was: 28 from the left, 142 from the top, the caption at 622
+  assert.deepEqual(photoLayout(100, true), { card: { left: 28, top: 142, width: 1096, height: 464 }, caption: { left: 52, top: 622, width: 1004 } });
+  assert.deepEqual(photoLayout(100, false).card, { left: 28, top: 142, width: 1096, height: 514 });
+  assert.deepEqual(photoLayout(undefined, true), photoLayout(100, true));
+  assert.deepEqual(photoLayout('large', false), photoLayout(100, false));
+
+  assert.deepEqual(photoLayout(80, true), { card: { left: 138, top: 189, width: 877, height: 371 }, caption: { left: 162, top: 576, width: 894 } });
+  assert.deepEqual(photoLayout(80, false).card, { left: 138, top: 194, width: 877, height: 411 });
+  assert.deepEqual(photoLayout(60, true), { card: { left: 247, top: 235, width: 658, height: 278 }, caption: { left: 271, top: 529, width: 785 } });
+  assert.deepEqual(photoLayout(60, false).card, { left: 247, top: 245, width: 658, height: 308 });
+  assert.deepEqual(photoLayout(59, true), photoLayout(60, true));
+  assert.deepEqual(photoLayout(1000, true), photoLayout(100, true));
+
+  // the frame's cut corner runs from (1148, 640) to (1068, 704): the most x a point can have at a height
+  const frameLimit = y => (y <= 640 ? 1148 : 1148 - (y - 640) * 80 / 64);
+
+  [true, false].forEach(hasCaption => {
+    for (let percent = 60; percent <= 100; percent++) {
+      const layout = photoLayout(percent, hasCaption);
+      const card = layout.card;
+      const where = percent + (hasCaption ? ' with' : ' without') + ' a caption';
+
+      // in proportion to the full card, in whole pixels
+      assert.ok(Math.abs(card.width - 1096 * percent / 100) <= 0.5, 'width at ' + where);
+      assert.ok(Math.abs(card.height - (hasCaption ? 464 : 514) * percent / 100) <= 0.5, 'height at ' + where);
+      // in the middle of the panel (1152 wide), to the pixel
+      assert.ok(Math.abs(card.left - (1152 - card.width - card.left)) <= 1, 'centred across at ' + where);
+      // never above the header's plate (the body starts at 120) and never below the space it has at 100
+      assert.ok(card.top >= 142, 'below the header at ' + where);
+      const bottom = hasCaption ? layout.caption.top + 64 : card.top + card.height;
+      assert.ok(bottom <= (hasCaption ? 686 : 656), 'inside the space it has at 100, ' + where);
+      // the card's own cut corner is clear of the frame's
+      assert.ok(card.left + card.width <= frameLimit(card.top + card.height - 34) - 20, 'right of the card at ' + where);
+      assert.ok(card.left + card.width - 42 <= frameLimit(card.top + card.height) - 20, 'cut corner at ' + where);
+
+      if (hasCaption) {
+        const caption = layout.caption;
+        assert.equal(caption.top, card.top + card.height + 16, 'the caption is directly under the card at ' + where);
+        assert.equal(caption.left, card.left + 24, 'the caption lines up with the card at ' + where);
+        assert.ok(caption.width > 0 && caption.width <= 1004, 'caption width at ' + where);
+        // it always stops where it stops at full size, which is clear of the frame's cut corner
+        assert.equal(caption.left + caption.width, 1056, 'the caption stops at 1056 at ' + where);
+        assert.ok(caption.left + caption.width <= frameLimit(caption.top + 64) - 30, 'the caption is clear of the cut corner at ' + where);
+      }
+      // the credit plate: at most 700 wide and at most the card less 88, from 2 in, so it ends well left of the card's cut corner
+      const creditEnd = 2 + Math.min(700, card.width - 88);
+      assert.ok(creditEnd <= card.width - 42 - 40, 'the credit is clear of the cut corner at ' + where);
+    }
+  });
+});
+
+test('the Photo panel draws the card and the caption at the Photo size, and the picture still fills the card', () => withFakePage(drawn => {
+  const photo = { address: 'data/sample/photo-1.svg', caption: '[Caption]', credit: '[Name]', focus: { x: 30, y: 40 } };
+  const draw = (settings, shown) => {
+    const target = { innerHTML: '', querySelector: () => null };
+    live.photoPanel.mount(target, { photos: [shown || photo], settings: settings });
+    return target.innerHTML;
+  };
+
+  const full = draw({ photoOrder: 'random', photoScale: 100 });
+  assert.ok(full.includes('<div class="card" data-slat="item" style="left: 28px; top: 142px; width: 1096px; height: 464px">'));
+  assert.ok(full.includes('<div class="caption" data-slat="item" style="left: 52px; top: 622px; width: 1004px">[Caption]</div>'));
+  // content with no settings, or no size in them, is the full size
+  assert.equal(draw(undefined), full);
+  assert.equal(draw({ photoOrder: 'random' }), full);
+
+  const small = draw({ photoOrder: 'random', photoScale: 60 });
+  assert.ok(small.includes('<div class="card" data-slat="item" style="left: 247px; top: 235px; width: 658px; height: 278px">'));
+  assert.ok(small.includes('<div class="caption" data-slat="item" style="left: 271px; top: 529px; width: 785px">[Caption]</div>'));
+  // the card's edge is drawn at the new size, and the picture, the hotspot and the credit are still in it
+  assert.ok(small.includes('width="658" height="278" viewBox="0 0 658 278"'));
+  assert.ok(small.includes('<img src="data/sample/photo-1.svg" style="object-position: 30% 40%" alt="">'));
+  assert.ok(small.includes('<div class="credit">Photo: [Name]</div>'));
+  assert.ok(small.includes('<div class="picture">') && small.includes('PHOTOS'));
+  assert.ok(drawn.includes('card-1096x464') && drawn.includes('card-658x278'));
+
+  // with no caption the card is taller, and there is no caption box
+  const bare = draw({ photoScale: 60 }, { address: 'data/sample/photo-3.svg' });
+  assert.ok(bare.includes('style="left: 247px; top: 245px; width: 658px; height: 308px"'));
+  assert.equal(bare.includes('class="caption"'), false);
+  assert.ok(drawn.includes('card-658x308'));
+  assert.ok(draw({ photoScale: 100 }, { address: 'data/sample/photo-3.svg' }).includes('style="left: 28px; top: 142px; width: 1096px; height: 514px"'));
+
+  // the Portrait size does not touch the Photo panel
+  assert.equal(draw({ portraitScale: 60 }), full);
+
+  // the stylesheet leaves the place and the size to photo.js, and keeps the text sizes and the cut of the picture
+  const style = fs.readFileSync(path.join(dashboardFolder, 'panels/photo/photo.css'), 'utf8');
+  assert.equal(/\.photo \.card\s*\{[^}]*(left|top|width|height):/.test(style), false, 'the card has a place or a size in photo.css');
+  assert.equal(/\.photo \.caption\s*\{[^}]*(left|top|width):/.test(style), false, 'the caption has a place or a width in photo.css');
+  assert.ok(/\.photo \.caption\s*\{[^}]*height: 64px;[^}]*font: 500 var\(--size-body\)\/64px/.test(style), 'the caption keeps its height and its text size');
+  assert.ok(style.includes('max-width: min(700px, calc(100% - 88px));'), 'the credit does not shrink with a smaller card');
+  assert.ok(style.includes('object-fit: cover;'));
+}));
 
 test('the Leadership and Team Leads panels have no cap of six and use the shared slots', () => {
   ['leadership/leadership.js', 'team-leads/team-leads.js'].forEach(file => {
@@ -3701,7 +3913,7 @@ test('the Leadership panel shows one role on each visit, centred, in the colour 
   assert.equal(countOf(visits[3], 'data-metal="silver"'), 1);
 
   // a short page uses the same portrait as a full one: one slot is as big as any, and the row centres them
-  assert.equal(countOf(visits[3], '<div class="portrait">'), 1);
+  assert.equal(countOf(visits[3], '<div class="portrait" style='), 1);
   assert.ok(visits[3].includes('card-292x292'));
   assert.ok(visits[3].includes('<div class="slots">'));
   assert.ok(visits[3].includes('<div class="slot-role">MENTOR</div>'));
@@ -5056,6 +5268,48 @@ test('the Tasks panel draws a contact and a place under the name, only for tasks
   const unsafe = markup([taskCalled('[A]', 'up-next', { contact: '<b>', location: 'A & B' })]);
   assert.ok(unsafe.includes('&lt;b&gt;') && unsafe.includes('A &amp; B') && !unsafe.includes('<b>'), unsafe);
 });
+
+// This one comes last: the Leadership, Roster and Team Leads panels keep the page they showed
+// last, and the tests above count their visits from the first page.
+test('the Leadership, Team Leads and Roster panels draw their portraits at the Portrait size, and at 100 without it', () => withFakePage(() => {
+  const host = () => ({ innerHTML: '', querySelector: () => null, querySelectorAll: () => [] });
+  const people = [{ role: 'Coach', name: '[Coach A]' }, { role: 'Captain', name: '[Captain A]' }];
+  const subteams = [{ name: '[Build]', lead: '[Lead A]', members: ['[Alex]', '[Sam]'] }];
+  const panels = [
+    ['leadership', live.leadershipPanel],
+    ['team leads', live.teamLeadsPanel],
+    ['roster', live.rosterPanel],
+  ];
+
+  panels.forEach(([name, panel]) => {
+    const draw = settings => {
+      const target = host();
+      panel.mount(target, { people: people, subteams: subteams, settings: settings });
+      return target.innerHTML;
+    };
+
+    const at60 = draw({ portraitScale: 60 });
+    const at80 = draw({ portraitScale: 80, photoScale: 60 });
+    const at100 = draw({ portraitScale: 100 });
+    assert.ok(at60.includes('--portrait-card: 175px; --portrait-photo: 167px; --portrait-inset: 4px'), name + ' at 60');
+    assert.ok(at80.includes('--portrait-card: 234px; --portrait-photo: 224px; --portrait-inset: 5px'), name + ' at 80, and the Photo size does not change it');
+    assert.ok(at100.includes('--portrait-card: 292px; --portrait-photo: 280px; --portrait-inset: 6px'), name + ' at 100');
+    // content with no settings, or no size in them, is the full size
+    assert.ok(draw(undefined).includes('--portrait-card: 292px'), name + ' with no settings');
+    assert.ok(draw({}).includes('--portrait-card: 292px'), name + ' with no size');
+    // the text keeps its size: apart from the sizes of the portrait, the markup is the same whatever the setting
+    const withoutSizes = (html, variables) => html.replace(variables, '').replace(/ width="\d+" height="\d+"/g, '');
+    assert.equal(withoutSizes(at60, '--portrait-card: 175px; --portrait-photo: 167px; --portrait-inset: 4px'),
+      withoutSizes(at100, '--portrait-card: 292px; --portrait-photo: 280px; --portrait-inset: 6px'), name);
+  });
+
+  // the style of the slot does not name a size of its own for the text or the slot
+  const base = fs.readFileSync(path.join(dashboardFolder, 'base.css'), 'utf8');
+  assert.ok(/grid-auto-columns: 352px;/.test(base), 'the slot is still 352 wide');
+  assert.ok(/\.roster \.slot\s*\{[^}]*width: 352px;/.test(fs.readFileSync(path.join(dashboardFolder, 'panels/roster/roster.css'), 'utf8')));
+  assert.ok(/\.portrait\s*\{[^}]*margin: 0 auto 8px;/.test(base), 'a smaller portrait is centred in its slot');
+  assert.ok(/\.slots\s*\{[^}]*justify-content: center;[^}]*align-content: center;/.test(base), 'the row is centred in the panel');
+}));
 
 // Run them
 

@@ -1,17 +1,22 @@
 // Plays the hidden transitions (docs/hidden-transitions.md). Deciding when is in
 // core/hidden.js, the list of transitions and what each one does is in
-// core/hidden-transitions.js, and every move is in frame.css, in the section
-// "Hidden transitions". This file is the glue: it asks at each page change of
-// the large panel, sets the attributes the stylesheet reads, and waits.
+// core/hidden-transitions.js, and every move is in frame.css, in the sections
+// "Hidden transitions" and "The blue glitch". This file is the glue: it asks at
+// each page change of the large panel, sets the attributes the stylesheet reads,
+// and waits.
 //
 // How a transition goes on the screen. #world carries data-hidden:
-//   glitch  red glitches over the screen (only the red eyes have this)
+//   glitch  glitches over the screen, red or blue (data-tint says which)
 //   break   the five blocks fly apart in 3D (the banner, the countdown, the large
 //           panel, the small panel and the ticker, marked data-block in index.html)
 //   apart   the blocks are out of sight and #backdrop shows what is behind them.
 //           The pages of all three areas are swapped now (core/areas.js)
 //   build   the blocks fly back together, showing the next screen
-// and nothing at all when no transition is playing.
+// and nothing at all when no transition is playing. A glitch can also play while
+// the blocks are apart, and then data-hidden stays apart and only data-tint is added.
+//
+// The four pictures (core/hidden-pictures.js) are loaded when this starts and sit
+// in #backdrop, each one hidden until a step shows it, so a cut to one is one frame.
 //
 // Only one plays at a time, and never while an alert, an announcement, a demo or
 // the night screen has the screen. If one of them starts in the middle, or the
@@ -20,9 +25,10 @@
 
 import * as frame from '../frame.js';
 import { hiddenAdvanceSeconds } from '../config.js';
-import { backdropMarkup } from './hidden-art.js';
+import { allPictures, makePictureChooser, pictureAddress } from './hidden-pictures.js';
 import { chooseHidden, holdReason, pushedKind, readHandledRequest, rememberHandledRequest } from './hidden.js';
 import { hiddenTransitions } from './hidden-transitions.js';
+import { preloadImages } from './images.js';
 import { setHiddenOffer, startWholeScreen } from './areas.js';
 import { moveOn, secondsUntilChange } from './schedule.js';
 import { takeoverRunning } from './takeover.js';
@@ -40,6 +46,7 @@ const longestRest = 3000; // milliseconds to wait for the three areas to stop mo
 const world = document.getElementById('world');
 const backdrop = document.getElementById('backdrop');
 const redWash = document.getElementById('red-wash');
+const blueGlitch = document.getElementById('blue-glitch');
 
 let getContent = null;
 let storage = null;
@@ -50,6 +57,9 @@ let asked = ''; // the push the large panel has been asked to move on for
 let playing = false;
 let demoRunning = () => false; // set in startHidden, when the pieces are there
 let nightIsUp = () => false;
+let chooser = null; // picks the picture of each play, so the two of a set take turns
+const pictureElements = {}; // file name -> the img in #backdrop, once the picture has loaded. A picture that failed is not here.
+let showing = null; // the img on the backdrop now, or null
 
 class Stopped extends Error {}
 
@@ -90,11 +100,39 @@ export async function startHidden(contentGetter, switchText) {
     console.error('The hidden transitions cannot tell when the night screen is up', error);
   }
 
-  backdrop.innerHTML = backdropMarkup();
+  chooser = makePictureChooser(storage);
+  loadPictures();
   // On the html element, where tokens.css works --time-hidden out from it
   document.documentElement.style.setProperty('--hidden-seconds', String(flySeconds));
   setHiddenOffer(offer);
   frame.onSecond(look);
+}
+
+// Loads the four pictures now and puts each one in #backdrop when it has loaded,
+// hidden until a step shows it. One that fails to load is left out, and the step
+// that would have used it takes the next picture of its set, or shows none.
+function loadPictures() {
+  const pictures = allPictures();
+
+  preloadImages(pictures.map(pictureAddress)).then(results => {
+    results.forEach((result, index) => {
+      const picture = pictures[index];
+      if (!result.ok) {
+        console.error('The hidden transition picture ' + picture.file + ' did not load, so it is skipped');
+        return;
+      }
+
+      const image = result.image;
+      image.className = 'picture';
+      image.alt = '';
+      image.dataset.fit = picture.fit;
+      if (picture.crisp) image.dataset.crisp = 'on';
+      backdrop.appendChild(image);
+      pictureElements[picture.file] = image;
+      // Decoded now, not at the cut. Browsers that cannot do this just decode it when it first shows.
+      if (image.decode) image.decode().catch(() => {});
+    });
+  });
 }
 
 // What the screen is doing, as core/hidden.js wants it
@@ -221,18 +259,48 @@ async function play(choice, requestedAt, swapPage) {
   return cameBack;
 }
 
+// Takes the glitch layers away, the red one and the blue one
+function clearGlitch() {
+  redWash.hidden = true;
+  blueGlitch.hidden = true;
+  delete world.dataset.tint;
+}
+
+// Puts the next picture of the set on the backdrop in this state: 'in' (it fades
+// in) or 'on' (it is there at once). The backdrop takes the picture's own
+// background colour, so a picture that does not fill the screen has no black bars.
+// When no picture of the set can be shown, nothing changes on the backdrop.
+function showPicture(set, state) {
+  showing = null;
+  const picture = chooser.next(set, file => pictureElements[file] !== undefined);
+  if (!picture) return;
+
+  showing = pictureElements[picture.file];
+  backdrop.style.setProperty('--picture-fill', picture.fill);
+  backdrop.dataset.look = 'picture';
+  showing.dataset.state = state;
+}
+
 // The steps a transition is made of (core/hidden-transitions.js lists them)
 function makeScene(screen, swapPage) {
   let cameBackIn = 0;
 
   return {
-    // Red glitches: the old television jumps, and a flat red layer flickers
-    async glitch(seconds) {
+    // Glitches. Red (the default): the old television jumps, and a flat red layer
+    // flickers. Blue: the stage and its blocks jump about and tear, and the flat
+    // blue layers in #blue-glitch flicker. frame.css does all of that moving, and
+    // data-tint is how it knows which. Only the red uses the old television glitch.
+    async glitch(seconds, tint = 'red') {
+      const blue = tint === 'blue';
       world.style.setProperty('--glitch-seconds', String(seconds));
-      redWash.hidden = false;
-      world.dataset.hidden = 'glitch';
-      frame.playGlitch(seconds);
+      world.dataset.tint = blue ? 'blue' : 'red';
+      (blue ? blueGlitch : redWash).hidden = false;
+      if (!world.dataset.hidden) world.dataset.hidden = 'glitch'; // while the blocks are apart, the screen stays apart
+      if (!blue) frame.playGlitch(seconds);
       await sleep(seconds);
+
+      // Over the empty backdrop no break follows to fade the layers out, so this takes them away
+      if (world.dataset.hidden === 'apart') clearGlitch();
     },
 
     // The blocks fly apart and the backdrop shows behind them. When they are
@@ -245,18 +313,32 @@ function makeScene(screen, swapPage) {
 
       await sleep(flySeconds * apartAfter);
       world.dataset.hidden = 'apart';
-      redWash.hidden = true;
+      clearGlitch();
       swapPage();
       screen.apart();
     },
 
     wait: seconds => sleep(seconds),
 
-    // Changes what the backdrop shows ('eyes', 'face' or 'gone') and waits
-    show(look, seconds) {
+    // The next picture of the set fades in
+    async pictureIn(set, seconds) {
       backdrop.style.setProperty('--look-seconds', String(seconds));
-      backdrop.dataset.look = look;
-      return sleep(seconds);
+      showPicture(set, 'in');
+      await sleep(seconds);
+      if (showing) showing.dataset.state = 'on';
+    },
+
+    // The next picture of the set is there at once, in the very next frame, and stays
+    async pictureCut(set, seconds) {
+      showPicture(set, 'on');
+      await sleep(seconds);
+    },
+
+    // The picture fades out
+    async pictureOut(seconds) {
+      backdrop.style.setProperty('--look-seconds', String(seconds));
+      if (showing) showing.dataset.state = 'out';
+      await sleep(seconds);
     },
 
     // The blocks fly back together, showing the next screen
@@ -280,7 +362,10 @@ function putBack(screen) {
   backdrop.hidden = true;
   delete backdrop.dataset.look;
   backdrop.style.removeProperty('--look-seconds');
-  redWash.hidden = true;
+  backdrop.style.removeProperty('--picture-fill');
+  Object.keys(pictureElements).forEach(file => delete pictureElements[file].dataset.state);
+  showing = null;
+  clearGlitch();
   frame.stopGlitch();
   frame.setHiddenPlaying(false);
   screen.end();

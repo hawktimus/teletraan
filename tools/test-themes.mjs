@@ -34,7 +34,8 @@ const { themes } = await import(base + 'themes/registry.js');
 const { overlays } = await import(base + 'themes/overlays/registry.js');
 
 const otherTheme = themes.filter(theme => theme.id !== config.defaultThemeSettings.defaultTheme)[0].id;
-const anOverlay = overlays[0].id;
+const exampleOverlay = overlays.filter(overlay => overlay.id === 'example')[0];
+const anOverlay = exampleOverlay.id; // the placeholder overlay: colours only, no decorations
 const defaultTheme = config.defaultThemeSettings.defaultTheme;
 
 const tests = [];
@@ -64,7 +65,19 @@ test('the registries have the placeholder theme and overlay, and the default the
   assert.ok(themes.length >= 2, 'there should be a second theme');
   assert.ok(overlays.length >= 1, 'there should be an overlay');
   assert.ok(/placeholder/i.test(themes.filter(theme => theme.id === otherTheme)[0].name), 'the second theme is marked as a placeholder');
-  assert.ok(/placeholder/i.test(overlays[0].name), 'the overlay is marked as a placeholder');
+  assert.ok(/placeholder/i.test(exampleOverlay.name), 'the example overlay is marked as a placeholder');
+});
+
+test('the seven seasonal packs are listed, in order, with their final ids, and the example has no decorations', () => {
+  const packs = [
+    ['halloween', 'Halloween'], ['thanksgiving', 'Thanksgiving'], ['christmas', 'Christmas'], ['new-years', 'New Year\'s'],
+    ['valentines-day', 'Valentine\'s Day'], ['competition-day', 'Competition Day'], ['summer-break', 'Summer Break'],
+  ];
+  assert.deepEqual(overlays.slice(0, 7).map(overlay => [overlay.id, overlay.name]), packs);
+  assert.ok(overlays.slice(0, 7).every(overlay => overlay.decorations === true), 'every pack says it has decorations');
+  assert.equal(exampleOverlay.decorations, false);
+  assert.ok(overlays.every(overlay => typeof overlay.decorations === 'boolean'), 'every overlay says decorations: true or false');
+  assert.equal(new Set(overlays.map(overlay => overlay.id)).size, overlays.length, 'no id twice');
 });
 
 test('with nothing set, or nothing usable, the default theme and no overlay', () => {
@@ -482,6 +495,41 @@ test('the address can choose a theme and an overlay, and none', async () => {
   await inPage(async world => {
     await world.apply.startThemes(world.getContent, { theme: 'no-such-theme', overlay: anOverlay });
     assert.equal(world.classes(), ['overlay-' + anOverlay, 'theme-' + defaultTheme].sort().join(' '), 'an unknown theme in the address is ignored');
+  });
+});
+
+test('onLook is told each look that goes on, at boot and at each change, and a failure in it never stops the colours', async () => {
+  await inPage(async world => {
+    const told = [];
+    world.content = { theme: { useNow: useOtherNow } };
+    await world.apply.startThemes(world.getContent, null, look => told.push(look.theme + '/' + look.overlay));
+    assert.deepEqual(told, [otherTheme + '/' + anOverlay], 'told at boot');
+
+    world.content = { theme: {} };
+    world.apply.checkTheme();
+    assert.equal(told.length, 1, 'a change that is only waiting is not told yet');
+    world.apply.changeThemeNow();
+    assert.deepEqual(told, [otherTheme + '/' + anOverlay, defaultTheme + '/'], 'told in the same step as the classes');
+    assert.equal(world.classes(), 'theme-' + defaultTheme);
+  });
+
+  await inPage(async world => {
+    const real = console.error;
+    const logged = [];
+    console.error = text => logged.push(String(text));
+    try {
+      world.content = { theme: { useNow: useOtherNow } };
+      await world.apply.startThemes(world.getContent, null, () => { throw new Error('the decorations broke'); });
+    } finally {
+      console.error = real;
+    }
+    assert.equal(world.classes(), ['overlay-' + anOverlay, 'theme-' + otherTheme].sort().join(' '), 'the colours are on whatever the callback did');
+    assert.ok(logged.length === 1 && /follow the theme change/.test(logged[0]));
+  });
+
+  await inPage(async world => {
+    await world.apply.startThemes(world.getContent, null, 'not a function');
+    assert.equal(world.classes(), 'theme-' + defaultTheme, 'a callback that is not a function is ignored');
   });
 });
 

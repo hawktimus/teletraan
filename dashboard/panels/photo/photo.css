@@ -16,12 +16,12 @@
   font: 700 var(--size-heading)/96px var(--font-display);
 }
 
-/* The picture card is 28px in from the frame.
-   Its width and height are set in photo.js. */
+/* The picture card is 28px in from the frame at full size, and in the middle
+   of the panel when the Photo size setting makes it smaller. Its left, top,
+   width and height are set in photo.js (the numbers are in photoLayout, in
+   core/photos.js). */
 .photo .card {
   position: absolute;
-  left: 28px;
-  top: 142px;
 }
 
 /* The picture is cut to the same shape as the card (the points are the ones in
@@ -53,14 +53,15 @@
 }
 /* The credit sits on the lower left of the picture, on a plain plate in the
    card colour so it can be read over any photo. It stops well short of the cut
-   corner on the right. It comes before the card's outline in the markup, so the
-   metal edge is drawn over it. */
+   corner on the right: at most 700px wide, and in a smaller card at most the
+   card's width less 88px (the cut corner starts 42px from the right). It comes
+   before the card's outline in the markup, so the metal edge is drawn over it. */
 .photo .credit {
   position: absolute;
   left: 2px;
   bottom: 2px;
   box-sizing: border-box;
-  max-width: 700px;
+  max-width: min(700px, calc(100% - 88px));
   padding: 0 24px;
   overflow: hidden;
   white-space: nowrap;
@@ -78,12 +79,11 @@
 /* The caption lines up with the text of the other panels and stops at x=1056
    so it stays clear of the cut corner. It is one line: a longer one ends in
    three dots (the three dots need nowrap). Studio stops it at 36 characters,
-   which fits when the text is ordinary mixed case. */
+   which fits when the text is ordinary mixed case. Its left, top and width
+   are set in photo.js, because a smaller card moves it up and in. Its height
+   and its text size never change. */
 .photo .caption {
   position: absolute;
-  left: 52px;
-  top: 622px;
-  width: 1004px;
   height: 64px;
   overflow: hidden;
   white-space: nowrap;

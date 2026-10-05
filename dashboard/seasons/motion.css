@@ -1,0 +1,157 @@
+/* The only animation the seasonal packs have. A pack (seasons/<id>.js) names a
+   motion and says how long it takes. It never holds keyframes: they are all
+   here, so the cost of a pack is easy to judge and a motion is written once.
+   tools/check-seasons.mjs fails if a keyframe is anywhere else.
+
+   Only transform, opacity and stroke-dashoffset (line drawing) are animated. No
+   blur, no glow, no shadow, no gradient and no 3D. Every rule that plays a
+   motion starts with html[data-motion="full"], so calm and none motion play
+   nothing at all and every piece rests where its x and y put it.
+
+   A motion is measured from the piece's resting place, the x and y written in the
+   pack. That place is the middle of a path, or the pose the piece comes back to.
+   core/season.js sets three variables on a piece:
+     --seconds  how long one round takes, before the Speed setting
+     --delay    seconds to wait before the first round. A negative number starts
+                part of the way in, so the pieces of a pack are not in step
+     --travel   how far it goes, in pixels, for the motions that travel
+
+   The motions, with the --travel each has when a piece does not set one:
+     fall     drops by --travel (1200px), turning a little, fading in at the top and out at the bottom
+     sway     swings left and right, up to 8 degrees, about its top edge, like something hanging
+     drift    crosses sideways by --travel (1920px), fading in at one end and out at the other
+     rise     floats up by --travel (600px), fading in at the bottom and out at the top
+     twinkle  fades down to a quarter of its strength and back (opacity only)
+     bob      moves up and down by --travel (6px) and back
+     spin     turns once round its middle
+     pulse    swells to 1.2 times its size and back
+     draw     draws its lines, holds, then wipes them away (the lines need pathLength="1" and stroke-dasharray="1")
+     sweep    makes one quick pass across by --travel (600px), then rests out of sight for the rest of the round
+     slide    comes in from the left by --travel (200px), stays, then leaves to the right
+
+   To add a motion: write its keyframes below, give it a rule in "One rule for
+   each motion", add its name to motions in core/season.js, and add its line to
+   this list. */
+
+
+@keyframes season-fall {
+  0%   { transform: translate(0, calc(var(--travel, 1200px) * -.5)) rotate(-25deg); opacity: 0; }
+  8%   { opacity: 1; }
+  92%  { opacity: 1; }
+  100% { transform: translate(0, calc(var(--travel, 1200px) * .5)) rotate(25deg); opacity: 0; }
+}
+
+@keyframes season-sway {
+  0%, 100% { transform: rotate(-8deg); }
+  50%      { transform: rotate(8deg); }
+}
+
+@keyframes season-drift {
+  0%   { transform: translateX(calc(var(--travel, 1920px) * -.5)); opacity: 0; }
+  4%   { opacity: 1; }
+  96%  { opacity: 1; }
+  100% { transform: translateX(calc(var(--travel, 1920px) * .5)); opacity: 0; }
+}
+
+@keyframes season-rise {
+  0%   { transform: translateY(calc(var(--travel, 600px) * .5)); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateY(calc(var(--travel, 600px) * -.5)); opacity: 0; }
+}
+
+@keyframes season-twinkle {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: .25; }
+}
+
+@keyframes season-bob {
+  0%, 100% { transform: translateY(calc(var(--travel, 6px) * -.5)); }
+  50%      { transform: translateY(calc(var(--travel, 6px) * .5)); }
+}
+
+@keyframes season-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes season-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.2); }
+}
+
+/* A line is drawn by sliding its dash. At rest the offset is 0, so a still
+   picture shows the whole line. */
+@keyframes season-draw {
+  0%   { stroke-dashoffset: 1; }
+  35%  { stroke-dashoffset: 0; }
+  70%  { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -1; }
+}
+
+@keyframes season-sweep {
+  0%   { transform: translateX(calc(var(--travel, 600px) * -.5)); opacity: 0; }
+  4%   { opacity: 1; }
+  30%  { transform: translateX(calc(var(--travel, 600px) * .5)); opacity: 1; }
+  34%  { transform: translateX(calc(var(--travel, 600px) * .5)); opacity: 0; }
+  100% { transform: translateX(calc(var(--travel, 600px) * .5)); opacity: 0; }
+}
+
+@keyframes season-slide {
+  0%   { transform: translateX(calc(var(--travel, 200px) * -1)); opacity: 0; }
+  12%  { transform: translateX(0); opacity: 1; }
+  88%  { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(var(--travel, 200px)); opacity: 0; }
+}
+
+/* The front layer fades with the blocks of a hidden transition (see "Hidden
+   transitions" in frame.css) */
+@keyframes season-out { to   { opacity: 0; } }
+@keyframes season-in  { from { opacity: 0; } }
+
+
+/* One rule for each motion. The first sets what they share: the length of a
+   round and the wait come from the piece, and the Speed setting (--pace) makes
+   both longer or shorter. Rounds go on for ever. "both" keeps a piece in its
+   first pose while it waits. */
+
+html[data-motion="full"] .season-piece[data-move] {
+  animation-duration: calc(var(--seconds, 10) * 1s * var(--pace, 1));
+  animation-delay: calc(var(--delay, 0) * 1s * var(--pace, 1));
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+  animation-timing-function: ease-in-out;
+}
+
+html[data-motion="full"] .season-piece[data-move="fall"]    { animation-name: season-fall; animation-timing-function: linear; }
+html[data-motion="full"] .season-piece[data-move="sway"]    { animation-name: season-sway; transform-origin: 50% 0; }
+html[data-motion="full"] .season-piece[data-move="drift"]   { animation-name: season-drift; animation-timing-function: linear; }
+html[data-motion="full"] .season-piece[data-move="rise"]    { animation-name: season-rise; animation-timing-function: linear; }
+html[data-motion="full"] .season-piece[data-move="twinkle"] { animation-name: season-twinkle; }
+html[data-motion="full"] .season-piece[data-move="bob"]     { animation-name: season-bob; }
+html[data-motion="full"] .season-piece[data-move="spin"]    { animation-name: season-spin; animation-timing-function: linear; }
+html[data-motion="full"] .season-piece[data-move="pulse"]   { animation-name: season-pulse; }
+html[data-motion="full"] .season-piece[data-move="draw"]    { animation-name: season-draw; animation-timing-function: linear; }
+html[data-motion="full"] .season-piece[data-move="sweep"]   { animation-name: season-sweep; }
+html[data-motion="full"] .season-piece[data-move="slide"]   { animation-name: season-slide; }
+
+
+/* While the night screen covers the picture nothing behind it is worth playing */
+html[data-night] .season-piece { animation-play-state: paused; }
+
+/* A hidden transition (core/hidden-run.js). The back layer is under #backdrop,
+   so the backdrop covers it and nothing is needed. The front layer is over the
+   stage, so it fades out as the blocks fly apart, stays out of sight while the
+   screen is apart or shows something else, and fades back in as the blocks come
+   home. During the red glitches it stays as it is. */
+html[data-motion="full"] #world[data-hidden]:not([data-hidden="glitch"]) .season-front {
+  visibility: hidden;
+}
+html[data-motion="full"] #world[data-hidden="break"] .season-front {
+  visibility: visible;
+  animation: season-out calc(var(--time-hidden) * .3) linear both;
+}
+html[data-motion="full"] #world[data-hidden="build"] .season-front {
+  visibility: visible;
+  animation: season-in calc(var(--time-hidden) * .4) linear calc(var(--time-hidden) * .6) both;
+}

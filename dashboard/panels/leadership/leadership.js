@@ -23,7 +23,8 @@ export function hasContent(content) {
 export function mount(host, content) {
   const turn = nextPage(leadershipPages(content.people));
   const people = turn.items[0] || [];
-  const slots = people.map(personSlot).join('');
+  const scale = content.settings && content.settings.portraitScale;
+  const slots = people.map(person => personSlot(person, scale)).join('');
 
   host.innerHTML = `
     <section class="page leadership">
@@ -42,13 +43,15 @@ export function mount(host, content) {
   preloadPhotos(turn.upcoming[0] || []);
 }
 
-// What is written under the name is the typed title, or the role if there is none
-function personSlot(person) {
+// What is written under the name is the typed title, or the role if there is none.
+// scale is the Portrait size setting, a percent.
+function personSlot(person, scale) {
   const role = String(person.role || '').trim().toLowerCase();
   return slotMarkup({
     name: person.name,
     role: String(person.title || person.role || '').toUpperCase(),
     address: photoAddress(person),
     metal: roleMetals[role],
+    scale: scale,
   });
 }

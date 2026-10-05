@@ -1,0 +1,46 @@
+/* Where the seasonal layers sit and how a piece is laid out. Nothing here
+   moves: every motion is in motion.css. core/season.js writes the layers into
+   #world (see the top of that file for where), and writes each piece's place
+   and size into its own style attribute.
+
+   Both layers are as big as the screen and let every click through. The front
+   layer is made of zones, and each zone is a fixed rectangle that clips what is
+   inside it, so a piece can never leave its zone and cross text. The browser
+   lifts a piece onto a layer of its own while its animation runs, so nothing
+   here asks for that. contain: strict tells it a layer or zone cannot change
+   the size or the look of anything outside it. */
+
+.season-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  contain: strict;
+  pointer-events: none;
+}
+
+/* The shapes are drawn here once and every piece points at them. It takes no room. */
+.season-defs {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+}
+
+.season-zone {
+  position: absolute;
+  overflow: hidden;
+  contain: strict;
+}
+
+.season-piece { position: absolute; }
+.season-piece svg,
+.season-scene { display: block; }
+.season-scene {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
