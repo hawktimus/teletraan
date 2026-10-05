@@ -37,14 +37,25 @@ const idColumns = {
   sponsor: ['name'],
   tipOrNews: ['text'],
   subteam: ['name'],
+  place: ['name'],
   person: ['role', 'name'],
   customPanel: ['title'],
+};
+
+// Columns that were added to a template after people had started filling it
+// in. They stay at the end, whatever their place in the schema, so a sheet made
+// from the older template still lines up with the new one.
+const lastColumns = {
+  task: ['contact', 'location'],
 };
 
 // Made-up values for the EXAMPLE row. Words in [square brackets] are marked
 // placeholders, as in the sample content. A column with no value here is empty.
 const examples = {
-  task: { title: '[Task name]', subteam: '[Subteam A]', status: 'in-progress', order: '1', show: 'yes', expires: '2027-03-01 18:00' },
+  task: {
+    title: '[Task name]', subteam: '[Subteam A]', status: 'in-progress', order: '1', show: 'yes', expires: '2027-03-01 18:00',
+    contact: '[First name]', location: '[Place name]',
+  },
   plan: {
     heading: '[Plan heading]', date: '2027-01-12', location: '[Room or place]',
     'rows.1.time': '[6:00 PM]', 'rows.1.text': '[First thing]', 'rows.1.lead': '[Lead]',
@@ -61,6 +72,7 @@ const examples = {
     name: '[Subteam A]', lead: '[Lead name]', members: '[Student A] | [Student B]', spotlight: 'yes', spotlightHeadline: '[What the subteam did]',
     spotlightText: "[Two or three short sentences about the subteam's work.]", order: '1', show: 'yes',
   },
+  place: { name: '[Place name]', show: 'yes' },
   person: { role: 'Captain', name: '[Person name]', showPhoto: 'yes', order: '1', show: 'yes' },
   customPanel: {
     title: '[Title]',
@@ -190,6 +202,13 @@ function columnsFor(type, typesByName) {
     const isGroup = field.type === 'array' && field.of[0].type !== 'string';
     if (isGroup) groupColumns(field, typesByName).forEach(column => columns.push(column));
     else columns.push({ name: field.name, rules: plain(rulesFor(field)) });
+  });
+
+  (lastColumns[type.name] || []).forEach(name => {
+    const column = columns.filter(item => item.name === name)[0];
+    if (!column) throw new Error(type.name + ': lastColumns names ' + name + ', which is not a column');
+    columns.splice(columns.indexOf(column), 1);
+    columns.push(column);
   });
 
   if (!idColumns[type.name]) throw new Error('Add ' + type.name + ' to idColumns in make-templates.mjs: it says which columns name a row.');

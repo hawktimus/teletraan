@@ -22,7 +22,7 @@ function test(name, run) {
   tests.push({ name: name, run: run });
 }
 
-const knownTypes = ['task', 'plan', 'extraEvent', 'sponsor', 'tipOrNews', 'subteam', 'person', 'customPanel'];
+const knownTypes = ['task', 'plan', 'extraEvent', 'sponsor', 'tipOrNews', 'subteam', 'place', 'person', 'customPanel'];
 const { types, singletons } = await loadSchemas();
 const templates = makeTemplates(types, singletons);
 
@@ -96,11 +96,18 @@ test('row 1 names the columns, row 2 gives the type and the limits, row 3 is the
     assert.equal(rows[2][0], 'EXAMPLE', type);
   });
   const task = rowsOf(templates.task);
-  assert.deepEqual(task[0], ['example', 'title', 'subteam', 'status', 'finishedOn', 'order', 'show', 'expires']);
+  // contact and location were added later, so they are the last two columns
+  assert.deepEqual(task[0], ['example', 'title', 'subteam', 'status', 'finishedOn', 'order', 'show', 'expires', 'contact', 'location']);
   assert.equal(task[1][1], 'text; required; max 22; id 1');
   assert.equal(task[1][2], 'name of subteam');
   assert.equal(task[1][3], 'one of blocked/in-progress/up-next/done; required');
   assert.equal(task[1][5], 'whole number');
+  assert.equal(task[1][8], 'text; max 12');
+  assert.equal(task[1][9], 'name of place');
+
+  const place = rowsOf(templates.place);
+  assert.deepEqual(place[0], ['example', 'name', 'show']);
+  assert.equal(place[1][1], 'text; required; max 16; id 1');
 });
 
 test('plan rows and custom panel blocks are numbered groups, as many as the schema allows', () => {
@@ -129,6 +136,8 @@ test('the sample rows make a document each when the EXAMPLE mark is taken off', 
   assert.equal(task.expires, new Date('2027-03-01T18:00').toISOString());
   assert.equal(task.show, true);
   assert.equal(task.order, 1);
+  assert.equal(task.contact, '[First name]');
+  assert.deepEqual(task.location, { _type: 'reference', _ref: 'place-place-name' });
 });
 
 test('the limits in row 2 are kept: every text column takes its limit and refuses one more', () => {
@@ -145,7 +154,7 @@ test('the limits in row 2 are kept: every text column takes its limit and refuse
       if (!limit || !groupUsed) return;
       const fits = csvFor(type, [Object.assign({}, example, { [name]: 'x'.repeat(Number(limit[2])) })]);
       const tooLong = csvFor(type, [Object.assign({}, example, { [name]: 'x'.repeat(Number(limit[2]) + 1) })]);
-      const other = type === 'task' ? { 'subteam.csv': csvFor('subteam', [{ name: '[Subteam A]', show: 'yes' }]) } : {};
+      const other = type === 'task' ? { 'subteam.csv': csvFor('subteam', [{ name: '[Subteam A]', show: 'yes' }]), 'place.csv': csvFor('place', [{ name: '[Place name]', show: 'yes' }]) } : {};
 
       assert.equal(runImporter(Object.assign({ [type + '.csv']: fits }, other)).status, 0, type + '.' + name + ' at its limit');
       const refused = runImporter(Object.assign({ [type + '.csv']: tooLong }, other));
@@ -292,6 +301,63 @@ test('a name that points at nothing, and two rows with one id, are refused', () 
   assert.ok(runImporter({ 'task.csv': 'a,b\n1,2\n' }).message.includes('row 2 should start with the type'));
 });
 
+test('a task points at a place by name, capitals ignored: the starting places are known, and so is a place CSV', () => {
+  const seeded = runImporter({ 'task.csv': csvFor('task', [{ title: 'Build a frame', status: 'up-next', contact: 'Sam', location: 'programming ROOM' }]) });
+  assert.equal(seeded.status, 0, seeded.message);
+  assert.equal(seeded.docs[0].contact, 'Sam');
+  assert.deepEqual(seeded.docs[0].location, { _type: 'reference', _ref: 'place-programming-room' });
+
+  // the ids in the seed file are the ones the importer makes from the names
+  const seedLines = fs.readFileSync(path.join(root, 'docs', 'seed', 'places.ndjson'), 'utf8').trim().split('\n').map(line => JSON.parse(line));
+  assert.deepEqual(seedLines.map(place => place.name), ['Classroom', 'Programming room', 'Media center']);
+  seedLines.forEach(place => {
+    const found = runImporter({ 'task.csv': csvFor('task', [{ title: 'A', status: 'up-next', location: place.name.toUpperCase() }]) });
+    assert.equal(found.status, 0, found.message);
+    assert.equal(found.docs[0].location._ref, place._id);
+  });
+
+  const made = runImporter({
+    'place.csv': csvFor('place', [{ name: 'Machine shop', show: 'yes' }, { name: 'Hallway' }]),
+    'task.csv': csvFor('task', [{ title: 'Drill', status: 'in-progress', location: 'machine SHOP' }, { title: 'Sweep', status: 'up-next', location: 'Classroom' }]),
+  });
+  assert.equal(made.status, 0, made.message);
+  assert.deepEqual(made.docs.filter(doc => doc._type === 'place').map(doc => doc._id), ['place-machine-shop', 'place-hallway']);
+  assert.deepEqual(made.docs.filter(doc => doc._type === 'task').map(doc => doc.location._ref), ['place-machine-shop', 'place-classroom']);
+
+  // a task with no contact and no location makes a document with neither
+  const plain = runImporter({ 'task.csv': csvFor('task', [{ title: 'Plain', status: 'up-next' }]) });
+  assert.equal('contact' in plain.docs[0] || 'location' in plain.docs[0], false);
+});
+
+test('a place the script does not know is refused and the row is named', () => {
+  const result = runImporter({ 'task.csv': csvFor('task', [{ title: 'Fine', status: 'up-next', location: 'Classroom' }, { title: 'Lost', status: 'up-next', location: 'The gym' }]) });
+  assert.equal(result.status, 1);
+  assert.equal(result.docs, null);
+  assert.ok(result.message.includes('task.csv, row 4, column location: "The gym" is not a place the script knows (Classroom, Programming room, Media center)'), result.message);
+  assert.ok(!result.message.includes('row 3'), result.message);
+
+  // a contact over 12 characters is refused too
+  const long = runImporter({ 'task.csv': csvFor('task', [{ title: 'A', status: 'up-next', contact: 'x'.repeat(13) }]) });
+  assert.ok(long.message.includes('task.csv, row 3, column contact: 13 characters, up to 12 fit'), long.message);
+});
+
+test('a task CSV made before contact and location existed still imports', () => {
+  // the template as it was, with its eight columns and no contact or location
+  const old = [
+    'example,title,subteam,status,finishedOn,order,show,expires',
+    'type task,text; required; max 22; id 1,name of subteam,one of blocked/in-progress/up-next/done; required,datetime,whole number,yes/no; default yes,datetime',
+    'EXAMPLE,[Task name],[Subteam A],in-progress,,1,yes,2027-03-01 18:00',
+    ',Wire the robot,Alpha,in-progress,,2,yes,',
+    ',Paint the sign,,up-next,,,,',
+  ].join('\n') + '\n';
+  const result = runImporter({ 'subteam.csv': csvFor('subteam', [subteamRow]), 'task.csv': old });
+  assert.equal(result.status, 0, result.message);
+  assert.deepEqual(result.docs.map(doc => doc._id), ['subteam-alpha', 'task-wire-the-robot', 'task-paint-the-sign']);
+  assert.equal(result.docs[1].subteam._ref, 'subteam-alpha');
+  assert.equal(result.docs[2].show, true);
+  assert.equal(result.docs.some(doc => 'contact' in doc || 'location' in doc), false);
+});
+
 test('quotes, commas, new lines, a byte order mark and Windows line ends are read correctly', () => {
   const awkward = 'Say "hi", then\nleave';
   const sponsor = { name: 'Smith, "Jo" & Co', tier: '', blurb: awkward, show: 'yes' };
@@ -312,9 +378,9 @@ test('quotes, commas, new lines, a byte order mark and Windows line ends are rea
   assert.equal(emptyQuoted.status, 0, emptyQuoted.message);
 });
 
-test('the importer is under 120 lines and uses only what node has', () => {
+test('the importer is under 140 lines and uses only what node has', () => {
   const source = fs.readFileSync(importerFile, 'utf8');
-  assert.ok(source.trim().split('\n').length < 120, 'import-csv.mjs has ' + source.trim().split('\n').length + ' lines');
+  assert.ok(source.trim().split('\n').length < 140, 'import-csv.mjs has ' + source.trim().split('\n').length + ' lines');
   const imports = source.match(/^import .* from '.*';$/gm);
   assert.ok(imports.every(line => line.includes("'node:")), imports.join('\n'));
 });

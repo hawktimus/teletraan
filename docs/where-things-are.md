@@ -83,11 +83,12 @@ editors can sign in from anywhere.
                               decides sample or production content from Dashboard Settings,
                               images.js builds the addresses of photos from Sanity, photos.js says
                               which photos the Photo panel shows and in what order, portrait.js
-                              draws a person's framed portrait with the name under it, roster.js
+                              draws a person's framed portrait with the name under it, leadership.js
+                              makes the pages of the Leadership panel, one role to a page, roster.js
                               makes the pages of the Subteam roster panel, theme.js
                               works out which theme and overlay apply, theme-apply.js puts them on the page,
                               transitions.js chooses the style and the metal of the next page change,
-                              events.js merges the BAND events with the Extra events from Studio,
+                              events.js merges the BAND events with the Events Calendar entries from Studio,
                               connection.js decides why Sanity could not be read and writes the
                               connection status text at the bottom right, device.js reads the Mini's
                               name and addresses (data/live/device.json) for the red version of it
@@ -96,6 +97,9 @@ editors can sign in from anywhere.
                               demo.js decides when a demo from the Studio's Demo page plays and runs its
                               steps, demo-screens.js lists the screens a demo can show, and
                               demo-runner.js starts it (docs/demo.md),
+                              announce.js decides when the Play announcements button plays every
+                              announcement that is switched on, and announce-run.js starts it
+                              (docs/hidden-transitions.md),
                               hidden.js decides when a hidden transition replaces a page change,
                               hidden-transitions.js lists them, hidden-run.js plays them and
                               hidden-art.js draws their wallpaper and face (docs/hidden-transitions.md),
@@ -106,11 +110,14 @@ editors can sign in from anywhere.
       fonts/, assets/         fonts and pictures, all served from here
       data/sample/            sample content with marked placeholders
       data/live/              files the Mini downloads (never committed)
-    studio/                   the Sanity editing screen, its buttons (actions.js: the two content source
-                              buttons, the Play buttons of the hidden transitions, and Run demo and Stop demo),
+    studio/                   the Sanity editing screen, its sidebar (structure.js: one list with a line
+                              for each entry, so changing the order means moving a line,
+                              docs/reordering-the-sidebar.md), its buttons (actions.js: the two content source
+                              buttons, the Play buttons of the hidden transitions, Play announcements, and Run demo and Stop demo),
                               its copy of the theme lists (themes.js), its copy of the demo screens
                               (demo-screens.js), its copy of the hidden transitions (hidden-transitions.js),
-                              and check-schemas.mjs.
+                              the Publish all tool in the top bar (publish-all-tool.js is the page and
+                              publish-all.js is its logic, docs/publish-all.md), and check-schemas.mjs.
                               scripts/ has make-templates.mjs, which writes the CSV templates from the
                               schemas, and import-csv.mjs, which checks filled-in CSVs and makes a file
                               for sanity dataset import (docs/importing-from-csv.md)
@@ -123,7 +130,7 @@ editors can sign in from anywhere.
       test-weather.mjs        checks for the weather reader and its pictures
       test-content.mjs        checks for the code that reads the editors' content, the photo
                               addresses, which photos show and in what order, the pages of
-                              portraits and of the subteam roster, the subteam members, the merging of events and the
+                              portraits, of the Leadership panel and of the subteam roster, the subteam members, the merging of events and the
                               lines of the Mini's address, and the reasons and the lines of the
                               connection status text
       test-themes.mjs         checks for which theme and overlay apply, and for putting them on the page
@@ -135,6 +142,8 @@ editors can sign in from anywhere.
                               transition plays (core/hidden.js) and what its stylesheet moves
       test-tick.mjs           checks for the clock of the screen (tick.js) with a fake clock, and that the
                               countdown and the banner write only what changed each second
+      test-publish-all.mjs    checks for the logic of the Publish all tool: which drafts are listed, the
+                              transaction for each, the order, the skipped reasons and the summary
       test-templates.mjs      checks that the CSV templates match the schemas, and the CSV importer
       test-connection-script.mjs  checks for deploy/scripts/check-connection.sh, with fake tools
       check-themes.mjs        fails if a theme or overlay is missing a variable or has text that is
@@ -150,9 +159,11 @@ editors can sign in from anywhere.
     docs/                     how-to guides: editing-content.md, adding-a-field.md, adding-a-panel.md,
                               adding-a-theme.md, adding-a-holiday-overlay.md, rebuilding-the-mini.md,
                               try-it-on-the-mini.md, the-logo.md, page-transitions.md, night-mode.md,
-                              hidden-transitions.md, demo.md and importing-from-csv.md.
-                              seed/ has content to import into the Studio: extra-events.ndjson, the
-                              starting Extra events. content-templates/ has one CSV template for each
+                              hidden-transitions.md, demo.md, publish-all.md, reordering-the-sidebar.md
+                              and importing-from-csv.md.
+                              seed/ has content to import into the Studio: places.ndjson, the three
+                              starting places, and extra-events.ndjson, the
+                              starting Events Calendar entries. content-templates/ has one CSV template for each
                               kind of content (importing-from-csv.md)
 
 ## Changing things
@@ -218,6 +229,13 @@ alone.
   `dashboard/core/hidden-transitions.js`. A new transition is one entry in each, plus a chance
   field. `core/hidden.js` decides, `core/hidden-run.js` plays, and `frame.css` ("Hidden
   transitions") moves the five blocks. Try one with `?hidden=desktop` or `?hidden=redEyes`.
+- **Play announcements.** A button in the menu beside Publish on Dashboard Settings
+  (docs/hidden-transitions.md) that plays every announcement that is switched on, once, whatever
+  its time and days. It writes the hidden `announceRequest` field (`announceRequestField` in
+  `studio/schemas/settingsAnnouncements.js`, the button is `usePlayAnnouncementsAction` in
+  `studio/actions.js`). The starting value is `announceRequest` in `defaultSettings` in
+  `dashboard/config.js`. `core/announce.js` decides and `core/announce-run.js` plays it. A Demo step
+  can use it too: All announcements in `demoScreens`.
 - **The demo.** The Demo page in Studio (docs/demo.md): Run demo and Stop demo
   in its menu, the Steps, and the Demo announcement text. The starting values
   are `defaultDemo` in `dashboard/config.js` and their copy in
@@ -274,6 +292,12 @@ alone.
   for a person with no photo is drawn once in `dashboard/index.html`, and its
   four colours are the `--silhouette-` variables in `dashboard/tokens.css`.
   Three portraits fit on a page, set by `slotsPerPage` in `core/portrait.js`.
+  `core/leadership.js` builds the pages of the Leadership panel from it: one
+  role to a page (coaches, captains, mentors), and a role with more than three
+  people is shared out evenly, so 4 are 2 and 2. A shorter page keeps the same
+  portrait size and sits in the middle of the row (the section People
+  portraits in `dashboard/base.css`). The portrait is 292 pixels square with the
+  280 pixel photo 6 pixels in from the edge (`portraitSize` in `core/portrait.js`).
   The starting value of the switch is `defaultPerson.showPhoto` in
   `dashboard/config.js` and its copy in `studio/schemas/person.js`.
 - **Subteam members.** The Members list of a subteam in Studio
@@ -283,7 +307,7 @@ alone.
   `core/roster.js` makes the pages of the Subteam roster panel, 16 names to a
   page, and the panel is in `panels/roster/`. Its two columns are 344px wide in
   `roster.css`, which holds a name of 12 characters at 56px.
-- **Events that are not on BAND.** Extra events in Studio
+- **Events that are not on BAND.** Events Calendar in Studio
   (`studio/schemas/extraEvent.js`), described in docs/editing-content.md. The
   screen reads them with the rest of the content (`extraEvents` in
   `core/sanity.js`). `core/events.js` joins them to the BAND events: it sorts
@@ -291,8 +315,10 @@ alone.
   the Theme page, and keeps only the BAND one when both have the same date and
   one title contains the other. `shell.js` merges again when the content
   changes and once a minute. The Events panel and the Next event tile only draw
-  the list. An event with no start time is all-day and shows its date and no
-  time. The starting seven are in `docs/seed/extra-events.ndjson`, and the
+  the list. Both write the date with `eventDate()` in `core/events.js`, in the
+  Time zone on the Theme page: the month with the day (`APR 2`), the weekday
+  where the panel shows one, and a range as `APR 2-4` or `MAR 30-APR 1`. An
+  event with no start time is all-day and shows its date and no time. The starting seven are in `docs/seed/extra-events.ndjson`, and the
   command to import them is in docs/editing-content.md. The sample content has
   three of its own.
 - **Where the weather is taken from.** `location` in `dashboard/config.js`
@@ -335,6 +361,22 @@ alone.
   plates are flat purple and the metal is on the edges only. The metal is made
   from the colours in `dashboard/tokens.css`, so change those to restyle it.
   The other colours are the theme's: `dashboard/themes/hawktimus.css`.
+- **A task's contact and location.** Two optional fields of a task in Studio
+  (`studio/schemas/task.js`). The contact is a first name of up to 12
+  characters. The location is a reference to a place (`studio/schemas/place.js`:
+  a name of up to 16 characters that no other place has, capitals ignored, and
+  a show switch). The query in `core/sanity.js` follows the reference
+  (`location->name`) and asks whether the place is showing, and `normalizeTask`
+  in the same file turns a hidden, deleted or nameless place into no location.
+  The task stays on the screen. The Tasks panel (`panels/tasks/`) draws a task
+  with a contact or a location on two lines, so a row of two lines holds one
+  such task or two plain tasks, and a page is three rows. When there are more
+  rows it shows the next page each time it comes round (`makePages` in
+  `core/turns.js`). A Done task shows only its name. The starting places are in
+  `docs/seed/places.ndjson`, and the command to import them is in
+  docs/editing-content.md. In the CSV templates `contact` and `location` are
+  the last two columns of task.csv, and the importer knows the starting places
+  (docs/importing-from-csv.md).
 - **A new field on something editors fill in.** See docs/adding-a-field.md.
 - **Many items at once from a spreadsheet.** See docs/importing-from-csv.md.
   The CSV templates in `docs/content-templates/` are written from the schemas
@@ -354,6 +396,7 @@ version as the Studio (22.12 or newer), and nothing else installed.
     node tools/test-tick.mjs
     node tools/test-night.mjs
     node tools/test-templates.mjs
+    node tools/test-publish-all.mjs
     node tools/test-connection-script.mjs
     node tools/check-themes.mjs
     node studio/check-schemas.mjs

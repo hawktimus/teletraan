@@ -44,9 +44,9 @@ builds the address the screen asks for. A new picture field would be done the
 same way. A Photo document (the Photos list) is tidied in `normalizePhoto` in
 dashboard/core/sanity.js, which copies only the fields it knows, so a new field
 on a photo must be added to its part of `contentQuery` and to `normalizePhoto`.
-An Extra event is tidied in `tidyExtraEvent` in dashboard/core/events.js, which
-copies only the fields it knows, so a new field on an Extra event must be added
-there as well.
+An Events Calendar entry (type `extraEvent`) is tidied in `tidyExtraEvent` in
+dashboard/core/events.js, which copies only the fields it knows, so a new field
+on one must be added there as well.
 
 ## 3. The panel
 
@@ -85,6 +85,10 @@ the script stops and names the missing one. A new kind of content also needs a
 line in `idColumns` there. Run `node tools/test-templates.mjs` from the top
 folder. It fails if the templates are out of date. docs/importing-from-csv.md
 explains the templates.
+
+A new kind of content (a new file in `studio/schemas/`) also needs a line in
+the sidebar, in `studio/structure.js`. `node check-schemas.mjs` fails until it
+has one. See docs/reordering-the-sidebar.md.
 
 ## Where defaults live
 
@@ -171,10 +175,12 @@ status called `review`, change all of these:
    nothing changes there. Add a task with the new status to
    dashboard/data/sample/content.json so you can see it.
 
-The order of `groups` matters. The panel has room for three groups, each with
-up to 2 tasks. When more than three statuses have tasks, the last ones in
-`groups` are left out. That is why Blocked is first and Done is last. A new
-status that must always show belongs near the top of the list.
+The order of `groups` matters. A page of the panel is three rows, a row holds
+the tasks of one status, and a status with many tasks takes several rows. The
+rows are shared out over pages that the panel shows one after another, so the
+order of `groups` is the order on the pages. That is why Blocked is first, so a
+blocked task is always on the first page, and Done is last. A new status that
+must be on the first page belongs near the top of the list.
 
 ## Going live
 

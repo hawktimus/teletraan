@@ -53,6 +53,12 @@ let nightIsUp = () => false;
 
 class Stopped extends Error {}
 
+// True while a hidden transition plays. The announcements the Studio pushes
+// (core/announce-run.js) ask, so they wait for it to be over.
+export function hiddenPlaying() {
+  return playing;
+}
+
 // Even asking for localStorage can throw, for example when the browser has storage switched off
 function savedStorage() {
   try {

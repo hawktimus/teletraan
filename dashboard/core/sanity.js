@@ -12,13 +12,16 @@ import { classifyFailure } from './connection.js';
 // Sanity leaves out a list the editors have emptied, which would bring the
 // default list back, so coalesce hands over an empty list instead. A Done
 // task with no Finished on date counts as finished when it was last edited.
+// A task's location is the name of the place it points to. The query also asks
+// whether that place is showing, and normalizeTask turns a hidden, deleted or
+// nameless place into no location at all. The task itself stays.
 // The Theme document is read with the rest. Its empty schedule and its
 // missing fields are the defaults, so nothing special is needed (core/theme.js).
 // The Demo document is read with the rest too, and its changes come through the
 // same live stream, so a click on Run demo reaches the screen within seconds.
 // No Demo document means no demo (core/demo.js).
-// Extra events that are switched off are left out here. A missing switch means
-// on. The events are tidied and merged with the BAND ones in core/events.js.
+// Events Calendar entries that are switched off are left out here. A missing
+// switch means on. The events are tidied and merged with the BAND ones in core/events.js.
 // A person's photo is sent as a plain address with its size, crop and hotspot
 // (images.js builds the address the screen asks for). The photo's own record
 // has names that start with an underscore, which normalizeContent drops.
@@ -37,6 +40,8 @@ export const contentQuery = `{
   "tasks": *[_type == "task"] | order(_createdAt asc) {
     ...,
     "subteam": subteam->name,
+    "location": location->name,
+    "locationShown": location->show != false,
     "finishedOn": coalesce(finishedOn, _updatedAt)
   },
   "sponsors": *[_type == "sponsor"] | order(_createdAt asc),
@@ -196,7 +201,7 @@ export function normalizeContent(result, now = new Date()) {
     settings: settings,
     theme: data.theme,
     demo: data.demo,
-    tasks: itemsFrom(data.tasks),
+    tasks: itemsFrom(data.tasks).map(normalizeTask),
     plan: firstShowingPlan(data.plans, now),
     sponsors: itemsFrom(data.sponsors),
     tipsAndNews: itemsFrom(data.tipsAndNews),
@@ -221,6 +226,7 @@ export function normalizeSample(raw) {
   ['tasks', 'sponsors', 'tipsAndNews', 'subteams', 'people', 'extraEvents', 'customPanels'].forEach(name => {
     content[name] = itemsFrom(data[name]);
   });
+  content.tasks = content.tasks.map(normalizeTask);
   content.subteams = content.subteams.map(normalizeSubteam);
   content.people = content.people.map(normalizePerson);
   content.photos = itemsFrom(data.photos).filter(photo => typeof photo.address === 'string');
@@ -299,6 +305,23 @@ function withRows(plan) {
 function firstShowingPlan(plans, now) {
   const plan = visibleItems(itemsFrom(plans), now).find(item => isForToday(item, now));
   return plan ? withRows(plan) : null;
+}
+
+// A task's contact (a first name) and location (a place's name) are plain text
+// or not there at all. The location goes when its place is hidden, deleted or
+// has no name, and the flag the query adds is not kept. Nothing else about the
+// task changes, so a hidden place never hides a task.
+function normalizeTask(raw) {
+  const task = Object.assign({}, raw);
+  const placeHidden = task.locationShown === false;
+  delete task.locationShown;
+
+  ['contact', 'location'].forEach(name => {
+    const text = typeof task[name] === 'string' ? task[name].trim() : '';
+    if (text === '' || (name === 'location' && placeHidden)) delete task[name];
+    else task[name] = text;
+  });
+  return task;
 }
 
 // A person with no photo, or one that cannot be used, has no photo at all.

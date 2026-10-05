@@ -13,44 +13,50 @@ For everyone who changes what is on the TV. No programming is needed.
 Studio saves what you type as a draft. The TV does not show a draft. When you
 are done, click Publish. The TV changes within a few seconds.
 
+To publish several drafts at once, use Publish all in the top bar. It lists
+every draft, checks each one you tick the way the Publish button does, and
+publishes the ones that pass. See docs/publish-all.md.
+
 If the TV loses its internet connection, it keeps showing the last content it
 received.
 
 ## The sidebar
 
-- Tasks: what the team is working on. Each task has a name, a subteam and a
-  status (Blocked, In progress, Up next or Done). When you set a task to Done,
-  fill in "Finished on". If you leave it empty, the time you last edited the
-  task counts as the finish time. The task leaves the screen after the number
-  of days set in Dashboard Settings. The Tasks panel shows at most 2 tasks for
-  each status and at most 3 statuses, in the order Blocked, In progress, Up
-  next, Done. Done tasks only show when one of the other three statuses has no
-  tasks. The Open Tasks panel counts every open task, even one that the Tasks
-  panel has no room for.
+- Tasks: what the team is working on. Each task has a name, a subteam, an
+  optional point of contact, an optional location and a status (Blocked, In
+  progress, Up next or Done). The point of contact is a first name, up to 12
+  characters, with no last name. The location is a place picked from the list
+  of Places (see "Places" below). When you set a task to Done, fill in
+  "Finished on". If you leave it empty, the time you last edited the task
+  counts as the finish time. The task leaves the screen after the number of
+  days set in Dashboard Settings. See "What the Tasks panel shows" below.
 - Tonight's Plan: the schedule for tonight's meeting, up to 5 rows. The TV
   shows the first plan that is switched on and is dated today or has no date.
   A plan from another day is skipped, so an old plan that is still switched on
   does not hide today's.
-- Extra events: events that are not on BAND, such as one another school hosts.
-  Each has a name, a start date, an optional end date, optional times and an
-  optional place. See "Extra events" below.
-- Sponsors: name, tier, a short line about them, a thank-you line for the
-  ticker, and the web address of their logo.
-- Tips and News: the lines that run along the bottom of the screen.
+- Events Calendar: events that are not on BAND, such as one another school
+  hosts. Each entry has a name, a start date, an optional end date, optional
+  times and an optional place. See "Events Calendar" below.
 - Subteams: each subteam, its lead and the students on it. Turn on "In the
   spotlight" to feature one. Add a subteam here before you use it on a task.
   The Team Leads panel shows every subteam that has a lead, three to a page
   (see Photos of people). The Subteam roster panel shows the lead and the
   members of each subteam (see Subteam members).
 - Leadership: coaches, captains and mentors, each with an optional photo. The
-  panel lists coaches first, then captains, then mentors, three to a page (see
-  Photos of people). Pick the role, type the name, and type a title if you
-  want something other than the role under the name, for example Head Coach.
-  The role also colours the frame round the portrait: Coach is red, Captain
-  is gold and Mentor is silver.
+  panel shows all the coaches, then all the captains, then all the mentors. A
+  page never mixes roles, and a role with more than three people continues on
+  more pages (see Photos of people). Pick the role, type the name, and type a
+  title if you want something other than the role under the name, for example
+  Head Coach. The role also colours the frame round the portrait: Coach is red,
+  Captain is gold and Mentor is silver. There is no separate role for a
+  president: give a president the role Captain and the title President, and
+  they are shown with the captains.
+- Sponsors: name, tier, a short line about them, a thank-you line for the
+  ticker, and the web address of their logo.
 - Photos: the pictures for the Photo panel. Each has a picture you upload, an
   optional short caption and the first name of the person who took it. See
   "Photos" below.
+- Tips and News: the lines that run along the bottom of the screen.
 - Custom Panels: a panel you build yourself from blocks (heading, text,
   number, list, image address, progress bar, countdown). About 3 blocks fit.
   A block that does not fit is left out. The title shows in capital letters,
@@ -58,30 +64,36 @@ received.
 - Dashboard Settings: the settings for the whole screen, described below.
 - Theme: the colours of the whole screen, and holiday colours for set dates.
   See "Theme" below.
+- Places: the rooms and areas a task can be in, such as the Classroom. See
+  "Places" below.
 - Demo: plays a few of the special screens (the announcement and night mode) now,
   for visitors. See "Demo" below, and docs/demo.md.
 
 Events on the team's BAND calendars are not edited here. Add or change the
 event in BAND and it reaches the TV after the Mini next downloads the
-calendars. An event that is not on BAND goes in Extra events.
+calendars. An event that is not on BAND goes in Events Calendar.
 
 Sponsor logos are not stored in Studio. Where you see an address, paste the
 web address of the picture. The photos in Photos and the photo of a person in
 Leadership are uploaded to Studio.
 
-## Extra events
+## Events Calendar
 
-Use Extra events for something that is not on BAND. The Events panel and the
-Next event tile show them mixed in with the BAND events, in order of start.
+Use Events Calendar for something that is not on BAND. The Events panel and the
+Next event tile show its entries mixed in with the BAND events, in order of
+start.
 
-To add one by hand, open Extra events, click the plus button, fill in the form
+To add one by hand, open Events Calendar, click the plus button, fill in the form
 and click Publish. The fields:
 
 - Event name: up to 30 characters.
 - Start date: needed.
 - End date: optional. Use it for an event of more than one day. It cannot be
-  before the start date. The screen writes the dates as a range, such as
-  APR 2-4, or DEC 30-JAN 2 when the event crosses into a new month.
+  before the start date. The screen always writes the month with the day. An
+  event of one day is APR 2, and the Next event tile adds the weekday, as in
+  FRI APR 2. An event of several days is a range: APR 2-4, MAR 30-APR 1 when
+  it crosses into a new month, or DEC 30-JAN 2 when it crosses into a new
+  year. Events from BAND are written the same way.
 - Start time and End time: optional, in 24 hour time with two digits, such as
   18:30. Leave Start time empty for an all-day event: the screen shows the date
   and no time. An End time needs a Start time.
@@ -94,9 +106,11 @@ What the screen does with them:
   the Start date if there is no End date. The day changes at midnight in the
   Time zone on the Theme page. You do not have to delete or hide a finished
   event. The screen checks once a minute, so it goes soon after midnight.
-- The times you type are read in that same Time zone. Keep it the same as the
-  Mini's own time zone (docs/rebuilding-the-mini.md, step 3), because the
-  screen writes times on the Mini's clock.
+- The dates and times you type are read in that same Time zone, and the screen
+  writes the dates of every event, from BAND too, in it: the weekday and the
+  month are never taken from the Mini's own clock. Keep the Time zone the same
+  as the Mini's own time zone (docs/rebuilding-the-mini.md, step 3), because
+  the screen writes times on the Mini's clock.
 - If a BAND event is on the same date and one of the two titles contains the
   other, capitals ignored, only the BAND event shows. So you can add an event
   before it is in BAND, and it steps aside once BAND has it. For an event of
@@ -131,11 +145,70 @@ What each part means:
   the original text back over those edits. `npx sanity dataset import --help`
   lists every option.
 
-When it finishes, the seven events are in Extra events, published. Open them
+When it finishes, the seven events are in Events Calendar, published. Open them
 there to check. An event you delete in Studio comes back if you import again,
 because its id is missing again. Ids use hyphens and no dots on purpose: the
 screen reads without signing in, and Sanity keeps a document whose id has a
 dot private.
+
+## What the Tasks panel shows
+
+A page of the Tasks panel is three rows, and a row is one status: BLOCKED, IN
+PROGRESS, UP NEXT or RECENTLY DONE. A row has room for two lines of text:
+
+- A task with only a name (and maybe a subteam) is one line.
+- A task with a point of contact or a location is two lines: the name and the
+  subteam, then the contact and the location under them, in smaller text.
+  A task with only a contact shows only the contact, and a task with only a
+  location shows only the place.
+- Only Blocked, In progress and Up next tasks show the contact and the
+  location. A Done task shows its name and subteam and nothing more.
+
+So a row holds two tasks with only a name, or one task that has a contact or a
+location. A status with more tasks than that takes more than one row, and each
+row has its own label. Blocked comes first, then In progress, Up next and Done.
+
+When the rows do not fit on one page, the panel shows the next page each time
+it comes round, and the first page again after the last. A blocked task is
+always on the first page. Giving tasks contacts and locations makes the pages
+hold fewer tasks, three at the least, so there are more pages. Hidden tasks,
+expired tasks and Done tasks past the number of days in Dashboard Settings are
+left out. The Open Tasks panel counts every open task however many pages there are.
+
+## Places
+
+A place is a room or area where a task is done, such as the Classroom. Pick one
+in the Location field of a task and the TV shows its name under the task. Places
+are a list of their own, so that every task spells a place the same way.
+
+To add one, open Places, click the plus button, fill in the form and click
+Publish. The fields:
+
+- Place name: needed, up to 16 characters. Two places cannot have the same
+  name. Studio ignores capitals when it compares, so it refuses "classroom"
+  when "Classroom" is already there.
+- Show on screen: turn it off to hide the place. A task that uses a hidden
+  place shows no location, and the task itself stays on the screen. Deleting a
+  place does the same to the tasks that used it.
+
+You can also add a place while you edit a task: in the Location field choose
+Create new, type the name, and publish the new place as well as the task. The
+TV only shows a place once it is published.
+
+### Importing the starting places
+
+The file `docs/seed/places.ndjson` holds the three starting places: Classroom,
+Programming room and Media center. Import it once, in the same way as the
+starting events above: from a Mac, with the Studio set up and signed in, and
+with the team mentor's yes. From the `studio` folder, run this one command:
+
+    npx sanity dataset import ../docs/seed/places.ndjson --missing
+
+Each place has a fixed id, such as `place-classroom`, and `--missing` skips any
+place whose id is already there, so running it again changes nothing. The
+parts of the command are explained under "Importing the starting list" above.
+A place you delete in Studio comes back if you import again, because its id is
+missing again.
 
 ## Adding many items from a spreadsheet
 
@@ -218,10 +291,17 @@ Each person in Leadership has a Photo and a "Show photo on screen" switch. The
 Leadership and Team Leads panels show a framed portrait for each person, with
 the name and the title under it (the role if no title is typed). The role
 colours the frame: Coach red, Captain gold and Mentor silver. The colours are
-the `roleMetals` list in `dashboard/panels/leadership/leadership.js`. Three
-portraits fit on a page. If there are
-more people, the panel shows the next page each time it comes round, and the
-text stays the same size. It never gets smaller to fit more people.
+the `roleMetals` list in `dashboard/panels/leadership/leadership.js`.
+
+Three portraits fit on a page. The Leadership panel never mixes roles on a
+page: the coaches come first, then the captains, then the mentors. A role with
+more than three people is shared out as evenly as possible over as many pages
+as it needs, so 4 people are 2 and 2, 5 are 3 and 2, and 6 are 3 and 3. A page
+with fewer than three people has portraits the same size as a full page, and
+they sit in the middle. The Team Leads panel fills each page with three leads.
+When there is more than one page, the panel shows the next page each time it
+comes round, and the text stays the same size. It never gets smaller to fit
+more people.
 
 When you upload a photo:
 
@@ -416,7 +496,10 @@ Announcements, Night mode, Hidden, Calendars, Content source and Connection.
   form, such as 14:30, and tick the days it should play. Tick at least one day.
   The second line is optional: leave it empty and only the first line plays.
   Turn off "Show on screen" to stop one without deleting it. If you delete
-  every announcement, none play.
+  every announcement, none play. To see them now, open the menu next to Publish
+  (the three dots) and click "Play announcements". It publishes the page for you,
+  and the TV plays every announcement that is switched on, once, one after
+  another, whatever their times and days (docs/hidden-transitions.md).
 - Night mode: the screensaver (docs/night-mode.md). Between "Night starts at"
   and "Night ends at" the screen is black with the team logo and the team number
   under it, and the picture is never turned off. "Use night mode" starts on. The
@@ -488,8 +571,8 @@ for a set of dates.
   used, so a theme rule and an overlay rule can both apply at once.
 - Time zone: the zone the dates are read in, such as America/New_York, which is
   where the page starts. The date changes at midnight in that zone, whatever
-  the zone of the computer that shows the screen. Extra events use it too, for
-  their times and for when they are over.
+  the zone of the computer that shows the screen. Events Calendar entries use it
+  too, for their times and for when they are over.
 
 The order is: Use a theme now, then the first matching rule of each kind, then
 the Default theme and no overlay. The screen checks once a minute, and also
@@ -512,7 +595,8 @@ waiting for their times (docs/demo.md).
   when nothing has been asked for.
 - Steps: the screens to show, in order, up to 10, each with the seconds it stays
   (5 to 300). It starts with the Announcement for 30 seconds and then Night mode
-  for 30 seconds.
+  for 30 seconds. "All announcements" is a screen too: it plays every announcement
+  that is switched on at its own length, and ignores the seconds of its step.
 - Demo announcement text: the words of the Announcement step, up to 24 characters.
   Leave it empty to use the first announcement in Dashboard Settings, or
   [DEMO ANNOUNCEMENT] if there is none.
@@ -543,7 +627,7 @@ click Publish. The result is the same.
   as the TV is back on production. It is never shown on production content. A
   full screen alert or announcement covers it, like everything else.
 - Sample content comes with its own calendar, its own pictures and three
-  sample Extra events. Their dates are in March 2027, so once those days have
+  sample Events Calendar entries. Their dates are in March 2027, so once those days have
   passed they leave the screen. Change the dates in
   `dashboard/data/sample/content.json` to see them again. Nothing
   else is read from Studio while it is on, so your tasks, events, alert and

@@ -80,6 +80,34 @@
   font: 500 var(--size-label)/64px var(--font-text);
 }
 
+/* Under the title of a task that has them: who to ask, then where. At 44px, the
+   smallest size, and 52px high, so a title and its detail are 116px and the
+   label above them still fits the row. A name or place that is too long is cut
+   off with an ellipsis, as the title is. */
+.tasks .task-detail {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  white-space: nowrap;
+  font: 500 var(--size-label)/52px var(--font-text);
+}
+.tasks .contact,
+.tasks .location {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tasks .contact { flex: none; max-width: 360px; }
+.tasks .location {
+  flex: 0 1 auto;
+  color: var(--lilac);
+}
+/* a dot between the two, drawn here so nothing is added to the text */
+.tasks .contact + .location::before {
+  content: "\00b7";
+  margin-right: 20px;
+}
+
 /* A blocked row sits on a dark red band with a red bar at its left, so it
    stands out across the room. The band stops short of the metal bar under it. */
 .tasks .status-blocked {

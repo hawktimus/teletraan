@@ -1,11 +1,11 @@
-// The next few things on the team calendar and the Extra events, one row each.
+// The next few things on the team calendar and the Events Calendar entries, one row each.
 // The list comes from core/events.js, already merged and sorted.
 
 import { rowBarMarkup } from '../../core/plate.js';
 import { doubleSlash } from '../../core/marks.js';
 import { escapeHtml } from '../../core/text.js';
-import { rangeText, timeText } from '../../core/events.js';
-import { asDate, dayName } from '../../core/time.js';
+import { eventDate, timeText } from '../../core/events.js';
+import { asDate } from '../../core/time.js';
 
 // Four rows of 144px fill the 576px body. The row height is in events.css.
 const MAX_EVENTS = 4;
@@ -34,7 +34,8 @@ export function hasContent(content) {
 
 export function mount(host, content) {
   const events = upcoming(content);
-  const lines = events.map((event, index) => rowMarkup(event, index === events.length - 1)).join('');
+  const zone = (content.theme || {}).timeZone;
+  const lines = events.map((event, index) => rowMarkup(event, index === events.length - 1, zone)).join('');
 
   host.innerHTML = `
     <section class="page events">
@@ -49,20 +50,20 @@ export function mount(host, content) {
 
 // Every row is a slat, and the thin metal bar under it turns over with it.
 // The last row has no bar under it, because the frame is there.
-function rowMarkup(event, isLast) {
-  const start = asDate(event.start);
+function rowMarkup(event, isLast, timeZone) {
+  const date = eventDate(event, timeZone);
 
   // The line under the title: the dates if the event lasts several days, the
-  // time unless it is an all-day event, then the place. The day and number
+  // time unless it is an all-day event, then the place. The weekday and date
   // on the left already say when an all-day event starts.
-  const line = [rangeText(event), timeText(event), event.location].filter(Boolean).join(' · ');
+  const line = [date.range, timeText(event), event.location].filter(Boolean).join(' · ');
 
   return `
     <div class="row" data-slat="item">
       ${isLast ? '' : rowBarMarkup(1124)}
       <div class="date">
-        <div class="day-name">${dayName(start)}</div>
-        <div class="day-number">${start.getDate()}</div>
+        <div class="day-name">${date.weekday}</div>
+        <div class="month-day">${date.monthDay}</div>
       </div>
       <div class="details">
         <div class="event-title">${escapeHtml(event.title)}</div>

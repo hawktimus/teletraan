@@ -4,6 +4,7 @@ import extraEvent from './extraEvent.js';
 import sponsor from './sponsor.js';
 import tipOrNews from './tipOrNews.js';
 import subteam from './subteam.js';
+import place from './place.js';
 import person from './person.js';
 import photo from './photo.js';
 import customPanel from './customPanel.js';
@@ -19,6 +20,7 @@ export const schemaTypes = [
   sponsor,
   tipOrNews,
   subteam,
+  place,
   person,
   photo,
   customPanel,

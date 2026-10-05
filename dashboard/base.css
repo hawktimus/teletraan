@@ -457,13 +457,13 @@ html[data-night="on"] #stage { visibility: hidden; }
 }
 
 /* People portraits (core/portrait.js). The Leadership and Team Leads panels
-   draw a row of up to three slots. A slot is 352 wide: a portrait 296 square,
+   draw a row of up to three slots. A slot is 352 wide: a portrait 292 square,
    then the name and the role under it. The row has a box of its own, 1096 by
    516, below the header. The slots sit at the top of the row and the row sits
    in the middle of the box, so a page of short names is not left at the top
    with an empty strip under it. The worst case, a name on two lines and a role
-   on two lines, is 296 + 8 + 120 + 92 = 516 and fills the box, so it ends at
-   y = 660 of the panel. The frame's cut corner runs from (1148, 640) to
+   on two lines, is 292 + 8 + 120 + 92 = 512 and nearly fills the box, so it
+   ends at y = 658 of the panel. The frame's cut corner runs from (1148, 640) to
    (1068, 704). The last line of text in the last slot is short enough to stay
    inside it, which was measured with names of 17 characters and subteam names
    of 11. The text sizes are the label and body sizes in tokens.css. */
@@ -483,23 +483,23 @@ html[data-night="on"] #stage { visibility: hidden; }
 }
 .slot { text-align: center; }
 
-/* The portrait is a card (cardMarkup, 296 square) with the picture inside its
-   edge. The picture is 280 square, 8px in. Its bottom right corner is cut to
-   run beside the card's own cut corner, 6px inside it. */
+/* The portrait is a card (cardMarkup, 292 square) with the picture inside its
+   edge. The picture is 280 square, 6px in. Its bottom right corner is cut to
+   run beside the card's own cut corner, about 4px inside it. */
 .portrait {
   position: relative;
-  width: 296px;
-  height: 296px;
+  width: 292px;
+  height: 292px;
   margin: 0 auto 8px;
 }
 .portrait-photo {
   position: absolute;
-  left: 8px;
-  top: 8px;
+  left: 6px;
+  top: 6px;
   width: 280px;
   height: 280px;
   overflow: hidden;
-  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 28.9px), calc(100% - 36.2px) 100%, 0 100%);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 30.2px), calc(100% - 37.7px) 100%, 0 100%);
 }
 .portrait-photo img,
 .silhouette {

@@ -2,9 +2,12 @@
 // `sanity dataset import`. Run it from the studio folder: node scripts/import-csv.mjs folder-or-file ...
 // Row 2 of each CSV says what its columns accept; make-templates.mjs writes it. If any
 // row breaks a rule nothing is written: fix the CSV and run it again. An id is the type
-// plus the words of the row, so importing twice changes nothing.
+// plus the words of the row, so importing twice changes nothing. A name in a column such as
+// subteam or location must be in the CSV of that type given with it. The three starting
+// places (docs/seed/places.ndjson) are known too.
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 // What each kind of cell must look like, how to say it, and what is stored
 const kinds = {
@@ -59,6 +62,9 @@ function readCell(text, rules) {
 }
 
 const docs = [], problems = [], ids = {}, refs = [];
+// The starting places come from docs/seed/places.ndjson, not from a CSV, so a task may point at them by name
+const seedFile = fileURLToPath(new URL('../../docs/seed/places.ndjson', import.meta.url));
+const seeded = fs.existsSync(seedFile) ? fs.readFileSync(seedFile, 'utf8').split('\n').filter(Boolean).map(line => JSON.parse(line)) : [];
 const report = (file, row, column, message) => problems.push(path.basename(file) + ', row ' + row + ', column ' + column + ': ' + message);
 
 // One row of a CSV becomes one document. Columns such as rows.2.text belong to
@@ -108,7 +114,12 @@ process.argv.slice(2).forEach(arg => {
   else if (fs.statSync(arg).isDirectory()) fs.readdirSync(arg).filter(name => /\.csv$/i.test(name)).sort().forEach(name => readFile(path.join(arg, name)));
   else readFile(arg);
 });
-refs.filter(ref => !ids[ref.id]).forEach(ref => report(ref.file, ref.row, ref.name, '"' + ref.text + '" is not in the ' + ref.id.split('-')[0] + ' CSV given with this one'));
+const unknown = ref => {
+  if (ref.id.split('-')[0] !== 'place') return '"' + ref.text + '" is not in the ' + ref.id.split('-')[0] + ' CSV given with this one';
+  const names = seeded.concat(docs.filter(doc => doc._type === 'place')).map(place => place.name).join(', ');
+  return '"' + ref.text + '" is not a place the script knows (' + names + '). Add it to a place CSV given with this one, or leave the cell empty and pick the place in Studio';
+};
+refs.filter(ref => !ids[ref.id] && !seeded.some(place => place._id === ref.id)).forEach(ref => report(ref.file, ref.row, ref.name, unknown(ref)));
 
 if (problems.length || !docs.length) {
   console.error(problems.length ? problems.join('\n') + '\n\n' + problems.length + ' problem(s). Nothing was written. Fix the CSV and run this again.' : 'No rows to import. Give a CSV file or a folder of them. Empty rows and EXAMPLE rows are skipped.');

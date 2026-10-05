@@ -1,7 +1,8 @@
-// An event that is not on the BAND calendars. The dashboard merges these with
-// the BAND events in core/events.js, sorts them by start, and drops each one
-// once its last day has passed. No start time means an all-day event, which
-// shows its date and no time.
+// An entry in the Events Calendar list: an event that is not on the BAND
+// calendars. The dashboard merges these with the BAND events in core/events.js,
+// sorts them by start, and drops each one once its last day has passed. No
+// start time means an all-day event, which shows its date and no time. The
+// type is still called extraEvent, which is what is stored in Sanity.
 //
 // There is no Hide after field: the dashboard drops a finished event itself.
 
@@ -45,7 +46,7 @@ function isOver(item) {
 
 export default defineType({
   name: 'extraEvent',
-  title: 'Extra event',
+  title: 'Events Calendar',
   type: 'document',
   fields: [
     defineField({

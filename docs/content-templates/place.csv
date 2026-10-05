@@ -1,0 +1,3 @@
+example,name,show
+type place,text; required; max 16; id 1,yes/no; default yes
+EXAMPLE,[Place name],yes

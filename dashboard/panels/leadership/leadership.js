@@ -1,44 +1,29 @@
-// Coaches, captains and mentors, a portrait each, three to a page. When there
-// are more people, each time the panel comes round it shows the next page.
+// Coaches, captains and mentors, a portrait each. A page never mixes the
+// roles, and a role with more people than fit on a page is split evenly over
+// more pages (core/leadership.js). Each time the panel comes round it shows the
+// next page.
 
 import { doubleSlash } from '../../core/marks.js';
-import { hasText } from '../../core/text.js';
-import { visibleItems } from '../../core/content.js';
 import { makePages } from '../../core/turns.js';
-import { photoAddress, preloadPhotos, slotMarkup, slotsPerPage, watchPhotos } from '../../core/portrait.js';
+import { leadershipPages } from '../../core/leadership.js';
+import { photoAddress, preloadPhotos, slotMarkup, watchPhotos } from '../../core/portrait.js';
 
-const nextPage = makePages(slotsPerPage);
-
-// Roles are shown in this order. Any other role comes after them.
-const roleOrder = ['coach', 'captain', 'mentor'];
+// One page at a time: each item of the list given to nextPage is a whole page
+const nextPage = makePages(1);
 
 // The role also decides the metal of the frame round the portrait: gold, silver
 // or red. To change a colour, change a word here. A role that is not in this
 // list keeps the colour of the panel's own frame.
 const roleMetals = { coach: 'red', captain: 'gold', mentor: 'silver' };
 
-function rankOf(person) {
-  const rank = roleOrder.indexOf(String(person.role || '').trim().toLowerCase());
-  return rank === -1 ? roleOrder.length : rank;
-}
-
-function peopleFor(content) {
-  return visibleItems(content.people)
-    .filter(person => hasText(person.name) || hasText(person.role))
-    .map((person, position) => ({ person: person, position: position, rank: rankOf(person) }))
-    // the position keeps people with the same role in the order they were typed,
-    // which older browsers do not promise when sorting
-    .sort((first, second) => first.rank - second.rank || first.position - second.position)
-    .map(entry => entry.person);
-}
-
 export function hasContent(content) {
-  return peopleFor(content).length > 0;
+  return leadershipPages(content.people).length > 0;
 }
 
 export function mount(host, content) {
-  const page = nextPage(peopleFor(content));
-  const slots = page.items.map(personSlot).join('');
+  const turn = nextPage(leadershipPages(content.people));
+  const people = turn.items[0] || [];
+  const slots = people.map(personSlot).join('');
 
   host.innerHTML = `
     <section class="page leadership">
@@ -54,7 +39,7 @@ export function mount(host, content) {
     </section>`;
 
   watchPhotos(host);
-  preloadPhotos(page.upcoming);
+  preloadPhotos(turn.upcoming[0] || []);
 }
 
 // What is written under the name is the typed title, or the role if there is none

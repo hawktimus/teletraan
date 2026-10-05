@@ -7,6 +7,7 @@ import { chooseSource } from './source.js';
 import { tidyTheme } from './theme.js';
 import { tidyDemo } from './demo.js';
 import { chanceFields, tidyHiddenRequest } from './hidden.js';
+import { tidyAnnounceRequest } from './announce.js';
 import { fetchResult, liveEventsUrl, normalizeContent, normalizeSample } from './sanity.js';
 import { reasons } from './connection.js';
 import { tidyClockTime } from './night.js';
@@ -92,6 +93,8 @@ export function fixSettingValues(settings) {
     settings[name] = keepInRange(settings[name], limits[name], defaultSettings[name]);
   });
   settings.hiddenRequest = tidyHiddenRequest(settings.hiddenRequest);
+  // The last click of Play announcements (Announcements tab, hidden from editors): a time, or empty
+  settings.announceRequest = tidyAnnounceRequest(settings.announceRequest);
   settings.crt = tidyGlitch(settings.crt);
 }
 

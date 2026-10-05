@@ -210,6 +210,11 @@ export const defaultSettings = {
   desktopChance: 1,
   redEyesChance: 1,
   hiddenRequest: { kind: '', requestedAt: '' },
+  // The "Play announcements" button in the Studio (core/announce.js, core/announce-run.js, docs/hidden-transitions.md).
+  //   announceRequest  the last click of the button. requestedAt is the time it was clicked and is empty until
+  //                    it has been. The screen plays every announcement that is switched on, once, for a request
+  //                    that is less than demoWindowSeconds old and is not the one it handled before (see below).
+  announceRequest: { requestedAt: '' },
   countdown: {
     kickoffLabel: 'KICKOFF IN',
     kickoff: '2027-01-09T12:00',
@@ -272,8 +277,8 @@ export const defaultSettings = {
 //   useNow        a theme and an overlay to show now, whatever the schedule says. Each is empty
 //                 (follow the schedule), an id, or for the overlay 'none'. until is a time, or empty.
 //   schedule      rules: { name, kind: 'theme' | 'overlay', theme or overlay, startDate, endDate, repeatsEveryYear }
-//   timeZone      the time zone the dates in the schedule are read in. Extra events (core/events.js)
-//                 use it too, for their times and for when they are over
+//   timeZone      the time zone the dates in the schedule are read in. Events Calendar entries
+//                 (core/events.js) use it too, for their times and for when they are over
 export const defaultThemeSettings = {
   defaultTheme: 'hawktimus',
   useNow: { theme: '', overlay: '', until: '' },

@@ -4,7 +4,7 @@
 import { defineType, defineField, defineArrayMember } from 'sanity';
 import { neverOrAtLeast, tooLong } from './fields.js';
 import { rotationField } from './settingsRotation.js';
-import { announcementsField } from './settingsAnnouncements.js';
+import { announcementsField, announceRequestField } from './settingsAnnouncements.js';
 import { logoFields, logoGroup } from './settingsLogo.js';
 import { transitionsFields, transitionsGroup } from './settingsTransitions.js';
 import { photosFields, photosGroup } from './settingsPhotos.js';
@@ -423,6 +423,7 @@ export default defineType({
     safetyDaysField,
     ...photosFields(),
     announcementsField(),
+    announceRequestField(),
     ...nightFields(),
     ...hiddenFields(),
     calendarsField,

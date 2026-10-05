@@ -51,6 +51,23 @@ export const demoScreens = {
     },
   },
 
+  // Every announcement that is switched on in Dashboard Settings, one after another, each at its
+  // own length and whatever its time and days say. It is the same as the Play announcements
+  // button in the Studio (core/announce.js). The step's seconds are not used.
+  'all-announcements': {
+    name: 'All announcements',
+    async run(context) {
+      const takeover = await import('./takeover.js');
+      const announce = await import('./announce.js');
+      const list = announce.enabledAnnouncements(context.getContent().settings);
+      await announce.playEach(
+        list,
+        config => takeover.runAnnouncement(config, context.getContent, context.cancelled),
+        context.cancelled
+      );
+    },
+  },
+
   // The bouncing logo, whatever the time and whatever Night style says
   'night-mode': {
     name: 'Night mode',

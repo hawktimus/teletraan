@@ -63,9 +63,9 @@
   },
 
   "tasks": [
-    { "title": "[Task in progress]", "subteam": "[Subteam A]", "status": "in-progress" },
-    { "title": "[Second task]", "subteam": "[Subteam C]", "status": "in-progress" },
-    { "title": "[Next task]", "subteam": "[Subteam B]", "status": "up-next" },
+    { "title": "[Task in progress]", "subteam": "[Subteam A]", "status": "in-progress", "contact": "[Contact A]", "location": "[Place A]" },
+    { "title": "[Second task]", "subteam": "[Subteam C]", "status": "in-progress", "contact": "[Contact B]" },
+    { "title": "[Next task]", "subteam": "[Subteam B]", "status": "up-next", "location": "[Place B]" },
     { "title": "[Queued task]", "subteam": "[Subteam E]", "status": "up-next" },
     { "title": "[Finished task]", "subteam": "[Subteam D]", "status": "done" },
     { "title": "[Second finished task]", "subteam": "[Subteam F]", "status": "done" }

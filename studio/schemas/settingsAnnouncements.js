@@ -1,5 +1,6 @@
 // Full screen announcements at set times of the day: a first line, then a
-// second line a few seconds later.
+// second line a few seconds later. Also the hidden announceRequest that the
+// "Play announcements" button writes (actions.js).
 
 import { defineField, defineArrayMember } from 'sanity';
 import { showField, tooLong, subtitleFor } from './fields.js';
@@ -106,6 +107,31 @@ const announcementMember = defineArrayMember({
     },
   },
 });
+
+// The Play announcements button (actions.js) writes the time into this and publishes,
+// and the screen then plays every announcement that is switched on, once
+// (dashboard/core/announce.js). Editors never see it: hidden keeps it out of the
+// form, and its value stays in the document. The starting value is the same as
+// defaultSettings.announceRequest in dashboard/config.js, and a missing one means no request.
+export function announceRequestField() {
+  return defineField({
+    name: 'announceRequest',
+    title: 'Last announcement push',
+    type: 'object',
+    group: 'announcements',
+    hidden: true,
+    description: 'Filled in by the Play announcements button beside Publish. The screen plays every announcement that is switched on, once. Do not edit it.',
+    fields: [
+      defineField({
+        name: 'requestedAt',
+        title: 'Pushed at',
+        type: 'datetime',
+        readOnly: true,
+        description: 'When the button was last clicked. The screen plays a push once, and only for a minute after this time.',
+      }),
+    ],
+  });
+}
 
 export function announcementsField() {
   return defineField({

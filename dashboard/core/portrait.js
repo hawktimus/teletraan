@@ -7,7 +7,7 @@
 //
 // The sizes here are repeated in base.css (the section People portraits).
 // Change them together. With the photo at 280 and the edge of the card
-// around it, the portrait is 296 square, and three slots fit across the
+// around it, the portrait is 292 square, and three slots fit across the
 // large panel.
 
 import { defaultPerson } from '../config.js';
@@ -18,7 +18,7 @@ import { visibleItems } from './content.js';
 
 export const slotsPerPage = 3;
 
-const portraitSize = 296;
+const portraitSize = 292;
 const photoSize = 280; // the photo is asked for at exactly this size, 1 to 1 on the screen
 
 // The address of the photo to show for a person, or an empty text for the

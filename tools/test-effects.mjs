@@ -8,7 +8,9 @@
 // and new, the order and the pauses of the steps, and what stops a demo. And it
 // tests when a hidden transition plays (dashboard/core/hidden.js): the chance, the
 // master switch, calm motion, what blocks it and a push from the Studio, the
-// registry of the transitions, and the parts of frame.css that move them.
+// registry of the transitions, and the parts of frame.css that move them. And it tests
+// Play announcements (dashboard/core/announce.js): the guard, the age limit, which
+// announcements play, what it waits for, and the Demo step that plays them too.
 //
 //   node tools/test-effects.mjs
 //
@@ -28,7 +30,7 @@ const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url))
 const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-effects-'));
 fs.mkdirSync(path.join(workFolder, 'dashboard', 'core'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
-['config.js', 'frame.js', 'core/transitions.js', 'core/tick.js', 'core/demo.js', 'core/demo-screens.js', 'core/hidden.js', 'core/hidden-transitions.js', 'core/hidden-art.js'].forEach(file => {
+['config.js', 'frame.js', 'core/transitions.js', 'core/tick.js', 'core/demo.js', 'core/demo-screens.js', 'core/hidden.js', 'core/hidden-transitions.js', 'core/hidden-art.js', 'core/announce.js'].forEach(file => {
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
 const frameUrl = pathToFileURL(path.join(workFolder, 'dashboard/frame.js')).href;
@@ -39,6 +41,7 @@ const demoRegistry = await import(pathToFileURL(path.join(workFolder, 'dashboard
 const hidden = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/hidden.js')).href);
 const hiddenRegistry = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/hidden-transitions.js')).href);
 const hiddenArt = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/hidden-art.js')).href);
+const announce = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/announce.js')).href);
 
 const realSetImmediate = globalThis.setImmediate;
 const second = 1000;
@@ -1757,7 +1760,7 @@ test('content with no demo in it, or a demo with no request, plays nothing', asy
 
 test('the registry has a name and a run function for each screen, in the plain words the Studio shows', () => {
   const ids = Object.keys(demoRegistry.demoScreens);
-  assert.deepEqual(ids, ['announcement', 'night-mode']);
+  assert.deepEqual(ids, ['announcement', 'all-announcements', 'night-mode']);
   ids.forEach(id => {
     const entry = demoRegistry.demoScreens[id];
     assert.ok(/^[a-z]+(-[a-z]+)*$/.test(id), id + ' is a plain lower case id');
@@ -2433,6 +2436,489 @@ test('the large panel asks for a hidden transition before its page change, and t
   ['const since = changeCount(region);', "const since = changeCount('ticker');", 'const since = changeCount(null);'].forEach(call => assert.ok(schedule.includes(call), call));
   assert.ok(!/\bpagesRefreshed === since\b/.test(schedule), 'the hold compares both counts');
   ["since, region);", "since, 'ticker');", 'since, null);'].forEach(call => assert.ok(schedule.includes(call), call));
+});
+
+// Play announcements (dashboard/core/announce.js): the Studio's button that plays every
+// announcement that is switched on, now, once
+
+const { tidyAnnounceRequest, enabledAnnouncements, playEach, makeAnnounceRunner, readHandledAnnounce, rememberHandledAnnounce } = announce;
+
+// An announcement as Dashboard Settings holds it. The time and the days are what the screen
+// ignores when it plays them on request.
+const announcementAt = (title, overrides) => Object.assign({
+  show: true, time: '14:30', title: title, followUp: '', titleSeconds: 12, followUpSeconds: 10, days: [0, 1, 2, 3, 4, 5, 6],
+}, overrides);
+
+// A fake screen for the runner, with a clock the test moves. An announcement takes its two
+// lines' seconds, in steps of a quarter second, and ends early when it is told to stop. Each new
+// second it looks, as the one clock of the screen does, and things the test planned for a time
+// (at) happen when that time comes.
+function announceWorld(options) {
+  const settings = options || {};
+  const world = {
+    start: demoNow.getTime(),
+    nowMs: demoNow.getTime(),
+    content: { settings: { announceRequest: { requestedAt: '' }, announcements: [] } },
+    log: [],
+    played: [],
+    alerts: 0,
+    takeover: false,
+    demo: false,
+    night: false,
+    hidden: false,
+    store: settings.store || {},
+    planned: [],
+  };
+
+  async function tick(milliseconds) {
+    const secondBefore = Math.floor(world.nowMs / 1000);
+    world.nowMs += milliseconds;
+    world.planned.filter(item => !item.done && item.at <= world.nowMs).forEach(item => {
+      item.done = true;
+      item.run();
+    });
+    if (Math.floor(world.nowMs / 1000) !== secondBefore) world.runner.look(new Date(world.nowMs));
+  }
+
+  world.runner = makeAnnounceRunner({
+    getContent: () => world.content,
+    storage: settings.storage === undefined ? makeStorage(world.store) : settings.storage,
+    pauseRotation: () => world.log.push('rotation paused'),
+    resumeRotation: () => world.log.push('rotation resumed'),
+    takeoverRunning: () => world.takeover,
+    demoRunning: () => world.demo,
+    nightIsUp: () => world.night,
+    hiddenPlaying: () => world.hidden,
+    alertsStarted: () => world.alerts,
+    async playAnnouncement(config, shouldStop) {
+      world.played.push(config);
+      world.log.push('play ' + config.title + ' ' + (config.titleSeconds + config.followUpSeconds));
+      if (config.title === 'BROKEN') throw new Error('this announcement fails');
+
+      let left = (config.titleSeconds + config.followUpSeconds) * 1000;
+      while (left > 0 && !shouldStop()) {
+        await tick(250);
+        left -= 250;
+      }
+      world.log.push((shouldStop() ? 'stopped ' : 'done ') + config.title);
+    },
+  });
+
+  world.look = () => world.runner.look(new Date(world.nowMs));
+  world.requestedSecondsAgo = seconds => { world.content.settings.announceRequest = { requestedAt: new Date(world.nowMs - seconds * 1000).toISOString() }; };
+  world.requestedSecondsAhead = seconds => { world.content.settings.announceRequest = { requestedAt: new Date(world.nowMs + seconds * 1000).toISOString() }; };
+  world.announcements = list => { world.content.settings.announcements = list; };
+  world.at = (seconds, run) => world.planned.push({ at: world.start + seconds * 1000, run: run, done: false });
+  world.elapsed = () => (world.nowMs - world.start) / 1000;
+  return world;
+}
+
+// Looks once and waits for whatever started to be over
+async function lookAndFinish(world) {
+  world.look();
+  await world.runner.whenIdle();
+}
+
+test('a request plays every announcement that is switched on, once, in order, each at its own length, with the rotation paused from start to end', async () => {
+  const world = announceWorld();
+  world.announcements([announcementAt('ONE', { followUp: 'SECOND LINE' }), announcementAt('TWO', { titleSeconds: 5, followUpSeconds: 3 })]);
+  world.requestedSecondsAgo(2);
+
+  world.look();
+  assert.equal(world.runner.isRunning(), true);
+  await world.runner.whenIdle();
+
+  assert.deepEqual(world.log, ['rotation paused', 'play ONE 22', 'done ONE', 'play TWO 8', 'done TWO', 'rotation resumed']);
+  assert.equal(world.elapsed(), 30, 'twenty-two seconds and then eight');
+  assert.equal(world.runner.isRunning(), false);
+  assert.deepEqual(world.played, [
+    { title: 'ONE', followUp: 'SECOND LINE', titleSeconds: 12, followUpSeconds: 10 },
+    { title: 'TWO', followUp: '', titleSeconds: 5, followUpSeconds: 3 },
+  ]);
+});
+
+test('only the announcements that are switched on play, and a switch that is missing means on', async () => {
+  const world = announceWorld();
+  world.announcements([
+    announcementAt('SHOWN'),
+    announcementAt('OFF', { show: false }),
+    announcementAt('NO SWITCH', { show: undefined }),
+    announcementAt('ALSO OFF', { show: false }),
+  ]);
+  world.requestedSecondsAgo(1);
+
+  await lookAndFinish(world);
+  assert.deepEqual(world.played.map(config => config.title), ['SHOWN', 'NO SWITCH']);
+  assert.deepEqual(enabledAnnouncements(world.content.settings).map(config => config.title), ['SHOWN', 'NO SWITCH']);
+
+  const allOff = announceWorld();
+  allOff.announcements([announcementAt('OFF', { show: false })]);
+  allOff.requestedSecondsAgo(1);
+  await lookAndFinish(allOff);
+  assert.deepEqual(allOff.log, []);
+});
+
+test('the time and the days of an announcement are ignored: it plays whatever the clock says and even when no day is ticked', async () => {
+  const world = announceWorld(); // 12:00 UTC on a Monday
+  world.announcements([
+    announcementAt('NOT TODAY', { time: '03:00', days: [0, 6] }),
+    announcementAt('NO DAYS', { time: '12:00', days: [] }),
+    announcementAt('NO TIME', { time: undefined, days: undefined }),
+  ]);
+  world.requestedSecondsAgo(1);
+
+  await lookAndFinish(world);
+  assert.deepEqual(world.played.map(config => config.title), ['NOT TODAY', 'NO DAYS', 'NO TIME']);
+
+  // what is handed to the screen is the words and the seconds, and nothing about when
+  world.played.forEach(config => assert.deepEqual(Object.keys(config).sort(), ['followUp', 'followUpSeconds', 'title', 'titleSeconds']));
+});
+
+test('a request plays while it is a minute old at most, and an older one never plays', async () => {
+  for (const age of [0, 1, 30, 59, 60]) {
+    const world = announceWorld();
+    world.announcements([announcementAt('ONE')]);
+    world.requestedSecondsAgo(age);
+    await lookAndFinish(world);
+    assert.equal(world.played.length, 1, age + ' seconds old');
+  }
+  for (const age of [61, 90, 3600, 86400, 86400 * 365]) {
+    const world = announceWorld();
+    world.announcements([announcementAt('ONE')]);
+    world.requestedSecondsAgo(age);
+    await lookAndFinish(world);
+    assert.deepEqual(world.log, [], age + ' seconds old');
+  }
+
+  // a few seconds ahead counts, because the clock of the computer that clicked may be a little ahead
+  for (const [ahead, plays] of [[3, 1], [5, 1], [6, 0], [3600, 0]]) {
+    const world = announceWorld();
+    world.announcements([announcementAt('ONE')]);
+    world.requestedSecondsAhead(ahead);
+    await lookAndFinish(world);
+    assert.equal(world.played.length, plays, ahead + ' seconds ahead');
+  }
+});
+
+test('a request plays once, and a new request plays again', async () => {
+  const world = announceWorld();
+  world.announcements([announcementAt('ONE')]);
+  world.requestedSecondsAgo(1);
+
+  await lookAndFinish(world);
+  const once = world.log.length;
+  assert.ok(once > 0);
+
+  world.look();
+  world.look();
+  await world.runner.whenIdle();
+  assert.equal(world.log.length, once, 'the request is still in the settings and is not played again');
+
+  world.requestedSecondsAgo(0);
+  await lookAndFinish(world);
+  assert.equal(world.log.length, once * 2, 'a new request is played');
+});
+
+test('a screen that restarts after a push does not play it again, whether it was a few seconds or a minute later', async () => {
+  const world = announceWorld();
+  world.announcements([announcementAt('ONE')]);
+  world.requestedSecondsAgo(1);
+  await lookAndFinish(world);
+  assert.equal(world.store['teletraan-announce-handled'], world.content.settings.announceRequest.requestedAt);
+
+  // the page loads again with the same storage and the same request still in the settings
+  const soon = announceWorld({ store: world.store });
+  soon.nowMs = soon.start = world.nowMs + 20 * 1000;
+  soon.content.settings = JSON.parse(JSON.stringify(world.content.settings));
+  soon.look();
+  assert.deepEqual(soon.log, [], 'handled before, so not again');
+
+  // a browser with no storage at all, a minute later: the request is too old
+  const later = announceWorld({ storage: null });
+  later.nowMs = later.start = world.nowMs + 70 * 1000;
+  later.content.settings = JSON.parse(JSON.stringify(world.content.settings));
+  later.look();
+  assert.deepEqual(later.log, [], 'older than a minute, so not at all');
+});
+
+test('a storage that fails still plays a request once while the page is open', async () => {
+  const world = announceWorld({ storage: brokenStorage });
+  world.announcements([announcementAt('ONE')]);
+  world.requestedSecondsAgo(3);
+
+  await lookAndFinish(world);
+  const once = world.log.length;
+  assert.ok(once > 0);
+
+  await lookAndFinish(world);
+  assert.equal(world.log.length, once, 'it remembers the request itself');
+});
+
+test('the handled request has a name of its own in localStorage, apart from the demo and the hidden transitions', () => {
+  assert.equal(announce.handledKey, 'teletraan-announce-handled');
+  assert.notEqual(announce.handledKey, handledKey);
+  assert.notEqual(announce.handledKey, hidden.handledKey);
+
+  const store = {};
+  const storage = makeStorage(store);
+  assert.equal(readHandledAnnounce(storage), '');
+  const request = secondsAgo(5);
+  assert.equal(rememberHandledAnnounce(storage, request), true);
+  assert.deepEqual(store, { 'teletraan-announce-handled': request });
+  assert.equal(readHandledAnnounce(storage), request);
+  assert.equal(readHandled(storage), '', 'the demo has not handled anything');
+  assert.equal(readHandledRequest(storage), '', 'no hidden transition has been pushed');
+
+  assert.equal(readHandledAnnounce(brokenStorage), '');
+  assert.equal(readHandledAnnounce(null), '');
+  assert.equal(rememberHandledAnnounce(brokenStorage, request), false);
+  assert.equal(rememberHandledAnnounce(null, request), false);
+});
+
+test('a demo or a hidden push that was handled does not stop an announcement push with the same time from playing', async () => {
+  const request = secondsAgo(2);
+  const world = announceWorld({ store: { 'teletraan-demo-handled': request, 'teletraan-hidden-handled': request } });
+  world.announcements([announcementAt('ONE')]);
+  world.content.settings.announceRequest = { requestedAt: request };
+
+  await lookAndFinish(world);
+  assert.equal(world.played.length, 1);
+});
+
+test('with no announcement switched on nothing plays and nothing is paused, and the request counts as handled', async () => {
+  for (const list of [[], [announcementAt('OFF', { show: false })], undefined, null, 'none']) {
+    const world = announceWorld();
+    world.content.settings.announcements = list;
+    world.requestedSecondsAgo(1);
+
+    world.look();
+    assert.deepEqual(world.log, [], JSON.stringify(list));
+    assert.equal(world.runner.isRunning(), false);
+  }
+
+  // switching one on a few seconds later does not bring the same request back
+  const world = announceWorld();
+  world.requestedSecondsAgo(1);
+  world.look();
+  world.announcements([announcementAt('ONE')]);
+  await lookAndFinish(world);
+  assert.deepEqual(world.log, []);
+});
+
+test('while an alert, an announcement, a demo, the night screen or a hidden transition has the screen a request waits, and plays when it is over if it is still a minute old at most', async () => {
+  for (const name of ['takeover', 'demo', 'night', 'hidden']) {
+    const world = announceWorld();
+    world.announcements([announcementAt('ONE')]);
+    world[name] = true;
+    world.requestedSecondsAgo(1);
+
+    world.look();
+    assert.deepEqual(world.log, [], 'not while ' + name + ' has the screen');
+    assert.equal(world.runner.isRunning(), false);
+
+    world.nowMs += 30 * 1000;
+    world[name] = false;
+    await lookAndFinish(world);
+    assert.deepEqual(world.played.map(config => config.title), ['ONE'], 'half a minute later, after ' + name);
+
+    const late = announceWorld();
+    late.announcements([announcementAt('ONE')]);
+    late[name] = true;
+    late.requestedSecondsAgo(1);
+    late.look();
+    late.nowMs += 90 * 1000;
+    late[name] = false;
+    late.look();
+    assert.deepEqual(late.log, [], 'a minute and a half later it is too old, after ' + name);
+  }
+});
+
+test('a real alert that starts while they play ends the rest, and everything is given back', async () => {
+  const world = announceWorld();
+  world.announcements([announcementAt('ONE'), announcementAt('TWO')]);
+  world.requestedSecondsAgo(1);
+  world.at(5, () => { world.alerts += 1; });
+
+  await lookAndFinish(world);
+  assert.deepEqual(world.log, ['rotation paused', 'play ONE 22', 'stopped ONE', 'rotation resumed']);
+  assert.equal(world.runner.isRunning(), false);
+  assert.ok(world.elapsed() <= 6, 'the first one did not wait out its seconds: ' + world.elapsed());
+});
+
+test('an alert or announcement that has the screen between two announcements ends the rest', async () => {
+  const world = announceWorld();
+  world.announcements([announcementAt('ONE'), announcementAt('TWO')]);
+  world.requestedSecondsAgo(1);
+  world.at(10, () => { world.takeover = true; });
+
+  await lookAndFinish(world);
+  assert.deepEqual(world.log, ['rotation paused', 'play ONE 22', 'done ONE', 'rotation resumed']);
+});
+
+test('a new request in the middle of the announcements stops them and plays them again from the first', async () => {
+  const world = announceWorld();
+  world.announcements([announcementAt('ONE'), announcementAt('TWO', { titleSeconds: 4, followUpSeconds: 3 })]);
+  world.requestedSecondsAgo(1);
+  world.at(5, () => { world.content.settings.announceRequest = { requestedAt: new Date(world.nowMs).toISOString() }; });
+
+  await lookAndFinish(world);
+  assert.deepEqual(world.log, ['rotation paused', 'play ONE 22', 'stopped ONE', 'rotation resumed']);
+
+  await lookAndFinish(world);
+  assert.deepEqual(world.log.slice(4), ['rotation paused', 'play ONE 22', 'done ONE', 'play TWO 7', 'done TWO', 'rotation resumed']);
+});
+
+test('the list is taken when the request starts, so a change made while they play does not change what plays', async () => {
+  const world = announceWorld();
+  world.announcements([announcementAt('ONE'), announcementAt('TWO')]);
+  world.requestedSecondsAgo(1);
+  world.at(5, () => world.announcements([announcementAt('THREE')]));
+
+  await lookAndFinish(world);
+  assert.deepEqual(world.played.map(config => config.title), ['ONE', 'TWO']);
+});
+
+test('an announcement that fails ends the rest and the rotation is given back', () => withQuietErrors(async heard => {
+  const world = announceWorld();
+  world.announcements([announcementAt('BROKEN'), announcementAt('TWO')]);
+  world.requestedSecondsAgo(1);
+
+  await lookAndFinish(world);
+  assert.deepEqual(world.log, ['rotation paused', 'play BROKEN 22', 'rotation resumed']);
+  assert.equal(heard.length, 1, 'the failure is written to the console');
+  assert.equal(world.runner.isRunning(), false);
+}));
+
+test('content with no settings, no request or a request that is not a time plays nothing', async () => {
+  const world = announceWorld();
+  world.announcements([announcementAt('ONE')]);
+  [null, undefined, {}, { settings: null }, { settings: {} }, { settings: { announceRequest: null } }, { settings: { announceRequest: {} } }].forEach(content => {
+    world.content = content;
+    world.look();
+  });
+  [{ requestedAt: '' }, { requestedAt: 'tomorrow' }, { requestedAt: 12345 }, 'now', []].forEach(request => {
+    world.content = { settings: { announceRequest: request, announcements: [announcementAt('ONE')] } };
+    world.look();
+  });
+  assert.deepEqual(world.log, []);
+  assert.equal(world.runner.isRunning(), false);
+});
+
+test('tidyAnnounceRequest always gives a time, empty when it is not usable', () => {
+  const when = secondsAgo(3);
+  assert.deepEqual(tidyAnnounceRequest({ requestedAt: when }), { requestedAt: when });
+  assert.deepEqual(tidyAnnounceRequest({ requestedAt: 'whenever' }), { requestedAt: '' });
+  assert.deepEqual(tidyAnnounceRequest({ requestedAt: 12345 }), { requestedAt: '' });
+  [undefined, null, when, 4, [], {}].forEach(value => assert.deepEqual(tidyAnnounceRequest(value), { requestedAt: '' }, JSON.stringify(value)));
+  assert.deepEqual(Object.keys(tidyAnnounceRequest({ requestedAt: when, kind: 'desktop', extra: 1 })), ['requestedAt']);
+  assert.deepEqual(config.defaultSettings.announceRequest, { requestedAt: '' });
+});
+
+test('enabledAnnouncements gives words and seconds, and uses the starting seconds for any that cannot be used', () => {
+  const [first, second] = enabledAnnouncements({
+    announcements: [
+      { title: 'A', followUp: 'B', titleSeconds: 7, followUpSeconds: 4, time: '09:00', days: [1] },
+      { title: 'C', titleSeconds: 0, followUpSeconds: 'ten' },
+    ],
+  });
+  assert.deepEqual(first, { title: 'A', followUp: 'B', titleSeconds: 7, followUpSeconds: 4 });
+  assert.deepEqual(second, { title: 'C', followUp: '', titleSeconds: 12, followUpSeconds: 10 });
+
+  [undefined, null, {}, { announcements: 'none' }, { announcements: {} }, { announcements: [] }, { announcements: [null, 4, 'x', []] }].forEach(settings => {
+    assert.deepEqual(enabledAnnouncements(settings), [], JSON.stringify(settings));
+  });
+  assert.deepEqual(enabledAnnouncements({ announcements: [{ show: true }] }), [{ title: '', followUp: '', titleSeconds: 12, followUpSeconds: 10 }]);
+});
+
+test('the starting announcements are both enabled and play as they are', () => {
+  assert.deepEqual(enabledAnnouncements(config.defaultSettings).map(item => item.title), ['WHAT TIME IS IT?', 'WHAT TIME IS IT?']);
+});
+
+test('playEach asks whether to stop before each announcement, plays them one at a time, and plays none when told to stop at once', async () => {
+  const log = [];
+  const playOne = async item => {
+    log.push('start ' + item);
+    await Promise.resolve();
+    log.push('end ' + item);
+  };
+
+  await playEach(['a', 'b', 'c'], playOne, () => false);
+  assert.deepEqual(log, ['start a', 'end a', 'start b', 'end b', 'start c', 'end c']);
+
+  log.length = 0;
+  let asked = 0;
+  await playEach(['a', 'b', 'c'], playOne, () => { asked += 1; return asked > 1; });
+  assert.deepEqual(log, ['start a', 'end a']);
+
+  log.length = 0;
+  await playEach(['a', 'b'], playOne, () => true);
+  await playEach([], playOne, () => false);
+  assert.deepEqual(log, []);
+});
+
+test('a Demo step can play the announcements: the registry has it, with its name in plain words, after the single announcement', () => {
+  const ids = Object.keys(demoRegistry.demoScreens);
+  assert.ok(ids.indexOf('all-announcements') === ids.indexOf('announcement') + 1);
+  assert.equal(demoRegistry.demoScreens['all-announcements'].name, 'All announcements');
+  assert.equal(typeof demoRegistry.demoScreens['all-announcements'].run, 'function');
+  assert.deepEqual(tidyDemo({ steps: [{ screen: 'all-announcements', seconds: 30 }] }).steps, [{ screen: 'all-announcements', seconds: 30 }]);
+});
+
+test('the Demo step plays each enabled announcement in order at its own length through runAnnouncement, whatever the time says, and plays none when none is enabled', async () => {
+  // takeover.js draws on the page, so a stand-in that writes down what it is asked takes its place here
+  fs.writeFileSync(path.join(workFolder, 'dashboard/core/takeover.js'), [
+    'export const played = [];',
+    'export async function runAnnouncement(config, getContent, shouldStop) {',
+    '  played.push({ title: config.title, seconds: [config.titleSeconds, config.followUpSeconds], contentGiven: typeof getContent(), stopAsked: shouldStop() });',
+    '}',
+  ].join('\n'));
+  const stand = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/takeover.js')).href);
+  const screen = demoRegistry.demoScreens['all-announcements'];
+  const content = { settings: { announcements: [announcementAt('ONE', { time: '03:00', days: [] }), announcementAt('OFF', { show: false }), announcementAt('TWO', { titleSeconds: 5, followUpSeconds: 3 })] } };
+
+  await screen.run({ seconds: 30, getContent: () => content, cancelled: () => false });
+  assert.deepEqual(stand.played, [
+    { title: 'ONE', seconds: [12, 10], contentGiven: 'object', stopAsked: false },
+    { title: 'TWO', seconds: [5, 3], contentGiven: 'object', stopAsked: false },
+  ]);
+
+  // a demo that was stopped plays none, and one stopped after the first plays no more
+  stand.played.length = 0;
+  await screen.run({ seconds: 30, getContent: () => content, cancelled: () => true });
+  assert.deepEqual(stand.played, []);
+
+  let asked = 0;
+  await screen.run({ seconds: 30, getContent: () => content, cancelled: () => { asked += 1; return asked > 2; } });
+  assert.deepEqual(stand.played.map(item => item.title), ['ONE']);
+
+  stand.played.length = 0;
+  await screen.run({ seconds: 30, getContent: () => ({ settings: { announcements: [announcementAt('OFF', { show: false })] } }), cancelled: () => false });
+  await screen.run({ seconds: 30, getContent: () => ({ settings: { announcements: [] } }), cancelled: () => false });
+  assert.deepEqual(stand.played, []);
+});
+
+test('the announcement functions import only the config and the demo functions and use no page, and the screen code that runs them is started last', () => {
+  const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+  const code = text => text.split('\n').filter(line => !line.trim().startsWith('//')).join('\n');
+
+  assert.deepEqual(read('core/announce.js').split('\n').filter(line => /^import /.test(line)), [
+    "import { defaultSettings } from '../config.js';",
+    "import { readHandled, rememberHandled, shouldRunDemo } from './demo.js';",
+  ]);
+  assert.ok(!/\bdocument\b|\bwindow\b|\bimport\(/.test(code(read('core/announce.js'))), 'no page in announce.js');
+
+  // the real screen: it asks the four things that can have the screen, and hidden-run.js can say when it does
+  const run = read('core/announce-run.js');
+  ['demoRunning', 'nightIsUp', 'hiddenPlaying'].forEach(name => assert.ok(run.includes("'" + name + "'"), name));
+  assert.ok(run.includes('takeoverRunning: takeoverRunning,') && run.includes('alertsStarted: alertsStarted,'));
+  assert.ok(/export function hiddenPlaying\(\) \{\s*return playing;\s*\}/.test(read('core/hidden-run.js')));
+
+  const shell = read('shell.js');
+  const announcing = shell.indexOf("startOptional('./core/announce-run.js', module => module.startAnnounceRunner(getContent))");
+  assert.ok(announcing > shell.indexOf("startOptional('./core/hidden-run.js'"), 'after the hidden transitions');
+  assert.ok(announcing > shell.indexOf("startOptional('./core/demo-runner.js'"), 'after the demo runner');
+  assert.ok(announcing > shell.indexOf('startTakeovers(getContent);'), 'after the takeovers');
+  assert.ok(shell.lastIndexOf("if (!params.get('show') && !stress) {", announcing) > shell.lastIndexOf('startNight', announcing) - 2000, 'only when the whole screen runs');
 });
 
 // Run them

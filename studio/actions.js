@@ -13,6 +13,10 @@
 // the kind and the time now into Last push (the Hidden tab) and publishes. The
 // screen plays it once, at its next page change or within 20 seconds.
 //
+// Dashboard Settings has one more button after those, "Play announcements". It writes
+// the time now into announceRequest and publishes, and the screen plays every
+// announcement that is switched on, once, one after another (docs/hidden-transitions.md).
+//
 // sanity.config.js adds each set to its own page and no other.
 //
 // A Studio action is a plain function that Studio calls with the document.
@@ -147,3 +151,24 @@ function makePlayHiddenAction(kind) {
 }
 
 export const playHiddenActions = hiddenTransitions.map(makePlayHiddenAction);
+
+// The Play announcements button. Like the Play buttons above it is always allowed, so a
+// second click plays them again. The screen plays a request that is a minute old at most
+// and that it has not played before, and ignores the time and days of each announcement.
+// What it plays is the announcements list of this same page, so nothing is chosen here.
+export function usePlayAnnouncementsAction(props) {
+  const { patch, publish } = useDocumentOperation(props.id, props.type);
+
+  return {
+    label: 'Play announcements',
+    title: 'Play every announcement that is switched on, one after another, on the screen now. Times and days are ignored. Nothing plays if none is switched on.',
+    disabled: Boolean(patch.disabled),
+    onHandle: () => {
+      patch.execute([{ set: { announceRequest: { requestedAt: new Date().toISOString() } } }]);
+      publish.execute();
+      props.onComplete();
+    },
+  };
+}
+// Studio and check-schemas.mjs tell actions apart by this name
+usePlayAnnouncementsAction.action = 'playAnnouncements';

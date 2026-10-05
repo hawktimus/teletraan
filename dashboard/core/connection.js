@@ -63,7 +63,7 @@ export function itemCounts(content) {
     ['Tips', size(data.tipsAndNews)],
     ['Subteams', size(data.subteams)],
     ['People', size(data.people)],
-    ['Extra events', size(data.extraEvents)],
+    ['Events Calendar', size(data.extraEvents)],
     ['Plan', data.plan ? 1 : 0],
     ['Custom panels', size(data.customPanels)],
   ];

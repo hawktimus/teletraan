@@ -22,10 +22,11 @@ The folder `docs/content-templates/` has one CSV file for each kind of content.
 | --- | --- |
 | task.csv | Tasks |
 | plan.csv | Tonight's Plan |
-| extraEvent.csv | Extra events |
+| extraEvent.csv | Events Calendar |
 | sponsor.csv | Sponsors |
 | tipOrNews.csv | Tips and News |
 | subteam.csv | Subteams |
+| place.csv | Places |
 | person.csv | Leadership |
 | customPanel.csv | Custom Panels |
 
@@ -60,6 +61,18 @@ EXAMPLE row adds nothing, so a template you leave alone does no harm.
 A task points to its subteam by name. The script only accepts a name that is in
 a subteam file in the same folder, so keep subteam.csv with task.csv.
 
+A task can also have a point of contact (`contact`, a first name of up to 12
+characters) and a `location`, which is the name of a place. Both are the last
+two columns of task.csv, and both may be left empty. A task file saved from
+the older template, without these two columns, still imports. The script knows
+the three starting places, Classroom, Programming room and Media center,
+without a file (they are in `docs/seed/places.ndjson`), and any place in a
+place.csv in the same folder. It ignores capitals, so `classroom` is fine. Any
+other name is refused, with the row named. It cannot look in Studio, so a place
+someone made there by hand is not known to it: leave the cell empty and pick
+the place in the task in Studio, or add the place to place.csv if it is not in
+Studio yet.
+
 ### 2. Make the cells plain text
 
 Spreadsheet programs turn 2027-03-04 into a date of their own and write it
@@ -89,6 +102,7 @@ One row is one item. Write each kind of value like this:
 | web address | An address that starts with https:// | https://example.com/logo.png |
 | one of tip/news/reminder | One of the words, spelled exactly | tip |
 | name of subteam | The name of the subteam, as in subteam.csv | Build |
+| name of place | The name of the place, as in place.csv or the starting places | Classroom |
 
 Some more things to know:
 
@@ -191,6 +205,7 @@ the same row always makes the same item:
 | sponsor | name |
 | tipOrNews | text |
 | subteam | name |
+| place | name |
 | person | role, name |
 | customPanel | title |
 

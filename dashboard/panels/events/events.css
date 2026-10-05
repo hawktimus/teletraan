@@ -44,13 +44,14 @@
    line, so that row stops sooner. */
 .events .row:nth-child(4) { padding-right: 88px; }
 
-/* The day and the date sit in a column of their own, centred */
+/* The weekday and the month and day sit in a column of their own, centred.
+   The widest date at this size, MAR 30, is 224px, so the column has room to spare. */
 .events .date {
   flex: none;
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 220px;
+  width: 240px;
   color: var(--yellow);
   font-family: var(--font-display);
   font-weight: 700;
@@ -59,7 +60,7 @@
   font-size: var(--size-label);
   line-height: 48px;
 }
-.events .day-number {
+.events .month-day {
   font-size: var(--size-body);
   line-height: 56px;
 }

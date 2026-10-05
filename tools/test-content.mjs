@@ -43,7 +43,7 @@ async function loadCopy(name, changeConfig) {
   });
 
   // the Events panel and the Next event tile draw the merged list, and the Roster panel draws the roster pages, so they are tested too
-  ['events/events.js', 'next-event/next-event.js', 'roster/roster.js'].forEach(file => {
+  ['events/events.js', 'next-event/next-event.js', 'roster/roster.js', 'leadership/leadership.js'].forEach(file => {
     fs.mkdirSync(path.join(root, 'dashboard/panels', path.dirname(file)), { recursive: true });
     fs.copyFileSync(path.join(dashboardFolder, 'panels', file), path.join(root, 'dashboard/panels', file));
   });
@@ -58,6 +58,8 @@ async function loadCopy(name, changeConfig) {
     eventsPanel: await import(base + 'panels/events/events.js'),
     nextEventPanel: await import(base + 'panels/next-event/next-event.js'),
     rosterPanel: await import(base + 'panels/roster/roster.js'),
+    leadershipPanel: await import(base + 'panels/leadership/leadership.js'),
+    leadership: await import(base + 'core/leadership.js'),
     images: await import(base + 'core/images.js'),
     photos: await import(base + 'core/photos.js'),
     portrait: await import(base + 'core/portrait.js'),
@@ -93,7 +95,7 @@ const { pickSource, tidySourceSettings } = live.source;
 const { escapeHtml, hasText } = live.text;
 const { tidyDevice, deviceLines, loginAddress, showDeviceInfo, deviceFile, refreshSeconds } = live.device;
 const { classifyFailure, connectionLines, itemCounts, reasonText, reasons, drawConnection } = live.connection;
-const { tidyExtraEvent, extraEventsToEvents, mergeEvents, instantIn, rangeLabel, rangeText, timeText } = live.events;
+const { tidyExtraEvent, extraEventsToEvents, mergeEvents, instantIn, rangeLabel, eventDate, timeText } = live.events;
 const eventsPanel = live.eventsPanel;
 const nextEventPanel = live.nextEventPanel;
 const { makeTurns, makePages } = live.turns;
@@ -101,6 +103,7 @@ const { tidyPhoto, photoUrl, preloadImages, screenPhotoUrl, photoFocus, photoMax
 const { photosToShow, photoKey, newestFirst, creditText, makePhotoQueue, ownSeconds } = live.photos;
 const { photoAddress, personNamed, slotMarkup, slotsPerPage, silhouetteMarkup } = live.portrait;
 const { rosterPages, makeRosterTurns, membersPerPage, rowsPerColumn } = live.roster;
+const { leadershipPages, splitEvenly, roleOrder } = live.leadership;
 
 // startContent decides between the two readers. These two skip the deciding
 // and just read, for the tests that are about one reader.
@@ -3338,6 +3341,31 @@ test('the sample content carries the Hidden settings and no push', () => {
   assert.deepEqual(settings.hiddenRequest, { kind: '', requestedAt: '' });
 });
 
+test('the last click of Play announcements is kept as a time, and anything that is not one is empty, through all three paths', () => {
+  const defaults = live.config.defaultSettings;
+  assert.deepEqual(defaults.announceRequest, { requestedAt: '' });
+
+  // a published page that lacks it gets the starting value
+  settingsThrough({}).forEach(settings => assert.deepEqual(settings.announceRequest, { requestedAt: '' }));
+
+  const request = { requestedAt: '2026-10-05T12:00:00.000Z' };
+  settingsThrough({ announceRequest: request }).forEach(settings => assert.deepEqual(settings.announceRequest, request));
+  settingsThrough({ announceRequest: { requestedAt: 'whenever' } }).forEach(settings => assert.deepEqual(settings.announceRequest, { requestedAt: '' }));
+  [undefined, null, '', request.requestedAt, 12, [], [request]].forEach(value => {
+    settingsThrough({ announceRequest: value }).forEach(settings => assert.deepEqual(settings.announceRequest, { requestedAt: '' }, JSON.stringify(value)));
+  });
+
+  // only the time comes through from a stored page, and the document's own names do not
+  const stored = normalizeContent({ settings: document('dashboardSettings', 'dashboardSettings', { announceRequest: Object.assign({ _type: 'x', extra: 1 }, request) }) }).settings;
+  assert.deepEqual(stored.announceRequest, request);
+
+  // it does not touch the announcements themselves, and the sample carries no request
+  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  assert.ok(!('announceRequest' in raw.settings), 'a request is never part of the sample');
+  assert.deepEqual(normalizeSample(raw).settings.announceRequest, { requestedAt: '' });
+  assert.deepEqual(stored.announcements, live.config.defaultSettings.announcements, 'a page with no announcements list still has the starting ones');
+});
+
 test('photos are read from Sanity with the rest of the content, and nothing reads a photos.json any more', () => {
   const code = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
   const scripts = [];
@@ -3478,7 +3506,7 @@ test('a slot has the portrait, the name and the role, as one slat, and escapes w
   assert.ok(silhouetteMarkup().includes('href="#person-silhouette"'));
 
   // the card's shape is drawn once, however many slots there are
-  assert.deepEqual(drawn, ['card-296x296']);
+  assert.deepEqual(drawn, ['card-292x292']);
 }));
 
 test('the silhouette is drawn once in index.html, from the logo\'s numbers, with every colour a variable', () => {
@@ -3513,7 +3541,10 @@ test('the portrait sizes in portrait.js, base.css and the text sizes agree', () 
   // the photo is asked for at 280 and drawn at 280
   assert.ok(photoAddress({ photo: tidyPhoto(photoRecord()) }).includes('w=280&h=280'));
   assert.ok(/\.portrait-photo\s*\{[^}]*width: 280px;[^}]*height: 280px;/.test(base));
-  assert.ok(/\.portrait\s*\{[^}]*width: 296px;[^}]*height: 296px;/.test(base));
+  assert.ok(/\.portrait\s*\{[^}]*width: 292px;[^}]*height: 292px;/.test(base));
+  // the picture sits 6px in from the card's edge, with its cut corner beside the card's
+  assert.ok(/\.portrait-photo\s*\{[^}]*left: 6px;[^}]*top: 6px;/.test(base));
+  assert.ok(base.includes('calc(100% - 30.2px), calc(100% - 37.7px) 100%'));
   assert.ok(/\.slot-name\s*\{ font: 500 var\(--size-body\)\//.test(base));
   assert.ok(/\.slot-role\s*\{[^}]*font: 600 var\(--size-label\)\//.test(base));
   assert.ok(tokens.includes('--size-body: 56px;') && tokens.includes('--size-label: 44px;'));
@@ -3523,12 +3554,158 @@ test('the Leadership and Team Leads panels have no cap of six and use the shared
   ['leadership/leadership.js', 'team-leads/team-leads.js'].forEach(file => {
     const code = fs.readFileSync(path.join(dashboardFolder, 'panels', file), 'utf8');
     assert.equal(/MAX_CARDS|slice\(0, 6\)/.test(code), false, file + ' still limits the list to six');
-    assert.ok(code.includes('makePages(slotsPerPage)'), file + ' does not show a page at a time');
+    // Team Leads fills each page with up to three leads. Leadership is given its pages ready made, one role to a page
+    const paging = file.startsWith('leadership') ? 'makePages(1)' : 'makePages(slotsPerPage)';
+    assert.ok(code.includes(paging), file + ' does not show a page at a time');
     assert.ok(code.includes('preloadPhotos('), file + ' does not load the next page\'s photos');
     assert.ok(code.includes('watchPhotos('), file + ' does not replace a photo that cannot be loaded');
     assert.ok(code.includes('slotMarkup('), file + ' should draw its slots with slotMarkup');
   });
 });
+
+// The Leadership panel: its pages (core/leadership.js) and what it draws
+
+function crew(role, count, more) {
+  const people = [];
+  for (let number = 1; number <= count; number++) {
+    people.push(Object.assign({ role: role, name: '[' + role + ' ' + number + ']' }, more));
+  }
+  return people;
+}
+
+const namesOf = page => page.map(person => person.name);
+const rolesOf = page => Array.from(new Set(page.map(person => String(person.role).trim().toLowerCase())));
+
+test('splitEvenly shares a list over the fewest pages, with the larger pages first', () => {
+  const sizesFor = (count, size) => splitEvenly(namesCalled(count), size).map(page => page.length);
+
+  assert.deepEqual(sizesFor(0, 3), []);
+  assert.deepEqual(sizesFor(1, 3), [1]);
+  assert.deepEqual(sizesFor(2, 3), [2]);
+  assert.deepEqual(sizesFor(3, 3), [3]);
+  assert.deepEqual(sizesFor(4, 3), [2, 2]);
+  assert.deepEqual(sizesFor(5, 3), [3, 2]);
+  assert.deepEqual(sizesFor(6, 3), [3, 3]);
+  assert.deepEqual(sizesFor(7, 3), [3, 2, 2]);
+  assert.deepEqual(sizesFor(8, 3), [3, 3, 2]);
+  assert.deepEqual(sizesFor(9, 3), [3, 3, 3]);
+  assert.deepEqual(sizesFor(10, 3), [3, 3, 2, 2]);
+  // the size is a number given to it, not a fixed three
+  assert.deepEqual(sizesFor(5, 4), [3, 2]);
+  assert.deepEqual(sizesFor(9, 4), [3, 3, 3]);
+
+  // nobody is lost or moved: the pages put end to end are the list
+  assert.deepEqual([].concat(...splitEvenly(namesCalled(10), 3)), namesCalled(10));
+});
+
+test('leadershipPages puts the coaches, then the captains, then the mentors, whatever order they were typed in', () => {
+  const people = [].concat(crew('Mentor', 1), crew('Captain', 2), crew('Coach', 1), crew('Mentor', 1, { name: '[Mentor B]' }));
+  const pages = leadershipPages(people);
+
+  assert.deepEqual(roleOrder, ['coach', 'captain', 'mentor']);
+  assert.deepEqual(pages.map(rolesOf), [['coach'], ['captain'], ['mentor']]);
+  assert.deepEqual(pages.map(namesOf), [['[Coach 1]'], ['[Captain 1]', '[Captain 2]'], ['[Mentor 1]', '[Mentor B]']]);
+});
+
+test('two coaches and a captain are on separate pages, and the sample people are three pages of two', () => {
+  assert.deepEqual(leadershipPages([].concat(crew('Coach', 2), crew('Captain', 1))).map(namesOf), [['[Coach 1]', '[Coach 2]'], ['[Captain 1]']]);
+
+  const sample = normalizeSample(JSON.parse(fs.readFileSync(sampleFile, 'utf8')));
+  assert.deepEqual(leadershipPages(sample.people).map(page => page.length), [2, 2, 2]);
+  assert.deepEqual(leadershipPages(sample.people).map(rolesOf), [['coach'], ['captain'], ['mentor']]);
+});
+
+test('a role with more people than fit on a page is split evenly, and a page is never three of one role and one of another', () => {
+  assert.equal(slotsPerPage, 3);
+
+  const sizes = people => leadershipPages(people).map(page => page.length);
+  assert.deepEqual(sizes(crew('Coach', 4)), [2, 2]);
+  assert.deepEqual(sizes(crew('Captain', 5)), [3, 2]);
+  assert.deepEqual(sizes(crew('Mentor', 6)), [3, 3]);
+  assert.deepEqual(sizes(crew('Mentor', 7)), [3, 2, 2]);
+
+  const everyone = [].concat(crew('Coach', 4), crew('Captain', 5), crew('Mentor', 7));
+  const pages = leadershipPages(everyone);
+  assert.deepEqual(pages.map(page => page.length), [2, 2, 3, 2, 3, 2, 2]);
+  pages.forEach(page => assert.equal(rolesOf(page).length, 1, 'a page mixes roles: ' + namesOf(page)));
+  assert.ok(pages.every(page => page.length <= slotsPerPage));
+  // the people are in their typed order inside a role
+  assert.deepEqual([].concat(...pages.slice(0, 2)).map(person => person.name), namesOf(crew('Coach', 4)));
+});
+
+test('a president is a captain with a title, so they are on the captains\' page', () => {
+  const people = [].concat(crew('Captain', 1, { name: '[President]', title: 'President' }), crew('Coach', 1), crew('Captain', 1));
+  const pages = leadershipPages(people);
+
+  assert.deepEqual(pages.map(namesOf), [['[Coach 1]'], ['[President]', '[Captain 1]']]);
+});
+
+test('leadershipPages ignores capitals and spaces in a role, and puts any other role last, on pages of its own', () => {
+  const people = [].concat(crew('  CAPTAIN ', 1), crew('coach', 1), crew('Alumni', 1), crew('Mentor', 1), crew('', 1, { name: '[No role]' }), crew('Alumni', 1, { name: '[Alumni B]' }));
+  const pages = leadershipPages(people);
+
+  assert.deepEqual(pages.map(namesOf), [['[coach 1]'], ['[  CAPTAIN  1]'], ['[Mentor 1]'], ['[Alumni 1]', '[Alumni B]'], ['[No role]']]);
+});
+
+test('leadershipPages leaves out hidden and expired people and people with nothing to show', () => {
+  assert.deepEqual(leadershipPages([]), []);
+  assert.deepEqual(leadershipPages(undefined), []);
+
+  const people = [
+    { role: 'Coach', name: '[Shown]' },
+    { role: 'Coach', name: '[Hidden]', show: false },
+    { role: 'Coach', name: '[Expired]', expires: '2020-01-01T00:00:00.000Z' },
+    { role: 'Coach', name: '[Later expiry]', expires: '2999-01-01T00:00:00.000Z' },
+    { role: '', name: '' },
+    { role: 'Captain' },
+    { name: '[No role]' },
+  ];
+  assert.deepEqual(leadershipPages(people).map(namesOf), [['[Shown]', '[Later expiry]'], [undefined], ['[No role]']]);
+
+  // a hidden coach does not leave an empty page, and the others are shared out as if the coach was not there
+  const hidden = crew('Coach', 5);
+  hidden[0].show = false;
+  assert.deepEqual(leadershipPages(hidden).map(page => page.length), [2, 2]);
+});
+
+// The panel draws one page and the frame turns it over, so what is checked
+// here is the markup of each visit
+function leadershipMarkup(people) {
+  const host = { innerHTML: '', querySelectorAll: () => [] };
+  live.leadershipPanel.mount(host, { people: people });
+  return host.innerHTML;
+}
+
+test('the Leadership panel shows one role on each visit, centred, in the colour of its role, and comes back to the first page', () => withFakePage(() => {
+  const people = [].concat(crew('Coach', 2), crew('Captain', 4), crew('Mentor', 1));
+  const content = { people: people };
+  assert.equal(live.leadershipPanel.hasContent(content), true);
+  assert.equal(live.leadershipPanel.hasContent({ people: [] }), false);
+  assert.equal(live.leadershipPanel.hasContent({ people: [{ role: 'Coach', name: '[Hidden]', show: false }] }), false);
+
+  const visits = [leadershipMarkup(people), leadershipMarkup(people), leadershipMarkup(people), leadershipMarkup(people), leadershipMarkup(people)];
+  const slotsIn = html => countOf(html, 'data-slat="item"');
+
+  // 2 coaches, then the 4 captains as 2 and 2, then the mentor, then round again
+  assert.deepEqual(visits.map(slotsIn), [2, 2, 2, 1, 2]);
+  assert.ok(visits[0].includes('[Coach 1]') && visits[0].includes('[Coach 2]'));
+  assert.equal(visits[0].includes('Captain'), false);
+  assert.ok(visits[1].includes('[Captain 1]') && visits[1].includes('[Captain 2]'));
+  assert.ok(visits[2].includes('[Captain 3]') && visits[2].includes('[Captain 4]'));
+  assert.ok(visits[3].includes('[Mentor 1]'));
+  assert.ok(visits[4].includes('[Coach 1]'));
+
+  // the frame colours still follow the role: red for coaches, gold for captains, silver for mentors
+  assert.equal(countOf(visits[0], 'class="slot red-metal"'), 2);
+  assert.equal(countOf(visits[1], 'data-metal="gold"'), 2);
+  assert.equal(countOf(visits[3], 'data-metal="silver"'), 1);
+
+  // a short page uses the same portrait as a full one: one slot is as big as any, and the row centres them
+  assert.equal(countOf(visits[3], '<div class="portrait">'), 1);
+  assert.ok(visits[3].includes('card-292x292'));
+  assert.ok(visits[3].includes('<div class="slots">'));
+  assert.ok(visits[3].includes('<div class="slot-role">MENTOR</div>'));
+}));
 
 // The Subteam roster panel: its pages (core/roster.js) and what it draws
 
@@ -3749,7 +3926,7 @@ function javascriptFilesIn(folder) {
   }, []);
 }
 
-// Extra events: events typed into the Studio that are not on BAND (core/events.js).
+// Events Calendar: events typed into the Studio that are not on BAND (core/events.js).
 // Times are given as real moments (...Z) and zones by name, so none of this
 // depends on the time zone of the computer that runs the tests.
 
@@ -3779,7 +3956,7 @@ function titlesOf(events) {
   return events.map(event => event.title);
 }
 
-test('the query asks for the Extra events that are not switched off, soonest first, and normalizeContent passes them on', () => {
+test('the query asks for the Events Calendar entries that are not switched off, soonest first, and normalizeContent passes them on', () => {
   assert.ok(contentQuery.includes('*[_type == "extraEvent" && show != false] | order(startDate asc, _createdAt asc)'));
 
   const content = normalizeContent({
@@ -3795,14 +3972,14 @@ test('the query asks for the Extra events that are not switched off, soonest fir
   assert.deepEqual(withDefaults(null).extraEvents, []);
 });
 
-test('the sample content has Extra events marked with square brackets, and they are kept', () => {
+test('the sample content has Events Calendar entries marked with square brackets, and they are kept', () => {
   const file = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
   assert.ok(file.extraEvents.length >= 2);
   file.extraEvents.forEach(item => assert.ok(item.title.startsWith('['), item.title));
 
   const content = normalizeSample(file);
   assert.equal(content.extraEvents.length, file.extraEvents.length);
-  assert.equal(extraEventsToEvents(content.extraEvents, newYork).length, file.extraEvents.length, 'every sample Extra event can be shown');
+  assert.equal(extraEventsToEvents(content.extraEvents, newYork).length, file.extraEvents.length, 'every sample Events Calendar entry can be shown');
 });
 
 test('tidyExtraEvent keeps a good event and fills in the end date and the empty parts', () => {
@@ -3853,7 +4030,7 @@ test('instantIn gives the real moment when a clock in that time zone shows a tim
   assert.equal(instantIn('UTC', '2027-01-09', '18:30').toISOString(), '2027-01-09T18:30:00.000Z');
 });
 
-test('an Extra event with no start time is an all-day event, made like a BAND one', () => {
+test('an Events Calendar entry with no start time is an all-day event, made like a BAND one', () => {
   const event = extraEventsToEvents([extra({ title: 'Game Drop', startDate: '2027-04-02', endDate: '2027-04-04', location: 'Holly Springs HS' })], newYork)[0];
 
   assert.equal(event.allDay, true);
@@ -3869,7 +4046,7 @@ test('an Extra event with no start time is an all-day event, made like a BAND on
   assert.equal(event.start.getDate(), 2);
 });
 
-test('an Extra event with a start time starts at that time in the Theme time zone', () => {
+test('an Events Calendar entry with a start time starts at that time in the Theme time zone', () => {
   const event = extraEventsToEvents([extra({ startDate: '2027-01-09', startTime: '18:30', endTime: '20:00' })], newYork)[0];
   assert.equal(event.allDay, false);
   assert.equal(event.start.toISOString(), '2027-01-09T23:30:00.000Z');
@@ -3879,7 +4056,7 @@ test('an Extra event with a start time starts at that time in the Theme time zon
   assert.equal(elsewhere.start.toISOString(), '2027-01-09T18:30:00.000Z');
 });
 
-test('a timed Extra event with no end time ends when it starts, unless it runs over several days', () => {
+test('a timed Events Calendar entry with no end time ends when it starts, unless it runs over several days', () => {
   const oneDay = extraEventsToEvents([extra({ startDate: '2027-01-09', startTime: '18:30' })], newYork)[0];
   assert.equal(oneDay.end.getTime(), oneDay.start.getTime());
 
@@ -3897,7 +4074,7 @@ test('extraEventsToEvents copes with a missing list, bad entries and a time zone
   assert.equal(fallback.start.toISOString(), '2027-01-09T23:30:00.000Z', 'an unknown zone is America/New_York');
 });
 
-test('mergeEvents puts BAND and Extra events in one list sorted by start', () => {
+test('mergeEvents puts BAND events and Events Calendar entries in one list sorted by start', () => {
   const band = [bandTimed('[Band late]', '2027-03-04T23:00:00Z', '2027-03-05T01:00:00Z'), bandDay('[Band day]', 2027, 3, 10)];
   const extras = [extra({ title: '[Extra later]', startDate: '2027-03-12' }), extra({ title: '[Extra first]', startDate: '2027-03-04' })];
   const now = new Date('2027-03-01T15:00:00Z');
@@ -3906,7 +4083,7 @@ test('mergeEvents puts BAND and Extra events in one list sorted by start', () =>
   assert.deepEqual(titlesOf(merged), ['[Extra first]', '[Band late]', '[Band day]', '[Extra later]']);
 });
 
-test('mergeEvents shows the BAND events as they are when there are no Extra events, and the Extra events when there are no BAND ones', () => {
+test('mergeEvents shows the BAND events as they are when there are no Events Calendar entries, and the entries when there are no BAND ones', () => {
   const now = new Date('2027-03-01T15:00:00Z');
   const band = [bandDay('[Band day]', 2027, 3, 10)];
 
@@ -3984,7 +4161,7 @@ test('mergeEvents adds the dates each event covers, in the Theme time zone for t
   assert.deepEqual(days('[Ends at midnight]'), ['2027-03-10', '2027-03-10']);
 });
 
-test('an Extra event on the same date as a BAND event with a title that contains the other is left out', () => {
+test('an Events Calendar entry on the same date as a BAND event with a title that contains the other is left out', () => {
   const now = new Date('2026-10-04T15:00:00Z');
   const band = [bandDay('Doyenne East Regional', 2026, 10, 17)];
 
@@ -4002,7 +4179,7 @@ test('an Extra event on the same date as a BAND event with a title that contains
   assert.deepEqual(titlesOf(merged), ['THOR East']);
 });
 
-test('an Extra event stays when the date is different, or the titles are not alike', () => {
+test('an Events Calendar entry stays when the date is different, or the titles are not alike', () => {
   const now = new Date('2026-10-04T15:00:00Z');
   const band = [bandDay('Doyenne East Regional', 2026, 10, 17)];
 
@@ -4011,7 +4188,7 @@ test('an Extra event stays when the date is different, or the titles are not ali
   assert.deepEqual(titlesOf(mergeEvents(band, [extra({ title: 'Doyenne West', startDate: '2026-10-17' })], newYork, now)), ['Doyenne East Regional', 'Doyenne West']);
 });
 
-test('a BAND event on any day of a several day Extra event with the same name hides the Extra event, and an empty title matches nothing', () => {
+test('a BAND event on any day of a several day Events Calendar entry with the same name hides the entry, and an empty title matches nothing', () => {
   const now = new Date('2027-03-01T15:00:00Z');
   const weekend = extra({ title: 'Wake County Event', startDate: '2027-04-02', endDate: '2027-04-04' });
 
@@ -4027,16 +4204,81 @@ test('rangeLabel writes one day, a range in one month, and a range over two mont
   assert.equal(rangeLabel('2027-03-31', '2027-04-01'), 'Mar 31-Apr 1');
   assert.equal(rangeLabel('2027-04-09', '2027-04-10'), 'Apr 9-10');
   assert.equal(rangeLabel('2027-04-02', '2027-04-01'), 'Apr 2', 'a last day before the first is one day');
+  assert.equal(rangeLabel('2027-03-30', '2027-04-01'), 'Mar 30-Apr 1');
+  assert.equal(rangeLabel('2026-12-31', '2027-01-01'), 'Dec 31-Jan 1', 'a range over New Year');
+  assert.equal(rangeLabel('2028-02-28', '2028-02-29'), 'Feb 28-29', 'the leap day');
 });
 
-test('rangeText is in capitals for an event of several days and empty for one day', () => {
-  assert.equal(rangeText({ firstDay: '2027-04-02', lastDay: '2027-04-04' }), 'APR 2-4');
-  assert.equal(rangeText({ firstDay: '2026-12-30', lastDay: '2027-01-02' }), 'DEC 30-JAN 2');
-  assert.equal(rangeText({ firstDay: '2027-04-02', lastDay: '2027-04-02' }), '');
-  assert.equal(rangeText({}), '');
+test('eventDate writes the weekday, the month and day, and the range, in capitals', () => {
+  const dates = (firstDay, lastDay) => eventDate({ firstDay: firstDay, lastDay: lastDay });
 
-  const merged = mergeEvents([bandDay('[Band]', 2027, 4, 2, 4)], [], newYork, new Date('2027-03-01T15:00:00Z'));
-  assert.equal(rangeText(merged[0]), 'APR 2-4');
+  // one day, with the month: the examples from the owner
+  assert.deepEqual(dates('2026-10-17', '2026-10-17'), { weekday: 'SAT', monthDay: 'OCT 17', range: '', text: 'SAT OCT 17' });
+  assert.deepEqual(dates('2026-12-05', '2026-12-05'), { weekday: 'SAT', monthDay: 'DEC 5', range: '', text: 'SAT DEC 5' });
+
+  // several days in one month
+  assert.deepEqual(dates('2027-04-02', '2027-04-04'), { weekday: 'FRI', monthDay: 'APR 2', range: 'APR 2-4', text: 'APR 2-4' });
+
+  // over a month end, and over New Year
+  assert.deepEqual(dates('2027-03-30', '2027-04-01'), { weekday: 'TUE', monthDay: 'MAR 30', range: 'MAR 30-APR 1', text: 'MAR 30-APR 1' });
+  assert.deepEqual(dates('2026-12-30', '2027-01-02'), { weekday: 'WED', monthDay: 'DEC 30', range: 'DEC 30-JAN 2', text: 'DEC 30-JAN 2' });
+  assert.equal(dates('2026-12-31', '2027-01-01').range, 'DEC 31-JAN 1');
+
+  // the edges of a month and a year, and a leap day
+  assert.equal(dates('2026-12-31', '2026-12-31').text, 'THU DEC 31');
+  assert.equal(dates('2027-01-01', '2027-01-01').text, 'FRI JAN 1');
+  assert.equal(dates('2027-03-31', '2027-03-31').text, 'WED MAR 31');
+  assert.equal(dates('2027-04-01', '2027-04-01').text, 'THU APR 1');
+  assert.equal(dates('2028-02-29', '2028-02-29').text, 'TUE FEB 29');
+
+  // a last day before the first is one day
+  assert.equal(dates('2027-04-02', '2027-04-01').range, '');
+});
+
+test('eventDate has nothing to say for an event with no date that can be read', () => {
+  const none = { weekday: '', monthDay: '', range: '', text: '' };
+  assert.deepEqual(eventDate({}), none);
+  assert.deepEqual(eventDate(undefined), none);
+  assert.deepEqual(eventDate({ firstDay: 'soon', lastDay: 'later' }), none);
+  assert.deepEqual(eventDate({ firstDay: '2027-02-30', lastDay: '2027-02-30', start: 'not a date' }), none);
+});
+
+test('eventDate reads the dates in the Theme time zone, whatever the time zone of the computer', () => {
+  // 02:00 UTC on the 18th is 10 PM on the 17th in New York and 11 AM on the 18th in Tokyo
+  const late = { title: '[Late]', start: new Date('2026-10-18T02:00:00Z'), end: new Date('2026-10-18T03:00:00Z'), allDay: false, location: '' };
+  assert.equal(eventDate(late, newYork).text, 'SAT OCT 17');
+  assert.equal(eventDate(late, 'Asia/Tokyo').text, 'SUN OCT 18');
+  assert.equal(eventDate(late, 'UTC').text, 'SUN OCT 18');
+  assert.equal(eventDate(late).text, 'SAT OCT 17', 'no zone given: the Theme page starts as New York');
+  assert.equal(eventDate(late, 'Nowhere/Land').text, 'SAT OCT 17', 'a zone that does not exist counts as none');
+
+  // an event that ends at midnight is not on the day after
+  const toMidnight = { start: new Date('2026-12-30T22:00:00Z'), end: new Date('2026-12-31T05:00:00Z'), allDay: false }; // 5 PM to midnight in New York
+  assert.deepEqual([eventDate(toMidnight, newYork).range, eventDate(toMidnight, newYork).text], ['', 'WED DEC 30']);
+
+  // the same events, with the computer in zones a long way either side of New York
+  const before = process.env.TZ;
+  try {
+    ['Pacific/Kiritimati', 'Pacific/Pago_Pago', 'Asia/Kolkata', 'UTC'].forEach(zone => {
+      process.env.TZ = zone;
+      const band = [
+        bandDay('[All day]', 2026, 12, 30, 31),
+        bandTimed('[Late]', '2026-10-18T02:00:00Z', '2026-10-18T03:00:00Z'),
+        bandTimed('[New Year]', '2027-01-01T04:30:00Z', '2027-01-01T04:50:00Z'), // 11:30 PM to 11:50 PM on 31 December in New York
+      ];
+      const merged = mergeEvents(band, [extra({ title: '[Extra]', startDate: '2027-04-02', startTime: '23:30' })], newYork, new Date('2026-10-01T12:00:00Z'));
+      const texts = merged.map(event => event.title + ': ' + eventDate(event, newYork).text);
+
+      assert.deepEqual(texts, ['[Late]: SAT OCT 17', '[All day]: DEC 30-31', '[New Year]: THU DEC 31', '[Extra]: FRI APR 2'], 'computer zone ' + zone);
+
+      // with no firstDay or lastDay on them, the same text comes out
+      const bare = merged.map(event => eventDate({ start: event.start, end: event.end, allDay: event.allDay }, newYork).text);
+      assert.deepEqual(bare, merged.map(event => eventDate(event, newYork).text), 'computer zone ' + zone);
+    });
+  } finally {
+    if (before === undefined) delete process.env.TZ;
+    else process.env.TZ = before;
+  }
 });
 
 test('timeText is empty for an all-day event, so only its date shows', () => {
@@ -4046,9 +4288,14 @@ test('timeText is empty for an all-day event, so only its date shows', () => {
 });
 
 // The two panels write times on the computer's own clock, as they do for BAND
-// events, so these tests use the computer's own time zone for the Extra events.
+// events, so these tests use the computer's own time zone for the Events Calendar entries.
 // (On the Mini the two are the same: rebuilding-the-mini.md sets the zone.)
 const computerZone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+// FRI for 2027-04-02, from the calendar alone and in UTC
+function weekdayOn(year, month, day) {
+  return ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][new Date(Date.UTC(year, month - 1, day)).getUTCDay()];
+}
 
 // The two panels draw the merged list. A stand-in host takes the markup.
 function drawn(panel, content) {
@@ -4073,6 +4320,8 @@ test('the Events panel shows an all-day event with its date and no time, and a r
 
   const markup = drawn(eventsPanel, { events: merged });
   assert.ok(markup.includes('Winterfest'));
+  assert.ok(markup.includes('<div class="day-name">' + weekdayOn(soon.getFullYear(), 4, 2) + '</div>'), 'the weekday is kept');
+  assert.ok(markup.includes('<div class="month-day">APR 2</div>'), 'the month comes with the day');
   assert.ok(markup.includes('APR 2-4 · Holly Springs HS'), 'a range, then the place');
   assert.ok(markup.includes('6:30 PM · Cafeteria'), 'a time, then the place');
   assert.ok(!markup.includes('ALL DAY'), 'no all-day wording and no time');
@@ -4091,7 +4340,7 @@ test('the Next event tile shows the date only for an all-day event, a range for 
 
   const oneDay = tile({ title: 'Game Drop', startDate: year + '-01-09' });
   assert.ok(oneDay.includes('Game Drop'));
-  assert.ok(/class="when">[A-Z]{3} JAN 9<\/div>/.test(oneDay), oneDay);
+  assert.ok(oneDay.includes('class="when">' + weekdayOn(year, 1, 9) + ' JAN 9</div>'), oneDay);
 
   const range = tile({ title: 'Weekend', startDate: year + '-04-02', endDate: year + '-04-04', location: 'Holly Springs HS' });
   assert.ok(/class="when">APR 2-4<\/div>/.test(range), range);
@@ -4099,6 +4348,40 @@ test('the Next event tile shows the date only for an all-day event, a range for 
 
   const timed = tile({ title: 'Evening', startDate: year + '-01-09', startTime: '18:30' });
   assert.ok(/class="when">[A-Z]{3} JAN 9 · \d{1,2}:\d\d [AP]M<\/div>/.test(timed), timed);
+  assert.ok(timed.includes('class="when">' + weekdayOn(year, 1, 9) + ' JAN 9 · '), timed);
+});
+
+test('the two panels write the date in the Theme time zone, whatever the time zone of the computer', () => {
+  const year = new Date().getFullYear() + 1;
+  const late = [bandTimed('[Late]', year + '-10-18T02:00:00Z', year + '-10-18T02:30:00Z')]; // 10 PM on the 17th in New York, 11 AM on the 18th in Tokyo
+
+  const before = process.env.TZ;
+  try {
+    ['Pacific/Kiritimati', 'Pacific/Pago_Pago', 'Asia/Kolkata'].forEach(zone => {
+      process.env.TZ = zone;
+
+      const inNewYork = { theme: { timeZone: newYork }, events: mergeEvents(late, [], newYork, new Date()) };
+      const events = drawn(eventsPanel, inNewYork);
+      assert.ok(events.includes('<div class="day-name">' + weekdayOn(year, 10, 17) + '</div>'), 'events, computer zone ' + zone);
+      assert.ok(events.includes('<div class="month-day">OCT 17</div>'), 'events, computer zone ' + zone);
+      assert.ok(drawn(nextEventPanel, inNewYork).includes('class="when">' + weekdayOn(year, 10, 17) + ' OCT 17 · '), 'tile, computer zone ' + zone);
+
+      const inTokyo = { theme: { timeZone: 'Asia/Tokyo' }, events: mergeEvents(late, [], 'Asia/Tokyo', new Date()) };
+      assert.ok(drawn(eventsPanel, inTokyo).includes('<div class="month-day">OCT 18</div>'), 'events in Tokyo, computer zone ' + zone);
+      assert.ok(drawn(nextEventPanel, inTokyo).includes('class="when">' + weekdayOn(year, 10, 18) + ' OCT 18 · '), 'tile in Tokyo, computer zone ' + zone);
+    });
+  } finally {
+    if (before === undefined) delete process.env.TZ;
+    else process.env.TZ = before;
+  }
+});
+
+test('the two panels still write a date when the events did not come through mergeEvents', () => {
+  // shell.js shows the BAND events as they are when merging fails: no firstDay, no lastDay
+  const year = new Date().getFullYear() + 1;
+  const bare = { theme: { timeZone: newYork }, events: [bandTimed('[Late]', year + '-10-18T02:00:00Z', year + '-10-18T02:30:00Z')] };
+  assert.ok(drawn(eventsPanel, bare).includes('<div class="month-day">OCT 17</div>'));
+  assert.ok(drawn(nextEventPanel, { events: bare.events }).includes('class="when">' + weekdayOn(year, 10, 17) + ' OCT 17 · '), 'with no theme in the content the default zone is used');
 });
 
 test('the Events panel and the Next event tile have nothing to show once the only event is over', () => {
@@ -4353,7 +4636,7 @@ test('reasonText has plain words for each reason, and other for one it does not 
 test('itemCounts counts each kind of content, the plan as one or none, and copes with missing lists', () => {
   assert.deepEqual(itemCounts(someContent), [
     ['Tasks', 12], ['Sponsors', 4], ['Tips', 9], ['Subteams', 5],
-    ['People', 8], ['Extra events', 2], ['Plan', 1], ['Custom panels', 3],
+    ['People', 8], ['Events Calendar', 2], ['Plan', 1], ['Custom panels', 3],
   ]);
   assert.deepEqual(itemCounts(withDefaults({})).map(pair => pair[1]), [0, 0, 0, 0, 0, 0, 0, 0]);
   assert.deepEqual(itemCounts(null).map(pair => pair[1]), [0, 0, 0, 0, 0, 0, 0, 0]);
@@ -4392,7 +4675,7 @@ test('connectionLines with the switch on gives the last read, the counts and the
   assert.deepEqual(connectionLines({ status: sanityStatus, always: true, content: someContent, calendarsReadAt: calendarsRead }), [
     'Sanity OK · last read 2:31 PM',
     'Tasks 12 · Sponsors 4 · Tips 9 · Subteams 5',
-    'People 8 · Extra events 2 · Plan 1 · Custom panels 3',
+    'People 8 · Events Calendar 2 · Plan 1 · Custom panels 3',
     'Calendars read 2:30 PM',
   ]);
 });
@@ -4402,7 +4685,7 @@ test('connectionLines says when the calendars have not been read, and when Sanit
   assert.deepEqual(lines, [
     'Sanity not read yet',
     'Tasks 0 · Sponsors 0 · Tips 0 · Subteams 0',
-    'People 0 · Extra events 0 · Plan 0 · Custom panels 0',
+    'People 0 · Events Calendar 0 · Plan 0 · Custom panels 0',
     'Calendars not read yet',
   ]);
 });
@@ -4425,7 +4708,7 @@ test('connectionLines puts the reason first and the counts after it when the swi
     'SANITY UNREACHABLE: NETWORK DOWN',
     'Last good read 2:31 PM',
     'Tasks 12 · Sponsors 4 · Tips 9 · Subteams 5',
-    'People 8 · Extra events 2 · Plan 1 · Custom panels 3',
+    'People 8 · Events Calendar 2 · Plan 1 · Custom panels 3',
     'Calendars read 2:30 PM',
     'ssh hawktimus@10.0.0.5',
   ]);
@@ -4598,6 +4881,180 @@ test('every script in dashboard/ uses nothing newer than ES2017', () => {
     });
   });
   assert.deepEqual(problems, []);
+});
+
+// A task's contact and location, and the Tasks panel that shows them
+
+test('the query follows the task\'s place reference, and says whether the place is showing', () => {
+  assert.ok(contentQuery.includes('"location": location->name'));
+  assert.ok(contentQuery.includes('"locationShown": location->show != false'));
+});
+
+test('a task keeps its contact and the name of its place, and nothing else about it changes', () => {
+  const result = {
+    tasks: [
+      document('task', 't1', { title: '[A]', status: 'in-progress', contact: ' Sam ', location: 'Classroom', locationShown: true, order: 2 }),
+      document('task', 't2', { title: '[B]', status: 'up-next', contact: '', location: null, locationShown: true, order: 1 }),
+    ],
+  };
+  const tasks = normalizeContent(result, today).tasks;
+  assert.deepEqual(tasks, [
+    { title: '[B]', status: 'up-next', order: 1 },
+    { title: '[A]', status: 'in-progress', contact: 'Sam', location: 'Classroom', order: 2 },
+  ]);
+});
+
+test('a hidden, deleted or nameless place gives no location, and the task stays', () => {
+  const task = fields => document('task', 't1', Object.assign({ title: '[A]', status: 'in-progress', contact: 'Sam' }, fields));
+  const only = fields => normalizeContent({ tasks: [task(fields)] }, today).tasks[0];
+
+  // hidden: the query sends the name and locationShown false
+  assert.deepEqual(only({ location: 'Classroom', locationShown: false }), { title: '[A]', status: 'in-progress', contact: 'Sam' });
+  // deleted, or never published: the query sends null for both
+  assert.deepEqual(only({ location: null, locationShown: null }), { title: '[A]', status: 'in-progress', contact: 'Sam' });
+  // a place with no name, a name of spaces, or something that is not text
+  assert.equal('location' in only({ location: '   ', locationShown: true }), false);
+  assert.equal('location' in only({ location: 7, locationShown: true }), false);
+  assert.equal('location' in only({ location: { _ref: 'place-x' } }), false);
+  // a place that shows
+  assert.equal(only({ location: 'Classroom', locationShown: true }).location, 'Classroom');
+
+  // the task's own hidden switch, expiry and order work as before
+  const hiddenTask = normalizeContent({ tasks: [task({ location: 'Classroom', show: false }), task({ location: 'Hallway', expires: '2020-01-01T00:00:00.000Z' }), task({ location: 'Gym' })] }, today).tasks;
+  assert.equal(hiddenTask.length, 3);
+  assert.deepEqual(visibleItems(hiddenTask, today).map(item => item.location), ['Gym']);
+});
+
+test('the sample content is cleaned the same way, and has a contact and a place', () => {
+  const sample = normalizeSample(JSON.parse(fs.readFileSync(sampleFile, 'utf8')));
+  assert.ok(sample.tasks.some(task => task.contact && task.location));
+  assert.ok(sample.tasks.some(task => task.contact && !task.location));
+  assert.ok(sample.tasks.some(task => !task.contact && task.location));
+
+  const odd = normalizeSample({ tasks: [{ title: '[A]', status: 'up-next', contact: '  ', location: ' Hallway ', locationShown: false }] });
+  assert.deepEqual(odd.tasks, [{ title: '[A]', status: 'up-next' }]);
+});
+
+// Each mount of the panel shows the next page, so a test that mounts it gets its own copy
+let tasksPanelCopies = 0;
+async function freshTasksPanel() {
+  const folder = path.join(workFolder, 'flag-off', 'dashboard', 'panels', 'tasks');
+  fs.mkdirSync(folder, { recursive: true });
+  fs.copyFileSync(path.join(dashboardFolder, 'panels', 'tasks', 'tasks.js'), path.join(folder, 'tasks.js'));
+  tasksPanelCopies += 1;
+  return import(pathToFileURL(path.join(folder, 'tasks.js')).href + '?copy=' + tasksPanelCopies);
+}
+
+function taskCalled(title, status, extra) {
+  return Object.assign({ title: title, status: status }, extra);
+}
+
+// A row as one line of text: the status and the titles
+function rowText(row) {
+  return row.group.status + ': ' + row.tasks.map(task => task.title).join(' ');
+}
+
+test('a task with a contact or a place takes two lines, so a row of two lines holds one, and a done task is always one line', async () => {
+  const panel = await freshTasksPanel();
+  const content = {
+    settings: { doneDays: 7 },
+    tasks: [
+      taskCalled('[A]', 'blocked'),
+      taskCalled('[B]', 'in-progress', { contact: 'Sam' }),
+      taskCalled('[C]', 'in-progress', { location: 'Classroom' }),
+      taskCalled('[D]', 'in-progress'),
+      taskCalled('[E]', 'in-progress'),
+      taskCalled('[F]', 'up-next', { contact: 'Kim', location: 'Media center' }),
+      taskCalled('[G]', 'done', { contact: 'Lee', location: 'Hallway' }),
+      taskCalled('[H]', 'done'),
+    ],
+  };
+
+  assert.deepEqual(panel.rowsFor(content, today).map(rowText), [
+    'blocked: [A]',
+    'in-progress: [B]',
+    'in-progress: [C]',
+    'in-progress: [D] [E]',
+    'up-next: [F]',
+    'done: [G] [H]',
+  ]);
+
+  // a plain task and one with details do not share a row: that would be three lines
+  const mixed = { settings: { doneDays: 7 }, tasks: [taskCalled('[A]', 'up-next'), taskCalled('[B]', 'up-next', { location: 'Hallway' }), taskCalled('[C]', 'up-next')] };
+  assert.deepEqual(panel.rowsFor(mixed, today).map(rowText), ['up-next: [A]', 'up-next: [B]', 'up-next: [C]']);
+});
+
+test('the Tasks panel keeps its rules: hidden and expired tasks stay off, old done tasks drop off, a task with no title is skipped', async () => {
+  const panel = await freshTasksPanel();
+  const old = new Date(today.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString();
+  const content = {
+    settings: { doneDays: 7 },
+    tasks: [
+      taskCalled('[Hidden]', 'in-progress', { show: false, location: 'Hallway' }),
+      taskCalled('[Expired]', 'in-progress', { expires: '2020-01-01T00:00:00.000Z', contact: 'Sam' }),
+      taskCalled('', 'in-progress', { contact: 'Sam' }),
+      taskCalled('[Old]', 'done', { finishedOn: old }),
+      taskCalled('[Shown]', 'in-progress', { contact: 'Sam' }),
+    ],
+  };
+  assert.deepEqual(panel.rowsFor(content, today).map(rowText), ['in-progress: [Shown]']);
+  assert.equal(panel.hasContent(content), true);
+  assert.equal(panel.hasContent({ settings: { doneDays: 7 }, tasks: [taskCalled('[Old]', 'done', { finishedOn: old })] }), false);
+  assert.equal(panel.hasContent({ settings: { doneDays: 7 }, tasks: [] }), false);
+});
+
+test('the Tasks panel shows three rows a page and the next page each time it comes round, blocked first and done last', async () => {
+  const panel = await freshTasksPanel();
+  const content = {
+    settings: { doneDays: 7 },
+    tasks: [
+      taskCalled('[Done]', 'done'),
+      taskCalled('[P1]', 'in-progress', { contact: 'Sam' }),
+      taskCalled('[P2]', 'in-progress', { contact: 'Kim' }),
+      taskCalled('[P3]', 'in-progress', { location: 'Hallway' }),
+      taskCalled('[P4]', 'in-progress', { location: 'Classroom' }),
+      taskCalled('[Next]', 'up-next', { contact: 'Lee' }),
+      taskCalled('[Blocked]', 'blocked', { contact: 'Pat' }),
+    ],
+  };
+
+  const first = drawn(panel, content);
+  const second = drawn(panel, content);
+  const third = drawn(panel, content);
+
+  assert.equal(countOf(first, 'data-slat="item"'), 3);
+  ['[Blocked]', '[P1]', '[P2]'].forEach(title => assert.ok(first.includes(title), title + ' should be on the first page'));
+  assert.ok(!first.includes('[P3]'));
+  assert.equal(countOf(second, 'data-slat="item"'), 3);
+  ['[P3]', '[P4]', '[Next]'].forEach(title => assert.ok(second.includes(title), title + ' should be on the second page'));
+  assert.equal(countOf(third, 'data-slat="item"'), 1);
+  assert.ok(third.includes('[Done]'));
+
+  // then round to the first page again
+  assert.equal(drawn(panel, content), first);
+});
+
+test('the Tasks panel draws a contact and a place under the name, only for tasks that are not done, and escapes them', async () => {
+  const panel = await freshTasksPanel();
+  const markup = tasks => drawn(panel, { settings: { doneDays: 7 }, tasks: tasks });
+
+  const both = markup([taskCalled('[A]', 'in-progress', { contact: 'Sam', location: 'Classroom' })]);
+  assert.ok(both.includes('<div class="task-detail"><span class="contact">Sam</span><span class="location">Classroom</span></div>'), both);
+
+  const contactOnly = markup([taskCalled('[A]', 'blocked', { contact: 'Sam' })]);
+  assert.ok(contactOnly.includes('<span class="contact">Sam</span>') && !contactOnly.includes('class="location"'));
+  const locationOnly = markup([taskCalled('[A]', 'up-next', { location: 'Media center' })]);
+  assert.ok(locationOnly.includes('<span class="location">Media center</span>') && !locationOnly.includes('class="contact"'));
+
+  const plain = markup([taskCalled('[A]', 'up-next', { subteam: '[Build]' })]);
+  assert.ok(!plain.includes('task-detail'));
+  assert.ok(plain.includes('<div class="subteam">[Build]</div>'));
+
+  const done = markup([taskCalled('[A]', 'done', { contact: 'Sam', location: 'Classroom' })]);
+  assert.ok(done.includes('[A]') && !done.includes('task-detail') && !done.includes('Sam') && !done.includes('Classroom'), done);
+
+  const unsafe = markup([taskCalled('[A]', 'up-next', { contact: '<b>', location: 'A & B' })]);
+  assert.ok(unsafe.includes('&lt;b&gt;') && unsafe.includes('A &amp; B') && !unsafe.includes('<b>'), unsafe);
 });
 
 // Run them

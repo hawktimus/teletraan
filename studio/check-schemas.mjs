@@ -32,7 +32,16 @@ function withFlags(fields) {
 // The limits are what fits on the screen, measured with ordinary mixed case
 // text. Change one here only after measuring the panel again.
 const contract = {
-  task: withFlags({ title: text(22), subteam: { kind: 'reference', to: 'subteam' }, status: 'string', finishedOn: 'datetime', order: 'number' }),
+  task: withFlags({
+    title: text(22),
+    subteam: { kind: 'reference', to: 'subteam' },
+    status: 'string',
+    finishedOn: 'datetime',
+    contact: text(12),
+    location: { kind: 'reference', to: 'place' },
+    order: 'number',
+  }),
+  place: { name: text(16), show: 'boolean' },
   plan: withFlags({
     heading: text(26),
     date: 'date',
@@ -91,6 +100,7 @@ const contract = {
     desktopChance: number(0, 100),
     redEyesChance: number(0, 100),
     hiddenRequest: object({ kind: 'string', requestedAt: 'datetime' }),
+    announceRequest: object({ requestedAt: 'datetime' }),
     countdown: object({ kickoffLabel: text(12), kickoff: 'datetime', rolloutLabel: text(12), rollout: 'datetime' }),
     alert: object({ on: 'boolean', headline: text(24), message: text(90), until: 'datetime' }),
     rotation: object({ grid1: rows(panelStep), grid2: rows(panelStep), tickerSeconds: number(6, 120) }),
@@ -153,31 +163,38 @@ const choices = {
   'dashboardSettings.nightSpeed': ['slow', 'normal', 'fast'],
   'dashboardSettings.contentSource': ['production', 'sample'],
   'dashboardSettings.hiddenRequest.kind': ['desktop', 'redEyes'],
-  'demo.steps.screen': ['announcement', 'night-mode'],
+  'demo.steps.screen': ['announcement', 'all-announcements', 'night-mode'],
 };
 
 // The panels that can be put in each area of the screen. The Studio lists and
 // defaultSettings in config.js must offer the same panels as registry.js.
 const rotationAreas = ['grid1', 'grid2'];
 
-// The pages that exist once, after the lists: [title, type]. Each is one document whose id is its type.
-const singletonPages = [
-  ['Dashboard Settings', 'dashboardSettings'],
-  ['Theme', 'theme'],
-  ['Demo', 'demo'],
-];
+// The field each sidebar list is sorted by. Where a line sits in structure.js
+// is up to whoever edits that file, so only the sort of each list is checked.
+const listSort = {
+  task: 'order',
+  plan: 'date',
+  extraEvent: 'startDate',
+  sponsor: 'order',
+  tipOrNews: 'order',
+  subteam: 'order',
+  person: 'order',
+  photo: '_createdAt',
+  customPanel: 'order',
+  place: 'name',
+};
 
-const sidebar = [
-  ['Tasks', 'task', 'order'],
-  ["Tonight's Plan", 'plan', 'date'],
-  ['Extra events', 'extraEvent', 'startDate'],
-  ['Sponsors', 'sponsor', 'order'],
-  ['Tips and News', 'tipOrNews', 'order'],
-  ['Subteams', 'subteam', 'order'],
-  ['Leadership', 'person', 'order'],
-  ['Photos', 'photo', '_createdAt'],
-  ['Custom Panels', 'customPanel', 'order'],
-];
+// The pages that exist once. Each is one document whose id is its type.
+const pageTypes = ['dashboardSettings', 'theme', 'demo'];
+
+// Document types that have no line in structure.js, with the reason for each.
+// Types that are only objects inside another document are not documents and
+// are left out of the check without being listed here.
+const notInSidebar = {};
+
+// The sidebar titles that people look for by name
+const sidebarTitles = { extraEvent: 'Events Calendar', place: 'Places' };
 
 // The real 'sanity' and 'react' packages are not installed, so stand-ins with
 // the same function names sit next to a copy of the files that import them.
@@ -194,6 +211,12 @@ const standIns = {
       'export const defineArrayMember = member => member;',
       'export const defineConfig = config => config;',
       // writes down what an action does, so checkContentSource can read it back
+      // only the names the Publish all tool imports, so that its file can be loaded
+      'export const useClient = () => ({});',
+      'export const useSchema = () => ({ get: () => undefined });',
+      'export const useWorkspace = () => ({});',
+      'export const useCurrentUser = () => null;',
+      'export const validateDocument = async () => [];',
       'export const useDocumentOperation = () => ({',
       '  patch: { execute: patches => globalThis.studioCalls.push({ patch: patches }) },',
       '  publish: { execute: () => globalThis.studioCalls.push({ publish: true }) },',
@@ -207,13 +230,14 @@ const standIns = {
     'index.js': [
       'export const useState = value => [value, () => {}];',
       'export const useEffect = () => {};',
+      'export const createElement = (type, props, ...children) => ({ type: type, props: props, children: children });',
     ].join('\n'),
   },
 };
 
 function makeSandbox() {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-studio-'));
-  ['schemas', 'structure.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
+  ['schemas', 'structure.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'publish-all.js', 'publish-all-tool.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
     fs.cpSync(path.join(here, name), path.join(folder, name), { recursive: true });
   });
   fs.writeFileSync(path.join(folder, 'package.json'), JSON.stringify({ type: 'module' }));
@@ -1150,8 +1174,9 @@ function checkHiddenTab() {
   const offered = choicesOf('dashboardSettings.hiddenRequest.kind');
   need(problems, offered.map(item => item.title).join() === ids.map(id => registry[id].name).join(), 'hiddenRequest.kind should show the names in the dashboard registry');
 
-  // The Play buttons come after the two content source buttons: one for each transition, plain functions, and only on this page
-  const buttons = world.config.document.actions([], { schemaType: 'dashboardSettings' }).slice(2);
+  // The Play buttons come after the two content source buttons: one for each transition, plain functions, and only on this page.
+  // Play announcements comes after them (checkPlayAnnouncements).
+  const buttons = world.config.document.actions([], { schemaType: 'dashboardSettings' }).slice(2, 2 + Object.keys(registry).length);
   if (buttons.length !== ids.length || !buttons.every(button => typeof button === 'function')) {
     return problems.concat('the settings page should add one Play button for each hidden transition, written as plain functions');
   }
@@ -1181,6 +1206,71 @@ function checkHiddenTab() {
     need(problems, request && typeof request.requestedAt === 'string' && new Date(request.requestedAt).toISOString() === request.requestedAt && Date.parse(request.requestedAt) >= before && Date.parse(request.requestedAt) <= after, label + ' should write the time now, as new Date().toISOString() writes it');
     need(problems, press(button, { hiddenRequest: { kind: id, requestedAt: '2026-06-01T12:00:00.000Z' } }).state.disabled === false, label + ' should be on when a push is already published, so it can be played again');
   });
+  return problems;
+}
+
+// Play announcements: the hidden announceRequest field in the Announcements tab
+// (schemas/settingsAnnouncements.js), its starting value in config.js, the button that
+// fills it in (actions.js) and the Demo step that plays the same announcements
+// (the registry in dashboard/core/demo-screens.js and the Studio's copy of it).
+function checkPlayAnnouncements() {
+  const problems = [];
+  const config = world.dashboard;
+  const settings = typeByName('dashboardSettings');
+  const request = fieldAt('dashboardSettings.announceRequest');
+  const time = fieldAt('dashboardSettings.announceRequest.requestedAt');
+
+  // The field: an object with one read only time, hidden from editors, with no starting value of its own
+  need(problems, request && request.type === 'object', 'announceRequest should be an object');
+  need(problems, request && request.group === 'announcements', 'announceRequest should be in the Announcements tab');
+  need(problems, request && request.hidden === true, 'announceRequest should be hidden from editors (hidden: true)');
+  need(problems, request && request.initialValue === undefined, 'announceRequest should have no starting value in the Studio');
+  need(problems, request && /Play announcements/.test(request.description || ''), 'the announceRequest description should name the button Play announcements');
+  need(problems, time && time.type === 'datetime' && time.readOnly === true, 'announceRequest.requestedAt should be a read only datetime');
+  need(problems, time && !constraintNamed(constraintsOf(time), 'required'), 'announceRequest.requestedAt should be optional');
+  const inTab = fieldsIn(settings).filter(field => field.group === 'announcements').map(field => field.name);
+  need(problems, inTab.join() === 'announcements,announceRequest', 'the Announcements tab should hold, in this order: announcements, announceRequest, not ' + inTab.join(', '));
+
+  // The starting value is a request with no time, and the sample content never carries a request
+  need(problems, sameData(config.defaultSettings.announceRequest, { requestedAt: '' }), 'the default announceRequest in config.js should be a time that is empty');
+  need(problems, !('announceRequest' in world.sample.settings), 'the sample settings should not carry an announceRequest');
+
+  // A Demo step can play the same announcements: the same id and name in the registry and in the Studio's copy
+  const registry = world.demoRegistry.demoScreens;
+  const copy = world.studioDemoScreens.demoScreens.filter(entry => entry.id === 'all-announcements')[0];
+  need(problems, registry['all-announcements'] && registry['all-announcements'].name === 'All announcements', 'the dashboard demo screens should have all-announcements, named All announcements');
+  need(problems, copy && copy.name === 'All announcements', 'studio/demo-screens.js should have all-announcements, named All announcements');
+
+  // The button comes last on the settings page, after the Play buttons of the hidden transitions, and nowhere else
+  const played = Object.keys(world.hiddenRegistry.hiddenTransitions).length;
+  const buttons = world.config.document.actions([], { schemaType: 'dashboardSettings' });
+  const button = buttons[2 + played];
+  if (buttons.length !== 3 + played || typeof button !== 'function') {
+    return problems.concat('the settings page should end with the Play announcements button, a plain function, after the Play buttons of the hidden transitions');
+  }
+  need(problems, world.config.document.actions([], { schemaType: 'demo' }).every(item => item.action !== 'playAnnouncements'), 'only the settings page should get the Play announcements button');
+
+  function press(published, draft) {
+    globalThis.studioCalls = [];
+    const props = { id: 'dashboardSettings', type: 'dashboardSettings', published: published, draft: draft || null, onComplete: () => {} };
+    const state = button(props);
+    if (!state.disabled) state.onHandle();
+    return { state: state, calls: globalThis.studioCalls };
+  }
+
+  // It writes the time now, only that, and publishes
+  const before = Date.now();
+  const pressed = press(null);
+  const after = Date.now();
+  const set = pressed.calls[0] && pressed.calls[0].patch && pressed.calls[0].patch[0] && pressed.calls[0].patch[0].set;
+  const written = set && set.announceRequest;
+
+  need(problems, pressed.state.label === 'Play announcements', 'the button should be labelled Play announcements');
+  need(problems, button.action === 'playAnnouncements', 'the button should be called playAnnouncements');
+  need(problems, pressed.calls.length === 2 && pressed.calls[0].patch.length === 1 && Object.keys(set).join() === 'announceRequest' && pressed.calls[1].publish === true, 'Play announcements should set announceRequest and then publish');
+  need(problems, written && Object.keys(written).join() === 'requestedAt', 'Play announcements should write only requestedAt');
+  need(problems, written && typeof written.requestedAt === 'string' && new Date(written.requestedAt).toISOString() === written.requestedAt && Date.parse(written.requestedAt) >= before && Date.parse(written.requestedAt) <= after, 'Play announcements should write the time now, as new Date().toISOString() writes it');
+  need(problems, press({ announceRequest: { requestedAt: '2026-06-01T12:00:00.000Z' } }).state.disabled === false, 'Play announcements should be on when a request is already published, so it can be played again');
   return problems;
 }
 
@@ -1294,7 +1384,6 @@ function checkDashboardNames() {
 // A stand-in for the Studio's structure builder that writes down each call
 function fakeBuilder() {
   const methods = ['title', 'id', 'child', 'items', 'schemaType', 'documentId', 'defaultOrdering'];
-
   function node(start) {
     const made = Object.assign({}, start);
     const builder = { made: made };
@@ -1312,26 +1401,81 @@ function fakeBuilder() {
     listItem: () => node({}),
     documentTypeList: type => node({ type: type }),
     document: () => node({}),
+    divider: () => node({ divider: true }),
   };
+}
+
+// structure.js holds the whole sidebar as one list, sidebarEntries. Each line
+// has to name a type that exists, and each kind of document has to have a
+// line, or editors could not reach it. The order of the lines is not checked.
+function checkSidebarLines(problems) {
+  const entries = world.structure.sidebarEntries;
+  const typeNames = world.types.map(type => type.name);
+  const named = [];
+
+  entries.forEach((entry, index) => {
+    const line = 'structure.js line ' + (index + 1) + ' of sidebarEntries';
+    if (entry.kind === 'divider') return;
+    if (entry.kind !== 'list' && entry.kind !== 'page') return problems.push(line + ' has the kind "' + entry.kind + '". Use list, page or divider.');
+
+    const where = line + ' ("' + entry.title + '")';
+    if (!entry.title) problems.push(line + ' has no title');
+    if (typeNames.indexOf(entry.type) === -1) return problems.push(where + ' names the type "' + entry.type + '", and schemas/index.js has no type with that name. Fix the spelling or remove the line.');
+
+    if (named.indexOf(entry.type) !== -1) problems.push(where + ' repeats the type "' + entry.type + '", which already has a line in the sidebar');
+    named.push(entry.type);
+
+    if (entry.kind === 'page') {
+      need(problems, pageTypes.indexOf(entry.type) !== -1, where + ' is a page, but "' + entry.type + '" is not one of the pages that exist once: ' + pageTypes.join(', '));
+      need(problems, entry.id === entry.type, where + ' should open the document with id ' + entry.type + ', not ' + entry.id);
+      return;
+    }
+
+    need(problems, pageTypes.indexOf(entry.type) === -1, where + ' is a list, but "' + entry.type + '" exists once and should be a page');
+    const field = entry.sort && entry.sort.field;
+    const sortable = field && (field.charAt(0) === '_' || fieldsIn(typeByName(entry.type)).some(item => item.name === field));
+    need(problems, sortable, where + ' is sorted by "' + field + '", which is not a field of ' + entry.type);
+    if (listSort[entry.type]) need(problems, field === listSort[entry.type], where + ' should be listed by ' + listSort[entry.type] + ', not ' + field);
+  });
+
+  world.types.filter(type => type.type === 'document').forEach(type => {
+    const reason = notInSidebar[type.name];
+    if (reason) return need(problems, named.indexOf(type.name) === -1, type.name + ' is listed in notInSidebar in check-schemas.mjs ("' + reason + '") and also has a line in structure.js. Remove one of the two.');
+    need(problems, named.indexOf(type.name) !== -1, 'the document type "' + type.name + '" (' + type.title + ') has no line in the sidebar. Add a line for it to sidebarEntries in studio/structure.js, or, if editors should not see it there, list it in notInSidebar in studio/check-schemas.mjs with the reason.');
+  });
+
+  Object.keys(sidebarTitles).forEach(typeName => {
+    const entry = entries.filter(item => item.type === typeName)[0];
+    need(problems, !entry || entry.title === sidebarTitles[typeName], 'the sidebar line for ' + typeName + ' should be titled ' + sidebarTitles[typeName] + ', not ' + (entry && entry.title));
+  });
 }
 
 function checkSidebar() {
   const problems = [];
+  const entries = world.structure.sidebarEntries;
+  if (!Array.isArray(entries) || entries.length === 0) return ['structure.js should export sidebarEntries, the one list that holds every line of the sidebar'];
+
+  checkSidebarLines(problems);
+
+  // What the Studio gets is those lines, in the same order, with the same sorting
   const items = world.structure.structure(fakeBuilder()).made.items.map(item => item.made);
-  const titles = sidebar.map(entry => entry[0]).concat(singletonPages.map(page => page[0]));
-  if (items.map(item => item.title).join() !== titles.join()) problems.push('the sidebar should read, in order: ' + titles.join(', '));
+  if (items.length !== entries.length) return problems.concat('structure() should make one sidebar item for each line of sidebarEntries (' + entries.length + '), it makes ' + items.length);
 
-  sidebar.forEach((entry, index) => {
-    const list = items[index] && items[index].child && items[index].child.made;
-    if (!list || list.type !== entry[1]) return problems.push(entry[0] + ' should open the ' + entry[1] + ' list');
-    if (list.defaultOrdering[0].field !== entry[2]) problems.push(entry[0] + ' should be listed by ' + entry[2]);
-  });
+  entries.forEach((entry, index) => {
+    const item = items[index];
+    const child = item.child && item.child.made;
+    const what = 'sidebar line ' + (index + 1) + ' ("' + (entry.title || entry.kind) + '")';
 
-  singletonPages.forEach((entry, index) => {
-    const item = items[sidebar.length + index];
-    const page = item && item.child && item.child.made;
-    const pageOk = page && page.schemaType === entry[1] && page.documentId === entry[1];
-    need(problems, pageOk, entry[0] + ' should open the one document with id ' + entry[1]);
+    if (entry.kind === 'divider') return need(problems, item.divider === true, what + ' should be a divider');
+    if (item.title !== entry.title) return problems.push(what + ' should be titled ' + entry.title + ', it is ' + item.title);
+
+    if (entry.kind === 'list') {
+      const listOk = child && child.type === entry.type && child.title === entry.title && child.defaultOrdering[0].field === entry.sort.field;
+      need(problems, listOk, what + ' should open the ' + entry.type + ' list, titled ' + entry.title + ', sorted by ' + entry.sort.field);
+    } else {
+      const pageOk = child && child.schemaType === entry.type && child.documentId === entry.id;
+      need(problems, pageOk, what + ' should open the one document with id ' + entry.id);
+    }
   });
   return problems;
 }
@@ -1342,7 +1486,7 @@ function checkSettingsPage() {
   const actions = ['publish', 'discardChanges', 'delete', 'duplicate', 'unpublish'].map(action => ({ action: action }));
   const kept = world.config.document.actions(actions, { schemaType: 'dashboardSettings' }).map(item => item.action).join();
   const others = world.config.document.actions(actions, { schemaType: 'task' }).length;
-  const wanted = 'publish,discardChanges,useSampleContent,useProductionContent,playDesktop,playRedEyes';
+  const wanted = 'publish,discardChanges,useSampleContent,useProductionContent,playDesktop,playRedEyes,playAnnouncements';
   if (kept !== wanted) problems.push('the settings page should have these actions: ' + wanted + '. It has: ' + kept);
   if (others !== actions.length) problems.push('other types should keep every action');
 
@@ -1686,7 +1830,7 @@ function checkTheme() {
   return problems;
 }
 
-// Extra events: events that are not on BAND. The title, start date and
+// Events Calendar: events that are not on BAND. The title, start date and
 // show switch are asked for, the rest is optional, the end date may not come
 // before the start date, and an end time needs a start time. The seed file in
 // docs/seed has to be something `sanity dataset import --missing` can load
@@ -1898,6 +2042,117 @@ function checkExtraEvents() {
   return problems;
 }
 
+// The Place type, and the two fields of a task that use it. A place has a name
+// (required, up to 16 characters, different from every other place) and a
+// Show on screen switch. A task's contact and location are optional, and the
+// location keeps Sanity's Create new option, so an editor can add a place
+// while editing a task. The seed file holds the three starting places.
+function checkPlaces() {
+  const problems = [];
+  const rulesOf = field => (field ? constraintsOf(field) : []);
+  const type = typeByName('place');
+  if (!type) return ['place is missing from schemas/index.js'];
+
+  need(problems, constraintNamed(rulesOf(fieldAt('place.name')), 'required'), 'place.name should be required');
+  const show = fieldAt('place.show');
+  need(problems, show && show.type === 'boolean' && show.title === 'Show on screen' && show.initialValue === true, 'place.show should be a switch titled Show on screen that starts on');
+  need(problems, type.title === 'Places', 'the place type should have the title Places');
+  need(problems, (type.orderings || []).some(item => item.by && item.by[0].field === 'name'), 'place needs an ordering by name');
+  const hidden = type.preview.prepare({ title: 'Classroom', show: false }).subtitle || '';
+  need(problems, hidden.indexOf('Hidden') !== -1, 'the place preview does not say when a place is hidden');
+
+  ['contact', 'location'].forEach(name => {
+    const field = fieldAt('task.' + name);
+    need(problems, field && !constraintNamed(rulesOf(field), 'required'), 'task.' + name + ' should be optional');
+    need(problems, field && /optional/i.test(field.description || ''), 'the task.' + name + ' description should say it is optional');
+  });
+
+  const location = fieldAt('task.location');
+  const options = (location && location.options) || {};
+  need(problems, !options.disableNew, 'task.location should leave Create new on: do not set disableNew');
+  need(problems, !options.filter && !options.weak, 'task.location should be an ordinary reference to a place');
+
+  // the contact is a first name, with no space or digit
+  const firstName = constraintNamed(rulesOf(fieldAt('task.contact')), 'custom');
+  if (!firstName) {
+    problems.push('task.contact should be checked so that it is a first name only');
+  } else {
+    const run = value => firstName.args[0](value);
+    need(problems, run(undefined) === true && run('Sam') === true && run('Mary-Anne') === true, 'a first name, or an empty contact, should be accepted');
+    need(problems, typeof run('Sam K') === 'string' && typeof run('Sam2') === 'string', 'a contact with a space or a number in it should be refused');
+  }
+
+  // the sample content shows a contact and a place, and keeps to the limits
+  const tasks = world.sample.tasks;
+  need(problems, tasks.some(task => task.contact && task.location), 'the sample content needs a task with a contact and a location');
+  need(problems, tasks.some(task => task.contact && !task.location) && tasks.some(task => task.location && !task.contact), 'the sample content needs a task with only a contact and one with only a location');
+  tasks.forEach(task => {
+    need(problems, task.contact === undefined || (typeof task.contact === 'string' && task.contact.length <= 12), 'sample task "' + task.title + '": contact should be text of 12 characters or fewer');
+    need(problems, task.location === undefined || (typeof task.location === 'string' && task.location.length <= 16), 'sample task "' + task.title + '": location should be the place name, 16 characters or fewer');
+  });
+
+  // The seed file: one JSON document a line, fixed ids, only fields the Studio has
+  const lines = world.placeSeed.split('\n').filter(line => line.trim() !== '');
+  const names = fieldsIn(type).map(field => field.name);
+  const ids = [];
+  const seeded = [];
+  lines.forEach((line, index) => {
+    const where = 'docs/seed/places.ndjson line ' + (index + 1);
+    let doc;
+    try {
+      doc = JSON.parse(line);
+    } catch (error) {
+      return problems.push(where + ' is not JSON');
+    }
+
+    need(problems, doc._type === 'place', where + ' should have _type place');
+    need(problems, typeof doc._id === 'string' && /^place-[a-z0-9-]+$/.test(doc._id), where + ' should have a fixed _id such as place-classroom, with lowercase letters, digits and hyphens');
+    // the CSV importer makes the same id from a place's name, so a task in a CSV can point at a seeded place
+    const importerId = 'place-' + String(doc.name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    need(problems, doc._id === importerId, where + ': the _id should be ' + importerId + ', which is the one studio/scripts/import-csv.mjs makes from the name');
+    ids.push(doc._id);
+    seeded.push(String(doc.name).toLowerCase());
+    Object.keys(doc).forEach(key => need(problems, key.charAt(0) === '_' || names.indexOf(key) !== -1, where + ': ' + key + ' is not a field of place'));
+    need(problems, typeof doc.name === 'string' && doc.name.length > 0 && doc.name.length <= 16, where + ' needs a name of 1 to 16 characters');
+    need(problems, doc.show === true, where + ' should have show true');
+  });
+  need(problems, new Set(ids).size === ids.length, 'docs/seed/places.ndjson uses an _id twice');
+  need(problems, new Set(seeded).size === seeded.length, 'docs/seed/places.ndjson has the same name twice');
+  need(problems, seeded.join() === 'classroom,programming room,media center', 'docs/seed/places.ndjson should hold Classroom, Programming room and Media center, in that order');
+  return problems;
+}
+
+// The name check asks Sanity for the other places, so it waits for an answer.
+// A stand-in client gives the answer here and writes down what it was asked.
+async function checkPlaceNames() {
+  const problems = [];
+  const custom = constraintNamed(constraintsOf(fieldAt('place.name')), 'custom');
+  if (!custom) return ['place.name should be checked against the names of the other places'];
+
+  async function ask(name, document, others) {
+    const asked = [];
+    const getClient = () => ({ fetch: async (query, params, options) => { asked.push({ query: query, params: params, options: options }); return others; } });
+    const answer = await custom.args[0](name, { document: document, getClient: getClient });
+    return { answer: answer, asked: asked[0] };
+  }
+
+  const others = ['Classroom', 'Media center'];
+  const same = await ask('Classroom', { _id: 'drafts.place-new' }, others);
+  need(problems, typeof same.answer === 'string', 'a name that another place has should be refused');
+  need(problems, typeof (await ask('  mEDIA CENTER ', { _id: 'place-new' }, others)).answer === 'string', 'a name that another place has, in other capitals or with spaces round it, should be refused');
+  need(problems, (await ask('Programming room', { _id: 'place-new' }, others)).answer === true, 'a name no other place has should be accepted');
+  need(problems, (await ask('Classroom', { _id: 'place-new' }, [])).answer === true, 'a name should be accepted when there are no other places');
+  need(problems, (await ask('Classroom', { _id: 'place-new' }, null)).answer === true, 'a name should be accepted when Sanity lists no places');
+  need(problems, (await ask('', { _id: 'place-new' }, others)).answer === true && (await ask(undefined, { _id: 'place-new' }, others)).answer === true, 'an empty name is left to the required check');
+
+  // the place itself, as published and as a draft, is not another place, and a draft of another place counts
+  const own = same.asked;
+  need(problems, own && JSON.stringify(own.params.ownIds) === JSON.stringify(['place-new', 'drafts.place-new']), 'the lookup should leave out the place being edited, both as published and as a draft');
+  need(problems, own && own.options && own.options.perspective === 'raw', 'the lookup should include drafts (perspective raw), so a place that is not yet published counts');
+  need(problems, own && own.query.indexOf('_type == "place"') !== -1, 'the lookup should look at places only');
+  return problems;
+}
+
 const world = {};
 const results = [];
 
@@ -1920,6 +2175,35 @@ function report() {
   const failed = results.filter(result => result.problems.length > 0).length;
   console.log('\n' + (results.length - failed) + ' of ' + results.length + ' checks passed.');
   return failed;
+}
+
+// Publish all (studio/publish-all-tool.js) is a tool in the top bar. What it
+// publishes comes from publish-all.js, whose logic tools/test-publish-all.mjs
+// runs. Here: the tool is registered, the pages that exist once keep their
+// fixed ids, and every kind of document has a name in its list.
+function checkPublishAll() {
+  const problems = [];
+  const tool = (world.config.tools || []).filter(entry => entry.name === 'publish-all')[0];
+  if (!tool) return ['sanity.config.js should add a tool named publish-all'];
+  need(problems, tool.title === 'Publish all', 'the Publish all tool should have the title Publish all');
+  need(problems, typeof tool.component === 'function', 'the Publish all tool needs a component, written as a plain function');
+
+  const ids = world.publishAllTool.singletonIds;
+  need(problems, Object.keys(ids).join() === world.structure.singletonTypes.join(), 'the Publish all tool should know the pages that exist once: ' + world.structure.singletonTypes.join(', '));
+
+  const schema = { get: name => typeByName(name) };
+  world.structure.singletonTypes.forEach(type => {
+    const right = world.publishAll.chooseDrafts([{ _id: 'drafts.' + type, _type: type }], schema, ids)[0];
+    const wrong = world.publishAll.chooseDrafts([{ _id: 'drafts.another', _type: type }], schema, ids)[0];
+    need(problems, right && right.problem === '' && right.publishedId === type, type + ' should publish to the fixed id ' + type);
+    need(problems, wrong && wrong.problem !== '', 'a draft of ' + type + ' with some other id should be left alone');
+  });
+
+  world.types.filter(type => type.type === 'document').forEach(type => {
+    const item = world.publishAll.chooseDrafts([{ _id: 'drafts.example', _type: type.name }], schema, ids)[0];
+    need(problems, item && item.typeTitle !== '' && item.title !== '', type.name + ' should have a type title and a title in the Publish all list, even with every field empty');
+  });
+  return problems;
 }
 
 // The theme files are checked by their own script, so a failure there fails
@@ -1949,8 +2233,11 @@ async function main() {
     world.studioDemoScreens = await load(path.join(folder, 'demo-screens.js'));
     world.hiddenRegistry = await load(path.join(dashboardFolder, 'core', 'hidden-transitions.js'));
     world.studioHidden = await load(path.join(folder, 'hidden-transitions.js'));
+    world.publishAll = await load(path.join(folder, 'publish-all.js'));
+    world.publishAllTool = await load(path.join(folder, 'publish-all-tool.js'));
     world.sample = JSON.parse(fs.readFileSync(path.join(dashboardFolder, 'data', 'sample', 'content.json'), 'utf8'));
     world.seed = fs.readFileSync(path.join(here, '..', 'docs', 'seed', 'extra-events.ndjson'), 'utf8');
+    world.placeSeed = fs.readFileSync(path.join(here, '..', 'docs', 'seed', 'places.ndjson'), 'utf8');
   } finally {
     fs.rmSync(folder, { recursive: true, force: true });
   }
@@ -1970,6 +2257,7 @@ async function main() {
   check('the Transitions tab agrees with dashboard/config.js', checkTransitionsTab);
   check('the Night mode tab agrees with dashboard/config.js', checkNightTab);
   check('the Hidden tab agrees with dashboard/config.js and the dashboard registry, and the Play buttons work', checkHiddenTab);
+  check('Play announcements has its hidden field, its button and its Demo step', checkPlayAnnouncements);
   check('Content source and the switch back time agree with dashboard/config.js, and the two buttons work', checkContentSource);
   check('Show connection status is a switch that starts off, in the Connection tab', checkConnectionStatus);
   check('a subteam has an optional list of first names, up to 24 of 12 characters, with no repeats', checkSubteamMembers);
@@ -1979,11 +2267,14 @@ async function main() {
   check('the Theme page agrees with dashboard/config.js, needs a start and an end for each rule, and checks the time zone', checkTheme);
   check('the demo screens in studio/demo-screens.js are the ones in the dashboard registry', checkDemoScreens);
   check('the Demo page agrees with dashboard/config.js, and Run demo and Stop demo do what they say', checkDemo);
-  check('an extra event needs a title and a start date, and the seed file can be imported', checkExtraEvents);
+  check('an Events Calendar entry needs a title and a start date, and the seed file can be imported', checkExtraEvents);
+  check('a place has a name and a switch, a task has an optional contact and place, and the places seed file can be imported', checkPlaces);
+  results.push({ name: 'two places cannot have the same name, capitals ignored', problems: await checkPlaceNames().catch(error => ['the check stopped: ' + error.message]) });
   check('starting values match dashboard/config.js', checkStartingValues);
   check('every name in config.js and the sample content has a field', checkDashboardNames);
-  check('the sidebar is in the right order', checkSidebar);
+  check('every document type has a line in the sidebar, and each line opens the right list or page', checkSidebar);
   check('Dashboard Settings, Theme and Demo exist once and the project files agree', checkSettingsPage);
+  check('the Publish all tool is in the top bar and keeps the pages that exist once on their fixed ids', checkPublishAll);
   check('every theme and overlay is complete and readable (tools/check-themes.mjs)', checkThemeGuard);
 
   process.exitCode = report() > 0 ? 1 : 0;

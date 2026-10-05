@@ -3,8 +3,8 @@
 
 import { rowBarMarkup } from '../../core/plate.js';
 import { escapeHtml } from '../../core/text.js';
-import { rangeText, timeText } from '../../core/events.js';
-import { asDate, formatDate } from '../../core/time.js';
+import { eventDate, timeText } from '../../core/events.js';
+import { asDate } from '../../core/time.js';
 
 // An event with no end time is over when it starts
 function endOf(event) {
@@ -24,21 +24,20 @@ export function hasContent(content) {
 
 export function mount(host, content) {
   const event = nextEvent(content);
+  const zone = (content.theme || {}).timeZone;
 
   host.innerHTML = `
     <section class="page next-event">
       <div class="label" data-slat="label">NEXT EVENT</div>
 
-      <div class="content" data-slat="content">${event ? eventMarkup(event) : ''}</div>
+      <div class="content" data-slat="content">${event ? eventMarkup(event, zone) : ''}</div>
     </section>`;
 }
 
-function eventMarkup(event) {
-  const start = asDate(event.start);
-
+function eventMarkup(event, timeZone) {
   // An event of several days shows its dates, an all-day event shows no time
   const time = timeText(event);
-  const when = rangeText(event) || formatDate(start);
+  const when = eventDate(event, timeZone).text;
   const location = event.location ? `<div class="location">${escapeHtml(event.location)}</div>` : '';
 
   return `

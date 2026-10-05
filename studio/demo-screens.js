@@ -6,5 +6,6 @@
 
 export const demoScreens = [
   { id: 'announcement', name: 'Announcement' },
+  { id: 'all-announcements', name: 'All announcements' },
   { id: 'night-mode', name: 'Night mode' },
 ];

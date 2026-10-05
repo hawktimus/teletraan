@@ -120,6 +120,9 @@ async function run() {
 
       // The hidden transitions. After the demo runner and the night screen, which they ask about
       startOptional('./core/hidden-run.js', module => module.startHidden(getContent, params.get('hidden')));
+
+      // The Play announcements button in the Studio. Last, because it asks the ones above whether they have the screen
+      startOptional('./core/announce-run.js', module => module.startAnnounceRunner(getContent));
     }
 
     if (!early) {
@@ -162,14 +165,14 @@ function setBase(newBase, newStatus) {
   if (switched) showPagesNow();
 }
 
-// The BAND events and the Extra events from the Studio as one list. If
-// merging fails the BAND events are shown as they are, so a bad Extra event
-// never takes the Events panel away.
+// The BAND events and the Events Calendar entries from the Studio as one list.
+// If merging fails the BAND events are shown as they are, so a bad entry never
+// takes the Events panel away.
 function mergedEvents() {
   try {
     return mergeEvents(extras.events, base.extraEvents, base.theme.timeZone);
   } catch (error) {
-    console.error('Could not merge the Extra events with the calendar events', error);
+    console.error('Could not merge the Events Calendar entries with the calendar events', error);
     return extras.events || [];
   }
 }

@@ -1,5 +1,8 @@
 # Hidden transitions
 
+This page also covers the Play announcements button, which sits beside the two Play
+buttons for the transitions. See "Play announcements" below.
+
 A hidden transition is a rare surprise. Now and then, instead of an ordinary page
 change, the whole screen does something else. There are two:
 
@@ -41,8 +44,9 @@ ordinary page change. If the two add up to more than 100, red eyes gets what is 
    or **Play red eyes**.
 3. Look at the TV. It plays within about 20 seconds.
 
-The button writes the kind and the time now into Last push and publishes the page for
-you, so you do not click Publish. Any other change you had not published yet is
+The menu has a third button, Play announcements, which is not a transition (see below).
+Each of the two buttons above writes the kind and the time now into Last push and
+publishes the page for you, so you do not click Publish. Any other change you had not published yet is
 published too, as with the buttons that switch between sample and production content.
 
 What the screen does with a push:
@@ -76,6 +80,55 @@ What the screen does with a push:
 - They also never play while a full screen alert or announcement is up, while a demo
   plays, or while the night screen is up. If one of those starts in the middle of a
   hidden transition, the transition stops at once and the screen goes back to normal.
+
+## Play announcements
+
+The menu next to Publish on Dashboard Settings has a third button, **Play announcements**.
+It is not a transition, but it is built the same way: one click, and the TV plays it
+within a few seconds. It plays every announcement in the Announcements tab that is
+switched on, once, one after another. Use it to show visitors the announcements, or to
+check them, without waiting for 14:30.
+
+1. Open Dashboard Settings in Studio.
+2. Open the menu next to Publish (the three dots) and click **Play announcements**.
+3. Look at the TV.
+
+The button writes the time now into `announceRequest` and publishes the page for you, so
+you do not click Publish. Any other change you had not published yet is published too.
+`announceRequest` has one field, `requestedAt`, and editors never see it in Studio: it is
+hidden, but its value stays in the page.
+
+What the screen does with it:
+
+- It plays each announcement that is switched on (Show on screen), in the order of the
+  list. An announcement that is switched off is skipped.
+- Each plays at its normal length: the seconds of its first line and then, if it has
+  one, the seconds of its second line, with the old television effect between them. It is
+  the same full screen announcement as one that comes at its own time.
+- It ignores each announcement's Time and Days. One set for Friday at 17:00 plays on a
+  Monday morning, and one with no day ticked plays too.
+- It plays once. The screen keeps the request it handled last in the browser's storage
+  (`localStorage`, under `teletraan-announce-handled`), so a Mini that restarts never
+  plays it again. This is separate from the demo's and the hidden transitions' own.
+- It plays only while the request is less than 60 seconds old, the same rule as the demo
+  (docs/demo.md) and a pushed hidden transition. The Mini's clock must be right: if it is
+  more than a minute out, it never plays.
+- It waits for an alert, an announcement, a demo, a hidden transition or the night screen
+  to be over, if that happens inside the minute. Otherwise it is dropped.
+- With no announcement switched on, nothing plays. The request still counts as used, so
+  switching one on a moment later does not play it. Click the button again.
+- While they play, the normal pages stop changing. A real alert that comes on takes the
+  screen and the rest do not play. Click the button again while they play and they start
+  again from the first. An announcement that comes due at its own time while these play is
+  missed, because only one announcement can have the screen.
+- The list is taken when the request starts, so editing the announcements while they play
+  changes the next click and not this one.
+- While the screen shows sample content (Content source in Dashboard Settings) it reads
+  the settings from `dashboard/data/sample/content.json`, not from Studio, so the button
+  does nothing. Switch back to production content first.
+
+A Demo step can play the same announcements: pick **All announcements** as its screen
+(docs/demo.md).
 
 ## Try one
 
@@ -164,12 +217,23 @@ A transition is one entry in a list, plus a few lines to give it a chance settin
 - `dashboard/core/hidden-run.js`: plays a transition: asks at each page change, sets
   the attributes, waits, and puts the screen back whatever happens.
 - `dashboard/core/hidden-art.js`: the wallpaper and the face, as polygons.
+- `dashboard/core/announce.js`: the plain functions behind Play announcements, with no page
+  in them: tidying `announceRequest`, which announcements play (`enabledAnnouncements`),
+  playing them one after another (`playEach`), and the runner that applies the guard and
+  waits for the screen (`makeAnnounceRunner`). The tests are in `tools/test-effects.mjs`.
+- `dashboard/core/announce-run.js`: gives that runner the real screen, and plays each
+  announcement with `runAnnouncement` in `core/takeover.js`. `hiddenPlaying` in
+  `core/hidden-run.js` is how it knows a hidden transition has the screen.
 - `dashboard/core/areas.js` and `core/schedule.js`: the hook at the large panel's page
   change, the gate for the other areas, and `moveOn` (ask a region to change page now).
 - `dashboard/frame.css` ("Hidden transitions"), `base.css`, `tokens.css` (the colours
   and times) and `index.html` (`#backdrop`, `#red-wash` and `data-block`).
 - `dashboard/frame.js`: `setHiddenPlaying` holds the logo effects and the screen glitch
   still while one plays, and `playGlitch` gives it its red glitches.
+- `studio/schemas/settingsAnnouncements.js` has the hidden `announceRequest` field
+  (`announceRequestField`), and `usePlayAnnouncementsAction` in `studio/actions.js` is the
+  button. The starting value is `announceRequest` in `defaultSettings` in
+  `dashboard/config.js`.
 - `studio/schemas/settingsHidden.js` is the tab, `studio/actions.js` has the Play
   buttons, and `studio/hidden-transitions.js` is the Studio's copy of the list. The
   starting values are `hiddenEnabled`, `desktopChance`, `redEyesChance` and

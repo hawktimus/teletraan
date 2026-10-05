@@ -1,0 +1,3 @@
+{"_id": "place-classroom", "_type": "place", "name": "Classroom", "show": true}
+{"_id": "place-programming-room", "_type": "place", "name": "Programming room", "show": true}
+{"_id": "place-media-center", "_type": "place", "name": "Media center", "show": true}

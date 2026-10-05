@@ -2,20 +2,21 @@ import { defineConfig } from 'sanity';
 import { structureTool } from 'sanity/structure';
 import { projectId, dataset } from './project.js';
 import { schemaTypes } from './schemas/index.js';
+import { publishAllTool } from './publish-all-tool.js';
 import { structure, settingsType, demoType, singletonTypes } from './structure.js';
-import { useSampleContentAction, useProductionContentAction, useRunDemoAction, useStopDemoAction, playHiddenActions } from './actions.js';
+import { useSampleContentAction, useProductionContentAction, useRunDemoAction, useStopDemoAction, playHiddenActions, usePlayAnnouncementsAction } from './actions.js';
 
 // Dashboard Settings, Theme and Demo each exist once (singletonTypes in
 // structure.js). Their pages are made the long-standing way, by removing the
 // actions that would copy them or take them away, because Sanity's newer
 // singleton option is still in beta. Dashboard Settings also gets the two
-// buttons that switch the screen between sample and production content, and a
-// Play button for each hidden transition. Demo gets Run demo and Stop demo
-// (actions.js).
+// buttons that switch the screen between sample and production content, a
+// Play button for each hidden transition, and Play announcements. Demo gets
+// Run demo and Stop demo (actions.js).
 const removedFromSingletons = ['delete', 'duplicate', 'unpublish'];
 
 const buttonsOf = {
-  [settingsType]: [useSampleContentAction, useProductionContentAction].concat(playHiddenActions),
+  [settingsType]: [useSampleContentAction, useProductionContentAction].concat(playHiddenActions, [usePlayAnnouncementsAction]),
   [demoType]: [useRunDemoAction, useStopDemoAction],
 };
 
@@ -36,6 +37,8 @@ export default defineConfig({
   projectId: projectId,
   dataset: dataset,
   plugins: [structureTool({ structure: structure })],
+  // Publish all is a page of its own in the top bar, next to the editing screen (docs/publish-all.md)
+  tools: [publishAllTool],
   schema: { types: schemaTypes },
   document: {
     actions: actionsFor,

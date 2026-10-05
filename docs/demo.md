@@ -34,6 +34,13 @@ The screens you can pick are the ones in the list of "demo screens" in the code:
 - Announcement: the full screen announcement. With the Demo announcement text it
   is one line. The step's seconds are how long the words stay up. The announcement
   takes a few more seconds to arrive and to leave.
+- All announcements: every announcement in Dashboard Settings that is switched on,
+  one after another, in the order of the list. Each plays at its own length (the
+  seconds of its first line and of its second line), whatever its time and days say.
+  It is the same as the Play announcements button on Dashboard Settings
+  (docs/hidden-transitions.md). The step's seconds are not used: the step lasts as
+  long as the announcements do, and it is over at once when none is switched on. The
+  Demo announcement text is not used either. Stop demo ends it early.
 - Night mode: the black screensaver with the bouncing logo. It shows whatever the
   time is, whether or not Use night mode is on, and whatever Night style says. It
   ignores `?night=off` too. The step's seconds count from when it starts to fade
@@ -124,7 +131,8 @@ back in the function it returns, or when `context.cancelled()` says so.
 ## Where the code is
 
 - `dashboard/core/demo-screens.js`: the list of screens, and what the
-  announcement step shows.
+  announcement step shows. The All announcements step uses `enabledAnnouncements`
+  and `playEach` in `dashboard/core/announce.js`.
 - `dashboard/core/demo.js`: the plain functions, with no page in them. They tidy
   the Demo page into `content.demo`, decide whether a request should run
   (`shouldRunDemo`), remember the handled request, and run the steps

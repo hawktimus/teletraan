@@ -1,6 +1,6 @@
 // One list of events from two places: the BAND calendars (core/calendar.js)
-// and the Extra events that editors type into the Studio for things that are
-// not on BAND. shell.js calls mergeEvents() each time either changes, and once
+// and the Events Calendar entries that editors type into the Studio for things
+// that are not on BAND. shell.js calls mergeEvents() each time either changes, and once
 // a minute so an event that has finished disappears. The Events panel and the
 // Next event tile show the list it returns.
 //
@@ -11,8 +11,9 @@
 // midnight after its last day, the same as a BAND one.
 //
 // Dates are read in the Time zone on the Theme page, so "today" is the same
-// day for the editors and for the screen. Plain functions only, so
-// tools/test-content.mjs can run them.
+// day for the editors and for the screen. eventDate() at the bottom writes the
+// date of an event for the screen, and every panel that shows one uses it, so
+// they all agree. Plain functions only, so tools/test-content.mjs can run them.
 
 import { defaultThemeSettings } from '../config.js';
 import { dateIn, isTimeZone } from './theme.js';
@@ -22,6 +23,7 @@ export const extraCalendarId = 'extra';
 const extraCalendarName = 'Extra';
 
 const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const weekdayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
 function isRecord(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -55,8 +57,8 @@ function addDays(day, count) {
 }
 
 // Midnight at the start of that day on this computer's clock. This is how the
-// calendar reader makes an all-day event, so the day name and number on the
-// screen come out right whatever time zone the computer is in.
+// calendar reader makes an all-day event, so the day of an all-day event is
+// the same one whatever time zone the computer is in.
 function localMidnight(day) {
   const parts = dayParts(day);
   return new Date(parts.year, parts.month - 1, parts.day);
@@ -113,10 +115,10 @@ export function instantIn(timeZone, day, time) {
   return new Date(wanted - offsetAt(timeZone, guess));
 }
 
-// Reading an Extra event
+// Reading an Events Calendar entry
 
-// What the Studio sent for one Extra event, made safe to use, or null when
-// the event cannot be shown: switched off, no title, or no real start date.
+// What the Studio sent for one Events Calendar entry, made safe to use, or
+// null when the event cannot be shown: switched off, no title, or no real start date.
 // Anything else that is wrong is dropped quietly, so one slip does not hide
 // the event: an end date before the start becomes the start, a time that is
 // not HH:MM means no time (an all-day event), and an end time with no start
@@ -144,10 +146,10 @@ export function tidyExtraEvent(raw) {
   };
 }
 
-// An Extra event as the same kind of event the calendar reader makes. With no
-// start time it is all-day. A timed event with no end time ends when it
-// starts, like a BAND event with no end, unless it runs over several days:
-// then it lasts to the end of its last day.
+// An Events Calendar entry as the same kind of event the calendar reader
+// makes. With no start time it is all-day. A timed event with no end time ends
+// when it starts, like a BAND event with no end, unless it runs over several
+// days: then it lasts to the end of its last day.
 function eventFrom(extra, timeZone) {
   const allDay = extra.startTime === '';
   let start;
@@ -177,9 +179,9 @@ function eventFrom(extra, timeZone) {
   };
 }
 
-// Every showing Extra event in the list, as events. timeZone is a name such
-// as America/New_York. The list may be missing, and an event that cannot be
-// used is left out.
+// Every showing Events Calendar entry in the list, as events. timeZone is a
+// name such as America/New_York. The list may be missing, and an event that
+// cannot be used is left out.
 export function extraEventsToEvents(list, timeZone) {
   const zone = isTimeZone(timeZone) ? timeZone : defaultThemeSettings.timeZone;
 
@@ -225,12 +227,12 @@ function byStart(first, second) {
 
 // The events of both kinds, as one list sorted by start.
 //   bandEvents   what core/calendar.js read, a list of events
-//   extraList    content.extraEvents, the Extra events from the Studio
+//   extraList    content.extraEvents, the Events Calendar entries from the Studio
 //   timeZone     content.theme.timeZone
 //   now          the moment to judge by, for the tests
 // An event is dropped once the day it ends on (the day it starts on, if it has
-// no end) is before today in that time zone. An Extra event that is also on
-// BAND is dropped and the BAND one stays. An event with no usable start is
+// no end) is before today in that time zone. An Events Calendar entry that is
+// also on BAND is dropped and the BAND one stays. An event with no usable start is
 // left out. The lists passed in are not changed.
 export function mergeEvents(bandEvents, extraList, timeZone, now) {
   const zone = isTimeZone(timeZone) ? timeZone : defaultThemeSettings.timeZone;
@@ -250,23 +252,61 @@ export function mergeEvents(bandEvents, extraList, timeZone, now) {
 
 // Showing an event
 
+// Apr 2, for the day 2027-04-02
+function monthDayLabel(day) {
+  const parts = dayParts(day);
+  return monthNames[parts.month - 1] + ' ' + parts.day;
+}
+
 // Apr 2 for one day, Apr 2-4 for several days in one month, and
-// Dec 30-Jan 2 when the months differ. first and last are days like 2027-04-02.
+// Mar 30-Apr 1 when the months differ (Dec 30-Jan 2 when the year changes too).
+// first and last are days like 2027-04-02.
 export function rangeLabel(first, last) {
   const from = dayParts(first);
   const to = dayParts(last);
-  const start = monthNames[from.month - 1] + ' ' + from.day;
+  const start = monthDayLabel(first);
   if (last <= first) return start;
 
   if (from.year === to.year && from.month === to.month) return start + '-' + to.day;
   return start + '-' + monthNames[to.month - 1] + ' ' + to.day;
 }
 
-// APR 2-4 for an event that covers more than one day, otherwise nothing. The
-// screen writes dates in capitals.
-export function rangeText(event) {
-  if (!event.firstDay || !event.lastDay || event.lastDay <= event.firstDay) return '';
-  return rangeLabel(event.firstDay, event.lastDay).toUpperCase();
+// FRI for the day 2027-04-02. It is worked out from the date alone, in UTC, so
+// the time zone of the computer cannot move it to the day before or after.
+function weekdayOf(day) {
+  const parts = dayParts(day);
+  return weekdayNames[new Date(Date.UTC(parts.year, parts.month - 1, parts.day)).getUTCDay()];
+}
+
+// The first and last day of an event, or null when it has none that can be
+// read. An event from mergeEvents() has them already. One that did not go
+// through it (shell.js shows the BAND events as they are when merging fails)
+// gets them worked out here, in the same time zone.
+function daysOf(event, timeZone) {
+  if (isDay(event.firstDay) && isDay(event.lastDay)) return event;
+  if (!event.start || isNaN(asDate(event.start))) return null;
+
+  const zone = isTimeZone(timeZone) ? timeZone : defaultThemeSettings.timeZone;
+  return withDays(event, zone);
+}
+
+// The date of an event as the screen writes it, in capitals. timeZone is
+// content.theme.timeZone, and is only needed for an event with no firstDay.
+//   weekday   FRI, the first day
+//   monthDay  APR 2, the first day
+//   range     APR 2-4 or MAR 30-APR 1, and empty for an event of one day
+//   text      the whole date on one line: FRI APR 2 for one day, otherwise the
+//             range. This is what the Next event tile shows.
+// All four are empty when the event has no date that can be read.
+export function eventDate(event, timeZone) {
+  const days = daysOf(event || {}, timeZone);
+  if (days === null) return { weekday: '', monthDay: '', range: '', text: '' };
+
+  const weekday = weekdayOf(days.firstDay);
+  const monthDay = monthDayLabel(days.firstDay).toUpperCase();
+  const range = days.lastDay > days.firstDay ? rangeLabel(days.firstDay, days.lastDay).toUpperCase() : '';
+
+  return { weekday: weekday, monthDay: monthDay, range: range, text: range || weekday + ' ' + monthDay };
 }
 
 // 6:30 PM, or nothing for an all-day event, which shows its date only

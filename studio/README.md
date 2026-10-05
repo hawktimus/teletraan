@@ -9,14 +9,16 @@ TV. The dashboard reads what they publish.
     project.js            the project ID and dataset
     sanity.config.js      the Studio's main settings
     sanity.cli.js         settings for the command line tool
-    structure.js          the sidebar, in plain words (Extra events is the list for events not on BAND)
-    actions.js            the two content source buttons and the Play buttons of the hidden transitions on Dashboard Settings, and Run demo and Stop demo on Demo
+    structure.js          the sidebar, one list with a line for each entry, so changing the order means moving a line (Events Calendar is the list for events not on BAND)
+    actions.js            the two content source buttons, the Play buttons of the hidden transitions and Play announcements on Dashboard Settings, and Run demo and Stop demo on Demo
     themes.js             the list of themes and overlays, a copy of the dashboard's
     demo-screens.js       the list of screens a demo can show, a copy of the dashboard's
     hidden-transitions.js the list of hidden transitions, a copy of the dashboard's
     schemas/              one file per kind of content
     scripts/              make-templates.mjs writes the CSV templates from the schemas,
                           import-csv.mjs turns filled-in CSVs into a file for sanity dataset import
+    publish-all-tool.js   the Publish all page in the top bar (docs/publish-all.md)
+    publish-all.js        the logic of Publish all, with no Studio in it, so node can test it
     check-schemas.mjs     a check that needs nothing installed
     package.json          the packages the Studio needs
 
@@ -115,9 +117,9 @@ Commands for later, run in this folder:
     npm run build     builds the Studio into a folder called dist
     npm run deploy    puts the latest Studio on the web (do this after changing a schema)
 
-## The starting Extra events
+## The starting Events Calendar entries
 
-Extra events are for events that are not on BAND (docs/editing-content.md).
+Events Calendar is for events that are not on BAND (docs/editing-content.md).
 The seven events from October 2026 to April 2027 are in
 `docs/seed/extra-events.ndjson`. After step 4, and with the team mentor's yes,
 import them once from this folder:
@@ -127,6 +129,18 @@ import them once from this folder:
 `--missing` skips any event that is already there, so running it again changes
 nothing. Do not use `--replace`. docs/editing-content.md explains each part of
 the command.
+
+## The starting places
+
+A task's location is picked from the Places list (docs/editing-content.md). The
+three starting places, Classroom, Programming room and Media center, are in
+`docs/seed/places.ndjson`. After step 4, and with the team mentor's yes, import
+them once from this folder:
+
+    npx sanity dataset import ../docs/seed/places.ndjson --missing
+
+`--missing` skips any place that is already there, so running it again changes
+nothing. Do not use `--replace`.
 
 ## Adding many items from CSV files
 
@@ -253,6 +267,18 @@ The Studio is built on its own and cannot read the dashboard folder, so
 `hidden-transitions.js` is a copy of the ids, names and chance fields in
 `dashboard/core/hidden-transitions.js`. `check-schemas.mjs` fails if they differ.
 
+## Play announcements
+
+The menu beside Publish on Dashboard Settings has one more button after the two Play
+buttons: "Play announcements", `usePlayAnnouncementsAction` in `actions.js`. It sets
+`announceRequest` to the time now and publishes. `announceRequest` is a hidden field
+(`announceRequestField` in `schemas/settingsAnnouncements.js`): editors never see it, and
+its value stays in the page. The screen plays every announcement that is switched on, once,
+whatever its time and days, for a request that is under a minute old (`dashboard/core/announce.js`).
+The Demo page can do the same with its step "All announcements", which comes from the list in
+`demo-screens.js`. Run `npm run deploy` after you change `schemas/settingsAnnouncements.js`, so
+the editors see the button. docs/hidden-transitions.md explains how it works.
+
 ## Photos of people
 
 Leadership has a Photo field, an image the editors upload in Studio, and a
@@ -322,7 +348,8 @@ an end for every rule, `themes.js` matches the dashboard's registries, the Demo
 page agrees with `defaultDemo`, has Run demo and Stop demo, and `demo-screens.js`
 matches the dashboard's list of demo screens, the Hidden tab agrees with
 `defaultSettings`, has a working Play button for each hidden transition, and
-`hidden-transitions.js` matches the dashboard's list, and the project ID in project.js is
+`hidden-transitions.js` matches the dashboard's list, Play announcements has its hidden
+field, its button and its Demo step, and the project ID in project.js is
 the one in dashboard/config.js. It prints PASS or
 FAIL for each check and exits with an error if any fails. Run it after every
 change to a schema.

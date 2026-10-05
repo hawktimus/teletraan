@@ -73,10 +73,14 @@ where Grid 1 has a header. For the ticker start from `panels/ticker/ticker.css`.
 is `page` and then the id. `content` is the data from Sanity, shaped like
 `dashboard/data/sample/content.json` (its `photos` are the Photo documents from
 Studio, cleaned in `core/sanity.js`), plus `events` and `weather`, which may be
-missing. `events` is the BAND events and the Extra events from
+missing. `events` is the BAND events and the Events Calendar entries from
 Studio, already merged and sorted (`core/events.js`). Each event has `title`,
-`start`, `end`, `allDay`, `location`, `firstDay` and `lastDay`. `rangeText()`
-and `timeText()` in `core/events.js` write the dates and the time for it.
+`start`, `end`, `allDay`, `location`, `firstDay` and `lastDay`. `eventDate()`
+and `timeText()` in `core/events.js` write the date and the time for it.
+`eventDate(event, content.theme.timeZone)` gives the weekday, the month and
+day, and the range (`FRI`, `APR 2`, `APR 2-4`), read in the Time zone on the
+Theme page. Use it for any event date a panel shows, so every panel writes it
+the same way, and do not write a date from `start` with `getDate()`.
 
     export function mount(host, content) {
       host.innerHTML = `
@@ -136,12 +140,14 @@ panel. A panel that needs a line, a card or a bar uses one of these:
 - **A portrait slot.** `slotMarkup({ name, role, address })` in
   `core/portrait.js` is a framed picture with a name and a role under it.
   Leave `address` empty and it shows the silhouette. `leadership.js` and
-  `team-leads.js` draw rows of three, and `roster.js` draws one as the team lead
-  beside a list of names. They get a page of people at a time
-  from `makePages(slotsPerPage)` in `core/turns.js`, which counts the pages
-  between turns of the panel, and they call `watchPhotos` and `preloadPhotos`
-  from `core/portrait.js`. The slot's rules are in `base.css`, under People
-  portraits.
+  `team-leads.js` draw rows of up to three, and `roster.js` draws one as the
+  team lead beside a list of names. `team-leads.js` gets a page of people at a
+  time from `makePages(slotsPerPage)` in `core/turns.js`, which counts the
+  pages between turns of the panel. `leadership.js` gets its pages ready made
+  from `leadershipPages` in `core/leadership.js`, so that a page is one role,
+  and counts them with `makePages(1)`. They call `watchPhotos` and
+  `preloadPhotos` from `core/portrait.js`. The slot's rules are in `base.css`,
+  under People portraits. A row with fewer than three slots is centred.
 - **A straight bar.** `<div class="bar"></div>` is 16px high, or add
   `bar-thin` for 8px. Give it a width. The banner rule is one.
 - **A tag.** `tagMarkup(width)` is the slanted purple tag of the ticker.
