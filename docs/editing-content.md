@@ -43,6 +43,9 @@ received.
 - Leadership: coaches, captains and mentors, each with an optional photo. The
   panel lists coaches first, then captains, then mentors, three to a page (see
   Photos of people).
+- Photos: the pictures for the Photo panel. Each has a picture you upload, an
+  optional short caption and the first name of the person who took it. See
+  "Photos" below.
 - Custom Panels: a panel you build yourself from blocks (heading, text,
   number, list, image address, progress bar, countdown). About 3 blocks fit.
   A block that does not fit is left out. The title shows in capital letters,
@@ -50,14 +53,16 @@ received.
 - Dashboard Settings: the settings for the whole screen, described below.
 - Theme: the colours of the whole screen, and holiday colours for set dates.
   See "Theme" below.
+- Demo: plays a few of the special screens (the announcement and night mode) now,
+  for visitors. See "Demo" below, and docs/demo.md.
 
 Events on the team's BAND calendars are not edited here. Add or change the
 event in BAND and it reaches the TV after the Mini next downloads the
 calendars. An event that is not on BAND goes in Extra events.
 
-Sponsor logos and the pictures in the Photos panel are not stored in Studio.
-Where you see an address, paste the web address of the picture. The photo of a
-person in Leadership is the one picture that is uploaded to Studio.
+Sponsor logos are not stored in Studio. Where you see an address, paste the
+web address of the picture. The photos in Photos and the photo of a person in
+Leadership are uploaded to Studio.
 
 ## Extra events
 
@@ -127,6 +132,81 @@ because its id is missing again. Ids use hyphens and no dots on purpose: the
 screen reads without signing in, and Sanity keeps a document whose id has a
 dot private.
 
+## Adding many items from a spreadsheet
+
+To add a lot of items at once, for example the tasks and sponsors for a new
+season, fill in the CSV templates in `docs/content-templates/` in a
+spreadsheet and import them. The steps are in docs/importing-from-csv.md. It
+only adds items and never changes one that is already there.
+
+## Photos
+
+The Photo panel shows one photo at a time, with its caption under it and the
+photographer's first name at the lower left of the picture ("Photo: Sam").
+Photos are uploaded to Studio. Nothing is kept on the Mini.
+
+### Adding a photo
+
+1. Open Photos in the sidebar and click the plus button.
+2. Under Picture, drag a photo onto the box or click it and choose one. A large
+   photo straight from a phone is fine: the screen asks Sanity for a copy that
+   is no wider than the screen, in a small file format, so you do not need to
+   shrink it first.
+3. Open the crop and hotspot tool (the crop button on the picture). Crop out
+   anything you do not want, and drag the circle onto the main subject, such as
+   a face. The screen cuts the photo to fit its box and keeps the circle in view.
+4. Caption is optional: a short line under the picture, up to 36 characters. No
+   last names.
+5. Credit is optional: the first name of the person who took the photo, up to
+   14 characters. Studio refuses a space or a number, so use a hyphen in a name
+   such as Mary-Anne. The screen shows it as "Photo: Sam".
+6. Click Publish. There is no approval step: a photo shows on the TV as soon as
+   it is published, so look at it first. The TV changes within a few seconds.
+
+Every photo also has "Show on screen" and "Hide after", like the other items.
+Turn "Show on screen" off to take a photo off the TV without deleting it, or set
+"Hide after" so it goes by itself. The list shows Hidden or Expired beside such a
+photo. The Photo panel only uses photos that are on and have not expired. If there
+are none, the panel is skipped.
+
+### For the people who upload
+
+- Use first names only. Put the photographer's first name in Credit and nothing
+  more.
+- Never put a last name in a caption, and do not write a last name for anyone in
+  the picture.
+- Switch location tagging off on your phone before you take the photo. A phone
+  can save where a photo was taken inside the picture file, and anyone who has
+  the picture's web address can open that file. On an iPhone: Settings, Privacy
+  and Security, Location Services, Camera, then choose Never. On an Android
+  phone: open the Camera app, open its settings and turn off Location tags (the
+  name changes a little between makes).
+- Take the photo in landscape, with the phone turned sideways. The picture
+  box on the TV is about twice as wide as it is tall. A square photo loses about
+  half its height and a tall photo loses most of it, so landscape is best and
+  the circle in the crop and hotspot tool matters most for the others.
+- Only upload a photo that may be shown. Photos in Studio can be opened by
+  anyone who has their web address.
+
+### Order and time on screen
+
+Dashboard Settings has a Photos tab with two settings:
+
+- Photo order is Random (the default) or Newest first. Random never shows the
+  same photo twice in a row. Newest first goes from the photo uploaded last to
+  the one uploaded first, then starts over. "Newest" is the time the photo was
+  added to Studio, not the time it was taken. A photo added while the screen
+  is running comes at the start of the next round.
+- Seconds per photo is how long the Photo panel stays up, from 6 to 120, and
+  starts at 16. A Photo row in the Panels tab that has seconds of its own wins
+  over it. With the row's seconds empty, the Photo panel follows Seconds per
+  photo and not Seconds per page.
+
+While one photo is up, the screen starts downloading the next one, so it is
+ready at the page change. If a photo cannot be loaded, the card says so and the
+next page change tries the next photo. While the screen shows the sample content
+(Content source), the Photo panel shows the three sample photos instead.
+
 ## Photos of people
 
 Each person in Leadership has a Photo and a "Show photo on screen" switch. The
@@ -194,40 +274,80 @@ box.
 
 ## Dashboard Settings
 
-One page, with tabs along the top. It cannot be deleted or copied.
+One page, with tabs along the top. It cannot be deleted or copied. The tabs, in
+order, are Screen, Logo, Transitions, Countdown, Alert, Panels, Photos,
+Announcements, Night mode, Hidden, Calendars, Content source and Connection.
 
 - Screen: the team name, number and school in the banner. Motion is Full or
-  Calm (Calm only fades panels in and out, with no turning, glint, name effect
-  or screen glitch). Speed is Very slow, Slow, Normal or Fast. It changes how fast things
-  move and how long each panel and ticker line stays, but not announcements or
-  alerts, which keep the seconds you give them. Frame metal is Gold (warm
-  antique brass) or Silver (weathered steel) and sets the metal on the edges of
-  the frames. Glint is a bright spark that runs once around each frame every few
-  seconds. Turn it off for a calmer screen.
-- Logo and effects: the two effects that play now and then, each with the same
-  three settings. Name effect makes the letters of the team name split apart,
-  turn and lock back together. "Name effect every (seconds)" is how often, from
-  30 to 900, or 0 to never play it. The starting value is 300, which is every
-  five minutes. "Name effect duration (seconds)" is how long one play takes,
-  from 0.5 to 10. The starting value is 1.43, the time it takes on HAWKTIMUS
-  PRIME today, and a longer or shorter name takes a little more or less. The
-  Screen glitch is a short old television glitch over the whole screen: a bright
-  bar rolls down, the picture jumps sideways and the scan lines flicker. "Play
-  the glitch" turns it on or off, "Seconds between glitches" is from 30 to
-  3600, or 0 to never play it, and starts at 240 (every four minutes), and
-  "Glitch duration (seconds)" is from 0.5 to 10 and starts at 2.7. The
-  durations are for Normal speed, and the Speed setting makes them longer or
-  shorter like every other move. The seconds between plays are real seconds.
-  Only one effect plays at a time, and none starts while a panel is changing
-  page, so one that is due can start a moment late. Its next play is counted
-  from when it started, so a late play is never followed by extra ones. Calm
-  motion plays neither. The announcements play the glitch between their two
+  Calm (Calm only fades panels in and out, with no turning, glint, logo
+  animations, name effect or screen glitch). Speed is Very slow, Slow, Normal
+  or Fast. It changes how fast things move and how long each panel and ticker
+  line stays, but not announcements or alerts, which keep the seconds you give
+  them. Frame metal is Gold (warm
+  antique brass) or Silver (weathered steel) and sets the metal on the edges that
+  stay on the screen: the banner, the countdown and the logo. The large and small
+  panels choose their own metal at every page change, in the Transitions tab.
+  Glint is a bright spark that runs once around each frame every few
+  seconds. Turn it off for a calmer screen. Screen glitch is a short old
+  television glitch over the whole screen: a bright bar rolls down, the picture
+  jumps sideways and the scan lines flicker. "Play the glitch" turns it on or
+  off, "Seconds between glitches" is from 30 to 3600, or 0 to never play it, and
+  starts at 240 (every four minutes), and "Glitch duration (seconds)" is from 0.5
+  to 10 and starts at 2.7. The announcements play the glitch between their two
   lines whatever this tab says. The glitch used to be set in minutes. If an
   older Studio page shows an "unknown field" box called everyMinutes, click
   Unset. The screen reads an old value of minutes as seconds until you set the
   new field.
+- Logo: everything the logo and the team name do, in one tab. "Logo
+  animations" is the master switch, and comes first. Turn it off and nothing in
+  the logo moves, the name effect included, and the logo stays the still
+  emblem. Under it, "Entrance" is a switch for the four plates flying in once
+  when the screen starts. It plays once, so it has no timing. The spin (the
+  logo makes one full turn, drawn flat), the flying hawk (the logo folds into a
+  robot, changes into a hawk, flies and changes back) and the name effect (the
+  letters of the team name split apart, turn and lock back together) each have
+  the same three settings: a switch, "every (seconds)" and "duration
+  (seconds)". Every is how often it plays, and 0 means never. The spin starts at
+  every 72 seconds (0 for never, or 10 to 3600) and takes 1.6 seconds (0.5 to
+  10). The flying hawk starts at every 24 seconds (0 for never, or 10 to 3600)
+  and takes 11 seconds (6 to 30) from the first fold to the plates locking
+  home. The name effect starts at every 300 seconds, which is five minutes (0
+  for never, or 30 to 900), and takes 1.43 seconds (0.5 to 10), the time it
+  takes on HAWKTIMUS PRIME today. A longer or shorter name takes a little more
+  or less. The starting values are what the logo did before it had
+  settings. A duration
+  stretches or squeezes the whole animation by the same amount, so a flying
+  hawk of 22 seconds is the same flight at half speed. The durations are for
+  Normal speed, and the Speed setting makes them longer or shorter like every
+  other move. The seconds between plays are real seconds, counted from when
+  the animation last started. Only one animation plays at a time, and none
+  starts while a panel is changing page, so one that is due can start a moment
+  late. A late play is never followed by extra ones. Calm motion plays none of
+  them. The screen glitch used to be in this tab, in "Logo and effects". It is
+  in the Screen tab now.
+- Transitions: how the large and small panels change page, and what metal their
+  frames have (docs/page-transitions.md). "Page change style" is Alternate (the
+  default), Slat change only or Mechanical only. The slat change turns the rows
+  over while the frame lifts and drops. The mechanical change breaks the frame
+  into plates and bars that fold away in 3D and then click back into place around
+  the new page, like a robot changing shape. Alternate takes turns between the
+  two. "Break and rebuild time" is how many seconds the frame takes to break
+  apart in the mechanical change, and the same again to rebuild, from 0.3 to 2,
+  and starts at 0.6. "Frame finish" is the metal of the page frames, picked again
+  at every page change: Mostly gold (the default) is gold with silver now and then,
+  Alternate goes gold, silver, gold, Gold only and Silver only never change.
+  "Silver chance (percent)" is how many changes in 100 bring silver with Mostly
+  gold, from 0 to 100, and starts at 10 (about one change in ten). The other
+  finishes ignore it. Frame metal in the Screen tab is the metal of the banner,
+  countdown and logo, which never change, so it does not decide the page
+  frames. The times are for Normal speed, and the Speed setting stretches them
+  like every other move. Calm motion is a plain fade of the page whatever these
+  say, and a change of metal fades the whole panel. Motion off moves nothing. The
+  ticker has no frame, so only its words change.
 - Countdown: the labels and dates for Kickoff and Rollout. The countdown counts
-  to Kickoff, then to Rollout.
+  to Kickoff, then to Rollout. Its seconds change right on the second of the
+  Mini's clock, so it keeps time with a phone however long the screen has been
+  running.
 - Alert: turn it on to cover the whole screen with a headline and a message.
   Turn it off to take it down, or set "Take down at" to do it automatically.
 - Panels: which panels appear, in what order and for how long. Drag a row to move
@@ -236,18 +356,50 @@ One page, with tabs along the top. It cannot be deleted or copied.
   value is 20. A small panel stays three quarters as long and a ticker line one
   and a half times as long, so at 20 seconds a small panel stays 15 and a
   ticker line 30. A row can have seconds of its own, from 6 to 120. Leave the
-  field empty and the row follows "Seconds per page". The ticker has its own
+  field empty and the row follows "Seconds per page" (the Photo row follows
+  "Seconds per photo" in the Photos tab). The ticker has its own
   "Seconds per ticker line" that works the same way. A row that already has
   seconds keeps them until you clear the field. Speed is applied after all of
   this, so Slow makes every page stay longer than the number you typed. This tab
   also has how many days finished tasks stay, and the date the safety day count
   starts. If you delete every row of a list, nothing is shown in that part of
   the screen.
+- Photos: how the Photo panel works. "Photo order" is Random or Newest first, and
+  "Seconds per photo" is from 6 to 120 and starts at 16. See "Photos" above.
 - Announcements: full screen messages at set times. Give the time in 24 hour
   form, such as 14:30, and tick the days it should play. Tick at least one day.
   The second line is optional: leave it empty and only the first line plays.
   Turn off "Show on screen" to stop one without deleting it. If you delete
   every announcement, none play.
+- Night mode: the screensaver (docs/night-mode.md). Between "Night starts at"
+  and "Night ends at" the screen is black with the team logo and the team number
+  under it, and the picture is never turned off. "Use night mode" starts on. The
+  times are 24 hour times such as 23:30, and start as 23:30 and 11:30. An end
+  before the start runs past midnight, and the same time for both means night
+  mode never comes on. They use the Time zone on the Theme page, and there is no
+  time zone here. "Night style" is Bouncing logo (the logo drifts round the
+  screen, changes colour at every bounce and spins when it hits a corner) or
+  Blank black. "Logo width (pixels)" is from 120 to 800 and starts at 300.
+  "Bounce speed" is Slow, Normal or Fast, and a corner is hit about every 12, 6.5
+  or 3.7 minutes. "Preview night mode" shows it now, whatever the time, even with
+  "Use night mode" off: turn it on and publish to look, and turn it off and
+  publish when you are done. Calm motion keeps the logo still in the middle. An
+  alert or an announcement still shows over night mode.
+- Hidden: two rare surprise transitions that now and then replace a page change
+  of the large panel (docs/hidden-transitions.md). "Allow hidden transitions" is
+  the master switch and starts on. "Desktop reveal chance (percent)" and "Red
+  eyes chance (percent)" are how many page changes in 100 become that
+  transition, from 0 to 100, and both start at 1, so about one page change in 50
+  is a surprise. 0 is never. In the
+  desktop reveal the whole screen comes apart and shows a wallpaper for a moment
+  before it comes back with the next pages. In red eyes it glitches red, breaks
+  apart to black, shows a robot face with red eyes for 2 seconds and comes back.
+  To play one now, open the menu next to Publish (the three dots) and click
+  "Play desktop reveal" or "Play red eyes". Each publishes the page for you, and
+  the TV plays it once within about 20 seconds, whatever the chances say. "Last
+  push" shows which one was pushed and when, and you cannot type in it. Nothing
+  here plays in Calm motion, or during an alert, an announcement, a demo or night
+  mode, and with "Allow hidden transitions" off none plays at all, pushed or not.
 - Calendars: give each calendar a name and choose whether it shows. A new Studio
   starts with one row, code team, named Team calendar. A calendar only shows
   events when it has a row here, with a code that matches the calendar on the
@@ -257,6 +409,15 @@ One page, with tabs along the top. It cannot be deleted or copied.
   events show.
 - Content source: Production or Sample, and an optional "Switch back to
   production at" time. See the next section.
+- Connection: one switch, "Show connection status". It starts off. Turn it on
+  to keep a small text at the bottom right of the screen with the time of the
+  last read from Sanity, how many tasks, sponsors and other items there are, and
+  the time the calendars were last read. The counts include items you have
+  switched off or that have expired. It is for setting up or checking the
+  screen, so turn it off again for everyday use. Whatever this says, the same
+  text comes up in red by itself when the screen has not been able to reach
+  Sanity for over two minutes, and says why (docs/rebuilding-the-mini.md,
+  "Checking the connection"). A full screen alert or announcement covers it.
 
 ## Theme
 
@@ -291,6 +452,28 @@ on at the next page change of the large panel, so allow up to a minute or so. In
 an alert it can take up to two minutes. The themes and overlays in the lists
 are the ones the dashboard has. A new one is added in the code
 (docs/adding-a-theme.md, docs/adding-a-holiday-overlay.md).
+
+## Demo
+
+One page, like Dashboard Settings. It cannot be deleted or copied. A demo shows
+the announcement and night mode on the TV one after the other, once, without
+waiting for their times (docs/demo.md).
+
+- Run demo: open the menu next to Publish (the three dots) and click Run demo.
+  The TV starts the demo within a few seconds, plays it once and goes back to
+  normal. It publishes the page itself. Click it again to start over.
+- Stop demo: in the same menu. It ends a demo that is playing. It is switched off
+  when nothing has been asked for.
+- Steps: the screens to show, in order, up to 10, each with the seconds it stays
+  (5 to 300). It starts with the Announcement for 30 seconds and then Night mode
+  for 30 seconds.
+- Demo announcement text: the words of the Announcement step, up to 24 characters.
+  Leave it empty to use the first announcement in Dashboard Settings, or
+  [DEMO ANNOUNCEMENT] if there is none.
+- Requested at: filled in by Run demo. You cannot type in it.
+
+A demo is only played when it was asked for in the last minute, and only once, so
+a TV that restarts never plays an old one. A real alert ends it.
 
 ## Sample content and production content
 

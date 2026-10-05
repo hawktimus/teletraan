@@ -71,8 +71,9 @@ where Grid 1 has a header. For the ticker start from `panels/ticker/ticker.css`.
 
 `mount(host, content)` fills `host.innerHTML` with one `<section>`. Its class
 is `page` and then the id. `content` is the data from Sanity, shaped like
-`dashboard/data/sample/content.json`, plus `events`, `photos` and `weather`,
-which may be missing. `events` is the BAND events and the Extra events from
+`dashboard/data/sample/content.json` (its `photos` are the Photo documents from
+Studio, cleaned in `core/sanity.js`), plus `events` and `weather`, which may be
+missing. `events` is the BAND events and the Extra events from
 Studio, already merged and sorted (`core/events.js`). Each event has `title`,
 `start`, `end`, `allDay`, `location`, `firstDay` and `lastDay`. `rangeText()`
 and `timeText()` in `core/events.js` write the dates and the time for it.
@@ -143,7 +144,7 @@ panel. A panel that needs a line, a card or a bar uses one of these:
 - **A straight bar.** `<div class="bar"></div>` is 16px high, or add
   `bar-thin` for 8px. Give it a width. The banner rule is one.
 - **A tag.** `tagMarkup(width)` is the slanted purple tag of the ticker.
-- **Bolts** belong to the frame. A panel does not draw its own.
+- **Screws** belong to the frame. A panel does not draw its own.
 - **Text colours.** White, `--yellow`, `--lilac` and the status colours are all
   at least 4.5 to 1 against a plate or a card. Keep it that way: do not put
   text on a colour you have not checked. `--yellow` is the brand yellow, for
@@ -214,8 +215,7 @@ speed. Then check:
   line for `data/live/version.txt`. That is expected: the Mini writes that
   file, so your computer does not have it. While the screen is on sample
   content it reads only `data/sample/`. On production content it also looks for
-  the Mini's calendar and photo files in `data/live/`, and a missing one is a
-  404 too.
+  the Mini's calendar files in `data/live/`, and a missing one is a 404 too.
 - no text is smaller than 44px
 - nothing crosses the frame or the cut corner
 - everything with text on it turns over, in order from the top, and nothing
@@ -235,9 +235,11 @@ Its parts, from the back to the front:
 
 1. the plate: the purple fills, and the thin metal seams under the header
 2. the shadows of the two frame halves, one svg each
-3. the two halves of the frame, one svg each, with the bolts
+3. the two halves of the frame, one svg each, with the screws
 4. the glint, the bright dash that runs round the frame now and then
-5. the page: your panel's section
+5. the pieces: the same frame cut into plates, bars and corner brackets, hidden
+   until a mechanical page change (docs/page-transitions.md)
+6. the page: your panel's section
 
 The ticker has no frame. Its tag and its message are two slats that swap in
 place.
@@ -250,9 +252,9 @@ with seconds of its own uses those.
 
 | State | When | What moves |
 |-------|------|------------|
-| `in` | the first page of the area | the plates slide in, the frame lines are drawn, the bolts pop in, then the slats turn in |
-| `xo` | the old page's last second | the bolts turn a quarter to release the frame, the halves lift off and pull apart, the slats pull back and turn edge-on |
-| `xi` | the new page arriving | the slats turn in, the halves drop back, the bolts turn back and lock |
+| `in` | the first page of the area | the plates slide in, the frame lines are drawn, the screws turn in, then the slats turn in |
+| `xo` | the old page leaving | the screws come undone, then either the halves lift off and pull apart and the slats pull back and turn edge-on (the slat change), or the frame breaks into pieces that fold away (the mechanical change) |
+| `xi` | the new page arriving | the slats turn in and either the halves drop back or the pieces rebuild, then the screws turn back in |
 | `shown` | at rest | nothing, except the glint |
 | `out` | the area is taken away | the whole area fades |
 
@@ -263,11 +265,18 @@ The shadows travel further than the bars, and that growing gap is what reads
 as depth. In calm motion nothing turns, slides or lifts: the old page fades out
 in 0.3 seconds and the new one fades in. With motion off nothing moves.
 
+Which of the two changes an area uses (`data-change`) and which metal its frame
+has (`data-metal`, gold or silver) are chosen at the start of every change, by
+`frame.js` and `core/transitions.js`, from the Transitions tab of Dashboard
+Settings. A panel does nothing for either: its slats turn or fold with the
+frame, and its edges follow the metal of the area. docs/page-transitions.md
+explains the two changes, the screws and the metal, and how to add a third.
+
 ## The look
 
 The plates are flat purple on a purple-black ground. The metal is on the edges
-only: every frame line, the thin bars between rows, the edge of a card, the
-bolts and the outline of the logo. It is one shape drawn five times, back to
+only: every frame line, the thin bars between rows, the edge of a card and the
+outline of the logo. The screws at the joints are always silver. It is one shape drawn five times, back to
 front: its shadow (a dark copy moved down and right), its dark rim, its banded
 face, a soft shade on the lower half and a bright ridge on the lit edge. The
 shape is drawn once in `core/plate.js` and the metal colours come from
@@ -280,7 +289,7 @@ Dashboard Settings field and an address switch, and the address wins.
 
 | Attribute | Values | Dashboard Settings | Address |
 |-----------|--------|--------------------|---------|
-| `data-metal` | `gold` (dull antique gold, the default) or `silver` (weathered silver) | Screen, Frame metal | `?metal=silver` |
+| `data-metal` | `gold` (dull antique gold, the default) or `silver` (weathered silver). It is on the html element, for the banner, the countdown and the logo, and on each large and small panel area, for its frame and everything in it, chosen at every page change | Screen, Frame metal (the html element). Transitions, Frame finish (the areas) | `?metal=silver` (the html element). `?frames=silver` (the areas) |
 | `data-glint` | `on` (the default) or `off`: the bright dash that runs round each big frame | Screen, Glint | `?glint=off` |
 | `data-finish` | `metal` (the default) or `flat` | none | `?finish=flat` |
 | `data-motion` | `full` (the default), `calm` or `none` | Screen, Motion (full or calm) | `?motion=calm` |
@@ -290,8 +299,9 @@ The announcement's warning tape is the brand yellow, because it is tape and
 not metal.
 
 **The flat finish.** Every edge becomes one plain stroke with no shadow, rim,
-shade, ridge or glint, and every bolt a plain hexagon. The turning slats and
-the lifting halves stay, so it is the same screen with less to paint. If the
+shade, ridge or glint, and every screw a plain silver head with a slot. The
+turning slats, the lifting halves and the turning screws stay, so it is the
+same screen with less to paint. If the
 screen on the Mini is slow, this is the first thing to try
 (docs/try-it-on-the-mini.md).
 
@@ -303,9 +313,9 @@ screen on the Mini is slow, this is the first thing to try
   `drop-shadow()`, `mix-blend-mode` or video. They are too slow on the Mini.
   A shadow is a dark copy of the shape moved a few pixels, as the frame does.
 - use a 3D transform (`perspective`, `translateZ`, `rotateX`, `rotateY`). The
-  slat turns, the name effect and the logo are the only places, and
-  `frame.css` has them all. The frame halves lifting and the bolts turning are
-  flat moves.
+  slat turns, the pieces of the mechanical page change, the hidden transitions,
+  the name effect and the logo are the only places, and `frame.css` has them
+  all. The frame halves lifting and the screws turning are flat moves.
 - animate colours, gradients, sizes or filters. Only transform, opacity and
   line drawing change.
 - add a layer that covers the whole screen, or a big repeating texture
@@ -327,6 +337,13 @@ small panel or the ticker never needs any of this.
   Every time there is multiplied by the Speed setting, so a new time in
   `frame.css` or `tokens.css` is written `calc(400ms * var(--pace))`, and code
   that waits uses `frame.pace()`.
+- **Write only what changed.** A panel that shows the time, such as the clock
+  or the countdown, asks to be told when each real second starts with
+  `frame.onSecond(listener, element)`. `core/tick.js` reads the clock each time
+  and waits for the start of the next second, so it does not drift and never
+  fires twice to catch up. In the listener, compare the new value with what is
+  already on the screen and write to the page only if it differs, so a normal
+  tick changes one digit and nothing else. Do not start a timer of your own.
 - **Text sizes** come from `tokens.css`. The smallest is `var(--size-label)`
   (44px), body text is `var(--size-body)` (56px) or `var(--size-body-large)`
   (64px), and headings are `var(--size-heading)` (96px). The big numbers have

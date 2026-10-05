@@ -68,6 +68,12 @@
   --time-slam-in: calc(420ms * var(--pace));
   --time-scan: calc(900ms * var(--pace));
   --time-calm: calc(300ms * var(--pace));
+  --break-seconds: .6; /* frame.js sets it from Break and rebuild time: the mechanical page change breaks the frame apart in this many seconds, and rebuilds it in the same again */
+  --time-break: calc(var(--break-seconds) * 1s * var(--pace));
+  --hidden-seconds: 1.6; /* core/hidden-run.js sets it, with the same number: the blocks of a hidden transition fly apart in this many seconds, and fly back in the same again */
+  --time-hidden: calc(var(--hidden-seconds) * 1s * var(--pace));
+  --glitch-seconds: 1.5; /* the red glitches of the red eyes last this long. hidden-run.js sets it from the transition's list of steps */
+  --look-seconds: 1; /* how long the backdrop takes over a step of the red eyes. hidden-run.js sets it, step by step */
   --crt-scale: 1; /* frame.js sets it from the Screen glitch duration: seconds divided by 2.7. 1 is the normal 2.7 seconds */
   --time-crt: calc(2.6s * var(--crt-scale) * var(--pace)); /* the old television effect, which frame.js times to match */
   --time-crt-roll: calc(1.2s * var(--crt-scale) * var(--pace)); /* one pass of its bright bar, which plays twice */
@@ -94,11 +100,17 @@
    mid stops dull, or it turns into chrome or bright yellow. The brand yellow
    (--yellow) is for text only. It is not the colour of the gold metal.
 
-   html[data-metal] picks the metal: gold (the default) or silver. Change the
-   attribute and every edge changes colour. */
+   data-metal picks the metal: gold (the default) or silver. It is read from
+   the nearest element that has the attribute. The html element has one, set by
+   Frame metal in Dashboard Settings, and it covers everything that stays on
+   the screen: the banner, the countdown and the logo. Each large and small
+   panel area has one of its own, set at every page change (Frame finish in
+   Dashboard Settings), so a page frame can be silver under a gold banner.
+   Everything inside an area follows the area. Change the attribute and every
+   edge under it changes colour. */
 
 :root,
-html[data-metal="gold"] {
+[data-metal="gold"] {
   --metal-1: #efe6c4; /* the brightest highlight, a pale cream */
   --metal-2: #cfba7f;
   --metal-3: #a98f43; /* the plain mid tone */
@@ -115,7 +127,7 @@ html[data-metal="gold"] {
   --metal-flat: #a58b44; /* the one plain colour of the flat finish */
 }
 
-html[data-metal="silver"] {
+[data-metal="silver"] {
   --metal-1: #c3c4c3; /* bright, but nowhere near white */
   --metal-2: #a4a7a8;
   --metal-3: #85888a;
@@ -130,6 +142,30 @@ html[data-metal="silver"] {
   --metal-glint: #f0f2f2;
   --metal-shade: rgba(42, 34, 24, .8);
   --metal-flat: #7f8386;
+}
+
+/* Silver as one plain colour, for what is not a metal edge: the logo of the night
+   screen. It is the silver metal's second tone above. */
+:root {
+  --silver: #a4a7a8;
+}
+
+/* The hidden transitions (core/hidden-art.js, frame.css). The red eyes picture is
+   dark steel on black, in five flat tones, with a lighter edge on every plate,
+   and two flat reds for the eyes. The flat red of the red glitches is the
+   same kind of red. None of them follows a theme, so the surprise looks the same
+   whatever the season. */
+:root {
+  --hidden-red: #c8141b;
+  --face-lit: #343a43;
+  --face-lit-2: #414853;
+  --face-shade: #252a31;
+  --face-shade-2: #2e343c;
+  --face-dark: #15181c;
+  --face-cut: #050607;
+  --face-edge: #5b6470;
+  --eye-red: #e0161d;
+  --eye-hot: #ff4a3a;
 }
 
 /* The red metal of the countdown and the alert. It does not change with
@@ -151,20 +187,44 @@ html[data-metal="silver"] {
   --red-flat: #b8362a;
 }
 
-/* Which colours an edge and a bolt use. A frame that has class red-metal uses
-   the red ones. The gradients (url(...)) are in index.html. */
+/* The screws at the frame joints. They are silver on every frame, gold or
+   silver, so their colours do not follow data-metal. Face, rim, slot and the
+   bright line along the lit edge. The face is a gradient (index.html). */
+:root {
+  --screw-light: #c3c4c3;
+  --screw-mid: #85888a;
+  --screw-dark: #5f6165;
+  --screw-rim: #121315;
+  --screw-slot: #17181a;
+  --screw-ridge: #cdcfce;
+  --screw-flat: #7f8386;
+  --screw-face: url(#screw-face-silver);
+}
+
+/* Which colours an edge uses. A custom property that is made from another one
+   is worked out on the element that sets it, so these are set on every element
+   that sets a metal (the html element and each area), or an area would keep the
+   page's colours. The gradients (url(...)) are in index.html, one set for each
+   metal. A frame that has class red-metal uses the red ones. */
 :root {
   --edge-shadow: #050308;
-  --edge-face: url(#edge-metal);
+}
+:root,
+[data-metal] {
   --edge-rim: var(--metal-rim);
-  --edge-ridge: url(#edge-ridge-metal);
   --edge-glint: var(--metal-glint);
-  --edge-shade: url(#edge-shade-metal);
   --edge-flat: var(--metal-flat);
-  --bolt-rim: var(--metal-rim);
-  --bolt-face: url(#bolt-face-metal);
-  --bolt-core: url(#bolt-core-metal);
-  --bolt-ridge: var(--metal-ridge);
+}
+:root,
+[data-metal="gold"] {
+  --edge-face: url(#edge-gold);
+  --edge-ridge: url(#edge-ridge-gold);
+  --edge-shade: url(#edge-shade-gold);
+}
+[data-metal="silver"] {
+  --edge-face: url(#edge-silver);
+  --edge-ridge: url(#edge-ridge-silver);
+  --edge-shade: url(#edge-shade-silver);
 }
 .red-metal {
   --edge-face: url(#edge-red);
@@ -173,25 +233,14 @@ html[data-metal="silver"] {
   --edge-glint: var(--red-glint);
   --edge-shade: url(#edge-shade-red);
   --edge-flat: var(--red-flat);
-  --bolt-rim: var(--red-rim);
-  --bolt-face: url(#bolt-face-red);
-  --bolt-core: url(#bolt-core-red);
-  --bolt-ridge: var(--red-ridge);
 }
 
 /* The flat finish (?finish=flat, or data-finish="flat" on the html element).
-   Every edge becomes one plain stroke and every bolt a plain hexagon with a
-   dark outline, with no shadow, ridge, banding or glint. The layers are
+   Every edge becomes one plain stroke and every screw a plain silver octagon
+   with a dark slot, with no shadow, ridge, banding or glint. The layers are
    switched off in base.css. The Mini is an old machine, so if the screen is
    slow, try the flat finish first. */
 :root[data-finish="flat"] {
-  --bolt-rim: var(--metal-rim);
-  --bolt-face: var(--edge-flat);
-  --bolt-core: var(--metal-rim);
-  --bolt-ridge: transparent;
-}
-:root[data-finish="flat"] .red-metal {
-  --bolt-rim: var(--red-rim);
-  --bolt-face: var(--edge-flat);
-  --bolt-core: var(--red-rim);
+  --screw-face: var(--screw-flat);
+  --screw-ridge: transparent;
 }

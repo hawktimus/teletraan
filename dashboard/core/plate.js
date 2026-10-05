@@ -6,13 +6,13 @@
 // and its colours come from tokens.css. The shape of each frame is added once
 // to the hidden defs in index.html, the first time a plate of that kind is
 // built, and every later plate points at it with <use>. The gradients and the
-// bolt are in index.html too. The five layer classes are described in
+// screw are in index.html too. The five layer classes are described in
 // base.css.
 //
 // The frame round a plate is drawn in two halves, each in its own svg:
 //   half a: the left side, the top left corner and the top
 //   half b: the right side, the bottom right corner and the bottom
-// They meet at the top right and the bottom left. Each half carries the bolts
+// They meet at the top right and the bottom left. Each half carries the screws
 // of its own corners, so it can move on its own as one piece.
 //
 // Every piece is labelled with data-part so frame.js can move it. The panel
@@ -21,9 +21,10 @@
 //
 // There are three ways to get a frame. areaMarkup() is the frame of an area
 // that stays on screen while its pages change (the large panel and the small
-// panel). plateMarkup() is the whole plate of a panel that sits outside the
-// areas and draws its own, the countdown. frameMarkup() is the full screen
-// frame of the alert and the announcement.
+// panel). It also holds the same frame cut into pieces, hidden, for the
+// mechanical page change. plateMarkup() is the whole plate of a panel that
+// sits outside the areas and draws its own, the countdown. frameMarkup() is the
+// full screen frame of the alert and the announcement.
 
 // the large panel on the left (1152 x 708)
 const grid1 = {
@@ -36,13 +37,13 @@ const grid1 = {
   // number split (counting from 0) and at the first point.
   outline: [[4, 704], [4, 68], [84, 4], [1148, 4], [1148, 640], [1068, 704]],
   split: 3,
-  // the line under the header, and the bolt shape between the two header plates
+  // the line under the header, and the notch shape between the two header plates
   seams: [
     [[4, 120], [1148, 120]],
     [[664, 4], [648, 52], [688, 52], [665.3, 120]],
   ],
-  // bolts on the ends of the cut corners, shared out between the halves
-  bolts: { a: [[4, 68], [84, 4]], b: [[1148, 640], [1068, 704]] },
+  // screws on the ends of the cut corners, shared out between the halves
+  screws: { a: [[4, 68], [84, 4]], b: [[1148, 640], [1068, 704]] },
   glintDelay: 2, // seconds after the panel has arrived
 };
 
@@ -59,13 +60,54 @@ const grid2 = {
     [[4, 84], [652, 84]],
     [[480, 4], [453.3, 84]],
   ],
-  bolts: { a: [[4, 52], [64, 4]], b: [[652, 320], [592, 368]] },
+  screws: { a: [[4, 52], [64, 4]], b: [[652, 320], [592, 368]] },
   glintDelay: 8,
 };
 
+// The pieces a large or small frame breaks into for the mechanical page
+// change, listed from the back to the front. Together they are the whole
+// frame: the plates, the two lines under the header, and the edge cut into
+// bars. A piece is one of
+//   points + fill   a plate: the polygon, and which fill class paints it
+//   line            a bar of the frame: the line it follows, drawn as an edge
+// A bar may also have screws: 'a' or 'b', the screws of that half of the frame.
+// Bars end in a straight run, on a whole number, so neighbours meet exactly
+// and the rebuilt frame looks like the one at rest. The name is what frame.css
+// moves it by (data-piece), so grid1 and grid2 share their names.
+grid1.pieces = [
+  { name: 'plate-header-left', fill: 'header-left', points: grid1.headerLeft },
+  { name: 'plate-header-right', fill: 'header-right', points: grid1.headerRight },
+  { name: 'plate-body-left', fill: 'body', points: [[4, 120], [576, 120], [576, 704], [4, 704]] },
+  { name: 'plate-body-right', fill: 'body', points: [[576, 120], [1148, 120], [1148, 640], [1068, 704], [576, 704]] },
+  { name: 'seam-line', line: [[4, 120], [1148, 120]] },
+  { name: 'seam-notch', line: grid1.seams[1] },
+  { name: 'edge-top-left', line: [[230, 4], [664, 4]] },
+  { name: 'edge-top-right', line: [[664, 4], [1148, 4], [1148, 170]] },
+  { name: 'edge-right', line: [[1148, 170], [1148, 520]] },
+  { name: 'edge-bottom', line: [[480, 704], [930, 704]] },
+  { name: 'edge-bottom-left', line: [[4, 230], [4, 704], [480, 704]] },
+  { name: 'corner-top-left', line: [[4, 230], [4, 68], [84, 4], [230, 4]], screws: 'a' },
+  { name: 'corner-bottom-right', line: [[1148, 520], [1148, 640], [1068, 704], [930, 704]], screws: 'b' },
+];
+
+grid2.pieces = [
+  { name: 'plate-header-left', fill: 'header-left', points: grid2.headerLeft },
+  { name: 'plate-header-right', fill: 'header-right', points: grid2.headerRight },
+  { name: 'plate-body', fill: 'body', points: grid2.body },
+  { name: 'seam-line', line: [[4, 84], [652, 84]] },
+  { name: 'seam-notch', line: grid2.seams[1] },
+  { name: 'edge-top-left', line: [[160, 4], [480, 4]] },
+  { name: 'edge-top-right', line: [[480, 4], [652, 4], [652, 100]] },
+  { name: 'edge-right', line: [[652, 100], [652, 240]] },
+  { name: 'edge-bottom', line: [[260, 368], [500, 368]] },
+  { name: 'edge-bottom-left', line: [[4, 140], [4, 368], [260, 368]] },
+  { name: 'corner-top-left', line: [[4, 140], [4, 52], [64, 4], [160, 4]], screws: 'a' },
+  { name: 'corner-bottom-right', line: [[652, 240], [652, 320], [592, 368], [500, 368]], screws: 'b' },
+];
+
 // the countdown (656 x 320). It has no header, its frame is red, and its
 // top edge is cut into teeth like a jaw. The first tooth starts clear of the
-// bolt, which covers the top edge up to about x = 88.
+// screw, which covers the top edge up to about x = 88.
 const countdown = (function () {
   const top = [[64, 4]];
   for (let x = 100; x < 628; x += 24) {
@@ -84,7 +126,7 @@ const countdown = (function () {
     body: [[64, 4], [652, 4], [652, 268], [592, 316], [4, 316], [4, 52]],
     outline: outline,
     split: split,
-    bolts: { a: [[64, 4]], b: [[592, 316]] },
+    screws: { a: [[64, 4]], b: [[592, 316]] },
     glintDelay: 5,
   };
 })();
@@ -97,7 +139,7 @@ const screenFrame = {
   height: 1080,
   outline: [[64, 1008], [64, 120], [120, 72], [1856, 72], [1856, 960], [1800, 1008]],
   split: 3,
-  bolts: { a: [[64, 120], [120, 72]], b: [[1856, 960], [1800, 1008]] },
+  screws: { a: [[64, 120], [120, 72]], b: [[1856, 960], [1800, 1008]] },
 };
 
 // [[1, 2], [3, 4]] becomes "1,2 3,4", which is how SVG wants a list of points
@@ -120,6 +162,23 @@ function halves(shape) {
 
 
 // Shapes drawn once
+
+// A gradient takes its colours from the place it sits in the page, not from the
+// shape that uses it. index.html draws the three edge gradients once, for gold
+// (data-metal="gold" on each), and this makes the same three for silver, so the
+// stops are only written once. tokens.css points each frame at the gradients of
+// its own metal. shell.js calls it once, before anything is drawn.
+export function makeSilverGradients() {
+  document.querySelectorAll('linearGradient[data-metal="gold"]').forEach(gold => {
+    const silverId = gold.id.replace('gold', 'silver');
+    if (document.getElementById(silverId)) return;
+
+    const silver = gold.cloneNode(true);
+    silver.id = silverId;
+    silver.setAttribute('data-metal', 'silver');
+    gold.parentNode.appendChild(silver);
+  });
+}
 
 // Adds a shape to the hidden defs unless it is already there, and gives its id back
 function define(id, markup) {
@@ -178,60 +237,60 @@ function edgeLayers(id, part, names = allLayers) {
   return part ? `<g data-part="${part}">${layers}</g>` : layers;
 }
 
-// A bolt centred on a corner: its shadow, and the head. Both pop in
-// together. The two are separate so a turning head never turns its shadow.
-// --n is the bolt's number, for the pop in delay in frame.css.
-function boltShadowMarkup(index) {
-  return `<use class="bolt-shadow" data-part="stud" data-index="${index}" style="--n: ${index}" href="#bolt-shadow-shape"/>`;
+// A screw centred on a corner: its shadow, and the head. They arrive, unscrew
+// and screw back in together. The two are separate shapes so a turning head
+// never turns its shadow. --n is the screw's number, for the delay in frame.css.
+function screwShadowMarkup(index) {
+  return `<use class="screw-shadow" data-part="stud" data-index="${index}" style="--n: ${index}" href="#screw-shadow-shape"/>`;
 }
 
-function boltHeadMarkup(index) {
-  return `<use class="bolt" data-part="stud" data-index="${index}" style="--n: ${index}" href="#bolt-shape"/>`;
+function screwHeadMarkup(index) {
+  return `<use class="screw" data-part="stud" data-index="${index}" style="--n: ${index}" href="#screw-shape"/>`;
 }
 
-function boltPair(center, index) {
-  return `<g transform="translate(${center[0]} ${center[1]})">${boltShadowMarkup(index)}${boltHeadMarkup(index)}</g>`;
+function screwPair(center, index) {
+  return `<g transform="translate(${center[0]} ${center[1]})">${screwShadowMarkup(index)}${screwHeadMarkup(index)}</g>`;
 }
 
-// One half of a frame: its five layers, then its bolts. drawPart is the
+// One half of a frame: its five layers, then its screws. drawPart is the
 // data-part that frame.js draws line by line.
-function halfMarkup(kind, side, shape, red, drawPart, firstBolt) {
-  const bolts = shape.bolts[side].map((center, index) => boltPair(center, firstBolt + index)).join('');
+function halfMarkup(kind, side, shape, red, drawPart, firstScrew) {
+  const screws = shape.screws[side].map((center, index) => screwPair(center, firstScrew + index)).join('');
 
   return `<svg class="plate${red}" data-part="frame-${side}" width="${shape.width}" height="${shape.height}" viewBox="0 0 ${shape.width} ${shape.height}">
     ${edgeLayers(kind + '-' + side, drawPart)}
-    ${bolts}
+    ${screws}
   </svg>`;
 }
 
 // The two halves of a frame, one after the other
 function frameHalves(kind, shape, red, drawPart) {
   return halfMarkup(kind, 'a', shape, red, drawPart, 0) +
-    halfMarkup(kind, 'b', shape, red, drawPart, shape.bolts.a.length);
+    halfMarkup(kind, 'b', shape, red, drawPart, shape.screws.a.length);
 }
 
 // One svg of the frame of an area that stays on screen: the shadow of one
-// half, or the bars and bolt heads of one half. There are four in all. When
+// half, or the bars and screw heads of one half. There are four in all. When
 // the halves lift off, each shadow travels further than its bars, and that
 // growing gap is what reads as depth. Because each of the four is a whole
 // svg, the browser moves it as a picture and does not draw its lines again.
 // The shadows come first, so both shadows are under both halves' bars.
-function areaLayer(kind, shape, side, firstBolt, shadow) {
-  const bolts = shape.bolts[side].map((center, index) => {
-    const bolt = shadow ? boltShadowMarkup(firstBolt + index) : boltHeadMarkup(firstBolt + index);
-    return `<g transform="translate(${center[0]} ${center[1]})">${bolt}</g>`;
+function areaLayer(kind, shape, side, firstScrew, shadow) {
+  const screws = shape.screws[side].map((center, index) => {
+    const screw = shadow ? screwShadowMarkup(firstScrew + index) : screwHeadMarkup(firstScrew + index);
+    return `<g transform="translate(${center[0]} ${center[1]})">${screw}</g>`;
   }).join('');
   const layers = edgeLayers(kind + '-' + side, 'outline', shadow ? shadowOnly : withoutShadow);
   const part = (shadow ? 'shadow-' : 'frame-') + side;
 
   return `<svg class="plate${shadow ? ' shadow-layer' : ''}" data-part="${part}" width="${shape.width}" height="${shape.height}" viewBox="0 0 ${shape.width} ${shape.height}">
     ${layers}
-    ${bolts}
+    ${screws}
   </svg>`;
 }
 
 function areaHalves(kind, shape) {
-  const firstInB = shape.bolts.a.length;
+  const firstInB = shape.screws.a.length;
 
   return areaLayer(kind, shape, 'a', 0, true) +
     areaLayer(kind, shape, 'b', firstInB, true) +
@@ -250,7 +309,7 @@ function glintMarkup(kind, shape, red) {
 // The fills of a plate and its seams, in one svg. They stay where they are
 // when the frame's halves lift.
 function fillsMarkup(kind, shape, red) {
-  let svg = `<svg class="plate${red}" width="${shape.width}" height="${shape.height}" viewBox="0 0 ${shape.width} ${shape.height}">`;
+  let svg = `<svg class="plate fills${red}" width="${shape.width}" height="${shape.height}" viewBox="0 0 ${shape.width} ${shape.height}">`;
   svg += `<polygon class="body" data-part="body" points="${toPoints(shape.body)}"/>`;
 
   if (shape.headerLeft) {
@@ -259,6 +318,53 @@ function fillsMarkup(kind, shape, red) {
   }
   if (shape.seams) svg += edgeLayers(kind + '-seams', 'seam');
   return svg + '</svg>';
+}
+
+
+// One piece of a frame, as an svg of its own just big enough to hold it. Its
+// viewBox is the piece's rectangle of the panel, not the whole panel, so every
+// point (and every gradient, which is measured in the same units) is where it
+// is in the full frame. The piece is placed at that rectangle, so it sits
+// exactly over the frame at rest, and moves as a picture of its own. Room is
+// left round the points for the width of the edge, its shadow and a screw.
+const pieceRoom = 32;
+
+function pieceMarkup(kind, shape, piece) {
+  const points = piece.line || piece.points;
+  const xs = points.map(point => point[0]);
+  const ys = points.map(point => point[1]);
+  const left = Math.floor(Math.min.apply(null, xs) - pieceRoom);
+  const top = Math.floor(Math.min.apply(null, ys) - pieceRoom);
+  const width = Math.ceil(Math.max.apply(null, xs) + pieceRoom) - left;
+  const height = Math.ceil(Math.max.apply(null, ys) + pieceRoom) - top;
+
+  let art;
+  if (piece.line) {
+    const id = kind + '-piece-' + piece.name;
+    define(id, `<polyline id="${id}" points="${toPoints(piece.line)}"/>`);
+    art = edgeLayers(id);
+  } else {
+    art = `<polygon class="${piece.fill}" points="${toPoints(piece.points)}"/>`;
+  }
+
+  // The screws are numbered as they are in the frame at rest, a's first
+  let screws = '';
+  if (piece.screws) {
+    const first = piece.screws === 'a' ? 0 : shape.screws.a.length;
+    const centers = shape.screws[piece.screws];
+    const at = center => `translate(${center[0]} ${center[1]})`;
+    screws = centers.map((center, index) => `<g transform="${at(center)}">${screwShadowMarkup(first + index)}</g>`).join('') +
+      centers.map((center, index) => `<g transform="${at(center)}">${screwHeadMarkup(first + index)}</g>`).join('');
+  }
+
+  return `<svg class="plate piece" data-piece="${piece.name}" style="left: ${left}px; top: ${top}px;" width="${width}" height="${height}" viewBox="${left} ${top} ${width} ${height}">
+    ${art}
+    ${screws}
+  </svg>`;
+}
+
+function piecesMarkup(kind, shape) {
+  return shape.pieces.map(piece => pieceMarkup(kind, shape, piece)).join('');
 }
 
 
@@ -276,12 +382,14 @@ export function plateMarkup(kind) {
 }
 
 // The frame of the large or the small panel area, drawn once for as long as
-// the screen is up. It holds no page content. kind is 'grid1' or 'grid2'.
+// the screen is up. It holds no page content. kind is 'grid1' or 'grid2'. After
+// the frame come its pieces, which are the same frame cut up and stay hidden
+// until a mechanical page change shows them in its place (frame.css).
 export function areaMarkup(kind) {
   const shape = shapes[kind];
   defineFrame(kind, shape);
 
-  return fillsMarkup(kind, shape, '') + areaHalves(kind, shape) + glintMarkup(kind, shape, '');
+  return fillsMarkup(kind, shape, '') + areaHalves(kind, shape) + glintMarkup(kind, shape, '') + piecesMarkup(kind, shape);
 }
 
 // The frame behind the full screen alert and announcement: the plate, then

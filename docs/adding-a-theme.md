@@ -34,7 +34,7 @@ The variables a theme must set, and what each is for:
 | `--lilac` | the quiet text, such as the subteam beside a task |
 | `--yellow-faint` | the accent at 16 percent strength, for the sweeping bar of light |
 | `--danger` | red lamps, stripes and the bar beside a blocked task |
-| `--danger-bright` | red text on a dark red plate, such as OFFLINE |
+| `--danger-bright` | red text on a dark red plate, such as the connection status text |
 | `--danger-plate` | the countdown plate and the band behind a blocked task |
 | `--danger-hot` | the full screen alert and the countdown in its last week |
 | `--danger-dark` | the unlit blocks of the countdown rail |

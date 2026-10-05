@@ -23,7 +23,7 @@
   color: var(--yellow);
   font: 600 var(--size-label)/44px var(--font-display);
 }
-/* The date is cut off with an ellipsis before it can reach the bolt in the
+/* The date is cut off with an ellipsis before it can reach the notch in the
    middle of the header. */
 .tonight .tag-text {
   min-width: 0;

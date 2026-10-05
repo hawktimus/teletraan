@@ -4,7 +4,8 @@
 import { defaultPerson, defaultSettings } from '../config.js';
 import { parseLocalDateTime, sameDay } from './time.js';
 import { fixSettingValues, visibleItems, withDefaults } from './content.js';
-import { tidyPhoto } from './images.js';
+import { photoFocus, screenPhotoUrl, tidyPhoto } from './images.js';
+import { classifyFailure } from './connection.js';
 
 // Everything the screen needs, in one request. Lists come back in the order
 // they were created, and normalizeContent puts the ones with an Order first.
@@ -13,11 +14,17 @@ import { tidyPhoto } from './images.js';
 // task with no Finished on date counts as finished when it was last edited.
 // The Theme document is read with the rest. Its empty schedule and its
 // missing fields are the defaults, so nothing special is needed (core/theme.js).
+// The Demo document is read with the rest too, and its changes come through the
+// same live stream, so a click on Run demo reaches the screen within seconds.
+// No Demo document means no demo (core/demo.js).
 // Extra events that are switched off are left out here. A missing switch means
 // on. The events are tidied and merged with the BAND ones in core/events.js.
 // A person's photo is sent as a plain address with its size, crop and hotspot
 // (images.js builds the address the screen asks for). The photo's own record
 // has names that start with an underscore, which normalizeContent drops.
+// A Photo document is sent the same way, with its id and the time it was
+// created (the underscore names are not kept, so they are asked for under
+// plain ones). Hidden and expired photos stay in the list like the other items.
 export const contentQuery = `{
   "settings": *[_id == "dashboardSettings"][0] {
     ...,
@@ -26,6 +33,7 @@ export const contentQuery = `{
     "calendars": coalesce(calendars, [])
   },
   "theme": *[_id == "theme"][0],
+  "demo": *[_id == "demo"][0],
   "tasks": *[_type == "task"] | order(_createdAt asc) {
     ...,
     "subteam": subteam->name,
@@ -44,6 +52,21 @@ export const contentQuery = `{
       hotspot
     }
   },
+  "photos": *[_type == "photo"] | order(_createdAt desc) {
+    "id": _id,
+    "createdAt": _createdAt,
+    caption,
+    credit,
+    show,
+    expires,
+    "image": image {
+      "url": asset->url,
+      "width": asset->metadata.dimensions.width,
+      "height": asset->metadata.dimensions.height,
+      crop,
+      hotspot
+    }
+  },
   "plans": *[_type == "plan"] | order(date asc, _createdAt asc),
   "extraEvents": *[_type == "extraEvent" && show != false] | order(startDate asc, _createdAt asc),
   "customPanels": *[_type == "customPanel"] | order(_createdAt asc)
@@ -55,6 +78,7 @@ export const sourceQuery = '*[_id == "dashboardSettings"][0] { contentSource, sw
 
 const requestSeconds = 15;
 const sourceRequestSeconds = 5;
+const probeSeconds = 5;
 
 // sanity is { projectId, dataset, apiVersion } from config.js. The ordinary
 // host is used, not the cached one, so a change shows at once.
@@ -79,15 +103,55 @@ export function liveEventsUrl(sanity) {
     '/data/live/events/' + sanity.dataset;
 }
 
+// The front page of the same host. Nothing is read from it: it only has to answer.
+export function probeUrl(sanity) {
+  return 'https://' + sanity.projectId + '.api.sanity.io/';
+}
+
+// An error for a read that failed. Its reason is one of the words in
+// core/connection.js, which the status text on the screen shows.
+function readFailure(message, failure) {
+  const error = new Error(message);
+  error.reason = classifyFailure(failure);
+  return error;
+}
+
+// A plain request to the same host, with the mode 'no-cors'. The browser lets
+// it through but does not let the page read the answer, so all it can say is
+// whether the host answered. That is how a block by CORS (the host is there)
+// is told from no network (it is not).
+async function hostAnswers(sanity) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), probeSeconds * 1000);
+
+  try {
+    await fetch(probeUrl(sanity), { mode: 'no-cors', cache: 'no-store', signal: controller.signal });
+    return true;
+  } catch (error) {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // Asks Sanity and returns the whole answer. Throws when there is no answer in
-// time or the status is bad, so the caller keeps what it has.
-async function fetchBody(url, seconds) {
+// time or the status is bad, so the caller keeps what it has. The error has
+// a reason (see readFailure). Pass sanity to find out why a read with no
+// answer failed, which costs one more small request. Pass null to skip that.
+async function fetchBody(url, seconds, sanity) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), seconds * 1000);
 
   try {
-    const response = await fetch(url, { cache: 'no-store', signal: controller.signal });
-    if (!response.ok) throw new Error('Sanity answered with status ' + response.status);
+    let response;
+    try {
+      response = await fetch(url, { cache: 'no-store', signal: controller.signal });
+    } catch (error) {
+      const timedOut = controller.signal.aborted;
+      const hostAnswered = sanity ? await hostAnswers(sanity) : null;
+      throw readFailure('Could not read from Sanity: ' + error.message, { timedOut: timedOut, hostAnswered: hostAnswered });
+    }
+    if (!response.ok) throw readFailure('Sanity answered with status ' + response.status, { status: response.status });
 
     return await response.json();
   } finally {
@@ -98,7 +162,7 @@ async function fetchBody(url, seconds) {
 // Asks Sanity for everything and returns the query result as it came.
 // Throws when the answer cannot be used, so the caller keeps what it has.
 export async function fetchResult(sanity) {
-  const body = await fetchBody(queryUrl(sanity), requestSeconds);
+  const body = await fetchBody(queryUrl(sanity), requestSeconds, sanity);
   if (!body || typeof body.result !== 'object' || body.result === null) {
     throw new Error('Sanity sent no result');
   }
@@ -111,7 +175,7 @@ export async function fetchResult(sanity) {
 // empty object and the defaults apply. That is a good answer, not a failure.
 // Throws when there is no usable answer.
 export async function fetchSourceSettings(sanity) {
-  const body = await fetchBody(sourceQueryUrl(sanity), sourceRequestSeconds);
+  const body = await fetchBody(sourceQueryUrl(sanity), sourceRequestSeconds, null);
   if (!isRecord(body) || !('result' in body) || (body.result !== null && !isRecord(body.result))) {
     throw new Error('Sanity sent no answer about the content source');
   }
@@ -131,12 +195,14 @@ export function normalizeContent(result, now = new Date()) {
     team: team,
     settings: settings,
     theme: data.theme,
+    demo: data.demo,
     tasks: itemsFrom(data.tasks),
     plan: firstShowingPlan(data.plans, now),
     sponsors: itemsFrom(data.sponsors),
     tipsAndNews: itemsFrom(data.tipsAndNews),
     subteams: itemsFrom(data.subteams),
     people: itemsFrom(data.people).map(normalizePerson),
+    photos: photosFrom(data.photos),
     extraEvents: itemsFrom(data.extraEvents),
     customPanels: customPanelsFrom(data.customPanels),
   });
@@ -156,6 +222,7 @@ export function normalizeSample(raw) {
     content[name] = itemsFrom(data[name]);
   });
   content.people = content.people.map(normalizePerson);
+  content.photos = itemsFrom(data.photos).filter(photo => typeof photo.address === 'string');
   return withDefaults(content);
 }
 
@@ -243,6 +310,32 @@ function normalizePerson(raw) {
   if (photo) person.photo = photo;
   else delete person.photo;
   return person;
+}
+
+// A photo from Studio becomes { id, address, focus, caption, credit, createdAt,
+// show, expires }. The address is the one the screen asks for (images.js) and
+// focus is where the hotspot is in it. A photo with no picture that can be used
+// is dropped, since there is nothing to show. The sample photos are already
+// like this, with an address and no more than a caption and a credit.
+function normalizePhoto(raw) {
+  const picture = tidyPhoto(raw.image);
+  if (!picture) return null;
+
+  const photo = cleanObject({
+    id: raw.id,
+    createdAt: raw.createdAt,
+    caption: raw.caption,
+    credit: raw.credit,
+    show: raw.show,
+    expires: raw.expires,
+  });
+  photo.address = screenPhotoUrl(picture);
+  photo.focus = photoFocus(picture);
+  return photo;
+}
+
+function photosFrom(list) {
+  return objectsIn(list).map(normalizePhoto).filter(photo => photo !== null);
 }
 
 function normalizeTeam(team) {

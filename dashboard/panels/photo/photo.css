@@ -51,6 +51,24 @@
   height: 100%;
   font: 500 var(--size-body)/64px var(--font-text);
 }
+/* The credit sits on the lower left of the picture, on a plain plate in the
+   card colour so it can be read over any photo. It stops well short of the cut
+   corner on the right. It comes before the card's outline in the markup, so the
+   metal edge is drawn over it. */
+.photo .credit {
+  position: absolute;
+  left: 2px;
+  bottom: 2px;
+  box-sizing: border-box;
+  max-width: 700px;
+  padding: 0 24px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  background: var(--card);
+  color: var(--white);
+  font: 500 var(--size-label)/56px var(--font-text);
+}
 .photo .card-outline {
   left: 0;
   top: 0;
@@ -58,7 +76,9 @@
 .photo .card-fill { fill: none; }
 
 /* The caption lines up with the text of the other panels and stops at x=1056
-   so it stays clear of the cut corner. */
+   so it stays clear of the cut corner. It is one line: a longer one ends in
+   three dots (the three dots need nowrap). Studio stops it at 36 characters,
+   which fits when the text is ordinary mixed case. */
 .photo .caption {
   position: absolute;
   left: 52px;
@@ -66,6 +86,7 @@
   width: 1004px;
   height: 64px;
   overflow: hidden;
+  white-space: nowrap;
   text-overflow: ellipsis;
   font: 500 var(--size-body)/64px var(--font-text);
 }

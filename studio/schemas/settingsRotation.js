@@ -26,7 +26,8 @@ const smallPanels = [
   { title: 'Sponsor logo', value: 'sponsor-logo' },
 ];
 
-// Not required: an empty field is allowed and means "follow Seconds per page"
+// Not required: an empty field is allowed and means "follow Seconds per page".
+// The Photo panel follows Seconds per photo (Photos tab) instead.
 const secondsRule = Rule => Rule.integer().min(6).max(120).error('Use a whole number from 6 to 120.');
 
 // A new Studio starts with every panel in the list, in this order, with no
@@ -59,7 +60,7 @@ function stepMember(panels) {
         name: 'seconds',
         title: 'Seconds on screen',
         type: 'number',
-        description: 'Optional. Leave empty and the panel follows Seconds per page. Otherwise how long it stays up, from 6 to 120 seconds.',
+        description: 'Optional. Leave empty and the panel follows Seconds per page (Photo follows Seconds per photo). Otherwise how long it stays up, from 6 to 120.',
         validation: secondsRule,
       }),
     ],
@@ -72,7 +73,7 @@ function stepMember(panels) {
         } else if (step.seconds) {
           subtitle = step.seconds + ' seconds';
         } else {
-          subtitle = 'Follows Seconds per page';
+          subtitle = step.panel === 'photo' ? 'Follows Seconds per photo' : 'Follows Seconds per page';
         }
         return { title: titleOf(panels, step.panel) || 'Panel not chosen', subtitle: subtitle };
       },

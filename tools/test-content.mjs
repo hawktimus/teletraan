@@ -51,12 +51,14 @@ async function loadCopy(name, changeConfig) {
   const base = pathToFileURL(path.join(root, 'dashboard')).href + '/';
   return {
     config: await import(base + 'config.js'),
+    connection: await import(base + 'core/connection.js'),
     content: await import(base + 'core/content.js'),
     device: await import(base + 'core/device.js'),
     events: await import(base + 'core/events.js'),
     eventsPanel: await import(base + 'panels/events/events.js'),
     nextEventPanel: await import(base + 'panels/next-event/next-event.js'),
     images: await import(base + 'core/images.js'),
+    photos: await import(base + 'core/photos.js'),
     portrait: await import(base + 'core/portrait.js'),
     sanity: await import(base + 'core/sanity.js'),
     source: await import(base + 'core/source.js'),
@@ -83,16 +85,18 @@ assert.equal(live.config.useSampleContent, false);
 assert.equal(flagOn.config.useSampleContent, true);
 assert.equal(noProject.config.sanity.projectId, '');
 
-const { normalizeContent, contentQuery, queryUrl, liveEventsUrl, sourceQuery, sourceQueryUrl, fetchSourceSettings, normalizeSample } = live.sanity;
+const { normalizeContent, contentQuery, queryUrl, liveEventsUrl, sourceQuery, sourceQueryUrl, probeUrl, fetchSourceSettings, normalizeSample } = live.sanity;
 const { withDefaults, isVisible, visibleItems, startContent, startSanityContent, startSampleContent } = live.content;
 const { pickSource, tidySourceSettings } = live.source;
 const { escapeHtml, hasText } = live.text;
 const { tidyDevice, deviceLines, loginAddress, showDeviceInfo, deviceFile, refreshSeconds } = live.device;
+const { classifyFailure, connectionLines, itemCounts, reasonText, reasons, drawConnection } = live.connection;
 const { tidyExtraEvent, extraEventsToEvents, mergeEvents, instantIn, rangeLabel, rangeText, timeText } = live.events;
 const eventsPanel = live.eventsPanel;
 const nextEventPanel = live.nextEventPanel;
 const { makeTurns, makePages } = live.turns;
-const { tidyPhoto, photoUrl, preloadImages } = live.images;
+const { tidyPhoto, photoUrl, preloadImages, screenPhotoUrl, photoFocus, photoMaxWidth } = live.images;
+const { photosToShow, photoKey, newestFirst, creditText, makePhotoQueue, ownSeconds } = live.photos;
 const { photoAddress, personNamed, slotMarkup, slotsPerPage, silhouetteMarkup } = live.portrait;
 
 // startContent decides between the two readers. These two skip the deciding
@@ -300,6 +304,14 @@ function sanityFixture() {
       frameMetal: 'silver',
       glint: false,
       pageSeconds: 30,
+      logoAnimations: false,
+      logoEntrance: false,
+      logoSpin: false,
+      logoSpinEvery: 100,
+      logoSpinDuration: 3,
+      logoHawk: false,
+      logoHawkEvery: 60,
+      logoHawkDuration: 20,
       nameTransform: false,
       nameEvery: 120,
       nameDuration: 3,
@@ -360,6 +372,14 @@ function sanityFixture() {
       document('person', 'p2', { role: 'Coach', name: '[Coach A]', order: 1 }),
     ],
 
+    // what the photos part of contentQuery answers: the underscore names are asked for under plain ones
+    photos: [
+      { id: 'ph1', createdAt: '2026-09-20T10:00:00Z', caption: '[Photo caption]', credit: '[Name]', show: true, image: photoRecord() },
+      { id: 'ph2', createdAt: '2026-09-10T10:00:00Z', caption: '', credit: null, show: false, expires: null, image: photoRecord({ width: 600, height: 900 }) },
+      { id: 'ph3', createdAt: '2026-09-01T10:00:00Z', expires: '2020-01-01T00:00:00.000Z', image: photoRecord() },
+      { id: 'ph4', createdAt: '2026-08-01T10:00:00Z', image: null },
+    ],
+
     plans: [
       document('plan', 'l1', { heading: '[Hidden plan]', show: false }),
       document('plan', 'l2', { heading: '[Expired plan]', expires: '2020-01-01T00:00:00.000Z' }),
@@ -418,6 +438,10 @@ test('normalizeContent turns a full Sanity result into the sample content shape'
   assert.equal(settings.frameMetal, 'silver');
   assert.equal(settings.glint, false);
   assert.equal(settings.pageSeconds, 30);
+  assert.deepEqual(
+    [settings.logoAnimations, settings.logoEntrance, settings.logoSpin, settings.logoSpinEvery, settings.logoSpinDuration, settings.logoHawk, settings.logoHawkEvery, settings.logoHawkDuration],
+    [false, false, false, 100, 3, false, 60, 20]
+  );
   assert.equal(settings.nameTransform, false);
   assert.equal(settings.nameEvery, 120);
   assert.equal(settings.nameDuration, 3);
@@ -475,6 +499,13 @@ test('normalizeContent turns a full Sanity result into the sample content shape'
   assert.deepEqual(content.people, [
     { role: 'Coach', name: '[Coach A]', order: 1, showPhoto: true },
     { role: 'Mentor', name: '[Mentor A]', showPhoto: true },
+  ]);
+
+  // hidden and expired photos stay in the list, like every other item. A photo with no picture is dropped.
+  assert.deepEqual(content.photos, [
+    { id: 'ph1', createdAt: '2026-09-20T10:00:00Z', caption: '[Photo caption]', credit: '[Name]', show: true, address: photoBase + '?w=1920&fit=max&auto=format', focus: { x: 50, y: 50 } },
+    { id: 'ph2', createdAt: '2026-09-10T10:00:00Z', show: false, address: photoBase + '?w=1920&fit=max&auto=format', focus: { x: 50, y: 50 } },
+    { id: 'ph3', createdAt: '2026-09-01T10:00:00Z', expires: '2020-01-01T00:00:00.000Z', address: photoBase + '?w=1920&fit=max&auto=format', focus: { x: 50, y: 50 } },
   ]);
 
   assert.deepEqual(content.plan, {
@@ -619,7 +650,7 @@ test('normalizeContent fills gaps in settings from the defaults', () => {
   assert.deepEqual(settings.rotation.grid1, [{ panel: 'events', show: true }]);
   assert.deepEqual(settings.rotation.grid2, [{ panel: 'forecast', show: true }]);
   assert.equal('tickerSeconds' in settings.rotation, false);
-  ['frameMetal', 'glint', 'pageSeconds', 'nameTransform', 'nameEvery', 'nameDuration'].forEach(name => {
+  logoSettingNames.concat(['frameMetal', 'glint', 'pageSeconds', 'pageChangeStyle', 'breakSeconds', 'frameFinish', 'silverChance', 'photoOrder', 'photoSeconds'], nightSettingNames).forEach(name => {
     assert.equal(settings[name], defaults[name], name + ' is missing, so it is the default');
   });
   assert.deepEqual(settings.announcements, [
@@ -794,6 +825,16 @@ test('speed is one of four names, and anything else becomes normal', () => {
 
 // The three ways content reaches the screen: from Sanity, from the sample
 // file, and straight into withDefaults. Each must treat settings the same way.
+// The names of the settings in the Logo tab: the master switch, the entrance, the spin, the
+// flying hawk and the name effect
+const logoSettingNames = [
+  'logoAnimations', 'logoEntrance', 'logoSpin', 'logoSpinEvery', 'logoSpinDuration',
+  'logoHawk', 'logoHawkEvery', 'logoHawkDuration', 'nameTransform', 'nameEvery', 'nameDuration',
+];
+
+// The names of the settings in the Night mode tab
+const nightSettingNames = ['nightEnabled', 'nightStyle', 'nightStart', 'nightEnd', 'nightLogoWidth', 'nightSpeed', 'nightPreview'];
+
 function settingsThrough(settings) {
   return [
     normalizeContent({ settings: settings }).settings,
@@ -813,13 +854,45 @@ test('the new settings have the defaults the Studio starts with', () => {
   assert.equal(defaults.nameEvery, 300);
   assert.equal(defaults.nameDuration, 1.43);
   assert.deepEqual(defaults.crt, { on: true, everySeconds: 240, durationSeconds: 2.7 });
+
+  // the Logo tab: what the logo did before it had settings. The spin was every third pass of
+  // the old 24 second show and took 1.6 seconds. The hawk was every pass and took 3 + 2 + 4 + 2.
+  assert.equal(defaults.logoAnimations, true);
+  assert.equal(defaults.logoEntrance, true);
+  assert.deepEqual([defaults.logoSpin, defaults.logoSpinEvery, defaults.logoSpinDuration], [true, 3 * 24, 1.6]);
+  assert.deepEqual([defaults.logoHawk, defaults.logoHawkEvery, defaults.logoHawkDuration], [true, 24, 3 + 2 + 4 + 2]);
+
+  // the Transitions tab: take turns between the two page changes, 0.6 s to break and the same to
+  // rebuild, gold on most changes and silver on one in ten
+  assert.deepEqual(live.config.pageChangeStyles, ['alternate', 'slat', 'mechanical']);
+  assert.deepEqual(live.config.frameFinishes, ['mostly-gold', 'alternate', 'gold', 'silver']);
+  assert.deepEqual(
+    [defaults.pageChangeStyle, defaults.breakSeconds, defaults.frameFinish, defaults.silverChance],
+    ['alternate', 0.6, 'mostly-gold', 10]
+  );
+
   assert.deepEqual(live.config.limits, {
     pageSeconds: { min: 8, max: 120 },
     nameEvery: { min: 0, shortest: 30, max: 900 },
     nameDuration: { min: 0.5, max: 10 },
     crtEvery: { min: 0, shortest: 30, max: 3600 },
     crtDuration: { min: 0.5, max: 10 },
+    logoSpinEvery: { min: 0, shortest: 10, max: 3600 },
+    logoSpinDuration: { min: 0.5, max: 10 },
+    logoHawkEvery: { min: 0, shortest: 10, max: 3600 },
+    logoHawkDuration: { min: 6, max: 30 },
+    breakSeconds: { min: 0.3, max: 2 },
+    silverChance: { min: 0, max: 100 },
+    photoSeconds: { min: 6, max: 120 },
+    nightLogoWidth: { min: 120, max: 800 },
+    demoSeconds: { min: 5, max: 300 },
+    desktopChance: { min: 0, max: 100 },
+    redEyesChance: { min: 0, max: 100 },
   });
+
+  // the Photos tab: random order, and 16 seconds a photo
+  assert.deepEqual(live.config.photoOrders, ['random', 'newest-first']);
+  assert.deepEqual([defaults.photoOrder, defaults.photoSeconds], ['random', 16]);
 
   // the name effect takes .8 s for a letter and each later letter starts 45 ms after the one before (frame.css)
   const letters = Array.from(live.config.defaultTeam.name).length;
@@ -834,7 +907,7 @@ test('the new settings have the defaults the Studio starts with', () => {
   assert.equal('tickerSeconds' in defaults.rotation, false);
 
   const empty = withDefaults({}).settings;
-  ['frameMetal', 'glint', 'pageSeconds', 'nameTransform', 'nameEvery', 'nameDuration'].forEach(name => {
+  logoSettingNames.concat(['frameMetal', 'glint', 'pageSeconds', 'pageChangeStyle', 'breakSeconds', 'frameFinish', 'silverChance'], nightSettingNames).forEach(name => {
     assert.equal(empty[name], defaults[name], name);
   });
   assert.deepEqual(empty.crt, defaults.crt);
@@ -854,8 +927,8 @@ test('frame metal is gold or silver, and anything else becomes gold', () => {
   assert.equal(withDefaults(null).settings.frameMetal, 'gold');
 });
 
-test('glint and the name effect are switches, and anything but true or false becomes on', () => {
-  ['glint', 'nameTransform'].forEach(name => {
+test('glint, the master switch, the entrance, the spin, the hawk and the name effect are switches, and anything but true or false becomes on', () => {
+  ['glint', 'logoAnimations', 'logoEntrance', 'logoSpin', 'logoHawk', 'nameTransform'].forEach(name => {
     [true, false].forEach(value => {
       settingsThrough({ [name]: value }).forEach(settings => assert.equal(settings[name], value, name));
     });
@@ -915,6 +988,74 @@ test('the name effect every so many seconds is 0 (never) or 30 to 900, and anyth
 
 test('the name effect duration is a number from 0.5 to 10 seconds, decimals allowed, and anything else is moved into range or becomes 1.43', () => {
   checkRange('nameDuration', 0.5, 10, 1.43, [0.51, 1.43, 2.5, 9.99]);
+});
+
+test('the spin every so many seconds is 0 (never) or 10 to 3600, and anything else is moved into range or becomes 72', () => {
+  checkEvery(value => settingsThrough({ logoSpinEvery: value }).map(settings => settings.logoSpinEvery), 10, 3600, 72, [11, 72, 600, 3599]);
+});
+
+test('the spin duration is a number from 0.5 to 10 seconds, decimals allowed, and anything else is moved into range or becomes 1.6', () => {
+  checkRange('logoSpinDuration', 0.5, 10, 1.6, [0.51, 1.6, 2.5, 9.99]);
+});
+
+test('the flying hawk every so many seconds is 0 (never) or 10 to 3600, and anything else is moved into range or becomes 24', () => {
+  checkEvery(value => settingsThrough({ logoHawkEvery: value }).map(settings => settings.logoHawkEvery), 10, 3600, 24, [11, 24, 600, 3599]);
+});
+
+test('the flying hawk duration is a number from 6 to 30 seconds, decimals allowed, and anything else is moved into range or becomes 11', () => {
+  checkRange('logoHawkDuration', 6, 30, 11, [6.5, 11, 12.5, 29.9]);
+});
+
+// A setting that is one of a few words: the words stay, and anything else becomes the default
+function checkWords(name, words, fallback) {
+  words.forEach(word => {
+    settingsThrough({ [name]: word }).forEach(settings => assert.equal(settings[name], word, name + ' ' + word));
+  });
+
+  [undefined, null, '', 'Slat', 'MECHANICAL', 'mostly gold', 'bronze', 'toString', 0, true, [words[0]], {}].forEach(value => {
+    settingsThrough({ [name]: value }).forEach(settings => {
+      assert.equal(settings[name], fallback, name + ' with ' + JSON.stringify(value));
+    });
+  });
+}
+
+test('the page change style is alternate, slat or mechanical, and anything else becomes alternate', () => {
+  checkWords('pageChangeStyle', ['alternate', 'slat', 'mechanical'], 'alternate');
+});
+
+test('the frame finish is mostly-gold, alternate, gold or silver, and anything else becomes mostly-gold', () => {
+  checkWords('frameFinish', ['mostly-gold', 'alternate', 'gold', 'silver'], 'mostly-gold');
+});
+
+test('the break and rebuild time is a number from 0.3 to 2 seconds, decimals allowed, and anything else is moved into range or becomes 0.6', () => {
+  checkRange('breakSeconds', 0.3, 2, 0.6, [0.31, 0.6, 1.25, 1.99]);
+});
+
+test('the silver chance is a percent from 0 to 100, and anything else is moved into range or becomes 10', () => {
+  checkRange('silverChance', 0, 100, 10, [1, 10, 50, 99]);
+});
+
+test('settings saved before the Transitions tab existed get the starting page change and frame finish', () => {
+  const defaults = live.config.defaultSettings;
+
+  settingsThrough({ frameMetal: 'silver', nameEvery: 120 }).forEach(settings => {
+    assert.equal(settings.frameMetal, 'silver', 'Frame metal is its own setting');
+    ['pageChangeStyle', 'breakSeconds', 'frameFinish', 'silverChance'].forEach(name => {
+      assert.equal(settings[name], defaults[name], name);
+    });
+  });
+});
+
+test('settings saved before the Logo tab existed keep the name effect values and get the old logo behaviour for the rest', () => {
+  const saved = { nameTransform: false, nameEvery: 120, nameDuration: 3 }; // what was published when the tab was Logo and effects
+  const defaults = live.config.defaultSettings;
+
+  settingsThrough(saved).forEach(settings => {
+    assert.deepEqual([settings.nameTransform, settings.nameEvery, settings.nameDuration], [false, 120, 3]);
+    ['logoAnimations', 'logoEntrance', 'logoSpin', 'logoSpinEvery', 'logoSpinDuration', 'logoHawk', 'logoHawkEvery', 'logoHawkDuration'].forEach(name => {
+      assert.equal(settings[name], defaults[name], name);
+    });
+  });
 });
 
 function glitchThrough(glitch) {
@@ -1067,11 +1208,97 @@ test('the sample content has a Theme document with the defaults, and it comes th
   assert.deepEqual(withDefaults(file).theme, live.config.defaultThemeSettings);
 });
 
+// The Demo document. When a demo plays is in tools/test-effects.mjs.
+
+test('the query asks for the Demo document by its id, and the answer is cleaned into content.demo', () => {
+  assert.ok(contentQuery.includes('"demo": *[_id == "demo"][0]'));
+
+  const stored = document('demo', 'demo', {
+    requestedAt: '2026-10-05T12:00:00.000Z',
+    steps: [
+      { _key: 'a', screen: 'night-mode', seconds: 45 },
+      { _key: 'b', screen: 'announcement', seconds: 20 },
+    ],
+    announcementText: 'HELLO VISITORS',
+  });
+
+  const demo = normalizeContent({ demo: stored }).demo;
+  assert.equal(demo.requestedAt, '2026-10-05T12:00:00.000Z');
+  assert.deepEqual(demo.steps, [{ screen: 'night-mode', seconds: 45 }, { screen: 'announcement', seconds: 20 }]);
+  assert.equal(demo.announcementText, 'HELLO VISITORS');
+  assert.deepEqual(Object.keys(demo).sort(), ['announcementText', 'requestedAt', 'steps'], 'only the three fields come through, not _id and the rest');
+});
+
+test('a missing Demo document is no demo: no request, and the default steps', () => {
+  const defaults = live.config.defaultDemo;
+
+  assert.deepEqual(normalizeContent({}).demo, defaults);
+  assert.deepEqual(normalizeContent({ demo: null }).demo, defaults);
+  assert.deepEqual(normalizeContent({ demo: 'oops' }).demo, defaults);
+  assert.deepEqual(withDefaults({}).demo, defaults);
+  assert.deepEqual(withDefaults(null).demo, defaults);
+  assert.equal(normalizeContent({}).demo.requestedAt, '');
+  assert.deepEqual(defaults.steps, [{ screen: 'announcement', seconds: 30 }, { screen: 'night-mode', seconds: 30 }]);
+});
+
+test('a step with an unknown or missing screen is dropped, its seconds are kept in the range 5 to 300, and a list that is not a list is the default', () => {
+  const demo = normalizeContent({
+    demo: document('demo', 'demo', {
+      steps: [
+        { screen: 'no-such-screen', seconds: 30 },
+        { seconds: 30 },
+        { screen: 'announcement', seconds: 1 },
+        { screen: 'announcement', seconds: 5000 },
+        { screen: 'night-mode', seconds: 'soon' },
+        { screen: 'night-mode', seconds: 12.5 },
+      ],
+    }),
+  }).demo;
+  assert.deepEqual(demo.steps, [
+    { screen: 'announcement', seconds: 5 },
+    { screen: 'announcement', seconds: 300 },
+    { screen: 'night-mode', seconds: 30 },
+    { screen: 'night-mode', seconds: 12.5 },
+  ]);
+
+  assert.deepEqual(normalizeContent({ demo: document('demo', 'demo', { steps: 'x' }) }).demo.steps, live.config.defaultDemo.steps);
+  assert.deepEqual(normalizeContent({ demo: document('demo', 'demo', { steps: [] }) }).demo.steps, [], 'a list the editors emptied stays empty');
+});
+
+test('a request that is not a time is no request, and a request cleared with Stop demo is no request', () => {
+  assert.equal(normalizeContent({ demo: document('demo', 'demo', { requestedAt: 'whenever' }) }).demo.requestedAt, '');
+  assert.equal(normalizeContent({ demo: document('demo', 'demo', { requestedAt: null }) }).demo.requestedAt, '');
+  assert.equal(normalizeContent({ demo: document('demo', 'demo', { steps: [] }) }).demo.requestedAt, '');
+});
+
+test('a saved copy from before the Demo document existed still gives a demo', async () => {
+  await inWorld(async world => {
+    saveCopy(world, { settings: document('dashboardSettings', 'dashboardSettings', { motion: 'calm' }) }, world.now - minute);
+    world.handler = () => unreachable();
+    const first = await readSanity(() => {});
+    assert.deepEqual(first.content.demo, live.config.defaultDemo);
+  });
+});
+
+test('the sample content has a Demo document with the defaults and no request, and it comes through unchanged', () => {
+  const file = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  assert.deepEqual(file.demo, live.config.defaultDemo);
+  assert.deepEqual(normalizeSample(file).demo, live.config.defaultDemo);
+  assert.deepEqual(withDefaults(file).demo, live.config.defaultDemo);
+  assert.equal(normalizeSample({}).demo.requestedAt, '');
+});
+
+test('a change to the request alone is a change of content, so the screen hears of it', () => {
+  const before = normalizeContent({ demo: document('demo', 'demo', {}) });
+  const after = normalizeContent({ demo: document('demo', 'demo', { requestedAt: '2026-10-05T12:00:00.000Z' }) });
+  assert.notEqual(JSON.stringify(before), JSON.stringify(after));
+});
+
 test('the sample content file carries the new settings and they come through unchanged', () => {
   const file = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
   const settings = normalizeSample(file).settings;
 
-  ['frameMetal', 'glint', 'pageSeconds', 'nameTransform', 'nameEvery', 'nameDuration', 'crt', 'contentSource', 'switchBackAt'].forEach(name => {
+  logoSettingNames.concat(['frameMetal', 'glint', 'pageSeconds', 'crt', 'contentSource', 'switchBackAt']).forEach(name => {
     assert.ok(name in file.settings, 'the sample content has no ' + name);
     assert.deepEqual(settings[name], file.settings[name], name);
   });
@@ -1084,7 +1311,7 @@ test('sample mode reads the sample file and reads it again every 30 seconds', as
 
     const first = await readSample(world.onChange);
     assert.deepEqual(first.content, normalizeSample(file));
-    assert.deepEqual(first.status, { source: 'sample', updated: null, offline: false });
+    assert.deepEqual(first.status, { source: 'sample', updated: null, offline: false, reason: '' });
     assert.equal(world.fetches[0].url, 'data/sample/content.json');
     assert.equal(world.streams.length, 0);
     assert.equal(world.storage.size, 0);
@@ -1171,7 +1398,7 @@ test('sample mode starts with empty content when the file cannot be read', async
 
     const first = await readSample(world.onChange);
     assert.deepEqual(first.content, withDefaults({}));
-    assert.deepEqual(first.status, { source: 'sample', updated: null, offline: true });
+    assert.deepEqual(first.status, { source: 'sample', updated: null, offline: true, reason: 'other' });
     assert.equal(world.errors.length, 1);
   });
 });
@@ -1190,6 +1417,29 @@ test('the content source settings have their defaults, and the old static consta
   const empty = withDefaults({}).settings;
   assert.equal(empty.contentSource, 'production');
   assert.equal(empty.switchBackAt, '');
+});
+
+test('config.js keeps the useSampleContent flag as the fallback, and it is false', () => {
+  const text = fs.readFileSync(path.join(dashboardFolder, 'config.js'), 'utf8');
+  assert.ok(/^export const useSampleContent = false;$/m.test(text), 'useSampleContent should be exported and false');
+  assert.ok(/only the fallback/.test(text), 'its comment should still say it is only the fallback');
+  assert.equal(live.config.useSampleContent, false);
+});
+
+test('Show connection status starts off, true is kept, and anything that is not true or false becomes off', () => {
+  assert.equal(live.config.defaultSettings.showConnectionStatus, false);
+  assert.equal(withDefaults({}).settings.showConnectionStatus, false);
+  assert.equal(withDefaults(null).settings.showConnectionStatus, false);
+
+  settingsThrough({ showConnectionStatus: true }).forEach(settings => assert.equal(settings.showConnectionStatus, true));
+  settingsThrough({ showConnectionStatus: false }).forEach(settings => assert.equal(settings.showConnectionStatus, false));
+  settingsThrough({}).forEach(settings => assert.equal(settings.showConnectionStatus, false, 'a field the published settings lack'));
+
+  ['true', 'on', 1, 0, null, '', ['true'], {}].forEach(value => {
+    settingsThrough({ showConnectionStatus: value }).forEach(settings => {
+      assert.equal(settings.showConnectionStatus, false, JSON.stringify(value));
+    });
+  });
 });
 
 test('contentSource is production or sample and anything else becomes production, and switchBackAt is text', () => {
@@ -1381,7 +1631,7 @@ test('source: sample settings load only the sample content, with no other conten
 
     const first = await startContent(world.onChange);
     assert.deepEqual(first.content, normalizeSample(world.server.file));
-    assert.deepEqual(first.status, { source: 'sample', updated: null, offline: false });
+    assert.deepEqual(first.status, { source: 'sample', updated: null, offline: false, reason: '' });
     assert.deepEqual(world.fetches.map(request => request.url), [sourceQueryUrl(live.config.sanity), 'data/sample/content.json']);
     assert.equal(contentQueries(world), 0);
     assert.equal(world.streams.length, 0);
@@ -1756,7 +2006,7 @@ test('source: a screen that started on the flag moves to what Dashboard Settings
   });
 });
 
-test('source: production keeps its offline logic when it was switched to while running', async () => {
+test('source: production keeps its two minute rule when it was switched to while running', async () => {
   await inWorld(async world => {
     serve(world, { settings: { contentSource: 'sample' } });
     await startContent(world.onChange);
@@ -1770,8 +2020,13 @@ test('source: production keeps its offline logic when it was switched to while r
     world.server.settings = {};
     await world.advance(30 * second);
     assert.deepEqual(sourcesOf(world), ['sanity']);
-    assert.equal(world.changes[0].status.offline, true);
+    assert.equal(world.changes[0].status.offline, false);
     assert.deepEqual(world.changes[0].content, withDefaults({}));
+
+    // two minutes after the first failed read, which was at 30 seconds
+    await world.advance(2 * minute);
+    assert.equal(world.changes.length, 2);
+    assert.equal(world.changes[1].status.offline, true);
   });
 });
 
@@ -1894,7 +2149,7 @@ test('sanity: a saved copy starts the screen at once, then Sanity replaces it', 
   });
 });
 
-test('sanity: a saved copy and no network shows the saved copy as offline, and tries again', async () => {
+test('sanity: a saved copy and no network shows the saved copy, says offline after 2 minutes, and tries again', async () => {
   await inWorld(async world => {
     const saved = sanityFixture();
     saveCopy(world, saved, start - 3 * minute);
@@ -1904,24 +2159,32 @@ test('sanity: a saved copy and no network shows the saved copy as offline, and t
     assert.equal(first.status.offline, false);
 
     await world.advance(0);
-    assert.equal(world.changes.length, 1);
-    assert.equal(world.changes[0].status.source, 'cache');
-    assert.equal(world.changes[0].status.offline, true);
-    assert.deepEqual(world.changes[0].content, normalizeContent(saved));
+    assert.equal(world.changes.length, 0);
     assert.equal(world.errors.length, 1);
 
     await world.advance(30 * second - 1);
-    assert.equal(world.fetches.length, 1);
+    assert.equal(contentQueries(world), 1);
     await world.advance(1);
-    assert.equal(world.fetches.length, 2);
-    assert.equal(world.changes.length, 1);
+    assert.equal(contentQueries(world), 2);
     assert.equal(world.errors.length, 2);
+    assert.equal(world.changes.length, 0);
+
+    // two minutes after the first failed read, which was at the start
+    await world.advance(90 * second - 1);
+    assert.equal(world.changes.length, 0);
+    await world.advance(1);
+    assert.equal(world.changes.length, 1);
+    assert.equal(world.changes[0].status.source, 'cache');
+    assert.equal(world.changes[0].status.offline, true);
+    assert.equal(world.changes[0].status.reason, 'network');
+    assert.deepEqual(world.changes[0].content, normalizeContent(saved));
 
     world.handler = async () => sanityReply(saved);
     await world.advance(30 * second);
     assert.equal(world.changes.length, 2);
     assert.equal(world.changes[1].status.source, 'sanity');
     assert.equal(world.changes[1].status.offline, false);
+    assert.equal(world.changes[1].status.reason, '');
   });
 });
 
@@ -1931,7 +2194,7 @@ test('sanity: no saved copy and no network gives empty content, never the sample
 
     const first = await readSanity(world.onChange);
     assert.deepEqual(first.content, withDefaults({}));
-    assert.equal(first.status.offline, true);
+    assert.equal(first.status.offline, false);
     assert.equal(first.status.updated, null);
     assert.equal(first.content.tasks.length, 0);
     assert.equal(world.errors.length, 1);
@@ -1940,32 +2203,40 @@ test('sanity: no saved copy and no network gives empty content, never the sample
     const sampleTitle = JSON.parse(fs.readFileSync(sampleFile, 'utf8')).tasks[0].title;
     assert.equal(JSON.stringify(first.content).includes(sampleTitle), false);
 
+    await world.advance(2 * minute);
+    assert.equal(world.changes.length, 1);
+    assert.equal(world.changes[0].status.offline, true);
+    assert.equal(world.changes[0].status.updated, null);
+    assert.deepEqual(world.changes[0].content, withDefaults({}));
+
     world.handler = async () => sanityReply(sanityFixture());
     await world.advance(30 * second);
-    assert.equal(world.changes.length, 1);
-    assert.equal(world.changes[0].status.offline, false);
-    assert.equal(world.changes[0].status.source, 'sanity');
-    assert.equal(world.changes[0].content.tasks.length, 4);
+    assert.equal(world.changes.length, 2);
+    assert.equal(world.changes[1].status.offline, false);
+    assert.equal(world.changes[1].status.source, 'sanity');
+    assert.equal(world.changes[1].content.tasks.length, 4);
   });
 });
 
-test('sanity: offline only after 10 minutes without a good read, and clears on the next one', async () => {
+test('sanity: offline comes 2 minutes after the first failed read, and clears on the next good one', async () => {
   await inWorld(async world => {
     const fixture = sanityFixture();
     world.handler = async () => sanityReply(fixture);
     await readSanity(world.onChange);
 
+    // The first failed read is the next one, 5 minutes in. Its 2 minutes are up at 7:00.
     world.handler = unreachable;
-    await world.advance(10 * minute);
-    // reads failed at 5:00, 5:30 and so on up to 10:00, which is not yet more than 10 minutes
-    assert.equal(world.fetches.length, 12);
-    assert.equal(world.errors.length, 11);
+    await world.advance(7 * minute - 1);
+    assert.equal(contentQueries(world), 5); // the first read, then 5:00, 5:30, 6:00 and 6:30, which all failed
+    assert.equal(world.errors.length, 4);
     assert.equal(world.changes.length, 0);
 
-    await world.advance(30 * second);
+    await world.advance(1);
     assert.equal(world.changes.length, 1);
     assert.equal(world.changes[0].status.offline, true);
+    assert.equal(world.changes[0].status.reason, 'network');
     assert.equal(world.changes[0].status.source, 'sanity');
+    assert.equal(world.changes[0].status.updated.getTime(), start);
     assert.deepEqual(world.changes[0].content, normalizeContent(fixture));
 
     await world.advance(30 * second);
@@ -1975,7 +2246,68 @@ test('sanity: offline only after 10 minutes without a good read, and clears on t
     await world.advance(30 * second);
     assert.equal(world.changes.length, 2);
     assert.equal(world.changes[1].status.offline, false);
+    assert.equal(world.changes[1].status.reason, '');
     assert.equal(world.changes[1].status.updated.getTime(), world.now);
+  });
+});
+
+test('sanity: a good read stops the 2 minutes, and the next failure starts them again', async () => {
+  await inWorld(async world => {
+    const fixture = sanityFixture();
+    world.handler = async () => sanityReply(fixture);
+    await readSanity(world.onChange);
+
+    // fails from 5:00, would be offline at 7:00
+    world.handler = unreachable;
+    await world.advance(6 * minute);
+    assert.equal(world.changes.length, 0);
+
+    // a good read at 6:30 stops the count, so nothing happens at 7:00
+    world.handler = async () => sanityReply(fixture);
+    await world.advance(30 * second);
+    await world.advance(2 * minute);
+    assert.equal(world.changes.length, 0);
+
+    // now 8:30. The next read is 5 minutes after the good one, at 11:30, and
+    // fails. Its 2 minutes are up at 13:30.
+    world.handler = unreachable;
+    await world.advance(5 * minute - 1);
+    assert.equal(world.changes.length, 0);
+    await world.advance(1);
+    assert.equal(world.changes.length, 1);
+    assert.equal(world.changes[0].status.offline, true);
+  });
+});
+
+test('sanity: the reason follows the latest failed read while it is offline', async () => {
+  await inWorld(async world => {
+    world.handler = unreachable;
+    await readSanity(world.onChange);
+    await world.advance(2 * minute);
+    assert.equal(world.changes.length, 1);
+    assert.equal(world.changes[0].status.reason, 'network');
+
+    world.handler = async () => jsonResponse({ error: { description: 'Session not found' } }, 401);
+    await world.advance(30 * second);
+    assert.equal(world.changes.length, 2);
+    assert.equal(world.changes[1].status.offline, true);
+    assert.equal(world.changes[1].status.reason, 'denied');
+
+    await world.advance(30 * second);
+    assert.equal(world.changes.length, 2);
+  });
+});
+
+test('sanity: stopping the reader cancels the 2 minutes', async () => {
+  await inWorld(async world => {
+    world.handler = unreachable;
+    const reader = await startSanityContent(world.onChange);
+    assert.equal(reader.first.status.offline, false);
+
+    reader.stop();
+    await world.advance(10 * minute);
+    assert.equal(world.changes.length, 0);
+    assert.equal(world.timers.length, 0);
   });
 });
 
@@ -2040,7 +2372,7 @@ test('sanity: reads never overlap, a change that comes during a read gets a read
   });
 });
 
-test('sanity: a read that hangs is given up after 15 seconds and the next one still works', async () => {
+test('sanity: a read that hangs is given up after 15 seconds, then asked about for 5 more, and the next one still works', async () => {
   await inWorld(async world => {
     saveCopy(world, sanityFixture(), start - minute);
     world.handler = (url, options) => new Promise((resolve, reject) => {
@@ -2051,17 +2383,20 @@ test('sanity: a read that hangs is given up after 15 seconds and the next one st
     await world.advance(0);
     await world.advance(15 * second - 1);
     assert.equal(world.errors.length, 0);
-    assert.equal(world.changes.length, 0);
 
+    // the read is given up, and one small request to the same host finds out why. It hangs too.
     await world.advance(1);
+    assert.equal(world.errors.length, 0);
+    assert.equal(world.fetches.length, 2);
+    await world.advance(5 * second);
     assert.equal(world.errors.length, 1);
-    assert.equal(world.changes.length, 1);
-    assert.equal(world.changes[0].status.offline, true);
+    assert.equal(world.changes.length, 0);
 
     world.handler = async () => sanityReply(sanityFixture());
     await world.advance(30 * second);
-    assert.equal(world.changes.length, 2);
-    assert.equal(world.changes[1].status.offline, false);
+    assert.equal(world.changes.length, 1);
+    assert.equal(world.changes[0].status.source, 'sanity');
+    assert.equal(world.changes[0].status.offline, false);
   });
 });
 
@@ -2078,17 +2413,116 @@ test('sanity: bad answers count as a failed read and keep what is on screen', as
       world.handler = async () => badAnswers[name]();
       const first = await readSanity(world.onChange);
       assert.deepEqual(first.content, withDefaults({}), name);
-      assert.equal(first.status.offline, true, name);
+      assert.equal(first.status.offline, false, name);
       assert.equal(world.errors.length, 1, name);
 
+      // An answer Sanity gave is never asked about again with the second request
+      assert.equal(world.fetches.length, 1, name);
+
+      await world.advance(2 * minute);
+      assert.equal(world.changes.length, 1, name);
+      assert.equal(world.changes[0].status.offline, true, name);
+      assert.equal(world.changes[0].status.reason, 'other', name);
+    });
+
+    await inWorld(async world => {
+      world.handler = async () => badAnswers[name]();
       saveCopy(world, sanityFixture(), start);
       const withCopy = await readSanity(world.onChange);
-      await world.advance(0);
       assert.equal(withCopy.status.source, 'cache', name);
+
+      await world.advance(2 * minute);
+      assert.equal(world.changes.length, 1, name);
+      assert.equal(world.changes[0].status.source, 'cache', name);
       assert.equal(world.changes[0].status.offline, true, name);
       assert.equal(world.changes[0].content.tasks.length, 4, name);
     });
   }
+});
+
+// Why a read failed, in the four words of core/connection.js. The browser gives
+// the same error for no network and for a block by CORS, so the second request
+// to the same host, with the mode 'no-cors', tells them apart.
+
+function opaqueAnswer() {
+  return { type: 'opaque', ok: false, status: 0 };
+}
+
+// A read that hangs only ends when the clock moves, so a saved copy is needed
+// for the screen to start without waiting for it
+async function reasonAfterTwoMinutes(handler, savedCopy) {
+  let found = null;
+  await inWorld(async world => {
+    world.handler = handler;
+    if (savedCopy) saveCopy(world, sanityFixture(), start);
+    await readSanity(world.onChange);
+    await world.advance(savedCopy ? 3 * minute : 2 * minute);
+    assert.equal(world.changes.length, 1);
+    found = { status: world.changes[0].status, fetches: world.fetches };
+  });
+  return found;
+}
+
+test('sanity: no answer at all from the host is the network', async () => {
+  const found = await reasonAfterTwoMinutes(unreachable);
+  assert.equal(found.status.reason, 'network');
+});
+
+test('sanity: a host that answers the plain request while the read fails is CORS', async () => {
+  const found = await reasonAfterTwoMinutes((url, options) => (options.mode === 'no-cors' ? Promise.resolve(opaqueAnswer()) : unreachable()));
+  assert.equal(found.status.reason, 'cors');
+
+  // The second request goes to the same host, with no-cors, and nothing is read from it
+  const probes = found.fetches.filter(request => request.options.mode === 'no-cors');
+  assert.ok(probes.length >= 1);
+  probes.forEach(request => {
+    assert.equal(request.url, probeUrl(live.config.sanity));
+    assert.ok(request.url.startsWith('https://' + live.config.sanity.projectId + '.api.sanity.io/'));
+  });
+  assert.equal(found.fetches.length, probes.length * 2, 'every failed read makes one second request and no more');
+});
+
+test('sanity: 401 and 403 are access denied, and no second request is made', async () => {
+  for (const code of [401, 403]) {
+    const found = await reasonAfterTwoMinutes(async () => jsonResponse({ error: { description: 'no' } }, code));
+    assert.equal(found.status.reason, 'denied', 'status ' + code);
+    assert.equal(found.fetches.filter(request => request.options.mode === 'no-cors').length, 0, 'status ' + code);
+  }
+});
+
+test('sanity: a server error, a missing result and text that is not JSON are other', async () => {
+  const answers = [
+    async () => jsonResponse({ error: 'no' }, 500),
+    async () => jsonResponse({ error: 'no' }, 404),
+    async () => jsonResponse({ ms: 1 }),
+    async () => ({ ok: true, status: 200, json: async () => { throw new SyntaxError('Unexpected token'); } }),
+  ];
+  for (const answer of answers) {
+    assert.equal((await reasonAfterTwoMinutes(answer)).status.reason, 'other');
+  }
+});
+
+test('sanity: a read that times out is other when the host answers, and the network when it does not', async () => {
+  function hangs(options) {
+    return new Promise((resolve, reject) => {
+      options.signal.addEventListener('abort', () => reject(new Error('The request was aborted')));
+    });
+  }
+
+  const slow = await reasonAfterTwoMinutes((url, options) => (options.mode === 'no-cors' ? Promise.resolve(opaqueAnswer()) : hangs(options)), true);
+  assert.equal(slow.status.reason, 'other');
+
+  const dead = await reasonAfterTwoMinutes((url, options) => hangs(options), true);
+  assert.equal(dead.status.reason, 'network');
+});
+
+test('sanity: the Dashboard Settings read never makes the second request, so a slow network is not made slower', async () => {
+  await inWorld(async world => {
+    world.handler = unreachable;
+    await assert.rejects(() => live.sanity.fetchSourceSettings(live.config.sanity));
+    assert.equal(world.fetches.length, 1);
+    assert.equal(world.fetches[0].url, sourceQueryUrl(live.config.sanity));
+  });
 });
 
 test('sanity: a saved copy that cannot be used is the same as having none', async () => {
@@ -2374,6 +2808,496 @@ test('preloadImages starts a download for each address and skips the empty ones'
     delete globalThis.Image;
   }
   assert.deepEqual(started, ['https://example.com/a.jpg', 'https://example.com/b.jpg']);
+});
+
+// Photos in Studio: the Photo documents, the address the screen asks for, which
+// photos show, in what order, and for how long
+
+function photoItem(id, createdAt, changes) {
+  return Object.assign({ id: id, address: 'https://cdn.sanity.io/images/abc123/production/' + id + '-800x600.jpg?w=1920&fit=max&auto=format', createdAt: createdAt }, changes);
+}
+
+function photosFrom(list) {
+  return normalizeContent({ photos: list }).photos;
+}
+
+// A repeatable run of numbers from 0 up to but not including 1, for the random order
+function seededRandom(seed) {
+  let state = seed;
+  return () => {
+    state = (state * 1664525 + 1013904223) % 4294967296;
+    return state / 4294967296;
+  };
+}
+
+test('the query asks for each photo with its id, when it was made, its words, switches and picture', () => {
+  assert.ok(contentQuery.includes('"photos": *[_type == "photo"] | order(_createdAt desc) {'));
+  ['"id": _id', '"createdAt": _createdAt', 'caption,', 'credit,', 'show,', 'expires,', '"image": image {'].forEach(piece => {
+    assert.ok(contentQuery.includes(piece), 'the query does not ask for ' + piece);
+  });
+  // the same picture lines as a person's photo, asked for twice
+  assert.equal(contentQuery.split('"url": asset->url').length - 1, 2);
+});
+
+test('a photo from Studio gets the address the screen asks for: no wider than the screen, a small format', () => {
+  const [photo] = photosFrom([{ id: 'a1', createdAt: '2026-09-20T10:00:00Z', caption: '[Caption]', credit: '[Name]', image: photoRecord() }]);
+
+  assert.equal(photo.address, photoBase + '?w=1920&fit=max&auto=format');
+  assert.equal(photoMaxWidth, 1920);
+  assert.deepEqual(photo, { id: 'a1', createdAt: '2026-09-20T10:00:00Z', caption: '[Caption]', credit: '[Name]', address: photo.address, focus: { x: 50, y: 50 } });
+  assert.equal(JSON.stringify(photo).includes('_type'), false);
+});
+
+test('screenPhotoUrl is never wider than 1920 and never enlarges a smaller picture', () => {
+  [[100, 100], [800, 600], [1920, 1080], [4032, 3024], [60, 4000]].forEach(([width, height]) => {
+    const address = screenPhotoUrl(photoRecord({ width: width, height: height }));
+    const asked = Number(address.match(/[?&]w=(\d+)/)[1]);
+
+    assert.ok(asked <= 1920, 'asks for ' + asked + ' wide');
+    assert.ok(address.includes('&fit=max') && address.includes('auto=format'), address);
+    assert.equal(address.includes('&h='), false, 'asks for a height, so it would be cut: ' + address);
+  });
+  assert.equal(screenPhotoUrl(photoRecord()), photoBase + '?w=1920&fit=max&auto=format');
+});
+
+test('the editor\'s crop is sent as the part of the picture to keep, and no crop leaves it out', () => {
+  const cropped = photoRecord({ crop: { top: 0.1, bottom: 0, left: 0, right: 0.25 } });
+  assert.equal(screenPhotoUrl(cropped), photoBase + '?rect=0,60,600,540&w=1920&fit=max&auto=format');
+
+  // a crop of nothing is no crop
+  assert.equal(screenPhotoUrl(photoRecord({ crop: { top: 0, bottom: 0, left: 0, right: 0 } })), photoBase + '?w=1920&fit=max&auto=format');
+  assert.equal(screenPhotoUrl(photoRecord({ crop: null })), photoBase + '?w=1920&fit=max&auto=format');
+});
+
+test('screenPhotoUrl gives an empty text for a picture that cannot be used', () => {
+  [undefined, null, 'text', {}, photoRecord({ url: 'http://cdn.sanity.io/images/a.jpg' }), photoRecord({ width: 0 }), photoRecord({ height: null })].forEach(raw => {
+    assert.equal(screenPhotoUrl(raw), '');
+  });
+});
+
+test('photoFocus says where the hotspot is in what the crop keeps, so the card cuts around it', () => {
+  assert.deepEqual(photoFocus(photoRecord({ hotspot: null })), { x: 50, y: 50 });
+  assert.deepEqual(photoFocus(photoRecord({ hotspot: { x: 0.25, y: 0.75 } })), { x: 25, y: 75 });
+
+  // the editor cut 25% off the right: the middle of the original is two thirds across what is left
+  assert.deepEqual(photoFocus(photoRecord({ crop: { top: 0, bottom: 0, left: 0, right: 0.25 } })), { x: 67, y: 50 });
+  // a hotspot inside the part that was cut off is held at the edge
+  assert.deepEqual(photoFocus(photoRecord({ crop: { top: 0, bottom: 0, left: 0.5, right: 0 }, hotspot: { x: 0.1, y: 0.5 } })), { x: 0, y: 50 });
+  assert.deepEqual(photoFocus(null), { x: 50, y: 50 });
+});
+
+test('a photo with no picture that can be used is dropped, and the rest is kept', () => {
+  const photos = photosFrom([
+    { id: 'a', image: null },
+    { id: 'b', image: { url: null, width: null, height: null, crop: null, hotspot: null } },
+    { id: 'c', image: photoRecord({ url: 'http://cdn.sanity.io/images/a.jpg' }) },
+    { id: 'd' },
+    null,
+    'text',
+    { id: 'e', image: photoRecord() },
+  ]);
+  assert.deepEqual(photos.map(photo => photo.id), ['e']);
+  assert.deepEqual(photosFrom(undefined), []);
+  assert.deepEqual(photosFrom(null), []);
+  assert.deepEqual(normalizeContent({}).photos, []);
+  assert.deepEqual(withDefaults(null).photos, []);
+});
+
+test('empty fields of a photo are left out, and a switched off photo keeps its switch', () => {
+  const [photo] = photosFrom([{ id: 'a', createdAt: '2026-09-20T10:00:00Z', caption: '', credit: null, show: false, expires: null, image: photoRecord() }]);
+
+  assert.equal('caption' in photo, false);
+  assert.equal('credit' in photo, false);
+  assert.equal('expires' in photo, false);
+  assert.equal(photo.show, false);
+});
+
+test('photosToShow leaves out photos that are switched off, have expired, or have no picture', () => {
+  const now = new Date(2026, 9, 4, 12, 0);
+  const content = {
+    photos: [
+      photoItem('on', '2026-09-30T10:00:00Z', { show: true }),
+      photoItem('missing-switch', '2026-09-29T10:00:00Z'),
+      photoItem('off', '2026-09-28T10:00:00Z', { show: false }),
+      photoItem('expired', '2026-09-27T10:00:00Z', { expires: '2026-10-01T12:00:00.000Z' }),
+      photoItem('later', '2026-09-26T10:00:00Z', { expires: '2026-10-09T12:00:00.000Z' }),
+      photoItem('no-picture', '2026-09-25T10:00:00Z', { address: '' }),
+      { id: 'no-address' },
+      null,
+    ],
+  };
+  assert.deepEqual(photosToShow(content, now).map(photo => photo.id), ['on', 'missing-switch', 'later']);
+
+  // the same photo expires while the screen runs
+  assert.deepEqual(photosToShow(content, new Date(2026, 9, 10)).map(photo => photo.id), ['on', 'missing-switch']);
+
+  // a photo from the sample has an address and nothing else, and shows
+  assert.equal(photosToShow({ photos: [{ address: 'data/sample/photo-1.svg' }] }, now).length, 1);
+  assert.deepEqual(photosToShow({}, now), []);
+  assert.deepEqual(photosToShow({ photos: 'none' }, now), []);
+});
+
+test('newestFirst goes by the time each photo was made, and puts photos with no time last, in their own order', () => {
+  const list = [
+    photoItem('middle', '2026-09-10T10:00:00Z'),
+    { address: 'sample-a' },
+    photoItem('newest', '2026-09-20T10:00:00Z'),
+    { address: 'sample-b', createdAt: 'not a time' },
+    photoItem('oldest', '2026-08-01T10:00:00Z'),
+    photoItem('twin', '2026-09-10T10:00:00Z'),
+  ];
+  const sorted = newestFirst(list);
+
+  assert.deepEqual(sorted.map(photo => photo.id || photo.address), ['newest', 'middle', 'twin', 'oldest', 'sample-a', 'sample-b']);
+  assert.deepEqual(list.map(photo => photo.id || photo.address), ['middle', 'sample-a', 'newest', 'sample-b', 'oldest', 'twin'], 'the list that was passed in is not changed');
+});
+
+test('photoKey is the id, and the address for a photo with no id', () => {
+  assert.equal(photoKey({ id: 'a', address: 'x' }), 'a');
+  assert.equal(photoKey({ address: 'data/sample/photo-1.svg' }), 'data/sample/photo-1.svg');
+});
+
+test('creditText is the first name only, even if a last name got in another way', () => {
+  assert.equal(creditText({ credit: 'Sam' }), 'Sam');
+  assert.equal(creditText({ credit: 'Mary-Anne' }), 'Mary-Anne');
+  assert.equal(creditText({ credit: 'Sam Smith' }), 'Sam');
+  assert.equal(creditText({ credit: '  Sam  Smith ' }), 'Sam');
+  assert.equal(creditText({ credit: '' }), '');
+  assert.equal(creditText({ credit: '   ' }), '');
+  assert.equal(creditText({}), '');
+});
+
+test('random order never shows the same photo twice in a row, with two, three or ten photos', () => {
+  [2, 3, 10].forEach(count => {
+    const list = Array.from({ length: count }, (value, index) => photoItem('p' + index, '2026-09-0' + (index % 9 + 1) + 'T10:00:00Z'));
+    const queue = makePhotoQueue(seededRandom(count));
+    const seen = new Set();
+    let last = null;
+
+    for (let turn = 0; turn < 500; turn++) {
+      const { photo, next } = queue.take(list, 'random');
+      assert.notEqual(photo.id, last, 'the same photo twice in a row with ' + count + ' photos, turn ' + turn);
+      assert.notEqual(next.id, photo.id, 'the next photo is the one on screen');
+      seen.add(photo.id);
+      last = photo.id;
+    }
+    assert.equal(seen.size, count, 'every photo should come round');
+  });
+});
+
+test('the photo chosen as next is the one shown next, so the one that was loaded is the one that shows', () => {
+  const list = ['a', 'b', 'c', 'd', 'e'].map(id => photoItem(id, '2026-09-01T10:00:00Z'));
+  const queue = makePhotoQueue(seededRandom(7));
+
+  let turn = queue.take(list, 'random');
+  for (let count = 0; count < 100; count++) {
+    const following = queue.take(list, 'random');
+    assert.equal(following.photo, turn.next, 'turn ' + count);
+    turn = following;
+  }
+});
+
+test('with one photo it is shown every time, and with none nothing is', () => {
+  const only = [photoItem('only', '2026-09-01T10:00:00Z')];
+  ['random', 'newest-first'].forEach(order => {
+    const queue = makePhotoQueue(seededRandom(1));
+    for (let count = 0; count < 3; count++) {
+      const { photo, next } = queue.take(only, order);
+      assert.equal(photo.id, 'only');
+      assert.equal(next.id, 'only');
+    }
+    assert.deepEqual(queue.take([], order), { photo: null, next: null });
+  });
+});
+
+test('newest first walks the list from the newest to the oldest and then starts over', () => {
+  const list = [
+    photoItem('oldest', '2026-08-01T10:00:00Z'),
+    photoItem('newest', '2026-09-20T10:00:00Z'),
+    photoItem('middle', '2026-09-10T10:00:00Z'),
+  ];
+  const queue = makePhotoQueue(() => {
+    throw new Error('newest first does not use random numbers');
+  });
+
+  const shown = [];
+  for (let turn = 0; turn < 7; turn++) shown.push(queue.take(list, 'newest-first').photo.id);
+  assert.deepEqual(shown, ['newest', 'middle', 'oldest', 'newest', 'middle', 'oldest', 'newest']);
+  assert.equal(queue.take(list, 'newest-first').next.id, 'oldest', 'the next one is worked out while this one is up');
+});
+
+test('newest first goes on after the photo it showed when a newer one arrives, and starts at the newest when that one is gone', () => {
+  const first = photoItem('first', '2026-09-01T10:00:00Z');
+  const second = photoItem('second', '2026-08-01T10:00:00Z');
+  const third = photoItem('third', '2026-07-01T10:00:00Z');
+  const queue = makePhotoQueue();
+
+  assert.equal(queue.take([first, second, third], 'newest-first').photo.id, 'first');
+  assert.equal(queue.take([first, second, third], 'newest-first').photo.id, 'second');
+
+  // a newer photo is uploaded: the walk carries on, and the new one comes at the next round
+  const newer = photoItem('newer', '2026-10-01T10:00:00Z');
+  assert.equal(queue.take([newer, first, second, third], 'newest-first').photo.id, 'third');
+  assert.equal(queue.take([newer, first, second, third], 'newest-first').photo.id, 'newer');
+
+  // the photo that was planned to come next is hidden: the one after it takes its place
+  const queue2 = makePhotoQueue();
+  queue2.take([first, second, third], 'newest-first');
+  assert.equal(queue2.take([first, third], 'newest-first').photo.id, 'third');
+});
+
+test('a photo that is hidden or expired after it was chosen as next is not shown, and the order setting is followed at once', () => {
+  const list = ['a', 'b', 'c'].map((id, index) => photoItem(id, '2026-09-0' + (index + 1) + 'T10:00:00Z'));
+  const queue = makePhotoQueue(seededRandom(3));
+
+  const turn = queue.take(list, 'random');
+  const without = list.filter(photo => photo.id !== turn.next.id);
+  const after = queue.take(without, 'random');
+  assert.notEqual(after.photo.id, turn.next.id);
+  assert.notEqual(after.photo.id, turn.photo.id);
+
+  // the order is changed in Dashboard Settings: the next turn follows the new order, not the plan
+  const queue2 = makePhotoQueue(seededRandom(3));
+  queue2.take(list, 'random');
+  assert.equal(queue2.take(list, 'newest-first').photo.id, 'c');
+});
+
+test('a list that grows from one photo does not show the same photo twice', () => {
+  const only = photoItem('only', '2026-09-01T10:00:00Z');
+  const another = photoItem('another', '2026-09-02T10:00:00Z');
+  const queue = makePhotoQueue(seededRandom(5));
+
+  assert.equal(queue.take([only], 'random').photo.id, 'only');
+  assert.equal(queue.take([only, another], 'random').photo.id, 'another');
+});
+
+test('ownSeconds: a row with seconds uses them, the Photo row with none uses Seconds per photo, and the others use none', () => {
+  const settings = { photoSeconds: 30, pageSeconds: 20 };
+
+  assert.equal(ownSeconds({ panel: 'tasks', seconds: 25 }, settings), 25);
+  assert.equal(ownSeconds({ panel: 'photo', seconds: 40 }, settings), 40);
+  assert.equal(ownSeconds({ panel: 'photo' }, settings), 30);
+  assert.equal(ownSeconds({ panel: 'photo', seconds: 0 }, settings), 30);
+  assert.equal(ownSeconds({ panel: 'photo', seconds: null }, settings), 30);
+  assert.equal(ownSeconds({ panel: 'tasks' }, settings), 0);
+  assert.equal(ownSeconds({ panel: 'events' }, settings), 0);
+  assert.equal(ownSeconds({ panel: 'next-event' }, settings), 0);
+
+  // a missing or unusable setting is the default, 16
+  assert.equal(ownSeconds({ panel: 'photo' }, {}), 16);
+  assert.equal(ownSeconds({ panel: 'photo' }, { photoSeconds: 'soon' }), 16);
+  assert.equal(ownSeconds({ panel: 'photo' }, { photoSeconds: -3 }), 16);
+});
+
+test('Photo order and Seconds per photo are checked like the other settings', () => {
+  live.config.photoOrders.forEach(name => {
+    settingsThrough({ photoOrder: name }).forEach(settings => assert.equal(settings.photoOrder, name));
+  });
+  [undefined, null, '', 'Random', 'newest', 'newest first', 'toString', 3, ['random'], {}].forEach(value => {
+    settingsThrough({ photoOrder: value }).forEach(settings => assert.equal(settings.photoOrder, 'random', JSON.stringify(value)));
+  });
+
+  // from 6 to 120, and what is outside is brought to the nearest end
+  [[6, 6], [16, 16], [120, 120], [3, 6], [0, 6], [-5, 6], [500, 120]].forEach(([value, wanted]) => {
+    settingsThrough({ photoSeconds: value }).forEach(settings => assert.equal(settings.photoSeconds, wanted, String(value)));
+  });
+  [undefined, null, '', '20', NaN, Infinity, true, {}].forEach(value => {
+    const results = settingsThrough({ photoSeconds: value });
+    results.slice(0, 3).forEach(settings => assert.equal(settings.photoSeconds, Number.isFinite(value) ? value : 16, String(value)));
+  });
+});
+
+test('the sample content keeps its photo list, now inside the content, and the Photos settings', () => {
+  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const content = normalizeSample(raw);
+
+  assert.equal(content.photos.length, 3);
+  assert.deepEqual(content.photos.map(photo => photo.address), ['data/sample/photo-1.svg', 'data/sample/photo-2.svg', 'data/sample/photo-3.svg']);
+  assert.equal(content.photos[0].caption, '[Photo caption one]');
+  assert.equal(content.photos[0].credit, '[Name]');
+  assert.equal('credit' in content.photos[1], false);
+  assert.equal('caption' in content.photos[2], false, 'an empty caption is left out');
+  assert.equal(photosToShow(content).length, 3);
+  assert.deepEqual([content.settings.photoOrder, content.settings.photoSeconds], ['random', 16]);
+
+  raw.photos.forEach(photo => {
+    assert.ok(fs.existsSync(path.join(dashboardFolder, photo.address)), photo.address + ' is not in the sample folder');
+  });
+
+  // an item with no address is dropped, and no list at all gives no photos
+  assert.deepEqual(normalizeSample({ photos: [{ caption: 'no address' }, { address: 'a.svg' }] }).photos, [{ address: 'a.svg' }]);
+  assert.deepEqual(normalizeSample({}).photos, []);
+});
+
+test('the Night mode settings: the starting values, the two choices, the two times and the logo width, through all three paths', () => {
+  const defaults = live.config.defaultSettings;
+  assert.deepEqual(
+    [defaults.nightEnabled, defaults.nightStyle, defaults.nightStart, defaults.nightEnd, defaults.nightLogoWidth, defaults.nightSpeed, defaults.nightPreview],
+    [true, 'bounce', '23:30', '11:30', 300, 'normal', false]
+  );
+  assert.deepEqual(live.config.nightStyles, ['bounce', 'black']);
+  assert.deepEqual(Object.keys(live.config.nightSpeeds), ['slow', 'normal', 'fast']);
+
+  // a published page that lacks every one of them gets the starting values
+  settingsThrough({}).forEach(settings => nightSettingNames.forEach(name => assert.equal(settings[name], defaults[name], name)));
+  assert.equal(withDefaults(null).settings.nightStart, '23:30');
+
+  // the two choices
+  live.config.nightStyles.forEach(name => settingsThrough({ nightStyle: name }).forEach(settings => assert.equal(settings.nightStyle, name)));
+  Object.keys(live.config.nightSpeeds).forEach(name => settingsThrough({ nightSpeed: name }).forEach(settings => assert.equal(settings.nightSpeed, name)));
+  [undefined, null, '', 'Bounce', 'blank', 'toString', 0, true, ['black'], {}].forEach(value => {
+    settingsThrough({ nightStyle: value }).forEach(settings => assert.equal(settings.nightStyle, 'bounce', JSON.stringify(value)));
+  });
+  [undefined, null, '', 'Fast', 'very-fast', 'constructor', 0, true, ['fast'], {}].forEach(value => {
+    settingsThrough({ nightSpeed: value }).forEach(settings => assert.equal(settings.nightSpeed, 'normal', JSON.stringify(value)));
+  });
+
+  // the times are 24 hour times with two digits, and anything else is the starting time
+  ['00:00', '09:05', '21:45', '23:59'].forEach(text => {
+    settingsThrough({ nightStart: text, nightEnd: text }).forEach(settings => assert.deepEqual([settings.nightStart, settings.nightEnd], [text, text]));
+  });
+  ['9:05', '24:00', '12:60', '2330', '23:30:00', ' 23:30', 'late', 2330, null, {}].forEach(value => {
+    settingsThrough({ nightStart: value, nightEnd: value }).forEach(settings => {
+      assert.deepEqual([settings.nightStart, settings.nightEnd], ['23:30', '11:30'], JSON.stringify(value));
+    });
+  });
+
+  // the logo width is from 120 to 800, and what is outside is brought to the nearest end
+  [[120, 120], [300, 300], [800, 800], [50, 120], [0, 120], [-9, 120], [5000, 800]].forEach(([value, wanted]) => {
+    settingsThrough({ nightLogoWidth: value }).forEach(settings => assert.equal(settings.nightLogoWidth, wanted, String(value)));
+  });
+  [undefined, null, '', '300', NaN, Infinity, true, {}].forEach(value => {
+    const results = settingsThrough({ nightLogoWidth: value });
+    results.slice(0, 3).forEach(settings => assert.equal(settings.nightLogoWidth, Number.isFinite(value) ? value : 300, String(value)));
+  });
+
+  // the two switches: night mode starts on and the preview off, and anything but true or false is that
+  [true, false].forEach(value => {
+    settingsThrough({ nightEnabled: value, nightPreview: value }).forEach(settings => assert.deepEqual([settings.nightEnabled, settings.nightPreview], [value, value]));
+  });
+  [undefined, null, '', 'false', 'on', 0, 1, [], {}].forEach(value => {
+    settingsThrough({ nightEnabled: value, nightPreview: value }).forEach(settings => {
+      assert.deepEqual([settings.nightEnabled, settings.nightPreview], [true, false], JSON.stringify(value));
+    });
+  });
+});
+
+test('the sample content carries the Night mode settings', () => {
+  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const settings = normalizeSample(raw).settings;
+
+  nightSettingNames.forEach(name => {
+    assert.ok(name in raw.settings, name + ' is in the sample file');
+    assert.equal(settings[name], live.config.defaultSettings[name], name);
+  });
+  assert.equal(normalizeSample({}).theme.timeZone, 'America/New_York', 'night mode reads its zone from the Theme page, which starts as New York');
+});
+
+// The names of the settings in the Hidden tab, and the last push from the Studio
+const hiddenSettingNames = ['hiddenEnabled', 'desktopChance', 'redEyesChance'];
+
+test('the Hidden settings: the starting values, the master switch and the two chances, through all three paths', () => {
+  const defaults = live.config.defaultSettings;
+  assert.deepEqual([defaults.hiddenEnabled, defaults.desktopChance, defaults.redEyesChance], [true, 1, 1]);
+  assert.deepEqual(defaults.hiddenRequest, { kind: '', requestedAt: '' });
+
+  // a published page that lacks every one of them gets the starting values
+  settingsThrough({}).forEach(settings => {
+    hiddenSettingNames.forEach(name => assert.equal(settings[name], defaults[name], name));
+    assert.deepEqual(settings.hiddenRequest, { kind: '', requestedAt: '' });
+  });
+
+  // a chance is a percent from 0 to 100, 0 is never, and what is outside is brought to the nearest end
+  [[0, 0], [1, 1], [50, 50], [100, 100], [0.5, 0.5], [-3, 0], [101, 100], [5000, 100]].forEach(([value, wanted]) => {
+    settingsThrough({ desktopChance: value, redEyesChance: value }).forEach(settings => {
+      assert.deepEqual([settings.desktopChance, settings.redEyesChance], [wanted, wanted], String(value));
+    });
+  });
+  [undefined, null, '', '5', NaN, Infinity, true, [], {}].forEach(value => {
+    const results = settingsThrough({ desktopChance: value, redEyesChance: value });
+    results.slice(0, 3).forEach(settings => {
+      assert.deepEqual([settings.desktopChance, settings.redEyesChance], Number.isFinite(value) ? [value, value] : [1, 1], String(value));
+    });
+  });
+
+  // the master switch starts on, and anything but true or false is on
+  [true, false].forEach(value => settingsThrough({ hiddenEnabled: value }).forEach(settings => assert.equal(settings.hiddenEnabled, value)));
+  [undefined, null, '', 'false', 'off', 0, 1, [], {}].forEach(value => {
+    settingsThrough({ hiddenEnabled: value }).forEach(settings => assert.equal(settings.hiddenEnabled, true, JSON.stringify(value)));
+  });
+});
+
+test('the last push from the Studio is kept as a kind and a time, and anything that is not one is empty', () => {
+  const push = { kind: 'redEyes', requestedAt: '2026-10-05T12:00:00.000Z' };
+  settingsThrough({ hiddenRequest: push }).forEach(settings => assert.deepEqual(settings.hiddenRequest, push));
+
+  // the kind has to be one in the registry, and the time has to be a time
+  settingsThrough({ hiddenRequest: { kind: 'desktop', requestedAt: 'whenever' } }).forEach(settings => {
+    assert.deepEqual(settings.hiddenRequest, { kind: 'desktop', requestedAt: '' });
+  });
+  settingsThrough({ hiddenRequest: { kind: 'megaflash', requestedAt: push.requestedAt } }).forEach(settings => {
+    assert.deepEqual(settings.hiddenRequest, { kind: '', requestedAt: push.requestedAt });
+  });
+  [undefined, null, 'redEyes', 12, [], [push]].forEach(value => {
+    settingsThrough({ hiddenRequest: value }).forEach(settings => assert.deepEqual(settings.hiddenRequest, { kind: '', requestedAt: '' }, JSON.stringify(value)));
+  });
+
+  // only the two fields come through from a stored page, and the document's own names do not
+  const stored = normalizeContent({ settings: document('dashboardSettings', 'dashboardSettings', { hiddenRequest: Object.assign({ _type: 'x', extra: 1 }, push) }) }).settings;
+  assert.deepEqual(stored.hiddenRequest, push);
+});
+
+test('the sample content carries the Hidden settings and no push', () => {
+  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const settings = normalizeSample(raw).settings;
+
+  hiddenSettingNames.forEach(name => {
+    assert.ok(name in raw.settings, name + ' is in the sample file');
+    assert.equal(settings[name], live.config.defaultSettings[name], name);
+  });
+  assert.ok(!('hiddenRequest' in raw.settings), 'a push is never part of the sample');
+  assert.deepEqual(settings.hiddenRequest, { kind: '', requestedAt: '' });
+});
+
+test('photos are read from Sanity with the rest of the content, and nothing reads a photos.json any more', () => {
+  const code = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+  const scripts = [];
+  (function walk(folder) {
+    fs.readdirSync(path.join(dashboardFolder, folder), { withFileTypes: true }).forEach(entry => {
+      const relative = path.join(folder, entry.name);
+      if (entry.isDirectory() && entry.name !== 'data' && entry.name !== 'fonts') walk(relative);
+      else if (entry.name.endsWith('.js')) scripts.push(relative);
+    });
+  })('.');
+
+  scripts.forEach(file => {
+    assert.equal(/photos\.json|readPhotos/.test(code(file)), false, file + ' still reads a photo list file');
+  });
+  assert.equal(fs.existsSync(path.join(dashboardFolder, 'data/sample/photos.json')), false);
+  assert.equal(code('shell.js').includes('extras.photos'), false);
+
+  // the stay of the Photo panel is worked out from the Photos setting
+  const schedule = code('core/schedule.js');
+  assert.ok(schedule.includes("import { ownSeconds } from './photos.js';"));
+  assert.ok(schedule.includes('stayFor(region, ownSeconds(next.step, settings), settings)'));
+});
+
+test('the Photo panel uses the visible photos, the order setting, the credit at 44px, and loads the next photo', () => {
+  const panel = fs.readFileSync(path.join(dashboardFolder, 'panels/photo/photo.js'), 'utf8');
+  const style = fs.readFileSync(path.join(dashboardFolder, 'panels/photo/photo.css'), 'utf8');
+
+  assert.ok(panel.includes('queue.take(photosToShow(content), content.settings && content.settings.photoOrder)'));
+  assert.ok(panel.includes('return photosToShow(content).length > 0;'));
+  assert.ok(panel.includes('preloadImages([turn.next.address])'), 'the next photo is not loaded');
+  assert.ok(panel.includes('Photo: ${escapeHtml(credit)}'), 'the credit does not say Photo: and the name');
+  assert.ok(panel.includes('object-position'), 'the hotspot is not used');
+  assert.equal(/Math\.random/.test(panel), false, 'the panel chooses by itself, not through the queue');
+
+  assert.ok(/\.photo \.credit\s*\{[^}]*font: 500 var\(--size-label\)\/56px/.test(style), 'the credit is not at least 44px');
+  const credit = style.match(/\.photo \.credit\s*\{[^}]*\}/)[0];
+  assert.ok(credit.includes('background: var(--card);') && credit.includes('color: var(--white);'), 'the credit is not white on the card colour, a pair check-themes.mjs tests');
+  assert.ok(/--size-label: 44px;/.test(fs.readFileSync(path.join(dashboardFolder, 'tokens.css'), 'utf8')));
+  assert.equal(/blur|box-shadow|text-shadow|filter/.test(style), false, 'the photo panel uses an effect that is not allowed');
 });
 
 test('makePages gives a page at a time, comes back to the first, and says what comes next', () => {
@@ -2920,7 +3844,7 @@ test('shell.js merges the events when content changes and once a minute', () => 
   assert.ok(shell.includes('base.theme.timeZone'), 'the Theme time zone should be used');
 });
 
-// The Mini's name and addresses, shown while the status says OFFLINE
+// The Mini's name and addresses, shown inside the connection status text while Sanity cannot be reached
 // (core/device.js). The first tests are the pure part: device.json in, up to
 // two lines of text out.
 
@@ -2967,67 +3891,60 @@ test('loginAddress prefers Tailscale, then Wi-Fi, then nothing', () => {
   assert.equal(loginAddress({ wifi: '', tailscale: '' }), '');
 });
 
-// The strip itself, with a stand-in for the page, a clock and a fetch
+// The reading of device.json, with a clock and a fetch. The lines go to a
+// function, which in the dashboard puts them in the connection status text.
 
-function fakeStrip() {
-  const strip = { hidden: true, children: [{ textContent: '' }, { textContent: '' }] };
-  globalThis.document = { getElementById: id => (id === 'device-info' ? strip : null) };
-  return strip;
-}
-
-function shownText(strip) {
-  return strip.hidden ? null : strip.children.map(row => row.textContent);
-}
-
-async function withStrip(run) {
+async function withDevice(run) {
   await inWorld(async world => {
-    const strip = fakeStrip();
+    const seen = []; // every list of lines that was handed over, in order
+    const use = lines => seen.push(lines);
     try {
-      await run(world, strip);
+      await run(world, seen, use);
     } finally {
-      showDeviceInfo(false);
-      delete globalThis.document;
+      showDeviceInfo(false, use);
     }
   });
 }
 
-test('the strip reads device.json when the status shows, uses no cache, and shows the two lines', () => withStrip(async (world, strip) => {
+const fullDeviceLines = [
+  'hawktimus-mini · Wi-Fi 192.168.1.23 · Tailscale 100.101.102.103',
+  'ssh hawktimus@100.101.102.103',
+];
+
+test('the device lines are read from device.json when asked for, with no cache, and handed over', () => withDevice(async (world, seen, use) => {
   world.handler = async () => jsonResponse(fullDevice);
 
-  showDeviceInfo(true);
+  showDeviceInfo(true, use);
   await settle();
 
   assert.equal(world.fetches.length, 1);
   assert.ok(world.fetches[0].url.endsWith('data/live/device.json'), world.fetches[0].url);
   assert.equal(deviceFile, 'data/live/device.json');
   assert.equal(world.fetches[0].options.cache, 'no-store');
-  assert.deepEqual(shownText(strip), [
-    'hawktimus-mini · Wi-Fi 192.168.1.23 · Tailscale 100.101.102.103',
-    'ssh hawktimus@100.101.102.103',
-  ]);
+  assert.deepEqual(seen, [fullDeviceLines]);
 }));
 
-test('the strip reads nothing and shows nothing while the status is not showing', () => withStrip(async (world, strip) => {
+test('nothing is read and nothing handed over while the status text is not showing', () => withDevice(async (world, seen, use) => {
   world.handler = async () => jsonResponse(fullDevice);
 
-  showDeviceInfo(false);
-  showDeviceInfo(false);
+  showDeviceInfo(false, use);
+  showDeviceInfo(false, use);
   await world.advance(5 * 60 * 1000);
 
   assert.equal(world.fetches.length, 0);
   assert.equal(world.timers.length, 0);
-  assert.equal(shownText(strip), null);
+  assert.deepEqual(seen, []);
 }));
 
-test('the strip reads the file again every minute while it stays shown, and asking to show it twice starts one timer', () => withStrip(async (world, strip) => {
+test('the file is read again every minute while it stays shown, and asking twice starts one timer', () => withDevice(async (world, seen, use) => {
   let reads = 0;
   world.handler = async () => {
     reads += 1;
     return jsonResponse(reads === 1 ? fullDevice : { hostname: 'hawktimus-mini', wifi: '10.0.0.8', tailscale: '' });
   };
 
-  showDeviceInfo(true);
-  showDeviceInfo(true);
+  showDeviceInfo(true, use);
+  showDeviceInfo(true, use);
   await settle();
   assert.equal(reads, 1);
   assert.equal(world.timers.length, 1);
@@ -3037,43 +3954,43 @@ test('the strip reads the file again every minute while it stays shown, and aski
   assert.equal(reads, 1);
   await world.advance(1000);
   assert.equal(reads, 2);
-  assert.deepEqual(shownText(strip), ['hawktimus-mini · Wi-Fi 10.0.0.8', 'ssh hawktimus@10.0.0.8']);
+  assert.deepEqual(seen[seen.length - 1], ['hawktimus-mini · Wi-Fi 10.0.0.8', 'ssh hawktimus@10.0.0.8']);
 
   await world.advance(60 * 1000);
   assert.equal(reads, 3);
 }));
 
-test('the strip is hidden at once when the status goes away, and the reading stops', () => withStrip(async (world, strip) => {
+test('the lines are taken away at once when the text goes away, and the reading stops', () => withDevice(async (world, seen, use) => {
   world.handler = async () => jsonResponse(fullDevice);
 
-  showDeviceInfo(true);
+  showDeviceInfo(true, use);
   await settle();
-  assert.notEqual(shownText(strip), null);
+  assert.deepEqual(seen[seen.length - 1], fullDeviceLines);
 
-  showDeviceInfo(false);
-  assert.equal(shownText(strip), null);
-  assert.deepEqual(strip.children.map(row => row.textContent), ['', '']);
+  showDeviceInfo(false, use);
+  assert.deepEqual(seen[seen.length - 1], []);
   assert.equal(world.timers.length, 0);
 
+  const count = seen.length;
   await world.advance(5 * 60 * 1000);
   assert.equal(world.fetches.length, 1);
-  assert.equal(shownText(strip), null);
+  assert.equal(seen.length, count);
 }));
 
-test('an answer that comes after the status went away is thrown away', () => withStrip(async (world, strip) => {
+test('an answer that comes after the text went away is thrown away', () => withDevice(async (world, seen, use) => {
   let answer = null;
   world.handler = () => new Promise(resolve => { answer = resolve; });
 
-  showDeviceInfo(true);
+  showDeviceInfo(true, use);
   await settle();
-  showDeviceInfo(false);
+  showDeviceInfo(false, use);
 
   answer(jsonResponse(fullDevice));
   await settle();
-  assert.equal(shownText(strip), null);
+  assert.deepEqual(seen, [[]]);
 }));
 
-test('a missing file, a file that is not JSON and a network error all show nothing, and a good file later shows again', () => withStrip(async (world, strip) => {
+test('a missing file, a file that is not JSON and a network error all give no lines, and a good file later gives them', () => withDevice(async (world, seen, use) => {
   const answers = [
     async () => jsonResponse({}, 404),
     async () => ({ ok: true, status: 200, json: async () => { throw new SyntaxError('Unexpected token'); } }),
@@ -3083,41 +4000,281 @@ test('a missing file, a file that is not JSON and a network error all show nothi
   ];
   world.handler = async () => answers.shift()();
 
-  showDeviceInfo(true);
+  showDeviceInfo(true, use);
   await settle();
-  assert.equal(shownText(strip), null, 'a missing file');
+  assert.deepEqual(seen, [[]], 'a missing file');
 
   await world.advance(60 * 1000);
-  assert.equal(shownText(strip), null, 'bad JSON');
+  assert.deepEqual(seen[seen.length - 1], [], 'bad JSON');
 
   await world.advance(60 * 1000);
-  assert.equal(shownText(strip), null, 'a network error');
+  assert.deepEqual(seen[seen.length - 1], [], 'a network error');
 
   await world.advance(60 * 1000);
-  assert.equal(shownText(strip), null, 'every value empty');
+  assert.deepEqual(seen[seen.length - 1], [], 'every value empty');
 
   await world.advance(60 * 1000);
-  assert.deepEqual(shownText(strip)[1], 'ssh hawktimus@100.101.102.103');
+  assert.deepEqual(seen[seen.length - 1], fullDeviceLines);
   assert.equal(world.errors.length, 0, 'a missing file is not an error to report');
 }));
 
-test('shell.js shows the strip only for status.offline, and index.html has the strip hidden to begin with', () => {
-  const shell = fs.readFileSync(path.join(dashboardFolder, 'shell.js'), 'utf8');
-  assert.ok(shell.includes("import { showDeviceInfo } from './core/device.js';"));
-  assert.ok(shell.includes('showDeviceInfo(Boolean(status && status.offline));'), 'rebuild() should pass status.offline');
+// The connection status text: when it shows, what it says, and the page it is drawn on
 
-  const page = fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8');
-  assert.ok(/<div id="device-info" hidden>\s*<div><\/div>\s*<div><\/div>\s*<\/div>/.test(page), 'index.html should have the empty hidden strip');
-  assert.ok(page.indexOf('id="device-info"') > page.indexOf('id="stage"'), 'the strip comes after the stage');
-  assert.ok(page.indexOf('id="device-info"') < page.indexOf('id="overlay"'), 'the strip comes before the overlay');
+const sanityStatus = { source: 'sanity', updated: new Date(2026, 9, 2, 14, 31), offline: false, reason: '' };
+const calendarsRead = new Date(2026, 9, 2, 14, 30);
+
+function contentWith(counts) {
+  const items = number => Array.from({ length: number }, (value, index) => ({ title: '[Item ' + index + ']' }));
+  return {
+    tasks: items(counts.tasks || 0),
+    sponsors: items(counts.sponsors || 0),
+    tipsAndNews: items(counts.tipsAndNews || 0),
+    subteams: items(counts.subteams || 0),
+    people: items(counts.people || 0),
+    extraEvents: items(counts.extraEvents || 0),
+    plan: counts.plan ? { rows: [] } : null,
+    customPanels: items(counts.customPanels || 0),
+  };
+}
+
+const someContent = contentWith({ tasks: 12, sponsors: 4, tipsAndNews: 9, subteams: 5, people: 8, extraEvents: 2, plan: true, customPanels: 3 });
+
+test('classifyFailure: 401 and 403 are access denied, whatever else is known', () => {
+  assert.equal(classifyFailure({ status: 401 }), 'denied');
+  assert.equal(classifyFailure({ status: 403 }), 'denied');
+  assert.equal(classifyFailure({ status: 403, hostAnswered: false }), 'denied');
 });
 
-test('the strip text is at least 44px, has no animation, and is only shown by the hidden switch', () => {
+test('classifyFailure: any other status Sanity answered with is other', () => {
+  [400, 404, 429, 500, 503, 200].forEach(status => {
+    assert.equal(classifyFailure({ status: status }), 'other', 'status ' + status);
+  });
+});
+
+test('classifyFailure: no readable answer is the network when the host does not answer, and CORS when it does', () => {
+  assert.equal(classifyFailure({ hostAnswered: false }), 'network');
+  assert.equal(classifyFailure({ hostAnswered: true }), 'cors');
+  assert.equal(classifyFailure({ status: 0, hostAnswered: true, timedOut: false }), 'cors');
+});
+
+test('classifyFailure: a timeout is the network when the host does not answer, and not CORS when it does', () => {
+  assert.equal(classifyFailure({ timedOut: true, hostAnswered: false }), 'network');
+  assert.equal(classifyFailure({ timedOut: true, hostAnswered: true }), 'other');
+});
+
+test('classifyFailure: with nothing known, or nothing usable, it is other, and it always gives one of the four words', () => {
+  assert.equal(classifyFailure({ hostAnswered: null }), 'other');
+  assert.equal(classifyFailure({}), 'other');
+  [undefined, null, 'text', 7, { status: 'x' }].forEach(value => assert.equal(classifyFailure(value), 'other'));
+  assert.deepEqual(reasons, ['network', 'cors', 'denied', 'other']);
+});
+
+test('reasonText has plain words for each reason, and other for one it does not know', () => {
+  assert.equal(reasonText('network'), 'network down');
+  assert.equal(reasonText('cors'), 'CORS blocked');
+  assert.equal(reasonText('denied'), 'access denied');
+  assert.equal(reasonText('other'), 'other error');
+  assert.equal(reasonText('nonsense'), 'other error');
+  assert.equal(reasonText(undefined), 'other error');
+});
+
+test('itemCounts counts each kind of content, the plan as one or none, and copes with missing lists', () => {
+  assert.deepEqual(itemCounts(someContent), [
+    ['Tasks', 12], ['Sponsors', 4], ['Tips', 9], ['Subteams', 5],
+    ['People', 8], ['Extra events', 2], ['Plan', 1], ['Custom panels', 3],
+  ]);
+  assert.deepEqual(itemCounts(withDefaults({})).map(pair => pair[1]), [0, 0, 0, 0, 0, 0, 0, 0]);
+  assert.deepEqual(itemCounts(null).map(pair => pair[1]), [0, 0, 0, 0, 0, 0, 0, 0]);
+  assert.deepEqual(itemCounts({ tasks: 'not a list', plan: {} }).map(pair => pair[1]), [0, 0, 0, 0, 0, 0, 1, 0]);
+});
+
+test('connectionLines shows nothing while Sanity is reachable and the switch is off', () => {
+  assert.deepEqual(connectionLines({ status: sanityStatus, always: false, content: someContent, calendarsReadAt: calendarsRead }), []);
+  assert.deepEqual(connectionLines({ status: { source: 'cache', updated: null, offline: false, reason: '' }, always: false }), []);
+  assert.deepEqual(connectionLines({ status: null, always: true }), []);
+  assert.deepEqual(connectionLines({ always: true }), []);
+});
+
+test('connectionLines gives the reason and the last good read while Sanity is unreachable, then the Mini lines', () => {
+  const status = { source: 'sanity', updated: new Date(2026, 9, 2, 14, 31), offline: true, reason: 'cors' };
+  assert.deepEqual(connectionLines({ status: status, always: false, deviceLines: fullDeviceLines }), [
+    'SANITY UNREACHABLE: CORS BLOCKED',
+    'Last good read 2:31 PM',
+    'hawktimus-mini · Wi-Fi 192.168.1.23 · Tailscale 100.101.102.103',
+    'ssh hawktimus@100.101.102.103',
+  ]);
+});
+
+test('connectionLines names each of the four reasons, and says so when there has been no good read', () => {
+  const words = { network: 'NETWORK DOWN', cors: 'CORS BLOCKED', denied: 'ACCESS DENIED', other: 'OTHER ERROR' };
+  Object.keys(words).forEach(reason => {
+    const lines = connectionLines({ status: { source: 'sanity', updated: null, offline: true, reason: reason }, always: false });
+    assert.deepEqual(lines, ['SANITY UNREACHABLE: ' + words[reason], 'No good read yet']);
+  });
+
+  const unknown = connectionLines({ status: { source: 'sanity', updated: null, offline: true, reason: '' }, always: false });
+  assert.equal(unknown[0], 'SANITY UNREACHABLE: OTHER ERROR');
+});
+
+test('connectionLines with the switch on gives the last read, the counts and the calendar time', () => {
+  assert.deepEqual(connectionLines({ status: sanityStatus, always: true, content: someContent, calendarsReadAt: calendarsRead }), [
+    'Sanity OK · last read 2:31 PM',
+    'Tasks 12 · Sponsors 4 · Tips 9 · Subteams 5',
+    'People 8 · Extra events 2 · Plan 1 · Custom panels 3',
+    'Calendars read 2:30 PM',
+  ]);
+});
+
+test('connectionLines says when the calendars have not been read, and when Sanity has not been read yet', () => {
+  const lines = connectionLines({ status: { source: 'sanity', updated: null, offline: false, reason: '' }, always: true, content: withDefaults({}), calendarsReadAt: null });
+  assert.deepEqual(lines, [
+    'Sanity not read yet',
+    'Tasks 0 · Sponsors 0 · Tips 0 · Subteams 0',
+    'People 0 · Extra events 0 · Plan 0 · Custom panels 0',
+    'Calendars not read yet',
+  ]);
+});
+
+test('connectionLines says when the screen shows a saved copy, or the sample', () => {
+  const saved = connectionLines({ status: { source: 'cache', updated: new Date(2026, 9, 2, 9, 5), offline: false, reason: '' }, always: true, content: someContent });
+  assert.equal(saved[0], 'Saved copy from 9:05 AM');
+
+  const none = connectionLines({ status: { source: 'cache', updated: null, offline: false, reason: '' }, always: true, content: someContent });
+  assert.equal(none[0], 'Saved copy, Sanity not read yet');
+
+  const sample = connectionLines({ status: { source: 'sample', updated: null, offline: false, reason: '' }, always: true, content: someContent });
+  assert.equal(sample[0], 'Sample content, Sanity not read');
+});
+
+test('connectionLines puts the reason first and the counts after it when the switch is on and Sanity is unreachable', () => {
+  const status = { source: 'cache', updated: new Date(2026, 9, 2, 14, 31), offline: true, reason: 'network' };
+  const lines = connectionLines({ status: status, always: true, content: someContent, calendarsReadAt: calendarsRead, deviceLines: ['ssh hawktimus@10.0.0.5'] });
+  assert.deepEqual(lines, [
+    'SANITY UNREACHABLE: NETWORK DOWN',
+    'Last good read 2:31 PM',
+    'Tasks 12 · Sponsors 4 · Tips 9 · Subteams 5',
+    'People 8 · Extra events 2 · Plan 1 · Custom panels 3',
+    'Calendars read 2:30 PM',
+    'ssh hawktimus@10.0.0.5',
+  ]);
+});
+
+test('connectionLines says so when the sample file cannot be read, and never blames Sanity for it', () => {
+  const lines = connectionLines({ status: { source: 'sample', updated: null, offline: true, reason: 'other' }, always: false });
+  assert.deepEqual(lines, ['SAMPLE CONTENT FILE NOT READ']);
+});
+
+test('no line is longer than the screen has room for at 44px', () => {
+  // The text is nowrap and cut with an ellipsis at 1840px. At 44px a character is
+  // at most about 28px wide, so 60 characters is 1680px and fits with its padding.
+  const status = { source: 'sanity', updated: new Date(2026, 9, 2, 14, 31), offline: true, reason: 'denied' };
+  const lines = connectionLines({ status: status, always: true, content: someContent, calendarsReadAt: calendarsRead, deviceLines: fullDeviceLines });
+  const shortLines = lines.filter(line => line.indexOf('hawktimus-mini') !== 0);
+  shortLines.forEach(line => assert.ok(line.length <= 60, line));
+});
+
+// drawConnection, with a stand-in for the page
+
+function fakeBox() {
+  const box = {
+    hidden: true,
+    dataset: {},
+    children: [],
+    appendChild(child) {
+      this.children.push(child);
+    },
+  };
+  globalThis.document = {
+    getElementById: id => (id === 'connection-status' ? box : null),
+    createElement: () => ({ textContent: '', className: '' }),
+  };
+  return box;
+}
+
+function withBox(run) {
+  const box = fakeBox();
+  try {
+    return run(box);
+  } finally {
+    delete globalThis.document;
+  }
+}
+
+function rowsOf(box) {
+  return box.children.map(row => row.textContent);
+}
+
+test('drawConnection adds a row for each line, shows the box and sets its tone', () => withBox(box => {
+  drawConnection(['SANITY UNREACHABLE: NETWORK DOWN', 'Last good read 2:31 PM'], 'warning');
+  assert.equal(box.hidden, false);
+  assert.equal(box.dataset.tone, 'warning');
+  assert.deepEqual(rowsOf(box), ['SANITY UNREACHABLE: NETWORK DOWN', 'Last good read 2:31 PM']);
+}));
+
+test('drawConnection hides the box and empties the rows when there are no lines, and reuses its rows', () => withBox(box => {
+  drawConnection(['one', 'two', 'three'], 'info');
+  const rows = box.children.slice();
+
+  drawConnection(['four'], 'info');
+  assert.deepEqual(rowsOf(box), ['four', '', '']);
+  assert.equal(box.children.length, 3, 'no new rows are made for fewer lines');
+  assert.equal(box.hidden, false);
+
+  drawConnection([], 'info');
+  assert.equal(box.hidden, true);
+  assert.deepEqual(rowsOf(box), ['', '', '']);
+  assert.ok(box.children.every((row, index) => row === rows[index]), 'the same rows are used');
+}));
+
+test('drawConnection marks a line that starts with ssh as the command', () => withBox(box => {
+  drawConnection(['Sanity OK', 'ssh hawktimus@100.101.102.103'], 'warning');
+  assert.deepEqual(box.children.map(row => row.className), ['', 'command']);
+
+  drawConnection(['ssh hawktimus@10.0.0.5', 'Sanity OK'], 'warning');
+  assert.deepEqual(box.children.map(row => row.className), ['command', '']);
+}));
+
+test('drawConnection does nothing when the page has no connection status box', () => {
+  globalThis.document = { getElementById: () => null };
+  try {
+    drawConnection(['a line'], 'info');
+  } finally {
+    delete globalThis.document;
+  }
+});
+
+test('shell.js draws the connection text from the status and the switch, and keeps the calendar read time', () => {
+  const shell = fs.readFileSync(path.join(dashboardFolder, 'shell.js'), 'utf8');
+  assert.ok(shell.includes("import { connectionLines, drawConnection } from './core/connection.js';"));
+  assert.ok(shell.includes("import { showDeviceInfo } from './core/device.js';"));
+  assert.ok(shell.includes('showDeviceInfo(Boolean(status && status.offline), useDeviceLines);'), 'rebuild() should pass status.offline');
+  assert.ok(shell.includes('always: content.settings.showConnectionStatus,'), 'the switch should be passed');
+  assert.ok(shell.includes("drawConnection(lines, status && status.offline ? 'warning' : 'info');"));
+  assert.ok(/if \(result\.failed\.length === 0\) calendarsReadAt = now;/.test(shell), 'readEvents should record when the calendars were read');
+  assert.ok(/calendarsReadAt = null;/.test(shell), 'a change of source should forget the time');
+  assert.ok(!shell.includes('OFFLINE'), 'the banner no longer says OFFLINE');
+});
+
+test('index.html has the empty hidden connection box after the stage and before the overlay, and the banner no longer has a status', () => {
+  const page = fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8');
+  assert.ok(/<div id="connection-status" hidden><\/div>/.test(page), 'index.html should have the empty hidden box');
+  assert.ok(page.indexOf('id="connection-status"') > page.indexOf('id="stage"'), 'the box comes after the stage');
+  assert.ok(page.indexOf('id="connection-status"') < page.indexOf('id="overlay"'), 'the box comes before the overlay');
+  assert.ok(!page.includes('device-info'), 'the old strip is gone');
+
+  const banner = fs.readFileSync(path.join(dashboardFolder, 'panels/banner/banner.js'), 'utf8');
+  assert.ok(!banner.includes('OFFLINE') && !banner.includes('data-part="status"'), 'the banner has no OFFLINE text');
+  const frameScript = fs.readFileSync(path.join(dashboardFolder, 'frame.js'), 'utf8');
+  assert.ok(!/'status':/.test(frameScript), 'frame.js has no line for the banner status');
+});
+
+test('the connection text is at least 44px, sits bottom right, has no animation, and is only shown by the hidden switch', () => {
   const css = fs.readFileSync(path.join(dashboardFolder, 'base.css'), 'utf8');
-  const rule = css.match(/#device-info \{([^}]*)\}/);
-  assert.ok(rule, 'base.css should have the #device-info rule');
+  const rule = css.match(/#connection-status \{([^}]*)\}/);
+  assert.ok(rule, 'base.css should have the #connection-status rule');
   assert.ok(rule[1].includes('font: 600 var(--size-label)/44px'), 'the text is the 44px label size');
-  assert.ok(!/animation|transition|shadow|filter/.test(rule[1]), 'no animation, shadow or blur');
+  assert.ok(/position: absolute;/.test(rule[1]) && /right: \d+px;/.test(rule[1]) && /bottom: \d+px;/.test(rule[1]), 'it is taken out of the flow, bottom right');
+  assert.ok(!/animation|transition|shadow|filter|transform/.test(css.slice(css.indexOf('#connection-status {'), css.indexOf('.panel { position: relative; }'))), 'no animation, shadow or blur');
   assert.ok(!/display:/.test(rule[1]), 'a display value would override the hidden switch');
 });
 

@@ -8,7 +8,8 @@ installing anything on the Mini, and whenever a step needs a login or a key.
 ## How it fits together
 
 - A web server container shows the `dashboard` folder at
-  `http://localhost:8080/dashboard/`. It can only be reached from the Mini.
+  `http://localhost:3229/dashboard/`, the port in `TELETRAAN_PORT` in
+  `local.env`. It can only be reached from the Mini.
 - A timer runs `pull.sh` every 5 minutes. A pull is a deploy: the files in the
   repository are the files on the screen.
 - A timer runs `fetch-calendars.sh` every 15 minutes. It saves the BAND
@@ -16,14 +17,16 @@ installing anything on the Mini, and whenever a step needs a login or a key.
 - The kiosk service starts a browser full screen when the Mini boots. A kiosk
   is a browser with no address bar, tabs or menus.
 
-The calendars, `photos.json`, `version.txt` and `device.json` live in
+The calendars, `version.txt` and `device.json` live in
 `/var/lib/teletraan/data` on the Mini, not in the repository. The container
 shows that folder as `dashboard/data/live/`, so nothing the Mini downloads
 ever shows up in git. The scripts write the calendars, `version.txt` and
 `device.json` (the Mini's name and addresses, written every minute by
 `kiosk.sh`, see "Finding the Mini on the network" in
-`docs/rebuilding-the-mini.md`). `photos.json` is made by hand, see
-`docs/rebuilding-the-mini.md`.
+`docs/rebuilding-the-mini.md`). The photos are not on the Mini: they are
+uploaded in Studio and come with the rest of the content. The dashboard used to
+read a list of photos from a `photos.json` file in that folder. It does not any
+more, so a file with that name left on an older Mini can be deleted.
 
 Do not delete `dashboard/data/live/.gitkeep`: Docker needs the empty folder
 to attach the data folder to.
@@ -37,6 +40,7 @@ to attach the data folder to.
 | `local.example.env` | The template for `local.env`, with placeholders only |
 | `scripts/pull.sh` | Gets new commits and writes `version.txt` so an open dashboard reloads |
 | `scripts/fetch-calendars.sh` | Downloads each calendar named in `local.env`, over https only |
+| `scripts/check-connection.sh` | Checks DNS, Sanity, CORS, BAND, the web container, the kiosk and the clock, one OK or FAIL line each. Run it over SSH, see "Checking the connection" in `docs/rebuilding-the-mini.md` |
 | `scripts/kiosk.sh` | Opens the browser full screen with the right settings, or any page given after its name. Also writes `device.json` every minute while the browser runs |
 | `scripts/install-timers.sh` | Copies the unit files into place and turns on the two timers |
 | `systemd/*.service`, `*.timer` | What runs, and how often |
@@ -49,6 +53,10 @@ one that owns the repository) may read it:
 
     cp local.example.env local.env
     chmod 600 local.env
+
+The Mini's dashboard port is 3229. Set `TELETRAAN_PORT='3229'` in `local.env`:
+the template and the fallback in `docker-compose.yml` still say 8080. The screen
+and the Sanity CORS origin (studio/README.md, step 6) both use this port.
 
 Git ignores the file wherever it sits, and also copies an editor leaves next
 to it, such as `local.env.save`. Never paste a feed address into a file that

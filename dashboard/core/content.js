@@ -1,11 +1,15 @@
 // Where the screen gets what it shows: startContent() hands over the content
 // once it has it, and again every time it changes. Same shape as data/sample/content.json.
 
-import { contentSources, defaultSettings, defaultTeam, limits, metals, sampleFolder, sanity, speeds } from '../config.js';
+import { contentSources, defaultSettings, defaultTeam, frameFinishes, limits, metals, nightSpeeds, nightStyles, pageChangeStyles, photoOrders, sampleFolder, sanity, speeds } from '../config.js';
 import { parseLocalDateTime } from './time.js';
 import { chooseSource } from './source.js';
 import { tidyTheme } from './theme.js';
+import { tidyDemo } from './demo.js';
+import { chanceFields, tidyHiddenRequest } from './hidden.js';
 import { fetchResult, liveEventsUrl, normalizeContent, normalizeSample } from './sanity.js';
+import { reasons } from './connection.js';
+import { tidyClockTime } from './night.js';
 
 const storageKey = 'teletraan-content';
 const sampleRecheck = 30 * 1000;
@@ -13,7 +17,9 @@ const waitForMoreEdits = 1500;
 const pollEvery = 5 * 60 * 1000;
 const retryAfterFailure = 30 * 1000;
 const reopenStreamAfter = 60 * 1000;
-const offlineAfter = 10 * 60 * 1000;
+// Sanity counts as unreachable once reads have failed for this long, counted
+// from the first failed read. The screen then says so (core/connection.js).
+const unreachableAfter = 2 * 60 * 1000;
 
 // An item is shown unless it is switched off or its expiry time has passed
 export function isVisible(item, now = new Date()) {
@@ -32,7 +38,7 @@ export function visibleItems(list, now = new Date()) {
 // whether settings exist.
 export function withDefaults(raw) {
   const source = raw || {};
-  const content = Object.assign({ tasks: [], plan: null, sponsors: [], tipsAndNews: [], subteams: [], people: [], customPanels: [], extraEvents: [] }, source);
+  const content = Object.assign({ tasks: [], plan: null, sponsors: [], tipsAndNews: [], subteams: [], people: [], photos: [], customPanels: [], extraEvents: [] }, source);
   content.team = Object.assign({}, defaultTeam, source.team);
   content.settings = Object.assign({}, defaultSettings, source.settings);
   content.settings.countdown = Object.assign({}, defaultSettings.countdown, content.settings.countdown);
@@ -42,6 +48,10 @@ export function withDefaults(raw) {
   // The Theme document is its own thing, not part of Dashboard Settings. A
   // missing or unusable value becomes the default (see core/theme.js).
   content.theme = tidyTheme(source.theme);
+
+  // The Demo document is its own thing too. A missing one is no request and
+  // the default steps (see core/demo.js).
+  content.demo = tidyDemo(source.demo);
 
   // normalizeSettings in sanity.js already does this for the editors' content.
   // This covers content that did not come through it.
@@ -57,13 +67,31 @@ export function fixSettingValues(settings) {
   if (typeof settings.switchBackAt !== 'string') settings.switchBackAt = defaultSettings.switchBackAt;
   if (!Object.keys(speeds).includes(settings.speed)) settings.speed = defaultSettings.speed;
   if (!metals.includes(settings.frameMetal)) settings.frameMetal = defaultSettings.frameMetal;
+  // The Transitions tab
+  if (!pageChangeStyles.includes(settings.pageChangeStyle)) settings.pageChangeStyle = defaultSettings.pageChangeStyle;
+  if (!frameFinishes.includes(settings.frameFinish)) settings.frameFinish = defaultSettings.frameFinish;
+  // The Photos tab
+  if (!photoOrders.includes(settings.photoOrder)) settings.photoOrder = defaultSettings.photoOrder;
+  // The Night mode tab: two choices, two times of day, a switch each way and the logo width
+  if (!nightStyles.includes(settings.nightStyle)) settings.nightStyle = defaultSettings.nightStyle;
+  if (!Object.keys(nightSpeeds).includes(settings.nightSpeed)) settings.nightSpeed = defaultSettings.nightSpeed;
+  settings.nightStart = tidyClockTime(settings.nightStart, defaultSettings.nightStart);
+  settings.nightEnd = tidyClockTime(settings.nightEnd, defaultSettings.nightEnd);
 
-  ['glint', 'nameTransform'].forEach(name => {
+  // The logo and name switches and numbers are the Logo tab in the Studio
+  const logoSwitches = ['logoAnimations', 'logoEntrance', 'logoSpin', 'logoHawk', 'nameTransform'];
+  const logoNumbers = ['logoSpinEvery', 'logoSpinDuration', 'logoHawkEvery', 'logoHawkDuration', 'nameEvery', 'nameDuration'];
+  const transitionNumbers = ['breakSeconds', 'silverChance'];
+
+  ['glint', 'showConnectionStatus', 'nightEnabled', 'nightPreview', 'hiddenEnabled'].concat(logoSwitches).forEach(name => {
     if (typeof settings[name] !== 'boolean') settings[name] = defaultSettings[name];
   });
-  ['pageSeconds', 'nameEvery', 'nameDuration'].forEach(name => {
+  // The Hidden tab: each chance is a percent, and the last push from the Studio is a kind and a time
+  const hiddenNumbers = chanceFields();
+  ['pageSeconds', 'photoSeconds', 'nightLogoWidth'].concat(logoNumbers, transitionNumbers, hiddenNumbers).forEach(name => {
     settings[name] = keepInRange(settings[name], limits[name], defaultSettings[name]);
   });
+  settings.hiddenRequest = tidyHiddenRequest(settings.hiddenRequest);
   settings.crt = tidyGlitch(settings.crt);
 }
 
@@ -94,8 +122,10 @@ function tidyGlitch(raw) {
 
 // Resolves with { content, status } as soon as there is something to show.
 // After that, onChange({ content, status }) is called each time either changes.
-// status is { source: 'sample' | 'sanity' | 'cache', updated: Date or null, offline: boolean }
+// status is { source: 'sample' | 'sanity' | 'cache', updated: Date or null, offline: boolean, reason: string }
 // where updated is when the content was last read, and a new updated alone is not a change.
+// offline is true once Sanity has been out of reach for over two minutes, and reason then says
+// why: one of the words in core/connection.js. reason is '' when offline is false.
 //
 // Dashboard Settings says which content to show (source.js): the sample, or
 // what the editors published. The screen keeps asking, so a change in Content
@@ -142,7 +172,7 @@ function makeAnnouncer(onChange) {
     announce(state) {
       if (stopped) return;
 
-      const text = JSON.stringify([state.content, state.status.source, state.status.offline]);
+      const text = JSON.stringify([state.content, state.status.source, state.status.offline, state.status.reason]);
       const send = last !== null && text !== last;
       last = text;
       if (!send) return;
@@ -177,7 +207,8 @@ export async function startSampleContent(onChange) {
       console.error('Could not read the sample content', error);
       offline = true;
     }
-    return { content: content, status: { source: 'sample', updated: null, offline: offline } };
+    // The sample is a file on this computer, not Sanity. If it cannot be read the status text says so.
+    return { content: content, status: { source: 'sample', updated: null, offline: offline, reason: offline ? 'other' : '' } };
   }
 
   const first = await readFile();
@@ -273,9 +304,10 @@ export async function startSanityContent(onChange) {
   let content = saved ? saved.content : withDefaults({});
   let source = saved ? 'cache' : 'sanity';
   let updated = saved ? saved.savedAt : null; // in milliseconds
-  let lastSuccess = null; // the last good read in this run, in milliseconds
   let failed = false; // true when the latest read failed
-  let offline = false;
+  let offline = false; // true once reads have failed for unreachableAfter
+  let reason = ''; // why the latest read failed, while there is a failure
+  let alarm = null; // the timer that sets offline. It starts at the first failed read.
   let busy = false;
   let again = false;
   let nextRead = null;
@@ -284,25 +316,46 @@ export async function startSanityContent(onChange) {
 
   function current() {
     const date = updated === null ? null : new Date(updated);
-    return { content: content, status: { source: source, updated: date, offline: offline } };
+    return { content: content, status: { source: source, updated: date, offline: offline, reason: offline ? reason : '' } };
+  }
+
+  // The timer is real time from the first failed read. A good read stops it,
+  // so a read that fails again later starts a new two minutes.
+  function startAlarm() {
+    if (alarm !== null) return;
+
+    alarm = setTimeout(() => {
+      alarm = null;
+      if (stopped) return;
+
+      offline = true;
+      announcer.announce(current());
+    }, unreachableAfter);
+  }
+
+  function stopAlarm() {
+    clearTimeout(alarm);
+    alarm = null;
   }
 
   // A failed read keeps the content on screen. It only counts as offline once
-  // the screen has gone ten minutes without a good read.
+  // the alarm goes off, two minutes after the first one that failed.
   async function readOnce() {
     try {
       const raw = await fetchResult(sanity);
       content = normalizeContent(raw);
-      lastSuccess = Date.now();
-      updated = lastSuccess;
+      updated = Date.now();
       source = 'sanity';
       failed = false;
       offline = false;
+      reason = '';
+      stopAlarm();
       saveCopy(raw, updated);
     } catch (error) {
       console.error('Could not read content from Sanity', error);
       failed = true;
-      offline = lastSuccess === null || Date.now() - lastSuccess > offlineAfter;
+      reason = error && reasons.includes(error.reason) ? error.reason : 'other';
+      startAlarm();
     }
   }
 
@@ -359,6 +412,7 @@ export async function startSanityContent(onChange) {
     stop() {
       stopped = true;
       announcer.stop();
+      stopAlarm();
       clearTimeout(nextRead);
       clearTimeout(waiting);
       closeStream();

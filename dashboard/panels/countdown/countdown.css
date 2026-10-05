@@ -137,7 +137,7 @@
 }
 
 /* a bar of 12 blocks that fills through each minute. It stops short of the
-   bolt at the cut corner. */
+   screw at the cut corner. */
 .countdown .segments {
   position: absolute;
   left: 32px;

@@ -1,0 +1,3 @@
+example,name,lead,spotlight,spotlightHeadline,spotlightText,order,show,expires
+type subteam,text; required; max 11; id 1,text; max 17,yes/no; default no,text; max 40,text; max 100,whole number,yes/no; default yes,datetime
+EXAMPLE,[Subteam A],[Lead name],yes,[What the subteam did],[Two or three short sentences about the subteam's work.],1,yes,

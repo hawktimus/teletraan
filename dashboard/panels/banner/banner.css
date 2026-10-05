@@ -162,15 +162,6 @@
   font: 600 var(--size-label)/44px var(--font-display);
 }
 
-/* OFFLINE is the one warning on the wall, so it uses the warning colour. */
-.banner .status {
-  flex: none;
-  color: var(--lilac);
-  font: 600 var(--size-label)/44px var(--font-display);
-}
-.banner .status.offline { color: var(--danger-bright); }
-.banner .status:empty { display: none; }
-
 /* SAMPLE CONTENT is on the screen the whole time the sample is showing, so
    nobody mistakes it for the team's real content. Solid yellow with dark
    text, the highest contrast on the screen. It sits to the right of the TEAM

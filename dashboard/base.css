@@ -43,6 +43,10 @@ html, body {
   gap: 20px 32px;
 }
 
+/* Positioned, so that the backdrop before it in index.html (hidden
+   transitions, below) stacks under it and the red wash after it stacks over it. */
+#stage { position: relative; }
+
 #region-banner { grid-column: 1 / 3; grid-row: 1; }
 #region-grid1 { grid-column: 1; grid-row: 2; }
 #region-right {
@@ -72,6 +76,53 @@ html, body {
   height: 100%;
 }
 
+/* Hidden transitions (core/hidden-run.js, docs/hidden-transitions.md). Two full
+   screen layers that are hidden except while one plays. #backdrop is under the
+   stage and holds three things, shown one at a time by data-look (frame.css):
+   black (its own background), the wallpaper, and the red eyes picture.
+   #red-wash is over the stage and is only a flat red colour whose opacity
+   flickers. The colours of the face are the --face and --eye tokens in
+   tokens.css. The wallpaper is drawn in its own colours (core/hidden-art.js). */
+#backdrop,
+#red-wash {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  pointer-events: none;
+}
+#backdrop { background: #000; }
+#red-wash {
+  background: var(--hidden-red);
+  opacity: 0;
+}
+#backdrop .wallpaper,
+#backdrop .red-eyes {
+  position: absolute;
+  opacity: 0;
+}
+#backdrop .wallpaper { left: 0; top: 0; width: 1920px; height: 1080px; }
+#backdrop .red-eyes { left: 410px; top: 98px; width: 1100px; height: 884px; opacity: 1; }
+#backdrop .wallpaper svg,
+#backdrop .red-eyes svg { display: block; }
+#backdrop .face-plates,
+#backdrop .face-eyes { opacity: 0; }
+#backdrop .face-lit { fill: var(--face-lit); }
+#backdrop .face-lit-2 { fill: var(--face-lit-2); }
+#backdrop .face-shade { fill: var(--face-shade); }
+#backdrop .face-shade-2 { fill: var(--face-shade-2); }
+#backdrop .face-dark { fill: var(--face-dark); }
+#backdrop .face-cut { fill: var(--face-cut); }
+#backdrop .face-plates polygon {
+  stroke: var(--face-edge);
+  stroke-width: 3px;
+  stroke-linejoin: miter;
+}
+#backdrop .eye { fill: var(--eye-red); }
+#backdrop .eye-core { fill: var(--eye-hot); }
+
 /* Full screen panels (alerts, announcements) sit on top of everything */
 #overlay {
   position: absolute;
@@ -81,33 +132,143 @@ html, body {
   height: 1080px;
 }
 
-/* The Mini's name and addresses (core/device.js). It is shown only while the
-   banner says OFFLINE, and it is taken out of the flow (position: absolute),
-   so showing or hiding it moves nothing. It covers the ticker row and the gap
-   above it while it is shown: from the bottom of the large panels (y 964) to
-   the bottom of the ticker (y 1056) is 92px, and two lines of 44px text and a
-   4px line along the top fill that exactly. It has its own solid plate in the
-   warning colour, so it reads whatever is moving behind it. It comes after
-   the stage in index.html and before #overlay, so a full screen alert covers
-   it like everything else. */
-#device-info {
+/* The connection status text (core/connection.js). It comes up by itself when
+   Sanity has been out of reach for over two minutes, and stays on all the time
+   when Show connection status is switched on in Dashboard Settings. It is
+   taken out of the flow (position: absolute), so showing or hiding it moves
+   nothing, and it sits in the bottom right corner, level with the bottom of
+   the ticker. Each line is one 44px row, so the box is as high as it has
+   lines. It has its own solid plate, so it reads whatever is moving behind
+   it. data-tone says which look: info (a plain dark plate) or warning (the
+   red plate, while Sanity cannot be reached). It comes after the stage in
+   index.html and before #overlay, so a full screen alert covers it like
+   everything else. */
+#connection-status {
   position: absolute;
-  left: 40px;
+  right: 40px;
   bottom: 24px;
-  width: 1840px;
+  max-width: 1840px;
   box-sizing: border-box;
   padding: 0 24px;
-  border-top: 4px solid var(--danger);
-  background: var(--danger-plate);
+  border-top: 4px solid var(--yellow);
+  background: var(--ground);
   font: 600 var(--size-label)/44px var(--font-display);
+  white-space: nowrap;
 }
-#device-info > div {
+#connection-status[data-tone="warning"] {
+  border-top-color: var(--danger);
+  background: var(--danger-plate);
+}
+#connection-status > div {
   overflow: hidden;
   text-overflow: ellipsis;
+  color: var(--white);
 }
-#device-info > div:empty { display: none; }
-#device-info > div:first-child { color: var(--white); }
-#device-info > div:last-child { color: var(--yellow); }
+#connection-status > div:empty { display: none; }
+#connection-status > div:first-child { color: var(--yellow); }
+#connection-status[data-tone="warning"] > div:first-child { color: var(--danger-bright); }
+#connection-status > div.command { color: var(--yellow); }
+
+/* Night mode, the screensaver (core/night-screen.js). A black layer over the
+   stage and the connection text, under #overlay, so an alert or announcement
+   still shows over it. It is hidden until night begins. It holds one block:
+   the emblem, drawn once (emblemMarkup in core/logo.js), with the team number
+   under it. How the block moves is in frame.css, under "Night mode". Here are
+   the sizes, worked out in CSS so nothing is measured while it moves:
+     --night-logo-w   how wide the logo is. night-screen.js sets it from Logo
+                      width in Dashboard Settings.
+     the block        as wide as the logo, or 220px if the logo is narrower,
+                      because the number under it is about 160px wide
+     --night-travel-x how far the block can go sideways: the screen less the block
+   The colours are a pair: the plates (and the number) and the outline (and the
+   stripes). Each pair is made of theme colours and the silver in tokens.css, and
+   night-screen.js changes data-pair every time the logo bounces. */
+#night {
+  --night-logo-w: 300px;
+  --night-logo-h: calc(var(--night-logo-w) * 884 / 1100);
+  --night-gap: 8px;
+  --night-number-h: 80px;
+  --night-block-w: max(var(--night-logo-w), 220px);
+  --night-block-h: calc(var(--night-logo-h) + var(--night-gap) + var(--night-number-h));
+  --night-travel-x: calc(1920px - var(--night-block-w));
+  --night-travel-y: calc(1080px - var(--night-block-h));
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background: #000;
+}
+#night .night-x {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--night-block-w);
+  height: var(--night-block-h);
+}
+#night .night-y,
+#night .night-block {
+  width: 100%;
+  height: 100%;
+}
+#night .night-block {
+  --hit-x: 0; /* which way the logo moves in from a corner while it spins: 1 or -1, set when a corner is hit */
+  --hit-y: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+#night .night-block[data-pair="0"] { --night-plate: var(--yellow); --night-line: var(--white); }
+#night .night-block[data-pair="1"] { --night-plate: var(--lilac); --night-line: var(--yellow); }
+#night .night-block[data-pair="2"] { --night-plate: var(--silver); --night-line: var(--lilac); }
+#night .night-block[data-pair="3"] { --night-plate: var(--white); --night-line: var(--silver); }
+#night .night-logo {
+  flex: none;
+  width: var(--night-logo-w);
+  height: var(--night-logo-h);
+}
+#night .night-logo svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+#night .emblem-outline {
+  fill: var(--night-line);
+  stroke: var(--night-line);
+  stroke-width: 52px; /* in the drawing's own 1100 x 884 units, like the logo in the banner */
+  stroke-linejoin: round;
+}
+#night .emblem-plate { fill: var(--night-plate); }
+#night .emblem-stripe { fill: var(--night-line); }
+
+/* The number: 64px, in the display face, centred under the logo. The second
+   copy is gold and lies exactly over the first. It is invisible until a corner
+   hit, when it fades in and out (frame.css). */
+#night .night-number {
+  align-self: stretch;
+  margin-top: var(--night-gap);
+  height: var(--night-number-h);
+  font: 700 var(--size-body-large)/var(--night-number-h) var(--font-display);
+  text-align: center;
+  color: var(--night-plate);
+}
+#night .night-flash {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--night-logo-h) + var(--night-gap));
+  margin-top: 0;
+  color: var(--yellow);
+  opacity: 0;
+}
+
+/* Under the night screen the dashboard carries on but is not drawn, which saves
+   the old Mini the work. night-screen.js sets data-night once the screen has
+   faded in, and takes it away as it starts to fade out. */
+html[data-night="on"] #stage { visibility: hidden; }
 
 .panel { position: relative; }
 
@@ -143,8 +304,9 @@ html, body {
      shade   soft dark patches of grime on the lower half of the face
      ridge   a bright line on the lit upper left edge, worn in places
 
-   The colours are the --edge tokens, which follow html[data-metal]. A frame
-   with class red-metal uses the red ones. The shade and the ridge are
+   The colours are the --edge tokens, which follow the nearest data-metal (the
+   html element, or the area the plate is in). A frame with class red-metal uses
+   the red ones. The shade and the ridge are
    gradients that fade in and out, which is what makes the metal look worn.
    None of the five layers has a dash pattern of its own, because the line
    drawing in frame.css sets one on the group that holds them. */
@@ -183,25 +345,25 @@ html, body {
 }
 .thin .edge-ridge { transform: translate(-2.5px, -2.5px); }
 
-/* Bolts. The shapes are in index.html. A rule here for a shape inside a
+/* Screws. The shape is in index.html. A rule here for a shape inside a
    <use> cannot depend on where the <use> sits, so the colours come from
-   variables, which do pass through. */
-.bolt-rim { fill: var(--bolt-rim); }
-.bolt-face { fill: var(--bolt-face); }
-.bolt-ridge {
+   variables, which do pass through. A screw is silver on every frame. */
+.screw-rim { fill: var(--screw-rim); }
+.screw-face { fill: var(--screw-face); }
+.screw-ridge {
   fill: none;
-  stroke: var(--bolt-ridge);
+  stroke: var(--screw-ridge);
   stroke-width: 3px;
 }
-.bolt-core { fill: var(--bolt-core); }
-.bolt-shadow { fill: var(--edge-shadow); }
+.screw-slot { fill: var(--screw-slot); }
+.screw-shadow { fill: var(--edge-shadow); }
 
-/* The flat finish: one plain stroke and one plain bolt, nothing else */
+/* The flat finish: one plain stroke and one plain screw, nothing else */
 [data-finish="flat"] .edge-shadow,
 [data-finish="flat"] .edge-rim,
 [data-finish="flat"] .edge-shade,
 [data-finish="flat"] .edge-ridge,
-[data-finish="flat"] .bolt-shadow { display: none; }
+[data-finish="flat"] .screw-shadow { display: none; }
 [data-finish="flat"] .edge-face { stroke: var(--edge-flat); }
 
 /* A straight metal bar made from a plain box, with the same banding as the
@@ -210,10 +372,12 @@ html, body {
    8px with class bar-thin.
 
    --bar-face is the banded metal. It repeats every 380px, so every bar has the
-   same grain whatever its length. Its stops are the ones in the edge-metal
-   gradient in index.html, each offset multiplied by 380. It is set on :root
-   because html[data-metal] is the same element, so it follows the metal. */
-:root {
+   same grain whatever its length. Its stops are the ones in the edge-gold
+   gradient in index.html, each offset multiplied by 380. It is set on :root and
+   on every element with a data-metal, because a variable made from other
+   variables is worked out where it is set. */
+:root,
+[data-metal] {
   --bar-face: repeating-linear-gradient(100deg,
     var(--metal-1) 0px, var(--metal-2) 11.4px, var(--metal-3) 19px, var(--metal-3) 22px, var(--metal-5) 22.8px,
     var(--metal-3) 24.3px, var(--metal-3) 38px, var(--metal-grime) 41px, var(--metal-grime) 46.4px, var(--metal-3) 49.4px,

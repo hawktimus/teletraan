@@ -4,10 +4,13 @@
 //   rect=left,top,width,height   the part of the original to keep, in pixels
 //   w and h                      the size to send back
 //   fit=crop                     cut to exactly w by h
+//   fit=max                      fit inside w by h, and never make the picture
+//                                bigger than the original
 //   auto=format                  send WebP or another small format when the
 //                                browser can use it
-// The screen asks for a photo at the size it is shown, so no more is
-// downloaded than is drawn.
+// A portrait is asked for at the size it is shown, so no more is downloaded
+// than is drawn. A photo for the Photo panel is asked for as wide as the screen
+// at most (screenPhotoUrl).
 
 // What Sanity stores for a photo, cleaned. Gives back null when it cannot be
 // used, and the panel then shows the silhouette. The crop is how much the
@@ -65,16 +68,29 @@ function keepBetween(number, smallest, largest) {
   return Math.min(largest, Math.max(smallest, number));
 }
 
+// What is left of the original after the editor's crop, in pixels
+function croppedPart(photo) {
+  const left = Math.round(photo.crop.left * photo.width);
+  const top = Math.round(photo.crop.top * photo.height);
+  return {
+    left: left,
+    top: top,
+    width: Math.round(photo.width - photo.crop.right * photo.width - left),
+    height: Math.round(photo.height - photo.crop.bottom * photo.height - top),
+  };
+}
+
 // The part of the original to send, in pixels: as big as the editor's crop
 // allows, in the shape of the box it is shown in, and as close to centred on
 // the hotspot as the crop lets it be. Cutting here, and not leaving it to
 // Sanity, is what keeps a face in the picture.
 function partToShow(photo, boxWidth, boxHeight) {
   const aspect = boxWidth / boxHeight;
-  const cropLeft = Math.round(photo.crop.left * photo.width);
-  const cropTop = Math.round(photo.crop.top * photo.height);
-  const cropWidth = Math.round(photo.width - photo.crop.right * photo.width - cropLeft);
-  const cropHeight = Math.round(photo.height - photo.crop.bottom * photo.height - cropTop);
+  const cropped = croppedPart(photo);
+  const cropLeft = cropped.left;
+  const cropTop = cropped.top;
+  const cropWidth = cropped.width;
+  const cropHeight = cropped.height;
 
   let width;
   let height;
@@ -115,6 +131,41 @@ export function photoUrl(photo, width, height, scale = 1) {
     '&h=' + high +
     '&fit=crop' +
     '&auto=format';
+}
+
+// The widest a photo is ever asked for. The screen is 1920 pixels wide, so a
+// wider copy would only be downloaded and thrown away.
+export const photoMaxWidth = 1920;
+
+// The address of a photo for the Photo panel: the part the editor kept, no
+// wider than the screen, never enlarged, in a small format. The panel cuts it
+// to its card with the browser (see photoFocus), so the same copy fits with
+// or without a caption. Gives back an empty text when there is no usable photo.
+export function screenPhotoUrl(photo) {
+  const clean = tidyPhoto(photo);
+  if (!clean) return '';
+
+  const kept = croppedPart(clean);
+  const wasCropped = kept.left > 0 || kept.top > 0 || kept.width < clean.width || kept.height < clean.height;
+  const rect = wasCropped ? 'rect=' + [kept.left, kept.top, kept.width, kept.height].join(',') + '&' : '';
+
+  return clean.url + '?' + rect + 'w=' + photoMaxWidth + '&fit=max&auto=format';
+}
+
+// Where the hotspot is in the part the editor kept, as { x, y } in percent
+// (0 is the left or top edge). The panel gives it to object-position, so when
+// the card cuts the photo it keeps the face. A photo with no hotspot gives the middle.
+export function photoFocus(photo) {
+  const clean = tidyPhoto(photo);
+  if (!clean) return { x: 50, y: 50 };
+
+  const across = (clean.hotspot.x - clean.crop.left) / (1 - clean.crop.left - clean.crop.right);
+  const down = (clean.hotspot.y - clean.crop.top) / (1 - clean.crop.top - clean.crop.bottom);
+  return { x: toPercent(across), y: toPercent(down) };
+}
+
+function toPercent(fraction) {
+  return Math.round(keepBetween(fraction, 0, 1) * 100);
 }
 
 // Starts downloading pictures nobody is looking at yet, so the browser has

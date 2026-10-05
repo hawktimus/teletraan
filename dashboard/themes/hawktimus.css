@@ -23,7 +23,7 @@
      --lilac           the quiet text, such as the subteam beside a task
      --yellow-faint    the accent at 16 percent strength, for the sweeping bar of light. Write it as rgba().
      --danger          red lamps, stripes and the bar beside a blocked task
-     --danger-bright   the red text on a dark red plate, such as OFFLINE and the countdown in its last month
+     --danger-bright   the red text on a dark red plate, such as the connection status text and the countdown in its last month
      --danger-plate    the countdown plate, and the band behind a blocked task
      --danger-hot      the full screen alert, and the countdown in its last week
      --danger-dark     the unlit blocks of the countdown rail

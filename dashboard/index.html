@@ -10,9 +10,14 @@
   <link rel="stylesheet" href="frame.css">
 </head>
 <body>
-  <!-- The metal kit. The gradients and the bolt are drawn here once, and every
+  <!-- The metal kit. The gradients and the screw are drawn here once, and every
        frame points at them with <use>. The colours are the --metal and --red
-       tokens in tokens.css, so changing html[data-metal] recolours every edge.
+       tokens in tokens.css. A gradient takes its colours from the place it
+       sits in the page and not from the shape that uses it, so the three edge
+       gradients below carry data-metal="gold", and plate.js makes a silver copy
+       of each (data-metal="silver") the first time it draws a frame. tokens.css
+       points a frame at the gradients of its own metal, so the page frames can
+       be gold or silver while the banner keeps the metal of Frame metal.
        plate.js adds each frame's shapes to the empty group at the end, the first
        time that kind of frame is built. Nothing here is shown by itself. -->
   <svg class="metal-defs" width="0" height="0" aria-hidden="true">
@@ -24,7 +29,7 @@
            darkest. The gradient is measured from the top left corner of the
            drawing it is used in, so the edges of one frame carry on the same
            bands. It repeats by reflecting, so it never shows a seam. -->
-      <linearGradient id="edge-metal" gradientUnits="userSpaceOnUse" spreadMethod="reflect" x1="0" y1="0" x2="420" y2="260">
+      <linearGradient id="edge-gold" data-metal="gold" gradientUnits="userSpaceOnUse" spreadMethod="reflect" x1="0" y1="0" x2="420" y2="260">
         <stop offset="0" style="stop-color: var(--metal-1)"/>
         <stop offset=".03" style="stop-color: var(--metal-2)"/>
         <stop offset=".05" style="stop-color: var(--metal-3)"/>
@@ -110,7 +115,7 @@
       <!-- The ridge, the bright line on the lit edge. It is a gradient at another
            angle than the face, and it fades in places, like polished metal that
            has been handled. -->
-      <linearGradient id="edge-ridge-metal" gradientUnits="userSpaceOnUse" spreadMethod="reflect" x1="0" y1="0" x2="330" y2="150">
+      <linearGradient id="edge-ridge-gold" data-metal="gold" gradientUnits="userSpaceOnUse" spreadMethod="reflect" x1="0" y1="0" x2="330" y2="150">
         <stop offset="0" style="stop-color: var(--metal-ridge)" stop-opacity="1"/>
         <stop offset=".12" style="stop-color: var(--metal-ridge)" stop-opacity=".45"/>
         <stop offset=".2" style="stop-color: var(--metal-2)" stop-opacity=".9"/>
@@ -138,7 +143,7 @@
       <!-- The shade, soft dark patches of grime on the lower half of the edge.
            The colour is the same everywhere. Only the opacity changes, so the
            patches fade in and out and are never the same length. -->
-      <linearGradient id="edge-shade-metal" gradientUnits="userSpaceOnUse" spreadMethod="reflect" x1="0" y1="0" x2="260" y2="170">
+      <linearGradient id="edge-shade-gold" data-metal="gold" gradientUnits="userSpaceOnUse" spreadMethod="reflect" x1="0" y1="0" x2="260" y2="170">
         <stop offset="0" style="stop-color: var(--metal-shade)" stop-opacity="0"/>
         <stop offset=".08" style="stop-color: var(--metal-shade)" stop-opacity="0"/>
         <stop offset=".12" style="stop-color: var(--metal-shade)" stop-opacity=".9"/>
@@ -175,30 +180,14 @@
         <stop offset="1" style="stop-color: var(--red-shade)" stop-opacity="0"/>
       </linearGradient>
 
-      <!-- The two parts of a bolt: the outer head, and the pit in the middle,
-           which is lit the other way round. The head starts at colour 2, not the
-           brightest, so a bolt looks old. -->
-      <linearGradient id="bolt-face-metal" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" style="stop-color: var(--metal-2)"/>
-        <stop offset=".4" style="stop-color: var(--metal-3)"/>
-        <stop offset=".72" style="stop-color: var(--metal-6)"/>
-        <stop offset="1" style="stop-color: var(--metal-4)"/>
-      </linearGradient>
-      <linearGradient id="bolt-core-metal" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" style="stop-color: var(--metal-5)"/>
-        <stop offset=".55" style="stop-color: var(--metal-6)"/>
-        <stop offset="1" style="stop-color: var(--metal-7)"/>
-      </linearGradient>
-      <linearGradient id="bolt-face-red" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" style="stop-color: var(--red-2)"/>
-        <stop offset=".4" style="stop-color: var(--red-3)"/>
-        <stop offset=".72" style="stop-color: var(--red-6)"/>
-        <stop offset="1" style="stop-color: var(--red-4)"/>
-      </linearGradient>
-      <linearGradient id="bolt-core-red" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" style="stop-color: var(--red-5)"/>
-        <stop offset=".55" style="stop-color: var(--red-6)"/>
-        <stop offset="1" style="stop-color: var(--red-7)"/>
+      <!-- The face of a screw head. Screws are always silver, whatever the metal of
+           the frame, so these colours are the --screw tokens in tokens.css and
+           not the --metal ones. The gradient is measured over the head, and the
+           head turns with it. -->
+      <linearGradient id="screw-face-silver" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" style="stop-color: var(--screw-light)"/>
+        <stop offset=".45" style="stop-color: var(--screw-mid)"/>
+        <stop offset="1" style="stop-color: var(--screw-dark)"/>
       </linearGradient>
 
       <!-- The logo's outline and stripes. The gradient is measured over the
@@ -214,15 +203,18 @@
         <stop offset="1" style="stop-color: var(--metal-4)"/>
       </linearGradient>
 
-      <!-- A bolt is centred on 0,0. The shadow is the same head moved 5 right
-           and 7 down. The colours are set in base.css. -->
-      <polygon id="bolt-shadow-shape" points="-6,-10 16,-10 26,-2 26,14 16,22 -6,22 -16,14 -16,-2"/>
-      <g id="bolt-shape">
-        <polygon class="bolt-rim" points="-11,-17 11,-17 21,-9 21,9 11,17 -11,17 -21,9 -21,-9"/>
-        <polygon class="bolt-face" points="-9,-14 9,-14 18,-7 18,7 9,14 -9,14 -18,7 -18,-7"/>
-        <polyline class="bolt-ridge" points="-17,7 -17,-7 -9,-13 9,-13"/>
-        <polygon class="bolt-rim" points="-6,-9 6,-9 11,-5 11,5 6,9 -6,9 -11,5 -11,-5"/>
-        <polygon class="bolt-core" points="-4,-6 4,-6 8,-3 8,3 4,6 -4,6 -8,3 -8,-3"/>
+      <!-- A screw is centred on 0,0. It is a slotted head, an octagon like the
+           frame's own cut corners, with a dark slot straight across so that a
+           turn can be seen. frame.css turns it and nothing else here moves. The
+           shadow is the same octagon moved 5 right and 7 down, and is a shape of
+           its own so a turning head never turns its shadow. The colours are set
+           in base.css from the --screw tokens. -->
+      <polygon id="screw-shadow-shape" points="-4,-15 14,-15 27,-2 27,16 14,29 -4,29 -17,16 -17,-2"/>
+      <g id="screw-shape">
+        <polygon class="screw-rim" points="-9,-22 9,-22 22,-9 22,9 9,22 -9,22 -22,9 -22,-9"/>
+        <polygon class="screw-face" points="-8,-18 8,-18 18,-8 18,8 8,18 -8,18 -18,8 -18,-8"/>
+        <polyline class="screw-ridge" points="-17,7 -17,-7 -8,-17 8,-17"/>
+        <polygon class="screw-slot" points="-18,-3.5 18,-3.5 18,3.5 -18,3.5"/>
       </g>
       <!-- The silhouette shown for a person with no photo (core/portrait.js).
            It is a faceted, chamfered bust, drawn on the logo's own grid (see
@@ -252,26 +244,41 @@
 
   <div id="screen">
     <div id="world">
+      <!-- What shows behind the stage while a hidden transition has the screen
+           apart (core/hidden-run.js, docs/hidden-transitions.md): black, the
+           wallpaper, or the red eyes. It is empty and hidden until a transition
+           plays, and it is before the stage so everything else covers it. -->
+      <div id="backdrop" hidden></div>
       <div id="stage">
         <!-- The banner and the countdown draw themselves into their regions. The
              large panel, the small panel and the ticker each get an area, with
-             its frame, the first time a page needs it (core/areas.js). -->
-        <div id="region-banner"></div>
-        <div id="region-grid1"></div>
+             its frame, the first time a page needs it (core/areas.js). The five
+             regions marked data-block are the blocks that fly apart in a hidden
+             transition. -->
+        <div id="region-banner" data-block></div>
+        <div id="region-grid1" data-block></div>
         <div id="region-right">
-          <div id="region-countdown"></div>
-          <div id="region-grid2"></div>
+          <div id="region-countdown" data-block></div>
+          <div id="region-grid2" data-block></div>
         </div>
-        <div id="region-ticker"></div>
+        <div id="region-ticker" data-block></div>
       </div>
-      <!-- The Mini's name and addresses, shown only while the banner says
-           OFFLINE (core/device.js). It is after the stage, so it covers the
-           ticker row while it is shown, and before the overlay, so a full
-           screen alert still covers it. -->
-      <div id="device-info" hidden>
-        <div></div>
-        <div></div>
-      </div>
+      <!-- The flat red layer of the red glitches. It is above the stage and hidden
+           except while that transition plays. -->
+      <div id="red-wash" hidden></div>
+      <!-- The connection status text (core/connection.js): why Sanity cannot
+           be reached, and the Mini's name and addresses (core/device.js), or
+           the always-on text when Show connection status is switched on. Its
+           lines are added by the script. It is after the stage, so it covers
+           the corner of the screen while it is shown, and before the overlay,
+           so a full screen alert still covers it. -->
+      <div id="connection-status" hidden></div>
+      <!-- The night screen, the screensaver (core/night-screen.js): black, with the
+           logo and the team number. It is after the stage and the connection
+           text, which it covers, and before the overlay, so an alert or an
+           announcement still shows over it. It is empty and hidden until the
+           script builds it. -->
+      <div id="night" hidden></div>
       <div id="overlay"></div>
     </div>
     <div id="crt">

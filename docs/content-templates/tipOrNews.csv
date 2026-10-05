@@ -1,0 +1,3 @@
+example,kind,text,order,show,expires
+type tipOrNews,one of tip/news/reminder; required,text; required; max 52; id 1,whole number,yes/no; default yes,datetime
+EXAMPLE,tip,[A tip for the team.],1,yes,

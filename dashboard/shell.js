@@ -6,7 +6,9 @@
 //   motion=full|calm|none             how much things move
 //   speed=very-slow|slow|normal|fast  how fast things move and how long panels stay
 //   finish=metal|flat                 polished metal edges, or one plain colour (to test speed)
-//   metal=gold|silver                 the metal of the frame edges
+//   metal=gold|silver                 the metal of the permanent frame edges (the banner, the countdown, the logo)
+//   change=alternate|slat|mechanical  how the large and small panels change page
+//   frames=mostly-gold|alternate|gold|silver   the metal of the large and small page frames
 //   glint=on|off                      the bright dash that runs round the big frames
 //   draw=stroke|fade                  draw lines, or fade them in (to find out which is slower)
 //   stress                            show Grid 1, Grid 2 and the ticker together, changing together
@@ -16,12 +18,16 @@
 //   demo=announcement|alert|crt       play one of the special effects now
 //   theme=<id>                        show a theme from themes/registry.js, whatever the Theme settings say
 //   overlay=<id>|none                 show an overlay from themes/overlays/registry.js, or none
+//   night=on|off                      show the night screen (the screensaver) now, or never, whatever the time
+//   hidden=desktop|redEyes|off        play that hidden transition at the next page change of the large panel, or never play any
 
 import * as frame from './frame.js';
 import { panels } from './registry.js';
-import { sampleFolder, liveFolder, defaultSettings, metals, location as place } from './config.js';
+import { sampleFolder, liveFolder, defaultSettings, frameFinishes, metals, pageChangeStyles, location as place } from './config.js';
 import { startContent, withDefaults } from './core/content.js';
 import { mergeEvents } from './core/events.js';
+import { connectionLines, drawConnection } from './core/connection.js';
+import { makeSilverGradients } from './core/plate.js';
 import { showDeviceInfo } from './core/device.js';
 import { checkTheme, showThemeNow, startThemes } from './core/theme-apply.js';
 import { loadPanel, mountPanel, updatePanel } from './core/panels.js';
@@ -36,17 +42,24 @@ const screen = document.getElementById('screen');
 
 let base = null; // the content from the editors, or the sample
 let status = null;
-const extras = {}; // events, photos and weather: things that do not come from the editors. Each may be missing. extras.events are the BAND events only.
+const extras = {}; // events and weather: things that do not come from the editors. Each may be missing. extras.events are the BAND events only.
 let content = null; // base and extras together, always the newest
 let rereadEvents = null; // set once the calendar reader is running
 let calendarsKey = null; // the calendar list the events were last read for
 let showingSample = false; // true while Dashboard Settings has the screen on the sample content
-let extrasStarted = false; // the events and photos are being read, so a change of source has to redo them
+let extrasStarted = false; // the events are being read, so a change of source has to redo them
+let calendarsReadAt = null; // when every calendar file was last read well, for the connection status text
+let deviceText = []; // the Mini's name and ssh line, read only while Sanity cannot be reached
 
 window.teletraanStarted = true; // index.html reloads the page if this never happens
 run();
 
 async function run() {
+  try {
+    makeSilverGradients(); // before any frame is drawn, so a silver frame has its gradients
+  } catch (error) {
+    console.error('The silver gradients could not be made. Silver frames will have no metal.', error);
+  }
   fitToScreen();
   window.addEventListener('resize', fitToScreen);
   // The finish in index.html is the default. The address overrides it for testing.
@@ -86,12 +99,28 @@ async function run() {
       console.error('The theme could not be started. The screen keeps the default look.', error);
     }
 
+    // The night screen goes up before the panels are drawn, so a Mini that
+    // restarts in the middle of the night does not show the dashboard first.
+    // It is left out of the test views (?show and ?stress) unless asked for.
+    if (params.has('night') || (!params.get('show') && !stress)) {
+      await startOptional('./core/night-screen.js', module => module.startNight(getContent, params.get('night')));
+    }
+
     startWhatStays();
 
     // Alerts and announcements do not need the weather or events, so they
     // start looking at the clock at once. An announcement must never be
     // missed because the screen was still loading.
-    if (!params.get('show') && !stress) startTakeovers(getContent);
+    if (!params.get('show') && !stress) {
+      startTakeovers(getContent);
+
+      // The Demo page in the Studio. After the takeovers, so that an alert that
+      // comes due on the same second has the screen before the demo looks.
+      startOptional('./core/demo-runner.js', module => module.startDemoRunner(getContent));
+
+      // The hidden transitions. After the demo runner and the night screen, which they ask about
+      startOptional('./core/hidden-run.js', module => module.startHidden(getContent, params.get('hidden')));
+    }
 
     if (!early) {
       const first = await loading;
@@ -108,11 +137,12 @@ async function run() {
   }
 }
 
-// Joins the editors' content with the weather, events and photos. When the
-// content switches between the sample and the editors' own (Dashboard
-// Settings decides, see core/source.js), the events and photos that were read
-// for the old one are thrown away and read again from the right folder, and
-// the pages on screen are replaced now instead of at their next turn.
+// Joins the editors' content with the weather and events. When the content
+// switches between the sample and the editors' own (Dashboard Settings
+// decides, see core/source.js), the events that were read for the old one are
+// thrown away and read again from the right folder, and the pages on screen
+// are replaced now instead of at their next turn. The photos are part of the
+// content itself, so they switch with it.
 function setBase(newBase, newStatus) {
   const sample = newStatus.source === 'sample';
   const switched = extrasStarted && sample !== showingSample;
@@ -123,16 +153,13 @@ function setBase(newBase, newStatus) {
 
   if (switched) {
     delete extras.events;
-    delete extras.photos;
     calendarsKey = null; // makes rebuild() read the calendars again
+    calendarsReadAt = null;
   }
   rebuild();
   checkTheme(); // a changed theme waits for the next page change
 
-  if (switched) {
-    readPhotos();
-    showPagesNow();
-  }
+  if (switched) showPagesNow();
 }
 
 // The BAND events and the Extra events from the Studio as one list. If
@@ -154,22 +181,62 @@ function rebuild() {
   if (!params.has('speed')) frame.setSpeed(content.settings.speed);
   const glitch = content.settings.crt;
   frame.setCrt(glitch.on, glitch.everySeconds, glitch.durationSeconds);
-  frame.setNameEffect(content.settings.nameTransform, content.settings.nameEvery, content.settings.nameDuration);
+  useLogoSettings(content.settings);
+  usePageChangeSettings(content.settings);
   if (!metals.includes(params.get('metal'))) setPageSwitch('metal', content.settings.frameMetal);
   if (!['on', 'off'].includes(params.get('glint'))) setPageSwitch('glint', content.settings.glint ? 'on' : 'off');
   updatePanel('banner', content);
   updatePanel('countdown', content);
 
-  // The Mini's address, only while the banner says OFFLINE
+  // The connection status text, and the Mini's address inside it while Sanity cannot be reached
   try {
-    showDeviceInfo(Boolean(status && status.offline));
+    showDeviceInfo(Boolean(status && status.offline), useDeviceLines);
+    drawConnectionText();
   } catch (error) {
-    console.error('Could not update the Mini address lines', error);
+    console.error('Could not update the connection status text', error);
   }
 
   // hiding, renaming or adding a calendar shows at once, not at the next 10 minute read
   const key = JSON.stringify(content.settings.calendars);
   if (rereadEvents && key !== calendarsKey) rereadEvents();
+}
+
+// The Logo tab of Dashboard Settings: the master switch, the entrance, and the
+// switch, seconds between plays and seconds one play lasts of the spin, the
+// flying hawk and the name effect (see "Effects that play now and then" in frame.js)
+function useLogoSettings(settings) {
+  frame.setLogoAnimations(settings.logoAnimations, settings.logoEntrance);
+  frame.setSpin(settings.logoSpin, settings.logoSpinEvery, settings.logoSpinDuration);
+  frame.setHawk(settings.logoHawk, settings.logoHawkEvery, settings.logoHawkDuration);
+  frame.setNameEffect(settings.nameTransform, settings.nameEvery, settings.nameDuration);
+}
+
+// The Transitions tab of Dashboard Settings: how a page change looks and what
+// metal the page frames have. The address wins, like the other switches above.
+function usePageChangeSettings(settings) {
+  const style = pageChangeStyles.includes(params.get('change')) ? params.get('change') : settings.pageChangeStyle;
+  const finish = frameFinishes.includes(params.get('frames')) ? params.get('frames') : settings.frameFinish;
+  frame.setPageChange(style, finish, settings.silverChance, settings.breakSeconds);
+}
+
+// The device lines arrive a moment after the text first shows, and every
+// minute after that
+function useDeviceLines(lines) {
+  deviceText = lines;
+  drawConnectionText();
+}
+
+// The text at the bottom right (core/connection.js). It shows by itself while
+// status.offline is true, and all the time when Show connection status is on.
+function drawConnectionText() {
+  const lines = connectionLines({
+    status: status,
+    always: content.settings.showConnectionStatus,
+    content: content,
+    calendarsReadAt: calendarsReadAt,
+    deviceLines: deviceText,
+  });
+  drawConnection(lines, status && status.offline ? 'warning' : 'info');
 }
 
 // An attribute on the html element that the stylesheets read. It is only
@@ -224,10 +291,9 @@ function startWhatComesAndGoes() {
   }
 }
 
-// Weather, calendar events and photos. Each is loaded on its own, so one
-// failing leaves the others working. The first events and photos are worth
-// a short wait, so the first panels have something to show, but never more
-// than a few seconds.
+// Weather and calendar events. Each is loaded on its own, so one failing
+// leaves the other working. The first events are worth a short wait, so the
+// first panels have something to show, but never more than a few seconds.
 async function startExtras() {
   const ready = [];
   extrasStarted = true;
@@ -246,9 +312,6 @@ async function startExtras() {
     setInterval(rereadEvents, 10 * 60 * 1000);
   }));
 
-  ready.push(readPhotos());
-  setInterval(readPhotos, 10 * 60 * 1000);
-
   // An event that has finished must leave the list even when nothing else
   // changes, and a new day starts at midnight in the Theme time zone
   setInterval(() => {
@@ -259,10 +322,10 @@ async function startExtras() {
   await Promise.race([Promise.all(ready), frame.wait(3000)]);
 }
 
-// The sample content has its own calendar file and photo list in data/sample.
-// The editors' content uses the files the Mini downloads into data/live. Each
-// reads only its own folder, so the two never mix. A read that finishes after
-// the source has switched belongs to the old source, and is dropped.
+// The sample content has its own calendar file in data/sample. The editors'
+// content uses the files the Mini downloads into data/live. Each reads only
+// its own folder, so the two never mix. A read that finishes after the source
+// has switched belongs to the old source, and is dropped.
 async function readEvents(module) {
   try {
     const reading = showingSample;
@@ -278,26 +341,10 @@ async function readEvents(module) {
     // failed download does not empty the screen
     const kept = (extras.events || []).filter(event => result.failed.includes(event.calendarId) && event.end > now);
     extras.events = kept.concat(result.events).sort((first, second) => first.start - second.start);
+    if (result.failed.length === 0) calendarsReadAt = now; // one calendar that fails keeps the time of the last time all of them worked
     rebuild();
   } catch (error) {
     console.error('Could not read the calendars', error);
-  }
-}
-
-async function readPhotos() {
-  const reading = showingSample;
-
-  try {
-    const response = await fetch((reading ? sampleFolder : liveFolder) + 'photos.json', { cache: 'no-store' });
-    if (!response.ok) return;
-
-    const photos = await response.json();
-    if (reading !== showingSample) return;
-
-    extras.photos = photos;
-    rebuild();
-  } catch (error) {
-    console.error('Could not read the photo list', error);
   }
 }
 

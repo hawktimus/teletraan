@@ -17,7 +17,9 @@
 // to think about it. The speed setting is handled here too: every time below
 // is a normal-speed time, and pace() says how much to stretch it.
 
-import { defaultTeam, speeds } from './config.js';
+import { defaultSettings, defaultTeam, speeds } from './config.js';
+import { chooseFinish, chooseStyle } from './core/transitions.js';
+import { makeSecondTimer } from './core/tick.js';
 
 const page = document.documentElement;
 const motionModes = ['full', 'calm', 'none'];
@@ -27,7 +29,7 @@ let speed = 'normal';
 
 // How each kind of whole panel is put together. One line per part:
 //   part name: [effect, start time in ms, gap in ms between repeated parts]
-// Bolts, countdown segments and letters use the gap so they appear one after
+// Screws, countdown segments and letters use the gap so they appear one after
 // another. A part with no line here just appears and stays. The effects are
 // the data-fx rules at the top of frame.css.
 export const sequences = {
@@ -39,7 +41,6 @@ export const sequences = {
     'subtitle':     ['fade', 1000],
     'rule':         ['grow', 1100],
     'school':       ['fade', 1300],
-    'status':       ['fade', 1500],
     'sample-badge': ['fade', 1500],
   },
 
@@ -86,7 +87,7 @@ export function start(options) {
   setMotion(options.motion);
   setSpeed(options.speed || 'normal');
   page.dataset.draw = options.draw === 'fade' ? 'fade' : 'stroke';
-  tick();
+  secondClock.start();
   startLookingAtEffects();
 }
 
@@ -98,7 +99,10 @@ export function setMotion(mode) {
     mode = 'full';
   }
   motion = mode;
-  page.dataset.motion = mode;
+  // Written only when it changes: shell.js calls this at every content change,
+  // and writing the same value again can make the browser restyle the page,
+  // which is not wanted in the middle of a page change
+  if (page.dataset.motion !== mode) page.dataset.motion = mode;
   if (mode !== 'full') {
     stopCrt();
     restLogos();
@@ -114,6 +118,7 @@ export function setSpeed(name) {
     name = 'normal';
   }
   speed = name;
+  if (page.dataset.speed === name) return; // see setMotion
   page.dataset.speed = name;
   page.style.setProperty('--pace', String(speeds[name]));
 }
@@ -128,32 +133,16 @@ export function wait(milliseconds) {
 }
 
 
-// One timer for the whole screen. Panels ask to be told when each second
-// starts. Pass the panel's element as well, so the listener is dropped
-// automatically once that panel has left the page.
-const secondListeners = [];
+// One timer for the whole screen, in core/tick.js. Panels ask to be told when
+// each second starts. Pass the panel's element as well, so the listener is
+// dropped automatically once that panel has left the page. A listener should
+// touch the page only when what it shows has changed, and should not read
+// the size or position of anything: it runs every second, even in the middle
+// of a page change.
+const secondClock = makeSecondTimer();
 
 export function onSecond(listener, element) {
-  secondListeners.push({ listener: listener, element: element || null });
-}
-
-function tick() {
-  // Set the next tick first, aiming for the start of the next second so the
-  // digits stay on time. A listener that fails must not stop the clock.
-  setTimeout(tick, 1000 - (Date.now() % 1000));
-
-  const now = new Date();
-  secondListeners.slice().forEach(entry => {
-    if (entry.element && !entry.element.isConnected) {
-      secondListeners.splice(secondListeners.indexOf(entry), 1);
-      return;
-    }
-    try {
-      entry.listener(now);
-    } catch (error) {
-      console.error(error);
-    }
-  });
+  secondClock.onSecond(listener, element);
 }
 
 
@@ -215,12 +204,18 @@ function whenDone(panel, limitMs) {
 // from that:
 //
 //   in     the first page. The frame assembles, then the page turns in.
-//   xo     the old page's last second: bolts turn, the frame halves lift,
-//          the slats pull back and turn edge-on.
-//   xi     the new page arriving: slats turn in, halves drop, bolts lock.
+//   xo     the old page leaving: the screws unscrew, then either the frame
+//          halves lift and the slats turn edge-on (the slat change) or the
+//          frame breaks into pieces that fold away (the mechanical change).
+//   xi     the new page arriving: the pieces rebuild or the halves drop, the
+//          slats turn in, the screws turn back in.
 //   shown  at rest. Nothing moves except the glint.
 //   out    the whole area fades away (see retire).
 //
+// Which of the two changes an area uses, and the metal its frame has after
+// the change, are chosen at the start of every change (planChange). The area
+// keeps the answers in data-change and data-metal, and frame.css reads them.
+
 // A slat is a piece of page content that turns over when the page changes: a
 // heading, a row, a card. A panel marks each one with data-slat="name", and
 // the table below says in what order the slats turn and which way. A panel
@@ -267,6 +262,56 @@ export function numberSlats(page) {
   });
 }
 
+// The page change settings (the Transitions tab of Dashboard Settings), set by
+// shell.js through setPageChange().
+let breakSecondsNow = defaultSettings.breakSeconds;
+let changeSettings = {
+  style: defaultSettings.pageChangeStyle,
+  finish: defaultSettings.frameFinish,
+  silverChance: defaultSettings.silverChance,
+};
+
+// style is 'alternate', 'slat' or 'mechanical', finish is 'mostly-gold',
+// 'alternate', 'gold' or 'silver', silverChance is a percent and breakSeconds
+// is how long the frame takes to break apart (and the same again to rebuild)
+// at normal speed. A value that does not fit is dealt with by
+// chooseStyle and chooseFinish, and by fixSettingValues in core/content.js.
+export function setPageChange(style, finish, silverChance, breakSeconds) {
+  changeSettings = { style: style, finish: finish, silverChance: silverChance };
+  if (breakSeconds > 0) {
+    breakSecondsNow = breakSeconds;
+    page.style.setProperty('--break-seconds', String(breakSeconds));
+  }
+}
+
+// How long the old page takes to leave in each style, in milliseconds. The
+// mechanical change breaks the frame apart in the break time (and the new page
+// arrives in the same again), and frame.css reads --break-seconds for the
+// motion itself. Only full motion has the mechanical change: calm is a fade and
+// takes the slat change's time, and with motion off nothing waits.
+function leaveMs(style) {
+  if (style === 'mechanical' && motion === 'full') return breakSecondsNow * 1000 * pace();
+  return turnMs();
+}
+
+// Decides the next change of this area, and says what it is: { style, finish }.
+// The area's data-change and data-metal hold what it used last, which is how
+// 'alternate' knows whose turn it is. The ticker has no frame, so it always
+// uses the slat change and has no finish.
+export function planChange(area) {
+  if (area.dataset.area === 'ticker') return { style: 'slat', finish: null };
+
+  return {
+    style: chooseStyle(changeSettings.style, area.dataset.change || null),
+    finish: chooseFinish(changeSettings.finish, changeSettings.silverChance, area.dataset.metal || null, Math.random),
+  };
+}
+
+// The metal for a frame that is new, so its first assembly has one
+export function firstFinish() {
+  return chooseFinish(changeSettings.finish, changeSettings.silverChance, null, Math.random);
+}
+
 // How long the old page takes to leave and the new one to arrive, in
 // milliseconds. frame.css fits every move of the change inside one second
 // each, times the Speed setting. In calm the fade is shorter but takes the
@@ -291,9 +336,14 @@ export function arrive(area, first) {
 
 // The old page's last second. When it is over the caller swaps in the next
 // page and calls arrive(area, false), which carries straight on from here.
-export function leave(area) {
+// change is what planChange() answered for this area.
+export function leave(area, change) {
+  area.dataset.change = change.style;
+  // The recolour attribute is for the stylesheet: a frame that changes metal
+  // is out of sight while the metal changes (see frame.css)
+  area.dataset.recolor = change.finish && change.finish !== area.dataset.metal ? 'yes' : 'no';
   area.dataset.state = 'xo';
-  return wait(turnMs());
+  return wait(leaveMs(change.style));
 }
 
 // Takes the whole area away, frame and page, with a short fade. Used when
@@ -306,30 +356,47 @@ export function retire(area) {
 
 // Effects that play now and then
 //
-// Two effects play on a timer: the team name effect (the letters split and
-// turn, see "The team name" in frame.css) and the screen glitch (the old
-// television, see "The old television effect"). Dashboard Settings has the
-// same three settings for each, under "Logo and effects": a switch, the
-// seconds between plays (0 is never) and the seconds one play lasts. shell.js
-// passes them to setNameEffect and setCrt every time the content changes.
+// Four effects play on a timer. Dashboard Settings has the same three
+// settings for each: a switch, the seconds between plays (0 is never) and the
+// seconds one play lasts. shell.js passes them to setNameEffect, setSpin,
+// setHawk and setCrt every time the content changes.
+//
+//   name    the team name effect: the letters split and turn (Logo tab)
+//   spin    the logo makes one full turn, drawn flat (Logo tab)
+//   hawk    the logo folds into a robot, changes into the hawk, flies and
+//           changes back (Logo tab)
+//   glitch  the old television glitch over the whole screen (Screen tab)
+//
+// A fifth, the entrance, plays once when the logo starts: the four plates fly
+// in. It has a switch and no timing. The Logo tab also has a master switch
+// (setLogoAnimations). Off, it stops the name effect, the spin, the hawk, the
+// entrance and the flying logo of the announcements, and leaves the still
+// emblem.
 //
 // This is the one place that decides when an effect may start:
-//   - Only one plays at a time.
-//   - Neither starts while an area is changing page (leaving or arriving).
-//   - The name effect starts only while the logo rests, and the logo does not
-//     move again until the name effect is over, so the two never move together.
-//   - Calm and none motion play neither.
+//   - Only one plays at a time, so the logo never moves while the name effect
+//     plays, and the spin and the hawk never overlap.
+//   - None starts while an area is changing page (leaving or arriving). The
+//     entrance is the one exception, because it plays as the screen starts,
+//     beside the banner arriving.
+//   - Calm and none motion play none of them.
 // An effect that comes due when it may not start waits in line and starts as
 // soon as it may. The line is looked at every 250 ms. Each effect counts its
 // seconds from when it last started, so a long wait means one late play and
-// never a burst of catch-up plays.
+// never a burst of catch-up plays. Until its first play, a logo effect counts
+// from the moment the logo starts, and plays firstAfter seconds in (or
+// sooner, if its seconds between plays are fewer). Those are the seconds the
+// old fixed 24 second show first played each of them at.
 //
 // The seconds between plays are real seconds. The seconds one play lasts are
 // at normal speed, and the Speed setting stretches them like every other time.
 //
 // playNameEffect and playCrt ask for a play now, for the ?demo=crt address,
 // the announcements and the browser console. They wait in the same line, and
-// they play whatever the switch and the seconds between plays say.
+// they play whatever the switches and the seconds between plays say. A play
+// asked for by hand does not wait for the spin, the hawk or the entrance: it
+// ends them on the spot. The announcement asks for the glitch between its two
+// lines, and the banner is hidden under it, so the logo has nothing to finish.
 
 const lookEveryMs = 250;
 
@@ -350,45 +417,177 @@ const defaultNameSeconds = nameSeconds(Array.from(defaultTeam.name).length, 1);
 // to 2.6 s of it, and --crt-scale in tokens.css stretches them all together.
 const crtNormalSeconds = 2.7;
 
-// on is the switch, everySeconds is 0 for never, and seconds is how long one
-// play lasts. lastStarted is when it last began, null if it has not yet.
-const effects = {
-  name: {
+// The logo's acts. An act is a name that frame.css has rules for (set as
+// data-act on the logo) and how many seconds it lasts at normal speed. An act
+// has to be at least as long as the animations in it, or the next act would
+// cut them off. The times in frame.css are multiplied by --pace and so are
+// the times here, so the two stay matched at every Speed setting. If the
+// setting changes in the middle of an act, playLogoAct also waits for the
+// animations to finish.
+const entranceSeconds = 2; // boot: the plates fly in (the animations take about 1 s)
+export const spinNormalSeconds = 1.6; // turn: one full turn
+
+// The flying hawk is these four acts one after the other: 11 seconds, which is
+// logoHawkDuration in config.js
+export const hawkActs = [
+  ['robot', 3],     // the wings fold into legs, the head lifts clear
+  ['hawk-in', 2],   // the plates break away and the hawk turns in
+  ['flight', 4],    // five wingbeats
+  ['hawk-out', 2],  // the hawk turns back into the plates
+];
+const hawkNormalSeconds = hawkActs.reduce((total, act) => total + act[1], 0);
+
+// An effect, with what most of them have in common filled in:
+//   logo             the master switch of the Logo tab stops it
+//   on               the switch
+//   everySeconds     0 is never
+//   seconds          how long one play lasts, at normal speed
+//   firstAfter       seconds from the logo starting to its first play
+//   lastStarted      when it last began, null if it has not yet
+//   countFrom        where the count to the first play starts
+//   duringPageChange it may start while an area is changing page
+//   cuttable         a play asked for by hand ends it and takes over
+//   mayStart         whether it can play now
+//   play             plays it, and says when it is over
+function newEffect(fields) {
+  return Object.assign({
+    logo: true,
     on: true,
-    everySeconds: 300,
-    seconds: defaultNameSeconds,
+    everySeconds: 0,
+    firstAfter: 0,
     lastStarted: null,
-    mayStart: () => !!document.querySelector('[data-name-effect]') && logoIsResting(),
+    countFrom: performance.now(),
+    duringPageChange: false,
+    cuttable: false,
+  }, fields);
+}
+
+const effects = {
+  name: newEffect({
+    everySeconds: defaultSettings.nameEvery,
+    seconds: defaultNameSeconds,
+    firstAfter: entranceSeconds, // the old show's first rest
+    mayStart: () => !!document.querySelector('[data-name-effect]'),
     play: playNameEffectNow,
-  },
-  glitch: {
-    on: true,
-    everySeconds: 240,
+  }),
+  spin: newEffect({
+    everySeconds: defaultSettings.logoSpinEvery,
+    seconds: defaultSettings.logoSpinDuration,
+    firstAfter: 50, // the third pass of the old show, 2 seconds in
+    cuttable: true,
+    mayStart: logoCanMove,
+    play: playSpinNow,
+  }),
+  hawk: newEffect({
+    everySeconds: defaultSettings.logoHawkEvery,
+    seconds: defaultSettings.logoHawkDuration,
+    firstAfter: 13, // where the old show first started the robot act
+    cuttable: true,
+    mayStart: logoCanMove,
+    play: playHawkNow,
+  }),
+  entrance: newEffect({
+    seconds: entranceSeconds,
+    duringPageChange: true,
+    cuttable: true,
+    mayStart: logoCanMove,
+    play: playEntranceNow,
+  }),
+  glitch: newEffect({
+    logo: false,
+    everySeconds: defaultSettings.crt.everySeconds,
     seconds: crtNormalSeconds,
-    lastStarted: performance.now(),
+    lastStarted: performance.now(), // the first glitch comes after its seconds, counted from the page loading
     mayStart: () => !!document.getElementById('crt') && !!document.getElementById('world'),
     play: playCrtNow,
-  },
+  }),
 };
 
-let playing = null; // the name of the effect that is playing now, or null
-let playingDone = Promise.resolve(); // settles when that effect is over
+let logoAnimationsOn = defaultSettings.logoAnimations; // the master switch
+let entranceOn = defaultSettings.logoEntrance;
+let showLogo = null; // the logo the effects above move: the one in the banner
+
+let playing = null; // the run of the effect that is playing now, { name }, or null
 let waiting = []; // effects that want to start, first come first served: { name, byHand }
+let nightCovers = false; // the night screen covers the picture, so nothing behind it is worth playing
+let effectsPaused = false; // a demo is playing: the effects that come due on their own wait
+let hiddenPlaying = false; // a hidden transition has the whole screen: no effect starts, and none waits
+
+// Called by the night screen (core/night-screen.js) when it covers the picture
+// and when it lets go. While it covers, no effect starts and none waits, and
+// one that is playing ends by itself. When it lets go, whatever is due plays,
+// one at a time, as after any long wait.
+export function setNightCovers(covers) {
+  const now = covers === true;
+  if (now === nightCovers) return; // asked every second, so only a change counts
+
+  nightCovers = now;
+  if (now) stopLogoEffects();
+}
+
+// Called by the demo runner (core/demo.js) for as long as a demo plays. The
+// effects that come due on their own do not start and the ones waiting are
+// dropped, and one that is playing in the logo ends. A play asked for by hand
+// still goes ahead: the announcement a demo plays asks for the glitch between its lines.
+export function setEffectsPaused(paused) {
+  effectsPaused = paused === true;
+  if (effectsPaused) stopLogoEffects();
+}
+
+// Called by the hidden transitions (core/hidden-run.js) for as long as one has
+// the screen. No effect starts and none waits, and whatever is playing ends on
+// the spot: the logo goes back to its still emblem and the glitch stops. The
+// effects that are due play one at a time once the screen is back together.
+export function setHiddenPlaying(on) {
+  hiddenPlaying = on === true;
+  if (!hiddenPlaying) return;
+
+  stopLogoEffects();
+  if (playing && playing.name === 'glitch') {
+    stopCrt();
+    playing = null;
+  }
+}
+
+// 'full', 'calm' or 'none', the motion setting as it is now
+export function motionNow() {
+  return motion;
+}
+
+// Both set the switch, the seconds between plays and the seconds one play
+// lasts. A missing or silly value becomes the fallback.
+function setTiming(effect, on, everySeconds, seconds, fallback) {
+  effect.on = on !== false;
+  effect.everySeconds = everySeconds >= 0 ? everySeconds : fallback.everySeconds;
+  effect.seconds = seconds > 0 ? seconds : fallback.seconds;
+}
 
 export function setNameEffect(on, everySeconds, seconds) {
-  effects.name.on = on !== false;
-  effects.name.everySeconds = everySeconds >= 0 ? everySeconds : 300;
-  effects.name.seconds = seconds > 0 ? seconds : defaultNameSeconds;
+  setTiming(effects.name, on, everySeconds, seconds, { everySeconds: defaultSettings.nameEvery, seconds: defaultNameSeconds });
 }
 
 export function setCrt(on, everySeconds, seconds) {
-  effects.glitch.on = on !== false;
-  effects.glitch.everySeconds = everySeconds >= 0 ? everySeconds : 240;
-  effects.glitch.seconds = seconds > 0 ? seconds : crtNormalSeconds;
+  setTiming(effects.glitch, on, everySeconds, seconds, { everySeconds: defaultSettings.crt.everySeconds, seconds: crtNormalSeconds });
 }
 
-// Play the name effect or the glitch as soon as the rules above allow. To
-// try one from the browser console on the dashboard page:
+export function setSpin(on, everySeconds, seconds) {
+  setTiming(effects.spin, on, everySeconds, seconds, { everySeconds: defaultSettings.logoSpinEvery, seconds: defaultSettings.logoSpinDuration });
+}
+
+export function setHawk(on, everySeconds, seconds) {
+  setTiming(effects.hawk, on, everySeconds, seconds, { everySeconds: defaultSettings.logoHawkEvery, seconds: defaultSettings.logoHawkDuration });
+}
+
+// The master switch, and the switch of the entrance. Turning the master off
+// ends whatever the logo is doing at once.
+export function setLogoAnimations(on, entrance) {
+  logoAnimationsOn = on !== false;
+  entranceOn = entrance !== false;
+  if (!logoAnimationsOn) stopLogoEffects();
+}
+
+// Play an effect as soon as the rules above allow. To try one from the
+// browser console on the dashboard page:
 //   import('./frame.js').then(frame => frame.playNameEffect())
 export function playNameEffect() {
   askToPlay('name', true);
@@ -401,14 +600,14 @@ export function playCrt() {
 // An effect wants to start. A play asked for by hand plays even when its
 // switch is off. A play that is going or waiting already is not asked for twice.
 function askToPlay(name, byHand) {
-  if (playing === name || waiting.some(entry => entry.name === name)) return;
+  if ((playing && playing.name === name) || waiting.some(entry => entry.name === name)) return;
 
   waiting.push({ name: name, byHand: byHand });
   startNextEffect();
 }
 
 function lookAtEffects() {
-  if (motion !== 'full') return;
+  if (motion !== 'full' || nightCovers || hiddenPlaying) return;
 
   Object.keys(effects).forEach(name => {
     if (isDue(effects[name])) askToPlay(name, false);
@@ -416,62 +615,72 @@ function lookAtEffects() {
   startNextEffect();
 }
 
+// An effect plays on its own only when its own switch is on, and, for the
+// logo's, the master switch too, and no demo has paused the effects
+function isSwitchedOn(effect) {
+  return !effectsPaused && effect.on && (!effect.logo || logoAnimationsOn);
+}
+
 function isDue(effect) {
-  if (!effect.on || effect.everySeconds <= 0) return false;
-  if (effect.lastStarted === null) return true;
-  return performance.now() - effect.lastStarted >= effect.everySeconds * 1000;
+  if (!isSwitchedOn(effect) || effect.everySeconds <= 0) return false;
+
+  const now = performance.now();
+  if (effect.lastStarted === null) {
+    return now - effect.countFrom >= Math.min(effect.firstAfter, effect.everySeconds) * 1000;
+  }
+  return now - effect.lastStarted >= effect.everySeconds * 1000;
 }
 
 // Whether a waiting effect still wants to play. One that came due stops
 // wanting to when its switch is turned off, and every one stops when the
-// motion is no longer full.
+// motion is no longer full, the night screen covers the picture or a hidden
+// transition has the screen.
 function isWanted(entry) {
   const effect = effects[entry.name];
-  return motion === 'full' && (entry.byHand || (effect.on && effect.everySeconds > 0));
+  return motion === 'full' && !nightCovers && !hiddenPlaying && (entry.byHand || (isSwitchedOn(effect) && effect.everySeconds > 0));
 }
 
 // Starts the first effect in line that may start, if nothing is playing and
 // no area is changing page. Called by askToPlay and every 250 ms.
 function startNextEffect() {
   waiting = waiting.filter(isWanted);
-  if (playing || areaIsChanging()) return;
 
-  const index = waiting.findIndex(entry => effects[entry.name].mayStart());
+  if (playing && effects[playing.name].cuttable && waiting.some(entry => entry.byHand)) {
+    stopLogoEffects();
+  }
+  if (playing) return;
+
+  const changing = areaIsChanging();
+  const index = waiting.findIndex(entry => {
+    const effect = effects[entry.name];
+    return effect.mayStart() && (effect.duringPageChange || !changing);
+  });
   if (index === -1) return;
 
-  playingDone = runEffect(waiting.splice(index, 1)[0].name);
+  runEffect(waiting.splice(index, 1)[0].name);
 }
 
 async function runEffect(name) {
   const effect = effects[name];
-  playing = name;
+  const run = { name: name };
+  playing = run;
   effect.lastStarted = performance.now();
 
   try {
-    await effect.play(effect.seconds);
+    await effect.play(effect.seconds, run);
   } catch (error) {
     console.error('The ' + name + ' effect failed', error);
   }
-  playing = null;
+
+  // An effect that was ended early (stopLogoEffects) is not playing any more,
+  // and something else may have started since
+  if (playing === run) playing = null;
 }
 
 // An area is changing page from the moment its old page starts to leave until
 // the new page has arrived (any state but shown, see Persistent areas above)
 function areaIsChanging() {
   return Array.from(document.querySelectorAll('.area')).some(area => area.dataset.state !== 'shown');
-}
-
-// With no show running (tools/logo.html before Show is pressed) the logo is
-// always at rest
-function logoIsResting() {
-  const logo = document.querySelector('.logo[data-show]');
-  return !logo || !logo.dataset.show || logo.dataset.act === 'rest' || logo.dataset.act === 'name';
-}
-
-// The logo show waits here before an act that moves, if the name effect is
-// still playing
-function whenNameEffectIsOver() {
-  return playing === 'name' ? playingDone : Promise.resolve();
 }
 
 let looking = false;
@@ -483,13 +692,18 @@ function startLookingAtEffects() {
   setInterval(lookAtEffects, lookEveryMs);
 }
 
+// A number to multiply a time by: how many times as long as normal
+function scaleOf(seconds, normalSeconds) {
+  return Math.round(seconds / normalSeconds * 1000) / 1000;
+}
+
 
 // The name effect: frame.css moves the letters while the name has the class
 // splitting. --name-scale stretches all of its times, so the whole effect
 // lasts the seconds in the setting on a name as long as the default.
 async function playNameEffectNow(seconds) {
   const name = document.querySelector('[data-name-effect]');
-  const scale = Math.round(seconds / defaultNameSeconds * 1000) / 1000;
+  const scale = scaleOf(seconds, defaultNameSeconds);
   const lastLetter = nameSeconds(name.querySelectorAll('.letter').length, scale) * 1000 * pace();
 
   name.style.setProperty('--name-scale', String(scale));
@@ -500,15 +714,28 @@ async function playNameEffectNow(seconds) {
 
 // The glitch: frame.js adds playing to #crt and crt-on to #world, and
 // frame.css does the rest. It ends by the clock, a little after the last
-// keyframe.
-async function playCrtNow(seconds) {
+// keyframe. run is the play the scheduler started it as: a glitch that was
+// ended early (setHiddenPlaying) must not stop the next one when its clock runs out.
+async function playCrtNow(seconds, run) {
   const crt = document.getElementById('crt');
   const world = document.getElementById('world');
 
-  page.style.setProperty('--crt-scale', String(Math.round(seconds / crtNormalSeconds * 1000) / 1000));
+  page.style.setProperty('--crt-scale', String(scaleOf(seconds, crtNormalSeconds)));
   crt.classList.add('playing');
   world.classList.add('crt-on');
   await wait(seconds * 1000 * pace());
+  if (!run || playing === run) stopCrt();
+}
+
+// The glitch now, for this many seconds at normal speed, and says when it is over.
+// For the red glitches of a hidden transition, which has the effects held
+// (setHiddenPlaying), so it is the only thing playing.
+export function playGlitch(seconds) {
+  return playCrtNow(seconds, null);
+}
+
+// Ends the glitch now, for a hidden transition that was stopped in the middle of it
+export function stopGlitch() {
   stopCrt();
 }
 
@@ -566,33 +793,16 @@ export function nudge(leftElement, rightElement) {
 }
 
 
-// The logo's show: a list of acts that repeats for as long as the page is
-// open. An act is a name that frame.css has rules for (it is set as data-act
-// on the logo) and how many seconds it lasts at normal speed. The whole list
-// is one cycle of 24 seconds, and the number after each act is the second of
-// the cycle it starts. A third number means the act only plays every that many
-// cycles. The rest of the time the logo rests for the same seconds.
+// The logo
 //
-// An act has to be at least as long as the animations in it, or the next act
-// would cut them off. The times in frame.css are multiplied by --pace and so
-// are the times here, so the two stay matched at every Speed setting. If the
-// setting changes in the middle of an act, playLogoAct also waits for the
-// animations to finish.
-export const logoShow = [
-  ['rest', 2],      //  0  the first time round this is boot: the plates fly in
-  ['turn', 2, 3],   //  2  one full turn, every third cycle
-  ['rest', 1],      //  4
-  ['name', 2],      //  5  the logo is still. Like every rest, this is a time the team name effect may play
-  ['rest', 6],      //  7
-  ['robot', 3],     // 13  the wings fold into legs, the head lifts clear
-  ['hawk-in', 2],   // 16  the plates break away and the hawk turns in
-  ['flight', 4],    // 18  five wingbeats
-  ['hawk-out', 2],  // 22  the hawk turns back into the plates
-];
+// The logo's moves are effects like the others (see "Effects that play now
+// and then" above): the entrance, the spin and the flying hawk. Each plays an
+// act, or a few in a row, by setting data-act on the logo. frame.css has the
+// rules for each act name.
 
-// Plays one act and says when it is over. Any mode but full motion gets the
-// still emblem. An act that is already playing starts again from the
-// beginning, which tools/logo.html needs.
+// Plays one act and says when it is over. seconds is how long the act lasts at
+// normal speed. Any mode but full motion gets the still emblem. An act that is
+// already playing starts again from the beginning, which tools/logo.html needs.
 export async function playLogoAct(logo, act, seconds) {
   if (logo.dataset.act === act && act !== 'rest') {
     logo.dataset.act = 'rest';
@@ -604,52 +814,114 @@ export async function playLogoAct(logo, act, seconds) {
   await whenDone(logo);
 }
 
-let logoShowCount = 0;
-
-export function startLogo(logo) {
-  // Starting a logo again must give it one show, not two
-  const id = String(++logoShowCount);
-  logo.dataset.show = id;
-  effects.name.lastStarted = null; // a new show gets the name effect in its first moment of rest
-  runLogoShow(logo, id).catch(error => console.error('The logo show stopped', error));
+// The logo can move: it is the banner's logo and it is on the page
+function logoCanMove() {
+  return !!showLogo && showLogo.isConnected;
 }
 
-async function runLogoShow(logo, id) {
-  const going = () => logo.isConnected && logo.dataset.show === id;
-
-  for (let cycle = 0; going(); cycle++) {
-    for (let step = 0; step < logoShow.length; step++) {
-      if (!going()) return;
-
-      const [name, seconds, every] = logoShow[step];
-      let act = name;
-      if (every && (cycle + 1) % every !== 0) act = 'rest';
-      if (cycle === 0 && step === 0) act = 'boot';
-
-      // The name effect starts only while the logo rests (see Effects that
-      // play now and then), so the logo waits for it before it moves
-      if (act !== 'rest' && act !== 'name') await whenNameEffectIsOver();
-
-      await playLogoAct(logo, act, seconds);
-    }
-  }
+// Whether the play that has this run should carry on moving this logo. It
+// should not once it has been ended (stopLogoEffects), or when the logo has
+// gone, or the master switch is off, or the motion is not full.
+function logoIsGoing(logo, run) {
+  return playing === run && showLogo === logo && logo.isConnected && logoAnimationsOn && motion === 'full';
 }
 
-// Ends the show on a logo and leaves it a still emblem (tools/logo.html uses it)
-export function stopLogo(logo) {
-  logo.dataset.show = '';
+// Back to the still emblem. The time scales go with it, so an act played by
+// hand later (tools/logo.html) runs at its normal time.
+function restLogo(logo) {
   logo.dataset.act = 'rest';
+  logo.style.removeProperty('--spin-scale');
+  logo.style.removeProperty('--hawk-scale');
+}
+
+// The entrance: the plates fly in
+async function playEntranceNow(seconds, run) {
+  const logo = showLogo;
+
+  await playLogoAct(logo, 'boot', seconds);
+  if (playing === run) restLogo(logo);
+}
+
+// The spin. --spin-scale stretches the time of the turn in frame.css, so the
+// turn lasts the seconds in the setting.
+async function playSpinNow(seconds, run) {
+  const logo = showLogo;
+
+  logo.style.setProperty('--spin-scale', String(scaleOf(seconds, spinNormalSeconds)));
+  await playLogoAct(logo, 'turn', seconds);
+  if (playing === run) restLogo(logo);
+}
+
+// The flying hawk: the four acts one after the other. --hawk-scale stretches
+// every time in them in frame.css, and the acts here are stretched the same,
+// so the whole sequence lasts the seconds in the setting.
+async function playHawkNow(seconds, run) {
+  const logo = showLogo;
+  const scale = seconds / hawkNormalSeconds;
+
+  logo.style.setProperty('--hawk-scale', String(scaleOf(seconds, hawkNormalSeconds)));
+  for (const act of hawkActs) {
+    if (!logoIsGoing(logo, run)) break;
+    await playLogoAct(logo, act[0], act[1] * scale);
+  }
+  if (playing === run) restLogo(logo);
+}
+
+// Takes over the logo that the effects move, and starts them counting. The
+// entrance plays first, if its switch and the master switch are on. Starting a
+// logo again (tools/logo.html) starts it all again.
+export function startLogo(logo) {
+  showLogo = logo;
+  restLogo(logo);
+
+  // Anything waiting for the old logo is dropped, so the entrance comes first
+  waiting = waiting.filter(entry => !effects[entry.name].logo);
+
+  const now = performance.now();
+  Object.keys(effects).forEach(name => {
+    if (!effects[name].logo) return;
+    effects[name].lastStarted = null;
+    effects[name].countFrom = now;
+  });
+
+  if (logoAnimationsOn && entranceOn) askToPlay('entrance', true);
+}
+
+// Ends the effects on a logo and leaves it a still emblem (tools/logo.html uses it)
+export function stopLogo(logo) {
+  if (showLogo === logo) {
+    showLogo = null;
+    if (playing && effects[playing.name].logo) playing = null;
+  }
+  restLogo(logo);
 }
 
 // A logo that flies for as long as it is on screen (the announcements). It
 // runs on --pace, so a change of Speed changes it while it flies. Calm and
-// none show the hawk still, in frame.css.
+// none show the hawk still, in frame.css. With the master switch off it is the
+// still emblem.
 export function flyLogo(logo) {
-  logo.dataset.act = 'fly';
+  logo.dataset.act = logoAnimationsOn ? 'fly' : 'rest';
 }
 
-// Called when the motion setting leaves full: a logo in the middle of an act
-// goes back to rest at once, because the act's pose would otherwise stay.
+// Ends whatever the logo is doing at once and leaves the still emblem. The
+// play that was going sees it is no longer the one playing and stops by
+// itself. Used by the master switch, and by a play asked for by hand.
+function stopLogoEffects() {
+  if (playing && effects[playing.name].logo) {
+    if (playing.name === 'name') stopNameEffect();
+    playing = null;
+  }
+  restLogos();
+}
+
+function stopNameEffect() {
+  const name = document.querySelector('[data-name-effect]');
+  if (name) name.classList.remove('splitting');
+}
+
+// Also called when the motion setting leaves full: a logo in the middle of an
+// act goes back to rest at once, because the act's pose would otherwise stay.
 function restLogos() {
-  document.querySelectorAll('.logo[data-show]').forEach(logo => { logo.dataset.act = 'rest'; });
+  if (showLogo) restLogo(showLogo);
 }

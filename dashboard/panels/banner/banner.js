@@ -41,7 +41,6 @@ export function mount(host, content) {
           <img class="wordmark" data-part="wordmark" src="assets/teletraan-wordmark.svg" alt="Teletraan I">
           <span class="subtitle" data-part="subtitle">DASHBOARD</span>
           <span class="rule bar" data-part="rule"></span>
-          <span class="status" data-part="status"></span>
           <span class="school" data-part="school"></span>
         </div>
       </div>
@@ -49,8 +48,20 @@ export function mount(host, content) {
 
   const element = host.firstElementChild;
   update(element, content);
-  tickClock(element, new Date());
-  frame.onSecond(now => tickClock(element, now), element);
+
+  // The text only changes once a minute, so the page is touched only when the
+  // minute is a different one. The minute is counted from the clock itself, so
+  // a new day, or the clock being set, always counts as a different minute.
+  let shownMinute = null;
+  const showClock = now => {
+    const minute = Math.floor(now.getTime() / 60000);
+    if (minute === shownMinute) return;
+
+    shownMinute = minute;
+    drawClock(element, now);
+  };
+  showClock(new Date());
+  frame.onSecond(showClock, element);
 }
 
 function setText(element, selector, text) {
@@ -69,9 +80,10 @@ function setName(element, name) {
   heading.innerHTML = nameMarkup(name);
 }
 
-// New content: the names, the weather, whether the content is old, and
-// whether it is the sample. The badge shows only while it is the sample, and
-// is gone the moment the content is not.
+// New content: the names, the weather, and whether it is the sample. The
+// badge shows only while it is the sample, and is gone the moment the content
+// is not. Whether Sanity can be reached is not said here but in the
+// connection status text at the bottom right (core/connection.js).
 export function update(element, content) {
   setName(element, content.team.name);
   setText(element, '.team-number', content.team.number);
@@ -85,13 +97,10 @@ export function update(element, content) {
   if (icon.innerHTML !== markup) icon.innerHTML = markup;
 
   const status = content.status || {};
-  setText(element, '.status', status.offline ? 'OFFLINE' : '');
-  element.querySelector('.status').classList.toggle('offline', Boolean(status.offline));
   setText(element, '.sample-badge', status.source === 'sample' ? 'SAMPLE CONTENT' : '');
 }
 
-// The text only changes once a minute, so only touch the page when it does.
-function tickClock(element, now) {
+function drawClock(element, now) {
   const clock = formatClock(now);
   setText(element, '.time', clock.time);
   setText(element, '.suffix', clock.suffix);

@@ -23,7 +23,7 @@ fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n'
 ['config.js', 'frame.js', 'themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
-['theme.js', 'theme-apply.js'].forEach(file => {
+['theme.js', 'theme-apply.js', 'transitions.js', 'tick.js'].forEach(file => {
   fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(workFolder, 'dashboard/core', file));
 });
 
@@ -505,7 +505,8 @@ test('a failure in the content never stops the screen: the look stays as it was'
 
 test('the large panel tells theme-apply when its frame is apart, and nothing else moves', () => {
   const areas = fs.readFileSync(path.join(dashboardFolder, 'core/areas.js'), 'utf8');
-  assert.ok(/await frame\.leave\(area\);\s*\n[^\n]*\n\s*if \(region === themeRegion\) changeThemeNow\(\);/.test(areas), 'areas.js should call changeThemeNow() right after the old page has left');
+  // the new metal goes on in the same moment (core/areas.js), so a line or two of comment and that line sit between
+  assert.ok(/await frame\.leave\(area, change\);\s*\n(?:[^\n]*\n){0,4}\s*if \(region === themeRegion\) changeThemeNow\(\);/.test(areas), 'areas.js should call changeThemeNow() right after the old page has left');
   assert.ok(areas.includes("const themeRegion = 'grid1';"));
 
   const apply = fs.readFileSync(path.join(dashboardFolder, 'core/theme-apply.js'), 'utf8');

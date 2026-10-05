@@ -1,7 +1,7 @@
 # Adding a field
 
 For the students who maintain the Studio and the dashboard. The example adds
-an optional "Room" field to tasks, up to 12 characters. Do the four steps in
+an optional "Room" field to tasks, up to 12 characters. Do the five steps in
 order.
 
 ## 1. The schema
@@ -37,13 +37,16 @@ Add the name to a sample item with a marked placeholder:
 dashboard/core/sanity.js turns Sanity documents into this shape. Every field
 of a task, sponsor, tip, subteam, person, plan or custom panel comes through
 without any change there. A field nobody has filled in is missing, so every
-panel must cope with that. There are two exceptions. A person's photo is not a
+panel must cope with that. There are three exceptions. A person's photo is not a
 plain value. Its query line in `contentQuery` asks for the picture's address,
 size, crop and hotspot, and `normalizePerson` cleans it. dashboard/core/images.js
 builds the address the screen asks for. A new picture field would be done the
-same way. An Extra event is tidied in `tidyExtraEvent` in
-dashboard/core/events.js, which copies only the fields it knows, so a new field
-on an Extra event must be added there as well.
+same way. A Photo document (the Photos list) is tidied in `normalizePhoto` in
+dashboard/core/sanity.js, which copies only the fields it knows, so a new field
+on a photo must be added to its part of `contentQuery` and to `normalizePhoto`.
+An Extra event is tidied in `tidyExtraEvent` in dashboard/core/events.js, which
+copies only the fields it knows, so a new field on an Extra event must be added
+there as well.
 
 ## 3. The panel
 
@@ -69,6 +72,20 @@ missing or different from the contract, or the dashboard reads a name that has
 no field. It also runs `tools/check-themes.mjs`, the colour check, and fails if
 that fails.
 
+## 5. The CSV templates
+
+The CSV templates in docs/content-templates/ are made from the schemas, so the
+new field needs a new column. Still in the studio folder, run:
+
+    node scripts/make-templates.mjs
+
+A field that editors must fill in (`Rule.required()`) also needs a sample value
+in `examples` in studio/scripts/make-templates.mjs, under the field's name, or
+the script stops and names the missing one. A new kind of content also needs a
+line in `idColumns` there. Run `node tools/test-templates.mjs` from the top
+folder. It fails if the templates are out of date. docs/importing-from-csv.md
+explains the templates.
+
 ## Where defaults live
 
 - dashboard/config.js holds `defaultSettings`, `defaultTeam`,
@@ -89,8 +106,11 @@ dashboard/config.js. Give it a one-line description, a starting value
 it is a switch, one of a few words or a number in a range, also add it to
 `fixSettingValues` in dashboard/core/content.js, with its limits in `limits` in
 config.js, so a missing or silly value becomes the default instead of reaching
-a panel. The timing of the name effect and the screen glitch (the Logo and
-effects tab) is done this way. The lists of panels and announcements have their own
+a panel. The timing of the logo animations and the name effect (the Logo tab,
+all in studio/schemas/settingsLogo.js), of the screen glitch (the Screen
+tab), of night mode (the Night mode tab, all in
+studio/schemas/settingsNight.js) and of the hidden transitions (the Hidden tab, all in
+studio/schemas/settingsHidden.js, docs/hidden-transitions.md) is done this way. The lists of panels and announcements have their own
 files, settingsRotation.js and settingsAnnouncements.js. A new field inside one
 of those two lists must also be added to normalizeRotation or
 normalizeAnnouncements in dashboard/core/sanity.js, which copy only the fields

@@ -1,0 +1,3 @@
+example,name,tier,blurb,thankYou,logoAddress,order,show,expires
+type sponsor,text; required; max 19; id 1,text; max 12,text; max 80,text; max 54,web address,whole number,yes/no; default yes,datetime
+EXAMPLE,[Sponsor name],[Tier],[A short line about the sponsor.],[Thank you to our sponsor],https://example.com/logo.png,1,yes,

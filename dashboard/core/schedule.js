@@ -17,6 +17,7 @@
 import * as frame from '../frame.js';
 import { defaultSettings } from '../config.js';
 import { buildPage, canShow, moduleOf, regionOf, topicOf } from './panels.js';
+import { ownSeconds } from './photos.js';
 import { changePage, clearRegion } from './areas.js';
 
 // The topics on screen in each grid region right now. While a page is
@@ -24,20 +25,37 @@ import { changePage, clearRegion } from './areas.js';
 const onScreen = { grid1: [], grid2: [] };
 const shortestStay = 5; // seconds
 const shortestHold = 1000; // milliseconds
-let paused = false;
+let pauses = 0; // how many things have paused the rotation and not yet resumed it
 
-// While an alert or announcement covers the screen, the rotation stops
+// While an alert or announcement covers the screen, the rotation stops. A demo
+// pauses it too, for all its steps. It is a count and not a switch, so the
+// resume at the end of the announcement a demo plays does not start the pages
+// while the demo is still going.
 export function pauseRotation() {
-  paused = true;
+  pauses += 1;
 }
 
 export function resumeRotation() {
-  paused = false;
+  pauses = Math.max(0, pauses - 1);
 }
 
 // Counts the calls to showPagesNow(). A page that was chosen before a call
 // does not get its full stay.
 let pagesRefreshed = 0;
+
+// Counts, for each region, how many times it has been asked to move on at once
+// (moveOn). Like pagesRefreshed, but for one region only.
+const moves = { grid1: 0, grid2: 0, ticker: 0 };
+
+// What a page that was chosen before an ask compares: both counts together.
+// Both only ever grow, so the sum changes whenever either does.
+function changeCount(region) {
+  return pagesRefreshed + (moves[region] || 0);
+}
+
+// How many milliseconds of its stay each region still has to wait, while it is
+// holding a page still. A region that is changing page has no entry.
+const holdLeft = {};
 
 // Every page on screen leaves early and the next ones are chosen from the
 // newest content. Used when the screen switches between sample and real
@@ -46,30 +64,54 @@ export function showPagesNow() {
   pagesRefreshed += 1;
 }
 
+// Asks these regions (a list of 'grid1', 'grid2' and 'ticker') to move on to
+// their next page now, within a quarter of a second. The hidden transitions use
+// it (core/hidden-run.js). A region that is changing page at that moment
+// carries on and then moves on again at once.
+export function moveOn(regions) {
+  regions.forEach(region => {
+    if (region in moves) moves[region] += 1;
+  });
+}
+
+// How many seconds until this region changes page by itself, or null when it is
+// not holding a page still right now (it is changing page, or has nothing to show).
+export function secondsUntilChange(region) {
+  return region in holdLeft ? holdLeft[region] / 1000 : null;
+}
+
 // Waits, but the clock stands still while paused. A time of zero or less (a
 // mistake in the settings) still waits a second, so a loop can never spin
-// without stopping. since is the value of pagesRefreshed when the page was
-// chosen: if showPagesNow() was called after that, the wait ends.
-async function hold(milliseconds, since) {
+// without stopping. since is changeCount(region) when the page was chosen: if
+// showPagesNow() or moveOn() was called after that, the wait ends. region is
+// null for the views that change all their panels together.
+async function hold(milliseconds, since, region) {
   let left = milliseconds > 0 ? milliseconds : 1000;
-  while (left > 0 && pagesRefreshed === since) {
-    await frame.wait(250);
-    if (!paused) left -= 250;
+  try {
+    while (left > 0 && changeCount(region) === since) {
+      if (region) holdLeft[region] = left;
+      await frame.wait(250);
+      if (pauses === 0) left -= 250;
+    }
+  } finally {
+    if (region) delete holdLeft[region];
   }
 }
 
 async function waitWhilePaused() {
-  while (paused) await frame.wait(250);
+  while (pauses > 0) await frame.wait(250);
 }
 
 // How long a page stays, in milliseconds, with the Speed setting applied.
-// A row's own seconds win. Otherwise the whole board follows Seconds per
-// page in Dashboard Settings: the small panel stays three quarters as long
-// and the ticker one and a half times as long. The ticker's own seconds
-// (Dashboard Settings, Panels) come in as ownSeconds too. Fast never takes a
-// page below 5 seconds, unless the editors asked for less than that to begin
-// with. The settings are read each time, so a change applies at the next page.
-function stayFor(region, ownSeconds, settings) {
+// A row's own seconds win. The Photo panel's row, with none, follows Seconds
+// per photo (Photos tab, see ownSeconds in photos.js). Otherwise the whole
+// board follows Seconds per page in Dashboard Settings: the small panel stays
+// three quarters as long and the ticker one and a half times as long. The
+// ticker's own seconds (Dashboard Settings, Panels) come in as rowSeconds too.
+// Fast never takes a page below 5 seconds, unless the editors asked for less
+// than that to begin with. The settings are read each time, so a change
+// applies at the next page.
+function stayFor(region, rowSeconds, settings) {
   const board = Number(settings.pageSeconds) > 0 ? Number(settings.pageSeconds) : defaultSettings.pageSeconds;
   const automatic = {
     grid1: board,
@@ -77,7 +119,7 @@ function stayFor(region, ownSeconds, settings) {
     ticker: Math.max(8, Math.round(board * 1.5)),
   };
 
-  const seconds = Number(ownSeconds) > 0 ? Number(ownSeconds) : automatic[region];
+  const seconds = Number(rowSeconds) > 0 ? Number(rowSeconds) : automatic[region];
   return Math.max(seconds * frame.pace(), Math.min(seconds, shortestStay)) * 1000;
 }
 
@@ -145,7 +187,7 @@ export function startRotation(region, getPlaylist, getContent) {
     while (true) {
       try {
         await waitWhilePaused();
-        const since = pagesRefreshed;
+        const since = changeCount(region);
         const next = pickPage();
 
         // Nothing could be drawn: leave the page that is on screen and try again
@@ -159,7 +201,8 @@ export function startRotation(region, getPlaylist, getContent) {
         onScreen[region] = next && next.topic ? [next.topic] : [];
 
         if (next) {
-          await hold(holdFor(stayFor(region, next.step.seconds, getContent().settings), arrivedAfter), since);
+          const settings = getContent().settings;
+          await hold(holdFor(stayFor(region, ownSeconds(next.step, settings), settings), arrivedAfter), since, region);
         } else {
           await frame.wait(1000); // nothing to show right now
         }
@@ -185,7 +228,7 @@ export function startTicker(getContent) {
       try {
         await waitWhilePaused();
 
-        const since = pagesRefreshed;
+        const since = changeCount('ticker');
         const content = getContent();
         const module = moduleOf('ticker');
         const lines = module && module.items ? module.items(content) : [];
@@ -206,7 +249,7 @@ export function startTicker(getContent) {
           continue;
         }
         const arrivedAfter = await changePage('ticker', page);
-        await hold(holdFor(stayFor('ticker', content.settings.rotation.tickerSeconds, content.settings), arrivedAfter), since);
+        await hold(holdFor(stayFor('ticker', content.settings.rotation.tickerSeconds, content.settings), arrivedAfter), since, 'ticker');
       } catch (error) {
         console.error('The ticker hit a problem and will try again', error);
         clearRegion('ticker');
@@ -225,10 +268,10 @@ export function startTogether(ids, getContent, holdSeconds) {
   async function loop() {
     while (true) {
       try {
-        const since = pagesRefreshed;
+        const since = changeCount(null);
         const pages = ids.map(id => buildPage(id, getContent()));
         await Promise.all(pages.map(page => changePage(page.region, page)));
-        await hold(holdSeconds * 1000, since);
+        await hold(holdSeconds * 1000, since, null);
       } catch (error) {
         console.error('The stress test hit a problem', error);
         ids.filter(id => regionOf(id)).forEach(id => clearRegion(regionOf(id)));

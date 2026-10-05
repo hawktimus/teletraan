@@ -11,7 +11,8 @@ the kiosk uses.
 
 Nothing needs copying. The dashboard is already on the Mini: the pull timer
 keeps `/opt/teletraan` up to date from the repository, and the web server
-shows it at `http://localhost:8080/dashboard/`. The test runs the code that
+shows it at `http://localhost:3229/dashboard/` (3229 is `TELETRAAN_PORT` in
+`deploy/local.env`, so use the number that file has). The test runs the code that
 has been pushed. To test a change, push it, then wait up to 5 minutes or run
 `/opt/teletraan/deploy/scripts/pull.sh`. Do not push while a test is running:
 the screen reloads itself on every update, and the readout starts again.
@@ -24,7 +25,7 @@ text screen, log in as `hawktimus`, stop the service, and start the kiosk
 script with an address that ends in `?perf`:
 
     sudo systemctl stop teletraan-kiosk.service
-    xinit /opt/teletraan/deploy/scripts/kiosk.sh 'http://localhost:8080/dashboard/?perf' -- :1 vt8
+    xinit /opt/teletraan/deploy/scripts/kiosk.sh 'http://localhost:3229/dashboard/?perf' -- :1 vt8
 
 Keep the quotes. Without them the shell would end the command at the first `&`
 in an address.
@@ -48,7 +49,7 @@ seconds after the page started, so a long run gives a fair picture.
 | frame ms p95 | the slow end: 95 out of 100 refreshes were faster than this |
 | worst | the single slowest refresh after the first 3 seconds |
 | late | how many refreshes took longer than 25 ms, which you can see as a stutter |
-| animations running | how many things are moving right now. In normal mode it is usually 5 to 30, and it reaches 40 to 60 for a second or two when pages change at the same time or the logo changes. One page change of the large panel is about 13 at a time, and the three glints are always 3 of the count. While the hawk flies (4 seconds out of every 24) about 3 are on the hawk, and the changes into it and back start about 13 for 2 seconds each. `stress` reaches about 80. Calm mode stays at about 11 or fewer and `motion=none` at 0. A number that stays far above these for many seconds means something is wrong |
+| animations running | how many things are moving right now. In normal mode it is usually 5 to 30, and it reaches 40 to 60 for a second or two when pages change at the same time or the logo changes. One slat change of the large panel is about 17 at a time, one mechanical change about 26 (the 13 pieces, the screws and the slats), and the three glints are always 3 of the count. While the hawk flies (4 seconds out of every 24) about 3 are on the hawk, and the changes into it and back start about 13 for 2 seconds each. `stress` reaches about 80. Calm mode stays at about 11 or fewer and `motion=none` at 0. A number that stays far above these for many seconds means something is wrong |
 | memory | how much memory the page uses (Chromium browsers only) |
 
 ## 3. Switches
@@ -65,9 +66,13 @@ for example `?perf&stress`.
 | `speed=very-slow`, `slow`, `normal`, `fast` | the Speed setting from Dashboard Settings, for this page only. Moves take 2, 1.5, 1 or 0.75 times as long, and so do the panels' time on screen. The address wins over Dashboard Settings |
 | `finish=metal` | the normal look: purple plates with polished metal edges (a banded gradient, a shadow, a shade and a ridge on every line) |
 | `finish=flat` | the same screen with every edge one plain colour, no shadow, shade, ridge or glint. The shapes, text and movement do not change (the rows still turn over and the frame halves still lift), so any difference in the numbers is the cost of the metal |
-| `metal=gold`, `silver` | the metal of the frame edges, for this page only. The address wins over Dashboard Settings |
+| `metal=gold`, `silver` | the metal of the permanent frame edges (the banner, the countdown and the logo), for this page only. The address wins over Dashboard Settings |
+| `change=alternate`, `slat`, `mechanical` | how the large and small panels change page, for this page only. `mechanical` breaks the frame into pieces and rebuilds it, `slat` turns the rows over and lifts the frame (docs/page-transitions.md). Add `stress` to see a change every few seconds |
+| `frames=mostly-gold`, `alternate`, `gold`, `silver` | the metal of the large and small page frames, picked again at every page change, for this page only |
 | `theme=<id>` | a theme from `dashboard/themes/registry.js`, for this page only. The address wins over the Theme page in Studio |
 | `overlay=<id>`, `none` | a holiday overlay, or none, for this page only |
+| `night=on`, `off` | the night screen (the screensaver, docs/night-mode.md) now whatever the time, or never, for this page only. The address wins over Dashboard Settings. The bouncing logo costs two moving layers, so it is far lighter than the dashboard it covers |
+| `hidden=desktop`, `redEyes`, `off` | plays that hidden transition (docs/hidden-transitions.md) once, at the next page change of the large panel, whatever the chances say, or never plays any, for this page only. It needs full motion, and the night screen stops it, so add `night=off` at night. While it plays it holds five blocks, the backdrop and, for red eyes, a red layer as layers, and none when it is over |
 | `glint=on`, `off` | the bright dash that runs round each big frame every few seconds, for this page only. Off shows what the glint costs |
 | `stress` | shows the left panel, the small panel and the ticker together. Each is held for 3 seconds, then all three turn their pages over together, about every 5 seconds. The frames stay. The banner and countdown stay |
 | `draw=fade` | fades the frame lines in instead of drawing them when the frames assemble, to find out whether drawing is the slow part. The assembly happens once, when the page loads |
@@ -75,7 +80,7 @@ for example `?perf&stress`.
 | `show=events` | shows only that panel, with the banner and the countdown. The panel is held for 30 seconds, then its page turns over and arrives again. Use any panel name from `registry.js` |
 | `demo=announcement` | plays the first announcement from Dashboard Settings 4 seconds after the page loads |
 | `demo=alert` | shows a sample alert |
-| `demo=crt` | plays the screen glitch (the old television effect) every 8 seconds, waiting while a page is changing or the name effect is playing |
+| `demo=crt` | plays the screen glitch (the old television effect) every 8 seconds, waiting while a page is changing or another effect is playing |
 
 To compare the finishes, run the same address twice, once as it is and once
 with `finish=flat` added. Keep every other switch the same, run both for the
@@ -86,7 +91,11 @@ with `glint=off` to see what the glint costs on its own.
 The page change is the heaviest thing the screen does, and `stress` makes it
 happen every 5 seconds, so a `stress` run shows it best. Watch the `late`
 count: a late refresh while the rows turn over or the frame halves lift is the
-stutter to look for.
+stutter to look for. Run it once with `change=slat` and once with
+`change=mechanical` to compare the two page changes (docs/page-transitions.md):
+the mechanical one paints a dozen pieces as it starts, and the frame at rest
+again as it ends. If it is clearly worse, set Page change style to Slat change
+only.
 
 ## 4. The comparison page
 
@@ -108,7 +117,7 @@ Then go back with Ctrl+Alt+F1 and start the kiosk script with this address:
 
     xinit /opt/teletraan/deploy/scripts/kiosk.sh 'http://localhost:8081/tools/perf/plates.html?perf' -- :1 vt8
 
-Compare it with `'http://localhost:8080/dashboard/?only=tasks&perf'`, and add
+Compare it with `'http://localhost:3229/dashboard/?only=tasks&perf'`, and add
 the same `finish` to both addresses so the two pages are painted the same way.
 Stop the small server with Ctrl+C in the second text screen when you are done.
 
@@ -129,7 +138,7 @@ Stop the small server with Ctrl+C in the second text screen when you are done.
 
        cp /opt/teletraan/deploy/scripts/kiosk.sh /tmp/kiosk-no-gpu.sh
        nano /tmp/kiosk-no-gpu.sh
-       xinit /tmp/kiosk-no-gpu.sh 'http://localhost:8080/dashboard/?perf' -- :1 vt8
+       xinit /tmp/kiosk-no-gpu.sh 'http://localhost:3229/dashboard/?perf' -- :1 vt8
 
    If the run without the flags is smoother, or the picture glitches with
    them, remove the two lines from `deploy/scripts/kiosk.sh` and push. Never

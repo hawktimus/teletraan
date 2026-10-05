@@ -12,10 +12,34 @@ const stage = document.getElementById('stage');
 let running = null; // 'alert' or 'announcement' while something covers the screen
 let alertInterrupts = false; // an alert came on while an announcement was showing
 let lastAnnouncement = ''; // which announcement ran last, so it runs once
+let alertCount = 0; // how many alerts have started since the page loaded
 
 // True while an alert or an announcement covers the screen
 export function takeoverRunning() {
   return running !== null;
+}
+
+// How many alerts have started so far. A demo (core/demo.js) counts them, so it
+// can tell that a real alert came and took the screen from it.
+export function alertsStarted() {
+  return alertCount;
+}
+
+// One function that is called each time an alert or announcement starts or
+// ends, so the night screen (core/night-screen.js) can step aside at once and
+// come back at once, and not at its next look a second later.
+let watcher = null;
+
+export function watchTakeovers(listener) {
+  watcher = listener;
+}
+
+function tellWatcher() {
+  try {
+    if (watcher) watcher();
+  } catch (error) {
+    console.error('Something watching the alerts failed', error);
+  }
 }
 
 // Checks every second whether an alert or an announcement should start.
@@ -100,6 +124,7 @@ async function replace(element, id, content) {
 function begin(kind) {
   running = kind;
   pauseRotation();
+  tellWatcher();
 }
 
 function finish() {
@@ -108,6 +133,7 @@ function finish() {
   alertInterrupts = false;
   resumeRotation();
   running = null;
+  tellWatcher();
 }
 
 function withAnnouncement(content, text, phase) {
@@ -117,6 +143,7 @@ function withAnnouncement(content, text, phase) {
 // An alert stays until the editors turn it off or its "until" time passes.
 // If they change its words while it is showing, the new words replace the old.
 async function runAlert(getContent) {
+  alertCount += 1;
   begin('alert');
   try {
     const element = await cover('alert', getContent());
@@ -147,10 +174,10 @@ async function keepAlertShowing(first, getContent) {
   await uncover(element);
 }
 
-// Waits, but ends early if an alert needs the screen
-async function waitUnlessInterrupted(seconds) {
+// Waits, but ends early if an alert needs the screen or stopped() says so
+async function waitUnlessInterrupted(seconds, stopped) {
   let left = seconds * 1000;
-  while (left > 0 && !alertInterrupts) {
+  while (left > 0 && !stopped()) {
     await frame.wait(250);
     left -= 250;
   }
@@ -158,23 +185,27 @@ async function waitUnlessInterrupted(seconds) {
 
 // The announcement: the first line, then the second, then back to normal.
 // The old television effect plays in between. A second line left empty means
-// there is only the first.
-export async function runAnnouncement(config, getContent) {
+// there is only the first. A demo (core/demo-screens.js) passes shouldStop, a
+// function that says true when the announcement should end early.
+export async function runAnnouncement(config, getContent, shouldStop) {
+  const stopped = () => alertInterrupts || Boolean(shouldStop && shouldStop());
+
   begin('announcement');
   try {
     let element = await cover('announcement', withAnnouncement(getContent(), config.title, 'title'));
-    await waitUnlessInterrupted(config.titleSeconds);
+    await waitUnlessInterrupted(config.titleSeconds, stopped);
 
-    if (hasText(config.followUp) && !alertInterrupts) {
+    if (hasText(config.followUp) && !stopped()) {
       frame.playCrt();
       await frame.wait(400);
       element = await replace(element, 'announcement', withAnnouncement(getContent(), config.followUp, 'follow-up'));
-      await waitUnlessInterrupted(config.followUpSeconds);
+      await waitUnlessInterrupted(config.followUpSeconds, stopped);
     }
 
     if (alertInterrupts && alertWanted(getContent().settings, new Date())) {
       // The alert takes the screen straight from the announcement, so the
       // normal screen is not seen for a moment in between
+      alertCount += 1;
       running = 'alert';
       alertInterrupts = false;
       element = await replace(element, 'alert', getContent());

@@ -1,4 +1,4 @@
-/* The title must stay left of the bolt shape at x=648, so it is cut off at
+/* The title must stay left of the notch shape at x=648, so it is cut off at
    560px. It is shown in capitals because the tails of letters like g and y
    would run into the metal line under the header. */
 .custom .header {

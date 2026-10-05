@@ -107,3 +107,21 @@ export function logoMarkup() {
 
   return `<div class="drawing"><div class="bob">${plates}<div class="hawk">${hawkMarkup()}</div></div></div>`;
 }
+
+// The emblem alone, drawn once as one flat svg on the same 1100 x 884 grid, for
+// the night screen (core/night-screen.js). There is no shadow and no hawk. Every
+// outline comes first, then every plate, then the stripes, so no outline covers
+// a plate. The colours are not set here: the shapes carry the classes
+// emblem-outline, emblem-plate and emblem-stripe (names of their own, because
+// plate and slash are used elsewhere), and the stylesheet gives them CSS
+// variables.
+export function emblemMarkup() {
+  const shapes = emblem.reduce((all, part) => all.concat(part[1]), []);
+  const stripes = emblem.reduce((all, part) => all.concat(part[2]), []);
+
+  return '<svg viewBox="0 0 1100 884" aria-hidden="true">' +
+    shapes.map(points => polygon('emblem-outline', points)).join('') +
+    shapes.map(points => polygon('emblem-plate', points)).join('') +
+    stripes.map(points => polygon('emblem-stripe', points)).join('') +
+    '</svg>';
+}

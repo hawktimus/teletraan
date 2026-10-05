@@ -27,7 +27,8 @@ json_text() {
 # Writes device.json in the data folder: the Mini's name, its Wi-Fi and
 # Tailscale addresses and the time. With nothing else to go on, this is how
 # someone finds the Mini on a school network they cannot look at. The
-# dashboard shows it only while it says OFFLINE.
+# dashboard shows it only while its connection status text says Sanity is
+# unreachable (core/connection.js).
 #
 # Written the way pull.sh writes version.txt: a temporary file in the same
 # folder, then mv, so the web server never reads half a file.

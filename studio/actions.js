@@ -1,13 +1,26 @@
-// Two extra buttons on the Dashboard Settings page, in the menu beside Publish:
-// "Use sample content" and "Use production content". Each sets Content source
-// and publishes in one click, so the screen follows within about 30 seconds.
-// sanity.config.js adds them to the Dashboard Settings page and no other.
+// Extra buttons in the menu beside Publish, for two pages.
+//
+// Dashboard Settings has "Use sample content" and "Use production content".
+// Each sets Content source and publishes in one click, so the screen follows
+// within about 30 seconds.
+//
+// Demo has "Run demo" and "Stop demo". Run demo writes the time now into
+// Requested at and publishes, and the screen plays the demo within a few
+// seconds. Stop demo clears Requested at and publishes.
+//
+// Dashboard Settings also has one button for each hidden transition, "Play
+// desktop reveal" and "Play red eyes" (docs/hidden-transitions.md). Each writes
+// the kind and the time now into Last push (the Hidden tab) and publishes. The
+// screen plays it once, at its next page change or within 20 seconds.
+//
+// sanity.config.js adds each set to its own page and no other.
 //
 // A Studio action is a plain function that Studio calls with the document.
 // It gives back a label and what to do when it is clicked.
 
 import { useEffect, useState } from 'react';
 import { useDocumentOperation } from 'sanity';
+import { hiddenTransitions } from './hidden-transitions.js';
 
 // What the screen shows for a settings document, by the same rule as
 // pickSource in dashboard/core/source.js: sample, until the switch back time
@@ -67,3 +80,70 @@ export function useProductionContentAction(props) {
   return useSwitchSource(props, 'production', 'Use production content');
 }
 useProductionContentAction.action = 'useProductionContent';
+
+// The Demo page's two buttons (docs/demo.md). Neither keeps any state: Run demo
+// is always allowed, so a second click starts the demo again, and Stop demo is
+// off only when there is no request to clear.
+
+export function useRunDemoAction(props) {
+  const { patch, publish } = useDocumentOperation(props.id, props.type);
+
+  return {
+    label: 'Run demo',
+    title: 'Play the demo on the screen now. It plays once, then the screen goes back to normal.',
+    disabled: Boolean(patch.disabled),
+    onHandle: () => {
+      patch.execute([{ set: { requestedAt: new Date().toISOString() } }]);
+      publish.execute();
+      props.onComplete();
+    },
+  };
+}
+useRunDemoAction.action = 'runDemo';
+
+export function useStopDemoAction(props) {
+  const { patch, publish } = useDocumentOperation(props.id, props.type);
+
+  // A request that is in the draft or in the published page is something to clear
+  const asked = Boolean((props.draft && props.draft.requestedAt) || (props.published && props.published.requestedAt));
+
+  return {
+    label: 'Stop demo',
+    title: asked ? 'Stop the demo on the screen now.' : 'No demo has been asked for.',
+    disabled: !asked || Boolean(patch.disabled),
+    onHandle: () => {
+      patch.execute([{ unset: ['requestedAt'] }]);
+      publish.execute();
+      props.onComplete();
+    },
+  };
+}
+useStopDemoAction.action = 'stopDemo';
+
+// The Hidden tab's buttons, one for each transition in hidden-transitions.js, so
+// adding a transition there adds its button. kind is { id, name, chanceField }.
+// A button is always allowed, so a second click plays it again. The screen only
+// plays a push that is a minute old at most and that it has not played before.
+function makePlayHiddenAction(kind) {
+  const label = 'Play ' + kind.name.toLowerCase();
+
+  function usePlayHiddenAction(props) {
+    const { patch, publish } = useDocumentOperation(props.id, props.type);
+
+    return {
+      label: label,
+      title: label + ' on the screen. It plays once, at the next page change or within 20 seconds, and only if Allow hidden transitions is on.',
+      disabled: Boolean(patch.disabled),
+      onHandle: () => {
+        patch.execute([{ set: { hiddenRequest: { kind: kind.id, requestedAt: new Date().toISOString() } } }]);
+        publish.execute();
+        props.onComplete();
+      },
+    };
+  }
+  // Studio and check-schemas.mjs tell actions apart by this name: playDesktop, playRedEyes
+  usePlayHiddenAction.action = 'play' + kind.id.charAt(0).toUpperCase() + kind.id.slice(1);
+  return usePlayHiddenAction;
+}
+
+export const playHiddenActions = hiddenTransitions.map(makePlayHiddenAction);

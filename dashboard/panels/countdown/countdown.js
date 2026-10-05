@@ -69,6 +69,9 @@ export function mount(host, content) {
   const state = {
     content: content,
     lastMinute: null,
+    shown: {}, // what each part shows now, so a part is written only when it changes
+    lineKey: '', // what the top line was worked out from
+    line: { label: '', date: '' },
     days: element.querySelector('.days-number span'),
     daysWord: element.querySelector('.days-word'),
     hours: element.querySelector('.hours span'),
@@ -82,6 +85,7 @@ export function mount(host, content) {
   };
   states.set(element, state);
 
+  watchFonts();
   refresh(element, new Date());
   frame.onSecond(now => refresh(element, now), element);
 }
@@ -127,6 +131,16 @@ function currentStage(settings, now) {
   return { label: anyDate ? 'COUNTDOWN OVER' : 'DATE NOT SET', target: null, reached: false };
 }
 
+// A width measured before a font arrived is wrong, so the top line is worked
+// out again whenever a font finishes loading (see drawTopLine)
+let fontLoads = 0;
+let watchingFonts = false;
+function watchFonts() {
+  if (watchingFonts || !document.fonts || !document.fonts.addEventListener) return;
+  watchingFonts = true;
+  document.fonts.addEventListener('loadingdone', () => { fontLoads += 1; });
+}
+
 // How wide text is on the top line, in px. A canvas measures it because the
 // text is not on the page yet. The font must match .top-line in countdown.css.
 let pen = null;
@@ -155,19 +169,41 @@ function threatLevel(days) {
   return 'calm';
 }
 
-function setText(element, text) {
-  if (element.textContent !== text) element.textContent = text;
+// True the first time a part is given a value and each time the value is
+// different from the one before. The countdown runs every second, and almost
+// everything on it stays the same from one second to the next, so each part
+// is written only when this says it changed.
+function isNew(state, name, value) {
+  if (state.shown[name] === value) return false;
+  state.shown[name] = value;
+  return true;
 }
 
-// The first time a number is shown it just appears. After that a new
-// number slams in, but only when it really is different.
-function show(element, text) {
-  if (element.textContent === text) return;
-  if (element.textContent === '') {
-    element.textContent = text;
-  } else {
-    frame.slam(element, text);
+// Shows a number, but only when it is different from the one shown. The
+// first time it just appears. After that the new number slams in. Says
+// whether it wrote anything.
+function showNumber(state, name, text) {
+  const first = state.shown[name] === undefined;
+  if (!isNew(state, name, text)) return false;
+
+  if (first) state[name].textContent = text;
+  else frame.slam(state[name], text);
+  return true;
+}
+
+// The words on the top line. Fitting them measures text, which is the one
+// slow thing here, so it is done only when the words could be different: a new
+// label, a new date, or the stage going from counting to NOW.
+function drawTopLine(state, stage) {
+  const key = [stage.label, stage.reached, stage.target ? stage.target.getTime() : 'none', fontLoads].join('|');
+  if (key !== state.lineKey) {
+    state.lineKey = key;
+    // a message with no date has no IN and nothing to fit beside it
+    state.line = stage.target ? topLine(stage) : { label: stage.label, date: '' };
   }
+
+  if (isNew(state, 'label', state.line.label)) state.label.textContent = state.line.label;
+  if (isNew(state, 'date', state.line.date)) state.date.textContent = state.line.date;
 }
 
 function refresh(element, now) {
@@ -175,26 +211,29 @@ function refresh(element, now) {
   const stage = currentStage(state.content.settings.countdown, now);
   const left = stage.target ? timeLeft(stage.target, now) : timeLeft(now, now);
 
-  // a message with no date has no IN and nothing to fit beside it
-  const line = stage.target ? topLine(stage) : { label: stage.label, date: '' };
-  setText(state.label, line.label);
-  setText(state.date, line.date);
+  drawTopLine(state, stage);
 
-  show(state.days, String(left.days));
-  state.days.parentNode.classList.toggle('long', left.days > 99); // three digits do not fit at the big size
-  setText(state.daysWord, left.days === 1 ? 'DAY' : 'DAYS');
-  show(state.hours, pad(left.hours));
-  show(state.minutes, pad(left.minutes));
-  show(state.seconds, pad(left.seconds));
+  // Only the seconds change on most ticks, and each part is written only
+  // when it is different from last time
+  const daysChanged = showNumber(state, 'days', String(left.days));
+  if (daysChanged) state.days.parentNode.classList.toggle('long', left.days > 99); // three digits do not fit at the big size
+  const daysWord = left.days === 1 ? 'DAY' : 'DAYS';
+  if (isNew(state, 'daysWord', daysWord)) state.daysWord.textContent = daysWord;
+
+  showNumber(state, 'hours', pad(left.hours));
+  showNumber(state, 'minutes', pad(left.minutes));
+  showNumber(state, 'seconds', pad(left.seconds));
 
   const level = stage.target ? threatLevel(left.days) : 'calm';
-  if (element.dataset.level !== level) element.dataset.level = level;
+  if (isNew(state, 'level', level)) element.dataset.level = level;
 
   // The bar under the numbers loses one block every 5 seconds and is full again at the next minute
   const lit = Math.floor((60 - left.seconds) / (60 / SEGMENTS));
-  state.segments.forEach((segment, index) => {
-    segment.classList.toggle('lit', index < lit);
-  });
+  if (isNew(state, 'lit', lit)) {
+    state.segments.forEach((segment, index) => {
+      segment.classList.toggle('lit', index < lit);
+    });
+  }
 
   if (state.lastMinute !== null && state.lastMinute !== left.minutes) {
     frame.nudge(state.chevronLeft, state.chevronRight);

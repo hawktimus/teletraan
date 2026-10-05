@@ -1,8 +1,9 @@
-// The Mini's name and addresses, shown on the wall only while the banner says
-// OFFLINE. With no network access at the school, this is how someone finds the
-// Mini to log in to it. The kiosk script on the Mini writes data/live/device.json
-// every minute (deploy/scripts/kiosk.sh). Nothing is read while the status is
-// not showing, and a missing file or bad JSON shows nothing.
+// The Mini's name and addresses, shown on the wall inside the connection
+// status text (core/connection.js) while Sanity cannot be reached. With no
+// network access at the school, this is how someone finds the Mini to log in
+// to it. The kiosk script on the Mini writes data/live/device.json every
+// minute (deploy/scripts/kiosk.sh). Nothing is read while the status text is
+// not showing, and a missing file or bad JSON gives no lines.
 
 import { liveFolder } from '../config.js';
 
@@ -60,15 +61,19 @@ export function deviceLines(raw) {
   return lines;
 }
 
-// The strip on the screen is #device-info in index.html. While it is shown,
-// the file is read again every minute.
+// While the status text is showing, the file is read again every minute. The
+// lines go to the function passed to showDeviceInfo, which puts them in the text.
 let timer = null;
-let requests = 0; // counts the reads, so an answer that comes after the strip was hidden is dropped
+let requests = 0; // counts the reads, so an answer that comes after the text was hidden is dropped
+let onLines = () => {};
 
-// Called with true while the OFFLINE status is showing and false otherwise.
-// Calling it again with the same answer does nothing, so it is safe to call
-// every time the content changes.
-export function showDeviceInfo(shown) {
+// Called with true while the connection status text is showing because Sanity
+// cannot be reached, and false otherwise. useLines(lines) is called with the
+// lines each time they are read, and with [] when the reading stops. Calling it
+// again with the same answer does nothing but remember the newest useLines, so
+// it is safe to call every time the content changes.
+export function showDeviceInfo(shown, useLines) {
+  if (useLines) onLines = useLines;
   if (shown === (timer !== null)) return;
 
   if (shown) {
@@ -78,7 +83,7 @@ export function showDeviceInfo(shown) {
     clearInterval(timer);
     timer = null;
     requests += 1;
-    draw([]);
+    onLines([]);
   }
 }
 
@@ -91,21 +96,8 @@ async function readDevice() {
     const response = await fetch(deviceFile, { cache: 'no-store' });
     if (response.ok) lines = deviceLines(await response.json());
   } catch (error) {
-    // no file yet, or it could not be read: show nothing
+    // no file yet, or it could not be read: no lines
   }
 
-  if (mine === requests) draw(lines);
-}
-
-// Two lines in the strip. The strip is hidden when there is nothing to say.
-function draw(lines) {
-  const strip = document.getElementById('device-info');
-  if (!strip) return;
-
-  const rows = strip.children;
-  for (let index = 0; index < rows.length; index++) {
-    const text = lines[index] || '';
-    if (rows[index].textContent !== text) rows[index].textContent = text;
-  }
-  strip.hidden = lines.length === 0;
+  if (mine === requests) onLines(lines);
 }

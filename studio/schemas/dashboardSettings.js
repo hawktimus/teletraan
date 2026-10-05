@@ -2,19 +2,29 @@
 // fixed id 'dashboardSettings' (see structure.js).
 
 import { defineType, defineField, defineArrayMember } from 'sanity';
-import { tooLong } from './fields.js';
+import { neverOrAtLeast, tooLong } from './fields.js';
 import { rotationField } from './settingsRotation.js';
 import { announcementsField } from './settingsAnnouncements.js';
+import { logoFields, logoGroup } from './settingsLogo.js';
+import { transitionsFields, transitionsGroup } from './settingsTransitions.js';
+import { photosFields, photosGroup } from './settingsPhotos.js';
+import { nightFields, nightGroup } from './settingsNight.js';
+import { hiddenFields, hiddenGroup } from './settingsHidden.js';
 
 const groups = [
   { name: 'screen', title: 'Screen' },
-  { name: 'effects', title: 'Logo and effects' },
+  logoGroup,
+  transitionsGroup,
   { name: 'countdown', title: 'Countdown' },
   { name: 'alert', title: 'Alert' },
   { name: 'panels', title: 'Panels' },
+  photosGroup,
   { name: 'announcements', title: 'Announcements' },
+  nightGroup,
+  hiddenGroup,
   { name: 'calendars', title: 'Calendars' },
   { name: 'source', title: 'Content source' },
+  { name: 'connection', title: 'Connection' },
 ];
 
 // The values are the names in contentSources in dashboard/config.js
@@ -118,12 +128,24 @@ const switchBackAtField = defineField({
   ],
 });
 
+// The same starting value as defaultSettings.showConnectionStatus in
+// dashboard/config.js. The text comes up by itself when Sanity cannot be
+// reached, whatever this says (dashboard/core/connection.js).
+const showConnectionStatusField = defineField({
+  name: 'showConnectionStatus',
+  title: 'Show connection status',
+  type: 'boolean',
+  group: 'connection',
+  description: 'Keeps a small text at the bottom right with the last Sanity read, the item counts and the calendar read time. It always shows when Sanity is unreachable.',
+  initialValue: false,
+});
+
 const motionField = defineField({
   name: 'motion',
   title: 'Motion',
   type: 'string',
   group: 'screen',
-  description: 'Full plays all the movement. Calm only fades panels in and out, with no turning, glint, name effect or screen glitch.',
+  description: 'Full plays all the movement. Calm only fades panels in and out, with no turning, glint, logo animations, name effect or screen glitch.',
   options: { list: motions, layout: 'radio', direction: 'horizontal' },
   initialValue: 'full',
   validation: Rule => Rule.required().error('Pick full or calm.'),
@@ -148,7 +170,7 @@ const frameMetalField = defineField({
   title: 'Frame metal',
   type: 'string',
   group: 'screen',
-  description: 'The metal on the frame edges. Gold is warm antique brass, Silver is weathered steel.',
+  description: 'The metal of the banner, countdown and logo edges. Gold is warm antique brass, Silver is weathered steel. Page frames follow Frame finish (Transitions tab).',
   options: { list: metals, layout: 'radio', direction: 'horizontal' },
   initialValue: 'gold',
   validation: Rule => [
@@ -166,56 +188,14 @@ const glintField = defineField({
   initialValue: true,
 });
 
-// The three settings for the name effect and the three for the screen glitch
-// share a tab, Logo and effects. The seconds between plays can be 0, which
-// means never, or 30 or more. The starting values are the same as
-// defaultSettings in dashboard/config.js: nameDuration is how long the effect
-// takes on HAWKTIMUS PRIME today, and the glitch lasts 2.7 seconds today.
-function neverOrAtLeast(shortest) {
-  return value => (typeof value === 'number' && value > 0 && value < shortest ? 'Use 0 for never, or ' + shortest + ' or more.' : true);
-}
-
-const nameTransformField = defineField({
-  name: 'nameTransform',
-  title: 'Name effect',
-  type: 'boolean',
-  group: 'effects',
-  description: 'Now and then each letter of the team name splits apart, turns and locks back together. Turn it off to keep the name still.',
-  initialValue: true,
-});
-
-const nameEveryField = defineField({
-  name: 'nameEvery',
-  title: 'Name effect every (seconds)',
-  type: 'number',
-  group: 'effects',
-  description: 'Seconds between plays of the name effect, from 30 to 900. Use 0 to never play it.',
-  initialValue: 300,
-  validation: Rule => [
-    Rule.required().error('Enter the number of seconds, or 0 for never.'),
-    Rule.integer().min(0).max(900).error('Use 0 for never, or a whole number from 30 to 900.'),
-    Rule.custom(neverOrAtLeast(30)),
-  ],
-});
-
-const nameDurationField = defineField({
-  name: 'nameDuration',
-  title: 'Name effect duration (seconds)',
-  type: 'number',
-  group: 'effects',
-  description: 'How long one play of the name effect lasts, from 0.5 to 10 seconds, at Normal speed.',
-  initialValue: 1.43,
-  validation: Rule => [
-    Rule.required().error('Enter the number of seconds.'),
-    Rule.min(0.5).max(10).error('Use a number from 0.5 to 10.'),
-  ],
-});
-
+// The screen glitch is in the Screen tab. The seconds between glitches can be
+// 0, which means never, or 30 or more. The starting values are the same as
+// defaultSettings.crt in dashboard/config.js: the glitch lasts 2.7 seconds today.
 const crtField = defineField({
   name: 'crt',
   title: 'Screen glitch',
   type: 'object',
-  group: 'effects',
+  group: 'screen',
   description: 'A short old television glitch that plays across the whole screen now and then. Calm motion never plays it.',
   fields: [
     defineField({
@@ -432,20 +412,23 @@ export default defineType({
     speedField,
     frameMetalField,
     glintField,
-    nameTransformField,
-    nameEveryField,
-    nameDurationField,
     crtField,
+    ...logoFields(),
+    ...transitionsFields(),
     countdownField,
     alertField,
     pageSecondsField,
     rotationField(),
     doneDaysField,
     safetyDaysField,
+    ...photosFields(),
     announcementsField(),
+    ...nightFields(),
+    ...hiddenFields(),
     calendarsField,
     contentSourceField,
     switchBackAtField,
+    showConnectionStatusField,
   ],
   preview: {
     prepare: () => ({ title: 'Dashboard Settings' }),

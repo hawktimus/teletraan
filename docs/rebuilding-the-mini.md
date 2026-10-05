@@ -5,13 +5,12 @@ to a working screen. Allow an afternoon.
 
 Most of what the Mini shows comes back from somewhere else: the dashboard from
 the repository, the content from Sanity (the service the editors type into)
-and the calendars from BAND. Four things live only on the Mini and are lost
+and the calendars from BAND. Three things live only on the Mini and are lost
 when its disk is wiped:
 
 - `deploy/local.env`, which holds the calendar feed addresses
 - the deploy key in `/home/hawktimus/.ssh`, if the repository is private
 - the password of the `hawktimus` account
-- `photos.json` in `/var/lib/teletraan/data`, the photo list (see Photos below)
 
 Before you wipe anything, keep a copy of each wherever the team mentor keeps
 the team's passwords.
@@ -94,8 +93,8 @@ see studio/README.md.
    the user, so the group is `hawktimus` too. If `git clone` cannot connect, port 22 may be
    blocked on the school network. Ask the team mentor.
 
-7. **Make the data folder.** The calendars, `photos.json`, `version.txt` and
-   `device.json` go here, outside the repository.
+7. **Make the data folder.** The calendars, `version.txt` and `device.json`
+   go here, outside the repository.
 
        sudo mkdir -p /var/lib/teletraan/data
        sudo chown hawktimus:hawktimus /var/lib/teletraan/data
@@ -106,6 +105,11 @@ see studio/README.md.
        cp local.example.env local.env
        chmod 600 local.env
        nano local.env
+
+   Set `TELETRAAN_PORT` to `'3229'`. That is the port the dashboard uses on
+   this team's Mini, so the screen is at `http://localhost:3229/dashboard/`,
+   and that address must be a CORS origin in the Sanity project (studio/README.md,
+   step 6). The template says 8080, so change it.
 
    Replace the placeholder with the real calendar address. Add one
    `CALENDAR_<ID>_URL` line for each calendar. Keep each address in single
@@ -123,7 +127,7 @@ see studio/README.md.
 
        cd /opt/teletraan/deploy
        sudo docker compose --env-file local.env up -d
-       curl -I http://localhost:8080/dashboard/
+       curl -I http://localhost:3229/dashboard/
 
    The curl answer should start with `200` and include `Cache-Control:
    no-store`. The server starts by itself after every reboot.
@@ -187,24 +191,6 @@ see studio/README.md.
 
     Then go through What to check.
 
-## Photos
-
-The Photos panel reads a list of pictures from `photos.json` in the data
-folder. Photos are not stored in Sanity, and nothing creates this file for
-you. Without it the panel is skipped. Make it by hand:
-
-    nano /var/lib/teletraan/data/photos.json
-
-Each entry is the web address of a picture and an optional caption:
-
-    [
-      { "address": "https://[picture address]", "caption": "[Photo caption]" }
-    ]
-
-`dashboard/data/sample/photos.json` is an example. The Mini does not copy the
-pictures, the screen loads each one from its address. The screen reads the
-list again about every 10 minutes, so there is nothing to restart.
-
 ## Burn-in
 
 The plates, the metal frames, the banner and the countdown stay in the same
@@ -218,19 +204,40 @@ its settings. The Mini can keep running.
 ## What to check
 
 - The dashboard is on the screen within two minutes of the Mini starting.
+- `ssh hawktimus@<address> /opt/teletraan/deploy/scripts/check-connection.sh`
+  ends with `OK` (see Checking the connection below).
 - The clock matches a phone, and the date is right.
 - All four sides of the frames and the whole ticker are visible. If
   an edge is cut off, go back to step 13. The frames are metal, gold unless
-  Dashboard Settings says Silver (Screen, Frame metal), on purple plates.
-- Every 20 seconds or so the pages turn over: the rows flip, the frames lift a
-  little and drop back, and the bolts turn. A bright dash runs round each big
+  Dashboard Settings says Silver (Screen, Frame metal), on purple plates. The
+  large and small frames are silver now and then, about one page change in
+  ten (Transitions, Frame finish).
+- Every 20 seconds or so the pages change. Either the rows flip and the frame
+  lifts a little and drops back, or the frame breaks into pieces that fold away
+  and click back into place (Transitions, Page change style), and the screws at
+  the joints turn out and back in. A bright dash runs round each big
   frame every few seconds. If that stutters, see `docs/try-it-on-the-mini.md`:
   `?glint=off` and `?finish=flat` are the first things to try.
 - Events appear. `sudo journalctl -u teletraan-calendars.service -n 20`
   shows `updated` for every calendar. If a calendar says `updated` but its
   events never show, it has no row in Dashboard Settings, Calendars (step 8).
-- The Photo panel shows pictures within about 10 minutes of `photos.json`
-  being saved.
+- The Photo panel shows the photos that are on in the Photos list in Studio
+  (docs/editing-content.md, "Photos"). They come with the rest of the content,
+  so there is nothing on the Mini to set up, and the old `photos.json` file in
+  the data folder is no longer read. If the panel never comes up, the list has
+  no photo that is switched on and not expired.
+- Night mode (docs/night-mode.md) puts a black screen with the team logo up from
+  23:30 to 11:30 Eastern, unless Dashboard Settings says otherwise (Night mode
+  tab), and the TV stays on all night. To see it at once, open the Night mode
+  tab, turn on Preview night mode and publish, then turn it off again. If the TV
+  itself goes dark, that is the TV's own sleep setting, not the dashboard: turn
+  its auto power off or sleep timer off.
+- The hidden transitions (docs/hidden-transitions.md) are two rare surprises that
+  replace a page change. To see each once on the Mini, open Dashboard Settings in
+  Studio, open the menu next to Publish and click Play desktop reveal, then Play
+  red eyes. Each plays within about 20 seconds. If the screen stutters during one,
+  set both chances in the Hidden tab to 0 and tell whoever looks after the code.
+  They never play at night, in calm motion, or over an alert or announcement.
 - Make a small change on a laptop and push it. Within about 6 minutes (up to
   5 for the pull timer, up to 1 for the dashboard to notice) the screen
   reloads and shows it.
@@ -246,20 +253,125 @@ its settings. The Mini can keep running.
 
 The screen asks Sanity for Dashboard Settings first, and Content source there
 says which content to show. While it is Sample, the screen shows the sample
-content in `dashboard/data/sample/` (the content, the calendar and the photo
-list) and does not read the calendars and `photos.json` that the Mini downloads
-or any other content from Sanity. A SAMPLE CONTENT label shows beside the TEAM
+content in `dashboard/data/sample/` (the content, with its three sample photos,
+and the calendar) and does not read the calendars that the Mini downloads or
+any other content from Sanity. A SAMPLE CONTENT label shows beside the TEAM
 plate. Every piece of sample text is in [square brackets]. It still reloads
 itself after an update, and the browser console shows a 404 for `version.txt`
 in `data/live/` if the Mini has not written it. That is expected.
 
 Editors switch between sample and production in Studio (docs/editing-content.md),
 and the Mini follows within about 30 seconds without a restart. The Mini asks
-Sanity from the address `http://localhost:8080`, so that address must be a CORS
-origin in the Sanity project settings (studio/README.md, step 6). If the Mini
-cannot read Dashboard Settings and has no saved copy of them, it falls back to
-`useSampleContent` in `dashboard/config.js`. If the banner says OFFLINE and the
-Mini has no earlier copy of the content, the origin is the first thing to check.
+Sanity from the address `http://localhost:<port>`, with the port in
+`TELETRAAN_PORT` in `local.env`, so that address must be a CORS origin in the
+Sanity project settings (studio/README.md, step 6). If the Mini cannot read
+Dashboard Settings and has no saved copy of them, it falls back to
+`useSampleContent` in `dashboard/config.js`, which is `false`, so it shows the
+editors' content. If the screen says SANITY UNREACHABLE: CORS BLOCKED, the
+origin is the first thing to check (see Checking the connection, next).
+
+## Checking the connection
+
+One command checks everything the screen needs to get its content. Run it from
+any computer that can reach the Mini, with the Mini's address (the screen shows
+it, see the next section):
+
+    ssh hawktimus@<address> /opt/teletraan/deploy/scripts/check-connection.sh
+
+It prints one line for each check, `OK` or `FAIL` and then what it found, and
+the last line is `OK` if every check passed or `FAIL` if any did not. A missing
+tool or a failed check only fails its own line, so the others still run. Add
+`-t` after `ssh` if Docker needs `sudo` and `sudo` needs a password.
+
+    OK    DNS: api.sanity.io is found at [address]
+    OK    Sanity: [project].apicdn.sanity.io answered HTTP 200
+    OK    Dataset: [dataset] can be read without a login ([number] documents visible)
+    OK    CORS: Sanity allows http://localhost:[port] (HTTP 200)
+    OK    BAND: api.band.us answered HTTP 404
+    OK    Web container: teletraan-web: Up [time]
+    OK    Kiosk: teletraan-kiosk.service is active
+    OK    Time: the clock is in sync, now [date and time]
+    OK    Documents: [number] published
+            [type]: [number]
+    OK
+
+- DNS: the Mini can turn `api.sanity.io` into an address. A FAIL here means the
+  Mini has no working network or DNS.
+- Sanity: the Sanity host answers at all. Any answer under 500 counts, and the
+  line gives the HTTP code. Code 000 means no answer: the network or a firewall.
+- Dataset: a plain query, with no login, gets a number back. A FAIL says the
+  dataset needs a login. It must stay public (studio/README.md).
+- CORS: Sanity gives the browser permission to read its answer for
+  `http://localhost:<port>`. The port is read from `TELETRAAN_PORT` in
+  `deploy/local.env`, and from `deploy/docker-compose.yml` if `local.env` has
+  none. A FAIL says to add that address to the project's CORS origins at
+  sanity.io/manage.
+- BAND: `api.band.us` answers. Any answer, even "not found", means it can be
+  reached, so the calendars can be downloaded.
+- Web container: the container `teletraan-web` is running.
+- Kiosk: `teletraan-kiosk.service` is active, which is the browser on the TV.
+- Time: the clock is in sync. The date, the countdown and the schedules all
+  come from it (step 3).
+- Documents: how many published documents Sanity holds, for each type. Drafts
+  are not counted, and neither are Sanity's own documents such as pictures. If a
+  type you expect is missing, nothing of that type is published.
+
+The project ID, the dataset and the API version are read from
+`dashboard/config.js`, and nothing is written into the script. Only the line
+`TELETRAAN_PORT` is read from `local.env`. The script never prints or sends a
+calendar address, a key or a password. The Sanity checks do not send a login.
+
+The screen says the same about Sanity by itself. When Sanity has been out of
+reach for over two minutes, counted from the first read that failed, a small
+red text comes up at the bottom right of the screen and says why:
+
+    SANITY UNREACHABLE: NETWORK DOWN
+    Last good read [time]
+    [name] · Wi-Fi [address] · Tailscale [address]
+    ssh hawktimus@[address]
+
+- NETWORK DOWN: the browser cannot reach Sanity at all. Check the cable, the
+  Wi-Fi and DNS. `check-connection.sh` shows which.
+- CORS BLOCKED: the network works, but Sanity does not let the browser read the
+  answer, because the address the screen runs from is not in the project's CORS
+  origins. The address is `http://localhost:<port>`. It must be that exact
+  address: `localhost` is not the same as `127.0.0.1`.
+- ACCESS DENIED: Sanity answered 401 or 403. Check that the dataset is still
+  public and that `projectId` and `dataset` in `dashboard/config.js` are right.
+- OTHER ERROR: anything else, such as an error at Sanity or an answer the screen
+  cannot use. The browser console on a laptop shows more.
+
+The last good read is the time of day of the last time the screen read
+Sanity. If there has been none since the screen started, it says there has been
+no good read yet, and the screen shows its saved copy, if it has one. The text
+is gone at once when Sanity answers again. The two lines about the Mini are the
+ones in the next section, and they are only on the screen while the red text is.
+
+The reason is found with a second, plain request to the same Sanity host that
+the browser lets through without letting the page read it. If it gets an
+answer, the host is there and only the permission is missing (CORS). If it
+gets none, the network is down. It is only made after a read fails with no
+answer, never on a good read.
+
+In Studio, Dashboard Settings has a Connection tab with the switch Show
+connection status. Turn it on to keep the text on the screen all the time, for
+setting up or looking into a problem. It then has these lines, in a dark plate
+instead of the red one:
+
+    Sanity OK · last read [time]
+    Tasks [n] · Sponsors [n] · Tips [n] · Subteams [n]
+    People [n] · Extra events [n] · Plan [n] · Custom panels [n]
+    Calendars read [time]
+
+The first line says `Saved copy from [time]` while the screen shows a copy
+saved on the Mini and has not read Sanity yet. The counts are what Sanity sent,
+including items that are switched off or have expired, so they can be higher
+than what is on the screen. Plan is 1 when there is a plan for today and 0 when
+there is not. The calendar time is when the screen last read every calendar
+file, which is not the same as when the Mini downloaded them. It says
+`Calendars not read yet` until the screen has read them all, and again for as
+long as one calendar file cannot be read. To see when the Mini last downloaded
+the calendars, use `sudo journalctl -u teletraan-calendars.service -n 20`.
 
 ## Finding the Mini on the network
 
@@ -283,20 +395,21 @@ To read it on the Mini:
 
     cat /var/lib/teletraan/data/device.json
 
-The screen shows the same thing, but only while the banner says OFFLINE. A
-dark red strip appears across the bottom of the screen, over the ticker, with
-two lines of text:
+The screen shows the same thing, but only while the red connection status text
+is up, which is when Sanity has been out of reach for over two minutes (see
+Checking the connection above). The last two lines of that text are about the
+Mini:
 
     [name] · Wi-Fi [address] · Tailscale [address]
     ssh hawktimus@[address]
 
 The second line uses the Tailscale address if there is one, and otherwise the
-Wi-Fi address. A part that is empty is left out, and nothing shows if the
-Mini has no name or address at all. The strip reads the file again every
-minute while it is showing, so it is at most a minute old, and it goes away at
-once when OFFLINE does. It is never on the screen otherwise. If the strip
-does not appear while OFFLINE shows, the file is missing: see the next
-paragraph.
+Wi-Fi address. A part that is empty is left out, and the two lines are left out
+if the Mini has no name or address at all. The text reads the file again every
+minute while it is showing, so it is at most a minute old, and the lines go
+away at once when Sanity answers again. They are never on the screen
+otherwise, not even when Show connection status is on. If the two lines are
+missing while the text is red, the file is missing: see the next paragraph.
 
 The loop that writes the file starts with the kiosk script. After the new
 `kiosk.sh` has been pulled, the running kiosk still has the old copy, so
@@ -337,6 +450,7 @@ Start with the log for the part that is wrong.
 | `xinit` says "Only console users are allowed to run the X server" | You are not on a real text screen. Run `tty`: if it prints `/dev/pts/...` you are in SSH or in a terminal window. Go to the Mini's own keyboard, press Ctrl+Alt+F3 (hold the Fn key too on a Mac keyboard) and log in as `hawktimus` there. If it still says it on a real text screen, run `sudo dpkg-reconfigure x11-common` and choose "Anybody". If the Mini starts into a desktop with a login picture instead of a text login, it is not set up the way this page assumes: tell the team mentor. The kiosk service does not have this problem, because it starts X on the console itself. |
 | Black screen, nothing | `sudo journalctl -u teletraan-kiosk.service -n 50`. A line about X or a missing package means step 11 is not finished. `sudo systemctl restart teletraan-kiosk.service` starts it again. |
 | "Teletraan I could not start. Trying again in 30 seconds." | The browser works but the dashboard could not start, for example a file would not load or a panel failed. It retries by itself, and a fix that has been pulled is picked up on the next try. To see why, run the same commit on a laptop (`python3 tools/serve.py`) and read the browser console there. |
+| The screen says SANITY UNREACHABLE | Run `check-connection.sh` (see Checking the connection). Its FAIL lines say which part is wrong, and the reason on the screen says which kind of fault it is. |
 | The browser says it cannot connect | `sudo docker compose ps` in `/opt/teletraan/deploy`. If it is not running, run step 9 again. |
 | Calendars are old | `sudo journalctl -u teletraan-calendars.service -n 30`. "The server said no" usually means BAND changed the address. Get a new one and edit `local.env`. The old file stays on screen until a download works. |
 | A change never arrives | `sudo journalctl -u teletraan-pull.service -n 30`, then see the next three rows. |

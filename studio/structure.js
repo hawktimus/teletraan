@@ -6,7 +6,9 @@ export const settingsType = 'dashboardSettings';
 export const settingsId = 'dashboardSettings';
 export const themeType = 'theme';
 export const themeId = 'theme';
-export const singletonTypes = [settingsType, themeType];
+export const demoType = 'demo';
+export const demoId = 'demo';
+export const singletonTypes = [settingsType, themeType, demoType];
 
 // A sidebar entry that opens the list of one kind of content
 function listOf(S, title, type, ordering) {
@@ -42,8 +44,10 @@ export function structure(S) {
       listOf(S, 'Tips and News', 'tipOrNews', byOrder),
       listOf(S, 'Subteams', 'subteam', byOrder),
       listOf(S, 'Leadership', 'person', byOrder),
+      listOf(S, 'Photos', 'photo', { field: '_createdAt', direction: 'desc' }),
       listOf(S, 'Custom Panels', 'customPanel', byOrder),
       pageOf(S, 'Dashboard Settings', settingsType, settingsId),
       pageOf(S, 'Theme', themeType, themeId),
+      pageOf(S, 'Demo', demoType, demoId),
     ]);
 }

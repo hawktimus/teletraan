@@ -9,10 +9,35 @@
     "speed": "normal",
     "frameMetal": "gold",
     "glint": true,
+    "showConnectionStatus": false,
     "pageSeconds": 20,
+    "logoAnimations": true,
+    "logoEntrance": true,
+    "logoSpin": true,
+    "logoSpinEvery": 72,
+    "logoSpinDuration": 1.6,
+    "logoHawk": true,
+    "logoHawkEvery": 24,
+    "logoHawkDuration": 11,
     "nameTransform": true,
     "nameEvery": 300,
     "nameDuration": 1.43,
+    "pageChangeStyle": "alternate",
+    "breakSeconds": 0.6,
+    "frameFinish": "mostly-gold",
+    "silverChance": 10,
+    "photoOrder": "random",
+    "photoSeconds": 16,
+    "nightEnabled": true,
+    "nightStyle": "bounce",
+    "nightStart": "23:30",
+    "nightEnd": "11:30",
+    "nightLogoWidth": 300,
+    "nightSpeed": "normal",
+    "nightPreview": false,
+    "hiddenEnabled": true,
+    "desktopChance": 1,
+    "redEyesChance": 1,
     "crt": { "on": true, "everySeconds": 240, "durationSeconds": 2.7 },
     "contentSource": "sample",
     "switchBackAt": "",
@@ -26,6 +51,15 @@
     "useNow": { "theme": "", "overlay": "", "until": "" },
     "schedule": [],
     "timeZone": "America/New_York"
+  },
+
+  "demo": {
+    "requestedAt": "",
+    "steps": [
+      { "screen": "announcement", "seconds": 30 },
+      { "screen": "night-mode", "seconds": 30 }
+    ],
+    "announcementText": ""
   },
 
   "tasks": [
@@ -88,6 +122,12 @@
     { "role": "Captain", "name": "[Captain name]" },
     { "role": "Mentor", "name": "[Mentor name]" },
     { "role": "Mentor", "name": "[Mentor name]" }
+  ],
+
+  "photos": [
+    { "address": "data/sample/photo-1.svg", "caption": "[Photo caption one]", "credit": "[Name]" },
+    { "address": "data/sample/photo-2.svg", "caption": "[Photo caption two]" },
+    { "address": "data/sample/photo-3.svg", "caption": "" }
   ],
 
   "extraEvents": [

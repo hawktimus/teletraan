@@ -14,12 +14,12 @@ For adjusting the content that gets displayed, Sanity will be used.
 
 Almost everything on the screen is typed into the Studio, which is the editing page for the dashboard. Open it at [Studio address] and sign in.
 
-The list on the left is what you can change: Tasks, Tonight's Plan, Sponsors, Tips and News, Subteams, Leadership, Custom Panels, and Dashboard Settings. Click the one you want, change it, and press **Publish**. Nothing shows on the TV until it is published, and it gets there within a few seconds.
+The list on the left is what you can change: Tasks, Tonight's Plan, Extra events, Sponsors, Tips and News, Subteams, Leadership, Photos, Custom Panels, Dashboard Settings, Theme, and Demo. Click the one you want, change it, and press **Publish**. Nothing shows on the TV until it is published, and it gets there within a few seconds.
 
 - Every item has a **Show on screen** switch and an optional **Hide after** date, so things come down on their own.
 - Every field says how many characters fit on the screen. Studio will not let you publish text that is too long.
 - **Dashboard Settings** is the one page for the whole board: which boards show and in what order, how long each stays, the countdown dates, the announcement times and words, an alert, and the look and the speed.
-- Events are not typed in here. They come from the team's BAND calendars.
+- BAND events are not typed in here. They come from the team's BAND calendars. Events that are not on BAND go in Extra events.
 
 More detail is in docs/editing-content.md.
 
@@ -40,7 +40,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - Tonight's plan
 - Upcoming events and the next event, from the team's BAND calendars
 - Sponsors, with sponsor logos and thank-yous
-- Photos, randomized
+- Photos, uploaded in Sanity and shown at random or newest first
 - Subteam spotlight, leadership, and team leads
 - Task counts and safety days
 - Custom boards that can be built in Studio
@@ -53,6 +53,11 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - Polished gold or silver frame edges, picked in Studio
 - Pages that flip like slats while the frames stay in place
 - The animated hawk logo, and a team name that splits apart and locks back together every few minutes
+- Night mode: from 11:30pm to 11:30am the screen goes black with a bouncing logo, and the picture is never turned off. The times are set in Studio
+- Mechanical page changes: the frame breaks into plates and bars that fold away and click back together around the next page, with screws that turn at the joints. Studio can use these, the slat flip, or take turns
+- Hidden transitions: now and then the whole screen comes apart to show a desktop, or a face with red eyes. They can be played on request from Studio
+- A demo for visitors that plays the announcement and night mode on request from Studio
+- A connection check for the Mini (deploy/scripts/check-connection.sh) and a small text on the screen that says why when Sanity cannot be reached
 
 ## More guides
 

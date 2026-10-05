@@ -36,6 +36,12 @@ export function tooLong(Rule, limit) {
   return Rule.max(limit).error('Too long. Up to ' + limit + ' characters fit.');
 }
 
+// Seconds between plays of an effect: 0 means never, and a number from just
+// above 0 up to the shortest is too often
+export function neverOrAtLeast(shortest) {
+  return value => (typeof value === 'number' && value > 0 && value < shortest ? 'Use 0 for never, or ' + shortest + ' or more.' : true);
+}
+
 export const byOrder = {
   title: 'Order on screen',
   name: 'order',
