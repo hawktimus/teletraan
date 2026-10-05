@@ -94,8 +94,8 @@ see studio/README.md.
    the user, so the group is `hawktimus` too. If `git clone` cannot connect, port 22 may be
    blocked on the school network. Ask the team mentor.
 
-7. **Make the data folder.** The calendars, `photos.json` and `version.txt` go
-   here, outside the repository.
+7. **Make the data folder.** The calendars, `photos.json`, `version.txt` and
+   `device.json` go here, outside the repository.
 
        sudo mkdir -p /var/lib/teletraan/data
        sudo chown hawktimus:hawktimus /var/lib/teletraan/data
@@ -244,18 +244,68 @@ its settings. The Mini can keep running.
   starts" below.
 - For the speed tests on the real hardware, use `docs/try-it-on-the-mini.md`.
 
-While `useSampleContent` in `dashboard/config.js` is `true`, the screen shows
-the sample content in `dashboard/data/sample/` instead of asking Sanity. Every
-piece of sample text is in [square brackets]. It still reads the calendars and
-`photos.json` that the Mini downloads, and uses the sample file for any that
-are missing. It still reloads itself after an update. The browser console may
-show a 404 for a file that is missing from `data/live/`. That is expected.
+The screen asks Sanity for Dashboard Settings first, and Content source there
+says which content to show. While it is Sample, the screen shows the sample
+content in `dashboard/data/sample/` (the content, the calendar and the photo
+list) and does not read the calendars and `photos.json` that the Mini downloads
+or any other content from Sanity. A SAMPLE CONTENT label shows beside the TEAM
+plate. Every piece of sample text is in [square brackets]. It still reloads
+itself after an update, and the browser console shows a 404 for `version.txt`
+in `data/live/` if the Mini has not written it. That is expected.
 
-Once the Studio has content, switch the Mini over by following studio/README.md
-and pushing the one-word change to `config.js`. The Mini asks Sanity from the
-address `http://localhost:8080`, so that address must be a CORS origin in the
-Sanity project settings. If the banner then says OFFLINE and the Mini has no
-earlier copy of the content, the origin is the first thing to check.
+Editors switch between sample and production in Studio (docs/editing-content.md),
+and the Mini follows within about 30 seconds without a restart. The Mini asks
+Sanity from the address `http://localhost:8080`, so that address must be a CORS
+origin in the Sanity project settings (studio/README.md, step 6). If the Mini
+cannot read Dashboard Settings and has no saved copy of them, it falls back to
+`useSampleContent` in `dashboard/config.js`. If the banner says OFFLINE and the
+Mini has no earlier copy of the content, the origin is the first thing to check.
+
+## Finding the Mini on the network
+
+Without access to the school's network tools, the Mini tells you its own
+address. While the kiosk is running, `scripts/kiosk.sh` writes
+`/var/lib/teletraan/data/device.json` once a minute, in the same safe way
+`pull.sh` writes `version.txt`. It has four values:
+
+    {"hostname":"[name]","wifi":"[address]","tailscale":"[address]","time":"[UTC time]"}
+
+- `hostname` is the Mini's name.
+- `wifi` is the first IPv4 address on a Wi-Fi interface (a name that starts
+  with `wl`). A Mini on a network cable has no Wi-Fi address, so this is empty.
+- `tailscale` is the address from `tailscale ip -4`, or the one on the
+  `tailscale0` interface. It is empty when Tailscale is not installed or not
+  connected. This page does not install Tailscale.
+- `time` is when the file was written, in UTC.
+
+A value the Mini cannot find is left empty, and the file is still written.
+To read it on the Mini:
+
+    cat /var/lib/teletraan/data/device.json
+
+The screen shows the same thing, but only while the banner says OFFLINE. A
+dark red strip appears across the bottom of the screen, over the ticker, with
+two lines of text:
+
+    [name] · Wi-Fi [address] · Tailscale [address]
+    ssh hawktimus@[address]
+
+The second line uses the Tailscale address if there is one, and otherwise the
+Wi-Fi address. A part that is empty is left out, and nothing shows if the
+Mini has no name or address at all. The strip reads the file again every
+minute while it is showing, so it is at most a minute old, and it goes away at
+once when OFFLINE does. It is never on the screen otherwise. If the strip
+does not appear while OFFLINE shows, the file is missing: see the next
+paragraph.
+
+The loop that writes the file starts with the kiosk script. After the new
+`kiosk.sh` has been pulled, the running kiosk still has the old copy, so
+restart it:
+
+    sudo systemctl restart teletraan-kiosk.service
+
+The `ssh` line only works if the SSH server is installed (step 2), and the
+Wi-Fi address only from a computer on the same school network.
 
 ## If the TV is not ready when the Mini starts
 

@@ -17,7 +17,7 @@
 // to think about it. The speed setting is handled here too: every time below
 // is a normal-speed time, and pace() says how much to stretch it.
 
-import { speeds } from './config.js';
+import { defaultTeam, speeds } from './config.js';
 
 const page = document.documentElement;
 const motionModes = ['full', 'calm', 'none'];
@@ -32,14 +32,15 @@ let speed = 'normal';
 // the data-fx rules at the top of frame.css.
 export const sequences = {
   banner: {
-    'title':      ['latch-left', 500],
-    'team-plate': ['latch-left', 700],
-    'clock':      ['latch-right', 700],
-    'wordmark':   ['fade', 1000],
-    'subtitle':   ['fade', 1000],
-    'rule':       ['grow', 1100],
-    'school':     ['fade', 1300],
-    'status':     ['fade', 1500],
+    'title':        ['latch-left', 500],
+    'team-plate':   ['latch-left', 700],
+    'clock':        ['latch-right', 700],
+    'wordmark':     ['fade', 1000],
+    'subtitle':     ['fade', 1000],
+    'rule':         ['grow', 1100],
+    'school':       ['fade', 1300],
+    'status':       ['fade', 1500],
+    'sample-badge': ['fade', 1500],
   },
 
   countdown: {
@@ -86,6 +87,7 @@ export function start(options) {
   setSpeed(options.speed || 'normal');
   page.dataset.draw = options.draw === 'fade' ? 'fade' : 'stroke';
   tick();
+  startLookingAtEffects();
 }
 
 // 'full', 'calm' or 'none'. Anything else is ignored, because a wall
@@ -187,9 +189,10 @@ export function exit(panel) {
   return whenDone(panel);
 }
 
-function whenDone(panel) {
+// limitMs is for an effect that can take longer than the usual five seconds
+function whenDone(panel, limitMs) {
   // very old browsers cannot report animations, so wait a fixed time instead
-  if (!panel.getAnimations) return wait(2500 * pace());
+  if (!panel.getAnimations) return wait(limitMs || 2500 * pace());
 
   // animations that never end (the pulsing lamp) are not waited for
   const running = panel.getAnimations({ subtree: true })
@@ -200,7 +203,7 @@ function whenDone(panel) {
 
   // never wait forever, for example if the window is hidden. The limit grows
   // with the pace, or a slow setting would be cut off while it still moves.
-  return Promise.race([done, wait(5000 * pace())]);
+  return Promise.race([done, wait(limitMs || 5000 * pace())]);
 }
 
 
@@ -301,46 +304,220 @@ export function retire(area) {
 }
 
 
-// The team name effect. shell.js passes the two Dashboard Settings (the
-// switch and the seconds between plays) to setNameEffect every time the
-// content changes. The effect itself is the classes and keyframes under "The
-// team name" in frame.css, on the letters that core/name.js builds.
+// Effects that play now and then
 //
-// The logo's show decides when it may start, because the name and the logo
-// must never move together. The show has a quiet moment in every cycle (the
-// act called name), and the effect plays then if it is due. It is due once
-// every nameEverySeconds, counted from the start of the show, so the first
-// play is in the first cycle and the next is in the first cycle after the
-// seconds are up. The seconds are real seconds. The Speed setting changes
-// how fast the effect moves, not how often it plays.
-let nameEffectOn = true;
-let nameEverySeconds = 300;
-let showStartedAt = 0;
-let lastNameSlot = -1;
+// Two effects play on a timer: the team name effect (the letters split and
+// turn, see "The team name" in frame.css) and the screen glitch (the old
+// television, see "The old television effect"). Dashboard Settings has the
+// same three settings for each, under "Logo and effects": a switch, the
+// seconds between plays (0 is never) and the seconds one play lasts. shell.js
+// passes them to setNameEffect and setCrt every time the content changes.
+//
+// This is the one place that decides when an effect may start:
+//   - Only one plays at a time.
+//   - Neither starts while an area is changing page (leaving or arriving).
+//   - The name effect starts only while the logo rests, and the logo does not
+//     move again until the name effect is over, so the two never move together.
+//   - Calm and none motion play neither.
+// An effect that comes due when it may not start waits in line and starts as
+// soon as it may. The line is looked at every 250 ms. Each effect counts its
+// seconds from when it last started, so a long wait means one late play and
+// never a burst of catch-up plays.
+//
+// The seconds between plays are real seconds. The seconds one play lasts are
+// at normal speed, and the Speed setting stretches them like every other time.
+//
+// playNameEffect and playCrt ask for a play now, for the ?demo=crt address,
+// the announcements and the browser console. They wait in the same line, and
+// they play whatever the switch and the seconds between plays say.
 
-export function setNameEffect(on, everySeconds) {
-  nameEffectOn = on !== false;
-  nameEverySeconds = everySeconds > 0 ? everySeconds : 300;
+const lookEveryMs = 250;
+
+// How long the name effect lasts today, measured from the keyframes in
+// frame.css: .8 s for a letter, and each letter after the first starts
+// 45 ms later. On the default name that is the nameDuration in config.js.
+// A different name takes a little more or less. The setting scales it all.
+const nameLetterSeconds = 0.8;
+const nameStaggerSeconds = 0.045;
+
+function nameSeconds(letters, scale) {
+  return (nameLetterSeconds + Math.max(0, letters - 1) * nameStaggerSeconds) * scale;
 }
 
-function playNameEffectIfDue() {
-  const slot = Math.floor((Date.now() - showStartedAt) / 1000 / nameEverySeconds);
-  if (!nameEffectOn || slot === lastNameSlot) return;
+const defaultNameSeconds = nameSeconds(Array.from(defaultTeam.name).length, 1);
 
-  lastNameSlot = slot;
-  playNameEffect();
+// The glitch lasts this long at normal speed. frame.css times its keyframes
+// to 2.6 s of it, and --crt-scale in tokens.css stretches them all together.
+const crtNormalSeconds = 2.7;
+
+// on is the switch, everySeconds is 0 for never, and seconds is how long one
+// play lasts. lastStarted is when it last began, null if it has not yet.
+const effects = {
+  name: {
+    on: true,
+    everySeconds: 300,
+    seconds: defaultNameSeconds,
+    lastStarted: null,
+    mayStart: () => !!document.querySelector('[data-name-effect]') && logoIsResting(),
+    play: playNameEffectNow,
+  },
+  glitch: {
+    on: true,
+    everySeconds: 240,
+    seconds: crtNormalSeconds,
+    lastStarted: performance.now(),
+    mayStart: () => !!document.getElementById('crt') && !!document.getElementById('world'),
+    play: playCrtNow,
+  },
+};
+
+let playing = null; // the name of the effect that is playing now, or null
+let playingDone = Promise.resolve(); // settles when that effect is over
+let waiting = []; // effects that want to start, first come first served: { name, byHand }
+
+export function setNameEffect(on, everySeconds, seconds) {
+  effects.name.on = on !== false;
+  effects.name.everySeconds = everySeconds >= 0 ? everySeconds : 300;
+  effects.name.seconds = seconds > 0 ? seconds : defaultNameSeconds;
 }
 
-// Plays the effect now and says when it is over. It does nothing in calm or
-// none motion. To try it from the browser console on the dashboard page:
+export function setCrt(on, everySeconds, seconds) {
+  effects.glitch.on = on !== false;
+  effects.glitch.everySeconds = everySeconds >= 0 ? everySeconds : 240;
+  effects.glitch.seconds = seconds > 0 ? seconds : crtNormalSeconds;
+}
+
+// Play the name effect or the glitch as soon as the rules above allow. To
+// try one from the browser console on the dashboard page:
 //   import('./frame.js').then(frame => frame.playNameEffect())
-export async function playNameEffect() {
-  const name = document.querySelector('[data-name-effect]');
-  if (motion !== 'full' || !name || name.classList.contains('splitting')) return;
+export function playNameEffect() {
+  askToPlay('name', true);
+}
 
+export function playCrt() {
+  askToPlay('glitch', true);
+}
+
+// An effect wants to start. A play asked for by hand plays even when its
+// switch is off. A play that is going or waiting already is not asked for twice.
+function askToPlay(name, byHand) {
+  if (playing === name || waiting.some(entry => entry.name === name)) return;
+
+  waiting.push({ name: name, byHand: byHand });
+  startNextEffect();
+}
+
+function lookAtEffects() {
+  if (motion !== 'full') return;
+
+  Object.keys(effects).forEach(name => {
+    if (isDue(effects[name])) askToPlay(name, false);
+  });
+  startNextEffect();
+}
+
+function isDue(effect) {
+  if (!effect.on || effect.everySeconds <= 0) return false;
+  if (effect.lastStarted === null) return true;
+  return performance.now() - effect.lastStarted >= effect.everySeconds * 1000;
+}
+
+// Whether a waiting effect still wants to play. One that came due stops
+// wanting to when its switch is turned off, and every one stops when the
+// motion is no longer full.
+function isWanted(entry) {
+  const effect = effects[entry.name];
+  return motion === 'full' && (entry.byHand || (effect.on && effect.everySeconds > 0));
+}
+
+// Starts the first effect in line that may start, if nothing is playing and
+// no area is changing page. Called by askToPlay and every 250 ms.
+function startNextEffect() {
+  waiting = waiting.filter(isWanted);
+  if (playing || areaIsChanging()) return;
+
+  const index = waiting.findIndex(entry => effects[entry.name].mayStart());
+  if (index === -1) return;
+
+  playingDone = runEffect(waiting.splice(index, 1)[0].name);
+}
+
+async function runEffect(name) {
+  const effect = effects[name];
+  playing = name;
+  effect.lastStarted = performance.now();
+
+  try {
+    await effect.play(effect.seconds);
+  } catch (error) {
+    console.error('The ' + name + ' effect failed', error);
+  }
+  playing = null;
+}
+
+// An area is changing page from the moment its old page starts to leave until
+// the new page has arrived (any state but shown, see Persistent areas above)
+function areaIsChanging() {
+  return Array.from(document.querySelectorAll('.area')).some(area => area.dataset.state !== 'shown');
+}
+
+// With no show running (tools/logo.html before Show is pressed) the logo is
+// always at rest
+function logoIsResting() {
+  const logo = document.querySelector('.logo[data-show]');
+  return !logo || !logo.dataset.show || logo.dataset.act === 'rest' || logo.dataset.act === 'name';
+}
+
+// The logo show waits here before an act that moves, if the name effect is
+// still playing
+function whenNameEffectIsOver() {
+  return playing === 'name' ? playingDone : Promise.resolve();
+}
+
+let looking = false;
+
+// Called by start(), so importing this file starts no timer
+function startLookingAtEffects() {
+  if (looking) return;
+  looking = true;
+  setInterval(lookAtEffects, lookEveryMs);
+}
+
+
+// The name effect: frame.css moves the letters while the name has the class
+// splitting. --name-scale stretches all of its times, so the whole effect
+// lasts the seconds in the setting on a name as long as the default.
+async function playNameEffectNow(seconds) {
+  const name = document.querySelector('[data-name-effect]');
+  const scale = Math.round(seconds / defaultNameSeconds * 1000) / 1000;
+  const lastLetter = nameSeconds(name.querySelectorAll('.letter').length, scale) * 1000 * pace();
+
+  name.style.setProperty('--name-scale', String(scale));
   name.classList.add('splitting');
-  await whenDone(name);
+  await whenDone(name, lastLetter + 1000); // a second more than it needs, in case it is held up
   name.classList.remove('splitting');
+}
+
+// The glitch: frame.js adds playing to #crt and crt-on to #world, and
+// frame.css does the rest. It ends by the clock, a little after the last
+// keyframe.
+async function playCrtNow(seconds) {
+  const crt = document.getElementById('crt');
+  const world = document.getElementById('world');
+
+  page.style.setProperty('--crt-scale', String(Math.round(seconds / crtNormalSeconds * 1000) / 1000));
+  crt.classList.add('playing');
+  world.classList.add('crt-on');
+  await wait(seconds * 1000 * pace());
+  stopCrt();
+}
+
+// Also used when the motion setting changes to calm or none in the middle of it
+function stopCrt() {
+  const crt = document.getElementById('crt');
+  const world = document.getElementById('world');
+  if (crt) crt.classList.remove('playing');
+  if (world) world.classList.remove('crt-on');
 }
 
 
@@ -405,7 +582,7 @@ export const logoShow = [
   ['rest', 2],      //  0  the first time round this is boot: the plates fly in
   ['turn', 2, 3],   //  2  one full turn, every third cycle
   ['rest', 1],      //  4
-  ['name', 2],      //  5  the logo is still, so the team name effect may play
+  ['name', 2],      //  5  the logo is still. Like every rest, this is a time the team name effect may play
   ['rest', 6],      //  7
   ['robot', 3],     // 13  the wings fold into legs, the head lifts clear
   ['hawk-in', 2],   // 16  the plates break away and the hawk turns in
@@ -433,8 +610,7 @@ export function startLogo(logo) {
   // Starting a logo again must give it one show, not two
   const id = String(++logoShowCount);
   logo.dataset.show = id;
-  showStartedAt = Date.now();
-  lastNameSlot = -1;
+  effects.name.lastStarted = null; // a new show gets the name effect in its first moment of rest
   runLogoShow(logo, id).catch(error => console.error('The logo show stopped', error));
 }
 
@@ -449,7 +625,10 @@ async function runLogoShow(logo, id) {
       let act = name;
       if (every && (cycle + 1) % every !== 0) act = 'rest';
       if (cycle === 0 && step === 0) act = 'boot';
-      if (act === 'name') playNameEffectIfDue();
+
+      // The name effect starts only while the logo rests (see Effects that
+      // play now and then), so the logo waits for it before it moves
+      if (act !== 'rest' && act !== 'name') await whenNameEffectIsOver();
 
       await playLogoAct(logo, act, seconds);
     }
@@ -474,37 +653,3 @@ export function flyLogo(logo) {
 function restLogos() {
   document.querySelectorAll('.logo[data-show]').forEach(logo => { logo.dataset.act = 'rest'; });
 }
-
-
-// The old television effect. start() sets it going every few minutes.
-let crtEveryMinutes = 0;
-let crtSeconds = 0;
-
-export function setCrt(everyMinutes) {
-  crtEveryMinutes = everyMinutes || 0;
-}
-
-const CRT_MS = 2700; // a little longer than the 2.6 second animations in frame.css, before the pace
-
-export function playCrt() {
-  const crt = document.getElementById('crt');
-  const world = document.getElementById('world');
-  if (motion !== 'full' || !crt || !world || crt.classList.contains('playing')) return;
-
-  crt.classList.add('playing');
-  world.classList.add('crt-on');
-  setTimeout(stopCrt, CRT_MS * pace());
-}
-
-// Also used when the motion setting changes to calm or none in the middle of it
-function stopCrt() {
-  const crt = document.getElementById('crt');
-  const world = document.getElementById('world');
-  if (crt) crt.classList.remove('playing');
-  if (world) world.classList.remove('crt-on');
-}
-
-onSecond(() => {
-  crtSeconds++;
-  if (crtEveryMinutes > 0 && crtSeconds % (crtEveryMinutes * 60) === 0) playCrt();
-});

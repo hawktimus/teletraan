@@ -1,0 +1,7 @@
+{"_id": "extraEvent-2026-10-17-doyenne-east", "_type": "extraEvent", "title": "Doyenne East", "startDate": "2026-10-17", "location": "Douglas Byrd HS", "show": true}
+{"_id": "extraEvent-2026-10-18-thor-east", "_type": "extraEvent", "title": "THOR East", "startDate": "2026-10-18", "location": "Douglas Byrd HS", "show": true}
+{"_id": "extraEvent-2026-10-29-hses-steam-night", "_type": "extraEvent", "title": "HSES STEAM Night", "startDate": "2026-10-29", "show": true}
+{"_id": "extraEvent-2026-12-05-winterfest", "_type": "extraEvent", "title": "Winterfest", "startDate": "2026-12-05", "show": true}
+{"_id": "extraEvent-2026-12-12-holly-days-parade", "_type": "extraEvent", "title": "Holly Days Parade", "startDate": "2026-12-12", "show": true}
+{"_id": "extraEvent-2027-01-09-game-drop", "_type": "extraEvent", "title": "Game Drop", "startDate": "2027-01-09", "show": true}
+{"_id": "extraEvent-2027-04-02-host-wake-county-event", "_type": "extraEvent", "title": "Host: Wake County Event", "startDate": "2027-04-02", "endDate": "2027-04-04", "location": "Holly Springs HS", "show": true}

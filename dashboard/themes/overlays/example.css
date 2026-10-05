@@ -1,0 +1,16 @@
+/* Overlay: Example (placeholder). A holiday overlay is a few accent colours
+   laid over whichever theme is showing. This one makes the yellow and the
+   quiet text paler. It is a placeholder: change the colours, the name and the
+   description in registry.js, or delete it. docs/adding-a-holiday-overlay.md
+   has the steps.
+
+   An overlay may set only the variables listed in overlayVariables in
+   required.js. It must set --yellow and --yellow-faint together, because the
+   second is the first at 16 percent strength. tools/check-themes.mjs tries it
+   on top of every theme and fails if any text becomes hard to read. */
+
+html.overlay-example {
+  --yellow: #ffe58a;
+  --yellow-faint: rgba(255, 229, 138, .16);
+  --lilac: #d9e2ff;
+}

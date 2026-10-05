@@ -1,9 +1,11 @@
-// The next few things on the team calendar, one row each.
+// The next few things on the team calendar and the Extra events, one row each.
+// The list comes from core/events.js, already merged and sorted.
 
 import { rowBarMarkup } from '../../core/plate.js';
 import { doubleSlash } from '../../core/marks.js';
 import { escapeHtml } from '../../core/text.js';
-import { asDate, dayName, formatTimeOfDay } from '../../core/time.js';
+import { rangeText, timeText } from '../../core/events.js';
+import { asDate, dayName } from '../../core/time.js';
 
 // Four rows of 144px fill the 576px body. The row height is in events.css.
 const MAX_EVENTS = 4;
@@ -49,8 +51,11 @@ export function mount(host, content) {
 // The last row has no bar under it, because the frame is there.
 function rowMarkup(event, isLast) {
   const start = asDate(event.start);
-  const when = event.allDay ? 'ALL DAY' : formatTimeOfDay(start);
-  const where = event.location ? ' · ' + event.location : '';
+
+  // The line under the title: the dates if the event lasts several days, the
+  // time unless it is an all-day event, then the place. The day and number
+  // on the left already say when an all-day event starts.
+  const line = [rangeText(event), timeText(event), event.location].filter(Boolean).join(' · ');
 
   return `
     <div class="row" data-slat="item">
@@ -61,7 +66,7 @@ function rowMarkup(event, isLast) {
       </div>
       <div class="details">
         <div class="event-title">${escapeHtml(event.title)}</div>
-        <div class="event-when">${escapeHtml(when + where)}</div>
+        ${line ? `<div class="event-when">${escapeHtml(line)}</div>` : ''}
       </div>
     </div>`;
 }

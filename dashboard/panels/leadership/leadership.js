@@ -1,12 +1,13 @@
-// Coaches, captains and mentors, one card each.
+// Coaches, captains and mentors, a portrait each, three to a page. When there
+// are more people, each time the panel comes round it shows the next page.
 
-import { cardMarkup } from '../../core/plate.js';
 import { doubleSlash } from '../../core/marks.js';
-import { escapeHtml, hasText } from '../../core/text.js';
+import { hasText } from '../../core/text.js';
 import { visibleItems } from '../../core/content.js';
+import { makePages } from '../../core/turns.js';
+import { photoAddress, preloadPhotos, slotMarkup, slotsPerPage, watchPhotos } from '../../core/portrait.js';
 
-// Two columns by three rows. People after the sixth are not shown.
-const MAX_CARDS = 6;
+const nextPage = makePages(slotsPerPage);
 
 // Roles are shown in this order. Any other role comes after them.
 const roleOrder = ['coach', 'captain', 'mentor'];
@@ -23,8 +24,7 @@ function peopleFor(content) {
     // the position keeps people with the same role in the order they were typed,
     // which older browsers do not promise when sorting
     .sort((first, second) => first.rank - second.rank || first.position - second.position)
-    .map(entry => entry.person)
-    .slice(0, MAX_CARDS);
+    .map(entry => entry.person);
 }
 
 export function hasContent(content) {
@@ -32,7 +32,8 @@ export function hasContent(content) {
 }
 
 export function mount(host, content) {
-  const cards = peopleFor(content).map(personCard).join('');
+  const page = nextPage(peopleFor(content));
+  const slots = page.items.map(personSlot).join('');
 
   host.innerHTML = `
     <section class="page leadership">
@@ -44,21 +45,17 @@ export function mount(host, content) {
         </div>
       </div>
 
-      <div class="cards">${cards}</div>
+      <div class="slots">${slots}</div>
     </section>`;
+
+  watchPhotos(host);
+  preloadPhotos(page.upcoming);
 }
 
-// Each card turns over as one piece: its purple plate, its metal edge and
-// its words
-function personCard(person) {
-  const role = String(person.role || '').toUpperCase();
-
-  return `
-    <div class="card" data-slat="item">
-      ${cardMarkup(538, 168)}
-      <div class="card-text">
-        <div class="card-role">${escapeHtml(role)}</div>
-        <div class="card-name">${escapeHtml(person.name)}</div>
-      </div>
-    </div>`;
+function personSlot(person) {
+  return slotMarkup({
+    name: person.name,
+    role: String(person.role || '').toUpperCase(),
+    address: photoAddress(person),
+  });
 }

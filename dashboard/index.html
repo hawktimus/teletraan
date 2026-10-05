@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>Teletraan I</title>
   <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="themes/hawktimus.css">
   <link rel="stylesheet" href="tokens.css">
   <link rel="stylesheet" href="base.css">
   <link rel="stylesheet" href="frame.css">
@@ -223,6 +224,28 @@
         <polygon class="bolt-rim" points="-6,-9 6,-9 11,-5 11,5 6,9 -6,9 -11,5 -11,-5"/>
         <polygon class="bolt-core" points="-4,-6 4,-6 8,-3 8,3 4,6 -4,6 -8,3 -8,-3"/>
       </g>
+      <!-- The silhouette shown for a person with no photo (core/portrait.js).
+           It is a faceted, chamfered bust, drawn on the logo's own grid (see
+           core/logo.js, 1100 x 884) so it belongs with the hawk. The head has
+           the head plate's sides (x 430.5 to 669.5), its top (290.5) and the
+           width of its column (478.5 to 621.5) at the chin (632). The neck is
+           as wide as the jaw plate's top (498.5 to 601.5). The shoulders are
+           as wide as the face plate (326.5 to 773.5), with the cut corners at
+           45 degrees like the wing plates, and the two stripes are slashes like
+           theirs. The view box shows the middle of the grid, so the shoulders
+           run off the bottom. Every colour is a variable (--silhouette-... in
+           tokens.css, which follow the theme), set by the classes in base.css. -->
+      <symbol id="person-silhouette" viewBox="170 190 760 760">
+        <polygon class="bust-light" points="478.5,290.5 550,290.5 550,632 478.5,632 430.5,520 430.5,350"/>
+        <polygon class="bust-shade" points="550,290.5 621.5,290.5 669.5,350 669.5,520 621.5,632 550,632"/>
+        <polygon class="bust-light" points="498.5,632 550,632 550,960 326.5,960 326.5,773.5 400,700 498.5,700"/>
+        <polygon class="bust-shade" points="550,632 601.5,632 601.5,700 700,700 773.5,773.5 773.5,960 550,960"/>
+        <polygon class="bust-cut" points="498.5,632 601.5,632 601.5,668 550,696 498.5,668"/>
+        <polygon class="bust-cut" points="498.5,700 601.5,700 550,775"/>
+        <polygon class="bust-slash" points="346,796 346,826 476,926 476,896"/>
+        <polygon class="bust-slash" points="754,796 754,826 624,926 624,896"/>
+      </symbol>
+
       <g id="metal-shapes"></g>
     </defs>
   </svg>
@@ -240,6 +263,14 @@
           <div id="region-grid2"></div>
         </div>
         <div id="region-ticker"></div>
+      </div>
+      <!-- The Mini's name and addresses, shown only while the banner says
+           OFFLINE (core/device.js). It is after the stage, so it covers the
+           ticker row while it is shown, and before the overlay, so a full
+           screen alert still covers it. -->
+      <div id="device-info" hidden>
+        <div></div>
+        <div></div>
       </div>
       <div id="overlay"></div>
     </div>

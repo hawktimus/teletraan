@@ -16,13 +16,14 @@ export const sanity = {
   apiVersion: '2025-02-19',
 };
 
-// While this is true the screen shows the sample content in data/sample
-// instead of asking Sanity. Set it to false once the Studio has content and
-// the CORS origin is added, as the studio README describes. Until then Sanity
-// would refuse the screen's requests and there would be nothing to show.
-export const useSampleContent = true;
-
-export const sampleMode = sanity.projectId === '' || useSampleContent;
+// Which content the screen shows, sample or production, is chosen by Content
+// source in Dashboard Settings (the Studio has two buttons for it). This flag
+// is only the fallback: it is used when Dashboard Settings cannot be read,
+// for example the very first start with no internet, and no copy of them was
+// saved on this computer. true shows the sample content in data/sample, false
+// shows what the editors published. If the project ID above is empty there is
+// nothing to read, so the screen always shows the sample.
+export const useSampleContent = false;
 
 // Calendar files, photo lists and sample content live in one of these
 // folders. The sample folder is kept in git. The live folder is filled in
@@ -30,14 +31,14 @@ export const sampleMode = sanity.projectId === '' || useSampleContent;
 export const sampleFolder = 'data/sample/';
 export const liveFolder = 'data/live/';
 
-// where the editors' content comes from
-export const dataFolder = sampleMode ? sampleFolder : liveFolder;
-
 // The countdown looks more serious as the date gets closer
 export const threat = {
   tenseDays: 30,
   criticalDays: 7,
 };
+
+// The Content source setting in Dashboard Settings
+export const contentSources = ['production', 'sample'];
 
 // The Speed setting in Dashboard Settings. Each name is how much longer
 // (more than 1) or shorter (less than 1) everything takes: how long a move
@@ -49,13 +50,23 @@ export const metals = ['gold', 'silver'];
 
 // The smallest and largest values the Studio accepts. A number outside them
 // is brought back to the nearest end, so one slip cannot break the screen.
+//
+// For the seconds between plays, 0 means never. Any other number must be at
+// least `shortest`, so a smaller one is brought up to it.
 export const limits = {
   pageSeconds: { min: 8, max: 120 },
-  nameEvery: { min: 30, max: 900 },
+  nameEvery: { min: 0, shortest: 30, max: 900 },
+  nameDuration: { min: 0.5, max: 10 },
+  crtEvery: { min: 0, shortest: 30, max: 3600 },
+  crtDuration: { min: 0.5, max: 10 },
 };
 
 // Used for anything the editors have not filled in yet
 export const defaultSettings = {
+  // production shows the editors' content. sample shows the content in
+  // data/sample until switchBackAt, a time like 2027-01-09T12:00 (or empty).
+  contentSource: 'production',
+  switchBackAt: '',
   motion: 'full',
   speed: 'normal',
   frameMetal: 'gold',
@@ -65,8 +76,15 @@ export const defaultSettings = {
   // seconds of its own, or a ticker with its own, uses those instead. The
   // rows below have none, so they follow this.
   pageSeconds: 20,
+  // The name effect and the screen glitch (Logo and effects in the Studio).
+  // Each has a switch, the seconds between plays (0 is never) and the
+  // seconds one play lasts at normal speed. nameDuration is the length of
+  // the effect on HAWKTIMUS PRIME today: .8 s for a letter plus 45 ms for
+  // each of the 14 letters after the first. crt is the old television
+  // glitch, and 2.7 s is how long frame.js keeps it going today.
   nameTransform: true,
   nameEvery: 300,
+  nameDuration: 1.43,
   countdown: {
     kickoffLabel: 'KICKOFF IN',
     kickoff: '2027-01-09T12:00',
@@ -96,7 +114,7 @@ export const defaultSettings = {
   },
   doneDays: 7,
   safetyDaysSince: '',
-  crt: { on: true, everyMinutes: 4 },
+  crt: { on: true, everySeconds: 240, durationSeconds: 2.7 },
   announcements: [
     {
       show: true,
@@ -118,6 +136,28 @@ export const defaultSettings = {
     },
   ],
   calendars: [{ id: 'team', name: 'Team calendar', show: true }],
+};
+
+// Used for anything missing from the Theme document in the Studio. The
+// Studio starts at the same values, and check-schemas.mjs fails if they differ.
+//   defaultTheme  the id of a theme in themes/registry.js
+//   useNow        a theme and an overlay to show now, whatever the schedule says. Each is empty
+//                 (follow the schedule), an id, or for the overlay 'none'. until is a time, or empty.
+//   schedule      rules: { name, kind: 'theme' | 'overlay', theme or overlay, startDate, endDate, repeatsEveryYear }
+//   timeZone      the time zone the dates in the schedule are read in. Extra events (core/events.js)
+//                 use it too, for their times and for when they are over
+export const defaultThemeSettings = {
+  defaultTheme: 'hawktimus',
+  useNow: { theme: '', overlay: '', until: '' },
+  schedule: [],
+  timeZone: 'America/New_York',
+};
+
+// Used for a person whose "Show photo on screen" switch is missing from the
+// saved content, such as a person added before the switch existed. The
+// Studio field starts at the same value.
+export const defaultPerson = {
+  showPhoto: true,
 };
 
 export const defaultTeam = {

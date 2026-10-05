@@ -419,9 +419,11 @@ svg [data-fx] { transform-box: fill-box; }
   stroke-linejoin: round;
 }
 .logo .slash { fill: var(--logo-edge); }
-.logo .fill-purple { fill: var(--purple); }
-.logo .fill-tail { fill: var(--purple-dark); }
-.logo .fill-far { fill: var(--card); } /* the far wing is the darkest because it is the furthest away */
+/* The logo has colours of its own (set in themes/hawktimus.css), so a theme that
+   recolours the plates does not recolour the hawk unless it sets them too. */
+.logo .fill-purple { fill: var(--logo-purple); }
+.logo .fill-tail { fill: var(--logo-tail); }
+.logo .fill-far { fill: var(--logo-far); } /* the far wing is the darkest because it is the furthest away */
 
 .logo .emblem .shadow,
 .logo .emblem .outline { stroke-width: 52px; }
@@ -724,11 +726,20 @@ html:not([data-motion="full"]) .logo[data-act="fly"] .hawk-far-wing { transform:
    the letters. The whole letter is shown the rest of the time. While the
    effect plays, frame.js gives the name the class splitting.
 
+   Each letter takes .8 s and starts 45 ms after the one before it. Both are
+   multiplied by --name-scale, which frame.js sets from the Name effect
+   duration setting (1 is the normal 1.43 s on HAWKTIMUS PRIME), so the
+   whole effect gets longer or shorter together.
+
    The three pieces draw the same letter as the whole one, through
    data-letter, each clipped to its own slice. The top and bottom slices
    reach 1.5 percent (about a pixel) into the middle one, so no hairline of
    background shows along the cuts while the pieces sit together. */
 
+[data-name-effect] {
+  --letter-time: calc(.8s * var(--name-scale, 1) * var(--pace));
+  --letter-gap: calc(45ms * var(--name-scale, 1) * var(--pace));
+}
 [data-name-effect] .cut {
   position: absolute;
   left: 0;
@@ -740,18 +751,18 @@ html:not([data-motion="full"]) .logo[data-act="fly"] .hawk-far-wing { transform:
 [data-name-effect] .cut-2 { clip-path: polygon(-10% 61.2%, 110% 22.8%, 110% 46.8%, -10% 85.2%); }
 [data-name-effect] .cut-3 { clip-path: polygon(-10% 83.7%, 110% 45.3%, 110% 130%, -10% 130%); }
 
-/* Each letter starts 45 ms after the one before it. --i is its place in the name. */
+/* --i is the letter's place in the name, so letter 3 starts 3 gaps in */
 [data-motion="full"] [data-name-effect].splitting .whole {
-  animation: name-whole calc(.8s * var(--pace)) linear calc(var(--i) * 45ms * var(--pace)) forwards;
+  animation: name-whole var(--letter-time) linear calc(var(--i) * var(--letter-gap)) forwards;
 }
 [data-motion="full"] [data-name-effect].splitting .cut-1 {
-  animation: name-top calc(.8s * var(--pace)) cubic-bezier(.5, 0, .2, 1) calc(var(--i) * 45ms * var(--pace)) forwards;
+  animation: name-top var(--letter-time) cubic-bezier(.5, 0, .2, 1) calc(var(--i) * var(--letter-gap)) forwards;
 }
 [data-motion="full"] [data-name-effect].splitting .cut-2 {
-  animation: name-middle calc(.8s * var(--pace)) cubic-bezier(.5, 0, .2, 1) calc(var(--i) * 45ms * var(--pace)) forwards;
+  animation: name-middle var(--letter-time) cubic-bezier(.5, 0, .2, 1) calc(var(--i) * var(--letter-gap)) forwards;
 }
 [data-motion="full"] [data-name-effect].splitting .cut-3 {
-  animation: name-bottom calc(.8s * var(--pace)) cubic-bezier(.5, 0, .2, 1) calc(var(--i) * 45ms * var(--pace)) forwards;
+  animation: name-bottom var(--letter-time) cubic-bezier(.5, 0, .2, 1) calc(var(--i) * var(--letter-gap)) forwards;
 }
 
 /* The whole letter is hidden while the pieces are out, and back at the very end */
@@ -787,7 +798,13 @@ html:not([data-motion="full"]) .logo[data-act="fly"] .hawk-far-wing { transform:
    #world). Scan lines stay still. A bright bar rolls down twice, the
    picture jumps sideways a few times, and the lines flicker. Nothing here
    flashes brighter than a dim bar, and nothing repeats faster than twice a
-   second. */
+   second.
+
+   What moves: the bar moves with transform, the picture jumps with
+   transform, and the lines flicker with opacity. Nothing else changes.
+   Every time comes from --crt-scale (tokens.css, set by frame.js from the
+   Screen glitch duration), so the whole effect gets longer or shorter
+   together. */
 
 #crt {
   position: absolute;

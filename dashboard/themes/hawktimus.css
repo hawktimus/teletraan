@@ -1,0 +1,74 @@
+/* Theme: Hawktimus. The purple and gold look the screen has always had, and
+   the default.
+
+   A theme file holds CSS variables and nothing else. Sizes, times and
+   everything structural stay in tokens.css. Copy this file to start a new
+   theme (docs/adding-a-theme.md) and change the values.
+
+   These are set with ":root" as well as with the class, so the screen has its
+   colours before any theme is chosen, and a variable a newer theme leaves out
+   falls back to the one below. Every theme file should still set every
+   required variable, because tools/check-themes.mjs fails if one is missing.
+   That check also needs 7 to 1 contrast for the text and background pairs it
+   lists, and it reads the list of required names from required.js.
+
+   REQUIRED variables, and what each is for:
+     --ground          behind everything, and the background of the banner and the full screen announcement
+     --plate           the body of a plate
+     --card            a card standing on a plate
+     --purple          header tabs, the team plate and the ticker tag. The name is old: it is whatever colour the tabs are.
+     --purple-dark     a darker shade of the tab colour, for the shaded side of the silhouette
+     --yellow          the accent, for text and small marks
+     --white           the main text
+     --lilac           the quiet text, such as the subteam beside a task
+     --yellow-faint    the accent at 16 percent strength, for the sweeping bar of light. Write it as rgba().
+     --danger          red lamps, stripes and the bar beside a blocked task
+     --danger-bright   the red text on a dark red plate, such as OFFLINE and the countdown in its last month
+     --danger-plate    the countdown plate, and the band behind a blocked task
+     --danger-hot      the full screen alert, and the countdown in its last week
+     --danger-dark     the unlit blocks of the countdown rail
+     --status-progress the colour of an in progress task
+     --status-next     the colour of an up next task
+     --status-done     the colour of a done task
+     --status-blocked  the colour of a blocked task
+
+   OPTIONAL variables. The three logo ones are written out here as plain
+   colours, and not as the variables above, so the logo keeps the brand colours
+   when a theme changes the plates. A theme sets one only to recolour the logo.
+     --logo-purple     the body, head and near wing of the hawk
+     --logo-tail       the tail
+     --logo-far        the far wing, the darkest because it is the furthest away
+   The four --silhouette variables in tokens.css (the picture shown for a
+   person with no photo) follow the colours above. A theme may set them too.
+
+   The metal of the frame edges is not part of a theme. Frame metal in
+   Dashboard Settings chooses it (the --metal variables in tokens.css). */
+
+:root,
+html.theme-hawktimus {
+  --ground: #09060f;
+  --plate: #29054a;
+  --card: #3d036d;
+  --purple: #6c18b6;
+  --purple-dark: #53048f;
+  --yellow: #faca2a; /* the brand yellow. For text and small marks only. The frame metal called "gold" is a different colour. */
+  --white: #ffffff;
+  --lilac: #c7b1ec;
+  --yellow-faint: rgba(250, 202, 42, .16);
+
+  --danger: #f2452f;
+  --danger-bright: #ff7a45;
+  --danger-plate: #1a0a0d;
+  --danger-hot: #4a1210;
+  --danger-dark: #2a0e0e;
+
+  /* always shown with a shape and a word too */
+  --status-progress: #3fc0f2;
+  --status-next: var(--lilac);
+  --status-done: #5cf1ac;
+  --status-blocked: #f76046;
+
+  --logo-purple: #6c18b6;
+  --logo-tail: #53048f;
+  --logo-far: #3d036d;
+}

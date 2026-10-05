@@ -1,0 +1,30 @@
+/* Theme: Alternate (placeholder). A dark blue look that shows how a second
+   theme is written. It is a placeholder: change the colours, the name and the
+   description in registry.js, or delete it. docs/adding-a-theme.md has the steps.
+
+   Every required variable is set, as in hawktimus.css, which lists what each
+   one is for. The logo keeps the brand colours because this file sets none of
+   the --logo variables. */
+
+html.theme-alternate {
+  --ground: #05080c;
+  --plate: #0f2535;
+  --card: #1a3b52;
+  --purple: #173f5a;
+  --purple-dark: #10304a;
+  --yellow: #ffd470;
+  --white: #ffffff;
+  --lilac: #bcd8ea;
+  --yellow-faint: rgba(255, 212, 112, .16);
+
+  --danger: #e5533d;
+  --danger-bright: #ff8a5c;
+  --danger-plate: #1c0d0b;
+  --danger-hot: #4d1612;
+  --danger-dark: #2b100d;
+
+  --status-progress: #5ccbff;
+  --status-next: var(--lilac);
+  --status-done: #62f0b5;
+  --status-blocked: #ff9a82;
+}

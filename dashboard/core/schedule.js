@@ -35,12 +35,24 @@ export function resumeRotation() {
   paused = false;
 }
 
+// Counts the calls to showPagesNow(). A page that was chosen before a call
+// does not get its full stay.
+let pagesRefreshed = 0;
+
+// Every page on screen leaves early and the next ones are chosen from the
+// newest content. Used when the screen switches between sample and real
+// content, so pages of the old content do not stay for another 20 seconds.
+export function showPagesNow() {
+  pagesRefreshed += 1;
+}
+
 // Waits, but the clock stands still while paused. A time of zero or less (a
 // mistake in the settings) still waits a second, so a loop can never spin
-// without stopping.
-async function hold(milliseconds) {
+// without stopping. since is the value of pagesRefreshed when the page was
+// chosen: if showPagesNow() was called after that, the wait ends.
+async function hold(milliseconds, since) {
   let left = milliseconds > 0 ? milliseconds : 1000;
-  while (left > 0) {
+  while (left > 0 && pagesRefreshed === since) {
     await frame.wait(250);
     if (!paused) left -= 250;
   }
@@ -133,6 +145,7 @@ export function startRotation(region, getPlaylist, getContent) {
     while (true) {
       try {
         await waitWhilePaused();
+        const since = pagesRefreshed;
         const next = pickPage();
 
         // Nothing could be drawn: leave the page that is on screen and try again
@@ -146,7 +159,7 @@ export function startRotation(region, getPlaylist, getContent) {
         onScreen[region] = next && next.topic ? [next.topic] : [];
 
         if (next) {
-          await hold(holdFor(stayFor(region, next.step.seconds, getContent().settings), arrivedAfter));
+          await hold(holdFor(stayFor(region, next.step.seconds, getContent().settings), arrivedAfter), since);
         } else {
           await frame.wait(1000); // nothing to show right now
         }
@@ -172,6 +185,7 @@ export function startTicker(getContent) {
       try {
         await waitWhilePaused();
 
+        const since = pagesRefreshed;
         const content = getContent();
         const module = moduleOf('ticker');
         const lines = module && module.items ? module.items(content) : [];
@@ -192,7 +206,7 @@ export function startTicker(getContent) {
           continue;
         }
         const arrivedAfter = await changePage('ticker', page);
-        await hold(holdFor(stayFor('ticker', content.settings.rotation.tickerSeconds, content.settings), arrivedAfter));
+        await hold(holdFor(stayFor('ticker', content.settings.rotation.tickerSeconds, content.settings), arrivedAfter), since);
       } catch (error) {
         console.error('The ticker hit a problem and will try again', error);
         clearRegion('ticker');
@@ -211,9 +225,10 @@ export function startTogether(ids, getContent, holdSeconds) {
   async function loop() {
     while (true) {
       try {
+        const since = pagesRefreshed;
         const pages = ids.map(id => buildPage(id, getContent()));
         await Promise.all(pages.map(page => changePage(page.region, page)));
-        await hold(holdSeconds * 1000);
+        await hold(holdSeconds * 1000, since);
       } catch (error) {
         console.error('The stress test hit a problem', error);
         ids.filter(id => regionOf(id)).forEach(id => clearRegion(regionOf(id)));

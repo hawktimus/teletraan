@@ -22,8 +22,10 @@
 import * as frame from '../frame.js';
 import { areaMarkup } from './plate.js';
 import { hostFor, placeWholePanel } from './panels.js';
+import { changeThemeNow } from './theme-apply.js';
 
 const areaRegions = ['grid1', 'grid2', 'ticker'];
+const themeRegion = 'grid1'; // a new theme goes on when this region's frame is apart
 const areaOf = {};  // region -> its area element, while it exists
 const showing = {}; // region -> the page on screen there, as buildPage() made it
 
@@ -55,6 +57,8 @@ export async function changePage(region, next) {
   if (old && next) {
     // The old page's last second. The frame stays.
     await frame.leave(area);
+    // The frame is apart now, the moment a waiting theme goes on (core/theme-apply.js)
+    if (region === themeRegion) changeThemeNow();
   } else if (old) {
     // There is no next page, so the frame goes too
     await frame.retire(area);

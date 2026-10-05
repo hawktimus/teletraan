@@ -1,38 +1,30 @@
-/* Colours, the metal on the frame edges, text sizes and the standard movement
-   times. Change a value here and every panel that uses it follows. The logo's
-   own timing is in frame.css, and the digit roll and chevron nudge are in
-   frame.js.
+/* The metal on the frame edges, text sizes and the standard movement times.
+   The colours are in themes/ (see hawktimus.css). Change a value here and
+   every panel that uses it follows. The logo's own timing is in frame.css, and
+   the digit roll and chevron nudge are in frame.js.
 
    Every time here is multiplied by --pace, which frame.js sets from the Speed
    setting in Dashboard Settings (2, 1.5, 1 or .75). Keep calc(... * var(--pace))
    around a new time so it follows the setting too. */
 
 :root {
-  /* colours: flat purple plates on a purple-black ground. The metal is only
-     on the edges (see "The metal" below). */
-  --ground: #09060f; /* behind everything */
-  --plate: #29054a; /* the body of a plate, and the strip beside a header tab */
-  --purple: #6c18b6; /* header tabs, the team plate and the ticker tag */
-  --purple-dark: #53048f; /* the tail of the flying hawk, a shade darker than the plates */
-  --card: #3d036d; /* a card standing on a plate */
-  --yellow: #faca2a; /* the brand yellow. For text and small marks only. The frame metal called "gold" is a different colour. */
-  --white: #ffffff;
-  --lilac: #c7b1ec;
-  --yellow-faint: rgba(250, 202, 42, .16); /* the sweeping bar of light, and the bar of the old television effect */
-  --panel-face: var(--plate); /* the body of a plate and of a full screen frame. A panel can set its own, for example .countdown { --panel-face: var(--danger-plate); } */
+  /* The colours are not here. They are in themes/hawktimus.css (the look the
+     screen has by default) and the other files in themes/, and the page picks
+     one with a class on the html element. The metal on the frame edges is
+     below, and is chosen by Frame metal in Dashboard Settings. */
 
-  /* red is used by the countdown, the alert, and blocked tasks */
-  --danger: #f2452f;
-  --danger-bright: #ff7a45;
-  --danger-plate: #1a0a0d; /* the countdown plate */
-  --danger-hot: #4a1210; /* the alert, and the countdown in its last days */
-  --danger-dark: #2a0e0e; /* the unlit blocks of the countdown rail */
+  /* the body of a plate and of a full screen frame. A panel can set its own,
+     for example .countdown { --panel-face: var(--danger-plate); } */
+  --panel-face: var(--plate);
 
-  /* task status colours. Always shown with a shape and a word too. */
-  --status-progress: #3fc0f2;
-  --status-next: var(--lilac);
-  --status-done: #5cf1ac;
-  --status-blocked: #f76046;
+  /* the silhouette shown for a person with no photo (drawn once in index.html).
+     Two tones for the lit and the shaded faces, a dark one for the cuts
+     between them, and the stripes. They follow the theme's colours, and a
+     theme can set them itself. */
+  --silhouette-light: var(--purple);
+  --silhouette-shade: var(--purple-dark);
+  --silhouette-cut: var(--plate);
+  --silhouette-slash: var(--metal-3);
 
   /* fonts */
   --font-display: 'Tomorrow', 'Trebuchet MS', sans-serif;
@@ -76,8 +68,9 @@
   --time-slam-in: calc(420ms * var(--pace));
   --time-scan: calc(900ms * var(--pace));
   --time-calm: calc(300ms * var(--pace));
-  --time-crt: calc(2.6s * var(--pace)); /* the old television effect, which frame.js times to match */
-  --time-crt-roll: calc(1.2s * var(--pace)); /* one pass of its bright bar, which plays twice */
+  --crt-scale: 1; /* frame.js sets it from the Screen glitch duration: seconds divided by 2.7. 1 is the normal 2.7 seconds */
+  --time-crt: calc(2.6s * var(--crt-scale) * var(--pace)); /* the old television effect, which frame.js times to match */
+  --time-crt-roll: calc(1.2s * var(--crt-scale) * var(--pace)); /* one pass of its bright bar, which plays twice */
   --time-pulse-slow: calc(1.6s * var(--pace)); /* the lamp on the countdown, slowest to fastest as the date nears */
   --time-pulse-medium: calc(1.1s * var(--pace));
   --time-pulse-fast: calc(.7s * var(--pace));

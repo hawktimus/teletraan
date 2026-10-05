@@ -8,11 +8,19 @@ import { announcementsField } from './settingsAnnouncements.js';
 
 const groups = [
   { name: 'screen', title: 'Screen' },
+  { name: 'effects', title: 'Logo and effects' },
   { name: 'countdown', title: 'Countdown' },
   { name: 'alert', title: 'Alert' },
   { name: 'panels', title: 'Panels' },
   { name: 'announcements', title: 'Announcements' },
   { name: 'calendars', title: 'Calendars' },
+  { name: 'source', title: 'Content source' },
+];
+
+// The values are the names in contentSources in dashboard/config.js
+const contentSources = [
+  { title: 'Production', value: 'production' },
+  { title: 'Sample', value: 'sample' },
 ];
 
 const motions = [
@@ -73,12 +81,49 @@ const teamField = defineField({
   ],
 });
 
+// The "Use sample content" and "Use production content" buttons (actions.js)
+// set this field and publish. The dashboard reads it first, before anything
+// else, and follows it while it runs. The starting value is the same as
+// defaultSettings.contentSource in dashboard/config.js.
+const contentSourceField = defineField({
+  name: 'contentSource',
+  title: 'Content source',
+  type: 'string',
+  group: 'source',
+  description: 'Production shows the content you publish here. Sample shows made-up content with a SAMPLE CONTENT label, for trying things out.',
+  options: { list: contentSources, layout: 'radio', direction: 'horizontal' },
+  initialValue: 'production',
+  validation: Rule => [
+    Rule.required().error('Pick production or sample.'),
+    Rule.valid(contentSources.map(source => source.value)).error('Pick production or sample.'),
+  ],
+});
+
+// A time that has gone already makes the screen show production straight away
+function hasPassed(value, context) {
+  const onSample = context.document && context.document.contentSource === 'sample';
+  if (onSample && value && new Date(value) <= new Date()) return 'This time has already passed, so the screen shows production.';
+  return true;
+}
+
+const switchBackAtField = defineField({
+  name: 'switchBackAt',
+  title: 'Switch back to production at',
+  type: 'datetime',
+  group: 'source',
+  description: 'Optional. While the source is Sample, the screen goes back to production at this time. Leave empty to stay on sample until you switch it.',
+  validation: Rule => [
+    Rule.min('2020-01-01T00:00:00Z').max('2099-12-31T23:59:00Z').error('Pick a time between the years 2020 and 2099.'),
+    Rule.custom(hasPassed).warning(),
+  ],
+});
+
 const motionField = defineField({
   name: 'motion',
   title: 'Motion',
   type: 'string',
   group: 'screen',
-  description: 'Full plays all the movement. Calm only fades panels in and out, with no turning, glint or name effect.',
+  description: 'Full plays all the movement. Calm only fades panels in and out, with no turning, glint, name effect or screen glitch.',
   options: { list: motions, layout: 'radio', direction: 'horizontal' },
   initialValue: 'full',
   validation: Rule => Rule.required().error('Pick full or calm.'),
@@ -121,11 +166,20 @@ const glintField = defineField({
   initialValue: true,
 });
 
+// The three settings for the name effect and the three for the screen glitch
+// share a tab, Logo and effects. The seconds between plays can be 0, which
+// means never, or 30 or more. The starting values are the same as
+// defaultSettings in dashboard/config.js: nameDuration is how long the effect
+// takes on HAWKTIMUS PRIME today, and the glitch lasts 2.7 seconds today.
+function neverOrAtLeast(shortest) {
+  return value => (typeof value === 'number' && value > 0 && value < shortest ? 'Use 0 for never, or ' + shortest + ' or more.' : true);
+}
+
 const nameTransformField = defineField({
   name: 'nameTransform',
   title: 'Name effect',
   type: 'boolean',
-  group: 'screen',
+  group: 'effects',
   description: 'Now and then each letter of the team name splits apart, turns and locks back together. Turn it off to keep the name still.',
   initialValue: true,
 });
@@ -134,38 +188,64 @@ const nameEveryField = defineField({
   name: 'nameEvery',
   title: 'Name effect every (seconds)',
   type: 'number',
-  group: 'screen',
-  description: 'How often the team name splits apart and locks back together, from 30 to 900 seconds.',
+  group: 'effects',
+  description: 'Seconds between plays of the name effect, from 30 to 900. Use 0 to never play it.',
   initialValue: 300,
   validation: Rule => [
+    Rule.required().error('Enter the number of seconds, or 0 for never.'),
+    Rule.integer().min(0).max(900).error('Use 0 for never, or a whole number from 30 to 900.'),
+    Rule.custom(neverOrAtLeast(30)),
+  ],
+});
+
+const nameDurationField = defineField({
+  name: 'nameDuration',
+  title: 'Name effect duration (seconds)',
+  type: 'number',
+  group: 'effects',
+  description: 'How long one play of the name effect lasts, from 0.5 to 10 seconds, at Normal speed.',
+  initialValue: 1.43,
+  validation: Rule => [
     Rule.required().error('Enter the number of seconds.'),
-    Rule.integer().min(30).max(900).error('Use a whole number from 30 to 900.'),
+    Rule.min(0.5).max(10).error('Use a number from 0.5 to 10.'),
   ],
 });
 
 const crtField = defineField({
   name: 'crt',
-  title: 'Old TV effect',
+  title: 'Screen glitch',
   type: 'object',
-  group: 'screen',
-  description: 'A short old television effect that plays now and then across the screen.',
+  group: 'effects',
+  description: 'A short old television glitch that plays across the whole screen now and then. Calm motion never plays it.',
   fields: [
     defineField({
       name: 'on',
-      title: 'Play the effect',
+      title: 'Play the glitch',
       type: 'boolean',
-      description: 'Turn this off to stop the effect.',
+      description: 'Turn this off to stop the glitch.',
       initialValue: true,
     }),
     defineField({
-      name: 'everyMinutes',
-      title: 'Minutes between plays',
+      name: 'everySeconds',
+      title: 'Seconds between glitches',
       type: 'number',
-      description: 'How often it plays, from 1 to 60 minutes.',
-      initialValue: 4,
+      description: 'How often it plays, from 30 to 3600 seconds. Use 0 to never play it.',
+      initialValue: 240,
       validation: Rule => [
-        Rule.required().error('Enter the number of minutes.'),
-        Rule.integer().min(1).max(60).error('Use a whole number from 1 to 60.'),
+        Rule.required().error('Enter the number of seconds, or 0 for never.'),
+        Rule.integer().min(0).max(3600).error('Use 0 for never, or a whole number from 30 to 3600.'),
+        Rule.custom(neverOrAtLeast(30)),
+      ],
+    }),
+    defineField({
+      name: 'durationSeconds',
+      title: 'Glitch duration (seconds)',
+      type: 'number',
+      description: 'How long one glitch lasts, from 0.5 to 10 seconds, at Normal speed.',
+      initialValue: 2.7,
+      validation: Rule => [
+        Rule.required().error('Enter the number of seconds.'),
+        Rule.min(0.5).max(10).error('Use a number from 0.5 to 10.'),
       ],
     }),
   ],
@@ -354,15 +434,18 @@ export default defineType({
     glintField,
     nameTransformField,
     nameEveryField,
+    nameDurationField,
+    crtField,
     countdownField,
     alertField,
     pageSecondsField,
     rotationField(),
     doneDaysField,
     safetyDaysField,
-    crtField,
     announcementsField(),
     calendarsField,
+    contentSourceField,
+    switchBackAtField,
   ],
   preview: {
     prepare: () => ({ title: 'Dashboard Settings' }),

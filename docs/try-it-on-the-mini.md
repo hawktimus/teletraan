@@ -66,6 +66,8 @@ for example `?perf&stress`.
 | `finish=metal` | the normal look: purple plates with polished metal edges (a banded gradient, a shadow, a shade and a ridge on every line) |
 | `finish=flat` | the same screen with every edge one plain colour, no shadow, shade, ridge or glint. The shapes, text and movement do not change (the rows still turn over and the frame halves still lift), so any difference in the numbers is the cost of the metal |
 | `metal=gold`, `silver` | the metal of the frame edges, for this page only. The address wins over Dashboard Settings |
+| `theme=<id>` | a theme from `dashboard/themes/registry.js`, for this page only. The address wins over the Theme page in Studio |
+| `overlay=<id>`, `none` | a holiday overlay, or none, for this page only |
 | `glint=on`, `off` | the bright dash that runs round each big frame every few seconds, for this page only. Off shows what the glint costs |
 | `stress` | shows the left panel, the small panel and the ticker together. Each is held for 3 seconds, then all three turn their pages over together, about every 5 seconds. The frames stay. The banner and countdown stay |
 | `draw=fade` | fades the frame lines in instead of drawing them when the frames assemble, to find out whether drawing is the slow part. The assembly happens once, when the page loads |
@@ -73,7 +75,7 @@ for example `?perf&stress`.
 | `show=events` | shows only that panel, with the banner and the countdown. The panel is held for 30 seconds, then its page turns over and arrives again. Use any panel name from `registry.js` |
 | `demo=announcement` | plays the first announcement from Dashboard Settings 4 seconds after the page loads |
 | `demo=alert` | shows a sample alert |
-| `demo=crt` | plays the old television effect every 8 seconds |
+| `demo=crt` | plays the screen glitch (the old television effect) every 8 seconds, waiting while a page is changing or the name effect is playing |
 
 To compare the finishes, run the same address twice, once as it is and once
 with `finish=flat` added. Keep every other switch the same, run both for the

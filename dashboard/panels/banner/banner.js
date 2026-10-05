@@ -20,6 +20,7 @@ export function mount(host, content) {
               ${teamPlateMarkup()}
               <span>TEAM <b class="team-number"></b></span>
             </div>
+            <span class="sample-badge" data-part="sample-badge"></span>
           </div>
 
           <div class="banner-right" data-part="clock">
@@ -68,7 +69,9 @@ function setName(element, name) {
   heading.innerHTML = nameMarkup(name);
 }
 
-// New content: the names, the weather, and whether the content is old
+// New content: the names, the weather, whether the content is old, and
+// whether it is the sample. The badge shows only while it is the sample, and
+// is gone the moment the content is not.
 export function update(element, content) {
   setName(element, content.team.name);
   setText(element, '.team-number', content.team.number);
@@ -84,6 +87,7 @@ export function update(element, content) {
   const status = content.status || {};
   setText(element, '.status', status.offline ? 'OFFLINE' : '');
   element.querySelector('.status').classList.toggle('offline', Boolean(status.offline));
+  setText(element, '.sample-badge', status.source === 'sample' ? 'SAMPLE CONTENT' : '');
 }
 
 // The text only changes once a minute, so only touch the page when it does.

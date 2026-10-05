@@ -1,8 +1,10 @@
 // Title, day, time and place of the first event that has not finished yet.
+// The list comes from core/events.js, already merged and sorted.
 
 import { rowBarMarkup } from '../../core/plate.js';
 import { escapeHtml } from '../../core/text.js';
-import { asDate, formatDate, formatTimeOfDay } from '../../core/time.js';
+import { rangeText, timeText } from '../../core/events.js';
+import { asDate, formatDate } from '../../core/time.js';
 
 // An event with no end time is over when it starts
 function endOf(event) {
@@ -33,12 +35,15 @@ export function mount(host, content) {
 
 function eventMarkup(event) {
   const start = asDate(event.start);
-  const time = event.allDay ? 'ALL DAY' : formatTimeOfDay(start);
+
+  // An event of several days shows its dates, an all-day event shows no time
+  const time = timeText(event);
+  const when = rangeText(event) || formatDate(start);
   const location = event.location ? `<div class="location">${escapeHtml(event.location)}</div>` : '';
 
   return `
     <div class="title">${escapeHtml(event.title)}</div>
     <div class="bar-slot">${rowBarMarkup(628)}</div>
-    <div class="when">${formatDate(start)} · ${time}</div>
+    <div class="when">${escapeHtml(time ? when + ' · ' + time : when)}</div>
     ${location}`;
 }

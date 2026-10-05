@@ -14,7 +14,7 @@ loads, so the times below count from then.
 |--------|-----|--------------|
 | 0 | boot | Only the first pass. The four plates fly in and settle (about 1 second). |
 | 2 | turn | Only every third pass. The logo makes one full turn, drawn flat (1.6 seconds). |
-| 5 | name | The logo is still. The team name effect plays now if it is due. |
+| 5 | name | The logo is still, as in every rest. The team name effect may play (see The team name). |
 | 13 | robot | The wings swing down into legs, the face and jaw rise into a body and the head lifts clear. |
 | 16 | hawk-in | 2 seconds. Each plate pulls back, travels to where its part of the hawk will be and turns edge-on. Then the side view hawk turns in: the body, the wings, the head, and last the tail slides out in two pieces, the near wing unfolds in three panels and the beak snaps out. |
 | 18 | flight | Five wingbeats of 0.8 seconds. Each wing turns about its shoulder and the body rides up and down. |
@@ -31,15 +31,23 @@ logo asked to fly shows the hawk still, with its wings up. In the flat finish
 
 ### The team name
 
-Every Name effect every seconds (Dashboard Settings, 300 by default) each
-letter of the team name splits along two slanted cuts into three pieces. The
-pieces pull apart, turn once and lock back, one letter after another, 45
-milliseconds apart. It takes about 1.5 seconds.
+Every Name effect every seconds (Dashboard Settings, Logo and effects tab, 300
+by default, 0 for never) each letter of the team name splits along two slanted
+cuts into three pieces. The pieces pull apart, turn once and lock back, one
+letter after another. A letter takes 0.8 seconds and each starts 45
+milliseconds after the one before, so on HAWKTIMUS PRIME the whole effect takes
+1.43 seconds. Name effect duration (seconds) sets that total: frame.js turns it
+into `--name-scale`, and every letter time and gap in `frame.css` is multiplied
+by it.
 
-- It starts at the quiet moment (second 5 of a pass), so the name and the logo
-  never move together. The first time is in the first pass, then once every
-  Name effect every seconds. Those are real seconds. The Speed setting changes
-  how fast the effect moves, not how often it plays.
+- It starts only while the logo is resting, so the name and the logo never move
+  together. If the logo is moving when the effect is due, it waits, and the
+  logo does not start a move while the effect is still playing. The first time
+  is in the first rest of the show, then once every Name effect every seconds,
+  counted from when it last started. Those are real seconds. The Speed setting
+  changes how fast the effect moves, not how often it plays.
+- It never starts at the same moment as the screen glitch, or while a page is
+  changing. See "Effects that play now and then" in `dashboard/frame.js`.
 - It is off in calm and none motion, and when Name effect is switched off in
   Dashboard Settings.
 - To try it now, open the dashboard in a browser, open the console and type:
@@ -64,10 +72,15 @@ milliseconds apart. It takes about 1.5 seconds.
   `.logo[data-act="robot"]`. The section "The team name" has the name effect.
 - The list `logoShow` in `dashboard/frame.js` says which act plays and for how
   many seconds. The same file has `startLogo`, `playLogoAct` and
-  `playNameEffect`.
+  `playNameEffect`. The same file has the one scheduler that decides when the
+  name effect and the screen glitch may start.
 - The gradient of the outline, `logo-metal`, is in `dashboard/index.html`. It is
   made from the metal colours in `tokens.css`, so Frame metal in Dashboard
   Settings (gold or silver) changes it with the frames.
+- The three purples of the hawk are the variables `--logo-purple`, `--logo-tail`
+  and `--logo-far` in `dashboard/themes/hawktimus.css`. They are written out as
+  plain colours, so a theme that recolours the plates leaves the logo in its
+  brand colours unless the theme sets those three itself.
 - The size of each logo is in the stylesheet of the panel that shows it
   (`banner.css`, `announcement.css`). `--k` is the box's width divided by 1100.
 - `tools/logo.html` shows the logo large with a button for each act, a slider

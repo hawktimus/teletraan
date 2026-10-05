@@ -12,9 +12,20 @@
     "pageSeconds": 20,
     "nameTransform": true,
     "nameEvery": 300,
+    "nameDuration": 1.43,
+    "crt": { "on": true, "everySeconds": 240, "durationSeconds": 2.7 },
+    "contentSource": "sample",
+    "switchBackAt": "",
     "calendars": [
       { "id": "team", "name": "[Team calendar]", "show": true }
     ]
+  },
+
+  "theme": {
+    "defaultTheme": "hawktimus",
+    "useNow": { "theme": "", "overlay": "", "until": "" },
+    "schedule": [],
+    "timeZone": "America/New_York"
   },
 
   "tasks": [
@@ -77,6 +88,12 @@
     { "role": "Captain", "name": "[Captain name]" },
     { "role": "Mentor", "name": "[Mentor name]" },
     { "role": "Mentor", "name": "[Mentor name]" }
+  ],
+
+  "extraEvents": [
+    { "title": "[Evening event]", "startDate": "2027-03-03", "startTime": "18:30", "endTime": "20:00", "location": "[Place]" },
+    { "title": "[All-day event]", "startDate": "2027-03-05", "location": "[Place]" },
+    { "title": "[Weekend event]", "startDate": "2027-03-12", "endDate": "2027-03-14", "location": "[Place]" }
   ],
 
   "customPanels": [

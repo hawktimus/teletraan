@@ -1,15 +1,23 @@
-// Talks to Sanity: the one query, the addresses, and turning what comes back
+// Talks to Sanity: the two queries, the addresses, and turning what comes back
 // into the content shape in data/sample/content.json. The sample is cleaned the same way.
 
-import { defaultSettings } from '../config.js';
+import { defaultPerson, defaultSettings } from '../config.js';
 import { parseLocalDateTime, sameDay } from './time.js';
 import { fixSettingValues, visibleItems, withDefaults } from './content.js';
+import { tidyPhoto } from './images.js';
 
 // Everything the screen needs, in one request. Lists come back in the order
 // they were created, and normalizeContent puts the ones with an Order first.
 // Sanity leaves out a list the editors have emptied, which would bring the
 // default list back, so coalesce hands over an empty list instead. A Done
 // task with no Finished on date counts as finished when it was last edited.
+// The Theme document is read with the rest. Its empty schedule and its
+// missing fields are the defaults, so nothing special is needed (core/theme.js).
+// Extra events that are switched off are left out here. A missing switch means
+// on. The events are tidied and merged with the BAND ones in core/events.js.
+// A person's photo is sent as a plain address with its size, crop and hotspot
+// (images.js builds the address the screen asks for). The photo's own record
+// has names that start with an underscore, which normalizeContent drops.
 export const contentQuery = `{
   "settings": *[_id == "dashboardSettings"][0] {
     ...,
@@ -17,6 +25,7 @@ export const contentQuery = `{
     "announcements": coalesce(announcements, []),
     "calendars": coalesce(calendars, [])
   },
+  "theme": *[_id == "theme"][0],
   "tasks": *[_type == "task"] | order(_createdAt asc) {
     ...,
     "subteam": subteam->name,
@@ -25,20 +34,43 @@ export const contentQuery = `{
   "sponsors": *[_type == "sponsor"] | order(_createdAt asc),
   "tipsAndNews": *[_type == "tipOrNews"] | order(_createdAt asc),
   "subteams": *[_type == "subteam"] | order(_createdAt asc),
-  "people": *[_type == "person"] | order(_createdAt asc),
+  "people": *[_type == "person"] | order(_createdAt asc) {
+    ...,
+    "photo": photo {
+      "url": asset->url,
+      "width": asset->metadata.dimensions.width,
+      "height": asset->metadata.dimensions.height,
+      crop,
+      hotspot
+    }
+  },
   "plans": *[_type == "plan"] | order(date asc, _createdAt asc),
+  "extraEvents": *[_type == "extraEvent" && show != false] | order(startDate asc, _createdAt asc),
   "customPanels": *[_type == "customPanel"] | order(_createdAt asc)
 }`;
 
+// The screen asks this first, to learn whether to show the sample or the
+// editors' content (source.js). It is tiny, so it is quick and cheap to repeat.
+export const sourceQuery = '*[_id == "dashboardSettings"][0] { contentSource, switchBackAt }';
+
 const requestSeconds = 15;
+const sourceRequestSeconds = 5;
 
 // sanity is { projectId, dataset, apiVersion } from config.js. The ordinary
 // host is used, not the cached one, so a change shows at once.
-export function queryUrl(sanity) {
+function addressOf(sanity, query) {
   return 'https://' + sanity.projectId + '.api.sanity.io/v' + sanity.apiVersion +
     '/data/query/' + sanity.dataset +
-    '?query=' + encodeURIComponent(contentQuery) +
+    '?query=' + encodeURIComponent(query) +
     '&perspective=published';
+}
+
+export function queryUrl(sanity) {
+  return addressOf(sanity, contentQuery);
+}
+
+export function sourceQueryUrl(sanity) {
+  return addressOf(sanity, sourceQuery);
 }
 
 // The stream that says "something changed"
@@ -47,24 +79,43 @@ export function liveEventsUrl(sanity) {
     '/data/live/events/' + sanity.dataset;
 }
 
-// Asks Sanity for everything and returns the query result as it came.
-// Throws when the answer cannot be used, so the caller keeps what it has.
-export async function fetchResult(sanity) {
+// Asks Sanity and returns the whole answer. Throws when there is no answer in
+// time or the status is bad, so the caller keeps what it has.
+async function fetchBody(url, seconds) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), requestSeconds * 1000);
+  const timer = setTimeout(() => controller.abort(), seconds * 1000);
 
   try {
-    const response = await fetch(queryUrl(sanity), { cache: 'no-store', signal: controller.signal });
+    const response = await fetch(url, { cache: 'no-store', signal: controller.signal });
     if (!response.ok) throw new Error('Sanity answered with status ' + response.status);
 
-    const body = await response.json();
-    if (!body || typeof body.result !== 'object' || body.result === null) {
-      throw new Error('Sanity sent no result');
-    }
-    return body.result;
+    return await response.json();
   } finally {
     clearTimeout(timer);
   }
+}
+
+// Asks Sanity for everything and returns the query result as it came.
+// Throws when the answer cannot be used, so the caller keeps what it has.
+export async function fetchResult(sanity) {
+  const body = await fetchBody(queryUrl(sanity), requestSeconds);
+  if (!body || typeof body.result !== 'object' || body.result === null) {
+    throw new Error('Sanity sent no result');
+  }
+  return body.result;
+}
+
+// Asks Sanity for just contentSource and switchBackAt. Gives up after 5
+// seconds, so a slow network does not hold the screen back. When Sanity
+// answers that there is no Dashboard Settings document yet, the result is an
+// empty object and the defaults apply. That is a good answer, not a failure.
+// Throws when there is no usable answer.
+export async function fetchSourceSettings(sanity) {
+  const body = await fetchBody(sourceQueryUrl(sanity), sourceRequestSeconds);
+  if (!isRecord(body) || !('result' in body) || (body.result !== null && !isRecord(body.result))) {
+    throw new Error('Sanity sent no answer about the content source');
+  }
+  return body.result || {};
 }
 
 // Turns a query result into content. Hidden and expired items stay in the
@@ -79,12 +130,14 @@ export function normalizeContent(result, now = new Date()) {
   return withDefaults({
     team: team,
     settings: settings,
+    theme: data.theme,
     tasks: itemsFrom(data.tasks),
     plan: firstShowingPlan(data.plans, now),
     sponsors: itemsFrom(data.sponsors),
     tipsAndNews: itemsFrom(data.tipsAndNews),
     subteams: itemsFrom(data.subteams),
-    people: itemsFrom(data.people),
+    people: itemsFrom(data.people).map(normalizePerson),
+    extraEvents: itemsFrom(data.extraEvents),
     customPanels: customPanelsFrom(data.customPanels),
   });
 }
@@ -99,9 +152,10 @@ export function normalizeSample(raw) {
     plan: isRecord(data.plan) ? withRows(cleanObject(data.plan)) : null,
   });
 
-  ['tasks', 'sponsors', 'tipsAndNews', 'subteams', 'people', 'customPanels'].forEach(name => {
+  ['tasks', 'sponsors', 'tipsAndNews', 'subteams', 'people', 'extraEvents', 'customPanels'].forEach(name => {
     content[name] = itemsFrom(data[name]);
   });
+  content.people = content.people.map(normalizePerson);
   return withDefaults(content);
 }
 
@@ -179,6 +233,18 @@ function firstShowingPlan(plans, now) {
   return plan ? withRows(plan) : null;
 }
 
+// A person with no photo, or one that cannot be used, has no photo at all.
+// A missing "Show photo on screen" takes the default from config.js.
+function normalizePerson(raw) {
+  const person = Object.assign({}, defaultPerson, raw);
+  if (typeof person.showPhoto !== 'boolean') person.showPhoto = defaultPerson.showPhoto;
+
+  const photo = tidyPhoto(person.photo);
+  if (photo) person.photo = photo;
+  else delete person.photo;
+  return person;
+}
+
 function normalizeTeam(team) {
   const result = {};
   Object.keys(team || {}).forEach(key => {
@@ -193,7 +259,8 @@ function normalizeSettings(raw) {
   if (isRecord(settings.rotation)) settings.rotation = normalizeRotation(settings.rotation);
   else delete settings.rotation;
 
-  // The choices, switches and numbers in a range are checked in content.js
+  // The choices, switches and numbers in a range are checked in content.js.
+  // That includes the screen glitch, where an old everyMinutes becomes seconds.
   fixSettingValues(settings);
 
   tidyList(settings, 'announcements', normalizeAnnouncements);

@@ -37,7 +37,13 @@ Add the name to a sample item with a marked placeholder:
 dashboard/core/sanity.js turns Sanity documents into this shape. Every field
 of a task, sponsor, tip, subteam, person, plan or custom panel comes through
 without any change there. A field nobody has filled in is missing, so every
-panel must cope with that.
+panel must cope with that. There are two exceptions. A person's photo is not a
+plain value. Its query line in `contentQuery` asks for the picture's address,
+size, crop and hotspot, and `normalizePerson` cleans it. dashboard/core/images.js
+builds the address the screen asks for. A new picture field would be done the
+same way. An Extra event is tidied in `tidyExtraEvent` in
+dashboard/core/events.js, which copies only the fields it knows, so a new field
+on an Extra event must be added there as well.
 
 ## 3. The panel
 
@@ -60,12 +66,15 @@ Then run this in the studio folder:
 
 Every line must say PASS. It fails if a field has no description, a limit is
 missing or different from the contract, or the dashboard reads a name that has
-no field.
+no field. It also runs `tools/check-themes.mjs`, the colour check, and fails if
+that fails.
 
 ## Where defaults live
 
-- dashboard/config.js holds `defaultSettings` and `defaultTeam`. The dashboard
-  uses them for anything the editors have not filled in.
+- dashboard/config.js holds `defaultSettings`, `defaultTeam`,
+  `defaultPerson` (the starting value of "Show photo on screen") and
+  `defaultThemeSettings`. The dashboard uses them for anything the editors have
+  not filled in.
 - A schema's `initialValue` is what a new item starts with. It is used only
   when an item is created. Items that already exist do not get it, so the
   dashboard default still matters.
@@ -75,11 +84,33 @@ no field.
 ## Settings fields
 
 A new setting goes in studio/schemas/dashboardSettings.js, and its default in
-dashboard/config.js. The lists of panels and announcements have their own
+dashboard/config.js. Give it a one-line description, a starting value
+(`initialValue`) and a validation rule with a smallest and a largest value. If
+it is a switch, one of a few words or a number in a range, also add it to
+`fixSettingValues` in dashboard/core/content.js, with its limits in `limits` in
+config.js, so a missing or silly value becomes the default instead of reaching
+a panel. The timing of the name effect and the screen glitch (the Logo and
+effects tab) is done this way. The lists of panels and announcements have their own
 files, settingsRotation.js and settingsAnnouncements.js. A new field inside one
 of those two lists must also be added to normalizeRotation or
 normalizeAnnouncements in dashboard/core/sanity.js, which copy only the fields
 they know.
+
+Content source and Switch back to production at are the exception to "one
+place": the screen asks Sanity for these two first, with its own small query,
+`sourceQuery` in dashboard/core/sanity.js, before it reads anything else. They
+are also in `defaultSettings`, because they are part of the settings document.
+A new setting that decides which content the screen shows would have to be
+added to `sourceQuery` and to `tidySourceSettings` in dashboard/core/source.js.
+An ordinary setting needs neither.
+
+The Theme page is a separate document, studio/schemas/theme.js, and its
+starting values are `defaultThemeSettings` in dashboard/config.js. The screen
+reads the whole document, and `tidyTheme` in dashboard/core/theme.js copies
+only the fields it knows, so a new Theme field must be added there as well as
+to the schema, to `defaultThemeSettings` and to `theme` in the contract in
+studio/check-schemas.mjs. The list of themes and overlays in the schema comes
+from studio/themes.js (docs/adding-a-theme.md).
 
 When editors delete every row of a list, Sanity removes the list, and the
 dashboard would then use the default list. To make an empty list mean none,
@@ -94,9 +125,12 @@ A task status is filed in several places. A status missing from one of them
 shows as a task with no mark or no colour, or does not show at all. To add a
 status called `review`, change all of these:
 
-1. dashboard/tokens.css: add a colour, `--status-review`, next to the other
-   `--status-` colours. (The two older ones are `--status-progress` for
-   in-progress and `--status-next` for up-next.)
+1. dashboard/themes/hawktimus.css: add a colour, `--status-review`, next to
+   the other `--status-` colours. (The two older ones are `--status-progress`
+   for in-progress and `--status-next` for up-next.) Add it to every other
+   theme file in dashboard/themes/ too, add its name to `requiredVariables` in
+   dashboard/themes/required.js, and add the pair "`--status-review` on
+   `--plate`" to `pairs` in tools/check-themes.mjs.
 2. dashboard/core/marks.js: add a shape for `review` to `statusShapes`.
    Without one the task has an empty mark.
 3. dashboard/base.css: add a `.mark-review` rule next to the other `.mark-`

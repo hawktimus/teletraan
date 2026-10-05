@@ -72,7 +72,10 @@ where Grid 1 has a header. For the ticker start from `panels/ticker/ticker.css`.
 `mount(host, content)` fills `host.innerHTML` with one `<section>`. Its class
 is `page` and then the id. `content` is the data from Sanity, shaped like
 `dashboard/data/sample/content.json`, plus `events`, `photos` and `weather`,
-which may be missing.
+which may be missing. `events` is the BAND events and the Extra events from
+Studio, already merged and sorted (`core/events.js`). Each event has `title`,
+`start`, `end`, `allDay`, `location`, `firstDay` and `lastDay`. `rangeText()`
+and `timeText()` in `core/events.js` write the dates and the time for it.
 
     export function mount(host, content) {
       host.innerHTML = `
@@ -127,8 +130,16 @@ panel. A panel that needs a line, a card or a bar uses one of these:
 - **A card.** `cardMarkup(width, height)` is a purple card with a thin metal
   edge and the bottom right corner cut. Put it first inside a box of that
   size that is `position: relative`, then the text. The text needs
-  `position: relative` too, so that it is drawn above the card. `leadership.js`
-  and `spotlight.js` use cards.
+  `position: relative` too, so that it is drawn above the card. `spotlight.js`
+  uses cards.
+- **A portrait slot.** `slotMarkup({ name, role, address })` in
+  `core/portrait.js` is a framed picture with a name and a role under it.
+  Leave `address` empty and it shows the silhouette. `leadership.js` and
+  `team-leads.js` draw rows of three. They get a page of people at a time
+  from `makePages(slotsPerPage)` in `core/turns.js`, which counts the pages
+  between turns of the panel, and they call `watchPhotos` and `preloadPhotos`
+  from `core/portrait.js`. The slot's rules are in `base.css`, under People
+  portraits.
 - **A straight bar.** `<div class="bar"></div>` is 16px high, or add
   `bar-thin` for 8px. Give it a width. The banner rule is one.
 - **A tag.** `tagMarkup(width)` is the slanted purple tag of the ticker.
@@ -199,11 +210,12 @@ arrives again. Wait for that once. Add `&motion=none` to stop everything moving,
 page fade instead of turn, and `&speed=very-slow` to see everything at half
 speed. Then check:
 
-- the browser console shows no errors from your files. In sample mode it does
-  show 404 lines for files under `data/live/` (the photo list, the calendars
-  and `version.txt`) and a warning about a calendar. That is expected: the
-  Mini downloads those files, so on your computer the dashboard falls back to
-  `data/sample/`.
+- the browser console shows no errors from your files. It does show a 404
+  line for `data/live/version.txt`. That is expected: the Mini writes that
+  file, so your computer does not have it. While the screen is on sample
+  content it reads only `data/sample/`. On production content it also looks for
+  the Mini's calendar and photo files in `data/live/`, and a missing one is a
+  404 too.
 - no text is smaller than 44px
 - nothing crosses the frame or the cut corner
 - everything with text on it turns over, in order from the top, and nothing
@@ -258,8 +270,10 @@ only: every frame line, the thin bars between rows, the edge of a card, the
 bolts and the outline of the logo. It is one shape drawn five times, back to
 front: its shadow (a dark copy moved down and right), its dark rim, its banded
 face, a soft shade on the lower half and a bright ridge on the lit edge. The
-shape is drawn once in `core/plate.js` and the colours come from
-`tokens.css`. The gradients are in `index.html`.
+shape is drawn once in `core/plate.js` and the metal colours come from
+`tokens.css`. The gradients are in `index.html`. The colours of the plates and
+the text are the theme's (`themes/hawktimus.css`, docs/adding-a-theme.md), so a
+panel uses a variable such as `var(--yellow)` and never a colour code.
 
 Four attributes on the `html` element change how it looks. Each has a
 Dashboard Settings field and an address switch, and the address wins.
@@ -316,9 +330,13 @@ small panel or the ticker never needs any of this.
 - **Text sizes** come from `tokens.css`. The smallest is `var(--size-label)`
   (44px), body text is `var(--size-body)` (56px) or `var(--size-body-large)`
   (64px), and headings are `var(--size-heading)` (96px). The big numbers have
-  their own tokens, such as `var(--size-stat)`. Colours come from there too.
-  If no token fits, add one to `tokens.css`. Do not write a size or a colour
-  code in a panel.
+  their own tokens, such as `var(--size-stat)`. Colours are variables too, set
+  by the theme files in `themes/`. If no size token fits, add one to
+  `tokens.css`. A new colour is a new variable in every theme file
+  (docs/adding-a-theme.md). Do not write a size or a colour code in a panel.
+  Text on a plate must be one of the pairs `tools/check-themes.mjs` tests.
+  Add the pair there if your panel puts a colour on a background it does not
+  have yet.
 - **Escape editors' text.** Anything an editor typed goes through
   `escapeHtml()` from `core/text.js` before it goes into a template. It also
   turns a missing field into nothing, so the screen never says `undefined`.

@@ -14,13 +14,18 @@
 //   perf                              show the frame timing readout
 //   show=<panel id>                   show only that panel, for example show=events
 //   demo=announcement|alert|crt       play one of the special effects now
+//   theme=<id>                        show a theme from themes/registry.js, whatever the Theme settings say
+//   overlay=<id>|none                 show an overlay from themes/overlays/registry.js, or none
 
 import * as frame from './frame.js';
 import { panels } from './registry.js';
-import { sampleMode, sampleFolder, liveFolder, defaultSettings, metals, location as place } from './config.js';
+import { sampleFolder, liveFolder, defaultSettings, metals, location as place } from './config.js';
 import { startContent, withDefaults } from './core/content.js';
+import { mergeEvents } from './core/events.js';
+import { showDeviceInfo } from './core/device.js';
+import { checkTheme, showThemeNow, startThemes } from './core/theme-apply.js';
 import { loadPanel, mountPanel, updatePanel } from './core/panels.js';
-import { startRotation, startTicker, startTogether } from './core/schedule.js';
+import { showPagesNow, startRotation, startTicker, startTogether } from './core/schedule.js';
 import { startTakeovers, runAnnouncement, takeoverRunning } from './core/takeover.js';
 
 const params = new URLSearchParams(window.location.search);
@@ -31,11 +36,12 @@ const screen = document.getElementById('screen');
 
 let base = null; // the content from the editors, or the sample
 let status = null;
-const extras = {}; // events, photos and weather: things that do not come from the editors. Each may be missing.
+const extras = {}; // events, photos and weather: things that do not come from the editors. Each may be missing. extras.events are the BAND events only.
 let content = null; // base and extras together, always the newest
 let rereadEvents = null; // set once the calendar reader is running
 let calendarsKey = null; // the calendar list the events were last read for
-let liveReadsToSkip = 0; // sample mode: reads that go straight to the sample calendars
+let showingSample = false; // true while Dashboard Settings has the screen on the sample content
+let extrasStarted = false; // the events and photos are being read, so a change of source has to redo them
 
 window.teletraanStarted = true; // index.html reloads the page if this never happens
 run();
@@ -73,6 +79,13 @@ async function run() {
       setBase(withDefaults(null), { source: 'sanity', updated: null, offline: false });
     }
 
+    // The theme goes on before the first panel is drawn, so nothing flashes in the wrong colours
+    try {
+      await startThemes(getContent, { theme: params.get('theme'), overlay: params.get('overlay') });
+    } catch (error) {
+      console.error('The theme could not be started. The screen keeps the default look.', error);
+    }
+
     startWhatStays();
 
     // Alerts and announcements do not need the weather or events, so they
@@ -83,6 +96,7 @@ async function run() {
     if (!early) {
       const first = await loading;
       setBase(first.content, first.status);
+      showThemeNow(); // the first real content, so its theme goes on at once, not at a page change
     }
 
     await startExtras();
@@ -94,23 +108,64 @@ async function run() {
   }
 }
 
-// Joins the editors' content with the weather, events and photos
+// Joins the editors' content with the weather, events and photos. When the
+// content switches between the sample and the editors' own (Dashboard
+// Settings decides, see core/source.js), the events and photos that were read
+// for the old one are thrown away and read again from the right folder, and
+// the pages on screen are replaced now instead of at their next turn.
 function setBase(newBase, newStatus) {
+  const sample = newStatus.source === 'sample';
+  const switched = extrasStarted && sample !== showingSample;
+
+  showingSample = sample;
   base = newBase;
   status = newStatus;
+
+  if (switched) {
+    delete extras.events;
+    delete extras.photos;
+    calendarsKey = null; // makes rebuild() read the calendars again
+  }
   rebuild();
+  checkTheme(); // a changed theme waits for the next page change
+
+  if (switched) {
+    readPhotos();
+    showPagesNow();
+  }
+}
+
+// The BAND events and the Extra events from the Studio as one list. If
+// merging fails the BAND events are shown as they are, so a bad Extra event
+// never takes the Events panel away.
+function mergedEvents() {
+  try {
+    return mergeEvents(extras.events, base.extraEvents, base.theme.timeZone);
+  } catch (error) {
+    console.error('Could not merge the Extra events with the calendar events', error);
+    return extras.events || [];
+  }
 }
 
 function rebuild() {
   content = Object.assign({}, base, extras, { status: status });
+  content.events = mergedEvents();
   if (!params.has('motion')) frame.setMotion(content.settings.motion); // so a change in Dashboard Settings shows at once
   if (!params.has('speed')) frame.setSpeed(content.settings.speed);
-  frame.setCrt(content.settings.crt.on ? content.settings.crt.everyMinutes : 0);
-  frame.setNameEffect(content.settings.nameTransform, content.settings.nameEvery);
+  const glitch = content.settings.crt;
+  frame.setCrt(glitch.on, glitch.everySeconds, glitch.durationSeconds);
+  frame.setNameEffect(content.settings.nameTransform, content.settings.nameEvery, content.settings.nameDuration);
   if (!metals.includes(params.get('metal'))) setPageSwitch('metal', content.settings.frameMetal);
   if (!['on', 'off'].includes(params.get('glint'))) setPageSwitch('glint', content.settings.glint ? 'on' : 'off');
   updatePanel('banner', content);
   updatePanel('countdown', content);
+
+  // The Mini's address, only while the banner says OFFLINE
+  try {
+    showDeviceInfo(Boolean(status && status.offline));
+  } catch (error) {
+    console.error('Could not update the Mini address lines', error);
+  }
 
   // hiding, renaming or adding a calendar shows at once, not at the next 10 minute read
   const key = JSON.stringify(content.settings.calendars);
@@ -175,6 +230,7 @@ function startWhatComesAndGoes() {
 // than a few seconds.
 async function startExtras() {
   const ready = [];
+  extrasStarted = true;
 
   ready.push(startOptional('./core/weather.js', module => new Promise(resolve => {
     module.startWeather(place, weather => {
@@ -193,45 +249,35 @@ async function startExtras() {
   ready.push(readPhotos());
   setInterval(readPhotos, 10 * 60 * 1000);
 
+  // An event that has finished must leave the list even when nothing else
+  // changes, and a new day starts at midnight in the Theme time zone
+  setInterval(() => {
+    if (content) content.events = mergedEvents();
+  }, 60 * 1000);
+
   watchVersion();
   await Promise.race([Promise.all(ready), frame.wait(3000)]);
 }
 
+// The sample content has its own calendar file and photo list in data/sample.
+// The editors' content uses the files the Mini downloads into data/live. Each
+// reads only its own folder, so the two never mix. A read that finishes after
+// the source has switched belongs to the old source, and is dropped.
 async function readEvents(module) {
   try {
+    const reading = showingSample;
     const now = new Date();
     const calendars = content.settings.calendars;
     calendarsKey = JSON.stringify(calendars);
 
-    // In sample mode the Mini's downloaded files usually do not exist. Once
-    // none is found, the next 5 reads skip the look (and the 404 it causes).
-    let result = { events: [], failed: calendars.map(calendar => calendar.id) };
-    if (liveReadsToSkip > 0) {
-      liveReadsToSkip--;
-    } else {
-      result = await module.loadEvents({ folder: liveFolder + 'calendars/', calendars: calendars, now: now, daysAhead: 60 });
-      if (sampleMode && calendars.length > 0 && result.failed.length === calendars.length) liveReadsToSkip = 5;
-    }
-    let events = result.events;
-    let failed = result.failed;
-
-    // While the screen shows sample content, a calendar the Mini has not
-    // downloaded yet falls back to the sample file, which is marked as sample
-    if (sampleMode && failed.length > 0) {
-      const retry = await module.loadEvents({
-        folder: sampleFolder + 'calendars/',
-        calendars: calendars.filter(calendar => failed.includes(calendar.id)),
-        now: now,
-        daysAhead: 60,
-      });
-      events = events.concat(retry.events);
-      failed = retry.failed;
-    }
+    const folder = (reading ? sampleFolder : liveFolder) + 'calendars/';
+    const result = await module.loadEvents({ folder: folder, calendars: calendars, now: now, daysAhead: 60 });
+    if (reading !== showingSample) return;
 
     // A calendar that could not be read keeps what it had last time, so one
     // failed download does not empty the screen
-    const kept = (extras.events || []).filter(event => failed.includes(event.calendarId) && event.end > now);
-    extras.events = kept.concat(events).sort((first, second) => first.start - second.start);
+    const kept = (extras.events || []).filter(event => result.failed.includes(event.calendarId) && event.end > now);
+    extras.events = kept.concat(result.events).sort((first, second) => first.start - second.start);
     rebuild();
   } catch (error) {
     console.error('Could not read the calendars', error);
@@ -239,19 +285,19 @@ async function readEvents(module) {
 }
 
 async function readPhotos() {
-  const folders = sampleMode ? [liveFolder, sampleFolder] : [liveFolder];
+  const reading = showingSample;
 
-  for (const folder of folders) {
-    try {
-      const response = await fetch(folder + 'photos.json', { cache: 'no-store' });
-      if (!response.ok) continue;
+  try {
+    const response = await fetch((reading ? sampleFolder : liveFolder) + 'photos.json', { cache: 'no-store' });
+    if (!response.ok) return;
 
-      extras.photos = await response.json();
-      rebuild();
-      return;
-    } catch (error) {
-      console.error('Could not read the photo list', error);
-    }
+    const photos = await response.json();
+    if (reading !== showingSample) return;
+
+    extras.photos = photos;
+    rebuild();
+  } catch (error) {
+    console.error('Could not read the photo list', error);
   }
 }
 

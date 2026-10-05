@@ -5,7 +5,7 @@ import { describeWeather } from './weather.js';
 
 const slope = 0.8;
 
-// colours come from tokens.css, and var() only works inside a style attribute
+// colours come from the theme (themes/hawktimus.css), and var() only works inside a style attribute
 const colors = {
   sun: 'var(--yellow)',
   cloud: 'var(--white)',

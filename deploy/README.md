@@ -16,11 +16,14 @@ installing anything on the Mini, and whenever a step needs a login or a key.
 - The kiosk service starts a browser full screen when the Mini boots. A kiosk
   is a browser with no address bar, tabs or menus.
 
-The calendars, `photos.json` and `version.txt` live in
+The calendars, `photos.json`, `version.txt` and `device.json` live in
 `/var/lib/teletraan/data` on the Mini, not in the repository. The container
 shows that folder as `dashboard/data/live/`, so nothing the Mini downloads
-ever shows up in git. The scripts write the calendars and `version.txt`.
-`photos.json` is made by hand, see `docs/rebuilding-the-mini.md`.
+ever shows up in git. The scripts write the calendars, `version.txt` and
+`device.json` (the Mini's name and addresses, written every minute by
+`kiosk.sh`, see "Finding the Mini on the network" in
+`docs/rebuilding-the-mini.md`). `photos.json` is made by hand, see
+`docs/rebuilding-the-mini.md`.
 
 Do not delete `dashboard/data/live/.gitkeep`: Docker needs the empty folder
 to attach the data folder to.
@@ -34,7 +37,7 @@ to attach the data folder to.
 | `local.example.env` | The template for `local.env`, with placeholders only |
 | `scripts/pull.sh` | Gets new commits and writes `version.txt` so an open dashboard reloads |
 | `scripts/fetch-calendars.sh` | Downloads each calendar named in `local.env`, over https only |
-| `scripts/kiosk.sh` | Opens the browser full screen with the right settings, or any page given after its name |
+| `scripts/kiosk.sh` | Opens the browser full screen with the right settings, or any page given after its name. Also writes `device.json` every minute while the browser runs |
 | `scripts/install-timers.sh` | Copies the unit files into place and turns on the two timers |
 | `systemd/*.service`, `*.timer` | What runs, and how often |
 

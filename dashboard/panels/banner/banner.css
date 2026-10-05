@@ -44,6 +44,7 @@
 }
 
 .banner .banner-left {
+  position: relative; /* the sample badge is placed from this corner */
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
@@ -169,3 +170,29 @@
 }
 .banner .status.offline { color: var(--danger-bright); }
 .banner .status:empty { display: none; }
+
+/* SAMPLE CONTENT is on the screen the whole time the sample is showing, so
+   nobody mistakes it for the team's real content. Solid yellow with dark
+   text, the highest contrast on the screen. It sits to the right of the TEAM
+   plate, in room that is otherwise empty, between the team name above and the
+   clock on the right. It is taken out of the flow (position: absolute), so
+   showing or hiding it can never move anything else. It does not move itself:
+   a badge that came and went would not be a permanent label. banner.js leaves
+   it empty when the content is the editors' own, and an empty badge is hidden. */
+.banner .sample-badge {
+  position: absolute;
+  /* the plate is 520px wide. The name above it is 76px high, then the 8px
+     gap, and the plate is 76px high, so 102px puts the 44px badge level with
+     the clear purple of the plate. */
+  left: 544px;
+  top: 102px;
+  box-sizing: border-box;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 6px;
+  background: var(--yellow);
+  color: var(--ground);
+  font: 700 var(--size-label)/44px var(--font-display);
+  white-space: nowrap;
+}
+.banner .sample-badge:empty { display: none; }

@@ -81,6 +81,34 @@ html, body {
   height: 1080px;
 }
 
+/* The Mini's name and addresses (core/device.js). It is shown only while the
+   banner says OFFLINE, and it is taken out of the flow (position: absolute),
+   so showing or hiding it moves nothing. It covers the ticker row and the gap
+   above it while it is shown: from the bottom of the large panels (y 964) to
+   the bottom of the ticker (y 1056) is 92px, and two lines of 44px text and a
+   4px line along the top fill that exactly. It has its own solid plate in the
+   warning colour, so it reads whatever is moving behind it. It comes after
+   the stage in index.html and before #overlay, so a full screen alert covers
+   it like everything else. */
+#device-info {
+  position: absolute;
+  left: 40px;
+  bottom: 24px;
+  width: 1840px;
+  box-sizing: border-box;
+  padding: 0 24px;
+  border-top: 4px solid var(--danger);
+  background: var(--danger-plate);
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+#device-info > div {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#device-info > div:empty { display: none; }
+#device-info > div:first-child { color: var(--white); }
+#device-info > div:last-child { color: var(--yellow); }
+
 .panel { position: relative; }
 
 .metal-defs {
@@ -263,3 +291,82 @@ html, body {
   stroke: var(--status-done);
   stroke-width: 9px;
 }
+
+/* People portraits (core/portrait.js). The Leadership and Team Leads panels
+   draw a row of up to three slots. A slot is 352 wide: a portrait 296 square,
+   then the name and the role under it. The row has a box of its own, 1096 by
+   516, below the header. The slots sit at the top of the row and the row sits
+   in the middle of the box, so a page of short names is not left at the top
+   with an empty strip under it. The worst case, a name on two lines and a role
+   on two lines, is 296 + 8 + 120 + 92 = 516 and fills the box, so it ends at
+   y = 660 of the panel. The frame's cut corner runs from (1148, 640) to
+   (1068, 704). The last line of text in the last slot is short enough to stay
+   inside it, which was measured with names of 17 characters and subteam names
+   of 11. The text sizes are the label and body sizes in tokens.css. */
+.slots {
+  position: absolute;
+  left: 28px;
+  top: 144px;
+  width: 1096px;
+  height: 516px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 352px;
+  column-gap: 20px;
+  justify-content: center; /* a page with one or two people sits in the middle */
+  align-content: center;
+  align-items: start;
+}
+.slot { text-align: center; }
+
+/* The portrait is a card (cardMarkup, 296 square) with the picture inside its
+   edge. The picture is 280 square, 8px in. Its bottom right corner is cut to
+   run beside the card's own cut corner, 6px inside it. */
+.portrait {
+  position: relative;
+  width: 296px;
+  height: 296px;
+  margin: 0 auto 8px;
+}
+.portrait-photo {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  width: 280px;
+  height: 280px;
+  overflow: hidden;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 28.9px), calc(100% - 36.2px) 100%, 0 100%);
+}
+.portrait-photo img,
+.silhouette {
+  display: block;
+  width: 280px;
+  height: 280px;
+}
+
+/* A long name goes on a second line and is cut after that. The first three
+   lines of rules are how a browser cuts text after a number of lines. */
+.slot-name,
+.slot-role {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: normal; /* the screen keeps every line on one line, these two may wrap */
+}
+.slot-name { font: 500 var(--size-body)/60px var(--font-text); }
+.slot-role {
+  color: var(--yellow);
+  font: 600 var(--size-label)/46px var(--font-display);
+}
+.slot-name:empty,
+.slot-role:empty { display: none; }
+
+/* The silhouette is drawn once in index.html. These colours come from
+   tokens.css, and a variable reaches inside a <use>, so a theme that sets the
+   variables recolours it. */
+.bust-light { fill: var(--silhouette-light); }
+.bust-shade { fill: var(--silhouette-shade); }
+.bust-cut { fill: var(--silhouette-cut); }
+.bust-slash { fill: var(--silhouette-slash); }
