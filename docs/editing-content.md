@@ -37,12 +37,17 @@ received.
 - Sponsors: name, tier, a short line about them, a thank-you line for the
   ticker, and the web address of their logo.
 - Tips and News: the lines that run along the bottom of the screen.
-- Subteams: each subteam and its lead. Turn on "In the spotlight" to feature
-  one. Add a subteam here before you use it on a task. The Team Leads panel
-  shows every subteam that has a lead, three to a page (see Photos of people).
+- Subteams: each subteam, its lead and the students on it. Turn on "In the
+  spotlight" to feature one. Add a subteam here before you use it on a task.
+  The Team Leads panel shows every subteam that has a lead, three to a page
+  (see Photos of people). The Subteam roster panel shows the lead and the
+  members of each subteam (see Subteam members).
 - Leadership: coaches, captains and mentors, each with an optional photo. The
   panel lists coaches first, then captains, then mentors, three to a page (see
-  Photos of people).
+  Photos of people). Pick the role, type the name, and type a title if you
+  want something other than the role under the name, for example Head Coach.
+  The role also colours the frame round the portrait: Coach is red, Captain
+  is gold and Mentor is silver.
 - Photos: the pictures for the Photo panel. Each has a picture you upload, an
   optional short caption and the first name of the person who took it. See
   "Photos" below.
@@ -211,7 +216,10 @@ next page change tries the next photo. While the screen shows the sample content
 
 Each person in Leadership has a Photo and a "Show photo on screen" switch. The
 Leadership and Team Leads panels show a framed portrait for each person, with
-the name and the role under it. Three portraits fit on a page. If there are
+the name and the title under it (the role if no title is typed). The role
+colours the frame: Coach red, Captain gold and Mentor silver. The colours are
+the `roleMetals` list in `dashboard/panels/leadership/leadership.js`. Three
+portraits fit on a page. If there are
 more people, the panel shows the next page each time it comes round, and the
 text stays the same size. It never gets smaller to fit more people.
 
@@ -234,7 +242,8 @@ the TV has lost its internet connection. The TV tries again the next time the
 page comes round.
 
 A subteam has only the name of its lead, with no photo of its own. The Team
-Leads panel shows the photo of the person in Leadership whose name is the same
+Leads panel and the Subteam roster panel show the photo of the person in
+Leadership whose name is the same
 as the lead's name, for example the lead Sam and the person Sam. The capital
 letters and spaces at the ends do not matter, but the spelling does. If nobody
 in Leadership has that name, or that person is hidden, the lead shows the
@@ -242,6 +251,40 @@ silhouette.
 
 Photos in Studio can be opened by anyone who has their web address. Only
 upload a photo that may be shown.
+
+## Subteam members
+
+Each subteam has a Members list. Add one line for each student on the subteam.
+The Subteam roster panel shows one subteam on a page: the team lead as a
+portrait on the left, with TEAM LEAD under the name, and the members in two
+columns on the right. The subteam's name is the title of the page.
+
+- Type first names only, with no numbers. If two students have the same first
+  name, add a last initial to each, such as Sam K.
+- A name is up to 12 characters and a subteam has up to 24 members. Studio
+  refuses a name that is too long, a line left empty, and the same name twice
+  (capital letters do not matter).
+- Drag the dots on the left of a line to change the order. The names show in
+  the order of the list.
+- A page holds 16 names, 8 in each column. A subteam with more members goes on
+  to a second page, with the lead shown again. The text never gets smaller to
+  fit more names.
+- Each time the panel comes round it shows the next page, one subteam after
+  another in the order of the Subteams list, and then starts again.
+- The lead is the Lead field of the subteam. The photo is the one of the person
+  in Leadership with the same name (see Photos of people), or the silhouette.
+- A subteam with a lead and no members shows the lead alone. A subteam with
+  members and no lead shows the names alone. A subteam with neither is left
+  out, and so is one that is hidden or has passed its "Hide after" date.
+- The heading always says ROSTER. The name of the subteam is shown in capital
+  letters in the corner tag, where all 11 letters the field allows fit.
+
+To put the panel on the screen, open Dashboard Settings, then the Panels tab,
+then "Large panels". A Studio set up before this panel existed has a saved list
+without it, and a saved list is shown as it is, so the panel stays off until you
+add it. Use "Add item", pick Subteam roster, and drag the row to where you want
+it in the list. A row that is already there only needs "Show on screen" turned
+on. Click Publish.
 
 ## Order
 
@@ -350,8 +393,11 @@ Announcements, Night mode, Hidden, Calendars, Content source and Connection.
   running.
 - Alert: turn it on to cover the whole screen with a headline and a message.
   Turn it off to take it down, or set "Take down at" to do it automatically.
-- Panels: which panels appear, in what order and for how long. Drag a row to move
-  it. Turn off "Show on screen" to skip a panel. "Seconds per page" is at the
+- Panels: which panels appear, in what order and for how long. In Dashboard
+  Settings open the Panels tab. "Large panels" and "Small panels" are lists:
+  point at the dots on the left of a row, then drag the row up or down. The
+  panels show in the order of the list, top first, and the order applies on
+  the next page change. Turn off "Show on screen" to skip a panel. "Seconds per page" is at the
   top. It is how long a large panel stays up, from 8 to 120, and the starting
   value is 20. A small panel stays three quarters as long and a ticker line one
   and a half times as long, so at 20 seconds a small panel stays 15 and a

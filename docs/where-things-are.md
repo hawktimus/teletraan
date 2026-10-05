@@ -83,7 +83,8 @@ editors can sign in from anywhere.
                               decides sample or production content from Dashboard Settings,
                               images.js builds the addresses of photos from Sanity, photos.js says
                               which photos the Photo panel shows and in what order, portrait.js
-                              draws a person's framed portrait with the name under it, theme.js
+                              draws a person's framed portrait with the name under it, roster.js
+                              makes the pages of the Subteam roster panel, theme.js
                               works out which theme and overlay apply, theme-apply.js puts them on the page,
                               transitions.js chooses the style and the metal of the next page change,
                               events.js merges the BAND events with the Extra events from Studio,
@@ -122,7 +123,7 @@ editors can sign in from anywhere.
       test-weather.mjs        checks for the weather reader and its pictures
       test-content.mjs        checks for the code that reads the editors' content, the photo
                               addresses, which photos show and in what order, the pages of
-                              portraits, the merging of events and the
+                              portraits and of the subteam roster, the subteam members, the merging of events and the
                               lines of the Mini's address, and the reasons and the lines of the
                               connection status text
       test-themes.mjs         checks for which theme and overlay apply, and for putting them on the page
@@ -275,6 +276,13 @@ alone.
   Three portraits fit on a page, set by `slotsPerPage` in `core/portrait.js`.
   The starting value of the switch is `defaultPerson.showPhoto` in
   `dashboard/config.js` and its copy in `studio/schemas/person.js`.
+- **Subteam members.** The Members list of a subteam in Studio
+  (`studio/schemas/subteam.js`): first names, up to 24 of 12 characters, with no
+  digits and no repeats. The screen tidies them in `normalizeSubteam` in
+  `core/sanity.js` (trimmed, no repeats, at most 24, always a list).
+  `core/roster.js` makes the pages of the Subteam roster panel, 16 names to a
+  page, and the panel is in `panels/roster/`. Its two columns are 344px wide in
+  `roster.css`, which holds a name of 12 characters at 56px.
 - **Events that are not on BAND.** Extra events in Studio
   (`studio/schemas/extraEvent.js`), described in docs/editing-content.md. The
   screen reads them with the rest of the content (`extraEvents` in

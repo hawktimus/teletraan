@@ -45,12 +45,13 @@ const contract = {
   subteam: withFlags({
     name: text(11),
     lead: text(17),
+    members: strings(12, 24),
     spotlight: 'boolean',
     spotlightHeadline: text(40),
     spotlightText: text(100),
     order: 'number',
   }),
-  person: withFlags({ role: 'string', name: text(17), photo: 'image', showPhoto: 'boolean', order: 'number' }),
+  person: withFlags({ role: 'string', name: text(17), title: text(22), photo: 'image', showPhoto: 'boolean', order: 'number' }),
   photo: withFlags({ image: 'image', caption: text(36), credit: text(14) }),
   customPanel: withFlags({ title: text(7), blocks: { kind: 'blocks', max: 6 }, order: 'number' }),
   dashboardSettings: {
@@ -1459,6 +1460,60 @@ function checkPhotos() {
   return problems;
 }
 
+// The members of a subteam are first names for the Subteam roster panel. Each
+// one is needed, has no digits and stops at 12 characters, the list stops at
+// 24 and refuses the same name twice in any capitals, and it starts empty.
+// The sample subteams have to follow the same rules.
+function checkSubteamMembers() {
+  const problems = [];
+  const field = fieldAt('subteam.members');
+  if (!field) return ['subteam.members is missing'];
+
+  const member = field.of && field.of[0];
+  const eachRules = member ? constraintsOf(member) : [];
+  const listRules = constraintsOf(field);
+  const eachCheck = constraintNamed(eachRules, 'custom');
+  const listCheck = constraintNamed(listRules, 'custom');
+
+  need(problems, constraintNamed(eachRules, 'required'), 'each member should be required, so an empty line is refused');
+  need(problems, Array.isArray(field.initialValue) && field.initialValue.length === 0, 'subteam.members should start as an empty list');
+  need(problems, /first names/i.test(field.description || ''), 'the subteam.members description should say first names only');
+  need(problems, /drag/i.test(field.description || ''), 'the subteam.members description should say that the order can be changed by dragging');
+  need(problems, constraintNamed(listRules, 'required') === undefined, 'subteam.members should be optional');
+
+  if (!eachCheck) {
+    problems.push('each member should be checked: no digits, and not only spaces');
+  } else {
+    const run = eachCheck.args[0];
+    ['Sam', 'Mary Anne', "O'Neil", 'Zoë', 'Sam K.', '[Student A]'].forEach(good => need(problems, run(good) === true, 'the member check refuses "' + good + '"'));
+    ['Sam2', '7', '   ', ''].forEach(bad => need(problems, typeof run(bad) === 'string' && run(bad).length > 0, 'the member check accepts "' + bad + '"'));
+  }
+
+  if (!listCheck) {
+    problems.push('the list of members should be checked for the same name twice');
+  } else {
+    const run = listCheck.args[0];
+    [undefined, [], ['Sam'], ['Sam', 'Alex'], ['Sam', '', 'Alex']].forEach(good => need(problems, run(good) === true, 'the repeat check refuses ' + JSON.stringify(good)));
+    [['Sam', 'sam'], ['Sam', ' SAM '], ['Alex', 'Sam', 'alex']].forEach(bad => need(problems, typeof run(bad) === 'string' && run(bad).length > 0, 'the repeat check accepts ' + JSON.stringify(bad)));
+  }
+
+  // The list in the Studio shows how many members a subteam has
+  const preview = typeByName('subteam').preview;
+  need(problems, preview.select.members === 'members', 'the subteam list should select the members');
+  need(problems, preview.prepare({ title: 'Build', members: ['a', 'b', 'c'] }).subtitle.indexOf('3 members') !== -1, 'the subteam list should say how many members');
+  need(problems, preview.prepare({ title: 'Build', members: ['a'] }).subtitle.indexOf('1 member') !== -1, 'the subteam list should say 1 member');
+  need(problems, preview.prepare({ title: 'Build', members: [] }).subtitle.indexOf('member') === -1, 'the subteam list should not mention members when there are none');
+
+  // The sample content follows the same rules as the Studio
+  world.sample.subteams.forEach(subteam => {
+    const names = subteam.members || [];
+    need(problems, names.length <= 24, 'sample subteam ' + subteam.name + ' has more than 24 members');
+    names.forEach(name => need(problems, name.length <= 12 && (!eachCheck || eachCheck.args[0](name) === true), 'sample member ' + name + ' breaks the Members rules'));
+    need(problems, !listCheck || listCheck.args[0](names) === true, 'sample subteam ' + subteam.name + ' has the same member twice');
+  });
+  return problems;
+}
+
 // A person's photo and its switch. The photo is optional, its description has
 // the advice for the people who upload, the switch starts at the value
 // defaultPerson has in config.js, and the sample people have no photos.
@@ -1917,6 +1972,7 @@ async function main() {
   check('the Hidden tab agrees with dashboard/config.js and the dashboard registry, and the Play buttons work', checkHiddenTab);
   check('Content source and the switch back time agree with dashboard/config.js, and the two buttons work', checkContentSource);
   check('Show connection status is a switch that starts off, in the Connection tab', checkConnectionStatus);
+  check('a subteam has an optional list of first names, up to 24 of 12 characters, with no repeats', checkSubteamMembers);
   check('a person has an optional photo and a switch that starts on, as in dashboard/config.js', checkPersonPhoto);
   check('a photo has a picture, a short caption and a first name credit, and the Photos tab agrees with dashboard/config.js', checkPhotos);
   check('the themes and overlays in studio/themes.js are the ones in the dashboard registries', checkThemeLists);

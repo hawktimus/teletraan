@@ -1,3 +1,3 @@
-example,role,name,showPhoto,order,show,expires
-type person,one of Coach/Captain/Mentor; required; id 1,text; required; max 17; id 2,yes/no; default yes,whole number,yes/no; default yes,datetime
-EXAMPLE,Captain,[Person name],yes,1,yes,
+example,role,name,title,showPhoto,order,show,expires
+type person,one of Coach/Captain/Mentor; required; id 1,text; required; max 17; id 2,text; max 22,yes/no; default yes,whole number,yes/no; default yes,datetime
+EXAMPLE,Captain,[Person name],,yes,1,yes,

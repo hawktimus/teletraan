@@ -27,6 +27,7 @@ export const panels = [
   { id: 'photo', region: 'grid1', topic: 'photo' },
   { id: 'leadership', region: 'grid1', topic: 'people' },
   { id: 'team-leads', region: 'grid1', topic: 'subteams' },
+  { id: 'roster', region: 'grid1', topic: 'subteams' },
   { id: 'custom', region: 'grid1', topic: 'custom' },
 
   { id: 'task-counts', region: 'grid2', topic: 'tasks' },

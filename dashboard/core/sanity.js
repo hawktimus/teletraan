@@ -200,7 +200,7 @@ export function normalizeContent(result, now = new Date()) {
     plan: firstShowingPlan(data.plans, now),
     sponsors: itemsFrom(data.sponsors),
     tipsAndNews: itemsFrom(data.tipsAndNews),
-    subteams: itemsFrom(data.subteams),
+    subteams: itemsFrom(data.subteams).map(normalizeSubteam),
     people: itemsFrom(data.people).map(normalizePerson),
     photos: photosFrom(data.photos),
     extraEvents: itemsFrom(data.extraEvents),
@@ -221,6 +221,7 @@ export function normalizeSample(raw) {
   ['tasks', 'sponsors', 'tipsAndNews', 'subteams', 'people', 'extraEvents', 'customPanels'].forEach(name => {
     content[name] = itemsFrom(data[name]);
   });
+  content.subteams = content.subteams.map(normalizeSubteam);
   content.people = content.people.map(normalizePerson);
   content.photos = itemsFrom(data.photos).filter(photo => typeof photo.address === 'string');
   return withDefaults(content);
@@ -305,11 +306,40 @@ function firstShowingPlan(plans, now) {
 function normalizePerson(raw) {
   const person = Object.assign({}, defaultPerson, raw);
   if (typeof person.showPhoto !== 'boolean') person.showPhoto = defaultPerson.showPhoto;
+  if (typeof person.title === 'string' && person.title.trim() !== '') person.title = person.title.trim();
+  else delete person.title;
 
   const photo = tidyPhoto(person.photo);
   if (photo) person.photo = photo;
   else delete person.photo;
   return person;
+}
+
+// The most members a subteam shows. Two pages of the roster panel hold 24.
+// The Members field in studio/schemas/subteam.js has the same limit.
+const maxMembers = 24;
+
+// A subteam always has members: a list of first names, possibly empty. Only
+// text is kept, without the spaces at the ends. A name that is empty, or the
+// same as an earlier one apart from capital letters, is dropped, and so is
+// every name after the 24th. The order the editors gave is kept.
+function normalizeSubteam(raw) {
+  const subteam = Object.assign({}, raw);
+  const names = Array.isArray(raw.members) ? raw.members : [];
+  const seen = [];
+
+  subteam.members = [];
+  names.forEach(name => {
+    if (typeof name !== 'string') return;
+
+    const trimmed = name.trim();
+    const key = trimmed.toLowerCase();
+    if (trimmed === '' || seen.indexOf(key) !== -1 || subteam.members.length >= maxMembers) return;
+
+    seen.push(key);
+    subteam.members.push(trimmed);
+  });
+  return subteam;
 }
 
 // A photo from Studio becomes { id, address, focus, caption, credit, createdAt,

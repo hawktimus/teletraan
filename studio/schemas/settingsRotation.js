@@ -15,6 +15,7 @@ const largePanels = [
   { title: 'Photo', value: 'photo' },
   { title: 'Leadership', value: 'leadership' },
   { title: 'Team leads', value: 'team-leads' },
+  { title: 'Subteam roster', value: 'roster' },
   { title: 'Custom panel', value: 'custom' },
 ];
 

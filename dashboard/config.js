@@ -227,6 +227,7 @@ export const defaultSettings = {
       { panel: 'photo', show: true },
       { panel: 'leadership', show: true },
       { panel: 'team-leads', show: true },
+      { panel: 'roster', show: true },
       { panel: 'custom', show: true },
     ],
     grid2: [

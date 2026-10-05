@@ -1,0 +1,68 @@
+/* The header sits on top of the two header plates of the area's frame */
+.roster .header {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  box-sizing: border-box;
+  width: 1152px;
+  height: 116px;
+  padding: 0 40px 0 76px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+/* The heading is always ROSTER, so it stays at the full heading size. The
+   subteam name goes in the tag, where 11 letters fit at 44px. */
+.roster .title {
+  font: 700 var(--size-heading)/96px var(--font-display);
+}
+.roster .tag {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.roster .tag-text {
+  color: var(--yellow);
+  font: 600 var(--size-label)/44px var(--font-display);
+  text-transform: uppercase;
+}
+
+/* The same box as the row of portraits in base.css (1096 by 516), with the
+   lead and the names side by side in the middle of it. The portrait slot is
+   styled in base.css, under People portraits. */
+.roster .body {
+  position: absolute;
+  left: 28px;
+  top: 144px;
+  width: 1096px;
+  height: 516px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  column-gap: 24px;
+}
+.roster .slot {
+  flex: none;
+  width: 352px;
+}
+
+/* Two columns of up to 8 names. A column is 344px wide, which holds a name of
+   12 characters at this size (the widest ordinary ones measure about 340). A
+   longer one is cut with an ellipsis. With a lead, the slot, the gap and the
+   two columns are 1080px of the 1096px box, so the right column ends at
+   x = 1116. Eight rows of 60px fill y = 162 to 642, and the cut corner of the
+   frame runs from (1148, 640) to (1068, 704), so the last name is 18px clear
+   of it. */
+.roster .members {
+  flex: none;
+  display: flex;
+  column-gap: 16px;
+}
+.roster .column {
+  width: 344px;
+}
+.roster .member {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font: 500 var(--size-body)/60px var(--font-text);
+}

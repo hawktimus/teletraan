@@ -12,6 +12,11 @@ const nextPage = makePages(slotsPerPage);
 // Roles are shown in this order. Any other role comes after them.
 const roleOrder = ['coach', 'captain', 'mentor'];
 
+// The role also decides the metal of the frame round the portrait: gold, silver
+// or red. To change a colour, change a word here. A role that is not in this
+// list keeps the colour of the panel's own frame.
+const roleMetals = { coach: 'red', captain: 'gold', mentor: 'silver' };
+
 function rankOf(person) {
   const rank = roleOrder.indexOf(String(person.role || '').trim().toLowerCase());
   return rank === -1 ? roleOrder.length : rank;
@@ -52,10 +57,13 @@ export function mount(host, content) {
   preloadPhotos(page.upcoming);
 }
 
+// What is written under the name is the typed title, or the role if there is none
 function personSlot(person) {
+  const role = String(person.role || '').trim().toLowerCase();
   return slotMarkup({
     name: person.name,
-    role: String(person.role || '').toUpperCase(),
+    role: String(person.title || person.role || '').toUpperCase(),
     address: photoAddress(person),
+    metal: roleMetals[role],
   });
 }

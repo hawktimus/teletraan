@@ -178,7 +178,7 @@ test('a few rows become documents with fixed ids, and a second run gives the sam
 });
 
 test('an empty switch gets the value Studio gives a new item, and a needed field never does', () => {
-  assert.equal(rowsOf(templates.subteam)[1][7], 'yes/no; default yes');
+  assert.equal(rowsOf(templates.subteam)[1][8], 'yes/no; default yes');
   const result = runImporter({ 'person.csv': csvFor('person', [{ role: 'Coach', name: 'Pat' }]) });
   assert.equal(result.status, 0, result.message);
   assert.equal(result.docs[0].show, true);
@@ -209,6 +209,18 @@ test('plan rows, a list of lines and blocks of different kinds are built from th
     { _type: 'listBlock', items: ['one', 'two', 'three'] },
     { _type: 'progressBlock', label: 'Bar', percent: 75 },
   ]);
+});
+
+test('subteam members are one cell with the names between | marks, up to 24 names of 12 characters', () => {
+  assert.ok(rowsOf(templates.subteam)[0].includes('members'));
+  const subteam = runImporter({ 'subteam.csv': csvFor('subteam', [{ name: 'Build', lead: 'Sam', members: 'Alex | Kim |  | Lee' }]) });
+  assert.equal(subteam.status, 0, subteam.message);
+  assert.deepEqual(subteam.docs[0].members, ['Alex', 'Kim', 'Lee']);
+
+  const tooMany = runImporter({ 'subteam.csv': csvFor('subteam', [{ name: 'Build', members: Array.from({ length: 25 }, (item, index) => 'N' + String.fromCharCode(97 + index)).join('|') }]) });
+  assert.ok(tooMany.message.includes('column members: 25 lines, up to 24 fit'), tooMany.message);
+  const tooLong = runImporter({ 'subteam.csv': csvFor('subteam', [{ name: 'Build', members: 'Alex|' + 'x'.repeat(13) }]) });
+  assert.ok(tooLong.message.includes('column members:'), tooLong.message);
 });
 
 test('the EXAMPLE row and empty rows are skipped, and a folder of untouched templates has nothing to import', () => {

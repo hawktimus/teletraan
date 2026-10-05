@@ -107,16 +107,16 @@
   ],
 
   "subteams": [
-    { "name": "[Subteam A]", "lead": "[Lead name]", "spotlight": true, "spotlightHeadline": "[What this subteam did this week]", "spotlightText": "[Two or three short sentences about the subteam's work go here.]" },
-    { "name": "[Subteam B]", "lead": "[Lead name]" },
-    { "name": "[Subteam C]", "lead": "[Lead name]" },
-    { "name": "[Subteam D]", "lead": "[Lead name]" },
-    { "name": "[Subteam E]", "lead": "[Lead name]" },
-    { "name": "[Subteam F]", "lead": "[Lead name]" }
+    { "name": "[Subteam A]", "lead": "[Lead name]", "members": ["[Student A]", "[Student B]", "[Student C]", "[Student D]", "[Student E]", "[Student F]"], "spotlight": true, "spotlightHeadline": "[What this subteam did this week]", "spotlightText": "[Two or three short sentences about the subteam's work go here.]" },
+    { "name": "[Subteam B]", "lead": "[Lead name]", "members": ["[Student A]", "[Student B]", "[Student C]", "[Student D]", "[Student E]", "[Student F]", "[Student G]", "[Student H]", "[Student I]", "[Student J]"] },
+    { "name": "[Subteam C]", "lead": "[Lead name]", "members": ["[Student A]", "[Student B]", "[Student C]", "[Student D]", "[Student E]", "[Student F]", "[Student G]", "[Student H]", "[Student I]", "[Student J]", "[Student K]", "[Student L]", "[Student M]"] },
+    { "name": "[Subteam D]", "lead": "[Lead name]", "members": ["[Student A]", "[Student B]", "[Student C]", "[Student D]", "[Student E]", "[Student F]", "[Student G]", "[Student H]", "[Student I]", "[Student J]", "[Student K]", "[Student L]", "[Student M]", "[Student N]", "[Student O]", "[Student P]"] },
+    { "name": "[Subteam E]", "lead": "[Lead name]", "members": ["[Student A]", "[Student B]", "[Student C]", "[Student D]"] },
+    { "name": "[Subteam F]", "lead": "[Lead name]", "members": ["[Student A]", "[Student B]", "[Student C]", "[Student D]", "[Student E]", "[Student F]", "[Student G]", "[Student H]", "[Student I]", "[Student J]", "[Student K]", "[Student L]", "[Student M]", "[Student N]", "[Student O]", "[Student P]", "[Student Q]", "[Student R]"] }
   ],
 
   "people": [
-    { "role": "Coach", "name": "[Coach name]" },
+    { "role": "Coach", "name": "[Coach name]", "title": "[Head coach]" },
     { "role": "Coach", "name": "[Coach name]" },
     { "role": "Captain", "name": "[Captain name]" },
     { "role": "Captain", "name": "[Captain name]" },

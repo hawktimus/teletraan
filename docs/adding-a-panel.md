@@ -136,7 +136,8 @@ panel. A panel that needs a line, a card or a bar uses one of these:
 - **A portrait slot.** `slotMarkup({ name, role, address })` in
   `core/portrait.js` is a framed picture with a name and a role under it.
   Leave `address` empty and it shows the silhouette. `leadership.js` and
-  `team-leads.js` draw rows of three. They get a page of people at a time
+  `team-leads.js` draw rows of three, and `roster.js` draws one as the team lead
+  beside a list of names. They get a page of people at a time
   from `makePages(slotsPerPage)` in `core/turns.js`, which counts the pages
   between turns of the panel, and they call `watchPhotos` and `preloadPhotos`
   from `core/portrait.js`. The slot's rules are in `base.css`, under People

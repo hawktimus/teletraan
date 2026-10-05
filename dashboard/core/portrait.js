@@ -47,15 +47,24 @@ export function silhouetteMarkup() {
   </svg>`;
 }
 
-// One slot: { name, role, address }. The whole slot turns over as one piece
-// when the page changes. role may be empty.
+// The attribute that gives a slot's frame its metal. gold and silver are the
+// data-metal variants. red is a class, as for the countdown. Anything else
+// leaves the frame the colour of the area it is in.
+function metalAttribute(metal) {
+  if (metal === 'red') return ' class="slot red-metal"';
+  if (metal === 'gold' || metal === 'silver') return ` class="slot" data-metal="${metal}"`;
+  return ' class="slot"';
+}
+
+// One slot: { name, role, address, metal }. The whole slot turns over as one
+// piece when the page changes. role and metal may be empty.
 export function slotMarkup(slot) {
   const picture = slot.address
     ? `<img src="${escapeHtml(slot.address)}" width="${photoSize}" height="${photoSize}" alt="">`
     : silhouetteMarkup();
 
   return `
-    <div class="slot" data-slat="item">
+    <div${metalAttribute(slot.metal)} data-slat="item">
       <div class="portrait">
         ${cardMarkup(portraitSize, portraitSize)}
         <div class="portrait-photo">${picture}</div>

@@ -42,6 +42,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - Sponsors, with sponsor logos and thank-yous
 - Photos, uploaded in Sanity and shown at random or newest first
 - Subteam spotlight, leadership, and team leads
+- Subteam rosters: the team lead and who is on each subteam
 - Task counts and safety days
 - Custom boards that can be built in Studio
 - A ticker along the bottom for tips, news, reminders, and sponsor thanks

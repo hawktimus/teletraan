@@ -92,9 +92,9 @@ One row is one item. Write each kind of value like this:
 
 Some more things to know:
 
-- A list of lines (the list block of a custom panel) is one cell. Put a
-  vertical bar between the lines, like `Drill | Saw | Tape`. Row 2 says how
-  many lines and how long each may be.
+- A list of lines (the list block of a custom panel, or the members of a
+  subteam) is one cell. Put a vertical bar between the lines, like
+  `Drill | Saw | Tape`. Row 2 says how many lines and how long each may be.
 - A cell with `required` in row 2 must be filled in. The script says which
   row and column is empty.
 - Leave a cell empty to leave the field out. An empty yes/no cell gets what

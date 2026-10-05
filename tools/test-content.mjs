@@ -42,8 +42,8 @@ async function loadCopy(name, changeConfig) {
     fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, 'dashboard', file));
   });
 
-  // the Events panel and the Next event tile draw the merged list, so they are tested too
-  ['events/events.js', 'next-event/next-event.js'].forEach(file => {
+  // the Events panel and the Next event tile draw the merged list, and the Roster panel draws the roster pages, so they are tested too
+  ['events/events.js', 'next-event/next-event.js', 'roster/roster.js'].forEach(file => {
     fs.mkdirSync(path.join(root, 'dashboard/panels', path.dirname(file)), { recursive: true });
     fs.copyFileSync(path.join(dashboardFolder, 'panels', file), path.join(root, 'dashboard/panels', file));
   });
@@ -57,9 +57,11 @@ async function loadCopy(name, changeConfig) {
     events: await import(base + 'core/events.js'),
     eventsPanel: await import(base + 'panels/events/events.js'),
     nextEventPanel: await import(base + 'panels/next-event/next-event.js'),
+    rosterPanel: await import(base + 'panels/roster/roster.js'),
     images: await import(base + 'core/images.js'),
     photos: await import(base + 'core/photos.js'),
     portrait: await import(base + 'core/portrait.js'),
+    roster: await import(base + 'core/roster.js'),
     sanity: await import(base + 'core/sanity.js'),
     source: await import(base + 'core/source.js'),
     text: await import(base + 'core/text.js'),
@@ -98,6 +100,7 @@ const { makeTurns, makePages } = live.turns;
 const { tidyPhoto, photoUrl, preloadImages, screenPhotoUrl, photoFocus, photoMaxWidth } = live.images;
 const { photosToShow, photoKey, newestFirst, creditText, makePhotoQueue, ownSeconds } = live.photos;
 const { photoAddress, personNamed, slotMarkup, slotsPerPage, silhouetteMarkup } = live.portrait;
+const { rosterPages, makeRosterTurns, membersPerPage, rowsPerColumn } = live.roster;
 
 // startContent decides between the two readers. These two skip the deciding
 // and just read, for the tests that are about one reader.
@@ -492,8 +495,8 @@ test('normalizeContent turns a full Sanity result into the sample content shape'
   ]);
 
   assert.deepEqual(content.subteams, [
-    { name: '[Subteam A]', lead: '[Lead A]', spotlight: true, spotlightHeadline: '[Headline]', spotlightText: '[Spotlight text]', order: 1 },
-    { name: '[Subteam B]', lead: '[Lead B]', spotlight: false, order: 2 },
+    { name: '[Subteam A]', lead: '[Lead A]', spotlight: true, spotlightHeadline: '[Headline]', spotlightText: '[Spotlight text]', order: 1, members: [] },
+    { name: '[Subteam B]', lead: '[Lead B]', spotlight: false, order: 2, members: [] },
   ]);
 
   assert.deepEqual(content.people, [
@@ -2690,6 +2693,82 @@ test('a missing Show photo on screen takes the default, and a real switch is kep
   assert.equal(normalizeSample({ people: [{ role: 'Coach', name: '[Coach]', showPhoto: false }] }).people[0].showPhoto, false);
 });
 
+test('a person\'s typed title is kept without its spaces, and an empty or missing one is left out', () => {
+  assert.equal(personWith({ title: '  Head Coach ' }).title, 'Head Coach');
+  assert.equal('title' in personWith({}), false);
+  assert.equal('title' in personWith({ title: '   ' }), false);
+  assert.equal('title' in personWith({ title: 7 }), false);
+  assert.equal(normalizeSample({ people: [{ role: 'Coach', name: '[Coach]', title: '[Head coach]' }] }).people[0].title, '[Head coach]');
+});
+
+// Subteam members: the names the Subteam roster panel shows
+
+function subteamWith(fields) {
+  return normalizeContent({ subteams: [document('subteam', 'sx', Object.assign({ name: '[Subteam X]' }, fields))] }).subteams[0];
+}
+
+function namesCalled(count) {
+  const names = [];
+  for (let number = 1; number <= count; number++) names.push('[Student ' + String.fromCharCode(64 + number) + ']');
+  return names;
+}
+
+test('a subteam always has members, an empty list when the field is missing or is not a list', () => {
+  assert.deepEqual(subteamWith({}).members, []);
+  assert.deepEqual(subteamWith({ members: [] }).members, []);
+  assert.deepEqual(subteamWith({ members: null }).members, []);
+  assert.deepEqual(subteamWith({ members: '[Alex]' }).members, []);
+  assert.deepEqual(subteamWith({ members: { first: '[Alex]' } }).members, []);
+  assert.deepEqual(normalizeSample({ subteams: [{ name: '[A]' }] }).subteams[0].members, []);
+  assert.deepEqual(normalizeContent({}, today).subteams, []);
+});
+
+test('members keep the order they were typed in, from Sanity and from the sample', () => {
+  assert.deepEqual(subteamWith({ members: ['[Sam]', '[Alex]', '[Kim]'] }).members, ['[Sam]', '[Alex]', '[Kim]']);
+  assert.deepEqual(normalizeSample({ subteams: [{ name: '[A]', members: ['[Sam]', '[Alex]'] }] }).subteams[0].members, ['[Sam]', '[Alex]']);
+});
+
+test('members are trimmed, and empty, spaces-only and non-text entries are dropped', () => {
+  const members = subteamWith({ members: ['  [Alex] ', '', '   ', null, 7, true, { name: '[Obj]' }, ['[Nested]'], '[Sam]'] }).members;
+  assert.deepEqual(members, ['[Alex]', '[Sam]']);
+  assert.deepEqual(normalizeSample({ subteams: [{ name: '[A]', members: [' [Alex]', 3, null, ''] }] }).subteams[0].members, ['[Alex]']);
+});
+
+test('a member who repeats an earlier name, in any capitals, is dropped and the first spelling stays', () => {
+  const members = subteamWith({ members: ['[Alex]', '[Sam]', '[ALEX]', ' [sam] ', '[Kim]', '[alex]'] }).members;
+  assert.deepEqual(members, ['[Alex]', '[Sam]', '[Kim]']);
+});
+
+test('at most 24 members are kept, the first 24, and a repeat does not use up a place', () => {
+  assert.equal(subteamWith({ members: namesCalled(30).concat(['x']) }).members.length, 24);
+  assert.deepEqual(subteamWith({ members: namesCalled(30) }).members, namesCalled(24));
+  assert.deepEqual(subteamWith({ members: namesCalled(24) }).members, namesCalled(24));
+
+  const withRepeat = namesCalled(25);
+  withRepeat.splice(3, 0, '[STUDENT A]');
+  assert.deepEqual(subteamWith({ members: withRepeat }).members, namesCalled(24));
+});
+
+test('the other fields of a subteam come through next to the members', () => {
+  const subteam = subteamWith({ lead: '[Lead]', members: ['[Alex]'], spotlight: true, order: 3, show: false });
+  assert.deepEqual(subteam, { name: '[Subteam X]', lead: '[Lead]', members: ['[Alex]'], spotlight: true, order: 3, show: false });
+});
+
+test('the sample subteams have members as marked placeholders, a different number each, and two pages for one', () => {
+  const sample = normalizeSample(JSON.parse(fs.readFileSync(sampleFile, 'utf8')));
+  const counts = sample.subteams.map(subteam => subteam.members.length);
+
+  assert.equal(new Set(counts).size, counts.length, 'two sample subteams have the same number of members');
+  assert.ok(counts.every(count => count > 0 && count <= 24), 'a sample subteam has no members or more than 24');
+  sample.subteams.forEach(subteam => subteam.members.forEach(name => {
+    assert.ok(/^\[[^\]]+\]$/.test(name), name + ' is not a marked placeholder');
+    assert.ok(name.length <= 12 && !/\d/.test(name), name + ' breaks the rules of the Members field');
+  }));
+  assert.ok(counts.some(count => count > membersPerPage), 'no sample subteam needs a second page');
+  assert.ok(counts.some(count => count === membersPerPage), 'no sample subteam fills a page exactly');
+  assert.ok(rosterPages(sample.subteams).length > sample.subteams.length);
+});
+
 test('the sample people have no photos, so the sample shows silhouettes', () => {
   const people = normalizeSample(JSON.parse(fs.readFileSync(sampleFile, 'utf8'))).people;
   assert.ok(people.length > 0);
@@ -3450,6 +3529,199 @@ test('the Leadership and Team Leads panels have no cap of six and use the shared
     assert.ok(code.includes('slotMarkup('), file + ' should draw its slots with slotMarkup');
   });
 });
+
+// The Subteam roster panel: its pages (core/roster.js) and what it draws
+
+function team(name, lead, members, more) {
+  return Object.assign({ name: name, lead: lead, members: members }, more);
+}
+
+test('rosterPages gives one page for a subteam that has a lead and members', () => {
+  const pages = rosterPages([team('[Build]', '[Lead A]', ['[Alex]', '[Sam]'])]);
+
+  assert.deepEqual(pages, [{ subteam: '[Build]', lead: '[Lead A]', members: ['[Alex]', '[Sam]'], pageNumber: 1, pageCount: 1 }]);
+});
+
+test('rosterPages with nothing to show gives no pages', () => {
+  assert.deepEqual(rosterPages([]), []);
+  assert.deepEqual(rosterPages(undefined), []);
+  // a subteam with neither a lead nor a member has nothing to put on a page
+  assert.deepEqual(rosterPages([team('[Empty]', '', []), team('[Spaces]', '   ', []), { name: '[Bare]' }]), []);
+  assert.deepEqual(rosterPages([team('[Blank names]', '', ['', '  '])]), []);
+});
+
+test('a subteam with a lead and no members gets one page, and one with members and no lead too', () => {
+  const pages = rosterPages([team('[Lead only]', '[Lead A]', []), team('[Members only]', '', ['[Alex]']), { name: '[No members field]', lead: '[Lead B]' }]);
+
+  assert.deepEqual(pages, [
+    { subteam: '[Lead only]', lead: '[Lead A]', members: [], pageNumber: 1, pageCount: 1 },
+    { subteam: '[Members only]', lead: '', members: ['[Alex]'], pageNumber: 1, pageCount: 1 },
+    { subteam: '[No members field]', lead: '[Lead B]', members: [], pageNumber: 1, pageCount: 1 },
+  ]);
+});
+
+test('the lead and the name are shown without the spaces at their ends', () => {
+  const page = rosterPages([team('  [Build] ', '  [Lead A]  ', ['[Alex]'])])[0];
+
+  assert.equal(page.subteam, '[Build]');
+  assert.equal(page.lead, '[Lead A]');
+});
+
+test('16 members fill one page, and more continue on the next with the lead shown again', () => {
+  assert.equal(rowsPerColumn, 8);
+  assert.equal(membersPerPage, 16);
+  assert.equal(rosterPages([team('[Build]', '[Lead A]', namesCalled(16))]).length, 1);
+
+  const pages = rosterPages([team('[Build]', '[Lead A]', namesCalled(18))]);
+  assert.equal(pages.length, 2);
+  assert.deepEqual(pages.map(page => page.members.length), [16, 2]);
+  assert.deepEqual(pages[0].members, namesCalled(16));
+  assert.deepEqual(pages[1].members, namesCalled(18).slice(16));
+  assert.deepEqual(pages.map(page => [page.pageNumber, page.pageCount]), [[1, 2], [2, 2]]);
+  assert.deepEqual(pages.map(page => [page.subteam, page.lead]), [['[Build]', '[Lead A]'], ['[Build]', '[Lead A]']]);
+
+  // 24 is the most the Studio allows, and 17 and 24 both need two pages
+  assert.deepEqual(rosterPages([team('[Build]', '[Lead A]', namesCalled(24))]).map(page => page.members.length), [16, 8]);
+  assert.equal(rosterPages([team('[Build]', '[Lead A]', namesCalled(17))]).length, 2);
+});
+
+test('hidden and expired subteams are skipped, and the Studio order is kept', () => {
+  const pages = rosterPages([
+    team('[First]', '[Lead A]', ['[Alex]']),
+    team('[Hidden]', '[Lead B]', ['[Sam]'], { show: false }),
+    team('[Expired]', '[Lead C]', ['[Kim]'], { expires: '2020-01-01T00:00:00.000Z' }),
+    team('[Later expiry]', '[Lead D]', ['[Lee]'], { expires: '2999-01-01T00:00:00.000Z' }),
+    team('[Last]', '', namesCalled(17)),
+  ]);
+
+  assert.deepEqual(pages.map(page => page.subteam), ['[First]', '[Later expiry]', '[Last]', '[Last]']);
+  assert.deepEqual(pages.map(page => page.pageNumber), [1, 1, 1, 2]);
+});
+
+test('the turn counter walks the pages one visit at a time and starts over after the last', () => {
+  const subteams = [team('[A]', '[Lead A]', namesCalled(17)), team('[B]', '', ['[Alex]'])];
+  const next = makeRosterTurns();
+  const label = turn => turn.page.subteam + ' ' + turn.page.pageNumber + '/' + turn.page.pageCount;
+
+  const first = next(subteams);
+  assert.equal(label(first), '[A] 1/2');
+  assert.equal(first.upcoming.pageNumber, 2);
+  assert.equal(label(next(subteams)), '[A] 2/2');
+  assert.equal(label(next(subteams)), '[B] 1/1');
+  // after the last page it starts again, and the page after the last one is the first
+  const again = next(subteams);
+  assert.equal(label(again), '[A] 1/2');
+  assert.equal(next(subteams).upcoming.subteam, '[B]');
+});
+
+test('the turn counter copes with one page, with none, and with a list that changes between visits', () => {
+  const single = makeRosterTurns();
+  assert.deepEqual(single([team('[A]', '[Lead A]', [])]).upcoming, null);
+  assert.equal(single([team('[A]', '[Lead A]', [])]).page.subteam, '[A]');
+
+  const nothing = makeRosterTurns();
+  assert.deepEqual(nothing([]), { page: null, upcoming: null });
+  assert.deepEqual(nothing([team('[Hidden]', '[Lead A]', [], { show: false })]), { page: null, upcoming: null });
+
+  // the roster gets shorter after page 3 was shown: counting goes round the pages as they are now
+  const shrinking = makeRosterTurns();
+  const three = [team('[A]', '[Lead A]', []), team('[B]', '[Lead B]', []), team('[C]', '[Lead C]', [])];
+  shrinking(three);
+  shrinking(three);
+  assert.equal(shrinking(three).page.subteam, '[C]');
+  // the fourth visit would be page 4, which goes round the 2 pages left to page 2, and then the first again
+  const two = three.slice(0, 2);
+  assert.equal(shrinking(two).page.subteam, '[B]');
+  assert.equal(shrinking(two).page.subteam, '[A]');
+});
+
+// The panel only draws a page, and the frame turns it over, so what is checked
+// here is the markup: the title, the tag, the portrait slot and the two columns
+function rosterMarkup(content) {
+  const host = { innerHTML: '', querySelectorAll: () => [] };
+  live.rosterPanel.mount(host, content);
+  return host.innerHTML;
+}
+
+function countOf(text, piece) {
+  return text.split(piece).length - 1;
+}
+
+test('the Subteam roster panel draws the heading, the subteam in the tag, the team lead and the members in two columns', () => withFakePage(() => {
+  const content = { people: [], subteams: [team('[Build]', '[Lead A]', namesCalled(16))] };
+  const html = rosterMarkup(content);
+
+  assert.ok(live.rosterPanel.hasContent(content));
+  assert.ok(html.includes('<h2 class="title" data-slat="title">ROSTER</h2>'));
+  assert.ok(html.includes('<span class="tag-text">[Build]</span>'));
+  assert.ok(html.includes('<div class="slot-name">[Lead A]</div>'));
+  assert.ok(html.includes('<div class="slot-role">TEAM LEAD</div>'));
+  assert.equal(countOf(html, 'class="column"'), 2);
+  assert.equal(countOf(html, 'class="member" data-slat="item"'), 16);
+
+  const columns = html.split('class="column"').slice(1).map(part => countOf(part.split('</div>\n')[0], 'class="member"'));
+  assert.deepEqual(columns, [8, 8]);
+}));
+
+test('the Subteam roster panel shares a short list between the columns, and a longer subteam continues with its tag', () => withFakePage(() => {
+  const nine = rosterMarkup({ people: [], subteams: [team('[Build]', '[Lead A]', namesCalled(9))] });
+  const sizes = nine.split('class="column"').slice(1).map(part => countOf(part.split('</div></div>')[0], 'class="member"'));
+  assert.deepEqual(sizes, [5, 4]);
+
+  const one = rosterMarkup({ people: [], subteams: [team('[Build]', '[Lead A]', ['[Alex]'])] });
+  assert.equal(countOf(one, 'class="column"'), 1);
+
+  // the module keeps its own turn counter, so this walks the pages of two visits
+  const content = { people: [], subteams: [team('[Long]', '[Lead A]', namesCalled(18))] };
+  const firstVisit = rosterMarkup(content);
+  const secondVisit = rosterMarkup(content);
+  assert.ok(firstVisit.includes('<span class="tag-text">[Long]</span>'));
+  assert.ok(secondVisit.includes('<span class="tag-text">[Long]</span>'));
+  assert.deepEqual([firstVisit, secondVisit].map(html => countOf(html, 'class="member"')).sort((a, b) => a - b), [2, 16]);
+  assert.equal(countOf(firstVisit, 'class="member"') + countOf(secondVisit, 'class="member"'), 18);
+  assert.ok(firstVisit.includes('TEAM LEAD') && secondVisit.includes('TEAM LEAD'));
+}));
+
+test('the Subteam roster panel has no portrait without a lead, and nothing on the right without members', () => withFakePage(() => {
+  const noLead = rosterMarkup({ people: [], subteams: [team('[Build]', '', ['[Alex]'])] });
+  assert.equal(noLead.includes('class="slot'), false);
+  assert.equal(noLead.includes('TEAM LEAD'), false);
+  assert.equal(countOf(noLead, 'class="member"'), 1);
+
+  const leadOnly = rosterMarkup({ people: [], subteams: [team('[Build]', '[Lead A]', [])] });
+  assert.ok(leadOnly.includes('TEAM LEAD'));
+  assert.equal(leadOnly.includes('class="column"'), false);
+  assert.equal(leadOnly.includes('class="member"'), false);
+
+  assert.equal(live.rosterPanel.hasContent({ subteams: [team('[Build]', '', [])] }), false);
+  assert.equal(live.rosterPanel.hasContent({ subteams: [] }), false);
+}));
+
+test('the Subteam roster panel escapes what editors typed, and shows the lead\'s photo from Leadership', () => withFakePage(() => {
+  const html = rosterMarkup({ people: [], subteams: [team('<b>Hi</b>', '<i>Lead</i>', ['<u>Alex</u>'])] });
+  assert.equal(/<(b|i|u)>/.test(html), false);
+  assert.ok(html.includes('&lt;b&gt;Hi&lt;/b&gt;') && html.includes('&lt;i&gt;Lead&lt;/i&gt;') && html.includes('&lt;u&gt;Alex&lt;/u&gt;'));
+  assert.ok(html.includes('<use href="#person-silhouette"'));
+
+  const photo = tidyPhoto(photoRecord());
+  const withPhoto = rosterMarkup({ people: [{ role: 'Captain', name: ' [lead a] ', photo: photo, showPhoto: true }], subteams: [team('[Build]', '[Lead A]', [])] });
+  assert.ok(withPhoto.includes('<img src="' + escapeHtml(photoUrl(photo, 280, 280)) + '"'));
+  assert.equal(withPhoto.includes('person-silhouette'), false);
+}));
+
+test('the Subteam roster panel is in the registry with the topic of the other subteam panels, and uses the shared pieces', () => {
+  const registry = fs.readFileSync(path.join(dashboardFolder, 'registry.js'), 'utf8');
+  assert.ok(registry.includes("{ id: 'roster', region: 'grid1', topic: 'subteams' },"));
+
+  const code = fs.readFileSync(path.join(dashboardFolder, 'panels/roster/roster.js'), 'utf8');
+  const style = fs.readFileSync(path.join(dashboardFolder, 'panels/roster/roster.css'), 'utf8');
+  ['slotMarkup(', 'watchPhotos(', 'preloadPhotos(', 'personNamed(', 'makeRosterTurns(', 'doubleSlash()', 'escapeHtml('].forEach(piece => assert.ok(code.includes(piece), 'roster.js does not use ' + piece));
+  assert.equal(/setTimeout|setInterval|requestAnimationFrame|animate\(/.test(code), false, 'the roster panel has animation code');
+  assert.equal(/@keyframes|transition:|animation:|box-shadow|text-shadow|filter|blur/.test(style), false, 'roster.css uses an effect that is not allowed');
+  assert.ok(/\.roster \.member\s*\{[^}]*font: 500 var\(--size-body\)\//.test(style), 'the names are not at the body size');
+  assert.equal(/font-size|font: [^;]*\b\d+px\//.test(style.replace(/var\(--size-[a-z-]+\)\/\d+px/g, '')), false, 'roster.css has a text size of its own');
+});
+
 
 
 // Things that came after ES2017, and the pattern that finds each one. This is
