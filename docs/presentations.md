@@ -85,12 +85,12 @@ status Scheduled runs on the TV.
 ## 6. Troubleshooting
 
 - The TV says "Slides are not ready. Ask a coach." The Mini downloads each deck
-  shortly before its talk, and again just before it starts, so a late edit is
-  included. A failed download is tried again a few minutes later. The usual
-  cause is a deck that is not shared, see the next point. If it is shared and
-  the slides are still not ready after 10 minutes, tell the team mentor: the
-  Mini may be off the internet or its slides service may not be running
-  (docs/rebuilding-the-mini.md).
+  once the talk is less than 36 hours away, and again when the talk is 20
+  minutes away, so a late edit is included. A failed download is tried again
+  2 minutes later. The usual cause is a deck that is not shared, see the next
+  point. If it is shared and the slides are still not ready after 10 minutes,
+  tell the team mentor: the Mini may be off the internet or its slides service
+  may not be running (docs/rebuilding-the-mini.md).
 - The deck is not shared. Open the deck in Google Slides and click Share. Under
   General access pick Anyone with the link, and set it to Viewer. If that choice
   is not offered, the account blocks it: ask the team mentor. The Slides link

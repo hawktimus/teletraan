@@ -16,19 +16,24 @@ installing anything on the Mini, and whenever a step needs a login or a key.
   the Studio and tells the Mini to pull now (`docs/shipping-from-the-mac.md`).
 - A timer runs `fetch-calendars.sh` every 15 minutes. It saves the BAND
   calendars where the dashboard reads them.
+- A timer runs `slides-sync.sh` every 2 minutes. It downloads the slides of
+  the talks that are coming up and saves them as pictures where the dashboard
+  reads them.
 - The kiosk service starts a browser full screen when the Mini boots. A kiosk
   is a browser with no address bar, tabs or menus.
 
-The calendars, `version.txt` and `device.json` live in
+The calendars, the slides, `version.txt` and `device.json` live in
 `/var/lib/teletraan/data` on the Mini, not in the repository. The container
 shows that folder as `dashboard/data/live/`, so nothing the Mini downloads
-ever shows up in git. The scripts write the calendars, `version.txt` and
-`device.json` (the Mini's name and addresses, written every minute by
-`kiosk.sh`, see "Finding the Mini on the network" in
-`docs/rebuilding-the-mini.md`). The photos are not on the Mini: they are
-uploaded in Studio and come with the rest of the content. The dashboard used to
-read a list of photos from a `photos.json` file in that folder. It does not any
-more, so a file with that name left on an older Mini can be deleted.
+ever shows up in git. The slides of a talk are in `slides/<talk id>/` there,
+and the dashboard reads them at `data/live/slides/<talk id>/`. The scripts
+write the calendars, the slides, `version.txt` and `device.json` (the Mini's
+name and addresses, written every minute by `kiosk.sh`, see "Finding the Mini
+on the network" in `docs/rebuilding-the-mini.md`). The photos are not on the
+Mini: they are uploaded in Studio and come with the rest of the content. The
+dashboard used to read a list of photos from a `photos.json` file in that
+folder. It does not any more, so a file with that name left on an older Mini
+can be deleted.
 
 Do not delete `dashboard/data/live/.gitkeep`: Docker needs the empty folder
 to attach the data folder to.
@@ -38,13 +43,15 @@ to attach the data folder to.
 | File | What it does |
 |------|--------------|
 | `docker-compose.yml` | Starts the web server container, fixed to one nginx version |
-| `nginx.conf` | The web server's settings: no caching, file types, hidden files |
+| `nginx.conf` | The web server's settings: no caching (except 10 seconds for a deck's `manifest.json`), file types, hidden files |
 | `local.example.env` | The template for `local.env`, with placeholders only |
 | `scripts/pull.sh` | Gets new commits and writes `version.txt` so an open dashboard reloads |
 | `scripts/fetch-calendars.sh` | Downloads each calendar named in `local.env`, over https only |
 | `scripts/check-connection.sh` | Checks DNS, Sanity, CORS, BAND, the web container, the kiosk and the clock, one OK or FAIL line each. Run it over SSH, see "Checking the connection" in `docs/rebuilding-the-mini.md` |
+| `scripts/slides-sync.sh` | Downloads the slides of the coming talks from Google Slides, turns them into pictures, and saves them with a `manifest.json`. `slides-sync.sh --test <link>` tries one deck and deletes what it made. Needs `poppler-utils`, `curl` and `jq` |
 | `scripts/kiosk.sh` | Opens the browser full screen with the right settings, or any page given after its name. Also writes `device.json` every minute while the browser runs |
 | `scripts/install-timers.sh` | Copies the unit files into place and turns on the two timers |
+| `scripts/install-slides.sh` | Copies the two slides unit files into place and turns on the slides timer. Does not install the packages, it prints the `apt install` line when one is missing |
 | `systemd/*.service`, `*.timer` | What runs, and how often |
 
 ## local.env
@@ -74,6 +81,7 @@ Run these on the Mini. A command that starts with `sudo` needs administrator rig
     systemctl list-timers 'teletraan-*'                    when do the timers run next?
     sudo journalctl -u teletraan-pull.service -n 30        what did the last pulls do?
     sudo journalctl -u teletraan-calendars.service -n 30   what did the last downloads do?
+    sudo journalctl -u teletraan-slides.service -n 30      what did the last slide downloads do?
     sudo journalctl -u teletraan-kiosk.service -n 30       why is the screen black?
     sudo systemctl restart teletraan-kiosk.service         restart the browser
     sudo systemctl stop teletraan-kiosk.service            stop the screen, to use the Mini's terminal
@@ -93,8 +101,10 @@ happens.
 - a file in `systemd/` changed: run `sudo /opt/teletraan/deploy/scripts/install-timers.sh`, which
   also restarts the two timers, then
   `sudo systemctl restart teletraan-kiosk.service` if the kiosk file changed
-- `pull.sh` or `fetch-calendars.sh` changed: nothing to do, the next run uses
-  the new script
+- a slides file in `systemd/` changed: run
+  `sudo /opt/teletraan/deploy/scripts/install-slides.sh`
+- `pull.sh`, `fetch-calendars.sh` or `slides-sync.sh` changed: nothing to do,
+  the next run uses the new script
 - `kiosk.sh` changed: restart the kiosk service, because the browser only
   reads the script when it starts
 

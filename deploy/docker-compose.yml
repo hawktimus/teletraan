@@ -19,9 +19,9 @@ services:
       - "127.0.0.1:${TELETRAAN_PORT:-8080}:80"
     volumes:
       - ../dashboard:/srv/web/dashboard:ro
-      # Calendars and version.txt. The scripts on the Mini write this folder,
-      # the web server only reads it. Without create_host_path: false, Docker
-      # would quietly make a missing folder owned by root, and then the
+      # Calendars, slides and version.txt. The scripts on the Mini write this
+      # folder, the web server only reads it. Without create_host_path: false,
+      # Docker would quietly make a missing folder owned by root, and then the
       # scripts could not write to it.
       - type: bind
         source: ${TELETRAAN_DATA:-/var/lib/teletraan/data}

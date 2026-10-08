@@ -152,6 +152,8 @@ editors can sign in from anywhere.
     deploy/                   how the Mini runs it: web server, timers, scripts. scripts/check-connection.sh
                               checks the Mini's connection to Sanity, BAND, Docker and the kiosk with one
                               OK or FAIL line each (docs/rebuilding-the-mini.md, "Checking the connection").
+                              scripts/slides-sync.sh downloads the slides of the coming talks and turns them
+                              into pictures in the data folder (docs/presentations.md).
                               mac/ is for the Mac you work on: ship.sh commits, pushes, updates the Studio
                               and tells the Mini to pull (docs/shipping-from-the-mac.md)
     tools/
@@ -185,6 +187,7 @@ editors can sign in from anywhere.
                               transaction for each, the order, the skipped reasons and the summary
       test-templates.mjs      checks that the CSV templates match the schemas, and the CSV importer
       test-connection-script.mjs  checks for deploy/scripts/check-connection.sh, with fake tools
+      test-slides-script.mjs  checks for deploy/scripts/slides-sync.sh and install-slides.sh, with fake tools
       check-seasons.mjs       fails if a seasonal pack is not in the data format, has a piece outside its zone, too
                               many pieces, a forbidden word, no header mark, a mark bigger than its box (60 x 76),
                               fewer than 8 or more than 14 pieces over the panels, an over piece that is too big,
@@ -485,7 +488,8 @@ alone.
 ## Checking your work
 
 Run these in the terminal, from this folder. They need Node.js, the same
-version as the Studio (22.12 or newer), and nothing else installed.
+version as the Studio (22.12 or newer), and nothing else installed. The one
+exception is `test-slides-script.mjs`, which needs `jq`.
 
     node tools/test-calendar.mjs
     node tools/test-weather.mjs
@@ -499,6 +503,7 @@ version as the Studio (22.12 or newer), and nothing else installed.
     node tools/test-templates.mjs
     node tools/test-publish-all.mjs
     node tools/test-connection-script.mjs
+    node tools/test-slides-script.mjs
     node tools/check-themes.mjs
     node tools/check-seasons.mjs
     node studio/check-schemas.mjs
