@@ -903,6 +903,8 @@ test('the new settings have the defaults the Studio starts with', () => {
     demoSeconds: { min: 5, max: 300 },
     desktopChance: { min: 0, max: 100 },
     redEyesChance: { min: 0, max: 100 },
+    noShowMinutes: { min: 1, max: 15 },
+    graceMinutes: { min: 0, max: 10 },
   });
 
   // the Photos tab: random order, and 16 seconds a photo
@@ -3546,6 +3548,48 @@ test('the Hidden settings: the starting values, the master switch and the two ch
   [true, false].forEach(value => settingsThrough({ hiddenEnabled: value }).forEach(settings => assert.equal(settings.hiddenEnabled, value)));
   [undefined, null, '', 'false', 'off', 0, 1, [], {}].forEach(value => {
     settingsThrough({ hiddenEnabled: value }).forEach(settings => assert.equal(settings.hiddenEnabled, true, JSON.stringify(value)));
+  });
+});
+
+// The names of the settings in the Presentations tab
+const presentationSettingNames = ['presentationsEnabled', 'noShowMinutes', 'graceMinutes'];
+
+test('the Presentations settings: the starting values, the switch and the two minutes, through all three paths', () => {
+  const defaults = live.config.defaultSettings;
+  assert.deepEqual([defaults.presentationsEnabled, defaults.noShowMinutes, defaults.graceMinutes], [true, 5, 5]);
+
+  // a published page that lacks every one of them gets the starting values
+  settingsThrough({}).forEach(settings => {
+    presentationSettingNames.forEach(name => assert.equal(settings[name], defaults[name], name));
+  });
+
+  // the wait is 1 to 15 minutes and the overrun 0 to 10, and what is outside is brought to the nearest end
+  [[1, 1], [8, 8], [15, 15], [0, 1], [-2, 1], [16, 15], [300, 15]].forEach(([value, wanted]) => {
+    settingsThrough({ noShowMinutes: value }).forEach(settings => assert.equal(settings.noShowMinutes, wanted, String(value)));
+  });
+  [[0, 0], [3, 3], [10, 10], [-1, 0], [11, 10], [90, 10]].forEach(([value, wanted]) => {
+    settingsThrough({ graceMinutes: value }).forEach(settings => assert.equal(settings.graceMinutes, wanted, String(value)));
+  });
+  [undefined, null, '', '7', NaN, Infinity, true, [], {}].forEach(value => {
+    settingsThrough({ noShowMinutes: value, graceMinutes: value }).forEach(settings => {
+      assert.deepEqual([settings.noShowMinutes, settings.graceMinutes], [5, 5], String(value));
+    });
+  });
+
+  // the switch starts on, and anything but true or false is on
+  [true, false].forEach(value => settingsThrough({ presentationsEnabled: value }).forEach(settings => assert.equal(settings.presentationsEnabled, value)));
+  [undefined, null, '', 'false', 'off', 0, 1, [], {}].forEach(value => {
+    settingsThrough({ presentationsEnabled: value }).forEach(settings => assert.equal(settings.presentationsEnabled, true, JSON.stringify(value)));
+  });
+});
+
+test('the sample content carries the Presentations settings', () => {
+  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const settings = normalizeSample(raw).settings;
+
+  presentationSettingNames.forEach(name => {
+    assert.ok(name in raw.settings, name + ' is in the sample file');
+    assert.equal(settings[name], live.config.defaultSettings[name], name);
   });
 });
 

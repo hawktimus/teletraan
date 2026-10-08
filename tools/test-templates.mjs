@@ -73,11 +73,12 @@ test('the files in docs/content-templates are what the schemas give', () => {
   assert.deepEqual(files, Object.keys(templates).map(type => type + '.csv').sort());
 });
 
-test('there is a template for every kind of content, and none for photos or the settings pages', () => {
-  const documents = types.filter(type => type.type === 'document' && singletons.indexOf(type.name) === -1 && type.name !== 'photo');
+test('there is a template for every kind of content, and none for photos, meeting days, presentations or the settings pages', () => {
+  const noTemplate = ['photo', 'presentationDay', 'presentation'];
+  const documents = types.filter(type => type.type === 'document' && singletons.indexOf(type.name) === -1 && noTemplate.indexOf(type.name) === -1);
   assert.deepEqual(Object.keys(templates).sort(), documents.map(type => type.name).sort());
   knownTypes.forEach(type => assert.ok(templates[type], 'no template for ' + type));
-  ['photo', 'dashboardSettings', 'theme', 'demo'].forEach(type => assert.equal(templates[type], undefined, type));
+  noTemplate.concat(['dashboardSettings', 'theme', 'demo']).forEach(type => assert.equal(templates[type], undefined, type));
 });
 
 test('a type named photo and the pages that exist once are skipped', () => {

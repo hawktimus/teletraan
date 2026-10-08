@@ -85,12 +85,14 @@ export function fixSettingValues(settings) {
   const logoNumbers = ['logoSpinEvery', 'logoSpinDuration', 'logoHawkEvery', 'logoHawkDuration', 'nameEvery', 'nameDuration'];
   const transitionNumbers = ['breakSeconds', 'silverChance'];
 
-  ['glint', 'showConnectionStatus', 'nightEnabled', 'nightPreview', 'hiddenEnabled'].concat(logoSwitches).forEach(name => {
+  ['glint', 'showConnectionStatus', 'nightEnabled', 'nightPreview', 'hiddenEnabled', 'presentationsEnabled'].concat(logoSwitches).forEach(name => {
     if (typeof settings[name] !== 'boolean') settings[name] = defaultSettings[name];
   });
   // The Hidden tab: each chance is a percent, and the last push from the Studio is a kind and a time
   const hiddenNumbers = chanceFields();
-  ['pageSeconds', 'photoSeconds', 'nightLogoWidth'].concat(logoNumbers, transitionNumbers, hiddenNumbers).forEach(name => {
+  // The Presentations tab: minutes to wait for the speaker, and minutes a talk may overrun
+  const presentationNumbers = ['noShowMinutes', 'graceMinutes'];
+  ['pageSeconds', 'photoSeconds', 'nightLogoWidth'].concat(logoNumbers, transitionNumbers, hiddenNumbers, presentationNumbers).forEach(name => {
     settings[name] = keepInRange(settings[name], limits[name], defaultSettings[name]);
   });
   ['portraitScale', 'photoScale'].forEach(name => {

@@ -23,9 +23,10 @@ const studioFolder = path.join(path.dirname(fileURLToPath(import.meta.url)), '..
 const defaultOutput = path.join(studioFolder, '..', 'docs', 'content-templates');
 
 // Not rows of content. A photo is a picture that has to be uploaded in Studio,
-// so it has no CSV template. The pages that exist once (Dashboard Settings,
-// Theme) are listed in structure.js.
-const skippedTypes = ['photo'];
+// so it has no CSV template. Meeting days and presentations are added in Studio
+// or by the booking form. The pages that exist once (Dashboard Settings, Theme)
+// are listed in structure.js.
+const skippedTypes = ['photo', 'presentationDay', 'presentation'];
 
 // The columns whose words make the id of a row, in order. The id is the type
 // plus a slug of these cells, so importing the same row twice changes nothing.

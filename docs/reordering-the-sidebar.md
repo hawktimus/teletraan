@@ -4,22 +4,34 @@ The list on the left of the Studio is one list in `studio/structure.js`, called
 `sidebarEntries`. One line is one entry, from top to bottom. To change the
 order, move a line.
 
-## The three kinds of line
+## The four kinds of line
 
     { kind: 'list', title: 'Tasks', type: 'task', sort: byOrder },
     { kind: 'page', title: 'Theme', type: themeType, id: themeId },
+    { kind: 'group', title: 'Presentations', id: 'presentations', entries: [ ... ] },
     { kind: 'divider' },
 
 - `list` opens the list of one kind of document. `title` is what editors read
   in the sidebar and at the top of the list. `type` is the document type, the
   `name` in its file in `studio/schemas/`. `sort` is how the list opens: by
   Order on screen (`byOrder`), by start date (`byStartDate`), by name
-  (`byName`), by date with the newest first (`newestDateFirst`) or by upload
-  with the newest first (`newestUploadFirst`). They are defined just above the
-  list.
+  (`byName`), by date with the newest first (`newestDateFirst`), by upload
+  with the newest first (`newestUploadFirst`), by the first talk of a meeting
+  day (`byFirstTalk`), or by the start of a talk with the soonest first
+  (`soonestStart`) or the latest first (`latestStart`). They are defined just
+  above the list.
 - `page` opens the one document of its type, which has a fixed id: Dashboard
   Settings, Theme and Demo. These three are the pages that exist once.
+- `group` opens a list of lists. Its lines are under `entries`, one line each,
+  and each is a `list` line. Presentations is one: Meeting days, Upcoming talks
+  and Past talks.
 - `divider` is a thin line between groups.
+
+A `list` line can have a `filter`, which keeps some of the documents of its
+type. Upcoming talks and Past talks are both the type `presentation`, so each
+has an `id` of its own. In a filter, `$since` is the time a day ago, worked out
+when the sidebar opens. Do not use `now()`: Studio keeps a list live, and a live
+filter cannot use it.
 
 Calendar events from BAND have no line, because they are not edited in the
 Studio. Events that are not on BAND are the Events Calendar list.

@@ -48,6 +48,22 @@ const contract = {
     location: text(30),
     rows: rows({ time: text(9), text: text(18), lead: text(10) }, 5),
   }),
+  presentationDay: {
+    firstSlotAt: 'datetime',
+    lastSlotAt: 'datetime',
+    slotMinutes: number(5, 30),
+    closeMinutesBefore: number(0, 240),
+    open: 'boolean',
+  },
+  presentation: {
+    name: text(12),
+    subteam: 'string',
+    topic: text(40),
+    start: 'datetime',
+    minutes: number(5, 30),
+    deckLink: 'url',
+    status: 'string',
+  },
   extraEvent: { title: text(30), startDate: 'date', endDate: 'date', startTime: 'time', endTime: 'time', location: text(24), show: 'boolean' },
   sponsor: withFlags({ name: text(19), tier: text(12), blurb: text(80), thankYou: text(54), logoAddress: 'url', order: 'number' }),
   tipOrNews: withFlags({ kind: 'string', text: text(52), order: 'number' }),
@@ -103,6 +119,9 @@ const contract = {
     desktopChance: number(0, 100),
     redEyesChance: number(0, 100),
     hiddenRequest: object({ kind: 'string', requestedAt: 'datetime' }),
+    presentationsEnabled: 'boolean',
+    noShowMinutes: number(1, 15),
+    graceMinutes: number(0, 10),
     announceRequest: object({ requestedAt: 'datetime' }),
     countdown: object({ kickoffLabel: text(12), kickoff: 'datetime', rolloutLabel: text(12), rollout: 'datetime' }),
     alert: object({ on: 'boolean', headline: text(24), message: text(90), until: 'datetime' }),
@@ -156,6 +175,8 @@ const itemTypes = ['task', 'plan', 'sponsor', 'tipOrNews', 'subteam', 'person', 
 const choices = {
   'task.status': ['blocked', 'in-progress', 'up-next', 'done'],
   'tipOrNews.kind': ['tip', 'news', 'reminder'],
+  'presentation.subteam': ['Build', 'Programming', 'Design', 'Electrical', 'Outreach', 'Business', 'Other'],
+  'presentation.status': ['scheduled', 'cancelled', 'done', 'skipped'],
   'person.role': ['Coach', 'Captain', 'Mentor'],
   'dashboardSettings.motion': ['full', 'calm'],
   'dashboardSettings.speed': ['very-slow', 'slow', 'normal', 'fast'],
@@ -188,6 +209,8 @@ const listSort = {
   photo: '_createdAt',
   customPanel: 'order',
   place: 'name',
+  presentationDay: 'firstSlotAt',
+  presentation: 'start',
 };
 
 // The pages that exist once. Each is one document whose id is its type.
@@ -199,7 +222,7 @@ const pageTypes = ['dashboardSettings', 'theme', 'demo'];
 const notInSidebar = {};
 
 // The sidebar titles that people look for by name
-const sidebarTitles = { extraEvent: 'Events Calendar', place: 'Places' };
+const sidebarTitles = { extraEvent: 'Events Calendar', place: 'Places', presentationDay: 'Meeting days' };
 
 // The real 'sanity' and 'react' packages are not installed, so stand-ins with
 // the same function names sit next to a copy of the files that import them.
@@ -747,6 +770,7 @@ const transitionNames = ['pageChangeStyle', 'breakSeconds', 'frameFinish', 'silv
 const photoNames = ['photoOrder', 'photoSeconds', 'portraitScale', 'photoScale'];
 const nightNames = ['nightEnabled', 'nightStyle', 'nightStart', 'nightEnd', 'nightLogoWidth', 'nightSpeed', 'nightPreview'];
 const hiddenNames = ['hiddenEnabled', 'desktopChance', 'redEyesChance', 'hiddenRequest'];
+const presentationNames = ['presentationsEnabled', 'noShowMinutes', 'graceMinutes'];
 
 function checkTransitionsTab() {
   const problems = [];
@@ -847,6 +871,8 @@ function checkLookAndTiming() {
     ['nightLogoWidth', 'nightLogoWidth', 300, true],
     ['desktopChance', 'desktopChance', 1, true],
     ['redEyesChance', 'redEyesChance', 1, true],
+    ['noShowMinutes', 'noShowMinutes', 5, true],
+    ['graceMinutes', 'graceMinutes', 5, true],
   ].forEach(entry => {
     const name = entry[0];
     const field = at(name);
@@ -1249,6 +1275,45 @@ function checkHiddenTab() {
   return problems;
 }
 
+// The Presentations tab: the switch and the two minutes, all in
+// schemas/settingsPresentations.js. The limits and starting values are also
+// compared in checkLookAndTiming and checkStartingValues.
+function checkPresentationsTab() {
+  const problems = [];
+  const config = world.dashboard;
+  const settings = typeByName('dashboardSettings');
+  const at = name => fieldAt('dashboardSettings.' + name);
+
+  need(problems, settings.groups.filter(group => group.title === 'Presentations').length === 1, 'Dashboard Settings should have exactly one tab named Presentations');
+  need(problems, settings.groups.filter(group => group.name === 'presentations' && group.title === 'Presentations').length === 1, 'the Presentations tab should be the group presentations');
+
+  // Nothing else is in the tab, so deleting settingsPresentations.js removes the whole section
+  const inTab = fieldsIn(settings).filter(field => field.group === 'presentations').map(field => field.name);
+  need(problems, inTab.join() === presentationNames.join(), 'the Presentations tab should hold, in this order: ' + presentationNames.join(', ') + ', not ' + inTab.join(', '));
+
+  const titles = { presentationsEnabled: 'Run presentations', noShowMinutes: 'Wait for the speaker (minutes)', graceMinutes: 'Overrun allowed (minutes)' };
+  Object.keys(titles).forEach(name => need(problems, at(name) && at(name).title === titles[name], name + ' should be titled ' + titles[name]));
+
+  // The switch starts on, here and in config.js
+  const switchField = at('presentationsEnabled');
+  need(problems, switchField && switchField.type === 'boolean' && switchField.initialValue === true && config.defaultSettings.presentationsEnabled === true, 'presentationsEnabled should be a switch that starts on, and so should its default in config.js');
+
+  // The two minutes are whole numbers, 1 to 15 and 0 to 10, and the description gives the range
+  need(problems, sameData(config.limits.noShowMinutes, { min: 1, max: 15 }), 'limits.noShowMinutes in config.js should be 1 to 15');
+  need(problems, sameData(config.limits.graceMinutes, { min: 0, max: 10 }), 'limits.graceMinutes in config.js should be 0 to 10');
+  need(problems, at('noShowMinutes') && /from 1 to 15/.test(at('noShowMinutes').description || ''), 'the noShowMinutes description should give the range, from 1 to 15');
+  need(problems, at('graceMinutes') && /from 0 to 10/.test(at('graceMinutes').description || ''), 'the graceMinutes description should give the range, from 0 to 10');
+
+  // The sample content carries the settings, with values the dashboard accepts
+  const sample = world.sample.settings;
+  need(problems, typeof sample.presentationsEnabled === 'boolean', 'the sample settings need presentationsEnabled, true or false');
+  ['noShowMinutes', 'graceMinutes'].forEach(name => {
+    const limit = config.limits[name];
+    need(problems, sample[name] >= limit.min && sample[name] <= limit.max, 'the sample settings need ' + name + ' from ' + limit.min + ' to ' + limit.max);
+  });
+  return problems;
+}
+
 // Play announcements: the hidden announceRequest field in the Announcements tab
 // (schemas/settingsAnnouncements.js), its starting value in config.js, the button that
 // fills it in (actions.js) and the Demo step that plays the same announcements
@@ -1352,7 +1417,7 @@ function checkStartingValues() {
   expect('look', settings.look);
   expect('showConnectionStatus', settings.showConnectionStatus);
   expect('pageSeconds', settings.pageSeconds);
-  logoSwitches.concat(logoNumbers, transitionNames, photoNames, nightNames, hiddenNames.slice(0, 3)).forEach(name => expect(name, settings[name]));
+  logoSwitches.concat(logoNumbers, transitionNames, photoNames, nightNames, hiddenNames.slice(0, 3), presentationNames).forEach(name => expect(name, settings[name]));
   expect('countdown.kickoffLabel', settings.countdown.kickoffLabel);
   expect('countdown.rolloutLabel', settings.countdown.rolloutLabel);
   expect('alert.on', settings.alert.on);
@@ -1424,7 +1489,7 @@ function checkDashboardNames() {
 
 // A stand-in for the Studio's structure builder that writes down each call
 function fakeBuilder() {
-  const methods = ['title', 'id', 'child', 'items', 'schemaType', 'documentId', 'defaultOrdering'];
+  const methods = ['title', 'id', 'child', 'items', 'schemaType', 'documentId', 'defaultOrdering', 'apiVersion', 'filter', 'params'];
   function node(start) {
     const made = Object.assign({}, start);
     const builder = { made: made };
@@ -1448,22 +1513,33 @@ function fakeBuilder() {
 
 // structure.js holds the whole sidebar as one list, sidebarEntries. Each line
 // has to name a type that exists, and each kind of document has to have a
-// line, or editors could not reach it. The order of the lines is not checked.
+// line, or editors could not reach it. A group holds lists, and its lines count
+// like the others. The order of the lines is not checked.
+
+// Every line of the sidebar, the lines inside each group too
+function allLines(entries) {
+  return entries.reduce((lines, entry) => lines.concat(entry.kind === 'group' ? [entry].concat(entry.entries || []) : [entry]), []);
+}
+
 function checkSidebarLines(problems) {
   const entries = world.structure.sidebarEntries;
   const typeNames = world.types.map(type => type.name);
   const named = [];
+  const ids = [];
 
-  entries.forEach((entry, index) => {
-    const line = 'structure.js line ' + (index + 1) + ' of sidebarEntries';
-    if (entry.kind === 'divider') return;
-    if (entry.kind !== 'list' && entry.kind !== 'page') return problems.push(line + ' has the kind "' + entry.kind + '". Use list, page or divider.');
+  // The id of a line is how Studio tells the lines of one list apart
+  function checkId(entry, where) {
+    const id = entry.id || entry.type;
+    need(problems, ids.indexOf(id) === -1, where + ' has the id "' + id + '", which another line in the sidebar has too. Remove the repeated line, or, for lists of one type with a filter, give each line an id of its own.');
+    ids.push(id);
+  }
 
+  function checkLine(entry, line) {
     const where = line + ' ("' + entry.title + '")';
     if (!entry.title) problems.push(line + ' has no title');
     if (typeNames.indexOf(entry.type) === -1) return problems.push(where + ' names the type "' + entry.type + '", and schemas/index.js has no type with that name. Fix the spelling or remove the line.');
 
-    if (named.indexOf(entry.type) !== -1) problems.push(where + ' repeats the type "' + entry.type + '", which already has a line in the sidebar');
+    checkId(entry, where);
     named.push(entry.type);
 
     if (entry.kind === 'page') {
@@ -1477,6 +1553,34 @@ function checkSidebarLines(problems) {
     const sortable = field && (field.charAt(0) === '_' || fieldsIn(typeByName(entry.type)).some(item => item.name === field));
     need(problems, sortable, where + ' is sorted by "' + field + '", which is not a field of ' + entry.type);
     if (listSort[entry.type]) need(problems, field === listSort[entry.type], where + ' should be listed by ' + listSort[entry.type] + ', not ' + field);
+
+    if (entry.filter !== undefined) {
+      need(problems, typeof entry.filter === 'string' && entry.filter.indexOf('$since') !== -1, where + ' has a filter that should use $since, the time a day ago that structure.js works out when the sidebar opens');
+      need(problems, !/now\s*\(/.test(String(entry.filter)), where + ' has a filter that uses now(). Studio keeps lists live and a live filter cannot use it. Use $since.');
+    }
+  }
+
+  entries.forEach((entry, index) => {
+    const line = 'structure.js line ' + (index + 1) + ' of sidebarEntries';
+    if (entry.kind === 'divider') return;
+
+    if (entry.kind === 'group') {
+      const where = line + ' ("' + entry.title + '")';
+      if (!entry.title) problems.push(line + ' has no title');
+      need(problems, typeof entry.id === 'string' && entry.id !== '', where + ' needs an id');
+      checkId(entry, where);
+      if (!Array.isArray(entry.entries) || entry.entries.length === 0) return problems.push(where + ' has no lines under entries');
+
+      entry.entries.forEach((inner, position) => {
+        const innerLine = where + ', line ' + (position + 1);
+        if (inner.kind !== 'list') return problems.push(innerLine + ' has the kind "' + inner.kind + '". A group holds lists only.');
+        checkLine(inner, innerLine);
+      });
+      return;
+    }
+
+    if (entry.kind !== 'list' && entry.kind !== 'page') return problems.push(line + ' has the kind "' + entry.kind + '". Use list, page, group or divider.');
+    checkLine(entry, line);
   });
 
   world.types.filter(type => type.type === 'document').forEach(type => {
@@ -1486,9 +1590,39 @@ function checkSidebarLines(problems) {
   });
 
   Object.keys(sidebarTitles).forEach(typeName => {
-    const entry = entries.filter(item => item.type === typeName)[0];
+    const entry = allLines(entries).filter(item => item.type === typeName)[0];
     need(problems, !entry || entry.title === sidebarTitles[typeName], 'the sidebar line for ' + typeName + ' should be titled ' + sidebarTitles[typeName] + ', not ' + (entry && entry.title));
   });
+}
+
+// What structure() built for one line has to match the line. For a group, its lines are checked the same way.
+function checkBuiltItem(entry, item, what, problems) {
+  const child = item.child && item.child.made;
+
+  if (entry.kind === 'divider') return need(problems, item.divider === true, what + ' should be a divider');
+  if (item.title !== entry.title) return problems.push(what + ' should be titled ' + entry.title + ', it is ' + item.title);
+
+  if (entry.kind === 'group') {
+    const inside = ((child && child.items) || []).map(inner => inner.made);
+    need(problems, child && child.id === entry.id && child.title === entry.title, what + ' should open a list titled ' + entry.title + ' with the id ' + entry.id);
+    if (inside.length !== entry.entries.length) return problems.push(what + ' should open ' + entry.entries.length + ' lines, it opens ' + inside.length);
+    entry.entries.forEach((inner, index) => checkBuiltItem(inner, inside[index], what + ', line ' + (index + 1) + ' ("' + inner.title + '")', problems));
+  } else if (entry.kind === 'list') {
+    const listOk = child && child.type === entry.type && child.title === entry.title && child.defaultOrdering[0].field === entry.sort.field;
+    need(problems, listOk, what + ' should open the ' + entry.type + ' list, titled ' + entry.title + ', sorted by ' + entry.sort.field);
+    need(problems, item.id === (entry.id || entry.type), what + ' should have the id ' + (entry.id || entry.type) + ', it has ' + item.id);
+
+    if (entry.filter && child) {
+      const aDay = 24 * 60 * 60 * 1000;
+      const since = child.params && child.params.since;
+      need(problems, typeof child.filter === 'string' && child.filter.indexOf(entry.filter) !== -1 && child.params && child.params.type === entry.type, what + ' should filter the ' + entry.type + ' list with: ' + entry.filter);
+      need(problems, typeof since === 'string' && Math.abs(Date.now() - aDay - Date.parse(since)) < 60 * 1000, what + ' should pass $since as the time a day ago, worked out when the sidebar opens');
+      need(problems, child.id === (entry.id || entry.type) && typeof child.apiVersion === 'string', what + ' should give the filtered list its id and an apiVersion');
+    }
+  } else {
+    const pageOk = child && child.schemaType === entry.type && child.documentId === entry.id;
+    need(problems, pageOk, what + ' should open the one document with id ' + entry.id);
+  }
 }
 
 function checkSidebar() {
@@ -1503,20 +1637,7 @@ function checkSidebar() {
   if (items.length !== entries.length) return problems.concat('structure() should make one sidebar item for each line of sidebarEntries (' + entries.length + '), it makes ' + items.length);
 
   entries.forEach((entry, index) => {
-    const item = items[index];
-    const child = item.child && item.child.made;
-    const what = 'sidebar line ' + (index + 1) + ' ("' + (entry.title || entry.kind) + '")';
-
-    if (entry.kind === 'divider') return need(problems, item.divider === true, what + ' should be a divider');
-    if (item.title !== entry.title) return problems.push(what + ' should be titled ' + entry.title + ', it is ' + item.title);
-
-    if (entry.kind === 'list') {
-      const listOk = child && child.type === entry.type && child.title === entry.title && child.defaultOrdering[0].field === entry.sort.field;
-      need(problems, listOk, what + ' should open the ' + entry.type + ' list, titled ' + entry.title + ', sorted by ' + entry.sort.field);
-    } else {
-      const pageOk = child && child.schemaType === entry.type && child.documentId === entry.id;
-      need(problems, pageOk, what + ' should open the one document with id ' + entry.id);
-    }
+    checkBuiltItem(entry, items[index], 'sidebar line ' + (index + 1) + ' ("' + (entry.title || entry.kind) + '")', problems);
   });
   return problems;
 }
@@ -2233,6 +2354,234 @@ async function checkPlaceNames() {
   return problems;
 }
 
+// Every field that has rules says what is wrong in plain words, so the message
+// an editor reads is ours and not Sanity's
+function checkPlainMessages(typeName, problems) {
+  fieldsIn(typeByName(typeName)).forEach(field => {
+    const rules = constraintsOf(field);
+    const messages = rules.filter(rule => rule.name === 'error' && rule.args[0]);
+    need(problems, rules.length === 0 || messages.length > 0, typeName + '.' + field.name + ' has rules and no error message in plain words');
+  });
+}
+
+// Meeting days: the first and last talk are needed, the length of a talk and the
+// time booking closes have a starting value and a range, and the list reads each
+// day on one line. The last talk is checked against the first in
+// checkMeetingDayTimes.
+function checkMeetingDays() {
+  const problems = [];
+  const at = name => fieldAt('presentationDay.' + name);
+  const rulesOf = field => (field ? constraintsOf(field) : []);
+  const type = typeByName('presentationDay');
+  if (!type) return ['presentationDay is missing from schemas/index.js'];
+
+  need(problems, type.title === 'Meeting days', 'the presentationDay type should have the title Meeting days');
+  const titles = {
+    firstSlotAt: 'First talk starts',
+    lastSlotAt: 'Last talk starts',
+    slotMinutes: 'Length of each talk',
+    closeMinutesBefore: 'Booking closes this long before a slot',
+    open: 'Open for booking',
+  };
+  Object.keys(titles).forEach(name => need(problems, at(name) && at(name).title === titles[name], 'presentationDay.' + name + ' should be titled ' + titles[name]));
+
+  ['firstSlotAt', 'lastSlotAt'].forEach(name => {
+    need(problems, at(name) && at(name).type === 'datetime' && constraintNamed(rulesOf(at(name)), 'required'), 'presentationDay.' + name + ' should be a required datetime');
+  });
+  const gap = at('firstSlotAt') ? at('firstSlotAt').description || '' : '';
+  need(problems, /gap/.test(gap) && /announcement/.test(gap), 'the presentationDay.firstSlotAt description should tell coaches to leave a gap for the announcement');
+
+  // Whole minutes in a range, with a starting value: [field, starting value, smallest, largest]
+  [['slotMinutes', 15, 5, 30], ['closeMinutesBefore', 30, 0, 240]].forEach(entry => {
+    const field = at(entry[0]);
+    const rules = rulesOf(field);
+    const low = constraintNamed(rules, 'min');
+    const high = constraintNamed(rules, 'max');
+    const name = 'presentationDay.' + entry[0];
+
+    need(problems, field && field.type === 'number' && field.initialValue === entry[1], name + ' should be a number that starts as ' + entry[1]);
+    need(problems, low && high && low.args[0] === entry[2] && high.args[0] === entry[3], name + ' should allow ' + entry[2] + ' to ' + entry[3]);
+    need(problems, constraintNamed(rules, 'required') && constraintNamed(rules, 'integer'), name + ' should be required and a whole number');
+    need(problems, field && (field.description || '').indexOf('from ' + entry[2] + ' to ' + entry[3]) !== -1, 'the ' + name + ' description should give the range, from ' + entry[2] + ' to ' + entry[3]);
+  });
+
+  const open = at('open');
+  need(problems, open && open.type === 'boolean' && open.initialValue === true, 'presentationDay.open should be a switch that starts on');
+  need(problems, (type.orderings || []).some(item => item.by && item.by[0].field === 'firstSlotAt' && item.by[0].direction === 'asc'), 'presentationDay needs an ordering by firstSlotAt, soonest first');
+  checkPlainMessages('presentationDay', problems);
+
+  // The list line, in New York time: the day, the first and last talk, and how many slots fit from one to the other
+  const line = (firstAt, lastAt, minutes, open) => type.preview.prepare({ first: firstAt, last: lastAt, minutes: minutes, open: open });
+  const first = '2026-10-08T18:45:00.000Z';
+  const last = '2026-10-08T20:45:00.000Z';
+  [
+    [line(first, last, 15).title, 'Thu Oct 8, 2:45 PM to 4:45 PM - 9 talks'],
+    [line(first, last, undefined).title, 'Thu Oct 8, 2:45 PM to 4:45 PM - 9 talks'],
+    [line(first, last, 20).title, 'Thu Oct 8, 2:45 PM to 4:45 PM - 7 talks'],
+    [line(first, '2026-10-08T20:50:00.000Z', 15).title, 'Thu Oct 8, 2:45 PM to 4:50 PM - 9 talks'],
+    [line(first, first, 15).title, 'Thu Oct 8, 2:45 PM to 2:45 PM - 1 talk'],
+    [line(first, '2026-10-08T17:45:00.000Z', 15).title, 'Thu Oct 8, 2:45 PM to 1:45 PM'],
+    [line(first, undefined, 15).title, 'Thu Oct 8, 2:45 PM'],
+    [line('2026-10-08T16:30:00.000Z', undefined, 15).title, 'Thu Oct 8, 12:30 PM'],
+    [line('2026-10-08T04:05:00.000Z', undefined, 15).title, 'Thu Oct 8, 12:05 AM'],
+    [line(undefined, last, 15).title, 'Meeting day with no times'],
+  ].forEach(entry => need(problems, entry[0] === entry[1], 'the meeting day list should read "' + entry[1] + '", it reads "' + entry[0] + '"'));
+
+  need(problems, line(first, last, 15, false).subtitle === 'Closed for booking', 'the meeting day list should say Closed for booking when the day is not open');
+  need(problems, line(first, last, 15, true).subtitle === '' && line(first, last, 15, undefined).subtitle === '', 'the meeting day list should say nothing more when the day is open');
+  return problems;
+}
+
+// The last talk is a slot of the same meeting: not before the first talk, and on
+// the same calendar day on the kiosk's clock. The kiosk's time zone is the one on
+// the Theme page, which the check asks Sanity for, so it waits for an answer. A
+// stand-in client gives the answer here and writes down what it was asked.
+async function checkMeetingDayTimes() {
+  const problems = [];
+  const custom = constraintNamed(constraintsOf(fieldAt('presentationDay.lastSlotAt')), 'custom');
+  if (!custom) return ['presentationDay.lastSlotAt should be checked against the first talk'];
+
+  // answer is the time zone Sanity gives back, or an Error for a question that fails
+  async function ask(lastAt, firstAt, answer) {
+    const asked = [];
+    const getClient = () => ({
+      fetch: async (query, params, options) => {
+        asked.push({ query: query, options: options });
+        if (answer instanceof Error) throw answer;
+        return answer;
+      },
+    });
+    const result = await custom.args[0](lastAt, { document: { firstSlotAt: firstAt }, getClient: getClient });
+    return { answer: result, asked: asked[0] };
+  }
+
+  const newYork = 'America/New_York';
+  const first = '2026-10-08T18:45:00.000Z';
+  const accepted = [
+    ['two hours after the first talk', '2026-10-08T20:45:00.000Z', first],
+    ['the same time as the first talk', first, first],
+    ['6 PM then 9 PM, which is the next day in UTC and the same day in New York', '2026-10-09T01:00:00.000Z', '2026-10-08T22:00:00.000Z'],
+    ['no last talk yet', undefined, first],
+    ['no first talk yet', '2026-10-08T20:45:00.000Z', undefined],
+  ];
+  const refused = [
+    ['an hour before the first talk', '2026-10-08T17:45:00.000Z', first],
+    ['the next day', '2026-10-09T18:45:00.000Z', first],
+    ['past midnight in New York', '2026-10-09T05:00:00.000Z', first],
+  ];
+  for (const entry of accepted) need(problems, (await ask(entry[1], entry[2], newYork)).answer === true, 'a last talk ' + entry[0] + ' should be accepted');
+  for (const entry of refused) need(problems, typeof (await ask(entry[1], entry[2], newYork)).answer === 'string', 'a last talk ' + entry[0] + ' should be refused');
+
+  // The Theme page's zone decides the day, so the same two times can be on different days
+  const evening = ['2026-10-09T01:00:00.000Z', '2026-10-08T22:00:00.000Z'];
+  need(problems, typeof (await ask(evening[0], evening[1], 'UTC')).answer === 'string', 'with the Theme page time zone UTC, 22:00 and 01:00 UTC are on different days and should be refused');
+
+  // No usable answer from Sanity means America/New_York
+  const noAnswer = [['no Theme page', null], ['an empty zone', ''], ['a zone Intl does not know', 'Nowhere/Land'], ['a question that fails', new Error('offline')]];
+  for (const entry of noAnswer) {
+    need(problems, (await ask(evening[0], evening[1], entry[1])).answer === true, 'with ' + entry[0] + ', the zone should be America/New_York, where those times are on the same day');
+  }
+
+  const question = (await ask('2026-10-08T20:45:00.000Z', first, newYork)).asked;
+  need(problems, question && question.query.indexOf('"theme"') !== -1 && question.query.indexOf('timeZone') !== -1, 'the lookup should ask for the timeZone of the Theme page, which has the id theme');
+  need(problems, question && question.options && question.options.perspective === 'published', 'the lookup should read the published Theme page (perspective published), as the screen does');
+  return problems;
+}
+
+// Presentations: a first name, a title for the TV, a start, a length, a Google Slides
+// link and a status. The slides link has to match the pattern the booking form and
+// the slide fetcher on the Mini use, so a link that is not a Google Slides deck never gets in.
+function checkPresentations() {
+  const problems = [];
+  const at = name => fieldAt('presentation.' + name);
+  const rulesOf = field => (field ? constraintsOf(field) : []);
+  const type = typeByName('presentation');
+  if (!type) return ['presentation is missing from schemas/index.js'];
+
+  need(problems, type.title === 'Presentations', 'the presentation type should have the title Presentations');
+  const titles = { name: 'First name', subteam: 'Subteam', topic: 'Title shown on the TV', start: 'Starts at', minutes: 'Length of the talk', deckLink: 'Slides link', status: 'Status' };
+  Object.keys(titles).forEach(name => need(problems, at(name) && at(name).title === titles[name], 'presentation.' + name + ' should be titled ' + titles[name]));
+
+  ['name', 'topic', 'start', 'minutes', 'deckLink', 'status'].forEach(name => {
+    need(problems, at(name) && constraintNamed(rulesOf(at(name)), 'required'), 'presentation.' + name + ' should be required');
+  });
+  need(problems, at('subteam') && !constraintNamed(rulesOf(at('subteam')), 'required') && /optional/i.test(at('subteam').description || ''), 'presentation.subteam should be optional, and its description should say so');
+  need(problems, at('start') && at('start').type === 'datetime', 'presentation.start should be a datetime');
+
+  // The name is a first name: a space or a digit is refused with a message, a hyphen is fine
+  const firstName = constraintNamed(rulesOf(at('name')), 'custom');
+  if (!firstName) {
+    problems.push('presentation.name should be checked so that it is a first name only');
+  } else {
+    const run = firstName.args[0];
+    ['Alex', 'Mary-Anne', "O'Neil", '', undefined].forEach(good => need(problems, run(good) === true, 'the name check refuses "' + good + '"'));
+    ['Alex K', 'Alex2', ' Alex'].forEach(bad => need(problems, typeof run(bad) === 'string' && run(bad).length > 0, 'the name check accepts "' + bad + '"'));
+  }
+  need(problems, at('name') && /first name/i.test(at('name').description || ''), 'the presentation.name description should say first name');
+
+  // The subteam is picked from a list and nothing else
+  const subteam = at('subteam');
+  const allowed = subteam ? constraintNamed(rulesOf(subteam), 'valid') : null;
+  need(problems, allowed && allowed.args[0].join() === choices['presentation.subteam'].join(), 'presentation.subteam should only allow: ' + choices['presentation.subteam'].join(', '));
+
+  // The length is whole minutes from 5 to 30 and starts at 15
+  const minutes = at('minutes');
+  const minutesRules = rulesOf(minutes);
+  need(problems, minutes && minutes.type === 'number' && minutes.initialValue === 15, 'presentation.minutes should be a number that starts as 15');
+  need(problems, constraintNamed(minutesRules, 'integer') && constraintNamed(minutesRules, 'min') && constraintNamed(minutesRules, 'max'), 'presentation.minutes should be a whole number with a smallest and a largest');
+  need(problems, minutes && (minutes.description || '').indexOf('from 5 to 30') !== -1, 'the presentation.minutes description should give the range, from 5 to 30');
+
+  // The slides link: the pattern is the one the booking form uses, and only a Google Slides deck matches it
+  const link = at('deckLink');
+  const linkRule = constraintNamed(rulesOf(link), 'regex');
+  need(problems, link && link.type === 'url', 'presentation.deckLink should be a url');
+  if (!linkRule) {
+    problems.push('presentation.deckLink should be checked with a pattern');
+  } else {
+    const pattern = linkRule.args[0];
+    need(problems, pattern.source === new RegExp('^https://docs\\.google\\.com/presentation/d/[A-Za-z0-9_-]+').source, 'the presentation.deckLink pattern should be ^https://docs\\.google\\.com/presentation/d/[A-Za-z0-9_-]+');
+    [
+      'https://docs.google.com/presentation/d/1AbC-d_Ef',
+      'https://docs.google.com/presentation/d/1AbC-d_Ef/edit?usp=sharing',
+    ].forEach(good => need(problems, pattern.test(good), 'the slides link pattern refuses ' + good));
+    [
+      'http://docs.google.com/presentation/d/1AbC-d_Ef',
+      'https://docs.google.com/document/d/1AbC-d_Ef',
+      'https://docs.google.com/presentation/d/',
+      'https://docs.google.com/presentation/d/%20',
+      'https://docs.google.com.example.net/presentation/d/1AbC-d_Ef',
+      'https://docsXgoogle.com/presentation/d/1AbC-d_Ef',
+      ' https://docs.google.com/presentation/d/1AbC-d_Ef',
+      'see https://docs.google.com/presentation/d/1AbC-d_Ef',
+    ].forEach(bad => need(problems, !pattern.test(bad), 'the slides link pattern accepts ' + bad));
+  }
+
+  // The status is a radio list of four, scheduled to start with, and nothing else is allowed
+  const status = at('status');
+  const statusAllowed = status ? constraintNamed(rulesOf(status), 'valid') : null;
+  need(problems, status && status.options && status.options.layout === 'radio' && status.initialValue === 'scheduled', 'presentation.status should be a radio list that starts as scheduled');
+  need(problems, statusAllowed && statusAllowed.args[0].join() === choices['presentation.status'].join(), 'presentation.status should only allow: ' + choices['presentation.status'].join(', '));
+
+  need(problems, (type.orderings || []).some(item => item.by && item.by[0].field === 'start' && item.by[0].direction === 'asc'), 'presentation needs an ordering by start, soonest first');
+  checkPlainMessages('presentation', problems);
+
+  // The list line, in New York time: Thu 2:45 PM - Alex - the title. A talk that is not scheduled says so under it.
+  const talk = fields => type.preview.prepare(Object.assign({ start: '2026-10-08T18:45:00.000Z', name: 'Alex', topic: '[Talk title]' }, fields));
+  [
+    [talk({}).title, 'Thu 2:45 PM - Alex - [Talk title]'],
+    [talk({ start: '2026-10-08T16:30:00.000Z' }).title, 'Thu 12:30 PM - Alex - [Talk title]'],
+    [talk({ start: '2026-10-08T04:05:00.000Z' }).title, 'Thu 12:05 AM - Alex - [Talk title]'],
+    [talk({ start: undefined }).title, 'Alex - [Talk title]'],
+    [talk({ topic: undefined }).title, 'Thu 2:45 PM - Alex'],
+    [talk({ status: 'scheduled' }).subtitle, ''],
+    [talk({ subteam: 'Build' }).subtitle, 'Build'],
+    [talk({ status: 'cancelled', subteam: 'Build' }).subtitle, 'Cancelled · Build'],
+    [talk({ status: 'done' }).subtitle, 'Done'],
+    [talk({ status: 'skipped' }).subtitle, 'Skipped'],
+  ].forEach(entry => need(problems, entry[0] === entry[1], 'the presentation list should read "' + entry[1] + '", it reads "' + entry[0] + '"'));
+  return problems;
+}
+
 const world = {};
 const results = [];
 
@@ -2364,6 +2713,10 @@ async function main() {
   check('an Events Calendar entry needs a title and a start date, and the seed file can be imported', checkExtraEvents);
   check('a place has a name and a switch, a task has an optional contact and place, and the places seed file can be imported', checkPlaces);
   results.push({ name: 'two places cannot have the same name, capitals ignored', problems: await checkPlaceNames().catch(error => ['the check stopped: ' + error.message]) });
+  check('the Presentations tab agrees with dashboard/config.js', checkPresentationsTab);
+  check('a meeting day has a first and a last talk, a talk length, a booking close time and a one line list entry', checkMeetingDays);
+  results.push({ name: 'the last talk of a meeting day is on the same day as the first, in the Theme page time zone', problems: await checkMeetingDayTimes().catch(error => ['the check stopped: ' + error.message]) });
+  check('a presentation has a first name, a title, a start, a length, a Google Slides link and a status, and a one line list entry', checkPresentations);
   check('starting values match dashboard/config.js', checkStartingValues);
   check('every name in config.js and the sample content has a field', checkDashboardNames);
   check('every document type has a line in the sidebar, and each line opens the right list or page', checkSidebar);

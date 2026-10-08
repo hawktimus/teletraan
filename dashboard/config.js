@@ -128,6 +128,10 @@ export const limits = {
   // The Hidden tab. A chance is a percent of the page changes, and 0 is never.
   desktopChance: { min: 0, max: 100 },
   redEyesChance: { min: 0, max: 100 },
+  // The Presentations tab, in minutes. Waiting over 15 minutes for a speaker holds up the next talk, and 10 minutes
+  // over is the most a talk may run past its slot. A grace of 0 ends it when the slot ends.
+  noShowMinutes: { min: 1, max: 15 },
+  graceMinutes: { min: 0, max: 10 },
 };
 
 // Used for anything the editors have not filled in yet
@@ -232,6 +236,13 @@ export const defaultSettings = {
   desktopChance: 1,
   redEyesChance: 1,
   hiddenRequest: { kind: '', requestedAt: '' },
+  // The Presentations tab in the Studio: talks that the screen shows full screen from the clicker.
+  //   presentationsEnabled  the switch. Off, the screen never starts a talk.
+  //   noShowMinutes         how long the title card waits for the first key press before the talk is skipped
+  //   graceMinutes          how long a talk may run past its slot before it is ended
+  presentationsEnabled: true,
+  noShowMinutes: 5,
+  graceMinutes: 5,
   // The "Play announcements" button in the Studio (core/announce.js, core/announce-run.js, docs/hidden-transitions.md).
   //   announceRequest  the last click of the button. requestedAt is the time it was clicked and is empty until
   //                    it has been. The screen plays every announcement that is switched on, once, for a request

@@ -1,5 +1,7 @@
 import task from './task.js';
 import plan from './plan.js';
+import presentationDay from './presentationDay.js';
+import presentation from './presentation.js';
 import extraEvent from './extraEvent.js';
 import sponsor from './sponsor.js';
 import tipOrNews from './tipOrNews.js';
@@ -16,6 +18,8 @@ import { customPanelBlocks } from './customPanelBlocks.js';
 export const schemaTypes = [
   task,
   plan,
+  presentationDay,
+  presentation,
   extraEvent,
   sponsor,
   tipOrNews,
