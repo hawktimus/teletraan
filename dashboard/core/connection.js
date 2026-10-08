@@ -51,7 +51,7 @@ export function classifyFailure(failure) {
 }
 
 // How many of each kind of content the screen holds. Hidden and expired items
-// are counted too: this is what Sanity sent, not what is on screen. The plan
+// are counted too: this is what Sanity sent, not what is on screen. Up Next
 // is one document for today, so it is 1 or 0.
 export function itemCounts(content) {
   const data = content || {};
@@ -64,7 +64,7 @@ export function itemCounts(content) {
     ['Subteams', size(data.subteams)],
     ['People', size(data.people)],
     ['Events Calendar', size(data.extraEvents)],
-    ['Plan', data.plan ? 1 : 0],
+    ['Up Next', data.plan ? 1 : 0],
     ['Custom panels', size(data.customPanels)],
   ];
 }

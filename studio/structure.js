@@ -26,7 +26,7 @@ const newestUploadFirst = { field: '_createdAt', direction: 'desc' };
 
 export const sidebarEntries = [
   { kind: 'list', title: 'Tasks', type: 'task', sort: byOrder },
-  { kind: 'list', title: "Tonight's Plan", type: 'plan', sort: newestDateFirst },
+  { kind: 'list', title: 'Up Next', type: 'plan', sort: newestDateFirst },
   { kind: 'list', title: 'Events Calendar', type: 'extraEvent', sort: byStartDate },
   { kind: 'list', title: 'Subteams', type: 'subteam', sort: byOrder },
   { kind: 'list', title: 'Leadership', type: 'person', sort: byOrder },

@@ -396,7 +396,7 @@ function sanityFixture() {
       document('plan', 'l1', { heading: '[Hidden plan]', show: false }),
       document('plan', 'l2', { heading: '[Expired plan]', expires: '2020-01-01T00:00:00.000Z' }),
       document('plan', 'l3', {
-        heading: "[Tonight's plan]",
+        heading: "[Meeting heading]",
         date: '2026-10-02',
         location: '[Room]',
         rows: [
@@ -521,7 +521,7 @@ test('normalizeContent turns a full Sanity result into the sample content shape'
   ]);
 
   assert.deepEqual(content.plan, {
-    heading: "[Tonight's plan]",
+    heading: "[Meeting heading]",
     date: '2026-10-02',
     location: '[Room]',
     rows: [
@@ -576,7 +576,7 @@ test('normalizeContent keeps hidden and expired items, and picks the first plan 
   assert.equal(content.tasks.length, 4);
   assert.equal(visibleItems(content.tasks, new Date(start)).length, 2);
   assert.equal(content.tipsAndNews.length, 3);
-  assert.equal(content.plan.heading, "[Tonight's plan]");
+  assert.equal(content.plan.heading, "[Meeting heading]");
 
   const laterPlan = fixture.plans[2];
   laterPlan.show = false;
@@ -597,19 +597,19 @@ test('normalizeContent picks the first plan that is for today, not one that is f
     { heading: '[Last week]', date: '2026-09-25' },
     { heading: '[Yesterday]', date: '2026-10-01' },
     { heading: '[Tomorrow]', date: '2026-10-03' },
-    { heading: '[Tonight]', date: '2026-10-02' },
+    { heading: '[Today]', date: '2026-10-02' },
     { heading: '[No date]' },
   ];
-  assert.equal(normalizeContent(planResult(plans), today).plan.heading, '[Tonight]');
+  assert.equal(normalizeContent(planResult(plans), today).plan.heading, '[Today]');
 
-  const withoutToday = plans.filter(plan => plan.heading !== '[Tonight]');
+  const withoutToday = plans.filter(plan => plan.heading !== '[Today]');
   assert.equal(normalizeContent(planResult(withoutToday), today).plan.heading, '[No date]');
 
   const onlyOtherDays = withoutToday.filter(plan => plan.date);
   assert.equal(normalizeContent(planResult(onlyOtherDays), today).plan, null);
 
   const lastMinute = new Date(2026, 9, 2, 23, 59);
-  assert.equal(normalizeContent(planResult(plans), lastMinute).plan.heading, '[Tonight]');
+  assert.equal(normalizeContent(planResult(plans), lastMinute).plan.heading, '[Today]');
   const nextMorning = new Date(2026, 9, 3, 0, 1);
   assert.equal(normalizeContent(planResult(plans), nextMorning).plan.heading, '[Tomorrow]');
 });
@@ -619,10 +619,10 @@ test('normalizeContent skips a hidden or expired plan for today, and reads a dat
     { heading: '[Hidden]', date: '2026-10-02', show: false },
     { heading: '[Expired]', date: '2026-10-02', expires: '2026-10-02T09:00:00' },
     { heading: '[Odd date]', date: 'next friday' },
-    { heading: '[Tonight]', date: '2026-10-02' },
+    { heading: '[Today]', date: '2026-10-02' },
   ];
   assert.equal(normalizeContent(planResult(plans), today).plan.heading, '[Odd date]');
-  assert.equal(normalizeContent(planResult(plans.slice(0, 2).concat(plans[3])), today).plan.heading, '[Tonight]');
+  assert.equal(normalizeContent(planResult(plans.slice(0, 2).concat(plans[3])), today).plan.heading, '[Today]');
 });
 
 test('normalizeContent of an empty dataset is the defaults', () => {
@@ -4582,11 +4582,11 @@ test('mergeEvents also drops BAND events whose last day has passed, and keeps on
     bandDay('[Today]', 2027, 3, 5),
     bandDay('[Three days, still on]', 2027, 3, 3, 5),
     bandTimed('[Ended last night]', '2027-03-04T23:00:00Z', '2027-03-05T02:00:00Z'),
-    bandTimed('[Tonight]', '2027-03-05T23:00:00Z', '2027-03-06T01:00:00Z'),
+    bandTimed('[This evening]', '2027-03-05T23:00:00Z', '2027-03-06T01:00:00Z'),
   ];
 
   const merged = mergeEvents(band, [], newYork, now);
-  assert.deepEqual(titlesOf(merged).sort(), ['[Three days, still on]', '[Today]', '[Tonight]']);
+  assert.deepEqual(titlesOf(merged).sort(), ['[This evening]', '[Three days, still on]', '[Today]']);
 });
 
 test('an event with no usable start is left out', () => {
@@ -5080,10 +5080,10 @@ test('reasonText has plain words for each reason, and other for one it does not 
   assert.equal(reasonText(undefined), 'other error');
 });
 
-test('itemCounts counts each kind of content, the plan as one or none, and copes with missing lists', () => {
+test('itemCounts counts each kind of content, Up Next as one or none, and copes with missing lists', () => {
   assert.deepEqual(itemCounts(someContent), [
     ['Tasks', 12], ['Sponsors', 4], ['Tips', 9], ['Subteams', 5],
-    ['People', 8], ['Events Calendar', 2], ['Plan', 1], ['Custom panels', 3],
+    ['People', 8], ['Events Calendar', 2], ['Up Next', 1], ['Custom panels', 3],
   ]);
   assert.deepEqual(itemCounts(withDefaults({})).map(pair => pair[1]), [0, 0, 0, 0, 0, 0, 0, 0]);
   assert.deepEqual(itemCounts(null).map(pair => pair[1]), [0, 0, 0, 0, 0, 0, 0, 0]);
@@ -5122,7 +5122,7 @@ test('connectionLines with the switch on gives the last read, the counts and the
   assert.deepEqual(connectionLines({ status: sanityStatus, always: true, content: someContent, calendarsReadAt: calendarsRead }), [
     'Sanity OK · last read 2:31 PM',
     'Tasks 12 · Sponsors 4 · Tips 9 · Subteams 5',
-    'People 8 · Events Calendar 2 · Plan 1 · Custom panels 3',
+    'People 8 · Events Calendar 2 · Up Next 1 · Custom panels 3',
     'Calendars read 2:30 PM',
   ]);
 });
@@ -5132,7 +5132,7 @@ test('connectionLines says when the calendars have not been read, and when Sanit
   assert.deepEqual(lines, [
     'Sanity not read yet',
     'Tasks 0 · Sponsors 0 · Tips 0 · Subteams 0',
-    'People 0 · Events Calendar 0 · Plan 0 · Custom panels 0',
+    'People 0 · Events Calendar 0 · Up Next 0 · Custom panels 0',
     'Calendars not read yet',
   ]);
 });
@@ -5155,7 +5155,7 @@ test('connectionLines puts the reason first and the counts after it when the swi
     'SANITY UNREACHABLE: NETWORK DOWN',
     'Last good read 2:31 PM',
     'Tasks 12 · Sponsors 4 · Tips 9 · Subteams 5',
-    'People 8 · Events Calendar 2 · Plan 1 · Custom panels 3',
+    'People 8 · Events Calendar 2 · Up Next 1 · Custom panels 3',
     'Calendars read 2:30 PM',
     'ssh hawktimus@10.0.0.5',
   ]);

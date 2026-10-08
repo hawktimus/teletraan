@@ -21,7 +21,7 @@ The folder `docs/content-templates/` has one CSV file for each kind of content.
 | File | Studio sidebar |
 | --- | --- |
 | task.csv | Tasks |
-| plan.csv | Tonight's Plan |
+| plan.csv | Up Next |
 | extraEvent.csv | Events Calendar |
 | sponsor.csv | Sponsors |
 | tipOrNews.csv | Tips and News |
@@ -123,7 +123,7 @@ Some more things to know:
 
 Two kinds of content hold a list, so their columns come in numbered groups.
 
-**Tonight's Plan** has up to 5 schedule rows. Group 1 is `rows.1.time`,
+**Up Next** has up to 5 schedule rows. Group 1 is `rows.1.time`,
 `rows.1.text` and `rows.1.lead`, group 2 is `rows.2.time` and so on. Leave a
 group empty and it is left out. If you fill in anything in a group, its text
 is needed.

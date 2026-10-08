@@ -14,7 +14,7 @@ For adjusting the content that gets displayed, Sanity will be used.
 
 Almost everything on the screen is typed into the Studio, which is the editing page for the dashboard. Open it at [Studio address] and sign in.
 
-The list on the left is what you can change: Tasks, Tonight's Plan, Events Calendar, Subteams, Leadership, Sponsors, Photos, Tips and News, Custom Panels, Dashboard Settings, Theme, Places, and Demo. Click the one you want, change it, and press **Publish**. Nothing shows on the TV until it is published, and it gets there within a few seconds.
+The list on the left is what you can change: Tasks, Up Next, Events Calendar, Subteams, Leadership, Sponsors, Photos, Tips and News, Custom Panels, Dashboard Settings, Theme, Places, and Demo. Click the one you want, change it, and press **Publish**. Nothing shows on the TV until it is published, and it gets there within a few seconds.
 
 - Every item has a **Show on screen** switch and an optional **Hide after** date, so things come down on their own.
 - Every field says how many characters fit on the screen. Studio will not let you publish text that is too long.
@@ -39,7 +39,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - Date, time, and weather for Holly Springs
 - Countdown timer to FRC Kickoff (January 9, 2027), then to Rollout
 - Team tasks, each with an optional point of contact and a location picked from a list of places
-- Tonight's plan
+- Up Next, the schedule for today's meeting
 - Upcoming events and the next event, from the team's BAND calendars
 - Sponsors, with sponsor logos and thank-yous
 - Photos, uploaded in Sanity and shown at random or newest first

@@ -13,7 +13,6 @@
 }
 .tonight .title {
   margin: 0;
-  letter-spacing: -2px; /* the G in this font leaves a gap after it */
   font: 700 var(--size-heading)/96px var(--font-display);
 }
 .tonight .tag {

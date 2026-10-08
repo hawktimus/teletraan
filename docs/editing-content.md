@@ -30,10 +30,10 @@ received.
   "Finished on". If you leave it empty, the time you last edited the task
   counts as the finish time. The task leaves the screen after the number of
   days set in Dashboard Settings. See "What the Tasks panel shows" below.
-- Tonight's Plan: the schedule for tonight's meeting, up to 5 rows. The TV
-  shows the first plan that is switched on and is dated today or has no date.
-  A plan from another day is skipped, so an old plan that is still switched on
-  does not hide today's.
+- Up Next: the schedule for today's meeting, up to 5 rows. The TV shows the
+  first one that is switched on and is dated today or has no date. One from
+  another day is skipped, so an old one that is still switched on does not
+  hide today's.
 - Events Calendar: events that are not on BAND, such as one another school
   hosts. Each entry has a name, a start date, an optional end date, optional
   times and an optional place. See "Events Calendar" below.

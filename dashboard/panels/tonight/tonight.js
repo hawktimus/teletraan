@@ -1,4 +1,4 @@
-// The plan for tonight's meeting, one line per time slot.
+// What is up next at today's meeting, one line per time slot.
 
 import { rowBarMarkup, cardMarkup } from '../../core/plate.js';
 import { doubleSlash } from '../../core/marks.js';
@@ -42,7 +42,7 @@ export function mount(host, content) {
   host.innerHTML = `
     <section class="page tonight">
       <div class="header">
-        <h2 class="title" data-slat="title">TONIGHT</h2>
+        <h2 class="title" data-slat="title">UP NEXT</h2>
         <div class="tag" data-slat="tag">${dateText}${doubleSlash()}</div>
       </div>
 

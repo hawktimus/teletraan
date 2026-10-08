@@ -35,8 +35,8 @@ Add the name to a sample item with a marked placeholder:
     { "title": "[Task in progress]", "room": "[Room]", ... }
 
 dashboard/core/sanity.js turns Sanity documents into this shape. Every field
-of a task, sponsor, tip, subteam, person, plan or custom panel comes through
-without any change there. A field nobody has filled in is missing, so every
+of a task, sponsor, tip, subteam, person, plan (Up Next) or custom panel
+comes through without any change there. A field nobody has filled in is missing, so every
 panel must cope with that. There are three exceptions. A person's photo is not a
 plain value. Its query line in `contentQuery` asks for the picture's address,
 size, crop and hotspot, and `normalizePerson` cleans it. dashboard/core/images.js

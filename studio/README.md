@@ -1,7 +1,7 @@
 # Teletraan I Studio
 
 The editing screen for the dashboard, built with Sanity Studio. About ten team
-members use it to change the tasks, plans, sponsors and other content on the
+members use it to change the tasks, Up Next, sponsors and other content on the
 TV. The dashboard reads what they publish.
 
 ## What is here

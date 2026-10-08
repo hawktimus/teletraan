@@ -27,21 +27,21 @@ const rowFields = [
 
 export default defineType({
   name: 'plan',
-  title: "Tonight's Plan",
+  title: 'Up Next',
   type: 'document',
   fields: [
     defineField({
       name: 'heading',
       title: 'Heading',
       type: 'string',
-      description: 'The heading of the plan, such as the kind of meeting. Up to 26 characters fit.',
+      description: 'The heading, such as the kind of meeting. Up to 26 characters fit.',
       validation: Rule => [Rule.required().error('Add a heading.'), tooLong(Rule, 26)],
     }),
     defineField({
       name: 'date',
       title: 'Date',
       type: 'date',
-      description: 'The day this plan is for.',
+      description: 'The day this is for.',
     }),
     defineField({
       name: 'location',
@@ -81,7 +81,7 @@ export default defineType({
     select: { title: 'heading', date: 'date', location: 'location', show: 'show', expires: 'expires' },
     prepare(item) {
       const text = [item.date, item.location].filter(Boolean).join(' · ');
-      return { title: item.title || 'Plan with no heading', subtitle: subtitleFor(text, item) };
+      return { title: item.title || 'Up Next with no heading', subtitle: subtitleFor(text, item) };
     },
   },
 });

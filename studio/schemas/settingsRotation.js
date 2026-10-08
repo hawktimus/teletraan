@@ -9,7 +9,7 @@ import { titleOf } from './fields.js';
 const largePanels = [
   { title: 'Tasks', value: 'tasks' },
   { title: 'Upcoming events', value: 'events' },
-  { title: "Tonight's plan", value: 'tonight' },
+  { title: 'Up Next', value: 'tonight' },
   { title: 'Subteam spotlight', value: 'spotlight' },
   { title: 'Sponsor feature', value: 'sponsor-feature' },
   { title: 'Photo', value: 'photo' },

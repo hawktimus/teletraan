@@ -57,7 +57,7 @@ const examples = {
     contact: '[First name]', location: '[Place name]',
   },
   plan: {
-    heading: '[Plan heading]', date: '2027-01-12', location: '[Room or place]',
+    heading: '[Meeting heading]', date: '2027-01-12', location: '[Room or place]',
     'rows.1.time': '[6:00 PM]', 'rows.1.text': '[First thing]', 'rows.1.lead': '[Lead]',
     'rows.2.time': '[6:30 PM]', 'rows.2.text': '[Second thing]',
     show: 'yes',
