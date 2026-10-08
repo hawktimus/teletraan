@@ -122,6 +122,7 @@ const contract = {
     presentationsEnabled: 'boolean',
     noShowMinutes: number(1, 15),
     graceMinutes: number(0, 10),
+    presentationTestRequest: object({ requestedAt: 'datetime' }),
     announceRequest: object({ requestedAt: 'datetime' }),
     countdown: object({ kickoffLabel: text(12), kickoff: 'datetime', rolloutLabel: text(12), rollout: 'datetime' }),
     alert: object({ on: 'boolean', headline: text(24), message: text(90), until: 'datetime' }),
@@ -1241,7 +1242,7 @@ function checkHiddenTab() {
   need(problems, offered.map(item => item.title).join() === ids.map(id => registry[id].name).join(), 'hiddenRequest.kind should show the names in the dashboard registry');
 
   // The Play buttons come after the two content source buttons: one for each transition, plain functions, and only on this page.
-  // Play announcements comes after them (checkPlayAnnouncements).
+  // Play announcements and Run presentation test come after them (checkPlayAnnouncements, checkRunPresentationTest).
   const buttons = world.config.document.actions([], { schemaType: 'dashboardSettings' }).slice(2, 2 + Object.keys(registry).length);
   if (buttons.length !== ids.length || !buttons.every(button => typeof button === 'function')) {
     return problems.concat('the settings page should add one Play button for each hidden transition, written as plain functions');
@@ -1287,9 +1288,11 @@ function checkPresentationsTab() {
   need(problems, settings.groups.filter(group => group.title === 'Presentations').length === 1, 'Dashboard Settings should have exactly one tab named Presentations');
   need(problems, settings.groups.filter(group => group.name === 'presentations' && group.title === 'Presentations').length === 1, 'the Presentations tab should be the group presentations');
 
-  // Nothing else is in the tab, so deleting settingsPresentations.js removes the whole section
+  // Nothing else is in the tab, so deleting settingsPresentations.js removes the whole section. The last field is
+  // the hidden one that Run presentation test fills in (checkRunPresentationTest).
   const inTab = fieldsIn(settings).filter(field => field.group === 'presentations').map(field => field.name);
-  need(problems, inTab.join() === presentationNames.join(), 'the Presentations tab should hold, in this order: ' + presentationNames.join(', ') + ', not ' + inTab.join(', '));
+  const wanted = presentationNames.concat('presentationTestRequest');
+  need(problems, inTab.join() === wanted.join(), 'the Presentations tab should hold, in this order: ' + wanted.join(', ') + ', not ' + inTab.join(', '));
 
   const titles = { presentationsEnabled: 'Run presentations', noShowMinutes: 'Wait for the speaker (minutes)', graceMinutes: 'Overrun allowed (minutes)' };
   Object.keys(titles).forEach(name => need(problems, at(name) && at(name).title === titles[name], name + ' should be titled ' + titles[name]));
@@ -1346,12 +1349,12 @@ function checkPlayAnnouncements() {
   need(problems, registry['all-announcements'] && registry['all-announcements'].name === 'All announcements', 'the dashboard demo screens should have all-announcements, named All announcements');
   need(problems, copy && copy.name === 'All announcements', 'studio/demo-screens.js should have all-announcements, named All announcements');
 
-  // The button comes last on the settings page, after the Play buttons of the hidden transitions, and nowhere else
+  // The button comes after the Play buttons of the hidden transitions, and nowhere else. Run presentation test is the one after it.
   const played = Object.keys(world.hiddenRegistry.hiddenTransitions).length;
   const buttons = world.config.document.actions([], { schemaType: 'dashboardSettings' });
   const button = buttons[2 + played];
-  if (buttons.length !== 3 + played || typeof button !== 'function') {
-    return problems.concat('the settings page should end with the Play announcements button, a plain function, after the Play buttons of the hidden transitions');
+  if (buttons.length !== 4 + played || typeof button !== 'function') {
+    return problems.concat('the settings page should have the Play announcements button, a plain function, after the Play buttons of the hidden transitions, and then Run presentation test');
   }
   need(problems, world.config.document.actions([], { schemaType: 'demo' }).every(item => item.action !== 'playAnnouncements'), 'only the settings page should get the Play announcements button');
 
@@ -1376,6 +1379,61 @@ function checkPlayAnnouncements() {
   need(problems, written && Object.keys(written).join() === 'requestedAt', 'Play announcements should write only requestedAt');
   need(problems, written && typeof written.requestedAt === 'string' && new Date(written.requestedAt).toISOString() === written.requestedAt && Date.parse(written.requestedAt) >= before && Date.parse(written.requestedAt) <= after, 'Play announcements should write the time now, as new Date().toISOString() writes it');
   need(problems, press({ announceRequest: { requestedAt: '2026-06-01T12:00:00.000Z' } }).state.disabled === false, 'Play announcements should be on when a request is already published, so it can be played again');
+  return problems;
+}
+
+// Run presentation test: the hidden presentationTestRequest field in the Presentations tab
+// (schemas/settingsPresentations.js), its starting value in config.js and the button that
+// fills it in (actions.js). It is the last button on the settings page.
+function checkRunPresentationTest() {
+  const problems = [];
+  const config = world.dashboard;
+  const request = fieldAt('dashboardSettings.presentationTestRequest');
+  const time = fieldAt('dashboardSettings.presentationTestRequest.requestedAt');
+
+  // The field: an object with one read only time, hidden from editors, with no starting value of its own
+  need(problems, request && request.type === 'object', 'presentationTestRequest should be an object');
+  need(problems, request && request.group === 'presentations', 'presentationTestRequest should be in the Presentations tab');
+  need(problems, request && request.hidden === true, 'presentationTestRequest should be hidden from editors (hidden: true)');
+  need(problems, request && request.initialValue === undefined, 'presentationTestRequest should have no starting value in the Studio');
+  need(problems, request && /Run presentation test/.test(request.description || ''), 'the presentationTestRequest description should name the button Run presentation test');
+  need(problems, time && time.type === 'datetime' && time.readOnly === true, 'presentationTestRequest.requestedAt should be a read only datetime');
+  need(problems, time && !constraintNamed(constraintsOf(time), 'required'), 'presentationTestRequest.requestedAt should be optional');
+
+  // The starting value is a request with no time, and the sample content never carries a request
+  need(problems, sameData(config.defaultSettings.presentationTestRequest, { requestedAt: '' }), 'the default presentationTestRequest in config.js should be a time that is empty');
+  need(problems, !('presentationTestRequest' in world.sample.settings), 'the sample settings should not carry a presentationTestRequest');
+
+  // The button is the last one on the settings page, and nowhere else
+  const played = Object.keys(world.hiddenRegistry.hiddenTransitions).length;
+  const buttons = world.config.document.actions([], { schemaType: 'dashboardSettings' });
+  const button = buttons[3 + played];
+  if (buttons.length !== 4 + played || typeof button !== 'function') {
+    return problems.concat('the settings page should end with the Run presentation test button, a plain function, after Play announcements');
+  }
+  need(problems, world.config.document.actions([], { schemaType: 'demo' }).every(item => item.action !== 'runPresentationTest'), 'only the settings page should get the Run presentation test button');
+
+  function press(published, draft) {
+    globalThis.studioCalls = [];
+    const props = { id: 'dashboardSettings', type: 'dashboardSettings', published: published, draft: draft || null, onComplete: () => {} };
+    const state = button(props);
+    if (!state.disabled) state.onHandle();
+    return { state: state, calls: globalThis.studioCalls };
+  }
+
+  // It writes the time now, only that, and publishes
+  const before = Date.now();
+  const pressed = press(null);
+  const after = Date.now();
+  const set = pressed.calls[0] && pressed.calls[0].patch && pressed.calls[0].patch[0] && pressed.calls[0].patch[0].set;
+  const written = set && set.presentationTestRequest;
+
+  need(problems, pressed.state.label === 'Run presentation test', 'the button should be labelled Run presentation test');
+  need(problems, button.action === 'runPresentationTest', 'the button should be called runPresentationTest');
+  need(problems, pressed.calls.length === 2 && pressed.calls[0].patch.length === 1 && Object.keys(set).join() === 'presentationTestRequest' && pressed.calls[1].publish === true, 'Run presentation test should set presentationTestRequest and then publish');
+  need(problems, written && Object.keys(written).join() === 'requestedAt', 'Run presentation test should write only requestedAt');
+  need(problems, written && typeof written.requestedAt === 'string' && new Date(written.requestedAt).toISOString() === written.requestedAt && Date.parse(written.requestedAt) >= before && Date.parse(written.requestedAt) <= after, 'Run presentation test should write the time now, as new Date().toISOString() writes it');
+  need(problems, press({ presentationTestRequest: { requestedAt: '2026-06-01T12:00:00.000Z' } }).state.disabled === false, 'Run presentation test should be on when a request is already published, so it can be run again');
   return problems;
 }
 
@@ -1471,9 +1529,10 @@ function checkDashboardNames() {
   add(unknownKeys(world.dashboard.defaultDemo, fieldsIn(typeByName('demo')), 'defaultDemo in config.js'));
   add(unknownKeys(sample.demo || {}, fieldsIn(typeByName('demo')), 'sample demo'));
 
-  const lists = { tasks: 'task', sponsors: 'sponsor', tipsAndNews: 'tipOrNews', subteams: 'subteam', people: 'person', extraEvents: 'extraEvent' };
+  const lists = { tasks: 'task', sponsors: 'sponsor', tipsAndNews: 'tipOrNews', subteams: 'subteam', people: 'person', extraEvents: 'extraEvent', presentationDays: 'presentationDay', presentations: 'presentation' };
   Object.keys(lists).forEach(key => {
-    sample[key].forEach(item => add(unknownKeys(item, fieldsIn(typeByName(lists[key])), 'sample ' + key)));
+    // a talk has its Sanity id under the plain name id, the way the query sends it
+    sample[key].forEach(item => add(unknownKeys(without(item, 'id'), fieldsIn(typeByName(lists[key])), 'sample ' + key)));
   });
 
   sample.customPanels.forEach(panel => {
@@ -1648,7 +1707,7 @@ function checkSettingsPage() {
   const actions = ['publish', 'discardChanges', 'delete', 'duplicate', 'unpublish'].map(action => ({ action: action }));
   const kept = world.config.document.actions(actions, { schemaType: 'dashboardSettings' }).map(item => item.action).join();
   const others = world.config.document.actions(actions, { schemaType: 'task' }).length;
-  const wanted = 'publish,discardChanges,useSampleContent,useProductionContent,playDesktop,playRedEyes,playAnnouncements';
+  const wanted = 'publish,discardChanges,useSampleContent,useProductionContent,playDesktop,playRedEyes,playAnnouncements,runPresentationTest';
   if (kept !== wanted) problems.push('the settings page should have these actions: ' + wanted + '. It has: ' + kept);
   if (others !== actions.length) problems.push('other types should keep every action');
 
@@ -2531,6 +2590,15 @@ function checkPresentations() {
   need(problems, constraintNamed(minutesRules, 'integer') && constraintNamed(minutesRules, 'min') && constraintNamed(minutesRules, 'max'), 'presentation.minutes should be a whole number with a smallest and a largest');
   need(problems, minutes && (minutes.description || '').indexOf('from 5 to 30') !== -1, 'the presentation.minutes description should give the range, from 5 to 30');
 
+  // The dashboard cleans a talk with the same length, statuses and starting values (config.js)
+  const config = world.dashboard;
+  const least = constraintNamed(minutesRules, 'min');
+  const most = constraintNamed(minutesRules, 'max');
+  need(problems, least && most && least.args[0] === config.limits.talkMinutes.min && most.args[0] === config.limits.talkMinutes.max, 'presentation.minutes should have the limits in config.js, ' + JSON.stringify(config.limits.talkMinutes));
+  need(problems, minutes && minutes.initialValue === config.defaultTalk.minutes, 'defaultTalk.minutes in config.js should be the starting length, ' + (minutes && minutes.initialValue));
+  need(problems, config.talkStatuses.join() === choices['presentation.status'].join(), 'talkStatuses in config.js should be: ' + choices['presentation.status'].join(', '));
+  need(problems, at('status') && at('status').initialValue === config.defaultTalk.status, 'defaultTalk.status in config.js should be the starting status, ' + (at('status') && at('status').initialValue));
+
   // The slides link: the pattern is the one the booking form uses, and only a Google Slides deck matches it
   const link = at('deckLink');
   const linkRule = constraintNamed(rulesOf(link), 'regex');
@@ -2701,6 +2769,7 @@ async function main() {
   check('the Night mode tab agrees with dashboard/config.js', checkNightTab);
   check('the Hidden tab agrees with dashboard/config.js and the dashboard registry, and the Play buttons work', checkHiddenTab);
   check('Play announcements has its hidden field, its button and its Demo step', checkPlayAnnouncements);
+  check('Run presentation test has its hidden field and its button', checkRunPresentationTest);
   check('Content source and the switch back time agree with dashboard/config.js, and the two buttons work', checkContentSource);
   check('Show connection status is a switch that starts off, in the Connection tab', checkConnectionStatus);
   check('a subteam has an optional list of first names, up to 24 of 12 characters, with no repeats', checkSubteamMembers);

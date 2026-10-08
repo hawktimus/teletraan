@@ -120,8 +120,9 @@ svg [data-fx] { transform-box: fill-box; }
 /* The glint. A short bright dash runs once round each large frame, then waits.
    plate.js draws it on its own svg and sets --glint-delay, the wait in
    seconds before the first run. Only line drawing and opacity change. It is
-   off in calm and none motion, in the flat finish, and with data-glint="off"
-   (?glint=off). */
+   off in calm and none motion, in the flat finish, with data-glint="off"
+   (?glint=off), and while a talk holds the screen (data-paused, set by pause()
+   in frame.js). */
 
 .glint {
   fill: none;
@@ -147,6 +148,7 @@ svg [data-fx] { transform-box: fill-box; }
   18%, 100% { stroke-dashoffset: 0; opacity: 0; }
 }
 [data-glint="off"] .glint-layer,
+[data-paused] .glint-layer,
 [data-motion="calm"] .glint-layer,
 [data-motion="none"] .glint-layer,
 [data-finish="flat"] .glint-layer { display: none; }
@@ -1608,6 +1610,17 @@ html:not([data-motion="full"]) .logo[data-act="fly"] .hawk-far-wing { transform:
 
 [data-draw="fade"] [data-state="in"] [data-fx="draw"]  { animation: fade-in var(--time-draw-in) linear var(--delay, 0ms) backwards; }
 [data-draw="fade"] [data-state="out"] [data-fx="draw"] { animation: fade-out var(--time-draw-out) linear forwards; }
+
+
+/* A talk (panels/talk, core/presentation-run.js). The cards come and go with the
+   effects above. The slides change at once, with no animation of any kind. Only the
+   chip, the slide number, fades in and out, with opacity only. chip-out starts at
+   full strength and ends at the chip's own opacity, which is 0. */
+
+.talk .chip[data-shown="on"]  { animation: fade-in var(--time-fade-in) linear backwards; }
+.talk .chip[data-shown="out"] { animation: chip-out var(--time-fade-out) linear forwards; }
+@keyframes chip-out { from { opacity: 1; } }
+[data-motion="none"] .talk .chip { animation: none; }
 
 
 /* Calm mode: no travel, no drawing, no effects. The whole panel fades as

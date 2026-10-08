@@ -16,6 +16,11 @@ no demo has been asked for. Click Run demo again while a demo is playing and it
 starts again from the first step. Run demo and Stop demo each publish the page
 for you, so you do not click Publish.
 
+Dashboard Settings has a button of its own for the presentation mode, **Run
+presentation test**, in the same menu as Play announcements. It starts the sample
+talk with six sample slides, so you can try the clicker without a booked talk. It
+is not a demo step and does not use this page. docs/hidden-transitions.md explains it.
+
 ## What the page holds
 
 - Requested at: the time Run demo was clicked. Run demo fills it in and Stop demo

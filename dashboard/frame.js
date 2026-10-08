@@ -104,6 +104,17 @@ export const sequences = {
     'stud':    ['servo', 500, 50],
     'scan':    ['scan', 900],
   },
+
+  // Full screen: the cards of a booked talk, for the title, for slides that are not
+  // ready and for the thanks (panels/talk). The slides themselves are not here, since
+  // they change at once.
+  talk: {
+    'ground':   ['fade', 0],
+    'label':    ['fade', 200],
+    'headline': ['latch-left', 200],
+    'detail':   ['latch-right', 350],
+    'prompt':   ['fade', 1000],
+  },
 };
 
 
@@ -571,13 +582,52 @@ export function setEffectsPaused(paused) {
 export function setHiddenPlaying(on) {
   hiddenPlaying = on === true;
   showKit();
-  if (!hiddenPlaying) return;
+  if (hiddenPlaying) endEffectsPlaying();
+}
 
+function endEffectsPlaying() {
   stopLogoEffects();
   if (playing && playing.name === 'glitch') {
     stopCrt();
     playing = null;
   }
+}
+
+// One hold on the whole screen, for a talk in presentation mode. pause(reason)
+// takes it and resume(reason) lets it go. Each reason is held once, and the hold
+// lasts until every reason has been let go. While it lasts:
+//   - no effect starts and none waits, and whatever plays ends on the spot, as for a
+//     hidden transition
+//   - the neon kit is still, and the glint and the seasonal pieces stop (html data-paused)
+//   - core/schedule.js stops the page changes of all three areas
+//   - takeoverRunning() in core/takeover.js is true, so the hidden transitions, the night
+//     screen, the demo, Play announcements and the page reloads wait, and an announcement
+//     that comes due is kept and plays when the hold is gone
+// An alert still takes the screen: it overrides everything.
+// When the hold is gone everything starts again by itself. What came due meanwhile plays
+// then, one effect at a time, as after any long wait.
+const holds = new Set();
+
+export function pause(reason) {
+  if (holds.has(reason)) return;
+
+  holds.add(reason);
+  if (holds.size > 1) return;
+  page.dataset.paused = 'on';
+  showKit();
+  endEffectsPlaying();
+}
+
+export function resume(reason) {
+  if (!holds.delete(reason) || holds.size > 0) return;
+
+  delete page.dataset.paused;
+  showKit();
+}
+
+// True while any reason holds the screen
+export function isPaused() {
+  return holds.size > 0;
 }
 
 // 'full', 'calm' or 'none', the motion setting as it is now
@@ -639,6 +689,7 @@ function askToPlay(name, byHand) {
 
 function lookAtEffects() {
   if (motion !== 'full' || nightCovers || hiddenPlaying) return;
+  if (isPaused()) return;
 
   Object.keys(effects).forEach(name => {
     if (isDue(effects[name])) askToPlay(name, false);
@@ -664,11 +715,11 @@ function isDue(effect) {
 
 // Whether a waiting effect still wants to play. One that came due stops
 // wanting to when its switch is turned off, and every one stops when the
-// motion is no longer full, the night screen covers the picture or a hidden
-// transition has the screen.
+// motion is no longer full, the night screen covers the picture, a hidden
+// transition has the screen or the screen is paused.
 function isWanted(entry) {
   const effect = effects[entry.name];
-  return motion === 'full' && !nightCovers && !hiddenPlaying && (entry.byHand || (isSwitchedOn(effect) && effect.everySeconds > 0));
+  return motion === 'full' && !nightCovers && !hiddenPlaying && !isPaused() && (entry.byHand || (isSwitchedOn(effect) && effect.everySeconds > 0));
 }
 
 // Starts the first effect in line that may start, if nothing is playing and
@@ -1019,7 +1070,7 @@ export function setTakeoverCovers(covers) {
 
 // The parts that run by themselves, and the two events, may move now
 function kitMoves() {
-  return kitOn && motion === 'full' && !nightCovers && !takeoverCovers && !hiddenPlaying;
+  return kitOn && motion === 'full' && !nightCovers && !takeoverCovers && !hiddenPlaying && !isPaused();
 }
 
 function kitMayFire() {

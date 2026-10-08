@@ -8,6 +8,7 @@ import { tidyTheme } from './theme.js';
 import { tidyDemo } from './demo.js';
 import { chanceFields, tidyHiddenRequest } from './hidden.js';
 import { tidyAnnounceRequest } from './announce.js';
+import { tidyTestRequest } from './presentation-test.js';
 import { fetchResult, liveEventsUrl, normalizeContent, normalizeSample } from './sanity.js';
 import { reasons } from './connection.js';
 import { tidyClockTime } from './night.js';
@@ -39,7 +40,7 @@ export function visibleItems(list, now = new Date()) {
 // whether settings exist.
 export function withDefaults(raw) {
   const source = raw || {};
-  const content = Object.assign({ tasks: [], plan: null, sponsors: [], tipsAndNews: [], subteams: [], people: [], photos: [], customPanels: [], extraEvents: [] }, source);
+  const content = Object.assign({ tasks: [], plan: null, sponsors: [], tipsAndNews: [], subteams: [], people: [], photos: [], presentations: [], customPanels: [], extraEvents: [] }, source);
   content.team = Object.assign({}, defaultTeam, source.team);
   content.settings = Object.assign({}, defaultSettings, source.settings);
   content.settings.countdown = Object.assign({}, defaultSettings.countdown, content.settings.countdown);
@@ -101,12 +102,14 @@ export function fixSettingValues(settings) {
   settings.hiddenRequest = tidyHiddenRequest(settings.hiddenRequest);
   // The last click of Play announcements (Announcements tab, hidden from editors): a time, or empty
   settings.announceRequest = tidyAnnounceRequest(settings.announceRequest);
+  // The last click of Run presentation test (Presentations tab, hidden from editors): a time, or empty
+  settings.presentationTestRequest = tidyTestRequest(settings.presentationTestRequest);
   settings.crt = tidyGlitch(settings.crt);
 }
 
 // A number in its range. For a limit with a shortest, 0 stays 0 (never) and
 // a number between 0 and the shortest is brought up to the shortest.
-function keepInRange(value, limit, fallback) {
+export function keepInRange(value, limit, fallback) {
   if (typeof value !== 'number' || !isFinite(value)) return fallback;
   if (limit.shortest && value > limit.min && value < limit.shortest) return limit.shortest;
   return Math.min(limit.max, Math.max(limit.min, value));

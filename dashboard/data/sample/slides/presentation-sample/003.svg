@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080">
+  <rect width="1920" height="1080" fill="#29054a"/>
+  <polygon points="1500,260 1780,800 1220,800" fill="#faca2a" opacity="0.35"/>
+  <text x="160" y="620" font-family="sans-serif" font-size="240" font-weight="bold" fill="#ffffff">SLIDE 3</text>
+</svg>

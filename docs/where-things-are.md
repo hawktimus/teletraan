@@ -70,7 +70,10 @@ editors can sign in from anywhere.
                               change, docs/page-transitions.md), the screws, the logo's entrance, spin and
                               flying hawk, the name effect, the screen glitch and the scheduler that says
                               when each of those may start. frame.css also has the night screen's
-                              bounce, spin and fades, and the hidden transitions (docs/hidden-transitions.md)
+                              bounce, spin and fades, and the hidden transitions (docs/hidden-transitions.md).
+                              frame.js has pause(reason) and resume(reason) too, the one hold a talk takes on
+                              the whole screen: the pages, the effects, the hidden transitions, night mode and
+                              the announcements wait until it is let go
       neon-kit.css            the moving neon of Neon Prime, the kit: its lines, ticks and brackets and every
                               keyframe they use (docs/layouts.md, "The kit"). frame.js has the part of it that
                               is timed (the name glitch and the burst at a page change)
@@ -129,6 +132,13 @@ editors can sign in from anywhere.
                               hidden-transitions.js lists them, hidden-run.js plays them and
                               hidden-pictures.js lists their four pictures (in assets/hidden) and
                               which one plays next (docs/hidden-transitions.md),
+                              presentation.js decides when a booked talk shows its title card and its
+                              slides, what each key of the clicker does and which talks were skipped,
+                              and presentation-run.js puts that on the screen and reads the keys (the
+                              cards and the slides are drawn by panels/talk, docs/presentations.md),
+                              presentation-test.js decides when the Run presentation test button starts
+                              the sample talk, and presentation-test-run.js starts it
+                              (docs/hidden-transitions.md),
                               tick.js is the one clock of the screen: it tells every panel when a real
                               second starts by reading the time, not by counting, so the digits never
                               drift, and a panel should write to the page only what has changed
@@ -136,12 +146,13 @@ editors can sign in from anywhere.
                               column of the sidebar layout, in place of the banner and the countdown
                               (docs/layouts.md, "The sidebar")
       fonts/, assets/         fonts and pictures, all served from here
-      data/sample/            sample content with marked placeholders
+      data/sample/            sample content with marked placeholders, and a sample talk with six slides
+                              (slides/presentation-sample)
       data/live/              files the Mini downloads (never committed)
     studio/                   the Sanity editing screen, its sidebar (structure.js: one list with a line
                               for each entry, so changing the order means moving a line,
                               docs/reordering-the-sidebar.md), its buttons (actions.js: the two content source
-                              buttons, the Play buttons of the hidden transitions, Play announcements, and Run demo and Stop demo),
+                              buttons, the Play buttons of the hidden transitions, Play announcements, Run presentation test, and Run demo and Stop demo),
                               its copy of the theme lists (themes.js), its copy of the demo screens
                               (demo-screens.js), its copy of the hidden transitions (hidden-transitions.js),
                               the Publish all tool in the top bar (publish-all-tool.js is the page and
@@ -299,6 +310,14 @@ alone.
   `studio/actions.js`). The starting value is `announceRequest` in `defaultSettings` in
   `dashboard/config.js`. `core/announce.js` decides and `core/announce-run.js` plays it. A Demo step
   can use it too: All announcements in `demoScreens`.
+- **Run presentation test.** The button after Play announcements in the same menu
+  (docs/hidden-transitions.md). It starts the sample talk, with its six sample slides in
+  `dashboard/data/sample/slides/presentation-sample/`, and needs no internet. It writes the hidden
+  `presentationTestRequest` field (`presentationTestRequestField` in
+  `studio/schemas/settingsPresentations.js`, the button is `useRunPresentationTestAction` in
+  `studio/actions.js`). The starting value is `presentationTestRequest` in `defaultSettings` in
+  `dashboard/config.js`. `core/presentation-test.js` decides, `core/presentation-test-run.js` reads the
+  sample talk and `startTestTalk` in `core/presentation-run.js` puts it on the screen.
 - **The demo.** The Demo page in Studio (docs/demo.md): Run demo and Stop demo
   in its menu, the Steps, and the Demo announcement text. The starting values
   are `defaultDemo` in `dashboard/config.js` and their copy in

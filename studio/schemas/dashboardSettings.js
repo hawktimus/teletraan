@@ -10,7 +10,7 @@ import { transitionsFields, transitionsGroup } from './settingsTransitions.js';
 import { photosFields, photosGroup } from './settingsPhotos.js';
 import { nightFields, nightGroup } from './settingsNight.js';
 import { hiddenFields, hiddenGroup } from './settingsHidden.js';
-import { presentationsFields, presentationsGroup } from './settingsPresentations.js';
+import { presentationsFields, presentationsGroup, presentationTestRequestField } from './settingsPresentations.js';
 
 const groups = [
   { name: 'screen', title: 'Screen' },
@@ -454,6 +454,7 @@ export default defineType({
     ...nightFields(),
     ...hiddenFields(),
     ...presentationsFields(),
+    presentationTestRequestField(),
     calendarsField,
     contentSourceField,
     switchBackAtField,

@@ -44,7 +44,8 @@ async function loadCopy(name, changeConfig) {
 
   // the Events panel and the Next event tile draw the merged list, and the Roster panel draws the roster pages, so they are tested too.
   // The Photo and Team Leads panels are here to check that they follow the two size settings.
-  ['events/events.js', 'next-event/next-event.js', 'roster/roster.js', 'leadership/leadership.js', 'photo/photo.js', 'team-leads/team-leads.js'].forEach(file => {
+  // The Up Next panel is here for the rows it draws from the plan and the booked talks.
+  ['events/events.js', 'next-event/next-event.js', 'roster/roster.js', 'leadership/leadership.js', 'photo/photo.js', 'team-leads/team-leads.js', 'tonight/tonight.js'].forEach(file => {
     fs.mkdirSync(path.join(root, 'dashboard/panels', path.dirname(file)), { recursive: true });
     fs.copyFileSync(path.join(dashboardFolder, 'panels', file), path.join(root, 'dashboard/panels', file));
   });
@@ -62,12 +63,14 @@ async function loadCopy(name, changeConfig) {
     leadershipPanel: await import(base + 'panels/leadership/leadership.js'),
     photoPanel: await import(base + 'panels/photo/photo.js'),
     teamLeadsPanel: await import(base + 'panels/team-leads/team-leads.js'),
+    tonightPanel: await import(base + 'panels/tonight/tonight.js'),
     leadership: await import(base + 'core/leadership.js'),
     look: await import(base + 'core/look.js'),
     marks: await import(base + 'core/marks.js'),
     images: await import(base + 'core/images.js'),
     photos: await import(base + 'core/photos.js'),
     portrait: await import(base + 'core/portrait.js'),
+    presentation: await import(base + 'core/presentation.js'),
     roster: await import(base + 'core/roster.js'),
     sanity: await import(base + 'core/sanity.js'),
     source: await import(base + 'core/source.js'),
@@ -104,6 +107,7 @@ const { classifyFailure, connectionLines, itemCounts, reasonText, reasons, drawC
 const { tidyExtraEvent, extraEventsToEvents, mergeEvents, instantIn, rangeLabel, eventDate, timeText } = live.events;
 const eventsPanel = live.eventsPanel;
 const nextEventPanel = live.nextEventPanel;
+const tonightPanel = live.tonightPanel;
 const { makeTurns, makePages } = live.turns;
 const { tidyPhoto, photoUrl, preloadImages, screenPhotoUrl, photoFocus, photoMaxWidth } = live.images;
 const { photosToShow, photoKey, newestFirst, creditText, makePhotoQueue, ownSeconds } = live.photos;
@@ -441,7 +445,8 @@ test('normalizeContent turns a full Sanity result into the sample content shape'
   const content = normalizeContent(sanityFixture(), today);
   const sampleContent = withDefaults(JSON.parse(fs.readFileSync(sampleFile, 'utf8')));
 
-  assert.deepEqual(Object.keys(content).sort(), Object.keys(sampleContent).sort());
+  // The sample also carries a Meeting day to show its shape. The booking script reads those, not the screen.
+  assert.deepEqual(Object.keys(content).sort(), Object.keys(sampleContent).filter(name => name !== 'presentationDays').sort());
   assert.deepEqual(content.team, { name: '[Team name]', number: '1234', school: live.config.defaultTeam.school });
 
   const settings = content.settings;
@@ -596,7 +601,7 @@ test('normalizeContent picks the first plan that is for today, not one that is f
   const plans = [
     { heading: '[Last week]', date: '2026-09-25' },
     { heading: '[Yesterday]', date: '2026-10-01' },
-    { heading: '[Tomorrow]', date: '2026-10-03' },
+    { heading: '[Topic E]', date: '2026-10-03' },
     { heading: '[Today]', date: '2026-10-02' },
     { heading: '[No date]' },
   ];
@@ -611,7 +616,7 @@ test('normalizeContent picks the first plan that is for today, not one that is f
   const lastMinute = new Date(2026, 9, 2, 23, 59);
   assert.equal(normalizeContent(planResult(plans), lastMinute).plan.heading, '[Today]');
   const nextMorning = new Date(2026, 9, 3, 0, 1);
-  assert.equal(normalizeContent(planResult(plans), nextMorning).plan.heading, '[Tomorrow]');
+  assert.equal(normalizeContent(planResult(plans), nextMorning).plan.heading, '[Topic E]');
 });
 
 test('normalizeContent skips a hidden or expired plan for today, and reads a date it cannot understand as no date', () => {
@@ -905,6 +910,7 @@ test('the new settings have the defaults the Studio starts with', () => {
     redEyesChance: { min: 0, max: 100 },
     noShowMinutes: { min: 1, max: 15 },
     graceMinutes: { min: 0, max: 10 },
+    talkMinutes: { min: 5, max: 30 },
   });
 
   // the Photos tab: random order, and 16 seconds a photo
@@ -3236,6 +3242,184 @@ test('empty fields of a photo are left out, and a switched off photo keeps its s
   assert.equal(photo.show, false);
 });
 
+// Booked talks: the Presentation documents, cleaned for core/presentation.js
+
+function talkRecord(changes) {
+  return Object.assign({
+    id: 'presentation-a1',
+    name: 'Alex',
+    subteam: 'Build',
+    topic: '[Talk title]',
+    start: '2026-10-08T18:45:00.000Z',
+    minutes: 15,
+    deckLink: 'https://docs.google.com/presentation/d/1AbC-d_Ef/edit?usp=sharing',
+    status: 'scheduled',
+  }, changes);
+}
+
+function talksFrom(list) {
+  return normalizeContent({ presentations: list }).presentations;
+}
+
+test('the query asks for each booked talk with its id and its fields, soonest first, from the published documents', () => {
+  assert.ok(contentQuery.includes('"presentations": *[_type == "presentation"] | order(start asc, _createdAt asc) {'));
+  ['"id": _id', 'name,', 'subteam,', 'topic,', 'start,', 'minutes,', 'deckLink,', 'status'].forEach(piece => {
+    assert.ok(contentQuery.includes(piece), 'the query does not ask for ' + piece);
+  });
+  assert.equal(new URL(queryUrl(live.config.sanity)).searchParams.get('perspective'), 'published', 'a draft is never sent');
+});
+
+test('a talk from Studio keeps its fields with the start as a Date, and loses Sanity\'s own names', () => {
+  const [talk] = talksFrom([Object.assign(talkRecord(), { _id: 'presentation-a1', _type: 'presentation', _rev: 'rev-1', _createdAt: '2026-09-01T10:00:00Z' })]);
+
+  assert.deepEqual(talk, {
+    id: 'presentation-a1',
+    name: 'Alex',
+    subteam: 'Build',
+    topic: '[Talk title]',
+    start: new Date('2026-10-08T18:45:00.000Z'),
+    minutes: 15,
+    deckLink: 'https://docs.google.com/presentation/d/1AbC-d_Ef/edit?usp=sharing',
+    status: 'scheduled',
+  });
+  assert.ok(talk.start instanceof Date);
+  assert.equal(JSON.stringify(talk).includes('_type'), false);
+});
+
+test('a talk\'s name, subteam and title lose the spaces at their ends, and an empty subteam is left out', () => {
+  const [talk] = talksFrom([talkRecord({ name: '  Alex ', subteam: ' Build', topic: '\t[Talk title]  ' })]);
+  assert.deepEqual([talk.name, talk.subteam, talk.topic], ['Alex', 'Build', '[Talk title]']);
+
+  [undefined, null, '', '   ', 7].forEach(subteam => {
+    assert.equal('subteam' in talksFrom([talkRecord({ subteam: subteam })])[0], false, JSON.stringify(subteam));
+  });
+  [undefined, null, 7].forEach(value => {
+    const [odd] = talksFrom([talkRecord({ name: value, topic: value })]);
+    assert.deepEqual([odd.name, odd.topic], ['', ''], JSON.stringify(value));
+  });
+});
+
+test('a talk\'s minutes are 5 to 30, and 15 when they are missing or not a number', () => {
+  assert.deepEqual(live.config.limits.talkMinutes, { min: 5, max: 30 });
+  assert.equal(live.config.defaultTalk.minutes, 15);
+
+  [[5, 5], [15, 15], [30, 30], [4, 5], [0, 5], [-10, 5], [31, 30], [600, 30]].forEach(([value, wanted]) => {
+    assert.equal(talksFrom([talkRecord({ minutes: value })])[0].minutes, wanted, String(value));
+  });
+  [undefined, null, '', '20', NaN, Infinity, true, [], {}].forEach(value => {
+    assert.equal(talksFrom([talkRecord({ minutes: value })])[0].minutes, 15, JSON.stringify(value));
+  });
+});
+
+test('a slides link is kept only when it is a Google Slides link, and a talk without one stays', () => {
+  [
+    'https://docs.google.com/presentation/d/1AbC-d_Ef',
+    'https://docs.google.com/presentation/d/1AbC-d_Ef/edit?usp=sharing',
+  ].forEach(link => assert.equal(talksFrom([talkRecord({ deckLink: link })])[0].deckLink, link, link));
+
+  [
+    'http://docs.google.com/presentation/d/1AbC-d_Ef',
+    'https://docs.google.com/document/d/1AbC-d_Ef',
+    'https://docs.google.com/presentation/d/',
+    'https://docs.google.com/presentation/d/%20',
+    'https://docs.google.com.example.net/presentation/d/1AbC-d_Ef',
+    'https://docsXgoogle.com/presentation/d/1AbC-d_Ef',
+    ' https://docs.google.com/presentation/d/1AbC-d_Ef',
+    'see https://docs.google.com/presentation/d/1AbC-d_Ef',
+    '',
+    null,
+    undefined,
+    42,
+  ].forEach(link => {
+    const talks = talksFrom([talkRecord({ deckLink: link })]);
+    assert.equal(talks.length, 1, 'the talk stays: ' + JSON.stringify(link));
+    assert.equal('deckLink' in talks[0], false, JSON.stringify(link));
+  });
+});
+
+test('a talk\'s status is one of the four and scheduled when it is missing or is none of them', () => {
+  assert.deepEqual(live.config.talkStatuses, ['scheduled', 'cancelled', 'done', 'skipped']);
+  assert.equal(live.config.defaultTalk.status, 'scheduled');
+
+  live.config.talkStatuses.forEach(status => assert.equal(talksFrom([talkRecord({ status: status })])[0].status, status));
+  [undefined, null, '', 'paused', 'Cancelled', 3].forEach(status => {
+    assert.equal(talksFrom([talkRecord({ status: status })])[0].status, 'scheduled', JSON.stringify(status));
+  });
+});
+
+test('a talk that is cancelled, done or skipped stays in the list, for core/presentation.js to leave out', () => {
+  const talks = talksFrom(['cancelled', 'done', 'skipped'].map((status, place) => talkRecord({ id: 'presentation-' + place, status: status })));
+  assert.deepEqual(talks.map(talk => talk.status), ['cancelled', 'done', 'skipped']);
+});
+
+test('a talk with no id, or with no start that can be read, is dropped, and the rest is kept', () => {
+  const talks = talksFrom([
+    talkRecord({ id: '' }),
+    talkRecord({ id: undefined }),
+    talkRecord({ id: 7 }),
+    talkRecord({ id: 'no-start-1', start: undefined }),
+    talkRecord({ id: 'no-start-2', start: null }),
+    talkRecord({ id: 'no-start-3', start: '' }),
+    talkRecord({ id: 'no-start-4', start: 'soon' }),
+    talkRecord({ id: 'no-start-5', start: 1760000000000 }),
+    null,
+    'text',
+    talkRecord({ id: 'presentation-ok' }),
+  ]);
+  assert.deepEqual(talks.map(talk => talk.id), ['presentation-ok']);
+});
+
+test('talks keep the order Sanity sent them in, and the answer with no talks, or talks that are not a list, is an empty list', () => {
+  const list = [talkRecord({ id: 'b', start: '2026-10-08T19:00:00.000Z' }), talkRecord({ id: 'a', start: '2026-10-08T18:45:00.000Z' })];
+  assert.deepEqual(talksFrom(list).map(talk => talk.id), ['b', 'a']);
+
+  [undefined, null, 'oops', 7, {}].forEach(value => assert.deepEqual(talksFrom(value), []));
+  assert.deepEqual(normalizeContent({}).presentations, []);
+  assert.deepEqual(normalizeContent(null).presentations, []);
+  assert.deepEqual(withDefaults(null).presentations, []);
+  assert.deepEqual(withDefaults({}).presentations, []);
+});
+
+test('sample talks are cleaned the same way as talks from Sanity, and a sample with none gives an empty list', () => {
+  const sample = normalizeSample({ presentations: [talkRecord({ name: ' Alex ', minutes: 99, status: 'later' }), talkRecord({ id: '' })] });
+  assert.equal(sample.presentations.length, 1);
+  assert.deepEqual([sample.presentations[0].name, sample.presentations[0].minutes, sample.presentations[0].status], ['Alex', 30, 'scheduled']);
+  assert.ok(sample.presentations[0].start instanceof Date);
+
+  assert.deepEqual(normalizeSample({}).presentations, []);
+  assert.deepEqual(normalizeSample({ presentations: 'oops' }).presentations, []);
+  assert.deepEqual(normalizeSample(JSON.parse(fs.readFileSync(sampleFile, 'utf8'))).presentations.filter(talk => !(talk.start instanceof Date)), []);
+});
+
+test('a saved copy from before talks existed still gives an empty list of talks', async () => {
+  await inWorld(async world => {
+    const raw = copyOf(sanityFixture());
+    assert.equal('presentations' in raw, false);
+    saveCopy(world, raw, start - minute);
+    world.handler = async () => unreachable();
+
+    const first = await readSanity(world.onChange);
+    assert.deepEqual(first.content.presentations, []);
+  });
+});
+
+test('a change to a talk\'s start is a change of content, so the screen hears of it', async () => {
+  await inWorld(async world => {
+    const fixture = sanityFixture();
+    fixture.presentations = [talkRecord()];
+    world.handler = async () => sanityReply(copyOf(fixture));
+    await readSanity(world.onChange);
+
+    fixture.presentations = [talkRecord({ start: '2026-10-08T19:00:00.000Z' })];
+    world.streams[0].emit('message');
+    await world.advance(2 * second);
+    await world.advance(0);
+
+    assert.equal(world.changes.length, 1);
+    assert.equal(world.changes[0].content.presentations[0].start.toISOString(), '2026-10-08T19:00:00.000Z');
+  });
+});
+
 test('photosToShow leaves out photos that are switched off, have expired, or have no picture', () => {
   const now = new Date(2026, 9, 4, 12, 0);
   const content = {
@@ -3593,6 +3777,51 @@ test('the sample content carries the Presentations settings', () => {
   });
 });
 
+test('the sample content carries one Meeting day, one talk with its text in square brackets, and six slides with a manifest', () => {
+  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const sample = normalizeSample(raw);
+
+  // the talk fits the Studio: a name up to 12 characters, a title up to 40, a length of 5 to 30 minutes
+  assert.equal(sample.presentations.length, 1);
+  const talk = sample.presentations[0];
+  ['name', 'subteam', 'topic'].forEach(name => assert.match(talk[name], /^\[.+\]$/, name));
+  assert.ok(talk.name.length <= 12 && talk.topic.length <= 40);
+  assert.ok(talk.minutes >= live.config.limits.talkMinutes.min && talk.minutes <= live.config.limits.talkMinutes.max);
+  assert.equal(talk.status, 'scheduled');
+  assert.ok(!('deckLink' in talk), 'no link to a deck that someone else owns');
+
+  // it starts on a slot of the Meeting day
+  assert.equal(raw.presentationDays.length, 1);
+  const day = raw.presentationDays[0];
+  const first = Date.parse(day.firstSlotAt);
+  const last = Date.parse(day.lastSlotAt);
+  assert.deepEqual(Object.keys(day).sort(), ['closeMinutesBefore', 'firstSlotAt', 'lastSlotAt', 'open', 'slotMinutes']);
+  assert.ok(first <= talk.start.getTime() && talk.start.getTime() <= last);
+  assert.equal((talk.start.getTime() - first) % (day.slotMinutes * 60000), 0, 'on a slot');
+  assert.equal(day.open, true);
+
+  // the folder is where the screen looks for the slides of a sample talk, and the manifest has the shape the Mini writes
+  const folder = path.join(dashboardFolder, live.presentation.slidesFolder(true, talk));
+  const manifest = JSON.parse(fs.readFileSync(path.join(folder, 'manifest.json'), 'utf8'));
+  assert.deepEqual(Object.keys(manifest), ['ok', 'pages', 'fetchedAt', 'refreshed']);
+  assert.equal(manifest.ok, true);
+  assert.equal(manifest.refreshed, false);
+  assert.ok(!isNaN(Date.parse(manifest.fetchedAt)));
+  assert.deepEqual(manifest.pages, ['001.svg', '002.svg', '003.svg', '004.svg', '005.svg', '006.svg']);
+  assert.deepEqual(live.presentation.slidePages(manifest), manifest.pages);
+  assert.deepEqual(fs.readdirSync(folder).filter(name => !name.startsWith('.')).sort(), ['manifest.json'].concat(manifest.pages).sort());
+
+  // each slide is a picture of 1920 by 1080 with the word SLIDE and its number, in text of 44px or more and lines of 3px or more
+  manifest.pages.forEach((page, index) => {
+    const svg = fs.readFileSync(path.join(folder, page), 'utf8');
+    assert.match(svg, /viewBox="0 0 1920 1080"/, page);
+    assert.ok(svg.includes('>SLIDE ' + (index + 1) + '</text>'), page);
+    (svg.match(/font-size="(\d+)"/g) || []).forEach(size => assert.ok(Number(size.match(/\d+/)[0]) >= 44, page + ' ' + size));
+    (svg.match(/stroke-width="([\d.]+)"/g) || []).forEach(width => assert.ok(Number(width.match(/[\d.]+/)[0]) >= 3, page + ' ' + width));
+    assert.ok(!/<script|<image|<filter|href=/.test(svg), page + ' holds only plain shapes and text');
+  });
+});
+
 test('the last push from the Studio is kept as a kind and a time, and anything that is not one is empty', () => {
   const push = { kind: 'redEyes', requestedAt: '2026-10-05T12:00:00.000Z' };
   settingsThrough({ hiddenRequest: push }).forEach(settings => assert.deepEqual(settings.hiddenRequest, push));
@@ -3648,6 +3877,31 @@ test('the last click of Play announcements is kept as a time, and anything that 
   assert.ok(!('announceRequest' in raw.settings), 'a request is never part of the sample');
   assert.deepEqual(normalizeSample(raw).settings.announceRequest, { requestedAt: '' });
   assert.deepEqual(stored.announcements, live.config.defaultSettings.announcements, 'a page with no announcements list still has the starting ones');
+});
+
+test('the last click of Run presentation test is kept as a time, and anything that is not one is empty, through all three paths', () => {
+  const defaults = live.config.defaultSettings;
+  assert.deepEqual(defaults.presentationTestRequest, { requestedAt: '' });
+
+  // a published page that lacks it gets the starting value
+  settingsThrough({}).forEach(settings => assert.deepEqual(settings.presentationTestRequest, { requestedAt: '' }));
+
+  const request = { requestedAt: '2026-10-05T12:00:00.000Z' };
+  settingsThrough({ presentationTestRequest: request }).forEach(settings => assert.deepEqual(settings.presentationTestRequest, request));
+  settingsThrough({ presentationTestRequest: { requestedAt: 'whenever' } }).forEach(settings => assert.deepEqual(settings.presentationTestRequest, { requestedAt: '' }));
+  [undefined, null, '', request.requestedAt, 12, [], [request]].forEach(value => {
+    settingsThrough({ presentationTestRequest: value }).forEach(settings => assert.deepEqual(settings.presentationTestRequest, { requestedAt: '' }, JSON.stringify(value)));
+  });
+
+  // only the time comes through from a stored page, and the document's own names do not
+  const stored = normalizeContent({ settings: document('dashboardSettings', 'dashboardSettings', { presentationTestRequest: Object.assign({ _type: 'x', extra: 1 }, request) }) }).settings;
+  assert.deepEqual(stored.presentationTestRequest, request);
+
+  // it does not touch the other Presentations settings, and the sample carries no request
+  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  assert.ok(!('presentationTestRequest' in raw.settings), 'a request is never part of the sample');
+  assert.deepEqual(normalizeSample(raw).settings.presentationTestRequest, { requestedAt: '' });
+  assert.deepEqual([stored.presentationsEnabled, stored.noShowMinutes, stored.graceMinutes], [true, 5, 5]);
 });
 
 test('photos are read from Sanity with the rest of the content, and nothing reads a photos.json any more', () => {
@@ -4880,6 +5134,259 @@ test('the Events panel and the Next event tile have nothing to show once the onl
   assert.deepEqual(content.events, []);
   assert.equal(eventsPanel.hasContent(content), false);
   assert.equal(nextEventPanel.hasContent(content), false);
+});
+
+// Up Next: the plan, then the talks booked for today. The clock reads 2:50 PM on
+// Thursday 8 October 2026 in New York.
+const upNextNow = new Date('2026-10-08T18:50:00Z');
+
+function upNextTalk(start, name, topic, extra) {
+  return Object.assign({ id: 'presentation-' + name, name: name, topic: topic, start: new Date(start), minutes: 15, status: 'scheduled' }, extra);
+}
+
+function upNextPlan(count) {
+  const rows = Array.from({ length: count }, (item, place) => ({ time: '[' + (place + 6) + ' PM]', text: '[Item ' + (place + 1) + ']' }));
+  return { heading: '[Plan]', rows: rows };
+}
+
+function upNextContent(talks, plan, extra) {
+  return Object.assign({ theme: { timeZone: newYork }, settings: {}, plan: plan || null, presentations: talks }, extra);
+}
+
+// Talks from 3:00 PM, 15 minutes apart, so none has started at 2:50 PM
+function laterTalks(count) {
+  return Array.from({ length: count }, (item, place) => upNextTalk(Date.UTC(2026, 9, 8, 19, place * 15), 'Kim' + place, '[Talk ' + place + ']'));
+}
+
+function lineOf(row) {
+  return [row.kind, row.time, row.text, row.tag].filter(Boolean).join(' | ');
+}
+
+function upNextLines(content, now) {
+  return tonightPanel.rowsFor(content, now || upNextNow).map(lineOf);
+}
+
+test('Up Next lists the plan first, then today\'s talks soonest first, with the one in progress marked and finished talks left off', () => {
+  const content = upNextContent([
+    upNextTalk('2026-10-08T19:15:00Z', 'Sam', '[Topic B]'),
+    upNextTalk('2026-10-08T18:45:00Z', 'Alex', '[Topic A]'),
+    upNextTalk('2026-10-08T18:15:00Z', 'Kim', '[Topic C]'),
+    upNextTalk('2026-10-09T19:00:00Z', 'Pat', '[Topic E]'),
+    upNextTalk('2026-10-09T02:30:00Z', 'Lee', '[Topic D]'),
+  ], upNextPlan(1));
+
+  assert.deepEqual(upNextLines(content), [
+    'plan | [6 PM] | [Item 1]',
+    'talk | 2:45 PM | Alex: [Topic A] | NOW',
+    'talk | 3:15 PM | Sam: [Topic B] | TALK',
+    'talk | 10:30 PM | Lee: [Topic D] | TALK',
+  ]);
+
+  const rows = tonightPanel.rowsFor(content, upNextNow);
+  assert.deepEqual(rows.map(row => row.live), [undefined, true, false, false]);
+});
+
+test('Up Next reads the day and the time on the clock in the Theme time zone, not the computer\'s', () => {
+  const talks = [upNextTalk('2026-10-08T18:45:00Z', 'Alex', '[Topic A]'), upNextTalk('2026-10-09T02:30:00Z', 'Lee', '[Topic D]')];
+
+  assert.deepEqual(upNextLines(upNextContent(talks)), ['talk | 2:45 PM | Alex: [Topic A] | NOW', 'talk | 10:30 PM | Lee: [Topic D] | TALK']);
+
+  // in Tokyo it is 3:50 AM on the 9th, and Lee's talk is at 11:30 AM that day
+  const tokyo = upNextContent(talks, null, { theme: { timeZone: 'Asia/Tokyo' } });
+  assert.deepEqual(upNextLines(tokyo), ['talk | 3:45 AM | Alex: [Topic A] | NOW', 'talk | 11:30 AM | Lee: [Topic D] | TALK']);
+
+  // with no zone in the content the default one is used
+  assert.deepEqual(upNextLines(upNextContent(talks, null, { theme: undefined })), upNextLines(upNextContent(talks)));
+});
+
+test('Up Next writes midnight and noon as 12:00 AM and 12:00 PM, and keeps the minutes to two digits', () => {
+  const early = new Date('2026-10-08T04:00:00Z'); // midnight at the start of the 8th in New York
+  const talks = [
+    upNextTalk('2026-10-08T04:05:00Z', 'A', '[One]'),
+    upNextTalk('2026-10-08T16:00:00Z', 'B', '[Two]'),
+    upNextTalk('2026-10-08T16:30:00Z', 'C', '[Three]'),
+    upNextTalk('2026-10-08T17:00:00Z', 'D', '[Four]'),
+  ];
+  assert.deepEqual(upNextLines(upNextContent(talks), early).map(line => line.split(' | ')[1]), ['12:05 AM', '12:00 PM', '12:30 PM', '1:00 PM']);
+});
+
+test('Up Next leaves out a talk that is not scheduled, a draft, one with no start, and every talk while Run presentations is off', () => {
+  const kept = upNextTalk('2026-10-08T19:00:00Z', 'Alex', '[Kept]');
+  const talks = [
+    kept,
+    upNextTalk('2026-10-08T19:00:00Z', 'B', '[Cancelled]', { status: 'cancelled' }),
+    upNextTalk('2026-10-08T19:00:00Z', 'C', '[Done]', { status: 'done' }),
+    upNextTalk('2026-10-08T19:00:00Z', 'D', '[Skipped]', { status: 'skipped' }),
+    upNextTalk('2026-10-08T19:00:00Z', 'E', '[Draft]', { id: 'drafts.presentation-E' }),
+    upNextTalk('2026-10-08T19:00:00Z', 'F', '[No start]', { start: new Date('soon') }),
+    null,
+    'oops',
+  ];
+  assert.deepEqual(upNextLines(upNextContent(talks)), ['talk | 3:00 PM | Alex: [Kept] | TALK']);
+  assert.deepEqual(upNextLines(upNextContent([kept], null, { settings: { presentationsEnabled: false } })), []);
+  assert.deepEqual(upNextLines(upNextContent([kept], null, { settings: undefined })), ['talk | 3:00 PM | Alex: [Kept] | TALK']);
+  assert.deepEqual(upNextLines(upNextContent(undefined)), []);
+  assert.deepEqual(upNextLines(upNextContent('oops')), []);
+});
+
+test('Up Next cuts a talk to 18 characters, the width of a plan row, and ends it with an ellipsis', () => {
+  const text = (name, topic) => tonightPanel.rowsFor(upNextContent([upNextTalk('2026-10-08T19:00:00Z', name, topic)]), upNextNow)[0].text;
+
+  assert.equal(text('Alex', '[Short]'), 'Alex: [Short]');
+  assert.equal(text('Alex', '123456789012'), 'Alex: 123456789012', '18 characters fit');
+  assert.equal(text('Alex', '1234567890123'), 'Alex: 12345678901…', '19 do not');
+  assert.equal(text('Alex', '1234567890123').length, 18, 'the ellipsis is counted in');
+  assert.equal(text('Alex', 'Swerve bas ahead'), 'Alex: Swerve bas…', 'a space before the cut is dropped');
+
+  // a pair of code units is never split
+  const smile = '\u{1F600}';
+  assert.equal(text('Al', smile.repeat(20)), 'Al: ' + smile.repeat(13) + '…');
+
+  // a missing name or title leaves no colon
+  assert.equal(text('Alex', ''), 'Alex');
+  assert.equal(text('', '[Title]'), '[Title]');
+  assert.equal(text('  Alex ', ' [Title] '), 'Alex: [Title]');
+});
+
+test('Up Next never has more than five lines: the talks fill what the plan leaves, and the last free line says +N more', () => {
+  const count = (content, kind) => tonightPanel.rowsFor(content, upNextNow).filter(row => row.kind === kind).length;
+
+  // no plan: four talks and the line that counts the other three
+  const seven = upNextContent(laterTalks(7));
+  assert.deepEqual(upNextLines(seven), [
+    'talk | 3:00 PM | Kim0: [Talk 0] | TALK',
+    'talk | 3:15 PM | Kim1: [Talk 1] | TALK',
+    'talk | 3:30 PM | Kim2: [Talk 2] | TALK',
+    'talk | 3:45 PM | Kim3: [Talk 3] | TALK',
+    'more | +3 more',
+  ]);
+
+  // two plan rows keep their lines, so two talks fit and three are left
+  assert.deepEqual(upNextLines(upNextContent(laterTalks(5), upNextPlan(2))), [
+    'plan | [6 PM] | [Item 1]',
+    'plan | [7 PM] | [Item 2]',
+    'talk | 3:00 PM | Kim0: [Talk 0] | TALK',
+    'talk | 3:15 PM | Kim1: [Talk 1] | TALK',
+    'more | +3 more',
+  ]);
+
+  // the talks fit exactly: no line that counts
+  assert.equal(count(upNextContent(laterTalks(2), upNextPlan(3)), 'more'), 0);
+  assert.equal(upNextLines(upNextContent(laterTalks(2), upNextPlan(3))).length, 5);
+  assert.equal(count(upNextContent(laterTalks(1), upNextPlan(4)), 'more'), 0);
+
+  // one free line and two talks: the line counts them both
+  assert.deepEqual(upNextLines(upNextContent(laterTalks(2), upNextPlan(4))).slice(4), ['more | +2 more']);
+
+  // a plan of five rows leaves nothing for the talks, and none of its rows is lost
+  const full = upNextContent(laterTalks(3), upNextPlan(5));
+  assert.deepEqual(upNextLines(full), upNextLines(upNextContent([], upNextPlan(5))));
+  assert.equal(count(full, 'plan'), 5);
+  assert.equal(count(full, 'talk') + count(full, 'more'), 0);
+
+  // however many talks and plan rows, the lines stay at five, with every plan row in
+  for (let planRows = 0; planRows <= 5; planRows++) {
+    for (let talks = 0; talks <= 8; talks++) {
+      const content = upNextContent(laterTalks(talks), upNextPlan(planRows));
+      assert.ok(tonightPanel.rowsFor(content, upNextNow).length <= 5, planRows + ' plan rows, ' + talks + ' talks');
+      assert.equal(count(content, 'plan'), planRows);
+    }
+  }
+});
+
+test('Up Next keeps the talk in progress when the talks overflow, since it is the first of them', () => {
+  const talks = laterTalks(6).concat(upNextTalk('2026-10-08T18:45:00Z', 'Alex', '[Topic A]'));
+  const lines = upNextLines(upNextContent(talks, upNextPlan(1)));
+
+  assert.equal(lines[1], 'talk | 2:45 PM | Alex: [Topic A] | NOW');
+  assert.equal(lines.length, 5);
+  assert.equal(lines[4], 'more | +4 more');
+});
+
+test('a talk is in progress from its start until its slot ends, and gone after, whatever the overrun setting says', () => {
+  const talks = [upNextTalk('2026-10-08T18:45:00Z', 'Alex', '[Topic A]')]; // 2:45 to 3:00 PM
+  const settings = { presentationsEnabled: true, graceMinutes: 10 };
+  const at = (hours, minutes, seconds) => upNextLines(upNextContent(talks, null, { settings: settings }), new Date(Date.UTC(2026, 9, 8, hours, minutes, seconds)));
+
+  assert.deepEqual(at(18, 44, 59), ['talk | 2:45 PM | Alex: [Topic A] | TALK']);
+  assert.deepEqual(at(18, 45, 0), ['talk | 2:45 PM | Alex: [Topic A] | NOW']);
+  assert.deepEqual(at(18, 59, 59), ['talk | 2:45 PM | Alex: [Topic A] | NOW']);
+  assert.deepEqual(at(19, 0, 0), []);
+
+  // no minutes: the length a talk starts with
+  assert.deepEqual(upNextLines(upNextContent([upNextTalk('2026-10-08T18:45:00Z', 'Alex', '[Topic A]', { minutes: undefined })])), ['talk | 2:45 PM | Alex: [Topic A] | NOW']);
+});
+
+test('Up Next has nothing to show with no plan and no talks, and shows the talks alone when there is no plan', () => {
+  const now = new Date();
+  const live = upNextTalk(now, 'Alex', '[Topic A]', { minutes: 30 });
+  const over = upNextTalk(new Date(now.getTime() - 60 * 60 * 1000), 'Kim', '[Over]', { minutes: 15 });
+
+  assert.equal(tonightPanel.hasContent(upNextContent([])), false);
+  assert.equal(tonightPanel.hasContent(upNextContent([over])), false);
+  assert.equal(tonightPanel.hasContent(upNextContent([live], null, { settings: { presentationsEnabled: false } })), false);
+  assert.deepEqual(tonightPanel.rowsFor(upNextContent([]), now), []);
+
+  assert.equal(tonightPanel.hasContent(upNextContent([live])), true);
+  assert.equal(tonightPanel.hasContent(upNextContent([], upNextPlan(0))), true, 'a plan with no rows still shows, as it did');
+  assert.equal(tonightPanel.hasContent(upNextContent([], Object.assign(upNextPlan(1), { show: false }))), false);
+  assert.equal(tonightPanel.hasContent(upNextContent([live], Object.assign(upNextPlan(1), { show: false }))), true);
+});
+
+test('the Up Next panel draws a plan row as it always did, a talk with its tag, and the line that counts what did not fit', () => {
+  const now = new Date();
+  const talks = Array.from({ length: 6 }, (item, place) => upNextTalk(now, 'Kim' + place, '[Talk ' + place + ']', { minutes: 30 }));
+  const rowsIn = markup => countOf(markup, 'data-slat="item"') - 1; // the first is the card with the heading
+
+  const withPlan = drawn(tonightPanel, upNextContent(talks, upNextPlan(2)));
+  assert.equal(rowsIn(withPlan), 5);
+  assert.ok(withPlan.includes('<div class="heading">[Plan]</div>'));
+  assert.ok(withPlan.includes('<div class="row" data-slat="item">'));
+  assert.ok(withPlan.includes('<div class="text">[Item 1]</div>'));
+  assert.equal(countOf(withPlan, 'class="row talk-row"'), 2);
+  assert.equal(countOf(withPlan, 'class="talk-tag talk-now">NOW</div>'), 2);
+  assert.ok(withPlan.includes('<div class="text">Kim0: [Talk 0]</div>'));
+  assert.ok(withPlan.includes('<div class="row more-row" data-slat="item">'));
+  assert.ok(withPlan.includes('<div class="text">+4 more</div>'));
+  assert.equal(withPlan.includes('Talks today'), false);
+
+  // the last line has no bar under it, as before
+  assert.equal(countOf(withPlan, '<svg class="row-bar"'), 4);
+
+  const alone = drawn(tonightPanel, upNextContent(talks.slice(0, 2)));
+  assert.equal(rowsIn(alone), 2);
+  assert.ok(alone.includes('<div class="heading">Talks today</div>'));
+  assert.equal(alone.includes('+'), false);
+
+  // what the speaker typed is not read as markup
+  const odd = drawn(tonightPanel, upNextContent([upNextTalk(now, 'Al', '<b>Hi</b>', { minutes: 30 })]));
+  assert.ok(odd.includes('Al: &lt;b&gt;Hi&lt;/b&gt;'));
+  assert.equal(odd.includes('<b>'), false);
+
+  // nothing at all: the card with no heading, as it was drawn before
+  const empty = drawn(tonightPanel, upNextContent([]));
+  assert.ok(empty.includes('<div class="heading"></div>'));
+  assert.equal(rowsIn(empty), 0);
+});
+
+test('the stylesheet of Up Next keeps text at 44px or more and lines at 3px or more, and the tag of a talk follows the badge', () => {
+  const css = fs.readFileSync(path.join(dashboardFolder, 'panels/tonight/tonight.css'), 'utf8');
+  const tokens = fs.readFileSync(path.join(dashboardFolder, 'tokens.css'), 'utf8');
+  const size = name => Number((new RegExp('--' + name + ': (\\d+)px;').exec(tokens) || [])[1]);
+
+  const sizes = Array.from(css.matchAll(/font:\s*\d+ var\(--(size-[a-z-]+)\)\//g));
+  assert.ok(sizes.length >= 8);
+  sizes.forEach(match => assert.ok(size(match[1]) >= 44, match[1] + ' is smaller than 44px'));
+  assert.equal(/font(-size)?:[^;]*\b\d+px\b[^;]*\//.test(css), false, 'a size written in pixels');
+  assert.equal(/font-size:/.test(css), false);
+
+  Array.from(css.matchAll(/border(-[a-z]+)?:\s*(\d+)px/g)).forEach(match => assert.ok(Number(match[2]) >= 3, match[0]));
+
+  const tag = /\.tonight \.talk-tag\s*\{([^}]*)\}/.exec(css)[1];
+  assert.ok(/border: 3px solid var\(--lilac\);/.test(tag));
+  assert.ok(/font: 600 var\(--size-label\)\/44px var\(--font-display\);/.test(tag));
+  const now = /\.tonight \.talk-now\s*\{([^}]*)\}/.exec(css)[1];
+  assert.ok(/background: var\(--yellow\);/.test(now) && /color: var\(--ground\);/.test(now), 'the same pair as the sample badge on the banner');
 });
 
 test('shell.js merges the events when content changes and once a minute', () => {

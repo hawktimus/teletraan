@@ -1,0 +1,156 @@
+/* The layer that holds a booked talk (#talk in index.html). It is empty and hidden
+   until a talk starts. It has no colour of its own, so a card comes in over the
+   dashboard. After the last slide it is black, for the thanks card. The cursor is
+   already hidden on the whole page, and tabindex lets the layer hold focus. */
+#talk {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  cursor: none;
+  outline: none;
+}
+#talk[data-ground="black"] { background: #000; }
+
+/* Under a card or the slides the dashboard is not drawn, which saves the old Mini
+   the work. presentation-run.js sets data-talk once the picture covers it. */
+html[data-talk="on"] #stage { visibility: hidden; }
+
+/* Every picture fills the layer. A card is a .panel, which is position: relative in
+   base.css, so the second class here puts it in place whatever the order of the files. */
+.talk.title,
+.talk.not-ready,
+.talk.thanks,
+.talk.slides {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+}
+
+/* The cards: the title, the slides that are not ready, and the thanks */
+.talk.title,
+.talk.not-ready,
+.talk.thanks {
+  box-sizing: border-box;
+  padding: 0 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  text-align: center;
+}
+.talk .ground {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  background: var(--ground);
+}
+
+/* The lines are positioned so they sit over the ground. Every line wraps, since the
+   page keeps one line everywhere else, and a line with no words takes no room. */
+.talk .label,
+.talk .headline,
+.talk .detail,
+.talk .prompt {
+  position: relative;
+  max-width: 1680px;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+.talk .label:empty,
+.talk .headline:empty,
+.talk .detail:empty,
+.talk .prompt:empty { display: none; }
+
+.talk .label {
+  color: var(--lilac);
+  font: 700 var(--size-body-large)/72px var(--font-display);
+  text-transform: uppercase;
+}
+.talk .headline {
+  color: var(--white);
+  font: 700 var(--size-heading)/112px var(--font-display);
+}
+.talk.title .headline,
+.talk.thanks .headline {
+  font-size: var(--size-stat);
+  line-height: 180px;
+}
+
+/* A title of 40 letters is two lines. The padding is room for the tails of letters like g and y. */
+.talk .detail {
+  max-height: 340px;
+  padding-bottom: 12px;
+  overflow: hidden;
+  color: var(--yellow);
+  font: 700 var(--size-heading)/112px var(--font-display);
+}
+.talk .prompt {
+  margin-top: 56px;
+  color: var(--white);
+  font: 500 var(--size-body)/72px var(--font-text);
+}
+
+/* The slides: one picture at a time on black, shown whole. A picture is put in and
+   taken out with no fade and no move, so nothing here has a transition or an animation. */
+.talk.slides { background: #000; }
+.talk .slide-host,
+.talk .slide {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+}
+.talk .slide {
+  display: block;
+  object-fit: contain;
+  background: #000;
+  transition: none;
+  animation: none;
+}
+.talk.slides[data-black="on"] .slide { visibility: hidden; }
+
+/* The progress line, in the gold of the frame edges, along the very bottom. The line is as
+   wide as the screen and scaled to how far the talk has got (presentation-run.js). */
+.talk .progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 1920px;
+  height: 6px;
+}
+.talk .progress-line {
+  width: 1920px;
+  height: 6px;
+  background: var(--metal-2);
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+
+/* The speaker and the slide number, bottom right, on a solid plate so it reads on any
+   slide. It is out of sight until a key is pressed. How it fades is in frame.css. */
+.talk .chip {
+  position: absolute;
+  right: 40px;
+  bottom: 24px;
+  box-sizing: border-box;
+  padding: 0 24px;
+  display: flex;
+  gap: 32px;
+  border-top: 4px solid var(--yellow);
+  background: var(--ground);
+  color: var(--white);
+  font: 600 var(--size-label)/44px var(--font-display);
+  opacity: 0;
+}
+.talk .chip[data-shown="on"] { opacity: 1; }
+.talk .chip-name { color: var(--yellow); }

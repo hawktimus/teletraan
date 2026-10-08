@@ -40,6 +40,12 @@ export function resumeRotation() {
   pauses = Math.max(0, pauses - 1);
 }
 
+// The rotation also waits while a talk holds the screen (frame.pause). That hold
+// is kept in frame.js, apart from the count above.
+function rotationPaused() {
+  return pauses > 0 || frame.isPaused();
+}
+
 // Counts the calls to showPagesNow(). A page that was chosen before a call
 // does not get its full stay.
 let pagesRefreshed = 0;
@@ -92,7 +98,7 @@ async function hold(milliseconds, since, region) {
     while (left > 0 && changeCount(region) === since) {
       if (region) holdLeft[region] = left;
       await frame.wait(250);
-      if (pauses === 0) left -= 250;
+      if (!rotationPaused()) left -= 250;
     }
   } finally {
     if (region) delete holdLeft[region];
@@ -100,7 +106,7 @@ async function hold(milliseconds, since, region) {
 }
 
 async function waitWhilePaused() {
-  while (pauses > 0) await frame.wait(250);
+  while (rotationPaused()) await frame.wait(250);
 }
 
 // How long a page stays, in milliseconds, with the Speed setting applied.

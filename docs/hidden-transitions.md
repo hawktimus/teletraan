@@ -1,7 +1,8 @@
 # Hidden transitions
 
 This page also covers the Play announcements button, which sits beside the two Play
-buttons for the transitions. See "Play announcements" below.
+buttons for the transitions. See "Play announcements" below. The Run presentation test
+button, the last one in the menu, is covered after it.
 
 A hidden transition is a rare surprise. Now and then, instead of an ordinary page
 change, the whole screen does something else. There are two:
@@ -99,7 +100,7 @@ ordinary page change. If the two add up to more than 100, red eyes gets what is 
    or **Play red eyes**.
 3. Look at the TV. It plays within about 20 seconds.
 
-The menu has a third button, Play announcements, which is not a transition (see below).
+The menu has two more buttons that are not transitions, Play announcements and Run presentation test (see below).
 Each of the two buttons above writes the kind and the time now into Last push and
 publishes the page for you, so you do not click Publish. Any other change you had not published yet is
 published too, as with the buttons that switch between sample and production content.
@@ -184,6 +185,21 @@ What the screen does with it:
 
 A Demo step can play the same announcements: pick **All announcements** as its screen
 (docs/demo.md).
+
+## Run presentation test
+
+The last button in the menu next to Publish on Dashboard Settings is **Run presentation test**.
+Click it and the TV starts a sample talk within a few seconds: the title card, then six sample
+slides that say SLIDE and a number, then the thank you card. Press the clicker to begin, as at a
+real talk. It needs no internet and no Google deck, because the talk and its slides are in
+`dashboard/data/sample/`. Use it to check the clicker and the screen before a meeting.
+
+The button writes the time now into `presentationTestRequest` and publishes the page for you. It
+follows the same rules as Play announcements: it runs once, only while the request is less than 60
+seconds old, and it waits for an alert, an announcement, a talk, a demo, a hidden transition or the
+night screen to be over. Run presentations in the Presentations tab must be on. While the screen
+shows sample content it reads the settings from `dashboard/data/sample/content.json`, so the button
+does nothing. Switch back to production content first.
 
 ## Try one
 
@@ -307,6 +323,13 @@ A transition is one entry in a list, plus a few lines to give it a chance settin
 - `dashboard/core/announce-run.js`: gives that runner the real screen, and plays each
   announcement with `runAnnouncement` in `core/takeover.js`. `hiddenPlaying` in
   `core/hidden-run.js` is how it knows a hidden transition has the screen.
+- `dashboard/core/presentation-test.js`: the plain functions behind Run presentation test, with no
+  page in them: tidying `presentationTestRequest` and the runner that applies the guard and waits for
+  the screen (`makePresentationTestRunner`). The tests are in `tools/test-effects.mjs`.
+- `dashboard/core/presentation-test-run.js`: gives that runner the real screen, reads the sample talk
+  from `dashboard/data/sample/content.json` and hands it to `startTestTalk` in
+  `core/presentation-run.js`. Its slides and manifest.json are in
+  `dashboard/data/sample/slides/presentation-sample/`.
 - `dashboard/core/areas.js` and `core/schedule.js`: the hook at the large panel's page
   change, the gate for the other areas, and `moveOn` (ask a region to change page now).
 - `dashboard/frame.css` ("Hidden transitions" and "The blue glitch"), `base.css` (the
@@ -317,6 +340,10 @@ A transition is one entry in a list, plus a few lines to give it a chance settin
 - `studio/schemas/settingsAnnouncements.js` has the hidden `announceRequest` field
   (`announceRequestField`), and `usePlayAnnouncementsAction` in `studio/actions.js` is the
   button. The starting value is `announceRequest` in `defaultSettings` in
+  `dashboard/config.js`.
+- `studio/schemas/settingsPresentations.js` has the hidden `presentationTestRequest` field
+  (`presentationTestRequestField`), and `useRunPresentationTestAction` in `studio/actions.js` is the
+  button. The starting value is `presentationTestRequest` in `defaultSettings` in
   `dashboard/config.js`.
 - `studio/schemas/settingsHidden.js` is the tab, `studio/actions.js` has the Play
   buttons, and `studio/hidden-transitions.js` is the Studio's copy of the list. The

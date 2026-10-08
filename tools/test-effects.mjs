@@ -10,7 +10,11 @@
 // master switch, calm motion, what blocks it and a push from the Studio, the
 // registry of the transitions, and the parts of frame.css that move them. And it tests
 // Play announcements (dashboard/core/announce.js): the guard, the age limit, which
-// announcements play, what it waits for, and the Demo step that plays them too.
+// announcements play, what it waits for, and the Demo step that plays them too. And it
+// tests Run presentation test (dashboard/core/presentation-test.js): the same guard, what it
+// waits for, and the sample talk it starts. And it
+// tests the screen of a booked talk (dashboard/core/presentation-run.js): the title card, the
+// slides, the keys, the thanks card, and what each does to the rest of the screen.
 //
 //   node tools/test-effects.mjs
 //
@@ -30,7 +34,7 @@ const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url))
 const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-effects-'));
 fs.mkdirSync(path.join(workFolder, 'dashboard', 'core'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
-['config.js', 'frame.js', 'core/transitions.js', 'core/tick.js', 'core/demo.js', 'core/demo-screens.js', 'core/hidden.js', 'core/hidden-transitions.js', 'core/hidden-pictures.js', 'core/images.js', 'core/announce.js'].forEach(file => {
+['config.js', 'frame.js', 'core/transitions.js', 'core/tick.js', 'core/demo.js', 'core/demo-screens.js', 'core/hidden.js', 'core/hidden-transitions.js', 'core/hidden-pictures.js', 'core/images.js', 'core/announce.js', 'core/presentation-test.js'].forEach(file => {
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
 const frameUrl = pathToFileURL(path.join(workFolder, 'dashboard/frame.js')).href;
@@ -43,6 +47,7 @@ const hiddenRegistry = await import(pathToFileURL(path.join(workFolder, 'dashboa
 const hiddenPictures = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/hidden-pictures.js')).href);
 const imagesModule = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/images.js')).href);
 const announce = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/announce.js')).href);
+const presentationTest = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/presentation-test.js')).href);
 
 const realSetImmediate = globalThis.setImmediate;
 const second = 1000;
@@ -3301,6 +3306,257 @@ test('the announcement functions import only the config and the demo functions a
   assert.ok(shell.lastIndexOf("if (!params.get('show') && !stress) {", announcing) > shell.lastIndexOf('startNight', announcing) - 2000, 'only when the whole screen runs');
 });
 
+// Run presentation test (dashboard/core/presentation-test.js): the Studio's button that starts the
+// sample talk, now, once
+
+const { tidyTestRequest, makePresentationTestRunner, readHandledTest, rememberHandledTest, talkStartingAt } = presentationTest;
+
+// The talk in data/sample/content.json, as the screen reads it
+const sampleTalk = {
+  id: 'presentation-sample', name: '[First name]', subteam: '[Subteam A]', topic: '[Title of the talk]',
+  start: new Date('2027-03-04T00:00:00.000Z'), minutes: 15, status: 'scheduled',
+};
+
+// A fake screen for the runner, with a clock the test moves. sample is what reading the sample
+// content gives: the talk, null when it has none, or 'fails' when the file cannot be read.
+function presentationTestWorld(options) {
+  const settings = options || {};
+  const world = {
+    nowMs: demoNow.getTime(),
+    content: { settings: { presentationsEnabled: true, presentationTestRequest: { requestedAt: '' } } },
+    started: [],
+    takeover: false,
+    demo: false,
+    night: false,
+    hidden: false,
+    sample: settings.sample === undefined ? sampleTalk : settings.sample,
+    store: settings.store || {},
+  };
+
+  world.runner = makePresentationTestRunner({
+    getContent: () => world.content,
+    storage: settings.storage === undefined ? makeStorage(world.store) : settings.storage,
+    takeoverRunning: () => world.takeover,
+    demoRunning: () => world.demo,
+    nightIsUp: () => world.night,
+    hiddenPlaying: () => world.hidden,
+    async loadSampleTalk() {
+      if (world.sample === 'fails') throw new Error('the sample content cannot be read');
+      return world.sample;
+    },
+    startTalk: talk => world.started.push(talk),
+  });
+
+  world.look = () => world.runner.look(new Date(world.nowMs));
+  world.requestedSecondsAgo = seconds => { world.content.settings.presentationTestRequest = { requestedAt: new Date(world.nowMs - seconds * 1000).toISOString() }; };
+  return world;
+}
+
+// Looks once and waits for the talk to be handed to the screen
+async function lookAndStart(world) {
+  world.look();
+  await world.runner.whenStarted();
+}
+
+test('a request starts the sample talk once, with its start set to now and the rest as the sample has it', async () => {
+  const world = presentationTestWorld();
+  world.requestedSecondsAgo(2);
+
+  await lookAndStart(world);
+  assert.equal(world.started.length, 1);
+  assert.equal(world.started[0].start.getTime(), world.nowMs, 'it starts now');
+  assert.deepEqual(Object.assign({}, world.started[0], { start: null }), Object.assign({}, sampleTalk, { start: null }));
+  assert.equal(sampleTalk.start.toISOString(), '2027-03-04T00:00:00.000Z', 'the sample talk itself is not changed');
+
+  world.nowMs += 1000;
+  await lookAndStart(world);
+  world.nowMs += 20 * 1000;
+  await lookAndStart(world);
+  assert.equal(world.started.length, 1, 'the same request starts it once');
+  assert.deepEqual(world.store, { 'teletraan-presentation-test-handled': world.content.settings.presentationTestRequest.requestedAt });
+});
+
+test('the sample talk is scheduled whatever the sample file says, and it keeps its id, which is the name of its folder of slides', () => {
+  const now = new Date(demoNow.getTime());
+  ['cancelled', 'done', 'skipped', undefined].forEach(status => {
+    const talk = talkStartingAt(Object.assign({}, sampleTalk, { status: status }), now);
+    assert.equal(talk.status, 'scheduled', String(status));
+    assert.equal(talk.id, 'presentation-sample');
+    assert.equal(talk.start.getTime(), now.getTime());
+    assert.notEqual(talk.start, now, 'a copy of the time, not the clock of the screen');
+  });
+});
+
+test('a request that is more than a minute old, in the future by more than a few seconds, or not a time starts nothing', async () => {
+  for (const seconds of [61, 90, 3600, -30]) {
+    const world = presentationTestWorld();
+    world.requestedSecondsAgo(seconds);
+    await lookAndStart(world);
+    assert.equal(world.started.length, 0, String(seconds));
+  }
+
+  // the clock of the computer that clicked may be a few seconds ahead
+  const ahead = presentationTestWorld();
+  ahead.requestedSecondsAgo(-3);
+  await lookAndStart(ahead);
+  assert.equal(ahead.started.length, 1);
+});
+
+test('a request that was handled before is not started again when the page loads again, and the demo, the hidden transitions and the announcements keep their own', async () => {
+  const request = secondsAgo(5);
+  const again = presentationTestWorld({ store: { 'teletraan-presentation-test-handled': request } });
+  again.content.settings.presentationTestRequest = { requestedAt: request };
+  await lookAndStart(again);
+  assert.equal(again.started.length, 0);
+
+  assert.equal(presentationTest.handledKey, 'teletraan-presentation-test-handled');
+  assert.notEqual(presentationTest.handledKey, announce.handledKey);
+  assert.notEqual(presentationTest.handledKey, hidden.handledKey);
+  assert.notEqual(presentationTest.handledKey, demo.handledKey);
+
+  const other = presentationTestWorld({ store: { 'teletraan-demo-handled': request, 'teletraan-hidden-handled': request, 'teletraan-announce-handled': request } });
+  other.content.settings.presentationTestRequest = { requestedAt: request };
+  await lookAndStart(other);
+  assert.equal(other.started.length, 1);
+
+  const store = {};
+  const storage = makeStorage(store);
+  assert.equal(readHandledTest(storage), '');
+  assert.equal(rememberHandledTest(storage, request), true);
+  assert.deepEqual(store, { 'teletraan-presentation-test-handled': request });
+  assert.equal(readHandledTest(storage), request);
+  assert.equal(readHandledTest(brokenStorage), '');
+  assert.equal(readHandledTest(null), '');
+  assert.equal(rememberHandledTest(brokenStorage, request), false);
+  assert.equal(rememberHandledTest(null, request), false);
+});
+
+test('storage that cannot be used still stops the same request from starting twice while the page is open', async () => {
+  for (const storage of [brokenStorage, null]) {
+    const world = presentationTestWorld({ storage: storage });
+    world.requestedSecondsAgo(2);
+    await lookAndStart(world);
+    world.nowMs += 1000;
+    await lookAndStart(world);
+    assert.equal(world.started.length, 1);
+  }
+});
+
+test('while an alert, an announcement, a talk, a demo, the night screen or a hidden transition has the screen a request waits, and starts when it is over if it is still a minute old at most', async () => {
+  for (const name of ['takeover', 'demo', 'night', 'hidden']) {
+    const world = presentationTestWorld();
+    world[name] = true;
+    world.requestedSecondsAgo(1);
+
+    await lookAndStart(world);
+    assert.equal(world.started.length, 0, 'not while ' + name + ' has the screen');
+
+    world.nowMs += 30 * 1000;
+    world[name] = false;
+    await lookAndStart(world);
+    assert.equal(world.started.length, 1, 'half a minute later, after ' + name);
+
+    const late = presentationTestWorld();
+    late[name] = true;
+    late.requestedSecondsAgo(1);
+    await lookAndStart(late);
+    late.nowMs += 90 * 1000;
+    late[name] = false;
+    await lookAndStart(late);
+    assert.equal(late.started.length, 0, 'a minute and a half later it is too old, after ' + name);
+  }
+});
+
+test('with Run presentations off nothing starts and the request is kept, so turning it on within the minute runs the test', async () => {
+  const world = presentationTestWorld();
+  world.content.settings.presentationsEnabled = false;
+  world.requestedSecondsAgo(1);
+
+  await lookAndStart(world);
+  assert.equal(world.started.length, 0);
+  assert.deepEqual(world.store, {}, 'it is not used up');
+
+  world.nowMs += 20 * 1000;
+  world.content.settings.presentationsEnabled = true;
+  await lookAndStart(world);
+  assert.equal(world.started.length, 1);
+
+  const late = presentationTestWorld();
+  late.content.settings.presentationsEnabled = false;
+  late.requestedSecondsAgo(1);
+  await lookAndStart(late);
+  late.nowMs += 90 * 1000;
+  late.content.settings.presentationsEnabled = true;
+  await lookAndStart(late);
+  assert.equal(late.started.length, 0, 'after a minute it is too old');
+});
+
+test('a sample that has no talk or cannot be read starts nothing, says so in the console, and the request counts as used', () => withQuietErrors(async heard => {
+  for (const sample of [null, 'fails']) {
+    const world = presentationTestWorld({ sample: sample });
+    world.requestedSecondsAgo(1);
+
+    await lookAndStart(world);
+    assert.equal(world.started.length, 0, String(sample));
+    assert.equal(heard.length, 1, String(sample));
+    assert.match(String(heard[0][0]), /Run presentation test failed/);
+
+    world.nowMs += 1000;
+    await lookAndStart(world);
+    assert.equal(heard.length, 1, 'it is not tried again');
+    heard.length = 0;
+  }
+}));
+
+test('content with no settings, no request or a request that is not a time starts nothing', async () => {
+  const world = presentationTestWorld();
+  [null, undefined, {}, { settings: null }, { settings: {} }, { settings: { presentationTestRequest: null } }, { settings: { presentationTestRequest: {} } }].forEach(content => {
+    world.content = content;
+    world.look();
+  });
+  [{ requestedAt: '' }, { requestedAt: 'tomorrow' }, { requestedAt: 12345 }, 'now', []].forEach(request => {
+    world.content = { settings: { presentationTestRequest: request } };
+    world.look();
+  });
+  await world.runner.whenStarted();
+  assert.equal(world.started.length, 0);
+});
+
+test('tidyTestRequest always gives a time, empty when it is not usable', () => {
+  const when = secondsAgo(3);
+  assert.deepEqual(tidyTestRequest({ requestedAt: when }), { requestedAt: when });
+  assert.deepEqual(tidyTestRequest({ requestedAt: 'whenever' }), { requestedAt: '' });
+  assert.deepEqual(tidyTestRequest({ requestedAt: 12345 }), { requestedAt: '' });
+  [undefined, null, when, 4, [], {}].forEach(value => assert.deepEqual(tidyTestRequest(value), { requestedAt: '' }, JSON.stringify(value)));
+  assert.deepEqual(Object.keys(tidyTestRequest({ requestedAt: when, kind: 'desktop', extra: 1 })), ['requestedAt']);
+  assert.deepEqual(config.defaultSettings.presentationTestRequest, { requestedAt: '' });
+});
+
+test('the presentation test functions import only the demo functions and use no page, and the screen code that runs them is started after the talk screen', () => {
+  const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+  const code = text => text.split('\n').filter(line => !line.trim().startsWith('//')).join('\n');
+
+  assert.deepEqual(read('core/presentation-test.js').split('\n').filter(line => /^import /.test(line)), [
+    "import { readHandled, rememberHandled, shouldRunDemo } from './demo.js';",
+  ]);
+  assert.ok(!/\bdocument\b|\bwindow\b|\bimport\(/.test(code(read('core/presentation-test.js'))), 'no page in presentation-test.js');
+
+  // the real screen: it asks what can have the screen, reads the sample file from the sample folder and hands the talk to the talk screen
+  const run = read('core/presentation-test-run.js');
+  ['demoRunning', 'nightIsUp', 'hiddenPlaying'].forEach(name => assert.ok(run.includes("'" + name + "'"), name));
+  assert.ok(run.includes('takeoverRunning: takeoverRunning,') && run.includes('startTalk: startTestTalk,'));
+  assert.ok(run.includes("fetch(sampleFolder + 'content.json'"), 'the sample file, and nothing from Sanity or Google');
+  assert.ok(!/sanity\.io|google\.com|config\.js'.*\bsanity\b/.test(code(run)), 'no other address');
+
+  const shell = read('shell.js');
+  const testing = shell.indexOf("startOptional('./core/presentation-test-run.js', module => module.startPresentationTestRunner(getContent))");
+  assert.ok(testing > shell.indexOf("startOptional('./core/presentation-run.js'"), 'after the talk screen');
+  assert.ok(testing > shell.indexOf("startOptional('./core/hidden-run.js'"), 'after the hidden transitions');
+  assert.ok(testing > shell.indexOf("startOptional('./core/demo-runner.js'"), 'after the demo runner');
+  assert.ok(testing > shell.indexOf('startTakeovers(getContent);'), 'after the takeovers');
+  assert.ok(shell.lastIndexOf("if (!params.get('show') && !stress) {", testing) > shell.lastIndexOf('startNight', testing) - 2000, 'only when the whole screen runs');
+});
+
 // The Neon Prime kit (frame.js, "The Neon Prime kit"): the two events that frame.js drives, the name
 // glitch and the burst of bars when a new page arrives in the large frame, and the attribute that
 // tells neon-kit.css when the rest may move. The shapes and keyframes are not tested here.
@@ -3416,6 +3672,7 @@ const kitBlocks = [
   ['no motion', world => world.frame.setMotion('none'), world => world.frame.setMotion('full'), undefined],
   ['the night screen', world => world.frame.setNightCovers(true), world => world.frame.setNightCovers(false), undefined],
   ['a hidden transition', world => world.frame.setHiddenPlaying(true), world => world.frame.setHiddenPlaying(false), undefined],
+  ['a talk', world => world.frame.pause('talk'), world => world.frame.resume('talk'), undefined],
   ['an alert or an announcement', world => world.frame.setTakeoverCovers(true), world => world.frame.setTakeoverCovers(false), undefined],
   ['a demo', world => world.frame.setEffectsPaused(true), world => world.frame.setEffectsPaused(false), 'on'],
 ];
@@ -3614,6 +3871,970 @@ test('the kit is on in frame.js only when told, never from an import, and shell.
   assert.ok(/frame\.setKit\(hasKit\(look\.theme, layoutNow\(\)\) && params\.get\('kit'\) !== 'off'\)/.test(shell), 'shell.js switches the kit with each look, and ?kit=off switches it off');
   const takeover = fs.readFileSync(path.join(dashboardFolder, 'core/takeover.js'), 'utf8');
   assert.ok(/frame\.setTakeoverCovers\(true\)/.test(takeover) && /frame\.setTakeoverCovers\(false\)/.test(takeover), 'an alert and an announcement tell the kit when they start and end');
+});
+
+// frame.js: one hold on the whole screen, for a talk
+
+test('while the screen is paused no effect starts and none waits, and the effects that were due play once it is resumed', async () => {
+  await inPage(async world => {
+    world.frame.setNameEffect(false, 300, 1.43);
+    world.frame.setCrt(true, 30, 2.7);
+
+    assert.equal(world.frame.isPaused(), false);
+    world.frame.pause('talk');
+    world.frame.pause('talk'); // asked again, and nothing changes
+    assert.equal(world.frame.isPaused(), true);
+    assert.equal(world.pageData.paused, 'on', 'the stylesheets stop the glint and the seasonal pieces');
+    await world.advance(100 * second);
+    assert.deepEqual(world.log, [], 'the glitch has been due since 30 seconds');
+
+    world.frame.playCrt(); // asked for by hand, which waits too
+    await world.advance(10 * second);
+    assert.deepEqual(world.log, []);
+
+    world.frame.resume('talk');
+    assert.equal(world.frame.isPaused(), false);
+    assert.equal(world.pageData.paused, undefined, 'the page is not marked paused any more');
+    await world.advance(second);
+    assert.equal(world.starts('glitch').length, 1, 'one late play, not a burst');
+  });
+});
+
+test('the hold is kept by reason: it lasts until every reason is resumed, and a reason that was never paused changes nothing', async () => {
+  await inPage(async world => {
+    world.frame.setNameEffect(false, 300, 1.43);
+    world.frame.setCrt(true, 30, 2.7);
+
+    world.frame.resume('talk');
+    assert.equal(world.frame.isPaused(), false);
+    assert.equal(world.pageData.paused, undefined);
+
+    world.frame.pause('talk');
+    world.frame.pause('test');
+    world.frame.resume('talk');
+    assert.equal(world.frame.isPaused(), true, 'the other reason still holds the screen');
+    assert.equal(world.pageData.paused, 'on');
+    await world.advance(100 * second);
+    assert.deepEqual(world.log, []);
+
+    world.frame.resume('test');
+    world.frame.resume('test'); // resumed again, and nothing changes
+    assert.equal(world.frame.isPaused(), false);
+    assert.equal(world.pageData.paused, undefined);
+    await world.advance(second);
+    assert.equal(world.starts('glitch').length, 1);
+  });
+});
+
+test('a glitch that is playing when the screen is paused ends on the spot, and so does a spin of the logo', async () => {
+  await inPage(async world => {
+    world.frame.setNameEffect(false, 300, 1.43);
+    world.frame.setCrt(true, 30, 2.7);
+
+    await world.advance(30500); // the glitch started at 30 seconds and plays until 32.7
+    assert.deepEqual(world.starts('glitch'), [30000]);
+    world.frame.pause('talk');
+    assert.deepEqual(world.ends('glitch'), [30500], 'ended on the spot');
+    await world.advance(10 * second);
+    assert.deepEqual(world.ends('glitch'), [30500], 'its clock running out ends nothing twice');
+  });
+
+  await inPage(async world => {
+    world.frame.setLogoAnimations(true, false);
+    world.frame.setSpin(true, 10, 1.6);
+    world.frame.setHawk(false, 0, 11);
+    world.frame.setNameEffect(false, 300, 1.43);
+    world.frame.setCrt(false, 240, 2.7);
+    world.frame.startLogo(world.logo);
+
+    await world.advance(11 * second);
+    assert.equal(world.starts('spin').length >= 1, true);
+    world.frame.pause('talk');
+    assert.equal(world.logo.dataset.act, 'rest', 'back to the still emblem');
+
+    const before = world.starts('spin').length;
+    await world.advance(100 * second);
+    assert.equal(world.starts('spin').length, before, 'and no more while the screen is paused');
+  });
+});
+
+test('the screen stays paused through a change of motion, and the effects do not start by themselves when it goes back to full', async () => {
+  await inPage(async world => {
+    world.frame.setNameEffect(false, 300, 1.43);
+    world.frame.setCrt(true, 30, 2.7);
+
+    world.frame.pause('talk');
+    world.frame.setMotion('calm');
+    world.frame.setMotion('full');
+    await world.advance(100 * second);
+    assert.deepEqual(world.log, []);
+    assert.equal(world.frame.isPaused(), true);
+  });
+});
+
+test('the glint and the seasonal pieces stop while the screen is paused, in the stylesheets', () => {
+  const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+
+  assert.ok(/\[data-glint="off"\] \.glint-layer,\s*\[data-paused\] \.glint-layer,[^{]*\{ display: none; \}/.test(read('frame.css')), 'the glint is not drawn');
+  assert.ok(read('seasons/motion.css').includes('html[data-paused] .season-piece { animation-play-state: paused; }'), 'the pieces stand still');
+});
+
+test('only frame.js, schedule.js and takeover.js ask whether the screen is paused, and everything that waits for a cover asks takeoverRunning', () => {
+  const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+  const code = text => text.split('\n').filter(line => !line.trim().startsWith('//')).join('\n');
+
+  // the rotation and the ticker wait, and a page does not use up its stay
+  const schedule = code(read('core/schedule.js'));
+  assert.ok(/function rotationPaused\(\) \{\s*return pauses > 0 \|\| frame\.isPaused\(\);\s*\}/.test(schedule));
+  assert.ok(schedule.includes('if (!rotationPaused()) left -= 250;'));
+  assert.ok(schedule.includes('while (rotationPaused()) await frame.wait(250);'));
+  assert.equal((schedule.match(/frame\.isPaused\(\)/g) || []).length, 1, 'asked in one place');
+
+  // the others ask this one, so a hold is a cover to all of them
+  const takeover = code(read('core/takeover.js'));
+  assert.ok(/export function takeoverRunning\(\) \{\s*return running !== null \|\| frame\.isPaused\(\);\s*\}/.test(takeover));
+  ['core/hidden-run.js', 'core/night-screen.js', 'core/announce-run.js', 'core/demo-runner.js', 'core/announce.js', 'core/demo.js', 'core/hidden.js', 'core/presentation-test.js', 'core/presentation-test-run.js', 'shell.js'].forEach(file => {
+    assert.ok(!/isPaused|frame\.pause|frame\.resume/.test(code(read(file))), file + ' asks takeoverRunning and not the pause');
+  });
+  ['core/hidden-run.js', 'core/night-screen.js', 'core/announce-run.js', 'core/demo-runner.js', 'core/presentation-test-run.js', 'shell.js'].forEach(file => {
+    assert.ok(read(file).includes('takeoverRunning'), file + ' asks takeoverRunning');
+  });
+
+  const frame = code(read('frame.js'));
+  assert.ok(frame.includes('export function pause(reason)') && frame.includes('export function resume(reason)') && frame.includes('export function isPaused()'));
+  assert.ok(frame.includes("if (motion !== 'full' || nightCovers || hiddenPlaying) return;\n  if (isPaused()) return;"), 'no effect comes due while it is paused');
+});
+
+// takeover.js on a fake page. The real file runs with stand-ins for frame.js, the panels and the
+// rotation: the clock is a function the test calls, and the screen is paused when the test says so.
+
+const takeoverTree = path.join(workFolder, 'takeover-tree');
+['core/takeover.js', 'core/text.js', 'core/time.js'].forEach(file => {
+  fs.mkdirSync(path.dirname(path.join(takeoverTree, 'dashboard', file)), { recursive: true });
+  fs.copyFileSync(path.join(dashboardFolder, file), path.join(takeoverTree, 'dashboard', file));
+});
+fs.writeFileSync(path.join(takeoverTree, 'package.json'), '{ "type": "module" }\n');
+fs.writeFileSync(path.join(takeoverTree, 'dashboard/frame.js'), [
+  'export const onSecond = listener => { globalThis.takeoverWorld.listener = listener; };',
+  'export const isPaused = () => globalThis.takeoverWorld.paused;',
+  'export const wait = () => new Promise(resolve => setImmediate(resolve));',
+  'export const enter = async () => {};',
+  'export const exit = async () => {};',
+  'export const setTakeoverCovers = () => {};',
+  'export const playCrt = () => {};',
+].join('\n') + '\n');
+fs.writeFileSync(path.join(takeoverTree, 'dashboard/core/panels.js'), [
+  'export function mountPanel(id, content) {',
+  "  globalThis.takeoverWorld.shown.push(id + (content.announcement ? ': ' + content.announcement.text : ''));",
+  '  return { remove() {} };',
+  '}',
+].join('\n') + '\n');
+fs.writeFileSync(path.join(takeoverTree, 'dashboard/core/schedule.js'), [
+  'export const pauseRotation = () => {};',
+  'export const resumeRotation = () => {};',
+].join('\n') + '\n');
+let takeovers = 0;
+
+async function inTakeoverPage(announcements, run) {
+  const world = { paused: false, listener: null, shown: [], settings: { alert: { on: false }, announcements: announcements } };
+  globalThis.takeoverWorld = world;
+  globalThis.document = { getElementById: () => ({ style: {}, innerHTML: '' }) };
+
+  try {
+    takeovers += 1;
+    world.takeover = await import(pathToFileURL(path.join(takeoverTree, 'dashboard/core/takeover.js')).href + '?run=' + takeovers);
+    world.takeover.startTakeovers(() => ({ settings: world.settings }));
+    world.tick = (hours, minutes, seconds) => world.listener(new Date(2026, 9, 8, hours, minutes, seconds));
+    world.settleAll = async () => {
+      for (let turn = 0; turn < 40; turn++) await flush();
+    };
+    await run(world);
+  } finally {
+    delete globalThis.document;
+    delete globalThis.takeoverWorld;
+  }
+}
+
+function announcementTitled(title, time) {
+  return { show: true, time: time, title: title, followUp: '', titleSeconds: 1, followUpSeconds: 1, days: [0, 1, 2, 3, 4, 5, 6] };
+}
+
+test('an announcement plays when it comes due, and once', async () => {
+  await inTakeoverPage([announcementTitled('ONE', '14:30')], async world => {
+    world.tick(14, 29, 59);
+    assert.deepEqual(world.shown, []);
+
+    world.tick(14, 30, 0);
+    assert.deepEqual(world.shown, ['announcement: ONE']);
+    assert.equal(world.takeover.takeoverRunning(), true);
+    await world.settleAll();
+    assert.equal(world.takeover.takeoverRunning(), false);
+
+    world.tick(14, 30, 1);
+    world.tick(14, 30, 2);
+    await world.settleAll();
+    assert.deepEqual(world.shown, ['announcement: ONE']);
+  });
+});
+
+test('takeoverRunning is true while the screen is paused, which holds the hidden transitions, the demo, the night screen and the reloads', async () => {
+  await inTakeoverPage([], async world => {
+    assert.equal(world.takeover.takeoverRunning(), false);
+    world.paused = true;
+    assert.equal(world.takeover.takeoverRunning(), true);
+    world.paused = false;
+    assert.equal(world.takeover.takeoverRunning(), false);
+  });
+});
+
+test('an announcement that comes due while the screen is paused is kept, and plays once the pause is over', async () => {
+  await inTakeoverPage([announcementTitled('ONE', '14:30')], async world => {
+    world.paused = true;
+    world.tick(14, 30, 0);
+    world.tick(14, 30, 1);
+    await world.settleAll();
+    assert.deepEqual(world.shown, [], 'not while the talk holds the screen');
+
+    world.tick(14, 40, 0);
+    assert.deepEqual(world.shown, [], 'still held, ten minutes later');
+
+    world.paused = false;
+    world.tick(14, 45, 0);
+    assert.deepEqual(world.shown, ['announcement: ONE'], 'it plays at the first look after the pause');
+    await world.settleAll();
+
+    world.tick(14, 45, 1);
+    world.tick(14, 46, 0);
+    await world.settleAll();
+    assert.deepEqual(world.shown, ['announcement: ONE'], 'and only once');
+  });
+});
+
+test('announcements that came due during one pause play one after the other, in the order they came due', async () => {
+  await inTakeoverPage([announcementTitled('ONE', '14:30'), announcementTitled('TWO', '14:35')], async world => {
+    world.paused = true;
+    world.tick(14, 30, 0);
+    world.tick(14, 35, 0);
+    world.paused = false;
+
+    world.tick(14, 36, 0);
+    assert.deepEqual(world.shown, ['announcement: ONE']);
+    world.tick(14, 36, 1); // the first is still playing
+    assert.deepEqual(world.shown, ['announcement: ONE']);
+    await world.settleAll();
+
+    world.tick(14, 36, 2);
+    assert.deepEqual(world.shown, ['announcement: ONE', 'announcement: TWO']);
+    await world.settleAll();
+    world.tick(14, 36, 3);
+    assert.deepEqual(world.shown, ['announcement: ONE', 'announcement: TWO']);
+  });
+});
+
+test('an alert still takes the screen while it is paused, and an announcement due before the pause ended waits for the alert too', async () => {
+  await inTakeoverPage([announcementTitled('ONE', '14:30')], async world => {
+    world.paused = true;
+    world.tick(14, 30, 0);
+    world.settings.alert = { on: true, headline: 'H', message: 'M', until: '' };
+    world.tick(14, 31, 0);
+    assert.deepEqual(world.shown, ['alert'], 'the alert overrides everything, a talk too');
+
+    world.settings.alert = { on: false };
+    await world.settleAll();
+    world.paused = false;
+    world.tick(14, 32, 0);
+    assert.deepEqual(world.shown, ['alert', 'announcement: ONE']);
+    await world.settleAll();
+  });
+});
+
+// presentation-run.js on a fake page. The real file runs with stand-ins for frame.js, the panels and
+// takeover.js. A card is a plain object with children, so a test can see what is on the screen. The
+// clock is a function the test calls, and the keys are pressed by calling the handler the file added.
+
+const talkTree = path.join(workFolder, 'talk-tree');
+['config.js', 'core/presentation-run.js', 'core/presentation.js', 'core/time.js'].forEach(file => {
+  fs.mkdirSync(path.dirname(path.join(talkTree, 'dashboard', file)), { recursive: true });
+  fs.copyFileSync(path.join(dashboardFolder, file), path.join(talkTree, 'dashboard', file));
+});
+fs.writeFileSync(path.join(talkTree, 'package.json'), '{ "type": "module" }\n');
+fs.writeFileSync(path.join(talkTree, 'dashboard/frame.js'), [
+  'export const onSecond = listener => { globalThis.talkWorld.listener = listener; };',
+  "export const pause = reason => { globalThis.talkWorld.holds.add(reason); globalThis.talkWorld.log.push('pause'); };",
+  "export const resume = reason => { globalThis.talkWorld.holds.delete(reason); globalThis.talkWorld.log.push('resume'); };",
+  'export const wait = milliseconds => new Promise(resolve => globalThis.talkWorld.waits.push({ milliseconds: milliseconds, resolve: resolve }));',
+  "export const enter = card => { globalThis.talkWorld.log.push('enter ' + card.kind); card.dataset.state = 'in'; return Promise.resolve(); };",
+  "export const exit = card => { globalThis.talkWorld.log.push('exit ' + card.kind); card.dataset.state = 'out'; return new Promise(resolve => setImmediate(resolve)); };",
+].join('\n') + '\n');
+fs.writeFileSync(path.join(talkTree, 'dashboard/core/takeover.js'), [
+  'export const takeoverRunning = () => globalThis.talkWorld.announcing || globalThis.talkWorld.holds.size > 0;',
+].join('\n') + '\n');
+fs.writeFileSync(path.join(talkTree, 'dashboard/core/panels.js'), [
+  'export function buildPage(id, content) {',
+  '  const world = globalThis.talkWorld;',
+  '  const screen = content.talkScreen;',
+  '  const element = world.makeElement(screen.kind);',
+  "  if (screen.kind === 'slides') ['slide-host', 'progress-line', 'chip', 'chip-count'].forEach(name => element.add(name));",
+  "  world.log.push('build ' + screen.kind);",
+  '  return { id: id, region: "overlay", element: element };',
+  '}',
+].join('\n') + '\n');
+let talkPages = 0;
+
+class TalkElement {
+  constructor(kind) {
+    this.kind = kind;
+    this.dataset = {};
+    this.style = {};
+    this.children = [];
+    this.parent = null;
+    this.hidden = false;
+    this.className = '';
+    this.named = {};
+  }
+
+  add(name) {
+    const child = new TalkElement(name);
+    child.className = name;
+    child.fixed = true;
+    this.named[name] = child;
+    this.appendChild(child);
+  }
+
+  // Like the real one, setting the text to nothing takes every child away
+  set textContent(text) {
+    this.text = text;
+    if (text === '') this.children = this.children.filter(child => child.fixed);
+  }
+
+  get textContent() {
+    return this.text || '';
+  }
+
+  appendChild(child) {
+    child.parent = this;
+    this.children.push(child);
+  }
+
+  prepend(child) {
+    child.parent = this;
+    this.children.unshift(child);
+  }
+
+  remove() {
+    if (this.parent) this.parent.children = this.parent.children.filter(child => child !== this);
+    this.parent = null;
+  }
+
+  querySelector(selector) {
+    return this.named[selector.slice(1)] || null;
+  }
+
+  focus() {
+    globalThis.talkWorld.focused += 1;
+    globalThis.document.activeElement = this;
+  }
+}
+
+function manifestOf(pages) {
+  return { ok: true, pages: pages, fetchedAt: '2026-10-08T18:00:00Z', refreshed: false };
+}
+
+// options: manifest (what the server sends: an object, null for a 404, 'down' for no network or 'hangs'
+// for no answer), talks, start (the time of the talk in ms, so that two pages can have the same one),
+// settings, status and store (an object that stands for localStorage, or 'off' when asking for it
+// throws). world.tick(ms) is the clock: 1000 is the start of the talk.
+let talkRuns = 0;
+
+async function inTalkPage(options, run) {
+  const store = options.store && options.store !== 'off' ? options.store : {};
+  const world = {
+    log: [], holds: new Set(), waits: [], keyHandlers: [], fetched: [], images: [], timeouts: [],
+    announcing: false, listener: null, focused: 0, store: store, makeElement: kind => new TalkElement(kind),
+    manifest: options.manifest === undefined ? manifestOf(['001.jpg', '002.jpg', '003.jpg']) : options.manifest,
+  };
+  const layer = new TalkElement('layer');
+  layer.hidden = true;
+  const page = new TalkElement('html');
+  const real = { setTimeout: globalThis.setTimeout };
+
+  globalThis.talkWorld = world;
+  globalThis.document = { documentElement: page, activeElement: null, getElementById: id => (id === 'talk' ? layer : null) };
+  globalThis.window = {
+    addEventListener: (name, handler, capture) => world.keyHandlers.push({ name: name, handler: handler, capture: capture }),
+    localStorage: options.store === 'off'
+      ? { getItem() { throw new Error('storage is off'); }, setItem() { throw new Error('storage is off'); } }
+      : { getItem: key => (key in store ? store[key] : null), setItem: (key, value) => { store[key] = value; } },
+  };
+  globalThis.Image = class {
+    constructor() {
+      this.decoded = 0;
+      world.images.push(this);
+    }
+
+    decode() {
+      this.decoded += 1;
+      return Promise.resolve();
+    }
+  };
+  globalThis.fetch = (address, init) => {
+    world.fetched.push({ address: address, init: init });
+    if (world.manifest === 'hangs') return new Promise(() => {});
+    if (world.manifest === 'down') return Promise.reject(new Error('no network'));
+    if (world.manifest === null) return Promise.resolve({ ok: false });
+    return Promise.resolve({ ok: true, json: () => Promise.resolve(world.manifest) });
+  };
+  globalThis.setTimeout = (action, milliseconds) => {
+    world.timeouts.push({ action: action, milliseconds: milliseconds });
+    return world.timeouts.length;
+  };
+
+  try {
+    talkRuns += 1;
+    const module = await import(pathToFileURL(path.join(talkTree, 'dashboard/core/presentation-run.js')).href + '?run=' + talkRuns);
+    const start = options.start || Date.now() + 1000; // keys are read with the real clock, so the talk starts a second from now
+    const content = {
+      presentations: options.talks || [{ id: 'presentation-abc', name: 'Alex', subteam: 'Programming', topic: 'Swerve drive', start: new Date(start), minutes: 15, status: 'scheduled' }],
+      settings: Object.assign({ presentationsEnabled: true, noShowMinutes: 5, graceMinutes: 5 }, options.settings),
+      status: options.status || { source: 'sanity' },
+    };
+    module.startPresentations(() => content);
+
+    world.module = module;
+    world.layer = layer;
+    world.page = page;
+    world.content = content;
+    world.tick = milliseconds => world.listener(new Date(start - 1000 + milliseconds));
+    world.settleAll = async () => {
+      for (let turn = 0; turn < 20; turn++) await flush();
+    };
+    world.press = (key, extra) => {
+      const event = Object.assign({ key: key, repeat: false, defaultPrevented: false, preventDefault() { this.defaultPrevented = true; } }, extra);
+      world.keyHandlers.filter(entry => entry.name === 'keydown').forEach(entry => entry.handler(event));
+      return event;
+    };
+    world.view = () => layer.children.find(child => child.kind === 'slides');
+    world.cards = kind => layer.children.filter(child => child.kind === kind).length;
+    world.slideAddressNow = () => world.view().named['slide-host'].children.map(child => child.src);
+    await run(world);
+    await world.settleAll();
+  } finally {
+    globalThis.setTimeout = real.setTimeout;
+    delete globalThis.window;
+    delete globalThis.document;
+    delete globalThis.Image;
+    delete globalThis.fetch;
+    delete globalThis.talkWorld;
+  }
+}
+
+const talkAddress = 'data/live/slides/presentation-abc/';
+
+test('a talk puts up its title card at its start, holds the screen, and reads the manifest from the server each time', async () => {
+  await inTalkPage({}, async world => {
+    world.tick(0);
+    assert.deepEqual(world.log, [], 'not before the start');
+    assert.equal(world.layer.hidden, true);
+    assert.equal(world.keyHandlers.some(entry => entry.name === 'keydown' && entry.capture === true), true, 'the keys are read on the window, before anything else');
+
+    world.tick(1000);
+    assert.deepEqual(world.log, ['pause', 'build title', 'enter title']);
+    assert.equal(world.layer.hidden, false);
+    assert.equal(world.cards('title'), 1);
+    assert.equal(world.layer.dataset.ground, 'plain');
+    assert.equal(world.focused > 0, true, 'the layer has the focus, which the keys need');
+    assert.deepEqual(world.fetched.map(item => item.address), [talkAddress + 'manifest.json']);
+    assert.deepEqual(world.fetched[0].init, { cache: 'no-store' });
+
+    await world.settleAll();
+    assert.equal(world.page.dataset.talk, 'on', 'the dashboard is not drawn under the card once it has come in');
+    assert.deepEqual(world.images.map(image => image.src), [talkAddress + '001.jpg', talkAddress + '002.jpg', talkAddress + '003.jpg'], 'the first slides are decoded while the title is up');
+    assert.deepEqual(world.images.map(image => image.decoded), [1, 1, 1]);
+  });
+});
+
+test('the sample content looks for its slides in the sample folder', async () => {
+  await inTalkPage({ status: { source: 'sample' } }, async world => {
+    world.tick(1000);
+    assert.deepEqual(world.fetched.map(item => item.address), ['data/sample/slides/presentation-abc/manifest.json']);
+  });
+});
+
+test('the sample talk of Run presentation test starts at once, reads the sample folder whatever the content source is, and is not brought back once it is over', async () => {
+  const sampleTalkNow = () => ({ id: 'presentation-sample', name: '[First name]', subteam: '[Subteam A]', topic: '[Title of the talk]', start: new Date(), minutes: 15, status: 'scheduled' });
+  const sampleAddress = 'data/sample/slides/presentation-sample/';
+
+  await inTalkPage({ talks: [], manifest: manifestOf(['001.svg', '002.svg']) }, async world => {
+    world.tick(0);
+    assert.deepEqual(world.log, [], 'nothing is booked');
+
+    world.module.startTestTalk(sampleTalkNow());
+    assert.deepEqual(world.log, ['pause', 'build title', 'enter title']);
+    assert.deepEqual(world.fetched.map(item => item.address), [sampleAddress + 'manifest.json']);
+
+    await world.settleAll();
+    world.press(' ');
+    assert.deepEqual(world.slideAddressNow(), [sampleAddress + '001.svg']);
+    world.press(' ');
+    world.press(' ');
+    assert.equal(world.cards('thanks'), 1, 'after the last slide');
+
+    world.tick(8000);
+    await world.settleAll();
+    assert.equal(world.holds.size, 0);
+    world.tick(30000);
+    assert.equal(world.holds.size, 0, 'a talk that is over does not start again');
+  });
+});
+
+test('the sample talk waits for an announcement like any talk, and a talk that is already over does not start', async () => {
+  await inTalkPage({ talks: [], manifest: manifestOf(['001.jpg']) }, async world => {
+    world.announcing = true;
+    world.module.startTestTalk({ id: 'presentation-sample', name: '[First name]', topic: '[Title of the talk]', start: new Date(), minutes: 15, status: 'scheduled' });
+    assert.deepEqual(world.log, [], 'the title card waits while the announcement plays');
+
+    world.announcing = false;
+    world.tick(1000);
+    assert.deepEqual(world.log.slice(0, 2), ['pause', 'build title']);
+  });
+
+  await inTalkPage({ talks: [], manifest: manifestOf(['001.jpg']) }, async world => {
+    world.module.startTestTalk({ id: 'presentation-sample', name: '[First name]', topic: '[Title of the talk]', start: new Date(Date.now() - 3 * 3600 * 1000), minutes: 15, status: 'scheduled' });
+    assert.deepEqual(world.log, [], 'a talk that is already over does not start');
+  });
+});
+
+test('a booked talk reads the live folder, also after the sample talk has been ended on its title card', async () => {
+  await inTalkPage({ manifest: manifestOf(['001.jpg']) }, async world => {
+    world.module.startTestTalk({ id: 'presentation-sample', name: '[First name]', topic: '[Title of the talk]', start: new Date(), minutes: 15, status: 'scheduled' });
+    await world.settleAll();
+    world.press('Escape');
+    world.press('Escape');
+    await world.settleAll();
+
+    world.tick(1000);
+    world.tick(2000);
+    assert.deepEqual(world.fetched.map(item => item.address), ['data/sample/slides/presentation-sample/manifest.json', talkAddress + 'manifest.json']);
+  });
+});
+
+test('with Run presentations off the sample talk does not start', async () => {
+  await inTalkPage({ talks: [], settings: { presentationsEnabled: false } }, async world => {
+    world.module.startTestTalk({ id: 'presentation-sample', name: '[First name]', topic: '[Title of the talk]', start: new Date(), minutes: 15, status: 'scheduled' });
+    world.tick(1000);
+    assert.deepEqual(world.log, []);
+    assert.equal(world.holds.size, 0);
+  });
+});
+
+test('a forward key starts the talk: the first slide shows at once, the title card fades out over it, and the chip and the progress line show', async () => {
+  await inTalkPage({}, async world => {
+    world.tick(1000);
+    await world.settleAll();
+
+    assert.equal(world.press('PageDown').defaultPrevented, true);
+    const view = world.view();
+    assert.equal(world.layer.children[0], view, 'the slides are under the title card');
+    assert.equal(world.layer.dataset.ground, 'black');
+    assert.deepEqual(world.slideAddressNow(), [talkAddress + '001.jpg']);
+    assert.equal(view.named['progress-line'].style.transform, 'scaleX(' + 1 / 3 + ')');
+    assert.equal(view.named['chip-count'].textContent, '1 / 3');
+    assert.equal(view.named.chip.dataset.shown, 'on');
+    assert.equal(world.log.includes('exit title'), true);
+
+    await world.settleAll();
+    assert.equal(world.cards('title'), 0, 'the title card is gone');
+  });
+});
+
+test('the keys move through the slides at once, black comes and goes, home and end jump, and no slide is loaded twice', async () => {
+  await inTalkPage({}, async world => {
+    world.tick(1000);
+    await world.settleAll();
+    world.press('Enter');
+    const view = world.view();
+
+    world.press('ArrowRight');
+    assert.deepEqual(world.slideAddressNow(), [talkAddress + '002.jpg'], 'one slide in the view at a time');
+    assert.equal(view.named['chip-count'].textContent, '2 / 3');
+    world.press('p');
+    assert.deepEqual(world.slideAddressNow(), [talkAddress + '001.jpg']);
+    world.press('ArrowLeft');
+    assert.equal(view.named['chip-count'].textContent, '1 / 3', 'not before the first');
+
+    world.press('b');
+    assert.equal(view.dataset.black, 'on');
+    world.press('.');
+    assert.equal(view.dataset.black, 'off');
+    world.press('b');
+    world.press('n');
+    assert.equal(view.dataset.black, 'off', 'a slide key ends the black screen');
+    assert.equal(world.images.length, 3, 'the three slides were made once each');
+
+    world.press('End');
+    assert.equal(view.named['chip-count'].textContent, '3 / 3');
+    assert.equal(view.named['progress-line'].style.transform, 'scaleX(1)');
+    world.press('Home');
+    assert.equal(view.named['chip-count'].textContent, '1 / 3');
+    assert.deepEqual(world.slideAddressNow(), [talkAddress + '001.jpg']);
+  });
+});
+
+test('the chip shows for three seconds after a key and then fades out', async () => {
+  await inTalkPage({}, async world => {
+    world.tick(1000);
+    await world.settleAll();
+    world.press(' ');
+    const chip = world.view().named.chip;
+    assert.equal(chip.dataset.shown, 'on');
+
+    world.tick(2000);
+    assert.equal(chip.dataset.shown, 'on');
+    world.tick(5000);
+    assert.equal(chip.dataset.shown, 'out');
+
+    world.press('Escape');
+    assert.equal(chip.dataset.shown, 'on', 'any key, Esc too');
+    const timer = world.timeouts[world.timeouts.length - 1];
+    assert.equal(timer.milliseconds > 3000 && timer.milliseconds < 4000, true, 'and a timer takes it away a little over three seconds later');
+  });
+});
+
+test('the keys are the talk\'s only while a talk holds the screen, a held key does not repeat, and a key that is not in the map is left alone', async () => {
+  await inTalkPage({}, async world => {
+    assert.equal(world.press('Enter').defaultPrevented, false, 'idle leaves F5 and the rest alone');
+
+    world.tick(1000);
+    await world.settleAll();
+    assert.equal(world.press('x').defaultPrevented, false);
+    assert.equal(world.press('n', { ctrlKey: true }).defaultPrevented, false);
+    assert.equal(world.press('F5', { altKey: true }).defaultPrevented, false);
+    assert.equal(world.press('Enter', { repeat: true }).defaultPrevented, true, 'a repeat is stopped too');
+    assert.equal(world.view(), undefined, 'but it did not start the talk');
+
+    ['F5', ' ', 'PageUp', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Escape'].forEach(key => assert.equal(world.press(key).defaultPrevented, true, key));
+  });
+});
+
+test('the last slide and one more forward key give the thanks card, and five seconds later the dashboard is given back', async () => {
+  await inTalkPage({}, async world => {
+    world.tick(1000);
+    await world.settleAll();
+    world.press(' ');
+    world.press(' ');
+    world.press(' ');
+    world.log.length = 0;
+
+    world.press(' ');
+    assert.deepEqual(world.log, ['build thanks', 'enter thanks']);
+    assert.equal(world.view(), undefined, 'the slides are gone');
+    assert.equal(world.layer.dataset.ground, 'black', 'the card comes in over black');
+    assert.equal(world.holds.size, 1);
+
+    world.tick(4000);
+    assert.equal(world.holds.size, 1);
+    world.tick(6000);
+    await world.settleAll();
+    assert.equal(world.layer.hidden, true);
+    assert.equal(world.holds.size, 0);
+    assert.equal(world.page.dataset.talk, undefined);
+    assert.equal(world.layer.children.length, 0);
+    assert.equal(world.log[world.log.length - 1], 'resume');
+
+    world.tick(8000);
+    world.tick(30000);
+    assert.equal(world.holds.size, 0, 'a talk that is over does not start again');
+    assert.equal(JSON.parse(world.store['teletraan-talks-skipped']).length, 1);
+  });
+});
+
+test('Esc once does nothing and twice within two seconds ends the talk, on the slides and on the title card', async () => {
+  await inTalkPage({}, async world => {
+    world.tick(1000);
+    await world.settleAll();
+    world.press(' ');
+    world.press('Escape');
+    assert.equal(world.cards('thanks'), 0);
+    world.press('Escape');
+    assert.equal(world.cards('thanks'), 1);
+  });
+
+  await inTalkPage({}, async world => {
+    world.tick(1000);
+    await world.settleAll();
+    world.press('Escape');
+    assert.equal(world.holds.size, 1);
+    world.press('Escape');
+    assert.equal(world.page.dataset.talk, undefined, 'the dashboard shows again under the card that fades out');
+    await world.settleAll();
+    world.tick(2000);
+    await world.settleAll();
+    assert.equal(world.layer.hidden, true);
+    assert.equal(world.holds.size, 0);
+  });
+});
+
+test('slides that are not ready show the card for 60 seconds, the forward key does nothing, and then the dashboard comes back', async () => {
+  for (const manifest of [null, 'down', { ok: false, error: 'not shared', fetchedAt: '2026-10-08T18:00:00Z' }, manifestOf([])]) {
+    await inTalkPage({ manifest: manifest }, async world => {
+      world.tick(1000);
+      await world.settleAll();
+      world.tick(2000);
+      assert.equal(world.log.includes('build not-ready'), true, JSON.stringify(manifest));
+      assert.equal(world.cards('not-ready'), 1);
+      assert.equal(world.press(' ').defaultPrevented, true);
+      assert.equal(world.view(), undefined, 'there is nothing to start');
+
+      world.tick(40000);
+      assert.equal(world.holds.size, 1, 'still up');
+      world.tick(63000);
+      await world.settleAll();
+      world.tick(64000);
+      await world.settleAll();
+      assert.equal(world.holds.size, 0);
+      assert.equal(world.layer.hidden, true);
+    });
+  }
+});
+
+test('a manifest that does not come within ten seconds counts as missing', async () => {
+  await inTalkPage({ manifest: 'hangs' }, async world => {
+    world.tick(1000);
+    await world.settleAll();
+    world.tick(2000);
+    assert.equal(world.cards('not-ready'), 0, 'still waiting');
+
+    const wait = world.waits.find(entry => entry.milliseconds === 10000);
+    assert.ok(wait, 'a ten second wait was started');
+    wait.resolve();
+    await world.settleAll();
+    assert.equal(world.cards('not-ready'), 1);
+  });
+});
+
+test('the title card waits for an announcement or an alert to end', async () => {
+  await inTalkPage({}, async world => {
+    world.announcing = true;
+    world.tick(1000);
+    world.tick(5000);
+    assert.deepEqual(world.log, []);
+    assert.equal(world.holds.size, 0);
+
+    world.announcing = false;
+    world.tick(6000);
+    assert.equal(world.log.includes('build title'), true);
+  });
+});
+
+test('a talk that nobody starts is skipped after noShowMinutes, and a page that loads again does not bring it back', async () => {
+  const store = {};
+  const start = Date.now() + 1000;
+  await inTalkPage({ store: store, start: start }, async world => {
+    world.tick(1000);
+    await world.settleAll();
+    world.tick(1000 + 4 * 60000);
+    assert.equal(world.holds.size, 1, 'still waiting after four minutes');
+    world.tick(1000 + 5 * 60000);
+    await world.settleAll();
+    world.tick(1000 + 5 * 60000 + 1000);
+    await world.settleAll();
+    assert.equal(world.holds.size, 0);
+    assert.equal(world.layer.hidden, true);
+  });
+  assert.equal(JSON.parse(store['teletraan-talks-skipped']).length, 1);
+
+  await inTalkPage({ store: store, start: start }, async world => {
+    world.tick(1000);
+    world.tick(2000);
+    assert.deepEqual(world.log, [], 'the same talk at the same start');
+  });
+
+  const moved = [{ id: 'presentation-abc', name: 'Alex', subteam: 'Programming', topic: 'Swerve drive', start: new Date(start + 60000), minutes: 15, status: 'scheduled' }];
+  await inTalkPage({ store: store, start: start, talks: moved }, async world => {
+    world.tick(61000);
+    assert.equal(world.log.includes('build title'), true, 'a talk that was moved is a new talk');
+  });
+});
+
+test('storage that cannot be used still keeps a skipped talk skipped for as long as the page is open', async () => {
+  await inTalkPage({ store: 'off' }, async world => {
+    world.tick(1000);
+    await world.settleAll();
+    world.press('Escape');
+    world.press('Escape');
+    await world.settleAll();
+    world.tick(2000);
+    await world.settleAll();
+    world.tick(3000);
+    world.tick(4000);
+    assert.equal(world.holds.size, 0);
+    assert.equal(world.layer.hidden, true);
+  });
+});
+
+test('switching Run presentations off ends a talk at once, and a talk that runs over ends at its end plus the grace', async () => {
+  await inTalkPage({}, async world => {
+    world.tick(1000);
+    await world.settleAll();
+    world.press(' ');
+    world.content.settings.presentationsEnabled = false;
+    world.tick(3000);
+    await world.settleAll();
+    assert.equal(world.holds.size, 0);
+    assert.equal(world.layer.hidden, true);
+    assert.equal(world.layer.children.length, 0);
+  });
+
+  await inTalkPage({}, async world => {
+    world.tick(1000);
+    await world.settleAll();
+    world.press(' ');
+    world.tick(1000 + 19 * 60000);
+    assert.equal(world.cards('thanks'), 0);
+    world.tick(1000 + 20 * 60000 + 1000);
+    assert.equal(world.cards('thanks'), 1, 'fifteen minutes and five of grace');
+  });
+});
+
+test('a card that fails to draw gives the dashboard back, and the talk does not start again', async () => {
+  const errors = [];
+  const real = console.error;
+  console.error = (...details) => errors.push(details);
+
+  try {
+    await inTalkPage({}, async world => {
+      world.tick(1000);
+      await world.settleAll();
+      world.press(' ');
+      world.makeElement = kind => {
+        if (kind === 'thanks') throw new Error('no card');
+        return new TalkElement(kind);
+      };
+      world.press(' ');
+      world.press(' ');
+      world.press(' ');
+      await world.settleAll();
+
+      assert.equal(errors.length, 1);
+      assert.equal(world.holds.size, 0);
+      assert.equal(world.layer.hidden, true);
+      world.tick(5000);
+      assert.equal(world.holds.size, 0);
+    });
+  } finally {
+    console.error = real;
+  }
+});
+
+// The plain functions the screen adds to core/presentation.js
+
+test('pictureOf says what each state puts on the screen, and cardLines gives the words of a card', async () => {
+  const presentation = await import(pathToFileURL(path.join(talkTree, 'dashboard/core/presentation.js')).href);
+  const talk = { id: 'presentation-abc', name: 'Alex', subteam: 'Programming', topic: 'Swerve drive', start: new Date(), minutes: 15 };
+
+  assert.equal(presentation.pictureOf({ name: 'idle' }), 'none');
+  assert.equal(presentation.pictureOf({ name: 'skipped', talk: talk }), 'none');
+  assert.equal(presentation.pictureOf({ name: 'title', talk: talk, notReadyAt: null }), 'title');
+  assert.equal(presentation.pictureOf({ name: 'title', talk: talk, notReadyAt: 5 }), 'not-ready');
+  assert.equal(presentation.pictureOf({ name: 'presenting', talk: talk }), 'slides');
+  assert.equal(presentation.pictureOf({ name: 'thanks', talk: talk }), 'thanks');
+
+  assert.deepEqual(presentation.cardLines('title', talk), { label: 'Programming', headline: 'Alex', detail: 'Swerve drive', prompt: 'Press the clicker to begin' });
+  assert.deepEqual(presentation.cardLines('title', Object.assign({}, talk, { subteam: undefined })).label, '');
+  assert.deepEqual(presentation.cardLines('not-ready', talk), { label: '', headline: 'Slides are not ready.', detail: 'Ask a coach.', prompt: '' });
+  assert.deepEqual(presentation.cardLines('thanks', talk), { label: '', headline: 'Thank you', detail: 'Alex', prompt: '' });
+});
+
+test('the slide folder and addresses, the slide number and the progress line are worked out in core/presentation.js', async () => {
+  const presentation = await import(pathToFileURL(path.join(talkTree, 'dashboard/core/presentation.js')).href);
+
+  assert.equal(presentation.slidesFolder(false, { id: 'presentation-abc' }), 'data/live/slides/presentation-abc/');
+  assert.equal(presentation.slidesFolder(true, { id: 'presentation-abc' }), 'data/sample/slides/presentation-abc/');
+  assert.equal(presentation.slidesFolder(false, { id: '../x y' }), 'data/live/slides/..%2Fx%20y/', 'an id cannot leave the folder');
+  assert.equal(presentation.slideAddress('data/live/slides/a/', '001.jpg'), 'data/live/slides/a/001.jpg');
+  assert.equal(presentation.slideAddress('data/live/slides/a/', '../../x.jpg'), 'data/live/slides/a/..%2F..%2Fx.jpg');
+
+  const state = { name: 'presenting', slide: 6, count: 24 };
+  assert.equal(presentation.slideNumberText(state), '7 / 24');
+  assert.equal(presentation.progressOf(state), 7 / 24);
+  assert.equal(presentation.progressOf(Object.assign({}, state, { slide: 23 })), 1);
+  assert.equal(presentation.progressOf({ name: 'title', slide: 0, count: 24 }), 0);
+});
+
+test('the first Esc on a slide shows the chip too, since it is a key press', async () => {
+  const presentation = await import(pathToFileURL(path.join(talkTree, 'dashboard/core/presentation.js')).href);
+  const state = { name: 'presenting', talk: { id: 'a' }, count: 5, slide: 2, black: false, keyAt: null, escapedAt: null };
+
+  const after = presentation.pressKey(state, 'Escape', new Date(10000));
+  assert.equal(after.name, 'presenting');
+  assert.equal(after.slide, 2);
+  assert.equal(presentation.chipShown(after, new Date(12000)), true);
+  assert.equal(presentation.chipShown(after, new Date(13000)), false);
+  assert.equal(presentation.pressKey(after, 'Escape', new Date(11000)).name, 'thanks');
+});
+
+// The files around it
+
+test('the talk panel is in the registry, its cards have the parts frame.js moves, and its layer is in index.html under the overlay and over the night screen', async () => {
+  const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+
+  assert.ok(read('registry.js').includes("{ id: 'talk', region: 'overlay' },"));
+  assert.equal(fs.existsSync(path.join(dashboardFolder, 'panels/talk/talk.js')) && fs.existsSync(path.join(dashboardFolder, 'panels/talk/talk.css')), true);
+
+  const html = read('index.html');
+  const night = html.indexOf('<div id="night" hidden></div>');
+  const talk = html.indexOf('<div id="talk" tabindex="-1" hidden></div>');
+  const overlay = html.indexOf('<div id="overlay"></div>');
+  assert.ok(night !== -1 && talk > night && overlay > talk, 'night screen, then the talk, then the overlay');
+
+  // frame.js reads the page when it is loaded, so its table is read as text
+  const table = /\n  talk: \{([^}]*)\},/.exec(read('frame.js'))[1];
+  const lines = Array.from(table.matchAll(/'([a-z-]+)':\s*\['([a-z-]+)'/g));
+  const mountSource = read('panels/talk/talk.js');
+  const parts = Array.from(mountSource.matchAll(/data-part="([a-z-]+)"/g)).map(match => match[1]);
+  assert.deepEqual(parts, lines.map(match => match[1]), 'a line in sequences.talk for every part of a card, in the same order');
+  assert.ok(mountSource.includes('data-sequence="talk"'));
+  lines.forEach(match => assert.ok(['fade', 'latch-left', 'latch-right'].includes(match[2]), match[1] + ' uses an effect that only fades and slides'));
+});
+
+test('the stylesheet of a talk keeps the rules of the screen: text of 44px or more, lines of 3px or more, nothing that moves but the chip', () => {
+  const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+  const css = read('panels/talk/talk.css').replace(/\/\*[\s\S]*?\*\//g, '');
+
+  // every size in a font shorthand is one of the tokens at 44px or more
+  const tokens = {};
+  Array.from(read('tokens.css').matchAll(/--(size-[a-z-]+): (\d+)px;/g)).forEach(match => { tokens[match[1]] = Number(match[2]); });
+  const sizes = Array.from(css.matchAll(/font(?:-size)?:[^;]*?var\(--(size-[a-z-]+)\)/g));
+  assert.equal(sizes.length >= 6, true, 'the sizes are tokens');
+  sizes.forEach(match => assert.ok(tokens[match[1]] >= 44, match[1] + ' is smaller than 44px'));
+  assert.ok(/font:\s*600 var\(--size-label\)\/44px/.test(css), 'the chip is 44px');
+  assert.ok(/font:\s*500 var\(--size-body\)\/72px/.test(css), 'the prompt is 56px');
+
+  assert.ok(/\.talk \.progress-line \{[^}]*height: 6px;/.test(css), 'the progress line is 6px');
+  assert.ok(/border-top: 4px solid/.test(css));
+  assert.equal(/box-shadow|text-shadow|filter|blur|drop-shadow/.test(css), false);
+
+  // the slides do not move, and the only motion rules for a talk are in frame.css
+  assert.equal(/@keyframes/.test(css), false);
+  assert.equal(/transition:(?!\s*none)/.test(css), false);
+  assert.equal(/animation:(?!\s*none)/.test(css), false);
+  assert.ok(/\.talk \.slide \{[^}]*transition: none;[^}]*animation: none;/.test(css));
+  assert.ok(/object-fit: contain;/.test(css));
+  assert.ok(/#talk \{[^}]*cursor: none;/.test(css));
+
+  const motion = read('frame.css');
+  assert.ok(motion.includes('.talk .chip[data-shown="on"]  { animation: fade-in var(--time-fade-in) linear backwards; }'));
+  assert.ok(motion.includes('@keyframes chip-out { from { opacity: 1; } }'));
+  assert.ok(motion.includes('[data-motion="none"] .talk .chip { animation: none; }'));
+});
+
+test('shell.js starts the screen of a talk behind startOptional, in the views that have alerts', () => {
+  const shell = fs.readFileSync(path.join(dashboardFolder, 'shell.js'), 'utf8');
+  const announce = shell.indexOf("startOptional('./core/announce-run.js'");
+  const talk = shell.indexOf("startOptional('./core/presentation-run.js', module => module.startPresentations(getContent));");
+
+  assert.ok(talk > announce && announce > shell.indexOf('startTakeovers(getContent);'), 'after the takeovers');
+  assert.ok(shell.slice(shell.lastIndexOf('if (', talk), talk).startsWith("if (!params.get('show') && !stress) {"), 'not in the test views');
 });
 
 // Run them

@@ -138,6 +138,13 @@ async function run() {
 
       // The Play announcements button in the Studio. Last, because it asks the ones above whether they have the screen
       startOptional('./core/announce-run.js', module => module.startAnnounceRunner(getContent));
+
+      // A booked talk takes the whole screen when its time comes. After the takeovers, so that an announcement
+      // that comes due on the same second plays first, and the title card waits for it
+      startOptional('./core/presentation-run.js', module => module.startPresentations(getContent));
+
+      // The Run presentation test button in the Studio. After the talk screen, which it starts the sample talk on
+      startOptional('./core/presentation-test-run.js', module => module.startPresentationTestRunner(getContent));
     }
 
     if (!early) {

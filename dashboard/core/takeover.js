@@ -12,11 +12,15 @@ const stage = document.getElementById('stage');
 let running = null; // 'alert' or 'announcement' while something covers the screen
 let alertInterrupts = false; // an alert came on while an announcement was showing
 let lastAnnouncement = ''; // which announcement ran last, so it runs once
+const owed = []; // announcements that came due while a talk held the screen, in the order they came
 let alertCount = 0; // how many alerts have started since the page loaded
 
-// True while an alert or an announcement covers the screen
+// True while an alert or an announcement covers the screen, and while a talk holds
+// it (frame.pause). The things that must not start over a cover ask this: the
+// hidden transitions, Play announcements, the demo, the night screen and the
+// reloads of the page.
 export function takeoverRunning() {
-  return running !== null;
+  return running !== null || frame.isPaused();
 }
 
 // How many alerts have started so far. A demo (core/demo.js) counts them, so it
@@ -57,11 +61,13 @@ export function startTakeovers(getContent) {
       return;
     }
 
+    // What comes due while a talk holds the screen waits, and plays once it is over
     const due = dueAnnouncement(settings, now);
     if (due) {
       lastAnnouncement = due.key;
-      runAnnouncement(due.config, getContent);
+      owed.push(due.config);
     }
+    if (owed.length > 0 && !frame.isPaused()) runAnnouncement(owed.shift(), getContent);
   });
 }
 

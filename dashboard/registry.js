@@ -41,6 +41,7 @@ export const panels = [
 
   { id: 'alert', region: 'overlay' },
   { id: 'announcement', region: 'overlay' },
+  { id: 'talk', region: 'overlay' },
 
   { id: 'stand-in-tile', region: 'grid2', testOnly: true },
   { id: 'stand-in-ticker', region: 'ticker', testOnly: true },

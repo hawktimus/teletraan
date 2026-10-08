@@ -17,6 +17,10 @@
 // the time now into announceRequest and publishes, and the screen plays every
 // announcement that is switched on, once, one after another (docs/hidden-transitions.md).
 //
+// Dashboard Settings ends with "Run presentation test". It writes the time now into
+// presentationTestRequest and publishes, and the screen runs the sample talk with its six
+// sample slides (docs/hidden-transitions.md).
+//
 // sanity.config.js adds each set to its own page and no other.
 //
 // A Studio action is a plain function that Studio calls with the document.
@@ -172,3 +176,24 @@ export function usePlayAnnouncementsAction(props) {
 }
 // Studio and check-schemas.mjs tell actions apart by this name
 usePlayAnnouncementsAction.action = 'playAnnouncements';
+
+// The Run presentation test button. Like Play announcements it is always allowed, so a
+// second click runs the test again. The screen runs a request that is a minute old at most
+// and that it has not run before. What it runs is the talk in the sample content, so
+// nothing is chosen here.
+export function useRunPresentationTestAction(props) {
+  const { patch, publish } = useDocumentOperation(props.id, props.type);
+
+  return {
+    label: 'Run presentation test',
+    title: 'Run the sample talk on the screen now, with six sample slides. Press the clicker to begin. It needs no internet and only runs if Run presentations is on.',
+    disabled: Boolean(patch.disabled),
+    onHandle: () => {
+      patch.execute([{ set: { presentationTestRequest: { requestedAt: new Date().toISOString() } } }]);
+      publish.execute();
+      props.onComplete();
+    },
+  };
+}
+// Studio and check-schemas.mjs tell actions apart by this name
+useRunPresentationTestAction.action = 'runPresentationTest';

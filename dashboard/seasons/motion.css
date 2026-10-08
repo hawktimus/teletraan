@@ -152,6 +152,9 @@ html[data-motion="full"] .season-piece[data-move="flutter"] { animation-name: se
 /* While the night screen covers the picture nothing behind it is worth playing */
 html[data-night] .season-piece { animation-play-state: paused; }
 
+/* The same while a talk holds the screen (frame.pause) */
+html[data-paused] .season-piece { animation-play-state: paused; }
+
 /* A hidden transition (core/hidden-run.js). The back layer is under #backdrop,
    so the backdrop covers it and nothing is needed. The front layer and the over
    layer are over the stage, so they fade out as the blocks fly apart (break),

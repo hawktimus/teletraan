@@ -1,9 +1,9 @@
 // Talks to Sanity: the two queries, the addresses, and turning what comes back
 // into the content shape in data/sample/content.json. The sample is cleaned the same way.
 
-import { defaultPerson, defaultSettings } from '../config.js';
+import { defaultPerson, defaultSettings, defaultTalk, limits, talkStatuses } from '../config.js';
 import { parseLocalDateTime, sameDay } from './time.js';
-import { fixSettingValues, visibleItems, withDefaults } from './content.js';
+import { fixSettingValues, keepInRange, visibleItems, withDefaults } from './content.js';
 import { photoFocus, screenPhotoUrl, tidyPhoto } from './images.js';
 import { classifyFailure } from './connection.js';
 
@@ -28,6 +28,9 @@ import { classifyFailure } from './connection.js';
 // A Photo document is sent the same way, with its id and the time it was
 // created (the underscore names are not kept, so they are asked for under
 // plain ones). Hidden and expired photos stay in the list like the other items.
+// A booked talk is sent the same way, with its id under a plain name. Only
+// published talks come back, so a draft is never on the screen. A talk that is
+// not scheduled stays in the list, and core/presentation.js leaves it out.
 export const contentQuery = `{
   "settings": *[_id == "dashboardSettings"][0] {
     ...,
@@ -71,6 +74,16 @@ export const contentQuery = `{
       crop,
       hotspot
     }
+  },
+  "presentations": *[_type == "presentation"] | order(start asc, _createdAt asc) {
+    "id": _id,
+    name,
+    subteam,
+    topic,
+    start,
+    minutes,
+    deckLink,
+    status
   },
   "plans": *[_type == "plan"] | order(date asc, _createdAt asc),
   "extraEvents": *[_type == "extraEvent" && show != false] | order(startDate asc, _createdAt asc),
@@ -208,6 +221,7 @@ export function normalizeContent(result, now = new Date()) {
     subteams: itemsFrom(data.subteams).map(normalizeSubteam),
     people: itemsFrom(data.people).map(normalizePerson),
     photos: photosFrom(data.photos),
+    presentations: presentationsFrom(data.presentations),
     extraEvents: itemsFrom(data.extraEvents),
     customPanels: customPanelsFrom(data.customPanels),
   });
@@ -230,6 +244,7 @@ export function normalizeSample(raw) {
   content.subteams = content.subteams.map(normalizeSubteam);
   content.people = content.people.map(normalizePerson);
   content.photos = itemsFrom(data.photos).filter(photo => typeof photo.address === 'string');
+  content.presentations = presentationsFrom(data.presentations);
   return withDefaults(content);
 }
 
@@ -389,6 +404,43 @@ function normalizePhoto(raw) {
 
 function photosFrom(list) {
   return objectsIn(list).map(normalizePhoto).filter(photo => photo !== null);
+}
+
+// The same pattern as the Slides link field in studio/schemas/presentation.js
+const deckLinkPattern = /^https:\/\/docs\.google\.com\/presentation\/d\/[A-Za-z0-9_-]+/;
+
+function trimmed(value) {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+// A talk from Studio becomes { id, name, subteam, topic, start, minutes, deckLink,
+// status }. The name, subteam and title lose the spaces at their ends. The subteam
+// is left out when it is empty, and so is a link that is not a Google Slides link
+// (the link is checked as it is typed, with no trimming). start is a Date and
+// minutes is 5 to 30, 15 when it cannot be used. A status that is not one of the
+// four is scheduled. A talk with no id or no start that can be read is dropped,
+// since nothing could find it or say when it runs. A talk that is cancelled, done
+// or skipped stays, and core/presentation.js leaves it out.
+function normalizeTalk(raw) {
+  const start = typeof raw.start === 'string' ? new Date(raw.start) : null;
+  if (typeof raw.id !== 'string' || raw.id === '' || !start || isNaN(start.getTime())) return null;
+
+  const talk = { id: raw.id, name: trimmed(raw.name) };
+  const subteam = trimmed(raw.subteam);
+  if (subteam !== '') talk.subteam = subteam;
+
+  talk.topic = trimmed(raw.topic);
+  talk.start = start;
+  talk.minutes = keepInRange(raw.minutes, limits.talkMinutes, defaultTalk.minutes);
+
+  if (typeof raw.deckLink === 'string' && deckLinkPattern.test(raw.deckLink)) talk.deckLink = raw.deckLink;
+
+  talk.status = talkStatuses.includes(raw.status) ? raw.status : defaultTalk.status;
+  return talk;
+}
+
+function presentationsFrom(list) {
+  return objectsIn(list).map(normalizeTalk).filter(talk => talk !== null);
 }
 
 function normalizeTeam(team) {

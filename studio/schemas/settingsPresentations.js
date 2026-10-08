@@ -1,19 +1,20 @@
 // The Presentations tab of Dashboard Settings: whether the screen takes over for
-// booked talks, and how long it waits. Three fields:
+// booked talks, and how long it waits. Three fields, and a hidden one:
 //
-//   presentationsEnabled  the switch, on to start with
-//   noShowMinutes         minutes the title card waits before the talk is skipped, from 1 to 15, 5 to start with
-//   graceMinutes          minutes a talk may run past its slot before it is ended, from 0 to 10, 5 to start with
+//   presentationsEnabled     the switch, on to start with
+//   noShowMinutes            minutes the title card waits before the talk is skipped, from 1 to 15, 5 to start with
+//   graceMinutes             minutes a talk may run past its slot before it is ended, from 0 to 10, 5 to start with
+//   presentationTestRequest  filled in by the Run presentation test button (actions.js), never by editors
 //
 // The starting values and limits are the same as defaultSettings and limits in
 // dashboard/config.js. check-schemas.mjs fails if they differ. The talks and the
 // meeting days are in presentation.js and presentationDay.js.
 //
 // To take the whole section out later: delete this file, remove its import and
-// the two lines that use presentationsGroup and presentationsFields in
-// dashboardSettings.js, and remove the same names from check-schemas.mjs and
-// config.js. The dashboard uses the starting values for anything missing from
-// the published settings.
+// the lines that use presentationsGroup, presentationsFields and
+// presentationTestRequestField in dashboardSettings.js, and remove the same names
+// from check-schemas.mjs and config.js. The dashboard uses the starting values for
+// anything missing from the published settings.
 
 import { defineField } from 'sanity';
 
@@ -56,4 +57,29 @@ export function presentationsFields() {
       ],
     }),
   ];
+}
+
+// The Run presentation test button (actions.js) writes the time into this and publishes,
+// and the screen then starts the sample talk, once (dashboard/core/presentation-test.js).
+// Editors never see it: hidden keeps it out of the form, and its value stays in the
+// document. The starting value is the same as defaultSettings.presentationTestRequest in
+// dashboard/config.js, and a missing one means no request.
+export function presentationTestRequestField() {
+  return defineField({
+    name: 'presentationTestRequest',
+    title: 'Last presentation test',
+    type: 'object',
+    group: 'presentations',
+    hidden: true,
+    description: 'Filled in by the Run presentation test button beside Publish. The screen runs the sample talk once. Do not edit it.',
+    fields: [
+      defineField({
+        name: 'requestedAt',
+        title: 'Requested at',
+        type: 'datetime',
+        readOnly: true,
+        description: 'When the button was last clicked. The screen runs a test once, and only for a minute after this time.',
+      }),
+    ],
+  });
 }

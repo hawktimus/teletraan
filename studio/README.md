@@ -10,7 +10,7 @@ TV. The dashboard reads what they publish.
     sanity.config.js      the Studio's main settings
     sanity.cli.js         settings for the command line tool
     structure.js          the sidebar, one list with a line for each entry, so changing the order means moving a line (Events Calendar is the list for events not on BAND)
-    actions.js            the two content source buttons, the Play buttons of the hidden transitions and Play announcements on Dashboard Settings, and Run demo and Stop demo on Demo
+    actions.js            the two content source buttons, the Play buttons of the hidden transitions, Play announcements and Run presentation test on Dashboard Settings, and Run demo and Stop demo on Demo
     themes.js             the list of themes and overlays, a copy of the dashboard's
     demo-screens.js       the list of screens a demo can show, a copy of the dashboard's
     hidden-transitions.js the list of hidden transitions, a copy of the dashboard's
@@ -281,6 +281,17 @@ The Demo page can do the same with its step "All announcements", which comes fro
 `demo-screens.js`. Run `npm run deploy` after you change `schemas/settingsAnnouncements.js`, so
 the editors see the button. docs/hidden-transitions.md explains how it works.
 
+## Run presentation test
+
+The last button on Dashboard Settings is "Run presentation test", `useRunPresentationTestAction`
+in `actions.js`. It sets `presentationTestRequest` to the time now and publishes.
+`presentationTestRequest` is a hidden field in the Presentations tab
+(`presentationTestRequestField` in `schemas/settingsPresentations.js`). The screen runs the
+sample talk with its six sample slides, for a request that is under a minute old
+(`dashboard/core/presentation-test.js`). Run `npm run deploy` after you change
+`schemas/settingsPresentations.js`, so the editors see the button. docs/hidden-transitions.md
+explains how it works.
+
 ## Photos of people
 
 Leadership has a Photo field, an image the editors upload in Studio, and a
@@ -360,7 +371,8 @@ page agrees with `defaultDemo`, has Run demo and Stop demo, and `demo-screens.js
 matches the dashboard's list of demo screens, the Hidden tab agrees with
 `defaultSettings`, has a working Play button for each hidden transition, and
 `hidden-transitions.js` matches the dashboard's list, Play announcements has its hidden
-field, its button and its Demo step, and the project ID in project.js is
+field, its button and its Demo step, Run presentation test has its hidden field and its button,
+and the project ID in project.js is
 the one in dashboard/config.js. It prints PASS or
 FAIL for each check and exits with an error if any fails. Run it after every
 change to a schema.

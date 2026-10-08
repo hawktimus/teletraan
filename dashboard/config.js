@@ -132,6 +132,8 @@ export const limits = {
   // over is the most a talk may run past its slot. A grace of 0 ends it when the slot ends.
   noShowMinutes: { min: 1, max: 15 },
   graceMinutes: { min: 0, max: 10 },
+  // The length of one booked talk, in minutes (the Presentations list in the Studio)
+  talkMinutes: { min: 5, max: 30 },
 };
 
 // Used for anything the editors have not filled in yet
@@ -240,9 +242,13 @@ export const defaultSettings = {
   //   presentationsEnabled  the switch. Off, the screen never starts a talk.
   //   noShowMinutes         how long the title card waits for the first key press before the talk is skipped
   //   graceMinutes          how long a talk may run past its slot before it is ended
+  //   presentationTestRequest  the last click of the "Run presentation test" button (core/presentation-test.js). requestedAt
+  //                            is the time it was clicked and is empty until it has been. The screen plays the sample talk
+  //                            once, for a request that is less than demoWindowSeconds old and is not the one it handled before.
   presentationsEnabled: true,
   noShowMinutes: 5,
   graceMinutes: 5,
+  presentationTestRequest: { requestedAt: '' },
   // The "Play announcements" button in the Studio (core/announce.js, core/announce-run.js, docs/hidden-transitions.md).
   //   announceRequest  the last click of the button. requestedAt is the time it was clicked and is empty until
   //                    it has been. The screen plays every announcement that is switched on, once, for a request
@@ -357,6 +363,15 @@ export const defaultDemo = {
 // Studio field starts at the same value.
 export const defaultPerson = {
   showPhoto: true,
+};
+
+// Used for a booked talk that has no length or no status in the saved content. The
+// Studio fields start at the same values (studio/schemas/presentation.js), and so
+// does the list of statuses. Only a scheduled talk runs on the screen.
+export const talkStatuses = ['scheduled', 'cancelled', 'done', 'skipped'];
+export const defaultTalk = {
+  minutes: 15,
+  status: 'scheduled',
 };
 
 export const defaultTeam = {

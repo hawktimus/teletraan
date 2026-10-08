@@ -117,3 +117,26 @@
   color: var(--lilac);
   font: 500 var(--size-label)/52px var(--font-text);
 }
+
+/* A booked talk is a row like the others. Its tag stands where a lead's name
+   would, in a box so that it is not mistaken for one. The talk in progress has a
+   solid tag. */
+.tonight .talk-tag {
+  flex: none;
+  box-sizing: border-box;
+  margin-left: 16px;
+  padding: 0 12px;
+  border: 3px solid var(--lilac);
+  border-radius: 6px;
+  color: var(--lilac);
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+.tonight .talk-now {
+  border-color: var(--yellow);
+  background: var(--yellow);
+  color: var(--ground);
+  font-weight: 700;
+}
+
+/* The line that says how many talks did not fit */
+.tonight .more-row .text { color: var(--lilac); }
