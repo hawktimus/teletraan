@@ -35,8 +35,9 @@ said yes.**
 | Docker Engine and the Compose plugin: `docker-ce`, `docker-ce-cli`, `containerd.io`, `docker-buildx-plugin`, `docker-compose-plugin`. They come from Docker's own apt source, so Docker's apt repository and its signing key are added too. Debian's `docker.io` also works if `docker compose version` then runs. | run the web server | 5 |
 | A read-only deploy key for the repository, if it is private | let the Mini pull updates | 6 |
 | The `nginx:1.28-alpine` container image, downloaded from Docker Hub by Docker the first time the server starts | the web server itself | 9 |
-| `xserver-xorg`, `xinit`, `x11-xserver-utils`, `chromium` | show the dashboard full screen | 11 |
-| `unclutter` (optional) | hide the mouse pointer when testing inside a desktop | 11 |
+| `poppler-utils` and `jq`. `curl` is already installed in step 4. | turn the slides of the talks into pictures, and read the list of talks from Sanity | 11 |
+| `xserver-xorg`, `xinit`, `x11-xserver-utils`, `chromium` | show the dashboard full screen | 12 |
+| `unclutter` (optional) | hide the mouse pointer when testing inside a desktop | 12 |
 
 The repository host needs an account that the team mentor holds. This page does
 not create it. The Sanity project already exists, and its ID is in
@@ -93,8 +94,8 @@ see studio/README.md.
    the user, so the group is `hawktimus` too. If `git clone` cannot connect, port 22 may be
    blocked on the school network. Ask the team mentor.
 
-7. **Make the data folder.** The calendars, `version.txt` and `device.json`
-   go here, outside the repository.
+7. **Make the data folder.** The calendars, the slides, `version.txt` and
+   `device.json` go here, outside the repository.
 
        sudo mkdir -p /var/lib/teletraan/data
        sudo chown hawktimus:hawktimus /var/lib/teletraan/data
@@ -114,7 +115,8 @@ see studio/README.md.
    Replace the placeholder with the real calendar address. Add one
    `CALENDAR_<ID>_URL` line for each calendar. Keep each address in single
    quotes. Use the `https://` or `webcal://` address. `fetch-calendars.sh`
-   refuses a plain `http://` one.
+   refuses a plain `http://` one. Adding a calendar later is the same, see
+   Adding or changing a calendar below.
 
    Then tell the dashboard which calendars to show. In Studio open Dashboard
    Settings, then the Calendars tab, and add one row for each calendar. The
@@ -140,9 +142,45 @@ see studio/README.md.
         sudo /opt/teletraan/deploy/scripts/install-timers.sh
 
     `fetch-calendars.sh` prints one line for each calendar and never prints an
-    address.
+    address. `install-timers.sh` turns on the pull timer as well as the
+    calendar timer, so the Mini pulls the repository by itself. A Mini that
+    must not do that skips this step and does step 11.
 
-11. **Set up the screen.** Install the display packages.
+11. **Turn on the calendar and slides services.** This installs two things
+    and nothing else: the calendar service, which downloads the calendars
+    every 15 minutes, and the slides fetcher, which downloads the slides of
+    the talks that are coming up every 2 minutes. It does not turn on the
+    pull timer, so this is the step for a Mini that must not pull by itself.
+    A Mini that did step 10 already has the calendar service and leaves out
+    `install-calendars.sh` below.
+
+        sudo apt install poppler-utils curl jq
+        /opt/teletraan/deploy/scripts/fetch-calendars.sh
+        sudo /opt/teletraan/deploy/scripts/install-calendars.sh
+        sudo /opt/teletraan/deploy/scripts/install-slides.sh
+
+    The packages need the team mentor's yes first, see the table at the top.
+    Each install script says what it will do and waits for Enter. Both use
+    the account that owns the repository, so no account name is typed
+    anywhere. `install-slides.sh` does not install the packages: if one is
+    missing it stops and prints the `apt install` line above.
+
+    The slides are saved in `slides/` in the data folder from step 7, not in
+    `/opt/teletraan`, so replacing the files in `/opt/teletraan` does not
+    remove them.
+
+    To try the slides fetcher, give it the link of a deck that is shared with
+    Anyone with the link:
+
+        /opt/teletraan/deploy/scripts/slides-sync.sh --test '[link of the deck]'
+
+    It prints `OK` and the number of pages, or `FAIL` and the reason, and
+    deletes what it made.
+
+    The spare Mini needs the same steps. Its `local.env` is its own file, so
+    the calendar lines go into it too.
+
+12. **Set up the screen.** Install the display packages.
 
         sudo apt install xserver-xorg xinit x11-xserver-utils chromium
 
@@ -172,7 +210,7 @@ see studio/README.md.
     run `sudo systemctl stop teletraan-kiosk.service`. To use Firefox instead
     of Chromium, see the comments at the end of `deploy/scripts/kiosk.sh`.
 
-12. **Stop the Mini sleeping.** `kiosk.sh` already turns off the screen saver
+13. **Stop the Mini sleeping.** `kiosk.sh` already turns off the screen saver
     and screen blanking. This stops Debian suspending the whole machine:
 
         sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
@@ -180,12 +218,12 @@ see studio/README.md.
     On the TV itself, turn off any sleep timer, auto power off and eco mode.
     An OLED or plasma TV is the exception, see Burn-in below.
 
-13. **Turn off overscan on the TV.** Overscan crops the edges of the picture.
+14. **Turn off overscan on the TV.** Overscan crops the edges of the picture.
     In the TV's picture settings choose the size setting called "Just Scan",
     "Screen Fit", "1:1" or "Dot by Dot" (the name depends on the make). If
     the HDMI input can be named, name it "PC".
 
-14. **Reboot and test.**
+15. **Reboot and test.**
 
         sudo reboot
 
@@ -208,7 +246,7 @@ its settings. The Mini can keep running.
   ends with `OK` (see Checking the connection below).
 - The clock matches a phone, and the date is right.
 - All four sides of the frames and the whole ticker are visible. If
-  an edge is cut off, go back to step 13. The frames are metal, gold unless
+  an edge is cut off, go back to step 14. The frames are metal, gold unless
   Dashboard Settings says Silver (Screen, Frame metal), on purple plates. The
   large and small frames are silver now and then, about one page change in
   ten (Transitions, Frame finish).
@@ -221,6 +259,11 @@ its settings. The Mini can keep running.
 - Events appear. `sudo journalctl -u teletraan-calendars.service -n 20`
   shows `updated` for every calendar. If a calendar says `updated` but its
   events never show, it has no row in Dashboard Settings, Calendars (step 8).
+- The slides service runs. `systemctl list-timers 'teletraan-*'` lists
+  `teletraan-slides.timer`. `sudo journalctl -u teletraan-slides.service -n 20`
+  has a line such as `talk [id]: 12 slides saved` for each talk in the next
+  36 hours, and nothing from the script when there is no talk. To prove the
+  download with a real deck, use `slides-sync.sh --test` as in step 11.
 - The Photo panel shows the photos that are on in the Photos list in Studio
   (docs/editing-content.md, "Photos"). They come with the rest of the content,
   so there is nothing on the Mini to set up, and the old `photos.json` file in
@@ -441,6 +484,58 @@ with this in it:
 
 Reboot and repeat the test with the Mini first.
 
+## Adding or changing a calendar
+
+Each BAND calendar is one line in `deploy/local.env` on the Mini. To add one:
+
+1. Get the calendar's iCal link from BAND. It starts with `https://` or
+   `webcal://`.
+2. Choose an ID for it in capital letters, such as `GROUP` or `BUILD_SEASON`.
+   Digits and underscores are fine too. Open the file on the Mini:
+
+       cd /opt/teletraan/deploy
+       nano local.env
+
+   Add one line, `CALENDAR_`, then the ID, then `_URL`, with the address in
+   single quotes and no spaces around the `=`:
+
+       CALENDAR_GROUP_URL='https://api.band.us/ical?token=PASTE_LINK_HERE'
+
+3. The Mini saves the calendar as the ID in lowercase, with `.ics` after it,
+   in the `calendars` folder of the data folder. `CALENDAR_GROUP_URL` is saved
+   as `group.ics` and `CALENDAR_BUILD_SEASON_URL` as `build_season.ics`. The
+   lowercase ID is the calendar's code. In Studio open Dashboard Settings,
+   then the Calendars tab, and add a row with that code and a name, as in
+   step 8. The screen shows nothing from a calendar that has no row.
+4. The calendar service reads `local.env` each time it runs, so nothing needs
+   restarting. To get the calendar now and not within 15 minutes, run:
+
+       /opt/teletraan/deploy/scripts/fetch-calendars.sh
+
+   It prints `calendar group: updated`, or the reason it could not download
+   the calendar, and then keeps the old file. It never prints the address.
+5. To see what the screen will do with the calendar, run `check-calendars.sh`
+   on a computer that has Node, a copy of the repository and a
+   `deploy/local.env` with the same line. The Mini has no Node.
+
+       deploy/scripts/check-calendars.sh
+
+   It prints a line for each event in the next 30 days, SHOWN or HIDDEN, and
+   for a hidden one the name of the Calendar filter that hides it. Each
+   calendar ends with a TOTAL line that gives the number shown and hidden. A
+   FAIL line says why the download failed. A NOTE line says the screen shows
+   none of the calendar, because it has no row in Calendars or the row is
+   switched off. Every line names the calendar by its code, never by its
+   address.
+
+To change an address, edit `CALENDAR_<ID>_URL` in `local.env`. Keep the ID as
+it is, so the file name and the Studio row stay the same. The Mini uses the new
+address the next time the calendar service runs, or at once with
+`fetch-calendars.sh`.
+
+The spare Mini needs the same steps, in its own `local.env`. A line added to
+one Mini's file is not on the other's.
+
 ## Recovering
 
 Start with the log for the part that is wrong.
@@ -448,11 +543,12 @@ Start with the log for the part that is wrong.
 | What you see | What to try |
 |--------------|-------------|
 | `xinit` says "Only console users are allowed to run the X server" | You are not on a real text screen. Run `tty`: if it prints `/dev/pts/...` you are in SSH or in a terminal window. Go to the Mini's own keyboard, press Ctrl+Alt+F3 (hold the Fn key too on a Mac keyboard) and log in as `hawktimus` there. If it still says it on a real text screen, run `sudo dpkg-reconfigure x11-common` and choose "Anybody". If the Mini starts into a desktop with a login picture instead of a text login, it is not set up the way this page assumes: tell the team mentor. The kiosk service does not have this problem, because it starts X on the console itself. |
-| Black screen, nothing | `sudo journalctl -u teletraan-kiosk.service -n 50`. A line about X or a missing package means step 11 is not finished. `sudo systemctl restart teletraan-kiosk.service` starts it again. |
+| Black screen, nothing | `sudo journalctl -u teletraan-kiosk.service -n 50`. A line about X or a missing package means step 12 is not finished. `sudo systemctl restart teletraan-kiosk.service` starts it again. |
 | "Teletraan I could not start. Trying again in 30 seconds." | The browser works but the dashboard could not start, for example a file would not load or a panel failed. It retries by itself, and a fix that has been pulled is picked up on the next try. To see why, run the same commit on a laptop (`python3 tools/serve.py`) and read the browser console there. |
 | The screen says SANITY UNREACHABLE | Run `check-connection.sh` (see Checking the connection). Its FAIL lines say which part is wrong, and the reason on the screen says which kind of fault it is. |
 | The browser says it cannot connect | `sudo docker compose ps` in `/opt/teletraan/deploy`. If it is not running, run step 9 again. |
-| Calendars are old | `sudo journalctl -u teletraan-calendars.service -n 30`. "The server said no" usually means BAND changed the address. Get a new one and edit `local.env`. The old file stays on screen until a download works. |
+| Calendars are old | `sudo journalctl -u teletraan-calendars.service -n 30`. "The server said no" usually means BAND changed the address. Get a new one and edit `CALENDAR_<ID>_URL` in `local.env`, see Adding or changing a calendar. The old file stays on screen until a download works. |
+| The TV says "Slides are not ready. Ask a coach." | `sudo journalctl -u teletraan-slides.service -n 30`. A line such as `talk [id]: no slides, not shared` gives the reason. A deck that is not shared is the usual one, see docs/presentations.md. If there are no lines for the talk at all, check that `sudo systemctl status teletraan-slides.timer` says active, and run step 11 again if it does not. |
 | A change never arrives | `sudo journalctl -u teletraan-pull.service -n 30`, then see the next three rows. |
 | The pull log says local changes would be overwritten | Someone edited a file on the Mini. Look with `git -C /opt/teletraan status`. Ask before throwing those changes away. Files on the Mini should never be edited by hand. |
 | The pull log says "Not possible to fast-forward" | Someone force-pushed or rewrote the shared branch. Do not follow git's hint to merge or rebase. After checking that nobody edited files on the Mini, run `git -C /opt/teletraan fetch` and then `git -C /opt/teletraan reset --hard '@{u}'`. The next pull updates `version.txt`. |

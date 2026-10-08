@@ -14,13 +14,14 @@ For adjusting the content that gets displayed, Sanity will be used.
 
 Almost everything on the screen is typed into the Studio, which is the editing page for the dashboard. Open it at [Studio address] and sign in.
 
-The list on the left is what you can change: Tasks, Up Next, Events Calendar, Subteams, Leadership, Sponsors, Photos, Tips and News, Custom Panels, Dashboard Settings, Theme, Places, and Demo. Click the one you want, change it, and press **Publish**. Nothing shows on the TV until it is published, and it gets there within a few seconds.
+The list on the left is what you can change: Tasks, Up Next, Presentations, Events Calendar, Calendar filters, Subteams, Leadership, Sponsors, Photos, Tips and News, Custom Panels, Dashboard Settings, Theme, Places, and Demo. Click the one you want, change it, and press **Publish**. Nothing shows on the TV until it is published, and it gets there within a few seconds.
 
 - Every item has a **Show on screen** switch and an optional **Hide after** date, so things come down on their own.
 - Every field says how many characters fit on the screen. Studio will not let you publish text that is too long.
 - **Publish all**, in the top bar, lists every document that has a draft and publishes the ticked ones in one go. Each is checked first with the same rules as its Publish button, and one that fails is skipped with the reason while the rest are published.
-- **Dashboard Settings** is the one page for the whole board: which boards show and in what order, how long each stays, the countdown dates, the announcement times and words, an alert, how big the portraits and photos are, and the look and the speed.
-- BAND events are not typed in here. They come from the team's BAND calendars. Events that are not on BAND go in Events Calendar.
+- **Dashboard Settings** is the one page for the whole board: which boards show and in what order, how long each stays, the countdown dates, the announcement times and words, an alert, how presentations run, how big the portraits and photos are, and the look and the speed.
+- Presentations holds the Meeting days that have talk slots, and the talks students have booked (docs/presentations.md).
+- BAND events are not typed in here. They come from the team's BAND calendars. Events that are not on BAND go in Events Calendar. A Calendar filter hides some BAND events, such as a meeting that repeats every week (docs/calendar-filters.md).
 - The order of the list on the left is one plain list in `studio/structure.js`. To change the order, move a line (docs/reordering-the-sidebar.md).
 
 More detail is in docs/editing-content.md.
@@ -39,8 +40,8 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - Date, time, and weather for Holly Springs
 - Countdown timer to FRC Kickoff (January 9, 2027), then to Rollout
 - Team tasks, each with an optional point of contact and a location picked from a list of places
-- Up Next, the schedule for today's meeting
-- Upcoming events and the next event, from the team's BAND calendars
+- Up Next, the schedule for today's meeting, with the talks booked for today
+- Upcoming events and the next event, from the team's BAND calendars, with Calendar filters that hide or keep events, such as a meeting that repeats every week
 - Sponsors, with sponsor logos and thank-yous
 - Photos, uploaded in Sanity and shown at random or newest first
 - Subteam spotlight, leadership, and team leads
@@ -64,13 +65,21 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - Hidden transitions: now and then the screen glitches blue, comes apart and cuts to a blue error screen, or glitches red and shows two red eyes in the dark. Each has two pictures that take turns. They can be played on request from Studio
 - A Play announcements button in Studio that plays every announcement that is switched on, once, without waiting for its time
 - A Publish all tool in the Studio's top bar that publishes all the drafts you tick, checking each one first and skipping any that would fail
+- Presentations: a student books a short talk in a Google Form, and the talk appears in Studio. At its time the TV shows a title card, then the student's Google Slides one picture at a time, moved by a clicker, then a thank you card. The Mini turns each deck into pictures before the talk (docs/presentations.md)
+- A Run presentation test button in Studio that plays a sample talk with six sample slides, with no internet
 - A demo for visitors that plays the announcement and night mode on request from Studio
+- A calendar check (deploy/scripts/check-calendars.sh) that lists the next 30 days of events and says which ones the Calendar filters hide
 - A connection check for the Mini (deploy/scripts/check-connection.sh) and a small text on the screen that says why when Sanity cannot be reached
 
 ## More guides
 
 - docs/editing-content.md: using the Studio
 - docs/publish-all.md: publishing many drafts at once, and what skipped and failed mean
+- docs/presentations.md: booking talks, the Sanity token, the clicker keys and what to do when slides are not ready
+- docs/up-next.md: the schedule and the talks in the Up Next panel
+- docs/calendar-filters.md: rules that hide or keep BAND events
+- docs/hide-a-repeating-meeting.md: the four steps for hiding the Pre-Season meetings
+- docs/calendar-links.md: adding a BAND calendar or changing its link
 - docs/adding-a-field.md: adding a field to something editors fill in
 - docs/adding-a-panel.md: adding a new board
 - docs/rebuilding-the-mini.md: setting up the Mini from scratch

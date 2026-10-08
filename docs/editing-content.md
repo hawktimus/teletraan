@@ -33,10 +33,19 @@ received.
 - Up Next: the schedule for today's meeting, up to 5 rows. The TV shows the
   first one that is switched on and is dated today or has no date. One from
   another day is skipped, so an old one that is still switched on does not
-  hide today's.
+  hide today's. The talks booked for today fill the rows the schedule leaves
+  free (docs/up-next.md).
+- Presentations: the talks students book in a Google Form. It opens three lists.
+  Meeting days says which days have talk slots and when they start, and a day
+  with no Meeting day has no slots. Upcoming talks and Past talks are the booked
+  talks, where a coach can cancel or move one (docs/presentations.md).
 - Events Calendar: events that are not on BAND, such as one another school
   hosts. Each entry has a name, a start date, an optional end date, optional
   times and an optional place. See "Events Calendar" below.
+- Calendar filters: rules that hide events from the BAND calendars, or keep them
+  on the screen, such as a meeting that repeats every week
+  (docs/calendar-filters.md). Students can follow
+  docs/hide-a-repeating-meeting.md.
 - Subteams: each subteam, its lead and the students on it. Turn on "In the
   spotlight" to feature one. Add a subteam here before you use it on a task.
   The Team Leads panel shows every subteam that has a lead, three to a page
@@ -71,7 +80,8 @@ received.
 
 Events on the team's BAND calendars are not edited here. Add or change the
 event in BAND and it reaches the TV after the Mini next downloads the
-calendars. An event that is not on BAND goes in Events Calendar.
+calendars. An event that is not on BAND goes in Events Calendar. To add a BAND
+calendar or change its link, see docs/calendar-links.md.
 
 Sponsor logos are not stored in Studio. Where you see an address, paste the
 web address of the picture. The photos in Photos and the photo of a person in
@@ -424,7 +434,8 @@ box.
 
 One page, with tabs along the top. It cannot be deleted or copied. The tabs, in
 order, are Screen, Logo, Transitions, Countdown, Alert, Panels, Photos,
-Announcements, Night mode, Hidden, Calendars, Content source and Connection.
+Announcements, Night mode, Hidden, Presentations, Calendars, Content source and
+Connection.
 
 - Screen: the team name, number and school in the banner. Motion is Full or
   Calm (Calm only fades panels in and out, with no turning, glint, logo
@@ -574,13 +585,20 @@ Announcements, Night mode, Hidden, Calendars, Content source and Connection.
   push" shows which one was pushed and when, and you cannot type in it. Nothing
   here plays in Calm motion, or during an alert, an announcement, a demo or night
   mode, and with "Allow hidden transitions" off none plays at all, pushed or not.
+- Presentations: whether the TV takes over for booked talks (docs/presentations.md).
+  "Run presentations" is the switch and starts on. "Wait for the speaker
+  (minutes)" is how long the title card waits for the first press of the clicker
+  before the talk is skipped, from 1 to 15, and starts at 5. "Overrun allowed
+  (minutes)" is how long a talk may run past its slot before it is ended, from 0
+  to 10, and starts at 5. "Run presentation test" in the menu next to Publish (the
+  three dots) starts a sample talk.
 - Calendars: give each calendar a name and choose whether it shows. A new Studio
   starts with one row, code team, named Team calendar. A calendar only shows
   events when it has a row here, with a code that matches the calendar on the
   Mini (the code team is CALENDAR_TEAM_URL there), and its "Show on screen"
   switch is on. The code is lowercase letters, digits and underscores. Do not
   change a calendar's code unless you were told to. If you delete every row, no
-  events show.
+  events show. To add a calendar, see docs/calendar-links.md.
 - Content source: Production or Sample, and an optional "Switch back to
   production at" time. See the next section.
 - Connection: one switch, "Show connection status". It starts off. Turn it on

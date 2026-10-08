@@ -11,7 +11,9 @@ installing anything on the Mini, and whenever a step needs a login or a key.
   `http://localhost:3229/dashboard/`, the port in `TELETRAAN_PORT` in
   `local.env`. It can only be reached from the Mini.
 - A timer runs `pull.sh` every 5 minutes. A pull is a deploy: the files in the
-  repository are the files on the screen.
+  repository are the files on the screen. A Mini that must not pull by itself
+  leaves this timer off and installs only the calendar and slides services
+  (`docs/rebuilding-the-mini.md`, step 11).
 - `mac/ship.sh` runs on the Mac you work on, not on the Mini. It pushes, updates
   the Studio and tells the Mini to pull now (`docs/shipping-from-the-mac.md`).
 - A timer runs `fetch-calendars.sh` every 15 minutes. It saves the BAND
@@ -52,7 +54,8 @@ to attach the data folder to.
 | `scripts/check-calendars.mjs` | The part of `check-calendars.sh` that runs the dashboard's own calendar code |
 | `scripts/slides-sync.sh` | Downloads the slides of the coming talks from Google Slides, turns them into pictures, and saves them with a `manifest.json`. `slides-sync.sh --test <link>` tries one deck and deletes what it made. Needs `poppler-utils`, `curl` and `jq` |
 | `scripts/kiosk.sh` | Opens the browser full screen with the right settings, or any page given after its name. Also writes `device.json` every minute while the browser runs |
-| `scripts/install-timers.sh` | Copies the unit files into place and turns on the two timers |
+| `scripts/install-timers.sh` | Copies the unit files into place and turns on the calendar timer and the pull timer |
+| `scripts/install-calendars.sh` | Copies the two calendar unit files into place and turns on the calendar timer. Installs nothing else, so it leaves the pull timer off |
 | `scripts/install-slides.sh` | Copies the two slides unit files into place and turns on the slides timer. Does not install the packages, it prints the `apt install` line when one is missing |
 | `systemd/*.service`, `*.timer` | What runs, and how often |
 
@@ -103,6 +106,8 @@ happens.
 - a file in `systemd/` changed: run `sudo /opt/teletraan/deploy/scripts/install-timers.sh`, which
   also restarts the two timers, then
   `sudo systemctl restart teletraan-kiosk.service` if the kiosk file changed
+- a calendar file in `systemd/` changed on a Mini without the pull timer: run
+  `sudo /opt/teletraan/deploy/scripts/install-calendars.sh`
 - a slides file in `systemd/` changed: run
   `sudo /opt/teletraan/deploy/scripts/install-slides.sh`
 - `pull.sh`, `fetch-calendars.sh` or `slides-sync.sh` changed: nothing to do,
@@ -120,8 +125,9 @@ the step that uses each one, is the table at the top of
 ## Names this folder assumes
 
 The unit files use the repository location `/opt/teletraan`.
-`install-timers.sh` stops with an explanation if the repository is somewhere
-else. The account is not named in the unit files: they say `ACCOUNT`, and
-`install-timers.sh` fills in the account that owns the repository, so it works
-whatever the Mini's user is called. The repository must not be owned by root.
+`install-timers.sh`, `install-calendars.sh` and `install-slides.sh` stop with
+an explanation if the repository is somewhere else. The account is not named
+in the unit files: they say `ACCOUNT`, and the install script fills in the
+account that owns the repository, so it works whatever the Mini's user is
+called. The repository must not be owned by root.
 To use another location, change it in every file in `systemd/`.

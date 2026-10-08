@@ -5380,8 +5380,8 @@ test('Up Next cuts a talk to 18 characters, the width of a plan row, and ends it
   assert.equal(text('Alex', 'Swerve bas ahead'), 'Alex: Swerve bas…', 'a space before the cut is dropped');
 
   // a pair of code units is never split
-  const smile = '\u{1F600}';
-  assert.equal(text('Al', smile.repeat(20)), 'Al: ' + smile.repeat(13) + '…');
+  const clef = '\u{1D11E}';
+  assert.equal(text('Al', clef.repeat(20)), 'Al: ' + clef.repeat(13) + '…');
 
   // a missing name or title leaves no colon
   assert.equal(text('Alex', ''), 'Alex');

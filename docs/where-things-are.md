@@ -144,7 +144,8 @@ editors can sign in from anywhere.
                               drift, and a panel should write to the page only what has changed
       panels/                 one folder per panel: a script and a stylesheet. panels/side is the whole
                               column of the sidebar layout, in place of the banner and the countdown
-                              (docs/layouts.md, "The sidebar")
+                              (docs/layouts.md, "The sidebar"). panels/tonight is the Up Next panel
+                              (docs/up-next.md)
       fonts/, assets/         fonts and pictures, all served from here
       data/sample/            sample content with marked placeholders, and a sample talk with six slides
                               (slides/presentation-sample)
@@ -157,21 +158,34 @@ editors can sign in from anywhere.
                               (demo-screens.js), its copy of the hidden transitions (hidden-transitions.js),
                               the Publish all tool in the top bar (publish-all-tool.js is the page and
                               publish-all.js is its logic, docs/publish-all.md), and check-schemas.mjs.
+                              schemas/ has a file for each kind of content. calendarFilter.js is the
+                              Calendar filters (docs/calendar-filters.md), presentationDay.js the Meeting
+                              days, presentation.js the booked talks and settingsPresentations.js the
+                              Presentations tab of Dashboard Settings (docs/presentations.md)
                               scripts/ has make-templates.mjs, which writes the CSV templates from the
                               schemas, and import-csv.mjs, which checks filled-in CSVs and makes a file
                               for sanity dataset import (docs/importing-from-csv.md)
     deploy/                   how the Mini runs it: web server, timers, scripts. scripts/check-connection.sh
                               checks the Mini's connection to Sanity, BAND, Docker and the kiosk with one
                               OK or FAIL line each (docs/rebuilding-the-mini.md, "Checking the connection").
+                              scripts/fetch-calendars.sh downloads the BAND calendars in local.env into the
+                              data folder (docs/calendar-links.md).
                               scripts/check-calendars.sh lists the events of each calendar in local.env and
                               says which ones the Calendar filters hide. It needs Node, so it runs on a
-                              computer that has it, not on the Mini.
+                              computer that has it, not on the Mini. check-calendars.mjs is the part of it
+                              that runs the dashboard's own calendar code.
                               scripts/slides-sync.sh downloads the slides of the coming talks and turns them
                               into pictures in the data folder (docs/presentations.md).
+                              scripts/install-timers.sh turns on the calendar timer and the pull timer,
+                              install-calendars.sh only the calendar timer and install-slides.sh the slides
+                              timer (docs/rebuilding-the-mini.md, step 11). systemd/ has the unit files they
+                              copy into place.
                               mac/ is for the Mac you work on: ship.sh commits, pushes, updates the Studio
                               and tells the Mini to pull (docs/shipping-from-the-mac.md)
     tools/
       serve.py                the server above
+      presentation-booking/   the Apps Script code behind the Google Form where students book a talk
+                              (docs/presentations.md)
       test-calendar.mjs       checks for the calendar reader, and for the Calendar filters that take events
                               off the screen (core/events.js)
       test-weather.mjs        checks for the weather reader and its pictures
@@ -206,6 +220,8 @@ editors can sign in from anywhere.
       test-templates.mjs      checks that the CSV templates match the schemas, and the CSV importer
       test-connection-script.mjs  checks for deploy/scripts/check-connection.sh, with fake tools
       test-slides-script.mjs  checks for deploy/scripts/slides-sync.sh and install-slides.sh, with fake tools
+      test-install-calendars.mjs  checks for deploy/scripts/install-calendars.sh: that it stops before it changes
+                              anything, and that it installs the calendar units only
       test-calendars-script.mjs  checks for deploy/scripts/check-calendars.sh, with a fake curl
       check-seasons.mjs       fails if a seasonal pack is not in the data format, has a piece outside its zone, too
                               many pieces, a forbidden word, no header mark, a mark bigger than its box (60 x 76),
@@ -226,8 +242,9 @@ editors can sign in from anywhere.
     docs/                     how-to guides: editing-content.md, adding-a-field.md, adding-a-panel.md,
                               adding-a-theme.md, layouts.md, adding-a-holiday-overlay.md, seasonal-packs.md, rebuilding-the-mini.md,
                               try-it-on-the-mini.md, the-logo.md, page-transitions.md, night-mode.md,
-                              hidden-transitions.md, demo.md, publish-all.md, reordering-the-sidebar.md
-                              and importing-from-csv.md.
+                              hidden-transitions.md, demo.md, publish-all.md, reordering-the-sidebar.md,
+                              importing-from-csv.md, presentations.md, up-next.md, calendar-filters.md,
+                              calendar-links.md and hide-a-repeating-meeting.md.
                               seed/ has content to import into the Studio: places.ndjson, the three
                               starting places, and extra-events.ndjson, the
                               starting Events Calendar entries. content-templates/ has one CSV template for each

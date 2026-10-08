@@ -3,7 +3,8 @@
 For the coaches who run the talks. A student books a short talk in a Google
 Form. A script saves the booking into Sanity, the talk appears in Studio, and at
 its time the TV shows the student's slides. The script is
-`tools/presentation-booking/presentation-booking.gs`.
+`tools/presentation-booking/presentation-booking.gs`. The talks of the day also
+show in the Up Next panel (docs/up-next.md).
 
 Talk titles and first names are public. The Sanity dataset can be read by anyone
 (studio/README.md), so anything a student types as a title or a name can be read
@@ -82,7 +83,58 @@ Talks are in Studio under Presentations, then Upcoming talks.
 The sheet follows within 5 minutes and the slot reopens. Only a talk with the
 status Scheduled runs on the TV.
 
-## 6. Troubleshooting
+## 6. On the day
+
+At the start time of a talk the TV shows a title card with the subteam, the first
+name and the title, and the words "Press the clicker to begin". If the
+announcement is playing, the card waits until it ends. If the talk before is still
+going, it is ended when its slot and the overrun are used up, and then the next
+card comes up.
+
+The first forward key starts the talk. The slides fill the screen, with a gold
+line along the bottom that shows how far through the deck the talk is. For 3
+seconds after each key, a small box at the bottom right shows the first name and
+the slide number, such as 7 / 24. Most clickers send Page Down and Page Up. These
+keys work:
+
+- Next slide, and start the talk: Page Down, Right arrow, Down arrow, Space,
+  Enter, N or F5.
+- Slide before: Page Up, Left arrow, Up arrow or P.
+- Black screen, on and off: B or the full stop.
+- First slide: Home. Last slide: End.
+- End the talk: Esc twice within 2 seconds. One Esc does nothing.
+
+One more forward key on the last slide shows the Thank you card for 5 seconds, and
+then the TV goes back to what it was doing. A talk also ends by itself when its
+slot and the overrun are used up, on whatever slide it is.
+
+While a talk is on, the TV holds everything else: the pages, the effects, night
+mode and the announcements. What came due during the talk happens after it.
+
+If nobody presses a key while the title card is up, the talk is skipped and the TV
+goes back. A skipped talk does not come back by itself. To run it again, change
+Starts at on the talk to a time that is now or a few minutes ahead and publish.
+
+The three settings are in the Presentations tab of Dashboard Settings:
+
+- Run presentations: on to start with. Off, the TV never takes over for a talk, and
+  a talk that is on the screen ends at once. The talks stay in Studio.
+- Wait for the speaker (minutes): how long the title card waits for the first key.
+  From 1 to 15, and 5 to start with.
+- Overrun allowed (minutes): how long a talk may run past its slot before it is
+  ended. From 0 to 10, and 5 to start with.
+
+## 7. Try it before the day
+
+1. In Dashboard Settings open the menu next to Publish (the three dots) and click
+   Run presentation test. The TV starts a sample talk with six sample slides, and
+   you press the clicker as at a real talk. It needs no internet and no booked
+   talk (docs/hidden-transitions.md, "Run presentation test").
+2. To try a real deck, share it with Anyone with the link, then run
+   `slides-sync.sh --test` on the Mini with the deck's link. It prints OK and the
+   number of pages, or FAIL and the reason (docs/rebuilding-the-mini.md, step 11).
+
+## 8. Troubleshooting
 
 - The TV says "Slides are not ready. Ask a coach." The Mini downloads each deck
   once the talk is less than 36 hours away, and again when the talk is 20
