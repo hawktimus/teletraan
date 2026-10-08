@@ -2,7 +2,8 @@
 // and the Events Calendar entries that editors type into the Studio for things
 // that are not on BAND. shell.js calls mergeEvents() each time either changes, and once
 // a minute so an event that has finished disappears. The Events panel and the
-// Next event tile show the list it returns.
+// Next event tile show the list it returns. The Calendar filters from the Studio
+// take BAND events out of it, after the repeating events are expanded.
 //
 // Every event has the shape core/calendar.js makes, with Date objects:
 //   { title, start, end, allDay, location, uid, calendar, calendarId }
@@ -16,6 +17,7 @@
 // they all agree. Plain functions only, so tools/test-content.mjs can run them.
 
 import { defaultThemeSettings } from '../config.js';
+import { visibleItems } from './content.js';
 import { dateIn, isTimeZone } from './theme.js';
 import { asDate, formatTimeOfDay, pad } from './time.js';
 
@@ -191,6 +193,45 @@ export function extraEventsToEvents(list, timeZone) {
     .map(extra => eventFrom(extra, zone));
 }
 
+// Calendar filters
+
+// 0 for Sunday to 6 for Saturday, for a day like 2027-04-02
+function weekdayNumber(day) {
+  return weekdayNames.indexOf(weekdayOf(day));
+}
+
+// A rule matches when every condition it has matches. A rule with no condition
+// matches nothing, so a slip in the Studio cannot hide every event.
+function ruleMatches(rule, event) {
+  const words = rule.words || [];
+  const days = rule.days || [];
+  if (words.length === 0 && days.length === 0 && !rule.calendar && !rule.fromDate && !rule.toDate) return false;
+
+  const title = String(event.title || '').toLowerCase();
+  if (words.length > 0 && !words.some(word => title.includes(String(word).toLowerCase()))) return false;
+  if (days.length > 0 && !days.includes(weekdayNumber(event.firstDay))) return false;
+  if (rule.calendar && rule.calendar !== event.calendarId) return false;
+  if (rule.fromDate && event.firstDay < rule.fromDate) return false;
+  if (rule.toDate && event.firstDay > rule.toDate) return false;
+  return true;
+}
+
+// The Hide rule that takes a BAND event off the screen, or null when the event
+// shows. rules is content.calendarFilters, as sanity.js cleans it, and a rule
+// that is off or past its Hide after time does nothing. A Hide rule only works
+// when no Always show rule matches the event as well. The day of an event is its
+// first day, in the Theme time zone for a timed event, so a long event is judged
+// by the day it starts. timeZone is only needed for an event with no firstDay,
+// and now is the moment to judge the Hide after time by.
+export function hidingRule(event, rules, timeZone, now) {
+  const dated = daysOf(event || {}, timeZone);
+  if (dated === null || !Array.isArray(rules)) return null;
+
+  const matching = visibleItems(rules.filter(isRecord), now).filter(rule => ruleMatches(rule, dated));
+  if (matching.some(rule => rule.action === 'show')) return null;
+  return matching.find(rule => rule.action === 'hide') || null;
+}
+
 // Merging
 
 // A BAND event with the dates it covers added. The last moment of the event is
@@ -230,17 +271,22 @@ function byStart(first, second) {
 //   extraList    content.extraEvents, the Events Calendar entries from the Studio
 //   timeZone     content.theme.timeZone
 //   now          the moment to judge by, for the tests
+//   filterList   content.calendarFilters, the rules from the Studio
 // An event is dropped once the day it ends on (the day it starts on, if it has
 // no end) is before today in that time zone. An Events Calendar entry that is
-// also on BAND is dropped and the BAND one stays. An event with no usable start is
-// left out. The lists passed in are not changed.
-export function mergeEvents(bandEvents, extraList, timeZone, now) {
+// also on BAND is dropped and the BAND one stays, unless a filter has hidden the
+// BAND one. A BAND event that a filter hides is left out. The filters never
+// touch an Events Calendar entry. An event with no usable start is left out.
+// The lists passed in are not changed.
+export function mergeEvents(bandEvents, extraList, timeZone, now, filterList) {
   const zone = isTimeZone(timeZone) ? timeZone : defaultThemeSettings.timeZone;
-  const today = dateIn(zone, now || new Date());
+  const moment = now || new Date();
+  const today = dateIn(zone, moment);
 
   const band = (Array.isArray(bandEvents) ? bandEvents : [])
     .filter(event => isRecord(event) && !isNaN(asDate(event.start)))
-    .map(event => withDays(event, zone));
+    .map(event => withDays(event, zone))
+    .filter(event => hidingRule(event, filterList, zone, moment) === null);
   const extra = extraEventsToEvents(extraList, zone)
     .filter(event => !band.some(other => isSameEvent(other, event)));
 

@@ -1,4 +1,5 @@
-// Tests for dashboard/core/calendar.js. Run with:  node tools/test-calendar.mjs
+// Tests for dashboard/core/calendar.js, and for how dashboard/core/events.js applies the
+// Calendar filters to the events it reads. Run with:  node tools/test-calendar.mjs
 // Exits with a non-zero code when a test fails. The fixtures are in tools/testdata.
 
 import assert from 'node:assert';
@@ -27,7 +28,35 @@ async function loadCalendarModule() {
   }
 }
 
+// events.js and sanity.js reach the Theme settings and the other core files, so the folder
+// is copied as it is, next to a package.json that says "type": "module".
+async function loadFilterModules() {
+  const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-filters-'));
+  const dashboard = new URL('../dashboard/', import.meta.url);
+  fs.writeFileSync(path.join(folder, 'package.json'), '{ "type": "module" }\n');
+  fs.mkdirSync(path.join(folder, 'dashboard/core'), { recursive: true });
+  fs.mkdirSync(path.join(folder, 'dashboard/themes/overlays'), { recursive: true });
+
+  fs.copyFileSync(new URL('config.js', dashboard), path.join(folder, 'dashboard/config.js'));
+  fs.readdirSync(new URL('core/', dashboard))
+    .filter(file => file.endsWith('.js'))
+    .forEach(file => fs.copyFileSync(new URL('core/' + file, dashboard), path.join(folder, 'dashboard/core', file)));
+  ['themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
+    fs.copyFileSync(new URL(file, dashboard), path.join(folder, 'dashboard', file));
+  });
+
+  try {
+    const base = pathToFileURL(path.join(folder, 'dashboard')).href + '/';
+    const events = await import(base + 'core/events.js');
+    const sanity = await import(base + 'core/sanity.js');
+    return { mergeEvents: events.mergeEvents, hidingRule: events.hidingRule, normalizeSample: sanity.normalizeSample };
+  } finally {
+    fs.rmSync(folder, { recursive: true, force: true });
+  }
+}
+
 const { parseIcs, expandEvents, loadEvents } = await loadCalendarModule();
+const { mergeEvents, hidingRule, normalizeSample } = await loadFilterModules();
 
 // Dates written in UTC give the same moment on any computer. Dates written
 // with local() are on this computer's own clock, like a calendar time with no zone.
@@ -723,6 +752,324 @@ test('loadEvents shows the sample calendar for any date', async () => {
     assert.ok(events.length >= 10, 'found ' + events.length);
     assert.ok(events.every(event => event.calendar === '[Team calendar]' && event.end > now));
   }
+});
+
+// The Calendar filters (core/events.js), run on the events of the weekly and overrides
+// calendars after their repeating events are expanded. The rules are shaped the way
+// core/sanity.js cleans them. The Theme time zone is New York, and the clock reads noon
+// on 1 January 2027.
+const newYork = 'America/New_York';
+const filterNow = utc(2027, 1, 1, 17);
+const bothCalendars = [{ id: 'weekly', name: '[Robotics]' }, { id: 'overrides', name: '[Meetings]' }];
+const weekdayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+function filterRule(action, fields) {
+  return Object.assign({ name: '[Rule]', action: action, words: [], days: [], calendar: '', fromDate: '', toDate: '' }, fields);
+}
+const hide = fields => filterRule('hide', fields);
+const alwaysShow = fields => filterRule('show', fields);
+
+// Events that start at the given UTC moments, such as 20270111T220000Z
+function calendarOf(events) {
+  const lines = ['BEGIN:VCALENDAR'];
+  events.forEach(([title, startsAt], place) => {
+    lines.push('BEGIN:VEVENT', 'UID:filter-' + place, 'DTSTART:' + startsAt, 'SUMMARY:' + title, 'END:VEVENT');
+  });
+  lines.push('END:VCALENDAR');
+  return lines.join('\n') + '\n';
+}
+
+// What the screen would list: the calendars read, merged with the Events Calendar entries and filtered.
+// options: calendars, inline (calendar files by id), extra (Events Calendar entries), zone, now
+async function shownWith(rules, options = {}) {
+  serveFixtures(options.inline || {});
+  const { events } = await loadEvents({ folder: 'calendars/', calendars: options.calendars || bothCalendars, now: filterNow, daysAhead: 60 });
+  return mergeEvents(events, options.extra || [], options.zone || newYork, options.now || filterNow, rules);
+}
+
+const lineOf = event => event.firstDay + ' ' + event.title;
+const linesOf = events => events.map(lineOf);
+const firstDaysOf = (events, title) => events.filter(event => event.title === title).map(event => event.firstDay);
+
+// The day of the week on the wall in New York, worked out here and not by events.js. An all-day
+// event is on the day of this computer's clock, the way the calendar reader makes it.
+function newYorkWeekday(event) {
+  if (event.allDay) return weekdayNames[event.start.getDay()];
+  return new Intl.DateTimeFormat('en-US', { timeZone: newYork, weekday: 'short' }).format(event.start);
+}
+
+test('a Hide rule on Monday and Thursday takes away every event on those days and nothing else', async () => {
+  const everything = await shownWith([]);
+  const filtered = await shownWith([hide({ name: '[Monday and Thursday]', days: [1, 4] })]);
+
+  const expected = everything.filter(event => !['Mon', 'Thu'].includes(newYorkWeekday(event)));
+  assert.ok(everything.length - expected.length >= 15, 'the calendars have events on those days');
+  assert.deepStrictEqual(linesOf(filtered), linesOf(expected));
+  filtered.forEach(event => assert.ok(!['Mon', 'Thu'].includes(newYorkWeekday(event)), lineOf(event)));
+
+  assert.deepStrictEqual(firstDaysOf(everything, '[Weekdays only]'), ['2027-01-11', '2027-01-12', '2027-01-13', '2027-01-14', '2027-01-15', '2027-01-18', '2027-01-19']);
+  assert.deepStrictEqual(firstDaysOf(filtered, '[Weekdays only]'), ['2027-01-12', '2027-01-13', '2027-01-15', '2027-01-19']);
+  assert.deepStrictEqual(firstDaysOf(filtered, '[Starts on a Thursday]'), [], 'a Thursday and a string of Mondays');
+  assert.deepStrictEqual(firstDaysOf(filtered, '[Weekly meeting]'), ['2027-01-05', '2027-02-09'], 'a Tuesday meeting is left alone');
+});
+
+test('a Thursday-only rule takes the Thursday occurrence of a series and leaves its Mondays', async () => {
+  const everything = await shownWith([]);
+  const filtered = await shownWith([hide({ days: [4] })]);
+
+  assert.deepStrictEqual(firstDaysOf(everything, '[Starts on a Thursday]'), [
+    '2027-01-07', '2027-01-11', '2027-01-18', '2027-01-25', '2027-02-01', '2027-02-08', '2027-02-15', '2027-02-22', '2027-03-01',
+  ]);
+  assert.deepStrictEqual(firstDaysOf(filtered, '[Starts on a Thursday]'), [
+    '2027-01-11', '2027-01-18', '2027-01-25', '2027-02-01', '2027-02-08', '2027-02-15', '2027-02-22', '2027-03-01',
+  ]);
+  assert.deepStrictEqual(firstDaysOf(filtered, '[Weekdays only]'), ['2027-01-11', '2027-01-12', '2027-01-13', '2027-01-15', '2027-01-18', '2027-01-19']);
+  assert.deepStrictEqual(linesOf(filtered), linesOf(everything.filter(event => newYorkWeekday(event) !== 'Thu')));
+});
+
+test('a rule judges each occurrence by the day it falls on, also one that was moved to another day', async () => {
+  const everything = await shownWith([]);
+  assert.deepStrictEqual(firstDaysOf(everything, '[Weekly meeting moved]'), ['2027-01-13'], 'moved from the Tuesday to the Wednesday');
+
+  const wednesdays = await shownWith([hide({ days: [3] })]);
+  assert.deepStrictEqual(firstDaysOf(wednesdays, '[Weekly meeting moved]'), []);
+  assert.deepStrictEqual(firstDaysOf(wednesdays, '[Weekly meeting]'), ['2027-01-05', '2027-02-09']);
+
+  const tuesdays = await shownWith([hide({ days: [2] })]);
+  assert.deepStrictEqual(firstDaysOf(tuesdays, '[Weekly meeting moved]'), ['2027-01-13']);
+  assert.deepStrictEqual(firstDaysOf(tuesdays, '[Weekly meeting]'), []);
+});
+
+test('an Always show rule keeps the events a Hide rule would take, in whatever order the rules come', async () => {
+  const everything = await shownWith([]);
+  const mondayAndThursday = hide({ name: '[Monday and Thursday]', days: [1, 4] });
+  const keepWeekdays = alwaysShow({ name: '[Keep weekdays]', words: ['weekdays'] });
+
+  const forward = await shownWith([mondayAndThursday, keepWeekdays]);
+  const backward = await shownWith([keepWeekdays, mondayAndThursday]);
+  assert.deepStrictEqual(linesOf(backward), linesOf(forward));
+  assert.deepStrictEqual(firstDaysOf(forward, '[Weekdays only]'), firstDaysOf(everything, '[Weekdays only]'), 'every Monday and Thursday is back');
+  assert.deepStrictEqual(firstDaysOf(forward, '[Starts on a Thursday]'), [], 'and the other events of those days are still hidden');
+
+  assert.deepStrictEqual(linesOf(await shownWith([keepWeekdays])), linesOf(everything), 'on its own it hides nothing');
+  const unrelated = alwaysShow({ words: ['kickoff'] });
+  assert.deepStrictEqual(linesOf(await shownWith([mondayAndThursday, unrelated])), linesOf(await shownWith([mondayAndThursday])), 'a rule that does not match keeps nothing');
+
+  // an Always show rule has to match on every condition it has, like any rule
+  const keepMondays = alwaysShow({ words: ['weekdays'], days: [1] });
+  const mondaysBack = await shownWith([mondayAndThursday, keepMondays]);
+  assert.deepStrictEqual(firstDaysOf(mondaysBack, '[Weekdays only]'), ['2027-01-11', '2027-01-12', '2027-01-13', '2027-01-15', '2027-01-18', '2027-01-19']);
+});
+
+test('a rule for one date hides the events of that date and no other', async () => {
+  const everything = await shownWith([]);
+  const filtered = await shownWith([hide({ fromDate: '2027-01-11', toDate: '2027-01-11' })]);
+
+  assert.ok(everything.some(event => event.firstDay === '2027-01-11'));
+  assert.deepStrictEqual(linesOf(filtered), linesOf(everything.filter(event => event.firstDay !== '2027-01-11')));
+  assert.deepStrictEqual(firstDaysOf(filtered, '[Weekdays only]'), ['2027-01-12', '2027-01-13', '2027-01-14', '2027-01-15', '2027-01-18', '2027-01-19']);
+
+  const oneTitle = await shownWith([hide({ words: ['weekdays'], fromDate: '2027-01-18', toDate: '2027-01-18' })]);
+  assert.deepStrictEqual(firstDaysOf(oneTitle, '[Weekdays only]'), ['2027-01-11', '2027-01-12', '2027-01-13', '2027-01-14', '2027-01-15', '2027-01-19']);
+  assert.deepStrictEqual(firstDaysOf(oneTitle, '[Starts on a Thursday]'), firstDaysOf(everything, '[Starts on a Thursday]'), 'the other events of that date are not named');
+});
+
+test('a date range counts its first and last day, an open end goes on for ever, and an event is judged by the day it starts', async () => {
+  const everything = await shownWith([]);
+
+  const range = await shownWith([hide({ fromDate: '2027-01-12', toDate: '2027-01-14' })]);
+  assert.deepStrictEqual(firstDaysOf(range, '[Weekdays only]'), ['2027-01-11', '2027-01-15', '2027-01-18', '2027-01-19']);
+  assert.deepStrictEqual(linesOf(range), linesOf(everything.filter(event => event.firstDay < '2027-01-12' || event.firstDay > '2027-01-14')));
+
+  const from = await shownWith([hide({ fromDate: '2027-01-15' })]);
+  assert.ok(from.length > 0 && from.every(event => event.firstDay < '2027-01-15'), 'nothing from the 15th on');
+  assert.deepStrictEqual(linesOf(from), linesOf(everything.filter(event => event.firstDay < '2027-01-15')));
+
+  const until = await shownWith([hide({ toDate: '2027-01-15' })]);
+  assert.ok(until.length > 0 && until.every(event => event.firstDay > '2027-01-15'), 'nothing up to the 15th');
+  assert.deepStrictEqual(linesOf(until), linesOf(everything.filter(event => event.firstDay > '2027-01-15')));
+
+  const mixed = await shownWith([hide({ words: ['weekdays'], fromDate: '2027-01-12', toDate: '2027-01-14' })]);
+  assert.deepStrictEqual(firstDaysOf(mixed, '[Weekdays only]'), ['2027-01-11', '2027-01-15', '2027-01-18', '2027-01-19']);
+  assert.deepStrictEqual(firstDaysOf(mixed, '[Starts on a Thursday]'), firstDaysOf(everything, '[Starts on a Thursday]'));
+
+  // the three day event is on the 20th, 21st and 22nd of January
+  const team = { calendars: [{ id: 'single-events', name: '[Team]' }] };
+  const threeDays = async (fromDate, toDate) => firstDaysOf(await shownWith([hide({ fromDate: fromDate, toDate: toDate })], team), '[Three day event]');
+  assert.deepStrictEqual(await threeDays('', ''), ['2027-01-20'], 'a rule with no date at all is no rule');
+  assert.deepStrictEqual(await threeDays('2027-01-21', '2027-01-22'), ['2027-01-20'], 'it started before the range');
+  assert.deepStrictEqual(await threeDays('2027-01-20', '2027-01-20'), []);
+  assert.deepStrictEqual(await threeDays('2027-01-19', '2027-01-20'), []);
+});
+
+test('a rule for one calendar hides that calendar only, and a calendar nobody has hides nothing', async () => {
+  const everything = await shownWith([]);
+  assert.ok(everything.some(event => event.calendarId === 'overrides') && everything.some(event => event.calendarId === 'weekly'));
+
+  const meetings = await shownWith([hide({ name: '[Hide the meetings]', calendar: 'overrides' })]);
+  assert.deepStrictEqual(linesOf(meetings), linesOf(everything.filter(event => event.calendarId !== 'overrides')));
+  assert.ok(meetings.every(event => event.calendarId === 'weekly'));
+
+  const robotics = await shownWith([hide({ calendar: 'weekly' })]);
+  assert.deepStrictEqual(linesOf(robotics), linesOf(everything.filter(event => event.calendarId === 'overrides')));
+
+  // the calendar and a day together: a Tuesday on the other calendar stays
+  const tuesdays = await shownWith([hide({ calendar: 'overrides', days: [2] })]);
+  assert.deepStrictEqual(firstDaysOf(tuesdays, '[Weekly meeting]'), []);
+  assert.deepStrictEqual(firstDaysOf(tuesdays, '[Weekly meeting moved]'), ['2027-01-13']);
+  assert.deepStrictEqual(firstDaysOf(tuesdays, '[Every other Tuesday]'), firstDaysOf(everything, '[Every other Tuesday]'));
+
+  assert.deepStrictEqual(linesOf(await shownWith([hide({ calendar: 'boosters' })])), linesOf(everything));
+  assert.deepStrictEqual(linesOf(await shownWith([hide({ calendar: 'weekly' }), alwaysShow({ calendar: 'weekly', days: [1] })])), linesOf(everything.filter(event => event.calendarId === 'overrides' || newYorkWeekday(event) === 'Mon')));
+});
+
+test('a rule that is off or past its Hide after time does nothing, and one that has not expired yet still works', async () => {
+  const everything = await shownWith([]);
+  const rule = hide({ name: '[Monday and Thursday]', days: [1, 4] });
+  const working = await shownWith([rule]);
+  assert.ok(working.length < everything.length);
+
+  assert.deepStrictEqual(linesOf(await shownWith([Object.assign({}, rule, { show: false })])), linesOf(everything), 'switched off');
+  assert.deepStrictEqual(linesOf(await shownWith([Object.assign({}, rule, { show: true })])), linesOf(working), 'switched on');
+
+  // the Hide after time is noon on the 20th in New York, and the clock decides
+  const expires = '2027-01-20T17:00:00Z';
+  const expiring = Object.assign({}, rule, { expires: expires });
+  const lastMoment = new Date(Date.parse(expires) - 1);
+  const noEvents = await shownWith([], { now: lastMoment });
+  const withRule = await shownWith([rule], { now: lastMoment });
+  assert.ok(withRule.length < noEvents.length);
+  assert.deepStrictEqual(linesOf(await shownWith([expiring], { now: lastMoment })), linesOf(withRule), 'a millisecond before it');
+
+  const atExpiry = new Date(expires);
+  assert.deepStrictEqual(linesOf(await shownWith([expiring], { now: atExpiry })), linesOf(await shownWith([], { now: atExpiry })), 'at it the rule has stopped');
+
+  // an Always show rule that is off or past its time keeps nothing
+  const switchedOff = Object.assign({}, alwaysShow({ words: ['weekdays'] }), { show: false });
+  const pastTime = Object.assign({}, alwaysShow({ words: ['weekdays'] }), { expires: '2027-01-01T12:00:00Z' });
+  assert.deepStrictEqual(linesOf(await shownWith([rule, switchedOff])), linesOf(working));
+  assert.deepStrictEqual(linesOf(await shownWith([rule, pastTime])), linesOf(working));
+});
+
+test('title words match inside the title in any capitals, and one of the words is enough', async () => {
+  const everything = await shownWith([]);
+  const titlesGone = async words => {
+    const kept = titlesOf(await shownWith([hide({ words: words })]));
+    return Array.from(new Set(titlesOf(everything))).filter(title => !kept.includes(title)).sort();
+  };
+
+  assert.deepStrictEqual(await titlesGone(['weekdays']), ['[Weekdays only]']);
+  assert.deepStrictEqual(await titlesGone(['WEEKDAYS']), ['[Weekdays only]']);
+  assert.deepStrictEqual(await titlesGone(['wEeKdAyS oNlY']), ['[Weekdays only]'], 'a word with a space in it');
+  assert.deepStrictEqual(await titlesGone(['eekday']), ['[Weekdays only]'], 'inside another word');
+  assert.deepStrictEqual(await titlesGone(['kickoff', 'weekdays']), ['[Weekdays only]'], 'one match is enough');
+  assert.deepStrictEqual(await titlesGone(['kickoff']), []);
+  assert.deepStrictEqual(await titlesGone([]), [], 'no words and no other condition is no rule');
+  assert.deepStrictEqual(await titlesGone(['weekly MEETING']), [
+    '[Weekly meeting moved earlier]', '[Weekly meeting moved out of range]', '[Weekly meeting moved]', '[Weekly meeting with a guest]', '[Weekly meeting]',
+  ]);
+});
+
+test('the day of an event is the day on the clock of the Theme time zone', async () => {
+  // 3:30 AM UTC on Tuesday 12 January is 10:30 PM on Monday the 11th in New York and 12:30 PM on Tuesday in Tokyo
+  const inline = { late: calendarOf([['[Late event]', '20270112T033000Z']]) };
+  const options = zone => ({ calendars: [{ id: 'late', name: '[Late]' }], inline: inline, zone: zone });
+  const mondays = [hide({ days: [1] })];
+  const tuesdays = [hide({ days: [2] })];
+
+  assert.deepStrictEqual(titlesOf(await shownWith(mondays, options(newYork))), []);
+  assert.deepStrictEqual(titlesOf(await shownWith(tuesdays, options(newYork))), ['[Late event]']);
+  assert.deepStrictEqual(titlesOf(await shownWith(mondays, options('Asia/Tokyo'))), ['[Late event]']);
+  assert.deepStrictEqual(titlesOf(await shownWith(tuesdays, options('Asia/Tokyo'))), []);
+  assert.deepStrictEqual(titlesOf(await shownWith(tuesdays, options('UTC'))), []);
+});
+
+test('a rule with no condition matches nothing, so a slip in the Studio cannot hide every event', async () => {
+  const everything = await shownWith([]);
+  assert.deepStrictEqual(linesOf(await shownWith([hide({})])), linesOf(everything));
+  assert.deepStrictEqual(linesOf(await shownWith([hide({ name: '[Nothing]', words: [], days: [], calendar: '', fromDate: '', toDate: '' })])), linesOf(everything));
+  assert.deepStrictEqual(linesOf(await shownWith([hide({ days: [4] }), alwaysShow({})])), linesOf(await shownWith([hide({ days: [4] })])), 'and an Always show with none keeps nothing');
+});
+
+test('no rules, a list that is not a list, and entries that are not rules leave every event on the screen', async () => {
+  const everything = await shownWith([]);
+  const unfiltered = linesOf(everything);
+
+  assert.deepStrictEqual(linesOf(await shownWith(undefined)), unfiltered);
+  assert.deepStrictEqual(linesOf(await shownWith(null)), unfiltered);
+  assert.deepStrictEqual(linesOf(await shownWith('hide everything')), unfiltered);
+  assert.deepStrictEqual(linesOf(await shownWith({ days: [1] })), unfiltered);
+  assert.deepStrictEqual(linesOf(await shownWith([null, 'rule', 7, [], undefined])), unfiltered);
+
+  const withJunk = await shownWith([null, hide({ days: [4] }), 'rule']);
+  assert.deepStrictEqual(linesOf(withJunk), linesOf(await shownWith([hide({ days: [4] })])));
+});
+
+test('hidingRule gives the Hide rule that took an event away, and nothing for an event that shows', async () => {
+  const everything = await shownWith([]);
+  const monday = everything.find(event => event.title === '[Weekdays only]' && event.firstDay === '2027-01-11');
+  const tuesday = everything.find(event => event.title === '[Weekdays only]' && event.firstDay === '2027-01-12');
+  const byTitle = hide({ name: '[By title]', words: ['weekdays'] });
+  const byDay = hide({ name: '[By day]', days: [1] });
+  const keep = alwaysShow({ name: '[Keep]', words: ['weekdays'] });
+
+  assert.strictEqual(hidingRule(monday, [byDay, byTitle], newYork, filterNow), byDay, 'the first rule in the list');
+  assert.strictEqual(hidingRule(monday, [byTitle, byDay], newYork, filterNow), byTitle);
+  assert.strictEqual(hidingRule(tuesday, [byDay], newYork, filterNow), null);
+  assert.strictEqual(hidingRule(tuesday, [byDay, byTitle], newYork, filterNow), byTitle);
+  assert.strictEqual(hidingRule(monday, [byDay, byTitle, keep], newYork, filterNow), null, 'an Always show rule wins');
+  assert.strictEqual(hidingRule(monday, [keep], newYork, filterNow), null);
+
+  [undefined, null, 'rules', {}, []].forEach(rules => assert.strictEqual(hidingRule(monday, rules, newYork, filterNow), null, JSON.stringify(rules)));
+  [undefined, null, {}, { title: '[No start]' }, { title: '[Bad start]', start: 'soon' }].forEach(event => {
+    assert.strictEqual(hidingRule(event, [byTitle, byDay], newYork, filterNow), null, JSON.stringify(event));
+  });
+
+  // an event that did not go through mergeEvents has no days yet, and gets them in the zone that is passed
+  serveFixtures({ late: calendarOf([['[Late event]', '20270112T033000Z']]) });
+  const { events } = await loadEvents({ folder: 'calendars/', calendars: [{ id: 'late', name: '[Late]' }], now: filterNow, daysAhead: 60 });
+  assert.strictEqual('firstDay' in events[0], false);
+  assert.strictEqual(hidingRule(events[0], [byDay], newYork, filterNow), byDay);
+  assert.strictEqual(hidingRule(events[0], [byDay], 'UTC', filterNow), null);
+});
+
+test('the filters never touch an Events Calendar entry, and one that copies a hidden BAND event shows in its place', async () => {
+  const typed = { title: '[Typed in Studio]', startDate: '2027-01-11', startTime: '10:00' };
+  const rules = [hide({ name: '[Mondays]', days: [1] })];
+
+  const shown = await shownWith(rules, { extra: [typed] });
+  assert.deepStrictEqual(shown.filter(event => event.calendarId === 'extra').map(lineOf), ['2027-01-11 [Typed in Studio]']);
+  assert.deepStrictEqual(firstDaysOf(shown.filter(event => event.calendarId === 'weekly'), '[Weekdays only]'), ['2027-01-12', '2027-01-13', '2027-01-14', '2027-01-15', '2027-01-19']);
+
+  // the same event typed in and on BAND: with no rule the BAND one stays, with a rule that hides it the typed one does
+  const copy = { title: '[Weekdays only]', startDate: '2027-01-11', startTime: '09:00' };
+  const onJanuary11 = events => events.filter(event => event.title === '[Weekdays only]' && event.firstDay === '2027-01-11');
+  assert.deepStrictEqual(onJanuary11(await shownWith([], { extra: [copy] })).map(event => event.calendarId), ['weekly']);
+  assert.deepStrictEqual(onJanuary11(await shownWith(rules, { extra: [copy] })).map(event => event.calendarId), ['extra']);
+});
+
+test('the two example rules in the sample content hide Pre-Season on Monday and Thursday and keep Kickoff', async () => {
+  const sample = normalizeSample(JSON.parse(fs.readFileSync(new URL('../dashboard/data/sample/content.json', import.meta.url), 'utf8')));
+  assert.strictEqual(sample.calendarFilters.length, 2);
+  sample.calendarFilters.forEach(rule => assert.ok(/^\[.+\]$/.test(rule.name), rule.name + ' is a marked placeholder'));
+
+  const inline = {
+    season: calendarOf([
+      ['[Pre-Season build]', '20270111T220000Z'],
+      ['[Pre-Season build]', '20270112T220000Z'],
+      ['[PRE-SEASON mentors]', '20270114T220000Z'],
+      ['[Kickoff Pre-Season party]', '20270118T220000Z'],
+      ['[Build session]', '20270111T230000Z'],
+    ]),
+  };
+  const options = { calendars: [{ id: 'season', name: '[Season]' }], inline: inline };
+  assert.strictEqual((await shownWith([], options)).length, 5);
+
+  assert.deepStrictEqual(linesOf(await shownWith(sample.calendarFilters, options)), [
+    '2027-01-11 [Build session]',
+    '2027-01-12 [Pre-Season build]',
+    '2027-01-18 [Kickoff Pre-Season party]',
+  ]);
 });
 
 let failures = 0;

@@ -374,6 +374,13 @@ export const defaultTalk = {
   status: 'scheduled',
 };
 
+// A calendar filter rule that has no action, or one that is not in the list,
+// hides: the Studio field starts on Hide too (studio/schemas/calendarFilter.js).
+export const filterActions = ['hide', 'show'];
+export const defaultFilter = {
+  action: 'hide',
+};
+
 export const defaultTeam = {
   name: 'HAWKTIMUS PRIME',
   number: '3229',

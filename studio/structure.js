@@ -53,6 +53,7 @@ export const sidebarEntries = [
     ],
   },
   { kind: 'list', title: 'Events Calendar', type: 'extraEvent', sort: byStartDate },
+  { kind: 'list', title: 'Calendar filters', type: 'calendarFilter', sort: byName },
   { kind: 'list', title: 'Subteams', type: 'subteam', sort: byOrder },
   { kind: 'list', title: 'Leadership', type: 'person', sort: byOrder },
   { kind: 'list', title: 'Sponsors', type: 'sponsor', sort: byOrder },

@@ -31,9 +31,10 @@ The folder `docs/content-templates/` has one CSV file for each kind of content.
 | customPanel.csv | Custom Panels |
 
 There is no template for the pages that exist once (Dashboard Settings, Theme
-and Demo), for Meeting days or Presentations, and none for photos. The pictures
-in Photos and the photo of a person in Leadership are uploaded in Studio, so
-there is no photo template and person.csv has no photo column.
+and Demo), for Meeting days, Presentations or Calendar filters, and none for
+photos. The pictures in Photos and the photo of a person in Leadership are
+uploaded in Studio, so there is no photo template and person.csv has no photo
+column.
 
 Every template has three rows at the top:
 

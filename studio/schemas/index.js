@@ -3,6 +3,7 @@ import plan from './plan.js';
 import presentationDay from './presentationDay.js';
 import presentation from './presentation.js';
 import extraEvent from './extraEvent.js';
+import calendarFilter from './calendarFilter.js';
 import sponsor from './sponsor.js';
 import tipOrNews from './tipOrNews.js';
 import subteam from './subteam.js';
@@ -21,6 +22,7 @@ export const schemaTypes = [
   presentationDay,
   presentation,
   extraEvent,
+  calendarFilter,
   sponsor,
   tipOrNews,
   subteam,

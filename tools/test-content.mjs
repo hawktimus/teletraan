@@ -3420,6 +3420,147 @@ test('a change to a talk\'s start is a change of content, so the screen hears of
   });
 });
 
+// Calendar filters: the rules from Studio, cleaned for core/events.js
+
+function filterRecord(changes) {
+  return Object.assign({
+    name: '[Hide Pre-Season Monday and Thursday]',
+    action: 'hide',
+    words: ['Pre-Season'],
+    days: [1, 4],
+    calendar: 'team',
+    fromDate: '2027-01-01',
+    toDate: '2027-02-28',
+    expires: '2027-03-01T12:00:00.000Z',
+  }, changes);
+}
+
+function filtersFrom(list) {
+  return normalizeContent({ calendarFilters: list }).calendarFilters;
+}
+
+test('the query asks for the Calendar filters in the order they were made, and content with none has an empty list', () => {
+  assert.ok(contentQuery.includes('"calendarFilters": *[_type == "calendarFilter"] | order(_createdAt asc),'));
+
+  assert.deepEqual(normalizeContent({}).calendarFilters, []);
+  assert.deepEqual(normalizeContent(null).calendarFilters, []);
+  assert.deepEqual(withDefaults(null).calendarFilters, []);
+  assert.deepEqual(withDefaults({}).calendarFilters, []);
+  assert.deepEqual(normalizeSample({}).calendarFilters, []);
+  assert.deepEqual(normalizeSample({ calendarFilters: 'oops' }).calendarFilters, []);
+});
+
+test('a rule from Studio keeps its fields and loses Sanity\'s own names, and the switch and the Hide after time stay only when they say something', () => {
+  const [rule] = filtersFrom([Object.assign(filterRecord(), { _id: 'filter-1', _type: 'calendarFilter', _rev: 'rev-1', _createdAt: '2026-09-01T10:00:00Z' })]);
+
+  assert.deepEqual(rule, {
+    name: '[Hide Pre-Season Monday and Thursday]',
+    action: 'hide',
+    words: ['Pre-Season'],
+    days: [1, 4],
+    calendar: 'team',
+    fromDate: '2027-01-01',
+    toDate: '2027-02-28',
+    expires: '2027-03-01T12:00:00.000Z',
+  });
+  assert.equal(JSON.stringify(rule).includes('_type'), false);
+
+  assert.equal('show' in filtersFrom([filterRecord({ show: true })])[0], false, 'on is the same as not set');
+  assert.equal('show' in filtersFrom([filterRecord({ show: undefined })])[0], false);
+  assert.equal(filtersFrom([filterRecord({ show: false })])[0].show, false);
+  [undefined, null, ''].forEach(value => assert.equal('expires' in filtersFrom([filterRecord({ expires: value })])[0], false, JSON.stringify(value)));
+});
+
+test('the words of a rule lose the spaces at their ends and the empty ones go, and the days are the numbers 0 to 6 once each, Sunday first', () => {
+  assert.deepEqual(filtersFrom([filterRecord({ words: ['  Pre-Season ', '', '   ', 7, null, 'Kickoff'] })])[0].words, ['Pre-Season', 'Kickoff']);
+  [undefined, null, 'Pre-Season', 7, {}].forEach(value => assert.deepEqual(filtersFrom([filterRecord({ words: value })])[0].words, [], JSON.stringify(value)));
+
+  assert.deepEqual(filtersFrom([filterRecord({ days: [4, 1, 4, 7, -1, 1.5, '2', null, 0] })])[0].days, [0, 1, 4]);
+  assert.deepEqual(filtersFrom([filterRecord({ days: [3, 2, 1, 6, 5, 4, 0] })])[0].days, [0, 1, 2, 3, 4, 5, 6]);
+  [undefined, null, 'Monday', 1, {}].forEach(value => assert.deepEqual(filtersFrom([filterRecord({ days: value })])[0].days, [], JSON.stringify(value)));
+});
+
+test('the calendar code loses the spaces at its ends, and a date is kept only when it is written like 2027-04-02', () => {
+  assert.equal(filtersFrom([filterRecord({ calendar: '  team ' })])[0].calendar, 'team');
+  [undefined, null, 7, {}].forEach(value => assert.equal(filtersFrom([filterRecord({ calendar: value })])[0].calendar, '', JSON.stringify(value)));
+
+  assert.deepEqual(filtersFrom([filterRecord({ fromDate: '2027-04-02', toDate: '2027-04-03' })]).map(rule => [rule.fromDate, rule.toDate]), [['2027-04-02', '2027-04-03']]);
+  ['2027-4-2', '04/02/2027', '2027-04-02T10:00:00Z', ' 2027-04-02', '', null, undefined, 20270402].forEach(value => {
+    const [rule] = filtersFrom([filterRecord({ fromDate: value, toDate: value })]);
+    assert.deepEqual([rule.fromDate, rule.toDate], ['', ''], JSON.stringify(value));
+  });
+});
+
+test('a rule\'s action is hide or show, and hide when it is missing or is none of them', () => {
+  assert.deepEqual(live.config.filterActions, ['hide', 'show']);
+  assert.equal(live.config.defaultFilter.action, 'hide');
+
+  live.config.filterActions.forEach(action => assert.equal(filtersFrom([filterRecord({ action: action })])[0].action, action));
+  [undefined, null, '', 'Hide', 'always', 'banana', 3].forEach(action => {
+    assert.equal(filtersFrom([filterRecord({ action: action })])[0].action, 'hide', JSON.stringify(action));
+  });
+});
+
+test('a rule with nothing left to match is dropped, since it would match every event, and one that is off or past its time stays', () => {
+  const nothing = { words: [], days: [], calendar: '', fromDate: '', toDate: '' };
+  const rules = filtersFrom([
+    filterRecord(Object.assign({ name: '[No condition]' }, nothing)),
+    filterRecord(Object.assign({ name: '[Spaces only]' }, nothing, { words: ['  ', ''], calendar: '   ' })),
+    filterRecord(Object.assign({ name: '[Bad dates only]' }, nothing, { fromDate: 'soon', toDate: '04/02/2027' })),
+    filterRecord(Object.assign({ name: '[Bad days only]' }, nothing, { days: [7, -1] })),
+    filterRecord(Object.assign({ name: '[Off]' }, nothing, { words: ['Pre-Season'], show: false })),
+    filterRecord(Object.assign({ name: '[Past]' }, nothing, { calendar: 'team', expires: '2020-01-01T00:00:00Z' })),
+    filterRecord(Object.assign({ name: '[Only a day]' }, nothing, { days: [4] })),
+    filterRecord(Object.assign({ name: '[Only a date]' }, nothing, { toDate: '2027-04-02' })),
+  ]);
+  assert.deepEqual(rules.map(rule => rule.name), ['[Off]', '[Past]', '[Only a day]', '[Only a date]']);
+});
+
+test('rules that are not a list, and entries that are not rules, give an empty list or are left out', () => {
+  [undefined, null, 'oops', 7, {}].forEach(value => assert.deepEqual(filtersFrom(value), [], JSON.stringify(value)));
+  assert.deepEqual(filtersFrom([undefined, null, 'text', 5, [], {}, filterRecord({ name: '[Kept]' })]).map(rule => rule.name), ['[Kept]']);
+  assert.deepEqual(filtersFrom([filterRecord({ name: '[B]' }), filterRecord({ name: '[A]' })]).map(rule => rule.name), ['[B]', '[A]'], 'in the order Sanity sent them');
+  assert.equal(filtersFrom([filterRecord({ name: undefined })])[0].name, '');
+});
+
+test('the sample content carries the two example rules, cleaned like the rules from Sanity', () => {
+  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  assert.equal(raw.calendarFilters.length, 2);
+
+  assert.deepEqual(normalizeSample(raw).calendarFilters, [
+    { name: '[Hide Pre-Season Monday and Thursday]', action: 'hide', words: ['Pre-Season'], days: [1, 4], calendar: '', fromDate: '', toDate: '' },
+    { name: '[Always show Kickoff]', action: 'show', words: ['Kickoff'], days: [], calendar: '', fromDate: '', toDate: '' },
+  ]);
+  assert.deepEqual(normalizeSample({ calendarFilters: [filterRecord({ words: [' Pre-Season '], action: 'banana' })] }).calendarFilters.map(rule => [rule.action, rule.words]), [['hide', ['Pre-Season']]]);
+});
+
+test('a saved copy from before the filters existed gives an empty list, and a change to a rule is a change of content', async () => {
+  await inWorld(async world => {
+    const raw = copyOf(sanityFixture());
+    assert.equal('calendarFilters' in raw, false);
+    saveCopy(world, raw, start - minute);
+    world.handler = async () => unreachable();
+
+    const first = await readSanity(world.onChange);
+    assert.deepEqual(first.content.calendarFilters, []);
+  });
+
+  await inWorld(async world => {
+    const fixture = sanityFixture();
+    fixture.calendarFilters = [filterRecord()];
+    world.handler = async () => sanityReply(copyOf(fixture));
+    await readSanity(world.onChange);
+
+    fixture.calendarFilters = [filterRecord({ days: [1, 2, 4] })];
+    world.streams[0].emit('message');
+    await world.advance(2 * second);
+    await world.advance(0);
+
+    assert.equal(world.changes.length, 1);
+    assert.deepEqual(world.changes[0].content.calendarFilters[0].days, [1, 2, 4]);
+  });
+});
+
 test('photosToShow leaves out photos that are switched off, have expired, or have no picture', () => {
   const now = new Date(2026, 9, 4, 12, 0);
   const content = {

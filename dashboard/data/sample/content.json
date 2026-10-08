@@ -151,6 +151,11 @@
     { "title": "[Weekend event]", "startDate": "2027-03-12", "endDate": "2027-03-14", "location": "[Place]" }
   ],
 
+  "calendarFilters": [
+    { "name": "[Hide Pre-Season Monday and Thursday]", "action": "hide", "words": ["Pre-Season"], "days": [1, 4] },
+    { "name": "[Always show Kickoff]", "action": "show", "words": ["Kickoff"] }
+  ],
+
   "customPanels": [
     {
       "title": "[Panel]",

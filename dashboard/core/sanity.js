@@ -1,7 +1,7 @@
 // Talks to Sanity: the two queries, the addresses, and turning what comes back
 // into the content shape in data/sample/content.json. The sample is cleaned the same way.
 
-import { defaultPerson, defaultSettings, defaultTalk, limits, talkStatuses } from '../config.js';
+import { defaultFilter, defaultPerson, defaultSettings, defaultTalk, filterActions, limits, talkStatuses } from '../config.js';
 import { parseLocalDateTime, sameDay } from './time.js';
 import { fixSettingValues, keepInRange, visibleItems, withDefaults } from './content.js';
 import { photoFocus, screenPhotoUrl, tidyPhoto } from './images.js';
@@ -22,6 +22,8 @@ import { classifyFailure } from './connection.js';
 // No Demo document means no demo (core/demo.js).
 // Events Calendar entries that are switched off are left out here. A missing
 // switch means on. The events are tidied and merged with the BAND ones in core/events.js.
+// Calendar filter rules are cleaned in normalizeFilter. One that is off or past
+// its Hide after time stays in the list, and core/events.js leaves it out.
 // A person's photo is sent as a plain address with its size, crop and hotspot
 // (images.js builds the address the screen asks for). The photo's own record
 // has names that start with an underscore, which normalizeContent drops.
@@ -87,6 +89,7 @@ export const contentQuery = `{
   },
   "plans": *[_type == "plan"] | order(date asc, _createdAt asc),
   "extraEvents": *[_type == "extraEvent" && show != false] | order(startDate asc, _createdAt asc),
+  "calendarFilters": *[_type == "calendarFilter"] | order(_createdAt asc),
   "customPanels": *[_type == "customPanel"] | order(_createdAt asc)
 }`;
 
@@ -223,6 +226,7 @@ export function normalizeContent(result, now = new Date()) {
     photos: photosFrom(data.photos),
     presentations: presentationsFrom(data.presentations),
     extraEvents: itemsFrom(data.extraEvents),
+    calendarFilters: filtersFrom(data.calendarFilters),
     customPanels: customPanelsFrom(data.customPanels),
   });
 }
@@ -245,6 +249,7 @@ export function normalizeSample(raw) {
   content.people = content.people.map(normalizePerson);
   content.photos = itemsFrom(data.photos).filter(photo => typeof photo.address === 'string');
   content.presentations = presentationsFrom(data.presentations);
+  content.calendarFilters = filtersFrom(data.calendarFilters);
   return withDefaults(content);
 }
 
@@ -441,6 +446,45 @@ function normalizeTalk(raw) {
 
 function presentationsFrom(list) {
   return objectsIn(list).map(normalizeTalk).filter(talk => talk !== null);
+}
+
+const plainDate = /^\d{4}-\d{2}-\d{2}$/;
+
+// A rule from the Calendar filters list becomes { name, action, words, days,
+// calendar, fromDate, toDate }, with the show switch and the Hide after time kept
+// as they are. The words lose the spaces at their ends and the empty ones go.
+// The days are a set of the numbers 0 to 6, Sunday first, in order. The calendar
+// and the two dates are text, empty when there is none, and a date that is not
+// like 2027-04-02 is none. An action that is not hide or show is hide, as the
+// Studio field starts on Hide. A rule with no condition left would match every
+// event, so it is dropped. A rule that is off or expired stays, and
+// core/events.js leaves it out.
+function normalizeFilter(raw) {
+  const words = (Array.isArray(raw.words) ? raw.words : [])
+    .filter(word => typeof word === 'string' && word.trim() !== '')
+    .map(word => word.trim());
+  const days = (Array.isArray(raw.days) ? raw.days : [])
+    .filter((day, index, list) => Number.isInteger(day) && day >= 0 && day <= 6 && list.indexOf(day) === index)
+    .sort((first, second) => first - second);
+
+  const rule = {
+    name: trimmed(raw.name),
+    action: filterActions.includes(raw.action) ? raw.action : defaultFilter.action,
+    words: words,
+    days: days,
+    calendar: trimmed(raw.calendar),
+    fromDate: plainDate.test(raw.fromDate) ? raw.fromDate : '',
+    toDate: plainDate.test(raw.toDate) ? raw.toDate : '',
+  };
+  if (raw.show === false) rule.show = false;
+  if (raw.expires) rule.expires = raw.expires;
+
+  const hasCondition = words.length > 0 || days.length > 0 || rule.calendar !== '' || rule.fromDate !== '' || rule.toDate !== '';
+  return hasCondition ? rule : null;
+}
+
+function filtersFrom(list) {
+  return objectsIn(list).map(normalizeFilter).filter(rule => rule !== null);
 }
 
 function normalizeTeam(team) {

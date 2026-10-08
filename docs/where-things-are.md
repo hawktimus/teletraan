@@ -163,13 +163,17 @@ editors can sign in from anywhere.
     deploy/                   how the Mini runs it: web server, timers, scripts. scripts/check-connection.sh
                               checks the Mini's connection to Sanity, BAND, Docker and the kiosk with one
                               OK or FAIL line each (docs/rebuilding-the-mini.md, "Checking the connection").
+                              scripts/check-calendars.sh lists the events of each calendar in local.env and
+                              says which ones the Calendar filters hide. It needs Node, so it runs on a
+                              computer that has it, not on the Mini.
                               scripts/slides-sync.sh downloads the slides of the coming talks and turns them
                               into pictures in the data folder (docs/presentations.md).
                               mac/ is for the Mac you work on: ship.sh commits, pushes, updates the Studio
                               and tells the Mini to pull (docs/shipping-from-the-mac.md)
     tools/
       serve.py                the server above
-      test-calendar.mjs       checks for the calendar reader
+      test-calendar.mjs       checks for the calendar reader, and for the Calendar filters that take events
+                              off the screen (core/events.js)
       test-weather.mjs        checks for the weather reader and its pictures
       test-content.mjs        checks for the code that reads the editors' content, the photo
                               addresses, which photos show and in what order, the pages of
@@ -188,6 +192,9 @@ editors can sign in from anywhere.
                               kind of mistake
       test-night.mjs          checks for night mode: when it is night in a time zone, where the bouncing
                               logo starts and how often it hits a corner, and the night stylesheet
+      test-presentation.mjs   checks for presentation mode (core/presentation.js): when a talk is due, how it
+                              goes from the title card to the thanks card, which talks are skipped, and what
+                              each key of the clicker does
       test-effects.mjs        checks for when the logo animations, the name effect and the screen glitch may start
                               (frame.js), for choosing the page change style and the metal of the frames, and
                               for when a demo plays and what stops it (core/demo.js), and for when a hidden
@@ -199,6 +206,7 @@ editors can sign in from anywhere.
       test-templates.mjs      checks that the CSV templates match the schemas, and the CSV importer
       test-connection-script.mjs  checks for deploy/scripts/check-connection.sh, with fake tools
       test-slides-script.mjs  checks for deploy/scripts/slides-sync.sh and install-slides.sh, with fake tools
+      test-calendars-script.mjs  checks for deploy/scripts/check-calendars.sh, with a fake curl
       check-seasons.mjs       fails if a seasonal pack is not in the data format, has a piece outside its zone, too
                               many pieces, a forbidden word, no header mark, a mark bigger than its box (60 x 76),
                               fewer than 8 or more than 14 pieces over the panels, an over piece that is too big,
@@ -519,10 +527,12 @@ exception is `test-slides-script.mjs`, which needs `jq`.
     node tools/test-effects.mjs
     node tools/test-tick.mjs
     node tools/test-night.mjs
+    node tools/test-presentation.mjs
     node tools/test-templates.mjs
     node tools/test-publish-all.mjs
     node tools/test-connection-script.mjs
     node tools/test-slides-script.mjs
+    node tools/test-calendars-script.mjs
     node tools/check-themes.mjs
     node tools/check-seasons.mjs
     node studio/check-schemas.mjs

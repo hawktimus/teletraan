@@ -65,6 +65,17 @@ const contract = {
     status: 'string',
   },
   extraEvent: { title: text(30), startDate: 'date', endDate: 'date', startTime: 'time', endTime: 'time', location: text(24), show: 'boolean' },
+  calendarFilter: {
+    name: text(40),
+    action: 'string',
+    words: strings(30, 5),
+    days: { kind: 'weekdays', startsOn: 1 },
+    calendar: text(20),
+    fromDate: 'date',
+    toDate: 'date',
+    show: 'boolean',
+    expires: 'datetime',
+  },
   sponsor: withFlags({ name: text(19), tier: text(12), blurb: text(80), thankYou: text(54), logoAddress: 'url', order: 'number' }),
   tipOrNews: withFlags({ kind: 'string', text: text(52), order: 'number' }),
   subteam: withFlags({
@@ -176,6 +187,7 @@ const itemTypes = ['task', 'plan', 'sponsor', 'tipOrNews', 'subteam', 'person', 
 const choices = {
   'task.status': ['blocked', 'in-progress', 'up-next', 'done'],
   'tipOrNews.kind': ['tip', 'news', 'reminder'],
+  'calendarFilter.action': ['hide', 'show'],
   'presentation.subteam': ['Build', 'Programming', 'Design', 'Electrical', 'Outreach', 'Business', 'Other'],
   'presentation.status': ['scheduled', 'cancelled', 'done', 'skipped'],
   'person.role': ['Coach', 'Captain', 'Mentor'],
@@ -203,6 +215,7 @@ const listSort = {
   task: 'order',
   plan: 'date',
   extraEvent: 'startDate',
+  calendarFilter: 'name',
   sponsor: 'order',
   tipOrNews: 'order',
   subteam: 'order',
@@ -223,7 +236,7 @@ const pageTypes = ['dashboardSettings', 'theme', 'demo'];
 const notInSidebar = {};
 
 // The sidebar titles that people look for by name
-const sidebarTitles = { extraEvent: 'Events Calendar', place: 'Places', presentationDay: 'Meeting days' };
+const sidebarTitles = { extraEvent: 'Events Calendar', calendarFilter: 'Calendar filters', place: 'Places', presentationDay: 'Meeting days' };
 
 // The real 'sanity' and 'react' packages are not installed, so stand-ins with
 // the same function names sit next to a copy of the files that import them.
@@ -499,9 +512,12 @@ function checkWeekdays(field, want, say) {
   const member = field.of && field.of[0];
   if (field.type !== 'array' || !member || member.type !== 'number') return say('should be a list of numbers');
 
+  // the week starts on Sunday unless the contract says startsOn
+  const first = want.startsOn || 0;
+  const order = weekdayNames.map((name, index) => (index + first) % 7);
   const list = (field.options && field.options.list) || [];
-  const wanted = weekdayNames.map((name, index) => index + ':' + name);
-  if (list.map(item => item.value + ':' + item.title).join() !== wanted.join()) say('should be a checkbox list of 0 to 6 titled Sunday to Saturday');
+  const wanted = order.map(day => day + ':' + weekdayNames[day]);
+  if (list.map(item => item.value + ':' + item.title).join() !== wanted.join()) say('should be a checkbox list of 0 to 6 titled ' + weekdayNames[first] + ' to ' + weekdayNames[(first + 6) % 7]);
 }
 
 // A picture field: images only, with the crop and hotspot tools on, so an
@@ -1529,7 +1545,7 @@ function checkDashboardNames() {
   add(unknownKeys(world.dashboard.defaultDemo, fieldsIn(typeByName('demo')), 'defaultDemo in config.js'));
   add(unknownKeys(sample.demo || {}, fieldsIn(typeByName('demo')), 'sample demo'));
 
-  const lists = { tasks: 'task', sponsors: 'sponsor', tipsAndNews: 'tipOrNews', subteams: 'subteam', people: 'person', extraEvents: 'extraEvent', presentationDays: 'presentationDay', presentations: 'presentation' };
+  const lists = { tasks: 'task', sponsors: 'sponsor', tipsAndNews: 'tipOrNews', subteams: 'subteam', people: 'person', extraEvents: 'extraEvent', calendarFilters: 'calendarFilter', presentationDays: 'presentationDay', presentations: 'presentation' };
   Object.keys(lists).forEach(key => {
     // a talk has its Sanity id under the plain name id, the way the query sends it
     sample[key].forEach(item => add(unknownKeys(without(item, 'id'), fieldsIn(typeByName(lists[key])), 'sample ' + key)));
@@ -2423,6 +2439,138 @@ function checkPlainMessages(typeName, problems) {
   });
 }
 
+// Calendar filters: only the name is asked for in the fields. The action starts
+// on Hide, the days start from Monday, the calendar code has the pattern of the
+// calendars in Dashboard Settings, and the to date may not come before the from
+// date. The rule as a whole needs at least one of words, days, a calendar or a
+// date, which is a check on the document and not on a field.
+function checkCalendarFilters() {
+  const problems = [];
+  const at = name => fieldAt('calendarFilter.' + name);
+  const rulesOf = field => (field ? constraintsOf(field) : []);
+  const type = typeByName('calendarFilter');
+  if (!type) return ['calendarFilter is missing from schemas/index.js'];
+
+  need(problems, type.title === 'Calendar filters', 'the calendarFilter type should have the title Calendar filters');
+  const titles = { name: 'Rule name', action: 'Action', words: 'Title words', days: 'Days', calendar: 'Calendar', fromDate: 'From date', toDate: 'To date', show: 'Rule on', expires: 'Hide after' };
+  Object.keys(titles).forEach(name => need(problems, at(name) && at(name).title === titles[name], 'calendarFilter.' + name + ' should be titled ' + titles[name]));
+
+  need(problems, constraintNamed(rulesOf(at('name')), 'required'), 'calendarFilter.name should be required');
+  need(problems, at('name') && /screen/.test(at('name').description || ''), 'the calendarFilter.name description should say the name does not show on the screen');
+  ['words', 'days', 'calendar', 'fromDate', 'toDate', 'expires'].forEach(name => {
+    need(problems, at(name) && !constraintNamed(rulesOf(at(name)), 'required'), 'calendarFilter.' + name + ' should be optional');
+    need(problems, at(name) && /optional/i.test(at(name).description || ''), 'the calendarFilter.' + name + ' description should say it is optional');
+  });
+
+  // Hide or Always show, and Hide to start with
+  const action = at('action');
+  const allowed = action ? constraintNamed(rulesOf(action), 'valid') : null;
+  need(problems, action && action.options && action.options.layout === 'radio' && action.initialValue === 'hide', 'calendarFilter.action should be a radio list that starts as hide');
+  need(problems, constraintNamed(rulesOf(action), 'required'), 'calendarFilter.action should be required');
+  need(problems, allowed && allowed.args[0].join() === choices['calendarFilter.action'].join(), 'calendarFilter.action should only allow: ' + choices['calendarFilter.action'].join(', '));
+  need(problems, choicesOf('calendarFilter.action').map(item => item.title).join() === 'Hide,Always show', 'calendarFilter.action should be shown as Hide and Always show');
+
+  // A word of spaces is inside every title, so it is refused
+  const words = at('words');
+  const wordRules = words && words.of && words.of[0] ? constraintsOf(words.of[0]) : [];
+  const wordCheck = constraintNamed(wordRules, 'custom');
+  need(problems, constraintNamed(wordRules, 'required'), 'each calendarFilter word should be required, so a line cannot be left empty');
+  if (!wordCheck) {
+    problems.push('calendarFilter.words should refuse a word that is only spaces');
+  } else {
+    ['Pre-Season', 'kickoff', 'a'].forEach(good => need(problems, wordCheck.args[0](good) === true, 'the word check refuses "' + good + '"'));
+    ['', '   '].forEach(bad => need(problems, typeof wordCheck.args[0](bad) === 'string', 'the word check accepts "' + bad + '"'));
+  }
+
+  const days = at('days');
+  need(problems, days && days.initialValue === undefined, 'calendarFilter.days should start with no day ticked');
+
+  // The same pattern as the calendar codes in Dashboard Settings, so a code that is typed here can match
+  const code = constraintNamed(rulesOf(at('calendar')), 'regex');
+  const settingsCode = constraintNamed(rulesOf(fieldAt('dashboardSettings.calendars.id')), 'regex');
+  if (!code || !settingsCode) {
+    problems.push('calendarFilter.calendar should be checked with the code pattern of the calendars in Dashboard Settings');
+  } else {
+    need(problems, code.args[0].source === settingsCode.args[0].source, 'calendarFilter.calendar should use the same code pattern as the calendars in Dashboard Settings');
+    ['team', 'group', 'build_season'].forEach(good => need(problems, code.args[0].test(good), 'the calendar code pattern refuses ' + good));
+    ['Team', 'build-season', 'build season', 'team.ics', ''].forEach(bad => need(problems, !code.args[0].test(bad), 'the calendar code pattern accepts "' + bad + '"'));
+  }
+  const where = at('calendar') ? at('calendar').description || '' : '';
+  need(problems, /Dashboard Settings/.test(where) && /Calendars/.test(where), 'the calendarFilter.calendar description should point to Calendars in Dashboard Settings');
+  need(problems, /every calendar/i.test(where), 'the calendarFilter.calendar description should say that empty means every calendar');
+
+  // Both dates are limited to 2020 to 2099, like the dates in the Theme schedule
+  ['fromDate', 'toDate'].forEach(name => {
+    const rules = rulesOf(at(name));
+    const low = constraintNamed(rules, 'min');
+    const high = constraintNamed(rules, 'max');
+    need(problems, at(name) && at(name).type === 'date', 'calendarFilter.' + name + ' should be a date');
+    need(problems, low && high && low.args[0] === '2020-01-01' && high.args[0] === '2099-12-31', 'calendarFilter.' + name + ' should allow 2020-01-01 to 2099-12-31');
+  });
+
+  // The to date is not before the from date, and either may be empty
+  const toDate = constraintNamed(rulesOf(at('toDate')), 'custom');
+  if (!toDate) {
+    problems.push('calendarFilter.toDate should be checked so that it is not before the from date');
+  } else {
+    const run = (value, from) => toDate.args[0](value, { document: { fromDate: from } });
+    need(problems, typeof run('2027-04-01', '2027-04-02') === 'string', 'a to date before the from date should be refused');
+    need(problems, run('2027-04-02', '2027-04-02') === true && run('2027-04-04', '2027-04-02') === true, 'a to date on or after the from date should be accepted');
+    need(problems, run(undefined, '2027-04-02') === true && run('2027-04-04', undefined) === true, 'an empty to date, or a to date with no from date, should be accepted');
+  }
+
+  const show = at('show');
+  need(problems, show && show.type === 'boolean' && show.initialValue === true, 'calendarFilter.show should be a switch that starts on');
+  need(problems, at('expires') && at('expires').type === 'datetime', 'calendarFilter.expires should be a datetime');
+
+  // The rule as a whole needs at least one condition, or it would match every event
+  const whole = constraintNamed(constraintsOf(type), 'custom');
+  if (!whole) {
+    problems.push('calendarFilter should be checked as a whole: a rule needs at least one of words, days, a calendar or a date');
+  } else {
+    const run = rule => whole.args[0](rule);
+    [
+      ['a word', { words: ['Pre-Season'] }],
+      ['a day', { days: [1] }],
+      ['Sunday, which is day 0', { days: [0] }],
+      ['a calendar', { calendar: 'group' }],
+      ['a from date', { fromDate: '2027-01-01' }],
+      ['a to date', { toDate: '2027-01-01' }],
+      ['a word and a day', { words: ['Pre-Season'], days: [1, 4] }],
+    ].forEach(entry => need(problems, run(entry[1]) === true, 'a rule with ' + entry[0] + ' should be accepted'));
+    [
+      ['nothing', {}],
+      ['a name and an action only', { name: '[Rule]', action: 'hide' }],
+      ['empty lists', { words: [], days: [] }],
+      ['words that are only spaces', { words: ['  '] }],
+      ['a calendar of spaces', { calendar: '  ' }],
+      ['an empty calendar', { calendar: '' }],
+    ].forEach(entry => need(problems, typeof run(entry[1]) === 'string', 'a rule with ' + entry[0] + ' should be refused'));
+    need(problems, /at least one/.test(run({})), 'the message for a rule with no condition should say that at least one is needed');
+    need(problems, run(undefined) === true, 'a missing document is left to the other checks');
+  }
+
+  need(problems, (type.orderings || []).some(item => item.by && item.by[0].field === 'name' && item.by[0].direction === 'asc'), 'calendarFilter needs an ordering by name, A to Z');
+  checkPlainMessages('calendarFilter', problems);
+
+  // The list line: the name, then Off or Expired, the action and each condition the rule has
+  const line = fields => type.preview.prepare(Object.assign({ title: '[Rule]' }, fields));
+  [
+    [line({ action: 'hide', words: ['Pre-Season'], days: [4, 1] }).subtitle, 'Hide · Pre-Season · Mon, Thu'],
+    [line({ action: 'show', words: ['Kickoff'] }).subtitle, 'Always show · Kickoff'],
+    [line({ action: 'hide', words: ['Pre-Season', 'Practice'], days: [4, 1], calendar: 'group', from: '2027-01-01', to: '2027-02-01' }).subtitle, 'Hide · Pre-Season or Practice · Mon, Thu · group · 2027-01-01 to 2027-02-01'],
+    [line({ action: 'hide', days: [0, 6] }).subtitle, 'Hide · Sat, Sun'],
+    [line({ action: 'hide', from: '2027-01-01' }).subtitle, 'Hide · from 2027-01-01'],
+    [line({ action: 'hide', to: '2027-02-01' }).subtitle, 'Hide · until 2027-02-01'],
+    [line({ action: 'hide', words: ['', 'Kickoff'] }).subtitle, 'Hide · Kickoff'],
+    [line({ action: 'hide', words: ['Pre-Season'], show: false }).subtitle, 'Off · Hide · Pre-Season'],
+    [line({ action: 'hide', words: ['Pre-Season'], expires: '2000-01-01T00:00:00.000Z' }).subtitle, 'Expired · Hide · Pre-Season'],
+    [line({ action: 'hide', words: ['Pre-Season'], expires: '2999-01-01T00:00:00.000Z' }).subtitle, 'Hide · Pre-Season'],
+    [type.preview.prepare({}).title, 'Rule with no name'],
+  ].forEach(entry => need(problems, entry[0] === entry[1], 'the calendar filter list should read "' + entry[1] + '", it reads "' + entry[0] + '"'));
+  return problems;
+}
+
 // Meeting days: the first and last talk are needed, the length of a talk and the
 // time booking closes have a starting value and a range, and the list reads each
 // day on one line. The last talk is checked against the first in
@@ -2780,6 +2928,7 @@ async function main() {
   check('the demo screens in studio/demo-screens.js are the ones in the dashboard registry', checkDemoScreens);
   check('the Demo page agrees with dashboard/config.js, and Run demo and Stop demo do what they say', checkDemo);
   check('an Events Calendar entry needs a title and a start date, and the seed file can be imported', checkExtraEvents);
+  check('a calendar filter has a name, an action, title words, days, a calendar and dates, and needs at least one of them', checkCalendarFilters);
   check('a place has a name and a switch, a task has an optional contact and place, and the places seed file can be imported', checkPlaces);
   results.push({ name: 'two places cannot have the same name, capitals ignored', problems: await checkPlaceNames().catch(error => ['the check stopped: ' + error.message]) });
   check('the Presentations tab agrees with dashboard/config.js', checkPresentationsTab);

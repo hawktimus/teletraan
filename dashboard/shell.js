@@ -187,12 +187,13 @@ function setBase(newBase, newStatus) {
   if (switched) showPagesNow();
 }
 
-// The BAND events and the Events Calendar entries from the Studio as one list.
-// If merging fails the BAND events are shown as they are, so a bad entry never
-// takes the Events panel away.
+// The BAND events and the Events Calendar entries from the Studio as one list,
+// with the Calendar filters applied to the BAND events. If merging fails the
+// BAND events are shown as they are, so a bad entry never takes the Events
+// panel away.
 function mergedEvents() {
   try {
-    return mergeEvents(extras.events, base.extraEvents, base.theme.timeZone);
+    return mergeEvents(extras.events, base.extraEvents, base.theme.timeZone, new Date(), base.calendarFilters);
   } catch (error) {
     console.error('Could not merge the Events Calendar entries with the calendar events', error);
     return extras.events || [];
