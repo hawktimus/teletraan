@@ -32,6 +32,7 @@ let asked = { theme: null, overlay: null }; // ?theme= and ?overlay= in the addr
 let showing = { theme: '', overlay: '' }; // what the classes on the page say now
 let waiting = null; // { look, since }: a look that is not on screen yet
 let followLook = null; // called with the look each time it goes on the page. shell.js gives it, to show the overlay's decorations
+let holdLook = null; // asked before a look goes on the page: true means not now. shell.js gives it, for a theme with another layout (core/layout-apply.js)
 
 // The one stylesheet index.html links itself is hawktimus.css, because the
 // screen needs it before anything is drawn. Every other theme and overlay is
@@ -81,6 +82,16 @@ function wantedLook() {
 // The old theme class and overlay class go and the new ones come in one step,
 // so the screen is never drawn with half of each
 function applyLook(look) {
+  // A theme with another layout cannot go on by changing variables. The page
+  // reloads to change layout, so this look is not put on this page.
+  if (holdLook) {
+    try {
+      if (holdLook(look)) return;
+    } catch (error) {
+      console.error('Could not check the layout of the theme', error);
+    }
+  }
+
   Array.prototype.slice.call(page.classList)
     .filter(name => /^(theme|overlay)-/.test(name))
     .forEach(name => page.classList.remove(name));
@@ -129,6 +140,13 @@ export function showThemeNow() {
 // look is waiting, this is when it goes on.
 export function changeThemeNow() {
   if (waiting) showThemeNow();
+}
+
+// Gives the function that is asked before a look goes on the page. It is called
+// with { theme, overlay } and answers true to keep the look off the page for now.
+// shell.js gives it, call this before startThemes().
+export function holdLooksFor(hold) {
+  holdLook = typeof hold === 'function' ? hold : null;
 }
 
 // getContent() gives the newest content. address is { theme, overlay } from

@@ -1,0 +1,424 @@
+/* The Neon Prime kit: the moving neon of the sidebar layout, in one file. It is
+   one of the three places where something moves (frame.css, seasons/motion.css
+   and this file), and the only place for the kit's keyframes. tools/check-themes.mjs
+   fails for a keyframe that is anywhere else, and for one in this file that
+   animates anything but transform, opacity and stroke-dashoffset. docs/layouts.md,
+   "The kit", has the table of the effects and how to add one.
+
+   The shapes (lines, rows of ticks, brackets, bars) are drawn here as flat
+   colours and thin strokes, with no glow, blur or shadow. They sit in the few
+   empty elements that core/layout-apply.js adds to the four blocks (core/layout.js,
+   kitMarkup), so that they fly apart with the blocks in a hidden transition.
+   They are drawn at rest in every motion setting. Everything that moves is
+   below "Playing", and every rule there starts with html[data-kit="on"]
+   [data-motion="full"]. frame.js sets data-kit (setKit and showKit), and takes it
+   off while the night screen, an alert, an announcement or a hidden transition
+   has the screen, so the kit costs nothing then. Calm and none motion never
+   play any of it.
+
+   The effects, with where each is and what moves:
+     name glitch    the team name in the top strip. frame.js adds .glitching to it
+                    now and then, and its letters' three spare pieces become a
+                    cyan copy, a magenta copy and a sliced band that jump in steps
+     data packets   a bright dash races along the line under the strip, the line
+                    on the right of the sidebar and the line above the ticker
+     scan sweep     a thin bright line sweeps down the large frame, and a slower one
+                    down the sidebar
+     neon flicker   the bright parts of the sidebar's line and of the ticker's
+                    line stutter like a faulty tube
+     hud brackets   four corner brackets round the large frame breathe in and out
+     tick chase     a group of lit ticks travels along the row of ticks under the strip
+     page burst     bars of glitch cross the large frame when a new page arrives
+
+   Times are multiplied by --pace like every other time, and none of the times
+   match, so the kit never falls into a loop. A negative delay starts a part
+   some way in. */
+
+
+/* The colours. The cyan and the magenta (--neon-cyan and --neon-magenta) are the
+   theme's own, in themes/decor/neon-prime-decor.css. There is no green here
+   (tools/check-themes.mjs reads this file too). */
+html.theme-neon-prime {
+  --kit-dim: #17808f; /* a dull cyan: a line at rest, the tail of a packet */
+  --kit-pale: #d9fbff; /* the head of a packet and the sweeping line */
+}
+
+.kit {
+  display: none;
+  position: absolute;
+  pointer-events: none;
+}
+html.theme-neon-prime[data-layout="sidebar"] .kit { display: block; }
+
+
+/* The name glitch. Each letter of the name has its whole self and three empty
+   pieces that draw the same letter (core/name.js, and the name effect in
+   frame.css). While .glitching is on the name, the first piece is a whole
+   cyan copy, the third a whole magenta one, and the middle one a band of the
+   letter, in the colour of the name. The copies are behind the letter, so the
+   name is always there to read. */
+html.theme-neon-prime[data-layout="sidebar"] .side-name .letter { isolation: isolate; }
+html.theme-neon-prime[data-layout="sidebar"] .side-name .whole {
+  position: relative;
+  z-index: 1;
+}
+html.theme-neon-prime[data-layout="sidebar"] .side-name.glitching .cut-1 {
+  clip-path: none;
+  color: var(--neon-cyan);
+}
+html.theme-neon-prime[data-layout="sidebar"] .side-name.glitching .cut-3 {
+  clip-path: none;
+  color: var(--neon-magenta);
+}
+html.theme-neon-prime[data-layout="sidebar"] .side-name.glitching .cut-2 {
+  z-index: 2;
+  clip-path: polygon(-10% 28%, 110% 28%, 110% 44%, -10% 44%);
+}
+html.theme-neon-prime[data-layout="sidebar"] .side-name.glitching .letter:nth-child(3n+2) .cut-2 { clip-path: polygon(-10% 52%, 110% 52%, 110% 66%, -10% 66%); }
+html.theme-neon-prime[data-layout="sidebar"] .side-name.glitching .letter:nth-child(3n) .cut-2 { clip-path: polygon(-10% 70%, 110% 70%, 110% 82%, -10% 82%); }
+
+
+/* The line under the strip, in the 20 px gap between the strip and the row under
+   it (14 px high, 3 px from each side): a dim line with a row of ticks above it
+   and a bright part at each end, a lit group of ticks that travels along the row
+   (::before) and a packet that races along the line (::after). Everything is
+   clipped to the line, and at rest the lit ticks and the packet wait out of
+   sight. The ticks are 16 px apart, and the lit group moves 16 px at a time, so it
+   always lands on the ticks under it. */
+html.theme-neon-prime[data-layout="sidebar"] .kit-strip {
+  --kit-run: calc(var(--strip-width) + 160px);
+  left: 0;
+  top: calc(var(--strip-height) + 3px);
+  width: 100%;
+  height: 14px;
+  overflow: hidden;
+  background:
+    linear-gradient(var(--neon-cyan), var(--neon-cyan)) 0 8px / 260px 4px no-repeat,
+    linear-gradient(var(--neon-cyan), var(--neon-cyan)) 100% 8px / 340px 4px no-repeat,
+    repeating-linear-gradient(90deg, var(--kit-dim) 0, var(--kit-dim) 3px, transparent 3px, transparent 16px) 0 0 / 100% 6px no-repeat,
+    linear-gradient(var(--kit-dim), var(--kit-dim)) 0 8px / 100% 4px no-repeat;
+}
+html.theme-neon-prime[data-layout="sidebar"] .kit-strip::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 192px;
+  height: 6px;
+  transform: translateX(-192px);
+  background:
+    repeating-linear-gradient(90deg, var(--kit-pale) 0, var(--kit-pale) 3px, transparent 3px, transparent 16px) 144px 0 / 48px 6px no-repeat,
+    repeating-linear-gradient(90deg, var(--neon-cyan) 0, var(--neon-cyan) 3px, transparent 3px, transparent 16px) 80px 0 / 64px 6px no-repeat,
+    repeating-linear-gradient(90deg, var(--kit-dim) 0, var(--kit-dim) 3px, transparent 3px, transparent 16px) 0 0 / 80px 6px no-repeat;
+}
+html.theme-neon-prime[data-layout="sidebar"] .kit-strip::after,
+html.theme-neon-prime[data-layout="sidebar"] .kit-ticker::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  width: 160px;
+  height: 8px;
+}
+html.theme-neon-prime[data-layout="sidebar"] .kit-strip::after {
+  left: 0;
+  transform: translateX(-160px);
+  background: linear-gradient(90deg, var(--kit-dim) 0, var(--kit-dim) 70px, var(--neon-cyan) 70px, var(--neon-cyan) 132px, var(--kit-pale) 132px, var(--kit-pale) 160px);
+}
+
+
+/* The line on the right of the sidebar, in the 32 px gap between the sidebar and
+   the pane: the same, standing up. Its bright parts (::before) flicker, and its
+   packet (::after) runs down it. */
+html.theme-neon-prime[data-layout="sidebar"] .kit-side {
+  --kit-run: calc(var(--sidebar-height) + 160px);
+  left: calc(var(--sidebar-width) + 9px);
+  top: 0;
+  width: 14px;
+  height: 100%;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(180deg, var(--kit-dim) 0, var(--kit-dim) 3px, transparent 3px, transparent 16px) 0 0 / 6px 100% no-repeat,
+    linear-gradient(var(--kit-dim), var(--kit-dim)) 8px 0 / 4px 100% no-repeat;
+}
+html.theme-neon-prime[data-layout="sidebar"] .kit-side::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    linear-gradient(var(--neon-cyan), var(--neon-cyan)) 8px 36px / 4px 150px no-repeat,
+    linear-gradient(var(--neon-cyan), var(--neon-cyan)) 8px 330px / 4px 70px no-repeat,
+    linear-gradient(var(--neon-cyan), var(--neon-cyan)) 8px 560px / 4px 180px no-repeat;
+}
+html.theme-neon-prime[data-layout="sidebar"] .kit-side::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 0;
+  width: 8px;
+  height: 160px;
+  transform: translateY(-160px);
+  background: linear-gradient(180deg, var(--kit-dim) 0, var(--kit-dim) 70px, var(--neon-cyan) 70px, var(--neon-cyan) 132px, var(--kit-pale) 132px, var(--kit-pale) 160px);
+}
+
+
+/* The line above the ticker, in the 20 px gap between the row and the ticker. Its
+   bright parts (::before) flicker and its packet (::after) runs the other way,
+   from the right. */
+html.theme-neon-prime[data-layout="sidebar"] .kit-ticker {
+  --kit-run: calc(var(--ticker-width) + 160px);
+  left: 0;
+  top: -17px;
+  width: 100%;
+  height: 14px;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(90deg, var(--kit-dim) 0, var(--kit-dim) 3px, transparent 3px, transparent 16px) 0 0 / 100% 6px no-repeat,
+    linear-gradient(var(--kit-dim), var(--kit-dim)) 0 8px / 100% 4px no-repeat;
+}
+html.theme-neon-prime[data-layout="sidebar"] .kit-ticker::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    linear-gradient(var(--neon-cyan), var(--neon-cyan)) 0 8px / 330px 4px no-repeat,
+    linear-gradient(var(--neon-cyan), var(--neon-cyan)) 560px 8px / 140px 4px no-repeat,
+    linear-gradient(var(--neon-cyan), var(--neon-cyan)) 1420px 8px / 420px 4px no-repeat;
+}
+html.theme-neon-prime[data-layout="sidebar"] .kit-ticker::after {
+  right: 0;
+  transform: translateX(160px);
+  background: linear-gradient(90deg, var(--kit-pale) 0, var(--kit-pale) 28px, var(--neon-cyan) 28px, var(--neon-cyan) 90px, var(--kit-dim) 90px, var(--kit-dim) 160px);
+}
+
+
+/* The sweeping line of the sidebar (and below, of the large frame): a layer as
+   big as the column, clipped to it, with a thin bright line (::before) that waits
+   above the top at rest, out of sight. The line is 4 px with a faint 1 px line
+   under it, and a flat tint of 36 px behind it, thin enough to never hide a word. */
+html.theme-neon-prime[data-layout="sidebar"] .kit-scan,
+html.theme-neon-prime[data-layout="sidebar"] .kit-pane {
+  overflow: hidden;
+}
+html.theme-neon-prime[data-layout="sidebar"] .kit-scan {
+  --kit-sweep: var(--sidebar-height);
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+html.theme-neon-prime[data-layout="sidebar"] .kit-scan::before,
+html.theme-neon-prime[data-layout="sidebar"] .kit-pane::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: -52px;
+  width: 100%;
+  height: 52px;
+  opacity: 0;
+  background:
+    linear-gradient(var(--kit-pale), var(--kit-pale)) 0 36px / 100% 4px no-repeat,
+    linear-gradient(var(--neon-cyan), var(--neon-cyan)) 0 46px / 100% 1px no-repeat,
+    linear-gradient(rgba(45, 230, 255, .14), rgba(45, 230, 255, .14)) 0 0 / 100% 36px no-repeat;
+}
+
+
+/* The large frame's layer: the body of the frame, below its header (the frame is
+   drawn for 1152 by 708 and scaled by --pane-scale, so the numbers are those of the
+   frame times the scale: 18 from the left, 124 from the top, 1116 by 510, which is
+   above the cut corner at the bottom right), clipped to it, so the sweeping line
+   (::before) and the bars of the page burst stay off the metal, the header and the
+   cut corners. The four bars wait at rest with no opacity. */
+html.theme-neon-prime[data-layout="sidebar"] .kit-pane {
+  --kit-sweep: calc(510px * var(--pane-scale));
+  left: calc(18px * var(--pane-scale));
+  top: calc(124px * var(--pane-scale));
+  width: calc(1116px * var(--pane-scale));
+  height: calc(510px * var(--pane-scale));
+  z-index: 5; /* above the frame, which is added to the region after this layer */
+}
+html.theme-neon-prime[data-layout="sidebar"] .kit-pane i {
+  position: absolute;
+  opacity: 0;
+}
+html.theme-neon-prime[data-layout="sidebar"] .kit-pane i:nth-child(1) { left: 4%;  top: 12%; width: 52%; height: 16px; background: var(--neon-cyan);    --kit-jump: 240px; }
+html.theme-neon-prime[data-layout="sidebar"] .kit-pane i:nth-child(2) { left: 30%; top: 37%; width: 60%; height: 10px; background: var(--neon-magenta); --kit-jump: -360px; }
+html.theme-neon-prime[data-layout="sidebar"] .kit-pane i:nth-child(3) { left: 10%; top: 60%; width: 44%; height: 20px; background: var(--kit-pale);     --kit-jump: 180px; }
+html.theme-neon-prime[data-layout="sidebar"] .kit-pane i:nth-child(4) { left: 38%; top: 82%; width: 50%; height: 12px; background: var(--neon-cyan);    --kit-jump: -200px; }
+
+
+/* The brackets: four corner brackets round the large frame, in the free space at
+   its two sides, drawn as the corners of one box the size of the pane's space
+   (the row between the strip and the ticker, to the right of the sidebar, less
+   6 px each side). The box breathes, so each corner moves a few pixels. */
+html.theme-neon-prime[data-layout="sidebar"] .kit-brackets {
+  left: calc(var(--sidebar-x) + var(--sidebar-width) + 32px + 6px - var(--pane-x));
+  top: calc(var(--sidebar-y) + 6px - var(--pane-y));
+  width: calc(var(--strip-x) + var(--strip-width) - var(--sidebar-x) - var(--sidebar-width) - 32px - 12px);
+  height: calc(var(--sidebar-height) - 12px);
+  background:
+    linear-gradient(var(--neon-cyan), var(--neon-cyan)) 0 0 / 64px 5px no-repeat,
+    linear-gradient(var(--neon-cyan), var(--neon-cyan)) 0 0 / 5px 64px no-repeat,
+    linear-gradient(var(--neon-magenta), var(--neon-magenta)) 100% 0 / 64px 5px no-repeat,
+    linear-gradient(var(--neon-magenta), var(--neon-magenta)) 100% 0 / 5px 64px no-repeat,
+    linear-gradient(var(--neon-magenta), var(--neon-magenta)) 0 100% / 64px 5px no-repeat,
+    linear-gradient(var(--neon-magenta), var(--neon-magenta)) 0 100% / 5px 64px no-repeat,
+    linear-gradient(var(--neon-cyan), var(--neon-cyan)) 100% 100% / 64px 5px no-repeat,
+    linear-gradient(var(--neon-cyan), var(--neon-cyan)) 100% 100% / 5px 64px no-repeat;
+}
+
+
+/* Playing. Every rule from here on starts with html[data-kit="on"]
+   [data-motion="full"]: frame.js sets data-kit while the kit may move. */
+
+/* The name glitch lasts .4 s (kitGlitchSeconds in frame.js). The letters do not
+   start together, so the glitch ripples along the name. */
+html[data-kit="on"][data-motion="full"] .side-name.glitching .cut-1 { animation: kit-glitch-left calc(.4s * var(--pace)) steps(1) both; }
+html[data-kit="on"][data-motion="full"] .side-name.glitching .cut-3 { animation: kit-glitch-right calc(.4s * var(--pace)) steps(1) both; }
+html[data-kit="on"][data-motion="full"] .side-name.glitching .cut-2 { animation: kit-glitch-slice calc(.4s * var(--pace)) steps(1) both; }
+html[data-kit="on"][data-motion="full"] .side-name.glitching .letter:nth-child(3n+2) .cut { animation-delay: calc(40ms * var(--pace)); }
+html[data-kit="on"][data-motion="full"] .side-name.glitching .letter:nth-child(3n) .cut { animation-delay: calc(80ms * var(--pace)); }
+
+/* The packets, one on each line, each at its own speed. They race for a part of
+   each round and rest out of sight for the rest of it. */
+html[data-kit="on"][data-motion="full"] .kit-strip::after   { animation: kit-run-right calc(8.6s * var(--pace)) linear calc(-2.4s * var(--pace)) infinite; }
+html[data-kit="on"][data-motion="full"] .kit-side::after    { animation: kit-run-down calc(7.2s * var(--pace)) linear calc(-4.5s * var(--pace)) infinite; }
+html[data-kit="on"][data-motion="full"] .kit-ticker::after  { animation: kit-run-left calc(11.3s * var(--pace)) linear calc(-7s * var(--pace)) infinite; }
+
+/* The lit ticks: 127 steps of 16 px along the row of ticks */
+html[data-kit="on"][data-motion="full"] .kit-strip::before  { animation: kit-tick-chase calc(9.4s * var(--pace)) steps(127, end) calc(-3.1s * var(--pace)) infinite; }
+
+/* The sweeping lines: the large frame's every 10.7 s, the sidebar's every 17 s */
+html[data-kit="on"][data-motion="full"] .kit-pane::before   { animation: kit-sweep calc(10.7s * var(--pace)) linear calc(-2s * var(--pace)) infinite; }
+html[data-kit="on"][data-motion="full"] .kit-scan::before   { animation: kit-sweep calc(17s * var(--pace)) linear calc(-9s * var(--pace)) infinite; }
+
+/* The flicker: two lines, two patterns, two lengths */
+html[data-kit="on"][data-motion="full"] .kit-ticker::before { animation: kit-flicker-a calc(13s * var(--pace)) steps(1) calc(-5s * var(--pace)) infinite; }
+html[data-kit="on"][data-motion="full"] .kit-side::before   { animation: kit-flicker-b calc(19s * var(--pace)) steps(1) calc(-6s * var(--pace)) infinite; }
+
+/* The brackets breathe, there and back */
+html[data-kit="on"][data-motion="full"] .kit-brackets       { animation: kit-breathe calc(5.6s * var(--pace)) ease-in-out calc(-1.7s * var(--pace)) infinite alternate; }
+
+/* The page burst lasts .3 s (kitBurstSeconds in frame.js). frame.js adds .bursting
+   to the layer while it plays. The bars start a little apart. */
+html[data-kit="on"][data-motion="full"] .kit-pane.bursting i { animation: kit-burst calc(.3s * var(--pace)) steps(1) both; }
+html[data-kit="on"][data-motion="full"] .kit-pane.bursting i:nth-child(2) { animation-delay: calc(30ms * var(--pace)); }
+html[data-kit="on"][data-motion="full"] .kit-pane.bursting i:nth-child(3) { animation-delay: calc(15ms * var(--pace)); }
+html[data-kit="on"][data-motion="full"] .kit-pane.bursting i:nth-child(4) { animation-delay: calc(50ms * var(--pace)); }
+
+
+/* The keyframes. Only transform and opacity change, and steps(1) in a rule
+   makes each step a jump. */
+
+/* the cyan copy of a letter, jumping left in steps */
+@keyframes kit-glitch-left {
+  0%   { transform: translateX(0); opacity: 0; }
+  8%   { transform: translateX(-8px); opacity: 1; }
+  24%  { transform: translateX(-3px); }
+  38%  { transform: translateX(-11px); }
+  50%  { transform: translateX(0); opacity: 0; }
+  58%  { transform: translateX(-6px); opacity: 1; }
+  76%  { transform: translateX(-12px); }
+  90%  { transform: translateX(-2px); }
+  100% { transform: translateX(0); opacity: 0; }
+}
+
+/* the magenta copy, jumping right at other moments */
+@keyframes kit-glitch-right {
+  0%   { transform: translateX(0); opacity: 0; }
+  8%   { transform: translateX(8px); opacity: 1; }
+  20%  { transform: translateX(12px); }
+  36%  { transform: translateX(3px); }
+  48%  { transform: translateX(0); opacity: 0; }
+  60%  { transform: translateX(9px); opacity: 1; }
+  72%  { transform: translateX(4px); }
+  88%  { transform: translateX(13px); }
+  100% { transform: translateX(0); opacity: 0; }
+}
+
+/* the sliced band of the letter, jumping sideways further than the copies */
+@keyframes kit-glitch-slice {
+  0%   { transform: translateX(0); opacity: 0; }
+  12%  { transform: translateX(22px); opacity: 1; }
+  26%  { transform: translateX(-16px); }
+  40%  { transform: translateX(0); opacity: 0; }
+  52%  { transform: translateX(-20px); opacity: 1; }
+  66%  { transform: translateX(12px); }
+  80%  { transform: translateX(22px); }
+  92%  { transform: translateX(0); opacity: 0; }
+  100% { transform: translateX(0); opacity: 0; }
+}
+
+/* a packet racing along a line, then resting out of sight until the round is over */
+@keyframes kit-run-right {
+  0%       { transform: translateX(-160px); }
+  27%, 100% { transform: translateX(var(--kit-run)); }
+}
+@keyframes kit-run-left {
+  0%       { transform: translateX(160px); }
+  22%, 100% { transform: translateX(calc(var(--kit-run) * -1)); }
+}
+@keyframes kit-run-down {
+  0%       { transform: translateY(-160px); }
+  30%, 100% { transform: translateY(var(--kit-run)); }
+}
+
+/* a group of lit ticks stepping along the row of ticks, 16 px at a time */
+@keyframes kit-tick-chase {
+  0%        { transform: translateX(-192px); }
+  55%, 100% { transform: translateX(1840px); }
+}
+
+/* a thin line sweeping down its layer, then waiting */
+@keyframes kit-sweep {
+  0%        { transform: translateY(0); opacity: 0; }
+  3%        { opacity: .8; }
+  40%       { transform: translateY(calc(var(--kit-sweep) + 52px)); opacity: .8; }
+  43%, 100% { transform: translateY(calc(var(--kit-sweep) + 52px)); opacity: 0; }
+}
+
+/* a tube that stutters: mostly lit, and now and then two or three quick dips */
+@keyframes kit-flicker-a {
+  0%, 38%     { opacity: 1; }
+  39%         { opacity: .15; }
+  40%         { opacity: 1; }
+  41%         { opacity: .35; }
+  42%, 70%    { opacity: 1; }
+  71%         { opacity: 0; }
+  72.5%       { opacity: 1; }
+  73.5%       { opacity: .2; }
+  74.5%, 100% { opacity: 1; }
+}
+@keyframes kit-flicker-b {
+  0%, 12%     { opacity: 1; }
+  13%         { opacity: .3; }
+  14.5%       { opacity: 1; }
+  15.5%       { opacity: 0; }
+  16.5%, 55%  { opacity: 1; }
+  56%         { opacity: .25; }
+  57%         { opacity: .8; }
+  58%         { opacity: .1; }
+  59%, 100%   { opacity: 1; }
+}
+
+/* the brackets move in and out a few pixels (the box is 1.4 percent bigger at most) */
+@keyframes kit-breathe {
+  from { transform: scale(.99); }
+  to   { transform: scale(1.004); }
+}
+
+/* a bar of the page burst jumping sideways by its own --kit-jump */
+@keyframes kit-burst {
+  0%   { transform: translateX(0); opacity: 0; }
+  10%  { transform: translateX(var(--kit-jump)); opacity: .9; }
+  35%  { transform: translateX(calc(var(--kit-jump) * -.5)); opacity: .9; }
+  55%  { transform: translateX(calc(var(--kit-jump) * .3)); opacity: 0; }
+  70%  { transform: translateX(calc(var(--kit-jump) * -1)); opacity: .7; }
+  88%  { transform: translateX(0); opacity: 0; }
+  100% { transform: translateX(0); opacity: 0; }
+}

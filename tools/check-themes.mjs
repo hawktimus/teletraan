@@ -6,6 +6,12 @@
 //   - a registry entry has no file, or a file has no registry entry
 //   - any text and background pair on the screen is under 7:1 contrast, for
 //     any theme, alone and with any overlay on top of it
+//   - Neon Prime's three files (its colours, its decor and its kit) write a
+//     green: any colour with a hue from 65 to 175 degrees that is not a grey
+//   - a keyframe is anywhere but frame.css, seasons/motion.css or neon-kit.css,
+//     or neon-kit.css animates anything but transform, opacity and
+//     stroke-dashoffset, uses a filter, blur, glow, shadow or blend mode, or
+//     plays an animation outside full motion and the kit being on
 //
 //   node tools/check-themes.mjs
 //
@@ -311,6 +317,234 @@ function checkPairsExist() {
   return problems;
 }
 
+// Neon Prime has no green. It is dark purple and gunmetal with cyan, magenta and
+// amber, and the owner asked for the green to go. A colour written in any of
+// these three files, as #hex, rgb(), rgba(), hsl(), hsla() or a colour word, fails
+// when its hue is in this range (yellow green, through green, to teal green) and
+// it is not a grey. The seasonal packs are not these files: a pack recolours
+// the accent on purpose, and Christmas is green.
+const noGreenFiles = ['themes/neon-prime.css', 'themes/decor/neon-prime-decor.css', 'neon-kit.css'];
+const greenFrom = 65;
+const greenTo = 175;
+
+// A grey, or so nearly one that it has no hue to speak of: under 15 percent
+// saturation, or all three channels within 15 of each other (nearly black or white)
+const greyBelowSaturation = 0.15;
+const greyChannelSpread = 15;
+
+// The colour words that are greens. The other colour words are not checked.
+const greenWords = [
+  'green', 'lime', 'limegreen', 'lawngreen', 'chartreuse', 'greenyellow', 'yellowgreen',
+  'springgreen', 'mediumspringgreen', 'lightgreen', 'palegreen', 'darkgreen', 'forestgreen',
+  'seagreen', 'mediumseagreen', 'darkseagreen', 'olivedrab', 'darkolivegreen',
+  'aquamarine', 'mediumaquamarine',
+];
+
+// Hue in degrees (0 to 360) and saturation (0 to 1) of { r, g, b }, as HSL defines them
+function hueAndSaturation(color) {
+  const red = color.r / 255;
+  const green = color.g / 255;
+  const blue = color.b / 255;
+  const top = Math.max(red, green, blue);
+  const bottom = Math.min(red, green, blue);
+  const spread = top - bottom;
+  const lightness = (top + bottom) / 2;
+  if (spread === 0) return { hue: 0, saturation: 0 };
+
+  const saturation = lightness > 0.5 ? spread / (2 - top - bottom) : spread / (top + bottom);
+  let hue;
+  if (top === red) hue = (green - blue) / spread + (green < blue ? 6 : 0);
+  else if (top === green) hue = (blue - red) / spread + 2;
+  else hue = (red - green) / spread + 4;
+  return { hue: hue * 60, saturation: saturation };
+}
+
+// The standard conversion from hsl() to red, green and blue (0 to 255)
+function hslToRgb(hue, saturation, lightness) {
+  const reach = saturation * Math.min(lightness, 1 - lightness);
+  const channel = offset => {
+    const position = (((offset + hue / 30) % 12) + 12) % 12;
+    return 255 * (lightness - reach * Math.max(-1, Math.min(position - 3, 9 - position, 1)));
+  };
+  return { r: channel(0), g: channel(8), b: channel(4) };
+}
+
+// What a hue is called, for the message
+function hueName(hue) {
+  if (hue < 95) return 'yellow green';
+  if (hue < 150) return 'green';
+  return 'teal green';
+}
+
+// Every colour written in some CSS text, in the order it is written, as { text,
+// color or word, place, line }. The comments are blanked first (not removed, so
+// the line numbers stay right), and only what is after a colon inside a rule is
+// read, so a selector such as #screen is never taken for a colour. A colour
+// that needs a variable to be known is left out.
+function coloursWritten(cssText) {
+  const text = cssText.replace(/\/\*[\s\S]*?\*\//g, comment => comment.replace(/[^\n]/g, ' '));
+  const found = [];
+  const lineOf = place => text.slice(0, place).split('\n').length;
+  const inValue = place => {
+    const before = text.slice(0, place);
+    const start = Math.max(before.lastIndexOf('{'), before.lastIndexOf(';'), before.lastIndexOf('}'));
+    return before.slice(start + 1).indexOf(':') !== -1;
+  };
+
+  const hexPattern = /#([0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{4}|[0-9a-f]{3})(?![0-9a-z-])/gi;
+  let match = hexPattern.exec(text);
+  while (match) {
+    if (inValue(match.index)) {
+      const digits = match[1].length <= 4 ? match[1].split('').map(digit => digit + digit).join('') : match[1];
+      const number = parseInt(digits.slice(0, 6), 16);
+      found.push({ text: match[0], color: { r: number >> 16, g: (number >> 8) & 255, b: number & 255 }, place: match.index, line: lineOf(match.index) });
+    }
+    match = hexPattern.exec(text);
+  }
+
+  const functionPattern = /\b(rgba?|hsla?)\(([^()]*)\)/gi;
+  match = functionPattern.exec(text);
+  while (match) {
+    const numbers = match[2].split(/[\s,/]+/).filter(Boolean).map(part => parseFloat(part));
+    if (numbers.length >= 3 && numbers.every(number => !isNaN(number))) {
+      const parts = match[2].split(/[\s,/]+/).filter(Boolean);
+      const percent = index => parts[index].indexOf('%') !== -1;
+      const color = match[1].toLowerCase().slice(0, 3) === 'hsl'
+        ? hslToRgb(numbers[0], numbers[1] / 100, numbers[2] / 100)
+        : { r: percent(0) ? numbers[0] * 2.55 : numbers[0], g: percent(1) ? numbers[1] * 2.55 : numbers[1], b: percent(2) ? numbers[2] * 2.55 : numbers[2] };
+      found.push({ text: match[0], color: color, place: match.index, line: lineOf(match.index) });
+    }
+    match = functionPattern.exec(text);
+  }
+
+  const wordPattern = new RegExp('(?<![\\w.#-])(' + greenWords.join('|') + ')(?![\\w-])', 'gi');
+  match = wordPattern.exec(text);
+  while (match) {
+    if (inValue(match.index)) found.push({ text: match[0], word: match[1].toLowerCase(), place: match.index, line: lineOf(match.index) });
+    match = wordPattern.exec(text);
+  }
+  return found.sort((first, second) => first.place - second.place);
+}
+
+// The problems with greens in one file's text. "name" is what the message calls the file.
+function greensIn(name, cssText) {
+  const problems = [];
+  coloursWritten(cssText).forEach(found => {
+    const where = name + ' line ' + found.line + ': ';
+    if (found.word) return problems.push(where + 'the colour word "' + found.word + '" is a green. Neon Prime has no green: use cyan, magenta, violet, white or amber');
+
+    const color = found.color;
+    const spread = Math.max(color.r, color.g, color.b) - Math.min(color.r, color.g, color.b);
+    const measured = hueAndSaturation(color);
+    if (spread <= greyChannelSpread || measured.saturation < greyBelowSaturation) return;
+
+    const hue = Math.round(measured.hue); // whole degrees, as the message says them
+    if (hue >= greenFrom && hue <= greenTo) {
+      problems.push(where + found.text + ' is a green (hue ' + hue + ' degrees, ' + hueName(hue) + '). Neon Prime uses no hue from ' + greenFrom + ' to ' + greenTo + ' degrees: use cyan, magenta, violet, white or amber');
+    }
+  });
+  return problems;
+}
+
+function checkNoGreen() {
+  const problems = [];
+  noGreenFiles.forEach(file => {
+    const full = path.join(dashboardFolder, file);
+    if (!fs.existsSync(full)) return problems.push(file + ' does not exist, so it cannot be checked for green');
+    problems.push.apply(problems, greensIn(file, fs.readFileSync(full, 'utf8')));
+  });
+  return problems;
+}
+
+// The Neon Prime kit (docs/layouts.md, "The kit"). Things move in three
+// stylesheets and nowhere else: frame.css, seasons/motion.css and neon-kit.css.
+// A keyframe anywhere else fails, and so does a panel's stylesheet that has
+// one. The kit's own file may animate only transform, opacity and
+// stroke-dashoffset, uses no filter, blur, glow, shadow or blend mode, and plays
+// an animation only in full motion and only while frame.js says the kit is on
+// (data-kit="on"), so calm and none motion, the night screen, an alert and a
+// hidden transition never see it move. The check for the other two files is in
+// tools/test-tick.mjs and tools/check-seasons.mjs.
+const motionFiles = ['frame.css', 'seasons/motion.css', 'neon-kit.css'];
+const kitFile = 'neon-kit.css';
+const kitMayAnimate = ['transform', 'opacity', 'stroke-dashoffset'];
+const kitGate = 'html[data-kit="on"][data-motion="full"]';
+const kitForbidden = [
+  { pattern: /filter|blur|glow|shadow/i, words: 'a filter, blur, glow or shadow' },
+  { pattern: /blend/i, words: 'a blend mode' },
+  { pattern: /backdrop/i, words: 'a backdrop' },
+  { pattern: /will-change/i, words: 'will-change' },
+  { pattern: /transition\s*:|transition-/i, words: 'a transition' },
+];
+const keyframesPattern = /@keyframes\s+([\w-]+)\s*\{((?:[^{}]*\{[^{}]*\})*[^{}]*)\}/g;
+
+// Every .css file under the dashboard folder except the fonts, as a path with slashes, relative to it
+function stylesheets(folder) {
+  const found = [];
+  fs.readdirSync(path.join(dashboardFolder, folder), { withFileTypes: true }).forEach(entry => {
+    const relative = folder === '' ? entry.name : folder + '/' + entry.name;
+    if (entry.isDirectory() && entry.name !== 'fonts') found.push.apply(found, stylesheets(relative));
+    else if (entry.name.endsWith('.css')) found.push(relative);
+  });
+  return found;
+}
+
+function checkKit() {
+  const problems = [];
+  const withoutComments = text => text.replace(/\/\*[\s\S]*?\*\//g, '');
+
+  stylesheets('').filter(file => motionFiles.indexOf(file) === -1).forEach(file => {
+    if (/@keyframes/.test(withoutComments(fs.readFileSync(path.join(dashboardFolder, file), 'utf8')))) {
+      problems.push('dashboard/' + file + ' has @keyframes. Every keyframe belongs in ' + motionFiles.join(', ') + ' (a panel holds no animation)');
+    }
+  });
+
+  const full = path.join(dashboardFolder, kitFile);
+  if (!fs.existsSync(full)) return problems.concat(['dashboard/' + kitFile + ' does not exist']);
+
+  const text = withoutComments(fs.readFileSync(full, 'utf8'));
+  kitForbidden.filter(rule => rule.pattern.test(text)).forEach(rule => problems.push(kitFile + ' uses ' + rule.words + '. The kit is flat colour and thin lines, and moves only transform, opacity and stroke-dashoffset'));
+
+  const defined = [];
+  let match = keyframesPattern.exec(text);
+  while (match) {
+    const name = match[1];
+    defined.push(name);
+    if (!/^kit-[a-z0-9-]+$/.test(name)) problems.push('the keyframes "' + name + '" in ' + kitFile + ' should be named kit-<name>');
+
+    const properties = [];
+    match[2].replace(/\{([^{}]*)\}/g, (all, body) => {
+      body.split(';').map(item => item.trim()).filter(Boolean).forEach(item => properties.push(item.slice(0, item.indexOf(':')).trim()));
+      return all;
+    });
+    properties.filter((property, place) => kitMayAnimate.indexOf(property) === -1 && properties.indexOf(property) === place).forEach(property => {
+      problems.push('the keyframes "' + name + '" in ' + kitFile + ' animate ' + property + '. Only ' + kitMayAnimate.join(', ') + ' may be animated');
+    });
+    match = keyframesPattern.exec(text);
+  }
+  keyframesPattern.lastIndex = 0;
+
+  const rules = blocksIn(text.replace(keyframesPattern, ''));
+  keyframesPattern.lastIndex = 0;
+  const played = [];
+  rules.filter(rule => rule.declarations.some(item => /^animation/.test(item.name))).forEach(rule => {
+    rule.selectors.filter(selector => selector.indexOf(kitGate) !== 0).forEach(selector => {
+      problems.push(kitFile + ' plays an animation with the selector "' + selector + '". Start it with ' + kitGate + ', so that calm and none motion stay still, and so does everything while the night screen, an alert or a hidden transition has the screen');
+    });
+    rule.declarations.filter(item => item.name === 'animation' || item.name === 'animation-name').forEach(item => {
+      (item.value.match(/\bkit-[a-z0-9-]+/g) || []).forEach(name => {
+        played.push(name);
+        if (defined.indexOf(name) === -1) problems.push(kitFile + ' plays ' + name + ', which has no @keyframes ' + name);
+      });
+    });
+  });
+  defined.filter(name => played.indexOf(name) === -1).forEach(name => problems.push('the keyframes "' + name + '" in ' + kitFile + ' are never played. Play them with a rule that starts with ' + kitGate + ', or delete them'));
+
+  const index = fs.existsSync(path.join(dashboardFolder, 'index.html')) ? fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8') : '';
+  if (index.indexOf('href="' + kitFile + '"') === -1) problems.push('index.html should link ' + kitFile);
+  return problems;
+}
+
 const results = [];
 
 function check(name, run) {
@@ -337,6 +571,8 @@ async function main() {
   check('every overlay sets accent colours only', checkOverlayFiles);
   check('the text and background pairs are all variables a theme must set', checkPairsExist);
   check('every text and background pair is at least ' + minimumContrast + ':1, for every theme and overlay', checkContrast);
+  check('the Neon Prime files have no green (no hue from ' + greenFrom + ' to ' + greenTo + ' degrees)', checkNoGreen);
+  check('keyframes are only in the shared motion files, and the kit moves only transform, opacity and line drawing, in full motion', checkKit);
 
   results.forEach(result => {
     console.log((result.problems.length === 0 ? 'PASS  ' : 'FAIL  ') + result.name);

@@ -235,7 +235,12 @@
    Every edge becomes one plain stroke and every screw a plain silver octagon
    with a dark slot, with no shadow, ridge, banding or glint. The layers are
    switched off in base.css. The Mini is an old machine, so if the screen is
-   slow, try the flat finish first. */
+   slow, try the flat finish first.
+
+   The Look setting in Dashboard Settings (core/look.js) sets this finish:
+   Polished is data-finish="metal", the normal look. Flat and Plain are
+   data-finish="flat", with the glint off. Plain also sets data-look="plain",
+   which base.css reads to hide the screws and the // in the panel headers. */
 :root[data-finish="flat"] {
   --screw-face: var(--screw-flat);
   --screw-ridge: transparent;

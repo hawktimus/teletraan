@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Seasonal pack zones</title>
+  <!-- A tool for whoever draws a seasonal pack (docs/seasonal-packs.md). It shows
+       the dashboard and outlines every zone of core/season.js over it, so you can
+       see where decorations may go. It reads the zone list from the same file the
+       screen uses, so a change there shows here at once.
+
+       Open it from the server in tools/serve.py:
+         http://localhost:8080/tools/zones.html
+       It shows the still dashboard with no pack on. Add the switches you want after
+       the address and they go to the dashboard instead, for example
+         http://localhost:8080/tools/zones.html?overlay=christmas&motion=full&night=off&hidden=off
+
+       The text here is smaller than the dashboard's 44px minimum because this is a
+       test tool and never part of the real screen. -->
+  <style>
+    html, body { margin: 0; height: 100%; background: #222; overflow: hidden; }
+    #frame { position: relative; width: 1920px; height: 1080px; transform-origin: 0 0; }
+    iframe { display: block; width: 1920px; height: 1080px; border: 0; }
+    #outlines { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; pointer-events: none; }
+    .zone { position: absolute; box-sizing: border-box; border: 1px solid #00e5ff; background: rgba(0, 229, 255, .18); }
+    .zone span { position: absolute; left: 0; top: 100%; margin-top: 2px; padding: 0 4px; background: #00e5ff; color: #000; font: 700 14px/18px sans-serif; white-space: nowrap; }
+    .zone.low span { top: auto; bottom: 100%; margin: 0 0 2px; }
+    .zone.far span { left: auto; right: 0; }
+  </style>
+</head>
+<body>
+  <div id="frame">
+    <iframe id="dashboard" title="The dashboard"></iframe>
+    <div id="outlines"></div>
+  </div>
+
+  <script type="module">
+    import { zones } from '../dashboard/core/season.js';
+
+    const defaults = '?motion=none&overlay=none&night=off&hidden=off';
+    const query = window.location.search || defaults;
+    document.getElementById('dashboard').src = '../dashboard/' + query;
+
+    // One outline for each zone
+    const outlines = document.getElementById('outlines');
+    Object.keys(zones).forEach(name => {
+      const zone = zones[name];
+      const box = document.createElement('div');
+      // A label near the bottom goes above its zone, and one near the right edge ends at it
+      box.className = 'zone' + (zone.y > 900 ? ' low' : '') + (zone.x > 1500 ? ' far' : '');
+      box.style.cssText = 'left: ' + zone.x + 'px; top: ' + zone.y + 'px; width: ' + zone.width + 'px; height: ' + zone.height + 'px;';
+
+      const label = document.createElement('span');
+      label.textContent = name + '  ' + zone.x + ', ' + zone.y + '  ' + zone.width + ' x ' + zone.height;
+      box.appendChild(label);
+      outlines.appendChild(box);
+    });
+
+    // The dashboard is always 1920 x 1080. Shrink it to fit a smaller window.
+    function fit() {
+      const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080, 1);
+      document.getElementById('frame').style.transform = 'scale(' + scale + ')';
+    }
+    window.addEventListener('resize', fit);
+    fit();
+  </script>
+</body>
+</html>

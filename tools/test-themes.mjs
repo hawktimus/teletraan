@@ -7,6 +7,7 @@
 // The colours of the themes are checked by tools/check-themes.mjs.
 
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -66,6 +67,16 @@ test('the registries have the placeholder theme and overlay, and the default the
   assert.ok(overlays.length >= 1, 'there should be an overlay');
   assert.ok(/placeholder/i.test(themes.filter(theme => theme.id === otherTheme)[0].name), 'the second theme is marked as a placeholder');
   assert.ok(/placeholder/i.test(exampleOverlay.name), 'the example overlay is marked as a placeholder');
+});
+
+test('Neon Prime is the third theme, with the sidebar layout. The other two have no layout, so they are standard', () => {
+  assert.deepEqual(themes.slice(0, 3).map(theme => theme.id), ['hawktimus', 'alternate', 'neon-prime']);
+  assert.equal(themes[2].name, 'Neon Prime');
+  assert.equal(themes[2].layout, 'sidebar');
+  assert.ok(/sidebar/i.test(themes[2].description) && /no small frame/i.test(themes[2].description), 'the description says what editors get');
+  assert.ok(themes.slice(0, 2).every(theme => theme.layout === undefined), 'a theme with no layout field has the standard layout');
+  assert.ok(themes.every(theme => theme.layout === undefined || ['standard', 'sidebar'].indexOf(theme.layout) !== -1), 'a layout is one of the two');
+  assert.ok(!/placeholder/i.test(themes[2].name), 'the display name is final');
 });
 
 test('the seven seasonal packs are listed, in order, with their final ids, and the example has no decorations', () => {
@@ -315,6 +326,22 @@ test('tidyTheme gives the defaults for nothing, and keeps what is usable', () =>
   assert.deepEqual(tidyTheme(tidyTheme(kept)), kept, 'tidying twice changes nothing');
 });
 
+test('the switch for seasonal pieces over the panels starts on, and only a real false turns it off', () => {
+  assert.equal(config.defaultThemeSettings.seasonOverPanels, true);
+  assert.equal(tidyTheme({}).seasonOverPanels, true, 'missing means on');
+  assert.equal(tidyTheme({ seasonOverPanels: true }).seasonOverPanels, true);
+  assert.equal(tidyTheme({ seasonOverPanels: false }).seasonOverPanels, false);
+
+  // anything that is not a true or false is the default, which is on
+  [null, 'false', 'off', 0, 1, {}, []].forEach(odd => {
+    assert.equal(tidyTheme({ seasonOverPanels: odd }).seasonOverPanels, true, 'an odd value ' + JSON.stringify(odd));
+  });
+
+  const off = tidyTheme({ seasonOverPanels: false });
+  assert.equal(tidyTheme(off).seasonOverPanels, false, 'tidying twice changes nothing');
+  assert.equal(resolveTheme({ seasonOverPanels: false }, new Date('2026-12-15T17:00:00Z')).overlay, '', 'the switch plays no part in choosing the overlay');
+});
+
 // The page
 
 // Just enough of a page for theme-apply.js: the html element with a class list,
@@ -549,6 +576,57 @@ test('a failure in the content never stops the screen: the look stays as it was'
   });
 });
 
+test('a look that is held does not go on the page, stays waiting, and goes on when it is let through', async () => {
+  await inPage(async world => {
+    await world.apply.startThemes(world.getContent, null);
+
+    let holding = true;
+    const asked = [];
+    world.apply.holdLooksFor(look => {
+      asked.push(look.theme);
+      return holding;
+    });
+
+    world.content = { theme: { useNow: useOtherNow } };
+    world.apply.checkTheme();
+    world.apply.changeThemeNow();
+    assert.equal(world.classes(), 'theme-' + defaultTheme, 'held, so the page keeps its look');
+    assert.deepEqual(asked, [otherTheme], 'it is asked about the look that wants to go on');
+
+    world.clock += 61 * 1000;
+    world.apply.checkTheme();
+    assert.deepEqual(asked, [otherTheme, otherTheme], 'it is asked again at the next check, so a held look is not lost');
+    assert.equal(world.classes(), 'theme-' + defaultTheme);
+
+    holding = false;
+    world.apply.changeThemeNow();
+    assert.equal(world.classes(), ['overlay-' + anOverlay, 'theme-' + otherTheme].sort().join(' '), 'let through at the next page change');
+  });
+});
+
+test('a hold that fails is logged and the colours go on anyway', async () => {
+  await inPage(async world => {
+    await world.apply.startThemes(world.getContent, null);
+    world.apply.holdLooksFor(() => {
+      throw new Error('the layout check failed');
+    });
+
+    const logged = [];
+    const real = console.error;
+    console.error = (...parts) => logged.push(parts.join(' '));
+    try {
+      world.content = { theme: { useNow: useOtherNow } };
+      world.apply.checkTheme();
+      world.apply.changeThemeNow();
+    } finally {
+      console.error = real;
+    }
+    assert.equal(world.classes(), ['overlay-' + anOverlay, 'theme-' + otherTheme].sort().join(' '));
+    assert.equal(logged.length, 1);
+    assert.ok(/layout of the theme/.test(logged[0]));
+  });
+});
+
 // The wiring
 
 test('the large panel tells theme-apply when its frame is apart, and nothing else moves', () => {
@@ -580,6 +658,246 @@ test('index.html links the default theme and the theme files hold variables only
     assert.ok(declarations.length > 10, name + ' has no variables');
     declarations.forEach(item => assert.ok(item.startsWith('--'), name + ' has something that is not a variable: ' + item));
   });
+});
+
+// The look of Neon Prime that is not a colour list (dashboard/themes/decor/neon-prime-decor.css)
+
+const decorPath = path.join(dashboardFolder, 'themes/decor/neon-prime-decor.css');
+const decorText = fs.existsSync(decorPath) ? fs.readFileSync(decorPath, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '') : '';
+
+// The arguments of every gradient in the text, each as a list of its top level parts
+function gradientsIn(text) {
+  const found = [];
+  const start = /(?:repeating-)?(?:linear|radial|conic)-gradient\(/g;
+  let match = start.exec(text);
+  while (match) {
+    let depth = 1;
+    let index = start.lastIndex;
+    let part = '';
+    const parts = [];
+    while (depth > 0 && index < text.length) {
+      const letter = text[index];
+      if (letter === '(') depth += 1;
+      if (letter === ')') depth -= 1;
+      if (depth === 0) break;
+      if (letter === ',' && depth === 1) { parts.push(part.trim()); part = ''; } else part += letter;
+      index += 1;
+    }
+    parts.push(part.trim());
+    found.push({ kind: match[0], parts: parts });
+    match = start.exec(text);
+  }
+  return found;
+}
+
+test('the Neon Prime decor file is linked once, after the sidebar layout, and only touches Neon Prime', () => {
+  assert.ok(decorText.length > 0, 'dashboard/themes/decor/neon-prime-decor.css is missing');
+  const index = fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8');
+  assert.equal(index.split('href="themes/decor/neon-prime-decor.css"').length - 1, 1, 'index.html links it once');
+  assert.ok(index.indexOf('themes/decor/neon-prime-decor.css') > index.indexOf('layouts/sidebar.css'));
+
+  let blocks = 0;
+  decorText.replace(/([^{}]+)\{[^{}]*\}/g, (all, list) => {
+    blocks += 1;
+    list.split(',').map(selector => selector.trim()).forEach(selector => {
+      assert.ok(selector.startsWith('html.theme-neon-prime'), 'a rule here is for every theme: ' + selector);
+    });
+    return all;
+  });
+  assert.ok(blocks > 10, 'the decor file has its rules');
+  assert.ok(!fs.existsSync(path.join(dashboardFolder, 'themes/neon-prime-decor.css')), 'a file in themes/ must be a theme, so the decor file is in themes/decor/');
+});
+
+test('the Neon Prime decor file has no glow, blur, shadow, filter, text or movement, and its gradients have hard stops', () => {
+  assert.ok(!/(box-shadow|text-shadow|drop-shadow|filter|blur\(|backdrop|mix-blend|blend-mode|@keyframes|transition|will-change|perspective|translateZ|rotateX|rotateY|video)/.test(decorText));
+  assert.ok(!/(radial|conic)-gradient/.test(decorText), 'only straight stripes and plain rectangles');
+  decorText.replace(/content:\s*([^;]*);/g, (all, value) => {
+    assert.equal(value.trim(), '""', 'no text in the decor: ' + all);
+    return all;
+  });
+  assert.ok(!/font(-size|-family)?\s*:/.test(decorText), 'the decor sets no text size');
+
+  // the only animation property is the choice of an animation frame.css has
+  decorText.replace(/animation(-name)?\s*:\s*([^;]*);/g, (all, name, value) => {
+    assert.ok(['lift', 'drop', 'none'].indexOf(value.trim()) !== -1, 'only lift, drop or none: ' + all);
+    return all;
+  });
+
+  const gradients = gradientsIn(decorText);
+  assert.ok(gradients.length > 20, 'the gradients were found');
+  gradients.forEach(gradient => {
+    const stops = gradient.parts.filter((part, place) => !(place === 0 && /^(to |-?[\d.]+deg)/.test(part)));
+    const read = stop => {
+      const found = /^(.*?)(?:\s+(-?[\d.]+(?:px|%)?))?$/.exec(stop);
+      return { color: found[1].trim(), at: found[2] === undefined ? null : (found[2] === '0' ? '0px' : found[2]) };
+    };
+    for (let place = 1; place < stops.length; place += 1) {
+      const before = read(stops[place - 1]);
+      const now = read(stops[place]);
+      if (before.color === now.color) continue;
+      assert.ok(now.at !== null && now.at === before.at, 'a change of colour must be a hard stop, at the same place: ' + gradient.parts.join(', '));
+    }
+  });
+});
+
+test('the gunmetal sets every variable that the silver metal sets, and the screen picks it whatever Frame metal says', () => {
+  const tokens = fs.readFileSync(path.join(dashboardFolder, 'tokens.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const silver = /\[data-metal="silver"\]\s*\{([^}]*)\}/.exec(tokens)[1];
+  const names = silver.split(';').map(item => item.split(':')[0].trim()).filter(Boolean);
+  assert.ok(names.length >= 14, 'the silver metal has its tones');
+
+  const gunmetal = /html\.theme-neon-prime,\s*html\.theme-neon-prime \[data-metal\]\s*\{([^}]*)\}/.exec(decorText);
+  assert.ok(gunmetal, 'the gunmetal rule reaches the html element and every element that has data-metal');
+  names.forEach(name => assert.ok(gunmetal[1].indexOf(name + ':') !== -1, 'the gunmetal does not set ' + name));
+});
+
+// The check for greens (tools/check-themes.mjs) really fails
+
+// Every .css file of the dashboard except the fonts, into the same place in the copy
+function copyStylesheets(from, to) {
+  fs.readdirSync(from, { withFileTypes: true }).forEach(entry => {
+    if (entry.isDirectory()) {
+      if (entry.name !== 'fonts') copyStylesheets(path.join(from, entry.name), path.join(to, entry.name));
+    } else if (entry.name.endsWith('.css')) {
+      fs.mkdirSync(to, { recursive: true });
+      fs.copyFileSync(path.join(from, entry.name), path.join(to, entry.name));
+    }
+  });
+}
+
+// Runs tools/check-themes.mjs on a copy of the files it reads. "change" gets the
+// text of one file of the copy and returns what it should be.
+function greenCheckAfter(name, file, change) {
+  const folder = path.join(workFolder, 'green-' + name);
+  fs.mkdirSync(path.join(folder, 'tools'), { recursive: true });
+  fs.copyFileSync(path.join(dashboardFolder, '../tools/check-themes.mjs'), path.join(folder, 'tools/check-themes.mjs'));
+  fs.cpSync(path.join(dashboardFolder, 'themes'), path.join(folder, 'dashboard/themes'), { recursive: true });
+  ['config.js', 'index.html', 'tokens.css'].forEach(item => fs.copyFileSync(path.join(dashboardFolder, item), path.join(folder, 'dashboard', item)));
+  copyStylesheets(dashboardFolder, path.join(folder, 'dashboard')); // the check for keyframes reads every stylesheet
+
+  if (file) {
+    const target = path.join(folder, 'dashboard', file);
+    const before = fs.readFileSync(target, 'utf8');
+    const after = change(before);
+    assert.notEqual(after, before, 'the test change to ' + file + ' did nothing, so its anchor text is gone');
+    fs.writeFileSync(target, after);
+  }
+  const run = spawnSync(process.execPath, [path.join(folder, 'tools/check-themes.mjs')], { encoding: 'utf8' });
+  return { failed: run.status !== 0, text: run.stdout + run.stderr };
+}
+
+const themeFile = 'themes/neon-prime.css';
+const decorFile = 'themes/decor/neon-prime-decor.css';
+const addRule = lines => before => before + '\nhtml.theme-neon-prime .test-only {\n' + lines.map(line => '  ' + line + '\n').join('') + '}\n';
+
+test('the check for greens passes on the real Neon Prime files, and the seasonal packs keep their greens', () => {
+  const run = greenCheckAfter('real', null);
+  assert.ok(!run.failed, run.text);
+  assert.ok(/PASS  the Neon Prime files have no green/.test(run.text));
+
+  const christmas = fs.readFileSync(path.join(dashboardFolder, 'themes/overlays/christmas.css'), 'utf8');
+  assert.ok(/--yellow:\s*#[0-9a-f]{6}/i.test(christmas), 'the Christmas pack sets the accent, and the check does not look at it');
+});
+
+test('a green added to the Neon Prime colours file fails, and the message names the file, the colour and its hue', () => {
+  const run = greenCheckAfter('theme', themeFile, before => before.replace(/--status-done:[^;]*;/, '--status-done: #4dffa6;'));
+  assert.ok(run.failed, 'the check should fail');
+  assert.match(run.text, /FAIL  the Neon Prime files have no green/);
+  assert.match(run.text, /themes\/neon-prime\.css line \d+: #4dffa6 is a green \(hue 150 degrees, teal green\)/);
+});
+
+test('a green added to the Neon Prime decor file fails, however it is written', () => {
+  const run = greenCheckAfter('decor', decorFile, addRule([
+    'color: #c8ff2a;',
+    'background: rgb(40, 220, 60);',
+    'border-color: rgba(200, 255, 42, .2);',
+    'outline-color: hsl(120, 80%, 50%);',
+    'fill: #0f8;',
+    'stroke: lime;',
+  ]));
+  assert.ok(run.failed, 'the check should fail');
+  [
+    'themes/decor/neon-prime-decor.css line \\d+: #c8ff2a is a green \\(hue 75 degrees, yellow green\\)',
+    'rgb\\(40, 220, 60\\) is a green \\(hue 127 degrees, green\\)',
+    'rgba\\(200, 255, 42, \\.2\\) is a green',
+    'hsl\\(120, 80%, 50%\\) is a green \\(hue 120 degrees',
+    '#0f8 is a green \\(hue 152 degrees, teal green\\)',
+    'the colour word "lime" is a green',
+  ].forEach(words => assert.match(run.text, new RegExp(words)));
+});
+
+test('the check for greens takes in hue 65 to 175 and nothing outside it, and lets greys go', () => {
+  const edges = greenCheckAfter('edges', decorFile, addRule([
+    'color: hsl(65, 100%, 50%);',
+    'background: hsl(175, 100%, 50%);',
+  ]));
+  assert.ok(edges.failed);
+  assert.ok(/hsl\(65, 100%, 50%\) is a green/.test(edges.text) && /hsl\(175, 100%, 50%\) is a green/.test(edges.text), 'hue 65 and hue 175 are greens');
+
+  const fine = greenCheckAfter('fine', decorFile, addRule([
+    'color: hsl(64, 100%, 50%);', // a yellow
+    'background: hsl(176, 100%, 50%);', // a cyan
+    'border-color: #7a8a7a;', // a grey with a trace of green, too pale to be a hue
+    'outline-color: #0a0b0a;', // nearly black
+    'fill: rgba(255, 255, 255, .5);',
+    'stroke: #ff2bd6;',
+  ]));
+  assert.ok(!fine.failed, fine.text);
+});
+
+test('a green in a comment, or in a selector, is not a colour written', () => {
+  const run = greenCheckAfter('comment', decorFile, before => '/* once #4dffa6, lime and rgb(40, 220, 60) */\n' + before + '\nhtml.theme-neon-prime #abc-green .lime { color: #ff2bd6; }\n');
+  assert.ok(!run.failed, run.text);
+});
+
+// The Neon Prime kit (dashboard/neon-kit.css): the check for its keyframes and its rules fails on a copy
+// of the files with one mistake in them, and says what it is
+
+const kitFile = 'neon-kit.css';
+const kitCheckName = /FAIL  keyframes are only in the shared motion files/;
+
+test('the kit check passes on the real files, and the kit file is linked once, after the decor file', () => {
+  const run = greenCheckAfter('kit-real', null);
+  assert.ok(!run.failed, run.text);
+  assert.ok(/PASS  keyframes are only in the shared motion files/.test(run.text));
+
+  const index = fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8');
+  assert.equal(index.split('href="neon-kit.css"').length - 1, 1, 'index.html links it once');
+  assert.ok(index.indexOf('href="neon-kit.css"') > index.indexOf('themes/decor/neon-prime-decor.css'));
+});
+
+const kitMistakes = [
+  ['keyframes that animate the width', kitFile, before => before.replace('@keyframes kit-breathe {\n  from { transform: scale(.99); }', '@keyframes kit-breathe {\n  from { width: 5px; transform: scale(.99); }'), /the keyframes "kit-breathe" in neon-kit.css animate width\. Only transform, opacity, stroke-dashoffset may be animated/],
+  ['keyframes that animate the top', kitFile, before => before.replace('  from { transform: scale(.99); }', '  from { transform: scale(.99); top: 0; }'), /kit-breathe" in neon-kit.css animate top/],
+  ['a filter in the kit', kitFile, before => before + '\n.kit { filter: blur(2px); }\n', /neon-kit.css uses a filter, blur, glow or shadow/],
+  ['a shadow in the kit', kitFile, before => before + '\n.kit-strip { box-shadow: 0 0 8px #2de6ff; }\n', /uses a filter, blur, glow or shadow/],
+  ['a blend mode in the kit', kitFile, before => before + '\n.kit-strip { mix-blend-mode: screen; }\n', /neon-kit.css uses a blend mode/],
+  ['a transition in the kit', kitFile, before => before + '\n.kit-strip { transition: opacity 1s; }\n', /neon-kit.css uses a transition/],
+  ['will-change in the kit', kitFile, before => before + '\n.kit-strip { will-change: transform; }\n', /neon-kit.css uses will-change/],
+  ['an animation that plays in calm motion', kitFile, before => before.replace('html[data-kit="on"][data-motion="full"] .kit-strip::after   {', 'html[data-kit="on"] .kit-strip::after   {'), /plays an animation with the selector "html\[data-kit="on"\] \.kit-strip::after"\. Start it with html\[data-kit="on"\]\[data-motion="full"\]/],
+  ['an animation with no gate at all', kitFile, before => before + '\n.kit-strip { animation: kit-run-right 5s linear infinite; }\n', /plays an animation with the selector "\.kit-strip"/],
+  ['keyframes with a name that is not the kit\'s', kitFile, before => before.replace('@keyframes kit-breathe {', '@keyframes breathe {'), /the keyframes "breathe" in neon-kit.css should be named kit-<name>/],
+  ['an animation with no keyframes', kitFile, before => before.replace('@keyframes kit-sweep {', '@keyframes kit-sweeep {'), /plays kit-sweep, which has no @keyframes kit-sweep/],
+  ['keyframes that are never played', kitFile, before => before + '\n@keyframes kit-unused { to { opacity: 0; } }\n', /the keyframes "kit-unused" in neon-kit.css are never played/],
+  ['a keyframe in a panel stylesheet', 'panels/tasks/tasks.css', before => before + '\n@keyframes wiggle { to { opacity: 0; } }\n', /dashboard\/panels\/tasks\/tasks\.css has @keyframes\. Every keyframe belongs in frame\.css, seasons\/motion\.css, neon-kit\.css/],
+  ['a keyframe in the decor file', 'themes/decor/neon-prime-decor.css', before => before + '\n@keyframes wiggle { to { opacity: 0; } }\n', /neon-prime-decor\.css has @keyframes/],
+  ['a keyframe in the sidebar layout', 'layouts/sidebar.css', before => before + '\n@keyframes wiggle { to { opacity: 0; } }\n', /layouts\/sidebar\.css has @keyframes/],
+  ['a keyframe in the season styles', 'seasons/season.css', before => before + '\n@keyframes wiggle { to { opacity: 0; } }\n', /seasons\/season\.css has @keyframes/],
+  ['the kit stylesheet not linked', 'index.html', before => before.replace('  <link rel="stylesheet" href="neon-kit.css">\n', ''), /index\.html should link neon-kit\.css/],
+  ['a green in the kit', kitFile, before => before + '\nhtml.theme-neon-prime .kit-strip { background: #3dff7a; }\n', /neon-kit\.css line \d+: #3dff7a is a green/],
+];
+
+kitMistakes.forEach((entry, place) => {
+  test('the kit check fails for ' + entry[0] + ', and says what is wrong', () => {
+    const run = greenCheckAfter('kit-' + place, entry[1], entry[2]);
+    assert.ok(run.failed, 'the check should have failed:\n' + run.text);
+    assert.match(run.text, entry[3]);
+  });
+});
+
+test('a comment may say filter, shadow or keyframes, and the kit check does not mind', () => {
+  const run = greenCheckAfter('kit-comment', kitFile, before => '/* no filter, blur, glow, shadow or blend mode, and no @keyframes outside this file */\n' + before);
+  assert.ok(!run.failed, run.text);
 });
 
 // Run them

@@ -63,6 +63,8 @@ async function loadCopy(name, changeConfig) {
     photoPanel: await import(base + 'panels/photo/photo.js'),
     teamLeadsPanel: await import(base + 'panels/team-leads/team-leads.js'),
     leadership: await import(base + 'core/leadership.js'),
+    look: await import(base + 'core/look.js'),
+    marks: await import(base + 'core/marks.js'),
     images: await import(base + 'core/images.js'),
     photos: await import(base + 'core/photos.js'),
     portrait: await import(base + 'core/portrait.js'),
@@ -96,6 +98,7 @@ const { normalizeContent, contentQuery, queryUrl, liveEventsUrl, sourceQuery, so
 const { withDefaults, isVisible, visibleItems, startContent, startSanityContent, startSampleContent } = live.content;
 const { pickSource, tidySourceSettings } = live.source;
 const { escapeHtml, hasText } = live.text;
+const { pageSwitchesFor } = live.look;
 const { tidyDevice, deviceLines, loginAddress, showDeviceInfo, deviceFile, refreshSeconds } = live.device;
 const { classifyFailure, connectionLines, itemCounts, reasonText, reasons, drawConnection } = live.connection;
 const { tidyExtraEvent, extraEventsToEvents, mergeEvents, instantIn, rangeLabel, eventDate, timeText } = live.events;
@@ -659,7 +662,7 @@ test('normalizeContent fills gaps in settings from the defaults', () => {
   assert.deepEqual(settings.rotation.grid1, [{ panel: 'events', show: true }]);
   assert.deepEqual(settings.rotation.grid2, [{ panel: 'forecast', show: true }]);
   assert.equal('tickerSeconds' in settings.rotation, false);
-  logoSettingNames.concat(['frameMetal', 'glint', 'pageSeconds', 'pageChangeStyle', 'breakSeconds', 'frameFinish', 'silverChance', 'photoOrder', 'photoSeconds'], nightSettingNames).forEach(name => {
+  logoSettingNames.concat(['frameMetal', 'glint', 'look', 'pageSeconds', 'pageChangeStyle', 'breakSeconds', 'frameFinish', 'silverChance', 'photoOrder', 'photoSeconds'], nightSettingNames).forEach(name => {
     assert.equal(settings[name], defaults[name], name + ' is missing, so it is the default');
   });
   assert.deepEqual(settings.announcements, [
@@ -858,6 +861,7 @@ test('the new settings have the defaults the Studio starts with', () => {
   assert.deepEqual(live.config.metals, ['gold', 'silver']);
   assert.equal(defaults.frameMetal, 'gold');
   assert.equal(defaults.glint, true);
+  assert.equal(defaults.look, 'polished');
   assert.equal(defaults.pageSeconds, 20);
   assert.equal(defaults.nameTransform, true);
   assert.equal(defaults.nameEvery, 300);
@@ -918,7 +922,7 @@ test('the new settings have the defaults the Studio starts with', () => {
   assert.equal('tickerSeconds' in defaults.rotation, false);
 
   const empty = withDefaults({}).settings;
-  logoSettingNames.concat(['frameMetal', 'glint', 'pageSeconds', 'pageChangeStyle', 'breakSeconds', 'frameFinish', 'silverChance'], nightSettingNames).forEach(name => {
+  logoSettingNames.concat(['frameMetal', 'glint', 'look', 'pageSeconds', 'pageChangeStyle', 'breakSeconds', 'frameFinish', 'silverChance'], nightSettingNames).forEach(name => {
     assert.equal(empty[name], defaults[name], name);
   });
   assert.deepEqual(empty.crt, defaults.crt);
@@ -936,6 +940,237 @@ test('frame metal is gold or silver, and anything else becomes gold', () => {
   });
   assert.equal(normalizeContent({ settings: null }).settings.frameMetal, 'gold');
   assert.equal(withDefaults(null).settings.frameMetal, 'gold');
+});
+
+// The Look setting: polished, flat or plain (dashboard/core/look.js). The address
+// parts are what shell.js reads from the page address, each null when it is not there.
+const noAddress = { look: null, finish: null, glint: null };
+
+test('look is polished, flat or plain, and anything else becomes polished', () => {
+  assert.deepEqual(live.config.looks, ['polished', 'flat', 'plain']);
+  assert.equal(live.config.defaultSettings.look, 'polished');
+
+  live.config.looks.forEach(name => {
+    settingsThrough({ look: name }).forEach(settings => assert.equal(settings.look, name));
+  });
+
+  [undefined, null, '', 'Flat', 'PLAIN', 'matte', 'toString', 'finish', 0, true, ['flat'], {}].forEach(value => {
+    settingsThrough({ look: value }).forEach(settings => {
+      assert.equal(settings.look, 'polished', JSON.stringify(value));
+    });
+  });
+  assert.equal(normalizeContent({ settings: null }).settings.look, 'polished');
+  assert.equal(withDefaults(null).settings.look, 'polished');
+
+  // it is a setting of its own: Glint and Frame metal keep their values
+  settingsThrough({ look: 'plain', glint: true, frameMetal: 'silver' }).forEach(settings => {
+    assert.deepEqual([settings.look, settings.glint, settings.frameMetal], ['plain', true, 'silver']);
+  });
+});
+
+test('Polished sets the metal finish and follows the Glint setting, Flat and Plain set the flat finish with no glint', () => {
+  assert.deepEqual(pageSwitchesFor({ look: 'polished', glint: true }, noAddress), { look: 'polished', finish: 'metal', glint: 'on' });
+  assert.deepEqual(pageSwitchesFor({ look: 'polished', glint: false }, noAddress), { look: 'polished', finish: 'metal', glint: 'off' });
+
+  [true, false].forEach(glint => {
+    assert.deepEqual(pageSwitchesFor({ look: 'flat', glint: glint }, noAddress), { look: 'flat', finish: 'flat', glint: 'off' });
+    assert.deepEqual(pageSwitchesFor({ look: 'plain', glint: glint }, noAddress), { look: 'plain', finish: 'flat', glint: 'off' });
+  });
+
+  // a setting that is not a look is Polished, even when the function is given it uncleaned
+  [undefined, null, '', 'matte', 0].forEach(value => {
+    assert.deepEqual(pageSwitchesFor({ look: value, glint: true }, noAddress), { look: 'polished', finish: 'metal', glint: 'on' }, String(value));
+  });
+});
+
+test('Polished sets nothing new: it is the look, the finish and the glint that index.html starts with', () => {
+  const tag = fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8').match(/<html [^>]*>/)[0];
+  const attribute = name => (tag.match(new RegExp(' data-' + name + '="([^"]*)"')) || [])[1];
+
+  const starting = pageSwitchesFor(live.config.defaultSettings, noAddress);
+  assert.deepEqual(starting, { look: attribute('look'), finish: attribute('finish'), glint: attribute('glint') });
+  assert.equal(starting.look, 'polished');
+
+  // the sample content has the look too, and it is Polished
+  const sample = JSON.parse(fs.readFileSync(sampleFile, 'utf8')).settings;
+  assert.equal(sample.look, 'polished');
+  assert.deepEqual(pageSwitchesFor(normalizeSample({ settings: sample }).settings, noAddress), starting);
+});
+
+test('the address wins for one page: ?look= over the setting, ?finish= and ?glint= over what the look says', () => {
+  const polished = { look: 'polished', glint: true };
+  const flat = { look: 'flat', glint: true };
+
+  // ?look= over the setting, whichever way round
+  assert.deepEqual(pageSwitchesFor(polished, { look: 'plain', finish: null, glint: null }), { look: 'plain', finish: 'flat', glint: 'off' });
+  assert.deepEqual(pageSwitchesFor({ look: 'plain', glint: true }, { look: 'polished', finish: null, glint: null }), { look: 'polished', finish: 'metal', glint: 'on' });
+  assert.deepEqual(pageSwitchesFor({ look: 'plain', glint: false }, { look: 'polished', finish: null, glint: null }), { look: 'polished', finish: 'metal', glint: 'off' });
+
+  // ?finish= changes the finish and nothing else, so the old addresses mean what they meant
+  assert.deepEqual(pageSwitchesFor(polished, { look: null, finish: 'flat', glint: null }), { look: 'polished', finish: 'flat', glint: 'on' });
+  assert.deepEqual(pageSwitchesFor(flat, { look: null, finish: 'metal', glint: null }), { look: 'flat', finish: 'metal', glint: 'off' });
+  assert.deepEqual(pageSwitchesFor(polished, { look: 'plain', finish: 'metal', glint: null }), { look: 'plain', finish: 'metal', glint: 'off' });
+
+  // ?glint= changes the glint and nothing else
+  assert.deepEqual(pageSwitchesFor(polished, { look: null, finish: null, glint: 'off' }), { look: 'polished', finish: 'metal', glint: 'off' });
+  assert.deepEqual(pageSwitchesFor({ look: 'polished', glint: false }, { look: null, finish: null, glint: 'on' }), { look: 'polished', finish: 'metal', glint: 'on' });
+  assert.deepEqual(pageSwitchesFor(flat, { look: null, finish: null, glint: 'on' }), { look: 'flat', finish: 'flat', glint: 'on' });
+
+  // an address that is not one of the words is ignored
+  ['', 'matte', 'Flat', 'ON', 'true'].forEach(word => {
+    assert.deepEqual(pageSwitchesFor(polished, { look: word, finish: word, glint: word }), { look: 'polished', finish: 'metal', glint: 'on' }, word);
+    assert.deepEqual(pageSwitchesFor(flat, { look: word, finish: word, glint: word }), { look: 'flat', finish: 'flat', glint: 'off' }, word);
+  });
+});
+
+test('every look with every address and every Glint setting gives words the stylesheets know', () => {
+  const finishOf = { polished: 'metal', flat: 'flat', plain: 'flat' };
+  const words = list => [null, '', 'matte'].concat(list);
+  let combinations = 0;
+
+  words(live.config.looks).forEach(settingLook => {
+    [true, false].forEach(glintSetting => {
+      words(live.config.looks).forEach(askedLook => {
+        words(['metal', 'flat']).forEach(askedFinish => {
+          words(['on', 'off']).forEach(askedGlint => {
+            const settings = { look: settingLook, glint: glintSetting };
+            const asked = { look: askedLook, finish: askedFinish, glint: askedGlint };
+            const result = pageSwitchesFor(settings, asked);
+            const label = JSON.stringify([settings, asked]);
+
+            const look = [askedLook, settingLook].filter(word => live.config.looks.includes(word))[0] || 'polished';
+            const finish = ['metal', 'flat'].includes(askedFinish) ? askedFinish : finishOf[look];
+            const glint = ['on', 'off'].includes(askedGlint) ? askedGlint : look === 'polished' && glintSetting ? 'on' : 'off';
+            assert.deepEqual(result, { look: look, finish: finish, glint: glint }, label);
+            assert.deepEqual(Object.keys(result), ['look', 'finish', 'glint'], label);
+            combinations += 1;
+          });
+        });
+      });
+    });
+  });
+  assert.equal(combinations, 6 * 2 * 6 * 5 * 5);
+
+  // a look in config.js with no line in core/look.js would stop the screen, so every look must work
+  live.config.looks.forEach(name => {
+    assert.doesNotThrow(() => pageSwitchesFor({ look: name, glint: true }, noAddress), name);
+  });
+});
+
+function cssFilesIn(folder) {
+  return fs.readdirSync(folder, { withFileTypes: true }).reduce((files, entry) => {
+    const full = path.join(folder, entry.name);
+    if (entry.isDirectory()) return files.concat(cssFilesIn(full));
+    return entry.name.endsWith('.css') ? files.concat(full) : files;
+  }, []);
+}
+
+test('the rules for Plain are in base.css and hide only the screws and the default // in the panel headers, and only Neon Prime reads the look besides', () => {
+  const withoutComments = text => text.replace(/\/\*[\s\S]*?\*\//g, '');
+  const readCss = file => withoutComments(fs.readFileSync(file, 'utf8'));
+
+  // base.css has the rules for Plain. Neon Prime's decor file is the one other reader: see the next lines
+  const readers = ['base.css', 'themes/decor/neon-prime-decor.css'];
+  cssFilesIn(dashboardFolder).forEach(file => {
+    const name = path.relative(dashboardFolder, file);
+    assert.equal(readCss(file).includes('data-look="plain"'), readers.includes(name), name + (readers.includes(name) ? ' should read the look' : ' reads data-look="plain"'));
+  });
+
+  // In Neon Prime the ridge is the neon trim. The flat finish hides every ridge, and Flat and Plain give this theme's back.
+  const decor = readCss(path.join(dashboardFolder, 'themes/decor/neon-prime-decor.css'));
+  assert.ok(/html\.theme-neon-prime\[data-look="flat"\] \.edge-ridge,\s*html\.theme-neon-prime\[data-look="plain"\] \.edge-ridge \{ display: inline; \}/.test(decor));
+  // and the cyan line along the bars (the rail, the countdown's frame) stays too: one rule that gives the three bar gradients
+  // their ridge line and nothing else, and only when the finish is flat
+  const barRule = /html\.theme-neon-prime\[data-finish="flat"\]\[data-look="flat"\],\s*html\.theme-neon-prime\[data-finish="flat"\]\[data-look="plain"\] \{([^{}]*)\}/.exec(decor);
+  assert.ok(barRule, 'the bars of Neon Prime keep their cyan line in Flat and Plain');
+  const barNames = barRule[1].split(';').map(item => item.trim()).filter(Boolean).map(item => item.split(':')[0]);
+  assert.deepEqual(barNames, ['--bar-across-8', '--bar-down-8', '--bar-down-16']);
+  assert.ok(barRule[1].split(';').filter(item => item.trim()).every(item => item.includes('var(--metal-ridge)') && !item.includes('--metal-rim') && !item.includes('--metal-shade')));
+  assert.equal(decor.split('data-look').length - 1, 4, 'and nothing else in that file reads the look');
+
+  // the rules, as selectors and what they set
+  const rules = [];
+  readCss(path.join(dashboardFolder, 'base.css')).replace(/([^{}]+)\{([^{}]*)\}/g, (all, selectors, declarations) => {
+    if (selectors.includes('data-look="plain"')) rules.push({ selectors: selectors.split(',').map(item => item.trim()), declarations: declarations.trim() });
+    return all;
+  });
+  assert.deepEqual(rules, [{
+    selectors: [':root[data-look="plain"] .screw', ':root[data-look="plain"] .screw-shadow', ':root[data-look="plain"] .header svg.double-slash'],
+    declarations: 'display: none;',
+  }]);
+
+  // the screws are the two classes plate.js draws, and a header's slashes are the svg that marks.js draws
+  const plate = fs.readFileSync(path.join(dashboardFolder, 'core/plate.js'), 'utf8');
+  assert.ok(plate.includes('<use class="screw-shadow"') && plate.includes('<use class="screw"'));
+  assert.ok(live.marks.doubleSlash().startsWith('<svg class="double-slash"'));
+});
+
+test('the rules for Plain never match a pack mark or a status shape, and the panels draw their header mark inside a header', () => {
+  // The selector ends with svg.double-slash: an svg element that has the class. Count what it would match.
+  const slashSvgs = html => (html.match(/<svg[^>]*\sclass="(?:[^"]*\s)?double-slash(?:\s[^"]*)?"/g) || []).length;
+  const { doubleSlash, setPackMark, statusMark } = live.marks;
+  const treeMark = {
+    viewBox: '0 0 60 76',
+    markup: '<polygon points="30,38 30,68 2,68" fill="#43c47c"/><g class="double-slash"><polygon points="30,0 32.2,4.8 37,7 32.2,9.2 30,14 27.8,9.2 23,7 27.8,4.8"/></g>',
+  };
+
+  try {
+    setPackMark(null);
+    assert.equal(slashSvgs(doubleSlash()), 1, 'the default slashes are matched');
+
+    // a pack's mark is an svg of class pack-mark. Its accent shapes are a g of class double-slash, which is not an svg.
+    setPackMark(treeMark);
+    const pack = doubleSlash();
+    assert.ok(pack.includes('<svg class="pack-mark"') && pack.includes('<g class="double-slash">'), 'the pack mark has the group');
+    assert.equal(slashSvgs(pack), 0, 'a pack mark is not matched');
+  } finally {
+    setPackMark(null);
+  }
+
+  ['in-progress', 'up-next', 'done', 'blocked'].forEach(status => {
+    const mark = statusMark(status);
+    assert.equal(slashSvgs(mark), 0, status);
+    assert.ok(/^<svg class="mark mark-/.test(mark) && !/screw|header/.test(mark), status);
+  });
+
+  // in the seasonal packs the class double-slash is only ever on a g, never on an svg of its own
+  const seasonsFolder = path.join(dashboardFolder, 'seasons');
+  fs.readdirSync(seasonsFolder).filter(file => file.endsWith('.js')).forEach(file => {
+    const tags = fs.readFileSync(path.join(seasonsFolder, file), 'utf8').match(/<\w+[^<>]*class="double-slash"/g) || [];
+    tags.forEach(tag => assert.ok(tag.startsWith('<g '), file + ': ' + tag));
+  });
+
+  // Every panel that draws the mark does it in its header, except the bullets of the Custom panel's lists, which stay
+  const panelsFolder = path.join(dashboardFolder, 'panels');
+  let drawn = 0;
+  fs.readdirSync(panelsFolder).forEach(name => {
+    const file = path.join(panelsFolder, name, name + '.js');
+    if (!fs.existsSync(file)) return;
+
+    const code = fs.readFileSync(file, 'utf8');
+    const uses = code.split('${doubleSlash()}').length - 1;
+    if (uses === 0) return;
+
+    const bullets = code.split('<span class="list-marker">${doubleSlash()}</span>').length - 1;
+    assert.ok(bullets === 0 || name === 'custom', name + ' draws bullets');
+    assert.ok(uses - bullets === 1 && code.includes('<div class="header">'), name + ' draws its header mark once, inside a header');
+    drawn += 1;
+  });
+  assert.equal(drawn, 10, 'the ten panels with a header mark');
+});
+
+test('shell.js applies Look through core/look.js at the start and at every content change, so a change in Studio shows at once', () => {
+  const shell = fs.readFileSync(path.join(dashboardFolder, 'shell.js'), 'utf8');
+
+  assert.ok(shell.includes("import { pageSwitchesFor } from './core/look.js';"));
+  assert.ok(/function useLookSetting\(settings\) \{\s*const switches = pageSwitchesFor\(settings, \{ look: params\.get\('look'\), finish: params\.get\('finish'\), glint: params\.get\('glint'\) \}\);\s*Object\.keys\(switches\)\.forEach\(name => setPageSwitch\(name, switches\[name\]\)\);/.test(shell));
+  assert.equal(shell.split('useLookSetting(defaultSettings);').length - 1, 1, 'once at the start, so the address shows before the content arrives');
+
+  const rebuild = shell.slice(shell.indexOf('function rebuild() {'), shell.indexOf('// The Logo tab of Dashboard Settings'));
+  assert.ok(rebuild.includes('useLookSetting(content.settings);'), 'rebuild() runs at every content change');
+
+  // nothing else sets the finish or the glint
+  assert.equal(/dataset\.(finish|glint|look)|setPageSwitch\('(finish|glint|look)'/.test(shell), false);
 });
 
 test('glint, the master switch, the entrance, the spin, the hawk and the name effect are switches, and anything but true or false becomes on', () => {
@@ -1309,7 +1544,7 @@ test('the sample content file carries the new settings and they come through unc
   const file = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
   const settings = normalizeSample(file).settings;
 
-  logoSettingNames.concat(['frameMetal', 'glint', 'pageSeconds', 'crt', 'contentSource', 'switchBackAt']).forEach(name => {
+  logoSettingNames.concat(['frameMetal', 'glint', 'look', 'pageSeconds', 'crt', 'contentSource', 'switchBackAt']).forEach(name => {
     assert.ok(name in file.settings, 'the sample content has no ' + name);
     assert.deepEqual(settings[name], file.settings[name], name);
   });

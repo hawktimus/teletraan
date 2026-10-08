@@ -71,15 +71,31 @@ editors can sign in from anywhere.
                               flying hawk, the name effect, the screen glitch and the scheduler that says
                               when each of those may start. frame.css also has the night screen's
                               bounce, spin and fades, and the hidden transitions (docs/hidden-transitions.md)
+      neon-kit.css            the moving neon of Neon Prime, the kit: its lines, ticks and brackets and every
+                              keyframe they use (docs/layouts.md, "The kit"). frame.js has the part of it that
+                              is timed (the name glitch and the burst at a page change)
       perf.js                 the frame-rate readout, shown with ?perf (the P key hides it)
       tokens.css              the two metals, the screws, sizes and timings
       themes/                 one CSS file of colour variables per theme, and registry.js listing them.
-                              overlays/ has the holiday overlays the same way, and required.js lists
-                              the variables a theme must set (docs/adding-a-theme.md)
+                              overlays/ has the seasonal packs' colours the same way (the overlays),
+                              and required.js lists the variables a theme must set.
+                              decor/ has what Neon Prime adds to its colours: the gunmetal and the
+                              neon decoration (docs/adding-a-theme.md, "Neon Prime")
+      seasons/                the decorations of the seasonal packs: one file for each pack, with its
+                              header mark, its pieces over the panels and its edge decorations
+                              (christmas.js is the finished model), motion.css with every keyframe they
+                              use, and season.css with the layout of the three layers
+                              (docs/seasonal-packs.md)
+      layouts/                sidebar.css, the placing of the sidebar layout: a strip across the top with the team
+                              name, a column on the left, one big frame scaled up on the right and the ticker
+                              across the whole bottom, with no small frame. The numbers are in core/layout.js
+                              (docs/layouts.md)
       base.css                the 1920x1080 screen and the shared metal shapes
       core/                   helpers used by several panels. plate.js draws the frames, areas.js keeps
                               the frames in place while pages change, schedule.js says what shows when,
-                              logo.js and name.js draw the hawk and the team name, source.js
+                              logo.js and name.js draw the hawk and the team name (name.js can also put the
+                              name on two lines, which nothing uses now), countdown.js is the countdown's parts and
+                              the code that writes its numbers, for both layouts, source.js
                               decides sample or production content from Dashboard Settings,
                               images.js builds the addresses of photos from Sanity, photos.js says
                               which photos the Photo panel shows and in what order, portrait.js
@@ -87,7 +103,16 @@ editors can sign in from anywhere.
                               makes the pages of the Leadership panel, one role to a page, roster.js
                               makes the pages of the Subteam roster panel, theme.js
                               works out which theme and overlay apply, theme-apply.js puts them on the page,
+                              layout.js says which layout a theme has, which regions and blocks a layout
+                              has, the numbers of the sidebar layout and when a change of layout must
+                              reload the page, and layout-apply.js sets the layout on the page before
+                              anything is drawn (docs/layouts.md),
+                              season.js draws the decorations of the overlay's seasonal pack in three layers
+                              and hands its header mark to marks.js, which draws the picture at the right of
+                              every panel header (the double slash, or the pack's mark),
                               transitions.js chooses the style and the metal of the next page change,
+                              look.js turns the Look setting (polished, flat or plain) into the page
+                              switches the stylesheets read (data-finish, data-glint and data-look),
                               events.js merges the BAND events with the Events Calendar entries from Studio,
                               connection.js decides why Sanity could not be read and writes the
                               connection status text at the bottom right, device.js reads the Mini's
@@ -107,7 +132,9 @@ editors can sign in from anywhere.
                               tick.js is the one clock of the screen: it tells every panel when a real
                               second starts by reading the time, not by counting, so the digits never
                               drift, and a panel should write to the page only what has changed
-      panels/                 one folder per panel: a script and a stylesheet
+      panels/                 one folder per panel: a script and a stylesheet. panels/side is the whole
+                              column of the sidebar layout, in place of the banner and the countdown
+                              (docs/layouts.md, "The sidebar")
       fonts/, assets/         fonts and pictures, all served from here
       data/sample/            sample content with marked placeholders
       data/live/              files the Mini downloads (never committed)
@@ -135,8 +162,17 @@ editors can sign in from anywhere.
                               addresses, which photos show and in what order, the pages of
                               portraits, of the Leadership panel and of the subteam roster, the subteam members, the merging of events and the
                               lines of the Mini's address, and the reasons and the lines of the
-                              connection status text
+                              connection status text, and for the Look setting: its cleaning, the
+                              switches each look sets and the rules for Plain in base.css
       test-themes.mjs         checks for which theme and overlay apply, and for putting them on the page
+      test-layouts.mjs        checks for the layouts: which layout a theme has, the numbers of the sidebar layout,
+                              the reload that changes layout and that it cannot loop, that the scheduler leaves
+                              out the small frame, the blocks of a hidden transition, and that a seasonal pack
+                              draws only what a layout allows
+      test-seasons.mjs        checks for choosing, loading and drawing a seasonal pack (core/season.js), for its
+                              header mark (core/marks.js), its over layer and the Theme switch that turns that off,
+                              for a pack that is missing, broken or slow, and that check-seasons.mjs fails for each
+                              kind of mistake
       test-night.mjs          checks for night mode: when it is night in a time zone, where the bouncing
                               logo starts and how often it hits a corner, and the night stylesheet
       test-effects.mjs        checks for when the logo animations, the name effect and the screen glitch may start
@@ -149,6 +185,12 @@ editors can sign in from anywhere.
                               transaction for each, the order, the skipped reasons and the summary
       test-templates.mjs      checks that the CSV templates match the schemas, and the CSV importer
       test-connection-script.mjs  checks for deploy/scripts/check-connection.sh, with fake tools
+      check-seasons.mjs       fails if a seasonal pack is not in the data format, has a piece outside its zone, too
+                              many pieces, a forbidden word, no header mark, a mark bigger than its box (60 x 76),
+                              fewer than 8 or more than 14 pieces over the panels, an over piece that is too big,
+                              solid or quick, or animation anywhere but seasons/motion.css
+      zones.html              the zones of the seasonal packs outlined over the dashboard, at
+                              http://localhost:8080/tools/zones.html
       check-themes.mjs        fails if a theme or overlay is missing a variable or has text that is
                               hard to read
       testdata/               the calendar files test-calendar.mjs reads
@@ -160,7 +202,7 @@ editors can sign in from anywhere.
                               from plain plates, in metal or flat, at
                               http://localhost:8080/tools/perf/plates.html
     docs/                     how-to guides: editing-content.md, adding-a-field.md, adding-a-panel.md,
-                              adding-a-theme.md, adding-a-holiday-overlay.md, rebuilding-the-mini.md,
+                              adding-a-theme.md, layouts.md, adding-a-holiday-overlay.md, seasonal-packs.md, rebuilding-the-mini.md,
                               try-it-on-the-mini.md, the-logo.md, page-transitions.md, night-mode.md,
                               hidden-transitions.md, demo.md, publish-all.md, reordering-the-sidebar.md
                               and importing-from-csv.md.
@@ -199,6 +241,19 @@ alone.
   frame on or off. The metals are the `--metal-` colours in
   `dashboard/tokens.css`. Try them with `?metal=gold`, `?metal=silver` and
   `?glint=off`.
+- **How much polish the frames have.** Dashboard Settings, Screen tab, Look:
+  Polished (as now, the default), Flat or Plain. Flat is the flat finish with
+  no glint, and Plain is Flat with no screws on the frames and no double slash
+  in the panel headers. The list of looks and the starting value (`looks` and
+  `defaultSettings.look`) are in `dashboard/config.js`, and the field is in
+  `studio/schemas/dashboardSettings.js`. `core/look.js` turns the look into the
+  `data-finish`, `data-glint` and `data-look` switches on the html element
+  (`useLookSetting` in `shell.js` does it at every content change, so a change
+  in Studio shows at once), and the two rules for Plain are in `base.css`, next
+  to the flat finish. It works with every theme. Try one with `?look=polished`,
+  `?look=flat` or `?look=plain`: the address wins over the setting for that page
+  only, and `?finish=` and `?glint=` in the same address win over the look. To
+  add a look, see the first lines of `core/look.js`.
 - **How a page changes, and the metal of the page frames.** Dashboard Settings,
   Transitions tab (docs/page-transitions.md): Page change style (alternate,
   slat or mechanical), Break and rebuild time, Frame finish (mostly gold,
@@ -371,17 +426,35 @@ alone.
   them into `#connection-status`. It comes up in red by itself after two minutes
   without Sanity. The command for the Mini is `deploy/scripts/check-connection.sh`
   (docs/rebuilding-the-mini.md, "Checking the connection").
-- **The theme (the colours of the whole screen), and holiday overlays.** Theme
-  in Studio. Its Default theme, "Use a theme now", Schedule and Time zone
+- **The theme (the colours of the whole screen), and seasonal packs (holiday
+  overlays).** Theme in Studio. Its Default theme, "Use a theme now", Schedule and Time zone
   decide which theme and overlay show. The themes are the files in
   `dashboard/themes/` and the lists are `registry.js` there and in
   `dashboard/themes/overlays/`, with a copy in `studio/themes.js`. The starting
   values are `defaultThemeSettings` in `dashboard/config.js` and their copy in
   `studio/schemas/theme.js`. A new theme is docs/adding-a-theme.md and a new
-  overlay is docs/adding-a-holiday-overlay.md. The screen works out the theme
+  overlay is docs/adding-a-holiday-overlay.md. An overlay may also have
+  decorations (a header mark, pieces over the panels and edge decorations), which
+  together make a seasonal pack:
+  `dashboard/core/season.js` draws them from `dashboard/seasons/<id>.js`, and
+  docs/seasonal-packs.md explains the mark, the over layer, the zones, the data format and the motions.
+  The Theme page's "Seasonal pieces over the panels" switch is `seasonOverPanels`.
+  The screen works out the theme
   when it starts and once a minute, and changes it at the next page change of
   the large panel. The Time zone is also the one the Theme page uses to read
   dates. Try a theme with `?theme=<id>` and an overlay with `?overlay=<id>`.
+- **Where the regions of the screen sit (the layout).** A theme may have the
+  sidebar layout (`layout: 'sidebar'` in `dashboard/themes/registry.js` and
+  `studio/themes.js`): Neon Prime has it. The numbers are in
+  `dashboard/core/layout.js`, the placing in `dashboard/layouts/sidebar.css`, the
+  column's content in `dashboard/panels/side/`, and docs/layouts.md has the
+  sizes, how the big frame is scaled, what does not show, and how to add a layout.
+  Neon Prime also has the kit, seven moving neon effects (the name glitch, data
+  packets, sweeping lines and others): `dashboard/neon-kit.css`, the section
+  "The Neon Prime kit" in `dashboard/frame.js`, and docs/layouts.md, "The kit",
+  which also says how to add an effect.
+  Try it with `?theme=neon-prime`, and test its speed on the Mini with
+  docs/try-it-on-the-mini.md, section 7.
 - **A new panel, or the look of the frames.** See docs/adding-a-panel.md. How the
   frames change page and get their metal is docs/page-transitions.md. The
   plates are flat purple and the metal is on the edges only. The metal is made
@@ -418,6 +491,8 @@ version as the Studio (22.12 or newer), and nothing else installed.
     node tools/test-weather.mjs
     node tools/test-content.mjs
     node tools/test-themes.mjs
+    node tools/test-layouts.mjs
+    node tools/test-seasons.mjs
     node tools/test-effects.mjs
     node tools/test-tick.mjs
     node tools/test-night.mjs
@@ -425,13 +500,15 @@ version as the Studio (22.12 or newer), and nothing else installed.
     node tools/test-publish-all.mjs
     node tools/test-connection-script.mjs
     node tools/check-themes.mjs
+    node tools/check-seasons.mjs
     node studio/check-schemas.mjs
 
 Each one ends with a total such as `24 of 24 passed` and says FAIL beside
 anything that went wrong. If anything fails, the command ends with an error.
-Run all eleven after you change code under `dashboard/core/` or a file under
-`studio/schemas/`. `check-schemas.mjs` runs `check-themes.mjs` itself, so after
-you change a file in `dashboard/themes/` it is enough to run `check-schemas.mjs`.
+Run all of them after you change code under `dashboard/core/` or a file under
+`studio/schemas/`. `check-schemas.mjs` runs `check-themes.mjs` and `check-seasons.mjs`
+itself, so after you change a file in `dashboard/themes/` or `dashboard/seasons/` it is
+enough to run `check-schemas.mjs`.
 `test-templates.mjs` fails when the CSV templates are out of date, so after a
 schema change run `node scripts/make-templates.mjs` in the `studio` folder.
 
@@ -467,7 +544,9 @@ colours were not changed.
 - The frames have polished, aged metal edges with silver screws at the joints.
   That is `?finish=metal`, the normal look. `?finish=flat` shows the same screen
   with plain one-colour edges, flat silver screws and no shadow or glint. Comparing the two on the Mini
-  shows what the metal costs. docs/try-it-on-the-mini.md lists every switch.
+  shows what the metal costs. The Look setting in Dashboard Settings sets this
+  finish: Polished is `metal`, Flat and Plain are `flat`, and `?look=plain` also
+  hides the screws and the double slash in the headers. docs/try-it-on-the-mini.md lists every switch.
 
 ## Testing speed on the Mini
 

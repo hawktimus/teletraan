@@ -44,6 +44,13 @@ const metals = [
   { title: 'Silver', value: 'silver' },
 ];
 
+// The values are the names in looks in dashboard/config.js
+const looks = [
+  { title: 'Polished (as now)', value: 'polished' },
+  { title: 'Flat', value: 'flat' },
+  { title: 'Plain', value: 'plain' },
+];
+
 // The values are the names in speeds in dashboard/config.js
 const speeds = [
   { title: 'Very slow', value: 'very-slow' },
@@ -184,8 +191,25 @@ const glintField = defineField({
   title: 'Glint',
   type: 'boolean',
   group: 'screen',
-  description: 'A bright spark runs once around each frame every few seconds. Turn it off for a calmer screen.',
+  description: 'A bright spark runs once around each frame every few seconds. Turn it off for a calmer screen. Flat and Plain (Look) have none.',
   initialValue: true,
+});
+
+// How much polish the frames have. The starting value is the same as
+// defaultSettings.look in dashboard/config.js. dashboard/core/look.js turns the
+// choice into the switches the stylesheets read. It is not required: Dashboard
+// Settings published before this field existed has no look, which the screen
+// reads as Polished, and a required field would stop that page being published
+// (an alert too) until somebody picked one.
+const lookField = defineField({
+  name: 'look',
+  title: 'Look',
+  type: 'string',
+  group: 'screen',
+  description: 'Polished is the default, as now. Flat has plain edges and no glint. Plain also has no screws or // marks in headers. Flat and Plain are lighter on the Mini.',
+  options: { list: looks, layout: 'radio', direction: 'horizontal' },
+  initialValue: 'polished',
+  validation: Rule => Rule.valid(looks.map(look => look.value)).error('Pick polished, flat or plain.'),
 });
 
 // The screen glitch is in the Screen tab. The seconds between glitches can be
@@ -412,6 +436,7 @@ export default defineType({
     speedField,
     frameMetalField,
     glintField,
+    lookField,
     crtField,
     ...logoFields(),
     ...transitionsFields(),

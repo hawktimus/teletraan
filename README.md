@@ -54,8 +54,11 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - Calm mode, which turns the effects off
 - A speed setting for the whole board, and seconds per page that can be set for the whole board or for each board
 - Polished gold or silver frame edges, picked in Studio
+- A Look setting in Studio that turns the polish down: Polished (the normal look, and the default), Flat (plain colour edges and no glint) or Plain (Flat, with no screws and no // in the panel headers). Flat and Plain are lighter on the Mini, and `?look=flat` or `?look=plain` on the address tries one for a single page
 - Pages that flip like slats while the frames stay in place
 - The animated hawk logo, and a team name that splits apart and locks back together every few minutes
+- Layouts: a theme may have the sidebar layout, a strip across the top with the team name, a column on the left, one big frame on the right and the ticker across the whole bottom, with no small frame (docs/layouts.md). The theme Neon Prime has it: near black violet, indigo plates, gunmetal frames and neon cyan and magenta with amber marks, and no green. It has a kit of moving neon: the team name glitches now and then, bright dashes race along its lines, thin lines sweep down the big frame and the sidebar, and it all stops in calm mode, at night, and under an alert. Pick it on the Theme page; the screen reloads once to change layout. Its speed on the Mini has not been tested (docs/try-it-on-the-mini.md)
+- Seasonal packs: Halloween, Thanksgiving, Christmas, New Year's, Valentine's Day, Competition Day and Summer Break. Each is a set of accent colours plus a small picture that replaces the double slash in every panel header, decorations in the empty edges of the screen (strings of lights, a scene along the bottom) and a few small, faint, slow pieces, such as snowflakes, that drift over the whole screen. The editors schedule them on the Theme page in Studio, where a switch turns the pieces over the panels off. In calm mode nothing moves and those pieces are not drawn
 - Night mode: from 11:30pm to 11:30am the screen goes black with a bouncing logo, and the picture is never turned off. The times are set in Studio
 - Mechanical page changes: the frame breaks into plates and bars that fold away and click back together around the next page, with screws that turn at the joints. Studio can use these, the slat flip, or take turns
 - Hidden transitions: now and then the screen glitches blue, comes apart and cuts to a blue error screen, or glitches red and shows two red eyes in the dark. Each has two pictures that take turns. They can be played on request from Studio
@@ -75,5 +78,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - docs/where-things-are.md: what each folder is for, where the settings live, and how to check your work
 - docs/try-it-on-the-mini.md: testing speed on the Mini
 - docs/the-logo.md: how the hawk logo moves
+- docs/layouts.md: the standard and the sidebar layout, their numbers, how the big frame is scaled, and how to add a layout
+- docs/seasonal-packs.md: the seasonal packs, where decorations go, how to add one, and suggested dates
 
 The weather comes from Open-Meteo (open-meteo.com), a free service that needs no key.

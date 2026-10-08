@@ -1,0 +1,393 @@
+/* The sidebar's content (panels/side/side.js, docs/layouts.md, "The sidebar").
+   Every selector starts with html[data-layout="sidebar"], so the standard
+   layout is never touched. The panel is 384 wide and 776 high, which is the
+   whole of the column (#region-sidebar), and every part is placed by hand
+   inside it: the top is where the part starts, counted from the top of the
+   column (or of the brand, for the parts in it), and the height is the room it
+   has. Nothing is moved by what is in another part, so a long school name or a
+   three digit day count cannot push anything. The parts only have sizes and
+   places here. What they look like is the theme's business, with the class
+   names that start with side-.
+
+   The team name, the clock with the date, and the weather are not in this
+   column. The panel moves them into the strip across the top of the screen
+   (side.js, placeInStrip), and layouts/sidebar.css gives the strip's slots their
+   places. The clock and the weather are placed here, counted from the top of
+   their slot, which is as high as the strip.
+
+     part               top   height  what
+     in the strip, at its right end (500 wide)
+     .side-clock          6     132   the time (96 px) and, under it, the date
+     .side-weather       90      48   on the date row, at the right
+     in the column
+     .side-countdown      0     408   the countdown, 384 wide, stacked
+     .side-brand        432     344   the logo, the TEAM plate and the school
+       .side-logo          4      90   112 wide, at the left
+       .side-sample        5      88   230 wide, at the right of the logo, two lines of 44 px
+       .side-team        108      76   384 wide
+       .side-school      194     138   352 wide, up to three lines of 46 px
+
+   The countdown is stacked, from its top: the label (44) and under it the date
+   (44), the days (136), the DAYS word with the bars between it and the lamp (44),
+   the hours, minutes and seconds (56) with HRS, MIN and SEC under them (44), and
+   the rail of 12 blocks. A label with no date after it (COUNTDOWN OVER, DATE NOT
+   SET) takes both lines. The gap between the countdown and the brand is 24. All
+   text is 44 px or more, and no part is wider than 384. */
+
+html[data-layout="sidebar"] .side {
+  width: 384px;
+  height: 776px;
+  overflow: hidden;
+}
+
+
+/* The clock, in the strip: the time and AM or PM on the first row, the date
+   under them. The slot is 500 wide, the room the layout gives the clock
+   (stripClockWidth in core/layout.js). The time is 280 wide at its widest
+   (10:59), with AM or PM 70 more, and the date 288 at its widest (MON MAR 29). */
+html[data-layout="sidebar"] .side-clock {
+  position: absolute;
+  left: 0;
+  top: 6px;
+  box-sizing: border-box;
+  width: 500px;
+  height: 132px;
+  display: grid;
+  grid-template-columns: max-content max-content 1fr;
+  grid-template-rows: 84px 48px;
+  column-gap: 14px;
+  align-items: baseline;
+}
+html[data-layout="sidebar"] .side-clock .time {
+  grid-column: 1;
+  grid-row: 1;
+  font: 700 var(--size-heading)/84px var(--font-display);
+}
+html[data-layout="sidebar"] .side-clock .suffix {
+  grid-column: 2;
+  grid-row: 1;
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+html[data-layout="sidebar"] .side-clock .date {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  color: var(--yellow);
+  font: 600 var(--size-label)/48px var(--font-display);
+}
+
+
+/* The weather, on the date row at the right: the picture, then the temperature.
+   The picture and 104°F are 186 wide, and the widest date is 288, so they do not
+   meet in the 500 of the slot. */
+html[data-layout="sidebar"] .side-weather {
+  position: absolute;
+  right: 0;
+  top: 90px;
+  box-sizing: border-box;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font: 600 var(--size-label)/48px var(--font-display);
+}
+html[data-layout="sidebar"] .side-weather .weather-icon { display: block; }
+
+
+/* The countdown. The same parts as the standard countdown (core/countdown.js
+   writes them), stacked in a box 384 wide with a flat face in place of its red
+   frame. It looks more serious as the date comes closer, by the same variables
+   as the standard countdown: the face, the colour of the numbers and how fast
+   the lamp pulses. Its parts are 16 from each side, 352 wide. */
+html[data-layout="sidebar"] .side-countdown {
+  position: absolute;
+  left: 0;
+  top: 0;
+  box-sizing: border-box;
+  width: 384px;
+  height: 408px;
+  --accent: var(--danger);
+  --count-color: var(--yellow);
+  --pulse-time: var(--time-pulse-slow);
+  --panel-face: var(--danger-plate); /* a dark red plate. In the last week it is a brighter red. */
+}
+html[data-layout="sidebar"] .side-countdown[data-level="tense"] {
+  --count-color: var(--danger-bright);
+  --pulse-time: var(--time-pulse-medium);
+}
+html[data-layout="sidebar"] .side-countdown[data-level="critical"] {
+  --count-color: var(--white);
+  --pulse-time: var(--time-pulse-fast);
+  --panel-face: var(--danger-hot);
+}
+html[data-layout="sidebar"] .side-countdown .countdown-face {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 384px;
+  height: 408px;
+  background: var(--panel-face);
+}
+
+/* The top line: the label and, under it, the date, 88 high between them. The
+   label is 44 high, and the whole 88 when there is no date to put under it, so
+   a label that does not fit one line (COUNTDOWN OVER is 438 wide, a column line
+   is 352) goes on to a second. A label too long for that is cut off. The lamp is
+   placed from the top of the top line, at the right end of the DAYS row. */
+html[data-layout="sidebar"] .side-countdown .top-line {
+  position: absolute;
+  left: 16px;
+  top: 8px;
+  width: 352px;
+  height: 88px;
+  display: flex;
+  flex-direction: column;
+  /* core/countdown.js measures this font and size to decide what fits. Change them together. */
+  font: 700 var(--size-label)/44px var(--font-display);
+}
+html[data-layout="sidebar"] .side-countdown .label-group {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  color: var(--yellow);
+}
+html[data-layout="sidebar"] .side-countdown .label {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: normal; /* the screen keeps every line on one line, this may take two */
+}
+html[data-layout="sidebar"] .side-countdown .date {
+  flex: none;
+  height: 44px;
+  color: var(--yellow);
+}
+html[data-layout="sidebar"] .side-countdown .date:empty { display: none; } /* and the label has the room */
+html[data-layout="sidebar"] .side-countdown .lamp {
+  position: absolute;
+  right: 0;
+  top: 240px;
+  width: 20px;
+  height: 20px;
+  background: var(--accent);
+}
+
+/* The days. The row has no box of its own: the days box is as wide as the
+   countdown, with room at both sides for the two chevrons, and the number is
+   centred between them. The box clips the chevrons so they slide out from its
+   edges. The number window is 296 wide: the widest two digit count (99 at 184 px)
+   is 269 and the widest three digit count (399 at 132 px) is 284. */
+html[data-layout="sidebar"] .side-countdown .days {
+  position: absolute;
+  left: 0;
+  top: 100px;
+  box-sizing: border-box;
+  width: 384px;
+  height: 136px;
+  padding: 0 44px;
+  overflow: hidden;
+}
+html[data-layout="sidebar"] .side-countdown .days-window {
+  height: 136px;
+  overflow: hidden; /* a new number drops in from above and must not show outside */
+  text-align: center;
+}
+html[data-layout="sidebar"] .side-countdown .days-number {
+  color: var(--count-color);
+  font: 700 var(--size-days)/136px var(--font-display);
+}
+html[data-layout="sidebar"] .side-countdown .days-number.long { font-size: var(--size-days-long); }
+html[data-layout="sidebar"] .side-countdown .chevron {
+  position: absolute;
+  top: 0;
+  width: 30px;
+  height: 136px;
+}
+html[data-layout="sidebar"] .side-countdown .chevron-left { left: 8px; }
+html[data-layout="sidebar"] .side-countdown .chevron-right { right: 8px; }
+html[data-layout="sidebar"] .side-countdown .chevron polyline {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 12px;
+}
+
+/* The DAYS row: the word at the left (118 wide), then the row of slanted bars
+   (side.js draws it 182 wide) and the lamp at the right end */
+html[data-layout="sidebar"] .side-countdown .days-word {
+  position: absolute;
+  left: 16px;
+  top: 236px;
+  height: 44px;
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+html[data-layout="sidebar"] .side-countdown .stripes {
+  position: absolute;
+  left: 150px;
+  top: 252px;
+}
+html[data-layout="sidebar"] .side-countdown .stripes path { fill: var(--accent); }
+
+/* The hours, minutes and seconds: three columns of 117, each with its number
+   over its unit. The font's digits are different widths (a 1 is narrower than a
+   9), so each number is centred in a box of its own, and the units under them
+   never move. The pairs follow one another in the markup (number, unit), and the
+   adjacent selectors send each unit under its number. */
+html[data-layout="sidebar"] .side-countdown .time-row {
+  position: absolute;
+  left: 16px;
+  top: 284px;
+  width: 352px;
+  height: 100px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: 56px 44px;
+}
+html[data-layout="sidebar"] .side-countdown .digits {
+  display: block;
+  height: 56px;
+  overflow: hidden;
+  text-align: center;
+  font: 700 var(--size-body)/56px var(--font-display);
+}
+html[data-layout="sidebar"] .side-countdown .digits span { display: block; }
+html[data-layout="sidebar"] .side-countdown .hours { grid-column: 1; grid-row: 1; }
+html[data-layout="sidebar"] .side-countdown .minutes { grid-column: 2; grid-row: 1; }
+html[data-layout="sidebar"] .side-countdown .seconds { grid-column: 3; grid-row: 1; }
+html[data-layout="sidebar"] .side-countdown .unit {
+  grid-row: 2;
+  color: var(--yellow);
+  text-align: center;
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+html[data-layout="sidebar"] .side-countdown .hours + .unit { grid-column: 1; }
+html[data-layout="sidebar"] .side-countdown .minutes + .unit { grid-column: 2; }
+html[data-layout="sidebar"] .side-countdown .seconds + .unit { grid-column: 3; }
+
+/* The bar of 12 blocks that fills through each minute, as wide as the parts above it */
+html[data-layout="sidebar"] .side-countdown .segments {
+  position: absolute;
+  left: 16px;
+  top: 390px;
+  width: 352px;
+  display: flex;
+  gap: 4px;
+}
+html[data-layout="sidebar"] .side-countdown .segment {
+  flex: 1 1 0;
+  height: 12px;
+  background: var(--danger-dark);
+}
+html[data-layout="sidebar"] .side-countdown .segment.lit { background: var(--accent); }
+
+
+/* The logo, the SAMPLE CONTENT label, the TEAM plate and the school. The logo
+   is drawn on a grid 1100 wide and shrunk to fit its box: --k is the box's width
+   divided by 1100 (112 / 1100). Its parts reach past the box while the show
+   plays (see "The logo" in frame.css and .banner .logo), about 15 px each way at
+   this size, which is room the brand has at the left, above and below, and the
+   gap to the label at the right. */
+html[data-layout="sidebar"] .side-brand {
+  position: absolute;
+  left: 0;
+  top: 432px;
+  box-sizing: border-box;
+  width: 384px;
+  height: 344px;
+}
+html[data-layout="sidebar"] .side-logo {
+  --k: .1018;
+  position: absolute;
+  left: 14px;
+  top: 4px;
+  width: 112px;
+  height: 90px;
+}
+
+/* SAMPLE CONTENT is on the screen the whole time the sample is showing, so
+   nobody mistakes it for the team's real content. It is two lines of 44 px
+   (SAMPLE, then CONTENT, which is 214 wide) at the right of the logo, solid
+   yellow with dark text, the highest contrast on the screen. It is taken out of
+   the flow (position: absolute), so showing or hiding it can never move anything.
+   side.js leaves it empty when the content is the editors' own, and an empty
+   label is hidden. */
+html[data-layout="sidebar"] .side-sample {
+  position: absolute;
+  left: 154px;
+  top: 5px;
+  box-sizing: border-box;
+  width: 230px;
+  height: 88px;
+  background: var(--yellow);
+  color: var(--ground);
+  text-align: center;
+  white-space: normal;
+  font: 700 var(--size-label)/44px var(--font-display);
+}
+html[data-layout="sidebar"] .side-sample:empty { display: none; }
+
+/* The plate is the banner's, as wide as the column. TEAM with a five digit number
+   is 308 wide at 44 px, and the plate's cut corner (bottom right) starts 44 px
+   from its right edge. */
+html[data-layout="sidebar"] .side-team {
+  position: absolute;
+  left: 0;
+  top: 108px;
+  box-sizing: border-box;
+  width: 384px;
+  height: 76px;
+}
+html[data-layout="sidebar"] .side-team svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+html[data-layout="sidebar"] .side-team span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  box-sizing: border-box;
+  width: 384px;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* The label size, because TEAM with a five digit number is 292 at 44 px and
+     372 at 56, which the plate's cut corner would cut into */
+  font: 700 var(--size-label)/44px var(--font-display);
+  /* The frame's rim and its shadow cover the top of the plate, so the clear
+     purple sits lower than the middle. The padding at the top moves the words
+     down to it, and the padding at the right moves them away from the cut
+     corner. */
+  padding-top: 5px;
+  padding-right: 16px;
+}
+html[data-layout="sidebar"] .side-team b {
+  margin-left: 16px;
+  color: var(--yellow);
+}
+
+/* The school may take three lines, for example HOLLY SPRINGS over HIGH SCHOOL, and is
+   centred in its box so fewer lines sit in the middle of it. A fourth line is
+   cut off with an ellipsis. */
+html[data-layout="sidebar"] .side-school {
+  position: absolute;
+  left: 16px;
+  top: 194px;
+  box-sizing: border-box;
+  width: 352px;
+  height: 138px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+html[data-layout="sidebar"] .side-school .school-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: normal; /* the screen keeps every line on one line, this may take three */
+  text-align: center;
+  font: 600 var(--size-label)/46px var(--font-display);
+}

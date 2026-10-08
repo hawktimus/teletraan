@@ -1,0 +1,54 @@
+/* Theme: Neon Prime. A dark look with neon, a mix of cyberpunk and giant
+   fighting machines: a near black violet ground, deep indigo plates, dark
+   purple tabs, gunmetal frames, and neon used sparingly. It has the sidebar
+   layout (a column on the left, one big pane on the right, no small frame,
+   docs/layouts.md).
+
+   As in hawktimus.css, this file holds the required colour variables and
+   nothing else (hawktimus.css says what each one is for). What this theme adds
+   beyond the list, the gunmetal frame edges, the neon trim and the neon colours
+   that are not text, is in themes/decor/neon-prime-decor.css. docs/adding-a-theme.md
+   has the table of every colour.
+
+   The three neon colours:
+     electric cyan   #2de6ff   --status-progress here, and the trim lines in the decor file
+     hot magenta     #ff2bd6   the decor file only (the glint and the blocks), never text
+     amber           #ffae2b   --yellow, for headings, numerals and small marks, and the hazard stripes
+   There is no green in this theme and no hue from 65 to 175 degrees:
+   tools/check-themes.mjs fails for one in this file or in the decor file.
+   Text is only ever white, lilac, amber or a status colour, and each reaches 7
+   to 1 contrast on the plate it sits on (tools/check-themes.mjs). */
+
+html.theme-neon-prime {
+  --ground: #06030d;
+  --plate: #130a27;
+  --card: #1f1141;
+  --purple: #2d1a5c;
+  --purple-dark: #1b0f3f;
+  --yellow: #ffae2b; /* the accent. The name is old: it is amber here */
+  --white: #f4f1ff;
+  --lilac: #b8a8ff;
+  --yellow-faint: rgba(255, 174, 43, .16);
+
+  --danger: #ff2e63;
+  --danger-bright: #ff93ab;
+  --danger-plate: #1f0712;
+  --danger-hot: #5a0a22;
+  --danger-dark: #330b1a;
+
+  /* always shown with a shape and a word too. Four different hues: cyan, lilac,
+     ice white and pink red. */
+  --status-progress: #2de6ff;
+  --status-next: var(--lilac);
+  --status-done: #d7f1ff;
+  --status-blocked: #ff8aa3;
+
+  --logo-purple: #6a3fe6;
+  --logo-tail: #4b27b3;
+  --logo-far: #2f1a7d;
+
+  --silhouette-light: #4a2ca0;
+  --silhouette-shade: #2b1766;
+  --silhouette-cut: #0d0620;
+  --silhouette-slash: #2de6ff;
+}

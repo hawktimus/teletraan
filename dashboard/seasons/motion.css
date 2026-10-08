@@ -28,6 +28,7 @@
      draw     draws its lines, holds, then wipes them away (the lines need pathLength="1" and stroke-dasharray="1")
      sweep    makes one quick pass across by --travel (600px), then rests out of sight for the rest of the round
      slide    comes in from the left by --travel (200px), stays, then leaves to the right
+     flutter  falls by --travel (1200px) while swaying 30px left and right, fading in at the top and out at the bottom
 
    To add a motion: write its keyframes below, give it a rule in "One rule for
    each motion", add its name to motions in core/season.js, and add its line to
@@ -104,6 +105,17 @@
   100% { transform: translateX(var(--travel, 200px)); opacity: 0; }
 }
 
+/* Snow, leaves and confetti: a fall that sways, for the pieces over the panels */
+@keyframes season-flutter {
+  0%   { transform: translate(0, calc(var(--travel, 1200px) * -.5)) rotate(-20deg); opacity: 0; }
+  6%   { opacity: 1; }
+  25%  { transform: translate(30px, calc(var(--travel, 1200px) * -.25)) rotate(15deg); }
+  50%  { transform: translate(-30px, 0) rotate(-15deg); }
+  75%  { transform: translate(30px, calc(var(--travel, 1200px) * .25)) rotate(15deg); }
+  94%  { opacity: 1; }
+  100% { transform: translate(0, calc(var(--travel, 1200px) * .5)) rotate(-20deg); opacity: 0; }
+}
+
 /* The front layer fades with the blocks of a hidden transition (see "Hidden
    transitions" in frame.css) */
 @keyframes season-out { to   { opacity: 0; } }
@@ -134,24 +146,30 @@ html[data-motion="full"] .season-piece[data-move="pulse"]   { animation-name: se
 html[data-motion="full"] .season-piece[data-move="draw"]    { animation-name: season-draw; animation-timing-function: linear; }
 html[data-motion="full"] .season-piece[data-move="sweep"]   { animation-name: season-sweep; }
 html[data-motion="full"] .season-piece[data-move="slide"]   { animation-name: season-slide; }
+html[data-motion="full"] .season-piece[data-move="flutter"] { animation-name: season-flutter; animation-timing-function: linear; }
 
 
 /* While the night screen covers the picture nothing behind it is worth playing */
 html[data-night] .season-piece { animation-play-state: paused; }
 
 /* A hidden transition (core/hidden-run.js). The back layer is under #backdrop,
-   so the backdrop covers it and nothing is needed. The front layer is over the
-   stage, so it fades out as the blocks fly apart, stays out of sight while the
-   screen is apart or shows something else, and fades back in as the blocks come
-   home. During the red glitches it stays as it is. */
-html[data-motion="full"] #world[data-hidden]:not([data-hidden="glitch"]) .season-front {
+   so the backdrop covers it and nothing is needed. The front layer and the over
+   layer are over the stage, so they fade out as the blocks fly apart (break),
+   stay out of sight while the screen is apart or shows something else, and fade
+   back in as the blocks come home (build). During the red glitches they stay as
+   they are. Any other value of data-hidden hides them, so a new step of a
+   transition never has decorations over it. The first rule names break and
+   build in its :not() parts so that it never matches them: it has more parts
+   than the two rules after it and would win over them. */
+html[data-motion="full"] #world[data-hidden]:not([data-hidden="glitch"]):not([data-hidden="break"]):not([data-hidden="build"]) .season-front,
+html[data-motion="full"] #world[data-hidden]:not([data-hidden="glitch"]):not([data-hidden="break"]):not([data-hidden="build"]) .season-over {
   visibility: hidden;
 }
-html[data-motion="full"] #world[data-hidden="break"] .season-front {
-  visibility: visible;
+html[data-motion="full"] #world[data-hidden="break"] .season-front,
+html[data-motion="full"] #world[data-hidden="break"] .season-over {
   animation: season-out calc(var(--time-hidden) * .3) linear both;
 }
-html[data-motion="full"] #world[data-hidden="build"] .season-front {
-  visibility: visible;
+html[data-motion="full"] #world[data-hidden="build"] .season-front,
+html[data-motion="full"] #world[data-hidden="build"] .season-over {
   animation: season-in calc(var(--time-hidden) * .4) linear calc(var(--time-hidden) * .6) both;
 }

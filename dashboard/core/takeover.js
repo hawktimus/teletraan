@@ -124,6 +124,7 @@ async function replace(element, id, content) {
 function begin(kind) {
   running = kind;
   pauseRotation();
+  frame.setTakeoverCovers(true); // the neon kit stops while the screen is covered
   tellWatcher();
 }
 
@@ -133,6 +134,7 @@ function finish() {
   alertInterrupts = false;
   resumeRotation();
   running = null;
+  frame.setTakeoverCovers(false);
   tellWatcher();
 }
 

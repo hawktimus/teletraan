@@ -2,12 +2,14 @@
 // the shape of it, and change the pictures, the places and the numbers.
 // docs/seasonal-packs.md explains every part.
 //
-// What it draws, in the empty places of the screen:
-//   - snow falling behind the panels (back) and down the margins (front)
-//   - a lit string along the top edge, and two more in the gap above the ticker
-//   - holly in one cut corner and a bell in the other
-//   - a snowy scene along the bottom edge: hills, trees, presents, a snowman and
-//     two lamp posts
+// What it draws:
+//   - a fir tree in place of the slashes at the right of every panel header (mark)
+//   - twelve snowflakes of three sizes that fall and sway across the whole screen,
+//     over the panels (over)
+//   - in the empty places: a lit string along the top edge, and two more in the
+//     gap above the ticker, holly in one cut corner and a bell in the other, and
+//     a snowy scene along the bottom edge: hills, trees, presents, a snowman and
+//     two lamp posts (front and scene)
 //
 // The pack is data. It holds no keyframes and no animation code: a piece names a
 // motion ('fall', 'twinkle', 'sway'...) and seasons/motion.css plays it, and
@@ -109,9 +111,11 @@ const stringA = lightString(836, 14, 8, 1, 3, 0.7, 2);
 const stringB = lightString(654, 14, 6, 1, 3, 0.7, 2);
 
 
-// The scene along the bottom edge. It is 1920 wide and 22 high. Left of x 270
-// the ticker's tag comes within 8 px of its top, so there the hills stay low and
-// nothing stands on them.
+// The scene along the bottom edge. It is 1920 wide and 26 high, and its y runs
+// from -4 (the top edge of the strip) to 22 (the bottom of the screen), so the
+// ground is at the bottom and the trees have 4 px of headroom. Left of x 270
+// the ticker's tag comes within 12 px of the top, so there (y under 8) the hills
+// stay low and nothing stands on them.
 
 // A hilltop edge made of straight facets: one point every step pixels, with a
 // height that rolls between the limits. low is the lowest the top may be for
@@ -148,7 +152,7 @@ function farTrees() {
   let markup = '';
   for (let i = 0; i < 40; i++) {
     const x = 284 + i * 41 + (i * i * 7) % 17;
-    const h = 8 + (i * 5) % 4;
+    const h = 9 + (i * 5) % 4;
     markup += shape([[x - h * 0.34, 16], [x, 16], [x, 16 - h]], '#237a4d') + shape([[x, 16], [x + h * 0.34, 16], [x, 16 - h]], '#1a5d3b');
   }
   return markup;
@@ -166,33 +170,37 @@ function present(x, size, boxColour, ribbon) {
 
 // A snowman standing on y 20: three balls, a scarf and a nose
 function snowman(x) {
-  return ball(x, 17.2, 3.6, snow, snowMid) +
-    ball(x, 10.8, 2.8, snow, snowMid) +
-    ball(x, 5.6, 2.1, snow, snowMid) +
-    shape([[x - 2.8, 7.6], [x + 2.8, 7.6], [x + 2.8, 9], [x - 2.8, 9]], red) +
-    shape([[x + 1.4, 9], [x + 2.8, 9], [x + 2.8, 12], [x + 1.4, 12]], redShade) +
-    shape([[x, 5.4], [x + 3.4, 6], [x, 6.6]], '#f09a3e') +
-    shape([[x - 1.2, 4.6], [x - 0.4, 4.6], [x - 0.4, 5.4], [x - 1.2, 5.4]], '#2a2f45');
+  const k = 1.2; // how much bigger than the first drawing
+  const up = y => 20 - (20 - y) * k; // a height above the feet, scaled
+  const wide = n => n * k;
+
+  return ball(x, up(17.2), wide(3.6), snow, snowMid) +
+    ball(x, up(10.8), wide(2.8), snow, snowMid) +
+    ball(x, up(5.6), wide(2.1), snow, snowMid) +
+    shape([[x - wide(2.8), up(9)], [x + wide(2.8), up(9)], [x + wide(2.8), up(7.6)], [x - wide(2.8), up(7.6)]], red) +
+    shape([[x + wide(1.4), up(9)], [x + wide(2.8), up(9)], [x + wide(2.8), up(12)], [x + wide(1.4), up(12)]], redShade) +
+    shape([[x, up(6.6)], [x + wide(3.4), up(6)], [x, up(5.4)]], '#f09a3e') +
+    shape([[x - wide(1.2), up(5.4)], [x - wide(0.4), up(5.4)], [x - wide(0.4), up(4.6)], [x - wide(1.2), up(4.6)]], '#2a2f45');
 }
 
 // A lamp post standing on y 20. The glass is dull here. The lit glass is a piece
 // of its own (the lamps shape below), which twinkles.
 function lamp(x) {
-  return shape([[x - 0.8, 7], [x + 0.8, 7], [x + 0.8, 21], [x - 0.8, 21]], '#7f8fb0') +
-    shape([[x - 3.4, 0.6], [x + 3.4, 0.6], [x + 4.4, 2.2], [x + 4.4, 7], [x - 4.4, 7], [x - 4.4, 2.2]], '#4b5877') +
-    shape([[x - 2.6, 2], [x + 2.6, 2], [x + 2.6, 5.8], [x - 2.6, 5.8]], '#7a6a3e');
+  return shape([[x - 0.8, 4], [x + 0.8, 4], [x + 0.8, 21], [x - 0.8, 21]], '#7f8fb0') +
+    shape([[x - 3.4, -2.4], [x + 3.4, -2.4], [x + 4.4, -0.8], [x + 4.4, 4], [x - 4.4, 4], [x - 4.4, -0.8]], '#4b5877') +
+    shape([[x - 2.6, -1], [x + 2.6, -1], [x + 2.6, 2.8], [x - 2.6, 2.8]], '#7a6a3e');
 }
 
 // The lit glass of the lamps, as one shape as wide as the scene
 function lampLight(xs) {
-  return xs.map(x => shape([[x - 2.6, 2], [x + 2.6, 2], [x + 2.6, 5.8], [x - 2.6, 5.8]], '#ffe9a0')).join('');
+  return xs.map(x => shape([[x - 2.6, -1], [x + 2.6, -1], [x + 2.6, 2.8], [x - 2.6, 2.8]], '#ffe9a0')).join('');
 }
 
 // x of the middle and the height of each tree
 const trees = [
-  [312, 15], [346, 11], [388, 17], [560, 13], [592, 16], [700, 12], [734, 15], [770, 11],
-  [1110, 16], [1146, 12], [1290, 13], [1326, 17], [1364, 12], [1560, 15], [1596, 11],
-  [1700, 14], [1736, 17], [1774, 12], [1860, 15], [1896, 11],
+  [312, 18], [346, 13], [388, 21], [560, 16], [592, 19], [700, 14], [734, 18], [770, 13],
+  [1110, 19], [1146, 14], [1290, 16], [1326, 21], [1364, 14], [1560, 18], [1596, 13],
+  [1700, 17], [1736, 21], [1774, 14], [1860, 18], [1896, 13],
 ];
 
 // x of the left side, the size, the colour of the box and the colour of the ribbon
@@ -216,18 +224,60 @@ const sceneMarkup =
   hill(snow, 19.2, 0.8, 32, 2, 17.5);
 
 
+// The mark: a fir tree, 60 by 76, which is the biggest a mark may be (markBox in
+// core/marks.js). Three tiers, each lit on the left and in shade on the right,
+// with a darker band under each tier so the tiers read as separate. The star is
+// the accent colour of the screen: shapes inside <g class="double-slash"> are
+// painted by base.css with --yellow, which the Christmas overlay makes mint, so
+// the star follows the colours of the pack. The greens and the red are fixed.
+
+const markLit = '#43c47c';
+const markShade = '#2a9a5e';
+const markBand = '#1f7a4a';
+const markTrunk = '#8a5a36';
+
+// One tier of the tree: a triangle from the apex (its top, a y) down to the base
+// (a y), reaching half pixels left and right of the middle at x 30, with its
+// darker band along the bottom
+function tier(apex, base, half) {
+  const edgeAt = y => half * (y - apex) / (base - apex); // how far the slanting side is from the middle at height y
+  const band = base - 5;
+  return shape([[30, apex], [30, base], [30 - half, base]], markLit) +
+    shape([[30, apex], [30 + half, base], [30, base]], markShade) +
+    shape([[30 - edgeAt(band), band], [30 + edgeAt(band), band], [30 + half, base], [30 - half, base]], markBand);
+}
+
+// A small faceted bauble: a diamond, lit on the left and in shade on the right
+function bauble(x, y) {
+  const r = 4.4;
+  return shape([[x, y - r], [x, y + r], [x - r, y]], red) + shape([[x, y - r], [x + r, y], [x, y + r]], redShade);
+}
+
+const treeMarkup =
+  shape([[25, 68], [35, 68], [35, 76], [25, 76]], markTrunk) +
+  tier(38, 68, 28) +
+  tier(24, 52, 21) +
+  tier(12, 34, 14) +
+  bauble(29, 27) + bauble(39, 44) + bauble(20, 60) +
+  '<g class="double-slash"><polygon points="30,0 32.2,4.8 37,7 32.2,9.2 30,14 27.8,9.2 23,7 27.8,4.8"/></g>';
+
+const mark = { viewBox: '0 0 60 76', markup: treeMarkup };
+
+
 // The shapes the pieces use, each drawn once
 
-// A snowflake, a four pointed star, and a plainer one for the thin places
-const flake = {
-  viewBox: '0 0 24 24',
-  markup: polygon('12,0 14.6,9.4 24,12 14.6,14.6 12,24 9.4,14.6 0,12 9.4,9.4', snow),
-};
+// A snowflake: three bars crossing at 60 degrees, with a small hexagon in the middle
+const snowflakeMarkup = (function () {
+  const bar = [[-13, 0], [-10, -3], [10, -3], [13, 0], [10, 3], [-10, 3]];
+  const turned = degrees => {
+    const a = degrees * Math.PI / 180;
+    return bar.map(point => [14 + point[0] * Math.cos(a) - point[1] * Math.sin(a), 14 + point[0] * Math.sin(a) + point[1] * Math.cos(a)]);
+  };
+  const middle = [0, 1, 2, 3, 4, 5].map(i => [14 + 5.2 * Math.cos(i * Math.PI / 3), 14 + 5.2 * Math.sin(i * Math.PI / 3)]);
+  return shape(turned(0), snow) + shape(turned(60), snow) + shape(turned(120), snow) + shape(middle, snowMid);
+}());
 
-const flakeDot = {
-  viewBox: '0 0 16 16',
-  markup: polygon('5,0 11,0 16,5 16,11 11,16 5,16 0,11 0,5', '#dfe8ff'),
-};
+const snowflake = { viewBox: '0 0 28 28', markup: snowflakeMarkup };
 
 // A gold star
 const star = {
@@ -263,8 +313,7 @@ const holly = {
 };
 
 const shapes = {
-  'flake': flake,
-  'flake-dot': flakeDot,
+  'snowflake': snowflake,
   'star': star,
   'bell': bell,
   'holly': holly,
@@ -278,14 +327,15 @@ const shapes = {
   'wire-b': stringB.wire,
   'lights-b-0': stringB.bulbs[0],
   'lights-b-1': stringB.bulbs[1],
-  'lamps': { viewBox: '0 0 1920 22', markup: lampLight(lamps) },
+  'lamps': { viewBox: '0 -4 1920 26', markup: lampLight(lamps) },
 };
 
 
 // The pack. A piece is
 //   shape    which of the shapes above
-//   x, y     where its top left corner rests, in pixels. In the back layer these
-//            are screen pixels. In the front layer they are measured from the
+//   x, y     where its top left corner rests, in pixels. In the back and over
+//            layers these are screen pixels, and the middle of the path of a
+//            travelling piece. In the front layer they are measured from the
 //            top left corner of the piece's zone
 //   size     how wide it is, in pixels. The height follows from the shape
 //   zone     (front only) which zone it is in: the list is at the top of core/season.js
@@ -299,31 +349,37 @@ const shapes = {
 export const pack = {
   shapes: shapes,
 
-  // 1920 wide and 22 high. Drawn in the "ground" zone along the bottom edge.
-  scene: { viewBox: '0 0 1920 22', markup: sceneMarkup },
+  // 1920 wide and 26 high, from y -4 to 22. Drawn in the "ground" zone along the bottom edge.
+  scene: { viewBox: '0 -4 1920 26', markup: sceneMarkup },
 
-  // Snow drifting down behind the panels. It is seen in the gaps between them
-  // and in the margins. Slow and faint, so it never competes with the text.
-  back: [
-    { shape: 'flake', x: 160, y: 140, size: 26, opacity: 0.5, motion: 'fall', seconds: 46, delay: -12, travel: 1500 },
-    { shape: 'flake-dot', x: 420, y: 700, size: 16, opacity: 0.5, motion: 'fall', seconds: 38, delay: -30, travel: 1400 },
-    { shape: 'flake', x: 760, y: 360, size: 20, opacity: 0.45, motion: 'fall', seconds: 52, delay: -5, travel: 1500 },
-    { shape: 'flake', x: 1010, y: 880, size: 28, opacity: 0.5, motion: 'fall', seconds: 44, delay: -22, travel: 1500 },
-    { shape: 'flake-dot', x: 1330, y: 240, size: 14, opacity: 0.55, motion: 'fall', seconds: 36, delay: -16, travel: 1400 },
-    { shape: 'flake', x: 1620, y: 560, size: 22, opacity: 0.45, motion: 'fall', seconds: 50, delay: -40, travel: 1500 },
-    { shape: 'flake', x: 1790, y: 900, size: 18, opacity: 0.5, motion: 'fall', seconds: 42, delay: -8, travel: 1500 },
+  // The picture that replaces the slashes in every panel header
+  mark: mark,
+
+  // Snow over the panels: twelve flakes of three sizes (22, 32 and 44), each
+  // falling and swaying on its own slow round. A flake takes 24 to 52 seconds to
+  // cross the screen, so it is only over a letter for a moment, and it is faint
+  // enough (opacity .7 to .85) that a word shows through it. The big ones are
+  // the faintest and fall fastest, the small ones are the clearest and slowest,
+  // which gives the snow some depth. The delays are spread (golden ratio steps
+  // round each flake's own round) so the first screen already has flakes at every
+  // height. This layer carries all of the snow: none falls behind the panels or
+  // in the margins, because a pack may only move about 24 pieces in all.
+  over: [
+    { shape: 'snowflake', x: 70, y: 529, size: 22, opacity: 0.85, motion: 'flutter', seconds: 44, delay: -3.1, travel: 1300 },
+    { shape: 'snowflake', x: 235, y: 518, size: 44, opacity: 0.7, motion: 'flutter', seconds: 24, delay: -16.5, travel: 1300 },
+    { shape: 'snowflake', x: 390, y: 524, size: 32, opacity: 0.78, motion: 'flutter', seconds: 34, delay: -10.4, travel: 1300 },
+    { shape: 'snowflake', x: 575, y: 529, size: 22, opacity: 0.85, motion: 'flutter', seconds: 50, delay: -46.2, travel: 1300 },
+    { shape: 'snowflake', x: 735, y: 524, size: 32, opacity: 0.78, motion: 'flutter', seconds: 38, delay: -20.6, travel: 1300 },
+    { shape: 'snowflake', x: 905, y: 518, size: 44, opacity: 0.7, motion: 'flutter', seconds: 28, delay: -4.5, travel: 1300 },
+    { shape: 'snowflake', x: 1075, y: 529, size: 22, opacity: 0.85, motion: 'flutter', seconds: 46, delay: -35.8, travel: 1300 },
+    { shape: 'snowflake', x: 1245, y: 524, size: 32, opacity: 0.78, motion: 'flutter', seconds: 32, delay: -12.7, travel: 1300 },
+    { shape: 'snowflake', x: 1395, y: 518, size: 44, opacity: 0.7, motion: 'flutter', seconds: 26, delay: -9.8, travel: 1300 },
+    { shape: 'snowflake', x: 1565, y: 529, size: 22, opacity: 0.85, motion: 'flutter', seconds: 52, delay: -32.9, travel: 1300 },
+    { shape: 'snowflake', x: 1715, y: 524, size: 32, opacity: 0.78, motion: 'flutter', seconds: 36, delay: -9, travel: 1300 },
+    { shape: 'snowflake', x: 1850, y: 518, size: 44, opacity: 0.7, motion: 'flutter', seconds: 30, delay: -26.1, travel: 1300 },
   ],
 
   front: [
-    // Snow down the margins and the gap between the two columns
-    { zone: 'left', shape: 'flake-dot', x: 8, y: 110, size: 12, motion: 'fall', seconds: 20, delay: -4, travel: 800 },
-    { zone: 'left', shape: 'flake', x: 4, y: 360, size: 16, motion: 'fall', seconds: 26, delay: -15, travel: 800 },
-    { zone: 'left', shape: 'flake-dot', x: 12, y: 580, size: 10, motion: 'fall', seconds: 17, delay: -9, travel: 800 },
-    { zone: 'right', shape: 'flake', x: 6, y: 150, size: 16, motion: 'fall', seconds: 24, delay: -3, travel: 900 },
-    { zone: 'right', shape: 'flake-dot', x: 12, y: 430, size: 12, motion: 'fall', seconds: 19, delay: -12, travel: 900 },
-    { zone: 'right', shape: 'flake', x: 8, y: 690, size: 14, motion: 'fall', seconds: 28, delay: -20, travel: 900 },
-    { zone: 'gutter', shape: 'flake-dot', x: 4, y: 150, size: 10, motion: 'fall', seconds: 16, delay: -6, travel: 420 },
-
     // The lit string along the top edge: the wire stays, and the three groups of
     // bulbs twinkle one after another
     { zone: 'top', shape: 'wire-top', x: 0, y: 0, size: 1920 },

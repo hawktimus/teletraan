@@ -434,9 +434,25 @@ Announcements, Night mode, Hidden, Calendars, Content source and Connection.
   them. Frame metal is Gold (warm
   antique brass) or Silver (weathered steel) and sets the metal on the edges that
   stay on the screen: the banner, the countdown and the logo. The large and small
-  panels choose their own metal at every page change, in the Transitions tab.
+  panels choose their own metal at every page change, in the Transitions tab. The
+  theme Neon Prime has frames of dark steel of its own and ignores both settings.
   Glint is a bright spark that runs once around each frame every few
-  seconds. Turn it off for a calmer screen. Screen glitch is a short old
+  seconds. Turn it off for a calmer screen. Look is how much polish the frames
+  have. Polished (as now) is the default and is the screen as it has always
+  looked: worn metal edges, screws with shading, the glint, and the // at the
+  right of each panel header. Flat has plain colour edges and plain screws, with
+  no worn metal, shading, ridge or banding, and no glint, whatever the Glint
+  switch says. The // stays. Plain is Flat with no screws on the frames and
+  no // in the panel headers. The header picture of a seasonal pack, the shapes
+  beside the tasks and every other mark stay in all three. Flat and Plain draw
+  less, so the Mini has an easier time (docs/try-it-on-the-mini.md). A look
+  applies to every theme (Neon Prime keeps its cyan and magenta trim lines in
+  Flat and Plain), and Frame metal and Frame finish keep their meaning.
+  It does not change Motion, the page change style, the hidden transitions or
+  the name effect. To see one before you change the setting, add `?look=flat`
+  or `?look=plain` to the address of the screen: the address wins, for that page
+  only. If no choice is ticked for Look (a Dashboard Settings page published
+  before Look existed), the screen uses Polished. Screen glitch is a short old
   television glitch over the whole screen: a bright bar rolls down, the picture
   jumps sideways and the scan lines flicker. "Play the glitch" turns it on or
   off, "Seconds between glitches" is from 30 to 3600, or 0 to never play it, and
@@ -514,7 +530,9 @@ Announcements, Night mode, Hidden, Calendars, Content source and Connection.
   this, so Slow makes every page stay longer than the number you typed. This tab
   also has how many days finished tasks stay, and the date the safety day count
   starts. If you delete every row of a list, nothing is shown in that part of
-  the screen.
+  the screen. While the theme Neon Prime is on there is no small frame, so the
+  Small panels list is not used and the Large panels list is the rotation of the
+  one big frame.
 - Photos: how the Photo panel works. "Photo order" is Random or Newest first, and
   "Seconds per photo" is from 6 to 120 and starts at 16. See "Photos" above.
 - Announcements: full screen messages at set times. Give the time in 24 hour
@@ -578,28 +596,50 @@ Announcements, Night mode, Hidden, Calendars, Content source and Connection.
 ## Theme
 
 One page, like Dashboard Settings. It cannot be deleted or copied. A theme is
-a set of colours for the whole screen. It changes colours only: nothing moves
-or changes size. A holiday overlay lays a few accent colours over the theme
-for a set of dates.
+a set of colours for the whole screen. Hawktimus and the placeholder Alternate
+change colours only: nothing moves or changes size. One theme, Neon Prime, also
+changes where things sit: a column on the left with the team name, the clock,
+the countdown and the logo, one big frame on the right and the ticker under it.
+It has no small frame, so the Small panels list in Dashboard Settings is not
+used while it is on (the Large panels list is the whole rotation), and it has
+frames of dark steel whatever Frame metal says. When the screen changes to or
+from Neon Prime it reloads once, at the next page change of the large frame.
+A seasonal pack is a holiday look: a few accent colours laid
+over the theme for a set of dates, plus decorations: a small picture in place of
+the double slash at the right of every panel header (a tree, a pumpkin, a
+heart...), decorations in the empty places along the edges of the screen, such
+as strings of lights and a snowy scene, and a few small pieces, such as
+snowflakes, that drift slowly over the whole screen. The pieces over the panels
+are small and faint and only cross a word for a moment. In calm motion nothing
+moves and the pieces over the panels are not drawn.
 
 - Default theme: the look the screen has when nothing below applies.
-- Use a theme now: pick a theme, an overlay, or both, and they show at once,
+- Use a theme now: pick a theme, a seasonal pack, or both, and they show at once,
   whatever the schedule says. Leave a part empty and the schedule decides it.
-  Pick "No overlay" to hide the overlay the schedule would show. "Until" is
+  Pick "No seasonal pack" to hide the pack the schedule would show. "Until" is
   optional. When that time passes, "Use a theme now" stops by itself. With no
   time it stays until you clear it.
 - Schedule: rules for certain dates. Give each rule a name (only editors see
-  it), a kind (Theme or Holiday overlay), the theme or overlay, a start date and
+  it), a kind (Theme or Seasonal pack), the theme or the pack, a start date and
   an end date. Both dates are needed, and both days count. Turn on "Repeats
   every year" to use the same days every year: only the month and the day
   count, so the year you pick is ignored. A rule can run over New Year. For 20
   December to 5 January, turn on "Repeats every year" and give any year for
   each date. For each kind, the first rule in the list that covers today is
-  used, so a theme rule and an overlay rule can both apply at once.
+  used, so a theme rule and a seasonal pack rule can both apply at once. Nothing is
+  scheduled for you: docs/seasonal-packs.md suggests dates for each pack, and you
+  decide. Competition Day and Summer Break have no fixed dates, so type the
+  competition days and the first and last day of school yourself.
 - Time zone: the zone the dates are read in, such as America/New_York, which is
   where the page starts. The date changes at midnight in that zone, whatever
   the zone of the computer that shows the screen. Events Calendar entries use it
   too, for their times and for when they are over.
+- Seasonal pieces over the panels: a switch that starts on. On, a seasonal pack
+  lets small pieces such as snow drift over the panels. Off, the pack keeps only its
+  header pictures and the decorations along the edges. Turn it off if the pieces
+  distract people, or if the screen stutters. A change shows within a few seconds,
+  and Calm motion in Dashboard Settings hides the pieces too (docs/seasonal-packs.md,
+  "The over layer").
 
 The order is: Use a theme now, then the first matching rule of each kind, then
 the Default theme and no overlay. The screen checks once a minute, and also
@@ -607,7 +647,7 @@ when you publish. It does not change colour in front of people: a change goes
 on at the next page change of the large panel, so allow up to a minute or so. In
 an alert it can take up to two minutes. The themes and overlays in the lists
 are the ones the dashboard has. A new one is added in the code
-(docs/adding-a-theme.md, docs/adding-a-holiday-overlay.md).
+(docs/adding-a-theme.md, docs/adding-a-holiday-overlay.md, docs/seasonal-packs.md).
 
 ## Demo
 

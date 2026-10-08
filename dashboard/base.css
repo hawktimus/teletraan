@@ -389,6 +389,22 @@ html[data-night="on"] #stage { visibility: hidden; }
 [data-finish="flat"] .screw-shadow { display: none; }
 [data-finish="flat"] .edge-face { stroke: var(--edge-flat); }
 
+/* The plain look (Look in Dashboard Settings, or ?look=plain, which sets
+   data-look="plain" on the html element). It also sets the flat finish, so the
+   rules above do the edges. These two take away the rest: the screws, and the
+   default double slash in the panel headers. Nothing else is hidden here.
+   The rules say :root because the hidden transitions' backdrop has a data-look
+   of its own (blue or picture, above), which has nothing to do with this one.
+
+   The default slashes are an svg with class double-slash. A seasonal pack's
+   mark is an svg with class pack-mark, and the accent shapes inside it are a g
+   with class double-slash, so the rule says svg and never reaches them. The
+   status shapes of a task have the class mark. The bullets in the lists of a
+   Custom panel are not in a header, so they stay. */
+:root[data-look="plain"] .screw,
+:root[data-look="plain"] .screw-shadow,
+:root[data-look="plain"] .header svg.double-slash { display: none; }
+
 /* A straight metal bar made from a plain box, with the same banding as the
    edges: the dark rim, the bright ridge, the banded face, and the shaded
    lower half. The banner rule is one. Give it a width and it is 16px high, or
@@ -464,6 +480,16 @@ html[data-night="on"] #stage { visibility: hidden; }
 /* Small pictures */
 .double-slash { display: block; }
 .double-slash polygon { fill: var(--yellow); }
+
+/* The header mark of a seasonal pack (core/marks.js) takes the place of the
+   slashes. It may be 60 px wide, 6 px wider than the slashes, and the extra
+   hangs out to the right over the header's right padding, where the plate is
+   free, so the text beside the mark stays exactly where it is. A pack paints the
+   shapes that follow the accent colour with <g class="double-slash">. */
+.pack-mark {
+  display: block;
+  margin-right: -6px;
+}
 
 .mark-in-progress polygon { fill: var(--status-progress); }
 .mark-blocked polygon { fill: var(--status-blocked); }

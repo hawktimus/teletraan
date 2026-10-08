@@ -32,6 +32,7 @@ import * as frame from '../frame.js';
 import { areaMarkup } from './plate.js';
 import { hostFor, placeWholePanel } from './panels.js';
 import { changeThemeNow } from './theme-apply.js';
+import { hasRegion, layoutNow } from './layout.js';
 
 const areaRegions = ['grid1', 'grid2', 'ticker'];
 const themeRegion = 'grid1'; // a new theme goes on when this region's frame is apart
@@ -112,6 +113,7 @@ function swapUnseen(region, next) {
 // page leaving is not counted). It is not called again for a region until it
 // resolves.
 export async function changePage(region, next) {
+  if (!hasRegion(layoutNow(), region)) return 0; // the layout has no such region, so no area is made for it
   if (!areaRegions.includes(region)) return changeWholePanel(region, next);
 
   const old = showing[region] || null;

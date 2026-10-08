@@ -1,29 +1,39 @@
 // The seasonal packs: the decorations that go with a holiday overlay.
 //
 // An overlay (themes/overlays/) is a few accent colours. A pack is the
-// decorations that go with it: a scene along the bottom edge of the screen and
-// small pieces in the empty places. A pack is plain data in seasons/<id>.js, and
-// docs/seasonal-packs.md explains it. This file reads that data and draws it in
-// two layers:
+// decorations that go with it: a mark for the panel headers, a scene along the
+// bottom edge of the screen, and small pieces. A pack is plain data in
+// seasons/<id>.js, and docs/seasonal-packs.md explains it. This file reads that
+// data and draws it in three layers:
 //
 //   #season-back    behind the stage, as big as the screen. Its pieces drift
 //                   behind the panels and show in the gaps between them.
 //   #season-front   above the stage. It is made of ZONES: fixed rectangles that
 //                   hold no text and clip what is inside them, so a piece can
 //                   never cross a word, the logo, the clock or a panel.
+//   #season-over    above the front layer, as big as the screen. Its pieces
+//                   fall, drift or rise across the whole screen, over the
+//                   panels. They are small, faint, slow and few, so one only
+//                   touches a letter for a moment. It is not drawn in calm or
+//                   none motion, or when the Theme page's switch is off.
 //
-// Both layers let every click through, and both sit under everything that takes
-// over the screen: the hidden transitions, the night screen, an alert, an
-// announcement and the demo. With no pack on, neither layer exists.
+// The mark goes to core/marks.js, which draws it in place of the slashes at the
+// right of every panel header.
+//
+// All three layers let every click through, and all sit under everything that
+// takes over the screen: the hidden transitions, the night screen, an alert, an
+// announcement and the demo. With no pack on, none of them exists.
 //
 // Nothing here moves. A piece names a motion and seasons/motion.css plays it,
-// and only in full motion: in calm and none motion every piece rests.
+// and only in full motion: in calm and none motion every piece rests, and the
+// over layer is gone.
 //
 // The functions that decide and draw markup have no page in sight, so
 // tools/test-seasons.mjs can run them. tools/check-seasons.mjs uses the same
 // functions to check every pack.
 
 import { overlays } from '../themes/overlays/registry.js';
+import { markBox, markSize, setPackMark } from './marks.js';
 
 // The zones. Every one is a rectangle of the 1920 x 1080 screen with nothing in
 // it: no text, no frame and no screw. They were measured on the full sample
@@ -32,8 +42,8 @@ import { overlays } from '../themes/overlays/registry.js';
 // (docs/seasonal-packs.md, "How the zones were measured").
 export const zones = {
   'top':      { x: 0,    y: 0,    width: 1920, height: 26 },  // the strip above the banner, whose first text starts at y 28
-  'ground':   { x: 0,    y: 1058, width: 1920, height: 22 },  // the strip under the ticker, where the scene goes. Left of x 270 the ticker tag's edge reaches y 1066, so keep that part low
-  'left':     { x: 0,    y: 360,  width: 30,   height: 696 },  // the margin left of the large panel, below its top left screw
+  'ground':   { x: 0,    y: 1054, width: 1920, height: 26 },  // the strip under the ticker, where the scene goes. Left of x 270 the ticker tag's edge reaches y 1066, so keep that part low
+  'left':     { x: 0,    y: 360,  width: 30,   height: 690 },  // the margin left of the large panel, below its top left screw
   'right':    { x: 1890, y: 30,   width: 30,   height: 846 },  // the margin right of the countdown and the small panel, above the bottom right screw
   'gutter':   { x: 1198, y: 278,  width: 20,   height: 342 },  // the gap between the large panel and the countdown, above the small panel's screw
   'string-a': { x: 244,  y: 970,  width: 836,  height: 14 },   // the gap between the large panel and the ticker, left of its screw
@@ -47,7 +57,21 @@ export const sceneZone = 'ground';
 
 // The motions a piece may name. seasons/motion.css has the keyframes of each,
 // and tools/check-seasons.mjs fails if the two lists differ.
-export const motions = ['fall', 'sway', 'drift', 'rise', 'twinkle', 'bob', 'spin', 'pulse', 'draw', 'sweep', 'slide'];
+export const motions = ['fall', 'sway', 'drift', 'rise', 'twinkle', 'bob', 'spin', 'pulse', 'draw', 'sweep', 'slide', 'flutter'];
+
+// What the over layer allows. Its pieces cross the panels, and so cross words,
+// so they are small, faint, slow and few: a piece only touches a letter for a
+// moment and never hides a word. The seconds are the fewest one round of that
+// motion may take. tools/check-seasons.mjs also asks every finished pack for a
+// mark and for at least leastPieces pieces here.
+export const overRules = {
+  size: { least: 18, most: 44 },
+  opacityMost: 0.85,
+  leastPieces: 8,
+  mostPieces: 14,
+  seconds: { fall: 12, flutter: 12, drift: 12, rise: 12, sway: 2, twinkle: 2 },
+};
+export const overMotions = Object.keys(overRules.seconds);
 
 // A pack may have at most this many pieces that move, and this many in all.
 // The screen is shown by an old Mac Mini, and every moving piece costs it a little.
@@ -56,7 +80,8 @@ export const mostPieces = 60;
 
 const screen = { width: 1920, height: 1080 };
 const pieceKeys = ['shape', 'x', 'y', 'size', 'zone', 'motion', 'seconds', 'delay', 'travel', 'opacity'];
-const packKeys = ['shapes', 'scene', 'back', 'front'];
+const packKeys = ['shapes', 'scene', 'mark', 'back', 'front', 'over'];
+const markKeys = ['viewBox', 'markup', 'width', 'height'];
 const nameShape = /^[a-z][a-z0-9-]*$/;
 
 function isRecord(value) {
@@ -94,8 +119,8 @@ export function pieceBox(piece, shapes) {
   return { x: piece.x, y: piece.y, width: piece.size, height: round(piece.size * box.height / box.width) };
 }
 
-// What is wrong with one piece, in plain words. layer is 'back' or 'front'.
-// An empty list means the piece can be drawn.
+// What is wrong with one piece, in plain words. layer is 'back', 'front' or
+// 'over'. An empty list means the piece can be drawn.
 export function pieceProblems(piece, layer, shapes) {
   if (!isRecord(piece)) return ['is not a piece: it should be { shape, x, y, size ... }'];
 
@@ -110,7 +135,7 @@ export function pieceProblems(piece, layer, shapes) {
   if (layer === 'front') {
     if (!zones[piece.zone]) problems.push('is in the zone "' + piece.zone + '", which is not in the zone list in core/season.js. The zones are ' + Object.keys(zones).join(', '));
   } else if (piece.zone !== undefined) {
-    problems.push('is a back piece, so it has no zone: its x and y are screen pixels');
+    problems.push('is ' + (layer === 'over' ? 'an over' : 'a ' + layer) + ' piece, so it has no zone: its x and y are screen pixels');
   }
 
   if (piece.motion !== undefined) {
@@ -123,7 +148,9 @@ export function pieceProblems(piece, layer, shapes) {
   if (piece.travel !== undefined && (!isNumber(piece.travel) || piece.travel <= 0)) problems.push('travel should be a number of pixels above 0');
   if (piece.opacity !== undefined && (!isNumber(piece.opacity) || piece.opacity < 0 || piece.opacity > 1)) problems.push('opacity should be a number from 0 to 1');
 
-  // At rest it must be inside its zone, or on the screen for a back piece
+  if (layer === 'over') overProblems(piece).forEach(text => problems.push(text));
+
+  // At rest it must be inside its zone, or on the screen for a back or over piece
   if (problems.length === 0) {
     const box = pieceBox(piece, shapes);
     const room = layer === 'front' ? zones[piece.zone] : screen;
@@ -131,6 +158,57 @@ export function pieceProblems(piece, layer, shapes) {
       problems.push('uses a shape whose viewBox is not four numbers such as "0 0 24 24"');
     } else if (box.x < 0 || box.y < 0 || box.x + box.width > room.width + 0.001 || box.y + box.height > room.height + 0.001) {
       problems.push('does not fit at rest: it covers x ' + box.x + ' to ' + round(box.x + box.width) + ' and y ' + box.y + ' to ' + round(box.y + box.height) + ', and ' + (layer === 'front' ? 'the zone "' + piece.zone + '"' : 'the screen') + ' is ' + room.width + ' by ' + room.height);
+    }
+  }
+  return problems;
+}
+
+// The extra rules of the over layer (overRules at the top of this file), for a
+// piece whose other fields are already known to be well formed
+function overProblems(piece) {
+  const problems = [];
+  const rules = overRules;
+
+  if (isNumber(piece.size) && (piece.size < rules.size.least || piece.size > rules.size.most)) {
+    problems.push('is ' + piece.size + ' px wide, and the over layer allows ' + rules.size.least + ' to ' + rules.size.most);
+  }
+  if (!isNumber(piece.opacity) || piece.opacity > rules.opacityMost) {
+    problems.push('needs an opacity of ' + rules.opacityMost + ' or less, so that a word shows through it');
+  }
+
+  if (piece.motion === undefined) {
+    problems.push('needs a motion, because a piece that stays still would sit on a word for ever. The over layer allows ' + overMotions.join(', '));
+  } else if (overMotions.indexOf(piece.motion) === -1) {
+    if (motions.indexOf(piece.motion) !== -1) problems.push('has the motion "' + piece.motion + '", which is too quick for the over layer. It allows ' + overMotions.join(', '));
+  } else if (isNumber(piece.seconds) && piece.seconds < rules.seconds[piece.motion]) {
+    problems.push('takes ' + piece.seconds + ' seconds for a round of ' + piece.motion + ', and the least the over layer allows is ' + rules.seconds[piece.motion]);
+  }
+  return problems;
+}
+
+// What is wrong with a pack's header mark, in plain words. An empty list means
+// it can be drawn. It has the rules of core/marks.js: a size that fits markBox.
+export function markProblems(mark) {
+  if (!isRecord(mark)) return ['should be { viewBox, markup }'];
+
+  const problems = [];
+  Object.keys(mark).filter(key => markKeys.indexOf(key) === -1)
+    .forEach(key => problems.push('has "' + key + '", which a mark does not use. The names are ' + markKeys.join(', ')));
+
+  if (!readViewBox(mark.viewBox)) problems.push('has a viewBox that is not four numbers such as "0 0 ' + markBox.width + ' ' + markBox.height + '"');
+  if (typeof mark.markup !== 'string' || mark.markup.trim() === '') problems.push('has no markup');
+
+  const given = [mark.width, mark.height].filter(value => value !== undefined).length;
+  if (given === 1) {
+    problems.push('has a width or a height but not both. Give both, or neither, and the size follows the viewBox');
+  } else if (given === 2 && !(isNumber(mark.width) && isNumber(mark.height) && mark.width > 0 && mark.height > 0)) {
+    problems.push('should have a width and a height that are numbers above 0');
+  }
+
+  if (problems.length === 0) {
+    const size = markSize(mark);
+    if (size.width > markBox.width || size.height > markBox.height) {
+      problems.push('is ' + size.width + ' by ' + size.height + ' pixels, and the box for a mark is ' + markBox.width + ' by ' + markBox.height);
     }
   }
   return problems;
@@ -150,7 +228,7 @@ function shapeProblems(name, shape) {
 // empty list means it can be drawn. A pack with no pieces and no scene is fine:
 // it is how a new pack starts.
 export function packProblems(pack) {
-  if (!isRecord(pack)) return ['the pack should be an object: { shapes, scene, back, front }'];
+  if (!isRecord(pack)) return ['the pack should be an object: { shapes, scene, mark, back, front, over }'];
 
   const problems = [];
   Object.keys(pack).filter(key => packKeys.indexOf(key) === -1)
@@ -170,7 +248,9 @@ export function packProblems(pack) {
     }
   }
 
-  ['back', 'front'].forEach(layer => {
+  if (pack.mark !== undefined && pack.mark !== null) markProblems(pack.mark).forEach(text => problems.push('the mark ' + text));
+
+  ['back', 'front', 'over'].forEach(layer => {
     const list = pack[layer] === undefined ? [] : pack[layer];
     if (!Array.isArray(list)) return problems.push(layer + ' should be a list of pieces');
 
@@ -183,13 +263,16 @@ export function packProblems(pack) {
   const counts = countPieces(pack);
   if (counts.moving > mostMovingPieces) problems.push('the pack has ' + counts.moving + ' pieces that move, and the most is ' + mostMovingPieces + '. The Mini would struggle');
   if (counts.all > mostPieces) problems.push('the pack has ' + counts.all + ' pieces, and the most is ' + mostPieces);
+  if (counts.over > overRules.mostPieces) problems.push('the pack has ' + counts.over + ' over pieces, and the most is ' + overRules.mostPieces + '. They cross the panels, so few is better');
   return problems;
 }
 
-// How many pieces a pack has, and how many of them move
+// How many pieces a pack has in all three layers, how many of them move, and
+// how many are in the over layer
 export function countPieces(pack) {
-  const list = (isRecord(pack) ? [].concat(Array.isArray(pack.back) ? pack.back : [], Array.isArray(pack.front) ? pack.front : []) : []).filter(isRecord);
-  return { all: list.length, moving: list.filter(piece => piece.motion !== undefined).length };
+  const layer = name => (isRecord(pack) && Array.isArray(pack[name]) ? pack[name] : []).filter(isRecord);
+  const list = [].concat(layer('back'), layer('front'), layer('over'));
+  return { all: list.length, moving: list.filter(piece => piece.motion !== undefined).length, over: layer('over').length };
 }
 
 // Markup
@@ -234,12 +317,22 @@ function sceneMarkup(scene) {
   return '<svg class="season-scene" viewBox="' + scene.viewBox + '" width="' + room.width + '" height="' + room.height + '" preserveAspectRatio="none" aria-hidden="true">' + scene.markup + '</svg>';
 }
 
-// The inside of the two layers, and the lines to log about any piece that was
-// left out. A piece with a problem is left out and the rest are drawn, so one
-// slip in a pack never takes the whole pack away.
-export function layersMarkup(pack) {
+// The layers of a pack, and the ones a layout draws by default. The zones and the
+// back layer were measured on the standard layout, so another layout draws only
+// some of them (decorationLayers in core/layout.js). The mark is drawn in every layout.
+const allLayers = ['back', 'front', 'over'];
+
+// The inside of the layers, the mark, and the lines to log about any piece or
+// mark that was left out. A piece with a problem is left out and the rest are
+// drawn, so one slip in a pack never takes the whole pack away. layers is the
+// list of layers to draw, from allLayers: a layer that is not in it is left
+// empty, and its pieces are not looked at. The shapes the pieces point at are
+// in the back layer's markup, so they are there for the over layer even when
+// no back piece is drawn.
+export function layersMarkup(pack, layers) {
   const shapes = isRecord(pack.shapes) ? pack.shapes : {};
   const skipped = [];
+  const wanted = Array.isArray(layers) ? layers : allLayers;
 
   function usable(layer) {
     return (Array.isArray(pack[layer]) ? pack[layer] : []).filter((piece, index) => {
@@ -249,9 +342,10 @@ export function layersMarkup(pack) {
     });
   }
 
-  const back = usable('back');
-  const front = usable('front');
-  const scene = isRecord(pack.scene) && readViewBox(pack.scene.viewBox) && typeof pack.scene.markup === 'string' ? pack.scene : null;
+  const back = wanted.indexOf('back') !== -1 ? usable('back') : [];
+  const front = wanted.indexOf('front') !== -1 ? usable('front') : [];
+  const over = wanted.indexOf('over') !== -1 ? usable('over') : [];
+  const scene = wanted.indexOf('front') !== -1 && isRecord(pack.scene) && readViewBox(pack.scene.viewBox) && typeof pack.scene.markup === 'string' ? pack.scene : null;
 
   const inZones = Object.keys(zones).map(name => {
     const own = front.filter(piece => piece.zone === name);
@@ -259,12 +353,17 @@ export function layersMarkup(pack) {
     return inner === '' ? '' : zoneMarkup(name, inner);
   }).join('');
 
-  const empty = back.length === 0 && inZones === '';
+  const markWrong = pack.mark === undefined || pack.mark === null ? [] : markProblems(pack.mark);
+  markWrong.forEach(text => skipped.push('mark ' + text));
+
+  const empty = back.length === 0 && inZones === '' && over.length === 0;
   return {
     empty: empty,
     skipped: skipped,
+    mark: pack.mark && markWrong.length === 0 ? pack.mark : null,
     back: symbolsMarkup(shapes) + back.map(piece => pieceMarkup(piece, shapes)).join(''),
     front: inZones,
+    over: over.map(piece => pieceMarkup(piece, shapes)).join(''),
   };
 }
 
@@ -291,8 +390,12 @@ export async function loadPack(overlayId, importModule) {
 
 const backId = 'season-back';
 const frontId = 'season-front';
+const overId = 'season-over';
 let shown = ''; // the pack on the page now, or '' for none
 let asks = 0; // counts the asks, so a slow load never lands after a newer ask
+let overWanted = true; // the Theme page's switch, "Seasonal pieces over the panels" (setOverPanels)
+let layersWanted = allLayers; // the layers the layout draws (setLayers)
+let overMarkup = ''; // what the over layer of the pack on the page holds, kept so the switch can draw it again
 
 // The id of the pack on the page, or ''
 export function seasonShown() {
@@ -300,11 +403,13 @@ export function seasonShown() {
 }
 
 function removeLayers() {
-  [backId, frontId].forEach(id => {
+  [backId, frontId, overId].forEach(id => {
     const layer = document.getElementById(id);
     if (layer) layer.remove();
   });
   shown = '';
+  overMarkup = '';
+  setPackMark(null); // the slashes come back, on the next page that is built
 }
 
 function makeLayer(id, className, html) {
@@ -315,25 +420,58 @@ function makeLayer(id, className, html) {
   return layer;
 }
 
+// The over layer, drawn again from what was kept: it goes straight after the
+// front layer, so the red flicker, the connection text, the night screen and
+// everything in #overlay cover it too. It is left out while the switch is off.
+function drawOver() {
+  const old = document.getElementById(overId);
+  if (old) old.remove();
+
+  const world = document.getElementById('world');
+  const after = document.getElementById(frontId) || document.getElementById('stage');
+  if (!overWanted || overMarkup === '' || !world || !after) return;
+
+  world.insertBefore(makeLayer(overId, 'season-over', overMarkup), after.nextSibling);
+}
+
+// Turns the over layer on or off while the screen runs. shell.js calls it with
+// the Theme page's switch each time the content changes. Anything but false is on.
+export function setOverPanels(on) {
+  const wanted = on !== false;
+  if (wanted === overWanted) return;
+
+  overWanted = wanted;
+  if (shown) drawOver();
+}
+
+// Which layers of a pack are drawn: the list from decorationLayers() in
+// core/layout.js. shell.js gives it before the first pack is asked for. The
+// layout does not change while the screen runs, so it is read when a pack is drawn.
+export function setLayers(layers) {
+  layersWanted = Array.isArray(layers) ? layers : allLayers;
+}
+
 // The old layers go and the new ones come in one step. The back layer goes in
 // before #backdrop, so the hidden transitions cover it. The front layer goes in
-// straight after #stage, so the red flicker, the connection text, the night
-// screen and everything in #overlay cover it.
+// straight after #stage, and the over layer after that.
 function drawLayers(overlayId, pack) {
   const world = document.getElementById('world');
   const backdrop = document.getElementById('backdrop');
   const stage = document.getElementById('stage');
   if (!world || !backdrop || !stage) throw new Error('index.html has no #world, #backdrop or #stage');
 
-  const drawn = layersMarkup(pack);
+  const drawn = layersMarkup(pack, layersWanted);
   drawn.skipped.forEach(text => console.error('The ' + overlayId + ' pack: the ' + text + '. It was left out.'));
 
   removeLayers();
   shown = overlayId;
+  setPackMark(drawn.mark); // a pack with only a mark still changes the headers
   if (drawn.empty) return; // a new pack with nothing in it yet
 
   world.insertBefore(makeLayer(backId, 'season-back', drawn.back), backdrop);
   world.insertBefore(makeLayer(frontId, 'season-front', drawn.front), stage.nextSibling);
+  overMarkup = drawn.over;
+  drawOver();
 }
 
 // Shows the pack of this overlay, replacing the one on the page, or takes the

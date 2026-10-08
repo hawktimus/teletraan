@@ -1,0 +1,167 @@
+/* The sidebar layout (docs/layouts.md): a strip across the top with the team
+   name, a column on the left, one large frame on the right scaled up to fill its
+   space, and the ticker across the whole bottom. There is no small frame.
+
+   Every rule here starts with html[data-layout="sidebar"], so the standard
+   layout is never touched. core/layout-apply.js sets that attribute before
+   anything is drawn, and sets the variables used below on the html element from
+   the numbers in core/layout.js. Change a number there, not here:
+
+     --strip-x, --strip-y, --strip-width, --strip-height           the strip across the top
+     --strip-name-size                                             the size of the team name in it
+     --strip-clock-width                                           the room at its right end for the clock, date and weather
+     --sidebar-x, --sidebar-y, --sidebar-width, --sidebar-height   the left column
+     --pane-x, --pane-y, --pane-width, --pane-height               the large frame, scaled
+     --pane-scale                                                  how much it is enlarged
+     --ticker-x, --ticker-y, --ticker-width, --ticker-height       the ticker along the bottom
+
+   The regions are placed by hand (position: absolute) and the stage keeps its
+   1920 x 1080 box, which the full screen layers (alerts, announcements, the
+   night screen, the hidden transitions) are sized from. */
+
+html[data-layout="sidebar"] #stage {
+  display: block;
+  padding: 0;
+}
+
+
+/* The strip across the top. It is a block of its own for the hidden transitions.
+   #strip-name is its slot for the team name, which the side panel draws and moves
+   there (panels/side/side.js): one line, as large as the strip allows
+   (--strip-name-size, which core/layout.js works out the strip's height from).
+   The name is a row of letters the name effect splits (core/name.js), and a name
+   too long for the room squeezes its letters together, as it does in the banner.
+   #strip-clock is the slot at the right end for the clock, the date and the
+   weather, which the panel moves there too, --strip-clock-width wide. The name
+   slot stops 16 px short of it. The strip's own plate is a placeholder until the
+   theme gives the strip a look. */
+html[data-layout="sidebar"] #region-strip {
+  position: absolute;
+  left: var(--strip-x);
+  top: var(--strip-y);
+  width: var(--strip-width);
+  height: var(--strip-height);
+  background: var(--plate); /* placeholder: the strip has no frame or content of its own yet */
+}
+html[data-layout="sidebar"] #strip-name {
+  position: absolute;
+  left: 32px;
+  right: calc(32px + var(--strip-clock-width) + 16px);
+  top: 0;
+  height: var(--strip-height);
+  display: flex;
+  align-items: center;
+}
+html[data-layout="sidebar"] #strip-clock {
+  position: absolute;
+  right: 32px;
+  top: 0;
+  width: var(--strip-clock-width);
+  height: var(--strip-height);
+}
+html[data-layout="sidebar"] .side-name {
+  display: flex;
+  min-width: 0;
+  height: var(--strip-name-size);
+  margin: 0;
+  font: 700 var(--strip-name-size)/var(--strip-name-size) var(--font-display);
+}
+html[data-layout="sidebar"] .side-name .letter {
+  position: relative;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+
+/* The sidebar column. index.html has its three slots, from top to bottom:
+     #sidebar-top        #region-banner is moved here, and the side panel (panels/side)
+                         is drawn into it. The panel is the whole column: the countdown,
+                         logo, TEAM plate and school. The team name, the clock and the
+                         weather are part of the same panel, but they are moved up into
+                         the strip
+     #sidebar-countdown  #region-countdown is moved here. Nothing is drawn in it, because
+                         the countdown is part of the side panel
+     #sidebar-bottom     nothing is drawn in it either
+   The slots are as high as what is put in them. The column is as high as the room
+   between the strip and the ticker, and that is all the height there is, which is
+   exactly the height of the side panel (docs/layouts.md, "The sidebar"). */
+html[data-layout="sidebar"] #region-sidebar {
+  position: absolute;
+  left: var(--sidebar-x);
+  top: var(--sidebar-y);
+  width: var(--sidebar-width);
+  height: var(--sidebar-height);
+  display: flex;
+  flex-direction: column;
+  background: var(--plate); /* placeholder: the column has no frame or content of its own yet */
+}
+html[data-layout="sidebar"] #sidebar-top,
+html[data-layout="sidebar"] #sidebar-countdown,
+html[data-layout="sidebar"] #sidebar-bottom {
+  flex: none;
+}
+html[data-layout="sidebar"] #sidebar-bottom {
+  margin-top: auto;
+}
+
+/* The side panel is drawn into #region-banner, and it is as big as the column.
+   The standard countdown is not drawn in this layout (registry.js, fixedPanels),
+   so its region is empty and is taken out of the way. */
+html[data-layout="sidebar"] #region-banner {
+  width: var(--sidebar-width);
+  height: var(--sidebar-height);
+}
+html[data-layout="sidebar"] #region-countdown {
+  display: none;
+}
+
+
+/* The large frame, as one pane. Its panels are drawn for a frame 1152 wide and
+   708 high and are not redrawn: the frame is scaled, the same amount across and
+   down, from its top left corner, and #region-grid1 is the size it comes to
+   (the area is made inside it, core/areas.js). It is the area that is scaled and
+   not the region, because the hidden transitions move the region (frame.css)
+   and would drop a scale on it. */
+html[data-layout="sidebar"] #region-grid1 {
+  position: absolute;
+  left: var(--pane-x);
+  top: var(--pane-y);
+  width: var(--pane-width);
+  height: var(--pane-height);
+}
+html[data-layout="sidebar"] .area[data-area="grid1"] {
+  transform: scale(var(--pane-scale));
+  transform-origin: 0 0;
+}
+
+/* There is no small frame. Its region, with nothing in it, is taken out of the
+   way. */
+html[data-layout="sidebar"] #region-right {
+  display: none;
+}
+
+
+/* The ticker, along the whole bottom of the screen, under the sidebar and the
+   pane. It is the standard layout's ticker, the same size (1840 by 72, the area
+   in base.css), the same tag and the same one line with an ellipsis (ticker.css),
+   so it needs no rules of its own beyond its place. The connection status text
+   (base.css) is already capped to the same width and sits level with it. */
+html[data-layout="sidebar"] #region-ticker {
+  position: absolute;
+  left: var(--ticker-x);
+  top: var(--ticker-y);
+  width: var(--ticker-width);
+  height: var(--ticker-height);
+}
+
+
+/* The hidden transitions (core/hidden-run.js, docs/hidden-transitions.md) break
+   the blocks of the layout apart: the strip, the sidebar, the large frame and
+   the ticker. The poses are read like the table in frame.css: --tx, --ty and
+   --tz are how far a block moves, --rx, --ry and --rz how far it turns, and
+   --hold how late it starts (0 to .3). The strip and the ticker fly as the
+   banner and the ticker do in the standard layout, up and down. The sidebar goes
+   off to the left and the large frame to the right. */
+html[data-layout="sidebar"] #region-strip   { --tx: 0px;     --ty: -520px; --tz: -700px; --rx: -80deg; --ry: 0deg;   --rz: 0deg;  --hold: 0; }
+html[data-layout="sidebar"] #region-sidebar { --tx: -1000px; --ty: 60px;   --tz: -600px; --rx: 8deg;   --ry: 80deg;  --rz: -6deg; --hold: .08; }
+html[data-layout="sidebar"] #region-grid1   { --tx: 1100px;  --ty: -140px; --tz: -500px; --rx: -10deg; --ry: -85deg; --rz: 8deg;  --hold: .16; }

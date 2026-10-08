@@ -1,0 +1,339 @@
+/* Neon Prime: everything about the look that is not one of the colours in
+   themes/neon-prime.css. Every rule starts with html.theme-neon-prime, so no
+   other theme is touched. It is linked in index.html and does nothing until
+   that theme is on. It is here and not in themes/ because a file in themes/ is
+   a list of colours and nothing else (tools/check-themes.mjs). docs/layouts.md,
+   "Neon Prime", has the picture and the table of colours.
+
+   Rules for this file, the same as for the rest of the screen:
+     - flat colours and thin strokes only. No glow, blur, shadow, filter or
+       gradient that fakes a glow. A gradient is used only with hard stops,
+       for stripes and plain rectangles
+     - nothing here moves. The one moving neon thing, the bright dash that runs
+       round each frame now and then, is the glint in frame.css, which this
+       file only recolours. The one place that touches motion (the page change
+       and the metal) only picks an animation frame.css already has
+     - no text, so nothing here can be smaller than 44px
+     - each decoration is one box (a ::before or ::after) with a list of
+       background layers. Each layer is one flat shape, in the order of a comment
+
+   Parts, in order: the colours, the gunmetal, the neon trim on the metal, the
+   page change, the screen, the strip across the top, the pane, the ticker, the
+   sidebar. */
+
+
+/* The colours that are not text. The cyan and the magenta, and the dark that
+   fills the gaps between them. The amber of the hazard stripes is the theme's own
+   --yellow, so a seasonal pack that recolours the accent recolours them too.
+   There is no green anywhere in this file (tools/check-themes.mjs checks). */
+html.theme-neon-prime {
+  --neon-cyan: #2de6ff;
+  --neon-magenta: #ff2bd6;
+  --neon-dark: #07030f;
+  --grid-line: #1a0e38; /* the faint squares on the pane's plate */
+  --screen-line: #0f0725; /* the faint squares behind everything */
+}
+
+
+/* Gunmetal. A third metal for the frame edges, next to gold and silver in
+   tokens.css, with the same eight tones and the same worn streaks, in dark
+   steel with a trace of violet. This theme sets it for every edge, and ignores
+   Frame metal in Dashboard Settings: the selector reaches the html element and
+   every element that has data-metal (the areas and the gradients), which would
+   otherwise set gold or silver on themselves. The ridge is the bright line
+   along the lit edge, and here it is neon cyan. The glint is the dash that
+   runs round a frame, hot magenta. The screws are dark steel too. */
+html.theme-neon-prime,
+html.theme-neon-prime [data-metal] {
+  --metal-1: #98a2b8; /* the brightest highlight, nowhere near white */
+  --metal-2: #7a849a;
+  --metal-3: #5a6378; /* the plain mid tone */
+  --metal-4: #3f4658;
+  --metal-5: #161924; /* the darkest pit */
+  --metal-6: #4d475c; /* violet grime */
+  --metal-7: #6d7589;
+  --metal-8: #5a6378;
+  --metal-grime: #282634;
+  --metal-rim: #06050c;
+  --metal-ridge: #2de6ff;
+  --metal-glint: #ff2bd6;
+  --metal-shade: rgba(8, 6, 16, .78);
+  --metal-flat: #565e72;
+}
+html.theme-neon-prime {
+  --screw-light: #8c94a8;
+  --screw-mid: #596074;
+  --screw-dark: #383e4e;
+  --screw-rim: #06050c;
+  --screw-slot: #0b0912;
+  --screw-ridge: #aab3c8;
+  --screw-flat: #565e72;
+}
+
+/* The steel bars that are not frame edges (the rail and the countdown's frame,
+   below) are the banner's bar (base.css, .bar) drawn along or across: the rim,
+   the neon ridge and the shade, over the banded face. They are written once
+   here, and the flat finish (?finish=flat, which the Mini may need) swaps them
+   for one plain colour, as it does the banner's bars. A bar is 8px thick or 16. */
+html.theme-neon-prime {
+  --bar-across-8: linear-gradient(180deg, var(--metal-rim) 0, var(--metal-rim) 1px, var(--metal-ridge) 1px, var(--metal-ridge) 3px, transparent 3px, transparent 5px, var(--metal-shade) 5px, var(--metal-shade) 7px, var(--metal-rim) 7px, var(--metal-rim) 8px);
+  --bar-down-8: linear-gradient(90deg, var(--metal-rim) 0, var(--metal-rim) 1px, var(--metal-ridge) 1px, var(--metal-ridge) 3px, transparent 3px, transparent 5px, var(--metal-shade) 5px, var(--metal-shade) 7px, var(--metal-rim) 7px, var(--metal-rim) 8px);
+  --bar-down-16: linear-gradient(90deg, var(--metal-rim) 0, var(--metal-rim) 2px, var(--metal-ridge) 2px, var(--metal-ridge) 5px, transparent 5px, transparent 9px, var(--metal-shade) 9px, var(--metal-shade) 14px, var(--metal-rim) 14px, var(--metal-rim) 16px);
+  --bar-steel: var(--bar-face);
+}
+html.theme-neon-prime[data-finish="flat"] {
+  --bar-across-8: linear-gradient(transparent, transparent);
+  --bar-down-8: linear-gradient(transparent, transparent);
+  --bar-down-16: linear-gradient(transparent, transparent);
+  --bar-steel: linear-gradient(var(--metal-flat), var(--metal-flat));
+}
+/* The Flat and Plain looks (Look in Dashboard Settings) keep the cyan line along
+   the bars, as they keep it along the frames below. The dark rim and the shade
+   beside it are polish and go. The line is where the polished one is. It needs
+   the flat finish as well, so ?finish=metal with a look is still the metal. */
+html.theme-neon-prime[data-finish="flat"][data-look="flat"],
+html.theme-neon-prime[data-finish="flat"][data-look="plain"] {
+  --bar-across-8: linear-gradient(180deg, transparent 0, transparent 1px, var(--metal-ridge) 1px, var(--metal-ridge) 3px, transparent 3px);
+  --bar-down-8: linear-gradient(90deg, transparent 0, transparent 1px, var(--metal-ridge) 1px, var(--metal-ridge) 3px, transparent 3px);
+  --bar-down-16: linear-gradient(90deg, transparent 0, transparent 2px, var(--metal-ridge) 2px, var(--metal-ridge) 5px, transparent 5px);
+}
+
+
+/* The neon trim on the metal. The frame's lit edge (plate.js draws it as the
+   ridge layer) is a flat cyan line, thicker than the worn bright line it
+   replaces. It is drawn by the same line drawing as the rest of the frame, and
+   moves with it, so nothing here is animated. The red frame of the countdown
+   gets magenta. */
+html.theme-neon-prime .edge-ridge {
+  stroke: var(--neon-cyan);
+  stroke-width: 4px;
+}
+html.theme-neon-prime .thin .edge-ridge { stroke-width: 3px; }
+html.theme-neon-prime .red-metal .edge-ridge { stroke: var(--neon-magenta); }
+
+/* The flat finish takes the ridge away from every theme (base.css), and here the
+   ridge is the neon trim, which is one plain line and not polish. In the Flat and
+   Plain looks (Look in Dashboard Settings) it stays, so the frames are still
+   Neon Prime. ?finish=flat on its own is as it was: no ridge. */
+html.theme-neon-prime[data-look="flat"] .edge-ridge,
+html.theme-neon-prime[data-look="plain"] .edge-ridge { display: inline; }
+
+
+/* A page change that "changes the metal" lifts the frame and fades it out while
+   the colour changes (frame.css, data-recolor). This theme's metal is the same
+   whatever the page change picked, so there is nothing to hide, and the frame
+   lifts and drops without fading, as it does when the metal stays. These choose
+   animations frame.css already has. */
+html.theme-neon-prime[data-motion="full"] .area[data-recolor="yes"][data-state="xo"] [data-part="frame-a"],
+html.theme-neon-prime[data-motion="full"] .area[data-recolor="yes"][data-state="xo"] [data-part="frame-b"],
+html.theme-neon-prime[data-motion="full"] .area[data-recolor="yes"][data-state="xo"] [data-part="shadow-a"],
+html.theme-neon-prime[data-motion="full"] .area[data-recolor="yes"][data-state="xo"] [data-part="shadow-b"] {
+  animation-name: lift;
+}
+html.theme-neon-prime[data-motion="full"] .area[data-recolor="yes"][data-state="xi"] [data-part="frame-a"],
+html.theme-neon-prime[data-motion="full"] .area[data-recolor="yes"][data-state="xi"] [data-part="frame-b"],
+html.theme-neon-prime[data-motion="full"] .area[data-recolor="yes"][data-state="xi"] [data-part="shadow-a"],
+html.theme-neon-prime[data-motion="full"] .area[data-recolor="yes"][data-state="xi"] [data-part="shadow-b"] {
+  animation-name: drop;
+}
+html.theme-neon-prime[data-motion="calm"] .area[data-recolor="yes"][data-state="xo"],
+html.theme-neon-prime[data-motion="calm"] .area[data-recolor="yes"][data-state="xi"] {
+  animation: none;
+}
+
+
+/* The screen. Faint squares behind everything, like a blueprint, so the
+   ground is not one flat colour. They are the screen's own background, drawn
+   once. */
+html.theme-neon-prime #screen {
+  background:
+    linear-gradient(90deg, var(--screen-line) 0, var(--screen-line) 2px, transparent 2px) 0 0 / 96px 96px,
+    linear-gradient(0deg, var(--screen-line) 0, var(--screen-line) 2px, transparent 2px) 0 0 / 96px 96px,
+    var(--ground);
+}
+
+
+/* The strip across the top, with the team name and the clock (layouts/sidebar.css
+   places it, docs/layouts.md draws it). Its own plate, a flat colour in the
+   layout's placeholder, is taken away and drawn here as one box: a thin steel
+   frame (the bars below, the same as the countdown's) with two cut corners, top
+   right and bottom left, and a cyan line along each cut. The box is the strip's
+   own size, so it flies apart with the strip in a hidden transition. The text
+   sits inside the 8px bars: the name from 32px in and the clock 6px under the top.
+   The line of ticks and the packet under the strip are the kit's (neon-kit.css). */
+html.theme-neon-prime[data-layout="sidebar"] #region-strip {
+  background: none;
+}
+html.theme-neon-prime[data-layout="sidebar"] #region-strip::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  clip-path: polygon(0 0, calc(100% - 32px) 0, 100% 32px, 100% 100%, 32px 100%, 0 calc(100% - 32px));
+  background:
+    linear-gradient(to bottom left, transparent 0, transparent 22.6px, var(--neon-cyan) 22.6px, var(--neon-cyan) 28px, transparent 28px) 100% 0 / 32px 32px no-repeat,
+    linear-gradient(to top right, transparent 0, transparent 22.6px, var(--neon-cyan) 22.6px, var(--neon-cyan) 28px, transparent 28px) 0 100% / 32px 32px no-repeat,
+    var(--bar-across-8) 0 0 / 100% 8px no-repeat,
+    var(--bar-steel) 0 0 / 100% 8px no-repeat,
+    var(--bar-across-8) 0 100% / 100% 8px no-repeat,
+    var(--bar-steel) 0 100% / 100% 8px no-repeat,
+    var(--bar-down-8) 0 0 / 8px 100% no-repeat,
+    var(--bar-steel) 0 0 / 8px 100% no-repeat,
+    var(--bar-down-8) 100% 0 / 8px 100% no-repeat,
+    var(--bar-steel) 100% 0 / 8px 100% no-repeat,
+    var(--plate);
+}
+
+
+/* The pane (the large frame, scaled, on the right) has no decoration of its own
+   outside its frame: the gunmetal and the cyan trim on the frame are above, and
+   the lines in the gaps round it, the brackets in the free space at its two
+   sides and the moving neon are the kit's (neon-kit.css). */
+
+/* On a page of the pane. Every large panel's root is .page, and a page is
+   drawn for the frame at its own size (1152 x 708), so these are measured from
+   the page's corner. Faint squares fill the body of the plate, under the text,
+   and the page is the same size as the frame, so they stop at its edge (the
+   cut corner at the bottom right is left to the frame's metal, which covers it). */
+html.theme-neon-prime .area[data-area="grid1"] .page {
+  z-index: 0; /* so the squares can go behind the page's own text with z-index -1, and no further back */
+}
+html.theme-neon-prime .area[data-area="grid1"] .page::before {
+  content: "";
+  z-index: -1;
+  position: absolute;
+  left: 12px;
+  top: 128px;
+  width: 1128px;
+  height: 566px;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, var(--grid-line) 0, var(--grid-line) 2px, transparent 2px) 0 0 / 48px 48px,
+    linear-gradient(0deg, var(--grid-line) 0, var(--grid-line) 2px, transparent 2px) 0 0 / 48px 48px;
+}
+
+/* The header. Under the title on the tab there is a short hazard bar, and on
+   the plate to the right of the notch a row of tick marks. Both sit in the 14px
+   under the text of the header, which no panel uses, and the ticks stop before
+   the mark at the right (54px wide) and the longest date text. */
+html.theme-neon-prime .area[data-area="grid1"] .page .header::before {
+  content: "";
+  position: absolute;
+  left: 76px;
+  top: 100px;
+  width: 168px;
+  height: 8px;
+  background: repeating-linear-gradient(90deg, var(--yellow) 0, var(--yellow) 10px, var(--neon-dark) 10px, var(--neon-dark) 20px);
+  transform: skewX(-32deg);
+  pointer-events: none;
+}
+html.theme-neon-prime .area[data-area="grid1"] .page .header::after {
+  content: "";
+  position: absolute;
+  left: 712px;
+  top: 94px;
+  width: 330px;
+  height: 14px;
+  background:
+    repeating-linear-gradient(90deg, var(--neon-cyan) 0, var(--neon-cyan) 3px, transparent 3px, transparent 15px) 0 0 / 100% 14px no-repeat;
+  pointer-events: none;
+}
+
+
+/* While the frame is not whole, its marks are not shown: during the first
+   assembly, and while the mechanical page change has the frame in pieces (the
+   slat change keeps the frame in place, so they stay). They come back with the
+   frame, at the end of the change. */
+html.theme-neon-prime .area[data-state="in"] .page::before,
+html.theme-neon-prime .area[data-state="in"] .page .header::before,
+html.theme-neon-prime .area[data-state="in"] .page .header::after,
+html.theme-neon-prime .area[data-change="mechanical"][data-state="xo"] .page::before,
+html.theme-neon-prime .area[data-change="mechanical"][data-state="xo"] .page .header::before,
+html.theme-neon-prime .area[data-change="mechanical"][data-state="xo"] .page .header::after,
+html.theme-neon-prime .area[data-change="mechanical"][data-state="xi"] .page::before,
+html.theme-neon-prime .area[data-change="mechanical"][data-state="xi"] .page .header::before,
+html.theme-neon-prime .area[data-change="mechanical"][data-state="xi"] .page .header::after {
+  visibility: hidden;
+}
+
+
+/* The ticker. The tag at its left end is a frame like the others, so it has
+   the gunmetal and the cyan edge already. Under it, in the room above and below
+   the 72px tag, there is a hazard bar as wide as the tag. */
+html.theme-neon-prime[data-layout="sidebar"] .ticker .tag::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 82px;
+  width: 100%;
+  height: 12px;
+  background: repeating-linear-gradient(90deg, var(--yellow) 0, var(--yellow) 10px, var(--neon-dark) 10px, var(--neon-dark) 20px);
+  transform: skewX(-32deg);
+  pointer-events: none;
+}
+
+
+/* The sidebar (the column on the left, 384 wide). The side panel (panels/side)
+   puts every part at a fixed place in it and says that what they look like is
+   the theme's business. There is no room to frame the column, so the decoration
+   is in the margin and in the countdown: a steel rail in the screen's left
+   margin, and the countdown's own steel frame. The line on its right is the
+   kit's.
+
+   The column's own plate (a placeholder in layouts/sidebar.css) is taken away,
+   so the ground and its faint squares show. */
+html.theme-neon-prime #region-sidebar {
+  background: none;
+}
+
+/* The rail: a steel bar the height of the column, in the margin to the left of
+   it (x 8 to 24 of the screen), with its ends cut at a slant. Layers, top to
+   bottom: a magenta block, a cyan block, a hazard block, then at the bottom a
+   cyan block and a magenta block, and under them all the steel (--bar-down-16
+   and --bar-steel, defined with the gunmetal). */
+html.theme-neon-prime #region-sidebar::before {
+  content: "";
+  position: absolute;
+  left: -32px;
+  top: 0;
+  width: 16px;
+  height: 100%;
+  clip-path: polygon(0 16px, 16px 0, 16px calc(100% - 16px), 0 100%);
+  pointer-events: none;
+  background:
+    linear-gradient(var(--neon-magenta), var(--neon-magenta)) 0 36px / 16px 56px no-repeat,
+    linear-gradient(var(--neon-cyan), var(--neon-cyan)) 0 104px / 16px 24px no-repeat,
+    repeating-linear-gradient(45deg, var(--yellow) 0, var(--yellow) 10px, var(--neon-dark) 10px, var(--neon-dark) 20px) 0 140px / 16px 140px no-repeat,
+    linear-gradient(var(--neon-cyan), var(--neon-cyan)) 0 calc(100% - 128px) / 16px 24px no-repeat,
+    linear-gradient(var(--neon-magenta), var(--neon-magenta)) 0 calc(100% - 92px) / 16px 56px no-repeat,
+    var(--bar-down-16),
+    var(--bar-steel);
+}
+
+/* The countdown has a flat face (side.css) and no frame of its own. This gives
+   it a thin steel frame of the banner's bar, with two cut corners (top right and
+   bottom left) and a cyan line along each cut. The face is the colour of
+   --panel-face, which the countdown sets for its calm, tense and critical looks.
+   The clip-path cuts the corners, and the box stays 384 by 408. The first two
+   layers are the cut lines, then the four bars of the frame (top, bottom, left
+   and right), each as a rim, ridge and shade over the banded steel. */
+html.theme-neon-prime[data-layout="sidebar"] .side-countdown .countdown-face {
+  box-sizing: border-box;
+  clip-path: polygon(0 0, calc(100% - 32px) 0, 100% 32px, 100% 100%, 32px 100%, 0 calc(100% - 32px));
+  background:
+    linear-gradient(to bottom left, transparent 0, transparent 22.6px, var(--neon-cyan) 22.6px, var(--neon-cyan) 28px, transparent 28px) 100% 0 / 32px 32px no-repeat,
+    linear-gradient(to top right, transparent 0, transparent 22.6px, var(--neon-cyan) 22.6px, var(--neon-cyan) 28px, transparent 28px) 0 100% / 32px 32px no-repeat,
+    var(--bar-across-8) 0 0 / 100% 8px no-repeat,
+    var(--bar-steel) 0 0 / 100% 8px no-repeat,
+    var(--bar-across-8) 0 100% / 100% 8px no-repeat,
+    var(--bar-steel) 0 100% / 100% 8px no-repeat,
+    var(--bar-down-8) 0 0 / 8px 100% no-repeat,
+    var(--bar-steel) 0 0 / 8px 100% no-repeat,
+    var(--bar-down-8) 100% 0 / 8px 100% no-repeat,
+    var(--bar-steel) 100% 0 / 8px 100% no-repeat,
+    var(--panel-face);
+}

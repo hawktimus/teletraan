@@ -1,7 +1,8 @@
-/* Overlay: Summer Break. The accent colours of the Summer Break seasonal pack. This is a
-   first set of colours, ready to change. The decorations that go with it are
-   in dashboard/seasons/summer-break.js, and docs/seasonal-packs.md explains how a pack
-   is put together.
+/* Overlay: Summer Break. The accent colours of the Summer Break seasonal pack: a
+   bright aqua for the accent and a warm sun cream for the quiet text, so the
+   screen reads sea and sunshine against the dark plates. The deeper blues, the
+   coral and the sand live in the decorations (dashboard/seasons/summer-break.js)
+   and not here. docs/seasonal-packs.md explains how a pack is put together.
 
    An overlay may set only the three variables below. --yellow and
    --yellow-faint go together, because the second is the first at 16 percent
@@ -9,7 +10,7 @@
    and fails if any text becomes hard to read. */
 
 html.overlay-summer-break {
-  --yellow: #ffe36b;
-  --yellow-faint: rgba(255, 227, 107, .16);
-  --lilac: #c9f0ff;
+  --yellow: #7ff0e2;
+  --yellow-faint: rgba(127, 240, 226, .16);
+  --lilac: #ffe6a3;
 }

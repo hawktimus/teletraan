@@ -13,6 +13,9 @@
 //   enter() and exit(). The table below says what each part does and when,
 //   and frame.css plays it.
 //
+// A third thing, the neon kit of the sidebar layout (Neon Prime), has its timing
+// in the last section of this file, and its shapes and keyframes in neon-kit.css.
+//
 // The motion setting (full, calm or none) is handled here so no panel has
 // to think about it. The speed setting is handled here too: every time below
 // is a normal-speed time, and pace() says how much to stretch it.
@@ -58,6 +61,27 @@ export const sequences = {
     'segment':       ['pop', 1450, 35],
     'stud':          ['servo', 1300, 50],
     'scan':          ['scan', 1200],
+  },
+
+  // The sidebar layout's one panel, in place of the banner and the countdown
+  // (panels/side). The countdown's parts keep the names and the order they
+  // have above, a little later, and the logo's own show runs beside them. The
+  // team name, the clock and the weather are not here: they are in the strip,
+  // outside the panel.
+  side: {
+    'body':          ['unfold', 800],
+    'lamp':          ['pop', 1150],
+    'label':         ['fade', 1200],
+    'chevron-left':  ['latch-left', 1100],
+    'chevron-right': ['latch-right', 1100],
+    'days':          ['slam', 1300],
+    'days-word':     ['fade', 1450],
+    'time':          ['fade', 1500],
+    'stripes':       ['grow', 1550],
+    'segment':       ['pop', 1650, 35],
+    'team-plate':    ['latch-left', 1400],
+    'school':        ['fade', 1700],
+    'sample-badge':  ['fade', 1900],
   },
 
   // Full screen: an alert from the editors
@@ -107,6 +131,9 @@ export function setMotion(mode) {
     stopCrt();
     restLogos();
   }
+  showKit();
+  if (mode === 'full') armKitGlitch();
+  else disarmKitGlitch();
 }
 
 // 'very-slow', 'slow', 'normal' or 'fast'. Anything else is ignored, like
@@ -326,6 +353,7 @@ export function turnMs() {
 export function arrive(area, first) {
   const state = first ? 'in' : 'xi';
   area.dataset.state = state;
+  if (!first && area.dataset.area === 'grid1') playKitBurst();
 
   return whenDone(area).then(() => {
     // "shown" has no animation rules, so changing the motion setting
@@ -523,6 +551,7 @@ export function setNightCovers(covers) {
 
   nightCovers = now;
   if (now) stopLogoEffects();
+  showKit();
 }
 
 // Called by the demo runner (core/demo.js) for as long as a demo plays. The
@@ -532,6 +561,7 @@ export function setNightCovers(covers) {
 export function setEffectsPaused(paused) {
   effectsPaused = paused === true;
   if (effectsPaused) stopLogoEffects();
+  if (effectsPaused) endKitEvents();
 }
 
 // Called by the hidden transitions (core/hidden-run.js) for as long as one has
@@ -540,6 +570,7 @@ export function setEffectsPaused(paused) {
 // effects that are due play one at a time once the screen is back together.
 export function setHiddenPlaying(on) {
   hiddenPlaying = on === true;
+  showKit();
   if (!hiddenPlaying) return;
 
   stopLogoEffects();
@@ -924,4 +955,153 @@ function stopNameEffect() {
 // act goes back to rest at once, because the act's pose would otherwise stay.
 function restLogos() {
   if (showLogo) restLogo(showLogo);
+}
+
+
+// The Neon Prime kit
+//
+// Moving neon for the theme with the sidebar layout (docs/layouts.md, "The kit").
+// The shapes and every keyframe are in neon-kit.css. Most of the kit is plain CSS
+// that runs for as long as the page says so, which it does with html[data-kit="on"]
+// (showKit below). Two parts are events, and they are driven from here:
+//
+//   the name glitch   the team name glitches for a moment, at an irregular
+//                     time: 12 to 25 seconds after the last one, a new number
+//                     each time
+//   the page burst    bars of glitch cross the large frame each time a new
+//                     page starts to arrive in it (arrive, above)
+//
+// The kit is on when shell.js says so (setKit), and only while the motion is full
+// and nothing covers the screen: the night screen, an alert or an announcement,
+// or a hidden transition. In calm and none motion nothing of it moves. The two
+// events are also silent while a demo plays (setEffectsPaused). A glitch that
+// comes due when it may not play is skipped, never saved up for later, and the
+// timers are cleared when the theme goes away (setKit(false)) or the motion
+// leaves full.
+
+// The seconds between two name glitches: a new number between these each time
+export const kitGlitchGapSeconds = { least: 12, most: 25 };
+
+// How long each lasts at normal speed. neon-kit.css times its keyframes to them
+// (and to --pace, like every other time), so change them together.
+const kitGlitchSeconds = 0.4;
+const kitBurstSeconds = 0.3;
+
+let kitOn = false; // the theme with the kit is on the page
+let takeoverCovers = false; // an alert or an announcement covers the screen
+let kitGlitchTimer = null; // waits for the next glitch
+let kitGlitchEnd = null; // ends the glitch that is playing
+let kitBurstEnd = null; // ends the burst that is playing
+
+// The seconds to wait for the next glitch. random is Math.random, or a stand-in
+// in the tests: it gives a number from 0 up to 1.
+export function kitGlitchGap(random) {
+  const gap = kitGlitchGapSeconds;
+  return gap.least + Math.min(1, Math.max(0, random())) * (gap.most - gap.least);
+}
+
+// Called by shell.js each time a theme goes on the page, and by takeover.js
+// when an alert or an announcement starts and ends.
+export function setKit(on) {
+  kitOn = on === true;
+  showKit();
+  if (kitOn && motion === 'full') armKitGlitch();
+  else disarmKitGlitch();
+}
+
+export function setTakeoverCovers(covers) {
+  const now = covers === true;
+  if (now === takeoverCovers) return; // asked on every start and end, so only a change counts
+
+  takeoverCovers = now;
+  showKit();
+}
+
+// The parts that run by themselves, and the two events, may move now
+function kitMoves() {
+  return kitOn && motion === 'full' && !nightCovers && !takeoverCovers && !hiddenPlaying;
+}
+
+function kitMayFire() {
+  return kitMoves() && !effectsPaused;
+}
+
+// Puts data-kit="on" on the html element while the kit may move, and takes it
+// off the moment it may not, which stops every animation of the kit and ends any
+// glitch or burst that is playing. It is written only when it changes, because
+// writing it can make the browser restyle the page.
+function showKit() {
+  if (kitMoves()) {
+    if (page.dataset.kit !== 'on') page.dataset.kit = 'on';
+    return;
+  }
+
+  if (page.dataset.kit !== undefined) delete page.dataset.kit;
+  endKitEvents();
+}
+
+function armKitGlitch() {
+  if (!kitOn || kitGlitchTimer !== null) return;
+  kitGlitchTimer = setTimeout(playKitGlitch, kitGlitchGap(Math.random) * 1000);
+}
+
+function disarmKitGlitch() {
+  clearTimeout(kitGlitchTimer);
+  kitGlitchTimer = null;
+  endKitEvents();
+}
+
+// The next glitch is set first, so that one that is skipped or fails never ends
+// the series. It plays only when nothing else is playing: not the name effect,
+// the logo or the glitch of the screen, and not while a page is changing.
+function playKitGlitch() {
+  kitGlitchTimer = null;
+  armKitGlitch();
+
+  try {
+    const name = document.querySelector('[data-name-effect]');
+    if (!name || !kitMayFire() || playing || areaIsChanging()) return;
+
+    name.classList.add('glitching');
+    kitGlitchEnd = setTimeout(endKitGlitch, kitGlitchSeconds * 1000 * pace());
+  } catch (error) {
+    console.error('The name glitch failed', error);
+  }
+}
+
+function endKitGlitch() {
+  if (kitGlitchEnd === null) return; // none is playing: nothing to look for in the page
+  clearTimeout(kitGlitchEnd);
+  kitGlitchEnd = null;
+
+  const name = document.querySelector('[data-name-effect]');
+  if (name) name.classList.remove('glitching');
+}
+
+// Called by arrive() for each page after the first in the large frame. It must
+// never stop the page from arriving, whatever goes wrong here.
+function playKitBurst() {
+  try {
+    const pane = document.querySelector('.kit-pane');
+    if (!pane || !kitMayFire() || pane.classList.contains('bursting')) return;
+
+    pane.classList.add('bursting');
+    kitBurstEnd = setTimeout(endKitBurst, kitBurstSeconds * 1000 * pace());
+  } catch (error) {
+    console.error('The page change burst failed', error);
+  }
+}
+
+function endKitBurst() {
+  if (kitBurstEnd === null) return;
+  clearTimeout(kitBurstEnd);
+  kitBurstEnd = null;
+
+  const pane = document.querySelector('.kit-pane');
+  if (pane) pane.classList.remove('bursting');
+}
+
+function endKitEvents() {
+  endKitGlitch();
+  endKitBurst();
 }

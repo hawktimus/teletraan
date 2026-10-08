@@ -1,7 +1,8 @@
-/* Overlay: New Year's. The accent colours of the New Year's seasonal pack. This is a
-   first set of colours, ready to change. The decorations that go with it are
-   in dashboard/seasons/new-years.js, and docs/seasonal-packs.md explains how a pack
-   is put together.
+/* Overlay: New Year's. The accent colours of the New Year's seasonal pack: a
+   pale gold for the accent and a cool silver for the quiet text, so the screen
+   reads gold and silver against the dark plates. The fireworks, the confetti and
+   the skyline have their own colours in dashboard/seasons/new-years.js.
+   docs/seasonal-packs.md explains how a pack is put together.
 
    An overlay may set only the three variables below. --yellow and
    --yellow-faint go together, because the second is the first at 16 percent
@@ -9,7 +10,7 @@
    and fails if any text becomes hard to read. */
 
 html.overlay-new-years {
-  --yellow: #ffe9a8;
-  --yellow-faint: rgba(255, 233, 168, .16);
-  --lilac: #dfe6ff;
+  --yellow: #ffd666;
+  --yellow-faint: rgba(255, 214, 102, .16);
+  --lilac: #d0d8e8;
 }

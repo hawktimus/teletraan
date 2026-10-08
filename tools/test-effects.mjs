@@ -70,16 +70,19 @@ function makeStyle() {
 // A fresh frame.js with a fake page, a fake clock and a log of every start and
 // end of an effect. log entries are { effect, event, at } with at in ms.
 async function inPage(run) {
-  const world = { now: 0, timers: [], nextTimer: 1, log: [], areas: [], pageStyle: makeStyle() };
+  const world = { now: 0, timers: [], nextTimer: 1, log: [], kit: [], areas: [], pageStyle: makeStyle(), pageData: {} };
 
   function record(effect) {
     return (name, added) => {
       if (name === 'playing' || name === 'splitting') world.log.push({ effect: effect, event: added ? 'start' : 'end', at: world.now });
+      // The neon kit's two events (frame.js, "The Neon Prime kit") have a log of their own, so the log above stays the effects'
+      if (name === 'glitching' || name === 'bursting') world.kit.push({ what: name, event: added ? 'start' : 'end', at: world.now });
     };
   }
 
   world.crt = { classList: makeClassList(record('glitch')) };
   world.worldElement = { classList: makeClassList(() => {}) };
+  world.pane = { classList: makeClassList(record('pane')) }; // the layer of the neon kit's page burst (.kit-pane)
 
   // The name element ends its animations after the length frame.css would
   // give them: 1.43 s times --name-scale, and 15 letters.
@@ -123,15 +126,20 @@ async function inPage(run) {
   };
 
   globalThis.document = {
-    documentElement: { dataset: {}, style: world.pageStyle },
+    documentElement: { dataset: world.pageData, style: world.pageStyle },
     getElementById: id => ({ crt: world.crt, world: world.worldElement })[id] || null,
-    querySelector: selector => ({ '[data-name-effect]': world.name })[selector] || null,
+    querySelector: selector => ({ '[data-name-effect]': world.name, '.kit-pane': world.pane })[selector] || null,
     querySelectorAll: selector => (selector === '.area' ? world.areas : []),
   };
 
-  const real = { setTimeout: globalThis.setTimeout, setInterval: globalThis.setInterval, performance: globalThis.performance };
+  const real = { setTimeout: globalThis.setTimeout, setInterval: globalThis.setInterval, clearTimeout: globalThis.clearTimeout, performance: globalThis.performance };
   globalThis.setTimeout = (fn, ms) => {
-    world.timers.push({ at: world.now + (ms || 0), id: world.nextTimer++, fn: fn, every: 0 });
+    const id = world.nextTimer++;
+    world.timers.push({ at: world.now + (ms || 0), id: id, fn: fn, every: 0 });
+    return id;
+  };
+  globalThis.clearTimeout = id => {
+    world.timers = world.timers.filter(timer => timer.id !== id);
   };
   globalThis.setInterval = (fn, ms) => {
     world.timers.push({ at: world.now + ms, id: world.nextTimer++, fn: fn, every: ms });
@@ -156,6 +164,7 @@ async function inPage(run) {
   } finally {
     globalThis.setTimeout = real.setTimeout;
     globalThis.setInterval = real.setInterval;
+    globalThis.clearTimeout = real.clearTimeout;
     Object.defineProperty(globalThis, 'performance', { value: real.performance, configurable: true, writable: true });
     delete globalThis.document;
   }
@@ -3290,6 +3299,321 @@ test('the announcement functions import only the config and the demo functions a
   assert.ok(announcing > shell.indexOf("startOptional('./core/demo-runner.js'"), 'after the demo runner');
   assert.ok(announcing > shell.indexOf('startTakeovers(getContent);'), 'after the takeovers');
   assert.ok(shell.lastIndexOf("if (!params.get('show') && !stress) {", announcing) > shell.lastIndexOf('startNight', announcing) - 2000, 'only when the whole screen runs');
+});
+
+// The Neon Prime kit (frame.js, "The Neon Prime kit"): the two events that frame.js drives, the name
+// glitch and the burst of bars when a new page arrives in the large frame, and the attribute that
+// tells neon-kit.css when the rest may move. The shapes and keyframes are not tested here.
+
+// Runs a test body with Math.random replaced. seeded() is the number generator with a fixed seed
+// above, so a test of many glitches is the same every time.
+async function withRandom(random, run) {
+  const real = Math.random;
+  Math.random = random;
+  try {
+    await run();
+  } finally {
+    Math.random = real;
+  }
+}
+
+// frame.js with the kit on and nothing else playing: the name effect and the glitch of the screen are off
+async function inKitPage(run) {
+  await withRandom(seeded(7), async () => {
+    await inPage(async world => {
+      world.frame.setNameEffect(false, 300, 1.43);
+      world.frame.setCrt(false, 240, 2.7);
+      world.glitchStarts = () => world.kit.filter(item => item.what === 'glitching' && item.event === 'start').map(item => item.at);
+      world.glitchEnds = () => world.kit.filter(item => item.what === 'glitching' && item.event === 'end').map(item => item.at);
+      world.burstStarts = () => world.kit.filter(item => item.what === 'bursting' && item.event === 'start').map(item => item.at);
+      world.burstEnds = () => world.kit.filter(item => item.what === 'bursting' && item.event === 'end').map(item => item.at);
+      world.largeArea = () => ({ dataset: { area: 'grid1', state: 'xo' }, getAnimations: () => [] });
+      await run(world);
+    });
+  });
+}
+
+test('the gap between two name glitches is 12 to 25 seconds, a new number each time, and never outside them', () => {
+  const frame = new Promise(resolve => resolve());
+  return frame.then(async () => {
+    await inPage(async world => {
+      const gap = world.frame.kitGlitchGap;
+      assert.deepEqual(world.frame.kitGlitchGapSeconds, { least: 12, most: 25 });
+      assert.equal(gap(() => 0), 12);
+      assert.equal(gap(() => 1), 25);
+      assert.equal(gap(() => 0.5), 18.5);
+      assert.equal(gap(() => -3), 12, 'a number below 0 is the least');
+      assert.equal(gap(() => 9), 25, 'a number above 1 is the most');
+
+      const random = seeded(99);
+      const gaps = [];
+      for (let count = 0; count < 500; count += 1) gaps.push(gap(random));
+      assert.ok(gaps.every(seconds => seconds >= 12 && seconds <= 25), 'every gap is 12 to 25 seconds');
+      assert.ok(new Set(gaps.map(seconds => Math.round(seconds * 10))).size > 100, 'the gaps are not all alike');
+      assert.ok(gaps.some(seconds => seconds < 14) && gaps.some(seconds => seconds > 23), 'both ends of the range are used');
+    });
+  });
+});
+
+test('the kit starts nothing until it is switched on, and switching it on or off starts or ends the series', async () => {
+  await inKitPage(async world => {
+    await world.advance(300 * second);
+    assert.deepEqual(world.kit, [], 'the kit is off by default: nothing plays');
+    assert.equal(world.pageData.kit, undefined, 'and data-kit is not on the page');
+
+    world.frame.setKit(true);
+    assert.equal(world.pageData.kit, 'on');
+    await world.advance(60 * second);
+    assert.ok(world.glitchStarts().length >= 2, 'a glitch every 12 to 25 seconds');
+
+    world.frame.setKit(false);
+    assert.equal(world.pageData.kit, undefined, 'the page says the kit is off');
+    const before = world.kit.length;
+    await world.advance(300 * second);
+    assert.equal(world.kit.length, before, 'nothing plays once the kit is off');
+  });
+});
+
+test('a name glitch lasts .4 seconds, comes 12 to 25 seconds after the last one, and no two are alike', async () => {
+  await inKitPage(async world => {
+    world.frame.setKit(true);
+    await world.advance(1200 * second);
+
+    const starts = world.glitchStarts();
+    const ends = world.glitchEnds();
+    assert.ok(starts.length > 50, 'about 65 glitches in 20 minutes, there were ' + starts.length);
+    assert.equal(ends.length, starts.length);
+    starts.forEach((start, place) => assert.equal(ends[place] - start, 400, 'each glitch lasts .4 s'));
+
+    assert.ok(starts[0] >= 12000 && starts[0] <= 25000, 'the first one is 12 to 25 seconds after the kit went on, not at once: ' + starts[0]);
+    const gaps = starts.slice(1).map((start, place) => start - starts[place]);
+    assert.ok(gaps.every(milliseconds => milliseconds >= 12000 && milliseconds <= 25000), 'every gap is 12 to 25 seconds: ' + Math.min.apply(null, gaps) + ' to ' + Math.max.apply(null, gaps));
+    assert.ok(new Set(gaps).size > gaps.length / 2, 'the gaps are irregular');
+    assert.ok(gaps.some(milliseconds => milliseconds < 15000) && gaps.some(milliseconds => milliseconds > 22000), 'short gaps and long ones');
+  });
+});
+
+test('the Speed setting stretches the glitch and the burst, and not the gaps', async () => {
+  await inKitPage(async world => {
+    world.frame.setSpeed('very-slow'); // twice as long
+    world.frame.setKit(true);
+    await world.advance(100 * second);
+    assert.ok(world.glitchStarts().length >= 3);
+    world.glitchStarts().forEach((start, place) => assert.equal(world.glitchEnds()[place] - start, 800, 'twice .4 s'));
+
+    world.frame.arrive(world.largeArea(), false);
+    const at = world.now;
+    await world.advance(2000);
+    assert.deepEqual(world.burstStarts(), [at]);
+    assert.deepEqual(world.burstEnds(), [at + 600], 'twice .3 s');
+  });
+});
+
+// What stops the kit, one at a time. Each says how to start it, how to stop it, and whether data-kit
+// stays on while it is on: the demo and a page change only hold back the two events
+const kitBlocks = [
+  ['calm motion', world => world.frame.setMotion('calm'), world => world.frame.setMotion('full'), undefined],
+  ['no motion', world => world.frame.setMotion('none'), world => world.frame.setMotion('full'), undefined],
+  ['the night screen', world => world.frame.setNightCovers(true), world => world.frame.setNightCovers(false), undefined],
+  ['a hidden transition', world => world.frame.setHiddenPlaying(true), world => world.frame.setHiddenPlaying(false), undefined],
+  ['an alert or an announcement', world => world.frame.setTakeoverCovers(true), world => world.frame.setTakeoverCovers(false), undefined],
+  ['a demo', world => world.frame.setEffectsPaused(true), world => world.frame.setEffectsPaused(false), 'on'],
+];
+
+kitBlocks.forEach(entry => {
+  test('the name glitch is silent during ' + entry[0] + ', and is not saved up: the series carries on at its own times after it', async () => {
+    await inKitPage(async world => {
+      world.frame.setKit(true);
+      await world.advance(40 * second);
+      const before = world.glitchStarts().length;
+      assert.ok(before >= 1);
+
+      entry[1](world);
+      assert.equal(world.pageData.kit, entry[3], 'data-kit while ' + entry[0]);
+      await world.advance(600 * second);
+      assert.equal(world.glitchStarts().length, before, 'no glitch during ' + entry[0]);
+      assert.equal(world.name.classList.contains('glitching'), false);
+
+      entry[2](world);
+      assert.equal(world.pageData.kit, 'on', 'data-kit is back');
+      const resumed = world.now;
+      await world.advance(120 * second);
+      const starts = world.glitchStarts().slice(before);
+      assert.ok(starts.length >= 3 && starts.length <= 10, 'glitches go on at the normal gaps, and no burst of the ones missed: ' + starts.length);
+      assert.ok(starts[0] - resumed <= 25000, 'the first one is within the longest gap');
+      assert.ok(starts.slice(1).every((start, place) => start - starts[place] >= 12000), 'still 12 seconds apart at least');
+    });
+  });
+});
+
+test('a glitch that is playing ends on the spot when something covers the screen, and the timers are cleared when the kit goes', async () => {
+  await inKitPage(async world => {
+    world.frame.setKit(true);
+    const pending = () => world.timers.filter(timer => timer.at - world.now > 2000 && !timer.every).length;
+    assert.equal(pending(), 1, 'one timer waits for the first glitch');
+
+    await world.advance(30 * second);
+    let start = world.glitchStarts().length;
+    assert.ok(start >= 1);
+    assert.equal(pending(), 1, 'one timer waits for the next');
+
+    // wait for the middle of a glitch
+    while (!world.name.classList.contains('glitching')) await world.advance(50);
+    world.frame.setNightCovers(true);
+    assert.equal(world.name.classList.contains('glitching'), false, 'the night screen ends it at once');
+    world.frame.setNightCovers(false);
+
+    while (!world.name.classList.contains('glitching')) await world.advance(50);
+    world.frame.setKit(false);
+    assert.equal(world.name.classList.contains('glitching'), false, 'switching the kit off ends it at once');
+    assert.equal(pending(), 0, 'and no timer is left waiting');
+    const ends = world.glitchEnds().length;
+    await world.advance(100 * second);
+    assert.equal(world.glitchEnds().length, ends);
+    assert.equal(pending(), 0);
+
+    world.frame.setKit(true);
+    assert.equal(pending(), 1, 'switching it on again starts the series again');
+    world.frame.setMotion('calm');
+    assert.equal(pending(), 0, 'and calm motion clears the timer too');
+    world.frame.setMotion('full');
+    assert.equal(pending(), 1, 'and full motion sets it again');
+    world.frame.setKit(true);
+    world.frame.setKit(true);
+    assert.equal(pending(), 1, 'asked again and again it is still one timer, because shell.js calls it at every look and every content change');
+  });
+});
+
+test('the name glitch waits for the name effect and for a page change instead of playing over them', async () => {
+  await withRandom(() => 0, async () => { // the shortest gap every time: 12 seconds
+    await inPage(async world => {
+      world.frame.setCrt(false, 240, 2.7);
+      world.frame.setNameEffect(true, 300, 20); // plays from 2 to 22 seconds
+      world.frame.setKit(true);
+
+      await world.advance(23 * second);
+      const nameStarts = world.starts('name');
+      assert.deepEqual(nameStarts, [2000]);
+      assert.deepEqual(world.kit.filter(item => item.what === 'glitching'), [], 'the glitch due at 12 seconds was skipped while the name effect played');
+
+      await world.advance(2 * second);
+      assert.deepEqual(world.kit.filter(item => item.what === 'glitching' && item.event === 'start').map(item => item.at), [24000], 'the next one, 12 seconds later, plays');
+
+      const area = world.addArea('xo'); // a page is changing
+      await world.advance(60 * second);
+      assert.equal(world.kit.filter(item => item.what === 'glitching' && item.event === 'start').length, 1, 'none while a page changes');
+      area.dataset.state = 'shown';
+      await world.advance(13 * second);
+      assert.equal(world.kit.filter(item => item.what === 'glitching' && item.event === 'start').length, 2, 'and the next gap after it is over, it plays again');
+    });
+  });
+});
+
+test('the page burst plays for .3 seconds when a new page arrives in the large frame, and for no other arrival', async () => {
+  await inKitPage(async world => {
+    world.frame.setKit(true);
+
+    const first = world.largeArea();
+    world.frame.arrive(first, true); // the first page: the frame is still assembling
+    await world.advance(6 * second);
+    assert.deepEqual(world.kit.filter(item => item.what === 'bursting'), [], 'not for the first page');
+
+    const ticker = { dataset: { area: 'ticker', state: 'xo' }, getAnimations: () => [] };
+    const small = { dataset: { area: 'grid2', state: 'xo' }, getAnimations: () => [] };
+    world.frame.arrive(ticker, false);
+    world.frame.arrive(small, false);
+    await world.advance(6 * second);
+    assert.deepEqual(world.kit.filter(item => item.what === 'bursting'), [], 'not for the ticker or the small frame');
+
+    const next = world.largeArea();
+    const at = world.now;
+    world.frame.arrive(next, false);
+    assert.equal(next.dataset.state, 'xi', 'the page still arrives the way it did');
+    await world.advance(6 * second);
+    assert.deepEqual(world.burstStarts(), [at]);
+    assert.deepEqual(world.burstEnds(), [at + 300]);
+    assert.equal(next.dataset.state, 'shown', 'and it arrives as before');
+
+    // asked twice while it plays, it is one burst
+    world.frame.arrive(world.largeArea(), false);
+    world.frame.arrive(world.largeArea(), false);
+    await world.advance(second);
+    assert.equal(world.burstStarts().length, 2);
+  });
+});
+
+kitBlocks.forEach(entry => {
+  test('the page burst is silent during ' + entry[0], async () => {
+    await inKitPage(async world => {
+      world.frame.setKit(true);
+      entry[1](world);
+      world.frame.arrive(world.largeArea(), false);
+      await world.advance(2 * second);
+      assert.deepEqual(world.burstStarts(), [], 'no burst during ' + entry[0]);
+
+      entry[2](world);
+      const at = world.now;
+      world.frame.arrive(world.largeArea(), false);
+      await world.advance(2 * second);
+      assert.deepEqual(world.burstStarts(), [at], 'and one when it is over');
+    });
+  });
+});
+
+test('the page burst is not played while the kit is off, and a burst in the middle ends when the kit goes', async () => {
+  await inKitPage(async world => {
+    world.frame.arrive(world.largeArea(), false);
+    await world.advance(2 * second);
+    assert.deepEqual(world.burstStarts(), [], 'the kit is off');
+
+    world.frame.setKit(true);
+    world.frame.arrive(world.largeArea(), false);
+    assert.equal(world.pane.classList.contains('bursting'), true);
+    world.frame.setKit(false);
+    assert.equal(world.pane.classList.contains('bursting'), false, 'switching the kit off ends it at once');
+    await world.advance(2 * second);
+    assert.equal(world.burstEnds().length, 1, 'once, and the timer that was waiting for its end did not end it again');
+  });
+});
+
+test('a page change goes on arriving when the kit has nothing to find in the page', async () => {
+  await inKitPage(async world => {
+    world.frame.setKit(true);
+    const find = document.querySelector;
+    document.querySelector = selector => {
+      if (selector === '.kit-pane') throw new Error('the page has no kit');
+      return find(selector);
+    };
+    const area = world.largeArea();
+    const logged = [];
+    const realError = console.error;
+    console.error = (...parts) => logged.push(parts.join(' '));
+    let arrived;
+    try {
+      arrived = world.frame.arrive(area, false);
+    } finally {
+      console.error = realError;
+    }
+    await world.advance(6 * second);
+    await arrived;
+    assert.equal(area.dataset.state, 'shown');
+    assert.ok(logged.some(line => /page change burst failed/.test(line)), 'and says what failed');
+  });
+});
+
+test('the kit is on in frame.js only when told, never from an import, and shell.js tells it for Neon Prime in the sidebar layout', () => {
+  const frame = fs.readFileSync(path.join(dashboardFolder, 'frame.js'), 'utf8');
+  const kit = frame.slice(frame.indexOf('// The Neon Prime kit\n'));
+  assert.ok(kit.length > 1000, 'the kit section is in frame.js');
+  assert.ok(!/setInterval/.test(kit), 'one timer at a time, no repeating timer');
+  assert.ok(!/requestAnimationFrame|\.animate\(|style\.setProperty|\.style\./.test(kit), 'the kit adds no animation code of its own: a class, and the stylesheet does the rest');
+  assert.equal((kit.match(/setTimeout\(/g) || []).length, 3, 'a glitch timer, and the end of a glitch and of a burst');
+  assert.equal((kit.match(/clearTimeout\(/g) || []).length, 3, 'each is cleared');
+
+  const shell = fs.readFileSync(path.join(dashboardFolder, 'shell.js'), 'utf8');
+  assert.ok(/frame\.setKit\(hasKit\(look\.theme, layoutNow\(\)\) && params\.get\('kit'\) !== 'off'\)/.test(shell), 'shell.js switches the kit with each look, and ?kit=off switches it off');
+  const takeover = fs.readFileSync(path.join(dashboardFolder, 'core/takeover.js'), 'utf8');
+  assert.ok(/frame\.setTakeoverCovers\(true\)/.test(takeover) && /frame\.setTakeoverCovers\(false\)/.test(takeover), 'an alert and an announcement tell the kit when they start and end');
 });
 
 // Run them

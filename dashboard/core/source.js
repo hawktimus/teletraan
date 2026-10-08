@@ -63,6 +63,18 @@ function saveSettings(settings) {
   }
 }
 
+// The source the screen will most likely start with, answered at once from the
+// last answer saved on this computer, without asking Sanity. It follows the same
+// rules as chooseSource() below, so core/layout-apply.js can choose the layout
+// before anything is drawn.
+export function savedSource(now) {
+  if (sanity.projectId === '') return 'sample';
+
+  const known = readSavedSettings();
+  if (known) return pickSource(known, now);
+  return useSampleContent ? 'sample' : 'production';
+}
+
 // Reads Dashboard Settings once and resolves with
 //   { source: 'sample' or 'production', keepWatching(onChange) }
 // The screen starts the matching reader and then calls keepWatching. From

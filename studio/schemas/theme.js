@@ -65,7 +65,7 @@ const defaultThemeField = defineField({
   name: 'defaultTheme',
   title: 'Default theme',
   type: 'string',
-  description: 'The look the screen has when Use a theme now and the schedule below do not say otherwise.',
+  description: 'The look when Use a theme now and the schedule below say nothing. Neon Prime has a sidebar and no small frame, and reloads the screen once.',
   options: { list: themeChoices },
   initialValue: 'hawktimus',
   validation: Rule => [
@@ -84,7 +84,7 @@ const useNowField = defineField({
       name: 'theme',
       title: 'Theme',
       type: 'string',
-      description: 'Optional. The theme to show now. Leave empty to follow the schedule.',
+      description: 'Optional. The theme to show now. Leave empty to follow the schedule. Neon Prime has a sidebar and no small frame, and reloads the screen once.',
       options: { list: themeChoices },
       validation: Rule => Rule.valid(ids(themeChoices)).error('Pick a theme from the list.'),
     }),
@@ -133,7 +133,7 @@ const ruleMember = defineArrayMember({
       name: 'theme',
       title: 'Theme',
       type: 'string',
-      description: 'The theme to show on these dates.',
+      description: 'The theme to show on these dates. Neon Prime has a sidebar and no small frame, and reloads the screen once.',
       options: { list: themeChoices },
       hidden: ({ parent }) => !parent || parent.kind !== 'theme',
       validation: Rule => [
@@ -217,9 +217,17 @@ const timeZoneField = defineField({
   ],
 });
 
+const seasonOverPanelsField = defineField({
+  name: 'seasonOverPanels',
+  title: 'Seasonal pieces over the panels',
+  type: 'boolean',
+  description: 'On: snow, leaves and other small pieces of a seasonal pack drift over the panels. Off: only its header pictures and edge decorations show.',
+  initialValue: true,
+});
+
 export default defineType({
   name: 'theme',
   title: 'Theme',
   type: 'document',
-  fields: [defaultThemeField, useNowField, scheduleField, timeZoneField],
+  fields: [defaultThemeField, useNowField, scheduleField, timeZoneField, seasonOverPanelsField],
 });

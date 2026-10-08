@@ -434,10 +434,13 @@ export function cardMarkup(width, height) {
   return edgedShape('card-' + width + 'x' + height, points, 'card-fill', 'card-outline thin', width, height);
 }
 
-// The team plate in the banner (520 x 76)
-export function teamPlateMarkup() {
-  const points = [[4, 4], [516, 4], [516, 40], [476, 72], [4, 72]];
-  return edgedShape('team-plate-shape', points, 'team-fill', 'team-plate-art', 520, 76);
+// The team plate in the banner (520 x 76). The sidebar layout draws it at
+// another width, and each width is its own shape, so the id carries the width
+// (the 520 one keeps the id it has always had).
+export function teamPlateMarkup(width = 520) {
+  const points = [[4, 4], [width - 4, 4], [width - 4, 40], [width - 44, 72], [4, 72]];
+  const id = width === 520 ? 'team-plate-shape' : 'team-plate-shape-' + width;
+  return edgedShape(id, points, 'team-fill', 'team-plate-art', width, 76);
 }
 
 // The slanted label at the left end of the ticker. A longer word needs a

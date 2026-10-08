@@ -7,8 +7,10 @@
 //
 // How a transition goes on the screen. #world carries data-hidden:
 //   glitch  glitches over the screen, red or blue (data-tint says which)
-//   break   the five blocks fly apart in 3D (the banner, the countdown, the large
-//           panel, the small panel and the ticker, marked data-block in index.html)
+//   break   the blocks fly apart in 3D. The standard layout has five (the banner, the
+//           countdown, the large panel, the small panel and the ticker, marked
+//           data-block in index.html), and the sidebar layout four (the top strip,
+//           the sidebar, the large panel and the ticker, core/layout.js, blocksOf)
 //   apart   the blocks are out of sight and #backdrop shows what is behind them.
 //           The pages of all three areas are swapped now (core/areas.js)
 //   build   the blocks fly back together, showing the next screen
@@ -31,6 +33,7 @@ import { hiddenTransitions } from './hidden-transitions.js';
 import { preloadImages } from './images.js';
 import { setHiddenOffer, startWholeScreen } from './areas.js';
 import { moveOn, secondsUntilChange } from './schedule.js';
+import { layoutNow, otherAreas } from './layout.js';
 import { takeoverRunning } from './takeover.js';
 
 // How long the blocks take to fly apart, and the same again to fly back, at
@@ -309,7 +312,7 @@ function makeScene(screen, swapPage) {
       backdrop.dataset.look = look;
       backdrop.hidden = false;
       world.dataset.hidden = 'break';
-      moveOn(['grid2', 'ticker']); // they pick their next page and wait at the gate for this moment
+      moveOn(otherAreas(layoutNow())); // the areas the layout has besides the large one pick their next page and wait at the gate for this moment
 
       await sleep(flySeconds * apartAfter);
       world.dataset.hidden = 'apart';

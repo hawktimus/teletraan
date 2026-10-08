@@ -5,6 +5,9 @@
 // Switches you can add to the address, for example index.html?motion=calm
 //   motion=full|calm|none             how much things move
 //   speed=very-slow|slow|normal|fast  how fast things move and how long panels stay
+//   look=polished|flat|plain          how much polish the frames have (Look in Dashboard Settings). flat is
+//                                     the flat finish with no glint, plain also has no screws and no // in the
+//                                     panel headers. finish= and glint= below win over it
 //   finish=metal|flat                 polished metal edges, or one plain colour (to test speed)
 //   metal=gold|silver                 the metal of the permanent frame edges (the banner, the countdown, the logo)
 //   change=alternate|slat|mechanical  how the large and small panels change page
@@ -16,20 +19,26 @@
 //   perf                              show the frame timing readout
 //   show=<panel id>                   show only that panel, for example show=events
 //   demo=announcement|alert|crt       play one of the special effects now
-//   theme=<id>                        show a theme from themes/registry.js, whatever the Theme settings say
+//   theme=<id>                        show a theme from themes/registry.js, whatever the Theme settings say. A theme with
+//                                     another layout (core/layout.js) brings its layout with it
 //   overlay=<id>|none                 show an overlay from themes/overlays/registry.js, or none
 //   night=on|off                      show the night screen (the screensaver) now, or never, whatever the time
+//   seasonover=on|off                 show or hide the seasonal pieces over the panels, whatever the Theme page says
 //   hidden=desktop|redEyes|off        play that hidden transition at the next page change of the large panel, or never play any
+//   kit=off                           switch the neon kit (Neon Prime's moving neon, docs/layouts.md) off, to see what it costs
 
 import * as frame from './frame.js';
-import { panels } from './registry.js';
+import { fixedPanels, panels } from './registry.js';
 import { sampleFolder, liveFolder, defaultSettings, frameFinishes, metals, pageChangeStyles, location as place } from './config.js';
-import { startContent, withDefaults } from './core/content.js';
+import { savedTheme, startContent, withDefaults } from './core/content.js';
 import { mergeEvents } from './core/events.js';
 import { connectionLines, drawConnection } from './core/connection.js';
+import { pageSwitchesFor } from './core/look.js';
 import { makeSilverGradients } from './core/plate.js';
 import { showDeviceInfo } from './core/device.js';
-import { checkTheme, showThemeNow, startThemes } from './core/theme-apply.js';
+import { checkTheme, holdLooksFor, showThemeNow, startThemes } from './core/theme-apply.js';
+import { holdForLayout, startLayout } from './core/layout-apply.js';
+import { decorationLayers, hasKit, layoutNow } from './core/layout.js';
 import { loadPanel, mountPanel, updatePanel } from './core/panels.js';
 import { showPagesNow, startRotation, startTicker, startTogether } from './core/schedule.js';
 import { startTakeovers, runAnnouncement, takeoverRunning } from './core/takeover.js';
@@ -56,6 +65,11 @@ window.teletraanStarted = true; // index.html reloads the page if this never hap
 run();
 
 async function run() {
+  // The layout goes on first of all, so that no region, area or panel is ever
+  // drawn in the wrong place. It is the layout of the theme the last saved
+  // content chose, or of ?theme=. A theme with another layout reloads the page later.
+  startLayout(params.get('theme'), savedTheme);
+
   try {
     makeSilverGradients(); // before any frame is drawn, so a silver frame has its gradients
   } catch (error) {
@@ -63,16 +77,14 @@ async function run() {
   }
   fitToScreen();
   window.addEventListener('resize', fitToScreen);
-  // The finish in index.html is the default. The address overrides it for testing.
-  const finish = params.get('finish');
-  if (finish === 'flat' || finish === 'metal') document.documentElement.dataset.finish = finish;
+  // The look, the finish and the glint. index.html has the polished ones. The
+  // address wins, then rebuild() applies Look and Glint from Dashboard Settings.
+  useLookSetting(defaultSettings);
 
-  // The metal of the frame edges and the glint. The address wins, then
-  // rebuild() applies the Dashboard Settings values to the same two attributes.
+  // The metal of the frame edges. The address wins, then rebuild() applies
+  // Frame metal from Dashboard Settings to the same attribute.
   const metal = params.get('metal');
   if (metals.includes(metal)) document.documentElement.dataset.metal = metal;
-  const glint = params.get('glint');
-  if (glint === 'on' || glint === 'off') document.documentElement.dataset.glint = glint;
 
   try {
     frame.start({ motion: params.get('motion') || 'full', speed: params.get('speed') || 'normal', draw: params.get('draw') });
@@ -93,8 +105,10 @@ async function run() {
       setBase(withDefaults(null), { source: 'sanity', updated: null, offline: false });
     }
 
-    // The theme goes on before the first panel is drawn, so nothing flashes in the wrong colours
+    // The theme goes on before the first panel is drawn, so nothing flashes in the wrong colours.
+    // A theme with another layout than the page reloads it, but never while an alert or an announcement has the screen.
     try {
+      holdLooksFor(look => holdForLayout(look, takeoverRunning));
       await startThemes(getContent, { theme: params.get('theme'), overlay: params.get('overlay') }, showDecorations);
     } catch (error) {
       console.error('The theme could not be started. The screen keeps the default look.', error);
@@ -187,10 +201,12 @@ function rebuild() {
   frame.setCrt(glitch.on, glitch.everySeconds, glitch.durationSeconds);
   useLogoSettings(content.settings);
   usePageChangeSettings(content.settings);
+  useSeasonSwitch();
   if (!metals.includes(params.get('metal'))) setPageSwitch('metal', content.settings.frameMetal);
-  if (!['on', 'off'].includes(params.get('glint'))) setPageSwitch('glint', content.settings.glint ? 'on' : 'off');
+  useLookSetting(content.settings);
   updatePanel('banner', content);
   updatePanel('countdown', content);
+  updatePanel('side', content); // does nothing in a layout that does not draw it
 
   // The connection status text, and the Mini's address inside it while Sanity cannot be reached
   try {
@@ -250,29 +266,37 @@ function setPageSwitch(name, value) {
   if (document.documentElement.dataset[name] !== value) document.documentElement.dataset[name] = value;
 }
 
+// The Look setting (core/look.js) sets three of those switches: look, finish and
+// glint. The address wins, for this page only. rebuild() calls it at every
+// content change, so a new Look in Dashboard Settings shows at once. (The look
+// that showDecorations() and useKit() take is a theme and overlay, which is
+// another thing.)
+function useLookSetting(settings) {
+  const switches = pageSwitchesFor(settings, { look: params.get('look'), finish: params.get('finish'), glint: params.get('glint') });
+  Object.keys(switches).forEach(name => setPageSwitch(name, switches[name]));
+}
+
 function getContent() {
   return content;
 }
 
-// The banner and countdown stay on screen the whole time
+// The banner and countdown stay on screen the whole time. The sidebar layout
+// has the one panel, side, in their place (registry.js, fixedPanels)
 function startWhatStays() {
   if (onlyTasks) return;
 
   // Each is started on its own, so one that fails to draw leaves the other
   // and the rest of the screen working
-  try {
-    const banner = mountPanel('banner', content);
-    frame.startLogo(banner.querySelector('.logo'));
-    frame.enter(banner);
-  } catch (error) {
-    console.error('The banner could not be drawn', error);
-  }
-
-  try {
-    frame.enter(mountPanel('countdown', content));
-  } catch (error) {
-    console.error('The countdown could not be drawn', error);
-  }
+  fixedPanels(layoutNow()).forEach(id => {
+    try {
+      const element = mountPanel(id, content);
+      const logo = element.querySelector('.logo'); // only the panel that has the logo gives the effects something to move
+      if (logo) frame.startLogo(logo);
+      frame.enter(element);
+    } catch (error) {
+      console.error('The ' + id + ' panel could not be drawn', error);
+    }
+  });
 }
 
 // The panels that come and go
@@ -290,7 +314,8 @@ function startWhatComesAndGoes() {
   const rotation = () => content.settings.rotation;
   startRotation('grid1', () => (onlyTasks ? [{ panel: 'tasks', show: true, seconds: 12 }] : rotation().grid1), getContent);
   if (!onlyTasks) {
-    startRotation('grid2', () => rotation().grid2, getContent);
+    startRotation('grid2', () => rotation().grid2, getContent); // does nothing in a layout with no small frame
+
     startTicker(getContent);
   }
 }
@@ -352,15 +377,47 @@ async function readEvents(module) {
   }
 }
 
-// The decorations of the overlay's seasonal pack (core/season.js,
+// The neon kit (docs/layouts.md, "The kit") is on for Neon Prime in the sidebar
+// layout, and off for every other look, and for ?kit=off. A problem here never
+// stops the colours.
+function useKit(look) {
+  try {
+    frame.setKit(hasKit(look.theme, layoutNow()) && params.get('kit') !== 'off');
+  } catch (error) {
+    console.error('Could not switch the neon kit', error);
+  }
+}
+
+// What goes with each look that goes on the page: the neon kit, and the
+// decorations of the overlay's seasonal pack (core/season.js,
 // docs/seasonal-packs.md). theme-apply.js calls this each time a look goes on
 // the page. The module is read only when a pack is wanted, or when one has to be
 // taken away, and a problem in it is logged and never stops the colours.
 function showDecorations(look) {
+  useKit(look);
   if (!look.overlay && !decorationsUsed) return;
 
   decorationsUsed = true;
-  startOptional('./core/season.js', module => module.showSeason(look.overlay));
+  startOptional('./core/season.js', module => {
+    module.setLayers(decorationLayers(layoutNow())); // the zones and the back layer are for the standard layout only
+    module.setOverPanels(wantOverPanels());
+    return module.showSeason(look.overlay);
+  });
+}
+
+// The pieces over the panels: the Theme page's switch, and the address wins
+// like the other switches. A change in Studio shows at once because rebuild()
+// calls useSeasonSwitch() each time the content changes.
+function wantOverPanels() {
+  const asked = params.get('seasonover');
+  if (asked === 'on' || asked === 'off') return asked === 'on';
+
+  return !base || !base.theme || base.theme.seasonOverPanels !== false;
+}
+
+function useSeasonSwitch() {
+  if (!decorationsUsed) return; // core/season.js is not loaded, and reads the switch when it is
+  startOptional('./core/season.js', module => module.setOverPanels(wantOverPanels()));
 }
 
 // A module that is allowed to be missing or to fail without stopping the screen

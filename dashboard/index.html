@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-motion="full" data-draw="stroke" data-finish="metal" data-metal="gold" data-glint="on">
+<html lang="en" data-motion="full" data-draw="stroke" data-finish="metal" data-metal="gold" data-glint="on" data-look="polished">
 <head>
   <meta charset="utf-8">
   <title>Teletraan I</title>
@@ -8,6 +8,9 @@
   <link rel="stylesheet" href="tokens.css">
   <link rel="stylesheet" href="base.css">
   <link rel="stylesheet" href="frame.css">
+  <link rel="stylesheet" href="layouts/sidebar.css">
+  <link rel="stylesheet" href="themes/decor/neon-prime-decor.css">
+  <link rel="stylesheet" href="neon-kit.css">
   <link rel="stylesheet" href="seasons/season.css">
   <link rel="stylesheet" href="seasons/motion.css">
 </head>
@@ -262,8 +265,37 @@
              large panel, the small panel and the ticker each get an area, with
              its frame, the first time a page needs it (core/areas.js). The five
              regions marked data-block are the blocks that fly apart in a hidden
-             transition. -->
+             transition in the standard layout. The sidebar layout marks its own
+             four (core/layout.js, blocksOf). -->
         <div id="region-banner" data-block></div>
+        <!-- The top strip of the sidebar layout (docs/layouts.md). It is hidden, and
+             nothing in it is used, while the standard layout is on. When a theme
+             with the sidebar layout is on, core/layout-apply.js shows it and makes
+             it a block that flies apart at the top. #strip-name is the slot for the
+             team name, and #strip-clock the slot at the right end for the clock,
+             the date and the weather: the side panel (panels/side) draws them and
+             moves them here. layouts/sidebar.css places both. -->
+        <div id="region-strip" hidden>
+          <div id="strip-name"></div>
+          <div id="strip-clock"></div>
+        </div>
+        <!-- The sidebar of the sidebar layout (docs/layouts.md). It is hidden, and
+             nothing in it is used, while the standard layout is on. When a theme
+             with the sidebar layout is on, core/layout-apply.js shows it, moves
+             #region-banner into #sidebar-top and #region-countdown into
+             #sidebar-countdown, and makes the sidebar a block that flies apart on
+             the left, in place of the banner and the countdown.
+             layouts/sidebar.css places it. The side panel is drawn into
+             #sidebar-top, with the banner, and is the whole column: the
+             countdown, then the logo, the TEAM plate and the school.
+             #sidebar-countdown and #sidebar-bottom stay empty. The team name, the
+             clock, the date and the weather are not in the column but in the strip
+             above it. -->
+        <div id="region-sidebar" hidden>
+          <div id="sidebar-top"></div>
+          <div id="sidebar-countdown"></div>
+          <div id="sidebar-bottom"></div>
+        </div>
         <div id="region-grid1" data-block></div>
         <div id="region-right">
           <div id="region-countdown" data-block></div>

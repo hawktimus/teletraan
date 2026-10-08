@@ -50,6 +50,15 @@ export const speeds = { 'very-slow': 2, 'slow': 1.5, 'normal': 1, 'fast': 0.75 }
 // its own that is chosen at every page change, see frameFinishes below.
 export const metals = ['gold', 'silver'];
 
+// The Look setting in Dashboard Settings: how much polish the frames have.
+// core/look.js turns it into the page switches the stylesheets read
+// (data-finish, data-glint and data-look). The Studio copies this list.
+//   polished  the normal look: worn metal edges, screws with shading, the glint
+//             that runs round the frames, and the // in the panel headers
+//   flat      plain colour edges and plain screws, and no glint. The // stays
+//   plain     flat, and no screws on the frames and no // in the panel headers
+export const looks = ['polished', 'flat', 'plain'];
+
 // The Transitions tab in Dashboard Settings (core/transitions.js chooses from them)
 //   pageChangeStyles  alternate: the slat change and the mechanical change take turns.
 //                     slat: the old change only. mechanical: the new one only.
@@ -131,6 +140,8 @@ export const defaultSettings = {
   speed: 'normal',
   frameMetal: 'gold',
   glint: true,
+  // see looks above. Flat and Plain also switch the glint off, whatever glint says
+  look: 'polished',
   // Puts the connection status text on the screen all the time, with the last
   // read from Sanity, how much of each kind of content there is, and when the
   // calendars were read. It comes up by itself, whatever this says, when Sanity
@@ -290,11 +301,14 @@ export const defaultSettings = {
 //   schedule      rules: { name, kind: 'theme' | 'overlay', theme or overlay, startDate, endDate, repeatsEveryYear }
 //   timeZone      the time zone the dates in the schedule are read in. Events Calendar entries
 //                 (core/events.js) use it too, for their times and for when they are over
+//   seasonOverPanels  true lets a seasonal pack draw small pieces (snow, leaves...) drifting over the
+//                 panels (core/season.js). false keeps only its header marks and edge decorations
 export const defaultThemeSettings = {
   defaultTheme: 'hawktimus',
   useNow: { theme: '', overlay: '', until: '' },
   schedule: [],
   timeZone: 'America/New_York',
+  seasonOverPanels: true,
 };
 
 // The Demo page in the Studio (core/demo.js, core/demo-screens.js and core/demo-runner.js).

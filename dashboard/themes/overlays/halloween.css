@@ -1,7 +1,10 @@
-/* Overlay: Halloween. The accent colours of the Halloween seasonal pack. This is a
-   first set of colours, ready to change. The decorations that go with it are
-   in dashboard/seasons/halloween.js, and docs/seasonal-packs.md explains how a pack
-   is put together.
+/* Overlay: Halloween. The accent colours of the Halloween seasonal pack: a
+   pale pumpkin orange for the headings and labels, and a pale violet for the
+   quiet text, so the screen reads orange and purple. Both are pale on purpose:
+   the plates are dark and text must keep 7 to 1 contrast on every theme, and a
+   real pumpkin orange is too dark for that. The deeper oranges and purples
+   live in the decorations (dashboard/seasons/halloween.js), which are not text.
+   docs/seasonal-packs.md explains how a pack is put together.
 
    An overlay may set only the three variables below. --yellow and
    --yellow-faint go together, because the second is the first at 16 percent
@@ -9,7 +12,7 @@
    and fails if any text becomes hard to read. */
 
 html.overlay-halloween {
-  --yellow: #ffcc88;
-  --yellow-faint: rgba(255, 204, 136, .16);
-  --lilac: #ddc2ff;
+  --yellow: #ffc58c;
+  --yellow-faint: rgba(255, 197, 140, .16);
+  --lilac: #e1bfff;
 }

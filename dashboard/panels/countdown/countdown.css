@@ -1,4 +1,4 @@
-/* The look changes with data-level, which countdown.js sets from how many
+/* The look changes with data-level, which core/countdown.js sets from how many
    days are left. The urgent level gets white numbers, because red numbers
    would melt into the red frame. The frame itself is red metal (plate.js). */
 
@@ -29,14 +29,14 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 24px; /* LINE_GAP in countdown.js */
-  /* countdown.js measures this font and size to decide what fits. Change them together. */
+  gap: 24px; /* LINE_GAP in core/countdown.js */
+  /* core/countdown.js measures this font and size to decide what fits. Change them together. */
   font: 700 var(--size-label)/44px var(--font-display);
 }
 .countdown .label-group {
   display: flex;
   align-items: center;
-  gap: 16px; /* with the 20px lamp this leaves 528px, LINE_ROOM in countdown.js */
+  gap: 16px; /* with the 20px lamp this leaves 528px, LINE_ROOM in core/countdown.js */
   min-width: 0;
   overflow: hidden;
   color: var(--yellow);
@@ -58,7 +58,7 @@
 }
 .countdown .date:empty { display: none; } /* so its gap does not take room from the label */
 
-/* a row of slanted bars, drawn by countdown.js */
+/* a row of slanted bars, drawn by core/countdown.js */
 .countdown .stripes {
   position: absolute;
   left: 64px;

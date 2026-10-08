@@ -19,6 +19,7 @@ import { defaultSettings } from '../config.js';
 import { buildPage, canShow, moduleOf, regionOf, topicOf } from './panels.js';
 import { ownSeconds } from './photos.js';
 import { changePage, clearRegion } from './areas.js';
+import { hasRegion, layoutNow } from './layout.js';
 
 // The topics on screen in each grid region right now. While a page is
 // leaving it holds two: the one going and the one coming.
@@ -132,7 +133,11 @@ function holdFor(stay, arrivedAfter) {
 // region is 'grid1' or 'grid2'
 // getPlaylist() returns the list of { panel, show, seconds } for that region
 // getContent() returns the newest content
+// A region the layout does not have (the small frame in the sidebar layout,
+// core/layout.js) is never started, so none of its panels is ever drawn.
 export function startRotation(region, getPlaylist, getContent) {
+  if (!hasRegion(layoutNow(), region)) return;
+
   const otherRegion = region === 'grid1' ? 'grid2' : 'grid1';
   let position = -1;
   let somePanelFailed = false; // set by pickPage when a panel could not be drawn
@@ -265,6 +270,11 @@ export function startTicker(getContent) {
 // panels arrive together, are held, and change together, over and over. The
 // time given is how long each is held still.
 export function startTogether(ids, getContent, holdSeconds) {
+  // A panel of a region the layout does not have is left out. A name that is not
+  // a panel stays, so building it reports the mistake as before.
+  ids = ids.filter(id => regionOf(id) === null || hasRegion(layoutNow(), regionOf(id)));
+  if (ids.length === 0) return;
+
   async function loop() {
     while (true) {
       try {

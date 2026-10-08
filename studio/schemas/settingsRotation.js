@@ -101,8 +101,8 @@ export function rotationField() {
     group: 'panels',
     description: 'Which panels appear on the screen, in what order, and for how long.',
     fields: [
-      panelList('grid1', 'Large panels', 'The big panels, one at a time. Drag to change the order. A row can have its own seconds.', largePanels),
-      panelList('grid2', 'Small panels', 'The small panels, one at a time. Drag to change the order. A row can have its own seconds.', smallPanels),
+      panelList('grid1', 'Large panels', 'The big panels, one at a time. Drag to change the order. A row can have its own seconds. With Neon Prime this list is the whole rotation.', largePanels),
+      panelList('grid2', 'Small panels', 'The small panels, one at a time. Drag to change the order. A row can have its own seconds. Not used while Neon Prime (a sidebar) is on.', smallPanels),
       defineField({
         name: 'tickerSeconds',
         title: 'Seconds per ticker line',

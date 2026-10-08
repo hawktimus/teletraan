@@ -176,6 +176,11 @@ In `dashboard/registry.js`, add one line to the list:
 
     { id: 'my-panel', region: 'grid1', topic: 'my-topic' },
 
+A line may also have `layout: 'sidebar'`. Such a panel is drawn only in that
+layout, and in the regions banner and countdown it takes the place of the panels
+that have no layout (`fixedPanels` in the same file). The `side` panel is the
+one example (docs/layouts.md, "The sidebar").
+
 ## 8. Put it in the rotation
 
 The panel's id is written in two more places. They have to match
@@ -233,8 +238,8 @@ speed. Then check:
 - nothing crosses the frame or the cut corner
 - everything with text on it turns over, in order from the top, and nothing
   stays behind while the rest turns
-- the panel still looks right with `&finish=flat` and with `&metal=silver`
-  added to the address
+- the panel still looks right with `&finish=flat`, with `&look=plain` (no
+  screws and no // in the header) and with `&metal=silver` added to the address
 - the panel looks right with no items, one item, many items and a very long
   title, and text such as `<b>` shows as plain text
 
@@ -297,14 +302,15 @@ shape is drawn once in `core/plate.js` and the metal colours come from
 the text are the theme's (`themes/hawktimus.css`, docs/adding-a-theme.md), so a
 panel uses a variable such as `var(--yellow)` and never a colour code.
 
-Four attributes on the `html` element change how it looks. Each has a
+Five attributes on the `html` element change how it looks. Each has a
 Dashboard Settings field and an address switch, and the address wins.
 
 | Attribute | Values | Dashboard Settings | Address |
 |-----------|--------|--------------------|---------|
 | `data-metal` | `gold` (dull antique gold, the default) or `silver` (weathered silver). It is on the html element, for the banner, the countdown and the logo, and on each large and small panel area, for its frame and everything in it, chosen at every page change | Screen, Frame metal (the html element). Transitions, Frame finish (the areas) | `?metal=silver` (the html element). `?frames=silver` (the areas) |
-| `data-glint` | `on` (the default) or `off`: the bright dash that runs round each big frame | Screen, Glint | `?glint=off` |
-| `data-finish` | `metal` (the default) or `flat` | none | `?finish=flat` |
+| `data-glint` | `on` (the default) or `off`: the bright dash that runs round each big frame | Screen, Glint (Flat and Plain in Look turn it off) | `?glint=off` |
+| `data-finish` | `metal` (the default) or `flat` | Screen, Look (Polished is `metal`, Flat and Plain are `flat`) | `?finish=flat` |
+| `data-look` | `polished` (the default), `flat` or `plain`: plain also hides the screws and the // in the panel headers (two rules in `base.css`). The look sets `data-finish` and `data-glint` too (`core/look.js`) | Screen, Look | `?look=plain` |
 | `data-motion` | `full` (the default), `calm` or `none` | Screen, Motion (full or calm) | `?motion=calm` |
 
 The countdown and the alert are always red metal, whatever `data-metal` says.
@@ -316,7 +322,13 @@ shade, ridge or glint, and every screw a plain silver head with a slot. The
 turning slats, the lifting halves and the turning screws stay, so it is the
 same screen with less to paint. If the
 screen on the Mini is slow, this is the first thing to try
-(docs/try-it-on-the-mini.md).
+(docs/try-it-on-the-mini.md). Look in Dashboard Settings sets it (Flat and
+Plain).
+
+**The plain look.** Plain is the flat finish with the screws and the default //
+in the panel headers hidden (`data-look="plain"`, two rules in `base.css`). A
+panel gets it with no code of its own if its header has class `header` and draws
+the mark with `doubleSlash()`. A seasonal pack's mark and the status shapes stay.
 
 **Do not:**
 

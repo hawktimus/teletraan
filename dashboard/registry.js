@@ -5,6 +5,8 @@
 //   topic     what it is about. Grid 1 and Grid 2 never show the same topic
 //             at the same moment, so tasks and task-counts share one.
 //   testOnly  only used by the hardware test (?stress)
+//   layout    only used in that layout (core/layout.js). A panel with no layout
+//             is used in every layout. See fixedPanels() below.
 //
 // A panel in grid1, grid2 or ticker draws only its page. The area it is shown
 // in supplies the frame and the page change (core/areas.js). The banner, the
@@ -17,6 +19,7 @@
 export const panels = [
   { id: 'banner', region: 'banner' },
   { id: 'countdown', region: 'countdown' },
+  { id: 'side', region: 'banner', layout: 'sidebar' },
   { id: 'ticker', region: 'ticker' },
 
   { id: 'tasks', region: 'grid1', topic: 'tasks' },
@@ -45,3 +48,15 @@ export const panels = [
   script: './panels/' + panel.id + '/' + panel.id + '.js',
   style: 'panels/' + panel.id + '/' + panel.id + '.css',
 }, panel));
+
+// The panels that stay on screen the whole time, in the order shell.js draws
+// them. The sidebar layout has one of its own, side, which holds what the
+// banner and the countdown hold in the standard layout, so when a panel names
+// the layout it is the one drawn, and the panels with no layout are not.
+export function fixedPanels(layout) {
+  const stays = panel => panel.region === 'banner' || panel.region === 'countdown';
+  const own = panels.filter(panel => stays(panel) && panel.layout === layout);
+
+  return (own.length > 0 ? own : panels.filter(panel => stays(panel) && !panel.layout)).map(panel => panel.id);
+}
+

@@ -71,6 +71,7 @@ const contract = {
     contentSource: 'string',
     switchBackAt: 'datetime',
     glint: 'boolean',
+    look: 'string',
     pageSeconds: number(8, 120),
     logoAnimations: 'boolean',
     logoEntrance: 'boolean',
@@ -134,6 +135,7 @@ const contract = {
       repeatsEveryYear: 'boolean',
     }, 24),
     timeZone: text(40),
+    seasonOverPanels: 'boolean',
   },
   demo: {
     requestedAt: 'datetime',
@@ -158,6 +160,7 @@ const choices = {
   'dashboardSettings.motion': ['full', 'calm'],
   'dashboardSettings.speed': ['very-slow', 'slow', 'normal', 'fast'],
   'dashboardSettings.frameMetal': ['gold', 'silver'],
+  'dashboardSettings.look': ['polished', 'flat', 'plain'],
   'dashboardSettings.pageChangeStyle': ['alternate', 'slat', 'mechanical'],
   'dashboardSettings.frameFinish': ['mostly-gold', 'alternate', 'gold', 'silver'],
   'dashboardSettings.photoOrder': ['random', 'newest-first'],
@@ -940,6 +943,39 @@ function checkLookAndTiming() {
   return problems;
 }
 
+// Look, in the Screen tab. The Studio list is the dashboard's list (the looks in
+// config.js), in the same order, the starting value is Polished, which changes
+// nothing on the screen, and the sample content has a look the dashboard accepts.
+function checkLookSetting() {
+  const problems = [];
+  const config = world.dashboard;
+  const look = fieldAt('dashboardSettings.look');
+  const rules = look ? constraintsOf(look) : [];
+  const allowed = constraintNamed(rules, 'valid');
+  const offered = choicesOf('dashboardSettings.look');
+  const titles = { polished: 'Polished (as now)', flat: 'Flat', plain: 'Plain' };
+
+  need(problems, config.looks.join() === 'polished,flat,plain', 'looks in config.js should be polished, flat and plain, not ' + config.looks.join());
+  need(problems, config.defaultSettings.look === 'polished', 'the default look in config.js should be polished');
+  need(problems, look && look.initialValue === 'polished', 'look should start as polished');
+  need(problems, look && look.group === 'screen', 'look should be in the Screen tab');
+  need(problems, look && look.title === 'Look', 'look should be titled Look');
+  need(problems, look && look.options && look.options.layout === 'radio', 'look should be a radio list');
+  need(problems, offered.map(item => item.value).join() === config.looks.join(), 'look should offer the same names, in the same order, as looks in config.js: ' + config.looks.join(', '));
+  offered.forEach(item => need(problems, item.title === titles[item.value], 'the look ' + item.value + ' should be titled ' + titles[item.value]));
+  need(problems, allowed && allowed.args[0].join() === config.looks.join(), 'look should only allow: ' + config.looks.join(', '));
+  // Dashboard Settings published before Look existed has no look, and the screen reads that as Polished.
+  // A required field would stop that page being published until someone picked one.
+  need(problems, !constraintNamed(rules, 'required'), 'look should not be required: an empty look is Polished, and the page must still publish');
+
+  // The description says what each look does, and which one is the default
+  const words = look ? look.description || '' : '';
+  need(problems, /Polished is the default/.test(words) && /Flat/.test(words) && /Plain/.test(words) && /Mini/.test(words), 'the look description should say that Polished is the default, what Flat and Plain do, and that the Mini is lighter with them');
+
+  need(problems, config.looks.indexOf(world.sample.settings.look) !== -1, 'the sample settings need a look of ' + config.looks.join(', '));
+  return problems;
+}
+
 // Content source and Switch back to production at. The Studio and
 // dashboard/config.js agree on the choices and the starting value, and the two
 // buttons on the settings page set the field and publish.
@@ -1313,6 +1349,7 @@ function checkStartingValues() {
   expect('speed', settings.speed);
   expect('frameMetal', settings.frameMetal);
   expect('glint', settings.glint);
+  expect('look', settings.look);
   expect('showConnectionStatus', settings.showConnectionStatus);
   expect('pageSeconds', settings.pageSeconds);
   logoSwitches.concat(logoNumbers, transitionNames, photoNames, nightNames, hiddenNames.slice(0, 3)).forEach(name => expect(name, settings[name]));
@@ -1716,6 +1753,16 @@ function sameRegistry(name, dashboardList, studioList, problems) {
     keys.forEach(key => {
       if (copy[key] !== entry[key]) problems.push('the ' + name + ' number ' + (index + 1) + ' has ' + key + ' "' + copy[key] + '" in studio/themes.js but "' + entry[key] + '" in the dashboard registry');
     });
+
+    // layout is on the themes only, and a theme that says nothing has the standard layout (dashboard/core/layout.js)
+    if (name === 'themes') {
+      const layoutOf = item => (item.layout === undefined ? world.layoutModule.defaultLayout : item.layout);
+      if (layoutOf(copy) !== layoutOf(entry)) problems.push('the themes number ' + (index + 1) + ' has layout "' + layoutOf(copy) + '" in studio/themes.js but "' + layoutOf(entry) + '" in the dashboard registry');
+      need(problems, world.layoutModule.isLayout(layoutOf(entry)), 'the theme "' + entry.id + '" has the layout "' + layoutOf(entry) + '", which is not one of: ' + world.layoutModule.layouts.join(', '));
+      if (layoutOf(entry) === 'sidebar') {
+        need(problems, /sidebar/i.test(copy.description || '') && /no small frame/i.test(copy.description || ''), 'the Studio description of the theme "' + entry.id + '" should say it has a sidebar and no small frame, so editors know what they are picking');
+      }
+    }
   });
 }
 
@@ -1770,6 +1817,9 @@ function checkTheme() {
   need(problems, at('defaultTheme') && at('defaultTheme').initialValue === defaults.defaultTheme, 'theme.defaultTheme should start as ' + defaults.defaultTheme + ', as in config.js');
   need(problems, at('timeZone') && at('timeZone').initialValue === defaults.timeZone, 'theme.timeZone should start as ' + defaults.timeZone + ', as in config.js');
   need(problems, defaults.timeZone === 'America/New_York', 'the default time zone in config.js should be America/New_York');
+  need(problems, defaults.seasonOverPanels === true && at('seasonOverPanels') && at('seasonOverPanels').initialValue === true, 'theme.seasonOverPanels should start on (true), and so should seasonOverPanels in config.js');
+  need(problems, at('seasonOverPanels') && at('seasonOverPanels').title === 'Seasonal pieces over the panels', 'theme.seasonOverPanels should be titled Seasonal pieces over the panels');
+  need(problems, at('seasonOverPanels') && /off/i.test(at('seasonOverPanels').description || ''), 'the theme.seasonOverPanels description should say what Off does');
   need(problems, sameData(defaults.useNow, { theme: '', overlay: '', until: '' }), 'useNow in config.js should be empty');
   need(problems, sameData(defaults.schedule, []), 'the schedule in config.js should be empty');
   need(problems, !at('schedule').initialValue && !at('useNow').initialValue, 'theme.useNow and theme.schedule should start empty');
@@ -2269,6 +2319,7 @@ async function main() {
     world.dashboard = await load(path.join(dashboardFolder, 'config.js'));
     world.registry = await load(path.join(dashboardFolder, 'registry.js'));
     world.themeRegistry = await load(path.join(dashboardFolder, 'themes', 'registry.js'));
+    world.layoutModule = await load(path.join(dashboardFolder, 'core', 'layout.js'));
     world.overlayRegistry = await load(path.join(dashboardFolder, 'themes', 'overlays', 'registry.js'));
     world.studioThemes = await load(path.join(folder, 'themes.js'));
     world.demoRegistry = await load(path.join(dashboardFolder, 'core', 'demo-screens.js'));
@@ -2296,6 +2347,7 @@ async function main() {
   check('the rules for announcement days and calendar codes work', checkRules);
   check('the Speed setting offers the speeds the dashboard has', checkSpeed);
   check('frame metal, glint, seconds per page and the name effect agree with dashboard/config.js', checkLookAndTiming);
+  check('the Look setting offers the looks in dashboard/config.js and starts on Polished', checkLookSetting);
   check('the Transitions tab agrees with dashboard/config.js', checkTransitionsTab);
   check('the Night mode tab agrees with dashboard/config.js', checkNightTab);
   check('the Hidden tab agrees with dashboard/config.js and the dashboard registry, and the Play buttons work', checkHiddenTab);

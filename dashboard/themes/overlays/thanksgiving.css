@@ -1,7 +1,9 @@
-/* Overlay: Thanksgiving. The accent colours of the Thanksgiving seasonal pack. This is a
-   first set of colours, ready to change. The decorations that go with it are
-   in dashboard/seasons/thanksgiving.js, and docs/seasonal-packs.md explains how a pack
-   is put together.
+/* Overlay: Thanksgiving. The accent colours of the Thanksgiving seasonal pack: a
+   warm amber for the headings and labels, and a pale tan for the quiet text, so
+   the screen reads like harvest light on wood. Brown itself is too dark to read
+   as text on these plates, so the browns live in the decorations
+   (dashboard/seasons/thanksgiving.js) and not here. docs/seasonal-packs.md
+   explains how a pack is put together.
 
    An overlay may set only the three variables below. --yellow and
    --yellow-faint go together, because the second is the first at 16 percent
@@ -9,7 +11,7 @@
    and fails if any text becomes hard to read. */
 
 html.overlay-thanksgiving {
-  --yellow: #fad8a0;
-  --yellow-faint: rgba(250, 216, 160, .16);
-  --lilac: #f3d9bd;
+  --yellow: #ffc772;
+  --yellow-faint: rgba(255, 199, 114, .16);
+  --lilac: #f0cfab;
 }

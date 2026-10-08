@@ -6,6 +6,11 @@
 //     shape that is not listed, a motion or a zone that does not exist, or sits
 //     outside its zone's rectangle when it rests, or the pack has too many pieces
 //     or too many that move
+//   - a finished pack has no header mark, or a mark bigger than the box measured
+//     for it (markBox in core/marks.js), or fewer than 8 or more than 14 pieces in
+//     the over layer, or an over piece that is too big, too solid, too quick or
+//     not moving (docs/seasonal-packs.md, "The over layer"). The six packs in
+//     stillToDo are not finished yet and are the only ones excused
 //   - a pack file, motion.css or season.css uses the words filter, blur, shadow
 //     or glow, or draws a gradient, a script, a style, or a picture from a file
 //   - a keyframe, a transition or any animation code is anywhere but motion.css
@@ -28,6 +33,16 @@ const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url))
 const seasonsFolder = path.join(dashboardFolder, 'seasons');
 const motionFile = path.join(seasonsFolder, 'motion.css');
 const layerFile = path.join(seasonsFolder, 'season.css');
+const docsFile = path.join(dashboardFolder, '..', 'docs', 'seasonal-packs.md');
+
+// The width of the double slash that a mark replaces (core/marks.js)
+const slashWidth = 54;
+
+// The packs that are not finished yet. Only these are excused from having a header
+// mark and at least 8 over pieces: every other pack except the placeholder
+// "example" must have both. Whoever finishes a pack takes its id out of this list.
+// When the list is empty, every pack is held to the rules and nothing is excused.
+const stillToDo = [];
 
 // What motion.css may animate
 const allowedProperties = ['transform', 'opacity', 'stroke-dashoffset'];
@@ -187,10 +202,50 @@ async function checkPacks() {
     world.packs[id] = pack;
     world.season.packProblems(pack).forEach(text => problems.push(id + ': ' + text));
     Object.keys(pack.shapes || {}).forEach(name => {
-      const list = [].concat(pack.back || [], pack.front || []);
+      const list = [].concat(pack.back || [], pack.front || [], pack.over || []);
       if (!list.some(piece => piece && piece.shape === name)) world.notes.push(id + ': the shape "' + name + '" is not used by any piece');
     });
   }
+  return problems;
+}
+
+// A finished pack has a header mark and 8 to 14 over pieces. packProblems (in
+// checkPacks) already holds every pack, finished or not, to the size of the mark
+// and to the rules of each over piece and the most pieces; this adds the least.
+function checkMarkAndOver() {
+  const problems = [];
+  const rules = world.season.overRules;
+
+  stillToDo.filter(id => !world.overlays.some(overlay => overlay.id === id && overlay.decorations === true))
+    .forEach(id => problems.push('stillToDo lists "' + id + '", which is not a pack. Take it out of the list at the top of tools/check-seasons.mjs'));
+
+  Object.keys(world.packs).forEach(id => {
+    const pack = world.packs[id];
+    const over = Array.isArray(pack.over) ? pack.over : [];
+    const hasMark = pack.mark !== undefined && pack.mark !== null;
+
+    if (stillToDo.indexOf(id) !== -1) {
+      if (hasMark && over.length >= rules.leastPieces) world.notes.push(id + ' has a mark and ' + over.length + ' over pieces: take it out of stillToDo at the top of tools/check-seasons.mjs');
+      return;
+    }
+
+    if (!hasMark) problems.push(id + ': the pack has no mark. Add mark: { viewBox, markup }, the picture that replaces the slashes in every panel header (docs/seasonal-packs.md, "The header mark")');
+    if (over.length < rules.leastPieces) problems.push(id + ': the pack has ' + over.length + ' over pieces, and a finished pack has at least ' + rules.leastPieces + ' (docs/seasonal-packs.md, "The over layer")');
+  });
+
+  // A mark may be wider than the slashes it replaces, by hanging out to the right
+  // over the header's empty padding, so the text beside it stays where it is
+  const box = world.marks.markBox;
+  const hang = box.width - slashWidth;
+  const rule = rulesIn(read(path.join(dashboardFolder, 'base.css'))).filter(item => item.selectors.indexOf('.pack-mark') !== -1)[0];
+  const margin = rule ? rule.declarations.filter(item => item.name === 'margin-right')[0] : null;
+  if (hang > 0 && (!margin || margin.value !== '-' + hang + 'px')) {
+    problems.push('dashboard/base.css: .pack-mark should set margin-right: -' + hang + 'px. The box for a mark is ' + hang + ' px wider than the ' + slashWidth + ' px slashes, and the extra hangs out to the right so that the text beside the mark stays where it is');
+  }
+
+  // The box is written in the docs too, so whoever draws a mark can find it
+  const docs = fs.existsSync(docsFile) ? read(docsFile) : '';
+  if (!docs.includes(box.width + ' x ' + box.height)) problems.push('docs/seasonal-packs.md should say that the box for a mark is ' + box.width + ' x ' + box.height + ' pixels, as markBox in dashboard/core/marks.js does');
   return problems;
 }
 
@@ -200,6 +255,7 @@ function checkShapeMarkup() {
     const pack = world.packs[id];
     const all = Object.keys(pack.shapes || {}).map(name => ({ where: 'the shape "' + name + '"', markup: pack.shapes[name] && pack.shapes[name].markup }));
     if (pack.scene) all.push({ where: 'the scene', markup: pack.scene.markup });
+    if (pack.mark) all.push({ where: 'the mark', markup: pack.mark.markup });
 
     all.filter(item => typeof item.markup === 'string').forEach(item => {
       forbiddenMarkup.filter(rule => rule.pattern.test(item.markup)).forEach(rule => problems.push(id + ': ' + item.where + ' holds ' + rule.words));
@@ -233,6 +289,11 @@ function checkPackFilesAreData() {
   const layerRule = rulesIn(read(layerFile)).filter(rule => rule.selectors.indexOf('.season-layer') !== -1)[0];
   if (!layerRule || !layerRule.declarations.some(item => item.name === 'pointer-events' && item.value === 'none')) problems.push('dashboard/seasons/season.css: .season-layer should set pointer-events: none');
   if (!layerRule || !layerRule.declarations.some(item => item.name === 'overflow' && item.value === 'hidden')) problems.push('dashboard/seasons/season.css: .season-layer should set overflow: hidden');
+  // The over layer is drawn in full motion only: calm and none motion would leave its pieces sitting on words
+  const hidden = rulesIn(read(layerFile)).filter(rule => rule.selectors.indexOf('.season-over') !== -1)[0];
+  const shownInFull = rulesIn(read(layerFile)).filter(rule => rule.selectors.indexOf('html[data-motion="full"] .season-over') !== -1)[0];
+  if (!hidden || !hidden.declarations.some(item => item.name === 'display' && item.value === 'none')) problems.push('dashboard/seasons/season.css: .season-over should set display: none');
+  if (!shownInFull || !shownInFull.declarations.some(item => item.name === 'display' && item.value === 'block')) problems.push('dashboard/seasons/season.css: html[data-motion="full"] .season-over should set display: block, so that only full motion draws the over layer');
   const zoneRule = rulesIn(read(layerFile)).filter(rule => rule.selectors.indexOf('.season-zone') !== -1)[0];
   if (!zoneRule || !zoneRule.declarations.some(item => item.name === 'overflow' && item.value === 'hidden')) problems.push('dashboard/seasons/season.css: .season-zone should set overflow: hidden, because a zone is what keeps a piece off the text');
   return problems;
@@ -323,11 +384,13 @@ async function check(name, run) {
 async function main() {
   world.overlays = (await load(path.join(dashboardFolder, 'themes', 'overlays', 'registry.js'))).overlays;
   world.season = await load(path.join(dashboardFolder, 'core', 'season.js'));
+  world.marks = await load(path.join(dashboardFolder, 'core', 'marks.js'));
   world.packs = {};
 
   await check('the registry and the pack files agree', checkFilesMatchRegistry);
   await check('the zones are real rectangles of the screen that do not overlap', checkZones);
   await check('every pack is in the data format, and every piece fits its zone at rest', checkPacks);
+  await check('every finished pack has a header mark and 8 to 14 over pieces', checkMarkAndOver);
   await check('no shape holds a filter, a gradient, a script or a link', checkShapeMarkup);
   await check('no pack, and not core/season.js, holds any animation', checkPackFilesAreData);
   await check('motion.css animates only transform, opacity and line drawing, and only in full motion', checkMotionCss);

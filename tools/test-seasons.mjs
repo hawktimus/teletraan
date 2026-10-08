@@ -31,7 +31,7 @@ function copyInto(folder, from, to) {
 function makeTree(folder) {
   fs.mkdirSync(folder, { recursive: true });
   fs.writeFileSync(path.join(folder, 'package.json'), '{ "type": "module" }\n');
-  ['dashboard/core/season.js', 'dashboard/themes/overlays/registry.js', 'dashboard/index.html', 'tools/check-seasons.mjs'].forEach(file => copyInto(folder, file, file));
+  ['dashboard/core/season.js', 'dashboard/core/marks.js', 'dashboard/base.css', 'dashboard/themes/overlays/registry.js', 'dashboard/index.html', 'tools/check-seasons.mjs', 'docs/seasonal-packs.md'].forEach(file => copyInto(folder, file, file));
   fs.readdirSync(path.join(dashboardFolder, 'seasons')).forEach(name => copyInto(folder, 'dashboard/seasons/' + name, 'dashboard/seasons/' + name));
 }
 
@@ -42,6 +42,8 @@ const base = pathToFileURL(path.join(mainTree, 'dashboard')).href + '/';
 const season = await import(base + 'core/season.js');
 const { overlays } = await import(base + 'themes/overlays/registry.js');
 const { zones, motions, hasDecorations, pieceProblems, packProblems, layersMarkup, pieceMarkup, loadPack } = season;
+const { overMotions, markProblems } = season;
+const marks = await import(base + 'core/marks.js');
 
 const packIds = ['halloween', 'thanksgiving', 'christmas', 'new-years', 'valentines-day', 'competition-day', 'summer-break'];
 const tests = [];
@@ -60,7 +62,7 @@ const shapes = {
 function makePack(extra) {
   return Object.assign({
     shapes: shapes,
-    scene: { viewBox: '0 0 1920 22', markup: '<rect width="1920" height="22"/>' },
+    scene: { viewBox: '0 0 ' + zones.ground.width + ' ' + zones.ground.height, markup: '<rect width="1920" height="22"/>' },
     back: [{ shape: 'flake', x: 100, y: 200, size: 24, motion: 'fall', seconds: 20, delay: -5, travel: 900, opacity: 0.5 }],
     front: [
       { zone: 'left', shape: 'flake', x: 4, y: 40, size: 12, motion: 'fall', seconds: 15 },
@@ -89,6 +91,7 @@ test('the zones are the ones the packs may use, and every zone is a rectangle of
   });
   assert.ok(zones.ground.y + zones.ground.height === 1080, 'the ground is the bottom edge');
   assert.ok(zones.ground.height >= 20, 'the strip under the ticker is at least 20 px');
+  assert.ok(zones.ground.y >= 1053, 'the ticker text is cut off at y 1052, so the ground starts below it');
 });
 
 // The data format
@@ -120,10 +123,11 @@ test('every kind of mistake in a piece is named in plain words', () => {
 });
 
 test('a piece must fit its zone when it rests, and a back piece must fit the screen', () => {
-  // the left zone is 30 wide and 696 high
-  assert.deepEqual(pieceProblems({ zone: 'left', shape: 'flake', x: 6, y: 672, size: 24 }, 'front', shapes), []);
+  // the left zone is 30 wide and a little under 700 high
+  const low = zones.left.height - 24;
+  assert.deepEqual(pieceProblems({ zone: 'left', shape: 'flake', x: 6, y: low, size: 24 }, 'front', shapes), []);
   assert.match(pieceProblems({ zone: 'left', shape: 'flake', x: 7, y: 40, size: 24 }, 'front', shapes).join(), /does not fit at rest/);
-  assert.match(pieceProblems({ zone: 'left', shape: 'flake', x: 4, y: 680, size: 24 }, 'front', shapes).join(), /does not fit at rest/);
+  assert.match(pieceProblems({ zone: 'left', shape: 'flake', x: 4, y: low + 1, size: 24 }, 'front', shapes).join(), /does not fit at rest/);
   assert.match(pieceProblems({ zone: 'left', shape: 'flake', x: -1, y: 40, size: 12 }, 'front', shapes).join(), /does not fit at rest/);
   // the height follows the shape: 100 wide and 20 high, so 50 wide is 10 high
   assert.deepEqual(pieceProblems({ zone: 'top', shape: 'wide', x: 0, y: 16, size: 50 }, 'front', shapes), []);
@@ -415,10 +419,332 @@ test('every pack in the registry loads from its file and draws, and the Christma
   const counts = season.countPieces(pack);
   const drawn = layersMarkup(pack);
   assert.ok(counts.moving > 15 && counts.moving <= season.mostMovingPieces, 'it moves ' + counts.moving + ' pieces');
-  assert.ok(pack.back.length >= 5, 'snow behind the panels');
-  ['top', 'ground', 'left', 'right', 'string-a', 'string-b', 'corner-a', 'corner-b'].forEach(zone => assert.ok(drawn.front.includes('data-zone="' + zone + '"'), 'something in the zone ' + zone));
+  assert.equal(counts.over, 12, 'twelve snowflakes over the panels');
+  ['top', 'ground', 'string-a', 'string-b', 'corner-a', 'corner-b'].forEach(zone => assert.ok(drawn.front.includes('data-zone="' + zone + '"'), 'something in the zone ' + zone));
   assert.ok(pack.scene && drawn.front.includes('season-scene'));
   assert.ok(pack.front.every(piece => piece.motion === undefined || motions.indexOf(piece.motion) !== -1));
+});
+
+// The header mark (core/marks.js, set by core/season.js)
+
+const treeMark = { viewBox: '0 0 60 76', markup: '<polygon points="30,0 60,76 0,76"/>' };
+const slashes = /class="double-slash" viewBox="0 0 70 94" width="54" height="72"/;
+
+test('doubleSlash draws the slashes, then the mark of a pack at the right size, then the slashes again', () => {
+  try {
+    marks.setPackMark(null);
+    assert.match(marks.doubleSlash(), slashes);
+
+    marks.setPackMark(treeMark);
+    const html = marks.doubleSlash();
+    assert.ok(html.includes('class="pack-mark"') && html.includes('viewBox="0 0 60 76" width="60" height="76"') && html.includes(treeMark.markup));
+    assert.ok(!html.includes('class="double-slash"'), 'the svg is not the slashes, so base.css does not paint all of it one colour');
+
+    // with no size given it is the biggest that fits the box and keeps the proportions of the viewBox
+    marks.setPackMark({ viewBox: '0 0 100 50', markup: '<rect/>' });
+    assert.match(marks.doubleSlash(), /width="60" height="30"/);
+    marks.setPackMark({ viewBox: '0 0 20 40', markup: '<rect/>' });
+    assert.match(marks.doubleSlash(), /width="38" height="76"/);
+    marks.setPackMark({ viewBox: '0 0 100 100', markup: '<rect/>', width: 40, height: 50 });
+    assert.match(marks.doubleSlash(), /width="40" height="50"/);
+
+    marks.setPackMark(null);
+    assert.match(marks.doubleSlash(), slashes);
+  } finally {
+    marks.setPackMark(null);
+  }
+});
+
+test('a mark that cannot be drawn, or is bigger than the box, leaves the slashes', () => {
+  const bad = [
+    null, undefined, 'a tree', {}, { viewBox: '0 0 60 76' }, { viewBox: '0 0 60 76', markup: '   ' },
+    { viewBox: 'big', markup: '<rect/>' }, { viewBox: '0 0 0 0', markup: '<rect/>' },
+    { viewBox: '0 0 60 76', markup: '<rect/>', width: 61, height: 76 },
+    { viewBox: '0 0 60 76', markup: '<rect/>', width: 60, height: 77 },
+    { viewBox: '0 0 60 76', markup: '<rect/>', width: 0, height: 10 },
+  ];
+
+  try {
+    bad.forEach(mark => {
+      marks.setPackMark(treeMark);
+      marks.setPackMark(mark);
+      assert.match(marks.doubleSlash(), slashes, JSON.stringify(mark));
+    });
+  } finally {
+    marks.setPackMark(null);
+  }
+});
+
+test('the box for a mark is 60 x 76, and every panel with a header mark draws it through doubleSlash', () => {
+  assert.deepEqual(marks.markBox, { width: 60, height: 76 });
+
+  // a panel that drew its own picture would keep the slashes while a pack is on
+  ['tasks', 'events', 'photo', 'leadership', 'roster', 'tonight', 'spotlight', 'team-leads', 'sponsor-feature', 'custom'].forEach(name => {
+    const code = fs.readFileSync(path.join(dashboardFolder, 'panels', name, name + '.js'), 'utf8');
+    assert.ok(code.includes('import { doubleSlash') && code.includes('${doubleSlash()}'), name + ' should draw its mark with doubleSlash()');
+    assert.ok(!code.includes('class="double-slash"'), name + ' should not draw the slashes itself');
+  });
+});
+
+test('every kind of mistake in a mark is named in plain words', () => {
+  const mark = extra => Object.assign({ viewBox: '0 0 60 76', markup: '<rect/>' }, extra);
+
+  assert.deepEqual(markProblems(treeMark), []);
+  assert.deepEqual(markProblems(mark({ viewBox: '0 0 100 50' })), [], 'a wide drawing is scaled down to fit');
+  assert.deepEqual(markProblems(mark({ width: 60, height: 76 })), []);
+  assert.deepEqual(markProblems(mark({ width: 30, height: 40 })), []);
+
+  assert.match(markProblems('a tree').join(), /viewBox, markup/);
+  assert.match(markProblems({ markup: '<rect/>' }).join(), /viewBox/);
+  assert.match(markProblems({ viewBox: '0 0 60 76' }).join(), /no markup/);
+  assert.match(markProblems(mark({ colour: 'red' })).join(), /"colour"/);
+  assert.match(markProblems(mark({ width: 60 })).join(), /not both/);
+  assert.match(markProblems(mark({ width: 0, height: 5 })).join(), /above 0/);
+  assert.match(markProblems(mark({ width: 61, height: 76 })).join(), /is 61 by 76 pixels, and the box for a mark is 60 by 76/);
+  assert.match(markProblems(mark({ width: 40, height: 77 })).join(), /is 40 by 77 pixels/);
+
+  assert.deepEqual(packProblems(makePack({ mark: treeMark })), []);
+  assert.match(packProblems(makePack({ mark: { viewBox: 'x', markup: '<rect/>' } })).join(), /the mark has a viewBox/);
+  assert.match(packProblems(makePack({ mark: 'tree' })).join(), /the mark should be/);
+});
+
+test('a pack puts its mark in the headers when it goes on, and the slashes come back when the pack goes', async () => {
+  await onPage(async (page, logged, season) => {
+    try {
+      await season.showSeason('halloween', importPack(makePack({ mark: treeMark })));
+      assert.ok(marks.doubleSlash().includes('class="pack-mark"'));
+
+      await season.showSeason('thanksgiving', importPack(makePack()));
+      assert.match(marks.doubleSlash(), slashes, 'another pack with no mark');
+
+      await season.showSeason('halloween', importPack(makePack({ mark: treeMark })));
+      assert.ok(marks.doubleSlash().includes('class="pack-mark"'));
+      await season.showSeason('', null);
+      assert.match(marks.doubleSlash(), slashes, 'no overlay');
+
+      await season.showSeason('halloween', importPack(makePack({ mark: treeMark })));
+      await season.showSeason('example', importPack(makePack({ mark: treeMark })));
+      assert.match(marks.doubleSlash(), slashes, 'an overlay with no decorations');
+
+      await season.showSeason('halloween', importPack(makePack({ mark: treeMark })));
+      await season.showSeason('christmas', () => Promise.reject(new Error('Failed to fetch')));
+      assert.match(marks.doubleSlash(), slashes, 'a pack that cannot be loaded takes the old mark away');
+    } finally {
+      marks.setPackMark(null);
+    }
+  });
+});
+
+test('a pack with only a mark still changes the headers, and a mark with a mistake is logged and left out', async () => {
+  await onPage(async (page, logged, season) => {
+    try {
+      await season.showSeason('halloween', importPack({ mark: treeMark }));
+      assert.deepEqual(page.order(), ['backdrop', 'stage', 'red-wash'], 'a pack with nothing to draw adds nothing to the page');
+      assert.ok(marks.doubleSlash().includes('class="pack-mark"'));
+      assert.deepEqual(logged, []);
+
+      await season.showSeason('thanksgiving', importPack(makePack({ mark: { viewBox: '0 0 60 76', markup: '<rect/>', width: 90, height: 90 } })));
+      assert.match(marks.doubleSlash(), slashes);
+      assert.equal(logged.length, 1);
+      assert.match(logged[0], /thanksgiving pack: the mark is 90 by 90 pixels/);
+      assert.deepEqual(page.order(), ['season-back', 'backdrop', 'stage', 'season-front', 'red-wash'], 'the rest of the pack is drawn');
+    } finally {
+      marks.setPackMark(null);
+    }
+  });
+});
+
+// The over layer
+
+// A flake of the test shapes that obeys every rule of the over layer
+function flakes(count, extra) {
+  return Array.from({ length: count }, (item, index) => Object.assign({ shape: 'flake', x: 100 + index * 100, y: 500, size: 24, opacity: 0.6, motion: 'flutter', seconds: 30, delay: -index, travel: 1300 }, extra));
+}
+
+test('a piece of the over layer is held to the rules of the layer: small, faint, slow and moving', () => {
+  const over = piece => pieceProblems(Object.assign({ shape: 'flake', x: 100, y: 500, size: 24, opacity: 0.6, motion: 'flutter', seconds: 30 }, piece), 'over', shapes);
+
+  assert.deepEqual(over({}), []);
+
+  // size 18 to 44
+  assert.match(over({ size: 17 }).join(), /is 17 px wide, and the over layer allows 18 to 44/);
+  assert.match(over({ size: 45 }).join(), /is 45 px wide/);
+  assert.deepEqual(over({ size: 18 }), []);
+  assert.deepEqual(over({ size: 44 }), []);
+
+  // opacity .85 at the most, and it has to be given
+  assert.match(over({ opacity: 0.86 }).join(), /opacity of 0.85 or less/);
+  assert.match(over({ opacity: undefined }).join(), /opacity of 0.85 or less/);
+  assert.deepEqual(over({ opacity: 0.85 }), []);
+
+  // only the slow motions, and a piece has to move
+  assert.match(over({ motion: undefined, seconds: undefined }).join(), /needs a motion/);
+  ['bob', 'spin', 'pulse', 'draw', 'sweep', 'slide'].forEach(name => assert.match(over({ motion: name, seconds: 60 }).join(), /too quick for the over layer/, name));
+  assert.match(over({ motion: 'wobble' }).join(), /motion "wobble"/);
+  overMotions.forEach(name => assert.ok(motions.indexOf(name) !== -1, name + ' is a motion'));
+
+  // the fewest seconds for a round
+  ['fall', 'flutter', 'drift', 'rise'].forEach(name => {
+    assert.match(over({ motion: name, seconds: 11.9 }).join(), /the least the over layer allows is 12/, name);
+    assert.deepEqual(over({ motion: name, seconds: 12 }), [], name);
+  });
+  ['twinkle', 'sway'].forEach(name => {
+    assert.match(over({ motion: name, seconds: 1.9 }).join(), /the least the over layer allows is 2/, name);
+    assert.deepEqual(over({ motion: name, seconds: 2 }), [], name);
+  });
+
+  // x and y are screen pixels, and it has to fit the screen at rest
+  assert.match(over({ x: 1900 }).join(), /does not fit at rest/);
+  assert.match(over({ y: -5 }).join(), /does not fit at rest/);
+  assert.match(over({ zone: 'left' }).join(), /no zone/);
+});
+
+test('a pack has at most 14 over pieces, and they count with the others towards the pieces that move', () => {
+  assert.deepEqual(packProblems(makePack({ over: flakes(14) })), []);
+  assert.match(packProblems(makePack({ over: flakes(15) })).join(), /15 over pieces, and the most is 14/);
+
+  const front = Array.from({ length: 9 }, (item, index) => ({ zone: 'left', shape: 'flake', x: 4, y: 10 + index * 20, size: 12, motion: 'twinkle', seconds: 3 }));
+  const crowded = makePack({ front: front, over: flakes(14) });
+  assert.deepEqual(season.countPieces(crowded), { all: 24, moving: 24, over: 14 });
+  assert.deepEqual(packProblems(crowded), []);
+  assert.match(packProblems(makePack({ front: front.concat([front[0]]), over: flakes(14) })).join(), /25 pieces that move/);
+});
+
+test('an over piece with a mistake is left out and logged, and the rest are drawn', () => {
+  const drawn = layersMarkup(makePack({
+    over: flakes(3).concat([
+      { shape: 'flake', x: 100, y: 500, size: 60, opacity: 0.5, motion: 'fall', seconds: 30 },
+      { shape: 'flake', x: 100, y: 500, size: 24, opacity: 0.5, motion: 'fall', seconds: 5 },
+    ]),
+  }));
+
+  assert.equal(drawn.skipped.length, 2);
+  assert.match(drawn.skipped[0], /^over piece 4 .*60 px wide/);
+  assert.match(drawn.skipped[1], /^over piece 5 .*the least the over layer allows is 12/);
+  assert.equal((drawn.over.match(/season-piece/g) || []).length, 3);
+  assert.ok(drawn.over.includes('data-move="flutter"') && !drawn.back.includes('data-move="flutter"'));
+});
+
+test('every layer that takes over the screen is after the stage in index.html, so the seasonal layers are under all of them', () => {
+  const index = fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8').replace(/<!--[\s\S]*?-->/g, '');
+  const world = index.slice(index.indexOf('<div id="world">'), index.indexOf('<div id="crt">'));
+  const ids = (world.match(/<div id="[a-z-]+"/g) || []).map(text => text.slice(9, -1)).filter(id => ['backdrop', 'stage', 'red-wash', 'blue-glitch', 'connection-status', 'night', 'overlay'].indexOf(id) !== -1);
+
+  // season.js puts the front and over layers straight after #stage, and the back layer before #backdrop
+  assert.deepEqual(ids, ['backdrop', 'stage', 'red-wash', 'blue-glitch', 'connection-status', 'night', 'overlay']);
+  assert.ok(index.indexOf('<div id="crt">') > index.indexOf('<div id="overlay">'), 'the old television effect is over everything');
+  assert.ok(!/id="season-/.test(index), 'the layers are added by the script');
+});
+
+test('the over layer goes in straight after the front layer, and shares the shapes of the back layer', async () => {
+  await onPage(async (page, logged, season) => {
+    await season.showSeason('halloween', importPack(makePack({ over: flakes(8) })));
+
+    assert.deepEqual(page.order(), ['season-back', 'backdrop', 'stage', 'season-front', 'season-over', 'red-wash']);
+    const over = page.getElementById('season-over');
+    assert.ok(over.className.split(' ').indexOf('season-layer') !== -1 && over.className.split(' ').indexOf('season-over') !== -1);
+    assert.equal((over.innerHTML.match(/season-piece/g) || []).length, 8);
+    assert.ok(over.innerHTML.includes('data-move="flutter"') && over.innerHTML.includes('href="#season-shape-flake"'));
+    assert.ok(page.getElementById('season-back').innerHTML.includes('<symbol id="season-shape-flake"'), 'the shapes are drawn once, in the back layer');
+  });
+});
+
+test('a pack with no over list has no over layer, and a pack with only an over list is drawn', async () => {
+  await onPage(async (page, logged, season) => {
+    await season.showSeason('halloween', importPack(makePack()));
+    assert.equal(page.getElementById('season-over'), null);
+
+    await season.showSeason('thanksgiving', importPack({ shapes: shapes, over: flakes(8) }));
+    assert.deepEqual(page.order(), ['season-back', 'backdrop', 'stage', 'season-front', 'season-over', 'red-wash']);
+
+    await season.showSeason('christmas', importPack({ shapes: shapes, over: [] }));
+    assert.deepEqual(page.order(), ['backdrop', 'stage', 'red-wash'], 'a pack with no pieces at all draws nothing');
+  });
+});
+
+test('the Theme switch takes the over layer away and brings it back while the screen runs', async () => {
+  await onPage(async (page, logged, season) => {
+    const withOver = ['season-back', 'backdrop', 'stage', 'season-front', 'season-over', 'red-wash'];
+    const without = ['season-back', 'backdrop', 'stage', 'season-front', 'red-wash'];
+
+    await season.showSeason('halloween', importPack(makePack({ over: flakes(8) })));
+    assert.deepEqual(page.order(), withOver, 'it starts on');
+
+    season.setOverPanels(false);
+    assert.deepEqual(page.order(), without, 'the rest of the pack stays');
+    season.setOverPanels(false);
+    assert.deepEqual(page.order(), without);
+
+    season.setOverPanels(true);
+    assert.deepEqual(page.order(), withOver);
+    assert.equal((page.getElementById('season-over').innerHTML.match(/season-piece/g) || []).length, 8, 'the same pieces come back');
+
+    // anything that is not a real false is on, like a missing value on the Theme page
+    [undefined, null, 0, '', 'off', 'false', {}].forEach(odd => {
+      season.setOverPanels(false);
+      season.setOverPanels(odd);
+      assert.deepEqual(page.order(), withOver, JSON.stringify(odd));
+    });
+  });
+});
+
+test('the switch counts when it is set before the pack comes, and with no pack it draws nothing', async () => {
+  await onPage(async (page, logged, season) => {
+    season.setOverPanels(false);
+    await season.showSeason('halloween', importPack(makePack({ over: flakes(8) })));
+    assert.deepEqual(page.order(), ['season-back', 'backdrop', 'stage', 'season-front', 'red-wash'], 'off: no over layer');
+
+    await season.showSeason('thanksgiving', importPack(makePack({ over: flakes(8) })));
+    assert.equal(page.getElementById('season-over'), null, 'a new pack keeps the switch');
+    season.setOverPanels(true);
+    assert.ok(page.getElementById('season-over'));
+
+    await season.showSeason('', null);
+    assert.deepEqual(page.order(), ['backdrop', 'stage', 'red-wash'], 'a pack that goes takes the over layer with it');
+    season.setOverPanels(false);
+    season.setOverPanels(true);
+    assert.deepEqual(page.order(), ['backdrop', 'stage', 'red-wash'], 'the switch with no pack on draws nothing');
+  });
+});
+
+test('the over layer is drawn in full motion only, and follows the front layer through a hidden transition', () => {
+  const read = file => fs.readFileSync(path.join(mainTree, 'dashboard/seasons', file), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const rulesOf = css => css.replace(/@keyframes\s+[\w-]+\s*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/g, '').split('}').map(chunk => chunk.split('{')).filter(parts => parts.length === 2)
+    .map(parts => ({ selector: parts[0].trim(), body: parts[1] }));
+
+  // calm and none motion: the layer is display: none, and only full motion turns it on
+  const layer = rulesOf(read('season.css'));
+  const hide = layer.filter(rule => rule.selector === '.season-over')[0];
+  assert.ok(hide && /display:\s*none/.test(hide.body), 'the layer is hidden by default');
+  const asked = layer.filter(rule => /\.season-over/.test(rule.selector) && /display:\s*block/.test(rule.body));
+  assert.equal(asked.length, 1);
+  assert.equal(asked[0].selector, 'html[data-motion="full"] .season-over', 'only full motion shows it');
+
+  // the hidden transitions treat it as they treat the front layer
+  const motion = rulesOf(read('motion.css'));
+  const front = motion.filter(rule => rule.selector.indexOf('.season-front') !== -1);
+  assert.equal(front.length, 3);
+  front.forEach(rule => assert.ok(rule.selector.indexOf('.season-over') !== -1, 'a rule for the front layer should name the over layer too: ' + rule.selector.slice(0, 80)));
+  assert.ok(motion.some(rule => rule.selector === 'html[data-night] .season-piece' && /animation-play-state:\s*paused/.test(rule.body)), 'the night screen pauses the pieces of every layer');
+});
+
+test('the Theme switch reaches the screen through config.js, theme.js, shell.js, the sample content and the Studio schema', () => {
+  const read = file => fs.readFileSync(path.join(root, file), 'utf8');
+
+  assert.match(read('dashboard/config.js'), /export const defaultThemeSettings = \{[\s\S]*?seasonOverPanels: true,[\s\S]*?\};/);
+  assert.ok(read('dashboard/core/theme.js').includes("seasonOverPanels: typeof source.seasonOverPanels === 'boolean' ? source.seasonOverPanels : defaults.seasonOverPanels"), 'a missing or odd value is the default');
+  assert.equal(JSON.parse(read('dashboard/data/sample/content.json')).theme.seasonOverPanels, true);
+
+  const shell = read('dashboard/shell.js');
+  assert.ok(shell.includes("params.get('seasonover')"), 'the address can switch it, for trying');
+  assert.ok(shell.includes('module.setOverPanels(wantOverPanels())'));
+  assert.ok(/function rebuild\(\)[\s\S]*?useSeasonSwitch\(\);[\s\S]*?\n}/.test(shell), 'rebuild() hands the switch over each time the content changes, so a change in Studio shows at once');
+
+  const schema = read('studio/schemas/theme.js');
+  assert.match(schema, /name: 'seasonOverPanels',\s*title: 'Seasonal pieces over the panels',\s*type: 'boolean',/);
+  assert.match(schema, /initialValue: true,/);
+  assert.ok(/fields: \[[^\]]*seasonOverPanelsField\]/.test(schema), 'the field is on the Theme page');
+  assert.ok(read('studio/check-schemas.mjs').includes("seasonOverPanels: 'boolean'"), 'check-schemas.mjs lists the field');
 });
 
 // Calm and none motion
@@ -435,6 +761,31 @@ test('only full motion plays any motion, and the layers let every click through'
   const layer = fs.readFileSync(path.join(mainTree, 'dashboard/seasons/season.css'), 'utf8');
   assert.ok(/\.season-layer\s*\{[^}]*pointer-events: none/.test(layer));
   assert.ok(!/animation|@keyframes|transition/.test(layer.replace(/\/\*[\s\S]*?\*\//g, '')), 'season.css holds no animation');
+});
+
+test('a hidden transition fades the front layer out and in, and hides it in every other step, in full motion only', () => {
+  const css = fs.readFileSync(path.join(mainTree, 'dashboard/seasons/motion.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const rules = css.replace(/@keyframes\s+[\w-]+\s*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/g, '').split('}').map(chunk => chunk.split('{')).filter(parts => parts.length === 2)
+    .map(parts => ({ selector: parts[0].trim(), body: parts[1] }));
+  const forFront = rules.filter(rule => rule.selector.indexOf('.season-front') !== -1);
+
+  const hides = forFront.filter(rule => /visibility:\s*hidden/.test(rule.body));
+  assert.equal(hides.length, 1, 'one rule hides the front layer');
+  assert.ok(hides[0].selector.indexOf('html[data-motion="full"] #world[data-hidden]') === 0, 'only in full motion, whenever a step is playing');
+  // A selector with more :not() parts wins over one with fewer, so the hiding rule has to leave the steps that fade out of its reach
+  ['glitch', 'break', 'build'].forEach(step => assert.ok(hides[0].selector.indexOf(':not([data-hidden="' + step + '"])') !== -1, 'the hiding rule leaves ' + step + ' alone'));
+
+  ['break', 'build'].forEach(step => {
+    const rule = forFront.filter(item => item.selector.indexOf('#world[data-hidden="' + step + '"]') !== -1)[0];
+    assert.ok(rule, 'a rule for ' + step);
+    assert.ok(/animation:\s*season-(out|in)\b/.test(rule.body) && !/visibility/.test(rule.body), step + ' fades the layer and does not hide it');
+    assert.ok(rule.selector.indexOf('html[data-motion="full"]') === 0);
+  });
+  assert.ok(/season-out/.test(forFront.filter(item => item.selector.indexOf('#world[data-hidden="break"]') !== -1)[0].body));
+  assert.ok(/season-in/.test(forFront.filter(item => item.selector.indexOf('#world[data-hidden="build"]') !== -1)[0].body));
+
+  const night = rules.filter(rule => rule.selector === 'html[data-night] .season-piece')[0];
+  assert.ok(night && /animation-play-state:\s*paused/.test(night.body), 'the pieces wait while the night screen covers them');
 });
 
 test('shell.js gives theme-apply the decorations callback, and index.html links the two stylesheets', () => {
@@ -475,20 +826,40 @@ const motionFile = 'dashboard/seasons/motion.css';
 test('the check passes on the real files', () => {
   const run = spawnSync(process.execPath, [path.join(mainTree, 'tools/check-seasons.mjs')], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stdout + run.stderr);
-  assert.match(run.stdout, /6 of 6 checks passed/);
+  assert.match(run.stdout, /(\d+) of \1 checks passed/, 'every check passes');
 });
 
+const markLine = "const mark = { viewBox: '0 0 60 76', markup: treeMarkup };";
+const withoutFlakes = pattern => before => before.split('\n').filter(line => !pattern.test(line)).join('\n');
+
 const mistakes = [
+  ['a finished pack with no mark', { [christmas]: before => before.replace('  mark: mark,\n', '') }, /christmas: the pack has no mark/],
+  ['a mark bigger than its box', { [christmas]: before => before.replace(markLine, "const mark = { viewBox: '0 0 60 76', width: 80, height: 90, markup: treeMarkup };") }, /the mark is 80 by 90 pixels, and the box for a mark is 60 by 76/],
+  ['a mark with a script in it', { [christmas]: before => before.replace(markLine, "const mark = { viewBox: '0 0 60 76', markup: treeMarkup + '<script>1</script>' };") }, /christmas: the mark holds a script/],
+  ['a gradient in a mark', { [christmas]: before => before.replace(markLine, "const mark = { viewBox: '0 0 60 76', markup: treeMarkup + '<linearGradient id=\"g\"/>' };") }, /christmas: the mark holds a gradient/],
+  ['the word glow in a mark', { [christmas]: before => before.replace(markLine, "const mark = { viewBox: '0 0 60 76', markup: treeMarkup + '<g id=\"glow\"/>' };") }, /christmas: the mark uses the word "glow"/],
+  ['an over piece that is too big', { [christmas]: before => before.replace('x: 235, y: 518, size: 44,', 'x: 235, y: 518, size: 60,') }, /over piece 2 \(snowflake\) is 60 px wide, and the over layer allows 18 to 44/],
+  ['an over piece that is too solid', { [christmas]: before => before.replace("size: 44, opacity: 0.7, motion: 'flutter', seconds: 24,", "size: 44, opacity: 0.95, motion: 'flutter', seconds: 24,") }, /over piece 2 \(snowflake\) needs an opacity of 0.85 or less/],
+  ['an over piece that is too quick', { [christmas]: before => before.replace("motion: 'flutter', seconds: 24,", "motion: 'flutter', seconds: 8,") }, /takes 8 seconds for a round of flutter, and the least the over layer allows is 12/],
+  ['an over piece with a motion that is too quick for the layer', { [christmas]: before => before.replace("motion: 'flutter', seconds: 24,", "motion: 'pulse', seconds: 24,") }, /the motion "pulse", which is too quick for the over layer/],
+  ['an over piece that does not move', { [christmas]: before => before.replace("opacity: 0.85, motion: 'flutter', seconds: 44, delay: -3.1, travel: 1300", 'opacity: 0.85') }, /needs a motion, because a piece that stays still/],
+  ['an over piece that leaves the screen at rest', { [christmas]: before => before.replace('x: 1850, y: 518, size: 44', 'x: 1900, y: 518, size: 44') }, /over piece 12 .*does not fit at rest/],
+  ['fewer than 8 over pieces', { [christmas]: withoutFlakes(/shape: 'snowflake', x: (1075|1245|1395|1565|1715|1850),/) }, /christmas: the pack has 6 over pieces, and a finished pack has at least 8/],
+  ['more than 14 over pieces', { [christmas]: before => before.replace("x: 1850, y: 518, size: 44, opacity: 0.7, motion: 'flutter', seconds: 30, delay: -26.1, travel: 1300 },", "x: 1850, y: 518, size: 44, opacity: 0.7, motion: 'flutter', seconds: 30, delay: -26.1, travel: 1300 },\n    { shape: 'snowflake', x: 40, y: 500, size: 20, opacity: 0.8, motion: 'fall', seconds: 40 },\n    { shape: 'snowflake', x: 80, y: 500, size: 20, opacity: 0.8, motion: 'fall', seconds: 40 },\n    { shape: 'snowflake', x: 120, y: 500, size: 20, opacity: 0.8, motion: 'fall', seconds: 40 },") }, /christmas: the pack has 15 over pieces, and the most is 14/],
+  ['a stillToDo id that is not a pack', { 'tools/check-seasons.mjs': before => before.replace('const stillToDo = [', "const stillToDo = ['spring', ") }, /stillToDo lists "spring"/],
+  ['the over layer shown in calm motion', { 'dashboard/seasons/season.css': before => before.replace('html[data-motion="full"] .season-over { display: block; }', '.season-over { display: block; }') }, /so that only full motion draws the over layer/],
+  ['a mark that would push the text beside it', { 'dashboard/base.css': before => before.replace('margin-right: -6px;', 'margin-right: 0;') }, /\.pack-mark should set margin-right: -6px/],
+  ['a mark size that the docs do not mention', { 'docs/seasonal-packs.md': before => before.replace(/60 x 76/g, '70 x 90') }, /docs\/seasonal-packs.md should say that the box for a mark is 60 x 76/],
   ['a missing pack file', { 'dashboard/seasons/halloween.js': null }, /halloween.*does not exist/],
   ['a pack file with no overlay', { 'dashboard/seasons/spring.js': 'export const pack = { shapes: {}, scene: null, back: [], front: [] };\n' }, null],
   ['an unknown motion', { [christmas]: before => before.replace("motion: 'sway'", "motion: 'wobble'") }, /motion "wobble"/],
   ['an unknown zone', { [christmas]: before => before.replace("zone: 'corner-b'", "zone: 'corner-z'") }, /zone "corner-z"/],
-  ['a piece outside its zone at rest', { [christmas]: before => before.replace("zone: 'left', shape: 'flake-dot', x: 8, y: 110", "zone: 'left', shape: 'flake-dot', x: 28, y: 110") }, /does not fit at rest/],
+  ['a piece outside its zone at rest', { [christmas]: before => before.replace("zone: 'corner-a', shape: 'star', x: 78, y: 7", "zone: 'corner-a', shape: 'star', x: 90, y: 7") }, /does not fit at rest/],
   ['an unknown shape', { [christmas]: before => before.replace("zone: 'corner-a', shape: 'star'", "zone: 'corner-a', shape: 'comet'") }, /shape "comet"/],
-  ['too many moving pieces', { [christmas]: before => before.replace("{ zone: 'gutter', shape: 'flake-dot', x: 4, y: 150, size: 10, motion: 'fall', seconds: 16, delay: -6, travel: 420 },", "{ zone: 'gutter', shape: 'flake-dot', x: 4, y: 150, size: 10, motion: 'fall', seconds: 16, delay: -6, travel: 420 },\n    { zone: 'gutter', shape: 'flake-dot', x: 4, y: 160, size: 10, motion: 'fall', seconds: 16 },") }, /pieces that move/],
+  ['too many moving pieces', { [christmas]: before => before.replace("{ zone: 'corner-b', shape: 'bell', x: 15, y: 0, size: 22, motion: 'sway', seconds: 5, delay: -1.5 },", "{ zone: 'corner-b', shape: 'bell', x: 15, y: 0, size: 22, motion: 'sway', seconds: 5, delay: -1.5 },\n    { zone: 'gutter', shape: 'snowflake', x: 4, y: 160, size: 10, motion: 'fall', seconds: 16 },\n    { zone: 'gutter', shape: 'snowflake', x: 4, y: 180, size: 10, motion: 'fall', seconds: 16 },\n    { zone: 'gutter', shape: 'snowflake', x: 4, y: 200, size: 10, motion: 'fall', seconds: 16 },") }, /pieces that move/],
   ['the word glow in a pack', { [christmas]: before => before.replace("const cap = '#2d4a3a';", "const cap = '#2d4a3a';\nconst glow = 1;") }, /uses the word "glow"/],
-  ['the word shadow in a shape', { [christmas]: before => before.replace('const flake = {', "const flake = { name: 'shadow',") }, /uses the word "shadow"/],
-  ['a gradient in a shape', { [christmas]: before => before.replace("markup: polygon('12,0 14.6,9.4", "markup: '<linearGradient id=\"g\"/>' + polygon('12,0 14.6,9.4") }, /gradient/],
+  ['the word shadow in a shape', { [christmas]: before => before.replace('const snowflake = {', "const snowflake = { name: 'shadow',") }, /uses the word "shadow"/],
+  ['a gradient in a shape', { [christmas]: before => before.replace("markup: polygon('7,0 8.9,5.1 14,7", "markup: '<linearGradient id=\"g\"/>' + polygon('7,0 8.9,5.1 14,7") }, /gradient/],
   ['a keyframe in a pack file', { [christmas]: before => before.replace("const cap = '#2d4a3a';", "const cap = '#2d4a3a';\nconst css = '@keyframes spin { to { opacity: 0; } }';") }, /@keyframes/],
   ['a keyframe in season.css', { 'dashboard/seasons/season.css': before => before + '\n@keyframes wiggle { to { opacity: 0; } }\n' }, /season.css has @keyframes/],
   ['an animation property in season.css', { 'dashboard/seasons/season.css': before => before + '\n.season-piece { animation: none; }\n' }, /season.css sets animation/],
@@ -511,6 +882,23 @@ mistakes.forEach(entry => {
     if (entry[2]) assert.match(result.text, entry[2]);
     else assert.match(result.text, /spring.*no overlay that says decorations/);
   });
+});
+
+test('the packs in stillToDo are excused from the mark and the over pieces, and only the ones listed', () => {
+  const everyPack = "const stillToDo = ['halloween', 'thanksgiving', 'christmas', 'new-years', 'valentines-day', 'competition-day', 'summer-break'];";
+  const bare = before => before.replace('  mark: mark,\n', '').replace(/  over: \[[\s\S]*?\n  \],\n/, '');
+
+  const excused = checkAfter('excused', { [christmas]: bare, 'tools/check-seasons.mjs': before => before.replace(/const stillToDo = \[[^\]]*\];/, everyPack) });
+  assert.equal(excused.failed, false, 'a pack in stillToDo may have no mark and no over pieces:\n' + excused.text);
+
+  const notExcused = checkAfter('not-excused', { [christmas]: bare });
+  assert.ok(notExcused.failed, 'a pack that is not in stillToDo must have both');
+  assert.match(notExcused.text, /christmas: the pack has no mark/);
+  assert.match(notExcused.text, /christmas: the pack has 0 over pieces/);
+
+  const code = fs.readFileSync(path.join(root, 'tools/check-seasons.mjs'), 'utf8');
+  const listed = (/const stillToDo = \[([^\]]*)\];/.exec(code) || [0, ''])[1];
+  assert.ok(listed.indexOf("'christmas'") === -1 && listed.indexOf("'example'") === -1, 'Christmas is finished, and the example overlay has no pack');
 });
 
 // Run them

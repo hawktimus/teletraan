@@ -1,7 +1,9 @@
-/* Overlay: Competition Day. The accent colours of the Competition Day seasonal pack. This is a
-   first set of colours, ready to change. The decorations that go with it are
-   in dashboard/seasons/competition-day.js, and docs/seasonal-packs.md explains how a pack
-   is put together.
+/* Overlay: Competition Day. The accent colours of the Competition Day seasonal
+   pack: a bright team gold for the accent and a warm white for the quiet text,
+   so the screen reads gold and white against the dark plates. The purple of the
+   team stays in the theme, and the decorations
+   (dashboard/seasons/competition-day.js) bring the violet and white of the
+   chequered flag. docs/seasonal-packs.md explains how a pack is put together.
 
    An overlay may set only the three variables below. --yellow and
    --yellow-faint go together, because the second is the first at 16 percent
@@ -9,7 +11,7 @@
    and fails if any text becomes hard to read. */
 
 html.overlay-competition-day {
-  --yellow: #9fe6ff;
-  --yellow-faint: rgba(159, 230, 255, .16);
-  --lilac: #d4f1ff;
+  --yellow: #ffde5c;
+  --yellow-faint: rgba(255, 222, 92, .16);
+  --lilac: #fff3d6;
 }

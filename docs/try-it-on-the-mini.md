@@ -66,14 +66,17 @@ for example `?perf&stress`.
 | `speed=very-slow`, `slow`, `normal`, `fast` | the Speed setting from Dashboard Settings, for this page only. Moves take 2, 1.5, 1 or 0.75 times as long, and so do the panels' time on screen. The address wins over Dashboard Settings |
 | `finish=metal` | the normal look: purple plates with polished metal edges (a banded gradient, a shadow, a shade and a ridge on every line) |
 | `finish=flat` | the same screen with every edge one plain colour, no shadow, shade, ridge or glint. The shapes, text and movement do not change (the rows still turn over and the frame halves still lift), so any difference in the numbers is the cost of the metal |
+| `look=polished`, `flat`, `plain` | the Look setting from Dashboard Settings, for this page only. The address wins over Dashboard Settings. `polished` is the normal look, the same as `finish=metal`. `flat` is `finish=flat` with the glint off. `plain` is `flat` with no screws on the frames and no // in the panel headers, so it draws the least. A `finish=` or `glint=` in the same address wins over the look for that one thing |
 | `metal=gold`, `silver` | the metal of the permanent frame edges (the banner, the countdown and the logo), for this page only. The address wins over Dashboard Settings |
 | `change=alternate`, `slat`, `mechanical` | how the large and small panels change page, for this page only. `mechanical` breaks the frame into pieces and rebuilds it, `slat` turns the rows over and lifts the frame (docs/page-transitions.md). Add `stress` to see a change every few seconds |
 | `frames=mostly-gold`, `alternate`, `gold`, `silver` | the metal of the large and small page frames, picked again at every page change, for this page only |
-| `theme=<id>` | a theme from `dashboard/themes/registry.js`, for this page only. The address wins over the Theme page in Studio |
-| `overlay=<id>`, `none` | a holiday overlay, or none, for this page only |
+| `theme=<id>` | a theme from `dashboard/themes/registry.js`, for this page only. The address wins over the Theme page in Studio. A theme with another layout brings its layout with it (`neon-prime`, section 7) |
+| `overlay=<id>`, `none` | a seasonal pack (its colours and its decorations, docs/seasonal-packs.md), or none, for this page only |
+| `seasonover=on`, `off` | the small pieces a seasonal pack draws over the panels (snow, leaves...), on or off, for this page only. The address wins over the Theme page. Calm motion also hides them. They have not been tested on the Mini, so watch `perf` with and without them |
 | `night=on`, `off` | the night screen (the screensaver, docs/night-mode.md) now whatever the time, or never, for this page only. The address wins over Dashboard Settings. The bouncing logo costs two moving layers, so it is far lighter than the dashboard it covers |
-| `hidden=desktop`, `redEyes`, `off` | plays that hidden transition (docs/hidden-transitions.md) once, at the next page change of the large panel, whatever the chances say, or never plays any, for this page only. It needs full motion, and the night screen stops it, so add `night=off` at night. While it plays it holds five blocks, the backdrop, a picture and a red layer or the blue glitch layers as layers, and none when it is over. Play it twice to see both pictures of its set |
+| `hidden=desktop`, `redEyes`, `off` | plays that hidden transition (docs/hidden-transitions.md) once, at the next page change of the large panel, whatever the chances say, or never plays any, for this page only. It needs full motion, and the night screen stops it, so add `night=off` at night. While it plays it holds five blocks (four in the sidebar layout), the backdrop, a picture and a red layer or the blue glitch layers as layers, and none when it is over. Play it twice to see both pictures of its set |
 | `glint=on`, `off` | the bright dash that runs round each big frame every few seconds, for this page only. Off shows what the glint costs |
+| `kit=off` | switches the neon kit (the moving neon of Neon Prime: nine small parts that move all the time, and a name glitch and a burst of bars now and then, docs/layouts.md, "The kit") off, for this page only. It does nothing on a theme that has no kit. Calm motion also stops it. Off shows what the kit costs |
 | `stress` | shows the left panel, the small panel and the ticker together. Each is held for 3 seconds, then all three turn their pages over together, about every 5 seconds. The frames stay. The banner and countdown stay |
 | `draw=fade` | fades the frame lines in instead of drawing them when the frames assemble, to find out whether drawing is the slow part. The assembly happens once, when the page loads |
 | `only=tasks` | shows only the Tasks panel, with no banner, countdown, small panels or ticker, for a fair comparison with the next page |
@@ -86,7 +89,9 @@ To compare the finishes, run the same address twice, once as it is and once
 with `finish=flat` added. Keep every other switch the same, run both for the
 same length of time, and compare the numbers. The readout does not say which
 finish is running, so write the address down beside each result. Do the same
-with `glint=off` to see what the glint costs on its own.
+with `glint=off` to see what the glint costs on its own. Run it with `look=flat`
+and with `look=plain` too, to see how much lighter each look is. Plain also
+leaves out the screws and their shadows, which turn at every page change.
 
 The page change is the heaviest thing the screen does, and `stress` makes it
 happen every 5 seconds, so a `stress` run shows it best. Watch the `late`
@@ -148,6 +153,8 @@ Stop the small server with Ctrl+C in the second text screen when you are done.
    at the end of each:
    - `?perf` (normal)
    - `?perf&finish=flat`
+   - `?perf&look=flat`
+   - `?perf&look=plain`
    - `?perf&motion=calm`
    - `?perf&glint=off`
    - `?perf&stress`
@@ -173,6 +180,68 @@ Stop the small server with Ctrl+C in the second text screen when you are done.
 - Anything the two readers could not make out
 - Whether the Mini felt hot or the fan was loud
 
+## 7. The Neon Prime theme (the sidebar layout)
+
+Neon Prime has its own layout (docs/layouts.md): a strip across the top with the
+team name, a column on the left, one big frame on the right drawn at 1.0319 times
+its size, and the ticker across the whole bottom. It also has the kit, a set of
+moving neon (docs/layouts.md, "The kit"): nine small parts that move all the time,
+and a glitch of the team name and a burst of bars at each page change as short
+events. It has been checked in a desktop browser and **has not been run on the
+Mini**, so this is the first speed test of it. The standard layout and the other
+two themes are not touched by it, so they need no new test.
+
+Before you start, make sure the Mini has the code (section 1) and that the
+editors' Studio has been deployed (`npm run deploy` in the studio folder), so
+Neon Prime is in their Theme lists. The test does not need Studio: the address
+below picks the theme for that page only.
+
+Start the kiosk script as in section 2, with the theme in the address:
+
+    xinit /opt/teletraan/deploy/scripts/kiosk.sh 'http://localhost:3229/dashboard/?theme=neon-prime&perf' -- :1 vt8
+
+Run each of these for 30 minutes, write down typical, p95, worst, late and
+"animations running" at the end, and run the same address with `theme=hawktimus`
+(or no theme) for 30 minutes as the standard layout to compare with:
+
+| Address ends with | What it shows |
+|-------------------|---------------|
+| `?theme=neon-prime&perf` | the normal look, with the kit |
+| `?theme=neon-prime&perf&kit=off` | what the kit costs: the nine small parts that move all the time and the two short events (docs/layouts.md, "The kit") |
+| `?theme=neon-prime&perf&motion=calm` | the calm variant: nothing of the kit moves, the neon lines, ticks and brackets stand still, and a page change is a fade |
+| `?theme=neon-prime&perf&finish=flat` | the flat variant: the same with plain edges, to see what the metal costs |
+| `?theme=neon-prime&perf&look=plain` | the plain variant: the flat finish with no glint and no screws. The cyan trim on the frames stays, which `finish=flat` alone hides |
+| `?theme=neon-prime&perf&motion=calm&finish=flat` | calm and flat together, the lightest this theme can be. If even this is not smooth on the Mini, the layout is too heavy for it |
+| `?theme=neon-prime&perf&glint=off` | what the one glint costs |
+| `?theme=neon-prime&perf&change=mechanical` | the heaviest page change |
+| `?theme=neon-prime&perf&stress` | the large frame and the ticker changing every few seconds (there is no small frame to change) |
+| `?theme=neon-prime&perf&show=photo` | the Photo panel, scaled up with the frame |
+
+Then leave `?theme=neon-prime&perf` running overnight. Also run the screen with
+Neon Prime chosen in Studio (Theme, Use a theme now) and not in the address,
+watch that the page reloads once at the next page change, and that nothing
+reloads after that.
+
+What to expect. On a desktop browser the "animations running" number averaged
+8.6 in this layout with `kit=off` and 18.5 with the kit on, against 15.5 in the
+standard one, with a slat page change, and reached 35 at most with the kit off and
+54 with it on, against 51 (docs/layouts.md, "Moving elements"). With
+`motion=calm` it is 0 at rest. The Mini should
+show a similar relation: fewer without the kit, a little more with it. The number is not
+the speed: the layout draws the large frame through a scale, and it is the
+frame times (typical, p95 and late) that show whether the Mini's graphics chip
+minds that. If this layout is clearly worse than the standard one on the same
+Mini, write the numbers down and do not use it on the TV until someone has
+looked at them.
+
+Also look at the screen itself from 20 feet and from 30 feet. The ground is a
+very dark violet, and some TVs show very dark colours as one flat black. Check
+that the indigo plates can be told from the ground, that the neon cyan and
+magenta and the amber are not too bright to read the text next to them, and
+that the text in the large frame is as sharp as in the standard layout (it is
+drawn scaled).
+Write down anything that is hard to read.
+
 ## What counts as good
 
 These are starting points, not rules:
@@ -186,9 +255,9 @@ These are starting points, not rules:
   address. If flat is clearly smoother, the metal is too heavy for the Mini.
   If only the glint is the difference, turn it off in Dashboard Settings
   (Glint) and keep the metal.
-  Ask whoever looks after the code to make flat the starting finish: it is set
-  by `data-finish` on the `html` line of `dashboard/index.html` and by the line
-  in `dashboard/shell.js` that sets `dataset.finish`
+  Make flat the starting finish with Look in Dashboard Settings (Screen tab):
+  Flat is the flat finish with no glint, and Plain also leaves out the screws and
+  the // in the panel headers. No code changes
 
 If the Mini can only manage 30 frames a second, say so. That can still work if
 it is steady, and it will help decide what to change.

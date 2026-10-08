@@ -25,3 +25,41 @@ function letterMarkup(letter, index) {
 export function nameMarkup(name) {
   return Array.from(name).map(letterMarkup).join('');
 }
+
+// The name on two lines, for a place where a name is too wide for one line at
+// 96px. No layout uses it now, because the strip of the sidebar layout is wide
+// enough for the name on one line (nameMarkup above). It is kept, with its
+// tests, for a layout that has a narrow place for the name. The effect needs
+// nothing else: it moves every .letter inside the heading, so the letters of the
+// first line go first and then the letters of the second.
+//
+// A name of one word stays on one line. With more words the line break goes
+// where the longer of the two lines is the shortest, and the first such place
+// wins a tie, so HAWKTIMUS PRIME is HAWKTIMUS over PRIME. Spaces at the ends
+// and doubled spaces are dropped, and a name with nothing in it is one empty
+// line.
+export function splitName(name) {
+  const text = String(name === undefined || name === null ? '' : name).trim().replace(/\s+/g, ' ');
+  const words = text.split(' ');
+  if (words.length < 2) return [text];
+
+  let best = null;
+  for (let cut = 1; cut < words.length; cut++) {
+    const lines = [words.slice(0, cut).join(' '), words.slice(cut).join(' ')];
+    const longest = Math.max(Array.from(lines[0]).length, Array.from(lines[1]).length);
+    if (best === null || longest < best.longest) best = { lines: lines, longest: longest };
+  }
+  return best.lines;
+}
+
+// Each line is a span of its own (name-line). --i carries on counting from the
+// first line into the second, so frame.css starts the second line's letters
+// after the first line's last one.
+export function nameLinesMarkup(name) {
+  let index = 0;
+
+  return splitName(name).map(line => {
+    const letters = Array.from(line).map(letter => letterMarkup(letter, index++)).join('');
+    return `<span class="name-line">${letters}</span>`;
+  }).join('');
+}

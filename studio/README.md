@@ -294,7 +294,7 @@ change. docs/editing-content.md has the advice for the people who upload.
 
 The Theme page (`schemas/theme.js`) is a document that exists once, like
 Dashboard Settings. It has the Default theme, "Use a theme now", a Schedule of
-rules and a Time zone. The screen reads it with the rest of the content and
+rules, a Time zone and a switch, "Seasonal pieces over the panels" (it starts on). The screen reads it with the rest of the content and
 works out the theme in `dashboard/core/theme.js`. Nothing needs setting up for
 it beyond the steps above. Run `npm run deploy` after you change `schemas/theme.js`
 or `themes.js`, so the editors see the change.
@@ -302,9 +302,18 @@ or `themes.js`, so the editors see the change.
 The lists of themes and overlays come from `themes.js`. The Studio is built on
 its own and cannot read the dashboard folder, so `themes.js` is a copy of
 `dashboard/themes/registry.js` and `dashboard/themes/overlays/registry.js`.
-`check-schemas.mjs` fails if the ids, names or descriptions differ. To add a
+`check-schemas.mjs` fails if the ids, names or descriptions differ. A theme that
+has the sidebar layout (Neon Prime) has `layout: 'sidebar'` in both copies, the
+check fails if they differ, and its description must say it has a sidebar and no
+small frame (docs/layouts.md). The Theme page lists show the theme names only, so
+the descriptions of the Default theme, Use a theme now and the schedule's Theme
+field say what a sidebar theme does, and the Small panels list in Dashboard
+Settings says it is not used with one. To add a
 theme or an overlay, see docs/adding-a-theme.md and
-docs/adding-a-holiday-overlay.md.
+docs/adding-a-holiday-overlay.md. An overlay is shown to the editors as a
+"Seasonal pack" (only the titles and descriptions say so, the stored values do
+not change), and its `decorations` flag, which says whether it has a pack file in
+`dashboard/seasons/`, is checked too (docs/seasonal-packs.md).
 
 The Time zone is checked against the zones the browser knows
 (`Intl.supportedValuesOf`), or against a plain pattern when the browser cannot
@@ -360,3 +369,8 @@ The colours of the themes are checked by `tools/check-themes.mjs` in the top
 folder, and `check-schemas.mjs` runs it too, so a theme that is missing a
 colour or is hard to read fails here as well. It can also be run alone with
 `node tools/check-themes.mjs` from the top folder.
+
+The decorations of the seasonal packs are checked by `tools/check-seasons.mjs`,
+and `check-schemas.mjs` runs that too, so an overlay that says it has decorations
+and has no pack file fails here as well. It can be run alone with
+`node tools/check-seasons.mjs` from the top folder (docs/seasonal-packs.md).

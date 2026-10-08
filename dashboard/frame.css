@@ -1,5 +1,7 @@
-/* Everything that moves is defined here and in frame.js. Only transform,
-   opacity and line drawing are animated.
+/* Everything that moves is defined here and in frame.js, except the seasonal
+   packs (seasons/motion.css) and the neon kit of Neon Prime (neon-kit.css, with
+   its timing in the last section of frame.js). Only transform, opacity and line
+   drawing are animated.
 
    There are two ways a screen area moves. The large panel, the small panel
    and the ticker keep their frame and only swap the page inside it: see
@@ -1617,7 +1619,8 @@ html:not([data-motion="full"]) .logo[data-act="fly"] .hawk-far-wing { transform:
 [data-motion="calm"] .panel [data-fx],
 [data-motion="calm"] .panel [data-idle] { animation: none; }
 [data-motion="calm"] #crt { display: none; }
-[data-motion="calm"] .banner .logo { animation: fade-in var(--time-calm) linear backwards; }
+[data-motion="calm"] .banner .logo,
+[data-motion="calm"] .side .logo { animation: fade-in var(--time-calm) linear backwards; }
 
 
 /* No motion at all, for measuring the cost of the still picture */

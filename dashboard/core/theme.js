@@ -3,8 +3,10 @@
 // tools/test-themes.mjs can run them. core/theme-apply.js puts the answer on
 // the page.
 //
-// The Theme document in the Studio holds four things (defaultThemeSettings in
-// config.js has the starting values). resolveTheme() reads them in this order:
+// The Theme document in the Studio holds five things (defaultThemeSettings in
+// config.js has the starting values). The fifth, the switch for seasonal pieces
+// over the panels, plays no part in choosing a theme: core/season.js reads it.
+// resolveTheme() reads the others in this order:
 //
 //   1. Use now. A theme and an overlay to show at once. Each can be left
 //      empty to follow the rules instead, and the overlay can be 'none'. It
@@ -127,7 +129,7 @@ function tidyRule(raw) {
 }
 
 // Takes whatever the Theme document holds, or nothing, and gives back all
-// four settings with a value the screen can use. Anything missing or
+// five settings with a value the screen can use. Anything missing or
 // unusable is the default, so the screen never has to check.
 export function tidyTheme(raw) {
   const source = isRecord(raw) ? raw : {};
@@ -138,6 +140,7 @@ export function tidyTheme(raw) {
     useNow: tidyUseNow(source.useNow),
     schedule: (Array.isArray(source.schedule) ? source.schedule : []).map(tidyRule).filter(rule => rule !== null),
     timeZone: isTimeZone(source.timeZone) ? source.timeZone : defaults.timeZone,
+    seasonOverPanels: typeof source.seasonOverPanels === 'boolean' ? source.seasonOverPanels : defaults.seasonOverPanels,
   };
 }
 

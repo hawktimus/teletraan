@@ -195,6 +195,10 @@ time zone, or the night screen will stop it. docs/try-it-on-the-mini.md lists ev
 ## How it works
 
 The five blocks are the five regions marked `data-block` in `dashboard/index.html`.
+That is the standard layout. The sidebar layout (docs/layouts.md) has four blocks:
+the top strip, the sidebar, the large panel and the ticker. `core/layout-apply.js` moves `data-block`
+to them when the page starts, and their poses are in `layouts/sidebar.css`. Everything
+else here is the same, and the transition waits for no small panel there.
 When a transition plays, `core/hidden-run.js` sets `data-hidden` on `#world`, and
 `frame.css` (the section "Hidden transitions") does all the moving:
 
@@ -226,7 +230,7 @@ is never more than a fifth opaque. A test in `tools/test-effects.mjs` counts the
 
 The blocks are promoted to layers (`will-change`) and given a perspective only while
 they fly, in `break` and `build`. Between those, and the rest of the time, there is
-nothing extra for the Mini to hold. The five blocks, the backdrop, the picture and, for the
+nothing extra for the Mini to hold. The blocks (five, or four in the sidebar layout), the backdrop, the picture and, for the
 glitches, the red layer or the blue layers (three washes and six pieces, for about 2 and 1
 seconds) are the only layers a hidden transition adds. The four pictures wait in the
 backdrop, which is not drawn until a transition plays.
@@ -234,7 +238,8 @@ backdrop, which is not drawn until a transition plays.
 Swapping the pages: when the large panel's page change comes up, it asks for a hidden
 transition (`core/areas.js`). If one plays, the transition first waits for the three
 areas to be at rest. When the blocks are apart it swaps the large panel's next page,
-and it asks the small panel and the ticker to move on to theirs. They pick their next
+and it asks the small panel and the ticker (only the ticker in the sidebar layout) to
+move on to theirs. They pick their next
 page as they always do, wait at a gate in `core/areas.js` until the screen is apart,
 and swap it unseen. A region that is late carries on with an ordinary page change once
 the screen is whole again.

@@ -534,11 +534,11 @@ test('starting frame.js sets one timer going, and starting it again sets no more
 test('nothing that runs each second reads the size or place of anything, or sets a repeating timer of its own', () => {
   const layoutReads = /offsetWidth|offsetHeight|offsetTop|offsetLeft|getBoundingClientRect|getComputedStyle|clientWidth|clientHeight|scrollWidth|scrollHeight|getClientRects|innerWidth|innerHeight/;
 
-  ['core/tick.js', 'panels/countdown/countdown.js', 'panels/banner/banner.js', 'core/takeover.js'].forEach(file => {
+  ['core/tick.js', 'core/countdown.js', 'panels/countdown/countdown.js', 'panels/banner/banner.js', 'core/takeover.js'].forEach(file => {
     const code = read(file);
     assert.ok(!layoutReads.test(code), file + ' reads layout');
   });
-  ['core/tick.js', 'panels/countdown/countdown.js', 'panels/banner/banner.js'].forEach(file => {
+  ['core/tick.js', 'core/countdown.js', 'panels/countdown/countdown.js', 'panels/banner/banner.js'].forEach(file => {
     assert.ok(!read(file).includes('setInterval'), file + ' has a repeating timer');
   });
   assert.ok(read('core/tick.js').includes('setTimeout'), 'the clock sets one timer at a time');

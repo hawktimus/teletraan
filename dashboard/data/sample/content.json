@@ -9,6 +9,7 @@
     "speed": "normal",
     "frameMetal": "gold",
     "glint": true,
+    "look": "polished",
     "showConnectionStatus": false,
     "pageSeconds": 20,
     "logoAnimations": true,
@@ -52,7 +53,8 @@
     "defaultTheme": "hawktimus",
     "useNow": { "theme": "", "overlay": "", "until": "" },
     "schedule": [],
-    "timeZone": "America/New_York"
+    "timeZone": "America/New_York",
+    "seasonOverPanels": true
   },
 
   "demo": {
