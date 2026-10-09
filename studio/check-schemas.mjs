@@ -1167,12 +1167,12 @@ function checkStyleSetting() {
   // A required field would stop that page being published until someone picked one.
   need(problems, !constraintNamed(rules, 'required'), 'style should not be required: an empty style is Original, and the page must still publish');
 
-  // The description says what each style is, and that the theme does not decide the layout of two of them
+  // The description says what each style is, and that the theme does not decide the layout of one of them
   const words = style ? style.description || '' : '';
-  need(problems, /Original/.test(words) && /Cybertron/.test(words) && /Minimal/.test(words) && /whatever the theme/.test(words), 'the style description should say what Original is, what Cybertron and Minimal have, and that the theme does not change that');
+  need(problems, /Original/.test(words) && /Cybertron/.test(words) && /Minimal/.test(words) && /whatever the theme/.test(words), 'the style description should say what Original is, what Cybertron and Minimal have, and that the theme does not change the layout of Minimal');
 
   need(problems, config.styles.indexOf(world.sample.settings.style) !== -1, 'the sample settings need a style of ' + config.styles.join(', '));
-  need(problems, world.layoutModule.layouts.indexOf('bar') !== -1, 'the dashboard needs the bar layout, which Cybertron and Minimal have');
+  need(problems, world.layoutModule.layouts.indexOf('bar') !== -1, 'the dashboard needs the bar layout, which Minimal has');
 
   const theme = fieldAt('theme.defaultTheme');
   need(problems, theme && /Style and team set the base values/.test(theme.description || ''), 'the Look page should say that the style and the team set the base values');

@@ -36,7 +36,14 @@ let speed = 'normal';
 // another. A part with no line here just appears and stays. The effects are
 // the data-fx rules at the top of frame.css.
 export const sequences = {
+  // The banner has the first four parts only in Cybertron, where it stands on a plate
+  // (core/plate.js, "The frames of the bar layout"): the plate unfolds, its lines are drawn,
+  // and its decoration and bolts come after
   banner: {
+    'body':         ['unfold', 200],
+    'outline':      ['draw', 700],
+    'decor':        ['fade', 1350],
+    'stud':         ['servo', 1300, 50],
     'title':        ['latch-left', 500],
     'team-plate':   ['latch-left', 700],
     'clock':        ['latch-right', 700],
@@ -66,6 +73,12 @@ export const sequences = {
     'scan':          ['scan', 1200],
   },
 
+  // The countdown of Cybertron, the wide war clock (panels/countdown). The clock comes in as
+  // one piece, and none of its parts has a line of its own
+  'countdown-war': {
+    'war':           ['unfold', 300],
+  },
+
   // The sidebar layout's one panel, in place of the banner and the countdown
   // (panels/side). The countdown's parts keep the names and the order they
   // have above, a little later, and the logo's own show runs beside them. The
@@ -90,7 +103,7 @@ export const sequences = {
   // The bar layout's two panels that stay on screen: the banner (panels/bar-banner) and
   // the side column (panels/bar-column). The banner draws its own frame, as the countdown
   // does: the plate unfolds, the lines are drawn, the decoration and the hex bolts come
-  // after, and in Minimal so do the rivets, the rust and the id. The war clock is in the
+  // after, and in Minimal so do the rivets and the rust. The war clock is in the
   // war slot and arrives with it, so it has no parts of its own
   'bar-banner': {
     'body':         ['unfold', 200],
@@ -100,7 +113,6 @@ export const sequences = {
     'decor':        ['fade', 1350],
     'rivets':       ['fade', 1350],
     'wear':         ['fade', 1350],
-    'plate-id':     ['fade', 1400],
     'stud':         ['servo', 1300, 50],
   },
   'bar-column': {
@@ -211,7 +223,10 @@ export function onSecond(listener, element) {
 }
 
 
-export function enter(panel) {
+// contentOnly is true at the end of a hidden transition (core/hidden-pile.js), when the frame
+// has just been put back together: the parts that are the frame are left alone and only the
+// content comes in
+export function enter(panel, contentOnly = false) {
   const sequence = sequences[panel.dataset.sequence];
   if (!sequence) {
     throw new Error('No sequence called "' + panel.dataset.sequence + '" in frame.js');
@@ -220,6 +235,10 @@ export function enter(panel) {
   panel.querySelectorAll('[data-part]').forEach(part => {
     const rule = sequence[part.dataset.part];
     if (!rule) return;
+    if (contentOnly && isFramePart(part)) {
+      delete part.dataset.fx;
+      return;
+    }
 
     const effect = rule[0];
     const startMs = rule[1];
@@ -236,6 +255,11 @@ export function enter(panel) {
     // later cannot replay a panel that is already on screen
     if (panel.dataset.state === 'in') panel.dataset.state = 'shown';
   });
+}
+
+// A part that is drawn inside the plate of the panel, or the stamped id or the sweep of light over it
+function isFramePart(part) {
+  return part.closest('svg.plate') !== null || part.classList.contains('plate-id') || part.dataset.part === 'scan';
 }
 
 export function exit(panel) {

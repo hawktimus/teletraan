@@ -95,17 +95,18 @@ editors can sign in from anywhere.
                               (a banner, a side column, one main panel and the ticker) and its mirror. The numbers
                               are in core/layout.js (docs/layouts.md)
       styles/                 one stylesheet for each style (Style in Dashboard Settings): original.css has the
-                              mirror of the standard layout, and cybertron.css and minimal.css each set custom
-                              properties and paint the page background, the plates, the rail and the
-                              decoration of the bar frames that only that style has (docs/layouts.md, "Styles"
-                              and "Frames")
+                              mirror of the standard layout, which Cybertron has too, and cybertron.css and
+                              minimal.css each set custom properties and paint the page background, the plates
+                              and the decoration of the frames that only that style has (docs/layouts.md,
+                              "Styles", "Frames" and "Cybertron")
       base.css                the fixed 1920x1080 screen and the shared metal shapes. Nothing is responsive:
                               shell.js scales the whole screen to the window (docs/layouts.md, "The screen is
                               a fixed canvas")
       core/                   helpers used by several panels. plate.js draws the frames, and the three steel frames
-                              of the bar layout, with Minimal's own three (docs/layouts.md, "Frames"), and the
-                              housing of the war clock, areas.js keeps
-                              the frames in place while pages change, schedule.js says what shows when,
+                              of the bar layout, with Minimal's own three (docs/layouts.md, "Frames") and the
+                              four of Cybertron ("Cybertron"), and the housing of the war clock, areas.js keeps
+                              the frames in place while pages change and draws them again when a style with other frames
+                              goes on, schedule.js says what shows when,
                               panel-order.js says in what order (the Panel order list in Dashboard Settings),
                               logo.js and name.js draw the hawk and the team name (name.js can also put the
                               name on two lines, which nothing uses now), countdown.js is the countdown's parts and
@@ -113,8 +114,9 @@ editors can sign in from anywhere.
                               decides sample or production content from ?sample=1 in the address,
                               images.js builds the addresses of photos from Sanity, photos.js says
                               which photos the Photo panel shows and in what order, portrait.js
-                              draws a person's framed portrait with the name under it, leadership.js
-                              makes the pages of the Leadership panel, one role to a page, roster.js
+                              draws a person's framed portrait, with the name under it or as a row,
+                              leadership.js picks the four people of the Leadership panel, team-leads.js
+                              makes the rows of the Team Leads panel, roster.js
                               makes the pages of the Subteam roster panel, theme.js
                               works out which theme and overlay apply, theme-apply.js puts them on the page,
                               layout.js says which layout a theme has, which regions and blocks a layout
@@ -132,7 +134,9 @@ editors can sign in from anywhere.
                               every panel header (the double slash, or the pack's mark), corner-art.js holds
                               the four ornaments of line art that go in the cut corners, pack-extras.js
                               decides the ticker prefix, banner line and corner art of the pack on the page,
-                              transitions.js chooses the style and the metal of the next page change,
+                              transitions.js chooses the style and the metal of the next page change and
+                              plans how the frames fall into a pile and come back at the end of a hidden
+                              transition,
                               look.js turns the Polish setting (polished, flat or plain) into the page
                               switches the stylesheets read (data-finish, data-glint and data-look),
                               events.js filters and sorts the BAND events, and writes the dates of an event,
@@ -150,13 +154,15 @@ editors can sign in from anywhere.
                               announcement that is switched on, and announce-run.js starts it
                               (docs/hidden-transitions.md),
                               hidden.js decides when a hidden transition replaces a page change,
-                              hidden-transitions.js lists them, hidden-run.js plays them and
-                              hidden-pictures.js lists their four pictures (in assets/hidden) and
-                              which one plays next (docs/hidden-transitions.md),
+                              hidden-transitions.js lists them, hidden-run.js plays them,
+                              hidden-pile.js finds the frames that fall at their end and writes where
+                              each one lies, and hidden-pictures.js lists their four pictures (in
+                              assets/hidden) and which one plays next (docs/hidden-transitions.md),
                               presentation.js decides when a booked talk shows its title card and its
-                              slides, what each key of the clicker does and which talks were skipped,
-                              and presentation-run.js puts that on the screen and reads the keys (the
-                              cards and the slides are drawn by panels/talk, docs/presentations.md),
+                              slides, what each key of the clicker and each button of the mouse does and
+                              which talks were skipped, and presentation-run.js puts that on the screen
+                              and reads the keys and the mouse (the cards and the slides are drawn by
+                              panels/talk, docs/presentations.md),
                               presentation-test.js decides when the Run presentation test button starts
                               the sample talk, and presentation-test-run.js starts it
                               (docs/hidden-transitions.md),
@@ -219,6 +225,10 @@ editors can sign in from anywhere.
                               install-calendars.sh only the calendar timer and install-slides.sh the slides
                               timer (docs/rebuilding-the-mini.md, step 11). systemd/ has the unit files they
                               copy into place.
+                              scripts/install-console.sh writes the startup drawing above the old text of
+                              /etc/issue and turns on teletraan-console.service, which shows the shutdown
+                              drawing. The two drawings are console/startup.txt and console/shutdown.txt
+                              (docs/rebuilding-the-mini.md, step 13).
                               mac/ is for the Mac you work on: ship.sh commits, pushes, updates the Studio
                               and tells the Mini to pull (docs/shipping-from-the-mac.md)
     tools/
@@ -230,7 +240,7 @@ editors can sign in from anywhere.
       test-weather.mjs        checks for the weather reader and its pictures
       test-content.mjs        checks for the code that reads the editors' content, the photo
                               addresses, which photos show and in what order, the pages of
-                              portraits, of the Leadership panel and of the subteam roster, the subteam members, the events list and the
+                              portraits, of the subteam roster, the subteam members, the events list and the
                               lines of the Mini's address, and the reasons and the lines of the
                               connection status text, for the Polish setting: its cleaning, the
                               switches each look sets and the rules for Plain in base.css, and for
@@ -277,6 +287,24 @@ editors can sign in from anywhere.
       test-calendars-script.mjs  checks for deploy/scripts/check-calendars.sh, with a fake curl
       test-status-write.mjs   checks for deploy/scripts/status-write.sh, with a fake curl, that the services and
                               kiosk.sh run it, and that the dashboard never reads the status document
+      test-cybertron.mjs      checks for Cybertron on the layout of Original: which layout each style has, its four
+                              frames, the stage, the banner and the ticker on their plates, the wide war clock, and
+                              that the frames are drawn again when the style changes
+      test-minimal.mjs        checks for Minimal on the bar layout: what the order gives it, what it must not have
+                              (stamped ids, hazard stripes, scanlines, slashes, conduit, brackets), and the list of
+                              what it shares with Cybertron
+      test-pile.mjs           checks for the end of the hidden transitions: the plan of the fall, the pile and the
+                              lift (at most 40 pieces, 5 seconds, every piece back in its place), the stylesheet
+                              that moves them, the cube, and the script that finds the pieces on a fake page
+      test-person-rows.mjs    checks for the rows of the Team Leads and Leadership panels: four rows to a
+                              panel, who is in them, the portrait size, and the sizes in base.css
+      test-presentation-mouse.mjs  checks for the mouse in presentation mode: what each button does, the second
+                              click of a double click, a click on the card that says the slides are not ready,
+                              the context menu, the hidden cursor, and the rotation that starts again
+      test-console.mjs        checks for the boot and shutdown drawings (plain 7 bit text, the size, the
+                              symmetry of the figure, the same text in the sample content), for
+                              install-console.sh in a fake root (it stops before it changes anything, keeps the
+                              copy of /etc/issue, and does nothing the second time) and for the unit
       check-seasons.mjs       fails if a seasonal pack is not in the data format, has a piece outside its zone, too
                               many pieces, a forbidden word, no header mark, a mark bigger than its box (60 x 76),
                               fewer than 8 or more than 14 pieces over the panels, an over piece that is too big,
@@ -387,7 +415,9 @@ alone.
   `studio/hidden-transitions.js`, a copy of `hiddenTransitions` in
   `dashboard/core/hidden-transitions.js`. A new transition is one entry in each, plus an hours
   field and a chance field. `core/hidden.js` decides, `core/hidden-run.js` plays, and `frame.css` ("Hidden
-  transitions" and "The blue glitch") moves the five blocks and the glitches. The four
+  transitions" and "The blue glitch") moves the five blocks and the glitches. Both end with
+  the frames falling into a pile and a cube putting them back (`core/hidden-pile.js`,
+  `planPile` in `core/transitions.js`, and "The frames fall and come back" in `frame.css`). The four
   pictures are in `dashboard/assets/hidden/`, and `core/hidden-pictures.js` says how each one
   fills the screen and which one plays next. Try one with `?hidden=desktop` or `?hidden=redEyes`.
 - **Play announcements.** A button in the menu beside Publish on Dashboard Settings
@@ -498,15 +528,20 @@ alone.
   the size it is shown, 280 by 280 pixels, in `core/portrait.js`. The silhouette
   for a person with no photo is drawn once in `dashboard/index.html`, and its
   four colours are the `--silhouette-` variables in `dashboard/tokens.css`.
-  Three portraits fit on a page, set by `slotsPerPage` in `core/portrait.js`.
-  `core/leadership.js` builds the pages of the Leadership panel from it: one
-  role to a page (coaches, captains, mentors), and a role with more than three
-  people is shared out evenly, so 4 are 2 and 2. A shorter page keeps the same
-  portrait size and sits in the middle of the row (the section People
-  portraits in `dashboard/base.css`). At full size the portrait is 292 pixels
-  square with the 280 pixel photo 6 pixels in from the edge (`portraitSize` in
-  `core/portrait.js`). The photo is always asked for at 280, whatever the
-  Portrait size setting says, so the copy loaded ahead of time is the one shown.
+  Four rows fit on a panel, set by `rowsPerPage` in `core/portrait.js`, and
+  `rowsMarkup` draws them. `core/leadership.js` picks the people of the
+  Leadership panel: the coaches, then the captains, then the mentors, the first
+  four. `core/team-leads.js` makes the rows of the Team Leads panel, one for each
+  subteam in the order of the Order field, and the panel shows four each time it
+  comes round. The rows are in the section People portraits in
+  `dashboard/base.css`: four of 144 pixels fill the 576 pixel body, as in the
+  Events panel. In a row the portrait is 124 pixels square (`rowSizes` in
+  `core/portrait.js`), and on the Subteam roster panel it is 292 pixels square with the
+  280 pixel photo 6 pixels in from the edge (`portraitSize`). The photo is
+  always asked for at 280, whatever the Portrait size setting says, so the copy
+  loaded ahead of time is the one shown. `showcaseOf` in `core/team-leads.js` is
+  there for a later mode that shows one subteam's lead and its members. Nothing
+  calls it yet. `tools/test-person-rows.mjs` has the tests of the rows.
   The starting value of the switch is `defaultPerson.showPhoto` in
   `dashboard/config.js` and its copy in `studio/schemas/person.js`.
 - **Subteam members.** The Members list of a subteam in Studio
@@ -577,16 +612,17 @@ alone.
   Original (the screen as it was), Cybertron or Minimal. The names are `styles` in
   `dashboard/config.js`, `dashboard/core/style.js` puts `data-style` on the html
   element and says which layout a style asks for, and there is a stylesheet for each
-  in `dashboard/styles/`. Cybertron and Minimal have the bar layout whatever the
-  theme says. `?style=cybertron` in the address shows one for a single page. The four
-  steps for the editors are in docs/switch-the-look.md.
-- **The war clock.** The countdown drawn a second time, 700 by 120, in the banner of the bar
-  layout, which is Cybertron and Minimal. It reads the same label and dates as the countdown
+  in `dashboard/styles/`. Minimal has the bar layout whatever the theme says, and
+  Original and Cybertron have the layout of the theme. `?style=cybertron` in the address
+  shows one for a single page. The four steps for the editors are in docs/switch-the-look.md.
+- **The war clock.** The countdown drawn a second time: 700 by 120 in the banner of the bar
+  layout, which is Minimal, and 616 by 200 in the countdown's place in Cybertron (the wide form,
+  `warMarkup('wide')`, drawn into the countdown panel). It reads the same label and dates as the countdown
   (Dashboard Settings, Countdown tab), so there is nothing to set for it. The numbers come from
   `core/countdown.js`, `panels/countdown/countdown.js` writes them (`warMarkup`, `startWar` and
   `updateWar`), `panels/bar-banner` puts it in its slot, `core/plate.js` draws the housing
   (`warHousingMarkup`) and `panels/countdown/countdown.css` places every part. The digits are
-  amber in Cybertron and the team's neon in Minimal. docs/layouts.md, "The war clock", has
+  amber in Cybertron and the team's neon in Minimal. docs/layouts.md, "The war clock" and "The wide war clock", has
   the sizes.
 - **The teams, and the team on the screen.** Teams in the Studio sidebar, under Settings
   (`studio/schemas/team.js`): a name, a short name, a number, a code, an optional logo, seven
@@ -675,6 +711,12 @@ exception is `test-slides-script.mjs`, which needs `jq`.
     node tools/test-install-calendars.mjs
     node tools/test-calendars-script.mjs
     node tools/test-status-write.mjs
+    node tools/test-cybertron.mjs
+    node tools/test-minimal.mjs
+    node tools/test-pile.mjs
+    node tools/test-person-rows.mjs
+    node tools/test-presentation-mouse.mjs
+    node tools/test-console.mjs
     node tools/check-themes.mjs
     node tools/check-seasons.mjs
     node studio/check-schemas.mjs

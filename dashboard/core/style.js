@@ -4,11 +4,14 @@
 //
 //   data-style   set on the html element. The stylesheets in styles/ read it. Each one
 //                only sets custom properties and the layout rules its style needs
-//   the layout   Original keeps the layout its theme names (core/layout.js). Cybertron
-//                and Minimal use the bar layout, whatever the theme says
-//   data-shapes  set on the html element once, when the page starts. It is the corners of
-//                the frames the page draws: Minimal has its own (core/plate.js, frameKind),
-//                and the other styles have the usual ones, so it is not there for them
+//   the layout   Original and Cybertron keep the layout their theme names (core/layout.js):
+//                the standard layout, or the sidebar layout for Neon Prime. Minimal uses
+//                the bar layout, whatever the theme says
+//   data-shapes  set on the html element. It is the corners of the frames the page has
+//                drawn: Cybertron and Minimal have their own (core/plate.js, frameKind), and
+//                Original has the usual ones, so it is not there for it. It is written when
+//                the page starts, and again when a style with other frames goes on while the
+//                screen runs (recordShapes, and redrawFrames in core/areas.js)
 //
 // The team (core/teams.js) is a different thing: it sets the colors and the mirror
 // switch, and any style can have either team.
@@ -26,13 +29,22 @@ export function isStyle(name) {
 }
 
 // The layout a style asks for, or null when the theme decides
-const forcedLayout = { original: null, cybertron: 'bar', minimal: 'bar' };
+const forcedLayout = { original: null, cybertron: null, minimal: 'bar' };
 
-// The corners of the frames a style draws, or '' for the usual ones. Frames are drawn once
-// and stay for as long as the page is up, so a page whose style has other corners than the
-// page's own reloads (core/layout.js, drawnFor)
-const shapeOf = { original: '', cybertron: '', minimal: 'minimal' };
+// The corners of the frames a style draws, or '' for the usual ones. Frames are drawn
+// once for each area, so a style that goes on while the screen runs has them drawn again
+// (core/areas.js, redrawFrames). Minimal's frames are the ones of the bar layout, which
+// is another layout, so a page that goes to it or from it reloads (core/layout.js, drawnFor)
+const shapeOf = { original: '', cybertron: 'cybertron', minimal: 'minimal' };
 export const shapeSets = Object.values(shapeOf).filter(Boolean);
+
+// The styles with steel for the metal of every frame. The page change never gives their
+// frames another metal (core/areas.js)
+const steelStyles = ['cybertron', 'minimal'];
+
+export function hasSteel(style) {
+  return steelStyles.includes(style);
+}
 
 export function shapesFor(style) {
   return isStyle(style) ? shapeOf[style] : '';
@@ -73,7 +85,7 @@ export function styleNow(page = pageOrNone()) {
   return isStyle(name) ? name : defaultSettings.style;
 }
 
-// The corners of the frames this page was started with, which a later style does not change
+// The corners of the frames this page has drawn
 export function shapesNow(page = pageOrNone()) {
   const name = page && page.dataset ? page.dataset.shapes : '';
   return shapeSets.includes(name) ? name : '';
@@ -106,7 +118,9 @@ export function startStyle(asked, readSaved, page = pageOrNone()) {
   return style;
 }
 
-function recordShapes(style, page) {
+// Says which frames the page has been drawn with. startStyle does it for the first
+// frames, and redrawFrames asks for it when a style with other frames goes on
+export function recordShapes(style, page = pageOrNone()) {
   if (!page || !page.dataset) return;
 
   const shapes = shapesFor(style);

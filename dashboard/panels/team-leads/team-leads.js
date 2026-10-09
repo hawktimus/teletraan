@@ -1,25 +1,21 @@
-// The lead of each subteam, a portrait each, three to a page. When there are
-// more leads, each time the panel comes round it shows the next page.
+// The lead of each department, one row each, four to a page. When there are
+// more departments, each time the panel comes round it shows the next page
+// (core/team-leads.js).
 
 import { doubleSlash } from '../../core/marks.js';
-import { hasText } from '../../core/text.js';
-import { visibleItems } from '../../core/content.js';
 import { makePages } from '../../core/turns.js';
-import { personNamed, photoAddress, preloadPhotos, slotMarkup, slotsPerPage, watchPhotos } from '../../core/portrait.js';
+import { departmentRows } from '../../core/team-leads.js';
+import { personNamed, photoAddress, preloadPhotos, rowsMarkup, rowsPerPage, watchPhotos } from '../../core/portrait.js';
 
-const nextPage = makePages(slotsPerPage);
-
-function subteamsFor(content) {
-  return visibleItems(content.subteams).filter(subteam => hasText(subteam.lead));
-}
+const nextPage = makePages(rowsPerPage);
 
 export function hasContent(content) {
-  return subteamsFor(content).length > 0;
+  return departmentRows(content.subteams).length > 0;
 }
 
 export function mount(host, content) {
-  const page = nextPage(subteamsFor(content));
-  const slots = page.items.map(subteam => leadSlot(subteam, content)).join('');
+  const page = nextPage(departmentRows(content.subteams));
+  const rows = page.items.map(row => leadRow(row, content));
 
   host.innerHTML = `
     <section class="page team-leads">
@@ -31,26 +27,19 @@ export function mount(host, content) {
         </div>
       </div>
 
-      <div class="slots">${slots}</div>
+      ${rowsMarkup(rows, content.settings && content.settings.portraitScale)}
     </section>`;
 
   watchPhotos(host);
-  preloadPhotos(page.upcoming.map(subteam => personNamed(content.people, subteam.lead)));
+  preloadPhotos(page.upcoming.map(row => personNamed(content.people, row.lead)));
 }
 
-// SUBTEAM NAME LEAD, or just LEAD when the subteam has no name
-function labelFor(subteam) {
-  const name = String(subteam.name || '').trim().toUpperCase();
-  return name ? name + ' LEAD' : 'LEAD';
-}
-
-// A subteam has only the lead's name. The photo is the photo of the person
+// A department has only the lead's name. The photo is the photo of the person
 // with that name under Leadership, if there is one.
-function leadSlot(subteam, content) {
-  return slotMarkup({
-    name: subteam.lead,
-    role: labelFor(subteam),
-    address: photoAddress(personNamed(content.people, subteam.lead)),
-    scale: content.settings && content.settings.portraitScale,
-  });
+function leadRow(row, content) {
+  return {
+    name: row.name,
+    role: row.role,
+    address: photoAddress(personNamed(content.people, row.lead)),
+  };
 }

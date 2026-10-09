@@ -149,8 +149,8 @@ const showConnectionStatusField = defineField({
 
 // The look of the whole screen. The starting value is the same as defaultSettings.style
 // in dashboard/config.js. dashboard/core/style.js turns the choice into the page
-// switch the stylesheets read and into a layout: Cybertron and Minimal have the bar
-// layout whatever the theme says. It is not required: Dashboard Settings published
+// switch the stylesheets read and into a layout: Minimal has the bar layout whatever the
+// theme says, and Original and Cybertron have the layout of the theme. It is not required: Dashboard Settings published
 // before this field existed has no style, which the screen reads as Original, and a
 // required field would stop that page being published (an alert too) until somebody
 // picked one.
@@ -159,7 +159,7 @@ const styleField = defineField({
   title: 'Style',
   type: 'string',
   group: 'look',
-  description: 'Original is the screen as now. Cybertron and Minimal have a banner, a side column and one main panel, whatever the theme. The team sets the base colors.',
+  description: 'Original is the screen as now. Cybertron is it in steel plates. Minimal has one main panel and a side column, whatever the theme. The team sets the colors.',
   options: { list: styles, layout: 'radio', direction: 'horizontal' },
   initialValue: 'original',
   validation: Rule => Rule.valid(styles.map(style => style.value)).error('Pick original, cybertron or minimal.'),

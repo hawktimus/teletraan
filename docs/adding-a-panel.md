@@ -145,15 +145,16 @@ panel. A panel that needs a line, a card or a bar uses one of these:
   Leave `address` empty and it shows the silhouette. `scale` is the Portrait
   size setting, `content.settings.portraitScale`, a percent (leave it out for
   100): the portrait is 292 square at 100 and gets smaller in proportion, and
-  every panel that draws a portrait should pass it. `leadership.js` and
-  `team-leads.js` draw rows of up to three, and `roster.js` draws one as the
-  team lead beside a list of names. `team-leads.js` gets a page of people at a
-  time from `makePages(slotsPerPage)` in `core/turns.js`, which counts the
-  pages between turns of the panel. `leadership.js` gets its pages ready made
-  from `leadershipPages` in `core/leadership.js`, so that a page is one role,
-  and counts them with `makePages(1)`. They call `watchPhotos` and
-  `preloadPhotos` from `core/portrait.js`. The slot's rules are in `base.css`,
-  under People portraits. A row with fewer than three slots is centred.
+  every panel that draws a portrait should pass it. `roster.js` draws one as
+  the team lead beside a list of names.
+- **Rows of people.** `rowsMarkup(rows, scale)` in `core/portrait.js` draws up
+  to `rowsPerPage` (4) rows, each `{ name, role, address, metal }`: the photo at
+  the left, the name beside it and the role at the right end. `leadership.js`
+  and `team-leads.js` use it. `team-leads.js` gets a page of rows at a time from
+  `makePages(rowsPerPage)` in `core/turns.js`, which counts the pages between
+  turns of the panel. `leadership.js` is one page, picked by `leaders` in
+  `core/leadership.js`. Both call `watchPhotos` from `core/portrait.js`. The
+  rules of the rows and of the slot are in `base.css`, under People portraits.
 - **A straight bar.** `<div class="bar"></div>` is 16px high, or add
   `bar-thin` for 8px. Give it a width. The banner rule is one.
 - **A tag.** `tagMarkup(width)` is the slanted purple tag of the ticker.
@@ -313,7 +314,7 @@ Dashboard Settings field and an address switch, and the address wins.
 
 | Attribute | Values | Dashboard Settings | Address |
 |-----------|--------|--------------------|---------|
-| `data-metal` | `gold` (dull antique gold, the default) or `silver` (weathered silver). It is on the html element, for the banner, the countdown and the logo, and on each large and small panel area, for its frame and everything in it, chosen at every page change | Screen, Frame metal (the html element). Transitions, Frame finish (the areas) | `?metal=silver` (the html element). `?frames=silver` (the areas) |
+| `data-metal` | `gold` (dull antique gold, the default) or `silver` (weathered silver). It is on the html element, for the banner, the countdown and the logo, and on each large and small panel area, for its frame and everything in it, chosen at every page change | Screen, Frame metal (the html element). Look, Frame finish (the areas) | `?metal=silver` (the html element). `?frames=silver` (the areas) |
 | `data-glint` | `on` (the default) or `off`: the bright dash that runs round each big frame | Screen, Glint (Flat and Plain in Polish turn it off) | `?glint=off` |
 | `data-finish` | `metal` (the default) or `flat` | Screen, Polish (Polished is `metal`, Flat and Plain are `flat`) | `?finish=flat` |
 | `data-look` | `polished` (the default), `flat` or `plain`: plain also hides the screws and the // in the panel headers (two rules in `base.css`). The look sets `data-finish` and `data-glint` too (`core/look.js`) | Screen, Polish | `?look=plain` |

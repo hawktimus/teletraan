@@ -22,7 +22,8 @@ import { layoutFor, shapesFor, shapesNow, styleNow } from './style.js';
 // document as it was saved the last time the content was read from Sanity, or
 // null (core/content.js, savedTheme). page is the html element, and only the
 // tests give another. style is the style startStyle() chose (core/style.js), and
-// the layout of Cybertron and Minimal is the bar layout whatever the theme says.
+// the layout of Minimal is the bar layout whatever the theme says. Original and
+// Cybertron have the layout of the theme.
 // Returns the layout it chose. Whatever goes wrong, the screen starts in the
 // standard layout.
 export function startLayout(address, readTheme, page = document.documentElement, style) {
@@ -155,8 +156,8 @@ function savedStorage() {
 }
 
 // look is { theme, overlay, style }. Returns true when this look must not go on the
-// page now: the page is reloading to change layout (or to draw the frames with the
-// corners of another style), or it has to wait for the
+// page now: the page is reloading to change layout (or to draw the frames of the bar
+// layout with the corners of another style), or it has to wait for the
 // moment it can, because an alert or an announcement has the screen and the
 // new page would not bring it back. theme-apply.js asks again at its next
 // page change and once a minute. When the layout is the same, or the page

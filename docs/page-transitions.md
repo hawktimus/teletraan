@@ -32,11 +32,13 @@ moves nothing. Both ignore Page change style. The mechanical change only
 exists in full motion.
 
 Now and then a hidden transition replaces a page change of the large panel: the
-whole screen comes apart and rebuilds, with a blue error screen or a picture of two
-red eyes behind it.
-It uses the same keyframes (`piece-break` and `piece-build`) as the pieces of the
-mechanical change, for five big blocks instead of a frame's pieces. See
-docs/hidden-transitions.md.
+whole screen comes apart, with a blue error screen or a picture of two
+red eyes behind it, and then it comes back and its frames fall into a pile and are put
+back by a cube.
+The blocks fly apart with the same keyframes (`piece-break`) as the pieces of the
+mechanical change, for five big blocks instead of a frame's pieces. The frames fall
+as these same pieces, which the area shows in place of the whole frame while the metal is
+down, and come back with `piece-fall` and `piece-lift`. See docs/hidden-transitions.md.
 
 ## The metal
 
@@ -123,7 +125,8 @@ panel. That keeps every point where it is in the whole frame, so the pieces fit
 together into the frame at rest, and the metal bands carry on from one to the
 next. The large frame has 13 pieces and the small frame 12. The pieces are in the
 area from the start but hidden (`display: none`). During a mechanical change they
-are shown, and the frame at rest is hidden in their place.
+are shown, and the frame at rest is hidden in their place. The same happens while
+the frames fall at the end of a hidden transition.
 
 Only the pieces are layers, and only while the change runs: `will-change` is set
 on them in the two states of a mechanical change and nowhere else, and the area has
@@ -139,15 +142,16 @@ sit on its own line, and each rivet is in one piece only, so the dots fly away a
 back with the frame. The stamped id is not in a piece: it is hidden while the pieces are
 shown, like the plates.
 
-The frame of the main panel in the bar layout (Cybertron and Minimal) is cut into 12 pieces
-with the names of the large frame's pieces, so the table in `frame.css` moves them. It has no
-seam under its header, so it has no `seam-line` or `seam-notch`, and it has one more,
-`plate-decor`, which holds the decoration. Its bars carry their neon lines and their
-bolts. The ticker of that layout has a frame, and it does not lift or break: its page
-change turns the slats only (docs/layouts.md, "Frames"). Minimal's main panel has the same 12
-pieces: its rivets and its rust are each in the bar they are on, so they go with it, and its
-weld seam and the line with ticks are in `plate-decor`. The bar layout never changes the
-metal of a frame, because the steel is the metal of both of its styles.
+The frame of the main panel in the bar layout (Minimal), and the large and the small frame of
+Cybertron, are cut into 12 pieces with the names of the large frame's pieces, so the table in
+`frame.css` moves them. They have no seam under their headers, so they have no `seam-line` or
+`seam-notch`, and each has one more, `plate-decor`, which holds the decoration. Their bars carry
+their neon lines and their bolts. The ticker of the bar layout, and the ticker of Cybertron, has a
+frame, and it does not lift or break: its page change turns the slats only (docs/layouts.md,
+"Frames" and "Cybertron"). Minimal's main panel has the same 12 pieces: its rivets and its rust
+are each in the bar they are on, so they go with it, and its weld seam and the line with ticks are
+in `plate-decor`. The page change never changes the metal of a frame of Cybertron or Minimal,
+because the steel is the metal of both styles.
 
 To change where a piece goes, edit its line in the table in `frame.css`
 (`[data-piece="name"]`). `--tx`, `--ty` and `--tz` are how far it moves, `--rx`,

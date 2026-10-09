@@ -2,63 +2,64 @@
    has always been, in the layout its theme names. It sets no custom property, so
    nothing changes while the team does not mirror the layout.
 
-   What it has is the mirror of the standard layout. A team can have Mirror switched
-   on (core/teams.js puts the class mirrored on the html element), and then the
-   standard layout is turned left to right: the countdown and the small frame on the
-   left and the large frame on the right, the clock at the left end of the banner and
-   the name at the right with the logo at the far end, and the ticker's tag at the
-   right end. The frames keep the shape they have and the
+   What it has is the mirror of the standard layout, which Cybertron has too, because it
+   keeps the same arrangement (styles/cybertron.css only adds what its own banner needs).
+   A team can have Mirror switched on (core/teams.js puts the class mirrored on the html
+   element), and then the standard layout is turned left to right: the countdown and the
+   small frame on the left and the large frame on the right, the clock at the left end of
+   the banner and the name at the right with the logo at the far end, and the ticker's tag
+   at the right end. The frames keep the shape they have and the
    pages in them keep reading from the left. Text is never turned round, only its
    order and its alignment. The sidebar layout (Neon Prime) is not mirrored.
 
-   Every rule starts with html[data-style="original"].mirrored[data-layout="standard"],
-   so a screen that is not mirrored is never touched. The bar layout has its own
-   mirror in layouts/bar.css, and both are the same idea: a flex row turned with
-   flex-direction, and the text at the other end of its box. */
+   Every rule starts with html.mirrored[data-layout="standard"], so a screen that is not
+   mirrored is never touched, and the bar layout (Minimal) and the sidebar layout are not
+   either. The bar layout has its own mirror in layouts/bar.css, and both are the same
+   idea: a flex row turned with flex-direction, and the text at the other end of its box. */
 
 /* The two columns change places. The banner and the ticker run across both. */
-html[data-style="original"].mirrored[data-layout="standard"] #stage {
+html.mirrored[data-layout="standard"] #stage {
   grid-template-columns: 656px 1152px;
 }
-html[data-style="original"].mirrored[data-layout="standard"] #region-grid1 { grid-column: 2; }
-html[data-style="original"].mirrored[data-layout="standard"] #region-right { grid-column: 1; }
+html.mirrored[data-layout="standard"] #region-grid1 { grid-column: 2; }
+html.mirrored[data-layout="standard"] #region-right { grid-column: 1; }
 
 /* The banner: the logo at the right end, then the name block, and the clock at the
    left end of the block. The name is a flex row of letters (core/name.js) that
    squeezes when it is too long, so it keeps its width and its letters go to the
    right end of it. The SAMPLE CONTENT badge is beside the TEAM plate, on the other
    side of it now. */
-html[data-style="original"].mirrored[data-layout="standard"] .banner {
+html.mirrored[data-layout="standard"] .banner {
   grid-template-columns: minmax(0, 1fr) 219px;
 }
-html[data-style="original"].mirrored[data-layout="standard"] .banner .logo { grid-column: 2; grid-row: 1; }
-html[data-style="original"].mirrored[data-layout="standard"] .banner .banner-text { grid-column: 1; grid-row: 1; }
-html[data-style="original"].mirrored[data-layout="standard"] .banner .banner-top,
-html[data-style="original"].mirrored[data-layout="standard"] .banner .banner-bottom,
-html[data-style="original"].mirrored[data-layout="standard"] .ticker {
+html.mirrored[data-layout="standard"] .banner .logo { grid-column: 2; grid-row: 1; }
+html.mirrored[data-layout="standard"] .banner .banner-text { grid-column: 1; grid-row: 1; }
+html.mirrored[data-layout="standard"] .banner .banner-top,
+html.mirrored[data-layout="standard"] .banner .banner-bottom,
+html.mirrored[data-layout="standard"] .ticker {
   flex-direction: row-reverse;
 }
-html[data-style="original"].mirrored[data-layout="standard"] .banner .team-name { justify-content: flex-end; }
-html[data-style="original"].mirrored[data-layout="standard"] .banner .team-plate { align-self: flex-end; }
-html[data-style="original"].mirrored[data-layout="standard"] .banner .banner-right { align-items: flex-start; }
-html[data-style="original"].mirrored[data-layout="standard"] .banner .sample-badge {
+html.mirrored[data-layout="standard"] .banner .team-name { justify-content: flex-end; }
+html.mirrored[data-layout="standard"] .banner .team-plate { align-self: flex-end; }
+html.mirrored[data-layout="standard"] .banner .banner-right { align-items: flex-start; }
+html.mirrored[data-layout="standard"] .banner .sample-badge {
   left: auto;
   right: 544px;
 }
 
 /* The ticker's message ends at the tag, which is at the right end now */
-html[data-style="original"].mirrored[data-layout="standard"] .ticker .message { text-align: right; }
+html.mirrored[data-layout="standard"] .ticker .message { text-align: right; }
 
 /* The hidden transitions fly the large frame off to the right and the countdown and
    the small frame to the left, the other way round from frame.css */
-html[data-style="original"].mirrored[data-layout="standard"] #region-grid1     { --tx: 1100px;  --ry: -85deg; --rz: 8deg; }
-html[data-style="original"].mirrored[data-layout="standard"] #region-countdown { --tx: -900px;  --ry: 70deg;  --rz: -14deg; }
-html[data-style="original"].mirrored[data-layout="standard"] #region-grid2     { --tx: -1000px; --ry: 80deg;  --rz: 10deg; }
+html.mirrored[data-layout="standard"] #region-grid1     { --tx: 1100px;  --ry: -85deg; --rz: 8deg; }
+html.mirrored[data-layout="standard"] #region-countdown { --tx: -900px;  --ry: 70deg;  --rz: -14deg; }
+html.mirrored[data-layout="standard"] #region-grid2     { --tx: -1000px; --ry: 80deg;  --rz: 10deg; }
 
 /* The zones of a seasonal pack's front layer are rectangles of the screen that were
    measured empty on the layout as it is not mirrored (core/season.js). On this one
    they would cover text, so they are not drawn. The header mark and the pieces that
    drift over the screen are. */
-html[data-style="original"].mirrored[data-layout="standard"] #season-front {
+html.mirrored[data-layout="standard"] #season-front {
   display: none;
 }

@@ -23,6 +23,11 @@ installing anything on the Mini, and whenever a step needs a login or a key.
   reads them.
 - The kiosk service starts a browser full screen when the Mini boots. A kiosk
   is a browser with no address bar, tabs or menus.
+- Two text drawings, `console/startup.txt` and `console/shutdown.txt`, fill the
+  TV while the Mini starts (above the login prompt) and while it shuts down.
+  `install-console.sh` puts the first in `/etc/issue` and turns on a unit that
+  prints the second. The container shows only the `dashboard` folder, so the
+  drawings are not served.
 
 The calendars, the slides, `version.txt` and `device.json` live in
 `/var/lib/teletraan/data` on the Mini, not in the repository. The container
@@ -58,6 +63,8 @@ to attach the data folder to.
 | `scripts/install-timers.sh` | Copies the unit files into place and turns on the calendar timer and the pull timer |
 | `scripts/install-calendars.sh` | Copies the two calendar unit files into place and turns on the calendar timer. Installs nothing else, so it leaves the pull timer off |
 | `scripts/install-slides.sh` | Copies the two slides unit files into place and turns on the slides timer. Does not install the packages, it prints the `apt install` line when one is missing |
+| `scripts/install-console.sh` | Keeps a copy of `/etc/issue` once, writes the startup drawing above that text, copies `teletraan-console.service` and turns it on. Installs no package and is safe to run twice. The way back is in `docs/rebuilding-the-mini.md`, step 13 |
+| `console/startup.txt`, `console/shutdown.txt` | The drawing shown above the login prompt while the Mini starts, and the same drawing with the words "shutting down" for when it stops. Plain 7 bit text, at most 100 columns by 56 rows, with no backslash because the login prompt reads one as a code |
 | `systemd/*.service`, `*.timer` | What runs, and how often |
 
 ## local.env
@@ -112,6 +119,11 @@ happens.
   `sudo /opt/teletraan/deploy/scripts/install-calendars.sh`
 - a slides file in `systemd/` changed: run
   `sudo /opt/teletraan/deploy/scripts/install-slides.sh`
+- `console/startup.txt` changed: run
+  `sudo /opt/teletraan/deploy/scripts/install-console.sh`, because `/etc/issue`
+  is a copy of it. `console/shutdown.txt` changed: nothing to do, the unit
+  reads the file when the Mini stops. `teletraan-console.service` changed: run
+  the same script
 - `pull.sh`, `fetch-calendars.sh` or `slides-sync.sh` changed: nothing to do,
   the next run uses the new script
 - `kiosk.sh` changed: restart the kiosk service, because the browser only
@@ -120,16 +132,19 @@ happens.
 ## Things that need the team mentor's yes
 
 Installing the packages on the Mini, Docker's apt source and key, the nginx
-image, and the deploy key all need the team mentor's yes first. The list, with
+image, the deploy key and the change to `/etc/issue` all need the team
+mentor's yes first. The list, with
 the step that uses each one, is the table at the top of
 `docs/rebuilding-the-mini.md`.
 
 ## Names this folder assumes
 
 The unit files use the repository location `/opt/teletraan`.
-`install-timers.sh`, `install-calendars.sh` and `install-slides.sh` stop with
-an explanation if the repository is somewhere else. The account is not named
+`install-timers.sh`, `install-calendars.sh`, `install-slides.sh` and
+`install-console.sh` stop with an explanation if the repository is somewhere
+else. The account is not named
 in the unit files: they say `ACCOUNT`, and the install script fills in the
 account that owns the repository, so it works whatever the Mini's user is
-called. The repository must not be owned by root.
+called. The repository must not be owned by root. `teletraan-console.service`
+runs as root and has no account in it.
 To use another location, change it in every file in `systemd/`.

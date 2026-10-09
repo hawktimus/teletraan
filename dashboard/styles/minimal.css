@@ -1,23 +1,24 @@
 /* The Minimal style (core/style.js, Style in Dashboard Settings): the industrial
-   style. It has the same bar layout as Cybertron (layouts/bar.css) whatever the
-   theme says, and any team's colors. The first rule sets custom properties, which
-   the bar panels and the frame drawing read. They have the same names as the ones
-   in cybertron.css, where each is described, and Minimal does not set the ones for
-   what only Cybertron has (the raised plate, the scanlines). The rules after it
-   paint the page background and the parts of the frames that only this style has.
-   Everything it paints is still: the grid, the rivets and the rust never move.
+   style. It has the bar layout (layouts/bar.css) whatever the theme says, and any
+   team's colors. The first rule sets custom properties, which the bar panels and the
+   frame drawing read. They have the same names as the ones in cybertron.css, where
+   each is described, and Minimal does not set the ones for what only Cybertron has
+   (the raised plate, the scanlines). The rules after it paint the page background and
+   the parts of the frames that only this style has. Everything it paints is still:
+   the grid, the rivets and the rust never move.
 
      --style-rust            the rust at two corners of every frame, and the patch under it, and
                              the rust on the war clock's housing
 
    The frames are drawn by core/plate.js with shapes of their own for this style, cut
-   at 34 px instead of 56 (bar-main-minimal and the other two, "The frames of the bar
-   layout"). Minimal has no wide neon lines, no hazard stripe, no conduit, no slashes
-   and no brackets. What it has on a frame is a thin neon line just inside the steel
-   edge, a hex bolt at each of the four joints, rivets and the stamped id, which are
-   the Original style's, rust, a weld seam on the main panel, and a line with ticks
-   along the foot of its header. The plates are the team's background color, and the
-   header tab is an armor plate with the team's plate color inset. */
+   at 34 px (bar-main-minimal and the other two, "The frames of the bar layout"). What
+   only Cybertron has is not here: no wide neon lines, no hazard stripe, no conduit, no
+   slashes, no brackets, no plate seams, no scanlines and no raised plate. Minimal has no
+   stamped id either, which is Original's. What it has on a frame is a thin neon line just
+   inside the steel edge, a hex bolt at each of the four joints, the rivets that Original
+   also has, rust, a weld seam on the main panel, and a line with ticks along the foot of
+   its header. The plates are the team's background color, and the header tab is an armor
+   plate with the team's plate color inset. */
 
 html[data-style="minimal"] {
   --style-body: var(--ground);
@@ -73,10 +74,15 @@ html[data-style="minimal"] .tag-fill { fill: var(--team-plate); }
 html[data-style="minimal"] .bar-logo .drawing { --logo-edge: var(--team-accent); }
 
 
-/* The rivets and the stamped id are the Original style's (base.css, plate.js): they are in the
-   markup of every frame that has them, and are shown here and for Original only */
+/* The rivets are the Original style's (base.css, plate.js): they are in the markup of every
+   frame that has them, and are shown here and for Original only. The stamped id is Original's
+   alone, and no frame of this style has one in its markup */
 html[data-style="minimal"] .rivets { display: inline; }
-html[data-style="minimal"] .plate-id { display: block; }
+
+/* The // mark at the right end of a header is left off, as the pictures have none. The ticks
+   along the foot of the header are there instead. A seasonal pack's mark is another picture
+   (pack-mark) and stays. */
+html[data-style="minimal"] .header svg.double-slash { display: none; }
 
 
 /* What only Minimal draws on a frame (plate.js, decorMarkup and wearMarkup). The weld seam
@@ -119,7 +125,7 @@ html[data-style="minimal"][data-finish="flat"] .art-wear { display: none; }
    neon, and two groups of ticks, a long pink one, a short neon one and a short accent one at
    the top, and a pink and a neon one lower down. The row of the layout turns round with the
    mirror, so the rail is at the right edge for a team that has it on. The numbers are
-   measured on the 12 by 736 box of the rail, and are the same as Cybertron's. */
+   measured on the 12 by 736 box of the rail. */
 html[data-style="minimal"] .bar-rail { position: relative; }
 html[data-style="minimal"] .bar-rail::before {
   content: "";
@@ -148,5 +154,5 @@ html[data-style="minimal"] .bar-rail::after {
 
 
 /* The war clock in the banner (panels/countdown) is shown by this style and by Cybertron, and by no
-   other. Its digits are --style-digits, the team's neon here. */
+   other. Here it is the narrow form, 700 by 120. Its digits are --style-digits, the team's neon here. */
 html[data-style="minimal"] .war-clock { display: block; }

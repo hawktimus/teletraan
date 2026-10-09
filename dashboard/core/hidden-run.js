@@ -13,7 +13,11 @@
 //           the sidebar, the large panel and the ticker, core/layout.js, blocksOf)
 //   apart   the blocks are out of sight and #backdrop shows what is behind them.
 //           The pages of all three areas are swapped now (core/areas.js)
-//   build   the blocks fly back together, showing the next screen
+//   fall    the screen is whole, showing the next pages, and its frames break: every piece
+//           of metal falls into a pile, a cube rises out of it and, with data-lift added,
+//           the pieces fly back (core/hidden-pile.js, "The frames fall and come back" in
+//           frame.css). The rotation clock is held for as long as it lasts
+//   build   the content comes back in as it does at the first assembly
 // and nothing at all when no transition is playing. A glitch can also play while
 // the blocks are apart, and then data-hidden stays apart and only data-tint is added.
 //
@@ -30,20 +34,21 @@ import { hiddenAdvanceSeconds } from '../config.js';
 import { allPictures, makePictureChooser, pictureAddress } from './hidden-pictures.js';
 import { chooseHidden, holdReason, pushedKind, readHandledRequest, readLastFired, rememberHandledRequest, rememberLastFired } from './hidden.js';
 import { hiddenTransitions } from './hidden-transitions.js';
+import { makePile } from './hidden-pile.js';
 import { preloadImages } from './images.js';
 import { setHiddenOffer, startWholeScreen } from './areas.js';
-import { moveOn, secondsUntilChange } from './schedule.js';
+import { moveOn, pauseRotation, resumeRotation, secondsUntilChange } from './schedule.js';
 import { layoutNow, otherAreas } from './layout.js';
 import { takeoverRunning } from './takeover.js';
+import { pileTimes } from './transitions.js';
 
-// How long the blocks take to fly apart, and the same again to fly back, at
-// normal speed. frame.css has the same number as --hidden-seconds in tokens.css.
-// The last block starts .3 of it late and each block takes .6 of it, so all the
-// blocks are apart after .9 of it. Coming back they take .5 of it each and the
-// last starts .18 of it late.
+// How long the blocks take to fly apart, at normal speed. frame.css has the same number as
+// --hidden-seconds in tokens.css, and it is the length of the fall of the frames too
+// (pileTimes.fallMs in core/transitions.js). The last block starts .3 of it late and
+// each block takes .6 of it, so all the blocks are apart after .9 of it.
 const flySeconds = 1.6;
 const apartAfter = 0.9;
-const togetherAfter = 0.9; // includes the backdrop fading out at the end
+const togetherAfter = 0.9; // the build: the backdrop fades out and the content comes in
 const longestRest = 3000; // milliseconds to wait for the three areas to stop moving before giving up
 
 const world = document.getElementById('world');
@@ -64,6 +69,8 @@ let nightIsUp = () => false;
 let chooser = null; // picks the picture of each play, so the two of a set take turns
 const pictureElements = {}; // file name -> the img in #backdrop, once the picture has loaded. A picture that failed is not here.
 let showing = null; // the img on the backdrop now, or null
+let pile = null; // the frames that fall at the end of this transition, or null
+let rotationHeld = false; // this transition has paused the rotation clock
 
 class Stopped extends Error {}
 
@@ -351,11 +358,30 @@ function makeScene(screen, swapPage) {
       await sleep(seconds);
     },
 
-    // The blocks fly back together, showing the next screen
+    // The screen comes back: the frames of the next screen fall into a pile, a cube rises and the
+    // frames fly back (core/hidden-pile.js), and then the content comes in. The three parts
+    // take 5 seconds at the most, and nothing else moves meanwhile. cameBack is the last part only,
+    // since the rotation clock was held for the rest
     async rebuild() {
       screen.together();
+      pauseRotation();
+      rotationHeld = true;
+
+      pile = makePile();
+      if (!pile.empty) {
+        world.dataset.hidden = 'fall';
+        const plan = pile.release(Math.floor(Math.random() * 4294967296));
+        await sleep(pileTimes.cubeAtMs / 1000);
+        pile.showCube();
+        await sleep((pileTimes.liftAtMs - pileTimes.cubeAtMs) / 1000);
+        world.dataset.lift = ''; // the second pulse: the pieces lift
+        await sleep((plan.lockedMs - pileTimes.liftAtMs) / 1000);
+        pile.finish();
+      }
+
       const started = performance.now();
       world.dataset.hidden = 'build';
+      pile.contentIn();
       await sleep(flySeconds * togetherAfter);
       cameBackIn = performance.now() - started;
     },
@@ -368,6 +394,15 @@ function makeScene(screen, swapPage) {
 // transition set is taken away
 function putBack(screen) {
   delete world.dataset.hidden;
+  delete world.dataset.lift;
+  if (rotationHeld) resumeRotation();
+  rotationHeld = false;
+  try {
+    if (pile) pile.clear();
+  } catch (error) {
+    console.error('The frames of the hidden transition could not be put back', error);
+  }
+  pile = null;
   world.style.removeProperty('--glitch-seconds');
   backdrop.hidden = true;
   delete backdrop.dataset.look;

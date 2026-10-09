@@ -23,8 +23,10 @@
 //   scene.pictureCut(set, seconds)    the next picture of the set shows at once, with no fade,
 //                                     and stays for these seconds
 //   scene.pictureOut(seconds)         the picture fades out over these seconds
-//   scene.rebuild()                   swaps the pages while the blocks are apart, and the blocks
-//                                     fly back together showing the next screen
+//   scene.rebuild()                   the screen comes back whole, showing the next screen, and its
+//                                     frames fall into a pile, a cube rises out of it and the frames
+//                                     fly back to their places. At most 5 seconds, and then the
+//                                     content comes in (docs/hidden-transitions.md)
 // A set is a name in core/hidden-pictures.js, 'redEyes' or 'blueScreen'. Each play
 // takes the picture after the one used last, so the two pictures of a set take
 // turns. A picture that did not load is skipped, and with none to show the step still
@@ -38,7 +40,7 @@
 export const hiddenTransitions = {
   // The screen glitches blue like a failing computer, the whole screen comes apart
   // over a deep blue, glitches once more and cuts to a blue error screen for 3
-  // seconds, then comes back together showing the next screen
+  // seconds, then comes back whole, falls into a pile and is put back by the cube
   desktop: {
     name: 'Desktop reveal',
     hoursField: 'desktopEveryHours',
@@ -54,7 +56,7 @@ export const hiddenTransitions = {
 
   // Red glitches, everything breaks apart to black, a picture of two red eyes
   // fades in, stays for 2.5 seconds and fades out, and the screen comes back
-  // together
+  // whole, falls into a pile and is put back by the cube
   redEyes: {
     name: 'Red eyes',
     hoursField: 'redEyesEveryHours',

@@ -105,6 +105,16 @@ keys work:
 - First slide: Home. Last slide: End.
 - End the talk: Esc twice within 2 seconds. One Esc does nothing.
 
+The mouse works too, for a speaker with no clicker. A left click, or a tap on a
+touch screen, does what Page Down does: it starts the talk on the title card,
+moves to the next slide, and on the last slide shows the Thank you card. A right
+click does what Page Up does. The middle button does nothing. A double click moves
+one slide, not two, because a second left click within half a second of the one
+before is left out. While a talk is on the screen the right click does not open
+the browser menu, and the mouse pointer stays hidden. If the card says "Slides are
+not ready", any click on it ends the talk at once and the TV starts its pages
+again from the first one, as when it was switched on.
+
 One more forward key on the last slide shows the Thank you card for 5 seconds, and
 then the TV goes back to what it was doing. A talk also ends by itself when its
 slot and the overrun are used up, on whatever slide it is.

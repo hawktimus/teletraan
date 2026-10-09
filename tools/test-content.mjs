@@ -72,7 +72,6 @@ async function loadCopy(name, changeConfig) {
     sponsorLogoPanel: await import(base + 'panels/sponsor-logo/sponsor-logo.js'),
     customPanel: await import(base + 'panels/custom/custom.js'),
     tickerPanel: await import(base + 'panels/ticker/ticker.js'),
-    leadership: await import(base + 'core/leadership.js'),
     layout: await import(base + 'core/layout.js'),
     look: await import(base + 'core/look.js'),
     marks: await import(base + 'core/marks.js'),
@@ -113,9 +112,8 @@ const teamsModule = live.teams;
 const { makeTurns, makePages } = live.turns;
 const { tidyPhoto, photoUrl, preloadImages, screenPhotoUrl, photoFocus, photoMaxWidth } = live.images;
 const { photosToShow, photoKey, newestFirst, creditText, makePhotoQueue, ownSeconds } = live.photos;
-const { photoAddress, personNamed, slotMarkup, slotsPerPage, silhouetteMarkup } = live.portrait;
+const { photoAddress, personNamed, slotMarkup, silhouetteMarkup } = live.portrait;
 const { rosterPages, makeRosterTurns, membersPerPage, rowsPerColumn } = live.roster;
-const { leadershipPages, splitEvenly, roleOrder } = live.leadership;
 
 // startContent decides between the two readers. These two skip the deciding
 // and just read, for the tests that are about one reader.
@@ -448,7 +446,8 @@ test('normalizeContent turns a full Sanity result into the sample content shape'
   const sampleContent = withDefaults(JSON.parse(fs.readFileSync(sampleFile, 'utf8')));
 
   // The sample also carries a Meeting day to show its shape. The booking script reads those, not the screen.
-  assert.deepEqual(Object.keys(content).sort(), Object.keys(sampleContent).filter(name => name !== 'presentationDays').sort());
+  // And the drawings of the boot and shutdown screens, which the screen does not read.
+  assert.deepEqual(Object.keys(content).sort(), Object.keys(sampleContent).filter(name => name !== 'presentationDays' && name !== 'console').sort());
   assert.deepEqual(content.team, { name: '[Team name]', number: '1234', school: live.config.defaultTeam.school });
 
   const settings = content.settings;
@@ -3885,8 +3884,6 @@ function withFakePage(run) {
 }
 
 test('a slot has the portrait, the name and the role, as one slat, and escapes what editors typed', () => withFakePage(drawn => {
-  assert.equal(slotsPerPage, 3);
-
   const withPhoto = slotMarkup({ name: '<b>Alexandria Joseph</b>', role: 'CAPTAIN', address: photoBase + '?rect=0,0,5,5&w=280&h=280&fit=crop&auto=format' });
   assert.ok(withPhoto.includes('data-slat="item"'));
   assert.ok(withPhoto.includes('<img src="' + photoBase + '?rect=0,0,5,5&amp;w=280&amp;h=280&amp;fit=crop&amp;auto=format" width="280" height="280" alt="">'));
@@ -4022,7 +4019,7 @@ test('portraitSizes: the card, the photo and the space round it at 60, 80 and 10
     before = size;
   }
 
-  // three slots of 352 and two gaps of 20 are the 1096 of the row, so a portrait never needs more than its slot
+  // the slot of the Roster panel is 352 wide, so a portrait never needs more than its slot
   assert.ok(portraitSizes(100).card <= 352);
 });
 
@@ -4152,163 +4149,6 @@ test('the Photo panel draws the card and the caption at the Photo size, and the 
   assert.ok(/\.photo \.caption\s*\{[^}]*height: 64px;[^}]*font: 500 var\(--size-body\)\/64px/.test(style), 'the caption keeps its height and its text size');
   assert.ok(style.includes('max-width: min(700px, calc(100% - 88px));'), 'the credit does not shrink with a smaller card');
   assert.ok(style.includes('object-fit: cover;'));
-}));
-
-test('the Leadership and Team Leads panels have no cap of six and use the shared slots', () => {
-  ['leadership/leadership.js', 'team-leads/team-leads.js'].forEach(file => {
-    const code = fs.readFileSync(path.join(dashboardFolder, 'panels', file), 'utf8');
-    assert.equal(/MAX_CARDS|slice\(0, 6\)/.test(code), false, file + ' still limits the list to six');
-    // Team Leads fills each page with up to three leads. Leadership is given its pages ready made, one role to a page
-    const paging = file.startsWith('leadership') ? 'makePages(1)' : 'makePages(slotsPerPage)';
-    assert.ok(code.includes(paging), file + ' does not show a page at a time');
-    assert.ok(code.includes('preloadPhotos('), file + ' does not load the next page\'s photos');
-    assert.ok(code.includes('watchPhotos('), file + ' does not replace a photo that cannot be loaded');
-    assert.ok(code.includes('slotMarkup('), file + ' should draw its slots with slotMarkup');
-  });
-});
-
-// The Leadership panel: its pages (core/leadership.js) and what it draws
-
-function crew(role, count, more) {
-  const people = [];
-  for (let number = 1; number <= count; number++) {
-    people.push(Object.assign({ role: role, name: '[' + role + ' ' + number + ']' }, more));
-  }
-  return people;
-}
-
-const namesOf = page => page.map(person => person.name);
-const rolesOf = page => Array.from(new Set(page.map(person => String(person.role).trim().toLowerCase())));
-
-test('splitEvenly shares a list over the fewest pages, with the larger pages first', () => {
-  const sizesFor = (count, size) => splitEvenly(namesCalled(count), size).map(page => page.length);
-
-  assert.deepEqual(sizesFor(0, 3), []);
-  assert.deepEqual(sizesFor(1, 3), [1]);
-  assert.deepEqual(sizesFor(2, 3), [2]);
-  assert.deepEqual(sizesFor(3, 3), [3]);
-  assert.deepEqual(sizesFor(4, 3), [2, 2]);
-  assert.deepEqual(sizesFor(5, 3), [3, 2]);
-  assert.deepEqual(sizesFor(6, 3), [3, 3]);
-  assert.deepEqual(sizesFor(7, 3), [3, 2, 2]);
-  assert.deepEqual(sizesFor(8, 3), [3, 3, 2]);
-  assert.deepEqual(sizesFor(9, 3), [3, 3, 3]);
-  assert.deepEqual(sizesFor(10, 3), [3, 3, 2, 2]);
-  // the size is a number given to it, not a fixed three
-  assert.deepEqual(sizesFor(5, 4), [3, 2]);
-  assert.deepEqual(sizesFor(9, 4), [3, 3, 3]);
-
-  // nobody is lost or moved: the pages put end to end are the list
-  assert.deepEqual([].concat(...splitEvenly(namesCalled(10), 3)), namesCalled(10));
-});
-
-test('leadershipPages puts the coaches, then the captains, then the mentors, whatever order they were typed in', () => {
-  const people = [].concat(crew('Mentor', 1), crew('Captain', 2), crew('Coach', 1), crew('Mentor', 1, { name: '[Mentor B]' }));
-  const pages = leadershipPages(people);
-
-  assert.deepEqual(roleOrder, ['coach', 'captain', 'mentor']);
-  assert.deepEqual(pages.map(rolesOf), [['coach'], ['captain'], ['mentor']]);
-  assert.deepEqual(pages.map(namesOf), [['[Coach 1]'], ['[Captain 1]', '[Captain 2]'], ['[Mentor 1]', '[Mentor B]']]);
-});
-
-test('two coaches and a captain are on separate pages, and the sample people are three pages of two', () => {
-  assert.deepEqual(leadershipPages([].concat(crew('Coach', 2), crew('Captain', 1))).map(namesOf), [['[Coach 1]', '[Coach 2]'], ['[Captain 1]']]);
-
-  const sample = normalizeSample(JSON.parse(fs.readFileSync(sampleFile, 'utf8')));
-  assert.deepEqual(leadershipPages(sample.people).map(page => page.length), [2, 2, 2]);
-  assert.deepEqual(leadershipPages(sample.people).map(rolesOf), [['coach'], ['captain'], ['mentor']]);
-});
-
-test('a role with more people than fit on a page is split evenly, and a page is never three of one role and one of another', () => {
-  assert.equal(slotsPerPage, 3);
-
-  const sizes = people => leadershipPages(people).map(page => page.length);
-  assert.deepEqual(sizes(crew('Coach', 4)), [2, 2]);
-  assert.deepEqual(sizes(crew('Captain', 5)), [3, 2]);
-  assert.deepEqual(sizes(crew('Mentor', 6)), [3, 3]);
-  assert.deepEqual(sizes(crew('Mentor', 7)), [3, 2, 2]);
-
-  const everyone = [].concat(crew('Coach', 4), crew('Captain', 5), crew('Mentor', 7));
-  const pages = leadershipPages(everyone);
-  assert.deepEqual(pages.map(page => page.length), [2, 2, 3, 2, 3, 2, 2]);
-  pages.forEach(page => assert.equal(rolesOf(page).length, 1, 'a page mixes roles: ' + namesOf(page)));
-  assert.ok(pages.every(page => page.length <= slotsPerPage));
-  // the people are in their typed order inside a role
-  assert.deepEqual([].concat(...pages.slice(0, 2)).map(person => person.name), namesOf(crew('Coach', 4)));
-});
-
-test('a president is a captain with a title, so they are on the captains\' page', () => {
-  const people = [].concat(crew('Captain', 1, { name: '[President]', title: 'President' }), crew('Coach', 1), crew('Captain', 1));
-  const pages = leadershipPages(people);
-
-  assert.deepEqual(pages.map(namesOf), [['[Coach 1]'], ['[President]', '[Captain 1]']]);
-});
-
-test('leadershipPages ignores capitals and spaces in a role, and puts any other role last, on pages of its own', () => {
-  const people = [].concat(crew('  CAPTAIN ', 1), crew('coach', 1), crew('Alumni', 1), crew('Mentor', 1), crew('', 1, { name: '[No role]' }), crew('Alumni', 1, { name: '[Alumni B]' }));
-  const pages = leadershipPages(people);
-
-  assert.deepEqual(pages.map(namesOf), [['[coach 1]'], ['[  CAPTAIN  1]'], ['[Mentor 1]'], ['[Alumni 1]', '[Alumni B]'], ['[No role]']]);
-});
-
-test('leadershipPages leaves out hidden and expired people and people with nothing to show', () => {
-  assert.deepEqual(leadershipPages([]), []);
-  assert.deepEqual(leadershipPages(undefined), []);
-
-  const people = [
-    { role: 'Coach', name: '[Shown]' },
-    { role: 'Coach', name: '[Hidden]', show: false },
-    { role: 'Coach', name: '[Expired]', expires: '2020-01-01T00:00:00.000Z' },
-    { role: 'Coach', name: '[Later expiry]', expires: '2999-01-01T00:00:00.000Z' },
-    { role: '', name: '' },
-    { role: 'Captain' },
-    { name: '[No role]' },
-  ];
-  assert.deepEqual(leadershipPages(people).map(namesOf), [['[Shown]', '[Later expiry]'], [undefined], ['[No role]']]);
-
-  // a hidden coach does not leave an empty page, and the others are shared out as if the coach was not there
-  const hidden = crew('Coach', 5);
-  hidden[0].show = false;
-  assert.deepEqual(leadershipPages(hidden).map(page => page.length), [2, 2]);
-});
-
-// The panel draws one page and the frame turns it over, so what is checked
-// here is the markup of each visit
-function leadershipMarkup(people) {
-  const host = { innerHTML: '', querySelectorAll: () => [] };
-  live.leadershipPanel.mount(host, { people: people });
-  return host.innerHTML;
-}
-
-test('the Leadership panel shows one role on each visit, centred, in the colour of its role, and comes back to the first page', () => withFakePage(() => {
-  const people = [].concat(crew('Coach', 2), crew('Captain', 4), crew('Mentor', 1));
-  const content = { people: people };
-  assert.equal(live.leadershipPanel.hasContent(content), true);
-  assert.equal(live.leadershipPanel.hasContent({ people: [] }), false);
-  assert.equal(live.leadershipPanel.hasContent({ people: [{ role: 'Coach', name: '[Hidden]', show: false }] }), false);
-
-  const visits = [leadershipMarkup(people), leadershipMarkup(people), leadershipMarkup(people), leadershipMarkup(people), leadershipMarkup(people)];
-  const slotsIn = html => countOf(html, 'data-slat="item"');
-
-  // 2 coaches, then the 4 captains as 2 and 2, then the mentor, then round again
-  assert.deepEqual(visits.map(slotsIn), [2, 2, 2, 1, 2]);
-  assert.ok(visits[0].includes('[Coach 1]') && visits[0].includes('[Coach 2]'));
-  assert.equal(visits[0].includes('Captain'), false);
-  assert.ok(visits[1].includes('[Captain 1]') && visits[1].includes('[Captain 2]'));
-  assert.ok(visits[2].includes('[Captain 3]') && visits[2].includes('[Captain 4]'));
-  assert.ok(visits[3].includes('[Mentor 1]'));
-  assert.ok(visits[4].includes('[Coach 1]'));
-
-  // the frame colours still follow the role: red for coaches, gold for captains, silver for mentors
-  assert.equal(countOf(visits[0], 'class="slot red-metal"'), 2);
-  assert.equal(countOf(visits[1], 'data-metal="gold"'), 2);
-  assert.equal(countOf(visits[3], 'data-metal="silver"'), 1);
-
-  // a short page uses the same portrait as a full one: one slot is as big as any, and the row centres them
-  assert.equal(countOf(visits[3], '<div class="portrait" style='), 1);
-  assert.ok(visits[3].includes('card-292x292'));
-  assert.ok(visits[3].includes('<div class="slots">'));
-  assert.ok(visits[3].includes('<div class="slot-role">MENTOR</div>'));
 }));
 
 // The Subteam roster panel: its pages (core/roster.js) and what it draws
@@ -5769,15 +5609,13 @@ test('the Tasks panel draws a contact and a place under the name, only for tasks
   assert.ok(unsafe.includes('&lt;b&gt;') && unsafe.includes('A &amp; B') && !unsafe.includes('<b>'), unsafe);
 });
 
-// This one comes last: the Leadership, Roster and Team Leads panels keep the page they showed
-// last, and the tests above count their visits from the first page.
-test('the Leadership, Team Leads and Roster panels draw their portraits at the Portrait size, and at 100 without it', () => withFakePage(() => {
+// This one comes last: the Roster panel keeps the page it showed last, and the tests above count
+// its visits from the first page. The rows of Leadership and Team Leads are in tools/test-person-rows.mjs.
+test('the Roster panel draws its portrait at the Portrait size, and at 100 without it', () => withFakePage(() => {
   const host = () => ({ innerHTML: '', querySelector: () => null, querySelectorAll: () => [] });
   const people = [{ role: 'Coach', name: '[Coach A]' }, { role: 'Captain', name: '[Captain A]' }];
   const subteams = [{ name: '[Build]', lead: '[Lead A]', members: ['[Alex]', '[Sam]'] }];
   const panels = [
-    ['leadership', live.leadershipPanel],
-    ['team leads', live.teamLeadsPanel],
     ['roster', live.rosterPanel],
   ];
 
@@ -5805,10 +5643,8 @@ test('the Leadership, Team Leads and Roster panels draw their portraits at the P
 
   // the style of the slot does not name a size of its own for the text or the slot
   const base = fs.readFileSync(path.join(dashboardFolder, 'base.css'), 'utf8');
-  assert.ok(/grid-auto-columns: 352px;/.test(base), 'the slot is still 352 wide');
-  assert.ok(/\.roster \.slot\s*\{[^}]*width: 352px;/.test(fs.readFileSync(path.join(dashboardFolder, 'panels/roster/roster.css'), 'utf8')));
+  assert.ok(/\.roster \.slot\s*\{[^}]*width: 352px;/.test(fs.readFileSync(path.join(dashboardFolder, 'panels/roster/roster.css'), 'utf8')), 'the slot is still 352 wide');
   assert.ok(/\.portrait\s*\{[^}]*margin: 0 auto 8px;/.test(base), 'a smaller portrait is centred in its slot');
-  assert.ok(/\.slots\s*\{[^}]*justify-content: center;[^}]*align-content: center;/.test(base), 'the row is centred in the panel');
 }));
 
 // Teams: the team documents, the team each item is for, which team the mode asks for, and the
@@ -6254,7 +6090,7 @@ test('the sample content has the two starting teams, and every style with every 
         assert.equal(live.style.chooseStyle(settings.style, null), style, where);
         assert.deepEqual([team.code, team.mirror], [mode, mode === 'nova'], where);
         assert.equal(live.theme.resolveTheme(theme, today).overlay, pack, where);
-        assert.equal(live.layout.chooseLayout(theme, null, today, style), style === 'original' ? 'standard' : 'bar', where);
+        assert.equal(live.layout.chooseLayout(theme, null, today, style), style === 'minimal' ? 'bar' : 'standard', where);
         combinations += 1;
       });
     });

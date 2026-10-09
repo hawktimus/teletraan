@@ -14,7 +14,7 @@
 //   bar       a banner across the top with the team name at one end and the war
 //             clock at the other, under it a thin side column and one main panel
 //             (grid1), and the ticker across the whole bottom. No small frame.
-//             The styles Cybertron and Minimal use it
+//             The style Minimal uses it
 //
 // Everything here is plain functions and numbers with no page in sight, so
 // tools/test-layouts.mjs can run them. core/layout-apply.js puts the answer on
@@ -23,8 +23,8 @@
 //
 // A layout cannot change while the screen runs, because the regions are drawn
 // for one layout. When the theme or the style changes to one with another layout,
-// the page reloads once (mustReload below). So does a change to a style that has
-// other corners on its frames, which are drawn once as well (drawnFor).
+// the page reloads once (mustReload below). A change between Original and Cybertron
+// keeps the layout and only draws the frames again (core/areas.js, redrawFrames).
 
 import { themes } from '../themes/registry.js';
 import { isKnownTheme, resolveTheme } from './theme.js';
@@ -306,7 +306,7 @@ export function cssVariables(geometry, settings) {
   };
 }
 
-// The bar layout's numbers. They are the pictures of Cybertron and Minimal, halved
+// The bar layout's numbers. They are the pictures of the bar layout, halved
 // from 3840 x 2160 to the 1920 x 1080 screen, and they are written once, here.
 // layout-apply.js hands them to layouts/bar.css and the two bar panels as
 // variables (barCssVariables below), so a change here is all it takes.
@@ -476,9 +476,10 @@ export function barCssVariables(geometry, settings) {
 export const reloadKey = 'teletraan-layout-reload';
 
 // What a page is drawn for: its layout, and in the bar layout the corners of its frames
-// when the style has its own (core/style.js, shapesFor), written 'bar-minimal'. Cybertron
-// and Minimal have the same layout and different corners, so a page that goes from one to
-// the other is drawn again, like a page that changes layout.
+// when the style has its own (core/style.js, shapesFor), written 'bar-minimal'. Frames with
+// other corners in the same layout are drawn again while the screen runs, not by a reload
+// (core/areas.js, redrawFrames), so the standard layout is the same page for Original and
+// for Cybertron.
 export function drawnFor(layout, shapes) {
   return layout === 'bar' && shapeSets.indexOf(shapes) !== -1 ? layout + '-' + shapes : layout;
 }

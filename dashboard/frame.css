@@ -374,9 +374,10 @@ svg [data-fx] { transform-box: fill-box; }
   animation: screw-shadow-in var(--screw-in-time) var(--ease-turn) var(--screw-in-delay) both;
 }
 
-/* The ticker of the bar layout has a frame of bolts, and it holds still while its message
-   changes, so its bolts do not turn. (The large panel's do.) */
-html[data-layout="bar"] .area[data-area="ticker"] .screw { animation-name: none; }
+/* The ticker of the bar layout and of Cybertron has a frame of bolts, and it holds still while
+   its message changes, so its bolts do not turn. (The large panel's do.) */
+html[data-layout="bar"] .area[data-area="ticker"] .screw,
+html[data-style="cybertron"] .area[data-area="ticker"] .screw { animation-name: none; }
 
 
 /* The frame halves lift off the panel and pull apart, then drop back and lock.
@@ -1152,6 +1153,149 @@ html:not([data-motion="full"]) .logo[data-act="fly"] .hawk-far-wing { transform:
 }
 
 
+/* The frames fall and come back: the end of the red eyes and the blue screen
+   (docs/hidden-transitions.md). core/hidden-run.js sets data-hidden="fall" on #world and
+   core/hidden-pile.js marks what moves (data-pile) and writes the numbers of each piece. A piece
+   is any piece of metal the page draws as a separate element, and a bolt has a copy of its own in
+   #pile (core/hidden-pile.js lists them).
+
+   Fall, 1.6 s. The screen is whole for an instant. The content fades away in the first .3 s. Every
+   piece lets go at its own moment (--pile-delay, 0 to .4 s), tips back, turns in the plane, falls to
+   the bottom of the screen and makes one bounce of 30 px. They end in a pile in the bottom 120 px,
+   side by side in the order they fell. A frame that is cut into pieces shows its pieces in place of
+   the whole frame, as the mechanical page change does. The shadows, the glint and the stamped id
+   are left out.
+
+   Cube. It rises from below the bottom edge over .6 s, turns once about its upright axis (.8 s) and
+   pulses its opacity twice (1 to .4 to 1, .4 s each). Its line drawing is in index.html and its
+   place and colour are in base.css.
+
+   Lift. core/hidden-run.js adds data-lift to #world on the second pulse. The pieces lift in the
+   opposite order (--pile-lift-delay, .06 s apart) and fly back in .5 s with the same easing as the
+   first assembly, each undoing its own tip and turn. The cube shrinks to a point in the middle of
+   the large panel and is gone when the last piece is home.
+
+   Build. The frames show again as they were, and the content comes in as it does at the first
+   assembly: the pages of the areas turn in, the panels bring in their own parts (frame.js, enter).
+
+   The times here are the same numbers as pileTimes in core/transitions.js, and
+   tools/test-pile.mjs holds the two together. Only transform and opacity change. The perspective
+   is in the transform of each piece, so nothing is promoted or given a lens of its own. */
+
+/* In their place, until core/hidden-pile.js writes the numbers of a piece or of the cube */
+[data-pile="piece"] {
+  --pile-x: 0px;
+  --pile-y: 0px;
+  --pile-tip: 0deg;
+  --pile-twist: 0deg;
+  --pile-scale: 1;
+  --pile-delay: 0ms;
+  --pile-lift-delay: 0ms;
+}
+#cube {
+  --cube-dx: 0px;
+  --cube-dy: 0px;
+  --cube-shrink-delay: 0ms;
+  --cube-shrink-time: 1ms;
+}
+
+/* The frame at rest gives way to its pieces, and the parts that are only for show stay out of the way */
+[data-motion="full"] #world[data-hidden="fall"] [data-pile="pieces"] .piece {
+  display: block;
+}
+[data-motion="full"] #world[data-hidden="fall"] [data-pile="pieces"] .fills,
+[data-motion="full"] #world[data-hidden="fall"] [data-pile="pieces"] [data-part="frame-a"],
+[data-motion="full"] #world[data-hidden="fall"] [data-pile="pieces"] [data-part="frame-b"],
+[data-motion="full"] #world[data-hidden="fall"] [data-pile="pieces"] [data-part="shadow-a"],
+[data-motion="full"] #world[data-hidden="fall"] [data-pile="pieces"] [data-part="shadow-b"],
+[data-motion="full"] #world[data-hidden="fall"] .shadow-layer,
+[data-motion="full"] #world[data-hidden="fall"] .glint-layer,
+[data-motion="full"] #world[data-hidden="fall"] .plate-id,
+[data-motion="full"] #world[data-hidden="fall"] .screw-shadow,
+[data-motion="full"] #world[data-hidden="fall"] .kit,
+[data-motion="full"] #world[data-hidden="fall"] [data-pile="released"] {
+  display: none;
+}
+
+/* The content fades away in the first .3 s and stays gone until the build */
+[data-motion="full"] #world[data-hidden="fall"] [data-pile="content"] {
+  animation: fade-out calc(.3s * var(--pace)) linear both;
+}
+[data-motion="full"] #world[data-hidden="build"] [data-pile="content"] {
+  animation: fade-in var(--time-fade-in) linear both;
+}
+[data-motion="full"] .area[data-content="in"] [data-slat] {
+  animation: slat-in calc(.5s * var(--pace)) var(--ease-turn) calc(var(--n) * 90ms * var(--pace)) both;
+}
+
+/* The metal: 1.2 s of falling from its own moment, so the last piece is down at 1.6 s */
+[data-motion="full"] #world[data-hidden="fall"] [data-pile="piece"] {
+  animation: piece-fall calc(var(--time-hidden) * .75) linear var(--pile-delay) both;
+}
+[data-motion="full"] #world[data-hidden="fall"][data-lift] [data-pile="piece"] {
+  animation: piece-lift calc(.5s * var(--pace)) var(--ease-in) var(--pile-lift-delay) both;
+}
+
+/* Down at 62 percent of the way, back up 30 px by 80 and down again at the end. The same
+   transform functions in the same order in every step, so the browser can blend them. */
+@keyframes piece-fall {
+  0% {
+    transform: translate(0px, 0px) perspective(1600px) rotateZ(0deg) rotateX(0deg) scale(1);
+    animation-timing-function: cubic-bezier(.55, 0, .85, .45);
+  }
+  62% {
+    transform: translate(var(--pile-x), var(--pile-y)) perspective(1600px) rotateZ(var(--pile-twist)) rotateX(var(--pile-tip)) scale(var(--pile-scale));
+    animation-timing-function: cubic-bezier(.2, .6, .4, 1);
+  }
+  80% {
+    transform: translate(var(--pile-x), calc(var(--pile-y) - 30px)) perspective(1600px) rotateZ(var(--pile-twist)) rotateX(var(--pile-tip)) scale(var(--pile-scale));
+    animation-timing-function: cubic-bezier(.6, 0, .9, .4);
+  }
+  100% {
+    transform: translate(var(--pile-x), var(--pile-y)) perspective(1600px) rotateZ(var(--pile-twist)) rotateX(var(--pile-tip)) scale(var(--pile-scale));
+  }
+}
+@keyframes piece-lift {
+  from {
+    transform: translate(var(--pile-x), var(--pile-y)) perspective(1600px) rotateZ(var(--pile-twist)) rotateX(var(--pile-tip)) scale(var(--pile-scale));
+  }
+  to {
+    transform: translate(0px, 0px) perspective(1600px) rotateZ(0deg) rotateX(0deg) scale(1);
+  }
+}
+
+/* The cube. Each move is on a box of its own, so no two animations share a property. The box
+   rises 240 px, from the bottom edge (base.css puts it at top 840) to its place on the pile. */
+[data-motion="full"] #cube .cube-rise {
+  animation: cube-rise calc(.6s * var(--pace)) var(--ease-in) both;
+}
+[data-motion="full"] #cube .cube-turn {
+  animation: cube-turn calc(.8s * var(--pace)) var(--ease-hard) calc(.3s * var(--pace)) both;
+}
+[data-motion="full"] #cube .cube-art {
+  animation: cube-pulse calc(.4s * var(--pace)) linear calc(.6s * var(--pace)) 2 both;
+}
+[data-motion="full"] #cube .cube-travel {
+  animation: cube-shrink var(--cube-shrink-time) linear var(--cube-shrink-delay) both;
+}
+@keyframes cube-rise {
+  from { transform: translateY(240px); }
+  to   { transform: translateY(0px); }
+}
+@keyframes cube-turn {
+  from { transform: perspective(1600px) rotateY(0deg); }
+  to   { transform: perspective(1600px) rotateY(360deg); }
+}
+@keyframes cube-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: .4; }
+}
+@keyframes cube-shrink {
+  from { transform: translate(0px, 0px) scale(1); }
+  to   { transform: translate(var(--cube-dx), var(--cube-dy)) scale(0); }
+}
+
+
 /* Hidden transitions. core/hidden-run.js plays them and sets data-hidden on
    #world; this section does all the moving. docs/hidden-transitions.md says what
    they are. data-hidden goes through these values, and is not there at all the
@@ -1169,8 +1313,10 @@ html:not([data-motion="full"]) .logo[data-act="fly"] .hawk-far-wing { transform:
              under the stage, fades in behind them
      apart   the blocks are out of sight (visibility: hidden, so nothing of them
              is painted). The pages are swapped now.
-     build   the blocks fly back together with the same overshoot and settle
-             (piece-build) and #backdrop fades out at the end
+     fall    the screen is whole again and its frames fall, a cube rises and the
+             frames fly back. It is in the section above, "The frames fall and
+             come back". #backdrop stays as it is.
+     build   the screen is whole, #backdrop fades out and the content comes in
 
    #backdrop is black, a deep blue or the colour of the picture on it, as
    data-look says (base.css). The pictures (core/hidden-pictures.js) come in
@@ -1178,7 +1324,7 @@ html:not([data-motion="full"]) .logo[data-act="fly"] .hawk-far-wing { transform:
    blurred. See "What the pictures do" below.
 
    The blocks are only promoted to layers (will-change) and given a perspective
-   while they fly, in break and build. At rest, and while they are out of sight,
+   while they fly apart, in break. At rest, and while they are out of sight,
    none of that is set, so the Mini holds no extra layers. The 3D transforms here
    are allowed for the screws, the page change pieces and the hidden transitions,
    and nowhere else. Calm and none motion never play a hidden transition.
@@ -1207,40 +1353,34 @@ html:not([data-motion="full"]) .logo[data-act="fly"] .hawk-far-wing { transform:
 /* One lens for all five blocks: the stage, with its middle at the middle of the
    screen. The countdown and the small panel are inside #region-right, which
    passes the 3D on to them. */
-[data-motion="full"] #world[data-hidden="break"] #stage,
-[data-motion="full"] #world[data-hidden="build"] #stage {
+[data-motion="full"] #world[data-hidden="break"] #stage {
   perspective: 1800px;
   perspective-origin: 50% 50%;
 }
-[data-motion="full"] #world[data-hidden="break"] #region-right,
-[data-motion="full"] #world[data-hidden="build"] #region-right {
+[data-motion="full"] #world[data-hidden="break"] #region-right {
   transform-style: preserve-3d;
 }
-[data-motion="full"] #world[data-hidden="break"] [data-block],
-[data-motion="full"] #world[data-hidden="build"] [data-block] {
+[data-motion="full"] #world[data-hidden="break"] [data-block] {
   will-change: transform, opacity;
 }
 
 /* Break: each block takes .6 of the time and starts --hold of it late, so all are
-   apart after .9 of it. Build: each takes .5 and starts --hold x .6 late. The
-   backdrop is read by core/hidden-run.js as .9 of the time each way. */
+   apart after .9 of it. core/hidden-run.js reads that as .9 of the time. */
 [data-motion="full"] #world[data-hidden="break"] [data-block] {
   animation: piece-break calc(var(--time-hidden) * .6) linear calc(var(--time-hidden) * var(--hold)) both;
-}
-[data-motion="full"] #world[data-hidden="build"] [data-block] {
-  animation: piece-build calc(var(--time-hidden) * .5) linear calc(var(--time-hidden) * var(--hold) * .6) both;
 }
 [data-motion="full"] #world[data-hidden="apart"] [data-block] {
   visibility: hidden;
 }
 
-/* The backdrop fades in over the first .3 of the break, and out over .3 of the
-   build, starting at .6 of it, when the blocks are almost home */
+/* The backdrop fades in over the first .3 of the break and stays through the fall, where the
+   frames fall and come back over it (the section above). It fades out over the first .3 of
+   the build, while the content comes in. core/hidden-run.js waits .9 of the time for the build. */
 [data-motion="full"] #world[data-hidden] #backdrop {
   animation: fade-in calc(var(--time-hidden) * .3) linear both;
 }
 [data-motion="full"] #world[data-hidden="build"] #backdrop {
-  animation: fade-out calc(var(--time-hidden) * .3) linear calc(var(--time-hidden) * .6) both;
+  animation: fade-out calc(var(--time-hidden) * .3) linear both;
 }
 
 /* The red glitches. steps(1) makes each opacity a jump and not a fade. The

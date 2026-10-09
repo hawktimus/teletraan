@@ -50,6 +50,10 @@ function rotationPaused() {
 // does not get its full stay.
 let pagesRefreshed = 0;
 
+// Counts the calls to restartRotation(). A loop that sees a new number starts its list again
+// from the first panel.
+let restarts = 0;
+
 // Counts, for each region, how many times it has been asked to move on at once
 // (moveOn). Like pagesRefreshed, but for one region only.
 const moves = { grid1: 0, grid2: 0, ticker: 0 };
@@ -69,6 +73,18 @@ const holdLeft = {};
 // content, so pages of the old content do not stay for another 20 seconds.
 export function showPagesNow() {
   pagesRefreshed += 1;
+}
+
+// Starts the rotation again from the first panel of every list, as when the screen started.
+// The pages go at once, without leaving, and each region makes its frame again, so the frames
+// assemble. It is for a screen that is covered, such as by the card of a talk that is ending
+// (core/presentation-run.js), where nobody sees the pages go.
+export function restartRotation() {
+  restarts += 1;
+  onScreen.grid1 = [];
+  onScreen.grid2 = [];
+  ['grid1', 'grid2', 'ticker'].forEach(region => clearRegion(region));
+  showPagesNow();
 }
 
 // Asks these regions (a list of 'grid1', 'grid2' and 'ticker') to move on to
@@ -146,6 +162,7 @@ export function startRotation(region, getPlaylist, getContent) {
 
   const otherRegion = region === 'grid1' ? 'grid2' : 'grid1';
   let position = -1;
+  let seenRestarts = restarts;
   let somePanelFailed = false; // set by pickPage when a panel could not be drawn
 
   // The next step in the list that is allowed on screen right now
@@ -198,6 +215,10 @@ export function startRotation(region, getPlaylist, getContent) {
     while (true) {
       try {
         await waitWhilePaused();
+        if (seenRestarts !== restarts) {
+          seenRestarts = restarts;
+          position = -1;
+        }
         const since = changeCount(region);
         const next = pickPage();
 
@@ -233,11 +254,16 @@ export function startRotation(region, getPlaylist, getContent) {
 // supplies the list of lines with items(content).
 export function startTicker(getContent) {
   let position = -1;
+  let seenRestarts = restarts;
 
   async function loop() {
     while (true) {
       try {
         await waitWhilePaused();
+        if (seenRestarts !== restarts) {
+          seenRestarts = restarts;
+          position = -1;
+        }
 
         const since = changeCount('ticker');
         const content = getContent();

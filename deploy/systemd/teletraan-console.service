@@ -1,0 +1,32 @@
+[Unit]
+Description=Show the Teletraan I shutdown screen on the TV
+# Without the usual dependencies this unit waits for nothing at boot, and
+# shutdown stops it early, before the disk goes. Stopping it is what prints.
+DefaultDependencies=no
+Conflicts=shutdown.target
+Before=shutdown.target
+# Starting before the kiosk and the login prompt means stopping after them, so
+# neither wipes the drawing or switches the screen away from it.
+Before=teletraan-kiosk.service getty@tty1.service
+
+[Service]
+# Nothing runs at start. The unit only has to count as running, so that
+# shutdown has something to stop.
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/true
+# The commands below print on the first text screen, which is tty1. The service
+# runs as root and names no account. TERM is for clear.
+StandardOutput=tty
+TTYPath=/dev/tty1
+Environment=TERM=linux
+ExecStop=/usr/bin/clear
+ExecStop=/usr/bin/chvt 1
+# pr puts 70 spaces in front of each line, as install-console.sh does for the
+# login screen, so the drawing sits in the middle of a 240 column screen.
+ExecStop=/usr/bin/pr -t -o 70 /opt/teletraan/deploy/console/shutdown.txt
+# A stuck command must not hold up the shutdown
+TimeoutStopSec=10s
+
+[Install]
+WantedBy=multi-user.target

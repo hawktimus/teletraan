@@ -1,30 +1,20 @@
-// Coaches, captains and mentors, a portrait each. A page never mixes the
-// roles, and a role with more people than fit on a page is split evenly over
-// more pages (core/leadership.js). Each time the panel comes round it shows the
-// next page.
+// The coaches and captains, one row each, four rows (core/leadership.js).
 
 import { doubleSlash } from '../../core/marks.js';
-import { makePages } from '../../core/turns.js';
-import { leadershipPages } from '../../core/leadership.js';
-import { photoAddress, preloadPhotos, slotMarkup, watchPhotos } from '../../core/portrait.js';
+import { leaders } from '../../core/leadership.js';
+import { photoAddress, rowsMarkup, watchPhotos } from '../../core/portrait.js';
 
-// One page at a time: each item of the list given to nextPage is a whole page
-const nextPage = makePages(1);
-
-// The role also decides the metal of the frame round the portrait: gold, silver
+// The role also decides the metal of the frame round the picture: gold, silver
 // or red. To change a colour, change a word here. A role that is not in this
 // list keeps the colour of the panel's own frame.
 const roleMetals = { coach: 'red', captain: 'gold', mentor: 'silver' };
 
 export function hasContent(content) {
-  return leadershipPages(content.people).length > 0;
+  return leaders(content.people).length > 0;
 }
 
 export function mount(host, content) {
-  const turn = nextPage(leadershipPages(content.people));
-  const people = turn.items[0] || [];
-  const scale = content.settings && content.settings.portraitScale;
-  const slots = people.map(person => personSlot(person, scale)).join('');
+  const rows = leaders(content.people).map(personRow);
 
   host.innerHTML = `
     <section class="page leadership">
@@ -36,22 +26,19 @@ export function mount(host, content) {
         </div>
       </div>
 
-      <div class="slots">${slots}</div>
+      ${rowsMarkup(rows, content.settings && content.settings.portraitScale)}
     </section>`;
 
   watchPhotos(host);
-  preloadPhotos(turn.upcoming[0] || []);
 }
 
-// What is written under the name is the typed title, or the role if there is none.
-// scale is the Portrait size setting, a percent.
-function personSlot(person, scale) {
+// What is written at the right end is the typed title, or the role if there is none.
+function personRow(person) {
   const role = String(person.role || '').trim().toLowerCase();
-  return slotMarkup({
+  return {
     name: person.name,
     role: String(person.title || person.role || '').toUpperCase(),
     address: photoAddress(person),
     metal: roleMetals[role],
-    scale: scale,
-  });
+  };
 }
