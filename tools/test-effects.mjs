@@ -4986,9 +4986,10 @@ test('an alert still takes the screen while it is paused, and an announcement du
   });
 });
 
-// presentation-run.js on a fake page. The real file runs with stand-ins for frame.js, the panels and
-// takeover.js. A card is a plain object with children, so a test can see what is on the screen. The
-// clock is a function the test calls, and the keys are pressed by calling the handler the file added.
+// presentation-run.js on a fake page. The real file runs with stand-ins for frame.js, the panels,
+// takeover.js and schedule.js. A card is a plain object with children, so a test can see what is on the
+// screen. The clock is a function the test calls, and the keys and the mouse buttons are pressed by
+// calling the handlers the file added.
 
 const talkTree = path.join(workFolder, 'talk-tree');
 ['config.js', 'core/presentation-run.js', 'core/presentation.js', 'core/time.js'].forEach(file => {
@@ -5006,6 +5007,9 @@ fs.writeFileSync(path.join(talkTree, 'dashboard/frame.js'), [
 ].join('\n') + '\n');
 fs.writeFileSync(path.join(talkTree, 'dashboard/core/takeover.js'), [
   'export const takeoverRunning = () => globalThis.talkWorld.announcing || globalThis.talkWorld.holds.size > 0;',
+].join('\n') + '\n');
+fs.writeFileSync(path.join(talkTree, 'dashboard/core/schedule.js'), [
+  "export const restartRotation = () => { globalThis.talkWorld.log.push('restart rotation'); };",
 ].join('\n') + '\n');
 fs.writeFileSync(path.join(talkTree, 'dashboard/core/panels.js'), [
   'export function buildPage(id, content) {',
@@ -5149,6 +5153,28 @@ async function inTalkPage(options, run) {
     world.press = (key, extra) => {
       const event = Object.assign({ key: key, repeat: false, defaultPrevented: false, preventDefault() { this.defaultPrevented = true; } }, extra);
       world.keyHandlers.filter(entry => entry.name === 'keydown').forEach(entry => entry.handler(event));
+      return event;
+    };
+    // The time of a click is given in milliseconds, since the code reads the clock for it
+    world.mouse = (button, atMs) => {
+      const event = { type: 'mousedown', button: button, defaultPrevented: false, preventDefault() { this.defaultPrevented = true; } };
+      const RealDate = Date;
+      const clock = atMs === undefined ? RealDate.now() : atMs;
+      globalThis.Date = class extends RealDate {
+        constructor(...details) {
+          super(...(details.length > 0 ? details : [clock]));
+        }
+      };
+      try {
+        world.keyHandlers.filter(entry => entry.name === 'mousedown').forEach(entry => entry.handler(event));
+      } finally {
+        globalThis.Date = RealDate;
+      }
+      return event;
+    };
+    world.menu = () => {
+      const event = { type: 'contextmenu', defaultPrevented: false, preventDefault() { this.defaultPrevented = true; } };
+      world.keyHandlers.filter(entry => entry.name === 'contextmenu').forEach(entry => entry.handler(event));
       return event;
     };
     world.view = () => layer.children.find(child => child.kind === 'slides');
@@ -5562,6 +5588,127 @@ test('a card that fails to draw gives the dashboard back, and the talk does not 
   } finally {
     console.error = real;
   }
+});
+
+// The mouse (core/presentation.js has the click map)
+
+test('a left click starts the talk and moves on, a right click goes back, the middle button does nothing, and the buttons are read on the window', async () => {
+  await inTalkPage({}, async world => {
+    assert.equal(world.keyHandlers.some(entry => entry.name === 'mousedown' && entry.capture === true), true, 'before anything else');
+    assert.equal(world.keyHandlers.some(entry => entry.name === 'contextmenu' && entry.capture === true), true);
+
+    world.tick(1000);
+    await world.settleAll();
+    assert.equal(world.mouse(1, 0).defaultPrevented, true, 'every button is the talk\'s while it holds the screen');
+    assert.equal(world.mouse(2, 0).defaultPrevented, true);
+    assert.equal(world.view(), undefined, 'neither the middle button nor the right one starts the talk');
+
+    assert.equal(world.mouse(0, 1000).defaultPrevented, true);
+    const view = world.view();
+    assert.equal(world.layer.children[0], view, 'the slides are under the title card');
+    assert.deepEqual(world.slideAddressNow(), [talkAddress + '001.jpg']);
+    assert.equal(view.named['chip-count'].textContent, '1 / 3');
+    assert.equal(view.named.chip.dataset.shown, 'on', 'a click shows the chip, as a key does');
+    assert.equal(world.log.includes('exit title'), true);
+
+    world.mouse(0, 5000);
+    assert.deepEqual(world.slideAddressNow(), [talkAddress + '002.jpg']);
+    world.mouse(1, 8000);
+    assert.deepEqual(world.slideAddressNow(), [talkAddress + '002.jpg'], 'the middle button changes nothing');
+    world.mouse(2, 10000);
+    assert.deepEqual(world.slideAddressNow(), [talkAddress + '001.jpg']);
+    world.mouse(2, 12000);
+    assert.equal(view.named['chip-count'].textContent, '1 / 3', 'not before the first');
+
+    world.mouse(0, 14000);
+    world.mouse(0, 16000);
+    assert.equal(view.named['chip-count'].textContent, '3 / 3');
+    assert.equal(world.cards('thanks'), 0);
+    world.mouse(0, 18000);
+    assert.equal(world.cards('thanks'), 1, 'a left click on the last slide gives the thanks card');
+    assert.equal(world.log.includes('restart rotation'), false, 'a talk that ends the usual way does not restart the rotation');
+  });
+});
+
+test('a double click moves one slide and not two, and starts the talk without skipping its first slide', async () => {
+  await inTalkPage({}, async world => {
+    world.tick(1000);
+    await world.settleAll();
+
+    world.mouse(0, 1000);
+    world.mouse(0, 1200);
+    assert.deepEqual(world.slideAddressNow(), [talkAddress + '001.jpg'], 'the second click of the double click is left out');
+
+    world.mouse(0, 5000);
+    world.mouse(0, 5300);
+    assert.deepEqual(world.slideAddressNow(), [talkAddress + '002.jpg']);
+    world.mouse(0, 6000);
+    assert.deepEqual(world.slideAddressNow(), [talkAddress + '003.jpg'], 'a second later is a new click');
+  });
+});
+
+test('the context menu is shut for as long as a talk holds the screen, and not before or after', async () => {
+  await inTalkPage({}, async world => {
+    assert.equal(world.menu().defaultPrevented, false, 'idle leaves the menu alone');
+    assert.equal(world.mouse(2, 0).defaultPrevented, false, 'and the buttons');
+
+    world.tick(1000);
+    await world.settleAll();
+    assert.equal(world.menu().defaultPrevented, true, 'the title card');
+    world.mouse(0, 1000);
+    assert.equal(world.menu().defaultPrevented, true, 'the slides');
+
+    world.press('Escape');
+    world.press('Escape');
+    assert.equal(world.cards('thanks'), 1);
+    assert.equal(world.menu().defaultPrevented, true, 'the thanks card');
+
+    world.tick(8000);
+    await world.settleAll();
+    assert.equal(world.holds.size, 0);
+    assert.equal(world.menu().defaultPrevented, false, 'after the talk');
+    assert.equal(world.mouse(0, 20000).defaultPrevented, false);
+  });
+});
+
+test('a click on the card that says the slides are not ready ends the talk at once and restarts the rotation, once', async () => {
+  for (const button of [0, 1, 2]) {
+    await inTalkPage({ manifest: null }, async world => {
+      world.tick(1000);
+      await world.settleAll();
+      world.tick(2000);
+      assert.equal(world.cards('not-ready'), 1);
+      assert.equal(world.log.includes('restart rotation'), false);
+
+      assert.equal(world.mouse(button, 3000).defaultPrevented, true, 'button ' + button);
+      assert.equal(world.page.dataset.talk, undefined, 'the dashboard shows again under the card that fades out');
+      assert.equal(world.log.includes('exit not-ready'), true);
+      assert.equal(world.log.filter(line => line === 'restart rotation').length, 1);
+
+      world.mouse(0, 3200);
+      assert.equal(world.log.filter(line => line === 'restart rotation').length, 1, 'a second click before the next look does not restart it again');
+
+      await world.settleAll();
+      world.tick(3000);
+      await world.settleAll();
+      assert.equal(world.holds.size, 0);
+      assert.equal(world.layer.hidden, true);
+      world.tick(60000);
+      assert.equal(world.holds.size, 0, 'the talk does not start again');
+      assert.equal(world.log.filter(line => line === 'restart rotation').length, 1);
+    });
+  }
+});
+
+test('a click on the title card before the slides are counted does nothing', async () => {
+  await inTalkPage({ manifest: 'hangs' }, async world => {
+    world.tick(1000);
+    await world.settleAll();
+    assert.equal(world.mouse(0, 1000).defaultPrevented, true);
+    assert.equal(world.view(), undefined, 'there is nothing to show yet');
+    assert.equal(world.log.includes('restart rotation'), false, 'and the title card is not the card that says the slides are not ready');
+    assert.equal(world.cards('title'), 1);
+  });
 });
 
 // The plain functions the screen adds to core/presentation.js

@@ -155,9 +155,10 @@ editors can sign in from anywhere.
                               hidden-pictures.js lists their four pictures (in assets/hidden) and
                               which one plays next (docs/hidden-transitions.md),
                               presentation.js decides when a booked talk shows its title card and its
-                              slides, what each key of the clicker does and which talks were skipped,
-                              and presentation-run.js puts that on the screen and reads the keys (the
-                              cards and the slides are drawn by panels/talk, docs/presentations.md),
+                              slides, what each key of the clicker and each button of the mouse does and
+                              which talks were skipped, and presentation-run.js puts that on the screen
+                              and reads the keys and the mouse (the cards and the slides are drawn by
+                              panels/talk, docs/presentations.md),
                               presentation-test.js decides when the Run presentation test button starts
                               the sample talk, and presentation-test-run.js starts it
                               (docs/hidden-transitions.md),
@@ -270,6 +271,9 @@ editors can sign in from anywhere.
                               what it shares with Cybertron
       test-person-rows.mjs    checks for the rows of the Team Leads and Leadership panels: four rows to a
                               panel, who is in them, the portrait size, and the sizes in base.css
+      test-presentation-mouse.mjs  checks for the mouse in presentation mode: what each button does, the second
+                              click of a double click, a click on the card that says the slides are not ready,
+                              the context menu, the hidden cursor, and the rotation that starts again
       check-seasons.mjs       fails if a seasonal pack is not in the data format, has a piece outside its zone, too
                               many pieces, a forbidden word, no header mark, a mark bigger than its box (60 x 76),
                               fewer than 8 or more than 14 pieces over the panels, an over piece that is too big,

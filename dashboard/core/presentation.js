@@ -11,9 +11,10 @@
 //   idle        nothing shows. A scheduled talk is due from its start until its end,
 //               and waits while an alert or an announcement has the screen.
 //   title       the card with the speaker, the subteam and the title. The first
-//               forward key starts the talk. The wait for it runs from the moment
-//               the card appeared, and the card is a copy of the talk, so an edit
-//               in Studio does not change it.
+//               forward key or left click starts the talk. The wait for it runs from
+//               the moment the card appeared, and the card is a copy of the talk, so
+//               an edit in Studio does not change it. On the card that says the slides
+//               are not ready, any click ends the talk at once.
 //   presenting  one slide at a time. The talk ends at its start plus its minutes
 //               plus graceMinutes, whatever slide it is on.
 //   thanks      the card after the last slide, for a few seconds.
@@ -24,7 +25,8 @@
 // The screen keeps one state and calls, in this order:
 //   once a second  state = nextState(state, { now, talks, settings, skipped, announcing, slides })
 //   on a key       state = pressKey(state, event.key, new Date())
-//   after both     rememberEnded(storage, skipped, state), so a talk that is skipped or over
+//   on a click     state = pressMouse(state, mouseButton(event.button), new Date())
+//   after each     rememberEnded(storage, skipped, state), so a talk that is skipped or over
 //                  does not start again
 // It holds the screen (frame.pause) for as long as holdsScreen(state) is true.
 //
@@ -69,6 +71,32 @@ export const keyActions = {
 export function keyAction(key) {
   const name = typeof key === 'string' && key.length === 1 ? key.toLowerCase() : key;
   return Object.prototype.hasOwnProperty.call(keyActions, name) ? keyActions[name] : null;
+}
+
+// What each button of the mouse does, by the name mouseButton() gives it. A tap on a touch
+// screen is a left click. null is nothing: the middle button is not used. A double click is
+// not a button, see secondOfDoubleClick.
+export const clickActions = {
+  left: 'forward',
+  right: 'back',
+  middle: null,
+};
+
+// A second left click this many milliseconds or fewer after the click before it is half of a
+// double click, and does nothing
+export const doubleClickMs = 500;
+
+const buttonNames = { 0: 'left', 1: 'middle', 2: 'right' };
+
+// 'left', 'middle' or 'right' for the number the browser gives in event.button, or null for
+// any other button
+export function mouseButton(number) {
+  return Object.prototype.hasOwnProperty.call(buttonNames, number) ? buttonNames[number] : null;
+}
+
+// 'forward' or 'back', or null for a button that presentation mode leaves alone
+export function clickAction(button) {
+  return Object.prototype.hasOwnProperty.call(clickActions, button) ? clickActions[button] : null;
 }
 
 function isRecord(value) {
@@ -206,7 +234,7 @@ function startTitle(state, input) {
   const talk = dueTalk(input.talks, input.now, input.settings, input.skipped);
   if (talk === null) return state;
 
-  return { name: 'title', talk: copyOfTalk(talk), since: input.now.getTime(), count: 0, notReadyAt: null, escapedAt: null };
+  return { name: 'title', talk: copyOfTalk(talk), since: input.now.getTime(), count: 0, notReadyAt: null, escapedAt: null, clickedAt: null };
 }
 
 // The wait for the speaker ends at noShowMinutes, or when the slot is over if that
@@ -251,9 +279,11 @@ export function escapeTwice(previous, time) {
 //   escape    twice within two seconds ends the talk. One does nothing.
 export function pressKey(state, key, now) {
   const action = keyAction(key);
-  if (action === null) return state;
+  return action === null ? state : pressAction(state, action, now.getTime());
+}
 
-  const time = now.getTime();
+// What an action does in the state the talk is in. A key and a click both come here.
+function pressAction(state, action, time) {
   if (state.name === 'title') return pressOnTitle(state, action, time);
   if (state.name === 'presenting') return pressOnSlide(state, action, time);
   return state;
@@ -262,7 +292,7 @@ export function pressKey(state, key, now) {
 function pressOnTitle(state, action, time) {
   if (action === 'forward') {
     if (state.count === 0 || state.notReadyAt !== null) return state;
-    return { name: 'presenting', talk: state.talk, count: state.count, slide: 0, black: false, keyAt: time, escapedAt: null };
+    return { name: 'presenting', talk: state.talk, count: state.count, slide: 0, black: false, keyAt: time, escapedAt: null, clickedAt: null };
   }
   if (action !== 'escape') return state;
 
@@ -282,6 +312,46 @@ function pressOnSlide(state, action, time) {
   if (action === 'back') return Object.assign(shown, { slide: Math.max(0, state.slide - 1), black: false });
   if (action === 'home') return Object.assign(shown, { slide: 0, black: false });
   return Object.assign(shown, { slide: last, black: false });
+}
+
+// True when this left click comes within doubleClickMs of the click before it that moved the
+// talk. Both are milliseconds, and the first is null when there has been none.
+export function secondOfDoubleClick(previous, time) {
+  return typeof previous === 'number' && time >= previous && time - previous <= doubleClickMs;
+}
+
+// The state after a click of the mouse. button is 'left', 'middle' or 'right' (mouseButton).
+// A click does what clickActions says, which is what the key of that action does, with two
+// differences:
+//   not ready  on the card that says the slides are not ready, any click ends the talk at once.
+//              The talk is skipped, and the screen starts its rotation again (restartsRotation).
+//   double     the second left click of a double click does nothing, so a double click on the
+//              title card starts the talk and does not also skip its first slide. A click that
+//              is left out does not start the time again.
+// A click that changes nothing gives back the state it was given.
+export function pressMouse(state, button, now) {
+  const time = now.getTime();
+  if (pictureOf(state) === 'not-ready') return skippedState(state.talk, 'not-ready');
+
+  const action = clickAction(button);
+  if (action === null) return state;
+  if (action === 'forward' && secondOfDoubleClick(state.clickedAt, time)) return state;
+
+  const next = pressAction(state, action, time);
+  const moved = action === 'forward' && next !== state && next.name === 'presenting';
+  return moved ? Object.assign({}, next, { clickedAt: time }) : next;
+}
+
+// True when a click took the talk off the card that says the slides are not ready. The screen then
+// starts its rotation again from the first panel, with the first assembly of the frames.
+export function restartsRotation(before, after) {
+  return pictureOf(before) === 'not-ready' && after !== before;
+}
+
+// The context menu of the browser is switched off for as long as a talk holds the screen, and
+// not otherwise. The right button goes back instead.
+export function blocksContextMenu(state) {
+  return holdsScreen(state);
 }
 
 // True for chipSeconds after a key press while a talk is on its slides

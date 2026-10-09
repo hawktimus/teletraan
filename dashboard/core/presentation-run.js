@@ -1,14 +1,15 @@
-// Presentation mode on the page: the title card, the slides, the thanks card and the keys of
-// the clicker (docs/presentations.md). core/presentation.js decides what happens and when.
-// This file gives it the real screen: the one clock, the keys, localStorage, the pictures
-// (panels/talk) and the hold on the rest of the dashboard (frame.pause).
+// Presentation mode on the page: the title card, the slides, the thanks card, and the keys of
+// the clicker and the buttons of the mouse (docs/presentations.md). core/presentation.js decides
+// what happens and when. This file gives it the real screen: the one clock, the keys, the mouse,
+// localStorage, the pictures (panels/talk) and the hold on the rest of the dashboard (frame.pause).
 //
 // The talk is drawn in #talk, which is under #overlay, so an alert still covers it.
 
 import * as frame from '../frame.js';
 import { buildPage } from './panels.js';
 import { takeoverRunning } from './takeover.js';
-import { chipSeconds, chipShown, holdsScreen, idleState, keyAction, nextState, pictureOf, preloadAhead, preloadIndexes, pressKey, progressOf, readSkipped, rememberEnded, slideAddress, slideNumberText, slidePages, slidesFolder } from './presentation.js';
+import { restartRotation } from './schedule.js';
+import { blocksContextMenu, chipSeconds, chipShown, holdsScreen, idleState, keyAction, mouseButton, nextState, pictureOf, preloadAhead, preloadIndexes, pressKey, pressMouse, progressOf, readSkipped, rememberEnded, restartsRotation, slideAddress, slideNumberText, slidePages, slidesFolder } from './presentation.js';
 
 const root = document.documentElement;
 const layer = document.getElementById('talk');
@@ -45,6 +46,8 @@ export function startPresentations(contentGetter) {
   skipped = readSkipped(storage);
 
   window.addEventListener('keydown', onKey, true);
+  window.addEventListener('mousedown', onMouse, true);
+  window.addEventListener('contextmenu', onContextMenu, true);
   window.addEventListener('blur', () => setTimeout(takeFocus, 0));
   frame.onSecond(look);
 }
@@ -82,7 +85,29 @@ function onKey(event) {
   event.preventDefault();
   if (event.repeat) return;
 
-  step(pressKey(state, event.key, new Date()));
+  pressed(pressKey(state, event.key, new Date()));
+}
+
+// Every button of the mouse is ours while a talk holds the screen, so a click does not select
+// text or take the focus away. A tap on a touch screen comes here as a left click.
+function onMouse(event) {
+  const button = mouseButton(event.button);
+  if (!holdsScreen(state) || button === null) return;
+
+  event.preventDefault();
+  const before = state;
+  pressed(pressMouse(state, button, new Date()));
+  if (restartsRotation(before, state)) restartRotation();
+}
+
+// The right button goes back, so the menu of the browser stays shut while a talk holds the screen
+function onContextMenu(event) {
+  if (blocksContextMenu(state)) event.preventDefault();
+}
+
+// The chip shows the slide number for a few seconds after a key or a click, and a timer takes it away
+function pressed(next) {
+  step(next);
   setTimeout(() => drawChip(new Date()), chipSeconds * 1000 + 50);
 }
 
