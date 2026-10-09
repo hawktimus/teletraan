@@ -1093,7 +1093,9 @@ the numbers in this section against the code.
   does not have lose the mark. A transition still ends in a clean rebuild, and
   waits for no small frame. The bar layout has four too: the banner, the side
   column, the main panel and the ticker, with the poses of the column and the main
-  panel in `layouts/bar.css`.
+  panel in `layouts/bar.css`. The rebuild is the frames falling into a pile and
+  coming back (docs/hidden-transitions.md): they fall as the pieces they are drawn
+  in, in every layout, and the strip and the sidebar fall whole.
 - **Alerts, announcements, the night screen, the demo and the connection text**
   are layers as big as the screen. They do not depend on the layout, and cover it.
   The connection text is as wide as the ticker at most, as it is in the standard

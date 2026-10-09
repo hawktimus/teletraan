@@ -223,7 +223,10 @@ export function onSecond(listener, element) {
 }
 
 
-export function enter(panel) {
+// contentOnly is true at the end of a hidden transition (core/hidden-pile.js), when the frame
+// has just been put back together: the parts that are the frame are left alone and only the
+// content comes in
+export function enter(panel, contentOnly = false) {
   const sequence = sequences[panel.dataset.sequence];
   if (!sequence) {
     throw new Error('No sequence called "' + panel.dataset.sequence + '" in frame.js');
@@ -232,6 +235,10 @@ export function enter(panel) {
   panel.querySelectorAll('[data-part]').forEach(part => {
     const rule = sequence[part.dataset.part];
     if (!rule) return;
+    if (contentOnly && isFramePart(part)) {
+      delete part.dataset.fx;
+      return;
+    }
 
     const effect = rule[0];
     const startMs = rule[1];
@@ -248,6 +255,11 @@ export function enter(panel) {
     // later cannot replay a panel that is already on screen
     if (panel.dataset.state === 'in') panel.dataset.state = 'shown';
   });
+}
+
+// A part that is drawn inside the plate of the panel, or the stamped id or the sweep of light over it
+function isFramePart(part) {
+  return part.closest('svg.plate') !== null || part.classList.contains('plate-id') || part.dataset.part === 'scan';
 }
 
 export function exit(panel) {

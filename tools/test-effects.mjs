@@ -2852,7 +2852,7 @@ test('the blocks of the hidden transitions: five regions are marked, each has a 
   });
 });
 
-test('the hidden transition times: the blocks are apart after .9 of the break time and back after .9, as hidden-run.js waits, and the number is one number', () => {
+test('the hidden transition times: the blocks are apart after .9 of the break time and the build takes .9 with the backdrop gone inside it, as hidden-run.js waits, and the number is one number', () => {
   const run = fs.readFileSync(path.join(dashboardFolder, 'core/hidden-run.js'), 'utf8');
   const fly = Number(run.match(/const flySeconds = ([0-9.]+);/)[1]);
   assert.equal(fly, 1.6);
@@ -2863,15 +2863,14 @@ test('the hidden transition times: the blocks are apart after .9 of the break ti
   const apartAfter = Number(run.match(/const apartAfter = ([0-9.]+);/)[1]);
   const togetherAfter = Number(run.match(/const togetherAfter = ([0-9.]+);/)[1]);
   const breakRule = frameCss.match(/#world\[data-hidden="break"\] \[data-block\] \{\s*animation: piece-break calc\(var\(--time-hidden\) \* ([0-9.]+)\) linear calc\(var\(--time-hidden\) \* var\(--hold\)\) both;/);
-  const buildRule = frameCss.match(/#world\[data-hidden="build"\] \[data-block\] \{\s*animation: piece-build calc\(var\(--time-hidden\) \* ([0-9.]+)\) linear calc\(var\(--time-hidden\) \* var\(--hold\) \* ([0-9.]+)\) both;/);
-  assert.ok(breakRule && buildRule, 'the break and the build rules');
+  assert.ok(breakRule, 'the break rule');
+  assert.ok(!/data-hidden="build"\] \[data-block\]/.test(frameCss), 'the blocks do not fly back any more: the frames fall and come back');
   const latest = Math.max(...frameCss.split('\n').filter(line => /^#region-[a-z0-9]+ +\{/.test(line)).map(line => Number(line.match(/--hold: ([0-9.]+)/)[1])));
   assert.equal(latest, 0.3);
 
   assert.ok(Math.abs(Number(breakRule[1]) + latest - apartAfter) < 1e-9, 'the last block is apart after ' + apartAfter);
-  assert.ok(Number(buildRule[1]) + latest * Number(buildRule[2]) <= togetherAfter, 'the last block is back by ' + togetherAfter);
-  const fade = frameCss.match(/#world\[data-hidden="build"\] #backdrop \{\s*animation: fade-out calc\(var\(--time-hidden\) \* ([0-9.]+)\) linear calc\(var\(--time-hidden\) \* ([0-9.]+)\) both;/);
-  assert.ok(fade && Math.abs(Number(fade[1]) + Number(fade[2]) - togetherAfter) < 1e-9, 'the backdrop is gone at the end of the build');
+  const fade = frameCss.match(/#world\[data-hidden="build"\] #backdrop \{\s*animation: fade-out calc\(var\(--time-hidden\) \* ([0-9.]+)\) linear both;/);
+  assert.ok(fade && Number(fade[1]) <= togetherAfter, 'the backdrop is gone inside the build');
 });
 
 test('every time in the hidden transitions comes from --time-hidden, --glitch-seconds or --look-seconds, times --pace', () => {
@@ -2881,7 +2880,7 @@ test('every time in the hidden transitions comes from --time-hidden, --glitch-se
   const section = frameCss.slice(start, end).replace(/\/\*[\s\S]*?\*\//g, '');
 
   const timings = section.split('\n').filter(line => /animation: /.test(line));
-  assert.equal(timings.length, 15, 'the break, the build, the backdrop twice, the red wash twice, the picture in and out, the three blue washes, the torn pieces, the blue layer fading, the stage and the blocks');
+  assert.equal(timings.length, 14, 'the break, the backdrop twice, the red wash twice, the picture in and out, the three blue washes, the torn pieces, the blue layer fading, the stage and the blocks');
   timings.forEach(line => {
     assert.ok(/var\(--(time-hidden|glitch-seconds|look-seconds)\)/.test(line), line);
     if (/--(glitch|look)-seconds/.test(line)) assert.ok(line.includes('var(--pace)'), 'the Speed setting stretches it: ' + line);
@@ -2925,25 +2924,24 @@ test('the hidden transitions move only transform and opacity: their keyframes, t
   assert.ok(section.includes('@keyframes blue-tear-b'), 'the whole section is looked at');
   assert.ok(!/(filter|box-shadow|text-shadow|drop-shadow|blur\(|blend)/.test(section), 'a filter, blend, shadow or blur');
 
-  // the layers are promoted only while the blocks fly (break and build)
+  // the layers are promoted only while the blocks fly apart (break)
   const promoted = css.match(/[^{}]*\{[^{}]*will-change: transform, opacity;[^{}]*\}/g) || [];
   const mine = promoted.filter(block => /data-hidden/.test(block));
   assert.equal(mine.length, 1);
-  assert.ok(/data-hidden="break"\] \[data-block\]/.test(mine[0]) && /data-hidden="build"\] \[data-block\]/.test(mine[0]));
+  assert.ok(/data-hidden="break"\] \[data-block\]/.test(mine[0]) && !/data-hidden="build"/.test(mine[0]));
   assert.ok(!/data-hidden="apart"[^{]*\{[^}]*will-change/.test(css), 'nothing is promoted while the blocks are out of sight');
   assert.ok(/data-hidden="apart"\] \[data-block\] \{\s*visibility: hidden;/.test(css));
 
-  // the perspective and the 3D pass-through are only there while they fly, in full motion
+  // the perspective and the 3D pass-through are only there while they fly apart, in full motion
   const lens = css.match(/[^{}]*\{[^{}]*perspective: 1800px;[^{}]*\}/g).filter(block => /data-hidden/.test(block));
   assert.equal(lens.length, 1);
-  assert.ok(/data-motion="full"\] #world\[data-hidden="break"\] #stage/.test(lens[0]) && /data-hidden="build"\] #stage/.test(lens[0]));
+  assert.ok(/data-motion="full"\] #world\[data-hidden="break"\] #stage/.test(lens[0]) && !/data-hidden="build"/.test(lens[0]));
   assert.equal((css.match(/transform-style: preserve-3d/g) || []).length, 1);
 
   // nothing of the hidden transitions is written for calm or none motion
   css.split('\n').filter(line => /data-hidden/.test(line)).forEach(line => assert.ok(!/data-motion="(calm|none)"/.test(line), line));
-  // the blocks use the keyframes of the mechanical change, so the overshoot and settle are the same
+  // the blocks use the keyframes of the mechanical change to fly apart, so the overshoot and settle are the same
   assert.ok(/#world\[data-hidden="break"\] \[data-block\] \{\s*animation: piece-break /.test(css));
-  assert.ok(/#world\[data-hidden="build"\] \[data-block\] \{\s*animation: piece-build /.test(css));
 });
 
 test('the red wash never flashes more than twice in any second, never brighter than .45, and ends at .3 where the break takes over', () => {

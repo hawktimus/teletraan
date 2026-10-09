@@ -146,6 +146,42 @@ html, body {
 #blue-glitch .tear-5 { left: 500px;  top: 760px; width: 1300px; height: 90px;  background: var(--hidden-blue-new); }
 #blue-glitch .tear-6 { left: 0;      top: 930px; width: 1920px; height: 22px;  background: var(--hidden-blue-pale); }
 
+/* The frames that fall at the end of a hidden transition (core/hidden-pile.js,
+   docs/hidden-transitions.md). #pile is a full screen layer over the stage. It holds the copies of
+   the bolts that fall, which the script adds, and the cube. The cube is 120 by 120 and rests on the
+   pile, in the middle of the screen, with its line drawing in the team accent. Each box inside it
+   is the size of the drawing, and every move is in frame.css. */
+#pile {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  pointer-events: none;
+}
+#cube {
+  position: absolute;
+  left: 900px;
+  top: 840px;
+  width: 120px;
+  height: 120px;
+}
+#cube div {
+  width: 120px;
+  height: 120px;
+}
+.cube-art {
+  display: block;
+}
+.cube-art path {
+  fill: none;
+  stroke: var(--team-accent);
+  stroke-width: 5px;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
 /* Full screen panels (alerts, announcements) sit on top of everything */
 #overlay {
   position: absolute;

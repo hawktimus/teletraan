@@ -407,6 +407,27 @@
         <div class="tear tear-5"></div>
         <div class="tear tear-6"></div>
       </div>
+      <!-- The frames that fall at the end of a hidden transition (core/hidden-pile.js,
+           docs/hidden-transitions.md, "The frames fall and come back"). It holds a copy of each
+           bolt, which the script adds, and the cube: a line drawing of an isometric cube inside
+           three boxes, so that rising, travelling and turning are each a move of their own and the
+           drawing itself pulses. It is over the stage and the pieces, under the connection text, the
+           night screen and the overlay, and it is hidden except while the frames fall. Its place and
+           colour are in base.css and every move is in frame.css. -->
+      <div id="pile" hidden>
+        <div id="cube" hidden>
+          <div class="cube-rise">
+            <div class="cube-travel">
+              <div class="cube-turn">
+                <svg class="cube-art" width="120" height="120" viewBox="0 0 120 120">
+                  <path d="M60 6L106.8 33L106.8 87L60 114L13.2 87L13.2 33Z"/>
+                  <path d="M13.2 33L60 60L106.8 33M60 60L60 114"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       <!-- The connection status text (core/connection.js): why Sanity cannot
            be reached, and the Mini's name and addresses (core/device.js), or
            the always-on text when Show connection status is switched on. Its

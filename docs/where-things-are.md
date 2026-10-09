@@ -135,7 +135,9 @@ editors can sign in from anywhere.
                               every panel header (the double slash, or the pack's mark), corner-art.js holds
                               the four ornaments of line art that go in the cut corners, pack-extras.js
                               decides the ticker prefix, banner line and corner art of the pack on the page,
-                              transitions.js chooses the style and the metal of the next page change,
+                              transitions.js chooses the style and the metal of the next page change and
+                              plans how the frames fall into a pile and come back at the end of a hidden
+                              transition,
                               look.js turns the Polish setting (polished, flat or plain) into the page
                               switches the stylesheets read (data-finish, data-glint and data-look),
                               events.js merges the BAND events with the Events Calendar entries from Studio,
@@ -151,9 +153,10 @@ editors can sign in from anywhere.
                               announcement that is switched on, and announce-run.js starts it
                               (docs/hidden-transitions.md),
                               hidden.js decides when a hidden transition replaces a page change,
-                              hidden-transitions.js lists them, hidden-run.js plays them and
-                              hidden-pictures.js lists their four pictures (in assets/hidden) and
-                              which one plays next (docs/hidden-transitions.md),
+                              hidden-transitions.js lists them, hidden-run.js plays them,
+                              hidden-pile.js finds the frames that fall at their end and writes where
+                              each one lies, and hidden-pictures.js lists their four pictures (in
+                              assets/hidden) and which one plays next (docs/hidden-transitions.md),
                               presentation.js decides when a booked talk shows its title card and its
                               slides, what each key of the clicker and each button of the mouse does and
                               which talks were skipped, and presentation-run.js puts that on the screen
@@ -269,6 +272,9 @@ editors can sign in from anywhere.
       test-minimal.mjs        checks for Minimal on the bar layout: what the order gives it, what it must not have
                               (stamped ids, hazard stripes, scanlines, slashes, conduit, brackets), and the list of
                               what it shares with Cybertron
+      test-pile.mjs           checks for the end of the hidden transitions: the plan of the fall, the pile and the
+                              lift (at most 40 pieces, 5 seconds, every piece back in its place), the stylesheet
+                              that moves them, the cube, and the script that finds the pieces on a fake page
       test-person-rows.mjs    checks for the rows of the Team Leads and Leadership panels: four rows to a
                               panel, who is in them, the portrait size, and the sizes in base.css
       test-presentation-mouse.mjs  checks for the mouse in presentation mode: what each button does, the second
@@ -378,7 +384,9 @@ alone.
   `studio/hidden-transitions.js`, a copy of `hiddenTransitions` in
   `dashboard/core/hidden-transitions.js`. A new transition is one entry in each, plus a chance
   field. `core/hidden.js` decides, `core/hidden-run.js` plays, and `frame.css` ("Hidden
-  transitions" and "The blue glitch") moves the five blocks and the glitches. The four
+  transitions" and "The blue glitch") moves the five blocks and the glitches. Both end with
+  the frames falling into a pile and a cube putting them back (`core/hidden-pile.js`,
+  `planPile` in `core/transitions.js`, and "The frames fall and come back" in `frame.css`). The four
   pictures are in `dashboard/assets/hidden/`, and `core/hidden-pictures.js` says how each one
   fills the screen and which one plays next. Try one with `?hidden=desktop` or `?hidden=redEyes`.
 - **Play announcements.** A button in the menu beside Publish on Dashboard Settings
@@ -659,6 +667,7 @@ exception is `test-slides-script.mjs`, which needs `jq`.
     node tools/test-calendars-script.mjs
     node tools/test-cybertron.mjs
     node tools/test-minimal.mjs
+    node tools/test-pile.mjs
     node tools/check-themes.mjs
     node tools/check-seasons.mjs
     node studio/check-schemas.mjs
