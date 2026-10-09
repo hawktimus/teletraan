@@ -89,8 +89,8 @@ export const sequences = {
   // The bar layout's two panels that stay on screen: the banner (panels/bar-banner) and
   // the side column (panels/bar-column). The banner draws its own frame, as the countdown
   // does: the plate unfolds, the lines are drawn, the decoration and the hex bolts come
-  // after, and in Minimal so do the rivets, the rust and the id. The war clock's slot is
-  // empty until the war clock is drawn into it
+  // after, and in Minimal so do the rivets, the rust and the id. The war clock is in the
+  // war slot and arrives with it, so it has no parts of its own
   'bar-banner': {
     'body':         ['unfold', 200],
     'outline':      ['draw', 700],

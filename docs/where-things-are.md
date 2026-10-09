@@ -101,11 +101,12 @@ editors can sign in from anywhere.
                               and "Frames")
       base.css                the 1920x1080 screen and the shared metal shapes
       core/                   helpers used by several panels. plate.js draws the frames, and the three steel frames
-                              of the bar layout, with Minimal's own three (docs/layouts.md, "Frames"), areas.js keeps
+                              of the bar layout, with Minimal's own three (docs/layouts.md, "Frames"), and the
+                              housing of the war clock, areas.js keeps
                               the frames in place while pages change, schedule.js says what shows when,
                               logo.js and name.js draw the hawk and the team name (name.js can also put the
                               name on two lines, which nothing uses now), countdown.js is the countdown's parts and
-                              the code that writes its numbers, for both layouts, source.js
+                              the code that writes its numbers, for every layout and for the war clock, source.js
                               decides sample or production content from Dashboard Settings,
                               images.js builds the addresses of photos from Sanity, photos.js says
                               which photos the Photo panel shows and in what order, portrait.js
@@ -154,7 +155,9 @@ editors can sign in from anywhere.
                               column of the sidebar layout, in place of the banner and the countdown
                               (docs/layouts.md, "The sidebar"). panels/bar-banner and panels/bar-column are
                               the banner and the side column of the bar layout (docs/layouts.md, "The bar
-                              layout"). panels/tonight is the Up Next panel (docs/up-next.md)
+                              layout"). The war clock in that banner is drawn by panels/countdown, as a
+                              second rendering of the countdown (docs/layouts.md, "The war clock").
+                              panels/tonight is the Up Next panel (docs/up-next.md)
       fonts/, assets/         fonts and pictures, all served from here
       data/sample/            sample content with marked placeholders, and a sample talk with six slides
                               (slides/presentation-sample)
@@ -210,8 +213,9 @@ editors can sign in from anywhere.
       test-layouts.mjs        checks for the layouts: which layout a theme and a style have, the numbers of the
                               sidebar and bar layouts, the mirror, that the screen is always 1920 x 1080,
                               the reload that changes layout and that it cannot loop, that the scheduler leaves
-                              out the small frame, the blocks of a hidden transition, and that a seasonal pack
-                              draws only what a layout allows
+                              out the small frame, the blocks of a hidden transition, that a seasonal pack
+                              draws only what a layout allows, and the war clock: its housing, its digits and
+                              labels, its sizes and that it does not move
       test-seasons.mjs        checks for choosing, loading and drawing a seasonal pack (core/season.js), for its
                               header mark (core/marks.js), its over layer and the Theme switch that turns that off,
                               for a pack that is missing, broken or slow, and that check-seasons.mjs fails for each

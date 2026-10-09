@@ -7,7 +7,8 @@
    paint the page background and the parts of the frames that only this style has.
    Everything it paints is still: the grid, the rivets and the rust never move.
 
-     --style-rust            the rust at two corners of every frame, and the patch under it
+     --style-rust            the rust at two corners of every frame, and the patch under it, and
+                             the rust on the war clock's housing
 
    The frames are drawn by core/plate.js with shapes of their own for this style, cut
    at 34 px instead of 56 (bar-main-minimal and the other two, "The frames of the bar
@@ -144,3 +145,8 @@ html[data-style="minimal"] .bar-rail::after {
     linear-gradient(var(--style-pink), var(--style-pink)) 1px 576px / 10px 62px no-repeat,
     linear-gradient(var(--style-neon), var(--style-neon)) 1px 650px / 10px 24px no-repeat;
 }
+
+
+/* The war clock in the banner (panels/countdown) is shown by this style and by Cybertron, and by no
+   other. Its digits are --style-digits, the team's neon here. */
+html[data-style="minimal"] .war-clock { display: block; }

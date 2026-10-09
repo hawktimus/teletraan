@@ -7,6 +7,7 @@
 // draw only what a layout allows, how the mirror turns the layouts round, that the
 // screen is always 1920 x 1080, the frames of the bar layout (their shapes, their
 // parts and where they land on the screen), the steel and what Cybertron paints,
+// the war clock (its housing, its digits and labels, and that it fits and holds still),
 // and that the stylesheets and the docs agree with the numbers. Nothing touches the
 // network or a browser.
 //
@@ -1044,9 +1045,10 @@ async function onSidebar(run, atMs) {
   world.draw = (content, panelFile) => {
     const element = makeBox(world.log, 'panel');
     const countdown = makeBox(world.log, 'countdown');
+    if (world.prepare) world.prepare(countdown); // a test may watch the box before the panel starts on it
     const real = element.querySelector;
     element.querySelector = selector => {
-      if (selector === '.side-countdown') return countdown;
+      if (selector === '.side-countdown' || selector === '.war-clock') return countdown; // the war clock is the countdown drawn a third time
       if (selector === '.side-name' && world.nameMoved) return null; // the panel's name was moved into the strip
       if (world.clockMoved && /^\.(side-clock|side-weather|time|suffix|weather-icon|temperature)\b/.test(selector)) return null; // and so were the clock and the weather
       return real(selector);
@@ -2511,7 +2513,8 @@ test('the text sizes below 44 px in the whole dashboard are an explicit list: th
   walk('dashboard');
   assert.ok(allowed.length >= 6, 'found the style and bar files: ' + allowed.join(', '));
 
-  // Text of 20 or 24 px is allowed only for the war clock's labels and the plate ids, and neither is drawn yet in these files
+  // Text of 20 or 24 px is allowed only for the war clock's labels and the plate ids. The labels are in panels/countdown/countdown.css and the ids in base.css,
+  // which the next test lists one by one, so none of them is in a bar or style file
   const small = [{ what: 'the war clock labels', sizes: [20, 24] }, { what: 'the stamped plate ids', sizes: [20] }];
   assert.deepEqual(small.map(item => item.what), ['the war clock labels', 'the stamped plate ids']);
   allowed.forEach(file => {
@@ -2520,7 +2523,7 @@ test('the text sizes below 44 px in the whole dashboard are an explicit list: th
   });
 });
 
-test('every literal text size under 44 px in the dashboard stylesheets is on a list: so far only the stamped plate id, 20 px in base.css', () => {
+test('every literal text size under 44 px in the dashboard stylesheets is on a list: the stamped plate id, 20 px in base.css, and the war clock\'s labels, 20 and 24 px in countdown.css', () => {
   const found = [];
   const walk = folder => fs.readdirSync(path.join(root, folder), { withFileTypes: true }).forEach(entry => {
     const relative = folder + '/' + entry.name;
@@ -2539,8 +2542,17 @@ test('every literal text size under 44 px in the dashboard stylesheets is on a l
   });
   walk('dashboard');
 
-  const allowed = [{ file: 'dashboard/base.css', selector: '.plate-id', size: 20 }];
-  assert.deepEqual(found, allowed);
+  // the file and the rule of every size, in the same order whatever order the folders are read in
+  const war = 'dashboard/panels/countdown/countdown.css';
+  const allowed = [
+    { file: 'dashboard/base.css', selector: '.plate-id', size: 20 },
+    { file: war, selector: 'html[data-layout="bar"] .war-lines span', size: 24 }, // the label and the date
+    { file: war, selector: 'html[data-layout="bar"] .war-clock[data-over="yes"] .label', size: 20 }, // COUNTDOWN OVER and DATE NOT SET, on two lines
+    { file: war, selector: 'html[data-layout="bar"] .war-days-group .days-word', size: 24 }, // DAYS
+    { file: war, selector: 'html[data-layout="bar"] .war-cell .unit', size: 20 }, // HRS, MIN and SEC
+  ];
+  const order = list => list.map(item => item.file + ' ' + item.selector + ' ' + item.size).sort();
+  assert.deepEqual(order(found), order(allowed));
 });
 
 test('the mirror leaves the frames, their rivets and their ids as they are, and the ids are drawn for Original whether the layout is mirrored or not', () => {
@@ -2766,7 +2778,7 @@ test('the side column writes the clock, the date, the weather, the team number, 
   });
 });
 
-test('the banner has the name and the war clock\'s empty slot, draws the name as letters once, and draws a new name when the team changes', async () => {
+test('the banner has the name and the war clock in its slot, draws the name as letters once, and draws a new name when the team changes', async () => {
   await onSidebar(async world => {
     await world.draw(teamContent(), barBannerFile);
     const classes = classesIn(world.markup);
@@ -2776,7 +2788,8 @@ test('the banner has the name and the war clock\'s empty slot, draws the name as
     assert.ok(world.markup.indexOf('class="plate fills"') < world.markup.indexOf('bar-name'), 'the frame is drawn first, so the name is over it');
     assert.equal(countOf(world.markup, 'class="plate fills"'), 1, 'one frame');
     assert.equal(countOf(world.markup, 'data-name-effect'), 1, 'one name for the effect to find');
-    assert.ok(/class="bar-war"[^>]*><\/div>/.test(world.markup), 'the slot is empty');
+    assert.ok(/class="bar-war"[^>]*>\s*<div class="war-clock"/.test(world.markup), 'the war clock is the one thing in the slot');
+    assert.equal(countOf(world.markup, 'class="war-clock"'), 1, 'one war clock');
 
     const name = world.element.nodes['.bar-name'];
     assert.equal(countOf(name.innerHTML, 'class="letter"'), 'HAWKTIMUS PRIME'.length, 'a letter for each character');
@@ -2844,6 +2857,11 @@ const signedArea = outline => outline.reduce((sum, point, index) => {
   return sum + point[0] * next[1] - next[0] * point[1];
 }, 0) / 2;
 const hasText = (markup, text) => markup.indexOf(text) !== -1;
+const distanceToSegment = (point, from, to) => {
+  const length = lengthOf(from, to);
+  const along = Math.max(0, Math.min(1, ((point[0] - from[0]) * (to[0] - from[0]) + (point[1] - from[1]) * (to[1] - from[1])) / (length * length)));
+  return lengthOf(point, [from[0] + (to[0] - from[0]) * along, from[1] + (to[1] - from[1]) * along]);
+};
 
 test('the three bar frames are drawn for the boxes of the layout: the main panel for its area, the banner and the ticker for their regions, with the header as high as the large frame\'s', () => {
   const main = plate.barShape('bar-main');
@@ -3731,6 +3749,452 @@ test('the numbers in the Frames section of docs/layouts.md for the frames of Min
   assert.ok(section.includes('every 18') && section.includes('4 wide and 10 high'));
   assert.ok(section.includes('HP-01') && section.includes('HP-02'));
 });
+
+// The war clock (panels/countdown, warHousingMarkup in core/plate.js, "The war clock" in docs/layouts.md)
+
+// The display font's advance widths in thousandths of an em, read from tomorrow-700.woff2 and tomorrow-600.woff2.
+// Kerning is left out, which only makes a word narrower
+const fontAdvances = {
+  700: {
+    digits: [692, 478, 683, 695, 709, 708, 715, 603, 696, 730],
+    space: 246,
+    letters: { A: 736, B: 747, C: 670, D: 744, E: 680, F: 639, G: 818, H: 765, I: 420, J: 681, K: 692, L: 610, M: 885, N: 766, O: 754, P: 689, Q: 754, R: 742, S: 722, T: 609, U: 777, V: 708, W: 1010, X: 702, Y: 678, Z: 680 },
+  },
+  600: {
+    digits: [682, 455, 672, 668, 672, 666, 695, 569, 689, 699],
+    space: 239,
+    letters: { A: 711, B: 727, C: 673, D: 732, E: 657, F: 611, G: 737, H: 749, I: 408, J: 635, K: 686, L: 591, M: 892, N: 752, O: 729, P: 657, Q: 729, R: 718, S: 696, T: 587, U: 745, V: 697, W: 964, X: 683, Y: 669, Z: 669 },
+  },
+};
+
+// How wide text is in px, with the letter spacing as a fraction of the size, after every character
+function textWidth(text, weight, size, spacing) {
+  const table = fontAdvances[weight];
+  return Array.from(text).reduce((sum, character) => {
+    const advance = /\d/.test(character) ? table.digits[Number(character)] : character === ' ' ? table.space : table.letters[character];
+    return sum + advance / 1000 * size + spacing * size;
+  }, 0);
+}
+
+const warCssFile = 'dashboard/panels/countdown/countdown.css';
+const barRule = 'html[data-layout="bar"] ';
+
+// The war clock's part of countdown.css, which starts with the rule that hides it
+const warSection = () => {
+  const css = withoutComments(read(warCssFile));
+  return css.slice(css.indexOf('.war-clock { display: none; }'));
+};
+
+// The body of the war clock's rule for a selector (the bar layout's prefix is added)
+const warRule = selector => {
+  const escaped = (barRule + selector).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const found = new RegExp('(?:^|\\})\\s*' + escaped + ' \\{([^{}]*)\\}').exec(warSection());
+  assert.ok(found, 'countdown.css has no rule for ' + selector);
+  return found[1];
+};
+const warNumber = (selector, name) => {
+  const found = new RegExp('(?:^|[;\\s])' + name + ': (-?\\d+)(?:px)?[;\\s]').exec(warRule(selector));
+  return found ? Number(found[1]) : null;
+};
+
+// Where each part of the war clock is, in the housing's own pixels, from the stylesheet. The plates share their top and height
+const warParts = () => ({
+  'war-status': { top: warNumber('.war-status', 'top'), height: warNumber('.war-status', 'height'), left: warNumber('.war-status', 'left'), width: warNumber('.war-status', 'width') },
+  'war-lines': { top: warNumber('.war-lines', 'top'), height: warNumber('.war-lines', 'height'), left: warNumber('.war-lines', 'left'), width: warNumber('.war-lines', 'width') },
+  'war-days-plate': { top: warNumber('.war-plate', 'top'), height: warNumber('.war-plate', 'height'), left: warNumber('.war-days-plate', 'left'), width: warNumber('.war-days-plate', 'width') },
+  'war-time-plate': { top: warNumber('.war-plate', 'top'), height: warNumber('.war-plate', 'height'), left: warNumber('.war-time-plate', 'left'), width: warNumber('.war-time-plate', 'width') },
+});
+const boxOf = part => ({ x: part.left, y: part.top, width: part.width, height: part.height });
+
+// The rivets of the housing: the centres in the path
+const rivetsIn = markup => {
+  const path = /<path class="war-rivet" d="([^"]*)"/.exec(markup)[1];
+  return (path.match(/M[\d.]+ [\d.]+/g) || []).map(text => /M([\d.]+) ([\d.]+)/.exec(text)).map(found => [Number(found[1]) + 5, Number(found[2])]);
+};
+
+// Two days from the fake clock of onSidebar (Wed Oct 28 2026, 12:59:20), written as a Kickoff that is that many whole days and an hour or two away
+const kickoffIn = days => {
+  const at = new Date(2026, 9, 28 + days, 14, 0);
+  const two = number => String(number).padStart(2, '0');
+  return at.getFullYear() + '-' + two(at.getMonth() + 1) + '-' + two(at.getDate()) + 'T' + two(at.getHours()) + ':' + two(at.getMinutes());
+};
+const warContent = (kickoff, rollout) => teamContent({ settings: { countdown: { kickoff: kickoff, kickoffLabel: 'KICKOFF', rollout: rollout === undefined ? '2027-04-01T12:00' : rollout, rolloutLabel: 'ROLLOUT' } } });
+
+test('the housing of the war clock is one steel plate 700 by 120 with the edge of the frames, a cut corner of 22 at the top left and the bottom right, four rivets, one weld seam and rust at two corners', async () => {
+  await withPlatePage(() => {
+    const markup = plate.warHousingMarkup();
+    assert.ok(isBalanced(markup));
+    assert.ok(/^<svg class="war-housing" width="700" height="120" viewBox="0 0 700 120">/.test(markup));
+    assert.equal(countOf(markup, '<svg '), 1, 'one drawing');
+    assert.equal(countOf(markup, 'class="war-housing-fill"'), 1, 'one plate');
+    assert.deepEqual([700, 120], [b.war.width, b.war.height], 'the size of the slot in the banner');
+
+    // 4 inside the box, like every frame, with the cuts at the top left and the bottom right and the other two corners square
+    const points = /<polygon class="war-housing-fill" points="([^"]*)"/.exec(markup)[1].split(' ').map(pair => pair.split(',').map(Number));
+    assert.deepEqual(points, [[4, 116], [4, 26], [26, 4], [696, 4], [696, 94], [674, 116]]);
+    assert.deepEqual([points[1][1] - points[2][1], points[2][0] - points[1][0]], [22, 22], 'the cut at the top left');
+    assert.deepEqual([points[4][0] - points[5][0], points[5][1] - points[4][1]], [22, 22], 'and at the bottom right');
+    assert.ok(signedArea(points) > 0, 'clockwise on the screen, like the frames');
+
+    // the five layers of the edge, back to front, on the one shape that the plate has
+    const layers = (markup.match(/<use class="edge-[a-z]+" href="#war-housing-shape"\/>/g) || []).map(text => /edge-([a-z]+)/.exec(text)[1]);
+    assert.deepEqual(layers, ['shadow', 'rim', 'face', 'shade', 'ridge']);
+
+    // four rivets, one in each corner and clear of the cut corners
+    const rivets = rivetsIn(markup);
+    assert.deepEqual(rivets, [[30, 22], [672, 22], [30, 92], [672, 92]]);
+    assert.equal(countOf(markup, 'class="war-rivet"'), 1, 'in one path');
+    edgesOf(points).forEach(([from, to]) => rivets.forEach(center => assert.ok(distanceToSegment(center, from, to) >= 5 + 8, 'a rivet is clear of the rim of the edge: ' + center)));
+
+    // one weld seam, horizontal, with the light line 4 below the dark one, as Minimal's seam is
+    assert.equal(countOf(markup, 'class="war-weld-dark"'), 1);
+    assert.equal(countOf(markup, 'class="war-weld-light"'), 1);
+    assert.ok(/class="war-weld-dark" d="M16 63L684 63"/.test(markup) && /class="war-weld-light" d="M16 67L684 67"/.test(markup));
+
+    // rust at the bottom left and the top right: two patches (gradients) and one stroke with two arcs
+    const patches = (markup.match(/<ellipse class="war-smudge" cx="(\d+)" cy="(\d+)"/g) || []).map(text => /cx="(\d+)" cy="(\d+)"/.exec(text).slice(1).map(Number));
+    assert.equal(patches.length, 2);
+    assert.ok(patches.some(([x, y]) => x < 350 && y > 60) && patches.some(([x, y]) => x > 350 && y < 60), 'one at the bottom left and one at the top right');
+    assert.equal((/class="war-wear" d="([^"]*)"/.exec(markup)[1].match(/M/g) || []).length, 2, 'two arcs in one stroke');
+
+    // the order: the plate, the seam, the edge over them, then the rust on the steel, then the rivets on top
+    const at = text => markup.indexOf(text);
+    assert.ok(at('war-housing-fill') < at('war-weld-dark') && at('war-weld-dark') < at('edge-shadow') && at('edge-ridge') < at('war-rust') && at('war-rust') < at('war-rivet'));
+
+    assert.ok((markup.match(/<(svg|g|polygon|path|use|ellipse)[ >]/g) || []).length <= 20, 'a handful of elements');
+    assert.ok(!/(filter|animate|<set|clipPath|<image|<mask|<pattern)/i.test(markup), 'no filter, picture, mask, clip or animation');
+  });
+});
+
+test('the war clock markup has each part once with the class names core/countdown.js looks for, and none of the parts of the other countdowns', async () => {
+  await onSidebar(async world => {
+    const countdown = await import(urlOf(world.folder, 'dashboard/panels/countdown/countdown.js'));
+    const markup = countdown.warMarkup();
+    const classes = classesIn(markup);
+
+    assert.ok(isBalanced(markup));
+    assert.ok(/^\s*<div class="war-clock" data-level="calm" data-over="no">/.test(markup), 'one root, calm, and not over');
+    ['war-clock', 'war-housing', 'war-status', 'war-lines', 'label', 'date', 'war-days-plate', 'war-days-group', 'days-number', 'days-word', 'war-time-plate', 'hours', 'minutes', 'seconds'].forEach(name => {
+      assert.equal(classes.filter(found => found === name).length, 1, name + ' appears once');
+    });
+    assert.equal(classes.filter(found => found === 'war-plate').length, 2, 'two plates');
+    assert.equal(classes.filter(found => found === 'war-cell').length, 3, 'three cells');
+    assert.deepEqual((markup.match(/class="unit">[A-Z]+/g) || []).map(text => text.slice(13)), ['HRS', 'MIN', 'SEC']);
+
+    // the plates and the housing are in the order they are drawn: the housing first, so the plates are over it
+    const at = name => markup.search(new RegExp('class="[^"]*\\b' + name + '\\b'));
+    ['war-housing', 'war-status', 'war-lines', 'war-days-plate', 'war-time-plate'].reduce((before, name) => { assert.ok(at(name) > before, name + ' follows the part before it'); return at(name); }, -1);
+
+    // no lamp, no chevrons, no row of blocks, no bars of the countdown, no serial plate, no pipes, and nothing that arrives by itself
+    ['lamp', 'chevron', 'segment', 'segments', 'stripes', 'top-line', 'time-row', 'days-row', 'serial', 'pipe'].forEach(name => assert.ok(!classes.some(found => found.includes(name)), 'no ' + name));
+    assert.equal(countOf(markup, 'data-part'), 0, 'the clock arrives with the slot it is in');
+  });
+});
+
+test('the war clock shows the days as two digits, three from 100, and the hours, minutes and seconds as two digits, from the same dates as the countdown', async () => {
+  const cases = [[0, '00'], [4, '04'], [7, '07'], [10, '10'], [92, '92'], [99, '99'], [100, '100'], [146, '146']];
+
+  for (const [days, shown] of cases) {
+    await onSidebar(async world => {
+      const long = [];
+      world.prepare = box => { box.querySelector('.days-number span').parentNode.classList.toggle = (token, force) => long.push([token, force]); };
+      await world.draw(warContent(kickoffIn(days)), barBannerFile);
+
+      const text = selector => world.countdown.nodes[selector].textContent;
+      const left = Math.floor((new Date(kickoffIn(days)) - new Date(world.now)) / 1000);
+      assert.equal(text('.days-number span'), shown, days + ' days');
+      assert.equal(Math.floor(left / 86400), days, 'the test asks for ' + days + ' days');
+      assert.equal(text('.days-word'), 'DAYS');
+      assert.equal(text('.hours span'), String(Math.floor(left % 86400 / 3600)).padStart(2, '0'));
+      assert.equal(text('.minutes span'), String(Math.floor(left % 3600 / 60)).padStart(2, '0'));
+      assert.equal(text('.seconds span'), String(left % 60).padStart(2, '0'));
+      assert.deepEqual(long, [['long', days > 99]], 'only 100 days or more is the long number, which has the smaller size');
+    });
+  }
+
+  // one day is DAY, and the count is two digits again
+  await onSidebar(async world => {
+    await world.draw(warContent('2026-10-29T14:00'), barBannerFile);
+    assert.deepEqual([world.countdown.nodes['.days-number span'].textContent, world.countdown.nodes['.days-word'].textContent], ['00', 'DAYS'], '23 hours and 30 minutes is not a day yet');
+  }, new Date(2026, 9, 28, 14, 30, 0).getTime());
+  await onSidebar(async world => {
+    await world.draw(warContent('2026-10-29T14:00'), barBannerFile);
+    assert.deepEqual([world.countdown.nodes['.days-number span'].textContent, world.countdown.nodes['.days-word'].textContent], ['01', 'DAY'], 'a day and a minute is 01 DAY');
+  }, new Date(2026, 9, 28, 13, 59, 0).getTime());
+});
+
+test('the war clock has the label from Dashboard Settings with no IN and the date under it, and says NOW, COUNTDOWN OVER and DATE NOT SET in the standard countdown\'s words', async () => {
+  const states = [
+    // kickoff, rollout, label, date, level, over, days (when they are not a matter of the time zone)
+    ['2027-03-01T12:00', '2027-04-01T12:00', 'KICKOFF', 'MAR 1', 'calm', 'no', null],
+    ['2026-11-20T12:00', '2027-04-01T12:00', 'KICKOFF', 'NOV 20', 'tense', 'no', null],
+    ['2026-11-02T12:00', '2027-04-01T12:00', 'KICKOFF', 'NOV 2', 'critical', 'no', null],
+    ['2026-10-28T09:00', '2027-04-01T12:00', 'KICKOFF', 'NOW', 'critical', 'no', '00'],
+    ['2026-09-01T09:00', '2027-04-01T12:00', 'ROLLOUT', 'APR 1', 'calm', 'no', null],
+    ['2026-09-01T09:00', '2026-10-01T09:00', 'COUNTDOWN OVER', '', 'calm', 'yes', '00'],
+    ['', '', 'DATE NOT SET', '', 'calm', 'yes', '00'],
+  ];
+
+  for (const [kickoff, rollout, label, date, level, over, days] of states) {
+    await onSidebar(async world => {
+      await world.draw(warContent(kickoff, rollout), barBannerFile);
+      const name = kickoff + ' ' + rollout;
+      assert.equal(world.countdown.nodes['.label'].textContent, label, name);
+      assert.equal(world.countdown.nodes['.date'].textContent, date, name);
+      assert.equal(world.countdown.dataset.level, level, name);
+      assert.equal(world.countdown.dataset.over, over, name);
+      if (days) assert.equal(world.countdown.nodes['.days-number span'].textContent, days, name);
+      if (over === 'yes') ['.hours span', '.minutes span', '.seconds span'].forEach(selector => assert.equal(world.countdown.nodes[selector].textContent, '00', name));
+    });
+  }
+
+  // a label typed with its IN is the label, and the date is what the standard countdown has beside it
+  await onSidebar(async world => {
+    await world.draw(teamContent({ settings: { countdown: { kickoff: '2027-01-09T12:00', kickoffLabel: 'Kickoff in', rollout: '', rolloutLabel: '' } } }), barBannerFile);
+    assert.deepEqual([world.countdown.nodes['.label'].textContent, world.countdown.nodes['.date'].textContent], ['KICKOFF', 'JAN 9']);
+    assert.equal(world.measured.length, 0, 'nothing is measured: the label has a line of its own');
+  });
+
+  // new dates from the editors are used on the next second, and a changed level and the end state follow
+  await onSidebar(async world => {
+    await world.draw(warContent('2027-03-01T12:00'), barBannerFile);
+    world.module.update(world.element, warContent('2026-11-02T12:00', '2026-12-01T12:00'));
+    world.nextTick();
+    assert.deepEqual([world.countdown.dataset.level, world.countdown.nodes['.date'].textContent], ['critical', 'NOV 2']);
+    world.module.update(world.element, warContent('2026-09-01T12:00', '2026-10-01T12:00'));
+    world.nextTick();
+    assert.deepEqual([world.countdown.nodes['.label'].textContent, world.countdown.dataset.over, world.countdown.dataset.level], ['COUNTDOWN OVER', 'yes', 'calm']);
+  });
+});
+
+test('the war clock changes its digits at once with the same tick as the countdown: no roll, no nudge, and only the seconds are written on most ticks', async () => {
+  await onSidebar(async world => {
+    await world.draw(warContent('2026-11-02T12:00'), barBannerFile);
+    assert.equal(world.timers.length, 1, 'one clock of the screen, shared with the countdown');
+    assert.ok(!world.log.some(entry => entry.endsWith('.animate')), 'the first numbers just appear');
+    world.log.length = 0;
+
+    world.nextTick();
+    assert.deepEqual(world.log.filter(entry => entry.startsWith('countdown')), ['countdown .seconds span.text'], 'only the seconds, and not rolled');
+    assert.equal(world.countdown.nodes['.seconds span'].textContent, String(Math.floor((new Date(2026, 10, 2, 12, 0) - new Date(world.now)) / 1000) % 60).padStart(2, '0'));
+
+    // through the end of a minute, which is when the standard countdown's chevrons close, and the 5 seconds of its row of blocks
+    world.log.length = 0;
+    for (let tick = 0; tick < 70; tick++) world.nextTick();
+    const left = Math.floor((new Date(2026, 10, 2, 12, 0) - new Date(world.now)) / 1000);
+    assert.equal(world.countdown.nodes['.minutes span'].textContent, String(Math.floor(left % 3600 / 60)).padStart(2, '0'));
+    assert.ok(world.log.includes('countdown .minutes span.text') && world.log.includes('countdown .hours span.text'), 'the minutes and the hours changed when the seconds ran out: 0:40 left became 59:29');
+    assert.ok(!world.log.some(entry => entry.endsWith('.animate')), 'nothing was rolled or nudged, not even at the minute');
+    assert.ok(!world.log.some(entry => entry.includes('.chevron')), 'no chevrons');
+    assert.ok(!world.log.some(entry => entry.startsWith('countdown.segment')), 'no row of blocks');
+  });
+
+  // the standard countdown is as it was: a new number rolls in, and the chevrons close at the minute
+  await onSidebar(async world => {
+    await world.draw(teamContent(), 'dashboard/panels/side/side.js');
+    world.log.length = 0;
+    world.nextTick();
+    assert.ok(world.log.includes('countdown .seconds span.animate'));
+  });
+});
+
+test('a fault in the war clock leaves the name on the banner', async () => {
+  await onSidebar(async world => {
+    const errors = [];
+    await withGlobals({ console: { error: (...parts) => errors.push(parts), log: console.log } }, async () => {
+      await world.draw(teamContent({ settings: null }), barBannerFile);
+    });
+    assert.equal(errors.length, 1, 'the fault is told once');
+    assert.ok(String(errors[0][0]).includes('war clock'));
+    assert.equal(world.element.nodes['.bar-name'].dataset.name, 'HAWKTIMUS PRIME', 'the name is drawn');
+  });
+});
+
+test('the war clock\'s plates, sizes and colors are the ones the order gives, and only Cybertron and Minimal show it', () => {
+  const section = warSection();
+
+  // The housing is the slot: 700 by 120, as barSettings has it
+  assert.deepEqual([warNumber('.war-clock', 'width'), warNumber('.war-clock', 'height')], [layout.barSettings.warClock.width, layout.barSettings.warClock.height]);
+
+  // The plates: #0c0b09 with a 3 px border of #2b2a26, and a gradient inside from a highlight at the top to a shade at the foot
+  const clock = warRule('.war-clock');
+  assert.ok(/--war-plate: #0c0b09;/.test(clock) && /--war-plate-border: #2b2a26;/.test(clock));
+  const plateRule = warRule('.war-plate');
+  assert.ok(/border: 3px solid var\(--war-plate-border\);/.test(plateRule));
+  const gradient = /linear-gradient\(180deg, rgba\(255, 255, 255, ([.\d]+)\) 0, rgba\(255, 255, 255, 0\) (\d+)%, rgba\(0, 0, 0, ([.\d]+)\) 100%\),\s*var\(--war-plate\);/.exec(plateRule);
+  assert.ok(gradient, 'a top to bottom gradient from a highlight to a shade, over the plate color');
+  assert.ok(Number(gradient[1]) > 0 && Number(gradient[3]) > 0);
+  assert.deepEqual([warNumber('.war-days-plate', 'width'), warNumber('.war-plate', 'height')], [176, 92]);
+  assert.equal(warNumber('.war-time-plate', 'width'), 250);
+  assert.ok(/box-sizing: border-box;/.test(plateRule), 'the 176 and the 250 are the whole plate, with its border');
+
+  // The days at 76 px with DAYS at 24, the time at 48 with HRS, MIN and SEC at 20, the label and the date at 24, and three digits at 48
+  const fontOf = selector => /font: (\d+) (\d+)px\/(\d+)px var\(--font-display\);/.exec(warRule(selector)).slice(1).map(Number);
+  assert.deepEqual(fontOf('.war-days-group .days-number'), [700, 76, 76]);
+  assert.equal(warNumber('.war-days-group .days-number.long', 'font-size'), 48);
+  assert.deepEqual(fontOf('.war-days-group .days-word'), [600, 24, 28]);
+  assert.deepEqual(fontOf('.war-cell .digits'), [700, 48, 52]);
+  assert.deepEqual(fontOf('.war-cell .unit'), [600, 20, 22]);
+  assert.deepEqual(fontOf('.war-lines span'), [700, 24, 28]);
+  assert.equal(warNumber('.war-clock[data-over="yes"] .label', 'font-size'), 20);
+  assert.ok(/letter-spacing: \.12em;/.test(warRule('.war-lines span')), 'the label is letter spaced');
+
+  // Text under 44 px in this part is the labels: 20 and 24, and nothing else
+  const small = new Set();
+  (section.match(/font(-size)?: [^;]*/g) || []).forEach(text => (text.match(/(?<![\/\d.])\d+(\.\d+)?px/g) || []).filter(size => parseFloat(size) < 44).forEach(size => small.add(parseFloat(size))));
+  assert.deepEqual(Array.from(small).sort(), [20, 24]);
+
+  // The digits and the labels are --style-digits: amber in Cybertron, the team's neon in Minimal. The last month is orange and the last week is white with red borders
+  assert.ok(/--war-ink: var\(--style-digits\);/.test(clock) && /color: var\(--war-ink\);/.test(clock));
+  assert.ok(/--war-ink: var\(--danger-bright\);/.test(warRule('.war-clock[data-level="tense"]')));
+  assert.ok(/--war-ink: var\(--white\);/.test(warRule('.war-clock[data-level="critical"]')) && /--war-plate-border: var\(--danger\);/.test(warRule('.war-clock[data-level="critical"]')));
+  assert.ok(/background: var\(--danger\);/.test(warRule('.war-status')), 'the red status square');
+  const style = name => withoutComments(read('dashboard/styles/' + name + '.css'));
+  assert.ok(/--style-digits: #ffb327;/.test(style('cybertron')) && /--style-digits: var\(--team-neon\);/.test(style('minimal')));
+  assert.ok(/--style-rust: #[0-9a-f]{6};/.test(style('cybertron')) && /--style-rust: #[0-9a-f]{6};/.test(style('minimal')), 'both styles have the rust of the housing');
+
+  // Hidden unless a style shows it, and only these two do
+  assert.ok(section.startsWith('.war-clock { display: none; }'));
+  assert.ok(style('cybertron').includes('html[data-style="cybertron"] .war-clock { display: block; }') && style('minimal').includes('html[data-style="minimal"] .war-clock { display: block; }'));
+  const mentions = [];
+  const walk = folder => fs.readdirSync(path.join(root, folder), { withFileTypes: true }).forEach(entry => {
+    const relative = folder + '/' + entry.name;
+    if (entry.isDirectory()) { if (!['fonts', 'data', 'assets'].includes(entry.name)) walk(relative); }
+    else if (entry.name.endsWith('.css') && /\.war-/.test(withoutComments(read(relative)))) mentions.push(relative);
+  });
+  walk('dashboard');
+  assert.deepEqual(mentions.sort(), [warCssFile, 'dashboard/styles/cybertron.css', 'dashboard/styles/minimal.css']);
+  assert.ok(!/war-/.test(withoutComments(read('dashboard/styles/original.css'))), 'Original has no war clock');
+});
+
+test('the war clock\'s parts are inside the housing, clear of each other and of the rivets, and the budget in docs/layouts.md is the numbers in countdown.css', async () => {
+  const parts = warParts();
+  const doc = read('docs/layouts.md');
+  const section = doc.slice(doc.indexOf('### The war clock'), doc.indexOf('### The side column'));
+  assert.ok(section.length > 1000, 'docs/layouts.md has a section called The war clock');
+
+  const rows = {};
+  section.split('\n').forEach(line => {
+    const row = /^\| `\.([a-z-]+)` \| (\d+) \| (\d+) \| (\d+) \| (\d+) \|/.exec(line);
+    if (row) rows[row[1]] = { top: Number(row[2]), height: Number(row[3]), left: Number(row[4]), width: Number(row[5]) };
+  });
+  assert.deepEqual(Object.keys(rows).sort(), Object.keys(parts).sort(), 'the budget has a row for each part, and no other');
+  Object.keys(parts).forEach(name => assert.deepEqual(rows[name], parts[name], name + ' in the docs and in countdown.css'));
+
+  const housing = { x: 0, y: 0, width: 700, height: 120 };
+  Object.keys(parts).forEach(name => assert.ok(within(boxOf(parts[name]), housing), name + ' is inside the housing'));
+  const names = Object.keys(parts);
+  names.forEach((name, index) => names.slice(index + 1).forEach(other => assert.ok(apart(boxOf(parts[name]), boxOf(parts[other])), name + ' and ' + other + ' overlap')));
+
+  // From left to right: the label block, a gap, the days, a gap, the time
+  assert.ok(parts['war-lines'].left + parts['war-lines'].width < parts['war-days-plate'].left);
+  assert.ok(parts['war-days-plate'].left + parts['war-days-plate'].width < parts['war-time-plate'].left);
+  assert.equal(parts['war-days-plate'].top + parts['war-days-plate'].height / 2, 60, 'the plates are in the middle of the housing\'s height');
+  assert.equal(parts['war-status'].left + parts['war-status'].width + 8, parts['war-lines'].left, 'the label is 8 from its square');
+  assert.equal(parts['war-lines'].height, 2 * 28, 'two lines of 28');
+  assert.equal(parts['war-status'].top + parts['war-status'].height / 2, parts['war-lines'].top + 14, 'the square is level with the middle of the label');
+
+  // The time plate: 3 cells of 80 and 2 px each side, inside a 3 px border, are the 250 of the plate
+  assert.equal(3 * warNumber('.war-cell', 'width') + 2 * 2 + 2 * 3, parts['war-time-plate'].width);
+  assert.ok(/padding: 0 2px;/.test(warRule('.war-time-plate')));
+
+  // The rivets stand in the corners and no part covers one. The bottom right plate corner keeps clear of the cut corner and its rim
+  await withPlatePage(() => {
+    const markup = plate.warHousingMarkup();
+    rivetsIn(markup).forEach(([x, y]) => names.forEach(name => assert.ok(apart({ x: x - 5, y: y - 5, width: 10, height: 10 }, boxOf(parts[name])), 'a rivet is under ' + name)));
+    const time = parts['war-time-plate'];
+    const corner = [time.left + time.width, time.top + time.height];
+    assert.ok(distanceToLine(corner, [696, 94], [674, 116]) >= 8 + 6, 'the time plate is 6 clear of the rim at the cut corner');
+
+    // the seam is between the two lines of the label
+    const middle = parts['war-lines'].top + 28;
+    const dark = Number(/war-weld-dark" d="M\d+ (\d+)/.exec(markup)[1]);
+    assert.ok(dark < middle && dark + 4 > middle, 'the weld seam is between the label and the date');
+  });
+});
+
+test('the digits and the labels of the war clock fit their boxes in the display font, and three digit days are drawn smaller', () => {
+  const room = warNumber('.war-lines', 'width');
+  const plateInside = warNumber('.war-days-plate', 'width') - 2 * 3;
+  const gap = warNumber('.war-days-group', 'gap');
+  const days = textWidth('DAYS', 600, 24, -0.03);
+  assert.ok(/letter-spacing: -\.04em;/.test(warRule('.war-days-group .days-number')) && /letter-spacing: -\.03em;/.test(warRule('.war-days-group .days-word')));
+  assert.equal(gap, 2);
+
+  // Every two digit count, and the ones that do not fit the 170 inside the plate, which the plate cuts off
+  const wide = [];
+  let most = 0;
+  for (let count = 10; count <= 99; count++) {
+    const width = textWidth(String(count), 700, 76, -0.04) + gap + days;
+    if (width > plateInside) wide.push(count);
+    most = Math.max(most, width - plateInside);
+  }
+  assert.deepEqual(wide, [69, 96, 99], 'the counts that are wider than the plate');
+  assert.ok(most <= 2, 'by 2 px at the most, which the two sides share: ' + most);
+  assert.ok(textWidth('99', 700, 76, 0) <= 111.1 && days < 66, 'the numbers in countdown.css');
+
+  // Three digits at 76 px do not fit, and at 48 px (the long size) every one does
+  assert.ok(textWidth('100', 700, 76, -0.04) + gap + days > plateInside + 20, 'three digits at 76 px do not fit');
+  let worst = 0;
+  for (let count = 100; count <= 999; count++) worst = Math.max(worst, textWidth(String(count), 700, 48, -0.04) + gap + days);
+  assert.ok(worst <= plateInside, 'every three digit count fits at 48 px: ' + worst);
+
+  // Two time digits at 48 px in the box of 76, and the labels under them in their cell of 80
+  let widest = 0;
+  for (let count = 0; count <= 99; count++) widest = Math.max(widest, textWidth(String(count).padStart(2, '0'), 700, 48, 0));
+  assert.ok(widest <= warNumber('.war-cell .digits', 'width'), 'two digits are ' + widest);
+  assert.ok(warNumber('.war-cell .digits', 'width') <= warNumber('.war-cell', 'width'));
+  ['HRS', 'MIN', 'SEC'].forEach(unit => assert.ok(textWidth(unit, 600, 20, 0.12) <= warNumber('.war-cell', 'width'), unit));
+
+  // The label and the date at 24 px with their letters spaced, in the line of 169: KICKOFF and ROLLOUT, NOW, and the widest date
+  ['KICKOFF', 'ROLLOUT', 'NOW'].forEach(word => assert.ok(textWidth(word, 700, 24, 0.12) <= room, word));
+  ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'].forEach(month => assert.ok(textWidth(month + ' 30', 700, 24, 0.12) <= room, month));
+
+  // The end states are on two lines at 20 px, and each line of them is in the line of 169
+  ['COUNTDOWN', 'OVER', 'DATE NOT', 'SET'].forEach(words => assert.ok(textWidth(words, 700, 20, 0.1) <= room, words));
+  assert.ok(textWidth('COUNTDOWN OVER', 700, 24, 0.12) > room, 'COUNTDOWN OVER does not fit on one line at 24 px, which is why it has two at 20');
+  assert.ok(/-webkit-line-clamp: 2;/.test(warRule('.war-clock[data-over="yes"] .label')));
+  assert.ok(/text-overflow: ellipsis;/.test(warRule('.war-lines span')), 'a label that is too wide for its line is cut off with an ellipsis');
+});
+
+test('nothing in the war clock moves: no animation, transition, glow, shadow or transform in its rules, no animation code, and no line of its own in the table of frame.js', () => {
+  const section = warSection();
+  assert.ok(section.length > 3000);
+  assert.ok(!/(animation|transition|@keyframes|filter|box-shadow|text-shadow|blur\(|will-change|transform|clip-path)/.test(section), 'no animation, glow, shadow or transform');
+  assert.ok(!/@media|[\d.]+(vw|vh)\b/.test(section), 'nothing is responsive');
+  section.replace(/([^{}]+)\{[^{}]*\}/g, (all, list) => {
+    list.split(',').forEach(selector => assert.ok(/^(\.war-clock|html\[data-layout="bar"\](\[data-finish="flat"\])? \.war-)/.test(selector.trim()), 'a rule that is not for the war clock: ' + selector.trim()));
+    return all;
+  });
+
+  // The lines are at least 3 px
+  (section.match(/stroke-width: [\d.]+px/g) || []).concat(section.match(/border: [\d.]+px/g) || []).forEach(text => assert.ok(parseFloat(/[\d.]+/.exec(text)[0]) >= 3, text));
+
+  // The digits change at once: the roll is only for the other countdowns, and the nudge too
+  const core = read('dashboard/core/countdown.js');
+  assert.ok(core.includes('if (first || state.war) state[name].textContent = text;'));
+  assert.ok(core.includes('if (!state.war && state.lastMinute !== null && state.lastMinute !== left.minutes) {'));
+  ['dashboard/panels/countdown/countdown.js', 'dashboard/panels/bar-banner/bar-banner.js'].forEach(file => {
+    assert.equal(/setTimeout|setInterval|requestAnimationFrame|animate\(|getAnimations|classList/.test(read(file)), false, file + ' has animation code');
+  });
+  assert.equal(read('dashboard/panels/countdown/countdown.js').includes('data-part'), false, 'no part of the clock arrives of its own');
+  const sequence = /'bar-banner': \{([^}]*)\}/.exec(read('dashboard/frame.js'))[1];
+  assert.deepEqual((sequence.match(/'[a-z-]+':/g) || []).map(part => part.slice(1, -2)), ['body', 'outline', 'title', 'war', 'decor', 'rivets', 'wear', 'plate-id', 'stud'], 'the banner\'s table has a line for the slot and none for a part of the clock');
+});
+
+test('the mirror moves the war clock with its slot and turns nothing in it: no rule of the layout names it, and the banner\'s row has it at the other end', () => {
+  const bar = withoutComments(read('dashboard/layouts/bar.css'));
+  assert.ok(!/war-/.test(bar.replace(/\.bar-war|--bar-war-[a-z]+/g, '')), 'no rule of the layout names a part of the clock');
+  assert.ok(!/mirrored/.test(warSection()), 'and none of its own');
+  assert.ok(/html\.mirrored\[data-layout="bar"\] \.bar-banner,/.test(bar), 'the banner is a row that turns, so the slot changes ends');
+  assert.ok(!/mirror-art/.test(read('dashboard/panels/countdown/countdown.js')) && !/mirror-art/.test(read('dashboard/core/plate.js')), 'nothing in it is turned');
+
+  const m = layout.mirrorGeometry(b);
+  assert.deepEqual([b.war.x, m.war.x], [1148, 72], 'the slot is at the right end, and at the left end when mirrored');
+  assert.deepEqual([m.war.width, m.war.height], [700, 120]);
+  assert.equal(m.war.y, b.war.y, 'at the same height');
+});
+
 
 // Run them
 

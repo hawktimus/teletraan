@@ -7,13 +7,14 @@
    has. Everything it paints is still: nothing here moves.
 
      --style-body            the body of a plate
-     --style-raised          a raised plate: the war clock's housing
-     --style-armor-top       the top and the bottom of the armor header tab, which are
-     --style-armor-bottom    lighter and darker than --style-raised
+     --style-raised          a raised plate
+     --style-armor-top       the top and the bottom of the armor header tab and of the war
+     --style-armor-bottom    clock's housing, which are lighter and darker than --style-raised
      --style-chamfer         the large cut corners of a panel (the same 56 as in core/plate.js)
      --style-neon            the neon strokes, and the rule under the clock in the side column
      --style-pink            the conduit line along the inner edges
      --style-digits          the digits of the war clock
+     --style-rust            the rust on the war clock's housing
      --style-grid-size       the grid on the page background, and how faint it is
      --style-grid-opacity
      --style-scan-opacity    the scanlines on the page background
@@ -31,6 +32,7 @@ html[data-style="cybertron"] {
   --style-neon: var(--team-neon);
   --style-pink: var(--team-pink);
   --style-digits: #ffb327;
+  --style-rust: #b4672d;
   --style-grid-size: 96px;
   --style-grid-opacity: .07;
   --style-scan-opacity: .035;
@@ -145,3 +147,8 @@ html[data-style="cybertron"] .bar-rail::after {
     linear-gradient(var(--style-pink), var(--style-pink)) 1px 576px / 10px 62px no-repeat,
     linear-gradient(var(--style-neon), var(--style-neon)) 1px 650px / 10px 24px no-repeat;
 }
+
+
+/* The war clock in the banner (panels/countdown) is shown by this style and by Minimal, and by no
+   other. Its digits are --style-digits, amber here. */
+html[data-style="cybertron"] .war-clock { display: block; }

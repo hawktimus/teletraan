@@ -4,7 +4,9 @@
 // countdownParts() in a box of their own and give the box to startCountdown(),
 // which writes the numbers into the parts every second. The nearer the date,
 // the more serious it looks (data-level, set on the box, which the stylesheet of
-// each panel reads).
+// each panel reads). The bar layout has a third drawing, the war clock
+// (panels/countdown, warMarkup), which has its own parts and starts with
+// { war: true }.
 
 import * as frame from '../frame.js';
 import { timeLeft, monthName, parseLocalDateTime, pad } from './time.js';
@@ -73,10 +75,14 @@ export function countdownParts(stripesWidth) {
 // are written now and again every second, for as long as the element is on the
 // page. options.lineRoom is how many px the label and the date have on the top
 // line (LINE_ROOM when it is left out): the width of the top line, less the
-// lamp (20) and the gap after it (16).
+// lamp (20) and the gap after it (16). options.war is for the war clock: the
+// label has a line to itself and the date another, so nothing is fitted and
+// there is no IN, the days are two digits at least, and every number changes at
+// once, with no roll and no nudge.
 export function startCountdown(element, content, options) {
   const state = {
     content: content,
+    war: Boolean(options && options.war),
     lastMinute: null,
     shown: {}, // what each part shows now, so a part is written only when it changes
     lineRoom: (options && options.lineRoom) || LINE_ROOM,
@@ -161,12 +167,17 @@ function lineWidth(text) {
   return pen.measureText(text).width;
 }
 
+// The date beside the label: "JAN 9", or NOW once the time has come
+function dateOf(stage) {
+  return stage.reached ? 'NOW' : monthName(stage.target) + ' ' + stage.target.getDate();
+}
+
 // The two pieces of the top line: "KICKOFF IN" on the left and the date on
 // the right ("JAN 9", or NOW once the time has come). When both do not fit in
 // the room, the IN goes first, then the date. A label too long even by itself
 // is cut off with an ellipsis by the stylesheet.
 export function topLine(stage, room = LINE_ROOM) {
-  const date = stage.reached ? 'NOW' : monthName(stage.target) + ' ' + stage.target.getDate();
+  const date = dateOf(stage);
   const fits = text => lineWidth(text) + LINE_GAP + lineWidth(date) <= room;
 
   const withIn = stage.label + ' IN';
@@ -192,15 +203,24 @@ function isNew(state, name, value) {
 }
 
 // Shows a number, but only when it is different from the one shown. The
-// first time it just appears. After that the new number slams in. Says
-// whether it wrote anything.
+// first time it just appears. After that the new number slams in, except on
+// the war clock, where it changes at once. Says whether it wrote anything.
 function showNumber(state, name, text) {
   const first = state.shown[name] === undefined;
   if (!isNew(state, name, text)) return false;
 
-  if (first) state[name].textContent = text;
+  if (first || state.war) state[name].textContent = text;
   else frame.slam(state[name], text);
   return true;
+}
+
+// The label and the date as they are written. A message with no date has no IN
+// and nothing to fit beside it, and the war clock puts the date under the label
+// instead of beside it.
+function lineOf(state, stage) {
+  if (!stage.target) return { label: stage.label, date: '' };
+  if (state.war) return { label: stage.label, date: dateOf(stage) };
+  return topLine(stage, state.lineRoom);
 }
 
 // The words on the top line. Fitting them measures text, which is the one
@@ -210,8 +230,7 @@ function drawTopLine(state, stage) {
   const key = [stage.label, stage.reached, stage.target ? stage.target.getTime() : 'none', fontLoads].join('|');
   if (key !== state.lineKey) {
     state.lineKey = key;
-    // a message with no date has no IN and nothing to fit beside it
-    state.line = stage.target ? topLine(stage, state.lineRoom) : { label: stage.label, date: '' };
+    state.line = lineOf(state, stage);
   }
 
   if (isNew(state, 'label', state.line.label)) state.label.textContent = state.line.label;
@@ -227,7 +246,7 @@ function refresh(element, now) {
 
   // Only the seconds change on most ticks, and each part is written only
   // when it is different from last time
-  const daysChanged = showNumber(state, 'days', String(left.days));
+  const daysChanged = showNumber(state, 'days', state.war ? pad(left.days) : String(left.days));
   if (daysChanged) state.days.parentNode.classList.toggle('long', left.days > 99); // three digits do not fit at the big size
   const daysWord = left.days === 1 ? 'DAY' : 'DAYS';
   if (isNew(state, 'daysWord', daysWord)) state.daysWord.textContent = daysWord;
@@ -239,15 +258,20 @@ function refresh(element, now) {
   const level = stage.target ? threatLevel(left.days) : 'calm';
   if (isNew(state, 'level', level)) element.dataset.level = level;
 
-  // The bar under the numbers loses one block every 5 seconds and is full again at the next minute
+  // yes when there is no date to count to (after Rollout, or none set), which the war clock writes in another size
+  const over = stage.target ? 'no' : 'yes';
+  if (isNew(state, 'over', over)) element.dataset.over = over;
+
+  // The bar under the numbers loses one block every 5 seconds and is full again at the next minute.
+  // The war clock has no bar
   const lit = Math.floor((60 - left.seconds) / (60 / SEGMENTS));
-  if (isNew(state, 'lit', lit)) {
+  if (!state.war && isNew(state, 'lit', lit)) {
     state.segments.forEach((segment, index) => {
       segment.classList.toggle('lit', index < lit);
     });
   }
 
-  if (state.lastMinute !== null && state.lastMinute !== left.minutes) {
+  if (!state.war && state.lastMinute !== null && state.lastMinute !== left.minutes) {
     frame.nudge(state.chevronLeft, state.chevronRight);
   }
   state.lastMinute = left.minutes;

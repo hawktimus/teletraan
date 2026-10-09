@@ -155,3 +155,203 @@
   background: linear-gradient(180deg, var(--red-ridge) 0, var(--red-ridge) 3px, var(--accent) 3px, var(--accent) 8px, var(--red-4) 8px, var(--red-4) 12px);
 }
 [data-finish="flat"] .countdown .segment.lit { background: var(--accent); }
+
+
+/* The war clock (warMarkup in countdown.js): the countdown drawn a third time, in the banner of
+   the bar layout, 700 by 120, in the slot that panels/bar-banner has for it. It has the same
+   dates, label and tick, and its own look: a steel housing (core/plate.js, warHousingMarkup),
+   the label over the date, the days on a dark plate and the hours, minutes and seconds on
+   another. Everything is placed by hand, counted from the top left corner of the housing, and
+   docs/layouts.md ("The war clock") has the same numbers. Nothing here moves: the digits change
+   at once, and the clock arrives with the slot it is in. The mirror does not turn it. It is a
+   plate that reads from the left, like every frame, so only its slot changes ends.
+
+   Only Cybertron and Minimal show it (styles/cybertron.css, styles/minimal.css). They set the
+   color of the digits, --style-digits. The labels are 20 and 24 px, which is under 44 px: the
+   one text that is, besides the stamped ids. */
+
+.war-clock { display: none; }
+
+html[data-layout="bar"] .war-clock {
+  --war-ink: var(--style-digits);
+  --war-plate: #0c0b09;
+  --war-plate-border: #2b2a26;
+  --war-dim: .75; /* the date and the small labels, a little fainter than the digits */
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 700px;
+  height: 120px;
+  color: var(--war-ink);
+}
+
+/* The last month is orange, and the last week is white on plates with a red border */
+html[data-layout="bar"] .war-clock[data-level="tense"] { --war-ink: var(--danger-bright); }
+html[data-layout="bar"] .war-clock[data-level="critical"] {
+  --war-ink: var(--white);
+  --war-plate-border: var(--danger);
+}
+
+/* The housing: the plate, the weld seam and the rust are in the svg, with the steel edge
+   over them. The rust is a soft patch (a gradient) and a short stroke, and the flat finish
+   leaves it off. */
+html[data-layout="bar"] .war-housing {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+html[data-layout="bar"] .war-housing-fill { fill: url(#armor-face); }
+html[data-layout="bar"] .war-weld-dark {
+  fill: none;
+  stroke: #05070a;
+  stroke-opacity: .7;
+  stroke-width: 3px;
+}
+html[data-layout="bar"] .war-weld-light {
+  fill: none;
+  stroke: var(--metal-ridge);
+  stroke-opacity: .2;
+  stroke-width: 3px;
+}
+html[data-layout="bar"] .war-smudge { fill: url(#wear-rust); }
+html[data-layout="bar"] .war-wear {
+  fill: none;
+  stroke: var(--style-rust);
+  stroke-opacity: .55;
+  stroke-linecap: round;
+  stroke-width: 4px;
+}
+html[data-layout="bar"][data-finish="flat"] .war-rust { display: none; }
+html[data-layout="bar"] .war-rivet {
+  fill: var(--screw-mid);
+  stroke: var(--screw-rim);
+  stroke-width: 3px;
+}
+
+/* The red square, and the label over the date. The label is cut off with an ellipsis when it
+   is too wide for its line, as the standard countdown's is. After Rollout, and with no date
+   set, the label is COUNTDOWN OVER or DATE NOT SET, which are the standard countdown's words
+   and take both lines, at 20 px. */
+html[data-layout="bar"] .war-status {
+  position: absolute;
+  left: 28px;
+  top: 46px;
+  width: 10px;
+  height: 10px;
+  background: var(--danger);
+}
+html[data-layout="bar"] .war-lines {
+  position: absolute;
+  left: 46px;
+  top: 37px;
+  width: 169px;
+  height: 56px;
+}
+html[data-layout="bar"] .war-lines span {
+  display: block;
+  height: 28px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font: 700 24px/28px var(--font-display);
+  letter-spacing: .12em;
+}
+html[data-layout="bar"] .war-lines .date { opacity: var(--war-dim); }
+html[data-layout="bar"] .war-lines .date:empty { display: none; }
+html[data-layout="bar"] .war-clock[data-over="yes"] .label {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  height: 56px;
+  white-space: normal;
+  font-size: 20px;
+  letter-spacing: .1em;
+}
+
+/* The two digit plates: 3 px border, and a gradient inside from a faint highlight at the top
+   to a shade at the foot. The time plate has 2 px each side, so its three cells of 80 fill it. */
+html[data-layout="bar"] .war-plate {
+  position: absolute;
+  top: 14px;
+  box-sizing: border-box;
+  height: 92px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 3px solid var(--war-plate-border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .08) 0, rgba(255, 255, 255, 0) 45%, rgba(0, 0, 0, .4) 100%),
+    var(--war-plate);
+}
+html[data-layout="bar"] .war-days-plate {
+  left: 223px;
+  width: 176px;
+}
+html[data-layout="bar"] .war-time-plate {
+  left: 414px;
+  width: 250px;
+  padding: 0 2px;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+/* The days at 76 px with DAYS beside it, on one baseline. Two digits in the display font are up
+   to 111 px wide and DAYS is about 64, and the plate has 170 inside its border, so the digits
+   are set .04 em closer together. Three digits (100 days or more) are 48 px, like the time. */
+html[data-layout="bar"] .war-days-group {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+html[data-layout="bar"] .war-days-group .days-number {
+  white-space: nowrap;
+  font: 700 76px/76px var(--font-display);
+  letter-spacing: -.04em;
+}
+html[data-layout="bar"] .war-days-group .days-number.long {
+  font-size: 48px;
+  line-height: 48px;
+}
+html[data-layout="bar"] .war-days-group .days-word {
+  opacity: var(--war-dim);
+  font: 600 24px/28px var(--font-display);
+  letter-spacing: -.03em;
+}
+
+/* The hours, minutes and seconds at 48 px, each over its label at 20 px, and a thin bar at the
+   left of the second and the third. The digits have a box as wide as their widest pair, so the
+   labels stay where they are. */
+html[data-layout="bar"] .war-cell {
+  position: relative;
+  flex: none;
+  width: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+html[data-layout="bar"] .war-cell + .war-cell::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 12px;
+  width: 3px;
+  height: 64px;
+  background: var(--war-plate-border);
+}
+html[data-layout="bar"] .war-cell .digits {
+  display: block;
+  width: 76px;
+  height: 52px;
+  text-align: center;
+  font: 700 48px/52px var(--font-display);
+}
+html[data-layout="bar"] .war-cell .digits span { display: block; }
+html[data-layout="bar"] .war-cell .unit {
+  opacity: var(--war-dim);
+  font: 600 20px/22px var(--font-display);
+  letter-spacing: .12em;
+}

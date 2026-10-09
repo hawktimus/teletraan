@@ -477,8 +477,67 @@ panel may show any topic.
 line at the heading size (96 px), in a slot 1052 wide: HAWKTIMUS PRIME is 985 wide
 at that size, and a longer name squeezes its letters together, as the banner's name
 does, so the war clock never moves. The war clock's slot is at the other end, 700 by
-120, in the middle of the banner's height. It is empty until the war clock is drawn
-into it. Both are 40 in from the ends of the banner, with 24 between them.
+120, in the middle of the banner's height, and the war clock is drawn in it (see "The war
+clock"). Both are 40 in from the ends of the banner, with 24 between them.
+
+### The war clock
+
+The war clock is the countdown drawn a third time, 700 by 120, in the banner's slot. It has
+the same source as the countdown in the standard layout and in the sidebar: the dates, the
+labels and the second tick, all from Dashboard Settings (`core/countdown.js` works them out,
+and `startCountdown` is given `{ war: true }`). Only the look is its own. The code is in
+`panels/countdown` (`warMarkup`, `startWar` and `updateWar` in `countdown.js`, the rules in
+`countdown.css`) and the housing is drawn by `warHousingMarkup` in `core/plate.js`.
+`panels/bar-banner` puts it in its slot. Cybertron and Minimal show it
+(`styles/cybertron.css` and `styles/minimal.css`), and no other style does.
+
+The housing is a plate of steel, with the edge of the frames (the shadow, the rim, the face, the
+shade and the ridge, as in "Frames"), the same gradient as the armor tab, a cut corner of 22 at the
+top left and the bottom right, four rivets at the corners, one horizontal weld seam between the
+label and the date, and rust at the bottom left and the top right. The rust is a soft patch and a
+short stroke, the flat finish leaves it off, and it never moves. Inside it, from left to right,
+are a label block, a dark plate with the days and a dark plate with the time. Every part is placed
+by hand, counted from the top left corner of the housing:
+
+| Part | Top | Height | Left | Width | What it holds |
+|------|-----|--------|------|-------|---------------|
+| `.war-status` | 46 | 10 | 28 | 10 | the red square, which is `--danger` |
+| `.war-lines` | 37 | 56 | 46 | 169 | the label in capitals, 24 px with the letters spaced, and under it the date in the same size, a line of 28 each |
+| `.war-days-plate` | 14 | 92 | 223 | 176 | the days at 76 px and DAYS beside them at 24 px |
+| `.war-time-plate` | 14 | 92 | 414 | 250 | the hours, minutes and seconds at 48 px, with HRS, MIN and SEC under them at 20 px, in three cells of 80 with a bar of 3 px between two cells |
+
+The plates are `#0c0b09` with a 3 px border of `#2b2a26` and a gradient inside, from a faint
+highlight at the top to a shade at the foot. The digits are amber (`#ffb327`) in Cybertron and the
+team's neon in Minimal, which is `--style-digits`. The date, DAYS and the small labels are a little
+fainter. The rivets are 5 px, in the corners, 3 px clear of the plates. The labels, 20 and 24 px,
+are text under 44 px, which only the war clock and the stamped ids may have. The list is in
+`tools/test-layouts.mjs`.
+
+**What it shows.** The label is the label from Dashboard Settings in capitals, with no IN, and the
+date is under it, as `JAN 9`, or `NOW` for the rest of the day when the time has come. The days
+are two digits, three when there are 100 or more, and the hours, minutes and seconds are two
+each. They change with the same tick as the countdown, at once: there is no roll, no nudge of
+chevrons, no lamp row, no serial plate and no pipes. After Rollout the label is COUNTDOWN
+OVER, and while no date is set it is DATE NOT SET, which are the words the standard countdown
+shows. They take both lines at 20 px (COUNTDOWN over OVER, and DATE NOT over SET), with the days
+at 00 and the time at 00 00 00. In the last 30 days the digits and the labels turn orange (`--danger-bright`), and in the
+last 7 they turn white and the borders of the plates turn red (`--danger`).
+
+**What fits.** The numbers come from the advance widths of the display font, without kerning,
+which only makes a word narrower. Two digits at 76 px are up to 111 wide and DAYS at 24 px is
+about 64, and the plate has 170 inside its border, so the digits are set .04 em closer
+together and DAYS .03 em, with 2 px between the days and DAYS. The 3 counts that are still wider
+(69, 96 and 99) are wider than the plate by 1.4 px at the most, shared by both sides, and the
+plate cuts off what is outside it. Three digits at 76 px would be 199 with DAYS, so a count of
+100 or more is drawn at 48 px, like the time, and the widest of those, 999, is 166. The widest
+pair of time digits at 48 px is 70 wide in its box of 76. KICKOFF at 24 px with its spaced letters
+is 128 wide and ROLLOUT is 137, in the 169 of the label. COUNTDOWN at 20 px is 155. A label of up
+to 12 characters that is wider than the line is cut off with an ellipsis, as the standard
+countdown's is. This has been worked out from the font and not looked at on a screen.
+
+**The mirror.** The slot is at the other end of the banner when the layout is mirrored, and the
+war clock in it is the same picture: the label block at the left, then the days, then the time.
+It reads from the left like every plate, and nothing turns it round.
 
 ### The side column
 
@@ -567,6 +626,8 @@ rules in `layouts/bar.css` that start with `html.mirrored[data-layout="bar"]`.
 - **Decoration** that has no text and no transform of its own, such as a cut corner
   or a notch, turns with the class `mirror-art`, which is `transform: scaleX(-1)`.
   Text is never turned round.
+- **The war clock** is in its slot at the other end of the banner, and what is in it is not
+  turned: the label, the days and the time read from the left (see "The war clock").
 - **The hidden transitions** fly the side column to the right and the main panel to
   the left.
 
@@ -607,7 +668,7 @@ and the team gives the colors.
 | File | What it has |
 |------|-------------|
 | `styles/original.css` | no custom properties, and the mirror of the standard layout |
-| `styles/cybertron.css` | `--style-body` and `--style-raised` (the gunmetal plates), the two colors of the armor tab, the 56 px chamfer, the neon and pink of the team, amber digits for the war clock, a 96 px grid at .07 and scanlines at .035. Then the rules that paint the page background, the plates, the rail and the decoration of the frames (see "Frames") |
+| `styles/cybertron.css` | `--style-body` and `--style-raised` (the gunmetal plates), the two colors of the armor tab, the 56 px chamfer, the neon and pink of the team, amber digits and rust for the war clock, a 96 px grid at .07 and scanlines at .035. Then the rules that paint the page background, the plates, the rail and the decoration of the frames (see "Frames") |
 | `styles/minimal.css` | the 34 px chamfer, the neon and pink of the team, digits in the team's neon, the team's background for the plates, the two colors of the armor tab, the rust, a 48 px grid at .07 and no scanlines. Then the rules that paint the grid, the plates, the rail, the rivets and the ids that Original also has, and what only Minimal draws on a frame (see "Frames") |
 
 The style goes on the page at the same moment as a new theme (`theme-apply.js`

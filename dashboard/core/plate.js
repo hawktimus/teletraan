@@ -242,12 +242,14 @@ function liesOn(point, line) {
 
 // Every rivet of a row is a circle in one path, so a row is one element. The
 // row of a half is labelled, so frame.css can bring it in once the frame is drawn.
-function rivetsMarkup(centers, labelled) {
+// The class is rivets, which base.css shows for Original and Minimal only, unless
+// the caller names another.
+function rivetsMarkup(centers, labelled, name = 'rivets') {
   if (centers.length === 0) return '';
 
   const size = 2 * rivetRadius;
   const circles = centers.map(center => `M${tenth(center[0] - rivetRadius)} ${center[1]}a${rivetRadius} ${rivetRadius} 0 1 0 ${size} 0a${rivetRadius} ${rivetRadius} 0 1 0 -${size} 0`).join('');
-  return `<path class="rivets"${labelled ? ' data-part="rivets"' : ''} d="${circles}"/>`;
+  return `<path class="${name}"${labelled ? ' data-part="rivets"' : ''} d="${circles}"/>`;
 }
 
 // A bar frame has the stamped id only when its shape has a number (Minimal's main panel and banner)
@@ -947,6 +949,51 @@ function piecesMarkup(kind, shape) {
     worn.forEach(item => unworn.splice(unworn.indexOf(item), 1));
     return pieceMarkup(kind, shape, piece, mine, worn);
   }).join('');
+}
+
+
+// The war clock's housing
+
+// The war clock (panels/countdown, docs/layouts.md, "The war clock") is drawn once, 700 by
+// 120, in the banner of the bar layout. Its housing is a plate of steel with the same edge
+// as the frames: the line 4 inside the box, a cut corner of 22 at the top left and the
+// bottom right, four rivets in the corners, one weld seam across the middle and rust at the
+// bottom left and the top right. Cybertron and Minimal draw it the same way, so it does not
+// depend on which of the two shapes of frame the page has. Everything in it is still.
+const warBox = { width: 700, height: 120, chamfer: 22 };
+const warRivets = [[30, 22], [672, 22], [30, 92], [672, 92]];
+const warSeam = { y: 63, from: 16, to: 684 }; // between the label and the date. The light line is weldGap below the dark one
+const warRust = {
+  patches: [{ cx: 50, cy: 100 }, { cx: 650, cy: 20 }],
+  patchRadius: { x: 56, y: 16 },
+  arcs: 'M6 72Q28 90 6 108M650 6Q668 24 686 6',
+};
+
+function warOutline() {
+  const left = 4;
+  const top = 4;
+  const right = warBox.width - 4;
+  const bottom = warBox.height - 4;
+  const cut = warBox.chamfer;
+
+  return [[left, bottom], [left, top + cut], [left + cut, top], [right, top], [right, bottom - cut], [right - cut, bottom]];
+}
+
+export function warHousingMarkup() {
+  const outline = warOutline();
+  const id = define('war-housing-shape', `<polygon id="war-housing-shape" points="${toPoints(outline)}"/>`);
+  const seam = [[[warSeam.from, warSeam.y], [warSeam.to, warSeam.y]]];
+  const light = [[[warSeam.from, warSeam.y + weldGap], [warSeam.to, warSeam.y + weldGap]]];
+  const patch = item => `<ellipse class="war-smudge" cx="${item.cx}" cy="${item.cy}" rx="${warRust.patchRadius.x}" ry="${warRust.patchRadius.y}"/>`;
+
+  return `<svg class="war-housing" width="${warBox.width}" height="${warBox.height}" viewBox="0 0 ${warBox.width} ${warBox.height}">
+    <polygon class="war-housing-fill" points="${toPoints(outline)}"/>
+    <path class="war-weld-dark" d="${pathData(seam)}"/>
+    <path class="war-weld-light" d="${pathData(light)}"/>
+    ${edgeLayers(id)}
+    <g class="war-rust">${warRust.patches.map(patch).join('')}<path class="war-wear" d="${warRust.arcs}"/></g>
+    ${rivetsMarkup(warRivets, false, 'war-rivet')}
+  </svg>`;
 }
 
 

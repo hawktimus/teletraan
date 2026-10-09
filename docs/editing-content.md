@@ -530,7 +530,8 @@ Connection.
 - Countdown: the labels and dates for Kickoff and Rollout. The countdown counts
   to Kickoff, then to Rollout. Its seconds change right on the second of the
   Mini's clock, so it keeps time with a phone however long the screen has been
-  running.
+  running. With the Cybertron and Minimal styles the same label and dates are in
+  the war clock at one end of the banner, with the label over the date and no IN.
 - Alert: turn it on to cover the whole screen with a headline and a message.
   Turn it off to take it down, or set "Take down at" to do it automatically.
 - Panels: which panels appear, in what order and for how long. In Dashboard
