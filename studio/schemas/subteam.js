@@ -26,7 +26,7 @@ function checkNoRepeats(names) {
 
 export default defineType({
   name: 'subteam',
-  title: 'Subteam',
+  title: 'Team lead',
   type: 'document',
   fields: [
     defineField({
@@ -93,7 +93,7 @@ export default defineType({
       const count = Array.isArray(item.members) ? item.members.length : 0;
       const members = count === 1 ? '1 member' : count > 1 ? count + ' members' : '';
       const text = [item.lead, members, item.spotlight ? 'In the spotlight' : ''].filter(Boolean).join(' · ');
-      return { title: item.title || 'Subteam with no name', subtitle: subtitleFor(text, item) };
+      return { title: item.title || 'Team lead with no name', subtitle: subtitleFor(text, item) };
     },
   },
 });

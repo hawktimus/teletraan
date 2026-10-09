@@ -27,7 +27,7 @@ const rowFields = [
 
 export default defineType({
   name: 'plan',
-  title: 'Up Next',
+  title: 'Agenda item',
   type: 'document',
   fields: [
     defineField({
@@ -82,7 +82,7 @@ export default defineType({
     select: { title: 'heading', date: 'date', location: 'location', show: 'show', expires: 'expires' },
     prepare(item) {
       const text = [item.date, item.location].filter(Boolean).join(' · ');
-      return { title: item.title || 'Up Next with no heading', subtitle: subtitleFor(text, item) };
+      return { title: item.title || 'Agenda item with no heading', subtitle: subtitleFor(text, item) };
     },
   },
 });

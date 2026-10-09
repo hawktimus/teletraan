@@ -97,9 +97,9 @@
   },
 
   "tasks": [
-    { "title": "[Task in progress]", "subteam": "[Subteam A]", "status": "in-progress", "contact": "[Contact A]", "location": "[Location A]" },
+    { "title": "[Task in progress]", "subteam": "[Subteam A]", "status": "in-progress", "contact": "[Contact A]", "location": "[Place A]" },
     { "title": "[Second task]", "subteam": "[Subteam C]", "status": "in-progress", "contact": "[Contact B]" },
-    { "title": "[Next task]", "subteam": "[Subteam B]", "status": "up-next", "location": "[Location B]" },
+    { "title": "[Next task]", "subteam": "[Subteam B]", "status": "up-next", "location": "[Place B]" },
     { "title": "[Queued task]", "subteam": "[Subteam E]", "status": "up-next" },
     { "title": "[Finished task]", "subteam": "[Subteam D]", "status": "done" },
     { "title": "[Second finished task]", "subteam": "[Subteam F]", "status": "done" }
@@ -170,12 +170,6 @@
 
   "presentations": [
     { "id": "presentation-sample", "name": "[First name]", "subteam": "[Subteam A]", "topic": "[Title of the talk]", "start": "2027-03-04T00:00:00.000Z", "minutes": 15, "status": "scheduled" }
-  ],
-
-  "extraEvents": [
-    { "title": "[Evening event]", "startDate": "2027-03-03", "startTime": "18:30", "endTime": "20:00", "location": "[Location]" },
-    { "title": "[All-day event]", "startDate": "2027-03-05", "location": "[Location]" },
-    { "title": "[Weekend event]", "startDate": "2027-03-12", "endDate": "2027-03-14", "location": "[Location]" }
   ],
 
   "calendarFilters": [

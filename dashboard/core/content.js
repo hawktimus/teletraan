@@ -44,7 +44,7 @@ export function visibleItems(list, now = new Date()) {
 // whether settings exist.
 export function withDefaults(raw) {
   const source = raw || {};
-  const content = Object.assign({ tasks: [], plan: null, plans: [], teams: [], sponsors: [], tipsAndNews: [], subteams: [], people: [], photos: [], presentations: [], customPanels: [], extraEvents: [], calendarFilters: [] }, source);
+  const content = Object.assign({ tasks: [], plan: null, plans: [], teams: [], sponsors: [], tipsAndNews: [], subteams: [], people: [], photos: [], presentations: [], customPanels: [], calendarFilters: [] }, source);
   content.team = Object.assign({}, defaultTeam, source.team);
   content.settings = Object.assign({}, defaultSettings, source.settings);
   content.settings.countdown = Object.assign({}, defaultSettings.countdown, content.settings.countdown);
@@ -55,7 +55,7 @@ export function withDefaults(raw) {
   // missing or unusable value becomes the default (see core/theme.js).
   content.theme = tidyTheme(source.theme);
 
-  // The Test the screen document is its own thing too. A missing one is no request and
+  // The Demo document is its own thing too. A missing one is no request and
   // the default steps (see core/demo.js).
   content.demo = tidyDemo(source.demo);
 

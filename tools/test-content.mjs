@@ -44,7 +44,7 @@ async function loadCopy(name, changeConfig) {
 
   // the Events panel and the Next event tile draw the merged list, and the Roster panel draws the roster pages, so they are tested too.
   // The Photo and Team Leads panels are here to check that they follow the two size settings.
-  // The Up Next panel is here for the rows it draws from the plan and the booked talks.
+  // The Daily Agenda panel is here for the rows it draws from the plan and the booked talks.
   // The rest are here to check that each one leaves out the items of the other team (the Teams section).
   ['events/events.js', 'next-event/next-event.js', 'roster/roster.js', 'leadership/leadership.js', 'photo/photo.js', 'team-leads/team-leads.js', 'tonight/tonight.js',
     'tasks/tasks.js', 'task-counts/task-counts.js', 'spotlight/spotlight.js', 'sponsor-feature/sponsor-feature.js', 'sponsor-logo/sponsor-logo.js', 'custom/custom.js', 'ticker/ticker.js'].forEach(file => {
@@ -118,7 +118,7 @@ const { escapeHtml, hasText } = live.text;
 const { pageSwitchesFor } = live.look;
 const { tidyDevice, deviceLines, loginAddress, showDeviceInfo, deviceFile, refreshSeconds } = live.device;
 const { classifyFailure, connectionLines, itemCounts, reasonText, reasons, drawConnection } = live.connection;
-const { tidyExtraEvent, extraEventsToEvents, mergeEvents, instantIn, rangeLabel, eventDate, timeText } = live.events;
+const { mergeEvents, rangeLabel, eventDate, timeText } = live.events;
 const eventsPanel = live.eventsPanel;
 const nextEventPanel = live.nextEventPanel;
 const tonightPanel = live.tonightPanel;
@@ -557,7 +557,7 @@ test('normalizeContent turns a full Sanity result into the sample content shape'
   });
 });
 
-test('normalizeContent maps every kind of custom panel block', () => {
+test('normalizeContent maps every kind of extra panel block', () => {
   const content = normalizeContent(sanityFixture());
 
   assert.deepEqual(content.customPanels, [
@@ -1544,9 +1544,9 @@ test('the sample content has a Look document with the defaults and two example s
   assert.deepEqual(normalizeSample(file).theme, withDefaults(file).theme, 'reading the sample twice changes nothing');
 });
 
-// The Test the screen document. When a demo plays is in tools/test-effects.mjs.
+// The Demo document. When a demo plays is in tools/test-effects.mjs.
 
-test('the query asks for the Test the screen document by its id, and the answer is cleaned into content.demo', () => {
+test('the query asks for the Demo document by its id, and the answer is cleaned into content.demo', () => {
   assert.ok(contentQuery.includes('"demo": *[_id == "demo"][0]'));
 
   const stored = document('demo', 'demo', {
@@ -1565,7 +1565,7 @@ test('the query asks for the Test the screen document by its id, and the answer 
   assert.deepEqual(Object.keys(demo).sort(), ['announcementText', 'requestedAt', 'steps'], 'only the three fields come through, not _id and the rest');
 });
 
-test('a missing Test the screen document is no demo: no request, and the default steps', () => {
+test('a missing Demo document is no demo: no request, and the default steps', () => {
   const defaults = live.config.defaultDemo;
 
   assert.deepEqual(normalizeContent({}).demo, defaults);
@@ -1607,7 +1607,7 @@ test('a request that is not a time is no request, and a request cleared with Sto
   assert.equal(normalizeContent({ demo: document('demo', 'demo', { steps: [] }) }).demo.requestedAt, '');
 });
 
-test('a saved copy from before the Test the screen document existed still gives a demo', async () => {
+test('a saved copy from before the Demo document existed still gives a demo', async () => {
   await inWorld(async world => {
     saveCopy(world, { settings: document('dashboardSettings', 'dashboardSettings', { motion: 'calm' }) }, world.now - minute);
     world.handler = () => unreachable();
@@ -1616,7 +1616,7 @@ test('a saved copy from before the Test the screen document existed still gives 
   });
 });
 
-test('the sample content has a Test the screen document with the defaults and no request, and it comes through unchanged', () => {
+test('the sample content has a Demo document with the defaults and no request, and it comes through unchanged', () => {
   const file = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
   assert.deepEqual(file.demo, live.config.defaultDemo);
   assert.deepEqual(normalizeSample(file).demo, live.config.defaultDemo);
@@ -4993,15 +4993,11 @@ function javascriptFilesIn(folder) {
   }, []);
 }
 
-// Events Calendar: events typed into the Studio that are not on BAND (core/events.js).
+// Events: the list the screen shows, from the BAND calendars (core/events.js).
 // Times are given as real moments (...Z) and zones by name, so none of this
 // depends on the time zone of the computer that runs the tests.
 
 const newYork = 'America/New_York';
-
-function extra(fields) {
-  return Object.assign({ title: '[Extra]', startDate: '2027-04-02' }, fields);
-}
 
 // An all-day BAND event, made the way core/calendar.js makes it: midnights on the computer's own clock
 function bandDay(title, year, month, day, lastDay) {
@@ -5023,171 +5019,63 @@ function titlesOf(events) {
   return events.map(event => event.title);
 }
 
-test('the query asks for the Events Calendar entries that are not switched off, soonest first, and normalizeContent passes them on', () => {
-  assert.ok(contentQuery.includes('*[_type == "extraEvent" && show != false] | order(startDate asc, _createdAt asc)'));
+test('the query does not ask for the Events Calendar entries, and normalizeContent leaves them out of the content', () => {
+  assert.equal(contentQuery.includes('extraEvent'), false);
 
-  const content = normalizeContent({
-    extraEvents: [
-      document('extraEvent', 'e1', { title: '[One]', startDate: '2027-04-02', endDate: '', location: '' }),
-      'oops',
-      null,
-    ],
-  }, today);
-  assert.deepEqual(content.extraEvents, [{ title: '[One]', startDate: '2027-04-02' }]);
-  assert.deepEqual(normalizeContent({}, today).extraEvents, []);
-  assert.deepEqual(normalizeContent({ extraEvents: 'oops' }, today).extraEvents, []);
-  assert.deepEqual(withDefaults(null).extraEvents, []);
+  const entry = document('extraEvent', 'e1', { title: '[One]', startDate: '2027-04-02' });
+  assert.equal('extraEvents' in normalizeContent({ extraEvents: [entry] }, today), false);
+  assert.equal('extraEvents' in normalizeContent({}, today), false);
+  assert.equal('extraEvents' in withDefaults(null), false);
 });
 
-test('the sample content has Events Calendar entries marked with square brackets, and they are kept', () => {
+test('the sample content has no Events Calendar entries, since its events are in the sample calendar', () => {
   const file = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
-  assert.ok(file.extraEvents.length >= 2);
-  file.extraEvents.forEach(item => assert.ok(item.title.startsWith('['), item.title));
-
-  const content = normalizeSample(file);
-  assert.equal(content.extraEvents.length, file.extraEvents.length);
-  assert.equal(extraEventsToEvents(content.extraEvents, newYork).length, file.extraEvents.length, 'every sample Events Calendar entry can be shown');
+  assert.equal('extraEvents' in file, false);
+  assert.equal('extraEvents' in normalizeSample(file), false);
 });
 
-test('tidyExtraEvent keeps a good event and fills in the end date and the empty parts', () => {
-  assert.deepEqual(tidyExtraEvent(extra({ location: '  Holly Springs HS ' })), {
-    title: '[Extra]', startDate: '2027-04-02', endDate: '2027-04-02', startTime: '', endTime: '', location: 'Holly Springs HS',
-  });
-  assert.deepEqual(tidyExtraEvent(extra({ endDate: '2027-04-04', startTime: '18:30', endTime: '20:00' })), {
-    title: '[Extra]', startDate: '2027-04-02', endDate: '2027-04-04', startTime: '18:30', endTime: '20:00', location: '',
-  });
-});
-
-test('tidyExtraEvent leaves out an event that is switched off, has no title, or has no real start date', () => {
-  assert.equal(tidyExtraEvent(extra({ show: false })), null);
-  assert.equal(tidyExtraEvent(extra({ show: true })) !== null, true);
-  assert.equal(tidyExtraEvent(extra({ title: '   ' })), null);
-  assert.equal(tidyExtraEvent(extra({ title: undefined })), null);
-  assert.equal(tidyExtraEvent(extra({ startDate: undefined })), null);
-  assert.equal(tidyExtraEvent(extra({ startDate: '2027-02-30' })), null);
-  assert.equal(tidyExtraEvent(extra({ startDate: '04/02/2027' })), null);
-  assert.equal(tidyExtraEvent('oops'), null);
-  assert.equal(tidyExtraEvent(null), null);
-  assert.equal(tidyExtraEvent([]), null);
-});
-
-test('tidyExtraEvent fixes small slips instead of hiding the event', () => {
-  // an end date before the start is the start
-  assert.equal(tidyExtraEvent(extra({ endDate: '2027-04-01' })).endDate, '2027-04-02');
-  assert.equal(tidyExtraEvent(extra({ endDate: 'soon' })).endDate, '2027-04-02');
-  // a time that is not HH:MM means no time, so the event is all-day
-  ['6:30 PM', '24:00', '18:60', '1830', 42, ''].forEach(bad => {
-    assert.equal(tidyExtraEvent(extra({ startTime: bad })).startTime, '', String(bad));
-  });
-  // an end time needs a start time, and may not come before it on a one day event
-  assert.equal(tidyExtraEvent(extra({ endTime: '20:00' })).endTime, '');
-  assert.equal(tidyExtraEvent(extra({ startTime: '18:30', endTime: '17:00' })).endTime, '');
-  assert.equal(tidyExtraEvent(extra({ startTime: '18:30', endTime: '25:00' })).endTime, '');
-  assert.equal(tidyExtraEvent(extra({ startTime: '18:30', endTime: '17:00', endDate: '2027-04-03' })).endTime, '17:00');
-});
-
-test('instantIn gives the real moment when a clock in that time zone shows a time', () => {
-  assert.equal(instantIn(newYork, '2027-01-09', '18:30').toISOString(), '2027-01-09T23:30:00.000Z'); // winter, 5 hours behind UTC
-  assert.equal(instantIn(newYork, '2027-07-04', '18:30').toISOString(), '2027-07-04T22:30:00.000Z'); // summer, 4 hours behind
-  assert.equal(instantIn(newYork, '2027-03-14', '01:00').toISOString(), '2027-03-14T06:00:00.000Z'); // the morning the clocks go forward, before 2:00
-  assert.equal(instantIn(newYork, '2027-03-14', '12:00').toISOString(), '2027-03-14T16:00:00.000Z'); // the same day, after
-  assert.equal(instantIn(newYork, '2027-11-07', '12:00').toISOString(), '2027-11-07T17:00:00.000Z'); // the day the clocks go back
-  assert.equal(instantIn(newYork, '2027-01-09', '00:00').toISOString(), '2027-01-09T05:00:00.000Z');
-  assert.equal(instantIn('Asia/Kolkata', '2027-01-09', '18:30').toISOString(), '2027-01-09T13:00:00.000Z'); // 5 and a half hours ahead
-  assert.equal(instantIn('UTC', '2027-01-09', '18:30').toISOString(), '2027-01-09T18:30:00.000Z');
-});
-
-test('an Events Calendar entry with no start time is an all-day event, made like a BAND one', () => {
-  const event = extraEventsToEvents([extra({ title: 'Game Drop', startDate: '2027-04-02', endDate: '2027-04-04', location: 'Holly Springs HS' })], newYork)[0];
-
-  assert.equal(event.allDay, true);
-  assert.equal(event.title, 'Game Drop');
-  assert.equal(event.location, 'Holly Springs HS');
-  assert.equal(event.calendar, 'Extra');
-  assert.equal(event.calendarId, 'extra');
-  assert.deepEqual([event.firstDay, event.lastDay], ['2027-04-02', '2027-04-04']);
-
-  // midnights on the computer's own clock, ending at the midnight after the last day
-  assert.equal(event.start.getTime(), new Date(2027, 3, 2).getTime());
-  assert.equal(event.end.getTime(), new Date(2027, 3, 5).getTime());
-  assert.equal(event.start.getDate(), 2);
-});
-
-test('an Events Calendar entry with a start time starts at that time in the Look time zone', () => {
-  const event = extraEventsToEvents([extra({ startDate: '2027-01-09', startTime: '18:30', endTime: '20:00' })], newYork)[0];
-  assert.equal(event.allDay, false);
-  assert.equal(event.start.toISOString(), '2027-01-09T23:30:00.000Z');
-  assert.equal(event.end.toISOString(), '2027-01-10T01:00:00.000Z');
-
-  const elsewhere = extraEventsToEvents([extra({ startDate: '2027-01-09', startTime: '18:30' })], 'Europe/London')[0];
-  assert.equal(elsewhere.start.toISOString(), '2027-01-09T18:30:00.000Z');
-});
-
-test('a timed Events Calendar entry with no end time ends when it starts, unless it runs over several days', () => {
-  const oneDay = extraEventsToEvents([extra({ startDate: '2027-01-09', startTime: '18:30' })], newYork)[0];
-  assert.equal(oneDay.end.getTime(), oneDay.start.getTime());
-
-  const several = extraEventsToEvents([extra({ startDate: '2027-01-09', endDate: '2027-01-10', startTime: '18:30' })], newYork)[0];
-  assert.equal(several.end.toISOString(), '2027-01-11T05:00:00.000Z'); // midnight at the end of the 10th in New York
-  assert.equal(several.lastDay, '2027-01-10');
-});
-
-test('extraEventsToEvents copes with a missing list, bad entries and a time zone it does not know', () => {
-  assert.deepEqual(extraEventsToEvents(undefined, newYork), []);
-  assert.deepEqual(extraEventsToEvents('oops', newYork), []);
-  assert.deepEqual(extraEventsToEvents([null, {}, extra({ show: false })], newYork), []);
-
-  const fallback = extraEventsToEvents([extra({ startDate: '2027-01-09', startTime: '18:30' })], 'Nowhere/Land')[0];
-  assert.equal(fallback.start.toISOString(), '2027-01-09T23:30:00.000Z', 'an unknown zone is America/New_York');
-});
-
-test('mergeEvents puts BAND events and Events Calendar entries in one list sorted by start', () => {
-  const band = [bandTimed('[Band late]', '2027-03-04T23:00:00Z', '2027-03-05T01:00:00Z'), bandDay('[Band day]', 2027, 3, 10)];
-  const extras = [extra({ title: '[Extra later]', startDate: '2027-03-12' }), extra({ title: '[Extra first]', startDate: '2027-03-04' })];
+test('mergeEvents puts the events in one list sorted by start', () => {
+  const band = [bandTimed('[Late]', '2027-03-04T23:00:00Z', '2027-03-05T01:00:00Z'), bandDay('[Day]', 2027, 3, 10), bandDay('[Later day]', 2027, 3, 12), bandDay('[First day]', 2027, 3, 4)];
   const now = new Date('2027-03-01T15:00:00Z');
 
-  const merged = mergeEvents(band, extras, newYork, now);
-  assert.deepEqual(titlesOf(merged), ['[Extra first]', '[Band late]', '[Band day]', '[Extra later]']);
+  assert.deepEqual(titlesOf(mergeEvents(band, newYork, now)), ['[First day]', '[Late]', '[Day]', '[Later day]']);
 });
 
-test('mergeEvents shows the BAND events as they are when there are no Events Calendar entries, and the entries when there are no BAND ones', () => {
+test('mergeEvents shows the events as they are, and nothing when there are none or the list is missing', () => {
   const now = new Date('2027-03-01T15:00:00Z');
-  const band = [bandDay('[Band day]', 2027, 3, 10)];
 
-  assert.deepEqual(titlesOf(mergeEvents(band, [], newYork, now)), ['[Band day]']);
-  assert.deepEqual(titlesOf(mergeEvents(band, undefined, newYork, now)), ['[Band day]']);
-  assert.deepEqual(titlesOf(mergeEvents(undefined, [extra({ startDate: '2027-03-05' })], newYork, now)), ['[Extra]']);
-  assert.deepEqual(mergeEvents(undefined, undefined, newYork, now), []);
-  assert.deepEqual(mergeEvents(null, null, undefined, now), []);
+  assert.deepEqual(titlesOf(mergeEvents([bandDay('[Day]', 2027, 3, 10)], newYork, now)), ['[Day]']);
+  assert.deepEqual(mergeEvents([], newYork, now), []);
+  assert.deepEqual(mergeEvents(undefined, newYork, now), []);
+  assert.deepEqual(mergeEvents(null, undefined, now), []);
 });
 
-test('mergeEvents does not change the lists it is given', () => {
-  const band = [bandDay('[Band day]', 2027, 3, 10)];
-  const extras = [extra({ startDate: '2027-03-05' })];
-  const before = JSON.stringify([band, extras]);
+test('mergeEvents does not change the list it is given', () => {
+  const band = [bandDay('[Day]', 2027, 3, 10)];
+  const before = JSON.stringify(band);
 
-  const merged = mergeEvents(band, extras, newYork, new Date('2027-03-01T15:00:00Z'));
-  assert.equal(JSON.stringify([band, extras]), before);
+  const merged = mergeEvents(band, newYork, new Date('2027-03-01T15:00:00Z'));
+  assert.equal(JSON.stringify(band), before);
   assert.equal(band[0].firstDay, undefined);
-  assert.notEqual(merged[1], band[0]);
+  assert.notEqual(merged[0], band[0]);
 });
 
 test('an event is dropped once its end date has passed, by the date in the Look time zone', () => {
-  const extras = [extra({ title: '[Over]', startDate: '2027-01-08' }), extra({ title: '[Today]', startDate: '2027-01-09' })];
+  const band = [bandTimed('[Over]', '2027-01-08T19:00:00Z', '2027-01-08T20:00:00Z'), bandTimed('[Today]', '2027-01-09T19:00:00Z', '2027-01-09T20:00:00Z')];
 
   // 22:00 on 9 January in New York is already 10 January in UTC
   const lateEvening = new Date('2027-01-10T03:00:00Z');
-  assert.deepEqual(titlesOf(mergeEvents([], extras, newYork, lateEvening)), ['[Today]']);
-  assert.deepEqual(titlesOf(mergeEvents([], extras, 'UTC', lateEvening)), [], 'the same moment is the next day in UTC');
+  assert.deepEqual(titlesOf(mergeEvents(band, newYork, lateEvening)), ['[Today]']);
+  assert.deepEqual(titlesOf(mergeEvents(band, 'UTC', lateEvening)), [], 'the same moment is the next day in UTC');
 
   // an event that is over at 00:30 on the 10th in New York
   const justAfterMidnight = new Date('2027-01-10T05:30:00Z');
-  assert.deepEqual(titlesOf(mergeEvents([], extras, newYork, justAfterMidnight)), []);
+  assert.deepEqual(titlesOf(mergeEvents(band, newYork, justAfterMidnight)), []);
 });
 
 test('an event with an end date stays until the end date has passed, and one with no end date goes after its start date', () => {
-  const extras = [extra({ title: '[Weekend]', startDate: '2027-04-02', endDate: '2027-04-04' }), extra({ title: '[One day]', startDate: '2027-04-02' })];
-  const shown = day => titlesOf(mergeEvents([], extras, newYork, new Date('2027-04-0' + day + 'T16:00:00Z')));
+  const band = [bandDay('[Weekend]', 2027, 4, 2, 4), bandDay('[One day]', 2027, 4, 2)];
+  const shown = day => titlesOf(mergeEvents(band, newYork, new Date('2027-04-0' + day + 'T16:00:00Z')));
 
   assert.deepEqual(shown(2).sort(), ['[One day]', '[Weekend]']);
   assert.deepEqual(shown(3), ['[Weekend]']);
@@ -5205,13 +5093,13 @@ test('mergeEvents also drops BAND events whose last day has passed, and keeps on
     bandTimed('[This evening]', '2027-03-05T23:00:00Z', '2027-03-06T01:00:00Z'),
   ];
 
-  const merged = mergeEvents(band, [], newYork, now);
+  const merged = mergeEvents(band, newYork, now);
   assert.deepEqual(titlesOf(merged).sort(), ['[This evening]', '[Three days, still on]', '[Today]']);
 });
 
 test('an event with no usable start is left out', () => {
   const band = [{ title: '[No start]', start: 'not a date', end: null, allDay: false }, null, 'oops', bandDay('[Fine]', 2027, 3, 10)];
-  assert.deepEqual(titlesOf(mergeEvents(band, [], newYork, new Date('2027-03-01T15:00:00Z'))), ['[Fine]']);
+  assert.deepEqual(titlesOf(mergeEvents(band, newYork, new Date('2027-03-01T15:00:00Z'))), ['[Fine]']);
 });
 
 test('mergeEvents adds the dates each event covers, in the Look time zone for timed events', () => {
@@ -5220,48 +5108,12 @@ test('mergeEvents adds the dates each event covers, in the Look time zone for ti
     bandTimed('[Evening]', '2027-03-11T01:30:00Z', '2027-03-11T03:00:00Z'), // 8:30 PM on the 10th in New York
     bandTimed('[Ends at midnight]', '2027-03-11T03:00:00Z', '2027-03-11T05:00:00Z'), // 10 PM to midnight on the 10th
   ];
-  const merged = mergeEvents(band, [], newYork, new Date('2027-03-01T15:00:00Z'));
+  const merged = mergeEvents(band, newYork, new Date('2027-03-01T15:00:00Z'));
   const days = title => merged.filter(event => event.title === title).map(event => [event.firstDay, event.lastDay])[0];
 
   assert.deepEqual(days('[Three days]'), ['2027-03-10', '2027-03-12']);
   assert.deepEqual(days('[Evening]'), ['2027-03-10', '2027-03-10']);
   assert.deepEqual(days('[Ends at midnight]'), ['2027-03-10', '2027-03-10']);
-});
-
-test('an Events Calendar entry on the same date as a BAND event with a title that contains the other is left out', () => {
-  const now = new Date('2026-10-04T15:00:00Z');
-  const band = [bandDay('Doyenne East Regional', 2026, 10, 17)];
-
-  // the Extra title is inside the BAND title
-  let merged = mergeEvents(band, [extra({ title: 'Doyenne East', startDate: '2026-10-17' })], newYork, now);
-  assert.deepEqual(titlesOf(merged), ['Doyenne East Regional'], 'the BAND one stays');
-  assert.equal(merged[0].calendarId, 'team');
-
-  // the BAND title is inside the Extra title, and capitals do not matter
-  merged = mergeEvents([bandDay('doyenne east', 2026, 10, 17)], [extra({ title: 'DOYENNE EAST - Day 1', startDate: '2026-10-17' })], newYork, now);
-  assert.deepEqual(titlesOf(merged), ['doyenne east']);
-
-  // the same title
-  merged = mergeEvents([bandDay('THOR East', 2026, 10, 18)], [extra({ title: 'thor east', startDate: '2026-10-18' })], newYork, now);
-  assert.deepEqual(titlesOf(merged), ['THOR East']);
-});
-
-test('an Events Calendar entry stays when the date is different, or the titles are not alike', () => {
-  const now = new Date('2026-10-04T15:00:00Z');
-  const band = [bandDay('Doyenne East Regional', 2026, 10, 17)];
-
-  assert.deepEqual(titlesOf(mergeEvents(band, [extra({ title: 'Doyenne East', startDate: '2026-10-18' })], newYork, now)), ['Doyenne East Regional', 'Doyenne East']);
-  assert.deepEqual(titlesOf(mergeEvents(band, [extra({ title: 'THOR East', startDate: '2026-10-17' })], newYork, now)), ['Doyenne East Regional', 'THOR East']);
-  assert.deepEqual(titlesOf(mergeEvents(band, [extra({ title: 'Doyenne West', startDate: '2026-10-17' })], newYork, now)), ['Doyenne East Regional', 'Doyenne West']);
-});
-
-test('a BAND event on any day of a several day Events Calendar entry with the same name hides the entry, and an empty title matches nothing', () => {
-  const now = new Date('2027-03-01T15:00:00Z');
-  const weekend = extra({ title: 'Wake County Event', startDate: '2027-04-02', endDate: '2027-04-04' });
-
-  assert.deepEqual(titlesOf(mergeEvents([bandDay('Host: Wake County Event', 2027, 4, 3)], [weekend], newYork, now)), ['Host: Wake County Event']);
-  assert.deepEqual(titlesOf(mergeEvents([bandDay('Wake County Event', 2027, 4, 5)], [weekend], newYork, now)).sort(), ['Wake County Event', 'Wake County Event']);
-  assert.deepEqual(titlesOf(mergeEvents([bandDay('', 2027, 4, 3)], [weekend], newYork, now)), ['Wake County Event', '']);
 });
 
 test('rangeLabel writes one day, a range in one month, and a range over two months', () => {
@@ -5332,11 +5184,12 @@ test('eventDate reads the dates in the Look time zone, whatever the time zone of
         bandDay('[All day]', 2026, 12, 30, 31),
         bandTimed('[Late]', '2026-10-18T02:00:00Z', '2026-10-18T03:00:00Z'),
         bandTimed('[New Year]', '2027-01-01T04:30:00Z', '2027-01-01T04:50:00Z'), // 11:30 PM to 11:50 PM on 31 December in New York
+        bandTimed('[Spring]', '2027-04-03T03:30:00Z', '2027-04-03T04:00:00Z'), // 11:30 PM on 2 April in New York
       ];
-      const merged = mergeEvents(band, [extra({ title: '[Extra]', startDate: '2027-04-02', startTime: '23:30' })], newYork, new Date('2026-10-01T12:00:00Z'));
+      const merged = mergeEvents(band, newYork, new Date('2026-10-01T12:00:00Z'));
       const texts = merged.map(event => event.title + ': ' + eventDate(event, newYork).text);
 
-      assert.deepEqual(texts, ['[Late]: SAT OCT 17', '[All day]: DEC 30-31', '[New Year]: THU DEC 31', '[Extra]: FRI APR 2'], 'computer zone ' + zone);
+      assert.deepEqual(texts, ['[Late]: SAT OCT 17', '[All day]: DEC 30-31', '[New Year]: THU DEC 31', '[Spring]: FRI APR 2'], 'computer zone ' + zone);
 
       // with no firstDay or lastDay on them, the same text comes out
       const bare = merged.map(event => eventDate({ start: event.start, end: event.end, allDay: event.allDay }, newYork).text);
@@ -5354,8 +5207,8 @@ test('timeText is empty for an all-day event, so only its date shows', () => {
   assert.equal(timeText({ allDay: false, start: new Date(2027, 0, 9, 0, 5).toISOString() }), '12:05 AM');
 });
 
-// The two panels write times on the computer's own clock, as they do for BAND
-// events, so these tests use the computer's own time zone for the Events Calendar entries.
+// The two panels write times on the computer's own clock, so these tests use the
+// computer's own time zone for the events.
 // (On the Mini the two are the same: rebuilding-the-mini.md sets the zone.)
 const computerZone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -5378,11 +5231,11 @@ function drawn(panel, content) {
 test('the Events panel shows an all-day event with its date and no time, and a range for several days', () => {
   const now = new Date();
   const soon = new Date(now.getFullYear() + 1, 3, 2); // next 2 April, so nothing has finished
-  const first = soon.getFullYear() + '-04-02';
-  const merged = mergeEvents([], [
-    extra({ title: 'Winterfest', startDate: first }),
-    extra({ title: 'Host: Wake County Event', startDate: first, endDate: soon.getFullYear() + '-04-04', location: 'Holly Springs HS' }),
-    extra({ title: 'Evening', startDate: first, startTime: '18:30', location: 'Cafeteria' }),
+  const year = soon.getFullYear();
+  const merged = mergeEvents([
+    bandDay('Winterfest', year, 4, 2),
+    Object.assign(bandDay('Host: Wake County Event', year, 4, 2, 4), { location: 'Holly Springs HS' }),
+    Object.assign(bandTimed('Evening', new Date(year, 3, 2, 18, 30).toISOString(), new Date(year, 3, 2, 18, 30).toISOString()), { location: 'Cafeteria' }),
   ], computerZone, now);
 
   const markup = drawn(eventsPanel, { events: merged });
@@ -5403,17 +5256,18 @@ test('the Events panel shows an all-day event with its date and no time, and a r
 test('the Next event tile shows the date only for an all-day event, a range for several days, and the time for a timed one', () => {
   const now = new Date();
   const year = now.getFullYear() + 1;
-  const tile = fields => drawn(nextEventPanel, { events: mergeEvents([], [extra(fields)], computerZone, now) });
+  const tile = event => drawn(nextEventPanel, { events: mergeEvents([event], computerZone, now) });
 
-  const oneDay = tile({ title: 'Game Drop', startDate: year + '-01-09' });
+  const oneDay = tile(bandDay('Game Drop', year, 1, 9));
   assert.ok(oneDay.includes('Game Drop'));
   assert.ok(oneDay.includes('class="when">' + weekdayOn(year, 1, 9) + ' JAN 9</div>'), oneDay);
 
-  const range = tile({ title: 'Weekend', startDate: year + '-04-02', endDate: year + '-04-04', location: 'Holly Springs HS' });
+  const range = tile(Object.assign(bandDay('Weekend', year, 4, 2, 4), { location: 'Holly Springs HS' }));
   assert.ok(/class="when">APR 2-4<\/div>/.test(range), range);
   assert.ok(range.includes('Holly Springs HS'));
 
-  const timed = tile({ title: 'Evening', startDate: year + '-01-09', startTime: '18:30' });
+  const evening = new Date(year, 0, 9, 18, 30).toISOString();
+  const timed = tile(bandTimed('Evening', evening, evening));
   assert.ok(/class="when">[A-Z]{3} JAN 9 · \d{1,2}:\d\d [AP]M<\/div>/.test(timed), timed);
   assert.ok(timed.includes('class="when">' + weekdayOn(year, 1, 9) + ' JAN 9 · '), timed);
 });
@@ -5427,13 +5281,13 @@ test('the two panels write the date in the Look time zone, whatever the time zon
     ['Pacific/Kiritimati', 'Pacific/Pago_Pago', 'Asia/Kolkata'].forEach(zone => {
       process.env.TZ = zone;
 
-      const inNewYork = { theme: { timeZone: newYork }, events: mergeEvents(late, [], newYork, new Date()) };
+      const inNewYork = { theme: { timeZone: newYork }, events: mergeEvents(late, newYork, new Date()) };
       const events = drawn(eventsPanel, inNewYork);
       assert.ok(events.includes('<div class="day-name">' + weekdayOn(year, 10, 17) + '</div>'), 'events, computer zone ' + zone);
       assert.ok(events.includes('<div class="month-day">OCT 17</div>'), 'events, computer zone ' + zone);
       assert.ok(drawn(nextEventPanel, inNewYork).includes('class="when">' + weekdayOn(year, 10, 17) + ' OCT 17 · '), 'tile, computer zone ' + zone);
 
-      const inTokyo = { theme: { timeZone: 'Asia/Tokyo' }, events: mergeEvents(late, [], 'Asia/Tokyo', new Date()) };
+      const inTokyo = { theme: { timeZone: 'Asia/Tokyo' }, events: mergeEvents(late, 'Asia/Tokyo', new Date()) };
       assert.ok(drawn(eventsPanel, inTokyo).includes('<div class="month-day">OCT 18</div>'), 'events in Tokyo, computer zone ' + zone);
       assert.ok(drawn(nextEventPanel, inTokyo).includes('class="when">' + weekdayOn(year, 10, 18) + ' OCT 18 · '), 'tile in Tokyo, computer zone ' + zone);
     });
@@ -5452,13 +5306,13 @@ test('the two panels still write a date when the events did not come through mer
 });
 
 test('the Events panel and the Next event tile have nothing to show once the only event is over', () => {
-  const content = { events: mergeEvents([], [extra({ startDate: '2020-05-05' })], newYork, new Date()) };
+  const content = { events: mergeEvents([bandDay('[Over]', 2020, 5, 5)], newYork, new Date()) };
   assert.deepEqual(content.events, []);
   assert.equal(eventsPanel.hasContent(content), false);
   assert.equal(nextEventPanel.hasContent(content), false);
 });
 
-// Up Next: the plan, then the talks booked for today. The clock reads 2:50 PM on
+// Daily Agenda: the plan, then the talks booked for today. The clock reads 2:50 PM on
 // Thursday 8 October 2026 in New York.
 const upNextNow = new Date('2026-10-08T18:50:00Z');
 
@@ -5488,7 +5342,7 @@ function upNextLines(content, now) {
   return tonightPanel.rowsFor(content, now || upNextNow).map(lineOf);
 }
 
-test('Up Next lists the plan first, then today\'s talks soonest first, with the one in progress marked and finished talks left off', () => {
+test('The Daily Agenda lists the plan first, then today\'s talks soonest first, with the one in progress marked and finished talks left off', () => {
   const content = upNextContent([
     upNextTalk('2026-10-08T19:15:00Z', 'Sam', '[Topic B]'),
     upNextTalk('2026-10-08T18:45:00Z', 'Alex', '[Topic A]'),
@@ -5508,7 +5362,7 @@ test('Up Next lists the plan first, then today\'s talks soonest first, with the 
   assert.deepEqual(rows.map(row => row.live), [undefined, true, false, false]);
 });
 
-test('Up Next reads the day and the time on the clock in the Look time zone, not the computer\'s', () => {
+test('The Daily Agenda reads the day and the time on the clock in the Look time zone, not the computer\'s', () => {
   const talks = [upNextTalk('2026-10-08T18:45:00Z', 'Alex', '[Topic A]'), upNextTalk('2026-10-09T02:30:00Z', 'Lee', '[Topic D]')];
 
   assert.deepEqual(upNextLines(upNextContent(talks)), ['talk | 2:45 PM | Alex: [Topic A] | NOW', 'talk | 10:30 PM | Lee: [Topic D] | TALK']);
@@ -5521,7 +5375,7 @@ test('Up Next reads the day and the time on the clock in the Look time zone, not
   assert.deepEqual(upNextLines(upNextContent(talks, null, { theme: undefined })), upNextLines(upNextContent(talks)));
 });
 
-test('Up Next writes midnight and noon as 12:00 AM and 12:00 PM, and keeps the minutes to two digits', () => {
+test('The Daily Agenda writes midnight and noon as 12:00 AM and 12:00 PM, and keeps the minutes to two digits', () => {
   const early = new Date('2026-10-08T04:00:00Z'); // midnight at the start of the 8th in New York
   const talks = [
     upNextTalk('2026-10-08T04:05:00Z', 'A', '[One]'),
@@ -5532,7 +5386,7 @@ test('Up Next writes midnight and noon as 12:00 AM and 12:00 PM, and keeps the m
   assert.deepEqual(upNextLines(upNextContent(talks), early).map(line => line.split(' | ')[1]), ['12:05 AM', '12:00 PM', '12:30 PM', '1:00 PM']);
 });
 
-test('Up Next leaves out a talk that is not scheduled, a draft, one with no start, and every talk while Run presentations is off', () => {
+test('The Daily Agenda leaves out a talk that is not scheduled, a draft, one with no start, and every talk while Run presentations is off', () => {
   const kept = upNextTalk('2026-10-08T19:00:00Z', 'Alex', '[Kept]');
   const talks = [
     kept,
@@ -5551,7 +5405,7 @@ test('Up Next leaves out a talk that is not scheduled, a draft, one with no star
   assert.deepEqual(upNextLines(upNextContent('oops')), []);
 });
 
-test('Up Next cuts a talk to 18 characters, the width of a plan row, and ends it with an ellipsis', () => {
+test('The Daily Agenda cuts a talk to 18 characters, the width of a plan row, and ends it with an ellipsis', () => {
   const text = (name, topic) => tonightPanel.rowsFor(upNextContent([upNextTalk('2026-10-08T19:00:00Z', name, topic)]), upNextNow)[0].text;
 
   assert.equal(text('Alex', '[Short]'), 'Alex: [Short]');
@@ -5570,7 +5424,7 @@ test('Up Next cuts a talk to 18 characters, the width of a plan row, and ends it
   assert.equal(text('  Alex ', ' [Title] '), 'Alex: [Title]');
 });
 
-test('Up Next never has more than five lines: the talks fill what the plan leaves, and the last free line says +N more', () => {
+test('The Daily Agenda never has more than five lines: the talks fill what the plan leaves, and the last free line says +N more', () => {
   const count = (content, kind) => tonightPanel.rowsFor(content, upNextNow).filter(row => row.kind === kind).length;
 
   // no plan: four talks and the line that counts the other three
@@ -5616,7 +5470,7 @@ test('Up Next never has more than five lines: the talks fill what the plan leave
   }
 });
 
-test('Up Next keeps the talk in progress when the talks overflow, since it is the first of them', () => {
+test('The Daily Agenda keeps the talk in progress when the talks overflow, since it is the first of them', () => {
   const talks = laterTalks(6).concat(upNextTalk('2026-10-08T18:45:00Z', 'Alex', '[Topic A]'));
   const lines = upNextLines(upNextContent(talks, upNextPlan(1)));
 
@@ -5639,7 +5493,7 @@ test('a talk is in progress from its start until its slot ends, and gone after, 
   assert.deepEqual(upNextLines(upNextContent([upNextTalk('2026-10-08T18:45:00Z', 'Alex', '[Topic A]', { minutes: undefined })])), ['talk | 2:45 PM | Alex: [Topic A] | NOW']);
 });
 
-test('Up Next has nothing to show with no plan and no talks, and shows the talks alone when there is no plan', () => {
+test('The Daily Agenda has nothing to show with no plan and no talks, and shows the talks alone when there is no plan', () => {
   const now = new Date();
   const live = upNextTalk(now, 'Alex', '[Topic A]', { minutes: 30 });
   const over = upNextTalk(new Date(now.getTime() - 60 * 60 * 1000), 'Kim', '[Over]', { minutes: 15 });
@@ -5655,7 +5509,7 @@ test('Up Next has nothing to show with no plan and no talks, and shows the talks
   assert.equal(tonightPanel.hasContent(upNextContent([live], Object.assign(upNextPlan(1), { show: false }))), true);
 });
 
-test('the Up Next panel draws a plan row as it always did, a talk with its tag, and the line that counts what did not fit', () => {
+test('the Daily Agenda panel draws a plan row as it always did, the heading AGENDA, a talk with its tag, and the line that counts what did not fit', () => {
   const now = new Date();
   const talks = Array.from({ length: 6 }, (item, place) => upNextTalk(now, 'Kim' + place, '[Talk ' + place + ']', { minutes: 30 }));
   const rowsIn = markup => countOf(markup, 'data-slat="item"') - 1; // the first is the card with the heading
@@ -5663,6 +5517,8 @@ test('the Up Next panel draws a plan row as it always did, a talk with its tag, 
   const withPlan = drawn(tonightPanel, upNextContent(talks, upNextPlan(2)));
   assert.equal(rowsIn(withPlan), 5);
   assert.ok(withPlan.includes('<div class="heading">[Plan]</div>'));
+  assert.ok(withPlan.includes('<h2 class="title" data-slat="title">AGENDA</h2>'));
+  assert.equal(withPlan.includes('UP NEXT'), false);
   assert.ok(withPlan.includes('<div class="row" data-slat="item">'));
   assert.ok(withPlan.includes('<div class="text">[Item 1]</div>'));
   assert.equal(countOf(withPlan, 'class="row talk-row"'), 2);
@@ -5691,7 +5547,7 @@ test('the Up Next panel draws a plan row as it always did, a talk with its tag, 
   assert.equal(rowsIn(empty), 0);
 });
 
-test('the stylesheet of Up Next keeps text at 44px or more and lines at 3px or more, and the tag of a talk follows the badge', () => {
+test('the stylesheet of the Daily Agenda keeps text at 44px or more and lines at 3px or more, and the tag of a talk follows the badge', () => {
   const css = fs.readFileSync(path.join(dashboardFolder, 'panels/tonight/tonight.css'), 'utf8');
   const tokens = fs.readFileSync(path.join(dashboardFolder, 'tokens.css'), 'utf8');
   const size = name => Number((new RegExp('--' + name + ': (\\d+)px;').exec(tokens) || [])[1]);
@@ -5906,13 +5762,12 @@ function contentWith(counts) {
     tipsAndNews: items(counts.tipsAndNews || 0),
     subteams: items(counts.subteams || 0),
     people: items(counts.people || 0),
-    extraEvents: items(counts.extraEvents || 0),
     plan: counts.plan ? { rows: [] } : null,
     customPanels: items(counts.customPanels || 0),
   };
 }
 
-const someContent = contentWith({ tasks: 12, sponsors: 4, tipsAndNews: 9, subteams: 5, people: 8, extraEvents: 2, plan: true, customPanels: 3 });
+const someContent = contentWith({ tasks: 12, sponsors: 4, tipsAndNews: 9, subteams: 5, people: 8, plan: true, customPanels: 3 });
 
 test('classifyFailure: 401 and 403 are access denied, whatever else is known', () => {
   assert.equal(classifyFailure({ status: 401 }), 'denied');
@@ -5953,14 +5808,14 @@ test('reasonText has plain words for each reason, and other for one it does not 
   assert.equal(reasonText(undefined), 'other error');
 });
 
-test('itemCounts counts each kind of content, Up Next as one or none, and copes with missing lists', () => {
+test('itemCounts counts each kind of content, the agenda as one or none, and copes with missing lists', () => {
   assert.deepEqual(itemCounts(someContent), [
-    ['Tasks', 12], ['Sponsors', 4], ['Tips', 9], ['Roster', 5],
-    ['People', 8], ['Events Calendar', 2], ['Up Next', 1], ['Extra panels', 3],
+    ['Tasks', 12], ['Sponsors', 4], ['Tips', 9], ['Team leads', 5],
+    ['People', 8], ['Agenda', 1], ['Extra panels', 3],
   ]);
-  assert.deepEqual(itemCounts(withDefaults({})).map(pair => pair[1]), [0, 0, 0, 0, 0, 0, 0, 0]);
-  assert.deepEqual(itemCounts(null).map(pair => pair[1]), [0, 0, 0, 0, 0, 0, 0, 0]);
-  assert.deepEqual(itemCounts({ tasks: 'not a list', plan: {} }).map(pair => pair[1]), [0, 0, 0, 0, 0, 0, 1, 0]);
+  assert.deepEqual(itemCounts(withDefaults({})).map(pair => pair[1]), [0, 0, 0, 0, 0, 0, 0]);
+  assert.deepEqual(itemCounts(null).map(pair => pair[1]), [0, 0, 0, 0, 0, 0, 0]);
+  assert.deepEqual(itemCounts({ tasks: 'not a list', plan: {} }).map(pair => pair[1]), [0, 0, 0, 0, 0, 1, 0]);
 });
 
 test('connectionLines shows nothing while Sanity is reachable and the switch is off', () => {
@@ -5994,8 +5849,8 @@ test('connectionLines names each of the four reasons, and says so when there has
 test('connectionLines with the switch on gives the last read, the counts and the calendar time', () => {
   assert.deepEqual(connectionLines({ status: sanityStatus, always: true, content: someContent, calendarsReadAt: calendarsRead }), [
     'Sanity OK · last read 2:31 PM',
-    'Tasks 12 · Sponsors 4 · Tips 9 · Roster 5',
-    'People 8 · Events Calendar 2 · Up Next 1 · Extra panels 3',
+    'Tasks 12 · Sponsors 4 · Tips 9 · Team leads 5',
+    'People 8 · Agenda 1 · Extra panels 3',
     'Calendars read 2:30 PM',
   ]);
 });
@@ -6004,8 +5859,8 @@ test('connectionLines says when the calendars have not been read, and when Sanit
   const lines = connectionLines({ status: { source: 'sanity', updated: null, offline: false, reason: '' }, always: true, content: withDefaults({}), calendarsReadAt: null });
   assert.deepEqual(lines, [
     'Sanity not read yet',
-    'Tasks 0 · Sponsors 0 · Tips 0 · Roster 0',
-    'People 0 · Events Calendar 0 · Up Next 0 · Extra panels 0',
+    'Tasks 0 · Sponsors 0 · Tips 0 · Team leads 0',
+    'People 0 · Agenda 0 · Extra panels 0',
     'Calendars not read yet',
   ]);
 });
@@ -6027,8 +5882,8 @@ test('connectionLines puts the reason first and the counts after it when the swi
   assert.deepEqual(lines, [
     'SANITY UNREACHABLE: NETWORK DOWN',
     'Last good read 2:31 PM',
-    'Tasks 12 · Sponsors 4 · Tips 9 · Roster 5',
-    'People 8 · Events Calendar 2 · Up Next 1 · Extra panels 3',
+    'Tasks 12 · Sponsors 4 · Tips 9 · Team leads 5',
+    'People 8 · Agenda 1 · Extra panels 3',
     'Calendars read 2:30 PM',
     'ssh hawktimus@10.0.0.5',
   ]);
@@ -6448,10 +6303,10 @@ function onTeamScreen(code, run) {
 
 test('the query asks for the teams, and for the team code of every kind of content that has a Team field', () => {
   assert.ok(contentQuery.includes('"teams": *[_type == "team"] | order(order asc, _createdAt asc) {'));
-  // tasks, sponsors, tips and news, subteams, people, talks, plans, Events Calendar entries and extra panels
-  assert.equal(contentQuery.split('"team": team->code').length - 1, 9);
+  // tasks, sponsors, tips and news, subteams, people, talks, plans and extra panels
+  assert.equal(contentQuery.split('"team": team->code').length - 1, 8);
 
-  ['"tasks"', '"sponsors"', '"tipsAndNews"', '"subteams"', '"people"', '"presentations"', '"plans"', '"extraEvents"', '"customPanels"'].forEach(name => {
+  ['"tasks"', '"sponsors"', '"tipsAndNews"', '"subteams"', '"people"', '"presentations"', '"plans"', '"customPanels"'].forEach(name => {
     const start = contentQuery.indexOf(name + ': *[');
     assert.ok(start !== -1, name);
     const next = contentQuery.indexOf('\n  "', start + 1);
@@ -6550,7 +6405,6 @@ const teamItems = {
   people: { name: '[Person]', role: 'Mentor' },
   presentations: { id: 'presentation-a', name: '[Speaker]', topic: '[Topic]', start: '2026-10-02T19:00:00Z', status: 'scheduled' },
   plans: { heading: '[Plan]', rows: [] },
-  extraEvents: { title: '[Event]', startDate: '2026-10-09' },
   customPanels: { title: '[Custom]', blocks: [{ _type: 'headingBlock', text: '[Heading]' }] },
 };
 
@@ -6724,14 +6578,10 @@ const teamCases = [
   } },
   { type: 'customPanel', shows: team => [live.customPanel.hasContent(withDefaults({ customPanels: [{ title: '[Custom]', blocks: [{ type: 'text', text: '[Text]' }], team: team }] }))] },
   { type: 'tip', shows: team => [live.tickerPanel.items(withDefaults({ tipsAndNews: [{ kind: 'tip', text: '[Tip]', team: team }] })).length > 0] },
-  { type: 'extraEvent', shows: team => {
-    const events = live.events.mergeEvents([], [{ title: '[Event]', startDate: '2099-04-02', team: team }], 'America/New_York', noon);
-    return [events.length > 0, live.eventsPanel.hasContent(withDefaults({ events: events }))];
-  } },
 ];
 
 test('every kind of content with a Team field leaves out the items of the other team, in every panel that draws it, and shows an item with no team in both', () => {
-  assert.equal(teamCases.length, 9, 'a case for each kind of content: the Studio has ten Team fields and no panel draws a Meeting day');
+  assert.equal(teamCases.length, 8, 'a case for each kind of content the screen draws: no panel draws a Meeting day, and the screen does not read Events Calendar entries');
 
   teamCases.forEach(({ type, shows }) => {
     ['prime', 'nova'].forEach(screen => {
@@ -6747,7 +6597,7 @@ test('every kind of content with a Team field leaves out the items of the other 
   });
 });
 
-test('the Up Next panel shows the first plan that is for the team on the screen, and a talk for the other team is not listed', () => {
+test('the Daily Agenda panel shows the first plan that is for the team on the screen, and a talk for the other team is not listed', () => {
   const content = normalizeContent({
     plans: [
       document('plan', 'p1', { heading: '[Nova plan]', team: 'nova', rows: [{ time: '[6:00 PM]', text: '[Nova row]', lead: '' }] }),
@@ -6764,7 +6614,7 @@ test('the Up Next panel shows the first plan that is for the team on the screen,
   onTeamScreen('nova', () => assert.deepEqual(lines(), ['[Nova row]', '[Nova speaker]']));
 });
 
-test('a talk still runs at its time whichever team is on the screen: the Up Next list is the only place a team leaves it out', () => {
+test('a talk still runs at its time whichever team is on the screen: the Daily Agenda list is the only place a team leaves it out', () => {
   const talk = { id: 'presentation-n', name: '[Speaker]', topic: '', start: new Date('2026-10-02T19:00:00Z'), minutes: 15, status: 'scheduled', team: 'nova' };
   const due = () => live.presentation.dueTalk([talk], new Date('2026-10-02T19:05:00Z'), { presentationsEnabled: true, graceMinutes: 5 }, new Set());
 
@@ -6777,7 +6627,7 @@ test('the shared content shows for both teams: events from BAND, photos, a tip w
   const content = withDefaults({ photos: photos, tipsAndNews: [{ kind: 'tip', text: '[Tip]' }] });
 
   ['prime', 'nova'].forEach(screen => onTeamScreen(screen, () => {
-    assert.deepEqual(live.events.mergeEvents(band, [], 'America/New_York', noon).map(event => event.title), ['[Band event]'], screen);
+    assert.deepEqual(live.events.mergeEvents(band, 'America/New_York', noon).map(event => event.title), ['[Band event]'], screen);
     assert.equal(live.photos.photosToShow(content, noon).length, 1, screen);
     assert.equal(live.tickerPanel.items(content).length, 1, screen);
   }));
@@ -6785,17 +6635,17 @@ test('the shared content shows for both teams: events from BAND, photos, a tip w
   // a rule from Calendar filters has no team, and shows or hides the same for both
   const rules = [{ name: '[Rule]', action: 'hide', words: ['band'], days: [], calendar: '', fromDate: '', toDate: '' }];
   ['prime', 'nova'].forEach(screen => onTeamScreen(screen, () => {
-    assert.deepEqual(live.events.mergeEvents(band, [], 'America/New_York', noon, rules), [], screen);
+    assert.deepEqual(live.events.mergeEvents(band, 'America/New_York', noon, rules), [], screen);
   }));
 });
 
-test('no panel judges the team itself: only the content code, the events merge and the team module use showsForTeam', () => {
+test('no panel judges the team itself: only the content code and the team module use showsForTeam', () => {
   const users = javascriptFilesIn(dashboardFolder)
     .filter(file => /\bshowsForTeam\b/.test(fs.readFileSync(file, 'utf8')))
     .map(file => path.relative(dashboardFolder, file).split(path.sep).join('/'))
     .sort();
 
-  assert.deepEqual(users, ['core/content.js', 'core/events.js', 'core/teams.js']);
+  assert.deepEqual(users, ['core/content.js', 'core/teams.js']);
 });
 
 test('with no team documents the screen is the starting Prime: its colors, its name and number from the Team box, and everything with no team showing', () => {

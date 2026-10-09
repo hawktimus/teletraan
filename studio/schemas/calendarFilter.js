@@ -2,7 +2,7 @@
 // screen. The dashboard applies the rules in core/events.js, after repeating
 // events are expanded. A rule matches an event when every condition it has
 // matches. An event is hidden when a Hide rule matches and no Always show rule
-// does. Events Calendar entries typed in Studio are never filtered.
+// does.
 
 import { defineType, defineField, defineArrayMember } from 'sanity';
 import { tooLong, aToZ, titleOf } from './fields.js';

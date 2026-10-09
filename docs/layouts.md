@@ -634,7 +634,7 @@ fixed length, and a variable cannot reach that:
 |-------|-------------------------|-------------------|
 | Tasks | header and rows 1152, row text 960 and 900 | row bars 1124 (`tasks.js`) |
 | Events | header and rows 1152 | row bars 1124 (`events.js`) |
-| Up Next (`tonight`) | header and rows 1152, plan card 1096 | plan card 1096 by 140 and row bars 1124 (`tonight.js`) |
+| Daily Agenda (`tonight`) | header and rows 1152, plan card 1096 | plan card 1096 by 140 and row bars 1124 (`tonight.js`) |
 | Subteam spotlight | header and story 1152, name card 1096 | name card 1096 by 128 (`spotlight.js`) |
 | Sponsor feature | header and story 1152, name card 1096 | cards 1096 by 128 and 360 by 280 (`sponsor-feature.js`) |
 | Photo | header 1152 | card 1096 wide and the caption's edge at 1056 (`core/photos.js`) |
@@ -987,7 +987,7 @@ gives the page, so a change of the numbers there moves the kit too.
   is also why the kit costs nothing while the screen is covered. Any glitch or burst
   that is playing ends on the spot, and the kit starts again when the screen is
   back.
-- **A demo** (the Test the screen page): the two events are silent. The rest goes on.
+- **A demo** (the Demo page): the two events are silent. The rest goes on.
 - **The two events** also wait for the moment: the name glitch is skipped while the
   name effect, the logo or the screen glitch is playing and while a page is
   changing, and it is never saved up (the next one comes 12 to 25 seconds after

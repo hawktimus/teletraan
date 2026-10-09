@@ -1,8 +1,8 @@
-// The Test the screen page: one document with the fixed id 'demo' (see structure.js). It has
-// no buttons now: the Start here page has the ones that try the screen. The type and its
-// fields stay so that the documents already in Studio open and publish as they were. The
-// dashboard reads it with the rest of the content and plays the steps in
-// dashboard/core/demo.js. The starting values are the same as defaultDemo in
+// The Demo page: one document with the fixed id 'demo' (see structure.js). It has no
+// buttons and no line in the sidebar now: the Start here page has the ones that try the
+// screen. The type and its fields stay so that the document already in Studio opens and
+// publishes as it was. The dashboard reads it with the rest of the content and plays the
+// steps in dashboard/core/demo.js. The starting values are the same as defaultDemo in
 // dashboard/config.js.
 //
 // The list of screens comes from ../demo-screens.js, a copy of the dashboard's
@@ -86,7 +86,7 @@ const announcementTextField = defineField({
 
 export default defineType({
   name: 'demo',
-  title: 'Test the screen',
+  title: 'Demo',
   type: 'document',
   fields: [requestedAtField, stepsField, announcementTextField],
 });

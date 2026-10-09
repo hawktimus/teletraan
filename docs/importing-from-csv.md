@@ -1,6 +1,6 @@
 # Importing content from CSV files
 
-Use this to add many items at once, for example the tasks, subteams and
+Use this to add many items at once, for example the tasks, team leads and
 sponsors for a new season. You fill in a spreadsheet, a small script checks
 it, and one Sanity command adds the items to the Studio.
 
@@ -21,17 +21,17 @@ The folder `docs/content-templates/` has one CSV file for each kind of content.
 | File | Studio sidebar |
 | --- | --- |
 | task.csv | Tasks |
-| plan.csv | Up Next |
-| extraEvent.csv | Events Calendar |
+| plan.csv | Agenda items, under Daily Agenda |
+| extraEvent.csv | Events Calendar, which has no line in the sidebar and is not read by the screen |
 | sponsor.csv | Sponsors |
 | tipOrNews.csv | Tips and News |
-| subteam.csv | Roster |
-| place.csv | Locations |
+| subteam.csv | Team leads |
+| place.csv | Places, which has no line in the sidebar: a task's Location field adds them |
 | person.csv | Leadership |
 | customPanel.csv | Extra panels |
 
 There is no template for the pages that exist once (Dashboard Settings, Look
-and Test the screen), for Meeting days, Presentations or Calendar filters, and none for
+and Demo), for Meeting days, Presentations or Calendar filters, and none for
 photos. The pictures in Photos and the photo of a person in Leadership are
 uploaded in Studio, so there is no photo template and person.csv has no photo
 column.
@@ -63,16 +63,16 @@ A task points to its subteam by name. The script only accepts a name that is in
 a subteam file in the same folder, so keep subteam.csv with task.csv.
 
 A task can also have a point of contact (`contact`, a first name of up to 12
-characters) and a `location`, which is the name of a location. Both come just
+characters) and a `location`, which is the name of a place. Both come just
 before the team column at the end of task.csv, and both may be left empty. A
 task file saved from the older template, without these two columns, still
 imports. The script knows
-the three starting locations, Classroom, Programming room and Media center,
-without a file (they are in `docs/seed/places.ndjson`), and any location in a
+the three starting places, Classroom, Programming room and Media center,
+without a file (they are in `docs/seed/places.ndjson`), and any place in a
 place.csv in the same folder. It ignores capitals, so `classroom` is fine. Any
-other name is refused, with the row named. It cannot look in Studio, so a location
+other name is refused, with the row named. It cannot look in Studio, so a place
 someone made there by hand is not known to it: leave the cell empty and pick
-the location in the task in Studio, or add the location to place.csv if it is not in
+the place in the task in Studio, or add the place to place.csv if it is not in
 Studio yet.
 
 Every template except place.csv ends with a `team` column. It is the code of the
@@ -113,7 +113,7 @@ One row is one item. Write each kind of value like this:
 | web address | An address that starts with https:// | https://example.com/logo.png |
 | one of tip/news/reminder | One of the words, spelled exactly | tip |
 | name of subteam | The name of the subteam, as in subteam.csv | Build |
-| name of place | The name of the location, as in place.csv or the starting locations | Classroom |
+| name of place | The name of the place, as in place.csv or the starting places | Classroom |
 
 Some more things to know:
 
@@ -134,7 +134,7 @@ Some more things to know:
 
 Two kinds of content hold a list, so their columns come in numbered groups.
 
-**Up Next** has up to 5 schedule rows. Group 1 is `rows.1.time`,
+**Agenda items** have up to 5 schedule rows. Group 1 is `rows.1.time`,
 `rows.1.text` and `rows.1.lead`, group 2 is `rows.2.time` and so on. Leave a
 group empty and it is left out. If you fill in anything in a group, its text
 is needed.

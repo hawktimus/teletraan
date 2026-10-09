@@ -1,5 +1,5 @@
-// The next few things on the team calendar and the Events Calendar entries, one row each.
-// The list comes from core/events.js, already merged and sorted.
+// The next few things on the team calendar, one row each.
+// The list comes from core/events.js, already filtered and sorted.
 
 import { rowBarMarkup } from '../../core/plate.js';
 import { doubleSlash } from '../../core/marks.js';

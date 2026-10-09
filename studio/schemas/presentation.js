@@ -1,5 +1,6 @@
 // A booked talk. The booking form saves one, and a coach can add or change one
-// here. Cancel a talk by setting its status to Cancelled, then use Publish all.
+// under Daily Agenda, with the same fields, the slides link too. Cancel a talk by
+// setting its status to Cancelled, then use Publish all.
 // The dataset is public, so the first name and the title are public too.
 
 import { defineType, defineField } from 'sanity';
@@ -41,7 +42,7 @@ function talkLine(item) {
 
 export default defineType({
   name: 'presentation',
-  title: 'Presentations',
+  title: 'Presentation',
   type: 'document',
   fields: [
     defineField({

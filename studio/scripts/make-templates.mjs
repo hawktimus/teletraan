@@ -28,7 +28,9 @@ const defaultOutput = path.join(studioFolder, '..', 'docs', 'content-templates')
 // words, which a sheet does not hold well, so they are added in Studio. A team has
 // colors and a logo, so it is added in Studio too (the two starting teams are in
 // docs/seed/teams.ndjson). The pages that exist once (Dashboard Settings, Look,
-// Test the screen) are listed in structure.js.
+// Demo) are listed in structure.js. Events Calendar entries and places have no
+// line in the sidebar, but they keep their templates, since the importer still
+// reads them.
 const skippedTypes = ['photo', 'presentationDay', 'presentation', 'calendarFilter', 'team'];
 
 // The columns whose words make the id of a row, in order. The id is the type
@@ -65,7 +67,7 @@ const lastColumns = {
 const examples = {
   task: {
     title: '[Task name]', subteam: '[Subteam A]', status: 'in-progress', order: '1', show: 'yes', expires: '2027-03-01 18:00',
-    contact: '[First name]', location: '[Location name]',
+    contact: '[First name]', location: '[Place name]',
   },
   plan: {
     heading: '[Meeting heading]', date: '2027-01-12', location: '[Room or place]',
@@ -73,7 +75,7 @@ const examples = {
     'rows.2.time': '[6:30 PM]', 'rows.2.text': '[Second thing]',
     show: 'yes',
   },
-  extraEvent: { title: '[Event name]', startDate: '2027-03-12', endDate: '2027-03-13', startTime: '09:00', endTime: '17:00', location: '[Location]', show: 'yes' },
+  extraEvent: { title: '[Event name]', startDate: '2027-03-12', endDate: '2027-03-13', startTime: '09:00', endTime: '17:00', location: '[Place]', show: 'yes' },
   sponsor: {
     name: '[Sponsor name]', tier: '[Tier]', blurb: '[A short line about the sponsor.]', thankYou: '[Thank you to our sponsor]',
     logoAddress: 'https://example.com/logo.png', order: '1', show: 'yes',
@@ -83,7 +85,7 @@ const examples = {
     name: '[Subteam A]', lead: '[Lead name]', members: '[Student A] | [Student B]', spotlight: 'yes', spotlightHeadline: '[What the subteam did]',
     spotlightText: "[Two or three short sentences about the subteam's work.]", order: '1', show: 'yes',
   },
-  place: { name: '[Location name]', show: 'yes' },
+  place: { name: '[Place name]', show: 'yes' },
   person: { role: 'Captain', name: '[Person name]', showPhoto: 'yes', order: '1', show: 'yes' },
   customPanel: {
     title: '[Title]',

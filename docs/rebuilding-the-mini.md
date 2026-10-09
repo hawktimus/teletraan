@@ -402,14 +402,14 @@ setting up or looking into a problem. It then has these lines, in a dark plate
 instead of the red one:
 
     Sanity OK · last read [time]
-    Tasks [n] · Sponsors [n] · Tips [n] · Roster [n]
-    People [n] · Events Calendar [n] · Up Next [n] · Extra panels [n]
+    Tasks [n] · Sponsors [n] · Tips [n] · Team leads [n]
+    People [n] · Agenda [n] · Extra panels [n]
     Calendars read [time]
 
 The first line says `Saved copy from [time]` while the screen shows a copy
 saved on the Mini and has not read Sanity yet. The counts are what Sanity sent,
 including items that are switched off or have expired, so they can be higher
-than what is on the screen. Up Next is 1 when there is one for today and 0 when
+than what is on the screen. Agenda is 1 when there is one for today and 0 when
 there is not. The calendar time is when the screen last read every calendar
 file, which is not the same as when the Mini downloaded them. It says
 `Calendars not read yet` until the screen has read them all, and again for as

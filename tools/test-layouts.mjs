@@ -4180,6 +4180,14 @@ function textWidth(text, weight, size, spacing) {
   }, 0);
 }
 
+// The Daily Agenda panel is headed AGENDA, six characters, where it was headed UP NEXT. At the heading size
+// of 96 px it is no wider than that was, to within two pixels, so the room it had in the header is enough
+test('the heading of the Daily Agenda panel is AGENDA and is no wider than UP NEXT was', () => {
+  assert.ok(read('dashboard/panels/tonight/tonight.js').includes('<h2 class="title" data-slat="title">AGENDA</h2>'));
+  assert.equal('AGENDA'.length, 6);
+  assert.ok(textWidth('AGENDA', 700, 96, 0) <= textWidth('UP NEXT', 700, 96, 0) + 2);
+});
+
 const warCssFile = 'dashboard/panels/countdown/countdown.css';
 const barRule = 'html[data-layout="bar"] ';
 

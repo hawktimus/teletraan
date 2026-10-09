@@ -23,24 +23,32 @@ received.
 ## The sidebar
 
 The sidebar is in groups, by how often you touch them. Start here is at the top.
-The group names, such as EVERY MEETING, are headings and not folders. Each line
-has an icon.
+The group names, such as EVERY MEETING, are headings. Daily Agenda and Settings are
+folders: click one and its lines open beside it. Each line has an icon.
 
 Start here: a short page that says what the screen is and that Publish all is the
 last step of every change. See "The Start here page" below.
 
 ### Every meeting
 
-- Up Next: the schedule for today's meeting, up to 5 rows. The TV shows the
-  first one that is switched on and is dated today or has no date. One from
-  another day is skipped, so an old one that is still switched on does not
-  hide today's. The talks booked for today fill the rows the schedule leaves
-  free (docs/up-next.md).
+- Daily Agenda: a folder with three lines. Its plus button adds an Agenda item or a
+  Presentation.
+  - Agenda items: the schedule for today's meeting, up to 5 rows. The TV shows the
+    first one that is switched on and is dated today or has no date. One from
+    another day is skipped, so an old one that is still switched on does not
+    hide today's. The talks booked for today fill the rows the schedule leaves
+    free (docs/up-next.md). The panel is headed AGENDA.
+  - Presentations: the talks students book in a Google Form, and the ones a coach
+    adds by hand. They have the same fields, the slides link too, and they are in
+    the same lists. Upcoming and Past are the two lists, where a coach can cancel
+    or move a talk (docs/presentations.md).
+  - Meeting days: which days have talk slots and when they start. A day with no
+    Meeting day has no slots.
 - Tasks: what the team is working on. Each task has a name, a subteam, an
   optional point of contact, an optional location and a status (Blocked, In
   progress, Up next or Done). The point of contact is a first name, up to 12
-  characters, with no last name. The location is picked from the list of
-  Locations (see "Locations" below). When you set a task to Done, fill in
+  characters, with no last name. The location is a place, picked in the Location
+  field of the task (see "Places" below). When you set a task to Done, fill in
   "Finished on". If you leave it empty, the time you last edited the task
   counts as the finish time. The task leaves the screen after the number of
   days set in Dashboard Settings. See "What the Tasks panel shows" below.
@@ -48,9 +56,6 @@ last step of every change. See "The Start here page" below.
 
 ### Events
 
-- Events Calendar: events that are not on BAND, such as one another school
-  hosts. Each entry has a name, a start date, an optional end date, optional
-  times and an optional location. See "Events Calendar" below.
 - Calendars: the BAND calendars the Mini reads. The page tells you to add a rule
   under Calendar filters to hide a repeating meeting, and to ask a coach to add
   the address of a new calendar on the Mini.
@@ -58,18 +63,9 @@ last step of every change. See "The Start here page" below.
   on the screen, such as a meeting that repeats every week
   (docs/calendar-filters.md). Students can follow
   docs/hide-a-repeating-meeting.md.
-- Presentations: the talks students book in a Google Form. It opens three lists.
-  Meeting days says which days have talk slots and when they start, and a day
-  with no Meeting day has no slots. Upcoming and Past are the booked talks,
-  where a coach can cancel or move one (docs/presentations.md).
 
-### The team
+### Roster
 
-- Roster: each subteam, its lead and the students on it. Turn on "In the
-  spotlight" to feature one. Add a subteam here before you use it on a task.
-  The Team Leads panel shows every subteam that has a lead, three to a page
-  (see Photos of people). The Subteam roster panel shows the lead and the
-  members of each subteam (see Subteam members).
 - Leadership: coaches, captains and mentors, each with an optional photo. The
   panel shows all the coaches, then all the captains, then all the mentors. A
   page never mixes roles, and a role with more than three people continues on
@@ -79,6 +75,11 @@ last step of every change. See "The Start here page" below.
   Captain is gold and Mentor is silver. There is no separate role for a
   president: give a president the role Captain and the title President, and
   they are shown with the captains.
+- Team leads: each subteam, its lead and the students on it. Turn on "In the
+  spotlight" to feature one. Add a subteam here before you use it on a task.
+  The Team Leads panel shows every subteam that has a lead, three to a page
+  (see Photos of people). The Subteam roster panel shows the lead and the
+  members of each subteam (see Subteam members).
 - Sponsors: name, tier, a short line about them, a thank-you line for the
   ticker, and the web address of their logo.
 - Photos: the pictures for the Photo panel. Each has a picture you upload, an
@@ -89,30 +90,31 @@ last step of every change. See "The Start here page" below.
 
 If you are not a coach, leave these alone and ask a coach.
 
-- Dashboard Settings: the settings for the whole screen, described below.
-- Look: the colours of the whole screen, and holiday colours for set dates.
-  See "Look" below.
-- Teams: the teams the TV can show, each with a name, a number, a logo, seven
-  colors and a switch that flips the screen left to right. See "Teams" below.
-- Locations: the rooms and areas a task can be in, such as the Classroom. See
-  "Locations" below.
+- Settings: a folder with three lines.
+  - Dashboard Settings: the settings for the whole screen, described below.
+  - Look: the colours of the whole screen, and holiday colours for set dates.
+    See "Look" below.
+  - Teams: the teams the TV can show, each with a name, a number, a logo, seven
+    colors and a switch that flips the screen left to right. See "Teams" below.
 - Extra panels: a panel you build yourself from blocks (heading, text,
   number, list, image address, progress bar, countdown). About 3 blocks fit.
   A block that does not fit is left out. The title shows in capital letters,
   7 at most.
-- Test the screen: the page of the old demo. It has no buttons now. The buttons that
-  try the screen are on Start here. See "Test the screen" below, and docs/demo.md.
 
-Tasks, Up Next, Roster, Leadership, Sponsors, Tips and News, Extra panels,
-Events Calendar entries, Meeting days and booked talks each have a Team choice:
+Three kinds of content are in the Studio but have no line in the list: Events
+Calendar entries, Places and Demo. They are explained below.
+
+Tasks, Agenda items, Team leads, Leadership, Sponsors, Tips and News, Extra panels,
+Meeting days and booked talks each have a Team choice:
 Both, or one of the teams. Both is picked to start with, and the item shows for
 every team. Pick a team to show it only while that team is on the screen
 (docs/team-on-an-item.md).
 
-Events on the team's BAND calendars are not edited here. Add or change the
-event in BAND and it reaches the TV after the Mini next downloads the
-calendars. An event that is not on BAND goes in Events Calendar. To add a BAND
-calendar or change its link, see docs/calendar-links.md.
+Events are not typed into the Studio. They come from the team's BAND calendars.
+Add or change the event in BAND and it reaches the TV after the Mini next
+downloads the calendars. To get an event on the screen, add it in the calendar app,
+or ask a coach for an Always show rule. To add a BAND calendar or change its link,
+see docs/calendar-links.md.
 
 Sponsor logos are not stored in Studio. Where you see an address, paste the
 web address of the picture. The photos in Photos and the photo of a person in
@@ -166,79 +168,32 @@ buttons here write the same fields, and the work is written once in
 `studio/screen-requests.js`. The page is `studio/start-here.js`, and its picture
 and button list are in `studio/start-here-parts.js`.
 
-## Events Calendar
+## Events
 
-Use Events Calendar for something that is not on BAND. The Events panel and the
-Next event tile show its entries mixed in with the BAND events, in order of
-start.
-
-To add one by hand, open Events Calendar, click the plus button, fill in the form
-and click Publish. The fields:
-
-- Event name: up to 30 characters.
-- Start date: needed.
-- End date: optional. Use it for an event of more than one day. It cannot be
-  before the start date. The screen always writes the month with the day. An
-  event of one day is APR 2, and the Next event tile adds the weekday, as in
-  FRI APR 2. An event of several days is a range: APR 2-4, MAR 30-APR 1 when
-  it crosses into a new month, or DEC 30-JAN 2 when it crosses into a new
-  year. Events from BAND are written the same way.
-- Start time and End time: optional, in 24 hour time with two digits, such as
-  18:30. Leave Start time empty for an all-day event: the screen shows the date
-  and no time. An End time needs a Start time.
-- Location: optional, up to 24 characters.
-- Show on screen: turn it off to hide the event without deleting it.
+The Events panel and the Next event tile show the events of the BAND calendars, in
+order of start, after the Calendar filters have taken some out. The screen always
+writes the month with the day. An event of one day is APR 2, and the Next event tile
+adds the weekday, as in FRI APR 2. An event of several days is a range: APR 2-4,
+MAR 30-APR 1 when it crosses into a new month, or DEC 30-JAN 2 when it crosses into a
+new year. An all-day event shows its date and no time.
 
 What the screen does with them:
 
-- An event leaves the screen when its last day has passed: the End date, or
-  the Start date if there is no End date. The day changes at midnight in the
-  Time zone on the Look page. You do not have to delete or hide a finished
-  event. The screen checks once a minute, so it goes soon after midnight.
-- The dates and times you type are read in that same Time zone, and the screen
-  writes the dates of every event, from BAND too, in it: the weekday and the
-  month are never taken from the Mini's own clock. Keep the Time zone the same
+- An event leaves the screen when its last day has passed. The day changes at
+  midnight in the Time zone on the Look page. You do not have to delete or hide a
+  finished event. The screen checks once a minute, so it goes soon after midnight.
+- The screen writes the dates of every event in that same Time zone: the weekday and
+  the month are never taken from the Mini's own clock. Keep the Time zone the same
   as the Mini's own time zone (docs/rebuilding-the-mini.md, step 3), because
   the screen writes times on the Mini's clock.
-- If a BAND event is on the same date and one of the two titles contains the
-  other, capitals ignored, only the BAND event shows. So you can add an event
-  before it is in BAND, and it steps aside once BAND has it. For an event of
-  several days "the same date" means the dates overlap.
 
-### Importing the starting list
+### The old Events Calendar entries
 
-The file `docs/seed/extra-events.ndjson` holds the first seven events, from
-October 2026 to April 2027. Import it once, from a Mac, with the Studio set up
-and signed in (studio/README.md, steps 1 to 4). It changes the real content
-that the TV shows, so ask the team mentor first.
-
-1. Open the Terminal app and go to the `studio` folder: type `cd `, with a
-   space after it, drag the `studio` folder from Finder into the window and
-   press Enter.
-2. Run this one command:
-
-       npx sanity dataset import ../docs/seed/extra-events.ndjson --missing
-
-What each part means:
-
-- `npx sanity dataset import` is the Sanity tool's command for adding
-  documents from a file. It already knows the project and dataset from
-  `sanity.cli.js`, so it needs nothing more.
-- `../docs/seed/extra-events.ndjson` is the file. `..` means the folder above
-  `studio`. The file has one event on each line, and each event has a fixed id,
-  such as `extraEvent-2026-10-17-doyenne-east`.
-- `--missing` means: skip any document whose id already exists. It is what
-  makes the import safe to repeat. Run it twice and the second run finds every
-  id already there, skips them all and changes nothing, even if someone has
-  edited an event in Studio since. Do not use `--replace` instead: it would put
-  the original text back over those edits. `npx sanity dataset import --help`
-  lists every option.
-
-When it finishes, the seven events are in Events Calendar, published. Open them
-there to check. An event you delete in Studio comes back if you import again,
-because its id is missing again. Ids use hyphens and no dots on purpose: the
-screen reads without signing in, and Sanity keeps a document whose id has a
-dot private.
+Before the calendars, events that were not on BAND were typed into a list called
+Events Calendar. The screen does not read that list any more, and it has no line in the
+sidebar or in the New menu. The entries already typed are still in the Studio and
+still open and publish, if you follow a link to one. Nothing was deleted. Their
+seed file, `docs/seed/extra-events.ndjson`, does not need to be imported.
 
 ## What the Tasks panel shows
 
@@ -264,40 +219,54 @@ hold fewer tasks, three at the least, so there are more pages. Hidden tasks,
 expired tasks and Done tasks past the number of days in Dashboard Settings are
 left out. The Open Tasks panel counts every open task however many pages there are.
 
-## Locations
+## Places
 
-A location is a room or area where a task is done, such as the Classroom. Pick one
+A place is a room or area where a task is done, such as the Classroom. Pick one
 in the Location field of a task and the TV shows its name under the task.
-Locations are a list of their own, so that every task spells a location the same way.
+Places are a list of their own, so that every task spells a place the same way.
+Places has no line in the sidebar. You add one, and open it, from a task.
 
-To add one, open Locations, click the plus button, fill in the form and click
-Publish. The fields:
+To add one, open a task, and in the Location field choose Create new. Type the name
+and publish the new place as well as the task. The TV only shows a place once it is
+published. The fields:
 
-- Location name: needed, up to 16 characters. Two locations cannot have the same
+- Place name: needed, up to 16 characters. Two places cannot have the same
   name. Studio ignores capitals when it compares, so it refuses "classroom"
   when "Classroom" is already there.
-- Show on screen: turn it off to hide the location. A task that uses a hidden
-  location shows no location, and the task itself stays on the screen. Deleting a
-  location does the same to the tasks that used it.
+- Show on screen: turn it off to hide the place. A task that uses a hidden
+  place shows no location, and the task itself stays on the screen. Deleting a
+  place does the same to the tasks that used it.
 
-You can also add a location while you edit a task: in the Location field choose
-Create new, type the name, and publish the new location as well as the task. The
-TV only shows a location once it is published.
+To change a place, open a task that uses it and open the place from the Location
+field of the task.
 
-### Importing the starting locations
+### Importing the starting places
 
-The file `docs/seed/places.ndjson` holds the three starting locations: Classroom,
-Programming room and Media center. Import it once, in the same way as the
-starting events above: from a Mac, with the Studio set up and signed in, and
-with the team mentor's yes. From the `studio` folder, run this one command:
+The file `docs/seed/places.ndjson` holds the three starting places: Classroom,
+Programming room and Media center. Import it once, from a Mac, with the Studio set
+up and signed in (studio/README.md, steps 1 to 4), and with the team mentor's yes.
+From the `studio` folder, run this one command:
 
     npx sanity dataset import ../docs/seed/places.ndjson --missing
 
-Each location has a fixed id, such as `place-classroom`, and `--missing` skips any
-location whose id is already there, so running it again changes nothing. The
-parts of the command are explained under "Importing the starting list" above.
-A location you delete in Studio comes back if you import again, because its id is
-missing again.
+What each part means:
+
+- `npx sanity dataset import` is the Sanity tool's command for adding
+  documents from a file. It already knows the project and dataset from
+  `sanity.cli.js`, so it needs nothing more.
+- `../docs/seed/places.ndjson` is the file. `..` means the folder above
+  `studio`. The file has one place on each line, and each place has a fixed id,
+  such as `place-classroom`.
+- `--missing` means: skip any document whose id already exists. It is what
+  makes the import safe to repeat. Run it twice and the second run finds every
+  id already there, skips them all and changes nothing, even if someone has
+  edited a place in Studio since. Do not use `--replace` instead: it would put
+  the original text back over those edits. `npx sanity dataset import --help`
+  lists every option.
+
+A place you delete in Studio comes back if you import again, because its id is
+missing again. Ids use hyphens and no dots on purpose: the screen reads without
+signing in, and Sanity keeps a document whose id has a dot private.
 
 ## Adding many items from a spreadsheet
 
@@ -369,7 +338,7 @@ Dashboard Settings has a Photos tab with four settings:
   over it. With the row's seconds empty, the Photo panel follows Seconds per
   photo and not Seconds per page.
 - Portrait size, percent is how big the portraits are on the Leadership and
-  Team Leads panels, and the team lead portrait on the Roster panel. It is a
+  Team Leads panels, and the team lead portrait on the Subteam roster panel. It is a
   whole number from 60 to 100 and starts at 100. 100 is the full size and the
   largest that fits the frame. At 80 the portraits are four fifths as big in
   both directions, frame and picture together. The names and roles under them
@@ -464,7 +433,7 @@ columns on the right. The subteam's name is the title of the page.
   to a second page, with the lead shown again. The text never gets smaller to
   fit more names.
 - Each time the panel comes round it shows the next page, one subteam after
-  another in the order of the Roster list, and then starts again.
+  another in the order of the Team leads list, and then starts again.
 - The lead is the Lead field of the subteam. The photo is the one of the person
   in Leadership with the same name (see Photos of people), or the silhouette.
 - A subteam with a lead and no members shows the lead alone. A subteam with
@@ -484,8 +453,8 @@ on. Click Publish.
 
 A team is what changes when the TV swaps from one team to the other: the name and
 number in the banner, the logo, the colors and whether the screen is flipped left to
-right. Open Teams, click the plus button, fill in the form and click Publish. The
-fields:
+right. Open Settings, then Teams, click the plus button, fill in the form and click
+Publish. The fields:
 
 - Team name: needed, up to 20 characters.
 - Short name: needed, up to 8 characters, such as PRIME.
@@ -785,8 +754,8 @@ moves and the pieces over the panels are not drawn.
   Thanksgiving leaves, Competition Day gears and New Year's fireworks.
 - Time zone: the zone the dates are read in, such as America/New_York, which is
   where the page starts. The date changes at midnight in that zone, whatever
-  the zone of the computer that shows the screen. Events Calendar entries use it
-  too, for their times and for when they are over.
+  the zone of the computer that shows the screen. The events use it too, for
+  their dates and for when they are over.
 - Seasonal pieces over the panels: a switch that starts on. On, a seasonal pack
   lets small pieces such as snow drift over the panels. Off, the pack keeps only its
   header pictures and the decorations along the edges. Turn it off if the pieces
@@ -802,13 +771,13 @@ an alert it can take up to two minutes. The themes and overlays in the lists
 are the ones the dashboard has. A new one is added in the code
 (docs/adding-a-theme.md, docs/adding-a-holiday-overlay.md, docs/seasonal-packs.md).
 
-## Test the screen
+## Demo
 
-One page, like Dashboard Settings. It cannot be deleted or copied. It used to play a
-demo of the announcement and night mode, with Run demo and Stop demo in the menu next
-to Publish. Those buttons are gone. The Start here page has the buttons that try the
-screen now (see "The Start here page" above), and Play announcement there plays the
-announcements. docs/demo.md says what is left.
+One page, like Dashboard Settings. It cannot be deleted or copied, and it has no line in
+the sidebar. It used to play a demo of the announcement and night mode, with Run demo
+and Stop demo in the menu next to Publish. Those buttons are gone. The Start here page
+has the buttons that try the screen now (see "The Start here page" above), and Play
+announcement there plays the announcements. docs/demo.md says what is left.
 
 - Steps: the screens to show, in order, up to 10, each with the seconds it stays
   (5 to 300). It starts with the Announcement for 30 seconds and then Night mode
@@ -843,10 +812,7 @@ click Publish. The result is the same.
 - Sample content has both teams, Prime and Nova, so `?team=nova` shows Nova with
   its colors and its mirror. Its theme schedule has two example pack rules, named
   [Winter pack] and [Fall pack], with a ticker prefix, a banner line and corner art.
-- Sample content comes with its own calendar, its own pictures and three
-  sample Events Calendar entries. Their dates are in March 2027, so once those days have
-  passed they leave the screen. Change the dates in
-  `dashboard/data/sample/content.json` to see them again. Nothing
+- Sample content comes with its own calendar and its own pictures. Nothing
   else is read from Studio while it is on, so your tasks, events, alert and
   the other settings do not show until you switch back. The TV still asks for
   Dashboard Settings every 30 seconds or so, to notice the switch back.

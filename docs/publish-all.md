@@ -24,7 +24,7 @@ For each ticked document, one at a time:
 
 1. It checks the draft with the Studio's own validation, the same check the
    Publish button uses. Required fields, character limits, the rule that two
-   locations cannot share a name, and every other rule in `studio/schemas/` all
+   places cannot share a name, and every other rule in `studio/schemas/` all
    apply. A warning does not stop a publish, just as it does not stop the button.
 2. If the check finds an error, the document is skipped. Nothing is written, it
    stays a draft, and the summary says which field and what is wrong.
@@ -57,7 +57,7 @@ never deleted.
 
 ## Pages that exist once
 
-Dashboard Settings, Look and Test the screen each exist once, with the fixed ids
+Dashboard Settings, Look and Demo each exist once, with the fixed ids
 `dashboardSettings`, `theme` and `demo` (`studio/structure.js`). Their drafts are
 `drafts.dashboardSettings` and so on, so removing `drafts.` gives the fixed id,
 and publishing keeps it. A draft of one of these kinds with any other id is
@@ -65,10 +65,10 @@ skipped instead of being published as a second copy.
 
 ## Documents that point at each other
 
-A task can point at a location. If both are new drafts, the location is published
-first, and the task is checked after that, so the task sees a published location. A
+A task can point at a place. If both are new drafts, the place is published
+first, and the task is checked after that, so the task sees a published place. A
 reference made with Create new while editing the task is changed from weak to
-ordinary when it is published, as the Publish button does. If the location is not
+ordinary when it is published, as the Publish button does. If the place is not
 ticked, the task fails on its own at the write, with Sanity's message, and stays
 a draft.
 

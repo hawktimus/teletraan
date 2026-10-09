@@ -1,10 +1,10 @@
-// An entry in the Events Calendar list: an event that is not on the BAND
-// calendars. The dashboard merges these with the BAND events in core/events.js,
-// sorts them by start, and drops each one once its last day has passed. No
-// start time means an all-day event, which shows its date and no time. The
-// type is still called extraEvent, which is what is stored in Sanity.
+// An entry in the Events Calendar: an event that is not on the BAND calendars.
+// The type is kept so that the entries already typed open and publish as they
+// were, but it has no line in the sidebar and the dashboard no longer reads it:
+// events come from the calendars now. The type is still called extraEvent, which
+// is what is stored in Sanity.
 //
-// There is no Hide after field: the dashboard drops a finished event itself.
+// There is no Hide after field: the dashboard dropped a finished event itself.
 
 import { defineType, defineField } from 'sanity';
 import { showField, teamField, tooLong, subtitleFor } from './fields.js';

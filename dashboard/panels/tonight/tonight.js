@@ -1,4 +1,4 @@
-// What is up next at today's meeting, one line per time slot. The talks booked
+// The agenda of today's meeting, one line per time slot. The talks booked
 // for today share the lines that the plan leaves free.
 
 import { rowBarMarkup, cardMarkup } from '../../core/plate.js';
@@ -120,7 +120,7 @@ export function mount(host, content) {
   host.innerHTML = `
     <section class="page tonight">
       <div class="header">
-        <h2 class="title" data-slat="title">UP NEXT</h2>
+        <h2 class="title" data-slat="title">AGENDA</h2>
         <div class="tag" data-slat="tag">${dateText}${doubleSlash()}</div>
       </div>
 

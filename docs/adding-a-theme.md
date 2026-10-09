@@ -106,7 +106,7 @@ the alert, and `?overlay=none` to be sure no overlay is on top.
 
 Run `npm run deploy` in the studio folder so the editors see Ocean in their
 list. The dashboard has it when the Mini next pulls the repo. Then, in Studio,
-open Look and either:
+open Settings, then Look, and either:
 
 - pick it as the Default theme,
 - pick it under "Use a theme now" to show it at once (set Until to end it by

@@ -94,7 +94,7 @@ export function skipKey(talk) {
 
 // Only a scheduled talk that Sanity has published and that has a start runs. The
 // id of a draft starts with drafts., and the public dataset never sends one, but
-// a draft must not start even so. The Up Next panel lists the same talks.
+// a draft must not start even so. The Daily Agenda panel lists the same talks.
 export function canRun(talk) {
   if (!isRecord(talk) || typeof talk.id !== 'string' || talk.id.startsWith('drafts.')) return false;
   return talk.status === 'scheduled' && !isNaN(asDate(talk.start).getTime());

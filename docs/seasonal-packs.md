@@ -168,7 +168,7 @@ The screen is shown by a 2011 Mac Mini with a weak graphics chip. So:
 Every panel in the large panel has a small picture at the right of its header: two slanted bars, the double
 slash (`doubleSlash()` in `dashboard/core/marks.js`). While a pack is on, that picture is the pack's own: a fir
 tree, a pumpkin, a heart, a firework burst, a chequered flag, a sun. Every panel that draws the slashes gets
-the mark with no change to the panel: Tasks, Events, Up Next, Subteam spotlight, Sponsor feature,
+the mark with no change to the panel: Tasks, Events, Daily Agenda, Subteam spotlight, Sponsor feature,
 Photos, Leadership, Team Leads, Roster and Extra panels. (An Extra panel also uses the picture, at 28 x 38
 pixels, as the bullet of a list block, so the mark is scaled down there.)
 
@@ -188,7 +188,7 @@ content showing. Every header of the large panel is the same plate, 116 px high,
   between the metal edge above and the one below. The slashes are 54 x 72 and sit in the middle (y 282 to 354).
   A 76 px mark leaves 6 px above and 11 px below.
 - **Width.** The mark is the last thing in the tag, with the tag's text (LEADERSHIP, TEAM LEADS, the subteam
-  name in Roster, the tier in Sponsor feature, the date in Up Next) to its left. The text has to stay
+  name in Roster, the tier in Sponsor feature, the date in Daily Agenda) to its left. The text has to stay
   clear of the notch in the middle of the header, and a mark that is wider would push it towards the notch.
   The free plate colour goes on 27 px past the slashes (to x 1179, where the metal edge begins), so a mark
   may be 6 px wider than the slashes without moving the text: `.pack-mark` in `base.css` has

@@ -1,11 +1,11 @@
-// The Test the screen page: the plain functions. They know nothing about the page, so
+// The Demo page: the plain functions. They know nothing about the page, so
 // tools/test-effects.mjs can run them. core/demo-runner.js hands them the real
 // screen, and core/demo-screens.js lists the screens a demo can show.
 //
 // How a demo goes:
 //   1. Someone clicks "Run demo" in the Studio. That writes the time into
-//      requestedAt on the Test the screen page and publishes it. "Stop demo" clears it.
-//   2. The screen reads the Test the screen page with the rest of the content and looks at
+//      requestedAt on the Demo page and publishes it. "Stop demo" clears it.
+//   2. The screen reads the Demo page with the rest of the content and looks at
 //      it every second (makeDemoRunner().look).
 //   3. A request starts a demo only if it is recent and is not the one handled
 //      before (shouldRunDemo). The one handled before is kept in localStorage,
@@ -33,7 +33,7 @@ function stepSeconds(value) {
   return Math.min(limits.demoSeconds.max, Math.max(limits.demoSeconds.min, value));
 }
 
-// The steps from the Test the screen page. A step with no screen, or a screen the
+// The steps from the Demo page. A step with no screen, or a screen the
 // dashboard does not have, is left out. More than demoMaxSteps are cut. A list
 // the editors emptied stays empty (a demo with nothing in it plays nothing),
 // and no list at all is the default one.
@@ -46,7 +46,7 @@ function tidySteps(raw) {
     .map(step => ({ screen: step.screen, seconds: stepSeconds(step.seconds) }));
 }
 
-// The Test the screen document as content.demo, always complete: requestedAt, steps and
+// The Demo document as content.demo, always complete: requestedAt, steps and
 // announcementText. A missing document is no request, and the default steps.
 export function tidyDemo(raw) {
   const source = isRecord(raw) ? raw : {};

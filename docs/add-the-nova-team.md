@@ -26,7 +26,7 @@ team, and Nova only and Alternate stay on Prime.
 
 ## 2. Fill in the Nova team
 
-In Studio open Teams, then Hawktimus Nova. These are the fields.
+In Studio open Settings, then Teams, then Hawktimus Nova. These are the fields.
 
 - Team name: up to 20 characters. It is the name in the banner.
 - Short name: up to 8 characters, such as NOVA.

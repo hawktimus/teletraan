@@ -779,12 +779,12 @@ function calendarOf(events) {
   return lines.join('\n') + '\n';
 }
 
-// What the screen would list: the calendars read, merged with the Events Calendar entries and filtered.
-// options: calendars, inline (calendar files by id), extra (Events Calendar entries), zone, now
+// What the screen would list: the calendars read and filtered.
+// options: calendars, inline (calendar files by id), zone, now
 async function shownWith(rules, options = {}) {
   serveFixtures(options.inline || {});
   const { events } = await loadEvents({ folder: 'calendars/', calendars: options.calendars || bothCalendars, now: filterNow, daysAhead: 60 });
-  return mergeEvents(events, options.extra || [], options.zone || newYork, options.now || filterNow, rules);
+  return mergeEvents(events, options.zone || newYork, options.now || filterNow, rules);
 }
 
 const lineOf = event => event.firstDay + ' ' + event.title;
@@ -1033,19 +1033,9 @@ test('hidingRule gives the Hide rule that took an event away, and nothing for an
   assert.strictEqual(hidingRule(events[0], [byDay], 'UTC', filterNow), null);
 });
 
-test('the filters never touch an Events Calendar entry, and one that copies a hidden BAND event shows in its place', async () => {
-  const typed = { title: '[Typed in Studio]', startDate: '2027-01-11', startTime: '10:00' };
-  const rules = [hide({ name: '[Mondays]', days: [1] })];
-
-  const shown = await shownWith(rules, { extra: [typed] });
-  assert.deepStrictEqual(shown.filter(event => event.calendarId === 'extra').map(lineOf), ['2027-01-11 [Typed in Studio]']);
+test('a Hide rule on Monday takes the Mondays out of a series that runs on every weekday', async () => {
+  const shown = await shownWith([hide({ name: '[Mondays]', days: [1] })]);
   assert.deepStrictEqual(firstDaysOf(shown.filter(event => event.calendarId === 'weekly'), '[Weekdays only]'), ['2027-01-12', '2027-01-13', '2027-01-14', '2027-01-15', '2027-01-19']);
-
-  // the same event typed in and on BAND: with no rule the BAND one stays, with a rule that hides it the typed one does
-  const copy = { title: '[Weekdays only]', startDate: '2027-01-11', startTime: '09:00' };
-  const onJanuary11 = events => events.filter(event => event.title === '[Weekdays only]' && event.firstDay === '2027-01-11');
-  assert.deepStrictEqual(onJanuary11(await shownWith([], { extra: [copy] })).map(event => event.calendarId), ['weekly']);
-  assert.deepStrictEqual(onJanuary11(await shownWith(rules, { extra: [copy] })).map(event => event.calendarId), ['extra']);
 });
 
 test('the two example rules in the sample content hide Pre-Season on Monday and Thursday and keep Kickoff', async () => {

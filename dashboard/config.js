@@ -135,7 +135,7 @@ export const limits = {
   // The Night mode tab. At 120 pixels the logo is still clear from across the room, and at 800 it
   // still fits the 1080 pixel height with the number under it.
   nightLogoWidth: { min: 120, max: 800 },
-  // The Test the screen page. A step shorter than 5 seconds is gone before it can be seen, and 5 minutes
+  // The Demo page. A step shorter than 5 seconds is gone before it can be seen, and 5 minutes
   // is longer than anyone shows a demo.
   demoSeconds: { min: 5, max: 300 },
   // The Hidden tab. A chance is a percent of the page changes, and 0 is never.
@@ -351,8 +351,8 @@ export const defaultSettings = {
 //   useNow        a theme and an overlay to show now, whatever the schedule says. Each is empty
 //                 (follow the schedule), an id, or for the overlay 'none'. until is a time, or empty.
 //   schedule      rules: { name, kind: 'theme' | 'overlay', theme or overlay, startDate, endDate, repeatsEveryYear }
-//   timeZone      the time zone the dates in the schedule are read in. Events Calendar entries
-//                 (core/events.js) use it too, for their times and for when they are over
+//   timeZone      the time zone the dates in the schedule are read in. The events
+//                 (core/events.js) use it too, for their dates and for when they are over
 //   seasonOverPanels  true lets a seasonal pack draw small pieces (snow, leaves...) drifting over the
 //                 panels (core/season.js). false keeps only its header marks and edge decorations
 export const defaultThemeSettings = {
@@ -363,7 +363,7 @@ export const defaultThemeSettings = {
   seasonOverPanels: true,
 };
 
-// The Test the screen page in the Studio (core/demo.js, core/demo-screens.js and core/demo-runner.js).
+// The Demo page in the Studio (core/demo.js, core/demo-screens.js and core/demo-runner.js).
 // "Run demo" writes the time into requestedAt and publishes. The screen plays the steps once when
 // it sees a request that is no more than demoWindowSeconds old and is not the one it handled last,
 // so a Mini that restarts never plays an old request again. A request up to demoSkewSeconds in

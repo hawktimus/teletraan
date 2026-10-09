@@ -71,6 +71,7 @@ const contract = {
     status: 'string',
     team: teamRef,
   },
+  // the dashboard no longer reads these. The type stays in the schema, so its limits are still checked
   extraEvent: { title: text(30), startDate: 'date', endDate: 'date', startTime: 'time', endTime: 'time', location: text(24), team: teamRef, show: 'boolean' },
   calendarFilter: {
     name: text(40),
@@ -245,7 +246,6 @@ const rotationAreas = ['grid1', 'grid2'];
 const listSort = {
   task: 'order',
   plan: 'date',
-  extraEvent: 'startDate',
   calendarFilter: 'name',
   sponsor: 'order',
   tipOrNews: 'order',
@@ -254,7 +254,6 @@ const listSort = {
   team: 'order',
   photo: '_createdAt',
   customPanel: 'order',
-  place: 'name',
   presentationDay: 'firstSlotAt',
   presentation: 'start',
 };
@@ -265,40 +264,67 @@ const pageTypes = ['dashboardSettings', 'theme', 'demo'];
 // Document types that have no line in structure.js, with the reason for each.
 // Types that are only objects inside another document are not documents and
 // are left out of the check without being listed here.
-const notInSidebar = {};
+const notInSidebar = {
+  extraEvent: 'events come from the calendars now, and the screen no longer reads these entries. The type stays, so the entries already typed still open',
+  place: 'a task\'s Location field adds a place with Create new and opens it from there',
+  demo: 'its buttons are on Start here',
+  status: 'the Mini writes it, and Dashboard Settings shows it',
+};
 
 // The sidebar titles that people look for by name
 const sidebarTitles = {
-  extraEvent: 'Events Calendar',
+  plan: 'Agenda items',
   calendarFilter: 'Calendar filters',
-  subteam: 'Roster',
-  place: 'Locations',
+  subteam: 'Team leads',
   customPanel: 'Extra panels',
   presentationDay: 'Meeting days',
   team: 'Teams',
   theme: 'Look',
-  demo: 'Test the screen',
+};
+
+// The titles of the types, which the New menu and the plus button of Daily Agenda show. They follow
+// the words of the sidebar, one document at a time. The types with no line in the sidebar keep their own.
+const typeTitles = {
+  plan: 'Agenda item',
+  presentation: 'Presentation',
+  subteam: 'Team lead',
+  customPanel: 'Extra panel',
+  theme: 'Look',
+  place: 'Places',
+  demo: 'Demo',
+  extraEvent: 'Events Calendar',
 };
 
 // The sidebar as the owner asked for it. A heading is the first thing before
 // the colon, and the lines under it come after. The first group has no heading.
 const sidebarGroups = [
   'Start here',
-  'EVERY MEETING: Up Next, Tasks, Tips and News',
-  'EVENTS: Events Calendar, Calendars, Calendar filters, Presentations',
-  'THE TEAM: Roster, Leadership, Sponsors, Photos',
-  'COACHES ONLY: Dashboard Settings, Look, Teams, Locations, Extra panels, Test the screen',
+  'EVERY MEETING: Daily Agenda, Tasks, Tips and News',
+  'EVENTS: Calendars, Calendar filters',
+  'ROSTER: Leadership, Team leads, Sponsors, Photos',
+  'COACHES ONLY: Settings, Extra panels',
 ];
-const presentationLines = 'Meeting days, Upcoming, Past';
 
-// The titles the sidebar used to have. None of them may be left in a title,
-// a description or a message that an editor reads.
+// What each folder holds, in order. A folder inside a folder has its lines in brackets.
+const folderLines = {
+  'Daily Agenda': 'Agenda items, Presentations (Upcoming, Past), Meeting days',
+  'Settings': 'Dashboard Settings, Look, Teams',
+};
+
+// The types the plus button of a folder offers
+const folderAdds = { 'Daily Agenda': 'plan,presentation' };
+
+// The titles the sidebar used to have, in the first rebuild or before it. None of them may be left
+// in a title, a description or a message that an editor reads.
 const oldTitles = [
-  { words: /\bSubteams\b/, was: 'Subteams', now: 'Roster' },
-  { words: /\bplaces?\b/i, was: 'Places', now: 'Locations' },
+  { words: /\bSubteams\b/, was: 'Subteams', now: 'Team leads' },
+  { words: /\bRoster (list|page|line)\b/i, was: 'Roster', now: 'Team leads' },
+  { words: /\bLocations\b/, was: 'Locations', now: 'Places' },
+  { words: /\bLocation name\b/, was: 'Location name', now: 'Place name' },
   { words: /\bCustom Panels?\b/i, was: 'Custom Panels', now: 'Extra panels' },
   { words: /\bTheme (page|document)\b/i, was: 'Theme', now: 'Look' },
-  { words: /\bDemo page\b/i, was: 'Demo', now: 'Test the screen' },
+  { words: /\bUp Next\b/, was: 'Up Next', now: 'Daily Agenda' },
+  { words: /\bTest the screen\b/i, was: 'Test the screen', now: 'Demo' },
 ];
 
 // The real 'sanity' and 'react' packages are not installed, so stand-ins with
@@ -1690,16 +1716,6 @@ const startBlocks = ['what', 'picture', 'steps', 'buttons', 'coaches'];
 const startButtons = ['Play announcement', 'Run presentation test', 'Next look now', 'Preview competition', 'Preview the screen'];
 const startAreas = ['A Banner', 'B Main panel', 'C Countdown', 'D Side panel', 'E Ticker'];
 
-// The titles of the sidebar the page is written for. The picture names these, and the sidebar is
-// rebuilt to them, so a title here may not be a line of structure.js until that is done. Once the
-// sidebar has the line Daily Agenda, checkStartHere also requires every title in the picture to be
-// a line of the sidebar.
-const startSidebarTitles = [
-  'Start here', 'Daily Agenda', 'Agenda items', 'Presentations', 'Meeting days', 'Tasks', 'Tips and News',
-  'Calendars', 'Calendar filters', 'Leadership', 'Team leads', 'Sponsors', 'Photos',
-  'Settings', 'Dashboard Settings', 'Look', 'Teams', 'Extra panels',
-];
-
 // Every element of a tree that the createElement stand-in made, in the order they are drawn,
 // that test keeps
 function nodesWhere(node, test, found) {
@@ -1790,7 +1806,6 @@ function checkStartHere() {
   // Each box is where the standard layout puts the area, and holds the sidebar items that fill it
   const boxes = standardBoxes();
   const sidebarTitlesNow = allLines(world.structure.sidebarEntries).map(entry => entry.title);
-  const sidebarRebuilt = sidebarTitlesNow.indexOf('Daily Agenda') !== -1;
   const above = 0.8;
   const below = 0.25;
   parts.areas.forEach((area, index) => {
@@ -1805,8 +1820,7 @@ function checkStartHere() {
 
     need(problems, area.feeds.length > 0 && area.feeds.every(line => line.length > 0), name + ' should name the sidebar items that fill it');
     area.feeds.forEach(line => line.forEach(title => {
-      need(problems, startSidebarTitles.indexOf(title) !== -1, name + ' names "' + title + '", which is not a title of the sidebar in startSidebarTitles');
-      need(problems, !sidebarRebuilt || sidebarTitlesNow.indexOf(title) !== -1, name + ' names "' + title + '", which is not a line of the sidebar');
+      need(problems, sidebarTitlesNow.indexOf(title) !== -1, name + ' names "' + title + '", which is not a line of the sidebar');
     }));
     need(problems, shown.indexOf(area.name) !== -1 && area.feeds.every(line => shown.indexOf(line.join(', ')) !== -1), name + ' should be written in the picture with the sidebar items that fill it');
 
@@ -2125,7 +2139,7 @@ function checkDashboardNames() {
   add(unknownKeys(world.dashboard.defaultDemo, fieldsIn(typeByName('demo')), 'defaultDemo in config.js'));
   add(unknownKeys(sample.demo || {}, fieldsIn(typeByName('demo')), 'sample demo'));
 
-  const lists = { tasks: 'task', sponsors: 'sponsor', tipsAndNews: 'tipOrNews', subteams: 'subteam', people: 'person', extraEvents: 'extraEvent', calendarFilters: 'calendarFilter', presentationDays: 'presentationDay', presentations: 'presentation' };
+  const lists = { tasks: 'task', sponsors: 'sponsor', tipsAndNews: 'tipOrNews', subteams: 'subteam', people: 'person', calendarFilters: 'calendarFilter', presentationDays: 'presentationDay', presentations: 'presentation' };
   Object.keys(lists).forEach(key => {
     // a talk has its Sanity id under the plain name id, the way the query sends it
     sample[key].forEach(item => add(unknownKeys(without(item, 'id'), fieldsIn(typeByName(lists[key])), 'sample ' + key)));
@@ -2144,7 +2158,7 @@ function checkDashboardNames() {
 
 // A stand-in for the Studio's structure builder that writes down each call
 function fakeBuilder() {
-  const methods = ['title', 'id', 'icon', 'child', 'items', 'schemaType', 'documentId', 'defaultOrdering', 'apiVersion', 'filter', 'params'];
+  const methods = ['title', 'id', 'icon', 'child', 'items', 'menuItems', 'schemaType', 'documentId', 'defaultOrdering', 'apiVersion', 'filter', 'params'];
   function node(start) {
     const made = Object.assign({}, start);
     const builder = { made: made };
@@ -2164,21 +2178,30 @@ function fakeBuilder() {
     document: () => node({}),
     component: component => node({ component: component }),
     divider: () => node({ divider: true }),
+    initialValueTemplateItem: templateId => ({ serialize: () => ({ templateId: templateId }) }),
+    menuItemsFromInitialValueTemplateItems: items => items.map(item => ({ intent: { type: 'create', params: { template: item.templateId } } })),
   };
 }
 
 // structure.js holds the whole sidebar as one list, sidebarEntries. Each line
 // has to name a type that exists, and each kind of document has to have a
-// line, or editors could not reach it. A group holds lists, and its lines count
+// line, or editors could not reach it, unless it is in notInSidebar with a reason.
+// A folder holds lists, pages and one more folder of lists, and its lines count
 // like the others. The headings, the lines under each and their order are the
-// ones in sidebarGroups, and every line has an icon of its own.
+// ones in sidebarGroups and folderLines, and every line has an icon of its own.
 
-// Every line of the sidebar, the lines inside each group too
+// Every line of the sidebar, the lines inside each folder too, however deep
 function allLines(entries) {
-  return entries.reduce((lines, entry) => lines.concat(entry.kind === 'group' ? [entry].concat(entry.entries || []) : [entry]), []);
+  return entries.reduce((lines, entry) => lines.concat(entry.kind === 'group' ? [entry].concat(allLines(entry.entries || [])) : [entry]), []);
 }
 
-// The headings and the lines under each, as text such as "EVERY MEETING: Up Next, Tasks"
+// The titles of the lines of a folder, a folder inside it with its own lines in brackets:
+// "Agenda items, Presentations (Upcoming, Past), Meeting days"
+function folderShape(entries) {
+  return entries.map(entry => entry.title + (entry.kind === 'group' ? ' (' + folderShape(entry.entries || []) + ')' : '')).join(', ');
+}
+
+// The headings and the lines under each, as text such as "EVERY MEETING: Daily Agenda, Tasks"
 function sidebarShape(entries) {
   const groups = [];
   entries.forEach(entry => {
@@ -2247,26 +2270,33 @@ function checkSidebarLines(problems) {
     checkIcon(entry, where);
   }
 
+  // A folder: an id, an icon and lines. depth is 1 for a folder in the sidebar and 2 for one inside it.
+  // A folder holds lists and pages, and at depth 1 one more folder, which holds lists only.
+  function checkFolder(entry, line, depth) {
+    const where = line + ' ("' + entry.title + '")';
+    if (!entry.title) problems.push(line + ' has no title');
+    need(problems, typeof entry.id === 'string' && entry.id !== '', where + ' needs an id');
+    checkId(entry, where);
+    checkIcon(entry, where);
+    if (!Array.isArray(entry.entries) || entry.entries.length === 0) return problems.push(where + ' has no lines under entries');
+
+    entry.entries.forEach((inner, position) => {
+      const innerLine = where + ', line ' + (position + 1);
+      if (inner.kind === 'group') {
+        need(problems, depth === 1, innerLine + ' is a folder inside a folder inside a folder. Only one folder may sit inside another.');
+        return checkFolder(inner, innerLine, depth + 1);
+      }
+      if (inner.kind === 'page') need(problems, depth === 1, innerLine + ' is a page inside the inner folder, which holds lists only.');
+      else if (inner.kind !== 'list') return problems.push(innerLine + ' has the kind "' + inner.kind + '". A folder holds lists, pages and one more folder.');
+      checkLine(inner, innerLine);
+    });
+  }
+
   entries.forEach((entry, index) => {
     const line = 'structure.js line ' + (index + 1) + ' of sidebarEntries';
     if (entry.kind === 'divider') return need(problems, typeof entry.title === 'string' && entry.title !== '', line + ' is a divider with no heading. Give it a title, such as EVERY MEETING.');
     if (entry.kind === 'component') return checkComponent(entry, line);
-
-    if (entry.kind === 'group') {
-      const where = line + ' ("' + entry.title + '")';
-      if (!entry.title) problems.push(line + ' has no title');
-      need(problems, typeof entry.id === 'string' && entry.id !== '', where + ' needs an id');
-      checkId(entry, where);
-      checkIcon(entry, where);
-      if (!Array.isArray(entry.entries) || entry.entries.length === 0) return problems.push(where + ' has no lines under entries');
-
-      entry.entries.forEach((inner, position) => {
-        const innerLine = where + ', line ' + (position + 1);
-        if (inner.kind !== 'list') return problems.push(innerLine + ' has the kind "' + inner.kind + '". A group holds lists only.');
-        checkLine(inner, innerLine);
-      });
-      return;
-    }
+    if (entry.kind === 'group') return checkFolder(entry, line, 1);
 
     if (entry.kind !== 'list' && entry.kind !== 'page') return problems.push(line + ' has the kind "' + entry.kind + '". Use list, page, group, component or divider.');
     checkLine(entry, line);
@@ -2284,16 +2314,22 @@ function checkSidebarLines(problems) {
   });
 }
 
-// The headings, the lines under each, the order, and Start here and Calendars
+// The headings, the lines under each, the order, the folders, and Start here and Calendars
 function checkSidebarGroups(problems) {
   const entries = world.structure.sidebarEntries;
   const shape = sidebarShape(entries);
   need(problems, shape.join('\n') === sidebarGroups.join('\n'), 'the sidebar should read, with a heading and then its lines:\n    ' + sidebarGroups.join('\n    ') + '\nstructure.js has:\n    ' + shape.join('\n    '));
 
-  // Presentations is the one line that holds lines. A heading is a divider, not a folder.
-  const groups = entries.filter(entry => entry.kind === 'group');
-  need(problems, groups.map(entry => entry.title).join() === 'Presentations', 'Presentations should be the only group that holds lines, and the headings should be dividers with a title. The groups are: ' + (groups.map(entry => entry.title).join() || 'none'));
-  need(problems, groups.length === 1 && groups[0].entries.map(inner => inner.title).join(', ') === presentationLines, 'Presentations should hold: ' + presentationLines);
+  // Daily Agenda and Settings are the folders, and Presentations is the one folder inside a folder.
+  // A heading is a divider, not a folder.
+  const folders = entries.filter(entry => entry.kind === 'group');
+  need(problems, folders.map(entry => entry.title).join() === Object.keys(folderLines).join(), 'The only folders in the sidebar should be ' + Object.keys(folderLines).join(' and ') + ', and the headings should be dividers with a title. The folders are: ' + (folders.map(entry => entry.title).join() || 'none'));
+  folders.forEach(folder => {
+    const want = folderLines[folder.title];
+    if (want) need(problems, folderShape(folder.entries) === want, folder.title + ' should hold: ' + want + '. It holds: ' + folderShape(folder.entries));
+    need(problems, (folder.add || []).join() === (folderAdds[folder.title] || ''), 'the plus button of ' + folder.title + ' should offer: ' + (folderAdds[folder.title] || 'nothing') + '. It offers: ' + ((folder.add || []).join() || 'nothing'));
+  });
+  need(problems, allLines(entries).filter(entry => entry.kind === 'group').length === 3, 'the sidebar should have three folders in all: Daily Agenda, Presentations inside it, and Settings');
 
   ['Start here', 'Calendars'].forEach(title => {
     const entry = entries.filter(item => item.title === title)[0];
@@ -2327,6 +2363,14 @@ function checkBuiltItem(entry, item, what, problems) {
   if (entry.kind === 'group') {
     const inside = ((child && child.items) || []).map(inner => inner.made);
     need(problems, child && child.id === entry.id && child.title === entry.title, what + ' should open a list titled ' + entry.title + ' with the id ' + entry.id);
+
+    // the plus button of the folder: a create entry for each type of add, and a line in the folder where the new document is listed
+    const offered = ((child && child.menuItems) || []).map(menu => menu.intent && menu.intent.type === 'create' && menu.intent.params.template);
+    need(problems, offered.join() === (entry.add || []).join(), what + ' should offer a new ' + ((entry.add || []).join(' and a new ') || 'document of no type') + ' in its plus button. It offers: ' + (offered.join() || 'nothing'));
+    (entry.add || []).forEach(type => {
+      need(problems, allLines(entry.entries).some(inner => inner.type === type), what + ' offers a new ' + type + ' but has no list of them');
+      need(problems, pageTypes.indexOf(type) === -1 && notInSidebar[type] === undefined, what + ' offers a new ' + type + ', which is not a kind of document an editor adds here');
+    });
     if (inside.length !== entry.entries.length) return problems.push(what + ' should open ' + entry.entries.length + ' lines, it opens ' + inside.length);
     entry.entries.forEach((inner, index) => checkBuiltItem(inner, inside[index], what + ', line ' + (index + 1) + ' ("' + inner.title + '")', problems));
   } else if (entry.kind === 'component') {
@@ -2412,8 +2456,14 @@ function checkOldTitles() {
     need(problems, !hit, text[0] + ' says "' + (hit && hit[0]) + '". The sidebar calls it ' + old.now + ' now, not ' + old.was + '.');
   }));
 
-  // The title of a type or a line is what the sidebar called it, so it is never an old one
-  const oldNames = ['Subteams', 'Places', 'Custom Panels', 'Custom Panel', 'Theme', 'Demo'];
+  // The title of a type is the word of the sidebar for one document, which the New menu and the plus button show
+  Object.keys(typeTitles).forEach(name => {
+    const type = typeByName(name);
+    need(problems, type && type.title === typeTitles[name], 'the type ' + name + ' should be titled ' + typeTitles[name] + ', not ' + (type && type.title));
+  });
+
+  // The title of a type or a line is never one the sidebar used to have
+  const oldNames = ['Subteams', 'Subteam', 'Roster', 'Locations', 'Up Next', 'Custom Panels', 'Custom Panel', 'Theme', 'Test the screen'];
   world.types.forEach(type => need(problems, oldNames.indexOf(type.title) === -1, 'the type ' + type.name + ' is still titled ' + type.title));
   allLines(world.structure.sidebarEntries).forEach(entry => need(problems, oldNames.indexOf(entry.title) === -1, 'the sidebar still has a line titled ' + entry.title));
   return problems;
@@ -2433,13 +2483,21 @@ function checkSettingsPage() {
   const themeActions = world.config.document.actions(actions, { schemaType: 'theme' }).map(item => item.action).join();
   if (themeActions !== 'publish,discardChanges') problems.push('the Look page should have these actions: publish,discardChanges. It has: ' + themeActions);
 
-  // The Test the screen page is the same, and has no buttons of its own: the Start here page has the ones that try the screen
+  // The Demo page is the same, and has no buttons of its own: the Start here page has the ones that try the screen
   const demoActions = world.config.document.actions(actions, { schemaType: 'demo' }).map(item => item.action).join();
-  if (demoActions !== 'publish,discardChanges') problems.push('the Test the screen page should have these actions: publish,discardChanges. It has: ' + demoActions);
+  if (demoActions !== 'publish,discardChanges') problems.push('the Demo page should have these actions: publish,discardChanges. It has: ' + demoActions);
 
-  const templates = [{ templateId: 'task' }, { templateId: 'dashboardSettings' }, { templateId: 'theme' }, { templateId: 'demo' }];
-  const offered = world.config.document.newDocumentOptions(templates, {}).map(item => item.templateId).join();
-  if (offered !== 'task') problems.push('the New menu should not offer Dashboard Settings, Look or Test the screen');
+  // The New menu in the top bar offers the types an editor adds, and not the pages that exist once or the
+  // types with no line in the sidebar. A place is still offered while a document is open, which is where
+  // the Location field of a task has Create new.
+  const templates = ['task', 'plan', 'presentation', 'dashboardSettings', 'theme', 'demo', 'extraEvent', 'place'].map(name => ({ templateId: name }));
+  const offeredIn = creationContext => world.config.document.newDocumentOptions(templates, creationContext === undefined ? {} : { creationContext: creationContext }).map(item => item.templateId).join();
+  const menu = 'task,plan,presentation';
+  if (offeredIn(undefined) !== menu) problems.push('the New menu should offer: ' + menu + '. It offers: ' + offeredIn(undefined));
+  if (offeredIn({ type: 'global' }) !== menu) problems.push('the New menu in the top bar should offer: ' + menu + '. It offers: ' + offeredIn({ type: 'global' }));
+  if (offeredIn({ type: 'structure', schemaType: 'task' }) !== menu) problems.push('the plus button of a list should offer: ' + menu + '. It offers: ' + offeredIn({ type: 'structure', schemaType: 'task' }));
+  const inField = offeredIn({ type: 'document', documentId: 'task-1', schemaType: 'task' });
+  if (inField !== 'task,plan,presentation,place') problems.push('a reference field should be able to create a place, and nothing is changed for the other types. It offers: ' + inField);
 
   const named = world.structure.settingsType === 'dashboardSettings' && world.structure.settingsId === 'dashboardSettings';
   need(problems, named, 'structure.js should name the settings type and id dashboardSettings');
@@ -2844,11 +2902,6 @@ function checkTheme() {
   return problems;
 }
 
-// Events Calendar: events that are not on BAND. The title, start date and
-// show switch are asked for, the rest is optional, the end date may not come
-// before the start date, and an end time needs a start time. The seed file in
-// docs/seed has to be something `sanity dataset import --missing` can load
-// twice with no change: fixed ids, real fields and values the Studio accepts.
 // The screens a demo can show, one at a time. The Studio's copy
 // (demo-screens.js) must say the same as the dashboard's registry, because the
 // editors pick from the Studio's list and the screen looks the id up in its own.
@@ -2884,7 +2937,7 @@ function checkDemoScreens() {
   return problems;
 }
 
-// The Test the screen page. The Studio and dashboard/config.js agree on the starting
+// The Demo page. The Studio and dashboard/config.js agree on the starting
 // values and the limits, Requested at is read only, and the page has no buttons. The
 // sample content carries the same starting values.
 function checkDemo() {
@@ -2929,11 +2982,17 @@ function checkDemo() {
   need(problems, constraintNamed(rulesOf(at('steps.screen')), 'required'), 'demo.steps.screen should be required');
 
   // Run demo and Stop demo are gone: the page has no buttons, and nothing else fills Requested at in
-  need(problems, world.config.document.actions([], { schemaType: 'demo' }).length === 0, 'the Test the screen page should add no actions. Run demo and Stop demo were taken out');
+  need(problems, world.config.document.actions([], { schemaType: 'demo' }).length === 0, 'the Demo page should add no actions. Run demo and Stop demo were taken out');
   need(problems, !/\brunDemo\b|\bstopDemo\b|useRunDemo|useStopDemo/.test(world.actionsSource), 'actions.js should not have Run demo or Stop demo');
   return problems;
 }
 
+// Events Calendar: events that are not on BAND. The type stays so that the entries already
+// typed open and publish, but it has no line in the sidebar and the dashboard does not read it.
+// The title, start date and show switch are asked for, the rest is optional, the end date may
+// not come before the start date, and an end time needs a start time. The seed file in
+// docs/seed has to be something `sanity dataset import --missing` can load
+// twice with no change: fixed ids, real fields and values the Studio accepts.
 function checkExtraEvents() {
   const problems = [];
   const at = name => fieldAt('extraEvent.' + name);
@@ -2949,7 +3008,7 @@ function checkExtraEvents() {
 
   const show = at('show');
   need(problems, show && show.type === 'boolean' && show.title === 'Show on screen' && show.initialValue === true, 'extraEvent.show should be a switch titled Show on screen that starts on');
-  need(problems, !at('expires'), 'extraEvent should have no Hide after field: the dashboard drops a finished event itself');
+  need(problems, !at('expires'), 'extraEvent should have no Hide after field: its dates say when it is over');
 
   // Both dates are limited to 2020 to 2099, like the dates in the Theme schedule
   ['startDate', 'endDate'].forEach(name => {
@@ -3022,11 +3081,12 @@ function checkExtraEvents() {
   return problems;
 }
 
-// The Place type, called Locations in the sidebar, and the two fields of a task that
-// use it. A location has a name (required, up to 16 characters, different from every
-// other location) and a Show on screen switch. A task's contact and location are
-// optional, and the location keeps Sanity's Create new option, so an editor can add a
-// location while editing a task. The seed file holds the three starting locations.
+// The Place type, and the two fields of a task that use it. A place has a name
+// (required, up to 16 characters, different from every other place) and a
+// Show on screen switch. A task's contact and location are optional, and the
+// location keeps Sanity's Create new option, so an editor can add a place
+// while editing a task: Places has no line in the sidebar, so that is the only
+// way to add one. The seed file holds the three starting places.
 function checkPlaces() {
   const problems = [];
   const rulesOf = field => (field ? constraintsOf(field) : []);
@@ -3036,10 +3096,10 @@ function checkPlaces() {
   need(problems, constraintNamed(rulesOf(fieldAt('place.name')), 'required'), 'place.name should be required');
   const show = fieldAt('place.show');
   need(problems, show && show.type === 'boolean' && show.title === 'Show on screen' && show.initialValue === true, 'place.show should be a switch titled Show on screen that starts on');
-  need(problems, type.title === 'Locations', 'the place type should have the title Locations');
+  need(problems, type.title === 'Places', 'the place type should have the title Places');
   need(problems, (type.orderings || []).some(item => item.by && item.by[0].field === 'name'), 'place needs an ordering by name');
   const hidden = type.preview.prepare({ title: 'Classroom', show: false }).subtitle || '';
-  need(problems, hidden.indexOf('Hidden') !== -1, 'the location preview does not say when a location is hidden');
+  need(problems, hidden.indexOf('Hidden') !== -1, 'the place preview does not say when a place is hidden');
 
   ['contact', 'location'].forEach(name => {
     const field = fieldAt('task.' + name);
@@ -3050,7 +3110,7 @@ function checkPlaces() {
   const location = fieldAt('task.location');
   const options = (location && location.options) || {};
   need(problems, !options.disableNew, 'task.location should leave Create new on: do not set disableNew');
-  need(problems, !options.filter && !options.weak, 'task.location should be an ordinary reference to a location');
+  need(problems, !options.filter && !options.weak, 'task.location should be an ordinary reference to a place');
 
   // the contact is a first name, with no space or digit
   const firstName = constraintNamed(rulesOf(fieldAt('task.contact')), 'custom');
@@ -3062,13 +3122,13 @@ function checkPlaces() {
     need(problems, typeof run('Sam K') === 'string' && typeof run('Sam2') === 'string', 'a contact with a space or a number in it should be refused');
   }
 
-  // the sample content shows a contact and a location, and keeps to the limits
+  // the sample content shows a contact and a place, and keeps to the limits
   const tasks = world.sample.tasks;
   need(problems, tasks.some(task => task.contact && task.location), 'the sample content needs a task with a contact and a location');
   need(problems, tasks.some(task => task.contact && !task.location) && tasks.some(task => task.location && !task.contact), 'the sample content needs a task with only a contact and one with only a location');
   tasks.forEach(task => {
     need(problems, task.contact === undefined || (typeof task.contact === 'string' && task.contact.length <= 12), 'sample task "' + task.title + '": contact should be text of 12 characters or fewer');
-    need(problems, task.location === undefined || (typeof task.location === 'string' && task.location.length <= 16), 'sample task "' + task.title + '": location should be the location name, 16 characters or fewer');
+    need(problems, task.location === undefined || (typeof task.location === 'string' && task.location.length <= 16), 'sample task "' + task.title + '": location should be the place name, 16 characters or fewer');
   });
 
   // The seed file: one JSON document a line, fixed ids, only fields the Studio has
@@ -3087,7 +3147,7 @@ function checkPlaces() {
 
     need(problems, doc._type === 'place', where + ' should have _type place');
     need(problems, typeof doc._id === 'string' && /^place-[a-z0-9-]+$/.test(doc._id), where + ' should have a fixed _id such as place-classroom, with lowercase letters, digits and hyphens');
-    // the CSV importer makes the same id from a location's name, so a task in a CSV can point at a seeded location
+    // the CSV importer makes the same id from a place's name, so a task in a CSV can point at a seeded place
     const importerId = 'place-' + String(doc.name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     need(problems, doc._id === importerId, where + ': the _id should be ' + importerId + ', which is the one studio/scripts/import-csv.mjs makes from the name');
     ids.push(doc._id);
@@ -3102,12 +3162,12 @@ function checkPlaces() {
   return problems;
 }
 
-// The name check asks Sanity for the other locations, so it waits for an answer.
+// The name check asks Sanity for the other places, so it waits for an answer.
 // A stand-in client gives the answer here and writes down what it was asked.
 async function checkPlaceNames() {
   const problems = [];
   const custom = constraintNamed(constraintsOf(fieldAt('place.name')), 'custom');
-  if (!custom) return ['place.name should be checked against the names of the other locations'];
+  if (!custom) return ['place.name should be checked against the names of the other places'];
 
   async function ask(name, document, others) {
     const asked = [];
@@ -3118,18 +3178,18 @@ async function checkPlaceNames() {
 
   const others = ['Classroom', 'Media center'];
   const same = await ask('Classroom', { _id: 'drafts.place-new' }, others);
-  need(problems, typeof same.answer === 'string', 'a name that another location has should be refused');
-  need(problems, typeof (await ask('  mEDIA CENTER ', { _id: 'place-new' }, others)).answer === 'string', 'a name that another location has, in other capitals or with spaces round it, should be refused');
-  need(problems, (await ask('Programming room', { _id: 'place-new' }, others)).answer === true, 'a name no other location has should be accepted');
-  need(problems, (await ask('Classroom', { _id: 'place-new' }, [])).answer === true, 'a name should be accepted when there are no other locations');
-  need(problems, (await ask('Classroom', { _id: 'place-new' }, null)).answer === true, 'a name should be accepted when Sanity lists no locations');
+  need(problems, typeof same.answer === 'string', 'a name that another place has should be refused');
+  need(problems, typeof (await ask('  mEDIA CENTER ', { _id: 'place-new' }, others)).answer === 'string', 'a name that another place has, in other capitals or with spaces round it, should be refused');
+  need(problems, (await ask('Programming room', { _id: 'place-new' }, others)).answer === true, 'a name no other place has should be accepted');
+  need(problems, (await ask('Classroom', { _id: 'place-new' }, [])).answer === true, 'a name should be accepted when there are no other places');
+  need(problems, (await ask('Classroom', { _id: 'place-new' }, null)).answer === true, 'a name should be accepted when Sanity lists no places');
   need(problems, (await ask('', { _id: 'place-new' }, others)).answer === true && (await ask(undefined, { _id: 'place-new' }, others)).answer === true, 'an empty name is left to the required check');
 
-  // the location itself, as published and as a draft, is not another location, and a draft of another location counts
+  // the place itself, as published and as a draft, is not another place, and a draft of another place counts
   const own = same.asked;
-  need(problems, own && JSON.stringify(own.params.ownIds) === JSON.stringify(['place-new', 'drafts.place-new']), 'the lookup should leave out the location being edited, both as published and as a draft');
-  need(problems, own && own.options && own.options.perspective === 'raw', 'the lookup should include drafts (perspective raw), so a location that is not yet published counts');
-  need(problems, own && own.query.indexOf('_type == "place"') !== -1, 'the lookup should look at locations only');
+  need(problems, own && JSON.stringify(own.params.ownIds) === JSON.stringify(['place-new', 'drafts.place-new']), 'the lookup should leave out the place being edited, both as published and as a draft');
+  need(problems, own && own.options && own.options.perspective === 'raw', 'the lookup should include drafts (perspective raw), so a place that is not yet published counts');
+  need(problems, own && own.query.indexOf('_type == "place"') !== -1, 'the lookup should look at places only');
   return problems;
 }
 
@@ -3409,7 +3469,7 @@ function checkPresentations() {
   const type = typeByName('presentation');
   if (!type) return ['presentation is missing from schemas/index.js'];
 
-  need(problems, type.title === 'Presentations', 'the presentation type should have the title Presentations');
+  need(problems, type.title === 'Presentation', 'the presentation type should have the title Presentation');
   const titles = { name: 'First name', subteam: 'Subteam', topic: 'Title shown on the TV', start: 'Starts at', minutes: 'Length of the talk', deckLink: 'Slides link', status: 'Status' };
   Object.keys(titles).forEach(name => need(problems, at(name) && at(name).title === titles[name], 'presentation.' + name + ' should be titled ' + titles[name]));
 
@@ -3582,10 +3642,10 @@ function checkTeams() {
   ].forEach(entry => need(problems, entry[0] === entry[1], 'the team list should read "' + entry[1] + '", it reads "' + entry[0] + '"'));
   need(problems, type.preview.select && type.preview.select.media === 'logo', 'the team list should show each logo (select media: logo)');
 
-  // The Teams line is right after Look, and is a list sorted by order
-  const entries = world.structure.sidebarEntries;
+  // The Teams line is right after Look, in the Settings folder, and is a list sorted by order
+  const entries = (world.structure.sidebarEntries.filter(entry => entry.title === 'Settings')[0] || { entries: [] }).entries;
   const after = entries[entries.map(entry => entry.title).indexOf('Look') + 1];
-  need(problems, after && after.kind === 'list' && after.type === 'team' && after.title === 'Teams', 'the Teams line should come right after Look in structure.js');
+  need(problems, after && after.kind === 'list' && after.type === 'team' && after.title === 'Teams', 'the Teams line should come right after Look in the Settings folder in structure.js');
 
   return problems.concat(checkTeamSeed(type));
 }
@@ -3965,11 +4025,11 @@ async function main() {
   check('the themes and overlays in studio/themes.js are the ones in the dashboard registries', checkThemeLists);
   check('the Look page agrees with dashboard/config.js, needs a start and an end for each rule, and checks the time zone', checkTheme);
   check('the demo screens in studio/demo-screens.js are the ones in the dashboard registry', checkDemoScreens);
-  check('the Test the screen page agrees with dashboard/config.js and has no buttons', checkDemo);
+  check('the Demo page agrees with dashboard/config.js and has no buttons', checkDemo);
   check('an Events Calendar entry needs a title and a start date, and the seed file can be imported', checkExtraEvents);
   check('a calendar filter has a name, an action, title words, days, a calendar and dates, and needs at least one of them', checkCalendarFilters);
-  check('a location has a name and a switch, a task has an optional contact and location, and the locations seed file can be imported', checkPlaces);
-  results.push({ name: 'two locations cannot have the same name, capitals ignored', problems: await checkPlaceNames().catch(error => ['the check stopped: ' + error.message]) });
+  check('a place has a name and a switch, a task has an optional contact and place, and the places seed file can be imported', checkPlaces);
+  results.push({ name: 'two places cannot have the same name, capitals ignored', problems: await checkPlaceNames().catch(error => ['the check stopped: ' + error.message]) });
   check('the Presentations tab agrees with dashboard/config.js', checkPresentationsTab);
   check('the Teams tab agrees with dashboard/config.js', checkTeamsTab);
   check('a meeting day has a first and a last talk, a talk length, a booking close time and a one line list entry', checkMeetingDays);
@@ -3982,7 +4042,7 @@ async function main() {
   check('every name in config.js and the sample content has a field', checkDashboardNames);
   check('the sidebar has the headings, groups and icons it should, every document type has a line, and each line opens the right list, page or component', checkSidebar);
   check('no title, description or message an editor reads still uses an old sidebar name', checkOldTitles);
-  check('Dashboard Settings, Look and Test the screen exist once and the project files agree', checkSettingsPage);
+  check('Dashboard Settings, Look and Demo exist once, the New menu offers the right types, and the project files agree', checkSettingsPage);
   check('the Publish all tool is in the top bar and keeps the pages that exist once on their fixed ids', checkPublishAll);
   check('every theme and overlay is complete and readable (tools/check-themes.mjs)', checkThemeGuard);
   check('every seasonal pack is complete, and draws only in the empty places (tools/check-seasons.mjs)', checkSeasonGuard);

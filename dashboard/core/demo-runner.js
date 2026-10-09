@@ -1,4 +1,4 @@
-// Plays a demo when the Test the screen page in the Studio asks for one (docs/demo.md).
+// Plays a demo when the Demo page in the Studio asks for one (docs/demo.md).
 // Deciding when to play and the order of the steps are in core/demo.js, which
 // has no page in it. This file gives it the real screen: the one clock, the
 // pauses, localStorage, and what is happening with alerts.

@@ -37,7 +37,7 @@ Add the name to a sample item with a marked placeholder:
     { "title": "[Task in progress]", "room": "[Room]", ... }
 
 dashboard/core/sanity.js turns Sanity documents into this shape. Every field
-of a task, sponsor, tip, subteam, person, plan (Up Next) or extra panel
+of a task, sponsor, tip, subteam, person, plan (Daily Agenda) or extra panel
 comes through without any change there. A field nobody has filled in is missing, so every
 panel must cope with that. There are three exceptions. A person's photo is not a
 plain value. Its query line in `contentQuery` asks for the picture's address,
@@ -46,9 +46,6 @@ builds the address the screen asks for. A new picture field would be done the
 same way. A Photo document (the Photos list) is tidied in `normalizePhoto` in
 dashboard/core/sanity.js, which copies only the fields it knows, so a new field
 on a photo must be added to its part of `contentQuery` and to `normalizePhoto`.
-An Events Calendar entry (type `extraEvent`) is tidied in `tidyExtraEvent` in
-dashboard/core/events.js, which copies only the fields it knows, so a new field
-on one must be added there as well.
 
 ## 3. The panel
 

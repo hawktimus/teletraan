@@ -6,8 +6,8 @@ says which. Empty means Both.
 
 ## The field
 
-These have a Team field: Tasks, Up Next, Roster, Leadership, Sponsors, Tips and
-News, Extra panels, Events Calendar entries, Meeting days and booked talks. It is
+These have a Team field: Tasks, Agenda items, Team leads, Leadership, Sponsors, Tips
+and News, Extra panels, Meeting days and booked talks. It is
 a row of choices: Both, then one for each team that is Active under Teams, with the
 name of the team. Both is picked to start with, and it stores nothing.
 
@@ -42,9 +42,9 @@ shows for both teams.
 
 - The Open Tasks tile of the task counts panel counts only the tasks that show for
   the team on the screen.
-- Up Next shows the first plan that is dated today and is for the team on the screen.
+- Daily Agenda shows the first plan that is dated today and is for the team on the screen.
   A plan for the other team is skipped.
-- The talks in Up Next are the ones for the team on the screen. A talk for the other
+- The talks in Daily Agenda are the ones for the team on the screen. A talk for the other
   team is not listed there, but it still runs at its start time, whichever team is
   showing, because a booked talk takes the whole screen.
 - A subteam lead's portrait on Team Leads and Subteam roster is the person in
@@ -71,9 +71,8 @@ The example gives Photos a Team field. Do the steps in order.
    team, not the reference.
 4. A kind that has its own tidying function copies only the fields it knows. Photos
    have `normalizePhoto`: add `team: raw.team` to the fields it copies and pass the
-   result through `withTeamCode`. Tasks, sponsors, tips, subteams, people, plans,
-   Events Calendar entries and extra panels go through `itemsFrom`, which does it
-   already.
+   result through `withTeamCode`. Tasks, sponsors, tips, subteams, people, plans
+   and extra panels go through `itemsFrom`, which does it already.
 5. In the panel, take the items through `visibleItems` from `core/content.js`. The
    Photo panel already does, so it needs nothing. Do not compare the team in a panel.
 6. Add `"team": "nova"` to one sample item in `dashboard/data/sample/content.json`,

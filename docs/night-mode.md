@@ -127,7 +127,7 @@ draw is random, so each night follows a different path.
 
 ## In a demo
 
-The Test the screen page in Studio (docs/demo.md) can show the night screen for a few seconds
+The Demo page in Studio (docs/demo.md) can show the night screen for a few seconds
 whatever the time is. The demo shows the bouncing logo, whether or not Use night mode
 is on and whatever Night style says, and it wins over `?night=off`. When the step
 ends the night screen goes back to what the clock and the settings say. An alert

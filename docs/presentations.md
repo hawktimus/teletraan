@@ -4,7 +4,7 @@ For the coaches who run the talks. A student books a short talk in a Google
 Form. A script saves the booking into Sanity, the talk appears in Studio, and at
 its time the TV shows the student's slides. The script is
 `tools/presentation-booking/presentation-booking.gs`. The talks of the day also
-show in the Up Next panel (docs/up-next.md).
+show in the Daily Agenda panel (docs/up-next.md).
 
 Talk titles and first names are public. The Sanity dataset can be read by anyone
 (studio/README.md), so anything a student types as a title or a name can be read

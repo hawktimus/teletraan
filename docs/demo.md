@@ -4,9 +4,9 @@ A demo shows a few of the screen's special screens one after another, for
 visitors or for a check that they work, without waiting for 14:30 or for night.
 It plays once, and then the screen goes back to what it was doing.
 
-Studio no longer starts it. Run demo and Stop demo are gone, and the Test the
-screen page has no buttons. The Start here page has the buttons that try the
-screen now (docs/editing-content.md, "The Start here page"):
+Studio no longer starts it. Run demo and Stop demo are gone, and the Demo page
+has no buttons and no line in the sidebar. The Start here page has the buttons
+that try the screen now (docs/editing-content.md, "The Start here page"):
 
 - Play announcement plays every announcement that is switched on. It does what the
   step All announcements does, and what Play announcements in the menu beside
@@ -20,17 +20,18 @@ The five Preview buttons in the menu beside Publish on Dashboard Settings show a
 team, a style or the next seasonal pack for 2 minutes ("Preview a look" in
 docs/hidden-transitions.md).
 
-What is left of the demo is the Test the screen document, its steps, and the code
+What is left of the demo is the Demo document, its steps, and the code
 that plays them. They stay so that the documents already in Studio open and publish
 as they were. The screen still plays a demo when the document has a recent Requested
-at, but nothing in Studio writes one now.
+at, but nothing in Studio writes one now, and with no line in the sidebar the steps
+cannot be changed there either.
 
 ## What the page holds
 
 - Requested at: the time a demo was last asked for. You cannot type in it, and
   nothing in Studio fills it in now.
 - Steps: the screens to show, one after the other, up to 10. Each step has a
-  Screen and the Seconds it stays, from 5 to 300. A new Test the screen page starts with the
+  Screen and the Seconds it stays, from 5 to 300. A new Demo page starts with the
   Announcement for 30 seconds and then Night mode for 30 seconds. Drag the steps
   to change the order, or add the same screen twice.
 - Demo announcement text: the words of the Announcement step, up to 24
@@ -57,7 +58,7 @@ The screens you can pick are the ones in the list of "demo screens" in the code:
 
 ## What the screen does
 
-The screen reads the Test the screen page with the rest of the content, so a new
+The screen reads the Demo page with the rest of the content, so a new
 Requested at reaches it within a few seconds. Then:
 
 - **A request starts a demo only if it is recent and new.** It must be no more
@@ -143,7 +144,7 @@ back in the function it returns, or when `context.cancelled()` says so.
   announcement step shows. The All announcements step uses `enabledAnnouncements`
   and `playEach` in `dashboard/core/announce.js`.
 - `dashboard/core/demo.js`: the plain functions, with no page in them. They tidy
-  the Test the screen page into `content.demo`, decide whether a request should run
+  the Demo page into `content.demo`, decide whether a request should run
   (`shouldRunDemo`), remember the handled request, and run the steps
   (`makeDemoRunner`). The tests for them are in `tools/test-effects.mjs`, and the
   tests for `content.demo` are in `tools/test-content.mjs`.

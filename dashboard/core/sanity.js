@@ -17,11 +17,11 @@ import { classifyFailure } from './connection.js';
 // nameless place into no location at all. The task itself stays.
 // The Look document is read with the rest. Its empty schedule and its
 // missing fields are the defaults, so nothing special is needed (core/theme.js).
-// The Test the screen document is read with the rest too, and its changes come through the
+// The Demo document is read with the rest too, and its changes come through the
 // same live stream, so a click on Run demo reaches the screen within seconds.
-// No Test the screen document means no demo (core/demo.js).
-// Events Calendar entries that are switched off are left out here. A missing
-// switch means on. The events are tidied and merged with the BAND ones in core/events.js.
+// No Demo document means no demo (core/demo.js).
+// Events come from the BAND calendars (core/calendar.js). The Events Calendar
+// entries in Studio are not read.
 // Calendar filter rules are cleaned in normalizeFilter. One that is off or past
 // its Hide after time stays in the list, and core/events.js leaves it out.
 // A person's photo is sent as a plain address with its size, crop and hotspot
@@ -94,7 +94,6 @@ export const contentQuery = `{
     "team": team->code
   },
   "plans": *[_type == "plan"] | order(date asc, _createdAt asc) { ..., "team": team->code },
-  "extraEvents": *[_type == "extraEvent" && show != false] | order(startDate asc, _createdAt asc) { ..., "team": team->code },
   "calendarFilters": *[_type == "calendarFilter"] | order(_createdAt asc),
   "customPanels": *[_type == "customPanel"] | order(_createdAt asc) { ..., "team": team->code },
   "teams": *[_type == "team"] | order(order asc, _createdAt asc) {
@@ -223,7 +222,7 @@ export async function fetchSourceSettings(sanity) {
 // lists; the panels leave them out with visibleItems(), which leaves out the
 // items of the other team as well. The one exception is plan, which is cut down
 // to the plans that are showing and are for today. plans has all of them, and
-// plan is the first, for the code that wants one. The Up Next panel takes the
+// plan is the first, for the code that wants one. The Daily Agenda panel takes the
 // first of plans that is for the team on the screen.
 export function normalizeContent(result, now = new Date()) {
   const data = result || {};
@@ -247,7 +246,6 @@ export function normalizeContent(result, now = new Date()) {
     people: itemsFrom(data.people).map(normalizePerson),
     photos: photosFrom(data.photos),
     presentations: presentationsFrom(data.presentations),
-    extraEvents: itemsFrom(data.extraEvents),
     calendarFilters: filtersFrom(data.calendarFilters),
     customPanels: customPanelsFrom(data.customPanels),
   });
@@ -266,7 +264,7 @@ export function normalizeSample(raw) {
   });
   content.plans = plans.length > 0 ? plans : (content.plan ? [content.plan] : []);
 
-  ['tasks', 'sponsors', 'tipsAndNews', 'subteams', 'people', 'extraEvents', 'customPanels'].forEach(name => {
+  ['tasks', 'sponsors', 'tipsAndNews', 'subteams', 'people', 'customPanels'].forEach(name => {
     content[name] = itemsFrom(data[name]);
   });
   content.tasks = content.tasks.map(normalizeTask);

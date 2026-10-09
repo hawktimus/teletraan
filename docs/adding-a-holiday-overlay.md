@@ -78,7 +78,7 @@ to see it over another theme. The address wins over Studio, for that page only.
 
 Run `npm run deploy` in the studio folder so the editors see Winter in their
 list. The dashboard has it when the Mini next pulls the repo. Then, in Studio,
-open Look and add a rule to the Schedule:
+open Settings, then Look, and add a rule to the Schedule:
 
 - Name: for the editors only, up to 24 characters.
 - Kind: Seasonal pack, then pick Winter.

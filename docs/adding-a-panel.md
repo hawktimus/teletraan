@@ -73,9 +73,9 @@ where Grid 1 has a header. For the ticker start from `panels/ticker/ticker.css`.
 is `page` and then the id. `content` is the data from Sanity, shaped like
 `dashboard/data/sample/content.json` (its `photos` are the Photo documents from
 Studio, cleaned in `core/sanity.js`), plus `events` and `weather`, which may be
-missing. `events` is the BAND events and the Events Calendar entries from
-Studio, already merged and sorted (`core/events.js`). Each event has `title`,
-`start`, `end`, `allDay`, `location`, `firstDay` and `lastDay`. `eventDate()`
+missing. `events` is the BAND events, already filtered and sorted
+(`core/events.js`). Each event has `title`, `start`, `end`, `allDay`,
+`location`, `firstDay` and `lastDay`. `eventDate()`
 and `timeText()` in `core/events.js` write the date and the time for it.
 `eventDate(event, content.theme.timeZone)` gives the weekday, the month and
 day, and the range (`FRI`, `APR 2`, `APR 2-4`), read in the Time zone on the

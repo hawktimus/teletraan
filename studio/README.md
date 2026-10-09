@@ -1,7 +1,7 @@
 # Teletraan I Studio
 
 The editing screen for the dashboard, built with Sanity Studio. About ten team
-members use it to change the tasks, Up Next, sponsors and other content on the
+members use it to change the tasks, the daily agenda, sponsors and other content on the
 TV. The dashboard reads what they publish.
 
 ## What is here
@@ -9,7 +9,7 @@ TV. The dashboard reads what they publish.
     project.js            the project ID and dataset
     sanity.config.js      the Studio's main settings
     sanity.cli.js         settings for the command line tool
-    structure.js          the sidebar, one list with a line for each entry, so changing the order means moving a line (Events Calendar is the list for events not on BAND)
+    structure.js          the sidebar, one list with a line for each entry, so changing the order means moving a line (a folder holds lines of its own, and Events Calendar, Places and Demo have no line)
     start-here.js         the Start here page, the first line of the sidebar, written as a plain function
     start-here-parts.js   the picture of the screen, the five buttons and their words, with no Studio in it, so node can test them
     screen-requests.js    what the request buttons write (Play announcement, Run presentation test, Next look now, Preview competition, the Play and Preview buttons), used by actions.js and the Start here page
@@ -125,29 +125,26 @@ Commands for later, run in this folder:
     npm run build     builds the Studio into a folder called dist
     npm run deploy    puts the latest Studio on the web (do this after changing a schema)
 
-## The starting Events Calendar entries
+## The old Events Calendar entries
 
-Events Calendar is for events that are not on BAND (docs/editing-content.md).
-The seven events from October 2026 to April 2027 are in
-`docs/seed/extra-events.ndjson`. After step 4, and with the team mentor's yes,
-import them once from this folder:
+Events come from the BAND calendars now, and the screen does not read Events
+Calendar entries. The kind of content stays in the Studio, so the entries
+already typed still open and publish, but it has no line in the list on the left
+and the New menu does not offer it (docs/editing-content.md). The seven events
+from October 2026 to April 2027 are still in `docs/seed/extra-events.ndjson`.
+There is no need to import them.
 
-    npx sanity dataset import ../docs/seed/extra-events.ndjson --missing
+## The starting places
 
-`--missing` skips any event that is already there, so running it again changes
-nothing. Do not use `--replace`. docs/editing-content.md explains each part of
-the command.
-
-## The starting locations
-
-A task's location is picked from the Locations list (docs/editing-content.md). The
-three starting locations, Classroom, Programming room and Media center, are in
+A task's location is a place, picked in the Location field of the task, where Create
+new adds one (docs/editing-content.md). Places has no line in the list on the left.
+The three starting places, Classroom, Programming room and Media center, are in
 `docs/seed/places.ndjson`. After step 4, and with the team mentor's yes, import
 them once from this folder:
 
     npx sanity dataset import ../docs/seed/places.ndjson --missing
 
-`--missing` skips any location that is already there, so running it again changes
+`--missing` skips any place that is already there, so running it again changes
 nothing. Do not use `--replace`.
 
 ## The starting teams
@@ -299,7 +296,7 @@ buttons: "Play announcements", `usePlayAnnouncementsAction` in `actions.js`. It 
 (`announceRequestField` in `schemas/settingsAnnouncements.js`): editors never see it, and
 its value stays in the page. The screen plays every announcement that is switched on, once,
 whatever its time and days, for a request that is under a minute old (`dashboard/core/announce.js`).
-The Test the screen page can do the same with its step "All announcements", which comes from the list in
+The Demo page has a step "All announcements" that does the same, which comes from the list in
 `demo-screens.js`. Run `npm run deploy` after you change `schemas/settingsAnnouncements.js`, so
 the editors see the button. docs/hidden-transitions.md explains how it works.
 
@@ -365,12 +362,12 @@ The Time zone is checked against the zones the browser knows
 (`Intl.supportedValuesOf`), or against a plain pattern when the browser cannot
 list them. It starts as America/New_York.
 
-## Test the screen
+## Demo
 
-The Test the screen page (`schemas/demo.js`) is a document that exists once, like Dashboard
+The Demo page (`schemas/demo.js`) is a document that exists once, like Dashboard
 Settings and Look. It has Requested at (read only), the Steps and the Demo
-announcement text. It has no buttons: Run demo and Stop demo were taken out, and the
-Start here page has the buttons that try the screen. The type and its fields stay so
+announcement text. It has no buttons and no line in the list on the left: Run demo and
+Stop demo were taken out, and the Start here page has the buttons that try the screen. The type and its fields stay so
 that the documents already in Studio open and publish as they were. The screen reads
 the page with the rest of the content and plays a demo when Requested at is recent
 (`dashboard/core/demo.js`), but nothing in Studio sets it now. Run `npm run deploy`
@@ -403,15 +400,16 @@ dashboard reads: every field exists with the right name and limit, every field
 has a description, the starting values match dashboard/config.js, the two
 content source buttons are on the Dashboard Settings page and do what they
 say, the Look page agrees with `defaultThemeSettings` and needs a start and
-an end for every rule, `themes.js` matches the dashboard's registries, the Test the screen
+an end for every rule, `themes.js` matches the dashboard's registries, the Demo
 page agrees with `defaultDemo` and has no buttons, and `demo-screens.js`
 matches the dashboard's list of demo screens, the Hidden tab agrees with
 `defaultSettings`, has a working Play button for each hidden transition, and
 `hidden-transitions.js` matches the dashboard's list, Play announcements has its hidden
 field, its button and its Demo step, Run presentation test has its hidden field and its button,
 the Preview buttons have their hidden field and a list that matches the dashboard's,
-the sidebar has the headings, groups and icons it should and every kind of
-content has a line, and the project ID in project.js is
+the sidebar has the headings, folders and icons it should, every kind of
+content has a line or a reason in the check for having none, the New menu offers the
+right kinds of content, and the project ID in project.js is
 the one in dashboard/config.js. It prints PASS or
 FAIL for each check and exits with an error if any fails. Run it after every
 change to a schema.

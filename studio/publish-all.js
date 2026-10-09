@@ -22,7 +22,7 @@ export function publishedIdOf(id) {
   return isDraftId(id) ? id.slice(draftPrefix.length) : id;
 }
 
-// "Events Calendar: Spring dinner", the way the tool names a document. A page
+// "Task: Wire the robot", the way the tool names a document. A page
 // that is its own title, such as Look, is named once.
 export function labelOf(item) {
   return item.title === item.typeTitle ? item.title : item.typeTitle + ': ' + item.title;

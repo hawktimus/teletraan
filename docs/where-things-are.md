@@ -136,13 +136,13 @@ editors can sign in from anywhere.
                               transitions.js chooses the style and the metal of the next page change,
                               look.js turns the Polish setting (polished, flat or plain) into the page
                               switches the stylesheets read (data-finish, data-glint and data-look),
-                              events.js merges the BAND events with the Events Calendar entries from Studio,
+                              events.js filters and sorts the BAND events, and writes the dates of an event,
                               connection.js decides why Sanity could not be read and writes the
                               connection status text at the bottom right, device.js reads the Mini's
                               name and addresses (data/live/device.json) for the red version of it
                               night.js says when it is night and where the screensaver logo starts,
                               and night-screen.js draws the night screen (docs/night-mode.md),
-                              demo.js decides when a demo from the Studio's Test the screen page plays and runs its
+                              demo.js decides when a demo from the Studio's Demo page plays and runs its
                               steps, demo-screens.js lists the screens a demo can show, and
                               demo-runner.js starts it (docs/demo.md),
                               announce.js decides when the Play announcements button plays every
@@ -172,7 +172,7 @@ editors can sign in from anywhere.
                               the banner and the side column of the bar layout (docs/layouts.md, "The bar
                               layout"). The war clock in that banner is drawn by panels/countdown, as a
                               second rendering of the countdown (docs/layouts.md, "The war clock").
-                              panels/tonight is the Up Next panel (docs/up-next.md)
+                              panels/tonight is the Daily Agenda panel, headed AGENDA (docs/up-next.md)
       fonts/, assets/         fonts and pictures, all served from here
       data/sample/            sample content with marked placeholders, and a sample talk with six slides
                               (slides/presentation-sample)
@@ -225,7 +225,7 @@ editors can sign in from anywhere.
       test-weather.mjs        checks for the weather reader and its pictures
       test-content.mjs        checks for the code that reads the editors' content, the photo
                               addresses, which photos show and in what order, the pages of
-                              portraits, of the Leadership panel and of the subteam roster, the subteam members, the merging of events and the
+                              portraits, of the Leadership panel and of the subteam roster, the subteam members, the events list and the
                               lines of the Mini's address, and the reasons and the lines of the
                               connection status text, for the Polish setting: its cleaning, the
                               switches each look sets and the rules for Plain in base.css, and for
@@ -288,8 +288,8 @@ editors can sign in from anywhere.
                               calendar-links.md, hide-a-repeating-meeting.md, switch-the-look.md,
                               add-the-nova-team.md and team-on-an-item.md.
                               seed/ has content to import into the Studio: places.ndjson, the three
-                              starting locations, teams.ndjson, the two starting teams, and extra-events.ndjson, the
-                              starting Events Calendar entries. content-templates/ has one CSV template for each
+                              starting places, teams.ndjson, the two starting teams, and extra-events.ndjson, the
+                              old Events Calendar entries, which the screen no longer reads. content-templates/ has one CSV template for each
                               kind of content (importing-from-csv.md)
 
 ## Changing things
@@ -401,7 +401,7 @@ alone.
   `competitionPreviewRequestField` in `studio/schemas/settingsRequests.js`), through `studio/screen-requests.js`.
   The starting values are in `defaultSettings` in `dashboard/config.js`, and `fixSettingValues` in
   `dashboard/core/content.js` keeps each one a time or empty.
-- **The demo.** The Test the screen page in Studio (docs/demo.md), which has no buttons now:
+- **The demo.** The Demo page in Studio (docs/demo.md), which has no buttons and no line in the sidebar now:
   the Steps and the Demo announcement text. The starting values
   are `defaultDemo` in `dashboard/config.js` and their copy in
   `studio/schemas/demo.js`, with `limits.demoSeconds` and `demoMaxSteps` there.
@@ -493,20 +493,18 @@ alone.
   `core/roster.js` makes the pages of the Subteam roster panel, 16 names to a
   page, and the panel is in `panels/roster/`. Its two columns are 344px wide in
   `roster.css`, which holds a name of 12 characters at 56px.
-- **Events that are not on BAND.** Events Calendar in Studio
-  (`studio/schemas/extraEvent.js`), described in docs/editing-content.md. The
-  screen reads them with the rest of the content (`extraEvents` in
-  `core/sanity.js`). `core/events.js` joins them to the BAND events: it sorts
-  by start, drops an event once its last day has passed in the Time zone on
-  the Look page, and keeps only the BAND one when both have the same date and
-  one title contains the other. `shell.js` merges again when the content
-  changes and once a minute. The Events panel and the Next event tile only draw
+- **The events.** They come from the BAND calendars (`core/calendar.js`). Events
+  Calendar in Studio (`studio/schemas/extraEvent.js`) is still a kind of content, but it
+  has no line in the sidebar, the New menu does not offer it, and the screen no longer
+  reads it: there is no `extraEvents` in `core/sanity.js`. `core/events.js` takes out the
+  events a Calendar filter hides, sorts by start, and drops an event once its last day
+  has passed in the Time zone on the Look page. `shell.js` does it again when the
+  content changes and once a minute. The Events panel and the Next event tile only draw
   the list. Both write the date with `eventDate()` in `core/events.js`, in the
   Time zone on the Look page: the month with the day (`APR 2`), the weekday
   where the panel shows one, and a range as `APR 2-4` or `MAR 30-APR 1`. An
-  event with no start time is all-day and shows its date and no time. The starting seven are in `docs/seed/extra-events.ndjson`, and the
-  command to import them is in docs/editing-content.md. The sample content has
-  three of its own.
+  all-day event shows its date and no time. The old seven entries are in
+  `docs/seed/extra-events.ndjson`, and there is no need to import them.
 - **Where the weather is taken from.** `location` in `dashboard/config.js`
   only. Editors cannot change it. Use latitude and longitude: in the United
   States latitude is positive and longitude is negative. Temperatures are
@@ -567,7 +565,7 @@ alone.
   (`warHousingMarkup`) and `panels/countdown/countdown.css` places every part. The digits are
   amber in Cybertron and the team's neon in Minimal. docs/layouts.md, "The war clock", has
   the sizes.
-- **The teams, and the team on the screen.** Teams in the Studio sidebar
+- **The teams, and the team on the screen.** Teams in the Studio sidebar, under Settings
   (`studio/schemas/team.js`): a name, a short name, a number, a code, an optional logo, seven
   colors, Mirror the layout, Active and Order. The two starting teams are in
   `docs/seed/teams.ndjson`, and the command to import them is in docs/add-the-nova-team.md.
@@ -581,7 +579,7 @@ alone.
   a swap never happens in the middle of a panel. `teams.css` has the starting colors. Try one
   with `?team=prime|nova|alternate`, or with the Preview Prime and Preview Nova buttons.
 - **Which team an item is for.** The Team field of a task, plan, subteam, person, sponsor, talk,
-  meeting day, extra panel, tip or news line and Events Calendar entry (`teamField` in
+  meeting day, extra panel and tip or news line (`teamField` in
   `studio/schemas/fields.js`, the radio in `studio/team-input.js`). Empty means Both. The query in
   `core/sanity.js` asks for `team->code`, and every panel takes its items through `visibleItems` in
   `core/content.js`, which asks `showsForTeam` in `core/teams.js`. docs/team-on-an-item.md says
@@ -606,19 +604,21 @@ alone.
   The other colours are the theme's: `dashboard/themes/hawktimus.css`.
 - **A task's contact and location.** Two optional fields of a task in Studio
   (`studio/schemas/task.js`). The contact is a first name of up to 12
-  characters. The location is a reference to a Locations entry (`studio/schemas/place.js`:
-  a name of up to 16 characters that no other location has, capitals ignored, and
-  a show switch). The query in `core/sanity.js` follows the reference
-  (`location->name`) and asks whether the location is showing, and `normalizeTask`
-  in the same file turns a hidden, deleted or nameless location into no location.
+  characters. The location is a reference to a place (`studio/schemas/place.js`:
+  a name of up to 16 characters that no other place has, capitals ignored, and
+  a show switch). Places has no line in the sidebar: a place is added with Create new
+  in the Location field of a task, and opened from there. The query in `core/sanity.js`
+  follows the reference (`location->name`) and asks whether the place is showing, and
+  `normalizeTask` in the same file turns a hidden, deleted or nameless place into no
+  location.
   The task stays on the screen. The Tasks panel (`panels/tasks/`) draws a task
   with a contact or a location on two lines, so a row of two lines holds one
   such task or two plain tasks, and a page is three rows. When there are more
   rows it shows the next page each time it comes round (`makePages` in
-  `core/turns.js`). A Done task shows only its name. The starting locations are in
+  `core/turns.js`). A Done task shows only its name. The starting places are in
   `docs/seed/places.ndjson`, and the command to import them is in
   docs/editing-content.md. In the CSV templates `contact` and `location` are
-  the last two columns of task.csv, and the importer knows the starting locations
+  the last two columns of task.csv, and the importer knows the starting places
   (docs/importing-from-csv.md).
 - **A new field on something editors fill in.** See docs/adding-a-field.md.
 - **Many items at once from a spreadsheet.** See docs/importing-from-csv.md.

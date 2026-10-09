@@ -5,8 +5,7 @@ every event, including meetings that repeat every week. A Calendar filter is a
 rule in Studio that takes some of those events off the TV, or keeps some on it.
 Students can follow docs/hide-a-repeating-meeting.md for the usual case.
 
-Filters work on BAND events only. Events Calendar entries typed into Studio are
-never filtered: to take one down, turn off its Show on screen switch. A
+Filters work on the BAND events, which are the only events the screen shows. A
 calendar's own Show on screen switch in Dashboard Settings, Calendars comes
 first. An event from a calendar that is switched off is gone before any rule
 looks at it.

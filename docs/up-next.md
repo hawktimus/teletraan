@@ -1,15 +1,17 @@
-# Up Next
+# Daily Agenda
 
-For the coaches and students who write the plan for the day's meeting. Up Next is
-the panel headed UP NEXT in the large frame. It shows the schedule for today's
+For the coaches and students who write the plan for the day's meeting. Daily Agenda
+is the panel headed AGENDA in the large frame. It shows the schedule for today's
 meeting, and the talks booked for today (docs/presentations.md).
 
 The code still says `plan` for the Studio type and `tonight` for the panel's folder
-and its name in the saved Panels list. They are stored names, so they stay.
+and its name in the saved Panels list. They are stored names, so they stay. The
+file is still called up-next.md for the same reason.
 
 ## The schedule
 
-In Studio open Up Next, click the plus button and fill in the form:
+In Studio open Daily Agenda, then Agenda items. Click the plus button of Agenda items,
+or the plus button of Daily Agenda and pick Agenda item, and fill in the form:
 
 - Heading: up to 26 characters, such as the kind of meeting.
 - Date: the day the plan is for.

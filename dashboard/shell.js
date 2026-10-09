@@ -148,7 +148,7 @@ async function run() {
     if (!params.get('show') && !stress) {
       startTakeovers(getContent);
 
-      // The Test the screen page in the Studio. After the takeovers, so that an alert that
+      // The Demo page in the Studio. After the takeovers, so that an alert that
       // comes due on the same second has the screen before the demo looks.
       startOptional('./core/demo-runner.js', module => module.startDemoRunner(getContent));
 
@@ -222,15 +222,14 @@ function setBase(newBase, newStatus) {
   if (switched) showPagesNow();
 }
 
-// The BAND events and the Events Calendar entries from the Studio as one list,
-// with the Calendar filters applied to the BAND events. If merging fails the
-// BAND events are shown as they are, so a bad entry never takes the Events
-// panel away.
+// The BAND events with the Calendar filters applied and the finished ones left
+// out. If that fails the BAND events are shown as they are, so a bad rule never
+// takes the Events panel away.
 function mergedEvents() {
   try {
-    return mergeEvents(extras.events, base.extraEvents, base.theme.timeZone, new Date(), base.calendarFilters);
+    return mergeEvents(extras.events, base.theme.timeZone, new Date(), base.calendarFilters);
   } catch (error) {
-    console.error('Could not merge the Events Calendar entries with the calendar events', error);
+    console.error('Could not apply the Calendar filters to the calendar events', error);
     return extras.events || [];
   }
 }
@@ -249,7 +248,7 @@ function chooseTeam() {
 
 function rebuild() {
   content = Object.assign({}, base, extras, { status: status });
-  chooseTeam(); // before the events are merged, because an Events Calendar entry for the other team is left out
+  chooseTeam(); // before the events, so everything below is built for the team on the screen
   content.events = mergedEvents();
   if (!params.has('motion')) frame.setMotion(content.settings.motion); // so a change in Dashboard Settings shows at once
   if (!params.has('speed')) frame.setSpeed(content.settings.speed);

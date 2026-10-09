@@ -45,12 +45,12 @@ a panel.
 
 Items that have a Team show only for that team. Items with Both, the countdown, the
 weather, the BAND events and the photos show for every team
-(docs/team-on-an-item.md). The teams are edited under Teams in the sidebar
+(docs/team-on-an-item.md). The teams are edited under Settings, then Teams, in the sidebar
 (docs/add-the-nova-team.md).
 
 ## 3. Pick the seasonal pack
 
-Open Look in the sidebar. There are two ways to turn a pack on.
+Open Settings, then Look, in the sidebar. There are two ways to turn a pack on.
 
 - Use a theme now, with Seasonal pack picked, shows the pack at once. Set Until, so
   it ends by itself.

@@ -26,8 +26,21 @@ function actionsFor(actions, context) {
   return kept.concat(buttonsOf[context.schemaType] || []);
 }
 
-function newDocumentChoices(templates) {
-  return templates.filter(template => singletonTypes.indexOf(template.templateId) === -1);
+// Types with no line in the sidebar are left out of the New menu in the top bar. The screen no
+// longer reads Events Calendar entries, so they are not offered anywhere. A place is offered
+// only while a document is open, which is where the Location field of a task offers Create
+// new, and that is how a place is added now.
+const notOffered = ['extraEvent'];
+const offeredInDocuments = ['place'];
+
+function newDocumentChoices(templates, context) {
+  const inDocument = Boolean(context && context.creationContext && context.creationContext.type === 'document');
+
+  return templates.filter(template => {
+    const type = template.templateId;
+    if (singletonTypes.indexOf(type) !== -1 || notOffered.indexOf(type) !== -1) return false;
+    return inDocument || offeredInDocuments.indexOf(type) === -1;
+  });
 }
 
 export default defineConfig({

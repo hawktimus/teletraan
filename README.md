@@ -14,14 +14,15 @@ For adjusting the content that gets displayed, Sanity will be used.
 
 Almost everything on the screen is typed into the Studio, which is the editing page for the dashboard. Open it at [Studio address] and sign in.
 
-The list on the left is what you can change. It opens with Start here and has four groups: Every meeting (Up Next, Tasks, Tips and News), Events (Events Calendar, Calendars, Calendar filters, Presentations), The team (Roster, Leadership, Sponsors, Photos) and Coaches only (Dashboard Settings, Look, Teams, Locations, Extra panels, Test the screen). Click the one you want, change it, and press **Publish**. Nothing shows on the TV until it is published, and it gets there within a few seconds.
+The list on the left is what you can change. It opens with Start here and has four groups: Every meeting (Daily Agenda, Tasks, Tips and News), Events (Calendars, Calendar filters), Roster (Leadership, Team leads, Sponsors, Photos) and Coaches only (Settings, Extra panels). Daily Agenda and Settings are folders. Daily Agenda holds Agenda items, Presentations and Meeting days. Settings holds Dashboard Settings, Look and Teams. Click the one you want, change it, and press **Publish**. Nothing shows on the TV until it is published, and it gets there within a few seconds.
 
 - Every item has a **Show on screen** switch and an optional **Hide after** date, so things come down on their own.
 - Every field says how many characters fit on the screen. Studio will not let you publish text that is too long.
 - **Publish all**, in the top bar, lists every document that has a draft and publishes the ticked ones in one go. Each is checked first with the same rules as its Publish button, and one that fails is skipped with the reason while the rest are published.
 - **Dashboard Settings** is the one page for the whole board: which boards show and in what order, how long each stays, the countdown dates, the announcement times and words, an alert, how presentations run, which team is on the screen, how big the portraits and photos are, and the style, the polish and the speed.
-- Presentations holds the Meeting days that have talk slots, and the talks students have booked (docs/presentations.md).
-- BAND events are not typed in here. They come from the team's BAND calendars. Events that are not on BAND go in Events Calendar. A Calendar filter hides some BAND events, such as a meeting that repeats every week (docs/calendar-filters.md).
+- Under Daily Agenda, Presentations holds the talks students have booked and the ones added by hand, and Meeting days holds the talk slots (docs/presentations.md). The plus button of Daily Agenda adds an Agenda item or a Presentation.
+- Events are not typed in here. They come from the team's BAND calendars, and the Calendars page says how to add or hide one. To get an event on the screen, add it in the calendar app, or ask a coach for an Always show rule. A Calendar filter hides some BAND events, such as a meeting that repeats every week (docs/calendar-filters.md).
+- Events Calendar, Places and Demo are not in the list on the left any more. The screen does not read Events Calendar entries. A place is added with Create new in the Location field of a task. The buttons that try the screen are on Start here.
 - The order of the list on the left is one plain list in `studio/structure.js`. To change the order, move a line (docs/reordering-the-sidebar.md).
 
 More detail is in docs/editing-content.md.
@@ -39,8 +40,8 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - Team name, number, and school, with the animated hawk logo
 - Date, time, and weather for Holly Springs
 - Countdown timer to FRC Kickoff (January 9, 2027), then to Rollout
-- Team tasks, each with an optional point of contact and a location picked from the Locations list
-- Up Next, the schedule for today's meeting, with the talks booked for today
+- Team tasks, each with an optional point of contact and a place, picked in the Location field of the task, where Create new adds one
+- The Daily Agenda panel, headed AGENDA: the schedule for today's meeting, with the talks booked for today
 - Upcoming events and the next event, from the team's BAND calendars, with Calendar filters that hide or keep events, such as a meeting that repeats every week
 - Sponsors, with sponsor logos and thank-yous
 - Photos, uploaded in Sanity and shown at random or newest first
@@ -57,7 +58,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - Polished gold or silver frame edges, picked in Studio
 - A Polish setting in Studio that turns the polish down: Polished (the normal look, and the default), Flat (plain colour edges and no glint) or Plain (Flat, with no screws and no // in the panel headers). Flat and Plain are lighter on the Mini, and `?look=flat` or `?look=plain` on the address tries one for a single page
 - A Style setting in Studio: Original (the screen as it has always been), Cybertron or Minimal. Cybertron and Minimal have the bar layout, a banner across the top with the team name and the war clock (the countdown in a steel housing), a thin side column and one main panel (docs/layouts.md). `?style=minimal` on the address tries one for a single page. Both draw steel frames with a neon line just inside the edge and hex bolts at the joints. Cybertron adds a hazard stripe under each header, pink conduit and brackets, a row of neon slashes and a grid with scanlines behind the screen. Minimal has smaller cut corners, rivets and a stamped id on its frames, rust at two corners, a weld seam on the main panel, tick marks along the header line and a finer grid
-- Teams: Hawktimus Prime and Hawktimus Nova, each with a name, number, logo, seven colors and a switch that flips the whole screen left to right. Team mode in Studio shows Prime only, Nova only, or swaps between the teams every few minutes, with everything changing together at a page change. Tasks, Up Next, sponsors and most other things have a Team choice, and empty means Both (docs/add-the-nova-team.md, docs/team-on-an-item.md)
+- Teams: Hawktimus Prime and Hawktimus Nova, each with a name, number, logo, seven colors and a switch that flips the whole screen left to right. Team mode in Studio shows Prime only, Nova only, or swaps between the teams every few minutes, with everything changing together at a page change. Tasks, agenda items, sponsors and most other things have a Team choice, and empty means Both (docs/add-the-nova-team.md, docs/team-on-an-item.md)
 - Switch the look: the style, the team and the seasonal pack are three separate settings, and four steps in Studio change them (docs/switch-the-look.md)
 - A fixed 1920 by 1080 screen. Every layout, the mirror and the war clock are placed in pixels inside it, and the page scales the whole picture to the window and never reflows (docs/layouts.md, "The screen is a fixed canvas")
 - Pages that flip like slats while the frames stay in place
@@ -72,7 +73,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - Presentations: a student books a short talk in a Google Form, and the talk appears in Studio. At its time the TV shows a title card, then the student's Google Slides one picture at a time, moved by a clicker, then a thank you card. The Mini turns each deck into pictures before the talk (docs/presentations.md)
 - A Run presentation test button in Studio that plays a sample talk with six sample slides, with no internet
 - Preview buttons in Studio (Prime, Nova, Cybertron, Minimal and the next seasonal pack) that show that look on the TV for 2 minutes and then go back to the saved settings, without changing any setting. `?team=`, `?style=` and `?overlay=` on the address try any combination with the sample content
-- A test page in Studio (Test the screen) for visitors that plays the announcement and night mode on request
+- A Start here page in Studio with buttons that try the screen (docs/demo.md)
 - A calendar check (deploy/scripts/check-calendars.sh) that lists the next 30 days of events and says which ones the Calendar filters hide
 - A connection check for the Mini (deploy/scripts/check-connection.sh) and a small text on the screen that says why when Sanity cannot be reached
 
@@ -84,7 +85,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - docs/add-the-nova-team.md: importing the teams, filling in the Nova team and setting the team mode
 - docs/team-on-an-item.md: how the Team choice on an item works, and how to add it to another kind of content
 - docs/presentations.md: booking talks, the Sanity token, the clicker keys and what to do when slides are not ready
-- docs/up-next.md: the schedule and the talks in the Up Next panel
+- docs/up-next.md: the schedule and the talks in the Daily Agenda panel
 - docs/calendar-filters.md: rules that hide or keep BAND events
 - docs/hide-a-repeating-meeting.md: the four steps for hiding the Pre-Season meetings
 - docs/calendar-links.md: adding a BAND calendar or changing its link
