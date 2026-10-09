@@ -97,8 +97,8 @@ test('row 1 names the columns, row 2 gives the type and the limits, row 3 is the
     assert.equal(rows[2][0], 'EXAMPLE', type);
   });
   const task = rowsOf(templates.task);
-  // contact, location and team were added later, so they are the last three columns
-  assert.deepEqual(task[0], ['example', 'title', 'subteam', 'status', 'finishedOn', 'order', 'show', 'expires', 'contact', 'location', 'team']);
+  // contact, location and team were added later, then priority and showOnTv, so those are the last five columns
+  assert.deepEqual(task[0], ['example', 'title', 'subteam', 'status', 'finishedOn', 'order', 'show', 'expires', 'contact', 'location', 'team', 'priority', 'showOnTv']);
   assert.equal(task[1][1], 'text; required; max 22; id 1');
   assert.equal(task[1][2], 'name of subteam');
   assert.equal(task[1][3], 'one of blocked/in-progress/up-next/done; required');
@@ -106,6 +106,10 @@ test('row 1 names the columns, row 2 gives the type and the limits, row 3 is the
   assert.equal(task[1][8], 'text; max 12');
   assert.equal(task[1][9], 'name of place');
   assert.equal(task[1][10], 'name of team');
+  assert.equal(task[1][11], 'one of high/medium/low');
+  assert.equal(task[1][12], 'yes/no; default yes');
+  // the source and the board item number are set by the board sync, so a sheet has no column for them
+  assert.ok(!task[0].includes('source') && !task[0].includes('mondayId') && !task[0].includes('boardNote'));
 
   const place = rowsOf(templates.place);
   assert.deepEqual(place[0], ['example', 'name', 'show']);
@@ -183,7 +187,7 @@ test('a few rows become documents with fixed ids, and a second run gives the sam
   assert.equal(first.docs[1].show, false);
   assert.deepEqual(first.docs[2], {
     _id: 'task-wire-the-robot', _type: 'task', title: 'Wire the robot',
-    subteam: { _type: 'reference', _ref: 'subteam-alpha' }, status: 'in-progress', order: 2, show: true,
+    subteam: { _type: 'reference', _ref: 'subteam-alpha' }, status: 'in-progress', order: 2, show: true, showOnTv: true,
   });
   assert.equal(first.docs[3].finishedOn, new Date('2027-02-03T16:30').toISOString());
 });
@@ -374,9 +378,11 @@ test('a row points at a team by its code, capitals ignored, and a CSV made befor
   };
   Object.keys(rowFor).forEach(type => {
     const top = rowsOf(templates[type]);
-    assert.equal(top[0][top[0].length - 1], 'team', type + ': team should be the last column');
-    assert.equal(top[1][top[1].length - 1], 'name of team', type);
-    assert.equal(top[2][top[2].length - 1], '', type + ': the EXAMPLE row leaves the team empty, which means both teams');
+    // a task has priority and showOnTv after the team, because they were added after it
+    const teamAt = top[0].length - 1 - (type === 'task' ? 2 : 0);
+    assert.equal(top[0][teamAt], 'team', type + ': team should be the last column');
+    assert.equal(top[1][teamAt], 'name of team', type);
+    assert.equal(top[2][teamAt], '', type + ': the EXAMPLE row leaves the team empty, which means both teams');
 
     const nova = runImporter({ [type + '.csv']: csvFor(type, [Object.assign({ team: 'Nova' }, rowFor[type])]) });
     assert.equal(nova.status, 0, type + ': ' + nova.message);
@@ -435,6 +441,40 @@ test('quotes, commas, new lines, a byte order mark and Windows line ends are rea
 
   const emptyQuoted = runImporter({ 'sponsor.csv': text.replace(',,', ',"",') });
   assert.equal(emptyQuoted.status, 0, emptyQuoted.message);
+});
+
+test('a task row can have a priority and a Show on TV cell, and a CSV made before them still imports', () => {
+  const full = runImporter({ 'task.csv': csvFor('task', [
+    { title: 'High one', status: 'up-next', priority: 'high', showOnTv: 'no' },
+    { title: 'Plain one', status: 'up-next' },
+  ]) });
+  assert.equal(full.status, 0, full.message);
+  assert.equal(full.docs[0].priority, 'high');
+  assert.equal(full.docs[0].showOnTv, false);
+
+  // an empty priority makes no priority, and an empty Show on TV cell is what Studio fills in: on
+  assert.equal('priority' in full.docs[1], false);
+  assert.equal(full.docs[1].showOnTv, true);
+
+  // the source and the board item number are never written by a sheet
+  assert.equal(full.docs.some(doc => 'source' in doc || 'mondayId' in doc), false);
+
+  const bad = runImporter({ 'task.csv': csvFor('task', [{ title: 'A', status: 'up-next', priority: 'urgent' }]) });
+  assert.equal(bad.status, 1);
+  assert.ok(bad.message.includes('column priority: write one of: high, medium, low'), bad.message);
+
+  // the template before priority and showOnTv: eleven columns, with the team last
+  const old = [
+    'example,title,subteam,status,finishedOn,order,show,expires,contact,location,team',
+    'type task,text; required; max 22; id 1,name of subteam,one of blocked/in-progress/up-next/done; required,datetime,whole number,yes/no; default yes,datetime,text; max 12,name of place,name of team',
+    'EXAMPLE,[Task name],[Subteam A],in-progress,,1,yes,2027-03-01 18:00,[First name],[Place name],',
+    ',Wire the robot,,in-progress,,2,yes,,Sam,Classroom,nova',
+  ].join('\n') + '\n';
+  const result = runImporter({ 'task.csv': old });
+  assert.equal(result.status, 0, result.message);
+  assert.equal(result.docs.length, 1);
+  assert.equal(result.docs[0].team._ref, 'team-nova');
+  assert.equal('priority' in result.docs[0] || 'showOnTv' in result.docs[0], false, 'an old sheet makes no value for columns it does not have');
 });
 
 test('the importer is under 140 lines and uses only what node has', () => {

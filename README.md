@@ -14,7 +14,7 @@ For adjusting the content that gets displayed, Sanity will be used.
 
 Almost everything on the screen is typed into the Studio, which is the editing page for the dashboard. Open it at [Studio address] and sign in.
 
-The list on the left is what you can change. It opens with Start here and has four groups: Every meeting (Daily Agenda, Tasks, Tips and News), Events (Calendars, Calendar filters), Roster (Leadership, Team leads, Sponsors, Photos) and Coaches only (Settings, Extra panels). Daily Agenda and Settings are folders. Daily Agenda holds Agenda items, Presentations and Meeting days. Settings holds Dashboard Settings, Look and Teams. Click the one you want, change it, and press **Publish**. Nothing shows on the TV until it is published, and it gets there within a few seconds.
+The list on the left is what you can change. It opens with Start here and has four groups: Every meeting (Daily Agenda, Tasks, Tips and News), Events (Calendars, Calendar filters), Roster (Leadership, Team leads, Sponsors, Photos) and Coaches only (Settings, Extra panels). Daily Agenda, Tasks and Settings are folders. Daily Agenda holds Agenda items, Presentations and Meeting days. Tasks holds Pinned, From the board and Hidden. Settings holds Dashboard Settings, Look and Teams. Click the one you want, change it, and press **Publish**. Nothing shows on the TV until it is published, and it gets there within a few seconds.
 
 - Every item has a **Show on screen** switch and an optional **Hide after** date, so things come down on their own.
 - Every field says how many characters fit on the screen. Studio will not let you publish text that is too long.
@@ -40,7 +40,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - Team name, number, and school, with the animated hawk logo
 - Date, time, and weather for Holly Springs
 - Countdown timer to FRC Kickoff (January 9, 2027), then to Rollout
-- Team tasks, each with an optional point of contact and a place, picked in the Location field of the task, where Create new adds one
+- Team tasks, each with an optional point of contact, a place, picked in the Location field of the task, where Create new adds one, and a priority. A Show on TV switch keeps a task off the screen, and pinned tasks come before tasks from the team board
 - The Daily Agenda panel, headed AGENDA: the schedule for today's meeting, with the talks booked for today
 - Upcoming events and the next event, from the team's BAND calendars, with Calendar filters that hide or keep events, such as a meeting that repeats every week
 - Sponsors, with sponsor logos and thank-yous

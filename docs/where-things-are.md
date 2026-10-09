@@ -117,7 +117,8 @@ editors can sign in from anywhere.
                               draws a person's framed portrait, with the name under it or as a row,
                               leadership.js picks the four people of the Leadership panel, team-leads.js
                               makes the rows of the Team Leads panel, roster.js
-                              makes the pages of the Subteam roster panel, theme.js
+                              makes the pages of the Subteam roster panel, task-source.js says whether a task
+                              is pinned or from the team board and puts the pinned ones first, theme.js
                               works out which theme and overlay apply, theme-apply.js puts them on the page,
                               layout.js says which layout a theme has, which regions and blocks a layout
                               has, the numbers of the sidebar and bar layouts and when a change of layout must
@@ -676,9 +677,25 @@ alone.
   rows it shows the next page each time it comes round (`makePages` in
   `core/turns.js`). A Done task shows only its name. The starting places are in
   `docs/seed/places.ndjson`, and the command to import them is in
-  docs/editing-content.md. In the CSV templates `contact` and `location` are
-  the last two columns of task.csv, and the importer knows the starting places
+  docs/editing-content.md. In the CSV templates `contact` and `location` come
+  before the `team` column of task.csv, and the importer knows the starting places
   (docs/importing-from-csv.md).
+- **Tasks from the team board, pinned tasks and Show on TV.** A task has four more
+  fields in `studio/schemas/task.js`: `source` (manual or monday, hidden, a task with
+  none is pinned), `mondayId` (hidden), `priority` and `showOnTv`. The Tasks line of
+  the sidebar is a folder of three lists, Pinned, From the board and Hidden, whose
+  filters are at the top of `studio/structure.js`. Every task is in one list. A task
+  with source monday opens read only except Show on TV, with one line at the top, and
+  `studio/show-on-tv-input.js` draws a task with no value as on. The folder's plus
+  button, Pin a task, is the template `pinnedTask` in `folderTemplates` of
+  `structure.js`, which `sanity.config.js` hands to the Studio and keeps out of the New
+  menus. On the screen, `isVisible` in `core/content.js` is the one place that reads
+  `showOnTv`, so both task panels leave out a task that is off. `core/sanity.js` puts
+  pinned tasks before board tasks with `pinnedFirst` from `core/task-source.js`, and
+  each group keeps its Order. `priority` and `mondayId` are not read by the screen.
+  `tools/test-task-board.mjs` tests the screen side. In the CSV templates `priority`
+  and `showOnTv` are the last two columns of task.csv, and `source` and `mondayId`
+  have no column.
 - **A new field on something editors fill in.** See docs/adding-a-field.md.
 - **Many items at once from a spreadsheet.** See docs/importing-from-csv.md.
   The CSV templates in `docs/content-templates/` are written from the schemas

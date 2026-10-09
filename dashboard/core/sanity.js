@@ -6,6 +6,7 @@ import { parseLocalDateTime, sameDay } from './time.js';
 import { fixSettingValues, isVisible, keepInRange, withDefaults } from './content.js';
 import { logoUrl, photoFocus, screenPhotoUrl, tidyPhoto } from './images.js';
 import { classifyFailure } from './connection.js';
+import { pinnedFirst } from './task-source.js';
 
 // Everything the screen needs, in one request. Lists come back in the order
 // they were created, and normalizeContent puts the ones with an Order first.
@@ -215,7 +216,7 @@ export function normalizeContent(result, now = new Date()) {
     settings: settings,
     theme: data.theme,
     demo: data.demo,
-    tasks: itemsFrom(data.tasks).map(normalizeTask),
+    tasks: pinnedFirst(itemsFrom(data.tasks).map(normalizeTask)),
     plan: plans[0] || null,
     plans: plans,
     sponsors: itemsFrom(data.sponsors),
@@ -245,7 +246,7 @@ export function normalizeSample(raw) {
   ['tasks', 'sponsors', 'tipsAndNews', 'subteams', 'people', 'customPanels'].forEach(name => {
     content[name] = itemsFrom(data[name]);
   });
-  content.tasks = content.tasks.map(normalizeTask);
+  content.tasks = pinnedFirst(content.tasks.map(normalizeTask));
   content.subteams = content.subteams.map(normalizeSubteam);
   content.people = content.people.map(normalizePerson);
   content.photos = itemsFrom(data.photos).filter(photo => typeof photo.address === 'string');

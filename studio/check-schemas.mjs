@@ -43,6 +43,8 @@ const contract = {
     finishedOn: 'datetime',
     contact: text(12),
     location: { kind: 'reference', to: 'place' },
+    source: 'string',
+    showOnTv: 'boolean',
     team: teamRef,
     order: 'number',
   }),
@@ -222,6 +224,9 @@ const studioOnlyFields = {
   'dashboardSettings.noShowMinutes': 'hidden. The screen uses the fixed number in dashboard/core/constants.js',
   'dashboardSettings.graceMinutes': 'hidden. The screen uses the fixed number in dashboard/core/constants.js',
   'presentationDay.closeMinutesBefore': 'hidden. The booking script reads it, and the dashboard never does',
+  'task.boardNote': 'the line at the top of a task from the team board. It stores nothing',
+  'task.priority': 'the board sync sets it and the list line shows it. The Tasks panel does not read it',
+  'task.mondayId': 'hidden. The board sync uses it to find the task of a board item, and the dashboard never reads it',
 };
 const studioOnlyTypes = {
   status: 'the Mini writes it for the status block, and the dashboard never reads it',
@@ -231,6 +236,8 @@ const itemTypes = ['task', 'plan', 'sponsor', 'tipOrNews', 'subteam', 'person', 
 
 const choices = {
   'task.status': ['blocked', 'in-progress', 'up-next', 'done'],
+  'task.source': ['manual', 'monday'],
+  'task.priority': ['high', 'medium', 'low'],
   'tipOrNews.kind': ['tip', 'news', 'reminder'],
   'calendarFilter.action': ['hide', 'show'],
   'presentation.subteam': ['Build', 'Programming', 'Design', 'Electrical', 'Outreach', 'Business', 'Other'],
@@ -324,11 +331,12 @@ const sidebarGroups = [
 // What each folder holds, in order. A folder inside a folder has its lines in brackets.
 const folderLines = {
   'Daily Agenda': 'Agenda items, Presentations (Upcoming, Past), Meeting days',
+  'Tasks': 'Pinned, From the board, Hidden',
   'Settings': 'Dashboard Settings, Look, Teams',
 };
 
-// The types the plus button of a folder offers
-const folderAdds = { 'Daily Agenda': 'plan,presentation' };
+// The types, or the folder templates of structure.js, that the plus button of a folder offers
+const folderAdds = { 'Daily Agenda': 'plan,presentation', 'Tasks': 'pinnedTask' };
 
 // The titles the sidebar used to have, in the first rebuild or before it. None of them may be left
 // in a title, a description or a message that an editor reads.
@@ -397,7 +405,7 @@ function iconImportsOf(source) {
 
 function makeSandbox() {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-studio-'));
-  ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'calendars-view.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'publish-all.js', 'publish-all-tool.js', 'team-input.js', 'note-field.js', 'status-input.js', 'panel-order-input.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
+  ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'calendars-view.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'publish-all.js', 'publish-all-tool.js', 'team-input.js', 'note-field.js', 'show-on-tv-input.js', 'status-input.js', 'panel-order-input.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
     fs.cpSync(path.join(here, name), path.join(folder, name), { recursive: true });
   });
   fs.writeFileSync(path.join(folder, 'package.json'), JSON.stringify({ type: 'module' }));
@@ -2195,9 +2203,14 @@ function checkSidebarLines(problems) {
     need(problems, sortable, where + ' is sorted by "' + field + '", which is not a field of ' + entry.type);
     if (listSort[entry.type]) need(problems, field === listSort[entry.type], where + ' should be listed by ' + listSort[entry.type] + ', not ' + field);
 
+    if (entry.thenBy !== undefined) {
+      const second = entry.thenBy.field;
+      need(problems, second && (second.charAt(0) === '_' || fieldsIn(typeByName(entry.type)).some(item => item.name === second)), where + ' is then sorted by "' + second + '", which is not a field of ' + entry.type);
+    }
+
     if (entry.filter !== undefined) {
-      need(problems, typeof entry.filter === 'string' && entry.filter.indexOf('$since') !== -1, where + ' has a filter that should use $since, the time a day ago that structure.js works out when the sidebar opens');
-      need(problems, !/now\s*\(/.test(String(entry.filter)), where + ' has a filter that uses now(). Studio keeps lists live and a live filter cannot use it. Use $since.');
+      need(problems, typeof entry.filter === 'string' && /\$(since|now)\b/.test(entry.filter), where + ' has a filter that should use $since, the time a day ago, or $now, the time the sidebar opened. structure.js works both out when the sidebar opens');
+      need(problems, !/now\s*\(/.test(String(entry.filter)), where + ' has a filter that uses now(). Studio keeps lists live and a live filter cannot use it. Use $since or $now.');
     }
   }
 
@@ -2270,7 +2283,7 @@ function checkSidebarGroups(problems) {
     if (want) need(problems, folderShape(folder.entries) === want, folder.title + ' should hold: ' + want + '. It holds: ' + folderShape(folder.entries));
     need(problems, (folder.add || []).join() === (folderAdds[folder.title] || ''), 'the plus button of ' + folder.title + ' should offer: ' + (folderAdds[folder.title] || 'nothing') + '. It offers: ' + ((folder.add || []).join() || 'nothing'));
   });
-  need(problems, allLines(entries).filter(entry => entry.kind === 'group').length === 3, 'the sidebar should have three folders in all: Daily Agenda, Presentations inside it, and Settings');
+  need(problems, allLines(entries).filter(entry => entry.kind === 'group').length === 4, 'the sidebar should have four folders in all: Daily Agenda, Presentations inside it, Tasks and Settings');
 
   ['Start here', 'Calendars'].forEach(title => {
     const entry = entries.filter(item => item.title === title)[0];
@@ -2308,7 +2321,10 @@ function checkBuiltItem(entry, item, what, problems) {
     // the plus button of the folder: a create entry for each type of add, and a line in the folder where the new document is listed
     const offered = ((child && child.menuItems) || []).map(menu => menu.intent && menu.intent.type === 'create' && menu.intent.params.template);
     need(problems, offered.join() === (entry.add || []).join(), what + ' should offer a new ' + ((entry.add || []).join(' and a new ') || 'document of no type') + ' in its plus button. It offers: ' + (offered.join() || 'nothing'));
-    (entry.add || []).forEach(type => {
+    (entry.add || []).forEach(name => {
+      // a name is a type, or a template of structure.js that makes a document of a type
+      const template = world.structure.folderTemplates.filter(item => item.id === name)[0];
+      const type = template ? template.schemaType : name;
       need(problems, allLines(entry.entries).some(inner => inner.type === type), what + ' offers a new ' + type + ' but has no list of them');
       need(problems, pageTypes.indexOf(type) === -1 && notInSidebar[type] === undefined, what + ' offers a new ' + type + ', which is not a kind of document an editor adds here');
     });
@@ -2321,6 +2337,7 @@ function checkBuiltItem(entry, item, what, problems) {
   } else if (entry.kind === 'list') {
     const listOk = child && child.type === entry.type && child.title === entry.title && child.defaultOrdering[0].field === entry.sort.field;
     need(problems, listOk, what + ' should open the ' + entry.type + ' list, titled ' + entry.title + ', sorted by ' + entry.sort.field);
+    if (entry.thenBy && child) need(problems, child.defaultOrdering.length === 2 && child.defaultOrdering[1].field === entry.thenBy.field, what + ' should then sort by ' + entry.thenBy.field);
     need(problems, item.id === (entry.id || entry.type), what + ' should have the id ' + (entry.id || entry.type) + ', it has ' + item.id);
 
     if (entry.filter && child) {
@@ -2328,6 +2345,8 @@ function checkBuiltItem(entry, item, what, problems) {
       const since = child.params && child.params.since;
       need(problems, typeof child.filter === 'string' && child.filter.indexOf(entry.filter) !== -1 && child.params && child.params.type === entry.type, what + ' should filter the ' + entry.type + ' list with: ' + entry.filter);
       need(problems, typeof since === 'string' && Math.abs(Date.now() - aDay - Date.parse(since)) < 60 * 1000, what + ' should pass $since as the time a day ago, worked out when the sidebar opens');
+      const opened = child.params && child.params.now;
+      need(problems, typeof opened === 'string' && Math.abs(Date.now() - Date.parse(opened)) < 60 * 1000, what + ' should pass $now as the time the sidebar opened');
       need(problems, child.id === (entry.id || entry.type) && typeof child.apiVersion === 'string', what + ' should give the filtered list its id and an apiVersion');
     }
   } else {
@@ -4145,6 +4164,142 @@ function checkPanelOrder() {
   return problems;
 }
 
+// Tasks from the team board and tasks pinned by hand. A task has a source, a board item number,
+// a priority and a Show on TV switch. A task from the board opens read only except Show on TV,
+// with one line at the top. The Tasks folder has three lists, Pinned, From the board and Hidden,
+// and between them they hold every task once, which is tried below with the real filters of
+// structure.js (docs/editing-content.md, "Tasks").
+const boardNoteText = 'This task comes from the team board. Change it there. Use Show on TV to hide it here.';
+const editableOnBoard = ['boardNote', 'source', 'mondayId', 'showOnTv'];
+
+// A filter of structure.js as a function of a task, so a test can run it. Only the forms the
+// three task filters use are turned over: ==, != and defined().
+function filterOf(filter) {
+  const js = filter
+    .replace(/(?<![=!<>])==/g, '===')
+    .replace(/!=/g, '!==')
+    .replace(/defined\((\w+)\)/g, '($1 !== undefined && $1 !== null)')
+    .replace(/\$now/g, 'now');
+  const test = new Function('source', 'showOnTv', 'show', 'expires', 'now', 'return ' + js + ';');
+  return (task, now) => test(task.source, task.showOnTv, task.show, task.expires, now);
+}
+
+function checkBoardTasks() {
+  const problems = [];
+  const at = name => fieldAt('task.' + name);
+  const rulesOf = field => (field ? constraintsOf(field) : []);
+
+  // the four new fields
+  const source = at('source');
+  need(problems, source && source.type === 'string' && source.hidden === true && source.initialValue === 'manual', 'task.source should be a string, hidden, that starts on manual');
+  const mondayId = at('mondayId');
+  need(problems, mondayId && mondayId.type === 'string' && mondayId.hidden === true, 'task.mondayId should be a string, hidden');
+  const priority = at('priority');
+  need(problems, priority && priority.type === 'string' && priority.hidden === undefined && priority.initialValue === undefined && !constraintNamed(rulesOf(priority), 'required'), 'task.priority should be an optional string with no starting value');
+  need(problems, priority && /optional/i.test(priority.description || ''), 'the task.priority description should say it is optional');
+  const showOnTv = at('showOnTv');
+  need(problems, showOnTv && showOnTv.type === 'boolean' && showOnTv.title === 'Show on TV' && showOnTv.initialValue === true && showOnTv.hidden === undefined, 'task.showOnTv should be a switch titled Show on TV that starts on');
+  need(problems, showOnTv && showOnTv.components && showOnTv.components.input === world.showOnTvInput.ShowOnTvInput, 'task.showOnTv should use the input in studio/show-on-tv-input.js, which draws a task with no value as on');
+
+  // the line at the top of a task from the board: first in the form, shown only for that task, stores nothing
+  const note = at('boardNote');
+  const names = fieldsIn(typeByName('task')).map(field => field.name);
+  need(problems, names[0] === 'boardNote', 'the note should be the first field of a task, and the first is ' + names[0]);
+  need(problems, note && note.description === boardNoteText, 'the note should say: ' + boardNoteText);
+  need(problems, note && note.readOnly === true && note.components && note.components.field === world.noteField.NoteField && !note.validation, 'the note should be read only, drawn by the note field, with no rules');
+  const board = { document: { source: 'monday', status: 'in-progress' } };
+  const pinned = { document: { source: 'manual', status: 'up-next' } };
+  const older = { document: { title: 'A task made before the board' } };
+  if (note && typeof note.hidden === 'function') {
+    need(problems, note.hidden(board) === false, 'the note should show on a task from the board');
+    need(problems, note.hidden(pinned) === true && note.hidden(older) === true && note.hidden({ document: undefined }) === true, 'the note should be hidden on a pinned task, on one with no source and on a new one');
+  } else {
+    problems.push('the note should have a hidden function that shows it only on a task from the board');
+  }
+
+  // read only: every field but the four above, and only on a task from the board
+  fieldsIn(typeByName('task')).forEach(field => {
+    const where = 'task.' + field.name;
+    if (editableOnBoard.indexOf(field.name) !== -1) {
+      need(problems, field.name === 'boardNote' || !field.readOnly, where + ' should stay editable on a task from the board');
+      return;
+    }
+    if (typeof field.readOnly !== 'function') return problems.push(where + ' should be read only on a task from the board: it needs a readOnly function');
+    need(problems, field.readOnly(board) === true, where + ' should be read only on a task from the board');
+    need(problems, field.readOnly(pinned) === false && field.readOnly(older) === false && field.readOnly({ document: undefined }) === false && field.readOnly({}) === false, where + ' should be editable on a pinned task, on one with no source and on a new one');
+  });
+
+  // a list line says Board or Pinned, the priority when there is one, and Hidden when the task is off the TV
+  const preview = typeByName('task').preview;
+  const line = fields => preview.prepare(Object.assign({ title: 'Wire the robot', status: 'in-progress', subteam: 'Build' }, fields)).subtitle;
+  need(problems, line({ source: 'monday' }) === 'In progress · Build · Board', 'a task from the board should read "In progress · Build · Board", it reads "' + line({ source: 'monday' }) + '"');
+  need(problems, line({ source: 'manual' }) === 'In progress · Build · Pinned', 'a pinned task should read "In progress · Build · Pinned", it reads "' + line({ source: 'manual' }) + '"');
+  need(problems, line({}) === 'In progress · Build · Pinned', 'a task with no source should read as pinned');
+  need(problems, line({ priority: 'high', source: 'monday', contact: 'Sam', place: 'Classroom' }) === 'In progress · Build · High priority · Board · Sam · Classroom', 'the priority should come before Board or Pinned, then the contact and the place, it reads "' + line({ priority: 'high', source: 'monday', contact: 'Sam', place: 'Classroom' }) + '"');
+  need(problems, line({ priority: 'urgent' }) === 'In progress · Build · Pinned', 'a priority that is not high, medium or low should not be shown');
+  need(problems, line({ showOnTv: false }) === 'Hidden · In progress · Build · Pinned', 'a task kept off the TV should read as hidden, it reads "' + line({ showOnTv: false }) + '"');
+  need(problems, line({ showOnTv: true }) === 'In progress · Build · Pinned' && line({ show: false }) === 'Hidden · In progress · Build · Pinned', 'Show on TV on should change nothing, and Show on screen off should still read as hidden');
+  need(problems, preview.select.source === 'source' && preview.select.priority === 'priority' && preview.select.showOnTv === 'showOnTv', 'the preview should select source, priority and showOnTv');
+
+  // the input: a task with no value is drawn as on, nothing is written on opening, a click writes the switch
+  const input = world.showOnTvInput;
+  need(problems, input.isShownOnTv(undefined) === true && input.isShownOnTv(null) === true && input.isShownOnTv(true) === true && input.isShownOnTv(false) === false, 'only a switch turned off should read as off');
+  const written = [];
+  const drawn = value => input.ShowOnTvInput({ id: 'x', value: value, readOnly: false, onChange: patch => written.push(patch) });
+  const box = element => element.children[0];
+  need(problems, box(drawn(undefined)).props.checked === true && box(drawn(true)).props.checked === true && box(drawn(false)).props.checked === false, 'the box should be ticked unless the switch was turned off');
+  need(problems, written.length === 0, 'drawing the input should write nothing');
+  box(drawn(undefined)).props.onChange({ target: { checked: false } });
+  box(drawn(false)).props.onChange({ target: { checked: true } });
+  need(problems, JSON.stringify(written) === JSON.stringify([{ type: 'set', value: false }, { type: 'set', value: true }]), 'a click should write the switch, off and then on');
+  need(problems, input.ShowOnTvInput({ value: true, readOnly: true, onChange: () => {} }).children[0].props.disabled === true, 'the box should be disabled when the field is read only');
+
+  // the Tasks folder: three lists in order, one add button, the template with its defaults
+  const folder = world.structure.sidebarEntries.filter(entry => entry.title === 'Tasks')[0];
+  if (!folder || folder.kind !== 'group') return problems.concat('the Tasks line of the sidebar should be a folder');
+  need(problems, folder.entries.map(entry => entry.title).join() === 'Pinned,From the board,Hidden', 'the Tasks folder should hold Pinned, From the board and Hidden, in that order');
+  need(problems, folder.add && folder.add.join() === 'pinnedTask', 'the Tasks folder should offer only pinnedTask in its plus button');
+  folder.entries.forEach(entry => {
+    need(problems, entry.type === 'task' && entry.sort.field === 'order' && entry.sort.direction === 'asc' && entry.thenBy && entry.thenBy.field === '_createdAt' && entry.thenBy.direction === 'asc', entry.title + ' should list tasks by Order, then the oldest first, as the screen does');
+  });
+
+  const template = world.structure.folderTemplates.filter(item => item.id === 'pinnedTask')[0];
+  need(problems, template && template.title === 'Pin a task' && template.schemaType === 'task', 'the template pinnedTask should be titled Pin a task and make a task');
+  need(problems, template && template.value.source === 'manual' && template.value.showOnTv === true && template.value.show === true && template.value.status === 'up-next' && !('team' in template.value), 'Pin a task should start a manual task, shown on the TV and on screen, with no team');
+  const offered = world.config.schema.templates([{ id: 'task' }]).map(item => item.id).join();
+  need(problems, offered === 'task,pinnedTask', 'sanity.config.js should add the folder templates to the templates of the Studio. It gives: ' + offered);
+  const choicesIn = creationContext => world.config.document.newDocumentOptions([{ templateId: 'task' }, { templateId: 'pinnedTask' }], { creationContext: creationContext }).map(item => item.templateId).join();
+  [undefined, { type: 'global' }, { type: 'structure', schemaType: 'task' }, { type: 'document', documentId: 'task-1', schemaType: 'task' }].forEach(creationContext => {
+    need(problems, choicesIn(creationContext) === 'task', 'the New menus should offer a task and not Pin a task, which only the Tasks folder offers. They offer: ' + choicesIn(creationContext));
+  });
+
+  // the three lists hold every task once. The filters are the ones structure.js gives the Studio.
+  const now = '2026-10-09T12:00:00.000Z';
+  const past = '2026-10-01T12:00:00.000Z';
+  const future = '2026-11-01T12:00:00.000Z';
+  const tasks = [
+    { name: 'a task made before the board: no new field', where: 'Pinned' },
+    { name: 'no source, empty values', task: { source: null, showOnTv: null, show: null, expires: null }, where: 'Pinned' },
+    { name: 'pinned', task: { source: 'manual', showOnTv: true, show: true }, where: 'Pinned' },
+    { name: 'pinned and expiring later', task: { source: 'manual', expires: future }, where: 'Pinned' },
+    { name: 'from the board', task: { source: 'monday', showOnTv: true }, where: 'From the board' },
+    { name: 'from the board, expiring later', task: { source: 'monday', expires: future }, where: 'From the board' },
+    { name: 'pinned and off the TV', task: { source: 'manual', showOnTv: false }, where: 'Hidden' },
+    { name: 'from the board and off the TV', task: { source: 'monday', showOnTv: false }, where: 'Hidden' },
+    { name: 'switched off on screen', task: { show: false }, where: 'Hidden' },
+    { name: 'from the board and switched off on screen', task: { source: 'monday', show: false }, where: 'Hidden' },
+    { name: 'expired', task: { expires: past }, where: 'Hidden' },
+    { name: 'from the board and expired', task: { source: 'monday', expires: past }, where: 'Hidden' },
+    { name: 'expiring this second', task: { expires: now }, where: 'Hidden' },
+  ];
+  tasks.forEach(item => {
+    const sits = folder.entries.filter(entry => filterOf(entry.filter)(item.task || {}, now)).map(entry => entry.title);
+    need(problems, sits.join() === item.where, 'a task ' + item.name + ' should be in ' + item.where + ' only. It is in: ' + (sits.join() || 'no list'));
+  });
+
+  return problems;
+}
+
 async function main() {
   const folder = makeSandbox();
   try {
@@ -4178,6 +4333,7 @@ async function main() {
     world.actionsSource = fs.readFileSync(path.join(here, 'actions.js'), 'utf8');
     world.baseCss = fs.readFileSync(path.join(dashboardFolder, 'base.css'), 'utf8');
     world.noteField = await load(path.join(folder, 'note-field.js'));
+    world.showOnTvInput = await load(path.join(folder, 'show-on-tv-input.js'));
     world.statusInput = await load(path.join(folder, 'status-input.js'));
     world.panelOrderInput = await load(path.join(folder, 'panel-order-input.js'));
     world.panelOrder = await load(path.join(dashboardFolder, 'core', 'panel-order.js'));
@@ -4249,6 +4405,7 @@ async function main() {
   check('the night times, the speaker wait, the overrun and the booking close time are hidden, keep their starting values and are not read by the dashboard', checkFixedValues);
   check('every theme and overlay is complete and readable (tools/check-themes.mjs)', checkThemeGuard);
   check('every seasonal pack is complete, and draws only in the empty places (tools/check-seasons.mjs)', checkSeasonGuard);
+  check('a task has a source, a priority and Show on TV, one from the board is read only except Show on TV, and the Tasks folder holds every task once', checkBoardTasks);
 
   process.exitCode = report() > 0 ? 1 : 0;
 }
