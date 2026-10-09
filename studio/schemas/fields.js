@@ -91,10 +91,11 @@ export function titleOf(choices, value) {
 }
 
 // Puts Hidden or Expired in front of a list line, so an editor can see at a
-// glance which items are not on the screen
-export function subtitleFor(text, item) {
+// glance which items are not on the screen. A calendar filter hides events
+// rather than showing anything, so its list says Off where the others say Hidden.
+export function subtitleFor(text, item, hiddenWord = 'Hidden') {
   let note = '';
-  if (item.show === false) note = 'Hidden';
+  if (item.show === false) note = hiddenWord;
   else if (item.expires && new Date(item.expires) < new Date()) note = 'Expired';
 
   return [note, text].filter(Boolean).join(' · ');

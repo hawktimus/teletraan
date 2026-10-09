@@ -90,10 +90,14 @@ export default defineType({
   preview: {
     select: { title: 'name', lead: 'lead', members: 'members', spotlight: 'spotlight', show: 'show', expires: 'expires' },
     prepare(item) {
+      // the Team Leads panel shows the lead, with the department at the right end, or the department and [lead]
+      const lead = typeof item.lead === 'string' ? item.lead.trim() : '';
+      const department = typeof item.title === 'string' ? item.title.trim() : '';
+      const role = lead === '' ? '[lead]' : department === '' ? 'Lead' : department + ' lead';
       const count = Array.isArray(item.members) ? item.members.length : 0;
       const members = count === 1 ? '1 member' : count > 1 ? count + ' members' : '';
-      const text = [item.lead, members, item.spotlight ? 'In the spotlight' : ''].filter(Boolean).join(' · ');
-      return { title: item.title || 'Team lead with no name', subtitle: subtitleFor(text, item) };
+      const text = [role, members, item.spotlight ? 'In the spotlight' : ''].filter(Boolean).join(' · ');
+      return { title: lead || department || 'Team lead with no name', subtitle: subtitleFor(text, item) };
     },
   },
 });

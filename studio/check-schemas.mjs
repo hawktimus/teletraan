@@ -3340,25 +3340,24 @@ function checkMeetingDays() {
   need(problems, (type.orderings || []).some(item => item.by && item.by[0].field === 'firstSlotAt' && item.by[0].direction === 'asc'), 'presentationDay needs an ordering by firstSlotAt, soonest first');
   checkPlainMessages('presentationDay', problems);
 
-  // The list line, in New York time: the day, the first and last talk, and how many slots fit from one to the other
-  const line = (firstAt, lastAt, minutes, open) => type.preview.prepare({ first: firstAt, last: lastAt, minutes: minutes, open: open });
+  // The list line, in New York time: the day, then the first and last talk
+  const line = (firstAt, lastAt, open) => type.preview.prepare({ first: firstAt, last: lastAt, open: open });
   const first = '2026-10-08T18:45:00.000Z';
   const last = '2026-10-08T20:45:00.000Z';
   [
-    [line(first, last, 15).title, 'Thu Oct 8, 2:45 PM to 4:45 PM - 9 talks'],
-    [line(first, last, undefined).title, 'Thu Oct 8, 2:45 PM to 4:45 PM - 9 talks'],
-    [line(first, last, 20).title, 'Thu Oct 8, 2:45 PM to 4:45 PM - 7 talks'],
-    [line(first, '2026-10-08T20:50:00.000Z', 15).title, 'Thu Oct 8, 2:45 PM to 4:50 PM - 9 talks'],
-    [line(first, first, 15).title, 'Thu Oct 8, 2:45 PM to 2:45 PM - 1 talk'],
-    [line(first, '2026-10-08T17:45:00.000Z', 15).title, 'Thu Oct 8, 2:45 PM to 1:45 PM'],
-    [line(first, undefined, 15).title, 'Thu Oct 8, 2:45 PM'],
-    [line('2026-10-08T16:30:00.000Z', undefined, 15).title, 'Thu Oct 8, 12:30 PM'],
-    [line('2026-10-08T04:05:00.000Z', undefined, 15).title, 'Thu Oct 8, 12:05 AM'],
-    [line(undefined, last, 15).title, 'Meeting day with no times'],
-  ].forEach(entry => need(problems, entry[0] === entry[1], 'the meeting day list should read "' + entry[1] + '", it reads "' + entry[0] + '"'));
+    [line(first, last), 'Thu Oct 8', '2:45 PM to 4:45 PM'],
+    [line(first, '2026-10-08T20:50:00.000Z'), 'Thu Oct 8', '2:45 PM to 4:50 PM'],
+    [line(first, first), 'Thu Oct 8', '2:45 PM'],
+    [line(first, '2026-10-08T17:45:00.000Z'), 'Thu Oct 8', '2:45 PM to 1:45 PM'],
+    [line(first, undefined), 'Thu Oct 8', '2:45 PM'],
+    [line('2026-10-08T16:30:00.000Z', undefined), 'Thu Oct 8', '12:30 PM'],
+    [line('2026-10-08T04:05:00.000Z', undefined), 'Thu Oct 8', '12:05 AM'],
+    [line(undefined, last), 'Meeting day with no times', ''],
+  ].forEach(entry => need(problems, entry[0].title === entry[1] && entry[0].subtitle === entry[2], 'the meeting day list should read "' + entry[1] + '" then "' + entry[2] + '", it reads "' + entry[0].title + '" then "' + entry[0].subtitle + '"'));
 
-  need(problems, line(first, last, 15, false).subtitle === 'Closed for booking', 'the meeting day list should say Closed for booking when the day is not open');
-  need(problems, line(first, last, 15, true).subtitle === '' && line(first, last, 15, undefined).subtitle === '', 'the meeting day list should say nothing more when the day is open');
+  need(problems, line(first, last, false).subtitle === 'Closed for booking · 2:45 PM to 4:45 PM', 'the meeting day list should say Closed for booking before the times when the day is not open');
+  need(problems, line(undefined, undefined, false).subtitle === 'Closed for booking', 'the meeting day list should say Closed for booking even with no times');
+  need(problems, line(first, last, true).subtitle === '2:45 PM to 4:45 PM' && line(first, last, undefined).subtitle === '2:45 PM to 4:45 PM', 'the meeting day list should say nothing more when the day is open');
   return problems;
 }
 
@@ -3504,19 +3503,20 @@ function checkPresentations() {
   need(problems, (type.orderings || []).some(item => item.by && item.by[0].field === 'start' && item.by[0].direction === 'asc'), 'presentation needs an ordering by start, soonest first');
   checkPlainMessages('presentation', problems);
 
-  // The list line, in New York time: Thu 2:45 PM - Alex - the title. A talk that is not scheduled says so under it.
+  // The list line, in New York time: the title, then when the talk starts and the first name. A talk that is not scheduled says so first.
   const talk = fields => type.preview.prepare(Object.assign({ start: '2026-10-08T18:45:00.000Z', name: 'Alex', topic: '[Talk title]' }, fields));
   [
-    [talk({}).title, 'Thu 2:45 PM - Alex - [Talk title]'],
-    [talk({ start: '2026-10-08T16:30:00.000Z' }).title, 'Thu 12:30 PM - Alex - [Talk title]'],
-    [talk({ start: '2026-10-08T04:05:00.000Z' }).title, 'Thu 12:05 AM - Alex - [Talk title]'],
-    [talk({ start: undefined }).title, 'Alex - [Talk title]'],
-    [talk({ topic: undefined }).title, 'Thu 2:45 PM - Alex'],
-    [talk({ status: 'scheduled' }).subtitle, ''],
-    [talk({ subteam: 'Build' }).subtitle, 'Build'],
-    [talk({ status: 'cancelled', subteam: 'Build' }).subtitle, 'Cancelled · Build'],
-    [talk({ status: 'done' }).subtitle, 'Done'],
-    [talk({ status: 'skipped' }).subtitle, 'Skipped'],
+    [talk({}).title, '[Talk title]'],
+    [talk({ topic: undefined }).title, 'Talk with no title'],
+    [talk({}).subtitle, 'Thu Oct 8, 2:45 PM · Alex'],
+    [talk({ start: '2026-10-08T16:30:00.000Z' }).subtitle, 'Thu Oct 8, 12:30 PM · Alex'],
+    [talk({ start: '2026-10-08T04:05:00.000Z' }).subtitle, 'Thu Oct 8, 12:05 AM · Alex'],
+    [talk({ start: undefined }).subtitle, 'Alex'],
+    [talk({ status: 'scheduled' }).subtitle, 'Thu Oct 8, 2:45 PM · Alex'],
+    [talk({ subteam: 'Build' }).subtitle, 'Thu Oct 8, 2:45 PM · Alex · Build'],
+    [talk({ status: 'cancelled', subteam: 'Build' }).subtitle, 'Cancelled · Thu Oct 8, 2:45 PM · Alex · Build'],
+    [talk({ status: 'done' }).subtitle, 'Done · Thu Oct 8, 2:45 PM · Alex'],
+    [talk({ status: 'skipped' }).subtitle, 'Skipped · Thu Oct 8, 2:45 PM · Alex'],
   ].forEach(entry => need(problems, entry[0] === entry[1], 'the presentation list should read "' + entry[1] + '", it reads "' + entry[0] + '"'));
   return problems;
 }
@@ -3590,13 +3590,15 @@ function checkTeams() {
   need(problems, (type.orderings || []).some(item => item.by && item.by[0].field === 'name' && item.by[0].direction === 'asc'), 'team needs an ordering by name, A to Z');
   checkPlainMessages('team', problems);
 
-  // The list line: the name, then Not active, the code and the number
-  const line = fields => type.preview.prepare(Object.assign({ title: 'Hawktimus Prime', code: 'prime', number: '3229' }, fields));
+  // The list line: the name, then the number and Mirror on or off. A team that is not active says Hidden first.
+  const line = fields => type.preview.prepare(Object.assign({ title: 'Hawktimus Prime', number: '3229', mirror: false }, fields));
   [
-    [line({}).subtitle, 'prime · 3229'],
-    [line({ active: true }).subtitle, 'prime · 3229'],
-    [line({ active: false }).subtitle, 'Not active · prime · 3229'],
-    [line({ number: undefined }).subtitle, 'prime'],
+    [line({}).subtitle, '3229 · Mirror off'],
+    [line({ active: true }).subtitle, '3229 · Mirror off'],
+    [line({ mirror: true }).subtitle, '3229 · Mirror on'],
+    [line({ mirror: undefined }).subtitle, '3229 · Mirror off'],
+    [line({ active: false }).subtitle, 'Hidden · 3229 · Mirror off'],
+    [line({ number: undefined }).subtitle, 'Mirror off'],
     [type.preview.prepare({}).title, 'Team with no name'],
   ].forEach(entry => need(problems, entry[0] === entry[1], 'the team list should read "' + entry[1] + '", it reads "' + entry[0] + '"'));
   need(problems, type.preview.select && type.preview.select.media === 'logo', 'the team list should show each logo (select media: logo)');
@@ -4229,16 +4231,17 @@ function checkBoardTasks() {
     need(problems, field.readOnly(pinned) === false && field.readOnly(older) === false && field.readOnly({ document: undefined }) === false && field.readOnly({}) === false, where + ' should be editable on a pinned task, on one with no source and on a new one');
   });
 
-  // a list line says Board or Pinned, the priority when there is one, and Hidden when the task is off the TV
+  // a list line says the subteam and the status, the priority when there is one, Board or Pinned, and Hidden when the task is off the TV
   const preview = typeByName('task').preview;
   const line = fields => preview.prepare(Object.assign({ title: 'Wire the robot', status: 'in-progress', subteam: 'Build' }, fields)).subtitle;
-  need(problems, line({ source: 'monday' }) === 'In progress · Build · Board', 'a task from the board should read "In progress · Build · Board", it reads "' + line({ source: 'monday' }) + '"');
-  need(problems, line({ source: 'manual' }) === 'In progress · Build · Pinned', 'a pinned task should read "In progress · Build · Pinned", it reads "' + line({ source: 'manual' }) + '"');
-  need(problems, line({}) === 'In progress · Build · Pinned', 'a task with no source should read as pinned');
-  need(problems, line({ priority: 'high', source: 'monday', contact: 'Sam', place: 'Classroom' }) === 'In progress · Build · High priority · Board · Sam · Classroom', 'the priority should come before Board or Pinned, then the contact and the place, it reads "' + line({ priority: 'high', source: 'monday', contact: 'Sam', place: 'Classroom' }) + '"');
-  need(problems, line({ priority: 'urgent' }) === 'In progress · Build · Pinned', 'a priority that is not high, medium or low should not be shown');
-  need(problems, line({ showOnTv: false }) === 'Hidden · In progress · Build · Pinned', 'a task kept off the TV should read as hidden, it reads "' + line({ showOnTv: false }) + '"');
-  need(problems, line({ showOnTv: true }) === 'In progress · Build · Pinned' && line({ show: false }) === 'Hidden · In progress · Build · Pinned', 'Show on TV on should change nothing, and Show on screen off should still read as hidden');
+  need(problems, line({ source: 'monday' }) === 'Build · In progress · Board', 'a task from the board should read "Build · In progress · Board", it reads "' + line({ source: 'monday' }) + '"');
+  need(problems, line({ source: 'manual' }) === 'Build · In progress · Pinned', 'a pinned task should read "Build · In progress · Pinned", it reads "' + line({ source: 'manual' }) + '"');
+  need(problems, line({}) === 'Build · In progress · Pinned', 'a task with no source should read as pinned');
+  need(problems, line({ priority: 'high', source: 'monday', contact: 'Sam', place: 'Classroom' }) === 'Build · In progress · High priority · Board · Sam · Classroom', 'the priority should come before Board or Pinned, then the contact and the place, it reads "' + line({ priority: 'high', source: 'monday', contact: 'Sam', place: 'Classroom' }) + '"');
+  need(problems, line({ priority: 'urgent' }) === 'Build · In progress · Pinned', 'a priority that is not high, medium or low should not be shown');
+  need(problems, line({ subteam: undefined }) === 'In progress · Pinned', 'a task with no subteam should start with its status');
+  need(problems, line({ showOnTv: false }) === 'Hidden · Build · In progress · Pinned', 'a task kept off the TV should read as hidden, it reads "' + line({ showOnTv: false }) + '"');
+  need(problems, line({ showOnTv: true }) === 'Build · In progress · Pinned' && line({ show: false }) === 'Hidden · Build · In progress · Pinned', 'Show on TV on should change nothing, and Show on screen off should still read as hidden');
   need(problems, preview.select.source === 'source' && preview.select.priority === 'priority' && preview.select.showOnTv === 'showOnTv', 'the preview should select source, priority and showOnTv');
 
   // the input: a task with no value is drawn as on, nothing is written on opening, a click writes the switch

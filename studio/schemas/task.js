@@ -135,7 +135,7 @@ export default defineType({
     select: { title: 'title', subteam: 'subteam.name', status: 'status', contact: 'contact', place: 'location.name', source: 'source', priority: 'priority', showOnTv: 'showOnTv', show: 'show', expires: 'expires' },
     prepare(item) {
       const priority = titleOf(priorities, item.priority);
-      const text = [titleOf(statuses, item.status), item.subteam, priority ? priority + ' priority' : '', item.source === 'monday' ? 'Board' : 'Pinned', item.contact, item.place].filter(Boolean).join(' · ');
+      const text = [item.subteam, titleOf(statuses, item.status), priority ? priority + ' priority' : '', item.source === 'monday' ? 'Board' : 'Pinned', item.contact, item.place].filter(Boolean).join(' · ');
       // a task kept off the TV is hidden, however it is listed
       const hidden = item.show === false || item.showOnTv === false;
       return { title: item.title || 'Task with no name', subtitle: subtitleFor(text, { show: hidden ? false : item.show, expires: item.expires }) };

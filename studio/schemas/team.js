@@ -9,7 +9,7 @@
 // colors that work until they are changed.
 
 import { defineType, defineField } from 'sanity';
-import { tooLong, byOrder, aToZ } from './fields.js';
+import { tooLong, byOrder, aToZ, subtitleFor } from './fields.js';
 
 // A hex color: # and six characters from 0 to 9 and A to F
 const hexColor = /^#[0-9A-Fa-f]{6}$/;
@@ -113,10 +113,11 @@ export default defineType({
   ],
   orderings: [byOrder, aToZ('name')],
   preview: {
-    select: { title: 'name', code: 'code', number: 'number', active: 'active', media: 'logo' },
+    select: { title: 'name', number: 'number', mirror: 'mirror', active: 'active', media: 'logo' },
     prepare(item) {
-      const text = [item.active === false ? 'Not active' : '', item.code, item.number].filter(Boolean).join(' · ');
-      return { title: item.title || 'Team with no name', subtitle: text, media: item.media };
+      const text = [item.number, item.mirror ? 'Mirror on' : 'Mirror off'].filter(Boolean).join(' · ');
+      // a team that is not active is left out of the rotation, like an item that is hidden
+      return { title: item.title || 'Team with no name', subtitle: subtitleFor(text, { show: item.active }), media: item.media };
     },
   },
 });

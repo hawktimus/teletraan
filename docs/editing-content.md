@@ -26,6 +26,11 @@ The sidebar is in groups, by how often you touch them. Start here is at the top.
 The group names, such as EVERY MEETING, are headings. Daily Agenda, Tasks and Settings
 are folders: click one and its lines open beside it. Each line has an icon.
 
+A row in a list reads like the TV: the name or text, then what goes with it, such as
+the subteam and status of a task or the time and first name of a talk. Hidden or
+Expired in front of a row means the TV is not showing it, and Off means a calendar
+filter is switched off.
+
 Start here: a short page that says what the screen is and that Publish all is the
 last step of every change. See "The Start here page" below.
 

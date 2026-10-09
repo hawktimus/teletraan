@@ -36,24 +36,6 @@ async function lastTalkFitsDay(value, context) {
   return dayIn(value, zone) === dayIn(first, zone) || 'The last talk must be on the same day as the first talk.';
 }
 
-// The number of slots from the first talk to the last
-function talkCount(first, last, minutes) {
-  const gap = new Date(last) - new Date(first);
-  if (isNaN(gap) || gap < 0 || !(minutes > 0)) return 0;
-  return Math.floor(gap / (minutes * 60 * 1000)) + 1;
-}
-
-// Thu Oct 8, 2:45 PM to 4:45 PM - 9 talks
-function dayLine(item) {
-  const first = clockIn(item.first, fallbackTimeZone);
-  const last = clockIn(item.last, fallbackTimeZone);
-  if (!first) return '';
-
-  const count = talkCount(item.first, item.last, item.minutes || 15);
-  const when = first.weekday + ' ' + first.date + ', ' + first.time + (last ? ' to ' + last.time : '');
-  return count > 0 ? when + ' - ' + count + (count === 1 ? ' talk' : ' talks') : when;
-}
-
 export default defineType({
   name: 'presentationDay',
   title: 'Meeting days',
@@ -106,9 +88,14 @@ export default defineType({
     { title: 'First talk, latest first', name: 'firstSlotLatest', by: [{ field: 'firstSlotAt', direction: 'desc' }] },
   ],
   preview: {
-    select: { first: 'firstSlotAt', last: 'lastSlotAt', minutes: 'slotMinutes', open: 'open' },
+    select: { first: 'firstSlotAt', last: 'lastSlotAt', open: 'open' },
     prepare(item) {
-      return { title: dayLine(item) || 'Meeting day with no times', subtitle: item.open === false ? 'Closed for booking' : '' };
+      const first = clockIn(item.first, fallbackTimeZone);
+      const last = clockIn(item.last, fallbackTimeZone);
+      const closed = item.open === false ? 'Closed for booking' : '';
+      // Thu Oct 8, then 2:45 PM to 4:45 PM
+      const slots = first ? first.time + (last && item.last !== item.first ? ' to ' + last.time : '') : '';
+      return { title: first ? first.weekday + ' ' + first.date : 'Meeting day with no times', subtitle: [closed, slots].filter(Boolean).join(' · ') };
     },
   },
 });
