@@ -16,15 +16,6 @@ export const sanity = {
   apiVersion: '2025-02-19',
 };
 
-// Which content the screen shows, sample or production, is chosen by Content
-// source in Dashboard Settings (the Studio has two buttons for it). This flag
-// is only the fallback: it is used when Dashboard Settings cannot be read,
-// for example the very first start with no internet, and no copy of them was
-// saved on this computer. true shows the sample content in data/sample, false
-// shows what the editors published. If the project ID above is empty there is
-// nothing to read, so the screen always shows the sample.
-export const useSampleContent = false;
-
 // Calendar files and sample content live in one of these folders. The sample
 // folder is kept in git. The live folder is filled in
 // by the Mini and is never committed.
@@ -36,9 +27,6 @@ export const threat = {
   tenseDays: 30,
   criticalDays: 7,
 };
-
-// The Content source setting in Dashboard Settings
-export const contentSources = ['production', 'sample'];
 
 // The Speed setting in Dashboard Settings. Each name is how much longer
 // (more than 1) or shorter (less than 1) everything takes: how long a move
@@ -66,13 +54,13 @@ export const looks = ['polished', 'flat', 'plain'];
 //   minimal    the industrial style, in the bar layout whatever the theme says
 export const styles = ['original', 'cybertron', 'minimal'];
 
-// The Teams tab in Dashboard Settings: which team the screen shows. The Studio copies this list.
+// The team settings in Dashboard Settings (Look tab): which team the screen shows. The Studio copies this list.
 //   prime      the Prime team all the time
 //   nova       the Nova team all the time
 //   alternate  the two teams take turns, alternateMinutes each
 export const teamModes = ['prime', 'nova', 'alternate'];
 
-// The Transitions tab in Dashboard Settings (core/transitions.js chooses from them)
+// The page change settings in Dashboard Settings (Look tab) (core/transitions.js chooses from them)
 //   pageChangeStyles  alternate: the slat change and the mechanical change take turns.
 //                     slat: the old change only. mechanical: the new one only.
 //   frameFinishes     mostly-gold: gold, and silver now and then (silverChance percent of
@@ -81,12 +69,12 @@ export const teamModes = ['prime', 'nova', 'alternate'];
 export const pageChangeStyles = ['alternate', 'slat', 'mechanical'];
 export const frameFinishes = ['mostly-gold', 'alternate', 'gold', 'silver'];
 
-// The Photos tab in Dashboard Settings (core/photos.js chooses from them)
+// The photo settings in Dashboard Settings (Screen tab) (core/photos.js chooses from them)
 //   random        any visible photo, never the same one twice in a row
 //   newest-first  from the newest photo to the oldest, then over again
 export const photoOrders = ['random', 'newest-first'];
 
-// The Night mode tab in Dashboard Settings (core/night.js and core/night-screen.js)
+// The night mode settings in Dashboard Settings (Advanced tab) (core/night.js and core/night-screen.js)
 //   nightStyles  bounce: the logo drifts round the black screen. black: only black.
 //   nightSpeeds  the seconds the logo takes to cross the screen sideways (across) and
 //                top to bottom (down), one crossing each way. Both are whole seconds and
@@ -116,47 +104,39 @@ export const limits = {
   nameDuration: { min: 0.5, max: 10 },
   crtEvery: { min: 0, shortest: 30, max: 3600 },
   crtDuration: { min: 0.5, max: 10 },
-  // The Logo tab. The hawk lasts from 6 seconds (quick but clear) to 30.
+  // The logo settings. The hawk lasts from 6 seconds (quick but clear) to 30.
   logoSpinEvery: { min: 0, shortest: 10, max: 3600 },
   logoSpinDuration: { min: 0.5, max: 10 },
   logoHawkEvery: { min: 0, shortest: 10, max: 3600 },
   logoHawkDuration: { min: 6, max: 30 },
-  // The Transitions tab. The frame breaks apart in this many seconds and
+  // The page change settings. The frame breaks apart in this many seconds and
   // rebuilds in the same again: below 0.3 the pieces cannot be followed, above 2
   // the screen spends more time apart than together.
   breakSeconds: { min: 0.3, max: 2 },
   silverChance: { min: 0, max: 100 },
-  // The Photos tab. Below 6 seconds a photo is gone before it can be looked at.
+  // The photo settings. Below 6 seconds a photo is gone before it can be looked at.
   photoSeconds: { min: 6, max: 120 },
-  // The two size settings in the Photos tab, in percent. 100 is the full size, the largest that
+  // The two size settings of the photo settings, in percent. 100 is the full size, the largest that
   // fits the frames. At 60 a picture is still easy to see from across the room.
   portraitScale: { min: 60, max: 100 },
   photoScale: { min: 60, max: 100 },
-  // The Night mode tab. At 120 pixels the logo is still clear from across the room, and at 800 it
+  // The night mode settings. At 120 pixels the logo is still clear from across the room, and at 800 it
   // still fits the 1080 pixel height with the number under it.
   nightLogoWidth: { min: 120, max: 800 },
   // The Test the screen page. A step shorter than 5 seconds is gone before it can be seen, and 5 minutes
   // is longer than anyone shows a demo.
   demoSeconds: { min: 5, max: 300 },
-  // The Hidden tab. A chance is a percent of the page changes, and 0 is never.
+  // The hidden transition settings. A chance is a percent of the page changes, and 0 is never.
   desktopChance: { min: 0, max: 100 },
   redEyesChance: { min: 0, max: 100 },
-  // The Presentations tab, in minutes. Waiting over 15 minutes for a speaker holds up the next talk, and 10 minutes
-  // over is the most a talk may run past its slot. A grace of 0 ends it when the slot ends.
-  noShowMinutes: { min: 1, max: 15 },
-  graceMinutes: { min: 0, max: 10 },
   // The length of one booked talk, in minutes (the Presentations list in the Studio)
   talkMinutes: { min: 5, max: 30 },
-  // The Teams tab, in minutes: how long each team stays on the screen in Alternate mode
+  // The team settings, in minutes: how long each team stays on the screen in Alternate mode
   alternateMinutes: { min: 1, max: 30 },
 };
 
 // Used for anything the editors have not filled in yet
 export const defaultSettings = {
-  // production shows the editors' content. sample shows the content in
-  // data/sample until switchBackAt, a time like 2027-01-09T12:00 (or empty).
-  contentSource: 'production',
-  switchBackAt: '',
   motion: 'full',
   speed: 'normal',
   frameMetal: 'gold',
@@ -175,7 +155,7 @@ export const defaultSettings = {
   // seconds of its own, or a ticker with its own, uses those instead. The
   // rows below have none, so they follow this.
   pageSeconds: 20,
-  // The Logo tab in the Studio. logoAnimations is the master switch: off, and
+  // The logo settings in the Studio (Look tab). logoAnimations is the master switch: off, and
   // nothing in the logo moves (the entrance, the spin, the flying hawk and the
   // name effect), whatever the switches below say. Every animation that plays
   // now and then has a switch, the seconds between plays (0 is never) and the
@@ -202,7 +182,7 @@ export const defaultSettings = {
   nameTransform: true,
   nameEvery: 300,
   nameDuration: 1.43,
-  // The Transitions tab in the Studio: how a page change looks.
+  // The page change settings in the Studio (Look tab): how a page change looks.
   //   pageChangeStyle  see pageChangeStyles above. The first change is the mechanical one.
   //   breakSeconds     how long the frame takes to break apart in the mechanical change, and the
   //                    same again to rebuild, at normal speed
@@ -213,7 +193,7 @@ export const defaultSettings = {
   breakSeconds: 0.6,
   frameFinish: 'mostly-gold',
   silverChance: 10,
-  // The Photos tab in the Studio. The photos themselves are Photo documents
+  // The photo settings in the Studio (Screen tab). The photos themselves are Photo documents
   // (core/photos.js shows the visible ones).
   //   photoOrder    see photoOrders above
   //   photoSeconds  how long the Photo panel stays, when its row in the Panels
@@ -227,9 +207,9 @@ export const defaultSettings = {
   photoSeconds: 16,
   portraitScale: 100,
   photoScale: 100,
-  // The Night mode tab in the Studio: the screensaver. The signal is never turned off. From
-  // nightStart to nightEnd (24 hour time, in the time zone of the Look page, and it may run past
-  // midnight) the screen is black with the team logo and the team number under it.
+  // The night mode settings in the Studio (Advanced tab): the screensaver. The signal is never turned off. From
+  // 23:30 to 11:30 (the fixed times in core/constants.js, in the time zone of the Look page) the screen is
+  // black with the team logo and the team number under it.
   //   nightEnabled    on, because a wall display left on all night needs it
   //   nightStyle      see nightStyles above
   //   nightLogoWidth  how wide the logo is, in pixels. The number under it is a fixed size.
@@ -237,12 +217,10 @@ export const defaultSettings = {
   //   nightPreview    shows night mode now, whatever the time and the switch above say
   nightEnabled: true,
   nightStyle: 'bounce',
-  nightStart: '23:30',
-  nightEnd: '11:30',
   nightLogoWidth: 300,
   nightSpeed: 'normal',
   nightPreview: false,
-  // The Hidden tab in the Studio: two rare transitions that replace a normal page change of the large
+  // The hidden transition settings in the Studio (Advanced tab): two rare transitions that replace a normal page change of the large
   // panel (core/hidden.js, core/hidden-transitions.js and core/hidden-run.js, docs/hidden-transitions.md).
   //   hiddenEnabled  the master switch. Off, neither plays, not even when it is pushed from the Studio.
   //   desktopChance  the percent of page changes that play the desktop reveal. 0 is never.
@@ -256,17 +234,14 @@ export const defaultSettings = {
   redEyesChance: 1,
   hiddenRequest: { kind: '', requestedAt: '' },
   // The Presentations tab in the Studio: talks that the screen shows full screen from the clicker.
-  //   presentationsEnabled  the switch. Off, the screen never starts a talk.
-  //   noShowMinutes         how long the title card waits for the first key press before the talk is skipped
-  //   graceMinutes          how long a talk may run past its slot before it is ended
+  //   presentationsEnabled  the switch. Off, the screen never starts a talk. How long the title card waits for the
+  //                         speaker and how long a talk may run past its slot are fixed (core/constants.js).
   //   presentationTestRequest  the last click of the "Run presentation test" button (core/presentation-test.js). requestedAt
   //                            is the time it was clicked and is empty until it has been. The screen plays the sample talk
   //                            once, for a request that is less than demoWindowSeconds old and is not the one it handled before.
   presentationsEnabled: true,
-  noShowMinutes: 5,
-  graceMinutes: 5,
   presentationTestRequest: { requestedAt: '' },
-  // The Teams tab in the Studio: which team the screen shows.
+  // The team settings in the Studio (Look tab): which team the screen shows.
   //   teamMode          see teamModes above. Prime only to start with, so a screen with no team
   //                     documents looks as it always has.
   //   alternateMinutes  with alternate, how long each team stays before the screen swaps to the other
@@ -291,6 +266,9 @@ export const defaultSettings = {
     rollout: '',
   },
   alert: { on: false, headline: '', message: '', until: '' },
+  // The panels that come and go. Dashboard Settings keeps their order as one list, rotation.order, which
+  // starts empty. When it is empty the screen builds it from these two lists, the large panels and the
+  // small panels (core/panel-order.js). A row with no seconds follows pageSeconds.
   rotation: {
     grid1: [
       { panel: 'tasks', show: true },

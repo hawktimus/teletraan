@@ -112,25 +112,27 @@ dashboard/config.js. Give it a one-line description, a starting value
 it is a switch, one of a few words or a number in a range, also add it to
 `fixSettingValues` in dashboard/core/content.js, with its limits in `limits` in
 config.js, so a missing or silly value becomes the default instead of reaching
-a panel. The timing of the logo animations and the name effect (the Logo tab,
-all in studio/schemas/settingsLogo.js), of the screen glitch (the Screen
-tab), of night mode (the Night mode tab, all in
-studio/schemas/settingsNight.js) and of the hidden transitions (the Hidden tab, all in
+a panel. The timing of the logo animations and the name effect (in the Look
+tab, all in studio/schemas/settingsLogo.js), of the screen glitch (the Screen
+tab), of night mode (in the Advanced tab, all in
+studio/schemas/settingsNight.js) and of the hidden transitions (in the Advanced tab, all in
 studio/schemas/settingsHidden.js, docs/hidden-transitions.md) is done this way. So are the switch and the two waits of the Presentations tab, all in
-studio/schemas/settingsPresentations.js. So are the mode and the minutes of the Teams tab, both in
+studio/schemas/settingsPresentations.js. So are the mode and the minutes of Alternate in the Look tab, both in
 studio/schemas/settingsTeams.js. The lists of panels and announcements have their own
 files, settingsRotation.js and settingsAnnouncements.js. A new field inside one
 of those two lists must also be added to normalizeRotation or
 normalizeAnnouncements in dashboard/core/sanity.js, which copy only the fields
 they know.
 
-Content source and Switch back to production at are the exception to "one
-place": the screen asks Sanity for these two first, with its own small query,
-`sourceQuery` in dashboard/core/sanity.js, before it reads anything else. They
-are also in `defaultSettings`, because they are part of the settings document.
-A new setting that decides which content the screen shows would have to be
-added to `sourceQuery` and to `tidySourceSettings` in dashboard/core/source.js.
-An ordinary setting needs neither.
+Which content the screen shows is not a setting. It always shows what the
+editors published, and `?sample=1` on the address shows the sample content for
+that page (dashboard/core/source.js). Content source and Switch back to
+production at are still fields in the schema, hidden, so that nothing saved is
+lost, and the dashboard does not read them.
+
+A field can be hidden the same way when a setting is retired: keep the field in
+the schema with `hidden: true` and a description that says it is not used, and
+take its name out of `defaultSettings` and `fixSettingValues`.
 
 The Look page is a separate document, studio/schemas/theme.js, and its
 starting values are `defaultThemeSettings` in dashboard/config.js. The screen

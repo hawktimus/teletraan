@@ -4,20 +4,19 @@ import { projectId, dataset } from './project.js';
 import { schemaTypes } from './schemas/index.js';
 import { publishAllTool } from './publish-all-tool.js';
 import { structure, settingsType, demoType, singletonTypes } from './structure.js';
-import { useSampleContentAction, useProductionContentAction, useRunDemoAction, useStopDemoAction, playHiddenActions, usePlayAnnouncementsAction, useRunPresentationTestAction, previewActions } from './actions.js';
+import { useRunDemoAction, useStopDemoAction, playHiddenActions, usePlayAnnouncementsAction, useRunPresentationTestAction, previewActions } from './actions.js';
 
 // Dashboard Settings, Look and Test the screen each exist once (singletonTypes in
 // structure.js). Their pages are made the long-standing way, by removing the
 // actions that would copy them or take them away, because Sanity's newer
-// singleton option is still in beta. Dashboard Settings also gets the two
-// buttons that switch the screen between sample and production content, a
-// Play button for each hidden transition, Play announcements, Run
-// presentation test and a Preview button for each look. Test the screen gets
-// Run demo and Stop demo (actions.js).
+// singleton option is still in beta. Dashboard Settings also gets a Play button
+// for each hidden transition, Play announcements, Run presentation test and a
+// Preview button for each look. Test the screen gets Run demo and Stop demo
+// (actions.js).
 const removedFromSingletons = ['delete', 'duplicate', 'unpublish'];
 
 const buttonsOf = {
-  [settingsType]: [useSampleContentAction, useProductionContentAction].concat(playHiddenActions, [usePlayAnnouncementsAction, useRunPresentationTestAction], previewActions),
+  [settingsType]: playHiddenActions.concat([usePlayAnnouncementsAction, useRunPresentationTestAction], previewActions),
   [demoType]: [useRunDemoAction, useStopDemoAction],
 };
 
@@ -28,8 +27,11 @@ function actionsFor(actions, context) {
   return kept.concat(buttonsOf[context.schemaType] || []);
 }
 
+// The Mini writes the status document (schemas/status.js), so nobody adds one by hand
+const writtenByTheMini = ['status'];
+
 function newDocumentChoices(templates) {
-  return templates.filter(template => singletonTypes.indexOf(template.templateId) === -1);
+  return templates.filter(template => singletonTypes.indexOf(template.templateId) === -1 && writtenByTheMini.indexOf(template.templateId) === -1);
 }
 
 export default defineConfig({

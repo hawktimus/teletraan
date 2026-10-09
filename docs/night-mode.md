@@ -1,6 +1,6 @@
 # Night mode
 
-Night mode is the screensaver. Between a start time and an end time the screen
+Night mode is the screensaver. From 11:30 pm to 11:30 am the screen
 shows black with the team logo and the team number under it, and the logo drifts
 round the screen. The picture is never turned off: the Mini keeps sending a
 signal, so the TV stays on and nothing has to wake up in the morning. The
@@ -9,7 +9,7 @@ and power saving of the Mini itself.
 
 ## The settings
 
-They are in Dashboard Settings, in the Night mode tab. The starting values are
+They are in Dashboard Settings, in the Advanced tab. The starting values are
 `defaultSettings` in `dashboard/config.js`, and the Studio fields are all in
 `studio/schemas/settingsNight.js`.
 
@@ -17,8 +17,6 @@ They are in Dashboard Settings, in the Night mode tab. The starting values are
 |-------|--------------|-----------|
 | Use night mode | The switch. Off, the dashboard stays on all night | on |
 | Night style | Bouncing logo, or Blank black (nothing at all) | Bouncing logo |
-| Night starts at | 24 hour time, two digits, such as 23:30 | 23:30 |
-| Night ends at | The same, such as 11:30 | 11:30 |
 | Logo width (pixels) | How wide the logo is, from 120 to 800 | 300 |
 | Bounce speed | Slow, Normal or Fast | Normal |
 | Preview night mode | Shows night mode now, whatever the time | off |
@@ -27,18 +25,25 @@ The switch starts on because this is a wall display that is left running. A
 missing setting in the published page is the starting value, so a Studio that
 has never saved the tab behaves as if it had.
 
+**The times are fixed.** Night starts at 23:30 and ends at 11:30. They are
+`nightStart` and `nightEnd` in `dashboard/core/constants.js`, and nothing in
+Dashboard Settings changes them. The Studio still has the two fields
+(`Night starts at` and `Night ends at`), hidden, with 23:30 and 11:30 in them, so
+a page saved before they were hidden opens and publishes as it did. The screen
+does not read what they hold. To change the times, change the two constants and
+this page.
+
 **The time zone is not a setting here.** Night mode uses the Time zone on the
 Look page (it starts as America/New_York), the one the whole screen already
 uses for dates. One zone for the screen means two settings can never disagree.
 The clock in that zone is read with `Intl.DateTimeFormat`, so the Mini's own
 time zone never matters.
 
-An end time before the start time runs past midnight, so 23:30 to 11:30 is the
-evening and the morning after. Night mode starts at the start time, and the end
-time is the first minute that is no longer night. The same start and end is no
-time at all, and night mode never comes on (Studio warns about it). The change
-of clocks in spring and autumn follows the clock on the wall, so night mode
-starts at 23:30 by that clock on every night of the year.
+The end time is before the start time, so night runs past midnight: 23:30 to
+11:30 is the evening and the morning after. Night mode starts at the start time,
+and the end time is the first minute that is no longer night. The change of
+clocks in spring and autumn follows the clock on the wall, so night mode starts
+at 23:30 by that clock on every night of the year.
 
 ## What you see
 
@@ -67,7 +72,7 @@ a second.
 
 ## Trying it
 
-Turn on "Preview night mode" in the Night mode tab and publish. The screen shows
+Turn on "Preview night mode" in the Advanced tab and publish. The screen shows
 night mode within a few seconds, even if "Use night mode" is off. Turn the
 preview off and publish when you are done.
 
@@ -152,7 +157,7 @@ or an announcement still shows over it. `showNightNow` and `endNightNow` in
   tab).
 - **The corner hit.** `night-spin` and `night-flash` in `dashboard/frame.css`.
 - **When it is night.** `inNightWindow` in `dashboard/core/night.js`, with its
-  tests.
+  tests, and the two times in `dashboard/core/constants.js`.
 
 `node tools/test-night.mjs` runs the checks: midnight, other time zones (it asks
 computers set to other zones too), the days the clocks change, that the logo is

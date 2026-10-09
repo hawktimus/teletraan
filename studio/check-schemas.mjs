@@ -27,6 +27,7 @@ const hexColor = { kind: 'hex' };
 const blockNames = ['headingBlock', 'textBlock', 'statBlock', 'listBlock', 'imageBlock', 'progressBlock', 'countdownBlock'];
 const weekdayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const panelStep = { panel: 'string', show: 'boolean', seconds: number(6, 120) };
+const olderStep = { panel: 'string', show: 'boolean', seconds: 'number' }; // the rows of the hidden older lists have no rules
 
 function withFlags(fields) {
   return Object.assign({}, fields, { show: 'boolean', expires: 'datetime' });
@@ -57,7 +58,6 @@ const contract = {
     firstSlotAt: 'datetime',
     lastSlotAt: 'datetime',
     slotMinutes: number(5, 30),
-    closeMinutesBefore: number(0, 240),
     open: 'boolean',
     team: teamRef,
   },
@@ -141,8 +141,6 @@ const contract = {
     photoScale: number(60, 100),
     nightEnabled: 'boolean',
     nightStyle: 'string',
-    nightStart: 'time',
-    nightEnd: 'time',
     nightLogoWidth: number(120, 800),
     nightSpeed: 'string',
     nightPreview: 'boolean',
@@ -151,8 +149,6 @@ const contract = {
     redEyesChance: number(0, 100),
     hiddenRequest: object({ kind: 'string', requestedAt: 'datetime' }),
     presentationsEnabled: 'boolean',
-    noShowMinutes: number(1, 15),
-    graceMinutes: number(0, 10),
     presentationTestRequest: object({ requestedAt: 'datetime' }),
     teamMode: 'string',
     alternateMinutes: number(1, 30),
@@ -160,7 +156,7 @@ const contract = {
     previewRequest: object({ kind: 'string', requestedAt: 'datetime' }),
     countdown: object({ kickoffLabel: text(12), kickoff: 'datetime', rolloutLabel: text(12), rollout: 'datetime' }),
     alert: object({ on: 'boolean', headline: text(24), message: text(90), until: 'datetime' }),
-    rotation: object({ grid1: rows(panelStep), grid2: rows(panelStep), tickerSeconds: number(6, 120) }),
+    rotation: object({ order: rows(panelStep), grid1: rows(olderStep), grid2: rows(olderStep), tickerSeconds: number(6, 120) }),
     doneDays: 'number',
     safetyDaysSince: 'date',
     crt: object({ on: 'boolean', everySeconds: number(0, 3600), durationSeconds: number(0.5, 10) }),
@@ -206,6 +202,24 @@ const contract = {
   imageBlock: { address: 'url' },
   progressBlock: { label: text(30), percent: number(0, 100) },
   countdownBlock: { label: text(24), target: 'datetime' },
+};
+
+// Fields and types in the Studio that the dashboard never reads, with the reason for each.
+// The notes and the status block store nothing, and the status document is written by the Mini.
+const studioOnlyFields = {
+  'dashboardSettings.miniStatus': 'the status block at the top of the Screen tab. It stores nothing',
+  'dashboardSettings.lookNote': 'the note on the Look tab. It stores nothing',
+  'dashboardSettings.mondayNote': 'the note on the Monday tab. It stores nothing',
+  'dashboardSettings.competitionNote': 'the note on the Competition tab. It stores nothing',
+  'theme.settingsNote': 'the note on the Look page. It stores nothing',
+  'dashboardSettings.nightStart': 'hidden. The screen uses the fixed time in dashboard/core/constants.js',
+  'dashboardSettings.nightEnd': 'hidden. The screen uses the fixed time in dashboard/core/constants.js',
+  'dashboardSettings.noShowMinutes': 'hidden. The screen uses the fixed number in dashboard/core/constants.js',
+  'dashboardSettings.graceMinutes': 'hidden. The screen uses the fixed number in dashboard/core/constants.js',
+  'presentationDay.closeMinutesBefore': 'hidden. The booking script reads it, and the dashboard never does',
+};
+const studioOnlyTypes = {
+  status: 'the Mini writes it for the status block, and the dashboard never reads it',
 };
 
 const itemTypes = ['task', 'plan', 'sponsor', 'tipOrNews', 'subteam', 'person', 'photo', 'customPanel'];
@@ -263,7 +277,9 @@ const pageTypes = ['dashboardSettings', 'theme', 'demo'];
 // Document types that have no line in structure.js, with the reason for each.
 // Types that are only objects inside another document are not documents and
 // are left out of the check without being listed here.
-const notInSidebar = {};
+const notInSidebar = {
+  status: 'the Mini writes it, and Dashboard Settings shows it in the status block at the top of the Screen tab',
+};
 
 // The sidebar titles that people look for by name
 const sidebarTitles = {
@@ -322,6 +338,8 @@ const standIns = {
       // only the names the team input (team-input.js) imports besides useClient: the two patches it writes
       "export const set = value => ({ type: 'set', value: value });",
       "export const unset = () => ({ type: 'unset' });",
+      // the panel order input (panel-order-input.js) reads two lists of the document, which a check puts in globalThis.studioForm
+      "export const useFormValue = path => (globalThis.studioForm || {})[path.join('.')];",
       'export const validateDocument = async () => [];',
       'export const useDocumentOperation = () => ({',
       '  patch: { execute: patches => globalThis.studioCalls.push({ patch: patches }) },',
@@ -335,7 +353,8 @@ const standIns = {
     'package.json': JSON.stringify({ name: 'react', type: 'module', exports: { '.': './index.js' } }),
     'index.js': [
       'export const useState = value => [value, () => {}];',
-      'export const useEffect = () => {};',
+      // writes down the effect, so a check can run it
+      'export const useEffect = effect => { (globalThis.studioEffects = globalThis.studioEffects || []).push(effect); };',
       'export const createElement = (type, props, ...children) => ({ type: type, props: props, children: children });',
     ].join('\n'),
   },
@@ -349,7 +368,7 @@ function iconImportsOf(source) {
 
 function makeSandbox() {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-studio-'));
-  ['schemas', 'structure.js', 'start-here.js', 'calendars-view.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'publish-all.js', 'publish-all-tool.js', 'team-input.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
+  ['schemas', 'structure.js', 'start-here.js', 'calendars-view.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'publish-all.js', 'publish-all-tool.js', 'team-input.js', 'note-field.js', 'status-input.js', 'panel-order-input.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
     fs.cpSync(path.join(here, name), path.join(folder, name), { recursive: true });
   });
   fs.writeFileSync(path.join(folder, 'package.json'), JSON.stringify({ type: 'module' }));
@@ -494,7 +513,7 @@ function compareFields(where, fields, expected, problems) {
     else checkField(where + '.' + name, field, expected[name], problems);
   });
   names.forEach(name => {
-    if (!expected[name]) problems.push(where + '.' + name + ': the dashboard does not read this field');
+    if (!expected[name] && !studioOnlyFields[where + '.' + name]) problems.push(where + '.' + name + ': the dashboard does not read this field');
   });
 }
 
@@ -645,7 +664,7 @@ function checkShape() {
     else problems.push(name + ' is missing from schemas/index.js');
   });
   world.types.forEach(type => {
-    if (!contract[type.name]) problems.push(type.name + ' is a type the dashboard does not read');
+    if (!contract[type.name] && !studioOnlyTypes[type.name]) problems.push(type.name + ' is a type the dashboard does not read');
   });
   return problems;
 }
@@ -838,7 +857,7 @@ function checkSpeed() {
   return problems;
 }
 
-// The Logo tab: the master switch, the entrance, and a switch, seconds between
+// The logo fields: the master switch, the entrance, and a switch, seconds between
 // plays and seconds one play lasts for each animation that repeats. The name
 // effect keeps its old stored names. The section is all in schemas/settingsLogo.js.
 const logoSwitches = ['logoAnimations', 'logoEntrance', 'logoSpin', 'logoHawk', 'nameTransform'];
@@ -846,25 +865,11 @@ const logoNumbers = ['logoSpinEvery', 'logoSpinDuration', 'logoHawkEvery', 'logo
 
 function checkLogoTab(problems) {
   const settings = typeByName('dashboardSettings');
-  const tabs = settings.groups.map(group => group.name);
   const logoFieldNames = logoSwitches.concat(logoNumbers);
 
-  need(problems, tabs.indexOf('effects') === -1, 'the Logo and effects tab (group effects) should be gone');
-  need(problems, settings.groups.filter(group => group.title === 'Logo').length === 1, 'Dashboard Settings should have exactly one tab named Logo');
-  need(problems, settings.groups.filter(group => group.name === 'logo' && group.title === 'Logo').length === 1, 'the Logo tab should be the group logo');
-
-  logoFieldNames.forEach(name => {
-    const field = fieldAt('dashboardSettings.' + name);
-    need(problems, field && field.group === 'logo', name + ' should be in the Logo tab');
-  });
-
-  // Nothing else is in the tab, so deleting settingsLogo.js removes the whole section
-  const others = fieldsIn(settings).filter(field => field.group === 'logo' && logoFieldNames.indexOf(field.name) === -1);
-  need(problems, others.length === 0, 'only the logo and name effect fields belong in the Logo tab, not ' + others.map(field => field.name).join(', '));
-
-  // The master switch is first, and the order in the tab is the order here
-  const inTab = fieldsIn(settings).filter(field => field.group === 'logo').map(field => field.name);
-  need(problems, inTab[0] === 'logoAnimations', 'the master switch logoAnimations should be the first field in the Logo tab');
+  // The master switch is the first of the logo fields. Which tab they are in is checked in checkSettingsTabs.
+  const inOrder = fieldsIn(settings).map(field => field.name).filter(name => logoFieldNames.indexOf(name) !== -1);
+  need(problems, inOrder[0] === 'logoAnimations', 'the master switch logoAnimations should be the first of the logo fields');
 
   const titles = { logoAnimations: 'Logo animations', logoEntrance: 'Entrance', logoSpin: 'Spin', logoHawk: 'Flying hawk', nameTransform: 'Name effect' };
   Object.keys(titles).forEach(name => {
@@ -881,7 +886,7 @@ function checkLogoTab(problems) {
   });
 }
 
-// The Transitions tab: Page change style, Break and rebuild time, Frame finish
+// The page change fields: Page change style, Break and rebuild time, Frame finish
 // and Silver chance. The section is all in schemas/settingsTransitions.js. The
 // number fields and their limits are compared with config.js in checkLookAndTiming.
 const transitionNames = ['pageChangeStyle', 'breakSeconds', 'frameFinish', 'silverChance'];
@@ -896,12 +901,8 @@ function checkTransitionsTab() {
   const settings = typeByName('dashboardSettings');
   const at = name => fieldAt('dashboardSettings.' + name);
 
-  need(problems, settings.groups.filter(group => group.title === 'Transitions').length === 1, 'Dashboard Settings should have exactly one tab named Transitions');
-  need(problems, settings.groups.filter(group => group.name === 'transitions' && group.title === 'Transitions').length === 1, 'the Transitions tab should be the group transitions');
-
-  // Nothing else is in the tab, so deleting settingsTransitions.js removes the whole section
-  const inTab = fieldsIn(settings).filter(field => field.group === 'transitions').map(field => field.name);
-  need(problems, inTab.join() === transitionNames.join(), 'the Transitions tab should hold, in this order: ' + transitionNames.join(', ') + ', not ' + inTab.join(', '));
+  const inOrder = fieldsIn(settings).map(field => field.name).filter(name => transitionNames.indexOf(name) !== -1);
+  need(problems, inOrder.join() === transitionNames.join(), 'the page change fields should come in this order: ' + transitionNames.join(', ') + ', not ' + inOrder.join(', '));
 
   const titles = { pageChangeStyle: 'Page change style', breakSeconds: 'Break and rebuild time', frameFinish: 'Frame finish', silverChance: 'Silver chance (percent)' };
   Object.keys(titles).forEach(name => {
@@ -989,8 +990,6 @@ function checkLookAndTiming() {
     ['nightLogoWidth', 'nightLogoWidth', 300, true],
     ['desktopChance', 'desktopChance', 1, true],
     ['redEyesChance', 'redEyesChance', 1, true],
-    ['noShowMinutes', 'noShowMinutes', 5, true],
-    ['graceMinutes', 'graceMinutes', 5, true],
   ].forEach(entry => {
     const name = entry[0];
     const field = at(name);
@@ -1038,7 +1037,7 @@ function checkLookAndTiming() {
   need(problems, /three quarters/.test(pageWords) && /one and a half/.test(pageWords), 'the pageSeconds description should give the small panel and ticker times');
 
   // Seconds in the lists and on the ticker are optional, and an empty field follows pageSeconds
-  [['rotation.grid1.seconds', 6, 120], ['rotation.grid2.seconds', 6, 120], ['rotation.tickerSeconds', 6, 120]].forEach(entry => {
+  [['rotation.order.seconds', 6, 120], ['rotation.tickerSeconds', 6, 120]].forEach(entry => {
     const field = at(entry[0]);
     const rules = field ? constraintsOf(field) : [];
     const low = constraintNamed(rules, 'min');
@@ -1056,14 +1055,9 @@ function checkLookAndTiming() {
   });
   need(problems, settings.rotation.tickerSeconds === undefined, 'defaultSettings.rotation in config.js should have no tickerSeconds');
 
-  // The tabs: the look settings and the screen glitch sit beside Motion and Speed, the page time
-  // with the lists, and everything the logo does (the name effect too) is in one tab, Logo
-  ['motion', 'speed', 'frameMetal', 'glint', 'crt'].forEach(name => {
-    need(problems, at(name) && at(name).group === 'screen', name + ' should be in the Screen tab');
-  });
+  // The tabs are checked in checkSettingsTabs
   need(problems, at('crt') && at('crt').title === 'Screen glitch', 'crt should be titled Screen glitch');
   checkLogoTab(problems);
-  need(problems, at('pageSeconds') && at('pageSeconds').group === 'panels', 'pageSeconds should be in the Panels tab');
 
   // The sample content carries the new settings, with values the dashboard accepts
   const sample = world.sample.settings;
@@ -1072,8 +1066,7 @@ function checkLookAndTiming() {
   logoSwitches.forEach(name => {
     need(problems, typeof sample[name] === 'boolean', 'the sample settings need ' + name + ', true or false');
   });
-  need(problems, config.contentSources.indexOf(sample.contentSource) !== -1, 'the sample settings need a contentSource of ' + config.contentSources.join(' or '));
-  need(problems, typeof sample.switchBackAt === 'string', 'the sample settings need switchBackAt, empty or a time');
+  need(problems, !('contentSource' in sample) && !('switchBackAt' in sample), 'the sample settings should not carry contentSource or switchBackAt, which the screen ignores');
   ['pageSeconds'].concat(logoNumbers).forEach(name => {
     const limit = config.limits[name];
     need(problems, sample[name] >= limit.min && sample[name] <= limit.max, 'the sample settings need ' + name + ' from ' + limit.min + ' to ' + limit.max);
@@ -1120,7 +1113,7 @@ function checkLookSetting() {
   return problems;
 }
 
-// Style, in the Screen tab. The Studio list is the dashboard's list (the styles in
+// Style, in the Look tab. The Studio list is the dashboard's list (the styles in
 // config.js), in the same order, the starting value is Original, which changes
 // nothing on the screen, and the sample content has a style the dashboard accepts.
 // The dashboard has a layout for the two styles that force one, and the Look page
@@ -1137,7 +1130,7 @@ function checkStyleSetting() {
   need(problems, config.styles.join() === 'original,cybertron,minimal', 'styles in config.js should be original, cybertron and minimal, not ' + config.styles.join());
   need(problems, config.defaultSettings.style === 'original', 'the default style in config.js should be original');
   need(problems, style && style.initialValue === 'original', 'style should start as original');
-  need(problems, style && style.group === 'screen', 'style should be in the Screen tab');
+  need(problems, style && style.group === 'look', 'style should be in the Look tab');
   need(problems, style && style.title === 'Style', 'style should be titled Style');
   need(problems, style && style.type === 'string' && style.options && style.options.layout === 'radio', 'style should be a radio list');
   need(problems, offered.map(item => item.value).join() === config.styles.join(), 'style should offer the same names, in the same order, as styles in config.js: ' + config.styles.join(', '));
@@ -1159,85 +1152,36 @@ function checkStyleSetting() {
   return problems;
 }
 
-// Content source and Switch back to production at. The Studio and
-// dashboard/config.js agree on the choices and the starting value, and the two
-// buttons on the settings page set the field and publish.
+// Content source and Switch back to production at. Both stay in the schema, hidden, so that
+// nothing already saved changes, and the dashboard ignores them: it always shows production,
+// and the sample content is reached with ?sample=1 on its address (dashboard/core/source.js).
+// The Use sample content and Use production content buttons are gone.
 function checkContentSource() {
   const problems = [];
   const config = world.dashboard;
   const at = name => fieldAt('dashboardSettings.' + name);
 
-  const source = at('contentSource');
-  const rules = source ? constraintsOf(source) : [];
-  const allowed = constraintNamed(rules, 'valid');
-  const offered = choicesOf('dashboardSettings.contentSource').map(item => item.value);
-  need(problems, config.contentSources.join() === 'production,sample', 'contentSources in config.js should be production and sample, not ' + config.contentSources.join());
-  need(problems, config.defaultSettings.contentSource === 'production', 'the default contentSource in config.js should be production');
-  need(problems, offered.join() === config.contentSources.join(), 'contentSource should offer the same names as contentSources in config.js: ' + config.contentSources.join(', '));
-  need(problems, source && source.options && source.options.layout === 'radio', 'contentSource should be a radio list');
-  need(problems, constraintNamed(rules, 'required'), 'contentSource should be required');
-  need(problems, allowed && allowed.args[0].join() === config.contentSources.join(), 'contentSource should only allow: ' + config.contentSources.join(', '));
-
-  // The switch back time is optional, starts empty, and is kept to a sensible range
-  const back = at('switchBackAt');
-  const backRules = back ? constraintsOf(back) : [];
-  need(problems, back && !constraintNamed(backRules, 'required'), 'switchBackAt should be optional');
-  need(problems, back && back.initialValue === undefined, 'switchBackAt should start empty');
-  need(problems, constraintNamed(backRules, 'min') && constraintNamed(backRules, 'max'), 'switchBackAt should have a smallest and a largest time');
-  need(problems, config.defaultSettings.switchBackAt === '', 'the default switchBackAt in config.js should be empty');
-  need(problems, back && /optional/i.test(back.description || ''), 'the switchBackAt description should say it is optional');
-
-  const tabs = typeByName('dashboardSettings').groups.map(group => group.name);
-  need(problems, tabs.indexOf('source') !== -1, 'Dashboard Settings should have a tab named source');
   ['contentSource', 'switchBackAt'].forEach(name => {
-    need(problems, at(name) && at(name).group === 'source', name + ' should be in the Content source tab');
+    const field = at(name);
+    need(problems, field, name + ' should stay in the schema, so that a saved value is kept');
+    need(problems, field && field.hidden === true, name + ' should be hidden (hidden: true)');
+    need(problems, field && field.group === 'advanced', name + ' should stay in the Advanced tab');
+    need(problems, !(name in config.defaultSettings), name + ' should not be in defaultSettings in config.js: the dashboard ignores it');
   });
+  need(problems, at('contentSource') && at('contentSource').initialValue === 'production', 'contentSource should still start as production');
+  need(problems, at('switchBackAt') && at('switchBackAt').initialValue === undefined, 'switchBackAt should still start empty');
+  ['contentSource', 'switchBackAt'].forEach(name => need(problems, at(name) && !constraintNamed(constraintsOf(at(name)), 'required'), name + ' should not be required: nobody can fill in a hidden field, and a page saved before it existed must still publish'));
+  need(problems, choicesOf('dashboardSettings.contentSource').map(item => item.value).join() === 'production,sample', 'contentSource should still offer production and sample, so that a saved value stays valid');
+  need(problems, at('contentSource') && /sample=1/.test(at('contentSource').description || ''), 'the contentSource description should say how to see the sample content, with ?sample=1');
+  need(problems, !('contentSources' in config) && !('useSampleContent' in config), 'config.js should have no contentSources and no useSampleContent: the screen shows production unless the address has ?sample=1');
 
-  // The two buttons: plain functions on the settings page and nowhere else
-  const buttons = world.config.document.actions([], { schemaType: 'dashboardSettings' }).slice(0, 2); // the Hidden tab's buttons come after these (checkHiddenTab)
-  const elsewhere = world.config.document.actions([], { schemaType: 'task' });
-  need(problems, elsewhere.length === 0, 'only the settings page should get the content source buttons');
-  if (buttons.length !== 2 || !buttons.every(button => typeof button === 'function')) {
-    return problems.concat('the settings page should start with two actions, written as plain functions');
-  }
-
-  // Each one sets the field and publishes, and is switched off when it has nothing to do
-  const past = '2020-06-01T12:00:00.000Z';
-  const future = '2099-06-01T12:00:00.000Z';
-
-  function press(button, published, draft) {
-    globalThis.studioCalls = [];
-    const props = { id: 'dashboardSettings', type: 'dashboardSettings', published: published, draft: draft || null, onComplete: () => {} };
-    const state = button(props);
-    if (!state.disabled) state.onHandle();
-    return { state: state, calls: globalThis.studioCalls };
-  }
-
-  const toSample = buttons[0];
-  const toProduction = buttons[1];
-  need(problems, toSample({ published: null, draft: null }).label === 'Use sample content', 'the first action should be labelled Use sample content');
-  need(problems, toProduction({ published: null, draft: null }).label === 'Use production content', 'the second action should be labelled Use production content');
-
-  const sampleFromProduction = press(toSample, { contentSource: 'production' });
-  need(problems, JSON.stringify(sampleFromProduction.calls) === JSON.stringify([{ patch: [{ set: { contentSource: 'sample' } }] }, { publish: true }]), 'Use sample content should set contentSource to sample and then publish');
-
-  const productionFromSample = press(toProduction, { contentSource: 'sample', switchBackAt: future });
-  need(problems, JSON.stringify(productionFromSample.calls) === JSON.stringify([{ patch: [{ set: { contentSource: 'production' } }] }, { publish: true }]), 'Use production content should set contentSource to production and then publish');
-
-  const staleTime = press(toSample, { contentSource: 'production', switchBackAt: past });
-  need(problems, JSON.stringify(staleTime.calls[0]) === JSON.stringify({ patch: [{ set: { contentSource: 'sample' } }, { unset: ['switchBackAt'] }] }), 'Use sample content should clear a switch back time that has already passed');
-
-  need(problems, press(toSample, { contentSource: 'sample' }).state.disabled === true, 'Use sample content should be off when the screen is already on the sample');
-  need(problems, press(toSample, { contentSource: 'sample', switchBackAt: future }).state.disabled === true, 'Use sample content should be off while the sample runs to a time in the future');
-  need(problems, press(toSample, { contentSource: 'sample', switchBackAt: past }).state.disabled === false, 'Use sample content should be on when the switch back time has passed');
-  need(problems, press(toProduction, { contentSource: 'sample', switchBackAt: past }).state.disabled === true, 'Use production content should be off when the switch back time has passed');
-  need(problems, press(toProduction, { contentSource: 'production' }).state.disabled === true, 'Use production content should be off when the screen is already on production');
-  need(problems, press(toProduction, null).state.disabled === true, 'Use production content should be off when nothing is published yet');
-  need(problems, press(toProduction, { contentSource: 'production' }, { contentSource: 'production' }).state.disabled === false, 'a draft is something to publish, so the button should be on');
+  // No button switches the content source any more
+  const actions = world.config.document.actions([], { schemaType: 'dashboardSettings' }).map(item => item.action);
+  need(problems, actions.indexOf('useSampleContent') === -1 && actions.indexOf('useProductionContent') === -1, 'the settings page should have no Use sample content and Use production content buttons');
   return problems;
 }
 
-// The Night mode tab (the screensaver): a switch that starts on, a style, a start
+// The night mode fields (the screensaver): a switch that starts on, a style, a start
 // and an end time, the logo width, a speed and a preview switch. The section is
 // all in schemas/settingsNight.js. There is no time zone field: night mode uses
 // the time zone of the Look page, so the descriptions say so. The choices, the
@@ -1249,12 +1193,8 @@ function checkNightTab() {
   const settings = typeByName('dashboardSettings');
   const at = name => fieldAt('dashboardSettings.' + name);
 
-  need(problems, settings.groups.filter(group => group.title === 'Night mode').length === 1, 'Dashboard Settings should have exactly one tab named Night mode');
-  need(problems, settings.groups.filter(group => group.name === 'night' && group.title === 'Night mode').length === 1, 'the Night mode tab should be the group night');
-
-  // Nothing else is in the tab, so deleting settingsNight.js removes the whole section
-  const inTab = fieldsIn(settings).filter(field => field.group === 'night').map(field => field.name);
-  need(problems, inTab.join() === nightNames.join(), 'the Night mode tab should hold, in this order: ' + nightNames.join(', ') + ', not ' + inTab.join(', '));
+  const inOrder = fieldsIn(settings).map(field => field.name).filter(name => nightNames.indexOf(name) !== -1);
+  need(problems, inOrder.join() === nightNames.join(), 'the night mode fields should come in this order: ' + nightNames.join(', ') + ', not ' + inOrder.join(', '));
 
   const titles = {
     nightEnabled: 'Use night mode',
@@ -1285,25 +1225,8 @@ function checkNightTab() {
     need(problems, config.defaultSettings[entry[0]] === entry[2], 'the default ' + entry[0] + ' in config.js should be ' + entry[2]);
   });
 
-  // The times: 23:30 to 11:30 to start with, and required. The pattern is checked by the time kind in the shape table.
-  need(problems, config.defaultSettings.nightStart === '23:30' && config.defaultSettings.nightEnd === '11:30', 'the default night times in config.js should be 23:30 to 11:30');
-  ['nightStart', 'nightEnd'].forEach(name => {
-    need(problems, at(name) && constraintNamed(constraintsOf(at(name)), 'required'), name + ' should be required');
-    need(problems, at(name) && /time zone/i.test(at(name).description || '') && /Look/.test(at(name).description || ''), 'the ' + name + ' description should say that it uses the time zone on the Look page');
-  });
+  // The times are fixed. The two fields are hidden and the screen uses dashboard/core/constants.js (checkFixedValues).
   need(problems, !fieldsIn(settings).some(field => /zone/i.test(field.name)), 'night mode has no time zone field of its own, because it uses the one on the Look page');
-
-  // The same start and end is no time at all, so the end time warns about it, and only warns
-  const endRules = at('nightEnd') ? constraintsOf(at('nightEnd')) : [];
-  const custom = constraintNamed(endRules, 'custom');
-  const next = custom ? endRules[endRules.indexOf(custom) + 1] : null;
-  need(problems, custom && next && next.name === 'warning', 'nightEnd should warn (not refuse) when it is the same as nightStart');
-  if (custom) {
-    const check = custom.args[0];
-    need(problems, typeof check('23:30', { document: { nightStart: '23:30' } }) === 'string', 'nightEnd should warn when it is the same as nightStart');
-    need(problems, check('11:30', { document: { nightStart: '23:30' } }) === true, 'nightEnd should not warn when it differs from nightStart');
-    need(problems, check('11:30', {}) === true && check(undefined, { document: {} }) === true, 'nightEnd should not warn when there is nothing to compare');
-  }
 
   // The logo width is in pixels, and the speed says how often a corner is reached
   const speed = at('nightSpeed');
@@ -1315,13 +1238,12 @@ function checkNightTab() {
   need(problems, config.nightStyles.indexOf(sample.nightStyle) !== -1, 'the sample settings need a nightStyle of ' + config.nightStyles.join(' or '));
   need(problems, Object.keys(config.nightSpeeds).indexOf(sample.nightSpeed) !== -1, 'the sample settings need a nightSpeed of ' + Object.keys(config.nightSpeeds).join(', '));
   need(problems, typeof sample.nightEnabled === 'boolean' && typeof sample.nightPreview === 'boolean', 'the sample settings need nightEnabled and nightPreview as true or false');
-  need(problems, /^([01]\d|2[0-3]):[0-5]\d$/.test(sample.nightStart) && /^([01]\d|2[0-3]):[0-5]\d$/.test(sample.nightEnd), 'the sample settings need nightStart and nightEnd in 24 hour time');
   const width = config.limits.nightLogoWidth;
   need(problems, sample.nightLogoWidth >= width.min && sample.nightLogoWidth <= width.max, 'the sample settings need nightLogoWidth from ' + width.min + ' to ' + width.max);
   return problems;
 }
 
-// The Hidden tab: the master switch, the two chances and the last push, all in
+// The hidden transition fields: the master switch, the two chances and the last push, all in
 // schemas/settingsHidden.js, and one Play button for each hidden transition on the
 // settings page (actions.js). The list of transitions in hidden-transitions.js is a
 // copy of the dashboard's registry, so it is compared here too. The limits and
@@ -1332,12 +1254,8 @@ function checkHiddenTab() {
   const settings = typeByName('dashboardSettings');
   const at = name => fieldAt('dashboardSettings.' + name);
 
-  need(problems, settings.groups.filter(group => group.title === 'Hidden').length === 1, 'Dashboard Settings should have exactly one tab named Hidden');
-  need(problems, settings.groups.filter(group => group.name === 'hidden' && group.title === 'Hidden').length === 1, 'the Hidden tab should be the group hidden');
-
-  // Nothing else is in the tab, so deleting settingsHidden.js removes the whole section
-  const inTab = fieldsIn(settings).filter(field => field.group === 'hidden').map(field => field.name);
-  need(problems, inTab.join() === hiddenNames.join(), 'the Hidden tab should hold, in this order: ' + hiddenNames.join(', ') + ', not ' + inTab.join(', '));
+  const inOrder = fieldsIn(settings).map(field => field.name).filter(name => hiddenNames.indexOf(name) !== -1);
+  need(problems, inOrder.join() === hiddenNames.join(), 'the hidden transition fields should come in this order: ' + hiddenNames.join(', ') + ', not ' + inOrder.join(', '));
 
   const titles = { hiddenEnabled: 'Allow hidden transitions', desktopChance: 'Desktop reveal chance (percent)', redEyesChance: 'Red eyes chance (percent)', hiddenRequest: 'Last push' };
   Object.keys(titles).forEach(name => need(problems, at(name) && at(name).title === titles[name], name + ' should be titled ' + titles[name]));
@@ -1351,7 +1269,6 @@ function checkHiddenTab() {
   Object.keys(registry).forEach(id => {
     const name = registry[id].chanceField;
     const field = at(name);
-    need(problems, field && field.group === 'hidden', name + ' should be in the Hidden tab');
     need(problems, field && /0 is never/.test(field.description || ''), 'the ' + name + ' description should say that 0 is never');
     need(problems, config.limits[name] && config.limits[name].min === 0 && config.limits[name].max === 100, 'limits.' + name + ' in config.js should be 0 to 100');
   });
@@ -1397,9 +1314,9 @@ function checkHiddenTab() {
   const offered = choicesOf('dashboardSettings.hiddenRequest.kind');
   need(problems, offered.map(item => item.title).join() === ids.map(id => registry[id].name).join(), 'hiddenRequest.kind should show the names in the dashboard registry');
 
-  // The Play buttons come after the two content source buttons: one for each transition, plain functions, and only on this page.
+  // The Play buttons come first: one for each transition, plain functions, and only on this page.
   // Play announcements and Run presentation test come after them (checkPlayAnnouncements, checkRunPresentationTest).
-  const buttons = world.config.document.actions([], { schemaType: 'dashboardSettings' }).slice(2, 2 + Object.keys(registry).length);
+  const buttons = world.config.document.actions([], { schemaType: 'dashboardSettings' }).slice(0, Object.keys(registry).length);
   if (buttons.length !== ids.length || !buttons.every(button => typeof button === 'function')) {
     return problems.concat('the settings page should add one Play button for each hidden transition, written as plain functions');
   }
@@ -1450,30 +1367,22 @@ function checkPresentationsTab() {
   const wanted = presentationNames.concat('presentationTestRequest');
   need(problems, inTab.join() === wanted.join(), 'the Presentations tab should hold, in this order: ' + wanted.join(', ') + ', not ' + inTab.join(', '));
 
-  const titles = { presentationsEnabled: 'Run presentations', noShowMinutes: 'Wait for the speaker (minutes)', graceMinutes: 'Overrun allowed (minutes)' };
+  const titles = { presentationsEnabled: 'Run presentations', noShowMinutes: 'Wait for the speaker (minutes)', graceMinutes: 'Overrun allowed (minutes)' }; // the last two are hidden, see checkFixedValues
   Object.keys(titles).forEach(name => need(problems, at(name) && at(name).title === titles[name], name + ' should be titled ' + titles[name]));
 
   // The switch starts on, here and in config.js
   const switchField = at('presentationsEnabled');
   need(problems, switchField && switchField.type === 'boolean' && switchField.initialValue === true && config.defaultSettings.presentationsEnabled === true, 'presentationsEnabled should be a switch that starts on, and so should its default in config.js');
 
-  // The two minutes are whole numbers, 1 to 15 and 0 to 10, and the description gives the range
-  need(problems, sameData(config.limits.noShowMinutes, { min: 1, max: 15 }), 'limits.noShowMinutes in config.js should be 1 to 15');
-  need(problems, sameData(config.limits.graceMinutes, { min: 0, max: 10 }), 'limits.graceMinutes in config.js should be 0 to 10');
-  need(problems, at('noShowMinutes') && /from 1 to 15/.test(at('noShowMinutes').description || ''), 'the noShowMinutes description should give the range, from 1 to 15');
-  need(problems, at('graceMinutes') && /from 0 to 10/.test(at('graceMinutes').description || ''), 'the graceMinutes description should give the range, from 0 to 10');
+  // The two minutes are fixed: the fields are hidden and the screen uses dashboard/core/constants.js (checkFixedValues)
 
   // The sample content carries the settings, with values the dashboard accepts
   const sample = world.sample.settings;
   need(problems, typeof sample.presentationsEnabled === 'boolean', 'the sample settings need presentationsEnabled, true or false');
-  ['noShowMinutes', 'graceMinutes'].forEach(name => {
-    const limit = config.limits[name];
-    need(problems, sample[name] >= limit.min && sample[name] <= limit.max, 'the sample settings need ' + name + ' from ' + limit.min + ' to ' + limit.max);
-  });
   return problems;
 }
 
-// Play announcements: the hidden announceRequest field in the Announcements tab
+// Play announcements: the hidden announceRequest field in the Screen tab
 // (schemas/settingsAnnouncements.js), its starting value in config.js, the button that
 // fills it in (actions.js) and the Demo step that plays the same announcements
 // (the registry in dashboard/core/demo-screens.js and the Studio's copy of it).
@@ -1486,14 +1395,13 @@ function checkPlayAnnouncements() {
 
   // The field: an object with one read only time, hidden from editors, with no starting value of its own
   need(problems, request && request.type === 'object', 'announceRequest should be an object');
-  need(problems, request && request.group === 'announcements', 'announceRequest should be in the Announcements tab');
   need(problems, request && request.hidden === true, 'announceRequest should be hidden from editors (hidden: true)');
   need(problems, request && request.initialValue === undefined, 'announceRequest should have no starting value in the Studio');
   need(problems, request && /Play announcements/.test(request.description || ''), 'the announceRequest description should name the button Play announcements');
   need(problems, time && time.type === 'datetime' && time.readOnly === true, 'announceRequest.requestedAt should be a read only datetime');
   need(problems, time && !constraintNamed(constraintsOf(time), 'required'), 'announceRequest.requestedAt should be optional');
-  const inTab = fieldsIn(settings).filter(field => field.group === 'announcements').map(field => field.name);
-  need(problems, inTab.join() === 'announcements,announceRequest', 'the Announcements tab should hold, in this order: announcements, announceRequest, not ' + inTab.join(', '));
+  const inOrder = fieldsIn(settings).map(field => field.name).filter(name => name === 'announcements' || name === 'announceRequest');
+  need(problems, inOrder.join() === 'announcements,announceRequest', 'the announcements should come before announceRequest, not ' + inOrder.join(', '));
 
   // The starting value is a request with no time, and the sample content never carries a request
   need(problems, sameData(config.defaultSettings.announceRequest, { requestedAt: '' }), 'the default announceRequest in config.js should be a time that is empty');
@@ -1508,8 +1416,8 @@ function checkPlayAnnouncements() {
   // The button comes after the Play buttons of the hidden transitions, and nowhere else. Run presentation test and the Preview buttons are the ones after it.
   const played = Object.keys(world.hiddenRegistry.hiddenTransitions).length;
   const buttons = world.config.document.actions([], { schemaType: 'dashboardSettings' });
-  const button = buttons[2 + played];
-  if (buttons.length !== 4 + played + world.studioPreviews.previews.length || typeof button !== 'function') {
+  const button = buttons[played];
+  if (buttons.length !== 2 + played + world.studioPreviews.previews.length || typeof button !== 'function') {
     return problems.concat('the settings page should have the Play announcements button, a plain function, after the Play buttons of the hidden transitions, and then Run presentation test and the Preview buttons');
   }
   need(problems, world.config.document.actions([], { schemaType: 'demo' }).every(item => item.action !== 'playAnnouncements'), 'only the settings page should get the Play announcements button');
@@ -1563,8 +1471,8 @@ function checkRunPresentationTest() {
   // The button comes after Play announcements and before the Preview buttons, and is on no other page
   const played = Object.keys(world.hiddenRegistry.hiddenTransitions).length;
   const buttons = world.config.document.actions([], { schemaType: 'dashboardSettings' });
-  const button = buttons[3 + played];
-  if (buttons.length !== 4 + played + world.studioPreviews.previews.length || typeof button !== 'function') {
+  const button = buttons[1 + played];
+  if (buttons.length !== 2 + played + world.studioPreviews.previews.length || typeof button !== 'function') {
     return problems.concat('the settings page should have the Run presentation test button, a plain function, after Play announcements and before the Preview buttons');
   }
   need(problems, world.config.document.actions([], { schemaType: 'demo' }).every(item => item.action !== 'runPresentationTest'), 'only the settings page should get the Run presentation test button');
@@ -1644,7 +1552,7 @@ function checkPreviewButtons() {
   need(problems, offered.map(item => item.title).join() === ids.map(id => 'Preview ' + registry[id].name).join(), 'previewRequest.kind should show the names in the dashboard registry, each after the word Preview');
 
   // The buttons come last, one for each preview, as plain functions, and are on no other page
-  const before = 4 + Object.keys(world.hiddenRegistry.hiddenTransitions).length;
+  const before = 2 + Object.keys(world.hiddenRegistry.hiddenTransitions).length;
   const buttons = world.config.document.actions([], { schemaType: 'dashboardSettings' }).slice(before);
   if (buttons.length !== ids.length || !buttons.every(button => typeof button === 'function')) {
     return problems.concat('the settings page should end with one Preview button for each preview, written as plain functions');
@@ -1681,19 +1589,16 @@ function checkPreviewButtons() {
   return problems;
 }
 
-// Show connection status is a switch that starts off, in a Connection tab of
-// its own. The connection status text comes up by itself when Sanity cannot be
-// reached, whatever the switch says (dashboard/core/connection.js).
+// Show connection status is a switch that starts off, in the Advanced tab. The
+// connection status text comes up by itself when Sanity cannot be reached,
+// whatever the switch says (dashboard/core/connection.js).
 function checkConnectionStatus() {
   const problems = [];
   const field = fieldAt('dashboardSettings.showConnectionStatus');
-  const tab = typeByName('dashboardSettings').groups.filter(group => group.name === 'connection')[0];
 
   need(problems, world.dashboard.defaultSettings.showConnectionStatus === false, 'the default showConnectionStatus in config.js should be false');
   need(problems, field && field.type === 'boolean' && field.initialValue === false, 'showConnectionStatus should be a switch that starts off');
   need(problems, field && field.title === 'Show connection status', 'showConnectionStatus should be titled Show connection status');
-  need(problems, field && field.group === 'connection', 'showConnectionStatus should be in the Connection tab');
-  need(problems, tab && tab.title === 'Connection', 'Dashboard Settings should have a tab named Connection (group connection)');
   return problems;
 }
 
@@ -1711,7 +1616,6 @@ function checkStartingValues() {
   }
 
   ['name', 'number', 'school'].forEach(name => expect('team.' + name, team[name]));
-  expect('contentSource', settings.contentSource);
   expect('motion', settings.motion);
   expect('speed', settings.speed);
   expect('frameMetal', settings.frameMetal);
@@ -1720,12 +1624,14 @@ function checkStartingValues() {
   expect('style', settings.style);
   expect('showConnectionStatus', settings.showConnectionStatus);
   expect('pageSeconds', settings.pageSeconds);
-  logoSwitches.concat(logoNumbers, transitionNames, photoNames, nightNames, hiddenNames.slice(0, 3), presentationNames, teamNames).forEach(name => expect(name, settings[name]));
+  const fixedNames = Object.keys(fixedValues).filter(pathText => pathText.startsWith('dashboardSettings.')).map(pathText => pathText.split('.')[1]);
+  logoSwitches.concat(logoNumbers, transitionNames, photoNames, nightNames, hiddenNames.slice(0, 3), presentationNames, teamNames).filter(name => fixedNames.indexOf(name) === -1).forEach(name => expect(name, settings[name]));
   expect('countdown.kickoffLabel', settings.countdown.kickoffLabel);
   expect('countdown.rolloutLabel', settings.countdown.rolloutLabel);
   expect('alert.on', settings.alert.on);
   expect('rotation.grid1', settings.rotation.grid1);
   expect('rotation.grid2', settings.rotation.grid2);
+  expect('rotation.order', world.panelOrder.orderFromLists(settings.rotation));
   expect('rotation.tickerSeconds', settings.rotation.tickerSeconds);
   expect('doneDays', settings.doneDays);
   expect('crt.on', settings.crt.on);
@@ -2070,11 +1976,11 @@ function checkOldTitles() {
 
 function checkSettingsPage() {
   const problems = [];
-  // The content source buttons are added to the settings page after the ones Studio keeps
+  // The buttons are added to the settings page after the ones Studio keeps
   const actions = ['publish', 'discardChanges', 'delete', 'duplicate', 'unpublish'].map(action => ({ action: action }));
   const kept = world.config.document.actions(actions, { schemaType: 'dashboardSettings' }).map(item => item.action).join();
   const others = world.config.document.actions(actions, { schemaType: 'task' }).length;
-  const wanted = 'publish,discardChanges,useSampleContent,useProductionContent,playDesktop,playRedEyes,playAnnouncements,runPresentationTest,previewPrime,previewNova,previewCybertron,previewMinimal,previewNextPack';
+  const wanted = 'publish,discardChanges,playDesktop,playRedEyes,playAnnouncements,runPresentationTest,previewPrime,previewNova,previewCybertron,previewMinimal,previewNextPack';
   if (kept !== wanted) problems.push('the settings page should have these actions: ' + wanted + '. It has: ' + kept);
   if (others !== actions.length) problems.push('other types should keep every action');
 
@@ -2086,9 +1992,9 @@ function checkSettingsPage() {
   const demoActions = world.config.document.actions(actions, { schemaType: 'demo' }).map(item => item.action).join();
   if (demoActions !== 'publish,discardChanges,runDemo,stopDemo') problems.push('the Test the screen page should have these actions: publish,discardChanges,runDemo,stopDemo. It has: ' + demoActions);
 
-  const templates = [{ templateId: 'task' }, { templateId: 'dashboardSettings' }, { templateId: 'theme' }, { templateId: 'demo' }];
+  const templates = [{ templateId: 'task' }, { templateId: 'dashboardSettings' }, { templateId: 'theme' }, { templateId: 'demo' }, { templateId: 'status' }];
   const offered = world.config.document.newDocumentOptions(templates, {}).map(item => item.templateId).join();
-  if (offered !== 'task') problems.push('the New menu should not offer Dashboard Settings, Look or Test the screen');
+  if (offered !== 'task') problems.push('the New menu should not offer Dashboard Settings, Look, Test the screen or the status document');
 
   const named = world.structure.settingsType === 'dashboardSettings' && world.structure.settingsId === 'dashboardSettings';
   need(problems, named, 'structure.js should name the settings type and id dashboardSettings');
@@ -2106,14 +2012,13 @@ function checkSettingsPage() {
   need(problems, /^[a-z0-9]{8,}$/.test(world.config.projectId), 'project.js should hold the Sanity project ID, lowercase letters and digits');
   need(problems, screen.projectId === world.config.projectId, 'dashboard/config.js has project ID "' + screen.projectId + '" but project.js has "' + world.config.projectId + '"');
   need(problems, screen.dataset === world.config.dataset, 'dashboard/config.js has dataset "' + screen.dataset + '" but project.js has "' + world.config.dataset + '"');
-  need(problems, typeof world.dashboard.useSampleContent === 'boolean', 'useSampleContent in dashboard/config.js should be true or false');
   return problems;
 }
 
-// The Photo type and the Photos tab. A photo has a picture (required, images
+// The Photo type and the photo settings. A photo has a picture (required, images
 // only, crop and hotspot on, checked with the contract above), an optional
 // short caption, a credit that is a first name only, a show switch and an
-// optional expiry, and no approval field. The tab has the order and the seconds
+// optional expiry, and no approval field. The settings have the order and the seconds
 // per photo, with the names, limits and starting values of config.js, and the
 // sample content has a photo list the Photo panel can show.
 function checkPhotos() {
@@ -2157,11 +2062,10 @@ function checkPhotos() {
   need(problems, newest, 'photo needs an ordering by _createdAt, newest first');
   need(problems, type.preview && type.preview.select && type.preview.select.media === 'image', 'the photo list should show each picture (select media: image)');
 
-  // The Photos tab holds the two settings, in this order, and nothing else
+  // The four photo settings come in this order
   const settings = typeByName('dashboardSettings');
-  need(problems, settings.groups.filter(group => group.name === 'photos' && group.title === 'Photos').length === 1, 'Dashboard Settings should have one tab named Photos (group photos)');
-  const inTab = fieldsIn(settings).filter(field => field.group === 'photos').map(field => field.name);
-  need(problems, inTab.join() === photoNames.join(), 'the Photos tab should hold, in this order: ' + photoNames.join(', ') + ', not ' + inTab.join(', '));
+  const inOrder = fieldsIn(settings).map(field => field.name).filter(name => photoNames.indexOf(name) !== -1);
+  need(problems, inOrder.join() === photoNames.join(), 'the photo settings should come in this order: ' + photoNames.join(', ') + ', not ' + inOrder.join(', '));
   need(problems, setting('photoOrder') && setting('photoOrder').title === 'Photo order', 'photoOrder should be titled Photo order');
   need(problems, setting('photoSeconds') && setting('photoSeconds').title === 'Seconds per photo', 'photoSeconds should be titled Seconds per photo');
   need(problems, setting('portraitScale') && setting('portraitScale').title === 'Portrait size, percent', 'portraitScale should be titled Portrait size, percent');
@@ -2985,8 +2889,9 @@ function checkMeetingDays() {
   const gap = at('firstSlotAt') ? at('firstSlotAt').description || '' : '';
   need(problems, /gap/.test(gap) && /announcement/.test(gap), 'the presentationDay.firstSlotAt description should tell coaches to leave a gap for the announcement');
 
-  // Whole minutes in a range, with a starting value: [field, starting value, smallest, largest]
-  [['slotMinutes', 15, 5, 30], ['closeMinutesBefore', 30, 0, 240]].forEach(entry => {
+  // Whole minutes in a range, with a starting value: [field, starting value, smallest, largest].
+  // closeMinutesBefore is hidden and is checked in checkFixedValues.
+  [['slotMinutes', 15, 5, 30]].forEach(entry => {
     const field = at(entry[0]);
     const rules = rulesOf(field);
     const low = constraintNamed(rules, 'min');
@@ -3442,9 +3347,9 @@ async function checkTeamInput() {
   return problems;
 }
 
-// The Teams tab of Dashboard Settings: the mode and the minutes of Alternate. The
+// The team fields of Dashboard Settings: the mode and the minutes of Alternate. The
 // choices, the limits and the starting values are the ones in dashboard/config.js.
-// Neither is required, because Dashboard Settings published before the tab existed has
+// Neither is required, because Dashboard Settings published before the fields existed has
 // neither and must still publish, and the screen reads that as Prime only and 5 minutes.
 const teamNames = ['teamMode', 'alternateMinutes'];
 
@@ -3455,12 +3360,8 @@ function checkTeamsTab() {
   const at = name => fieldAt('dashboardSettings.' + name);
   const rulesOf = field => (field ? constraintsOf(field) : []);
 
-  need(problems, settings.groups.filter(group => group.title === 'Teams').length === 1, 'Dashboard Settings should have exactly one tab named Teams');
-  need(problems, settings.groups.filter(group => group.name === 'teams' && group.title === 'Teams').length === 1, 'the Teams tab should be the group teams');
-
-  // Nothing else is in the tab, so deleting settingsTeams.js removes the whole section
-  const inTab = fieldsIn(settings).filter(field => field.group === 'teams').map(field => field.name);
-  need(problems, inTab.join() === teamNames.join(), 'the Teams tab should hold, in this order: ' + teamNames.join(', ') + ', not ' + inTab.join(', '));
+  const inOrder = fieldsIn(settings).map(field => field.name).filter(name => teamNames.indexOf(name) !== -1);
+  need(problems, inOrder.join() === teamNames.join(), 'the team fields should come in this order: ' + teamNames.join(', ') + ', not ' + inOrder.join(', '));
 
   need(problems, at('teamMode') && at('teamMode').title === 'Team mode', 'teamMode should be titled Team mode');
   need(problems, at('alternateMinutes') && at('alternateMinutes').title === 'Minutes for each team', 'alternateMinutes should be titled Minutes for each team');
@@ -3497,6 +3398,143 @@ function checkTeamsTab() {
   const sample = world.sample.settings;
   need(problems, config.teamModes.indexOf(sample.teamMode) !== -1, 'the sample settings need a teamMode of ' + config.teamModes.join(', '));
   need(problems, sample.alternateMinutes >= config.limits.alternateMinutes.min && sample.alternateMinutes <= config.limits.alternateMinutes.max, 'the sample settings need alternateMinutes from ' + config.limits.alternateMinutes.min + ' to ' + config.limits.alternateMinutes.max);
+  return problems;
+}
+
+// The tabs of Dashboard Settings, in order, and the tab of every field. A new field has to be given a
+// tab here. Advanced is the last tab because Studio has no tab that starts folded. Screen opens first.
+// The order of the fields inside a tab is the order of the fields in dashboardSettings.js.
+const settingsTabTitles = ['Screen', 'Look', 'Countdown', 'Calendars', 'Presentations', 'Monday', 'Competition', 'Advanced'];
+const logoNames = logoSwitches.concat(logoNumbers);
+const settingsTabs = {
+  screen: ['miniStatus', 'team', 'motion', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'alert', 'pageSeconds', 'rotation', 'doneDays', 'safetyDaysSince']
+    .concat(photoNames, ['announcements', 'announceRequest']),
+  look: ['lookNote', 'style'].concat(teamNames, logoNames, transitionNames),
+  countdown: ['countdown'],
+  calendars: ['calendars'],
+  presentations: presentationNames.concat('presentationTestRequest'),
+  monday: ['mondayNote'],
+  competition: ['competitionNote'],
+  advanced: nightNames.concat(hiddenNames, ['contentSource', 'switchBackAt', 'showConnectionStatus']),
+};
+
+function checkSettingsTabs() {
+  const problems = [];
+  const settings = typeByName('dashboardSettings');
+  const fields = fieldsIn(settings);
+
+  // The tabs are these eight, in this order, and only Screen is the default
+  need(problems, settings.groups.map(group => group.title).join() === settingsTabTitles.join(), 'Dashboard Settings should have these tabs, in this order: ' + settingsTabTitles.join(', ') + '. It has: ' + settings.groups.map(group => group.title).join(', '));
+  need(problems, settings.groups.map(group => group.name).join() === Object.keys(settingsTabs).join(), 'the tabs should be the groups ' + Object.keys(settingsTabs).join(', '));
+  need(problems, settings.groups.filter(group => group.default === true).map(group => group.name).join() === 'screen', 'Screen should be the one tab that opens first (default: true)');
+
+  // Every field is in the tab the table says, and the table has no field the schema lacks
+  Object.keys(settingsTabs).forEach(tab => {
+    settingsTabs[tab].forEach(name => {
+      const field = fields.filter(item => item.name === name)[0];
+      if (!field) return problems.push(name + ' is in the ' + tab + ' tab in check-schemas.mjs, and Dashboard Settings has no such field');
+      need(problems, field.group === tab, name + ' should be in the ' + tab + ' tab, not ' + field.group);
+    });
+  });
+  const listed = Object.keys(settingsTabs).reduce((all, tab) => all.concat(settingsTabs[tab]), []);
+  fields.forEach(field => need(problems, listed.indexOf(field.name) !== -1, field.name + ' is not in settingsTabs in check-schemas.mjs. Decide which tab it belongs in and add it.'));
+  need(problems, new Set(listed).size === listed.length, 'a field is in two tabs in settingsTabs');
+
+  // The status block and the notes are the first field of their tab
+  const first = tab => fields.filter(field => field.group === tab)[0];
+  need(problems, first('screen') && first('screen').name === 'miniStatus', 'the status block miniStatus should be the first field of the Screen tab');
+  ['look', 'monday', 'competition'].forEach(tab => need(problems, first(tab) && first(tab).name === tab + 'Note', 'the first field of the ' + tab + ' tab should be its note, ' + tab + 'Note'));
+
+  // The fields that leave the form stay in the schema
+  ['contentSource', 'switchBackAt'].forEach(name => need(problems, fieldAt('dashboardSettings.' + name) && fieldAt('dashboardSettings.' + name).hidden === true, name + ' should be hidden but stay in the schema'));
+
+  // The notes store nothing and say one thing each in one line, and the Look tab and the Look page point to each other
+  const notes = ['dashboardSettings.lookNote', 'dashboardSettings.mondayNote', 'dashboardSettings.competitionNote', 'theme.settingsNote'];
+  notes.forEach(pathText => {
+    const field = fieldAt(pathText);
+    need(problems, field && field.type === 'string' && field.readOnly === true && field.title === 'Note', pathText + ' should be a read only string titled Note');
+    need(problems, field && field.initialValue === undefined && !field.validation, pathText + ' should store nothing: no starting value and no rules');
+    need(problems, field && field.components && typeof field.components.field === 'function', pathText + ' should draw itself with a field component (note-field.js)');
+  });
+  const lookNote = fieldAt('dashboardSettings.lookNote');
+  const themeNote = fieldAt('theme.settingsNote');
+  need(problems, lookNote && /Look/.test(lookNote.description || '') && /sidebar/.test(lookNote.description || ''), 'the note on the Look tab should point to Look in the sidebar');
+  need(problems, themeNote && /Dashboard Settings/.test(themeNote.description || '') && /Look tab/.test(themeNote.description || ''), 'the note on the Look page should point to the Look tab of Dashboard Settings');
+  need(problems, fieldsIn(typeByName('theme'))[0].name === 'settingsNote', 'the note should be the first field of the Look page');
+  need(problems, world.noteField.NoteField({ schemaType: { description: 'A line.' } }).children[0] === 'A line.' && world.noteField.NoteField({ schemaType: {} }) === null, 'NoteField should draw the description, and nothing without one');
+
+  // The status block: a read only field with an input of its own that stores nothing
+  const status = fieldAt('dashboardSettings.miniStatus');
+  need(problems, status && status.type === 'string' && status.readOnly === true, 'miniStatus should be a read only string');
+  need(problems, status && status.initialValue === undefined && !status.validation, 'miniStatus should store nothing: no starting value and no rules');
+  need(problems, status && status.components && typeof status.components.input === 'function', 'miniStatus should have an input component (status-input.js)');
+  const source = fs.readFileSync(path.join(here, 'status-input.js'), 'utf8');
+  need(problems, !/onChange|\bset\(|unset\(|patch/.test(source), 'status-input.js should never change the value: no onChange, set, unset or patch');
+  return problems;
+}
+
+// The status document the Mini writes (schemas/status.js, deploy/scripts/status-write.sh) and the block that shows it
+function checkStatusBlock() {
+  const problems = [];
+  const type = typeByName('status');
+  const wanted = ['lastContentSeenAt', 'lastCalendarSyncAt', 'lastSlidesFetchAt', 'lastMondaySyncAt', 'lastFrcSyncAt', 'kioskStartedAt'];
+  const input = world.statusInput;
+
+  need(problems, type && type.type === 'document', 'status should be a document type');
+  need(problems, type && fieldsIn(type).map(field => field.name).join() === wanted.join(), 'status should have these fields, in this order: ' + wanted.join(', '));
+  fieldsIn(type || {}).forEach(field => {
+    need(problems, field.type === 'datetime', 'status.' + field.name + ' should be a datetime');
+    need(problems, !constraintNamed(constraintsOf(field), 'required'), 'status.' + field.name + ' should not be required: the Mini writes each one after its own job');
+  });
+  need(problems, type && type.readOnly === true, 'status should be read only: the Mini writes it');
+  need(problems, type && type.__experimental_omnisearch_visibility === false, 'status should be kept out of Studio search');
+  need(problems, input.statusId === 'status-mini', 'the status document should have the fixed id status-mini');
+  need(problems, input.statusLines.map(line => line.field).join() === wanted.join(), 'the block should show these fields, in this order: ' + wanted.join(', '));
+
+  // Editors never find it: no line in the sidebar and no place in the New menu
+  need(problems, allLines(world.structure.sidebarEntries).every(entry => entry.type !== 'status'), 'the sidebar should have no line for the status document');
+  const offered = world.config.document.newDocumentOptions([{ templateId: 'status' }, { templateId: 'task' }], {}).map(item => item.templateId).join();
+  need(problems, offered === 'task', 'the New menu should not offer the status document');
+
+  // The script on the Mini writes the same document and fields
+  const script = world.statusScript;
+  need(problems, script.indexOf("'" + input.statusId + "'") !== -1 || script.indexOf('"' + input.statusId + '"') !== -1 || script.indexOf('=' + input.statusId) !== -1, 'status-write.sh should write the document ' + input.statusId);
+  wanted.forEach(name => need(problems, script.indexOf(name) !== -1, 'status-write.sh should write the field ' + name));
+
+  // The ages in words, the lines, and a document that is missing or cannot be read
+  const now = new Date('2026-10-09T15:00:00.000Z');
+  const ago = minutes => new Date(now.getTime() - minutes * 60000).toISOString();
+  need(problems, input.ageText(ago(0), now) === 'just now' && input.ageText(ago(-5), now) === 'just now', 'a time that is now or ahead of the clock should read just now');
+  need(problems, input.ageText(ago(1), now) === '1 minute ago' && input.ageText(ago(5), now) === '5 minutes ago', 'ages in minutes should read 1 minute ago and 5 minutes ago');
+  need(problems, input.ageText(ago(60), now) === '1 hour ago' && input.ageText(ago(180), now) === '3 hours ago', 'ages in hours should read 1 hour ago and 3 hours ago');
+  need(problems, input.ageText(ago(3 * 24 * 60), now) === '3 days ago', 'an age of three days should read 3 days ago');
+  need(problems, [undefined, null, '', 'soon', 5, {}].every(value => input.ageText(value, now) === ''), 'a time that cannot be read should give no words');
+  const none = input.describeStatus(null, now);
+  need(problems, none.length === 6 && none.every(line => line.text === 'Not yet'), 'a missing document should give six lines that all say Not yet');
+  const some = input.describeStatus({ lastCalendarSyncAt: ago(5), kioskStartedAt: 'oops' }, now);
+  need(problems, some[1].label === 'Last calendar sync' && /^5 minutes ago \(/.test(some[1].text) && some[0].text === 'Not yet' && some[5].text === 'Not yet', 'a line should say its age and its time, and Not yet when the time is missing or unreadable');
+  need(problems, JSON.stringify(input.statusView(null, now)).indexOf('Reading the status') !== -1, 'the block should say it is reading while it waits');
+  need(problems, JSON.stringify(input.statusView({ doc: null, unreadable: false }, now)).indexOf('No status yet') !== -1, 'the block should say No status yet when the document is missing');
+  need(problems, JSON.stringify(input.statusView({ doc: null, unreadable: true }, now)).indexOf('could not be read') !== -1, 'the block should say so when the status cannot be read');
+  need(problems, JSON.stringify(input.statusView({ doc: { lastCalendarSyncAt: ago(5) }, unreadable: false }, now)).indexOf('Last calendar sync') !== -1, 'the block should show the lines when there is a document');
+  need(problems, typeof input.StatusInput === 'function' && JSON.stringify(input.StatusInput()).indexOf('Reading the status') !== -1, 'StatusInput should start by saying it is reading');
+  return problems;
+}
+
+// readStatus asks the published document by its id, and never fails. The stand-in client gives the answers.
+async function checkStatusRead() {
+  const problems = [];
+  const read = world.statusInput.readStatus;
+  const asked = [];
+  const answering = value => ({ fetch: async (...args) => { asked.push(args); return value; } });
+
+  const found = await read(answering({ _id: 'status-mini', lastCalendarSyncAt: '2026-10-09T15:00:00.000Z' }));
+  need(problems, found.doc && found.doc._id === 'status-mini' && found.unreadable === false, 'a document that is there should be handed over');
+  need(problems, asked.length === 1 && /_id == \$id/.test(asked[0][0]) && asked[0][1].id === 'status-mini' && asked[0][2].perspective === 'published', 'readStatus should ask for the published document with the id status-mini');
+  need(problems, sameData(await read(answering(null)), { doc: null, unreadable: false }), 'no document is a good answer, not a failure');
+  need(problems, sameData(await read(answering('text')), { doc: null, unreadable: false }), 'an answer that is not a document should be read as no document');
+  need(problems, sameData(await read({ fetch: async () => { throw new Error('offline'); } }), { doc: null, unreadable: true }), 'a client that fails should give unreadable');
+  need(problems, sameData(await read({}), { doc: null, unreadable: true }), 'a client with no fetch should give unreadable');
   return problems;
 }
 
@@ -3576,6 +3614,125 @@ function checkSeasonGuard() {
   return ['tools/check-seasons.mjs failed:'].concat(lines.map(line => '  ' + line));
 }
 
+// The fields that have one right answer. Each stays in the schema, hidden, with its starting
+// value, so a page saved with another value still opens and publishes, and the screen ignores
+// what is stored. The four settings have a constant in dashboard/core/constants.js. The close
+// time of a meeting day is read by the booking script and never by the dashboard, so it has none.
+//   path: { constant in constants.js, the starting value, the tab }
+const fixedValues = {
+  'dashboardSettings.nightStart': { constant: 'nightStart', value: '23:30', group: 'advanced' },
+  'dashboardSettings.nightEnd': { constant: 'nightEnd', value: '11:30', group: 'advanced' },
+  'dashboardSettings.noShowMinutes': { constant: 'noShowMinutes', value: 5, group: 'presentations' },
+  'dashboardSettings.graceMinutes': { constant: 'graceMinutes', value: 5, group: 'presentations' },
+  'presentationDay.closeMinutesBefore': { constant: '', value: 30, group: '' },
+};
+
+function checkFixedValues() {
+  const problems = [];
+  const config = world.dashboard;
+  const constants = world.constants;
+  const sample = world.sample.settings;
+
+  Object.keys(fixedValues).forEach(pathText => {
+    const wanted = fixedValues[pathText];
+    const name = pathText.split('.')[1];
+    const field = fieldAt(pathText);
+
+    need(problems, field, pathText + ' should stay in the schema, so that a saved value is kept');
+    if (!field) return;
+    need(problems, field.hidden === true, pathText + ' should be hidden (hidden: true)');
+    need(problems, field.initialValue === wanted.value, pathText + ' should still start as ' + JSON.stringify(wanted.value) + ', not ' + JSON.stringify(field.initialValue));
+    need(problems, !field.validation, pathText + ' should have no rules: nobody can fix a value in a hidden field, and a page saved with another value must still publish');
+    need(problems, !wanted.group || field.group === wanted.group, pathText + ' should stay in the ' + wanted.group + ' tab');
+    need(problems, /^Not (used any more|edited here)/.test(field.description || ''), pathText + ' description should begin by saying that it is not used any more or not edited here');
+
+    if (!wanted.constant) return;
+    need(problems, constants[wanted.constant] === wanted.value, 'constants.js should have ' + wanted.constant + ' = ' + JSON.stringify(wanted.value) + ', the value the field starts as');
+    need(problems, !(name in config.defaultSettings), name + ' should not be in defaultSettings in config.js: the dashboard uses constants.js');
+    need(problems, !(name in config.limits), name + ' should not be in limits in config.js: the dashboard uses constants.js');
+    need(problems, !(name in sample), 'the sample settings should not carry ' + name + ', which the screen ignores');
+  });
+
+  const wantedConstants = Object.keys(fixedValues).map(pathText => fixedValues[pathText].constant).filter(Boolean);
+  need(problems, Object.keys(constants).sort().join() === wantedConstants.slice().sort().join(), 'dashboard/core/constants.js should export exactly: ' + wantedConstants.join(', '));
+  return problems;
+}
+
+// Panel order: one list with every panel, in Dashboard Settings (schemas/settingsRotation.js). The older
+// lists, Large panels and Small panels, stay in the schema, hidden. The screen builds the one list from
+// them while it is empty (dashboard/core/panel-order.js), and the input fills it in the form the first time
+// it is opened (panel-order-input.js), with the same rows.
+function checkPanelOrder() {
+  const problems = [];
+  const config = world.dashboard;
+  const at = name => fieldAt('dashboardSettings.rotation.' + name);
+  const registered = world.registry.panels.filter(panel => !panel.testOnly);
+  const ids = rotationAreas.reduce((all, area) => all.concat(registered.filter(panel => panel.region === area).map(panel => panel.id)), []);
+
+  const order = at('order');
+  need(problems, order && order.type === 'array' && order.title === 'Panel order', 'rotation.order should be a list titled Panel order');
+  need(problems, order && !order.hidden, 'rotation.order should show in the form');
+  need(problems, order && !constraintNamed(constraintsOf(order), 'required') && !constraintNamed(constraintsOf(order), 'min'), 'rotation.order should have no rules: a page saved before it existed has none, and must still publish');
+  need(problems, order && /Drag/.test(order.description || ''), 'the rotation.order description should say to drag');
+
+  // One list with every panel the registry has for the large and the small frame, the large panels first
+  const offered = choicesOf('dashboardSettings.rotation.order.panel');
+  differences(ids, offered.map(item => item.value), 'registry.js', 'the Studio list for Panel order', problems);
+  need(problems, offered.map(item => item.value).join() === ids.join(), 'Panel order should offer the large panels and then the small panels, in the order of registry.js: ' + ids.join(', '));
+  offered.forEach(item => need(problems, isPlainTitle(item), 'Panel order: "' + item.title + '" is not a plain-words title'));
+
+  // The older lists are kept and hidden, with no rules on their rows, and the ticker seconds stay in the form
+  ['grid1', 'grid2'].forEach(name => {
+    need(problems, at(name) && at(name).hidden === true, 'rotation.' + name + ' should be hidden but stay in the schema');
+    need(problems, at(name) && at(name).initialValue.length > 0, 'rotation.' + name + ' should keep its starting rows');
+    ['panel', 'seconds'].forEach(inner => need(problems, at(name + '.' + inner) && !at(name + '.' + inner).validation, 'rotation.' + name + '.' + inner + ' should have no rules: nobody can fix a row in a hidden list, and a page saved with an odd row must still publish'));
+  });
+  ['panel', 'seconds'].forEach(inner => need(problems, at('order.' + inner) && at('order.' + inner).validation, 'rotation.order.' + inner + ' should keep its rules'));
+  need(problems, at('tickerSeconds') && !at('tickerSeconds').hidden, 'rotation.tickerSeconds should show in the form');
+
+  // A row in the list says which kind of panel it is
+  const member = order && order.of && order.of[0];
+  const line = panel => member.preview.prepare({ panel: panel, show: true });
+  need(problems, member && line('tasks').subtitle === 'Large panel · Follows Seconds per page' && line('forecast').subtitle === 'Small panel · Follows Seconds per page', 'a row of Panel order should say Large panel or Small panel in its subtitle');
+  need(problems, member && line('photo').subtitle === 'Large panel · Follows Seconds per photo', 'the Photo row should say that it follows Seconds per photo');
+  need(problems, member && member.preview.prepare({}).title === 'Panel not chosen', 'a row with no panel should read Panel not chosen');
+
+  // The starting rows are the dashboard's own list. The Studio's copy of the builder gives the same rows.
+  const lists = {
+    grid1: [{ panel: 'events', show: false, seconds: 30 }, { panel: 'tasks', show: true }, { panel: 'events', show: true }],
+    grid2: [{ panel: 'forecast', show: true, seconds: 9 }, { panel: 'task-counts', show: false }],
+  };
+  const withoutKeys = rowsOf => rowsOf.map(row => without(row, '_key'));
+  const dashboardRows = world.panelOrder.orderFromLists(lists);
+  const studioRows = world.panelOrderInput.orderFromLists(lists.grid1, lists.grid2);
+  need(problems, sameData(withoutKeys(studioRows), dashboardRows), 'the Studio builds ' + JSON.stringify(withoutKeys(studioRows)) + ' from the older lists but the dashboard builds ' + JSON.stringify(dashboardRows));
+  need(problems, new Set(studioRows.map(row => row._key)).size === studioRows.length, 'every row the input builds needs a key of its own');
+  need(problems, sameData(withoutKeys(world.panelOrderInput.orderFromLists(config.defaultSettings.rotation.grid1, config.defaultSettings.rotation.grid2)), world.panelOrder.orderFromLists(config.defaultSettings.rotation)), 'the rows built from the default lists should be the same in the Studio and the dashboard');
+
+  // The input: it fills an empty list once from the older lists, and otherwise only draws the form
+  need(problems, order && order.components && order.components.input === world.panelOrderInput.PanelOrderInput, 'rotation.order should draw itself with PanelOrderInput (panel-order-input.js)');
+  const open = props => {
+    const changes = [];
+    globalThis.studioForm = { 'rotation.grid1': lists.grid1, 'rotation.grid2': lists.grid2 };
+    globalThis.studioEffects = [];
+    const drawn = world.panelOrderInput.PanelOrderInput(Object.assign({ value: undefined, readOnly: false, onChange: patch => changes.push(patch), renderDefault: () => 'the usual list' }, props));
+    globalThis.studioEffects.forEach(effect => effect());
+    return { drawn: drawn, changes: changes };
+  };
+  const empty = open({});
+  need(problems, empty.drawn === 'the usual list', 'the input should draw the usual list');
+  need(problems, empty.changes.length === 1 && empty.changes[0].type === 'set' && sameData(empty.changes[0].value, studioRows), 'an empty list should be filled once from the older lists');
+  need(problems, open({ value: [] }).changes.length === 1, 'a list with no rows should be filled too');
+  need(problems, open({ value: [{ _key: 'a', panel: 'tasks', show: true }] }).changes.length === 0, 'a list with rows should be left as it is');
+  need(problems, open({ readOnly: true }).changes.length === 0, 'a list that cannot be edited should not be filled');
+  globalThis.studioForm = {};
+  globalThis.studioEffects = [];
+  world.panelOrderInput.PanelOrderInput({ value: undefined, readOnly: false, onChange: () => problems.push('a page with no older lists should not be filled'), renderDefault: () => null });
+  globalThis.studioEffects.forEach(effect => effect());
+  globalThis.studioForm = undefined;
+  return problems;
+}
+
 async function main() {
   const folder = makeSandbox();
   try {
@@ -3600,6 +3757,12 @@ async function main() {
     world.publishAll = await load(path.join(folder, 'publish-all.js'));
     world.publishAllTool = await load(path.join(folder, 'publish-all-tool.js'));
     world.teamInput = await load(path.join(folder, 'team-input.js'));
+    world.noteField = await load(path.join(folder, 'note-field.js'));
+    world.statusInput = await load(path.join(folder, 'status-input.js'));
+    world.panelOrderInput = await load(path.join(folder, 'panel-order-input.js'));
+    world.panelOrder = await load(path.join(dashboardFolder, 'core', 'panel-order.js'));
+    world.constants = await load(path.join(dashboardFolder, 'core', 'constants.js'));
+    world.statusScript = fs.readFileSync(path.join(here, '..', 'deploy', 'scripts', 'status-write.sh'), 'utf8');
     world.sample = JSON.parse(fs.readFileSync(path.join(dashboardFolder, 'data', 'sample', 'content.json'), 'utf8'));
     world.seed = fs.readFileSync(path.join(here, '..', 'docs', 'seed', 'extra-events.ndjson'), 'utf8');
     world.placeSeed = fs.readFileSync(path.join(here, '..', 'docs', 'seed', 'places.ndjson'), 'utf8');
@@ -3623,17 +3786,17 @@ async function main() {
   check('frame metal, glint, seconds per page and the name effect agree with dashboard/config.js', checkLookAndTiming);
   check('the Polish setting offers the looks in dashboard/config.js and starts on Polished', checkLookSetting);
   check('the Style setting offers the styles in dashboard/config.js and starts on Original, and the Look page says the style and team set the base values', checkStyleSetting);
-  check('the Transitions tab agrees with dashboard/config.js', checkTransitionsTab);
-  check('the Night mode tab agrees with dashboard/config.js', checkNightTab);
-  check('the Hidden tab agrees with dashboard/config.js and the dashboard registry, and the Play buttons work', checkHiddenTab);
+  check('the page change fields agree with dashboard/config.js', checkTransitionsTab);
+  check('the night mode fields agree with dashboard/config.js', checkNightTab);
+  check('the hidden transition fields agree with dashboard/config.js and the dashboard registry, and the Play buttons work', checkHiddenTab);
   check('Play announcements has its hidden field, its button and its Demo step', checkPlayAnnouncements);
   check('Run presentation test has its hidden field and its button', checkRunPresentationTest);
   check('the Preview buttons have their hidden field and the list the dashboard has, and each one writes its kind and the time', checkPreviewButtons);
-  check('Content source and the switch back time agree with dashboard/config.js, and the two buttons work', checkContentSource);
-  check('Show connection status is a switch that starts off, in the Connection tab', checkConnectionStatus);
+  check('Content source and the switch back time are hidden, kept in the schema and ignored by the dashboard, and the two buttons are gone', checkContentSource);
+  check('Show connection status is a switch that starts off', checkConnectionStatus);
   check('a subteam has an optional list of first names, up to 24 of 12 characters, with no repeats', checkSubteamMembers);
   check('a person has an optional photo and a switch that starts on, as in dashboard/config.js', checkPersonPhoto);
-  check('a photo has a picture, a short caption and a first name credit, and the Photos tab agrees with dashboard/config.js', checkPhotos);
+  check('a photo has a picture, a short caption and a first name credit, and the photo settings agree with dashboard/config.js', checkPhotos);
   check('the themes and overlays in studio/themes.js are the ones in the dashboard registries', checkThemeLists);
   check('the Look page agrees with dashboard/config.js, needs a start and an end for each rule, and checks the time zone', checkTheme);
   check('the demo screens in studio/demo-screens.js are the ones in the dashboard registry', checkDemoScreens);
@@ -3643,7 +3806,7 @@ async function main() {
   check('a location has a name and a switch, a task has an optional contact and location, and the locations seed file can be imported', checkPlaces);
   results.push({ name: 'two locations cannot have the same name, capitals ignored', problems: await checkPlaceNames().catch(error => ['the check stopped: ' + error.message]) });
   check('the Presentations tab agrees with dashboard/config.js', checkPresentationsTab);
-  check('the Teams tab agrees with dashboard/config.js', checkTeamsTab);
+  check('the team fields agree with dashboard/config.js', checkTeamsTab);
   check('a meeting day has a first and a last talk, a talk length, a booking close time and a one line list entry', checkMeetingDays);
   results.push({ name: 'the last talk of a meeting day is on the same day as the first, in the Look page time zone', problems: await checkMeetingDayTimes().catch(error => ['the check stopped: ' + error.message]) });
   check('a presentation has a first name, a title, a start, a length, a Google Slides link and a status, and a one line list entry', checkPresentations);
@@ -3656,6 +3819,11 @@ async function main() {
   check('no title, description or message an editor reads still uses an old sidebar name', checkOldTitles);
   check('Dashboard Settings, Look and Test the screen exist once and the project files agree', checkSettingsPage);
   check('the Publish all tool is in the top bar and keeps the pages that exist once on their fixed ids', checkPublishAll);
+  check('Dashboard Settings has its eight tabs, every field is in the tab the table says, and the notes and the status block store nothing', checkSettingsTabs);
+  check('the status document has the fields the Mini writes, is kept out of the sidebar and the New menu, and the block shows its lines in plain words', checkStatusBlock);
+  results.push({ name: 'the status block asks for the published document by its id, and survives a client that fails', problems: await checkStatusRead().catch(error => ['the check stopped: ' + error.message]) });
+  check('Panel order is one list of every panel, the older lists are hidden, and the input fills an empty list from them as the dashboard does', checkPanelOrder);
+  check('the night times, the speaker wait, the overrun and the booking close time are hidden, keep their starting values and are not read by the dashboard', checkFixedValues);
   check('every theme and overlay is complete and readable (tools/check-themes.mjs)', checkThemeGuard);
   check('every seasonal pack is complete, and draws only in the empty places (tools/check-seasons.mjs)', checkSeasonGuard);
 

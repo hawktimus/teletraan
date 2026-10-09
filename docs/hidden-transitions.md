@@ -74,9 +74,9 @@ ends and the screen comes back.
 4. Try it with `?hidden=desktop` or `?hidden=redEyes` in the address (see "Try one"). The
    address always plays the next picture, so add it twice to see both.
 
-## The Hidden tab
+## The hidden transition settings
 
-Open Studio, click Dashboard Settings and open the Hidden tab.
+Open Studio, click Dashboard Settings and open the Advanced tab.
 
 - **Allow hidden transitions.** The master switch. It starts on. Turn it off and
   neither transition ever plays, not even one you push (below).
@@ -103,7 +103,7 @@ ordinary page change. If the two add up to more than 100, red eyes gets what is 
 The menu has two more buttons that are not transitions, Play announcements and Run presentation test (see below).
 Each of the two buttons above writes the kind and the time now into Last push and
 publishes the page for you, so you do not click Publish. Any other change you had not published yet is
-published too, as with the buttons that switch between sample and production content.
+published too.
 
 What the screen does with a push:
 
@@ -122,9 +122,9 @@ What the screen does with a push:
 - It never plays with Allow hidden transitions off, or in calm or no motion. A push is
   not kept for later: after 60 seconds it is too old, so turning the switch on after
   that does not play it.
-- While the screen shows sample content (Content source in Dashboard Settings) it reads
+- While a page shows sample content (`?sample=1` on its address) it reads
   the settings from `dashboard/data/sample/content.json`, not from Studio, so a push
-  does nothing. Switch back to production content first.
+  does nothing. Open the screen without `?sample=1` first.
 
 ## Switch them off
 
@@ -141,7 +141,7 @@ What the screen does with a push:
 
 The menu next to Publish on Dashboard Settings has a third button, **Play announcements**.
 It is not a transition, but it is built the same way: one click, and the TV plays it
-within a few seconds. It plays every announcement in the Announcements tab that is
+within a few seconds. It plays every announcement in the Screen tab that is
 switched on, once, one after another. Use it to show visitors the announcements, or to
 check them, without waiting for 14:30.
 
@@ -179,9 +179,9 @@ What the screen does with it:
   missed, because only one announcement can have the screen.
 - The list is taken when the request starts, so editing the announcements while they play
   changes the next click and not this one.
-- While the screen shows sample content (Content source in Dashboard Settings) it reads
+- While a page shows sample content (`?sample=1` on its address) it reads
   the settings from `dashboard/data/sample/content.json`, not from Studio, so the button
-  does nothing. Switch back to production content first.
+  does nothing. Open the screen without `?sample=1` first.
 
 A Demo step can play the same announcements: pick **All announcements** as its screen
 (docs/demo.md).
@@ -197,9 +197,9 @@ real talk. It needs no internet and no Google deck, because the talk and its sli
 The button writes the time now into `presentationTestRequest` and publishes the page for you. It
 follows the same rules as Play announcements: it runs once, only while the request is less than 60
 seconds old, and it waits for an alert, an announcement, a talk, a demo, a hidden transition or the
-night screen to be over. Run presentations in the Presentations tab must be on. While the screen
-shows sample content it reads the settings from `dashboard/data/sample/content.json`, so the button
-does nothing. Switch back to production content first.
+night screen to be over. Run presentations in the Presentations tab must be on. While a page
+shows sample content (`?sample=1`) it reads the settings from `dashboard/data/sample/content.json`, so the button
+does nothing. Open the screen without `?sample=1` first.
 
 ## Preview a look
 
@@ -251,7 +251,7 @@ What the screen does with it:
 - Another click while a preview is showing replaces it, and the 2 minutes count from the new click.
 - At the end the screen goes back to the settings at the next page change, and the page reloads once more
   if the style it goes back to has another layout.
-- While the screen shows sample content (Content source in Dashboard Settings) it reads the settings from
+- While a page shows sample content (`?sample=1` on its address) it reads the settings from
   `dashboard/data/sample/content.json`, not from Studio, so the buttons do nothing. To try every style,
   team and pack with the sample content, put `?style=`, `?team=` and `?overlay=` on the address
   (docs/try-it-on-the-mini.md). The sample content has both teams.

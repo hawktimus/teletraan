@@ -201,6 +201,12 @@ The panel's id is written in two more places. They have to match
 Put both lines at the same position in their lists. The Studio starts with the
 list in `settingsRotation.js`, and the check compares it with `config.js`.
 
+These lists build the Panel order list that a new Studio starts with. A page
+that already has a Panel order list in Dashboard Settings (Screen tab) keeps its
+own list, so the new panel stays off the screen until an editor opens the list,
+uses "Add item", picks the panel and drags the row into place
+(`core/panel-order.js`).
+
 Then run this in the `studio` folder. It needs nothing installed:
 
     node check-schemas.mjs
@@ -209,7 +215,7 @@ Every line must say PASS. A FAIL line names the list that is missing the
 panel.
 
 Editors can hide the panel, reorder it or change its seconds in Dashboard
-Settings, on the Panels tab. Two things have to happen first:
+Settings, on the Screen tab. Two things have to happen first:
 
 - Run `npm run deploy` in the `studio` folder so the editors' copy of the
   Studio has the new panel (see Going live in docs/adding-a-field.md).
@@ -232,7 +238,7 @@ speed. Then check:
 - the browser console shows no errors from your files. It does show a 404
   line for `data/live/version.txt`. That is expected: the Mini writes that
   file, so your computer does not have it. While the screen is on sample
-  content it reads only `data/sample/`. On production content it also looks for
+  content (`?sample=1`) it reads only `data/sample/`. On production content it also looks for
   the Mini's calendar files in `data/live/`, and a missing one is a 404 too.
 - no text is smaller than 44px
 - nothing crosses the frame or the cut corner
@@ -285,7 +291,7 @@ in 0.3 seconds and the new one fades in. With motion off nothing moves.
 
 Which of the two changes an area uses (`data-change`) and which metal its frame
 has (`data-metal`, gold or silver) are chosen at the start of every change, by
-`frame.js` and `core/transitions.js`, from the Transitions tab of Dashboard
+`frame.js` and `core/transitions.js`, from the Look tab of Dashboard
 Settings. A panel does nothing for either: its slats turn or fold with the
 frame, and its edges follow the metal of the area. docs/page-transitions.md
 explains the two changes, the screws and the metal, and how to add a third.

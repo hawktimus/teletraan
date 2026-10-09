@@ -109,12 +109,7 @@ export const contentQuery = `{
   }
 }`;
 
-// The screen asks this first, to learn whether to show the sample or the
-// editors' content (source.js). It is tiny, so it is quick and cheap to repeat.
-export const sourceQuery = '*[_id == "dashboardSettings"][0] { contentSource, switchBackAt }';
-
 const requestSeconds = 15;
-const sourceRequestSeconds = 5;
 const probeSeconds = 5;
 
 // sanity is { projectId, dataset, apiVersion } from config.js. The ordinary
@@ -128,10 +123,6 @@ function addressOf(sanity, query) {
 
 export function queryUrl(sanity) {
   return addressOf(sanity, contentQuery);
-}
-
-export function sourceQueryUrl(sanity) {
-  return addressOf(sanity, sourceQuery);
 }
 
 // The stream that says "something changed"
@@ -204,19 +195,6 @@ export async function fetchResult(sanity) {
     throw new Error('Sanity sent no result');
   }
   return body.result;
-}
-
-// Asks Sanity for just contentSource and switchBackAt. Gives up after 5
-// seconds, so a slow network does not hold the screen back. When Sanity
-// answers that there is no Dashboard Settings document yet, the result is an
-// empty object and the defaults apply. That is a good answer, not a failure.
-// Throws when there is no usable answer.
-export async function fetchSourceSettings(sanity) {
-  const body = await fetchBody(sourceQueryUrl(sanity), sourceRequestSeconds, null);
-  if (!isRecord(body) || !('result' in body) || (body.result !== null && !isRecord(body.result))) {
-    throw new Error('Sanity sent no answer about the content source');
-  }
-  return body.result || {};
 }
 
 // Turns a query result into content. Hidden and expired items stay in the
@@ -591,6 +569,9 @@ function normalizeSettings(raw) {
   // That includes the screen glitch, where an old everyMinutes becomes seconds.
   fixSettingValues(settings);
 
+  // The Studio keeps these four, hidden, but the screen uses the fixed values in constants.js
+  ['nightStart', 'nightEnd', 'noShowMinutes', 'graceMinutes'].forEach(name => delete settings[name]);
+
   tidyList(settings, 'announcements', normalizeAnnouncements);
   tidyList(settings, 'calendars', calendars => calendars.filter(calendar => calendar.id));
   return settings;
@@ -612,20 +593,27 @@ function isPositive(number) {
 // The schedule needs a panel from every step. Seconds are optional: a row
 // with none, or with a number that cannot be used, has no seconds at all and
 // follows pageSeconds. The same goes for tickerSeconds.
+function normalizeSteps(steps) {
+  return steps
+    .filter(step => step.panel)
+    .map(step => {
+      const row = { panel: step.panel, show: step.show !== false };
+      if (isPositive(step.seconds)) row.seconds = step.seconds;
+      return row;
+    });
+}
+
+// order is the one list of panels (core/panel-order.js). Something that is not
+// a list is dropped, so the two older lists decide, as they do for an empty one.
 function normalizeRotation(rotation) {
   const result = Object.assign({}, rotation);
 
   ['grid1', 'grid2'].forEach(area => {
-    const steps = Array.isArray(result[area]) ? result[area] : defaultSettings.rotation[area];
-
-    result[area] = steps
-      .filter(step => step.panel)
-      .map(step => {
-        const row = { panel: step.panel, show: step.show !== false };
-        if (isPositive(step.seconds)) row.seconds = step.seconds;
-        return row;
-      });
+    result[area] = normalizeSteps(Array.isArray(result[area]) ? result[area] : defaultSettings.rotation[area]);
   });
+
+  if (Array.isArray(result.order)) result.order = normalizeSteps(result.order);
+  else delete result.order;
 
   if (!isPositive(result.tickerSeconds)) delete result.tickerSeconds;
   return result;

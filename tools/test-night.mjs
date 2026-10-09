@@ -23,15 +23,16 @@ const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
 const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-night-'));
 fs.mkdirSync(path.join(workFolder, 'dashboard', 'core'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
-['config.js', 'core/night.js', 'core/logo.js'].forEach(file => {
+['config.js', 'core/constants.js', 'core/night.js', 'core/logo.js'].forEach(file => {
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
 const nightUrl = pathToFileURL(path.join(workFolder, 'dashboard/core/night.js')).href;
 const night = await import(nightUrl);
 const config = await import(pathToFileURL(path.join(workFolder, 'dashboard/config.js')).href);
 const logo = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/logo.js')).href);
+const constants = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/constants.js')).href);
 
-const { inNightWindow, nightWanted, nightPlan, positionAt, nextPair, makeCornerDetector, isClockTime, tidyClockTime, minutesIn } = night;
+const { inNightWindow, nightWanted, nightPlan, positionAt, nextPair, makeCornerDetector, isClockTime, minutesIn } = night;
 
 const tests = [];
 function test(name, run) {
@@ -59,9 +60,6 @@ test('the times are 24 hour times with two digits, and anything else is not a ti
   ['24:00', '9:05', '14:60', '1430', '14:3', '', 'ab:cd', '23:30 ', ' 23:30', 7, null, undefined, {}].forEach(value => {
     assert.equal(isClockTime(value), false, JSON.stringify(value));
   });
-  assert.equal(tidyClockTime('09:05', '23:30'), '09:05');
-  assert.equal(tidyClockTime('9:05', '23:30'), '23:30');
-  assert.equal(tidyClockTime(undefined, '11:30'), '11:30');
 });
 
 test('a window inside one day starts at the start time, includes it, and ends at the end time, which is not included', () => {
@@ -205,8 +203,8 @@ test('the starting settings are the ones the owner asked for', () => {
 
   assert.equal(defaults.nightEnabled, true);
   assert.equal(defaults.nightStyle, 'bounce');
-  assert.equal(defaults.nightStart, '23:30');
-  assert.equal(defaults.nightEnd, '11:30');
+  assert.equal(constants.nightStart, '23:30');
+  assert.equal(constants.nightEnd, '11:30');
   assert.equal(defaults.nightLogoWidth, 300);
   assert.equal(defaults.nightSpeed, 'normal');
   assert.equal(defaults.nightPreview, false);

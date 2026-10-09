@@ -55,7 +55,7 @@ seconds, without waiting for a page change.
 
 ## 3. Set the team mode
 
-Open Dashboard Settings, then the Teams tab.
+Open Dashboard Settings, then the Look tab.
 
 - Team mode: Prime only is picked to start with. Pick Nova only to show Nova all the
   time, or Alternate to swap.

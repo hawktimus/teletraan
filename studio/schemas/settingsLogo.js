@@ -1,9 +1,10 @@
-// The Logo tab of Dashboard Settings: every setting for what the logo does and
-// when. The master switch comes first, then the entrance (it plays once, so it
-// has only a switch), then one switch, seconds between plays and seconds one
-// play lasts for each animation that repeats: the spin, the flying hawk and the
-// team name effect. The seconds between plays can be 0, which means never, or
-// 10 or more (30 or more for the name effect).
+// The logo fields of Dashboard Settings, in the Look tab: every setting for
+// what the logo does and when. The master switch comes first, then the
+// entrance (it plays once, so it has only a switch), then one switch, seconds
+// between plays and seconds one play lasts for each animation that repeats:
+// the spin, the flying hawk and the team name effect. The seconds between
+// plays can be 0, which means never, or 10 or more (30 or more for the name
+// effect).
 //
 // The starting values and limits are the same as defaultSettings and limits in
 // dashboard/config.js, and check-schemas.mjs fails if they differ. The name
@@ -12,21 +13,19 @@
 // takes on HAWKTIMUS PRIME today, and the flying hawk lasts 11 seconds today.
 //
 // To take the whole section out later: delete this file, remove its import and
-// the two lines that use logoGroup and logoFields in dashboardSettings.js, and
-// remove the same names from check-schemas.mjs and config.js. The dashboard
-// uses the starting values for anything missing from the published settings.
+// the line that uses logoFields in dashboardSettings.js, and remove the same
+// names from check-schemas.mjs and config.js. The dashboard uses the starting
+// values for anything missing from the published settings.
 
 import { defineField } from 'sanity';
 import { neverOrAtLeast } from './fields.js';
-
-export const logoGroup = { name: 'logo', title: 'Logo' };
 
 function switchField(name, title, description) {
   return defineField({
     name: name,
     title: title,
     type: 'boolean',
-    group: 'logo',
+    group: 'look',
     description: description,
     initialValue: true,
   });
@@ -38,7 +37,7 @@ function everyField(name, title, description, start, shortest, largest) {
     name: name,
     title: title,
     type: 'number',
-    group: 'logo',
+    group: 'look',
     description: description,
     initialValue: start,
     validation: Rule => [
@@ -55,7 +54,7 @@ function durationField(name, title, description, start, shortest, longest) {
     name: name,
     title: title,
     type: 'number',
-    group: 'logo',
+    group: 'look',
     description: description,
     initialValue: start,
     validation: Rule => [

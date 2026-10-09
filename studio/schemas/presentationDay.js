@@ -88,12 +88,9 @@ export default defineType({
       name: 'closeMinutesBefore',
       title: 'Booking closes this long before a slot',
       type: 'number',
-      description: 'How many minutes before a talk starts it can no longer be booked, from 0 to 240.',
+      hidden: true,
+      description: 'Not edited here. The booking script reads it: how many minutes before a talk starts it can no longer be booked. It starts at 30.',
       initialValue: 30,
-      validation: Rule => [
-        Rule.required().error('Enter the number of minutes.'),
-        Rule.integer().min(0).max(240).error('Use a whole number from 0 to 240.'),
-      ],
     }),
     defineField({
       name: 'open',

@@ -4990,7 +4990,7 @@ test('an alert still takes the screen while it is paused, and an announcement du
 // clock is a function the test calls, and the keys are pressed by calling the handler the file added.
 
 const talkTree = path.join(workFolder, 'talk-tree');
-['config.js', 'core/presentation-run.js', 'core/presentation.js', 'core/time.js'].forEach(file => {
+['config.js', 'core/constants.js', 'core/presentation-run.js', 'core/presentation.js', 'core/time.js'].forEach(file => {
   fs.mkdirSync(path.dirname(path.join(talkTree, 'dashboard', file)), { recursive: true });
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(talkTree, 'dashboard', file));
 });
@@ -5132,7 +5132,7 @@ async function inTalkPage(options, run) {
     const start = options.start || Date.now() + 1000; // keys are read with the real clock, so the talk starts a second from now
     const content = {
       presentations: options.talks || [{ id: 'presentation-abc', name: 'Alex', subteam: 'Programming', topic: 'Swerve drive', start: new Date(start), minutes: 15, status: 'scheduled' }],
-      settings: Object.assign({ presentationsEnabled: true, noShowMinutes: 5, graceMinutes: 5 }, options.settings),
+      settings: Object.assign({ presentationsEnabled: true }, options.settings),
       status: options.status || { source: 'sanity' },
     };
     module.startPresentations(() => content);

@@ -80,10 +80,10 @@ demo reaches it within a few seconds. Then:
   between two steps it ends if one has the screen.
 - **Calm and none still work.** In calm mode the screens fade, and with no motion
   nothing moves, as at any other time.
-- **Sample content has its own Demo.** While the screen shows sample content
-  (Content source in Dashboard Settings) it reads the demo from
+- **Sample content has its own Demo.** While a page shows sample content
+  (`?sample=1` on its address) it reads the demo from
   `dashboard/data/sample/content.json`, not from Studio, so Run demo has no
-  effect. Switch back to production content first.
+  effect. Open the screen without `?sample=1` first.
 
 The demo is not a screen on the normal rotation. It is also not the same as the
 `?demo=announcement` address switch, which only plays one announcement once for

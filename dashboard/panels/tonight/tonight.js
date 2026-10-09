@@ -16,7 +16,7 @@ const TEXT_FITS = 18; // characters, the same as the text of a plan row (studio/
 const talksHeading = 'Talks today'; // the heading on the card when there are talks and no plan
 
 // The end of the slot, with none of the overrun that the screen allows a speaker
-const slotOnly = { graceMinutes: 0 };
+const noOverrun = 0;
 
 // The first plan that is showing, is for today and is for the team on the screen, otherwise
 // null. A plan with no date is always for today. A date that cannot be read counts as no
@@ -53,7 +53,7 @@ function talksToday(content, now) {
   const today = dateIn(zone, now);
   const booked = (Array.isArray(content.presentations) ? content.presentations : []).filter(canRun);
   return visibleItems(booked, now)
-    .filter(talk => dateIn(zone, asDate(talk.start)) === today && now < talkEnd(talk, slotOnly))
+    .filter(talk => dateIn(zone, asDate(talk.start)) === today && now < talkEnd(talk, noOverrun))
     .sort((first, second) => asDate(first.start) - asDate(second.start));
 }
 

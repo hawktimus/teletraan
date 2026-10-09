@@ -6,7 +6,7 @@
 //
 // id          what is stored in hiddenRequest.kind
 // name        the words on the Play button: "Play " and the name in lower case
-// chanceField the Dashboard Settings field that holds its chance, in the Hidden tab
+// chanceField the Dashboard Settings field that holds its chance, in the Advanced tab
 
 export const hiddenTransitions = [
   { id: 'desktop', name: 'Desktop reveal', chanceField: 'desktopChance' },

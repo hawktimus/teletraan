@@ -632,7 +632,7 @@ html[data-layout="bar"] .area[data-area="ticker"] .screw { animation-name: none;
    long as the animations in it. See docs/the-logo.md.
 
    The spin and the hawk have a time scale each, set by frame.js on the logo
-   from Dashboard Settings (the Logo tab): --spin-scale and --hawk-scale are 1
+   from Dashboard Settings (the Look tab): --spin-scale and --hawk-scale are 1
    for the length written here, 2 for twice as long. --spin-pace and
    --hawk-pace are the scale and --pace together, and replace --pace in every
    time of those acts. */

@@ -10,5 +10,10 @@ Type=oneshot
 # Mini's user is called.
 User=ACCOUNT
 ExecStart=/opt/teletraan/deploy/scripts/fetch-calendars.sh
+# Tells Studio when the calendars were downloaded, and the time of the newest
+# change to the content that the Mini can see. The leading minus means a failure
+# here is ignored: the status must never mark a download as failed.
+ExecStartPost=-/opt/teletraan/deploy/scripts/status-write.sh calendar
+ExecStartPost=-/opt/teletraan/deploy/scripts/status-write.sh content
 # Each download gives up after 60 seconds. This is for the whole run.
 TimeoutStartSec=10min

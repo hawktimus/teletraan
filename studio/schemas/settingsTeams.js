@@ -1,4 +1,5 @@
-// The Teams tab of Dashboard Settings: which team the screen shows. Two fields:
+// The team fields of Dashboard Settings, in the Look tab: which team the screen
+// shows. Two fields:
 //
 //   teamMode          prime (Prime only, the default), nova (Nova only) or alternate
 //   alternateMinutes  minutes each team stays on the screen in Alternate mode, from 1 to 30, 5 to start with
@@ -8,18 +9,16 @@
 // limits are the same as defaultSettings and limits there. check-schemas.mjs
 // fails if they differ.
 //
-// Neither field is required. Dashboard Settings published before this tab
+// Neither field is required. Dashboard Settings published before these fields
 // existed has neither, and the screen reads that as Prime only and 5 minutes. A
 // required field would stop that page being published until somebody filled it in.
 //
 // To take the whole section out later: delete this file, remove its import and
-// the two lines that use teamsGroup and teamsFields in dashboardSettings.js, and
-// remove the same names from check-schemas.mjs and config.js. The dashboard uses
-// the starting values for anything missing from the published settings.
+// the line that uses teamsFields in dashboardSettings.js, and remove the same
+// names from check-schemas.mjs and config.js. The dashboard uses the starting
+// values for anything missing from the published settings.
 
 import { defineField } from 'sanity';
-
-export const teamsGroup = { name: 'teams', title: 'Teams' };
 
 // The values are the names in teamModes in dashboard/config.js
 const modes = [
@@ -34,7 +33,7 @@ export function teamsFields() {
       name: 'teamMode',
       title: 'Team mode',
       type: 'string',
-      group: 'teams',
+      group: 'look',
       description: 'Prime only or Nova only shows that team all the time. Alternate swaps between the teams, and the screen changes with each swap.',
       options: { list: modes, layout: 'radio', direction: 'horizontal' },
       initialValue: 'prime',
@@ -45,7 +44,7 @@ export function teamsFields() {
       name: 'alternateMinutes',
       title: 'Minutes for each team',
       type: 'number',
-      group: 'teams',
+      group: 'look',
       description: 'In Alternate mode, how many minutes each team stays on the screen, from 1 to 30. The swap waits for a change between panels.',
       initialValue: 5,
       validation: Rule => Rule.integer().min(1).max(30).error('Use a whole number from 1 to 30.'),

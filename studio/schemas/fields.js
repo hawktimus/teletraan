@@ -2,6 +2,7 @@
 
 import { defineField } from 'sanity';
 import { TeamInput } from '../team-input.js';
+import { NoteField } from '../note-field.js';
 
 export function showField() {
   return defineField({
@@ -44,6 +45,22 @@ export function teamField() {
     description: 'Optional. Pick a team to show this only while that team is on the screen. Leave it on Both to always show it.',
     components: { input: TeamInput },
   });
+}
+
+// One plain line in the form with nothing to fill in, such as a pointer to
+// another page. The text is the description. It stores nothing. The group is
+// the tab of Dashboard Settings it sits in, and is left out on other pages.
+export function noteField(name, text, group) {
+  const field = {
+    name: name,
+    title: 'Note',
+    type: 'string',
+    readOnly: true,
+    description: text,
+    components: { field: NoteField },
+  };
+  if (group) field.group = group;
+  return defineField(field);
 }
 
 // Text that is too long is cut off on the screen, so Studio refuses it first

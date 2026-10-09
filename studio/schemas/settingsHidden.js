@@ -1,6 +1,7 @@
-// The Hidden tab of Dashboard Settings: two rare surprise transitions that replace
-// a normal page change of the large panel, and the buttons that play one now.
-// docs/hidden-transitions.md explains both. Four fields:
+// The hidden transition fields of Dashboard Settings, in the Advanced tab: two
+// rare surprise transitions that replace a normal page change of the large
+// panel, and the buttons that play one now. docs/hidden-transitions.md explains
+// both. Four fields:
 //
 //   hiddenEnabled  the master switch, on to start with
 //   desktopChance  the percent of page changes that play the desktop reveal, 1 to start with
@@ -14,14 +15,12 @@
 // of the dashboard's registry. check-schemas.mjs fails if they differ.
 //
 // To take the whole section out later: delete this file, remove its import and the
-// two lines that use hiddenGroup and hiddenFields in dashboardSettings.js, and
-// remove the same names from check-schemas.mjs and config.js. The dashboard uses the
-// starting values for anything missing from the published settings.
+// line that uses hiddenFields in dashboardSettings.js, and remove the same names
+// from check-schemas.mjs and config.js. The dashboard uses the starting values
+// for anything missing from the published settings.
 
 import { defineField } from 'sanity';
 import { hiddenTransitions } from '../hidden-transitions.js';
-
-export const hiddenGroup = { name: 'hidden', title: 'Hidden' };
 
 // The kinds a push can ask for: the ones in hidden-transitions.js. The list is
 // only there to show which one was pushed, because the field is read only.
@@ -33,7 +32,7 @@ export function hiddenFields() {
       name: 'hiddenEnabled',
       title: 'Allow hidden transitions',
       type: 'boolean',
-      group: 'hidden',
+      group: 'advanced',
       description: 'The master switch. Off, neither hidden transition ever plays, not even when you push one with the buttons beside Publish. They never play in calm motion.',
       initialValue: true,
     }),
@@ -42,7 +41,7 @@ export function hiddenFields() {
       name: 'desktopChance',
       title: 'Desktop reveal chance (percent)',
       type: 'number',
-      group: 'hidden',
+      group: 'advanced',
       description: 'How many page changes in 100 become the desktop reveal: blue glitching, then a blue error screen for 3 seconds. From 0 to 100, 0 is never.',
       initialValue: 1,
       validation: Rule => [
@@ -55,7 +54,7 @@ export function hiddenFields() {
       name: 'redEyesChance',
       title: 'Red eyes chance (percent)',
       type: 'number',
-      group: 'hidden',
+      group: 'advanced',
       description: 'How many page changes in 100 become red eyes: red glitches, then a picture of two red eyes on black for a few seconds. From 0 to 100, 0 is never.',
       initialValue: 1,
       validation: Rule => [
@@ -68,7 +67,7 @@ export function hiddenFields() {
       name: 'hiddenRequest',
       title: 'Last push',
       type: 'object',
-      group: 'hidden',
+      group: 'advanced',
       description: 'Filled in by the buttons Play desktop reveal and Play red eyes beside Publish, which play it on the screen within about 20 seconds. Do not edit it.',
       fields: [
         defineField({

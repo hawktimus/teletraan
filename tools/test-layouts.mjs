@@ -901,12 +901,12 @@ test('shell.js sets the layout before anything else is drawn, and keeps an alert
   assert.ok(code.indexOf('holdLooksFor(') < code.indexOf('await startThemes('), 'the hold is in place before the first theme goes on');
 });
 
-test('core/content.js and core/source.js give the saved theme and the saved source, with the same rules as the real ones', () => {
+test('core/content.js and core/source.js give the saved theme only when the screen shows the editors content, with the same rules as the real ones', () => {
   const content = read('dashboard/core/content.js');
   const source = read('dashboard/core/source.js');
-  assert.ok(/export function savedTheme\(\)/.test(content) && content.includes("import { chooseSource, savedSource } from './source.js';"));
-  assert.ok(content.includes("if (savedSource(new Date()) !== 'production') return null;"), 'the sample has its own theme');
-  assert.ok(/export function savedSource\(now\) \{\s*if \(sanity\.projectId === ''\) return 'sample';\s*const known = readSavedSettings\(\);\s*if \(known\) return pickSource\(known, now\);\s*return useSampleContent \? 'sample' : 'production';\s*\}/.test(source));
+  assert.ok(/export function savedTheme\(\)/.test(content) && content.includes("import { chosenSource } from './source.js';"));
+  assert.ok(content.includes("if (chosenSource() !== 'production') return null;"), 'the sample has its own theme');
+  assert.ok(/export function chosenSource\(\) \{\s*if \(sanity\.projectId === ''\) return 'sample';\s*return asked \? 'sample' : 'production';\s*\}/.test(source));
 });
 
 test('index.html links the sidebar stylesheet after frame.css, so its rules come later in the cascade', () => {

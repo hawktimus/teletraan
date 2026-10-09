@@ -4,7 +4,7 @@
 //
 // When one plays:
 //   1. At a page change of the large panel, each hidden transition has its
-//      chance (a percent in Dashboard Settings, Hidden tab). One roll decides
+//      chance (a percent in Dashboard Settings, Advanced tab). One roll decides
 //      among all of them, so 1 percent and 1 percent means about one page
 //      change in fifty is a surprise.
 //   2. Someone can also push one from the Studio ("Play desktop reveal",

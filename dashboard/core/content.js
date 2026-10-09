@@ -1,9 +1,9 @@
 // Where the screen gets what it shows: startContent() hands over the content
 // once it has it, and again every time it changes. Same shape as data/sample/content.json.
 
-import { contentSources, defaultSettings, defaultTeam, frameFinishes, limits, looks, metals, nightSpeeds, nightStyles, pageChangeStyles, photoOrders, sampleFolder, sanity, speeds, styles, teamModes } from '../config.js';
+import { defaultSettings, defaultTeam, frameFinishes, limits, looks, metals, nightSpeeds, nightStyles, pageChangeStyles, photoOrders, sampleFolder, sanity, speeds, styles, teamModes } from '../config.js';
 import { parseLocalDateTime } from './time.js';
-import { chooseSource, savedSource } from './source.js';
+import { chosenSource } from './source.js';
 import { tidyTheme } from './theme.js';
 import { tidyDemo } from './demo.js';
 import { chanceFields, tidyHiddenRequest } from './hidden.js';
@@ -12,7 +12,6 @@ import { tidyTestRequest } from './presentation-test.js';
 import { tidyPreviewRequest } from './preview.js';
 import { fetchResult, liveEventsUrl, normalizeContent, normalizeSample } from './sanity.js';
 import { reasons } from './connection.js';
-import { tidyClockTime } from './night.js';
 import { showsForTeam } from './teams.js';
 
 const storageKey = 'teletraan-content';
@@ -69,26 +68,22 @@ export function withDefaults(raw) {
 // range. Anything that does not fit becomes the default, so the panels never
 // have to check. A number outside its range is moved to the nearest end.
 export function fixSettingValues(settings) {
-  if (!contentSources.includes(settings.contentSource)) settings.contentSource = defaultSettings.contentSource;
-  if (typeof settings.switchBackAt !== 'string') settings.switchBackAt = defaultSettings.switchBackAt;
   if (!Object.keys(speeds).includes(settings.speed)) settings.speed = defaultSettings.speed;
   if (!metals.includes(settings.frameMetal)) settings.frameMetal = defaultSettings.frameMetal;
   if (!looks.includes(settings.look)) settings.look = defaultSettings.look;
   if (!styles.includes(settings.style)) settings.style = defaultSettings.style;
-  // The Transitions tab
+  // The page change settings
   if (!pageChangeStyles.includes(settings.pageChangeStyle)) settings.pageChangeStyle = defaultSettings.pageChangeStyle;
   if (!frameFinishes.includes(settings.frameFinish)) settings.frameFinish = defaultSettings.frameFinish;
-  // The Photos tab
+  // The photo settings
   if (!photoOrders.includes(settings.photoOrder)) settings.photoOrder = defaultSettings.photoOrder;
-  // The Teams tab
+  // The team settings
   if (!teamModes.includes(settings.teamMode)) settings.teamMode = defaultSettings.teamMode;
-  // The Night mode tab: two choices, two times of day, a switch each way and the logo width
+  // The night mode settings: two choices, a switch each way and the logo width. The times are fixed (constants.js)
   if (!nightStyles.includes(settings.nightStyle)) settings.nightStyle = defaultSettings.nightStyle;
   if (!Object.keys(nightSpeeds).includes(settings.nightSpeed)) settings.nightSpeed = defaultSettings.nightSpeed;
-  settings.nightStart = tidyClockTime(settings.nightStart, defaultSettings.nightStart);
-  settings.nightEnd = tidyClockTime(settings.nightEnd, defaultSettings.nightEnd);
 
-  // The logo and name switches and numbers are the Logo tab in the Studio
+  // The logo and name switches and numbers are the logo settings in the Studio
   const logoSwitches = ['logoAnimations', 'logoEntrance', 'logoSpin', 'logoHawk', 'nameTransform'];
   const logoNumbers = ['logoSpinEvery', 'logoSpinDuration', 'logoHawkEvery', 'logoHawkDuration', 'nameEvery', 'nameDuration'];
   const transitionNumbers = ['breakSeconds', 'silverChance'];
@@ -96,20 +91,18 @@ export function fixSettingValues(settings) {
   ['glint', 'showConnectionStatus', 'nightEnabled', 'nightPreview', 'hiddenEnabled', 'presentationsEnabled'].concat(logoSwitches).forEach(name => {
     if (typeof settings[name] !== 'boolean') settings[name] = defaultSettings[name];
   });
-  // The Hidden tab: each chance is a percent, and the last push from the Studio is a kind and a time
+  // The hidden transition settings: each chance is a percent, and the last push from the Studio is a kind and a time
   const hiddenNumbers = chanceFields();
-  // The Presentations tab: minutes to wait for the speaker, and minutes a talk may overrun
-  const presentationNumbers = ['noShowMinutes', 'graceMinutes'];
-  // The Teams tab: minutes each team stays in Alternate mode
+  // The team settings: minutes each team stays in Alternate mode
   const teamNumbers = ['alternateMinutes'];
-  ['pageSeconds', 'photoSeconds', 'nightLogoWidth'].concat(logoNumbers, transitionNumbers, hiddenNumbers, presentationNumbers, teamNumbers).forEach(name => {
+  ['pageSeconds', 'photoSeconds', 'nightLogoWidth'].concat(logoNumbers, transitionNumbers, hiddenNumbers, teamNumbers).forEach(name => {
     settings[name] = keepInRange(settings[name], limits[name], defaultSettings[name]);
   });
   ['portraitScale', 'photoScale'].forEach(name => {
     settings[name] = tidyScale(name, settings[name]);
   });
   settings.hiddenRequest = tidyHiddenRequest(settings.hiddenRequest);
-  // The last click of Play announcements (Announcements tab, hidden from editors): a time, or empty
+  // The last click of Play announcements (Screen tab, hidden from editors): a time, or empty
   settings.announceRequest = tidyAnnounceRequest(settings.announceRequest);
   // The last click of Run presentation test (Presentations tab, hidden from editors): a time, or empty
   settings.presentationTestRequest = tidyTestRequest(settings.presentationTestRequest);
@@ -126,7 +119,7 @@ export function keepInRange(value, limit, fallback) {
   return Math.min(limit.max, Math.max(limit.min, value));
 }
 
-// A size setting of the Photos tab (portraitScale or photoScale): a whole percent
+// A size setting of the photo settings (portraitScale or photoScale): a whole percent
 // from 60 to 100, so 79.6 is 80. Anything missing or odd is 100, the full size.
 // The portrait and Photo panel code calls it too, so a size is never odd there.
 export function tidyScale(name, value) {
@@ -157,37 +150,11 @@ function tidyGlitch(raw) {
 // offline is true once Sanity has been out of reach for over two minutes, and reason then says
 // why: one of the words in core/connection.js. reason is '' when offline is false.
 //
-// Dashboard Settings says which content to show (source.js): the sample, or
-// what the editors published. The screen keeps asking, so a change in Content
-// source, or the Switch back time arriving, swaps the reader below while the
-// screen runs. The first content of the new source comes through onChange.
+// The content shown is what the editors published, or the sample when the
+// address has ?sample=1 (source.js). The choice is made once, when the page
+// starts.
 export async function startContent(onChange) {
-  let reader = null; // the sample reader or the Sanity reader that is running now
-  let turn = 0; // counts the switches, so a start that was overtaken by a newer one is dropped
-
-  async function use(source) {
-    turn += 1;
-    const mine = turn;
-    if (reader) reader.stop();
-    reader = null;
-
-    const started = source === 'sample' ? await startSampleContent(onChange) : await startSanityContent(onChange);
-    if (mine === turn) reader = started;
-    else started.stop();
-    return { first: started.first, current: mine === turn };
-  }
-
-  const choice = await chooseSource();
-  const started = await use(choice.source);
-
-  // Watching starts only now, so a switch can never arrive before the first content
-  choice.keepWatching(source => {
-    use(source)
-      .then(result => {
-        if (result.current) onChange(result.first);
-      })
-      .catch(error => console.error('Could not switch the content source', error));
-  });
+  const started = chosenSource() === 'sample' ? await startSampleContent(onChange) : await startSanityContent(onChange);
   return started.first;
 }
 
@@ -278,7 +245,7 @@ function readSavedCopy() {
 // anything is drawn.
 export function savedTheme() {
   try {
-    if (savedSource(new Date()) !== 'production') return null;
+    if (chosenSource() !== 'production') return null;
 
     const text = localStorage.getItem(storageKey);
     const saved = text ? JSON.parse(text) : null;
@@ -294,7 +261,7 @@ export function savedTheme() {
 // and core/layout-apply.js the layout, before anything is drawn.
 export function savedStyle() {
   try {
-    if (savedSource(new Date()) !== 'production') return null;
+    if (chosenSource() !== 'production') return null;
 
     const text = localStorage.getItem(storageKey);
     const saved = text ? JSON.parse(text) : null;

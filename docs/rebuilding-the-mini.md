@@ -125,6 +125,9 @@ see studio/README.md.
    downloads every calendar in `local.env`, but the dashboard only shows a
    calendar that has a row. A new Studio starts with one row, `team`.
 
+   To have Studio show what the Mini last did, add a `SANITY_WRITE_TOKEN`
+   line too. It is optional: see Showing what the Mini did in Studio below.
+
 9. **Start the web server.**
 
        cd /opt/teletraan/deploy
@@ -270,8 +273,8 @@ its settings. The Mini can keep running.
   the data folder is no longer read. If the panel never comes up, the list has
   no photo that is switched on and not expired.
 - Night mode (docs/night-mode.md) puts a black screen with the team logo up from
-  23:30 to 11:30 Eastern, unless Dashboard Settings says otherwise (Night mode
-  tab), and the TV stays on all night. To see it at once, open the Night mode
+  23:30 to 11:30 Eastern, unless Dashboard Settings says otherwise (Advanced
+  tab), and the TV stays on all night. To see it at once, open the Advanced
   tab, turn on Preview night mode and publish, then turn it off again. If the TV
   itself goes dark, that is the TV's own sleep setting, not the dashboard: turn
   its auto power off or sleep timer off.
@@ -279,7 +282,7 @@ its settings. The Mini can keep running.
   replace a page change. To see each once on the Mini, open Dashboard Settings in
   Studio, open the menu next to Publish and click Play desktop reveal, then Play
   red eyes. Each plays within about 20 seconds. If the screen stutters during one,
-  set both chances in the Hidden tab to 0 and tell whoever looks after the code.
+  set both chances in the Advanced tab to 0 and tell whoever looks after the code.
   They never play at night, in calm motion, or over an alert or announcement.
 - Make a small change on a laptop and push it. Within about 6 minutes (up to
   5 for the pull timer, up to 1 for the dashboard to notice) the screen
@@ -294,24 +297,23 @@ its settings. The Mini can keep running.
   starts" below.
 - For the speed tests on the real hardware, use `docs/try-it-on-the-mini.md`.
 
-The screen asks Sanity for Dashboard Settings first, and Content source there
-says which content to show. While it is Sample, the screen shows the sample
-content in `dashboard/data/sample/` (the content, with its three sample photos,
-and the calendar) and does not read the calendars that the Mini downloads or
-any other content from Sanity. A SAMPLE CONTENT label shows beside the TEAM
-plate. Every piece of sample text is in [square brackets]. It still reloads
-itself after an update, and the browser console shows a 404 for `version.txt`
-in `data/live/` if the Mini has not written it. That is expected.
+The screen always shows what the editors published. Nothing in Studio switches
+it to the sample content. To try things out with made-up content, add
+`?sample=1` to the end of the dashboard address, for example
+`http://localhost:3229/dashboard/?sample=1`, in a browser. That one page then
+shows the sample content in `dashboard/data/sample/` (the content, with its
+three sample photos, and the calendar) and does not read the calendars that the
+Mini downloads or any other content from Sanity. A SAMPLE CONTENT label shows
+beside the TEAM plate. Every piece of sample text is in [square brackets]. It
+still reloads itself after an update, and the browser console shows a 404 for
+`version.txt` in `data/live/` if the Mini has not written it. That is expected.
+The kiosk opens the address without `?sample=1`, so the TV never shows it.
 
-Editors switch between sample and production in Studio (docs/editing-content.md),
-and the Mini follows within about 30 seconds without a restart. The Mini asks
-Sanity from the address `http://localhost:<port>`, with the port in
+The Mini asks Sanity from the address `http://localhost:<port>`, with the port in
 `TELETRAAN_PORT` in `local.env`, so that address must be a CORS origin in the
-Sanity project settings (studio/README.md, step 6). If the Mini cannot read
-Dashboard Settings and has no saved copy of them, it falls back to
-`useSampleContent` in `dashboard/config.js`, which is `false`, so it shows the
-editors' content. If the screen says SANITY UNREACHABLE: CORS BLOCKED, the
-origin is the first thing to check (see Checking the connection, next).
+Sanity project settings (studio/README.md, step 6). If the screen says SANITY
+UNREACHABLE: CORS BLOCKED, the origin is the first thing to check (see Checking
+the connection, next).
 
 ## Checking the connection
 
@@ -396,7 +398,7 @@ answer, the host is there and only the permission is missing (CORS). If it
 gets none, the network is down. It is only made after a read fails with no
 answer, never on a good read.
 
-In Studio, Dashboard Settings has a Connection tab with the switch Show
+In Studio, the Advanced tab of Dashboard Settings has the switch Show
 connection status. Turn it on to keep the text on the screen all the time, for
 setting up or looking into a problem. It then has these lines, in a dark plate
 instead of the red one:
@@ -415,6 +417,72 @@ file, which is not the same as when the Mini downloaded them. It says
 `Calendars not read yet` until the screen has read them all, and again for as
 long as one calendar file cannot be read. To see when the Mini last downloaded
 the calendars, use `sudo journalctl -u teletraan-calendars.service -n 20`.
+
+## Showing what the Mini did in Studio
+
+The Screen tab of Dashboard Settings starts with a block that says when the
+Mini last saw a change to the content, downloaded the calendars, downloaded the
+slides, read the Monday boards and the FRC data, and started the screen. The
+Mini writes those times into one document in Sanity, `status-mini`, with
+`deploy/scripts/status-write.sh`. That needs a token that is allowed to write.
+Without one the Mini works as before and the block says No status yet.
+
+1. Make the token. Open sanity.io/manage and sign in, open the project, then
+   API, then Tokens, then Add API token. Name it `Mini status`, give it Editor
+   access and save. Sanity shows the token once, so copy it before leaving.
+
+2. Add it to `local.env` on the Mini, in single quotes, on its own line:
+
+       nano /opt/teletraan/deploy/local.env
+
+       SANITY_WRITE_TOKEN='[paste the token here]'
+
+   The file is locked to the Mini's account (step 8). A token with Editor
+   access can change anything in the dataset, so it goes in this file and
+   nowhere else: not in the repository, not in a message and not in Studio.
+   `local.example.env` has the line with a placeholder, and the script ignores a
+   value that still starts with `[`.
+
+3. Run the install scripts again. The calendar and slides services each have
+   a new line in their unit files that runs `status-write.sh` after the job, and
+   systemd only reads a changed unit file when the script copies it again:
+
+       sudo /opt/teletraan/deploy/scripts/install-calendars.sh
+       sudo /opt/teletraan/deploy/scripts/install-slides.sh
+
+   A Mini that was set up with `install-timers.sh` (step 10) runs that script
+   again instead, which copies every unit file.
+
+`status-write.sh` is the only script that uses the token. These start it:
+
+- `teletraan-calendars.service` runs it after each calendar download, to write
+  the calendar time and the time of the last content change it can see.
+- `teletraan-slides.service` runs it after each slides run, to write the slides
+  time.
+- `kiosk.sh` runs it in the background when the screen starts, to write the
+  start time. It never holds the screen back.
+
+Each of these runs it with a leading minus in the unit file, so a failed write
+is ignored and never makes a download look as if it failed. The services only
+run it when their own job worked, so after a failed calendar download the
+calendar time and the content time stay as they were.
+
+To try it by hand:
+
+    /opt/teletraan/deploy/scripts/status-write.sh kiosk
+
+It prints `status: wrote kioskStartedAt`, or says in plain words why not, and
+prints nothing at all when there is no token. Then open Dashboard Settings in
+Studio: the Screen tab shows Screen started: just now. The script never prints
+the token or an address.
+
+The dataset is public, so anyone who asks for the `status-mini` document can
+read it. It holds six times and nothing else.
+
+Every job writes a new version of the document, and the screen re-reads its
+content each time Sanity says something changed. The slides service runs every
+2 minutes, so the screen re-reads about that often. Nothing on the screen
+changes when the content has not.
 
 ## Finding the Mini on the network
 

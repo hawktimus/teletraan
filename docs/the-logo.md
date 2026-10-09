@@ -2,7 +2,7 @@
 
 The hawk at the top left of the banner has four animations: an entrance, a
 spin, a flying hawk and, in the team name beside it, the name effect. Each one
-has its own settings in Dashboard Settings, in a tab called Logo. This page
+has its own settings in the Look tab of Dashboard Settings. This page
 says what each animation does, when it plays, where the code is, and how to
 change one.
 
@@ -42,11 +42,11 @@ In calm and none motion nothing moves. The logo stays the still emblem, and a
 logo asked to fly shows the hawk still, with its wings up. In the flat finish
 (`?finish=flat`) the outline is one plain colour and the shadow is gone.
 
-## The Logo tab
+## The logo settings
 
-Dashboard Settings has one tab for all of this, called Logo. Everything in it
-is about the logo and its name, so the whole tab can be taken out later in one
-go (see the end of this page).
+The Look tab of Dashboard Settings has all of this, after Style and Team mode.
+Everything in it is about the logo and its name, so it can all be taken out
+later in one go (see the end of this page).
 
 | Field | Starting value | Allowed |
 |-------|----------------|---------|
@@ -142,7 +142,7 @@ in `frame.css` is multiplied by it.
   the name effect and the screen glitch. `hawkActs` there is the list of the
   four acts of the flying hawk and how many seconds each takes. The same file
   has `startLogo`, `playLogoAct` and `playNameEffect`, and `setSpin`,
-  `setHawk` and `setLogoAnimations`, which `shell.js` calls with the Logo tab
+  `setHawk` and `setLogoAnimations`, which `shell.js` calls with the logo
   settings every time the content changes.
 - The settings are `logoAnimations`, `logoEntrance`, `logoSpin`,
   `logoSpinEvery`, `logoSpinDuration`, `logoHawk`, `logoHawkEvery`,
@@ -201,9 +201,9 @@ by `pace()`.
   (a switch, seconds between plays and seconds one play lasts) to
   `studio/schemas/settingsLogo.js`, `defaultSettings`, `limits` and
   `fixSettingValues`, as docs/adding-a-field.md says.
-- To take the whole Logo tab out of the Studio, delete
+- To take the logo settings out of the Studio, delete
   `studio/schemas/settingsLogo.js` and the lines in `dashboardSettings.js` that
-  import it and use `logoGroup` and `logoFields()`. Remove the same names from
+  import it and use `logoFields()`. Remove the same names from
   `studio/check-schemas.mjs`. The dashboard keeps working: it uses the starting
   values in `dashboard/config.js` for anything the published settings do not
   have, so the logo goes on with its old behaviour.

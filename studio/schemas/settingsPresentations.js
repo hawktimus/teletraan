@@ -1,24 +1,26 @@
-// The Presentations tab of Dashboard Settings: whether the screen takes over for
-// booked talks, and how long it waits. Three fields, and a hidden one:
+// The presentation fields of Dashboard Settings, in the Presentations tab:
+// whether the screen takes over for booked talks. One field for editors, and
+// three hidden ones:
 //
 //   presentationsEnabled     the switch, on to start with
-//   noShowMinutes            minutes the title card waits before the talk is skipped, from 1 to 15, 5 to start with
-//   graceMinutes             minutes a talk may run past its slot before it is ended, from 0 to 10, 5 to start with
+//   noShowMinutes            hidden. The title card always waits 5 minutes (dashboard/core/constants.js)
+//   graceMinutes             hidden. A talk may always run 5 minutes past its slot (dashboard/core/constants.js)
 //   presentationTestRequest  filled in by the Run presentation test button (actions.js), never by editors
 //
-// The starting values and limits are the same as defaultSettings and limits in
-// dashboard/config.js. check-schemas.mjs fails if they differ. The talks and the
-// meeting days are in presentation.js and presentationDay.js.
+// noShowMinutes and graceMinutes stay in the schema so that a page saved with
+// them still opens and publishes, and they keep their starting values. The
+// screen never reads what they hold. They have no rules, because nobody can fix
+// a value in a hidden field. The starting value of the switch is the same as in
+// defaultSettings in dashboard/config.js. check-schemas.mjs fails if they differ.
+// The talks and the meeting days are in presentation.js and presentationDay.js.
 //
 // To take the whole section out later: delete this file, remove its import and
-// the lines that use presentationsGroup, presentationsFields and
-// presentationTestRequestField in dashboardSettings.js, and remove the same names
-// from check-schemas.mjs and config.js. The dashboard uses the starting values for
-// anything missing from the published settings.
+// the lines that use presentationsFields and presentationTestRequestField in
+// dashboardSettings.js, and remove the same names from check-schemas.mjs and
+// config.js. The dashboard uses the starting values for anything missing from
+// the published settings.
 
 import { defineField } from 'sanity';
-
-export const presentationsGroup = { name: 'presentations', title: 'Presentations' };
 
 export function presentationsFields() {
   return [
@@ -36,12 +38,9 @@ export function presentationsFields() {
       title: 'Wait for the speaker (minutes)',
       type: 'number',
       group: 'presentations',
-      description: 'How many minutes the title card waits for the first press of the clicker before the talk is skipped, from 1 to 15.',
+      hidden: true,
+      description: 'Not used any more. The title card always waits 5 minutes for the first press of the clicker.',
       initialValue: 5,
-      validation: Rule => [
-        Rule.required().error('Enter the number of minutes.'),
-        Rule.integer().min(1).max(15).error('Use a whole number from 1 to 15.'),
-      ],
     }),
 
     defineField({
@@ -49,12 +48,9 @@ export function presentationsFields() {
       title: 'Overrun allowed (minutes)',
       type: 'number',
       group: 'presentations',
-      description: 'How many minutes a talk may run past its slot before it is ended, from 0 to 10. 0 ends it when the slot ends.',
+      hidden: true,
+      description: 'Not used any more. A talk may always run 5 minutes past its slot before it is ended.',
       initialValue: 5,
-      validation: Rule => [
-        Rule.required().error('Enter the number of minutes.'),
-        Rule.integer().min(0).max(10).error('Use a whole number from 0 to 10.'),
-      ],
     }),
   ];
 }

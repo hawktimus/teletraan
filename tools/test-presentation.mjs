@@ -19,10 +19,11 @@ const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url))
 const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-presentation-'));
 fs.mkdirSync(path.join(workFolder, 'dashboard', 'core'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
-['config.js', 'core/presentation.js', 'core/time.js'].forEach(file => {
+['config.js', 'core/constants.js', 'core/presentation.js', 'core/time.js'].forEach(file => {
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
 const presentation = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/presentation.js')).href);
+const constants = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/constants.js')).href);
 
 const {
   canRun, chipShown, dueTalk, escapeTwice, holdsScreen, idleState, keyAction, keyActions, nextState, preloadIndexes,
@@ -41,8 +42,9 @@ const start = new Date('2026-10-08T19:00:00Z'); // 3:00 PM in New York
 // The moment this many milliseconds after the start of the talk
 const at = (offset, from = start) => new Date(from.getTime() + offset);
 
-// Dashboard Settings as the Studio starts them
-const settings = { presentationsEnabled: true, noShowMinutes: 5, graceMinutes: 5 };
+// Dashboard Settings as the Studio starts them. The wait for the speaker and the overrun are
+// fixed in core/constants.js and are not settings.
+const settings = { presentationsEnabled: true };
 
 // A talk as core/sanity.js hands it over
 function booked(extra) {
@@ -169,37 +171,33 @@ test('a talk is due until its slot and its grace are used up, and not after', ()
   assert.equal(nextState(idleState(), inputAt(at(20 * minute))).name, 'idle');
 });
 
-test('a talk ends at its start plus its minutes plus graceMinutes, and a number that is not usable is replaced by the usual one', () => {
-  const end = (talk, change) => talkEnd(booked(talk), Object.assign({}, settings, change)).toISOString();
+test('a talk ends at its start plus its minutes plus graceMinutes from constants.js, and a caller can name another overrun', () => {
+  const end = (talk, overrun) => talkEnd(booked(talk), overrun).toISOString();
 
-  assert.equal(end({}, {}), '2026-10-08T19:20:00.000Z');
-  assert.equal(end({}, { graceMinutes: 0 }), '2026-10-08T19:15:00.000Z');
-  assert.equal(end({}, { graceMinutes: 10 }), '2026-10-08T19:25:00.000Z');
-  assert.equal(end({ minutes: 30 }, { graceMinutes: 10 }), '2026-10-08T19:40:00.000Z');
-  assert.equal(end({ minutes: 5 }, { graceMinutes: 2 }), '2026-10-08T19:07:00.000Z');
-  assert.equal(end({ start: '2026-10-08T19:00:00Z' }, {}), '2026-10-08T19:20:00.000Z', 'a start written as text');
+  assert.equal(constants.graceMinutes, 5);
+  assert.equal(end({}), '2026-10-08T19:20:00.000Z');
+  assert.equal(end({}, 0), '2026-10-08T19:15:00.000Z', 'none of the overrun, as the Up Next panel asks');
+  assert.equal(end({}, 10), '2026-10-08T19:25:00.000Z');
+  assert.equal(end({ minutes: 30 }), '2026-10-08T19:35:00.000Z');
+  assert.equal(end({ minutes: 5 }), '2026-10-08T19:10:00.000Z');
+  assert.equal(end({ start: '2026-10-08T19:00:00Z' }), '2026-10-08T19:20:00.000Z', 'a start written as text');
 
-  [undefined, 0, -5, 'ten', NaN].forEach(minutes => assert.equal(end({ minutes: minutes }, {}), '2026-10-08T19:20:00.000Z', 'minutes ' + minutes));
-  [undefined, -1, 'x', NaN, null].forEach(grace => assert.equal(end({}, { graceMinutes: grace }), '2026-10-08T19:20:00.000Z', 'grace ' + grace));
+  [undefined, 0, -5, 'ten', NaN].forEach(minutes => assert.equal(end({ minutes: minutes }), '2026-10-08T19:20:00.000Z', 'minutes ' + minutes));
 });
 
 test('a presenting talk ends at its end on whatever slide it is on, and not a moment before', () => {
   const onSlides = talk => ({ name: 'presenting', talk: talk, count: 5, slide: 2, black: false, keyAt: null, escapedAt: null });
   const rows = [
-    { talk: {}, change: {}, minutes: 20 },
-    { talk: {}, change: { graceMinutes: 0 }, minutes: 15 },
-    { talk: {}, change: { graceMinutes: 10 }, minutes: 25 },
-    { talk: { minutes: 30 }, change: { graceMinutes: 10 }, minutes: 40 },
-    { talk: { minutes: 5 }, change: { graceMinutes: 2 }, minutes: 7 },
-    { talk: { minutes: undefined }, change: {}, minutes: 20 },
-    { talk: {}, change: { graceMinutes: undefined }, minutes: 20 },
-    { talk: {}, change: { graceMinutes: -3 }, minutes: 20 },
+    { talk: {}, minutes: 20 },
+    { talk: { minutes: 30 }, minutes: 35 },
+    { talk: { minutes: 5 }, minutes: 10 },
+    { talk: { minutes: undefined }, minutes: 20 },
   ];
 
   rows.forEach(row => {
     const state = onSlides(booked(row.talk));
-    const input = now => inputAt(now, { settings: Object.assign({}, settings, row.change) });
-    const label = JSON.stringify([row.talk, row.change]);
+    const input = now => inputAt(now);
+    const label = JSON.stringify(row.talk);
 
     assert.equal(nextState(state, input(at(row.minutes * minute - 1))), state, 'just before the end ' + label);
     const ended = nextState(state, input(at(row.minutes * minute)));
@@ -337,9 +335,9 @@ test('a talk that nobody starts is skipped after noShowMinutes, and stays skippe
   assert.equal(forgetful.look(at(8 * minute)).name, 'title', 'with nothing remembered the same talk would start');
 });
 
-test('noShowMinutes decides how long the card waits, and a number that is not usable is five minutes', () => {
-  const skippedAfter = noShow => {
-    const screen = makeScreen({ settings: { noShowMinutes: noShow } });
+test('the title card waits noShowMinutes from constants.js, whatever the settings hold', () => {
+  const skippedAfter = stored => {
+    const screen = makeScreen({ settings: stored });
     screen.look(at(0));
     for (let seconds = 1; seconds <= 20 * 60; seconds++) {
       if (screen.look(at(seconds * second)).name === 'skipped') return seconds;
@@ -347,20 +345,12 @@ test('noShowMinutes decides how long the card waits, and a number that is not us
     return null;
   };
 
-  assert.equal(skippedAfter(1), 60);
-  assert.equal(skippedAfter(2), 120);
-  assert.equal(skippedAfter(10), 600);
-  [undefined, null, -1, 'soon', NaN].forEach(value => assert.equal(skippedAfter(value), 300, String(value)));
+  assert.equal(constants.noShowMinutes, 5);
+  assert.equal(skippedAfter({}), 300);
+  [1, 2, 10, 15, 0, -1, 'soon', NaN, null].forEach(value => assert.equal(skippedAfter({ noShowMinutes: value }), 300, String(value)));
 });
 
-test('a title card is skipped when the slot is over, if that comes before the wait does', () => {
-  const short = { settings: { noShowMinutes: 15, graceMinutes: 0 }, talks: [booked({ minutes: 5 })] };
-  const screen = makeScreen(short);
-  screen.look(at(0));
-  assert.equal(screen.look(at(5 * minute - 1)).name, 'title');
-  assert.equal(screen.look(at(5 * minute)).name, 'skipped');
-  assert.equal(screen.state.reason, 'no-show');
-
+test('a title card is skipped when the talk is over, if that comes before the wait does', () => {
   // a page that loads late: the wait starts when the card comes up, and the slot ends at 3:20
   const late = makeScreen({});
   late.look(at(18 * minute));

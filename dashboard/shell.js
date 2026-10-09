@@ -35,6 +35,7 @@ import * as frame from './frame.js';
 import { fixedPanels, panels } from './registry.js';
 import { sampleFolder, liveFolder, defaultSettings, frameFinishes, metals, pageChangeStyles, location as place } from './config.js';
 import { savedStyle, savedTheme, startContent, withDefaults } from './core/content.js';
+import { askForSample } from './core/source.js';
 import { mergeEvents } from './core/events.js';
 import { connectionLines, drawConnection } from './core/connection.js';
 import { pageSwitchesFor } from './core/look.js';
@@ -47,6 +48,7 @@ import { decorationLayers, hasKit, layoutNow } from './core/layout.js';
 import { applyStyle, startStyle } from './core/style.js';
 import { resumePreview } from './core/preview.js';
 import { loadPanel, mountPanel, updatePanel } from './core/panels.js';
+import { playlistOf } from './core/panel-order.js';
 import { askForTeam, changeTeamNow, onTeamChange, useTeams } from './core/teams.js';
 import { showPagesNow, startRotation, startTicker, startTogether } from './core/schedule.js';
 import { startTakeovers, runAnnouncement, takeoverRunning } from './core/takeover.js';
@@ -85,6 +87,7 @@ async function run() {
   // A theme or style with another layout reloads the page later. A preview that was on at that
   // reload goes on first, so the style and the layout are the ones it holds.
   resumeSavedPreview();
+  askForSample(params.get('sample'));
   askForTeam(params.get('team'));
   const style = startStyle(params.get('style'), savedStyle);
   startLayout(params.get('theme'), savedTheme, document.documentElement, style);
@@ -197,12 +200,13 @@ function resumeSavedPreview() {
   }
 }
 
-// Joins the editors' content with the weather and events. When the content
-// switches between the sample and the editors' own (Dashboard Settings
-// decides, see core/source.js), the events that were read for the old one are
-// thrown away and read again from the right folder, and the pages on screen
-// are replaced now instead of at their next turn. The photos are part of the
-// content itself, so they switch with it.
+// Joins the editors' content with the weather and events. The screen can
+// start on the defaults and get the sample content a moment later (?sample=1,
+// see core/source.js). When the content switches between the sample and the
+// editors' own, the events that were read for the old one are thrown away and
+// read again from the right folder, and the pages on screen are replaced now
+// instead of at their next turn. The photos are part of the content itself,
+// so they switch with it.
 function setBase(newBase, newStatus) {
   const sample = newStatus.source === 'sample';
   const switched = extrasStarted && sample !== showingSample;
@@ -280,7 +284,7 @@ function rebuild() {
   if (rereadEvents && key !== calendarsKey) rereadEvents();
 }
 
-// The Logo tab of Dashboard Settings: the master switch, the entrance, and the
+// The logo settings of Dashboard Settings (Look tab): the master switch, the entrance, and the
 // switch, seconds between plays and seconds one play lasts of the spin, the
 // flying hawk and the name effect (see "Effects that play now and then" in frame.js)
 function useLogoSettings(settings) {
@@ -290,7 +294,7 @@ function useLogoSettings(settings) {
   frame.setNameEffect(settings.nameTransform, settings.nameEvery, settings.nameDuration);
 }
 
-// The Transitions tab of Dashboard Settings: how a page change looks and what
+// The page change settings of Dashboard Settings (Look tab): how a page change looks and what
 // metal the page frames have. The address wins, like the other switches above.
 function usePageChangeSettings(settings) {
   const style = pageChangeStyles.includes(params.get('change')) ? params.get('change') : settings.pageChangeStyle;
@@ -371,9 +375,9 @@ function startWhatComesAndGoes() {
   }
 
   const rotation = () => content.settings.rotation;
-  startRotation('grid1', () => (onlyTasks ? [{ panel: 'tasks', show: true, seconds: 12 }] : rotation().grid1), getContent);
+  startRotation('grid1', () => (onlyTasks ? [{ panel: 'tasks', show: true, seconds: 12 }] : playlistOf(rotation(), 'grid1')), getContent);
   if (!onlyTasks) {
-    startRotation('grid2', () => rotation().grid2, getContent); // does nothing in a layout with no small frame
+    startRotation('grid2', () => playlistOf(rotation(), 'grid2'), getContent); // does nothing in a layout with no small frame
 
     startTicker(getContent);
   }
