@@ -38,6 +38,7 @@ said yes.**
 | `poppler-utils` and `jq`. `curl` is already installed in step 4. | turn the slides of the talks into pictures, and read the list of talks from Sanity | 11 |
 | `xserver-xorg`, `xinit`, `x11-xserver-utils`, `chromium` | show the dashboard full screen | 12 |
 | `unclutter` (optional) | hide the mouse pointer when testing inside a desktop | 12 |
+| A changed `/etc/issue` (the old text is kept) and the unit `teletraan-console.service`. No package. | show the drawings on the TV while the Mini starts and shuts down | 13 |
 
 The repository host needs an account that the team mentor holds. This page does
 not create it. The Sanity project already exists, and its ID is in
@@ -210,7 +211,56 @@ see studio/README.md.
     run `sudo systemctl stop teletraan-kiosk.service`. To use Firefox instead
     of Chromium, see the comments at the end of `deploy/scripts/kiosk.sh`.
 
-13. **Stop the Mini sleeping.** `kiosk.sh` already turns off the screen saver
+13. **Show the boot and shutdown screens.** While the Mini starts, the text
+    screen shows a drawing above the login prompt, until the kiosk takes
+    over. When the Mini shuts down or reboots, the TV switches to the text
+    screen and shows a second drawing. The drawings are the files
+    `deploy/console/startup.txt` and `deploy/console/shutdown.txt`. They are
+    plain text, at most 100 columns wide and 56 rows tall, made for the text
+    screen of 240 columns and 67 rows that a 1920 by 1080 TV gets with the
+    default 8 by 16 font.
+
+        sudo /opt/teletraan/deploy/scripts/install-console.sh
+
+    The script says what it will do and waits for Enter. It installs no
+    packages and uses `chvt`, `clear` and `pr`, which are already on the Mini
+    (the kiosk service uses `chvt` too). It does this:
+
+    - Keeps a copy of the text now in `/etc/issue` as
+      `/etc/issue.before-teletraan`. It does this once and never overwrites
+      the copy.
+    - Writes `/etc/issue` again: the startup drawing, a blank line, then the
+      saved text. The login prompt reads that file and still works.
+    - Copies `teletraan-console.service` into place and turns it on. It
+      counts as running all the time. When the Mini stops, it clears the
+      first text screen, switches the TV to it and prints the shutdown
+      drawing. It runs as root and names no account.
+
+    Running it twice is safe. The second run says what it found and changes
+    nothing. It stops with a message, and changes nothing, if a file is
+    missing or empty. Run it again after `startup.txt` changes, because
+    `/etc/issue` is a copy of it. A change to `shutdown.txt` needs nothing,
+    because the unit reads the file when the Mini stops.
+
+    To see the shutdown drawing without shutting down, stop the unit. That
+    prints it and switches the TV away from the kiosk. Switch back, and start
+    the unit again so it is ready for the next shutdown:
+
+        sudo systemctl stop teletraan-console.service
+        sudo chvt 7
+        sudo systemctl start teletraan-console.service
+
+    The startup drawing shows on the next reboot. To go back to how it was,
+    restore the saved text and turn the unit off:
+
+        sudo cp /etc/issue.before-teletraan /etc/issue
+        sudo systemctl disable --now teletraan-console.service
+
+    The second line shows the shutdown drawing once, because stopping the
+    unit is what prints it. `sudo chvt 7` brings the kiosk back. Running
+    `install-console.sh` again turns both screens back on.
+
+14. **Stop the Mini sleeping.** `kiosk.sh` already turns off the screen saver
     and screen blanking. This stops Debian suspending the whole machine:
 
         sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
@@ -218,12 +268,12 @@ see studio/README.md.
     On the TV itself, turn off any sleep timer, auto power off and eco mode.
     An OLED or plasma TV is the exception, see Burn-in below.
 
-14. **Turn off overscan on the TV.** Overscan crops the edges of the picture.
+15. **Turn off overscan on the TV.** Overscan crops the edges of the picture.
     In the TV's picture settings choose the size setting called "Just Scan",
     "Screen Fit", "1:1" or "Dot by Dot" (the name depends on the make). If
     the HDMI input can be named, name it "PC".
 
-15. **Reboot and test.**
+16. **Reboot and test.**
 
         sudo reboot
 
@@ -246,7 +296,7 @@ its settings. The Mini can keep running.
   ends with `OK` (see Checking the connection below).
 - The clock matches a phone, and the date is right.
 - All four sides of the frames and the whole ticker are visible. If
-  an edge is cut off, go back to step 14. The frames are metal, gold unless
+  an edge is cut off, go back to step 15. The frames are metal, gold unless
   Dashboard Settings says Silver (Screen, Frame metal), on purple plates. The
   large and small frames are silver now and then, about one page change in
   ten (Transitions, Frame finish).
@@ -281,6 +331,10 @@ its settings. The Mini can keep running.
   red eyes. Each plays within about 20 seconds. If the screen stutters during one,
   set both chances in the Hidden tab to 0 and tell whoever looks after the code.
   They never play at night, in calm motion, or over an alert or announcement.
+- The text screen shows the startup drawing above the login prompt while the
+  Mini starts, and the TV shows the shutdown drawing as it stops (step 13).
+  If there is no drawing, `systemctl is-active teletraan-console.service`
+  should say `active`, and `head -n 3 /etc/issue` should show the drawing.
 - Make a small change on a laptop and push it. Within about 6 minutes (up to
   5 for the pull timer, up to 1 for the dashboard to notice) the screen
   reloads and shows it.

@@ -459,7 +459,8 @@ test('normalizeContent turns a full Sanity result into the sample content shape'
   const sampleContent = withDefaults(JSON.parse(fs.readFileSync(sampleFile, 'utf8')));
 
   // The sample also carries a Meeting day to show its shape. The booking script reads those, not the screen.
-  assert.deepEqual(Object.keys(content).sort(), Object.keys(sampleContent).filter(name => name !== 'presentationDays').sort());
+  // And the drawings of the boot and shutdown screens, which the screen does not read.
+  assert.deepEqual(Object.keys(content).sort(), Object.keys(sampleContent).filter(name => name !== 'presentationDays' && name !== 'console').sort());
   assert.deepEqual(content.team, { name: '[Team name]', number: '1234', school: live.config.defaultTeam.school });
 
   const settings = content.settings;

@@ -217,6 +217,10 @@ editors can sign in from anywhere.
                               install-calendars.sh only the calendar timer and install-slides.sh the slides
                               timer (docs/rebuilding-the-mini.md, step 11). systemd/ has the unit files they
                               copy into place.
+                              scripts/install-console.sh writes the startup drawing above the old text of
+                              /etc/issue and turns on teletraan-console.service, which shows the shutdown
+                              drawing. The two drawings are console/startup.txt and console/shutdown.txt
+                              (docs/rebuilding-the-mini.md, step 13).
                               mac/ is for the Mac you work on: ship.sh commits, pushes, updates the Studio
                               and tells the Mini to pull (docs/shipping-from-the-mac.md)
     tools/
@@ -280,6 +284,10 @@ editors can sign in from anywhere.
       test-presentation-mouse.mjs  checks for the mouse in presentation mode: what each button does, the second
                               click of a double click, a click on the card that says the slides are not ready,
                               the context menu, the hidden cursor, and the rotation that starts again
+      test-console.mjs        checks for the boot and shutdown drawings (plain 7 bit text, the size, the
+                              symmetry of the figure, the same text in the sample content), for
+                              install-console.sh in a fake root (it stops before it changes anything, keeps the
+                              copy of /etc/issue, and does nothing the second time) and for the unit
       check-seasons.mjs       fails if a seasonal pack is not in the data format, has a piece outside its zone, too
                               many pieces, a forbidden word, no header mark, a mark bigger than its box (60 x 76),
                               fewer than 8 or more than 14 pieces over the panels, an over piece that is too big,
@@ -668,6 +676,7 @@ exception is `test-slides-script.mjs`, which needs `jq`.
     node tools/test-cybertron.mjs
     node tools/test-minimal.mjs
     node tools/test-pile.mjs
+    node tools/test-console.mjs
     node tools/check-themes.mjs
     node tools/check-seasons.mjs
     node studio/check-schemas.mjs

@@ -75,6 +75,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - A test page in Studio (Test the screen) for visitors that plays the announcement and night mode on request
 - A calendar check (deploy/scripts/check-calendars.sh) that lists the next 30 days of events and says which ones the Calendar filters hide
 - A connection check for the Mini (deploy/scripts/check-connection.sh) and a small text on the screen that says why when Sanity cannot be reached
+- A boot and shutdown screen: a text drawing of a person pointing two fingers at each other, with TELETRAAN I under it, shows on the TV above the login prompt while the Mini starts and again while it shuts down (deploy/console, docs/rebuilding-the-mini.md, step 13)
 
 ## More guides
 
