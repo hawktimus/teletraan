@@ -355,6 +355,9 @@ export const pack = {
   // The picture that replaces the slashes in every panel header
   mark: mark,
 
+  // The corner art a rule gets when it picks none of its own (core/corner-art.js)
+  defaults: { cornerArt: 'snowflakes' },
+
   // Snow over the panels: twelve flakes of three sizes (22, 32 and 44), each
   // falling and swaying on its own slow round. A flake takes 24 to 52 seconds to
   // cross the screen, so it is only over a letter for a moment, and it is faint

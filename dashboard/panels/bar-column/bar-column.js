@@ -12,6 +12,7 @@ import { weatherIcon } from '../../core/weather-icons.js';
 import { logoMarkup, showTeamLogo } from '../../core/logo.js';
 import { teamPlateMarkup } from '../../core/plate.js';
 import { teamShown } from '../../core/teams.js';
+import { packExtras } from '../../core/theme.js';
 
 // Sizes that the stylesheet repeats. Change them together.
 const TEAM_PLATE_WIDTH = 300; // .bar-team in bar-column.css: the whole column
@@ -37,6 +38,7 @@ export function mount(host, content) {
             <span class="temperature"></span>
           </div>
         </div>
+        <div class="bar-line" data-part="line"></div>
 
         <div class="bar-team" data-part="team-plate">
           ${teamPlateMarkup(TEAM_PLATE_WIDTH)}
@@ -72,12 +74,12 @@ function setText(element, selector, text) {
   if (target.textContent !== text) target.textContent = text;
 }
 
-// New content: the team, the weather, and whether it is the sample. The team is the one
-// on the screen (core/teams.js): its number and logo, with the hawk when it has no logo.
-// The school is the same for both teams. The label shows only while it is the sample,
-// and is gone the moment the content is not. The weather is dashes until there is a
-// reading. Whether Sanity can be reached is not said here but in the connection status
-// text at the bottom right (core/connection.js).
+// New content: the team, the weather, the banner line and whether it is the sample. The
+// team is the one on the screen (core/teams.js): its number and logo, with the hawk when
+// it has no logo. The school is the same for both teams. The label shows only while it is
+// the sample, and is gone the moment the content is not. The weather is dashes until
+// there is a reading. Whether Sanity can be reached is not said here but in the
+// connection status text at the bottom right (core/connection.js).
 export function update(element, content) {
   const team = teamShown(content);
   setText(element, '.team-number', team.number);
@@ -93,6 +95,14 @@ export function update(element, content) {
 
   const status = content.status || {};
   setText(element, '.bar-sample', status.source === 'sample' ? 'SAMPLE CONTENT' : '');
+
+  // The banner line of the seasonal pack on the screen. While there is one, the parts under
+  // it move down (bar-column.css, data-line)
+  const line = packExtras(content).bannerLine;
+  setText(element, '.bar-line', line);
+
+  const wanted = line === '' ? 'off' : 'on';
+  if (element.dataset.line !== wanted) element.dataset.line = wanted;
 }
 
 function drawClock(element, now) {

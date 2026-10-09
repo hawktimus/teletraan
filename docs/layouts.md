@@ -565,6 +565,23 @@ wider than the plate allows beside its cut corner. The logo's parts reach about 
 past its box while the show plays, which fits in the 24 between the column and the
 ticker. All text is 44 px or more.
 
+A seasonal pack can add a banner line (docs/seasonal-packs.md, "Banner line"). It is
+`.bar-line`, one line of 44 px under the weather, centred and cut off with an ellipsis, and about
+10 characters of it fit in 300 px. While there is a line, `bar-column.js` sets `data-line` on the
+panel to `on`, and the parts under it move down. The 44 px come out of the gaps, and the logo stays
+where it is. These are the places while the line is on:
+
+| Part | Top | Height | Without a line |
+|------|-----|--------|----------------|
+| `.bar-line` | 192 | 44 | not there |
+| `.bar-team` | 240 | 76 | top 208 |
+| `.bar-school` | 322 | 176 | top 296, height 184 |
+| `.bar-sample` | 504 | 88 | top 488 |
+
+The school keeps its four lines, now of 44 px instead of 46. The label ends 7 px above the logo's
+box instead of 23, so while the show plays the logo's parts may pass behind the label for a moment.
+The label is only there while the sample content shows, so this happens only then.
+
 ### The width of the main panel
 
 The panels are written for a page 1152 wide and 708 high, and the main panel is 1484
@@ -835,7 +852,10 @@ keep their rows, their line limits and their rules.
   the scene along the bottom, pieces in the margins) were measured on the
   standard layout, and are drawn only there. In the sidebar layout they are left
   out (`decorationLayers` in `core/layout.js`, `setLayers` in `core/season.js`), and
-  so are they in the bar layout. docs/seasonal-packs.md has the details.
+  so are they in the bar layout. The corner art of a pack is in the cut corners, which are
+  zones, so only the standard layout draws it. The ticker prefix shows in every layout. The
+  banner line shows in the standard banner and the bar layout's side column, and not in the
+  sidebar layout. docs/seasonal-packs.md has the details.
 - **The test switches** work: `?stress` shows the large frame and the ticker
   together (there is no small frame to show), `?only=tasks` shows only the large
   frame, `?perf` shows the readout in the bottom right corner, and `?show=` with
@@ -866,8 +886,9 @@ keep their rows, their line limits and their rules.
   things, and they are the same panel's data. The wordmark is the one thing left
   out: at 44 px high it is wider than the column.
 - The strings of lights, scenes and pieces in the margins that a seasonal pack
-  draws (its zone and back decorations). The pack's header mark and the small
-  pieces over the panels do show.
+  draws (its zone and back decorations), and its corner art. The pack's header mark, the
+  small pieces over the panels and the ticker prefix do show. The banner line does not: the
+  strip has no free line of 44 px, and the date and weather fill the slot at its right end.
 - The frame metal setting. Neon Prime has frames of gunmetal whatever Frame metal
   says.
 

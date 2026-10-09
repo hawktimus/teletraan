@@ -121,7 +121,9 @@ editors can sign in from anywhere.
                               layout a style asks for (docs/layouts.md),
                               season.js draws the decorations of the overlay's seasonal pack in three layers
                               and hands its header mark to marks.js, which draws the picture at the right of
-                              every panel header (the double slash, or the pack's mark),
+                              every panel header (the double slash, or the pack's mark), corner-art.js holds
+                              the four ornaments of line art that go in the cut corners, pack-extras.js
+                              decides the ticker prefix, banner line and corner art of the pack on the page,
                               transitions.js chooses the style and the metal of the next page change,
                               look.js turns the Look setting (polished, flat or plain) into the page
                               switches the stylesheets read (data-finish, data-glint and data-look),
@@ -209,7 +211,8 @@ editors can sign in from anywhere.
                               lines of the Mini's address, and the reasons and the lines of the
                               connection status text, and for the Look setting: its cleaning, the
                               switches each look sets and the rules for Plain in base.css
-      test-themes.mjs         checks for which theme and overlay apply, and for putting them on the page
+      test-themes.mjs         checks for which theme and overlay apply, for putting them on the page, and for the
+                              ticker prefix, banner line and corner art that a seasonal pack rule can carry
       test-layouts.mjs        checks for the layouts: which layout a theme and a style have, the numbers of the
                               sidebar and bar layouts, the mirror, that the screen is always 1920 x 1080,
                               the reload that changes layout and that it cannot loop, that the scheduler leaves
@@ -218,8 +221,8 @@ editors can sign in from anywhere.
                               labels, its sizes and that it does not move
       test-seasons.mjs        checks for choosing, loading and drawing a seasonal pack (core/season.js), for its
                               header mark (core/marks.js), its over layer and the Theme switch that turns that off,
-                              for a pack that is missing, broken or slow, and that check-seasons.mjs fails for each
-                              kind of mistake
+                              for its corner art (core/corner-art.js), for a pack that is missing, broken or slow,
+                              and that check-seasons.mjs fails for each kind of mistake
       test-night.mjs          checks for night mode: when it is night in a time zone, where the bouncing
                               logo starts and how often it hits a corner, and the night stylesheet
       test-presentation.mjs   checks for presentation mode (core/presentation.js): when a talk is due, how it
@@ -242,7 +245,8 @@ editors can sign in from anywhere.
       check-seasons.mjs       fails if a seasonal pack is not in the data format, has a piece outside its zone, too
                               many pieces, a forbidden word, no header mark, a mark bigger than its box (60 x 76),
                               fewer than 8 or more than 14 pieces over the panels, an over piece that is too big,
-                              solid or quick, or animation anywhere but seasons/motion.css
+                              solid or quick, an ornament of corner art that leaves its box or has a fill, or
+                              animation anywhere but seasons/motion.css
       zones.html              the zones of the seasonal packs outlined over the dashboard, at
                               http://localhost:8080/tools/zones.html
       check-themes.mjs        fails if a theme or overlay is missing a variable or has text that is
@@ -502,6 +506,10 @@ alone.
   `dashboard/core/season.js` draws them from `dashboard/seasons/<id>.js`, and
   docs/seasonal-packs.md explains the mark, the over layer, the zones, the data format and the motions.
   The Theme page's "Seasonal pieces over the panels" switch is `seasonOverPanels`.
+  A rule for a seasonal pack can also carry a ticker prefix, a banner line and a corner art:
+  `dashboard/core/pack-extras.js` has the limits and the merge with the pack's `defaults`,
+  `dashboard/core/corner-art.js` the four ornaments, and `packExtras()` in `core/theme.js` is what
+  the ticker and the banner ask for (docs/seasonal-packs.md, "Extras on a rule").
   The screen works out the theme
   when it starts and once a minute, and changes it at the next page change of
   the large panel. The Time zone is also the one the Theme page uses to read

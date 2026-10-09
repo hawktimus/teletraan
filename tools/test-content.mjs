@@ -76,6 +76,7 @@ async function loadCopy(name, changeConfig) {
     leadership: await import(base + 'core/leadership.js'),
     look: await import(base + 'core/look.js'),
     marks: await import(base + 'core/marks.js'),
+    packExtras: await import(base + 'core/pack-extras.js'),
     images: await import(base + 'core/images.js'),
     photos: await import(base + 'core/photos.js'),
     portrait: await import(base + 'core/portrait.js'),
@@ -1525,11 +1526,19 @@ test('a saved copy from before the Theme document existed still gives a theme', 
   });
 });
 
-test('the sample content has a Theme document with the defaults, and it comes through unchanged', () => {
+test('the sample content has a Theme document with the defaults and two example seasonal pack rules, and they come through cleaned', () => {
   const file = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
-  assert.deepEqual(file.theme, live.config.defaultThemeSettings);
-  assert.deepEqual(normalizeSample(file).theme, live.config.defaultThemeSettings);
-  assert.deepEqual(withDefaults(file).theme, live.config.defaultThemeSettings);
+  const defaults = live.config.defaultThemeSettings;
+  const apartFromSchedule = theme => Object.assign({}, theme, { schedule: [] });
+
+  assert.deepEqual(apartFromSchedule(file.theme), defaults);
+  assert.deepEqual(apartFromSchedule(normalizeSample(file).theme), defaults);
+  assert.deepEqual(apartFromSchedule(withDefaults(file).theme), defaults);
+
+  const rules = withDefaults(file).theme.schedule;
+  assert.deepEqual(rules.map(rule => [rule.name, rule.kind, rule.overlay]), [['[Winter pack]', 'overlay', 'christmas'], ['[Fall pack]', 'overlay', 'thanksgiving']]);
+  assert.deepEqual(rules.map(rule => [rule.tickerPrefix, rule.bannerLine, rule.cornerArt]), [['[PREFIX]', '[Banner line for the pack]', ''], ['[PREFIX]', '[Banner line for the pack]', 'gears']]);
+  assert.deepEqual(normalizeSample(file).theme, withDefaults(file).theme, 'reading the sample twice changes nothing');
 });
 
 // The Demo document. When a demo plays is in tools/test-effects.mjs.
@@ -6763,6 +6772,106 @@ test('with no team documents the screen is the starting Prime: its colors, its n
   // a screen with no team documents shows the items of no team, and has none of the other team's
   assert.equal(activeTeams().length, 1);
   assert.deepEqual(visibleItems([{ title: '[1]' }, { title: '[2]', team: 'nova' }, { title: '[3]', team: 'prime' }], today).map(item => item.title), ['[1]', '[3]']);
+});
+
+// The ticker prefix of a seasonal pack (core/pack-extras.js, panels/ticker). The rule on the Theme page and the
+// cleaning of its text are in tools/test-themes.mjs.
+
+// A rule for a pack that covers every day of every year
+function packRule(extra) {
+  return Object.assign({ name: '[Rule]', kind: 'overlay', overlay: 'christmas', startDate: '01-01', endDate: '12-31', repeatsEveryYear: true }, extra);
+}
+
+// The ticker panel draws one line into a host. onPage is the class of the html element, which is where the screen
+// knows the pack from, or null for a page with no pack.
+function tickerLine(line, theme, onPage) {
+  let html = '';
+  withFakePage(() => {
+    globalThis.document.documentElement = { className: onPage || 'theme-hawktimus' };
+    const content = withDefaults({ theme: theme, tipsAndNews: [{ kind: 'tip', text: '[Tip]' }] });
+    live.tickerPanel.mount({ set innerHTML(markup) { html = markup; } }, Object.assign({}, content, { tickerLine: line }));
+  });
+  return html.slice(html.indexOf('<div class="message"'));
+}
+
+test('prefixFor keeps the prefix while the prefix, a space and the line are 52 characters or fewer, and drops the prefix and never the line when they are more', () => {
+  const { prefixFor, tickerLineLimit } = live.packExtras;
+
+  assert.equal(tickerLineLimit, 52, 'the same 52 characters the Studio allows in a tip');
+  assert.equal(prefixFor('HAPPY', '[Bring a water bottle]'), 'HAPPY');
+  assert.equal(prefixFor('HAPPY', 'x'.repeat(46)), 'HAPPY', '5 and 1 and 46 are 52');
+  assert.equal(prefixFor('HAPPY', 'x'.repeat(47)), '', '53 is one too many');
+  assert.equal(prefixFor('TWELVE CHARS', 'x'.repeat(39)), 'TWELVE CHARS', '12 and 1 and 39 are 52');
+  assert.equal(prefixFor('TWELVE CHARS', 'x'.repeat(40)), '');
+  assert.equal(prefixFor('HAPPY', 'x'.repeat(52)), '', 'a line that is already 52 characters has no room for a prefix');
+  assert.equal(prefixFor('HAPPY', 'x'.repeat(54)), '', 'nor does a thank-you of 54');
+  assert.equal(prefixFor('  HAPPY  ', '[Tip]'), 'HAPPY', 'spaces at the ends are not part of the prefix');
+  assert.equal(prefixFor('A VERY LONG PREFIX', '[Tip]'), 'A VERY LONG', 'cut at 12 characters, as on the Theme page');
+  ['', '   ', undefined, null, 7].forEach(none => assert.equal(prefixFor(none, '[Tip]'), '', String(none)));
+});
+
+test('the ticker shows the prefix of the pack that is on the screen before the line, in its own span, with the line whole', () => {
+  const theme = { schedule: [packRule({ tickerPrefix: '[PREFIX]' })] };
+  const line = { kind: 'tip', text: '[Bring a water bottle]' };
+
+  const plain = tickerLine(line, theme, null);
+  assert.ok(plain.includes('data-slat="content">[Bring a water bottle]</div>'), 'no pack on the page, no prefix');
+  assert.equal(plain.includes('prefix'), false);
+
+  const withPack = tickerLine(line, theme, 'theme-hawktimus overlay-christmas');
+  assert.ok(withPack.includes('data-slat="content"><span class="prefix">[PREFIX]</span> [Bring a water bottle]</div>'), withPack);
+
+  assert.equal(tickerLine(line, theme, 'theme-hawktimus overlay-halloween').includes('prefix'), false, 'the rule is for Christmas');
+  assert.equal(tickerLine(line, { schedule: [packRule({})] }, 'overlay-christmas').includes('prefix'), false, 'a rule with no prefix, and a pack with none of its own');
+  assert.equal(tickerLine(line, { schedule: [] }, 'overlay-christmas').includes('prefix'), false, 'no rule at all');
+  assert.equal(tickerLine(line, undefined, 'overlay-christmas').includes('prefix'), false, 'no Theme document yet');
+});
+
+test('a prefix that would not fit is dropped and the line is shown whole, a thank-you gets one too, and what editors typed is escaped', () => {
+  const theme = { schedule: [packRule({ tickerPrefix: 'HAPPY' })] };
+  const onPage = 'overlay-christmas';
+  const fits = 'x'.repeat(46);
+  const toolong = 'y'.repeat(47);
+
+  assert.ok(tickerLine({ kind: 'news', text: fits }, theme, onPage).includes('<span class="prefix">HAPPY</span> ' + fits + '</div>'));
+  const dropped = tickerLine({ kind: 'news', text: toolong }, theme, onPage);
+  assert.ok(dropped.includes('data-slat="content">' + toolong + '</div>'), 'the whole line, with no prefix');
+  assert.equal(dropped.includes('prefix'), false);
+
+  assert.ok(tickerLine({ kind: 'thanks', text: '[Thank you, Sponsor]' }, theme, onPage).includes('<span class="prefix">HAPPY</span> [Thank you, Sponsor]'));
+  assert.ok(tickerLine({ kind: 'reminder', text: '[Meeting at 6]' }, theme, onPage).includes('<span class="prefix">HAPPY</span> [Meeting at 6]'));
+
+  const escaped = tickerLine({ kind: 'tip', text: '<i>Tip</i> & more' }, { schedule: [packRule({ tickerPrefix: '<b>BIG</b>' })] }, onPage);
+  assert.ok(escaped.includes('<span class="prefix">&lt;b&gt;BIG&lt;/b&gt;</span> &lt;i&gt;Tip&lt;/i&gt; &amp; more</div>'), escaped);
+});
+
+test('the pack file\'s own prefix is used when the rule has none, and the rule wins when it has one', () => {
+  const line = { kind: 'tip', text: '[Tip]' };
+  const onPage = 'overlay-christmas';
+
+  live.packExtras.rememberDefaults('christmas', { tickerPrefix: 'OWN' });
+  try {
+    assert.ok(tickerLine(line, { schedule: [packRule({})] }, onPage).includes('<span class="prefix">OWN</span> [Tip]'));
+    assert.ok(tickerLine(line, { schedule: [packRule({ tickerPrefix: 'TYPED' })] }, onPage).includes('<span class="prefix">TYPED</span> [Tip]'));
+  } finally {
+    live.packExtras.rememberDefaults('christmas', {});
+  }
+});
+
+test('the ticker panel adds the prefix when it draws a line, and the list of lines has no prefix in it', () => {
+  const content = withDefaults({
+    tipsAndNews: [{ kind: 'tip', text: '[Tip]' }, { kind: 'news', text: '[News]' }],
+    sponsors: [{ name: '[Sponsor]', thankYou: '[Thanks]' }],
+    theme: { schedule: [packRule({ tickerPrefix: 'HAPPY' })] },
+  });
+
+  withFakePage(() => {
+    globalThis.document.documentElement = { className: 'overlay-christmas' };
+    assert.deepEqual(live.tickerPanel.items(content).map(item => item.text), ['[Tip]', '[News]', '[Thanks]'], 'the lines are as they were');
+  });
+  const code = fs.readFileSync(path.join(dashboardFolder, 'panels/ticker/ticker.js'), 'utf8');
+  assert.ok(code.includes("import { prefixFor } from '../../core/pack-extras.js';") && code.includes("import { packExtras } from '../../core/theme.js';"));
+  assert.ok(code.includes('prefixFor(packExtras(content).tickerPrefix, line.text)'));
 });
 
 // Run them

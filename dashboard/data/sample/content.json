@@ -58,7 +58,18 @@
   "theme": {
     "defaultTheme": "hawktimus",
     "useNow": { "theme": "", "overlay": "", "until": "" },
-    "schedule": [],
+    "schedule": [
+      {
+        "name": "[Winter pack]", "kind": "overlay", "overlay": "christmas",
+        "startDate": "2026-12-14", "endDate": "2026-12-25", "repeatsEveryYear": true,
+        "tickerPrefix": "[PREFIX]", "bannerLine": "[Banner line for the pack]"
+      },
+      {
+        "name": "[Fall pack]", "kind": "overlay", "overlay": "thanksgiving",
+        "startDate": "2026-11-18", "endDate": "2026-11-28", "repeatsEveryYear": true,
+        "tickerPrefix": "[PREFIX]", "bannerLine": "[Banner line for the pack]", "cornerArt": "gears"
+      }
+    ],
     "timeZone": "America/New_York",
     "seasonOverPanels": true
   },

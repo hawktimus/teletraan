@@ -45,6 +45,8 @@ html[data-motion="full"] .season-over { display: block; }
 }
 
 .season-piece { position: absolute; }
+/* Corner art takes the pack's accent colour; its lines use currentColor (core/corner-art.js) */
+.season-corner-art { color: var(--yellow); }
 .season-piece svg,
 .season-scene { display: block; }
 .season-scene {

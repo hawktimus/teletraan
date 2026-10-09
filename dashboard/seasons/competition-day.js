@@ -449,6 +449,9 @@ export const pack = {
   // The picture that replaces the slashes in every panel header
   mark: mark,
 
+  // The corner art a rule gets when it picks none of its own (core/corner-art.js)
+  defaults: { cornerArt: 'gears' },
+
   // Pieces over the panels: gears, little chequered flags, chequer tiles, confetti
   // and glints falling or rising across the whole screen, a finish line
   // celebration in the team colours. The pieces are 22 to 44 px wide. A piece takes

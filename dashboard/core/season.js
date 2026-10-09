@@ -20,6 +20,11 @@
 // The mark goes to core/marks.js, which draws it in place of the slashes at the
 // right of every panel header.
 //
+// Corner art (core/corner-art.js) is line art in the two cut corners, drawn into the
+// front layer's corner zones. A rule of the Theme schedule picks it, or else the pack's
+// own `defaults` do (core/pack-extras.js). Only the layouts that draw the front layer
+// have the zones, so the others draw none.
+//
 // All three layers let every click through, and all sit under everything that
 // takes over the screen: the hidden transitions, the night screen, an alert, an
 // announcement and the demo. With no pack on, none of them exists.
@@ -33,7 +38,9 @@
 // functions to check every pack.
 
 import { overlays } from '../themes/overlays/registry.js';
+import { cornerArtMarkup, cornerArtNone, cornerArtSize, isCornerArt } from './corner-art.js';
 import { markBox, markSize, setPackMark } from './marks.js';
+import { defaultsOf, defaultsProblems, mergeExtras, rememberDefaults } from './pack-extras.js';
 
 // The zones. Every one is a rectangle of the 1920 x 1080 screen with nothing in
 // it: no text, no frame and no screw. They were measured on the full sample
@@ -54,6 +61,16 @@ export const zones = {
 
 // The scene is drawn in this zone, stretched to fill it
 export const sceneZone = 'ground';
+
+// Where corner art goes: the two cut corners, which are the corner zones above. The
+// art is cornerArtSize square, and x and y say where its top left corner rests,
+// measured from the top left corner of the zone. It is drawn after the pack's own
+// pieces in the zone, so it lies over them. A layout that does not draw the front
+// layer has no zones and so draws no corner art.
+export const cornerPlaces = [
+  { zone: 'corner-a', x: 34, y: 0 },
+  { zone: 'corner-b', x: 12, y: 3 },
+];
 
 // The motions a piece may name. seasons/motion.css has the keyframes of each,
 // and tools/check-seasons.mjs fails if the two lists differ.
@@ -80,7 +97,7 @@ export const mostPieces = 60;
 
 const screen = { width: 1920, height: 1080 };
 const pieceKeys = ['shape', 'x', 'y', 'size', 'zone', 'motion', 'seconds', 'delay', 'travel', 'opacity'];
-const packKeys = ['shapes', 'scene', 'mark', 'back', 'front', 'over'];
+const packKeys = ['shapes', 'scene', 'mark', 'back', 'front', 'over', 'defaults'];
 const markKeys = ['viewBox', 'markup', 'width', 'height'];
 const nameShape = /^[a-z][a-z0-9-]*$/;
 
@@ -228,7 +245,7 @@ function shapeProblems(name, shape) {
 // empty list means it can be drawn. A pack with no pieces and no scene is fine:
 // it is how a new pack starts.
 export function packProblems(pack) {
-  if (!isRecord(pack)) return ['the pack should be an object: { shapes, scene, mark, back, front, over }'];
+  if (!isRecord(pack)) return ['the pack should be an object: { shapes, scene, mark, back, front, over, defaults }'];
 
   const problems = [];
   Object.keys(pack).filter(key => packKeys.indexOf(key) === -1)
@@ -249,6 +266,7 @@ export function packProblems(pack) {
   }
 
   if (pack.mark !== undefined && pack.mark !== null) markProblems(pack.mark).forEach(text => problems.push('the mark ' + text));
+  if (pack.defaults !== undefined) defaultsProblems(pack.defaults).forEach(text => problems.push('the defaults ' + text));
 
   ['back', 'front', 'over'].forEach(layer => {
     const list = pack[layer] === undefined ? [] : pack[layer];
@@ -317,6 +335,15 @@ function sceneMarkup(scene) {
   return '<svg class="season-scene" viewBox="' + scene.viewBox + '" width="' + room.width + '" height="' + room.height + '" preserveAspectRatio="none" aria-hidden="true">' + scene.markup + '</svg>';
 }
 
+// One ornament in one corner place. Its lines draw in once when it appears and then it
+// holds still: the rule is in seasons/motion.css, and in calm and none motion it is
+// drawn whole. The colour is the accent colour (seasons/season.css).
+export function cornerArtPieceMarkup(art, place) {
+  const size = cornerArtSize;
+  return '<div class="season-piece season-corner-art" style="left: ' + place.x + 'px; top: ' + place.y + 'px; width: ' + size + 'px; height: ' + size + 'px;">' +
+    '<svg viewBox="0 0 ' + size + ' ' + size + '" width="' + size + '" height="' + size + '" aria-hidden="true">' + cornerArtMarkup(art) + '</svg></div>';
+}
+
 // The layers of a pack, and the ones a layout draws by default. The zones and the
 // back layer were measured on the standard layout, so another layout draws only
 // some of them (decorationLayers in core/layout.js). The mark is drawn in every layout.
@@ -328,8 +355,10 @@ const allLayers = ['back', 'front', 'over'];
 // list of layers to draw, from allLayers: a layer that is not in it is left
 // empty, and its pieces are not looked at. The shapes the pieces point at are
 // in the back layer's markup, so they are there for the over layer even when
-// no back piece is drawn.
-export function layersMarkup(pack, layers) {
+// no back piece is drawn. art is the corner art to draw, an id from core/corner-art.js;
+// anything else draws none. It goes in the front layer, so a layout without that layer
+// has none.
+export function layersMarkup(pack, layers, art) {
   const shapes = isRecord(pack.shapes) ? pack.shapes : {};
   const skipped = [];
   const wanted = Array.isArray(layers) ? layers : allLayers;
@@ -347,9 +376,12 @@ export function layersMarkup(pack, layers) {
   const over = wanted.indexOf('over') !== -1 ? usable('over') : [];
   const scene = wanted.indexOf('front') !== -1 && isRecord(pack.scene) && readViewBox(pack.scene.viewBox) && typeof pack.scene.markup === 'string' ? pack.scene : null;
 
+  const corners = wanted.indexOf('front') !== -1 && isCornerArt(art) ? cornerPlaces : [];
+
   const inZones = Object.keys(zones).map(name => {
     const own = front.filter(piece => piece.zone === name);
-    const inner = (scene && name === sceneZone ? sceneMarkup(scene) : '') + own.map(piece => pieceMarkup(piece, shapes)).join('');
+    const corner = corners.filter(place => place.zone === name).map(place => cornerArtPieceMarkup(art, place)).join('');
+    const inner = (scene && name === sceneZone ? sceneMarkup(scene) : '') + own.map(piece => pieceMarkup(piece, shapes)).join('') + corner;
     return inner === '' ? '' : zoneMarkup(name, inner);
   }).join('');
 
@@ -383,6 +415,7 @@ export async function loadPack(overlayId, importModule) {
   if (!module || !isRecord(module.pack)) throw new Error('seasons/' + overlayId + '.js should export a pack');
 
   loaded[overlayId] = module.pack;
+  rememberDefaults(overlayId, module.pack.defaults);
   return module.pack;
 }
 
@@ -396,6 +429,8 @@ let asks = 0; // counts the asks, so a slow load never lands after a newer ask
 let overWanted = true; // the Theme page's switch, "Seasonal pieces over the panels" (setOverPanels)
 let layersWanted = allLayers; // the layers the layout draws (setLayers)
 let overMarkup = ''; // what the over layer of the pack on the page holds, kept so the switch can draw it again
+let artTyped = ''; // the corner art typed on the pack's rule, or '' (setCornerArt)
+let artDrawn = cornerArtNone; // the corner art in the front layer now
 
 // The id of the pack on the page, or ''
 export function seasonShown() {
@@ -409,6 +444,7 @@ function removeLayers() {
   });
   shown = '';
   overMarkup = '';
+  artDrawn = cornerArtNone;
   setPackMark(null); // the slashes come back, on the next page that is built
 }
 
@@ -451,6 +487,30 @@ export function setLayers(layers) {
   layersWanted = Array.isArray(layers) ? layers : allLayers;
 }
 
+// The corner art to draw for a pack: the one typed on its rule, else the pack's own
+// default, else none. A layout that does not draw the front layer draws none.
+function cornerArtFor(overlayId) {
+  if (layersWanted.indexOf('front') === -1) return cornerArtNone;
+  return mergeExtras({ cornerArt: artTyped }, defaultsOf(overlayId)).cornerArt;
+}
+
+// Gives the corner art typed on the rule of the pack on the page, or '' when the rule
+// leaves it empty. shell.js calls it each time the content changes, like setOverPanels.
+// A different art than the one drawn is drawn at once, which draws the pack again.
+export function setCornerArt(art) {
+  const typed = isCornerArt(art) || art === cornerArtNone ? art : '';
+  if (typed === artTyped) return;
+
+  artTyped = typed;
+  if (shown && loaded[shown] && cornerArtFor(shown) !== artDrawn) {
+    try {
+      drawLayers(shown, loaded[shown]);
+    } catch (error) {
+      console.error('The corner art for "' + shown + '" could not be drawn.', error);
+    }
+  }
+}
+
 // The old layers go and the new ones come in one step. The back layer goes in
 // before #backdrop, so the hidden transitions cover it. The front layer goes in
 // straight after #stage, and the over layer after that.
@@ -460,11 +520,13 @@ function drawLayers(overlayId, pack) {
   const stage = document.getElementById('stage');
   if (!world || !backdrop || !stage) throw new Error('index.html has no #world, #backdrop or #stage');
 
-  const drawn = layersMarkup(pack, layersWanted);
+  const art = cornerArtFor(overlayId);
+  const drawn = layersMarkup(pack, layersWanted, art);
   drawn.skipped.forEach(text => console.error('The ' + overlayId + ' pack: the ' + text + '. It was left out.'));
 
   removeLayers();
   shown = overlayId;
+  artDrawn = art;
   setPackMark(drawn.mark); // a pack with only a mark still changes the headers
   if (drawn.empty) return; // a new pack with nothing in it yet
 

@@ -79,3 +79,14 @@ export const overlays = [
     decorations: false,
   },
 ];
+
+// The corner art a rule for a seasonal pack can ask for: the four ornaments in
+// dashboard/core/corner-art.js, in the same order, and None for a rule that wants
+// no corner art whatever the pack's own is. check-schemas.mjs fails when the ids differ.
+export const cornerArts = [
+  { id: 'leaves', name: 'Leaves' },
+  { id: 'snowflakes', name: 'Snowflakes' },
+  { id: 'gears', name: 'Gears' },
+  { id: 'fireworks', name: 'Fireworks' },
+  { id: 'none', name: 'None' },
+];

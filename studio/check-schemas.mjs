@@ -186,6 +186,9 @@ const contract = {
       startDate: 'date',
       endDate: 'date',
       repeatsEveryYear: 'boolean',
+      tickerPrefix: text(12),
+      bannerLine: text(40),
+      cornerArt: 'string',
     }, 24),
     timeZone: text(40),
     seasonOverPanels: 'boolean',
@@ -2065,6 +2068,7 @@ function checkThemeLists() {
     ['theme.schedule.theme', themeIds],
     ['theme.schedule.overlay', overlayIds],
     ['theme.schedule.kind', ['theme', 'overlay']],
+    ['theme.schedule.cornerArt', world.cornerArt.cornerArtChoices],
   ];
   lists.forEach(entry => {
     const list = choicesOf(entry[0]);
@@ -2107,7 +2111,7 @@ function checkTheme() {
   need(problems, sameData(defaults.useNow, { theme: '', overlay: '', until: '' }), 'useNow in config.js should be empty');
   need(problems, sameData(defaults.schedule, []), 'the schedule in config.js should be empty');
   need(problems, !at('schedule').initialValue && !at('useNow').initialValue, 'theme.useNow and theme.schedule should start empty');
-  need(problems, sameData(world.sample.theme, defaults), 'the sample content should carry the theme settings in config.js');
+  need(problems, sameData(without(world.sample.theme, 'schedule'), without(defaults, 'schedule')), 'the sample content should carry the theme settings in config.js, apart from its schedule');
 
   // Default theme: required, and only the registry's themes
   const defaultRules = rulesOf(at('defaultTheme'));
@@ -2167,6 +2171,41 @@ function checkTheme() {
     need(problems, run(dates('2026-12-20', '2026-01-05', true)) === true, 'a rule that repeats every year may end before it starts, to run over New Year');
     need(problems, run(dates('2026-12-20', undefined, false)) === true && run(undefined) === true, 'a rule with no end yet is left to the required check');
   }
+
+  // The extras of a seasonal pack rule: a ticker prefix, a banner line and a corner art. They show only
+  // for the kind seasonal pack, are optional, start empty, and have the limits the screen fits
+  const extras = world.packExtras;
+  [['tickerPrefix', extras.tickerPrefixLimit], ['bannerLine', extras.bannerLineLimit]].forEach(item => {
+    const field = at('schedule.' + item[0]);
+    const max = field ? constraintNamed(rulesOf(field), 'max') : null;
+    need(problems, field && field.type === 'string' && /^Optional\./.test(field.description || ''), 'theme.schedule.' + item[0] + ' should be text, and its description should start with Optional');
+    need(problems, field && field.initialValue === undefined && !constraintNamed(rulesOf(field), 'required'), 'theme.schedule.' + item[0] + ' should be optional and start empty');
+    need(problems, max && max.args[0] === item[1], 'theme.schedule.' + item[0] + ' should allow up to ' + item[1] + ' characters, as pack-extras.js in the dashboard does');
+    need(problems, field && new RegExp('Up to ' + item[1] + ' characters').test(field.description || ''), 'the theme.schedule.' + item[0] + ' description should say it takes up to ' + item[1] + ' characters');
+  });
+  const art = at('schedule.cornerArt');
+  const artAllowed = art ? constraintNamed(rulesOf(art), 'valid') : null;
+  need(problems, art && art.initialValue === undefined && !constraintNamed(rulesOf(art), 'required') && /^Optional\./.test(art.description || ''), 'theme.schedule.cornerArt should be optional and start empty, so a pack\'s own corner art is used');
+  need(problems, art && /pack's own/.test(art.description || '') && /None/.test(art.description || ''), 'the theme.schedule.cornerArt description should say that empty is the pack\'s own and that None draws nothing');
+  need(problems, artAllowed && artAllowed.args[0].join() === world.cornerArt.cornerArtChoices.join(), 'theme.schedule.cornerArt should only allow: ' + world.cornerArt.cornerArtChoices.join(', '));
+  need(problems, world.cornerArt.cornerArtIds.join() === 'leaves,snowflakes,gears,fireworks', 'the four ornaments should be leaves, snowflakes, gears and fireworks');
+  ['tickerPrefix', 'bannerLine', 'cornerArt'].forEach(name => {
+    const field = at('schedule.' + name);
+    need(problems, field && field.hidden && field.hidden({ parent: { kind: 'theme' } }) === true && field.hidden({ parent: { kind: 'overlay' } }) === false, 'theme.schedule.' + name + ' should show only when the kind is overlay');
+  });
+
+  // The sample content has two example rules for packs, with names and texts marked with square brackets
+  const sampleRules = world.sample.theme.schedule;
+  const packIds = world.overlayRegistry.overlays.filter(entry => entry.decorations === true).map(entry => entry.id);
+  need(problems, sampleRules.length === 2, 'the sample content should have two example rules in its schedule');
+  sampleRules.forEach(rule => {
+    need(problems, rule.kind === 'overlay' && packIds.indexOf(rule.overlay) !== -1, 'a sample rule should be for a seasonal pack that has decorations');
+    need(problems, /^\[.+\]$/.test(rule.name || '') && rule.name.length <= 24, 'a sample rule name should be marked with square brackets, up to 24 characters: ' + rule.name);
+    need(problems, /^\[.+\]$/.test(rule.tickerPrefix || '') && rule.tickerPrefix.length <= extras.tickerPrefixLimit, 'a sample ticker prefix should be marked with square brackets, up to ' + extras.tickerPrefixLimit + ' characters');
+    need(problems, /^\[.+\]$/.test(rule.bannerLine || '') && rule.bannerLine.length <= extras.bannerLineLimit, 'a sample banner line should be marked with square brackets, up to ' + extras.bannerLineLimit + ' characters');
+    need(problems, rule.cornerArt === undefined || world.cornerArt.cornerArtChoices.indexOf(rule.cornerArt) !== -1, 'a sample corner art should be one of: ' + world.cornerArt.cornerArtChoices.join(', '));
+    need(problems, rule.startDate >= '2020-01-01' && rule.endDate <= '2099-12-31' && (rule.repeatsEveryYear || rule.startDate <= rule.endDate), 'a sample rule should have real dates');
+  });
 
   // The time zone: a name Intl knows. Browsers that cannot list the names get a plain pattern.
   const zone = constraintNamed(rulesOf(at('timeZone')), 'custom');
@@ -3290,6 +3329,8 @@ async function main() {
     world.layoutModule = await load(path.join(dashboardFolder, 'core', 'layout.js'));
     world.overlayRegistry = await load(path.join(dashboardFolder, 'themes', 'overlays', 'registry.js'));
     world.studioThemes = await load(path.join(folder, 'themes.js'));
+    world.cornerArt = await load(path.join(dashboardFolder, 'core', 'corner-art.js'));
+    world.packExtras = await load(path.join(dashboardFolder, 'core', 'pack-extras.js'));
     world.demoRegistry = await load(path.join(dashboardFolder, 'core', 'demo-screens.js'));
     world.studioDemoScreens = await load(path.join(folder, 'demo-screens.js'));
     world.hiddenRegistry = await load(path.join(dashboardFolder, 'core', 'hidden-transitions.js'));

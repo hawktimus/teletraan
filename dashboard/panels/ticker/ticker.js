@@ -4,6 +4,8 @@
 import { tagMarkup } from '../../core/plate.js';
 import { escapeHtml, hasText } from '../../core/text.js';
 import { visibleItems } from '../../core/content.js';
+import { prefixFor } from '../../core/pack-extras.js';
+import { packExtras } from '../../core/theme.js';
 
 // Longer words need a wider tag. The word is centred on the tag, and the
 // slanted ends of the tag leave about 50px less room than its width.
@@ -36,17 +38,24 @@ export function mount(host, content) {
 
   host.innerHTML = `
     <section class="page ticker">
-      ${line ? lineMarkup(line) : ''}
+      ${line ? lineMarkup(line, prefixOf(content, line)) : ''}
     </section>`;
 }
 
-function lineMarkup(line) {
+// The ticker prefix of the seasonal pack on the screen, or '' when there is none or the
+// line would not fit with it
+function prefixOf(content, line) {
+  return prefixFor(packExtras(content).tickerPrefix, line.text);
+}
+
+function lineMarkup(line, prefix) {
   const tag = tags[line.kind] || tags.news;
+  const start = prefix === '' ? '' : `<span class="prefix">${escapeHtml(prefix)}</span> `;
 
   return `
     <div class="tag" data-slat="label">
       ${tagMarkup(tag.width)}
       <span>${tag.word}</span>
     </div>
-    <div class="message" data-slat="content">${escapeHtml(line.text)}</div>`;
+    <div class="message" data-slat="content">${start}${escapeHtml(line.text)}</div>`;
 }

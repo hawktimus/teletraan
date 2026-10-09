@@ -50,7 +50,7 @@ const withoutComments = text => text.replace(/\/\*[\s\S]*?\*\//g, '');
 const mainTree = makeTree('main', [
   'dashboard/config.js', 'dashboard/registry.js', 'dashboard/themes/registry.js', 'dashboard/themes/overlays/registry.js',
   'dashboard/core/layout.js', 'dashboard/core/layout-apply.js', 'dashboard/core/theme.js', 'dashboard/core/style.js',
-  'dashboard/core/season.js', 'dashboard/core/marks.js',
+  'dashboard/core/season.js', 'dashboard/core/marks.js', 'dashboard/core/corner-art.js', 'dashboard/core/pack-extras.js',
 ]);
 const layout = await import(urlOf(mainTree, 'dashboard/core/layout.js'));
 const apply = await import(urlOf(mainTree, 'dashboard/core/layout-apply.js'));
@@ -698,7 +698,7 @@ test('hidden-run.js waits for the areas of the layout, and areas.js and schedule
 // small stand-ins that note what they were asked, so the test can see which
 // regions the scheduler gave pages to.
 const schedulerTree = makeTree('scheduler', ['dashboard/config.js', 'dashboard/registry.js', 'dashboard/core/schedule.js', 'dashboard/core/layout.js', 'dashboard/core/theme.js', 'dashboard/core/style.js',
-  'dashboard/themes/registry.js', 'dashboard/themes/overlays/registry.js']);
+  'dashboard/core/corner-art.js', 'dashboard/core/pack-extras.js', 'dashboard/themes/registry.js', 'dashboard/themes/overlays/registry.js']);
 const standIns = {
   'dashboard/frame.js': 'export const wait = () => new Promise(() => {});\nexport const pace = () => 1;\nexport const turnMs = () => 1000;\nexport const isPaused = () => false;\n',
   'dashboard/core/photos.js': 'export const ownSeconds = () => 0;\n',
@@ -879,7 +879,7 @@ test('shell.js gives season.js the layers before it asks for a pack, and the pag
   assert.ok(shell.indexOf('module.setLayers(') < shell.indexOf('return module.showSeason(look.overlay);'));
 
   const code = read('dashboard/core/season.js');
-  assert.ok(code.includes('const drawn = layersMarkup(pack, layersWanted);'));
+  assert.ok(code.includes('const drawn = layersMarkup(pack, layersWanted, art);'));
   assert.ok(/export function setLayers\(layers\) \{\s*layersWanted = Array\.isArray\(layers\) \? layers : allLayers;\s*\}/.test(code));
 });
 
@@ -974,7 +974,7 @@ test('the tests and the docs list this file and the new ones', () => {
 // selector the panel asks for. Every write to a node goes in a log.
 
 const sideFiles = ['dashboard/config.js', 'dashboard/frame.js', 'dashboard/registry.js', 'dashboard/panels/side/side.js', 'dashboard/panels/countdown/countdown.js',
-  'dashboard/panels/bar-banner/bar-banner.js', 'dashboard/panels/bar-column/bar-column.js']
+  'dashboard/panels/bar-banner/bar-banner.js', 'dashboard/panels/bar-column/bar-column.js', 'dashboard/themes/registry.js', 'dashboard/themes/overlays/registry.js']
   .concat(fs.readdirSync(path.join(dashboardFolder, 'core')).filter(name => name.endsWith('.js')).map(name => 'dashboard/core/' + name));
 const nameTree = makeTree('name', ['dashboard/core/name.js', 'dashboard/core/text.js']);
 const nameModule = await import(urlOf(nameTree, 'dashboard/core/name.js'));
@@ -2721,7 +2721,7 @@ test('the clock in the side column fits at its worst case: 10:59 with PM at 84 p
 
 const barColumnFile = 'dashboard/panels/bar-column/bar-column.js';
 const barBannerFile = 'dashboard/panels/bar-banner/bar-banner.js';
-const barClasses = ['bar-column', 'bar-rail', 'bar-body', 'bar-clock', 'bar-time', 'bar-date', 'bar-weather', 'bar-team', 'bar-school', 'bar-sample', 'bar-logo'];
+const barClasses = ['bar-column', 'bar-rail', 'bar-body', 'bar-clock', 'bar-time', 'bar-date', 'bar-weather', 'bar-line', 'bar-team', 'bar-school', 'bar-sample', 'bar-logo'];
 
 test('the side column has each part once with its class, in the order of the budget, the rail first, and every part that arrives has a line in the table of frame.js', async () => {
   await onSidebar(async world => {
@@ -2810,6 +2810,141 @@ test('the banner has the name and the war clock in its slot, draws the name as l
     assert.equal(/setTimeout|setInterval|requestAnimationFrame|animate\(|getAnimations|classList/.test(code), false, id + ' has animation code');
     assert.equal(/offsetWidth|offsetHeight|offsetTop|offsetLeft|getBoundingClientRect|getComputedStyle|clientWidth|clientHeight|scrollWidth|scrollHeight|getClientRects|innerWidth|innerHeight/.test(code), false, id + ' reads layout');
   });
+});
+
+// The banner line of a seasonal pack (docs/seasonal-packs.md, "Banner line"): the standard banner, the side column of
+// the bar layout, and nowhere in the sidebar layout
+
+test('in the side column the banner line is one line of 44 px under the weather, and while it is on the parts under it move to the places in docs/layouts.md, with nothing touching and the logo where it was', () => {
+  const css = withoutComments(read('dashboard/panels/bar-column/bar-column.css'));
+  const doc = read('docs/layouts.md');
+  const section = doc.slice(doc.indexOf('### The side column'), doc.indexOf('### The width of the main panel'));
+  const prefix = 'html[data-layout="bar"] ';
+  const blockOf = selector => {
+    const escaped = (prefix + selector).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const found = new RegExp('(?:^|\\})\\s*' + escaped + ' \\{([^{}]*)\\}').exec(css);
+    return found ? found[1] : null;
+  };
+  const valueIn = (block, name) => { const found = new RegExp('(?:^|[;\\s])' + name + ': (-?\\d+)(?:px)?[;\\s]').exec(block || ''); return found ? Number(found[1]) : null; };
+
+  // the line itself: under the weather, as wide as the column, 44 px high and 44 px of text, on one line, cut with an ellipsis
+  const line = blockOf('.bar-line');
+  assert.ok(line, 'bar-column.css has a rule for .bar-line');
+  const weather = blockOf('.bar-clock');
+  assert.equal(valueIn(line, 'top'), valueIn(weather, 'top') + valueIn(weather, 'height'), 'under the clock, which ends with the weather');
+  assert.equal(valueIn(line, 'height'), 44);
+  assert.match(line, /width: 100%;/);
+  assert.match(line, /font: 600 var\(--size-label\)\/44px var\(--font-display\);/);
+  assert.match(line, /white-space: nowrap;/);
+  assert.match(line, /text-overflow: ellipsis;/);
+  assert.match(line, /overflow: hidden;/);
+  assert.match(line, /display: none;/, 'it is not there until the panel says so');
+  assert.equal(Number(/--size-label: (\d+)px;/.exec(read('dashboard/tokens.css'))[1]), 44);
+
+  // while data-line is on
+  const on = selector => {
+    const escaped = (prefix + '.bar-column[data-line="on"] ' + selector).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const found = new RegExp('(?:^|\\})\\s*' + escaped + ' \\{([^{}]*)\\}').exec(css);
+    return found ? found[1] : null;
+  };
+  assert.match(on('.bar-line'), /display: block;/);
+  assert.equal(valueIn(on('.bar-team'), 'top'), 240);
+  assert.equal(valueIn(on('.bar-school'), 'top'), 322);
+  assert.equal(valueIn(on('.bar-school'), 'height'), 176);
+  assert.match(on('.bar-school .school-text'), /line-height: 44px;/);
+  assert.equal(valueIn(on('.bar-sample'), 'top'), 504);
+
+  const places = {
+    line: { top: valueIn(line, 'top'), height: 44 },
+    team: { top: valueIn(on('.bar-team'), 'top'), height: valueIn(blockOf('.bar-team'), 'height') },
+    school: { top: valueIn(on('.bar-school'), 'top'), height: valueIn(on('.bar-school'), 'height') },
+    sample: { top: valueIn(on('.bar-sample'), 'top'), height: valueIn(blockOf('.bar-sample'), 'height') },
+  };
+  const logo = { top: valueIn(blockOf('.bar-logo'), 'top'), height: valueIn(blockOf('.bar-logo'), 'height') };
+  const stack = ['line', 'team', 'school', 'sample'];
+  stack.slice(1).forEach((name, index) => assert.ok(places[stack[index]].top + places[stack[index]].height < places[name].top, stack[index] + ' ends above ' + name));
+  assert.ok(places.sample.top + places.sample.height < logo.top, 'the label ends above the logo');
+  assert.equal(logo.top + logo.height, b.column.height, 'the logo is where it was, at the foot of the column');
+  assert.equal(places.school.height, 4 * 44, 'the school keeps four lines, of 44 px now');
+  assert.equal(logo.top - (places.sample.top + places.sample.height), 7, 'the label is 7 px above the logo\'s box');
+
+  // the docs say the same
+  const rows = {};
+  section.split('\n').forEach(row => {
+    const found = /^\| `\.(bar-line|bar-team|bar-school|bar-sample)` \| (\d+) \| (\d+) \| ([^|]+) \|$/.exec(row);
+    if (found) rows[found[1]] = { top: Number(found[2]), height: Number(found[3]), without: found[4].trim() };
+  });
+  assert.deepEqual(Object.keys(rows).sort(), ['bar-line', 'bar-sample', 'bar-school', 'bar-team'], 'the docs have a row for each part that moves, and for the line');
+  stack.forEach(name => assert.deepEqual([rows['bar-' + name].top, rows['bar-' + name].height], [places[name].top, places[name].height], name + ' in the docs and in bar-column.css'));
+  assert.equal(rows['bar-team'].without, 'top ' + valueIn(blockOf('.bar-team'), 'top'));
+  assert.equal(rows['bar-school'].without, 'top ' + valueIn(blockOf('.bar-school'), 'top') + ', height ' + valueIn(blockOf('.bar-school'), 'height'));
+  assert.equal(rows['bar-sample'].without, 'top ' + valueIn(blockOf('.bar-sample'), 'top'));
+});
+
+test('the side column shows the banner line of the pack that is on the screen in its line part, sets data-line, and writes nothing when it is the same', async () => {
+  await onSidebar(async world => {
+    const rule = line => ({ name: '[Rule]', kind: 'overlay', overlay: 'christmas', startDate: '01-01', endDate: '12-31', repeatsEveryYear: true, bannerLine: line });
+    const content = line => teamContent({ theme: { schedule: [rule(line)] } });
+    const shown = () => world.element.nodes['.bar-line'].textContent;
+
+    document.documentElement.className = 'theme-hawktimus';
+    await world.draw(content('Happy holidays'), barColumnFile);
+    assert.equal(shown(), '', 'no pack on the page, no line');
+    assert.equal(world.element.dataset.line, 'off');
+
+    document.documentElement.className = 'theme-hawktimus overlay-christmas';
+    world.module.update(world.element, content('Happy holidays'));
+    assert.equal(shown(), 'Happy holidays');
+    assert.equal(world.element.dataset.line, 'on');
+
+    world.log.length = 0;
+    world.module.update(world.element, content('Happy holidays'));
+    assert.deepEqual(world.log, [], 'the same line is not written again');
+
+    world.module.update(world.element, content('x'.repeat(50)));
+    assert.equal(shown(), 'x'.repeat(40), 'cut at 40 characters');
+    world.module.update(world.element, content(''));
+    assert.equal(shown(), '');
+    assert.equal(world.element.dataset.line, 'off');
+
+    world.module.update(world.element, content('Happy holidays'));
+    document.documentElement.className = 'theme-hawktimus';
+    world.module.update(world.element, content('Happy holidays'));
+    assert.equal(shown(), '', 'the pack went');
+    assert.equal(world.element.dataset.line, 'off');
+  });
+});
+
+test('the standard banner puts the line in place of DASHBOARD and the bar on its bottom row, at 44 px on one line, and the sidebar layout draws no banner line', () => {
+  const css = withoutComments(read('dashboard/panels/banner/banner.css'));
+  const blockOf = selector => {
+    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const found = new RegExp('(?:^|\\})\\s*' + escaped + ' \\{([^{}]*)\\}').exec(css);
+    return found ? found[1] : null;
+  };
+
+  assert.match(blockOf('.banner .banner-line'), /display: none;/, 'not there until the panel says so');
+  assert.match(css, /\.banner\[data-line="on"\] \.subtitle,\s*\.banner\[data-line="on"\] \.rule \{ display: none; \}/, 'DASHBOARD and the bar make room');
+  const on = blockOf('.banner[data-line="on"] .banner-line');
+  assert.ok(on, 'a rule for the line while it is on');
+  assert.match(on, /display: block;/);
+  assert.match(on, /flex: 1 1 0;/);
+  assert.match(on, /min-width: 0;/);
+  assert.match(on, /white-space: nowrap;/);
+  assert.match(on, /text-overflow: ellipsis;/);
+  assert.match(on, /font: 600 var\(--size-label\)\/44px var\(--font-display\);/, 'text at 44 px, on a row 44 px high');
+  assert.match(blockOf('.banner .banner-bottom'), /height: 44px;/);
+
+  const code = read('dashboard/panels/banner/banner.js');
+  assert.ok(code.includes('<span class="banner-line" data-part="line"></span>') && code.includes('packExtras(content).bannerLine'));
+  assert.ok(code.indexOf('class="rule bar"') < code.indexOf('class="banner-line"') && code.indexOf('class="banner-line"') < code.indexOf('class="school"'), 'after the bar and before the school');
+
+  // the sidebar layout has no free line of 44 px, so the side panel does not ask for one
+  const side = read('dashboard/panels/side/side.js');
+  assert.equal(/packExtras|bannerLine|banner-line/.test(side), false, 'panels/side does not draw a banner line');
+  assert.equal(/banner-line|bannerLine/.test(read('dashboard/panels/side/side.css') + read('dashboard/layouts/sidebar.css')), false);
+  assert.ok(read('docs/layouts.md').includes('The banner line does not'), 'and the docs say so');
+  assert.ok(read('docs/seasonal-packs.md').includes('| Sidebar (Neon Prime) | nowhere.'));
 });
 
 // The frames of the bar layout (core/plate.js, "The frames of the bar layout"), and the steel, the neon and

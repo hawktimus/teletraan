@@ -20,6 +20,9 @@
      .bar-sample     488      88   230 wide, two lines of 44, in the middle
      .bar-logo       599     137   170 wide, at the foot of the column
 
+   A seasonal pack can add a banner line (core/pack-extras.js) under the weather, and then
+   the parts under it move down. Those places are at the end of this file (data-line).
+
    All text is 44 px or more, and no part is wider than 300. The widest time (10:59
    at 84 px, 245 wide) with PM (71 wide) is 316, and does not fit the column, so the
    letters of the time are 5 px closer together, which makes it 297. */
@@ -93,6 +96,25 @@ html[data-layout="bar"] .bar-weather {
   font: 600 var(--size-label)/48px var(--font-display);
 }
 html[data-layout="bar"] .bar-weather .weather-icon { display: block; }
+
+/* The banner line of a seasonal pack: one line of 44 px under the weather, centred and
+   cut off with an ellipsis, in the accent colour. About 10 characters of it show. It is
+   not there until bar-column.js sets data-line to on. */
+html[data-layout="bar"] .bar-line {
+  position: absolute;
+  left: 0;
+  top: 192px;
+  box-sizing: border-box;
+  width: 100%;
+  height: 44px;
+  display: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  color: var(--yellow);
+  font: 600 var(--size-label)/44px var(--font-display);
+}
 
 
 /* The TEAM plate is the banner's, as wide as the column (core/plate.js, teamPlateMarkup).
@@ -190,3 +212,20 @@ html[data-layout="bar"] .bar-logo {
   width: 170px;
   height: 137px;
 }
+
+
+/* While the pack has a banner line the 44 px of it come out of the gaps: the TEAM plate, the
+   school and the label move down, and the logo stays where it is. Nothing touches, and the
+   label is 7 px above the logo's box, not 23 (the logo's parts reach 23 px past its box
+   while the show plays, and may pass behind the label for a moment).
+
+     part            top   height
+     .bar-line       192     44
+     .bar-team       240     76
+     .bar-school     322    176   up to four lines of 44
+     .bar-sample     504     88 */
+html[data-layout="bar"] .bar-column[data-line="on"] .bar-line { display: block; }
+html[data-layout="bar"] .bar-column[data-line="on"] .bar-team { top: 240px; }
+html[data-layout="bar"] .bar-column[data-line="on"] .bar-school { top: 322px; height: 176px; }
+html[data-layout="bar"] .bar-column[data-line="on"] .bar-school .school-text { line-height: 44px; }
+html[data-layout="bar"] .bar-column[data-line="on"] .bar-sample { top: 504px; }

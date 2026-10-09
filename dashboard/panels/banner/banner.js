@@ -7,6 +7,7 @@ import { logoMarkup, showTeamLogo } from '../../core/logo.js';
 import { nameMarkup } from '../../core/name.js';
 import { teamPlateMarkup } from '../../core/plate.js';
 import { teamShown } from '../../core/teams.js';
+import { packExtras } from '../../core/theme.js';
 
 export function mount(host, content) {
   host.innerHTML = `
@@ -42,6 +43,7 @@ export function mount(host, content) {
           <img class="wordmark" data-part="wordmark" src="assets/teletraan-wordmark.svg" alt="Teletraan I">
           <span class="subtitle" data-part="subtitle">DASHBOARD</span>
           <span class="rule bar" data-part="rule"></span>
+          <span class="banner-line" data-part="line"></span>
           <span class="school" data-part="school"></span>
         </div>
       </div>
@@ -81,11 +83,12 @@ function setName(element, name) {
   heading.innerHTML = nameMarkup(name);
 }
 
-// New content: the team, the weather, and whether it is the sample. The team is the one
-// on the screen (core/teams.js): its name, number and logo, with the hawk when it has no
-// logo. The school is the same for both teams. The badge shows only while it is the
-// sample, and is gone the moment the content is not. Whether Sanity can be reached is
-// not said here but in the connection status text at the bottom right (core/connection.js).
+// New content: the team, the weather, the banner line and whether it is the sample. The
+// team is the one on the screen (core/teams.js): its name, number and logo, with the hawk
+// when it has no logo. The school is the same for both teams. The badge shows only while
+// it is the sample, and is gone the moment the content is not. Whether Sanity can be
+// reached is not said here but in the connection status text at the bottom right
+// (core/connection.js).
 export function update(element, content) {
   const team = teamShown(content);
   setName(element, team.name);
@@ -102,6 +105,17 @@ export function update(element, content) {
 
   const status = content.status || {};
   setText(element, '.sample-badge', status.source === 'sample' ? 'SAMPLE CONTENT' : '');
+
+  // The line of the seasonal pack on the screen takes the place of DASHBOARD and the bar
+  const line = packExtras(content).bannerLine;
+  setText(element, '.banner-line', line);
+  setLine(element, line);
+}
+
+// banner.css reads data-line to give the line its place
+function setLine(element, line) {
+  const wanted = line === '' ? 'off' : 'on';
+  if (element.dataset.line !== wanted) element.dataset.line = wanted;
 }
 
 function drawClock(element, now) {

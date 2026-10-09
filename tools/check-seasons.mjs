@@ -19,6 +19,9 @@
 //   - the motions in core/season.js and in motion.css are not the same list, or
 //     one is not described at the top of motion.css
 //   - the zones overlap each other or leave the screen
+//   - a corner art ornament is not stroke only paths inside its 28 by 28 box, with a line
+//     of 3 px or more, or a corner place does not fit its zone, or the rule that draws
+//     corner art in is not in motion.css (docs/seasonal-packs.md, "Corner art")
 //
 //   node tools/check-seasons.mjs
 //
@@ -34,6 +37,7 @@ const seasonsFolder = path.join(dashboardFolder, 'seasons');
 const motionFile = path.join(seasonsFolder, 'motion.css');
 const layerFile = path.join(seasonsFolder, 'season.css');
 const docsFile = path.join(dashboardFolder, '..', 'docs', 'seasonal-packs.md');
+const cornerArtFile = path.join(dashboardFolder, 'core', 'corner-art.js');
 
 // The width of the double slash that a mark replaces (core/marks.js)
 const slashWidth = 54;
@@ -367,6 +371,78 @@ function checkZones() {
   return problems;
 }
 
+// The corner art (core/corner-art.js): four ornaments of line art in the cut corners
+function checkCornerArt() {
+  const problems = [];
+  const art = world.cornerArt;
+  const half = art.cornerArtLine / 2;
+  const box = art.cornerArtSize;
+
+  if (art.cornerArtLine < 3) problems.push('cornerArtLine is ' + art.cornerArtLine + ' and no line may be thinner than 3 px');
+  if (art.cornerArtIds.join() !== 'leaves,snowflakes,gears,fireworks') problems.push('the ornaments are ' + art.cornerArtIds.join(', ') + ', and they should be leaves, snowflakes, gears and fireworks');
+
+  art.cornerArtIds.forEach(id => {
+    const markup = art.cornerArtMarkup(id);
+    const label = 'the corner art "' + id + '"';
+
+    forbiddenMarkup.filter(rule => rule.pattern.test(markup)).forEach(rule => problems.push(label + ' holds ' + rule.words));
+    wordProblems(label, markup).forEach(text => problems.push(text));
+    if (markup === '') problems.push(label + ' has no paths');
+
+    // Stroke only: every element is a path with no fill, a line in the accent colour, and what the draw keyframes need
+    (markup.match(/<[a-z]+[^>]*>/gi) || []).forEach(tag => {
+      if (!/^<path /.test(tag)) return problems.push(label + ' holds ' + tag.slice(0, 20) + ', and only paths are drawn');
+      if (!/ fill="none"/.test(tag)) problems.push(label + ' has a path with a fill. Corner art is line art');
+      if (!/ stroke="currentColor"/.test(tag)) problems.push(label + ' has a path that is not drawn in the accent colour (stroke="currentColor")');
+      if (!/ pathLength="1"/.test(tag) || !/ stroke-dasharray="1"/.test(tag)) problems.push(label + ' has a path without pathLength="1" and stroke-dasharray="1", which the draw keyframes need');
+    });
+
+    let points = [];
+    try {
+      points = art.cornerArtPoints(id);
+    } catch (error) {
+      return problems.push(error.message);
+    }
+    const outside = points.filter(point => point[0] - half < 0 || point[0] + half > box || point[1] - half < 0 || point[1] + half > box);
+    if (outside.length > 0) problems.push(label + ' leaves its ' + box + ' by ' + box + ' box with its ' + art.cornerArtLine + ' px line, at ' + outside[0].map(number => Math.round(number * 10) / 10).join(', '));
+  });
+
+  // The places are corner zones and the ornament fits each one at rest
+  const zones = world.season.cornerPlaces.map(place => ({ place: place, zone: world.season.zones[place.zone] }));
+  if (zones.length === 0) problems.push('cornerPlaces in core/season.js is empty');
+  zones.forEach(item => {
+    if (!item.zone) return problems.push('the corner place "' + item.place.zone + '" is not a zone in core/season.js');
+    if (item.place.zone.indexOf('corner-') !== 0) problems.push('the corner place "' + item.place.zone + '" is not a corner zone');
+    if (item.place.x < 0 || item.place.y < 0 || item.place.x + box > item.zone.width || item.place.y + box > item.zone.height) {
+      problems.push('the ' + box + ' by ' + box + ' ornament does not fit the zone "' + item.place.zone + '" at x ' + item.place.x + ', y ' + item.place.y + ': the zone is ' + item.zone.width + ' by ' + item.zone.height);
+    }
+  });
+
+  // No animation or effect in the file: the drawing in is one rule in motion.css, which reuses the draw keyframes
+  const code = withoutJsComments(read(cornerArtFile));
+  wordProblems('dashboard/core/corner-art.js', code).forEach(text => problems.push(text));
+  animationWords.filter(rule => rule.pattern.test(code)).forEach(rule => problems.push('dashboard/core/corner-art.js has ' + rule.words + '. The drawing in is in dashboard/seasons/motion.css'));
+
+  const rule = rulesIn(read(motionFile)).filter(item => item.selectors.indexOf('html[data-motion="full"] .season-corner-art') !== -1)[0];
+  const value = name => (rule ? rule.declarations.filter(item => item.name === name).map(item => item.value)[0] : undefined);
+  if (!rule) {
+    problems.push('motion.css has no rule for html[data-motion="full"] .season-corner-art, which draws the corner art in once');
+  } else {
+    if (value('animation-name') !== 'season-draw') problems.push('the corner art rule in motion.css should set animation-name: season-draw, the line drawing keyframes that are already there');
+    if (value('animation-iteration-count') !== '.35') problems.push('the corner art rule in motion.css should set animation-iteration-count: .35, so that it stops at the 35% step of season-draw, where every line is whole');
+    if (['both', 'forwards'].indexOf(value('animation-fill-mode')) === -1) problems.push('the corner art rule in motion.css should set animation-fill-mode: both, so that it holds still after it is drawn');
+  }
+  const draw = /@keyframes season-draw \{[\s\S]*?\n\}/.exec(withoutCssComments(read(motionFile)));
+  if (!draw || !/35%\s*\{\s*stroke-dashoffset:\s*0;/.test(draw[0])) problems.push('the 35% step of @keyframes season-draw in motion.css should set stroke-dashoffset: 0, because the corner art stops there');
+
+  const layer = rulesIn(read(layerFile)).filter(item => item.selectors.indexOf('.season-corner-art') !== -1)[0];
+  if (!layer || !layer.declarations.some(item => item.name === 'color' && item.value === 'var(--yellow)')) problems.push('dashboard/seasons/season.css: .season-corner-art should set color: var(--yellow), the accent colour of the pack');
+
+  const docs = fs.existsSync(docsFile) ? read(docsFile) : '';
+  if (!docs.includes('## Corner art')) problems.push('docs/seasonal-packs.md should have a section called Corner art');
+  return problems;
+}
+
 const results = [];
 
 async function check(name, run) {
@@ -385,6 +461,7 @@ async function main() {
   world.overlays = (await load(path.join(dashboardFolder, 'themes', 'overlays', 'registry.js'))).overlays;
   world.season = await load(path.join(dashboardFolder, 'core', 'season.js'));
   world.marks = await load(path.join(dashboardFolder, 'core', 'marks.js'));
+  world.cornerArt = await load(cornerArtFile);
   world.packs = {};
 
   await check('the registry and the pack files agree', checkFilesMatchRegistry);
@@ -394,6 +471,7 @@ async function main() {
   await check('no shape holds a filter, a gradient, a script or a link', checkShapeMarkup);
   await check('no pack, and not core/season.js, holds any animation', checkPackFilesAreData);
   await check('motion.css animates only transform, opacity and line drawing, and only in full motion', checkMotionCss);
+  await check('every corner art ornament is line art inside its box, and the corner places fit their zones', checkCornerArt);
 
   results.forEach(result => {
     console.log((result.problems.length === 0 ? 'PASS  ' : 'FAIL  ') + result.name);

@@ -656,7 +656,13 @@ moves and the pieces over the panels are not drawn.
   used, so a theme rule and a seasonal pack rule can both apply at once. Nothing is
   scheduled for you: docs/seasonal-packs.md suggests dates for each pack, and you
   decide. Competition Day and Summer Break have no fixed dates, so type the
-  competition days and the first and last day of school yourself.
+  competition days and the first and last day of school yourself. A rule for a
+  seasonal pack has three more fields, all optional. Ticker prefix (up to 12
+  characters) goes before each line on the ticker. Banner line (up to 40 characters)
+  is a short line in the banner, and a long one is cut off. Corner art is line art in
+  the two cut corners: leaves, snowflakes, gears or fireworks, or None. Leave one
+  empty and the pack's own is used, if it has one. Christmas has snowflakes,
+  Thanksgiving leaves, Competition Day gears and New Year's fireworks.
 - Time zone: the zone the dates are read in, such as America/New_York, which is
   where the page starts. The date changes at midnight in that zone, whatever
   the zone of the computer that shows the screen. Events Calendar entries use it

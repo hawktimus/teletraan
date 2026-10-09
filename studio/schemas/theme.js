@@ -10,13 +10,16 @@
 // for most of them, decorations along the edges of the screen
 // (docs/seasonal-packs.md). Only the titles and descriptions say so. The names
 // and stored values stay overlay and 'overlay', so nothing already saved changes.
+// A rule for a seasonal pack can also carry a ticker prefix, a banner line and a
+// corner art. Leaving one empty uses the pack's own, if it has one.
 
 import { defineType, defineField, defineArrayMember } from 'sanity';
 import { tooLong } from './fields.js';
-import { themes, overlays } from '../themes.js';
+import { themes, overlays, cornerArts } from '../themes.js';
 
 const themeChoices = themes.map(theme => ({ title: theme.name, value: theme.id }));
 const overlayChoices = overlays.map(overlay => ({ title: overlay.name, value: overlay.id }));
+const cornerArtChoices = cornerArts.map(art => ({ title: art.name, value: art.id }));
 
 // "No seasonal pack" is for Use a theme now only: it hides the pack the schedule would show
 const noOverlay = { title: 'No seasonal pack', value: 'none' };
@@ -43,6 +46,11 @@ function knownTimeZone(value) {
     return known.indexOf(value) !== -1 || value === 'UTC' || zoneMessage;
   }
   return zoneShape.test(value) || zoneMessage;
+}
+
+// The fields only a seasonal pack rule has are hidden for a theme rule
+function notAPack({ parent }) {
+  return !parent || parent.kind !== 'overlay';
 }
 
 // A rule names the theme or the overlay, by its kind. The one that does not
@@ -179,6 +187,31 @@ const ruleMember = defineArrayMember({
       type: 'boolean',
       description: 'On: only the month and day count, every year. Off: the rule applies once, on the exact dates.',
       initialValue: false,
+    }),
+    defineField({
+      name: 'tickerPrefix',
+      title: 'Ticker prefix',
+      type: 'string',
+      description: 'Optional. A word shown before each ticker line while the pack is on. A line too long for it shows without it. Up to 12 characters.',
+      hidden: notAPack,
+      validation: Rule => tooLong(Rule, 12),
+    }),
+    defineField({
+      name: 'bannerLine',
+      title: 'Banner line',
+      type: 'string',
+      description: 'Optional. A short line in the banner while the pack is on. The screen cuts a long one off. Up to 40 characters.',
+      hidden: notAPack,
+      validation: Rule => tooLong(Rule, 40),
+    }),
+    defineField({
+      name: 'cornerArt',
+      title: 'Corner art',
+      type: 'string',
+      description: 'Optional. Line art in the two cut corners while the pack is on. Leave empty for the pack\'s own, or pick None.',
+      options: { list: cornerArtChoices },
+      hidden: notAPack,
+      validation: Rule => Rule.valid(ids(cornerArtChoices)).error('Pick corner art from the list.'),
     }),
   ],
   validation: Rule => Rule.custom(endsBeforeStart),

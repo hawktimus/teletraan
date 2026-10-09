@@ -43,6 +43,7 @@ export const sequences = {
     'wordmark':     ['fade', 1000],
     'subtitle':     ['fade', 1000],
     'rule':         ['grow', 1100],
+    'line':         ['fade', 1100],
     'school':       ['fade', 1300],
     'sample-badge': ['fade', 1500],
   },
@@ -104,6 +105,7 @@ export const sequences = {
   },
   'bar-column': {
     'clock':        ['latch-right', 700],
+    'line':         ['fade', 900],
     'team-plate':   ['latch-left', 800],
     'school':       ['fade', 1100],
     'sample-badge': ['fade', 1300],

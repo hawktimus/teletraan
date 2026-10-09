@@ -39,6 +39,8 @@ The zones and the back layer were measured on the standard layout. In the sideba
 (docs/layouts.md) they are not drawn. The header mark and the over layer show in every
 layout, and a pack needs nothing extra for that (`decorationLayers` in `core/layout.js`).
 
+A rule can also add a ticker prefix, a banner line and a corner art. See "Extras on a rule".
+
 ## Where decorations can go
 
 The screen is full. Every row is used: the banner, the two columns of panels, and the ticker
@@ -348,6 +350,7 @@ The parts:
 | `back` | pieces behind the panels. Their x and y are screen pixels |
 | `front` | pieces over the empty places, each in a zone. Their x and y are measured from the top left corner of the zone |
 | `over` | pieces that cross the whole screen over the panels, small, faint and slow. Their x and y are screen pixels. 8 to 14 of them. See "The over layer" |
+| `defaults` | optional. `{ cornerArt, tickerPrefix, bannerLine }`, the values a rule gets when it leaves its own empty. See "Extras on a rule" |
 
 A piece:
 
@@ -393,6 +396,93 @@ Every motion is measured from the piece's resting place, the x and y in the pack
 To add a motion, write its keyframes in `motion.css` using only `transform`, `opacity` and `stroke-dashoffset`,
 give it a rule in "One rule for each motion", add its name to `motions` in `core/season.js`, and add
 its line to the list at the top of `motion.css`. `tools/check-seasons.mjs` fails if any of those is missing.
+
+## Extras on a rule
+
+A rule of a seasonal pack on the Theme page can carry three more things besides the pictures of
+the pack. Each is optional, and each shows only while that rule's pack is on the screen.
+
+| Field in Studio | Limit | What it does |
+|-----------------|-------|--------------|
+| Ticker prefix | 12 characters | a word shown before each ticker line |
+| Banner line | 40 characters | one short line of 44 px text in the banner |
+| Corner art | leaves, snowflakes, gears, fireworks or None | line art in the two cut corners |
+
+A pack file can carry a value of its own for each in `defaults`. It is used when the rule leaves the
+field empty, and a value typed on the rule wins. For Corner art, None on the rule means no corner
+art even when the pack has its own. Four packs have a corner art of their own and the other three
+have none:
+
+| Pack | Its own corner art |
+|------|--------------------|
+| `christmas` | snowflakes |
+| `thanksgiving` | leaves |
+| `competition-day` | gears |
+| `new-years` | fireworks |
+| `halloween`, `valentines-day`, `summer-break` | none |
+
+    export const pack = {
+      shapes: shapes,
+      mark: mark,
+      defaults: { cornerArt: 'snowflakes' },
+      ...
+    };
+
+`defaults` may also hold `tickerPrefix` and `bannerLine`. No pack has one yet, so a prefix or a line
+has to be typed on the rule. `node tools/check-seasons.mjs` names a default that is not allowed.
+
+Where the screen finds them: `ruleExtras()` in `core/theme.js` reads the rule, the first one for the pack
+that covers today (when Use a theme now shows a pack on a day no rule covers, the first rule for that
+pack), and `packExtras()` adds the pack's `defaults`. Both clean the text: spaces at the ends go, doubled
+spaces become one, and a value past its limit is cut off. The pack is the one on the page now, so the extras
+come and go with the pack's colours.
+
+### Ticker prefix
+
+The prefix goes before each line of the ticker, in the accent colour: `HAPPY Bring a water bottle`. It is part
+of the line, so the line still has to fit. A tip, a news line or a reminder may have 52 characters
+(`studio/schemas/tipOrNews.js`). When the prefix, one space and the line come to more than 52
+characters, that line is shown without the prefix and is never cut for it (`prefixFor()` in
+`core/pack-extras.js`). A thank-you from a sponsor allows 54 characters, and a line that long never gets a prefix.
+The prefix is in the ticker of every layout and every style.
+
+### Banner line
+
+The banner line is one line at 44 px, in the accent colour, cut off with an ellipsis. Nothing is free under the
+date for it, so each layout puts it where there is room. The room is worked out from the sizes in the
+stylesheets and has not been measured on the screen: keep the line short, and look at it with
+`?overlay=<id>` before it goes on the wall.
+
+| Layout | Where the line shows | Characters that show, roughly |
+|--------|----------------------|-------------------------------|
+| Standard | the bottom row of the banner, in place of the word DASHBOARD and the bar beside it, level with the school | 20 |
+| Bar (Cybertron and Minimal) | the side column, under the weather. The TEAM plate, the school and the SAMPLE CONTENT label move down while there is a line (docs/layouts.md, "The side column") | 10 |
+| Sidebar (Neon Prime) | nowhere. The strip has no free line of 44 px, and the date is in a slot 500 px wide | none |
+
+The banner draws it (`panels/banner`, `panels/bar-column`) from `packExtras()`, and sets `data-line` on the
+panel to `on` or `off`. The panel `side` does not ask for it.
+
+### Corner art
+
+Four ornaments of line art, drawn by hand in `core/corner-art.js`: leaves, snowflakes, gears and fireworks.
+Each is a few paths in a 28 by 28 box, with a line 3 px wide, no fill, in the accent colour of the pack.
+
+They go in the two cut corners, the zones `corner-a` (the large panel) and `corner-b` (the countdown). Those are the
+only two corners of the frames with room that was measured. The other corners hold screws and text. The places are
+`cornerPlaces` in `core/season.js`. The ornament is drawn after the pack's own pieces in the corner, so it lies over
+the holly, the bell or the web that is already there.
+
+The corners are zones of the front layer, which only the standard layout draws. The sidebar and bar layouts
+have no corner zones, so they draw no corner art.
+
+The lines draw in once, in about 3 seconds, when the pack appears, and then hold still. The rule is at the end of
+`seasons/motion.css`. It plays the first 35 percent of the `season-draw` keyframes, which end with every line whole, and
+stops there. In calm and none motion nothing animates, so the ornament is drawn whole and still.
+
+To add an ornament: add its paths to `ornaments` in `core/corner-art.js` (only `M`, `L`, `A` and `Z`, with a
+3 px line kept 1.5 px inside the box), add its id and name to `cornerArts` in `studio/themes.js` before None, and run
+`node tools/check-seasons.mjs` and `node studio/check-schemas.mjs`. The check names an ornament that leaves its
+box, has a fill or uses an effect.
 
 ## How to add a pack
 
@@ -484,6 +574,8 @@ Schedule, add an item, and fill in:
 - **Start date** and **End date.** Both are needed, and both days count.
 - **Repeats every year.** On: only the month and the day count, so the same days come round every year and
   the year you pick is ignored. A rule may run over New Year: 30 December to 2 January needs this on.
+- **Ticker prefix**, **Banner line** and **Corner art.** Optional, and only for a seasonal pack. Leave one empty to
+  use the pack's own, if it has one. See "Extras on a rule".
 
 The first rule of each kind that covers today is used, so put the rule that should win first. "Use a theme now"
 on the same page wins over the schedule.

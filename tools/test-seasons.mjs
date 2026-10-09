@@ -31,7 +31,7 @@ function copyInto(folder, from, to) {
 function makeTree(folder) {
   fs.mkdirSync(folder, { recursive: true });
   fs.writeFileSync(path.join(folder, 'package.json'), '{ "type": "module" }\n');
-  ['dashboard/core/season.js', 'dashboard/core/marks.js', 'dashboard/base.css', 'dashboard/themes/overlays/registry.js', 'dashboard/index.html', 'tools/check-seasons.mjs', 'docs/seasonal-packs.md'].forEach(file => copyInto(folder, file, file));
+  ['dashboard/core/season.js', 'dashboard/core/marks.js', 'dashboard/core/corner-art.js', 'dashboard/core/pack-extras.js', 'dashboard/base.css', 'dashboard/themes/overlays/registry.js', 'dashboard/index.html', 'tools/check-seasons.mjs', 'docs/seasonal-packs.md'].forEach(file => copyInto(folder, file, file));
   fs.readdirSync(path.join(dashboardFolder, 'seasons')).forEach(name => copyInto(folder, 'dashboard/seasons/' + name, 'dashboard/seasons/' + name));
 }
 
@@ -42,8 +42,10 @@ const base = pathToFileURL(path.join(mainTree, 'dashboard')).href + '/';
 const season = await import(base + 'core/season.js');
 const { overlays } = await import(base + 'themes/overlays/registry.js');
 const { zones, motions, hasDecorations, pieceProblems, packProblems, layersMarkup, pieceMarkup, loadPack } = season;
-const { overMotions, markProblems } = season;
+const { overMotions, markProblems, cornerPlaces, cornerArtPieceMarkup } = season;
 const marks = await import(base + 'core/marks.js');
+const cornerArt = await import(base + 'core/corner-art.js');
+const packExtras = await import(base + 'core/pack-extras.js');
 
 const packIds = ['halloween', 'thanksgiving', 'christmas', 'new-years', 'valentines-day', 'competition-day', 'summer-break'];
 const tests = [];
@@ -745,6 +747,223 @@ test('the Theme switch reaches the screen through config.js, theme.js, shell.js,
   assert.match(schema, /initialValue: true,/);
   assert.ok(/fields: \[[^\]]*seasonOverPanelsField\]/.test(schema), 'the field is on the Theme page');
   assert.ok(read('studio/check-schemas.mjs').includes("seasonOverPanels: 'boolean'"), 'check-schemas.mjs lists the field');
+});
+
+// Corner art (core/corner-art.js): four ornaments of line art in the two cut corners
+
+const ornamentIds = ['leaves', 'snowflakes', 'gears', 'fireworks'];
+
+test('there are four ornaments, and each is a few paths of line art with no fill, inside a 28 by 28 box with its line and the room it needs', () => {
+  assert.deepEqual(cornerArt.cornerArtIds, ornamentIds);
+  assert.deepEqual(cornerArt.cornerArtChoices, ornamentIds.concat(['none']));
+  assert.equal(cornerArt.cornerArtSize, 28);
+  assert.ok(cornerArt.cornerArtLine >= 3, 'no line is thinner than 3 px');
+
+  const half = cornerArt.cornerArtLine / 2;
+  ornamentIds.forEach(id => {
+    const paths = cornerArt.cornerArtPaths(id);
+    assert.ok(paths.length >= 2, id + ' is drawn with more than one path');
+    paths.forEach(d => assert.match(d, /^M[-\d. ]+((L|A)[-\d. ]+)*Z?$/, id + ' uses only M, L, A and Z with plain numbers: ' + d));
+
+    const markup = cornerArt.cornerArtMarkup(id);
+    const elements = markup.match(/<[a-z]+/g);
+    assert.equal(elements.length, paths.length, id + ' is nothing but paths');
+    assert.ok(elements.every(tag => tag === '<path'));
+    assert.equal(countOf(markup, 'fill="none"'), paths.length, 'every path has no fill');
+    assert.equal(countOf(markup, 'fill='), paths.length, 'and nothing has any other fill');
+    assert.equal(countOf(markup, 'stroke="currentColor"'), paths.length, 'every path is a line in the accent colour');
+    assert.equal(countOf(markup, 'stroke-width="3"'), paths.length);
+    assert.equal(countOf(markup, 'pathLength="1" stroke-dasharray="1"'), paths.length, 'and every path can be drawn in by the draw keyframes');
+    assert.doesNotMatch(markup, /filter|blur|shadow|glow|gradient|pattern|mask|clip|<style|<script|href|opacity|transform|animate/i, id + ' has no effect words');
+
+    cornerArt.cornerArtPoints(id).forEach(point => {
+      assert.ok(point[0] - half >= 0 && point[0] + half <= 28 && point[1] - half >= 0 && point[1] + half <= 28, id + ' stays inside its box with the line: ' + point.map(round2).join(','));
+    });
+  });
+
+  const reach = id => cornerArt.cornerArtPoints(id).reduce((all, point) => ({ left: Math.min(all.left, point[0]), right: Math.max(all.right, point[0]), top: Math.min(all.top, point[1]), bottom: Math.max(all.bottom, point[1]) }), { left: 99, right: 0, top: 99, bottom: 0 });
+  ornamentIds.forEach(id => {
+    const box = reach(id);
+    assert.ok(box.right - box.left >= 20 && box.bottom - box.top >= 20, id + ' fills most of the box, so it reads from across the room');
+  });
+
+  assert.deepEqual(cornerArt.cornerArtPaths('sparkles'), []);
+  assert.deepEqual(cornerArt.cornerArtPaths('none'), []);
+  assert.equal(cornerArt.cornerArtMarkup('none'), '');
+  assert.equal(cornerArt.isCornerArt('gears'), true);
+  assert.equal(cornerArt.isCornerArt('none'), false, 'none is a choice, not an ornament');
+  assert.equal(cornerArt.isCornerArt(undefined), false);
+});
+
+function round2(number) {
+  return Math.round(number * 100) / 100;
+}
+
+function countOf(text, part) {
+  return text.split(part).length - 1;
+}
+
+test('a path with a command the box check does not know is refused, and the arcs of the gear are sampled round the hub', () => {
+  const gears = cornerArt.cornerArtPoints('gears');
+  assert.ok(gears.some(point => Math.abs(point[0] - 10.8) < 0.1 && Math.abs(point[1] - 14) < 0.5), 'a point at the left of the hub');
+  assert.ok(gears.some(point => Math.abs(point[0] - 17.2) < 0.1 && Math.abs(point[1] - 14) < 0.5), 'and at the right');
+  gears.slice(-48).forEach(point => assert.ok(Math.abs(Math.hypot(point[0] - 14, point[1] - 14) - 3.2) < 0.01 || Math.hypot(point[0] - 14, point[1] - 14) > 3.2), 'no point of the hub is nearer its middle than its radius');
+});
+
+test('corner art goes in the two cut corners, which are corner zones, and fits each of them', () => {
+  assert.deepEqual(cornerPlaces.map(place => place.zone), ['corner-a', 'corner-b']);
+  cornerPlaces.forEach(place => {
+    const zone = zones[place.zone];
+    assert.ok(zone, place.zone + ' is a zone');
+    assert.ok(place.x >= 0 && place.y >= 0 && place.x + cornerArt.cornerArtSize <= zone.width && place.y + cornerArt.cornerArtSize <= zone.height, place.zone + ' is big enough for the ornament at its place: ' + zone.width + ' by ' + zone.height);
+  });
+  assert.equal(new Set(cornerPlaces.map(place => place.zone)).size, cornerPlaces.length, 'one ornament in each');
+});
+
+test('the front layer draws the ornament in each corner place, after the pack\'s own pieces, and draws none for none, an odd id or a layout without the front layer', () => {
+  const pack = makePack({ front: [{ zone: 'corner-a', shape: 'flake', x: 4, y: 0, size: 24 }] });
+  const drawn = layersMarkup(pack, undefined, 'snowflakes');
+
+  assert.equal(countOf(drawn.front, 'season-corner-art'), 2);
+
+  // corner-a and corner-b are the last two zones of the list
+  const inA = drawn.front.slice(drawn.front.indexOf('data-zone="corner-a"'), drawn.front.indexOf('data-zone="corner-b"'));
+  const inB = drawn.front.slice(drawn.front.indexOf('data-zone="corner-b"'));
+  assert.equal(countOf(inA, 'season-corner-art'), 1);
+  assert.equal(countOf(inB, 'season-corner-art'), 1, 'a corner with no piece of the pack is drawn for the ornament');
+  assert.ok(inA.indexOf('class="season-piece"') < inA.indexOf('season-corner-art'), 'the ornament is after the pack\'s own piece, so it lies over it');
+
+  assert.equal(countOf(drawn.front, cornerArt.cornerArtPaths('snowflakes')[0]), 2, 'the paths of the ornament, in each corner');
+  ornamentIds.forEach(id => assert.ok(layersMarkup(pack, undefined, id).front.includes(cornerArt.cornerArtPaths(id)[0]), id));
+
+  ['none', 'sparkles', '', undefined, null, 7].forEach(art => assert.equal(countOf(layersMarkup(pack, undefined, art).front, 'season-corner-art'), 0, String(art)));
+  assert.equal(countOf(layersMarkup(pack, undefined).front, 'season-corner-art'), 0, 'with no corner art asked for');
+  assert.equal(countOf(layersMarkup(pack, ['over'], 'snowflakes').front, 'season-corner-art'), 0, 'a layout that draws only the over layer has no corner');
+  assert.equal(countOf(layersMarkup(pack, ['back', 'over'], 'snowflakes').front, 'season-corner-art'), 0);
+  assert.equal(layersMarkup({}, undefined, 'gears').empty, false, 'a pack of nothing but corner art is not empty');
+  assert.equal(layersMarkup({}, undefined, 'none').empty, true);
+});
+
+test('an ornament is a piece the size of the box at its place, with a view box of its own, its paths and no motion of a pack', () => {
+  const html = cornerArtPieceMarkup('gears', { zone: 'corner-b', x: 12, y: 3 });
+
+  assert.ok(html.startsWith('<div class="season-piece season-corner-art" style="left: 12px; top: 3px; width: 28px; height: 28px;">'));
+  assert.ok(html.includes('<svg viewBox="0 0 28 28" width="28" height="28" aria-hidden="true">'));
+  assert.ok(html.includes(cornerArt.cornerArtMarkup('gears')));
+  assert.ok(!html.includes('data-move') && !html.includes('--seconds'), 'the draw is in motion.css, not a motion the pack names');
+});
+
+test('the corner art on the page is the one typed on the rule, else the pack\'s own, else none, and a change draws the front layer again', async () => {
+  const front = page => page.getElementById('season-front');
+  const countArt = page => countOf(front(page).innerHTML, 'season-corner-art');
+
+  await onPage(async (page, logged, fresh) => {
+    await fresh.showSeason('christmas', importPack(makePack({ defaults: { cornerArt: 'snowflakes' } })));
+    assert.ok(front(page).innerHTML.includes(cornerArt.cornerArtPaths('snowflakes')[0]), 'the pack\'s own, with nothing typed');
+    assert.equal(countArt(page), 2);
+
+    const first = front(page);
+    fresh.setCornerArt('');
+    assert.equal(front(page), first, 'nothing typed again changes nothing');
+    fresh.setCornerArt('snowflakes');
+    assert.equal(front(page), first, 'typing the art the pack already has changes nothing');
+
+    fresh.setCornerArt('gears');
+    assert.notEqual(front(page), first, 'a different art is drawn at once');
+    assert.ok(front(page).innerHTML.includes(cornerArt.cornerArtPaths('gears')[0]) && !front(page).innerHTML.includes(cornerArt.cornerArtPaths('snowflakes')[0]), 'the typed one wins');
+    const second = front(page);
+    fresh.setCornerArt('gears');
+    assert.equal(front(page), second, 'the same art again is not drawn again');
+    fresh.setCornerArt('none');
+    assert.equal(countArt(page), 0, 'None on the rule wins over the pack\'s own');
+    fresh.setCornerArt('');
+    assert.equal(countArt(page), 2, 'and empty goes back to the pack\'s own');
+    fresh.setCornerArt('sparkles');
+    assert.equal(countArt(page), 2, 'an id that is not an ornament counts as empty');
+    assert.deepEqual(logged, []);
+  });
+
+  await onPage(async (page, logged, fresh) => {
+    fresh.setCornerArt('leaves');
+    await fresh.showSeason('thanksgiving', importPack(makePack()));
+    assert.ok(front(page).innerHTML.includes(cornerArt.cornerArtPaths('leaves')[0]), 'typed before the pack comes on');
+
+    await fresh.showSeason('halloween', importPack(makePack({ defaults: { cornerArt: 'gears' } })));
+    assert.ok(front(page).innerHTML.includes(cornerArt.cornerArtPaths('leaves')[0]), 'a rule of the next pack is given by shell.js before it asks for the pack');
+    fresh.setCornerArt('');
+    await fresh.showSeason('christmas', importPack(makePack({ defaults: { cornerArt: 'gears' } })));
+    assert.ok(front(page).innerHTML.includes(cornerArt.cornerArtPaths('gears')[0]));
+
+    await fresh.showSeason('', null);
+    assert.equal(page.getElementById('season-front'), null);
+    fresh.setCornerArt('leaves');
+    assert.deepEqual(page.order(), ['backdrop', 'stage', 'red-wash'], 'a corner art with no pack draws nothing');
+  });
+
+  await onPage(async (page, logged, fresh) => {
+    fresh.setLayers(['over']);
+    fresh.setCornerArt('gears');
+    await fresh.showSeason('christmas', importPack(makePack({ defaults: { cornerArt: 'gears' }, over: flakes(8) })));
+    assert.equal(page.getElementById('season-front').innerHTML, '', 'a layout without the front layer has no corner art');
+    const layer = page.getElementById('season-front');
+    fresh.setCornerArt('leaves');
+    assert.equal(page.getElementById('season-front'), layer, 'and a change of art does not draw it again');
+  });
+});
+
+test('a pack may carry defaults for the three extras, and every mistake in them is named', () => {
+  assert.deepEqual(packProblems(makePack({ defaults: { cornerArt: 'gears', tickerPrefix: 'HAPPY', bannerLine: 'A line' } })), []);
+  assert.deepEqual(packProblems(makePack({ defaults: {} })), []);
+  assert.deepEqual(packProblems(makePack({ defaults: { cornerArt: 'none' } })), [], 'a pack may say none');
+  assert.match(packProblems(makePack({ defaults: { cornerArt: 'sparkles' } })).join(), /the defaults has the corner art "sparkles", which is not one of: leaves, snowflakes, gears, fireworks, none/);
+  assert.match(packProblems(makePack({ defaults: { tickerPrefix: 'A PREFIX THAT IS TOO LONG' } })).join(), /tickerPrefix should be text of 12 characters or fewer/);
+  assert.match(packProblems(makePack({ defaults: { bannerLine: 'x'.repeat(41) } })).join(), /bannerLine should be text of 40 characters or fewer/);
+  assert.match(packProblems(makePack({ defaults: { bannerLine: 7 } })).join(), /bannerLine should be text/);
+  assert.match(packProblems(makePack({ defaults: { corner: 'gears' } })).join(), /"corner", which defaults do not use/);
+  assert.match(packProblems(makePack({ defaults: 'gears' })).join(), /the defaults should be/);
+});
+
+test('the four packs that carry a corner art have the one the order names, and the other three have none of their own', async () => {
+  const folder = pathToFileURL(path.join(mainTree, 'dashboard', 'seasons')).href + '/';
+  const expected = { christmas: 'snowflakes', thanksgiving: 'leaves', 'competition-day': 'gears', 'new-years': 'fireworks' };
+
+  for (const id of packIds) {
+    const { pack } = await import(folder + id + '.js');
+    if (expected[id]) assert.deepEqual(pack.defaults, { cornerArt: expected[id] }, id);
+    else assert.equal(pack.defaults, undefined, id + ' has no corner art of its own');
+    assert.deepEqual(packProblems(pack), [], id);
+  }
+});
+
+test('loading a pack remembers its defaults, and a pack whose defaults are wrong has none', async () => {
+  await loadPack('summer-break', importPack(makePack({ defaults: { cornerArt: 'leaves', tickerPrefix: 'SUN' } })));
+  assert.deepEqual(packExtras.defaultsOf('summer-break'), { cornerArt: 'leaves', tickerPrefix: 'SUN' });
+  assert.deepEqual(packExtras.defaultsOf('no-such-pack'), {});
+
+  await loadPack('valentines-day', importPack(makePack({ defaults: { cornerArt: 'sparkles' } })));
+  assert.deepEqual(packExtras.defaultsOf('valentines-day'), {});
+});
+
+test('corner art draws in once and holds: one rule, in full motion only, that plays the first 35 percent of the draw keyframes and stays there', () => {
+  const css = fs.readFileSync(path.join(mainTree, 'dashboard/seasons/motion.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const withoutKeyframes = css.replace(/@keyframes\s+[\w-]+\s*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/g, '');
+  const rules = withoutKeyframes.split('}').map(chunk => chunk.split('{')).filter(parts => parts.length === 2).map(parts => ({ selector: parts[0].trim(), body: parts[1] }));
+  const art = rules.filter(rule => rule.selector.indexOf('.season-corner-art') !== -1);
+
+  assert.equal(art.length, 1);
+  assert.equal(art[0].selector, 'html[data-motion="full"] .season-corner-art', 'calm and none motion draw it whole and still');
+  assert.match(art[0].body, /animation-name:\s*season-draw;/, 'the keyframes that are already there');
+  assert.match(art[0].body, /animation-iteration-count:\s*\.35;/, 'it stops at their 35 percent step');
+  assert.match(art[0].body, /animation-fill-mode:\s*both;/, 'and holds it');
+  assert.doesNotMatch(art[0].body, /infinite/);
+
+  // that step is where every line is whole, and a corner art adds no keyframes of its own
+  const draw = /@keyframes season-draw \{([^}]*(?:\}[^}]*)*?)\n\}/.exec(css);
+  assert.ok(draw && /35%\s*\{\s*stroke-dashoffset:\s*0;\s*\}/.test(draw[1]), 'at 35 percent the dash offset is 0');
+  assert.deepEqual((css.match(/@keyframes\s+[\w-]+/g) || []).map(text => text.replace('@keyframes ', '')).filter(name => /corner|art/.test(name)), []);
+
+  const layer = fs.readFileSync(path.join(mainTree, 'dashboard/seasons/season.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.match(layer, /\.season-corner-art \{ color: var\(--yellow\); \}/, 'in the accent colour of the pack');
 });
 
 // Calm and none motion

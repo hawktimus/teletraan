@@ -466,6 +466,9 @@ export const pack = {
   // The picture that replaces the slashes in every panel header
   mark: mark,
 
+  // The corner art a rule gets when it picks none of its own (core/corner-art.js)
+  defaults: { cornerArt: 'fireworks' },
+
   // Over the panels: ten pieces that fall, tumble or rise across the whole screen, and
   // two sparkles that twinkle in the margins, where there is no text. Confetti,
   // stars and a diamond flutter or fall, slowly: a trip takes 26 to 48 seconds, so a

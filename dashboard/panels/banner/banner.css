@@ -162,6 +162,25 @@
   font: 600 var(--size-label)/44px var(--font-display);
 }
 
+/* The banner line of a seasonal pack (core/pack-extras.js). Nothing under the date is
+   free for 44 px of text, so while there is a line it takes the place of the word
+   DASHBOARD and the bar beside it, on the bottom row, level with the school. It is one
+   line, cut off with an ellipsis, and about 20 characters show. banner.js sets
+   data-line to on when the line is not empty. */
+.banner .banner-line { display: none; }
+.banner[data-line="on"] .subtitle,
+.banner[data-line="on"] .rule { display: none; }
+.banner[data-line="on"] .banner-line {
+  display: block;
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--yellow);
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+
 /* SAMPLE CONTENT is on the screen the whole time the sample is showing, so
    nobody mistakes it for the team's real content. Solid yellow with dark
    text, the highest contrast on the screen. It sits to the right of the TEAM

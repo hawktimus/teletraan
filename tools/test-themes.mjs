@@ -24,13 +24,15 @@ fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n'
 ['config.js', 'frame.js', 'themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
-['theme.js', 'theme-apply.js', 'teams.js', 'style.js', 'transitions.js', 'tick.js'].forEach(file => {
+['theme.js', 'theme-apply.js', 'teams.js', 'style.js', 'transitions.js', 'tick.js', 'corner-art.js', 'pack-extras.js'].forEach(file => {
   fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(workFolder, 'dashboard/core', file));
 });
 
 const base = pathToFileURL(path.join(workFolder, 'dashboard')).href + '/';
 const config = await import(base + 'config.js');
-const { resolveTheme, tidyTheme, ruleCovers, dateIn, isTimeZone } = await import(base + 'core/theme.js');
+const { resolveTheme, tidyTheme, ruleCovers, dateIn, isTimeZone, ruleExtras, overlayShown, packExtras } = await import(base + 'core/theme.js');
+const packExtrasModule = await import(base + 'core/pack-extras.js');
+const cornerArtModule = await import(base + 'core/corner-art.js');
 const { teamProperties, teamInitials } = await import(base + 'core/teams.js');
 const { themes } = await import(base + 'themes/registry.js');
 const { overlays } = await import(base + 'themes/overlays/registry.js');
@@ -1262,6 +1264,96 @@ test('the Alternate and Neon Prime themes and every overlay set their colors wit
   assert.ok(index.indexOf('href="tokens.css"') < index.indexOf('href="teams.css"'));
   // an overlay is linked from theme-apply.js, later than anything in index.html, so it wins over the team
   assert.ok(fs.readFileSync(path.join(dashboardFolder, 'core/theme-apply.js'), 'utf8').includes('document.head.appendChild(link);'));
+});
+
+// The extras of a seasonal pack: a ticker prefix, a banner line and a corner art on a rule
+// (dashboard/core/theme.js, dashboard/core/pack-extras.js). How they are drawn is in
+// tools/test-seasons.mjs, and how the ticker and the banner use them is in tools/test-content.mjs.
+
+// A rule for a seasonal pack as the Studio sends it, with the extras
+function packRule(id, extras, dates) {
+  const days = dates || ['2026-12-14', '2026-12-25'];
+  return Object.assign(rule('overlay', id, days[0], days[1], true), extras);
+}
+
+const emptyExtras = { tickerPrefix: '', bannerLine: '', cornerArt: '' };
+
+test('a rule for a seasonal pack keeps a ticker prefix, a banner line and a corner art, and a theme rule has none of them', () => {
+  const typed = { tickerPrefix: 'HAPPY', bannerLine: 'Merry everything', cornerArt: 'gears' };
+  const cleaned = tidyTheme({ schedule: [packRule(anOverlay, typed)] }).schedule[0];
+
+  assert.deepEqual([cleaned.tickerPrefix, cleaned.bannerLine, cleaned.cornerArt], ['HAPPY', 'Merry everything', 'gears']);
+  assert.deepEqual(tidyTheme({ schedule: [packRule(anOverlay)] }).schedule[0], Object.assign(packRule(anOverlay), emptyExtras), 'a rule that leaves them out has them empty');
+
+  const themeRule = tidyTheme({ schedule: [Object.assign(rule('theme', otherTheme, '2026-12-14', '2026-12-25'), typed)] }).schedule[0];
+  assert.deepEqual(Object.keys(themeRule).sort(), ['endDate', 'kind', 'name', 'repeatsEveryYear', 'startDate', 'theme'], 'a theme rule does not carry them');
+});
+
+test('the ticker prefix and the banner line are one line of text cut at 12 and 40 characters, and a corner art that is not in the list is empty', () => {
+  const clean = extras => tidyTheme({ schedule: [packRule(anOverlay, extras)] }).schedule[0];
+
+  assert.equal(packExtrasModule.tickerPrefixLimit, 12);
+  assert.equal(packExtrasModule.bannerLineLimit, 40);
+  assert.equal(clean({ tickerPrefix: '   HAPPY   DAYS  ' }).tickerPrefix, 'HAPPY DAYS');
+  assert.equal(clean({ tickerPrefix: 'A VERY LONG PREFIX' }).tickerPrefix, 'A VERY LONG', 'cut at 12, with no space left at the end');
+  assert.equal(clean({ bannerLine: 'x'.repeat(41) }).bannerLine, 'x'.repeat(40));
+  assert.equal(clean({ bannerLine: 'One\nline\tonly' }).bannerLine, 'One line only');
+  [undefined, null, 7, true, ['a'], { text: 'a' }].forEach(odd => {
+    assert.equal(clean({ tickerPrefix: odd, bannerLine: odd }).tickerPrefix, '');
+    assert.equal(clean({ tickerPrefix: odd, bannerLine: odd }).bannerLine, '');
+  });
+
+  cornerArtModule.cornerArtChoices.forEach(id => assert.equal(clean({ cornerArt: id }).cornerArt, id));
+  ['', 'Gears', 'snowflake', 'sparkles', null, 4, ['gears']].forEach(odd => assert.equal(clean({ cornerArt: odd }).cornerArt, '', String(odd)));
+  assert.deepEqual(cornerArtModule.cornerArtChoices, ['leaves', 'snowflakes', 'gears', 'fireworks', 'none']);
+});
+
+test('ruleExtras reads the rule for the pack: the one that covers today, else the first for that pack, else nothing', () => {
+  const winter = packRule('christmas', { tickerPrefix: 'WINTER', bannerLine: 'Winter line', cornerArt: 'snowflakes' }, ['2026-12-14', '2026-12-25']);
+  const later = packRule('christmas', { tickerPrefix: 'LATER', cornerArt: 'none' }, ['2026-12-26', '2026-12-31']);
+  const other = packRule('halloween', { tickerPrefix: 'BOO' }, ['2026-10-24', '2026-10-31']);
+  const theme = { schedule: [winter, later, other] };
+  const at = (id, day) => ruleExtras(theme, id, new Date(day + 'T17:00:00Z'));
+
+  assert.deepEqual(at('christmas', '2026-12-15'), { tickerPrefix: 'WINTER', bannerLine: 'Winter line', cornerArt: 'snowflakes' });
+  assert.deepEqual(at('christmas', '2026-12-28'), { tickerPrefix: 'LATER', bannerLine: '', cornerArt: 'none' }, 'the rule that covers the day, not the first');
+  assert.deepEqual(at('christmas', '2026-06-01'), { tickerPrefix: 'WINTER', bannerLine: 'Winter line', cornerArt: 'snowflakes' }, 'on a day no rule covers (Use now) the first rule for the pack');
+  assert.deepEqual(at('halloween', '2026-12-15'), { tickerPrefix: 'BOO', bannerLine: '', cornerArt: '' });
+  assert.deepEqual(at('thanksgiving', '2026-12-15'), emptyExtras, 'no rule for the pack');
+  assert.deepEqual(ruleExtras(undefined, 'christmas', new Date()), emptyExtras);
+  assert.deepEqual(ruleExtras({ schedule: [rule('theme', otherTheme, '2026-12-14', '2026-12-25', true)] }, 'christmas', new Date('2026-12-15T17:00:00Z')), emptyExtras, 'a theme rule is not a pack rule');
+});
+
+test('the overlay on the page is read from its class, and a page with no overlay class has none', () => {
+  assert.equal(overlayShown({ className: 'theme-hawktimus overlay-christmas' }), 'christmas');
+  assert.equal(overlayShown({ className: 'overlay-new-years theme-alternate' }), 'new-years');
+  assert.equal(overlayShown({ className: 'theme-hawktimus' }), '');
+  assert.equal(overlayShown({ className: '' }), '');
+  assert.equal(overlayShown({ className: 'theme-overlay-x' }), '', 'only a class that starts with overlay-');
+  assert.equal(overlayShown(), '', 'with no page at all');
+});
+
+test('packExtras: what is typed on the rule wins, the pack\'s own fills what is empty, corner art is none when there is neither, and a screen with no pack has nothing', () => {
+  const content = extra => ({ theme: { schedule: [packRule('christmas', extra)] } });
+  const page = { className: 'theme-hawktimus overlay-christmas' };
+  const now = new Date('2026-12-15T17:00:00Z');
+  const none = { tickerPrefix: '', bannerLine: '', cornerArt: 'none' };
+
+  packExtrasModule.rememberDefaults('christmas', { cornerArt: 'snowflakes', tickerPrefix: 'OWN', bannerLine: 'The pack\'s own line' });
+  assert.deepEqual(packExtras(content({}), now, page), { tickerPrefix: 'OWN', bannerLine: 'The pack\'s own line', cornerArt: 'snowflakes' }, 'an empty rule uses the pack');
+  assert.deepEqual(packExtras(content({ tickerPrefix: 'TYPED', bannerLine: 'Typed', cornerArt: 'gears' }), now, page), { tickerPrefix: 'TYPED', bannerLine: 'Typed', cornerArt: 'gears' }, 'a typed value wins');
+  assert.equal(packExtras(content({ cornerArt: 'none' }), now, page).cornerArt, 'none', 'None on the rule wins over the pack\'s corner art');
+  assert.equal(packExtras(content({ tickerPrefix: 'TYPED' }), now, page).bannerLine, 'The pack\'s own line', 'each part is decided on its own');
+
+  packExtrasModule.rememberDefaults('christmas', {});
+  assert.deepEqual(packExtras(content({}), now, page), none, 'no rule value and no default');
+  packExtrasModule.rememberDefaults('christmas', { cornerArt: 'sparkles' });
+  assert.deepEqual(packExtras(content({}), now, page), none, 'a default that is not corner art is ignored');
+
+  assert.deepEqual(packExtras(content({ tickerPrefix: 'TYPED' }), now, { className: 'theme-hawktimus' }), none, 'no overlay on the page');
+  assert.deepEqual(packExtras(null, now, page), none, 'no content yet');
+  assert.deepEqual(packExtras({ theme: 'oops' }, now, page), none);
+  assert.deepEqual(packExtras(content({ tickerPrefix: 'TYPED' }), now, { className: 'overlay-halloween' }), none, 'another pack has no rule');
 });
 
 // Run them

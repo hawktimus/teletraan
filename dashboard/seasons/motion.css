@@ -30,6 +30,10 @@
      slide    comes in from the left by --travel (200px), stays, then leaves to the right
      flutter  falls by --travel (1200px) while swaying 30px left and right, fading in at the top and out at the bottom
 
+   Corner art (core/corner-art.js) is not a motion a pack names. It plays the first
+   35% of the draw keyframes once, which is where every line is drawn, and holds
+   there. Its rule is at the end of "One rule for each motion".
+
    To add a motion: write its keyframes below, give it a rule in "One rule for
    each motion", add its name to motions in core/season.js, and add its line to
    this list. */
@@ -147,6 +151,19 @@ html[data-motion="full"] .season-piece[data-move="draw"]    { animation-name: se
 html[data-motion="full"] .season-piece[data-move="sweep"]   { animation-name: season-sweep; }
 html[data-motion="full"] .season-piece[data-move="slide"]   { animation-name: season-slide; }
 html[data-motion="full"] .season-piece[data-move="flutter"] { animation-name: season-flutter; animation-timing-function: linear; }
+
+/* Corner art draws in once and stays. An iteration count of .35 stops the draw
+   keyframes at their 35% step, where the offset is 0 and every line is whole, and
+   "both" holds that step after it ends, and the first step during the wait. The
+   round is 8.6 seconds, so the lines take about 3 seconds to draw. */
+html[data-motion="full"] .season-corner-art {
+  animation-name: season-draw;
+  animation-duration: calc(8.6s * var(--pace, 1));
+  animation-delay: calc(.4s * var(--pace, 1));
+  animation-iteration-count: .35;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+}
 
 
 /* While the night screen covers the picture nothing behind it is worth playing */

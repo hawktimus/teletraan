@@ -30,3 +30,6 @@
   text-overflow: ellipsis;
   font: 500 var(--size-body)/64px var(--font-text);
 }
+
+/* The prefix of a seasonal pack (core/pack-extras.js) is the same size as the line, in the accent colour */
+.ticker .message .prefix { color: var(--yellow); }

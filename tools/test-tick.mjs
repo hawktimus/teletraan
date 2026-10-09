@@ -34,7 +34,7 @@ function copyScripts() {
   workFolders.push(folder);
   fs.writeFileSync(path.join(folder, 'package.json'), '{ "type": "module" }\n');
 
-  const files = ['config.js', 'frame.js', 'panels/banner/banner.js', 'panels/countdown/countdown.js'];
+  const files = ['config.js', 'frame.js', 'themes/registry.js', 'themes/overlays/registry.js', 'panels/banner/banner.js', 'panels/countdown/countdown.js'];
   fs.readdirSync(path.join(dashboardFolder, 'core')).forEach(name => {
     if (name.endsWith('.js')) files.push('core/' + name);
   });
@@ -544,6 +544,54 @@ test('the banner shows the new day and the AM at midnight', async () => {
     assert.equal(page.nodes['.suffix'].textContent, 'AM');
     assert.equal(page.nodes['.date'].textContent, 'TUE OCT 6');
   }, new Date(2026, 9, 5, 23, 59, 58, 250).getTime());
+});
+
+test('the banner shows the banner line of the seasonal pack that is on the screen, only while one is, and writes nothing when it is the same', async () => {
+  await onScreen(async world => {
+    const banner = await import(world.folder + 'panels/banner/banner.js');
+    const page = makeHost(world.log);
+    const rule = extra => Object.assign({ name: '[Rule]', kind: 'overlay', overlay: 'christmas', startDate: '2026-10-01', endDate: '2026-10-31', repeatsEveryYear: true }, extra);
+    const withLine = line => ({ team: { name: '[Team]', number: '[0000]', school: '[School]' }, weather: null, status: {}, theme: { schedule: [rule({ bannerLine: line })] } });
+    const shown = () => page.nodes['.banner-line'].textContent;
+
+    // no pack on the page: no line, whatever the rule says
+    banner.mount(page.host, withLine('Happy holidays'));
+    assert.equal(shown(), '');
+    assert.equal(page.element.dataset.line, 'off');
+
+    // the pack comes on the page (theme-apply.js puts the class on the html element)
+    document.documentElement.className = 'theme-hawktimus overlay-christmas';
+    banner.update(page.element, withLine('Happy holidays'));
+    assert.equal(shown(), 'Happy holidays');
+    assert.equal(page.element.dataset.line, 'on');
+
+    world.log.length = 0;
+    banner.update(page.element, withLine('Happy holidays'));
+    assert.deepEqual(world.log, [], 'the same line is not written again');
+
+    banner.update(page.element, withLine('<b>Tags</b> & more'));
+    assert.equal(shown(), '<b>Tags</b> & more', 'it is text, so it is written as text');
+    banner.update(page.element, withLine('x'.repeat(60)));
+    assert.equal(shown(), 'x'.repeat(40), 'cut at 40 characters');
+
+    // a rule that leaves the line empty, and another pack, have none
+    banner.update(page.element, withLine(''));
+    assert.equal(shown(), '');
+    assert.equal(page.element.dataset.line, 'off');
+    banner.update(page.element, withLine('Happy holidays'));
+    document.documentElement.className = 'theme-hawktimus overlay-halloween';
+    banner.update(page.element, withLine('Happy holidays'));
+    assert.equal(shown(), '', 'the rule is for Christmas');
+    assert.equal(page.element.dataset.line, 'off');
+
+    // and the pack goes
+    document.documentElement.className = 'theme-hawktimus overlay-christmas';
+    banner.update(page.element, withLine('Happy holidays'));
+    document.documentElement.className = 'theme-hawktimus';
+    banner.update(page.element, withLine('Happy holidays'));
+    assert.equal(shown(), '');
+    assert.equal(page.element.dataset.line, 'off');
+  });
 });
 
 test('starting frame.js sets one timer going, and starting it again sets no more', async () => {

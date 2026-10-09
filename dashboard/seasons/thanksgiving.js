@@ -559,6 +559,9 @@ export const pack = {
   // The picture that replaces the slashes in every panel header
   mark: mark,
 
+  // The corner art a rule gets when it picks none of its own (core/corner-art.js)
+  defaults: { cornerArt: 'leaves' },
+
   // Leaves falling over the panels: eleven of three shapes (maple, oak and ginkgo)
   // and an acorn, in reds, oranges, golds and browns, each tumbling and swaying down
   // on its own slow round. A leaf takes 26 to 46 seconds to cross the screen, so it

@@ -39,6 +39,7 @@ import { pageSwitchesFor } from './core/look.js';
 import { makeSilverGradients } from './core/plate.js';
 import { showDeviceInfo } from './core/device.js';
 import { checkTheme, holdLooksFor, showThemeNow, startThemes } from './core/theme-apply.js';
+import { overlayShown, ruleExtras } from './core/theme.js';
 import { holdForLayout, startLayout } from './core/layout-apply.js';
 import { decorationLayers, hasKit, layoutNow } from './core/layout.js';
 import { applyStyle, startStyle } from './core/style.js';
@@ -239,6 +240,7 @@ function rebuild() {
   useLogoSettings(content.settings);
   usePageChangeSettings(content.settings);
   useSeasonSwitch();
+  usePackExtras();
   if (!metals.includes(params.get('metal'))) setPageSwitch('metal', content.settings.frameMetal);
   useLookSetting(content.settings);
   updatePanel('banner', content);
@@ -452,8 +454,24 @@ function showDecorations(look) {
   startOptional('./core/season.js', module => {
     module.setLayers(decorationLayers(layoutNow())); // the zones and the back layer are for the standard layout only
     module.setOverPanels(wantOverPanels());
+    module.setCornerArt(typedCornerArt(look.overlay));
     return module.showSeason(look.overlay);
-  });
+  }).then(refreshBannerLines); // the pack's own banner line is known once its file is read
+}
+
+// The corner art typed on the rule of this pack on the Theme page, or '' (core/theme.js, ruleExtras)
+function typedCornerArt(overlayId) {
+  if (!base || !overlayId) return '';
+  return ruleExtras(base.theme, overlayId, new Date()).cornerArt;
+}
+
+// The panels that show the banner line (core/theme.js, packExtras) are told again when a
+// pack comes or goes, because that does not change the content
+function refreshBannerLines() {
+  if (!content) return;
+
+  updatePanel('banner', content);
+  updatePanel('bar-column', content);
 }
 
 // The pieces over the panels: the Theme page's switch, and the address wins
@@ -469,6 +487,13 @@ function wantOverPanels() {
 function useSeasonSwitch() {
   if (!decorationsUsed) return; // core/season.js is not loaded, and reads the switch when it is
   startOptional('./core/season.js', module => module.setOverPanels(wantOverPanels()));
+}
+
+// The corner art typed on the rule of the pack on the page follows the Theme page while
+// the screen runs, like the switch above
+function usePackExtras() {
+  if (!decorationsUsed) return;
+  startOptional('./core/season.js', module => module.setCornerArt(typedCornerArt(overlayShown())));
 }
 
 // A module that is allowed to be missing or to fail without stopping the screen

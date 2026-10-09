@@ -15,10 +15,14 @@
 //      and overlays are picked on their own, so a theme rule and an overlay
 //      rule can both apply.
 //   3. The default theme, and no overlay.
+//
+// A rule for a seasonal pack (kind overlay) may also carry a ticker prefix, a banner
+// line and a corner art. packExtras() reads them for the pack that is on the page.
 
 import { defaultThemeSettings } from '../config.js';
 import { themes } from '../themes/registry.js';
 import { overlays } from '../themes/overlays/registry.js';
+import { bannerLineLimit, defaultsOf, mergeExtras, tickerPrefixLimit, tidyArt, tidyText } from './pack-extras.js';
 
 const kinds = ['theme', 'overlay'];
 
@@ -125,6 +129,13 @@ function tidyRule(raw) {
     repeatsEveryYear: raw.repeatsEveryYear === true || !start.year || !end.year,
   };
   rule[raw.kind] = id;
+
+  // Only a seasonal pack has them. An empty one means the pack's own value, or none
+  if (raw.kind === 'overlay') {
+    rule.tickerPrefix = tidyText(raw.tickerPrefix, tickerPrefixLimit);
+    rule.bannerLine = tidyText(raw.bannerLine, bannerLineLimit);
+    rule.cornerArt = tidyArt(raw.cornerArt);
+  }
   return rule;
 }
 
@@ -190,4 +201,48 @@ export function resolveTheme(settings, now) {
     theme: useNow.theme || firstRuleFor(theme.schedule, 'theme', today) || theme.defaultTheme,
     overlay: overlay,
   };
+}
+
+// What the rules say about the ticker prefix, the banner line and the corner art of one
+// seasonal pack: { tickerPrefix, bannerLine, cornerArt }, each '' when the rule leaves it
+// empty or there is no rule. settings is the Theme document, or content.theme. The rule is
+// the first one for this pack that covers today. Use now can show a pack on a day no rule
+// covers, and then the first rule for the pack is used, so that what an editor typed shows.
+export function ruleExtras(settings, overlayId, now) {
+  const theme = tidyTheme(settings);
+  const today = dateIn(theme.timeZone, now || new Date());
+  const own = theme.schedule.filter(rule => rule.kind === 'overlay' && rule.overlay === overlayId);
+  const rule = own.filter(item => ruleCovers(item, today))[0] || own[0];
+
+  return {
+    tickerPrefix: rule ? rule.tickerPrefix : '',
+    bannerLine: rule ? rule.bannerLine : '',
+    cornerArt: rule ? rule.cornerArt : '',
+  };
+}
+
+// The overlay on the page now, read from the class theme-apply.js puts on the html
+// element (overlay-christmas), or '' for none. page is only for the tests.
+export function overlayShown(page) {
+  const root = page || (typeof document === 'undefined' ? null : document.documentElement);
+  const found = root ? /(?:^|\s)overlay-([a-z0-9-]+)(?:\s|$)/.exec(String(root.className)) : null;
+  return found ? found[1] : '';
+}
+
+// The ticker prefix, the banner line and the corner art of the pack that is on the page
+// now: { tickerPrefix, bannerLine, cornerArt }. What is typed on its rule wins, and what
+// the rule leaves empty is the pack file's own value (core/pack-extras.js), else nothing
+// (corner art 'none'). With no pack on the page every part is empty. content is the
+// screen's content; now and page are only for the tests. It never throws, so a panel
+// that asks for it keeps its content whatever the Theme page holds.
+export function packExtras(content, now, page) {
+  const id = overlayShown(page);
+  if (id === '') return mergeExtras(null, null);
+
+  try {
+    return mergeExtras(ruleExtras(content ? content.theme : null, id, now), defaultsOf(id));
+  } catch (error) {
+    console.error('Could not read the extras of the seasonal pack', error);
+    return mergeExtras(null, defaultsOf(id));
+  }
 }
