@@ -1,5 +1,5 @@
 import { defineType, defineField } from 'sanity';
-import { showField, expiresField, orderField, tooLong, byOrder, aToZ, subtitleFor } from './fields.js';
+import { showField, expiresField, orderField, teamField, tooLong, byOrder, aToZ, subtitleFor } from './fields.js';
 
 const roles = [
   { title: 'Coach', value: 'Coach' },
@@ -48,6 +48,7 @@ export default defineType({
       description: 'Turn this off to show a plain silhouette instead of the photo, without deleting the photo.',
       initialValue: true,
     }),
+    teamField(),
     orderField(),
     showField(),
     expiresField(),

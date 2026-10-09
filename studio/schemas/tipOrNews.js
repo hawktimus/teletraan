@@ -1,5 +1,5 @@
 import { defineType, defineField } from 'sanity';
-import { showField, expiresField, orderField, tooLong, byOrder, aToZ, titleOf, subtitleFor } from './fields.js';
+import { showField, expiresField, orderField, teamField, tooLong, byOrder, aToZ, titleOf, subtitleFor } from './fields.js';
 
 const kinds = [
   { title: 'Tip', value: 'tip' },
@@ -28,6 +28,7 @@ export default defineType({
       description: 'The line shown on the ticker at the bottom of the screen. Up to 52 characters fit.',
       validation: Rule => [Rule.required().error('Write the line.'), tooLong(Rule, 52)],
     }),
+    teamField(),
     orderField(),
     showField(),
     expiresField(),

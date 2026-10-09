@@ -7,7 +7,7 @@
 // There is no Hide after field: the dashboard drops a finished event itself.
 
 import { defineType, defineField } from 'sanity';
-import { showField, tooLong, subtitleFor } from './fields.js';
+import { showField, teamField, tooLong, subtitleFor } from './fields.js';
 
 // 24 hour time with two digits for the hour and for the minutes
 const timeFormat = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -100,6 +100,7 @@ export default defineType({
       description: 'Optional. Where the event is. Up to 24 characters fit.',
       validation: Rule => tooLong(Rule, 24),
     }),
+    teamField(),
     showField(),
   ],
   orderings: [

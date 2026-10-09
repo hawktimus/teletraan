@@ -6,6 +6,7 @@
 // talk, which is a slot itself.
 
 import { defineType, defineField } from 'sanity';
+import { teamField } from './fields.js';
 import { clockIn, dayIn, fallbackTimeZone, isTimeZone } from './presentationTimes.js';
 
 // The same version as the screen's own questions to Sanity
@@ -101,6 +102,7 @@ export default defineType({
       description: 'Turn this off to close booking for this meeting day without deleting it.',
       initialValue: true,
     }),
+    teamField(),
   ],
   orderings: [
     { title: 'First talk, soonest first', name: 'firstSlotSoonest', by: [{ field: 'firstSlotAt', direction: 'asc' }] },

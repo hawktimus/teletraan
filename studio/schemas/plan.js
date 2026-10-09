@@ -1,5 +1,5 @@
 import { defineType, defineField, defineArrayMember } from 'sanity';
-import { showField, expiresField, tooLong, subtitleFor } from './fields.js';
+import { showField, expiresField, teamField, tooLong, subtitleFor } from './fields.js';
 
 const rowFields = [
   defineField({
@@ -70,6 +70,7 @@ export default defineType({
       ],
       validation: Rule => Rule.max(5).error('Only 5 rows fit on the screen.'),
     }),
+    teamField(),
     showField(),
     expiresField(),
   ],

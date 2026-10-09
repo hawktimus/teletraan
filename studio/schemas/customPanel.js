@@ -1,5 +1,5 @@
 import { defineType, defineField, defineArrayMember } from 'sanity';
-import { showField, expiresField, orderField, tooLong, byOrder, aToZ, subtitleFor } from './fields.js';
+import { showField, expiresField, orderField, teamField, tooLong, byOrder, aToZ, subtitleFor } from './fields.js';
 
 export default defineType({
   name: 'customPanel',
@@ -29,6 +29,7 @@ export default defineType({
       ],
       validation: Rule => Rule.max(6).error('Use 6 blocks or fewer. Blocks that do not fit on the screen are left out.'),
     }),
+    teamField(),
     orderField(),
     showField(),
     expiresField(),

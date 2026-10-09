@@ -44,6 +44,8 @@
     "presentationsEnabled": true,
     "noShowMinutes": 5,
     "graceMinutes": 5,
+    "teamMode": "prime",
+    "alternateMinutes": 5,
     "crt": { "on": true, "everySeconds": 240, "durationSeconds": 2.7 },
     "contentSource": "sample",
     "switchBackAt": "",

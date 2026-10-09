@@ -1,5 +1,5 @@
 import { defineType, defineField, defineArrayMember } from 'sanity';
-import { showField, expiresField, orderField, tooLong, byOrder, aToZ, subtitleFor } from './fields.js';
+import { showField, expiresField, orderField, teamField, tooLong, byOrder, aToZ, subtitleFor } from './fields.js';
 
 // The two spotlight fields only matter when the spotlight is on
 const spotlightOff = ({ document }) => !document || !document.spotlight;
@@ -81,6 +81,7 @@ export default defineType({
       hidden: spotlightOff,
       validation: Rule => tooLong(Rule, 100),
     }),
+    teamField(),
     orderField(),
     showField(),
     expiresField(),

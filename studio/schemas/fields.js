@@ -1,6 +1,7 @@
 // Pieces that every kind of content shares, so they look and work the same.
 
 import { defineField } from 'sanity';
+import { TeamInput } from '../team-input.js';
 
 export function showField() {
   return defineField({
@@ -28,6 +29,20 @@ export function orderField() {
     type: 'number',
     description: 'Optional. A lower number comes first on the screen. Items with no number come last.',
     validation: Rule => Rule.integer().error('Use a whole number such as 1, 2 or 3.'),
+  });
+}
+
+// Which team the item is for. It has no starting value: empty means Both, so an
+// item that was made before teams existed keeps showing for every team. The
+// radio is in team-input.js.
+export function teamField() {
+  return defineField({
+    name: 'team',
+    title: 'Team',
+    type: 'reference',
+    to: [{ type: 'team' }],
+    description: 'Optional. Pick a team to show this only while that team is on the screen. Leave it on Both to always show it.',
+    components: { input: TeamInput },
   });
 }
 

@@ -15,11 +15,14 @@ const dashboardFolder = path.join(here, '..', 'dashboard');
 // listed but missing from a schema is something the dashboard expects.
 //   text(30)   a string or text field that must stop at 30 characters
 //   'string'   a string picked from a fixed list
+//   hexColor   a string written as # and six hex characters, such as #6C18B6
 const text = max => ({ kind: 'text', max: max });
 const number = (min, max) => ({ kind: 'number', min: min, max: max });
 const object = fields => ({ kind: 'object', fields: fields });
 const rows = (fields, maxItems) => ({ kind: 'rows', fields: fields, maxItems: maxItems });
 const strings = (max, maxItems) => ({ kind: 'strings', max: max, maxItems: maxItems });
+const teamRef = { kind: 'reference', to: 'team' };
+const hexColor = { kind: 'hex' };
 
 const blockNames = ['headingBlock', 'textBlock', 'statBlock', 'listBlock', 'imageBlock', 'progressBlock', 'countdownBlock'];
 const weekdayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -39,6 +42,7 @@ const contract = {
     finishedOn: 'datetime',
     contact: text(12),
     location: { kind: 'reference', to: 'place' },
+    team: teamRef,
     order: 'number',
   }),
   place: { name: text(16), show: 'boolean' },
@@ -47,6 +51,7 @@ const contract = {
     date: 'date',
     location: text(30),
     rows: rows({ time: text(9), text: text(18), lead: text(10) }, 5),
+    team: teamRef,
   }),
   presentationDay: {
     firstSlotAt: 'datetime',
@@ -54,6 +59,7 @@ const contract = {
     slotMinutes: number(5, 30),
     closeMinutesBefore: number(0, 240),
     open: 'boolean',
+    team: teamRef,
   },
   presentation: {
     name: text(12),
@@ -63,8 +69,9 @@ const contract = {
     minutes: number(5, 30),
     deckLink: 'url',
     status: 'string',
+    team: teamRef,
   },
-  extraEvent: { title: text(30), startDate: 'date', endDate: 'date', startTime: 'time', endTime: 'time', location: text(24), show: 'boolean' },
+  extraEvent: { title: text(30), startDate: 'date', endDate: 'date', startTime: 'time', endTime: 'time', location: text(24), team: teamRef, show: 'boolean' },
   calendarFilter: {
     name: text(40),
     action: 'string',
@@ -76,8 +83,8 @@ const contract = {
     show: 'boolean',
     expires: 'datetime',
   },
-  sponsor: withFlags({ name: text(19), tier: text(12), blurb: text(80), thankYou: text(54), logoAddress: 'url', order: 'number' }),
-  tipOrNews: withFlags({ kind: 'string', text: text(52), order: 'number' }),
+  sponsor: withFlags({ name: text(19), tier: text(12), blurb: text(80), thankYou: text(54), logoAddress: 'url', team: teamRef, order: 'number' }),
+  tipOrNews: withFlags({ kind: 'string', text: text(52), team: teamRef, order: 'number' }),
   subteam: withFlags({
     name: text(11),
     lead: text(17),
@@ -85,11 +92,23 @@ const contract = {
     spotlight: 'boolean',
     spotlightHeadline: text(40),
     spotlightText: text(100),
+    team: teamRef,
     order: 'number',
   }),
-  person: withFlags({ role: 'string', name: text(17), title: text(22), photo: 'image', showPhoto: 'boolean', order: 'number' }),
+  person: withFlags({ role: 'string', name: text(17), title: text(22), photo: 'image', showPhoto: 'boolean', team: teamRef, order: 'number' }),
+  team: {
+    name: text(20),
+    shortName: text(8),
+    number: text(6),
+    code: text(10),
+    logo: 'image',
+    colors: object({ primary: hexColor, plate: hexColor, accent: hexColor, neon: hexColor, pink: hexColor, background: hexColor, text: hexColor }),
+    mirror: 'boolean',
+    active: 'boolean',
+    order: 'number',
+  },
   photo: withFlags({ image: 'image', caption: text(36), credit: text(14) }),
-  customPanel: withFlags({ title: text(7), blocks: { kind: 'blocks', max: 6 }, order: 'number' }),
+  customPanel: withFlags({ title: text(7), blocks: { kind: 'blocks', max: 6 }, team: teamRef, order: 'number' }),
   dashboardSettings: {
     team: object({ name: text(16), number: text(5), school: text(30) }),
     motion: 'string',
@@ -134,6 +153,8 @@ const contract = {
     noShowMinutes: number(1, 15),
     graceMinutes: number(0, 10),
     presentationTestRequest: object({ requestedAt: 'datetime' }),
+    teamMode: 'string',
+    alternateMinutes: number(1, 30),
     announceRequest: object({ requestedAt: 'datetime' }),
     countdown: object({ kickoffLabel: text(12), kickoff: 'datetime', rolloutLabel: text(12), rollout: 'datetime' }),
     alert: object({ on: 'boolean', headline: text(24), message: text(90), until: 'datetime' }),
@@ -201,6 +222,7 @@ const choices = {
   'dashboardSettings.nightStyle': ['bounce', 'black'],
   'dashboardSettings.nightSpeed': ['slow', 'normal', 'fast'],
   'dashboardSettings.contentSource': ['production', 'sample'],
+  'dashboardSettings.teamMode': ['prime', 'nova', 'alternate'],
   'dashboardSettings.hiddenRequest.kind': ['desktop', 'redEyes'],
   'demo.steps.screen': ['announcement', 'all-announcements', 'night-mode'],
 };
@@ -220,6 +242,7 @@ const listSort = {
   tipOrNews: 'order',
   subteam: 'order',
   person: 'order',
+  team: 'order',
   photo: '_createdAt',
   customPanel: 'order',
   place: 'name',
@@ -236,7 +259,7 @@ const pageTypes = ['dashboardSettings', 'theme', 'demo'];
 const notInSidebar = {};
 
 // The sidebar titles that people look for by name
-const sidebarTitles = { extraEvent: 'Events Calendar', calendarFilter: 'Calendar filters', place: 'Places', presentationDay: 'Meeting days' };
+const sidebarTitles = { extraEvent: 'Events Calendar', calendarFilter: 'Calendar filters', place: 'Places', presentationDay: 'Meeting days', team: 'Teams' };
 
 // The real 'sanity' and 'react' packages are not installed, so stand-ins with
 // the same function names sit next to a copy of the files that import them.
@@ -258,6 +281,9 @@ const standIns = {
       'export const useSchema = () => ({ get: () => undefined });',
       'export const useWorkspace = () => ({});',
       'export const useCurrentUser = () => null;',
+      // only the names the team input (team-input.js) imports besides useClient: the two patches it writes
+      "export const set = value => ({ type: 'set', value: value });",
+      "export const unset = () => ({ type: 'unset' });",
       'export const validateDocument = async () => [];',
       'export const useDocumentOperation = () => ({',
       '  patch: { execute: patches => globalThis.studioCalls.push({ patch: patches }) },',
@@ -279,7 +305,7 @@ const standIns = {
 
 function makeSandbox() {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-studio-'));
-  ['schemas', 'structure.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'publish-all.js', 'publish-all-tool.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
+  ['schemas', 'structure.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'publish-all.js', 'publish-all-tool.js', 'team-input.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
     fs.cpSync(path.join(here, name), path.join(folder, name), { recursive: true });
   });
   fs.writeFileSync(path.join(folder, 'package.json'), JSON.stringify({ type: 'module' }));
@@ -430,6 +456,7 @@ const kindChecks = {
   weekdays: checkWeekdays,
   blocks: checkBlocks,
   image: checkImage,
+  hex: checkHex,
 };
 
 function checkField(where, field, spec, problems) {
@@ -528,6 +555,25 @@ function checkImage(field, want, say) {
   if (field.type !== 'image') say('should be an image');
   if (options.hotspot !== true) say('should have the crop and hotspot tools on (options.hotspot)');
   if (options.accept !== 'image/*') say('should accept images only (options.accept should be "image/*")');
+}
+
+// A color field: a string written as # and six characters from 0 to 9 and A to F,
+// refused with a message in plain words that gives an example
+function checkHex(field, want, say) {
+  const rules = constraintsOf(field);
+  const pattern = constraintNamed(rules, 'regex');
+  if (field.type !== 'string') say('should be a string');
+  if (!pattern) return say('should be checked with a pattern');
+
+  ['#6C18B6', '#6c18b6', '#000000', '#FFFFFF', '#09060F'].forEach(good => {
+    if (!pattern.args[0].test(good)) say('the pattern refuses ' + good);
+  });
+  ['6C18B6', '#6C18B', '#6C18B6F', '#GGGGGG', '#12345', 'purple', '#6C18B6 ', ' #6C18B6', '#6C18B6\n', ''].forEach(bad => {
+    if (pattern.args[0].test(bad)) say('the pattern accepts "' + bad + '"');
+  });
+
+  const message = messageAfter(rules, 'regex');
+  if (message.indexOf('#6C18B6') === -1 || /regex|hexadecimal|pattern/i.test(message)) say('the error for a color that is not written right should say what to write in plain words, with an example such as #6C18B6');
 }
 
 function checkBlocks(field, want, say) {
@@ -1491,7 +1537,7 @@ function checkStartingValues() {
   expect('look', settings.look);
   expect('showConnectionStatus', settings.showConnectionStatus);
   expect('pageSeconds', settings.pageSeconds);
-  logoSwitches.concat(logoNumbers, transitionNames, photoNames, nightNames, hiddenNames.slice(0, 3), presentationNames).forEach(name => expect(name, settings[name]));
+  logoSwitches.concat(logoNumbers, transitionNames, photoNames, nightNames, hiddenNames.slice(0, 3), presentationNames, teamNames).forEach(name => expect(name, settings[name]));
   expect('countdown.kickoffLabel', settings.countdown.kickoffLabel);
   expect('countdown.rolloutLabel', settings.countdown.rolloutLabel);
   expect('alert.on', settings.alert.on);
@@ -2798,6 +2844,321 @@ function checkPresentations() {
   return problems;
 }
 
+// The Team type: a name, a short name, a number and a code, an optional logo, seven
+// colors, the mirror switch, the active switch and the order. The starting colors are
+// the Prime ones, which are the colors of the screen today (themes/hawktimus.css). The
+// seed file docs/seed/teams.ndjson holds the two teams, and the Teams list comes right
+// after Leadership in the sidebar.
+const teamColorNames = ['primary', 'plate', 'accent', 'neon', 'pink', 'background', 'text'];
+
+function checkTeams() {
+  const problems = [];
+  const at = name => fieldAt('team.' + name);
+  const rulesOf = field => (field ? constraintsOf(field) : []);
+  const type = typeByName('team');
+  if (!type) return ['team is missing from schemas/index.js'];
+
+  need(problems, type.title === 'Teams', 'the team type should have the title Teams');
+  const titles = { name: 'Team name', shortName: 'Short name', number: 'Team number', code: 'Team code', logo: 'Logo', colors: 'Colors', mirror: 'Mirror the layout', active: 'Active', order: 'Order' };
+  Object.keys(titles).forEach(name => need(problems, at(name) && at(name).title === titles[name], 'team.' + name + ' should be titled ' + titles[name]));
+  need(problems, fieldsIn(type).map(field => field.name).join() === Object.keys(titles).join(), 'the team fields should be, in this order: ' + Object.keys(titles).join(', '));
+
+  ['name', 'shortName', 'code'].forEach(name => need(problems, constraintNamed(rulesOf(at(name)), 'required'), 'team.' + name + ' should be required'));
+  ['number', 'logo'].forEach(name => {
+    need(problems, at(name) && !constraintNamed(rulesOf(at(name)), 'required'), 'team.' + name + ' should be optional');
+    need(problems, at(name) && /optional/i.test(at(name).description || ''), 'the team.' + name + ' description should say it is optional');
+  });
+  need(problems, at('logo') && /shared Hawktimus bird/.test(at('logo').description || ''), 'the team.logo description should say that empty means the shared Hawktimus bird');
+
+  // The code is lowercase letters and digits, because the data and the screen use it
+  const code = constraintNamed(rulesOf(at('code')), 'regex');
+  if (!code) {
+    problems.push('team.code should be checked so that it is lowercase');
+  } else {
+    ['prime', 'nova', 'team2'].forEach(good => need(problems, code.args[0].test(good), 'the team code pattern refuses ' + good));
+    ['Prime', 'my team', 'team-2', 'team_2', 'prime\n', ''].forEach(bad => need(problems, !code.args[0].test(bad), 'the team code pattern accepts "' + bad + '"'));
+  }
+
+  // The seven colors, in this order, each needed and starting at the Prime value
+  const seeded = {};
+  world.teamSeed.split('\n').filter(line => line.trim() !== '').forEach(line => {
+    try {
+      const doc = JSON.parse(line);
+      seeded[doc._id] = doc;
+    } catch (error) {
+      // checked with the seed file below
+    }
+  });
+  const prime = seeded['team-prime'] || { colors: {} };
+
+  need(problems, at('colors') && at('colors').type === 'object', 'team.colors should be an object');
+  need(problems, fieldsIn(at('colors') || {}).map(field => field.name).join() === teamColorNames.join(), 'team.colors should hold, in this order: ' + teamColorNames.join(', '));
+  teamColorNames.forEach(name => {
+    const field = fieldAt('team.colors.' + name);
+    need(problems, field && constraintNamed(rulesOf(field), 'required'), 'team.colors.' + name + ' should be required');
+    need(problems, field && field.initialValue === prime.colors[name], 'team.colors.' + name + ' should start as ' + prime.colors[name] + ', the Prime value in the seed file, and it starts as ' + (field && field.initialValue));
+  });
+
+  // The switches and the order
+  const mirror = at('mirror');
+  need(problems, mirror && mirror.type === 'boolean' && mirror.initialValue === false, 'team.mirror should be a switch that starts off');
+  const active = at('active');
+  need(problems, active && active.type === 'boolean' && active.initialValue === true, 'team.active should be a switch that starts on');
+  const order = at('order');
+  need(problems, order && order.type === 'number' && order.initialValue === 10, 'team.order should be a number that starts as 10');
+  need(problems, constraintNamed(rulesOf(order), 'integer'), 'team.order should be a whole number');
+  need(problems, order && /10/.test(order.description || ''), 'the team.order description should say that it starts at 10');
+
+  need(problems, (type.orderings || []).some(item => item.by && item.by[0].field === 'order' && item.by[0].direction === 'asc'), 'team needs an ordering by order');
+  need(problems, (type.orderings || []).some(item => item.by && item.by[0].field === 'name' && item.by[0].direction === 'asc'), 'team needs an ordering by name, A to Z');
+  checkPlainMessages('team', problems);
+
+  // The list line: the name, then Not active, the code and the number
+  const line = fields => type.preview.prepare(Object.assign({ title: 'Hawktimus Prime', code: 'prime', number: '3229' }, fields));
+  [
+    [line({}).subtitle, 'prime · 3229'],
+    [line({ active: true }).subtitle, 'prime · 3229'],
+    [line({ active: false }).subtitle, 'Not active · prime · 3229'],
+    [line({ number: undefined }).subtitle, 'prime'],
+    [type.preview.prepare({}).title, 'Team with no name'],
+  ].forEach(entry => need(problems, entry[0] === entry[1], 'the team list should read "' + entry[1] + '", it reads "' + entry[0] + '"'));
+  need(problems, type.preview.select && type.preview.select.media === 'logo', 'the team list should show each logo (select media: logo)');
+
+  // The Teams line is right after Leadership, and is a list sorted by order
+  const entries = world.structure.sidebarEntries;
+  const after = entries[entries.map(entry => entry.title).indexOf('Leadership') + 1];
+  need(problems, after && after.kind === 'list' && after.type === 'team' && after.title === 'Teams', 'the Teams line should come right after Leadership in structure.js');
+
+  return problems.concat(checkTeamSeed(type));
+}
+
+// The seed file: one JSON document a line, fixed ids, only fields the Studio has. The
+// values of the two teams are the ones in the work order, and the Prime ones that the
+// order leaves out (the background and the text) are the colors of the screen today.
+function checkTeamSeed(type) {
+  const problems = [];
+  const names = fieldsIn(type).map(field => field.name);
+  const lines = world.teamSeed.split('\n').filter(line => line.trim() !== '');
+  const docs = {};
+  const hex = /^#[0-9A-Fa-f]{6}$/;
+
+  const wanted = {
+    'team-prime': { number: '3229', code: 'prime', mirror: false, colors: { primary: '#6C18B6', plate: '#3B2A7A', accent: '#FACA2A', neon: '#35F0FF', pink: '#FF2E8C' } },
+    'team-nova': { number: '3230', code: 'nova', mirror: true, colors: { primary: '#1F7AE0', plate: '#1E3A6E', accent: '#9BF0FF', neon: '#FF2E8C', pink: '#35F0FF' } },
+  };
+  need(problems, lines.length === 2, 'docs/seed/teams.ndjson should have two teams, Prime and Nova, it has ' + lines.length);
+
+  lines.forEach((line, index) => {
+    const where = 'docs/seed/teams.ndjson line ' + (index + 1);
+    let doc;
+    try {
+      doc = JSON.parse(line);
+    } catch (error) {
+      return problems.push(where + ' is not JSON');
+    }
+
+    docs[doc._id] = doc;
+    need(problems, doc._type === 'team', where + ' should have _type team');
+    need(problems, typeof doc._id === 'string' && doc._id === 'team-' + doc.code, where + ' should have a fixed _id that is team- and the code, such as team-prime');
+    Object.keys(doc).forEach(key => need(problems, key.charAt(0) === '_' || names.indexOf(key) !== -1, where + ': ' + key + ' is not a field of team'));
+    need(problems, typeof doc.name === 'string' && doc.name.length > 0 && doc.name.length <= 20, where + ' needs a name of 1 to 20 characters');
+    need(problems, typeof doc.shortName === 'string' && doc.shortName.length > 0 && doc.shortName.length <= 8, where + ' needs a shortName of 1 to 8 characters');
+    need(problems, typeof doc.number === 'string' && doc.number.length > 0 && doc.number.length <= 6, where + ' needs a number of 1 to 6 characters');
+    need(problems, typeof doc.code === 'string' && /^[a-z0-9]{1,10}$/.test(doc.code), where + ' needs a code of 1 to 10 lowercase letters and digits');
+    need(problems, doc.colors && Object.keys(doc.colors).join() === teamColorNames.join(), where + ' should have the colors ' + teamColorNames.join(', ') + ', in this order');
+    teamColorNames.forEach(name => need(problems, doc.colors && hex.test(doc.colors[name]), where + ': colors.' + name + ' should be # and six hex characters'));
+    need(problems, typeof doc.mirror === 'boolean', where + ' should have mirror true or false');
+    need(problems, doc.active === true, where + ' should have active true');
+    need(problems, Number.isInteger(doc.order), where + ' should have a whole number for order');
+  });
+
+  Object.keys(wanted).forEach(id => {
+    const doc = docs[id];
+    if (!doc) return problems.push('docs/seed/teams.ndjson should have the team ' + id);
+    const want = wanted[id];
+    need(problems, doc.number === want.number && doc.code === want.code && doc.mirror === want.mirror, id + ' should have number ' + want.number + ', code ' + want.code + ' and mirror ' + want.mirror);
+    Object.keys(want.colors).forEach(name => need(problems, doc.colors && doc.colors[name] === want.colors[name], id + ' should have colors.' + name + ' ' + want.colors[name]));
+  });
+
+  // Prime is the screen as it is today: its main color, accent, background and text are the Hawktimus theme's
+  const themeColor = name => {
+    const found = new RegExp('--' + name + ':\\s*(#[0-9a-fA-F]{6})').exec(world.hawktimusCss);
+    return found ? found[1].toUpperCase() : '';
+  };
+  const prime = docs['team-prime'];
+  if (prime && prime.colors) {
+    [['primary', 'purple'], ['accent', 'yellow'], ['background', 'ground'], ['text', 'white']].forEach(entry => {
+      need(problems, prime.colors[entry[0]] && prime.colors[entry[0]].toUpperCase() === themeColor(entry[1]), 'team-prime colors.' + entry[0] + ' should be the --' + entry[1] + ' of themes/hawktimus.css, ' + themeColor(entry[1]));
+    });
+  }
+  const nova = docs['team-nova'];
+  need(problems, !prime || !nova || prime.order < nova.order, 'Prime should come before Nova in order');
+  return problems;
+}
+
+// The Team field: the same on every kind of content that can be for one team. It is
+// optional and has no starting value, so empty means Both, and every item that exists
+// keeps showing with no change. It uses the radio in team-input.js.
+const teamTypes = ['task', 'plan', 'subteam', 'person', 'sponsor', 'presentation', 'presentationDay', 'customPanel', 'tipOrNews', 'extraEvent'];
+
+function checkTeamField() {
+  const problems = [];
+
+  teamTypes.forEach(name => {
+    const field = fieldAt(name + '.team');
+    const where = name + '.team';
+    if (!field) return problems.push(name + ' should have a team field');
+
+    const words = field.description || '';
+    need(problems, field.type === 'reference' && field.to && field.to.length === 1 && field.to[0].type === 'team', where + ' should be a reference to team');
+    need(problems, field.title === 'Team', where + ' should be titled Team');
+    need(problems, !constraintNamed(constraintsOf(field), 'required'), where + ' should be optional, because empty means Both');
+    need(problems, field.initialValue === undefined, where + ' should have no starting value, so it starts on Both');
+    need(problems, /optional/i.test(words) && /Both/.test(words), 'the ' + where + ' description should say that it is optional and that Both shows it always');
+    need(problems, field.components && field.components.input === world.teamInput.TeamInput, where + ' should use the radio input, TeamInput in studio/team-input.js (components.input)');
+    need(problems, !(field.options && (field.options.disableNew || field.options.filter)), where + ' should be an ordinary reference to a team');
+  });
+
+  // No other kind of content points to a team, so the list above is the whole list
+  world.types.forEach(type => {
+    const field = fieldAt(type.name + '.team');
+    const reference = field && field.type === 'reference';
+    need(problems, !reference || teamTypes.indexOf(type.name) !== -1, type.name + ' has a team reference that is not in teamTypes in check-schemas.mjs');
+  });
+  return problems;
+}
+
+// The radio. The names and the choices come from the team documents, a team that cannot
+// be read leaves Both, and the patches are the ones Studio gives (set and unset).
+async function checkTeamInput() {
+  const problems = [];
+  const input = world.teamInput;
+  const prime = { _id: 'team-prime', name: 'Hawktimus Prime', active: true };
+  const nova = { _id: 'team-nova', name: 'Hawktimus Nova' };
+  const listed = (teams, current) => input.teamChoices(teams, current).map(choice => choice.id + '=' + choice.label).join();
+
+  // the choices
+  const onlyBoth = '=Both';
+  need(problems, listed([], '') === onlyBoth, 'with no teams the radio should show only Both, it shows ' + listed([], ''));
+  [undefined, null, 'text', 5, {}, [null, {}, { _id: 5 }, 'text']].forEach(odd => need(problems, listed(odd, '') === onlyBoth, 'teams that are not a list of teams (' + JSON.stringify(odd) + ') should leave only Both'));
+  need(problems, listed([prime, nova], '') === '=Both,team-prime=Hawktimus Prime,team-nova=Hawktimus Nova', 'Both and then each active team, in the order they are given, it shows ' + listed([prime, nova], ''));
+  need(problems, listed([prime, Object.assign({}, nova, { active: false })], '') === '=Both,team-prime=Hawktimus Prime', 'a team that is not active should be left out');
+  need(problems, listed([prime, Object.assign({}, nova, { active: false })], 'team-nova') === '=Both,team-prime=Hawktimus Prime,team-nova=Hawktimus Nova (not active)', 'a team that is not active but is picked should stay on the list, marked');
+  need(problems, listed([prime], 'team-gone') === '=Both,team-prime=Hawktimus Prime,team-gone=A team that could not be read', 'a picked team that is not in the list should still be shown');
+  need(problems, listed([], 'team-nova') === '=Both,team-nova=A team that could not be read', 'with no teams read, the picked team should still be shown');
+  need(problems, listed([{ _id: 'team-x' }], '') === '=Both,team-x=Team with no name', 'a team with no name should still be a line');
+
+  // the patches: Both clears the field, a team writes a reference
+  need(problems, JSON.stringify(input.teamPatch('')) === JSON.stringify({ type: 'unset' }), 'picking Both should clear the field (unset)');
+  need(problems, JSON.stringify(input.teamPatch('team-nova')) === JSON.stringify({ type: 'set', value: { _type: 'reference', _ref: 'team-nova' } }), 'picking a team should write a reference to it (set)');
+
+  // reading the teams: the published ones, in order, and nothing that throws
+  function clientAnswering(answer) {
+    const asked = [];
+    return { asked: asked, fetch: async (query, params, options) => { asked.push({ query: query, options: options }); if (answer instanceof Error) throw answer; return answer; } };
+  }
+  const good = clientAnswering([prime, nova]);
+  need(problems, JSON.stringify(await input.readTeams(good)) === JSON.stringify({ teams: [prime, nova], unreadable: false }), 'readTeams should give the teams it is given');
+  need(problems, good.asked[0] && good.asked[0].options && good.asked[0].options.perspective === 'published', 'readTeams should read the published teams (perspective published)');
+  need(problems, good.asked[0] && good.asked[0].query.indexOf('_type == "team"') !== -1 && /order\(order asc/.test(good.asked[0].query), 'readTeams should ask for the teams, by order');
+  need(problems, JSON.stringify(await input.readTeams(clientAnswering(null))) === JSON.stringify({ teams: [], unreadable: false }), 'readTeams with no answer should give no teams');
+  const failing = [
+    ['a question that fails', clientAnswering(new Error('offline'))],
+    ['a client that throws at once', { fetch: () => { throw new Error('no client'); } }],
+    ['a client with no fetch', {}],
+    ['no client', null],
+  ];
+  for (const entry of failing) {
+    const result = await input.readTeams(entry[1]);
+    need(problems, JSON.stringify(result) === JSON.stringify({ teams: [], unreadable: true }), 'readTeams with ' + entry[0] + ' should give no teams and say they could not be read');
+  }
+
+  // the screen of it: a radio group, Both first and picked when nothing is, and a team picked when it is the value
+  function collect(node, test, found) {
+    if (Array.isArray(node)) node.forEach(item => collect(item, test, found));
+    else if (node && typeof node === 'object') {
+      if (test(node)) found.push(node);
+      collect(node.children || [], test, found);
+    }
+    return found;
+  }
+  const radios = view => collect(view, node => node.type === 'input' && node.props.type === 'radio', []);
+  const patches = [];
+  const show = (value, readOnly) => input.TeamInput({ id: 'team', value: value, readOnly: readOnly, onChange: patch => patches.push(patch) });
+
+  const empty = show(undefined, false);
+  need(problems, collect(empty, node => node.props && node.props.role === 'radiogroup', []).length === 1, 'the input should be one radio group');
+  need(problems, radios(empty).length === 1 && radios(empty)[0].props.checked === true && radios(empty)[0].props.disabled === false, 'with no value and no teams read, the input should show Both, picked');
+  radios(empty)[0].props.onChange();
+  need(problems, JSON.stringify(patches) === JSON.stringify([{ type: 'unset' }]), 'picking Both in the input should clear the field');
+
+  const picked = radios(show({ _type: 'reference', _ref: 'team-nova' }, false));
+  need(problems, picked.length === 2 && picked[0].props.checked === false && picked[1].props.checked === true, 'with a team as the value, that team should be the one picked');
+  picked[1].props.onChange();
+  need(problems, JSON.stringify(patches[1]) === JSON.stringify({ type: 'set', value: { _type: 'reference', _ref: 'team-nova' } }), 'picking a team in the input should write a reference to it');
+  need(problems, radios(show(undefined, true)).every(radio => radio.props.disabled === true), 'a field that is read only should have every line off');
+  need(problems, radios(show({ _ref: 5 }, false)).length === 1, 'a value that is not a reference should be read as Both');
+  return problems;
+}
+
+// The Teams tab of Dashboard Settings: the mode and the minutes of Alternate. The
+// choices, the limits and the starting values are the ones in dashboard/config.js.
+// Neither is required, because Dashboard Settings published before the tab existed has
+// neither and must still publish, and the screen reads that as Prime only and 5 minutes.
+const teamNames = ['teamMode', 'alternateMinutes'];
+
+function checkTeamsTab() {
+  const problems = [];
+  const config = world.dashboard;
+  const settings = typeByName('dashboardSettings');
+  const at = name => fieldAt('dashboardSettings.' + name);
+  const rulesOf = field => (field ? constraintsOf(field) : []);
+
+  need(problems, settings.groups.filter(group => group.title === 'Teams').length === 1, 'Dashboard Settings should have exactly one tab named Teams');
+  need(problems, settings.groups.filter(group => group.name === 'teams' && group.title === 'Teams').length === 1, 'the Teams tab should be the group teams');
+
+  // Nothing else is in the tab, so deleting settingsTeams.js removes the whole section
+  const inTab = fieldsIn(settings).filter(field => field.group === 'teams').map(field => field.name);
+  need(problems, inTab.join() === teamNames.join(), 'the Teams tab should hold, in this order: ' + teamNames.join(', ') + ', not ' + inTab.join(', '));
+
+  need(problems, at('teamMode') && at('teamMode').title === 'Team mode', 'teamMode should be titled Team mode');
+  need(problems, at('alternateMinutes') && at('alternateMinutes').title === 'Minutes for each team', 'alternateMinutes should be titled Minutes for each team');
+
+  // The mode is a radio list of the names in config.js, Prime only to start with
+  const mode = at('teamMode');
+  const modeRules = rulesOf(mode);
+  const allowed = constraintNamed(modeRules, 'valid');
+  const offered = choicesOf('dashboardSettings.teamMode');
+  const modeTitles = { prime: 'Prime only', nova: 'Nova only', alternate: 'Alternate' };
+  need(problems, config.teamModes.join() === 'prime,nova,alternate', 'teamModes in config.js should be prime, nova and alternate, not ' + config.teamModes.join());
+  need(problems, mode && mode.type === 'string' && mode.options && mode.options.layout === 'radio', 'teamMode should be a radio list');
+  need(problems, offered.map(item => item.value).join() === config.teamModes.join(), 'teamMode should offer the names in config.js, in the same order: ' + config.teamModes.join(', '));
+  offered.forEach(item => need(problems, item.title === modeTitles[item.value], 'the team mode ' + item.value + ' should be titled ' + modeTitles[item.value]));
+  need(problems, allowed && allowed.args[0].join() === config.teamModes.join(), 'teamMode should only allow: ' + config.teamModes.join(', '));
+  need(problems, !constraintNamed(modeRules, 'required'), 'teamMode should not be required: an empty mode is Prime only, and the page must still publish');
+  need(problems, mode && mode.initialValue === 'prime' && config.defaultSettings.teamMode === 'prime', 'teamMode should start as prime, and so should its default in config.js');
+  need(problems, mode && /Alternate/.test(mode.description || '') && /Prime only/.test(mode.description || ''), 'the teamMode description should say what Prime only and Alternate do');
+
+  // The minutes are whole, 1 to 30, 5 to start with, and the description gives the range
+  const minutes = at('alternateMinutes');
+  const minutesRules = rulesOf(minutes);
+  const low = constraintNamed(minutesRules, 'min');
+  const high = constraintNamed(minutesRules, 'max');
+  need(problems, sameData(config.limits.alternateMinutes, { min: 1, max: 30 }), 'limits.alternateMinutes in config.js should be 1 to 30');
+  need(problems, minutes && minutes.type === 'number' && minutes.initialValue === 5 && config.defaultSettings.alternateMinutes === 5, 'alternateMinutes should be a number that starts as 5, and so should its default in config.js');
+  need(problems, low && high && low.args[0] === config.limits.alternateMinutes.min && high.args[0] === config.limits.alternateMinutes.max, 'alternateMinutes should have the limits in config.js, ' + JSON.stringify(config.limits.alternateMinutes));
+  need(problems, constraintNamed(minutesRules, 'integer'), 'alternateMinutes should be a whole number');
+  need(problems, !constraintNamed(minutesRules, 'required'), 'alternateMinutes should not be required: an empty one is 5, and the page must still publish');
+  need(problems, minutes && /from 1 to 30/.test(minutes.description || ''), 'the alternateMinutes description should give the range, from 1 to 30');
+  checkPlainMessages('dashboardSettings', problems);
+
+  // The sample content carries the settings, with values the dashboard accepts
+  const sample = world.sample.settings;
+  need(problems, config.teamModes.indexOf(sample.teamMode) !== -1, 'the sample settings need a teamMode of ' + config.teamModes.join(', '));
+  need(problems, sample.alternateMinutes >= config.limits.alternateMinutes.min && sample.alternateMinutes <= config.limits.alternateMinutes.max, 'the sample settings need alternateMinutes from ' + config.limits.alternateMinutes.min + ' to ' + config.limits.alternateMinutes.max);
+  return problems;
+}
+
 const world = {};
 const results = [];
 
@@ -2893,9 +3254,12 @@ async function main() {
     world.studioHidden = await load(path.join(folder, 'hidden-transitions.js'));
     world.publishAll = await load(path.join(folder, 'publish-all.js'));
     world.publishAllTool = await load(path.join(folder, 'publish-all-tool.js'));
+    world.teamInput = await load(path.join(folder, 'team-input.js'));
     world.sample = JSON.parse(fs.readFileSync(path.join(dashboardFolder, 'data', 'sample', 'content.json'), 'utf8'));
     world.seed = fs.readFileSync(path.join(here, '..', 'docs', 'seed', 'extra-events.ndjson'), 'utf8');
     world.placeSeed = fs.readFileSync(path.join(here, '..', 'docs', 'seed', 'places.ndjson'), 'utf8');
+    world.teamSeed = fs.readFileSync(path.join(here, '..', 'docs', 'seed', 'teams.ndjson'), 'utf8');
+    world.hawktimusCss = fs.readFileSync(path.join(dashboardFolder, 'themes', 'hawktimus.css'), 'utf8');
   } finally {
     fs.rmSync(folder, { recursive: true, force: true });
   }
@@ -2932,9 +3296,13 @@ async function main() {
   check('a place has a name and a switch, a task has an optional contact and place, and the places seed file can be imported', checkPlaces);
   results.push({ name: 'two places cannot have the same name, capitals ignored', problems: await checkPlaceNames().catch(error => ['the check stopped: ' + error.message]) });
   check('the Presentations tab agrees with dashboard/config.js', checkPresentationsTab);
+  check('the Teams tab agrees with dashboard/config.js', checkTeamsTab);
   check('a meeting day has a first and a last talk, a talk length, a booking close time and a one line list entry', checkMeetingDays);
   results.push({ name: 'the last talk of a meeting day is on the same day as the first, in the Theme page time zone', problems: await checkMeetingDayTimes().catch(error => ['the check stopped: ' + error.message]) });
   check('a presentation has a first name, a title, a start, a length, a Google Slides link and a status, and a one line list entry', checkPresentations);
+  check('a team has a name, a short name, a number, a code, a logo and seven colors, the Teams line follows Leadership, and the seed file can be imported', checkTeams);
+  check('every kind of content that can be for one team has an optional Team field that uses the radio', checkTeamField);
+  results.push({ name: 'the Team radio shows Both and each active team, writes and clears the reference, and survives teams that cannot be read', problems: await checkTeamInput().catch(error => ['the check stopped: ' + error.message]) });
   check('starting values match dashboard/config.js', checkStartingValues);
   check('every name in config.js and the sample content has a field', checkDashboardNames);
   check('every document type has a line in the sidebar, and each line opens the right list or page', checkSidebar);

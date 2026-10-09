@@ -36,6 +36,11 @@ const types = {
     title: 'Places',
     preview: { select: { title: 'name' }, prepare: item => ({ title: item.title || 'Place with no name' }) },
   },
+  team: {
+    name: 'team',
+    title: 'Teams',
+    preview: { select: { title: 'name' }, prepare: item => ({ title: item.title || 'Team with no name' }) },
+  },
   extraEvent: {
     name: 'extraEvent',
     title: 'Events Calendar',
@@ -401,6 +406,27 @@ test('a place that is new is published before the task that uses it, and the tas
   await logic.publishSelected(list, helpers);
   assert.deepEqual(order, ['check p1', 'write p1', 'check t1', 'write t1']);
   assert.deepEqual(calls.progress, [[1, 2, 'drafts.p1'], [2, 2, 'drafts.t1']]);
+});
+
+test('a team that is new is published before the task that is for it, with no special case', async () => {
+  const list = listFor([
+    draft('task', 't1', { title: 'Wire', team: { _type: 'reference', _ref: 'team-nova' } }),
+    draft('team', 'team-nova', { name: 'Hawktimus Nova' }),
+    draft('task', 't2', { title: 'Paint' }),
+  ]);
+  const { helpers } = makeHelpers();
+  const written = [];
+  const commit = helpers.commit;
+  helpers.commit = mutations => {
+    written.push(mutations[1].createOrReplace._id);
+    return commit(mutations);
+  };
+
+  const results = await logic.publishSelected(list, helpers);
+  assert.equal(written.length, 3);
+  assert.ok(written.indexOf('team-nova') < written.indexOf('t1'), written.join());
+  assert.deepEqual(results.map(result => result.status), ['published', 'published', 'published']);
+  assert.equal(logic.labelOf(list.filter(item => item.typeName === 'team')[0]), 'Teams: Hawktimus Nova');
 });
 
 test('with nothing selected nothing is checked or written', async () => {

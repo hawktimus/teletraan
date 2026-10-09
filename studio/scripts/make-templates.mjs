@@ -25,9 +25,11 @@ const defaultOutput = path.join(studioFolder, '..', 'docs', 'content-templates')
 // Not rows of content. A photo is a picture that has to be uploaded in Studio,
 // so it has no CSV template. Meeting days and presentations are added in Studio
 // or by the booking form. Calendar filters have day checkboxes and a list of
-// words, which a sheet does not hold well, so they are added in Studio. The
-// pages that exist once (Dashboard Settings, Theme) are listed in structure.js.
-const skippedTypes = ['photo', 'presentationDay', 'presentation', 'calendarFilter'];
+// words, which a sheet does not hold well, so they are added in Studio. A team has
+// colors and a logo, so it is added in Studio too (the two starting teams are in
+// docs/seed/teams.ndjson). The pages that exist once (Dashboard Settings, Theme)
+// are listed in structure.js.
+const skippedTypes = ['photo', 'presentationDay', 'presentation', 'calendarFilter', 'team'];
 
 // The columns whose words make the id of a row, in order. The id is the type
 // plus a slug of these cells, so importing the same row twice changes nothing.
@@ -48,7 +50,14 @@ const idColumns = {
 // in. They stay at the end, whatever their place in the schema, so a sheet made
 // from the older template still lines up with the new one.
 const lastColumns = {
-  task: ['contact', 'location'],
+  task: ['contact', 'location', 'team'],
+  plan: ['team'],
+  extraEvent: ['team'],
+  sponsor: ['team'],
+  tipOrNews: ['team'],
+  subteam: ['team'],
+  person: ['team'],
+  customPanel: ['team'],
 };
 
 // Made-up values for the EXAMPLE row. Words in [square brackets] are marked
@@ -90,12 +99,16 @@ const examples = {
 export async function loadSchemas() {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-templates-'));
   try {
-    ['schemas', 'structure.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js'].forEach(name => fs.cpSync(path.join(studioFolder, name), path.join(folder, name), { recursive: true }));
+    ['schemas', 'structure.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'team-input.js'].forEach(name => fs.cpSync(path.join(studioFolder, name), path.join(folder, name), { recursive: true }));
     fs.writeFileSync(path.join(folder, 'package.json'), JSON.stringify({ type: 'module' }));
-    const stub = path.join(folder, 'node_modules', 'sanity');
-    fs.mkdirSync(stub, { recursive: true });
-    fs.writeFileSync(path.join(stub, 'package.json'), JSON.stringify({ name: 'sanity', type: 'module', exports: './index.js' }));
-    fs.writeFileSync(path.join(stub, 'index.js'), ['defineType', 'defineField', 'defineArrayMember'].map(name => 'export const ' + name + ' = value => value;').join('\n'));
+    // the names that schemas/ and team-input.js import: the radio of the team field is never drawn here
+    const stubs = { sanity: ['defineType', 'defineField', 'defineArrayMember', 'set', 'unset', 'useClient'], react: ['createElement', 'useEffect', 'useState'] };
+    Object.keys(stubs).forEach(packageName => {
+      const stub = path.join(folder, 'node_modules', packageName);
+      fs.mkdirSync(stub, { recursive: true });
+      fs.writeFileSync(path.join(stub, 'package.json'), JSON.stringify({ name: packageName, type: 'module', exports: './index.js' }));
+      fs.writeFileSync(path.join(stub, 'index.js'), stubs[packageName].map(name => 'export const ' + name + ' = value => value;').join('\n'));
+    });
 
     const schemas = await import(pathToFileURL(path.join(folder, 'schemas', 'index.js')).href);
     const structure = await import(pathToFileURL(path.join(folder, 'structure.js')).href);

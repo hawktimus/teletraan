@@ -3,7 +3,7 @@
 // The dataset is public, so the first name and the title are public too.
 
 import { defineType, defineField } from 'sanity';
-import { tooLong, titleOf } from './fields.js';
+import { teamField, tooLong, titleOf } from './fields.js';
 import { clockIn, fallbackTimeZone } from './presentationTimes.js';
 
 // The name is a first name, so a space or a digit means a last name or
@@ -106,6 +106,7 @@ export default defineType({
         Rule.valid(statuses.map(status => status.value)).error('Pick scheduled, cancelled, done or skipped.'),
       ],
     }),
+    teamField(),
   ],
   orderings: [
     { title: 'Start, soonest first', name: 'startSoonest', by: [{ field: 'start', direction: 'asc' }] },

@@ -1,7 +1,7 @@
 // Where the screen gets what it shows: startContent() hands over the content
 // once it has it, and again every time it changes. Same shape as data/sample/content.json.
 
-import { contentSources, defaultSettings, defaultTeam, frameFinishes, limits, looks, metals, nightSpeeds, nightStyles, pageChangeStyles, photoOrders, sampleFolder, sanity, speeds } from '../config.js';
+import { contentSources, defaultSettings, defaultTeam, frameFinishes, limits, looks, metals, nightSpeeds, nightStyles, pageChangeStyles, photoOrders, sampleFolder, sanity, speeds, teamModes } from '../config.js';
 import { parseLocalDateTime } from './time.js';
 import { chooseSource, savedSource } from './source.js';
 import { tidyTheme } from './theme.js';
@@ -75,6 +75,8 @@ export function fixSettingValues(settings) {
   if (!frameFinishes.includes(settings.frameFinish)) settings.frameFinish = defaultSettings.frameFinish;
   // The Photos tab
   if (!photoOrders.includes(settings.photoOrder)) settings.photoOrder = defaultSettings.photoOrder;
+  // The Teams tab
+  if (!teamModes.includes(settings.teamMode)) settings.teamMode = defaultSettings.teamMode;
   // The Night mode tab: two choices, two times of day, a switch each way and the logo width
   if (!nightStyles.includes(settings.nightStyle)) settings.nightStyle = defaultSettings.nightStyle;
   if (!Object.keys(nightSpeeds).includes(settings.nightSpeed)) settings.nightSpeed = defaultSettings.nightSpeed;
@@ -93,7 +95,9 @@ export function fixSettingValues(settings) {
   const hiddenNumbers = chanceFields();
   // The Presentations tab: minutes to wait for the speaker, and minutes a talk may overrun
   const presentationNumbers = ['noShowMinutes', 'graceMinutes'];
-  ['pageSeconds', 'photoSeconds', 'nightLogoWidth'].concat(logoNumbers, transitionNumbers, hiddenNumbers, presentationNumbers).forEach(name => {
+  // The Teams tab: minutes each team stays in Alternate mode
+  const teamNumbers = ['alternateMinutes'];
+  ['pageSeconds', 'photoSeconds', 'nightLogoWidth'].concat(logoNumbers, transitionNumbers, hiddenNumbers, presentationNumbers, teamNumbers).forEach(name => {
     settings[name] = keepInRange(settings[name], limits[name], defaultSettings[name]);
   });
   ['portraitScale', 'photoScale'].forEach(name => {

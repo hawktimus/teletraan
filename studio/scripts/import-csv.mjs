@@ -4,7 +4,7 @@
 // row breaks a rule nothing is written: fix the CSV and run it again. An id is the type
 // plus the words of the row, so importing twice changes nothing. A name in a column such as
 // subteam or location must be in the CSV of that type given with it. The three starting
-// places (docs/seed/places.ndjson) are known too.
+// places and the two starting teams (docs/seed) are known too.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -62,9 +62,11 @@ function readCell(text, rules) {
 }
 
 const docs = [], problems = [], ids = {}, refs = [];
-// The starting places come from docs/seed/places.ndjson, not from a CSV, so a task may point at them by name
-const seedFile = fileURLToPath(new URL('../../docs/seed/places.ndjson', import.meta.url));
-const seeded = fs.existsSync(seedFile) ? fs.readFileSync(seedFile, 'utf8').split('\n').filter(Boolean).map(line => JSON.parse(line)) : [];
+// The starting places and teams come from docs/seed, not from a CSV, so a row may point at them by name. A team is named by its code.
+const seeded = ['places', 'teams'].flatMap(name => {
+  const file = fileURLToPath(new URL('../../docs/seed/' + name + '.ndjson', import.meta.url));
+  return fs.existsSync(file) ? fs.readFileSync(file, 'utf8').split('\n').filter(Boolean).map(line => JSON.parse(line)) : [];
+});
 const report = (file, row, column, message) => problems.push(path.basename(file) + ', row ' + row + ', column ' + column + ': ' + message);
 
 // One row of a CSV becomes one document. Columns such as rows.2.text belong to
@@ -115,8 +117,10 @@ process.argv.slice(2).forEach(arg => {
   else readFile(arg);
 });
 const unknown = ref => {
-  if (ref.id.split('-')[0] !== 'place') return '"' + ref.text + '" is not in the ' + ref.id.split('-')[0] + ' CSV given with this one';
-  const names = seeded.concat(docs.filter(doc => doc._type === 'place')).map(place => place.name).join(', ');
+  const type = ref.id.split('-')[0];
+  if (type === 'team') return '"' + ref.text + '" is not a team code the script knows (' + seeded.filter(doc => doc._type === 'team').map(team => team.code).join(', ') + '). Leave the cell empty to show the item for both teams';
+  if (type !== 'place') return '"' + ref.text + '" is not in the ' + type + ' CSV given with this one';
+  const names = seeded.filter(doc => doc._type === 'place').concat(docs.filter(doc => doc._type === 'place')).map(place => place.name).join(', ');
   return '"' + ref.text + '" is not a place the script knows (' + names + '). Add it to a place CSV given with this one, or leave the cell empty and pick the place in Studio';
 };
 refs.filter(ref => !ids[ref.id] && !seeded.some(place => place._id === ref.id)).forEach(ref => report(ref.file, ref.row, ref.name, unknown(ref)));

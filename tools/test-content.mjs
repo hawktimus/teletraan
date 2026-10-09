@@ -911,6 +911,7 @@ test('the new settings have the defaults the Studio starts with', () => {
     noShowMinutes: { min: 1, max: 15 },
     graceMinutes: { min: 0, max: 10 },
     talkMinutes: { min: 5, max: 30 },
+    alternateMinutes: { min: 1, max: 30 },
   });
 
   // the Photos tab: random order, and 16 seconds a photo
@@ -4018,6 +4019,45 @@ test('the last click of Play announcements is kept as a time, and anything that 
   assert.ok(!('announceRequest' in raw.settings), 'a request is never part of the sample');
   assert.deepEqual(normalizeSample(raw).settings.announceRequest, { requestedAt: '' });
   assert.deepEqual(stored.announcements, live.config.defaultSettings.announcements, 'a page with no announcements list still has the starting ones');
+});
+
+// The names of the settings in the Teams tab
+const teamSettingNames = ['teamMode', 'alternateMinutes'];
+
+test('the Teams settings: Prime only and 5 minutes to start with, one of three modes, and 1 to 30 minutes, through all three paths', () => {
+  const defaults = live.config.defaultSettings;
+  assert.deepEqual(live.config.teamModes, ['prime', 'nova', 'alternate']);
+  assert.deepEqual([defaults.teamMode, defaults.alternateMinutes], ['prime', 5]);
+  assert.deepEqual(live.config.limits.alternateMinutes, { min: 1, max: 30 });
+
+  // a published page that lacks both gets the starting values
+  settingsThrough({}).forEach(settings => {
+    teamSettingNames.forEach(name => assert.equal(settings[name], defaults[name], name));
+  });
+
+  // the three modes are kept, and anything else is Prime only
+  live.config.teamModes.forEach(mode => settingsThrough({ teamMode: mode }).forEach(settings => assert.equal(settings.teamMode, mode)));
+  ['Prime', 'NOVA', 'both', 'prime only', '', ' nova', 0, 1, true, null, [], {}].forEach(value => {
+    settingsThrough({ teamMode: value }).forEach(settings => assert.equal(settings.teamMode, 'prime', JSON.stringify(value)));
+  });
+
+  // the minutes are 1 to 30, and what is outside is brought to the nearest end
+  [[1, 1], [5, 5], [30, 30], [0, 1], [-4, 1], [31, 30], [600, 30]].forEach(([value, wanted]) => {
+    settingsThrough({ alternateMinutes: value }).forEach(settings => assert.equal(settings.alternateMinutes, wanted, String(value)));
+  });
+  [undefined, null, '', '7', NaN, Infinity, true, [], {}].forEach(value => {
+    settingsThrough({ alternateMinutes: value }).forEach(settings => assert.equal(settings.alternateMinutes, 5, String(value)));
+  });
+});
+
+test('the sample content carries the Teams settings', () => {
+  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const settings = normalizeSample(raw).settings;
+
+  teamSettingNames.forEach(name => {
+    assert.ok(name in raw.settings, name + ' is in the sample file');
+    assert.equal(settings[name], live.config.defaultSettings[name], name);
+  });
 });
 
 test('the last click of Run presentation test is kept as a time, and anything that is not one is empty, through all three paths', () => {

@@ -1,5 +1,5 @@
 import { defineType, defineField } from 'sanity';
-import { showField, expiresField, orderField, tooLong, byOrder, aToZ, titleOf, subtitleFor } from './fields.js';
+import { showField, expiresField, orderField, teamField, tooLong, byOrder, aToZ, titleOf, subtitleFor } from './fields.js';
 
 // The contact is a first name, so a space or a digit means a last name or
 // something else is in there. A hyphen is fine, as in Mary-Anne.
@@ -65,6 +65,7 @@ export default defineType({
       to: [{ type: 'place' }],
       description: 'Optional. Where the task is done. Pick a place, or use Create new to add one.',
     }),
+    teamField(),
     orderField(),
     showField(),
     expiresField(),

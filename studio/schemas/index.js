@@ -9,6 +9,7 @@ import tipOrNews from './tipOrNews.js';
 import subteam from './subteam.js';
 import place from './place.js';
 import person from './person.js';
+import team from './team.js';
 import photo from './photo.js';
 import customPanel from './customPanel.js';
 import dashboardSettings from './dashboardSettings.js';
@@ -28,6 +29,7 @@ export const schemaTypes = [
   subteam,
   place,
   person,
+  team,
   photo,
   customPanel,
   dashboardSettings,

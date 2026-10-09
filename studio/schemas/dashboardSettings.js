@@ -11,9 +11,11 @@ import { photosFields, photosGroup } from './settingsPhotos.js';
 import { nightFields, nightGroup } from './settingsNight.js';
 import { hiddenFields, hiddenGroup } from './settingsHidden.js';
 import { presentationsFields, presentationsGroup, presentationTestRequestField } from './settingsPresentations.js';
+import { teamsFields, teamsGroup } from './settingsTeams.js';
 
 const groups = [
   { name: 'screen', title: 'Screen' },
+  teamsGroup,
   logoGroup,
   transitionsGroup,
   { name: 'countdown', title: 'Countdown' },
@@ -440,6 +442,7 @@ export default defineType({
     glintField,
     lookField,
     crtField,
+    ...teamsFields(),
     ...logoFields(),
     ...transitionsFields(),
     countdownField,

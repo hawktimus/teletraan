@@ -56,6 +56,7 @@ export const sidebarEntries = [
   { kind: 'list', title: 'Calendar filters', type: 'calendarFilter', sort: byName },
   { kind: 'list', title: 'Subteams', type: 'subteam', sort: byOrder },
   { kind: 'list', title: 'Leadership', type: 'person', sort: byOrder },
+  { kind: 'list', title: 'Teams', type: 'team', sort: byOrder },
   { kind: 'list', title: 'Sponsors', type: 'sponsor', sort: byOrder },
   { kind: 'list', title: 'Photos', type: 'photo', sort: newestUploadFirst },
   { kind: 'list', title: 'Tips and News', type: 'tipOrNews', sort: byOrder },

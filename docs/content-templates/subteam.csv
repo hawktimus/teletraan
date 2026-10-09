@@ -1,3 +1,3 @@
-example,name,lead,members,spotlight,spotlightHeadline,spotlightText,order,show,expires
-type subteam,text; required; max 11; id 1,text; max 17,lines; max 24; each max 12,yes/no; default no,text; max 40,text; max 100,whole number,yes/no; default yes,datetime
-EXAMPLE,[Subteam A],[Lead name],[Student A] | [Student B],yes,[What the subteam did],[Two or three short sentences about the subteam's work.],1,yes,
+example,name,lead,members,spotlight,spotlightHeadline,spotlightText,order,show,expires,team
+type subteam,text; required; max 11; id 1,text; max 17,lines; max 24; each max 12,yes/no; default no,text; max 40,text; max 100,whole number,yes/no; default yes,datetime,name of team
+EXAMPLE,[Subteam A],[Lead name],[Student A] | [Student B],yes,[What the subteam did],[Two or three short sentences about the subteam's work.],1,yes,,

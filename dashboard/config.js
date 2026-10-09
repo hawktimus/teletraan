@@ -59,6 +59,12 @@ export const metals = ['gold', 'silver'];
 //   plain     flat, and no screws on the frames and no // in the panel headers
 export const looks = ['polished', 'flat', 'plain'];
 
+// The Teams tab in Dashboard Settings: which team the screen shows. The Studio copies this list.
+//   prime      the Prime team all the time
+//   nova       the Nova team all the time
+//   alternate  the two teams take turns, alternateMinutes each
+export const teamModes = ['prime', 'nova', 'alternate'];
+
 // The Transitions tab in Dashboard Settings (core/transitions.js chooses from them)
 //   pageChangeStyles  alternate: the slat change and the mechanical change take turns.
 //                     slat: the old change only. mechanical: the new one only.
@@ -134,6 +140,9 @@ export const limits = {
   graceMinutes: { min: 0, max: 10 },
   // The length of one booked talk, in minutes (the Presentations list in the Studio)
   talkMinutes: { min: 5, max: 30 },
+  // The Teams tab, in minutes. Under a minute the screen would swap teams before anything could be read,
+  // and over half an hour the second team hardly shows in a meeting.
+  alternateMinutes: { min: 1, max: 30 },
 };
 
 // Used for anything the editors have not filled in yet
@@ -249,6 +258,12 @@ export const defaultSettings = {
   noShowMinutes: 5,
   graceMinutes: 5,
   presentationTestRequest: { requestedAt: '' },
+  // The Teams tab in the Studio: which team the screen shows.
+  //   teamMode          see teamModes above. Prime only to start with, so a screen with no team
+  //                     documents looks as it always has.
+  //   alternateMinutes  with alternate, how long each team stays before the screen swaps to the other
+  teamMode: 'prime',
+  alternateMinutes: 5,
   // The "Play announcements" button in the Studio (core/announce.js, core/announce-run.js, docs/hidden-transitions.md).
   //   announceRequest  the last click of the button. requestedAt is the time it was clicked and is empty until
   //                    it has been. The screen plays every announcement that is switched on, once, for a request

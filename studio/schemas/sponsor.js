@@ -1,5 +1,5 @@
 import { defineType, defineField } from 'sanity';
-import { showField, expiresField, orderField, tooLong, byOrder, aToZ, subtitleFor } from './fields.js';
+import { showField, expiresField, orderField, teamField, tooLong, byOrder, aToZ, subtitleFor } from './fields.js';
 
 export default defineType({
   name: 'sponsor',
@@ -41,6 +41,7 @@ export default defineType({
       type: 'url',
       description: 'The web address of the logo picture. Logos are not uploaded to Studio.',
     }),
+    teamField(),
     orderField(),
     showField(),
     expiresField(),

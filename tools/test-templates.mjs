@@ -73,8 +73,8 @@ test('the files in docs/content-templates are what the schemas give', () => {
   assert.deepEqual(files, Object.keys(templates).map(type => type + '.csv').sort());
 });
 
-test('there is a template for every kind of content, and none for photos, meeting days, presentations, calendar filters or the settings pages', () => {
-  const noTemplate = ['photo', 'presentationDay', 'presentation', 'calendarFilter'];
+test('there is a template for every kind of content, and none for photos, meeting days, presentations, calendar filters, teams or the settings pages', () => {
+  const noTemplate = ['photo', 'presentationDay', 'presentation', 'calendarFilter', 'team'];
   const documents = types.filter(type => type.type === 'document' && singletons.indexOf(type.name) === -1 && noTemplate.indexOf(type.name) === -1);
   assert.deepEqual(Object.keys(templates).sort(), documents.map(type => type.name).sort());
   knownTypes.forEach(type => assert.ok(templates[type], 'no template for ' + type));
@@ -97,14 +97,15 @@ test('row 1 names the columns, row 2 gives the type and the limits, row 3 is the
     assert.equal(rows[2][0], 'EXAMPLE', type);
   });
   const task = rowsOf(templates.task);
-  // contact and location were added later, so they are the last two columns
-  assert.deepEqual(task[0], ['example', 'title', 'subteam', 'status', 'finishedOn', 'order', 'show', 'expires', 'contact', 'location']);
+  // contact, location and team were added later, so they are the last three columns
+  assert.deepEqual(task[0], ['example', 'title', 'subteam', 'status', 'finishedOn', 'order', 'show', 'expires', 'contact', 'location', 'team']);
   assert.equal(task[1][1], 'text; required; max 22; id 1');
   assert.equal(task[1][2], 'name of subteam');
   assert.equal(task[1][3], 'one of blocked/in-progress/up-next/done; required');
   assert.equal(task[1][5], 'whole number');
   assert.equal(task[1][8], 'text; max 12');
   assert.equal(task[1][9], 'name of place');
+  assert.equal(task[1][10], 'name of team');
 
   const place = rowsOf(templates.place);
   assert.deepEqual(place[0], ['example', 'name', 'show']);
@@ -357,6 +358,63 @@ test('a task CSV made before contact and location existed still imports', () => 
   assert.equal(result.docs[1].subteam._ref, 'subteam-alpha');
   assert.equal(result.docs[2].show, true);
   assert.equal(result.docs.some(doc => 'contact' in doc || 'location' in doc), false);
+});
+
+test('a row points at a team by its code, capitals ignored, and a CSV made before the team column still imports', () => {
+  // every kind of content that can be for one team ends with the team column, which may be empty
+  const rowFor = {
+    task: { title: 'A', status: 'up-next' },
+    plan: { heading: 'A' },
+    extraEvent: { title: 'A', startDate: '2027-03-04' },
+    sponsor: { name: 'A' },
+    tipOrNews: { kind: 'tip', text: 'A' },
+    subteam: { name: 'A' },
+    person: { role: 'Coach', name: 'A' },
+    customPanel: { title: 'A' },
+  };
+  Object.keys(rowFor).forEach(type => {
+    const top = rowsOf(templates[type]);
+    assert.equal(top[0][top[0].length - 1], 'team', type + ': team should be the last column');
+    assert.equal(top[1][top[1].length - 1], 'name of team', type);
+    assert.equal(top[2][top[2].length - 1], '', type + ': the EXAMPLE row leaves the team empty, which means both teams');
+
+    const nova = runImporter({ [type + '.csv']: csvFor(type, [Object.assign({ team: 'Nova' }, rowFor[type])]) });
+    assert.equal(nova.status, 0, type + ': ' + nova.message);
+    assert.deepEqual(nova.docs[0].team, { _type: 'reference', _ref: 'team-nova' }, type);
+
+    const both = runImporter({ [type + '.csv']: csvFor(type, [rowFor[type]]) });
+    assert.equal(both.status, 0, type + ': ' + both.message);
+    assert.equal('team' in both.docs[0], false, type + ': an empty team cell makes no team');
+  });
+
+  // the ids in the seed file are the ones the importer makes from the codes
+  const seedLines = fs.readFileSync(path.join(root, 'docs', 'seed', 'teams.ndjson'), 'utf8').trim().split('\n').map(line => JSON.parse(line));
+  assert.deepEqual(seedLines.map(team => team.code), ['prime', 'nova']);
+  seedLines.forEach(team => {
+    const found = runImporter({ 'task.csv': csvFor('task', [{ title: 'A', status: 'up-next', team: team.code }]) });
+    assert.equal(found.status, 0, found.message);
+    assert.equal(found.docs[0].team._ref, team._id);
+  });
+
+  // a task CSV from before the team column, with contact and location, still imports
+  const old = [
+    'example,title,subteam,status,finishedOn,order,show,expires,contact,location',
+    'type task,text; required; max 22; id 1,name of subteam,one of blocked/in-progress/up-next/done; required,datetime,whole number,yes/no; default yes,datetime,text; max 12,name of place',
+    'EXAMPLE,[Task name],[Subteam A],in-progress,,1,yes,2027-03-01 18:00,[First name],[Place name]',
+    ',Wire the robot,,in-progress,,2,yes,,Sam,Classroom',
+  ].join('\n') + '\n';
+  const result = runImporter({ 'task.csv': old });
+  assert.equal(result.status, 0, result.message);
+  assert.equal(result.docs[0].contact, 'Sam');
+  assert.equal('team' in result.docs[0], false);
+});
+
+test('a team the script does not know is refused, the row is named, and the codes are listed', () => {
+  const result = runImporter({ 'task.csv': csvFor('task', [{ title: 'Fine', status: 'up-next', team: 'prime' }, { title: 'Lost', status: 'up-next', team: 'Hawktimus Nova' }]) });
+  assert.equal(result.status, 1);
+  assert.equal(result.docs, null);
+  assert.ok(result.message.includes('task.csv, row 4, column team: "Hawktimus Nova" is not a team code the script knows (prime, nova)'), result.message);
+  assert.ok(!result.message.includes('row 3'), result.message);
 });
 
 test('quotes, commas, new lines, a byte order mark and Windows line ends are read correctly', () => {
