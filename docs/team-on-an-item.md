@@ -23,9 +23,9 @@ decides this, `visibleItems` in `dashboard/core/content.js`, and every panel tak
 its items through it. It leaves out hidden items and expired items in the same
 step. No panel checks the team itself.
 
-- With Team mode on Prime only, the screen shows the items for Prime and for Both.
-- With Nova only, it shows the items for Nova and for Both.
-- With Alternate, the items change with the team. They change in the same step as
+- With Prime alone in Team order, the screen shows the items for Prime and for Both.
+- With Nova alone, it shows the items for Nova and for Both.
+- With both in Team order, the items change with the team. They change in the same step as
   the name and the colors, at a page change, so a panel is never rebuilt in the
   middle of a page.
 

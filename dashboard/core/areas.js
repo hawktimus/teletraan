@@ -25,6 +25,11 @@
 // and frame.exit). shell.js and takeover.js show them directly. Only ?show
 // sends one through changePage, and then it takes the second path below.
 //
+// The look rotation (core/look-rotation-run.js) changes the style and the team at a page change of the
+// large panel, and asks this file for the way it looks: useSlatsOnce() makes the next page change of each
+// area the slat change, cutScreen() makes the pages of all three areas swap at once with nothing leaving
+// or arriving, and retireAreas() takes every area away whole, for the swap that assembles the screen again.
+//
 // Now and then a hidden transition replaces the page change of the large panel
 // (core/hidden-run.js, docs/hidden-transitions.md). The whole screen comes
 // apart, the pages of all three areas are swapped while nothing can be seen,
@@ -124,6 +129,27 @@ function planFor(area) {
   return hasSteel(styleNow()) ? { style: change.style, finish: null } : change;
 }
 
+// The regions whose next page change is the slat change, whatever Page change style says
+const slatsFor = new Set();
+
+export function useSlatsOnce() {
+  areaRegions.forEach(region => slatsFor.add(region));
+}
+
+// Counts the screen as apart until the function this gives is called: the page of each area that changes
+// in the meantime is swapped at once, as it is while a hidden transition has the screen apart
+export function cutScreen() {
+  const screen = startWholeScreen();
+  screen.apart();
+  return screen.end;
+}
+
+// Takes every area on the screen away, frame and page, and resolves when they are gone. The areas stay in
+// the document, so restartRotation() in core/schedule.js is what clears them.
+export async function retireAreas() {
+  await Promise.all(areaRegions.filter(region => areaOf[region]).map(region => frame.retire(areaOf[region])));
+}
+
 // Puts the next page in a region at once, with nothing to see: for a screen that
 // is apart. The frame's metal is chosen as in a page change, so it still varies.
 function swapUnseen(region, next) {
@@ -193,6 +219,7 @@ export async function changePage(region, next) {
     // The old page leaves, in the style planChange picked. The frame stays, or
     // breaks into pieces, depending on the style.
     const change = planFor(area);
+    if (slatsFor.delete(region)) change.style = 'slat';
     await frame.leave(area, change);
     // The frame is apart now, the moment the new metal goes on and a waiting
     // theme goes on (core/theme-apply.js)

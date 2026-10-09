@@ -170,6 +170,10 @@ editors can sign in from anywhere.
                               pack on the screen for 2 minutes, and preview-run.js starts it. What it holds is
                               kept by previewStyle in style.js, previewTeam in teams.js and previewPack in
                               theme.js (docs/hidden-transitions.md, "Preview a look"),
+                              look-rotation.js decides which look comes next (the style of the day, the
+                              order of the teams, their Monday cards and the Next look now guard), and
+                              look-rotation-run.js plays the three swaps and keeps the pass in localStorage
+                              (docs/layouts.md, "The look rotation"),
                               tick.js is the one clock of the screen: it tells every panel when a real
                               second starts by reading the time, not by counting, so the digits never
                               drift, and a panel should write to the page only what has changed
@@ -200,7 +204,8 @@ editors can sign in from anywhere.
                               Calendar filters (docs/calendar-filters.md), presentationDay.js the Meeting
                               days, presentation.js the booked talks and settingsPresentations.js the
                               Presentations tab of Dashboard Settings (docs/presentations.md). team.js is the
-                              Teams list and settingsTeams.js the team fields of the Look tab. status.js is the
+                              Teams list and settingsTeams.js the team fields of the Look tab, which are hidden now. settingsLook.js is
+                              Styles by day, Monday style, Team order and How the look changes. status.js is the
                               document the Mini writes (the status block, settingsStatus.js and status-input.js). settingsRotation.js is the Panels
                               box of Dashboard Settings, and panel-order-input.js fills its Panel order list when it is empty. The Team radio on tasks, sponsors and
                               the other kinds of content is team-input.js, put on each by teamField in fields.js
@@ -301,6 +306,10 @@ editors can sign in from anywhere.
       test-presentation-mouse.mjs  checks for the mouse in presentation mode: what each button does, the second
                               click of a double click, a click on the card that says the slides are not ready,
                               the context menu, the hidden cursor, and the rotation that starts again
+      test-look-rotation.mjs  checks for the look rotation (core/look-rotation.js): the style of the day, the
+                              order of the passes in a cycle, the boundary rule, a restart, one look holding,
+                              empty lists, the Next look now guard, and the question schedule.js asks at the
+                              end of every pass
       test-console.mjs        checks for the boot and shutdown drawings (plain 7 bit text, the size, the
                               symmetry of the figure, the same text in the sample content), for
                               install-console.sh in a fake root (it stops before it changes anything, keeps the
@@ -630,8 +639,9 @@ alone.
   `docs/seed/teams.ndjson`, and the command to import them is in docs/add-the-nova-team.md.
   Dashboard Settings, Look tab: Team mode (`teamMode`, Prime only to start with, from
   `teamModes`) and Minutes for each team (`alternateMinutes`, 5 to start with, 1 to 30), in
-  `studio/schemas/settingsTeams.js`, so the whole section can be removed by deleting that file. The
-  starting values, the limits and the built-in Prime team (`primeTeam`, which the screen uses
+  `studio/schemas/settingsTeams.js`, so the whole section can be removed by deleting that file. Both
+  are hidden now, and the screen uses them only when Team order is empty (docs/layouts.md, "The look
+  rotation"). The starting values, the limits and the built-in Prime team (`primeTeam`, which the screen uses
   when the Studio has no teams) are in `dashboard/config.js`. `teamsFrom` in `core/sanity.js`
   cleans the documents, `core/teams.js` chooses the team (`chooseTeam`) and puts it on the page
   (`applyTeamLook`), and `core/areas.js` calls `changeTeamNow` while the large frame is apart, so
@@ -716,6 +726,7 @@ exception is `test-slides-script.mjs`, which needs `jq`.
     node tools/test-pile.mjs
     node tools/test-person-rows.mjs
     node tools/test-presentation-mouse.mjs
+    node tools/test-look-rotation.mjs
     node tools/test-console.mjs
     node tools/check-themes.mjs
     node tools/check-seasons.mjs

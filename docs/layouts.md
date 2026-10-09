@@ -1075,6 +1075,79 @@ mirror, and with Style in Dashboard Settings changed between Original and Cybert
 screen ("Looking at a layout" has the list of what to check). `node tools/test-cybertron.mjs` checks
 the numbers in this section against the code.
 
+## The look rotation
+
+The screen goes through looks by itself. A look is a style and a team. Dashboard Settings, Look tab,
+has four settings, with their starting values in `defaultSettings` in `config.js`:
+
+- Styles by day (`dailyStyles`): Original and then Cybertron.
+- Monday style (`mondayStyle`): Minimal.
+- Team order (`teamOrder`): Prime and then Nova. The Studio keeps references to the teams and the
+  query in `core/sanity.js` sends their codes.
+- How the look changes (`lookSwap`): assemble, slats or cut. Assemble is the starting one.
+
+**The style of the day.** The number of the calendar day in the time zone of the Look page, counted
+from 1970, modulo the length of the list, says which style the day has (`dayNumber` and `styleForDay`
+in `core/look-rotation.js`). Every screen has the same style on the same day, and a screen that
+restarts lands on it again. It is worked out when the screen starts and at the end of every pass, so
+the style changes at the first pass that ends after midnight.
+
+**A cycle.** For each team in Team order there is a pass of its panels in the style of the day, and
+after it a pass of its Monday cards in the Monday style, if the team has Monday rows. A team with
+none skips that pass. With two styles, Prime with Monday rows and Nova without, a cycle is Prime in
+the style of the day, Prime in Minimal, Nova in the style of the day, and tomorrow the same three
+with the other style. The panels that every team shares (the events, the tips, the photos and the
+countdown) are in the pass of each team, once. There are no Monday cards yet: `mondayCards` in
+`core/look-rotation.js` returns none, so no team has a Monday pass until that function gives its
+rows and the cards are in the panel list.
+
+**When it moves.** A pass is over when the list of the large panel has been through once.
+`core/schedule.js` asks the rotation then, before the next page is chosen (`setLookHooks`), and the
+answer decides whether the list starts again from its first panel. A pass is never ended sooner than
+`lookShortestSeconds` (15) after it began. Nothing moves while an alert, an announcement, a talk, a
+demo, the night screen, a hidden transition or a swap has the screen. The rotation is asked again at
+the end of the next pass.
+
+**How the look goes on.** The style and the team are held by `rotateStyle` in `core/style.js` and
+`rotateTeam` in `core/teams.js`, the two modules that hold them for a preview. A preview and `?style=`
+or `?team=` in the address win over the rotation, and the rotation wins over the old Style and Team
+mode settings. Both go on the page in one step, at the moment the large frame is apart, where
+`core/areas.js` calls `changeThemeNow` and `changeTeamNow`. The page also keeps the rotation from
+running at all while the address has `?style=` or `?team=`, and in the test views (`?show=`, `?stress`
+and `?only=tasks`).
+
+**The three swaps** (`core/look-rotation-run.js`):
+
+- assemble: the banner, the countdown and the areas leave, the look goes on while nothing is on the
+  screen, and everything comes in again. The lists start from their first panel, so the frames
+  assemble as they do when the screen starts.
+- slats: the next page change of each area is the slat change, whatever Page change style says. The
+  frames stay.
+- cut: for `lookCutMilliseconds` the screen counts as apart, as in a hidden transition, so each area
+  swaps its page at once with nothing leaving or arriving.
+
+A change to or from Minimal is a change of layout, and the page reloads once whichever swap is set.
+
+**Starting again.** The pass the screen is in is written down in localStorage (`teletraan-look-pass`),
+and again every half minute. A page that reloads within `lookResumeSeconds` (600) of that goes on in
+the same pass, which is what a reload for a change of layout needs. A page that starts any other way
+starts the first pass. The screen reads its saved copy of the content for this, before anything is drawn.
+
+**One look, and empty lists.** One style and one team make one pass for ever, and nothing changes. A
+list that is empty gives the choice back to the old Style setting (Styles by day) or the old Team mode
+(Team order), which are hidden in the Studio and keep what is saved in them. Both empty hold nothing, so
+the screen is as it was before the rotation. A page published before the lists existed has them empty.
+
+**Next look now** (the Start here page) writes `nextLookRequest`. The screen answers a request once,
+when it is less than a minute old and is not the one handled before (kept in localStorage under
+`teletraan-next-look-handled`), and waits while something has the screen. It moves to the next pass
+at once, without waiting for the pass to end, and every list starts again from its first panel. A
+press while the Monday cards are up moves past them.
+
+Look at it with `?sample=1`, which has both teams and the rotation. `node tools/test-look-rotation.mjs`
+checks the order of the passes, the style of the day, the boundary rule, a restart and the Next look now
+guard.
+
 ## What else works in each layout
 
 - **Page changes** (slats and the mechanical change) are the same, inside the

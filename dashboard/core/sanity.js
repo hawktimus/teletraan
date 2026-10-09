@@ -22,6 +22,8 @@ import { classifyFailure } from './connection.js';
 // No Demo document means no demo (core/demo.js).
 // Events come from the BAND calendars (core/calendar.js). The Events Calendar
 // entries in Studio are not read.
+// Styles by day and Team order are sent as lists too, and Team order as the codes of its teams. A list
+// that is missing is a list that is empty: the screen then follows Style and Team mode (core/look-rotation.js).
 // Calendar filter rules are cleaned in normalizeFilter. One that is off or past
 // its Hide after time stays in the list, and core/events.js leaves it out.
 // A person's photo is sent as a plain address with its size, crop and hotspot
@@ -41,7 +43,9 @@ export const contentQuery = `{
     ...,
     "rotation": rotation { ..., "grid1": coalesce(grid1, []), "grid2": coalesce(grid2, []) },
     "announcements": coalesce(announcements, []),
-    "calendars": coalesce(calendars, [])
+    "calendars": coalesce(calendars, []),
+    "dailyStyles": coalesce(dailyStyles, []),
+    "teamOrder": coalesce(teamOrder[]->code, [])
   },
   "theme": *[_id == "theme"][0],
   "demo": *[_id == "demo"][0],

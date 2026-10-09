@@ -46,29 +46,29 @@ In Studio open Settings, then Teams, then Hawktimus Nova. These are the fields.
   - Text color: the main text.
 - Mirror the layout: on to start with. The whole screen is flipped left to right
   while Nova is showing.
-- Active: on. Turn it off to leave the team out of Alternate mode and out of the
+- Active: on. Turn it off to leave the team out of Team order and out of the
   Team choice on items.
 - Order: a lower number comes first. Prime is 10 and Nova is 20.
 
 Click Publish. A change to the team that is on the screen goes on within a few
 seconds, without waiting for a page change.
 
-## 3. Set the team mode
+## 3. Put Nova in Team order
 
 Open Dashboard Settings, then the Look tab.
 
-- Team mode: Prime only is picked to start with. Pick Nova only to show Nova all the
-  time, or Alternate to swap.
-- Minutes for each team: in Alternate mode, how long one team stays, from 1 to 30.
-  It starts at 5. The swaps are counted from the clock, so two screens agree.
+- Team order: a list of the teams. Prime and then Nova are in it to start with. Add Nova
+  if it is not there. Each team takes the screen for a pass of the panels, in the order of
+  the list. Take Prime out to show Nova all the time.
+- How the look changes: Assemble, Slats or Cut, for the swap from one team to the next.
 
-Click Publish. The swap waits for a page change. The name, the number, the logo, the
+Click Publish. The swap waits for the end of a pass. The name, the number, the logo, the
 colors and the mirror change together, and nothing changes in the middle of a panel.
 
 ## 4. Check the TV
 
 Open the menu next to Publish on Dashboard Settings (the three dots) and click
-Preview Nova. The TV shows Nova for 2 minutes whatever Team mode says, then goes
+Preview Nova. The TV shows Nova for 2 minutes whatever Team order says, then goes
 back. Look at the name, the number, the colors and which side the columns are on.
 With the sample content showing, `?team=nova` on the end of the address does the
 same for one page.
@@ -79,10 +79,9 @@ that are for both.
 
 ## Afterwards
 
-- To stop showing Nova, set Team mode to Prime only. The Nova team and its content
+- To stop showing Nova, take it out of Team order. The Nova team and its content
   stay in Studio.
 - To change the colors later, edit the Nova team and publish. Style and pack are
   separate settings (docs/switch-the-look.md).
-- A third team can be added as another document in Teams. It takes its turn in
-  Alternate mode. Team mode has a choice for Prime only and Nova only, and none for
-  a third team on its own.
+- A third team can be added as another document in Teams, and then added to Team
+  order, where it takes its turn.

@@ -1,7 +1,8 @@
 // The teams the screen can show, and the one that is on it. Three jobs:
 //
 //   choosing    chooseTeam() says which team the mode and the clock ask for. A preview (core/preview.js)
-//               or ?team= in the address can hold a mode in place of the setting (previewTeam, askForTeam)
+//               or ?team= in the address can hold a mode in place of the setting (previewTeam, askForTeam),
+//               and the look rotation (core/look-rotation.js) can hold a team in place of the mode (rotateTeam)
 //   filtering   showsForTeam() says whether an item belongs on the screen of that team.
 //               visibleItems() in content.js asks it, so a panel that leaves out hidden and
 //               expired items leaves out the other team's items too. No panel asks it itself
@@ -45,6 +46,7 @@ const waitedTooLong = 60 * 1000;
 let teams = [primeTeam]; // every team there is, in order
 let previewed = null; // { mode, until }: a preview (core/preview.js) holds a mode on the screen for a while
 let asked = ''; // ?team= in the address, for this page only
+let rotated = ''; // the code of the team the look rotation holds (core/look-rotation.js), or '' for none
 let wanted = primeTeam; // the team the mode and the clock ask for. The items follow this one
 let showing = null; // the team that is on the page, or null before the first one goes on
 let waitingSince = null; // the time, in milliseconds, that wanted first differed from showing
@@ -67,10 +69,28 @@ export function askForTeam(mode) {
   asked = teamModes.indexOf(mode) !== -1 ? mode : '';
 }
 
+// The look rotation holds a team for the pass it is in, the way a preview holds a mode, but weaker: a
+// preview and ?team= win over it, and it wins over Team mode. A code that is not an active team lets go.
+export function rotateTeam(code) {
+  rotated = typeof code === 'string' ? code : '';
+}
+
+function previewing(now) {
+  return previewed !== null && now.getTime() < previewed.until;
+}
+
 // The mode that counts: a preview that has time left, then the address, then Team mode
 function modeFor(settings, now) {
-  if (previewed && now.getTime() < previewed.until) return previewed.mode;
+  if (previewing(now)) return previewed.mode;
   return asked || settings.teamMode;
+}
+
+// The team the look rotation holds, or null when it holds none, a preview or the address asks for another, or
+// its team is not in the list or is switched off
+function rotatedTeam(list, now) {
+  if (rotated === '' || previewing(now) || asked !== '') return null;
+
+  return activeTeams(list).find(team => team.code === rotated) || null;
 }
 
 // The team a mode asks for at a moment. prime and nova ask for the team with that code, and
@@ -197,7 +217,7 @@ export function useTeams(content, now = new Date()) {
   const before = wanted.code;
 
   teams = Array.isArray(source.teams) && source.teams.length > 0 ? source.teams : [primeTeam];
-  wanted = chooseTeam(teams, modeFor(settings, now), settings.alternateMinutes, now);
+  wanted = rotatedTeam(teams, now) || chooseTeam(teams, modeFor(settings, now), settings.alternateMinutes, now);
   let changed = wanted.code !== before;
 
   if (showing === null) {

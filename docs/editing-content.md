@@ -144,8 +144,9 @@ The buttons try the screen without waiting for a time or for a booked talk:
 - Run presentation test: starts the sample talk with its six sample slides. It
   does what Run presentation test in the same menu does. Run presentations in
   the Presentations tab of Dashboard Settings must be on.
-- Next look now: moves the screen on to the next team pass of the look rotation.
-  A second press while the Monday cards are up moves past them.
+- Next look now: moves the screen on to the next pass of the look rotation: the next team, or the
+  Monday cards of the team on the screen if it has any. A second press while the Monday cards
+  are up moves past them to the next team.
 - Preview competition: shows the competition cards for 2 minutes, with sample
   competition data.
 - Preview the screen: opens the screen in a new tab with the sample content, which
@@ -472,11 +473,11 @@ Publish. The fields:
   starts with the Prime color.
 - Mirror the layout: off to start with. On, the whole screen is flipped left to
   right while this team is showing.
-- Active: on to start with. Off leaves the team out of Alternate mode and out of the
+- Active: on to start with. Off leaves the team out of Team order and out of the
   Team choice on items.
 - Order: a lower number comes first. It starts at 10.
 
-Which team is on the screen is Team mode in the Look tab of Dashboard Settings
+Which team is on the screen is Team order in the Look tab of Dashboard Settings
 (see below). The two starting teams, Hawktimus Prime and Hawktimus Nova, are in
 `docs/seed/teams.ndjson`, and docs/add-the-nova-team.md has the import and the
 steps. With no Teams at all the TV shows the built-in Prime team, as it always has.
@@ -603,25 +604,33 @@ problem would touch.
 - Note: the line at the top points to the Look page in the sidebar, which sets
   the colors, the seasonal packs and the time zone. The Look page has a line
   that points back here.
-- Style: the look of the whole screen. Original is the screen as it is now, in the layout of its theme.
-  Cybertron has the same layout, drawn in plates of gunmetal and steel, and changing
-  between the two does not reload the screen. Minimal has a banner across the top, a
-  thin side column and one main panel, whatever the theme says, and the screen reloads
-  once when you change to or from it. The team sets the base colors, and the Look page sets the
-  rest (docs/layouts.md, "Styles"). To see one first, add `?style=cybertron` or
-  `?style=minimal` to the address, or use a Preview button in the menu next to
-  Publish, which shows a look for 2 minutes and saves nothing (docs/switch-the-look.md).
-  If no choice is ticked for Style, the screen uses Original.
-- Teams: which team is on the screen. Team mode is Prime only (to start with), Nova
-  only or Alternate. In Alternate mode "Minutes for each team" is how long one team
-  stays, from 1 to 30, and starts at 5. The swaps are counted from the clock, so two
-  screens agree. A swap waits for a page change of the large panel and then the
-  name, the number, the logo, the colors and the mirror change together. With no
-  team document for the one picked, the screen stays on Prime. To see a team now,
-  open the menu next to Publish (the three dots) and click Preview Prime or Preview
-  Nova, or add `?team=nova` to the address. Each Preview button shows its look for 2
-  minutes and goes back to the saved settings, and so do Preview Cybertron, Preview
-  Minimal and Preview next pack (docs/hidden-transitions.md, "Preview a look").
+- Styles by day: the styles the screen goes through, one for each day, in this order and then over
+  again. Original and Cybertron to start with, so the screen is in Original one day and in Cybertron
+  the next. Original is the screen as it is now, in the layout of its theme. Cybertron has the same
+  layout, drawn in plates of gunmetal and steel. Minimal has a banner across the top, a thin side
+  column and one main panel, whatever the theme says (docs/layouts.md, "Styles"). The day starts at
+  midnight in the Time zone on the Look page, and the style of the day is picked at the first
+  change of look after midnight, or when the screen starts, so a screen that restarts is in the
+  same style. One style in the list holds all the time. If the list is empty, the screen uses the old
+  Style setting, which is hidden and keeps what was saved in it. A page published before the list
+  existed has it empty, so the screen keeps its style until someone fills the list in.
+- Monday style: the style while the Monday cards of a team are on the screen. Minimal to start with.
+  A team with no Monday cards skips them.
+- Team order: the teams, in the order they take the screen. Prime and then Nova to start with. Drag to
+  change the order. Only teams that are switched on count. One team holds all the time. When the team
+  changes, the name, the number, the logo, the colors and the mirror change together. If the list
+  is empty, the screen uses the old Team mode setting, which is hidden too, with Minutes for each team,
+  and so it does on a page published before the list existed.
+- How the look changes: Assemble, Slats or Cut, with Assemble to start with. Assemble takes the screen
+  apart and builds it again, from the first panel. Slats changes the panels with the slats turning and
+  keeps the frames. Cut changes at once. Each waits until the large panel has been through its panels
+  once, and never changes while an alert, an announcement or a talk has the screen. A change to or from
+  Minimal reloads the screen once, whichever one is picked (docs/layouts.md, "The look rotation").
+  To see the next look now, click Next look now on the Start here page. To see a style or a team
+  for 2 minutes without saving anything, open the menu next to Publish (the three dots) and click Preview
+  Prime, Preview Nova, Preview Cybertron or Preview Minimal, or add `?style=cybertron`, `?style=minimal`
+  or `?team=nova` to the address, which stops the rotation on that page (docs/switch-the-look.md,
+  docs/hidden-transitions.md, "Preview a look").
 - Logo: everything the logo and the team name do. "Logo
   animations" is the master switch, and comes first. Turn it off and nothing in
   the logo moves, the name effect included, and the logo stays the still

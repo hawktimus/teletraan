@@ -3,12 +3,17 @@
 For the students who edit the Studio. The look of the TV has three parts, and
 each is its own setting: the style (the layout and the frames), the team (the
 name, the number, the colors and whether the screen is flipped left to right) and
-the seasonal pack (a holiday overlay). Do the four steps in order. Nothing here
+the seasonal pack (a holiday overlay). The style and the team take turns by
+themselves: one style a day, and each team for a pass of the panels
+(docs/layouts.md, "The look rotation"). Do the four steps in order. Nothing here
 needs a change to the code.
 
 ## 1. Pick the style
 
-In Studio open Dashboard Settings, then the Look tab, and find Style.
+In Studio open Dashboard Settings, then the Look tab, and find Styles by day. It is a
+list, and the screen uses one style a day, in the order of the list, and then starts
+over. Put one style in it to keep that style all the time. Monday style is the style
+while the Monday cards of a team are on the screen. The styles are:
 
 - Original is the screen as it has always been. Its layout comes from the theme.
 - Cybertron has the same layout as Original: the banner, the large frame, the
@@ -31,19 +36,20 @@ once, at the next page change.
 
 ## 2. Pick the team
 
-Still in the Look tab of Dashboard Settings, find Team mode.
+Still in the Look tab of Dashboard Settings, find Team order. It is a list of the
+teams, Prime and then Nova to start with.
 
-- Prime only shows the Prime team all the time. It is picked to start with.
-- Nova only shows the Nova team all the time.
-- Alternate swaps between the teams. Minutes for each team is how long one stays,
-  from 1 to 30, and starts at 5.
+- Each team in the list takes the screen for a pass of the panels, and then the next
+  team does. Drag a team to change the order. A team that is switched off is left out.
+- One team in the list shows that team all the time.
+- How the look changes says how the screen goes from one team or style to the next:
+  Assemble, Slats or Cut.
 
 The team sets the name, the number, the logo, the colors and the mirror. A team
 with Mirror the layout on has the whole screen flipped left to right: the
 columns, the banner and the tag on the ticker change sides. The sidebar layout of
-the theme Neon Prime is not flipped. The swap in Alternate mode waits for a page
-change and then everything changes together, so nothing changes in the middle of
-a panel.
+the theme Neon Prime is not flipped. A swap waits for the end of a pass and
+then everything changes together, so nothing changes in the middle of a panel.
 
 Items that have a Team show only for that team. Items with Both, the countdown, the
 weather, the BAND events and the photos show for every team
@@ -87,8 +93,9 @@ both teams (docs/try-it-on-the-mini.md lists every switch).
 
 ## Afterwards
 
-- To go back to the screen as it was, set Style to Original, Team mode to Prime
-  only, and turn the pack rule off, or pick No seasonal pack under Use a theme now.
+- To go back to the screen as it was, put only Original in Styles by day and only
+  Prime in Team order, and turn the pack rule off, or pick No seasonal pack under Use
+  a theme now.
 - The team gives its main, accent, background and text colors to the theme
   Hawktimus. The other themes keep their own colors. The plate, neon and second
   bright colors of a team are read by Cybertron and Minimal only.

@@ -58,6 +58,10 @@
     "presentationsEnabled": true,
     "teamMode": "prime",
     "alternateMinutes": 5,
+    "dailyStyles": ["original", "cybertron"],
+    "mondayStyle": "minimal",
+    "teamOrder": ["prime", "nova"],
+    "lookSwap": "assemble",
     "crt": { "on": true, "everySeconds": 240, "durationSeconds": 2.7 },
     "calendars": [
       { "id": "team", "name": "[Team calendar]", "show": true }

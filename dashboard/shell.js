@@ -7,9 +7,10 @@
 //   speed=very-slow|slow|normal|fast  how fast things move and how long panels stay
 //   style=original|cybertron|minimal  the style of the whole screen (Style in Dashboard Settings), for this page only. minimal
 //                                     has the bar layout (core/layout.js) whatever the theme says, and the other two keep the
-//                                     layout of the theme
+//                                     layout of the theme. The look rotation (core/look-rotation.js) stops while it is there
 //   team=prime|nova|alternate         the team on the screen (Team mode in Dashboard Settings), for this page only. A team that
-//                                     the Studio has no document for is the built-in Prime
+//                                     the Studio has no document for is the built-in Prime. The look rotation stops while it
+//                                     is there too
 //   look=polished|flat|plain          how much polish the frames have (Look in Dashboard Settings). flat is
 //                                     the flat finish with no glint, plain also has no screws and no // in the
 //                                     panel headers. finish= and glint= below win over it
@@ -35,7 +36,7 @@
 import * as frame from './frame.js';
 import { fixedPanels, panels } from './registry.js';
 import { sampleFolder, liveFolder, defaultSettings, frameFinishes, metals, pageChangeStyles, location as place } from './config.js';
-import { savedStyle, savedTheme, startContent, withDefaults } from './core/content.js';
+import { savedContent, savedStyle, savedTheme, startContent, withDefaults } from './core/content.js';
 import { askForSample } from './core/source.js';
 import { mergeEvents } from './core/events.js';
 import { connectionLines, drawConnection } from './core/connection.js';
@@ -48,6 +49,7 @@ import { holdForLayout, startLayout } from './core/layout-apply.js';
 import { decorationLayers, hasKit, layoutNow } from './core/layout.js';
 import { redrawFrames } from './core/areas.js';
 import { applyStyle, recordShapes, shapesFor, shapesNow, startStyle } from './core/style.js';
+import { holdBootLook } from './core/look-rotation.js';
 import { resumePreview } from './core/preview.js';
 import { loadPanel, mountPanel, updatePanel } from './core/panels.js';
 import { playlistOf } from './core/panel-order.js';
@@ -92,6 +94,7 @@ async function run() {
   resumeSavedPreview();
   askForSample(params.get('sample'));
   askForTeam(params.get('team'));
+  resumeSavedLook();
   const style = startStyle(params.get('style'), savedStyle);
   startLayout(params.get('theme'), savedTheme, document.documentElement, style);
 
@@ -176,6 +179,12 @@ async function run() {
 
       // The team on the screen, which in Alternate mode changes with the clock (core/teams.js)
       startOptional('./core/team-run.js', module => module.startTeams(getContent));
+
+      // The look rotation: the style and team of each pass, the swaps, and the Next look now button in the Studio.
+      // After the ones it asks about. ?style= and ?team= in the address win over it, so then it does nothing
+      if (!onlyTasks) {
+        startOptional('./core/look-rotation-run.js', module => module.startLookRotation(getContent, params.has('style') || params.has('team')));
+      }
     }
 
     if (!early) {
@@ -191,6 +200,26 @@ async function run() {
     startDemo();
   } catch (error) {
     showFatal(error);
+  }
+}
+
+// The look rotation (core/look-rotation.js) holds the style and the team of the pass the screen was in, from the
+// saved copy of the content, so that the screen starts in them. A page that reloaded for a change of layout
+// goes on in the same pass. The test views leave the rotation out.
+function resumeSavedLook() {
+  if (params.get('show') || stress || onlyTasks) return;
+
+  try {
+    let storage = null;
+    try {
+      storage = window.localStorage;
+    } catch (error) {
+      console.error('Could not look for the pass the screen was in', error);
+    }
+
+    holdBootLook(savedContent(), storage, new Date());
+  } catch (error) {
+    console.error('Could not work out the look to start with', error);
   }
 }
 

@@ -1,7 +1,7 @@
 // Where the screen gets what it shows: startContent() hands over the content
 // once it has it, and again every time it changes. Same shape as data/sample/content.json.
 
-import { defaultSettings, defaultTeam, frameFinishes, limits, looks, metals, nightSpeeds, nightStyles, pageChangeStyles, photoOrders, sampleFolder, sanity, speeds, styles, teamModes } from '../config.js';
+import { defaultSettings, defaultTeam, frameFinishes, limits, looks, lookSwaps, metals, nightSpeeds, nightStyles, pageChangeStyles, photoOrders, sampleFolder, sanity, speeds, styles, teamModes } from '../config.js';
 import { parseLocalDateTime } from './time.js';
 import { chosenSource } from './source.js';
 import { tidyTheme } from './theme.js';
@@ -10,6 +10,7 @@ import { chanceFields, hoursFields, tidyHiddenRequest, tidyHours } from './hidde
 import { tidyAnnounceRequest } from './announce.js';
 import { tidyTestRequest } from './presentation-test.js';
 import { tidyPreviewRequest } from './preview.js';
+import { tidyNextLookRequest } from './look-rotation.js';
 import { fetchResult, liveEventsUrl, normalizeContent, normalizeSample } from './sanity.js';
 import { reasons } from './connection.js';
 import { showsForTeam } from './teams.js';
@@ -79,6 +80,11 @@ export function fixSettingValues(settings) {
   if (!photoOrders.includes(settings.photoOrder)) settings.photoOrder = defaultSettings.photoOrder;
   // The team settings
   if (!teamModes.includes(settings.teamMode)) settings.teamMode = defaultSettings.teamMode;
+  // The look rotation: the styles by day, the Monday style, the teams in order and the swap
+  settings.dailyStyles = tidyStyleList(settings.dailyStyles);
+  if (!styles.includes(settings.mondayStyle)) settings.mondayStyle = defaultSettings.mondayStyle;
+  settings.teamOrder = tidyTeamOrder(settings.teamOrder);
+  if (!lookSwaps.includes(settings.lookSwap)) settings.lookSwap = defaultSettings.lookSwap;
   // The night mode settings: two choices, a switch each way and the logo width. The times are fixed (constants.js)
   if (!nightStyles.includes(settings.nightStyle)) settings.nightStyle = defaultSettings.nightStyle;
   if (!Object.keys(nightSpeeds).includes(settings.nightSpeed)) settings.nightSpeed = defaultSettings.nightSpeed;
@@ -113,9 +119,30 @@ export function fixSettingValues(settings) {
   // The last click of a Preview button (hidden from editors): a kind and a time, or empty
   settings.previewRequest = tidyPreviewRequest(settings.previewRequest);
   // The last click of Next look now and of Preview competition (Start here page, hidden from editors): a time, or empty
-  settings.nextLookRequest = tidyRequestTime(settings.nextLookRequest);
+  settings.nextLookRequest = tidyNextLookRequest(settings.nextLookRequest);
   settings.competitionPreviewRequest = tidyRequestTime(settings.competitionPreviewRequest);
   settings.crt = tidyGlitch(settings.crt);
+}
+
+// The styles of Styles by day. Something that is not a list is the starting list. An empty list stays
+// empty: the editors emptied it on purpose, and the Style setting decides. A name that is not a style
+// goes, and a style that comes twice stays, because Original, Original, Cybertron is a pattern.
+function tidyStyleList(value) {
+  if (!Array.isArray(value)) return defaultSettings.dailyStyles.slice();
+
+  return value.filter(name => styles.includes(name));
+}
+
+// The codes of Team order, in lowercase and each once. Something that is not a list is the starting
+// list, and an empty list stays empty, so that Team mode decides.
+function tidyTeamOrder(value) {
+  if (!Array.isArray(value)) return defaultSettings.teamOrder.slice();
+
+  const codes = value
+    .filter(code => typeof code === 'string')
+    .map(code => code.trim().toLowerCase())
+    .filter(code => code !== '');
+  return codes.filter((code, index) => codes.indexOf(code) === index);
 }
 
 // A request that is only a time, always complete: { requestedAt }. A time that is not a time
@@ -285,6 +312,21 @@ export function savedStyle() {
     return settings && typeof settings === 'object' ? settings.style || null : null;
   } catch (error) {
     console.error('Could not read the saved style', error);
+    return null;
+  }
+}
+
+// The content in the saved copy, cleaned the way content from Sanity is, or null. Only when the screen will
+// start on the editors' content, like savedStyle. core/look-rotation.js uses it to work out the look the
+// screen starts with, before anything is drawn.
+export function savedContent() {
+  try {
+    if (chosenSource() !== 'production') return null;
+
+    const saved = readSavedCopy();
+    return saved ? saved.content : null;
+  } catch (error) {
+    console.error('Could not read the saved content', error);
     return null;
   }
 }

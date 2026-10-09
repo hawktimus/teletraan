@@ -155,6 +155,10 @@ const contract = {
     presentationTestRequest: object({ requestedAt: 'datetime' }),
     teamMode: 'string',
     alternateMinutes: number(1, 30),
+    dailyStyles: { kind: 'choiceList' },
+    mondayStyle: 'string',
+    teamOrder: { kind: 'references', to: 'team' },
+    lookSwap: 'string',
     announceRequest: object({ requestedAt: 'datetime' }),
     previewRequest: object({ kind: 'string', requestedAt: 'datetime' }),
     nextLookRequest: object({ requestedAt: 'datetime' }),
@@ -214,6 +218,7 @@ const contract = {
 const studioOnlyFields = {
   'dashboardSettings.miniStatus': 'the status block at the top of the Screen tab. It stores nothing',
   'dashboardSettings.lookNote': 'the note on the Look tab. It stores nothing',
+  'dashboardSettings.cycleNote': 'the second note on the Look tab, which says what a cycle is. It stores nothing',
   'dashboardSettings.mondayNote': 'the note on the Monday tab. It stores nothing',
   'dashboardSettings.competitionNote': 'the note on the Competition tab. It stores nothing',
   'theme.settingsNote': 'the note on the Look page. It stores nothing',
@@ -248,6 +253,8 @@ const choices = {
   'dashboardSettings.nightSpeed': ['slow', 'normal', 'fast'],
   'dashboardSettings.contentSource': ['production', 'sample'],
   'dashboardSettings.teamMode': ['prime', 'nova', 'alternate'],
+  'dashboardSettings.mondayStyle': ['original', 'cybertron', 'minimal'],
+  'dashboardSettings.lookSwap': ['assemble', 'slats', 'cut'],
   'dashboardSettings.hiddenRequest.kind': ['desktop', 'redEyes'],
   'dashboardSettings.previewRequest.kind': ['prime', 'nova', 'cybertron', 'minimal', 'next-pack'],
   'demo.steps.screen': ['announcement', 'all-announcements', 'night-mode'],
@@ -556,6 +563,8 @@ const kindChecks = {
   reference: checkReference,
   rows: checkRows,
   strings: checkStrings,
+  choiceList: checkChoiceList,
+  references: checkReferences,
   weekdays: checkWeekdays,
   blocks: checkBlocks,
   image: checkImage,
@@ -636,6 +645,21 @@ function checkStrings(field, want, say) {
 
   checkLimit(member, want.max, say, 'each line');
   checkLimit(field, want.maxItems, say, 'the list');
+}
+
+// A list of words, each picked from a list in its own row
+function checkChoiceList(field, want, say) {
+  const member = field.of && field.of[0];
+  if (field.type !== 'array' || !member || member.type !== 'string') return say('should be a list of strings');
+
+  if (!member.options || !member.options.list || member.options.list.length === 0) say('each row should be picked from a list');
+}
+
+// A list of references to one type
+function checkReferences(field, want, say) {
+  const member = field.of && field.of[0];
+  const target = member && member.to && member.to[0];
+  if (field.type !== 'array' || !member || member.type !== 'reference' || !target || target.type !== want.to) say('should be a list of references to ' + want.to);
 }
 
 function checkWeekdays(field, want, say) {
@@ -3764,6 +3788,7 @@ async function checkTeamInput() {
 // Neither is required, because Dashboard Settings published before the fields existed has
 // neither and must still publish, and the screen reads that as Prime only and 5 minutes.
 const teamNames = ['teamMode', 'alternateMinutes'];
+const rotationNames = ['dailyStyles', 'mondayStyle', 'teamOrder', 'lookSwap'];
 
 function checkTeamsTab() {
   const problems = [];
@@ -3821,7 +3846,7 @@ const logoNames = logoSwitches.concat(logoNumbers);
 const settingsTabs = {
   screen: ['miniStatus', 'team', 'motion', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'alert', 'pageSeconds', 'rotation', 'doneDays', 'safetyDaysSince']
     .concat(photoNames, ['announcements', 'announceRequest']),
-  look: ['lookNote', 'style'].concat(teamNames, logoNames, transitionNames),
+  look: ['lookNote', 'cycleNote'].concat(rotationNames, ['style'], teamNames, logoNames, transitionNames),
   countdown: ['countdown'],
   calendars: ['calendars'],
   presentations: presentationNames.concat('presentationTestRequest'),
@@ -3861,7 +3886,7 @@ function checkSettingsTabs() {
   ['contentSource', 'switchBackAt'].forEach(name => need(problems, fieldAt('dashboardSettings.' + name) && fieldAt('dashboardSettings.' + name).hidden === true, name + ' should be hidden but stay in the schema'));
 
   // The notes store nothing and say one thing each in one line, and the Look tab and the Look page point to each other
-  const notes = ['dashboardSettings.lookNote', 'dashboardSettings.mondayNote', 'dashboardSettings.competitionNote', 'theme.settingsNote'];
+  const notes = ['dashboardSettings.lookNote', 'dashboardSettings.cycleNote', 'dashboardSettings.mondayNote', 'dashboardSettings.competitionNote', 'theme.settingsNote'];
   notes.forEach(pathText => {
     const field = fieldAt(pathText);
     need(problems, field && field.type === 'string' && field.readOnly === true && field.title === 'Note', pathText + ' should be a read only string titled Note');
@@ -4145,6 +4170,88 @@ function checkPanelOrder() {
   return problems;
 }
 
+// The look rotation (schemas/settingsLook.js): the styles by day, the Monday style, the team order and the swap. The choices
+// and the starting values are the ones in dashboard/config.js. None is required, because an empty list gives the choice back
+// to Style and Team mode, which are hidden now and keep what is saved in them. The starting teams are the two of the seed file,
+// which the dashboard reads by their codes.
+function checkLookRotation() {
+  const problems = [];
+  const config = world.dashboard;
+  const at = name => fieldAt('dashboardSettings.' + name);
+  const rulesOf = field => (field ? constraintsOf(field) : []);
+  const titles = { original: 'Original', cybertron: 'Cybertron', minimal: 'Minimal', assemble: 'Assemble', slats: 'Slats', cut: 'Cut' };
+  const offered = list => list.map(item => item.value).join();
+
+  const names = fieldsIn(typeByName('dashboardSettings')).map(field => field.name);
+  const from = names.indexOf('lookNote');
+  need(problems, names.slice(from, from + 2 + rotationNames.length).join() === ['lookNote', 'cycleNote'].concat(rotationNames).join(), 'the Look tab should start with lookNote, cycleNote and then ' + rotationNames.join(', '));
+  rotationNames.forEach(name => {
+    need(problems, at(name) && at(name).group === 'look', name + ' should be in the Look tab');
+    need(problems, at(name) && !at(name).hidden, name + ' should show in the form');
+    need(problems, !constraintNamed(rulesOf(at(name)), 'required'), name + ' should not be required: an empty one gives the choice back to the old setting, and the page must still publish');
+    need(problems, rulesOf(at(name)).some(rule => rule.name === 'error' && rule.args[0]) || (at(name).of || []).some(member => constraintsOf(member).some(rule => rule.name === 'error' && rule.args[0])), name + ' has rules and no error message in plain words');
+  });
+  need(problems, at('dailyStyles') && at('dailyStyles').title === 'Styles by day', 'dailyStyles should be titled Styles by day');
+  need(problems, at('mondayStyle') && at('mondayStyle').title === 'Monday style', 'mondayStyle should be titled Monday style');
+  need(problems, at('teamOrder') && at('teamOrder').title === 'Team order', 'teamOrder should be titled Team order');
+  need(problems, at('lookSwap') && at('lookSwap').title === 'How the look changes', 'lookSwap should be titled How the look changes');
+
+  // The names the dashboard has, and the lists the Studio offers
+  need(problems, config.lookSwaps.join() === 'assemble,slats,cut', 'lookSwaps in config.js should be assemble, slats and cut, not ' + config.lookSwaps.join());
+  const rows = at('dailyStyles') && at('dailyStyles').of && at('dailyStyles').of[0];
+  const rowList = (rows && rows.options && rows.options.list) || [];
+  need(problems, offered(rowList) === config.styles.join(), 'each row of dailyStyles should offer the styles in config.js, in the same order: ' + config.styles.join(', '));
+  need(problems, offered(choicesOf('dashboardSettings.mondayStyle')) === config.styles.join(), 'mondayStyle should offer the styles in config.js, in the same order');
+  need(problems, offered(choicesOf('dashboardSettings.lookSwap')) === config.lookSwaps.join(), 'lookSwap should offer the swaps in config.js, in the same order');
+  rowList.concat(choicesOf('dashboardSettings.mondayStyle'), choicesOf('dashboardSettings.lookSwap')).forEach(item => need(problems, item.title === titles[item.value], 'the choice ' + item.value + ' should be titled ' + titles[item.value]));
+  ['mondayStyle', 'lookSwap'].forEach(name => {
+    const allowed = constraintNamed(rulesOf(at(name)), 'valid');
+    const known = name === 'lookSwap' ? config.lookSwaps : config.styles;
+    need(problems, at(name) && at(name).options && at(name).options.layout === 'radio', name + ' should be a radio list');
+    need(problems, allowed && allowed.args[0].join() === known.join(), name + ' should only allow: ' + known.join(', '));
+  });
+  const rowAllowed = rows && constraintNamed(constraintsOf(rows), 'valid');
+  need(problems, rowAllowed && rowAllowed.args[0].join() === config.styles.join(), 'each row of dailyStyles should only allow: ' + config.styles.join(', '));
+
+  // The starting values are the dashboard's defaults. The teams are written as references, to the ids of the seed file.
+  const settings = config.defaultSettings;
+  need(problems, sameData(at('dailyStyles') && at('dailyStyles').initialValue, settings.dailyStyles), 'dailyStyles should start as ' + JSON.stringify(settings.dailyStyles) + ', the default in config.js');
+  need(problems, at('mondayStyle') && at('mondayStyle').initialValue === settings.mondayStyle && settings.mondayStyle === 'minimal', 'mondayStyle should start as minimal, and so should its default in config.js');
+  need(problems, at('lookSwap') && at('lookSwap').initialValue === settings.lookSwap && settings.lookSwap === 'assemble', 'lookSwap should start as assemble, and so should its default in config.js');
+  need(problems, sameData(settings.dailyStyles, ['original', 'cybertron']) && sameData(settings.teamOrder, ['prime', 'nova']), 'the defaults in config.js should be Original then Cybertron, and Prime then Nova');
+  const seeded = world.teamSeed.split('\n').filter(line => line.trim() !== '').map(line => JSON.parse(line));
+  const starting = ((at('teamOrder') && at('teamOrder').initialValue) || []).map(item => {
+    const team = seeded.filter(doc => doc._id === item._ref)[0];
+    return item._type === 'reference' && team ? team.code : '(' + item._ref + ' is not in the seed file)';
+  });
+  need(problems, sameData(starting, settings.teamOrder), 'teamOrder should start with the teams ' + JSON.stringify(settings.teamOrder) + ', as references to the documents of docs/seed/teams.ndjson, not ' + JSON.stringify(starting));
+
+  // Only the teams that are switched on can be picked, and each once
+  const order = at('teamOrder') && at('teamOrder').of && at('teamOrder').of[0];
+  need(problems, order && order.options && order.options.filter === 'active != false', 'teamOrder should offer only the teams that are switched on (options.filter)');
+  need(problems, constraintNamed(rulesOf(at('teamOrder')), 'unique'), 'teamOrder should refuse a team that is in the list twice');
+
+  // The old choices stay in the schema, hidden, with their starting values. The screen uses them when a list is empty.
+  teamNames.concat('style').forEach(name => {
+    need(problems, at(name) && at(name).hidden === true, name + ' should be hidden but stay in the schema, so that a saved value is kept');
+    need(problems, at(name) && at(name).group === 'look', name + ' should stay in the Look tab');
+    need(problems, at(name) && /^Used only when (Styles by day|Team order) is empty/.test(at(name).description || ''), 'the ' + name + ' description should begin by saying that it is used only when its list is empty');
+  });
+
+  // The notes say what the tab does
+  const cycle = at('cycleNote');
+  need(problems, cycle && /cycle/.test(cycle.description || '') && /Monday/.test(cycle.description || ''), 'the second note on the Look tab should say what a cycle is, and mention the Monday cards');
+
+  // The sample content carries the four settings, with values the dashboard accepts
+  const sample = world.sample.settings;
+  need(problems, Array.isArray(sample.dailyStyles) && sample.dailyStyles.length > 0 && sample.dailyStyles.every(name => config.styles.indexOf(name) !== -1), 'the sample settings need dailyStyles, each of ' + config.styles.join(', '));
+  need(problems, config.styles.indexOf(sample.mondayStyle) !== -1, 'the sample settings need a mondayStyle of ' + config.styles.join(', '));
+  need(problems, config.lookSwaps.indexOf(sample.lookSwap) !== -1, 'the sample settings need a lookSwap of ' + config.lookSwaps.join(', '));
+  const codes = world.sample.teams.map(team => team.code);
+  need(problems, Array.isArray(sample.teamOrder) && sample.teamOrder.length > 0 && sample.teamOrder.every(code => codes.indexOf(code) !== -1), 'the sample settings need a teamOrder of the codes of the sample teams: ' + codes.join(', '));
+  return problems;
+}
+
 async function main() {
   const folder = makeSandbox();
   try {
@@ -4247,6 +4354,7 @@ async function main() {
   results.push({ name: 'the status block asks for the published document by its id, and survives a client that fails', problems: await checkStatusRead().catch(error => ['the check stopped: ' + error.message]) });
   check('Panel order is one list of every panel, the older lists are hidden, and the input fills an empty list from them as the dashboard does', checkPanelOrder);
   check('the night times, the speaker wait, the overrun and the booking close time are hidden, keep their starting values and are not read by the dashboard', checkFixedValues);
+  check('the look rotation fields offer the styles, teams and swaps the dashboard has, start as its defaults, and the old Style and Team mode are hidden but kept', checkLookRotation);
   check('every theme and overlay is complete and readable (tools/check-themes.mjs)', checkThemeGuard);
   check('every seasonal pack is complete, and draws only in the empty places (tools/check-seasons.mjs)', checkSeasonGuard);
 

@@ -1,5 +1,6 @@
 // The team fields of Dashboard Settings, in the Look tab: which team the screen
-// shows. Two fields:
+// shows. Two fields, both hidden since the look rotation (settingsLook.js) has Team order. They stay in
+// the schema, with what is saved in them, and the screen uses them when Team order is empty:
 //
 //   teamMode          prime (Prime only, the default), nova (Nova only) or alternate
 //   alternateMinutes  minutes each team stays on the screen in Alternate mode, from 1 to 30, 5 to start with
@@ -34,7 +35,8 @@ export function teamsFields() {
       title: 'Team mode',
       type: 'string',
       group: 'look',
-      description: 'Prime only or Nova only shows that team all the time. Alternate swaps between the teams, and the screen changes with each swap.',
+      hidden: true,
+      description: 'Used only when Team order is empty. Prime only or Nova only shows that team. Alternate swaps between the teams every few minutes.',
       options: { list: modes, layout: 'radio', direction: 'horizontal' },
       initialValue: 'prime',
       validation: Rule => Rule.valid(modes.map(mode => mode.value)).error('Pick Prime only, Nova only or Alternate.'),
@@ -45,7 +47,8 @@ export function teamsFields() {
       title: 'Minutes for each team',
       type: 'number',
       group: 'look',
-      description: 'In Alternate mode, how many minutes each team stays on the screen, from 1 to 30. The swap waits for a change between panels.',
+      hidden: true,
+      description: 'Used only when Team order is empty, in Alternate mode: how many minutes each team stays, from 1 to 30. The swap waits for a panel change.',
       initialValue: 5,
       validation: Rule => Rule.integer().min(1).max(30).error('Use a whole number from 1 to 30.'),
     }),

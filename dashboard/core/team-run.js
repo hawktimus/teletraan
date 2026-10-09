@@ -17,6 +17,12 @@ export function startTeams(contentGetter) {
   frame.onSecond(look);
 }
 
+// The look rotation (core/look-rotation-run.js) moves the pages on itself when it changes the team, so the
+// change is noted as seen and the next look at the clock finds nothing to move
+export function noteWantedTeam() {
+  lastWanted = wantedTeam().code;
+}
+
 function look(now) {
   const content = getContent();
   if (!content) return;

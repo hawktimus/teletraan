@@ -60,6 +60,13 @@ export const styles = ['original', 'cybertron', 'minimal'];
 //   alternate  the two teams take turns, alternateMinutes each
 export const teamModes = ['prime', 'nova', 'alternate'];
 
+// The look rotation in Dashboard Settings (Look tab) (core/look-rotation.js): how the screen changes from
+// one look to the next. The Studio copies this list.
+//   assemble  everything leaves and comes in again, the way the screen starts
+//   slats     the page change of the large panel with the slats turning, and the frames stay
+//   cut       at once, at the next page change of the large panel
+export const lookSwaps = ['assemble', 'slats', 'cut'];
+
 // The page change settings in Dashboard Settings (Look tab) (core/transitions.js chooses from them)
 //   pageChangeStyles  alternate: the slat change and the mechanical change take turns.
 //                     slat: the old change only. mechanical: the new one only.
@@ -256,6 +263,17 @@ export const defaultSettings = {
   //   alternateMinutes  with alternate, how long each team stays before the screen swaps to the other
   teamMode: 'prime',
   alternateMinutes: 5,
+  // The look rotation in the Studio (Look tab) (core/look-rotation.js, docs/layouts.md, "The look rotation").
+  //   dailyStyles  the styles the screen goes through, one for each calendar day, in this order and then over
+  //                again (see styles above). Empty means the hidden style above decides
+  //   mondayStyle  the style while the Monday cards of a team are on the screen (see styles above)
+  //   teamOrder    the codes of the teams, in the order of their passes. Only teams that are switched on count.
+  //                Empty means the hidden teamMode above decides
+  //   lookSwap     see lookSwaps above
+  dailyStyles: ['original', 'cybertron'],
+  mondayStyle: 'minimal',
+  teamOrder: ['prime', 'nova'],
+  lookSwap: 'assemble',
   // The "Play announcements" button in the Studio (core/announce.js, core/announce-run.js, docs/hidden-transitions.md).
   //   announceRequest  the last click of the button. requestedAt is the time it was clicked and is empty until
   //                    it has been. The screen plays every announcement that is switched on, once, for a request
@@ -379,6 +397,16 @@ export const hiddenGapHours = 4;
 // How long a preview from the Studio holds a team, a style or a seasonal pack on the screen, in seconds. After that the
 // screen goes back to the saved settings.
 export const previewSeconds = 120;
+
+// The look rotation (core/look-rotation.js). The screen never ends a pass of a team sooner than
+// lookShortestSeconds after it began, so a team with nothing to show cannot make the looks flicker.
+// A page that reloads, for a change of layout or a new version, goes on in the same pass if it
+// reloads within lookResumeSeconds of the last time the pass was written down.
+export const lookShortestSeconds = 15;
+export const lookResumeSeconds = 600;
+
+// How long the cut swap keeps the pages of all three areas changing at once, in milliseconds
+export const lookCutMilliseconds = 1000;
 
 export const defaultDemo = {
   requestedAt: '',

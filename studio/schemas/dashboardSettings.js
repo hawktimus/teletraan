@@ -13,6 +13,7 @@ import { nightFields } from './settingsNight.js';
 import { hiddenFields } from './settingsHidden.js';
 import { presentationsFields, presentationTestRequestField } from './settingsPresentations.js';
 import { teamsFields } from './settingsTeams.js';
+import { lookRotationFields } from './settingsLook.js';
 import { previewRequestField } from './settingsPreview.js';
 import { nextLookRequestField, competitionPreviewRequestField } from './settingsRequests.js';
 
@@ -147,19 +148,19 @@ const showConnectionStatusField = defineField({
   initialValue: false,
 });
 
-// The look of the whole screen. The starting value is the same as defaultSettings.style
-// in dashboard/config.js. dashboard/core/style.js turns the choice into the page
-// switch the stylesheets read and into a layout: Minimal has the bar layout whatever the
-// theme says, and Original and Cybertron have the layout of the theme. It is not required: Dashboard Settings published
-// before this field existed has no style, which the screen reads as Original, and a
-// required field would stop that page being published (an alert too) until somebody
-// picked one.
+// The look of the whole screen when Styles by day is empty. It is hidden, and the value saved in it stays. The
+// starting value is the same as defaultSettings.style in dashboard/config.js. dashboard/core/style.js turns the
+// choice into the page switch the stylesheets read and into a layout: Minimal has the bar layout whatever the
+// theme says, and Original and Cybertron have the layout of the theme. It is not required: Dashboard Settings
+// published before this field existed has no style, which the screen reads as Original, and a required field
+// would stop that page being published (an alert too) until somebody picked one.
 const styleField = defineField({
   name: 'style',
   title: 'Style',
   type: 'string',
   group: 'look',
-  description: 'Original is the screen as now. Cybertron is it in steel plates. Minimal has one main panel and a side column, whatever the theme. The team sets the colors.',
+  hidden: true,
+  description: 'Used only when Styles by day is empty. Original is the screen as now, Cybertron is steel plates, Minimal is one main panel, whatever the theme.',
   options: { list: styles, layout: 'radio', direction: 'horizontal' },
   initialValue: 'original',
   validation: Rule => Rule.valid(styles.map(style => style.value)).error('Pick original, cybertron or minimal.'),
@@ -443,8 +444,9 @@ const calendarsField = defineField({
   ],
 });
 
-// The note on the Look tab points to the Look page, which points back (theme.js)
-const lookNoteField = noteField('lookNote', 'Which style and team come on is set here. Colors, seasonal packs and the time zone are in Look, in the sidebar.', 'look');
+// The note on the Look tab points to the Look page, which points back (theme.js). The second says what a cycle is.
+const lookNoteField = noteField('lookNote', 'Which styles and teams come on, and how, is set here. Colors, seasonal packs and the time zone are in Look, in the sidebar.', 'look');
+const cycleNoteField = noteField('cycleNote', 'A cycle is each team in turn: its panels in the style of the day, then its Monday cards in the Monday style, then the next team.', 'look');
 
 // Replaced by the Monday settings and the competition settings when those are built
 const mondayNoteField = noteField('mondayNote', 'Nothing to set here yet. The Monday connection and boards will be set up on this tab.', 'monday');
@@ -459,6 +461,8 @@ export default defineType({
     statusBlockField(),
     teamField,
     lookNoteField,
+    cycleNoteField,
+    ...lookRotationFields(),
     styleField,
     motionField,
     speedField,
