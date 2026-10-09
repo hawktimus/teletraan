@@ -55,6 +55,13 @@ const looks = [
   { title: 'Plain', value: 'plain' },
 ];
 
+// The values are the names in styles in dashboard/config.js
+const styles = [
+  { title: 'Original', value: 'original' },
+  { title: 'Cybertron', value: 'cybertron' },
+  { title: 'Minimal', value: 'minimal' },
+];
+
 // The values are the names in speeds in dashboard/config.js
 const speeds = [
   { title: 'Very slow', value: 'very-slow' },
@@ -149,6 +156,24 @@ const showConnectionStatusField = defineField({
   group: 'connection',
   description: 'Keeps a small text at the bottom right with the last Sanity read, the item counts and the calendar read time. It always shows when Sanity is unreachable.',
   initialValue: false,
+});
+
+// The look of the whole screen. The starting value is the same as defaultSettings.style
+// in dashboard/config.js. dashboard/core/style.js turns the choice into the page
+// switch the stylesheets read and into a layout: Cybertron and Minimal have the bar
+// layout whatever the theme says. It is not required: Dashboard Settings published
+// before this field existed has no style, which the screen reads as Original, and a
+// required field would stop that page being published (an alert too) until somebody
+// picked one.
+const styleField = defineField({
+  name: 'style',
+  title: 'Style',
+  type: 'string',
+  group: 'screen',
+  description: 'Original is the screen as now. Cybertron and Minimal have a banner, a side column and one main panel, whatever the theme. The team sets the base colors.',
+  options: { list: styles, layout: 'radio', direction: 'horizontal' },
+  initialValue: 'original',
+  validation: Rule => Rule.valid(styles.map(style => style.value)).error('Pick original, cybertron or minimal.'),
 });
 
 const motionField = defineField({
@@ -436,6 +461,7 @@ export default defineType({
   groups: groups,
   fields: [
     teamField,
+    styleField,
     motionField,
     speedField,
     frameMetalField,

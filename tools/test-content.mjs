@@ -1077,6 +1077,64 @@ test('every look with every address and every Glint setting gives words the styl
   });
 });
 
+// The Style setting: original, cybertron or minimal (dashboard/core/style.js has the page side)
+
+test('style is original, cybertron or minimal, and anything else becomes original', () => {
+  assert.deepEqual(live.config.styles, ['original', 'cybertron', 'minimal']);
+  assert.equal(live.config.defaultSettings.style, 'original');
+
+  live.config.styles.forEach(name => {
+    settingsThrough({ style: name }).forEach(settings => assert.equal(settings.style, name));
+  });
+
+  [undefined, null, '', 'Cybertron', 'MINIMAL', 'bar', 'toString', 'look', 0, true, ['minimal'], {}].forEach(value => {
+    settingsThrough({ style: value }).forEach(settings => {
+      assert.equal(settings.style, 'original', JSON.stringify(value));
+    });
+  });
+  assert.equal(normalizeContent({ settings: null }).settings.style, 'original');
+  assert.equal(withDefaults(null).settings.style, 'original');
+
+  // it is a setting of its own: Look and Frame metal keep their values
+  settingsThrough({ style: 'cybertron', look: 'plain', frameMetal: 'silver' }).forEach(settings => {
+    assert.deepEqual([settings.style, settings.look, settings.frameMetal], ['cybertron', 'plain', 'silver']);
+  });
+});
+
+test('the sample content has the original style, which is what index.html starts with', () => {
+  const sample = JSON.parse(fs.readFileSync(sampleFile, 'utf8')).settings;
+  assert.equal(sample.style, 'original');
+  assert.equal(normalizeSample({ settings: sample }).settings.style, 'original');
+  assert.ok(/<html [^>]*data-style="original"/.test(fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8')));
+});
+
+test('savedStyle gives the style in the saved copy, and nothing when the copy, the style or the storage is missing or broken, or the screen starts on the sample', async () => {
+  await inWorld(async world => {
+    assert.equal(live.content.savedStyle(), null, 'nothing saved');
+
+    saveCopy(world, { settings: { style: 'cybertron' } }, start);
+    assert.equal(live.content.savedStyle(), 'cybertron');
+    saveCopy(world, { settings: { style: 'minimal', look: 'flat' } }, start);
+    assert.equal(live.content.savedStyle(), 'minimal');
+
+    [{ settings: {} }, { settings: null }, { settings: 'oops' }, {}, { settings: { style: '' } }].forEach(raw => {
+      saveCopy(world, raw, start);
+      assert.equal(live.content.savedStyle(), null, JSON.stringify(raw));
+    });
+
+    world.storage.set(storageKey, 'not json');
+    assert.equal(live.content.savedStyle(), null);
+    saveCopy(world, { settings: { style: 'minimal' } }, start);
+    world.storageBroken = true;
+    assert.equal(live.content.savedStyle(), null, 'a storage that throws');
+    world.storageBroken = false;
+
+    // the sample has a style of its own, read from its file, so nothing is saved for it
+    world.storage.set(sourceKey, JSON.stringify({ savedAt: start, settings: { contentSource: 'sample', switchBackAt: '' } }));
+    assert.equal(live.content.savedStyle(), null, 'the screen starts on the sample');
+  });
+});
+
 function cssFilesIn(folder) {
   return fs.readdirSync(folder, { withFileTypes: true }).reduce((files, entry) => {
     const full = path.join(folder, entry.name);

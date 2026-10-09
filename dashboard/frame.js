@@ -60,6 +60,8 @@ export const sequences = {
     'stripes':       ['grow', 1350],
     'segment':       ['pop', 1450, 35],
     'stud':          ['servo', 1300, 50],
+    'rivets':        ['fade', 1350],
+    'plate-id':      ['fade', 1400],
     'scan':          ['scan', 1200],
   },
 
@@ -82,6 +84,29 @@ export const sequences = {
     'team-plate':    ['latch-left', 1400],
     'school':        ['fade', 1700],
     'sample-badge':  ['fade', 1900],
+  },
+
+  // The bar layout's two panels that stay on screen: the banner (panels/bar-banner) and
+  // the side column (panels/bar-column). The banner draws its own frame, as the countdown
+  // does: the plate unfolds, the lines are drawn, the decoration and the hex bolts come
+  // after, and in Minimal so do the rivets, the rust and the id. The war clock's slot is
+  // empty until the war clock is drawn into it
+  'bar-banner': {
+    'body':         ['unfold', 200],
+    'outline':      ['draw', 700],
+    'title':        ['latch-left', 500],
+    'war':          ['fade', 900],
+    'decor':        ['fade', 1350],
+    'rivets':       ['fade', 1350],
+    'wear':         ['fade', 1350],
+    'plate-id':     ['fade', 1400],
+    'stud':         ['servo', 1300, 50],
+  },
+  'bar-column': {
+    'clock':        ['latch-right', 700],
+    'team-plate':   ['latch-left', 800],
+    'school':       ['fade', 1100],
+    'sample-badge': ['fade', 1300],
   },
 
   // Full screen: an alert from the editors

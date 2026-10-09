@@ -1,7 +1,7 @@
 // Every panel the dashboard can load. A panel is a folder under panels/
 // holding a script and a stylesheet.
 //
-//   region    where it appears: banner, countdown, grid1, grid2, ticker or overlay
+//   region    where it appears: banner, countdown, column, grid1, grid2, ticker or overlay
 //   topic     what it is about. Grid 1 and Grid 2 never show the same topic
 //             at the same moment, so tasks and task-counts share one.
 //   testOnly  only used by the hardware test (?stress)
@@ -20,6 +20,8 @@ export const panels = [
   { id: 'banner', region: 'banner' },
   { id: 'countdown', region: 'countdown' },
   { id: 'side', region: 'banner', layout: 'sidebar' },
+  { id: 'bar-banner', region: 'banner', layout: 'bar' },
+  { id: 'bar-column', region: 'column', layout: 'bar' },
   { id: 'ticker', region: 'ticker' },
 
   { id: 'tasks', region: 'grid1', topic: 'tasks' },
@@ -52,10 +54,11 @@ export const panels = [
 
 // The panels that stay on screen the whole time, in the order shell.js draws
 // them. The sidebar layout has one of its own, side, which holds what the
-// banner and the countdown hold in the standard layout, so when a panel names
-// the layout it is the one drawn, and the panels with no layout are not.
+// banner and the countdown hold in the standard layout, and the bar layout has
+// two, the banner and the side column, so when a panel names the layout it is the
+// one drawn, and the panels with no layout are not.
 export function fixedPanels(layout) {
-  const stays = panel => panel.region === 'banner' || panel.region === 'countdown';
+  const stays = panel => panel.region === 'banner' || panel.region === 'countdown' || panel.region === 'column';
   const own = panels.filter(panel => stays(panel) && panel.layout === layout);
 
   return (own.length > 0 ? own : panels.filter(panel => stays(panel) && !panel.layout)).map(panel => panel.id);

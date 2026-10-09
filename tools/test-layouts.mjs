@@ -1,10 +1,14 @@
-// Tests for the layouts: which layout a theme has, the numbers of the sidebar
-// layout (dashboard/core/layout.js: the strip, the sidebar, the pane and the
-// ticker), how the page is set up for it
+// Tests for the layouts: which layout a theme and a style have, the numbers of the
+// sidebar layout (dashboard/core/layout.js: the strip, the sidebar, the pane and the
+// ticker) and of the bar layout (the banner, the side column, the main panel and the
+// ticker), how the page is set up for them
 // (core/layout-apply.js, with a fake page), that the scheduler leaves out the
 // small frame, which blocks fly apart in a hidden transition, that seasonal packs
-// draw only what a layout allows, and that the stylesheet and the docs agree with
-// the numbers. Nothing touches the network or a browser.
+// draw only what a layout allows, how the mirror turns the layouts round, that the
+// screen is always 1920 x 1080, the frames of the bar layout (their shapes, their
+// parts and where they land on the screen), the steel and what Cybertron paints,
+// and that the stylesheets and the docs agree with the numbers. Nothing touches the
+// network or a browser.
 //
 //   node tools/test-layouts.mjs
 //
@@ -44,12 +48,13 @@ const withoutComments = text => text.replace(/\/\*[\s\S]*?\*\//g, '');
 // The real layout code, with the files it reads
 const mainTree = makeTree('main', [
   'dashboard/config.js', 'dashboard/registry.js', 'dashboard/themes/registry.js', 'dashboard/themes/overlays/registry.js',
-  'dashboard/core/layout.js', 'dashboard/core/layout-apply.js', 'dashboard/core/theme.js',
+  'dashboard/core/layout.js', 'dashboard/core/layout-apply.js', 'dashboard/core/theme.js', 'dashboard/core/style.js',
   'dashboard/core/season.js', 'dashboard/core/marks.js',
 ]);
 const layout = await import(urlOf(mainTree, 'dashboard/core/layout.js'));
 const apply = await import(urlOf(mainTree, 'dashboard/core/layout-apply.js'));
 const season = await import(urlOf(mainTree, 'dashboard/core/season.js'));
+const styles = await import(urlOf(mainTree, 'dashboard/core/style.js'));
 const { themes } = await import(urlOf(mainTree, 'dashboard/themes/registry.js'));
 const { panels } = await import(urlOf(mainTree, 'dashboard/registry.js'));
 const config = await import(urlOf(mainTree, 'dashboard/config.js'));
@@ -77,18 +82,19 @@ async function withGlobals(values, run) {
   }
 }
 
-// A page that only has an html element with a data-layout
-const pageWith = name => ({ documentElement: { dataset: name === undefined ? {} : { layout: name } } });
+// A page that only has an html element with a data-layout, and the corners of its frames when it has some
+const pageWith = (name, shapes) => ({ documentElement: { dataset: Object.assign(name === undefined ? {} : { layout: name }, shapes ? { shapes: shapes } : {}) } });
 
 
 // Which layout a theme has
 
 test('the standard layout is the default, and Neon Prime has the sidebar layout', () => {
-  assert.deepEqual(layout.layouts, ['standard', 'sidebar']);
+  assert.deepEqual(layout.layouts, ['standard', 'sidebar', 'bar']);
   assert.equal(layout.defaultLayout, 'standard');
   assert.equal(layout.layoutOf('hawktimus'), 'standard');
   assert.equal(layout.layoutOf('alternate'), 'standard');
   assert.equal(layout.layoutOf('neon-prime'), 'sidebar');
+  themes.forEach(theme => assert.notEqual(layout.layoutOf(theme.id), 'bar', theme.id + ': no theme has the bar layout, a style does'));
 });
 
 test('a theme with no layout, an unknown layout or no registry entry gets the standard layout', () => {
@@ -466,6 +472,8 @@ function fakePage() {
   make('strip-clock');
   make('region-sidebar').hidden = true;
   ['sidebar-top', 'sidebar-countdown', 'sidebar-bottom'].forEach(id => make(id));
+  make('bar-middle').hidden = true;
+  make('region-column').hidden = true;
 
   const style = { values: {}, setProperty(name, value) { style.values[name] = value; } };
   const html = { dataset: {}, style: style };
@@ -501,6 +509,9 @@ test('the standard layout leaves the page exactly as index.html has it', async (
   assert.equal(page.html.dataset.layout, 'standard');
   assert.equal(page.elements['region-strip'].hidden, true);
   assert.equal(page.elements['region-sidebar'].hidden, true);
+  assert.equal(page.elements['bar-middle'].hidden, true);
+  assert.equal(page.elements['region-column'].hidden, true);
+  assert.equal(page.elements['region-grid1'].parent, null, 'the large frame is not moved into the bar row');
   assert.equal(page.elements['region-banner'].parent, null);
   assert.equal(page.elements['region-countdown'].parent, null);
   assert.deepEqual(page.html.style.values, {}, 'no variables');
@@ -615,7 +626,8 @@ test('the sidebar layout has no small frame, and every other region of the stand
 });
 
 test('the small panels are the ones the sidebar layout skips, and the Large panels list is untouched', () => {
-  const skipped = panels.filter(panel => !layout.hasRegion('sidebar', panel.region)).map(panel => panel.id);
+  // a panel that names a layout of its own (the bar layout's two) is not one the sidebar skips for its region
+  const skipped = panels.filter(panel => !panel.layout && !layout.hasRegion('sidebar', panel.region)).map(panel => panel.id);
   assert.deepEqual(skipped.sort(), ['forecast', 'next-event', 'safety-days', 'sponsor-logo', 'stand-in-tile', 'task-counts']);
   assert.ok(panels.filter(panel => panel.region === 'grid2').every(panel => skipped.indexOf(panel.id) !== -1), 'every small panel');
 
@@ -684,7 +696,7 @@ test('hidden-run.js waits for the areas of the layout, and areas.js and schedule
 // schedule.js is the real file. What it imports from the page is replaced by
 // small stand-ins that note what they were asked, so the test can see which
 // regions the scheduler gave pages to.
-const schedulerTree = makeTree('scheduler', ['dashboard/config.js', 'dashboard/registry.js', 'dashboard/core/schedule.js', 'dashboard/core/layout.js', 'dashboard/core/theme.js',
+const schedulerTree = makeTree('scheduler', ['dashboard/config.js', 'dashboard/registry.js', 'dashboard/core/schedule.js', 'dashboard/core/layout.js', 'dashboard/core/theme.js', 'dashboard/core/style.js',
   'dashboard/themes/registry.js', 'dashboard/themes/overlays/registry.js']);
 const standIns = {
   'dashboard/frame.js': 'export const wait = () => new Promise(() => {});\nexport const pace = () => 1;\nexport const turnMs = () => 1000;\nexport const isPaused = () => false;\n',
@@ -758,6 +770,39 @@ test('?show and ?stress leave out a panel of a region the layout has not got, an
   assert.deepEqual(standard.filter(call => call[0] === 'buildPage').map(call => call[1]), ['tasks', 'task-counts', 'stand-in-ticker']);
 
   assert.deepEqual(await schedulerCalls('sidebar', scheduler => scheduler.startTogether(['task-counts'], () => content, 30)), [], 'nothing at all when every panel is skipped');
+});
+
+// The bar layout has no small frame either: the same mechanism, the same answers
+
+const smallPanels = panels.filter(panel => panel.region === 'grid2').map(panel => panel.id);
+
+test('the bar layout never starts the small frame: no playlist is read, no page is built and no area is asked for', async () => {
+  assert.ok(smallPanels.length >= 5, 'the small panels the registry has: ' + smallPanels.join(', '));
+  const asked = [];
+  const calls = await schedulerCalls('bar', scheduler => scheduler.startRotation('grid2', () => { asked.push('playlist'); return small; }, () => content));
+  assert.deepEqual(asked, []);
+  assert.deepEqual(calls, []);
+});
+
+test('the bar layout rotates the large frame and starts the ticker exactly as the standard layout does', async () => {
+  const standard = await schedulerCalls('standard', scheduler => scheduler.startRotation('grid1', () => large, () => content));
+  const bar = await schedulerCalls('bar', scheduler => scheduler.startRotation('grid1', () => large, () => content));
+  assert.deepEqual(standard, [['buildPage', 'tasks'], ['changePage', 'grid1', 'tasks']]);
+  assert.deepEqual(bar, standard);
+
+  const withTicker = { settings: content.settings, tipsAndNews: [{ kind: 'tip', text: 'A tip', show: true }], sponsors: [] };
+  const ticker = async name => schedulerCalls(name, scheduler => scheduler.startTicker(() => withTicker));
+  assert.deepEqual(await ticker('bar'), await ticker('standard'));
+});
+
+test('?show and ?stress in the bar layout leave out every small panel and keep the large ones and the ticker', async () => {
+  const everything = smallPanels.concat(['tasks', 'events', 'stand-in-ticker']);
+  const bar = await schedulerCalls('bar', scheduler => scheduler.startTogether(everything, () => content, 30));
+  assert.deepEqual(bar.filter(call => call[0] === 'buildPage').map(call => call[1]), ['tasks', 'events', 'stand-in-ticker']);
+  assert.deepEqual(bar.filter(call => call[0] === 'changePage').map(call => call[1]).sort(), ['grid1', 'grid1', 'ticker']);
+
+  smallPanels.forEach(id => assert.ok(!bar.some(call => call[1] === id || call[2] === id), id + ' was asked for'));
+  assert.deepEqual(await schedulerCalls('bar', scheduler => scheduler.startTogether(smallPanels, () => content, 30)), [], 'nothing at all when every panel is skipped');
 });
 
 
@@ -843,9 +888,10 @@ test('shell.js gives season.js the layers before it asks for a pack, and the pag
 test('shell.js sets the layout before anything else is drawn, and keeps an alert or announcement from being lost to a reload', () => {
   const shell = read('dashboard/shell.js');
   const code = shell.split('\n').filter(line => !line.trim().startsWith('//')).join('\n');
-  const first = code.indexOf('startLayout(params.get(\'theme\'), savedTheme);');
+  const first = code.indexOf('startLayout(params.get(\'theme\'), savedTheme, document.documentElement, style);');
 
-  assert.ok(first !== -1, 'startLayout is called with ?theme= and the saved theme');
+  assert.ok(first !== -1, 'startLayout is called with ?theme=, the saved theme and the style');
+  assert.ok(code.indexOf('const style = startStyle(params.get(\'style\'), savedStyle);') < first, 'the style is chosen before the layout, which needs it');
   assert.ok(first < code.indexOf('makeSilverGradients();'), 'before the gradients');
   assert.ok(first < code.indexOf('frame.start('), 'before the frame starts');
   assert.ok(first < code.indexOf('await Promise.race([waitForFonts()'), 'before the fonts, the panels and the content');
@@ -926,7 +972,8 @@ test('the tests and the docs list this file and the new ones', () => {
 // wait in a list, a canvas that measures text, and one fake node for each
 // selector the panel asks for. Every write to a node goes in a log.
 
-const sideFiles = ['dashboard/config.js', 'dashboard/frame.js', 'dashboard/registry.js', 'dashboard/panels/side/side.js', 'dashboard/panels/countdown/countdown.js']
+const sideFiles = ['dashboard/config.js', 'dashboard/frame.js', 'dashboard/registry.js', 'dashboard/panels/side/side.js', 'dashboard/panels/countdown/countdown.js',
+  'dashboard/panels/bar-banner/bar-banner.js', 'dashboard/panels/bar-column/bar-column.js']
   .concat(fs.readdirSync(path.join(dashboardFolder, 'core')).filter(name => name.endsWith('.js')).map(name => 'dashboard/core/' + name));
 const nameTree = makeTree('name', ['dashboard/core/name.js', 'dashboard/core/text.js']);
 const nameModule = await import(urlOf(nameTree, 'dashboard/core/name.js'));
@@ -1855,6 +1902,1834 @@ test('the decor names only elements the page has: a class or id that nothing in 
   });
   assert.ok(corpus.indexOf("'theme-'") !== -1 || corpus.indexOf('"theme-"') !== -1 || corpus.indexOf('theme-') !== -1, 'the theme class is written by theme-apply.js');
   assert.ok(read('dashboard/core/name.js').indexOf('cut-') !== -1, 'the spare pieces of a letter are numbered by core/name.js');
+});
+
+// The style, and the layout it asks for (dashboard/core/style.js)
+
+const everyTheme = themes.map(theme => theme.id);
+
+test('the styles are original, cybertron and minimal, and original is the default', () => {
+  assert.deepEqual(config.styles, ['original', 'cybertron', 'minimal']);
+  assert.equal(config.defaultSettings.style, 'original');
+  config.styles.forEach(name => assert.ok(styles.isStyle(name), name));
+  ['', 'Original', 'sidebar', 'bar', 'toString', undefined, null, 7].forEach(odd => assert.equal(styles.isStyle(odd), false, String(odd)));
+});
+
+test('the style comes from the setting, the address wins, and anything that is not a style is ignored', () => {
+  // saved (Dashboard Settings), asked (?style=), the style that results
+  const table = [
+    [undefined, undefined, 'original'],
+    [null, null, 'original'],
+    ['cybertron', null, 'cybertron'],
+    ['minimal', '', 'minimal'],
+    ['original', undefined, 'original'],
+    ['cybertron', 'minimal', 'minimal'],
+    ['minimal', 'original', 'original'],
+    ['original', 'cybertron', 'cybertron'],
+    ['oops', 'minimal', 'minimal'],
+    ['minimal', 'oops', 'minimal'],
+    ['oops', 'nope', 'original'],
+    ['toString', 'constructor', 'original'],
+    [7, {}, 'original'],
+  ];
+  table.forEach(row => assert.equal(styles.chooseStyle(row[0], row[1]), row[2], JSON.stringify(row)));
+});
+
+test('Original keeps the layout of the theme, and Cybertron and Minimal have the bar layout whatever the theme says', () => {
+  everyTheme.forEach(id => {
+    const own = layout.layoutOf(id);
+    assert.equal(styles.layoutFor('original', own), own, id + ' with Original');
+    assert.equal(styles.layoutFor('cybertron', own), 'bar', id + ' with Cybertron');
+    assert.equal(styles.layoutFor('minimal', own), 'bar', id + ' with Minimal');
+  });
+  ['sidebar', 'standard'].forEach(own => [undefined, null, '', 'oops', 'toString'].forEach(odd => assert.equal(styles.layoutFor(odd, own), own, String(odd) + ' is not a style: the theme decides')));
+  assert.ok(everyTheme.includes('neon-prime') && layout.layoutOf('neon-prime') === 'sidebar', 'the sidebar theme is in the table');
+});
+
+test('the layout at the start follows the style, the saved theme and the address', () => {
+  const sidebarTheme = { defaultTheme: 'neon-prime' };
+
+  assert.equal(layout.chooseLayout(null, null, noon, 'original'), 'standard');
+  assert.equal(layout.chooseLayout(null, null, noon), 'standard', 'no style is Original');
+  assert.equal(layout.chooseLayout(sidebarTheme, null, noon, 'original'), 'sidebar', 'Original leaves the sidebar theme as it is');
+  assert.equal(layout.chooseLayout(null, 'neon-prime', noon, 'original'), 'sidebar');
+  ['cybertron', 'minimal'].forEach(style => {
+    assert.equal(layout.chooseLayout(null, null, noon, style), 'bar', style);
+    assert.equal(layout.chooseLayout(sidebarTheme, null, noon, style), 'bar', style + ' with the sidebar theme saved');
+    assert.equal(layout.chooseLayout(null, 'neon-prime', noon, style), 'bar', style + ' with ?theme=neon-prime');
+    assert.equal(layout.chooseLayout({ schedule: 'oops', useNow: 5 }, null, noon, style), 'bar', style + ' with a theme that cannot be read');
+    assert.equal(layout.chooseLayout({ get defaultTheme() { throw new Error('broken'); } }, null, noon, style), 'bar', style + ' with a theme that throws');
+  });
+  assert.equal(layout.chooseLayout({ get defaultTheme() { throw new Error('broken'); } }, null, noon, 'original'), 'standard', 'Original and a theme that throws');
+});
+
+// A page that records every write to data-style
+function stylePage(first) {
+  const writes = [];
+  const dataset = {};
+  Object.defineProperty(dataset, 'style', {
+    get: () => first,
+    set: value => { writes.push(value); first = value; },
+    enumerable: true,
+  });
+  return { dataset: dataset, writes: writes };
+}
+
+test('the style goes on the page as data-style, and only when it changes', () => {
+  const page = stylePage('original');
+  styles.applyStyle('original', page);
+  assert.deepEqual(page.writes, [], 'the same style is not written again');
+
+  styles.applyStyle('cybertron', page);
+  styles.applyStyle('cybertron', page);
+  styles.applyStyle('minimal', page);
+  assert.deepEqual(page.writes, ['cybertron', 'minimal']);
+
+  styles.applyStyle('oops', page);
+  styles.applyStyle(undefined, page);
+  assert.deepEqual(page.writes, ['cybertron', 'minimal'], 'a name that is not a style is left off the page');
+  assert.doesNotThrow(() => styles.applyStyle('minimal', null), 'no page, no error');
+});
+
+test('startStyle chooses from the address and the saved setting, and starts in Original when it cannot choose', () => {
+  const asked = (query, saved) => {
+    const page = { dataset: {} };
+    const style = styles.startStyle(query, () => saved, page);
+    assert.equal(page.dataset.style, style, 'what it returns is what is on the page');
+    return style;
+  };
+  assert.equal(asked(null, null), 'original');
+  assert.equal(asked(null, 'cybertron'), 'cybertron');
+  assert.equal(asked('minimal', 'cybertron'), 'minimal');
+  assert.equal(asked('oops', 'oops'), 'original');
+
+  const logged = [];
+  const real = console.error;
+  console.error = (...parts) => logged.push(parts.join(' '));
+  try {
+    const page = { dataset: {} };
+    assert.equal(styles.startStyle(null, () => { throw new Error('storage is off'); }, page), 'original');
+    assert.equal(page.dataset.style, 'original');
+    assert.equal(styles.startStyle('minimal', () => { throw new Error('storage is off'); }, { dataset: {} }), 'original', 'a saved copy that cannot be read: even the address is not looked at, the start is Original');
+  } finally {
+    console.error = real;
+  }
+  assert.ok(logged.length === 2 && logged.every(line => /original style/.test(line)));
+});
+
+test('styleNow reads data-style from the page, and is Original with no page, no attribute or a name that is not a style', () => {
+  assert.equal(styles.styleNow(null), 'original');
+  assert.equal(styles.styleNow({}), 'original');
+  assert.equal(styles.styleNow({ dataset: {} }), 'original');
+  assert.equal(styles.styleNow({ dataset: { style: 'minimal' } }), 'minimal');
+  assert.equal(styles.styleNow({ dataset: { style: 'oops' } }), 'original');
+});
+
+test('a style that gives another layout than the page has reloads once, and two styles with the same layout and the same corners never reload', async () => {
+  let reloads = 0;
+  const store = fakeStorage();
+  const window = { sessionStorage: store, location: { reload: () => { reloads += 1; } } };
+  const look = (theme, style) => ({ theme: theme, overlay: '', style: style });
+
+  await withGlobals({ window: window, document: pageWith('standard') }, () => {
+    assert.equal(apply.holdForLayout(look('hawktimus', 'original')), false, 'Original and the standard theme: the same layout');
+    assert.equal(apply.holdForLayout(look('hawktimus', 'cybertron'), () => true), true, 'held while something has the screen');
+    assert.equal(reloads, 0);
+    assert.equal(apply.holdForLayout(look('hawktimus', 'cybertron'), () => false), true, 'reloading');
+    assert.equal(reloads, 1);
+    assert.equal(store.data[layout.reloadKey], 'bar');
+    assert.equal(apply.holdForLayout(look('hawktimus', 'cybertron'), () => false), false, 'back in the wrong layout: no second reload');
+    assert.equal(reloads, 1);
+  });
+
+  await withGlobals({ window: window, document: pageWith('bar') }, () => {
+    assert.equal(apply.holdForLayout(look('hawktimus', 'cybertron')), false, 'the page is in the bar layout now');
+    assert.deepEqual(store.data, {}, 'so the note is gone');
+    assert.equal(apply.holdForLayout(look('neon-prime', 'cybertron')), false, 'Cybertron and a sidebar theme: still the bar layout with the same corners, so colours only');
+    assert.equal(apply.holdForLayout(look('hawktimus', 'original')), true, 'back to Original reloads again');
+    assert.equal(reloads, 2);
+  });
+
+  await withGlobals({ window: window, document: pageWith('sidebar') }, () => {
+    assert.equal(apply.holdForLayout(look('neon-prime', 'original')), false, 'the sidebar theme with Original is the sidebar layout');
+    assert.equal(apply.holdForLayout(look('neon-prime', 'minimal')), true, 'Minimal takes the sidebar theme to the bar layout');
+    assert.equal(reloads, 3);
+  });
+
+  await withGlobals({ window: window, document: pageWith('standard') }, () => {
+    assert.equal(apply.holdForLayout({ theme: 'hawktimus', overlay: '' }), false, 'a look with no style is Original');
+    assert.equal(reloads, 3);
+  });
+});
+
+test('theme-apply.js carries the style in the look and waits for the page change with it, and index.html starts in Original', () => {
+  const code = read('dashboard/core/theme-apply.js');
+  assert.ok(code.includes("import { chooseStyle } from './style.js';"));
+  assert.ok(code.includes('look.style = chooseStyle(content.settings ? content.settings.style : null, asked.style);'), 'the setting, and ?style= over it');
+  assert.ok(code.includes('a.theme === b.theme && a.overlay === b.overlay && a.style === b.style'), 'a new style is a new look, so it waits for the same moment as a new theme');
+  assert.ok(!/dataset/.test(code), 'the page side is core/style.js, which shell.js asks in the same step (showDecorations)');
+
+  const shell = read('dashboard/shell.js');
+  assert.ok(shell.includes("style: params.get('style') }, showDecorations);"), 'the address goes to theme-apply');
+  assert.ok(shell.includes('applyStyle(look.style);'), 'the style goes on in the same step as the classes');
+  assert.ok(shell.includes("updatePanel('bar-banner', content);") && shell.includes("updatePanel('bar-column', content);"), 'the bar panels follow new content');
+
+  assert.ok(/<html [^>]*data-style="original"/.test(read('dashboard/index.html')), 'the page starts in Original, as it was');
+});
+
+
+// The bar layout's numbers (dashboard/core/layout.js, barSettings and makeBarGeometry)
+
+const b = layout.barGeometry;
+const bs = layout.barSettings;
+const barInside = { x: bs.margin.left, y: bs.margin.top, width: layout.screen.width - bs.margin.left - bs.margin.right, height: layout.screen.height - bs.margin.top - bs.margin.bottom };
+
+test('the bar layout has the numbers of the pictures: a banner 1856 by 160, a column 300 wide with a rail of 12, a main panel 1484 by 736 with a header of 120, and a ticker 1856 by 72', () => {
+  assert.deepEqual([b.banner.width, b.banner.height], [1856, 160]);
+  assert.deepEqual([b.war.width, b.war.height], [700, 120]);
+  assert.equal(b.column.width, 300);
+  assert.equal(b.rail.width, 12);
+  assert.deepEqual([b.main.width, b.main.height], [1484, 736]);
+  assert.equal(b.header.height, 120);
+  assert.equal(b.header.width, b.main.width, 'the header is as wide as the main panel');
+  assert.deepEqual([b.ticker.width, b.ticker.height], [1856, 72]);
+  assert.equal(b.column.height, b.main.height, 'the column and the main panel are one row');
+  assert.equal(b.rail.height, b.main.height);
+});
+
+test('the rows add up to the screen: the margins, the banner, 24, the main panel, 24 and the ticker are 1080 high, and the margins, the side column, 36 and the main panel are 1920 wide', () => {
+  assert.equal(bs.margin.top + b.banner.height + bs.rowGap + b.main.height + bs.rowGap + b.ticker.height + bs.margin.bottom, layout.screen.height);
+  assert.equal(bs.margin.left + b.side.width + bs.columnGap + b.main.width + bs.margin.right, layout.screen.width);
+  assert.equal(b.side.width, bs.railWidth + bs.railGap + bs.columnWidth);
+  assert.equal(b.middle.y - (b.banner.y + b.banner.height), bs.rowGap, 'the gap under the banner');
+  assert.equal(b.ticker.y - (b.middle.y + b.middle.height), bs.rowGap, 'the gap above the ticker');
+  assert.equal(b.main.x - (b.side.x + b.side.width), bs.columnGap, 'the gap between the side column and the main panel');
+  assert.equal(b.ticker.y + b.ticker.height, layout.screen.height - bs.margin.bottom, 'the ticker is at the bottom margin');
+  assert.equal(b.main.x + b.main.width, layout.screen.width - bs.margin.right, 'the main panel is at the right margin');
+});
+
+// Every rectangle is on the screen and inside the margins, the parts of a row stand apart, and the parts of a
+// block are inside it. label says which geometry it is, so a failure names it.
+function checkBarFits(geometry, label) {
+  const all = layout.rectanglesOf(geometry);
+  assert.deepEqual(Object.keys(all).sort(), ['banner', 'column', 'header', 'main', 'middle', 'name', 'page', 'rail', 'side', 'ticker', 'war'], label + ': the rectangles');
+  Object.keys(all).forEach(name => {
+    const box = all[name];
+    assert.ok(box.x >= 0 && box.y >= 0 && box.x + box.width <= layout.screen.width && box.y + box.height <= layout.screen.height, label + ': ' + name + ' is on the 1920 x 1080 screen');
+    assert.ok(within(box, barInside), label + ': ' + name + ' is inside the margins');
+  });
+
+  // The three rows never overlap
+  const rows = { banner: geometry.banner, middle: geometry.middle, ticker: geometry.ticker };
+  Object.keys(rows).forEach(a => Object.keys(rows).filter(other => other > a).forEach(other => assert.ok(apart(rows[a], rows[other]), label + ': ' + a + ' and ' + other + ' overlap')));
+
+  // In the banner: the name and the war clock, apart, with the gap between them
+  [geometry.name, geometry.war].forEach(part => assert.ok(within(part, geometry.banner), label + ': a banner part is inside the banner'));
+  assert.ok(apart(geometry.name, geometry.war), label + ': the name and the war clock overlap');
+  const gap = geometry.name.x < geometry.war.x ? geometry.war.x - (geometry.name.x + geometry.name.width) : geometry.name.x - (geometry.war.x + geometry.war.width);
+  assert.equal(gap, bs.nameGap, label + ': the gap between the name and the war clock');
+
+  // In the row: the side column and the main panel, apart, with the column gap between them. The rail and the column are in the side column
+  [geometry.side, geometry.main].forEach(part => assert.ok(within(part, geometry.middle), label + ': a row part is inside the row'));
+  assert.ok(apart(geometry.side, geometry.main), label + ': the side column and the main panel overlap');
+  [geometry.rail, geometry.column].forEach(part => assert.ok(within(part, geometry.side), label + ': the rail and the column are inside the side column'));
+  assert.ok(apart(geometry.rail, geometry.column), label + ': the rail and the column overlap');
+  assert.ok(within(geometry.header, geometry.main), label + ': the header is inside the main panel');
+  assert.ok(within(geometry.page, geometry.main), label + ': the scaled page is inside the main panel');
+}
+
+test('every rectangle of the bar layout is on the screen and inside the margins, and nothing overlaps', () => {
+  checkBarFits(b, 'bar');
+  assert.equal(bs.margin.left, bs.margin.right, 'the same margin at both sides, so a mirror puts everything back inside the same margins');
+});
+
+test('the name has the room it needs: HAWKTIMUS PRIME at the heading size is 985 wide, and its slot is 1052', () => {
+  assert.equal(b.name.width, b.banner.width - 2 * bs.bannerPadding - b.war.width - bs.nameGap);
+  assert.equal(b.name.x, b.banner.x + bs.bannerPadding);
+  assert.equal(b.war.x + b.war.width, b.banner.x + b.banner.width - bs.bannerPadding);
+  assert.equal(b.war.y - b.banner.y, b.banner.y + b.banner.height - (b.war.y + b.war.height), 'the war clock is in the middle of the banner\'s height');
+  assert.ok(nameWidth[96] <= b.name.width, 'the name at 96 px is not squeezed: ' + nameWidth[96] + ' in ' + b.name.width);
+  assert.ok(nameWidth[96] / b.name.width > 0.9, 'and 96 is the biggest heading size that fits, the next is not a token');
+});
+
+test('the large frame is scaled by the height of the main panel over 708, the same across and down, never shrinks, and its area is as wide as the panel needs', () => {
+  const area = bs.area;
+  assert.deepEqual(area, { width: 1152, height: 708 }, 'the size the panels are drawn for (base.css, plate.js)');
+  assert.ok(b.scale >= 1, 'text grows with the panel and never shrinks');
+  assert.ok(b.scale <= bs.main.height / area.height, 'no bigger than the height allows');
+  assert.ok(bs.main.height / area.height - b.scale < 0.0001 + 1e-9, 'and no more than four decimals below it');
+  assert.equal(String(b.scale).replace(/^\d\./, '').length <= 4, true, 'four decimals');
+  assert.ok(Math.abs(area.height * b.scale - b.page.height) < 0.01, 'the page is as high as the area at that scale');
+  assert.ok(b.page.height <= b.main.height && b.main.height - b.page.height < 1, 'it fills the height of the panel');
+
+  assert.ok(b.areaWidth * b.scale <= b.main.width + 1e-9, 'the area at that scale is not wider than the panel');
+  assert.ok(b.main.width - b.areaWidth * b.scale < b.scale, 'and is less than one unit short of it');
+  assert.ok(b.areaWidth > area.width, 'so the area is wider than the 1152 the panels are written for');
+  assert.equal(b.areaWidth, Math.floor(b.main.width / b.scale));
+  assert.equal(b.page.x, b.main.x);
+  assert.equal(b.page.y, b.main.y);
+});
+
+test('the numbers are one set: a taller banner makes a shorter main panel only if the row is made shorter, and a wider column moves the main panel', () => {
+  const wider = layout.makeBarGeometry(Object.assign({}, bs, { columnWidth: bs.columnWidth + 20 }));
+  assert.equal(wider.main.x, b.main.x + 20);
+  assert.equal(wider.column.width, 320);
+  assert.equal(wider.name.x, b.name.x, 'the banner does not move');
+
+  const taller = layout.makeBarGeometry(Object.assign({}, bs, { bannerHeight: bs.bannerHeight + 10 }));
+  assert.equal(taller.main.y, b.main.y + 10);
+  assert.equal(taller.ticker.y, b.ticker.y + 10, 'the rows below it move down. Whether they still fit is what the tests above check');
+  assert.ok(taller.ticker.y + taller.ticker.height > layout.screen.height - bs.margin.bottom, 'and this one would not fit, so the tests would fail for it');
+
+  assert.deepEqual(layout.makeBarGeometry(), b, 'with no settings it is the layout\'s own');
+});
+
+
+// The mirror
+
+test('mirroring turns every rectangle across the screen: x becomes 1920 less x and the width, and nothing else changes, so twice is the same as never', () => {
+  const rectangles = layout.rectanglesOf(b);
+  const mirrored = layout.mirrorGeometry(b);
+
+  Object.keys(rectangles).filter(name => name !== 'page').forEach(name => {
+    const was = rectangles[name];
+    const now = mirrored[name];
+    assert.equal(now.x, layout.screen.width - was.x - was.width, name + ' x');
+    assert.deepEqual([now.y, now.width, now.height], [was.y, was.width, was.height], name + ' keeps its height, its size and its row');
+  });
+  assert.deepEqual(mirrored.page, { x: mirrored.main.x, y: b.page.y, width: b.page.width, height: b.page.height }, 'the page is not turned: it stays at the left edge of the main panel, which has moved, because the panels read from the left');
+  assert.equal(mirrored.scale, b.scale, 'the numbers that are not rectangles are the same');
+  assert.equal(mirrored.areaWidth, b.areaWidth);
+  assert.deepEqual(layout.mirrorGeometry(mirrored), b, 'twice is the same as never');
+  assert.deepEqual(layout.mirrorRectangle({ x: 0, y: 5, width: 1920, height: 7 }), { x: 0, y: 5, width: 1920, height: 7 });
+});
+
+test('the mirrored layout has the side column and its rail at the right, the war clock at the left and the name at the right, and the banner, the row and the ticker where they were', () => {
+  const m = layout.mirrorGeometry(b);
+
+  assert.ok(b.side.x < b.main.x && m.side.x > m.main.x, 'the side column goes to the other side of the main panel');
+  assert.ok(b.rail.x < b.column.x && m.rail.x > m.column.x, 'and its rail is at the edge of the screen, outside it');
+  assert.equal(m.rail.x + m.rail.width, layout.screen.width - bs.margin.right, 'the rail is at the right margin');
+  assert.equal(m.main.x, bs.margin.left, 'the main panel is at the left margin');
+  assert.ok(b.name.x < b.war.x && m.name.x > m.war.x, 'the name and the war clock change ends');
+  assert.equal(m.war.x, bs.margin.left + bs.bannerPadding, 'the war clock is 40 in from the left end');
+
+  ['banner', 'middle', 'ticker'].forEach(name => assert.deepEqual(m[name], b[name], name + ' is as wide as the screen between the margins, so it is its own mirror'));
+  assert.equal(m.header.x, m.main.x, 'the header goes with the main panel');
+  assert.equal(b.column.x - (b.rail.x + b.rail.width), bs.railGap, 'the space between the rail and the column');
+  assert.equal(m.rail.x - (m.column.x + m.column.width), bs.railGap, 'and the same space, on the other side of the column');
+});
+
+test('the layout and its mirror never put anything outside the screen, which is always 1920 x 1080, and nothing overlaps in either', () => {
+  assert.deepEqual(layout.screen, { width: 1920, height: 1080 });
+  checkBarFits(b, 'bar');
+  checkBarFits(layout.mirrorGeometry(b), 'mirrored bar');
+  checkBarFits(layout.mirrorGeometry(layout.mirrorGeometry(b)), 'mirrored twice');
+
+  // The sidebar layout is the other one that places things by number. It is not mirrored, and is inside the screen
+  [g.strip, g.sidebar, g.space, g.pane, g.frame, g.ticker].forEach(box => assert.ok(box.x >= 0 && box.y >= 0 && box.x + box.width <= layout.screen.width && box.y + box.height <= layout.screen.height, 'the sidebar layout is on the screen: ' + JSON.stringify(box)));
+});
+
+test('the screen is a fixed 1920 x 1080 canvas: index.html, base.css, shell.js and the size constants of every layout say so, and nothing is responsive', () => {
+  assert.equal(layout.screen.width, 1920);
+  assert.equal(layout.screen.height, 1080);
+  assert.equal(settings.margin.left + settings.margin.right + g.strip.width, 1920, 'the sidebar layout\'s strip spans the screen between its margins');
+  assert.equal(settings.margin.top + g.strip.height + settings.rowGap + g.sidebar.height + settings.rowGap + g.ticker.height + settings.margin.bottom, 1080, 'the sidebar layout\'s rows add up to the height');
+  assert.equal(bs.margin.left + bs.margin.right + b.banner.width, 1920, 'the bar layout\'s banner spans the screen between its margins');
+
+  const base = withoutComments(read('dashboard/base.css'));
+  const sizeOf = selector => {
+    const found = new RegExp('(?:^|\\})\\s*' + selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' \\{([^}]*)\\}').exec(base);
+    assert.ok(found, 'base.css has a rule for ' + selector);
+    return [/(?:^|[;\s])width: (\d+)px/.exec(found[1]), /(?:^|[;\s])height: (\d+)px/.exec(found[1])].map(match => match && Number(match[1]));
+  };
+  ['#screen', '#world', '#stage', '#overlay', '#night'].forEach(selector => assert.deepEqual(sizeOf(selector), [1920, 1080], selector));
+  assert.deepEqual(sizeOf('#backdrop,\n#red-wash,\n#blue-glitch'), [1920, 1080], 'the layers of the hidden transitions');
+  assert.ok(!/[\d.]+(vw|vh|vmin|vmax)\b/.test(base), 'base.css sizes nothing in the window\'s units');
+  assert.ok(!/@media/.test(base), 'base.css has no media query: nothing reflows');
+
+  const html = read('dashboard/index.html');
+  assert.ok(!/<meta[^>]*viewport/i.test(html), 'index.html asks for no viewport');
+  assert.ok(/<div id="screen">/.test(html), 'index.html has the one screen');
+
+  const shell = read('dashboard/shell.js');
+  const fit = shell.slice(shell.indexOf('function fitToScreen()'), shell.indexOf('// A wall display must never sit blank'));
+  assert.ok(fit.includes('window.innerWidth / 1920') && fit.includes('window.innerHeight / 1080'), 'the page is fitted to the window by one scale, from 1920 x 1080');
+  assert.ok(fit.includes('screen.style.transform = \'scale(\' + scale + \')\';'));
+
+  ['bar.css', 'sidebar.css'].forEach(file => {
+    const css = withoutComments(read('dashboard/layouts/' + file));
+    assert.ok(!/@media|@container|[\d.]+(vw|vh|vmin|vmax)\b/.test(css), file + ' has no media query and no size in the window\'s units');
+  });
+});
+
+test('the mirror in the bar layout is one rule for every flex row of the layout, and the text that stays in reading order is named', () => {
+  const css = withoutComments(read('dashboard/layouts/bar.css'));
+  const rows = css.match(/html\.mirrored\[data-layout="bar"\][^{}]*\{[^{}]*flex-direction: row-reverse;[^{}]*\}/g) || [];
+  assert.equal(rows.length, 1, 'one rule turns the rows');
+  const turned = rows[0].slice(0, rows[0].indexOf('{')).split(',').map(selector => selector.trim().replace('html.mirrored[data-layout="bar"] ', ''));
+  assert.deepEqual(turned, ['#bar-middle', '.bar-banner', '.bar-column', '.ticker']);
+
+  // Every flex row that the layout declares, in its own stylesheet or in a panel's, is one of them or is a part that keeps its order
+  const files = ['layouts/bar.css', 'panels/bar-banner/bar-banner.css', 'panels/bar-column/bar-column.css', 'panels/ticker/ticker.css'];
+  const flexRows = [];
+  files.forEach(file => {
+    withoutComments(read('dashboard/' + file)).replace(/([^{}]+)\{([^{}]*)\}/g, (all, selectors, body) => {
+      const direction = /flex-direction: ([a-z-]+)/.exec(body);
+      if (/display: flex/.test(body) && (!direction || direction[1] === 'row')) {
+        selectors.split(',').forEach(selector => flexRows.push(selector.trim().replace('html[data-layout="bar"] ', '')));
+      }
+    });
+  });
+  // A part that is read one way, whatever the layout does: the letters of the name, the time and AM or PM, the picture and the
+  // temperature, the TEAM plate's words, the school and the word on the ticker's tag. The mirror only moves them to the other
+  // end of their box.
+  const keepOrder = ['.bar-name', '.bar-time', '.bar-weather', '.bar-team span', '.bar-school', '.ticker .tag span'];
+  const declared = flexRows.filter(selector => !selector.startsWith('html.mirrored'));
+  assert.ok(declared.length >= 8, 'found the flex rows: ' + declared.join(', '));
+  declared.forEach(selector => assert.ok(turned.indexOf(selector) !== -1 || keepOrder.indexOf(selector) !== -1, selector + ' is a flex row that the mirror does not turn and is not named as keeping its order'));
+  turned.forEach(selector => assert.ok(declared.indexOf(selector) !== -1, selector + ' is turned and is not a flex row'));
+  keepOrder.forEach(selector => assert.ok(declared.indexOf(selector) !== -1, selector + ' is named and is not a flex row'));
+  assert.ok(!/\.bar-time[^{}]*\{[^{}]*row-reverse/.test(css), 'the time is never turned round');
+
+  // The text at the other end of its box
+  assert.ok(/html\.mirrored\[data-layout="bar"\] \.bar-name,\s*html\.mirrored\[data-layout="bar"\] \.bar-time \{\s*justify-content: flex-end;\s*\}/.test(css), 'the name and the time go to the other end of their boxes');
+  assert.ok(/html\.mirrored\[data-layout="bar"\] \.ticker \.message \{\s*text-align: right;\s*\}/.test(css), 'the ticker\'s message ends at the tag');
+
+  // Text is never mirrored: only a class for decoration is turned, and nothing in a panel carries it
+  assert.deepEqual(css.match(/transform: [^;]+;/g).filter(text => /scaleX/.test(text)), ['transform: scaleX(-1);']);
+  assert.ok(/html\.mirrored\[data-layout="bar"\] \.mirror-art \{\s*transform: scaleX\(-1\);\s*\}/.test(css));
+  const panelFolders = fs.readdirSync(path.join(dashboardFolder, 'panels'), { withFileTypes: true }).filter(entry => entry.isDirectory()).map(entry => 'panels/' + entry.name);
+  panelFolders.forEach(folder => fs.readdirSync(path.join(dashboardFolder, folder)).forEach(file => assert.ok(!/mirror-art/.test(read('dashboard/' + folder + '/' + file)), folder + '/' + file + ' has text in it, or may have, and carries mirror-art')));
+  assert.ok(!/scaleX|scale\(-|rotateY/.test(read('dashboard/styles/original.css')), 'the standard layout\'s mirror turns no picture either');
+
+  // The same answer as the numbers: the row is [side, main] and turns to [main, side], the banner [name, war] to [war, name]
+  const m = layout.mirrorGeometry(b);
+  const order = geometry => ({ row: geometry.side.x < geometry.main.x ? 'side main' : 'main side', banner: geometry.name.x < geometry.war.x ? 'name war' : 'war name' });
+  assert.deepEqual(order(b), { row: 'side main', banner: 'name war' });
+  assert.deepEqual(order(m), { row: 'main side', banner: 'war name' });
+});
+
+test('the mirror of the standard layout is in original.css: the columns change places and the banner and the ticker turn, as the numbers of base.css say', () => {
+  const css = withoutComments(read('dashboard/styles/original.css'));
+  const base = withoutComments(read('dashboard/base.css'));
+  const prefix = 'html[data-style="original"].mirrored[data-layout="standard"]';
+
+  const selectors = [];
+  css.replace(/([^{}]+)\{[^{}]*\}/g, (all, list) => {
+    list.split(',').forEach(selector => selectors.push(selector.trim()));
+    return all;
+  });
+  assert.ok(selectors.length >= 12, 'the file has rules');
+  selectors.forEach(selector => assert.ok(selector.startsWith(prefix + ' '), 'a rule that is not for the mirrored standard layout would change the screen of a team that is not mirrored: ' + selector));
+  assert.ok(!/--[a-z-]+: [^;]*;/.test(css.replace(/--(tx|ty|tz|rx|ry|rz): [^;]*;/g, '')), 'Original sets no custom property of its own, only the poses of the blocks');
+
+  const columns = /grid-template-columns: (\d+)px (\d+)px;/.exec(/#stage \{[^}]*\}/.exec(base)[0]);
+  const mirroredColumns = new RegExp(prefix.replace(/[[\]".]/g, '\\$&') + ' #stage \\{\\s*grid-template-columns: (\\d+)px (\\d+)px;').exec(css);
+  assert.ok(columns && mirroredColumns);
+  assert.deepEqual([mirroredColumns[1], mirroredColumns[2]], [columns[2], columns[1]], 'the two columns of base.css, the other way round');
+  assert.ok(css.includes(prefix + ' #region-grid1 { grid-column: 2; }') && css.includes(prefix + ' #region-right { grid-column: 1; }'));
+  assert.ok(/#region-grid1 \{ grid-column: 1; grid-row: 2; \}/.test(base), 'base.css has the large frame in column 1');
+  assert.ok(/#region-right \{\s*grid-column: 2;/.test(base), 'and the countdown and the small frame in column 2');
+
+  // The flex rows of the banner and the ticker are the ones in their own stylesheets
+  const banner = withoutComments(read('dashboard/panels/banner/banner.css'));
+  const ticker = withoutComments(read('dashboard/panels/ticker/ticker.css'));
+  ['.banner-top', '.banner-bottom'].forEach(name => assert.ok(new RegExp('\\.banner ' + name.replace('.', '\\.') + ' \\{[^}]*display: flex;').test(banner), name + ' is a flex row in banner.css'));
+  assert.ok(/\.ticker \{\s*display: flex;/.test(ticker));
+  const turnedRule = new RegExp(prefix.replace(/[[\]".]/g, '\\$&') + ' \\.banner \\.banner-top,\\s*' + prefix.replace(/[[\]".]/g, '\\$&') + ' \\.banner \\.banner-bottom,\\s*' + prefix.replace(/[[\]".]/g, '\\$&') + ' \\.ticker \\{\\s*flex-direction: row-reverse;');
+  assert.ok(turnedRule.test(css), 'the banner\'s two rows and the ticker are turned by one rule');
+  assert.ok(!/data-layout="sidebar"/.test(css), 'the sidebar layout is not mirrored');
+  assert.ok(css.includes(prefix + ' #season-front {\n  display: none;\n}'), 'the zones of a seasonal pack, which were measured on the layout as it is not mirrored, are not drawn');
+});
+
+
+// The bar layout on the page, and its stylesheets
+
+test('the bar layout shows the row, moves the large frame into it after the side column, and blocks fly as banner, column, main panel and ticker', async () => {
+  const page = fakePage();
+  await withGlobals({ document: page.document }, () => {
+    assert.equal(apply.startLayout(null, () => null, page.html, 'cybertron'), 'bar');
+  });
+
+  assert.equal(page.html.dataset.layout, 'bar');
+  assert.equal(page.elements['bar-middle'].hidden, false);
+  assert.equal(page.elements['region-column'].hidden, false);
+  assert.equal(page.elements['region-grid1'].parent, page.elements['bar-middle'], 'the large frame is in the row');
+  assert.equal(page.elements['region-grid1'].parent.children[page.elements['bar-middle'].children.length - 1], page.elements['region-grid1'], 'last, after the side column');
+  assert.equal(page.elements['region-strip'].hidden, true, 'the sidebar layout\'s parts stay hidden');
+  assert.equal(page.elements['region-sidebar'].hidden, true);
+  assert.equal(page.elements['region-banner'].parent, null, 'the banner stays where index.html has it');
+  assert.equal(page.elements['region-ticker'].parent, null);
+  assert.deepEqual(blocksOn(page).sort(), layout.blocksOf('bar').map(name => 'region-' + name).sort());
+  assert.deepEqual(page.html.style.values, layout.barCssVariables());
+  assert.equal(page.elements['region-countdown'].attributes['data-block'], undefined, 'the countdown and the small frame are not blocks');
+  assert.equal(page.elements['region-grid2'].attributes['data-block'], undefined);
+  assert.deepEqual(page.elements['region-banner'].inserted, [], 'the kit is only for the sidebar layout');
+});
+
+test('the style and the theme both count at the start: Minimal with the sidebar theme is the bar layout, Original with it is the sidebar layout', async () => {
+  const saved = { defaultTheme: 'neon-prime' };
+  await withGlobals({ document: fakePage().document }, () => {
+    assert.equal(apply.startLayout(null, () => saved, fakePage().html, 'original'), 'sidebar');
+    assert.equal(apply.startLayout(null, () => saved, fakePage().html, 'minimal'), 'bar');
+    assert.equal(apply.startLayout('hawktimus', () => saved, fakePage().html, 'cybertron'), 'bar');
+    assert.equal(apply.startLayout(null, () => saved, fakePage().html), 'sidebar', 'no style: as before');
+  });
+});
+
+test('if the bar layout cannot be set up the screen starts in the standard layout, with nothing moved or shown', async () => {
+  const real = console.error;
+  console.error = () => {};
+  try {
+    ['bar-middle', 'region-column', 'region-grid1', 'region-banner', 'region-ticker'].forEach(missing => {
+      const page = fakePage();
+      delete page.elements[missing];
+      return withGlobals({ document: page.document }, () => {
+        assert.equal(apply.startLayout(null, () => null, page.html, 'minimal'), 'standard', 'no #' + missing);
+        assert.equal(page.html.dataset.layout, 'standard');
+        assert.equal(page.html.style.values['--bar-scale'], undefined, 'nothing half set up');
+        assert.equal(page.elements['region-grid1'] ? page.elements['region-grid1'].parent : null, null, 'nothing was moved');
+        assert.equal((page.elements['bar-middle'] || { hidden: true }).hidden, true, 'and nothing was shown');
+      });
+    });
+  } finally {
+    console.error = real;
+  }
+});
+
+test('index.html has the bar row hidden, with the side column in it, links the bar stylesheet and the three style files after frame.css, and the standard blocks are as they were', () => {
+  const html = read('dashboard/index.html');
+  assert.ok(/<div id="bar-middle" hidden>\s*<div id="region-column" hidden><\/div>\s*<\/div>\s*<div id="region-grid1" data-block><\/div>/.test(html), 'the row is hidden, holds the column, and the large frame follows it');
+  assert.ok(!/<div id="bar-middle"[^>]*data-block|<div id="region-column"[^>]*data-block/.test(html), 'only layout-apply.js makes the column a block');
+
+  const link = name => html.indexOf('href="' + name + '"');
+  ['layouts/bar.css', 'styles/original.css', 'styles/cybertron.css', 'styles/minimal.css'].forEach(name => {
+    assert.equal(countOf(html, 'href="' + name + '"'), 1, name);
+    assert.ok(fs.existsSync(path.join(dashboardFolder, name)), name + ' exists');
+    assert.ok(link(name) > link('frame.css'), name + ' comes after frame.css, so its rules come later in the cascade');
+    assert.ok(link(name) > link('teams.css'), name + ' comes after the team colors, which it reads');
+  });
+  assert.ok(link('layouts/bar.css') > link('layouts/sidebar.css'));
+  assert.ok(link('styles/original.css') > link('layouts/bar.css'), 'the styles come after the layouts');
+  assert.ok(link('styles/minimal.css') > link('styles/cybertron.css') && link('styles/cybertron.css') > link('styles/original.css'));
+  assert.ok(link('themes/decor/neon-prime-decor.css') > link('styles/minimal.css'), 'a theme\'s own decoration still comes after a style');
+  assert.ok(layout.blocksOf('bar').every(block => layout.everyBlock.indexOf(block) !== -1));
+  assert.deepEqual(layout.blocksOf('bar'), ['banner', 'column', 'grid1', 'ticker']);
+  assert.ok(layout.areasOf('bar').indexOf('grid2') === -1 && layout.hasRegion('bar', 'column') && !layout.hasRegion('bar', 'grid2') && !layout.hasRegion('bar', 'countdown'));
+  assert.deepEqual(layout.areasOf('bar'), ['grid1', 'ticker']);
+  assert.deepEqual(layout.otherAreas('bar'), ['ticker']);
+  assert.deepEqual(layout.decorationLayers('bar'), ['over'], 'a seasonal pack\'s zones were measured on the standard layout');
+  assert.equal(layout.hasKit('neon-prime', 'bar'), false, 'the neon kit is for the sidebar layout');
+});
+
+test('the bar layout draws two fixed panels, the banner and the side column, and none of the standard layout\'s or the sidebar layout\'s', () => {
+  const regionOf = id => panels.filter(panel => panel.id === id)[0].region;
+  assert.equal(regionOf('bar-banner'), 'banner');
+  assert.equal(regionOf('bar-column'), 'column');
+  ['bar-banner', 'bar-column'].forEach(id => assert.equal(panels.filter(panel => panel.id === id)[0].layout, 'bar', id));
+  ['banner', 'countdown', 'side', 'bar-banner', 'bar-column'].forEach(id => assert.ok(fs.existsSync(path.join(dashboardFolder, 'panels', id, id + '.js')) && fs.existsSync(path.join(dashboardFolder, 'panels', id, id + '.css')), id));
+
+  const registry = read('dashboard/registry.js');
+  const stays = new Function(registry.slice(registry.indexOf('export const panels = [')).replace('export const panels', 'const panels').replace('export function fixedPanels', 'function fixedPanels') + '\nreturn fixedPanels;')();
+  assert.deepEqual(stays('bar'), ['bar-banner', 'bar-column']);
+  assert.deepEqual(stays('sidebar'), ['side']);
+  assert.deepEqual(stays('standard'), ['banner', 'countdown'], 'the standard layout draws what it always did');
+
+  // both panels have an entrance in frame.js, with a rule for every data-part they draw
+  const frame = read('dashboard/frame.js');
+  ['bar-banner', 'bar-column'].forEach(id => {
+    const code = read('dashboard/panels/' + id + '/' + id + '.js');
+    const sequence = new RegExp("'" + id + "': \\{([^}]*)\\}").exec(frame);
+    assert.ok(sequence, 'frame.js has a sequence for ' + id);
+    assert.ok(code.includes('data-sequence="' + id + '"'));
+    (code.match(/data-part="[a-z-]+"/g) || []).forEach(part => assert.ok(sequence[1].includes("'" + part.slice(11, -1) + "'"), id + ' draws ' + part + ' and its sequence has no rule for it'));
+  });
+});
+
+test('the variables the bar stylesheets read are the ones layout.js writes, and all of them are used', () => {
+  const variables = layout.barCssVariables();
+  const files = ['layouts/bar.css', 'panels/bar-banner/bar-banner.css', 'panels/bar-column/bar-column.css'];
+  const used = new Set();
+  files.forEach(file => (withoutComments(read('dashboard/' + file)).match(/var\(--bar-[a-z-]+\)/g) || []).forEach(text => used.add(text.slice(4, -1))));
+
+  used.forEach(name => assert.ok(name in variables, name + ' is used and is not written by layout.js'));
+  Object.keys(variables).forEach(name => assert.ok(used.has(name), name + ' is written by layout.js and not used in a bar stylesheet'));
+  assert.equal(variables['--bar-banner-width'], '1856px');
+  assert.equal(variables['--bar-banner-height'], '160px');
+  assert.equal(variables['--bar-side-width'], '336px');
+  assert.equal(variables['--bar-column-width'], '300px');
+  assert.equal(variables['--bar-main-width'], '1484px');
+  assert.equal(variables['--bar-main-height'], '736px');
+  assert.equal(variables['--bar-war-width'], '700px');
+  assert.equal(variables['--bar-war-height'], '120px');
+  assert.equal(variables['--bar-ticker-width'], '1856px');
+  assert.equal(variables['--bar-scale'], String(b.scale));
+  assert.equal(variables['--bar-area-width'], b.areaWidth + 'px');
+  Object.keys(variables).filter(name => name !== '--bar-scale').forEach(name => assert.ok(/^-?\d+(\.\d+)?px$/.test(variables[name]), name + ' is a length'));
+});
+
+test('every rule in bar.css and in the two bar panels\' stylesheets is for the bar layout only, nothing in them moves or glows, and every text size is a token of 44 px or more', () => {
+  const tokens = read('dashboard/tokens.css');
+  ['layouts/bar.css', 'panels/bar-banner/bar-banner.css', 'panels/bar-column/bar-column.css'].forEach(file => {
+    const css = withoutComments(read('dashboard/' + file));
+    const selectors = [];
+    css.replace(/([^{}]+)\{[^{}]*\}/g, (all, list) => {
+      list.split(',').forEach(selector => selectors.push(selector.trim()));
+      return all;
+    });
+
+    assert.ok(selectors.length >= 3, file + ' has rules');
+    selectors.forEach(selector => assert.ok(/^html(\.mirrored)?\[data-layout="bar"\] /.test(selector), file + ': not scoped to the bar layout: ' + selector));
+    assert.ok(!/(animation|transition|@keyframes|filter|box-shadow|text-shadow|blur\(|gradient|blend|will-change)/.test(css), file + ': no animation, glow, shadow, blur or gradient');
+    assert.ok(!/(^|[^-])font(-size)?: [^;]*\b([0-3]\d|4[0-3])px/.test(css), file + ': no text below 44 px');
+    (css.match(/font(-size)?: [^;]*/g) || []).forEach(text => {
+      assert.ok(!/font(-size)?: [^;]*\b\d+px\//.test(text) || /var\(--size-[a-z-]+\)\/(\d+px|var\(--size-[a-z-]+\))/.test(text), file + ': a size of its own: ' + text);
+      (text.match(/var\(--size-[a-z-]+\)/g) || []).forEach(token => {
+        const size = Number(new RegExp(token.slice(4, -1) + ': (\\d+)px').exec(tokens)[1]);
+        assert.ok(size >= 44, token + ' is ' + size);
+      });
+    });
+  });
+  assert.ok(/--size-clock: 84px;/.test(tokens), 'the clock in the side column is 84 px, a token');
+
+  // the main panel is scaled by one number, from its corner, on the area, which hidden transitions do not move
+  const bar = withoutComments(read('dashboard/layouts/bar.css'));
+  assert.ok(/transform: scale\(var\(--bar-scale\)\);\s*transform-origin: 0 0;/.test(bar));
+  assert.ok(!/scale(X|Y)\(var|scale\([^)]*,/.test(bar.replace(/scaleX\(-1\)/g, '')), 'never scaled by two different numbers');
+  const scaled = bar.split('}').filter(block => /transform: scale\(var/.test(block)).map(block => block.split('{')[0].trim());
+  assert.deepEqual(scaled, ['html[data-layout="bar"] .area[data-area="grid1"]']);
+});
+
+test('the text sizes below 44 px in the whole dashboard are an explicit list: the war clock labels at 20 and 24 px and the stamped plate ids at 20 px, and no bar or style file has one', () => {
+  const allowed = [];
+  const walk = folder => fs.readdirSync(path.join(root, folder), { withFileTypes: true }).forEach(entry => {
+    const relative = folder + '/' + entry.name;
+    if (entry.isDirectory()) { if (!['fonts', 'data', 'assets'].includes(entry.name)) walk(relative); }
+    else if (entry.name.endsWith('.css') && (relative.startsWith('dashboard/styles/') || relative.startsWith('dashboard/layouts/bar') || relative.startsWith('dashboard/panels/bar-'))) allowed.push(relative);
+  });
+  walk('dashboard');
+  assert.ok(allowed.length >= 6, 'found the style and bar files: ' + allowed.join(', '));
+
+  // Text of 20 or 24 px is allowed only for the war clock's labels and the plate ids, and neither is drawn yet in these files
+  const small = [{ what: 'the war clock labels', sizes: [20, 24] }, { what: 'the stamped plate ids', sizes: [20] }];
+  assert.deepEqual(small.map(item => item.what), ['the war clock labels', 'the stamped plate ids']);
+  allowed.forEach(file => {
+    const css = withoutComments(read(file));
+    assert.ok(!/(^|[^-])font(-size)?: [^;]*\b([0-3]\d|4[0-3])px/.test(css), file + ' has text below 44 px, which only the war clock labels and the plate ids may have');
+  });
+});
+
+test('every literal text size under 44 px in the dashboard stylesheets is on a list: so far only the stamped plate id, 20 px in base.css', () => {
+  const found = [];
+  const walk = folder => fs.readdirSync(path.join(root, folder), { withFileTypes: true }).forEach(entry => {
+    const relative = folder + '/' + entry.name;
+    if (entry.isDirectory()) { if (!['fonts', 'data', 'assets'].includes(entry.name)) walk(relative); return; }
+    if (!entry.name.endsWith('.css')) return;
+
+    withoutComments(read(relative)).replace(/([^{}]+)\{([^{}]*)\}/g, (all, selectors, body) => {
+      (body.match(/font(-size)?: [^;]*/g) || []).forEach(declaration => {
+        // a size is a length that does not follow a slash, which is the line height of the font shorthand
+        (declaration.match(/(?<![\/\d.])\d+(\.\d+)?px/g) || []).filter(size => parseFloat(size) < 44).forEach(size => {
+          found.push({ file: relative, selector: selectors.trim(), size: parseFloat(size) });
+        });
+      });
+      return all;
+    });
+  });
+  walk('dashboard');
+
+  const allowed = [{ file: 'dashboard/base.css', selector: '.plate-id', size: 20 }];
+  assert.deepEqual(found, allowed);
+});
+
+test('the mirror leaves the frames, their rivets and their ids as they are, and the ids are drawn for Original whether the layout is mirrored or not', () => {
+  const css = withoutComments(read('dashboard/styles/original.css'));
+  assert.equal(/rivets|plate-id|\.plate\b|\.area|scaleX|rotateY\(180/.test(css), false, 'the mirror of the standard layout moves the regions and never turns a frame round');
+
+  const base = withoutComments(read('dashboard/base.css'));
+  assert.ok(base.includes('html[data-style="original"] .rivets { display: inline; }') && base.includes('html[data-style="original"] .plate-id { display: block; }'), 'drawn for Original, mirrored or not');
+  assert.equal(/\.mirrored[^{]*(rivets|plate-id)/.test(base), false);
+  assert.ok(/--team-initials, "HP"/.test(base), 'before a team is on the page the letters are the Prime team\'s');
+});
+
+test('the three style files each set their own custom properties for their own style only', () => {
+  const read2 = name => withoutComments(read('dashboard/styles/' + name + '.css'));
+  const rules = css => {
+    const found = [];
+    css.replace(/([^{}]+)\{([^{}]*)\}/g, (all, list, body) => {
+      found.push({ selectors: list.split(',').map(selector => selector.trim()), body: body });
+      return all;
+    });
+    return found;
+  };
+
+  ['cybertron', 'minimal'].forEach(name => {
+    const own = rules(read2(name));
+    assert.deepEqual(own[0].selectors, ['html[data-style="' + name + '"]'], name + ' starts with the rule that sets its custom properties');
+    own.slice(1).forEach(rule => rule.selectors.forEach(selector => assert.ok(selector.startsWith('html[data-style="' + name + '"]'), name + ': a rule that is not for its own style would change the other: ' + selector)));
+
+    const properties = own[0].body.split(';').map(line => line.trim()).filter(Boolean).map(line => line.split(':')[0].trim());
+    assert.ok(properties.length >= 5 && properties.every(property => /^--style-[a-z-]+$/.test(property)), name + ' only sets --style- custom properties: ' + properties.join(', '));
+    ['--style-chamfer', '--style-neon', '--style-digits', '--style-grid-size', '--style-grid-opacity'].forEach(property => assert.ok(properties.indexOf(property) !== -1, name + ' sets ' + property));
+    assert.ok(!/(^|[^-])font(-size)?:/.test(read2(name)), name + ' has no text of its own');
+  });
+
+  // The numbers the order gives
+  const value = (name, property) => new RegExp(property + ': ([^;]+);').exec(read2(name))[1];
+  assert.equal(value('cybertron', '--style-chamfer'), '56px');
+  assert.equal(value('minimal', '--style-chamfer'), '34px');
+  assert.equal(value('cybertron', '--style-digits'), '#ffb327', 'amber in Cybertron');
+  assert.equal(value('minimal', '--style-digits'), 'var(--team-neon)', 'the team\'s neon in Minimal');
+  assert.equal(value('cybertron', '--style-grid-size'), '96px');
+  assert.equal(value('minimal', '--style-grid-size'), '48px');
+  ['cybertron', 'minimal'].forEach(name => assert.equal(value(name, '--style-grid-opacity'), '.07', name));
+  assert.equal(value('cybertron', '--style-scan-opacity'), '.035');
+  assert.equal(value('cybertron', '--style-body'), '#15181f');
+  assert.equal(value('cybertron', '--style-raised'), '#262b33');
+
+  // Every custom property a style file or a bar panel reads comes from a style, a team or a token
+  const known = new Set();
+  ['cybertron', 'minimal'].forEach(name => (read2(name).match(/--[a-z-]+(?=:)/g) || []).forEach(property => known.add(property)));
+  ['panels/bar-banner/bar-banner.css', 'panels/bar-column/bar-column.css'].forEach(file => {
+    (withoutComments(read('dashboard/' + file)).match(/var\(--style-[a-z-]+/g) || []).forEach(text => assert.ok(known.has(text.slice(4)), file + ' reads ' + text.slice(4) + ', which no style sets'));
+  });
+  assert.ok(/--team-neon: #35f0ff;/.test(read('dashboard/teams.css')), 'the team neon the styles use is set in teams.css');
+});
+
+test('the numbers in docs/layouts.md are the numbers of the bar layout in layout.js', () => {
+  const doc = read('docs/layouts.md');
+  const section = doc.slice(doc.indexOf('\n## The bar layout\n'));
+  assert.ok(section.length > 100, 'docs/layouts.md has a section called The bar layout');
+
+  const row = label => {
+    const line = section.split('\n').find(text => text.startsWith('| ' + label + ' |'));
+    assert.ok(line, 'the bar layout section has no table row for ' + label);
+    return line.split('|').slice(2, 6).map(cell => Number(cell.trim()));
+  };
+  const numbers = rectangle => [rectangle.x, rectangle.y, rectangle.width, rectangle.height];
+
+  assert.deepEqual(row('Banner'), numbers(b.banner));
+  assert.deepEqual(row('Name slot'), numbers(b.name));
+  assert.deepEqual(row('War clock slot'), numbers(b.war));
+  assert.deepEqual(row('Row'), numbers(b.middle));
+  assert.deepEqual(row('Rail'), numbers(b.rail));
+  assert.deepEqual(row('Side column'), numbers(b.column));
+  assert.deepEqual(row('Main panel'), numbers(b.main));
+  assert.deepEqual(row('Header'), numbers(b.header));
+  assert.deepEqual(row('Page'), [b.page.x, b.page.y, b.page.width, b.page.height]);
+  assert.deepEqual(row('Bar ticker'), numbers(b.ticker));
+  assert.ok(section.includes(String(b.scale)) && section.includes(String(b.areaWidth)), 'the scale and the width of the area are written down');
+
+  // The mirrored numbers are in the doc too
+  const m = layout.mirrorGeometry(b);
+  assert.deepEqual(row('Mirrored rail'), numbers(m.rail));
+  assert.deepEqual(row('Mirrored side column'), numbers(m.column));
+  assert.deepEqual(row('Mirrored main panel'), numbers(m.main));
+  assert.deepEqual(row('Mirrored name slot'), numbers(m.name));
+  assert.deepEqual(row('Mirrored war clock slot'), numbers(m.war));
+  ['The width of the main panel', 'The mirror', 'Styles'].forEach(title => assert.ok(section.includes('### ' + title), 'the section has "' + title + '"'));
+});
+
+// The side column's parts (panels/bar-column/bar-column.css), and the budget in docs/layouts.md
+
+test('the budget of the side column in docs/layouts.md is the top and height of each part in bar-column.css, and the parts follow one another inside the column', () => {
+  const css = withoutComments(read('dashboard/panels/bar-column/bar-column.css'));
+  const doc = read('docs/layouts.md');
+  const section = doc.slice(doc.indexOf('### The side column'), doc.indexOf('### The width of the main panel'));
+  const prefix = 'html[data-layout="bar"] ';
+  const blockOf = selector => {
+    const escaped = (prefix + selector).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const found = new RegExp('(?:^|\\})\\s*' + escaped + ' \\{([^{}]*)\\}').exec(css);
+    return found ? found[1] : null;
+  };
+  const valueIn = (block, name) => { const found = new RegExp('(?:^|[;\\s])' + name + ': (-?\\d+)(?:px)?[;\\s]').exec(block || ''); return found ? Number(found[1]) : null; };
+
+  const parts = ['bar-clock', 'bar-time', 'bar-date', 'bar-weather', 'bar-team', 'bar-school', 'bar-sample', 'bar-logo'];
+  const rows = {};
+  section.split('\n').forEach(line => {
+    const row = /^\| `\.([a-z-]+)` \| (\d+) \| (\d+) \| (\d+) \| (\d+) \|/.exec(line);
+    if (row) rows[row[1]] = { top: Number(row[2]), height: Number(row[3]), left: Number(row[4]), width: Number(row[5]) };
+  });
+  assert.deepEqual(Object.keys(rows).sort(), parts.slice().sort(), 'the budget has a row for each part, and no other');
+
+  // the parts the stylesheet places by hand have a top, a height and a left of their own. The three parts of the clock follow one another
+  const placed = ['bar-clock', 'bar-team', 'bar-school', 'bar-sample', 'bar-logo'];
+  placed.forEach(name => {
+    const block = blockOf('.' + name);
+    assert.ok(block, 'bar-column.css has no rule for .' + name);
+    assert.equal(rows[name].top, valueIn(block, 'top'), '.' + name + ' top in the docs and in bar-column.css');
+    assert.equal(rows[name].height, valueIn(block, 'height'), '.' + name + ' height');
+    if (valueIn(block, 'left') !== null) assert.equal(rows[name].left, valueIn(block, 'left'), '.' + name + ' left');
+    if (valueIn(block, 'width') !== null) assert.equal(rows[name].width, valueIn(block, 'width'), '.' + name + ' width');
+  });
+  ['bar-time', 'bar-date', 'bar-weather'].forEach(name => assert.equal(rows[name].height, valueIn(blockOf('.' + name), 'height'), '.' + name + ' height'));
+  assert.equal(rows['bar-time'].top, 0);
+  assert.equal(rows['bar-date'].top, rows['bar-time'].height + valueIn(blockOf('.bar-time'), 'margin-bottom'), 'the date is under the time and the gap');
+  assert.equal(rows['bar-weather'].top, rows['bar-date'].top + rows['bar-date'].height, 'the weather is under the date');
+  assert.equal(rows['bar-clock'].height, rows['bar-weather'].top + rows['bar-weather'].height, 'the clock is as high as its three rows');
+
+  // everything is inside the column, and the parts do not touch
+  const column = { x: 0, y: 0, width: b.column.width, height: b.column.height };
+  parts.forEach(name => assert.ok(within({ x: rows[name].left, y: rows[name].top, width: rows[name].width, height: rows[name].height }, column), name + ' is inside the column'));
+  const stack = ['bar-clock', 'bar-team', 'bar-school', 'bar-sample', 'bar-logo'];
+  stack.slice(1).forEach((name, index) => {
+    const above = rows[stack[index]];
+    assert.ok(above.top + above.height < rows[name].top, stack[index] + ' ends above ' + name);
+  });
+  assert.equal(rows['bar-logo'].top + rows['bar-logo'].height, b.column.height, 'the logo is at the foot of the column');
+  assert.equal(rows['bar-logo'].left + rows['bar-logo'].width / 2, b.column.width / 2, 'in the middle of it');
+  assert.equal(rows['bar-sample'].left + rows['bar-sample'].width / 2, b.column.width / 2, 'and so is the label');
+  assert.ok(rows['bar-logo'].top - (rows['bar-sample'].top + rows['bar-sample'].height) >= 23, 'the logo\'s parts reach 23 px past its box while the show plays, and have the room above it too');
+  assert.equal(rows['bar-school'].height, 4 * 46, 'the school has room for four lines of 46 px');
+  assert.equal(rows['bar-sample'].height, 2 * 44, 'the label is two lines of 44 px');
+  assert.equal(rows['bar-team'].height, 76, 'the TEAM plate is the banner\'s height');
+  assert.ok(/\.bar-logo \{[^}]*--k: \.1545;[^}]*width: 170px;[^}]*height: 137px;/.test(css.replace(/html\[data-layout="bar"\] /g, '')), '--k is the width over 1100');
+  assert.ok(Math.abs(170 / 1100 - 0.1545) < 0.0001 && Math.abs(170 * 884 / 1100 - 137) < 0.5, 'and the height is the width times 884 over 1100');
+  assert.equal(Number(/const TEAM_PLATE_WIDTH = (\d+);/.exec(read('dashboard/panels/bar-column/bar-column.js'))[1]), b.column.width, 'the TEAM plate is drawn as wide as the column');
+});
+
+test('the clock in the side column fits at its worst case: 10:59 with PM at 84 px, with the letters of the time 5 px closer together', () => {
+  const css = withoutComments(read('dashboard/panels/bar-column/bar-column.css'));
+  const clockSize = 84;
+  assert.ok(new RegExp('--size-clock: ' + clockSize + 'px;').test(read('dashboard/tokens.css')));
+
+  const time = worst.time * clockSize / 96; // the widths of the table above were measured at 96 px
+  const spacing = Number(/letter-spacing: (-?[\d.]+)em;/.exec(css)[1]) * clockSize;
+  const gap = Number(/\.bar-time \{[^}]*gap: (\d+)px;/.exec(css)[1]);
+  const together = time + spacing * 5 + gap + worst.suffix; // five characters, each followed by its spacing
+  assert.ok(time + worst.suffix > b.column.width, 'with no spacing it does not fit, so the spacing is needed: ' + (time + worst.suffix));
+  assert.ok(together <= b.column.width, 'with it, it does: ' + together + ' in ' + b.column.width);
+  assert.ok(Math.abs(spacing) <= 6, 'and the letters are not squeezed by more than 6 px');
+  assert.ok(worst.date <= b.column.width, 'the date at its widest, MON MAR 29, fits the column');
+  assert.ok(worst.weatherIcon + 12 + worst.temperature <= b.column.width, 'and so do the weather picture and 104°F');
+});
+
+// The bar layout's two panels (panels/bar-banner and panels/bar-column), on the same fake page as the side panel
+
+const barColumnFile = 'dashboard/panels/bar-column/bar-column.js';
+const barBannerFile = 'dashboard/panels/bar-banner/bar-banner.js';
+const barClasses = ['bar-column', 'bar-rail', 'bar-body', 'bar-clock', 'bar-time', 'bar-date', 'bar-weather', 'bar-team', 'bar-school', 'bar-sample', 'bar-logo'];
+
+test('the side column has each part once with its class, in the order of the budget, the rail first, and every part that arrives has a line in the table of frame.js', async () => {
+  await onSidebar(async world => {
+    await world.draw(teamContent(), barColumnFile);
+    const classes = classesIn(world.markup);
+
+    barClasses.forEach(name => assert.equal(classes.filter(found => found === name).length, 1, name + ' appears once'));
+    assert.deepEqual(Array.from(new Set(classes.filter(name => name.startsWith('bar-')))).sort(), barClasses.slice().sort(), 'no other class that starts with bar-');
+    assert.ok(/<section class="panel bar-column" data-sequence="bar-column">/.test(world.markup), 'the container is the panel');
+    assert.ok(/<div class="logo bar-logo">/.test(world.markup), 'the logo has the class the effects look for, and its own');
+    assert.equal(countOf(world.markup, 'class="team-fill"'), 1, 'the TEAM plate is drawn once');
+    assert.equal(countOf(world.markup, 'data-name-effect'), 0, 'the name is in the banner');
+    assert.equal(countOf(world.markup, 'wordmark'), 0);
+
+    const at = name => world.markup.search(new RegExp('class="[^"]*\\b' + name + '\\b'));
+    assert.ok(at('bar-rail') < at('bar-body'), 'the rail is first in the row, so the mirror puts it at the edge of the screen');
+    ['bar-clock', 'bar-team', 'bar-school', 'bar-sample', 'bar-logo'].reduce((before, name) => { assert.ok(at(name) > before, name + ' follows the part before it'); return at(name); }, at('bar-body'));
+    ['bar-time', 'bar-date', 'bar-weather'].forEach(name => assert.ok(at(name) > at('bar-clock') && at(name) < at('bar-team'), name + ' is in the clock'));
+
+    const parts = new Set((world.markup.match(/data-part="([a-z-]+)"/g) || []).map(text => /"([a-z-]+)"/.exec(text)[1]));
+    const table = world.frame.sequences['bar-column'];
+    assert.ok(table, 'frame.js has a table for the side column');
+    parts.forEach(part => assert.ok(table[part], part + ' has no line in the table'));
+    Object.keys(table).forEach(part => assert.ok(parts.has(part), 'the table has a line for ' + part + ', which the panel does not have'));
+  });
+});
+
+test('the side column writes the clock, the date, the weather, the team number, the school and the SAMPLE CONTENT label, and writes nothing in a minute that is the same', async () => {
+  await onSidebar(async world => {
+    await world.draw(teamContent(), barColumnFile);
+    const shown = selector => world.element.nodes[selector].textContent;
+
+    assert.deepEqual([shown('.time'), shown('.suffix'), shown('.bar-date')], ['12:59', 'PM', 'WED OCT 28']);
+    assert.equal(shown('.team-number'), '3229');
+    assert.equal(shown('.school-text'), 'HOLLY SPRINGS HIGH SCHOOL');
+    assert.equal(shown('.temperature'), '104°F');
+    assert.ok(/<svg [^>]*width="48" height="48"/.test(world.element.nodes['.weather-icon'].innerHTML), 'the picture is 48');
+    assert.equal(shown('.bar-sample'), '', 'the editors\' own content has no label');
+
+    world.module.update(world.element, teamContent({ status: { source: 'sample' }, weather: null }));
+    assert.equal(shown('.bar-sample'), 'SAMPLE CONTENT');
+    assert.equal(shown('.temperature'), '--°F');
+    assert.equal(world.element.nodes['.weather-icon'].innerHTML, '');
+    world.module.update(world.element, teamContent({ team: { name: 'HAWKTIMUS PRIME', number: '32290', school: 'HOLLY SPRINGS HS' } }));
+    assert.deepEqual([shown('.team-number'), shown('.school-text'), shown('.bar-sample')], ['32290', 'HOLLY SPRINGS HS', '']);
+
+    world.log.length = 0;
+    for (let tick = 0; tick < 39; tick++) world.nextTick();
+    assert.equal(shown('.time'), '12:59', 'still the same minute');
+    assert.ok(!world.log.includes('panel .time.text'), 'the clock was not written in that minute');
+    world.nextTick(); // 1:00:00 PM
+    assert.deepEqual([shown('.time'), shown('.suffix')], ['1:00', 'PM']);
+    assert.ok(!world.log.includes('panel .suffix.text') && !world.log.includes('panel .bar-date.text'), 'the PM and the date are the same, so they are not written');
+  });
+});
+
+test('the banner has the name and the war clock\'s empty slot, draws the name as letters once, and draws a new name when the team changes', async () => {
+  await onSidebar(async world => {
+    await world.draw(teamContent(), barBannerFile);
+    const classes = classesIn(world.markup);
+    assert.deepEqual(classes.filter(name => name === 'panel' || name.startsWith('bar-')), ['panel', 'bar-banner', 'bar-name', 'bar-war']);
+    assert.ok(/<section class="panel bar-banner" data-sequence="bar-banner">/.test(world.markup));
+    assert.ok(world.markup.indexOf('bar-name') < world.markup.indexOf('bar-war'), 'the name is first, so the mirror puts the war clock at the other end');
+    assert.ok(world.markup.indexOf('class="plate fills"') < world.markup.indexOf('bar-name'), 'the frame is drawn first, so the name is over it');
+    assert.equal(countOf(world.markup, 'class="plate fills"'), 1, 'one frame');
+    assert.equal(countOf(world.markup, 'data-name-effect'), 1, 'one name for the effect to find');
+    assert.ok(/class="bar-war"[^>]*><\/div>/.test(world.markup), 'the slot is empty');
+
+    const name = world.element.nodes['.bar-name'];
+    assert.equal(countOf(name.innerHTML, 'class="letter"'), 'HAWKTIMUS PRIME'.length, 'a letter for each character');
+    assert.equal(name.dataset.name, 'HAWKTIMUS PRIME');
+
+    world.log.length = 0;
+    world.module.update(world.element, teamContent());
+    assert.deepEqual(world.log, [], 'the same name is not drawn again, which would start the name effect again');
+
+    world.module.update(world.element, teamContent({ team: { name: 'HAWKTIMUS NOVA', number: '3230', school: 'HOLLY SPRINGS HIGH SCHOOL' } }));
+    assert.equal(name.dataset.name, 'HAWKTIMUS NOVA');
+    assert.equal(countOf(name.innerHTML, 'class="letter"'), 'HAWKTIMUS NOVA'.length);
+    assert.ok(name.innerHTML.includes('data-letter="N"'));
+  });
+
+  ['bar-banner', 'bar-column'].forEach(id => {
+    const code = read('dashboard/panels/' + id + '/' + id + '.js');
+    assert.equal(/setTimeout|setInterval|requestAnimationFrame|animate\(|getAnimations|classList/.test(code), false, id + ' has animation code');
+    assert.equal(/offsetWidth|offsetHeight|offsetTop|offsetLeft|getBoundingClientRect|getComputedStyle|clientWidth|clientHeight|scrollWidth|scrollHeight|getClientRects|innerWidth|innerHeight/.test(code), false, id + ' reads layout');
+  });
+});
+
+// The frames of the bar layout (core/plate.js, "The frames of the bar layout"), and the steel, the neon and
+// the page background of Cybertron (tokens.css, index.html, base.css, styles/cybertron.css)
+
+const plateTree = makeTree('plate', ['dashboard/core/plate.js']);
+const plate = await import(urlOf(plateTree, 'dashboard/core/plate.js'));
+const frameKinds = ['bar-main', 'bar-banner', 'bar-ticker'];
+
+// plate.js adds each frame's shapes to a hidden group of the page, once. A page with only that group stands in for it.
+// run is given the set of ids that were drawn into the group
+function withPlatePage(run) {
+  const known = new Set();
+  return withGlobals({
+    document: {
+      getElementById: id => {
+        if (id !== 'metal-shapes') return known.has(id) ? {} : null;
+        return { insertAdjacentHTML: (where, markup) => (markup.match(/ id="[^"]+"/g) || []).forEach(found => known.add(found.slice(5, -1))) };
+      },
+    },
+  }, () => run(known));
+}
+
+// The ids that index.html draws once, which the frames point at as well
+const staticIds = new Set((read('dashboard/index.html').match(/ id="[^"]+"/g) || []).map(found => found.slice(5, -1)));
+
+// True when every tag that opens is closed, in order. An element that ends with /> closes itself.
+function isBalanced(markup) {
+  const open = [];
+  const tags = markup.match(/<\/?[a-zA-Z]+[^>]*>/g) || [];
+  return tags.every(tag => {
+    const name = /^<\/?([a-zA-Z]+)/.exec(tag)[1];
+    if (tag.endsWith('/>')) return true;
+    if (tag.startsWith('</')) return open.pop() === name;
+    open.push(name);
+    return true;
+  }) && open.length === 0;
+}
+
+const edgesOf = outline => outline.map((point, index) => [point, outline[(index + 1) % outline.length]]);
+const lengthOf = (from, to) => Math.hypot(to[0] - from[0], to[1] - from[1]);
+const distanceToLine = (point, from, to) => Math.abs((to[0] - from[0]) * (from[1] - point[1]) - (from[0] - point[0]) * (to[1] - from[1])) / lengthOf(from, to);
+const signedArea = outline => outline.reduce((sum, point, index) => {
+  const next = outline[(index + 1) % outline.length];
+  return sum + point[0] * next[1] - next[0] * point[1];
+}, 0) / 2;
+const hasText = (markup, text) => markup.indexOf(text) !== -1;
+
+test('the three bar frames are drawn for the boxes of the layout: the main panel for its area, the banner and the ticker for their regions, with the header as high as the large frame\'s', () => {
+  const main = plate.barShape('bar-main');
+  const banner = plate.barShape('bar-banner');
+  const ticker = plate.barShape('bar-ticker');
+
+  assert.deepEqual([main.width, main.height], [b.areaWidth, bs.area.height], 'the area before it is scaled (core/layout.js, areaWidth)');
+  assert.deepEqual([banner.width, banner.height], [b.banner.width, b.banner.height]);
+  assert.deepEqual([ticker.width, ticker.height], [b.ticker.width, b.ticker.height]);
+  assert.equal(plate.barShape('grid1'), null, 'the frames of the other layouts are not bar frames');
+
+  assert.equal(main.tab[4][1], 120, 'the header band ends at y = 120, as the large frame\'s does');
+  assert.ok(Math.abs((main.tab[4][1] - 4) * b.scale - b.header.height) < 1, 'which is the header of 120 on the screen: 116 from the line at 4, after the scale');
+  assert.equal(main.tab[0][1] > 0 && main.tab[2][0] < main.width, true);
+  assert.equal(banner.tab, undefined, 'the banner has no header');
+  assert.equal(ticker.tab, undefined, 'and neither has the ticker');
+
+  // The area of each region has its frame, and the ticker has one only in the bar layout
+  assert.equal(plate.frameKind('grid1', 'bar'), 'bar-main');
+  assert.equal(plate.frameKind('ticker', 'bar'), 'bar-ticker');
+  ['standard', 'sidebar'].forEach(name => ['grid1', 'grid2', 'ticker'].forEach(region => assert.equal(plate.frameKind(region, name), region, name + ' ' + region)));
+  assert.equal(plate.frameKind('grid2', 'bar'), 'grid2');
+});
+
+test('every bar frame is a rectangle with ten corners, 4 inside its box, with a cut corner at the top left and the bottom right and a step at the other two, the same turned half way round', () => {
+  const chamfers = { 'bar-main': 56, 'bar-banner': 56, 'bar-ticker': 32 };
+  const steps = { 'bar-main': 24, 'bar-banner': 24, 'bar-ticker': 16 };
+
+  frameKinds.forEach(kind => {
+    const shape = plate.barShape(kind);
+    const outline = shape.outline;
+    assert.equal(outline.length, 10, kind + ': ten corners');
+    assert.ok(signedArea(outline) > 0, kind + ': the outline runs clockwise on the screen, which the offsets rely on');
+
+    const xs = outline.map(point => point[0]);
+    const ys = outline.map(point => point[1]);
+    assert.deepEqual([Math.min.apply(null, xs), Math.max.apply(null, xs), Math.min.apply(null, ys), Math.max.apply(null, ys)], [4, shape.width - 4, 4, shape.height - 4], kind + ': the line is 4 inside the box');
+
+    edgesOf(outline).forEach(([from, to], index) => {
+      const across = Math.abs(to[0] - from[0]);
+      const down = Math.abs(to[1] - from[1]);
+      assert.ok(across === 0 || down === 0 || across === down, kind + ': edge ' + index + ' is straight or at 45 degrees');
+    });
+
+    const cut = (from, to) => [Math.abs(to[0] - from[0]), Math.abs(to[1] - from[1])];
+    assert.deepEqual(cut(outline[1], outline[2]), [chamfers[kind], chamfers[kind]], kind + ': the cut corner at the top left');
+    assert.deepEqual(cut(outline[6], outline[7]), [chamfers[kind], chamfers[kind]], kind + ': and at the bottom right');
+    assert.deepEqual(cut(outline[3], outline[4]), [steps[kind], steps[kind]], kind + ': the step at the top right');
+    assert.deepEqual(cut(outline[8], outline[9]), [steps[kind], steps[kind]], kind + ': and at the bottom left');
+    assert.equal(outline[4][1] - outline[3][1], steps[kind], kind + ': the top right corner is a step lower');
+    assert.equal(outline[8][1] - outline[9][1], steps[kind], kind + ': the bottom left corner is a step higher');
+
+    outline.forEach((point, index) => {
+      const opposite = outline[(index + 5) % 10];
+      assert.deepEqual([point[0] + opposite[0], point[1] + opposite[1]], [shape.width, shape.height], kind + ': corner ' + index + ' and corner ' + ((index + 5) % 10) + ' are one turn half way round from each other');
+    });
+  });
+
+  // The cut corner of Cybertron is the one the style names
+  const css = withoutComments(read('dashboard/styles/cybertron.css'));
+  assert.equal(Number(/--style-chamfer: (\d+)px;/.exec(css)[1]), plate.barShape('bar-main').outline[2][0] - plate.barShape('bar-main').outline[1][0], '--style-chamfer is the cut corner of the large frame and the banner');
+});
+
+test('a point of the outline moves along the line half way between its two edges, so every edge of the neon line, the conduit and the brackets is the same distance from the edge it follows', () => {
+  frameKinds.forEach(kind => {
+    const outline = plate.barShape(kind).outline;
+
+    [10, 16, -22].forEach(distance => {
+      const moved = plate.offsetOutline(outline, distance);
+      edgesOf(outline).forEach(([from, to], index) => {
+        const next = (index + 1) % outline.length;
+        [moved[index], moved[next]].forEach(point => assert.ok(Math.abs(distanceToLine(point, from, to) - Math.abs(distance)) < 0.15, kind + ': corner ' + index + ' moved ' + distance + ' is ' + distanceToLine(point, from, to) + ' from its edge'));
+      });
+      // inward is inside and outward is outside
+      assert.ok(distance > 0 ? signedArea(moved) < signedArea(outline) : signedArea(moved) > signedArea(outline), kind + ': ' + distance + ' makes the outline smaller or bigger');
+    });
+
+    // a point in the middle of an edge moves straight in, and one that is not on the outline is refused
+    const [from, to] = [outline[2], outline[3]];
+    const middle = [(from[0] + to[0]) / 2, from[1]];
+    assert.deepEqual(plate.offsetPoint(outline, middle, 10), [middle[0], from[1] + 10]);
+    assert.deepEqual(plate.offsetPoint(outline, middle, -10), [middle[0], from[1] - 10]);
+    assert.throws(() => plate.offsetPoint(outline, [middle[0], from[1] + 30], 10), /not on the outline/);
+  });
+});
+
+test('the neon line is the outline 10 inside, in two halves that join where the halves of the edge join, and the conduit and the brackets are made from the same corners', () => {
+  frameKinds.forEach(kind => {
+    const shape = plate.barShape(kind);
+    const inner = plate.offsetOutline(shape.outline, 10);
+
+    assert.deepEqual(shape.neon.a, inner.slice(0, shape.split + 1), kind + ': the first half');
+    assert.deepEqual(shape.neon.b, inner.slice(shape.split).concat([inner[0]]), kind + ': and the second');
+    assert.deepEqual(shape.neon.a[shape.neon.a.length - 1], shape.neon.b[0], kind + ': they meet at the top right');
+    assert.deepEqual(shape.neon.b[shape.neon.b.length - 1], shape.neon.a[0], kind + ': and at the bottom left');
+    assert.equal(shape.split, 5);
+
+    // Every bolt is at a corner of the outline, and the halves share them
+    const bolts = shape.screws.a.concat(shape.screws.b);
+    bolts.forEach(point => assert.ok(shape.outline.some(corner => corner[0] === point[0] && corner[1] === point[1]), kind + ': a bolt at ' + point));
+    assert.equal(new Set(bolts.map(point => point.join(','))).size, bolts.length, kind + ': no bolt twice');
+  });
+  assert.equal(plate.barShape('bar-main').screws.a.length + plate.barShape('bar-main').screws.b.length, 6, 'a bolt at every joint of the large frame');
+  assert.equal(plate.barShape('bar-banner').screws.a.length + plate.barShape('bar-banner').screws.b.length, 6, 'and of the banner');
+  assert.equal(plate.barShape('bar-ticker').screws.a.length + plate.barShape('bar-ticker').screws.b.length, 2, 'the ticker is 72 high, so it has the two at the ends of its cut corners');
+
+  // The brackets are outside the two cut corners, and the conduit is inside
+  frameKinds.forEach(kind => {
+    const shape = plate.barShape(kind);
+    assert.equal(shape.bracketLines.length, 2, kind + ': two brackets');
+    const [top, bottom] = shape.bracketLines;
+    assert.ok(top.every(point => point[0] < shape.outline[2][0] || point[1] < shape.outline[1][1]), kind + ': the first is at the top left');
+    assert.ok(bottom.every(point => point[0] > shape.outline[7][0] || point[1] > shape.outline[6][1]), kind + ': the second is at the bottom right');
+    assert.ok(top[1][0] < 4 && top[2][1] < 4 && bottom[1][0] > shape.width - 4 && bottom[2][1] > shape.height - 4, kind + ': outside the line of the edge');
+  });
+});
+
+test('the main panel\'s frame is cut into 12 pieces with the names the large frame\'s pieces have, the bars tile the outline, and every bolt is in one piece', () => {
+  const shape = plate.barShape('bar-main');
+  const names = shape.pieces.map(piece => piece.name);
+
+  assert.equal(names.length, 12);
+  assert.equal(new Set(names).size, 12, 'no name twice');
+  ['plate-header-left', 'plate-header-right', 'plate-body-left', 'plate-body-right', 'edge-top-left', 'edge-top-right', 'edge-right', 'edge-bottom', 'edge-bottom-left', 'corner-top-left', 'corner-bottom-right'].forEach(name => assert.ok(names.indexOf(name) !== -1, name));
+  assert.ok(names.indexOf('plate-decor') !== -1, 'the decoration is a plate of its own');
+  ['seam-line', 'seam-notch'].forEach(name => assert.equal(names.indexOf(name), -1, 'there is no steel seam under the header: ' + name));
+
+  // The bars are made of points of the outline, and put end to end they are the whole of it
+  const bars = shape.pieces.filter(piece => piece.line);
+  assert.equal(bars.length, 7);
+  const barLength = bars.reduce((sum, piece) => sum + edgesOf(piece.line).slice(0, -1).reduce((all, [from, to]) => all + lengthOf(from, to), 0), 0);
+  const outlineLength = edgesOf(shape.outline).reduce((sum, [from, to]) => sum + lengthOf(from, to), 0);
+  assert.ok(Math.abs(barLength - outlineLength) < 0.01, 'the bars are ' + barLength + ' long and the outline ' + outlineLength);
+  bars.forEach(piece => {
+    piece.line.forEach(point => assert.doesNotThrow(() => plate.offsetPoint(shape.outline, point, 1), piece.name + ' starts and ends on the outline'));
+    assert.equal(piece.neon.length, piece.line.length, piece.name + ' has its neon line');
+    piece.neon.forEach((point, index) => assert.deepEqual(point, plate.offsetPoint(shape.outline, piece.line[index], 10)));
+  });
+
+  // Each bolt is in one piece only
+  const placed = bars.reduce((all, piece) => all.concat(piece.screws.map(point => point.join(','))), []);
+  assert.deepEqual(placed.slice().sort(), shape.screws.a.concat(shape.screws.b).map(point => point.join(',')).sort());
+  assert.equal(new Set(placed).size, placed.length);
+
+  // The plates fill the body and the header, between them
+  const platesArea = ['plate-header-left', 'plate-header-right', 'plate-body-left', 'plate-body-right'].reduce((sum, name) => sum + Math.abs(signedArea(shape.pieces.filter(piece => piece.name === name)[0].points)), 0);
+  assert.ok(Math.abs(platesArea - signedArea(shape.outline)) < 1, 'the four plates are the whole of the plate: ' + platesArea + ' of ' + signedArea(shape.outline));
+
+  assert.equal(plate.barShape('bar-banner').pieces.length, 0, 'the banner leaves as one piece');
+  assert.equal(plate.barShape('bar-ticker').pieces.length, 0, 'and the ticker only turns its slats, so it has no pieces');
+});
+
+test('the main panel\'s frame has each of its parts once, in the order that puts the shadows under both halves and the page over all of it', async () => {
+  await withPlatePage(drawn => {
+    const markup = plate.areaMarkup('bar-main');
+    assert.ok(isBalanced(markup), 'every tag is closed');
+    const once = text => assert.equal(countOf(markup, text), 1, text);
+
+    ['data-part="body"', 'data-part="header-left"', 'data-part="header-right"', 'data-part="decor"', 'data-part="frame-a"', 'data-part="frame-b"', 'data-part="shadow-a"', 'data-part="shadow-b"'].forEach(once);
+    ['class="tab-inset"', 'class="tab-bevel"', 'class="tab-line"'].forEach(text => assert.equal(countOf(markup, text), 2, text + ' on the tab and on the piece that is the tab'));
+    ['art-seams', 'art-hazard', 'art-conduit', 'art-slashes', 'art-brackets'].forEach(name => assert.equal(countOf(markup, 'art-cybertron ' + name), 2, name + ' once in the frame and once in the piece that is the decoration'));
+    assert.equal(countOf(markup, 'class="plate piece"'), 12, 'the pieces');
+    assert.equal(countOf(markup, 'class="plate fills"'), 1);
+    assert.equal(countOf(markup, 'class="plate shadow-layer"'), 2);
+
+    // The edge has its five layers and its three neon ones in each half, drawn together by the group that has the outline's part
+    ['edge-rim', 'edge-face', 'edge-shade', 'edge-ridge', 'edge-neon-wide-2', 'edge-neon-wide-1', 'edge-neon'].forEach(layer => assert.equal(countOf(markup, '<use class="' + layer + '"'), 2 + 7, layer + ' in the two halves and in the seven bars'));
+    assert.equal(countOf(markup, '<use class="edge-shadow"'), 2 + 7, 'the shadows of the halves are in svgs of their own');
+    assert.equal(countOf(markup, 'data-part="outline"'), 4, 'the four svgs of the frame draw their lines');
+    assert.equal(countOf(markup, 'href="#bolt-shape"'), 6 + 6, 'six bolts in the frame and six in the pieces');
+    assert.ok(!hasText(markup, 'bolt-shadow') && !hasText(markup, 'screw-shadow'), 'the bolts have no shadow');
+
+    // The order: the fills, the two shadows, the two halves, then the pieces. The page is added after all of it (core/areas.js)
+    const at = text => markup.indexOf(text);
+    assert.ok(at('class="plate fills"') < at('data-part="shadow-a"') && at('data-part="shadow-a"') < at('data-part="shadow-b"') && at('data-part="shadow-b"') < at('data-part="frame-a"') && at('data-part="frame-a"') < at('data-part="frame-b"') && at('data-part="frame-b"') < at('class="plate piece"'));
+
+    // Every shape the markup points at was drawn into the page, or is one index.html draws once
+    const pointedAt = (markup.match(/href="#[a-z0-9-]+"/g) || []).map(text => text.slice(7, -1));
+    ['bar-main-a', 'bar-main-b', 'bar-main-neon-a', 'bar-main-neon-b', 'bolt-shape'].forEach(id => assert.ok(pointedAt.indexOf(id) !== -1, id));
+    pointedAt.forEach(id => assert.ok(drawn.has(id) || staticIds.has(id), id + ' is not drawn anywhere'));
+    assert.ok(drawn.has('bar-main-piece-edge-top-left-neon'), 'each bar has its neon line drawn');
+  });
+});
+
+test('the ticker\'s frame holds still: its four svgs have names the page change does not lift, and it has no pieces, no glint and no decoration but its brackets', async () => {
+  await withPlatePage(drawn => {
+    const markup = plate.areaMarkup('bar-ticker');
+    (markup.match(/href="#[a-z0-9-]+"/g) || []).forEach(found => assert.ok(drawn.has(found.slice(7, -1)) || staticIds.has(found.slice(7, -1)), found + ' is not drawn anywhere'));
+    assert.ok(isBalanced(markup));
+
+    ['still-frame-a', 'still-frame-b', 'still-shadow-a', 'still-shadow-b'].forEach(name => assert.equal(countOf(markup, 'data-part="' + name + '"'), 1, name));
+    ['frame-a', 'frame-b', 'shadow-a', 'shadow-b'].forEach(name => assert.equal(countOf(markup, 'data-part="' + name + '"'), 0, name + ' is what the page change lifts'));
+    assert.equal(countOf(markup, 'class="plate piece"'), 0);
+    assert.ok(!hasText(markup, 'glint') && !hasText(markup, 'plate-id') && !hasText(markup, 'rivets'));
+    assert.equal(countOf(markup, 'art-cybertron'), 1);
+    assert.equal(countOf(markup, 'art-brackets'), 1, 'only the brackets');
+    assert.equal(countOf(markup, 'href="#bolt-shape"'), 2);
+    assert.equal(countOf(markup, 'data-part="outline"'), 4, 'but its lines are drawn when it arrives');
+
+    // The part names are the ones frame.css moves, and the page change moves none of the ticker\'s
+    const frameCss = read('dashboard/frame.css');
+    ['still-frame-a', 'still-frame-b', 'still-shadow-a', 'still-shadow-b'].forEach(name => assert.ok(!hasText(frameCss, '"' + name + '"'), name + ' is not moved'));
+    assert.ok(/html\[data-layout="bar"\] \.area\[data-area="ticker"\] \.screw \{ animation-name: none; \}/.test(frameCss), 'and its bolts do not turn');
+  });
+});
+
+test('the banner draws its own frame like the countdown does: the plate, the two halves with their bolts, and a part for each thing that arrives, every one in the table of frame.js', async () => {
+  await withPlatePage(() => {
+    const markup = plate.plateMarkup('bar-banner');
+    assert.ok(isBalanced(markup));
+
+    assert.equal(countOf(markup, 'class="plate fills"'), 1);
+    ['data-part="body"', 'data-part="decor"', 'data-part="frame-a"', 'data-part="frame-b"'].forEach(text => assert.equal(countOf(markup, text), 1, text));
+    assert.equal(countOf(markup, 'data-part="outline"'), 2);
+    assert.equal(countOf(markup, 'data-part="stud"'), 6, 'six bolts');
+    assert.ok(!hasText(markup, 'header-left') && !hasText(markup, 'glint') && !hasText(markup, 'plate-id') && !hasText(markup, 'class="plate piece"'));
+
+    const frame = read('dashboard/frame.js');
+    const sequence = /'bar-banner': \{([^}]*)\}/.exec(frame)[1];
+    const parts = new Set((markup.match(/data-part="[a-z-]+"/g) || []).map(text => text.slice(11, -1)));
+    parts.forEach(part => ['frame-a', 'frame-b'].indexOf(part) !== -1 || assert.ok(sequence.includes("'" + part + "':"), part + ' has no line in the banner\'s table'));
+    ['body', 'outline', 'decor', 'stud', 'title', 'war'].forEach(part => assert.ok(sequence.includes("'" + part + "':"), part));
+    assert.ok(/'outline':\s*\['draw', (\d+)\]/.test(sequence) && /'decor':\s*\['fade', (\d+)\]/.test(sequence));
+    assert.ok(Number(/'decor':\s*\['fade', (\d+)\]/.exec(sequence)[1]) >= Number(/'outline':\s*\['draw', (\d+)\]/.exec(sequence)[1]) + 650, 'the decoration comes after the lines are drawn, which takes 650 ms');
+  });
+});
+
+test('the frames are small: a handful of svg elements and five new gradients, and no filter, no image and no animation of their own', async () => {
+  await withPlatePage(() => {
+    const elements = markup => (markup.match(/<(svg|g|polygon|polyline|path|use|circle)[ >]/g) || []).length;
+    assert.ok(elements(plate.areaMarkup('bar-main')) <= 150, 'the main panel');
+    assert.ok(elements(plate.plateMarkup('bar-banner')) <= 40, 'the banner');
+    assert.ok(elements(plate.areaMarkup('bar-ticker')) <= 40, 'the ticker');
+    assert.ok(elements(plate.areaMarkup('bar-main-minimal')) <= 150, 'the main panel in Minimal, with its rivets, rust and ticks');
+    assert.ok(elements(plate.plateMarkup('bar-banner-minimal')) <= 40, 'the banner in Minimal');
+    assert.ok(elements(plate.areaMarkup('bar-ticker-minimal')) <= 40, 'the ticker in Minimal');
+  });
+
+  const html = read('dashboard/index.html');
+  const gradients = html.match(/<linearGradient id="[a-z-]+"/g) || [];
+  ['edge-steel', 'edge-ridge-steel', 'edge-shade-steel', 'armor-face'].forEach(id => assert.ok(gradients.some(text => text.includes('"' + id + '"')), id));
+  assert.equal(gradients.length, 12, 'gold 3, red 3, the screw, the logo, steel 3 and the armor plate: ' + gradients.length);
+  assert.ok(!/<(filter|image|pattern|mask|clipPath|animate|set)\b/i.test(html), 'no filter, image, pattern, mask, clip or SMIL in the page\'s own drawing');
+  assert.deepEqual(html.match(/<radialGradient id="[a-z-]+"/g), ['<radialGradient id="wear-rust"'], 'the one radial gradient is the patch of rust under a Minimal frame\'s wear');
+  assert.ok(!/(feGaussianBlur|feDropShadow|box-shadow|text-shadow|backdrop-filter|filter=|filter:)/.test(read('dashboard/core/plate.js')), 'plate.js draws no glow');
+});
+
+test('on the screen every frame stays inside 0 to 1920 by 0 to 1080 with its bolts and brackets, in the layout and in its mirror, and the frames are never turned round', () => {
+  const place = (kind, box, scale) => {
+    const reach = plate.frameExtent(kind);
+    return { x: box.x + reach.left * scale, y: box.y + reach.top * scale, width: (reach.right - reach.left) * scale, height: (reach.bottom - reach.top) * scale };
+  };
+  const onScreen = (box, label) => assert.ok(box.x >= 0 && box.y >= 0 && box.x + box.width <= layout.screen.width && box.y + box.height <= layout.screen.height, label + ' is on the 1920 x 1080 screen: ' + JSON.stringify(box));
+
+  [['the layout', b], ['its mirror', layout.mirrorGeometry(b)]].forEach(([label, geometry]) => {
+    onScreen(place('bar-main', geometry.main, b.scale), 'the main panel\'s frame in ' + label);
+    onScreen(place('bar-banner', geometry.banner, 1), 'the banner\'s frame in ' + label);
+    onScreen(place('bar-ticker', geometry.ticker, 1), 'the ticker\'s frame in ' + label);
+  });
+
+  // A frame has the same shape in both: the mirror turns the regions and not the pictures in them, as the pictures of Nova show
+  const css = withoutComments(read('dashboard/layouts/bar.css') + read('dashboard/styles/cybertron.css'));
+  assert.ok(!/mirrored[^{}]*\.(area|plate)\b|\.(area|plate)\b[^{}]*mirrored/.test(css), 'no rule turns an area or a frame');
+  assert.ok(!/mirror-art/.test(read('dashboard/core/plate.js')), 'and plate.js does not ask for it');
+});
+
+test('the ticker\'s tag is a plate that is the same at both ends, so the mirror moves it to the other end and has nothing to turn', async () => {
+  await withPlatePage(() => {
+    const tag = plate.tagMarkup(328);
+    const points = /<polygon class="tag-fill" points="([^"]*)"/.exec(tag)[1].split(' ').map(pair => pair.split(',').map(Number));
+    assert.equal(points.length, 4);
+    // top left, top right, bottom right, bottom left: the slants at the two ends are the same
+    assert.ok(Math.abs((points[0][0] - points[3][0]) - (points[2][0] - points[1][0])) < 0.01, 'the same slant at both ends');
+    assert.equal(points[0][1], points[1][1]);
+    assert.equal(points[2][1], points[3][1]);
+  });
+});
+
+
+test('the numbers in the Frames section of docs/layouts.md are the numbers of the shapes in plate.js', () => {
+  const doc = read('docs/layouts.md');
+  const section = doc.slice(doc.indexOf('\n### Frames\n'), doc.indexOf('\n## What else works in each layout'));
+  assert.ok(section.length > 500, 'docs/layouts.md has a section called Frames');
+
+  const chamfers = { 'bar-main': 56, 'bar-banner': 56, 'bar-ticker': 32 };
+  frameKinds.forEach(kind => {
+    const shape = plate.barShape(kind);
+    const line = section.split('\n').find(text => text.startsWith('| `' + kind + '` |'));
+    assert.ok(line, 'the table has a row for ' + kind);
+
+    const cells = line.split('|').map(cell => cell.trim());
+    const outline = shape.outline;
+    assert.equal(cells[2], shape.width + ' x ' + shape.height, kind + ': drawn for');
+    assert.equal(Number(cells[3]), chamfers[kind], kind + ': the cut corner');
+    assert.equal(Number(cells[3]), outline[2][0] - outline[1][0], kind + ': is what the shape has');
+    assert.equal(Number(cells[4]), outline[4][1] - outline[3][1], kind + ': the step');
+    assert.equal(Number(cells[5]), (shape.width - 4) - outline[3][0], kind + ': the run');
+    assert.equal(Number(cells[6]), shape.screws.a.length + shape.screws.b.length, kind + ': the bolts');
+  });
+
+  // The parts and their sizes, as plate.js and the stylesheets have them
+  const css = withoutComments(read('dashboard/base.css') + read('dashboard/styles/cybertron.css'));
+  ['4 px, `--style-neon`', '14 px and .25 opacity', '24 px and .12', '12 px high, slanted bars 22 px wide every 44', 'six slanted bars in the neon, 22 px wide every 40', 'a leg of 60 px down the side and 70 px along the top', '3 px pink line'].forEach(text => assert.ok(section.includes(text), text));
+  assert.ok(/stroke-width: 4px;/.test(css) && /stroke-width: 14px;/.test(css) && /stroke-width: 24px;/.test(css));
+  const main = plate.barShape('bar-main');
+  assert.equal(main.art.hazard.split('M').length - 1, 32, 'the stripes across the 1399 px under the header');
+  assert.equal(main.art.slashes.split('M').length - 1, 6, 'six slashes');
+  assert.deepEqual(main.bracketLines.map(line => line.length), [4, 4]);
+  assert.ok(Math.abs(main.bracketLines[0][0][1] - main.bracketLines[0][1][1] - 60) < 1e-6, 'a leg of 60 down the side');
+  assert.ok(Math.abs(main.bracketLines[0][3][0] - main.bracketLines[0][2][0] - 70) < 1e-6, 'and 70 along the top');
+});
+
+
+// The steel
+
+test('steel is one more metal next to gold and silver: its tokens, its three gradients, and the same edge tokens, for Cybertron and Minimal and for nothing else', () => {
+  const tokens = withoutComments(read('dashboard/tokens.css'));
+  const found = /([^{}]*\[data-metal="steel"\][^{}]*)\{([^{}]*)\}/.exec(tokens);
+  assert.ok(found, 'tokens.css has a rule for the steel');
+
+  const selectors = found[1].split(',').map(selector => selector.trim());
+  assert.deepEqual(selectors, ['[data-metal="steel"]', 'html[data-style="cybertron"]', 'html[data-style="cybertron"] [data-metal]', 'html[data-style="minimal"]', 'html[data-style="minimal"] [data-metal]']);
+  assert.ok(!selectors.some(selector => /original/.test(selector)), 'Original has the metal it always had');
+
+  const declared = {};
+  found[2].split(';').map(line => line.trim()).filter(Boolean).forEach(line => { declared[line.split(':')[0].trim()] = line.slice(line.indexOf(':') + 1).trim(); });
+  ['--metal-1', '--metal-2', '--metal-3', '--metal-4', '--metal-5', '--metal-6', '--metal-7', '--metal-8', '--metal-grime', '--metal-rim', '--metal-ridge', '--metal-glint', '--metal-shade', '--metal-flat'].forEach(name => assert.ok(declared[name], 'steel sets ' + name));
+  assert.equal(declared['--edge-face'], 'url(#edge-steel)');
+  assert.equal(declared['--edge-ridge'], 'url(#edge-ridge-steel)');
+  assert.equal(declared['--edge-shade'], 'url(#edge-shade-steel)');
+
+  // Gold and silver keep their rules: the steel never reaches the selectors the others have
+  assert.ok(/:root,\s*\[data-metal="gold"\] \{\s*--metal-1: #efe6c4;/.test(tokens));
+  assert.ok(/\[data-metal="silver"\] \{\s*--metal-1: #c3c4c3;/.test(tokens));
+
+  // The brightest stop is below pure white and the metal is cool: more blue than red at every stop
+  ['--metal-1', '--metal-2', '--metal-3', '--metal-4', '--metal-5', '--metal-6', '--metal-7', '--metal-8', '--metal-grime', '--metal-rim', '--metal-ridge', '--metal-glint', '--metal-flat'].forEach(name => {
+    const hex = /^#([0-9a-f]{6})$/.exec(declared[name]);
+    assert.ok(hex, name + ' is a plain color');
+    const [red, , blue] = [0, 2, 4].map(offset => parseInt(hex[1].slice(offset, offset + 2), 16));
+    assert.ok(blue >= red, name + ' is not warm');
+    assert.ok(name === '--metal-glint' || red < 240, name + ' is below pure white');
+  });
+
+  const html = read('dashboard/index.html');
+  ['edge-steel', 'edge-ridge-steel', 'edge-shade-steel'].forEach(id => {
+    assert.equal(countOf(html, '<linearGradient id="' + id + '" data-metal="steel"'), 1, id + ' has the steel metal');
+    const body = html.slice(html.indexOf('<linearGradient id="' + id + '"'), html.indexOf('</linearGradient>', html.indexOf('<linearGradient id="' + id + '"')));
+    assert.ok(countOf(body, '<stop ') >= 7, id + ' has its stops');
+    (body.match(/var\(--metal-[a-z0-9]+\)/g) || []).forEach(text => assert.ok(declared[text.slice(4, -1)], id + ' reads ' + text + ', which the steel sets'));
+  });
+  ['edge-gold', 'edge-ridge-gold', 'edge-shade-gold'].forEach(id => assert.equal(countOf(html, '<linearGradient id="' + id + '" data-metal="gold"'), 1, id + ' is as it was'));
+
+  // The steel is in the same place as the others in the page: after the gold and the red, before the screws
+  assert.ok(html.indexOf('id="edge-steel"') > html.indexOf('id="edge-shade-red"') && html.indexOf('id="edge-steel"') < html.indexOf('id="screw-face-silver"'));
+});
+
+test('the neon and the bolt are shared by both styles in base.css: the neon line is on, the wider ones are off until a style turns them on, and the flat finish has none of them', () => {
+  const base = withoutComments(read('dashboard/base.css'));
+  const rule = selector => {
+    const found = new RegExp('(?:^|\\})\\s*' + selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' \\{([^}]*)\\}').exec(base);
+    assert.ok(found, 'base.css has a rule for ' + selector);
+    return found[1];
+  };
+
+  assert.ok(/stroke: var\(--style-neon, var\(--team-neon\)\);/.test(base), 'the neon is the style\'s, and the team\'s without one');
+  assert.ok(/stroke-width: 4px;/.test(rule('.edge-neon')));
+  assert.ok(/display: none;/.test(rule('.edge-neon-wide-1')) && /display: none;/.test(rule('.edge-neon-wide-2')), 'the wide lines are off');
+  assert.ok(/stroke-width: 14px;/.test(rule('.edge-neon-wide-1')) && /stroke-opacity: \.25;/.test(rule('.edge-neon-wide-1')));
+  assert.ok(/stroke-width: 24px;/.test(rule('.edge-neon-wide-2')) && /stroke-opacity: \.12;/.test(rule('.edge-neon-wide-2')));
+  assert.ok(/\[data-finish="flat"\] \.edge-neon-wide-1,\s*\[data-finish="flat"\] \.edge-neon-wide-2/.test(base), 'the flat finish has no wide lines');
+  assert.ok(/\.art-cybertron \{ display: none; \}/.test(base), 'what only Cybertron draws is off until it is on');
+
+  // The armor tab: a bevel, a bright line and the team plate color, in lines of 3px or more
+  assert.ok(/stroke-width: 3px;/.test(rule('.tab-bevel')) && /stroke-width: 3px;/.test(rule('.tab-line')));
+  assert.ok(/fill: var\(--team-plate\);/.test(rule('.tab-inset')), 'the team plate color is inset in the tab');
+
+  // Nothing in what the two styles share moves, glows or is a picture, and every line is 3px or more
+  const shared = [rule('.edge-neon'), rule('.edge-neon-wide-1'), rule('.edge-neon-wide-2'), rule('.tab-bevel'), rule('.tab-line'), rule('.tab-inset'), rule('.bolt-rim'), rule('.bolt-face'), rule('.bolt-dot')].join(' ');
+  assert.ok(!/(animation|transition|filter|shadow|blur|url\()/.test(shared));
+  (shared.match(/stroke-width: [\d.]+px/g) || []).forEach(text => assert.ok(parseFloat(/[\d.]+px/.exec(text)[0]) >= 3, text));
+});
+
+
+// What Cybertron paints
+
+test('the Cybertron stylesheet paints with the team\'s colors and gradients and no picture: the page background, the plates, the rail and what it draws on a frame, in lines of 3px or more, for its own style only', () => {
+  const css = withoutComments(read('dashboard/styles/cybertron.css'));
+  const rules = [];
+  css.replace(/([^{}]+)\{([^{}]*)\}/g, (all, list, body) => {
+    rules.push({ selectors: list.split(',').map(selector => selector.trim()), body: body });
+    return all;
+  });
+
+  assert.ok(rules.length >= 15, 'the style has its rules');
+  rules.forEach(rule => rule.selectors.forEach(selector => assert.ok(selector.startsWith('html[data-style="cybertron"]'), 'for Cybertron only: ' + selector)));
+  assert.ok(!/(animation|transition|@keyframes|filter|box-shadow|text-shadow|blur\(|will-change|font(-size)?:)/.test(css), 'nothing moves, glows or has text of its own');
+
+  // Static, and drawn with gradients and paths: the only url is the armor plate's gradient
+  const urls = css.match(/url\([^)]*\)/g) || [];
+  assert.deepEqual(urls, ['url(#armor-face)']);
+  assert.ok(!/\.(png|jpe?g|gif|webp|svg)\b/.test(css), 'no picture');
+
+  // Every color is a team color, a style color or the dark of the plate seams
+  const hexes = css.slice(css.indexOf('}') + 1).match(/#[0-9a-fA-F]{3,8}\b/g) || [];
+  hexes.forEach(hex => assert.ok(hex === '#05070a', 'a color of its own after the first rule: ' + hex));
+  ['#6c18b6', '#3b2a7a', '#faca2a', '#35f0ff', '#ff2e8c', '#1f7ae0', '#1e3a6e', '#9bf0ff'].forEach(team => assert.ok(!css.toLowerCase().includes(team), 'a team color written out: ' + team));
+  ['--team-accent', '--team-plate', '--style-neon', '--style-pink', '--style-body', '--style-grid-size', '--style-grid-opacity', '--style-scan-opacity'].forEach(name => assert.ok(css.includes('var(' + name + ')'), 'it reads ' + name));
+
+  // The page background: scanlines over the team's background, and a grid in a layer behind the stage, both faint
+  const screen = rules.filter(rule => rule.selectors[0] === 'html[data-style="cybertron"] #screen')[0].body;
+  assert.ok(/repeating-linear-gradient\(to bottom, rgba\(255, 255, 255, var\(--style-scan-opacity\)\)/.test(screen) && /var\(--ground\)/.test(screen));
+  const grid = rules.filter(rule => rule.selectors[0] === 'html[data-style="cybertron"] #screen::before')[0].body;
+  assert.ok(/background-size|\/ var\(--style-grid-size\) var\(--style-grid-size\)/.test(grid) && /opacity: var\(--style-grid-opacity\);/.test(grid) && /pointer-events: none;/.test(grid));
+  assert.ok(/width: 1920px;/.test(grid) && /height: 1080px;/.test(grid), 'as big as the screen');
+  assert.ok(/#screen::before/.test(css) && !/#screen::after/.test(css), 'both are behind the stage: a layer after it would be over the text');
+  const properties = withoutComments(read('dashboard/styles/cybertron.css'));
+  assert.ok(/--style-grid-size: 96px;/.test(properties) && /--style-grid-opacity: \.07;/.test(properties) && /--style-scan-opacity: \.035;/.test(properties));
+
+  // Every line it draws is 3px or more (the strokes the two styles share are checked with them, in base.css)
+  const widths = css.match(/(stroke-width|border-[a-z]*-width|outline-width): [\d.]+px/g) || [];
+  assert.ok(widths.length >= 3);
+  widths.forEach(text => assert.ok(parseFloat(/[\d.]+px/.exec(text)[0]) >= 3, text));
+  rules.filter(rule => /\.bar-rail::before/.test(rule.selectors[0])).forEach(rule => assert.ok(/width: 4px;/.test(rule.body), 'the rail\'s line is 4px'));
+
+  // The hazard stripe is the team's accent, the conduit and the brackets are pink and the slashes are neon
+  const paint = name => rules.filter(rule => rule.selectors[0] === 'html[data-style="cybertron"] .art-' + name)[0].body;
+  assert.ok(/fill: var\(--team-accent\);/.test(paint('hazard')));
+  assert.ok(/stroke: var\(--style-pink\);/.test(paint('conduit')) && /stroke: var\(--style-pink\);/.test(paint('brackets')));
+  assert.ok(/fill: var\(--style-neon\);/.test(paint('slashes')));
+  assert.ok(/stroke-opacity: \.6;/.test(paint('seams')), 'the seams are faint');
+
+  // The wide neon lines are on, except in the flat finish
+  assert.ok(css.includes('html[data-style="cybertron"]:not([data-finish="flat"]) .edge-neon-wide-1'));
+  // and the plates are the gunmetal: the body is the style's, the tab an armor plate, the TEAM plate and the tag the team's plate color
+  assert.ok(/--panel-face: var\(--style-body\);/.test(css) && css.includes('fill: url(#armor-face);'));
+  assert.ok(/\.team-fill,\s*html\[data-style="cybertron"\] \.tag-fill \{ fill: var\(--team-plate\); \}/.test(css));
+});
+
+test('the page background of Cybertron is the grid at 96px and the scanlines, nothing else on the screen is drawn behind the stage, and Original has none of it', () => {
+  const originalCss = withoutComments(read('dashboard/styles/original.css'));
+  const base = withoutComments(read('dashboard/base.css'));
+  assert.ok(!/#screen/.test(originalCss), 'Original does not touch the page background');
+  assert.ok(/#screen \{[^}]*background: var\(--ground\);/.test(base), 'it is the team\'s background color, as it was');
+  assert.ok(!/#screen::(before|after)/.test(base), 'and base.css draws nothing over it');
+  assert.ok(/--style-scan-opacity: \.035;/.test(withoutComments(read('dashboard/styles/cybertron.css'))));
+  assert.equal(/--style-scan-opacity/.test(withoutComments(read('dashboard/styles/minimal.css'))), false, 'Minimal has a grid and no scanlines');
+});
+
+test('the steel and the bolts reach the frames of Cybertron through the tokens: the edge, the row bars and the banner follow the style, the logo has the team accent, and the standard layout\'s frames are untouched', () => {
+  const css = withoutComments(read('dashboard/styles/cybertron.css'));
+  assert.ok(css.includes('html[data-style="cybertron"] .bar-logo .drawing { --logo-edge: var(--team-accent); }'));
+
+  // The tokens file gives the steel to the html element and to each element with a data-metal: that is the banner and every area
+  const tokens = withoutComments(read('dashboard/tokens.css'));
+  assert.ok(tokens.includes('html[data-style="cybertron"] [data-metal]'), 'every area, whichever metal the page change gave it');
+  assert.ok(/:root,\s*\[data-metal\] \{\s*--edge-rim: var\(--metal-rim\);/.test(tokens), 'the rim is worked out on each of them from the steel');
+
+  // The code that picks the metal of a page change never has to know: the bar layout makes no finish change at all
+  const areas = read('dashboard/core/areas.js');
+  assert.ok(/function planFor\(area\) \{\s*const change = frame\.planChange\(area\);\s*return layoutNow\(\) === 'bar' \? \{ style: change\.style, finish: null \} : change;\s*\}/.test(areas));
+  assert.equal(countOf(areas, 'frame\\.planChange\\(area\\)'), 1, 'planFor is the one place that asks');
+  assert.equal(countOf(areas, 'const change = planFor\\(area\\);'), 2, 'and areas.js calls it for the two changes, the page change and the swap of a hidden transition');
+  assert.ok(/frameKind\(region, layoutNow\(\), shapesNow\(\)\)/.test(areas) && /kind === 'ticker' \? '' : areaMarkup\(kind\)/.test(areas), 'the ticker has a frame in the bar layout and none in the others, with the corners of the page\'s style');
+});
+
+// Minimal: the frames with corners of their own, and what the style paints
+// (core/plate.js, core/style.js, styles/minimal.css)
+
+const minimalKinds = ['bar-main-minimal', 'bar-banner-minimal', 'bar-ticker-minimal'];
+const usualKind = { 'bar-main-minimal': 'bar-main', 'bar-banner-minimal': 'bar-banner', 'bar-ticker-minimal': 'bar-ticker' };
+
+test('only Minimal has frames with corners of its own, and the page records them once, at the start', () => {
+  assert.deepEqual(styles.shapeSets, ['minimal']);
+  assert.equal(styles.shapesFor('minimal'), 'minimal');
+  ['original', 'cybertron', 'oops', undefined, null, 'toString', 7].forEach(odd => assert.equal(styles.shapesFor(odd), '', String(odd)));
+
+  assert.equal(styles.shapesNow(null), '');
+  assert.equal(styles.shapesNow({}), '');
+  assert.equal(styles.shapesNow({ dataset: {} }), '');
+  assert.equal(styles.shapesNow({ dataset: { shapes: 'minimal' } }), 'minimal');
+  ['oops', 'original', 'cybertron', ''].forEach(odd => assert.equal(styles.shapesNow({ dataset: { shapes: odd } }), '', 'data-shapes is ' + odd));
+
+  const started = (asked, saved) => {
+    const page = { dataset: {} };
+    styles.startStyle(asked, () => saved, page);
+    return page.dataset;
+  };
+  assert.equal(started(null, 'minimal').shapes, 'minimal');
+  assert.equal('shapes' in started(null, 'cybertron'), false);
+  assert.equal('shapes' in started(null, 'original'), false);
+  assert.equal(started('minimal', 'original').shapes, 'minimal', 'the address wins');
+
+  const again = { dataset: { shapes: 'minimal' } };
+  styles.startStyle(null, () => 'original', again);
+  assert.equal('shapes' in again.dataset, false, 'a start in another style takes it away');
+
+  // A look that goes on later changes the style and never the corners, which were drawn at the start
+  const page = { dataset: { style: 'cybertron' } };
+  styles.applyStyle('minimal', page);
+  assert.equal(page.dataset.style, 'minimal');
+  assert.equal('shapes' in page.dataset, false);
+});
+
+test('frameKind gives the frames of Minimal for its corners, in the bar layout only, and the usual ones for anything else', () => {
+  assert.equal(plate.frameKind('grid1', 'bar', 'minimal'), 'bar-main-minimal');
+  assert.equal(plate.frameKind('ticker', 'bar', 'minimal'), 'bar-ticker-minimal');
+  assert.equal(plate.frameKind('banner', 'bar', 'minimal'), 'bar-banner-minimal');
+  assert.equal(plate.frameKind('grid1', 'bar', ''), 'bar-main');
+  assert.equal(plate.frameKind('grid1', 'bar'), 'bar-main');
+  assert.equal(plate.frameKind('banner', 'bar'), 'bar-banner');
+  assert.equal(plate.frameKind('grid1', 'bar', 'oops'), 'bar-main', 'corners that no frame has: the usual ones');
+  ['standard', 'sidebar'].forEach(name => ['grid1', 'grid2', 'ticker', 'banner'].forEach(region => assert.equal(plate.frameKind(region, name, 'minimal'), region, name + ' ' + region)));
+  assert.equal(plate.frameKind('grid2', 'bar', 'minimal'), 'grid2', 'there is no small frame in the bar layout');
+  minimalKinds.forEach(kind => assert.ok(plate.barShape(kind), kind + ' is a frame'));
+});
+
+test('a style with other corners on its frames reloads once, like a layout: Cybertron to Minimal and back, and never between two looks with the same corners', async () => {
+  assert.equal(layout.drawnFor('bar', 'minimal'), 'bar-minimal');
+  assert.equal(layout.drawnFor('bar', ''), 'bar');
+  assert.equal(layout.drawnFor('bar', 'oops'), 'bar');
+  assert.equal(layout.drawnFor('standard', 'minimal'), 'standard', 'only the bar layout has them');
+  assert.equal(layout.drawnFor('sidebar', 'minimal'), 'sidebar');
+  assert.ok(layout.isDrawn('bar-minimal') && layout.isDrawn('bar') && layout.isDrawn('standard'));
+  ['bar-oops', 'standard-minimal', 'minimal', '', undefined, null].forEach(odd => assert.equal(layout.isDrawn(odd), false, String(odd)));
+
+  const storage = fakeStorage();
+  assert.equal(layout.mustReload('bar', 'bar-minimal', storage), true);
+  assert.equal(storage.data[layout.reloadKey], 'bar-minimal');
+  assert.equal(layout.mustReload('bar', 'bar-minimal', storage), false, 'back in the wrong corners: no second reload');
+  assert.equal(layout.mustReload('bar-minimal', 'bar-minimal', storage), false);
+  assert.deepEqual(storage.data, {}, 'the note is rubbed out once the page is drawn for it');
+  assert.equal(layout.mustReload('bar-minimal', 'bar', storage), true, 'and back again');
+  assert.equal(layout.mustReload('bar-minimal', 'bar-oops', fakeStorage()), false);
+
+  let reloads = 0;
+  const store = fakeStorage();
+  const window = { sessionStorage: store, location: { reload: () => { reloads += 1; } } };
+  const look = (theme, style) => ({ theme: theme, overlay: '', style: style });
+
+  await withGlobals({ window: window, document: pageWith('bar') }, () => {
+    assert.equal(apply.holdForLayout(look('hawktimus', 'cybertron')), false, 'a page of Cybertron, and Cybertron');
+    assert.equal(apply.holdForLayout(look('hawktimus', 'minimal'), () => true), true, 'held while something has the screen');
+    assert.equal(reloads, 0);
+    assert.equal(apply.holdForLayout(look('hawktimus', 'minimal'), () => false), true, 'Minimal has other corners, so the page is drawn again');
+    assert.equal(reloads, 1);
+    assert.equal(store.data[layout.reloadKey], 'bar-minimal');
+    assert.equal(apply.holdForLayout(look('hawktimus', 'minimal'), () => false), false, 'back in the wrong corners: no second reload, and the colors go on');
+    assert.equal(reloads, 1);
+  });
+
+  await withGlobals({ window: window, document: pageWith('bar', 'minimal') }, () => {
+    assert.equal(apply.holdForLayout(look('neon-prime', 'minimal')), false, 'drawn for Minimal, and Minimal on any theme');
+    assert.deepEqual(store.data, {});
+    assert.equal(apply.holdForLayout(look('hawktimus', 'cybertron')), true, 'Minimal to Cybertron');
+    assert.equal(reloads, 2);
+  });
+
+  await withGlobals({ window: window, document: pageWith('bar', 'minimal') }, () => {
+    assert.equal(apply.holdForLayout(look('hawktimus', 'original')), true, 'Minimal to Original');
+    assert.equal(reloads, 3);
+  });
+
+  await withGlobals({ window: window, document: pageWith('standard') }, () => {
+    assert.equal(apply.holdForLayout(look('hawktimus', 'minimal')), true, 'Original to Minimal is a layout change as before');
+    assert.equal(reloads, 4);
+    assert.equal(store.data[layout.reloadKey], 'bar-minimal');
+  });
+  assert.ok(read('dashboard/core/layout-apply.js').includes('drawnFor(layoutFor(look.style, layoutOf(look.theme)), shapesFor(look.style))'), 'holdForLayout asks for the layout and the corners of the look');
+});
+
+test('the Minimal frames are the same ten-cornered plates with smaller cuts, 34 on the main panel and the banner and 20 on the ticker, with a bolt at each of the four joints', () => {
+  const chamfers = { 'bar-main-minimal': 34, 'bar-banner-minimal': 34, 'bar-ticker-minimal': 20 };
+  const steps = { 'bar-main-minimal': 16, 'bar-banner-minimal': 16, 'bar-ticker-minimal': 10 };
+
+  minimalKinds.forEach(kind => {
+    const shape = plate.barShape(kind);
+    const usual = plate.barShape(usualKind[kind]);
+    const outline = shape.outline;
+
+    assert.deepEqual([shape.width, shape.height], [usual.width, usual.height], kind + ' is drawn for the box the usual frame has');
+    assert.equal(outline.length, 10, kind + ': ten corners');
+    assert.ok(signedArea(outline) > 0, kind + ': clockwise on the screen');
+
+    const xs = outline.map(point => point[0]);
+    const ys = outline.map(point => point[1]);
+    assert.deepEqual([Math.min.apply(null, xs), Math.max.apply(null, xs), Math.min.apply(null, ys), Math.max.apply(null, ys)], [4, shape.width - 4, 4, shape.height - 4], kind + ': the line is 4 inside the box');
+    edgesOf(outline).forEach(([from, to], index) => {
+      const across = Math.abs(to[0] - from[0]);
+      const down = Math.abs(to[1] - from[1]);
+      assert.ok(across === 0 || down === 0 || across === down, kind + ': edge ' + index + ' is straight or at 45 degrees');
+    });
+
+    const cut = (from, to) => [Math.abs(to[0] - from[0]), Math.abs(to[1] - from[1])];
+    assert.deepEqual(cut(outline[1], outline[2]), [chamfers[kind], chamfers[kind]], kind + ': the cut corner at the top left');
+    assert.deepEqual(cut(outline[6], outline[7]), [chamfers[kind], chamfers[kind]], kind + ': and at the bottom right');
+    assert.deepEqual(cut(outline[3], outline[4]), [steps[kind], steps[kind]], kind + ': the step at the top right');
+    assert.deepEqual(cut(outline[8], outline[9]), [steps[kind], steps[kind]], kind + ': and at the bottom left');
+    outline.forEach((point, index) => {
+      const opposite = outline[(index + 5) % 10];
+      assert.deepEqual([point[0] + opposite[0], point[1] + opposite[1]], [shape.width, shape.height], kind + ': corner ' + index + ' and its opposite are one turn half way round from each other');
+    });
+
+    // a bolt at each of the four joints, which are the two ends of each cut corner, and no other part of Cybertron
+    const bolts = shape.screws.a.concat(shape.screws.b).map(point => point.join(','));
+    assert.deepEqual(bolts.slice().sort(), [1, 2, 6, 7].map(index => outline[index].join(',')).sort(), kind + ': four bolts');
+    assert.equal(shape.wide, false, kind + ': one neon line and no wide ones');
+    assert.equal(usual.wide, true, 'Cybertron keeps its two wide ones');
+    assert.deepEqual(shape.bracketLines, [], kind + ': no brackets');
+    ['hazard', 'conduit', 'slashes', 'seams', 'brackets'].forEach(name => assert.ok(!shape.art[name], kind + ' has no ' + name));
+    assert.deepEqual(shape.neon.a, plate.offsetOutline(outline, 10).slice(0, 6), kind + ': the neon line is the outline 10 inside');
+  });
+
+  // Cybertron's frames have none of what Minimal adds
+  frameKinds.forEach(kind => {
+    const shape = plate.barShape(kind);
+    assert.ok(shape.rivets === undefined && shape.wear === undefined && shape.number === undefined, kind + ' has no rivets, rust or id');
+    ['weldDark', 'weldLight', 'headerLine', 'ticks'].forEach(name => assert.ok(!shape.art[name], kind + ' has no ' + name));
+  });
+
+  // The rivets are the Original style's: every long straight edge, one every 90 and 5 in radius, which are the numbers of rivetsAlong
+  minimalKinds.forEach(kind => {
+    const shape = plate.barShape(kind);
+    const half = { a: shape.outline.slice(0, 6), b: shape.outline.slice(5).concat([shape.outline[0]]) };
+    assert.deepEqual(shape.rivets, { a: plate.rivetsOf(half.a), b: plate.rivetsOf(half.b) }, kind + ': the rivets of each half');
+    const all = shape.rivets.a.concat(shape.rivets.b);
+    assert.ok(all.length >= 30, kind + ' has a row of rivets along each long edge');
+    const between = (value, one, other) => value >= Math.min(one, other) - 0.1 && value <= Math.max(one, other) + 0.1;
+    all.forEach(center => assert.ok(edgesOf(shape.outline).some(([from, to]) => distanceToLine(center, from, to) < 0.1 && between(center[0], from[0], to[0]) && between(center[1], from[1], to[1])), kind + ': a rivet at ' + center + ' is on an edge'));
+    const top = shape.rivets.a.filter(center => center[1] === 4);
+    top.slice(1).forEach((center, index) => assert.ok(Math.abs(center[0] - top[index][0] - 90) < 0.11, kind + ': 90 apart along the top'));
+  });
+});
+
+test('the rust, the stamped id, the weld seam and the header line of Minimal are where the order puts them: rust at the two bottom corners of every frame, an id on the main panel and the banner, a seam on the tall panel only, ticks along the header line', () => {
+  frameKinds.forEach(kind => assert.equal(plate.barShape(kind).wear, undefined));
+
+  minimalKinds.forEach(kind => {
+    const shape = plate.barShape(kind);
+    assert.equal(shape.wear.length, 2, kind + ': rust at two corners');
+    const [left, bottom] = shape.wear;
+    assert.equal(left.anchor[0], 4, kind + ': the first arc is on the left edge');
+    assert.ok(left.anchor[1] > shape.outline[1][1] && left.anchor[1] < shape.outline[0][1], kind + ': above the step at the bottom left');
+    assert.equal(bottom.anchor[1], shape.height - 4, kind + ': the second is on the bottom edge');
+    assert.ok(bottom.anchor[0] < shape.outline[7][0] && bottom.anchor[0] > shape.width / 2, kind + ': before the cut corner at the bottom right');
+    shape.wear.forEach(item => assert.doesNotThrow(() => plate.offsetPoint(shape.outline, item.anchor, 1), kind + ': the anchor is on the outline'));
+    assert.ok(shape.wear.every(item => /^M[\d. ]+Q[\d. -]+$/.test(item.arc)), kind + ': each is one stroked curve');
+  });
+
+  // The id: HP-01 on the main panel, HP-02 on the banner where the war clock is, none on the ticker, whose message would cover it
+  assert.equal(plate.barShape('bar-main-minimal').number, '01');
+  assert.equal(plate.barShape('bar-banner-minimal').number, '02');
+  assert.equal(plate.barShape('bar-ticker-minimal').number, undefined);
+
+  // The weld seam is on the main panel only, under the header and clear of the 1152 the pages are written for
+  const main = plate.barShape('bar-main-minimal');
+  assert.equal(main.art.weldDark, 'M1188 134L1188 690');
+  assert.equal(main.art.weldLight, 'M1192 134L1192 690', 'the light line is 4 beside the dark one');
+  assert.ok(1188 - 1152 >= 36 && 1188 + 4 < main.width - 4 - 10, 'between the 1152 of the pages and the neon line');
+  assert.ok(!plate.barShape('bar-banner-minimal').art.weldDark && !plate.barShape('bar-ticker-minimal').art.weldDark, 'the banner and the ticker are not tall');
+
+  // The header line is a neon line along the foot of the header, with ticks standing on it
+  assert.equal(main.art.headerLine, 'M14 120L1413 120');
+  const ticks = main.art.ticks.split('Z').filter(Boolean).map(text => /^M(\d+) (\d+)h4v10h-4$/.exec(text));
+  assert.ok(ticks.every(Boolean), 'each tick is a bar 4 wide and 10 high');
+  assert.equal(ticks.length, 39);
+  ticks.forEach((found, index) => {
+    assert.equal(Number(found[1]), 702 + 18 * index, 'a tick every 18');
+    assert.equal(Number(found[2]) + 10, 118, 'standing on the line');
+  });
+  assert.ok(Number(ticks[0][1]) > main.tab[3][0], 'the first is past the slanted end of the tab');
+  assert.ok(Number(ticks[ticks.length - 1][1]) + 4 <= main.width - 4 - 10, 'and the last is inside the neon line');
+  assert.ok(!plate.barShape('bar-banner-minimal').art.headerLine && !plate.barShape('bar-ticker-minimal').art.ticks);
+});
+
+test('the main panel of Minimal has each of its parts where the frame has them: the rivets and the rust in the frame and in the pieces, once each, the id under the page, and nothing of Cybertron\'s', async () => {
+  await withPlatePage(drawn => {
+    const markup = plate.areaMarkup('bar-main-minimal');
+    assert.ok(isBalanced(markup), 'every tag is closed');
+    const shape = plate.barShape('bar-main-minimal');
+    const split = markup.indexOf('class="plate piece"');
+    const inFrame = markup.slice(0, split);
+    const inPieces = markup.slice(split);
+    const rivet = 'a5 5 0 1 0 10 0';
+
+    assert.equal(countOf(inFrame, rivet), shape.rivets.a.length + shape.rivets.b.length, 'a dot for each rivet');
+    assert.equal(countOf(inPieces, rivet), countOf(inFrame, rivet), 'and each one is in one piece');
+    assert.equal(countOf(inFrame, 'data-part="rivets"'), 2, 'the rivets of each half come in after the lines');
+    assert.equal(countOf(inFrame, 'data-part="wear"'), 1, 'the rust is in the second half, where the bottom corners are');
+    assert.equal(countOf(inFrame, 'class="art-minimal art-wear"'), 1, 'one path for both arcs');
+    assert.equal(countOf(inFrame, 'class="art-minimal art-smudge"'), 2);
+    assert.equal(countOf(inPieces, 'class="art-minimal art-wear"'), 2, 'in the pieces each arc is in the bar it is on');
+    assert.equal(countOf(inPieces, 'class="art-minimal art-smudge"'), 2);
+    assert.ok(markup.indexOf('data-part="wear"') > markup.indexOf('data-part="frame-b"'), 'the rust is on the steel of the second half');
+    assert.ok(markup.indexOf('data-part="wear"') < markup.indexOf('href="#bolt-shape"', markup.indexOf('data-part="frame-b"')), 'under its bolts');
+
+    const foot = shape.outline[7];
+    assert.equal(countOf(markup, 'data-part="plate-id"'), 1);
+    assert.ok(markup.includes(`data-number="01" style="left: ${foot[0] - 34 - 112}px; top: ${foot[1] - 14 - 20}px; width: 112px;"`), 'the id stands 34 left of the foot of the bottom right cut corner and 14 above the bottom line, as Original\'s does');
+    assert.ok(markup.indexOf('data-part="plate-id"') > markup.indexOf('class="plate fills"') && markup.indexOf('data-part="plate-id"') < markup.indexOf('data-part="shadow-a"'), 'it is under the frame, over the plate');
+
+    ['art-weld-dark', 'art-weld-light', 'art-header-line', 'art-ticks'].forEach(name => assert.equal(countOf(markup, 'class="art-minimal ' + name + '"'), 2, name + ' once in the frame and once in the piece that is the decoration'));
+    assert.equal(countOf(markup, 'data-part="decor"'), 1);
+    assert.equal(countOf(markup, 'href="#bolt-shape"'), 4 + 4, 'four bolts in the frame and four in the pieces');
+    assert.equal(countOf(markup, 'class="plate piece"'), 12, 'the same twelve pieces');
+    assert.equal(countOf(markup, '<use class="edge-neon"'), 2 + 7, 'one neon line in each half and in each of the seven bars');
+    ['art-cybertron', 'edge-neon-wide', 'art-brackets', 'art-hazard', 'art-conduit', 'art-slashes', 'art-seams', 'screw-shadow', 'bolt-shadow', 'glint'].forEach(name => assert.ok(!hasText(markup, name), 'nothing of ' + name));
+    ['class="tab-inset"', 'class="tab-bevel"', 'class="tab-line"'].forEach(text => assert.equal(countOf(markup, text), 2, text + ': the armor tab is the same as Cybertron\'s'));
+
+    // the frame is the same order of parts as the other bar frames, and every shape it points at is drawn
+    const at = text => markup.indexOf(text);
+    assert.ok(at('class="plate fills"') < at('data-part="shadow-a"') && at('data-part="shadow-b"') < at('data-part="frame-a"') && at('data-part="frame-b"') < at('class="plate piece"'));
+    (markup.match(/href="#[a-z0-9-]+"/g) || []).forEach(found => assert.ok(drawn.has(found.slice(7, -1)) || staticIds.has(found.slice(7, -1)), found + ' is not drawn anywhere'));
+    ['bar-main-minimal-a', 'bar-main-minimal-b', 'bar-main-minimal-neon-a', 'bar-main-minimal-neon-b'].forEach(id => assert.ok(drawn.has(id), id));
+
+    // Original's frames have the rivets and the id and none of the rest
+    const original = plate.areaMarkup('grid1');
+    assert.ok(hasText(original, 'data-part="plate-id"') && hasText(original, 'class="rivets"'));
+    ['art-minimal', 'art-wear', 'wear'].forEach(name => assert.ok(!hasText(original, name), 'the large frame of Original has no ' + name));
+  });
+});
+
+test('the banner and the ticker of Minimal: rivets, rust and bolts, the banner\'s id, and a line in the table of frame.js for every part that arrives', async () => {
+  await withPlatePage(drawn => {
+    const banner = plate.plateMarkup('bar-banner-minimal');
+    assert.ok(isBalanced(banner));
+    assert.equal(countOf(banner, 'class="plate fills"'), 1);
+    assert.equal(countOf(banner, 'data-part="rivets"'), 2);
+    assert.equal(countOf(banner, 'data-part="wear"'), 1);
+    assert.equal(countOf(banner, 'data-part="stud"'), 4, 'four bolts');
+    assert.equal(countOf(banner, 'data-number="02"'), 1);
+    assert.equal(countOf(banner, 'data-part="decor"'), 0, 'the banner has nothing else on it');
+    assert.ok(!hasText(banner, 'art-cybertron') && !hasText(banner, 'glint') && !hasText(banner, 'class="plate piece"'));
+
+    const sequence = /'bar-banner': \{([^}]*)\}/.exec(read('dashboard/frame.js'))[1];
+    const parts = new Set((banner.match(/data-part="[a-z-]+"/g) || []).map(text => text.slice(11, -1)));
+    ['body', 'outline', 'rivets', 'wear', 'plate-id', 'stud'].forEach(part => assert.ok(parts.has(part) && sequence.includes("'" + part + "':"), part + ' is in the banner and in its table'));
+    parts.forEach(part => ['frame-a', 'frame-b'].indexOf(part) !== -1 || assert.ok(sequence.includes("'" + part + "':"), part + ' has no line in the banner\'s table'));
+    ['rivets', 'wear', 'plate-id'].forEach(part => assert.ok(Number(new RegExp("'" + part + "':\\s*\\['fade', (\\d+)").exec(sequence)[1]) >= 1350, part + ' comes after the lines are drawn'));
+    (banner.match(/href="#[a-z0-9-]+"/g) || []).forEach(found => assert.ok(drawn.has(found.slice(7, -1)) || staticIds.has(found.slice(7, -1)), found));
+
+    const ticker = plate.areaMarkup('bar-ticker-minimal');
+    assert.ok(isBalanced(ticker));
+    ['still-frame-a', 'still-frame-b', 'still-shadow-a', 'still-shadow-b'].forEach(name => assert.equal(countOf(ticker, 'data-part="' + name + '"'), 1, name));
+    assert.equal(countOf(ticker, 'data-part="rivets"'), 2);
+    assert.equal(countOf(ticker, 'data-part="wear"'), 1);
+    assert.equal(countOf(ticker, 'href="#bolt-shape"'), 4);
+    assert.ok(!hasText(ticker, 'plate-id') && !hasText(ticker, 'glint') && !hasText(ticker, 'class="plate piece"') && !hasText(ticker, 'data-part="decor"'), 'no id, no pieces, no decoration');
+    (ticker.match(/href="#[a-z0-9-]+"/g) || []).forEach(found => assert.ok(drawn.has(found.slice(7, -1)) || staticIds.has(found.slice(7, -1)), found));
+  });
+});
+
+test('the rust sits behind the steel of its frame: it is a patch and an arc inside the frame\'s box, and the flat finish takes it away with the wide neon lines', () => {
+  frameKinds.concat(minimalKinds).forEach(kind => {
+    const shape = plate.barShape(kind);
+    (shape.wear || []).forEach(item => {
+      const box = { x: 0, y: 0, width: shape.width, height: shape.height };
+      assert.ok(item.smudge[0] > 0 && item.smudge[0] < shape.width && item.smudge[1] > 0 && item.smudge[1] < shape.height, kind + ': the middle of the patch is inside the frame');
+      const curve = /^M(-?[\d.]+) (-?[\d.]+)Q(-?[\d.]+) (-?[\d.]+) (-?[\d.]+) (-?[\d.]+)$/.exec(item.arc);
+      assert.ok(curve, kind + ': ' + item.arc);
+      [[curve[1], curve[2]], [curve[3], curve[4]], [curve[5], curve[6]]].forEach(point => assert.ok(within({ x: Number(point[0]), y: Number(point[1]), width: 0, height: 0 }, box), kind + ': the arc is inside the frame\'s box'));
+    });
+  });
+
+  const frameRules = withoutComments(read('dashboard/frame.css'));
+  assert.ok(/\[data-motion="full"\] \.area\[data-state="in"\] \[data-part="wear"\] \{\s*animation: fade-in var\(--time-fade-in\) linear calc\(var\(--assemble-draw\) \* var\(--pace\) \+ var\(--time-draw-in\)\) backwards;\s*\}/.test(frameRules), 'the rust fades in after the lines are drawn, like the rivets');
+
+  const css = withoutComments(read('dashboard/styles/minimal.css'));
+  assert.ok(/html\[data-style="minimal"\]\[data-finish="flat"\] \.art-smudge,\s*html\[data-style="minimal"\]\[data-finish="flat"\] \.art-wear \{ display: none; \}/.test(css), 'the flat finish has no rust');
+});
+
+test('the Minimal stylesheet paints with the team\'s colors and gradients and no picture: the grid, the plates, the rail, the rivets, the id and what it draws on a frame, in lines of 3px or more, for its own style only', () => {
+  const css = withoutComments(read('dashboard/styles/minimal.css'));
+  const rules = [];
+  css.replace(/([^{}]+)\{([^{}]*)\}/g, (all, list, body) => {
+    rules.push({ selectors: list.split(',').map(selector => selector.trim()), body: body });
+    return all;
+  });
+
+  assert.ok(rules.length >= 20, 'the style has its rules');
+  rules.forEach(rule => rule.selectors.forEach(selector => assert.ok(selector.startsWith('html[data-style="minimal"]'), 'for Minimal only: ' + selector)));
+  assert.ok(!/(animation|transition|@keyframes|filter|box-shadow|text-shadow|blur\(|will-change|font(-size)?:)/.test(css), 'nothing moves or glows, and it has no text of its own');
+  assert.ok(!/mirrored/.test(css), 'the frames are never turned by the mirror, so nothing here changes with it');
+
+  // Static, and drawn with gradients and paths: the only urls are the armor plate\'s gradient and the patch of rust
+  assert.deepEqual(css.match(/url\([^)]*\)/g) || [], ['url(#armor-face)', 'url(#wear-rust)']);
+  assert.ok(!/\.(png|jpe?g|gif|webp|svg)\b/.test(css), 'no picture');
+
+  // Every color after the first rule is a team color, a style color or the dark of the weld seam
+  const hexes = css.slice(css.indexOf('}') + 1).match(/#[0-9a-fA-F]{3,8}\b/g) || [];
+  hexes.forEach(hex => assert.ok(hex === '#05070a', 'a color of its own after the first rule: ' + hex));
+  ['#6c18b6', '#3b2a7a', '#faca2a', '#35f0ff', '#ff2e8c', '#1f7ae0', '#1e3a6e', '#9bf0ff'].forEach(team => assert.ok(!css.toLowerCase().includes(team), 'a team color written out: ' + team));
+  ['--team-accent', '--team-plate', '--style-neon', '--style-pink', '--style-body', '--style-rust', '--style-grid-size', '--style-grid-opacity', '--metal-ridge'].forEach(name => assert.ok(css.includes('var(' + name + ')'), 'it reads ' + name));
+
+  const first = rules[0].body;
+  assert.ok(/--style-body: var\(--ground\);/.test(first) && /--style-rust: #[0-9a-f]{6};/.test(first) && /--style-armor-top: #[0-9a-f]{6};/.test(first) && /--style-armor-bottom: #[0-9a-f]{6};/.test(first));
+  assert.ok(!/--style-raised|--style-scan-opacity/.test(css), 'Minimal has no raised plate and no scanlines');
+
+  // The page background is the team's, with the grid at 48px in a layer behind the stage, and no scanlines
+  const grid = rules.filter(rule => rule.selectors[0] === 'html[data-style="minimal"] #screen::before')[0].body;
+  assert.ok(/\/ var\(--style-grid-size\) var\(--style-grid-size\)/.test(grid) && /opacity: var\(--style-grid-opacity\);/.test(grid) && /pointer-events: none;/.test(grid));
+  assert.ok(/width: 1920px;/.test(grid) && /height: 1080px;/.test(grid), 'as big as the screen');
+  assert.ok(!/#screen \{|#screen::after|repeating-linear-gradient/.test(css), 'the color of the page is the team\'s background, as base.css has it, and nothing is drawn over the stage');
+  assert.ok(/--style-grid-size: 48px;/.test(first) && /--style-grid-opacity: \.07;/.test(first));
+
+  // Every line it draws is 3px or more
+  const widths = css.match(/(stroke-width|border-[a-z]*-width|outline-width): [\d.]+px/g) || [];
+  assert.ok(widths.length >= 4);
+  widths.forEach(text => assert.ok(parseFloat(/[\d.]+px/.exec(text)[0]) >= 3, text));
+  rules.filter(rule => /\.bar-rail::before/.test(rule.selectors[0])).forEach(rule => assert.ok(/width: 4px;/.test(rule.body), 'the rail\'s line is 4px'));
+
+  // The plates: the body is the team's background, the tab an armor plate, the team plate and the tag in the plate color
+  assert.ok(/--panel-face: var\(--style-body\);/.test(css) && css.includes('fill: url(#armor-face);'));
+  assert.ok(/\.team-fill,\s*html\[data-style="minimal"\] \.tag-fill \{ fill: var\(--team-plate\); \}/.test(css));
+  assert.ok(css.includes('html[data-style="minimal"] .bar-logo .drawing { --logo-edge: var(--team-accent); }'));
+
+  // The rivets and the id are shown, the weld seam is dark with a faint light line, the ticks are neon and the rust is a patch and an arc
+  assert.ok(css.includes('html[data-style="minimal"] .rivets { display: inline; }') && css.includes('html[data-style="minimal"] .plate-id { display: block; }'));
+  const paint = name => rules.filter(rule => rule.selectors[0] === 'html[data-style="minimal"] .art-' + name)[0].body;
+  assert.ok(/stroke: #05070a;/.test(paint('weld-dark')) && /stroke-opacity: \.7;/.test(paint('weld-dark')));
+  assert.ok(/stroke: var\(--metal-ridge\);/.test(paint('weld-light')) && /stroke-opacity: \.2;/.test(paint('weld-light')), 'faint');
+  assert.ok(/stroke: var\(--style-neon\);/.test(paint('header-line')) && /fill: var\(--style-neon\);/.test(paint('ticks')));
+  assert.ok(/fill: url\(#wear-rust\);/.test(paint('smudge')) && /stroke: var\(--style-rust\);/.test(paint('wear')) && /fill: none;/.test(paint('wear')));
+  assert.ok(css.includes('html[data-style="minimal"] .art-minimal { display: inline; }'));
+
+  // Each style paints its own: Minimal does not draw Cybertron\'s decoration, and Cybertron does not draw Minimal\'s
+  assert.ok(!/art-(hazard|conduit|slashes|brackets|seams)|edge-neon-wide|art-cybertron/.test(css));
+  assert.ok(!/art-(minimal|weld|header-line|ticks|smudge|wear)|rivets|plate-id/.test(withoutComments(read('dashboard/styles/cybertron.css'))));
+  assert.ok(/\.art-minimal \{ display: none; \}/.test(withoutComments(read('dashboard/base.css'))), 'what only Minimal draws is off until it is on');
+});
+
+test('Minimal and the mirror: the frames, the rivets, the rust, the ids and the seam are drawn in the coordinates of the frame and are never turned, so only the regions change places', () => {
+  const css = withoutComments(read('dashboard/layouts/bar.css') + read('dashboard/styles/cybertron.css') + read('dashboard/styles/minimal.css'));
+  assert.ok(!/mirrored[^{}]*\.(area|plate|rivets|plate-id|art-[a-z-]+)\b|\.(area|plate|rivets|plate-id|art-[a-z-]+)\b[^{}]*mirrored/.test(css), 'no rule turns a frame or anything drawn on it');
+  assert.ok(!/mirror-art|scaleX/.test(read('dashboard/core/plate.js')));
+
+  // The ids and the rivets are shown in Minimal whether the layout is mirrored or not, as they are in Original
+  const base = withoutComments(read('dashboard/base.css'));
+  assert.equal(/\.mirrored[^{]*(rivets|plate-id)/.test(base), false);
+  assert.ok(/html\[data-style="minimal"\] \.rivets \{ display: inline; \}/.test(withoutComments(read('dashboard/styles/minimal.css'))));
+
+  // Placed on the screen, every Minimal frame stays inside it in the layout and in its mirror, with its bolts and rust
+  const place = (kind, box, scale) => {
+    const reach = plate.frameExtent(kind);
+    return { x: box.x + reach.left * scale, y: box.y + reach.top * scale, width: (reach.right - reach.left) * scale, height: (reach.bottom - reach.top) * scale };
+  };
+  [['the layout', b], ['its mirror', layout.mirrorGeometry(b)]].forEach(([label, geometry]) => {
+    const boxes = { 'bar-main-minimal': [geometry.main, b.scale], 'bar-banner-minimal': [geometry.banner, 1], 'bar-ticker-minimal': [geometry.ticker, 1] };
+    minimalKinds.forEach(kind => {
+      const box = place(kind, boxes[kind][0], boxes[kind][1]);
+      assert.ok(box.x >= 0 && box.y >= 0 && box.x + box.width <= layout.screen.width && box.y + box.height <= layout.screen.height, kind + ' is on the 1920 x 1080 screen in ' + label + ': ' + JSON.stringify(box));
+    });
+  });
+  minimalKinds.forEach(kind => {
+    const reach = plate.frameExtent(kind);
+    const shape = plate.barShape(kind);
+    assert.ok(reach.left <= -15 && reach.top <= -15 && reach.right >= shape.width + 15 && reach.bottom >= shape.height + 15, kind + ' reaches the bolts, which stand out of the line by 19');
+  });
+});
+
+test('the numbers in the Frames section of docs/layouts.md for the frames of Minimal are the numbers of the shapes in plate.js', () => {
+  const doc = read('docs/layouts.md');
+  const section = doc.slice(doc.indexOf('\n### Frames\n'), doc.indexOf('\n## What else works in each layout'));
+  const chamfers = { 'bar-main-minimal': 34, 'bar-banner-minimal': 34, 'bar-ticker-minimal': 20 };
+
+  minimalKinds.forEach(kind => {
+    const shape = plate.barShape(kind);
+    const line = section.split('\n').find(text => text.startsWith('| `' + kind + '` |'));
+    assert.ok(line, 'the table has a row for ' + kind);
+
+    const cells = line.split('|').map(cell => cell.trim());
+    assert.equal(cells[2], shape.width + ' x ' + shape.height, kind + ': drawn for');
+    assert.equal(Number(cells[3]), chamfers[kind], kind + ': the cut corner');
+    assert.equal(Number(cells[3]), shape.outline[2][0] - shape.outline[1][0], kind + ': is what the shape has');
+    assert.equal(Number(cells[4]), shape.outline[4][1] - shape.outline[3][1], kind + ': the step');
+    assert.equal(Number(cells[5]), (shape.width - 4) - shape.outline[3][0], kind + ': the run');
+    assert.equal(Number(cells[6]), shape.screws.a.length + shape.screws.b.length, kind + ': the bolts');
+  });
+
+  // The parts only Minimal has, and their sizes
+  ['one neon line', 'rust at the two bottom corners', '| Stamped id |', '| Weld seam |', '| Header line |', '| Rivets |'].forEach(text => assert.ok(section.includes(text), 'the section says ' + text));
+  const main = plate.barShape('bar-main-minimal');
+  assert.ok(section.includes('x = 1188') && main.art.weldDark.startsWith('M1188 '), 'the seam is at 1188');
+  assert.ok(section.includes('39 ticks') && main.art.ticks.split('Z').filter(Boolean).length === 39);
+  assert.ok(section.includes('every 18') && section.includes('4 wide and 10 high'));
+  assert.ok(section.includes('HP-01') && section.includes('HP-02'));
 });
 
 // Run them

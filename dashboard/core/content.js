@@ -1,7 +1,7 @@
 // Where the screen gets what it shows: startContent() hands over the content
 // once it has it, and again every time it changes. Same shape as data/sample/content.json.
 
-import { contentSources, defaultSettings, defaultTeam, frameFinishes, limits, looks, metals, nightSpeeds, nightStyles, pageChangeStyles, photoOrders, sampleFolder, sanity, speeds, teamModes } from '../config.js';
+import { contentSources, defaultSettings, defaultTeam, frameFinishes, limits, looks, metals, nightSpeeds, nightStyles, pageChangeStyles, photoOrders, sampleFolder, sanity, speeds, styles, teamModes } from '../config.js';
 import { parseLocalDateTime } from './time.js';
 import { chooseSource, savedSource } from './source.js';
 import { tidyTheme } from './theme.js';
@@ -73,6 +73,7 @@ export function fixSettingValues(settings) {
   if (!Object.keys(speeds).includes(settings.speed)) settings.speed = defaultSettings.speed;
   if (!metals.includes(settings.frameMetal)) settings.frameMetal = defaultSettings.frameMetal;
   if (!looks.includes(settings.look)) settings.look = defaultSettings.look;
+  if (!styles.includes(settings.style)) settings.style = defaultSettings.style;
   // The Transitions tab
   if (!pageChangeStyles.includes(settings.pageChangeStyle)) settings.pageChangeStyle = defaultSettings.pageChangeStyle;
   if (!frameFinishes.includes(settings.frameFinish)) settings.frameFinish = defaultSettings.frameFinish;
@@ -281,6 +282,23 @@ export function savedTheme() {
     return saved && saved.raw && typeof saved.raw === 'object' ? saved.raw.theme || null : null;
   } catch (error) {
     console.error('Could not read the saved theme', error);
+    return null;
+  }
+}
+
+// The Style setting in the saved copy, as Sanity sent it, or null. Only when the screen will
+// start on the editors' content, like savedTheme. core/style.js uses it to choose the style,
+// and core/layout-apply.js the layout, before anything is drawn.
+export function savedStyle() {
+  try {
+    if (savedSource(new Date()) !== 'production') return null;
+
+    const text = localStorage.getItem(storageKey);
+    const saved = text ? JSON.parse(text) : null;
+    const settings = saved && saved.raw && typeof saved.raw === 'object' ? saved.raw.settings : null;
+    return settings && typeof settings === 'object' ? settings.style || null : null;
+  } catch (error) {
+    console.error('Could not read the saved style', error);
     return null;
   }
 }

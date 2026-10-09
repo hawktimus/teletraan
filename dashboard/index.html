@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-motion="full" data-draw="stroke" data-finish="metal" data-metal="gold" data-glint="on" data-look="polished">
+<html lang="en" data-motion="full" data-draw="stroke" data-finish="metal" data-metal="gold" data-glint="on" data-look="polished" data-style="original">
 <head>
   <meta charset="utf-8">
   <title>Teletraan I</title>
@@ -10,6 +10,10 @@
   <link rel="stylesheet" href="base.css">
   <link rel="stylesheet" href="frame.css">
   <link rel="stylesheet" href="layouts/sidebar.css">
+  <link rel="stylesheet" href="layouts/bar.css">
+  <link rel="stylesheet" href="styles/original.css">
+  <link rel="stylesheet" href="styles/cybertron.css">
+  <link rel="stylesheet" href="styles/minimal.css">
   <link rel="stylesheet" href="themes/decor/neon-prime-decor.css">
   <link rel="stylesheet" href="neon-kit.css">
   <link rel="stylesheet" href="seasons/season.css">
@@ -186,6 +190,69 @@
         <stop offset="1" style="stop-color: var(--red-shade)" stop-opacity="0"/>
       </linearGradient>
 
+      <!-- Steel, the metal of the Cybertron and Minimal styles: the same three
+           gradients as gold, with fewer and longer bands, so it reads as brushed
+           steel and not as worn brass. The colours are the --metal tokens of
+           data-metal="steel" (tokens.css), which the two styles also give to the
+           html element and to every area. -->
+      <linearGradient id="edge-steel" data-metal="steel" gradientUnits="userSpaceOnUse" spreadMethod="reflect" x1="0" y1="0" x2="420" y2="260">
+        <stop offset="0" style="stop-color: var(--metal-1)"/>
+        <stop offset=".05" style="stop-color: var(--metal-2)"/>
+        <stop offset=".12" style="stop-color: var(--metal-3)"/>
+        <stop offset=".2" style="stop-color: var(--metal-4)"/>
+        <stop offset=".24" style="stop-color: var(--metal-grime)"/>
+        <stop offset=".3" style="stop-color: var(--metal-3)"/>
+        <stop offset=".37" style="stop-color: var(--metal-7)"/>
+        <stop offset=".42" style="stop-color: var(--metal-1)"/>
+        <stop offset=".48" style="stop-color: var(--metal-3)"/>
+        <stop offset=".56" style="stop-color: var(--metal-5)"/>
+        <stop offset=".63" style="stop-color: var(--metal-6)"/>
+        <stop offset=".7" style="stop-color: var(--metal-3)"/>
+        <stop offset=".77" style="stop-color: var(--metal-7)"/>
+        <stop offset=".84" style="stop-color: var(--metal-4)"/>
+        <stop offset=".9" style="stop-color: var(--metal-grime)"/>
+        <stop offset=".95" style="stop-color: var(--metal-3)"/>
+        <stop offset="1" style="stop-color: var(--metal-8)"/>
+      </linearGradient>
+      <linearGradient id="edge-ridge-steel" data-metal="steel" gradientUnits="userSpaceOnUse" spreadMethod="reflect" x1="0" y1="0" x2="330" y2="150">
+        <stop offset="0" style="stop-color: var(--metal-ridge)" stop-opacity="1"/>
+        <stop offset=".16" style="stop-color: var(--metal-ridge)" stop-opacity=".5"/>
+        <stop offset=".34" style="stop-color: var(--metal-1)" stop-opacity="1"/>
+        <stop offset=".5" style="stop-color: var(--metal-2)" stop-opacity=".4"/>
+        <stop offset=".68" style="stop-color: var(--metal-ridge)" stop-opacity="1"/>
+        <stop offset=".84" style="stop-color: var(--metal-ridge)" stop-opacity=".55"/>
+        <stop offset="1" style="stop-color: var(--metal-ridge)" stop-opacity="1"/>
+      </linearGradient>
+      <linearGradient id="edge-shade-steel" data-metal="steel" gradientUnits="userSpaceOnUse" spreadMethod="reflect" x1="0" y1="0" x2="260" y2="170">
+        <stop offset="0" style="stop-color: var(--metal-shade)" stop-opacity="0"/>
+        <stop offset=".12" style="stop-color: var(--metal-shade)" stop-opacity=".9"/>
+        <stop offset=".24" style="stop-color: var(--metal-shade)" stop-opacity="0"/>
+        <stop offset=".45" style="stop-color: var(--metal-shade)" stop-opacity="0"/>
+        <stop offset=".52" style="stop-color: var(--metal-shade)" stop-opacity="1"/>
+        <stop offset=".62" style="stop-color: var(--metal-shade)" stop-opacity="0"/>
+        <stop offset=".85" style="stop-color: var(--metal-shade)" stop-opacity="0"/>
+        <stop offset=".92" style="stop-color: var(--metal-shade)" stop-opacity=".8"/>
+        <stop offset="1" style="stop-color: var(--metal-shade)" stop-opacity="0"/>
+      </linearGradient>
+
+      <!-- The face of a raised armor plate, the header tab of the bar frames: lighter
+           at the top and darker at the bottom, measured over the plate it fills. The
+           two colours are set by the style (--style-armor-top and
+           --style-armor-bottom). -->
+      <linearGradient id="armor-face" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style="stop-color: var(--style-armor-top, #333a45)"/>
+        <stop offset="1" style="stop-color: var(--style-armor-bottom, #1f242c)"/>
+      </linearGradient>
+
+      <!-- The soft patch of rust under an arc of wear on a Minimal frame (core/plate.js,
+           wearOf): the style's rust colour (--style-rust) at the middle, fading to nothing
+           at the edge. It is measured over the circle it fills, so it is one gradient for
+           every patch. -->
+      <radialGradient id="wear-rust" cx=".5" cy=".5" r=".5">
+        <stop offset="0" style="stop-color: var(--style-rust, #b4672d)" stop-opacity=".5"/>
+        <stop offset="1" style="stop-color: var(--style-rust, #b4672d)" stop-opacity="0"/>
+      </radialGradient>
+
       <!-- The face of a screw head. Screws are always silver, whatever the metal of
            the frame, so these colours are the --screw tokens in tokens.css and
            not the --metal ones. The gradient is measured over the head, and the
@@ -221,6 +288,15 @@
         <polygon class="screw-face" points="-8,-18 8,-18 18,-8 18,8 8,18 -8,18 -18,8 -18,-8"/>
         <polyline class="screw-ridge" points="-17,7 -17,-7 -8,-17 8,-17"/>
         <polygon class="screw-slot" points="-18,-3.5 18,-3.5 18,3.5 -18,3.5"/>
+      </g>
+      <!-- A hex bolt, centred on 0,0, for the bar frames: a dark rim, a silver face and a
+           pale dot in the middle. It is used where a screw is, with the same class and the
+           same animation, and has no shadow of its own. The colours are the --screw
+           tokens, set in base.css. -->
+      <g id="bolt-shape">
+        <polygon class="bolt-rim" points="0,-19 16.5,-9.5 16.5,9.5 0,19 -16.5,9.5 -16.5,-9.5"/>
+        <polygon class="bolt-face" points="0,-15 13,-7.5 13,7.5 0,15 -13,7.5 -13,-7.5"/>
+        <circle class="bolt-dot" cx="0" cy="0" r="5"/>
       </g>
       <!-- The silhouette shown for a person with no photo (core/portrait.js).
            It is a faceted, chamfered bust, drawn on the logo's own grid (see
@@ -266,8 +342,8 @@
              large panel, the small panel and the ticker each get an area, with
              its frame, the first time a page needs it (core/areas.js). The five
              regions marked data-block are the blocks that fly apart in a hidden
-             transition in the standard layout. The sidebar layout marks its own
-             four (core/layout.js, blocksOf). -->
+             transition in the standard layout. The sidebar and bar layouts mark their
+             own four (core/layout.js, blocksOf). -->
         <div id="region-banner" data-block></div>
         <!-- The top strip of the sidebar layout (docs/layouts.md). It is hidden, and
              nothing in it is used, while the standard layout is on. When a theme
@@ -296,6 +372,14 @@
           <div id="sidebar-top"></div>
           <div id="sidebar-countdown"></div>
           <div id="sidebar-bottom"></div>
+        </div>
+        <!-- The row of the bar layout, under the banner (docs/layouts.md, "The bar layout").
+             It is hidden, and nothing in it is used, while another layout is on. When the
+             bar layout is on, core/layout-apply.js shows it and moves #region-grid1 into it
+             after the side column, and makes the column a block that flies apart. The side
+             column is drawn by panels/bar-column, and layouts/bar.css places the row. -->
+        <div id="bar-middle" hidden>
+          <div id="region-column" hidden></div>
         </div>
         <div id="region-grid1" data-block></div>
         <div id="region-right">

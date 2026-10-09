@@ -463,7 +463,15 @@ Connection.
   the name effect. To see one before you change the setting, add `?look=flat`
   or `?look=plain` to the address of the screen: the address wins, for that page
   only. If no choice is ticked for Look (a Dashboard Settings page published
-  before Look existed), the screen uses Polished. Screen glitch is a short old
+  before Look existed), the screen uses Polished. Style is the look of the whole
+  screen. Original is the screen as it is now, in the layout of its theme.
+  Cybertron and Minimal have a banner across the top, a thin side column and one
+  main panel, whatever the theme says, and the screen reloads once when you change
+  to or from one of them, and when you change from one to the other, because their
+  frames have different corners. The team sets the base colors, and the Theme page sets the
+  rest (docs/layouts.md, "Styles"). To see one first, add `?style=cybertron` or
+  `?style=minimal` to the address. If no choice is ticked for Style, the screen uses
+  Original. Screen glitch is a short old
   television glitch over the whole screen: a bright bar rolls down, the picture
   jumps sideways and the scan lines flicker. "Play the glitch" turns it on or
   off, "Seconds between glitches" is from 30 to 3600, or 0 to never play it, and

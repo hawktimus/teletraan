@@ -4,7 +4,7 @@
 //   filtering   showsForTeam() says whether an item belongs on the screen of that team.
 //               visibleItems() in content.js asks it, so a panel that leaves out hidden and
 //               expired items leaves out the other team's items too. No panel asks it itself
-//   putting on  applyTeamLook() sets the seven colors and the mirror class on the html element
+//   putting on  applyTeamLook() sets the seven colors, the initials and the mirror class on the html element
 //
 // A different team never goes on the page where people can watch it happen. useTeams() sees the
 // change, and the items follow at once, so every page built from then on is the new team's. The
@@ -34,6 +34,10 @@ export const colorProperties = {
   background: '--team-background',
   text: '--team-text',
 };
+
+// The custom property that holds the letters at the front of the stamped id on each panel (HP in
+// HP-01). base.css writes it, in the Original style. The value is a quoted string, as content needs.
+export const initialsProperty = '--team-initials';
 
 const waitedTooLong = 60 * 1000;
 
@@ -76,6 +80,15 @@ export function showsForTeam(item, code = wanted.code) {
   return team === '' || team === code;
 }
 
+// The first letter of each word in the team's name, in capitals: Hawktimus Prime is HP and Hawktimus Nova
+// is HN. A name of one word gives its first two letters, and at most three letters are used.
+export function teamInitials(team) {
+  const words = (team && typeof team.name === 'string' ? team.name : '').match(/\p{L}+/gu) || [];
+  const letters = words.length === 1 ? words[0].slice(0, 2) : words.map(word => word[0]).join('');
+
+  return letters.slice(0, 3).toUpperCase();
+}
+
 // The custom properties a team sets, by name
 export function teamProperties(team) {
   const properties = {};
@@ -85,19 +98,20 @@ export function teamProperties(team) {
   return properties;
 }
 
-// Puts a team's colors and mirror on the page. page is the html element, and only the tests
-// give another.
+// Puts a team's colors, initials and mirror on the page. page is the html element, and only the
+// tests give another.
 export function applyTeamLook(team, page = typeof document === 'undefined' ? null : document.documentElement) {
   if (!page) return;
 
   const properties = teamProperties(team);
   Object.keys(properties).forEach(name => page.style.setProperty(name, properties[name]));
+  page.style.setProperty(initialsProperty, '"' + teamInitials(team) + '"');
 
   if (team.mirror === true) page.classList.add(mirrorClass);
   else page.classList.remove(mirrorClass);
 }
 
-// The one place a team goes on. The colors and the mirror are applied here, and the banner and the
+// The one place a team goes on. The colors, the initials and the mirror are applied here, and the banner and the
 // sidebar draw the team's name, number and logo from teamShown() when they are told to update
 // (onTeamChange). A style or layout that needs something more to change with the team adds its
 // line here.

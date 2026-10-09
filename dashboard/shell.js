@@ -5,6 +5,8 @@
 // Switches you can add to the address, for example index.html?motion=calm
 //   motion=full|calm|none             how much things move
 //   speed=very-slow|slow|normal|fast  how fast things move and how long panels stay
+//   style=original|cybertron|minimal  the style of the whole screen (Style in Dashboard Settings), for this page only. cybertron
+//                                     and minimal have the bar layout (core/layout.js) whatever the theme says
 //   look=polished|flat|plain          how much polish the frames have (Look in Dashboard Settings). flat is
 //                                     the flat finish with no glint, plain also has no screws and no // in the
 //                                     panel headers. finish= and glint= below win over it
@@ -30,7 +32,7 @@
 import * as frame from './frame.js';
 import { fixedPanels, panels } from './registry.js';
 import { sampleFolder, liveFolder, defaultSettings, frameFinishes, metals, pageChangeStyles, location as place } from './config.js';
-import { savedTheme, startContent, withDefaults } from './core/content.js';
+import { savedStyle, savedTheme, startContent, withDefaults } from './core/content.js';
 import { mergeEvents } from './core/events.js';
 import { connectionLines, drawConnection } from './core/connection.js';
 import { pageSwitchesFor } from './core/look.js';
@@ -39,6 +41,7 @@ import { showDeviceInfo } from './core/device.js';
 import { checkTheme, holdLooksFor, showThemeNow, startThemes } from './core/theme-apply.js';
 import { holdForLayout, startLayout } from './core/layout-apply.js';
 import { decorationLayers, hasKit, layoutNow } from './core/layout.js';
+import { applyStyle, startStyle } from './core/style.js';
 import { loadPanel, mountPanel, updatePanel } from './core/panels.js';
 import { changeTeamNow, onTeamChange, useTeams } from './core/teams.js';
 import { showPagesNow, startRotation, startTicker, startTogether } from './core/schedule.js';
@@ -72,10 +75,12 @@ onTeamChange(() => {
 run();
 
 async function run() {
-  // The layout goes on first of all, so that no region, area or panel is ever
-  // drawn in the wrong place. It is the layout of the theme the last saved
-  // content chose, or of ?theme=. A theme with another layout reloads the page later.
-  startLayout(params.get('theme'), savedTheme);
+  // The style and the layout go on first of all, so that no region, area or panel is ever
+  // drawn in the wrong place. The layout is the one the last saved content chose: the
+  // theme's, or the one the style forces (Cybertron and Minimal), or ?theme= and ?style=.
+  // A theme or style with another layout reloads the page later.
+  const style = startStyle(params.get('style'), savedStyle);
+  startLayout(params.get('theme'), savedTheme, document.documentElement, style);
 
   try {
     makeSilverGradients(); // before any frame is drawn, so a silver frame has its gradients
@@ -116,7 +121,7 @@ async function run() {
     // A theme with another layout than the page reloads it, but never while an alert or an announcement has the screen.
     try {
       holdLooksFor(look => holdForLayout(look, takeoverRunning));
-      await startThemes(getContent, { theme: params.get('theme'), overlay: params.get('overlay') }, showDecorations);
+      await startThemes(getContent, { theme: params.get('theme'), overlay: params.get('overlay'), style: params.get('style') }, showDecorations);
     } catch (error) {
       console.error('The theme could not be started. The screen keeps the default look.', error);
     }
@@ -239,6 +244,8 @@ function rebuild() {
   updatePanel('banner', content);
   updatePanel('countdown', content);
   updatePanel('side', content); // does nothing in a layout that does not draw it
+  updatePanel('bar-banner', content); // nor do these two
+  updatePanel('bar-column', content);
 
   // The connection status text, and the Mini's address inside it while Sanity cannot be reached
   try {
@@ -420,12 +427,24 @@ function useKit(look) {
   }
 }
 
-// What goes with each look that goes on the page: the neon kit, and the
+// The style of the look (core/style.js). It goes on in the same step as the theme's
+// classes, so the screen is never drawn with half of each. A problem here never
+// stops the colours.
+function useStyle(look) {
+  try {
+    applyStyle(look.style);
+  } catch (error) {
+    console.error('Could not put the style on the page', error);
+  }
+}
+
+// What goes with each look that goes on the page: the style, the neon kit, and the
 // decorations of the overlay's seasonal pack (core/season.js,
 // docs/seasonal-packs.md). theme-apply.js calls this each time a look goes on
 // the page. The module is read only when a pack is wanted, or when one has to be
 // taken away, and a problem in it is logged and never stops the colours.
 function showDecorations(look) {
+  useStyle(look);
   useKit(look);
   if (!look.overlay && !decorationsUsed) return;
 

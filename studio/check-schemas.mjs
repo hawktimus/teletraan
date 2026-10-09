@@ -118,6 +118,7 @@ const contract = {
     switchBackAt: 'datetime',
     glint: 'boolean',
     look: 'string',
+    style: 'string',
     pageSeconds: number(8, 120),
     logoAnimations: 'boolean',
     logoEntrance: 'boolean',
@@ -216,6 +217,7 @@ const choices = {
   'dashboardSettings.speed': ['very-slow', 'slow', 'normal', 'fast'],
   'dashboardSettings.frameMetal': ['gold', 'silver'],
   'dashboardSettings.look': ['polished', 'flat', 'plain'],
+  'dashboardSettings.style': ['original', 'cybertron', 'minimal'],
   'dashboardSettings.pageChangeStyle': ['alternate', 'slat', 'mechanical'],
   'dashboardSettings.frameFinish': ['mostly-gold', 'alternate', 'gold', 'silver'],
   'dashboardSettings.photoOrder': ['random', 'newest-first'],
@@ -1065,6 +1067,45 @@ function checkLookSetting() {
   return problems;
 }
 
+// Style, in the Screen tab. The Studio list is the dashboard's list (the styles in
+// config.js), in the same order, the starting value is Original, which changes
+// nothing on the screen, and the sample content has a style the dashboard accepts.
+// The dashboard has a layout for the two styles that force one, and the Theme page
+// says that the style and the team set the base values.
+function checkStyleSetting() {
+  const problems = [];
+  const config = world.dashboard;
+  const style = fieldAt('dashboardSettings.style');
+  const rules = style ? constraintsOf(style) : [];
+  const allowed = constraintNamed(rules, 'valid');
+  const offered = choicesOf('dashboardSettings.style');
+  const titles = { original: 'Original', cybertron: 'Cybertron', minimal: 'Minimal' };
+
+  need(problems, config.styles.join() === 'original,cybertron,minimal', 'styles in config.js should be original, cybertron and minimal, not ' + config.styles.join());
+  need(problems, config.defaultSettings.style === 'original', 'the default style in config.js should be original');
+  need(problems, style && style.initialValue === 'original', 'style should start as original');
+  need(problems, style && style.group === 'screen', 'style should be in the Screen tab');
+  need(problems, style && style.title === 'Style', 'style should be titled Style');
+  need(problems, style && style.type === 'string' && style.options && style.options.layout === 'radio', 'style should be a radio list');
+  need(problems, offered.map(item => item.value).join() === config.styles.join(), 'style should offer the same names, in the same order, as styles in config.js: ' + config.styles.join(', '));
+  offered.forEach(item => need(problems, item.title === titles[item.value], 'the style ' + item.value + ' should be titled ' + titles[item.value]));
+  need(problems, allowed && allowed.args[0].join() === config.styles.join(), 'style should only allow: ' + config.styles.join(', '));
+  // Dashboard Settings published before Style existed has no style, and the screen reads that as Original.
+  // A required field would stop that page being published until someone picked one.
+  need(problems, !constraintNamed(rules, 'required'), 'style should not be required: an empty style is Original, and the page must still publish');
+
+  // The description says what each style is, and that the theme does not decide the layout of two of them
+  const words = style ? style.description || '' : '';
+  need(problems, /Original/.test(words) && /Cybertron/.test(words) && /Minimal/.test(words) && /whatever the theme/.test(words), 'the style description should say what Original is, what Cybertron and Minimal have, and that the theme does not change that');
+
+  need(problems, config.styles.indexOf(world.sample.settings.style) !== -1, 'the sample settings need a style of ' + config.styles.join(', '));
+  need(problems, world.layoutModule.layouts.indexOf('bar') !== -1, 'the dashboard needs the bar layout, which Cybertron and Minimal have');
+
+  const theme = fieldAt('theme.defaultTheme');
+  need(problems, theme && /Style and team set the base values/.test(theme.description || ''), 'the Theme page should say that the style and the team set the base values');
+  return problems;
+}
+
 // Content source and Switch back to production at. The Studio and
 // dashboard/config.js agree on the choices and the starting value, and the two
 // buttons on the settings page set the field and publish.
@@ -1535,6 +1576,7 @@ function checkStartingValues() {
   expect('frameMetal', settings.frameMetal);
   expect('glint', settings.glint);
   expect('look', settings.look);
+  expect('style', settings.style);
   expect('showConnectionStatus', settings.showConnectionStatus);
   expect('pageSeconds', settings.pageSeconds);
   logoSwitches.concat(logoNumbers, transitionNames, photoNames, nightNames, hiddenNames.slice(0, 3), presentationNames, teamNames).forEach(name => expect(name, settings[name]));
@@ -3277,6 +3319,7 @@ async function main() {
   check('the Speed setting offers the speeds the dashboard has', checkSpeed);
   check('frame metal, glint, seconds per page and the name effect agree with dashboard/config.js', checkLookAndTiming);
   check('the Look setting offers the looks in dashboard/config.js and starts on Polished', checkLookSetting);
+  check('the Style setting offers the styles in dashboard/config.js and starts on Original, and the Theme page says the style and team set the base values', checkStyleSetting);
   check('the Transitions tab agrees with dashboard/config.js', checkTransitionsTab);
   check('the Night mode tab agrees with dashboard/config.js', checkNightTab);
   check('the Hidden tab agrees with dashboard/config.js and the dashboard registry, and the Play buttons work', checkHiddenTab);

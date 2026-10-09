@@ -1,0 +1,147 @@
+/* The Cybertron style (core/style.js, Style in Dashboard Settings): the sharp style.
+   It has the bar layout (layouts/bar.css) whatever the theme says, and any team's
+   colors. The first rule sets custom properties, which the bar panels and the frame
+   drawing read. The team's colors are --team-neon, --team-pink and the others in
+   teams.css, and they are the ones to use for anything that follows the team. The rules
+   after it paint the page background and the parts of the frames that only this style
+   has. Everything it paints is still: nothing here moves.
+
+     --style-body            the body of a plate
+     --style-raised          a raised plate: the war clock's housing
+     --style-armor-top       the top and the bottom of the armor header tab, which are
+     --style-armor-bottom    lighter and darker than --style-raised
+     --style-chamfer         the large cut corners of a panel (the same 56 as in core/plate.js)
+     --style-neon            the neon strokes, and the rule under the clock in the side column
+     --style-pink            the conduit line along the inner edges
+     --style-digits          the digits of the war clock
+     --style-grid-size       the grid on the page background, and how faint it is
+     --style-grid-opacity
+     --style-scan-opacity    the scanlines on the page background
+
+   The frames are drawn by core/plate.js, "The frames of the bar layout". The steel of
+   their edges is in tokens.css and index.html, and what Cybertron and Minimal share of
+   them is in base.css. */
+
+html[data-style="cybertron"] {
+  --style-body: #15181f;
+  --style-raised: #262b33;
+  --style-armor-top: #323843;
+  --style-armor-bottom: #1d2128;
+  --style-chamfer: 56px;
+  --style-neon: var(--team-neon);
+  --style-pink: var(--team-pink);
+  --style-digits: #ffb327;
+  --style-grid-size: 96px;
+  --style-grid-opacity: .07;
+  --style-scan-opacity: .035;
+}
+
+
+/* The page background: the team's background color, with the scanlines over it and, in a
+   layer of its own, the grid in the team's neon. Both are drawn with gradients, so there
+   is no picture to load, and both are behind everything on the screen. The grid has its own
+   layer because its color is a team color, which can only be made fainter by fading the
+   layer. The layer is as big as the screen and lets every click through. */
+html[data-style="cybertron"] #screen {
+  background:
+    repeating-linear-gradient(to bottom, rgba(255, 255, 255, var(--style-scan-opacity)) 0, rgba(255, 255, 255, var(--style-scan-opacity)) 3px, transparent 3px, transparent 6px),
+    var(--ground);
+}
+html[data-style="cybertron"] #screen::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  background:
+    linear-gradient(to right, var(--style-neon) 0, var(--style-neon) 3px, transparent 3px) 0 0 / var(--style-grid-size) var(--style-grid-size),
+    linear-gradient(to bottom, var(--style-neon) 0, var(--style-neon) 3px, transparent 3px) 0 0 / var(--style-grid-size) var(--style-grid-size);
+  opacity: var(--style-grid-opacity);
+  pointer-events: none;
+}
+
+
+/* The plates. The body of an area's frame and of the banner's is the gunmetal. The header
+   tab is a raised armor plate: a gradient, with the bevel, the bright line and the team's
+   plate color inset that plate.js draws on it (base.css). The rest of the header is the same
+   gunmetal as the body. */
+html[data-style="cybertron"] .area,
+html[data-style="cybertron"] .bar-banner {
+  --panel-face: var(--style-body);
+}
+html[data-style="cybertron"] .area .plate .header-left { fill: url(#armor-face); }
+html[data-style="cybertron"] .area .plate .header-right { fill: var(--style-body); }
+
+/* The TEAM plate and the ticker's tag are plates in the team's plate color */
+html[data-style="cybertron"] .team-fill,
+html[data-style="cybertron"] .tag-fill { fill: var(--team-plate); }
+
+/* The hawk has the team's accent for its outline, and keeps the colors the theme gives its
+   plates */
+html[data-style="cybertron"] .bar-logo .drawing { --logo-edge: var(--team-accent); }
+
+/* The neon line of a frame has the two wider and fainter ones behind it, except in the flat
+   finish (base.css) */
+html[data-style="cybertron"]:not([data-finish="flat"]) .edge-neon-wide-1,
+html[data-style="cybertron"]:not([data-finish="flat"]) .edge-neon-wide-2 { display: inline; }
+
+
+/* What only Cybertron draws on a frame (plate.js, decorMarkup): the hazard stripe in the
+   team's accent under the header, the pink conduit along two inner edges, a row of neon
+   slashes along the bottom, the pink brackets outside two corners and the faint seams of
+   the plates */
+html[data-style="cybertron"] .art-cybertron { display: inline; }
+html[data-style="cybertron"] .art-hazard { fill: var(--team-accent); }
+html[data-style="cybertron"] .art-conduit {
+  fill: none;
+  stroke: var(--style-pink);
+  stroke-width: 3px;
+}
+html[data-style="cybertron"] .art-slashes {
+  fill: var(--style-neon);
+  fill-opacity: .85;
+}
+html[data-style="cybertron"] .art-brackets {
+  fill: none;
+  stroke: var(--style-pink);
+  stroke-width: 4px;
+}
+html[data-style="cybertron"] .art-seams {
+  fill: none;
+  stroke: #05070a;
+  stroke-opacity: .6;
+  stroke-width: 3px;
+}
+
+
+/* The rail beside the side column (panels/bar-column): a line down the middle in the team's
+   neon, and two groups of ticks, a long pink one, a short neon one and a short accent one at
+   the top, and a pink and a neon one lower down. The row of the layout turns round with the
+   mirror, so the rail is at the right edge for a team that has it on. The numbers are
+   measured on the 12 by 736 box of the rail. */
+html[data-style="cybertron"] .bar-rail { position: relative; }
+html[data-style="cybertron"] .bar-rail::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--style-neon);
+  opacity: .5;
+}
+html[data-style="cybertron"] .bar-rail::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    linear-gradient(var(--style-pink), var(--style-pink)) 1px 41px / 10px 60px no-repeat,
+    linear-gradient(var(--style-neon), var(--style-neon)) 1px 110px / 10px 24px no-repeat,
+    linear-gradient(var(--team-accent), var(--team-accent)) 1px 151px / 10px 40px no-repeat,
+    linear-gradient(var(--style-pink), var(--style-pink)) 1px 576px / 10px 62px no-repeat,
+    linear-gradient(var(--style-neon), var(--style-neon)) 1px 650px / 10px 24px no-repeat;
+}

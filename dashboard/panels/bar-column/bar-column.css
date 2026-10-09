@@ -1,0 +1,192 @@
+/* The side column of the bar layout (panels/bar-column/bar-column.js). Every selector
+   starts with html[data-layout="bar"], so the other layouts are never touched. The
+   panel is a row: the rail, 24 of space and the column, which is the whole of
+   #region-column (layouts/bar.css), 336 wide and as high as the main panel, 736. The
+   sizes of the rail and the column come from the variables layouts/bar.css lists.
+   Every part of the column is placed by hand inside it: the top is where the part
+   starts, counted from the top of the column, and the height is the room it has.
+   Nothing is moved by what is in another part, so a long school name cannot push
+   anything. The parts only have sizes and places here. What they look like is the
+   style's business, with the class names that start with bar-. The mirror
+   (layouts/bar.css) turns the row round, and puts the time at the other end.
+
+     part            top   height  what
+     .bar-clock        0     192   the time and AM or PM (84), a rule under them, the date (48) and the weather (48)
+       .bar-time       0      90   84 of text and the rule under it, 300 wide
+       .bar-date      96      48   centred
+       .bar-weather  144      48   the picture and the temperature, centred
+     .bar-team       208      76   300 wide
+     .bar-school     296     184   up to four lines of 46
+     .bar-sample     488      88   230 wide, two lines of 44, in the middle
+     .bar-logo       599     137   170 wide, at the foot of the column
+
+   All text is 44 px or more, and no part is wider than 300. The widest time (10:59
+   at 84 px, 245 wide) with PM (71 wide) is 316, and does not fit the column, so the
+   letters of the time are 5 px closer together, which makes it 297. */
+
+html[data-layout="bar"] .bar-column {
+  width: var(--bar-side-width);
+  height: var(--bar-middle-height);
+  display: flex;
+  flex-direction: row;
+  gap: var(--bar-rail-gap);
+}
+
+/* The rail is the strip of ticks at the edge of the screen. It is a box of its own
+   size and nothing else here, so that the style can draw it. */
+html[data-layout="bar"] .bar-rail {
+  flex: none;
+  width: var(--bar-rail-width);
+  height: 100%;
+}
+
+html[data-layout="bar"] .bar-body {
+  position: relative;
+  flex: none;
+  width: var(--bar-column-width);
+  height: 100%;
+}
+
+
+/* The clock, the date and the weather: the time and AM or PM on the first row with
+   the rule under them, the date and the weather one under the other, centred. The
+   time is at the left end of its row, and at the right end when the layout is
+   mirrored. */
+html[data-layout="bar"] .bar-clock {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 192px;
+  display: flex;
+  flex-direction: column;
+}
+html[data-layout="bar"] .bar-time {
+  box-sizing: border-box;
+  height: 90px;
+  margin-bottom: 6px;
+  padding-bottom: 3px;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  border-bottom: 3px solid var(--style-neon, var(--team-neon));
+}
+html[data-layout="bar"] .bar-time .time {
+  font: 700 var(--size-clock)/84px var(--font-display);
+  letter-spacing: -.06em;
+}
+html[data-layout="bar"] .bar-time .suffix {
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+html[data-layout="bar"] .bar-date {
+  height: 48px;
+  color: var(--yellow);
+  text-align: center;
+  font: 600 var(--size-label)/48px var(--font-display);
+}
+html[data-layout="bar"] .bar-weather {
+  height: 48px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  font: 600 var(--size-label)/48px var(--font-display);
+}
+html[data-layout="bar"] .bar-weather .weather-icon { display: block; }
+
+
+/* The TEAM plate is the banner's, as wide as the column (core/plate.js, teamPlateMarkup).
+   The plate's cut corner (bottom right) starts 44 px from its right edge, and the
+   frame's rim and its shadow cover the top of the plate, so the clear part sits lower than the middle. The padding at
+   the top moves the words down to it, and the padding at the right moves them away
+   from the cut corner. */
+html[data-layout="bar"] .bar-team {
+  position: absolute;
+  left: 0;
+  top: 208px;
+  box-sizing: border-box;
+  width: 100%;
+  height: 76px;
+}
+html[data-layout="bar"] .bar-team svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+html[data-layout="bar"] .bar-team span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  box-sizing: border-box;
+  width: 100%;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 5px;
+  padding-right: 16px;
+  font: 700 var(--size-label)/44px var(--font-display);
+}
+html[data-layout="bar"] .bar-team b {
+  margin-left: 12px;
+  color: var(--yellow);
+}
+
+/* The school may take four lines, for example HOLLY, SPRINGS, HIGH and SCHOOL, and is
+   centred in its box so fewer lines sit in the middle of it. A fifth line is cut off
+   with an ellipsis. */
+html[data-layout="bar"] .bar-school {
+  position: absolute;
+  left: 0;
+  top: 296px;
+  box-sizing: border-box;
+  width: 100%;
+  height: 184px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+html[data-layout="bar"] .bar-school .school-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: normal; /* the screen keeps every line on one line, this may take four */
+  text-align: center;
+  font: 600 var(--size-label)/46px var(--font-display);
+}
+
+/* SAMPLE CONTENT is on the screen the whole time the sample is showing, so nobody
+   mistakes it for the team's real content. It is two lines of 44 px (SAMPLE, then
+   CONTENT, which is 214 wide), solid yellow with dark text, the highest contrast on
+   the screen. It is taken out of the flow (position: absolute), so showing or hiding
+   it can never move anything. bar-column.js leaves it empty when the content is the
+   editors' own, and an empty label is hidden. */
+html[data-layout="bar"] .bar-sample {
+  position: absolute;
+  left: 35px;
+  top: 488px;
+  box-sizing: border-box;
+  width: 230px;
+  height: 88px;
+  background: var(--yellow);
+  color: var(--ground);
+  text-align: center;
+  white-space: normal;
+  font: 700 var(--size-label)/44px var(--font-display);
+}
+html[data-layout="bar"] .bar-sample:empty { display: none; }
+
+/* The logo is drawn on a grid 1100 wide and shrunk to fit its box: --k is the box's
+   width divided by 1100 (170 / 1100). Its parts reach past the box while the show
+   plays (see "The logo" in frame.css and .banner .logo), about 23 px each way at this
+   size, which fits in the gap of 24 under the column and the room at each side. */
+html[data-layout="bar"] .bar-logo {
+  --k: .1545;
+  position: absolute;
+  left: 65px;
+  top: 599px;
+  width: 170px;
+  height: 137px;
+}

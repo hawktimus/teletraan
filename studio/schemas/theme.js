@@ -65,7 +65,7 @@ const defaultThemeField = defineField({
   name: 'defaultTheme',
   title: 'Default theme',
   type: 'string',
-  description: 'The look when Use a theme now and the schedule below say nothing. Neon Prime has a sidebar and no small frame, and reloads the screen once.',
+  description: 'The look when Use a theme now and the schedule say nothing. Style and team set the base values. Neon Prime has a sidebar and no small frame.',
   options: { list: themeChoices },
   initialValue: 'hawktimus',
   validation: Rule => [

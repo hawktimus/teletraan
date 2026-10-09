@@ -134,6 +134,21 @@ frame), on top of the slats, which turn as they always did.
 Edges are cut in a straight run, on a whole number, so neighbouring pieces meet
 exactly. Where a corner is turned, the corner is inside one piece.
 
+The rivets of the Original style are in the pieces too. Each bar holds the rivets that
+sit on its own line, and each rivet is in one piece only, so the dots fly away and come
+back with the frame. The stamped id is not in a piece: it is hidden while the pieces are
+shown, like the plates.
+
+The frame of the main panel in the bar layout (Cybertron and Minimal) is cut into 12 pieces
+with the names of the large frame's pieces, so the table in `frame.css` moves them. It has no
+seam under its header, so it has no `seam-line` or `seam-notch`, and it has one more,
+`plate-decor`, which holds the decoration. Its bars carry their neon lines and their
+bolts. The ticker of that layout has a frame, and it does not lift or break: its page
+change turns the slats only (docs/layouts.md, "Frames"). Minimal's main panel has the same 12
+pieces: its rivets and its rust are each in the bar they are on, so they go with it, and its
+weld seam and the line with ticks are in `plate-decor`. The bar layout never changes the
+metal of a frame, because the steel is the metal of both of its styles.
+
 To change where a piece goes, edit its line in the table in `frame.css`
 (`[data-piece="name"]`). `--tx`, `--ty` and `--tz` are how far it moves, `--rx`,
 `--ry` and `--rz` are how far it turns about each axis, and `--hold` is how late it

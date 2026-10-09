@@ -265,6 +265,16 @@ svg [data-fx] { transform-box: fill-box; }
 [data-motion="full"] .area[data-state="in"] [data-slat] {
   animation: slat-in calc(.5s * var(--pace)) var(--ease-turn) calc((1s + var(--n) * 90ms) * var(--pace)) both;
 }
+/* the rivets and the id fade in once the lines have been drawn, and so does the decoration of a bar frame */
+[data-motion="full"] .area[data-state="in"] [data-part="rivets"],
+[data-motion="full"] .area[data-state="in"] [data-part="plate-id"],
+[data-motion="full"] .area[data-state="in"] [data-part="decor"] {
+  animation: fade-in var(--time-fade-in) linear calc(var(--assemble-draw) * var(--pace) + var(--time-draw-in)) backwards;
+}
+/* and so does the rust of a Minimal frame */
+[data-motion="full"] .area[data-state="in"] [data-part="wear"] {
+  animation: fade-in var(--time-fade-in) linear calc(var(--assemble-draw) * var(--pace) + var(--time-draw-in)) backwards;
+}
 
 @keyframes rise-in { from { transform: translateY(var(--move)); opacity: 0; } }
 
@@ -363,6 +373,10 @@ svg [data-fx] { transform-box: fill-box; }
 [data-motion="full"] .area[data-state="xi"] .screw-shadow {
   animation: screw-shadow-in var(--screw-in-time) var(--ease-turn) var(--screw-in-delay) both;
 }
+
+/* The ticker of the bar layout has a frame of bolts, and it holds still while its message
+   changes, so its bolts do not turn. (The large panel's do.) */
+html[data-layout="bar"] .area[data-area="ticker"] .screw { animation-name: none; }
 
 
 /* The frame halves lift off the panel and pull apart, then drop back and lock.
@@ -464,11 +478,13 @@ svg [data-fx] { transform-box: fill-box; }
   will-change: transform, opacity;
 }
 [data-motion="full"] .area[data-change="mechanical"][data-state="xo"] .fills,
+[data-motion="full"] .area[data-change="mechanical"][data-state="xo"] .plate-id,
 [data-motion="full"] .area[data-change="mechanical"][data-state="xo"] [data-part="frame-a"],
 [data-motion="full"] .area[data-change="mechanical"][data-state="xo"] [data-part="frame-b"],
 [data-motion="full"] .area[data-change="mechanical"][data-state="xo"] [data-part="shadow-a"],
 [data-motion="full"] .area[data-change="mechanical"][data-state="xo"] [data-part="shadow-b"],
 [data-motion="full"] .area[data-change="mechanical"][data-state="xi"] .fills,
+[data-motion="full"] .area[data-change="mechanical"][data-state="xi"] .plate-id,
 [data-motion="full"] .area[data-change="mechanical"][data-state="xi"] [data-part="frame-a"],
 [data-motion="full"] .area[data-change="mechanical"][data-state="xi"] [data-part="frame-b"],
 [data-motion="full"] .area[data-change="mechanical"][data-state="xi"] [data-part="shadow-a"],
@@ -491,6 +507,7 @@ svg [data-fx] { transform-box: fill-box; }
 [data-piece="plate-body-left"]      { --tx: -170px; --ty: 40px;   --tz: -380px; --rx: 8deg;    --ry: 80deg;   --rz: -4deg;  --hold: .08; }
 [data-piece="plate-body-right"]     { --tx: 170px;  --ty: 60px;   --tz: -380px; --rx: -8deg;   --ry: -80deg;  --rz: 4deg;   --hold: .12; }
 [data-piece="plate-body"]           { --tx: 0px;    --ty: 90px;   --tz: -400px; --rx: 70deg;   --ry: 0deg;    --rz: 0deg;   --hold: .1; }
+[data-piece="plate-decor"]          { --tx: 0px;    --ty: 70px;   --tz: -320px; --rx: 55deg;   --ry: 0deg;    --rz: 0deg;   --hold: .14; }
 [data-piece="seam-line"]            { --tx: 0px;    --ty: 30px;   --tz: -240px; --rx: 150deg;  --ry: 0deg;    --rz: 0deg;   --hold: .1; }
 [data-piece="seam-notch"]           { --tx: 0px;    --ty: -80px;  --tz: -200px; --rx: 0deg;    --ry: 170deg;  --rz: 25deg;  --hold: .14; }
 [data-piece="edge-top-left"]        { --tx: -90px;  --ty: -130px; --tz: -180px; --rx: 160deg;  --ry: 0deg;    --rz: -10deg; --hold: .16; }
@@ -1647,7 +1664,8 @@ html:not([data-motion="full"]) .logo[data-act="fly"] .hawk-far-wing { transform:
 [data-motion="calm"] .panel [data-idle] { animation: none; }
 [data-motion="calm"] #crt { display: none; }
 [data-motion="calm"] .banner .logo,
-[data-motion="calm"] .side .logo { animation: fade-in var(--time-calm) linear backwards; }
+[data-motion="calm"] .side .logo,
+[data-motion="calm"] .bar-column .logo { animation: fade-in var(--time-calm) linear backwards; }
 
 
 /* No motion at all, for measuring the cost of the still picture */

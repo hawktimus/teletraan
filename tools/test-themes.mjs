@@ -24,14 +24,14 @@ fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n'
 ['config.js', 'frame.js', 'themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
-['theme.js', 'theme-apply.js', 'teams.js', 'transitions.js', 'tick.js'].forEach(file => {
+['theme.js', 'theme-apply.js', 'teams.js', 'style.js', 'transitions.js', 'tick.js'].forEach(file => {
   fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(workFolder, 'dashboard/core', file));
 });
 
 const base = pathToFileURL(path.join(workFolder, 'dashboard')).href + '/';
 const config = await import(base + 'config.js');
 const { resolveTheme, tidyTheme, ruleCovers, dateIn, isTimeZone } = await import(base + 'core/theme.js');
-const { teamProperties } = await import(base + 'core/teams.js');
+const { teamProperties, teamInitials } = await import(base + 'core/teams.js');
 const { themes } = await import(base + 'themes/registry.js');
 const { overlays } = await import(base + 'themes/overlays/registry.js');
 
@@ -936,6 +936,13 @@ function propertiesOf(team) {
   };
 }
 
+// The properties the page has with a team on it: the seven colors, and the initials for the plate ids, in
+// quotes as content needs them
+function onThePage(team) {
+  const initials = { prime: '"HP"', nova: '"HN"' };
+  return Object.assign(propertiesOf(team), { '--team-initials': initials[team.code] });
+}
+
 // The Teams settings and the team list, as the content has them. teams.js reads nothing else.
 function teamContent(mode, minutes, teams) {
   return { teams: teams || seededTeams, settings: { teamMode: mode, alternateMinutes: minutes || 5 } };
@@ -969,7 +976,7 @@ test('the screen starts on the team the settings ask for, at once: the seven col
 
     assert.deepEqual(world.root.properties, {
       '--team-primary': '#6C18B6', '--team-plate': '#3B2A7A', '--team-accent': '#FACA2A', '--team-neon': '#35F0FF',
-      '--team-pink': '#FF2E8C', '--team-background': '#09060F', '--team-text': '#FFFFFF',
+      '--team-pink': '#FF2E8C', '--team-background': '#09060F', '--team-text': '#FFFFFF', '--team-initials': '"HP"',
     });
     assert.equal(world.classes(), '');
     assert.equal(world.teams.mirrorClass, 'mirrored');
@@ -980,7 +987,7 @@ test('the screen starts on the team the settings ask for, at once: the seven col
 
     assert.deepEqual(world.root.properties, {
       '--team-primary': '#1F7AE0', '--team-plate': '#1E3A6E', '--team-accent': '#9BF0FF', '--team-neon': '#FF2E8C',
-      '--team-pink': '#35F0FF', '--team-background': '#060D1A', '--team-text': '#FFFFFF',
+      '--team-pink': '#35F0FF', '--team-background': '#060D1A', '--team-text': '#FFFFFF', '--team-initials': '"HN"',
     });
     assert.equal(world.classes(), 'mirrored');
   });
@@ -992,11 +999,28 @@ test('the properties of a team are its seven colors, whatever team it is, and th
   assert.equal(config.primeTeam.mirror, seededPrime.mirror);
 });
 
+test('the initials of a team are the first letter of each word of its name, in capitals, for the stamped plate ids: HP for Prime and HN for Nova', () => {
+  assert.equal(teamInitials(seededPrime), 'HP');
+  assert.equal(teamInitials(seededNova), 'HN');
+  assert.equal(teamInitials(config.primeTeam), 'HP', 'the built-in team, named in capitals');
+  assert.equal(teamInitials({ name: 'hawktimus nova' }), 'HN');
+  assert.equal(teamInitials({ name: '  Hawktimus   Prime ' }), 'HP', 'spaces round and between the words');
+  assert.equal(teamInitials({ name: 'Robo-Hawks Gold' }), 'RHG', 'a hyphen starts a new word');
+  assert.equal(teamInitials({ name: 'Hawktimus Prime Second Team' }), 'HPS', 'at most three letters');
+  assert.equal(teamInitials({ name: 'Hawktimus' }), 'HA', 'one word gives its first two letters');
+  assert.equal(teamInitials({ name: 'X' }), 'X');
+  assert.equal(teamInitials({ name: 'Équipe Étoile' }), 'ÉÉ', 'letters that are not in English');
+  assert.equal(teamInitials({ name: 'Team 3229' }), 'TE', 'a number is not a word');
+
+  [null, undefined, {}, { name: '' }, { name: '3229' }, { name: 7 }, 'Hawktimus Prime'].forEach(odd => assert.equal(teamInitials(odd), '', JSON.stringify(odd)));
+  assert.ok(!/["\\]/.test(teamInitials({ name: 'Prime "Hawk" \\ Team' })), 'only letters, so the quoted value is always safe');
+});
+
 test('with no team documents the page gets the starting Prime colors and no mirror', async () => {
   await onTeamPage(async world => {
     world.teams.useTeams({ settings: { teamMode: 'nova' } }, new Date(noon));
 
-    assert.deepEqual(world.root.properties, propertiesOf(seededPrime));
+    assert.deepEqual(world.root.properties, onThePage(seededPrime));
     assert.equal(world.classes(), '');
     assert.equal(world.teams.currentTeam(), config.primeTeam);
   });
@@ -1013,7 +1037,7 @@ test('Alternate keeps the team for its minutes, then asks for the other one, and
     const firstLook = Object.assign({}, world.root.properties);
     const firstClasses = world.classes();
     const toldAtStart = world.told;
-    assert.deepEqual(firstLook, propertiesOf(first), 'the first team is on at once');
+    assert.deepEqual(firstLook, onThePage(first), 'the first team is on at once');
 
     // the same slot: nothing is asked for, nothing waits, nothing is told
     [1, 2, 4].forEach(minutes => {
@@ -1044,14 +1068,14 @@ test('Alternate keeps the team for its minutes, then asks for the other one, and
     changeTeamNow();
     assert.equal(currentTeam().code, second.code);
     assert.equal(teamPending(), false);
-    assert.deepEqual(world.root.properties, propertiesOf(second));
+    assert.deepEqual(world.root.properties, onThePage(second));
     assert.equal(world.classes(), second.mirror ? 'mirrored' : '');
     assert.equal(world.told, toldAtStart + 2);
 
     // and when nothing is waiting a page change changes nothing
     changeTeamNow();
     assert.equal(world.told, toldAtStart + 2);
-    assert.deepEqual(world.root.properties, propertiesOf(second));
+    assert.deepEqual(world.root.properties, onThePage(second));
 
     // back to the first, a slot later
     useTeams(content, new Date(noon + 10 * minute));
@@ -1093,7 +1117,7 @@ test('a change that no page change comes for goes on a minute after it was asked
     assert.equal(currentTeam().code, first, '59 seconds is not yet a minute');
     useTeams(content, new Date(noon + 5 * minute + 60000));
     assert.notEqual(currentTeam().code, first, 'a minute with no page change');
-    assert.deepEqual(world.root.properties, propertiesOf(currentTeam()));
+    assert.deepEqual(world.root.properties, onThePage(currentTeam()));
     assert.equal(world.told, 3, 'told when the first team went on, when the other was wanted, and when the page had it');
   });
 });
@@ -1108,7 +1132,7 @@ test('a team that is asked for and then not is never put on, and an edit to the 
     useTeams(teamContent('prime'), new Date(noon + 2000)); // the editors changed their minds
     assert.equal(teamPending(), false);
     changeTeamNow();
-    assert.deepEqual(world.root.properties, propertiesOf(seededPrime));
+    assert.deepEqual(world.root.properties, onThePage(seededPrime));
     assert.equal(world.classes(), '');
 
     // a new color for the team that is showing goes on now, and a new color for the other team waits

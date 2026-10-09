@@ -1,0 +1,160 @@
+/* The bar layout (docs/layouts.md, "The bar layout"): a banner across the top with
+   the team name at one end and the war clock at the other, under it a thin side
+   column and one main panel, and the ticker across the whole bottom. There is no
+   small frame. The styles Cybertron and Minimal use it (core/style.js).
+
+   Every rule here starts with html[data-layout="bar"], so the other layouts are
+   never touched. core/layout-apply.js sets that attribute before anything is
+   drawn, and sets the variables used below on the html element from the numbers
+   in core/layout.js (barSettings). Change a number there, not here:
+
+     --bar-banner-x, --bar-banner-y, --bar-banner-width, --bar-banner-height    the banner
+     --bar-banner-padding, --bar-name-gap                                       the room at the ends of the banner, and between the name and the war clock
+     --bar-war-width, --bar-war-height                                          the war clock's slot
+     --bar-middle-x, --bar-middle-y, --bar-middle-width, --bar-middle-height    the row under the banner
+     --bar-side-width, --bar-rail-width, --bar-rail-gap, --bar-column-width     the rail and the side column
+     --bar-column-gap                                                           the space between the side column and the main panel
+     --bar-main-width, --bar-main-height                                        the main panel
+     --bar-area-width, --bar-scale                                              the large frame's drawing, and how much it is enlarged
+     --bar-ticker-x, --bar-ticker-y, --bar-ticker-width, --bar-ticker-height    the ticker
+
+   The banner, the row and the ticker are placed by hand (position: absolute) and the
+   stage keeps its 1920 x 1080 box, which the full screen layers (alerts,
+   announcements, the night screen, the hidden transitions) are sized from. The
+   row is a flex row: the side column first, then the main panel. */
+
+html[data-layout="bar"] #stage {
+  display: block;
+  padding: 0;
+}
+
+
+/* The banner. The bar-banner panel draws into it and is as big as it is. */
+html[data-layout="bar"] #region-banner {
+  position: absolute;
+  left: var(--bar-banner-x);
+  top: var(--bar-banner-y);
+  width: var(--bar-banner-width);
+  height: var(--bar-banner-height);
+}
+
+/* The row under the banner. #region-column is in it already, and layout-apply.js
+   moves #region-grid1 in after it. */
+html[data-layout="bar"] #bar-middle {
+  position: absolute;
+  left: var(--bar-middle-x);
+  top: var(--bar-middle-y);
+  width: var(--bar-middle-width);
+  height: var(--bar-middle-height);
+  display: flex;
+  flex-direction: row;
+  gap: var(--bar-column-gap);
+}
+
+/* The side column, with its rail. The bar-column panel draws into it. */
+html[data-layout="bar"] #region-column {
+  flex: none;
+  width: var(--bar-side-width);
+  height: var(--bar-middle-height);
+}
+
+/* The main panel. Its panels are drawn for a frame 1152 wide and 708 high and are
+   not redrawn: the area is scaled, the same amount across and down, from its top
+   left corner, by the height of the panel over 708. It is made as wide as the panel
+   needs at that scale (--bar-area-width, before the scale), and the panels keep the
+   width they were written for, so the page does not fill it. It is the area that
+   is scaled and not the region, because the hidden transitions move the region
+   (frame.css) and would drop a scale on it. */
+html[data-layout="bar"] #region-grid1 {
+  flex: none;
+  width: var(--bar-main-width);
+  height: var(--bar-main-height);
+}
+html[data-layout="bar"] .area[data-area="grid1"] {
+  width: var(--bar-area-width);
+  transform: scale(var(--bar-scale));
+  transform-origin: 0 0;
+}
+
+/* There is no small frame, and the war clock is in the banner. The region with
+   the countdown and the small frame, with nothing in it, is taken out of the way. */
+html[data-layout="bar"] #region-right {
+  display: none;
+}
+
+/* The ticker, along the whole bottom of the screen. It is the standard layout's
+   ticker, with the same tag and the same one line with an ellipsis (ticker.css), 16
+   wider because the row is. */
+html[data-layout="bar"] #region-ticker {
+  position: absolute;
+  left: var(--bar-ticker-x);
+  top: var(--bar-ticker-y);
+  width: var(--bar-ticker-width);
+  height: var(--bar-ticker-height);
+}
+html[data-layout="bar"] .area[data-area="ticker"] {
+  width: var(--bar-ticker-width);
+}
+
+/* The ticker has a frame of its own here (core/plate.js, "The frames of the bar layout"), with
+   its line 4 in from the edge of the row and its steel and neon about 20 wide. The tag and the
+   message start 16 in from each end of the row, which puts the tag over the frame's cut corner
+   the way the pictures have it. The mirror turns the row round and the padding is the same on
+   both sides. */
+html[data-layout="bar"] .ticker {
+  box-sizing: border-box;
+  padding: 0 16px;
+}
+
+/* The connection status text (base.css) sits at the bottom right, level with the ticker.
+   The ticker's margin is 32 here and the text's own is 40 and 24, so it is moved to the
+   ticker's corner and capped to its width. */
+html[data-layout="bar"] #connection-status {
+  right: calc(1920px - var(--bar-ticker-x) - var(--bar-ticker-width));
+  bottom: calc(1080px - var(--bar-ticker-y) - var(--bar-ticker-height));
+  max-width: var(--bar-ticker-width);
+}
+
+
+/* The mirror. A team can have Mirror switched on (core/teams.js puts the class
+   mirrored on the html element), and then the layout is turned left to right: the
+   side column and its rail go to the other side, the name and the war clock change
+   ends, and the ticker's tag goes to the right end. It is one rule for every flex
+   row of the layout, and a few that put the text at the other end of its box. Text
+   is never turned round, only its order and its alignment. The numbers in
+   core/layout.js (mirrorGeometry) give the same answer, and the tests hold the two
+   together. A flex row of the layout has to be in the first rule, or it does not
+   turn.
+
+   A drawing that is only decoration and has no transform of its own (a cut corner, a
+   notch) turns with class mirror-art. Nothing with text in it may have it. */
+html.mirrored[data-layout="bar"] #bar-middle,
+html.mirrored[data-layout="bar"] .bar-banner,
+html.mirrored[data-layout="bar"] .bar-column,
+html.mirrored[data-layout="bar"] .ticker {
+  flex-direction: row-reverse;
+}
+html.mirrored[data-layout="bar"] .bar-name,
+html.mirrored[data-layout="bar"] .bar-time {
+  justify-content: flex-end;
+}
+html.mirrored[data-layout="bar"] .ticker .message {
+  text-align: right;
+}
+html.mirrored[data-layout="bar"] .mirror-art {
+  transform: scaleX(-1);
+}
+
+
+/* The hidden transitions (core/hidden-run.js, docs/hidden-transitions.md) break
+   the blocks of the layout apart: the banner, the side column, the main panel and
+   the ticker. The poses are read like the table in frame.css: --tx, --ty and
+   --tz are how far a block moves, --rx, --ry and --rz how far it turns, and
+   --hold how late it starts (0 to .3). The banner and the ticker fly as they do in
+   the standard layout, up and down (frame.css). The side column goes off to the
+   left and the main panel to the right, and the other way when the layout is
+   mirrored. */
+html[data-layout="bar"] #region-column { --tx: -1000px; --ty: 60px;   --tz: -600px; --rx: 8deg;   --ry: 80deg;  --rz: -6deg; --hold: .08; }
+html[data-layout="bar"] #region-grid1  { --tx: 1100px;  --ty: -140px; --tz: -500px; --rx: -10deg; --ry: -85deg; --rz: 8deg;  --hold: .16; }
+html.mirrored[data-layout="bar"] #region-column { --tx: 1000px;  --ry: -80deg; --rz: 6deg; }
+html.mirrored[data-layout="bar"] #region-grid1  { --tx: -1100px; --ry: 85deg;  --rz: -8deg; }

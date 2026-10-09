@@ -1,0 +1,50 @@
+/* The banner of the bar layout (panels/bar-banner/bar-banner.js). Every selector
+   starts with html[data-layout="bar"], so the other layouts are never touched. The
+   panel is as big as the banner (#region-banner, layouts/bar.css): a row with the name
+   at one end and the war clock's slot at the other, 40 in from each end of the
+   banner and 24 apart. The sizes come from the variables layouts/bar.css lists, and
+   the mirror (layouts/bar.css) turns the row round. What the parts look like is
+   the style's business.
+
+   The frame is drawn first, in svgs that are placed by hand (position: absolute) over the
+   whole banner, so the name and the slot are placed (position: relative) to be drawn
+   over them. The frame is not turned by the mirror: it keeps its shape, as the frames of
+   the other layouts do. */
+
+html[data-layout="bar"] .bar-banner {
+  box-sizing: border-box;
+  width: var(--bar-banner-width);
+  height: var(--bar-banner-height);
+  padding: 0 var(--bar-banner-padding);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--bar-name-gap);
+}
+
+/* The name is a row of letters (core/name.js), so the name effect can split each
+   one. Nothing is cut off, because the effect moves pieces of letters outside the
+   line. A name too long for its slot squeezes its letters closer together instead,
+   so the war clock never moves. The slot is 1052 wide, and HAWKTIMUS PRIME is 985
+   at the heading size. */
+html[data-layout="bar"] .bar-name {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  height: var(--size-heading);
+  margin: 0;
+  font: 700 var(--size-heading)/var(--size-heading) var(--font-display);
+}
+html[data-layout="bar"] .bar-name .letter {
+  position: relative;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+html[data-layout="bar"] .bar-war {
+  position: relative;
+  flex: none;
+  width: var(--bar-war-width);
+  height: var(--bar-war-height);
+}

@@ -4,25 +4,32 @@
 //                      or panel is drawn. It sets data-layout on the html element,
 //                      and for the sidebar layout it also hands the numbers to
 //                      layouts/sidebar.css, shows the top strip and moves the banner
-//                      and the countdown into the sidebar column.
-//   holdForLayout()    asked by theme-apply.js each time a theme is about to go
-//                      on. When the theme has another layout than the page, the
-//                      page reloads, once, and starts in the right one.
+//                      and the countdown into the sidebar column. For the bar layout
+//                      it hands the numbers to layouts/bar.css, shows the row of
+//                      the side column and the main panel, and moves the large
+//                      frame into it.
+//   holdForLayout()    asked by theme-apply.js each time a look is about to go
+//                      on. When the theme and the style give another layout than
+//                      the page has, the page reloads, once, and starts in the
+//                      right one.
 //
 // Nothing here moves anything. docs/layouts.md explains the layouts.
 
-import { blocksOf, chooseLayout, cssVariables, defaultLayout, everyBlock, kitMarkup, layoutNow, layoutOf, mustReload } from './layout.js';
+import { barCssVariables, blocksOf, chooseLayout, cssVariables, defaultLayout, drawnFor, everyBlock, kitMarkup, layoutNow, layoutOf, mustReload } from './layout.js';
+import { layoutFor, shapesFor, shapesNow } from './style.js';
 
 // address is ?theme= from the address bar, or null. readTheme() gives the Theme
 // document as it was saved the last time the content was read from Sanity, or
 // null (core/content.js, savedTheme). page is the html element, and only the
-// tests give another. Returns the layout it chose. Whatever goes wrong, the
-// screen starts in the standard layout.
-export function startLayout(address, readTheme, page = document.documentElement) {
+// tests give another. style is the style startStyle() chose (core/style.js), and
+// the layout of Cybertron and Minimal is the bar layout whatever the theme says.
+// Returns the layout it chose. Whatever goes wrong, the screen starts in the
+// standard layout.
+export function startLayout(address, readTheme, page = document.documentElement, style) {
   let layout = defaultLayout;
 
   try {
-    layout = chooseLayout(readTheme(), address, new Date());
+    layout = chooseLayout(readTheme(), address, new Date(), style);
   } catch (error) {
     console.error('Could not choose the layout. The screen starts in the standard layout.', error);
   }
@@ -38,6 +45,58 @@ export function startLayout(address, readTheme, page = document.documentElement)
   return layout;
 }
 
+// The elements a layout needs are in index.html, hidden. Everything a layout needs
+// is found before anything is moved or shown, so a missing one leaves the page as
+// it was and the screen starts in the standard layout.
+function find(id) {
+  const element = document.getElementById(id);
+  if (!element) throw new Error('index.html has no #' + id);
+  return element;
+}
+
+function placeRegions(layout, page) {
+  if (layout === 'bar') placeBar(page);
+  else placeSidebar(layout, page);
+}
+
+// The blocks of the layout are the regions that fly apart in a hidden transition:
+// each gets data-block, and the standard layout's blocks that this one has not lose it
+function markBlocks(layout) {
+  const wanted = blocksOf(layout);
+  everyBlock.forEach(name => {
+    const element = document.getElementById('region-' + name);
+    if (!element) return;
+
+    if (wanted.indexOf(name) !== -1) element.setAttribute('data-block', '');
+    else element.removeAttribute('data-block');
+  });
+}
+
+// The bar layout has one element of its own in index.html: the row under the banner
+// (#bar-middle), with the side column (#region-column) in it. The large frame is
+// moved into the row after the column, and the row is a flex row, so the mirror
+// (layouts/bar.css) only has to turn it round. The banner, the column and the ticker
+// are drawn by the panels registry.js lists for this layout (panels/bar-banner and
+// panels/bar-column), and the banner, the column, the large frame and the ticker are
+// its four blocks of the hidden transitions. The standard layout's countdown and
+// small frame stay in index.html, empty and out of the way (layouts/bar.css).
+function placeBar(page) {
+  const middle = find('bar-middle');
+  const column = find('region-column');
+  const grid1 = find('region-grid1');
+  find('region-banner');
+  find('region-ticker');
+
+  middle.hidden = false;
+  column.hidden = false;
+  middle.appendChild(grid1);
+
+  markBlocks('bar');
+
+  const variables = barCssVariables();
+  Object.keys(variables).forEach(name => page.style.setProperty(name, variables[name]));
+}
+
 // The sidebar layout has two elements of its own in index.html: the top strip,
 // with a slot for the team name and one for the clock, and the column, with a
 // slot for each part of it. The banner and the countdown keep their own panels and regions, which are
@@ -46,13 +105,7 @@ export function startLayout(address, readTheme, page = document.documentElement)
 // into the strip by the side panel itself (panels/side/side.js), because they are
 // only drawn when the panel is. The standard layout needs none of this, and is left exactly as index.html
 // has it.
-function placeRegions(layout, page) {
-  const find = id => {
-    const element = document.getElementById(id);
-    if (!element) throw new Error('index.html has no #' + id);
-    return element;
-  };
-
+function placeSidebar(layout, page) {
   // Everything is found before anything is moved, so a missing slot leaves the page as it was
   const strip = find('region-strip');
   find('strip-name'); // only checked here: the side panel puts the name in it
@@ -68,14 +121,7 @@ function placeRegions(layout, page) {
   strip.hidden = false;
   sidebar.hidden = false;
 
-  const wanted = blocksOf(layout);
-  everyBlock.forEach(name => {
-    const element = document.getElementById('region-' + name);
-    if (!element) return;
-
-    if (wanted.indexOf(name) !== -1) element.setAttribute('data-block', '');
-    else element.removeAttribute('data-block');
-  });
+  markBlocks(layout);
 
   const variables = cssVariables();
   Object.keys(variables).forEach(name => page.style.setProperty(name, variables[name]));
@@ -108,16 +154,18 @@ function savedStorage() {
   }
 }
 
-// look is { theme, overlay }. Returns true when this look must not go on the
-// page now: the page is reloading to change layout, or it has to wait for the
+// look is { theme, overlay, style }. Returns true when this look must not go on the
+// page now: the page is reloading to change layout (or to draw the frames with the
+// corners of another style), or it has to wait for the
 // moment it can, because an alert or an announcement has the screen and the
 // new page would not bring it back. theme-apply.js asks again at its next
 // page change and once a minute. When the layout is the same, or the page
 // cannot safely reload (core/layout.js, mustReload), it returns false and the
-// colours go on as usual. busy() is true while something has the screen.
+// colours go on as usual. busy() is true while something has the screen. A look with
+// no style is the original style, which leaves the layout to the theme.
 export function holdForLayout(look, busy) {
-  const wanted = layoutOf(look.theme);
-  const onPage = layoutNow();
+  const wanted = drawnFor(layoutFor(look.style, layoutOf(look.theme)), shapesFor(look.style));
+  const onPage = drawnFor(layoutNow(), shapesNow());
   const storage = savedStorage();
 
   if (wanted === onPage) {

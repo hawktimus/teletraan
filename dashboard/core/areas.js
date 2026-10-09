@@ -29,11 +29,12 @@
 // other areas wait for the moment the screen is apart (startWholeScreen).
 
 import * as frame from '../frame.js';
-import { areaMarkup } from './plate.js';
+import { areaMarkup, frameKind } from './plate.js';
 import { hostFor, placeWholePanel } from './panels.js';
 import { changeThemeNow } from './theme-apply.js';
 import { changeTeamNow } from './teams.js';
 import { hasRegion, layoutNow } from './layout.js';
+import { shapesNow } from './style.js';
 
 const areaRegions = ['grid1', 'grid2', 'ticker'];
 const themeRegion = 'grid1'; // a new theme and a new team go on when this region's frame is apart
@@ -41,14 +42,17 @@ const hiddenRegion = 'grid1'; // a hidden transition may replace a page change o
 const areaOf = {};  // region -> its area element, while it exists
 const showing = {}; // region -> the page on screen there, as buildPage() made it
 
-// grid1 and grid2 have a frame. The ticker has none, only its two slats.
+// grid1 and grid2 have a frame. The ticker has none, only its two slats, except in
+// the bar layout, where it has a frame of its own and so does the large panel
+// (frameKind in plate.js, with the corners the page's style has).
 function makeArea(region) {
+  const kind = frameKind(region, layoutNow(), shapesNow());
   const element = document.createElement('div');
   element.className = 'area';
   element.dataset.area = region;
   element.dataset.state = 'in';
   if (region !== 'ticker') element.dataset.metal = frame.firstFinish(); // the page frame's own metal, see tokens.css
-  element.innerHTML = (region === 'ticker' ? '' : areaMarkup(region)) + '<div class="page-host"></div>';
+  element.innerHTML = (kind === 'ticker' ? '' : areaMarkup(kind)) + '<div class="page-host"></div>';
 
   document.getElementById('region-' + region).appendChild(element);
   areaOf[region] = element;
@@ -85,6 +89,15 @@ export function startWholeScreen() {
   };
 }
 
+// The change a frame makes now, from frame.planChange(). The bar layout has steel
+// frames in both of its styles, and steel is the metal whatever the page change says
+// (tokens.css), so the finish is never changed there: a frame that fades out and in to
+// change a color that does not change would only flicker.
+function planFor(area) {
+  const change = frame.planChange(area);
+  return layoutNow() === 'bar' ? { style: change.style, finish: null } : change;
+}
+
 // Puts the next page in a region at once, with nothing to see: for a screen that
 // is apart. The frame's metal is chosen as in a page change, so it still varies.
 function swapUnseen(region, next) {
@@ -97,7 +110,7 @@ function swapUnseen(region, next) {
   }
 
   if (area && region !== 'ticker') {
-    const change = frame.planChange(area);
+    const change = planFor(area);
     if (change.finish) area.dataset.metal = change.finish;
   }
   const made = area || makeArea(region);
@@ -153,7 +166,7 @@ export async function changePage(region, next) {
   if (old && next) {
     // The old page leaves, in the style planChange picked. The frame stays, or
     // breaks into pieces, depending on the style.
-    const change = frame.planChange(area);
+    const change = planFor(area);
     await frame.leave(area, change);
     // The frame is apart now, the moment the new metal goes on and a waiting
     // theme goes on (core/theme-apply.js)

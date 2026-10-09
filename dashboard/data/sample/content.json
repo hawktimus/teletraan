@@ -10,6 +10,7 @@
     "frameMetal": "gold",
     "glint": true,
     "look": "polished",
+    "style": "original",
     "showConnectionStatus": false,
     "pageSeconds": 20,
     "logoAnimations": true,

@@ -1,0 +1,146 @@
+/* The Minimal style (core/style.js, Style in Dashboard Settings): the industrial
+   style. It has the same bar layout as Cybertron (layouts/bar.css) whatever the
+   theme says, and any team's colors. The first rule sets custom properties, which
+   the bar panels and the frame drawing read. They have the same names as the ones
+   in cybertron.css, where each is described, and Minimal does not set the ones for
+   what only Cybertron has (the raised plate, the scanlines). The rules after it
+   paint the page background and the parts of the frames that only this style has.
+   Everything it paints is still: the grid, the rivets and the rust never move.
+
+     --style-rust            the rust at two corners of every frame, and the patch under it
+
+   The frames are drawn by core/plate.js with shapes of their own for this style, cut
+   at 34 px instead of 56 (bar-main-minimal and the other two, "The frames of the bar
+   layout"). Minimal has no wide neon lines, no hazard stripe, no conduit, no slashes
+   and no brackets. What it has on a frame is a thin neon line just inside the steel
+   edge, a hex bolt at each of the four joints, rivets and the stamped id, which are
+   the Original style's, rust, a weld seam on the main panel, and a line with ticks
+   along the foot of its header. The plates are the team's background color, and the
+   header tab is an armor plate with the team's plate color inset. */
+
+html[data-style="minimal"] {
+  --style-body: var(--ground);
+  --style-armor-top: #323843;
+  --style-armor-bottom: #1d2128;
+  --style-chamfer: 34px;
+  --style-neon: var(--team-neon);
+  --style-pink: var(--team-pink);
+  --style-digits: var(--team-neon);
+  --style-rust: #b4672d;
+  --style-grid-size: 48px;
+  --style-grid-opacity: .07;
+}
+
+
+/* The page background: the team's background color (the page's own rule in base.css), with
+   the grid over it in a layer of its own, in the team's neon. It is drawn with gradients, so
+   there is no picture to load, and it is behind everything on the screen. The grid has its
+   own layer because its color is a team color, which can only be made fainter by fading the
+   layer. The layer is as big as the screen and lets every click through. */
+html[data-style="minimal"] #screen::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  background:
+    linear-gradient(to right, var(--style-neon) 0, var(--style-neon) 3px, transparent 3px) 0 0 / var(--style-grid-size) var(--style-grid-size),
+    linear-gradient(to bottom, var(--style-neon) 0, var(--style-neon) 3px, transparent 3px) 0 0 / var(--style-grid-size) var(--style-grid-size);
+  opacity: var(--style-grid-opacity);
+  pointer-events: none;
+}
+
+
+/* The plates. The body of an area's frame and of the banner's is the team's background
+   color. The header tab is a raised armor plate: a gradient, with the bevel, the bright line
+   and the team's plate color inset that plate.js draws on it (base.css). The rest of the
+   header is the same as the body. */
+html[data-style="minimal"] .area,
+html[data-style="minimal"] .bar-banner {
+  --panel-face: var(--style-body);
+}
+html[data-style="minimal"] .area .plate .header-left { fill: url(#armor-face); }
+html[data-style="minimal"] .area .plate .header-right { fill: var(--style-body); }
+
+/* The TEAM plate and the ticker's tag are plates in the team's plate color */
+html[data-style="minimal"] .team-fill,
+html[data-style="minimal"] .tag-fill { fill: var(--team-plate); }
+
+/* The hawk has the team's accent for its outline, and keeps the colors the theme gives its
+   plates */
+html[data-style="minimal"] .bar-logo .drawing { --logo-edge: var(--team-accent); }
+
+
+/* The rivets and the stamped id are the Original style's (base.css, plate.js): they are in the
+   markup of every frame that has them, and are shown here and for Original only */
+html[data-style="minimal"] .rivets { display: inline; }
+html[data-style="minimal"] .plate-id { display: block; }
+
+
+/* What only Minimal draws on a frame (plate.js, decorMarkup and wearMarkup). The weld seam
+   is a dark line with a faint light line beside it. The header line is the team's neon, and
+   the ticks stand on it. The rust is an arc with a soft patch under it that is a gradient
+   (index.html, wear-rust), and the flat finish leaves it off, like the other worn parts of
+   the metal (base.css). */
+html[data-style="minimal"] .art-minimal { display: inline; }
+html[data-style="minimal"] .art-weld-dark {
+  fill: none;
+  stroke: #05070a;
+  stroke-opacity: .7;
+  stroke-width: 3px;
+}
+html[data-style="minimal"] .art-weld-light {
+  fill: none;
+  stroke: var(--metal-ridge);
+  stroke-opacity: .2;
+  stroke-width: 3px;
+}
+html[data-style="minimal"] .art-header-line {
+  fill: none;
+  stroke: var(--style-neon);
+  stroke-width: 3px;
+}
+html[data-style="minimal"] .art-ticks { fill: var(--style-neon); }
+html[data-style="minimal"] .art-smudge { fill: url(#wear-rust); }
+html[data-style="minimal"] .art-wear {
+  fill: none;
+  stroke: var(--style-rust);
+  stroke-opacity: .55;
+  stroke-linecap: round;
+  stroke-width: 4px;
+}
+html[data-style="minimal"][data-finish="flat"] .art-smudge,
+html[data-style="minimal"][data-finish="flat"] .art-wear { display: none; }
+
+
+/* The rail beside the side column (panels/bar-column): a line down the middle in the team's
+   neon, and two groups of ticks, a long pink one, a short neon one and a short accent one at
+   the top, and a pink and a neon one lower down. The row of the layout turns round with the
+   mirror, so the rail is at the right edge for a team that has it on. The numbers are
+   measured on the 12 by 736 box of the rail, and are the same as Cybertron's. */
+html[data-style="minimal"] .bar-rail { position: relative; }
+html[data-style="minimal"] .bar-rail::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--style-neon);
+  opacity: .5;
+}
+html[data-style="minimal"] .bar-rail::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    linear-gradient(var(--style-pink), var(--style-pink)) 1px 41px / 10px 60px no-repeat,
+    linear-gradient(var(--style-neon), var(--style-neon)) 1px 110px / 10px 24px no-repeat,
+    linear-gradient(var(--team-accent), var(--team-accent)) 1px 151px / 10px 40px no-repeat,
+    linear-gradient(var(--style-pink), var(--style-pink)) 1px 576px / 10px 62px no-repeat,
+    linear-gradient(var(--style-neon), var(--style-neon)) 1px 650px / 10px 24px no-repeat;
+}

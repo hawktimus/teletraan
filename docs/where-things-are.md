@@ -91,10 +91,17 @@ editors can sign in from anywhere.
                               (docs/seasonal-packs.md)
       layouts/                sidebar.css, the placing of the sidebar layout: a strip across the top with the team
                               name, a column on the left, one big frame scaled up on the right and the ticker
-                              across the whole bottom, with no small frame. The numbers are in core/layout.js
-                              (docs/layouts.md)
+                              across the whole bottom, with no small frame. bar.css, the placing of the bar layout
+                              (a banner, a side column, one main panel and the ticker) and its mirror. The numbers
+                              are in core/layout.js (docs/layouts.md)
+      styles/                 one stylesheet for each style (Style in Dashboard Settings): original.css has the
+                              mirror of the standard layout, and cybertron.css and minimal.css each set custom
+                              properties and paint the page background, the plates, the rail and the
+                              decoration of the bar frames that only that style has (docs/layouts.md, "Styles"
+                              and "Frames")
       base.css                the 1920x1080 screen and the shared metal shapes
-      core/                   helpers used by several panels. plate.js draws the frames, areas.js keeps
+      core/                   helpers used by several panels. plate.js draws the frames, and the three steel frames
+                              of the bar layout, with Minimal's own three (docs/layouts.md, "Frames"), areas.js keeps
                               the frames in place while pages change, schedule.js says what shows when,
                               logo.js and name.js draw the hawk and the team name (name.js can also put the
                               name on two lines, which nothing uses now), countdown.js is the countdown's parts and
@@ -107,9 +114,10 @@ editors can sign in from anywhere.
                               makes the pages of the Subteam roster panel, theme.js
                               works out which theme and overlay apply, theme-apply.js puts them on the page,
                               layout.js says which layout a theme has, which regions and blocks a layout
-                              has, the numbers of the sidebar layout and when a change of layout must
-                              reload the page, and layout-apply.js sets the layout on the page before
-                              anything is drawn (docs/layouts.md),
+                              has, the numbers of the sidebar and bar layouts and when a change of layout must
+                              reload the page, layout-apply.js sets the layout on the page before
+                              anything is drawn, and style.js says which style the screen has and which
+                              layout a style asks for (docs/layouts.md),
                               season.js draws the decorations of the overlay's seasonal pack in three layers
                               and hands its header mark to marks.js, which draws the picture at the right of
                               every panel header (the double slash, or the pack's mark),
@@ -144,8 +152,9 @@ editors can sign in from anywhere.
                               drift, and a panel should write to the page only what has changed
       panels/                 one folder per panel: a script and a stylesheet. panels/side is the whole
                               column of the sidebar layout, in place of the banner and the countdown
-                              (docs/layouts.md, "The sidebar"). panels/tonight is the Up Next panel
-                              (docs/up-next.md)
+                              (docs/layouts.md, "The sidebar"). panels/bar-banner and panels/bar-column are
+                              the banner and the side column of the bar layout (docs/layouts.md, "The bar
+                              layout"). panels/tonight is the Up Next panel (docs/up-next.md)
       fonts/, assets/         fonts and pictures, all served from here
       data/sample/            sample content with marked placeholders, and a sample talk with six slides
                               (slides/presentation-sample)
@@ -198,7 +207,8 @@ editors can sign in from anywhere.
                               connection status text, and for the Look setting: its cleaning, the
                               switches each look sets and the rules for Plain in base.css
       test-themes.mjs         checks for which theme and overlay apply, and for putting them on the page
-      test-layouts.mjs        checks for the layouts: which layout a theme has, the numbers of the sidebar layout,
+      test-layouts.mjs        checks for the layouts: which layout a theme and a style have, the numbers of the
+                              sidebar and bar layouts, the mirror, that the screen is always 1920 x 1080,
                               the reload that changes layout and that it cannot loop, that the scheduler leaves
                               out the small frame, the blocks of a hidden transition, and that a seasonal pack
                               draws only what a layout allows
@@ -492,9 +502,15 @@ alone.
   when it starts and once a minute, and changes it at the next page change of
   the large panel. The Time zone is also the one the Theme page uses to read
   dates. Try a theme with `?theme=<id>` and an overlay with `?overlay=<id>`.
+- **The style of the whole screen.** Style in Dashboard Settings (Screen tab) is
+  Original (the screen as it was), Cybertron or Minimal. The names are `styles` in
+  `dashboard/config.js`, `dashboard/core/style.js` puts `data-style` on the html
+  element and says which layout a style asks for, and there is a stylesheet for each
+  in `dashboard/styles/`. Cybertron and Minimal have the bar layout whatever the
+  theme says. `?style=cybertron` in the address shows one for a single page.
 - **Where the regions of the screen sit (the layout).** A theme may have the
   sidebar layout (`layout: 'sidebar'` in `dashboard/themes/registry.js` and
-  `studio/themes.js`): Neon Prime has it. The numbers are in
+  `studio/themes.js`): Neon Prime has it. A style may have the bar layout. The numbers are in
   `dashboard/core/layout.js`, the placing in `dashboard/layouts/sidebar.css`, the
   column's content in `dashboard/panels/side/`, and docs/layouts.md has the
   sizes, how the big frame is scaled, what does not show, and how to add a layout.

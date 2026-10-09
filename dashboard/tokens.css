@@ -36,6 +36,7 @@
   --size-body: 56px;
   --size-body-large: 64px;
   --size-team: 60px; /* TEAM 3229 on the team plate, which is only 46px of clear purple high */
+  --size-clock: 84px; /* the clock in the side column of the bar layout */
   --size-heading: 96px;
   --size-days: 184px;
   --size-days-long: 132px;
@@ -142,6 +143,42 @@
   --metal-glint: #f0f2f2;
   --metal-shade: rgba(42, 34, 24, .8);
   --metal-flat: #7f8386;
+}
+
+/* Steel, the metal of the Cybertron and Minimal styles. It is cool and neutral and
+   has no warm grime, so the neon of the style is the only colour near it. The
+   gradients are in index.html, with data-metal="steel" so they take these colours.
+
+   The second selector reaches the html element and every element with a data-metal
+   while one of those two styles is on. The banner and each area then have steel
+   whatever Frame metal and the page change say, and no code that sets data-metal
+   has to know about styles. The edge tokens are set here too, because they are
+   worked out on the element that sets them (see "Which colours an edge uses"
+   below). The row bars, the logo outline and the other things that read the metal
+   follow in the same way. A style that wants one of them to be another colour sets it
+   on its own. */
+[data-metal="steel"],
+html[data-style="cybertron"],
+html[data-style="cybertron"] [data-metal],
+html[data-style="minimal"],
+html[data-style="minimal"] [data-metal] {
+  --metal-1: #d6dbe2; /* the brightest highlight, nowhere near white */
+  --metal-2: #b3bac4;
+  --metal-3: #8b94a0; /* the plain mid tone */
+  --metal-4: #626b77;
+  --metal-5: #262b33; /* the darkest pit */
+  --metal-6: #6e7783;
+  --metal-7: #a5adb8;
+  --metal-8: #8b94a0;
+  --metal-grime: #434a55;
+  --metal-rim: #08090c;
+  --metal-ridge: #e4e8ee;
+  --metal-glint: #f4f6f9;
+  --metal-shade: rgba(9, 12, 17, .7);
+  --metal-flat: #7d8693;
+  --edge-face: url(#edge-steel);
+  --edge-ridge: url(#edge-ridge-steel);
+  --edge-shade: url(#edge-shade-steel);
 }
 
 /* Silver as one plain colour, for what is not a metal edge: the logo of the night

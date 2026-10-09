@@ -14,7 +14,9 @@
 // tests Run presentation test (dashboard/core/presentation-test.js): the same guard, what it
 // waits for, and the sample talk it starts. And it
 // tests the screen of a booked talk (dashboard/core/presentation-run.js): the title card, the
-// slides, the keys, the thanks card, and what each does to the rest of the screen.
+// slides, the keys, the thanks card, and what each does to the rest of the screen. And it
+// tests the frames that dashboard/core/plate.js draws: the pieces, and the rivets and the stamped
+// ids that only the Original style shows.
 //
 //   node tools/test-effects.mjs
 //
@@ -34,7 +36,7 @@ const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url))
 const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-effects-'));
 fs.mkdirSync(path.join(workFolder, 'dashboard', 'core'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
-['config.js', 'frame.js', 'core/transitions.js', 'core/tick.js', 'core/demo.js', 'core/demo-screens.js', 'core/hidden.js', 'core/hidden-transitions.js', 'core/hidden-pictures.js', 'core/images.js', 'core/announce.js', 'core/presentation-test.js'].forEach(file => {
+['config.js', 'frame.js', 'core/transitions.js', 'core/tick.js', 'core/demo.js', 'core/demo-screens.js', 'core/hidden.js', 'core/hidden-transitions.js', 'core/hidden-pictures.js', 'core/images.js', 'core/announce.js', 'core/presentation-test.js', 'core/plate.js'].forEach(file => {
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
 const frameUrl = pathToFileURL(path.join(workFolder, 'dashboard/frame.js')).href;
@@ -48,6 +50,7 @@ const hiddenPictures = await import(pathToFileURL(path.join(workFolder, 'dashboa
 const imagesModule = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/images.js')).href);
 const announce = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/announce.js')).href);
 const presentationTest = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/presentation-test.js')).href);
+const plateModule = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/plate.js')).href);
 
 const realSetImmediate = globalThis.setImmediate;
 const second = 1000;
@@ -1228,9 +1231,12 @@ test('each frame has 10 to 16 pieces, and the two frames name their pieces alike
   assert.deepEqual(found.grid2.filter(name => name.indexOf('plate-body') === -1), shared);
 });
 
+// The pieces of the main panel's frame in the bar layout, made by makeBarShape and not written out in plate.js
+const barPieceNames = plateModule.barShape('bar-main').pieces.map(piece => piece.name);
+
 test('every piece has a line in the table in frame.css with all seven numbers, and the screws are in the two corner pieces', () => {
   const found = piecesInPlateJs();
-  const names = found.grid1.concat(found.grid2);
+  const names = found.grid1.concat(found.grid2, barPieceNames);
 
   new Set(names).forEach(name => {
     const line = frameCss.split('\n').filter(text => text.indexOf('[data-piece="' + name + '"]') === 0)[0];
@@ -1343,11 +1349,27 @@ test('the screws turn only in full motion, hold still the rest of the time, and 
   assert.ok(/\[data-motion="calm"\] \.area\[data-recolor="yes"\]\[data-state="xi"\] \{\s*animation: fade-in/.test(frameCss));
 });
 
-test('the screw is drawn once, as one symbol with a slot across the head, in the silver tokens, and the hex bolt is gone', () => {
+test('the screw is drawn once, as one symbol with a slot across the head, in the silver tokens, and the hex bolt is only on the bar frames', () => {
   assert.ok(indexHtml.includes('<g id="screw-shape">') && indexHtml.includes('<polygon id="screw-shadow-shape"'));
   const screw = indexHtml.slice(indexHtml.indexOf('<g id="screw-shape">'), indexHtml.indexOf('</g>', indexHtml.indexOf('<g id="screw-shape">')));
   assert.ok(screw.includes('class="screw-slot"') && screw.includes('class="screw-face"') && screw.includes('class="screw-rim"'));
-  assert.ok(!/bolt/i.test(indexHtml) && !/bolt/i.test(plateJs) && !/bolt-/.test(baseCss) && !/bolt/i.test(tokensCss), 'no bolt is left');
+
+  // The hex bolt is the bar frames' screw: drawn once, in the same tokens, and the frames of the other layouts never use it
+  assert.equal((indexHtml.match(/<g id="bolt-shape">/g) || []).length, 1, 'the bolt is drawn once');
+  const bolt = indexHtml.slice(indexHtml.indexOf('<g id="bolt-shape">'), indexHtml.indexOf('</g>', indexHtml.indexOf('<g id="bolt-shape">')));
+  assert.ok(bolt.includes('class="bolt-rim"') && bolt.includes('class="bolt-face"') && bolt.includes('class="bolt-dot"'));
+  assert.deepEqual(bolt.match(/<polygon class="bolt-rim" points="([^"]*)"/)[1].split(' ').length, 6, 'a hexagon');
+  ['bolt-rim { fill: var(--screw-rim)', 'bolt-face { fill: var(--screw-face)', 'bolt-dot { fill: var(--screw-light)'].forEach(text => assert.ok(baseCss.includes('.' + text), text));
+  withPlatePage(() => {
+    ['grid1', 'grid2'].forEach(kind => assert.ok(!plateModule.areaMarkup(kind).includes('bolt-shape'), kind + ' keeps its screws'));
+    assert.ok(!plateModule.plateMarkup('countdown').includes('bolt-shape'), 'and so does the countdown');
+    ['bar-main', 'bar-ticker'].forEach(kind => {
+      const markup = plateModule.areaMarkup(kind);
+      assert.ok(markup.includes('href="#bolt-shape"') && !markup.includes('screw-shape') && !markup.includes('screw-shadow'), kind + ' has bolts and no screw');
+    });
+    const banner = plateModule.plateMarkup('bar-banner');
+    assert.ok(banner.includes('href="#bolt-shape"') && !banner.includes('screw-shape'), 'the banner has bolts too');
+  });
 
   ['--screw-light', '--screw-mid', '--screw-dark', '--screw-rim', '--screw-slot', '--screw-ridge', '--screw-flat', '--screw-face'].forEach(name => {
     assert.ok(tokensCss.includes(name + ':'), 'tokens.css has no ' + name);
@@ -1405,6 +1427,276 @@ test('makeSilverGradients copies each gold gradient once, with silver names and 
     globalThis.document = real;
     if (real === undefined) delete globalThis.document;
   }
+});
+
+// The rivets and the stamped ids that only the Original style shows (core/plate.js, base.css)
+
+// plate.js adds each frame's shapes to a hidden group of the page, once. A page with only
+// that group stands in for it.
+function withPlatePage(run) {
+  const real = globalThis.document;
+  const known = new Set();
+
+  globalThis.document = {
+    getElementById: id => {
+      if (id !== 'metal-shapes') return known.has(id) ? {} : null;
+      return { insertAdjacentHTML: (where, markup) => (markup.match(/ id="[^"]+"/g) || []).forEach(found => known.add(found.slice(5, -1))) };
+    },
+  };
+  try {
+    return run();
+  } finally {
+    globalThis.document = real;
+    if (real === undefined) delete globalThis.document;
+  }
+}
+
+// The svgs of a frame: its two halves, and its pieces if it has any
+function frameParts(markup) {
+  const svgs = markup.split('<svg ').slice(1);
+  const half = side => svgs.filter(svg => svg.includes('data-part="frame-' + side + '"'))[0];
+  return { a: half('a'), b: half('b'), pieces: svgs.filter(svg => svg.includes('class="plate piece"')) };
+}
+
+// Every rivet is a circle of radius 5 in a path: the start of each is its left side
+function rivetCenters(svg) {
+  return Array.from(svg.matchAll(/M(-?[\d.]+) ([\d.]+)a5 5 0 1 0 10 0a5 5 0 1 0 -10 0/g)).map(found => [Math.round((Number(found[1]) + 5) * 10) / 10, Number(found[2])]);
+}
+
+function screwCenters(svg) {
+  return Array.from(svg.matchAll(/translate\((\d+) (\d+)\)/g)).map(found => [Number(found[1]), Number(found[2])]);
+}
+
+// The long straight edges of each frame, as the frame lines run: the line one edge is on, and where it
+// starts and ends along it. half is the half of the frame that holds the edge. The top of the countdown
+// is a row of teeth and has no long straight edge.
+const rivetFrames = {
+  grid1: {
+    make: () => plateModule.areaMarkup('grid1'),
+    number: '01',
+    height: 708,
+    edges: [
+      { name: 'left', x: 4, from: 68, to: 704, half: 'a' },
+      { name: 'top', y: 4, from: 84, to: 1148, half: 'a' },
+      { name: 'right', x: 1148, from: 4, to: 640, half: 'b' },
+      { name: 'bottom', y: 704, from: 4, to: 1068, half: 'b' },
+    ],
+  },
+  countdown: {
+    make: () => plateModule.plateMarkup('countdown'),
+    number: '02',
+    height: 320,
+    edges: [
+      { name: 'left', x: 4, from: 52, to: 316, half: 'a' },
+      { name: 'right', x: 652, from: 4, to: 268, half: 'b' },
+      { name: 'bottom', y: 316, from: 4, to: 592, half: 'b' },
+    ],
+  },
+  grid2: {
+    make: () => plateModule.areaMarkup('grid2'),
+    number: '03',
+    height: 372,
+    edges: [
+      { name: 'left', x: 4, from: 52, to: 368, half: 'a' },
+      { name: 'top', y: 4, from: 64, to: 652, half: 'a' },
+      { name: 'right', x: 652, from: 4, to: 320, half: 'b' },
+      { name: 'bottom', y: 368, from: 4, to: 592, half: 'b' },
+    ],
+  },
+};
+
+// Where along its edge a rivet is, and whether it is on the edge
+function onEdge(center, edge) {
+  const along = edge.x !== undefined ? center[1] : center[0];
+  const across = edge.x !== undefined ? center[0] : center[1];
+  return across === (edge.x !== undefined ? edge.x : edge.y) && along > edge.from && along < edge.to;
+}
+
+test('a row of rivets is one every 90px along an edge, centred on it, with at least 45px at each end, and an edge under 180px has none', () => {
+  const { rivetsAlong } = plateModule;
+
+  assert.deepEqual(rivetsAlong([0, 0], [179, 0]), []);
+  assert.deepEqual(rivetsAlong([0, 0], [180, 0]), [[45, 0], [135, 0]]);
+  assert.deepEqual(rivetsAlong([10, 20], [10, 920]).map(center => center[1]), [65, 155, 245, 335, 425, 515, 605, 695, 785, 875]);
+
+  for (let length = 180; length <= 1400; length += 37) {
+    const row = rivetsAlong([100, 50], [100 + length, 50]);
+    const places = row.map(center => center[0] - 100);
+
+    assert.equal(row.length, Math.floor(length / 90), 'the count for an edge ' + length + ' long');
+    assert.ok(places[0] >= 45 - 0.05 && places[places.length - 1] <= length - 45 + 0.05, 'inside the edge, with room at each end: ' + length);
+    assert.ok(Math.abs((places[0]) - (length - places[places.length - 1])) <= 0.1, 'centred: ' + length);
+    places.slice(1).forEach((place, index) => assert.ok(Math.abs(place - places[index] - 90) <= 0.1, 'a gap of 90: ' + length));
+    row.forEach(center => assert.equal(center[1], 50, 'on the line'));
+  }
+
+  // the same edge from the other end has the same rivets, and any direction works
+  const forward = rivetsAlong([0, 0], [1064, 0]).map(center => center[0]);
+  const backward = rivetsAlong([1064, 0], [0, 0]).map(center => center[0]).reverse();
+  assert.deepEqual(forward, backward);
+  assert.deepEqual(rivetsAlong([0, 0], [0, 400]).map(center => center[1]), [65, 155, 245, 335]);
+  assert.deepEqual(plateModule.rivetsOf([[0, 0], [100, 0], [100, 400]]).map(center => center.join(',')), ['100,65', '100,155', '100,245', '100,335'], 'the 100px edge has none');
+});
+
+test('each frame has a rivet for every 90px of each long edge, on the line, inside the edge, in the half that holds the edge, and none on a cut corner', () => {
+  withPlatePage(() => {
+    Object.keys(rivetFrames).forEach(name => {
+      const frame = rivetFrames[name];
+      const parts = frameParts(frame.make());
+      const found = { a: rivetCenters(parts.a), b: rivetCenters(parts.b) };
+      const all = found.a.concat(found.b);
+      let expected = 0;
+
+      frame.edges.forEach(edge => {
+        const length = edge.to - edge.from;
+        const row = found[edge.half].filter(center => onEdge(center, edge));
+        const places = row.map(center => (edge.x !== undefined ? center[1] : center[0])).sort((one, other) => one - other);
+
+        assert.equal(row.length, Math.floor(length / 90), name + ' ' + edge.name + ': one for every 90px of ' + length);
+        assert.ok(places[0] >= edge.from + 45 - 0.05 && places[places.length - 1] <= edge.to - 45 + 0.05, name + ' ' + edge.name + ': inside the edge');
+        places.slice(1).forEach((place, index) => assert.ok(Math.abs(place - places[index] - 90) <= 0.1, name + ' ' + edge.name + ': 90 apart'));
+        expected += row.length;
+      });
+
+      assert.equal(all.length, expected, name + ': every rivet is on one of the long edges, and the cut corners and the teeth have none');
+      assert.equal(new Set(all.map(center => center.join(','))).size, all.length, name + ': no rivet twice');
+
+      // clear of every screw, whose shadow reaches 29px, and of the frame's other rivets by the width of a rivet
+      const screws = screwCenters(parts.a).concat(screwCenters(parts.b));
+      assert.ok(screws.length >= 2, name + ' has screws');
+      all.forEach(center => screws.forEach(screw => {
+        assert.ok(Math.hypot(center[0] - screw[0], center[1] - screw[1]) >= 29 + 5, name + ': a rivet at ' + center + ' is under the screw at ' + screw);
+      }));
+    });
+  });
+});
+
+test('the rivets of a frame are one path for each half and one for each bar of its pieces, never one element for each rivet, and every rivet is in exactly one piece', () => {
+  withPlatePage(() => {
+    ['grid1', 'grid2'].forEach(name => {
+      const markup = rivetFrames[name].make();
+      const parts = frameParts(markup);
+      const whole = rivetCenters(parts.a).concat(rivetCenters(parts.b));
+      const inPieces = parts.pieces.reduce((list, svg) => list.concat(rivetCenters(svg)), []);
+
+      assert.ok(whole.length > 0);
+      assert.deepEqual(inPieces.map(center => center.join(',')).sort(), whole.map(center => center.join(',')).sort(), name + ': the pieces carry the rivets of the frame, each one once');
+      assert.equal((markup.match(/class="rivets"/g) || []).length, 2 + parts.pieces.filter(svg => svg.includes('class="rivets"')).length);
+      assert.equal((markup.match(/class="rivets" data-part="rivets"/g) || []).length, 2, name + ': the two halves are labelled, so frame.css can bring them in');
+      assert.equal(/<circle|<use class="rivet/.test(markup), false, name + ': not an element for each rivet');
+      assert.ok((markup.match(/class="rivets"/g) || []).length <= 9, name + ': a handful of elements');
+
+      // a piece that is a plate has no rivets, and a bar has only the ones on its own line
+      parts.pieces.forEach(svg => {
+        const place = /left: (-?\d+)px; top: (-?\d+)px;" width="(\d+)" height="(\d+)"/.exec(svg);
+        rivetCenters(svg).forEach(center => {
+          assert.ok(center[0] >= Number(place[1]) && center[0] <= Number(place[1]) + Number(place[3]) && center[1] >= Number(place[2]) && center[1] <= Number(place[2]) + Number(place[4]), name + ': a rivet outside the piece that has it');
+        });
+      });
+    });
+
+    const countdown = rivetFrames.countdown.make();
+    assert.equal((countdown.match(/class="rivets"/g) || []).length, 2, 'the countdown has no pieces: one path for each half');
+  });
+});
+
+test('the frame of an alert and of an announcement has no rivets and no id', () => {
+  withPlatePage(() => {
+    [plateModule.frameMarkup(), plateModule.frameMarkup({ red: true })].forEach(markup => {
+      assert.equal(markup.includes('rivets'), false);
+      assert.equal(markup.includes('plate-id'), false);
+    });
+  });
+});
+
+test('each frame has one stamped id, numbered 01 for the large panel, 02 for the countdown and 03 for the small panel, in the bottom right corner and clear of the screw', () => {
+  withPlatePage(() => {
+    Object.keys(rivetFrames).forEach(name => {
+      const frame = rivetFrames[name];
+      const markup = frame.make();
+      const spans = markup.match(/<span class="plate-id"[^>]*><\/span>/g) || [];
+      assert.equal(spans.length, 1, name + ' has one id');
+
+      const found = /data-part="plate-id" data-number="(\d\d)" style="left: (\d+)px; top: (\d+)px; width: (\d+)px;"/.exec(spans[0]);
+      assert.ok(found, name + ': the id has its number and its place');
+      assert.equal(found[1], frame.number);
+      const box = { left: Number(found[2]), top: Number(found[3]), width: Number(found[4]), height: 20 };
+
+      // the whole box is on the plate, above the bottom line of the frame, which is 8px thick either side of it
+      const bottomLine = frame.edges.filter(edge => edge.name === 'bottom')[0].y;
+      assert.ok(box.top >= 0 && box.left >= 0, name + ': inside the panel');
+      assert.ok(box.top + box.height <= bottomLine - 8, name + ': above the bottom line of the frame');
+
+      // in the bottom right corner: nearer the right end than the left and in the lower part
+      const right = frame.edges.filter(edge => edge.name === 'bottom')[0].to;
+      assert.ok(box.left + box.width <= right, name + ': left of the foot of the cut corner');
+      assert.ok(box.left + box.width > right - 60, name + ': at the right end of the bottom edge');
+      assert.ok(bottomLine - (box.top + box.height) < 30, name + ': near the bottom');
+
+      // clear of the screws by their shadow
+      const parts = frameParts(markup);
+      screwCenters(parts.a).concat(screwCenters(parts.b)).forEach(screw => {
+        const nearX = Math.max(box.left, Math.min(screw[0], box.left + box.width));
+        const nearY = Math.max(box.top, Math.min(screw[1], box.top + box.height));
+        assert.ok(Math.hypot(screw[0] - nearX, screw[1] - nearY) >= 29, name + ': the id is under the screw at ' + screw);
+      });
+    });
+  });
+});
+
+test('base.css draws the rivets and the ids only while the style is Original, the id is 20px and dim, and no other stylesheet draws either, apart from the one that shows them on Minimal\'s own frames', () => {
+  const css = baseCss.replace(/\/\*[\s\S]*?\*\//g, '');
+  const rule = selector => {
+    const found = new RegExp('(?:^|\\n)' + selector.replace(/[.\[\]="]/g, '\\$&') + ' \\{([^}]*)\\}').exec(css);
+    assert.ok(found, 'base.css has no rule for ' + selector);
+    return found[1];
+  };
+
+  assert.ok(/display: none;/.test(rule('.rivets')) && /display: none;/.test(rule('.plate-id')), 'hidden unless a style shows them');
+  assert.ok(/display: inline;/.test(rule('html[data-style="original"] .rivets')));
+  assert.ok(/display: block;/.test(rule('html[data-style="original"] .plate-id')));
+  assert.equal((css.match(/\.rivets|\.plate-id/g) || []).length, 5, 'no other rule in base.css names them');
+  assert.ok(/stroke-width: 2px;/.test(rule('.rivets')) && /fill: var\(--screw-mid\);/.test(rule('.rivets')) && /stroke: var\(--screw-rim\);/.test(rule('.rivets')), 'steel with a dark rim');
+
+  const id = rule('.plate-id');
+  assert.ok(/font: 700 20px\/1 var\(--font-display\);/.test(id), 'the id is 20px');
+  assert.ok(/opacity: \.3;/.test(id), 'and dim');
+  assert.ok(/position: absolute;/.test(id) && /pointer-events: none;/.test(id));
+  assert.ok(css.includes('.plate-id::after { content: var(--team-initials, "HP") "-" attr(data-number); }'), 'the letters are the team\'s, and the number is the frame\'s');
+  assert.equal(/animation|transition|filter|shadow|blur/.test(id + rule('.rivets')), false, 'static, with no effect');
+
+  // the other stylesheets leave them alone, apart from frame.css, which brings them in and takes them away with the frame,
+  // and styles/minimal.css, which shows them on the frames Minimal draws with them (docs/layouts.md, "Frames")
+  const others = [];
+  const walk = folder => fs.readdirSync(folder, { withFileTypes: true }).forEach(entry => {
+    const full = path.join(folder, entry.name);
+    if (entry.isDirectory()) { if (!['fonts', 'data', 'assets'].includes(entry.name)) walk(full); }
+    else if (entry.name.endsWith('.css') && !['base.css', 'frame.css'].includes(entry.name) && /rivets|plate-id/.test(fs.readFileSync(full, 'utf8'))) others.push(path.relative(dashboardFolder, full));
+  });
+  walk(dashboardFolder);
+  assert.deepEqual(others, ['styles/minimal.css'], 'a style or theme that draws or hides them');
+  const minimalCss = fs.readFileSync(path.join(dashboardFolder, 'styles/minimal.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.deepEqual(minimalCss.match(/[^\n]*(\.rivets|\.plate-id)[^\n]*/g), ['html[data-style="minimal"] .rivets { display: inline; }', 'html[data-style="minimal"] .plate-id { display: block; }'], 'Minimal only shows them');
+});
+
+test('the rivets and the id come in after the lines are drawn, go with the frame in a page change, and are left out of the mechanical change with the plates', () => {
+  const css = frameCss.replace(/\/\*[\s\S]*?\*\//g, '');
+
+  const arrival = /\[data-motion="full"\] \.area\[data-state="in"\] \[data-part="rivets"\],\s*\[data-motion="full"\] \.area\[data-state="in"\] \[data-part="plate-id"\],\s*\[data-motion="full"\] \.area\[data-state="in"\] \[data-part="decor"\] \{\s*animation: fade-in var\(--time-fade-in\) linear calc\(var\(--assemble-draw\) \* var\(--pace\) \+ var\(--time-draw-in\)\) backwards;\s*\}/;
+  assert.ok(arrival.test(css), 'a fade, timed after the line drawing');
+  assert.ok(css.includes('[data-state="xo"] .plate-id,') && css.includes('[data-state="xi"] .plate-id,'), 'the id is hidden with the plates while the pieces are shown');
+
+  // the countdown brings them in with its other parts, after its outline is drawn
+  const sequence = /\n  countdown: \{([^}]*)\},/.exec(fs.readFileSync(path.join(dashboardFolder, 'frame.js'), 'utf8'))[1];
+  const line = part => new RegExp("'" + part + "':\\s*\\['fade', (\\d+)\\]").exec(sequence);
+  const drawn = /'outline':\s*\['draw', (\d+)\]/.exec(sequence);
+  assert.ok(line('rivets') && line('plate-id') && drawn);
+  assert.ok(Number(line('rivets')[1]) >= Number(drawn[1]) + 650, 'after the outline is drawn, which takes 650 ms');
+  assert.ok(Number(line('plate-id')[1]) >= Number(line('rivets')[1]));
+  withPlatePage(() => {
+    const markup = plateModule.plateMarkup('countdown');
+    assert.ok(markup.includes('data-part="rivets"') && markup.includes('data-part="plate-id"'));
+  });
 });
 
 // The Demo page (dashboard/core/demo.js)

@@ -381,11 +381,100 @@ html[data-night="on"] #stage { visibility: hidden; }
 .screw-slot { fill: var(--screw-slot); }
 .screw-shadow { fill: var(--edge-shadow); }
 
+/* Rivets and the stamped id (core/plate.js). Only the Original style draws them:
+   they are hidden unless data-style says original, and the other styles show their
+   own or none. The rivets are steel with a dark rim, like the screws. The id is the
+   small number in the bottom right corner of a panel: the letters are the team's
+   initials (--team-initials, set by core/teams.js), and the number is data-number.
+   It is the one text on the screen under 44px, and it is dim on purpose. Nothing
+   here moves or shifts anything, because both are positioned over the frame. */
+.rivets {
+  display: none;
+  fill: var(--screw-mid);
+  stroke: var(--screw-rim);
+  stroke-width: 2px;
+}
+.plate-id {
+  display: none;
+  position: absolute;
+  font: 700 20px/1 var(--font-display);
+  letter-spacing: .12em;
+  text-align: right;
+  color: var(--white);
+  opacity: .3;
+  pointer-events: none;
+}
+.plate-id::after { content: var(--team-initials, "HP") "-" attr(data-number); }
+html[data-style="original"] .rivets { display: inline; }
+html[data-style="original"] .plate-id { display: block; }
+
+/* The frames of the bar layout (core/plate.js, "The frames of the bar layout"). The
+   Cybertron and Minimal styles draw them from the same markup, so what they share is here
+   and what only one of them has is in its own file in styles/. The steel of the edge is
+   the --metal tokens in tokens.css.
+
+   The hex bolt is where a screw is, in the same place in the markup and with the same
+   class, so it turns in and out with the same animation. Its rim and face are the screw's.
+
+   The neon line sits just inside the steel edge, on a path of its own that is inset from the
+   edge (plate.js). The team's neon is --style-neon, which each style sets. The other two are
+   the same path with a much wider and fainter stroke each, for a style that wants a glow
+   without a filter. They are off here, and a style turns them on. The flat finish has none of
+   them.
+
+   The armor header tab has three parts of its own: the dark bevel round it, the bright line
+   along its lit edges and the team's plate color inset in it. */
+.bolt-rim { fill: var(--screw-rim); }
+.bolt-face { fill: var(--screw-face); }
+.bolt-dot { fill: var(--screw-light); }
+
+.edge-neon,
+.edge-neon-wide-1,
+.edge-neon-wide-2 {
+  fill: none;
+  stroke: var(--style-neon, var(--team-neon));
+}
+.edge-neon { stroke-width: 4px; }
+.edge-neon-wide-1 {
+  display: none;
+  stroke-width: 14px;
+  stroke-opacity: .25;
+}
+.edge-neon-wide-2 {
+  display: none;
+  stroke-width: 24px;
+  stroke-opacity: .12;
+}
+
+.tab-bevel {
+  fill: none;
+  stroke: var(--metal-rim);
+  stroke-width: 3px;
+}
+.tab-line {
+  fill: none;
+  stroke: var(--metal-ridge);
+  stroke-opacity: .55;
+  stroke-width: 3px;
+}
+.tab-inset {
+  fill: var(--team-plate);
+  fill-opacity: .45;
+}
+
+/* What only Cybertron draws on a bar frame. It is not drawn unless that style is on
+   (styles/cybertron.css shows it and paints it). The same goes for what only Minimal
+   draws: the weld seam, the header line and its ticks, and the rust (styles/minimal.css) */
+.art-cybertron { display: none; }
+.art-minimal { display: none; }
+
 /* The flat finish: one plain stroke and one plain screw, nothing else */
 [data-finish="flat"] .edge-shadow,
 [data-finish="flat"] .edge-rim,
 [data-finish="flat"] .edge-shade,
 [data-finish="flat"] .edge-ridge,
+[data-finish="flat"] .edge-neon-wide-1,
+[data-finish="flat"] .edge-neon-wide-2,
 [data-finish="flat"] .screw-shadow { display: none; }
 [data-finish="flat"] .edge-face { stroke: var(--edge-flat); }
 

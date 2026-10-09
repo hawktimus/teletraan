@@ -1,0 +1,105 @@
+// The Style setting of Dashboard Settings (the names are in `styles` in config.js).
+// A style is one word that picks the look of the whole screen. Three things follow
+// from it:
+//
+//   data-style   set on the html element. The stylesheets in styles/ read it. Each one
+//                only sets custom properties and the layout rules its style needs
+//   the layout   Original keeps the layout its theme names (core/layout.js). Cybertron
+//                and Minimal use the bar layout, whatever the theme says
+//   data-shapes  set on the html element once, when the page starts. It is the corners of
+//                the frames the page draws: Minimal has its own (core/plate.js, frameKind),
+//                and the other styles have the usual ones, so it is not there for them
+//
+// The team (core/teams.js) is a different thing: it sets the colors and the mirror
+// switch, and any style can have either team.
+//
+// chooseStyle and layoutFor are plain functions with no page in sight, so the tests in
+// tools/test-layouts.mjs can run them. applyStyle and startStyle put the answer on the
+// page. To add a style: add its name to `styles` in config.js, a line to `forcedLayout`
+// and one to `shapeOf` below, a stylesheet in styles/ linked from index.html, and a title
+// to the list in studio/schemas/dashboardSettings.js.
+
+import { defaultSettings, styles } from '../config.js';
+
+export function isStyle(name) {
+  return styles.includes(name);
+}
+
+// The layout a style asks for, or null when the theme decides
+const forcedLayout = { original: null, cybertron: 'bar', minimal: 'bar' };
+
+// The corners of the frames a style draws, or '' for the usual ones. Frames are drawn once
+// and stay for as long as the page is up, so a page whose style has other corners than the
+// page's own reloads (core/layout.js, drawnFor)
+const shapeOf = { original: '', cybertron: '', minimal: 'minimal' };
+export const shapeSets = Object.values(shapeOf).filter(Boolean);
+
+export function shapesFor(style) {
+  return isStyle(style) ? shapeOf[style] : '';
+}
+
+// saved is Style from Dashboard Settings, and asked is ?style= in the address. The
+// address wins, for this page only, like the other switches. Anything that is not a
+// style is ignored.
+export function chooseStyle(saved, asked) {
+  if (isStyle(asked)) return asked;
+  if (isStyle(saved)) return saved;
+  return defaultSettings.style;
+}
+
+// themeLayout is the layout the theme names (layoutOf in core/layout.js)
+export function layoutFor(style, themeLayout) {
+  const forced = isStyle(style) ? forcedLayout[style] : null;
+  return forced || themeLayout;
+}
+
+function pageOrNone() {
+  return typeof document === 'undefined' ? null : document.documentElement;
+}
+
+// The style on the page now. With no page, or no attribute, it is the default.
+export function styleNow(page = pageOrNone()) {
+  const name = page && page.dataset ? page.dataset.style : '';
+  return isStyle(name) ? name : defaultSettings.style;
+}
+
+// The corners of the frames this page was started with, which a later style does not change
+export function shapesNow(page = pageOrNone()) {
+  const name = page && page.dataset ? page.dataset.shapes : '';
+  return shapeSets.includes(name) ? name : '';
+}
+
+// Written only when it changes, because the style is looked at again with every look
+// that goes on the page, and the same value written twice can make the browser restyle it
+export function applyStyle(style, page = pageOrNone()) {
+  if (!page || !isStyle(style)) return;
+
+  if (page.dataset.style !== style) page.dataset.style = style;
+}
+
+// The first thing the screen does about its style, before the layout is set up and
+// before anything is drawn. asked is ?style= from the address bar, or null. readSaved()
+// gives the Style saved the last time the content was read from Sanity, or null
+// (core/content.js, savedStyle). Returns the style it put on the page. Whatever goes
+// wrong, the screen starts in the original style.
+export function startStyle(asked, readSaved, page = pageOrNone()) {
+  let style = defaultSettings.style;
+
+  try {
+    style = chooseStyle(readSaved(), asked);
+  } catch (error) {
+    console.error('Could not choose the style. The screen starts in the original style.', error);
+  }
+
+  applyStyle(style, page);
+  recordShapes(style, page);
+  return style;
+}
+
+function recordShapes(style, page) {
+  if (!page || !page.dataset) return;
+
+  const shapes = shapesFor(style);
+  if (shapes) page.dataset.shapes = shapes;
+  else delete page.dataset.shapes;
+}

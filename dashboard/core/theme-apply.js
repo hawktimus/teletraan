@@ -16,11 +16,17 @@
 // An overlay may also have decorations (core/season.js). This file does not
 // know about them: it tells whoever asked (the onLook of startThemes) each time
 // a look goes on, and they follow the overlay from there.
+//
+// A look is { theme, overlay, style }. The style (core/style.js) is the Style
+// setting, or ?style=, and it waits for the same moment as the theme. This file
+// only carries it: onLook puts data-style on the page, in the same step as the
+// classes, and a style with another layout reloads the page like a theme does.
 
 import * as frame from '../frame.js';
 import { themes } from '../themes/registry.js';
 import { overlays } from '../themes/overlays/registry.js';
 import { isKnownOverlay, isKnownTheme, resolveTheme } from './theme.js';
+import { chooseStyle } from './style.js';
 
 const page = document.documentElement;
 const checkEvery = 60 * 1000;
@@ -28,8 +34,8 @@ const waitedTooLong = 60 * 1000;
 const stylesheetWait = 2000;
 
 let readContent = null; // gives the newest content, set by startThemes
-let asked = { theme: null, overlay: null }; // ?theme= and ?overlay= in the address, for trying a theme
-let showing = { theme: '', overlay: '' }; // what the classes on the page say now
+let asked = { theme: null, overlay: null, style: null }; // ?theme=, ?overlay= and ?style= in the address, for trying a look
+let showing = { theme: '', overlay: '', style: '' }; // what the classes and data-style on the page say now
 let waiting = null; // { look, since }: a look that is not on screen yet
 let followLook = null; // called with the look each time it goes on the page. shell.js gives it, to show the overlay's decorations
 let holdLook = null; // asked before a look goes on the page: true means not now. shell.js gives it, for a theme with another layout (core/layout-apply.js)
@@ -61,17 +67,19 @@ function addStylesheets() {
 }
 
 function sameLook(a, b) {
-  return a.theme === b.theme && a.overlay === b.overlay;
+  return a.theme === b.theme && a.overlay === b.overlay && a.style === b.style;
 }
 
-// The theme and overlay the Theme document asks for now. The address wins,
-// like the other switches.
+// The theme and overlay the Theme document asks for now, and the style Dashboard
+// Settings asks for. The address wins, like the other switches.
 function wantedLook() {
   try {
-    const look = resolveTheme(readContent().theme, new Date());
+    const content = readContent();
+    const look = resolveTheme(content.theme, new Date());
     if (isKnownTheme(asked.theme)) look.theme = asked.theme;
     if (isKnownOverlay(asked.overlay)) look.overlay = asked.overlay;
     if (asked.overlay === 'none') look.overlay = '';
+    look.style = chooseStyle(content.settings ? content.settings.style : null, asked.style);
     return look;
   } catch (error) {
     console.error('Could not work out the theme', error);
@@ -143,15 +151,15 @@ export function changeThemeNow() {
 }
 
 // Gives the function that is asked before a look goes on the page. It is called
-// with { theme, overlay } and answers true to keep the look off the page for now.
+// with { theme, overlay, style } and answers true to keep the look off the page for now.
 // shell.js gives it, call this before startThemes().
 export function holdLooksFor(hold) {
   holdLook = typeof hold === 'function' ? hold : null;
 }
 
-// getContent() gives the newest content. address is { theme, overlay } from
+// getContent() gives the newest content. address is { theme, overlay, style } from
 // the address bar, or null. onLook is optional: it is called with
-// { theme, overlay } each time a look goes on the page, the first time too.
+// { theme, overlay, style } each time a look goes on the page, the first time too.
 // Resolves once the theme is on the page.
 export async function startThemes(getContent, address, onLook) {
   readContent = getContent;

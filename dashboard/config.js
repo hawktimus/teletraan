@@ -59,6 +59,13 @@ export const metals = ['gold', 'silver'];
 //   plain     flat, and no screws on the frames and no // in the panel headers
 export const looks = ['polished', 'flat', 'plain'];
 
+// The Style setting in Dashboard Settings: which look the whole screen has.
+// core/style.js turns it into data-style on the page and into a layout. The Studio copies this list.
+//   original   the screen as it has always been. It keeps the layout its theme names
+//   cybertron  the sharp style, in the bar layout whatever the theme says
+//   minimal    the industrial style, in the bar layout whatever the theme says
+export const styles = ['original', 'cybertron', 'minimal'];
+
 // The Teams tab in Dashboard Settings: which team the screen shows. The Studio copies this list.
 //   prime      the Prime team all the time
 //   nova       the Nova team all the time
@@ -156,6 +163,8 @@ export const defaultSettings = {
   glint: true,
   // see looks above. Flat and Plain also switch the glint off, whatever glint says
   look: 'polished',
+  // see styles above. Original is the screen as it was before there was a Style
+  style: 'original',
   // Puts the connection status text on the screen all the time, with the last
   // read from Sanity, how much of each kind of content there is, and when the
   // calendars were read. It comes up by itself, whatever this says, when Sanity
