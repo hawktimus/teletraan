@@ -335,7 +335,7 @@ const folderLines = {
   'Settings': 'Dashboard Settings, Look, Teams',
 };
 
-// The types, or the folder templates of structure.js, that the plus button of a folder offers
+// The types, or the templates of add-templates.js, that the plus button of a folder offers
 const folderAdds = { 'Daily Agenda': 'plan,presentation', 'Tasks': 'pinnedTask' };
 
 // The titles the sidebar used to have, in the first rebuild or before it. None of them may be left
@@ -405,7 +405,7 @@ function iconImportsOf(source) {
 
 function makeSandbox() {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-studio-'));
-  ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'calendars-view.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'publish-all.js', 'publish-all-tool.js', 'team-input.js', 'note-field.js', 'show-on-tv-input.js', 'status-input.js', 'panel-order-input.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
+  ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'calendars-view.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'publish-all.js', 'publish-all-tool.js', 'team-input.js', 'note-field.js', 'show-on-tv-input.js', 'status-input.js', 'panel-order-input.js', 'add-templates.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
     fs.cpSync(path.join(here, name), path.join(folder, name), { recursive: true });
   });
   fs.writeFileSync(path.join(folder, 'package.json'), JSON.stringify({ type: 'module' }));
@@ -2107,7 +2107,7 @@ function checkDashboardNames() {
 
 // A stand-in for the Studio's structure builder that writes down each call
 function fakeBuilder() {
-  const methods = ['title', 'id', 'icon', 'child', 'items', 'menuItems', 'schemaType', 'documentId', 'defaultOrdering', 'apiVersion', 'filter', 'params'];
+  const methods = ['title', 'id', 'icon', 'child', 'items', 'menuItems', 'schemaType', 'documentId', 'defaultOrdering', 'apiVersion', 'filter', 'params', 'initialValueTemplates'];
   function node(start) {
     const made = Object.assign({}, start);
     const builder = { made: made };
@@ -2322,8 +2322,8 @@ function checkBuiltItem(entry, item, what, problems) {
     const offered = ((child && child.menuItems) || []).map(menu => menu.intent && menu.intent.type === 'create' && menu.intent.params.template);
     need(problems, offered.join() === (entry.add || []).join(), what + ' should offer a new ' + ((entry.add || []).join(' and a new ') || 'document of no type') + ' in its plus button. It offers: ' + (offered.join() || 'nothing'));
     (entry.add || []).forEach(name => {
-      // a name is a type, or a template of structure.js that makes a document of a type
-      const template = world.structure.folderTemplates.filter(item => item.id === name)[0];
+      // a name is a type, or a template of add-templates.js that makes a document of a type
+      const template = world.addTemplates.filter(item => item.id === name)[0];
       const type = template ? template.schemaType : name;
       need(problems, allLines(entry.entries).some(inner => inner.type === type), what + ' offers a new ' + type + ' but has no list of them');
       need(problems, pageTypes.indexOf(type) === -1 && notInSidebar[type] === undefined, what + ' offers a new ' + type + ', which is not a kind of document an editor adds here');
@@ -4266,11 +4266,11 @@ function checkBoardTasks() {
     need(problems, entry.type === 'task' && entry.sort.field === 'order' && entry.sort.direction === 'asc' && entry.thenBy && entry.thenBy.field === '_createdAt' && entry.thenBy.direction === 'asc', entry.title + ' should list tasks by Order, then the oldest first, as the screen does');
   });
 
-  const template = world.structure.folderTemplates.filter(item => item.id === 'pinnedTask')[0];
+  const template = world.addTemplates.filter(item => item.id === 'pinnedTask')[0];
   need(problems, template && template.title === 'Pin a task' && template.schemaType === 'task', 'the template pinnedTask should be titled Pin a task and make a task');
   need(problems, template && template.value.source === 'manual' && template.value.showOnTv === true && template.value.show === true && template.value.status === 'up-next' && !('team' in template.value), 'Pin a task should start a manual task, shown on the TV and on screen, with no team');
   const offered = world.config.schema.templates([{ id: 'task' }]).map(item => item.id).join();
-  need(problems, offered === 'task,pinnedTask', 'sanity.config.js should add the folder templates to the templates of the Studio. It gives: ' + offered);
+  need(problems, offered === ['task'].concat(world.addTemplates.map(item => item.id)).join(), 'sanity.config.js should add the templates of add-templates.js to the templates of the Studio. It gives: ' + offered);
   const choicesIn = creationContext => world.config.document.newDocumentOptions([{ templateId: 'task' }, { templateId: 'pinnedTask' }], { creationContext: creationContext }).map(item => item.templateId).join();
   [undefined, { type: 'global' }, { type: 'structure', schemaType: 'task' }, { type: 'document', documentId: 'task-1', schemaType: 'task' }].forEach(creationContext => {
     need(problems, choicesIn(creationContext) === 'task', 'the New menus should offer a task and not Pin a task, which only the Tasks folder offers. They offer: ' + choicesIn(creationContext));
@@ -4300,6 +4300,127 @@ function checkBoardTasks() {
     need(problems, sits.join() === item.where, 'a task ' + item.name + ' should be in ' + item.where + ' only. It is in: ' + (sits.join() || 'no list'));
   });
 
+  return problems;
+}
+
+// The plus button of each list under Every meeting, Events and Roster. A list makes the template
+// named in its add (add-templates.js): a new document of the type the list shows, with the starting
+// values of the group, which are no team, the switch that puts it on the screen turned on and, for
+// a tip, the kind set. The New menus of the Studio, and the templates they offer, stay as they were
+// (docs/reordering-the-sidebar.md).
+const addGroups = ['EVERY MEETING', 'EVENTS', 'ROSTER'];
+
+// The template each list makes, by the title of the list
+const listAdds = {
+  'Agenda items': 'newPlan',
+  Upcoming: 'newPresentation',
+  Past: 'newPresentation',
+  'Meeting days': 'newPresentationDay',
+  Pinned: 'pinnedTask',
+  'From the board': 'pinnedTask',
+  Hidden: 'pinnedTask',
+  'Tips and News': 'newTip',
+  'Calendar filters': 'newCalendarFilter',
+  Leadership: 'newPerson',
+  'Team leads': 'newSubteam',
+  Sponsors: 'newSponsor',
+  Photos: 'newPhoto',
+};
+
+// The switch that puts a new document on the screen, when it is not called show
+const onSwitches = { presentation: ['status', 'scheduled'], presentationDay: ['open', true] };
+
+// Every line of the sidebar with the heading it sits under, the lines inside the folders too
+function linesUnderHeadings() {
+  const lines = [];
+  let heading = '';
+  world.structure.sidebarEntries.forEach(entry => {
+    if (entry.kind === 'divider') heading = entry.title;
+    else allLines([entry]).forEach(line => lines.push({ heading: heading, line: line }));
+  });
+  return lines;
+}
+
+// Each line of the sidebar next to what structure() built for it, folders opened
+function builtPairs(entries, items) {
+  return entries.reduce((pairs, entry, index) => {
+    const pair = [{ entry: entry, item: items[index] }];
+    const inside = entry.kind === 'group' ? items[index].child.made.items.map(inner => inner.made) : [];
+    return pairs.concat(pair, entry.kind === 'group' ? builtPairs(entry.entries, inside) : []);
+  }, []);
+}
+
+function checkListAdds() {
+  const problems = [];
+  const templates = world.addTemplates;
+  const documentTypes = world.types.filter(type => type.type === 'document');
+
+  // the templates: an id of their own, a type, a title, and starting values that are fields of the type
+  need(problems, new Set(templates.map(template => template.id)).size === templates.length, 'add-templates.js has two templates with the same id');
+  templates.forEach(template => {
+    const where = 'the template ' + template.id;
+    const type = documentTypes.filter(item => item.name === template.schemaType)[0];
+    need(problems, typeof template.title === 'string' && template.title !== '', where + ' has no title');
+    need(problems, documentTypes.every(item => item.name !== template.id), where + ' has the id of a type. Every type has a plain template with its own name, so give this one another id.');
+    if (!type) return problems.push(where + ' makes the type "' + template.schemaType + '", which is not a kind of document');
+
+    const fields = fieldsIn(type);
+    const value = template.value || {};
+    Object.keys(value).forEach(name => {
+      const field = fields.filter(item => item.name === name)[0];
+      if (!field) return problems.push(where + ' sets ' + name + ', which is not a field of ' + template.schemaType);
+      const choices = field.options && field.options.list;
+      if (choices) need(problems, choices.some(choice => (choice.value !== undefined ? choice.value : choice) === value[name]), where + ' sets ' + name + ' to "' + value[name] + '", which the field does not offer');
+    });
+    need(problems, !('team' in value), where + ' sets a team. A new document starts with no team, so it shows for every team.');
+    const on = onSwitches[template.schemaType] || ['show', true];
+    need(problems, value[on[0]] === on[1], where + ' should start with ' + on[0] + ' set to ' + on[1]);
+    if (fields.some(item => item.name === 'kind')) need(problems, typeof value.kind === 'string' && value.kind !== '', where + ' should set the kind, because ' + template.schemaType + ' has one');
+  });
+  const tip = templates.filter(template => template.id === 'newTip')[0];
+  need(problems, tip && tip.value.kind === 'tip', 'Tips and News should make a tip, so newTip should set the kind to tip');
+
+  // the lists of the three groups, and no others, each name the template of the table above
+  const lines = linesUnderHeadings();
+  const inGroups = lines.filter(item => addGroups.indexOf(item.heading) !== -1 && item.line.kind === 'list').map(item => item.line);
+  need(problems, inGroups.map(line => line.title).join() === Object.keys(listAdds).join(), 'the lists under ' + addGroups.join(', ') + ' should be: ' + Object.keys(listAdds).join(', ') + '. They are: ' + inGroups.map(line => line.title).join(', ') + '. Add the new list to listAdds in check-schemas.mjs.');
+  inGroups.forEach(line => {
+    const template = templates.filter(item => item.id === listAdds[line.title])[0];
+    need(problems, (line.add || []).join() === listAdds[line.title], line.title + ' should make ' + listAdds[line.title] + ' in its plus button. Its add is: ' + ((line.add || []).join() || 'empty'));
+    need(problems, template && template.schemaType === line.type, line.title + ' lists ' + line.type + ', and its template makes ' + (template && template.schemaType));
+  });
+  lines.filter(item => addGroups.indexOf(item.heading) === -1 && item.line.kind === 'list').forEach(item => {
+    need(problems, item.line.add === undefined, item.line.title + ' is not under ' + addGroups.join(', ') + ' and should keep the plain plus button');
+  });
+
+  // what structure() builds: the plus button of a list makes that one template and nothing else
+  const entries = world.structure.sidebarEntries;
+  const items = world.structure.structure(fakeBuilder()).made.items.map(item => item.made);
+  builtPairs(entries, items).filter(pair => pair.entry.kind === 'list').forEach(pair => {
+    const given = pair.item.child.made.initialValueTemplates;
+    const names = given && given.map(template => template.serialize().templateId);
+    need(problems, (names || []).join() === (pair.entry.add || []).join() && (pair.entry.add === undefined) === (given === undefined), pair.entry.title + ' should give the Studio the templates ' + ((pair.entry.add || []).join() || 'of the plain plus button') + '. It gives: ' + ((names || []).join() || 'none'));
+  });
+  const talks = entries.filter(entry => entry.title === 'Daily Agenda')[0].entries.filter(entry => entry.title === 'Presentations')[0];
+  need(problems, talks && talks.add && talks.add.join() === 'newPresentation', 'the Presentations folder should make a presentation in its plus button');
+
+  // the Studio's own templates and New menus are as they were: the plain templates first and in order,
+  // then these, which no New menu offers
+  const plain = documentTypes.map(type => ({ id: type.name, schemaType: type.name }));
+  const given = world.config.schema.templates(plain);
+  need(problems, sameData(given.slice(0, plain.length), plain), 'sanity.config.js should keep the templates the Studio makes for every type, and add its own after them');
+  need(problems, given.slice(plain.length).map(template => template.id).join() === templates.map(template => template.id).join(), 'sanity.config.js should add the templates of add-templates.js, and no others');
+
+  const hidden = pageTypes.concat(['extraEvent', 'status']);
+  const choicesIn = (list, creationContext) => world.config.document.newDocumentOptions(list, { creationContext: creationContext }).map(item => item.templateId).join();
+  const plainChoices = plain.map(template => ({ templateId: template.id }));
+  const allChoices = plainChoices.concat(templates.map(template => ({ templateId: template.id })));
+  [undefined, { type: 'global' }, { type: 'structure', schemaType: 'task' }, { type: 'structure', schemaType: 'tipOrNews' }, { type: 'document', documentId: 'task-1', schemaType: 'task' }].forEach(creationContext => {
+    const inDocument = Boolean(creationContext && creationContext.type === 'document');
+    const want = plain.map(template => template.id).filter(id => hidden.indexOf(id) === -1 && (inDocument || id !== 'place')).join();
+    need(problems, choicesIn(plainChoices, creationContext) === want, 'the New menus should offer every kind of document except ' + hidden.join(', ') + ' and, outside a document, place. They offer: ' + choicesIn(plainChoices, creationContext));
+    need(problems, choicesIn(allChoices, creationContext) === want, 'the New menus should not offer the templates of add-templates.js. They offer: ' + choicesIn(allChoices, creationContext));
+  });
   return problems;
 }
 
@@ -4347,6 +4468,7 @@ async function main() {
     world.placeSeed = fs.readFileSync(path.join(here, '..', 'docs', 'seed', 'places.ndjson'), 'utf8');
     world.teamSeed = fs.readFileSync(path.join(here, '..', 'docs', 'seed', 'teams.ndjson'), 'utf8');
     world.hawktimusCss = fs.readFileSync(path.join(dashboardFolder, 'themes', 'hawktimus.css'), 'utf8');
+    world.addTemplates = (await load(path.join(folder, 'add-templates.js'))).addTemplates;
   } finally {
     fs.rmSync(folder, { recursive: true, force: true });
   }
@@ -4409,6 +4531,7 @@ async function main() {
   check('every theme and overlay is complete and readable (tools/check-themes.mjs)', checkThemeGuard);
   check('every seasonal pack is complete, and draws only in the empty places (tools/check-seasons.mjs)', checkSeasonGuard);
   check('a task has a source, a priority and Show on TV, one from the board is read only except Show on TV, and the Tasks folder holds every task once', checkBoardTasks);
+  check('each list under Every meeting, Events and Roster has a plus button that makes its own type with the starting values of the group, and the New menus are as they were', checkListAdds);
 
   process.exitCode = report() > 0 ? 1 : 0;
 }

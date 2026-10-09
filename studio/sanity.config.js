@@ -3,7 +3,8 @@ import { structureTool } from 'sanity/structure';
 import { projectId, dataset } from './project.js';
 import { schemaTypes } from './schemas/index.js';
 import { publishAllTool } from './publish-all-tool.js';
-import { structure, settingsType, singletonTypes, folderTemplates } from './structure.js';
+import { structure, settingsType, singletonTypes } from './structure.js';
+import { addTemplates } from './add-templates.js';
 import { playHiddenActions, usePlayAnnouncementsAction, useRunPresentationTestAction, previewActions } from './actions.js';
 
 // Dashboard Settings, Look and Demo each exist once (singletonTypes in
@@ -29,9 +30,9 @@ function actionsFor(actions, context) {
 // longer reads Events Calendar entries, so they are not offered anywhere. The Mini writes the
 // status document (schemas/status.js), so nobody adds one by hand. A place is offered only
 // while a document is open, which is where the Location field of a task offers Create new,
-// and that is how a place is added now. A folder template, such as Pin a task, is offered by its
-// folder only.
-const notOffered = ['extraEvent', 'status'].concat(folderTemplates.map(template => template.id));
+// and that is how a place is added now. A template of add-templates.js, such as Pin a task, is
+// offered by the folder or list that names it, and by nothing else.
+const notOffered = ['extraEvent', 'status'].concat(addTemplates.map(template => template.id));
 const offeredInDocuments = ['place'];
 
 function newDocumentChoices(templates, context) {
@@ -52,7 +53,7 @@ export default defineConfig({
   plugins: [structureTool({ structure: structure })],
   // Publish all is a page of its own in the top bar, next to the editing screen (docs/publish-all.md)
   tools: [publishAllTool],
-  schema: { types: schemaTypes, templates: previous => previous.concat(folderTemplates) },
+  schema: { types: schemaTypes, templates: previous => previous.concat(addTemplates) },
   document: {
     actions: actionsFor,
     newDocumentOptions: newDocumentChoices,

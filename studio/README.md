@@ -10,6 +10,7 @@ TV. The dashboard reads what they publish.
     sanity.config.js      the Studio's main settings
     sanity.cli.js         settings for the command line tool
     structure.js          the sidebar, one list with a line for each entry, so changing the order means moving a line (a folder holds lines of its own, and Events Calendar, Places and Demo have no line)
+    add-templates.js      what the plus button of each folder and list makes: a new document of its type, with the starting values of its group
     start-here.js         the Start here page, the first line of the sidebar, written as a plain function
     start-here-parts.js   the picture of the screen, the five buttons and their words, with no Studio in it, so node can test them
     screen-requests.js    what the request buttons write (Play announcement, Run presentation test, Next look now, Preview competition, the Play and Preview buttons), used by actions.js and the Start here page

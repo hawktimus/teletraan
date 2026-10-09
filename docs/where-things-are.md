@@ -687,10 +687,10 @@ alone.
   filters are at the top of `studio/structure.js`. Every task is in one list. A task
   with source monday opens read only except Show on TV, with one line at the top, and
   `studio/show-on-tv-input.js` draws a task with no value as on. The folder's plus
-  button, Pin a task, is the template `pinnedTask` in `folderTemplates` of
-  `structure.js`, which `sanity.config.js` hands to the Studio and keeps out of the New
-  menus. On the screen, `isVisible` in `core/content.js` is the one place that reads
-  `showOnTv`, so both task panels leave out a task that is off. `core/sanity.js` puts
+  button, Pin a task, is the template `pinnedTask` in `studio/add-templates.js`, which
+  `sanity.config.js` hands to the Studio and keeps out of the New menus. On the screen,
+  `isVisible` in `core/content.js` is the one place that reads `showOnTv`, so both task
+  panels leave out a task that is off. `core/sanity.js` puts
   pinned tasks before board tasks with `pinnedFirst` from `core/task-source.js`, and
   each group keeps its Order. `priority` and `mondayId` are not read by the screen.
   `tools/test-task-board.mjs` tests the screen side. In the CSV templates `priority`

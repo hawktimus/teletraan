@@ -11,11 +11,12 @@
 // One line is one entry:
 //   kind 'list'       opens the list of one kind of document (type). With a filter it
 //                     lists only the documents the filter keeps, and needs an id of its own.
-//                     thenBy sorts the documents that sort alike by a second field
+//                     thenBy sorts the documents that sort alike by a second field. add names
+//                     the template in add-templates.js that the plus button of the list makes
 //   kind 'page'       opens the one document of its type, which has a fixed id
 //   kind 'group'      a folder: opens a list of the lines under entries. A folder holds
 //                     lists, pages and one more folder, which holds lists only. add names
-//                     the types, or the templates in folderTemplates, that the plus button
+//                     the types, or the templates in add-templates.js, that the plus button
 //                     of the folder offers
 //   kind 'component'  opens a page that is not a document. component is a plain function
 //                     that draws it (start-here.js, calendars-view.js), and it needs an id
@@ -88,18 +89,6 @@ const pinnedTasks = 'source != "monday" && showOnTv != false && show != false &&
 const boardTasks = 'source == "monday" && showOnTv != false && show != false && (!defined(expires) || expires > $now)';
 const hiddenTasks = 'showOnTv == false || show == false || (defined(expires) && expires <= $now)';
 
-// The new documents a folder can offer that are more than a new document of one type. The id is
-// what the add of a folder names, and sanity.config.js hands the list to the Studio. The value
-// is every starting value of the new document, so the defaults are all here.
-export const folderTemplates = [
-  {
-    id: 'pinnedTask',
-    title: 'Pin a task',
-    schemaType: 'task',
-    value: { source: 'manual', showOnTv: true, show: true, status: 'up-next' },
-  },
-];
-
 export const sidebarEntries = [
   { kind: 'component', title: 'Start here', id: 'startHere', icon: HomeIcon, component: StartHere },
   { kind: 'divider', title: 'EVERY MEETING' },
@@ -110,18 +99,19 @@ export const sidebarEntries = [
     id: 'dailyAgenda',
     add: ['plan', 'presentation'],
     entries: [
-      { kind: 'list', title: 'Agenda items', icon: TimelineIcon, type: 'plan', sort: newestDateFirst },
+      { kind: 'list', title: 'Agenda items', icon: TimelineIcon, type: 'plan', sort: newestDateFirst, add: ['newPlan'] },
       {
         kind: 'group',
         title: 'Presentations',
         icon: PresentationIcon,
         id: 'presentations',
+        add: ['newPresentation'],
         entries: [
-          { kind: 'list', title: 'Upcoming', icon: MicrophoneIcon, id: 'upcomingTalks', type: 'presentation', sort: soonestStart, filter: startedRecently },
-          { kind: 'list', title: 'Past', icon: ArchiveIcon, id: 'pastTalks', type: 'presentation', sort: latestStart, filter: startedEarlier },
+          { kind: 'list', title: 'Upcoming', icon: MicrophoneIcon, id: 'upcomingTalks', type: 'presentation', sort: soonestStart, filter: startedRecently, add: ['newPresentation'] },
+          { kind: 'list', title: 'Past', icon: ArchiveIcon, id: 'pastTalks', type: 'presentation', sort: latestStart, filter: startedEarlier, add: ['newPresentation'] },
         ],
       },
-      { kind: 'list', title: 'Meeting days', icon: ClockIcon, type: 'presentationDay', sort: byFirstTalk },
+      { kind: 'list', title: 'Meeting days', icon: ClockIcon, type: 'presentationDay', sort: byFirstTalk, add: ['newPresentationDay'] },
     ],
   },
   {
@@ -131,20 +121,20 @@ export const sidebarEntries = [
     id: 'tasks',
     add: ['pinnedTask'],
     entries: [
-      { kind: 'list', title: 'Pinned', icon: PinIcon, id: 'pinnedTasks', type: 'task', sort: byOrder, thenBy: oldestFirst, filter: pinnedTasks },
-      { kind: 'list', title: 'From the board', icon: DashboardIcon, id: 'boardTasks', type: 'task', sort: byOrder, thenBy: oldestFirst, filter: boardTasks },
-      { kind: 'list', title: 'Hidden', icon: EyeClosedIcon, id: 'hiddenTasks', type: 'task', sort: byOrder, thenBy: oldestFirst, filter: hiddenTasks },
+      { kind: 'list', title: 'Pinned', icon: PinIcon, id: 'pinnedTasks', type: 'task', sort: byOrder, thenBy: oldestFirst, filter: pinnedTasks, add: ['pinnedTask'] },
+      { kind: 'list', title: 'From the board', icon: DashboardIcon, id: 'boardTasks', type: 'task', sort: byOrder, thenBy: oldestFirst, filter: boardTasks, add: ['pinnedTask'] },
+      { kind: 'list', title: 'Hidden', icon: EyeClosedIcon, id: 'hiddenTasks', type: 'task', sort: byOrder, thenBy: oldestFirst, filter: hiddenTasks, add: ['pinnedTask'] },
     ],
   },
-  { kind: 'list', title: 'Tips and News', icon: BulbOutlineIcon, type: 'tipOrNews', sort: byOrder },
+  { kind: 'list', title: 'Tips and News', icon: BulbOutlineIcon, type: 'tipOrNews', sort: byOrder, add: ['newTip'] },
   { kind: 'divider', title: 'EVENTS' },
   { kind: 'component', title: 'Calendars', id: 'calendars', icon: SyncIcon, component: CalendarsView },
-  { kind: 'list', title: 'Calendar filters', icon: FilterIcon, type: 'calendarFilter', sort: byName },
+  { kind: 'list', title: 'Calendar filters', icon: FilterIcon, type: 'calendarFilter', sort: byName, add: ['newCalendarFilter'] },
   { kind: 'divider', title: 'ROSTER' },
-  { kind: 'list', title: 'Leadership', icon: StarIcon, type: 'person', sort: byOrder },
-  { kind: 'list', title: 'Team leads', icon: UsersIcon, type: 'subteam', sort: byOrder },
-  { kind: 'list', title: 'Sponsors', icon: HeartIcon, type: 'sponsor', sort: byOrder },
-  { kind: 'list', title: 'Photos', icon: ImagesIcon, type: 'photo', sort: newestUploadFirst },
+  { kind: 'list', title: 'Leadership', icon: StarIcon, type: 'person', sort: byOrder, add: ['newPerson'] },
+  { kind: 'list', title: 'Team leads', icon: UsersIcon, type: 'subteam', sort: byOrder, add: ['newSubteam'] },
+  { kind: 'list', title: 'Sponsors', icon: HeartIcon, type: 'sponsor', sort: byOrder, add: ['newSponsor'] },
+  { kind: 'list', title: 'Photos', icon: ImagesIcon, type: 'photo', sort: newestUploadFirst, add: ['newPhoto'] },
   { kind: 'divider', title: 'COACHES ONLY' },
   {
     kind: 'group',
@@ -172,12 +162,14 @@ function listOf(S, entry, times) {
       .filter('_type == $type && (' + entry.filter + ')')
       .params({ type: entry.type, since: times.since, now: times.now });
   }
+  // Last, because every change to the list works the templates out again from the type
+  if (entry.add) list = list.initialValueTemplates(entry.add.map(name => S.initialValueTemplateItem(name)));
   return S.listItem().title(entry.title).id(id).icon(entry.icon).child(list);
 }
 
 // A sidebar entry that opens a list of the lines under it. The plus button of a
 // folder with add offers a new document of each of those types, the way the
-// plus button of a list of one type does, or the new document of a folder template.
+// plus button of a list of one type does, or the new document of a template in add-templates.js.
 function groupOf(S, entry, times) {
   let list = S.list()
     .title(entry.title)

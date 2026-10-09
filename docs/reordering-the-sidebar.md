@@ -74,11 +74,14 @@ Presentation. Each type needs a list inside the folder, so that the new document
 is found there. The words in the menu are the titles of the types in
 `studio/schemas/`, one document at a time: Agenda item and Presentation.
 
-The `add` of a folder can also name a template from `folderTemplates` in `structure.js`,
+The `add` of a folder can also name a template from `studio/add-templates.js`,
 which is a new document with its own words and starting values. Tasks has
 `add: ['pinnedTask']`, and the template pinnedTask is titled Pin a task and makes a task with
 the source manual, shown on the TV and on screen. `sanity.config.js` gives the templates to
-the Studio and keeps them out of the New menus, so only the folder offers them.
+the Studio and keeps them out of the New menus, so only the folder or list that names one
+offers it. Every list under Every meeting, Events and Roster has an `add` with one template,
+so its plus button makes that type with no team and the switch on the screen turned on
+(a tip, for Tips and News).
 
 Every line except a divider has an `icon`, and no two lines share one. The icons
 come from `@sanity/icons`, which comes with the Studio and is not listed in
