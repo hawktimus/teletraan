@@ -1,7 +1,7 @@
 # Adding a holiday overlay
 
 An overlay lays a few accent colours over whichever theme is showing, for a set of dates.
-The editors see it as a **seasonal pack** on the Theme page in Studio, because an overlay may also
+The editors see it as a **seasonal pack** on the Look page in Studio, because an overlay may also
 have **decorations**: small pictures in the empty places along the edges of the screen. This page
 is about the colours. Everything about decorations, the seven packs that exist, the zones, the
 data format and the motions is in **docs/seasonal-packs.md**, which is also where to start if you
@@ -78,7 +78,7 @@ to see it over another theme. The address wins over Studio, for that page only.
 
 Run `npm run deploy` in the studio folder so the editors see Winter in their
 list. The dashboard has it when the Mini next pulls the repo. Then, in Studio,
-open Theme and add a rule to the Schedule:
+open Look and add a rule to the Schedule:
 
 - Name: for the editors only, up to 24 characters.
 - Kind: Seasonal pack, then pick Winter.
@@ -95,5 +95,5 @@ The first rule of each kind that covers today is used, so put the rule that
 should win first. "Use a theme now" on the same page wins over the schedule.
 Choose No seasonal pack there to switch a scheduled one off for a while.
 
-The dates are read in the Time zone on the Theme page, which starts as
+The dates are read in the Time zone on the Look page, which starts as
 America/New_York, and not in the zone of the computer that shows the screen.

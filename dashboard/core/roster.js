@@ -13,7 +13,7 @@ function membersOf(subteam) {
   return Array.isArray(subteam.members) ? subteam.members.filter(hasText) : [];
 }
 
-// Every page, subteam by subteam in the order of the Subteams list in Studio
+// Every page, subteam by subteam in the order of the Roster list in Studio
 // (the order content.subteams already has). Each page is
 //   { subteam, lead, members, pageNumber, pageCount }
 // subteam and lead are the typed texts, lead is empty when there is none, and

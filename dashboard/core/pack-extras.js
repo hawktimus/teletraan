@@ -1,7 +1,7 @@
 // The three extras a seasonal pack can add to the screen besides its pictures: a
 // ticker prefix (shown before each ticker line), a banner line (one line under
 // the date) and a corner art (line art in the cut corners, core/corner-art.js).
-// They are typed on a rule of the Theme schedule, and a pack file may carry a
+// They are typed on a rule of the Look schedule, and a pack file may carry a
 // value of its own in `defaults` for a rule that leaves the field empty. A value
 // typed on the rule wins. theme.js reads the rules (ruleExtras, packExtras) and
 // core/season.js reads the pack files. docs/seasonal-packs.md explains all three.

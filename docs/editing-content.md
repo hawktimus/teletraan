@@ -22,31 +22,50 @@ received.
 
 ## The sidebar
 
-- Tasks: what the team is working on. Each task has a name, a subteam, an
-  optional point of contact, an optional location and a status (Blocked, In
-  progress, Up next or Done). The point of contact is a first name, up to 12
-  characters, with no last name. The location is a place picked from the list
-  of Places (see "Places" below). When you set a task to Done, fill in
-  "Finished on". If you leave it empty, the time you last edited the task
-  counts as the finish time. The task leaves the screen after the number of
-  days set in Dashboard Settings. See "What the Tasks panel shows" below.
+The sidebar is in groups, by how often you touch them. Start here is at the top.
+The group names, such as EVERY MEETING, are headings and not folders. Each line
+has an icon.
+
+Start here: a short page that says what the screen is and that Publish all is the
+last step of every change.
+
+### Every meeting
+
 - Up Next: the schedule for today's meeting, up to 5 rows. The TV shows the
   first one that is switched on and is dated today or has no date. One from
   another day is skipped, so an old one that is still switched on does not
   hide today's. The talks booked for today fill the rows the schedule leaves
   free (docs/up-next.md).
-- Presentations: the talks students book in a Google Form. It opens three lists.
-  Meeting days says which days have talk slots and when they start, and a day
-  with no Meeting day has no slots. Upcoming talks and Past talks are the booked
-  talks, where a coach can cancel or move one (docs/presentations.md).
+- Tasks: what the team is working on. Each task has a name, a subteam, an
+  optional point of contact, an optional location and a status (Blocked, In
+  progress, Up next or Done). The point of contact is a first name, up to 12
+  characters, with no last name. The location is picked from the list of
+  Locations (see "Locations" below). When you set a task to Done, fill in
+  "Finished on". If you leave it empty, the time you last edited the task
+  counts as the finish time. The task leaves the screen after the number of
+  days set in Dashboard Settings. See "What the Tasks panel shows" below.
+- Tips and News: the lines that run along the bottom of the screen.
+
+### Events
+
 - Events Calendar: events that are not on BAND, such as one another school
   hosts. Each entry has a name, a start date, an optional end date, optional
-  times and an optional place. See "Events Calendar" below.
+  times and an optional location. See "Events Calendar" below.
+- Calendars: the BAND calendars the Mini reads. The page tells you to add a rule
+  under Calendar filters to hide a repeating meeting, and to ask a coach to add
+  the address of a new calendar on the Mini.
 - Calendar filters: rules that hide events from the BAND calendars, or keep them
   on the screen, such as a meeting that repeats every week
   (docs/calendar-filters.md). Students can follow
   docs/hide-a-repeating-meeting.md.
-- Subteams: each subteam, its lead and the students on it. Turn on "In the
+- Presentations: the talks students book in a Google Form. It opens three lists.
+  Meeting days says which days have talk slots and when they start, and a day
+  with no Meeting day has no slots. Upcoming and Past are the booked talks,
+  where a coach can cancel or move one (docs/presentations.md).
+
+### The team
+
+- Roster: each subteam, its lead and the students on it. Turn on "In the
   spotlight" to feature one. Add a subteam here before you use it on a task.
   The Team Leads panel shows every subteam that has a lead, three to a page
   (see Photos of people). The Subteam roster panel shows the lead and the
@@ -60,27 +79,31 @@ received.
   Captain is gold and Mentor is silver. There is no separate role for a
   president: give a president the role Captain and the title President, and
   they are shown with the captains.
-- Teams: the teams the TV can show, each with a name, a number, a logo, seven
-  colors and a switch that flips the screen left to right. See "Teams" below.
 - Sponsors: name, tier, a short line about them, a thank-you line for the
   ticker, and the web address of their logo.
 - Photos: the pictures for the Photo panel. Each has a picture you upload, an
   optional short caption and the first name of the person who took it. See
   "Photos" below.
-- Tips and News: the lines that run along the bottom of the screen.
-- Custom Panels: a panel you build yourself from blocks (heading, text,
+
+### Coaches only
+
+If you are not a coach, leave these alone and ask a coach.
+
+- Dashboard Settings: the settings for the whole screen, described below.
+- Look: the colours of the whole screen, and holiday colours for set dates.
+  See "Look" below.
+- Teams: the teams the TV can show, each with a name, a number, a logo, seven
+  colors and a switch that flips the screen left to right. See "Teams" below.
+- Locations: the rooms and areas a task can be in, such as the Classroom. See
+  "Locations" below.
+- Extra panels: a panel you build yourself from blocks (heading, text,
   number, list, image address, progress bar, countdown). About 3 blocks fit.
   A block that does not fit is left out. The title shows in capital letters,
   7 at most.
-- Dashboard Settings: the settings for the whole screen, described below.
-- Theme: the colours of the whole screen, and holiday colours for set dates.
-  See "Theme" below.
-- Places: the rooms and areas a task can be in, such as the Classroom. See
-  "Places" below.
-- Demo: plays a few of the special screens (the announcement and night mode) now,
-  for visitors. See "Demo" below, and docs/demo.md.
+- Test the screen: plays a few of the special screens (the announcement and night
+  mode) now, for visitors. See "Test the screen" below, and docs/demo.md.
 
-Tasks, Up Next, Subteams, Leadership, Sponsors, Tips and News, Custom Panels,
+Tasks, Up Next, Roster, Leadership, Sponsors, Tips and News, Extra panels,
 Events Calendar entries, Meeting days and booked talks each have a Team choice:
 Both, or one of the teams. Both is picked to start with, and the item shows for
 every team. Pick a team to show it only while that team is on the screen
@@ -122,7 +145,7 @@ What the screen does with them:
 
 - An event leaves the screen when its last day has passed: the End date, or
   the Start date if there is no End date. The day changes at midnight in the
-  Time zone on the Theme page. You do not have to delete or hide a finished
+  Time zone on the Look page. You do not have to delete or hide a finished
   event. The screen checks once a minute, so it goes soon after midnight.
 - The dates and times you type are read in that same Time zone, and the screen
   writes the dates of every event, from BAND too, in it: the weekday and the
@@ -178,7 +201,7 @@ PROGRESS, UP NEXT or RECENTLY DONE. A row has room for two lines of text:
 - A task with a point of contact or a location is two lines: the name and the
   subteam, then the contact and the location under them, in smaller text.
   A task with only a contact shows only the contact, and a task with only a
-  location shows only the place.
+  location shows only the location.
 - Only Blocked, In progress and Up next tasks show the contact and the
   location. A Done task shows its name and subteam and nothing more.
 
@@ -193,39 +216,39 @@ hold fewer tasks, three at the least, so there are more pages. Hidden tasks,
 expired tasks and Done tasks past the number of days in Dashboard Settings are
 left out. The Open Tasks panel counts every open task however many pages there are.
 
-## Places
+## Locations
 
-A place is a room or area where a task is done, such as the Classroom. Pick one
-in the Location field of a task and the TV shows its name under the task. Places
-are a list of their own, so that every task spells a place the same way.
+A location is a room or area where a task is done, such as the Classroom. Pick one
+in the Location field of a task and the TV shows its name under the task.
+Locations are a list of their own, so that every task spells a location the same way.
 
-To add one, open Places, click the plus button, fill in the form and click
+To add one, open Locations, click the plus button, fill in the form and click
 Publish. The fields:
 
-- Place name: needed, up to 16 characters. Two places cannot have the same
+- Location name: needed, up to 16 characters. Two locations cannot have the same
   name. Studio ignores capitals when it compares, so it refuses "classroom"
   when "Classroom" is already there.
-- Show on screen: turn it off to hide the place. A task that uses a hidden
-  place shows no location, and the task itself stays on the screen. Deleting a
-  place does the same to the tasks that used it.
+- Show on screen: turn it off to hide the location. A task that uses a hidden
+  location shows no location, and the task itself stays on the screen. Deleting a
+  location does the same to the tasks that used it.
 
-You can also add a place while you edit a task: in the Location field choose
-Create new, type the name, and publish the new place as well as the task. The
-TV only shows a place once it is published.
+You can also add a location while you edit a task: in the Location field choose
+Create new, type the name, and publish the new location as well as the task. The
+TV only shows a location once it is published.
 
-### Importing the starting places
+### Importing the starting locations
 
-The file `docs/seed/places.ndjson` holds the three starting places: Classroom,
+The file `docs/seed/places.ndjson` holds the three starting locations: Classroom,
 Programming room and Media center. Import it once, in the same way as the
 starting events above: from a Mac, with the Studio set up and signed in, and
 with the team mentor's yes. From the `studio` folder, run this one command:
 
     npx sanity dataset import ../docs/seed/places.ndjson --missing
 
-Each place has a fixed id, such as `place-classroom`, and `--missing` skips any
-place whose id is already there, so running it again changes nothing. The
+Each location has a fixed id, such as `place-classroom`, and `--missing` skips any
+location whose id is already there, so running it again changes nothing. The
 parts of the command are explained under "Importing the starting list" above.
-A place you delete in Studio comes back if you import again, because its id is
+A location you delete in Studio comes back if you import again, because its id is
 missing again.
 
 ## Adding many items from a spreadsheet
@@ -393,7 +416,7 @@ columns on the right. The subteam's name is the title of the page.
   to a second page, with the lead shown again. The text never gets smaller to
   fit more names.
 - Each time the panel comes round it shows the next page, one subteam after
-  another in the order of the Subteams list, and then starts again.
+  another in the order of the Roster list, and then starts again.
 - The lead is the Lead field of the subteam. The photo is the one of the person
   in Leadership with the same name (see Photos of people), or the silhouette.
 - A subteam with a lead and no members shows the lead alone. A subteam with
@@ -483,7 +506,7 @@ Connection.
   panels choose their own metal at every page change, in the Transitions tab. The
   theme Neon Prime has frames of dark steel of its own and ignores both settings.
   Glint is a bright spark that runs once around each frame every few
-  seconds. Turn it off for a calmer screen. Look is how much polish the frames
+  seconds. Turn it off for a calmer screen. Polish is how much polish the frames
   have. Polished (as now) is the default and is the screen as it has always
   looked: worn metal edges, screws with shading, the glint, and the // at the
   right of each panel header. Flat has plain colour edges and plain screws, with
@@ -491,19 +514,19 @@ Connection.
   switch says. The // stays. Plain is Flat with no screws on the frames and
   no // in the panel headers. The header picture of a seasonal pack, the shapes
   beside the tasks and every other mark stay in all three. Flat and Plain draw
-  less, so the Mini has an easier time (docs/try-it-on-the-mini.md). A look
+  less, so the Mini has an easier time (docs/try-it-on-the-mini.md). Polish
   applies to every theme (Neon Prime keeps its cyan and magenta trim lines in
   Flat and Plain), and Frame metal and Frame finish keep their meaning.
   It does not change Motion, the page change style, the hidden transitions or
   the name effect. To see one before you change the setting, add `?look=flat`
   or `?look=plain` to the address of the screen: the address wins, for that page
-  only. If no choice is ticked for Look (a Dashboard Settings page published
-  before Look existed), the screen uses Polished. Style is the look of the whole
+  only. If no choice is ticked for Polish (a Dashboard Settings page published
+  before Polish existed), the screen uses Polished. Style is the look of the whole
   screen. Original is the screen as it is now, in the layout of its theme.
   Cybertron and Minimal have a banner across the top, a thin side column and one
   main panel, whatever the theme says, and the screen reloads once when you change
   to or from one of them, and when you change from one to the other, because their
-  frames have different corners. The team sets the base colors, and the Theme page sets the
+  frames have different corners. The team sets the base colors, and the Look page sets the
   rest (docs/layouts.md, "Styles"). To see one first, add `?style=cybertron` or
   `?style=minimal` to the address, or use a Preview button in the menu next to
   Publish, which shows a look for 2 minutes and saves nothing (docs/switch-the-look.md).
@@ -614,7 +637,7 @@ Connection.
   under it, and the picture is never turned off. "Use night mode" starts on. The
   times are 24 hour times such as 23:30, and start as 23:30 and 11:30. An end
   before the start runs past midnight, and the same time for both means night
-  mode never comes on. They use the Time zone on the Theme page, and there is no
+  mode never comes on. They use the Time zone on the Look page, and there is no
   time zone here. "Night style" is Bouncing logo (the logo drifts round the
   screen, changes colour at every bounce and spins when it hits a corner) or
   Blank black. "Logo width (pixels)" is from 120 to 800 and starts at 300.
@@ -666,7 +689,7 @@ Connection.
   Sanity for over two minutes, and says why (docs/rebuilding-the-mini.md,
   "Checking the connection"). A full screen alert or announcement covers it.
 
-## Theme
+## Look
 
 One page, like Dashboard Settings. It cannot be deleted or copied. A theme is
 a set of colours for the whole screen. The style and the team are set in Dashboard
@@ -731,7 +754,7 @@ an alert it can take up to two minutes. The themes and overlays in the lists
 are the ones the dashboard has. A new one is added in the code
 (docs/adding-a-theme.md, docs/adding-a-holiday-overlay.md, docs/seasonal-packs.md).
 
-## Demo
+## Test the screen
 
 One page, like Dashboard Settings. It cannot be deleted or copied. A demo shows
 the announcement and night mode on the TV one after the other, once, without

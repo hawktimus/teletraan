@@ -45,7 +45,7 @@ export function layoutOf(themeId, list) {
 }
 
 // The layout the screen should start in, worked out before any content is
-// read, from the Theme document in the copy of the content saved on this
+// read, from the Look document in the copy of the content saved on this
 // computer (rawTheme, or null when there is none) and from ?theme= in the
 // address (askedTheme). It follows the same rules as theme-apply.js, so the
 // theme that goes on a moment later has the layout that is already on the page.

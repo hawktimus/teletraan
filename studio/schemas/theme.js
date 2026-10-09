@@ -260,7 +260,7 @@ const seasonOverPanelsField = defineField({
 
 export default defineType({
   name: 'theme',
-  title: 'Theme',
+  title: 'Look',
   type: 'document',
   fields: [defaultThemeField, useNowField, scheduleField, timeZoneField, seasonOverPanelsField],
 });

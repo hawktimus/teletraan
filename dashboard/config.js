@@ -50,7 +50,7 @@ export const speeds = { 'very-slow': 2, 'slow': 1.5, 'normal': 1, 'fast': 0.75 }
 // its own that is chosen at every page change, see frameFinishes below.
 export const metals = ['gold', 'silver'];
 
-// The Look setting in Dashboard Settings: how much polish the frames have.
+// The Polish setting in Dashboard Settings: how much polish the frames have.
 // core/look.js turns it into the page switches the stylesheets read
 // (data-finish, data-glint and data-look). The Studio copies this list.
 //   polished  the normal look: worn metal edges, screws with shading, the glint
@@ -135,7 +135,7 @@ export const limits = {
   // The Night mode tab. At 120 pixels the logo is still clear from across the room, and at 800 it
   // still fits the 1080 pixel height with the number under it.
   nightLogoWidth: { min: 120, max: 800 },
-  // The Demo page. A step shorter than 5 seconds is gone before it can be seen, and 5 minutes
+  // The Test the screen page. A step shorter than 5 seconds is gone before it can be seen, and 5 minutes
   // is longer than anyone shows a demo.
   demoSeconds: { min: 5, max: 300 },
   // The Hidden tab. A chance is a percent of the page changes, and 0 is never.
@@ -228,7 +228,7 @@ export const defaultSettings = {
   portraitScale: 100,
   photoScale: 100,
   // The Night mode tab in the Studio: the screensaver. The signal is never turned off. From
-  // nightStart to nightEnd (24 hour time, in the time zone of the Theme page, and it may run past
+  // nightStart to nightEnd (24 hour time, in the time zone of the Look page, and it may run past
   // midnight) the screen is black with the team logo and the team number under it.
   //   nightEnabled    on, because a wall display left on all night needs it
   //   nightStyle      see nightStyles above
@@ -340,7 +340,7 @@ export const defaultSettings = {
   calendars: [{ id: 'team', name: 'Team calendar', show: true }],
 };
 
-// Used for anything missing from the Theme document in the Studio. The
+// Used for anything missing from the Look document in the Studio. The
 // Studio starts at the same values, and check-schemas.mjs fails if they differ.
 //   defaultTheme  the id of a theme in themes/registry.js
 //   useNow        a theme and an overlay to show now, whatever the schedule says. Each is empty
@@ -358,7 +358,7 @@ export const defaultThemeSettings = {
   seasonOverPanels: true,
 };
 
-// The Demo page in the Studio (core/demo.js, core/demo-screens.js and core/demo-runner.js).
+// The Test the screen page in the Studio (core/demo.js, core/demo-screens.js and core/demo-runner.js).
 // "Run demo" writes the time into requestedAt and publishes. The screen plays the steps once when
 // it sees a request that is no more than demoWindowSeconds old and is not the one it handled last,
 // so a Mini that restarts never plays an old request again. A request up to demoSkewSeconds in

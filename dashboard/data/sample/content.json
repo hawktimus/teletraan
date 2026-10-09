@@ -97,9 +97,9 @@
   },
 
   "tasks": [
-    { "title": "[Task in progress]", "subteam": "[Subteam A]", "status": "in-progress", "contact": "[Contact A]", "location": "[Place A]" },
+    { "title": "[Task in progress]", "subteam": "[Subteam A]", "status": "in-progress", "contact": "[Contact A]", "location": "[Location A]" },
     { "title": "[Second task]", "subteam": "[Subteam C]", "status": "in-progress", "contact": "[Contact B]" },
-    { "title": "[Next task]", "subteam": "[Subteam B]", "status": "up-next", "location": "[Place B]" },
+    { "title": "[Next task]", "subteam": "[Subteam B]", "status": "up-next", "location": "[Location B]" },
     { "title": "[Queued task]", "subteam": "[Subteam E]", "status": "up-next" },
     { "title": "[Finished task]", "subteam": "[Subteam D]", "status": "done" },
     { "title": "[Second finished task]", "subteam": "[Subteam F]", "status": "done" }
@@ -173,9 +173,9 @@
   ],
 
   "extraEvents": [
-    { "title": "[Evening event]", "startDate": "2027-03-03", "startTime": "18:30", "endTime": "20:00", "location": "[Place]" },
-    { "title": "[All-day event]", "startDate": "2027-03-05", "location": "[Place]" },
-    { "title": "[Weekend event]", "startDate": "2027-03-12", "endDate": "2027-03-14", "location": "[Place]" }
+    { "title": "[Evening event]", "startDate": "2027-03-03", "startTime": "18:30", "endTime": "20:00", "location": "[Location]" },
+    { "title": "[All-day event]", "startDate": "2027-03-05", "location": "[Location]" },
+    { "title": "[Weekend event]", "startDate": "2027-03-12", "endDate": "2027-03-14", "location": "[Location]" }
   ],
 
   "calendarFilters": [

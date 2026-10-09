@@ -66,15 +66,15 @@ for example `?perf&stress`.
 | `speed=very-slow`, `slow`, `normal`, `fast` | the Speed setting from Dashboard Settings, for this page only. Moves take 2, 1.5, 1 or 0.75 times as long, and so do the panels' time on screen. The address wins over Dashboard Settings |
 | `finish=metal` | the normal look: purple plates with polished metal edges (a banded gradient, a shadow, a shade and a ridge on every line) |
 | `finish=flat` | the same screen with every edge one plain colour, no shadow, shade, ridge or glint. The shapes, text and movement do not change (the rows still turn over and the frame halves still lift), so any difference in the numbers is the cost of the metal |
-| `look=polished`, `flat`, `plain` | the Look setting from Dashboard Settings, for this page only. The address wins over Dashboard Settings. `polished` is the normal look, the same as `finish=metal`. `flat` is `finish=flat` with the glint off. `plain` is `flat` with no screws on the frames and no // in the panel headers, so it draws the least. A `finish=` or `glint=` in the same address wins over the look for that one thing |
+| `look=polished`, `flat`, `plain` | the Polish setting from Dashboard Settings, for this page only. The address wins over Dashboard Settings. `polished` is the normal look, the same as `finish=metal`. `flat` is `finish=flat` with the glint off. `plain` is `flat` with no screws on the frames and no // in the panel headers, so it draws the least. A `finish=` or `glint=` in the same address wins over the look for that one thing |
 | `style=original`, `cybertron`, `minimal` | the Style setting from Dashboard Settings, for this page only. The address wins over Dashboard Settings. `cybertron` and `minimal` have the bar layout whatever the theme says, so the page reloads once if it started in another layout or with the other style's corners (docs/layouts.md, "Styles") |
 | `team=prime`, `nova`, `alternate` | the Team mode setting from Dashboard Settings, for this page only. The address wins over Dashboard Settings. `nova` shows the Nova team with its colors and its mirror, from the team documents or from the sample content, which has both. A team the Studio has no document for is the built-in Prime. A Preview button wins over it while the preview lasts (docs/hidden-transitions.md, "Preview a look") |
 | `metal=gold`, `silver` | the metal of the permanent frame edges (the banner, the countdown and the logo), for this page only. The address wins over Dashboard Settings |
 | `change=alternate`, `slat`, `mechanical` | how the large and small panels change page, for this page only. `mechanical` breaks the frame into pieces and rebuilds it, `slat` turns the rows over and lifts the frame (docs/page-transitions.md). Add `stress` to see a change every few seconds |
 | `frames=mostly-gold`, `alternate`, `gold`, `silver` | the metal of the large and small page frames, picked again at every page change, for this page only |
-| `theme=<id>` | a theme from `dashboard/themes/registry.js`, for this page only. The address wins over the Theme page in Studio. A theme with another layout brings its layout with it (`neon-prime`, section 7) |
+| `theme=<id>` | a theme from `dashboard/themes/registry.js`, for this page only. The address wins over the Look page in Studio. A theme with another layout brings its layout with it (`neon-prime`, section 7) |
 | `overlay=<id>`, `none` | a seasonal pack (its colours and its decorations, docs/seasonal-packs.md), or none, for this page only |
-| `seasonover=on`, `off` | the small pieces a seasonal pack draws over the panels (snow, leaves...), on or off, for this page only. The address wins over the Theme page. Calm motion also hides them. They have not been tested on the Mini, so watch `perf` with and without them |
+| `seasonover=on`, `off` | the small pieces a seasonal pack draws over the panels (snow, leaves...), on or off, for this page only. The address wins over the Look page. Calm motion also hides them. They have not been tested on the Mini, so watch `perf` with and without them |
 | `night=on`, `off` | the night screen (the screensaver, docs/night-mode.md) now whatever the time, or never, for this page only. The address wins over Dashboard Settings. The bouncing logo costs two moving layers, so it is far lighter than the dashboard it covers |
 | `hidden=desktop`, `redEyes`, `off` | plays that hidden transition (docs/hidden-transitions.md) once, at the next page change of the large panel, whatever the chances say, or never plays any, for this page only. It needs full motion, and the night screen stops it, so add `night=off` at night. While it plays it holds five blocks (four in the sidebar layout), the backdrop, a picture and a red layer or the blue glitch layers as layers, and none when it is over. Play it twice to see both pictures of its set |
 | `glint=on`, `off` | the bright dash that runs round each big frame every few seconds, for this page only. Off shows what the glint costs |
@@ -195,7 +195,7 @@ two themes are not touched by it, so they need no new test.
 
 Before you start, make sure the Mini has the code (section 1) and that the
 editors' Studio has been deployed (`npm run deploy` in the studio folder), so
-Neon Prime is in their Theme lists. The test does not need Studio: the address
+Neon Prime is in their Look lists. The test does not need Studio: the address
 below picks the theme for that page only.
 
 Start the kiosk script as in section 2, with the theme in the address:
@@ -220,7 +220,7 @@ Run each of these for 30 minutes, write down typical, p95, worst, late and
 | `?theme=neon-prime&perf&show=photo` | the Photo panel, scaled up with the frame |
 
 Then leave `?theme=neon-prime&perf` running overnight. Also run the screen with
-Neon Prime chosen in Studio (Theme, Use a theme now) and not in the address,
+Neon Prime chosen in Studio (Look, Use a theme now) and not in the address,
 watch that the page reloads once at the next page change, and that nothing
 reloads after that.
 
@@ -257,7 +257,7 @@ These are starting points, not rules:
   address. If flat is clearly smoother, the metal is too heavy for the Mini.
   If only the glint is the difference, turn it off in Dashboard Settings
   (Glint) and keep the metal.
-  Make flat the starting finish with Look in Dashboard Settings (Screen tab):
+  Make flat the starting finish with Polish in Dashboard Settings (Screen tab):
   Flat is the flat finish with no glint, and Plain also leaves out the screws and
   the // in the panel headers. No code changes
 

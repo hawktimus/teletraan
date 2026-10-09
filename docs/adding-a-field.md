@@ -37,7 +37,7 @@ Add the name to a sample item with a marked placeholder:
     { "title": "[Task in progress]", "room": "[Room]", ... }
 
 dashboard/core/sanity.js turns Sanity documents into this shape. Every field
-of a task, sponsor, tip, subteam, person, plan (Up Next) or custom panel
+of a task, sponsor, tip, subteam, person, plan (Up Next) or extra panel
 comes through without any change there. A field nobody has filled in is missing, so every
 panel must cope with that. There are three exceptions. A person's photo is not a
 plain value. Its query line in `contentQuery` asks for the picture's address,
@@ -132,10 +132,10 @@ A new setting that decides which content the screen shows would have to be
 added to `sourceQuery` and to `tidySourceSettings` in dashboard/core/source.js.
 An ordinary setting needs neither.
 
-The Theme page is a separate document, studio/schemas/theme.js, and its
+The Look page is a separate document, studio/schemas/theme.js, and its
 starting values are `defaultThemeSettings` in dashboard/config.js. The screen
 reads the whole document, and `tidyTheme` in dashboard/core/theme.js copies
-only the fields it knows, so a new Theme field must be added there as well as
+only the fields it knows, so a new field on the Look page must be added there as well as
 to the schema, to `defaultThemeSettings` and to `theme` in the contract in
 studio/check-schemas.mjs. The list of themes and overlays in the schema comes
 from studio/themes.js (docs/adding-a-theme.md).

@@ -51,11 +51,11 @@ export function withDefaults(raw) {
   content.settings.alert = Object.assign({}, defaultSettings.alert, content.settings.alert);
   content.settings.rotation = Object.assign({}, defaultSettings.rotation, content.settings.rotation);
 
-  // The Theme document is its own thing, not part of Dashboard Settings. A
+  // The Look document is its own thing, not part of Dashboard Settings. A
   // missing or unusable value becomes the default (see core/theme.js).
   content.theme = tidyTheme(source.theme);
 
-  // The Demo document is its own thing too. A missing one is no request and
+  // The Test the screen document is its own thing too. A missing one is no request and
   // the default steps (see core/demo.js).
   content.demo = tidyDemo(source.demo);
 
@@ -272,7 +272,7 @@ function readSavedCopy() {
   }
 }
 
-// The Theme document in the saved copy, as Sanity sent it, or null. Only when the
+// The Look document in the saved copy, as Sanity sent it, or null. Only when the
 // screen will start on the editors' content: the sample has its own theme and is
 // read from a file. core/layout-apply.js uses it to choose the layout before
 // anything is drawn.

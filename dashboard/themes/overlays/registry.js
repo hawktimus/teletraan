@@ -10,7 +10,7 @@
 // The Studio keeps its own copy of this list in studio/themes.js.
 // check-schemas.mjs fails when the two lists differ, so change both.
 //
-// The ids are stored in Studio, in the Theme schedule, so never rename one.
+// The ids are stored in Studio, in the Look schedule, so never rename one.
 // The order here is the order of the Studio's list.
 
 export const overlays = [

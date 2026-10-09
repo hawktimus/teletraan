@@ -12,8 +12,8 @@ import { clockIn, dayIn, fallbackTimeZone, isTimeZone } from './presentationTime
 // The same version as the screen's own questions to Sanity
 const apiVersion = '2025-02-19';
 
-// The kiosk shows times in the zone of the Theme page. Without an answer from
-// Sanity, or with a name Intl does not know, it is the zone the Theme page starts with.
+// The kiosk shows times in the zone of the Look page. Without an answer from
+// Sanity, or with a name Intl does not know, it is the zone the Look page starts with.
 async function kioskTimeZone(context) {
   try {
     const client = context.getClient({ apiVersion: apiVersion });

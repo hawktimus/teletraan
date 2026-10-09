@@ -15,13 +15,13 @@
 //                   fall, drift or rise across the whole screen, over the
 //                   panels. They are small, faint, slow and few, so one only
 //                   touches a letter for a moment. It is not drawn in calm or
-//                   none motion, or when the Theme page's switch is off.
+//                   none motion, or when the Look page's switch is off.
 //
 // The mark goes to core/marks.js, which draws it in place of the slashes at the
 // right of every panel header.
 //
 // Corner art (core/corner-art.js) is line art in the two cut corners, drawn into the
-// front layer's corner zones. A rule of the Theme schedule picks it, or else the pack's
+// front layer's corner zones. A rule of the Look schedule picks it, or else the pack's
 // own `defaults` do (core/pack-extras.js). Only the layouts that draw the front layer
 // have the zones, so the others draw none.
 //
@@ -426,7 +426,7 @@ const frontId = 'season-front';
 const overId = 'season-over';
 let shown = ''; // the pack on the page now, or '' for none
 let asks = 0; // counts the asks, so a slow load never lands after a newer ask
-let overWanted = true; // the Theme page's switch, "Seasonal pieces over the panels" (setOverPanels)
+let overWanted = true; // the Look page's switch, "Seasonal pieces over the panels" (setOverPanels)
 let layersWanted = allLayers; // the layers the layout draws (setLayers)
 let overMarkup = ''; // what the over layer of the pack on the page holds, kept so the switch can draw it again
 let artTyped = ''; // the corner art typed on the pack's rule, or '' (setCornerArt)
@@ -471,7 +471,7 @@ function drawOver() {
 }
 
 // Turns the over layer on or off while the screen runs. shell.js calls it with
-// the Theme page's switch each time the content changes. Anything but false is on.
+// the Look page's switch each time the content changes. Anything but false is on.
 export function setOverPanels(on) {
   const wanted = on !== false;
   if (wanted === overWanted) return;

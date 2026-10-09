@@ -11,7 +11,7 @@
 // dates it covers written like 2027-04-02. An all-day event ends at the
 // midnight after its last day, the same as a BAND one.
 //
-// Dates are read in the Time zone on the Theme page, so "today" is the same
+// Dates are read in the Time zone on the Look page, so "today" is the same
 // day for the editors and for the screen. eventDate() at the bottom writes the
 // date of an event for the screen, and every panel that shows one uses it, so
 // they all agree. Plain functions only, so tools/test-content.mjs can run them.
@@ -221,7 +221,7 @@ function ruleMatches(rule, event) {
 // shows. rules is content.calendarFilters, as sanity.js cleans it, and a rule
 // that is off or past its Hide after time does nothing. A Hide rule only works
 // when no Always show rule matches the event as well. The day of an event is its
-// first day, in the Theme time zone for a timed event, so a long event is judged
+// first day, in the Look time zone for a timed event, so a long event is judged
 // by the day it starts. timeZone is only needed for an event with no firstDay,
 // and now is the moment to judge the Hide after time by.
 export function hidingRule(event, rules, timeZone, now) {

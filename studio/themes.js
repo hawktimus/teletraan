@@ -1,4 +1,4 @@
-// The themes and seasonal packs the Theme page offers. This is a copy of
+// The themes and seasonal packs the Look page offers. This is a copy of
 // dashboard/themes/registry.js and dashboard/themes/overlays/registry.js. The
 // Studio is built on its own and cannot read files from the dashboard folder,
 // so the lists are written out here too. check-schemas.mjs fails if the ids,
@@ -8,7 +8,7 @@
 //
 // A seasonal pack is stored as an overlay: the accent colours of a holiday and,
 // when decorations is true, the decorations that go with it. The ids are stored
-// in the Theme schedule, so never rename one.
+// in the Look schedule, so never rename one.
 
 export const themes = [
   {

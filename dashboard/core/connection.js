@@ -61,11 +61,11 @@ export function itemCounts(content) {
     ['Tasks', size(data.tasks)],
     ['Sponsors', size(data.sponsors)],
     ['Tips', size(data.tipsAndNews)],
-    ['Subteams', size(data.subteams)],
+    ['Roster', size(data.subteams)],
     ['People', size(data.people)],
     ['Events Calendar', size(data.extraEvents)],
     ['Up Next', data.plan ? 1 : 0],
-    ['Custom panels', size(data.customPanels)],
+    ['Extra panels', size(data.customPanels)],
   ];
 }
 

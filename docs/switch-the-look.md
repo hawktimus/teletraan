@@ -50,7 +50,7 @@ weather, the BAND events and the photos show for every team
 
 ## 3. Pick the seasonal pack
 
-Open Theme in the sidebar. There are two ways to turn a pack on.
+Open Look in the sidebar. There are two ways to turn a pack on.
 
 - Use a theme now, with Seasonal pack picked, shows the pack at once. Set Until, so
   it ends by itself.

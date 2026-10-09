@@ -57,13 +57,13 @@ export default defineType({
       description: 'Optional. The first name of who to ask about the task, with no last name. Up to 12 characters fit.',
       validation: Rule => [tooLong(Rule, 12), Rule.custom(firstNameOnly)],
     }),
-    // Create new is left on, so an editor can add a place while editing a task
+    // Create new is left on, so an editor can add a location while editing a task
     defineField({
       name: 'location',
       title: 'Location',
       type: 'reference',
       to: [{ type: 'place' }],
-      description: 'Optional. Where the task is done. Pick a place, or use Create new to add one.',
+      description: 'Optional. Where the task is done. Pick a location, or use Create new to add one.',
     }),
     teamField(),
     orderField(),

@@ -13,7 +13,7 @@ A seasonal pack is a holiday look for the screen. It has two parts:
   - **decorations in the empty places** along the edges of the screen: strings of lights, holly,
     a scene along the bottom edge
 
-The editors see a pack as one choice, "Seasonal pack", on the Theme page in Studio. Under
+The editors see a pack as one choice, "Seasonal pack", on the Look page in Studio. Under
 the hood the colours are called an overlay, and the id of a pack is the id of its overlay. The
 ids are stored in Studio, so they never change:
 
@@ -118,7 +118,7 @@ open `http://localhost:8080/tools/zones.html`.
 |-------|-------------------|----------------|
 | `#season-back` | just before `#backdrop`, so under the stage | as big as the screen. Its pieces drift behind the panels and show in the gaps and margins. It also holds the shapes, drawn once, that every piece points at |
 | `#season-front` | just after `#stage` | made of zones. Each zone clips what is inside it, so a piece can never leave its zone and cross text |
-| `#season-over` | just after `#season-front` | as big as the screen, over the panels. Its pieces fall, drift or rise across everything, slowly and faintly. It is not drawn in calm or none motion, or when the Theme switch is off (see "The over layer") |
+| `#season-over` | just after `#season-front` | as big as the screen, over the panels. Its pieces fall, drift or rise across everything, slowly and faintly. It is not drawn in calm or none motion, or when the Look switch is off (see "The over layer") |
 
 A back piece is behind the panels, and also behind the banner and the ticker, which have no plate of
 their own, so a faint flake may pass behind a word. It is never in front of one. Keep back pieces faint
@@ -169,7 +169,7 @@ Every panel in the large panel has a small picture at the right of its header: t
 slash (`doubleSlash()` in `dashboard/core/marks.js`). While a pack is on, that picture is the pack's own: a fir
 tree, a pumpkin, a heart, a firework burst, a chequered flag, a sun. Every panel that draws the slashes gets
 the mark with no change to the panel: Tasks, Events, Up Next, Subteam spotlight, Sponsor feature,
-Photos, Leadership, Team Leads, Roster and Custom panels. (A Custom panel also uses the picture, at 28 x 38
+Photos, Leadership, Team Leads, Roster and Extra panels. (An Extra panel also uses the picture, at 28 x 38
 pixels, as the bullet of a list block, so the mark is scaled down there.)
 
 Each of the seven packs has a mark. `core/season.js` gives it to `core/marks.js` when the pack goes on and
@@ -297,14 +297,14 @@ also not drawn when the switch below is off.
 
 ### The Studio switch, and how to turn the layer off
 
-On the Theme page in Studio there is a switch, **Seasonal pieces over the panels**. It starts on, and a
+On the Look page in Studio there is a switch, **Seasonal pieces over the panels**. It starts on, and a
 missing value counts as on. Turn it off to keep only the header marks and the edge decorations. A change shows
 within a few seconds, while the screen runs: the layer appears or disappears without a page change.
 
 | Way | What it does |
 |-----|--------------|
-| the Theme page switch | on or off for the real screen, for every pack |
-| `?seasonover=off` (or `on`) in the address | the same, for that page only, whatever the Theme page says. For trying |
+| the Look page switch | on or off for the real screen, for every pack |
+| `?seasonover=off` (or `on`) in the address | the same, for that page only, whatever the Look page says. For trying |
 | Calm motion in Dashboard Settings | the layer is not drawn, and nothing else of the pack moves either |
 | `?motion=calm` in the address | the same, for that page only |
 
@@ -404,7 +404,7 @@ its line to the list at the top of `motion.css`. `tools/check-seasons.mjs` fails
 
 ## Extras on a rule
 
-A rule of a seasonal pack on the Theme page can carry three more things besides the pictures of
+A rule of a seasonal pack on the Look page can carry three more things besides the pictures of
 the pack. Each is optional, and each shows only while that rule's pack is on the screen.
 
 | Field in Studio | Limit | What it does |
@@ -548,7 +548,7 @@ finished. To add an eighth, or to finish one, do these steps in order. The Chris
    list at the top of that file, which excuses it from having a mark and over pieces. Take it out when the pack is done.
 8. **Look at it** (below).
 9. **Put it on the calendar.** Run `npm run deploy` in the `studio` folder so the editors see the pack
-   in their list, and add a rule to the Theme schedule (below).
+   in their list, and add a rule to the Look schedule (below).
 
 ## Looking at a pack
 
@@ -565,10 +565,10 @@ read from across the room.
   pack has loaded, so the first page after the screen starts still has the slashes: wait for the next page
   (30 seconds with `show`).
 - `http://localhost:8080/tools/zones.html` shows the zones as outlines over the dashboard.
-- On the Theme page in Studio, "Use a theme now" with a seasonal pack picked shows it on the real screen
+- On the Look page in Studio, "Use a theme now" with a seasonal pack picked shows it on the real screen
   at once. Set Until, or clear it afterwards.
 - "Preview next pack" in the menu next to Publish on Dashboard Settings shows the pack after the one on
-  the screen for 2 minutes, and then the Theme page comes back, with nothing to clear
+  the screen for 2 minutes, and then the Look page comes back, with nothing to clear
   (docs/hidden-transitions.md, "Preview a look").
 - `?hidden=desktop` and `?hidden=redEyes` play a hidden transition, to see the front layer fade out and back.
   Add `&night=off` at night.
@@ -579,7 +579,7 @@ word for more than a moment, and how many things move at once (`?perf` shows "an
 
 ## Putting a pack on the calendar
 
-The editors decide when a pack shows. No rules are made for you. On the Theme page in Studio, open
+The editors decide when a pack shows. No rules are made for you. On the Look page in Studio, open
 Schedule, add an item, and fill in:
 
 - **Name.** For the editors only, up to 24 characters.

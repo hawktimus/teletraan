@@ -3,7 +3,7 @@ import { showField, expiresField, orderField, teamField, tooLong, byOrder, aToZ,
 
 export default defineType({
   name: 'customPanel',
-  title: 'Custom Panel',
+  title: 'Extra panel',
   type: 'document',
   fields: [
     defineField({

@@ -1,4 +1,4 @@
-// The Demo page: one document with the fixed id 'demo' (see structure.js). Its
+// The Test the screen page: one document with the fixed id 'demo' (see structure.js). Its
 // two buttons, Run demo and Stop demo, are in ../actions.js. The dashboard reads
 // it with the rest of the content and plays the steps in
 // dashboard/core/demo.js. The starting values are the same as defaultDemo in
@@ -85,7 +85,7 @@ const announcementTextField = defineField({
 
 export default defineType({
   name: 'demo',
-  title: 'Demo',
+  title: 'Test the screen',
   type: 'document',
   fields: [requestedAtField, stepsField, announcementTextField],
 });

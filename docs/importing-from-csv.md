@@ -25,13 +25,13 @@ The folder `docs/content-templates/` has one CSV file for each kind of content.
 | extraEvent.csv | Events Calendar |
 | sponsor.csv | Sponsors |
 | tipOrNews.csv | Tips and News |
-| subteam.csv | Subteams |
-| place.csv | Places |
+| subteam.csv | Roster |
+| place.csv | Locations |
 | person.csv | Leadership |
-| customPanel.csv | Custom Panels |
+| customPanel.csv | Extra panels |
 
-There is no template for the pages that exist once (Dashboard Settings, Theme
-and Demo), for Meeting days, Presentations or Calendar filters, and none for
+There is no template for the pages that exist once (Dashboard Settings, Look
+and Test the screen), for Meeting days, Presentations or Calendar filters, and none for
 photos. The pictures in Photos and the photo of a person in Leadership are
 uploaded in Studio, so there is no photo template and person.csv has no photo
 column.
@@ -63,16 +63,16 @@ A task points to its subteam by name. The script only accepts a name that is in
 a subteam file in the same folder, so keep subteam.csv with task.csv.
 
 A task can also have a point of contact (`contact`, a first name of up to 12
-characters) and a `location`, which is the name of a place. Both come just
+characters) and a `location`, which is the name of a location. Both come just
 before the team column at the end of task.csv, and both may be left empty. A
 task file saved from the older template, without these two columns, still
 imports. The script knows
-the three starting places, Classroom, Programming room and Media center,
-without a file (they are in `docs/seed/places.ndjson`), and any place in a
+the three starting locations, Classroom, Programming room and Media center,
+without a file (they are in `docs/seed/places.ndjson`), and any location in a
 place.csv in the same folder. It ignores capitals, so `classroom` is fine. Any
-other name is refused, with the row named. It cannot look in Studio, so a place
+other name is refused, with the row named. It cannot look in Studio, so a location
 someone made there by hand is not known to it: leave the cell empty and pick
-the place in the task in Studio, or add the place to place.csv if it is not in
+the location in the task in Studio, or add the location to place.csv if it is not in
 Studio yet.
 
 Every template except place.csv ends with a `team` column. It is the code of the
@@ -113,11 +113,11 @@ One row is one item. Write each kind of value like this:
 | web address | An address that starts with https:// | https://example.com/logo.png |
 | one of tip/news/reminder | One of the words, spelled exactly | tip |
 | name of subteam | The name of the subteam, as in subteam.csv | Build |
-| name of place | The name of the place, as in place.csv or the starting places | Classroom |
+| name of place | The name of the location, as in place.csv or the starting locations | Classroom |
 
 Some more things to know:
 
-- A list of lines (the list block of a custom panel, or the members of a
+- A list of lines (the list block of an extra panel, or the members of a
   subteam) is one cell. Put a vertical bar between the lines, like
   `Drill | Saw | Tape`. Row 2 says how many lines and how long each may be.
 - A cell with `required` in row 2 must be filled in. The script says which
@@ -139,7 +139,7 @@ Two kinds of content hold a list, so their columns come in numbered groups.
 group empty and it is left out. If you fill in anything in a group, its text
 is needed.
 
-**Custom Panels** have up to 6 blocks. Each block is a group that starts with
+**Extra panels** have up to 6 blocks. Each block is a group that starts with
 `blocks.1._type`, where you pick the kind of block. The other columns of the
 group are used by some kinds and left empty by the rest:
 

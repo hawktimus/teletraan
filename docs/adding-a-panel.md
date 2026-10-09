@@ -79,7 +79,7 @@ Studio, already merged and sorted (`core/events.js`). Each event has `title`,
 and `timeText()` in `core/events.js` write the date and the time for it.
 `eventDate(event, content.theme.timeZone)` gives the weekday, the month and
 day, and the range (`FRI`, `APR 2`, `APR 2-4`), read in the Time zone on the
-Theme page. Use it for any event date a panel shows, so every panel writes it
+Look page. Use it for any event date a panel shows, so every panel writes it
 the same way, and do not write a date from `start` with `getDate()`.
 
     export function mount(host, content) {
@@ -308,9 +308,9 @@ Dashboard Settings field and an address switch, and the address wins.
 | Attribute | Values | Dashboard Settings | Address |
 |-----------|--------|--------------------|---------|
 | `data-metal` | `gold` (dull antique gold, the default) or `silver` (weathered silver). It is on the html element, for the banner, the countdown and the logo, and on each large and small panel area, for its frame and everything in it, chosen at every page change | Screen, Frame metal (the html element). Transitions, Frame finish (the areas) | `?metal=silver` (the html element). `?frames=silver` (the areas) |
-| `data-glint` | `on` (the default) or `off`: the bright dash that runs round each big frame | Screen, Glint (Flat and Plain in Look turn it off) | `?glint=off` |
-| `data-finish` | `metal` (the default) or `flat` | Screen, Look (Polished is `metal`, Flat and Plain are `flat`) | `?finish=flat` |
-| `data-look` | `polished` (the default), `flat` or `plain`: plain also hides the screws and the // in the panel headers (two rules in `base.css`). The look sets `data-finish` and `data-glint` too (`core/look.js`) | Screen, Look | `?look=plain` |
+| `data-glint` | `on` (the default) or `off`: the bright dash that runs round each big frame | Screen, Glint (Flat and Plain in Polish turn it off) | `?glint=off` |
+| `data-finish` | `metal` (the default) or `flat` | Screen, Polish (Polished is `metal`, Flat and Plain are `flat`) | `?finish=flat` |
+| `data-look` | `polished` (the default), `flat` or `plain`: plain also hides the screws and the // in the panel headers (two rules in `base.css`). The look sets `data-finish` and `data-glint` too (`core/look.js`) | Screen, Polish | `?look=plain` |
 | `data-motion` | `full` (the default), `calm` or `none` | Screen, Motion (full or calm) | `?motion=calm` |
 
 The countdown and the alert are always red metal, whatever `data-metal` says.
@@ -322,7 +322,7 @@ shade, ridge or glint, and every screw a plain silver head with a slot. The
 turning slats, the lifting halves and the turning screws stay, so it is the
 same screen with less to paint. If the
 screen on the Mini is slow, this is the first thing to try
-(docs/try-it-on-the-mini.md). Look in Dashboard Settings sets it (Flat and
+(docs/try-it-on-the-mini.md). Polish in Dashboard Settings sets it (Flat and
 Plain).
 
 **The plain look.** Plain is the flat finish with the screws and the default //

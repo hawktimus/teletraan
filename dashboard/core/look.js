@@ -1,4 +1,4 @@
-// The Look setting of Dashboard Settings (the names are in `looks` in config.js).
+// The Polish setting of Dashboard Settings (the names are in `looks` in config.js).
 // A look is one word that picks values for the page switches the stylesheets
 // read: data-finish and data-glint, which already existed, and data-look, which
 // only the rules for Plain in base.css read. Nothing else reads the setting.

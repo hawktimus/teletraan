@@ -266,7 +266,38 @@ const pageTypes = ['dashboardSettings', 'theme', 'demo'];
 const notInSidebar = {};
 
 // The sidebar titles that people look for by name
-const sidebarTitles = { extraEvent: 'Events Calendar', calendarFilter: 'Calendar filters', place: 'Places', presentationDay: 'Meeting days', team: 'Teams' };
+const sidebarTitles = {
+  extraEvent: 'Events Calendar',
+  calendarFilter: 'Calendar filters',
+  subteam: 'Roster',
+  place: 'Locations',
+  customPanel: 'Extra panels',
+  presentationDay: 'Meeting days',
+  team: 'Teams',
+  theme: 'Look',
+  demo: 'Test the screen',
+};
+
+// The sidebar as the owner asked for it. A heading is the first thing before
+// the colon, and the lines under it come after. The first group has no heading.
+const sidebarGroups = [
+  'Start here',
+  'EVERY MEETING: Up Next, Tasks, Tips and News',
+  'EVENTS: Events Calendar, Calendars, Calendar filters, Presentations',
+  'THE TEAM: Roster, Leadership, Sponsors, Photos',
+  'COACHES ONLY: Dashboard Settings, Look, Teams, Locations, Extra panels, Test the screen',
+];
+const presentationLines = 'Meeting days, Upcoming, Past';
+
+// The titles the sidebar used to have. None of them may be left in a title,
+// a description or a message that an editor reads.
+const oldTitles = [
+  { words: /\bSubteams\b/, was: 'Subteams', now: 'Roster' },
+  { words: /\bplaces?\b/i, was: 'Places', now: 'Locations' },
+  { words: /\bCustom Panels?\b/i, was: 'Custom Panels', now: 'Extra panels' },
+  { words: /\bTheme (page|document)\b/i, was: 'Theme', now: 'Look' },
+  { words: /\bDemo page\b/i, was: 'Demo', now: 'Test the screen' },
+];
 
 // The real 'sanity' and 'react' packages are not installed, so stand-ins with
 // the same function names sit next to a copy of the files that import them.
@@ -310,9 +341,15 @@ const standIns = {
   },
 };
 
+// The icons structure.js imports, each from its own file of @sanity/icons:
+// [file, name], such as ['Home', 'HomeIcon']
+function iconImportsOf(source) {
+  return Array.from(source.matchAll(/import \{ (\w+) \} from '@sanity\/icons\/(\w+)';/g)).map(match => [match[2], match[1]]);
+}
+
 function makeSandbox() {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-studio-'));
-  ['schemas', 'structure.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'publish-all.js', 'publish-all-tool.js', 'team-input.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
+  ['schemas', 'structure.js', 'start-here.js', 'calendars-view.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'publish-all.js', 'publish-all-tool.js', 'team-input.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
     fs.cpSync(path.join(here, name), path.join(folder, name), { recursive: true });
   });
   fs.writeFileSync(path.join(folder, 'package.json'), JSON.stringify({ type: 'module' }));
@@ -322,6 +359,17 @@ function makeSandbox() {
     fs.mkdirSync(stub, { recursive: true });
     Object.keys(standIns[packageName]).forEach(name => fs.writeFileSync(path.join(stub, name), standIns[packageName][name]));
   });
+
+  // An icon stand-in for each file of @sanity/icons that structure.js imports
+  const icons = iconImportsOf(fs.readFileSync(path.join(folder, 'structure.js'), 'utf8'));
+  const iconFolder = path.join(folder, 'node_modules', '@sanity', 'icons');
+  const iconExports = {};
+  fs.mkdirSync(iconFolder, { recursive: true });
+  icons.forEach(icon => {
+    iconExports['./' + icon[0]] = './' + icon[0] + '.js';
+    fs.writeFileSync(path.join(iconFolder, icon[0] + '.js'), 'export const ' + icon[1] + ' = () => null;');
+  });
+  fs.writeFileSync(path.join(iconFolder, 'package.json'), JSON.stringify({ name: '@sanity/icons', type: 'module', exports: iconExports }));
   return folder;
 }
 
@@ -1055,7 +1103,7 @@ function checkLookSetting() {
   need(problems, config.defaultSettings.look === 'polished', 'the default look in config.js should be polished');
   need(problems, look && look.initialValue === 'polished', 'look should start as polished');
   need(problems, look && look.group === 'screen', 'look should be in the Screen tab');
-  need(problems, look && look.title === 'Look', 'look should be titled Look');
+  need(problems, look && look.title === 'Polish', 'look should be titled Polish');
   need(problems, look && look.options && look.options.layout === 'radio', 'look should be a radio list');
   need(problems, offered.map(item => item.value).join() === config.looks.join(), 'look should offer the same names, in the same order, as looks in config.js: ' + config.looks.join(', '));
   offered.forEach(item => need(problems, item.title === titles[item.value], 'the look ' + item.value + ' should be titled ' + titles[item.value]));
@@ -1075,7 +1123,7 @@ function checkLookSetting() {
 // Style, in the Screen tab. The Studio list is the dashboard's list (the styles in
 // config.js), in the same order, the starting value is Original, which changes
 // nothing on the screen, and the sample content has a style the dashboard accepts.
-// The dashboard has a layout for the two styles that force one, and the Theme page
+// The dashboard has a layout for the two styles that force one, and the Look page
 // says that the style and the team set the base values.
 function checkStyleSetting() {
   const problems = [];
@@ -1107,7 +1155,7 @@ function checkStyleSetting() {
   need(problems, world.layoutModule.layouts.indexOf('bar') !== -1, 'the dashboard needs the bar layout, which Cybertron and Minimal have');
 
   const theme = fieldAt('theme.defaultTheme');
-  need(problems, theme && /Style and team set the base values/.test(theme.description || ''), 'the Theme page should say that the style and the team set the base values');
+  need(problems, theme && /Style and team set the base values/.test(theme.description || ''), 'the Look page should say that the style and the team set the base values');
   return problems;
 }
 
@@ -1192,7 +1240,7 @@ function checkContentSource() {
 // The Night mode tab (the screensaver): a switch that starts on, a style, a start
 // and an end time, the logo width, a speed and a preview switch. The section is
 // all in schemas/settingsNight.js. There is no time zone field: night mode uses
-// the time zone of the Theme page, so the descriptions say so. The choices, the
+// the time zone of the Look page, so the descriptions say so. The choices, the
 // limit and the starting values are compared with config.js here and in
 // checkChoices, checkLookAndTiming and checkStartingValues.
 function checkNightTab() {
@@ -1241,9 +1289,9 @@ function checkNightTab() {
   need(problems, config.defaultSettings.nightStart === '23:30' && config.defaultSettings.nightEnd === '11:30', 'the default night times in config.js should be 23:30 to 11:30');
   ['nightStart', 'nightEnd'].forEach(name => {
     need(problems, at(name) && constraintNamed(constraintsOf(at(name)), 'required'), name + ' should be required');
-    need(problems, at(name) && /time zone/i.test(at(name).description || '') && /Theme/.test(at(name).description || ''), 'the ' + name + ' description should say that it uses the time zone on the Theme page');
+    need(problems, at(name) && /time zone/i.test(at(name).description || '') && /Look/.test(at(name).description || ''), 'the ' + name + ' description should say that it uses the time zone on the Look page');
   });
-  need(problems, !fieldsIn(settings).some(field => /zone/i.test(field.name)), 'night mode has no time zone field of its own, because it uses the one on the Theme page');
+  need(problems, !fieldsIn(settings).some(field => /zone/i.test(field.name)), 'night mode has no time zone field of its own, because it uses the one on the Look page');
 
   // The same start and end is no time at all, so the end time warns about it, and only warns
   const endRules = at('nightEnd') ? constraintsOf(at('nightEnd')) : [];
@@ -1745,7 +1793,7 @@ function checkDashboardNames() {
 
 // A stand-in for the Studio's structure builder that writes down each call
 function fakeBuilder() {
-  const methods = ['title', 'id', 'child', 'items', 'schemaType', 'documentId', 'defaultOrdering', 'apiVersion', 'filter', 'params'];
+  const methods = ['title', 'id', 'icon', 'child', 'items', 'schemaType', 'documentId', 'defaultOrdering', 'apiVersion', 'filter', 'params'];
   function node(start) {
     const made = Object.assign({}, start);
     const builder = { made: made };
@@ -1763,6 +1811,7 @@ function fakeBuilder() {
     listItem: () => node({}),
     documentTypeList: type => node({ type: type }),
     document: () => node({}),
+    component: component => node({ component: component }),
     divider: () => node({ divider: true }),
   };
 }
@@ -1770,11 +1819,23 @@ function fakeBuilder() {
 // structure.js holds the whole sidebar as one list, sidebarEntries. Each line
 // has to name a type that exists, and each kind of document has to have a
 // line, or editors could not reach it. A group holds lists, and its lines count
-// like the others. The order of the lines is not checked.
+// like the others. The headings, the lines under each and their order are the
+// ones in sidebarGroups, and every line has an icon of its own.
 
 // Every line of the sidebar, the lines inside each group too
 function allLines(entries) {
   return entries.reduce((lines, entry) => lines.concat(entry.kind === 'group' ? [entry].concat(entry.entries || []) : [entry]), []);
+}
+
+// The headings and the lines under each, as text such as "EVERY MEETING: Up Next, Tasks"
+function sidebarShape(entries) {
+  const groups = [];
+  entries.forEach(entry => {
+    if (entry.kind === 'divider') return groups.push({ heading: entry.title || '', titles: [] });
+    if (groups.length === 0) groups.push({ heading: '', titles: [] });
+    groups[groups.length - 1].titles.push(entry.title);
+  });
+  return groups.map(group => (group.heading ? group.heading + ': ' : '') + group.titles.join(', '));
 }
 
 function checkSidebarLines(problems) {
@@ -1782,6 +1843,7 @@ function checkSidebarLines(problems) {
   const typeNames = world.types.map(type => type.name);
   const named = [];
   const ids = [];
+  const icons = [];
 
   // The id of a line is how Studio tells the lines of one list apart
   function checkId(entry, where) {
@@ -1790,9 +1852,17 @@ function checkSidebarLines(problems) {
     ids.push(id);
   }
 
+  // The icon is how the lines are told apart at a glance, so no two lines share one
+  function checkIcon(entry, where) {
+    need(problems, Boolean(entry.icon), where + ' has no icon. Import one from @sanity/icons and add icon: to the line.');
+    need(problems, !entry.icon || icons.indexOf(entry.icon) === -1, where + ' has an icon that another line has too. Pick another one.');
+    icons.push(entry.icon);
+  }
+
   function checkLine(entry, line) {
     const where = line + ' ("' + entry.title + '")';
     if (!entry.title) problems.push(line + ' has no title');
+    checkIcon(entry, where);
     if (typeNames.indexOf(entry.type) === -1) return problems.push(where + ' names the type "' + entry.type + '", and schemas/index.js has no type with that name. Fix the spelling or remove the line.');
 
     checkId(entry, where);
@@ -1816,15 +1886,27 @@ function checkSidebarLines(problems) {
     }
   }
 
+  // A page that is not a document: a title, an id and a plain function that draws it
+  function checkComponent(entry, line) {
+    const where = line + ' ("' + entry.title + '")';
+    if (!entry.title) problems.push(line + ' has no title');
+    need(problems, typeof entry.id === 'string' && entry.id !== '', where + ' needs an id');
+    need(problems, typeof entry.component === 'function', where + ' needs a component, a plain function that draws the page');
+    checkId(entry, where);
+    checkIcon(entry, where);
+  }
+
   entries.forEach((entry, index) => {
     const line = 'structure.js line ' + (index + 1) + ' of sidebarEntries';
-    if (entry.kind === 'divider') return;
+    if (entry.kind === 'divider') return need(problems, typeof entry.title === 'string' && entry.title !== '', line + ' is a divider with no heading. Give it a title, such as EVERY MEETING.');
+    if (entry.kind === 'component') return checkComponent(entry, line);
 
     if (entry.kind === 'group') {
       const where = line + ' ("' + entry.title + '")';
       if (!entry.title) problems.push(line + ' has no title');
       need(problems, typeof entry.id === 'string' && entry.id !== '', where + ' needs an id');
       checkId(entry, where);
+      checkIcon(entry, where);
       if (!Array.isArray(entry.entries) || entry.entries.length === 0) return problems.push(where + ' has no lines under entries');
 
       entry.entries.forEach((inner, position) => {
@@ -1835,7 +1917,7 @@ function checkSidebarLines(problems) {
       return;
     }
 
-    if (entry.kind !== 'list' && entry.kind !== 'page') return problems.push(line + ' has the kind "' + entry.kind + '". Use list, page, group or divider.');
+    if (entry.kind !== 'list' && entry.kind !== 'page') return problems.push(line + ' has the kind "' + entry.kind + '". Use list, page, group, component or divider.');
     checkLine(entry, line);
   });
 
@@ -1851,18 +1933,55 @@ function checkSidebarLines(problems) {
   });
 }
 
+// The headings, the lines under each, the order, and Start here and Calendars
+function checkSidebarGroups(problems) {
+  const entries = world.structure.sidebarEntries;
+  const shape = sidebarShape(entries);
+  need(problems, shape.join('\n') === sidebarGroups.join('\n'), 'the sidebar should read, with a heading and then its lines:\n    ' + sidebarGroups.join('\n    ') + '\nstructure.js has:\n    ' + shape.join('\n    '));
+
+  // Presentations is the one line that holds lines. A heading is a divider, not a folder.
+  const groups = entries.filter(entry => entry.kind === 'group');
+  need(problems, groups.map(entry => entry.title).join() === 'Presentations', 'Presentations should be the only group that holds lines, and the headings should be dividers with a title. The groups are: ' + (groups.map(entry => entry.title).join() || 'none'));
+  need(problems, groups.length === 1 && groups[0].entries.map(inner => inner.title).join(', ') === presentationLines, 'Presentations should hold: ' + presentationLines);
+
+  ['Start here', 'Calendars'].forEach(title => {
+    const entry = entries.filter(item => item.title === title)[0];
+    need(problems, entry && entry.kind === 'component' && typeof entry.component === 'function', 'the sidebar should have a ' + title + ' line that opens a page drawn by a component');
+  });
+}
+
+// The icons are files of the installed @sanity/icons. That package is only read when it is installed.
+function checkIconFiles(problems) {
+  const manifest = path.join(here, 'node_modules', '@sanity', 'icons', 'package.json');
+  if (!fs.existsSync(manifest)) return;
+
+  const files = JSON.parse(fs.readFileSync(manifest, 'utf8')).exports || {};
+  iconImportsOf(fs.readFileSync(path.join(here, 'structure.js'), 'utf8')).forEach(icon => {
+    need(problems, files['./' + icon[0]] !== undefined, 'structure.js imports @sanity/icons/' + icon[0] + ', and the installed @sanity/icons has no such file');
+    need(problems, icon[1] === icon[0] + 'Icon', 'structure.js imports ' + icon[1] + ' from @sanity/icons/' + icon[0] + ', and that file holds ' + icon[0] + 'Icon');
+  });
+}
+
 // What structure() built for one line has to match the line. For a group, its lines are checked the same way.
 function checkBuiltItem(entry, item, what, problems) {
   const child = item.child && item.child.made;
 
-  if (entry.kind === 'divider') return need(problems, item.divider === true, what + ' should be a divider');
+  if (entry.kind === 'divider') {
+    need(problems, item.divider === true, what + ' should be a divider');
+    return need(problems, item.title === entry.title, what + ' should have the heading ' + entry.title + ', it has ' + item.title);
+  }
   if (item.title !== entry.title) return problems.push(what + ' should be titled ' + entry.title + ', it is ' + item.title);
+  need(problems, item.icon === entry.icon, what + ' should have the icon of its line');
 
   if (entry.kind === 'group') {
     const inside = ((child && child.items) || []).map(inner => inner.made);
     need(problems, child && child.id === entry.id && child.title === entry.title, what + ' should open a list titled ' + entry.title + ' with the id ' + entry.id);
     if (inside.length !== entry.entries.length) return problems.push(what + ' should open ' + entry.entries.length + ' lines, it opens ' + inside.length);
     entry.entries.forEach((inner, index) => checkBuiltItem(inner, inside[index], what + ', line ' + (index + 1) + ' ("' + inner.title + '")', problems));
+  } else if (entry.kind === 'component') {
+    const pageOk = child && child.component === entry.component && child.id === entry.id && child.title === entry.title;
+    need(problems, pageOk, what + ' should open the page ' + entry.title + ', drawn by its component, with the id ' + entry.id);
+    need(problems, item.id === entry.id, what + ' should have the id ' + entry.id + ', it has ' + item.id);
   } else if (entry.kind === 'list') {
     const listOk = child && child.type === entry.type && child.title === entry.title && child.defaultOrdering[0].field === entry.sort.field;
     need(problems, listOk, what + ' should open the ' + entry.type + ' list, titled ' + entry.title + ', sorted by ' + entry.sort.field);
@@ -1887,6 +2006,8 @@ function checkSidebar() {
   if (!Array.isArray(entries) || entries.length === 0) return ['structure.js should export sidebarEntries, the one list that holds every line of the sidebar'];
 
   checkSidebarLines(problems);
+  checkSidebarGroups(problems);
+  checkIconFiles(problems);
 
   // What the Studio gets is those lines, in the same order, with the same sorting
   const items = world.structure.structure(fakeBuilder()).made.items.map(item => item.made);
@@ -1895,6 +2016,55 @@ function checkSidebar() {
   entries.forEach((entry, index) => {
     checkBuiltItem(entry, items[index], 'sidebar line ' + (index + 1) + ' ("' + (entry.title || entry.kind) + '")', problems);
   });
+  return problems;
+}
+
+// Every text an editor reads: the titles of the types and fields, the tabs, the
+// descriptions, the words a list line shows when it has nothing to show, the
+// messages of the rules and the sidebar. None may still use a title the sidebar
+// had before, because an editor would look for a line that is not there.
+function checkOldTitles() {
+  const problems = [];
+  const texts = [];
+  const add = (where, text) => {
+    if (typeof text === 'string') texts.push([where, text]);
+  };
+
+  world.types.forEach(type => {
+    add(type.name + ' title', type.title);
+    (type.groups || []).forEach(group => add(type.name + ' tab ' + group.name, group.title));
+  });
+  eachField((where, field) => {
+    add(where + ' title', field.title);
+    add(where + ' description', field.description);
+    [field].concat(field.of || []).forEach(item => {
+      try {
+        constraintsOf(item).filter(rule => ['error', 'warning', 'info'].indexOf(rule.name) !== -1).forEach(rule => add(where + ' message', rule.args[0]));
+      } catch (error) {
+        // checkValidations reports a rule that does not run
+      }
+    });
+  });
+  eachPreview((where, preview) => {
+    try {
+      const shown = typeof preview.prepare === 'function' ? preview.prepare({}) : {};
+      add(where + ' list line', shown.title);
+      add(where + ' list line', shown.subtitle);
+    } catch (error) {
+      // a preview that needs its fields is checked with the others
+    }
+  });
+  allLines(world.structure.sidebarEntries).forEach(entry => add('the sidebar', entry.title));
+
+  texts.forEach(text => oldTitles.forEach(old => {
+    const hit = text[1].match(old.words);
+    need(problems, !hit, text[0] + ' says "' + (hit && hit[0]) + '". The sidebar calls it ' + old.now + ' now, not ' + old.was + '.');
+  }));
+
+  // The title of a type or a line is what the sidebar called it, so it is never an old one
+  const oldNames = ['Subteams', 'Places', 'Custom Panels', 'Custom Panel', 'Theme', 'Demo'];
+  world.types.forEach(type => need(problems, oldNames.indexOf(type.title) === -1, 'the type ' + type.name + ' is still titled ' + type.title));
+  allLines(world.structure.sidebarEntries).forEach(entry => need(problems, oldNames.indexOf(entry.title) === -1, 'the sidebar still has a line titled ' + entry.title));
   return problems;
 }
 
@@ -1908,17 +2078,17 @@ function checkSettingsPage() {
   if (kept !== wanted) problems.push('the settings page should have these actions: ' + wanted + '. It has: ' + kept);
   if (others !== actions.length) problems.push('other types should keep every action');
 
-  // The Theme page is made the same way: nothing that copies it or takes it away, and no buttons of its own
+  // The Look page is made the same way: nothing that copies it or takes it away, and no buttons of its own
   const themeActions = world.config.document.actions(actions, { schemaType: 'theme' }).map(item => item.action).join();
-  if (themeActions !== 'publish,discardChanges') problems.push('the Theme page should have these actions: publish,discardChanges. It has: ' + themeActions);
+  if (themeActions !== 'publish,discardChanges') problems.push('the Look page should have these actions: publish,discardChanges. It has: ' + themeActions);
 
-  // The Demo page is the same, with its two buttons (checkDemo looks at them)
+  // The Test the screen page is the same, with its two buttons (checkDemo looks at them)
   const demoActions = world.config.document.actions(actions, { schemaType: 'demo' }).map(item => item.action).join();
-  if (demoActions !== 'publish,discardChanges,runDemo,stopDemo') problems.push('the Demo page should have these actions: publish,discardChanges,runDemo,stopDemo. It has: ' + demoActions);
+  if (demoActions !== 'publish,discardChanges,runDemo,stopDemo') problems.push('the Test the screen page should have these actions: publish,discardChanges,runDemo,stopDemo. It has: ' + demoActions);
 
   const templates = [{ templateId: 'task' }, { templateId: 'dashboardSettings' }, { templateId: 'theme' }, { templateId: 'demo' }];
   const offered = world.config.document.newDocumentOptions(templates, {}).map(item => item.templateId).join();
-  if (offered !== 'task') problems.push('the New menu should not offer Dashboard Settings, Theme or Demo');
+  if (offered !== 'task') problems.push('the New menu should not offer Dashboard Settings, Look or Test the screen');
 
   const named = world.structure.settingsType === 'dashboardSettings' && world.structure.settingsId === 'dashboardSettings';
   need(problems, named, 'structure.js should name the settings type and id dashboardSettings');
@@ -2182,7 +2352,7 @@ function checkThemeLists() {
   return problems;
 }
 
-// The Theme page. The Studio and dashboard/config.js agree on the starting
+// The Look page. The Studio and dashboard/config.js agree on the starting
 // values, a rule has to have a start and an end, and the time zone is checked.
 function checkTheme() {
   const problems = [];
@@ -2363,7 +2533,7 @@ function checkDemoScreens() {
   return problems;
 }
 
-// The Demo page. The Studio and dashboard/config.js agree on the starting
+// The Test the screen page. The Studio and dashboard/config.js agree on the starting
 // values and the limits, Requested at is read only because the buttons fill it
 // in, and Run demo and Stop demo do what they say. The sample content carries
 // the same starting values.
@@ -2408,10 +2578,10 @@ function checkDemo() {
   need(problems, constraintNamed(secondsRules, 'required'), 'demo.steps.seconds should be required');
   need(problems, constraintNamed(rulesOf(at('steps.screen')), 'required'), 'demo.steps.screen should be required');
 
-  // The two buttons: plain functions on the Demo page and nowhere else
+  // The two buttons: plain functions on the Test the screen page and nowhere else
   const buttons = world.config.document.actions([], { schemaType: 'demo' });
   if (buttons.length !== 2 || !buttons.every(button => typeof button === 'function')) {
-    return problems.concat('the Demo page should add two actions, written as plain functions');
+    return problems.concat('the Test the screen page should add two actions, written as plain functions');
   }
 
   function press(button, published, draft) {
@@ -2535,11 +2705,11 @@ function checkExtraEvents() {
   return problems;
 }
 
-// The Place type, and the two fields of a task that use it. A place has a name
-// (required, up to 16 characters, different from every other place) and a
-// Show on screen switch. A task's contact and location are optional, and the
-// location keeps Sanity's Create new option, so an editor can add a place
-// while editing a task. The seed file holds the three starting places.
+// The Place type, called Locations in the sidebar, and the two fields of a task that
+// use it. A location has a name (required, up to 16 characters, different from every
+// other location) and a Show on screen switch. A task's contact and location are
+// optional, and the location keeps Sanity's Create new option, so an editor can add a
+// location while editing a task. The seed file holds the three starting locations.
 function checkPlaces() {
   const problems = [];
   const rulesOf = field => (field ? constraintsOf(field) : []);
@@ -2549,10 +2719,10 @@ function checkPlaces() {
   need(problems, constraintNamed(rulesOf(fieldAt('place.name')), 'required'), 'place.name should be required');
   const show = fieldAt('place.show');
   need(problems, show && show.type === 'boolean' && show.title === 'Show on screen' && show.initialValue === true, 'place.show should be a switch titled Show on screen that starts on');
-  need(problems, type.title === 'Places', 'the place type should have the title Places');
+  need(problems, type.title === 'Locations', 'the place type should have the title Locations');
   need(problems, (type.orderings || []).some(item => item.by && item.by[0].field === 'name'), 'place needs an ordering by name');
   const hidden = type.preview.prepare({ title: 'Classroom', show: false }).subtitle || '';
-  need(problems, hidden.indexOf('Hidden') !== -1, 'the place preview does not say when a place is hidden');
+  need(problems, hidden.indexOf('Hidden') !== -1, 'the location preview does not say when a location is hidden');
 
   ['contact', 'location'].forEach(name => {
     const field = fieldAt('task.' + name);
@@ -2563,7 +2733,7 @@ function checkPlaces() {
   const location = fieldAt('task.location');
   const options = (location && location.options) || {};
   need(problems, !options.disableNew, 'task.location should leave Create new on: do not set disableNew');
-  need(problems, !options.filter && !options.weak, 'task.location should be an ordinary reference to a place');
+  need(problems, !options.filter && !options.weak, 'task.location should be an ordinary reference to a location');
 
   // the contact is a first name, with no space or digit
   const firstName = constraintNamed(rulesOf(fieldAt('task.contact')), 'custom');
@@ -2575,13 +2745,13 @@ function checkPlaces() {
     need(problems, typeof run('Sam K') === 'string' && typeof run('Sam2') === 'string', 'a contact with a space or a number in it should be refused');
   }
 
-  // the sample content shows a contact and a place, and keeps to the limits
+  // the sample content shows a contact and a location, and keeps to the limits
   const tasks = world.sample.tasks;
   need(problems, tasks.some(task => task.contact && task.location), 'the sample content needs a task with a contact and a location');
   need(problems, tasks.some(task => task.contact && !task.location) && tasks.some(task => task.location && !task.contact), 'the sample content needs a task with only a contact and one with only a location');
   tasks.forEach(task => {
     need(problems, task.contact === undefined || (typeof task.contact === 'string' && task.contact.length <= 12), 'sample task "' + task.title + '": contact should be text of 12 characters or fewer');
-    need(problems, task.location === undefined || (typeof task.location === 'string' && task.location.length <= 16), 'sample task "' + task.title + '": location should be the place name, 16 characters or fewer');
+    need(problems, task.location === undefined || (typeof task.location === 'string' && task.location.length <= 16), 'sample task "' + task.title + '": location should be the location name, 16 characters or fewer');
   });
 
   // The seed file: one JSON document a line, fixed ids, only fields the Studio has
@@ -2600,7 +2770,7 @@ function checkPlaces() {
 
     need(problems, doc._type === 'place', where + ' should have _type place');
     need(problems, typeof doc._id === 'string' && /^place-[a-z0-9-]+$/.test(doc._id), where + ' should have a fixed _id such as place-classroom, with lowercase letters, digits and hyphens');
-    // the CSV importer makes the same id from a place's name, so a task in a CSV can point at a seeded place
+    // the CSV importer makes the same id from a location's name, so a task in a CSV can point at a seeded location
     const importerId = 'place-' + String(doc.name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     need(problems, doc._id === importerId, where + ': the _id should be ' + importerId + ', which is the one studio/scripts/import-csv.mjs makes from the name');
     ids.push(doc._id);
@@ -2615,12 +2785,12 @@ function checkPlaces() {
   return problems;
 }
 
-// The name check asks Sanity for the other places, so it waits for an answer.
+// The name check asks Sanity for the other locations, so it waits for an answer.
 // A stand-in client gives the answer here and writes down what it was asked.
 async function checkPlaceNames() {
   const problems = [];
   const custom = constraintNamed(constraintsOf(fieldAt('place.name')), 'custom');
-  if (!custom) return ['place.name should be checked against the names of the other places'];
+  if (!custom) return ['place.name should be checked against the names of the other locations'];
 
   async function ask(name, document, others) {
     const asked = [];
@@ -2631,18 +2801,18 @@ async function checkPlaceNames() {
 
   const others = ['Classroom', 'Media center'];
   const same = await ask('Classroom', { _id: 'drafts.place-new' }, others);
-  need(problems, typeof same.answer === 'string', 'a name that another place has should be refused');
-  need(problems, typeof (await ask('  mEDIA CENTER ', { _id: 'place-new' }, others)).answer === 'string', 'a name that another place has, in other capitals or with spaces round it, should be refused');
-  need(problems, (await ask('Programming room', { _id: 'place-new' }, others)).answer === true, 'a name no other place has should be accepted');
-  need(problems, (await ask('Classroom', { _id: 'place-new' }, [])).answer === true, 'a name should be accepted when there are no other places');
-  need(problems, (await ask('Classroom', { _id: 'place-new' }, null)).answer === true, 'a name should be accepted when Sanity lists no places');
+  need(problems, typeof same.answer === 'string', 'a name that another location has should be refused');
+  need(problems, typeof (await ask('  mEDIA CENTER ', { _id: 'place-new' }, others)).answer === 'string', 'a name that another location has, in other capitals or with spaces round it, should be refused');
+  need(problems, (await ask('Programming room', { _id: 'place-new' }, others)).answer === true, 'a name no other location has should be accepted');
+  need(problems, (await ask('Classroom', { _id: 'place-new' }, [])).answer === true, 'a name should be accepted when there are no other locations');
+  need(problems, (await ask('Classroom', { _id: 'place-new' }, null)).answer === true, 'a name should be accepted when Sanity lists no locations');
   need(problems, (await ask('', { _id: 'place-new' }, others)).answer === true && (await ask(undefined, { _id: 'place-new' }, others)).answer === true, 'an empty name is left to the required check');
 
-  // the place itself, as published and as a draft, is not another place, and a draft of another place counts
+  // the location itself, as published and as a draft, is not another location, and a draft of another location counts
   const own = same.asked;
-  need(problems, own && JSON.stringify(own.params.ownIds) === JSON.stringify(['place-new', 'drafts.place-new']), 'the lookup should leave out the place being edited, both as published and as a draft');
-  need(problems, own && own.options && own.options.perspective === 'raw', 'the lookup should include drafts (perspective raw), so a place that is not yet published counts');
-  need(problems, own && own.query.indexOf('_type == "place"') !== -1, 'the lookup should look at places only');
+  need(problems, own && JSON.stringify(own.params.ownIds) === JSON.stringify(['place-new', 'drafts.place-new']), 'the lookup should leave out the location being edited, both as published and as a draft');
+  need(problems, own && own.options && own.options.perspective === 'raw', 'the lookup should include drafts (perspective raw), so a location that is not yet published counts');
+  need(problems, own && own.query.indexOf('_type == "place"') !== -1, 'the lookup should look at locations only');
   return problems;
 }
 
@@ -2858,7 +3028,7 @@ function checkMeetingDays() {
 
 // The last talk is a slot of the same meeting: not before the first talk, and on
 // the same calendar day on the kiosk's clock. The kiosk's time zone is the one on
-// the Theme page, which the check asks Sanity for, so it waits for an answer. A
+// the Look page, which the check asks Sanity for, so it waits for an answer. A
 // stand-in client gives the answer here and writes down what it was asked.
 async function checkMeetingDayTimes() {
   const problems = [];
@@ -2896,19 +3066,19 @@ async function checkMeetingDayTimes() {
   for (const entry of accepted) need(problems, (await ask(entry[1], entry[2], newYork)).answer === true, 'a last talk ' + entry[0] + ' should be accepted');
   for (const entry of refused) need(problems, typeof (await ask(entry[1], entry[2], newYork)).answer === 'string', 'a last talk ' + entry[0] + ' should be refused');
 
-  // The Theme page's zone decides the day, so the same two times can be on different days
+  // The Look page's zone decides the day, so the same two times can be on different days
   const evening = ['2026-10-09T01:00:00.000Z', '2026-10-08T22:00:00.000Z'];
-  need(problems, typeof (await ask(evening[0], evening[1], 'UTC')).answer === 'string', 'with the Theme page time zone UTC, 22:00 and 01:00 UTC are on different days and should be refused');
+  need(problems, typeof (await ask(evening[0], evening[1], 'UTC')).answer === 'string', 'with the Look page time zone UTC, 22:00 and 01:00 UTC are on different days and should be refused');
 
   // No usable answer from Sanity means America/New_York
-  const noAnswer = [['no Theme page', null], ['an empty zone', ''], ['a zone Intl does not know', 'Nowhere/Land'], ['a question that fails', new Error('offline')]];
+  const noAnswer = [['no Look page', null], ['an empty zone', ''], ['a zone Intl does not know', 'Nowhere/Land'], ['a question that fails', new Error('offline')]];
   for (const entry of noAnswer) {
     need(problems, (await ask(evening[0], evening[1], entry[1])).answer === true, 'with ' + entry[0] + ', the zone should be America/New_York, where those times are on the same day');
   }
 
   const question = (await ask('2026-10-08T20:45:00.000Z', first, newYork)).asked;
-  need(problems, question && question.query.indexOf('"theme"') !== -1 && question.query.indexOf('timeZone') !== -1, 'the lookup should ask for the timeZone of the Theme page, which has the id theme');
-  need(problems, question && question.options && question.options.perspective === 'published', 'the lookup should read the published Theme page (perspective published), as the screen does');
+  need(problems, question && question.query.indexOf('"theme"') !== -1 && question.query.indexOf('timeZone') !== -1, 'the lookup should ask for the timeZone of the Look page, which has the id theme');
+  need(problems, question && question.options && question.options.perspective === 'published', 'the lookup should read the published Look page (perspective published), as the screen does');
   return problems;
 }
 
@@ -3019,7 +3189,7 @@ function checkPresentations() {
 // colors, the mirror switch, the active switch and the order. The starting colors are
 // the Prime ones, which are the colors of the screen today (themes/hawktimus.css). The
 // seed file docs/seed/teams.ndjson holds the two teams, and the Teams list comes right
-// after Leadership in the sidebar.
+// after Look in the sidebar.
 const teamColorNames = ['primary', 'plate', 'accent', 'neon', 'pink', 'background', 'text'];
 
 function checkTeams() {
@@ -3095,10 +3265,10 @@ function checkTeams() {
   ].forEach(entry => need(problems, entry[0] === entry[1], 'the team list should read "' + entry[1] + '", it reads "' + entry[0] + '"'));
   need(problems, type.preview.select && type.preview.select.media === 'logo', 'the team list should show each logo (select media: logo)');
 
-  // The Teams line is right after Leadership, and is a list sorted by order
+  // The Teams line is right after Look, and is a list sorted by order
   const entries = world.structure.sidebarEntries;
-  const after = entries[entries.map(entry => entry.title).indexOf('Leadership') + 1];
-  need(problems, after && after.kind === 'list' && after.type === 'team' && after.title === 'Teams', 'the Teams line should come right after Leadership in structure.js');
+  const after = entries[entries.map(entry => entry.title).indexOf('Look') + 1];
+  need(problems, after && after.kind === 'list' && after.type === 'team' && after.title === 'Teams', 'the Teams line should come right after Look in structure.js');
 
   return problems.concat(checkTeamSeed(type));
 }
@@ -3451,8 +3621,8 @@ async function main() {
   check('the rules for announcement days and calendar codes work', checkRules);
   check('the Speed setting offers the speeds the dashboard has', checkSpeed);
   check('frame metal, glint, seconds per page and the name effect agree with dashboard/config.js', checkLookAndTiming);
-  check('the Look setting offers the looks in dashboard/config.js and starts on Polished', checkLookSetting);
-  check('the Style setting offers the styles in dashboard/config.js and starts on Original, and the Theme page says the style and team set the base values', checkStyleSetting);
+  check('the Polish setting offers the looks in dashboard/config.js and starts on Polished', checkLookSetting);
+  check('the Style setting offers the styles in dashboard/config.js and starts on Original, and the Look page says the style and team set the base values', checkStyleSetting);
   check('the Transitions tab agrees with dashboard/config.js', checkTransitionsTab);
   check('the Night mode tab agrees with dashboard/config.js', checkNightTab);
   check('the Hidden tab agrees with dashboard/config.js and the dashboard registry, and the Play buttons work', checkHiddenTab);
@@ -3465,25 +3635,26 @@ async function main() {
   check('a person has an optional photo and a switch that starts on, as in dashboard/config.js', checkPersonPhoto);
   check('a photo has a picture, a short caption and a first name credit, and the Photos tab agrees with dashboard/config.js', checkPhotos);
   check('the themes and overlays in studio/themes.js are the ones in the dashboard registries', checkThemeLists);
-  check('the Theme page agrees with dashboard/config.js, needs a start and an end for each rule, and checks the time zone', checkTheme);
+  check('the Look page agrees with dashboard/config.js, needs a start and an end for each rule, and checks the time zone', checkTheme);
   check('the demo screens in studio/demo-screens.js are the ones in the dashboard registry', checkDemoScreens);
-  check('the Demo page agrees with dashboard/config.js, and Run demo and Stop demo do what they say', checkDemo);
+  check('the Test the screen page agrees with dashboard/config.js, and Run demo and Stop demo do what they say', checkDemo);
   check('an Events Calendar entry needs a title and a start date, and the seed file can be imported', checkExtraEvents);
   check('a calendar filter has a name, an action, title words, days, a calendar and dates, and needs at least one of them', checkCalendarFilters);
-  check('a place has a name and a switch, a task has an optional contact and place, and the places seed file can be imported', checkPlaces);
-  results.push({ name: 'two places cannot have the same name, capitals ignored', problems: await checkPlaceNames().catch(error => ['the check stopped: ' + error.message]) });
+  check('a location has a name and a switch, a task has an optional contact and location, and the locations seed file can be imported', checkPlaces);
+  results.push({ name: 'two locations cannot have the same name, capitals ignored', problems: await checkPlaceNames().catch(error => ['the check stopped: ' + error.message]) });
   check('the Presentations tab agrees with dashboard/config.js', checkPresentationsTab);
   check('the Teams tab agrees with dashboard/config.js', checkTeamsTab);
   check('a meeting day has a first and a last talk, a talk length, a booking close time and a one line list entry', checkMeetingDays);
-  results.push({ name: 'the last talk of a meeting day is on the same day as the first, in the Theme page time zone', problems: await checkMeetingDayTimes().catch(error => ['the check stopped: ' + error.message]) });
+  results.push({ name: 'the last talk of a meeting day is on the same day as the first, in the Look page time zone', problems: await checkMeetingDayTimes().catch(error => ['the check stopped: ' + error.message]) });
   check('a presentation has a first name, a title, a start, a length, a Google Slides link and a status, and a one line list entry', checkPresentations);
-  check('a team has a name, a short name, a number, a code, a logo and seven colors, the Teams line follows Leadership, and the seed file can be imported', checkTeams);
+  check('a team has a name, a short name, a number, a code, a logo and seven colors, the Teams line follows Look, and the seed file can be imported', checkTeams);
   check('every kind of content that can be for one team has an optional Team field that uses the radio', checkTeamField);
   results.push({ name: 'the Team radio shows Both and each active team, writes and clears the reference, and survives teams that cannot be read', problems: await checkTeamInput().catch(error => ['the check stopped: ' + error.message]) });
   check('starting values match dashboard/config.js', checkStartingValues);
   check('every name in config.js and the sample content has a field', checkDashboardNames);
-  check('every document type has a line in the sidebar, and each line opens the right list or page', checkSidebar);
-  check('Dashboard Settings, Theme and Demo exist once and the project files agree', checkSettingsPage);
+  check('the sidebar has the headings, groups and icons it should, every document type has a line, and each line opens the right list, page or component', checkSidebar);
+  check('no title, description or message an editor reads still uses an old sidebar name', checkOldTitles);
+  check('Dashboard Settings, Look and Test the screen exist once and the project files agree', checkSettingsPage);
   check('the Publish all tool is in the top bar and keeps the pages that exist once on their fixed ids', checkPublishAll);
   check('every theme and overlay is complete and readable (tools/check-themes.mjs)', checkThemeGuard);
   check('every seasonal pack is complete, and draws only in the empty places (tools/check-seasons.mjs)', checkSeasonGuard);

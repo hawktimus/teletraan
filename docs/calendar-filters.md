@@ -45,7 +45,7 @@ Studio will not publish one with none, because it would match every event.
 - A repeating event is judged one day at a time, after BAND's repeats are worked
   out. A rule for Mondays hides the Mondays and leaves the other days of the same
   repeating event.
-- The day of an event is the day it starts, in the Time zone on the Theme page. An
+- The day of an event is the day it starts, in the Time zone on the Look page. An
   event that starts on Thursday evening and ends after midnight is a Thursday
   event.
 - An event is hidden when a Hide rule matches it and no Always show rule matches

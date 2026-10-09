@@ -6,7 +6,7 @@
 // when the two lists differ, so change both.
 //
 // defaultThemeSettings.defaultTheme in config.js must be one of these ids. It
-// is the theme the screen uses when the Theme document says nothing else.
+// is the theme the screen uses when the Look document says nothing else.
 //
 // layout is optional: 'standard' (the banner across the top, two frames and the
 // ticker) when it is left out, or 'sidebar' (a column on the left, one big frame

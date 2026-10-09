@@ -1,4 +1,4 @@
-// The blocks a custom panel is built from, shown top to bottom. A block's name
+// The blocks an extra panel is built from, shown top to bottom. A block's name
 // without the word Block is what the dashboard reads: headingBlock is heading.
 
 import { defineType, defineField, defineArrayMember } from 'sanity';

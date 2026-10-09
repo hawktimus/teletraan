@@ -23,7 +23,7 @@ export function publishedIdOf(id) {
 }
 
 // "Events Calendar: Spring dinner", the way the tool names a document. A page
-// that is its own title, such as Theme, is named once.
+// that is its own title, such as Look, is named once.
 export function labelOf(item) {
   return item.title === item.typeTitle ? item.title : item.typeTitle + ': ' + item.title;
 }
@@ -41,7 +41,7 @@ function nonEmptyText(value) {
 // What to call a document in the list. First the type's own preview, which is
 // what the sidebar shows (a select and a prepare function in the schema). If
 // that gives nothing, the first of these fields that has text. Then the name of
-// the type, which suits a page that exists once, such as Theme.
+// the type, which suits a page that exists once, such as Look.
 const usefulFields = ['title', 'name', 'heading', 'headline', 'label', 'text'];
 
 export function titleOf(doc, type) {

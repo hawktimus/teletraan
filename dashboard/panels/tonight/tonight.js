@@ -42,7 +42,7 @@ function zoneOf(content) {
 }
 
 // The talks booked for today that are not over, soonest first. Today is the day on
-// the wall clock in the Theme time zone, as it is for events. A talk counts when it
+// the wall clock in the Look time zone, as it is for events. A talk counts when it
 // would run on the screen (canRun), and none count while Run presentations is off.
 // A talk for the other team is not listed. It still runs at its time, whichever team is on.
 function talksToday(content, now) {

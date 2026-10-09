@@ -72,7 +72,7 @@ function sameLook(a, b) {
   return a.theme === b.theme && a.overlay === b.overlay && a.style === b.style;
 }
 
-// The theme and overlay the Theme document asks for now, and the style Dashboard
+// The theme and overlay the Look document asks for now, and the style Dashboard
 // Settings asks for. The address wins, like the other switches.
 function wantedLook() {
   try {

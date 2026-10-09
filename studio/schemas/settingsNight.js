@@ -10,7 +10,7 @@
 //   nightSpeed      slow, normal (the default) or fast
 //   nightPreview    shows night mode now, whatever the time
 //
-// The time zone is not here. Night mode uses the time zone on the Theme page,
+// The time zone is not here. Night mode uses the time zone on the Look page,
 // so the whole screen has one zone and two settings can never disagree.
 //
 // The choices are the names in nightStyles and nightSpeeds in
@@ -78,7 +78,7 @@ export function nightFields() {
       title: 'Night starts at',
       type: 'string',
       group: 'night',
-      description: 'When night mode starts, in 24 hour time such as 23:30. It uses the time zone on the Theme page.',
+      description: 'When night mode starts, in 24 hour time such as 23:30. It uses the time zone on the Look page.',
       initialValue: '23:30',
       validation: Rule => [
         Rule.required().error('Enter the time, such as 23:30.'),
@@ -91,7 +91,7 @@ export function nightFields() {
       title: 'Night ends at',
       type: 'string',
       group: 'night',
-      description: 'When night mode ends, such as 11:30. An end before the start runs past midnight. It uses the time zone on the Theme page.',
+      description: 'When night mode ends, such as 11:30. An end before the start runs past midnight. It uses the time zone on the Look page.',
       initialValue: '11:30',
       validation: Rule => [
         Rule.required().error('Enter the time, such as 11:30.'),

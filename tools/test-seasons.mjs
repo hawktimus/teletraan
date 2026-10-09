@@ -664,7 +664,7 @@ test('a pack with no over list has no over layer, and a pack with only an over l
   });
 });
 
-test('the Theme switch takes the over layer away and brings it back while the screen runs', async () => {
+test('the Look switch takes the over layer away and brings it back while the screen runs', async () => {
   await onPage(async (page, logged, season) => {
     const withOver = ['season-back', 'backdrop', 'stage', 'season-front', 'season-over', 'red-wash'];
     const without = ['season-back', 'backdrop', 'stage', 'season-front', 'red-wash'];
@@ -681,7 +681,7 @@ test('the Theme switch takes the over layer away and brings it back while the sc
     assert.deepEqual(page.order(), withOver);
     assert.equal((page.getElementById('season-over').innerHTML.match(/season-piece/g) || []).length, 8, 'the same pieces come back');
 
-    // anything that is not a real false is on, like a missing value on the Theme page
+    // anything that is not a real false is on, like a missing value on the Look page
     [undefined, null, 0, '', 'off', 'false', {}].forEach(odd => {
       season.setOverPanels(false);
       season.setOverPanels(odd);
@@ -730,7 +730,7 @@ test('the over layer is drawn in full motion only, and follows the front layer t
   assert.ok(motion.some(rule => rule.selector === 'html[data-night] .season-piece' && /animation-play-state:\s*paused/.test(rule.body)), 'the night screen pauses the pieces of every layer');
 });
 
-test('the Theme switch reaches the screen through config.js, theme.js, shell.js, the sample content and the Studio schema', () => {
+test('the Look switch reaches the screen through config.js, theme.js, shell.js, the sample content and the Studio schema', () => {
   const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
   assert.match(read('dashboard/config.js'), /export const defaultThemeSettings = \{[\s\S]*?seasonOverPanels: true,[\s\S]*?\};/);
@@ -745,7 +745,7 @@ test('the Theme switch reaches the screen through config.js, theme.js, shell.js,
   const schema = read('studio/schemas/theme.js');
   assert.match(schema, /name: 'seasonOverPanels',\s*title: 'Seasonal pieces over the panels',\s*type: 'boolean',/);
   assert.match(schema, /initialValue: true,/);
-  assert.ok(/fields: \[[^\]]*seasonOverPanelsField\]/.test(schema), 'the field is on the Theme page');
+  assert.ok(/fields: \[[^\]]*seasonOverPanelsField\]/.test(schema), 'the field is on the Look page');
   assert.ok(read('studio/check-schemas.mjs').includes("seasonOverPanels: 'boolean'"), 'check-schemas.mjs lists the field');
 });
 

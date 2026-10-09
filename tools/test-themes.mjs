@@ -123,7 +123,7 @@ test('a rule covers its first and last day, and no other', () => {
   assert.deepEqual(lookAt(schedule, '2027-10-11T16:00:00Z'), none, 'a rule that does not repeat is for that year only');
 });
 
-test('dates are read in the Theme time zone, not the zone of this computer', () => {
+test('dates are read in the Look time zone, not the zone of this computer', () => {
   const schedule = [rule('theme', otherTheme, '2026-10-10', '2026-10-10')];
   const lateInNewYork = '2026-10-11T02:30:00Z'; // 22:30 on the 10th in New York, already the 11th in UTC and Tokyo
   const asOther = { theme: otherTheme, overlay: '' };
@@ -181,7 +181,7 @@ test('a rule that repeats every year can cross New Year, for example 12-20 to 01
   });
 });
 
-test('New Year is decided in the Theme time zone', () => {
+test('New Year is decided in the Look time zone', () => {
   const newYearsDay = [rule('theme', otherTheme, '2026-01-01', '2026-01-01', true)];
   const asOther = { theme: otherTheme, overlay: '' };
   const justAfterMidnightUtc = '2027-01-01T04:30:00Z';

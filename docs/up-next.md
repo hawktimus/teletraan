@@ -45,7 +45,7 @@ left.
   the schedule to 3 rows or fewer.
 - With no plan for today and some talks, the heading on the card says Talks today.
 
-Times are written in the Time zone on the Theme page. With no plan for today and no
+Times are written in the Time zone on the Look page. With no plan for today and no
 talks, the panel is left out of the rotation, as it was.
 
 ## Where the code is

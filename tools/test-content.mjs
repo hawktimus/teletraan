@@ -966,7 +966,7 @@ test('frame metal is gold or silver, and anything else becomes gold', () => {
   assert.equal(withDefaults(null).settings.frameMetal, 'gold');
 });
 
-// The Look setting: polished, flat or plain (dashboard/core/look.js). The address
+// The Polish setting: polished, flat or plain (dashboard/core/look.js). The address
 // parts are what shell.js reads from the page address, each null when it is not there.
 const noAddress = { look: null, finish: null, glint: null };
 
@@ -1222,7 +1222,7 @@ test('the rules for Plain never match a pack mark or a status shape, and the pan
     tags.forEach(tag => assert.ok(tag.startsWith('<g '), file + ': ' + tag));
   });
 
-  // Every panel that draws the mark does it in its header, except the bullets of the Custom panel's lists, which stay
+  // Every panel that draws the mark does it in its header, except the bullets of the Extra panel's lists, which stay
   const panelsFolder = path.join(dashboardFolder, 'panels');
   let drawn = 0;
   fs.readdirSync(panelsFolder).forEach(name => {
@@ -1481,9 +1481,9 @@ test('a row can leave seconds empty to follow seconds per page, and a good numbe
   assert.equal(normalizeContent({ settings: { rotation: { tickerSeconds: 7.5 } } }).settings.rotation.tickerSeconds, 7.5);
 });
 
-// The Theme document. The rules for which theme applies are in tools/test-themes.mjs.
+// The Look document. The rules for which theme applies are in tools/test-themes.mjs.
 
-test('the query asks for the Theme document by its id, and the answer is cleaned into content.theme', () => {
+test('the query asks for the Look document by its id, and the answer is cleaned into content.theme', () => {
   assert.ok(contentQuery.includes('"theme": *[_id == "theme"][0]'));
 
   const defaults = live.config.defaultThemeSettings;
@@ -1504,7 +1504,7 @@ test('the query asks for the Theme document by its id, and the answer is cleaned
   assert.deepEqual(Object.keys(theme).sort(), Object.keys(defaults).sort(), 'only the four settings come through, not _id and the rest');
 });
 
-test('a missing Theme document, or fields missing from it, are the defaults', () => {
+test('a missing Look document, or fields missing from it, are the defaults', () => {
   const defaults = live.config.defaultThemeSettings;
 
   assert.deepEqual(normalizeContent({}).theme, defaults);
@@ -1519,7 +1519,7 @@ test('a missing Theme document, or fields missing from it, are the defaults', ()
   assert.deepEqual(odd, defaults);
 });
 
-test('a saved copy from before the Theme document existed still gives a theme', async () => {
+test('a saved copy from before the Look document existed still gives a theme', async () => {
   await inWorld(async world => {
     saveCopy(world, { settings: document('dashboardSettings', 'dashboardSettings', { motion: 'calm' }) }, world.now - minute);
     world.handler = () => unreachable();
@@ -1529,7 +1529,7 @@ test('a saved copy from before the Theme document existed still gives a theme', 
   });
 });
 
-test('the sample content has a Theme document with the defaults and two example seasonal pack rules, and they come through cleaned', () => {
+test('the sample content has a Look document with the defaults and two example seasonal pack rules, and they come through cleaned', () => {
   const file = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
   const defaults = live.config.defaultThemeSettings;
   const apartFromSchedule = theme => Object.assign({}, theme, { schedule: [] });
@@ -1544,9 +1544,9 @@ test('the sample content has a Theme document with the defaults and two example 
   assert.deepEqual(normalizeSample(file).theme, withDefaults(file).theme, 'reading the sample twice changes nothing');
 });
 
-// The Demo document. When a demo plays is in tools/test-effects.mjs.
+// The Test the screen document. When a demo plays is in tools/test-effects.mjs.
 
-test('the query asks for the Demo document by its id, and the answer is cleaned into content.demo', () => {
+test('the query asks for the Test the screen document by its id, and the answer is cleaned into content.demo', () => {
   assert.ok(contentQuery.includes('"demo": *[_id == "demo"][0]'));
 
   const stored = document('demo', 'demo', {
@@ -1565,7 +1565,7 @@ test('the query asks for the Demo document by its id, and the answer is cleaned 
   assert.deepEqual(Object.keys(demo).sort(), ['announcementText', 'requestedAt', 'steps'], 'only the three fields come through, not _id and the rest');
 });
 
-test('a missing Demo document is no demo: no request, and the default steps', () => {
+test('a missing Test the screen document is no demo: no request, and the default steps', () => {
   const defaults = live.config.defaultDemo;
 
   assert.deepEqual(normalizeContent({}).demo, defaults);
@@ -1607,7 +1607,7 @@ test('a request that is not a time is no request, and a request cleared with Sto
   assert.equal(normalizeContent({ demo: document('demo', 'demo', { steps: [] }) }).demo.requestedAt, '');
 });
 
-test('a saved copy from before the Demo document existed still gives a demo', async () => {
+test('a saved copy from before the Test the screen document existed still gives a demo', async () => {
   await inWorld(async world => {
     saveCopy(world, { settings: document('dashboardSettings', 'dashboardSettings', { motion: 'calm' }) }, world.now - minute);
     world.handler = () => unreachable();
@@ -1616,7 +1616,7 @@ test('a saved copy from before the Demo document existed still gives a demo', as
   });
 });
 
-test('the sample content has a Demo document with the defaults and no request, and it comes through unchanged', () => {
+test('the sample content has a Test the screen document with the defaults and no request, and it comes through unchanged', () => {
   const file = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
   assert.deepEqual(file.demo, live.config.defaultDemo);
   assert.deepEqual(normalizeSample(file).demo, live.config.defaultDemo);
@@ -3921,7 +3921,7 @@ test('the sample content carries the Night mode settings', () => {
     assert.ok(name in raw.settings, name + ' is in the sample file');
     assert.equal(settings[name], live.config.defaultSettings[name], name);
   });
-  assert.equal(normalizeSample({}).theme.timeZone, 'America/New_York', 'night mode reads its zone from the Theme page, which starts as New York');
+  assert.equal(normalizeSample({}).theme.timeZone, 'America/New_York', 'night mode reads its zone from the Look page, which starts as New York');
 });
 
 // The names of the settings in the Hidden tab, and the last push from the Studio
@@ -5083,7 +5083,7 @@ test('an Events Calendar entry with no start time is an all-day event, made like
   assert.equal(event.start.getDate(), 2);
 });
 
-test('an Events Calendar entry with a start time starts at that time in the Theme time zone', () => {
+test('an Events Calendar entry with a start time starts at that time in the Look time zone', () => {
   const event = extraEventsToEvents([extra({ startDate: '2027-01-09', startTime: '18:30', endTime: '20:00' })], newYork)[0];
   assert.equal(event.allDay, false);
   assert.equal(event.start.toISOString(), '2027-01-09T23:30:00.000Z');
@@ -5142,7 +5142,7 @@ test('mergeEvents does not change the lists it is given', () => {
   assert.notEqual(merged[1], band[0]);
 });
 
-test('an event is dropped once its end date has passed, by the date in the Theme time zone', () => {
+test('an event is dropped once its end date has passed, by the date in the Look time zone', () => {
   const extras = [extra({ title: '[Over]', startDate: '2027-01-08' }), extra({ title: '[Today]', startDate: '2027-01-09' })];
 
   // 22:00 on 9 January in New York is already 10 January in UTC
@@ -5184,7 +5184,7 @@ test('an event with no usable start is left out', () => {
   assert.deepEqual(titlesOf(mergeEvents(band, [], newYork, new Date('2027-03-01T15:00:00Z'))), ['[Fine]']);
 });
 
-test('mergeEvents adds the dates each event covers, in the Theme time zone for timed events', () => {
+test('mergeEvents adds the dates each event covers, in the Look time zone for timed events', () => {
   const band = [
     bandDay('[Three days]', 2027, 3, 10, 12),
     bandTimed('[Evening]', '2027-03-11T01:30:00Z', '2027-03-11T03:00:00Z'), // 8:30 PM on the 10th in New York
@@ -5280,13 +5280,13 @@ test('eventDate has nothing to say for an event with no date that can be read', 
   assert.deepEqual(eventDate({ firstDay: '2027-02-30', lastDay: '2027-02-30', start: 'not a date' }), none);
 });
 
-test('eventDate reads the dates in the Theme time zone, whatever the time zone of the computer', () => {
+test('eventDate reads the dates in the Look time zone, whatever the time zone of the computer', () => {
   // 02:00 UTC on the 18th is 10 PM on the 17th in New York and 11 AM on the 18th in Tokyo
   const late = { title: '[Late]', start: new Date('2026-10-18T02:00:00Z'), end: new Date('2026-10-18T03:00:00Z'), allDay: false, location: '' };
   assert.equal(eventDate(late, newYork).text, 'SAT OCT 17');
   assert.equal(eventDate(late, 'Asia/Tokyo').text, 'SUN OCT 18');
   assert.equal(eventDate(late, 'UTC').text, 'SUN OCT 18');
-  assert.equal(eventDate(late).text, 'SAT OCT 17', 'no zone given: the Theme page starts as New York');
+  assert.equal(eventDate(late).text, 'SAT OCT 17', 'no zone given: the Look page starts as New York');
   assert.equal(eventDate(late, 'Nowhere/Land').text, 'SAT OCT 17', 'a zone that does not exist counts as none');
 
   // an event that ends at midnight is not on the day after
@@ -5388,7 +5388,7 @@ test('the Next event tile shows the date only for an all-day event, a range for 
   assert.ok(timed.includes('class="when">' + weekdayOn(year, 1, 9) + ' JAN 9 · '), timed);
 });
 
-test('the two panels write the date in the Theme time zone, whatever the time zone of the computer', () => {
+test('the two panels write the date in the Look time zone, whatever the time zone of the computer', () => {
   const year = new Date().getFullYear() + 1;
   const late = [bandTimed('[Late]', year + '-10-18T02:00:00Z', year + '-10-18T02:30:00Z')]; // 10 PM on the 17th in New York, 11 AM on the 18th in Tokyo
 
@@ -5478,7 +5478,7 @@ test('Up Next lists the plan first, then today\'s talks soonest first, with the 
   assert.deepEqual(rows.map(row => row.live), [undefined, true, false, false]);
 });
 
-test('Up Next reads the day and the time on the clock in the Theme time zone, not the computer\'s', () => {
+test('Up Next reads the day and the time on the clock in the Look time zone, not the computer\'s', () => {
   const talks = [upNextTalk('2026-10-08T18:45:00Z', 'Alex', '[Topic A]'), upNextTalk('2026-10-09T02:30:00Z', 'Lee', '[Topic D]')];
 
   assert.deepEqual(upNextLines(upNextContent(talks)), ['talk | 2:45 PM | Alex: [Topic A] | NOW', 'talk | 10:30 PM | Lee: [Topic D] | TALK']);
@@ -5686,7 +5686,7 @@ test('shell.js merges the events when content changes and once a minute', () => 
   assert.ok(shell.includes("import { mergeEvents } from './core/events.js';"));
   assert.ok(shell.includes('content.events = mergedEvents();'), 'rebuild() should merge');
   assert.ok(/setInterval\(\(\) => \{\s*if \(content\) content\.events = mergedEvents\(\);\s*\}, 60 \* 1000\);/.test(shell), 'a timer should merge once a minute');
-  assert.ok(shell.includes('base.theme.timeZone'), 'the Theme time zone should be used');
+  assert.ok(shell.includes('base.theme.timeZone'), 'the Look time zone should be used');
 });
 
 // The Mini's name and addresses, shown inside the connection status text while Sanity cannot be reached
@@ -5925,8 +5925,8 @@ test('reasonText has plain words for each reason, and other for one it does not 
 
 test('itemCounts counts each kind of content, Up Next as one or none, and copes with missing lists', () => {
   assert.deepEqual(itemCounts(someContent), [
-    ['Tasks', 12], ['Sponsors', 4], ['Tips', 9], ['Subteams', 5],
-    ['People', 8], ['Events Calendar', 2], ['Up Next', 1], ['Custom panels', 3],
+    ['Tasks', 12], ['Sponsors', 4], ['Tips', 9], ['Roster', 5],
+    ['People', 8], ['Events Calendar', 2], ['Up Next', 1], ['Extra panels', 3],
   ]);
   assert.deepEqual(itemCounts(withDefaults({})).map(pair => pair[1]), [0, 0, 0, 0, 0, 0, 0, 0]);
   assert.deepEqual(itemCounts(null).map(pair => pair[1]), [0, 0, 0, 0, 0, 0, 0, 0]);
@@ -5964,8 +5964,8 @@ test('connectionLines names each of the four reasons, and says so when there has
 test('connectionLines with the switch on gives the last read, the counts and the calendar time', () => {
   assert.deepEqual(connectionLines({ status: sanityStatus, always: true, content: someContent, calendarsReadAt: calendarsRead }), [
     'Sanity OK · last read 2:31 PM',
-    'Tasks 12 · Sponsors 4 · Tips 9 · Subteams 5',
-    'People 8 · Events Calendar 2 · Up Next 1 · Custom panels 3',
+    'Tasks 12 · Sponsors 4 · Tips 9 · Roster 5',
+    'People 8 · Events Calendar 2 · Up Next 1 · Extra panels 3',
     'Calendars read 2:30 PM',
   ]);
 });
@@ -5974,8 +5974,8 @@ test('connectionLines says when the calendars have not been read, and when Sanit
   const lines = connectionLines({ status: { source: 'sanity', updated: null, offline: false, reason: '' }, always: true, content: withDefaults({}), calendarsReadAt: null });
   assert.deepEqual(lines, [
     'Sanity not read yet',
-    'Tasks 0 · Sponsors 0 · Tips 0 · Subteams 0',
-    'People 0 · Events Calendar 0 · Up Next 0 · Custom panels 0',
+    'Tasks 0 · Sponsors 0 · Tips 0 · Roster 0',
+    'People 0 · Events Calendar 0 · Up Next 0 · Extra panels 0',
     'Calendars not read yet',
   ]);
 });
@@ -5997,8 +5997,8 @@ test('connectionLines puts the reason first and the counts after it when the swi
   assert.deepEqual(lines, [
     'SANITY UNREACHABLE: NETWORK DOWN',
     'Last good read 2:31 PM',
-    'Tasks 12 · Sponsors 4 · Tips 9 · Subteams 5',
-    'People 8 · Events Calendar 2 · Up Next 1 · Custom panels 3',
+    'Tasks 12 · Sponsors 4 · Tips 9 · Roster 5',
+    'People 8 · Events Calendar 2 · Up Next 1 · Extra panels 3',
     'Calendars read 2:30 PM',
     'ssh hawktimus@10.0.0.5',
   ]);
@@ -6418,7 +6418,7 @@ function onTeamScreen(code, run) {
 
 test('the query asks for the teams, and for the team code of every kind of content that has a Team field', () => {
   assert.ok(contentQuery.includes('"teams": *[_type == "team"] | order(order asc, _createdAt asc) {'));
-  // tasks, sponsors, tips and news, subteams, people, talks, plans, Events Calendar entries and custom panels
+  // tasks, sponsors, tips and news, subteams, people, talks, plans, Events Calendar entries and extra panels
   assert.equal(contentQuery.split('"team": team->code').length - 1, 9);
 
   ['"tasks"', '"sponsors"', '"tipsAndNews"', '"subteams"', '"people"', '"presentations"', '"plans"', '"extraEvents"', '"customPanels"'].forEach(name => {
@@ -6860,7 +6860,7 @@ test('the sample content has the two starting teams, and every style with every 
   }
 });
 
-// The ticker prefix of a seasonal pack (core/pack-extras.js, panels/ticker). The rule on the Theme page and the
+// The ticker prefix of a seasonal pack (core/pack-extras.js, panels/ticker). The rule on the Look page and the
 // cleaning of its text are in tools/test-themes.mjs.
 
 // A rule for a pack that covers every day of every year
@@ -6892,7 +6892,7 @@ test('prefixFor keeps the prefix while the prefix, a space and the line are 52 c
   assert.equal(prefixFor('HAPPY', 'x'.repeat(52)), '', 'a line that is already 52 characters has no room for a prefix');
   assert.equal(prefixFor('HAPPY', 'x'.repeat(54)), '', 'nor does a thank-you of 54');
   assert.equal(prefixFor('  HAPPY  ', '[Tip]'), 'HAPPY', 'spaces at the ends are not part of the prefix');
-  assert.equal(prefixFor('A VERY LONG PREFIX', '[Tip]'), 'A VERY LONG', 'cut at 12 characters, as on the Theme page');
+  assert.equal(prefixFor('A VERY LONG PREFIX', '[Tip]'), 'A VERY LONG', 'cut at 12 characters, as on the Look page');
   ['', '   ', undefined, null, 7].forEach(none => assert.equal(prefixFor(none, '[Tip]'), '', String(none)));
 });
 
@@ -6910,7 +6910,7 @@ test('the ticker shows the prefix of the pack that is on the screen before the l
   assert.equal(tickerLine(line, theme, 'theme-hawktimus overlay-halloween').includes('prefix'), false, 'the rule is for Christmas');
   assert.equal(tickerLine(line, { schedule: [packRule({})] }, 'overlay-christmas').includes('prefix'), false, 'a rule with no prefix, and a pack with none of its own');
   assert.equal(tickerLine(line, { schedule: [] }, 'overlay-christmas').includes('prefix'), false, 'no rule at all');
-  assert.equal(tickerLine(line, undefined, 'overlay-christmas').includes('prefix'), false, 'no Theme document yet');
+  assert.equal(tickerLine(line, undefined, 'overlay-christmas').includes('prefix'), false, 'no Look document yet');
 });
 
 test('a prefix that would not fit is dropped and the line is shown whole, a thank-you gets one too, and what editors typed is escaped', () => {

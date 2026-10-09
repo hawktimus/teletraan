@@ -756,7 +756,7 @@ test('loadEvents shows the sample calendar for any date', async () => {
 
 // The Calendar filters (core/events.js), run on the events of the weekly and overrides
 // calendars after their repeating events are expanded. The rules are shaped the way
-// core/sanity.js cleans them. The Theme time zone is New York, and the clock reads noon
+// core/sanity.js cleans them. The Look time zone is New York, and the clock reads noon
 // on 1 January 2027.
 const newYork = 'America/New_York';
 const filterNow = utc(2027, 1, 1, 17);
@@ -970,7 +970,7 @@ test('title words match inside the title in any capitals, and one of the words i
   ]);
 });
 
-test('the day of an event is the day on the clock of the Theme time zone', async () => {
+test('the day of an event is the day on the clock of the Look time zone', async () => {
   // 3:30 AM UTC on Tuesday 12 January is 10:30 PM on Monday the 11th in New York and 12:30 PM on Tuesday in Tokyo
   const inline = { late: calendarOf([['[Late event]', '20270112T033000Z']]) };
   const options = zone => ({ calendars: [{ id: 'late', name: '[Late]' }], inline: inline, zone: zone });

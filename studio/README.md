@@ -10,7 +10,9 @@ TV. The dashboard reads what they publish.
     sanity.config.js      the Studio's main settings
     sanity.cli.js         settings for the command line tool
     structure.js          the sidebar, one list with a line for each entry, so changing the order means moving a line (Events Calendar is the list for events not on BAND)
-    actions.js            the two content source buttons, the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons on Dashboard Settings, and Run demo and Stop demo on Demo
+    start-here.js         the Start here page, the first line of the sidebar, written as a plain function
+    calendars-view.js     the Calendars page under Events, written as a plain function
+    actions.js            the two content source buttons, the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons on Dashboard Settings, and Run demo and Stop demo on Test the screen
     themes.js             the list of themes and overlays, a copy of the dashboard's
     demo-screens.js       the list of screens a demo can show, a copy of the dashboard's
     hidden-transitions.js the list of hidden transitions, a copy of the dashboard's
@@ -133,16 +135,16 @@ import them once from this folder:
 nothing. Do not use `--replace`. docs/editing-content.md explains each part of
 the command.
 
-## The starting places
+## The starting locations
 
-A task's location is picked from the Places list (docs/editing-content.md). The
-three starting places, Classroom, Programming room and Media center, are in
+A task's location is picked from the Locations list (docs/editing-content.md). The
+three starting locations, Classroom, Programming room and Media center, are in
 `docs/seed/places.ndjson`. After step 4, and with the team mentor's yes, import
 them once from this folder:
 
     npx sanity dataset import ../docs/seed/places.ndjson --missing
 
-`--missing` skips any place that is already there, so running it again changes
+`--missing` skips any location that is already there, so running it again changes
 nothing. Do not use `--replace`.
 
 ## The starting teams
@@ -260,7 +262,7 @@ The Night mode tab of Dashboard Settings (`schemas/settingsNight.js`) holds the
 screensaver: Use night mode, Night style (a bouncing logo or blank black), the
 start and end times (24 hour, 23:30 and 11:30 to start with), Logo width (120 to
 800 pixels), Bounce speed and Preview night mode. It has no time zone of its own.
-The dashboard uses the Time zone on the Theme page, so the whole screen reads
+The dashboard uses the Time zone on the Look page, so the whole screen reads
 the clock in one zone. Nothing needs setting up beyond the steps above. Run
 `npm run deploy` after you change `schemas/settingsNight.js`, so the editors see
 the change. docs/night-mode.md explains how it works.
@@ -294,7 +296,7 @@ buttons: "Play announcements", `usePlayAnnouncementsAction` in `actions.js`. It 
 (`announceRequestField` in `schemas/settingsAnnouncements.js`): editors never see it, and
 its value stays in the page. The screen plays every announcement that is switched on, once,
 whatever its time and days, for a request that is under a minute old (`dashboard/core/announce.js`).
-The Demo page can do the same with its step "All announcements", which comes from the list in
+The Test the screen page can do the same with its step "All announcements", which comes from the list in
 `demo-screens.js`. Run `npm run deploy` after you change `schemas/settingsAnnouncements.js`, so
 the editors see the button. docs/hidden-transitions.md explains how it works.
 
@@ -317,7 +319,7 @@ The last five buttons on Dashboard Settings are "Preview Prime", "Preview Nova",
 is a hidden field in the Screen tab (`previewRequestField` in `schemas/settingsPreview.js`). The screen
 holds that team, style or seasonal pack for 2 minutes, for a request that is under a minute old, and then
 goes back to the saved settings (`dashboard/core/preview.js`). Nothing is saved to Dashboard Settings or
-the Theme page. `previews.js` is a copy of the ids and names in `previewKinds` in
+the Look page. `previews.js` is a copy of the ids and names in `previewKinds` in
 `dashboard/core/preview.js`, and `check-schemas.mjs` fails if they differ. Run `npm run deploy` after you
 change `schemas/settingsPreview.js` or `previews.js`, so the editors see the buttons.
 docs/hidden-transitions.md explains how it works.
@@ -331,9 +333,9 @@ needs no CORS origin, and asks for it cut to the size it is shown. Run
 `npm run deploy` after you change `schemas/person.js`, so the editors see the
 change. docs/editing-content.md has the advice for the people who upload.
 
-## Theme
+## Look
 
-The Theme page (`schemas/theme.js`) is a document that exists once, like
+The Look page (`schemas/theme.js`) is a document that exists once, like
 Dashboard Settings. It has the Default theme, "Use a theme now", a Schedule of
 rules, a Time zone and a switch, "Seasonal pieces over the panels" (it starts on). The screen reads it with the rest of the content and
 works out the theme in `dashboard/core/theme.js`. Nothing needs setting up for
@@ -346,7 +348,7 @@ its own and cannot read the dashboard folder, so `themes.js` is a copy of
 `check-schemas.mjs` fails if the ids, names or descriptions differ. A theme that
 has the sidebar layout (Neon Prime) has `layout: 'sidebar'` in both copies, the
 check fails if they differ, and its description must say it has a sidebar and no
-small frame (docs/layouts.md). The Theme page lists show the theme names only, so
+small frame (docs/layouts.md). The Look page lists show the theme names only, so
 the descriptions of the Default theme, Use a theme now and the schedule's Theme
 field say what a sidebar theme does, and the Small panels list in Dashboard
 Settings says it is not used with one. To add a
@@ -360,10 +362,10 @@ The Time zone is checked against the zones the browser knows
 (`Intl.supportedValuesOf`), or against a plain pattern when the browser cannot
 list them. It starts as America/New_York.
 
-## Demo
+## Test the screen
 
-The Demo page (`schemas/demo.js`) is a document that exists once, like Dashboard
-Settings and Theme. It has Requested at (read only), the Steps and the Demo
+The Test the screen page (`schemas/demo.js`) is a document that exists once, like Dashboard
+Settings and Look. It has Requested at (read only), the Steps and the Demo
 announcement text. Its menu, beside Publish, has two buttons from `actions.js`:
 Run demo writes the time now into Requested at and publishes, and Stop demo clears
 it and publishes. Both are plain functions that use `useDocumentOperation`.
@@ -387,6 +389,9 @@ names in `dashboard/core/demo-screens.js`. `check-schemas.mjs` fails if they dif
 - styled-components: the Studio uses it for its look. It has to be installed
   next to sanity and is not used directly.
 
+`@sanity/icons`, the sidebar icons, comes with sanity and is not listed in
+package.json. structure.js imports each icon from its own file.
+
 ## Checking the schemas
 
     node check-schemas.mjs
@@ -395,15 +400,16 @@ This needs no install. It loads every schema and checks it against what the
 dashboard reads: every field exists with the right name and limit, every field
 has a description, the starting values match dashboard/config.js, the two
 content source buttons are on the Dashboard Settings page and do what they
-say, the Theme page agrees with `defaultThemeSettings` and needs a start and
-an end for every rule, `themes.js` matches the dashboard's registries, the Demo
+say, the Look page agrees with `defaultThemeSettings` and needs a start and
+an end for every rule, `themes.js` matches the dashboard's registries, the Test the screen
 page agrees with `defaultDemo`, has Run demo and Stop demo, and `demo-screens.js`
 matches the dashboard's list of demo screens, the Hidden tab agrees with
 `defaultSettings`, has a working Play button for each hidden transition, and
 `hidden-transitions.js` matches the dashboard's list, Play announcements has its hidden
 field, its button and its Demo step, Run presentation test has its hidden field and its button,
 the Preview buttons have their hidden field and a list that matches the dashboard's,
-and the project ID in project.js is
+the sidebar has the headings, groups and icons it should and every kind of
+content has a line, and the project ID in project.js is
 the one in dashboard/config.js. It prints PASS or
 FAIL for each check and exits with an error if any fails. Run it after every
 change to a schema.

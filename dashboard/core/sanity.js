@@ -15,11 +15,11 @@ import { classifyFailure } from './connection.js';
 // A task's location is the name of the place it points to. The query also asks
 // whether that place is showing, and normalizeTask turns a hidden, deleted or
 // nameless place into no location at all. The task itself stays.
-// The Theme document is read with the rest. Its empty schedule and its
+// The Look document is read with the rest. Its empty schedule and its
 // missing fields are the defaults, so nothing special is needed (core/theme.js).
-// The Demo document is read with the rest too, and its changes come through the
+// The Test the screen document is read with the rest too, and its changes come through the
 // same live stream, so a click on Run demo reaches the screen within seconds.
-// No Demo document means no demo (core/demo.js).
+// No Test the screen document means no demo (core/demo.js).
 // Events Calendar entries that are switched off are left out here. A missing
 // switch means on. The events are tidied and merged with the BAND ones in core/events.js.
 // Calendar filter rules are cleaned in normalizeFilter. One that is off or past

@@ -489,7 +489,7 @@ html[data-style="original"] .plate-id { display: block; }
    mark is an svg with class pack-mark, and the accent shapes inside it are a g
    with class double-slash, so the rule says svg and never reaches them. The
    status shapes of a task have the class mark. The bullets in the lists of a
-   Custom panel are not in a header, so they stay. */
+   Extra panel are not in a header, so they stay. */
 :root[data-look="plain"] .screw,
 :root[data-look="plain"] .screw-shadow,
 :root[data-look="plain"] .header svg.double-slash { display: none; }

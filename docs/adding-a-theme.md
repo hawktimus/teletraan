@@ -106,7 +106,7 @@ the alert, and `?overlay=none` to be sure no overlay is on top.
 
 Run `npm run deploy` in the studio folder so the editors see Ocean in their
 list. The dashboard has it when the Mini next pulls the repo. Then, in Studio,
-open Theme and either:
+open Look and either:
 
 - pick it as the Default theme,
 - pick it under "Use a theme now" to show it at once (set Until to end it by
@@ -263,12 +263,12 @@ still red, with a magenta ridge.
 
 The flat finish (`?finish=flat`) hides the ridge in every theme. In Neon Prime the
 ridge is the neon trim, one plain line and not polish, so the Flat and Plain looks
-(Look in Dashboard Settings) keep it, with a rule in the decor file
+(Polish in Dashboard Settings) keep it, with a rule in the decor file
 (`data-look` is set by `core/look.js`). The steel bars (the rail and the countdown's
 frame) have the same cyan line in their gradients, and the flat finish takes it
 away too, so a second rule gives the three bar gradients back as one cyan line each,
 on the flat steel. `?finish=flat` on its own still hides both.
-The Look setting does not change anything else about a theme: the colours, the kit and
+The Polish setting does not change anything else about a theme: the colours, the kit and
 the seasonal packs are as they were.
 
 Because the metal is the same whatever a page change picks, the usual fade of
@@ -333,7 +333,7 @@ docs/layouts.md, "Moving elements".
 ## How the screen picks a theme
 
 The screen works out the theme and the overlay when it starts and again every
-minute, in the Time zone set on the Theme page. The style and the team are separate
+minute, in the Time zone set on the Look page. The style and the team are separate
 settings in Dashboard Settings and are not part of this choice. In this order:
 
 1. Use a theme now, until its Until time. A part left empty is decided by the

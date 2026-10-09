@@ -3,7 +3,7 @@
 // tools/test-themes.mjs can run them. core/theme-apply.js puts the answer on
 // the page.
 //
-// The Theme document in the Studio holds five things (defaultThemeSettings in
+// The Look document in the Studio holds five things (defaultThemeSettings in
 // config.js has the starting values). The fifth, the switch for seasonal pieces
 // over the panels, plays no part in choosing a theme: core/season.js reads it.
 // resolveTheme() reads the others in this order:
@@ -142,7 +142,7 @@ function tidyRule(raw) {
   return rule;
 }
 
-// Takes whatever the Theme document holds, or nothing, and gives back all
+// Takes whatever the Look document holds, or nothing, and gives back all
 // five settings with a value the screen can use. Anything missing or
 // unusable is the default, so the screen never has to check.
 export function tidyTheme(raw) {
@@ -190,7 +190,7 @@ function activeUseNow(useNow, now) {
 }
 
 // The theme and overlay to show at this moment: { theme: 'hawktimus', overlay: '' }.
-// settings is the Theme document, or content.theme. An empty overlay means none.
+// settings is the Look document, or content.theme. An empty overlay means none.
 export function resolveTheme(settings, now) {
   const theme = tidyTheme(settings);
   const moment = now || new Date();
@@ -208,7 +208,7 @@ export function resolveTheme(settings, now) {
 
 // What the rules say about the ticker prefix, the banner line and the corner art of one
 // seasonal pack: { tickerPrefix, bannerLine, cornerArt }, each '' when the rule leaves it
-// empty or there is no rule. settings is the Theme document, or content.theme. The rule is
+// empty or there is no rule. settings is the Look document, or content.theme. The rule is
 // the first one for this pack that covers today. Use now can show a pack on a day no rule
 // covers, and then the first rule for the pack is used, so that what an editor typed shows.
 export function ruleExtras(settings, overlayId, now) {
@@ -225,7 +225,7 @@ export function ruleExtras(settings, overlayId, now) {
 }
 
 // A preview (core/preview.js) holds a seasonal pack on the screen for a while without
-// touching the Theme page. until is a time in milliseconds. A new call replaces the one
+// touching the Look page. until is a time in milliseconds. A new call replaces the one
 // before, and a name that is not an overlay ends it.
 let previewed = null; // { pack, until }
 
@@ -251,7 +251,7 @@ export function overlayShown(page) {
 // the rule leaves empty is the pack file's own value (core/pack-extras.js), else nothing
 // (corner art 'none'). With no pack on the page every part is empty. content is the
 // screen's content; now and page are only for the tests. It never throws, so a panel
-// that asks for it keeps its content whatever the Theme page holds.
+// that asks for it keeps its content whatever the Look page holds.
 export function packExtras(content, now, page) {
   const id = overlayShown(page);
   if (id === '') return mergeExtras(null, null);

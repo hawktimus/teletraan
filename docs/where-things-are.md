@@ -134,7 +134,7 @@ editors can sign in from anywhere.
                               the four ornaments of line art that go in the cut corners, pack-extras.js
                               decides the ticker prefix, banner line and corner art of the pack on the page,
                               transitions.js chooses the style and the metal of the next page change,
-                              look.js turns the Look setting (polished, flat or plain) into the page
+                              look.js turns the Polish setting (polished, flat or plain) into the page
                               switches the stylesheets read (data-finish, data-glint and data-look),
                               events.js merges the BAND events with the Events Calendar entries from Studio,
                               connection.js decides why Sanity could not be read and writes the
@@ -142,7 +142,7 @@ editors can sign in from anywhere.
                               name and addresses (data/live/device.json) for the red version of it
                               night.js says when it is night and where the screensaver logo starts,
                               and night-screen.js draws the night screen (docs/night-mode.md),
-                              demo.js decides when a demo from the Studio's Demo page plays and runs its
+                              demo.js decides when a demo from the Studio's Test the screen page plays and runs its
                               steps, demo-screens.js lists the screens a demo can show, and
                               demo-runner.js starts it (docs/demo.md),
                               announce.js decides when the Play announcements button plays every
@@ -181,6 +181,7 @@ editors can sign in from anywhere.
                               for each entry, so changing the order means moving a line,
                               docs/reordering-the-sidebar.md), its buttons (actions.js: the two content source
                               buttons, the Play buttons of the hidden transitions, Play announcements, Run presentation test, the Preview buttons, and Run demo and Stop demo),
+                              its two pages that are not documents (start-here.js and calendars-view.js),
                               its copy of the theme lists (themes.js), its copy of the demo screens
                               (demo-screens.js), its copy of the hidden transitions (hidden-transitions.js),
                               its copy of the previews (previews.js),
@@ -223,7 +224,7 @@ editors can sign in from anywhere.
                               addresses, which photos show and in what order, the pages of
                               portraits, of the Leadership panel and of the subteam roster, the subteam members, the merging of events and the
                               lines of the Mini's address, and the reasons and the lines of the
-                              connection status text, for the Look setting: its cleaning, the
+                              connection status text, for the Polish setting: its cleaning, the
                               switches each look sets and the rules for Plain in base.css, and for
                               teams: the cleaning of a team, the team each mode asks for, which items
                               show for which team in every panel, and the Teams settings
@@ -237,7 +238,7 @@ editors can sign in from anywhere.
                               draws only what a layout allows, and the war clock: its housing, its digits and
                               labels, its sizes and that it does not move
       test-seasons.mjs        checks for choosing, loading and drawing a seasonal pack (core/season.js), for its
-                              header mark (core/marks.js), its over layer and the Theme switch that turns that off,
+                              header mark (core/marks.js), its over layer and the Look switch that turns that off,
                               for its corner art (core/corner-art.js), for a pack that is missing, broken or slow,
                               and that check-seasons.mjs fails for each kind of mistake
       test-night.mjs          checks for night mode: when it is night in a time zone, where the bouncing
@@ -284,7 +285,7 @@ editors can sign in from anywhere.
                               calendar-links.md, hide-a-repeating-meeting.md, switch-the-look.md,
                               add-the-nova-team.md and team-on-an-item.md.
                               seed/ has content to import into the Studio: places.ndjson, the three
-                              starting places, teams.ndjson, the two starting teams, and extra-events.ndjson, the
+                              starting locations, teams.ndjson, the two starting teams, and extra-events.ndjson, the
                               starting Events Calendar entries. content-templates/ has one CSV template for each
                               kind of content (importing-from-csv.md)
 
@@ -318,7 +319,7 @@ alone.
   frame on or off. The metals are the `--metal-` colours in
   `dashboard/tokens.css`. Try them with `?metal=gold`, `?metal=silver` and
   `?glint=off`.
-- **How much polish the frames have.** Dashboard Settings, Screen tab, Look:
+- **How much polish the frames have.** Dashboard Settings, Screen tab, Polish:
   Polished (as now, the default), Flat or Plain. Flat is the flat finish with
   no glint, and Plain is Flat with no screws on the frames and no double slash
   in the panel headers. The list of looks and the starting value (`looks` and
@@ -350,7 +351,7 @@ alone.
   with `nightSpeeds` (the seconds the logo takes to cross the screen) and
   `limits` there. The Studio fields are all in `studio/schemas/settingsNight.js`,
   so the whole tab can be removed by deleting that file. There is no time zone
-  setting: night mode uses the Time zone on the Theme page. `core/night.js`
+  setting: night mode uses the Time zone on the Look page. `core/night.js`
   decides when it is night and where the logo starts, `core/night-screen.js`
   shows and hides the black layer, and `frame.css` ("Night mode") has the
   bounce, the spin and the fades. Try it with `?night=on` and `?night=off`.
@@ -389,7 +390,7 @@ alone.
   `studio/actions.js`). The starting value is `presentationTestRequest` in `defaultSettings` in
   `dashboard/config.js`. `core/presentation-test.js` decides, `core/presentation-test-run.js` reads the
   sample talk and `startTestTalk` in `core/presentation-run.js` puts it on the screen.
-- **The demo.** The Demo page in Studio (docs/demo.md): Run demo and Stop demo
+- **The demo.** The Test the screen page in Studio (docs/demo.md): Run demo and Stop demo
   in its menu, the Steps, and the Demo announcement text. The starting values
   are `defaultDemo` in `dashboard/config.js` and their copy in
   `studio/schemas/demo.js`, with `limits.demoSeconds` and `demoMaxSteps` there.
@@ -486,11 +487,11 @@ alone.
   screen reads them with the rest of the content (`extraEvents` in
   `core/sanity.js`). `core/events.js` joins them to the BAND events: it sorts
   by start, drops an event once its last day has passed in the Time zone on
-  the Theme page, and keeps only the BAND one when both have the same date and
+  the Look page, and keeps only the BAND one when both have the same date and
   one title contains the other. `shell.js` merges again when the content
   changes and once a minute. The Events panel and the Next event tile only draw
   the list. Both write the date with `eventDate()` in `core/events.js`, in the
-  Time zone on the Theme page: the month with the day (`APR 2`), the weekday
+  Time zone on the Look page: the month with the day (`APR 2`), the weekday
   where the panel shows one, and a range as `APR 2-4` or `MAR 30-APR 1`. An
   event with no start time is all-day and shows its date and no time. The starting seven are in `docs/seed/extra-events.ndjson`, and the
   command to import them is in docs/editing-content.md. The sample content has
@@ -520,7 +521,7 @@ alone.
   without Sanity. The command for the Mini is `deploy/scripts/check-connection.sh`
   (docs/rebuilding-the-mini.md, "Checking the connection").
 - **The theme (the colours of the whole screen), and seasonal packs (holiday
-  overlays).** Theme in Studio. Its Default theme, "Use a theme now", Schedule and Time zone
+  overlays).** Look in Studio. Its Default theme, "Use a theme now", Schedule and Time zone
   decide which theme and overlay show. The themes are the files in
   `dashboard/themes/` and the lists are `registry.js` there and in
   `dashboard/themes/overlays/`, with a copy in `studio/themes.js`. The starting
@@ -531,14 +532,14 @@ alone.
   together make a seasonal pack:
   `dashboard/core/season.js` draws them from `dashboard/seasons/<id>.js`, and
   docs/seasonal-packs.md explains the mark, the over layer, the zones, the data format and the motions.
-  The Theme page's "Seasonal pieces over the panels" switch is `seasonOverPanels`.
+  The Look page's "Seasonal pieces over the panels" switch is `seasonOverPanels`.
   A rule for a seasonal pack can also carry a ticker prefix, a banner line and a corner art:
   `dashboard/core/pack-extras.js` has the limits and the merge with the pack's `defaults`,
   `dashboard/core/corner-art.js` the four ornaments, and `packExtras()` in `core/theme.js` is what
   the ticker and the banner ask for (docs/seasonal-packs.md, "Extras on a rule").
   The screen works out the theme
   when it starts and once a minute, and changes it at the next page change of
-  the large panel. The Time zone is also the one the Theme page uses to read
+  the large panel. The Time zone is also the one the Look page uses to read
   dates. Try a theme with `?theme=<id>` and an overlay with `?overlay=<id>`.
 - **The style of the whole screen.** Style in Dashboard Settings (Screen tab) is
   Original (the screen as it was), Cybertron or Minimal. The names are `styles` in
@@ -569,7 +570,7 @@ alone.
   a swap never happens in the middle of a panel. `teams.css` has the starting colors. Try one
   with `?team=prime|nova|alternate`, or with the Preview Prime and Preview Nova buttons.
 - **Which team an item is for.** The Team field of a task, plan, subteam, person, sponsor, talk,
-  meeting day, custom panel, tip or news line and Events Calendar entry (`teamField` in
+  meeting day, extra panel, tip or news line and Events Calendar entry (`teamField` in
   `studio/schemas/fields.js`, the radio in `studio/team-input.js`). Empty means Both. The query in
   `core/sanity.js` asks for `team->code`, and every panel takes its items through `visibleItems` in
   `core/content.js`, which asks `showsForTeam` in `core/teams.js`. docs/team-on-an-item.md says
@@ -594,19 +595,19 @@ alone.
   The other colours are the theme's: `dashboard/themes/hawktimus.css`.
 - **A task's contact and location.** Two optional fields of a task in Studio
   (`studio/schemas/task.js`). The contact is a first name of up to 12
-  characters. The location is a reference to a place (`studio/schemas/place.js`:
-  a name of up to 16 characters that no other place has, capitals ignored, and
+  characters. The location is a reference to a Locations entry (`studio/schemas/place.js`:
+  a name of up to 16 characters that no other location has, capitals ignored, and
   a show switch). The query in `core/sanity.js` follows the reference
-  (`location->name`) and asks whether the place is showing, and `normalizeTask`
-  in the same file turns a hidden, deleted or nameless place into no location.
+  (`location->name`) and asks whether the location is showing, and `normalizeTask`
+  in the same file turns a hidden, deleted or nameless location into no location.
   The task stays on the screen. The Tasks panel (`panels/tasks/`) draws a task
   with a contact or a location on two lines, so a row of two lines holds one
   such task or two plain tasks, and a page is three rows. When there are more
   rows it shows the next page each time it comes round (`makePages` in
-  `core/turns.js`). A Done task shows only its name. The starting places are in
+  `core/turns.js`). A Done task shows only its name. The starting locations are in
   `docs/seed/places.ndjson`, and the command to import them is in
   docs/editing-content.md. In the CSV templates `contact` and `location` are
-  the last two columns of task.csv, and the importer knows the starting places
+  the last two columns of task.csv, and the importer knows the starting locations
   (docs/importing-from-csv.md).
 - **A new field on something editors fill in.** See docs/adding-a-field.md.
 - **Many items at once from a spreadsheet.** See docs/importing-from-csv.md.
@@ -667,7 +668,7 @@ colours were not changed.
 - The announcements can be tried with `?demo=announcement`, and an alert with
   `?demo=alert`.
 - A theme can be tried with `?theme=<id>` and an overlay with `?overlay=<id>`
-  (`?overlay=none` for no overlay). The address wins over the Theme page.
+  (`?overlay=none` for no overlay). The address wins over the Look page.
 - A style can be tried with `?style=original|cybertron|minimal` and a team with
   `?team=prime|nova|alternate`. The address wins over Dashboard Settings, for that page only.
   The sample content has both teams, so every style, team and pack can be looked at together,
@@ -678,7 +679,7 @@ colours were not changed.
 - The night screen can be tried with `?night=on`, and kept away with `?night=off`
   (docs/night-mode.md). It also has a Preview night mode switch in Dashboard Settings.
 - The announcement and the night screen together can be shown with Run demo on the
-  Demo page in Studio (docs/demo.md).
+  Test the screen page in Studio (docs/demo.md).
 - Calm mode (`?motion=calm`, or Motion in Dashboard Settings) switches off
   every effect and leaves only short fades. `?motion=none` stops all movement.
 - Speed can be tried with `?speed=very-slow`, `?speed=slow`, `?speed=normal`
@@ -686,7 +687,7 @@ colours were not changed.
 - The frames have polished, aged metal edges with silver screws at the joints.
   That is `?finish=metal`, the normal look. `?finish=flat` shows the same screen
   with plain one-colour edges, flat silver screws and no shadow or glint. Comparing the two on the Mini
-  shows what the metal costs. The Look setting in Dashboard Settings sets this
+  shows what the metal costs. The Polish setting in Dashboard Settings sets this
   finish: Polished is `metal`, Flat and Plain are `flat`, and `?look=plain` also
   hides the screws and the double slash in the headers. docs/try-it-on-the-mini.md lists every switch.
 

@@ -4,7 +4,7 @@
 // so a test of 10 minutes takes no time. It also tests how a page change is
 // chosen (dashboard/core/transitions.js): the style and the metal of the
 // frame, and the waits frame.js makes for each style. And it tests when a demo
-// from the Demo page runs (dashboard/core/demo.js): whether a request is recent
+// from the Test the screen page runs (dashboard/core/demo.js): whether a request is recent
 // and new, the order and the pauses of the steps, and what stops a demo. And it
 // tests when a hidden transition plays (dashboard/core/hidden.js): the chance, the
 // master switch, calm motion, what blocks it and a push from the Studio, the
@@ -1707,7 +1707,7 @@ test('the rivets and the id come in after the lines are drawn, go with the frame
   });
 });
 
-// The Demo page (dashboard/core/demo.js)
+// The Test the screen page (dashboard/core/demo.js)
 
 const { shouldRunDemo, readHandled, rememberHandled, handledKey, makeDemoRunner, tidyDemo } = demo;
 const demoNow = new Date('2026-10-05T12:00:00.000Z');
@@ -1915,7 +1915,7 @@ test('a screen that restarts a few seconds after a demo does not play it again, 
   world.look();
   await world.runner.whenIdle();
 
-  // the page loads again with the same storage and the same request still on the Demo page
+  // the page loads again with the same storage and the same request still on the Test the screen page
   const soon = demoWorld({ store: world.store });
   soon.nowMs = soon.start = world.nowMs + 20 * 1000;
   soon.content.demo = Object.assign({}, world.content.demo);
@@ -4150,7 +4150,7 @@ test('Preview next pack holds the pack after the one on the screen for 2 minutes
   }
   assert.deepEqual(held, packs.concat(packs[0]));
 
-  // it is the pack that is held, nothing else, and the Theme page is not written
+  // it is the pack that is held, nothing else, and the Look page is not written
   assert.deepEqual(heldBy('next-pack', 'halloween'), { team: '', style: '', pack: 'thanksgiving' });
   assert.equal(styleModule.chooseStyle('minimal', null, world.at(10)), 'minimal');
   assert.equal(teamSeen('nova', world.at(0)), 'nova');

@@ -126,7 +126,7 @@ test('the time zone decides, through Intl, and a half hour zone and a zone it do
   assert.equal(inNightWindow(at('2026-10-04T17:59:00Z'), '23:30', '11:30', 'Asia/Kolkata'), false);
   assert.equal(inNightWindow(at('2026-10-04T18:00:00Z'), '23:30', '11:30', 'Asia/Kolkata'), true);
 
-  // a name Intl does not know is read in the Theme page's default zone, so the screen carries on
+  // a name Intl does not know is read in the Look page's default zone, so the screen carries on
   assert.equal(minutesIn('Mars/Olympus_Mons', instant), 0);
   assert.equal(inNightWindow(instant, '23:30', '11:30', 'Mars/Olympus_Mons'), true);
   assert.equal(minutesIn(undefined, instant), 0);
@@ -213,7 +213,7 @@ test('the starting settings are the ones the owner asked for', () => {
   assert.deepEqual(config.nightStyles, ['bounce', 'black']);
   assert.deepEqual(Object.keys(config.nightSpeeds), ['slow', 'normal', 'fast']);
   assert.deepEqual(config.limits.nightLogoWidth, { min: 120, max: 800 });
-  assert.equal(config.defaultThemeSettings.timeZone, eastern, 'the zone comes from the Theme page, where it starts as New York');
+  assert.equal(config.defaultThemeSettings.timeZone, eastern, 'the zone comes from the Look page, where it starts as New York');
 });
 
 // The bounce -------------------------------------------------------------
@@ -451,7 +451,7 @@ test('the night screen does nothing per frame: no frame timer, only the clock on
   assert.ok(code.includes('frame.onSecond(look)'), 'once a second, from the one clock');
   assert.ok(code.includes("addEventListener('animationiteration', onBounce)"), 'a wall reached is an event');
   assert.ok(code.includes('watchTakeovers(settle)'), 'an alert starting or ending is an event');
-  assert.ok(code.includes('nightWanted(content.settings, content.theme.timeZone, now, override)'), 'the time zone is the Theme page\'s');
+  assert.ok(code.includes('nightWanted(content.settings, content.theme.timeZone, now, override)'), 'the time zone is the Look page\'s');
   assert.ok(code.includes('frame.setNightCovers(covering && !stepAside)'), 'the effects wait while it covers');
   assert.ok(code.includes('nightPlan(speedName, Math.random)'), 'the plan is made once per start, not per frame');
 

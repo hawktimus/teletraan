@@ -72,7 +72,7 @@ replace the value of `sanityToken`.
 
 ## 5. Cancel or move a talk
 
-Talks are in Studio under Presentations, then Upcoming talks.
+Talks are in Studio under Presentations, then Upcoming.
 
 1. Open the talk.
 2. To cancel it, set Status to Cancelled. To move it, change Starts at to a time

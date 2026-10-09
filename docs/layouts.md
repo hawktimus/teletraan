@@ -43,7 +43,7 @@ page, over the setting. The theme still gives the colors and the seasonal packs.
 
 The layout is set before anything is drawn, so that a screen that starts with
 Neon Prime chosen starts straight in the sidebar layout. `shell.js` does it as
-its first step. It reads the Style and the Theme document in the copy of the
+its first step. It reads the Style and the Look document in the copy of the
 content saved on this computer (the same copy the screen uses when Sanity cannot be
 reached), puts `data-style` on the html element, works out the theme as
 `theme-apply.js` will, and sets `data-layout`. `?theme=neon-prime` and `?style=` in
@@ -987,7 +987,7 @@ gives the page, so a change of the numbers there moves the kit too.
   is also why the kit costs nothing while the screen is covered. Any glitch or burst
   that is playing ends on the spot, and the kit starts again when the screen is
   back.
-- **A demo** (the Demo page): the two events are silent. The rest goes on.
+- **A demo** (the Test the screen page): the two events are silent. The rest goes on.
 - **The two events** also wait for the moment: the name glitch is skipped while the
   name effect, the logo or the screen glitch is playing and while a page is
   changing, and it is never saved up (the next one comes 12 to 25 seconds after
@@ -1093,7 +1093,7 @@ Add `?theme=neon-prime` to the address, with `?night=off&hidden=off` to keep
 those away while you look: `http://localhost:8080/dashboard/?theme=neon-prime&night=off&hidden=off`.
 `?show=<panel id>` shows one panel in the pane. `?hidden=desktop` and
 `?hidden=redEyes` play the hidden transitions, and `?demo=alert` the alert.
-Without `?theme=` the screen follows the Theme page, and reloads once when the
+Without `?theme=` the screen follows the Look page, and reloads once when the
 theme with another layout comes on. For the bar layout use `?style=cybertron` or
 `?style=minimal`, for example `http://localhost:8080/dashboard/?style=minimal&night=off&hidden=off`.
 To look at the mirror, add `?team=nova` to the address, which shows the Nova team with

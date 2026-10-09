@@ -14,12 +14,12 @@ For adjusting the content that gets displayed, Sanity will be used.
 
 Almost everything on the screen is typed into the Studio, which is the editing page for the dashboard. Open it at [Studio address] and sign in.
 
-The list on the left is what you can change: Tasks, Up Next, Presentations, Events Calendar, Calendar filters, Subteams, Leadership, Teams, Sponsors, Photos, Tips and News, Custom Panels, Dashboard Settings, Theme, Places, and Demo. Click the one you want, change it, and press **Publish**. Nothing shows on the TV until it is published, and it gets there within a few seconds.
+The list on the left is what you can change. It opens with Start here and has four groups: Every meeting (Up Next, Tasks, Tips and News), Events (Events Calendar, Calendars, Calendar filters, Presentations), The team (Roster, Leadership, Sponsors, Photos) and Coaches only (Dashboard Settings, Look, Teams, Locations, Extra panels, Test the screen). Click the one you want, change it, and press **Publish**. Nothing shows on the TV until it is published, and it gets there within a few seconds.
 
 - Every item has a **Show on screen** switch and an optional **Hide after** date, so things come down on their own.
 - Every field says how many characters fit on the screen. Studio will not let you publish text that is too long.
 - **Publish all**, in the top bar, lists every document that has a draft and publishes the ticked ones in one go. Each is checked first with the same rules as its Publish button, and one that fails is skipped with the reason while the rest are published.
-- **Dashboard Settings** is the one page for the whole board: which boards show and in what order, how long each stays, the countdown dates, the announcement times and words, an alert, how presentations run, which team is on the screen, how big the portraits and photos are, and the style, the look and the speed.
+- **Dashboard Settings** is the one page for the whole board: which boards show and in what order, how long each stays, the countdown dates, the announcement times and words, an alert, how presentations run, which team is on the screen, how big the portraits and photos are, and the style, the polish and the speed.
 - Presentations holds the Meeting days that have talk slots, and the talks students have booked (docs/presentations.md).
 - BAND events are not typed in here. They come from the team's BAND calendars. Events that are not on BAND go in Events Calendar. A Calendar filter hides some BAND events, such as a meeting that repeats every week (docs/calendar-filters.md).
 - The order of the list on the left is one plain list in `studio/structure.js`. To change the order, move a line (docs/reordering-the-sidebar.md).
@@ -39,7 +39,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - Team name, number, and school, with the animated hawk logo
 - Date, time, and weather for Holly Springs
 - Countdown timer to FRC Kickoff (January 9, 2027), then to Rollout
-- Team tasks, each with an optional point of contact and a location picked from a list of places
+- Team tasks, each with an optional point of contact and a location picked from the Locations list
 - Up Next, the schedule for today's meeting, with the talks booked for today
 - Upcoming events and the next event, from the team's BAND calendars, with Calendar filters that hide or keep events, such as a meeting that repeats every week
 - Sponsors, with sponsor logos and thank-yous
@@ -47,7 +47,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - Subteam spotlight, leadership, and team leads
 - Subteam rosters: the team lead and who is on each subteam
 - Task counts and safety days
-- Custom boards that can be built in Studio
+- Extra panels that can be built in Studio
 - A ticker along the bottom for tips, news, reminders, and sponsor thanks
 - Announcements at 2:30pm and 5:00pm ("WHAT TIME IS IT?", then "PRIMETIME"), with the times and words set in Studio
 - Full-screen alerts that take over the whole screen
@@ -55,15 +55,15 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - Calm mode, which turns the effects off
 - A speed setting for the whole board, and seconds per page that can be set for the whole board or for each board
 - Polished gold or silver frame edges, picked in Studio
-- A Look setting in Studio that turns the polish down: Polished (the normal look, and the default), Flat (plain colour edges and no glint) or Plain (Flat, with no screws and no // in the panel headers). Flat and Plain are lighter on the Mini, and `?look=flat` or `?look=plain` on the address tries one for a single page
+- A Polish setting in Studio that turns the polish down: Polished (the normal look, and the default), Flat (plain colour edges and no glint) or Plain (Flat, with no screws and no // in the panel headers). Flat and Plain are lighter on the Mini, and `?look=flat` or `?look=plain` on the address tries one for a single page
 - A Style setting in Studio: Original (the screen as it has always been), Cybertron or Minimal. Cybertron and Minimal have the bar layout, a banner across the top with the team name and the war clock (the countdown in a steel housing), a thin side column and one main panel (docs/layouts.md). `?style=minimal` on the address tries one for a single page. Both draw steel frames with a neon line just inside the edge and hex bolts at the joints. Cybertron adds a hazard stripe under each header, pink conduit and brackets, a row of neon slashes and a grid with scanlines behind the screen. Minimal has smaller cut corners, rivets and a stamped id on its frames, rust at two corners, a weld seam on the main panel, tick marks along the header line and a finer grid
 - Teams: Hawktimus Prime and Hawktimus Nova, each with a name, number, logo, seven colors and a switch that flips the whole screen left to right. Team mode in Studio shows Prime only, Nova only, or swaps between the teams every few minutes, with everything changing together at a page change. Tasks, Up Next, sponsors and most other things have a Team choice, and empty means Both (docs/add-the-nova-team.md, docs/team-on-an-item.md)
 - Switch the look: the style, the team and the seasonal pack are three separate settings, and four steps in Studio change them (docs/switch-the-look.md)
 - A fixed 1920 by 1080 screen. Every layout, the mirror and the war clock are placed in pixels inside it, and the page scales the whole picture to the window and never reflows (docs/layouts.md, "The screen is a fixed canvas")
 - Pages that flip like slats while the frames stay in place
 - The animated hawk logo, and a team name that splits apart and locks back together every few minutes
-- Layouts: a theme may have the sidebar layout, a strip across the top with the team name, a column on the left, one big frame on the right and the ticker across the whole bottom, with no small frame (docs/layouts.md). The theme Neon Prime has it: near black violet, indigo plates, gunmetal frames and neon cyan and magenta with amber marks, and no green. It has a kit of moving neon: the team name glitches now and then, bright dashes race along its lines, thin lines sweep down the big frame and the sidebar, and it all stops in calm mode, at night, and under an alert. Pick it on the Theme page; the screen reloads once to change layout. Its speed on the Mini has not been tested (docs/try-it-on-the-mini.md)
-- Seasonal packs: Halloween, Thanksgiving, Christmas, New Year's, Valentine's Day, Competition Day and Summer Break. Each is a set of accent colours plus a small picture that replaces the double slash in every panel header, decorations in the empty edges of the screen (strings of lights, a scene along the bottom) and a few small, faint, slow pieces, such as snowflakes, that drift over the whole screen. The editors schedule them on the Theme page in Studio, where a switch turns the pieces over the panels off. A rule can also add a ticker prefix, a banner line and corner art: line art that draws in once in the cut corners and holds still. A pack lies over every style and team. In calm mode nothing moves and those pieces are not drawn
+- Layouts: a theme may have the sidebar layout, a strip across the top with the team name, a column on the left, one big frame on the right and the ticker across the whole bottom, with no small frame (docs/layouts.md). The theme Neon Prime has it: near black violet, indigo plates, gunmetal frames and neon cyan and magenta with amber marks, and no green. It has a kit of moving neon: the team name glitches now and then, bright dashes race along its lines, thin lines sweep down the big frame and the sidebar, and it all stops in calm mode, at night, and under an alert. Pick it on the Look page; the screen reloads once to change layout. Its speed on the Mini has not been tested (docs/try-it-on-the-mini.md)
+- Seasonal packs: Halloween, Thanksgiving, Christmas, New Year's, Valentine's Day, Competition Day and Summer Break. Each is a set of accent colours plus a small picture that replaces the double slash in every panel header, decorations in the empty edges of the screen (strings of lights, a scene along the bottom) and a few small, faint, slow pieces, such as snowflakes, that drift over the whole screen. The editors schedule them on the Look page in Studio, where a switch turns the pieces over the panels off. A rule can also add a ticker prefix, a banner line and corner art: line art that draws in once in the cut corners and holds still. A pack lies over every style and team. In calm mode nothing moves and those pieces are not drawn
 - Night mode: from 11:30pm to 11:30am the screen goes black with a bouncing logo, and the picture is never turned off. The times are set in Studio
 - Mechanical page changes: the frame breaks into plates and bars that fold away and click back together around the next page, with screws that turn at the joints. Studio can use these, the slat flip, or take turns
 - Hidden transitions: now and then the screen glitches blue, comes apart and cuts to a blue error screen, or glitches red and shows two red eyes in the dark. Each has two pictures that take turns. They can be played on request from Studio
@@ -72,7 +72,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - Presentations: a student books a short talk in a Google Form, and the talk appears in Studio. At its time the TV shows a title card, then the student's Google Slides one picture at a time, moved by a clicker, then a thank you card. The Mini turns each deck into pictures before the talk (docs/presentations.md)
 - A Run presentation test button in Studio that plays a sample talk with six sample slides, with no internet
 - Preview buttons in Studio (Prime, Nova, Cybertron, Minimal and the next seasonal pack) that show that look on the TV for 2 minutes and then go back to the saved settings, without changing any setting. `?team=`, `?style=` and `?overlay=` on the address try any combination with the sample content
-- A demo for visitors that plays the announcement and night mode on request from Studio
+- A test page in Studio (Test the screen) for visitors that plays the announcement and night mode on request
 - A calendar check (deploy/scripts/check-calendars.sh) that lists the next 30 days of events and says which ones the Calendar filters hide
 - A connection check for the Mini (deploy/scripts/check-connection.sh) and a small text on the screen that says why when Sanity cannot be reached
 

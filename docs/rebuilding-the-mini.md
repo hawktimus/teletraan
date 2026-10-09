@@ -402,8 +402,8 @@ setting up or looking into a problem. It then has these lines, in a dark plate
 instead of the red one:
 
     Sanity OK · last read [time]
-    Tasks [n] · Sponsors [n] · Tips [n] · Subteams [n]
-    People [n] · Events Calendar [n] · Up Next [n] · Custom panels [n]
+    Tasks [n] · Sponsors [n] · Tips [n] · Roster [n]
+    People [n] · Events Calendar [n] · Up Next [n] · Extra panels [n]
     Calendars read [time]
 
 The first line says `Saved copy from [time]` while the screen shows a copy

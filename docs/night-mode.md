@@ -28,7 +28,7 @@ missing setting in the published page is the starting value, so a Studio that
 has never saved the tab behaves as if it had.
 
 **The time zone is not a setting here.** Night mode uses the Time zone on the
-Theme page (it starts as America/New_York), the one the whole screen already
+Look page (it starts as America/New_York), the one the whole screen already
 uses for dates. One zone for the screen means two settings can never disagree.
 The clock in that zone is read with `Intl.DateTimeFormat`, so the Mini's own
 time zone never matters.
@@ -127,7 +127,7 @@ draw is random, so each night follows a different path.
 
 ## In a demo
 
-The Demo page in Studio (docs/demo.md) can show the night screen for a few seconds
+The Test the screen page in Studio (docs/demo.md) can show the night screen for a few seconds
 whatever the time is. The demo shows the bouncing logo, whether or not Use night mode
 is on and whatever Night style says, and it wins over `?night=off`. When the step
 ends the night screen goes back to what the clock and the settings say. An alert

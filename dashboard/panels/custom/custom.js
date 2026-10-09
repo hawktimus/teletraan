@@ -1,5 +1,5 @@
 // Panels the editors build from blocks. Each time this one comes round it
-// shows the next custom panel in the list. About three blocks fit.
+// shows the next extra panel in the list. About three blocks fit.
 
 import { cardMarkup, rowBarMarkup } from '../../core/plate.js';
 import { doubleSlash } from '../../core/marks.js';

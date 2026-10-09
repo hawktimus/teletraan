@@ -25,7 +25,7 @@
 
 /* The over layer is only drawn in full motion. A piece that stopped would sit
    on a word, so in calm and none motion the whole layer is gone. The same layer
-   is taken off the page by core/season.js when the Theme page's switch is off. */
+   is taken off the page by core/season.js when the Look page's switch is off. */
 .season-over { display: none; }
 html[data-motion="full"] .season-over { display: block; }
 

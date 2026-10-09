@@ -131,13 +131,13 @@ test('with nothing saved and nothing asked the layout is standard', () => {
   assert.equal(layout.chooseLayout({}, '', noon), 'standard');
 });
 
-test('the address wins over the saved Theme document, and an unknown theme in the address is ignored', () => {
+test('the address wins over the saved Look document, and an unknown theme in the address is ignored', () => {
   assert.equal(layout.chooseLayout(null, 'neon-prime', noon), 'sidebar');
   assert.equal(layout.chooseLayout({ defaultTheme: 'neon-prime' }, 'hawktimus', noon), 'standard');
   assert.equal(layout.chooseLayout({ defaultTheme: 'neon-prime' }, 'no-such-theme', noon), 'sidebar');
 });
 
-test('the saved Theme document decides: the default theme, Use now with its Until time, and the schedule', () => {
+test('the saved Look document decides: the default theme, Use now with its Until time, and the schedule', () => {
   assert.equal(layout.chooseLayout({ defaultTheme: 'neon-prime' }, null, noon), 'sidebar');
   assert.equal(layout.chooseLayout({ useNow: { theme: 'neon-prime', until: '' } }, null, noon), 'sidebar');
   assert.equal(layout.chooseLayout({ useNow: { theme: 'neon-prime', until: '2026-10-10T15:00:00Z' } }, null, noon), 'standard', 'Use now has run out');

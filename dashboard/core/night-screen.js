@@ -1,5 +1,5 @@
 // The night screen, the screensaver. Between the start and end times in the
-// Night mode tab of Dashboard Settings (in the time zone of the Theme page) the
+// Night mode tab of Dashboard Settings (in the time zone of the Look page) the
 // screen is black with the team logo and the team number under it. The signal
 // is never turned off: the Mini keeps sending a picture, and the kiosk script
 // keeps the TV from blanking (deploy/scripts/kiosk.sh).

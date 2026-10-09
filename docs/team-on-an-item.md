@@ -6,8 +6,8 @@ says which. Empty means Both.
 
 ## The field
 
-These have a Team field: Tasks, Up Next, Subteams, Leadership, Sponsors, Tips and
-News, Custom Panels, Events Calendar entries, Meeting days and booked talks. It is
+These have a Team field: Tasks, Up Next, Roster, Leadership, Sponsors, Tips and
+News, Extra panels, Events Calendar entries, Meeting days and booked talks. It is
 a row of choices: Both, then one for each team that is Active under Teams, with the
 name of the team. Both is picked to start with, and it stores nothing.
 
@@ -72,7 +72,7 @@ The example gives Photos a Team field. Do the steps in order.
 4. A kind that has its own tidying function copies only the fields it knows. Photos
    have `normalizePhoto`: add `team: raw.team` to the fields it copies and pass the
    result through `withTeamCode`. Tasks, sponsors, tips, subteams, people, plans,
-   Events Calendar entries and custom panels go through `itemsFrom`, which does it
+   Events Calendar entries and extra panels go through `itemsFrom`, which does it
    already.
 5. In the panel, take the items through `visibleItems` from `core/content.js`. The
    Photo panel already does, so it needs nothing. Do not compare the team in a panel.

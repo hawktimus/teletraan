@@ -27,7 +27,7 @@
 //                                     another layout (core/layout.js) brings its layout with it
 //   overlay=<id>|none                 show an overlay from themes/overlays/registry.js, or none
 //   night=on|off                      show the night screen (the screensaver) now, or never, whatever the time
-//   seasonover=on|off                 show or hide the seasonal pieces over the panels, whatever the Theme page says
+//   seasonover=on|off                 show or hide the seasonal pieces over the panels, whatever the Look page says
 //   hidden=desktop|redEyes|off        play that hidden transition at the next page change of the large panel, or never play any
 //   kit=off                           switch the neon kit (Neon Prime's moving neon, docs/layouts.md) off, to see what it costs
 
@@ -148,7 +148,7 @@ async function run() {
     if (!params.get('show') && !stress) {
       startTakeovers(getContent);
 
-      // The Demo page in the Studio. After the takeovers, so that an alert that
+      // The Test the screen page in the Studio. After the takeovers, so that an alert that
       // comes due on the same second has the screen before the demo looks.
       startOptional('./core/demo-runner.js', module => module.startDemoRunner(getContent));
 
@@ -401,7 +401,7 @@ async function startExtras() {
   }));
 
   // An event that has finished must leave the list even when nothing else
-  // changes, and a new day starts at midnight in the Theme time zone
+  // changes, and a new day starts at midnight in the Look time zone
   setInterval(() => {
     if (content) content.events = mergedEvents();
   }, 60 * 1000);
@@ -477,7 +477,7 @@ function showDecorations(look) {
   }).then(refreshBannerLines); // the pack's own banner line is known once its file is read
 }
 
-// The corner art typed on the rule of this pack on the Theme page, or '' (core/theme.js, ruleExtras)
+// The corner art typed on the rule of this pack on the Look page, or '' (core/theme.js, ruleExtras)
 function typedCornerArt(overlayId) {
   if (!base || !overlayId) return '';
   return ruleExtras(base.theme, overlayId, new Date()).cornerArt;
@@ -492,7 +492,7 @@ function refreshBannerLines() {
   updatePanel('bar-column', content);
 }
 
-// The pieces over the panels: the Theme page's switch, and the address wins
+// The pieces over the panels: the Look page's switch, and the address wins
 // like the other switches. A change in Studio shows at once because rebuild()
 // calls useSeasonSwitch() each time the content changes.
 function wantOverPanels() {
@@ -507,7 +507,7 @@ function useSeasonSwitch() {
   startOptional('./core/season.js', module => module.setOverPanels(wantOverPanels()));
 }
 
-// The corner art typed on the rule of the pack on the page follows the Theme page while
+// The corner art typed on the rule of the pack on the page follows the Look page while
 // the screen runs, like the switch above
 function usePackExtras() {
   if (!decorationsUsed) return;

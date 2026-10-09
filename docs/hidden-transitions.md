@@ -215,7 +215,7 @@ on a day it is not scheduled.
 
 The button writes its kind and the time now into `previewRequest` and publishes the page for you.
 `previewRequest` has two fields, `kind` and `requestedAt`, and editors never see it in Studio: it is
-hidden, but its value stays in the page. Nothing else in Dashboard Settings or on the Theme page is
+hidden, but its value stays in the page. Nothing else in Dashboard Settings or on the Look page is
 changed, so there is nothing to put back.
 
 What each button holds for 2 minutes:
@@ -237,10 +237,10 @@ What the screen does with it:
   goes back. The preview is kept in the browser's storage (`localStorage`, under
   `teletraan-preview-active`) so that the reload does not lose it. A preview that is over, or not
   readable, is dropped.
-- Next pack takes the pack on the screen now, whether the Theme page or an earlier preview put it
+- Next pack takes the pack on the screen now, whether the Look page or an earlier preview put it
   there, and moves to the one after it. After the last it goes round to the first. The placeholder overlay
   is not a pack. Click it again for the next pack. The ticker prefix, the banner line and the corner art
-  are the ones typed on that pack's rule on the Theme page, or the pack's own (docs/seasonal-packs.md).
+  are the ones typed on that pack's rule on the Look page, or the pack's own (docs/seasonal-packs.md).
 - It starts once, and only while the request is less than 60 seconds old, the same rule as the demo
   (docs/demo.md). The screen keeps the request it handled last in `localStorage`, under
   `teletraan-preview-handled`, so a Mini that restarts never starts it again. This is separate from the
@@ -266,7 +266,7 @@ To add a preview, add an entry to `previewKinds` in `dashboard/core/preview.js`,
 
 Add `?hidden=desktop` or `?hidden=redEyes` to the address and that transition plays at
 the next page change of the large panel, once, whatever the chance says.
-`?hidden=off` never plays any. Add `?night=off` too when it is night in the Theme
+`?hidden=off` never plays any. Add `?night=off` too when it is night in the Look
 time zone, or the night screen will stop it. docs/try-it-on-the-mini.md lists every switch.
 
 ## How it works

@@ -139,7 +139,7 @@ test('the sample rows make a document each when the EXAMPLE mark is taken off', 
   assert.equal(task.show, true);
   assert.equal(task.order, 1);
   assert.equal(task.contact, '[First name]');
-  assert.deepEqual(task.location, { _type: 'reference', _ref: 'place-place-name' });
+  assert.deepEqual(task.location, { _type: 'reference', _ref: 'place-location-name' });
 });
 
 test('the limits in row 2 are kept: every text column takes its limit and refuses one more', () => {
@@ -156,7 +156,7 @@ test('the limits in row 2 are kept: every text column takes its limit and refuse
       if (!limit || !groupUsed) return;
       const fits = csvFor(type, [Object.assign({}, example, { [name]: 'x'.repeat(Number(limit[2])) })]);
       const tooLong = csvFor(type, [Object.assign({}, example, { [name]: 'x'.repeat(Number(limit[2]) + 1) })]);
-      const other = type === 'task' ? { 'subteam.csv': csvFor('subteam', [{ name: '[Subteam A]', show: 'yes' }]), 'place.csv': csvFor('place', [{ name: '[Place name]', show: 'yes' }]) } : {};
+      const other = type === 'task' ? { 'subteam.csv': csvFor('subteam', [{ name: '[Subteam A]', show: 'yes' }]), 'place.csv': csvFor('place', [{ name: '[Location name]', show: 'yes' }]) } : {};
 
       assert.equal(runImporter(Object.assign({ [type + '.csv']: fits }, other)).status, 0, type + '.' + name + ' at its limit');
       const refused = runImporter(Object.assign({ [type + '.csv']: tooLong }, other));
@@ -303,7 +303,7 @@ test('a name that points at nothing, and two rows with one id, are refused', () 
   assert.ok(runImporter({ 'task.csv': 'a,b\n1,2\n' }).message.includes('row 2 should start with the type'));
 });
 
-test('a task points at a place by name, capitals ignored: the starting places are known, and so is a place CSV', () => {
+test('a task points at a location by name, capitals ignored: the starting locations are known, and so is a place CSV', () => {
   const seeded = runImporter({ 'task.csv': csvFor('task', [{ title: 'Build a frame', status: 'up-next', contact: 'Sam', location: 'programming ROOM' }]) });
   assert.equal(seeded.status, 0, seeded.message);
   assert.equal(seeded.docs[0].contact, 'Sam');
@@ -331,11 +331,11 @@ test('a task points at a place by name, capitals ignored: the starting places ar
   assert.equal('contact' in plain.docs[0] || 'location' in plain.docs[0], false);
 });
 
-test('a place the script does not know is refused and the row is named', () => {
+test('a location the script does not know is refused and the row is named', () => {
   const result = runImporter({ 'task.csv': csvFor('task', [{ title: 'Fine', status: 'up-next', location: 'Classroom' }, { title: 'Lost', status: 'up-next', location: 'The gym' }]) });
   assert.equal(result.status, 1);
   assert.equal(result.docs, null);
-  assert.ok(result.message.includes('task.csv, row 4, column location: "The gym" is not a place the script knows (Classroom, Programming room, Media center)'), result.message);
+  assert.ok(result.message.includes('task.csv, row 4, column location: "The gym" is not a location the script knows (Classroom, Programming room, Media center)'), result.message);
   assert.ok(!result.message.includes('row 3'), result.message);
 
   // a contact over 12 characters is refused too

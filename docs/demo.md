@@ -7,7 +7,7 @@ then the screen goes back to what it was doing.
 
 ## Run a demo
 
-1. Open Studio and click Demo in the sidebar.
+1. Open Studio and click Test the screen in the sidebar, under Coaches only.
 2. Open the menu next to Publish (the three dots) and click Run demo.
 3. Look at the TV. The demo starts within a few seconds.
 
@@ -28,7 +28,7 @@ pack for 2 minutes, and are explained there too ("Preview a look").
 - Requested at: the time Run demo was clicked. Run demo fills it in and Stop demo
   clears it. You cannot type in it.
 - Steps: the screens to show, one after the other, up to 10. Each step has a
-  Screen and the Seconds it stays, from 5 to 300. A new Demo page starts with the
+  Screen and the Seconds it stays, from 5 to 300. A new Test the screen page starts with the
   Announcement for 30 seconds and then Night mode for 30 seconds. Drag the steps
   to change the order, or add the same screen twice.
 - Demo announcement text: the words of the Announcement step, up to 24
@@ -55,7 +55,7 @@ The screens you can pick are the ones in the list of "demo screens" in the code:
 
 ## What the screen does
 
-The screen reads the Demo page with the rest of the content, so a click on Run
+The screen reads the Test the screen page with the rest of the content, so a click on Run
 demo reaches it within a few seconds. Then:
 
 - **A request starts a demo only if it is recent and new.** It must be no more
@@ -141,7 +141,7 @@ back in the function it returns, or when `context.cancelled()` says so.
   announcement step shows. The All announcements step uses `enabledAnnouncements`
   and `playEach` in `dashboard/core/announce.js`.
 - `dashboard/core/demo.js`: the plain functions, with no page in them. They tidy
-  the Demo page into `content.demo`, decide whether a request should run
+  the Test the screen page into `content.demo`, decide whether a request should run
   (`shouldRunDemo`), remember the handled request, and run the steps
   (`makeDemoRunner`). The tests for them are in `tools/test-effects.mjs`, and the
   tests for `content.demo` are in `tools/test-content.mjs`.

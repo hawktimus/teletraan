@@ -4,7 +4,7 @@
 // Each sets Content source and publishes in one click, so the screen follows
 // within about 30 seconds.
 //
-// Demo has "Run demo" and "Stop demo". Run demo writes the time now into
+// Test the screen has "Run demo" and "Stop demo". Run demo writes the time now into
 // Requested at and publishes, and the screen plays the demo within a few
 // seconds. Stop demo clears Requested at and publishes.
 //
@@ -95,7 +95,7 @@ export function useProductionContentAction(props) {
 }
 useProductionContentAction.action = 'useProductionContent';
 
-// The Demo page's two buttons (docs/demo.md). Neither keeps any state: Run demo
+// The Test the screen page's two buttons (docs/demo.md). Neither keeps any state: Run demo
 // is always allowed, so a second click starts the demo again, and Stop demo is
 // off only when there is no request to clear.
 

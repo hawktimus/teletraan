@@ -221,7 +221,7 @@ const glintField = defineField({
   title: 'Glint',
   type: 'boolean',
   group: 'screen',
-  description: 'A bright spark runs once around each frame every few seconds. Turn it off for a calmer screen. Flat and Plain (Look) have none.',
+  description: 'A bright spark runs once around each frame every few seconds. Turn it off for a calmer screen. Flat and Plain (Polish) have none.',
   initialValue: true,
 });
 
@@ -233,10 +233,10 @@ const glintField = defineField({
 // (an alert too) until somebody picked one.
 const lookField = defineField({
   name: 'look',
-  title: 'Look',
+  title: 'Polish',
   type: 'string',
   group: 'screen',
-  description: 'Polished is the default, as now. Flat has plain edges and no glint. Plain also has no screws or // marks in headers. Flat and Plain are lighter on the Mini.',
+  description: 'Polished is the default. Flat has plain edges and no glint. Plain also has no screws or // marks in headers. Flat and Plain are lighter on the Mini.',
   options: { list: looks, layout: 'radio', direction: 'horizontal' },
   initialValue: 'polished',
   validation: Rule => Rule.valid(looks.map(look => look.value)).error('Pick polished, flat or plain.'),
