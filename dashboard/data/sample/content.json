@@ -146,7 +146,13 @@
     { "name": "[Subteam C]", "lead": "[Lead name]", "members": ["[Student A]", "[Student B]", "[Student C]", "[Student D]", "[Student E]", "[Student F]", "[Student G]", "[Student H]", "[Student I]", "[Student J]", "[Student K]", "[Student L]", "[Student M]"] },
     { "name": "[Subteam D]", "lead": "[Lead name]", "members": ["[Student A]", "[Student B]", "[Student C]", "[Student D]", "[Student E]", "[Student F]", "[Student G]", "[Student H]", "[Student I]", "[Student J]", "[Student K]", "[Student L]", "[Student M]", "[Student N]", "[Student O]", "[Student P]"] },
     { "name": "[Subteam E]", "lead": "[Lead name]", "members": ["[Student A]", "[Student B]", "[Student C]", "[Student D]"] },
-    { "name": "[Subteam F]", "lead": "[Lead name]", "members": ["[Student A]", "[Student B]", "[Student C]", "[Student D]", "[Student E]", "[Student F]", "[Student G]", "[Student H]", "[Student I]", "[Student J]", "[Student K]", "[Student L]", "[Student M]", "[Student N]", "[Student O]", "[Student P]", "[Student Q]", "[Student R]"] }
+    { "name": "[Subteam F]", "lead": "[Lead name]", "members": ["[Student A]", "[Student B]", "[Student C]", "[Student D]", "[Student E]", "[Student F]", "[Student G]", "[Student H]", "[Student I]", "[Student J]", "[Student K]", "[Student L]", "[Student M]", "[Student N]", "[Student O]", "[Student P]", "[Student Q]", "[Student R]"] },
+    { "name": "[Subteam G]", "lead": "[Lead name]", "members": ["[Student A]", "[Student B]", "[Student C]", "[Student D]", "[Student E]"] },
+    { "name": "[Subteam H]", "lead": "[Lead name]", "members": ["[Student A]", "[Student B]", "[Student C]", "[Student D]", "[Student E]", "[Student F]", "[Student G]"] },
+    { "name": "[Subteam I]", "lead": "[Lead name]", "members": ["[Student A]", "[Student B]", "[Student C]", "[Student D]", "[Student E]", "[Student F]", "[Student G]", "[Student H]"] },
+    { "name": "[Subteam J]", "lead": "[Lead name]", "members": ["[Student A]", "[Student B]", "[Student C]", "[Student D]", "[Student E]", "[Student F]", "[Student G]", "[Student H]", "[Student I]"] },
+    { "name": "[Subteam K]", "lead": "[Lead name]", "members": ["[Student A]", "[Student B]", "[Student C]", "[Student D]", "[Student E]", "[Student F]", "[Student G]", "[Student H]", "[Student I]", "[Student J]", "[Student K]"] },
+    { "name": "[Subteam L]", "members": ["[Student A]", "[Student B]", "[Student C]"] }
   ],
 
   "people": [

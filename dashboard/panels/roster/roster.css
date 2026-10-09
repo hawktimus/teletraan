@@ -27,9 +27,9 @@
   text-transform: uppercase;
 }
 
-/* The same box as the row of portraits in base.css (1096 by 516), with the
-   lead and the names side by side in the middle of it. The portrait slot is
-   styled in base.css, under People portraits. */
+/* A box 1096 by 516 below the header, with the lead and the names side by side
+   in the middle of it. The portrait slot is styled in base.css, under People
+   portraits. */
 .roster .body {
   position: absolute;
   left: 28px;

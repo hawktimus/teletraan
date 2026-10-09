@@ -115,8 +115,9 @@ editors can sign in from anywhere.
                               decides sample or production content from Dashboard Settings,
                               images.js builds the addresses of photos from Sanity, photos.js says
                               which photos the Photo panel shows and in what order, portrait.js
-                              draws a person's framed portrait with the name under it, leadership.js
-                              makes the pages of the Leadership panel, one role to a page, roster.js
+                              draws a person's framed portrait, with the name under it or as a row,
+                              leadership.js picks the four people of the Leadership panel, team-leads.js
+                              makes the rows of the Team Leads panel, roster.js
                               makes the pages of the Subteam roster panel, theme.js
                               works out which theme and overlay apply, theme-apply.js puts them on the page,
                               layout.js says which layout a theme has, which regions and blocks a layout
@@ -223,7 +224,7 @@ editors can sign in from anywhere.
       test-weather.mjs        checks for the weather reader and its pictures
       test-content.mjs        checks for the code that reads the editors' content, the photo
                               addresses, which photos show and in what order, the pages of
-                              portraits, of the Leadership panel and of the subteam roster, the subteam members, the merging of events and the
+                              portraits, of the subteam roster, the subteam members, the merging of events and the
                               lines of the Mini's address, and the reasons and the lines of the
                               connection status text, for the Polish setting: its cleaning, the
                               switches each look sets and the rules for Plain in base.css, and for
@@ -267,6 +268,8 @@ editors can sign in from anywhere.
       test-minimal.mjs        checks for Minimal on the bar layout: what the order gives it, what it must not have
                               (stamped ids, hazard stripes, scanlines, slashes, conduit, brackets), and the list of
                               what it shares with Cybertron
+      test-person-rows.mjs    checks for the rows of the Team Leads and Leadership panels: four rows to a
+                              panel, who is in them, the portrait size, and the sizes in base.css
       check-seasons.mjs       fails if a seasonal pack is not in the data format, has a piece outside its zone, too
                               many pieces, a forbidden word, no header mark, a mark bigger than its box (60 x 76),
                               fewer than 8 or more than 14 pieces over the panels, an over piece that is too big,
@@ -471,15 +474,20 @@ alone.
   the size it is shown, 280 by 280 pixels, in `core/portrait.js`. The silhouette
   for a person with no photo is drawn once in `dashboard/index.html`, and its
   four colours are the `--silhouette-` variables in `dashboard/tokens.css`.
-  Three portraits fit on a page, set by `slotsPerPage` in `core/portrait.js`.
-  `core/leadership.js` builds the pages of the Leadership panel from it: one
-  role to a page (coaches, captains, mentors), and a role with more than three
-  people is shared out evenly, so 4 are 2 and 2. A shorter page keeps the same
-  portrait size and sits in the middle of the row (the section People
-  portraits in `dashboard/base.css`). At full size the portrait is 292 pixels
-  square with the 280 pixel photo 6 pixels in from the edge (`portraitSize` in
-  `core/portrait.js`). The photo is always asked for at 280, whatever the
-  Portrait size setting says, so the copy loaded ahead of time is the one shown.
+  Four rows fit on a panel, set by `rowsPerPage` in `core/portrait.js`, and
+  `rowsMarkup` draws them. `core/leadership.js` picks the people of the
+  Leadership panel: the coaches, then the captains, then the mentors, the first
+  four. `core/team-leads.js` makes the rows of the Team Leads panel, one for each
+  subteam in the order of the Order field, and the panel shows four each time it
+  comes round. The rows are in the section People portraits in
+  `dashboard/base.css`: four of 144 pixels fill the 576 pixel body, as in the
+  Events panel. In a row the portrait is 124 pixels square (`rowSizes` in
+  `core/portrait.js`), and on the Roster panel it is 292 pixels square with the
+  280 pixel photo 6 pixels in from the edge (`portraitSize`). The photo is
+  always asked for at 280, whatever the Portrait size setting says, so the copy
+  loaded ahead of time is the one shown. `showcaseOf` in `core/team-leads.js` is
+  there for a later mode that shows one subteam's lead and its members. Nothing
+  calls it yet. `tools/test-person-rows.mjs` has the tests of the rows.
   The starting value of the switch is `defaultPerson.showPhoto` in
   `dashboard/config.js` and its copy in `studio/schemas/person.js`.
 - **Subteam members.** The Members list of a subteam in Studio
