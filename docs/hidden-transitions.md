@@ -392,7 +392,7 @@ A transition is one entry in a list, plus a few lines to give it a chance settin
   `core/presentation-run.js`. Its slides and manifest.json are in
   `dashboard/data/sample/slides/presentation-sample/`.
 - `dashboard/core/preview.js`: the plain functions behind the Preview buttons, with no page in them: the
-  kinds, tidying `previewRequest`, which pack is next (`nextPack`), the note that survives a reload
+  kinds, tidying `previewRequest`, which pack is next (`nextPack`), the saved preview that survives a reload
   (`resumePreview`) and the runner that applies the guard and waits for the screen
   (`makePreviewRunner`). The tests are in `tools/test-effects.mjs`.
 - `dashboard/core/preview-run.js`: gives that runner the real screen and asks the page to work out its
