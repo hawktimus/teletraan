@@ -60,6 +60,8 @@ received.
   Captain is gold and Mentor is silver. There is no separate role for a
   president: give a president the role Captain and the title President, and
   they are shown with the captains.
+- Teams: the teams the TV can show, each with a name, a number, a logo, seven
+  colors and a switch that flips the screen left to right. See "Teams" below.
 - Sponsors: name, tier, a short line about them, a thank-you line for the
   ticker, and the web address of their logo.
 - Photos: the pictures for the Photo panel. Each has a picture you upload, an
@@ -77,6 +79,12 @@ received.
   "Places" below.
 - Demo: plays a few of the special screens (the announcement and night mode) now,
   for visitors. See "Demo" below, and docs/demo.md.
+
+Tasks, Up Next, Subteams, Leadership, Sponsors, Tips and News, Custom Panels,
+Events Calendar entries, Meeting days and booked talks each have a Team choice:
+Both, or one of the teams. Both is picked to start with, and the item shows for
+every team. Pick a team to show it only while that team is on the screen
+(docs/team-on-an-item.md).
 
 Events on the team's BAND calendars are not edited here. Add or change the
 event in BAND and it reaches the TV after the Mini next downloads the
@@ -401,6 +409,33 @@ add it. Use "Add item", pick Subteam roster, and drag the row to where you want
 it in the list. A row that is already there only needs "Show on screen" turned
 on. Click Publish.
 
+## Teams
+
+A team is what changes when the TV swaps from one team to the other: the name and
+number in the banner, the logo, the colors and whether the screen is flipped left to
+right. Open Teams, click the plus button, fill in the form and click Publish. The
+fields:
+
+- Team name: needed, up to 20 characters.
+- Short name: needed, up to 8 characters, such as PRIME.
+- Team number: optional, up to 6 characters.
+- Team code: needed, lowercase letters and digits, up to 10 characters, such as
+  prime. The data uses it, so do not change it later.
+- Logo: optional. Leave it empty to use the shared Hawktimus bird.
+- Colors: the main, plate, accent, neon, second bright, background and text colors.
+  Each is # and six characters from 0 to 9 and A to F, such as #6C18B6, and each
+  starts with the Prime color.
+- Mirror the layout: off to start with. On, the whole screen is flipped left to
+  right while this team is showing.
+- Active: on to start with. Off leaves the team out of Alternate mode and out of the
+  Team choice on items.
+- Order: a lower number comes first. It starts at 10.
+
+Which team is on the screen is Team mode in the Teams tab of Dashboard Settings
+(see below). The two starting teams, Hawktimus Prime and Hawktimus Nova, are in
+`docs/seed/teams.ndjson`, and docs/add-the-nova-team.md has the import and the
+steps. With no Teams at all the TV shows the built-in Prime team, as it always has.
+
 ## Order
 
 Most items have an optional Order number. A lower number comes first. Items
@@ -433,7 +468,7 @@ box.
 ## Dashboard Settings
 
 One page, with tabs along the top. It cannot be deleted or copied. The tabs, in
-order, are Screen, Logo, Transitions, Countdown, Alert, Panels, Photos,
+order, are Screen, Teams, Logo, Transitions, Countdown, Alert, Panels, Photos,
 Announcements, Night mode, Hidden, Presentations, Calendars, Content source and
 Connection.
 
@@ -470,8 +505,9 @@ Connection.
   to or from one of them, and when you change from one to the other, because their
   frames have different corners. The team sets the base colors, and the Theme page sets the
   rest (docs/layouts.md, "Styles"). To see one first, add `?style=cybertron` or
-  `?style=minimal` to the address. If no choice is ticked for Style, the screen uses
-  Original. Screen glitch is a short old
+  `?style=minimal` to the address, or use a Preview button in the menu next to
+  Publish, which shows a look for 2 minutes and saves nothing (docs/switch-the-look.md).
+  If no choice is ticked for Style, the screen uses Original. Screen glitch is a short old
   television glitch over the whole screen: a bright bar rolls down, the picture
   jumps sideways and the scan lines flicker. "Play the glitch" turns it on or
   off, "Seconds between glitches" is from 30 to 3600, or 0 to never play it, and
@@ -481,6 +517,16 @@ Connection.
   older Studio page shows an "unknown field" box called everyMinutes, click
   Unset. The screen reads an old value of minutes as seconds until you set the
   new field.
+- Teams: which team is on the screen. Team mode is Prime only (to start with), Nova
+  only or Alternate. In Alternate mode "Minutes for each team" is how long one team
+  stays, from 1 to 30, and starts at 5. The swaps are counted from the clock, so two
+  screens agree. A swap waits for a page change of the large panel and then the
+  name, the number, the logo, the colors and the mirror change together. With no
+  team document for the one picked, the screen stays on Prime. To see a team now,
+  open the menu next to Publish (the three dots) and click Preview Prime or Preview
+  Nova, or add `?team=nova` to the address. Each Preview button shows its look for 2
+  minutes and goes back to the saved settings, and so do Preview Cybertron, Preview
+  Minimal and Preview next pack (docs/hidden-transitions.md, "Preview a look").
 - Logo: everything the logo and the team name do, in one tab. "Logo
   animations" is the master switch, and comes first. Turn it off and nothing in
   the logo moves, the name effect included, and the logo stays the still
@@ -623,7 +669,10 @@ Connection.
 ## Theme
 
 One page, like Dashboard Settings. It cannot be deleted or copied. A theme is
-a set of colours for the whole screen. Hawktimus and the placeholder Alternate
+a set of colours for the whole screen. The style and the team are set in Dashboard
+Settings, not here. The team gives the theme Hawktimus its main, accent, background
+and text colors, and the other themes keep their own (docs/switch-the-look.md).
+Hawktimus and the placeholder Alternate
 change colours only: nothing moves or changes size. One theme, Neon Prime, also
 changes where things sit: a column on the left with the team name, the clock,
 the countdown and the logo, one big frame on the right and the ticker under it.
@@ -726,6 +775,9 @@ click Publish. The result is the same.
   the TEAM plate in the banner. It stays up the whole time and is gone as soon
   as the TV is back on production. It is never shown on production content. A
   full screen alert or announcement covers it, like everything else.
+- Sample content has both teams, Prime and Nova, so `?team=nova` shows Nova with
+  its colors and its mirror. Its theme schedule has two example pack rules, named
+  [Winter pack] and [Fall pack], with a ticker prefix, a banner line and corner art.
 - Sample content comes with its own calendar, its own pictures and three
   sample Events Calendar entries. Their dates are in March 2027, so once those days have
   passed they leave the screen. Change the dates in

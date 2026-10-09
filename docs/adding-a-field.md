@@ -26,6 +26,8 @@ Open studio/schemas/task.js and add a field to the `fields` list:
   `'datetime'`. A choice from a list uses `options: { list: [...] }`.
 - To show the field in the lists on the left of Studio, add it to the
   `select` and `prepare` of the same file.
+- A Team choice (Both, Prime or Nova) is not added by hand. Use `teamField()` from
+  `fields.js` and follow docs/team-on-an-item.md.
 
 ## 2. The content shape
 

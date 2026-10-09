@@ -41,6 +41,11 @@ layout, and a pack needs nothing extra for that (`decorationLayers` in `core/lay
 
 A rule can also add a ticker prefix, a banner line and a corner art. See "Extras on a rule".
 
+A pack lies over whatever style and team are on the screen. It changes no layout and no
+team setting, and its accent colors come after the team's, so on the theme Hawktimus the
+pack's accent wins while the pack is on. docs/switch-the-look.md has the four steps the
+editors follow.
+
 ## Where decorations can go
 
 The screen is full. Every row is used: the banner, the two columns of panels, and the ticker
@@ -436,6 +441,11 @@ that covers today (when Use a theme now shows a pack on a day no rule covers, th
 pack), and `packExtras()` adds the pack's `defaults`. Both clean the text: spaces at the ends go, doubled
 spaces become one, and a value past its limit is cut off. The pack is the one on the page now, so the extras
 come and go with the pack's colours.
+
+While the sample content shows, its theme schedule has two example rules, named
+[Winter pack] and [Fall pack], with a ticker prefix, a banner line and a corner art on each
+(`dashboard/data/sample/content.json`). Add `?overlay=christmas` to the address to see a
+pack at once.
 
 ### Ticker prefix
 

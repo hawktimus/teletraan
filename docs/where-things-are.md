@@ -79,6 +79,8 @@ editors can sign in from anywhere.
                               is timed (the name glitch and the burst at a page change)
       perf.js                 the frame-rate readout, shown with ?perf (the P key hides it)
       tokens.css              the two metals, the screws, sizes and timings
+      teams.css               the seven team colors, started at the Prime values, and the four colors the
+                              theme Hawktimus takes from them (core/teams.js sets them on the html element)
       themes/                 one CSS file of colour variables per theme, and registry.js listing them.
                               overlays/ has the seasonal packs' colours the same way (the overlays),
                               and required.js lists the variables a theme must set.
@@ -99,7 +101,9 @@ editors can sign in from anywhere.
                               properties and paint the page background, the plates, the rail and the
                               decoration of the bar frames that only that style has (docs/layouts.md, "Styles"
                               and "Frames")
-      base.css                the 1920x1080 screen and the shared metal shapes
+      base.css                the fixed 1920x1080 screen and the shared metal shapes. Nothing is responsive:
+                              shell.js scales the whole screen to the window (docs/layouts.md, "The screen is
+                              a fixed canvas")
       core/                   helpers used by several panels. plate.js draws the frames, and the three steel frames
                               of the bar layout, with Minimal's own three (docs/layouts.md, "Frames"), and the
                               housing of the war clock, areas.js keeps
@@ -119,6 +123,11 @@ editors can sign in from anywhere.
                               reload the page, layout-apply.js sets the layout on the page before
                               anything is drawn, and style.js says which style the screen has and which
                               layout a style asks for (docs/layouts.md),
+                              teams.js holds the teams, says which one the mode and the clock ask for,
+                              says whether an item shows for it (showsForTeam, used by visibleItems in
+                              content.js) and puts its colors, its initials and the mirror class on the
+                              page, and team-run.js asks it once a second and moves the pages on when
+                              the team changes (docs/team-on-an-item.md),
                               season.js draws the decorations of the overlay's seasonal pack in three layers
                               and hands its header mark to marks.js, which draws the picture at the right of
                               every panel header (the double slash, or the pack's mark), corner-art.js holds
@@ -214,10 +223,13 @@ editors can sign in from anywhere.
                               addresses, which photos show and in what order, the pages of
                               portraits, of the Leadership panel and of the subteam roster, the subteam members, the merging of events and the
                               lines of the Mini's address, and the reasons and the lines of the
-                              connection status text, and for the Look setting: its cleaning, the
-                              switches each look sets and the rules for Plain in base.css
-      test-themes.mjs         checks for which theme and overlay apply, for putting them on the page, and for the
-                              ticker prefix, banner line and corner art that a seasonal pack rule can carry
+                              connection status text, for the Look setting: its cleaning, the
+                              switches each look sets and the rules for Plain in base.css, and for
+                              teams: the cleaning of a team, the team each mode asks for, which items
+                              show for which team in every panel, and the Teams settings
+      test-themes.mjs         checks for which theme and overlay apply, for putting them on the page, for the
+                              ticker prefix, banner line and corner art that a seasonal pack rule can carry, and
+                              for putting the team on the page: its seven colors, its initials and the mirror class
       test-layouts.mjs        checks for the layouts: which layout a theme and a style have, the numbers of the
                               sidebar and bar layouts, the mirror, that the screen is always 1920 x 1080,
                               the reload that changes layout and that it cannot loop, that the scheduler leaves
@@ -269,7 +281,8 @@ editors can sign in from anywhere.
                               try-it-on-the-mini.md, the-logo.md, page-transitions.md, night-mode.md,
                               hidden-transitions.md, demo.md, publish-all.md, reordering-the-sidebar.md,
                               importing-from-csv.md, presentations.md, up-next.md, calendar-filters.md,
-                              calendar-links.md and hide-a-repeating-meeting.md.
+                              calendar-links.md, hide-a-repeating-meeting.md, switch-the-look.md,
+                              add-the-nova-team.md and team-on-an-item.md.
                               seed/ has content to import into the Studio: places.ndjson, the three
                               starting places, teams.ndjson, the two starting teams, and extra-events.ndjson, the
                               starting Events Calendar entries. content-templates/ has one CSV template for each
@@ -532,7 +545,36 @@ alone.
   `dashboard/config.js`, `dashboard/core/style.js` puts `data-style` on the html
   element and says which layout a style asks for, and there is a stylesheet for each
   in `dashboard/styles/`. Cybertron and Minimal have the bar layout whatever the
-  theme says. `?style=cybertron` in the address shows one for a single page.
+  theme says. `?style=cybertron` in the address shows one for a single page. The four
+  steps for the editors are in docs/switch-the-look.md.
+- **The war clock.** The countdown drawn a second time, 700 by 120, in the banner of the bar
+  layout, which is Cybertron and Minimal. It reads the same label and dates as the countdown
+  (Dashboard Settings, Countdown tab), so there is nothing to set for it. The numbers come from
+  `core/countdown.js`, `panels/countdown/countdown.js` writes them (`warMarkup`, `startWar` and
+  `updateWar`), `panels/bar-banner` puts it in its slot, `core/plate.js` draws the housing
+  (`warHousingMarkup`) and `panels/countdown/countdown.css` places every part. The digits are
+  amber in Cybertron and the team's neon in Minimal. docs/layouts.md, "The war clock", has
+  the sizes.
+- **The teams, and the team on the screen.** Teams in the Studio sidebar
+  (`studio/schemas/team.js`): a name, a short name, a number, a code, an optional logo, seven
+  colors, Mirror the layout, Active and Order. The two starting teams are in
+  `docs/seed/teams.ndjson`, and the command to import them is in docs/add-the-nova-team.md.
+  Dashboard Settings, Teams tab: Team mode (`teamMode`, Prime only to start with, from
+  `teamModes`) and Minutes for each team (`alternateMinutes`, 5 to start with, 1 to 30), in
+  `studio/schemas/settingsTeams.js`, so the whole tab can be removed by deleting that file. The
+  starting values, the limits and the built-in Prime team (`primeTeam`, which the screen uses
+  when the Studio has no teams) are in `dashboard/config.js`. `teamsFrom` in `core/sanity.js`
+  cleans the documents, `core/teams.js` chooses the team (`chooseTeam`) and puts it on the page
+  (`applyTeamLook`), and `core/areas.js` calls `changeTeamNow` while the large frame is apart, so
+  a swap never happens in the middle of a panel. `teams.css` has the starting colors. Try one
+  with `?team=prime|nova|alternate`, or with the Preview Prime and Preview Nova buttons.
+- **Which team an item is for.** The Team field of a task, plan, subteam, person, sponsor, talk,
+  meeting day, custom panel, tip or news line and Events Calendar entry (`teamField` in
+  `studio/schemas/fields.js`, the radio in `studio/team-input.js`). Empty means Both. The query in
+  `core/sanity.js` asks for `team->code`, and every panel takes its items through `visibleItems` in
+  `core/content.js`, which asks `showsForTeam` in `core/teams.js`. docs/team-on-an-item.md says
+  how it works and how to give another kind of content the field. In the CSV templates `team` is
+  the last column (docs/importing-from-csv.md).
 - **Where the regions of the screen sit (the layout).** A theme may have the
   sidebar layout (`layout: 'sidebar'` in `dashboard/themes/registry.js` and
   `studio/themes.js`): Neon Prime has it. A style may have the bar layout. The numbers are in
@@ -592,6 +634,7 @@ exception is `test-slides-script.mjs`, which needs `jq`.
     node tools/test-publish-all.mjs
     node tools/test-connection-script.mjs
     node tools/test-slides-script.mjs
+    node tools/test-install-calendars.mjs
     node tools/test-calendars-script.mjs
     node tools/check-themes.mjs
     node tools/check-seasons.mjs
@@ -625,6 +668,11 @@ colours were not changed.
   `?demo=alert`.
 - A theme can be tried with `?theme=<id>` and an overlay with `?overlay=<id>`
   (`?overlay=none` for no overlay). The address wins over the Theme page.
+- A style can be tried with `?style=original|cybertron|minimal` and a team with
+  `?team=prime|nova|alternate`. The address wins over Dashboard Settings, for that page only.
+  The sample content has both teams, so every style, team and pack can be looked at together,
+  for example `?style=minimal&team=nova&overlay=christmas`. The Preview buttons in Studio do the
+  same on the TV for 2 minutes (docs/hidden-transitions.md, "Preview a look").
 - A hidden transition can be tried with `?hidden=desktop` or `?hidden=redEyes`, and kept
   away with `?hidden=off` (docs/hidden-transitions.md). Add `?night=off` at night.
 - The night screen can be tried with `?night=on`, and kept away with `?night=off`

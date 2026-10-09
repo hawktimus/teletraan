@@ -16,6 +16,10 @@ three:
   across the whole bottom. There is no small frame. The styles Cybertron and Minimal
   have it, whatever theme is on (see "The bar layout").
 
+A team with Mirror the layout switched on turns the standard and the bar layout left
+to right (see "The mirror"). The sidebar layout is not turned. Every layout is placed in
+pixels on a fixed 1920 by 1080 canvas (see "The screen is a fixed canvas").
+
 The code is `dashboard/core/layout.js` (the numbers and the rules, with no page
 in it), `dashboard/core/layout-apply.js` (puts the layout on the page),
 `dashboard/core/style.js` (which style, and the layout it asks for) and
@@ -69,6 +73,26 @@ themes that have the same layout is only colours and does not reload. Cybertron 
 Minimal have the same layout but not the same corners on their frames, which are drawn
 once like the regions, so changing between them reloads once in the same way (see
 "Frames"). Changing the colours of either, or the theme or the team under it, does not.
+
+## The screen is a fixed canvas
+
+The screen is always 1920 by 1080 pixels, in every layout, with every style and
+with either team. `base.css` gives `#screen` and the layers on it those two sizes. On
+the TV the window is exactly that size and nothing is scaled. On a smaller window
+`fitToScreen` in `shell.js` scales the whole picture with one transform, the same
+across and down, and centres it. The page never reflows: there are no media queries,
+no sizes in the window's units and no viewport tag.
+
+So every part of a layout is placed in pixels, counted from the top left corner of
+the canvas. This holds for the standard, sidebar and bar layouts, for the mirror and
+for the war clock. A new layout does the same (see "Adding a layout"), and gives
+its numbers in one place in `core/layout.js`.
+
+`node tools/test-layouts.mjs` has two tests for this. One reads `index.html`,
+`base.css`, `shell.js` and the size constants of every layout, and fails when one
+of them is not 1920 by 1080 or when a layout stylesheet is responsive. The other
+works out the bar layout, its mirror and the mirror of the mirror, and fails when
+any part is outside 0 to 1920 across and 0 to 1080 down, or when two parts overlap.
 
 ## The sidebar layout
 
@@ -835,9 +859,10 @@ flat finish leaves it off. The grid, the rivets and the rust never move. The mir
 regions and not the frames, so the same frames, rivets, ids, rust and seam are at the same
 corners of a mirrored screen.
 
-The pictures of Cybertron and Minimal show rows made of a chip, a title and a place or a
-date. That is sample data in the picture, and no panel was restyled to copy it. The panels
-keep their rows, their line limits and their rules.
+The main panel shows the same rows the panel always showed. Neither style adds a colored
+chip in front of a title, and no panel is laid out as chip, title and place. The panels keep
+their rows, their line limits and their rules, and only the text is bigger, because the main
+panel is scaled up (see "The width of the main panel").
 
 ## What else works in each layout
 
@@ -1153,7 +1178,8 @@ Then run every test (docs/where-things-are.md, "Checking your work").
    apart (`blocksIn`), and which parts of a seasonal pack it draws
    (`seasonLayersIn`). If it has its own numbers, write them once as
    `sidebarSettings` does, with a function that works out the rectangles and one
-   that gives the variables.
+   that gives the variables. Every rectangle is in pixels of the 1920 by 1080
+   canvas. Use no percent of the window, no media query and no unit of the window.
 3. Put its markup in `index.html` (hidden, like `#region-sidebar`) and have
    `layout-apply.js` set it up (`placeRegions`) when the layout is chosen.
 4. Write `dashboard/layouts/wide.css`, link it in `index.html` after
@@ -1161,7 +1187,9 @@ Then run every test (docs/where-things-are.md, "Checking your work").
    other layouts are never touched. `tools/test-layouts.mjs` fails for a rule
    that does not.
 5. Give a theme `layout: 'wide'` in `dashboard/themes/registry.js` and in
-   `studio/themes.js`, and add it to the checks in `tools/test-layouts.mjs`.
+   `studio/themes.js`, and add it to the checks in `tools/test-layouts.mjs`,
+   including the two that keep a layout inside the screen ("The screen is a fixed
+   canvas").
 6. Or, if a style should have the layout, add the style's name to `forcedLayout` in
    `dashboard/core/style.js`.
 7. Run every test (docs/where-things-are.md, "Checking your work").

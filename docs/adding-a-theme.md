@@ -134,6 +134,19 @@ new theme would have gone on. Changing between themes with the same layout is
 only colours. docs/layouts.md has the numbers, how the big frame is scaled and
 how to add a layout.
 
+The Style setting in Dashboard Settings can name a layout too, and it wins over the
+theme. Original keeps the layout of the theme. Cybertron and Minimal have the bar
+layout whatever the theme says, so a theme with the standard layout and one with the
+sidebar layout both get it when one of those styles is on. The theme still gives the
+colors and the seasonal packs lie over it as before. A theme needs nothing for this.
+
+The team is a second source of color. `dashboard/teams.css` gives the theme Hawktimus
+its main, accent, background and text colors from the team on the screen, and no other
+theme is touched, so a new theme sets all its own colors in its file as before. The
+plate, neon and second bright colors of a team are read by Cybertron and Minimal
+only. Look at a new theme with `?style=cybertron` and `?team=nova` on the address as
+well as on its own.
+
 ## Neon Prime
 
 Neon Prime is the theme with the sidebar layout (above). It is dark: a near
@@ -320,7 +333,8 @@ docs/layouts.md, "Moving elements".
 ## How the screen picks a theme
 
 The screen works out the theme and the overlay when it starts and again every
-minute, in the Time zone set on the Theme page. In this order:
+minute, in the Time zone set on the Theme page. The style and the team are separate
+settings in Dashboard Settings and are not part of this choice. In this order:
 
 1. Use a theme now, until its Until time. A part left empty is decided by the
    next step.
