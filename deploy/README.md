@@ -53,7 +53,8 @@ to attach the data folder to.
 | `scripts/check-calendars.sh` | Lists each event of the next 30 days of every calendar in `local.env`, SHOWN or HIDDEN with the name of the Calendar filter that hides it, and the counts. It only reads and prints no address. It needs Node, which the Mini does not have, so run it on a computer that has Node and a copy of `local.env` |
 | `scripts/check-calendars.mjs` | The part of `check-calendars.sh` that runs the dashboard's own calendar code |
 | `scripts/slides-sync.sh` | Downloads the slides of the coming talks from Google Slides, turns them into pictures, and saves them with a `manifest.json`. `slides-sync.sh --test <link>` tries one deck and deletes what it made. Needs `poppler-utils`, `curl` and `jq` |
-| `scripts/kiosk.sh` | Opens the browser full screen with the right settings, or any page given after its name. Also writes `device.json` every minute while the browser runs |
+| `scripts/status-write.sh` | Writes the time of a job into the document `status-mini` in Sanity, which Studio shows at the top of the Screen tab of Dashboard Settings. Needs `SANITY_WRITE_TOKEN` in `local.env` and does nothing without it. The calendar and slides services and `kiosk.sh` run it, see "Showing what the Mini did in Studio" in `docs/rebuilding-the-mini.md` |
+| `scripts/kiosk.sh` | Opens the browser full screen with the right settings, or any page given after its name. Also writes `device.json` every minute while the browser runs, and starts `status-write.sh kiosk` in the background |
 | `scripts/install-timers.sh` | Copies the unit files into place and turns on the calendar timer and the pull timer |
 | `scripts/install-calendars.sh` | Copies the two calendar unit files into place and turns on the calendar timer. Installs nothing else, so it leaves the pull timer off |
 | `scripts/install-slides.sh` | Copies the two slides unit files into place and turns on the slides timer. Does not install the packages, it prints the `apt install` line when one is missing |
@@ -61,9 +62,10 @@ to attach the data folder to.
 
 ## local.env
 
-The real settings file is `local.env`. It holds the calendar feed addresses,
-which are secrets, so it is never committed and only the Mini's account (the
-one that owns the repository) may read it:
+The real settings file is `local.env`. It holds the calendar feed addresses and
+the Sanity write token (`SANITY_WRITE_TOKEN`), which are secrets, so it is never
+committed and only the Mini's account (the one that owns the repository) may
+read it:
 
     cp local.example.env local.env
     chmod 600 local.env

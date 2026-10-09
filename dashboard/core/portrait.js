@@ -10,7 +10,7 @@
 // photo at 280 and the edge of the card around it, the portrait is 292 square,
 // and three slots fit across the large panel.
 //
-// The Portrait size setting (Photos tab in Dashboard Settings) makes the whole
+// The Portrait size setting (Screen tab in Dashboard Settings) makes the whole
 // portrait smaller in proportion: the card, its metal edge, the picture in it
 // and the cut corners. Each slot is still 352 wide and the names and roles
 // keep their size, so a smaller portrait is only centred in the same slot.

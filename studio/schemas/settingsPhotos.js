@@ -1,5 +1,6 @@
-// The Photos tab of Dashboard Settings: the order the Photo panel shows its
-// photos in, how long it stays up, and how big the pictures are. Four fields:
+// The photo fields of Dashboard Settings, in the Screen tab: the order the Photo
+// panel shows its photos in, how long it stays up, and how big the pictures
+// are. Four fields:
 //
 //   photoOrder     random (the default) or newest first
 //   photoSeconds   seconds the panel stays up, from 6 to 120, starting at 16
@@ -13,13 +14,11 @@
 // (core/portrait.js and core/photos.js work out the smaller sizes).
 //
 // To take the whole section out later: delete this file, remove its import and
-// the two lines that use photosGroup and photosFields in dashboardSettings.js,
-// and remove the same names from check-schemas.mjs and config.js. The dashboard
-// uses the starting values for anything missing from the published settings.
+// the line that uses photosFields in dashboardSettings.js, and remove the same
+// names from check-schemas.mjs and config.js. The dashboard uses the starting
+// values for anything missing from the published settings.
 
 import { defineField } from 'sanity';
-
-export const photosGroup = { name: 'photos', title: 'Photos' };
 
 // The values are the names in photoOrders in dashboard/config.js
 const orders = [
@@ -33,7 +32,7 @@ export function photosFields() {
       name: 'photoOrder',
       title: 'Photo order',
       type: 'string',
-      group: 'photos',
+      group: 'screen',
       description: 'Random never shows the same photo twice in a row. Newest first goes from the latest upload to the oldest, then starts over.',
       options: { list: orders, layout: 'radio', direction: 'horizontal' },
       initialValue: 'random',
@@ -47,7 +46,7 @@ export function photosFields() {
       name: 'photoSeconds',
       title: 'Seconds per photo',
       type: 'number',
-      group: 'photos',
+      group: 'screen',
       description: 'How long the Photo panel stays up, from 6 to 120 seconds. A row in Panels with its own seconds wins.',
       initialValue: 16,
       validation: Rule => [
@@ -60,7 +59,7 @@ export function photosFields() {
       name: 'portraitScale',
       title: 'Portrait size, percent',
       type: 'number',
-      group: 'photos',
+      group: 'screen',
       description: 'How big the portraits are on Leadership, Team Leads and Roster, from 60 to 100. 100 is the full size and the largest that fits the frame.',
       initialValue: 100,
       validation: Rule => [
@@ -73,7 +72,7 @@ export function photosFields() {
       name: 'photoScale',
       title: 'Photo size, percent',
       type: 'number',
-      group: 'photos',
+      group: 'screen',
       description: 'How big the picture in the Photo panel is, from 60 to 100. 100 is the full size and the largest that fits the frame. Below 80, a long caption may be cut short.',
       initialValue: 100,
       validation: Rule => [

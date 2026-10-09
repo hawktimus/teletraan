@@ -4,7 +4,8 @@
 //
 // Two questions are answered here.
 //
-//   When is it night? inNightWindow() and nightWanted().
+//   When is it night? inNightWindow() and nightWanted(). The night starts and
+//   ends at the fixed times in constants.js.
 //
 //   Where does the logo start, so that it never starts in a corner and still
 //   reaches one now and then? nightPlan(). The logo is moved by two CSS
@@ -18,6 +19,7 @@
 //   corner hit comes. docs/night-mode.md has the same sum in words.
 
 import { defaultSettings, defaultThemeSettings, nightFirstHit, nightSpeeds } from '../config.js';
+import { nightEnd, nightStart } from './constants.js';
 
 // How many colour pairs frame.css has for the logo (the rules for data-pair)
 export const pairCount = 4;
@@ -32,11 +34,6 @@ const clockFormat = /^([01]\d|2[0-3]):[0-5]\d$/;
 // True for 24 hour time with two digits each, such as 23:30 or 09:05
 export function isClockTime(text) {
   return typeof text === 'string' && clockFormat.test(text);
-}
-
-// The time, or the fallback when it cannot be read
-export function tidyClockTime(text, fallback) {
-  return isClockTime(text) ? text : fallback;
 }
 
 function minutesOfDay(text) {
@@ -85,11 +82,12 @@ export function inNightWindow(now, start, end, timeZone) {
 
 // Whether the night screen should be up. override is the ?night= switch of the
 // address: 'on' forces it, 'off' stops it. The preview switch forces it too,
-// even when Use night mode is off, so an editor can see the look first.
+// even when Use night mode is off, so an editor can see the look first. The
+// start and end stored in the settings are not read.
 export function nightWanted(settings, timeZone, now, override) {
   if (override === 'off') return false;
   if (override === 'on' || settings.nightPreview === true) return true;
-  return settings.nightEnabled === true && inNightWindow(now, settings.nightStart, settings.nightEnd, timeZone);
+  return settings.nightEnabled === true && inNightWindow(now, nightStart, nightEnd, timeZone);
 }
 
 // The bounce

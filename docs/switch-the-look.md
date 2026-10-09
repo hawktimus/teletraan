@@ -8,7 +8,7 @@ needs a change to the code.
 
 ## 1. Pick the style
 
-In Studio open Dashboard Settings, then the Screen tab, and find Style.
+In Studio open Dashboard Settings, then the Look tab, and find Style.
 
 - Original is the screen as it has always been. Its layout comes from the theme.
 - Cybertron has a banner across the top with the team name at one end and the war
@@ -21,7 +21,7 @@ In Studio open Dashboard Settings, then the Screen tab, and find Style.
 The war clock is the countdown to Kickoff, then to Rollout, in a steel housing. It
 uses the dates and the label from the Countdown tab. Cybertron and Minimal have no
 small frame, so the next event, task counts, safety days and sponsor logo do not
-show with them. The main panel shows the panels of the Large panels list, one after
+show with them. The main panel shows the large panels of the Panel order list, one after
 another, with the rows and the line limits each panel always had.
 
 When the style gives another layout than the one on the TV, the screen reloads
@@ -29,7 +29,7 @@ once, at the next page change.
 
 ## 2. Pick the team
 
-Still in Dashboard Settings, open the Teams tab and find Team mode.
+Still in the Look tab of Dashboard Settings, find Team mode.
 
 - Prime only shows the Prime team all the time. It is picked to start with.
 - Nova only shows the Nova team all the time.

@@ -12,7 +12,6 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
 const sampleFile = path.join(dashboardFolder, 'data/sample/content.json');
 const storageKey = 'teletraan-content';
-const sourceKey = 'teletraan-source';
 const start = Date.UTC(2026, 9, 2, 15, 0, 0);
 const today = new Date(2026, 9, 2, 11, 0); // 2 October 2026 on this computer's own clock
 const second = 1000;
@@ -94,26 +93,14 @@ async function loadCopy(name, changeConfig) {
   };
 }
 
-// Which content the screen shows is decided while it runs, by Dashboard
-// Settings. The one thing config.js still says about it is useSampleContent,
-// the fallback for when the settings cannot be read. So there is a copy with
-// the flag on and a copy with it off, whatever the repository has today.
 // noProject has a project ID that is empty, so there is nothing to ask.
-function setFallbackFlag(text, value) {
-  assert.ok(/useSampleContent = (true|false);/.test(text), 'config.js no longer has useSampleContent');
-  return text.replace(/useSampleContent = (true|false);/, 'useSampleContent = ' + value + ';');
-}
-
-const live = await loadCopy('flag-off', text => setFallbackFlag(text, false));
-const flagOn = await loadCopy('flag-on', text => setFallbackFlag(text, true));
-const noProject = await loadCopy('no-project', text => setFallbackFlag(text, false).replace(/projectId: '[^']*'/, "projectId: ''"));
-assert.equal(live.config.useSampleContent, false);
-assert.equal(flagOn.config.useSampleContent, true);
+const live = await loadCopy('live', text => text);
+const noProject = await loadCopy('no-project', text => text.replace(/projectId: '[^']*'/, "projectId: ''"));
 assert.equal(noProject.config.sanity.projectId, '');
 
-const { normalizeContent, contentQuery, queryUrl, liveEventsUrl, sourceQuery, sourceQueryUrl, probeUrl, fetchSourceSettings, normalizeSample } = live.sanity;
+const { normalizeContent, contentQuery, queryUrl, liveEventsUrl, probeUrl, normalizeSample } = live.sanity;
 const { withDefaults, isVisible, visibleItems, startContent, startSanityContent, startSampleContent } = live.content;
-const { pickSource, tidySourceSettings } = live.source;
+const { askForSample, chosenSource } = live.source;
 const { escapeHtml, hasText } = live.text;
 const { pageSwitchesFor } = live.look;
 const { tidyDevice, deviceLines, loginAddress, showDeviceInfo, deviceFile, refreshSeconds } = live.device;
@@ -857,15 +844,15 @@ test('speed is one of four names, and anything else becomes normal', () => {
 
 // The three ways content reaches the screen: from Sanity, from the sample
 // file, and straight into withDefaults. Each must treat settings the same way.
-// The names of the settings in the Logo tab: the master switch, the entrance, the spin, the
+// The names of the logo settings: the master switch, the entrance, the spin, the
 // flying hawk and the name effect
 const logoSettingNames = [
   'logoAnimations', 'logoEntrance', 'logoSpin', 'logoSpinEvery', 'logoSpinDuration',
   'logoHawk', 'logoHawkEvery', 'logoHawkDuration', 'nameTransform', 'nameEvery', 'nameDuration',
 ];
 
-// The names of the settings in the Night mode tab
-const nightSettingNames = ['nightEnabled', 'nightStyle', 'nightStart', 'nightEnd', 'nightLogoWidth', 'nightSpeed', 'nightPreview'];
+// The names of the night mode settings. The start and end times are fixed in core/constants.js and are not settings.
+const nightSettingNames = ['nightEnabled', 'nightStyle', 'nightLogoWidth', 'nightSpeed', 'nightPreview'];
 
 function settingsThrough(settings) {
   return [
@@ -888,14 +875,14 @@ test('the new settings have the defaults the Studio starts with', () => {
   assert.equal(defaults.nameDuration, 1.43);
   assert.deepEqual(defaults.crt, { on: true, everySeconds: 240, durationSeconds: 2.7 });
 
-  // the Logo tab: what the logo did before it had settings. The spin was every third pass of
+  // the logo settings: what the logo did before it had settings. The spin was every third pass of
   // the old 24 second show and took 1.6 seconds. The hawk was every pass and took 3 + 2 + 4 + 2.
   assert.equal(defaults.logoAnimations, true);
   assert.equal(defaults.logoEntrance, true);
   assert.deepEqual([defaults.logoSpin, defaults.logoSpinEvery, defaults.logoSpinDuration], [true, 3 * 24, 1.6]);
   assert.deepEqual([defaults.logoHawk, defaults.logoHawkEvery, defaults.logoHawkDuration], [true, 24, 3 + 2 + 4 + 2]);
 
-  // the Transitions tab: take turns between the two page changes, 0.6 s to break and the same to
+  // the page change settings: take turns between the two page changes, 0.6 s to break and the same to
   // rebuild, gold on most changes and silver on one in ten
   assert.deepEqual(live.config.pageChangeStyles, ['alternate', 'slat', 'mechanical']);
   assert.deepEqual(live.config.frameFinishes, ['mostly-gold', 'alternate', 'gold', 'silver']);
@@ -923,13 +910,13 @@ test('the new settings have the defaults the Studio starts with', () => {
     demoSeconds: { min: 5, max: 300 },
     desktopChance: { min: 0, max: 100 },
     redEyesChance: { min: 0, max: 100 },
-    noShowMinutes: { min: 1, max: 15 },
-    graceMinutes: { min: 0, max: 10 },
+    desktopEveryHours: { min: 1, max: 1000 },
+    redEyesEveryHours: { min: 1, max: 1000 },
     talkMinutes: { min: 5, max: 30 },
     alternateMinutes: { min: 1, max: 30 },
   });
 
-  // the Photos tab: random order, and 16 seconds a photo
+  // the photo settings: random order, and 16 seconds a photo
   assert.deepEqual(live.config.photoOrders, ['random', 'newest-first']);
   assert.deepEqual([defaults.photoOrder, defaults.photoSeconds], ['random', 16]);
 
@@ -1133,9 +1120,13 @@ test('savedStyle gives the style in the saved copy, and nothing when the copy, t
     assert.equal(live.content.savedStyle(), null, 'a storage that throws');
     world.storageBroken = false;
 
-    // the sample has a style of its own, read from its file, so nothing is saved for it
-    world.storage.set(sourceKey, JSON.stringify({ savedAt: start, settings: { contentSource: 'sample', switchBackAt: '' } }));
-    assert.equal(live.content.savedStyle(), null, 'the screen starts on the sample');
+    // the sample has a style of its own, read from its file, so the saved copy is not used for it
+    askForSample('1');
+    try {
+      assert.equal(live.content.savedStyle(), null, 'the screen starts on the sample');
+    } finally {
+      askForSample(null);
+    }
   });
 });
 
@@ -1248,7 +1239,7 @@ test('shell.js applies Look through core/look.js at the start and at every conte
   assert.ok(/function useLookSetting\(settings\) \{\s*const switches = pageSwitchesFor\(settings, \{ look: params\.get\('look'\), finish: params\.get\('finish'\), glint: params\.get\('glint'\) \}\);\s*Object\.keys\(switches\)\.forEach\(name => setPageSwitch\(name, switches\[name\]\)\);/.test(shell));
   assert.equal(shell.split('useLookSetting(defaultSettings);').length - 1, 1, 'once at the start, so the address shows before the content arrives');
 
-  const rebuild = shell.slice(shell.indexOf('function rebuild() {'), shell.indexOf('// The Logo tab of Dashboard Settings'));
+  const rebuild = shell.slice(shell.indexOf('function rebuild() {'), shell.indexOf('// The logo settings of Dashboard Settings (Look tab)'));
   assert.ok(rebuild.includes('useLookSetting(content.settings);'), 'rebuild() runs at every content change');
 
   // nothing else sets the finish or the glint
@@ -1634,7 +1625,7 @@ test('the sample content file carries the new settings and they come through unc
   const file = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
   const settings = normalizeSample(file).settings;
 
-  logoSettingNames.concat(['frameMetal', 'glint', 'look', 'pageSeconds', 'crt', 'contentSource', 'switchBackAt']).forEach(name => {
+  logoSettingNames.concat(['frameMetal', 'glint', 'look', 'pageSeconds', 'crt']).forEach(name => {
     assert.ok(name in file.settings, 'the sample content has no ' + name);
     assert.deepEqual(settings[name], file.settings[name], name);
   });
@@ -1739,27 +1730,19 @@ test('sample mode starts with empty content when the file cannot be read', async
   });
 });
 
-test('the content source settings have their defaults, and the old static constants are gone', () => {
-  assert.deepEqual(live.config.contentSources, ['production', 'sample']);
-  assert.equal(live.config.defaultSettings.contentSource, 'production');
-  assert.equal(live.config.defaultSettings.switchBackAt, '');
-  assert.equal(typeof live.config.useSampleContent, 'boolean');
+test('the content source is not a setting: config.js and the defaults have no trace of it', () => {
+  assert.equal('contentSources' in live.config, false);
+  assert.equal('useSampleContent' in live.config, false);
   assert.equal('sampleMode' in live.config, false);
   assert.equal('dataFolder' in live.config, false);
   assert.equal(live.config.sampleFolder, 'data/sample/');
   assert.equal(live.config.liveFolder, 'data/live/');
   assert.notEqual(live.config.sanity.projectId, '');
 
-  const empty = withDefaults({}).settings;
-  assert.equal(empty.contentSource, 'production');
-  assert.equal(empty.switchBackAt, '');
-});
-
-test('config.js keeps the useSampleContent flag as the fallback, and it is false', () => {
-  const text = fs.readFileSync(path.join(dashboardFolder, 'config.js'), 'utf8');
-  assert.ok(/^export const useSampleContent = false;$/m.test(text), 'useSampleContent should be exported and false');
-  assert.ok(/only the fallback/.test(text), 'its comment should still say it is only the fallback');
-  assert.equal(live.config.useSampleContent, false);
+  ['contentSource', 'switchBackAt'].forEach(name => {
+    assert.equal(name in live.config.defaultSettings, false, name);
+    assert.equal(name in withDefaults({}).settings, false, name);
+  });
 });
 
 test('Show connection status starts off, true is kept, and anything that is not true or false becomes off', () => {
@@ -1778,130 +1761,43 @@ test('Show connection status starts off, true is kept, and anything that is not 
   });
 });
 
-test('contentSource is production or sample and anything else becomes production, and switchBackAt is text', () => {
-  live.config.contentSources.forEach(name => {
-    settingsThrough({ contentSource: name }).forEach(settings => assert.equal(settings.contentSource, name));
+test('chosenSource: production, unless ?sample=1 was asked for, or there is no Sanity project', () => {
+  askForSample(null);
+  assert.equal(chosenSource(), 'production');
+
+  askForSample('1');
+  assert.equal(chosenSource(), 'sample');
+
+  // only the exact text 1 counts. The address gives text, so a number or true is not it
+  ['0', '', '11', ' 1', 'true', 'yes', 'sample', 'production', null, undefined, 1, true].forEach(value => {
+    askForSample(value);
+    assert.equal(chosenSource(), 'production', JSON.stringify(value));
   });
 
-  [undefined, null, '', 'Sample', 'SAMPLE', 'demo', 'toString', 0, true, ['sample'], {}].forEach(value => {
-    settingsThrough({ contentSource: value }).forEach(settings => {
-      assert.equal(settings.contentSource, 'production', JSON.stringify(value));
-    });
-  });
+  // a later call replaces the one before
+  askForSample('1');
+  askForSample('0');
+  assert.equal(chosenSource(), 'production');
+  askForSample(null);
 
-  settingsThrough({ switchBackAt: '2027-01-09T17:00:00.000Z' }).forEach(settings => {
-    assert.equal(settings.switchBackAt, '2027-01-09T17:00:00.000Z');
-  });
-  [undefined, null, '', 5, true, ['2027-01-09'], {}].forEach(value => {
-    settingsThrough({ switchBackAt: value }).forEach(settings => assert.equal(settings.switchBackAt, '', JSON.stringify(value)));
-  });
-});
-
-test('the settings query asks for only contentSource and switchBackAt, from the published settings', () => {
-  assert.ok(sourceQuery.includes('_id == "dashboardSettings"'));
-  assert.ok(sourceQuery.includes('contentSource'));
-  assert.ok(sourceQuery.includes('switchBackAt'));
-  assert.ok(sourceQuery.length < 100);
-  assert.notEqual(sourceQuery, contentQuery);
-
-  const address = sourceQueryUrl(live.config.sanity);
-  assert.ok(address.startsWith('https://' + live.config.sanity.projectId + '.api.sanity.io/v2025-02-19/data/query/production?'));
-  assert.ok(address.includes('query=' + encodeURIComponent(sourceQuery)));
-  assert.ok(address.endsWith('&perspective=published'));
-  assert.notEqual(address, queryUrl(live.config.sanity));
-});
-
-test('pickSource: sample until the switch back time, and anything unclear is production', () => {
-  const now = new Date(start);
-  const earlier = new Date(start - minute).toISOString();
-  const later = new Date(start + minute).toISOString();
-
-  assert.equal(pickSource({ contentSource: 'production' }, now), 'production');
-  assert.equal(pickSource({ contentSource: 'sample' }, now), 'sample');
-  assert.equal(pickSource({ contentSource: 'sample', switchBackAt: '' }, now), 'sample');
-  assert.equal(pickSource({ contentSource: 'sample', switchBackAt: later }, now), 'sample');
-  assert.equal(pickSource({ contentSource: 'sample', switchBackAt: earlier }, now), 'production');
-  assert.equal(pickSource({ contentSource: 'sample', switchBackAt: new Date(start).toISOString() }, now), 'production');
-  assert.equal(pickSource({ contentSource: 'production', switchBackAt: later }, now), 'production');
-
-  // a time that cannot be read is ignored, so the sample stays on
-  assert.equal(pickSource({ contentSource: 'sample', switchBackAt: 'next week' }, now), 'sample');
-
-  // an editor-typed time with no zone is read on this computer's clock
-  const localLater = new Date(start + 3600 * 1000);
-  const typed = localLater.getFullYear() + '-' + String(localLater.getMonth() + 1).padStart(2, '0') + '-' + String(localLater.getDate()).padStart(2, '0') +
-    'T' + String(localLater.getHours()).padStart(2, '0') + ':' + String(localLater.getMinutes()).padStart(2, '0');
-  assert.equal(pickSource({ contentSource: 'sample', switchBackAt: typed }, now), 'sample');
-
-  [null, undefined, {}, 'sample', 7, [], { contentSource: 'Sample' }, { contentSource: 'toString' }].forEach(value => {
-    assert.equal(pickSource(value, now), 'production', JSON.stringify(value));
-  });
-  assert.deepEqual(tidySourceSettings(null), { contentSource: 'production', switchBackAt: '' });
-  assert.deepEqual(tidySourceSettings({ contentSource: 'sample', switchBackAt: later, extra: 1 }), { contentSource: 'sample', switchBackAt: later });
-});
-
-test('fetchSourceSettings: no settings document is a good answer, anything else unusable is an error, and 5 seconds is the limit', async () => {
-  await inWorld(async world => {
-    world.handler = async () => sanityReply({ contentSource: 'sample', switchBackAt: '2027-01-09T17:00:00.000Z' });
-    assert.deepEqual(await fetchSourceSettings(live.config.sanity), { contentSource: 'sample', switchBackAt: '2027-01-09T17:00:00.000Z' });
-    assert.equal(world.fetches[0].url, sourceQueryUrl(live.config.sanity));
-    assert.equal(world.fetches[0].options.headers, undefined);
-
-    world.handler = async () => sanityReply(null);
-    assert.deepEqual(await fetchSourceSettings(live.config.sanity), {});
-    world.handler = async () => sanityReply({});
-    assert.deepEqual(await fetchSourceSettings(live.config.sanity), {});
-
-    const bad = {
-      'an error status': () => jsonResponse({ error: 'no' }, 500),
-      'a missing page': () => jsonResponse({}, 404),
-      'no result': () => jsonResponse({ ms: 1 }),
-      'a list': () => sanityReply([]),
-      'text': () => sanityReply('sample'),
-      'a body that is not an object': () => jsonResponse(null),
-      'text instead of JSON': () => ({ ok: true, status: 200, json: async () => { throw new SyntaxError('Unexpected token'); } }),
-      'no connection': () => unreachable(),
-    };
-    for (const name of Object.keys(bad)) {
-      world.handler = async () => bad[name]();
-      await assert.rejects(fetchSourceSettings(live.config.sanity), name);
-    }
-  });
-
-  await inWorld(async world => {
-    world.handler = (url, options) => new Promise((resolve, reject) => {
-      options.signal.addEventListener('abort', () => reject(new Error('The request was aborted')));
-    });
-    let outcome = 'waiting';
-    fetchSourceSettings(live.config.sanity).then(() => { outcome = 'answered'; }, () => { outcome = 'gave up'; });
-
-    await world.advance(5 * second - 1);
-    assert.equal(outcome, 'waiting');
-    await world.advance(1);
-    assert.equal(outcome, 'gave up');
-  });
+  // with no project there is nothing to read
+  noProject.source.askForSample(null);
+  assert.equal(noProject.source.chosenSource(), 'sample');
+  noProject.source.askForSample('0');
+  assert.equal(noProject.source.chosenSource(), 'sample');
 });
 
 // A fake Sanity and a fake web server for startContent. world.server says what
-// each answers, and a test can change it while the screen runs.
-//   settings: the Dashboard Settings answer. An object, null (no settings
-//             document), or one of the strings in answerSettings.
+// each answers, and a test can change it while the screen runs. The screen asks
+// Sanity for the content only: it asks no question about which content to show.
 function serve(world, server) {
-  world.server = Object.assign({ settings: {}, content: sanityFixture(), file: JSON.parse(fs.readFileSync(sampleFile, 'utf8')) }, server);
+  world.server = Object.assign({ content: sanityFixture(), file: JSON.parse(fs.readFileSync(sampleFile, 'utf8')) }, server);
 
   world.handler = async url => {
-    if (url === sourceQueryUrl(live.config.sanity)) return answerSettings(world.server.settings);
     if (url === queryUrl(live.config.sanity)) return sanityReply(copyOf(world.server.content));
     if (url === 'data/sample/content.json') return jsonResponse(copyOf(world.server.file));
     throw new Error('The test did not expect a request for ' + url);
   };
-}
-
-function answerSettings(settings) {
-  if (settings === 'unreachable') return unreachable();
-  if (settings === 'error status') return jsonResponse({ error: 'no' }, 500);
-  if (settings === 'no result') return jsonResponse({ ms: 1 });
-  return sanityReply(copyOf(settings));
 }
 
 function requestsFor(world, url) {
@@ -1912,10 +1808,6 @@ function contentQueries(world) {
   return requestsFor(world, queryUrl(live.config.sanity));
 }
 
-function settingsQueries(world) {
-  return requestsFor(world, sourceQueryUrl(live.config.sanity));
-}
-
 function sampleReads(world) {
   return requestsFor(world, 'data/sample/content.json');
 }
@@ -1924,71 +1816,83 @@ function sourcesOf(world) {
   return world.changes.map(change => change.status.source);
 }
 
-function saveSource(world, settings, savedAt) {
-  world.storage.set(sourceKey, JSON.stringify({ savedAt: savedAt, settings: settings }));
+// Dashboard Settings as the Studio stores them, with the two fields the screen no longer reads
+function storedSource(world, fields) {
+  world.server.content.settings = Object.assign({}, world.server.content.settings, fields);
 }
 
-function savedSource(world) {
-  return JSON.parse(world.storage.get(sourceKey)).settings;
+// A world for a page opened with ?sample=1 on its address. The next test starts without it.
+async function inSampleWorld(run) {
+  await inWorld(async world => {
+    askForSample('1');
+    try {
+      await run(world);
+    } finally {
+      askForSample(null);
+    }
+  });
 }
 
-test('source: production settings read the settings first, then run the whole Sanity reader', async () => {
-  const answers = [
+test('source: production runs the whole Sanity reader and asks nothing else, whatever Dashboard Settings store', async () => {
+  const stored = [
+    {},
     { contentSource: 'production' },
     { contentSource: 'production', switchBackAt: '2099-01-01T00:00:00.000Z' },
-    {},
-    null,
+    { contentSource: 'sample' },
+    { contentSource: 'sample', switchBackAt: '' },
+    { contentSource: 'sample', switchBackAt: '2099-01-01T00:00:00.000Z' },
     { contentSource: 'Sample' },
   ];
 
-  for (const settings of answers) {
+  for (const fields of stored) {
     await inWorld(async world => {
-      serve(world, { settings: settings });
+      serve(world, {});
+      storedSource(world, fields);
 
       const first = await startContent(world.onChange);
-      const label = JSON.stringify(settings);
+      const label = JSON.stringify(fields);
       assert.equal(first.status.source, 'sanity', label);
       assert.deepEqual(first.content, normalizeContent(world.server.content), label);
 
-      // the settings come first, then the full query, and the stream is open
-      assert.deepEqual(world.fetches.map(request => request.url), [sourceQueryUrl(live.config.sanity), queryUrl(live.config.sanity)], label);
+      // the content query and the open stream, and nothing else
+      assert.deepEqual(world.fetches.map(request => request.url), [queryUrl(live.config.sanity)], label);
       assert.equal(world.streams.length, 1, label);
       assert.equal(sampleReads(world), 0, label);
-      assert.deepEqual(savedSource(world), tidySourceSettings(settings), label);
       assert.ok(world.storage.has(storageKey), label);
+      assert.equal(world.storage.has('teletraan-source'), false, label);
       assert.equal(world.errors.length, 0, label);
     });
   }
 });
 
-test('source: sample settings load only the sample content, with no other content request', async () => {
-  await inWorld(async world => {
-    serve(world, { settings: { contentSource: 'sample' } });
+test('source: ?sample=1 loads only the sample content, with no request to Sanity, whatever Dashboard Settings store', async () => {
+  for (const fields of [{}, { contentSource: 'production' }, { contentSource: 'sample' }]) {
+    await inSampleWorld(async world => {
+      serve(world, {});
+      storedSource(world, fields);
 
-    const first = await startContent(world.onChange);
-    assert.deepEqual(first.content, normalizeSample(world.server.file));
-    assert.deepEqual(first.status, { source: 'sample', updated: null, offline: false, reason: '' });
-    assert.deepEqual(world.fetches.map(request => request.url), [sourceQueryUrl(live.config.sanity), 'data/sample/content.json']);
-    assert.equal(contentQueries(world), 0);
-    assert.equal(world.streams.length, 0);
-    assert.equal(world.storage.has(storageKey), false);
-    assert.deepEqual(savedSource(world), { contentSource: 'sample', switchBackAt: '' });
+      const first = await startContent(world.onChange);
+      assert.deepEqual(first.content, normalizeSample(world.server.file));
+      assert.deepEqual(first.status, { source: 'sample', updated: null, offline: false, reason: '' });
+      assert.deepEqual(world.fetches.map(request => request.url), ['data/sample/content.json']);
+      assert.equal(contentQueries(world), 0);
+      assert.equal(world.streams.length, 0);
+      assert.equal(world.storage.has(storageKey), false);
+      assert.equal(world.storage.has('teletraan-source'), false);
 
-    // five minutes later: still no content query and no stream. Only the
-    // settings and the sample file are read.
-    await world.advance(5 * minute);
-    assert.equal(contentQueries(world), 0);
-    assert.equal(world.streams.length, 0);
-    world.fetches.forEach(request => {
-      assert.ok([sourceQueryUrl(live.config.sanity), 'data/sample/content.json'].includes(request.url), request.url);
+      // five minutes later: still no content query and no stream. Only the sample file is read.
+      await world.advance(5 * minute);
+      assert.equal(contentQueries(world), 0);
+      assert.equal(world.streams.length, 0);
+      world.fetches.forEach(request => assert.equal(request.url, 'data/sample/content.json'));
+      assert.equal(world.errors.length, 0);
     });
-    assert.equal(world.errors.length, 0);
-  });
+  }
 });
 
 test('source: sample content is edited in data/sample and shows within 30 seconds', async () => {
-  await inWorld(async world => {
-    serve(world, { settings: { contentSource: 'sample' } });
+  await inSampleWorld(async world => {
+    serve(world, {});
     await startContent(world.onChange);
 
     world.server.file.tasks[0].title = '[Edited task]';
@@ -1999,178 +1903,56 @@ test('source: sample content is edited in data/sample and shows within 30 second
   });
 });
 
-test('source: sample with a switch back time that has passed behaves as production', async () => {
-  const passed = [new Date(start - minute).toISOString(), new Date(start).toISOString(), '2020-01-01T00:00:00.000Z'];
-
-  for (const switchBackAt of passed) {
-    await inWorld(async world => {
-      serve(world, { settings: { contentSource: 'sample', switchBackAt: switchBackAt } });
-
-      const first = await startContent(world.onChange);
-      assert.equal(first.status.source, 'sanity', switchBackAt);
-      assert.equal(contentQueries(world), 1, switchBackAt);
-      assert.equal(sampleReads(world), 0, switchBackAt);
-      assert.equal(world.streams.length, 1, switchBackAt);
-    });
-  }
-
-  // a time still to come keeps the sample
+test('source: the page keeps the source it started with, however long it runs and whatever changes in Sanity', async () => {
   await inWorld(async world => {
-    serve(world, { settings: { contentSource: 'sample', switchBackAt: new Date(start + minute).toISOString() } });
-    const first = await startContent(world.onChange);
-    assert.equal(first.status.source, 'sample');
-    assert.equal(contentQueries(world), 0);
-  });
-});
-
-test('source: settings that cannot be read use the saved settings, whatever the fallback flag says', async () => {
-  const failures = ['unreachable', 'error status', 'no result'];
-
-  for (const failure of failures) {
-    for (const copy of [live, flagOn]) {
-      const flag = copy.config.useSampleContent;
-
-      // saved: sample, so sample, even with the flag off
-      await inWorld(async world => {
-        saveSource(world, { contentSource: 'sample', switchBackAt: '' }, start - 10 * minute);
-        serve(world, { settings: failure });
-
-        const first = await copy.content.startContent(world.onChange);
-        assert.equal(first.status.source, 'sample', failure + ' flag ' + flag);
-        assert.equal(contentQueries(world), 0, failure + ' flag ' + flag);
-        assert.equal(world.streams.length, 0, failure + ' flag ' + flag);
-        assert.equal(world.errors.length, 1, failure + ' flag ' + flag);
-        assert.deepEqual(savedSource(world), { contentSource: 'sample', switchBackAt: '' }, 'a failed read does not change the saved settings');
-      });
-
-      // saved: production, so production, even with the flag on
-      await inWorld(async world => {
-        saveSource(world, { contentSource: 'production', switchBackAt: '' }, start - 10 * minute);
-        serve(world, { settings: failure });
-        world.handler = (inner => async url => {
-          if (url === sourceQueryUrl(live.config.sanity)) return answerSettings(failure);
-          return inner(url);
-        })(world.handler);
-
-        const first = await copy.content.startContent(world.onChange);
-        assert.equal(first.status.source, 'sanity', failure + ' flag ' + flag);
-        assert.equal(sampleReads(world), 0, failure + ' flag ' + flag);
-      });
-
-      // saved: sample until a time that has passed, so production
-      await inWorld(async world => {
-        saveSource(world, { contentSource: 'sample', switchBackAt: new Date(start - minute).toISOString() }, start - 10 * minute);
-        serve(world, { settings: failure });
-
-        const first = await copy.content.startContent(world.onChange);
-        assert.equal(first.status.source, 'sanity', failure + ' flag ' + flag);
-      });
-    }
-  }
-});
-
-test('source: a settings read that hangs is given up after 5 seconds and the saved settings are used', async () => {
-  await inWorld(async world => {
-    saveSource(world, { contentSource: 'sample', switchBackAt: '' }, start - minute);
     serve(world, {});
-    const inner = world.handler;
-    world.handler = (url, options) => {
-      if (url !== sourceQueryUrl(live.config.sanity)) return inner(url, options);
-      return new Promise((resolve, reject) => {
-        options.signal.addEventListener('abort', () => reject(new Error('The request was aborted')));
-      });
-    };
+    await startContent(world.onChange);
 
-    let first = null;
-    startContent(world.onChange).then(state => { first = state; });
-    await world.advance(5 * second - 1);
-    assert.equal(first, null);
-
-    await world.advance(1);
-    assert.equal(first.status.source, 'sample');
-    assert.equal(world.errors.length, 1);
-  });
-});
-
-test('source: settings that cannot be read and nothing saved use the useSampleContent flag, both ways', async () => {
-  const failures = ['unreachable', 'error status', 'no result'];
-
-  for (const failure of failures) {
-    await inWorld(async world => {
-      serve(world, { settings: failure });
-      const first = await flagOn.content.startContent(world.onChange);
-      assert.equal(first.status.source, 'sample', failure);
-      assert.equal(contentQueries(world), 0, failure);
-      assert.equal(world.storage.has(sourceKey), false, 'nothing was read, so nothing is saved');
-    });
-
-    await inWorld(async world => {
-      serve(world, { settings: failure });
-      const first = await live.content.startContent(world.onChange);
-      assert.equal(first.status.source, 'sanity', failure);
-      assert.equal(contentQueries(world), 1, failure);
-      assert.equal(sampleReads(world), 0, failure);
-    });
-  }
-
-  // saved settings that cannot be used are the same as having none
-  const unusable = ['not json', '', 'null', '7', '{}', '{ "savedAt": 1 }', '{ "savedAt": 1, "settings": "sample" }', '{ "savedAt": 1, "settings": {} }'];
-  for (const text of unusable) {
-    await inWorld(async world => {
-      world.storage.set(sourceKey, text);
-      serve(world, { settings: 'unreachable' });
-      assert.equal((await flagOn.content.startContent(world.onChange)).status.source, 'sample', 'saved text: ' + text);
-    });
-    await inWorld(async world => {
-      world.storage.set(sourceKey, text);
-      serve(world, { settings: 'unreachable' });
-      assert.equal((await live.content.startContent(world.onChange)).status.source, 'sanity', 'saved text: ' + text);
-    });
-  }
-});
-
-test('source: a good answer wins over the saved settings and the flag, and no settings document means production', async () => {
-  // saved says sample and the flag says sample, Sanity says production
-  await inWorld(async world => {
-    saveSource(world, { contentSource: 'sample', switchBackAt: '' }, start - minute);
-    serve(world, { settings: { contentSource: 'production' } });
-    assert.equal((await flagOn.content.startContent(world.onChange)).status.source, 'sanity');
-    assert.deepEqual(savedSource(world), { contentSource: 'production', switchBackAt: '' });
-  });
-
-  // Sanity answers that there is no settings document: production, even with the flag on
-  await inWorld(async world => {
-    saveSource(world, { contentSource: 'sample', switchBackAt: '' }, start - minute);
-    serve(world, { settings: null });
-    const first = await flagOn.content.startContent(world.onChange);
-    assert.equal(first.status.source, 'sanity');
+    storedSource(world, { contentSource: 'sample', switchBackAt: '2099-01-01T00:00:00.000Z' });
+    await world.advance(30 * minute);
+    assert.ok(sourcesOf(world).every(source => source === 'sanity'));
     assert.equal(sampleReads(world), 0);
+    assert.equal(world.streams.length, 1);
+    world.fetches.forEach(request => assert.equal(request.url, queryUrl(live.config.sanity)));
     assert.equal(world.errors.length, 0);
   });
 
-  // saved says production, Sanity says sample
-  await inWorld(async world => {
-    saveSource(world, { contentSource: 'production', switchBackAt: '' }, start - minute);
-    serve(world, { settings: { contentSource: 'sample' } });
-    assert.equal((await live.content.startContent(world.onChange)).status.source, 'sample');
+  await inSampleWorld(async world => {
+    serve(world, {});
+    await startContent(world.onChange);
+
+    storedSource(world, { contentSource: 'production' });
+    await world.advance(30 * minute);
+    assert.deepEqual(sourcesOf(world), []);
+    assert.equal(contentQueries(world), 0);
+    assert.equal(world.streams.length, 0);
   });
 });
 
-test('source: blocked storage does not stop the screen choosing', async () => {
+test('source: blocked storage does not stop either source', async () => {
   await inWorld(async world => {
     world.storageBroken = true;
-    serve(world, { settings: { contentSource: 'sample' } });
+    serve(world, {});
+
+    const first = await startContent(world.onChange);
+    assert.equal(first.status.source, 'sanity');
+    // one for reading the saved copy, one for saving the new one
+    assert.equal(world.errors.length, 2);
+  });
+
+  await inSampleWorld(async world => {
+    world.storageBroken = true;
+    serve(world, {});
 
     const first = await startContent(world.onChange);
     assert.equal(first.status.source, 'sample');
-    assert.ok(world.errors.length >= 1);
+    assert.equal(world.errors.length, 0);
   });
 });
 
 test('source: an empty project ID always shows the sample and asks Sanity for nothing', async () => {
   await inWorld(async world => {
-    serve(world, { settings: { contentSource: 'production' } });
-    saveSource(world, { contentSource: 'production', switchBackAt: '' }, start - minute);
+    serve(world, {});
 
     const first = await noProject.content.startContent(world.onChange);
     assert.equal(first.status.source, 'sample');
@@ -2180,225 +1962,12 @@ test('source: an empty project ID always shows the sample and asks Sanity for no
   });
 });
 
-test('source: the settings are read again every 30 seconds, in production and in sample', async () => {
-  await inWorld(async world => {
-    serve(world, { settings: { contentSource: 'sample' } });
-    await startContent(world.onChange);
-    assert.equal(settingsQueries(world), 1);
-
-    await world.advance(30 * second - 1);
-    assert.equal(settingsQueries(world), 1);
-    await world.advance(1);
-    assert.equal(settingsQueries(world), 2);
-    await world.advance(60 * second);
-    assert.equal(settingsQueries(world), 4);
-    assert.equal(world.changes.length, 0);
-  });
-
-  await inWorld(async world => {
-    serve(world, { settings: {} });
-    await startContent(world.onChange);
-    await world.advance(90 * second);
-    assert.equal(settingsQueries(world), 4);
-    assert.equal(world.changes.length, 0);
-  });
-});
-
-test('source: "Use sample content" and "Use production content" take effect without a reload, in both directions', async () => {
-  await inWorld(async world => {
-    serve(world, { settings: { contentSource: 'production' } });
-    const first = await startContent(world.onChange);
-    assert.equal(first.status.source, 'sanity');
-    const productionStream = world.streams[0];
-
-    // someone presses "Use sample content"
-    world.server.settings = { contentSource: 'sample' };
-    await world.advance(30 * second);
-    assert.deepEqual(sourcesOf(world), ['sample']);
-    assert.deepEqual(world.changes[0].content, normalizeSample(world.server.file));
-    assert.equal(world.changes[0].status.offline, false);
-    assert.equal(productionStream.readyState, 2, 'the live stream is closed');
-    assert.deepEqual(savedSource(world), { contentSource: 'sample', switchBackAt: '' });
-
-    // from now on no content query and no stream, however long it runs
-    const queriesBefore = contentQueries(world);
-    await world.advance(15 * minute);
-    assert.equal(contentQueries(world), queriesBefore);
-    assert.equal(world.streams.length, 1);
-    assert.equal(world.changes.length, 1);
-    assert.ok(sampleReads(world) > 10);
-
-    // someone presses "Use production content". The saved copy shows at
-    // once, and Sanity replaces it.
-    world.server.content.tasks[0].title = '[Task from production]';
-    world.server.settings = { contentSource: 'production' };
-    await world.advance(30 * second);
-    assert.deepEqual(sourcesOf(world), ['sample', 'cache', 'sanity']);
-    assert.equal(world.changes[2].content.tasks.some(task => task.title === '[Task from production]'), true);
-    assert.equal(world.changes[2].status.offline, false);
-    assert.equal(world.streams.length, 2, 'the live stream is open again');
-
-    // and the sample reader stopped: its file is not read any more
-    const readsBefore = sampleReads(world);
-    await world.advance(5 * minute);
-    assert.equal(sampleReads(world), readsBefore);
-    assert.equal(world.errors.length, 0);
-
-    // sample again, and a repeated answer causes no further change
-    world.server.settings = { contentSource: 'sample' };
-    await world.advance(30 * second);
-    await world.advance(5 * minute);
-    assert.deepEqual(sourcesOf(world), ['sample', 'cache', 'sanity', 'sample']);
-  });
-});
-
-test('source: from sample to production with nothing saved reads Sanity first, then shows it', async () => {
-  await inWorld(async world => {
-    serve(world, { settings: { contentSource: 'sample' } });
-    await startContent(world.onChange);
-
-    world.server.settings = {};
-    await world.advance(30 * second);
-    assert.deepEqual(sourcesOf(world), ['sanity']);
-    assert.deepEqual(world.changes[0].content, normalizeContent(world.server.content));
-    assert.equal(world.streams.length, 1);
-    assert.equal(contentQueries(world), 1);
-
-    const readsBefore = sampleReads(world);
-    await world.advance(5 * minute);
-    assert.equal(sampleReads(world), readsBefore);
-  });
-});
-
-test('source: the switch back time arriving moves the screen to production without a reload', async () => {
-  await inWorld(async world => {
-    // 100 seconds is not a moment when the settings are read (every 30 seconds)
-    // so this is the clock being looked at (every 5 seconds)
-    const switchBackAt = new Date(start + 100 * second).toISOString();
-    serve(world, { settings: { contentSource: 'sample', switchBackAt: switchBackAt } });
-
-    const first = await startContent(world.onChange);
-    assert.equal(first.status.source, 'sample');
-
-    await world.advance(100 * second - 1);
-    assert.equal(world.changes.length, 0);
-    assert.equal(contentQueries(world), 0);
-
-    await world.advance(1);
-    assert.deepEqual(sourcesOf(world), ['sanity']);
-    assert.equal(contentQueries(world), 1);
-    assert.equal(world.streams.length, 1);
-
-    // and it stays on production, though the settings still say sample
-    await world.advance(10 * minute);
-    assert.deepEqual(sourcesOf(world), ['sanity']);
-  });
-});
-
-test('source: a read of the settings that fails keeps the screen on what it has, and a later good read still switches', async () => {
-  await inWorld(async world => {
-    serve(world, { settings: { contentSource: 'sample' } });
-    await startContent(world.onChange);
-
-    world.server.settings = 'unreachable';
-    await world.advance(5 * minute);
-    assert.equal(world.changes.length, 0);
-    assert.equal(world.errors.length, 10);
-
-    world.server.settings = 'error status';
-    await world.advance(minute);
-    assert.equal(world.changes.length, 0);
-
-    world.server.settings = {};
-    await world.advance(30 * second);
-    assert.deepEqual(sourcesOf(world), ['sanity']);
-  });
-});
-
-test('source: a screen that started on the flag moves to what Dashboard Settings say once they can be read', async () => {
-  await inWorld(async world => {
-    serve(world, { settings: 'unreachable' });
-    const first = await flagOn.content.startContent(world.onChange);
-    assert.equal(first.status.source, 'sample');
-
-    // still unreadable: the flag keeps deciding
-    await world.advance(5 * minute);
-    assert.equal(world.changes.length, 0);
-
-    world.server.settings = { contentSource: 'production' };
-    await world.advance(30 * second);
-    assert.deepEqual(sourcesOf(world), ['sanity']);
-  });
-
-  await inWorld(async world => {
-    serve(world, { settings: 'unreachable' });
-    const first = await live.content.startContent(world.onChange);
-    assert.equal(first.status.source, 'sanity');
-
-    world.server.settings = { contentSource: 'sample' };
-    await world.advance(30 * second);
-    assert.deepEqual(sourcesOf(world), ['sample']);
-    assert.equal(contentQueries(world) , 1);
-  });
-});
-
-test('source: production keeps its two minute rule when it was switched to while running', async () => {
-  await inWorld(async world => {
-    serve(world, { settings: { contentSource: 'sample' } });
-    await startContent(world.onChange);
-
-    // Sanity goes down for the content, but the settings still answer
-    const inner = world.handler;
-    world.handler = async (url, options) => {
-      if (url === queryUrl(live.config.sanity)) return unreachable();
-      return inner(url, options);
-    };
-    world.server.settings = {};
-    await world.advance(30 * second);
-    assert.deepEqual(sourcesOf(world), ['sanity']);
-    assert.equal(world.changes[0].status.offline, false);
-    assert.deepEqual(world.changes[0].content, withDefaults({}));
-
-    // two minutes after the first failed read, which was at 30 seconds
-    await world.advance(2 * minute);
-    assert.equal(world.changes.length, 2);
-    assert.equal(world.changes[1].status.offline, true);
-  });
-});
-
-test('source: a switch that is overtaken by a newer one is dropped', async () => {
-  await inWorld(async world => {
-    serve(world, { settings: { contentSource: 'sample' } });
-    await startContent(world.onChange);
-
-    // production is chosen, but Sanity is slow to answer the content query
-    const inner = world.handler;
-    let release = null;
-    world.handler = (url, options) => {
-      if (url !== queryUrl(live.config.sanity)) return inner(url, options);
-      return new Promise(resolve => {
-        release = () => resolve(sanityReply(copyOf(world.server.content)));
-      });
-    };
-    world.server.settings = {};
-    await world.advance(30 * second);
-    assert.equal(world.changes.length, 0);
-    assert.equal(contentQueries(world), 1);
-
-    // before it answers, the editors go back to the sample
-    world.server.settings = { contentSource: 'sample' };
-    await world.advance(30 * second);
-    assert.deepEqual(sourcesOf(world), ['sample']);
-
-    // the late answer from Sanity changes nothing, and nothing is left running for production
-    release();
-    await settle();
-    await world.advance(15 * minute);
-    assert.deepEqual(sourcesOf(world), ['sample']);
-    assert.equal(contentQueries(world), 1);
-    assert.equal(world.streams.length, 1);
-    assert.equal(world.streams[0].readyState, 2);
-  });
+test('source: shell.js reads ?sample= from the address before the style, the layout and the content', () => {
+  const code = fs.readFileSync(path.join(dashboardFolder, 'shell.js'), 'utf8');
+  const asked = code.indexOf("askForSample(params.get('sample'));");
+  assert.ok(asked > code.indexOf('async function run()'), 'it is asked in run()');
+  assert.ok(asked < code.indexOf("startStyle(params.get('style'), savedStyle)"), 'before the style, which reads the saved copy');
+  assert.ok(asked < code.indexOf('startContent('), 'before the content starts');
 });
 
 test('sanity: with no saved copy it waits for Sanity, saves the answer and listens for changes', async () => {
@@ -2850,15 +2419,6 @@ test('sanity: a read that times out is other when the host answers, and the netw
 
   const dead = await reasonAfterTwoMinutes((url, options) => hangs(options), true);
   assert.equal(dead.status.reason, 'network');
-});
-
-test('sanity: the Dashboard Settings read never makes the second request, so a slow network is not made slower', async () => {
-  await inWorld(async world => {
-    world.handler = unreachable;
-    await assert.rejects(() => live.sanity.fetchSourceSettings(live.config.sanity));
-    assert.equal(world.fetches.length, 1);
-    assert.equal(world.fetches[0].url, sourceQueryUrl(live.config.sanity));
-  });
 });
 
 test('sanity: a saved copy that cannot be used is the same as having none', async () => {
@@ -3860,18 +3420,17 @@ test('the sample content keeps its photo list, now inside the content, and the P
   assert.deepEqual(normalizeSample({}).photos, []);
 });
 
-test('the Night mode settings: the starting values, the two choices, the two times and the logo width, through all three paths', () => {
+test('the Night mode settings: the starting values, the two choices and the logo width, through all three paths', () => {
   const defaults = live.config.defaultSettings;
   assert.deepEqual(
-    [defaults.nightEnabled, defaults.nightStyle, defaults.nightStart, defaults.nightEnd, defaults.nightLogoWidth, defaults.nightSpeed, defaults.nightPreview],
-    [true, 'bounce', '23:30', '11:30', 300, 'normal', false]
+    [defaults.nightEnabled, defaults.nightStyle, defaults.nightLogoWidth, defaults.nightSpeed, defaults.nightPreview],
+    [true, 'bounce', 300, 'normal', false]
   );
   assert.deepEqual(live.config.nightStyles, ['bounce', 'black']);
   assert.deepEqual(Object.keys(live.config.nightSpeeds), ['slow', 'normal', 'fast']);
 
   // a published page that lacks every one of them gets the starting values
   settingsThrough({}).forEach(settings => nightSettingNames.forEach(name => assert.equal(settings[name], defaults[name], name)));
-  assert.equal(withDefaults(null).settings.nightStart, '23:30');
 
   // the two choices
   live.config.nightStyles.forEach(name => settingsThrough({ nightStyle: name }).forEach(settings => assert.equal(settings.nightStyle, name)));
@@ -3881,16 +3440,6 @@ test('the Night mode settings: the starting values, the two choices, the two tim
   });
   [undefined, null, '', 'Fast', 'very-fast', 'constructor', 0, true, ['fast'], {}].forEach(value => {
     settingsThrough({ nightSpeed: value }).forEach(settings => assert.equal(settings.nightSpeed, 'normal', JSON.stringify(value)));
-  });
-
-  // the times are 24 hour times with two digits, and anything else is the starting time
-  ['00:00', '09:05', '21:45', '23:59'].forEach(text => {
-    settingsThrough({ nightStart: text, nightEnd: text }).forEach(settings => assert.deepEqual([settings.nightStart, settings.nightEnd], [text, text]));
-  });
-  ['9:05', '24:00', '12:60', '2330', '23:30:00', ' 23:30', 'late', 2330, null, {}].forEach(value => {
-    settingsThrough({ nightStart: value, nightEnd: value }).forEach(settings => {
-      assert.deepEqual([settings.nightStart, settings.nightEnd], ['23:30', '11:30'], JSON.stringify(value));
-    });
   });
 
   // the logo width is from 120 to 800, and what is outside is brought to the nearest end
@@ -3924,7 +3473,7 @@ test('the sample content carries the Night mode settings', () => {
   assert.equal(normalizeSample({}).theme.timeZone, 'America/New_York', 'night mode reads its zone from the Look page, which starts as New York');
 });
 
-// The names of the settings in the Hidden tab, and the last push from the Studio
+// The names of the hidden transition settings, and the last push from the Studio
 const hiddenSettingNames = ['hiddenEnabled', 'desktopChance', 'redEyesChance'];
 
 test('the Hidden settings: the starting values, the master switch and the two chances, through all three paths', () => {
@@ -3958,29 +3507,17 @@ test('the Hidden settings: the starting values, the master switch and the two ch
   });
 });
 
-// The names of the settings in the Presentations tab
-const presentationSettingNames = ['presentationsEnabled', 'noShowMinutes', 'graceMinutes'];
+// The names of the settings in the Presentations tab. The wait for the speaker and the overrun are
+// fixed in core/constants.js and are not settings.
+const presentationSettingNames = ['presentationsEnabled'];
 
-test('the Presentations settings: the starting values, the switch and the two minutes, through all three paths', () => {
+test('the Presentations settings: the starting value and the switch, through all three paths', () => {
   const defaults = live.config.defaultSettings;
-  assert.deepEqual([defaults.presentationsEnabled, defaults.noShowMinutes, defaults.graceMinutes], [true, 5, 5]);
+  assert.equal(defaults.presentationsEnabled, true);
 
-  // a published page that lacks every one of them gets the starting values
+  // a published page that lacks it gets the starting value
   settingsThrough({}).forEach(settings => {
     presentationSettingNames.forEach(name => assert.equal(settings[name], defaults[name], name));
-  });
-
-  // the wait is 1 to 15 minutes and the overrun 0 to 10, and what is outside is brought to the nearest end
-  [[1, 1], [8, 8], [15, 15], [0, 1], [-2, 1], [16, 15], [300, 15]].forEach(([value, wanted]) => {
-    settingsThrough({ noShowMinutes: value }).forEach(settings => assert.equal(settings.noShowMinutes, wanted, String(value)));
-  });
-  [[0, 0], [3, 3], [10, 10], [-1, 0], [11, 10], [90, 10]].forEach(([value, wanted]) => {
-    settingsThrough({ graceMinutes: value }).forEach(settings => assert.equal(settings.graceMinutes, wanted, String(value)));
-  });
-  [undefined, null, '', '7', NaN, Infinity, true, [], {}].forEach(value => {
-    settingsThrough({ noShowMinutes: value, graceMinutes: value }).forEach(settings => {
-      assert.deepEqual([settings.noShowMinutes, settings.graceMinutes], [5, 5], String(value));
-    });
   });
 
   // the switch starts on, and anything but true or false is on
@@ -4132,7 +3669,7 @@ test('the last click of Next look now and of Preview competition is kept as a ti
   settingsThrough({ nextLookRequest: request }).forEach(settings => assert.deepEqual(settings.competitionPreviewRequest, { requestedAt: '' }));
 });
 
-// The names of the settings in the Teams tab
+// The names of the team settings
 const teamSettingNames = ['teamMode', 'alternateMinutes'];
 
 test('the Teams settings: Prime only and 5 minutes to start with, one of three modes, and 1 to 30 minutes, through all three paths', () => {
@@ -4193,7 +3730,7 @@ test('the last click of Run presentation test is kept as a time, and anything th
   const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
   assert.ok(!('presentationTestRequest' in raw.settings), 'a request is never part of the sample');
   assert.deepEqual(normalizeSample(raw).settings.presentationTestRequest, { requestedAt: '' });
-  assert.deepEqual([stored.presentationsEnabled, stored.noShowMinutes, stored.graceMinutes], [true, 5, 5]);
+  assert.equal(stored.presentationsEnabled, true);
 });
 
 test('the last click of a Preview button is kept as a kind and a time, and anything that is not one is empty, through all three paths', () => {
@@ -4415,7 +3952,7 @@ test('the portrait sizes in portrait.js, base.css and the text sizes agree', () 
   assert.ok(tokens.includes('--size-body: 56px;') && tokens.includes('--size-label: 44px;'));
 });
 
-// The two size settings of the Photos tab: Portrait size and Photo size
+// The two size settings of the photo settings: Portrait size and Photo size
 
 test('Portrait size and Photo size start at 100, are whole percents from 60 to 100, and anything odd is 100', () => {
   const defaults = live.config.defaultSettings;
@@ -6113,7 +5650,7 @@ test('the sample content is cleaned the same way, and has a contact and a place'
 // Each mount of the panel shows the next page, so a test that mounts it gets its own copy
 let tasksPanelCopies = 0;
 async function freshTasksPanel() {
-  const folder = path.join(workFolder, 'flag-off', 'dashboard', 'panels', 'tasks');
+  const folder = path.join(workFolder, 'live', 'dashboard', 'panels', 'tasks');
   fs.mkdirSync(folder, { recursive: true });
   fs.copyFileSync(path.join(dashboardFolder, 'panels', 'tasks', 'tasks.js'), path.join(folder, 'tasks.js'));
   tasksPanelCopies += 1;

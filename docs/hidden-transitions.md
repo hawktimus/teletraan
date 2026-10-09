@@ -74,24 +74,45 @@ ends and the screen comes back.
 4. Try it with `?hidden=desktop` or `?hidden=redEyes` in the address (see "Try one"). The
    address always plays the next picture, so add it twice to see both.
 
-## The Hidden tab
+## The hidden transition settings
 
-Open Studio, click Dashboard Settings and open the Hidden tab.
+Open Studio, click Dashboard Settings and open the Advanced tab.
 
 - **Allow hidden transitions.** The master switch. It starts on. Turn it off and
   neither transition ever plays, not even one you push (below).
-- **Desktop reveal chance (percent).** How many page changes in 100 become the
-  desktop reveal. From 0 to 100, and it starts at 1. 0 means never.
-- **Red eyes chance (percent).** The same for red eyes. It starts at 1. 0 means
-  never.
+- **Desktop reveal every (hours).** About once every this many hours of screen time.
+  A whole number from 1 to 1000. It starts at 60.
+- **Red eyes every (hours).** The same for red eyes. It starts at 60.
 - **Last push.** Filled in by the Play buttons (below). You cannot type in it. It
   shows which transition was pushed last, and when.
 
-The chance is for each page change of the large panel, which changes about every 20
-seconds. With both at 1, about one page change in 50 is a surprise, so a few an hour
-on the screen. One random number decides each page change: the first percent of
-the way from 0 to 100 is the desktop reveal, the next is red eyes, and the rest is an
-ordinary page change. If the two add up to more than 100, red eyes gets what is left.
+The screen rolls at each page change of the large panel. That panel changes page every
+Seconds per page (20 to start with, in the Screen tab), made longer or shorter by Speed.
+The chance at one page change is those seconds divided by the hours in seconds. At 20
+seconds and 60 hours that is 20 in 216000, which is 1 in 10800. A page change is not
+a timetable: at 60 hours a transition comes about every 60 hours on average, and it can
+come twice in a day or not for a week. One random number decides each page change: the
+first share of the way from 0 to 1 is the desktop reveal, the next is red eyes, and the
+rest is an ordinary page change.
+
+Screen time is the time the screen shows its normal pages. Night mode, an alert, an
+announcement, a demo, a talk and calm motion do not count, because nothing is rolled
+then. A row with seconds of its own in the Screen tab changes the time for that one page,
+so the hours are about right and not exact.
+
+After any hidden transition has played, none comes about by chance for 4 hours. The 4 is
+`hiddenGapHours` in `dashboard/config.js`. The time it played is kept in the browser's
+storage (`localStorage`, under `teletraan-hidden-last-fired`), so a Mini that restarts
+keeps the gap. If the storage is switched off, the screen keeps the time until the page
+is reloaded. A push from the Studio and `?hidden=` ignore the gap, but they start one.
+
+The two percent fields the page used to have, Desktop reveal chance and Red eyes chance,
+are hidden. A settings page saved before the hours existed has no hours. It keeps
+rolling by its percents (1 each to start with, so about one page change in 50 was a
+surprise) until you fill in the hours and publish. A percent of 1 is 1 page change in
+100, about every 33 minutes at 20 seconds, and the fewest hours the field takes is 1,
+which is 1 page change in 180. So every old percent from 1 up is more often than the hours
+can say. The Studio starts a new settings page at 60 hours for both.
 
 ## Play one now
 
@@ -103,14 +124,14 @@ ordinary page change. If the two add up to more than 100, red eyes gets what is 
 The menu has two more buttons that are not transitions, Play announcements and Run presentation test (see below).
 Each of the two buttons above writes the kind and the time now into Last push and
 publishes the page for you, so you do not click Publish. Any other change you had not published yet is
-published too, as with the buttons that switch between sample and production content.
+published too.
 
 What the screen does with a push:
 
 - It plays at the next page change of the large panel. If that is more than 20 seconds
   away, the large panel is asked to change page at once, so it plays within a few
   seconds.
-- It ignores the chance. A chance of 0 does not stop a push.
+- It ignores the hours and the 4 hour gap. It starts a gap, like any transition.
 - It plays once. The screen keeps the push it handled last in the browser's storage
   (`localStorage`, under `teletraan-hidden-handled`), so a Mini that restarts never
   plays it again.
@@ -122,15 +143,16 @@ What the screen does with a push:
 - It never plays with Allow hidden transitions off, or in calm or no motion. A push is
   not kept for later: after 60 seconds it is too old, so turning the switch on after
   that does not play it.
-- While the screen shows sample content (Content source in Dashboard Settings) it reads
+- While a page shows sample content (`?sample=1` on its address) it reads
   the settings from `dashboard/data/sample/content.json`, not from Studio, so a push
-  does nothing. Switch back to production content first.
+  does nothing. Open the screen without `?sample=1` first.
 
 ## Switch them off
 
-- **For good:** turn off Allow hidden transitions, or set both chances to 0 (a push
-  still works with the chances at 0, but not with the switch off).
-- **For one of them:** set its chance to 0.
+- **For good:** turn off Allow hidden transitions. A push does not work with the
+  switch off either.
+- **For one of them:** set its hours to 1000, about once in six weeks of screen time.
+  The hours cannot be 0.
 - **Calm and no motion** never play one. Motion in the Screen tab of Dashboard Settings
   set to Calm switches them off, and so does `?motion=calm` in the address.
 - They also never play while a full screen alert or announcement is up, while a demo
@@ -141,7 +163,7 @@ What the screen does with a push:
 
 The menu next to Publish on Dashboard Settings has a third button, **Play announcements**.
 It is not a transition, but it is built the same way: one click, and the TV plays it
-within a few seconds. It plays every announcement in the Announcements tab that is
+within a few seconds. It plays every announcement in the Screen tab that is
 switched on, once, one after another. Use it to show visitors the announcements, or to
 check them, without waiting for 14:30.
 
@@ -179,9 +201,9 @@ What the screen does with it:
   missed, because only one announcement can have the screen.
 - The list is taken when the request starts, so editing the announcements while they play
   changes the next click and not this one.
-- While the screen shows sample content (Content source in Dashboard Settings) it reads
+- While a page shows sample content (`?sample=1` on its address) it reads
   the settings from `dashboard/data/sample/content.json`, not from Studio, so the button
-  does nothing. Switch back to production content first.
+  does nothing. Open the screen without `?sample=1` first.
 
 A Demo step can play the same announcements: pick **All announcements** as its screen
 (docs/demo.md).
@@ -197,9 +219,9 @@ real talk. It needs no internet and no Google deck, because the talk and its sli
 The button writes the time now into `presentationTestRequest` and publishes the page for you. It
 follows the same rules as Play announcements: it runs once, only while the request is less than 60
 seconds old, and it waits for an alert, an announcement, a talk, a demo, a hidden transition or the
-night screen to be over. Run presentations in the Presentations tab must be on. While the screen
-shows sample content it reads the settings from `dashboard/data/sample/content.json`, so the button
-does nothing. Switch back to production content first.
+night screen to be over. Run presentations in the Presentations tab must be on. While a page
+shows sample content (`?sample=1`) it reads the settings from `dashboard/data/sample/content.json`, so the button
+does nothing. Open the screen without `?sample=1` first.
 
 ## Preview a look
 
@@ -251,7 +273,7 @@ What the screen does with it:
 - Another click while a preview is showing replaces it, and the 2 minutes count from the new click.
 - At the end the screen goes back to the settings at the next page change, and the page reloads once more
   if the style it goes back to has another layout.
-- While the screen shows sample content (Content source in Dashboard Settings) it reads the settings from
+- While a page shows sample content (`?sample=1` on its address) it reads the settings from
   `dashboard/data/sample/content.json`, not from Studio, so the buttons do nothing. To try every style,
   team and pack with the sample content, put `?style=`, `?team=` and `?overlay=` on the address
   (docs/try-it-on-the-mini.md). The sample content has both teams.
@@ -265,7 +287,7 @@ To add a preview, add an entry to `previewKinds` in `dashboard/core/preview.js`,
 ## Try one
 
 Add `?hidden=desktop` or `?hidden=redEyes` to the address and that transition plays at
-the next page change of the large panel, once, whatever the chance says.
+the next page change of the large panel, once, whatever the hours and the gap say.
 `?hidden=off` never plays any. Add `?night=off` too when it is night in the Look
 time zone, or the night screen will stop it. docs/try-it-on-the-mini.md lists every switch.
 
@@ -326,11 +348,14 @@ motion never play one. `?finish=flat` works as always.
 
 ## Add a hidden transition
 
-A transition is one entry in a list, plus a few lines to give it a chance setting.
+A transition is one entry in a list, plus a few lines to give it an hours setting and a
+chance setting.
 
 1. Add an entry to `hiddenTransitions` in `dashboard/core/hidden-transitions.js`. The
    key is the id the Studio stores. `name` is the words on its Play button.
-   `chanceField` is the name of its chance setting. `run(scene)` is the show, one line
+   `hoursField` is the name of its hours setting and `chanceField` the name of its
+   percent setting, which only a page saved before the hours existed still uses.
+   `run(scene)` is the show, one line
    for each step. The steps are `scene.glitch(seconds)` (red) or `scene.glitch(seconds,
    'blue')`, `scene.breakApart('black')` or `scene.breakApart('blue')`,
    `scene.wait(seconds)`, `scene.pictureIn(set, seconds)` (fades the next picture of the
@@ -340,6 +365,7 @@ A transition is one entry in a list, plus a few lines to give it a chance settin
 
        myTransition: {
          name: 'My transition',
+         hoursField: 'myEveryHours',
          chanceField: 'myChance',
          async run(scene) {
            await scene.breakApart('black');
@@ -351,26 +377,31 @@ A transition is one entry in a list, plus a few lines to give it a chance settin
    A new set of pictures is a new list in `core/hidden-pictures.js`, and its files go in
    `dashboard/assets/hidden/`. A new kind of step is a new function in `makeScene` in
    `core/hidden-run.js` and its moves in `frame.css`.
-2. In `dashboard/config.js` add the chance to `defaultSettings` (`myChance: 1`) and to
-   `limits` (`myChance: { min: 0, max: 100 }`).
-3. In `studio/hidden-transitions.js` add the same id, name and chance field, in the
+2. In `dashboard/config.js` add the hours and the chance to `defaultSettings`
+   (`myEveryHours: 0`, which means not set, and `myChance: 1`) and to `limits`
+   (`myEveryHours: { min: 1, max: 1000 }` and `myChance: { min: 0, max: 100 }`). Add
+   the hours to the sample content, `dashboard/data/sample/content.json`.
+3. In `studio/hidden-transitions.js` add the same id, name, hours field and chance field, in the
    same place in the list. The Studio is built on its own and cannot read the
    dashboard folder, which is why the list is written twice. The Play button comes from
    this list, so there is nothing to add in `actions.js`.
-4. In `studio/schemas/settingsHidden.js` add the chance field, a copy of
-   `desktopChance`. Add its name to `hiddenNames` and the number tables in
-   `studio/check-schemas.mjs` (search it for `desktopChance`).
-5. Run `node tools/test-effects.mjs`, `node tools/test-content.mjs` and
-   `node studio/check-schemas.mjs`. Then run `npm run deploy` in the `studio` folder so
+4. In `studio/schemas/settingsHidden.js` add the hours field, a copy of
+   `desktopEveryHours`, and the hidden chance field, a copy of `desktopChance`. Add
+   their names to `hiddenNames` and the number tables in
+   `studio/check-schemas.mjs` (search it for `desktopEveryHours`).
+5. Run `node tools/test-effects.mjs`, `node tools/test-content.mjs`,
+   `node tools/test-hidden-hours.mjs` and `node studio/check-schemas.mjs`. Then run `npm run deploy` in the `studio` folder so
    the editors see the new field and button.
 
 ## Where the code is
 
 - `dashboard/core/hidden-transitions.js`: the list, and the show of each.
 - `dashboard/core/hidden.js`: the plain functions, with no page in them. They decide
-  what happens at a page change (`chooseHidden`: the chance, the master switch, calm
-  motion, what blocks it, a push), and tidy and remember a push. The tests are in
-  `tools/test-effects.mjs`.
+  what happens at a page change (`chooseHidden`: the hours and the pace, the older
+  percent, the gap after a transition, the master switch, calm motion, what blocks it,
+  a push), and tidy and remember a push and the time of the last transition. The tests
+  are in `tools/test-effects.mjs`, and the hours and the gap are in
+  `tools/test-hidden-hours.mjs`.
 - `dashboard/core/hidden-run.js`: plays a transition: asks at each page change, sets
   the attributes, waits, and puts the screen back whatever happens.
 - `dashboard/core/hidden-pictures.js`: the four pictures (file name, size, how each fills the
@@ -420,5 +451,7 @@ A transition is one entry in a list, plus a few lines to give it a chance settin
   `dashboard/config.js`, and `previewSeconds` there is the 2 minutes.
 - `studio/schemas/settingsHidden.js` is the tab, `studio/actions.js` has the Play
   buttons, and `studio/hidden-transitions.js` is the Studio's copy of the list. The
-  starting values are `hiddenEnabled`, `desktopChance`, `redEyesChance` and
-  `hiddenRequest` in `defaultSettings` in `dashboard/config.js`.
+  starting values are `hiddenEnabled`, `desktopEveryHours`, `redEyesEveryHours`,
+  `desktopChance`, `redEyesChance` and `hiddenRequest` in `defaultSettings` in
+  `dashboard/config.js`. The hours start at 0 there, which means not set, and at 60 in
+  the Studio. `hiddenGapHours` is the 4 hour gap.

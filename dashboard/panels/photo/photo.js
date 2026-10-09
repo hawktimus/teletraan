@@ -1,5 +1,5 @@
 // A picture at a time from the photos in Studio, in the order set in Dashboard
-// Settings (Photos tab). Only photos that are switched on and have not expired
+// Settings (Screen tab). Only photos that are switched on and have not expired
 // are used. While one is up, the next is already downloading.
 
 import { cardMarkup } from '../../core/plate.js';

@@ -6,7 +6,7 @@
 //
 //   idle -> title -> presenting -> thanks -> idle
 //             |
-//             +-- no key for noShowMinutes -> skipped -> idle
+//             +-- no key for noShowMinutes (constants.js) -> skipped -> idle
 //
 //   idle        nothing shows. A scheduled talk is due from its start until its end,
 //               and waits while an alert or an announcement has the screen.
@@ -15,7 +15,7 @@
 //               the card appeared, and the card is a copy of the talk, so an edit
 //               in Studio does not change it.
 //   presenting  one slide at a time. The talk ends at its start plus its minutes
-//               plus graceMinutes, whatever slide it is on.
+//               plus graceMinutes (constants.js), whatever slide it is on.
 //   thanks      the card after the last slide, for a few seconds.
 //   skipped     the talk will not run. It lasts one look, then it is idle.
 //
@@ -31,7 +31,8 @@
 // A state is a plain object with a name and, except for idle, the talk. Times in a
 // state are milliseconds. The rest of this file takes and gives Dates.
 
-import { defaultSettings, defaultTalk, liveFolder, sampleFolder } from '../config.js';
+import { defaultTalk, liveFolder, sampleFolder } from '../config.js';
+import { graceMinutes, noShowMinutes } from './constants.js';
 import { asDate } from './time.js';
 
 export const states = ['idle', 'title', 'presenting', 'thanks', 'skipped'];
@@ -75,15 +76,11 @@ function isRecord(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
-function minutesSetting(settings, name) {
-  const value = settings[name];
-  return typeof value === 'number' && isFinite(value) && value >= 0 ? value : defaultSettings[name];
-}
-
-// When a talk is over, as a Date: its start, its minutes and the overrun it is allowed
-export function talkEnd(talk, settings) {
+// When a talk is over, as a Date: its start, its minutes and the overrun it is
+// allowed. The overrun is graceMinutes unless the caller names another one.
+export function talkEnd(talk, overrunMinutes = graceMinutes) {
   const minutes = typeof talk.minutes === 'number' && talk.minutes > 0 ? talk.minutes : defaultTalk.minutes;
-  return new Date(asDate(talk.start).getTime() + (minutes + minutesSetting(settings, 'graceMinutes')) * 60000);
+  return new Date(asDate(talk.start).getTime() + (minutes + overrunMinutes) * 60000);
 }
 
 // The key that the skipped set holds for a talk. It has the start in it, so a
@@ -115,7 +112,7 @@ export function dueTalk(talks, now, settings, skipped) {
     if (!canRun(talk)) return;
 
     const start = asDate(talk.start);
-    if (now < start || now >= talkEnd(talk, settings)) return;
+    if (now < start || now >= talkEnd(talk)) return;
     if (skipped.has(skipKey(talk))) return;
     if (found === null || start < asDate(found.start)) found = talk;
   });
@@ -214,8 +211,8 @@ function startTitle(state, input) {
 // is skipped. Slides that can are counted, so a forward key can start the talk.
 function keepTitle(state, input) {
   const time = input.now.getTime();
-  const noShow = minutesSetting(input.settings, 'noShowMinutes') * 60000;
-  if (time - state.since >= noShow || input.now >= talkEnd(state.talk, input.settings)) return skippedState(state.talk, 'no-show');
+  const noShow = noShowMinutes * 60000;
+  if (time - state.since >= noShow || input.now >= talkEnd(state.talk)) return skippedState(state.talk, 'no-show');
   if (input.slides === undefined) return state;
 
   const count = slidePages(input.slides).length;
@@ -228,7 +225,7 @@ function keepTitle(state, input) {
 
 // A talk ends when its slot and the overrun are used up, on whatever slide it is
 function keepPresenting(state, input) {
-  return input.now >= talkEnd(state.talk, input.settings) ? thanksState(state.talk, input.now.getTime()) : state;
+  return input.now >= talkEnd(state.talk) ? thanksState(state.talk, input.now.getTime()) : state;
 }
 
 function keepThanks(state, input) {

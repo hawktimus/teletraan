@@ -33,7 +33,7 @@ You need Python 3. In a terminal, from this folder:
 
     python3 tools/serve.py
 
-Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh the page, and you will see the change. The screen shows sample content (everything in [square brackets]) until it is switched over to the real content, which is covered in studio/README.md.
+Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh the page, and you will see the change. The screen shows the real content, which is covered in studio/README.md. Add `?sample=1` to the address, such as http://localhost:8080/dashboard/?sample=1, to see made-up sample content instead (everything in [square brackets]).
 
 ## What's included
 

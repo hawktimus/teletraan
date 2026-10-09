@@ -226,9 +226,9 @@ ticker's bottom, as it does in the standard layout.
 **No small frame.** The sidebar layout never makes Grid 2 (`#region-grid2` is
 empty and out of the way), and the scheduler leaves out every panel whose region
 is `grid2` in `dashboard/registry.js`: the task counts, safety days, next event,
-sponsor logo and forecast panels. The Large panels list in Dashboard Settings is
-the rotation of the pane. The Small panels list is not used while a sidebar theme
-is on. The countdown is not a small panel: it lives in the sidebar. Grid 1 and
+sponsor logo and forecast panels. The large panels in the Panel order list in
+Dashboard Settings are the rotation of the pane. The small panels in that list
+are not used while a sidebar theme is on. The countdown is not a small panel: it lives in the sidebar. Grid 1 and
 Grid 2 never show the same topic, so with no Grid 2 the pane may show any topic.
 `?show=` with a small panel shows nothing in this layout.
 
@@ -1115,7 +1115,7 @@ at each of them, then add the class `mirrored` as above and look again:
 3. The hazard stripe is under the header, from edge to edge, and the tab is above it.
 4. The brackets are outside the frames and do not touch the banner, the side column or
    the ticker, and nothing is outside the screen.
-5. Watch a page change with Page change style set to mechanical (Transitions tab): the
+5. Watch a page change with Page change style set to mechanical (Look tab): the
    frame breaks into pieces, the decoration goes with them, and everything comes back in
    place. The ticker's frame stays still while its message changes.
 

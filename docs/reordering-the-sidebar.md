@@ -89,7 +89,8 @@ Calendars is a page that explains them. Three kinds of content have no line:
 Events Calendar (the type `extraEvent`, which the screen no longer reads), Places
 (`place`, which a task's Location field adds and opens) and Demo (`demo`, whose
 buttons are on Start here). They are kept in the schema so that nothing already
-typed is lost.
+typed is lost. The status document (`status`) has no line either: the Mini writes
+it, and the status block at the top of the Screen tab of Dashboard Settings shows it.
 
 ## Change the order
 

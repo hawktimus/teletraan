@@ -141,7 +141,7 @@ export function makePhotoQueue(random = Math.random) {
 
 // The seconds a row of the Panels list has of its own, or 0 when it has none and
 // the board's Seconds per page rules. The Photo panel is the exception: with
-// no seconds of its own it follows Seconds per photo, in the Photos tab.
+// no seconds of its own it follows Seconds per photo, in the Screen tab.
 export function ownSeconds(step, settings) {
   if (Number(step.seconds) > 0) return Number(step.seconds);
   if (step.panel === 'photo') return Number(settings.photoSeconds) > 0 ? Number(settings.photoSeconds) : defaultSettings.photoSeconds;

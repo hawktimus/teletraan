@@ -326,7 +326,7 @@ are none, the panel is skipped.
 
 ### Order, time on screen and size
 
-Dashboard Settings has a Photos tab with four settings:
+The Screen tab of Dashboard Settings has four photo settings:
 
 - Photo order is Random (the default) or Newest first. Random never shows the
   same photo twice in a row. Newest first goes from the photo uploaded last to
@@ -334,7 +334,7 @@ Dashboard Settings has a Photos tab with four settings:
   added to Studio, not the time it was taken. A photo added while the screen
   is running comes at the start of the next round.
 - Seconds per photo is how long the Photo panel stays up, from 6 to 120, and
-  starts at 16. A Photo row in the Panels tab that has seconds of its own wins
+  starts at 16. A Photo row in Panel order, in the Screen tab, that has seconds of its own wins
   over it. With the row's seconds empty, the Photo panel follows Seconds per
   photo and not Seconds per page.
 - Portrait size, percent is how big the portraits are on the Leadership and
@@ -358,13 +358,13 @@ Dashboard Settings has a Photos tab with four settings:
 Studio only accepts whole numbers from 60 to 100 for the two sizes. If a value
 outside that range ever reaches the screen it uses the nearest end, and an
 empty or odd value is 100. To see a size, set it, click Publish, and wait for
-the panel to come round, or try it on the sample content first (Content
-source tab).
+the panel to come round, or try it on the sample content first (see "Sample
+content" below).
 
 While one photo is up, the screen starts downloading the next one, so it is
 ready at the page change. If a photo cannot be loaded, the card says so and the
-next page change tries the next photo. While the screen shows the sample content
-(Content source), the Photo panel shows the three sample photos instead.
+next page change tries the next photo. While a page shows the sample content
+(`?sample=1`), the Photo panel shows the three sample photos instead.
 
 ## Photos of people
 
@@ -380,7 +380,7 @@ more than three people is shared out as evenly as possible over as many pages
 as it needs, so 4 people are 2 and 2, 5 are 3 and 2, and 6 are 3 and 3. A page
 with fewer than three people has portraits the same size as a full page, and
 they sit in the middle. The size of all of them can be changed together with
-Portrait size, percent in the Photos tab of Dashboard Settings (see "Order,
+Portrait size, percent in the Screen tab of Dashboard Settings (see "Order,
 time on screen and size" above). The Team Leads panel fills each page with three leads.
 When there is more than one page, the panel shows the next page each time it
 comes round, and the text stays the same size. It never gets smaller to fit
@@ -442,8 +442,8 @@ columns on the right. The subteam's name is the title of the page.
 - The heading always says ROSTER. The name of the subteam is shown in capital
   letters in the corner tag, where all 11 letters the field allows fit.
 
-To put the panel on the screen, open Dashboard Settings, then the Panels tab,
-then "Large panels". A Studio set up before this panel existed has a saved list
+To put the panel on the screen, open Dashboard Settings, then the Screen tab,
+then "Panel order". A Studio set up before this panel existed has a saved list
 without it, and a saved list is shown as it is, so the panel stays off until you
 add it. Use "Add item", pick Subteam roster, and drag the row to where you want
 it in the list. A row that is already there only needs "Show on screen" turned
@@ -471,7 +471,7 @@ Publish. The fields:
   Team choice on items.
 - Order: a lower number comes first. It starts at 10.
 
-Which team is on the screen is Team mode in the Teams tab of Dashboard Settings
+Which team is on the screen is Team mode in the Look tab of Dashboard Settings
 (see below). The two starting teams, Hawktimus Prime and Hawktimus Nova, are in
 `docs/seed/teams.ndjson`, and docs/add-the-nova-team.md has the import and the
 steps. With no Teams at all the TV shows the built-in Prime team, as it always has.
@@ -508,22 +508,32 @@ box.
 ## Dashboard Settings
 
 One page, with tabs along the top. It cannot be deleted or copied. The tabs, in
-order, are Screen, Teams, Logo, Transitions, Countdown, Alert, Panels, Photos,
-Announcements, Night mode, Hidden, Presentations, Calendars, Content source and
-Connection.
+order, are Screen, Look, Countdown, Calendars, Presentations, Monday,
+Competition and Advanced. It opens on Screen. Studio also adds a tab called All
+fields, which shows every tab one under the other. Studio cannot start a tab
+folded, so Advanced is the last tab: it holds what only a coach looking into a
+problem would touch.
 
-- Screen: the team name, number and school in the banner. Motion is Full or
-  Calm (Calm only fades panels in and out, with no turning, glint, logo
-  animations, name effect or screen glitch). Speed is Very slow, Slow, Normal
-  or Fast. It changes how fast things move and how long each panel and ticker
-  line stays, but not announcements or alerts, which keep the seconds you give
-  them. Frame metal is Gold (warm
-  antique brass) or Silver (weathered steel) and sets the metal on the edges that
-  stay on the screen: the banner, the countdown and the logo. The large and small
-  panels choose their own metal at every page change, in the Transitions tab. The
-  theme Neon Prime has frames of dark steel of its own and ignores both settings.
-  Glint is a bright spark that runs once around each frame every few
-  seconds. Turn it off for a calmer screen. Polish is how much polish the frames
+### Screen
+
+- Status of the Mini: the block at the top. It says when the Mini last saw a
+  change to the content, downloaded the calendars, downloaded the slides, read
+  the Monday boards, read the FRC data, and started the screen. Each line says
+  how long ago and the time. You cannot type in it: the Mini writes it. It says
+  No status yet until the Mini has a write token (docs/rebuilding-the-mini.md,
+  "Showing what the Mini did in Studio"). A line says Not yet for a job the Mini
+  has not done since the token was added.
+- Team, motion and frames: the team name, number and school in the banner.
+  Motion is Full or Calm (Calm only fades panels in and out, with no turning,
+  glint, logo animations, name effect or screen glitch). Speed is Very slow,
+  Slow, Normal or Fast. It changes how fast things move and how long each panel
+  and ticker line stays, but not announcements or alerts, which keep the
+  seconds you give them. Frame metal is Gold (warm antique brass) or Silver
+  (weathered steel) and sets the metal on the edges that stay on the screen:
+  the banner, the countdown and the logo. The large and small panels choose
+  their own metal at every page change, in the Look tab. The theme Neon Prime
+  has frames of dark steel of its own and ignores both settings. Glint is a
+  bright spark that runs once around each frame every few seconds. Turn it off for a calmer screen. Polish is how much polish the frames
   have. Polished (as now) is the default and is the screen as it has always
   looked: worn metal edges, screws with shading, the glint, and the // at the
   right of each panel header. Flat has plain colour edges and plain screws, with
@@ -538,16 +548,7 @@ Connection.
   the name effect. To see one before you change the setting, add `?look=flat`
   or `?look=plain` to the address of the screen: the address wins, for that page
   only. If no choice is ticked for Polish (a Dashboard Settings page published
-  before Polish existed), the screen uses Polished. Style is the look of the whole
-  screen. Original is the screen as it is now, in the layout of its theme.
-  Cybertron and Minimal have a banner across the top, a thin side column and one
-  main panel, whatever the theme says, and the screen reloads once when you change
-  to or from one of them, and when you change from one to the other, because their
-  frames have different corners. The team sets the base colors, and the Look page sets the
-  rest (docs/layouts.md, "Styles"). To see one first, add `?style=cybertron` or
-  `?style=minimal` to the address, or use a Preview button in the menu next to
-  Publish, which shows a look for 2 minutes and saves nothing (docs/switch-the-look.md).
-  If no choice is ticked for Style, the screen uses Original. Screen glitch is a short old
+  before Polish existed), the screen uses Polished. Screen glitch is a short old
   television glitch over the whole screen: a bright bar rolls down, the picture
   jumps sideways and the scan lines flicker. "Play the glitch" turns it on or
   off, "Seconds between glitches" is from 30 to 3600, or 0 to never play it, and
@@ -557,6 +558,55 @@ Connection.
   older Studio page shows an "unknown field" box called everyMinutes, click
   Unset. The screen reads an old value of minutes as seconds until you set the
   new field.
+- Alert: turn it on to cover the whole screen with a headline and a message.
+  Turn it off to take it down, or set "Take down at" to do it automatically.
+- Panels: which panels appear, in what order and for how long. In Dashboard
+  Settings open the Screen tab. "Panel order" is one list with every panel in
+  it, large and small: point at the dots on the left of a row, then drag the row
+  up or down. Each row says Large panel or Small panel under its name. The large
+  panels show in the order they have in the list, top first, and the small panels
+  too, each on its own timer, and the order applies on the next page change. Turn
+  off "Show on screen" to skip a panel. A page saved before the list existed
+  shows it already filled in, from the two older lists, "Large panels" and "Small
+  panels", which are hidden now. "Seconds per page" is just above the list. It is how long a large panel stays up, from 8 to 120, and the starting
+  value is 20. A small panel stays three quarters as long and a ticker line one
+  and a half times as long, so at 20 seconds a small panel stays 15 and a
+  ticker line 30. A row can have seconds of its own, from 6 to 120. Leave the
+  field empty and the row follows "Seconds per page" (the Photo row follows
+  "Seconds per photo" lower down in this tab). The ticker has its own
+  "Seconds per ticker line" that works the same way. A row that already has
+  seconds keeps them until you clear the field. Speed is applied after all of
+  this, so Slow makes every page stay longer than the number you typed. This tab
+  also has how many days finished tasks stay, and the date the safety day count
+  starts. If you delete every row of the list, the screen goes back to the two
+  older lists, so to show nothing, turn off "Show on screen" on each row. While
+  the theme Neon Prime is on there is no small frame, so the small panels in the
+  list are not used and the large panels are the rotation of the one big frame.
+- Photos: how the Photo panel works. "Photo order" is Random or Newest first, and
+  "Seconds per photo" is from 6 to 120 and starts at 16. See "Photos" above.
+- Announcements: full screen messages at set times. Give the time in 24 hour
+  form, such as 14:30, and tick the days it should play. Tick at least one day.
+  The second line is optional: leave it empty and only the first line plays.
+  Turn off "Show on screen" to stop one without deleting it. If you delete
+  every announcement, none play. To see them now, open the menu next to Publish
+  (the three dots) and click "Play announcements". It publishes the page for you,
+  and the TV plays every announcement that is switched on, once, one after
+  another, whatever their times and days (docs/hidden-transitions.md).
+
+### Look
+
+- Note: the line at the top points to the Look page in the sidebar, which sets
+  the colors, the seasonal packs and the time zone. The Look page has a line
+  that points back here.
+- Style: the look of the whole screen. Original is the screen as it is now, in the layout of its theme.
+  Cybertron and Minimal have a banner across the top, a thin side column and one
+  main panel, whatever the theme says, and the screen reloads once when you change
+  to or from one of them, and when you change from one to the other, because their
+  frames have different corners. The team sets the base colors, and the Look page sets the
+  rest (docs/layouts.md, "Styles"). To see one first, add `?style=cybertron` or
+  `?style=minimal` to the address, or use a Preview button in the menu next to
+  Publish, which shows a look for 2 minutes and saves nothing (docs/switch-the-look.md).
+  If no choice is ticked for Style, the screen uses Original.
 - Teams: which team is on the screen. Team mode is Prime only (to start with), Nova
   only or Alternate. In Alternate mode "Minutes for each team" is how long one team
   stays, from 1 to 30, and starts at 5. The swaps are counted from the clock, so two
@@ -567,7 +617,7 @@ Connection.
   Nova, or add `?team=nova` to the address. Each Preview button shows its look for 2
   minutes and goes back to the saved settings, and so do Preview Cybertron, Preview
   Minimal and Preview next pack (docs/hidden-transitions.md, "Preview a look").
-- Logo: everything the logo and the team name do, in one tab. "Logo
+- Logo: everything the logo and the team name do. "Logo
   animations" is the master switch, and comes first. Turn it off and nothing in
   the logo moves, the name effect included, and the logo stays the still
   emblem. Under it, "Entrance" is a switch for the four plates flying in once
@@ -592,9 +642,9 @@ Connection.
   the animation last started. Only one animation plays at a time, and none
   starts while a panel is changing page, so one that is due can start a moment
   late. A late play is never followed by extra ones. Calm motion plays none of
-  them. The screen glitch used to be in this tab, in "Logo and effects". It is
+  them. The screen glitch used to be in a tab called "Logo and effects". It is
   in the Screen tab now.
-- Transitions: how the large and small panels change page, and what metal their
+- Page changes: how the large and small panels change page, and what metal their
   frames have (docs/page-transitions.md). "Page change style" is Alternate (the
   default), Slat change only or Mechanical only. The slat change turns the rows
   over while the frame lifts and drops. The mechanical change breaks the frame
@@ -613,80 +663,17 @@ Connection.
   like every other move. Calm motion is a plain fade of the page whatever these
   say, and a change of metal fades the whole panel. Motion off moves nothing. The
   ticker has no frame, so only its words change.
+
+### Countdown
+
 - Countdown: the labels and dates for Kickoff and Rollout. The countdown counts
   to Kickoff, then to Rollout. Its seconds change right on the second of the
   Mini's clock, so it keeps time with a phone however long the screen has been
   running. With the Cybertron and Minimal styles the same label and dates are in
   the war clock at one end of the banner, with the label over the date and no IN.
-- Alert: turn it on to cover the whole screen with a headline and a message.
-  Turn it off to take it down, or set "Take down at" to do it automatically.
-- Panels: which panels appear, in what order and for how long. In Dashboard
-  Settings open the Panels tab. "Large panels" and "Small panels" are lists:
-  point at the dots on the left of a row, then drag the row up or down. The
-  panels show in the order of the list, top first, and the order applies on
-  the next page change. Turn off "Show on screen" to skip a panel. "Seconds per page" is at the
-  top. It is how long a large panel stays up, from 8 to 120, and the starting
-  value is 20. A small panel stays three quarters as long and a ticker line one
-  and a half times as long, so at 20 seconds a small panel stays 15 and a
-  ticker line 30. A row can have seconds of its own, from 6 to 120. Leave the
-  field empty and the row follows "Seconds per page" (the Photo row follows
-  "Seconds per photo" in the Photos tab). The ticker has its own
-  "Seconds per ticker line" that works the same way. A row that already has
-  seconds keeps them until you clear the field. Speed is applied after all of
-  this, so Slow makes every page stay longer than the number you typed. This tab
-  also has how many days finished tasks stay, and the date the safety day count
-  starts. If you delete every row of a list, nothing is shown in that part of
-  the screen. While the theme Neon Prime is on there is no small frame, so the
-  Small panels list is not used and the Large panels list is the rotation of the
-  one big frame.
-- Photos: how the Photo panel works. "Photo order" is Random or Newest first, and
-  "Seconds per photo" is from 6 to 120 and starts at 16. See "Photos" above.
-- Announcements: full screen messages at set times. Give the time in 24 hour
-  form, such as 14:30, and tick the days it should play. Tick at least one day.
-  The second line is optional: leave it empty and only the first line plays.
-  Turn off "Show on screen" to stop one without deleting it. If you delete
-  every announcement, none play. To see them now, open the menu next to Publish
-  (the three dots) and click "Play announcements". It publishes the page for you,
-  and the TV plays every announcement that is switched on, once, one after
-  another, whatever their times and days (docs/hidden-transitions.md).
-- Night mode: the screensaver (docs/night-mode.md). Between "Night starts at"
-  and "Night ends at" the screen is black with the team logo and the team number
-  under it, and the picture is never turned off. "Use night mode" starts on. The
-  times are 24 hour times such as 23:30, and start as 23:30 and 11:30. An end
-  before the start runs past midnight, and the same time for both means night
-  mode never comes on. They use the Time zone on the Look page, and there is no
-  time zone here. "Night style" is Bouncing logo (the logo drifts round the
-  screen, changes colour at every bounce and spins when it hits a corner) or
-  Blank black. "Logo width (pixels)" is from 120 to 800 and starts at 300.
-  "Bounce speed" is Slow, Normal or Fast, and a corner is hit about every 12, 6.5
-  or 3.7 minutes. "Preview night mode" shows it now, whatever the time, even with
-  "Use night mode" off: turn it on and publish to look, and turn it off and
-  publish when you are done. Calm motion keeps the logo still in the middle. An
-  alert or an announcement still shows over night mode.
-- Hidden: two rare surprise transitions that now and then replace a page change
-  of the large panel (docs/hidden-transitions.md). "Allow hidden transitions" is
-  the master switch and starts on. "Desktop reveal chance (percent)" and "Red
-  eyes chance (percent)" are how many page changes in 100 become that
-  transition, from 0 to 100, and both start at 1, so about one page change in 50
-  is a surprise. 0 is never. In the
-  desktop reveal the screen glitches blue, comes apart, cuts to a blue error
-  screen for 3 seconds and comes back with the next pages. In red eyes it
-  glitches red, breaks apart to black, shows a picture of two red eyes for a few
-  seconds and comes back. Each has two pictures that take turns, and they can be
-  swapped for others (docs/hidden-transitions.md).
-  To play one now, open the menu next to Publish (the three dots) and click
-  "Play desktop reveal" or "Play red eyes". Each publishes the page for you, and
-  the TV plays it once within about 20 seconds, whatever the chances say. "Last
-  push" shows which one was pushed and when, and you cannot type in it. Nothing
-  here plays in Calm motion, or during an alert, an announcement, a demo or night
-  mode, and with "Allow hidden transitions" off none plays at all, pushed or not.
-- Presentations: whether the TV takes over for booked talks (docs/presentations.md).
-  "Run presentations" is the switch and starts on. "Wait for the speaker
-  (minutes)" is how long the title card waits for the first press of the clicker
-  before the talk is skipped, from 1 to 15, and starts at 5. "Overrun allowed
-  (minutes)" is how long a talk may run past its slot before it is ended, from 0
-  to 10, and starts at 5. "Run presentation test" in the menu next to Publish (the
-  three dots) starts a sample talk.
+
+### Calendars
+
 - Calendars: give each calendar a name and choose whether it shows. A new Studio
   starts with one row, code team, named Team calendar. A calendar only shows
   events when it has a row here, with a code that matches the calendar on the
@@ -694,8 +681,57 @@ Connection.
   switch is on. The code is lowercase letters, digits and underscores. Do not
   change a calendar's code unless you were told to. If you delete every row, no
   events show. To add a calendar, see docs/calendar-links.md.
-- Content source: Production or Sample, and an optional "Switch back to
-  production at" time. See the next section.
+
+### Presentations
+
+- Presentations: whether the TV takes over for booked talks (docs/presentations.md).
+  "Run presentations" is the switch and starts on. The wait for the speaker (the
+  title card waits 5 minutes for the first press of the clicker before the talk
+  is skipped) and the overrun (a talk may run 5 minutes past its slot) are fixed,
+  and are not shown. "Run presentation test" in the menu next to Publish (the
+  three dots) starts a sample talk.
+
+### Monday and Competition
+
+- Monday and Competition: each tab has one line that says nothing is set up
+  there yet. The Monday boards and the competition cards will be set up on these
+  tabs.
+
+### Advanced
+
+- Night mode: the screensaver (docs/night-mode.md). From 11:30 pm to 11:30 am
+  the screen is black with the team logo and the team number under it, and the
+  picture is never turned off. "Use night mode" starts on. The two times are
+  fixed, so there is nothing to set for them. They use the Time zone on the Look
+  page, and there is no time zone here. "Night style" is Bouncing logo (the logo drifts round the
+  screen, changes colour at every bounce and spins when it hits a corner) or
+  Blank black. "Logo width (pixels)" is from 120 to 800 and starts at 300.
+  "Bounce speed" is Slow, Normal or Fast, and a corner is hit about every 12, 6.5
+  or 3.7 minutes. "Preview night mode" shows it now, whatever the time, even with
+  "Use night mode" off: turn it on and publish to look, and turn it off and
+  publish when you are done. Calm motion keeps the logo still in the middle. An
+  alert or an announcement still shows over night mode.
+- Hidden transitions: two rare surprise transitions that now and then replace a page change
+  of the large panel (docs/hidden-transitions.md). "Allow hidden transitions" is
+  the master switch and starts on. "Desktop reveal every (hours)" and "Red eyes
+  every (hours)" say that it comes about once every this many hours of screen
+  time, from 1 to 1000, and both start at 60. It is a chance, so 60 hours is an
+  average and not a timetable. After one has played, none comes about by chance
+  for 4 hours. To make one rarer, raise its hours. To stop them all, turn off
+  "Allow hidden transitions". A settings page saved before the hours existed
+  has them empty, and keeps its old percent until you fill them in and publish.
+  In the desktop reveal the screen glitches blue, comes apart, cuts to a blue
+  error screen for 3 seconds and comes back with the next pages. In red eyes it
+  glitches red, breaks apart to black, shows a picture of two red eyes for a few
+  seconds and comes back. Each has two pictures that take turns, and they can be
+  swapped for others (docs/hidden-transitions.md).
+  To play one now, open the menu next to Publish (the three dots) and click
+  "Play desktop reveal" or "Play red eyes". Each publishes the page for you, and
+  the TV plays it once within about 20 seconds, whatever the hours and the gap
+  say. "Last push" shows which one was pushed and when, and you cannot type in
+  it. Nothing
+  here plays in Calm motion, or during an alert, an announcement, a demo or night
+  mode, and with "Allow hidden transitions" off none plays at all, pushed or not.
 - Connection: one switch, "Show connection status". It starts off. Turn it on
   to keep a small text at the bottom right of the screen with the time of the
   last read from Sanity, how many tasks, sponsors and other items there are, and
@@ -705,6 +741,10 @@ Connection.
   text comes up in red by itself when the screen has not been able to reach
   Sanity for over two minutes, and says why (docs/rebuilding-the-mini.md,
   "Checking the connection"). A full screen alert or announcement covers it.
+- Content source: it used to be a tab. The screen always shows what you
+  publish now, so the field and "Switch back to production at" are hidden and
+  the screen ignores them. A value saved in them stays in the document. To see
+  the sample content, see "Sample content" below.
 
 ## Look
 
@@ -716,8 +756,8 @@ Hawktimus and the placeholder Alternate
 change colours only: nothing moves or changes size. One theme, Neon Prime, also
 changes where things sit: a column on the left with the team name, the clock,
 the countdown and the logo, one big frame on the right and the ticker under it.
-It has no small frame, so the Small panels list in Dashboard Settings is not
-used while it is on (the Large panels list is the whole rotation), and it has
+It has no small frame, so the small panels in the Panel order list in Dashboard
+Settings are not used while it is on (the large panels are the whole rotation), and it has
 frames of dark steel whatever Frame metal says. When the screen changes to or
 from Neon Prime it reloads once, at the next page change of the large frame.
 A seasonal pack is a holiday look: a few accent colours laid
@@ -788,39 +828,30 @@ announcement there plays the announcements. docs/demo.md says what is left.
 - Requested at: the time a demo was last asked for. You cannot type in it, and
   nothing in Studio fills it in now.
 
-## Sample content and production content
+## Sample content
 
-The TV can show two kinds of content. Production is what you publish in
-Studio. Sample is made-up content that is kept with the dashboard, with every
-piece of text in [square brackets]. It is for trying the screen out, or for
-showing it to visitors before the real content is ready.
+The TV shows what you publish in Studio, and only that. Nothing in Studio
+switches it to anything else. Sample content is made-up content that is kept
+with the dashboard, with every piece of text in [square brackets]. It is for
+trying the screen out on a computer, or for showing it to visitors before the
+real content is ready.
 
-To switch, open Dashboard Settings, open the menu next to Publish (the three
-dots), and click "Use sample content" or "Use production content". One click
-changes Content source and publishes it. The TV follows within about 30
-seconds and does not need a restart. The buttons are switched off when the TV
-is already on that kind of content. Anything else you changed on the page and
-have not published yet is published at the same time.
+To see it, put `?sample=1` on the end of the address of the dashboard in a
+browser, for example `http://localhost:8080/dashboard/?sample=1`. Only that
+page shows the sample. Close it or take the `?sample=1` off and the page is
+back on what you published. The TV opens the address without it, so the TV
+never shows the sample. Any value other than 1 is ignored.
 
-You can also pick Production or Sample yourself in the Content source tab and
-click Publish. The result is the same.
-
-- While the TV shows sample content, a yellow SAMPLE CONTENT label sits beside
-  the TEAM plate in the banner. It stays up the whole time and is gone as soon
-  as the TV is back on production. It is never shown on production content. A
+- While a page shows sample content, a yellow SAMPLE CONTENT label sits beside
+  the TEAM plate in the banner. It is never shown on what you published. A
   full screen alert or announcement covers it, like everything else.
 - Sample content has both teams, Prime and Nova, so `?team=nova` shows Nova with
   its colors and its mirror. Its theme schedule has two example pack rules, named
   [Winter pack] and [Fall pack], with a ticker prefix, a banner line and corner art.
 - Sample content comes with its own calendar and its own pictures. Nothing
   else is read from Studio while it is on, so your tasks, events, alert and
-  the other settings do not show until you switch back. The TV still asks for
-  Dashboard Settings every 30 seconds or so, to notice the switch back.
-- "Switch back to production at" is optional. Set a time, and the TV goes back
-  to production by itself at that time, for example the end of a demo. Leave it
-  empty to stay on sample until someone clicks "Use production content". A
-  time that has already passed counts as production, so "Use sample content"
-  clears a time that has passed. The time is in your own time zone.
-- If the TV cannot read Dashboard Settings, it uses the last ones it saved. If
-  it has never saved any, `useSampleContent` in `dashboard/config.js` decides.
-  That flag is only this last resort. It is not how you switch.
+  the other settings do not show on that page.
+- Dashboard Settings used to have Content source and "Switch back to production
+  at", and two buttons in the menu next to Publish, "Use sample content" and
+  "Use production content". They are gone. The two fields are hidden and the TV
+  ignores them, so nothing already saved is lost.

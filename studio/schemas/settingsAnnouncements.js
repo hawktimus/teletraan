@@ -118,7 +118,7 @@ export function announceRequestField() {
     name: 'announceRequest',
     title: 'Last announcement push',
     type: 'object',
-    group: 'announcements',
+    group: 'screen',
     hidden: true,
     description: 'Filled in by the Play announcements button beside Publish. The screen plays every announcement that is switched on, once. Do not edit it.',
     fields: [
@@ -138,7 +138,7 @@ export function announcementsField() {
     name: 'announcements',
     title: 'Announcements',
     type: 'array',
-    group: 'announcements',
+    group: 'screen',
     description: 'Full screen messages that play at set times of the day.',
     of: [announcementMember],
     initialValue: startingList,

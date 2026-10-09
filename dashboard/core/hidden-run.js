@@ -28,7 +28,7 @@
 import * as frame from '../frame.js';
 import { hiddenAdvanceSeconds } from '../config.js';
 import { allPictures, makePictureChooser, pictureAddress } from './hidden-pictures.js';
-import { chooseHidden, holdReason, pushedKind, readHandledRequest, rememberHandledRequest } from './hidden.js';
+import { chooseHidden, holdReason, pushedKind, readHandledRequest, readLastFired, rememberHandledRequest, rememberLastFired } from './hidden.js';
 import { hiddenTransitions } from './hidden-transitions.js';
 import { preloadImages } from './images.js';
 import { setHiddenOffer, startWholeScreen } from './areas.js';
@@ -54,6 +54,7 @@ const blueGlitch = document.getElementById('blue-glitch');
 let getContent = null;
 let storage = null;
 let handled = ''; // the push handled before, as a time
+let lastFired = 0; // when a hidden transition last started, in milliseconds since 1970. 0 is none yet.
 let addressKind = ''; // a kind that ?hidden= asked for and that has not played yet
 let addressOff = false; // ?hidden=off
 let asked = ''; // the push the large panel has been asked to move on for
@@ -87,6 +88,7 @@ export async function startHidden(contentGetter, switchText) {
   getContent = contentGetter;
   storage = savedStorage();
   handled = readHandledRequest(storage);
+  lastFired = readLastFired(storage);
   addressOff = switchText === 'off';
   addressKind = Object.prototype.hasOwnProperty.call(hiddenTransitions, switchText) ? switchText : '';
 
@@ -159,6 +161,7 @@ function offer() {
     settings: content.settings,
     state: screenState(),
     handled: handled,
+    lastFired: lastFired,
     now: new Date(),
     random: Math.random,
     address: addressKind,
@@ -249,6 +252,10 @@ async function play(choice, requestedAt, swapPage) {
       rememberHandledRequest(storage, handled);
     }
     if (choice.how === 'address') addressKind = '';
+
+    // Whatever started it, no other comes about by chance for a while (hiddenGapHours in config.js)
+    lastFired = Date.now();
+    rememberLastFired(storage, lastFired);
 
     frame.setHiddenPlaying(true);
     const scene = makeScene(screen, swapPage);

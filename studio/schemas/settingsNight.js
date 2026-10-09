@@ -1,14 +1,20 @@
-// The Night mode tab of Dashboard Settings: the screensaver. Between a start
-// and an end time the screen is black with the team logo and the team number
-// under it. The picture is never turned off. Seven fields:
+// The night mode fields of Dashboard Settings, in the Advanced tab: the
+// screensaver. Between a start and an end time the screen is black with the
+// team logo and the team number under it. The picture is never turned off.
+// Seven fields:
 //
 //   nightEnabled    the switch, on to start with
 //   nightStyle      a bouncing logo (the default) or blank black
-//   nightStart      when it starts, 24 hour time, 23:30 to start with
-//   nightEnd        when it ends, 11:30 to start with. Earlier than the start runs past midnight
+//   nightStart      hidden. The screen always starts at 23:30 (dashboard/core/constants.js)
+//   nightEnd        hidden. The screen always ends at 11:30 (dashboard/core/constants.js)
 //   nightLogoWidth  how wide the logo is, from 120 to 800 pixels, 300 to start with
 //   nightSpeed      slow, normal (the default) or fast
 //   nightPreview    shows night mode now, whatever the time
+//
+// nightStart and nightEnd stay in the schema so that a page saved with them
+// still opens and publishes, and they keep their starting values. The screen
+// never reads what they hold. They have no rules, because nobody can fix a
+// value in a hidden field.
 //
 // The time zone is not here. Night mode uses the time zone on the Look page,
 // so the whole screen has one zone and two settings can never disagree.
@@ -18,16 +24,11 @@
 // defaultSettings and limits there. check-schemas.mjs fails if they differ.
 //
 // To take the whole section out later: delete this file, remove its import and
-// the two lines that use nightGroup and nightFields in dashboardSettings.js, and
-// remove the same names from check-schemas.mjs and config.js. The dashboard uses
-// the starting values for anything missing from the published settings.
+// the line that uses nightFields in dashboardSettings.js, and remove the same
+// names from check-schemas.mjs and config.js. The dashboard uses the starting
+// values for anything missing from the published settings.
 
 import { defineField } from 'sanity';
-
-export const nightGroup = { name: 'night', title: 'Night mode' };
-
-// 24 hour time with two digits for the hour and for the minutes, as in settingsAnnouncements.js
-const timeFormat = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 // The values are the names in nightStyles in dashboard/config.js
 const styles = [
@@ -42,19 +43,13 @@ const speeds = [
   { title: 'Fast', value: 'fast' },
 ];
 
-// The same start and end is no time at all, so night mode would never come on
-function differsFromStart(value, context) {
-  const same = context.document && value && context.document.nightStart === value;
-  return same ? 'The same as the start time, so night mode never starts.' : true;
-}
-
 export function nightFields() {
   return [
     defineField({
       name: 'nightEnabled',
       title: 'Use night mode',
       type: 'boolean',
-      group: 'night',
+      group: 'advanced',
       description: 'Between the start and end times the screen goes black with the team logo. The picture is never turned off. Turn this off to keep the dashboard on.',
       initialValue: true,
     }),
@@ -63,7 +58,7 @@ export function nightFields() {
       name: 'nightStyle',
       title: 'Night style',
       type: 'string',
-      group: 'night',
+      group: 'advanced',
       description: 'Bouncing logo drifts round the black screen and changes colour at every bounce. Blank black shows only black.',
       options: { list: styles, layout: 'radio', direction: 'horizontal' },
       initialValue: 'bounce',
@@ -77,34 +72,27 @@ export function nightFields() {
       name: 'nightStart',
       title: 'Night starts at',
       type: 'string',
-      group: 'night',
-      description: 'When night mode starts, in 24 hour time such as 23:30. It uses the time zone on the Look page.',
+      group: 'advanced',
+      hidden: true,
+      description: 'Not used any more. Night mode always starts at 23:30, in the time zone on the Look page.',
       initialValue: '23:30',
-      validation: Rule => [
-        Rule.required().error('Enter the time, such as 23:30.'),
-        Rule.regex(timeFormat, { name: '24 hour time' }).error('Use 24 hour time with two digits, such as 23:30.'),
-      ],
     }),
 
     defineField({
       name: 'nightEnd',
       title: 'Night ends at',
       type: 'string',
-      group: 'night',
-      description: 'When night mode ends, such as 11:30. An end before the start runs past midnight. It uses the time zone on the Look page.',
+      group: 'advanced',
+      hidden: true,
+      description: 'Not used any more. Night mode always ends at 11:30, in the time zone on the Look page.',
       initialValue: '11:30',
-      validation: Rule => [
-        Rule.required().error('Enter the time, such as 11:30.'),
-        Rule.regex(timeFormat, { name: '24 hour time' }).error('Use 24 hour time with two digits, such as 11:30.'),
-        Rule.custom(differsFromStart).warning(),
-      ],
     }),
 
     defineField({
       name: 'nightLogoWidth',
       title: 'Logo width (pixels)',
       type: 'number',
-      group: 'night',
+      group: 'advanced',
       description: 'How wide the logo is, from 120 to 800 pixels. The team number under it stays the same size.',
       initialValue: 300,
       validation: Rule => [
@@ -117,7 +105,7 @@ export function nightFields() {
       name: 'nightSpeed',
       title: 'Bounce speed',
       type: 'string',
-      group: 'night',
+      group: 'advanced',
       description: 'How fast the logo drifts. It reaches a corner about every 12 minutes (Slow), 6.5 (Normal) or 3.7 (Fast). Calm motion keeps it still.',
       options: { list: speeds, layout: 'radio', direction: 'horizontal' },
       initialValue: 'normal',
@@ -131,7 +119,7 @@ export function nightFields() {
       name: 'nightPreview',
       title: 'Preview night mode',
       type: 'boolean',
-      group: 'night',
+      group: 'advanced',
       description: 'Turn this on and publish to see night mode now, whatever the time, even with Use night mode off. Turn it off and publish when done.',
       initialValue: false,
     }),

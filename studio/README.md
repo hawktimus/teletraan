@@ -15,12 +15,15 @@ TV. The dashboard reads what they publish.
     screen-requests.js    what the request buttons write (Play announcement, Run presentation test, Next look now, Preview competition, the Play and Preview buttons), used by actions.js and the Start here page
     dashboard-address.js  the address that Preview the screen opens on the Start here page, with ?sample=1 for the sample content
     calendars-view.js     the Calendars page under Events, written as a plain function
-    actions.js            the two content source buttons, the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons on Dashboard Settings
+    actions.js            the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons on Dashboard Settings
     themes.js             the list of themes and overlays, a copy of the dashboard's
     demo-screens.js       the list of screens a demo can show, a copy of the dashboard's
     hidden-transitions.js the list of hidden transitions, a copy of the dashboard's
     previews.js           the list of Preview buttons (Prime, Nova, Cybertron, Minimal, next pack), a copy of the dashboard's
     team-input.js         the Team radio (Both, then each active team) that the Team field of each kind of content uses
+    note-field.js         the one plain line of a note in a form (fields.js, noteField)
+    status-input.js       the Status of the Mini block at the top of the Screen tab of Dashboard Settings
+    panel-order-input.js  the Panel order list in Dashboard Settings, which fills itself from the two older panel lists when it is empty
     schemas/              one file per kind of content
     scripts/              make-templates.mjs writes the CSV templates from the schemas,
                           import-csv.mjs turns filled-in CSVs into a file for sanity dataset import
@@ -77,37 +80,28 @@ docs/where-things-are.md).
    server answers on the port in `TELETRAAN_PORT` in deploy/local.env, 3229. If
    you ever change that port, add the new address as well.
 7. Type some content into the Studio. Open Dashboard Settings first and click
-   Publish. Then check the Announcements tab: the two starting rows, 14:30 and
+   Publish. Then check the Screen tab: the two starting announcements, 14:30 and
    17:00, must be there, because a settings page saved without them plays no
-   announcements. The Screen tab should show Frame metal on Gold with Glint on
-   and Screen glitch on every 240 seconds, the Logo tab should show Logo
+   announcements. It should show Frame metal on Gold with Glint on
+   and Screen glitch on every 240 seconds, Seconds per page at 20,
+   Photo order on Random, Seconds per photo 16, and
+   Portrait size and Photo size at 100.
+   The Look tab should show Logo
    animations on, Spin every 72 seconds, Flying hawk every 24 seconds and Name
-   effect every 300 seconds, the Transitions tab should show Page change style
+   effect every 300 seconds, and Page change style
    on Alternate, Break and rebuild time 0.6, Frame finish on Mostly gold and
-   Silver chance 10, the Panels tab should show Seconds per page at 20,
-   the Photos tab should show Photo order on Random, Seconds per photo 16, and
-   Portrait size and Photo size at 100,
-   the Night mode tab should show Use night mode on, Bouncing logo, 23:30 to
+   Silver chance 10.
+   The Advanced tab should show Use night mode on, Bouncing logo, 23:30 to
    11:30, Logo width 300 and Normal speed with the preview off,
-   the Hidden tab should show Allow hidden transitions on and both chances at 1,
-   and the Content source tab should show Production.
+   and Allow hidden transitions on and both set to every 60 hours.
    Add a few tasks, a sponsor and some tips, and click Publish on each.
    Studio keeps what you type as a draft, and the dashboard only reads what is
    published.
-8. Check that the dashboard has switched over from the sample content.
-   Content source in Dashboard Settings starts as Production, so within about
-   30 seconds of step 7 the [square bracket] sample text is replaced by what
-   you published and the SAMPLE CONTENT label goes. If it still shows the
-   sample, open the menu next to Publish on the Dashboard Settings page and
-   click "Use production content". A change you publish after this shows on
-   the screen within a few seconds. Then set the fallback in
-   dashboard/config.js for when the screen cannot read Dashboard Settings and
-   has no saved copy of them, for example on the first start with no internet:
-
-       export const useSampleContent = false;
-
-   `false` shows the editors' content (and the connection status text if it
-   cannot be read), `true` shows the sample. It switches nothing while the settings can be read.
+8. Check that the dashboard shows what you published. Open it without
+   `?sample=1` on the address, so the [square bracket] sample text is not
+   there and the SAMPLE CONTENT label is gone. A change you publish shows on
+   the screen within a few seconds. If the screen cannot read Sanity it shows
+   the connection status text, and the last copy it saved if it has one.
 9. Put the Studio online so the other editors can sign in from anywhere. The
    first time, it asks you to choose the Studio's address.
 
@@ -190,46 +184,33 @@ Open the browser's console to see more.
   is missing, or was typed differently from the address in the browser's
   address bar, for example `localhost` against `127.0.0.1`.
 - The screen is up but empty: nothing is published yet (step 7).
-- Anything else: use "Use sample content" in Dashboard Settings to get the
-  screen working again, then ask the team mentor. If the screen cannot read
-  Dashboard Settings either, set `useSampleContent` to `true` in
-  dashboard/config.js.
+- Anything else: add `?sample=1` to the address to get a screen that works
+  with the sample content, then ask the team mentor.
 
-## Sample and production content
+## Sample content
 
-Dashboard Settings has a Content source tab with two fields: Content source
-(Production or Sample) and "Switch back to production at", an optional time.
-Two buttons do the usual jobs. Open the menu next to Publish on the Dashboard
-Settings page:
+The screen always shows what the editors published. Nothing in Studio switches
+it. The sample content in dashboard/data/sample/ (the content, which has its own
+list of photos, and the calendar) is for trying things out: put `?sample=1` on
+the end of the dashboard address and that page shows it. On the sample the
+screen makes no request to Sanity for content. A SAMPLE CONTENT label shows
+beside the TEAM plate, and never shows on what the editors published.
 
-- "Use sample content" sets Content source to Sample and publishes. If a
-  switch back time has already passed it is cleared, because a time that has
-  passed would put the screen straight back on production.
-- "Use production content" sets Content source to Production and publishes.
+Dashboard Settings still has Content source and "Switch back to production at"
+in its schema, hidden, so that a value saved earlier is kept. The dashboard does
+not read them, and the two buttons that used to set them are gone.
+dashboard/core/source.js decides, and shell.js hands it the address.
 
-Each is one click. A button is switched off while the screen is already on that
-kind of content, and shows "Switching..." while it works. Anything else on the
-page that is not published yet is published too. The buttons are plain
-functions in actions.js, added to the Dashboard Settings page only, in
-sanity.config.js. Publish Dashboard Settings once (step 7) before you use them,
-so the other settings keep their starting values.
+## Status of the Mini
 
-How the screen behaves, in the order it does things:
-
-1. It asks Sanity only for Content source and the switch back time. If Sanity
-   does not answer in 5 seconds, or answers with an error, it uses the last
-   answer it saved on that computer. With none saved it uses
-   `useSampleContent` in dashboard/config.js. A good answer that says there is
-   no Dashboard Settings yet means the defaults, which is production.
-2. On production it reads everything from Sanity and listens for changes, as
-   before. On sample it reads only dashboard/data/sample/ (the content, which
-   has its own list of photos, and the calendar), and makes no other request
-   to Sanity.
-3. It asks again every 30 seconds, and looks at the clock every 5 seconds, so
-   a change in Content source, or the switch back time arriving, takes effect
-   without a reload, in either direction.
-4. While it is on sample, a SAMPLE CONTENT label shows beside the TEAM plate.
-   It is never shown on production.
+The Screen tab of Dashboard Settings starts with a block that shows when the Mini
+last did each of its jobs (`status-input.js`). It reads the document
+`status-mini`, of the type `status` (`schemas/status.js`), which the Mini writes with
+`deploy/scripts/status-write.sh`. The type is not in the sidebar or the New menu,
+and the field in Dashboard Settings (`schemas/settingsStatus.js`) stores nothing.
+Without a write token on the Mini the block says No status yet.
+docs/rebuilding-the-mini.md, "Showing what the Mini did in Studio", has the steps for
+the token.
 
 ## Photos
 
@@ -246,7 +227,7 @@ The dashboard reads the photos with the rest of the content (`photos` in
 photo that asks Sanity for the part the editor kept, no wider than 1920 pixels,
 never enlarged, in a small format (`screenPhotoUrl` in
 `dashboard/core/images.js`), and needs no CORS origin beyond the one in step 6.
-The Photos tab of Dashboard Settings (`schemas/settingsPhotos.js`) has Photo
+The photo settings in the Screen tab of Dashboard Settings (`schemas/settingsPhotos.js`) have Photo
 order (Random or Newest first), Seconds per photo (6 to 120, starting at
 16), Portrait size and Photo size (each a whole percent from 60 to 100,
 starting at 100, which is the full size). Nothing needs setting up beyond the steps above. Run `npm run deploy`
@@ -258,7 +239,7 @@ picture has to be uploaded in Studio.
 
 ## Night mode
 
-The Night mode tab of Dashboard Settings (`schemas/settingsNight.js`) holds the
+The night mode settings in the Advanced tab of Dashboard Settings (`schemas/settingsNight.js`) hold the
 screensaver: Use night mode, Night style (a bouncing logo or blank black), the
 start and end times (24 hour, 23:30 and 11:30 to start with), Logo width (120 to
 800 pixels), Bounce speed and Preview night mode. It has no time zone of its own.
@@ -269,23 +250,24 @@ the change. docs/night-mode.md explains how it works.
 
 ## Hidden transitions
 
-The Hidden tab of Dashboard Settings (`schemas/settingsHidden.js`) holds two rare
+The hidden transition settings in the Advanced tab of Dashboard Settings (`schemas/settingsHidden.js`) hold two rare
 surprise transitions: Allow hidden transitions (the master switch), Desktop reveal
-chance and Red eyes chance (percent of page changes, 0 to 100, both 1 to start with),
-and Last push. Last push has two read only fields, kind and requestedAt, that the
+every (hours) and Red eyes every (hours) (about once every this many hours of screen
+time, 1 to 1000, both 60 to start with), and Last push. The old Desktop reveal chance and
+Red eyes chance (percent of page changes) are still in the schema, hidden, for a page
+saved before the hours existed. Last push has two read only fields, kind and requestedAt, that the
 Play buttons fill in. The menu beside Publish on Dashboard Settings has one button for
 each transition, "Play desktop reveal" and "Play red eyes", from `actions.js`. Each
 sets Last push to its kind and the time now, and publishes. They are plain functions
 that use `useDocumentOperation`, made from the list in `hidden-transitions.js`, and
-`sanity.config.js` puts them on Dashboard Settings after the two content source
-buttons. The screen plays a push once, at its next page change or within about 20
+`sanity.config.js` puts them first on Dashboard Settings. The screen plays a push once, at its next page change or within about 20
 seconds, while it is less than a minute old (`dashboard/core/hidden.js`). Nothing
 needs setting up for it beyond the steps above. Run `npm run deploy` after you change
 `schemas/settingsHidden.js` or `hidden-transitions.js`, so the editors see the change.
 docs/hidden-transitions.md explains how it works and how to add a transition.
 
 The Studio is built on its own and cannot read the dashboard folder, so
-`hidden-transitions.js` is a copy of the ids, names and chance fields in
+`hidden-transitions.js` is a copy of the ids, names, hours fields and chance fields in
 `dashboard/core/hidden-transitions.js`. `check-schemas.mjs` fails if they differ.
 
 ## Play announcements
@@ -350,8 +332,8 @@ has the sidebar layout (Neon Prime) has `layout: 'sidebar'` in both copies, the
 check fails if they differ, and its description must say it has a sidebar and no
 small frame (docs/layouts.md). The Look page lists show the theme names only, so
 the descriptions of the Default theme, Use a theme now and the schedule's Theme
-field say what a sidebar theme does, and the Small panels list in Dashboard
-Settings says it is not used with one. To add a
+field say what a sidebar theme does, and the Panels box in Dashboard
+Settings says it shows no small panels with one. To add a
 theme or an overlay, see docs/adding-a-theme.md and
 docs/adding-a-holiday-overlay.md. An overlay is shown to the editors as a
 "Seasonal pack" (only the titles and descriptions say so, the stored values do
@@ -398,11 +380,11 @@ package.json. structure.js imports each icon from its own file.
 This needs no install. It loads every schema and checks it against what the
 dashboard reads: every field exists with the right name and limit, every field
 has a description, the starting values match dashboard/config.js, the two
-content source buttons are on the Dashboard Settings page and do what they
-say, the Look page agrees with `defaultThemeSettings` and needs a start and
-an end for every rule, `themes.js` matches the dashboard's registries, the Demo
-page agrees with `defaultDemo` and has no buttons, and `demo-screens.js`
-matches the dashboard's list of demo screens, the Hidden tab agrees with
+content source fields are hidden and ignored by the dashboard, the Look page
+agrees with `defaultThemeSettings` and needs a start and an end for every rule,
+`themes.js` matches the dashboard's registries, the Demo page agrees with
+`defaultDemo` and has no buttons, and `demo-screens.js` matches the dashboard's
+list of demo screens, the hidden transition fields agree with
 `defaultSettings`, has a working Play button for each hidden transition, and
 `hidden-transitions.js` matches the dashboard's list, Play announcements has its hidden
 field, its button and its Demo step, Run presentation test has its hidden field and its button,

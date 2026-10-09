@@ -9,7 +9,7 @@ it only ever uses the slat change.
 
 Every time the page in the large or the small panel changes, the frame's area
 does one of two changes. The Page change style setting (Dashboard Settings,
-Transitions tab) says which.
+Look tab) says which.
 
 - **The slat change.** The screws come undone, the two halves of the frame lift
   a little and pull apart, and the rows and headings of the page (the slats)

@@ -2,41 +2,32 @@
 // fixed id 'dashboardSettings' (see structure.js).
 
 import { defineType, defineField, defineArrayMember } from 'sanity';
-import { neverOrAtLeast, tooLong } from './fields.js';
+import { neverOrAtLeast, noteField, tooLong } from './fields.js';
+import { statusBlockField } from './settingsStatus.js';
 import { rotationField } from './settingsRotation.js';
 import { announcementsField, announceRequestField } from './settingsAnnouncements.js';
-import { logoFields, logoGroup } from './settingsLogo.js';
-import { transitionsFields, transitionsGroup } from './settingsTransitions.js';
-import { photosFields, photosGroup } from './settingsPhotos.js';
-import { nightFields, nightGroup } from './settingsNight.js';
-import { hiddenFields, hiddenGroup } from './settingsHidden.js';
-import { presentationsFields, presentationsGroup, presentationTestRequestField } from './settingsPresentations.js';
-import { teamsFields, teamsGroup } from './settingsTeams.js';
+import { logoFields } from './settingsLogo.js';
+import { transitionsFields } from './settingsTransitions.js';
+import { photosFields } from './settingsPhotos.js';
+import { nightFields } from './settingsNight.js';
+import { hiddenFields } from './settingsHidden.js';
+import { presentationsFields, presentationTestRequestField } from './settingsPresentations.js';
+import { teamsFields } from './settingsTeams.js';
 import { previewRequestField } from './settingsPreview.js';
 import { nextLookRequestField, competitionPreviewRequestField } from './settingsRequests.js';
 
+// The tabs, in order. Screen opens first. Studio has no folded tab, so Advanced,
+// for the things only a coach debugging the screen would touch, is the last one.
+// Monday and Competition hold a note until their settings are built.
 const groups = [
-  { name: 'screen', title: 'Screen' },
-  teamsGroup,
-  logoGroup,
-  transitionsGroup,
+  { name: 'screen', title: 'Screen', default: true },
+  { name: 'look', title: 'Look' },
   { name: 'countdown', title: 'Countdown' },
-  { name: 'alert', title: 'Alert' },
-  { name: 'panels', title: 'Panels' },
-  photosGroup,
-  { name: 'announcements', title: 'Announcements' },
-  nightGroup,
-  hiddenGroup,
-  presentationsGroup,
   { name: 'calendars', title: 'Calendars' },
-  { name: 'source', title: 'Content source' },
-  { name: 'connection', title: 'Connection' },
-];
-
-// The values are the names in contentSources in dashboard/config.js
-const contentSources = [
-  { title: 'Production', value: 'production' },
-  { title: 'Sample', value: 'sample' },
+  { name: 'presentations', title: 'Presentations' },
+  { name: 'monday', title: 'Monday' },
+  { name: 'competition', title: 'Competition' },
+  { name: 'advanced', title: 'Advanced' },
 ];
 
 const motions = [
@@ -111,41 +102,37 @@ const teamField = defineField({
   ],
 });
 
-// The "Use sample content" and "Use production content" buttons (actions.js)
-// set this field and publish. The dashboard reads it first, before anything
-// else, and follows it while it runs. The starting value is the same as
-// defaultSettings.contentSource in dashboard/config.js.
+// Content source and Switch back to production at are kept so that nothing
+// already saved changes, but they are hidden and the screen ignores them: it
+// always shows what the editors published. The made-up content is reached with
+// ?sample=1 on the dashboard address (dashboard/core/source.js). Neither is
+// required, because nobody can fill in a hidden field and a page saved before
+// the fields existed must still publish.
+const contentSources = [
+  { title: 'Production', value: 'production' },
+  { title: 'Sample', value: 'sample' },
+];
+
 const contentSourceField = defineField({
   name: 'contentSource',
   title: 'Content source',
   type: 'string',
-  group: 'source',
-  description: 'Production shows the content you publish here. Sample shows made-up content with a SAMPLE CONTENT label, for trying things out.',
+  group: 'advanced',
+  hidden: true,
+  description: 'Not used any more. The screen always shows the content you publish here. Add ?sample=1 to its address to see made-up content.',
   options: { list: contentSources, layout: 'radio', direction: 'horizontal' },
   initialValue: 'production',
-  validation: Rule => [
-    Rule.required().error('Pick production or sample.'),
-    Rule.valid(contentSources.map(source => source.value)).error('Pick production or sample.'),
-  ],
+  validation: Rule => Rule.valid(contentSources.map(source => source.value)).error('Pick production or sample.'),
 });
-
-// A time that has gone already makes the screen show production straight away
-function hasPassed(value, context) {
-  const onSample = context.document && context.document.contentSource === 'sample';
-  if (onSample && value && new Date(value) <= new Date()) return 'This time has already passed, so the screen shows production.';
-  return true;
-}
 
 const switchBackAtField = defineField({
   name: 'switchBackAt',
   title: 'Switch back to production at',
   type: 'datetime',
-  group: 'source',
-  description: 'Optional. While the source is Sample, the screen goes back to production at this time. Leave empty to stay on sample until you switch it.',
-  validation: Rule => [
-    Rule.min('2020-01-01T00:00:00Z').max('2099-12-31T23:59:00Z').error('Pick a time between the years 2020 and 2099.'),
-    Rule.custom(hasPassed).warning(),
-  ],
+  group: 'advanced',
+  hidden: true,
+  description: 'Not used any more. The screen always shows the content you publish here.',
+  validation: Rule => Rule.min('2020-01-01T00:00:00Z').max('2099-12-31T23:59:00Z').error('Pick a time between the years 2020 and 2099.'),
 });
 
 // The same starting value as defaultSettings.showConnectionStatus in
@@ -155,7 +142,7 @@ const showConnectionStatusField = defineField({
   name: 'showConnectionStatus',
   title: 'Show connection status',
   type: 'boolean',
-  group: 'connection',
+  group: 'advanced',
   description: 'Keeps a small text at the bottom right with the last Sanity read, the item counts and the calendar read time. It always shows when Sanity is unreachable.',
   initialValue: false,
 });
@@ -171,7 +158,7 @@ const styleField = defineField({
   name: 'style',
   title: 'Style',
   type: 'string',
-  group: 'screen',
+  group: 'look',
   description: 'Original is the screen as now. Cybertron and Minimal have a banner, a side column and one main panel, whatever the theme. The team sets the base colors.',
   options: { list: styles, layout: 'radio', direction: 'horizontal' },
   initialValue: 'original',
@@ -208,7 +195,7 @@ const frameMetalField = defineField({
   title: 'Frame metal',
   type: 'string',
   group: 'screen',
-  description: 'The metal of the banner, countdown and logo edges. Gold is warm antique brass, Silver is weathered steel. Page frames follow Frame finish (Transitions tab).',
+  description: 'The metal of the banner, countdown and logo edges. Gold is warm antique brass, Silver is weathered steel. Page frames follow Frame finish (Look tab).',
   options: { list: metals, layout: 'radio', direction: 'horizontal' },
   initialValue: 'gold',
   validation: Rule => [
@@ -331,7 +318,7 @@ const alertField = defineField({
   name: 'alert',
   title: 'Alert',
   type: 'object',
-  group: 'alert',
+  group: 'screen',
   description: 'A message that covers the whole screen until you turn it off.',
   fields: [
     defineField({
@@ -365,14 +352,14 @@ const alertField = defineField({
   ],
 });
 
-// A row in the Panels lists, or the ticker, can have seconds of its own. With
+// A row in Panel order, or the ticker, can have seconds of its own. With
 // none it follows this. The small panel and ticker times are worked out from it
 // as described at defaultSettings in dashboard/config.js.
 const pageSecondsField = defineField({
   name: 'pageSeconds',
   title: 'Seconds per page',
   type: 'number',
-  group: 'panels',
+  group: 'screen',
   description: 'How long each page stays up when it has no seconds of its own. The small panel stays three quarters as long and the ticker one and a half times as long.',
   initialValue: 20,
   validation: Rule => [
@@ -385,7 +372,7 @@ const doneDaysField = defineField({
   name: 'doneDays',
   title: 'Days finished tasks stay',
   type: 'number',
-  group: 'panels',
+  group: 'screen',
   description: 'How many days a finished task stays on the Tasks panel, from 1 to 30.',
   initialValue: 7,
   validation: Rule => [
@@ -398,7 +385,7 @@ const safetyDaysField = defineField({
   name: 'safetyDaysSince',
   title: 'Safety days start',
   type: 'date',
-  group: 'panels',
+  group: 'screen',
   description: 'The date the safety day count starts from. The Safety Days panel counts the days since this date.',
 });
 
@@ -456,13 +443,22 @@ const calendarsField = defineField({
   ],
 });
 
+// The note on the Look tab points to the Look page, which points back (theme.js)
+const lookNoteField = noteField('lookNote', 'Which style and team come on is set here. Colors, seasonal packs and the time zone are in Look, in the sidebar.', 'look');
+
+// Replaced by the Monday settings and the competition settings when those are built
+const mondayNoteField = noteField('mondayNote', 'Nothing to set here yet. The Monday connection and boards will be set up on this tab.', 'monday');
+const competitionNoteField = noteField('competitionNote', 'Nothing to set here yet. The competition cards will be set up on this tab.', 'competition');
+
 export default defineType({
   name: 'dashboardSettings',
   title: 'Dashboard Settings',
   type: 'document',
   groups: groups,
   fields: [
+    statusBlockField(),
     teamField,
+    lookNoteField,
     styleField,
     motionField,
     speedField,
@@ -490,6 +486,8 @@ export default defineType({
     ...presentationsFields(),
     presentationTestRequestField(),
     calendarsField,
+    mondayNoteField,
+    competitionNoteField,
     contentSourceField,
     switchBackAtField,
     showConnectionStatusField,

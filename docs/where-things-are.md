@@ -24,17 +24,16 @@ Leave it open. Then open http://localhost:8080/dashboard/ in a browser. Press
 Ctrl+C in the terminal to stop the server. This server is for trying things
 on a computer. On the Mini the web server in `deploy/` does the same job.
 
-The screen asks the editing screen's Dashboard Settings which content to show:
-the sample or the editors' own (production). While it shows the sample, every
-piece of sample text is in [square brackets] and a SAMPLE CONTENT label shows
-on the screen. If the settings cannot be read, and none were saved on this
-computer, `useSampleContent` in `dashboard/config.js` decides: `true` shows
-the sample, `false` shows the editors' content. That is the case before the
-setup in studio/README.md is finished (step 6, the CORS origin, is what lets
-the screen read them). Once it can read them, a Studio with nothing published
-shows production, which is empty, until someone uses "Use sample content". The
-browser console shows a 404 line for `data/live/version.txt`. That is
-expected: the Mini writes that file.
+The screen shows the editors' own content (production). To try things out with
+the sample instead, put `?sample=1` on the end of the address, such as
+`http://localhost:8080/dashboard/?sample=1`. While a page shows the sample,
+every piece of sample text is in [square brackets] and a SAMPLE CONTENT label
+shows on the screen. Nothing in Studio switches it, and `core/source.js` is the
+one place that decides. Until the setup in studio/README.md is finished (step 6,
+the CORS origin, is what lets the screen read Sanity), the screen has nothing
+to show on production, so use `?sample=1`. A Studio with nothing published
+shows an empty production screen. The browser console shows a 404 line for
+`data/live/version.txt`. That is expected: the Mini writes that file.
 
 A small text at the bottom right of the screen says when Sanity has been out
 of reach for over two minutes, and why (core/connection.js). Its last two lines
@@ -52,12 +51,11 @@ screen all the time, with the last read from Sanity and the item counts
 The Sanity project exists. Its ID, `ybfqe345`, is in `studio/project.js` and in
 `dashboard/config.js`, and its dataset is called `production`. What is left is
 to run the Studio on a Mac, let the dashboard read from it, type some content
-and switch the screen over from the sample. studio/README.md has every step.
+and look at it on the screen. studio/README.md has every step.
 In short, from the `studio` folder in the Terminal app: `npm install`,
 `npx sanity login`, `npm run dev`, then add `http://localhost:8080` (this Mac)
 and `http://localhost:3229` (the Mini) as CORS origins in the Sanity project
-settings, publish some content, use "Use
-production content" in Dashboard Settings, and run `npm run deploy` so the
+settings, publish some content, and run `npm run deploy` so the
 editors can sign in from anywhere.
 
 ## What is where
@@ -108,10 +106,11 @@ editors can sign in from anywhere.
                               of the bar layout, with Minimal's own three (docs/layouts.md, "Frames"), and the
                               housing of the war clock, areas.js keeps
                               the frames in place while pages change, schedule.js says what shows when,
+                              panel-order.js says in what order (the Panel order list in Dashboard Settings),
                               logo.js and name.js draw the hawk and the team name (name.js can also put the
                               name on two lines, which nothing uses now), countdown.js is the countdown's parts and
                               the code that writes its numbers, for every layout and for the war clock, source.js
-                              decides sample or production content from Dashboard Settings,
+                              decides sample or production content from ?sample=1 in the address,
                               images.js builds the addresses of photos from Sanity, photos.js says
                               which photos the Photo panel shows and in what order, portrait.js
                               draws a person's framed portrait with the name under it, leadership.js
@@ -142,6 +141,8 @@ editors can sign in from anywhere.
                               name and addresses (data/live/device.json) for the red version of it
                               night.js says when it is night and where the screensaver logo starts,
                               and night-screen.js draws the night screen (docs/night-mode.md),
+                              constants.js holds the values that have one right answer: the night times,
+                              the speaker wait and the overrun of a talk,
                               demo.js decides when a demo from the Studio's Demo page plays and runs its
                               steps, demo-screens.js lists the screens a demo can show, and
                               demo-runner.js starts it (docs/demo.md),
@@ -179,8 +180,7 @@ editors can sign in from anywhere.
       data/live/              files the Mini downloads (never committed)
     studio/                   the Sanity editing screen, its sidebar (structure.js: one list with a line
                               for each entry, so changing the order means moving a line,
-                              docs/reordering-the-sidebar.md), its buttons (actions.js: the two content source
-                              buttons, the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons),
+                              docs/reordering-the-sidebar.md), its buttons (actions.js: the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons),
                               its two pages that are not documents (start-here.js and calendars-view.js),
                               the words and picture of Start here (start-here-parts.js), what its request
                               buttons write, shared with actions.js (screen-requests.js), and the address
@@ -194,7 +194,9 @@ editors can sign in from anywhere.
                               Calendar filters (docs/calendar-filters.md), presentationDay.js the Meeting
                               days, presentation.js the booked talks and settingsPresentations.js the
                               Presentations tab of Dashboard Settings (docs/presentations.md). team.js is the
-                              Teams list and settingsTeams.js the Teams tab. The Team radio on tasks, sponsors and
+                              Teams list and settingsTeams.js the team fields of the Look tab. status.js is the
+                              document the Mini writes (the status block, settingsStatus.js and status-input.js). settingsRotation.js is the Panels
+                              box of Dashboard Settings, and panel-order-input.js fills its Panel order list when it is empty. The Team radio on tasks, sponsors and
                               the other kinds of content is team-input.js, put on each by teamField in fields.js
                               scripts/ has make-templates.mjs, which writes the CSV templates from the
                               schemas, and import-csv.mjs, which checks filled-in CSVs and makes a file
@@ -210,6 +212,9 @@ editors can sign in from anywhere.
                               that runs the dashboard's own calendar code.
                               scripts/slides-sync.sh downloads the slides of the coming talks and turns them
                               into pictures in the data folder (docs/presentations.md).
+                              scripts/status-write.sh writes the time of a job into the status-mini document
+                              in Sanity, for the status block in Dashboard Settings (docs/rebuilding-the-mini.md,
+                              "Showing what the Mini did in Studio").
                               scripts/install-timers.sh turns on the calendar timer and the pull timer,
                               install-calendars.sh only the calendar timer and install-slides.sh the slides
                               timer (docs/rebuilding-the-mini.md, step 11). systemd/ has the unit files they
@@ -249,10 +254,17 @@ editors can sign in from anywhere.
       test-presentation.mjs   checks for presentation mode (core/presentation.js): when a talk is due, how it
                               goes from the title card to the thanks card, which talks are skipped, and what
                               each key of the clicker does
+      test-panel-order.mjs    checks for the Panel order list (core/panel-order.js): the list built from the
+                              two older lists, and what each area of the screen follows
+      test-fixed-values.mjs   checks that the screen ignores the stored night times, speaker wait and overrun,
+                              and uses the fixed values in core/constants.js
       test-effects.mjs        checks for when the logo animations, the name effect and the screen glitch may start
                               (frame.js), for choosing the page change style and the metal of the frames, and
                               for when a demo plays and what stops it (core/demo.js), and for when a hidden
                               transition plays (core/hidden.js) and what its stylesheet moves
+      test-hidden-hours.mjs   checks that a hidden transition comes about once every so many hours of screen
+                              time (core/hidden.js): the chance of one page change, the older percent, the
+                              cleaning of the hours and the gap after a transition has played
       test-tick.mjs           checks for the clock of the screen (tick.js) with a fake clock, and that the
                               countdown and the banner write only what changed each second
       test-publish-all.mjs    checks for the logic of the Publish all tool: which drafts are listed, the
@@ -263,6 +275,8 @@ editors can sign in from anywhere.
       test-install-calendars.mjs  checks for deploy/scripts/install-calendars.sh: that it stops before it changes
                               anything, and that it installs the calendar units only
       test-calendars-script.mjs  checks for deploy/scripts/check-calendars.sh, with a fake curl
+      test-status-write.mjs   checks for deploy/scripts/status-write.sh, with a fake curl, that the services and
+                              kiosk.sh run it, and that the dashboard never reads the status document
       check-seasons.mjs       fails if a seasonal pack is not in the data format, has a piece outside its zone, too
                               many pieces, a forbidden word, no header mark, a mark bigger than its box (60 x 76),
                               fewer than 8 or more than 14 pieces over the panels, an over piece that is too big,
@@ -308,14 +322,17 @@ alone.
   to 12:00 noon on that day, on the Mini's clock, which is set to Eastern
   time. Noon is a guess and not the real start time of the event, so set the
   real time in Dashboard Settings.
-- **How long a panel stays, and in what order.** Dashboard Settings, Panels
+- **How long a panel stays, and in what order.** Dashboard Settings, Screen
   tab. "Seconds per page" is the time for the whole board (`pageSeconds` in
   `dashboard/config.js`, 20 to start). The small panel stays three quarters as
   long and the ticker one and a half times as long. A panel in the lists can
   have seconds of its own, and then that is used instead. The order is the
-  lists in `defaultSettings.rotation` and `studio/schemas/settingsRotation.js`.
+  Panel order list in Dashboard Settings (`rotation.order`). While that list is
+  empty the screen builds it from the lists in `defaultSettings.rotation`
+  (`core/panel-order.js`). The panels it offers are in
+  `studio/schemas/settingsRotation.js`.
   The Photo panel is the exception: with no seconds of its own it follows
-  "Seconds per photo" in the Photos tab (`photoSeconds`, 16 to start).
+  "Seconds per photo" in the Screen tab (`photoSeconds`, 16 to start).
 - **The colour of the frame edges.** Dashboard Settings, Screen tab, Frame
   metal: Gold or Silver. It is the metal of the banner, the countdown and the
   logo, which never change. Glint turns the bright spark that runs round each
@@ -336,37 +353,40 @@ alone.
   only, and `?finish=` and `?glint=` in the same address win over the look. To
   add a look, see the first lines of `core/look.js`.
 - **How a page changes, and the metal of the page frames.** Dashboard Settings,
-  Transitions tab (docs/page-transitions.md): Page change style (alternate,
+  Look tab (docs/page-transitions.md): Page change style (alternate,
   slat or mechanical), Break and rebuild time, Frame finish (mostly gold,
   alternate, gold or silver only) and Silver chance. The starting values are
   `pageChangeStyle`, `breakSeconds`, `frameFinish` and `silverChance` in
   `defaultSettings` in `dashboard/config.js`, and the limits are `limits`
   there. The Studio fields are all in `studio/schemas/settingsTransitions.js`,
-  so the whole tab can be removed by deleting that file. `core/transitions.js`
+  so the whole section can be removed by deleting that file. `core/transitions.js`
   chooses, `frame.js` starts the change and `frame.css` has the motion. Try them
   with `?change=slat|mechanical|alternate` and
   `?frames=gold|silver|alternate|mostly-gold`.
-- **Night mode, the screensaver.** Dashboard Settings, Night mode tab
-  (docs/night-mode.md): Use night mode, Night style, the start and end times,
-  Logo width, Bounce speed and Preview night mode. The starting values are
-  `nightEnabled`, `nightStyle`, `nightStart`, `nightEnd`, `nightLogoWidth`,
+- **Night mode, the screensaver.** Dashboard Settings, Advanced tab
+  (docs/night-mode.md): Use night mode, Night style, Logo width, Bounce speed
+  and Preview night mode. The start and end times are fixed in
+  `dashboard/core/constants.js`. The starting values are
+  `nightEnabled`, `nightStyle`, `nightLogoWidth`,
   `nightSpeed` and `nightPreview` in `defaultSettings` in `dashboard/config.js`,
   with `nightSpeeds` (the seconds the logo takes to cross the screen) and
   `limits` there. The Studio fields are all in `studio/schemas/settingsNight.js`,
-  so the whole tab can be removed by deleting that file. There is no time zone
+  so the whole section can be removed by deleting that file. There is no time zone
   setting: night mode uses the Time zone on the Look page. `core/night.js`
   decides when it is night and where the logo starts, `core/night-screen.js`
   shows and hides the black layer, and `frame.css` ("Night mode") has the
   bounce, the spin and the fades. Try it with `?night=on` and `?night=off`.
-- **Hidden transitions.** Dashboard Settings, Hidden tab (docs/hidden-transitions.md):
-  Allow hidden transitions, Desktop reveal chance and Red eyes chance, and Last push, with
+- **Hidden transitions.** Dashboard Settings, Advanced tab (docs/hidden-transitions.md):
+  Allow hidden transitions, Desktop reveal every (hours) and Red eyes every (hours), and Last push, with
   the buttons Play desktop reveal and Play red eyes in the menu beside Publish. The starting
-  values are `hiddenEnabled`, `desktopChance`, `redEyesChance` and `hiddenRequest` in
-  `defaultSettings` in `dashboard/config.js`, with `limits` there. The Studio fields are all in
+  values are `hiddenEnabled`, `desktopEveryHours`, `redEyesEveryHours`, `desktopChance`, `redEyesChance`
+  and `hiddenRequest` in `defaultSettings` in `dashboard/config.js`, with `limits` there. The two chances
+  are hidden and only a page saved before the hours existed uses them, and `hiddenGapHours` there is the
+  4 hours after one has played in which none comes about by chance. The Studio fields are all in
   `studio/schemas/settingsHidden.js`, the buttons are made in `studio/actions.js` from
   `studio/hidden-transitions.js`, a copy of `hiddenTransitions` in
-  `dashboard/core/hidden-transitions.js`. A new transition is one entry in each, plus a chance
-  field. `core/hidden.js` decides, `core/hidden-run.js` plays, and `frame.css` ("Hidden
+  `dashboard/core/hidden-transitions.js`. A new transition is one entry in each, plus an hours
+  field and a chance field. `core/hidden.js` decides, `core/hidden-run.js` plays, and `frame.css` ("Hidden
   transitions" and "The blue glitch") moves the five blocks and the glitches. The four
   pictures are in `dashboard/assets/hidden/`, and `core/hidden-pictures.js` says how each one
   fills the screen and which one plays next. Try one with `?hidden=desktop` or `?hidden=redEyes`.
@@ -408,7 +428,7 @@ alone.
   The screens a demo can show are `demoScreens` in `dashboard/core/demo-screens.js`
   with a copy in `studio/demo-screens.js`. A new screen is one entry in each
   (docs/demo.md). `core/demo.js` decides when a demo plays and runs the steps.
-- **The logo animations and the team name effect.** Dashboard Settings, Logo
+- **The logo animations and the team name effect.** Dashboard Settings, Look
   tab (docs/the-logo.md). A master switch, the entrance, and for the spin, the
   flying hawk and the name effect a switch, the seconds between plays (0 is
   never) and the seconds one play lasts. The starting values are
@@ -416,7 +436,7 @@ alone.
   `logoSpinDuration`, `logoHawk`, `logoHawkEvery`, `logoHawkDuration`,
   `nameTransform`, `nameEvery` and `nameDuration` in `defaultSettings` in
   `dashboard/config.js`, and the limits are `limits` there. The Studio fields
-  are all in `studio/schemas/settingsLogo.js`, so the whole tab can be removed
+  are all in `studio/schemas/settingsLogo.js`, so the whole section can be removed
   by deleting that file. `frame.js` decides when any of them may start (one at
   a time, never while a page is changing), and `frame.css` has the motion.
 - **The screen glitch.** Dashboard Settings, Screen tab, Screen glitch: a
@@ -426,23 +446,26 @@ alone.
   waits in the same line as the logo animations. A published glitch that still
   has `everyMinutes` is read as seconds (`tidyGlitch` in
   `dashboard/core/content.js`).
-- **The announcement times and words.** Dashboard Settings, Announcements
+- **The announcement times and words.** Dashboard Settings, Screen
   tab. The starting values are `defaultSettings.announcements` in
   `dashboard/config.js` and `startingList` in
   `studio/schemas/settingsAnnouncements.js`. The announcement panel keeps
   one more copy of the first line, for an announcement that has none.
-- **Sample or production content.** Dashboard Settings, Content source tab,
-  or the "Use sample content" and "Use production content" buttons in the menu
-  beside Publish (docs/editing-content.md). The screen follows within about 30
-  seconds. "Switch back to production at" ends a stretch of sample content by
-  itself. `useSampleContent` in `dashboard/config.js` is not that switch. It is
-  only what the screen does when it cannot read Dashboard Settings and has no
-  saved copy of them. The starting value of Content source is
-  `defaultSettings.contentSource` in `dashboard/config.js` and its copy in
-  `studio/schemas/dashboardSettings.js`.
+- **Sample or production content.** The screen always shows production. A
+  page shows the sample when its address has `?sample=1` (docs/editing-content.md,
+  "Sample content"). `askForSample` and `chosenSource` in `dashboard/core/source.js`
+  decide, and `shell.js` passes them the address. Content source and Switch back
+  to production at are still hidden fields in `studio/schemas/dashboardSettings.js`,
+  so that nothing saved is lost, and the dashboard does not read them.
+- **What the Mini last did.** Dashboard Settings, Screen tab, Status of the Mini.
+  The Mini writes the document `status-mini` with `deploy/scripts/status-write.sh`,
+  which the calendar and slides services and `kiosk.sh` start, and which needs
+  `SANITY_WRITE_TOKEN` in `deploy/local.env` (docs/rebuilding-the-mini.md, "Showing
+  what the Mini did in Studio"). The type is `studio/schemas/status.js` and the block
+  is `studio/status-input.js`. The dashboard never reads it.
 - **Photos for the Photo panel.** Photos in the Studio sidebar
   (`studio/schemas/photo.js`): a picture, an optional caption, a first name
-  credit, "Show on screen" and "Hide after". Dashboard Settings, Photos tab: Photo
+  credit, "Show on screen" and "Hide after". Dashboard Settings, Screen tab: Photo
   order (random or newest first) and Seconds per photo (`photoOrder` and
   `photoSeconds` in `dashboard/config.js`), and the two size settings below.
   The screen reads them with the rest of
@@ -452,7 +475,7 @@ alone.
   loading the next one. docs/editing-content.md has the advice for the people who
   upload. The sample content's `photos` list is what shows on the sample. There is
   no photo list file on the Mini.
-- **How big the pictures are.** Dashboard Settings, Photos tab: "Portrait size,
+- **How big the pictures are.** Dashboard Settings, Screen tab: "Portrait size,
   percent" (`portraitScale`) and "Photo size, percent" (`photoScale`). Each is a
   whole percent from 60 to 100, starting at 100, which is the full size and the
   largest that fits the frames. The starting values and the limits are in
@@ -522,7 +545,7 @@ alone.
 - **When the logo animations first play.** The name effect plays 2 seconds after
   the logo starts, the flying hawk at 13 seconds and the spin at 50 seconds. After
   that each repeats at its own interval. See docs/the-logo.md.
-- **The connection status text.** Dashboard Settings, Connection tab, Show
+- **The connection status text.** Dashboard Settings, Advanced tab, Show
   connection status (`showConnectionStatus` in `defaultSettings` in
   `dashboard/config.js`, the Studio field in `studio/schemas/dashboardSettings.js`).
   `core/connection.js` works out the lines and the reason, and `shell.js` draws
@@ -550,7 +573,7 @@ alone.
   when it starts and once a minute, and changes it at the next page change of
   the large panel. The Time zone is also the one the Look page uses to read
   dates. Try a theme with `?theme=<id>` and an overlay with `?overlay=<id>`.
-- **The style of the whole screen.** Style in Dashboard Settings (Screen tab) is
+- **The style of the whole screen.** Style in Dashboard Settings (Look tab) is
   Original (the screen as it was), Cybertron or Minimal. The names are `styles` in
   `dashboard/config.js`, `dashboard/core/style.js` puts `data-style` on the html
   element and says which layout a style asks for, and there is a stylesheet for each
@@ -569,9 +592,9 @@ alone.
   (`studio/schemas/team.js`): a name, a short name, a number, a code, an optional logo, seven
   colors, Mirror the layout, Active and Order. The two starting teams are in
   `docs/seed/teams.ndjson`, and the command to import them is in docs/add-the-nova-team.md.
-  Dashboard Settings, Teams tab: Team mode (`teamMode`, Prime only to start with, from
+  Dashboard Settings, Look tab: Team mode (`teamMode`, Prime only to start with, from
   `teamModes`) and Minutes for each team (`alternateMinutes`, 5 to start with, 1 to 30), in
-  `studio/schemas/settingsTeams.js`, so the whole tab can be removed by deleting that file. The
+  `studio/schemas/settingsTeams.js`, so the whole section can be removed by deleting that file. The
   starting values, the limits and the built-in Prime team (`primeTeam`, which the screen uses
   when the Studio has no teams) are in `dashboard/config.js`. `teamsFrom` in `core/sanity.js`
   cleans the documents, `core/teams.js` chooses the team (`chooseTeam`) and puts it on the page
@@ -639,15 +662,19 @@ exception is `test-slides-script.mjs`, which needs `jq`.
     node tools/test-layouts.mjs
     node tools/test-seasons.mjs
     node tools/test-effects.mjs
+    node tools/test-hidden-hours.mjs
     node tools/test-tick.mjs
     node tools/test-night.mjs
     node tools/test-presentation.mjs
+    node tools/test-panel-order.mjs
+    node tools/test-fixed-values.mjs
     node tools/test-templates.mjs
     node tools/test-publish-all.mjs
     node tools/test-connection-script.mjs
     node tools/test-slides-script.mjs
     node tools/test-install-calendars.mjs
     node tools/test-calendars-script.mjs
+    node tools/test-status-write.mjs
     node tools/check-themes.mjs
     node tools/check-seasons.mjs
     node studio/check-schemas.mjs

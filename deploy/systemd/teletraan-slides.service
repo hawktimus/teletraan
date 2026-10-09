@@ -9,5 +9,8 @@ Type=oneshot
 # repository, so this file does not depend on what the Mini's user is called.
 User=ACCOUNT
 ExecStart=/opt/teletraan/deploy/scripts/slides-sync.sh
+# Tells Studio when the slides were downloaded. The leading minus means a
+# failure here is ignored: the status must never mark a download as failed.
+ExecStartPost=-/opt/teletraan/deploy/scripts/status-write.sh slides
 # Each download gives up after 90 seconds. This is for the whole run.
 TimeoutStartSec=15min

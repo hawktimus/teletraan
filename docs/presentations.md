@@ -23,10 +23,11 @@ student leaves, and the booking stops with it.
 Add one for each meeting that has talks.
 
 1. In Studio open Presentations, then Meeting days, and click the plus button.
-2. Fill in First talk starts, Last talk starts, Length of each talk and Booking
-   closes this long before a slot. The last talk is a slot too, and the talks
-   start one length apart from the first to the last. A first talk at 2:45 PM,
-   a last talk at 4:15 PM and 15 minutes for each talk make 7 talks.
+2. Fill in First talk starts, Last talk starts and Length of each talk. Booking
+   closes 30 minutes before a slot, and that is not a field to fill in. The last
+   talk is a slot too, and the talks start one length apart from the first to
+   the last. A first talk at 2:45 PM, a last talk at 4:15 PM and 15 minutes for
+   each talk make 7 talks.
 3. Click Publish.
 
 The Form lists the free slots within 5 minutes. A day with no Meeting day has no
@@ -34,7 +35,7 @@ slots. Turn off Open for booking to close a day without deleting it.
 
 Leave a gap after the announcement. If it plays at 2:30 PM, start the first talk
 at 2:45 PM, so the first title card does not wait behind it. The times of the
-announcements are in the Announcements tab of Dashboard Settings.
+announcements are in the Screen tab of Dashboard Settings.
 
 ## 3. The Sanity token
 
@@ -115,14 +116,21 @@ If nobody presses a key while the title card is up, the talk is skipped and the 
 goes back. A skipped talk does not come back by itself. To run it again, change
 Starts at on the talk to a time that is now or a few minutes ahead and publish.
 
-The three settings are in the Presentations tab of Dashboard Settings:
+The one setting is in the Presentations tab of Dashboard Settings:
 
 - Run presentations: on to start with. Off, the TV never takes over for a talk, and
   a talk that is on the screen ends at once. The talks stay in Studio.
-- Wait for the speaker (minutes): how long the title card waits for the first key.
-  From 1 to 15, and 5 to start with.
-- Overrun allowed (minutes): how long a talk may run past its slot before it is
-  ended. From 0 to 10, and 5 to start with.
+
+Two numbers are fixed in the code and are not settings. The title card waits 5
+minutes for the first key. A talk may run 5 minutes past its slot before it is
+ended. They are `noShowMinutes` and `graceMinutes` in `dashboard/core/constants.js`.
+Dashboard Settings still has the two fields (Wait for the speaker and Overrun
+allowed), hidden, so a page saved before they were hidden opens and publishes as
+it did. The screen does not read what they hold.
+
+On a Meeting day, the field that says how long before a slot booking closes
+(`closeMinutesBefore`) is hidden too. It starts at 30. The booking script reads it,
+and the dashboard never does.
 
 ## 7. Try it before the day
 
@@ -149,6 +157,6 @@ The three settings are in the Presentations tab of Dashboard Settings:
   in Studio must also start with `https://docs.google.com/presentation/d/`.
 - The Form has no free slots. Check that the Meeting day exists and is
   published, not a draft, that Open for booking is on, and that its date is the
-  right one. A slot closes for booking the number of minutes before it that the
-  Meeting day says. If every slot is taken, move Last talk starts later. After
+  right one. A slot closes for booking 30 minutes before it, the number the
+  Meeting day starts with. If every slot is taken, move Last talk starts later. After
   any change, wait 5 minutes for the Form.

@@ -1,8 +1,9 @@
-// The night screen, the screensaver. Between the start and end times in the
-// Night mode tab of Dashboard Settings (in the time zone of the Look page) the
-// screen is black with the team logo and the team number under it. The signal
-// is never turned off: the Mini keeps sending a picture, and the kiosk script
-// keeps the TV from blanking (deploy/scripts/kiosk.sh).
+// The night screen, the screensaver. From 11:30 pm to 11:30 am (the fixed times
+// in core/constants.js, in the time zone of the Look page) the screen is black
+// with the team logo and the team number under it. The switch and the style are
+// in the night mode settings of Dashboard Settings, in the Advanced tab. The
+// signal is never turned off: the Mini keeps sending a picture, and the kiosk
+// script keeps the TV from blanking (deploy/scripts/kiosk.sh).
 //
 // This file only shows, hides and tells the stylesheet what to do. When it is
 // night comes from core/night.js, and every move is in frame.css ("Night mode").

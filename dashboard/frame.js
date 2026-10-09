@@ -327,7 +327,7 @@ export function numberSlats(page) {
   });
 }
 
-// The page change settings (the Transitions tab of Dashboard Settings), set by
+// The page change settings (the Look tab of Dashboard Settings), set by
 // shell.js through setPageChange().
 let breakSecondsNow = defaultSettings.breakSeconds;
 let changeSettings = {
@@ -427,14 +427,14 @@ export function retire(area) {
 // seconds one play lasts. shell.js passes them to setNameEffect, setSpin,
 // setHawk and setCrt every time the content changes.
 //
-//   name    the team name effect: the letters split and turn (Logo tab)
-//   spin    the logo makes one full turn, drawn flat (Logo tab)
+//   name    the team name effect: the letters split and turn (Look tab)
+//   spin    the logo makes one full turn, drawn flat (Look tab)
 //   hawk    the logo folds into a robot, changes into the hawk, flies and
-//           changes back (Logo tab)
+//           changes back (Look tab)
 //   glitch  the old television glitch over the whole screen (Screen tab)
 //
 // A fifth, the entrance, plays once when the logo starts: the four plates fly
-// in. It has a switch and no timing. The Logo tab also has a master switch
+// in. It has a switch and no timing. The logo settings also have a master switch
 // (setLogoAnimations). Off, it stops the name effect, the spin, the hawk, the
 // entrance and the flying logo of the announcements, and leaves the still
 // emblem.
@@ -504,7 +504,7 @@ export const hawkActs = [
 const hawkNormalSeconds = hawkActs.reduce((total, act) => total + act[1], 0);
 
 // An effect, with what most of them have in common filled in:
-//   logo             the master switch of the Logo tab stops it
+//   logo             the master switch of the logo settings stops it
 //   on               the switch
 //   everySeconds     0 is never
 //   seconds          how long one play lasts, at normal speed

@@ -111,7 +111,7 @@ async function waitWhilePaused() {
 
 // How long a page stays, in milliseconds, with the Speed setting applied.
 // A row's own seconds win. The Photo panel's row, with none, follows Seconds
-// per photo (Photos tab, see ownSeconds in photos.js). Otherwise the whole
+// per photo (Screen tab, see ownSeconds in photos.js). Otherwise the whole
 // board follows Seconds per page in Dashboard Settings: the small panel stays
 // three quarters as long and the ticker one and a half times as long. The
 // ticker's own seconds (Dashboard Settings, Panels) come in as rowSeconds too.

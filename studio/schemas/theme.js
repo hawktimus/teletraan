@@ -14,7 +14,7 @@
 // corner art. Leaving one empty uses the pack's own, if it has one.
 
 import { defineType, defineField, defineArrayMember } from 'sanity';
-import { tooLong } from './fields.js';
+import { noteField, tooLong } from './fields.js';
 import { themes, overlays, cornerArts } from '../themes.js';
 
 const themeChoices = themes.map(theme => ({ title: theme.name, value: theme.id }));
@@ -258,9 +258,12 @@ const seasonOverPanelsField = defineField({
   initialValue: true,
 });
 
+// Points to the Look tab of Dashboard Settings, which points back
+const settingsNoteField = noteField('settingsNote', 'Colors, seasonal packs and the time zone are set here. Which style and team come on is set in Dashboard Settings, on the Look tab.');
+
 export default defineType({
   name: 'theme',
   title: 'Look',
   type: 'document',
-  fields: [defaultThemeField, useNowField, scheduleField, timeZoneField, seasonOverPanelsField],
+  fields: [settingsNoteField, defaultThemeField, useNowField, scheduleField, timeZoneField, seasonOverPanelsField],
 });

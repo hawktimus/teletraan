@@ -27,11 +27,11 @@ const defaultOutput = path.join(studioFolder, '..', 'docs', 'content-templates')
 // or by the booking form. Calendar filters have day checkboxes and a list of
 // words, which a sheet does not hold well, so they are added in Studio. A team has
 // colors and a logo, so it is added in Studio too (the two starting teams are in
-// docs/seed/teams.ndjson). The pages that exist once (Dashboard Settings, Look,
-// Demo) are listed in structure.js. Events Calendar entries and places have no
-// line in the sidebar, but they keep their templates, since the importer still
-// reads them.
-const skippedTypes = ['photo', 'presentationDay', 'presentation', 'calendarFilter', 'team'];
+// docs/seed/teams.ndjson). The status document is written by the Mini, so it has
+// no template. The pages that exist once (Dashboard Settings, Look, Demo) are
+// listed in structure.js. Events Calendar entries and places have no line in the
+// sidebar, but they keep their templates, since the importer still reads them.
+const skippedTypes = ['photo', 'presentationDay', 'presentation', 'calendarFilter', 'team', 'status'];
 
 // The columns whose words make the id of a row, in order. The id is the type
 // plus a slug of these cells, so importing the same row twice changes nothing.
@@ -101,10 +101,10 @@ const examples = {
 export async function loadSchemas() {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-templates-'));
   try {
-    ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'publish-all.js', 'calendars-view.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'team-input.js'].forEach(name => fs.cpSync(path.join(studioFolder, name), path.join(folder, name), { recursive: true }));
+    ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'publish-all.js', 'calendars-view.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'team-input.js', 'note-field.js', 'status-input.js', 'panel-order-input.js'].forEach(name => fs.cpSync(path.join(studioFolder, name), path.join(folder, name), { recursive: true }));
     fs.writeFileSync(path.join(folder, 'package.json'), JSON.stringify({ type: 'module' }));
-    // the names that schemas/, team-input.js and start-here.js import: the radio of the team field and the Start here page are never drawn here
-    const stubs = { sanity: ['defineType', 'defineField', 'defineArrayMember', 'set', 'unset', 'useClient'], react: ['createElement', 'useEffect', 'useState'] };
+    // the names that schemas/ and the inputs import: the radio of the team field, the other inputs and the Start here page are never drawn here
+    const stubs = { sanity: ['defineType', 'defineField', 'defineArrayMember', 'set', 'unset', 'useClient', 'useFormValue'], react: ['createElement', 'useEffect', 'useState'] };
     Object.keys(stubs).forEach(packageName => {
       const stub = path.join(folder, 'node_modules', packageName);
       fs.mkdirSync(stub, { recursive: true });

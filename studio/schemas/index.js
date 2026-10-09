@@ -15,6 +15,7 @@ import customPanel from './customPanel.js';
 import dashboardSettings from './dashboardSettings.js';
 import theme from './theme.js';
 import demo from './demo.js';
+import status from './status.js';
 import { customPanelBlocks } from './customPanelBlocks.js';
 
 export const schemaTypes = [
@@ -35,4 +36,5 @@ export const schemaTypes = [
   dashboardSettings,
   theme,
   demo,
+  status,
 ].concat(customPanelBlocks);
