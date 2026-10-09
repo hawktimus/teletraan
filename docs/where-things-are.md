@@ -180,8 +180,11 @@ editors can sign in from anywhere.
     studio/                   the Sanity editing screen, its sidebar (structure.js: one list with a line
                               for each entry, so changing the order means moving a line,
                               docs/reordering-the-sidebar.md), its buttons (actions.js: the two content source
-                              buttons, the Play buttons of the hidden transitions, Play announcements, Run presentation test, the Preview buttons, and Run demo and Stop demo),
+                              buttons, the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons),
                               its two pages that are not documents (start-here.js and calendars-view.js),
+                              the words and picture of Start here (start-here-parts.js), what its request
+                              buttons write, shared with actions.js (screen-requests.js), and the address
+                              that Preview the screen opens (dashboard-address.js),
                               its copy of the theme lists (themes.js), its copy of the demo screens
                               (demo-screens.js), its copy of the hidden transitions (hidden-transitions.js),
                               its copy of the previews (previews.js),
@@ -373,7 +376,8 @@ alone.
   `studio/schemas/settingsAnnouncements.js`, the button is `usePlayAnnouncementsAction` in
   `studio/actions.js`). The starting value is `announceRequest` in `defaultSettings` in
   `dashboard/config.js`. `core/announce.js` decides and `core/announce-run.js` plays it. A Demo step
-  can use it too: All announcements in `demoScreens`.
+  can use it too: All announcements in `demoScreens`. The Start here page has this button too, and
+  both write what `announceRequest` in `studio/screen-requests.js` gives.
 - **Preview buttons.** The last five buttons in the same menu (docs/hidden-transitions.md, "Preview a look"):
   Preview Prime, Preview Nova, Preview Cybertron, Preview Minimal and Preview next pack. Each shows its look on
   the screen for `previewSeconds` (2 minutes) in `dashboard/config.js` and then the saved settings come back,
@@ -389,9 +393,16 @@ alone.
   `studio/schemas/settingsPresentations.js`, the button is `useRunPresentationTestAction` in
   `studio/actions.js`). The starting value is `presentationTestRequest` in `defaultSettings` in
   `dashboard/config.js`. `core/presentation-test.js` decides, `core/presentation-test-run.js` reads the
-  sample talk and `startTestTalk` in `core/presentation-run.js` puts it on the screen.
-- **The demo.** The Test the screen page in Studio (docs/demo.md): Run demo and Stop demo
-  in its menu, the Steps, and the Demo announcement text. The starting values
+  sample talk and `startTestTalk` in `core/presentation-run.js` puts it on the screen. The Start here
+  page has this button too, and both write what `presentationTestRequest` in
+  `studio/screen-requests.js` gives.
+- **Next look now and Preview competition.** Two buttons on the Start here page only. Each writes a hidden
+  field of Dashboard Settings, `nextLookRequest` and `competitionPreviewRequest` (`nextLookRequestField` and
+  `competitionPreviewRequestField` in `studio/schemas/settingsRequests.js`), through `studio/screen-requests.js`.
+  The starting values are in `defaultSettings` in `dashboard/config.js`, and `fixSettingValues` in
+  `dashboard/core/content.js` keeps each one a time or empty.
+- **The demo.** The Test the screen page in Studio (docs/demo.md), which has no buttons now:
+  the Steps and the Demo announcement text. The starting values
   are `defaultDemo` in `dashboard/config.js` and their copy in
   `studio/schemas/demo.js`, with `limits.demoSeconds` and `demoMaxSteps` there.
   The screens a demo can show are `demoScreens` in `dashboard/core/demo-screens.js`
@@ -678,8 +689,9 @@ colours were not changed.
   away with `?hidden=off` (docs/hidden-transitions.md). Add `?night=off` at night.
 - The night screen can be tried with `?night=on`, and kept away with `?night=off`
   (docs/night-mode.md). It also has a Preview night mode switch in Dashboard Settings.
-- The announcement and the night screen together can be shown with Run demo on the
-  Test the screen page in Studio (docs/demo.md).
+- The announcement can be shown with Play announcement on the Start here page in Studio
+  (docs/editing-content.md). The announcement and the night screen together are the demo
+  in docs/demo.md, which Studio no longer starts.
 - Calm mode (`?motion=calm`, or Motion in Dashboard Settings) switches off
   every effect and leaves only short fades. `?motion=none` stops all movement.
 - Speed can be tried with `?speed=very-slow`, `?speed=slow`, `?speed=normal`

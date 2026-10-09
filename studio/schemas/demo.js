@@ -1,6 +1,7 @@
-// The Test the screen page: one document with the fixed id 'demo' (see structure.js). Its
-// two buttons, Run demo and Stop demo, are in ../actions.js. The dashboard reads
-// it with the rest of the content and plays the steps in
+// The Test the screen page: one document with the fixed id 'demo' (see structure.js). It has
+// no buttons now: the Start here page has the ones that try the screen. The type and its
+// fields stay so that the documents already in Studio open and publish as they were. The
+// dashboard reads it with the rest of the content and plays the steps in
 // dashboard/core/demo.js. The starting values are the same as defaultDemo in
 // dashboard/config.js.
 //
@@ -22,7 +23,7 @@ const requestedAtField = defineField({
   name: 'requestedAt',
   title: 'Requested at',
   type: 'datetime',
-  description: 'Filled in by the Run demo button and cleared by Stop demo. You cannot type here.',
+  description: 'The time a demo was last asked for. You cannot type here.',
   readOnly: true,
 });
 

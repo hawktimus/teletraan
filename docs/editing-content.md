@@ -27,7 +27,7 @@ The group names, such as EVERY MEETING, are headings and not folders. Each line
 has an icon.
 
 Start here: a short page that says what the screen is and that Publish all is the
-last step of every change.
+last step of every change. See "The Start here page" below.
 
 ### Every meeting
 
@@ -100,8 +100,8 @@ If you are not a coach, leave these alone and ask a coach.
   number, list, image address, progress bar, countdown). About 3 blocks fit.
   A block that does not fit is left out. The title shows in capital letters,
   7 at most.
-- Test the screen: plays a few of the special screens (the announcement and night
-  mode) now, for visitors. See "Test the screen" below, and docs/demo.md.
+- Test the screen: the page of the old demo. It has no buttons now. The buttons that
+  try the screen are on Start here. See "Test the screen" below, and docs/demo.md.
 
 Tasks, Up Next, Roster, Leadership, Sponsors, Tips and News, Extra panels,
 Events Calendar entries, Meeting days and booked talks each have a Team choice:
@@ -117,6 +117,54 @@ calendar or change its link, see docs/calendar-links.md.
 Sponsor logos are not stored in Studio. Where you see an address, paste the
 web address of the picture. The photos in Photos and the photo of a person in
 Leadership are uploaded to Studio.
+
+## The Start here page
+
+The first line of the sidebar. It is a page, not a document, so there is nothing
+to publish on it. It has five parts, top to bottom:
+
+1. One line: what Teletraan I is, and that Publish all is the last step of every
+   change.
+2. A picture of the screen. The boxes A to E are the banner, the main panel, the
+   countdown, the side panel and the ticker, drawn in the shape of the screen.
+   Each box names the sidebar items that fill it.
+3. The three steps of every meeting: open Daily Agenda or Tasks, make the change,
+   click Publish all in the top bar. You edit on Draft, and the screen shows
+   Published.
+4. A row of five buttons, described below.
+5. One line: anything under Coaches only is for a coach.
+
+The buttons try the screen without waiting for a time or for a booked talk:
+
+- Play announcement: plays every announcement that is switched on, once, one
+  after another, whatever its time and days. It does what Play announcements in
+  the menu beside Publish on Dashboard Settings does (docs/hidden-transitions.md).
+- Run presentation test: starts the sample talk with its six sample slides. It
+  does what Run presentation test in the same menu does. Run presentations in
+  the Presentations tab of Dashboard Settings must be on.
+- Next look now: moves the screen on to the next team pass of the look rotation.
+  A second press while the Monday cards are up moves past them.
+- Preview competition: shows the competition cards for 2 minutes, with sample
+  competition data.
+- Preview the screen: opens the screen in a new tab with the sample content, which
+  is what `?sample=1` on the address does. The address is `dashboardAddress` in
+  `studio/dashboard-address.js`. It is the Mini's own address, and the Mini's web
+  server only answers on the Mini (deploy/README.md), so on any other computer
+  the tab shows no page.
+
+The first four buttons send a request and the screen answers it within a few
+seconds. They set the request on the published Dashboard Settings and nothing
+else, so a change on that page that you have not published yet stays a draft.
+The buttons in the menu beside Publish publish the whole page. Dashboard
+Settings must have been published once, or the page says so. Like the menu
+buttons, they do nothing on a screen that shows sample content.
+
+The requests are hidden fields of Dashboard Settings that hold the time of the
+last click: `announceRequest`, `presentationTestRequest`, `nextLookRequest` and
+`competitionPreviewRequest`. The buttons in the menu beside Publish and the
+buttons here write the same fields, and the work is written once in
+`studio/screen-requests.js`. The page is `studio/start-here.js`, and its picture
+and button list are in `studio/start-here-parts.js`.
 
 ## Events Calendar
 
@@ -756,26 +804,20 @@ are the ones the dashboard has. A new one is added in the code
 
 ## Test the screen
 
-One page, like Dashboard Settings. It cannot be deleted or copied. A demo shows
-the announcement and night mode on the TV one after the other, once, without
-waiting for their times (docs/demo.md).
+One page, like Dashboard Settings. It cannot be deleted or copied. It used to play a
+demo of the announcement and night mode, with Run demo and Stop demo in the menu next
+to Publish. Those buttons are gone. The Start here page has the buttons that try the
+screen now (see "The Start here page" above), and Play announcement there plays the
+announcements. docs/demo.md says what is left.
 
-- Run demo: open the menu next to Publish (the three dots) and click Run demo.
-  The TV starts the demo within a few seconds, plays it once and goes back to
-  normal. It publishes the page itself. Click it again to start over.
-- Stop demo: in the same menu. It ends a demo that is playing. It is switched off
-  when nothing has been asked for.
 - Steps: the screens to show, in order, up to 10, each with the seconds it stays
   (5 to 300). It starts with the Announcement for 30 seconds and then Night mode
-  for 30 seconds. "All announcements" is a screen too: it plays every announcement
-  that is switched on at its own length, and ignores the seconds of its step.
+  for 30 seconds.
 - Demo announcement text: the words of the Announcement step, up to 24 characters.
   Leave it empty to use the first announcement in Dashboard Settings, or
   [DEMO ANNOUNCEMENT] if there is none.
-- Requested at: filled in by Run demo. You cannot type in it.
-
-A demo is only played when it was asked for in the last minute, and only once, so
-a TV that restarts never plays an old one. A real alert ends it.
+- Requested at: the time a demo was last asked for. You cannot type in it, and
+  nothing in Studio fills it in now.
 
 ## Sample content and production content
 

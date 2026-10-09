@@ -13,6 +13,7 @@ import { hiddenFields, hiddenGroup } from './settingsHidden.js';
 import { presentationsFields, presentationsGroup, presentationTestRequestField } from './settingsPresentations.js';
 import { teamsFields, teamsGroup } from './settingsTeams.js';
 import { previewRequestField } from './settingsPreview.js';
+import { nextLookRequestField, competitionPreviewRequestField } from './settingsRequests.js';
 
 const groups = [
   { name: 'screen', title: 'Screen' },
@@ -470,6 +471,8 @@ export default defineType({
     lookField,
     crtField,
     previewRequestField(),
+    nextLookRequestField(),
+    competitionPreviewRequestField(),
     ...teamsFields(),
     ...logoFields(),
     ...transitionsFields(),

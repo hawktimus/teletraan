@@ -2,31 +2,33 @@
 
 A demo shows a few of the screen's special screens one after another, for
 visitors or for a check that they work, without waiting for 14:30 or for night.
-You start it from the editing screen (Studio) with one click. It plays once, and
-then the screen goes back to what it was doing.
+It plays once, and then the screen goes back to what it was doing.
 
-## Run a demo
+Studio no longer starts it. Run demo and Stop demo are gone, and the Test the
+screen page has no buttons. The Start here page has the buttons that try the
+screen now (docs/editing-content.md, "The Start here page"):
 
-1. Open Studio and click Test the screen in the sidebar, under Coaches only.
-2. Open the menu next to Publish (the three dots) and click Run demo.
-3. Look at the TV. The demo starts within a few seconds.
+- Play announcement plays every announcement that is switched on. It does what the
+  step All announcements does, and what Play announcements in the menu beside
+  Publish on Dashboard Settings does (docs/hidden-transitions.md).
+- Run presentation test starts the sample talk with six sample slides, so you can
+  try the clicker without a booked talk. It is not a demo step.
+- Next look now, Preview competition and Preview the screen are explained on that
+  page too.
 
-Click Stop demo in the same menu to end it early. Stop demo is switched off when
-no demo has been asked for. Click Run demo again while a demo is playing and it
-starts again from the first step. Run demo and Stop demo each publish the page
-for you, so you do not click Publish.
+The five Preview buttons in the menu beside Publish on Dashboard Settings show a
+team, a style or the next seasonal pack for 2 minutes ("Preview a look" in
+docs/hidden-transitions.md).
 
-Dashboard Settings has a button of its own for the presentation mode, **Run
-presentation test**, in the same menu as Play announcements. It starts the sample
-talk with six sample slides, so you can try the clicker without a booked talk. It
-is not a demo step and does not use this page. docs/hidden-transitions.md explains it.
-The five Preview buttons that follow it show a team, a style or the next seasonal
-pack for 2 minutes, and are explained there too ("Preview a look").
+What is left of the demo is the Test the screen document, its steps, and the code
+that plays them. They stay so that the documents already in Studio open and publish
+as they were. The screen still plays a demo when the document has a recent Requested
+at, but nothing in Studio writes one now.
 
 ## What the page holds
 
-- Requested at: the time Run demo was clicked. Run demo fills it in and Stop demo
-  clears it. You cannot type in it.
+- Requested at: the time a demo was last asked for. You cannot type in it, and
+  nothing in Studio fills it in now.
 - Steps: the screens to show, one after the other, up to 10. Each step has a
   Screen and the Seconds it stays, from 5 to 300. A new Test the screen page starts with the
   Announcement for 30 seconds and then Night mode for 30 seconds. Drag the steps
@@ -47,7 +49,7 @@ The screens you can pick are the ones in the list of "demo screens" in the code:
   It is the same as the Play announcements button on Dashboard Settings
   (docs/hidden-transitions.md). The step's seconds are not used: the step lasts as
   long as the announcements do, and it is over at once when none is switched on. The
-  Demo announcement text is not used either. Stop demo ends it early.
+  Demo announcement text is not used either. A new request ends it early.
 - Night mode: the black screensaver with the bouncing logo. It shows whatever the
   time is, whether or not Use night mode is on, and whatever Night style says. It
   ignores `?night=off` too. The step's seconds count from when it starts to fade
@@ -55,8 +57,8 @@ The screens you can pick are the ones in the list of "demo screens" in the code:
 
 ## What the screen does
 
-The screen reads the Test the screen page with the rest of the content, so a click on Run
-demo reaches it within a few seconds. Then:
+The screen reads the Test the screen page with the rest of the content, so a new
+Requested at reaches it within a few seconds. Then:
 
 - **A request starts a demo only if it is recent and new.** It must be no more
   than 60 seconds old, and it must not be the request the screen handled last.
@@ -72,18 +74,18 @@ demo reaches it within a few seconds. Then:
   When the last step ends, the pages change again and the screen is back where
   it was. Night mode goes back to what the clock and Dashboard Settings say, so
   it stays up if it really is night.
-- **Stop demo, or a new Run demo,** ends the demo that is playing. The screen
+- **A cleared or a new request** ends the demo that is playing. The screen
   that is up is taken away at once, and the rest of the steps do not play.
 - **A real alert wins.** If an alert comes on during a demo, the demo ends. If an
-  alert or a real announcement is on screen when you click Run demo, the demo
+  alert or a real announcement is on screen when the request arrives, the demo
   waits until it is over, as long as the request is still under a minute old, and
   between two steps it ends if one has the screen.
 - **Calm and none still work.** In calm mode the screens fade, and with no motion
   nothing moves, as at any other time.
 - **Sample content has its own Demo.** While the screen shows sample content
   (Content source in Dashboard Settings) it reads the demo from
-  `dashboard/data/sample/content.json`, not from Studio, so Run demo has no
-  effect. Switch back to production content first.
+  `dashboard/data/sample/content.json`, not from Studio, so a request written in
+  Studio has no effect. Switch back to production content first.
 
 The demo is not a screen on the normal rotation. It is also not the same as the
 `?demo=announcement` address switch, which only plays one announcement once for
@@ -152,7 +154,7 @@ back in the function it returns, or when `context.cancelled()` says so.
   rotation; `setEffectsPaused` in `frame.js`; `showNightNow` and `endNightNow` in
   `core/night-screen.js`; `alertsStarted` and the third argument of
   `runAnnouncement` in `core/takeover.js`.
-- `studio/schemas/demo.js` is the page, `studio/actions.js` has Run demo and Stop
-  demo, and `studio/demo-screens.js` is the Studio's copy of the list. The
+- `studio/schemas/demo.js` is the page, and `studio/demo-screens.js` is the
+  Studio's copy of the list. The
   starting values are `defaultDemo` in `dashboard/config.js` and their copy in
   `studio/schemas/demo.js`.

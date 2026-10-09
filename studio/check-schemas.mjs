@@ -158,6 +158,8 @@ const contract = {
     alternateMinutes: number(1, 30),
     announceRequest: object({ requestedAt: 'datetime' }),
     previewRequest: object({ kind: 'string', requestedAt: 'datetime' }),
+    nextLookRequest: object({ requestedAt: 'datetime' }),
+    competitionPreviewRequest: object({ requestedAt: 'datetime' }),
     countdown: object({ kickoffLabel: text(12), kickoff: 'datetime', rolloutLabel: text(12), rollout: 'datetime' }),
     alert: object({ on: 'boolean', headline: text(24), message: text(90), until: 'datetime' }),
     rotation: object({ grid1: rows(panelStep), grid2: rows(panelStep), tickerSeconds: number(6, 120) }),
@@ -315,7 +317,8 @@ const standIns = {
       'export const defineConfig = config => config;',
       // writes down what an action does, so checkContentSource can read it back
       // only the names the Publish all tool imports, so that its file can be loaded
-      'export const useClient = () => ({});',
+      // the client is the one a check puts in globalThis.studioClient: the Start here page sends through it
+      'export const useClient = () => globalThis.studioClient || {};',
       'export const useSchema = () => ({ get: () => undefined });',
       'export const useWorkspace = () => ({});',
       'export const useCurrentUser = () => null;',
@@ -349,7 +352,7 @@ function iconImportsOf(source) {
 
 function makeSandbox() {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-studio-'));
-  ['schemas', 'structure.js', 'start-here.js', 'calendars-view.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'publish-all.js', 'publish-all-tool.js', 'team-input.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
+  ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'calendars-view.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'publish-all.js', 'publish-all-tool.js', 'team-input.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
     fs.cpSync(path.join(here, name), path.join(folder, name), { recursive: true });
   });
   fs.writeFileSync(path.join(folder, 'package.json'), JSON.stringify({ type: 'module' }));
@@ -1681,6 +1684,354 @@ function checkPreviewButtons() {
   return problems;
 }
 
+// The Start here page (start-here.js, with its words and numbers in start-here-parts.js): five
+// blocks in this order, a picture of the screen with the areas A to E, and a row of five buttons.
+const startBlocks = ['what', 'picture', 'steps', 'buttons', 'coaches'];
+const startButtons = ['Play announcement', 'Run presentation test', 'Next look now', 'Preview competition', 'Preview the screen'];
+const startAreas = ['A Banner', 'B Main panel', 'C Countdown', 'D Side panel', 'E Ticker'];
+
+// The titles of the sidebar the page is written for. The picture names these, and the sidebar is
+// rebuilt to them, so a title here may not be a line of structure.js until that is done. Once the
+// sidebar has the line Daily Agenda, checkStartHere also requires every title in the picture to be
+// a line of the sidebar.
+const startSidebarTitles = [
+  'Start here', 'Daily Agenda', 'Agenda items', 'Presentations', 'Meeting days', 'Tasks', 'Tips and News',
+  'Calendars', 'Calendar filters', 'Leadership', 'Team leads', 'Sponsors', 'Photos',
+  'Settings', 'Dashboard Settings', 'Look', 'Teams', 'Extra panels',
+];
+
+// Every element of a tree that the createElement stand-in made, in the order they are drawn,
+// that test keeps
+function nodesWhere(node, test, found) {
+  const list = found || [];
+  if (Array.isArray(node)) {
+    node.forEach(item => nodesWhere(item, test, list));
+  } else if (node && typeof node === 'object') {
+    if (test(node)) list.push(node);
+    nodesWhere(node.children || [], test, list);
+  }
+  return list;
+}
+
+// The words of a tree, as one line
+function wordsIn(node) {
+  if (typeof node === 'string') return node;
+  if (Array.isArray(node)) return node.map(wordsIn).join(' ').replace(/\s+/g, ' ').trim();
+  return node && typeof node === 'object' ? wordsIn(node.children || []) : '';
+}
+
+// What a student reads is short plain sentences: none long, no dash, no exclamation mark, no emoji
+function checkPlainSentences(problems, where, text) {
+  text.split(/[.?]\s+|[.?]$/).forEach(sentence => {
+    const length = sentence.trim().split(/\s+/).filter(Boolean).length;
+    need(problems, length <= 20, where + ' has a sentence of ' + length + ' words: "' + sentence.trim() + '". Use short sentences.');
+  });
+  need(problems, !/[\u2014\u2013!]/.test(text), where + ' has a dash or an exclamation mark in it');
+  need(problems, !/\p{Extended_Pictographic}/u.test(text), where + ' has an emoji in it');
+}
+
+// The boxes of the standard layout, worked out from the sizes in dashboard/base.css: [banner, main
+// panel, countdown, side panel, ticker], each { x, y, width, height }
+function standardBoxes() {
+  const block = name => (world.baseCss.match(new RegExp(name + ' \\{[^}]*\\}')) || [''])[0];
+  const numbers = (text, property) => ((text.match(new RegExp(property + ': ([^;]*);')) || ['', ''])[1].match(/\d+/g) || []).map(Number);
+  const stage = block('#stage');
+  const right = block('#region-right');
+  const [padY, padX] = numbers(stage, 'padding');
+  const [leftWidth, rightWidth] = numbers(stage, 'grid-template-columns');
+  const [bannerHeight, mainHeight, tickerHeight] = numbers(stage, 'grid-template-rows');
+  const [rowGap, columnGap] = numbers(stage, 'gap');
+  const [countdownHeight, sideHeight] = numbers(right, 'grid-template-rows');
+  const [rightGap] = numbers(right, 'gap');
+
+  const wide = leftWidth + columnGap + rightWidth;
+  const middleY = padY + bannerHeight + rowGap;
+  const rightX = padX + leftWidth + columnGap;
+  return [
+    { x: padX, y: padY, width: wide, height: bannerHeight },
+    { x: padX, y: middleY, width: leftWidth, height: mainHeight },
+    { x: rightX, y: middleY, width: rightWidth, height: countdownHeight },
+    { x: rightX, y: middleY + countdownHeight + rightGap, width: rightWidth, height: sideHeight },
+    { x: padX, y: middleY + mainHeight + rowGap, width: wide, height: tickerHeight },
+  ];
+}
+
+function checkStartHere() {
+  const problems = [];
+  const parts = world.startHereParts;
+  globalThis.studioClient = undefined;
+  const page = world.startHere.StartHere();
+
+  // The five blocks, in the order of the list
+  const blocks = nodesWhere(page, node => node.props && node.props['data-block'] !== undefined);
+  need(problems, blocks.map(node => node.props['data-block']).join() === startBlocks.join(), 'the Start here page should have these five blocks, in this order: ' + startBlocks.join(', ') + '. It has: ' + blocks.map(node => node.props['data-block']).join(', '));
+  need(problems, wordsIn(nodesWhere(page, node => node.type === 'h1')) === 'Start here', 'the Start here page should open with the heading Start here');
+  const block = name => blocks.filter(node => node.props['data-block'] === name)[0];
+
+  // 1. what it is, and that Publish all is the last step. 3. the steps and Draft and Published. 5. Coaches only.
+  const what = wordsIn(block('what'));
+  need(problems, /Teletraan I/.test(what) && /Publish all is the last step/.test(what), 'the first block should say what Teletraan I is and that Publish all is the last step of every change');
+  const steps = block('steps') ? nodesWhere(block('steps'), node => node.type === 'li').map(wordsIn) : [];
+  need(problems, steps.length === 3 && /Daily Agenda/.test(steps[0]) && /Tasks/.test(steps[0]) && /Publish all/.test(steps[2]), 'the steps should be three lines: open Daily Agenda or Tasks, make the change, click Publish all');
+  need(problems, /Draft/.test(wordsIn(block('steps'))) && /Published/.test(wordsIn(block('steps'))), 'the steps block should have the sentence about Draft and Published');
+  need(problems, /Coaches only/.test(wordsIn(block('coaches'))) && /coach/.test(wordsIn(block('coaches'))), 'the last block should say that anything under Coaches only is for a coach');
+
+  // 2. the picture: the shape of the screen, a box for each of the five areas
+  const picture = nodesWhere(page, node => node.type === 'svg')[0];
+  const size = parts.screen;
+  need(problems, picture && picture.props.viewBox === '0 0 ' + size.width + ' ' + size.height, 'the picture should be an inline svg drawn on the 1920 by 1080 of the screen');
+  need(problems, size.width * 9 === size.height * 16, 'the picture should have the 16 to 9 shape of the screen');
+  need(problems, picture && picture.props.role === 'img' && String(picture.props['aria-label'] || '') !== '', 'the picture should have role img and a label for a screen reader');
+  const shown = picture ? nodesWhere(picture, node => node.type === 'text').map(wordsIn) : [];
+  need(problems, shown.filter(text => /^[A-Z]$/.test(text)).join('') === 'ABCDE', 'the picture should have the letters A to E, in order, one for each area. It has: ' + shown.filter(text => /^[A-Z]$/.test(text)).join(''));
+  need(problems, parts.areas.map(area => area.letter + ' ' + area.name).join() === startAreas.join(), 'the picture should have the areas ' + startAreas.join(', '));
+  need(problems, picture && nodesWhere(picture, node => node.type === 'image').length === 0 && !/\.(png|jpe?g|svg|webp)/i.test(world.startHereSource), 'the picture should be drawn in the page, not an image file');
+
+  // Each box is where the standard layout puts the area, and holds the sidebar items that fill it
+  const boxes = standardBoxes();
+  const sidebarTitlesNow = allLines(world.structure.sidebarEntries).map(entry => entry.title);
+  const sidebarRebuilt = sidebarTitlesNow.indexOf('Daily Agenda') !== -1;
+  const above = 0.8;
+  const below = 0.25;
+  parts.areas.forEach((area, index) => {
+    const name = area.letter + ' ' + area.name;
+    const want = boxes[index];
+    need(problems, want && ['x', 'y', 'width', 'height'].every(key => area[key] === want[key]), name + ' should be the box of the standard layout in dashboard/base.css: ' + JSON.stringify(want) + '. It is ' + JSON.stringify({ x: area.x, y: area.y, width: area.width, height: area.height }));
+    need(problems, area.x >= 0 && area.y >= 0 && area.x + area.width <= size.width && area.y + area.height <= size.height, name + ' should be inside the screen');
+    parts.areas.slice(index + 1).forEach(other => {
+      const apart = other.x >= area.x + area.width || area.x >= other.x + other.width || other.y >= area.y + area.height || area.y >= other.y + other.height;
+      need(problems, apart, name + ' and ' + other.letter + ' ' + other.name + ' should not overlap');
+    });
+
+    need(problems, area.feeds.length > 0 && area.feeds.every(line => line.length > 0), name + ' should name the sidebar items that fill it');
+    area.feeds.forEach(line => line.forEach(title => {
+      need(problems, startSidebarTitles.indexOf(title) !== -1, name + ' names "' + title + '", which is not a title of the sidebar in startSidebarTitles');
+      need(problems, !sidebarRebuilt || sidebarTitlesNow.indexOf(title) !== -1, name + ' names "' + title + '", which is not a line of the sidebar');
+    }));
+    need(problems, shown.indexOf(area.name) !== -1 && area.feeds.every(line => shown.indexOf(line.join(', ')) !== -1), name + ' should be written in the picture with the sidebar items that fill it');
+
+    // The words fit the box. The width is a wide guess (widthOf), since nothing is drawn here.
+    const labels = parts.labelsOf(area);
+    const inside = (left, right, top, bottom) => left >= area.x && right <= area.x + area.width && top >= area.y && bottom <= area.y + area.height;
+    need(problems, inside(labels.badge.x, labels.badge.x + labels.badge.size, labels.badge.y, labels.badge.y + labels.badge.size), name + ': the square with the letter should be inside its box');
+    need(problems, labels.letter.x - parts.widthOf(labels.letter.text, labels.letter.size) / 2 >= labels.badge.x && labels.letter.y <= labels.badge.y + labels.badge.size, name + ': the letter should be inside its square');
+    [labels.name].concat(labels.feeds).forEach(words => {
+      const fits = inside(words.x, words.x + parts.widthOf(words.text, words.size), words.y - words.size * above, words.y + words.size * below);
+      need(problems, fits, name + ': "' + words.text + '" should fit inside its box');
+    });
+  });
+
+  // 4. the row of five buttons: the four that send a request, and the one that opens the screen in a new tab
+  const row = block('buttons') ? nodesWhere(block('buttons'), node => (node.type === 'button' || node.type === 'a')) : [];
+  need(problems, row.map(wordsIn).join() === startButtons.join(), 'the buttons should be, in this order: ' + startButtons.join(', ') + '. They are: ' + row.map(wordsIn).join(', '));
+  need(problems, parts.buttons.map(item => item.label).join() === startButtons.join(), 'the buttons in start-here-parts.js should be, in this order: ' + startButtons.join(', '));
+  need(problems, row.every(item => item.props.style && item.props.style.minHeight >= 64 && item.props.style.fontSize >= 16), 'the buttons should be large: at least 64 high with text of 16 or more');
+  need(problems, row.slice(0, 4).every(item => item.type === 'button' && item.props.type === 'button' && typeof item.props.onClick === 'function'), 'the first four buttons should be buttons that send a request when clicked');
+  need(problems, parts.buttons.slice(0, 4).every(item => typeof item.request === 'function' && item.address === undefined) && parts.buttons[4].address !== undefined && parts.buttons[4].request === undefined, 'in start-here-parts.js the first four buttons should have a request and the last one an address');
+  const preview = row[4];
+  const address = world.dashboardAddress.dashboardAddress;
+  need(problems, /^https?:\/\/[^\s/]+\/dashboard\/\?sample=1$/.test(address), 'dashboardAddress in dashboard-address.js should be the address of the dashboard with the sample content, ending in /dashboard/?sample=1');
+  need(problems, preview && preview.type === 'a' && preview.props.href === address && preview.props.target === '_blank' && /noopener/.test(preview.props.rel || ''), 'Preview the screen should open the address in dashboard-address.js in a new tab, with rel noopener');
+  need(problems, world.startHereSource.indexOf(address) === -1 && world.startHerePartsSource.indexOf(address) === -1, 'the dashboard address should be written once, in dashboard-address.js, and not in the page');
+
+  // The words a student reads, one heading, line or paragraph at a time
+  nodesWhere(page, node => ['h1', 'h2', 'p', 'li', 'figcaption'].indexOf(node.type) !== -1).forEach(node => checkPlainSentences(problems, 'the Start here page ("' + wordsIn(node).slice(0, 30) + '")', wordsIn(node)));
+  checkPlainSentences(problems, 'the label of the picture', picture ? String(picture.props['aria-label']) : '');
+  checkPlainSentences(problems, 'the line after a request is sent', parts.sentLine);
+  checkPlainSentences(problems, 'the line when a request fails', parts.problemWith(new Error('Document by ID "x" not found')) + ' ' + parts.problemWith(new Error('The network is down.')));
+  need(problems, /has not been published yet/.test(parts.problemWith(new Error('Document by ID "dashboardSettings" not found'))), 'a Dashboard Settings page that was never published should be explained in plain words');
+  need(problems, parts.problemWith(new Error('offline')) === 'The request was not sent. offline', 'any other failure should say the request was not sent, and why');
+
+  // The buttons do not repeat the work of the buttons beside Publish: the fields are only in screen-requests.js
+  const writesRequest = source => /\b(announceRequest|presentationTestRequest|nextLookRequest|competitionPreviewRequest|hiddenRequest|previewRequest)\s*:/.test(source);
+  need(problems, !writesRequest(world.actionsSource), 'actions.js should not write a request field itself. It uses the functions in screen-requests.js');
+  need(problems, !writesRequest(world.startHereSource) && !writesRequest(world.startHerePartsSource) && !/requestedAt/.test(world.startHereSource + world.startHerePartsSource), 'the Start here page should not write a request field itself. It uses the functions in screen-requests.js');
+  need(problems, !/useDocumentOperation/.test(world.startHereSource), 'the Start here page should send through the Studio client and not through the document operations of an action');
+  return problems;
+}
+
+// The buttons that send a request, in the menu beside Publish (actions.js) and on the Start here page,
+// write the same fields, and both use the functions in screen-requests.js. Next look now and Preview
+// competition are on the Start here page only. Each request is a hidden field of Dashboard Settings
+// that holds the time it was asked for. The shapes below are what the buttons in actions.js wrote
+// before the work was moved: a time is written as TIME.
+async function checkScreenRequests() {
+  const problems = [];
+  const requests = world.screenRequests;
+  const structure = world.structure;
+  const pascal = id => id.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('');
+  const isTime = text => typeof text === 'string' && /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(text);
+
+  // The same value with every time written as TIME, and the times that were found
+  function shapeOf(value, times) {
+    if (isTime(value)) {
+      times.push(value);
+      return 'TIME';
+    }
+    if (value && typeof value === 'object') {
+      const copy = {};
+      Object.keys(value).forEach(key => {
+        copy[key] = shapeOf(value[key], times);
+      });
+      return copy;
+    }
+    return value;
+  }
+
+  // The page the requests are written to is Dashboard Settings, the one structure.js opens
+  need(problems, requests.settingsDocument.type === structure.settingsType && requests.settingsDocument.id === structure.settingsId, 'settingsDocument in screen-requests.js should be the type ' + structure.settingsType + ' and the id ' + structure.settingsId + ', as in structure.js');
+
+  // A client that writes down what it is asked. failing is an error the commit gives back.
+  function clientWriting(failing) {
+    const calls = [];
+    return {
+      calls: calls,
+      patch: id => {
+        calls.push({ patch: id });
+        return {
+          set: fields => {
+            calls.push({ set: fields });
+            return {
+              commit: () => {
+                calls.push({ commit: true });
+                return failing ? Promise.reject(failing) : Promise.resolve({});
+              },
+            };
+          },
+        };
+      },
+    };
+  }
+
+  const actions = world.config.document.actions([], { schemaType: 'dashboardSettings' });
+  const action = name => actions.filter(item => item.action === name)[0];
+
+  // What a button beside Publish writes: the fields it sets, and that it then publishes
+  function pressAction(name) {
+    const button = action(name);
+    globalThis.studioCalls = [];
+    if (typeof button !== 'function') return null;
+    button({ id: 'dashboardSettings', type: 'dashboardSettings', published: null, draft: null, onComplete: () => {} }).onHandle();
+    return globalThis.studioCalls;
+  }
+
+  const cases = [
+    { action: 'playAnnouncements', fields: () => requests.announceRequest(), shape: { announceRequest: { requestedAt: 'TIME' } } },
+    { action: 'runPresentationTest', fields: () => requests.presentationTestRequest(), shape: { presentationTestRequest: { requestedAt: 'TIME' } } },
+    // these two have no button beside Publish, only the one on the Start here page
+    { action: '', where: 'nextLookNow', fields: () => requests.nextLookRequest(), shape: { nextLookRequest: { requestedAt: 'TIME' } } },
+    { action: '', where: 'previewCompetition', fields: () => requests.competitionPreviewRequest(), shape: { competitionPreviewRequest: { requestedAt: 'TIME' } } },
+  ];
+  world.studioHidden.hiddenTransitions.forEach(kind => {
+    cases.push({ action: 'play' + pascal(kind.id), fields: () => requests.hiddenRequest(kind.id), shape: { hiddenRequest: { kind: kind.id, requestedAt: 'TIME' } } });
+  });
+  world.studioPreviews.previews.forEach(kind => {
+    cases.push({ action: 'preview' + pascal(kind.id), fields: () => requests.previewRequest(kind.id), shape: { previewRequest: { kind: kind.id, requestedAt: 'TIME' } } });
+  });
+
+  for (const item of cases) {
+    const where = item.action || item.where;
+    const client = clientWriting();
+    const before = Date.now();
+    await requests.sendWithClient(client, item.fields());
+    const after = Date.now();
+
+    // The button beside Publish: set the fields, then publish, as it always did
+    if (item.action) {
+      const sentByAction = pressAction(item.action);
+      const actionSet = sentByAction && sentByAction[0] && sentByAction[0].patch && sentByAction[0].patch[0] && sentByAction[0].patch[0].set;
+      need(problems, sentByAction && sentByAction.length === 2 && sentByAction[0].patch.length === 1 && sentByAction[1].publish === true, where + ' (beside Publish) should set the fields and then publish');
+      need(problems, JSON.stringify(shapeOf(actionSet, [])) === JSON.stringify(item.shape), where + ' (beside Publish) should set ' + JSON.stringify(item.shape) + ', not ' + JSON.stringify(shapeOf(actionSet, [])));
+    }
+
+    // The Start here page: the same fields, set on the published Dashboard Settings through the client
+    const times = [];
+    const clientSet = client.calls[1] && client.calls[1].set;
+    need(problems, client.calls.length === 3 && client.calls[0].patch === structure.settingsId && client.calls[2].commit === true, where + ' (Start here) should patch ' + structure.settingsId + ', set the fields and commit');
+    need(problems, JSON.stringify(shapeOf(clientSet, times)) === JSON.stringify(item.shape), where + ' (Start here) should set ' + JSON.stringify(item.shape) + ', not ' + JSON.stringify(shapeOf(clientSet, [])));
+    need(problems, times.length === 1 && Date.parse(times[0]) >= before && Date.parse(times[0]) <= after, where + ' (Start here) should write the time now, as new Date().toISOString() writes it');
+  }
+
+  // The four request buttons on the page, clicked: each sends its own request through the Studio client
+  const clicks = [
+    ['Play announcement', { announceRequest: { requestedAt: 'TIME' } }],
+    ['Run presentation test', { presentationTestRequest: { requestedAt: 'TIME' } }],
+    ['Next look now', { nextLookRequest: { requestedAt: 'TIME' } }],
+    ['Preview competition', { competitionPreviewRequest: { requestedAt: 'TIME' } }],
+  ];
+  for (const click of clicks) {
+    const client = clientWriting();
+    globalThis.studioClient = client;
+    const button = nodesWhere(world.startHere.StartHere(), node => node.type === 'button').filter(node => wordsIn(node) === click[0])[0];
+    if (!button) {
+      problems.push('the Start here page has no button ' + click[0]);
+      continue;
+    }
+    await button.props.onClick();
+    need(problems, client.calls.length === 3 && JSON.stringify(shapeOf(client.calls[1].set, [])) === JSON.stringify(click[1]), 'clicking ' + click[0] + ' should set ' + JSON.stringify(click[1]) + ' on Dashboard Settings');
+  }
+
+  // A request that cannot be sent is answered, not thrown: the click is done and the page says why
+  const failures = [
+    ['a page that was never published', clientWriting(new Error('Document by ID "dashboardSettings" not found'))],
+    ['a client that throws at once', { patch: () => { throw new Error('no client'); } }],
+    ['no client', {}],
+  ];
+  for (const failure of failures) {
+    globalThis.studioClient = failure[1];
+    const button = nodesWhere(world.startHere.StartHere(), node => node.type === 'button')[0];
+    let answered = true;
+    try {
+      await button.props.onClick();
+    } catch (error) {
+      answered = false;
+    }
+    need(problems, answered, 'a click with ' + failure[0] + ' should not stop the page');
+  }
+  globalThis.studioClient = undefined;
+  return problems;
+}
+
+// Next look now and Preview competition: the hidden nextLookRequest and competitionPreviewRequest fields
+// in the Screen tab (schemas/settingsRequests.js), their starting values in config.js, and the buttons
+// on the Start here page that fill them in. They have no button beside Publish.
+function checkNewRequests() {
+  const problems = [];
+  const config = world.dashboard;
+  const settings = typeByName('dashboardSettings');
+  const wanted = [
+    { name: 'nextLookRequest', button: 'Next look now' },
+    { name: 'competitionPreviewRequest', button: 'Preview competition' },
+  ];
+
+  wanted.forEach(item => {
+    const request = fieldAt('dashboardSettings.' + item.name);
+    const time = fieldAt('dashboardSettings.' + item.name + '.requestedAt');
+
+    // The field: an object with one read only time, hidden from editors, with no starting value of its own
+    need(problems, request && request.type === 'object', item.name + ' should be an object');
+    need(problems, request && request.group === 'screen', item.name + ' should be in the Screen tab');
+    need(problems, request && request.hidden === true, item.name + ' should be hidden from editors (hidden: true)');
+    need(problems, request && request.initialValue === undefined, item.name + ' should have no starting value in the Studio');
+    need(problems, request && (request.fields || []).map(field => field.name).join() === 'requestedAt', item.name + ' should have one field, requestedAt');
+    need(problems, request && request.description && request.description.indexOf(item.button) !== -1, 'the ' + item.name + ' description should name the button ' + item.button);
+    need(problems, time && time.type === 'datetime' && time.readOnly === true, item.name + '.requestedAt should be a read only datetime');
+    need(problems, time && !constraintNamed(constraintsOf(time), 'required'), item.name + '.requestedAt should be optional');
+    need(problems, fieldsIn(settings).filter(field => field.name === item.name).length === 1, item.name + ' should be in Dashboard Settings once');
+
+    // The starting value is a request with no time, and the sample content never carries a request
+    need(problems, sameData(config.defaultSettings[item.name], { requestedAt: '' }), 'the default ' + item.name + ' in config.js should be a time that is empty');
+    need(problems, !(item.name in world.sample.settings), 'the sample settings should not carry a ' + item.name);
+  });
+
+  // The buttons are on the Start here page only: no page gets an action for them
+  ['dashboardSettings', 'theme', 'demo', 'task'].forEach(type => {
+    const names = world.config.document.actions([], { schemaType: type }).map(button => String(button.action));
+    need(problems, !names.some(name => /nextLook|competition/i.test(name)), 'the ' + type + ' page should have no button for Next look now or Preview competition. They are on the Start here page');
+  });
+  return problems;
+}
+
 // Show connection status is a switch that starts off, in a Connection tab of
 // its own. The connection status text comes up by itself when Sanity cannot be
 // reached, whatever the switch says (dashboard/core/connection.js).
@@ -2082,9 +2433,9 @@ function checkSettingsPage() {
   const themeActions = world.config.document.actions(actions, { schemaType: 'theme' }).map(item => item.action).join();
   if (themeActions !== 'publish,discardChanges') problems.push('the Look page should have these actions: publish,discardChanges. It has: ' + themeActions);
 
-  // The Test the screen page is the same, with its two buttons (checkDemo looks at them)
+  // The Test the screen page is the same, and has no buttons of its own: the Start here page has the ones that try the screen
   const demoActions = world.config.document.actions(actions, { schemaType: 'demo' }).map(item => item.action).join();
-  if (demoActions !== 'publish,discardChanges,runDemo,stopDemo') problems.push('the Test the screen page should have these actions: publish,discardChanges,runDemo,stopDemo. It has: ' + demoActions);
+  if (demoActions !== 'publish,discardChanges') problems.push('the Test the screen page should have these actions: publish,discardChanges. It has: ' + demoActions);
 
   const templates = [{ templateId: 'task' }, { templateId: 'dashboardSettings' }, { templateId: 'theme' }, { templateId: 'demo' }];
   const offered = world.config.document.newDocumentOptions(templates, {}).map(item => item.templateId).join();
@@ -2534,9 +2885,8 @@ function checkDemoScreens() {
 }
 
 // The Test the screen page. The Studio and dashboard/config.js agree on the starting
-// values and the limits, Requested at is read only because the buttons fill it
-// in, and Run demo and Stop demo do what they say. The sample content carries
-// the same starting values.
+// values and the limits, Requested at is read only, and the page has no buttons. The
+// sample content carries the same starting values.
 function checkDemo() {
   const problems = [];
   const config = world.dashboard;
@@ -2554,9 +2904,9 @@ function checkDemo() {
   need(problems, /^\[.+\]$/.test(config.demoPlaceholderText), 'demoPlaceholderText in config.js should be marked with square brackets');
   need(problems, sameData(world.sample.demo, defaults), 'the sample content should carry the demo settings in config.js');
 
-  // Requested at is filled in by Run demo and cleared by Stop demo
+  // Requested at cannot be typed in, and may be empty
   need(problems, at('requestedAt') && at('requestedAt').readOnly === true, 'demo.requestedAt should be read only');
-  need(problems, !constraintNamed(rulesOf(at('requestedAt')), 'required'), 'demo.requestedAt should be optional, because Stop demo clears it');
+  need(problems, !constraintNamed(rulesOf(at('requestedAt')), 'required'), 'demo.requestedAt should be optional');
 
   // The announcement text is optional
   need(problems, !constraintNamed(rulesOf(at('announcementText')), 'required'), 'demo.announcementText should be optional');
@@ -2578,42 +2928,9 @@ function checkDemo() {
   need(problems, constraintNamed(secondsRules, 'required'), 'demo.steps.seconds should be required');
   need(problems, constraintNamed(rulesOf(at('steps.screen')), 'required'), 'demo.steps.screen should be required');
 
-  // The two buttons: plain functions on the Test the screen page and nowhere else
-  const buttons = world.config.document.actions([], { schemaType: 'demo' });
-  if (buttons.length !== 2 || !buttons.every(button => typeof button === 'function')) {
-    return problems.concat('the Test the screen page should add two actions, written as plain functions');
-  }
-
-  function press(button, published, draft) {
-    globalThis.studioCalls = [];
-    const props = { id: 'demo', type: 'demo', published: published, draft: draft || null, onComplete: () => {} };
-    const state = button(props);
-    if (!state.disabled) state.onHandle();
-    return { state: state, calls: globalThis.studioCalls };
-  }
-
-  const run = buttons[0];
-  const stop = buttons[1];
-  const asked = '2026-06-01T12:00:00.000Z';
-  need(problems, run({ published: null, draft: null }).label === 'Run demo', 'the first Demo action should be labelled Run demo');
-  need(problems, stop({ published: null, draft: null }).label === 'Stop demo', 'the second Demo action should be labelled Stop demo');
-
-  // Run demo writes the time now and publishes
-  const before = Date.now();
-  const ran = press(run, null);
-  const after = Date.now();
-  const stamp = ran.calls[0] && ran.calls[0].patch && ran.calls[0].patch[0] && ran.calls[0].patch[0].set ? ran.calls[0].patch[0].set.requestedAt : '';
-  need(problems, ran.calls.length === 2 && JSON.stringify(Object.keys(ran.calls[0].patch[0].set)) === '["requestedAt"]' && ran.calls[1].publish === true, 'Run demo should set requestedAt and then publish');
-  need(problems, typeof stamp === 'string' && new Date(stamp).toISOString() === stamp && Date.parse(stamp) >= before && Date.parse(stamp) <= after, 'Run demo should set requestedAt to the time now, as new Date().toISOString() writes it');
-  need(problems, press(run, { requestedAt: asked }).state.disabled === false, 'Run demo should be on when a request is already published, so it can be run again');
-
-  // Stop demo clears it and publishes, and is off when there is nothing to clear
-  const stopped = press(stop, { requestedAt: asked });
-  need(problems, JSON.stringify(stopped.calls) === JSON.stringify([{ patch: [{ unset: ['requestedAt'] }] }, { publish: true }]), 'Stop demo should clear requestedAt and then publish');
-  need(problems, press(stop, null).state.disabled === true, 'Stop demo should be off when nothing is published yet');
-  need(problems, press(stop, { steps: [] }).state.disabled === true, 'Stop demo should be off when no demo has been asked for');
-  need(problems, press(stop, null, { requestedAt: asked }).state.disabled === false, 'Stop demo should be on when the draft has a request');
-  need(problems, press(stop, { requestedAt: asked }, { steps: [] }).state.disabled === false, 'Stop demo should be on when a request is published, even if the draft has none');
+  // Run demo and Stop demo are gone: the page has no buttons, and nothing else fills Requested at in
+  need(problems, world.config.document.actions([], { schemaType: 'demo' }).length === 0, 'the Test the screen page should add no actions. Run demo and Stop demo were taken out');
+  need(problems, !/\brunDemo\b|\bstopDemo\b|useRunDemo|useStopDemo/.test(world.actionsSource), 'actions.js should not have Run demo or Stop demo');
   return problems;
 }
 
@@ -3600,6 +3917,14 @@ async function main() {
     world.publishAll = await load(path.join(folder, 'publish-all.js'));
     world.publishAllTool = await load(path.join(folder, 'publish-all-tool.js'));
     world.teamInput = await load(path.join(folder, 'team-input.js'));
+    world.startHere = await load(path.join(folder, 'start-here.js'));
+    world.startHereParts = await load(path.join(folder, 'start-here-parts.js'));
+    world.screenRequests = await load(path.join(folder, 'screen-requests.js'));
+    world.dashboardAddress = await load(path.join(folder, 'dashboard-address.js'));
+    world.startHereSource = fs.readFileSync(path.join(here, 'start-here.js'), 'utf8');
+    world.startHerePartsSource = fs.readFileSync(path.join(here, 'start-here-parts.js'), 'utf8');
+    world.actionsSource = fs.readFileSync(path.join(here, 'actions.js'), 'utf8');
+    world.baseCss = fs.readFileSync(path.join(dashboardFolder, 'base.css'), 'utf8');
     world.sample = JSON.parse(fs.readFileSync(path.join(dashboardFolder, 'data', 'sample', 'content.json'), 'utf8'));
     world.seed = fs.readFileSync(path.join(here, '..', 'docs', 'seed', 'extra-events.ndjson'), 'utf8');
     world.placeSeed = fs.readFileSync(path.join(here, '..', 'docs', 'seed', 'places.ndjson'), 'utf8');
@@ -3629,6 +3954,9 @@ async function main() {
   check('Play announcements has its hidden field, its button and its Demo step', checkPlayAnnouncements);
   check('Run presentation test has its hidden field and its button', checkRunPresentationTest);
   check('the Preview buttons have their hidden field and the list the dashboard has, and each one writes its kind and the time', checkPreviewButtons);
+  check('the Start here page has its five blocks in order, a picture of the screen with the areas A to E, and five buttons', checkStartHere);
+  results.push({ name: 'the Start here buttons and the buttons beside Publish write the same request fields, through screen-requests.js', problems: await checkScreenRequests().catch(error => ['the check stopped: ' + error.message]) });
+  check('Next look now and Preview competition have their hidden request fields and starting values', checkNewRequests);
   check('Content source and the switch back time agree with dashboard/config.js, and the two buttons work', checkContentSource);
   check('Show connection status is a switch that starts off, in the Connection tab', checkConnectionStatus);
   check('a subteam has an optional list of first names, up to 24 of 12 characters, with no repeats', checkSubteamMembers);
@@ -3637,7 +3965,7 @@ async function main() {
   check('the themes and overlays in studio/themes.js are the ones in the dashboard registries', checkThemeLists);
   check('the Look page agrees with dashboard/config.js, needs a start and an end for each rule, and checks the time zone', checkTheme);
   check('the demo screens in studio/demo-screens.js are the ones in the dashboard registry', checkDemoScreens);
-  check('the Test the screen page agrees with dashboard/config.js, and Run demo and Stop demo do what they say', checkDemo);
+  check('the Test the screen page agrees with dashboard/config.js and has no buttons', checkDemo);
   check('an Events Calendar entry needs a title and a start date, and the seed file can be imported', checkExtraEvents);
   check('a calendar filter has a name, an action, title words, days, a calendar and dates, and needs at least one of them', checkCalendarFilters);
   check('a location has a name and a switch, a task has an optional contact and location, and the locations seed file can be imported', checkPlaces);

@@ -284,6 +284,11 @@ export const defaultSettings = {
   //                   previewSeconds, once, for a request that is less than demoWindowSeconds old and is not the one it
   //                   handled before (see below). Nothing is written to the settings.
   previewRequest: { kind: '', requestedAt: '' },
+  // The "Next look now" and "Preview competition" buttons on the Start here page in the Studio.
+  //   nextLookRequest            the last click of Next look now. requestedAt is the time it was clicked and is empty until it has been.
+  //   competitionPreviewRequest  the last click of Preview competition, the same shape.
+  nextLookRequest: { requestedAt: '' },
+  competitionPreviewRequest: { requestedAt: '' },
   countdown: {
     kickoffLabel: 'KICKOFF IN',
     kickoff: '2027-01-09T12:00',

@@ -1,17 +1,13 @@
-// Extra buttons in the menu beside Publish, for two pages.
+// Extra buttons in the menu beside Publish, for Dashboard Settings.
 //
 // Dashboard Settings has "Use sample content" and "Use production content".
 // Each sets Content source and publishes in one click, so the screen follows
 // within about 30 seconds.
 //
-// Test the screen has "Run demo" and "Stop demo". Run demo writes the time now into
-// Requested at and publishes, and the screen plays the demo within a few
-// seconds. Stop demo clears Requested at and publishes.
-//
-// Dashboard Settings also has one button for each hidden transition, "Play
-// desktop reveal" and "Play red eyes" (docs/hidden-transitions.md). Each writes
-// the kind and the time now into Last push (the Hidden tab) and publishes. The
-// screen plays it once, at its next page change or within 20 seconds.
+// It also has one button for each hidden transition, "Play desktop reveal" and
+// "Play red eyes" (docs/hidden-transitions.md). Each writes the kind and the time
+// now into Last push (the Hidden tab) and publishes. The screen plays it once, at
+// its next page change or within 20 seconds.
 //
 // Dashboard Settings has one more button after those, "Play announcements". It writes
 // the time now into announceRequest and publishes, and the screen plays every
@@ -26,7 +22,10 @@
 // screen holds that team, style or seasonal pack for 2 minutes without changing the settings
 // (docs/hidden-transitions.md).
 //
-// sanity.config.js adds each set to its own page and no other.
+// sanity.config.js adds them to that page and no other.
+//
+// The Start here page has Play announcement and Run presentation test buttons too. What
+// these buttons write is in screen-requests.js, which the page uses as well.
 //
 // A Studio action is a plain function that Studio calls with the document.
 // It gives back a label and what to do when it is clicked.
@@ -35,6 +34,7 @@ import { useEffect, useState } from 'react';
 import { useDocumentOperation } from 'sanity';
 import { hiddenTransitions } from './hidden-transitions.js';
 import { previews } from './previews.js';
+import { announceRequest, presentationTestRequest, hiddenRequest, previewRequest, sendWithOperations } from './screen-requests.js';
 
 // What the screen shows for a settings document, by the same rule as
 // pickSource in dashboard/core/source.js: sample, until the switch back time
@@ -95,45 +95,6 @@ export function useProductionContentAction(props) {
 }
 useProductionContentAction.action = 'useProductionContent';
 
-// The Test the screen page's two buttons (docs/demo.md). Neither keeps any state: Run demo
-// is always allowed, so a second click starts the demo again, and Stop demo is
-// off only when there is no request to clear.
-
-export function useRunDemoAction(props) {
-  const { patch, publish } = useDocumentOperation(props.id, props.type);
-
-  return {
-    label: 'Run demo',
-    title: 'Play the demo on the screen now. It plays once, then the screen goes back to normal.',
-    disabled: Boolean(patch.disabled),
-    onHandle: () => {
-      patch.execute([{ set: { requestedAt: new Date().toISOString() } }]);
-      publish.execute();
-      props.onComplete();
-    },
-  };
-}
-useRunDemoAction.action = 'runDemo';
-
-export function useStopDemoAction(props) {
-  const { patch, publish } = useDocumentOperation(props.id, props.type);
-
-  // A request that is in the draft or in the published page is something to clear
-  const asked = Boolean((props.draft && props.draft.requestedAt) || (props.published && props.published.requestedAt));
-
-  return {
-    label: 'Stop demo',
-    title: asked ? 'Stop the demo on the screen now.' : 'No demo has been asked for.',
-    disabled: !asked || Boolean(patch.disabled),
-    onHandle: () => {
-      patch.execute([{ unset: ['requestedAt'] }]);
-      publish.execute();
-      props.onComplete();
-    },
-  };
-}
-useStopDemoAction.action = 'stopDemo';
-
 // The Hidden tab's buttons, one for each transition in hidden-transitions.js, so
 // adding a transition there adds its button. kind is { id, name, chanceField }.
 // A button is always allowed, so a second click plays it again. The screen only
@@ -149,8 +110,7 @@ function makePlayHiddenAction(kind) {
       title: label + ' on the screen. It plays once, at the next page change or within 20 seconds, and only if Allow hidden transitions is on.',
       disabled: Boolean(patch.disabled),
       onHandle: () => {
-        patch.execute([{ set: { hiddenRequest: { kind: kind.id, requestedAt: new Date().toISOString() } } }]);
-        publish.execute();
+        sendWithOperations(patch, publish, hiddenRequest(kind.id));
         props.onComplete();
       },
     };
@@ -174,8 +134,7 @@ export function usePlayAnnouncementsAction(props) {
     title: 'Play every announcement that is switched on, one after another, on the screen now. Times and days are ignored. Nothing plays if none is switched on.',
     disabled: Boolean(patch.disabled),
     onHandle: () => {
-      patch.execute([{ set: { announceRequest: { requestedAt: new Date().toISOString() } } }]);
-      publish.execute();
+      sendWithOperations(patch, publish, announceRequest());
       props.onComplete();
     },
   };
@@ -195,8 +154,7 @@ export function useRunPresentationTestAction(props) {
     title: 'Run the sample talk on the screen now, with six sample slides. Press the clicker to begin. It needs no internet and only runs if Run presentations is on.',
     disabled: Boolean(patch.disabled),
     onHandle: () => {
-      patch.execute([{ set: { presentationTestRequest: { requestedAt: new Date().toISOString() } } }]);
-      publish.execute();
+      sendWithOperations(patch, publish, presentationTestRequest());
       props.onComplete();
     },
   };
@@ -219,8 +177,7 @@ function makePreviewAction(kind) {
       title: 'Show ' + kind.shows + ' on the screen for 2 minutes, then go back to the saved settings. No setting is changed. It starts within about 20 seconds, and waits for an alert, a talk or night mode to be over.',
       disabled: Boolean(patch.disabled),
       onHandle: () => {
-        patch.execute([{ set: { previewRequest: { kind: kind.id, requestedAt: new Date().toISOString() } } }]);
-        publish.execute();
+        sendWithOperations(patch, publish, previewRequest(kind.id));
         props.onComplete();
       },
     };

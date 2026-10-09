@@ -115,7 +115,19 @@ export function fixSettingValues(settings) {
   settings.presentationTestRequest = tidyTestRequest(settings.presentationTestRequest);
   // The last click of a Preview button (hidden from editors): a kind and a time, or empty
   settings.previewRequest = tidyPreviewRequest(settings.previewRequest);
+  // The last click of Next look now and of Preview competition (Start here page, hidden from editors): a time, or empty
+  settings.nextLookRequest = tidyRequestTime(settings.nextLookRequest);
+  settings.competitionPreviewRequest = tidyRequestTime(settings.competitionPreviewRequest);
   settings.crt = tidyGlitch(settings.crt);
+}
+
+// A request that is only a time, always complete: { requestedAt }. A time that is not a time
+// is empty, which is no request.
+function tidyRequestTime(raw) {
+  const source = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+  const requestedAt = typeof source.requestedAt === 'string' && !isNaN(Date.parse(source.requestedAt)) ? source.requestedAt : '';
+
+  return { requestedAt: requestedAt };
 }
 
 // A number in its range. For a limit with a shortest, 0 stays 0 (never) and

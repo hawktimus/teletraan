@@ -11,8 +11,11 @@ TV. The dashboard reads what they publish.
     sanity.cli.js         settings for the command line tool
     structure.js          the sidebar, one list with a line for each entry, so changing the order means moving a line (Events Calendar is the list for events not on BAND)
     start-here.js         the Start here page, the first line of the sidebar, written as a plain function
+    start-here-parts.js   the picture of the screen, the five buttons and their words, with no Studio in it, so node can test them
+    screen-requests.js    what the request buttons write (Play announcement, Run presentation test, Next look now, Preview competition, the Play and Preview buttons), used by actions.js and the Start here page
+    dashboard-address.js  the address that Preview the screen opens on the Start here page, with ?sample=1 for the sample content
     calendars-view.js     the Calendars page under Events, written as a plain function
-    actions.js            the two content source buttons, the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons on Dashboard Settings, and Run demo and Stop demo on Test the screen
+    actions.js            the two content source buttons, the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons on Dashboard Settings
     themes.js             the list of themes and overlays, a copy of the dashboard's
     demo-screens.js       the list of screens a demo can show, a copy of the dashboard's
     hidden-transitions.js the list of hidden transitions, a copy of the dashboard's
@@ -366,14 +369,13 @@ list them. It starts as America/New_York.
 
 The Test the screen page (`schemas/demo.js`) is a document that exists once, like Dashboard
 Settings and Look. It has Requested at (read only), the Steps and the Demo
-announcement text. Its menu, beside Publish, has two buttons from `actions.js`:
-Run demo writes the time now into Requested at and publishes, and Stop demo clears
-it and publishes. Both are plain functions that use `useDocumentOperation`.
-`sanity.config.js` gives each page its own buttons. The screen reads the page with
-the rest of the content and plays the demo within a few seconds
-(`dashboard/core/demo.js`). Nothing needs setting up for it beyond the steps above.
-Run `npm run deploy` after you change `schemas/demo.js` or `demo-screens.js`, so the
-editors see the change. docs/demo.md explains how it works and how to add a screen.
+announcement text. It has no buttons: Run demo and Stop demo were taken out, and the
+Start here page has the buttons that try the screen. The type and its fields stay so
+that the documents already in Studio open and publish as they were. The screen reads
+the page with the rest of the content and plays a demo when Requested at is recent
+(`dashboard/core/demo.js`), but nothing in Studio sets it now. Run `npm run deploy`
+after you change `schemas/demo.js` or `demo-screens.js`, so the editors see the
+change. docs/demo.md explains how it works and how to add a screen.
 
 The list of screens comes from `demo-screens.js`. The Studio is built on its own and
 cannot read the dashboard folder, so `demo-screens.js` is a copy of the ids and
@@ -402,7 +404,7 @@ has a description, the starting values match dashboard/config.js, the two
 content source buttons are on the Dashboard Settings page and do what they
 say, the Look page agrees with `defaultThemeSettings` and needs a start and
 an end for every rule, `themes.js` matches the dashboard's registries, the Test the screen
-page agrees with `defaultDemo`, has Run demo and Stop demo, and `demo-screens.js`
+page agrees with `defaultDemo` and has no buttons, and `demo-screens.js`
 matches the dashboard's list of demo screens, the Hidden tab agrees with
 `defaultSettings`, has a working Play button for each hidden transition, and
 `hidden-transitions.js` matches the dashboard's list, Play announcements has its hidden

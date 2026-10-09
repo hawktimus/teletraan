@@ -4102,6 +4102,36 @@ test('the last click of Play announcements is kept as a time, and anything that 
   assert.deepEqual(stored.announcements, live.config.defaultSettings.announcements, 'a page with no announcements list still has the starting ones');
 });
 
+test('the last click of Next look now and of Preview competition is kept as a time, and anything that is not one is empty, through all three paths', () => {
+  const defaults = live.config.defaultSettings;
+  const request = { requestedAt: '2026-10-05T12:00:00.000Z' };
+
+  ['nextLookRequest', 'competitionPreviewRequest'].forEach(name => {
+    assert.deepEqual(defaults[name], { requestedAt: '' }, name);
+
+    // a published page that lacks it gets the starting value
+    settingsThrough({}).forEach(settings => assert.deepEqual(settings[name], { requestedAt: '' }, name));
+
+    settingsThrough({ [name]: request }).forEach(settings => assert.deepEqual(settings[name], request, name));
+    settingsThrough({ [name]: { requestedAt: 'whenever' } }).forEach(settings => assert.deepEqual(settings[name], { requestedAt: '' }, name));
+    [undefined, null, '', request.requestedAt, 12, [], [request]].forEach(value => {
+      settingsThrough({ [name]: value }).forEach(settings => assert.deepEqual(settings[name], { requestedAt: '' }, name + ' ' + JSON.stringify(value)));
+    });
+
+    // only the time comes through from a stored page, and the document's own names do not
+    const stored = normalizeContent({ settings: document('dashboardSettings', 'dashboardSettings', { [name]: Object.assign({ _type: 'x', extra: 1 }, request) }) }).settings;
+    assert.deepEqual(stored[name], request, name);
+
+    // the sample carries no request
+    const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+    assert.ok(!(name in raw.settings), name + ' is never part of the sample');
+    assert.deepEqual(normalizeSample(raw).settings[name], { requestedAt: '' }, name);
+  });
+
+  // one request does not touch the other
+  settingsThrough({ nextLookRequest: request }).forEach(settings => assert.deepEqual(settings.competitionPreviewRequest, { requestedAt: '' }));
+});
+
 // The names of the settings in the Teams tab
 const teamSettingNames = ['teamMode', 'alternateMinutes'];
 
