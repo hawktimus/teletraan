@@ -38,10 +38,20 @@ export function shapesFor(style) {
   return isStyle(style) ? shapeOf[style] : '';
 }
 
+// A preview (core/preview.js) holds a style on the screen for a while without writing the
+// setting. until is a time in milliseconds. A new call replaces the one before, and a
+// name that is not a style ends it.
+let previewed = null; // { style, until }
+
+export function previewStyle(style, until) {
+  previewed = isStyle(style) && typeof until === 'number' && isFinite(until) ? { style: style, until: until } : null;
+}
+
 // saved is Style from Dashboard Settings, and asked is ?style= in the address. The
 // address wins, for this page only, like the other switches. Anything that is not a
-// style is ignored.
-export function chooseStyle(saved, asked) {
+// style is ignored. A preview that has time left wins over both. now is a Date.
+export function chooseStyle(saved, asked, now = new Date()) {
+  if (previewed && now.getTime() < previewed.until) return previewed.style;
   if (isStyle(asked)) return asked;
   if (isStyle(saved)) return saved;
   return defaultSettings.style;

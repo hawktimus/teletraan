@@ -20,6 +20,8 @@ Dashboard Settings has a button of its own for the presentation mode, **Run
 presentation test**, in the same menu as Play announcements. It starts the sample
 talk with six sample slides, so you can try the clicker without a booked talk. It
 is not a demo step and does not use this page. docs/hidden-transitions.md explains it.
+The five Preview buttons that follow it show a team, a style or the next seasonal
+pack for 2 minutes, and are explained there too ("Preview a look").
 
 ## What the page holds
 

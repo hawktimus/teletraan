@@ -16,7 +16,7 @@
 // Nothing here moves anything. docs/layouts.md explains the layouts.
 
 import { barCssVariables, blocksOf, chooseLayout, cssVariables, defaultLayout, drawnFor, everyBlock, kitMarkup, layoutNow, layoutOf, mustReload } from './layout.js';
-import { layoutFor, shapesFor, shapesNow } from './style.js';
+import { layoutFor, shapesFor, shapesNow, styleNow } from './style.js';
 
 // address is ?theme= from the address bar, or null. readTheme() gives the Theme
 // document as it was saved the last time the content was read from Sanity, or
@@ -161,8 +161,8 @@ function savedStorage() {
 // new page would not bring it back. theme-apply.js asks again at its next
 // page change and once a minute. When the layout is the same, or the page
 // cannot safely reload (core/layout.js, mustReload), it returns false and the
-// colours go on as usual. busy() is true while something has the screen. A look with
-// no style is the original style, which leaves the layout to the theme.
+// colours go on as usual, with the style the page already has. busy() is true while
+// something has the screen. A look with no style is the original style, which leaves the layout to the theme.
 export function holdForLayout(look, busy) {
   const wanted = drawnFor(layoutFor(look.style, layoutOf(look.theme)), shapesFor(look.style));
   const onPage = drawnFor(layoutNow(), shapesNow());
@@ -173,7 +173,11 @@ export function holdForLayout(look, busy) {
     return false;
   }
   if (busy && busy()) return true;
-  if (!mustReload(onPage, wanted, storage)) return false;
+  if (!mustReload(onPage, wanted, storage)) {
+    // The page stays as it was drawn, so the style stays too: a style would not fit regions drawn for another layout
+    look.style = styleNow();
+    return false;
+  }
 
   window.location.reload();
   return true;

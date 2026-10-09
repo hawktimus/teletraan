@@ -21,11 +21,13 @@
 // setting, or ?style=, and it waits for the same moment as the theme. This file
 // only carries it: onLook puts data-style on the page, in the same step as the
 // classes, and a style with another layout reloads the page like a theme does.
+// A preview (core/preview.js) holds a style or a pack through the same look, so it goes on
+// at the same moment.
 
 import * as frame from '../frame.js';
 import { themes } from '../themes/registry.js';
 import { overlays } from '../themes/overlays/registry.js';
-import { isKnownOverlay, isKnownTheme, resolveTheme } from './theme.js';
+import { isKnownOverlay, isKnownTheme, previewedPack, resolveTheme } from './theme.js';
 import { chooseStyle } from './style.js';
 
 const page = document.documentElement;
@@ -79,6 +81,7 @@ function wantedLook() {
     if (isKnownTheme(asked.theme)) look.theme = asked.theme;
     if (isKnownOverlay(asked.overlay)) look.overlay = asked.overlay;
     if (asked.overlay === 'none') look.overlay = '';
+    look.overlay = previewedPack() || look.overlay; // a preview wins over the address, like the style
     look.style = chooseStyle(content.settings ? content.settings.style : null, asked.style);
     return look;
   } catch (error) {

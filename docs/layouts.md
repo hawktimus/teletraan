@@ -46,9 +46,12 @@ reached), puts `data-style` on the html element, works out the theme as
 the address win, like they do for colours. When
 there is nothing saved yet, or the saved copy cannot be read, the screen starts
 in the standard layout. While the screen shows the sample content there is no saved
-copy to read (the sample is a file), so a sample whose theme has the sidebar layout
-reloads once and then stays in the standard layout with the new colours. Use
-`?theme=` to look at a layout with the sample.
+copy to read (the sample is a file), so a sample whose theme has the sidebar layout, or
+whose style is Cybertron or Minimal, reloads once and then stays in the standard layout
+with the new colours and the style Original. Use `?theme=` and `?style=` to look at a
+layout with the sample. With `?team=` and `?overlay=` as well, every style, team and
+seasonal pack can be looked at with the sample content, which has both teams. The same
+holds for any page that cannot reload: it keeps the style it was drawn for.
 
 When the theme and the style that should be on screen give another layout than
 the page has, for example an editor switches the theme or the style in Studio,
@@ -670,7 +673,10 @@ left end of the name block, and the ticker's tag goes to the right end. Its fram
 and the pages in them are not turned: they keep their shapes and read from the left.
 The sidebar layout is not mirrored. The zones of a seasonal pack (the front layer)
 were measured on the layout as it is not mirrored, so they are not drawn while it is
-mirrored.
+mirrored. A test reads the stylesheets of the standard layout and fails for any flex row
+that `styles/original.css` does not turn, unless the test names it as a row that keeps its
+order, with the reason: the letters of the name, the time, the TEAM plate, the date and the
+weather, the word on the ticker's tag, and the lines of the countdown.
 
 ### Styles
 
@@ -704,6 +710,15 @@ team gives `HN`, and they change with the team at the same moment as the colors.
 is 20 px, which is under the 44 px rule. It is the one text that may be, and the list
 is in `tools/test-layouts.mjs`. A mirrored screen has the same frames, so the same
 rivets and ids. Alerts and announcements have neither.
+
+`tools/test-layouts.mjs` has one test for each style. It loads the stylesheet of the style
+with the css it overrides, which is every stylesheet `index.html` links apart from the other
+two styles, and the stylesheet of every panel. It fails when a custom property that a rule
+for that style reads has no value in those files, in a script (the numbers of the layouts,
+and the few names that a script writes) or in a fallback, and when a text is under 44 px.
+The text that may be is the explicit list: the stamped plate id, 20 px, and the war clock
+labels, 20 and 24 px. A rule for another style, or for a layout the style never has, is not
+looked at.
 
 ### Frames
 
@@ -1056,9 +1071,12 @@ those away while you look: `http://localhost:8080/dashboard/?theme=neon-prime&ni
 Without `?theme=` the screen follows the Theme page, and reloads once when the
 theme with another layout comes on. For the bar layout use `?style=cybertron` or
 `?style=minimal`, for example `http://localhost:8080/dashboard/?style=minimal&night=off&hidden=off`.
-To look at the mirror, type `document.documentElement.classList.add('mirrored')` in
-the browser's console, and take the class off again with `remove`. It is the class the
-Teams setting puts on the page for a team with Mirror on.
+To look at the mirror, add `?team=nova` to the address, which shows the Nova team with
+its mirror whatever Team mode says, with the sample content or with the team documents.
+Or type `document.documentElement.classList.add('mirrored')` in the browser's console,
+and take the class off again with `remove`. It is the class the Teams setting puts on
+the page for a team with Mirror on. The Preview buttons on Dashboard Settings show a
+style or a team on the real screen for 2 minutes (docs/hidden-transitions.md).
 
 To check the frames of the bar layout by hand, open `?style=cybertron&night=off&hidden=off` and look
 at each of them, then add the class `mirrored` as above and look again:

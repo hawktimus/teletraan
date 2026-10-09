@@ -7,6 +7,8 @@
 //   speed=very-slow|slow|normal|fast  how fast things move and how long panels stay
 //   style=original|cybertron|minimal  the style of the whole screen (Style in Dashboard Settings), for this page only. cybertron
 //                                     and minimal have the bar layout (core/layout.js) whatever the theme says
+//   team=prime|nova|alternate         the team on the screen (Team mode in Dashboard Settings), for this page only. A team that
+//                                     the Studio has no document for is the built-in Prime
 //   look=polished|flat|plain          how much polish the frames have (Look in Dashboard Settings). flat is
 //                                     the flat finish with no glint, plain also has no screws and no // in the
 //                                     panel headers. finish= and glint= below win over it
@@ -43,8 +45,9 @@ import { overlayShown, ruleExtras } from './core/theme.js';
 import { holdForLayout, startLayout } from './core/layout-apply.js';
 import { decorationLayers, hasKit, layoutNow } from './core/layout.js';
 import { applyStyle, startStyle } from './core/style.js';
+import { resumePreview } from './core/preview.js';
 import { loadPanel, mountPanel, updatePanel } from './core/panels.js';
-import { changeTeamNow, onTeamChange, useTeams } from './core/teams.js';
+import { askForTeam, changeTeamNow, onTeamChange, useTeams } from './core/teams.js';
 import { showPagesNow, startRotation, startTicker, startTogether } from './core/schedule.js';
 import { startTakeovers, runAnnouncement, takeoverRunning } from './core/takeover.js';
 
@@ -79,7 +82,10 @@ async function run() {
   // The style and the layout go on first of all, so that no region, area or panel is ever
   // drawn in the wrong place. The layout is the one the last saved content chose: the
   // theme's, or the one the style forces (Cybertron and Minimal), or ?theme= and ?style=.
-  // A theme or style with another layout reloads the page later.
+  // A theme or style with another layout reloads the page later. A preview that was on at that
+  // reload goes on first, so the style and the layout are the ones it holds.
+  resumeSavedPreview();
+  askForTeam(params.get('team'));
   const style = startStyle(params.get('style'), savedStyle);
   startLayout(params.get('theme'), savedTheme, document.documentElement, style);
 
@@ -159,6 +165,9 @@ async function run() {
       // The Run presentation test button in the Studio. After the talk screen, which it starts the sample talk on
       startOptional('./core/presentation-test-run.js', module => module.startPresentationTestRunner(getContent));
 
+      // The Preview buttons in the Studio. After the ones it asks about
+      startOptional('./core/preview-run.js', module => module.startPreviewRunner(getContent));
+
       // The team on the screen, which in Alternate mode changes with the clock (core/teams.js)
       startOptional('./core/team-run.js', module => module.startTeams(getContent));
     }
@@ -176,6 +185,15 @@ async function run() {
     startDemo();
   } catch (error) {
     showFatal(error);
+  }
+}
+
+// A preview is kept in localStorage while it is on (core/preview.js). Asking for the storage can throw.
+function resumeSavedPreview() {
+  try {
+    resumePreview(window.localStorage);
+  } catch (error) {
+    console.error('Could not look for a preview that was on', error);
   }
 }
 

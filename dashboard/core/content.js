@@ -9,6 +9,7 @@ import { tidyDemo } from './demo.js';
 import { chanceFields, tidyHiddenRequest } from './hidden.js';
 import { tidyAnnounceRequest } from './announce.js';
 import { tidyTestRequest } from './presentation-test.js';
+import { tidyPreviewRequest } from './preview.js';
 import { fetchResult, liveEventsUrl, normalizeContent, normalizeSample } from './sanity.js';
 import { reasons } from './connection.js';
 import { tidyClockTime } from './night.js';
@@ -112,6 +113,8 @@ export function fixSettingValues(settings) {
   settings.announceRequest = tidyAnnounceRequest(settings.announceRequest);
   // The last click of Run presentation test (Presentations tab, hidden from editors): a time, or empty
   settings.presentationTestRequest = tidyTestRequest(settings.presentationTestRequest);
+  // The last click of a Preview button (hidden from editors): a kind and a time, or empty
+  settings.previewRequest = tidyPreviewRequest(settings.previewRequest);
   settings.crt = tidyGlitch(settings.crt);
 }
 

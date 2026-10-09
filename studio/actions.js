@@ -17,9 +17,14 @@
 // the time now into announceRequest and publishes, and the screen plays every
 // announcement that is switched on, once, one after another (docs/hidden-transitions.md).
 //
-// Dashboard Settings ends with "Run presentation test". It writes the time now into
+// Dashboard Settings has "Run presentation test" after those. It writes the time now into
 // presentationTestRequest and publishes, and the screen runs the sample talk with its six
 // sample slides (docs/hidden-transitions.md).
+//
+// Dashboard Settings ends with five Preview buttons: Prime, Nova, Cybertron, Minimal and next
+// pack. Each writes its kind and the time now into previewRequest and publishes, and the
+// screen holds that team, style or seasonal pack for 2 minutes without changing the settings
+// (docs/hidden-transitions.md).
 //
 // sanity.config.js adds each set to its own page and no other.
 //
@@ -29,6 +34,7 @@
 import { useEffect, useState } from 'react';
 import { useDocumentOperation } from 'sanity';
 import { hiddenTransitions } from './hidden-transitions.js';
+import { previews } from './previews.js';
 
 // What the screen shows for a settings document, by the same rule as
 // pickSource in dashboard/core/source.js: sample, until the switch back time
@@ -197,3 +203,31 @@ export function useRunPresentationTestAction(props) {
 }
 // Studio and check-schemas.mjs tell actions apart by this name
 useRunPresentationTestAction.action = 'runPresentationTest';
+
+// The Preview buttons, one for each entry in previews.js, so adding a preview there adds its
+// button. They are always allowed, so a second click starts the preview again. The screen
+// only starts a request that is a minute old at most and that it has not started before.
+// Nothing is written to the settings: the screen holds the look in memory for 2 minutes.
+function makePreviewAction(kind) {
+  const label = 'Preview ' + kind.name;
+
+  function usePreviewAction(props) {
+    const { patch, publish } = useDocumentOperation(props.id, props.type);
+
+    return {
+      label: label,
+      title: 'Show ' + kind.shows + ' on the screen for 2 minutes, then go back to the saved settings. No setting is changed. It starts within about 20 seconds, and waits for an alert, a talk or night mode to be over.',
+      disabled: Boolean(patch.disabled),
+      onHandle: () => {
+        patch.execute([{ set: { previewRequest: { kind: kind.id, requestedAt: new Date().toISOString() } } }]);
+        publish.execute();
+        props.onComplete();
+      },
+    };
+  }
+  // Studio and check-schemas.mjs tell actions apart by this name: previewPrime, previewNextPack
+  usePreviewAction.action = 'preview' + kind.id.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('');
+  return usePreviewAction;
+}
+
+export const previewActions = previews.map(makePreviewAction);

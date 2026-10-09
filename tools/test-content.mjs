@@ -74,6 +74,7 @@ async function loadCopy(name, changeConfig) {
     customPanel: await import(base + 'panels/custom/custom.js'),
     tickerPanel: await import(base + 'panels/ticker/ticker.js'),
     leadership: await import(base + 'core/leadership.js'),
+    layout: await import(base + 'core/layout.js'),
     look: await import(base + 'core/look.js'),
     marks: await import(base + 'core/marks.js'),
     packExtras: await import(base + 'core/pack-extras.js'),
@@ -82,8 +83,10 @@ async function loadCopy(name, changeConfig) {
     portrait: await import(base + 'core/portrait.js'),
     presentation: await import(base + 'core/presentation.js'),
     roster: await import(base + 'core/roster.js'),
+    overlays: await import(base + 'themes/overlays/registry.js'),
     sanity: await import(base + 'core/sanity.js'),
     source: await import(base + 'core/source.js'),
+    style: await import(base + 'core/style.js'),
     text: await import(base + 'core/text.js'),
     theme: await import(base + 'core/theme.js'),
     teams: await import(base + 'core/teams.js'),
@@ -4163,6 +4166,36 @@ test('the last click of Run presentation test is kept as a time, and anything th
   assert.deepEqual([stored.presentationsEnabled, stored.noShowMinutes, stored.graceMinutes], [true, 5, 5]);
 });
 
+test('the last click of a Preview button is kept as a kind and a time, and anything that is not one is empty, through all three paths', () => {
+  const defaults = live.config.defaultSettings;
+  assert.deepEqual(defaults.previewRequest, { kind: '', requestedAt: '' });
+
+  // a published page that lacks it gets the starting value
+  settingsThrough({}).forEach(settings => assert.deepEqual(settings.previewRequest, { kind: '', requestedAt: '' }));
+
+  // the kind has to be one in the registry, and the time has to be a time
+  const request = { kind: 'next-pack', requestedAt: '2026-10-05T12:00:00.000Z' };
+  settingsThrough({ previewRequest: request }).forEach(settings => assert.deepEqual(settings.previewRequest, request));
+  ['prime', 'nova', 'cybertron', 'minimal'].forEach(kind => {
+    settingsThrough({ previewRequest: { kind: kind, requestedAt: request.requestedAt } }).forEach(settings => assert.equal(settings.previewRequest.kind, kind));
+  });
+  settingsThrough({ previewRequest: { kind: 'nova', requestedAt: 'whenever' } }).forEach(settings => assert.deepEqual(settings.previewRequest, { kind: 'nova', requestedAt: '' }));
+  settingsThrough({ previewRequest: { kind: 'neon', requestedAt: request.requestedAt } }).forEach(settings => assert.deepEqual(settings.previewRequest, { kind: '', requestedAt: request.requestedAt }));
+  [undefined, null, '', 'nova', 12, [], [request]].forEach(value => {
+    settingsThrough({ previewRequest: value }).forEach(settings => assert.deepEqual(settings.previewRequest, { kind: '', requestedAt: '' }, JSON.stringify(value)));
+  });
+
+  // only the two fields come through from a stored page, and the document's own names do not
+  const stored = normalizeContent({ settings: document('dashboardSettings', 'dashboardSettings', { previewRequest: Object.assign({ _type: 'x', extra: 1 }, request) }) }).settings;
+  assert.deepEqual(stored.previewRequest, request);
+
+  // it does not touch the style or the Teams settings, and the sample carries no request
+  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  assert.ok(!('previewRequest' in raw.settings), 'a request is never part of the sample');
+  assert.deepEqual(normalizeSample(raw).settings.previewRequest, { kind: '', requestedAt: '' });
+  assert.deepEqual([stored.style, stored.teamMode, stored.alternateMinutes], ['original', 'prime', 5]);
+});
+
 test('photos are read from Sanity with the rest of the content, and nothing reads a photos.json any more', () => {
   const code = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
   const scripts = [];
@@ -6772,6 +6805,59 @@ test('with no team documents the screen is the starting Prime: its colors, its n
   // a screen with no team documents shows the items of no team, and has none of the other team's
   assert.equal(activeTeams().length, 1);
   assert.deepEqual(visibleItems([{ title: '[1]' }, { title: '[2]', team: 'nova' }, { title: '[3]', team: 'prime' }], today).map(item => item.title), ['[1]', '[3]']);
+});
+
+test('the sample content has the two starting teams, and every style with every team and every seasonal pack can be chosen from it', () => {
+  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const sample = normalizeSample(raw);
+
+  // the same two teams as docs/seed/teams.ndjson, cleaned the same way as the editors' teams
+  assert.deepEqual(sample.teams, startingTeams());
+  assert.deepEqual(sample.teams.map(team => [team.code, team.number, team.mirror]), [['prime', '3229', false], ['nova', '3230', true]]);
+  assert.deepEqual(Object.assign({}, sample.teams[0], { builtIn: undefined }), Object.assign({}, live.config.primeTeam, { builtIn: undefined }), 'the sample Prime is the built-in Prime');
+  assert.ok(live.config.styles.includes(sample.settings.style) && live.config.teamModes.includes(sample.settings.teamMode), 'the sample settings pick a style and a team mode');
+  assert.deepEqual([sample.settings.style, sample.settings.teamMode], ['original', 'prime'], 'and show Prime in the Original style, as the screen always has');
+
+  // the sample's own rules for the seasonal packs are for packs that exist
+  const sampleRules = sample.theme.schedule.filter(rule => rule.kind === 'overlay');
+  assert.ok(sampleRules.length >= 2 && sampleRules.every(rule => live.theme.isKnownOverlay(rule.overlay) && /^\[.*\]$/.test(rule.name)));
+
+  // every combination: the style from the setting, the team from Team mode and the pack from Use now, as the sample is read
+  const packs = live.overlays.overlays.filter(overlay => overlay.decorations === true).map(overlay => overlay.id);
+  assert.equal(packs.length, 7);
+  let combinations = 0;
+  live.config.styles.forEach(style => {
+    ['prime', 'nova'].forEach(mode => {
+      packs.forEach(pack => {
+        const settings = Object.assign({}, sample.settings, { style: style, teamMode: mode });
+        const theme = Object.assign({}, sample.theme, { useNow: { theme: '', overlay: pack, until: '' } });
+        const team = teamsModule.chooseTeam(sample.teams, settings.teamMode, settings.alternateMinutes, today);
+        const where = style + ', ' + mode + ', ' + pack;
+
+        assert.equal(live.style.chooseStyle(settings.style, null), style, where);
+        assert.deepEqual([team.code, team.mirror], [mode, mode === 'nova'], where);
+        assert.equal(live.theme.resolveTheme(theme, today).overlay, pack, where);
+        assert.equal(live.layout.chooseLayout(theme, null, today, style), style === 'original' ? 'standard' : 'bar', where);
+        combinations += 1;
+      });
+    });
+  });
+  assert.equal(combinations, 42);
+
+  // and the team goes on the screen from the sample: Nova takes its name, its number and its mirror, and Prime comes back
+  const shown = mode => Object.assign({}, sample, { settings: Object.assign({}, sample.settings, { teamMode: mode }) });
+  try {
+    teamsModule.useTeams(shown('nova'), today);
+    teamsModule.changeTeamNow();
+    assert.equal(teamsModule.currentTeam().code, 'nova');
+    assert.deepEqual([teamsModule.teamShown(shown('nova')).name, teamsModule.teamShown(shown('nova')).number], ['HAWKTIMUS NOVA', '3230']);
+    teamsModule.useTeams(shown('prime'), today);
+    teamsModule.changeTeamNow();
+    assert.deepEqual([teamsModule.currentTeam().code, teamsModule.teamShown(shown('prime')).number], ['prime', '3229']);
+  } finally {
+    teamsModule.useTeams(withDefaults(null), today);
+    teamsModule.changeTeamNow();
+  }
 });
 
 // The ticker prefix of a seasonal pack (core/pack-extras.js, panels/ticker). The rule on the Theme page and the

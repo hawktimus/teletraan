@@ -2064,6 +2064,46 @@ test('a style that gives another layout than the page has reloads once, and two 
   });
 });
 
+test('when the page cannot reload for the layout a style needs, the look goes on with the style the page has, so no style is put on regions drawn for another layout', async () => {
+  let reloads = 0;
+  const store = fakeStorage();
+  const window = { sessionStorage: store, location: { reload: () => { reloads += 1; } } };
+  const broken = { get sessionStorage() { throw new Error('no storage'); }, location: { reload: () => { reloads += 1; } } };
+  const look = style => ({ theme: 'hawktimus', overlay: '', style: style });
+
+  // a page that started in Original and standard: the sample content says Cybertron, and the page has nothing saved to start from
+  await withGlobals({ window: window, document: pageWith('standard') }, () => {
+    const first = look('cybertron');
+    assert.equal(apply.holdForLayout(first, () => false), true, 'it reloads once');
+    assert.equal(first.style, 'cybertron', 'and the look is not changed while it does');
+    const second = look('cybertron');
+    assert.equal(apply.holdForLayout(second, () => false), false, 'it comes back in the standard layout, with the colours going on');
+    assert.equal(second.style, 'original', 'but the style is the one the page has');
+    assert.equal(reloads, 1);
+  });
+
+  // storage that cannot be used never reloads, and the style stays the page\'s
+  await withGlobals({ window: broken, document: pageWith('standard') }, () => {
+    const minimal = look('minimal');
+    assert.equal(apply.holdForLayout(minimal), false);
+    assert.equal(minimal.style, 'original');
+  });
+
+  // a page drawn for Minimal keeps Minimal when it cannot reload to go back to Original
+  await withGlobals({ window: broken, document: { documentElement: { dataset: { layout: 'bar', shapes: 'minimal', style: 'minimal' } } } }, () => {
+    const back = look('original');
+    assert.equal(apply.holdForLayout(back), false);
+    assert.equal(back.style, 'minimal');
+  });
+
+  // a look whose layout is the page's is left alone
+  await withGlobals({ window: window, document: pageWith('bar') }, () => {
+    const fits = look('cybertron');
+    assert.equal(apply.holdForLayout(fits), false);
+    assert.equal(fits.style, 'cybertron');
+  });
+});
+
 test('theme-apply.js carries the style in the look and waits for the page change with it, and index.html starts in Original', () => {
   const code = read('dashboard/core/theme-apply.js');
   assert.ok(code.includes("import { chooseStyle } from './style.js';"));
@@ -2607,6 +2647,235 @@ test('the three style files each set their own custom properties for their own s
     (withoutComments(read('dashboard/' + file)).match(/var\(--style-[a-z-]+/g) || []).forEach(text => assert.ok(known.has(text.slice(4)), file + ' reads ' + text.slice(4) + ', which no style sets'));
   });
   assert.ok(/--team-neon: #35f0ff;/.test(read('dashboard/teams.css')), 'the team neon the styles use is set in teams.css');
+});
+
+// The stylesheets of one style, each loaded with the css it overrides: the ones index.html links apart from the other two
+// style files, and the stylesheet of every panel. Every custom property that the style's rules read has a value, and no text
+// is below 44 px except the explicit list. A rule counts when it can apply to the style: not one for another style, not one for
+// the bar layout in Original (which has the layout of its theme), and not one for the sidebar layout in the styles that have the bar layout.
+
+function stylesheetsOf(style) {
+  const linked = Array.from(read('dashboard/index.html').matchAll(/<link rel="stylesheet" href="([^"]+)">/g)).map(match => match[1])
+    .filter(href => href !== 'fonts/fonts.css' && (!href.startsWith('styles/') || href === 'styles/' + style + '.css'));
+  const panels = fs.readdirSync(path.join(dashboardFolder, 'panels'), { withFileTypes: true }).filter(entry => entry.isDirectory())
+    .reduce((all, entry) => all.concat(fs.readdirSync(path.join(dashboardFolder, 'panels', entry.name)).filter(file => file.endsWith('.css')).map(file => 'panels/' + entry.name + '/' + file)), []);
+
+  return linked.concat(panels).map(file => ({ file: file, css: withoutComments(read('dashboard/' + file)) }));
+}
+
+// The @keyframes blocks of a stylesheet, and the stylesheet without them. A block is { name, inner }.
+function splitKeyframes(css) {
+  const blocks = [];
+  let rest = '';
+  let from = 0;
+  for (let at = css.indexOf('@keyframes', from); at !== -1; at = css.indexOf('@keyframes', from)) {
+    const open = css.indexOf('{', at);
+    let depth = 0;
+    let close = open;
+    for (; close < css.length; close++) {
+      if (css[close] === '{') depth += 1;
+      if (css[close] === '}') depth -= 1;
+      if (depth === 0) break;
+    }
+    rest += css.slice(from, at);
+    blocks.push({ name: css.slice(at + '@keyframes'.length, open).trim(), inner: css.slice(open + 1, close) });
+    from = close + 1;
+  }
+  return { rest: rest + css.slice(from), blocks: blocks };
+}
+
+// The rules of a style's stylesheets that can apply to it: { file, selector, body }, one for each rule. The steps of an @keyframes
+// count when a rule that can apply to the style names the animation. The neon kit is on in the sidebar layout only (hasKit in
+// core/layout.js), so a rule for data-kit="on" is a rule for that layout.
+function rulesOf(style, sheets) {
+  const layouts = style === 'original' ? ['standard', 'sidebar'] : ['bar'];
+  const applies = selector => {
+    const styleNamed = /\[data-style="([a-z]+)"\]/.exec(selector);
+    const layoutNamed = /\[data-layout="([a-z]+)"\]/.exec(selector);
+    const kitNamed = /\[data-kit="on"\]/.test(selector);
+    return (!styleNamed || styleNamed[1] === style) && (!layoutNamed || layouts.indexOf(layoutNamed[1]) !== -1) && (!kitNamed || layouts.indexOf('sidebar') !== -1);
+  };
+
+  const rules = [];
+  const animations = [];
+  sheets.forEach(sheet => {
+    const split = splitKeyframes(sheet.css);
+    split.rest.replace(/([^{}]+)\{([^{}]*)\}/g, (all, selectors, body) => {
+      const list = selectors.split(',').map(selector => selector.trim().replace(/\s+/g, ' '));
+      if (list.some(applies)) rules.push({ file: sheet.file, selector: list.join(', '), body: body });
+      return all;
+    });
+    split.blocks.forEach(block => animations.push({ file: sheet.file, name: block.name, inner: block.inner }));
+  });
+
+  animations.forEach(block => {
+    if (!rules.some(rule => new RegExp('(^|[\\s:,])' + block.name + '(?=[\\s;,]|$)').test(rule.body))) return;
+
+    block.inner.replace(/([^{}]+)\{([^{}]*)\}/g, (all, steps, body) => {
+      rules.push({ file: block.file, selector: '@keyframes ' + block.name + ' ' + steps.trim(), body: body });
+      return all;
+    });
+  });
+  return rules;
+}
+
+// The custom properties that no stylesheet sets, because the script that draws what they style writes them. The bar layout and
+// the sidebar layout write theirs from the numbers in layout.js, and each of the others is named with the file that writes it.
+const writtenByScript = {
+  '--sweep': 'core/plate.js',
+  '--i': 'core/name.js',
+  '--night-x-seconds': 'core/night-screen.js',
+  '--night-x-delay': 'core/night-screen.js',
+  '--night-y-seconds': 'core/night-screen.js',
+  '--night-y-delay': 'core/night-screen.js',
+};
+
+// The only text under 44 px: the stamped plate id, which Original and Minimal draw, and the labels of the war clock, which the
+// bar layout draws
+const plateId = { file: 'base.css', selector: '.plate-id', size: 20 };
+const warLabels = [
+  { file: 'panels/countdown/countdown.css', selector: 'html[data-layout="bar"] .war-lines span', size: 24 },
+  { file: 'panels/countdown/countdown.css', selector: 'html[data-layout="bar"] .war-clock[data-over="yes"] .label', size: 20 },
+  { file: 'panels/countdown/countdown.css', selector: 'html[data-layout="bar"] .war-days-group .days-word', size: 24 },
+  { file: 'panels/countdown/countdown.css', selector: 'html[data-layout="bar"] .war-cell .unit', size: 20 },
+];
+const smallTextOf = { original: [plateId], cybertron: [plateId].concat(warLabels), minimal: [plateId].concat(warLabels) };
+
+function checkStylesheetsOf(style) {
+  const sheets = stylesheetsOf(style);
+  const rules = rulesOf(style, sheets);
+  assert.ok(sheets.some(sheet => sheet.file === 'styles/' + style + '.css'), 'the style\'s own file is loaded');
+  assert.equal(sheets.filter(sheet => sheet.file.startsWith('styles/')).length, 1, 'and the files of the other two styles are not');
+  assert.ok(sheets.length >= 30 && sheets.some(sheet => sheet.file === 'base.css') && sheets.some(sheet => sheet.file === 'themes/hawktimus.css'), 'the css it overrides is loaded');
+
+  const scripted = Object.assign({}, layout.barCssVariables(), layout.cssVariables());
+  Object.keys(writtenByScript).forEach(name => assert.ok(read('dashboard/' + writtenByScript[name]).includes(name), writtenByScript[name] + ' writes ' + name));
+
+  // every definition, and every read that has no fallback
+  const definitions = {};
+  const reads = [];
+  rules.forEach(rule => {
+    rule.body.replace(/(?:^|[;\s])(--[a-z0-9-]+)\s*:\s*([^;]*)/g, (found, name, value) => {
+      (definitions[name] = definitions[name] || []).push({ file: rule.file, value: value.trim() });
+      return found;
+    });
+    rule.body.replace(/var\(\s*(--[a-z0-9-]+)\s*([,)])/g, (found, name, after) => {
+      if (after === ')') reads.push({ file: rule.file, selector: rule.selector, name: name });
+      return found;
+    });
+  });
+
+  assert.ok(Object.keys(definitions).length >= 150 && reads.length >= 300, 'found the custom properties: ' + Object.keys(definitions).length + ' set, ' + reads.length + ' read');
+  reads.forEach(use => assert.ok(definitions[use.name] || scripted[use.name] !== undefined || writtenByScript[use.name], style + ': ' + use.file + ' (' + use.selector + ') reads ' + use.name + ', which no loaded stylesheet sets, no script writes, and which has no fallback'));
+  Object.keys(definitions).forEach(name => definitions[name].forEach(item => {
+    assert.ok(item.value !== '', style + ': ' + item.file + ' sets ' + name + ' to nothing');
+    assert.ok(item.value !== 'var(' + name + ')', style + ': ' + item.file + ' sets ' + name + ' to itself');
+  }));
+
+  // the size of a text is a length in px, or a custom property that holds one, and a size that is not one of those is found out here
+  const sizeOf = (word, where) => {
+    const direct = /^(\d+(?:\.\d+)?)px$/.exec(word);
+    if (direct) return [Number(direct[1])];
+
+    const token = /^var\((--[a-z0-9-]+)\)$/.exec(word);
+    assert.ok(token, where + ': the size ' + word + ' is not a length in px or a custom property');
+    if (scripted[token[1]] !== undefined) return [parseFloat(scripted[token[1]])];
+    assert.ok(definitions[token[1]], where + ': ' + token[1] + ' has no value');
+    return definitions[token[1]].map(item => {
+      assert.ok(/^\d+(\.\d+)?px$/.test(item.value), where + ': ' + token[1] + ' is ' + item.value + ', not a length in px');
+      return parseFloat(item.value);
+    });
+  };
+
+  const small = [];
+  let declared = 0;
+  rules.forEach(rule => {
+    (rule.body.match(/(?:^|[;\s])font(?:-size)?\s*:\s*[^;]*/g) || []).forEach(text => {
+      const property = /font(?:-size)?/.exec(text)[0];
+      const value = text.slice(text.indexOf(':') + 1).trim();
+      const word = property === 'font-size' ? value : (/(?:^|\s)(var\(--[a-z0-9-]+\)|\d+(?:\.\d+)?px)(?=\/|\s)/.exec(value) || [])[1];
+      const where = style + ': ' + rule.file + ' ' + rule.selector;
+      assert.ok(word, where + ': no size in ' + value);
+
+      declared += 1;
+      sizeOf(word, where).filter(size => size < 44).forEach(size => small.push({ file: rule.file, selector: rule.selector, size: size }));
+    });
+  });
+  assert.ok(declared >= 100, 'found the text sizes: ' + declared);
+
+  const order = list => list.map(item => item.file + ' ' + item.selector + ' ' + item.size).sort();
+  assert.deepEqual(order(small), order(smallTextOf[style]), style + ': the text under 44 px is the explicit list, and nothing else');
+  assert.equal(small.filter(item => item.file.startsWith('styles/')).length, 0, 'and none of it is in the style\'s own file');
+}
+
+test('Original with the css it overrides: every custom property that is read has a value, and no text is under 44 px but the stamped plate id and the war clock labels', () => {
+  checkStylesheetsOf('original');
+});
+
+test('Cybertron with the css it overrides: every custom property that is read has a value, and no text is under 44 px but the stamped plate id and the war clock labels', () => {
+  checkStylesheetsOf('cybertron');
+});
+
+test('Minimal with the css it overrides: every custom property that is read has a value, and no text is under 44 px but the stamped plate id and the war clock labels', () => {
+  checkStylesheetsOf('minimal');
+});
+
+// The mirror of the standard layout (original.css) turns every flex row that the layout declares. Each flex row of the stylesheets of the
+// standard layout that has a direction of row, or none, is turned by a rule of original.css, or is named here with the reason it keeps its order.
+
+test('the mirror of the standard layout turns every flex row the layout declares, and a row that keeps its order is named with the reason', () => {
+  const prefix = 'html[data-style="original"].mirrored[data-layout="standard"] ';
+  const turned = [];
+  withoutComments(read('dashboard/styles/original.css')).replace(/([^{}]+)\{([^{}]*)\}/g, (all, selectors, body) => {
+    if (/flex-direction: row-reverse;/.test(body)) selectors.split(',').forEach(selector => turned.push(selector.trim()));
+    return all;
+  });
+  turned.forEach(selector => assert.ok(selector.startsWith(prefix), 'a mirror rule is for the mirrored standard layout only: ' + selector));
+  const turnedRows = turned.map(selector => selector.slice(prefix.length));
+
+  // every flex row that the standard layout declares: base.css and the stylesheets of the panels it draws itself. A rule for a layout
+  // or a style is not the standard layout's. The pages in the large and small frames are not the layout's rows: they read from the left.
+  const files = ['base.css', 'panels/banner/banner.css', 'panels/ticker/ticker.css', 'panels/countdown/countdown.css'];
+  const declared = [];
+  files.forEach(file => {
+    withoutComments(read('dashboard/' + file)).replace(/([^{}]+)\{([^{}]*)\}/g, (all, selectors, body) => {
+      const direction = /flex-direction: ([a-z-]+)/.exec(body);
+      if (/display: (inline-)?flex/.test(body) && (!direction || direction[1] === 'row')) {
+        selectors.split(',').map(selector => selector.trim()).filter(selector => !/data-layout|data-style/.test(selector)).forEach(selector => declared.push(file + ' ' + selector));
+      }
+      return all;
+    });
+  });
+  assert.ok(declared.length >= 10, 'found the flex rows: ' + declared.join(', '));
+
+  // These rows are read left to right whatever the layout does. The mirror moves the box they are in, and for the name it moves the
+  // letters to the other end of the box with justify-content, and turns nothing.
+  const keepsOrder = {
+    'panels/banner/banner.css .banner .team-name': 'the letters of the name are read left to right, and original.css moves them to the other end of their box',
+    'panels/banner/banner.css .banner .team-plate span': 'the words of the TEAM plate are read left to right inside a plate that the mirror moves',
+    'panels/banner/banner.css .banner .clock': 'the time and AM or PM are read left to right',
+    'panels/banner/banner.css .banner .date-row': 'the date, the picture and the temperature are read left to right',
+    'panels/ticker/ticker.css .ticker .tag span': 'the word on the ticker\'s tag is read left to right',
+    'panels/countdown/countdown.css .countdown .top-line': 'the countdown is one block that changes columns, and its lines are read left to right',
+    'panels/countdown/countdown.css .countdown .label-group': 'the countdown is one block that changes columns, and its lines are read left to right',
+    'panels/countdown/countdown.css .countdown .days-row': 'the countdown is one block that changes columns, and its lines are read left to right',
+    'panels/countdown/countdown.css .countdown .time-row': 'the countdown is one block that changes columns, and its lines are read left to right',
+    'panels/countdown/countdown.css .countdown .segments': 'the countdown is one block that changes columns, and its lines are read left to right',
+  };
+
+  declared.forEach(row => {
+    const file = files.filter(name => row.startsWith(name + ' '))[0];
+    const selector = row.slice(file.length + 1);
+    assert.ok(turnedRows.indexOf(selector) !== -1 || keepsOrder[row] !== undefined, row + ' is a flex row that the mirror does not turn and is not named as keeping its order');
+    assert.ok(!(turnedRows.indexOf(selector) !== -1 && keepsOrder[row] !== undefined), row + ' is turned and also named as keeping its order');
+  });
+  turnedRows.forEach(selector => assert.ok(declared.some(row => row.endsWith(' ' + selector)), selector + ' is turned and is not a flex row'));
+  Object.keys(keepsOrder).forEach(row => {
+    assert.ok(declared.indexOf(row) !== -1, row + ' is named as keeping its order and is not a flex row');
+    assert.ok(keepsOrder[row].length > 30, row + ' has no reason');
+  });
+  assert.deepEqual(turnedRows, ['.banner .banner-top', '.banner .banner-bottom', '.ticker'], 'the rows that are turned');
+  assert.deepEqual(declared.length, turnedRows.length + Object.keys(keepsOrder).length, 'every row is one or the other');
 });
 
 test('the numbers in docs/layouts.md are the numbers of the bar layout in layout.js', () => {

@@ -16,6 +16,9 @@
 //      rule can both apply.
 //   3. The default theme, and no overlay.
 //
+// A preview from the Studio (core/preview.js) can hold a seasonal pack for a while in place
+// of all this (previewPack, previewedPack below).
+//
 // A rule for a seasonal pack (kind overlay) may also carry a ticker prefix, a banner
 // line and a corner art. packExtras() reads them for the pack that is on the page.
 
@@ -219,6 +222,20 @@ export function ruleExtras(settings, overlayId, now) {
     bannerLine: rule ? rule.bannerLine : '',
     cornerArt: rule ? rule.cornerArt : '',
   };
+}
+
+// A preview (core/preview.js) holds a seasonal pack on the screen for a while without
+// touching the Theme page. until is a time in milliseconds. A new call replaces the one
+// before, and a name that is not an overlay ends it.
+let previewed = null; // { pack, until }
+
+export function previewPack(id, until) {
+  previewed = isKnownOverlay(id) && typeof until === 'number' && isFinite(until) ? { pack: id, until: until } : null;
+}
+
+// The pack a preview holds now, or '' when there is none or its time is up. now is a Date.
+export function previewedPack(now = new Date()) {
+  return previewed && now.getTime() < previewed.until ? previewed.pack : '';
 }
 
 // The overlay on the page now, read from the class theme-apply.js puts on the html

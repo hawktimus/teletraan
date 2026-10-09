@@ -1,6 +1,7 @@
 // The teams the screen can show, and the one that is on it. Three jobs:
 //
-//   choosing    chooseTeam() says which team the mode and the clock ask for
+//   choosing    chooseTeam() says which team the mode and the clock ask for. A preview (core/preview.js)
+//               or ?team= in the address can hold a mode in place of the setting (previewTeam, askForTeam)
 //   filtering   showsForTeam() says whether an item belongs on the screen of that team.
 //               visibleItems() in content.js asks it, so a panel that leaves out hidden and
 //               expired items leaves out the other team's items too. No panel asks it itself
@@ -17,7 +18,7 @@
 // core/team-run.js asks useTeams() once a second and moves the pages on when the team changes.
 // The one place that touches the page is applyTeamLook(), and it is given the page.
 
-import { defaultSettings, primeTeam } from '../config.js';
+import { defaultSettings, primeTeam, teamModes } from '../config.js';
 
 // The class on the html element while the team on the screen has Mirror the layout on. It does
 // nothing by itself: the stylesheets that flip the layout read it.
@@ -42,6 +43,8 @@ export const initialsProperty = '--team-initials';
 const waitedTooLong = 60 * 1000;
 
 let teams = [primeTeam]; // every team there is, in order
+let previewed = null; // { mode, until }: a preview (core/preview.js) holds a mode on the screen for a while
+let asked = ''; // ?team= in the address, for this page only
 let wanted = primeTeam; // the team the mode and the clock ask for. The items follow this one
 let showing = null; // the team that is on the page, or null before the first one goes on
 let waitingSince = null; // the time, in milliseconds, that wanted first differed from showing
@@ -50,6 +53,24 @@ const listeners = [];
 // The teams that are switched on, in order. They are the choices of Alternate mode.
 export function activeTeams(list = teams) {
   return (Array.isArray(list) ? list : []).filter(team => team.active !== false);
+}
+
+// Holds a mode on the screen until a time in milliseconds, whatever Team mode says and
+// without writing it. A new call replaces the one before, and a name that is not a mode
+// ends it.
+export function previewTeam(mode, until) {
+  previewed = teamModes.indexOf(mode) !== -1 && typeof until === 'number' && isFinite(until) ? { mode: mode, until: until } : null;
+}
+
+// ?team= in the address, like ?style=. A name that is not a mode is ignored.
+export function askForTeam(mode) {
+  asked = teamModes.indexOf(mode) !== -1 ? mode : '';
+}
+
+// The mode that counts: a preview that has time left, then the address, then Team mode
+function modeFor(settings, now) {
+  if (previewed && now.getTime() < previewed.until) return previewed.mode;
+  return asked || settings.teamMode;
 }
 
 // The team a mode asks for at a moment. prime and nova ask for the team with that code, and
@@ -176,7 +197,7 @@ export function useTeams(content, now = new Date()) {
   const before = wanted.code;
 
   teams = Array.isArray(source.teams) && source.teams.length > 0 ? source.teams : [primeTeam];
-  wanted = chooseTeam(teams, settings.teamMode, settings.alternateMinutes, now);
+  wanted = chooseTeam(teams, modeFor(settings, now), settings.alternateMinutes, now);
   let changed = wanted.code !== before;
 
   if (showing === null) {

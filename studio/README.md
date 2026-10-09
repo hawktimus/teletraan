@@ -10,10 +10,11 @@ TV. The dashboard reads what they publish.
     sanity.config.js      the Studio's main settings
     sanity.cli.js         settings for the command line tool
     structure.js          the sidebar, one list with a line for each entry, so changing the order means moving a line (Events Calendar is the list for events not on BAND)
-    actions.js            the two content source buttons, the Play buttons of the hidden transitions, Play announcements and Run presentation test on Dashboard Settings, and Run demo and Stop demo on Demo
+    actions.js            the two content source buttons, the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons on Dashboard Settings, and Run demo and Stop demo on Demo
     themes.js             the list of themes and overlays, a copy of the dashboard's
     demo-screens.js       the list of screens a demo can show, a copy of the dashboard's
     hidden-transitions.js the list of hidden transitions, a copy of the dashboard's
+    previews.js           the list of Preview buttons (Prime, Nova, Cybertron, Minimal, next pack), a copy of the dashboard's
     team-input.js         the Team radio (Both, then each active team) that the Team field of each kind of content uses
     schemas/              one file per kind of content
     scripts/              make-templates.mjs writes the CSV templates from the schemas,
@@ -308,6 +309,19 @@ sample talk with its six sample slides, for a request that is under a minute old
 `schemas/settingsPresentations.js`, so the editors see the button. docs/hidden-transitions.md
 explains how it works.
 
+## Preview buttons
+
+The last five buttons on Dashboard Settings are "Preview Prime", "Preview Nova", "Preview Cybertron",
+"Preview Minimal" and "Preview next pack", `previewActions` in `actions.js`, made from the list in
+`previews.js`. Each sets `previewRequest` to its kind and the time now, and publishes. `previewRequest`
+is a hidden field in the Screen tab (`previewRequestField` in `schemas/settingsPreview.js`). The screen
+holds that team, style or seasonal pack for 2 minutes, for a request that is under a minute old, and then
+goes back to the saved settings (`dashboard/core/preview.js`). Nothing is saved to Dashboard Settings or
+the Theme page. `previews.js` is a copy of the ids and names in `previewKinds` in
+`dashboard/core/preview.js`, and `check-schemas.mjs` fails if they differ. Run `npm run deploy` after you
+change `schemas/settingsPreview.js` or `previews.js`, so the editors see the buttons.
+docs/hidden-transitions.md explains how it works.
+
 ## Photos of people
 
 Leadership has a Photo field, an image the editors upload in Studio, and a
@@ -388,6 +402,7 @@ matches the dashboard's list of demo screens, the Hidden tab agrees with
 `defaultSettings`, has a working Play button for each hidden transition, and
 `hidden-transitions.js` matches the dashboard's list, Play announcements has its hidden
 field, its button and its Demo step, Run presentation test has its hidden field and its button,
+the Preview buttons have their hidden field and a list that matches the dashboard's,
 and the project ID in project.js is
 the one in dashboard/config.js. It prints PASS or
 FAIL for each check and exits with an error if any fails. Run it after every

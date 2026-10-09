@@ -157,6 +157,7 @@ const contract = {
     teamMode: 'string',
     alternateMinutes: number(1, 30),
     announceRequest: object({ requestedAt: 'datetime' }),
+    previewRequest: object({ kind: 'string', requestedAt: 'datetime' }),
     countdown: object({ kickoffLabel: text(12), kickoff: 'datetime', rolloutLabel: text(12), rollout: 'datetime' }),
     alert: object({ on: 'boolean', headline: text(24), message: text(90), until: 'datetime' }),
     rotation: object({ grid1: rows(panelStep), grid2: rows(panelStep), tickerSeconds: number(6, 120) }),
@@ -229,6 +230,7 @@ const choices = {
   'dashboardSettings.contentSource': ['production', 'sample'],
   'dashboardSettings.teamMode': ['prime', 'nova', 'alternate'],
   'dashboardSettings.hiddenRequest.kind': ['desktop', 'redEyes'],
+  'dashboardSettings.previewRequest.kind': ['prime', 'nova', 'cybertron', 'minimal', 'next-pack'],
   'demo.steps.screen': ['announcement', 'all-announcements', 'night-mode'],
 };
 
@@ -310,7 +312,7 @@ const standIns = {
 
 function makeSandbox() {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-studio-'));
-  ['schemas', 'structure.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'publish-all.js', 'publish-all-tool.js', 'team-input.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
+  ['schemas', 'structure.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'publish-all.js', 'publish-all-tool.js', 'team-input.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
     fs.cpSync(path.join(here, name), path.join(folder, name), { recursive: true });
   });
   fs.writeFileSync(path.join(folder, 'package.json'), JSON.stringify({ type: 'module' }));
@@ -1455,12 +1457,12 @@ function checkPlayAnnouncements() {
   need(problems, registry['all-announcements'] && registry['all-announcements'].name === 'All announcements', 'the dashboard demo screens should have all-announcements, named All announcements');
   need(problems, copy && copy.name === 'All announcements', 'studio/demo-screens.js should have all-announcements, named All announcements');
 
-  // The button comes after the Play buttons of the hidden transitions, and nowhere else. Run presentation test is the one after it.
+  // The button comes after the Play buttons of the hidden transitions, and nowhere else. Run presentation test and the Preview buttons are the ones after it.
   const played = Object.keys(world.hiddenRegistry.hiddenTransitions).length;
   const buttons = world.config.document.actions([], { schemaType: 'dashboardSettings' });
   const button = buttons[2 + played];
-  if (buttons.length !== 4 + played || typeof button !== 'function') {
-    return problems.concat('the settings page should have the Play announcements button, a plain function, after the Play buttons of the hidden transitions, and then Run presentation test');
+  if (buttons.length !== 4 + played + world.studioPreviews.previews.length || typeof button !== 'function') {
+    return problems.concat('the settings page should have the Play announcements button, a plain function, after the Play buttons of the hidden transitions, and then Run presentation test and the Preview buttons');
   }
   need(problems, world.config.document.actions([], { schemaType: 'demo' }).every(item => item.action !== 'playAnnouncements'), 'only the settings page should get the Play announcements button');
 
@@ -1490,7 +1492,7 @@ function checkPlayAnnouncements() {
 
 // Run presentation test: the hidden presentationTestRequest field in the Presentations tab
 // (schemas/settingsPresentations.js), its starting value in config.js and the button that
-// fills it in (actions.js). It is the last button on the settings page.
+// fills it in (actions.js). The Preview buttons come after it (checkPreviewButtons).
 function checkRunPresentationTest() {
   const problems = [];
   const config = world.dashboard;
@@ -1510,12 +1512,12 @@ function checkRunPresentationTest() {
   need(problems, sameData(config.defaultSettings.presentationTestRequest, { requestedAt: '' }), 'the default presentationTestRequest in config.js should be a time that is empty');
   need(problems, !('presentationTestRequest' in world.sample.settings), 'the sample settings should not carry a presentationTestRequest');
 
-  // The button is the last one on the settings page, and nowhere else
+  // The button comes after Play announcements and before the Preview buttons, and is on no other page
   const played = Object.keys(world.hiddenRegistry.hiddenTransitions).length;
   const buttons = world.config.document.actions([], { schemaType: 'dashboardSettings' });
   const button = buttons[3 + played];
-  if (buttons.length !== 4 + played || typeof button !== 'function') {
-    return problems.concat('the settings page should end with the Run presentation test button, a plain function, after Play announcements');
+  if (buttons.length !== 4 + played + world.studioPreviews.previews.length || typeof button !== 'function') {
+    return problems.concat('the settings page should have the Run presentation test button, a plain function, after Play announcements and before the Preview buttons');
   }
   need(problems, world.config.document.actions([], { schemaType: 'demo' }).every(item => item.action !== 'runPresentationTest'), 'only the settings page should get the Run presentation test button');
 
@@ -1540,6 +1542,94 @@ function checkRunPresentationTest() {
   need(problems, written && Object.keys(written).join() === 'requestedAt', 'Run presentation test should write only requestedAt');
   need(problems, written && typeof written.requestedAt === 'string' && new Date(written.requestedAt).toISOString() === written.requestedAt && Date.parse(written.requestedAt) >= before && Date.parse(written.requestedAt) <= after, 'Run presentation test should write the time now, as new Date().toISOString() writes it');
   need(problems, press({ presentationTestRequest: { requestedAt: '2026-06-01T12:00:00.000Z' } }).state.disabled === false, 'Run presentation test should be on when a request is already published, so it can be run again');
+  return problems;
+}
+
+// The Preview buttons: the hidden previewRequest field in the Screen tab
+// (schemas/settingsPreview.js), its starting value in config.js, the list of previews
+// that the Studio copies from the dashboard (previews.js), and the buttons that fill the
+// field in (actions.js). They are the last buttons on the settings page.
+function checkPreviewButtons() {
+  const problems = [];
+  const config = world.dashboard;
+  const request = fieldAt('dashboardSettings.previewRequest');
+  const kind = fieldAt('dashboardSettings.previewRequest.kind');
+  const time = fieldAt('dashboardSettings.previewRequest.requestedAt');
+  const registry = world.previewModule.previewKinds;
+  const ids = Object.keys(registry);
+  const copy = world.studioPreviews.previews;
+
+  // The field: an object with a read only kind and a read only time, hidden from editors, with no starting value of its own
+  need(problems, request && request.type === 'object', 'previewRequest should be an object');
+  need(problems, request && request.group === 'screen', 'previewRequest should be in the Screen tab');
+  need(problems, request && request.hidden === true, 'previewRequest should be hidden from editors (hidden: true)');
+  need(problems, request && request.initialValue === undefined, 'previewRequest should have no starting value in the Studio');
+  need(problems, request && /Preview buttons/.test(request.description || ''), 'the previewRequest description should name the Preview buttons');
+  need(problems, kind && kind.readOnly === true && !constraintNamed(constraintsOf(kind), 'required'), 'previewRequest.kind should be read only and optional');
+  need(problems, time && time.type === 'datetime' && time.readOnly === true, 'previewRequest.requestedAt should be a read only datetime');
+  need(problems, time && !constraintNamed(constraintsOf(time), 'required'), 'previewRequest.requestedAt should be optional');
+  const allowed = kind ? constraintNamed(constraintsOf(kind), 'valid') : null;
+  need(problems, allowed && allowed.args[0].join() === ids.join(), 'previewRequest.kind should only allow: ' + ids.join(', '));
+
+  // The starting value is a request with no kind and no time, and the sample content never carries a request
+  need(problems, sameData(config.defaultSettings.previewRequest, { kind: '', requestedAt: '' }), 'the default previewRequest in config.js should be a kind and a time that are both empty');
+  need(problems, !('previewRequest' in world.sample.settings), 'the sample settings should not carry a previewRequest');
+  need(problems, config.previewSeconds === 120, 'previewSeconds in config.js should be 120, the 2 minutes the buttons say');
+
+  // The Studio's list is the dashboard's registry: the same ids and names, in the same order, and each kind holds something that exists
+  need(problems, ids.length === 5, 'the registry in dashboard/core/preview.js should have five previews, not ' + ids.length);
+  need(problems, copy.length === ids.length, 'studio/previews.js has ' + copy.length + ' previews and the dashboard registry has ' + ids.length);
+  ids.forEach((id, index) => {
+    const entry = registry[id];
+    const other = copy[index];
+    if (!other || other.id !== id) return problems.push('preview number ' + (index + 1) + ' is "' + id + '" in the dashboard registry but "' + (other && other.id) + '" in studio/previews.js');
+    need(problems, other.name === entry.name, 'the preview "' + id + '" has name "' + entry.name + '" in the dashboard registry but "' + other.name + '" in studio/previews.js');
+    need(problems, typeof other.shows === 'string' && other.shows !== '', 'the preview "' + id + '" needs words for what it shows in studio/previews.js');
+
+    const holds = ['team', 'style', 'pack'].filter(name => entry[name] !== undefined);
+    need(problems, holds.length === 1, 'the preview "' + id + '" should hold one thing: a team, a style or a pack');
+    need(problems, entry.team === undefined || config.teamModes.indexOf(entry.team) !== -1, 'the preview "' + id + '" holds the team mode "' + entry.team + '", which is not one in teamModes in config.js');
+    need(problems, entry.style === undefined || config.styles.indexOf(entry.style) !== -1, 'the preview "' + id + '" holds the style "' + entry.style + '", which is not one in styles in config.js');
+    need(problems, entry.pack === undefined || entry.pack === 'next', 'the preview "' + id + '" holds a pack that is not "next"');
+  });
+  const offered = choicesOf('dashboardSettings.previewRequest.kind');
+  need(problems, offered.map(item => item.title).join() === ids.map(id => 'Preview ' + registry[id].name).join(), 'previewRequest.kind should show the names in the dashboard registry, each after the word Preview');
+
+  // The buttons come last, one for each preview, as plain functions, and are on no other page
+  const before = 4 + Object.keys(world.hiddenRegistry.hiddenTransitions).length;
+  const buttons = world.config.document.actions([], { schemaType: 'dashboardSettings' }).slice(before);
+  if (buttons.length !== ids.length || !buttons.every(button => typeof button === 'function')) {
+    return problems.concat('the settings page should end with one Preview button for each preview, written as plain functions');
+  }
+  need(problems, world.config.document.actions([], { schemaType: 'demo' }).every(item => !/^preview/.test(item.action)), 'only the settings page should get the Preview buttons');
+
+  function press(button, published, draft) {
+    globalThis.studioCalls = [];
+    const props = { id: 'dashboardSettings', type: 'dashboardSettings', published: published, draft: draft || null, onComplete: () => {} };
+    const state = button(props);
+    if (!state.disabled) state.onHandle();
+    return { state: state, calls: globalThis.studioCalls };
+  }
+
+  // Each writes its kind and the time now, only that, and publishes
+  const pascal = id => id.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('');
+  ids.forEach((id, index) => {
+    const button = buttons[index];
+    const label = 'Preview ' + registry[id].name;
+    const earlier = Date.now();
+    const pressed = press(button, null);
+    const later = Date.now();
+    const set = pressed.calls[0] && pressed.calls[0].patch && pressed.calls[0].patch[0] && pressed.calls[0].patch[0].set;
+    const written = set && set.previewRequest;
+
+    need(problems, pressed.state.label === label, 'the button for ' + id + ' should be labelled ' + label);
+    need(problems, button.action === 'preview' + pascal(id), 'the button for ' + id + ' should be called preview' + pascal(id));
+    need(problems, /2 minutes/.test(pressed.state.title || '') && /No setting is changed/.test(pressed.state.title || ''), label + ' should say in its hover text that it lasts 2 minutes and changes no setting');
+    need(problems, pressed.calls.length === 2 && pressed.calls[0].patch.length === 1 && Object.keys(set).join() === 'previewRequest' && pressed.calls[1].publish === true, label + ' should set previewRequest and then publish');
+    need(problems, written && Object.keys(written).join() === 'kind,requestedAt' && written.kind === id, label + ' should write the kind ' + id);
+    need(problems, written && typeof written.requestedAt === 'string' && new Date(written.requestedAt).toISOString() === written.requestedAt && Date.parse(written.requestedAt) >= earlier && Date.parse(written.requestedAt) <= later, label + ' should write the time now, as new Date().toISOString() writes it');
+    need(problems, press(button, { previewRequest: { kind: id, requestedAt: '2026-06-01T12:00:00.000Z' } }).state.disabled === false, label + ' should be on when a request is already published, so it can be clicked again');
+  });
   return problems;
 }
 
@@ -1814,7 +1904,7 @@ function checkSettingsPage() {
   const actions = ['publish', 'discardChanges', 'delete', 'duplicate', 'unpublish'].map(action => ({ action: action }));
   const kept = world.config.document.actions(actions, { schemaType: 'dashboardSettings' }).map(item => item.action).join();
   const others = world.config.document.actions(actions, { schemaType: 'task' }).length;
-  const wanted = 'publish,discardChanges,useSampleContent,useProductionContent,playDesktop,playRedEyes,playAnnouncements,runPresentationTest';
+  const wanted = 'publish,discardChanges,useSampleContent,useProductionContent,playDesktop,playRedEyes,playAnnouncements,runPresentationTest,previewPrime,previewNova,previewCybertron,previewMinimal,previewNextPack';
   if (kept !== wanted) problems.push('the settings page should have these actions: ' + wanted + '. It has: ' + kept);
   if (others !== actions.length) problems.push('other types should keep every action');
 
@@ -3335,6 +3425,8 @@ async function main() {
     world.studioDemoScreens = await load(path.join(folder, 'demo-screens.js'));
     world.hiddenRegistry = await load(path.join(dashboardFolder, 'core', 'hidden-transitions.js'));
     world.studioHidden = await load(path.join(folder, 'hidden-transitions.js'));
+    world.previewModule = await load(path.join(dashboardFolder, 'core', 'preview.js'));
+    world.studioPreviews = await load(path.join(folder, 'previews.js'));
     world.publishAll = await load(path.join(folder, 'publish-all.js'));
     world.publishAllTool = await load(path.join(folder, 'publish-all-tool.js'));
     world.teamInput = await load(path.join(folder, 'team-input.js'));
@@ -3366,6 +3458,7 @@ async function main() {
   check('the Hidden tab agrees with dashboard/config.js and the dashboard registry, and the Play buttons work', checkHiddenTab);
   check('Play announcements has its hidden field, its button and its Demo step', checkPlayAnnouncements);
   check('Run presentation test has its hidden field and its button', checkRunPresentationTest);
+  check('the Preview buttons have their hidden field and the list the dashboard has, and each one writes its kind and the time', checkPreviewButtons);
   check('Content source and the switch back time agree with dashboard/config.js, and the two buttons work', checkContentSource);
   check('Show connection status is a switch that starts off, in the Connection tab', checkConnectionStatus);
   check('a subteam has an optional list of first names, up to 24 of 12 characters, with no repeats', checkSubteamMembers);

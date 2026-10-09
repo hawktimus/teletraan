@@ -277,6 +277,13 @@ export const defaultSettings = {
   //                    it has been. The screen plays every announcement that is switched on, once, for a request
   //                    that is less than demoWindowSeconds old and is not the one it handled before (see below).
   announceRequest: { requestedAt: '' },
+  // The "Preview Prime", "Preview Nova", "Preview Cybertron", "Preview Minimal" and "Preview next pack" buttons in the
+  // Studio (core/preview.js, core/preview-run.js, docs/hidden-transitions.md).
+  //   previewRequest  the last click of one of them. kind is an id from previewKinds in core/preview.js and requestedAt is the
+  //                   time it was clicked. Both are empty until a button has been clicked. The screen holds that look for
+  //                   previewSeconds, once, for a request that is less than demoWindowSeconds old and is not the one it
+  //                   handled before (see below). Nothing is written to the settings.
+  previewRequest: { kind: '', requestedAt: '' },
   countdown: {
     kickoffLabel: 'KICKOFF IN',
     kickoff: '2027-01-09T12:00',
@@ -372,6 +379,11 @@ export const demoPlaceholderText = '[DEMO ANNOUNCEMENT]';
 // A push is only played while it is less than demoWindowSeconds old and is not the one handled
 // before, the same guard as the demo (shouldRunDemo in core/demo.js).
 export const hiddenAdvanceSeconds = 20;
+
+// How long a preview from the Studio holds a team, a style or a seasonal pack on the screen, in seconds. After that the
+// screen goes back to the saved settings.
+export const previewSeconds = 120;
+
 export const defaultDemo = {
   requestedAt: '',
   steps: [

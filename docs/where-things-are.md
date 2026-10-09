@@ -150,6 +150,10 @@ editors can sign in from anywhere.
                               presentation-test.js decides when the Run presentation test button starts
                               the sample talk, and presentation-test-run.js starts it
                               (docs/hidden-transitions.md),
+                              preview.js decides when a Preview button holds a team, a style or a seasonal
+                              pack on the screen for 2 minutes, and preview-run.js starts it. What it holds is
+                              kept by previewStyle in style.js, previewTeam in teams.js and previewPack in
+                              theme.js (docs/hidden-transitions.md, "Preview a look"),
                               tick.js is the one clock of the screen: it tells every panel when a real
                               second starts by reading the time, not by counting, so the digits never
                               drift, and a panel should write to the page only what has changed
@@ -167,9 +171,10 @@ editors can sign in from anywhere.
     studio/                   the Sanity editing screen, its sidebar (structure.js: one list with a line
                               for each entry, so changing the order means moving a line,
                               docs/reordering-the-sidebar.md), its buttons (actions.js: the two content source
-                              buttons, the Play buttons of the hidden transitions, Play announcements, Run presentation test, and Run demo and Stop demo),
+                              buttons, the Play buttons of the hidden transitions, Play announcements, Run presentation test, the Preview buttons, and Run demo and Stop demo),
                               its copy of the theme lists (themes.js), its copy of the demo screens
                               (demo-screens.js), its copy of the hidden transitions (hidden-transitions.js),
+                              its copy of the previews (previews.js),
                               the Publish all tool in the top bar (publish-all-tool.js is the page and
                               publish-all.js is its logic, docs/publish-all.md), and check-schemas.mjs.
                               schemas/ has a file for each kind of content. calendarFilter.js is the
@@ -355,6 +360,14 @@ alone.
   `studio/actions.js`). The starting value is `announceRequest` in `defaultSettings` in
   `dashboard/config.js`. `core/announce.js` decides and `core/announce-run.js` plays it. A Demo step
   can use it too: All announcements in `demoScreens`.
+- **Preview buttons.** The last five buttons in the same menu (docs/hidden-transitions.md, "Preview a look"):
+  Preview Prime, Preview Nova, Preview Cybertron, Preview Minimal and Preview next pack. Each shows its look on
+  the screen for `previewSeconds` (2 minutes) in `dashboard/config.js` and then the saved settings come back,
+  and none writes a setting. They write the hidden `previewRequest` field (`previewRequestField` in
+  `studio/schemas/settingsPreview.js`, the buttons are `previewActions` in `studio/actions.js`, made from the
+  list in `studio/previews.js`, a copy of `previewKinds` in `dashboard/core/preview.js`). The starting value is
+  `previewRequest` in `defaultSettings` in `dashboard/config.js`. `core/preview.js` decides and
+  `core/preview-run.js` runs it.
 - **Run presentation test.** The button after Play announcements in the same menu
   (docs/hidden-transitions.md). It starts the sample talk, with its six sample slides in
   `dashboard/data/sample/slides/presentation-sample/`, and needs no internet. It writes the hidden

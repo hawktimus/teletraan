@@ -68,6 +68,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - A Publish all tool in the Studio's top bar that publishes all the drafts you tick, checking each one first and skipping any that would fail
 - Presentations: a student books a short talk in a Google Form, and the talk appears in Studio. At its time the TV shows a title card, then the student's Google Slides one picture at a time, moved by a clicker, then a thank you card. The Mini turns each deck into pictures before the talk (docs/presentations.md)
 - A Run presentation test button in Studio that plays a sample talk with six sample slides, with no internet
+- Preview buttons in Studio (Prime, Nova, Cybertron, Minimal and the next seasonal pack) that show that look on the TV for 2 minutes and then go back to the saved settings, without changing any setting. `?team=`, `?style=` and `?overlay=` on the address try any combination with the sample content
 - A demo for visitors that plays the announcement and night mode on request from Studio
 - A calendar check (deploy/scripts/check-calendars.sh) that lists the next 30 days of events and says which ones the Calendar filters hide
 - A connection check for the Mini (deploy/scripts/check-connection.sh) and a small text on the screen that says why when Sanity cannot be reached

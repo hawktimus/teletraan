@@ -4,19 +4,20 @@ import { projectId, dataset } from './project.js';
 import { schemaTypes } from './schemas/index.js';
 import { publishAllTool } from './publish-all-tool.js';
 import { structure, settingsType, demoType, singletonTypes } from './structure.js';
-import { useSampleContentAction, useProductionContentAction, useRunDemoAction, useStopDemoAction, playHiddenActions, usePlayAnnouncementsAction, useRunPresentationTestAction } from './actions.js';
+import { useSampleContentAction, useProductionContentAction, useRunDemoAction, useStopDemoAction, playHiddenActions, usePlayAnnouncementsAction, useRunPresentationTestAction, previewActions } from './actions.js';
 
 // Dashboard Settings, Theme and Demo each exist once (singletonTypes in
 // structure.js). Their pages are made the long-standing way, by removing the
 // actions that would copy them or take them away, because Sanity's newer
 // singleton option is still in beta. Dashboard Settings also gets the two
 // buttons that switch the screen between sample and production content, a
-// Play button for each hidden transition, Play announcements and Run
-// presentation test. Demo gets Run demo and Stop demo (actions.js).
+// Play button for each hidden transition, Play announcements, Run
+// presentation test and a Preview button for each look. Demo gets Run demo
+// and Stop demo (actions.js).
 const removedFromSingletons = ['delete', 'duplicate', 'unpublish'];
 
 const buttonsOf = {
-  [settingsType]: [useSampleContentAction, useProductionContentAction].concat(playHiddenActions, [usePlayAnnouncementsAction, useRunPresentationTestAction]),
+  [settingsType]: [useSampleContentAction, useProductionContentAction].concat(playHiddenActions, [usePlayAnnouncementsAction, useRunPresentationTestAction], previewActions),
   [demoType]: [useRunDemoAction, useStopDemoAction],
 };
 

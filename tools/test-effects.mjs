@@ -12,7 +12,9 @@
 // Play announcements (dashboard/core/announce.js): the guard, the age limit, which
 // announcements play, what it waits for, and the Demo step that plays them too. And it
 // tests Run presentation test (dashboard/core/presentation-test.js): the same guard, what it
-// waits for, and the sample talk it starts. And it
+// waits for, and the sample talk it starts. And it tests the Preview buttons
+// (dashboard/core/preview.js): the same guard, what each one holds on the screen for 2 minutes,
+// and that the saved settings come back. And it
 // tests the screen of a booked talk (dashboard/core/presentation-run.js): the title card, the
 // slides, the keys, the thanks card, and what each does to the rest of the screen. And it
 // tests the frames that dashboard/core/plate.js draws: the pieces, and the rivets and the stamped
@@ -35,8 +37,10 @@ const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url))
 // package.json that says "type": "module" lets any version of node read them.
 const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-effects-'));
 fs.mkdirSync(path.join(workFolder, 'dashboard', 'core'), { recursive: true });
+fs.mkdirSync(path.join(workFolder, 'dashboard', 'themes', 'overlays'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
-['config.js', 'frame.js', 'core/transitions.js', 'core/tick.js', 'core/demo.js', 'core/demo-screens.js', 'core/hidden.js', 'core/hidden-transitions.js', 'core/hidden-pictures.js', 'core/images.js', 'core/announce.js', 'core/presentation-test.js', 'core/plate.js'].forEach(file => {
+['config.js', 'frame.js', 'core/transitions.js', 'core/tick.js', 'core/demo.js', 'core/demo-screens.js', 'core/hidden.js', 'core/hidden-transitions.js', 'core/hidden-pictures.js', 'core/images.js', 'core/announce.js', 'core/presentation-test.js', 'core/plate.js',
+  'core/preview.js', 'core/style.js', 'core/teams.js', 'core/theme.js', 'core/pack-extras.js', 'core/corner-art.js', 'themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
 const frameUrl = pathToFileURL(path.join(workFolder, 'dashboard/frame.js')).href;
@@ -51,6 +55,10 @@ const imagesModule = await import(pathToFileURL(path.join(workFolder, 'dashboard
 const announce = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/announce.js')).href);
 const presentationTest = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/presentation-test.js')).href);
 const plateModule = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/plate.js')).href);
+const preview = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/preview.js')).href);
+const styleModule = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/style.js')).href);
+const teamsModule = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/teams.js')).href);
+const themeModule = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/theme.js')).href);
 
 const realSetImmediate = globalThis.setImmediate;
 const second = 1000;
@@ -1709,6 +1717,7 @@ function makeStorage(store) {
   return {
     getItem: key => (key in store ? store[key] : null),
     setItem: (key, value) => { store[key] = String(value); },
+    removeItem: key => { delete store[key]; },
   };
 }
 
@@ -3847,6 +3856,542 @@ test('the presentation test functions import only the demo functions and use no 
   assert.ok(testing > shell.indexOf("startOptional('./core/demo-runner.js'"), 'after the demo runner');
   assert.ok(testing > shell.indexOf('startTakeovers(getContent);'), 'after the takeovers');
   assert.ok(shell.lastIndexOf("if (!params.get('show') && !stress) {", testing) > shell.lastIndexOf('startNight', testing) - 2000, 'only when the whole screen runs');
+});
+
+// Preview a look (dashboard/core/preview.js): the Studio's buttons that hold a team, a style or a
+// seasonal pack on the screen for 2 minutes, without writing the settings
+
+const { tidyPreviewRequest, makePreviewRunner, previewKinds, readHandledPreview, rememberHandledPreview, resumePreview, nextPack, previewPacks, heldBy } = preview;
+const previewSeconds = config.previewSeconds;
+
+// The modules keep what a preview holds for the whole run, so each test lets go of it first and last
+function letGoOfPreview() {
+  styleModule.previewStyle('', 0);
+  teamsModule.previewTeam('', 0);
+  themeModule.previewPack('', 0);
+  teamsModule.askForTeam('');
+}
+
+const novaTeam = Object.assign({}, config.primeTeam, { code: 'nova', name: 'HAWKTIMUS NOVA', mirror: true, builtIn: undefined });
+
+// The team the screen asks for at a moment when Team mode in the settings says saved
+function teamSeen(saved, now) {
+  teamsModule.useTeams({ teams: [config.primeTeam, novaTeam], settings: { teamMode: saved, alternateMinutes: 5 } }, now);
+  return teamsModule.wantedTeam().code;
+}
+
+// For each button: the value the settings give, the value the preview holds, and how to see which one the screen has.
+// The pack on the screen in these tests is Christmas, so the next pack is New Year's.
+const previewSeen = {
+  prime: { saved: 'nova', forced: 'prime', seen: now => teamSeen('nova', now) },
+  nova: { saved: 'prime', forced: 'nova', seen: now => teamSeen('prime', now) },
+  cybertron: { saved: 'original', forced: 'cybertron', seen: now => styleModule.chooseStyle('original', null, now) },
+  minimal: { saved: 'original', forced: 'minimal', seen: now => styleModule.chooseStyle('original', null, now) },
+  'next-pack': { saved: '', forced: 'new-years', seen: now => themeModule.previewedPack(now) },
+};
+
+// A fake screen for the runner, with a clock the test moves. asked is what the runner told the page to look at again.
+function previewWorld(options) {
+  const settings = options || {};
+  const world = {
+    nowMs: demoNow.getTime(),
+    content: { settings: { previewRequest: { kind: '', requestedAt: '' } } },
+    takeover: false,
+    demo: false,
+    night: false,
+    hidden: false,
+    pack: settings.pack === undefined ? 'christmas' : settings.pack,
+    asked: [],
+    store: settings.store || {},
+  };
+
+  world.runner = makePreviewRunner({
+    getContent: () => world.content,
+    storage: settings.storage === undefined ? makeStorage(world.store) : settings.storage,
+    takeoverRunning: () => world.takeover,
+    demoRunning: () => world.demo,
+    nightIsUp: () => world.night,
+    hiddenPlaying: () => world.hidden,
+    packOnScreen: () => world.pack,
+    lookAgain: held => world.asked.push(held),
+  });
+
+  world.look = () => world.runner.look(new Date(world.nowMs));
+  world.later = seconds => { world.nowMs += seconds * 1000; world.look(); };
+  world.at = seconds => new Date(world.nowMs + seconds * 1000);
+  world.request = (kind, seconds) => { world.content.settings.previewRequest = { kind: kind, requestedAt: new Date(world.nowMs - seconds * 1000).toISOString() }; };
+  return world;
+}
+
+// What every Preview button does with a request, whatever it holds: the guard of a demo, the wait for
+// whatever has the screen, the 2 minutes, and the settings coming back
+function checkPreviewButton(kind) {
+  const check = previewSeen[kind];
+  const holds = world => check.seen(world.at(0)) === check.forced;
+  letGoOfPreview();
+
+  // it holds its value for exactly 120 seconds from the moment it starts, and the saved value comes back
+  const world = previewWorld();
+  world.request(kind, 2);
+  assert.equal(check.seen(world.at(0)), check.saved, 'nothing is held before the screen looks');
+  world.look();
+  assert.equal(world.runner.isActive(), true);
+  assert.equal(check.seen(world.at(0)), check.forced, 'held at once');
+  assert.equal(previewSeconds, 120);
+  assert.equal(check.seen(world.at(119.999)), check.forced, 'held until the 120th second');
+  assert.equal(check.seen(world.at(120)), check.saved, 'and given back at the 120th');
+  world.later(60);
+  world.later(59);
+  assert.equal(world.runner.isActive(), true, 'still on at 119 seconds');
+  assert.equal(holds(world), true);
+  world.later(1);
+  assert.equal(world.runner.isActive(), false, 'over at 120 seconds');
+  assert.equal(holds(world), false);
+  assert.equal(world.asked.length, 2, 'the page is told when it starts and when it ends');
+  assert.deepEqual(world.asked[0], world.asked[1]);
+  assert.deepEqual(world.asked[0], heldBy(kind, 'christmas'));
+  assert.deepEqual(world.store, { 'teletraan-preview-handled': world.content.settings.previewRequest.requestedAt }, 'the request is remembered and the preview is not left behind');
+
+  // the same request is not started again, and a new one starts again from its own moment
+  world.look();
+  assert.equal(world.runner.isActive(), false, 'the request is still in the settings and is not started again');
+  world.request(kind, 0);
+  world.look();
+  assert.equal(world.runner.isActive(), true, 'a new request starts it');
+  world.later(100);
+  world.request(kind, 0);
+  world.look();
+  world.later(100);
+  assert.equal(holds(world), true, 'a request in the middle starts the 2 minutes again');
+  world.later(20);
+  assert.equal(holds(world), false);
+  letGoOfPreview();
+
+  // a request starts while it is a minute old at most, and an older one never starts
+  for (const age of [0, 1, 30, 59, 60]) {
+    letGoOfPreview();
+    const young = previewWorld();
+    young.request(kind, age);
+    young.look();
+    assert.equal(holds(young), true, age + ' seconds old');
+  }
+  for (const age of [61, 90, 3600, 86400, 86400 * 365]) {
+    letGoOfPreview();
+    const old = previewWorld();
+    old.request(kind, age);
+    old.look();
+    assert.equal(holds(old), false, age + ' seconds old');
+    assert.deepEqual(old.store, {});
+  }
+  // a few seconds ahead counts, because the clock of the computer that clicked may be a little ahead
+  for (const [ahead, starts] of [[3, true], [5, true], [6, false], [3600, false]]) {
+    letGoOfPreview();
+    const early = previewWorld();
+    early.request(kind, -ahead);
+    early.look();
+    assert.equal(holds(early), starts, ahead + ' seconds ahead');
+  }
+
+  // a screen that restarts after the click does not start it again, and the other runners' notes do not count
+  letGoOfPreview();
+  const again = previewWorld({ store: { 'teletraan-preview-handled': secondsAgo(5) } });
+  again.content.settings.previewRequest = { kind: kind, requestedAt: secondsAgo(5) };
+  again.look();
+  assert.equal(holds(again), false);
+  letGoOfPreview();
+  const other = previewWorld({ store: { 'teletraan-demo-handled': secondsAgo(5), 'teletraan-hidden-handled': secondsAgo(5), 'teletraan-announce-handled': secondsAgo(5), 'teletraan-presentation-test-handled': secondsAgo(5) } });
+  other.content.settings.previewRequest = { kind: kind, requestedAt: secondsAgo(5) };
+  other.look();
+  assert.equal(holds(other), true);
+
+  // storage that cannot be used still starts it once
+  for (const storage of [brokenStorage, null]) {
+    letGoOfPreview();
+    const stored = previewWorld({ storage: storage });
+    stored.request(kind, 2);
+    stored.look();
+    assert.equal(holds(stored), true);
+    stored.later(1);
+    stored.later(1);
+    assert.equal(stored.asked.length, 1, 'the same request is not started twice');
+  }
+
+  // while an alert, an announcement, a talk, a demo, the night screen or a hidden transition has the screen it waits,
+  // and it starts when it is over if the request is a minute old at most
+  for (const name of ['takeover', 'demo', 'night', 'hidden']) {
+    letGoOfPreview();
+    const waiting = previewWorld();
+    waiting[name] = true;
+    waiting.request(kind, 1);
+    waiting.look();
+    assert.equal(holds(waiting), false, 'not while ' + name + ' has the screen');
+    assert.deepEqual(waiting.store, {}, 'and the request is not used up');
+    waiting.nowMs += 30 * 1000;
+    waiting[name] = false;
+    waiting.look();
+    assert.equal(holds(waiting), true, 'half a minute later, after ' + name);
+
+    letGoOfPreview();
+    const late = previewWorld();
+    late[name] = true;
+    late.request(kind, 1);
+    late.look();
+    late.nowMs += 90 * 1000;
+    late[name] = false;
+    late.look();
+    assert.equal(holds(late), false, 'a minute and a half later it is too old, after ' + name);
+  }
+
+  // a preview that is on goes on when something takes the screen, and ends on time
+  letGoOfPreview();
+  const covered = previewWorld();
+  covered.request(kind, 1);
+  covered.look();
+  covered.takeover = true;
+  covered.later(60);
+  assert.equal(holds(covered), true, 'an alert does not end it');
+  covered.takeover = false;
+  covered.later(60);
+  assert.equal(holds(covered), false, 'and does not make it longer');
+  letGoOfPreview();
+}
+
+test('Preview Prime holds the Prime team for 2 minutes whatever Team mode says, and the guard is the demo\'s', () => {
+  checkPreviewButton('prime');
+  letGoOfPreview();
+
+  // it is the team mode that is held, and the saved one is not written
+  const world = previewWorld();
+  world.request('prime', 1);
+  world.look();
+  assert.deepEqual(heldBy('prime', 'christmas'), { team: 'prime', style: '', pack: '' });
+  assert.equal(teamSeen('nova', world.at(0)), 'prime', 'Nova only');
+  assert.equal(teamSeen('alternate', world.at(0)), 'prime', 'Alternate');
+  assert.equal(world.content.settings.teamMode, undefined, 'the settings are untouched');
+  assert.equal(styleModule.chooseStyle('minimal', null, world.at(0)), 'minimal', 'the style is not held');
+  assert.equal(themeModule.previewedPack(world.at(0)), '', 'nor the pack');
+
+  // the items follow: the team that is wanted is the one the pages are built for
+  assert.equal(teamsModule.showsForTeam({ team: 'nova' }, teamsModule.wantedTeam().code), false);
+  assert.equal(teamsModule.showsForTeam({ team: 'prime' }, teamsModule.wantedTeam().code), true);
+  letGoOfPreview();
+});
+
+test('Preview Nova holds the Nova team for 2 minutes whatever Team mode says, and falls back to Prime when there is no Nova', () => {
+  checkPreviewButton('nova');
+  letGoOfPreview();
+
+  const world = previewWorld();
+  world.request('nova', 1);
+  world.look();
+  assert.deepEqual(heldBy('nova', ''), { team: 'nova', style: '', pack: '' });
+  assert.equal(teamSeen('prime', world.at(0)), 'nova', 'Prime only');
+  assert.equal(teamSeen('alternate', world.at(0)), 'nova', 'Alternate');
+  assert.equal(teamsModule.showsForTeam({ team: 'nova' }, teamsModule.wantedTeam().code), true);
+  assert.equal(teamsModule.showsForTeam({ team: 'prime' }, teamsModule.wantedTeam().code), false);
+
+  // a dataset with no Nova team document keeps the team it has, as Nova only does
+  teamsModule.useTeams({ teams: [], settings: { teamMode: 'prime' } }, world.at(0));
+  assert.equal(teamsModule.wantedTeam(), config.primeTeam);
+  letGoOfPreview();
+});
+
+test('Preview Cybertron holds the Cybertron style for 2 minutes over the setting and the address, and the guard is the demo\'s', () => {
+  checkPreviewButton('cybertron');
+  letGoOfPreview();
+
+  const world = previewWorld();
+  world.request('cybertron', 1);
+  world.look();
+  assert.deepEqual(heldBy('cybertron', 'christmas'), { team: '', style: 'cybertron', pack: '' });
+  ['original', 'minimal', 'cybertron', undefined, null, 'oops'].forEach(saved => {
+    assert.equal(styleModule.chooseStyle(saved, null, world.at(10)), 'cybertron', 'the setting ' + saved);
+    assert.equal(styleModule.chooseStyle(saved, 'minimal', world.at(10)), 'cybertron', 'the address wins over the setting and loses to the preview');
+  });
+  assert.equal(styleModule.layoutFor(styleModule.chooseStyle('original', null, world.at(10)), 'standard'), 'bar', 'its layout is the bar layout');
+  assert.equal(styleModule.chooseStyle('minimal', 'original', world.at(121)), 'original', 'after the time the address wins again');
+  assert.equal(teamSeen('nova', world.at(0)), 'nova', 'the team is not held');
+  letGoOfPreview();
+});
+
+test('Preview Minimal holds the Minimal style for 2 minutes over the setting and the address, and the guard is the demo\'s', () => {
+  checkPreviewButton('minimal');
+  letGoOfPreview();
+
+  const world = previewWorld();
+  world.request('minimal', 1);
+  world.look();
+  assert.deepEqual(heldBy('minimal', 'christmas'), { team: '', style: 'minimal', pack: '' });
+  ['original', 'cybertron', 'minimal', undefined, null, 'oops'].forEach(saved => {
+    assert.equal(styleModule.chooseStyle(saved, null, world.at(10)), 'minimal', 'the setting ' + saved);
+    assert.equal(styleModule.chooseStyle(saved, 'cybertron', world.at(10)), 'minimal', 'the address');
+  });
+  assert.equal(styleModule.shapesFor('minimal'), 'minimal', 'it brings the corners of its frames');
+  assert.equal(styleModule.chooseStyle('cybertron', null, world.at(121)), 'cybertron', 'after the time the setting wins again');
+  letGoOfPreview();
+});
+
+test('Preview next pack holds the pack after the one on the screen for 2 minutes, in the order of the registry, and the guard is the demo\'s', () => {
+  checkPreviewButton('next-pack');
+  letGoOfPreview();
+
+  const packs = previewPacks();
+  assert.deepEqual(packs, ['halloween', 'thanksgiving', 'christmas', 'new-years', 'valentines-day', 'competition-day', 'summer-break']);
+
+  // each click moves on from the pack that is on the screen, a preview that is on included, and the last goes round to the first
+  const world = previewWorld({ pack: '' });
+  const held = [];
+  for (let click = 0; click < packs.length + 1; click++) {
+    world.nowMs += 1000;
+    world.request('next-pack', 0);
+    world.look();
+    held.push(themeModule.previewedPack(world.at(0)));
+    world.pack = held[held.length - 1];
+  }
+  assert.deepEqual(held, packs.concat(packs[0]));
+
+  // it is the pack that is held, nothing else, and the Theme page is not written
+  assert.deepEqual(heldBy('next-pack', 'halloween'), { team: '', style: '', pack: 'thanksgiving' });
+  assert.equal(styleModule.chooseStyle('minimal', null, world.at(10)), 'minimal');
+  assert.equal(teamSeen('nova', world.at(0)), 'nova');
+  assert.equal(world.content.theme, undefined);
+
+  // and it is a known overlay, so the page can draw it, and it wins over the schedule and Use now
+  held.forEach(id => assert.equal(themeModule.isKnownOverlay(id), true, id));
+  assert.equal(themeModule.resolveTheme({ useNow: { overlay: 'none', until: '' } }, world.at(0)).overlay, '', 'resolveTheme does not know about previews: theme-apply.js puts one over its answer');
+  letGoOfPreview();
+});
+
+test('the next pack is the one after the current in the order of the registry, the first with none or an unknown one, and never the placeholder', () => {
+  const list = [{ id: 'a', decorations: true }, { id: 'b', decorations: true }, { id: 'placeholder', decorations: false }, { id: 'c', decorations: true }];
+  assert.deepEqual(previewPacks(list), ['a', 'b', 'c']);
+  assert.equal(nextPack('', list), 'a');
+  assert.equal(nextPack('a', list), 'b');
+  assert.equal(nextPack('b', list), 'c', 'the placeholder is skipped');
+  assert.equal(nextPack('c', list), 'a', 'and after the last it is the first');
+  [undefined, null, 'oops', 'placeholder', 7].forEach(current => assert.equal(nextPack(current, list), 'a', String(current)));
+  assert.equal(nextPack('a', []), '');
+  assert.equal(nextPack('a', [{ id: 'x', decorations: false }]), '');
+  assert.equal(previewPacks().indexOf('example'), -1, 'the placeholder overlay of the registry is not a pack');
+  assert.equal(nextPack('summer-break'), 'halloween');
+});
+
+test('a request with a kind the registry does not have, or with no time, starts nothing and is not used up', () => {
+  letGoOfPreview();
+  [{ kind: 'nope', requestedAt: secondsAgo(1) }, { kind: '', requestedAt: secondsAgo(1) }, { kind: 'prime', requestedAt: '' }, { kind: 'prime', requestedAt: 'whenever' }, { kind: 7, requestedAt: secondsAgo(1) }].forEach(request => {
+    const world = previewWorld();
+    world.content.settings.previewRequest = request;
+    world.look();
+    assert.equal(world.runner.isActive(), false, JSON.stringify(request));
+    assert.deepEqual(world.store, {}, JSON.stringify(request));
+    assert.deepEqual(world.asked, []);
+  });
+
+  const world = previewWorld();
+  [null, undefined, {}, { settings: null }, { settings: {} }, { settings: { previewRequest: null } }, { settings: { previewRequest: {} } }].forEach(content => {
+    world.content = content;
+    world.look();
+  });
+  [{ requestedAt: '' }, { requestedAt: 'tomorrow' }, 'now', [], 4].forEach(request => {
+    world.content = { settings: { previewRequest: request } };
+    world.look();
+  });
+  assert.equal(world.runner.isActive(), false);
+  letGoOfPreview();
+});
+
+test('tidyPreviewRequest always gives a kind and a time, each empty when it is not usable', () => {
+  const when = secondsAgo(3);
+  assert.deepEqual(tidyPreviewRequest({ kind: 'nova', requestedAt: when }), { kind: 'nova', requestedAt: when });
+  assert.deepEqual(tidyPreviewRequest({ kind: 'nope', requestedAt: when }), { kind: '', requestedAt: when });
+  assert.deepEqual(tidyPreviewRequest({ kind: 'nova', requestedAt: 'whenever' }), { kind: 'nova', requestedAt: '' });
+  assert.deepEqual(tidyPreviewRequest({ kind: 'toString', requestedAt: when }), { kind: '', requestedAt: when }, 'a name every object has is not a kind');
+  [undefined, null, when, 4, [], {}].forEach(value => assert.deepEqual(tidyPreviewRequest(value), { kind: '', requestedAt: '' }, JSON.stringify(value)));
+  assert.deepEqual(Object.keys(tidyPreviewRequest({ kind: 'nova', requestedAt: when, extra: 1 })), ['kind', 'requestedAt']);
+  assert.deepEqual(config.defaultSettings.previewRequest, { kind: '', requestedAt: '' });
+});
+
+test('the five kinds are the five buttons, each holds one thing that exists, and the handled and active notes have names of their own', () => {
+  assert.deepEqual(Object.keys(previewKinds), ['prime', 'nova', 'cybertron', 'minimal', 'next-pack']);
+  assert.deepEqual(Object.keys(previewKinds).map(id => previewKinds[id].name), ['Prime', 'Nova', 'Cybertron', 'Minimal', 'next pack']);
+  Object.keys(previewKinds).forEach(id => {
+    const entry = previewKinds[id];
+    assert.deepEqual(['team', 'style', 'pack'].filter(name => entry[name] !== undefined).length, 1, id);
+    assert.ok(entry.team === undefined || config.teamModes.indexOf(entry.team) !== -1, id);
+    assert.ok(entry.style === undefined || config.styles.indexOf(entry.style) !== -1, id);
+    assert.ok(entry.pack === undefined || entry.pack === 'next', id);
+  });
+  assert.deepEqual(heldBy('oops', 'christmas'), { team: '', style: '', pack: '' });
+  assert.deepEqual(heldBy(undefined, ''), { team: '', style: '', pack: '' });
+
+  assert.equal(preview.handledKey, 'teletraan-preview-handled');
+  assert.equal(preview.activeKey, 'teletraan-preview-active');
+  [announce.handledKey, presentationTest.handledKey, hidden.handledKey, demo.handledKey, preview.activeKey].forEach(key => assert.notEqual(preview.handledKey, key));
+
+  const store = {};
+  const storage = makeStorage(store);
+  assert.equal(readHandledPreview(storage), '');
+  assert.equal(rememberHandledPreview(storage, secondsAgo(5)), true);
+  assert.deepEqual(store, { 'teletraan-preview-handled': secondsAgo(5) });
+  assert.equal(readHandledPreview(brokenStorage), '');
+  assert.equal(readHandledPreview(null), '');
+  assert.equal(rememberHandledPreview(brokenStorage, secondsAgo(5)), false);
+  assert.equal(rememberHandledPreview(null, secondsAgo(5)), false);
+});
+
+test('a preview that is on when the page reloads goes on for the time it has left, and one that is over, odd or unreadable does not', () => {
+  letGoOfPreview();
+  const world = previewWorld();
+  world.request('cybertron', 1);
+  world.look();
+  const record = JSON.parse(world.store['teletraan-preview-active']);
+  assert.deepEqual(record, { until: world.nowMs + 120 * 1000, held: { team: '', style: 'cybertron', pack: '' } });
+
+  // the page reloads: the modules start empty, and the screen puts the preview back before it chooses the style
+  letGoOfPreview();
+  assert.equal(styleModule.chooseStyle('original', null, world.at(30)), 'original');
+  const resumed = resumePreview(makeStorage(world.store), world.at(30));
+  assert.deepEqual(resumed, record);
+  assert.equal(styleModule.chooseStyle('original', null, world.at(30)), 'cybertron');
+  assert.equal(styleModule.chooseStyle('original', null, world.at(119)), 'cybertron');
+  assert.equal(styleModule.chooseStyle('original', null, world.at(120)), 'original', 'it ends when it would have ended');
+
+  // the runner that starts after the reload ends it on time and clears the note
+  const after = previewWorld({ store: world.store });
+  after.nowMs = world.nowMs + 119 * 1000;
+  after.look();
+  assert.equal(after.runner.isActive(), true);
+  assert.ok('teletraan-preview-active' in after.store);
+  after.later(1);
+  assert.equal(after.runner.isActive(), false);
+  assert.equal('teletraan-preview-active' in after.store, false);
+  assert.deepEqual(after.asked, [{ team: '', style: 'cybertron', pack: '' }], 'the page is told to look again');
+
+  // one that is over is dropped, and so is anything that is not a preview
+  letGoOfPreview();
+  const over = { 'teletraan-preview-active': JSON.stringify(record) };
+  assert.equal(resumePreview(makeStorage(over), world.at(121)), null);
+  assert.equal('teletraan-preview-active' in over, false, 'and forgotten');
+  assert.equal(styleModule.chooseStyle('original', null, world.at(121)), 'original');
+  ['', 'oops', '[]', '4', 'null', '{}', JSON.stringify({ until: 'soon', held: {} }), JSON.stringify({ until: record.until }), JSON.stringify({ until: record.until, held: 'cybertron' })].forEach(text => {
+    letGoOfPreview();
+    assert.equal(resumePreview(makeStorage({ 'teletraan-preview-active': text }), world.at(30)), null, text);
+    assert.equal(styleModule.chooseStyle('original', null, world.at(30)), 'original', text);
+  });
+  assert.equal(resumePreview(brokenStorage, world.at(30)), null);
+  assert.equal(resumePreview(null, world.at(30)), null);
+
+  // a held value that is not a mode, a style or an overlay is let go
+  const odd = resumePreview(makeStorage({ 'teletraan-preview-active': JSON.stringify({ until: record.until, held: { team: 'both', style: 'neon', pack: 'oops' } }) }), world.at(30));
+  assert.deepEqual(odd.held, { team: '', style: '', pack: '' });
+  assert.equal(styleModule.chooseStyle('original', null, world.at(30)), 'original');
+  assert.equal(themeModule.previewedPack(world.at(30)), '');
+  letGoOfPreview();
+});
+
+test('a preview that cannot write its note still runs, and ends at its time', () => {
+  letGoOfPreview();
+  const world = previewWorld({ storage: brokenStorage });
+  world.request('minimal', 1);
+  world.look();
+  assert.equal(styleModule.chooseStyle('original', null, world.at(10)), 'minimal');
+  world.later(121);
+  assert.equal(world.runner.isActive(), false);
+  assert.equal(styleModule.chooseStyle('original', null, world.at(0)), 'original');
+  letGoOfPreview();
+});
+
+test('previewStyle, previewTeam and previewPack take only a style, a mode and an overlay, a time that is a number, and a new call replaces the one before', () => {
+  letGoOfPreview();
+  const now = demoNow;
+  const until = now.getTime() + 1000;
+
+  ['neon', '', undefined, null, 4].forEach(value => {
+    styleModule.previewStyle(value, until);
+    assert.equal(styleModule.chooseStyle('minimal', null, now), 'minimal', String(value));
+    teamsModule.previewTeam(value, until);
+    assert.equal(teamSeen('prime', now), 'prime', String(value));
+    themeModule.previewPack(value, until);
+    assert.equal(themeModule.previewedPack(now), '', String(value));
+  });
+  [undefined, null, '5', NaN, Infinity].forEach(time => {
+    styleModule.previewStyle('cybertron', time);
+    assert.equal(styleModule.chooseStyle('original', null, now), 'original', String(time));
+    teamsModule.previewTeam('nova', time);
+    assert.equal(teamSeen('prime', now), 'prime', String(time));
+    themeModule.previewPack('christmas', time);
+    assert.equal(themeModule.previewedPack(now), '', String(time));
+  });
+
+  styleModule.previewStyle('cybertron', until);
+  styleModule.previewStyle('minimal', until);
+  assert.equal(styleModule.chooseStyle('original', null, now), 'minimal');
+  styleModule.previewStyle('', 0);
+  assert.equal(styleModule.chooseStyle('original', null, now), 'original', 'an empty name lets go');
+  assert.equal(styleModule.chooseStyle('original', null), 'original', 'the clock of the page is the default');
+
+  teamsModule.previewTeam('alternate', until);
+  assert.equal(teamSeen('nova', now), teamsModule.chooseTeam([config.primeTeam, novaTeam], 'alternate', 5, now).code, 'Alternate can be held too, and the clock decides');
+  letGoOfPreview();
+});
+
+test('?team= holds a mode for the page like ?style=, a preview wins over it, and a name that is not a mode is ignored', () => {
+  letGoOfPreview();
+  assert.equal(teamSeen('prime', demoNow), 'prime');
+  teamsModule.askForTeam('nova');
+  assert.equal(teamSeen('prime', demoNow), 'nova', 'the address wins over Team mode');
+  teamsModule.previewTeam('prime', demoNow.getTime() + 1000);
+  assert.equal(teamSeen('prime', demoNow), 'prime', 'a preview wins over the address');
+  assert.equal(teamSeen('prime', new Date(demoNow.getTime() + 2000)), 'nova', 'and when it is over the address is back');
+  ['oops', '', null, undefined, 'both'].forEach(value => {
+    teamsModule.previewTeam('', 0);
+    teamsModule.askForTeam('nova');
+    teamsModule.askForTeam(value);
+    assert.equal(teamSeen('prime', demoNow), 'prime', String(value));
+  });
+  letGoOfPreview();
+});
+
+test('the preview functions import only the config, the registry of overlays, the demo functions and the three modules they hold, and use no page, and the screen code that runs them is started after the others', () => {
+  const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+  const code = text => text.split('\n').filter(line => !line.trim().startsWith('//')).join('\n');
+
+  assert.deepEqual(read('core/preview.js').split('\n').filter(line => /^import /.test(line)), [
+    "import { previewSeconds, styles, teamModes } from '../config.js';",
+    "import { overlays } from '../themes/overlays/registry.js';",
+    "import { readHandled, rememberHandled, shouldRunDemo } from './demo.js';",
+    "import { previewStyle } from './style.js';",
+    "import { previewTeam } from './teams.js';",
+    "import { isKnownOverlay, previewPack } from './theme.js';",
+  ]);
+  assert.ok(!/\bdocument\b|\bwindow\b|\bimport\(/.test(code(read('core/preview.js'))), 'no page in preview.js');
+  ['animate(', 'transition', 'requestAnimationFrame', 'keyframes', 'setTimeout', 'setInterval'].forEach(word => assert.ok(!code(read('core/preview.js')).includes(word), 'preview.js does not animate or keep time: ' + word));
+
+  // the real screen: it asks what can have the screen, tells the page to look again and moves the pages on for a style or a pack
+  const run = read('core/preview-run.js');
+  ['demoRunning', 'nightIsUp', 'hiddenPlaying'].forEach(name => assert.ok(run.includes("'" + name + "'"), name));
+  assert.ok(run.includes('takeoverRunning: takeoverRunning,') && run.includes('packOnScreen: overlayShown,') && run.includes('lookAgain: lookAgain,'));
+  assert.ok(/if \(held\.style === '' && held\.pack === ''\) return;\s*\n\s*checkTheme\(\);\s*\n\s*moveOn\(\['grid1', 'grid2', 'ticker'\]\);/.test(run), 'a team is followed by core/team-run.js, a style or a pack is asked for here');
+  assert.ok(!/localStorage\.setItem|setProperty|dataset|classList/.test(code(run)), 'the runner writes nothing to the page or the settings itself');
+
+  const shell = read('shell.js');
+  const previewing = shell.indexOf("startOptional('./core/preview-run.js', module => module.startPreviewRunner(getContent))");
+  assert.ok(previewing > shell.indexOf("startOptional('./core/presentation-test-run.js'"), 'after the presentation test');
+  assert.ok(previewing > shell.indexOf("startOptional('./core/announce-run.js'"), 'after the announcements');
+  assert.ok(previewing > shell.indexOf("startOptional('./core/hidden-run.js'"), 'after the hidden transitions');
+  assert.ok(previewing > shell.indexOf("startOptional('./core/demo-runner.js'"), 'after the demo runner');
+  assert.ok(previewing > shell.indexOf('startTakeovers(getContent);'), 'after the takeovers');
+  assert.ok(shell.lastIndexOf("if (!params.get('show') && !stress) {", previewing) > shell.lastIndexOf('startNight', previewing) - 2000, 'only when the whole screen runs');
+
+  // a preview that reloaded the page goes back on before the style and the layout are chosen
+  const resuming = shell.indexOf('resumeSavedPreview();');
+  assert.ok(resuming !== -1 && resuming < shell.indexOf("const style = startStyle(params.get('style'), savedStyle);"), 'before the style');
+  assert.ok(shell.indexOf("askForTeam(params.get('team'));") > resuming && shell.indexOf("askForTeam(params.get('team'));") < shell.indexOf('const style = startStyle('));
+  assert.ok(/\/\/   team=prime\|nova\|alternate /.test(shell), 'the switch is in the list at the top');
+
+  // the style and the team are asked once a second or at every look, so a preview needs nothing more there; the pack is read in theme-apply.js
+  assert.ok(read('core/theme-apply.js').includes('look.overlay = previewedPack() || look.overlay;'));
+  assert.ok(read('core/content.js').includes('settings.previewRequest = tidyPreviewRequest(settings.previewRequest);'));
 });
 
 // The Neon Prime kit (frame.js, "The Neon Prime kit"): the two events that frame.js drives, the name

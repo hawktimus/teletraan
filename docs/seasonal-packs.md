@@ -557,6 +557,9 @@ read from across the room.
 - `http://localhost:8080/tools/zones.html` shows the zones as outlines over the dashboard.
 - On the Theme page in Studio, "Use a theme now" with a seasonal pack picked shows it on the real screen
   at once. Set Until, or clear it afterwards.
+- "Preview next pack" in the menu next to Publish on Dashboard Settings shows the pack after the one on
+  the screen for 2 minutes, and then the Theme page comes back, with nothing to clear
+  (docs/hidden-transitions.md, "Preview a look").
 - `?hidden=desktop` and `?hidden=redEyes` play a hidden transition, to see the front layer fade out and back.
   Add `&night=off` at night.
 

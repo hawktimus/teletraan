@@ -2,7 +2,7 @@
 
 This page also covers the Play announcements button, which sits beside the two Play
 buttons for the transitions. See "Play announcements" below. The Run presentation test
-button, the last one in the menu, is covered after it.
+button, and the five Preview buttons that end the menu, are covered after it.
 
 A hidden transition is a rare surprise. Now and then, instead of an ordinary page
 change, the whole screen does something else. There are two:
@@ -201,6 +201,67 @@ night screen to be over. Run presentations in the Presentations tab must be on. 
 shows sample content it reads the settings from `dashboard/data/sample/content.json`, so the button
 does nothing. Switch back to production content first.
 
+## Preview a look
+
+The last five buttons in the menu next to Publish on Dashboard Settings are **Preview Prime**,
+**Preview Nova**, **Preview Cybertron**, **Preview Minimal** and **Preview next pack**. Each one
+shows a look on the TV for 2 minutes, and then the screen goes back to the saved settings. Use
+them to show visitors a style, to check a team's colors and its mirror, or to see a seasonal pack
+on a day it is not scheduled.
+
+1. Open Dashboard Settings in Studio.
+2. Open the menu next to Publish (the three dots) and click a Preview button.
+3. Look at the TV.
+
+The button writes its kind and the time now into `previewRequest` and publishes the page for you.
+`previewRequest` has two fields, `kind` and `requestedAt`, and editors never see it in Studio: it is
+hidden, but its value stays in the page. Nothing else in Dashboard Settings or on the Theme page is
+changed, so there is nothing to put back.
+
+What each button holds for 2 minutes:
+
+| Button | What the screen shows |
+|--------|-----------------------|
+| Preview Prime | the Prime team, whatever Team mode says |
+| Preview Nova | the Nova team, whatever Team mode says. With no Nova team document in Studio it stays on Prime |
+| Preview Cybertron | the Cybertron style, whatever Style says and whatever `?style=` says |
+| Preview Minimal | the Minimal style, in the same way |
+| Preview next pack | the seasonal pack after the one on the screen, in the order of the list in `dashboard/themes/overlays/registry.js` |
+
+What the screen does with it:
+
+- A team goes on at the next page change, in the moment the large frame is apart, like a swap in Alternate
+  mode. The name, the number, the logo, the colors and the mirror change together.
+- A style or a pack goes on at the next page change too, and the pages are asked to move on at once, so it
+  takes a few seconds. A style with another layout reloads the page once when it goes on and once when it
+  goes back. The preview is kept in the browser's storage (`localStorage`, under
+  `teletraan-preview-active`) so that the reload does not lose it. A preview that is over, or not
+  readable, is dropped.
+- Next pack takes the pack on the screen now, whether the Theme page or an earlier preview put it
+  there, and moves to the one after it. After the last it goes round to the first. The placeholder overlay
+  is not a pack. Click it again for the next pack. The ticker prefix, the banner line and the corner art
+  are the ones typed on that pack's rule on the Theme page, or the pack's own (docs/seasonal-packs.md).
+- It starts once, and only while the request is less than 60 seconds old, the same rule as the demo
+  (docs/demo.md). The screen keeps the request it handled last in `localStorage`, under
+  `teletraan-preview-handled`, so a Mini that restarts never starts it again. This is separate from the
+  demo's, the hidden transitions', the announcements' and the presentation test's own.
+- It waits for an alert, an announcement, a talk, a demo, a hidden transition or the night screen to be
+  over, if that happens inside the minute. Otherwise it is dropped. An alert that comes on while it is
+  showing does not end it and does not make it longer.
+- Another click while a preview is showing replaces it, and the 2 minutes count from the new click.
+- At the end the screen goes back to the settings at the next page change, and the page reloads once more
+  if the style it goes back to has another layout.
+- While the screen shows sample content (Content source in Dashboard Settings) it reads the settings from
+  `dashboard/data/sample/content.json`, not from Studio, so the buttons do nothing. To try every style,
+  team and pack with the sample content, put `?style=`, `?team=` and `?overlay=` on the address
+  (docs/try-it-on-the-mini.md). The sample content has both teams.
+
+To add a preview, add an entry to `previewKinds` in `dashboard/core/preview.js`, the same id and name to
+`studio/previews.js`, and the id to the choices in `studio/check-schemas.mjs` (search it for
+`previewRequest.kind`). A kind holds one thing: a team mode, a style or the next pack. Then run
+`node tools/test-effects.mjs` and `node studio/check-schemas.mjs`, and run `npm run deploy` in the
+`studio` folder so the editors see the button.
+
 ## Try one
 
 Add `?hidden=desktop` or `?hidden=redEyes` to the address and that transition plays at
@@ -330,6 +391,14 @@ A transition is one entry in a list, plus a few lines to give it a chance settin
   from `dashboard/data/sample/content.json` and hands it to `startTestTalk` in
   `core/presentation-run.js`. Its slides and manifest.json are in
   `dashboard/data/sample/slides/presentation-sample/`.
+- `dashboard/core/preview.js`: the plain functions behind the Preview buttons, with no page in them: the
+  kinds, tidying `previewRequest`, which pack is next (`nextPack`), the note that survives a reload
+  (`resumePreview`) and the runner that applies the guard and waits for the screen
+  (`makePreviewRunner`). The tests are in `tools/test-effects.mjs`.
+- `dashboard/core/preview-run.js`: gives that runner the real screen and asks the page to work out its
+  look again. What it holds is three small functions: `previewStyle` in `core/style.js`, `previewTeam` in
+  `core/teams.js` and `previewPack` in `core/theme.js`. Each keeps a value and a time in memory and is
+  read by the code that chooses the style, the team and the pack, so no setting is written.
 - `dashboard/core/areas.js` and `core/schedule.js`: the hook at the large panel's page
   change, the gate for the other areas, and `moveOn` (ask a region to change page now).
 - `dashboard/frame.css` ("Hidden transitions" and "The blue glitch"), `base.css` (the
@@ -345,6 +414,10 @@ A transition is one entry in a list, plus a few lines to give it a chance settin
   (`presentationTestRequestField`), and `useRunPresentationTestAction` in `studio/actions.js` is the
   button. The starting value is `presentationTestRequest` in `defaultSettings` in
   `dashboard/config.js`.
+- `studio/schemas/settingsPreview.js` has the hidden `previewRequest` field (`previewRequestField`, in the
+  Screen tab), `studio/previews.js` is the Studio's copy of the kinds, and `previewActions` in
+  `studio/actions.js` are the buttons. The starting value is `previewRequest` in `defaultSettings` in
+  `dashboard/config.js`, and `previewSeconds` there is the 2 minutes.
 - `studio/schemas/settingsHidden.js` is the tab, `studio/actions.js` has the Play
   buttons, and `studio/hidden-transitions.js` is the Studio's copy of the list. The
   starting values are `hiddenEnabled`, `desktopChance`, `redEyesChance` and

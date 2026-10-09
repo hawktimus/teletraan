@@ -1184,7 +1184,7 @@ test('the page calls changeTeamNow in the same two moments as it calls changeThe
   assert.equal(areas.split('changeTeamNow()').length - 1, 2);
 
   const shell = fs.readFileSync(path.join(dashboardFolder, 'shell.js'), 'utf8');
-  assert.ok(shell.includes("import { changeTeamNow, onTeamChange, useTeams } from './core/teams.js';"));
+  assert.ok(shell.includes("import { askForTeam, changeTeamNow, onTeamChange, useTeams } from './core/teams.js';"));
   assert.ok(/showThemeNow\(\);[^\n]*\n\s*changeTeamNow\(\);/.test(shell), 'the first real content has its team on at once, as it has its theme');
   assert.ok(shell.indexOf('chooseTeam(); //') !== -1 && shell.indexOf('chooseTeam(); //') < shell.indexOf('content.events = mergedEvents();'), 'the team is chosen before the events are merged');
   assert.ok(/onTeamChange\(\(\) => \{\s*if \(content && !choosingTeam\) rebuild\(\);\s*\}\);/.test(shell), 'a change of team redraws the banner, and does not start a second redraw from inside one');
