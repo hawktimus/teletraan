@@ -11,18 +11,20 @@ needs a change to the code.
 In Studio open Dashboard Settings, then the Screen tab, and find Style.
 
 - Original is the screen as it has always been. Its layout comes from the theme.
-- Cybertron has a banner across the top with the team name at one end and the war
+- Cybertron has the same layout as Original: the banner, the large frame, the
+  countdown over the small frame and the ticker. The frames are gunmetal plates with
+  a steel edge, a neon line inside the edge, bolts at the joints and a hazard stripe
+  under each header. The countdown is the war clock in place of the red frame.
+- Minimal has a banner across the top with the team name at one end and the war
   clock at the other, a thin side column, one main panel and the ticker across the
-  bottom. The frames are steel with a neon line inside the edge, bolts at the
-  joints and a hazard stripe under each header.
-- Minimal has the same layout. Its frames have smaller cut corners, rivets, rust at
-  two corners and tick marks along the header line.
+  bottom. Its frames are steel with smaller cut corners, rivets, rust at two corners
+  and tick marks along the header line.
 
 The war clock is the countdown to Kickoff, then to Rollout, in a steel housing. It
-uses the dates and the label from the Countdown tab. Cybertron and Minimal have no
-small frame, so the next event, task counts, safety days and sponsor logo do not
-show with them. The main panel shows the panels of the Large panels list, one after
-another, with the rows and the line limits each panel always had.
+uses the dates and the label from the Countdown tab. Minimal has no small frame, so
+the next event, task counts, safety days and sponsor logo do not show with it, and the
+main panel shows the panels of the Large panels list, one after another, with the rows
+and the line limits each panel always had. Cybertron shows every panel Original does.
 
 When the style gives another layout than the one on the TV, the screen reloads
 once, at the next page change.

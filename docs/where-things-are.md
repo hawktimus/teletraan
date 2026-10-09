@@ -97,17 +97,18 @@ editors can sign in from anywhere.
                               (a banner, a side column, one main panel and the ticker) and its mirror. The numbers
                               are in core/layout.js (docs/layouts.md)
       styles/                 one stylesheet for each style (Style in Dashboard Settings): original.css has the
-                              mirror of the standard layout, and cybertron.css and minimal.css each set custom
-                              properties and paint the page background, the plates, the rail and the
-                              decoration of the bar frames that only that style has (docs/layouts.md, "Styles"
-                              and "Frames")
+                              mirror of the standard layout, which Cybertron has too, and cybertron.css and
+                              minimal.css each set custom properties and paint the page background, the plates
+                              and the decoration of the frames that only that style has (docs/layouts.md,
+                              "Styles", "Frames" and "Cybertron")
       base.css                the fixed 1920x1080 screen and the shared metal shapes. Nothing is responsive:
                               shell.js scales the whole screen to the window (docs/layouts.md, "The screen is
                               a fixed canvas")
       core/                   helpers used by several panels. plate.js draws the frames, and the three steel frames
-                              of the bar layout, with Minimal's own three (docs/layouts.md, "Frames"), and the
-                              housing of the war clock, areas.js keeps
-                              the frames in place while pages change, schedule.js says what shows when,
+                              of the bar layout, with Minimal's own three (docs/layouts.md, "Frames") and the
+                              four of Cybertron ("Cybertron"), and the housing of the war clock, areas.js keeps
+                              the frames in place while pages change and draws them again when a style with other frames
+                              goes on, schedule.js says what shows when,
                               logo.js and name.js draw the hawk and the team name (name.js can also put the
                               name on two lines, which nothing uses now), countdown.js is the countdown's parts and
                               the code that writes its numbers, for every layout and for the war clock, source.js
@@ -260,6 +261,12 @@ editors can sign in from anywhere.
       test-install-calendars.mjs  checks for deploy/scripts/install-calendars.sh: that it stops before it changes
                               anything, and that it installs the calendar units only
       test-calendars-script.mjs  checks for deploy/scripts/check-calendars.sh, with a fake curl
+      test-cybertron.mjs      checks for Cybertron on the layout of Original: which layout each style has, its four
+                              frames, the stage, the banner and the ticker on their plates, the wide war clock, and
+                              that the frames are drawn again when the style changes
+      test-minimal.mjs        checks for Minimal on the bar layout: what the order gives it, what it must not have
+                              (stamped ids, hazard stripes, scanlines, slashes, conduit, brackets), and the list of
+                              what it shares with Cybertron
       check-seasons.mjs       fails if a seasonal pack is not in the data format, has a piece outside its zone, too
                               many pieces, a forbidden word, no header mark, a mark bigger than its box (60 x 76),
                               fewer than 8 or more than 14 pieces over the panels, an over piece that is too big,
@@ -545,16 +552,17 @@ alone.
   Original (the screen as it was), Cybertron or Minimal. The names are `styles` in
   `dashboard/config.js`, `dashboard/core/style.js` puts `data-style` on the html
   element and says which layout a style asks for, and there is a stylesheet for each
-  in `dashboard/styles/`. Cybertron and Minimal have the bar layout whatever the
-  theme says. `?style=cybertron` in the address shows one for a single page. The four
-  steps for the editors are in docs/switch-the-look.md.
-- **The war clock.** The countdown drawn a second time, 700 by 120, in the banner of the bar
-  layout, which is Cybertron and Minimal. It reads the same label and dates as the countdown
+  in `dashboard/styles/`. Minimal has the bar layout whatever the theme says, and
+  Original and Cybertron have the layout of the theme. `?style=cybertron` in the address
+  shows one for a single page. The four steps for the editors are in docs/switch-the-look.md.
+- **The war clock.** The countdown drawn a second time: 700 by 120 in the banner of the bar
+  layout, which is Minimal, and 616 by 200 in the countdown's place in Cybertron (the wide form,
+  `warMarkup('wide')`, drawn into the countdown panel). It reads the same label and dates as the countdown
   (Dashboard Settings, Countdown tab), so there is nothing to set for it. The numbers come from
   `core/countdown.js`, `panels/countdown/countdown.js` writes them (`warMarkup`, `startWar` and
   `updateWar`), `panels/bar-banner` puts it in its slot, `core/plate.js` draws the housing
   (`warHousingMarkup`) and `panels/countdown/countdown.css` places every part. The digits are
-  amber in Cybertron and the team's neon in Minimal. docs/layouts.md, "The war clock", has
+  amber in Cybertron and the team's neon in Minimal. docs/layouts.md, "The war clock" and "The wide war clock", has
   the sizes.
 - **The teams, and the team on the screen.** Teams in the Studio sidebar
   (`studio/schemas/team.js`): a name, a short name, a number, a code, an optional logo, seven
@@ -637,6 +645,8 @@ exception is `test-slides-script.mjs`, which needs `jq`.
     node tools/test-slides-script.mjs
     node tools/test-install-calendars.mjs
     node tools/test-calendars-script.mjs
+    node tools/test-cybertron.mjs
+    node tools/test-minimal.mjs
     node tools/check-themes.mjs
     node tools/check-seasons.mjs
     node studio/check-schemas.mjs

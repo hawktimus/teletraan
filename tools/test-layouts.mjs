@@ -1176,7 +1176,7 @@ test('the sidebar layout draws the side panel in place of the banner and the cou
 test('shell.js draws the panels the layout names, starts the logo of the one that has it, and tells the side panel about new content', () => {
   const shell = read('dashboard/shell.js');
   assert.ok(shell.includes("import { fixedPanels, panels } from './registry.js';"));
-  assert.ok(shell.includes('fixedPanels(layoutNow()).forEach(id => {'));
+  assert.ok(shell.includes('fixedPanels(layoutNow()).forEach(id => showFixedPanel(id, true));'));
   assert.ok(shell.includes("if (logo) frame.startLogo(logo);"));
   assert.ok(shell.includes("updatePanel('side', content);"));
   assert.equal(countOf(shell, "mountPanel\\('banner'"), 0, 'the banner is no longer named by hand');
@@ -1937,11 +1937,11 @@ test('the style comes from the setting, the address wins, and anything that is n
   table.forEach(row => assert.equal(styles.chooseStyle(row[0], row[1]), row[2], JSON.stringify(row)));
 });
 
-test('Original keeps the layout of the theme, and Cybertron and Minimal have the bar layout whatever the theme says', () => {
+test('Original and Cybertron keep the layout of the theme, and Minimal has the bar layout whatever the theme says', () => {
   everyTheme.forEach(id => {
     const own = layout.layoutOf(id);
     assert.equal(styles.layoutFor('original', own), own, id + ' with Original');
-    assert.equal(styles.layoutFor('cybertron', own), 'bar', id + ' with Cybertron');
+    assert.equal(styles.layoutFor('cybertron', own), own, id + ' with Cybertron');
     assert.equal(styles.layoutFor('minimal', own), 'bar', id + ' with Minimal');
   });
   ['sidebar', 'standard'].forEach(own => [undefined, null, '', 'oops', 'toString'].forEach(odd => assert.equal(styles.layoutFor(odd, own), own, String(odd) + ' is not a style: the theme decides')));
@@ -1955,14 +1955,17 @@ test('the layout at the start follows the style, the saved theme and the address
   assert.equal(layout.chooseLayout(null, null, noon), 'standard', 'no style is Original');
   assert.equal(layout.chooseLayout(sidebarTheme, null, noon, 'original'), 'sidebar', 'Original leaves the sidebar theme as it is');
   assert.equal(layout.chooseLayout(null, 'neon-prime', noon, 'original'), 'sidebar');
-  ['cybertron', 'minimal'].forEach(style => {
+  assert.equal(layout.chooseLayout(sidebarTheme, null, noon, 'cybertron'), 'sidebar', 'and so does Cybertron');
+  assert.equal(layout.chooseLayout(null, 'neon-prime', noon, 'cybertron'), 'sidebar');
+  assert.equal(layout.chooseLayout(null, null, noon, 'cybertron'), 'standard');
+  ['minimal'].forEach(style => {
     assert.equal(layout.chooseLayout(null, null, noon, style), 'bar', style);
     assert.equal(layout.chooseLayout(sidebarTheme, null, noon, style), 'bar', style + ' with the sidebar theme saved');
     assert.equal(layout.chooseLayout(null, 'neon-prime', noon, style), 'bar', style + ' with ?theme=neon-prime');
     assert.equal(layout.chooseLayout({ schedule: 'oops', useNow: 5 }, null, noon, style), 'bar', style + ' with a theme that cannot be read');
     assert.equal(layout.chooseLayout({ get defaultTheme() { throw new Error('broken'); } }, null, noon, style), 'bar', style + ' with a theme that throws');
   });
-  assert.equal(layout.chooseLayout({ get defaultTheme() { throw new Error('broken'); } }, null, noon, 'original'), 'standard', 'Original and a theme that throws');
+  ['original', 'cybertron'].forEach(style => assert.equal(layout.chooseLayout({ get defaultTheme() { throw new Error('broken'); } }, null, noon, style), 'standard', style + ' and a theme that throws'));
 });
 
 // A page that records every write to data-style
@@ -2027,7 +2030,7 @@ test('styleNow reads data-style from the page, and is Original with no page, no 
   assert.equal(styles.styleNow({ dataset: { style: 'oops' } }), 'original');
 });
 
-test('a style that gives another layout than the page has reloads once, and two styles with the same layout and the same corners never reload', async () => {
+test('a style that gives another layout than the page has reloads once, and Original and Cybertron, which have the same layout, never reload: their frames are drawn again', async () => {
   let reloads = 0;
   const store = fakeStorage();
   const window = { sessionStorage: store, location: { reload: () => { reloads += 1; } } };
@@ -2035,25 +2038,29 @@ test('a style that gives another layout than the page has reloads once, and two 
 
   await withGlobals({ window: window, document: pageWith('standard') }, () => {
     assert.equal(apply.holdForLayout(look('hawktimus', 'original')), false, 'Original and the standard theme: the same layout');
-    assert.equal(apply.holdForLayout(look('hawktimus', 'cybertron'), () => true), true, 'held while something has the screen');
+    assert.equal(apply.holdForLayout(look('hawktimus', 'cybertron'), () => true), false, 'Cybertron has the same layout, so nothing is held for it');
+    assert.equal(apply.holdForLayout(look('hawktimus', 'cybertron'), () => false), false, 'and it never reloads');
     assert.equal(reloads, 0);
-    assert.equal(apply.holdForLayout(look('hawktimus', 'cybertron'), () => false), true, 'reloading');
+    assert.equal(apply.holdForLayout(look('hawktimus', 'minimal'), () => true), true, 'held while something has the screen');
+    assert.equal(reloads, 0);
+    assert.equal(apply.holdForLayout(look('hawktimus', 'minimal'), () => false), true, 'reloading');
     assert.equal(reloads, 1);
-    assert.equal(store.data[layout.reloadKey], 'bar');
-    assert.equal(apply.holdForLayout(look('hawktimus', 'cybertron'), () => false), false, 'back in the wrong layout: no second reload');
+    assert.equal(store.data[layout.reloadKey], 'bar-minimal');
+    assert.equal(apply.holdForLayout(look('hawktimus', 'minimal'), () => false), false, 'back in the wrong layout: no second reload');
     assert.equal(reloads, 1);
   });
 
-  await withGlobals({ window: window, document: pageWith('bar') }, () => {
-    assert.equal(apply.holdForLayout(look('hawktimus', 'cybertron')), false, 'the page is in the bar layout now');
+  await withGlobals({ window: window, document: pageWith('bar', 'minimal') }, () => {
+    assert.equal(apply.holdForLayout(look('hawktimus', 'minimal')), false, 'the page is in the bar layout now');
     assert.deepEqual(store.data, {}, 'so the note is gone');
-    assert.equal(apply.holdForLayout(look('neon-prime', 'cybertron')), false, 'Cybertron and a sidebar theme: still the bar layout with the same corners, so colours only');
+    assert.equal(apply.holdForLayout(look('neon-prime', 'minimal')), false, 'Minimal and a sidebar theme: still the bar layout with the same corners, so colours only');
     assert.equal(apply.holdForLayout(look('hawktimus', 'original')), true, 'back to Original reloads again');
     assert.equal(reloads, 2);
   });
 
   await withGlobals({ window: window, document: pageWith('sidebar') }, () => {
     assert.equal(apply.holdForLayout(look('neon-prime', 'original')), false, 'the sidebar theme with Original is the sidebar layout');
+    assert.equal(apply.holdForLayout(look('neon-prime', 'cybertron')), false, 'and with Cybertron');
     assert.equal(apply.holdForLayout(look('neon-prime', 'minimal')), true, 'Minimal takes the sidebar theme to the bar layout');
     assert.equal(reloads, 3);
   });
@@ -2071,14 +2078,22 @@ test('when the page cannot reload for the layout a style needs, the look goes on
   const broken = { get sessionStorage() { throw new Error('no storage'); }, location: { reload: () => { reloads += 1; } } };
   const look = style => ({ theme: 'hawktimus', overlay: '', style: style });
 
-  // a page that started in Original and standard: the sample content says Cybertron, and the page has nothing saved to start from
+  // a page that started in Original and standard: the sample content says Minimal, and the page has nothing saved to start from
   await withGlobals({ window: window, document: pageWith('standard') }, () => {
-    const first = look('cybertron');
+    const first = look('minimal');
     assert.equal(apply.holdForLayout(first, () => false), true, 'it reloads once');
-    assert.equal(first.style, 'cybertron', 'and the look is not changed while it does');
-    const second = look('cybertron');
+    assert.equal(first.style, 'minimal', 'and the look is not changed while it does');
+    const second = look('minimal');
     assert.equal(apply.holdForLayout(second, () => false), false, 'it comes back in the standard layout, with the colours going on');
     assert.equal(second.style, 'original', 'but the style is the one the page has');
+    assert.equal(reloads, 1);
+  });
+
+  // Cybertron has the layout of the page, so nothing is reloaded and the look keeps its style
+  await withGlobals({ window: window, document: pageWith('standard') }, () => {
+    const cybertron = look('cybertron');
+    assert.equal(apply.holdForLayout(cybertron, () => false), false);
+    assert.equal(cybertron.style, 'cybertron');
     assert.equal(reloads, 1);
   });
 
@@ -2097,10 +2112,10 @@ test('when the page cannot reload for the layout a style needs, the look goes on
   });
 
   // a look whose layout is the page's is left alone
-  await withGlobals({ window: window, document: pageWith('bar') }, () => {
-    const fits = look('cybertron');
+  await withGlobals({ window: window, document: pageWith('bar', 'minimal') }, () => {
+    const fits = look('minimal');
     assert.equal(apply.holdForLayout(fits), false);
-    assert.equal(fits.style, 'cybertron');
+    assert.equal(fits.style, 'minimal');
   });
 });
 
@@ -2355,7 +2370,7 @@ test('the mirror in the bar layout is one rule for every flex row of the layout,
 test('the mirror of the standard layout is in original.css: the columns change places and the banner and the ticker turn, as the numbers of base.css say', () => {
   const css = withoutComments(read('dashboard/styles/original.css'));
   const base = withoutComments(read('dashboard/base.css'));
-  const prefix = 'html[data-style="original"].mirrored[data-layout="standard"]';
+  const prefix = 'html.mirrored[data-layout="standard"]';
 
   const selectors = [];
   css.replace(/([^{}]+)\{[^{}]*\}/g, (all, list) => {
@@ -2391,7 +2406,7 @@ test('the mirror of the standard layout is in original.css: the columns change p
 test('the bar layout shows the row, moves the large frame into it after the side column, and blocks fly as banner, column, main panel and ticker', async () => {
   const page = fakePage();
   await withGlobals({ document: page.document }, () => {
-    assert.equal(apply.startLayout(null, () => null, page.html, 'cybertron'), 'bar');
+    assert.equal(apply.startLayout(null, () => null, page.html, 'minimal'), 'bar');
   });
 
   assert.equal(page.html.dataset.layout, 'bar');
@@ -2415,7 +2430,8 @@ test('the style and the theme both count at the start: Minimal with the sidebar 
   await withGlobals({ document: fakePage().document }, () => {
     assert.equal(apply.startLayout(null, () => saved, fakePage().html, 'original'), 'sidebar');
     assert.equal(apply.startLayout(null, () => saved, fakePage().html, 'minimal'), 'bar');
-    assert.equal(apply.startLayout('hawktimus', () => saved, fakePage().html, 'cybertron'), 'bar');
+    assert.equal(apply.startLayout('hawktimus', () => saved, fakePage().html, 'cybertron'), 'standard', 'Cybertron has the layout of the theme: the address names the standard one');
+    assert.equal(apply.startLayout(null, () => saved, fakePage().html, 'cybertron'), 'sidebar', 'and the saved sidebar theme is the sidebar layout');
     assert.equal(apply.startLayout(null, () => saved, fakePage().html), 'sidebar', 'no style: as before');
   });
 });
@@ -2652,7 +2668,7 @@ test('the three style files each set their own custom properties for their own s
 // The stylesheets of one style, each loaded with the css it overrides: the ones index.html links apart from the other two
 // style files, and the stylesheet of every panel. Every custom property that the style's rules read has a value, and no text
 // is below 44 px except the explicit list. A rule counts when it can apply to the style: not one for another style, not one for
-// the bar layout in Original (which has the layout of its theme), and not one for the sidebar layout in the styles that have the bar layout.
+// the bar layout in Original and Cybertron (which have the layout of their theme), and not one for the sidebar layout in Minimal, which has the bar layout.
 
 function stylesheetsOf(style) {
   const linked = Array.from(read('dashboard/index.html').matchAll(/<link rel="stylesheet" href="([^"]+)">/g)).map(match => match[1])
@@ -2688,7 +2704,7 @@ function splitKeyframes(css) {
 // count when a rule that can apply to the style names the animation. The neon kit is on in the sidebar layout only (hasKit in
 // core/layout.js), so a rule for data-kit="on" is a rule for that layout.
 function rulesOf(style, sheets) {
-  const layouts = style === 'original' ? ['standard', 'sidebar'] : ['bar'];
+  const layouts = style === 'minimal' ? ['bar'] : ['standard', 'sidebar'];
   const applies = selector => {
     const styleNamed = /\[data-style="([a-z]+)"\]/.exec(selector);
     const layoutNamed = /\[data-layout="([a-z]+)"\]/.exec(selector);
@@ -2730,8 +2746,8 @@ const writtenByScript = {
   '--night-y-delay': 'core/night-screen.js',
 };
 
-// The only text under 44 px: the stamped plate id, which Original and Minimal draw, and the labels of the war clock, which the
-// bar layout draws
+// The only text under 44 px: the stamped plate id, which only Original draws (base.css has its rule, and hides it from the other
+// styles), and the labels of the narrow war clock, which the bar layout draws. Cybertron has the wide war clock, whose text is all 44 px or more
 const plateId = { file: 'base.css', selector: '.plate-id', size: 20 };
 const warLabels = [
   { file: 'panels/countdown/countdown.css', selector: 'html[data-layout="bar"] .war-lines span', size: 24 },
@@ -2739,7 +2755,7 @@ const warLabels = [
   { file: 'panels/countdown/countdown.css', selector: 'html[data-layout="bar"] .war-days-group .days-word', size: 24 },
   { file: 'panels/countdown/countdown.css', selector: 'html[data-layout="bar"] .war-cell .unit', size: 20 },
 ];
-const smallTextOf = { original: [plateId], cybertron: [plateId].concat(warLabels), minimal: [plateId].concat(warLabels) };
+const smallTextOf = { original: [plateId], cybertron: [plateId], minimal: [plateId].concat(warLabels) };
 
 function checkStylesheetsOf(style) {
   const sheets = stylesheetsOf(style);
@@ -2808,15 +2824,15 @@ function checkStylesheetsOf(style) {
   assert.equal(small.filter(item => item.file.startsWith('styles/')).length, 0, 'and none of it is in the style\'s own file');
 }
 
-test('Original with the css it overrides: every custom property that is read has a value, and no text is under 44 px but the stamped plate id and the war clock labels', () => {
+test('Original with the css it overrides: every custom property that is read has a value, and no text is under 44 px but the stamped plate id', () => {
   checkStylesheetsOf('original');
 });
 
-test('Cybertron with the css it overrides: every custom property that is read has a value, and no text is under 44 px but the stamped plate id and the war clock labels', () => {
+test('Cybertron with the css it overrides: every custom property that is read has a value, and no text is under 44 px but the stamped plate id, which base.css hides for it', () => {
   checkStylesheetsOf('cybertron');
 });
 
-test('Minimal with the css it overrides: every custom property that is read has a value, and no text is under 44 px but the stamped plate id and the war clock labels', () => {
+test('Minimal with the css it overrides: every custom property that is read has a value, and no text is under 44 px but the war clock labels and the stamped plate id, which base.css hides for it', () => {
   checkStylesheetsOf('minimal');
 });
 
@@ -2824,7 +2840,7 @@ test('Minimal with the css it overrides: every custom property that is read has 
 // standard layout that has a direction of row, or none, is turned by a rule of original.css, or is named here with the reason it keeps its order.
 
 test('the mirror of the standard layout turns every flex row the layout declares, and a row that keeps its order is named with the reason', () => {
-  const prefix = 'html[data-style="original"].mirrored[data-layout="standard"] ';
+  const prefix = 'html.mirrored[data-layout="standard"] ';
   const turned = [];
   withoutComments(read('dashboard/styles/original.css')).replace(/([^{}]+)\{([^{}]*)\}/g, (all, selectors, body) => {
     if (/flex-direction: row-reverse;/.test(body)) selectors.split(',').forEach(selector => turned.push(selector.trim()));
@@ -2861,6 +2877,9 @@ test('the mirror of the standard layout turns every flex row the layout declares
     'panels/countdown/countdown.css .countdown .days-row': 'the countdown is one block that changes columns, and its lines are read left to right',
     'panels/countdown/countdown.css .countdown .time-row': 'the countdown is one block that changes columns, and its lines are read left to right',
     'panels/countdown/countdown.css .countdown .segments': 'the countdown is one block that changes columns, and its lines are read left to right',
+    'panels/countdown/countdown.css .war-clock.war-wide .war-lines': 'the wide war clock is one block that changes columns, and its label and its date are read left to right',
+    'panels/countdown/countdown.css .war-clock.war-wide .war-plate': 'the wide war clock is one block that changes columns, and its plates are read left to right',
+    'panels/countdown/countdown.css .war-clock.war-wide .war-days-group': 'the wide war clock is one block that changes columns, and its days are read left to right',
   };
 
   declared.forEach(row => {
@@ -3468,7 +3487,7 @@ test('the ticker\'s frame holds still: its four svgs have names the page change 
     // The part names are the ones frame.css moves, and the page change moves none of the ticker\'s
     const frameCss = read('dashboard/frame.css');
     ['still-frame-a', 'still-frame-b', 'still-shadow-a', 'still-shadow-b'].forEach(name => assert.ok(!hasText(frameCss, '"' + name + '"'), name + ' is not moved'));
-    assert.ok(/html\[data-layout="bar"\] \.area\[data-area="ticker"\] \.screw \{ animation-name: none; \}/.test(frameCss), 'and its bolts do not turn');
+    assert.ok(/html\[data-layout="bar"\] \.area\[data-area="ticker"\] \.screw,\s*html\[data-style="cybertron"\] \.area\[data-area="ticker"\] \.screw \{ animation-name: none; \}/.test(frameCss), 'and its bolts do not turn, in the bar layout and in Cybertron');
   });
 });
 
@@ -3652,7 +3671,7 @@ test('the neon and the bolt are shared by both styles in base.css: the neon line
 
 // What Cybertron paints
 
-test('the Cybertron stylesheet paints with the team\'s colors and gradients and no picture: the page background, the plates, the rail and what it draws on a frame, in lines of 3px or more, for its own style only', () => {
+test('the Cybertron stylesheet paints with the team\'s colors and gradients and no picture: the page background, the plates and what it draws on a frame, in lines of 3px or more, for its own style only', () => {
   const css = withoutComments(read('dashboard/styles/cybertron.css'));
   const rules = [];
   css.replace(/([^{}]+)\{([^{}]*)\}/g, (all, list, body) => {
@@ -3689,7 +3708,7 @@ test('the Cybertron stylesheet paints with the team\'s colors and gradients and 
   const widths = css.match(/(stroke-width|border-[a-z]*-width|outline-width): [\d.]+px/g) || [];
   assert.ok(widths.length >= 3);
   widths.forEach(text => assert.ok(parseFloat(/[\d.]+px/.exec(text)[0]) >= 3, text));
-  rules.filter(rule => /\.bar-rail::before/.test(rule.selectors[0])).forEach(rule => assert.ok(/width: 4px;/.test(rule.body), 'the rail\'s line is 4px'));
+  assert.ok(!/bar-rail|bar-logo|bar-banner/.test(css), 'the bar layout is Minimal\'s, and Cybertron has no part of it');
 
   // The hazard stripe is the team's accent, the conduit and the brackets are pink and the slashes are neon
   const paint = name => rules.filter(rule => rule.selectors[0] === 'html[data-style="cybertron"] .art-' + name)[0].body;
@@ -3717,19 +3736,19 @@ test('the page background of Cybertron is the grid at 96px and the scanlines, no
 
 test('the steel and the bolts reach the frames of Cybertron through the tokens: the edge, the row bars and the banner follow the style, the logo has the team accent, and the standard layout\'s frames are untouched', () => {
   const css = withoutComments(read('dashboard/styles/cybertron.css'));
-  assert.ok(css.includes('html[data-style="cybertron"] .bar-logo .drawing { --logo-edge: var(--team-accent); }'));
+  assert.ok(css.includes('html[data-style="cybertron"] .banner .logo .drawing,\nhtml[data-style="cybertron"] .side-logo .drawing { --logo-edge: var(--team-accent); }'), 'the hawk of the banner and of the sidebar has the team accent');
 
   // The tokens file gives the steel to the html element and to each element with a data-metal: that is the banner and every area
   const tokens = withoutComments(read('dashboard/tokens.css'));
   assert.ok(tokens.includes('html[data-style="cybertron"] [data-metal]'), 'every area, whichever metal the page change gave it');
   assert.ok(/:root,\s*\[data-metal\] \{\s*--edge-rim: var\(--metal-rim\);/.test(tokens), 'the rim is worked out on each of them from the steel');
 
-  // The code that picks the metal of a page change never has to know: the bar layout makes no finish change at all
+  // The code that picks the metal of a page change never has to know: the steel styles make no finish change at all
   const areas = read('dashboard/core/areas.js');
-  assert.ok(/function planFor\(area\) \{\s*const change = frame\.planChange\(area\);\s*return layoutNow\(\) === 'bar' \? \{ style: change\.style, finish: null \} : change;\s*\}/.test(areas));
+  assert.ok(/function planFor\(area\) \{\s*const change = frame\.planChange\(area\);\s*return hasSteel\(styleNow\(\)\) \? \{ style: change\.style, finish: null \} : change;\s*\}/.test(areas));
   assert.equal(countOf(areas, 'frame\\.planChange\\(area\\)'), 1, 'planFor is the one place that asks');
   assert.equal(countOf(areas, 'const change = planFor\\(area\\);'), 2, 'and areas.js calls it for the two changes, the page change and the swap of a hidden transition');
-  assert.ok(/frameKind\(region, layoutNow\(\), shapesNow\(\)\)/.test(areas) && /kind === 'ticker' \? '' : areaMarkup\(kind\)/.test(areas), 'the ticker has a frame in the bar layout and none in the others, with the corners of the page\'s style');
+  assert.ok(/frameKind\(region, layoutNow\(\), shapesNow\(\)\)/.test(areas) && /kind === 'ticker' \? '' : areaMarkup\(kind\)/.test(areas), 'the ticker has a frame in the bar layout and in Cybertron and none in the others, with the corners of the page\'s style');
 });
 
 // Minimal: the frames with corners of their own, and what the style paints
@@ -3738,16 +3757,18 @@ test('the steel and the bolts reach the frames of Cybertron through the tokens: 
 const minimalKinds = ['bar-main-minimal', 'bar-banner-minimal', 'bar-ticker-minimal'];
 const usualKind = { 'bar-main-minimal': 'bar-main', 'bar-banner-minimal': 'bar-banner', 'bar-ticker-minimal': 'bar-ticker' };
 
-test('only Minimal has frames with corners of its own, and the page records them once, at the start', () => {
-  assert.deepEqual(styles.shapeSets, ['minimal']);
+test('Cybertron and Minimal have frames with corners of their own, and the page records them at the start', () => {
+  assert.deepEqual(styles.shapeSets, ['cybertron', 'minimal']);
   assert.equal(styles.shapesFor('minimal'), 'minimal');
-  ['original', 'cybertron', 'oops', undefined, null, 'toString', 7].forEach(odd => assert.equal(styles.shapesFor(odd), '', String(odd)));
+  assert.equal(styles.shapesFor('cybertron'), 'cybertron');
+  ['original', 'oops', undefined, null, 'toString', 7].forEach(odd => assert.equal(styles.shapesFor(odd), '', String(odd)));
 
   assert.equal(styles.shapesNow(null), '');
   assert.equal(styles.shapesNow({}), '');
   assert.equal(styles.shapesNow({ dataset: {} }), '');
   assert.equal(styles.shapesNow({ dataset: { shapes: 'minimal' } }), 'minimal');
-  ['oops', 'original', 'cybertron', ''].forEach(odd => assert.equal(styles.shapesNow({ dataset: { shapes: odd } }), '', 'data-shapes is ' + odd));
+  assert.equal(styles.shapesNow({ dataset: { shapes: 'cybertron' } }), 'cybertron');
+  ['oops', 'original', ''].forEach(odd => assert.equal(styles.shapesNow({ dataset: { shapes: odd } }), '', 'data-shapes is ' + odd));
 
   const started = (asked, saved) => {
     const page = { dataset: {} };
@@ -3755,7 +3776,7 @@ test('only Minimal has frames with corners of its own, and the page records them
     return page.dataset;
   };
   assert.equal(started(null, 'minimal').shapes, 'minimal');
-  assert.equal('shapes' in started(null, 'cybertron'), false);
+  assert.equal(started(null, 'cybertron').shapes, 'cybertron');
   assert.equal('shapes' in started(null, 'original'), false);
   assert.equal(started('minimal', 'original').shapes, 'minimal', 'the address wins');
 
@@ -3763,11 +3784,16 @@ test('only Minimal has frames with corners of its own, and the page records them
   styles.startStyle(null, () => 'original', again);
   assert.equal('shapes' in again.dataset, false, 'a start in another style takes it away');
 
-  // A look that goes on later changes the style and never the corners, which were drawn at the start
+  // A look that goes on later changes the style and not the corners: they change when the frames are drawn again (recordShapes)
   const page = { dataset: { style: 'cybertron' } };
   styles.applyStyle('minimal', page);
   assert.equal(page.dataset.style, 'minimal');
   assert.equal('shapes' in page.dataset, false);
+  styles.recordShapes('cybertron', page);
+  assert.equal(page.dataset.shapes, 'cybertron');
+  styles.recordShapes('original', page);
+  assert.equal('shapes' in page.dataset, false, 'Original has the usual corners, which are no attribute');
+  assert.doesNotThrow(() => styles.recordShapes('minimal', null), 'no page, no error');
 });
 
 test('frameKind gives the frames of Minimal for its corners, in the bar layout only, and the usual ones for anything else', () => {
@@ -3783,7 +3809,7 @@ test('frameKind gives the frames of Minimal for its corners, in the bar layout o
   minimalKinds.forEach(kind => assert.ok(plate.barShape(kind), kind + ' is a frame'));
 });
 
-test('a style with other corners on its frames reloads once, like a layout: Cybertron to Minimal and back, and never between two looks with the same corners', async () => {
+test('a style with other corners on its frames in the bar layout reloads once, like a layout: Minimal to Original and back, and never between two looks that have the same layout', async () => {
   assert.equal(layout.drawnFor('bar', 'minimal'), 'bar-minimal');
   assert.equal(layout.drawnFor('bar', ''), 'bar');
   assert.equal(layout.drawnFor('bar', 'oops'), 'bar');
@@ -3806,8 +3832,13 @@ test('a style with other corners on its frames reloads once, like a layout: Cybe
   const window = { sessionStorage: store, location: { reload: () => { reloads += 1; } } };
   const look = (theme, style) => ({ theme: theme, overlay: '', style: style });
 
+  await withGlobals({ window: window, document: pageWith('standard', 'cybertron') }, () => {
+    assert.equal(apply.holdForLayout(look('hawktimus', 'original')), false, 'a page drawn for Cybertron, and Original: the frames are drawn again, and the page stays');
+    assert.equal(apply.holdForLayout(look('hawktimus', 'cybertron')), false);
+    assert.equal(reloads, 0);
+  });
+
   await withGlobals({ window: window, document: pageWith('bar') }, () => {
-    assert.equal(apply.holdForLayout(look('hawktimus', 'cybertron')), false, 'a page of Cybertron, and Cybertron');
     assert.equal(apply.holdForLayout(look('hawktimus', 'minimal'), () => true), true, 'held while something has the screen');
     assert.equal(reloads, 0);
     assert.equal(apply.holdForLayout(look('hawktimus', 'minimal'), () => false), true, 'Minimal has other corners, so the page is drawn again');
@@ -3820,12 +3851,12 @@ test('a style with other corners on its frames reloads once, like a layout: Cybe
   await withGlobals({ window: window, document: pageWith('bar', 'minimal') }, () => {
     assert.equal(apply.holdForLayout(look('neon-prime', 'minimal')), false, 'drawn for Minimal, and Minimal on any theme');
     assert.deepEqual(store.data, {});
-    assert.equal(apply.holdForLayout(look('hawktimus', 'cybertron')), true, 'Minimal to Cybertron');
+    assert.equal(apply.holdForLayout(look('hawktimus', 'cybertron')), true, 'Minimal to Cybertron is a layout change');
     assert.equal(reloads, 2);
   });
 
   await withGlobals({ window: window, document: pageWith('bar', 'minimal') }, () => {
-    assert.equal(apply.holdForLayout(look('hawktimus', 'original')), true, 'Minimal to Original');
+    assert.equal(apply.holdForLayout(look('neon-prime', 'original')), true, 'Minimal to Original, which has the sidebar layout with this theme');
     assert.equal(reloads, 3);
   });
 
@@ -3900,7 +3931,7 @@ test('the Minimal frames are the same ten-cornered plates with smaller cuts, 34 
   });
 });
 
-test('the rust, the stamped id, the weld seam and the header line of Minimal are where the order puts them: rust at the two bottom corners of every frame, an id on the main panel and the banner, a seam on the tall panel only, ticks along the header line', () => {
+test('the rust, the weld seam and the header line of Minimal are where the order puts them: rust at the two bottom corners of every frame, a seam on the tall panel only, ticks along the header line, and no stamped id on any frame', () => {
   frameKinds.forEach(kind => assert.equal(plate.barShape(kind).wear, undefined));
 
   minimalKinds.forEach(kind => {
@@ -3915,10 +3946,8 @@ test('the rust, the stamped id, the weld seam and the header line of Minimal are
     assert.ok(shape.wear.every(item => /^M[\d. ]+Q[\d. -]+$/.test(item.arc)), kind + ': each is one stroked curve');
   });
 
-  // The id: HP-01 on the main panel, HP-02 on the banner where the war clock is, none on the ticker, whose message would cover it
-  assert.equal(plate.barShape('bar-main-minimal').number, '01');
-  assert.equal(plate.barShape('bar-banner-minimal').number, '02');
-  assert.equal(plate.barShape('bar-ticker-minimal').number, undefined);
+  // The stamped id is Original's: no Minimal frame has a number for it
+  minimalKinds.forEach(kind => assert.equal(plate.barShape(kind).number, undefined, kind + ' has no stamped id'));
 
   // The weld seam is on the main panel only, under the header and clear of the 1152 the pages are written for
   const main = plate.barShape('bar-main-minimal');
@@ -3941,7 +3970,7 @@ test('the rust, the stamped id, the weld seam and the header line of Minimal are
   assert.ok(!plate.barShape('bar-banner-minimal').art.headerLine && !plate.barShape('bar-ticker-minimal').art.ticks);
 });
 
-test('the main panel of Minimal has each of its parts where the frame has them: the rivets and the rust in the frame and in the pieces, once each, the id under the page, and nothing of Cybertron\'s', async () => {
+test('the main panel of Minimal has each of its parts where the frame has them: the rivets and the rust in the frame and in the pieces, once each, no id, and nothing of Cybertron\'s', async () => {
   await withPlatePage(drawn => {
     const markup = plate.areaMarkup('bar-main-minimal');
     assert.ok(isBalanced(markup), 'every tag is closed');
@@ -3962,10 +3991,7 @@ test('the main panel of Minimal has each of its parts where the frame has them: 
     assert.ok(markup.indexOf('data-part="wear"') > markup.indexOf('data-part="frame-b"'), 'the rust is on the steel of the second half');
     assert.ok(markup.indexOf('data-part="wear"') < markup.indexOf('href="#bolt-shape"', markup.indexOf('data-part="frame-b"')), 'under its bolts');
 
-    const foot = shape.outline[7];
-    assert.equal(countOf(markup, 'data-part="plate-id"'), 1);
-    assert.ok(markup.includes(`data-number="01" style="left: ${foot[0] - 34 - 112}px; top: ${foot[1] - 14 - 20}px; width: 112px;"`), 'the id stands 34 left of the foot of the bottom right cut corner and 14 above the bottom line, as Original\'s does');
-    assert.ok(markup.indexOf('data-part="plate-id"') > markup.indexOf('class="plate fills"') && markup.indexOf('data-part="plate-id"') < markup.indexOf('data-part="shadow-a"'), 'it is under the frame, over the plate');
+    assert.ok(!hasText(markup, 'plate-id') && !hasText(markup, 'data-number'), 'no stamped id');
 
     ['art-weld-dark', 'art-weld-light', 'art-header-line', 'art-ticks'].forEach(name => assert.equal(countOf(markup, 'class="art-minimal ' + name + '"'), 2, name + ' once in the frame and once in the piece that is the decoration'));
     assert.equal(countOf(markup, 'data-part="decor"'), 1);
@@ -3988,7 +4014,7 @@ test('the main panel of Minimal has each of its parts where the frame has them: 
   });
 });
 
-test('the banner and the ticker of Minimal: rivets, rust and bolts, the banner\'s id, and a line in the table of frame.js for every part that arrives', async () => {
+test('the banner and the ticker of Minimal: rivets, rust and bolts, no id, and a line in the table of frame.js for every part that arrives', async () => {
   await withPlatePage(drawn => {
     const banner = plate.plateMarkup('bar-banner-minimal');
     assert.ok(isBalanced(banner));
@@ -3996,15 +4022,16 @@ test('the banner and the ticker of Minimal: rivets, rust and bolts, the banner\'
     assert.equal(countOf(banner, 'data-part="rivets"'), 2);
     assert.equal(countOf(banner, 'data-part="wear"'), 1);
     assert.equal(countOf(banner, 'data-part="stud"'), 4, 'four bolts');
-    assert.equal(countOf(banner, 'data-number="02"'), 1);
+    assert.ok(!hasText(banner, 'plate-id') && !hasText(banner, 'data-number'), 'no stamped id');
     assert.equal(countOf(banner, 'data-part="decor"'), 0, 'the banner has nothing else on it');
     assert.ok(!hasText(banner, 'art-cybertron') && !hasText(banner, 'glint') && !hasText(banner, 'class="plate piece"'));
 
     const sequence = /'bar-banner': \{([^}]*)\}/.exec(read('dashboard/frame.js'))[1];
     const parts = new Set((banner.match(/data-part="[a-z-]+"/g) || []).map(text => text.slice(11, -1)));
-    ['body', 'outline', 'rivets', 'wear', 'plate-id', 'stud'].forEach(part => assert.ok(parts.has(part) && sequence.includes("'" + part + "':"), part + ' is in the banner and in its table'));
+    ['body', 'outline', 'rivets', 'wear', 'stud'].forEach(part => assert.ok(parts.has(part) && sequence.includes("'" + part + "':"), part + ' is in the banner and in its table'));
+    assert.ok(!parts.has('plate-id') && !sequence.includes("'plate-id'"), 'the banner has no id and its table has no line for one');
     parts.forEach(part => ['frame-a', 'frame-b'].indexOf(part) !== -1 || assert.ok(sequence.includes("'" + part + "':"), part + ' has no line in the banner\'s table'));
-    ['rivets', 'wear', 'plate-id'].forEach(part => assert.ok(Number(new RegExp("'" + part + "':\\s*\\['fade', (\\d+)").exec(sequence)[1]) >= 1350, part + ' comes after the lines are drawn'));
+    ['rivets', 'wear'].forEach(part => assert.ok(Number(new RegExp("'" + part + "':\\s*\\['fade', (\\d+)").exec(sequence)[1]) >= 1350, part + ' comes after the lines are drawn'));
     (banner.match(/href="#[a-z0-9-]+"/g) || []).forEach(found => assert.ok(drawn.has(found.slice(7, -1)) || staticIds.has(found.slice(7, -1)), found));
 
     const ticker = plate.areaMarkup('bar-ticker-minimal');
@@ -4037,7 +4064,7 @@ test('the rust sits behind the steel of its frame: it is a patch and an arc insi
   assert.ok(/html\[data-style="minimal"\]\[data-finish="flat"\] \.art-smudge,\s*html\[data-style="minimal"\]\[data-finish="flat"\] \.art-wear \{ display: none; \}/.test(css), 'the flat finish has no rust');
 });
 
-test('the Minimal stylesheet paints with the team\'s colors and gradients and no picture: the grid, the plates, the rail, the rivets, the id and what it draws on a frame, in lines of 3px or more, for its own style only', () => {
+test('the Minimal stylesheet paints with the team\'s colors and gradients and no picture: the grid, the plates, the rail, the rivets and what it draws on a frame, in lines of 3px or more, for its own style only', () => {
   const css = withoutComments(read('dashboard/styles/minimal.css'));
   const rules = [];
   css.replace(/([^{}]+)\{([^{}]*)\}/g, (all, list, body) => {
@@ -4082,8 +4109,9 @@ test('the Minimal stylesheet paints with the team\'s colors and gradients and no
   assert.ok(/\.team-fill,\s*html\[data-style="minimal"\] \.tag-fill \{ fill: var\(--team-plate\); \}/.test(css));
   assert.ok(css.includes('html[data-style="minimal"] .bar-logo .drawing { --logo-edge: var(--team-accent); }'));
 
-  // The rivets and the id are shown, the weld seam is dark with a faint light line, the ticks are neon and the rust is a patch and an arc
-  assert.ok(css.includes('html[data-style="minimal"] .rivets { display: inline; }') && css.includes('html[data-style="minimal"] .plate-id { display: block; }'));
+  // The rivets are shown and the id is not, the // mark of the header is off, the weld seam is dark with a faint light line, the ticks are neon and the rust is a patch and an arc
+  assert.ok(css.includes('html[data-style="minimal"] .rivets { display: inline; }') && !/plate-id/.test(css), 'the rivets, and no id');
+  assert.ok(css.includes('html[data-style="minimal"] .header svg.double-slash { display: none; }'));
   const paint = name => rules.filter(rule => rule.selectors[0] === 'html[data-style="minimal"] .art-' + name)[0].body;
   assert.ok(/stroke: #05070a;/.test(paint('weld-dark')) && /stroke-opacity: \.7;/.test(paint('weld-dark')));
   assert.ok(/stroke: var\(--metal-ridge\);/.test(paint('weld-light')) && /stroke-opacity: \.2;/.test(paint('weld-light')), 'faint');
@@ -4097,12 +4125,12 @@ test('the Minimal stylesheet paints with the team\'s colors and gradients and no
   assert.ok(/\.art-minimal \{ display: none; \}/.test(withoutComments(read('dashboard/base.css'))), 'what only Minimal draws is off until it is on');
 });
 
-test('Minimal and the mirror: the frames, the rivets, the rust, the ids and the seam are drawn in the coordinates of the frame and are never turned, so only the regions change places', () => {
+test('Minimal and the mirror: the frames, the rivets, the rust and the seam are drawn in the coordinates of the frame and are never turned, so only the regions change places', () => {
   const css = withoutComments(read('dashboard/layouts/bar.css') + read('dashboard/styles/cybertron.css') + read('dashboard/styles/minimal.css'));
   assert.ok(!/mirrored[^{}]*\.(area|plate|rivets|plate-id|art-[a-z-]+)\b|\.(area|plate|rivets|plate-id|art-[a-z-]+)\b[^{}]*mirrored/.test(css), 'no rule turns a frame or anything drawn on it');
   assert.ok(!/mirror-art|scaleX/.test(read('dashboard/core/plate.js')));
 
-  // The ids and the rivets are shown in Minimal whether the layout is mirrored or not, as they are in Original
+  // The rivets are shown in Minimal whether the layout is mirrored or not, as they are in Original
   const base = withoutComments(read('dashboard/base.css'));
   assert.equal(/\.mirrored[^{]*(rivets|plate-id)/.test(base), false);
   assert.ok(/html\[data-style="minimal"\] \.rivets \{ display: inline; \}/.test(withoutComments(read('dashboard/styles/minimal.css'))));
@@ -4146,12 +4174,12 @@ test('the numbers in the Frames section of docs/layouts.md for the frames of Min
   });
 
   // The parts only Minimal has, and their sizes
-  ['one neon line', 'rust at the two bottom corners', '| Stamped id |', '| Weld seam |', '| Header line |', '| Rivets |'].forEach(text => assert.ok(section.includes(text), 'the section says ' + text));
+  ['one neon line', 'rust at the two bottom corners', '| Weld seam |', '| Header line |', '| Rivets |'].forEach(text => assert.ok(section.includes(text), 'the section says ' + text));
+  assert.ok(!section.includes('| Stamped id |') && !/HP-0[12]/.test(section), 'and it has no stamped id for Minimal');
   const main = plate.barShape('bar-main-minimal');
   assert.ok(section.includes('x = 1188') && main.art.weldDark.startsWith('M1188 '), 'the seam is at 1188');
   assert.ok(section.includes('39 ticks') && main.art.ticks.split('Z').filter(Boolean).length === 39);
   assert.ok(section.includes('every 18') && section.includes('4 wide and 10 high'));
-  assert.ok(section.includes('HP-01') && section.includes('HP-02'));
 });
 
 // The war clock (panels/countdown, warHousingMarkup in core/plate.js, "The war clock" in docs/layouts.md)
@@ -4581,9 +4609,11 @@ test('nothing in the war clock moves: no animation, transition, glow, shadow or 
   ['dashboard/panels/countdown/countdown.js', 'dashboard/panels/bar-banner/bar-banner.js'].forEach(file => {
     assert.equal(/setTimeout|setInterval|requestAnimationFrame|animate\(|getAnimations|classList/.test(read(file)), false, file + ' has animation code');
   });
-  assert.equal(read('dashboard/panels/countdown/countdown.js').includes('data-part'), false, 'no part of the clock arrives of its own');
+  const countdownCode = read('dashboard/panels/countdown/countdown.js');
+  assert.equal(countdownCode.slice(countdownCode.indexOf('export function warMarkup'), countdownCode.indexOf('export function startWar')).includes('data-part'), false, 'no part of the clock arrives of its own');
+  assert.equal(countOf(countdownCode, 'data-part'), 1, 'the wide clock arrives as one piece, in its slot');
   const sequence = /'bar-banner': \{([^}]*)\}/.exec(read('dashboard/frame.js'))[1];
-  assert.deepEqual((sequence.match(/'[a-z-]+':/g) || []).map(part => part.slice(1, -2)), ['body', 'outline', 'title', 'war', 'decor', 'rivets', 'wear', 'plate-id', 'stud'], 'the banner\'s table has a line for the slot and none for a part of the clock');
+  assert.deepEqual((sequence.match(/'[a-z-]+':/g) || []).map(part => part.slice(1, -2)), ['body', 'outline', 'title', 'war', 'decor', 'rivets', 'wear', 'stud'], 'the banner\'s table has a line for the slot and none for a part of the clock');
 });
 
 test('the mirror moves the war clock with its slot and turns nothing in it: no rule of the layout names it, and the banner\'s row has it at the other end', () => {

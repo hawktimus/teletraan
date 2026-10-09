@@ -374,9 +374,10 @@ svg [data-fx] { transform-box: fill-box; }
   animation: screw-shadow-in var(--screw-in-time) var(--ease-turn) var(--screw-in-delay) both;
 }
 
-/* The ticker of the bar layout has a frame of bolts, and it holds still while its message
-   changes, so its bolts do not turn. (The large panel's do.) */
-html[data-layout="bar"] .area[data-area="ticker"] .screw { animation-name: none; }
+/* The ticker of the bar layout and of Cybertron has a frame of bolts, and it holds still while
+   its message changes, so its bolts do not turn. (The large panel's do.) */
+html[data-layout="bar"] .area[data-area="ticker"] .screw,
+html[data-style="cybertron"] .area[data-area="ticker"] .screw { animation-name: none; }
 
 
 /* The frame halves lift off the panel and pull apart, then drop back and lock.

@@ -1652,7 +1652,7 @@ test('each frame has one stamped id, numbered 01 for the large panel, 02 for the
   });
 });
 
-test('base.css draws the rivets and the ids only while the style is Original, the id is 20px and dim, and no other stylesheet draws either, apart from the one that shows them on Minimal\'s own frames', () => {
+test('base.css draws the rivets and the ids only while the style is Original, the id is 20px and dim, and no other stylesheet draws either, apart from the one that shows the rivets on Minimal\'s own frames', () => {
   const css = baseCss.replace(/\/\*[\s\S]*?\*\//g, '');
   const rule = selector => {
     const found = new RegExp('(?:^|\\n)' + selector.replace(/[.\[\]="]/g, '\\$&') + ' \\{([^}]*)\\}').exec(css);
@@ -1674,7 +1674,7 @@ test('base.css draws the rivets and the ids only while the style is Original, th
   assert.equal(/animation|transition|filter|shadow|blur/.test(id + rule('.rivets')), false, 'static, with no effect');
 
   // the other stylesheets leave them alone, apart from frame.css, which brings them in and takes them away with the frame,
-  // and styles/minimal.css, which shows them on the frames Minimal draws with them (docs/layouts.md, "Frames")
+  // and styles/minimal.css, which shows the rivets on the frames Minimal draws with them (docs/layouts.md, "Frames")
   const others = [];
   const walk = folder => fs.readdirSync(folder, { withFileTypes: true }).forEach(entry => {
     const full = path.join(folder, entry.name);
@@ -1684,7 +1684,7 @@ test('base.css draws the rivets and the ids only while the style is Original, th
   walk(dashboardFolder);
   assert.deepEqual(others, ['styles/minimal.css'], 'a style or theme that draws or hides them');
   const minimalCss = fs.readFileSync(path.join(dashboardFolder, 'styles/minimal.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
-  assert.deepEqual(minimalCss.match(/[^\n]*(\.rivets|\.plate-id)[^\n]*/g), ['html[data-style="minimal"] .rivets { display: inline; }', 'html[data-style="minimal"] .plate-id { display: block; }'], 'Minimal only shows them');
+  assert.deepEqual(minimalCss.match(/[^\n]*(\.rivets|\.plate-id)[^\n]*/g), ['html[data-style="minimal"] .rivets { display: inline; }'], 'Minimal shows the rivets and has no id');
 });
 
 test('the rivets and the id come in after the lines are drawn, go with the frame in a page change, and are left out of the mechanical change with the plates', () => {
@@ -4108,7 +4108,8 @@ test('Preview Cybertron holds the Cybertron style for 2 minutes over the setting
     assert.equal(styleModule.chooseStyle(saved, null, world.at(10)), 'cybertron', 'the setting ' + saved);
     assert.equal(styleModule.chooseStyle(saved, 'minimal', world.at(10)), 'cybertron', 'the address wins over the setting and loses to the preview');
   });
-  assert.equal(styleModule.layoutFor(styleModule.chooseStyle('original', null, world.at(10)), 'standard'), 'bar', 'its layout is the bar layout');
+  assert.equal(styleModule.layoutFor(styleModule.chooseStyle('original', null, world.at(10)), 'standard'), 'standard', 'its layout is the one of the theme');
+  assert.equal(styleModule.layoutFor('cybertron', 'sidebar'), 'sidebar');
   assert.equal(styleModule.chooseStyle('minimal', 'original', world.at(121)), 'original', 'after the time the address wins again');
   assert.equal(teamSeen('nova', world.at(0)), 'nova', 'the team is not held');
   letGoOfPreview();

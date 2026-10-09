@@ -1,7 +1,7 @@
 /* The bar layout (docs/layouts.md, "The bar layout"): a banner across the top with
    the team name at one end and the war clock at the other, under it a thin side
    column and one main panel, and the ticker across the whole bottom. There is no
-   small frame. The styles Cybertron and Minimal use it (core/style.js).
+   small frame. The style Minimal uses it (core/style.js).
 
    Every rule here starts with html[data-layout="bar"], so the other layouts are
    never touched. core/layout-apply.js sets that attribute before anything is

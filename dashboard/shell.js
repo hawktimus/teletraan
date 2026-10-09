@@ -5,8 +5,9 @@
 // Switches you can add to the address, for example index.html?motion=calm
 //   motion=full|calm|none             how much things move
 //   speed=very-slow|slow|normal|fast  how fast things move and how long panels stay
-//   style=original|cybertron|minimal  the style of the whole screen (Style in Dashboard Settings), for this page only. cybertron
-//                                     and minimal have the bar layout (core/layout.js) whatever the theme says
+//   style=original|cybertron|minimal  the style of the whole screen (Style in Dashboard Settings), for this page only. minimal
+//                                     has the bar layout (core/layout.js) whatever the theme says, and the other two keep the
+//                                     layout of the theme
 //   team=prime|nova|alternate         the team on the screen (Team mode in Dashboard Settings), for this page only. A team that
 //                                     the Studio has no document for is the built-in Prime
 //   look=polished|flat|plain          how much polish the frames have (Look in Dashboard Settings). flat is
@@ -44,7 +45,8 @@ import { checkTheme, holdLooksFor, showThemeNow, startThemes } from './core/them
 import { overlayShown, ruleExtras } from './core/theme.js';
 import { holdForLayout, startLayout } from './core/layout-apply.js';
 import { decorationLayers, hasKit, layoutNow } from './core/layout.js';
-import { applyStyle, startStyle } from './core/style.js';
+import { redrawFrames } from './core/areas.js';
+import { applyStyle, recordShapes, shapesFor, shapesNow, startStyle } from './core/style.js';
 import { resumePreview } from './core/preview.js';
 import { loadPanel, mountPanel, updatePanel } from './core/panels.js';
 import { askForTeam, changeTeamNow, onTeamChange, useTeams } from './core/teams.js';
@@ -69,6 +71,7 @@ let calendarsReadAt = null; // when every calendar file was last read well, for 
 let deviceText = []; // the Mini's name and ssh line, read only while Sanity cannot be reached
 let decorationsUsed = false; // core/season.js has been asked for a pack, so it has to be asked again when the pack goes
 let choosingTeam = false; // rebuild() is choosing the team, so a change of team that it finds does not start another rebuild
+let stayStarted = false; // startWhatStays() has drawn the panels that stay, so a style with other frames has to draw them again
 
 window.teletraanStarted = true; // index.html reloads the page if this never happens
 
@@ -81,7 +84,7 @@ run();
 async function run() {
   // The style and the layout go on first of all, so that no region, area or panel is ever
   // drawn in the wrong place. The layout is the one the last saved content chose: the
-  // theme's, or the one the style forces (Cybertron and Minimal), or ?theme= and ?style=.
+  // theme's, or the one the style forces (Minimal), or ?theme= and ?style=.
   // A theme or style with another layout reloads the page later. A preview that was on at that
   // reload goes on first, so the style and the layout are the ones it holds.
   resumeSavedPreview();
@@ -344,18 +347,33 @@ function getContent() {
 function startWhatStays() {
   if (onlyTasks) return;
 
-  // Each is started on its own, so one that fails to draw leaves the other
-  // and the rest of the screen working
-  fixedPanels(layoutNow()).forEach(id => {
-    try {
-      const element = mountPanel(id, content);
-      const logo = element.querySelector('.logo'); // only the panel that has the logo gives the effects something to move
-      if (logo) frame.startLogo(logo);
-      frame.enter(element);
-    } catch (error) {
-      console.error('The ' + id + ' panel could not be drawn', error);
-    }
-  });
+  stayStarted = true;
+  fixedPanels(layoutNow()).forEach(id => showFixedPanel(id, true));
+}
+
+// Each is started on its own, so one that fails to draw leaves the other
+// and the rest of the screen working. animate is false for a panel that takes the place of one
+// that is on screen, which is there at once
+function showFixedPanel(id, animate) {
+  try {
+    const element = mountPanel(id, content);
+    const logo = element.querySelector('.logo'); // only the panel that has the logo gives the effects something to move
+    if (logo) frame.startLogo(logo);
+    if (animate) frame.enter(element);
+    else element.dataset.state = 'shown';
+  } catch (error) {
+    console.error('The ' + id + ' panel could not be drawn', error);
+  }
+}
+
+// The banner and the countdown of the standard layout draw their own frame, and Cybertron
+// gives them another (a plate behind the banner, and the war clock in place of the red
+// countdown). They are drawn again when that style goes on. The other layouts draw the same
+// panel in every style
+function redrawWhatStays() {
+  if (!stayStarted || onlyTasks || layoutNow() !== 'standard') return;
+
+  fixedPanels('standard').forEach(id => showFixedPanel(id, false));
 }
 
 // The panels that come and go
@@ -448,11 +466,17 @@ function useKit(look) {
 }
 
 // The style of the look (core/style.js). It goes on in the same step as the theme's
-// classes, so the screen is never drawn with half of each. A problem here never
-// stops the colours.
+// classes, so the screen is never drawn with half of each. A style with other frames than
+// the page has drawn also gets them in this step: the areas have their frame drawn again
+// and so do the banner and the countdown. A problem here never stops the colours.
 function useStyle(look) {
   try {
     applyStyle(look.style);
+    if (shapesFor(look.style) === shapesNow()) return;
+
+    recordShapes(look.style);
+    redrawFrames();
+    redrawWhatStays();
   } catch (error) {
     console.error('Could not put the style on the page', error);
   }

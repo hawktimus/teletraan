@@ -62,7 +62,7 @@ export const looks = ['polished', 'flat', 'plain'];
 // The Style setting in Dashboard Settings: which look the whole screen has.
 // core/style.js turns it into data-style on the page and into a layout. The Studio copies this list.
 //   original   the screen as it has always been. It keeps the layout its theme names
-//   cybertron  the sharp style, in the bar layout whatever the theme says
+//   cybertron  the sharp style: the layout of Original, drawn in gunmetal plates with a steel edge and neon
 //   minimal    the industrial style, in the bar layout whatever the theme says
 export const styles = ['original', 'cybertron', 'minimal'];
 

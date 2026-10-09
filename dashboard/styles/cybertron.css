@@ -1,17 +1,20 @@
 /* The Cybertron style (core/style.js, Style in Dashboard Settings): the sharp style.
-   It has the bar layout (layouts/bar.css) whatever the theme says, and any team's
-   colors. The first rule sets custom properties, which the bar panels and the frame
-   drawing read. The team's colors are --team-neon, --team-pink and the others in
-   teams.css, and they are the ones to use for anything that follows the team. The rules
-   after it paint the page background and the parts of the frames that only this style
-   has. Everything it paints is still: nothing here moves.
+   It has the layout of its theme, like Original (the standard layout, or the sidebar
+   layout for Neon Prime), and any team's colors. What it changes is the drawing: the
+   frames are gunmetal plates with a steel edge and neon (core/plate.js, "The frames of
+   Cybertron"), and the countdown is the war clock. The first rule sets custom
+   properties, which the frame drawing reads. The team's colors are --team-neon,
+   --team-pink and the others in teams.css, and they are the ones to use for anything
+   that follows the team. The rules after it paint the page background and the parts of
+   the frames that only this style has, and put the banner and the ticker on their
+   plates. Everything it paints is still: nothing here moves.
 
      --style-body            the body of a plate
      --style-raised          a raised plate
      --style-armor-top       the top and the bottom of the armor header tab and of the war
      --style-armor-bottom    clock's housing, which are lighter and darker than --style-raised
-     --style-chamfer         the large cut corners of a panel (the same 56 as in core/plate.js)
-     --style-neon            the neon strokes, and the rule under the clock in the side column
+     --style-chamfer         the large cut corners of the large and the small frame (the same 56 as in core/plate.js)
+     --style-neon            the neon strokes of the frames, and the grid on the page background
      --style-pink            the conduit line along the inner edges
      --style-digits          the digits of the war clock
      --style-rust            the rust on the war clock's housing
@@ -19,9 +22,8 @@
      --style-grid-opacity
      --style-scan-opacity    the scanlines on the page background
 
-   The frames are drawn by core/plate.js, "The frames of the bar layout". The steel of
-   their edges is in tokens.css and index.html, and what Cybertron and Minimal share of
-   them is in base.css. */
+   The frames are drawn by core/plate.js. The steel of their edges is in tokens.css and
+   index.html, and what Cybertron and Minimal share of them is in base.css. */
 
 html[data-style="cybertron"] {
   --style-body: #15181f;
@@ -69,7 +71,7 @@ html[data-style="cybertron"] #screen::before {
    plate color inset that plate.js draws on it (base.css). The rest of the header is the same
    gunmetal as the body. */
 html[data-style="cybertron"] .area,
-html[data-style="cybertron"] .bar-banner {
+html[data-style="cybertron"] .banner {
   --panel-face: var(--style-body);
 }
 html[data-style="cybertron"] .area .plate .header-left { fill: url(#armor-face); }
@@ -79,9 +81,15 @@ html[data-style="cybertron"] .area .plate .header-right { fill: var(--style-body
 html[data-style="cybertron"] .team-fill,
 html[data-style="cybertron"] .tag-fill { fill: var(--team-plate); }
 
-/* The hawk has the team's accent for its outline, and keeps the colors the theme gives its
-   plates */
-html[data-style="cybertron"] .bar-logo .drawing { --logo-edge: var(--team-accent); }
+/* The hawk in the banner (and in the sidebar of Neon Prime) has the team's accent for its outline,
+   and keeps the colors the theme gives its plates */
+html[data-style="cybertron"] .banner .logo .drawing,
+html[data-style="cybertron"] .side-logo .drawing { --logo-edge: var(--team-accent); }
+
+/* The // mark at the right end of a header is left off. The step at the top right of the frame
+   is where its top would be, and the pictures have none there. A seasonal pack's mark is
+   another picture (pack-mark) and stays. */
+html[data-style="cybertron"] .header svg.double-slash { display: none; }
 
 /* The neon line of a frame has the two wider and fainter ones behind it, except in the flat
    finish (base.css) */
@@ -117,38 +125,77 @@ html[data-style="cybertron"] .art-seams {
 }
 
 
-/* The rail beside the side column (panels/bar-column): a line down the middle in the team's
-   neon, and two groups of ticks, a long pink one, a short neon one and a short accent one at
-   the top, and a pink and a neon one lower down. The row of the layout turns round with the
-   mirror, so the rail is at the right edge for a team that has it on. The numbers are
-   measured on the 12 by 736 box of the rail. */
-html[data-style="cybertron"] .bar-rail { position: relative; }
-html[data-style="cybertron"] .bar-rail::before {
-  content: "";
-  position: absolute;
-  left: 4px;
-  top: 0;
-  width: 4px;
-  height: 100%;
-  background: var(--style-neon);
-  opacity: .5;
+/* The stage of the standard layout, laid out for the banner's plate (core/plate.js,
+   cybertron-banner). The plate is 1840 by 228, 16 higher than the banner of Original (212),
+   so that the logo, the name and the clock are inside its steel and its neon. The 16 come
+   from the top margin (4 of the 24) and from each of the two gaps (6 of the 20). The large
+   frame, the countdown and the small frame are the sizes they have in Original, the large
+   frame is 6 lower, and the ticker is where it is in Original. The sidebar layout is not
+   touched. */
+html[data-style="cybertron"][data-layout="standard"] #stage {
+  padding: 20px 40px 24px;
+  grid-template-rows: 228px 708px 72px;
+  gap: 14px 32px;
 }
-html[data-style="cybertron"] .bar-rail::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background:
-    linear-gradient(var(--style-pink), var(--style-pink)) 1px 41px / 10px 60px no-repeat,
-    linear-gradient(var(--style-neon), var(--style-neon)) 1px 110px / 10px 24px no-repeat,
-    linear-gradient(var(--team-accent), var(--team-accent)) 1px 151px / 10px 40px no-repeat,
-    linear-gradient(var(--style-pink), var(--style-pink)) 1px 576px / 10px 62px no-repeat,
-    linear-gradient(var(--style-neon), var(--style-neon)) 1px 650px / 10px 24px no-repeat;
+
+/* The zones of a seasonal pack's front layer were measured empty on the layout of Original
+   (core/season.js), and the plates and the brackets of this style cover some of them. The
+   header mark and the pieces that drift over the screen are drawn. */
+html[data-style="cybertron"] #season-front {
+  display: none;
 }
 
 
-/* The war clock in the banner (panels/countdown) is shown by this style and by Minimal, and by no
-   other. Its digits are --style-digits, amber here. */
+/* The banner on its plate. The plate is the whole banner box, and the steel, the neon and the
+   bolts take up the first 20 or so inside it, so the banner is laid out in the box that is left,
+   1752 by 192: the content has 18 above and below, 40 at the left (the hawk is clear of the cut
+   corner) and 48 at the right (the bottom row is clear of the cut corner). The hawk is 187 by 150,
+   which is Original's 219 by 176 at .854. The name is 72 high and the TEAM plate has the 76 it has
+   in Original, with no gap, which with the bottom row of 44 are the 192. The plate is first in the
+   banner, so the parts that follow are made positioned (position: relative) to be drawn over it.
+   The clock is 8 lower than it is in Original, because the top edge steps down over the last 100
+   at the right. */
+html[data-style="cybertron"] .banner {
+  box-sizing: border-box;
+  height: 228px;
+  padding: 18px 48px 18px 40px;
+  grid-template-columns: 187px minmax(0, 1fr);
+}
+html[data-style="cybertron"] .banner .logo {
+  --k: .17;
+  width: 187px;
+  height: 150px;
+}
+html[data-style="cybertron"] .banner .banner-text {
+  position: relative;
+  height: 192px;
+}
+html[data-style="cybertron"] .banner .banner-top { height: 148px; }
+html[data-style="cybertron"] .banner .banner-left { gap: 0; }
+html[data-style="cybertron"] .banner .team-name { height: 72px; }
+html[data-style="cybertron"] .banner .banner-right { margin-top: 8px; }
+html[data-style="cybertron"] .banner .sample-badge { top: 90px; }
+
+/* The mirror (styles/original.css) puts the logo at the right end, so the margins change sides */
+html[data-style="cybertron"].mirrored[data-layout="standard"] .banner {
+  padding: 18px 40px 18px 48px;
+  grid-template-columns: minmax(0, 1fr) 187px;
+}
+
+
+/* The ticker on its plate (core/plate.js, cybertron-ticker), which is as big as the ticker's area.
+   The tag and the message start 16 in from each end, which puts the tag over the plate's cut corner
+   the way the bar layout has it. The mirror turns the row round and the padding is the same on
+   both sides. */
+html[data-style="cybertron"] .ticker {
+  box-sizing: border-box;
+  padding: 0 16px;
+}
+
+
+/* The war clock (panels/countdown) is shown by this style and by Minimal, and by no other. The
+   style's countdown is the wide one, in the region of the red countdown. Its digits are
+   --style-digits, amber here. The flat finish leaves off the rust of its housing, like the other
+   worn parts of the metal (base.css). */
 html[data-style="cybertron"] .war-clock { display: block; }
+html[data-style="cybertron"][data-finish="flat"] .war-rust { display: none; }

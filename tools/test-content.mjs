@@ -6837,7 +6837,7 @@ test('the sample content has the two starting teams, and every style with every 
         assert.equal(live.style.chooseStyle(settings.style, null), style, where);
         assert.deepEqual([team.code, team.mirror], [mode, mode === 'nova'], where);
         assert.equal(live.theme.resolveTheme(theme, today).overlay, pack, where);
-        assert.equal(live.layout.chooseLayout(theme, null, today, style), style === 'original' ? 'standard' : 'bar', where);
+        assert.equal(live.layout.chooseLayout(theme, null, today, style), style === 'minimal' ? 'bar' : 'standard', where);
         combinations += 1;
       });
     });

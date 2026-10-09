@@ -5,11 +5,15 @@
 // only the Tasks panel (?show=tasks) draws only the large frame. It is a
 // <div class="area"> in the region's element:
 //
-//   <div class="area" data-area="grid1" data-state="in" data-metal="gold">
+//   <div class="area" data-area="grid1" data-frame="grid1" data-state="in" data-metal="gold">
 //     the plate and the frame's four layers and the glint (plate.js)
 //     the pieces the frame breaks into, hidden until a mechanical change (plate.js)
 //     <div class="page-host">the page of the panel on screen</div>
 //   </div>
+//
+// data-frame is the kind of frame that was drawn (frameKind in plate.js). The style decides
+// it, so when a style with other frames goes on while the screen runs, redrawFrames() puts
+// the new frame round each area and leaves its page where it is.
 //
 // changePage() is the one call that moves a region from the page it shows to
 // the next. The scheduler decides which page and when; frame.js does the
@@ -34,7 +38,7 @@ import { hostFor, placeWholePanel } from './panels.js';
 import { changeThemeNow } from './theme-apply.js';
 import { changeTeamNow } from './teams.js';
 import { hasRegion, layoutNow } from './layout.js';
-import { shapesNow } from './style.js';
+import { hasSteel, shapesNow, styleNow } from './style.js';
 
 const areaRegions = ['grid1', 'grid2', 'ticker'];
 const themeRegion = 'grid1'; // a new theme and a new team go on when this region's frame is apart
@@ -43,13 +47,14 @@ const areaOf = {};  // region -> its area element, while it exists
 const showing = {}; // region -> the page on screen there, as buildPage() made it
 
 // grid1 and grid2 have a frame. The ticker has none, only its two slats, except in
-// the bar layout, where it has a frame of its own and so does the large panel
-// (frameKind in plate.js, with the corners the page's style has).
+// the bar layout and in Cybertron, where it has a frame of its own (frameKind in plate.js,
+// with the corners the page's style has).
 function makeArea(region) {
   const kind = frameKind(region, layoutNow(), shapesNow());
   const element = document.createElement('div');
   element.className = 'area';
   element.dataset.area = region;
+  element.dataset.frame = kind;
   element.dataset.state = 'in';
   if (region !== 'ticker') element.dataset.metal = frame.firstFinish(); // the page frame's own metal, see tokens.css
   element.innerHTML = (kind === 'ticker' ? '' : areaMarkup(kind)) + '<div class="page-host"></div>';
@@ -57,6 +62,27 @@ function makeArea(region) {
   document.getElementById('region-' + region).appendChild(element);
   areaOf[region] = element;
   return element;
+}
+
+// Draws the frame of every area on the screen again, for the frames the page has now
+// (core/style.js, recordShapes). Frames are drawn once for an area, and a style that
+// goes on later may have others (Original and Cybertron share a layout and not a frame),
+// so shell.js calls this in the step that puts the style on the page. Only the frame is
+// replaced. The page-host and the page in it stay, and so do the area's state, its metal
+// and its change, so the new frame arrives in the state the old one was in. An area
+// whose frame is the right one is left alone.
+export function redrawFrames() {
+  Object.keys(areaOf).forEach(region => {
+    const area = areaOf[region];
+    const kind = frameKind(region, layoutNow(), shapesNow());
+    if (area.dataset.frame === kind) return;
+
+    Array.from(area.children)
+      .filter(child => !child.classList.contains('page-host'))
+      .forEach(child => child.remove());
+    if (kind !== 'ticker') area.insertAdjacentHTML('afterbegin', areaMarkup(kind));
+    area.dataset.frame = kind;
+  });
 }
 
 // core/hidden-run.js gives this function, once, when it starts. It is called at
@@ -89,13 +115,13 @@ export function startWholeScreen() {
   };
 }
 
-// The change a frame makes now, from frame.planChange(). The bar layout has steel
-// frames in both of its styles, and steel is the metal whatever the page change says
-// (tokens.css), so the finish is never changed there: a frame that fades out and in to
-// change a color that does not change would only flicker.
+// The change a frame makes now, from frame.planChange(). Cybertron and Minimal have steel
+// frames, and steel is the metal whatever the page change says (tokens.css), so the
+// finish is never changed for them: a frame that fades out and in to change a color
+// that does not change would only flicker.
 function planFor(area) {
   const change = frame.planChange(area);
-  return layoutNow() === 'bar' ? { style: change.style, finish: null } : change;
+  return hasSteel(styleNow()) ? { style: change.style, finish: null } : change;
 }
 
 // Puts the next page in a region at once, with nothing to see: for a screen that

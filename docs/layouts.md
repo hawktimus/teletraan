@@ -13,8 +13,11 @@ three:
   no small frame. The theme Neon Prime has it.
 - **bar**: a banner across the top with the team name at one end and the war clock
   at the other, under it a thin side column and one main panel, and the ticker
-  across the whole bottom. There is no small frame. The styles Cybertron and Minimal
-  have it, whatever theme is on (see "The bar layout").
+  across the whole bottom. There is no small frame. The style Minimal has it,
+  whatever theme is on (see "The bar layout").
+
+Original and Cybertron are the two styles that have the layout of their theme. Cybertron
+draws the same arrangement as Original in plates of gunmetal and steel (see "Cybertron").
 
 A team with Mirror the layout switched on turns the standard and the bar layout left
 to right (see "The mirror"). The sidebar layout is not turned. Every layout is placed in
@@ -34,12 +37,13 @@ layout has the standard one. The Studio's copy of the list (`studio/themes.js`)
 says the same, and `node studio/check-schemas.mjs` fails if the two differ.
 
 The style is the second thing that counts, and it wins. Style in Dashboard Settings
-(Screen tab) is Original, Cybertron or Minimal. Original keeps the layout of the
-theme, so a screen with Original is exactly what it was before there was a style.
-Cybertron and Minimal have the bar layout whatever the theme says, so Neon Prime
-with Cybertron is the bar layout in Neon Prime's colors. `core/style.js` works it
-out (`layoutFor`), and `?style=cybertron` in the address does the same for one
-page, over the setting. The theme still gives the colors and the seasonal packs.
+(Screen tab) is Original, Cybertron or Minimal. Original and Cybertron keep the layout
+of the theme, so a screen with Original is exactly what it was before there was a style,
+and Neon Prime with Cybertron is the sidebar layout drawn in Cybertron's plates. Minimal
+has the bar layout whatever the theme says, so Neon Prime with Minimal is the bar layout
+in Neon Prime's colors. `core/style.js` works it out (`layoutFor`), and `?style=minimal` in
+the address does the same for one page, over the setting. The theme still gives the
+colors and the seasonal packs.
 
 The layout is set before anything is drawn, so that a screen that starts with
 Neon Prime chosen starts straight in the sidebar layout. `shell.js` does it as
@@ -51,7 +55,7 @@ the address win, like they do for colours. When
 there is nothing saved yet, or the saved copy cannot be read, the screen starts
 in the standard layout. While the screen shows the sample content there is no saved
 copy to read (the sample is a file), so a sample whose theme has the sidebar layout, or
-whose style is Cybertron or Minimal, reloads once and then stays in the standard layout
+whose style is Minimal, reloads once and then stays in the standard layout
 with the new colours and the style Original. Use `?theme=` and `?style=` to look at a
 layout with the sample. With `?team=` and `?overlay=` as well, every style, team and
 seasonal pack can be looked at with the sample content, which has both teams. The same
@@ -69,10 +73,12 @@ rubbed out as soon as the page is in the layout wanted. If the browser's storage
 does not work, the page does not reload at all and the colours go on in the old
 layout. It also does not reload while an alert or an announcement has the screen,
 and tries again at the next page change and once a minute. Changing between two
-themes that have the same layout is only colours and does not reload. Cybertron and
-Minimal have the same layout but not the same corners on their frames, which are drawn
-once like the regions, so changing between them reloads once in the same way (see
-"Frames"). Changing the colours of either, or the theme or the team under it, does not.
+themes that have the same layout is only colours and does not reload. Original and
+Cybertron have the same layout but not the same frames, and the page does not reload for
+that: it draws the frames again in the step that puts the style on the page (see
+"Cybertron", "When the style changes"). Minimal has the bar layout, so changing to or from
+it reloads once, in the same way as a change of layout. Changing the colours of any style,
+or the theme or the team under it, does not.
 
 ## The screen is a fixed canvas
 
@@ -446,7 +452,7 @@ tested (see "The Mini", below).
 ## The bar layout
 
 A banner across the top, under it a thin side column and one main panel, and the
-ticker across the bottom. The styles Cybertron and Minimal have it. All lengths are
+ticker across the bottom. The style Minimal has it. All lengths are
 pixels of the 1920 x 1080 screen. They are written once, in `dashboard/core/layout.js`
 (`barSettings`), and `layout-apply.js` hands them to `layouts/bar.css` and to the two
 bar panels as variables on the html element. To change a size, change it there and
@@ -515,8 +521,9 @@ labels and the second tick, all from Dashboard Settings (`core/countdown.js` wor
 and `startCountdown` is given `{ war: true }`). Only the look is its own. The code is in
 `panels/countdown` (`warMarkup`, `startWar` and `updateWar` in `countdown.js`, the rules in
 `countdown.css`) and the housing is drawn by `warHousingMarkup` in `core/plate.js`.
-`panels/bar-banner` puts it in its slot. Cybertron and Minimal show it
-(`styles/cybertron.css` and `styles/minimal.css`), and no other style does.
+`panels/bar-banner` puts it in its slot, and Minimal shows it (`styles/minimal.css`). Cybertron
+shows the wide form of it in the countdown's place, which is its own section ("The wide war
+clock", under "Cybertron"), and Original shows neither.
 
 The housing is a plate of steel, with the edge of the frames (the shadow, the rim, the face, the
 shade and the ridge, as in "Frames"), the same gradient as the armor tab, a cut corner of 22 at the
@@ -534,8 +541,8 @@ by hand, counted from the top left corner of the housing:
 | `.war-time-plate` | 14 | 92 | 414 | 250 | the hours, minutes and seconds at 48 px, with HRS, MIN and SEC under them at 20 px, in three cells of 80 with a bar of 3 px between two cells |
 
 The plates are `#0c0b09` with a 3 px border of `#2b2a26` and a gradient inside, from a faint
-highlight at the top to a shade at the foot. The digits are amber (`#ffb327`) in Cybertron and the
-team's neon in Minimal, which is `--style-digits`. The date, DAYS and the small labels are a little
+highlight at the top to a shade at the foot. The digits are the team's neon in Minimal, and amber
+(`#ffb327`) in Cybertron, which is `--style-digits`. The date, DAYS and the small labels are a little
 fainter. The rivets are 5 px, in the corners, 3 px clear of the plates. The labels, 20 and 24 px,
 are text under 44 px, which only the war clock and the stamped ids may have. The list is in
 `tools/test-layouts.mjs`.
@@ -707,25 +714,27 @@ weather, the word on the ticker's tag, and the lines of the countdown.
 A style is `data-style` on the html element, and one stylesheet in `dashboard/styles/`.
 The first rule of a stylesheet sets the custom properties of its style. The rules after
 it paint what only that style has: the page background, the plates, the rail beside
-the side column and the decoration of its frames. A stylesheet never copies `base.css`
-or `frame.css`, and every rule in it starts with its own style, so a style cannot
-change another. The layout (`layouts/bar.css`) is the same for Cybertron and Minimal,
-and the team gives the colors.
+the side column (Minimal) and the decoration of its frames. A stylesheet never copies
+`base.css` or `frame.css`, and every rule in it starts with its own style, so a style
+cannot change another. Original and Cybertron have the layout of the theme, and Minimal
+the bar layout (`layouts/bar.css`), and the team gives the colors.
 
 | File | What it has |
 |------|-------------|
-| `styles/original.css` | no custom properties, and the mirror of the standard layout |
-| `styles/cybertron.css` | `--style-body` and `--style-raised` (the gunmetal plates), the two colors of the armor tab, the 56 px chamfer, the neon and pink of the team, amber digits and rust for the war clock, a 96 px grid at .07 and scanlines at .035. Then the rules that paint the page background, the plates, the rail and the decoration of the frames (see "Frames") |
-| `styles/minimal.css` | the 34 px chamfer, the neon and pink of the team, digits in the team's neon, the team's background for the plates, the two colors of the armor tab, the rust, a 48 px grid at .07 and no scanlines. Then the rules that paint the grid, the plates, the rail, the rivets and the ids that Original also has, and what only Minimal draws on a frame (see "Frames") |
+| `styles/original.css` | no custom properties, and the mirror of the standard layout, which Cybertron has too |
+| `styles/cybertron.css` | `--style-body` and `--style-raised` (the gunmetal plates), the two colors of the armor tab, the 56 px chamfer, the neon and pink of the team, amber digits and rust for the war clock, a 96 px grid at .07 and scanlines at .035. Then the rules that paint the page background, the plates and the decoration of the frames, and lay out the stage, the banner and the ticker for their plates (see "Cybertron") |
+| `styles/minimal.css` | the 34 px chamfer, the neon and pink of the team, digits in the team's neon, the team's background for the plates, the two colors of the armor tab, the rust, a 48 px grid at .07 and no scanlines. Then the rules that paint the grid, the plates, the rail and the rivets that Original also has, take the `//` mark off the headers, and paint what only Minimal draws on a frame (see "Minimal") |
 
 The style goes on the page at the same moment as a new theme (`theme-apply.js`
 carries it in the look), and a style with another layout reloads the page once, with
-the guard above. The frames are drawn by `core/plate.js` and are described under "Frames".
+the guard above. The frames are drawn by `core/plate.js` and are described under "Frames"
+and "Cybertron".
 
 Original also has rivets and stamped plate ids on its frames. `core/plate.js` puts
 both in the markup of every frame that has them, and `base.css` shows them while
-`data-style` is `original`. Minimal draws them on its own frames too, with the same
-code, and `styles/minimal.css` shows them there (see "Frames"). The rivets are a row of dots, one every 90 px, along each long straight
+`data-style` is `original`. Minimal draws the rivets on its own frames too, with the same
+code, and `styles/minimal.css` shows them there (see "Minimal"). Minimal has no stamped id:
+none of its frames has one in its markup, and neither has Cybertron's. The rivets are a row of dots, one every 90 px, along each long straight
 edge of the large frame, the small frame and the countdown. An edge under 180 px has
 none, so the cut corners and the countdown's teeth have none. The ids are `HP-01` on
 the large frame, `HP-02` on the countdown and `HP-03` on the small frame. The letters
@@ -740,9 +749,9 @@ with the css it overrides, which is every stylesheet `index.html` links apart fr
 two styles, and the stylesheet of every panel. It fails when a custom property that a rule
 for that style reads has no value in those files, in a script (the numbers of the layouts,
 and the few names that a script writes) or in a fallback, and when a text is under 44 px.
-The text that may be is the explicit list: the stamped plate id, 20 px, and the war clock
-labels, 20 and 24 px. A rule for another style, or for a layout the style never has, is not
-looked at.
+The text that may be is the explicit list: the stamped plate id, 20 px, which only Original shows,
+and for Minimal the labels of the narrow war clock, 20 and 24 px. Cybertron's wide war clock has none. A rule for
+another style, or for a layout the style never has, is not looked at.
 
 ### Frames
 
@@ -751,9 +760,15 @@ The bar layout has three frames of its own. `core/plate.js` makes their shapes w
 ticker's (`bar-ticker`). The main panel and the ticker are areas, and `core/areas.js` asks
 `frameKind` which frame an area has: the large panel has `bar-main` in this layout, and
 the ticker has `bar-ticker`, where in the other layouts it has none. The banner draws its
-own, as the countdown does (`plateMarkup('bar-banner')`). Both styles draw all three from
-the same markup. The markup has everything, and `base.css` and the style's own stylesheet
-show what the style has.
+own, as the countdown does (`plateMarkup('bar-banner')`). Minimal has its own three (see
+"Minimal"), and Minimal is the only style with the bar layout, so these three are what
+`frameKind` gives only for a bar page whose style has no frames of its own, which no style is
+now. They carry all of Cybertron's decoration, which is how the bar layout was drawn before
+Cybertron took the layout of its theme, and the tests still hold them to their numbers.
+Cybertron has the layout of Original and so has four frames of its own, the sizes of the
+frames of that layout (see "Cybertron"). All of them are made by the same function from the
+same markup. The markup has everything, and `base.css` and the style's own stylesheet show
+what the style has.
 
 Every frame is a rectangle with ten corners, its line 4 px inside the edge of its box. It has
 a cut corner at the top left and the bottom right, and a step at the top right and the bottom
@@ -781,7 +796,7 @@ From the bottom up, each half of the edge is drawn like the other frames: the sh
 dark rim, the steel face, the shade and the ridge. The steel is the metal in `tokens.css`
 (`--metal` tokens for `data-metal="steel"`) with its three gradients in `index.html`. Both
 styles give it to the html element and to every area, so the frame metal and the page change
-never change it, and `core/areas.js` makes no change of metal in this layout. Then come the
+never change it, and `core/areas.js` makes no change of metal for either style. Then come the
 neon lines, on one path that is the outline 10 px inside, so they follow every corner.
 
 | Part | What it is | Where it is |
@@ -833,20 +848,21 @@ cuts, and the table is read as the one above.
 Frames are drawn once and stay for as long as the page is up, so the corners are chosen
 when the page starts. `core/style.js` writes `data-shapes` on the html element then
 (`shapesFor`), and `frameKind` in `core/plate.js` gives the name of the frame for it. A page
-that goes from Cybertron to Minimal, or back, is drawn again: it reloads once, with the
-same guard as a change of layout (`drawnFor` and `mustReload` in `core/layout.js`). A page
-that changes the colors, the theme or the team does not.
+that goes to Minimal, or back from it, is drawn again: it changes layout, so it reloads once,
+with the same guard (`drawnFor` and `mustReload` in `core/layout.js`). A page that changes the
+colors, the theme or the team does not.
 
 What Minimal draws on a frame is in the same markup as the rest, and `styles/minimal.css`
 paints it. It has none of Cybertron's decoration: no wide neon lines, hazard stripe,
-conduit, slashes, brackets or plate seams.
+conduit, slashes, brackets or plate seams. Its frames have no stamped id or any other
+serial text, and its page has no scanlines and no raised plate. The `//` mark at the right end
+of a panel's header is off, as the pictures of Minimal have none and the ticks stand there.
 
 | Part | What it is | Where it is |
 |------|------------|-------------|
 | Neon line | 4 px, `--style-neon`: one neon line, with none of the wide ones | 10 px inside the edge |
 | Hex bolt | the same bolt as Cybertron's | the four joints: both ends of the top left and of the bottom right cut corner |
 | Rivets | dots of 5 px radius with a dark rim, one every 90 px, as Original's | every straight edge of 180 px or more |
-| Stamped id | 20 px, as Original's: HP-01 on the main panel and HP-02 on the banner, where the war clock is. The ticker has none, because its message would cover it | 34 px left of the foot of the bottom right cut corner, 14 px above the bottom line |
 | Rust | rust at the two bottom corners of every frame: an arc of 4 px, `--style-rust`, with a soft patch under it that is a radial gradient (`wear-rust` in `index.html`) | one arc on the left edge just above the step, bulging into the frame, and one on the bottom edge just before the cut corner |
 | Weld seam | a dark 3 px line with a faint light 3 px line 4 px beside it | the main panel only, at x = 1188, from under the header to just above the bottom. It is 36 px past the 1152 the pages are written for, so it crosses no text |
 | Header line | a 3 px neon line | along the foot of the header, with 39 ticks standing on it: every 18, 4 wide and 10 high, from the slanted end of the tab to the right edge |
@@ -856,13 +872,209 @@ its own (`--style-armor-top` and `--style-armor-bottom`). The plates are the tea
 color. The rust is on the steel, in the second half of the frame and in the pieces of the page
 change that have the corners, and it comes in with the rivets once the lines are drawn. The
 flat finish leaves it off. The grid, the rivets and the rust never move. The mirror turns the
-regions and not the frames, so the same frames, rivets, ids, rust and seam are at the same
+regions and not the frames, so the same frames, rivets, rust and seam are at the same
 corners of a mirrored screen.
+
+What Minimal and Cybertron share, and why. The order gives both a steel edge with a neon line
+inside it, hex bolts, a raised armor header with the team's plate color inset, and a grid on the
+page, and one function in `core/plate.js` draws both. So they share the steel (`tokens.css`), the
+4 px neon line, the hex bolt, the armor tab, the rule that gives a plate its face (it reads
+`--style-body`, which is gunmetal in one and the team's background in the other), the TEAM plate
+and the ticker's tag in the plate color, the hawk's outline in the team's accent, the grid layer (96 px in Cybertron and 48 px in
+Minimal, both at .07, each in its own stylesheet), the header without a `//` mark, and the war
+clock, which is the same clock in two forms. Everything else is one style's. In
+`styles/minimal.css`: the rivets, the rust, the weld seam, the header line and its ticks, the rail,
+the 34 px cuts and the plates in the team's background color. In `styles/cybertron.css`: the
+gunmetal body, the wide neon lines, the hazard stripe, the conduit, the slashes, the brackets, the
+plate seams, the scanlines, the 56 px cuts and the amber digits. `tools/test-minimal.mjs` lists
+what is shared, so a new shared rule fails it until the list says so.
 
 The main panel shows the same rows the panel always showed. Neither style adds a colored
 chip in front of a title, and no panel is laid out as chip, title and place. The panels keep
 their rows, their line limits and their rules, and only the text is bigger, because the main
 panel is scaled up (see "The width of the main panel").
+
+## Cybertron
+
+Cybertron has the layout of its theme, as Original does: the banner across the top, the
+large frame on the left, the countdown over the small frame on the right and the ticker
+across the bottom, or the sidebar layout for Neon Prime. What it changes is the drawing. Every
+frame is a plate of gunmetal (`--style-body`, `#15181f`) with a steel edge, the neon of the team
+just inside the edge and two wider and fainter lines of the same neon outside it, and the
+countdown is the war clock in place of the red frame. `styles/cybertron.css` paints it and
+`core/plate.js` draws the four frames. The mirror turns it as it turns Original, with the same
+rules (`styles/original.css`). Nothing Cybertron draws moves of its own, apart from the arrival and the
+page change that every frame has.
+
+The sidebar layout (Neon Prime) has the large frame and the ticker of Cybertron, scaled as they
+are for Original. Its column keeps the red countdown, because the war clock is 616 wide and the
+column is 384.
+
+The arrangement is Original's with the plates of Cybertron drawn on it. The panels in the
+large and the small frame are not changed: the frames are the sizes of Original's, and the
+headers are as high.
+
+### The stage
+
+The stage of the standard layout is laid out for the banner's plate, which is 16 higher than the
+banner of Original. The 16 come from the top margin and from the two gaps, so the large frame, the
+countdown and the small frame keep their sizes, the large frame is 6 lower, and the ticker is where
+it is in Original. The rule is in `styles/cybertron.css`, for the standard layout only. All lengths
+are pixels of the 1920 x 1080 screen.
+
+| Part | Cybertron | Original |
+|------|-----------|----------|
+| Top margin | 20 | 24 |
+| Banner | 228 | 212 |
+| Gap under the banner and under the large frame | 14 | 20 |
+| Large frame, and the countdown over the small frame | 708 | 708 |
+| Ticker | 72 | 72 |
+| Bottom margin | 24 | 24 |
+
+20 + 228 + 14 + 708 + 14 + 72 + 24 is 1080. The side margins are 40 and the columns are 1152
+and 656 with 32 between them, as in Original. The countdown is 320 high and the small frame 372,
+16 apart. A test works out the boxes from the stylesheet and finds every frame, with its bolts and
+its brackets, inside the screen, in the layout and in its mirror.
+
+### The frames
+
+`core/plate.js` makes four frames with `makeBarShape`, the function that makes the frames of the bar
+layout, each the size of the frame of Original that it stands in for. `frameKind` gives their names
+(`core/style.js` says that Cybertron has its own corners with `shapesFor`), and `core/areas.js` and
+the banner draw them. The corners are numbered and drawn as in "Frames".
+
+| Frame | Drawn for | Cut corner | Step | Run | Bolts |
+|-------|-----------|------------|------|-----|-------|
+| `cybertron-grid1` | 1152 x 708 | 56 | 24 | 150 | 6 |
+| `cybertron-grid2` | 656 x 372 | 56 | 24 | 120 | 6 |
+| `cybertron-banner` | 1840 x 228 | 32 | 16 | 100 | 6 |
+| `cybertron-ticker` | 1840 x 72 | 32 | 16 | 100 | 2 |
+
+The large and the small frame have a header as high as the ones they stand in for (120 and 84), an
+armor tab with the team's plate color inset, the hazard stripe in the team's accent under it, the
+pink conduit along the top and under the stripe, six slashes along the bottom at the right end, pink
+brackets outside the top left and the bottom right cut corners (legs of 60 down and 70 along on the
+large frame, 40 and 50 on the small one), faint plate seams across the body (three on the large
+frame, at 264, 408 and 552, and two on the small one, at 160 and 252), and the 12 pieces of the
+mechanical page change. The banner has the conduit and the brackets, and the ticker only the
+brackets, with legs of 40 and 50: it is 72 high and has no room for more. The banner and the ticker
+are one plate each, and the ticker holds still while its message changes. None of the four has
+rivets, rust or a stamped plate id. The rivets are Original's and Minimal's, the rust is Minimal's
+and the id is Original's. All of it is in the markup,
+and `styles/cybertron.css` shows it. The wide neon lines are left off in the flat finish.
+
+The `//` mark at the right end of a panel's header is not drawn in Cybertron (`.header
+svg.double-slash` is hidden, as the Plain look hides it). The step at the top right is where its
+top would be, and the pictures of Cybertron have no mark there. A seasonal pack's own mark is
+another picture (`pack-mark`) and stays.
+
+### The wide war clock
+
+The countdown of Cybertron is the war clock in its wide form, 616 by 200, in the middle of the
+countdown's region (656 by 320): 20 from each side and 60 above and below. It is the war clock of
+the bar layout (see "The war clock") laid out for 616 by 200, and it has the same source: the dates,
+the labels and the second tick come from Dashboard Settings, and `startCountdown` is given
+`{ war: true }`, so the label has no IN, the days are two digits (three from 100) and every number
+changes at once. The code is `warMarkup('wide')` in `panels/countdown/countdown.js`, which `mount`
+puts in a slot (`.war-slot`) of a panel of its own (`.countdown-war`), the rules at the end of
+`panels/countdown/countdown.css`, and `warHousingMarkup('wide')` in `core/plate.js`. The panel has
+one part that arrives, the slot (`countdown-war` in the table of `frame.js`), and no part of the
+clock has a line of its own. The narrow form is as it was, and Minimal keeps it.
+
+The housing is the narrow one's at another size: a plate of steel with the edge of the frames, a cut
+corner of 34 at the top left and the bottom right, four rivets, one weld seam between the label and
+the plates, and rust at the bottom left and the top right. The rust is a soft patch and a short
+stroke, the flat finish leaves it off, and it never moves. Every part is placed by hand, counted from
+the top left corner of the housing:
+
+| Part | Top | Height | Left | Width | What it holds |
+|------|-----|--------|------|-------|---------------|
+| `.war-status` | 33 | 14 | 52 | 14 | the red square, which is `--danger` |
+| `.war-lines` | 18 | 44 | 74 | 494 | the label in capitals on the left and the date at the right end, on one line at 44 px with the letters spaced |
+| `.war-days-plate` | 68 | 102 | 22 | 248 | the days at 76 px and DAYS beside them at 44 px |
+| `.war-time-plate` | 68 | 102 | 278 | 300 | the hours, minutes and seconds at 52 px, with HRS, MIN and SEC under them at 44 px, in three cells of 98 with a bar of 3 px between two cells |
+
+The plates, the digits and the colors are the narrow clock's: `#0c0b09` with a 3 px border of
+`#2b2a26`, amber digits from `--style-digits`, a date, DAYS and labels that are a little fainter,
+orange in the last 30 days, and white with red borders in the last 7. The rivets are 5 px, one at
+each corner, clear of the plates and of the rim. The text is all 44 px or more, so the wide clock is
+not on the list of text under 44 px, which only the narrow clock and the stamped ids are on.
+
+**What it shows.** The label is the label from Dashboard Settings in capitals, with no IN, and the
+date is at the right end of the same line, as `JAN 9`, or `NOW` for the rest of the day when the time
+has come. After Rollout the label is COUNTDOWN OVER, and while no date is set it is DATE NOT SET, the
+words the standard countdown shows, on the same line with no date, with the days at 00 and the time
+at 00 00 00.
+
+**What fits.** The numbers come from the advance widths of the display font, without kerning, which
+only makes a word narrower. Two digits at 76 px with DAYS at 44 px and the letters set .04 em and .03
+em closer are up to 225 wide (at 99 days), in the 242 that is inside the plate's border. Three digits
+at that size would not fit, so 100 days or more is drawn at 56 px, and the widest of those is 236. The
+widest pair of time digits at 52 px is 76 wide in its box of 96, and HRS, MIN and SEC are 93, 88 and 87
+in their cells of 98. KICKOFF is 217 wide and the widest date is 192, so with 24 between them they are
+433 of the 494, and ROLLOUT is 232 and makes 448. COUNTDOWN OVER, with no date, is 476. A label that
+is too wide for what the date leaves is cut off with an ellipsis, as the standard countdown's is.
+This has been worked out from the font and not looked at on a screen.
+
+**The mirror.** The slot is in the countdown's region, which is in the left column when the layout is
+mirrored, and the clock in it is the same picture: the label at the left, then the days, then the
+time. It reads from the left like every plate, and nothing turns it round.
+
+### The banner
+
+The banner stands on `cybertron-banner`, which is the whole banner box, 1840 by 228. The steel, the
+neon and the bolts take up the first 20 or so inside it, so the parts of the banner are laid out in
+what is left. They are the parts of Original's banner (`panels/banner`), with the plate drawn first
+under them, and `styles/cybertron.css` has the sizes:
+
+| Part | Size |
+|------|------|
+| Content | 1752 x 192: 18 from the top and the bottom, 40 from the left and 48 from the right |
+| Hawk | 187 x 150, which is Original's 219 x 176 at .854 (`--k` is .17) |
+| Name | 72 high, with the TEAM plate directly under it |
+| TEAM plate | 76 high, as in Original |
+| Bottom row | 44 high, as in Original: the wordmark, DASHBOARD, the bar and the school |
+| Clock and date | 8 lower than in Original, clear of the step at the top right |
+
+The name and the TEAM plate are 148 and the bottom row is 44, which are the 192. The hawk's top left
+corner is about 27 from the line of the cut corner at the top left, and the end of the bottom row is
+about 18 from the line of the cut corner at the bottom right, where 16 is the neon, its width and 4
+more. The clock ends before the bolt at the top right. The numbers are worked out and held by
+`tools/test-cybertron.mjs`, and have not been looked at on a screen. The SAMPLE CONTENT badge
+stays level with the TEAM plate, as it is in Original. The banner line of a seasonal pack takes
+the place of DASHBOARD and the bar, as it does in Original.
+
+### The ticker
+
+The ticker's frame is `cybertron-ticker`, as big as its area (1840 by 72). The tag and the message
+start 16 in from each end, which puts the tag over the plate's cut corner as the bar layout has it.
+The mirror turns the row round and the padding is the same on both sides. In Original the ticker has
+no frame, and the area draws only its two slats.
+
+### The mirror
+
+The standard layout is turned by `styles/original.css`, and its rules are for the layout and not for a
+style, so they turn Cybertron as they turn Original: the two columns change places, the banner's
+hawk goes to the far end and the clock to the left end of the name block, and the ticker's tag goes
+to the right end. The frames are not turned: they keep their shapes and the pages in them read from
+the left. The one thing Cybertron adds is the margins of the banner, which change sides so that the
+hawk and the bottom row are as far from the cut corners as they are when it is not mirrored.
+
+### When the style changes
+
+Frames are drawn once for an area, so a style with other frames has to draw them again. Original and
+Cybertron share a layout, so the page does not reload when the style changes between them. In the
+step that puts the style on the page (`useStyle` in `shell.js`, at the moment the large frame is
+apart), `shell.js` writes the corners of the new style (`recordShapes` in `core/style.js`), asks
+`redrawFrames` in `core/areas.js` to put the new frame round each area that is on screen, and
+draws the banner and the countdown again, because those two draw their own. Only the frame is
+replaced: the page in each area stays where it is. A change to or from Minimal is a change of
+layout and reloads the page once, as before.
+
+Look at it with `?style=cybertron&night=off&hidden=off` on the address, with `?team=nova` for the
+mirror, and with Style in Dashboard Settings changed between Original and Cybertron on the open
+screen ("Looking at a layout" has the list of what to check). `node tools/test-cybertron.mjs` checks
+the numbers in this section against the code.
 
 ## What else works in each layout
 
@@ -892,8 +1104,10 @@ panel is scaled up (see "The width of the main panel").
   the scene along the bottom, pieces in the margins) were measured on the
   standard layout, and are drawn only there. In the sidebar layout they are left
   out (`decorationLayers` in `core/layout.js`, `setLayers` in `core/season.js`), and
-  so are they in the bar layout. The corner art of a pack is in the cut corners, which are
-  zones, so only the standard layout draws it. The ticker prefix shows in every layout. The
+  so are they in the bar layout. Cybertron has the standard layout and draws the back
+  layer, and `styles/cybertron.css` hides the front layer, because the bolts and brackets of
+  its plates are where some of the zones were measured to be empty. The corner art of a pack
+  is in the cut corners, which are zones, so only Original with the standard layout draws it. The ticker prefix shows in every layout. The
   banner line shows in the standard banner and the bar layout's side column, and not in the
   sidebar layout. docs/seasonal-packs.md has the details.
 - **The test switches** work: `?stress` shows the large frame and the ticker
@@ -1094,8 +1308,9 @@ those away while you look: `http://localhost:8080/dashboard/?theme=neon-prime&ni
 `?show=<panel id>` shows one panel in the pane. `?hidden=desktop` and
 `?hidden=redEyes` play the hidden transitions, and `?demo=alert` the alert.
 Without `?theme=` the screen follows the Look page, and reloads once when the
-theme with another layout comes on. For the bar layout use `?style=cybertron` or
-`?style=minimal`, for example `http://localhost:8080/dashboard/?style=minimal&night=off&hidden=off`.
+theme with another layout comes on. For the bar layout use `?style=minimal`, for example
+`http://localhost:8080/dashboard/?style=minimal&night=off&hidden=off`, and for Cybertron
+`?style=cybertron`, which has the layout of the theme.
 To look at the mirror, add `?team=nova` to the address, which shows the Nova team with
 its mirror whatever Team mode says, with the sample content or with the team documents.
 Or type `document.documentElement.classList.add('mirrored')` in the browser's console,
@@ -1103,7 +1318,7 @@ and take the class off again with `remove`. It is the class the Teams setting pu
 the page for a team with Mirror on. The Preview buttons on Dashboard Settings show a
 style or a team on the real screen for 2 minutes (docs/hidden-transitions.md).
 
-To check the frames of the bar layout by hand, open `?style=cybertron&night=off&hidden=off` and look
+To check the frames of Cybertron by hand, open `?style=cybertron&night=off&hidden=off` and look
 at each of them, then add the class `mirrored` as above and look again:
 
 1. Each frame is closed, with a cut corner at the top left and the bottom right and a step
@@ -1112,12 +1327,18 @@ at each of them, then add the class `mirrored` as above and look again:
 2. The neon line is just inside the steel edge all the way round, and the pink conduit is
    just inside the neon. The title of a panel and the last row of text do not touch the
    conduit, the neon or the slashes.
-3. The hazard stripe is under the header, from edge to edge, and the tab is above it.
-4. The brackets are outside the frames and do not touch the banner, the side column or
-   the ticker, and nothing is outside the screen.
+3. The hazard stripe is under the header, from edge to edge, and the tab is above it, on the
+   large frame and on the small one.
+4. The brackets are outside the frames and do not touch the frame next to them, and nothing is
+   outside the screen.
 5. Watch a page change with Page change style set to mechanical (Transitions tab): the
    frame breaks into pieces, the decoration goes with them, and everything comes back in
    place. The ticker's frame stays still while its message changes.
+6. The hawk, the name, the TEAM plate, the clock, the date and the bottom row of the banner are
+   inside the plate, and none touches the steel or a bolt. The war clock is in the middle of
+   the countdown's place, and its days, hours, minutes and seconds change at once.
+7. With the screen open, change Style in Dashboard Settings between Original and Cybertron. The
+   screen does not reload: the frames, the banner and the countdown change in one step.
 
 Then open `?style=minimal&night=off&hidden=off` and look at the three frames again, in the layout
 and in the mirror:
@@ -1126,16 +1347,15 @@ and in the mirror:
    is a bolt at both ends of the top left and of the bottom right cut corner, and none at the
    steps.
 2. There is one neon line just inside the steel, with no wider glow lines, and there is no
-   hazard stripe, conduit, slashes or brackets.
+   hazard stripe, conduit, slashes, brackets, plate seams or scanlines, and no `//` mark in a header.
 3. Rivets run along the long straight edges, one every 90 px, and none along a short one.
 4. There is rust at the bottom left and the bottom right of each frame, and it holds still.
    The Flat look takes it away.
-5. HP-01 is faint at the bottom right of the main panel and HP-02 at the bottom right of the
-   banner. The ticker has no id. The weld seam stands to the right of the pages, and it
-   crosses no text on any panel of the Large panels list. The ticks stand on the neon line
-   at the foot of the header and do not touch the title or the // mark.
+5. There is no stamped id and no serial text anywhere. The weld seam stands to the right of the
+   pages, and it crosses no text on any panel of the Large panels list. The ticks stand on the
+   neon line at the foot of the header and do not touch the title.
 6. With the screen open, change Style in Dashboard Settings between Cybertron and Minimal. The
-   screen reloads once, and then has the corners of the new style.
+   screen reloads once, because the layout changes, and then has the new style.
 
 To check a layout by hand, look at every panel of the Large panels list with
 `?show=` (tasks, events, tonight, spotlight, sponsor-feature, photo, leadership,

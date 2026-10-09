@@ -35,8 +35,10 @@ clock or anything inside a panel. The back pieces are behind everything. The ove
 exception: they cross the panels, and so cross words, which is why they are small, faint, slow and few.
 In calm motion nothing moves, and the over pieces are not drawn at all.
 
-The zones and the back layer were measured on the standard layout. In the sidebar layout
-(docs/layouts.md) they are not drawn. The header mark and the over layer show in every
+The zones and the back layer were measured on the standard layout of Original. In the sidebar layout
+(docs/layouts.md) they are not drawn. In Cybertron the back layer is drawn and the zones are not, because
+the bolts and the brackets of its plates are where some zones were measured to be empty
+(`styles/cybertron.css`). The header mark and the over layer show in every
 layout, and a pack needs nothing extra for that (`decorationLayers` in `core/layout.js`).
 
 A rule can also add a ticker prefix, a banner line and a corner art. See "Extras on a rule".
@@ -466,7 +468,7 @@ stylesheets and has not been measured on the screen: keep the line short, and lo
 | Layout | Where the line shows | Characters that show, roughly |
 |--------|----------------------|-------------------------------|
 | Standard | the bottom row of the banner, in place of the word DASHBOARD and the bar beside it, level with the school | 20 |
-| Bar (Cybertron and Minimal) | the side column, under the weather. The TEAM plate, the school and the SAMPLE CONTENT label move down while there is a line (docs/layouts.md, "The side column") | 10 |
+| Bar (Minimal) | the side column, under the weather. The TEAM plate, the school and the SAMPLE CONTENT label move down while there is a line (docs/layouts.md, "The side column") | 10 |
 | Sidebar (Neon Prime) | nowhere. The strip has no free line of 44 px, and the date is in a slot 500 px wide | none |
 
 The banner draws it (`panels/banner`, `panels/bar-column`) from `packExtras()`, and sets `data-line` on the
@@ -482,8 +484,8 @@ only two corners of the frames with room that was measured. The other corners ho
 `cornerPlaces` in `core/season.js`. The ornament is drawn after the pack's own pieces in the corner, so it lies over
 the holly, the bell or the web that is already there.
 
-The corners are zones of the front layer, which only the standard layout draws. The sidebar and bar layouts
-have no corner zones, so they draw no corner art.
+The corners are zones of the front layer, which only the standard layout of Original draws. The sidebar and
+bar layouts, and Cybertron, have no corner zones, so they draw no corner art.
 
 The lines draw in once, in about 3 seconds, when the pack appears, and then hold still. The rule is at the end of
 `seasons/motion.css`. It plays the first 35 percent of the `season-draw` keyframes, which end with every line whole, and

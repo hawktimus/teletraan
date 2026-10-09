@@ -523,10 +523,10 @@ Connection.
   only. If no choice is ticked for Polish (a Dashboard Settings page published
   before Polish existed), the screen uses Polished. Style is the look of the whole
   screen. Original is the screen as it is now, in the layout of its theme.
-  Cybertron and Minimal have a banner across the top, a thin side column and one
-  main panel, whatever the theme says, and the screen reloads once when you change
-  to or from one of them, and when you change from one to the other, because their
-  frames have different corners. The team sets the base colors, and the Look page sets the
+  Cybertron has the same layout, drawn in plates of gunmetal and steel, and changing between
+  the two does not reload the screen. Minimal has a banner across the top, a thin side
+  column and one main panel, whatever the theme says, and the screen reloads once when
+  you change to or from it. The team sets the base colors, and the Look page sets the
   rest (docs/layouts.md, "Styles"). To see one first, add `?style=cybertron` or
   `?style=minimal` to the address, or use a Preview button in the menu next to
   Publish, which shows a look for 2 minutes and saves nothing (docs/switch-the-look.md).
@@ -600,7 +600,8 @@ Connection.
   to Kickoff, then to Rollout. Its seconds change right on the second of the
   Mini's clock, so it keeps time with a phone however long the screen has been
   running. With the Cybertron and Minimal styles the same label and dates are in
-  the war clock at one end of the banner, with the label over the date and no IN.
+  the war clock, with no IN: in the countdown's place with Cybertron, and at one end
+  of the banner with Minimal.
 - Alert: turn it on to cover the whole screen with a headline and a message.
   Turn it off to take it down, or set "Take down at" to do it automatically.
 - Panels: which panels appear, in what order and for how long. In Dashboard

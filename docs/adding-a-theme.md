@@ -135,9 +135,9 @@ only colours. docs/layouts.md has the numbers, how the big frame is scaled and
 how to add a layout.
 
 The Style setting in Dashboard Settings can name a layout too, and it wins over the
-theme. Original keeps the layout of the theme. Cybertron and Minimal have the bar
+theme. Original and Cybertron keep the layout of the theme. Minimal has the bar
 layout whatever the theme says, so a theme with the standard layout and one with the
-sidebar layout both get it when one of those styles is on. The theme still gives the
+sidebar layout both get it when that style is on. The theme still gives the
 colors and the seasonal packs lie over it as before. A theme needs nothing for this.
 
 The team is a second source of color. `dashboard/teams.css` gives the theme Hawktimus

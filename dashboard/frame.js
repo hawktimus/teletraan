@@ -36,7 +36,14 @@ let speed = 'normal';
 // another. A part with no line here just appears and stays. The effects are
 // the data-fx rules at the top of frame.css.
 export const sequences = {
+  // The banner has the first four parts only in Cybertron, where it stands on a plate
+  // (core/plate.js, "The frames of the bar layout"): the plate unfolds, its lines are drawn,
+  // and its decoration and bolts come after
   banner: {
+    'body':         ['unfold', 200],
+    'outline':      ['draw', 700],
+    'decor':        ['fade', 1350],
+    'stud':         ['servo', 1300, 50],
     'title':        ['latch-left', 500],
     'team-plate':   ['latch-left', 700],
     'clock':        ['latch-right', 700],
@@ -66,6 +73,12 @@ export const sequences = {
     'scan':          ['scan', 1200],
   },
 
+  // The countdown of Cybertron, the wide war clock (panels/countdown). The clock comes in as
+  // one piece, and none of its parts has a line of its own
+  'countdown-war': {
+    'war':           ['unfold', 300],
+  },
+
   // The sidebar layout's one panel, in place of the banner and the countdown
   // (panels/side). The countdown's parts keep the names and the order they
   // have above, a little later, and the logo's own show runs beside them. The
@@ -90,7 +103,7 @@ export const sequences = {
   // The bar layout's two panels that stay on screen: the banner (panels/bar-banner) and
   // the side column (panels/bar-column). The banner draws its own frame, as the countdown
   // does: the plate unfolds, the lines are drawn, the decoration and the hex bolts come
-  // after, and in Minimal so do the rivets, the rust and the id. The war clock is in the
+  // after, and in Minimal so do the rivets and the rust. The war clock is in the
   // war slot and arrives with it, so it has no parts of its own
   'bar-banner': {
     'body':         ['unfold', 200],
@@ -100,7 +113,6 @@ export const sequences = {
     'decor':        ['fade', 1350],
     'rivets':       ['fade', 1350],
     'wear':         ['fade', 1350],
-    'plate-id':     ['fade', 1400],
     'stud':         ['servo', 1300, 50],
   },
   'bar-column': {

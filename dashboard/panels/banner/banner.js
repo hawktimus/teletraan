@@ -1,17 +1,23 @@
-// The top of the screen: logo, team name, clock, date, weather and school.
+// The top of the screen: logo, team name, clock, date, weather and school. In Cybertron
+// it stands on a plate (frameKind in core/plate.js, with the corners the page's style has).
 
 import * as frame from '../../frame.js';
 import { formatClock, formatDate } from '../../core/time.js';
 import { weatherIcon } from '../../core/weather-icons.js';
 import { logoMarkup, showTeamLogo } from '../../core/logo.js';
 import { nameMarkup } from '../../core/name.js';
-import { teamPlateMarkup } from '../../core/plate.js';
+import { frameKind, plateMarkup, teamPlateMarkup } from '../../core/plate.js';
+import { layoutNow } from '../../core/layout.js';
+import { shapesNow } from '../../core/style.js';
 import { teamShown } from '../../core/teams.js';
 import { packExtras } from '../../core/theme.js';
 
 export function mount(host, content) {
+  const kind = frameKind('banner', layoutNow(), shapesNow());
+
   host.innerHTML = `
     <section class="panel banner" data-sequence="banner">
+      ${kind === 'banner' ? '' : plateMarkup(kind)}
       <div class="logo">${logoMarkup()}</div>
 
       <div class="banner-text">
