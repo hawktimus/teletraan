@@ -115,7 +115,8 @@ all in studio/schemas/settingsLogo.js), of the screen glitch (the Screen
 tab), of night mode (the Night mode tab, all in
 studio/schemas/settingsNight.js) and of the hidden transitions (the Hidden tab, all in
 studio/schemas/settingsHidden.js, docs/hidden-transitions.md) is done this way. So are the switch and the two waits of the Presentations tab, all in
-studio/schemas/settingsPresentations.js. The lists of panels and announcements have their own
+studio/schemas/settingsPresentations.js. So are the mode and the minutes of the Teams tab, both in
+studio/schemas/settingsTeams.js. The lists of panels and announcements have their own
 files, settingsRotation.js and settingsAnnouncements.js. A new field inside one
 of those two lists must also be added to normalizeRotation or
 normalizeAnnouncements in dashboard/core/sanity.js, which copy only the fields

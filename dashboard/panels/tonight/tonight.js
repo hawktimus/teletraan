@@ -4,7 +4,7 @@
 import { rowBarMarkup, cardMarkup } from '../../core/plate.js';
 import { doubleSlash } from '../../core/marks.js';
 import { escapeHtml, hasText } from '../../core/text.js';
-import { isVisible } from '../../core/content.js';
+import { visibleItems } from '../../core/content.js';
 import { defaultThemeSettings } from '../../config.js';
 import { minutesIn } from '../../core/night.js';
 import { canRun, talkEnd } from '../../core/presentation.js';
@@ -18,16 +18,16 @@ const talksHeading = 'Talks today'; // the heading on the card when there are ta
 // The end of the slot, with none of the overrun that the screen allows a speaker
 const slotOnly = { graceMinutes: 0 };
 
-// The plan if there is one for today, otherwise null. A plan with no date
-// is always for today. A date that cannot be read counts as no date, so
-// the plan still shows.
+// The first plan that is showing, is for today and is for the team on the screen, otherwise
+// null. A plan with no date is always for today. A date that cannot be read counts as no
+// date, so the plan still shows. Content with only a plan, and no list of plans, has that one.
 function planFor(content, now = new Date()) {
-  const plan = content.plan;
-  if (!plan || !isVisible(plan, now)) return null;
+  const plans = Array.isArray(content.plans) && content.plans.length > 0 ? content.plans : [content.plan];
 
-  const date = parseLocalDateTime(plan.date);
-  if (date && !sameDay(date, now)) return null;
-  return plan;
+  return visibleItems(plans.filter(Boolean), now).find(plan => {
+    const date = parseLocalDateTime(plan.date);
+    return !date || sameDay(date, now);
+  }) || null;
 }
 
 function rowsOf(plan) {
@@ -44,14 +44,16 @@ function zoneOf(content) {
 // The talks booked for today that are not over, soonest first. Today is the day on
 // the wall clock in the Theme time zone, as it is for events. A talk counts when it
 // would run on the screen (canRun), and none count while Run presentations is off.
+// A talk for the other team is not listed. It still runs at its time, whichever team is on.
 function talksToday(content, now) {
   const settings = content.settings || {};
   if (settings.presentationsEnabled === false) return [];
 
   const zone = zoneOf(content);
   const today = dateIn(zone, now);
-  return (Array.isArray(content.presentations) ? content.presentations : [])
-    .filter(talk => canRun(talk) && dateIn(zone, asDate(talk.start)) === today && now < talkEnd(talk, slotOnly))
+  const booked = (Array.isArray(content.presentations) ? content.presentations : []).filter(canRun);
+  return visibleItems(booked, now)
+    .filter(talk => dateIn(zone, asDate(talk.start)) === today && now < talkEnd(talk, slotOnly))
     .sort((first, second) => asDate(first.start) - asDate(second.start));
 }
 

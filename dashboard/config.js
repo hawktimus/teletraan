@@ -140,8 +140,7 @@ export const limits = {
   graceMinutes: { min: 0, max: 10 },
   // The length of one booked talk, in minutes (the Presentations list in the Studio)
   talkMinutes: { min: 5, max: 30 },
-  // The Teams tab, in minutes. Under a minute the screen would swap teams before anything could be read,
-  // and over half an hour the second team hardly shows in a meeting.
+  // The Teams tab, in minutes: how long each team stays on the screen in Alternate mode
   alternateMinutes: { min: 1, max: 30 },
 };
 
@@ -400,4 +399,30 @@ export const defaultTeam = {
   name: 'HAWKTIMUS PRIME',
   number: '3229',
   school: 'HOLLY SPRINGS HIGH SCHOOL',
+};
+
+// The team the screen shows when the Studio has no Teams, and the colors that a team
+// document with a missing or mistyped color falls back to (core/sanity.js). It is Prime
+// with the colors the screen has always had: teams.css starts at the same seven.
+// The name and number are the ones in defaultTeam, and the Team box in Dashboard Settings
+// changes them. The logo is empty, which means the shared hawk.
+export const primeTeam = {
+  code: 'prime',
+  name: defaultTeam.name,
+  shortName: 'PRIME',
+  number: defaultTeam.number,
+  logo: '',
+  colors: {
+    primary: '#6C18B6',
+    plate: '#3B2A7A',
+    accent: '#FACA2A',
+    neon: '#35F0FF',
+    pink: '#FF2E8C',
+    background: '#09060F',
+    text: '#FFFFFF',
+  },
+  mirror: false,
+  active: true,
+  order: 10,
+  builtIn: true,
 };

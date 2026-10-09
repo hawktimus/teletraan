@@ -108,6 +108,36 @@ export function logoMarkup() {
   return `<div class="drawing"><div class="bob">${plates}<div class="hawk">${hawkMarkup()}</div></div></div>`;
 }
 
+// A team that has a logo of its own shows that picture in the box in place of the hawk. The hawk
+// stays in the box, hidden, so the effects that move it keep the pieces they hold (frame.css hides it
+// while data-team-logo is on). An empty address gives the hawk back. box is the element with class
+// logo, and address is what core/images.js made, or empty.
+const pictures = new WeakMap(); // box -> the img it holds
+
+export function showTeamLogo(box, address) {
+  if (!box) return;
+
+  let picture = pictures.get(box);
+  if (!address) {
+    if (!picture) return;
+
+    picture.remove();
+    pictures.delete(box);
+    delete box.dataset.teamLogo;
+    return;
+  }
+
+  if (!picture) {
+    picture = document.createElement('img');
+    picture.className = 'team-logo';
+    picture.alt = '';
+    box.appendChild(picture);
+    pictures.set(box, picture);
+  }
+  if (picture.getAttribute('src') !== address) picture.setAttribute('src', address);
+  box.dataset.teamLogo = 'on';
+}
+
 // The emblem alone, drawn once as one flat svg on the same 1100 x 884 grid, for
 // the night screen (core/night-screen.js). There is no shadow and no hawk. Every
 // outline comes first, then every plate, then the stripes, so no outline covers

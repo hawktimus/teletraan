@@ -1,0 +1,27 @@
+/* Team colors. core/teams.js sets these seven on the html element from the team on the
+   screen (the Teams list in the Studio). They start here at the Prime values, the same
+   as primeTeam in config.js, so the screen has them before any team is chosen.
+
+   The default theme takes four of its colors from them. With Prime they are the same four
+   it has always had, so the screen looks as it did. The other themes set their own and are
+   not touched, and an overlay still wins because its stylesheet comes later. The plate, the
+   card and the darker shades stay with the theme: the team plate color is a different purple
+   from --plate, and only the new styles read it. */
+
+:root {
+  --team-primary: #6c18b6;
+  --team-plate: #3b2a7a;
+  --team-accent: #faca2a;
+  --team-neon: #35f0ff;
+  --team-pink: #ff2e8c;
+  --team-background: #09060f;
+  --team-text: #ffffff;
+}
+
+:root,
+html.theme-hawktimus {
+  --purple: var(--team-primary);
+  --yellow: var(--team-accent);
+  --ground: var(--team-background);
+  --white: var(--team-text);
+}

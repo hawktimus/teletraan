@@ -660,6 +660,20 @@ svg [data-fx] { transform-box: fill-box; }
   overflow: visible;
 }
 
+/* A team's own logo picture (core/logo.js, showTeamLogo) fills the box, and the hawk
+   is taken out while it shows. */
+.logo .team-logo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.logo[data-team-logo] .drawing {
+  display: none;
+}
+
 /* The outline and the stripes are the frame metal, so they follow data-metal.
    The plates are flat purple. */
 .logo .shadow {

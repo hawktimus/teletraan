@@ -142,6 +142,20 @@ export const photoMaxWidth = 1920;
 // to its card with the browser (see photoFocus), so the same copy fits with
 // or without a caption. Gives back an empty text when there is no usable photo.
 export function screenPhotoUrl(photo) {
+  return fittedUrl(photo, photoMaxWidth);
+}
+
+// The widest a team logo is ever asked for. It is shown in a box about 220 pixels wide, so
+// this is enough to stay sharp on the TV.
+export const logoMaxWidth = 600;
+
+// The address of a team's logo: the part the editor kept, no wider than logoMaxWidth,
+// never enlarged, in a small format. Gives back an empty text when there is no usable picture.
+export function logoUrl(photo) {
+  return fittedUrl(photo, logoMaxWidth);
+}
+
+function fittedUrl(photo, width) {
   const clean = tidyPhoto(photo);
   if (!clean) return '';
 
@@ -149,7 +163,7 @@ export function screenPhotoUrl(photo) {
   const wasCropped = kept.left > 0 || kept.top > 0 || kept.width < clean.width || kept.height < clean.height;
   const rect = wasCropped ? 'rect=' + [kept.left, kept.top, kept.width, kept.height].join(',') + '&' : '';
 
-  return clean.url + '?' + rect + 'w=' + photoMaxWidth + '&fit=max&auto=format';
+  return clean.url + '?' + rect + 'w=' + width + '&fit=max&auto=format';
 }
 
 // Where the hotspot is in the part the editor kept, as { x, y } in percent

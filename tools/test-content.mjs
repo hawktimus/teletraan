@@ -45,7 +45,9 @@ async function loadCopy(name, changeConfig) {
   // the Events panel and the Next event tile draw the merged list, and the Roster panel draws the roster pages, so they are tested too.
   // The Photo and Team Leads panels are here to check that they follow the two size settings.
   // The Up Next panel is here for the rows it draws from the plan and the booked talks.
-  ['events/events.js', 'next-event/next-event.js', 'roster/roster.js', 'leadership/leadership.js', 'photo/photo.js', 'team-leads/team-leads.js', 'tonight/tonight.js'].forEach(file => {
+  // The rest are here to check that each one leaves out the items of the other team (the Teams section).
+  ['events/events.js', 'next-event/next-event.js', 'roster/roster.js', 'leadership/leadership.js', 'photo/photo.js', 'team-leads/team-leads.js', 'tonight/tonight.js',
+    'tasks/tasks.js', 'task-counts/task-counts.js', 'spotlight/spotlight.js', 'sponsor-feature/sponsor-feature.js', 'sponsor-logo/sponsor-logo.js', 'custom/custom.js', 'ticker/ticker.js'].forEach(file => {
     fs.mkdirSync(path.join(root, 'dashboard/panels', path.dirname(file)), { recursive: true });
     fs.copyFileSync(path.join(dashboardFolder, 'panels', file), path.join(root, 'dashboard/panels', file));
   });
@@ -64,6 +66,13 @@ async function loadCopy(name, changeConfig) {
     photoPanel: await import(base + 'panels/photo/photo.js'),
     teamLeadsPanel: await import(base + 'panels/team-leads/team-leads.js'),
     tonightPanel: await import(base + 'panels/tonight/tonight.js'),
+    tasksPanel: await import(base + 'panels/tasks/tasks.js'),
+    taskCountsPanel: await import(base + 'panels/task-counts/task-counts.js'),
+    spotlightPanel: await import(base + 'panels/spotlight/spotlight.js'),
+    sponsorFeaturePanel: await import(base + 'panels/sponsor-feature/sponsor-feature.js'),
+    sponsorLogoPanel: await import(base + 'panels/sponsor-logo/sponsor-logo.js'),
+    customPanel: await import(base + 'panels/custom/custom.js'),
+    tickerPanel: await import(base + 'panels/ticker/ticker.js'),
     leadership: await import(base + 'core/leadership.js'),
     look: await import(base + 'core/look.js'),
     marks: await import(base + 'core/marks.js'),
@@ -76,6 +85,7 @@ async function loadCopy(name, changeConfig) {
     source: await import(base + 'core/source.js'),
     text: await import(base + 'core/text.js'),
     theme: await import(base + 'core/theme.js'),
+    teams: await import(base + 'core/teams.js'),
     turns: await import(base + 'core/turns.js'),
   };
 }
@@ -108,6 +118,7 @@ const { tidyExtraEvent, extraEventsToEvents, mergeEvents, instantIn, rangeLabel,
 const eventsPanel = live.eventsPanel;
 const nextEventPanel = live.nextEventPanel;
 const tonightPanel = live.tonightPanel;
+const teamsModule = live.teams;
 const { makeTurns, makePages } = live.turns;
 const { tidyPhoto, photoUrl, preloadImages, screenPhotoUrl, photoFocus, photoMaxWidth } = live.images;
 const { photosToShow, photoKey, newestFirst, creditText, makePhotoQueue, ownSeconds } = live.photos;
@@ -3166,8 +3177,8 @@ test('the query asks for each photo with its id, when it was made, its words, sw
   ['"id": _id', '"createdAt": _createdAt', 'caption,', 'credit,', 'show,', 'expires,', '"image": image {'].forEach(piece => {
     assert.ok(contentQuery.includes(piece), 'the query does not ask for ' + piece);
   });
-  // the same picture lines as a person's photo, asked for twice
-  assert.equal(contentQuery.split('"url": asset->url').length - 1, 2);
+  // the same picture lines as a person's photo, asked for three times: a person, a photo and a team logo
+  assert.equal(contentQuery.split('"url": asset->url').length - 1, 3);
 });
 
 test('a photo from Studio gets the address the screen asks for: no wider than the screen, a small format', () => {
@@ -6277,6 +6288,424 @@ test('the Leadership, Team Leads and Roster panels draw their portraits at the P
   assert.ok(/\.portrait\s*\{[^}]*margin: 0 auto 8px;/.test(base), 'a smaller portrait is centred in its slot');
   assert.ok(/\.slots\s*\{[^}]*justify-content: center;[^}]*align-content: center;/.test(base), 'the row is centred in the panel');
 }));
+
+// Teams: the team documents, the team each item is for, which team the mode asks for, and the
+// one function that leaves out what is for the other team (core/teams.js, sanity.js, content.js).
+// The tests that put the team on a page are in tools/test-themes.mjs.
+
+const seededTeams = fs.readFileSync(path.join(dashboardFolder, '../docs/seed/teams.ndjson'), 'utf8')
+  .split('\n')
+  .filter(line => line.trim() !== '')
+  .map(line => JSON.parse(line));
+
+// The teams as the screen holds them, from the two starting teams in docs/seed/teams.ndjson
+function startingTeams() {
+  return normalizeContent({ teams: seededTeams }, today).teams;
+}
+
+// Runs a check with a team on the screen, and puts the built-in team back after it. The
+// module is shared by every test in this file, so it has to be left as it was found.
+function onTeamScreen(code, run) {
+  teamsModule.useTeams({ teams: startingTeams(), settings: { teamMode: code, alternateMinutes: 5 } }, today);
+  teamsModule.changeTeamNow();
+  try {
+    run();
+  } finally {
+    teamsModule.useTeams(withDefaults(null), today);
+    teamsModule.changeTeamNow();
+  }
+}
+
+test('the query asks for the teams, and for the team code of every kind of content that has a Team field', () => {
+  assert.ok(contentQuery.includes('"teams": *[_type == "team"] | order(order asc, _createdAt asc) {'));
+  // tasks, sponsors, tips and news, subteams, people, talks, plans, Events Calendar entries and custom panels
+  assert.equal(contentQuery.split('"team": team->code').length - 1, 9);
+
+  ['"tasks"', '"sponsors"', '"tipsAndNews"', '"subteams"', '"people"', '"presentations"', '"plans"', '"extraEvents"', '"customPanels"'].forEach(name => {
+    const start = contentQuery.indexOf(name + ': *[');
+    assert.ok(start !== -1, name);
+    const next = contentQuery.indexOf('\n  "', start + 1);
+    assert.ok(contentQuery.slice(start, next === -1 ? contentQuery.length : next).includes('"team": team->code'), name + ' does not ask for its team code');
+  });
+
+  // a photo is shared by both teams, and nothing on the screen shows a Meeting day
+  const photos = contentQuery.slice(contentQuery.indexOf('"photos": *['), contentQuery.indexOf('"presentations": *['));
+  assert.equal(photos.includes('team'), false);
+  assert.equal(contentQuery.includes('presentationDay'), false);
+});
+
+test('the two starting teams become the teams the screen uses, and the built-in team is the starting Prime', () => {
+  const [prime, nova] = startingTeams();
+
+  assert.deepEqual(prime, {
+    code: 'prime', name: 'HAWKTIMUS PRIME', shortName: 'PRIME', number: '3229', logo: '',
+    colors: { primary: '#6C18B6', plate: '#3B2A7A', accent: '#FACA2A', neon: '#35F0FF', pink: '#FF2E8C', background: '#09060F', text: '#FFFFFF' },
+    mirror: false, active: true, order: 10,
+  });
+  assert.deepEqual(nova, {
+    code: 'nova', name: 'HAWKTIMUS NOVA', shortName: 'NOVA', number: '3230', logo: '',
+    colors: { primary: '#1F7AE0', plate: '#1E3A6E', accent: '#9BF0FF', neon: '#FF2E8C', pink: '#35F0FF', background: '#060D1A', text: '#FFFFFF' },
+    mirror: true, active: true, order: 20,
+  });
+
+  const builtIn = live.config.primeTeam;
+  assert.deepEqual(Object.assign({}, builtIn, { builtIn: undefined }), Object.assign({}, prime, { builtIn: undefined }), 'the team with no documents is the starting Prime');
+  assert.equal(builtIn.builtIn, true);
+  assert.equal(builtIn.name, live.config.defaultTeam.name);
+  assert.equal(builtIn.number, live.config.defaultTeam.number);
+});
+
+test('a team document is cleaned: the code is lowercase, the names are capitals, a bad color is the Prime one, and one with no code is dropped', () => {
+  const teams = normalizeContent({
+    teams: [
+      document('team', 'a', { code: ' Blue ', name: '[Blue team]', shortName: 'blue', number: ' 12 ', colors: { primary: '#0000FF', plate: 'blue', accent: '#12', neon: '', pink: '#ABCDEF', background: 7, text: '#fff' }, order: 5 }),
+      document('team', 'b', { code: 'blue', name: '[Second blue]' }),
+      document('team', 'c', { code: 'No Spaces', name: '[Dropped]' }),
+      document('team', 'd', { name: '[No code]' }),
+      document('team', 'e', { code: 'plain' }),
+      document('team', 'f', { code: 'quiet', name: '[Quiet]', active: false, mirror: 'yes', number: 3232 }),
+      'oops',
+      null,
+    ],
+  }, today).teams;
+
+  assert.deepEqual(teams.map(team => team.code), ['blue', 'plain', 'quiet'], 'in order, the first of a code wins, and a code with a space or none is dropped');
+
+  const [blue, plain, quiet] = teams;
+  assert.equal(blue.name, '[BLUE TEAM]');
+  assert.equal(blue.shortName, 'BLUE');
+  assert.equal(blue.number, '12');
+  assert.deepEqual(blue.colors, { primary: '#0000FF', plate: '#3B2A7A', accent: '#FACA2A', neon: '#35F0FF', pink: '#ABCDEF', background: '#09060F', text: '#FFFFFF' }, 'only #rrggbb is a color');
+  assert.equal(blue.order, 5);
+
+  assert.deepEqual([plain.name, plain.shortName, plain.number, plain.logo, plain.mirror, plain.active, plain.order], ['PLAIN', 'PLAIN', '', '', false, true, 10], 'a team with only a code');
+  assert.deepEqual([quiet.mirror, quiet.active, quiet.number], [false, false, '3232'], 'mirror is on only when it is true');
+});
+
+test('a team logo is a picture address at most 600 pixels wide, and no picture, or one that cannot be used, is the hawk', () => {
+  const withLogo = changes => normalizeContent({ teams: [document('team', 'a', Object.assign({ code: 'blue' }, changes))] }, today).teams[0].logo;
+
+  assert.equal(live.images.logoMaxWidth, 600);
+  assert.equal(withLogo({ logo: photoRecord() }), photoBase + '?w=600&fit=max&auto=format');
+  assert.equal(withLogo({ logo: photoRecord({ crop: { top: 0, bottom: 0, left: 0.1, right: 0.1 } }) }), photoBase + '?rect=80,0,640,600&w=600&fit=max&auto=format');
+  assert.equal(withLogo({}), '');
+  assert.equal(withLogo({ logo: null }), '');
+  assert.equal(withLogo({ logo: photoRecord({ url: 'http://example.com/a.jpg' }) }), '');
+  assert.equal(withLogo({ logo: photoRecord({ width: 0 }) }), '');
+  assert.equal(live.images.screenPhotoUrl(photoRecord()), photoBase + '?w=1920&fit=max&auto=format', 'a photo is still asked for at 1920');
+
+  // the sample file gives an address
+  const sample = normalizeSample({ teams: [{ code: 'blue', logo: ' data/sample/logo.svg ' }] }).teams;
+  assert.equal(sample[0].logo, 'data/sample/logo.svg');
+});
+
+test('the teams come out in order, through the editors\' content and the sample, and a missing list is no teams', () => {
+  const raw = [{ code: 'second', order: 20 }, { code: 'third' }, { code: 'first', order: 10 }];
+
+  assert.deepEqual(normalizeContent({ teams: raw }, today).teams.map(team => team.code), ['first', 'second', 'third']);
+  assert.deepEqual(normalizeSample({ teams: raw }).teams.map(team => team.code), ['first', 'second', 'third']);
+  [undefined, null, 'oops', {}, []].forEach(value => {
+    assert.deepEqual(normalizeContent({ teams: value }, today).teams, []);
+    assert.deepEqual(normalizeSample({ teams: value }).teams, []);
+  });
+  assert.deepEqual(withDefaults(null).teams, []);
+});
+
+// Every kind of content with a Team field, as the query sends it, and as the sample file has it
+const teamItems = {
+  tasks: { title: '[Task]', status: 'in-progress' },
+  sponsors: { name: '[Sponsor]', thankYou: '[Thanks]' },
+  tipsAndNews: { kind: 'tip', text: '[Tip]' },
+  subteams: { name: '[Subteam]', lead: '[Lead]', members: ['[Student]'], spotlight: true, spotlightHeadline: '[Headline]' },
+  people: { name: '[Person]', role: 'Mentor' },
+  presentations: { id: 'presentation-a', name: '[Speaker]', topic: '[Topic]', start: '2026-10-02T19:00:00Z', status: 'scheduled' },
+  plans: { heading: '[Plan]', rows: [] },
+  extraEvents: { title: '[Event]', startDate: '2026-10-09' },
+  customPanels: { title: '[Custom]', blocks: [{ _type: 'headingBlock', text: '[Heading]' }] },
+};
+
+test('a team reference arrives as the team code, and an empty one, a deleted team or anything else is no team at all', () => {
+  Object.keys(teamItems).forEach(list => {
+    const through = team => {
+      const item = Object.assign({}, teamItems[list], team === undefined ? {} : { team: team });
+      const sent = normalizeContent({ [list]: [document('thing', 'x', item)] }, today)[list][0];
+      const sample = normalizeSample({ [list]: [item] })[list][0];
+      return [sent, sample];
+    };
+
+    through('nova').forEach(item => assert.equal(item.team, 'nova', list));
+    through(' Prime ').forEach(item => assert.equal(item.team, 'prime', list + ': the code is lowercase'));
+    [undefined, null, '', '  ', 7, true, [], { _type: 'reference', _ref: 'team-nova' }].forEach(value => {
+      through(value).forEach(item => assert.equal('team' in item, false, list + ' with ' + JSON.stringify(value)));
+    });
+  });
+});
+
+test('the plans that are showing and are for today are kept as a list, the first of them is the plan, and each knows its team', () => {
+  const content = normalizeContent({
+    plans: [
+      document('plan', 'p1', { heading: '[Nova plan]', team: 'nova' }),
+      document('plan', 'p2', { heading: '[Both plan]' }),
+      document('plan', 'p3', { heading: '[Hidden plan]', show: false }),
+      document('plan', 'p4', { heading: '[Other day]', date: '2026-10-09T00:00:00' }),
+    ],
+  }, today);
+
+  assert.deepEqual(content.plans.map(plan => plan.heading), ['[Nova plan]', '[Both plan]']);
+  assert.deepEqual(content.plans.map(plan => plan.team), ['nova', undefined]);
+  assert.equal(content.plan, content.plans[0]);
+  assert.equal(content.plan.rows.length, 0);
+  assert.equal(normalizeContent({}, today).plan, null);
+  assert.deepEqual(normalizeContent({}, today).plans, []);
+
+  // the sample has one plan, or a list
+  assert.deepEqual(normalizeSample({ plan: { heading: '[One]', team: 'prime' } }).plans.map(plan => plan.heading), ['[One]']);
+  assert.equal(normalizeSample({ plans: [{ heading: '[A]' }, { heading: '[B]' }] }).plan.heading, '[A]');
+  assert.deepEqual(normalizeSample({}).plans, []);
+});
+
+const atMinute = (minutes, seconds) => new Date(Date.UTC(2026, 9, 2, 15, minutes, seconds || 0));
+
+test('the mode logic: Prime only and Nova only ask for that team, and anything else, or a missing team, is Prime', () => {
+  const { chooseTeam } = teamsModule;
+  const [prime, nova] = startingTeams();
+
+  [atMinute(0), atMinute(5), atMinute(37, 12)].forEach(now => {
+    assert.equal(chooseTeam(startingTeams(), 'prime', 5, now).code, 'prime');
+    assert.equal(chooseTeam(startingTeams(), 'nova', 5, now).code, 'nova');
+    ['', 'both', 'Nova', undefined, null, 7].forEach(mode => assert.equal(chooseTeam(startingTeams(), mode, 5, now).code, 'prime', String(mode)));
+  });
+
+  // with no Nova there is nothing to show but Prime, and with no teams at all it is the built-in one
+  assert.equal(chooseTeam([prime], 'nova', 5, atMinute(0)).code, 'prime');
+  assert.equal(chooseTeam([nova], 'prime', 5, atMinute(0)), live.config.primeTeam, 'a Prime that is not in the list is the built-in team');
+  [[], undefined, null, 'oops'].forEach(list => {
+    ['prime', 'nova', 'alternate'].forEach(mode => assert.equal(chooseTeam(list, mode, 5, atMinute(0)), live.config.primeTeam, mode));
+  });
+
+  // a team that is switched off is still the one a mode names, because the mode is a choice
+  const off = [prime, Object.assign({}, nova, { active: false })];
+  assert.equal(chooseTeam(off, 'nova', 5, atMinute(0)).code, 'nova');
+});
+
+test('the mode logic: Alternate gives each active team the same number of whole minutes in turn, counted from the clock', () => {
+  const { chooseTeam, activeTeams } = teamsModule;
+  const codeAt = (minutes, now, list) => chooseTeam(list || startingTeams(), 'alternate', minutes, now).code;
+
+  // 5 minutes: the team is the same for the whole slot, and the other one in the next
+  const first = codeAt(5, atMinute(0));
+  const second = first === 'prime' ? 'nova' : 'prime';
+  [atMinute(0), atMinute(2, 30), atMinute(4, 59)].forEach(now => assert.equal(codeAt(5, now), first));
+  [atMinute(5), atMinute(7), atMinute(9, 59)].forEach(now => assert.equal(codeAt(5, now), second));
+  assert.equal(codeAt(5, atMinute(10)), first);
+  assert.equal(codeAt(5, atMinute(15)), second);
+
+  // 1 minute and 30 minutes
+  assert.notEqual(codeAt(1, atMinute(0)), codeAt(1, atMinute(1)));
+  assert.equal(codeAt(1, atMinute(0)), codeAt(1, atMinute(2)));
+  assert.equal(codeAt(30, atMinute(0)), codeAt(30, atMinute(29, 59)));
+  assert.notEqual(codeAt(30, atMinute(29, 59)), codeAt(30, atMinute(30)));
+
+  // the same moment is the same team on any computer: it depends on the instant and nothing else
+  assert.equal(codeAt(5, new Date(atMinute(7).getTime())), codeAt(5, atMinute(7)));
+
+  // minutes that cannot be used are 5
+  [0, -3, NaN, Infinity, '5', null, undefined].forEach(value => {
+    [atMinute(0), atMinute(5), atMinute(11)].forEach(now => assert.equal(codeAt(value, now), codeAt(5, now), String(value)));
+  });
+
+  // a team that is switched off takes no turn, so one team left is that team all the time
+  const [prime, nova] = startingTeams();
+  const novaOff = [prime, Object.assign({}, nova, { active: false })];
+  [atMinute(0), atMinute(5), atMinute(10)].forEach(now => assert.equal(codeAt(5, now, novaOff), 'prime'));
+  assert.deepEqual(activeTeams(novaOff).map(team => team.code), ['prime']);
+  assert.deepEqual(activeTeams([]), []);
+  assert.deepEqual(activeTeams(null), []);
+
+  // three teams take turns in the order of the list
+  const three = [prime, nova, { code: 'third', colors: prime.colors, active: true }];
+  const run = [0, 5, 10, 15, 20, 25].map(minutes => codeAt(5, atMinute(minutes), three));
+  assert.deepEqual(run.slice(0, 3).sort(), ['nova', 'prime', 'third']);
+  assert.deepEqual(run.slice(3), run.slice(0, 3));
+  assert.equal(three.map(team => team.code).indexOf(run[1]), (three.map(team => team.code).indexOf(run[0]) + 1) % 3);
+});
+
+test('one function says whether an item shows for a team: an empty team, or the same team', () => {
+  const { showsForTeam } = teamsModule;
+
+  assert.equal(showsForTeam({ title: '[A]' }, 'nova'), true);
+  assert.equal(showsForTeam({ title: '[A]', team: '' }, 'nova'), true);
+  assert.equal(showsForTeam({ title: '[A]', team: 'nova' }, 'nova'), true);
+  assert.equal(showsForTeam({ title: '[A]', team: 'prime' }, 'nova'), false);
+  assert.equal(showsForTeam({ title: '[A]', team: 'nova' }, 'prime'), false);
+  [null, undefined, 'oops', 7].forEach(item => assert.equal(showsForTeam(item, 'nova'), true, String(item)));
+
+  // with no code it is the team on the screen. A screen that has not chosen one is Prime
+  assert.equal(showsForTeam({ team: 'prime' }), true);
+  assert.equal(showsForTeam({ team: 'nova' }), false);
+  onTeamScreen('nova', () => {
+    assert.equal(showsForTeam({ team: 'prime' }), false);
+    assert.equal(showsForTeam({ team: 'nova' }), true);
+    assert.equal(showsForTeam({}), true);
+  });
+  assert.equal(showsForTeam({ team: 'nova' }), false, 'and the built-in team is back');
+});
+
+test('visibleItems leaves out what is for the other team as well as what is hidden or expired, and keeps the order', () => {
+  const list = [
+    { title: '[1]', team: 'nova' },
+    { title: '[2]' },
+    { title: '[3]', team: 'prime' },
+    { title: '[4]', team: 'prime', show: false },
+    { title: '[5]', team: '', expires: '2000-01-01T00:00' },
+    { title: '[6]', team: 'prime' },
+  ];
+
+  assert.deepEqual(visibleItems(list, today).map(item => item.title), ['[2]', '[3]', '[6]']);
+  onTeamScreen('nova', () => assert.deepEqual(visibleItems(list, today).map(item => item.title), ['[1]', '[2]']));
+  assert.deepEqual(visibleItems(undefined), []);
+});
+
+// What a panel draws for one item that is for the team in the first place, for each kind of content that has a Team
+// field. Each says whether the panel has something to draw, and a case with several panels needs every one to agree.
+// The panels are the real ones, so a panel that took its items some other way, past visibleItems, would fail here.
+const noon = new Date('2026-10-02T15:00:00Z'); // 11:00 in New York
+const teamCases = [
+  { type: 'task', shows: team => {
+    const content = withDefaults({ tasks: [{ title: '[Task]', status: 'in-progress', team: team }] });
+    return [live.tasksPanel.hasContent(content), live.tasksPanel.rowsFor(content, noon).length > 0, live.taskCountsPanel.hasContent(content)];
+  } },
+  { type: 'plan', shows: team => {
+    const plan = { heading: '[Plan]', rows: [], team: team };
+    return [live.tonightPanel.hasContent(withDefaults({ plan: plan })), live.tonightPanel.hasContent(withDefaults({ plan: plan, plans: [plan] }))];
+  } },
+  { type: 'subteam', shows: team => {
+    const content = withDefaults({ subteams: [{ name: '[Subteam]', lead: '[Lead]', members: ['[Student]'], spotlight: true, spotlightHeadline: '[Headline]', team: team }] });
+    return [live.spotlightPanel.hasContent(content), live.teamLeadsPanel.hasContent(content), live.rosterPanel.hasContent(content)];
+  } },
+  { type: 'leadership', shows: team => [live.leadershipPanel.hasContent(withDefaults({ people: [{ name: '[Person]', role: 'Mentor', team: team }] }))] },
+  { type: 'sponsor', shows: team => {
+    const content = withDefaults({ sponsors: [{ name: '[Sponsor]', thankYou: '[Thanks]', team: team }] });
+    return [live.sponsorFeaturePanel.hasContent(content), live.sponsorLogoPanel.hasContent(content), live.tickerPanel.items(content).length > 0];
+  } },
+  { type: 'presentation', shows: team => {
+    const talk = { id: 'presentation-a', name: '[Speaker]', topic: '[Topic]', start: new Date('2026-10-02T19:00:00Z'), minutes: 15, status: 'scheduled', team: team };
+    return [live.tonightPanel.rowsFor(withDefaults({ presentations: [talk] }), noon).length > 0];
+  } },
+  { type: 'customPanel', shows: team => [live.customPanel.hasContent(withDefaults({ customPanels: [{ title: '[Custom]', blocks: [{ type: 'text', text: '[Text]' }], team: team }] }))] },
+  { type: 'tip', shows: team => [live.tickerPanel.items(withDefaults({ tipsAndNews: [{ kind: 'tip', text: '[Tip]', team: team }] })).length > 0] },
+  { type: 'extraEvent', shows: team => {
+    const events = live.events.mergeEvents([], [{ title: '[Event]', startDate: '2099-04-02', team: team }], 'America/New_York', noon);
+    return [events.length > 0, live.eventsPanel.hasContent(withDefaults({ events: events }))];
+  } },
+];
+
+test('every kind of content with a Team field leaves out the items of the other team, in every panel that draws it, and shows an item with no team in both', () => {
+  assert.equal(teamCases.length, 9, 'a case for each kind of content: the Studio has ten Team fields and no panel draws a Meeting day');
+
+  teamCases.forEach(({ type, shows }) => {
+    ['prime', 'nova'].forEach(screen => {
+      onTeamScreen(screen, () => {
+        const other = screen === 'prime' ? 'nova' : 'prime';
+
+        shows(screen).forEach(answer => assert.equal(answer, true, type + ' for ' + screen + ' on the ' + screen + ' screen'));
+        shows('').forEach(answer => assert.equal(answer, true, type + ' for both teams on the ' + screen + ' screen'));
+        shows(undefined).forEach(answer => assert.equal(answer, true, type + ' with no team on the ' + screen + ' screen'));
+        shows(other).forEach(answer => assert.equal(answer, false, type + ' for ' + other + ' on the ' + screen + ' screen'));
+      });
+    });
+  });
+});
+
+test('the Up Next panel shows the first plan that is for the team on the screen, and a talk for the other team is not listed', () => {
+  const content = normalizeContent({
+    plans: [
+      document('plan', 'p1', { heading: '[Nova plan]', team: 'nova', rows: [{ time: '[6:00 PM]', text: '[Nova row]', lead: '' }] }),
+      document('plan', 'p2', { heading: '[Both plan]', rows: [{ time: '[7:00 PM]', text: '[Both row]', lead: '' }] }),
+    ],
+    presentations: [
+      { id: 'presentation-n', name: '[Nova speaker]', topic: '', start: '2026-10-02T19:00:00Z', status: 'scheduled', team: 'nova' },
+      { id: 'presentation-p', name: '[Prime speaker]', topic: '', start: '2026-10-02T20:00:00Z', status: 'scheduled', team: 'prime' },
+    ],
+  }, noon);
+  const lines = () => tonightPanel.rowsFor(content, noon).map(row => row.text);
+
+  assert.deepEqual(lines(), ['[Both row]', '[Prime speaker]']);
+  onTeamScreen('nova', () => assert.deepEqual(lines(), ['[Nova row]', '[Nova speaker]']));
+});
+
+test('a talk still runs at its time whichever team is on the screen: the Up Next list is the only place a team leaves it out', () => {
+  const talk = { id: 'presentation-n', name: '[Speaker]', topic: '', start: new Date('2026-10-02T19:00:00Z'), minutes: 15, status: 'scheduled', team: 'nova' };
+  const due = () => live.presentation.dueTalk([talk], new Date('2026-10-02T19:05:00Z'), { presentationsEnabled: true, graceMinutes: 5 }, new Set());
+
+  ['prime', 'nova'].forEach(screen => onTeamScreen(screen, () => assert.equal(due(), talk, screen)));
+});
+
+test('the shared content shows for both teams: events from BAND, photos, a tip with no team, and the countdown', () => {
+  const band = [{ title: '[Band event]', start: new Date('2026-10-09T22:00:00Z'), end: new Date('2026-10-09T23:00:00Z'), allDay: false, location: '', calendarId: 'team' }];
+  const photos = [{ id: 'ph1', address: 'data/sample/photo-1.svg', focus: { x: 50, y: 50 } }];
+  const content = withDefaults({ photos: photos, tipsAndNews: [{ kind: 'tip', text: '[Tip]' }] });
+
+  ['prime', 'nova'].forEach(screen => onTeamScreen(screen, () => {
+    assert.deepEqual(live.events.mergeEvents(band, [], 'America/New_York', noon).map(event => event.title), ['[Band event]'], screen);
+    assert.equal(live.photos.photosToShow(content, noon).length, 1, screen);
+    assert.equal(live.tickerPanel.items(content).length, 1, screen);
+  }));
+
+  // a rule from Calendar filters has no team, and shows or hides the same for both
+  const rules = [{ name: '[Rule]', action: 'hide', words: ['band'], days: [], calendar: '', fromDate: '', toDate: '' }];
+  ['prime', 'nova'].forEach(screen => onTeamScreen(screen, () => {
+    assert.deepEqual(live.events.mergeEvents(band, [], 'America/New_York', noon, rules), [], screen);
+  }));
+});
+
+test('no panel judges the team itself: only the content code, the events merge and the team module use showsForTeam', () => {
+  const users = javascriptFilesIn(dashboardFolder)
+    .filter(file => /\bshowsForTeam\b/.test(fs.readFileSync(file, 'utf8')))
+    .map(file => path.relative(dashboardFolder, file).split(path.sep).join('/'))
+    .sort();
+
+  assert.deepEqual(users, ['core/content.js', 'core/events.js', 'core/teams.js']);
+});
+
+test('with no team documents the screen is the starting Prime: its colors, its name and number from the Team box, and everything with no team showing', () => {
+  const { useTeams, currentTeam, teamShown, activeTeams, wantedTeam, teamPending } = teamsModule;
+
+  ['prime', 'nova', 'alternate'].forEach(mode => {
+    const content = withDefaults({ settings: { teamMode: mode } });
+    assert.deepEqual(content.teams, []);
+
+    useTeams(content, atMinute(5));
+    teamsModule.changeTeamNow();
+    assert.equal(wantedTeam(), live.config.primeTeam, mode);
+    assert.equal(currentTeam(), live.config.primeTeam, mode);
+    assert.equal(teamPending(), false, mode);
+    assert.deepEqual(teamShown(content), live.config.primeTeam, mode + ': the Team box has the defaults');
+  });
+
+  // the Team box in Dashboard Settings still names the team on the screen
+  const named = withDefaults({ team: { name: '[TEAM NAME]', number: '1234' } });
+  teamsModule.useTeams(named, atMinute(0));
+  assert.equal(teamShown(named).name, '[TEAM NAME]');
+  assert.equal(teamShown(named).number, '1234');
+  assert.equal(teamShown(named).shortName, 'PRIME');
+  assert.equal(teamShown(named).logo, '');
+  assert.deepEqual(teamShown(named).colors, live.config.primeTeam.colors);
+  assert.deepEqual(teamShown(null), live.config.primeTeam, 'a screen with no content yet');
+
+  // and with team documents the team is the document, with the Team box left to the school
+  const withTeams = { teams: startingTeams(), settings: { teamMode: 'nova' }, team: { name: '[TEAM NAME]', number: '1234', school: '[SCHOOL]' } };
+  onTeamScreen('nova', () => {
+    teamsModule.useTeams(withTeams, atMinute(0));
+    assert.equal(teamShown(withTeams).name, 'HAWKTIMUS NOVA');
+    assert.equal(teamShown(withTeams).number, '3230');
+    assert.equal(teamShown(withTeams).shortName, 'NOVA');
+  });
+
+  // a screen with no team documents shows the items of no team, and has none of the other team's
+  assert.equal(activeTeams().length, 1);
+  assert.deepEqual(visibleItems([{ title: '[1]' }, { title: '[2]', team: 'nova' }, { title: '[3]', team: 'prime' }], today).map(item => item.title), ['[1]', '[3]']);
+});
 
 // Run them
 

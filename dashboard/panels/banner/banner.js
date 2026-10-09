@@ -3,9 +3,10 @@
 import * as frame from '../../frame.js';
 import { formatClock, formatDate } from '../../core/time.js';
 import { weatherIcon } from '../../core/weather-icons.js';
-import { logoMarkup } from '../../core/logo.js';
+import { logoMarkup, showTeamLogo } from '../../core/logo.js';
 import { nameMarkup } from '../../core/name.js';
 import { teamPlateMarkup } from '../../core/plate.js';
+import { teamShown } from '../../core/teams.js';
 
 export function mount(host, content) {
   host.innerHTML = `
@@ -80,14 +81,17 @@ function setName(element, name) {
   heading.innerHTML = nameMarkup(name);
 }
 
-// New content: the names, the weather, and whether it is the sample. The
-// badge shows only while it is the sample, and is gone the moment the content
-// is not. Whether Sanity can be reached is not said here but in the
-// connection status text at the bottom right (core/connection.js).
+// New content: the team, the weather, and whether it is the sample. The team is the one
+// on the screen (core/teams.js): its name, number and logo, with the hawk when it has no
+// logo. The school is the same for both teams. The badge shows only while it is the
+// sample, and is gone the moment the content is not. Whether Sanity can be reached is
+// not said here but in the connection status text at the bottom right (core/connection.js).
 export function update(element, content) {
-  setName(element, content.team.name);
-  setText(element, '.team-number', content.team.number);
+  const team = teamShown(content);
+  setName(element, team.name);
+  setText(element, '.team-number', team.number);
   setText(element, '.school', content.team.school);
+  showTeamLogo(element.querySelector('.logo'), team.logo);
 
   const weather = content.weather;
   setText(element, '.temperature', weather ? weather.temperature + '°F' : '--°F');

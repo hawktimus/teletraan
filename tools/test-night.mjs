@@ -433,6 +433,16 @@ test('the emblem is drawn once as one svg with no colour of its own', () => {
   assert.ok(screen.includes("import { emblemMarkup } from './logo.js';"));
 });
 
+test('a team logo fills the logo box and takes the hawk out of the way, and the hawk stays in the box for the effects', () => {
+  const css = read('frame.css');
+  assert.ok(/\.logo \.team-logo \{[^}]*position: absolute;[^}]*width: 100%;[^}]*height: 100%;[^}]*object-fit: contain;[^}]*\}/.test(css));
+  assert.ok(/\.logo\[data-team-logo\] \.drawing \{\s*display: none;\s*\}/.test(css), 'the hawk is hidden, not taken out of the page');
+
+  const code = read('core/logo.js');
+  assert.ok(/export function showTeamLogo\(box, address\)/.test(code));
+  assert.ok(!/innerHTML/.test(code.slice(code.indexOf('export function showTeamLogo'), code.indexOf('export function emblemMarkup'))), 'the markup of the hawk is not rebuilt');
+});
+
 test('the night screen does nothing per frame: no frame timer, only the clock once a second and two events', () => {
   const screen = read('core/night-screen.js');
   const code = screen.split('\n').filter(line => !line.trim().startsWith('//')).join('\n');

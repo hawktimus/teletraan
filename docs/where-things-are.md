@@ -161,7 +161,9 @@ editors can sign in from anywhere.
                               schemas/ has a file for each kind of content. calendarFilter.js is the
                               Calendar filters (docs/calendar-filters.md), presentationDay.js the Meeting
                               days, presentation.js the booked talks and settingsPresentations.js the
-                              Presentations tab of Dashboard Settings (docs/presentations.md)
+                              Presentations tab of Dashboard Settings (docs/presentations.md). team.js is the
+                              Teams list and settingsTeams.js the Teams tab. The Team radio on tasks, sponsors and
+                              the other kinds of content is team-input.js, put on each by teamField in fields.js
                               scripts/ has make-templates.mjs, which writes the CSV templates from the
                               schemas, and import-csv.mjs, which checks filled-in CSVs and makes a file
                               for sanity dataset import (docs/importing-from-csv.md)
@@ -246,7 +248,7 @@ editors can sign in from anywhere.
                               importing-from-csv.md, presentations.md, up-next.md, calendar-filters.md,
                               calendar-links.md and hide-a-repeating-meeting.md.
                               seed/ has content to import into the Studio: places.ndjson, the three
-                              starting places, and extra-events.ndjson, the
+                              starting places, teams.ndjson, the two starting teams, and extra-events.ndjson, the
                               starting Events Calendar entries. content-templates/ has one CSV template for each
                               kind of content (importing-from-csv.md)
 

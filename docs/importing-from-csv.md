@@ -63,9 +63,10 @@ A task points to its subteam by name. The script only accepts a name that is in
 a subteam file in the same folder, so keep subteam.csv with task.csv.
 
 A task can also have a point of contact (`contact`, a first name of up to 12
-characters) and a `location`, which is the name of a place. Both are the last
-two columns of task.csv, and both may be left empty. A task file saved from
-the older template, without these two columns, still imports. The script knows
+characters) and a `location`, which is the name of a place. Both come just
+before the team column at the end of task.csv, and both may be left empty. A
+task file saved from the older template, without these two columns, still
+imports. The script knows
 the three starting places, Classroom, Programming room and Media center,
 without a file (they are in `docs/seed/places.ndjson`), and any place in a
 place.csv in the same folder. It ignores capitals, so `classroom` is fine. Any
@@ -73,6 +74,15 @@ other name is refused, with the row named. It cannot look in Studio, so a place
 someone made there by hand is not known to it: leave the cell empty and pick
 the place in the task in Studio, or add the place to place.csv if it is not in
 Studio yet.
+
+Every template except place.csv ends with a `team` column. It is the code of the
+team the item is for: `prime` or `nova`, capitals ignored. Leave it empty to show
+the item for both teams, which is what happens to anything that was added
+before teams existed. A CSV saved from an older template, without the column,
+still imports. The script knows the two starting teams without a file (they are
+in `docs/seed/teams.ndjson`) and refuses any other code. The teams have to be in
+Studio before the import, so import that file first (studio/README.md, "The
+starting teams").
 
 ### 2. Make the cells plain text
 

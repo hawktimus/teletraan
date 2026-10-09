@@ -1,10 +1,10 @@
 // Talks to Sanity: the two queries, the addresses, and turning what comes back
 // into the content shape in data/sample/content.json. The sample is cleaned the same way.
 
-import { defaultFilter, defaultPerson, defaultSettings, defaultTalk, filterActions, limits, talkStatuses } from '../config.js';
+import { defaultFilter, defaultPerson, defaultSettings, defaultTalk, filterActions, limits, primeTeam, talkStatuses } from '../config.js';
 import { parseLocalDateTime, sameDay } from './time.js';
-import { fixSettingValues, keepInRange, visibleItems, withDefaults } from './content.js';
-import { photoFocus, screenPhotoUrl, tidyPhoto } from './images.js';
+import { fixSettingValues, isVisible, keepInRange, withDefaults } from './content.js';
+import { logoUrl, photoFocus, screenPhotoUrl, tidyPhoto } from './images.js';
 import { classifyFailure } from './connection.js';
 
 // Everything the screen needs, in one request. Lists come back in the order
@@ -33,6 +33,9 @@ import { classifyFailure } from './connection.js';
 // A booked talk is sent the same way, with its id under a plain name. Only
 // published talks come back, so a draft is never on the screen. A talk that is
 // not scheduled stays in the list, and core/presentation.js leaves it out.
+// The Teams come with the rest. Every kind of content that has a Team field is sent
+// with the code of its team, or nothing when it is for both teams. A team that was
+// deleted has no code either. A team's logo is sent like a person's photo.
 export const contentQuery = `{
   "settings": *[_id == "dashboardSettings"][0] {
     ...,
@@ -47,13 +50,15 @@ export const contentQuery = `{
     "subteam": subteam->name,
     "location": location->name,
     "locationShown": location->show != false,
+    "team": team->code,
     "finishedOn": coalesce(finishedOn, _updatedAt)
   },
-  "sponsors": *[_type == "sponsor"] | order(_createdAt asc),
-  "tipsAndNews": *[_type == "tipOrNews"] | order(_createdAt asc),
-  "subteams": *[_type == "subteam"] | order(_createdAt asc),
+  "sponsors": *[_type == "sponsor"] | order(_createdAt asc) { ..., "team": team->code },
+  "tipsAndNews": *[_type == "tipOrNews"] | order(_createdAt asc) { ..., "team": team->code },
+  "subteams": *[_type == "subteam"] | order(_createdAt asc) { ..., "team": team->code },
   "people": *[_type == "person"] | order(_createdAt asc) {
     ...,
+    "team": team->code,
     "photo": photo {
       "url": asset->url,
       "width": asset->metadata.dimensions.width,
@@ -85,12 +90,23 @@ export const contentQuery = `{
     start,
     minutes,
     deckLink,
-    status
+    status,
+    "team": team->code
   },
-  "plans": *[_type == "plan"] | order(date asc, _createdAt asc),
-  "extraEvents": *[_type == "extraEvent" && show != false] | order(startDate asc, _createdAt asc),
+  "plans": *[_type == "plan"] | order(date asc, _createdAt asc) { ..., "team": team->code },
+  "extraEvents": *[_type == "extraEvent" && show != false] | order(startDate asc, _createdAt asc) { ..., "team": team->code },
   "calendarFilters": *[_type == "calendarFilter"] | order(_createdAt asc),
-  "customPanels": *[_type == "customPanel"] | order(_createdAt asc)
+  "customPanels": *[_type == "customPanel"] | order(_createdAt asc) { ..., "team": team->code },
+  "teams": *[_type == "team"] | order(order asc, _createdAt asc) {
+    ...,
+    "logo": logo {
+      "url": asset->url,
+      "width": asset->metadata.dimensions.width,
+      "height": asset->metadata.dimensions.height,
+      crop,
+      hotspot
+    }
+  }
 }`;
 
 // The screen asks this first, to learn whether to show the sample or the
@@ -204,21 +220,27 @@ export async function fetchSourceSettings(sanity) {
 }
 
 // Turns a query result into content. Hidden and expired items stay in the
-// lists; the panels leave them out with visibleItems(). The one exception is
-// plan, where the first plan that is showing and is for today wins.
+// lists; the panels leave them out with visibleItems(), which leaves out the
+// items of the other team as well. The one exception is plan, which is cut down
+// to the plans that are showing and are for today. plans has all of them, and
+// plan is the first, for the code that wants one. The Up Next panel takes the
+// first of plans that is for the team on the screen.
 export function normalizeContent(result, now = new Date()) {
   const data = result || {};
   const settings = normalizeSettings(data.settings);
   const team = normalizeTeam(settings.team);
   delete settings.team;
+  const plans = showingPlans(data.plans, now);
 
   return withDefaults({
     team: team,
+    teams: teamsFrom(data.teams),
     settings: settings,
     theme: data.theme,
     demo: data.demo,
     tasks: itemsFrom(data.tasks).map(normalizeTask),
-    plan: firstShowingPlan(data.plans, now),
+    plan: plans[0] || null,
+    plans: plans,
     sponsors: itemsFrom(data.sponsors),
     tipsAndNews: itemsFrom(data.tipsAndNews),
     subteams: itemsFrom(data.subteams).map(normalizeSubteam),
@@ -235,11 +257,14 @@ export function normalizeContent(result, now = new Date()) {
 // as content from Sanity, so a typing slip in either one is handled alike.
 export function normalizeSample(raw) {
   const data = isRecord(raw) ? raw : {};
+  const plans = itemsFrom(data.plans).map(withRows);
   const content = Object.assign({}, data, {
     team: normalizeTeam(data.team),
+    teams: teamsFrom(data.teams),
     settings: normalizeSettings(data.settings),
-    plan: isRecord(data.plan) ? withRows(cleanObject(data.plan)) : null,
+    plan: isRecord(data.plan) ? withRows(withTeamCode(cleanObject(data.plan))) : plans[0] || null,
   });
+  content.plans = plans.length > 0 ? plans : (content.plan ? [content.plan] : []);
 
   ['tasks', 'sponsors', 'tipsAndNews', 'subteams', 'people', 'extraEvents', 'customPanels'].forEach(name => {
     content[name] = itemsFrom(data[name]);
@@ -307,8 +332,18 @@ function objectsIn(list) {
   return (Array.isArray(list) ? list : []).filter(item => item && typeof item === 'object');
 }
 
+// The team an item is for is the code of its team, or nothing when it is for both. The query
+// sends the code. Anything else, such as the reference object in a copy saved before the
+// query asked for the code, counts as nothing, so the item shows for both teams.
+function withTeamCode(item) {
+  const code = typeof item.team === 'string' ? item.team.trim().toLowerCase() : '';
+  if (code === '') delete item.team;
+  else item.team = code;
+  return item;
+}
+
 function itemsFrom(list) {
-  return sortByOrder(objectsIn(list).map(cleanObject));
+  return sortByOrder(objectsIn(list).map(cleanObject).map(withTeamCode));
 }
 
 // A plan with no date, or a date that cannot be read, is for any day
@@ -322,9 +357,8 @@ function withRows(plan) {
   return plan;
 }
 
-function firstShowingPlan(plans, now) {
-  const plan = visibleItems(itemsFrom(plans), now).find(item => isForToday(item, now));
-  return plan ? withRows(plan) : null;
+function showingPlans(plans, now) {
+  return itemsFrom(plans).filter(item => isVisible(item, now) && isForToday(item, now)).map(withRows);
 }
 
 // A task's contact (a first name) and location (a place's name) are plain text
@@ -423,9 +457,10 @@ function trimmed(value) {
 // is left out when it is empty, and so is a link that is not a Google Slides link
 // (the link is checked as it is typed, with no trimming). start is a Date and
 // minutes is 5 to 30, 15 when it cannot be used. A status that is not one of the
-// four is scheduled. A talk with no id or no start that can be read is dropped,
-// since nothing could find it or say when it runs. A talk that is cancelled, done
-// or skipped stays, and core/presentation.js leaves it out.
+// four is scheduled. A talk is for the team in its team field, and for both when there is
+// none. A talk with no id or no start that can be read is dropped, since nothing could find
+// it or say when it runs. A talk that is cancelled, done or skipped stays, and
+// core/presentation.js leaves it out.
 function normalizeTalk(raw) {
   const start = typeof raw.start === 'string' ? new Date(raw.start) : null;
   if (typeof raw.id !== 'string' || raw.id === '' || !start || isNaN(start.getTime())) return null;
@@ -441,6 +476,9 @@ function normalizeTalk(raw) {
   if (typeof raw.deckLink === 'string' && deckLinkPattern.test(raw.deckLink)) talk.deckLink = raw.deckLink;
 
   talk.status = talkStatuses.includes(raw.status) ? raw.status : defaultTalk.status;
+
+  const team = trimmed(raw.team).toLowerCase();
+  if (team !== '') talk.team = team;
   return talk;
 }
 
@@ -485,6 +523,54 @@ function normalizeFilter(raw) {
 
 function filtersFrom(list) {
   return objectsIn(list).map(normalizeFilter).filter(rule => rule !== null);
+}
+
+const hexColor = /^#[0-9A-Fa-f]{6}$/;
+const teamCode = /^[a-z0-9]+$/;
+
+// A team document from Studio becomes { code, name, shortName, number, logo, colors, mirror,
+// active, order }. The code is lowercase letters and digits, and it is what the items point to,
+// so a team without a usable one is dropped. The names are capitals, the way the team name
+// has always been written in the banner, and a missing one is the other, or the code. The
+// logo is the address of the picture at the width the screen needs (core/images.js), and
+// empty when there is none or it cannot be used, which means the shared hawk. A sample file
+// may give the logo as an address. A color that is not # and six hex digits is the Prime one.
+// The mirror is off unless it is on, and the team is active unless it is switched off.
+function normalizeTeamDocument(raw) {
+  const code = trimmed(raw.code).toLowerCase();
+  if (!teamCode.test(code)) return null;
+
+  const shortName = trimmed(raw.shortName).toUpperCase();
+  const name = trimmed(raw.name).toUpperCase();
+  const colors = {};
+  Object.keys(primeTeam.colors).forEach(color => {
+    const value = isRecord(raw.colors) ? trimmed(raw.colors[color]) : '';
+    colors[color] = hexColor.test(value) ? value : primeTeam.colors[color];
+  });
+
+  return {
+    code: code,
+    name: name || shortName || code.toUpperCase(),
+    shortName: shortName || name || code.toUpperCase(),
+    number: typeof raw.number === 'number' ? String(raw.number) : trimmed(raw.number),
+    logo: typeof raw.logo === 'string' ? raw.logo.trim() : logoUrl(raw.logo),
+    colors: colors,
+    mirror: raw.mirror === true,
+    active: raw.active !== false,
+    order: typeof raw.order === 'number' && isFinite(raw.order) ? raw.order : primeTeam.order,
+  };
+}
+
+// The first team of a code is the one that counts. The list is in order.
+function teamsFrom(list) {
+  const seen = [];
+
+  return itemsFrom(list).map(normalizeTeamDocument).filter(team => {
+    if (team === null || seen.indexOf(team.code) !== -1) return false;
+
+    seen.push(team.code);
+    return true;
+  });
 }
 
 function normalizeTeam(team) {
@@ -564,7 +650,7 @@ function normalizeAnnouncements(list) {
 
 function customPanelsFrom(list) {
   const panels = objectsIn(list).map(panel => {
-    const result = cleanObject(panel);
+    const result = withTeamCode(cleanObject(panel));
     result.blocks = objectsIn(panel.blocks).filter(block => block._type).map(normalizeBlock);
     return result;
   });

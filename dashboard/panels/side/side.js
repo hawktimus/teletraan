@@ -12,10 +12,11 @@
 import * as frame from '../../frame.js';
 import { formatClock, formatDate } from '../../core/time.js';
 import { weatherIcon } from '../../core/weather-icons.js';
-import { logoMarkup } from '../../core/logo.js';
+import { logoMarkup, showTeamLogo } from '../../core/logo.js';
 import { nameMarkup } from '../../core/name.js';
 import { teamPlateMarkup } from '../../core/plate.js';
 import { countdownParts, startCountdown, updateCountdown } from '../../core/countdown.js';
+import { teamShown } from '../../core/teams.js';
 
 // Sizes that the stylesheet repeats. Change them together.
 const TEAM_PLATE_WIDTH = 384; // .side-team in side.css: the whole column
@@ -136,15 +137,18 @@ function setName(element, name) {
   heading.innerHTML = nameMarkup(name);
 }
 
-// New content: the names, the weather, the countdown's dates, and whether it is
-// the sample. The label shows only while it is the sample, and is gone the
-// moment the content is not. The weather is dashes until there is a reading.
-// Whether Sanity can be reached is not said here but in the connection status
-// text at the bottom right (core/connection.js).
+// New content: the team, the weather, the countdown's dates, and whether it is
+// the sample. The team is the one on the screen (core/teams.js): its name, number
+// and logo, with the hawk when it has no logo. The label shows only while it is the
+// sample, and is gone the moment the content is not. The weather is dashes until
+// there is a reading. Whether Sanity can be reached is not said here but in the
+// connection status text at the bottom right (core/connection.js).
 export function update(element, content) {
-  setName(element, content.team.name);
-  setText(element, '.team-number', content.team.number);
+  const team = teamShown(content);
+  setName(element, team.name);
+  setText(element, '.team-number', team.number);
   setText(element, '.school-text', content.team.school);
+  showTeamLogo(element.querySelector('.side-logo'), team.logo);
 
   const weather = content.weather;
   setText(element, '.temperature', weather ? weather.temperature + '°F' : '--°F');

@@ -14,7 +14,7 @@ For adjusting the content that gets displayed, Sanity will be used.
 
 Almost everything on the screen is typed into the Studio, which is the editing page for the dashboard. Open it at [Studio address] and sign in.
 
-The list on the left is what you can change: Tasks, Up Next, Presentations, Events Calendar, Calendar filters, Subteams, Leadership, Sponsors, Photos, Tips and News, Custom Panels, Dashboard Settings, Theme, Places, and Demo. Click the one you want, change it, and press **Publish**. Nothing shows on the TV until it is published, and it gets there within a few seconds.
+The list on the left is what you can change: Tasks, Up Next, Presentations, Events Calendar, Calendar filters, Subteams, Leadership, Teams, Sponsors, Photos, Tips and News, Custom Panels, Dashboard Settings, Theme, Places, and Demo. Click the one you want, change it, and press **Publish**. Nothing shows on the TV until it is published, and it gets there within a few seconds.
 
 - Every item has a **Show on screen** switch and an optional **Hide after** date, so things come down on their own.
 - Every field says how many characters fit on the screen. Studio will not let you publish text that is too long.

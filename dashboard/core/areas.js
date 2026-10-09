@@ -32,10 +32,11 @@ import * as frame from '../frame.js';
 import { areaMarkup } from './plate.js';
 import { hostFor, placeWholePanel } from './panels.js';
 import { changeThemeNow } from './theme-apply.js';
+import { changeTeamNow } from './teams.js';
 import { hasRegion, layoutNow } from './layout.js';
 
 const areaRegions = ['grid1', 'grid2', 'ticker'];
-const themeRegion = 'grid1'; // a new theme goes on when this region's frame is apart
+const themeRegion = 'grid1'; // a new theme and a new team go on when this region's frame is apart
 const hiddenRegion = 'grid1'; // a hidden transition may replace a page change of this region
 const areaOf = {};  // region -> its area element, while it exists
 const showing = {}; // region -> the page on screen there, as buildPage() made it
@@ -105,6 +106,7 @@ function swapUnseen(region, next) {
   host.innerHTML = '';
   host.appendChild(next.element);
   if (region === themeRegion) changeThemeNow();
+  if (region === themeRegion) changeTeamNow();
 }
 
 // Moves a region from its page to the next one. next is what buildPage()
@@ -157,6 +159,7 @@ export async function changePage(region, next) {
     // theme goes on (core/theme-apply.js)
     if (change.finish) area.dataset.metal = change.finish;
     if (region === themeRegion) changeThemeNow();
+    if (region === themeRegion) changeTeamNow();
   } else if (old) {
     // There is no next page, so the frame goes too
     await frame.retire(area);

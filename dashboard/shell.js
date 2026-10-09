@@ -40,6 +40,7 @@ import { checkTheme, holdLooksFor, showThemeNow, startThemes } from './core/them
 import { holdForLayout, startLayout } from './core/layout-apply.js';
 import { decorationLayers, hasKit, layoutNow } from './core/layout.js';
 import { loadPanel, mountPanel, updatePanel } from './core/panels.js';
+import { changeTeamNow, onTeamChange, useTeams } from './core/teams.js';
 import { showPagesNow, startRotation, startTicker, startTogether } from './core/schedule.js';
 import { startTakeovers, runAnnouncement, takeoverRunning } from './core/takeover.js';
 
@@ -60,8 +61,14 @@ let extrasStarted = false; // the events are being read, so a change of source h
 let calendarsReadAt = null; // when every calendar file was last read well, for the connection status text
 let deviceText = []; // the Mini's name and ssh line, read only while Sanity cannot be reached
 let decorationsUsed = false; // core/season.js has been asked for a pack, so it has to be asked again when the pack goes
+let choosingTeam = false; // rebuild() is choosing the team, so a change of team that it finds does not start another rebuild
 
 window.teletraanStarted = true; // index.html reloads the page if this never happens
+
+// The banner, the sidebar and the events follow a change of team
+onTeamChange(() => {
+  if (content && !choosingTeam) rebuild();
+});
 run();
 
 async function run() {
@@ -145,12 +152,16 @@ async function run() {
 
       // The Run presentation test button in the Studio. After the talk screen, which it starts the sample talk on
       startOptional('./core/presentation-test-run.js', module => module.startPresentationTestRunner(getContent));
+
+      // The team on the screen, which in Alternate mode changes with the clock (core/teams.js)
+      startOptional('./core/team-run.js', module => module.startTeams(getContent));
     }
 
     if (!early) {
       const first = await loading;
       setBase(first.content, first.status);
       showThemeNow(); // the first real content, so its theme goes on at once, not at a page change
+      changeTeamNow(); // and its team
     }
 
     await startExtras();
@@ -200,8 +211,21 @@ function mergedEvents() {
   }
 }
 
+// The team that the Teams settings and the clock ask for. A problem here leaves the team that is on the screen.
+function chooseTeam() {
+  choosingTeam = true;
+  try {
+    useTeams(content, new Date());
+  } catch (error) {
+    console.error('Could not choose the team', error);
+  } finally {
+    choosingTeam = false;
+  }
+}
+
 function rebuild() {
   content = Object.assign({}, base, extras, { status: status });
+  chooseTeam(); // before the events are merged, because an Events Calendar entry for the other team is left out
   content.events = mergedEvents();
   if (!params.has('motion')) frame.setMotion(content.settings.motion); // so a change in Dashboard Settings shows at once
   if (!params.has('speed')) frame.setSpeed(content.settings.speed);

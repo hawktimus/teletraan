@@ -5,6 +5,7 @@ import * as frame from '../../frame.js';
 import { frameMarkup, rowBarMarkup } from '../../core/plate.js';
 import { escapeHtml } from '../../core/text.js';
 import { logoMarkup } from '../../core/logo.js';
+import { teamShown } from '../../core/teams.js';
 
 const fallback = { text: 'WHAT TIME IS IT?', phase: 'title' };
 
@@ -78,6 +79,8 @@ export function mount(host, content) {
 
   const logo = withLogo ? `<div class="logo" data-part="logo">${logoMarkup()}</div>` : '';
 
+  const team = teamShown(content);
+
   host.innerHTML = `
     <section class="panel announcement ${info.phase}" data-sequence="announce">
       ${frameMarkup()}
@@ -89,7 +92,7 @@ export function mount(host, content) {
 
       ${logo}
       <div class="words size-${size}">${words}</div>
-      <div class="caption" data-part="caption">${escapeHtml(content.team.name)} · TEAM ${escapeHtml(content.team.number)}</div>
+      <div class="caption" data-part="caption">${escapeHtml(team.name)} · TEAM ${escapeHtml(team.number)}</div>
     </section>`;
 
   const flyer = host.querySelector('.logo');

@@ -22,6 +22,7 @@
 import * as frame from '../frame.js';
 import { defaultTeam, nightStyles } from '../config.js';
 import { emblemMarkup } from './logo.js';
+import { teamShown } from './teams.js';
 import { cornerWindowMs, makeCornerDetector, nextPair, nightPlan, nightWanted } from './night.js';
 import { takeoverRunning, watchTakeovers } from './takeover.js';
 
@@ -106,7 +107,7 @@ function fadeTime() {
 // Puts the settings on the layer, and starts it if it is not up
 function show(content) {
   const settings = content.settings;
-  drawSettings(settings, content.team);
+  drawSettings(settings, teamShown(content));
 
   if (!shown) {
     shown = true;

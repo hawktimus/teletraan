@@ -24,13 +24,14 @@ fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n'
 ['config.js', 'frame.js', 'themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
-['theme.js', 'theme-apply.js', 'transitions.js', 'tick.js'].forEach(file => {
+['theme.js', 'theme-apply.js', 'teams.js', 'transitions.js', 'tick.js'].forEach(file => {
   fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(workFolder, 'dashboard/core', file));
 });
 
 const base = pathToFileURL(path.join(workFolder, 'dashboard')).href + '/';
 const config = await import(base + 'config.js');
 const { resolveTheme, tidyTheme, ruleCovers, dateIn, isTimeZone } = await import(base + 'core/theme.js');
+const { teamProperties } = await import(base + 'core/teams.js');
 const { themes } = await import(base + 'themes/registry.js');
 const { overlays } = await import(base + 'themes/overlays/registry.js');
 
@@ -898,6 +899,345 @@ kitMistakes.forEach((entry, place) => {
 test('a comment may say filter, shadow or keyframes, and the kit check does not mind', () => {
   const run = greenCheckAfter('kit-comment', kitFile, before => '/* no filter, blur, glow, shadow or blend mode, and no @keyframes outside this file */\n' + before);
   assert.ok(!run.failed, run.text);
+});
+
+// The team on the page (dashboard/core/teams.js, with a fake page): the seven colors and the mirror
+// class, and when a different team goes on. The mode logic and the filter are in tools/test-content.mjs.
+
+const seededTeams = fs.readFileSync(path.join(dashboardFolder, '../docs/seed/teams.ndjson'), 'utf8')
+  .split('\n')
+  .filter(line => line.trim() !== '')
+  .map(line => JSON.parse(line));
+const seededPrime = seededTeams[0];
+const seededNova = seededTeams[1];
+const minute = 60 * 1000;
+const noon = Date.UTC(2026, 9, 2, 15, 0, 0); // a moment on a 5 minute boundary
+
+// Just enough of the html element for teams.js: custom properties and a class list
+function makeRoot() {
+  const properties = {};
+  return {
+    properties: properties,
+    style: { setProperty: (name, value) => { properties[name] = value; } },
+    classList: makeClassList(),
+  };
+}
+
+// The seven properties as a team has them, in the order of the list
+function propertiesOf(team) {
+  return {
+    '--team-primary': team.colors.primary,
+    '--team-plate': team.colors.plate,
+    '--team-accent': team.colors.accent,
+    '--team-neon': team.colors.neon,
+    '--team-pink': team.colors.pink,
+    '--team-background': team.colors.background,
+    '--team-text': team.colors.text,
+  };
+}
+
+// The Teams settings and the team list, as the content has them. teams.js reads nothing else.
+function teamContent(mode, minutes, teams) {
+  return { teams: teams || seededTeams, settings: { teamMode: mode, alternateMinutes: minutes || 5 } };
+}
+
+// A fresh teams.js with its own fake page. Errors that it logs are collected.
+async function onTeamPage(run) {
+  const world = { root: makeRoot(), logged: [], told: 0 };
+  const realError = console.error;
+
+  globalThis.document = { documentElement: world.root };
+  console.error = (...parts) => world.logged.push(parts.join(' '));
+  try {
+    instance += 1;
+    world.teams = await import(base + 'core/teams.js?test=' + instance);
+    world.teams.onTeamChange(() => { world.told += 1; });
+    world.classes = () => world.root.classList.text();
+    await run(world);
+  } finally {
+    console.error = realError;
+    delete globalThis.document;
+  }
+}
+
+test('the screen starts on the team the settings ask for, at once: the seven colors are on the html element, and only Nova has the mirror class', async () => {
+  const names = ['--team-primary', '--team-plate', '--team-accent', '--team-neon', '--team-pink', '--team-background', '--team-text'];
+
+  await onTeamPage(async world => {
+    assert.deepEqual(Object.keys(world.teams.colorProperties).map(name => world.teams.colorProperties[name]), names);
+    world.teams.useTeams(teamContent('prime'), new Date(noon));
+
+    assert.deepEqual(world.root.properties, {
+      '--team-primary': '#6C18B6', '--team-plate': '#3B2A7A', '--team-accent': '#FACA2A', '--team-neon': '#35F0FF',
+      '--team-pink': '#FF2E8C', '--team-background': '#09060F', '--team-text': '#FFFFFF',
+    });
+    assert.equal(world.classes(), '');
+    assert.equal(world.teams.mirrorClass, 'mirrored');
+  });
+
+  await onTeamPage(async world => {
+    world.teams.useTeams(teamContent('nova'), new Date(noon));
+
+    assert.deepEqual(world.root.properties, {
+      '--team-primary': '#1F7AE0', '--team-plate': '#1E3A6E', '--team-accent': '#9BF0FF', '--team-neon': '#FF2E8C',
+      '--team-pink': '#35F0FF', '--team-background': '#060D1A', '--team-text': '#FFFFFF',
+    });
+    assert.equal(world.classes(), 'mirrored');
+  });
+});
+
+test('the properties of a team are its seven colors, whatever team it is, and the built-in team has the starting Prime ones', () => {
+  [seededPrime, seededNova].forEach(team => assert.deepEqual(teamProperties(team), propertiesOf(team)));
+  assert.deepEqual(teamProperties(config.primeTeam), propertiesOf(seededPrime));
+  assert.equal(config.primeTeam.mirror, seededPrime.mirror);
+});
+
+test('with no team documents the page gets the starting Prime colors and no mirror', async () => {
+  await onTeamPage(async world => {
+    world.teams.useTeams({ settings: { teamMode: 'nova' } }, new Date(noon));
+
+    assert.deepEqual(world.root.properties, propertiesOf(seededPrime));
+    assert.equal(world.classes(), '');
+    assert.equal(world.teams.currentTeam(), config.primeTeam);
+  });
+});
+
+test('Alternate keeps the team for its minutes, then asks for the other one, and the page changes only when the large frame is apart, all at once', async () => {
+  await onTeamPage(async world => {
+    const { useTeams, changeTeamNow, currentTeam, wantedTeam, teamPending, showsForTeam } = world.teams;
+    const content = teamContent('alternate', 5);
+
+    useTeams(content, new Date(noon));
+    const first = currentTeam();
+    const second = seededTeams.filter(team => team.code !== first.code)[0];
+    const firstLook = Object.assign({}, world.root.properties);
+    const firstClasses = world.classes();
+    const toldAtStart = world.told;
+    assert.deepEqual(firstLook, propertiesOf(first), 'the first team is on at once');
+
+    // the same slot: nothing is asked for, nothing waits, nothing is told
+    [1, 2, 4].forEach(minutes => {
+      useTeams(content, new Date(noon + minutes * minute + 59000));
+      assert.equal(wantedTeam().code, first.code);
+      assert.equal(teamPending(), false);
+    });
+    assert.equal(world.told, toldAtStart);
+
+    // the next slot: the other team is wanted, so the items follow, and the page and the banner do not
+    useTeams(content, new Date(noon + 5 * minute));
+    assert.equal(wantedTeam().code, second.code);
+    assert.equal(teamPending(), true);
+    assert.equal(currentTeam().code, first.code, 'the page still shows the first team');
+    assert.deepEqual(world.root.properties, firstLook, 'no color has changed');
+    assert.equal(world.classes(), firstClasses, 'the mirror has not changed');
+    assert.equal(showsForTeam({ team: second.code }), true, 'the pages built from now on are the second team\'s');
+    assert.equal(showsForTeam({ team: first.code }), false);
+    assert.equal(world.told, toldAtStart + 1, 'the banner and the events are told that a team is wanted');
+
+    // asking again, a second later and later, changes nothing while the frame is together
+    useTeams(content, new Date(noon + 5 * minute + 1000));
+    useTeams(content, new Date(noon + 5 * minute + 30000));
+    assert.deepEqual(world.root.properties, firstLook);
+    assert.equal(world.told, toldAtStart + 1);
+
+    // the frame is apart: everything changes in this one call, and nothing is left behind
+    changeTeamNow();
+    assert.equal(currentTeam().code, second.code);
+    assert.equal(teamPending(), false);
+    assert.deepEqual(world.root.properties, propertiesOf(second));
+    assert.equal(world.classes(), second.mirror ? 'mirrored' : '');
+    assert.equal(world.told, toldAtStart + 2);
+
+    // and when nothing is waiting a page change changes nothing
+    changeTeamNow();
+    assert.equal(world.told, toldAtStart + 2);
+    assert.deepEqual(world.root.properties, propertiesOf(second));
+
+    // back to the first, a slot later
+    useTeams(content, new Date(noon + 10 * minute));
+    changeTeamNow();
+    assert.equal(currentTeam().code, first.code);
+    assert.deepEqual(world.root.properties, firstLook);
+    assert.equal(world.classes(), firstClasses);
+    assert.equal(world.logged.length, 0);
+  });
+});
+
+test('every alternateMinutes the team that is wanted changes, in whole turns counted from the clock', async () => {
+  await onTeamPage(async world => {
+    const { useTeams, wantedTeam } = world.teams;
+    const content = teamContent('alternate', 3);
+
+    // a look every 20 seconds for 9 minutes: three turns of 9 looks each
+    const wanted = [];
+    for (let seconds = 0; seconds < 9 * 60; seconds += 20) {
+      useTeams(content, new Date(noon + seconds * 1000));
+      wanted.push(wantedTeam().code);
+    }
+
+    const first = wanted[0];
+    const second = seededTeams.filter(team => team.code !== first)[0].code;
+    assert.deepEqual(wanted, [].concat(Array(9).fill(first), Array(9).fill(second), Array(9).fill(first)));
+  });
+});
+
+test('a change that no page change comes for goes on a minute after it was asked for, and not before', async () => {
+  await onTeamPage(async world => {
+    const { useTeams, currentTeam } = world.teams;
+    const content = teamContent('alternate', 5);
+
+    useTeams(content, new Date(noon));
+    const first = currentTeam().code;
+    useTeams(content, new Date(noon + 5 * minute));
+    useTeams(content, new Date(noon + 5 * minute + 59000));
+    assert.equal(currentTeam().code, first, '59 seconds is not yet a minute');
+    useTeams(content, new Date(noon + 5 * minute + 60000));
+    assert.notEqual(currentTeam().code, first, 'a minute with no page change');
+    assert.deepEqual(world.root.properties, propertiesOf(currentTeam()));
+    assert.equal(world.told, 3, 'told when the first team went on, when the other was wanted, and when the page had it');
+  });
+});
+
+test('a team that is asked for and then not is never put on, and an edit to the team on the screen goes on at once', async () => {
+  await onTeamPage(async world => {
+    const { useTeams, currentTeam, teamPending, changeTeamNow } = world.teams;
+
+    useTeams(teamContent('prime'), new Date(noon));
+    useTeams(teamContent('nova'), new Date(noon + 1000));
+    assert.equal(teamPending(), true);
+    useTeams(teamContent('prime'), new Date(noon + 2000)); // the editors changed their minds
+    assert.equal(teamPending(), false);
+    changeTeamNow();
+    assert.deepEqual(world.root.properties, propertiesOf(seededPrime));
+    assert.equal(world.classes(), '');
+
+    // a new color for the team that is showing goes on now, and a new color for the other team waits
+    const edited = JSON.parse(JSON.stringify(seededTeams));
+    edited[0].colors.accent = '#112233';
+    useTeams(teamContent('prime', 5, edited), new Date(noon + 3000));
+    assert.equal(world.root.properties['--team-accent'], '#112233');
+    assert.equal(currentTeam().colors.accent, '#112233');
+
+    edited[1].colors.accent = '#445566';
+    useTeams(teamContent('prime', 5, edited), new Date(noon + 4000));
+    assert.equal(world.root.properties['--team-accent'], '#112233');
+    useTeams(teamContent('nova', 5, edited), new Date(noon + 5000));
+    changeTeamNow();
+    assert.equal(world.root.properties['--team-accent'], '#445566');
+  });
+});
+
+test('a problem putting the team on the page never stops the page change that asked for it', async () => {
+  await onTeamPage(async world => {
+    world.teams.useTeams(teamContent('prime'), new Date(noon));
+    world.teams.useTeams(teamContent('nova'), new Date(noon + 1000));
+
+    world.root.style.setProperty = () => { throw new Error('no page'); };
+    world.teams.changeTeamNow();
+    assert.equal(world.logged.length, 1);
+    assert.ok(/Could not change the team/.test(world.logged[0]));
+    assert.equal(world.teams.teamPending(), true, 'it will try again at the next page change');
+  });
+
+  // and one that follows the team, such as the banner, cannot stop the others being told
+  await onTeamPage(async world => {
+    let reached = 0;
+    world.teams.onTeamChange(() => { throw new Error('banner'); });
+    world.teams.onTeamChange(() => { reached += 1; });
+    world.teams.useTeams(teamContent('prime'), new Date(noon));
+    assert.equal(reached, 1);
+    assert.equal(world.logged.length, 1);
+  });
+});
+
+test('the page calls changeTeamNow in the same two moments as it calls changeThemeNow, and the screen runs the team once a second', () => {
+  const areas = fs.readFileSync(path.join(dashboardFolder, 'core/areas.js'), 'utf8');
+  assert.ok(areas.includes("import { changeTeamNow } from './teams.js';"));
+  assert.ok(/await frame\.leave\(area, change\);(?:\n[^\n]*){0,5}\n\s*if \(region === themeRegion\) changeThemeNow\(\);\n\s*if \(region === themeRegion\) changeTeamNow\(\);/.test(areas), 'after the old page has left, beside the theme');
+  assert.ok(/host\.appendChild\(next\.element\);\n\s*if \(region === themeRegion\) changeThemeNow\(\);\n\s*if \(region === themeRegion\) changeTeamNow\(\);/.test(areas), 'in the moment a hidden transition has the screen apart, beside the theme');
+  assert.equal(areas.split('changeTeamNow()').length - 1, 2);
+
+  const shell = fs.readFileSync(path.join(dashboardFolder, 'shell.js'), 'utf8');
+  assert.ok(shell.includes("import { changeTeamNow, onTeamChange, useTeams } from './core/teams.js';"));
+  assert.ok(/showThemeNow\(\);[^\n]*\n\s*changeTeamNow\(\);/.test(shell), 'the first real content has its team on at once, as it has its theme');
+  assert.ok(shell.indexOf('chooseTeam(); //') !== -1 && shell.indexOf('chooseTeam(); //') < shell.indexOf('content.events = mergedEvents();'), 'the team is chosen before the events are merged');
+  assert.ok(/onTeamChange\(\(\) => \{\s*if \(content && !choosingTeam\) rebuild\(\);\s*\}\);/.test(shell), 'a change of team redraws the banner, and does not start a second redraw from inside one');
+  assert.ok(shell.includes("startOptional('./core/team-run.js', module => module.startTeams(getContent));"));
+
+  const run = fs.readFileSync(path.join(dashboardFolder, 'core/team-run.js'), 'utf8');
+  assert.ok(run.includes('frame.onSecond(look);'));
+  assert.ok(run.includes("moveOn(['grid1', 'grid2', 'ticker']);"), 'when the wanted team changes the three areas move on, so their next pages are built for it');
+
+  const teams = fs.readFileSync(path.join(dashboardFolder, 'core/teams.js'), 'utf8');
+  ['animate(', 'transition', 'requestAnimationFrame', 'keyframes', 'setTimeout', 'setInterval'].forEach(word => assert.ok(!teams.includes(word), 'teams.js should not animate or keep time: ' + word));
+});
+
+// The colors (dashboard/teams.css)
+
+const teamsCss = fs.readFileSync(path.join(dashboardFolder, 'teams.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+
+function blocksOf(text) {
+  const blocks = [];
+  text.replace(/([^{}]+)\{([^{}]*)\}/g, (all, list, body) => {
+    const declarations = {};
+    body.split(';').map(item => item.trim()).filter(Boolean).forEach(item => {
+      declarations[item.slice(0, item.indexOf(':')).trim()] = item.slice(item.indexOf(':') + 1).trim();
+    });
+    blocks.push({ selectors: list.split(',').map(selector => selector.trim()), declarations: declarations });
+    return all;
+  });
+  return blocks;
+}
+
+test('teams.css starts the seven team colors at the Prime ones, and has no other rule than the four the default theme follows', () => {
+  const blocks = blocksOf(teamsCss);
+  assert.equal(blocks.length, 2);
+
+  assert.deepEqual(blocks[0].selectors, [':root']);
+  const colors = config.primeTeam.colors;
+  assert.deepEqual(Object.keys(blocks[0].declarations), ['--team-primary', '--team-plate', '--team-accent', '--team-neon', '--team-pink', '--team-background', '--team-text']);
+  Object.keys(propertiesOf(config.primeTeam)).forEach(name => {
+    assert.equal(blocks[0].declarations[name].toLowerCase(), propertiesOf(config.primeTeam)[name].toLowerCase(), name);
+  });
+  assert.equal(colors.primary.toLowerCase(), '#6c18b6');
+
+  assert.deepEqual(blocks[1].selectors, [':root', 'html.theme-hawktimus'], 'the default theme only: another theme keeps its own colors');
+  assert.deepEqual(blocks[1].declarations, {
+    '--purple': 'var(--team-primary)',
+    '--yellow': 'var(--team-accent)',
+    '--ground': 'var(--team-background)',
+    '--white': 'var(--team-text)',
+  });
+});
+
+test('the four colors the default theme takes from the team are the same colors the theme has today, so Prime looks as it did', () => {
+  const theme = fs.readFileSync(path.join(dashboardFolder, 'themes/hawktimus.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const set = {};
+  blocksOf(theme).forEach(block => Object.assign(set, block.declarations));
+  const colors = config.primeTeam.colors;
+
+  assert.equal(set['--purple'].toLowerCase(), colors.primary.toLowerCase());
+  assert.equal(set['--yellow'].toLowerCase(), colors.accent.toLowerCase());
+  assert.equal(set['--ground'].toLowerCase(), colors.background.toLowerCase());
+  assert.equal(set['--white'].toLowerCase(), colors.text.toLowerCase());
+
+  // and these are the ones that differ: the team plate is not the theme plate, so nothing takes it yet
+  assert.notEqual(set['--plate'].toLowerCase(), colors.plate.toLowerCase());
+  assert.equal(teamsCss.includes('--plate'), false);
+});
+
+test('the Alternate and Neon Prime themes and every overlay set their colors without the team, and the team colors are linked after the default theme and before the page styles', () => {
+  ['themes/alternate.css', 'themes/neon-prime.css', 'themes/decor/neon-prime-decor.css', 'layouts/sidebar.css', 'neon-kit.css'].concat(fs.readdirSync(path.join(dashboardFolder, 'themes/overlays')).filter(name => name.endsWith('.css')).map(name => 'themes/overlays/' + name)).forEach(file => {
+    assert.equal(/--team-/.test(fs.readFileSync(path.join(dashboardFolder, file), 'utf8')), false, file);
+  });
+
+  const index = fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8');
+  assert.equal(index.split('href="teams.css"').length - 1, 1);
+  assert.ok(index.indexOf('themes/hawktimus.css') < index.indexOf('href="teams.css"'), 'after the default theme, so its rule wins');
+  assert.ok(index.indexOf('href="teams.css"') < index.indexOf('href="base.css"'));
+  assert.ok(index.indexOf('href="tokens.css"') < index.indexOf('href="teams.css"'));
+  // an overlay is linked from theme-apply.js, later than anything in index.html, so it wins over the team
+  assert.ok(fs.readFileSync(path.join(dashboardFolder, 'core/theme-apply.js'), 'utf8').includes('document.head.appendChild(link);'));
 });
 
 // Run them

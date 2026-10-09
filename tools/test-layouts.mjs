@@ -1257,6 +1257,62 @@ test('the team number, the school and the SAMPLE CONTENT label follow the conten
   });
 });
 
+// A team document as core/sanity.js hands it over
+const novaDocument = { code: 'nova', name: 'HAWKTIMUS NOVA', shortName: 'NOVA', number: '3230', logo: '', colors: { primary: '#1F7AE0', plate: '#1E3A6E', accent: '#9BF0FF', neon: '#FF2E8C', pink: '#35F0FF', background: '#060D1A', text: '#FFFFFF' }, mirror: true, active: true, order: 20 };
+
+test('the sidebar draws the team that is on the screen: its name and number, the school of the Team box, and its logo in place of the hawk, which comes back when there is none', async () => {
+  await onSidebar(async world => {
+    const teams = await import(urlOf(world.folder, 'dashboard/core/teams.js'));
+    document.documentElement.classList = { add() {}, remove() {} };
+
+    const base = teamContent();
+    const withTeam = team => teamContent({ teams: [team], settings: Object.assign({}, base.settings, { teamMode: 'nova' }) });
+    const first = withTeam(novaDocument);
+    teams.useTeams(first, new Date(0));
+    await world.draw(first);
+    const shown = selector => world.element.nodes[selector].textContent;
+
+    assert.equal(world.element.nodes['.side-name'].dataset.name, 'HAWKTIMUS NOVA');
+    assert.equal(shown('.team-number'), '3230');
+    assert.equal(shown('.school-text'), 'HOLLY SPRINGS HIGH SCHOOL', 'the school is the same for both teams');
+
+    // the logo is a picture put in the logo box, and the hawk is hidden by the stylesheet while it shows
+    const box = world.element.nodes['.side-logo'];
+    const appended = [];
+    const removed = [];
+    box.appendChild = child => appended.push(child);
+    const realCreate = document.createElement;
+    document.createElement = tag => {
+      if (tag !== 'img') return realCreate(tag);
+      const attributes = {};
+      return { className: '', alt: 'x', setAttribute: (name, value) => { attributes[name] = value; }, getAttribute: name => (name in attributes ? attributes[name] : null), remove: () => removed.push('img'), attributes: attributes };
+    };
+
+    try {
+      const logo = 'https://cdn.sanity.io/images/abc123/production/0123abcd-800x600.jpg?w=600&fit=max&auto=format';
+      const second = withTeam(Object.assign({}, novaDocument, { logo: logo }));
+      teams.useTeams(second, new Date(0)); // the team that is on the screen with a new logo: it goes on at once
+      world.module.update(world.element, second);
+
+      assert.equal(appended.length, 1);
+      assert.equal(appended[0].className, 'team-logo');
+      assert.equal(appended[0].alt, '');
+      assert.equal(appended[0].attributes.src, logo);
+      assert.equal(box.dataset.teamLogo, 'on');
+
+      world.module.update(world.element, second);
+      assert.equal(appended.length, 1, 'the same logo is not put in again');
+
+      teams.useTeams(first, new Date(0));
+      world.module.update(world.element, first);
+      assert.deepEqual(removed, ['img'], 'no logo: the picture goes');
+      assert.equal(box.dataset.teamLogo, undefined, 'and the hawk is back');
+    } finally {
+      document.createElement = realCreate;
+    }
+  });
+});
+
 test('the name is built on one line, and is rebuilt only when it changes, so a rebuild never starts the effect again', async () => {
   await onSidebar(async world => {
     await world.draw(teamContent());

@@ -3150,7 +3150,7 @@ function checkTeamsTab() {
   need(problems, constraintNamed(minutesRules, 'integer'), 'alternateMinutes should be a whole number');
   need(problems, !constraintNamed(minutesRules, 'required'), 'alternateMinutes should not be required: an empty one is 5, and the page must still publish');
   need(problems, minutes && /from 1 to 30/.test(minutes.description || ''), 'the alternateMinutes description should give the range, from 1 to 30');
-  checkPlainMessages('dashboardSettings', problems);
+  teamNames.forEach(name => need(problems, rulesOf(at(name)).some(rule => rule.name === 'error' && rule.args[0]), name + ' has rules and no error message in plain words'));
 
   // The sample content carries the settings, with values the dashboard accepts
   const sample = world.sample.settings;

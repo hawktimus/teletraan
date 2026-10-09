@@ -14,6 +14,7 @@ TV. The dashboard reads what they publish.
     themes.js             the list of themes and overlays, a copy of the dashboard's
     demo-screens.js       the list of screens a demo can show, a copy of the dashboard's
     hidden-transitions.js the list of hidden transitions, a copy of the dashboard's
+    team-input.js         the Team radio (Both, then each active team) that the Team field of each kind of content uses
     schemas/              one file per kind of content
     scripts/              make-templates.mjs writes the CSV templates from the schemas,
                           import-csv.mjs turns filled-in CSVs into a file for sanity dataset import
@@ -142,6 +143,21 @@ them once from this folder:
 
 `--missing` skips any place that is already there, so running it again changes
 nothing. Do not use `--replace`.
+
+## The starting teams
+
+Teams is the list of the teams the screen can show. The two starting teams,
+Hawktimus Prime and Hawktimus Nova, are in `docs/seed/teams.ndjson`. Prime has
+the colors the screen has today. The Nova colors are placeholders until the team
+has chosen its own. The file cannot carry a note, so this paragraph is the mark:
+change them on the Nova team in Studio. After step 4, and with the team mentor's
+yes, import them once from this folder:
+
+    npx sanity dataset import ../docs/seed/teams.ndjson --missing
+
+`--missing` skips any team that is already there, so running it again changes
+nothing. Do not use `--replace`. Import the teams before any CSV that has a
+team in it, because that CSV points at them.
 
 ## Adding many items from CSV files
 

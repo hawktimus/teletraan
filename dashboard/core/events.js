@@ -18,6 +18,7 @@
 
 import { defaultThemeSettings } from '../config.js';
 import { visibleItems } from './content.js';
+import { showsForTeam } from './teams.js';
 import { dateIn, isTimeZone } from './theme.js';
 import { asDate, formatTimeOfDay, pad } from './time.js';
 
@@ -276,7 +277,9 @@ function byStart(first, second) {
 // no end) is before today in that time zone. An Events Calendar entry that is
 // also on BAND is dropped and the BAND one stays, unless a filter has hidden the
 // BAND one. A BAND event that a filter hides is left out. The filters never
-// touch an Events Calendar entry. An event with no usable start is left out.
+// touch an Events Calendar entry. An Events Calendar entry for the other team is
+// left out, and a BAND event is for both teams. An event with no usable start is
+// left out.
 // The lists passed in are not changed.
 export function mergeEvents(bandEvents, extraList, timeZone, now, filterList) {
   const zone = isTimeZone(timeZone) ? timeZone : defaultThemeSettings.timeZone;
@@ -287,7 +290,7 @@ export function mergeEvents(bandEvents, extraList, timeZone, now, filterList) {
     .filter(event => isRecord(event) && !isNaN(asDate(event.start)))
     .map(event => withDays(event, zone))
     .filter(event => hidingRule(event, filterList, zone, moment) === null);
-  const extra = extraEventsToEvents(extraList, zone)
+  const extra = extraEventsToEvents((Array.isArray(extraList) ? extraList : []).filter(entry => showsForTeam(entry)), zone)
     .filter(event => !band.some(other => isSameEvent(other, event)));
 
   return band
