@@ -90,7 +90,7 @@ docs/where-things-are.md).
    Silver chance 10.
    The Advanced tab should show Use night mode on, Bouncing logo, 23:30 to
    11:30, Logo width 300 and Normal speed with the preview off,
-   and Allow hidden transitions on and both chances at 1.
+   and Allow hidden transitions on and both set to every 60 hours.
    Add a few tasks, a sponsor and some tips, and click Publish on each.
    Studio keeps what you type as a draft, and the dashboard only reads what is
    published.
@@ -252,8 +252,10 @@ the change. docs/night-mode.md explains how it works.
 
 The hidden transition settings in the Advanced tab of Dashboard Settings (`schemas/settingsHidden.js`) hold two rare
 surprise transitions: Allow hidden transitions (the master switch), Desktop reveal
-chance and Red eyes chance (percent of page changes, 0 to 100, both 1 to start with),
-and Last push. Last push has two read only fields, kind and requestedAt, that the
+every (hours) and Red eyes every (hours) (about once every this many hours of screen
+time, 1 to 1000, both 60 to start with), and Last push. The old Desktop reveal chance and
+Red eyes chance (percent of page changes) are still in the schema, hidden, for a page
+saved before the hours existed. Last push has two read only fields, kind and requestedAt, that the
 Play buttons fill in. The menu beside Publish on Dashboard Settings has one button for
 each transition, "Play desktop reveal" and "Play red eyes", from `actions.js`. Each
 sets Last push to its kind and the time now, and publishes. They are plain functions
@@ -265,7 +267,7 @@ needs setting up for it beyond the steps above. Run `npm run deploy` after you c
 docs/hidden-transitions.md explains how it works and how to add a transition.
 
 The Studio is built on its own and cannot read the dashboard folder, so
-`hidden-transitions.js` is a copy of the ids, names and chance fields in
+`hidden-transitions.js` is a copy of the ids, names, hours fields and chance fields in
 `dashboard/core/hidden-transitions.js`. `check-schemas.mjs` fails if they differ.
 
 ## Play announcements

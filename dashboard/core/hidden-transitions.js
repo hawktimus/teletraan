@@ -1,12 +1,14 @@
 // The hidden transitions: rare surprises that replace a normal page change of
 // the large panel. One entry for each, so adding another is one entry here, the
-// same id and name in studio/hidden-transitions.js, and a chance field in
-// Dashboard Settings (docs/hidden-transitions.md).
+// same id and name in studio/hidden-transitions.js, and an hours field and a
+// chance field in Dashboard Settings (docs/hidden-transitions.md).
 //
 // The key is the id the Studio stores in hiddenRequest.kind. name is the words
-// the editors see on the Play button. chanceField is the setting that holds the
-// percent of page changes that play it. run(scene) is the whole show, one
-// line for each step, and the screen waits for each step before the next.
+// the editors see on the Play button. hoursField is the setting that holds how
+// many hours of screen time it comes about once in. chanceField is the older
+// setting, a percent of page changes, that a page saved before the hours
+// existed still uses. run(scene) is the whole show, one line for each step,
+// and the screen waits for each step before the next.
 //
 // scene is made by core/hidden-run.js. It has these steps:
 //   scene.glitch(seconds, tint)       glitches over the screen. tint is 'red' (the default): the old
@@ -39,6 +41,7 @@ export const hiddenTransitions = {
   // seconds, then comes back together showing the next screen
   desktop: {
     name: 'Desktop reveal',
+    hoursField: 'desktopEveryHours',
     chanceField: 'desktopChance',
     async run(scene) {
       await scene.glitch(2, 'blue');
@@ -54,6 +57,7 @@ export const hiddenTransitions = {
   // together
   redEyes: {
     name: 'Red eyes',
+    hoursField: 'redEyesEveryHours',
     chanceField: 'redEyesChance',
     async run(scene) {
       await scene.glitch(1.5);

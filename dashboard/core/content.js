@@ -6,7 +6,7 @@ import { parseLocalDateTime } from './time.js';
 import { chosenSource } from './source.js';
 import { tidyTheme } from './theme.js';
 import { tidyDemo } from './demo.js';
-import { chanceFields, tidyHiddenRequest } from './hidden.js';
+import { chanceFields, hoursFields, tidyHiddenRequest, tidyHours } from './hidden.js';
 import { tidyAnnounceRequest } from './announce.js';
 import { tidyTestRequest } from './presentation-test.js';
 import { tidyPreviewRequest } from './preview.js';
@@ -100,6 +100,10 @@ export function fixSettingValues(settings) {
   });
   ['portraitScale', 'photoScale'].forEach(name => {
     settings[name] = tidyScale(name, settings[name]);
+  });
+  // The hours between hidden transitions: 1 to 1000, or 0 when not set, and then the percent is used
+  hoursFields().forEach(name => {
+    settings[name] = tidyHours(settings[name], name);
   });
   settings.hiddenRequest = tidyHiddenRequest(settings.hiddenRequest);
   // The last click of Play announcements (Screen tab, hidden from editors): a time, or empty

@@ -145,8 +145,10 @@ const contract = {
     nightSpeed: 'string',
     nightPreview: 'boolean',
     hiddenEnabled: 'boolean',
-    desktopChance: number(0, 100),
-    redEyesChance: number(0, 100),
+    desktopEveryHours: number(1, 1000),
+    desktopChance: 'number',
+    redEyesEveryHours: number(1, 1000),
+    redEyesChance: 'number',
     hiddenRequest: object({ kind: 'string', requestedAt: 'datetime' }),
     presentationsEnabled: 'boolean',
     presentationTestRequest: object({ requestedAt: 'datetime' }),
@@ -892,7 +894,7 @@ function checkLogoTab(problems) {
 const transitionNames = ['pageChangeStyle', 'breakSeconds', 'frameFinish', 'silverChance'];
 const photoNames = ['photoOrder', 'photoSeconds', 'portraitScale', 'photoScale'];
 const nightNames = ['nightEnabled', 'nightStyle', 'nightStart', 'nightEnd', 'nightLogoWidth', 'nightSpeed', 'nightPreview'];
-const hiddenNames = ['hiddenEnabled', 'desktopChance', 'redEyesChance', 'hiddenRequest'];
+const hiddenNames = ['hiddenEnabled', 'desktopEveryHours', 'desktopChance', 'redEyesEveryHours', 'redEyesChance', 'hiddenRequest'];
 const presentationNames = ['presentationsEnabled', 'noShowMinutes', 'graceMinutes'];
 
 function checkTransitionsTab() {
@@ -988,8 +990,6 @@ function checkLookAndTiming() {
     ['portraitScale', 'portraitScale', 100, true],
     ['photoScale', 'photoScale', 100, true],
     ['nightLogoWidth', 'nightLogoWidth', 300, true],
-    ['desktopChance', 'desktopChance', 1, true],
-    ['redEyesChance', 'redEyesChance', 1, true],
   ].forEach(entry => {
     const name = entry[0];
     const field = at(name);
@@ -1243,7 +1243,8 @@ function checkNightTab() {
   return problems;
 }
 
-// The hidden transition fields: the master switch, the two chances and the last push, all in
+// The hidden transition fields: the master switch, the hours and the hidden percent of each
+// transition, and the last push, all in
 // schemas/settingsHidden.js, and one Play button for each hidden transition on the
 // settings page (actions.js). The list of transitions in hidden-transitions.js is a
 // copy of the dashboard's registry, so it is compared here too. The limits and
@@ -1257,19 +1258,50 @@ function checkHiddenTab() {
   const inOrder = fieldsIn(settings).map(field => field.name).filter(name => hiddenNames.indexOf(name) !== -1);
   need(problems, inOrder.join() === hiddenNames.join(), 'the hidden transition fields should come in this order: ' + hiddenNames.join(', ') + ', not ' + inOrder.join(', '));
 
-  const titles = { hiddenEnabled: 'Allow hidden transitions', desktopChance: 'Desktop reveal chance (percent)', redEyesChance: 'Red eyes chance (percent)', hiddenRequest: 'Last push' };
+  const titles = {
+    hiddenEnabled: 'Allow hidden transitions',
+    desktopEveryHours: 'Desktop reveal every (hours)',
+    desktopChance: 'Desktop reveal chance (percent)',
+    redEyesEveryHours: 'Red eyes every (hours)',
+    redEyesChance: 'Red eyes chance (percent)',
+    hiddenRequest: 'Last push',
+  };
   Object.keys(titles).forEach(name => need(problems, at(name) && at(name).title === titles[name], name + ' should be titled ' + titles[name]));
 
   // The master switch starts on, and its description says what it stops
   need(problems, at('hiddenEnabled') && at('hiddenEnabled').type === 'boolean' && at('hiddenEnabled').initialValue === true && config.defaultSettings.hiddenEnabled === true, 'hiddenEnabled should be a switch that starts on, and so should its default in config.js');
   need(problems, at('hiddenEnabled') && /push/.test(at('hiddenEnabled').description || '') && /calm/.test(at('hiddenEnabled').description || ''), 'the hiddenEnabled description should say that it stops a push too, and that calm motion never plays one');
 
-  // Each chance in the registry is a whole percent, 0 is never
+  // Each transition in the registry has hours: a whole number from 1 to 1000, 60 in the Studio and 0 (not set)
+  // in config.js, so that a page saved before the hours existed keeps rolling by its percent. The hours are
+  // optional, for the same reason.
   const registry = world.hiddenRegistry.hiddenTransitions;
+  Object.keys(registry).forEach(id => {
+    const name = registry[id].hoursField;
+    const field = at(name);
+    const rules = field ? constraintsOf(field) : [];
+    const low = constraintNamed(rules, 'min');
+    const high = constraintNamed(rules, 'max');
+    const limit = config.limits[name];
+
+    need(problems, field && field.type === 'number' && field.initialValue === 60, name + ' should be a number that starts at 60');
+    need(problems, field && field.description === 'About once every this many hours of screen time.', name + ' should have the description: About once every this many hours of screen time.');
+    need(problems, field && field.hidden !== true, name + ' should show in the form');
+    need(problems, limit && limit.min === 1 && limit.max === 1000, 'limits.' + name + ' in config.js should be 1 to 1000');
+    need(problems, limit && low && high && low.args[0] === limit.min && high.args[0] === limit.max, name + ' should have the limits in config.js, ' + JSON.stringify(limit));
+    need(problems, constraintNamed(rules, 'integer'), name + ' should be a whole number');
+    need(problems, !constraintNamed(rules, 'required'), name + ' should be optional, so a page saved before it existed still publishes');
+    need(problems, config.defaultSettings[name] === 0, 'the default ' + name + ' in config.js should be 0, which means not set');
+  });
+
+  // The percent of each transition is kept, hidden and with no rules, for a page that has no hours
   Object.keys(registry).forEach(id => {
     const name = registry[id].chanceField;
     const field = at(name);
-    need(problems, field && /0 is never/.test(field.description || ''), 'the ' + name + ' description should say that 0 is never');
+
+    need(problems, field && field.type === 'number' && field.hidden === true, name + ' should be a hidden number');
+    need(problems, field && field.initialValue === 1 && config.defaultSettings[name] === 1, name + ' should start at 1, and so should its default in config.js');
+    need(problems, field && constraintsOf(field).length === 0, name + ' should have no rules, because nobody can fix a value in a hidden field');
     need(problems, config.limits[name] && config.limits[name].min === 0 && config.limits[name].max === 100, 'limits.' + name + ' in config.js should be 0 to 100');
   });
 
@@ -1294,6 +1326,8 @@ function checkHiddenTab() {
   Object.keys(registry).forEach(id => {
     const name = registry[id].chanceField;
     need(problems, sample[name] >= 0 && sample[name] <= 100, 'the sample settings need ' + name + ' from 0 to 100');
+    const hours = registry[id].hoursField;
+    need(problems, sample[hours] >= 1 && sample[hours] <= 1000, 'the sample settings need ' + hours + ' from 1 to 1000');
   });
   need(problems, !('hiddenRequest' in sample), 'the sample settings should not carry a hiddenRequest');
 
@@ -1309,6 +1343,7 @@ function checkHiddenTab() {
     const other = copy[index];
     if (!other || other.id !== id) return problems.push('hidden transition number ' + (index + 1) + ' is "' + id + '" in the dashboard registry but "' + (other && other.id) + '" in studio/hidden-transitions.js');
     need(problems, other.name === entry.name, 'the hidden transition "' + id + '" has name "' + entry.name + '" in the dashboard registry but "' + other.name + '" in studio/hidden-transitions.js');
+    need(problems, other.hoursField === entry.hoursField, 'the hidden transition "' + id + '" has hours field "' + entry.hoursField + '" in the dashboard registry but "' + other.hoursField + '" in studio/hidden-transitions.js');
     need(problems, other.chanceField === entry.chanceField, 'the hidden transition "' + id + '" has chance field "' + entry.chanceField + '" in the dashboard registry but "' + other.chanceField + '" in studio/hidden-transitions.js');
   });
   const offered = choicesOf('dashboardSettings.hiddenRequest.kind');
@@ -1625,7 +1660,9 @@ function checkStartingValues() {
   expect('showConnectionStatus', settings.showConnectionStatus);
   expect('pageSeconds', settings.pageSeconds);
   const fixedNames = Object.keys(fixedValues).filter(pathText => pathText.startsWith('dashboardSettings.')).map(pathText => pathText.split('.')[1]);
-  logoSwitches.concat(logoNumbers, transitionNames, photoNames, nightNames, hiddenNames.slice(0, 3), presentationNames, teamNames).filter(name => fixedNames.indexOf(name) === -1).forEach(name => expect(name, settings[name]));
+  // The hours of the hidden transitions start at 60 here and at 0 in config.js, which checkHiddenTab checks
+  const hiddenStarting = ['hiddenEnabled', 'desktopChance', 'redEyesChance'];
+  logoSwitches.concat(logoNumbers, transitionNames, photoNames, nightNames, hiddenStarting, presentationNames, teamNames).filter(name => fixedNames.indexOf(name) === -1).forEach(name => expect(name, settings[name]));
   expect('countdown.kickoffLabel', settings.countdown.kickoffLabel);
   expect('countdown.rolloutLabel', settings.countdown.rolloutLabel);
   expect('alert.on', settings.alert.on);

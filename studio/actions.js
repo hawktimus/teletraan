@@ -71,7 +71,7 @@ export function useStopDemoAction(props) {
 useStopDemoAction.action = 'stopDemo';
 
 // The buttons of the hidden transitions, one for each transition in hidden-transitions.js, so
-// adding a transition there adds its button. kind is { id, name, chanceField }.
+// adding a transition there adds its button. kind is { id, name, hoursField, chanceField }.
 // A button is always allowed, so a second click plays it again. The screen only
 // plays a push that is a minute old at most and that it has not played before.
 function makePlayHiddenAction(kind) {

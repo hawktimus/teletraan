@@ -51,6 +51,8 @@
     "nightSpeed": "normal",
     "nightPreview": false,
     "hiddenEnabled": true,
+    "desktopEveryHours": 60,
+    "redEyesEveryHours": 60,
     "desktopChance": 1,
     "redEyesChance": 1,
     "presentationsEnabled": true,

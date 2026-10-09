@@ -371,14 +371,16 @@ alone.
   shows and hides the black layer, and `frame.css` ("Night mode") has the
   bounce, the spin and the fades. Try it with `?night=on` and `?night=off`.
 - **Hidden transitions.** Dashboard Settings, Advanced tab (docs/hidden-transitions.md):
-  Allow hidden transitions, Desktop reveal chance and Red eyes chance, and Last push, with
+  Allow hidden transitions, Desktop reveal every (hours) and Red eyes every (hours), and Last push, with
   the buttons Play desktop reveal and Play red eyes in the menu beside Publish. The starting
-  values are `hiddenEnabled`, `desktopChance`, `redEyesChance` and `hiddenRequest` in
-  `defaultSettings` in `dashboard/config.js`, with `limits` there. The Studio fields are all in
+  values are `hiddenEnabled`, `desktopEveryHours`, `redEyesEveryHours`, `desktopChance`, `redEyesChance`
+  and `hiddenRequest` in `defaultSettings` in `dashboard/config.js`, with `limits` there. The two chances
+  are hidden and only a page saved before the hours existed uses them, and `hiddenGapHours` there is the
+  4 hours after one has played in which none comes about by chance. The Studio fields are all in
   `studio/schemas/settingsHidden.js`, the buttons are made in `studio/actions.js` from
   `studio/hidden-transitions.js`, a copy of `hiddenTransitions` in
-  `dashboard/core/hidden-transitions.js`. A new transition is one entry in each, plus a chance
-  field. `core/hidden.js` decides, `core/hidden-run.js` plays, and `frame.css` ("Hidden
+  `dashboard/core/hidden-transitions.js`. A new transition is one entry in each, plus an hours
+  field and a chance field. `core/hidden.js` decides, `core/hidden-run.js` plays, and `frame.css` ("Hidden
   transitions" and "The blue glitch") moves the five blocks and the glitches. The four
   pictures are in `dashboard/assets/hidden/`, and `core/hidden-pictures.js` says how each one
   fills the screen and which one plays next. Try one with `?hidden=desktop` or `?hidden=redEyes`.

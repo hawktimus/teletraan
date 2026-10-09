@@ -127,8 +127,11 @@ export const limits = {
   // is longer than anyone shows a demo.
   demoSeconds: { min: 5, max: 300 },
   // The hidden transition settings. A chance is a percent of the page changes, and 0 is never.
+  // Hours are how often a transition comes about, in hours of screen time.
   desktopChance: { min: 0, max: 100 },
   redEyesChance: { min: 0, max: 100 },
+  desktopEveryHours: { min: 1, max: 1000 },
+  redEyesEveryHours: { min: 1, max: 1000 },
   // The length of one booked talk, in minutes (the Presentations list in the Studio)
   talkMinutes: { min: 5, max: 30 },
   // The team settings, in minutes: how long each team stays on the screen in Alternate mode
@@ -223,13 +226,19 @@ export const defaultSettings = {
   // The hidden transition settings in the Studio (Advanced tab): two rare transitions that replace a normal page change of the large
   // panel (core/hidden.js, core/hidden-transitions.js and core/hidden-run.js, docs/hidden-transitions.md).
   //   hiddenEnabled  the master switch. Off, neither plays, not even when it is pushed from the Studio.
-  //   desktopChance  the percent of page changes that play the desktop reveal. 0 is never.
-  //   redEyesChance  the percent of page changes that play red eyes. 0 is never.
+  //   desktopEveryHours  about once every this many hours of screen time, the desktop reveal plays.
+  //   redEyesEveryHours  the same for red eyes. The Studio starts both at 60. Here they start at 0, which means
+  //                      not set: a settings page saved before the hours existed has none, and keeps rolling
+  //                      by the two percents below (core/hidden.js).
+  //   desktopChance  the percent of page changes that play the desktop reveal. 0 is never. The Studio hides it.
+  //   redEyesChance  the percent of page changes that play red eyes. 0 is never. The Studio hides it.
   //   hiddenRequest  the last "Play desktop reveal" or "Play red eyes" pushed from the Studio:
   //                  kind is an id from the registry in core/hidden-transitions.js, and requestedAt is
   //                  the time it was pushed. Both are empty until something has been pushed. The screen
   //                  plays a request once, only while it is less than demoWindowSeconds old (see below).
   hiddenEnabled: true,
+  desktopEveryHours: 0,
+  redEyesEveryHours: 0,
   desktopChance: 1,
   redEyesChance: 1,
   hiddenRequest: { kind: '', requestedAt: '' },
@@ -357,6 +366,10 @@ export const demoPlaceholderText = '[DEMO ANNOUNCEMENT]';
 // A push is only played while it is less than demoWindowSeconds old and is not the one handled
 // before, the same guard as the demo (shouldRunDemo in core/demo.js).
 export const hiddenAdvanceSeconds = 20;
+
+// After a hidden transition has played, none comes about by chance for this many hours. A push from the Studio
+// and the ?hidden= switch ignore it. core/hidden.js keeps the time of the last one.
+export const hiddenGapHours = 4;
 
 // How long a preview from the Studio holds a team, a style or a seasonal pack on the screen, in seconds. After that the
 // screen goes back to the saved settings.

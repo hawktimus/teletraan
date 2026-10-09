@@ -910,6 +910,8 @@ test('the new settings have the defaults the Studio starts with', () => {
     demoSeconds: { min: 5, max: 300 },
     desktopChance: { min: 0, max: 100 },
     redEyesChance: { min: 0, max: 100 },
+    desktopEveryHours: { min: 1, max: 1000 },
+    redEyesEveryHours: { min: 1, max: 1000 },
     talkMinutes: { min: 5, max: 30 },
     alternateMinutes: { min: 1, max: 30 },
   });

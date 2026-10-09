@@ -1,18 +1,29 @@
 // The hidden transition fields of Dashboard Settings, in the Advanced tab: two
 // rare surprise transitions that replace a normal page change of the large
 // panel, and the buttons that play one now. docs/hidden-transitions.md explains
-// both. Four fields:
+// both. Six fields:
 //
-//   hiddenEnabled  the master switch, on to start with
-//   desktopChance  the percent of page changes that play the desktop reveal, 1 to start with
-//   redEyesChance  the percent of page changes that play red eyes, 1 to start with
-//   hiddenRequest  the last push from "Play desktop reveal" or "Play red eyes". It has two
-//                  fields, kind and requestedAt, and both are read only: the buttons in the
-//                  menu beside Publish fill them in (actions.js)
+//   hiddenEnabled      the master switch, on to start with
+//   desktopEveryHours  about once every this many hours of screen time the desktop reveal plays, 60 to start with
+//   desktopChance      hidden. The percent of page changes that play the desktop reveal, 1 to start with
+//   redEyesEveryHours  the same for red eyes, 60 to start with
+//   redEyesChance      hidden. The percent of page changes that play red eyes, 1 to start with
+//   hiddenRequest      the last push from "Play desktop reveal" or "Play red eyes". It has two
+//                      fields, kind and requestedAt, and both are read only: the buttons in the
+//                      menu beside Publish fill them in (actions.js)
 //
-// The starting values and limits are the same as defaultSettings and limits in
-// dashboard/config.js, and the kinds are the ones in hidden-transitions.js, a copy
-// of the dashboard's registry. check-schemas.mjs fails if they differ.
+// The two percent fields stay in the schema so that a page saved with them still
+// opens and publishes, and they keep their starting values. The screen reads a
+// percent only for a page that has no hours (dashboard/core/hidden.js). They have no
+// rules, because nobody can fix a value in a hidden field. The hours are not required
+// either: a page saved before they existed has none, and a required field would stop
+// it being published until somebody filled them in.
+//
+// The limits are the same as limits in dashboard/config.js, and the kinds are the
+// ones in hidden-transitions.js, a copy of the dashboard's registry. The starting
+// percents are the same as defaultSettings there. The starting hours are not: there
+// they start at 0, which means not set, so that an old page keeps its percent.
+// check-schemas.mjs fails if any of this differs.
 //
 // To take the whole section out later: delete this file, remove its import and the
 // line that uses hiddenFields in dashboardSettings.js, and remove the same names
@@ -38,16 +49,33 @@ export function hiddenFields() {
     }),
 
     defineField({
+      name: 'desktopEveryHours',
+      title: 'Desktop reveal every (hours)',
+      type: 'number',
+      group: 'advanced',
+      description: 'About once every this many hours of screen time.',
+      initialValue: 60,
+      validation: Rule => Rule.integer().min(1).max(1000).error('Use a whole number from 1 to 1000.'),
+    }),
+
+    defineField({
       name: 'desktopChance',
       title: 'Desktop reveal chance (percent)',
       type: 'number',
       group: 'advanced',
-      description: 'How many page changes in 100 become the desktop reveal: blue glitching, then a blue error screen for 3 seconds. From 0 to 100, 0 is never.',
+      hidden: true,
+      description: 'Used only by a page that has no hours for the desktop reveal: how many page changes in 100 play it.',
       initialValue: 1,
-      validation: Rule => [
-        Rule.required().error('Enter a percent from 0 to 100, or 0 for never.'),
-        Rule.integer().min(0).max(100).error('Use a whole number from 0 to 100.'),
-      ],
+    }),
+
+    defineField({
+      name: 'redEyesEveryHours',
+      title: 'Red eyes every (hours)',
+      type: 'number',
+      group: 'advanced',
+      description: 'About once every this many hours of screen time.',
+      initialValue: 60,
+      validation: Rule => Rule.integer().min(1).max(1000).error('Use a whole number from 1 to 1000.'),
     }),
 
     defineField({
@@ -55,12 +83,9 @@ export function hiddenFields() {
       title: 'Red eyes chance (percent)',
       type: 'number',
       group: 'advanced',
-      description: 'How many page changes in 100 become red eyes: red glitches, then a picture of two red eyes on black for a few seconds. From 0 to 100, 0 is never.',
+      hidden: true,
+      description: 'Used only by a page that has no hours for red eyes: how many page changes in 100 play it.',
       initialValue: 1,
-      validation: Rule => [
-        Rule.required().error('Enter a percent from 0 to 100, or 0 for never.'),
-        Rule.integer().min(0).max(100).error('Use a whole number from 0 to 100.'),
-      ],
     }),
 
     defineField({

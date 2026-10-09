@@ -696,19 +696,23 @@ problem would touch.
   alert or an announcement still shows over night mode.
 - Hidden transitions: two rare surprise transitions that now and then replace a page change
   of the large panel (docs/hidden-transitions.md). "Allow hidden transitions" is
-  the master switch and starts on. "Desktop reveal chance (percent)" and "Red
-  eyes chance (percent)" are how many page changes in 100 become that
-  transition, from 0 to 100, and both start at 1, so about one page change in 50
-  is a surprise. 0 is never. In the
-  desktop reveal the screen glitches blue, comes apart, cuts to a blue error
-  screen for 3 seconds and comes back with the next pages. In red eyes it
+  the master switch and starts on. "Desktop reveal every (hours)" and "Red eyes
+  every (hours)" say that it comes about once every this many hours of screen
+  time, from 1 to 1000, and both start at 60. It is a chance, so 60 hours is an
+  average and not a timetable. After one has played, none comes about by chance
+  for 4 hours. To make one rarer, raise its hours. To stop them all, turn off
+  "Allow hidden transitions". A settings page saved before the hours existed
+  has them empty, and keeps its old percent until you fill them in and publish.
+  In the desktop reveal the screen glitches blue, comes apart, cuts to a blue
+  error screen for 3 seconds and comes back with the next pages. In red eyes it
   glitches red, breaks apart to black, shows a picture of two red eyes for a few
   seconds and comes back. Each has two pictures that take turns, and they can be
   swapped for others (docs/hidden-transitions.md).
   To play one now, open the menu next to Publish (the three dots) and click
   "Play desktop reveal" or "Play red eyes". Each publishes the page for you, and
-  the TV plays it once within about 20 seconds, whatever the chances say. "Last
-  push" shows which one was pushed and when, and you cannot type in it. Nothing
+  the TV plays it once within about 20 seconds, whatever the hours and the gap
+  say. "Last push" shows which one was pushed and when, and you cannot type in
+  it. Nothing
   here plays in Calm motion, or during an alert, an announcement, a demo or night
   mode, and with "Allow hidden transitions" off none plays at all, pushed or not.
 - Connection: one switch, "Show connection status". It starts off. Turn it on

@@ -282,7 +282,7 @@ its settings. The Mini can keep running.
   replace a page change. To see each once on the Mini, open Dashboard Settings in
   Studio, open the menu next to Publish and click Play desktop reveal, then Play
   red eyes. Each plays within about 20 seconds. If the screen stutters during one,
-  set both chances in the Advanced tab to 0 and tell whoever looks after the code.
+  turn off Allow hidden transitions in the Advanced tab and tell whoever looks after the code.
   They never play at night, in calm motion, or over an alert or announcement.
 - Make a small change on a laptop and push it. Within about 6 minutes (up to
   5 for the pull timer, up to 1 for the dashboard to notice) the screen

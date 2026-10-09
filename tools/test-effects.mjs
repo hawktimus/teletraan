@@ -2477,7 +2477,7 @@ test('the registry and the plain functions import nothing from the page, so they
 
   assert.deepEqual(importsOf(read('core/hidden-transitions.js')), []);
   assert.deepEqual(importsOf(read('core/hidden.js')), [
-    "import { defaultSettings } from '../config.js';",
+    "import { defaultSettings, hiddenGapHours, limits, speeds } from '../config.js';",
     "import { readHandled, rememberHandled, shouldRunDemo } from './demo.js';",
     "import { hiddenTransitions } from './hidden-transitions.js';",
   ]);
@@ -2492,7 +2492,7 @@ test('the Studio list of hidden transitions says the same as the dashboard regis
   const studio = await import(pathToFileURL(path.join(fileURLToPath(new URL('../studio/', import.meta.url)), 'hidden-transitions.js')).href);
   assert.deepEqual(
     studio.hiddenTransitions,
-    hiddenKinds.map(kind => ({ id: kind, name: hiddenRegistry.hiddenTransitions[kind].name, chanceField: hiddenRegistry.hiddenTransitions[kind].chanceField }))
+    hiddenKinds.map(kind => ({ id: kind, name: hiddenRegistry.hiddenTransitions[kind].name, hoursField: hiddenRegistry.hiddenTransitions[kind].hoursField, chanceField: hiddenRegistry.hiddenTransitions[kind].chanceField }))
   );
 });
 
