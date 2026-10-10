@@ -17,10 +17,10 @@ import { lookRotationFields } from './settingsLook.js';
 import { previewRequestField } from './settingsPreview.js';
 import { nextLookRequestField, competitionPreviewRequestField } from './settingsRequests.js';
 import { competitionFields } from './settingsCompetition.js';
+import { mondayFields } from './settingsMonday.js';
 
 // The tabs, in order. Screen opens first. Studio has no folded tab, so Advanced,
 // for the things only a coach debugging the screen would touch, is the last one.
-// Monday holds a note until its settings are built.
 const groups = [
   { name: 'screen', title: 'Screen', default: true },
   { name: 'look', title: 'Look' },
@@ -478,9 +478,6 @@ const groupEventsByKindField = defineField({
 const lookNoteField = noteField('lookNote', 'Which styles and teams come on, and how, is set here. Colors, seasonal packs and the time zone are in Look, in the sidebar.', 'look');
 const cycleNoteField = noteField('cycleNote', 'A cycle is each team in turn: its panels in the style of the day, then its Monday cards in the Monday style, then the next team.', 'look');
 
-// Replaced by the Monday settings when those are built
-const mondayNoteField = noteField('mondayNote', 'Nothing to set here yet. The Monday connection and boards will be set up on this tab.', 'monday');
-
 export default defineType({
   name: 'dashboardSettings',
   title: 'Dashboard Settings',
@@ -520,7 +517,7 @@ export default defineType({
     presentationTestRequestField(),
     calendarsField,
     groupEventsByKindField,
-    mondayNoteField,
+    ...mondayFields(),
     ...competitionFields(),
     contentSourceField,
     switchBackAtField,

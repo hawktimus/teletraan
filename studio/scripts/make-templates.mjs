@@ -31,12 +31,12 @@ const defaultOutput = path.join(studioFolder, '..', 'docs', 'content-templates')
 // have no template. The pages that exist once (Dashboard Settings, Look, Demo) are
 // listed in structure.js. Events Calendar entries and places have no line in the
 // sidebar, but they keep their templates, since the importer still reads them.
-const skippedTypes = ['photo', 'presentationDay', 'presentation', 'calendarFilter', 'team', 'status', 'calendarStatus', 'frcStatus'];
+const skippedTypes = ['photo', 'presentationDay', 'presentation', 'calendarFilter', 'team', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus'];
 
-// Fields that are not columns. The board sync sets the source and the board item number of a
-// task, and the note at the top of a task from the board stores nothing.
+// Fields that are not columns. The board sync sets the source, the board item number and the due
+// date of a task, and the note at the top of a task from the board stores nothing.
 const notColumns = {
-  task: ['source', 'mondayId', 'boardNote'],
+  task: ['source', 'mondayId', 'boardNote', 'dueDate'],
 };
 
 // The columns whose words make the id of a row, in order. The id is the type
@@ -107,7 +107,7 @@ const examples = {
 export async function loadSchemas() {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-templates-'));
   try {
-    ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'publish-all.js', 'calendars-view.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'team-input.js', 'note-field.js', 'show-on-tv-input.js', 'status-input.js', 'frc-status-input.js', 'time-text.js', 'calendars-view-parts.js', 'panel-order-input.js'].forEach(name => fs.cpSync(path.join(studioFolder, name), path.join(folder, name), { recursive: true }));
+    ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'publish-all.js', 'calendars-view.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'team-input.js', 'note-field.js', 'show-on-tv-input.js', 'status-input.js', 'frc-status-input.js', 'monday-status-input.js', 'monday-pickers.js', 'time-text.js', 'calendars-view-parts.js', 'panel-order-input.js'].forEach(name => fs.cpSync(path.join(studioFolder, name), path.join(folder, name), { recursive: true }));
     fs.writeFileSync(path.join(folder, 'package.json'), JSON.stringify({ type: 'module' }));
     // the names that schemas/ and the inputs import: the radio of the team field, the other inputs and the Start here page are never drawn here
     const stubs = { sanity: ['defineType', 'defineField', 'defineArrayMember', 'set', 'unset', 'useClient', 'useFormValue'], react: ['createElement', 'useEffect', 'useState'] };

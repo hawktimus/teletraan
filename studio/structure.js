@@ -6,8 +6,8 @@
 // place (a task's Location field adds and opens them) and demo (its
 // buttons are on Start here). The status documents, which the Mini writes, have no line
 // either: status, which the status block in Dashboard Settings shows, calendarStatus,
-// which the Calendars page shows, and frcStatus, which the connection block of the
-// Competition tab shows. check-schemas.mjs lists them with the reason.
+// which the Calendars page shows, and frcStatus and mondayStatus, which the connection
+// blocks of the Competition and Monday tabs show. check-schemas.mjs lists them with the reason.
 //
 // One line is one entry:
 //   kind 'list'       opens the list of one kind of document (type). With a filter it

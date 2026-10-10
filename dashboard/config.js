@@ -389,6 +389,13 @@ export const defaultSettings = {
   competitionResults: true,
   competitionAlliance: true,
   competitionDistrict: true,
+  // The Monday tab in the Studio (docs/monday.md). The Mini reads these (deploy/scripts/monday-sync.sh) and writes the
+  // tasks, which carry what the cards need, so the screen only keeps them tidy.
+  //   mondayBoards      the boards the Mini reads, one entry for each: the board, its team, the status column with
+  //                     the three labels, and the optional priority, due date, owner and team columns. None to start with
+  //   mondayShowOwners  keeps the first name of the owner of an item. Off to start with
+  mondayBoards: [],
+  mondayShowOwners: false,
 };
 
 // Used for anything missing from the Look document in the Studio. The

@@ -276,6 +276,14 @@ Change it there. Use Show on TV to hide it here." The one thing you can change i
 Show on TV. Turn it off and the task leaves the TV and moves to the Hidden list.
 Turn it on and it comes back. The board sync keeps your choice the next time it runs.
 
+The Mini makes these tasks every 10 minutes from the boards chosen on the Monday tab of
+Dashboard Settings (docs/monday.md). Besides the fields above, a task from the board has
+a due date, which opens read only too. The Mini writes the name (up to 22 characters),
+the subteam, the status, the priority, the due date and, when the owner names are on,
+the contact. An item that is deleted on the board, or that no longer has one of the
+three status labels, is not deleted here: its task is switched off and moves to the
+Hidden list.
+
 Show on TV is on every task, not only the ones from the board. It is a second switch
 beside Show on screen. A task is on the TV only when both are on and it has not expired.
 A task made before Show on TV existed counts as on, and the switch is drawn as on.
@@ -784,8 +792,41 @@ problem would touch.
 
 ### Monday
 
-- Monday: the tab has one line that says nothing is set up there yet. The Monday
-  boards will be set up on this tab.
+The boards the Mini reads and how an item becomes a task (docs/monday.md). The Mini
+reads Monday every 10 minutes and keeps the items in Sanity as tasks, which the Tasks
+folder lists under From the board.
+
+- Monday connection from the Mini: a block at the top that you cannot type in. It says
+  who the token belongs to, when the Mini last read Monday, how many boards the token
+  can see, and the last error. With nothing yet it says No connection yet: a coach has
+  to add the token on the Mini (docs/rebuilding-the-mini.md, step 18) and the first
+  read comes within 10 minutes.
+- Boards: one entry for each board the screen reads, up to 10. Click Add item for a new
+  one. An entry has:
+  - Board: pick the board by name. The Mini fills in the list, so nobody types a
+    number. A board the token cannot see is not in the list.
+  - Team: the team the tasks of the board are for.
+  - Status column: the column with the status of each item.
+  - Backlog label, In progress label and Done label: the words of that column for
+    not started, being worked on and finished. They start as Backlog, Working on it
+    and Done. An item with any other label gets no task.
+  - Priority column, with High label, Medium label and Low label: optional. Leave the
+    column empty to show no priority.
+  - Due date column: optional.
+  - Owner column: optional. It is used only when Show owner first names on the TV is on.
+  - Subteam column: optional. Empty uses the names of the groups on the board. A name
+    that matches no Team lead puts the task under [Unmatched], which is not shown.
+  An entry needs its board, its team and its status column. The lists show the columns of
+  the board you picked. When a list cannot be read, the box is a plain one, and it says so:
+  type the board number or the column id.
+- Show owner first names on the TV: a switch, off to start with. On, a task keeps the
+  first name of the first owner of its item, up to 12 characters. Off, no name from the
+  board is kept.
+- The tasks and the list of boards are public, like the rest of the dataset: anyone who
+  asks Sanity can read the board names, the task names and, with the switch on, the first
+  names (docs/monday.md, "The dataset is public").
+- The data itself is a document the Mini writes, Monday data from the Mini. It has no line
+  in the list on the left and is not in the New menu.
 
 ### Competition
 
