@@ -10,6 +10,9 @@
 #   status-write.sh monday     the Monday boards were read
 #   status-write.sh frc        the FRC data was read
 #   status-write.sh kiosk      the screen started
+#   status-write.sh calendar-status
+#                              sends the document that the Calendars page in Studio
+#                              shows, which calendar-status.sh made in the data folder
 #
 # Writing needs a token with Editor access, SANITY_WRITE_TOKEN in local.env
 # (docs/rebuilding-the-mini.md). With no token this exits quietly, and Studio
@@ -26,7 +29,7 @@ env_file="$deploy/local.env"
 document=status-mini
 
 usage() {
-  echo "Usage: status-write.sh content|calendar|slides|monday|frc|kiosk" >&2
+  echo "Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|calendar-status" >&2
   exit 2
 }
 
@@ -40,6 +43,7 @@ case $1 in
   monday) field=lastMondaySyncAt ;;
   frc) field=lastFrcSyncAt ;;
   kiosk) field=kioskStartedAt ;;
+  calendar-status) field=calendar-status ;;
   *) usage ;;
 esac
 
@@ -110,7 +114,32 @@ newest_update() {
   printf '%s' "$answer" | sed -n 's/.*"result":"\([^"]*\)".*/\1/p' | head -n 1
 }
 
-if [ "$field" = lastContentSeenAt ]; then
+body=""
+
+if [ "$field" = calendar-status ]; then
+  # The document calendar-status.sh made. Studio reads it, so it has to be that
+  # document, and small enough to send on a command line. Nothing is sent when
+  # it is not there, because then there was no calendar run to report.
+  data=$(setting TELETRAAN_DATA)
+  file="${data:-/var/lib/teletraan/data}/calendar-status.json"
+  [ -f "$file" ] || exit 0
+
+  size=$(( $(wc -c < "$file") ))
+  if [ "$size" -gt 100000 ]; then
+    echo "status: calendar-status.json is too big, so nothing was written." >&2
+    exit 1
+  fi
+
+  text=$(cat "$file")
+  case $text in
+    '{"_id":"calendar-status","_type":"calendarStatus",'*) ;;
+    *)
+      echo "status: calendar-status.json is not the calendar status document, so nothing was written." >&2
+      exit 1
+      ;;
+  esac
+  body=$(printf '{"mutations":[{"createOrReplace":%s}]}' "$text")
+elif [ "$field" = lastContentSeenAt ]; then
   value=$(newest_update)
   if ! printf '%s' "$value" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z$'; then
     echo "status: could not find the newest change to the content, so nothing was written." >&2
@@ -122,8 +151,10 @@ fi
 
 # Make the document if it is not there yet, then set the one time. Everything
 # in the body is a name or a time that was checked above.
-body=$(printf '{"mutations":[{"createIfNotExists":{"_id":"%s","_type":"status"}},{"patch":{"id":"%s","set":{"%s":"%s"}}}]}' \
-  "$document" "$document" "$field" "$value")
+if [ -z "$body" ]; then
+  body=$(printf '{"mutations":[{"createIfNotExists":{"_id":"%s","_type":"status"}},{"patch":{"id":"%s","set":{"%s":"%s"}}}]}' \
+    "$document" "$document" "$field" "$value")
+fi
 
 status=0
 printf 'header = "Authorization: Bearer %s"\n' "$token" |

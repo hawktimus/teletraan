@@ -36,6 +36,7 @@ said yes.**
 | A read-only deploy key for the repository, if it is private | let the Mini pull updates | 6 |
 | The `nginx:1.28-alpine` container image, downloaded from Docker Hub by Docker the first time the server starts | the web server itself | 9 |
 | `poppler-utils` and `jq`. `curl` is already installed in step 4. | turn the slides of the talks into pictures, and read the list of talks from Sanity | 11 |
+| `nodejs`, optional, version 20.19 or newer (or 22.7 or newer): `sudo apt install nodejs` | list the coming events of each calendar on the Calendars page in Studio | 11 |
 | `xserver-xorg`, `xinit`, `x11-xserver-utils`, `chromium` | show the dashboard full screen | 12 |
 | `unclutter` (optional) | hide the mouse pointer when testing inside a desktop | 12 |
 | A changed `/etc/issue` (the old text is kept) and the unit `teletraan-console.service`. No package. | show the drawings on the TV while the Mini starts and shuts down | 13 |
@@ -172,6 +173,11 @@ see studio/README.md.
     The slides are saved in `slides/` in the data folder from step 7, not in
     `/opt/teletraan`, so replacing the files in `/opt/teletraan` does not
     remove them.
+
+    Node is not needed. Without it the Calendars page in Studio shows when each
+    calendar was downloaded and why a download failed, but no events. With it
+    the page lists the next events too (docs/calendars-page.md). The install
+    scripts say when Node is missing, and they go on.
 
     To try the slides fetcher, give it the link of a deck that is shared with
     Anyone with the link:
@@ -499,7 +505,9 @@ Without one the Mini works as before and the block says No status yet.
 
 3. Run the install scripts again. The calendar and slides services each have
    a new line in their unit files that runs `status-write.sh` after the job, and
-   systemd only reads a changed unit file when the script copies it again:
+   systemd only reads a changed unit file when the script copies it again. The
+   calendar service has two more, which run `calendar-status.sh` and
+   `status-write.sh calendar-status` for the Calendars page:
 
        sudo /opt/teletraan/deploy/scripts/install-calendars.sh
        sudo /opt/teletraan/deploy/scripts/install-slides.sh
@@ -511,6 +519,9 @@ Without one the Mini works as before and the block says No status yet.
 
 - `teletraan-calendars.service` runs it after each calendar download, to write
   the calendar time and the time of the last content change it can see.
+- `teletraan-calendars.service` also runs `calendar-status.sh` and then
+  `status-write.sh calendar-status` after every run, failed or not, to write the
+  document the Calendars page shows (docs/calendars-page.md).
 - `teletraan-slides.service` runs it after each slides run, to write the slides
   time.
 - `kiosk.sh` runs it in the background when the screen starts, to write the
@@ -519,7 +530,9 @@ Without one the Mini works as before and the block says No status yet.
 Each of these runs it with a leading minus in the unit file, so a failed write
 is ignored and never makes a download look as if it failed. The services only
 run it when their own job worked, so after a failed calendar download the
-calendar time and the content time stay as they were.
+calendar time and the content time stay as they were. The two steps for the
+Calendars page are stop steps (`ExecStopPost`), which systemd runs after a failed
+download too, because the page has to show why a download failed.
 
 To try it by hand:
 
@@ -532,6 +545,12 @@ the token or an address.
 
 The dataset is public, so anyone who asks for the `status-mini` document can
 read it. It holds six times and nothing else.
+
+The `calendar-status` document is public in the same way and holds more: the
+titles, dates and times of the next 12 events of each calendar, including the
+events that a Calendar filter hides from the TV. It holds no calendar address.
+Anyone who asks the dataset for it can read those titles (docs/calendars-page.md,
+"Who can read it").
 
 Every job writes a new version of the document, and the screen re-reads its
 content each time Sanity says something changed. The slides service runs every
@@ -636,9 +655,11 @@ Each BAND calendar is one line in `deploy/local.env` on the Mini. To add one:
 
    It prints `calendar group: updated`, or the reason it could not download
    the calendar, and then keeps the old file. It never prints the address.
-5. To see what the screen will do with the calendar, run `check-calendars.sh`
-   on a computer that has Node, a copy of the repository and a
-   `deploy/local.env` with the same line. The Mini has no Node.
+5. To see what the screen will do with the calendar, open Calendars under
+   Events in Studio after the next run (docs/calendars-page.md). To see every
+   event at once, run `check-calendars.sh` on a computer that has Node, a copy
+   of the repository and a `deploy/local.env` with the same line. The Mini has
+   no Node, unless it was installed for the Calendars page.
 
        deploy/scripts/check-calendars.sh
 
@@ -669,7 +690,7 @@ Start with the log for the part that is wrong.
 | "Teletraan I could not start. Trying again in 30 seconds." | The browser works but the dashboard could not start, for example a file would not load or a panel failed. It retries by itself, and a fix that has been pulled is picked up on the next try. To see why, run the same commit on a laptop (`python3 tools/serve.py`) and read the browser console there. |
 | The screen says SANITY UNREACHABLE | Run `check-connection.sh` (see Checking the connection). Its FAIL lines say which part is wrong, and the reason on the screen says which kind of fault it is. |
 | The browser says it cannot connect | `sudo docker compose ps` in `/opt/teletraan/deploy`. If it is not running, run step 9 again. |
-| Calendars are old | `sudo journalctl -u teletraan-calendars.service -n 30`. "The server said no" usually means BAND changed the address. Get a new one and edit `CALENDAR_<ID>_URL` in `local.env`, see Adding or changing a calendar. The old file stays on screen until a download works. |
+| Calendars are old | Open Calendars under Events in Studio: each calendar says when it was last downloaded and why a download failed. Or `sudo journalctl -u teletraan-calendars.service -n 30`. "The server said no" usually means BAND changed the address. Get a new one and edit `CALENDAR_<ID>_URL` in `local.env`, see Adding or changing a calendar. The old file stays on screen until a download works. |
 | The TV says "Slides are not ready. Ask a coach." | `sudo journalctl -u teletraan-slides.service -n 30`. A line such as `talk [id]: no slides, not shared` gives the reason. A deck that is not shared is the usual one, see docs/presentations.md. If there are no lines for the talk at all, check that `sudo systemctl status teletraan-slides.timer` says active, and run step 11 again if it does not. |
 | A change never arrives | `sudo journalctl -u teletraan-pull.service -n 30`, then see the next three rows. |
 | The pull log says local changes would be overwritten | Someone edited a file on the Mini. Look with `git -C /opt/teletraan status`. Ask before throwing those changes away. Files on the Mini should never be edited by hand. |

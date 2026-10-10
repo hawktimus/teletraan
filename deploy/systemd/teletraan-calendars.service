@@ -15,5 +15,11 @@ ExecStart=/opt/teletraan/deploy/scripts/fetch-calendars.sh
 # here is ignored: the status must never mark a download as failed.
 ExecStartPost=-/opt/teletraan/deploy/scripts/status-write.sh calendar
 ExecStartPost=-/opt/teletraan/deploy/scripts/status-write.sh content
+# Tells Studio's Calendars page what each calendar brought in, or why a download
+# failed. These are stop steps because systemd skips ExecStartPost after a
+# failed download and runs ExecStopPost after any run, and a failed download is
+# what the page has to show. The minus means a failure here is ignored.
+ExecStopPost=-/opt/teletraan/deploy/scripts/calendar-status.sh
+ExecStopPost=-/opt/teletraan/deploy/scripts/status-write.sh calendar-status
 # Each download gives up after 60 seconds. This is for the whole run.
 TimeoutStartSec=10min

@@ -230,6 +230,7 @@ const studioOnlyFields = {
 };
 const studioOnlyTypes = {
   status: 'the Mini writes it for the status block, and the dashboard never reads it',
+  calendarStatus: 'the Mini writes it for the Calendars page, and the dashboard never reads it',
 };
 
 const itemTypes = ['task', 'plan', 'sponsor', 'tipOrNews', 'subteam', 'person', 'photo', 'customPanel'];
@@ -292,6 +293,7 @@ const notInSidebar = {
   place: 'a task\'s Location field adds a place with Create new and opens it from there',
   demo: 'its buttons are on Start here',
   status: 'the Mini writes it, and Dashboard Settings shows it in the status block at the top of the Screen tab',
+  calendarStatus: 'the Mini writes it, and the Calendars page shows it',
 };
 
 // The sidebar titles that people look for by name
@@ -405,7 +407,7 @@ function iconImportsOf(source) {
 
 function makeSandbox() {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-studio-'));
-  ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'calendars-view.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'publish-all.js', 'publish-all-tool.js', 'team-input.js', 'note-field.js', 'show-on-tv-input.js', 'status-input.js', 'panel-order-input.js', 'add-templates.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
+  ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'calendars-view.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'publish-all.js', 'publish-all-tool.js', 'team-input.js', 'note-field.js', 'show-on-tv-input.js', 'status-input.js', 'time-text.js', 'calendars-view-parts.js', 'panel-order-input.js', 'add-templates.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
     fs.cpSync(path.join(here, name), path.join(folder, name), { recursive: true });
   });
   fs.writeFileSync(path.join(folder, 'package.json'), JSON.stringify({ type: 'module' }));
@@ -2450,7 +2452,7 @@ function checkSettingsPage() {
   // The New menu in the top bar offers the types an editor adds, and not the pages that exist once, the
   // status document that the Mini writes or the types with no line in the sidebar. A place is still
   // offered while a document is open, which is where the Location field of a task has Create new.
-  const templates = ['task', 'plan', 'presentation', 'dashboardSettings', 'theme', 'demo', 'status', 'extraEvent', 'place'].map(name => ({ templateId: name }));
+  const templates = ['task', 'plan', 'presentation', 'dashboardSettings', 'theme', 'demo', 'status', 'calendarStatus', 'extraEvent', 'place'].map(name => ({ templateId: name }));
   const offeredIn = creationContext => world.config.document.newDocumentOptions(templates, creationContext === undefined ? {} : { creationContext: creationContext }).map(item => item.templateId).join();
   const menu = 'task,plan,presentation';
   if (offeredIn(undefined) !== menu) problems.push('the New menu should offer: ' + menu + '. It offers: ' + offeredIn(undefined));
@@ -4411,7 +4413,7 @@ function checkListAdds() {
   need(problems, sameData(given.slice(0, plain.length), plain), 'sanity.config.js should keep the templates the Studio makes for every type, and add its own after them');
   need(problems, given.slice(plain.length).map(template => template.id).join() === templates.map(template => template.id).join(), 'sanity.config.js should add the templates of add-templates.js, and no others');
 
-  const hidden = pageTypes.concat(['extraEvent', 'status']);
+  const hidden = pageTypes.concat(['extraEvent', 'status', 'calendarStatus']);
   const choicesIn = (list, creationContext) => world.config.document.newDocumentOptions(list, { creationContext: creationContext }).map(item => item.templateId).join();
   const plainChoices = plain.map(template => ({ templateId: template.id }));
   const allChoices = plainChoices.concat(templates.map(template => ({ templateId: template.id })));
@@ -4421,6 +4423,167 @@ function checkListAdds() {
     need(problems, choicesIn(plainChoices, creationContext) === want, 'the New menus should offer every kind of document except ' + hidden.join(', ') + ' and, outside a document, place. They offer: ' + choicesIn(plainChoices, creationContext));
     need(problems, choicesIn(allChoices, creationContext) === want, 'the New menus should not offer the templates of add-templates.js. They offer: ' + choicesIn(allChoices, creationContext));
   });
+  return problems;
+}
+
+// The document the Mini writes for the Calendars page (schemas/calendarStatus.js, written by
+// deploy/scripts/calendar-status.sh and status-write.sh calendar-status), and the page under
+// Events that shows it beside the calendars of Dashboard Settings (calendars-view.js, with its
+// words and rows in calendars-view-parts.js).
+const calendarStatusFields = ['updatedAt', 'eventsNote', 'calendars'];
+const calendarEntryFields = ['code', 'fetchedAt', 'error', 'eventCount', 'hiddenCount', 'occurrences'];
+const calendarEventFields = ['title', 'date', 'time', 'shown', 'rule'];
+
+function checkCalendarStatusType() {
+  const problems = [];
+  const type = typeByName('calendarStatus');
+  const entry = fieldAt('calendarStatus.calendars');
+  const events = fieldAt('calendarStatus.calendars.occurrences');
+  const names = item => fieldsIn(item || {}).map(field => field.name).join();
+
+  need(problems, type && type.type === 'document', 'calendarStatus should be a document type');
+  need(problems, names(type) === calendarStatusFields.join(), 'calendarStatus should have these fields, in this order: ' + calendarStatusFields.join(', '));
+  need(problems, names(entry) === calendarEntryFields.join(), 'a calendar of calendarStatus should have these fields, in this order: ' + calendarEntryFields.join(', '));
+  need(problems, names(events) === calendarEventFields.join(), 'an event of calendarStatus should have these fields, in this order: ' + calendarEventFields.join(', '));
+
+  const kinds = { 'updatedAt': 'datetime', 'eventsNote': 'string', 'calendars': 'array', 'calendars.code': 'string', 'calendars.fetchedAt': 'datetime', 'calendars.error': 'string', 'calendars.eventCount': 'number', 'calendars.hiddenCount': 'number', 'calendars.occurrences': 'array', 'calendars.occurrences.title': 'string', 'calendars.occurrences.date': 'string', 'calendars.occurrences.time': 'string', 'calendars.occurrences.shown': 'boolean', 'calendars.occurrences.rule': 'string' };
+  Object.keys(kinds).forEach(name => {
+    const field = fieldAt('calendarStatus.' + name);
+    need(problems, field && field.type === kinds[name], 'calendarStatus.' + name + ' should be a ' + kinds[name]);
+    need(problems, field && !constraintNamed(constraintsOf(field), 'required'), 'calendarStatus.' + name + ' should not be required: the Mini writes only what it knows');
+  });
+  need(problems, type && type.readOnly === true, 'calendarStatus should be read only: the Mini writes it');
+  need(problems, type && type.__experimental_omnisearch_visibility === false, 'calendarStatus should be kept out of Studio search');
+
+  // Editors never find it: no line in the sidebar and no place in the New menu
+  need(problems, allLines(world.structure.sidebarEntries).every(entry => entry.type !== 'calendarStatus'), 'the sidebar should have no line for the calendar status document');
+  const offered = world.config.document.newDocumentOptions([{ templateId: 'calendarStatus' }, { templateId: 'task' }], {}).map(item => item.templateId).join();
+  need(problems, offered === 'task', 'the New menu should not offer the calendar status document');
+
+  // The page and the scripts on the Mini use the same id and the same type
+  need(problems, world.calendarsParts.calendarStatusId === 'calendar-status', 'the Calendars page should read the document calendar-status');
+  const start = '{"_id":"calendar-status","_type":"calendarStatus",';
+  need(problems, world.statusScript.indexOf(start) !== -1, 'status-write.sh should only send a document that starts with ' + start);
+  need(problems, world.calendarStatusScript.indexOf(start) !== -1, 'calendar-status.sh should write a document that starts with ' + start);
+  need(problems, world.calendarStatusHelper.indexOf("_id: 'calendar-status'") !== -1 && world.calendarStatusHelper.indexOf("_type: 'calendarStatus'") !== -1, 'calendar-status.mjs should write the document calendar-status of the type calendarStatus');
+  calendarEntryFields.concat(calendarEventFields, ['updatedAt']).forEach(name => {
+    need(problems, world.calendarStatusHelper.indexOf(name) !== -1, 'calendar-status.mjs should write the field ' + name);
+  });
+  need(problems, world.calendarStatusScript.indexOf('eventsNote') !== -1, 'calendar-status.sh should write the field eventsNote');
+  return problems;
+}
+
+function checkCalendarsPage() {
+  const problems = [];
+  const parts = world.calendarsParts;
+  const view = world.calendarsView;
+  const line = allLines(world.structure.sidebarEntries).filter(entry => entry.title === 'Calendars')[0];
+  const now = new Date('2026-10-09T15:00:00.000Z');
+  const ago = minutes => new Date(now.getTime() - minutes * 60000).toISOString();
+  const entries = [{ id: 'team', name: 'Team calendar', show: true }, { id: 'outreach', name: 'Outreach', show: false }];
+  const status = {
+    _id: 'calendar-status',
+    updatedAt: ago(1),
+    calendars: [
+      {
+        code: 'team',
+        fetchedAt: ago(5),
+        eventCount: 14,
+        hiddenCount: 3,
+        occurrences: [
+          { _key: 'o1', title: 'Team meeting', date: 'MON OCT 12', time: '6:00 PM', shown: true, rule: '' },
+          { _key: 'o2', title: 'Pre-Season', date: 'TUE OCT 13', time: '', shown: false, rule: 'Hide Pre-Season' },
+        ],
+      },
+      { code: 'old', error: 'download failed, the server said no, so the address may be wrong or expired' },
+    ],
+  };
+
+  // The line in the sidebar opens this page, under Events, and is no longer a placeholder
+  need(problems, line && line.kind === 'component' && line.component === view.CalendarsView, 'the Calendars line of the sidebar should open CalendarsView from calendars-view.js');
+  need(problems, typeof view.calendarsPage === 'function' && typeof view.readCalendars === 'function', 'calendars-view.js should export calendarsPage and readCalendars');
+
+  // The page: the heading, the one line of help, and then the two sides
+  const page = view.calendarsPage({ entries: entries, status: status, entriesUnreadable: false, statusUnreadable: false }, 'outreach', () => {}, now);
+  need(problems, wordsIn(nodesWhere(page, node => node.type === 'h1')) === 'Calendars', 'the page should open with the heading Calendars');
+  const paragraphs = nodesWhere(page, node => node.type === 'p').map(wordsIn);
+  need(problems, paragraphs[0] === parts.helpLine, 'the first line under the heading should be the help line');
+  need(problems, /Calendar filters/.test(parts.helpLine) && /ask a coach/.test(parts.helpLine) && /address on the Mini/.test(parts.helpLine), 'the help line should say to add a rule under Calendar filters and to ask a coach to add the address on the Mini');
+  const left = nodesWhere(page, node => node.props && node.props['data-side'] === 'calendars')[0];
+  const right = nodesWhere(page, node => node.props && node.props['data-side'] === 'events')[0];
+  need(problems, left && right, 'the page should have a left side with the calendars and a right side with the events');
+
+  // The left side: a button for each calendar of Dashboard Settings and then the one only the Mini knows, the second picked
+  const picks = [];
+  const buttons = left ? nodesWhere(left, node => node.type === 'button') : [];
+  need(problems, buttons.length === 3 && buttons.every(button => button.props.type === 'button' && typeof button.props.onClick === 'function'), 'the left side should have a button for each calendar: the two of Dashboard Settings and the one only the Mini has');
+  need(problems, buttons.map(button => button.props['aria-pressed']).join() === 'false,true,false', 'the picked calendar should be marked pressed');
+  const first = view.calendarsPage({ entries: entries, status: status, entriesUnreadable: false, statusUnreadable: false }, 'team', code => picks.push(code), now);
+  nodesWhere(first, node => node.type === 'button').forEach(button => button.props.onClick());
+  need(problems, picks.join() === 'team,outreach,old', 'a button should pick the calendar of its row');
+  need(problems, buttons[0] && /Team calendar/.test(wordsIn(buttons[0])) && /14 events, 3 hidden/.test(wordsIn(buttons[0])) && /Downloaded 5 minutes ago/.test(wordsIn(buttons[0])), 'a row should say the name, the number of events and when it was downloaded');
+  need(problems, buttons[1] && /Switched off on the screen/.test(wordsIn(buttons[1])) && /Nothing yet/.test(wordsIn(buttons[1])), 'a row for a calendar the Mini has not described should say Nothing yet');
+
+  // The right side: the 12 events with a badge, and the rule for a hidden one
+  const tab = view.calendarsPage({ entries: entries, status: status, entriesUnreadable: false, statusUnreadable: false }, 'team', () => {}, now);
+  const events = nodesWhere(tab, node => node.type === 'li').map(wordsIn);
+  need(problems, events.length === 2 && /MON OCT 12 6:00 PM Team meeting SHOWN/.test(events[0]), 'an event should say its date, time, title and SHOWN');
+  need(problems, /TUE OCT 13 All day Pre-Season HIDDEN Hidden by Hide Pre-Season/.test(events[1]), 'a hidden event should say HIDDEN and the name of the rule');
+  const failed = wordsIn(view.calendarsPage({ entries: entries, status: status, entriesUnreadable: false, statusUnreadable: false }, 'old', () => {}, now));
+  need(problems, /Download failed, the server said no, so the address may be wrong or expired\./.test(failed), 'a calendar that failed to download should say why in a sentence');
+
+  // The line that says how old the document is
+  need(problems, /The Mini wrote this 1 minute ago\./.test(wordsIn(first)), 'the page should say when the Mini wrote the document');
+  need(problems, wordsIn(view.calendarsPage({ entries: entries, status: Object.assign({}, status, { updatedAt: undefined }), entriesUnreadable: false, statusUnreadable: false }, '', () => {}, now)).indexOf('The Mini wrote this') === -1, 'the page should say nothing about when the document was written when it has no time');
+
+  // Nothing yet, reading, and a document that cannot be read
+  const nothing = wordsIn(view.calendarsPage({ entries: [], status: null, entriesUnreadable: false, statusUnreadable: false }, '', () => {}, now));
+  need(problems, nothing.indexOf(parts.nothingYet) !== -1 && nothing.indexOf(parts.noCalendarsLine) !== -1, 'with no status and no calendars the page should say Nothing yet and that Dashboard Settings has no calendars');
+  const waiting = wordsIn(view.calendarsPage({ entries: entries, status: null, entriesUnreadable: false, statusUnreadable: false }, '', () => {}, now));
+  need(problems, nodesWhere(view.calendarsPage({ entries: entries, status: null, entriesUnreadable: false, statusUnreadable: false }, '', () => {}, now), node => node.type === 'button').length === 2 && waiting.indexOf(parts.nothingYet) !== -1, 'before the Mini has synced the page should list the calendars of Dashboard Settings and say Nothing yet');
+  need(problems, wordsIn(view.calendarsPage(null, '', () => {}, now)).indexOf('Reading the calendars') !== -1, 'the page should say it is reading while it waits');
+  need(problems, wordsIn(view.calendarsPage({ entries: entries, status: null, entriesUnreadable: false, statusUnreadable: true }, '', () => {}, now)).indexOf('could not be read') !== -1, 'the page should say so when the status cannot be read');
+  need(problems, wordsIn(view.calendarsPage({ entries: [], status: status, entriesUnreadable: true, statusUnreadable: false }, '', () => {}, now)).indexOf('Dashboard Settings could not be read') !== -1, 'the page should say so when Dashboard Settings cannot be read, and still list the calendars of the Mini');
+  need(problems, typeof view.CalendarsView === 'function' && JSON.stringify(view.CalendarsView()).indexOf('Reading the calendars') !== -1, 'CalendarsView should start by saying it is reading');
+
+  // Read only: the page never changes a document
+  need(problems, !/onChange|\.patch\(|\.create\(|\.createOrReplace\(|\.delete\(|\.mutate\(|\.transaction\(|useDocumentOperation/.test(world.calendarsViewSource), 'calendars-view.js should never change a document: no patch, create, delete, mutate or onChange');
+
+  // What a student reads is short plain sentences
+  [parts.helpLine, parts.nothingYet, parts.settingsLine, parts.publicLine, parts.noCalendarsLine].forEach(text => checkPlainSentences(problems, 'the Calendars page ("' + text.slice(0, 30) + '")', text));
+  need(problems, /dataset/.test(parts.publicLine) && /anyone can read/.test(parts.publicLine) && /hides/.test(parts.publicLine), 'the page should say the titles are in the dataset that anyone can read, even the ones a rule hides');
+  return problems;
+}
+
+// readCalendars asks for the published Dashboard Settings and the published status document by their ids, and never fails
+async function checkCalendarsRead() {
+  const problems = [];
+  const read = world.calendarsView.readCalendars;
+  const asked = [];
+  const answering = answers => ({
+    fetch: async (...args) => {
+      asked.push(args);
+      const answer = answers[args[1].id];
+      if (answer instanceof Error) throw answer;
+      return answer;
+    },
+  });
+
+  const found = await read(answering({ dashboardSettings: { calendars: [{ id: 'team', name: 'Team calendar', show: true }] }, 'calendar-status': { _id: 'calendar-status', calendars: [] } }));
+  need(problems, found.entries.length === 1 && found.status && found.status._id === 'calendar-status' && !found.entriesUnreadable && !found.statusUnreadable, 'both documents that are there should be handed over');
+  need(problems, asked.length === 2 && asked.every(call => call[2].perspective === 'published' && /_id == \$id/.test(call[0])), 'readCalendars should ask for the published documents by their ids');
+  need(problems, asked.map(call => call[1].id).join() === 'dashboardSettings,calendar-status', 'readCalendars should ask for dashboardSettings and calendar-status');
+
+  const none = await read(answering({ dashboardSettings: null, 'calendar-status': null }));
+  need(problems, sameData(none, { entries: [], status: null, entriesUnreadable: false, statusUnreadable: false }), 'no documents are a good answer, not a failure');
+  const odd = await read(answering({ dashboardSettings: { calendars: 'text' }, 'calendar-status': 'text' }));
+  need(problems, sameData(odd, { entries: [], status: null, entriesUnreadable: false, statusUnreadable: false }), 'answers that are not documents should be read as no documents');
+  const oneBad = await read(answering({ dashboardSettings: new Error('offline'), 'calendar-status': { _id: 'calendar-status', calendars: [] } }));
+  need(problems, oneBad.entriesUnreadable === true && oneBad.statusUnreadable === false && oneBad.status !== null, 'one document that cannot be read should not stop the other');
+  const failing = await read({ fetch: async () => { throw new Error('offline'); } });
+  need(problems, failing.entriesUnreadable === true && failing.statusUnreadable === true && failing.status === null && failing.entries.length === 0, 'a client that fails should give both as unreadable');
+  const empty = await read({});
+  need(problems, empty.entriesUnreadable === true && empty.statusUnreadable === true, 'a client with no fetch should give both as unreadable');
   return problems;
 }
 
@@ -4469,6 +4632,12 @@ async function main() {
     world.teamSeed = fs.readFileSync(path.join(here, '..', 'docs', 'seed', 'teams.ndjson'), 'utf8');
     world.hawktimusCss = fs.readFileSync(path.join(dashboardFolder, 'themes', 'hawktimus.css'), 'utf8');
     world.addTemplates = (await load(path.join(folder, 'add-templates.js'))).addTemplates;
+    world.timeText = await load(path.join(folder, 'time-text.js'));
+    world.calendarsParts = await load(path.join(folder, 'calendars-view-parts.js'));
+    world.calendarsView = await load(path.join(folder, 'calendars-view.js'));
+    world.calendarsViewSource = fs.readFileSync(path.join(here, 'calendars-view.js'), 'utf8');
+    world.calendarStatusScript = fs.readFileSync(path.join(here, '..', 'deploy', 'scripts', 'calendar-status.sh'), 'utf8');
+    world.calendarStatusHelper = fs.readFileSync(path.join(here, '..', 'deploy', 'scripts', 'calendar-status.mjs'), 'utf8');
   } finally {
     fs.rmSync(folder, { recursive: true, force: true });
   }
@@ -4532,6 +4701,9 @@ async function main() {
   check('every seasonal pack is complete, and draws only in the empty places (tools/check-seasons.mjs)', checkSeasonGuard);
   check('a task has a source, a priority and Show on TV, one from the board is read only except Show on TV, and the Tasks folder holds every task once', checkBoardTasks);
   check('each list under Every meeting, Events and Roster has a plus button that makes its own type with the starting values of the group, and the New menus are as they were', checkListAdds);
+  check('the calendar status document has the fields the Mini writes, is kept out of the sidebar and the New menu, and the scripts on the Mini write the same document', checkCalendarStatusType);
+  check('the Calendars page has the help line, the calendars of Dashboard Settings on the left and the next events with SHOWN or HIDDEN on the right, and changes nothing', checkCalendarsPage);
+  results.push({ name: 'the Calendars page asks for the published documents by their ids, and survives a client that fails', problems: await checkCalendarsRead().catch(error => ['the check stopped: ' + error.message]) });
 
   process.exitCode = report() > 0 ? 1 : 0;
 }

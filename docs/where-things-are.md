@@ -188,7 +188,8 @@ editors can sign in from anywhere.
     studio/                   the Sanity editing screen, its sidebar (structure.js: one list with a line
                               for each entry, so changing the order means moving a line,
                               docs/reordering-the-sidebar.md), its buttons (actions.js: the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons),
-                              its two pages that are not documents (start-here.js and calendars-view.js),
+                              its two pages that are not documents (start-here.js and calendars-view.js,
+                              whose rows and words are in calendars-view-parts.js, docs/calendars-page.md),
                               the words and picture of Start here (start-here-parts.js), what its request
                               buttons write, shared with actions.js (screen-requests.js), and the address
                               that Preview the screen opens (dashboard-address.js),
@@ -202,7 +203,9 @@ editors can sign in from anywhere.
                               days, presentation.js the booked talks and settingsPresentations.js the
                               Presentations tab of Dashboard Settings (docs/presentations.md). team.js is the
                               Teams list and settingsTeams.js the team fields of the Look tab. status.js is the
-                              document the Mini writes (the status block, settingsStatus.js and status-input.js). settingsRotation.js is the Panels
+                              document the Mini writes (the status block, settingsStatus.js and status-input.js), and calendarStatus.js
+                              the one it writes for the Calendars page. time-text.js has the ages in words that
+                              both use. settingsRotation.js is the Panels
                               box of Dashboard Settings, and panel-order-input.js fills its Panel order list when it is empty. The Team radio on tasks, sponsors and
                               the other kinds of content is team-input.js, put on each by teamField in fields.js
                               scripts/ has make-templates.mjs, which writes the CSV templates from the
@@ -212,7 +215,11 @@ editors can sign in from anywhere.
                               checks the Mini's connection to Sanity, BAND, Docker and the kiosk with one
                               OK or FAIL line each (docs/rebuilding-the-mini.md, "Checking the connection").
                               scripts/fetch-calendars.sh downloads the BAND calendars in local.env into the
-                              data folder (docs/calendar-links.md).
+                              data folder (docs/calendar-links.md) and leaves calendar-sync.txt, a line for
+                              each calendar with its last good download and why a download failed.
+                              scripts/calendar-status.sh makes the document for the Calendars page from it,
+                              and lists the next events when Node is installed, with calendar-status.mjs
+                              (docs/calendars-page.md).
                               scripts/check-calendars.sh lists the events of each calendar in local.env and
                               says which ones the Calendar filters hide. It needs Node, so it runs on a
                               computer that has it, not on the Mini. check-calendars.mjs is the part of it
@@ -288,6 +295,11 @@ editors can sign in from anywhere.
       test-calendars-script.mjs  checks for deploy/scripts/check-calendars.sh, with a fake curl
       test-status-write.mjs   checks for deploy/scripts/status-write.sh, with a fake curl, that the services and
                               kiosk.sh run it, and that the dashboard never reads the status document
+      test-calendar-status.mjs  checks for what the Mini writes for the Calendars page: the sync file of
+                              fetch-calendars.sh, the document of calendar-status.sh and calendar-status.mjs
+                              (SHOWN or HIDDEN with the rule, the error case, no address anywhere, with and
+                              without Node), and status-write.sh calendar-status, with a fake curl
+      test-calendars-view.mjs checks for the rows and lines of the Calendars page in Studio
       test-cybertron.mjs      checks for Cybertron on the layout of Original: which layout each style has, its four
                               frames, the stage, the banner and the ticker on their plates, the wide war clock, and
                               that the frames are drawn again when the style changes
@@ -328,7 +340,7 @@ editors can sign in from anywhere.
                               try-it-on-the-mini.md, the-logo.md, page-transitions.md, night-mode.md,
                               hidden-transitions.md, demo.md, publish-all.md, reordering-the-sidebar.md,
                               importing-from-csv.md, presentations.md, up-next.md, calendar-filters.md,
-                              calendar-links.md, hide-a-repeating-meeting.md, switch-the-look.md,
+                              calendar-links.md, calendars-page.md, hide-a-repeating-meeting.md, switch-the-look.md,
                               add-the-nova-team.md and team-on-an-item.md.
                               seed/ has content to import into the Studio: places.ndjson, the three
                               starting places, teams.ndjson, the two starting teams, and extra-events.ndjson, the
@@ -734,6 +746,8 @@ exception is `test-slides-script.mjs`, which needs `jq`.
     node tools/test-person-rows.mjs
     node tools/test-presentation-mouse.mjs
     node tools/test-console.mjs
+    node tools/test-calendar-status.mjs
+    node tools/test-calendars-view.mjs
     node tools/check-themes.mjs
     node tools/check-seasons.mjs
     node studio/check-schemas.mjs

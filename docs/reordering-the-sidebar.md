@@ -103,12 +103,14 @@ every task once. A task that expires while the Studio is open moves to Hidden wh
 page is loaded again.
 
 Events are not edited in the Studio. They come from the BAND calendars, and
-Calendars is a page that explains them. Three kinds of content have no line:
+Calendars is a page that shows what each one brings in (docs/calendars-page.md).
+Three kinds of content have no line:
 Events Calendar (the type `extraEvent`, which the screen no longer reads), Places
 (`place`, which a task's Location field adds and opens) and Demo (`demo`, whose
 buttons are on Start here). They are kept in the schema so that nothing already
-typed is lost. The status document (`status`) has no line either: the Mini writes
-it, and the status block at the top of the Screen tab of Dashboard Settings shows it.
+typed is lost. The status documents have no line either: the Mini writes them.
+`status` is shown by the status block at the top of the Screen tab of Dashboard
+Settings, and `calendarStatus` by the Calendars page.
 
 ## Change the order
 

@@ -60,6 +60,12 @@ echo "  3. turn on teletraan-calendars.timer (every 15 minutes), and restart it 
 echo "     changed schedule is used"
 echo "It leaves the pull timer and the kiosk alone."
 echo
+if ! command -v node > /dev/null 2>&1; then
+  echo "Node is not installed here. The Calendars page in Studio will say when each calendar"
+  echo "was downloaded and why a download failed, but it will not list the coming events."
+  echo "docs/calendars-page.md says how to turn the list on."
+  echo
+fi
 printf 'Press Enter to go ahead, or Ctrl+C to stop. '
 read -r answer
 

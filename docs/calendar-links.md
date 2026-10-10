@@ -34,7 +34,8 @@ Three things that share one short ID, such as GROUP:
    has its own `local.env`, so add the line there too.
 3. In Studio add the row in Dashboard Settings, Calendars, and click Publish.
 4. The events arrive within 15 minutes, or at once if someone runs
-   `fetch-calendars.sh` on the Mini. To see which events the TV will show, run
+   `fetch-calendars.sh` on the Mini. To see which events the TV will show, open
+   Calendars under Events in Studio (docs/calendars-page.md), or run
    `check-calendars.sh` (docs/calendar-filters.md, "Checking the rules").
 
 ## Change a link

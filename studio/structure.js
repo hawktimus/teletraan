@@ -4,9 +4,9 @@
 // kept in the schema with no line here, so the documents already typed keep
 // opening: extraEvent (Events Calendar, which the screen no longer reads),
 // place (a task's Location field adds and opens them) and demo (its
-// buttons are on Start here). The status document, which the Mini writes and the
-// status block in Dashboard Settings shows, has no line either. check-schemas.mjs
-// lists them with the reason.
+// buttons are on Start here). The status documents, which the Mini writes, have no line
+// either: status, which the status block in Dashboard Settings shows, and calendarStatus,
+// which the Calendars page shows. check-schemas.mjs lists them with the reason.
 //
 // One line is one entry:
 //   kind 'list'       opens the list of one kind of document (type). With a filter it
