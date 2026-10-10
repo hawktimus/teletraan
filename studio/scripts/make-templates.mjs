@@ -63,7 +63,7 @@ const lastColumns = {
   extraEvent: ['team'],
   sponsor: ['team'],
   tipOrNews: ['team'],
-  subteam: ['team'],
+  subteam: ['team', 'showPhoto'],
   person: ['team'],
   customPanel: ['team'],
 };
@@ -89,7 +89,7 @@ const examples = {
   tipOrNews: { kind: 'tip', text: '[A tip for the team.]', order: '1', show: 'yes' },
   subteam: {
     name: '[Subteam A]', lead: '[Lead name]', members: '[Student A] | [Student B]', spotlight: 'yes', spotlightHeadline: '[What the subteam did]',
-    spotlightText: "[Two or three short sentences about the subteam's work.]", order: '1', show: 'yes',
+    spotlightText: "[Two or three short sentences about the subteam's work.]", order: '1', show: 'yes', showPhoto: 'yes',
   },
   place: { name: '[Place name]', show: 'yes' },
   person: { role: 'Captain', name: '[Person name]', showPhoto: 'yes', order: '1', show: 'yes' },

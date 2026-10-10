@@ -1,8 +1,13 @@
-// The coaches and captains, one row each, four rows (core/leadership.js).
+// The coaches and captains, one row each. A page holds four rows at the standard
+// portrait size and fewer at a bigger one, and each time the panel comes round it
+// shows the next page, so everyone is shown (core/leadership.js).
 
 import { doubleSlash } from '../../core/marks.js';
+import { makePages } from '../../core/turns.js';
 import { leaders } from '../../core/leadership.js';
-import { photoAddress, rowsMarkup, watchPhotos } from '../../core/portrait.js';
+import { photoAddress, preloadPhotos, rowLayout, rowsMarkup, rowsPerPage, watchPhotos } from '../../core/portrait.js';
+
+const nextPage = makePages(rowsPerPage);
 
 // The role also decides the metal of the frame round the picture: gold, silver
 // or red. To change a colour, change a word here. A role that is not in this
@@ -14,7 +19,9 @@ export function hasContent(content) {
 }
 
 export function mount(host, content) {
-  const rows = leaders(content.people).map(personRow);
+  const scale = content.settings && content.settings.portraitScale;
+  const page = nextPage(leaders(content.people), rowLayout(scale).rows);
+  const rows = page.items.map(personRow);
 
   host.innerHTML = `
     <section class="page leadership">
@@ -26,10 +33,11 @@ export function mount(host, content) {
         </div>
       </div>
 
-      ${rowsMarkup(rows, content.settings && content.settings.portraitScale)}
+      ${rowsMarkup(rows, scale)}
     </section>`;
 
   watchPhotos(host);
+  preloadPhotos(page.upcoming);
 }
 
 // What is written at the right end is the typed title, or the role if there is none.

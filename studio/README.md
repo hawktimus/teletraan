@@ -236,8 +236,9 @@ never enlarged, in a small format (`screenPhotoUrl` in
 `dashboard/core/images.js`), and needs no CORS origin beyond the one in step 6.
 The photo settings in the Screen tab of Dashboard Settings (`schemas/settingsPhotos.js`) have Photo
 order (Random or Newest first), Seconds per photo (6 to 120, starting at
-16), Portrait size and Photo size (each a whole percent from 60 to 100,
-starting at 100, which is the full size). Nothing needs setting up beyond the steps above. Run `npm run deploy`
+16), Portrait size (a whole percent from 60 to 200, starting at 100, which is
+the standard size; 200 is double) and Photo size (from 60 to 100, starting at
+100, which is the full size). Nothing needs setting up beyond the steps above. Run `npm run deploy`
 after you change `schemas/photo.js` or `schemas/settingsPhotos.js`, so the
 editors see the change. docs/editing-content.md has the advice for the people
 who upload: first names only, no last names in captions, location tagging off
@@ -316,11 +317,12 @@ docs/hidden-transitions.md explains how it works.
 ## Photos of people
 
 Leadership has a Photo field, an image the editors upload in Studio, and a
-"Show photo on screen" switch. Nothing needs setting up for it beyond the
-steps above. The dashboard shows the photo from Sanity's image address, which
-needs no CORS origin, and asks for it cut to the size it is shown. Run
-`npm run deploy` after you change `schemas/person.js`, so the editors see the
-change. docs/editing-content.md has the advice for the people who upload.
+"Show photo on screen" switch. A Team lead has the same two fields. Nothing
+needs setting up for them beyond the steps above. The dashboard shows the photo
+from Sanity's image address, which needs no CORS origin, and asks for it cut to
+the size it is shown. Run `npm run deploy` after you change `schemas/person.js`
+or `schemas/subteam.js`, so the editors see the change.
+docs/editing-content.md has the advice for the people who upload.
 
 ## Look
 

@@ -44,6 +44,20 @@ export default defineType({
       validation: Rule => tooLong(Rule, 17),
     }),
     defineField({
+      name: 'photo',
+      title: 'Photo',
+      type: 'image',
+      description: 'A square photo of the lead with a plain background. First name only goes in Lead. Drag the circle onto the face so the screen crops around it.',
+      options: { hotspot: true, accept: 'image/*' },
+    }),
+    defineField({
+      name: 'showPhoto',
+      title: 'Show photo on screen',
+      type: 'boolean',
+      description: 'Turn this off to show a plain silhouette instead of the photo, without deleting the photo.',
+      initialValue: true,
+    }),
+    defineField({
       name: 'members',
       title: 'Members',
       type: 'array',
@@ -88,7 +102,7 @@ export default defineType({
   ],
   orderings: [byOrder, aToZ('name')],
   preview: {
-    select: { title: 'name', lead: 'lead', members: 'members', spotlight: 'spotlight', show: 'show', expires: 'expires' },
+    select: { title: 'name', lead: 'lead', members: 'members', spotlight: 'spotlight', show: 'show', expires: 'expires', media: 'photo' },
     prepare(item) {
       // the Team Leads panel shows the lead, with the department at the right end, or the department and [lead]
       const lead = typeof item.lead === 'string' ? item.lead.trim() : '';
@@ -97,7 +111,7 @@ export default defineType({
       const count = Array.isArray(item.members) ? item.members.length : 0;
       const members = count === 1 ? '1 member' : count > 1 ? count + ' members' : '';
       const text = [role, members, item.spotlight ? 'In the spotlight' : ''].filter(Boolean).join(' · ');
-      return { title: lead || department || 'Team lead with no name', subtitle: subtitleFor(text, item) };
+      return { title: lead || department || 'Team lead with no name', subtitle: subtitleFor(text, item), media: item.media };
     },
   },
 });

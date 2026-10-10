@@ -47,9 +47,9 @@ shows for both teams.
 - The talks in Daily Agenda are the ones for the team on the screen. A talk for the other
   team is not listed there, but it still runs at its start time, whichever team is
   showing, because a booked talk takes the whole screen.
-- A subteam lead's portrait on Team Leads and Subteam roster is the person in
-  Leadership with the same name. If that person is for the other team, the lead
-  shows the silhouette.
+- A subteam lead's portrait on Team Leads and Subteam roster is the Photo on the
+  Team lead entry. An entry with no photo uses the person in Leadership with the
+  same name. If that person is for the other team, the lead shows the silhouette.
 - A Meeting day has the field, but the screen does not read Meeting days, so a team
   on a Meeting day changes nothing on the screen.
 - A team that has been deleted counts as no team, so its items show for both.

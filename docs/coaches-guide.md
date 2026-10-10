@@ -217,20 +217,28 @@ docs/calendar-filters.md, "Pinning an event".
 
 ## Team leads and Leadership
 
-Both panels show rows, four to a panel. A row has the framed photo at the left,
-the name beside it and the role at the right end in the team color.
+Both panels show rows, four to a panel at the standard portrait size. A row has
+the framed photo at the left, the name beside it and the role at the right end in
+the team color.
 
-- Leadership is one panel: the coaches, then the captains, then the mentors, each
-  group in Order, and the first four show. Two coaches and two captains fill it.
+- Leadership shows the coaches, then the captains, then the mentors, each group in
+  Order. Two coaches and two captains fill the four rows. With more people, the
+  panel shows the next rows each time it comes round.
 - Team leads has a row for each subteam, in Order: the name of the lead, and the
   subteam with LEAD after it at the right end. Twelve subteams are three panels of
   four, and the panel shows the next four each time it comes round. A subteam with
   no lead shows its own name and [lead], so a gap can be seen from across the room.
-- The photo of a lead is the photo of the person in Leadership with the same name.
-  With no match the row shows the silhouette.
+- The photo of a lead is the Photo on its Team lead entry. An entry with no photo
+  shows the photo of the person in Leadership with the same name, and with no
+  match the row shows the silhouette. Turn off Show photo on screen on the entry
+  to show the silhouette whatever Leadership has.
 
-Portrait size, percent in the Screen tab changes the photos and never the text
-(docs/editing-content.md, "Photos of people").
+Portrait size, percent in the Screen tab changes the photos and never the text.
+It goes from 60 to 200: 100 is the standard size and 200 is double. Above 100 the
+rows get taller, so a page holds 3 rows (to 139) or 2 (from 140), and the panels
+show the next rows each time they come round. Subteam roster stays at 100. The
+table and the way to pick a value are in docs/editing-content.md, under "Order,
+time on screen and size".
 
 ## Hidden effects by hours
 

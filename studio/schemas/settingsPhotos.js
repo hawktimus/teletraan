@@ -4,14 +4,17 @@
 //
 //   photoOrder     random (the default) or newest first
 //   photoSeconds   seconds the panel stays up, from 6 to 120, starting at 16
-//   portraitScale  size of the portraits, in percent, from 60 to 100, starting at 100
-//   photoScale     size of the picture in the Photo panel, the same range
+//   portraitScale  size of the portraits, in percent, from 60 to 200, starting at 100
+//   photoScale     size of the picture in the Photo panel, from 60 to 100
 //
 // The choices are the names in photoOrders in dashboard/config.js, and the
 // starting values and limits are the same as defaultSettings and limits there.
 // check-schemas.mjs fails if they differ. The photos themselves are in
-// photo.js. 100 percent is the full size, the largest that fits the frames
-// (core/portrait.js and core/photos.js work out the smaller sizes).
+// photo.js. For the Photo panel 100 percent is the full size, the largest that
+// fits the frame (core/photos.js works out the smaller sizes). For the
+// portraits 100 is the standard size and 200 is double: above 100 the rows of
+// Leadership and Team Leads get taller and fewer fit on a page
+// (core/portrait.js, rowLayout).
 //
 // To take the whole section out later: delete this file, remove its import and
 // the line that uses photosFields in dashboardSettings.js, and remove the same
@@ -60,11 +63,11 @@ export function photosFields() {
       title: 'Portrait size, percent',
       type: 'number',
       group: 'screen',
-      description: 'How big the portraits are on Leadership, Team Leads and Roster, from 60 to 100. 100 is the full size and the largest that fits the frame.',
+      description: 'From 60 to 200. 100 is standard and 200 is double. Above 100 a page of Leadership or Team Leads holds 3 rows (to 139) or 2 (from 140). Roster stays at 100.',
       initialValue: 100,
       validation: Rule => [
-        Rule.required().error('Enter a percent from 60 to 100.'),
-        Rule.integer().min(60).max(100).error('Use a whole number from 60 to 100.'),
+        Rule.required().error('Enter a percent from 60 to 200.'),
+        Rule.integer().min(60).max(200).error('Use a whole number from 60 to 200.'),
       ],
     }),
 

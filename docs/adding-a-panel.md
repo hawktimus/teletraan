@@ -147,16 +147,23 @@ panel. A panel that needs a line, a card or a bar uses one of these:
   Leave `address` empty and it shows the silhouette. `scale` is the Portrait
   size setting, `content.settings.portraitScale`, a percent (leave it out for
   100): the portrait is 292 square at 100 and gets smaller in proportion, and
-  every panel that draws a portrait should pass it. `roster.js` draws one as
+  every panel that draws a portrait should pass it. A slot stays at 100 when the
+  setting is above it, because the name sits beside it. `roster.js` draws one as
   the team lead beside a list of names.
 - **Rows of people.** `rowsMarkup(rows, scale)` in `core/portrait.js` draws up
-  to `rowsPerPage` (4) rows, each `{ name, role, address, metal }`: the photo at
-  the left, the name beside it and the role at the right end. `leadership.js`
-  and `team-leads.js` use it. `team-leads.js` gets a page of rows at a time from
-  `makePages(rowsPerPage)` in `core/turns.js`, which counts the pages between
-  turns of the panel. `leadership.js` is one page, picked by `leaders` in
-  `core/leadership.js`. Both call `watchPhotos` from `core/portrait.js`. The
-  rules of the rows and of the slot are in `base.css`, under People portraits.
+  to `rowLayout(scale).rows` rows, each `{ name, role, address, metal }`: the
+  photo at the left, the name beside it and the role at the right end. That is
+  4 rows up to a Portrait size of 100, then 3 and 2, because a bigger portrait
+  needs a taller row. `rowLayout` also says whether the role goes under the name.
+  `leadership.js` and `team-leads.js` use it. Both get a page of rows at a time
+  from `makePages(rowsPerPage)` in `core/turns.js`, which counts the pages
+  between turns of the panel, and each turn gives it the size of the page from
+  `rowLayout`: `nextPage(list, rowLayout(scale).rows)`. A panel that cuts its list
+  to one page would drop people when the page gets smaller, so let it page.
+  `leadership.js` is given everyone by `leaders` in `core/leadership.js`. The
+  photo of a team lead comes from `leadAddress` in `core/portrait.js`. Both call
+  `watchPhotos` from `core/portrait.js`. The rules of the rows and of the slot are
+  in `base.css`, under People portraits.
 - **A straight bar.** `<div class="bar"></div>` is 16px high, or add
   `bar-thin` for 8px. Give it a width. The banner rule is one.
 - **A tag.** `tagMarkup(width)` is the slanted purple tag of the ticker.

@@ -23,24 +23,37 @@ export function makeTurns() {
 //   number    this page, counting from 1
 //   count     how many pages there are
 // The first page comes round again after the last.
+//
+// A panel whose page size can change, because a setting changes it, gives the size
+// it wants at each turn: nextPage(list, 2). The size in makePages(4) is the one used
+// when a turn gives none. After a change the next page starts at the first item
+// that has not been shown yet, so nobody is skipped.
 
 export function makePages(size) {
   let position = 0;
+  let shownSize = size;
 
-  function pageOf(list, index) {
-    return list.slice(index * size, index * size + size);
+  function pageOf(list, index, perPage) {
+    return list.slice(index * perPage, index * perPage + perPage);
   }
 
-  return function next(list) {
-    const count = Math.max(1, Math.ceil(list.length / size));
+  return function next(list, perPage = size) {
+    // A new size starts at the first item not shown yet. Rounding down repeats an item rather than
+    // skipping one, and when every item has been shown the first page comes next.
+    if (perPage !== shownSize) {
+      const unseen = position * shownSize;
+      position = unseen >= list.length ? 0 : Math.floor(unseen / perPage);
+      shownSize = perPage;
+    }
+    const count = Math.max(1, Math.ceil(list.length / perPage));
 
     // The list can be shorter than last time, so count round the pages as they are now
     const index = position % count;
     position = index + 1;
 
     return {
-      items: pageOf(list, index),
-      upcoming: count > 1 ? pageOf(list, (index + 1) % count) : [],
+      items: pageOf(list, index, perPage),
+      upcoming: count > 1 ? pageOf(list, (index + 1) % count, perPage) : [],
       number: index + 1,
       count: count,
     };

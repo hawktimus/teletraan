@@ -1,11 +1,11 @@
-// The people on the Leadership panel. The panel is one page of four rows: the
-// coaches first, then the captains, then the mentors. With two coaches and two
-// captains, which is the team, those four are the page. With more than four
-// people, the first four show.
+// The people on the Leadership panel: the coaches first, then the captains, then
+// the mentors. The panel shows as many rows as the Portrait size leaves room for,
+// four at 100, and each time it comes round it shows the next rows, so everyone is
+// shown. With two coaches and two captains, which is the team, those four are one
+// page at 100.
 
 import { hasText } from './text.js';
 import { visibleItems } from './content.js';
-import { rowsPerPage } from './portrait.js';
 
 // Roles are shown in this order. A role that is not in the list (an old
 // entry, or a typed one) comes after them.
@@ -31,12 +31,10 @@ function groupsOf(people) {
     .filter(group => group.length > 0);
 }
 
-// The people to show, in the order of the rows. Hidden and expired people are
+// Everyone to show, in the order of the rows. Hidden and expired people are
 // left out, and so is a person with neither a name nor a role.
 export function leaders(people) {
   const showing = visibleItems(people).filter(person => hasText(person.name) || hasText(person.role));
 
-  return groupsOf(showing)
-    .reduce((all, group) => all.concat(group), [])
-    .slice(0, rowsPerPage);
+  return groupsOf(showing).reduce((all, group) => all.concat(group), []);
 }

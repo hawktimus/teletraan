@@ -183,7 +183,7 @@ test('a few rows become documents with fixed ids, and a second run gives the sam
   assert.equal(first.status, 0, first.message);
   assert.equal(first.text, second.text);
   assert.deepEqual(first.docs.map(doc => doc._id), ['subteam-alpha', 'subteam-beta-crew', 'task-wire-the-robot', 'task-done-wheels']);
-  assert.deepEqual(first.docs[0], { _id: 'subteam-alpha', _type: 'subteam', name: 'Alpha', lead: 'Lead', spotlight: false, show: true });
+  assert.deepEqual(first.docs[0], { _id: 'subteam-alpha', _type: 'subteam', name: 'Alpha', lead: 'Lead', spotlight: false, show: true, showPhoto: true });
   assert.equal(first.docs[1].show, false);
   assert.deepEqual(first.docs[2], {
     _id: 'task-wire-the-robot', _type: 'task', title: 'Wire the robot',
@@ -378,8 +378,8 @@ test('a row points at a team by its code, capitals ignored, and a CSV made befor
   };
   Object.keys(rowFor).forEach(type => {
     const top = rowsOf(templates[type]);
-    // a task has priority and showOnTv after the team, because they were added after it
-    const teamAt = top[0].length - 1 - (type === 'task' ? 2 : 0);
+    // a task has priority and showOnTv after the team, and a team lead has the photo switch, because they were added after it
+    const teamAt = top[0].length - 1 - (type === 'task' ? 2 : type === 'subteam' ? 1 : 0);
     assert.equal(top[0][teamAt], 'team', type + ': team should be the last column');
     assert.equal(top[1][teamAt], 'name of team', type);
     assert.equal(top[2][teamAt], '', type + ': the EXAMPLE row leaves the team empty, which means both teams');
