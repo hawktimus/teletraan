@@ -92,7 +92,7 @@ function settingsThrough(settings) {
   ];
 }
 
-// The chance ------------------------------------------------------------------------
+// The chance
 
 test('a page change every 20 seconds and 60 hours give 1 chance in 10800', () => {
   assert.equal(Math.round(1 / chancePerChange(60, 20)), 10800);
@@ -157,7 +157,7 @@ test('hours set on a transition win over its percent, and each transition has it
   assert.equal(chooseAt(0.006, onlyRed).choice, null);
 });
 
-// The percent, for a page saved before the hours --------------------------------------
+// The percent, for a page saved before the hours
 
 test('a page with no hours rolls by its percent, as it always did', () => {
   [undefined, null, 0, -5, 0.5, NaN, Infinity, '60', true, [], {}].forEach(value => {
@@ -223,7 +223,7 @@ test('every transition in the registry has hours with limits, a starting value o
   });
 });
 
-// The gap -----------------------------------------------------------------------------
+// The gap
 
 test('after a transition has played none comes about by chance for 4 hours', () => {
   assert.equal(config.hiddenGapHours, 4);

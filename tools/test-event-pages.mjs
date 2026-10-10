@@ -146,7 +146,7 @@ function ruleOf(css, selector) {
   return found ? found[1] : '';
 }
 
-// The two pages -------------------------------------------------------------------------
+// The two pages
 
 test('four events are a page: the next four on page one, the four after them on page two, and the rest on neither', () => {
   const content = contentFor(inOrder(10));
@@ -220,7 +220,7 @@ test('the panel draws the page it is given, four rows to a page, with the same h
   assert.deepEqual(titlesIn(drawn(contentFor(inOrder(6)), 2)), ['Event 5', 'Event 6'], 'a short second page keeps its rows at the top');
 });
 
-// The kind ---------------------------------------------------------------------------------
+// The kind
 
 test('the kind of an event is the kind of its calendar, and Other when the calendar has none, a kind that is not in the list, or no row', () => {
   const kinds = calendarRows.map(row => kindOf({ calendarId: row.id }, calendarRows));
@@ -261,7 +261,7 @@ test('what editors typed in the title is escaped, and the chip is plain words th
   assert.deepEqual(chipsIn(html), ['MEETING']);
 });
 
-// Group events by kind -------------------------------------------------------------------
+// Group events by kind
 
 // Eight events a day apart in calendars of the five kinds: 1 meetings, 2 competitions, 3 outreach,
 // 4 deadlines, 5 other, 6 meetings, 7 competitions, 8 outreach, then 9 deadlines and 10 meetings
@@ -311,7 +311,7 @@ test('with the grouping on, a page with none of its kinds does not run, and the 
   assert.equal(eventsPanel.hasContent(onlyMeetings, 1), true);
 });
 
-// Pinned events ---------------------------------------------------------------------------
+// Pinned events
 
 test('a pinned event is first on page one even when it is not one of the next eight, and the other places fill by date as before', () => {
   const events = inOrder(10);
@@ -411,7 +411,7 @@ test('only a pinned row has the pin mark, and the mark is 44 square', () => {
   assert.equal(countOf(drawn(contentFor(inOrder(10)), 1), 'pin-mark'), 0, 'with no rule there is no mark');
 });
 
-// What the reader and the settings give -------------------------------------------------------
+// What the reader and the settings give
 
 test('the reader keeps force on a rule when it is true, and drops it when it is false or missing', () => {
   const rules = [
@@ -460,7 +460,7 @@ test('the sample content has a kind on its calendar and enough events for both p
   assert.equal(first.concat(second).every(item => item.kind === row.kind), true);
 });
 
-// The step for each page in the rotation -----------------------------------------------------------
+// The step for each page in the rotation
 
 test('the registry gives the Events panel two pages and every other panel one', () => {
   registry.panels.forEach(panel => {
@@ -630,7 +630,7 @@ test('both pages of the Events panel stay on screen as long as the row says', as
   });
 });
 
-// The look of a row ----------------------------------------------------------------------------
+// The look of a row
 
 test('the chip is 44px or more, the title is on one line that ends in an ellipsis, and only the title gives way', () => {
   const css = read('panels/events/events.css');
@@ -669,7 +669,7 @@ test('the Events stylesheet moves nothing and has no blur, glow, shadow or filte
   ['animate', 'requestAnimationFrame', 'setTimeout', 'setInterval', 'style.transform'].forEach(word => assert.equal(script.includes(word), false, word));
 });
 
-// The Events Calendar entries --------------------------------------------------------------------
+// The Events Calendar entries
 
 test('nothing in the dashboard reads the Events Calendar entries any more', () => {
   const found = [];
@@ -686,7 +686,7 @@ test('nothing in the dashboard reads the Events Calendar entries any more', () =
   assert.equal(JSON.stringify(Object.keys(normalizeContent({}, new Date()))).includes('extraEvent'), false);
 });
 
-// The docs ----------------------------------------------------------------------------------------
+// The docs
 
 test('the docs say what the two pages are, the kinds, the grouping and the pin', () => {
   const filters = fs.readFileSync(path.join(docsFolder, 'calendar-filters.md'), 'utf8').replace(/\s+/g, ' ');

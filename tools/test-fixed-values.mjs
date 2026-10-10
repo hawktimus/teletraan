@@ -58,7 +58,7 @@ const oddStored = [
   {},
 ];
 
-// The fixed values -------------------------------------------------------------
+// The fixed values
 
 test('constants.js holds the four values with the numbers the Studio fields start as, and nothing else', () => {
   assert.deepEqual(Object.keys(constants).sort(), names.slice().sort());
@@ -76,7 +76,7 @@ test('config.js has no default and no limit for the four any more', () => {
   names.forEach(name => assert.equal(name in withDefaults({}).settings, false, name + ' in a page with no settings'));
 });
 
-// Night mode ----------------------------------------------------------------------
+// Night mode
 
 test('night mode runs from 23:30 to 11:30 in the Look page zone, whatever start and end the settings hold', () => {
   // 15 January 2027: New York is UTC-5, so 04:30Z is 23:30 and 16:30Z is 11:30
@@ -110,7 +110,7 @@ test('the switch, the preview and the address still decide as before, with odd t
   assert.equal(night.nightWanted(Object.assign({ nightEnabled: true }, stored), eastern, midnight, 'off'), false);
 });
 
-// Presentations --------------------------------------------------------------------
+// Presentations
 
 const second = 1000;
 const minute = 60 * second;
@@ -165,7 +165,7 @@ test('talkEnd takes an overrun in minutes, which is the fixed one when none is g
   assert.equal(presentation.talkEnd(talk, 0).toISOString(), '2026-10-08T19:15:00.000Z', 'the Up Next panel asks for none');
 });
 
-// The reader -----------------------------------------------------------------------
+// The reader
 
 test('the reader leaves the four stored values out of the settings, from Sanity and from the sample', () => {
   oddStored.forEach(stored => {

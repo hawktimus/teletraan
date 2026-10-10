@@ -83,7 +83,7 @@ function openCountText(tasks) {
   return host.innerHTML;
 }
 
-// A task is from the board only when its source is monday -----------------------
+// A task is from the board only when its source is monday
 
 test('a task is from the board only when its source is monday, so a task with no source is pinned', () => {
   assert.equal(isFromBoard({ source: 'monday' }), true);
@@ -106,7 +106,7 @@ test('pinnedFirst puts pinned tasks before board tasks and keeps the order insid
   assert.deepEqual(titlesOf(pinnedFirst([{ title: 'only' }])), ['only']);
 });
 
-// Pinned above board ----------------------------------------------------------
+// Pinned above board
 
 test('normalizeContent sorts by Order as before, then puts pinned tasks above board tasks', () => {
   const result = {
@@ -159,7 +159,7 @@ test('the Tasks panel puts a pinned task before a board task of the same status'
   assert.deepEqual(rows.map(row => titlesOf(row.tasks)), [['pinned second', 'board first']]);
 });
 
-// Show on TV ------------------------------------------------------------------
+// Show on TV
 
 test('a task with Show on TV off never shows, whatever its source, and nothing else about the switch is read', () => {
   assert.equal(isVisible({ title: 'a', showOnTv: false }, now), false);
@@ -210,7 +210,7 @@ test('the query sends every field of a task, so the new ones reach the screen wi
   assert.ok(/\{\s*\.\.\.,/.test(part), part);
 });
 
-// A task with none of the new fields -------------------------------------------
+// A task with none of the new fields
 
 // The rule as it was before the new fields: Order first and lowest first, the rest in the order
 // they were made, and a task is shown unless it is switched off, expired or for the other team.

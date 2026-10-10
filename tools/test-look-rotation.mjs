@@ -100,7 +100,7 @@ function walk(machine, from, count) {
 
 const other = style => (style === 'original' ? 'cybertron' : 'original');
 
-// The day -------------------------------------------------------------------------
+// The day
 
 test('a day is the same number from midnight to midnight in the time zone of the Look page, and one more after it', () => {
   const zone = 'America/New_York'; // 4 hours behind UTC in October
@@ -143,7 +143,7 @@ test('a list with nothing in it has no style, and a name that is not a style is 
   assert.equal(styleForDay(['red', 'cybertron'], 8), 'cybertron');
 });
 
-// The cycle -----------------------------------------------------------------------
+// The cycle
 
 test('a cycle of two styles, two teams and Monday rows on one team is Prime, Prime Monday, Nova, in that order', () => {
   const passes = planCycle({ style: 'original', mondayStyle: 'minimal', teams: ['prime', 'nova'], hasMonday: code => code === 'prime' });
@@ -317,7 +317,7 @@ test('the swap is the setting, and assemble when the setting is not one', () => 
   assert.equal(odd.boundary(seconds(noonOnTheTwelfth, 20)).swap, 'assemble');
 });
 
-// The boundary rule ---------------------------------------------------------------
+// The boundary rule
 
 test('the rotation moves only when it is asked at the end of a pass, and then only if the pass has run its shortest time', () => {
   const machine = rotationFor(contentWith({}));
@@ -385,7 +385,7 @@ test('the swap pauses the rotation by the count other callers use, and gives it 
   assert.equal((run.match(/resumeRotation\(\)/g) || []).length, 1);
 });
 
-// A screen that restarts ------------------------------------------------------------
+// A screen that restarts
 
 test('a screen that restarts lands on the style of the day, however long it was off and whatever it had kept', () => {
   const content = contentWith({});
@@ -465,7 +465,7 @@ test('the pass is written down again every half minute, so a reload long into a 
   assert.equal(JSON.parse(storage.kept[rotation.stateKey]).since, noonOnTheTwelfth.getTime(), 'with the time the pass began');
 });
 
-// One look holds, and empty lists give the choice back ------------------------------
+// One look holds, and empty lists give the choice back
 
 test('one style and one team make one pass for ever, over days, and nothing is ever handed on', () => {
   const content = contentWith({ dailyStyles: ['cybertron'], teamOrder: ['prime'] });
@@ -533,7 +533,7 @@ test('a content with no settings at all holds nothing', () => {
   assert.deepEqual(nothing.begin(noonOnTheTwelfth), { style: '', team: '' });
 });
 
-// Cleaning the settings -------------------------------------------------------------
+// Cleaning the settings
 
 test('settings that are missing are the starting ones: Original then Cybertron, Minimal, Prime then Nova, assemble', () => {
   const settings = withDefaults({}).settings;
@@ -589,7 +589,7 @@ test('the sample content has the rotation, with codes of the sample teams', () =
   settings.teamOrder.forEach(code => assert.ok(codes.includes(code), code));
 });
 
-// Style and team are held, not set ------------------------------------------------
+// Style and team are held, not set
 
 test('a style the rotation holds wins over the setting and loses to the address and to a preview', () => {
   const later = new Date(Date.now() + 60000);
@@ -653,7 +653,7 @@ test('the style and the team go on the page only through the modules a preview u
   assert.ok(previewModule.previewKinds.cybertron.style === 'cybertron', 'the previews hold the style in the same module');
 });
 
-// Next look now ---------------------------------------------------------------------
+// Next look now
 
 test('a click is read as a time, and a time that is not one is no click', () => {
   assert.deepEqual(tidyNextLookRequest({ requestedAt: '2026-10-12T16:00:00.000Z' }), { requestedAt: '2026-10-12T16:00:00.000Z' });
@@ -814,7 +814,7 @@ test('the page gives the runner a press that starts every list again, and a look
   assert.ok(run.includes("setLookHooks({ atPass: atPass, playlist: list => rotation.playlist(list, getContent()) });"));
 });
 
-// The swaps ---------------------------------------------------------------------------
+// The swaps
 
 test('the three swaps are the ones in config.js, and each has its branch in the page', () => {
   const run = read('core/look-rotation-run.js');
@@ -857,7 +857,7 @@ test('the page starts the rotation after the team, before the style, and leaves 
   assert.ok(/if \(addressAsks\) return;/.test(read('core/look-rotation-run.js')));
 });
 
-// core/schedule.js, with stand-ins for the page ----------------------------------------
+// core/schedule.js, with stand-ins for the page
 
 const scheduleTree = path.join(workFolder, 'schedule-tree');
 ['config.js', 'core/schedule.js'].forEach(file => {
@@ -1074,7 +1074,7 @@ test('the rotation is not asked again right after a restart, and starts the new 
   });
 });
 
-// The docs --------------------------------------------------------------------------
+// The docs
 
 test('the docs name the four settings, the three swaps and the rule for an empty list', () => {
   const layouts = fs.readFileSync(path.join(docsFolder, 'layouts.md'), 'utf8').replace(/\s+/g, ' ');

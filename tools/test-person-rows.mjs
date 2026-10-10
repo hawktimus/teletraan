@@ -163,7 +163,7 @@ function ruleOf(css, selector) {
 
 const numberIn = (rule, property) => Number(new RegExp('(?:^|[;\\s])' + property + ': (\\d+)(?:px)?[;\\s]').exec(rule)[1]);
 
-// The portrait in a row -------------------------------------------------------
+// The portrait in a row
 
 test('four rows to a page, and the portrait in a row is 124 square at 100 and follows the Portrait size', () => {
   assert.equal(rowsPerPage, 4);
@@ -232,7 +232,7 @@ test('a row follows the Portrait size and keeps its text, and the markup is the 
   assert.equal(withoutSizes(at60), withoutSizes(at100));
 }));
 
-// The Team Leads panel -----------------------------------------------------------
+// The Team Leads panel
 
 test('departmentRows: the lead and the department, in the order of the list, and [lead] for a department with no lead', () => {
   const rows = departmentRows([
@@ -370,7 +370,7 @@ test('the showcase hook gives one department\'s lead and members, and has no com
   ['panels/team-leads/team-leads.js', 'panels/leadership/leadership.js', 'panels/roster/roster.js'].forEach(file => assert.equal(read(file).includes('showcaseOf'), false, file));
 });
 
-// The Leadership panel -----------------------------------------------------------
+// The Leadership panel
 
 test('leaders puts the coaches, then the captains, then the mentors, whatever order they were typed in', () => {
   const people = [].concat(crew('Mentor', 1), crew('Captain', 2), crew('Coach', 1), crew('Mentor', 1, { name: '[Mentor B]' }));
@@ -455,7 +455,7 @@ test('the Leadership panel with three people has three rows, and a person with n
   assert.equal(countOf(html, '<use href="#person-silhouette"'), 3);
 }));
 
-// Both panels -------------------------------------------------------------------
+// Both panels
 
 test('both panels draw their rows at the Portrait size, and at 100 without it, and the text keeps its size', () => withFakePage(() => {
   const people = [{ role: 'Coach', name: '[Coach A]' }, { role: 'Captain', name: '[Captain A]' }];

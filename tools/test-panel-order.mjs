@@ -50,7 +50,7 @@ const oldLists = {
   grid2: [{ panel: 'forecast', show: true, seconds: 9 }, { panel: 'task-counts', show: false }],
 };
 
-// The older lists as one --------------------------------------------------
+// The older lists as one
 
 test('the older lists become one list: the large panels, then the small panels, each row with its switch and its seconds', () => {
   assert.deepEqual(orderFromLists(oldLists), [
@@ -93,7 +93,7 @@ test('lists that are missing, or are not lists, give an empty list', () => {
   });
 });
 
-// The list the screen follows ----------------------------------------------
+// The list the screen follows
 
 test('an empty order is built from the older lists, and a list with rows is used as it is', () => {
   const built = orderFromLists(oldLists);
@@ -150,7 +150,7 @@ test('a row switched off stays in the playlist, because the schedule is the one 
   assert.deepEqual(playlistOf(rotation, 'grid1'), rotation.order);
 });
 
-// Through the reader ---------------------------------------------------------
+// Through the reader
 
 test('the reader cleans the rows of the order like the rows of the older lists', () => {
   const rotation = normalizeContent({

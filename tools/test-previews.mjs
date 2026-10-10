@@ -97,7 +97,7 @@ const lines = {
 // The types whose items have a Show on screen switch and a Hide after time
 const withFlags = ['task', 'plan', 'subteam', 'person', 'sponsor', 'tipOrNews', 'customPanel'];
 
-// Title and subtitle ------------------------------------------------------------
+// Title and subtitle
 
 Object.keys(lines).forEach(typeName => {
   test('the ' + typeName + ' list shows the title and the subtitle of each made-up document', () => {
@@ -117,7 +117,7 @@ test('a document with nothing in it still has a title and never says undefined o
   });
 });
 
-// Hidden and Expired ------------------------------------------------------------
+// Hidden and Expired
 
 withFlags.forEach(typeName => {
   test('the ' + typeName + ' list starts with Hidden or Expired when the TV is not showing the item', () => {
@@ -165,7 +165,7 @@ test('a talk that is not scheduled and a meeting day that is closed say so first
   assert.equal(lineOf('presentationDay', Object.assign({}, day, { open: true })).subtitle, '2:45 PM to 4:45 PM');
 });
 
-// One place for the rule --------------------------------------------------------
+// One place for the rule
 
 test('the schemas of these lists do not write the words Hidden and Expired themselves', () => {
   const quoted = /['"](Hidden|Expired)['"]/;
