@@ -91,8 +91,8 @@ docs/where-things-are.md).
    17:00, must be there, because a settings page saved without them plays no
    announcements. It should show Frame metal on Gold with Glint on
    and Screen glitch on every 240 seconds, Seconds per page at 20,
-   Photo order on Random, Seconds per photo 16, and
-   Portrait size and Photo size at 100.
+   Photo order on Random, Seconds per photo 16,
+   Portrait size and Photo size at 100, and Photo fit on Fill the frame.
    The Look tab should show Logo
    animations on, Spin every 72 seconds, Flying hawk every 24 seconds and Name
    effect every 300 seconds, and Page change style
@@ -237,7 +237,8 @@ never enlarged, in a small format (`screenPhotoUrl` in
 The photo settings in the Screen tab of Dashboard Settings (`schemas/settingsPhotos.js`) have Photo
 order (Random or Newest first), Seconds per photo (6 to 120, starting at
 16), Portrait size and Photo size (each a whole percent from 60 to 100,
-starting at 100, which is the full size). Nothing needs setting up beyond the steps above. Run `npm run deploy`
+starting at 100, which is the full size) and Photo fit (Fill the frame or Show
+the whole photo, which a photo can override with its own Fit field). Nothing needs setting up beyond the steps above. Run `npm run deploy`
 after you change `schemas/photo.js` or `schemas/settingsPhotos.js`, so the
 editors see the change. docs/editing-content.md has the advice for the people
 who upload: first names only, no last names in captions, location tagging off

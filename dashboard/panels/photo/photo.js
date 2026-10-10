@@ -6,7 +6,7 @@ import { cardMarkup } from '../../core/plate.js';
 import { doubleSlash } from '../../core/marks.js';
 import { escapeHtml, hasText } from '../../core/text.js';
 import { preloadImages } from '../../core/images.js';
-import { creditText, makePhotoQueue, photoLayout, photosToShow } from '../../core/photos.js';
+import { creditText, hasRoomForCredit, makePhotoQueue, photoLayout, photosToShow, wholeShape } from '../../core/photos.js';
 
 const missingMarkup = '<div class="missing">[Photo not available]</div>';
 
@@ -17,11 +17,12 @@ export function hasContent(content) {
   return photosToShow(content).length > 0;
 }
 
-// The card cuts the photo to its own shape, so the hotspot decides what stays
-// in view. A photo with no hotspot (the sample photos) is centred.
-function pictureStyle(photo) {
+// A card that is cut to its own shape keeps what the hotspot says. A photo with
+// no hotspot (the sample photos) is centred. A photo shown whole is not cut, so
+// it has no use for the hotspot.
+function pictureStyle(photo, whole) {
   const focus = photo.focus;
-  if (!focus || !isFinite(focus.x) || !isFinite(focus.y)) return '';
+  if (whole || !focus || !isFinite(focus.x) || !isFinite(focus.y)) return '';
   return ` style="object-position: ${Number(focus.x)}% ${Number(focus.y)}%"`;
 }
 
@@ -29,18 +30,22 @@ function pictureStyle(photo) {
 export function mount(host, content) {
   const turn = queue.take(photosToShow(content), content.settings && content.settings.photoOrder);
   const photo = turn.photo;
-  const picture = photo ? `<img src="${escapeHtml(photo.address)}"${pictureStyle(photo)} alt="">` : missingMarkup;
-  const credit = photo ? creditText(photo) : '';
-  const creditPlate = hasText(credit) ? `<div class="credit">Photo: ${escapeHtml(credit)}</div>` : '';
   const hasCaption = photo !== null && hasText(photo.caption);
 
   // The picture sits in a card, and where it goes and how big it is depends on the
-  // Photo size setting and on whether there is a caption (see photoLayout)
-  const layout = photoLayout(content.settings && content.settings.photoScale, hasCaption);
+  // Photo size setting, on whether there is a caption and on whether the photo is
+  // shown whole, in the shape of the photo, or cut to the card (see photoLayout)
+  const shape = wholeShape(photo, content.settings && content.settings.photoFit);
+  const whole = shape !== null;
+  const layout = photoLayout(content.settings && content.settings.photoScale, hasCaption, shape);
   const card = layout.card;
   const captionBox = layout.caption;
+
+  const picture = photo ? `<img src="${escapeHtml(photo.address)}"${pictureStyle(photo, whole)} alt="">` : missingMarkup;
+  const credit = photo ? creditText(photo) : '';
+  const creditPlate = hasText(credit) && hasRoomForCredit(card.width) ? `<div class="credit">Photo: ${escapeHtml(credit)}</div>` : '';
   const caption = hasCaption
-    ? `<div class="caption" data-slat="item" style="left: ${captionBox.left}px; top: ${captionBox.top}px; width: ${captionBox.width}px">${escapeHtml(photo.caption)}</div>`
+    ? `<div class="${whole ? 'caption centred' : 'caption'}" data-slat="item" style="left: ${captionBox.left}px; top: ${captionBox.top}px; width: ${captionBox.width}px">${escapeHtml(photo.caption)}</div>`
     : '';
 
   host.innerHTML = `
@@ -50,7 +55,7 @@ export function mount(host, content) {
         <div data-slat="tag">${doubleSlash()}</div>
       </div>
 
-      <div class="card" data-slat="item" style="left: ${card.left}px; top: ${card.top}px; width: ${card.width}px; height: ${card.height}px">
+      <div class="${whole ? 'card whole' : 'card'}" data-slat="item" style="left: ${card.left}px; top: ${card.top}px; width: ${card.width}px; height: ${card.height}px">
         <div class="picture">${picture}</div>
         ${creditPlate}
         ${cardMarkup(card.width, card.height)}

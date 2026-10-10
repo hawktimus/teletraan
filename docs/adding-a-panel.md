@@ -139,8 +139,9 @@ panel. A panel that needs a line, a card or a bar uses one of these:
   size that is `position: relative`, then the text. The text needs
   `position: relative` too, so that it is drawn above the card. `spotlight.js`
   uses cards. The picture card of `photo.js` is one too, and its width and
-  height depend on the Photo size setting (`photoLayout` in `core/photos.js`),
-  1096 by 464 at 100 percent. `cardMarkup` takes the size, so a card of another
+  height depend on the Photo size setting and on whether the photo is shown
+  whole (`photoLayout` in `core/photos.js`), 1096 by 464 at 100 percent when it
+  is cut to the card. `cardMarkup` takes the size, so a card of another
   size is another call, drawn with the same corner and edge.
 - **A portrait slot.** `slotMarkup({ name, role, address, scale })` in
   `core/portrait.js` is a framed picture with a name and a role under it.

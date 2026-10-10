@@ -138,9 +138,10 @@ export function photoUrl(photo, width, height, scale = 1) {
 export const photoMaxWidth = 1920;
 
 // The address of a photo for the Photo panel: the part the editor kept, no
-// wider than the screen, never enlarged, in a small format. The panel cuts it
-// to its card with the browser (see photoFocus), so the same copy fits with
-// or without a caption. Gives back an empty text when there is no usable photo.
+// wider than the screen, never enlarged, in a small format. The panel fits it
+// to its card with the browser (see photoFocus and keptSize), so the same copy
+// fits with or without a caption. Gives back an empty text when there is no
+// usable photo.
 export function screenPhotoUrl(photo) {
   return fittedUrl(photo, photoMaxWidth);
 }
@@ -164,6 +165,17 @@ function fittedUrl(photo, width) {
   const rect = wasCropped ? 'rect=' + [kept.left, kept.top, kept.width, kept.height].join(',') + '&' : '';
 
   return clean.url + '?' + rect + 'w=' + width + '&fit=max&auto=format';
+}
+
+// The size in pixels of the part the editor kept. A photo that the Photo panel
+// shows whole gets a card in this shape. Gives back null when there is no
+// usable photo.
+export function keptSize(photo) {
+  const clean = tidyPhoto(photo);
+  if (!clean) return null;
+
+  const kept = croppedPart(clean);
+  return isPositive(kept.width) && isPositive(kept.height) ? { width: kept.width, height: kept.height } : null;
 }
 
 // Where the hotspot is in the part the editor kept, as { x, y } in percent

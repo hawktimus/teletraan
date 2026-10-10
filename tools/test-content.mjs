@@ -521,9 +521,9 @@ test('normalizeContent turns a full Sanity result into the sample content shape'
 
   // hidden and expired photos stay in the list, like every other item. A photo with no picture is dropped.
   assert.deepEqual(content.photos, [
-    { id: 'ph1', createdAt: '2026-09-20T10:00:00Z', caption: '[Photo caption]', credit: '[Name]', show: true, address: photoBase + '?w=1920&fit=max&auto=format', focus: { x: 50, y: 50 } },
-    { id: 'ph2', createdAt: '2026-09-10T10:00:00Z', show: false, address: photoBase + '?w=1920&fit=max&auto=format', focus: { x: 50, y: 50 } },
-    { id: 'ph3', createdAt: '2026-09-01T10:00:00Z', expires: '2020-01-01T00:00:00.000Z', address: photoBase + '?w=1920&fit=max&auto=format', focus: { x: 50, y: 50 } },
+    { id: 'ph1', createdAt: '2026-09-20T10:00:00Z', caption: '[Photo caption]', credit: '[Name]', show: true, address: photoBase + '?w=1920&fit=max&auto=format', focus: { x: 50, y: 50 }, size: { width: 800, height: 600 } },
+    { id: 'ph2', createdAt: '2026-09-10T10:00:00Z', show: false, address: photoBase + '?w=1920&fit=max&auto=format', focus: { x: 50, y: 50 }, size: { width: 600, height: 900 } },
+    { id: 'ph3', createdAt: '2026-09-01T10:00:00Z', expires: '2020-01-01T00:00:00.000Z', address: photoBase + '?w=1920&fit=max&auto=format', focus: { x: 50, y: 50 }, size: { width: 800, height: 600 } },
   ]);
 
   assert.deepEqual(content.plan, {
@@ -2818,7 +2818,7 @@ test('a photo from Studio gets the address the screen asks for: no wider than th
 
   assert.equal(photo.address, photoBase + '?w=1920&fit=max&auto=format');
   assert.equal(photoMaxWidth, 1920);
-  assert.deepEqual(photo, { id: 'a1', createdAt: '2026-09-20T10:00:00Z', caption: '[Caption]', credit: '[Name]', address: photo.address, focus: { x: 50, y: 50 } });
+  assert.deepEqual(photo, { id: 'a1', createdAt: '2026-09-20T10:00:00Z', caption: '[Caption]', credit: '[Name]', address: photo.address, focus: { x: 50, y: 50 }, size: { width: 800, height: 600 } });
   assert.equal(JSON.stringify(photo).includes('_type'), false);
 });
 

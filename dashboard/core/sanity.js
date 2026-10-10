@@ -1,10 +1,10 @@
 // Talks to Sanity: the two queries, the addresses, and turning what comes back
 // into the content shape in data/sample/content.json. The sample is cleaned the same way.
 
-import { defaultFilter, defaultPerson, defaultSettings, defaultTalk, filterActions, limits, primeTeam, talkStatuses, teamTrim } from '../config.js';
+import { defaultFilter, defaultPerson, defaultSettings, defaultTalk, filterActions, limits, photoFits, primeTeam, talkStatuses, teamTrim } from '../config.js';
 import { parseLocalDateTime, sameDay } from './time.js';
 import { fixSettingValues, isVisible, keepInRange, withDefaults } from './content.js';
-import { logoUrl, photoFocus, screenPhotoUrl, tidyPhoto } from './images.js';
+import { keptSize, logoUrl, photoFocus, screenPhotoUrl, tidyPhoto } from './images.js';
 import { classifyFailure } from './connection.js';
 import { pinnedFirst } from './task-source.js';
 import { tidyFrc } from './frc.js';
@@ -84,6 +84,7 @@ export const contentQuery = `{
     "createdAt": _createdAt,
     caption,
     credit,
+    fit,
     show,
     expires,
     "image": image {
@@ -413,11 +414,14 @@ function normalizeSubteam(raw) {
   return subteam;
 }
 
-// A photo from Studio becomes { id, address, focus, caption, credit, createdAt,
-// show, expires }. The address is the one the screen asks for (images.js) and
-// focus is where the hotspot is in it. A photo with no picture that can be used
-// is dropped, since there is nothing to show. The sample photos are already
-// like this, with an address and no more than a caption and a credit.
+// A photo from Studio becomes { id, address, focus, size, caption, credit, fit,
+// createdAt, show, expires }. The address is the one the screen asks for
+// (images.js), focus is where the hotspot is in it and size is the part the
+// editor kept, in pixels. fit is there only when the photo picked fill or
+// whole: any other value, and none, mean it follows the Photo fit setting. A
+// photo with no picture that can be used is dropped, since there is nothing to
+// show. The sample photos are already like this, with an address and no more
+// than a caption, a credit, a fit and a size.
 function normalizePhoto(raw) {
   const picture = tidyPhoto(raw.image);
   if (!picture) return null;
@@ -427,11 +431,14 @@ function normalizePhoto(raw) {
     createdAt: raw.createdAt,
     caption: raw.caption,
     credit: raw.credit,
+    fit: photoFits.includes(raw.fit) ? raw.fit : undefined,
     show: raw.show,
     expires: raw.expires,
   });
   photo.address = screenPhotoUrl(picture);
   photo.focus = photoFocus(picture);
+  const size = keptSize(picture);
+  if (size) photo.size = size;
   return photo;
 }
 

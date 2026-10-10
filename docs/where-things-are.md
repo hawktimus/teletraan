@@ -369,6 +369,10 @@ editors can sign in from anywhere.
                               that moves them, the cube, and the script that finds the pieces on a fake page
       test-person-rows.mjs    checks for the rows of the Team Leads and Leadership panels: four rows to a
                               panel, who is in them, the portrait size, and the sizes in base.css
+      test-photo-fit.mjs      checks for the Photo fit setting and the Fit of a photo: which mode a photo
+                              has, the numbers of the fill mode that did not change, the card in the shape of
+                              a photo (wide, square, tall and extreme, at 100 and 60 percent), the centred
+                              caption, the credit that a narrow card leaves out, and the sample photos
       test-presentation-mouse.mjs  checks for the mouse in presentation mode: what each button does, the second
                               click of a double click, a click on the card that says the slides are not ready,
                               the context menu, the hidden cursor, and the rotation that starts again
@@ -603,7 +607,8 @@ alone.
   (`studio/schemas/photo.js`): a picture, an optional caption, a first name
   credit, "Show on screen" and "Hide after". Dashboard Settings, Screen tab: Photo
   order (random or newest first) and Seconds per photo (`photoOrder` and
-  `photoSeconds` in `dashboard/config.js`), and the two size settings below.
+  `photoSeconds` in `dashboard/config.js`), the two size settings below and
+  Photo fit (`photoFit`, with `photoFits` in `dashboard/config.js`).
   The screen reads them with the rest of
   the content (`photos` in `core/sanity.js`) and asks Sanity for each at no more
   than 1920 pixels wide (`screenPhotoUrl` in `core/images.js`). `core/photos.js`
@@ -629,6 +634,21 @@ alone.
   100). `cardMarkup` draws the card at that size with the same cut corner and
   edge, and the card sits in the middle of the panel with the caption directly
   under it.
+- **Fill the frame or show the whole photo.** Dashboard Settings, Screen tab,
+  Photo fit (`photoFit`: `fill` or `whole`, starting at `fill`), and the Fit
+  field of a Photo (`fit`: `setting`, `fill` or `whole`) in
+  `studio/schemas/settingsPhotos.js` and `studio/schemas/photo.js`. `fixSettingValues`
+  in `core/content.js` turns an unknown setting into `fill`, and `normalizePhoto`
+  in `core/sanity.js` keeps a photo's `fit` only when it is `fill` or `whole`,
+  and adds its `size`, the part the editor kept in pixels (`keptSize` in
+  `core/images.js`). `fitOf` and `wholeShape` in `core/photos.js` say how a photo
+  is drawn: a photo shown whole with a usable size gives its shape to
+  `photoLayout`, which makes the card the biggest of that shape inside the card
+  of the fill mode, never narrower than 240 on its short side at 100, and
+  centres the caption under it. `hasRoomForCredit` leaves the credit plate off
+  a card narrower than 370. `panels/photo/photo.js` only draws, and
+  `photo.css` shows the picture with `object-fit: contain` in the whole mode.
+  `tools/test-photo-fit.mjs` has the tests.
 - **Photos of people.** Leadership in Studio, Photo and "Show photo on
   screen" (docs/editing-content.md). The screen asks Sanity for each photo at
   the size it is shown, 280 by 280 pixels, in `core/portrait.js`. The silhouette
@@ -847,6 +867,7 @@ exceptions are `test-slides-script.mjs`, `test-frc-script.mjs` and `test-monday-
     node tools/test-team-trim.mjs
     node tools/test-pile.mjs
     node tools/test-person-rows.mjs
+    node tools/test-photo-fit.mjs
     node tools/test-presentation-mouse.mjs
     node tools/test-look-rotation.mjs
     node tools/test-console.mjs

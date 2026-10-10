@@ -13,6 +13,14 @@ function firstNameOnly(value) {
   return true;
 }
 
+// The values are the names in photoFits in dashboard/config.js, and setting
+// means the photo follows Photo fit in Dashboard Settings
+const fits = [
+  { title: 'Same as Dashboard Settings', value: 'setting' },
+  { title: 'Fill the frame', value: 'fill' },
+  { title: 'Show the whole photo', value: 'whole' },
+];
+
 const newestFirst = {
   title: 'Newest first',
   name: 'newestFirst',
@@ -28,7 +36,7 @@ export default defineType({
       name: 'image',
       title: 'Picture',
       type: 'image',
-      description: 'Upload a photo. Wide photos fill the screen best. Drag the circle onto the main subject so the screen keeps it in view.',
+      description: 'Upload a photo. Wide photos fill the screen best. Drag the circle onto the main subject so the screen keeps it in view when the photo is cut to the card.',
       options: { hotspot: true, accept: 'image/*' },
       validation: Rule => Rule.required().error('Add a picture.'),
     }),
@@ -45,6 +53,15 @@ export default defineType({
       type: 'string',
       description: 'Optional. The first name of the person who took it, with no last name. The screen shows Photo: and the name. Up to 14 characters fit.',
       validation: Rule => [tooLong(Rule, 14), Rule.custom(firstNameOnly)],
+    }),
+    defineField({
+      name: 'fit',
+      title: 'Fit',
+      type: 'string',
+      description: 'Optional. Fill the frame cuts this photo to the card. Show the whole photo keeps its shape. The first choice follows Photo fit in Dashboard Settings.',
+      options: { list: fits, layout: 'radio', direction: 'horizontal' },
+      initialValue: 'setting',
+      validation: Rule => Rule.valid(fits.map(fit => fit.value)).error('Pick one of the three choices.'),
     }),
     showField(),
     expiresField(),

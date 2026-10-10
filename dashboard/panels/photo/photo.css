@@ -43,6 +43,13 @@
   height: 100%;
   object-fit: cover;
 }
+/* A photo shown whole has a card in its own shape, so the picture fills it and
+   nothing is cut. contain is the safe value: it cuts nothing even where the
+   card is a pixel off, or is held to a shape the photo is too extreme for (see
+   photoLayout), and then the card colour shows beside the picture. */
+.photo .whole .picture img {
+  object-fit: contain;
+}
 .photo .missing {
   display: flex;
   justify-content: center;
@@ -89,4 +96,9 @@
   white-space: nowrap;
   text-overflow: ellipsis;
   font: 500 var(--size-body)/64px var(--font-text);
+}
+/* The box under a card in the shape of its photo is as wide as the frame allows
+   however narrow the card is, so the text is centred and does not hang to one side */
+.photo .caption.centred {
+  text-align: center;
 }

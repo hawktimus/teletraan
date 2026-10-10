@@ -121,7 +121,7 @@ const contract = {
     active: 'boolean',
     order: 'number',
   },
-  photo: withFlags({ image: 'image', caption: text(36), credit: text(14) }),
+  photo: withFlags({ image: 'image', caption: text(36), credit: text(14), fit: 'string' }),
   customPanel: withFlags({ title: text(7), blocks: { kind: 'blocks', max: 6 }, team: teamRef, order: 'number' }),
   dashboardSettings: {
     team: object({ name: text(16), number: text(5), school: text(30) }),
@@ -153,6 +153,7 @@ const contract = {
     photoSeconds: number(6, 120),
     portraitScale: number(60, 100),
     photoScale: number(60, 100),
+    photoFit: 'string',
     nightEnabled: 'boolean',
     nightStyle: 'string',
     nightLogoWidth: number(120, 800),
@@ -300,6 +301,8 @@ const choices = {
   'dashboardSettings.pageChangeStyle': ['alternate', 'slat', 'mechanical'],
   'dashboardSettings.frameFinish': ['mostly-gold', 'alternate', 'gold', 'silver'],
   'dashboardSettings.photoOrder': ['random', 'newest-first'],
+  'dashboardSettings.photoFit': ['fill', 'whole'],
+  'photo.fit': ['setting', 'fill', 'whole'],
   'dashboardSettings.nightStyle': ['bounce', 'black'],
   'dashboardSettings.nightSpeed': ['slow', 'normal', 'fast'],
   'dashboardSettings.contentSource': ['production', 'sample'],
@@ -999,7 +1002,7 @@ function checkLogoTab(problems) {
 // and Silver chance. The section is all in schemas/settingsTransitions.js. The
 // number fields and their limits are compared with config.js in checkLookAndTiming.
 const transitionNames = ['pageChangeStyle', 'breakSeconds', 'frameFinish', 'silverChance'];
-const photoNames = ['photoOrder', 'photoSeconds', 'portraitScale', 'photoScale'];
+const photoNames = ['photoOrder', 'photoSeconds', 'portraitScale', 'photoScale', 'photoFit'];
 const nightNames = ['nightEnabled', 'nightStyle', 'nightStart', 'nightEnd', 'nightLogoWidth', 'nightSpeed', 'nightPreview'];
 const hiddenNames = ['hiddenEnabled', 'desktopEveryHours', 'desktopChance', 'redEyesEveryHours', 'redEyesChance', 'hiddenRequest'];
 const presentationNames = ['presentationsEnabled', 'noShowMinutes', 'graceMinutes'];
@@ -2597,7 +2600,7 @@ function checkPhotos() {
   need(problems, newest, 'photo needs an ordering by _createdAt, newest first');
   need(problems, type.preview && type.preview.select && type.preview.select.media === 'image', 'the photo list should show each picture (select media: image)');
 
-  // The four photo settings come in this order
+  // The five photo settings come in this order
   const settings = typeByName('dashboardSettings');
   const inOrder = fieldsIn(settings).map(field => field.name).filter(name => photoNames.indexOf(name) !== -1);
   need(problems, inOrder.join() === photoNames.join(), 'the photo settings should come in this order: ' + photoNames.join(', ') + ', not ' + inOrder.join(', '));
@@ -2639,7 +2642,7 @@ function checkPhotos() {
   need(problems, Array.isArray(sample.photos) && sample.photos.length > 0, 'the sample content needs a photos list for the Photo panel');
   (sample.photos || []).forEach((photo, index) => {
     need(problems, typeof photo.address === 'string' && photo.address.length > 0, 'sample photo ' + (index + 1) + ' needs an address');
-    Object.keys(photo).forEach(key => need(problems, ['address', 'caption', 'credit'].indexOf(key) !== -1, 'sample photo ' + (index + 1) + ' has ' + key + ', which the sample photos do not use'));
+    Object.keys(photo).forEach(key => need(problems, ['address', 'caption', 'credit', 'fit', 'size'].indexOf(key) !== -1, 'sample photo ' + (index + 1) + ' has ' + key + ', which the sample photos do not use'));
   });
   return problems;
 }
@@ -5275,6 +5278,59 @@ async function checkMondayBoardsRead() {
   return problems;
 }
 
+// The Photo fit setting (Dashboard Settings, Screen tab) and the Fit of one photo. The choices, the starting value and
+// the sample are the ones in dashboard/config.js. Neither is required, because Dashboard Settings and a photo saved
+// before these fields existed have none, and must still publish. The screen reads a missing one as fill and as the setting.
+function checkPhotoFit() {
+  const problems = [];
+  const config = world.dashboard;
+  const rulesOf = field => (field ? constraintsOf(field) : []);
+  const setting = fieldAt('dashboardSettings.photoFit');
+  const own = fieldAt('photo.fit');
+  const titles = { setting: 'Same as Dashboard Settings', fill: 'Fill the frame', whole: 'Show the whole photo' };
+
+  need(problems, config.photoFits.join() === 'fill,whole', 'photoFits in config.js should be fill and whole, not ' + config.photoFits.join());
+  need(problems, config.defaultSettings.photoFit === 'fill', 'the default photoFit in config.js should be fill');
+
+  need(problems, setting && setting.title === 'Photo fit' && setting.group === 'screen', 'photoFit should be titled Photo fit, in the Screen tab');
+  need(problems, setting && setting.options && setting.options.layout === 'radio', 'photoFit should be a radio list');
+  need(problems, choicesOf('dashboardSettings.photoFit').map(item => item.value).join() === config.photoFits.join(), 'photoFit should offer the names in config.js: ' + config.photoFits.join(', '));
+  choicesOf('dashboardSettings.photoFit').forEach(item => need(problems, item.title === titles[item.value], 'the photoFit choice ' + item.value + ' should be titled ' + titles[item.value]));
+  need(problems, setting && setting.initialValue === 'fill', 'photoFit should start as fill');
+  need(problems, setting && !constraintNamed(rulesOf(setting), 'required'), 'photoFit should not be required: Dashboard Settings saved before it existed has none');
+  const allowed = constraintNamed(rulesOf(setting), 'valid');
+  need(problems, allowed && allowed.args[0].join() === config.photoFits.join(), 'photoFit should only allow: ' + config.photoFits.join(', '));
+  need(problems, rulesOf(setting).some(rule => rule.name === 'error' && rule.args[0]), 'photoFit has rules and no error message in plain words');
+
+  need(problems, own && own.title === 'Fit' && /optional/i.test(own.description || ''), 'photo.fit should be titled Fit and described as optional');
+  need(problems, own && own.options && own.options.layout === 'radio', 'photo.fit should be a radio list');
+  choicesOf('photo.fit').forEach(item => need(problems, item.title === titles[item.value], 'the photo.fit choice ' + item.value + ' should be titled ' + titles[item.value]));
+  need(problems, choicesOf('photo.fit').map(item => item.value).join() === ['setting'].concat(config.photoFits).join(), 'photo.fit should offer setting and then the names in config.js');
+  need(problems, own && own.initialValue === 'setting', 'photo.fit should start as setting, the same as Dashboard Settings');
+  need(problems, own && !constraintNamed(rulesOf(own), 'required'), 'photo.fit should not be required: a photo saved before it existed has none');
+  const ownAllowed = constraintNamed(rulesOf(own), 'valid');
+  need(problems, ownAllowed && ownAllowed.args[0].join() === ['setting'].concat(config.photoFits).join(), 'photo.fit should only allow setting and the names in config.js');
+
+  const scale = fieldAt('dashboardSettings.photoScale');
+  need(problems, scale && /shown whole/.test(scale.description || ''), 'the photoScale description should say that a photo shown whole is made smaller by it too');
+
+  // The screen asks for the field, and the sample content shows both fits on photos of different shapes
+  need(problems, /"photos": \*\[_type == "photo"\][^}]*\bfit,/.test(world.sanitySource), 'the photos part of contentQuery should ask for fit');
+  const sample = world.sample;
+  need(problems, config.photoFits.indexOf(sample.settings.photoFit) !== -1, 'the sample settings need a photoFit of ' + config.photoFits.join(' or '));
+  const photos = sample.photos || [];
+  photos.forEach((photo, index) => {
+    const where = 'sample photo ' + (index + 1);
+    need(problems, photo.fit === undefined || photo.fit === 'setting' || config.photoFits.indexOf(photo.fit) !== -1, where + ' has a fit that is not setting, ' + config.photoFits.join(' or '));
+    const size = photo.size;
+    need(problems, size && size.width > 0 && size.height > 0, where + ' needs a size, with a width and a height in pixels');
+  });
+  need(problems, photos.some(photo => photo.fit === 'whole'), 'one sample photo should have fit whole');
+  const shapes = photos.filter(photo => photo.size).map(photo => Math.round(photo.size.width / photo.size.height * 100));
+  need(problems, new Set(shapes).size === shapes.length, 'the sample photos should each have a different shape');
+  return problems;
+}
+
 async function main() {
   const folder = makeSandbox();
   try {
@@ -5411,6 +5467,7 @@ async function main() {
   results.push({ name: 'the connection block asks for the published Monday data document by its id, and survives a client that fails', problems: await checkMondayRead().catch(error => ['the check stopped: ' + error.message]) });
   check('the board and column pickers list the boards and columns, keep a stored value that is not in the list, fall back to the plain box with the reason, and write only the id', checkMondayPickers);
   results.push({ name: 'the pickers ask for the published Monday data document by its id, and survive a client that fails', problems: await checkMondayBoardsRead().catch(error => ['the check stopped: ' + error.message]) });
+  check('the Photo fit setting and the Fit of a photo agree with dashboard/config.js, start as fill and as the setting, and the sample shows both on photos of different shapes', checkPhotoFit);
 
   process.exitCode = report() > 0 ? 1 : 0;
 }

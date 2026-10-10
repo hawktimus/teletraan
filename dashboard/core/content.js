@@ -1,7 +1,7 @@
 // Where the screen gets what it shows: startContent() hands over the content
 // once it has it, and again every time it changes. Same shape as data/sample/content.json.
 
-import { competitionModes, competitionSwitches, defaultSettings, defaultTeam, frameFinishes, limits, looks, lookSwaps, metals, nightSpeeds, nightStyles, pageChangeStyles, photoOrders, sampleFolder, sanity, speeds, styles, teamModes } from '../config.js';
+import { competitionModes, competitionSwitches, defaultSettings, defaultTeam, frameFinishes, limits, looks, lookSwaps, metals, nightSpeeds, nightStyles, pageChangeStyles, photoFits, photoOrders, sampleFolder, sanity, speeds, styles, teamModes } from '../config.js';
 import { parseLocalDateTime } from './time.js';
 import { chosenSource } from './source.js';
 import { tidyTheme } from './theme.js';
@@ -80,6 +80,7 @@ export function fixSettingValues(settings) {
   if (!frameFinishes.includes(settings.frameFinish)) settings.frameFinish = defaultSettings.frameFinish;
   // The photo settings
   if (!photoOrders.includes(settings.photoOrder)) settings.photoOrder = defaultSettings.photoOrder;
+  if (!photoFits.includes(settings.photoFit)) settings.photoFit = defaultSettings.photoFit;
   // The team settings
   if (!teamModes.includes(settings.teamMode)) settings.teamMode = defaultSettings.teamMode;
   // The look rotation: the styles by day, the Monday style, the teams in order and the swap
