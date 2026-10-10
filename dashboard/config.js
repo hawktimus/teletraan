@@ -107,6 +107,12 @@ export const frameFinishes = ['mostly-gold', 'alternate', 'gold', 'silver'];
 //   newest-first  from the newest photo to the oldest, then over again
 export const photoOrders = ['random', 'newest-first'];
 
+// How the Photo panel fits a photo to its card (core/photos.js). The setting picks one for every photo,
+// and a Photo document can pick its own, or say it follows the setting.
+//   fill   the card keeps one shape, and the picture is cut to it, around the hotspot
+//   whole  the card takes the shape of the photo, so nothing is cut
+export const photoFits = ['fill', 'whole'];
+
 // The night mode settings in Dashboard Settings (Advanced tab) (core/night.js and core/night-screen.js)
 //   nightStyles  bounce: the logo drifts round the black screen. black: only black.
 //   nightSpeeds  the seconds the logo takes to cross the screen sideways (across) and
@@ -239,10 +245,12 @@ export const defaultSettings = {
   //                 full size (core/portrait.js). The names and roles keep their size.
   //   photoScale    how big the picture in the Photo panel is, as a percent of the full size
   //                 (core/photos.js). 100 fills the panel. The caption keeps its size.
+  //   photoFit      see photoFits above. fill is how the panel always drew a photo.
   photoOrder: 'random',
   photoSeconds: 16,
   portraitScale: 100,
   photoScale: 100,
+  photoFit: 'fill',
   // The night mode settings in the Studio (Advanced tab): the screensaver. The signal is never turned off. From
   // 23:30 to 11:30 (the fixed times in core/constants.js, in the time zone of the Look page) the screen is
   // black with the team logo and the team number under it.

@@ -388,7 +388,10 @@ only adds items and never changes one that is already there.
 
 The Photo panel shows one photo at a time, with its caption under it and the
 photographer's first name at the lower left of the picture ("Photo: Sam").
-Photos are uploaded to Studio. Nothing is kept on the Mini.
+Photos are uploaded to Studio. Nothing is kept on the Mini. A photo is either cut
+to a card that has the same shape for every photo, or shown whole in a card of
+its own shape. Photo fit in Dashboard Settings picks one for all photos, and a
+photo can pick its own (see "Fill the frame or show the whole photo" below).
 
 ### Adding a photo
 
@@ -399,13 +402,15 @@ Photos are uploaded to Studio. Nothing is kept on the Mini.
    shrink it first.
 3. Open the crop and hotspot tool (the crop button on the picture). Crop out
    anything you do not want, and drag the circle onto the main subject, such as
-   a face. The screen cuts the photo to fit its box and keeps the circle in view.
+   a face. When the photo is cut to its card, the screen keeps the circle in view.
 4. Caption is optional: a short line under the picture, up to 36 characters. No
    last names.
 5. Credit is optional: the first name of the person who took the photo, up to
    14 characters. Studio refuses a space or a number, so use a hyphen in a name
    such as Mary-Anne. The screen shows it as "Photo: Sam".
-6. Click Publish. There is no approval step: a photo shows on the TV as soon as
+6. Fit is optional. Leave it on Same as Dashboard Settings to follow the Photo fit
+   setting. Pick Fill the frame or Show the whole photo to give this photo its own.
+7. Click Publish. There is no approval step: a photo shows on the TV as soon as
    it is published, so look at it first. The TV changes within a few seconds.
 
 Every photo also has "Show on screen" and "Hide after", like the other items.
@@ -426,16 +431,18 @@ are none, the panel is skipped.
   and Security, Location Services, Camera, then choose Never. On an Android
   phone: open the Camera app, open its settings and turn off Location tags (the
   name changes a little between makes).
-- Take the photo in landscape, with the phone turned sideways. The picture
-  box on the TV is about twice as wide as it is tall. A square photo loses about
-  half its height and a tall photo loses most of it, so landscape is best and
-  the circle in the crop and hotspot tool matters most for the others.
+- Take the photo in landscape, with the phone turned sideways. With Fill the
+  frame the picture box on the TV is about twice as wide as it is tall. A square
+  photo loses about half its height and a tall photo loses most of it, so
+  landscape is best and the circle in the crop and hotspot tool matters most for
+  the others. If a photo has to be tall or square, set its Fit to Show the whole
+  photo and nothing is cut.
 - Only upload a photo that may be shown. Photos in Studio can be opened by
   anyone who has their web address.
 
 ### Order, time on screen and size
 
-The Screen tab of Dashboard Settings has four photo settings:
+The Screen tab of Dashboard Settings has five photo settings:
 
 - Photo order is Random (the default) or Newest first. Random never shows the
   same photo twice in a row. Newest first goes from the photo uploaded last to
@@ -458,13 +465,19 @@ The Screen tab of Dashboard Settings has four photo settings:
   Subteam roster panel it is 292.
 - Photo size, percent is how big the picture in the Photo panel is, from 60 to
   100, starting at 100. 100 is the full size and the largest that fits the
-  frame. A smaller picture is in the middle of the panel with its caption
-  directly under it. The caption and the "Photo:" credit keep their size. The
-  caption starts a little way in from the left edge of the picture and always
-  ends in the same place, so a smaller picture leaves it less room. At 80 or
-  more the longest caption Studio allows (36 characters) still fits. Below 80 a
-  caption of more than about 30 characters may be cut with three dots, so check
-  a long caption after you change the size.
+  frame, so the picture cannot be made bigger than that. A smaller picture is in
+  the middle of the panel with its caption directly under it. A photo shown
+  whole is made smaller by it in the same way. The caption and the "Photo:"
+  credit keep their size. With Fill the frame the caption starts a little way
+  in from the left edge of the picture and always ends in the same place, so a
+  smaller picture leaves it less room. At 80 or more the longest caption Studio
+  allows (36 characters) still fits. Below 80 a caption of more than about 30
+  characters may be cut with three dots, so check a long caption after you
+  change the size.
+- Photo fit is Fill the frame (the starting choice) or Show the whole photo. It
+  applies to every photo that has Same as Dashboard Settings in its Fit field.
+  Dashboard Settings saved before Photo fit existed shows no choice marked, and
+  the screen counts that as Fill the frame. Pick one and click Publish to mark it.
 
 Studio only accepts whole numbers from 60 to 100 for the two sizes. If a value
 outside that range ever reaches the screen it uses the nearest end, and an
@@ -472,10 +485,43 @@ empty or odd value is 100. To see a size, set it, click Publish, and wait for
 the panel to come round, or try it on the sample content first (see "Sample
 content" below).
 
+### Fill the frame or show the whole photo
+
+Fill the frame is how the Photo panel always drew a photo. The card is the same
+shape for every photo: 1096 wide and 464 high at size 100, or 514 high when the
+photo has no caption. The photo is cut to it, and the circle from the crop and
+hotspot tool stays in view.
+
+Show the whole photo gives the card the shape of the photo, the part that is
+left after your crop. The card is the biggest card of that shape that fits in
+the same box, so it is never bigger than the card of Fill the frame. No side of
+the picture is cut away. Only the small cut corner at the bottom right, which
+every card has, covers a little of it. Photo size, percent makes it smaller.
+The card stays in the middle of the panel, and the caption is centred under it.
+The circle is not used, because nothing is cut. A tall photo gives a narrow
+card, with empty space at each side.
+
+- An extremely wide or tall photo does not turn into a thin strip. At size 100
+  the short side of the card is at least 240 pixels. The picture keeps its own
+  shape inside that card, and the card colour shows beside it, or above and
+  below it.
+- A card narrower than 370 pixels has no "Photo:" credit, because the name would
+  be cut to its first letters or to three dots. At size 100 a 9 by 16 phone
+  photo with a caption is 261 wide and a 3 by 4 photo with a caption is 348
+  wide, so neither has its credit. A 3 by 4 photo with no caption is 386 wide
+  and a square photo with a caption is 464 wide, and both have it. At size 60 a
+  3 by 4 photo with a caption is 209 wide and does not. On a card up to about 600
+  pixels wide a long first name is cut with three dots.
+
+A photo's own Fit wins over the setting. A new photo starts on Same as Dashboard
+Settings. A photo saved before Fit existed shows no choice marked, and counts as
+Same as Dashboard Settings.
+
 While one photo is up, the screen starts downloading the next one, so it is
 ready at the page change. If a photo cannot be loaded, the card says so and the
 next page change tries the next photo. While a page shows the sample content
-(`?sample=1`), the Photo panel shows the three sample photos instead.
+(`?sample=1`), the Photo panel shows three sample photos of different shapes
+instead. The second one is set to Show the whole photo.
 
 ## Photos of people
 
@@ -700,8 +746,9 @@ problem would touch.
   older lists, so to show nothing, turn off "Show on screen" on each row. While
   the theme Neon Prime is on there is no small frame, so the small panels in the
   list are not used and the large panels are the rotation of the one big frame.
-- Photos: how the Photo panel works. "Photo order" is Random or Newest first, and
-  "Seconds per photo" is from 6 to 120 and starts at 16. See "Photos" above.
+- Photos: how the Photo panel works. "Photo order" is Random or Newest first,
+  "Seconds per photo" is from 6 to 120 and starts at 16, and "Photo fit" is Fill
+  the frame or Show the whole photo. See "Photos" above.
 - Announcements: full screen messages at set times. Give the time in 24 hour
   form, such as 14:30, and tick the days it should play. Tick at least one day.
   The second line is optional: leave it empty and only the first line plays.

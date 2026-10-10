@@ -51,6 +51,7 @@
     "photoSeconds": 16,
     "portraitScale": 100,
     "photoScale": 100,
+    "photoFit": "fill",
     "nightEnabled": true,
     "nightStyle": "bounce",
     "nightLogoWidth": 300,
@@ -186,9 +187,9 @@
   ],
 
   "photos": [
-    { "address": "data/sample/photo-1.svg", "caption": "[Photo caption one]", "credit": "[Name]" },
-    { "address": "data/sample/photo-2.svg", "caption": "[Photo caption two]" },
-    { "address": "data/sample/photo-3.svg", "caption": "" }
+    { "address": "data/sample/photo-1.svg", "caption": "[Photo caption one]", "credit": "[Name]", "size": { "width": 1152, "height": 708 } },
+    { "address": "data/sample/photo-2.svg", "caption": "[Photo caption two]", "fit": "whole", "size": { "width": 720, "height": 960 } },
+    { "address": "data/sample/photo-3.svg", "caption": "", "size": { "width": 800, "height": 800 } }
   ],
 
   "presentationDays": [
