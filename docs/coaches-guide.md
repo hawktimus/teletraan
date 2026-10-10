@@ -137,12 +137,15 @@ Sanity as tasks (docs/monday.md). It needs the team mentor's yes at the first st
        /opt/teletraan/deploy/scripts/monday-sync.sh --check
 
 4. Wait 10 minutes. Open Dashboard Settings, Monday tab. The block at the top says
-   who the token belongs to and when the Mini last read Monday.
+   who the token belongs to, when the Mini last read Monday, how many boards are
+   chosen and how many tasks the Mini has made.
 5. Under Boards click Add item. Pick the board by name, the team and the status
-   column. Change the three status labels to the words the board uses. The
-   priority, due date, owner and subteam columns are optional. If a list cannot be
-   read, the box is a plain one: type the board number or the column id.
-6. Click Publish. Within 10 minutes the tasks are in Tasks, From the board.
+   column. Change the In progress and Done labels to the words the board uses. Every
+   other status is Backlog. The priority, due date, owner and subteam columns are
+   optional. If a list cannot be read, the box is a plain one: type the board number
+   or the column id.
+6. Click Publish. Within 10 minutes the tasks are in Tasks, From the board. If they do
+   not show up, go down "If nothing shows up" in docs/monday.md.
 
 Show on TV is a switch on every task. On a task from the board it is the one thing
 you can change: turn it off and the task leaves the TV and the three Monday cards

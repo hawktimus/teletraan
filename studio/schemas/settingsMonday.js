@@ -4,14 +4,14 @@
 //   mondayConnection   a read only block that says who the token belongs to and when the
 //                      Mini last read Monday (../monday-status-input.js). It stores nothing
 //   mondayBoards       one entry for each board the screen reads. An entry has the board and
-//                      its team, the status column with the three labels that mean not
-//                      started, being worked on and finished, and optional columns for the
-//                      priority, the due date, the owner and the subteam
+//                      its team, the status column with the labels that mean being worked on
+//                      and finished (any other status is Backlog), and optional columns for
+//                      the priority, the due date, the owner and the subteam
 //   mondayShowOwners   whether the first name of the owner of an item is kept, off to start with
 //
 // The board and the columns are picked from lists that the Mini fills in (../monday-pickers.js),
 // so nobody types a number. The lists fall back to a plain box when they cannot be read.
-// The rows on a card are fixed at 2 not started, 2 being worked on and 2 finished, so they
+// The rows on a card are fixed at 2 in the backlog, 2 being worked on and 2 finished, so they
 // are not a field.
 //
 // The names and the starting values are the same as mondayBoards and mondayShowOwners in
@@ -82,21 +82,30 @@ const board = defineArrayMember({
       validation: Rule => Rule.required().error('Pick the team.'),
     }),
     columnField('statusColumn', 'Status column', 'The column with the status of each item. If the list cannot be read, type the column id, up to 50 characters.', StatusColumnInput, true),
-    labelField('backlogLabel', 'Backlog label', 'The status label that means the task is not started. Up to 30 characters.', 'Backlog'),
-    labelField('progressLabel', 'In progress label', 'The status label that means the task is being worked on. Up to 30 characters.', 'Working on it'),
-    labelField('doneLabel', 'Done label', 'The status label that means the task is finished. Up to 30 characters.', 'Done'),
+    // Kept, and hidden, so that a value saved earlier still opens and publishes. The Mini no longer reads it.
+    defineField({
+      name: 'backlogLabel',
+      title: 'Backlog label',
+      type: 'string',
+      hidden: true,
+      description: 'Not used any more. Every status that is not the In progress label or the Done label is Backlog. Up to 30 characters.',
+      initialValue: 'Backlog',
+      validation: Rule => tooLong(Rule, 30),
+    }),
+    labelField('progressLabel', 'In progress label', 'Items with this status are In progress. Every status that is not this label or the Done label is Backlog. Up to 30 characters.', 'Working on it'),
+    labelField('doneLabel', 'Done label', 'Items with this status are Done. Every status that is not this label or the In progress label is Backlog. Up to 30 characters.', 'Done'),
     columnField('priorityColumn', 'Priority column', 'Optional. The column with the priority. If the list cannot be read, type the column id, up to 50 characters.', PriorityColumnInput, false),
     labelField('priorityHigh', 'High label', 'Optional. The priority label that means high. Up to 30 characters.', 'High'),
     labelField('priorityMedium', 'Medium label', 'Optional. The priority label that means medium. Up to 30 characters.', 'Medium'),
     labelField('priorityLow', 'Low label', 'Optional. The priority label that means low. Up to 30 characters.', 'Low'),
-    columnField('dueColumn', 'Due date column', 'Optional. The column with the due date. If the list cannot be read, type the column id, up to 50 characters.', DueColumnInput, false),
+    columnField('dueColumn', 'Due date column', 'Optional. A date column gives its day and a timeline column gives its end date. If the list cannot be read, type the column id, up to 50 characters.', DueColumnInput, false),
     columnField('ownerColumn', 'Owner column', 'Optional. The column with the owner, used when owner names are on. If the list cannot be read, type the column id, up to 50 characters.', OwnerColumnInput, false),
     columnField('teamColumn', 'Subteam column', 'Optional. The column that names the Team lead. Empty uses the group names. If the list cannot be read, type the column id, up to 50 characters.', TeamColumnInput, false),
   ],
   preview: {
-    select: { board: 'boardId', team: 'team.name', backlog: 'backlogLabel', progress: 'progressLabel', done: 'doneLabel' },
+    select: { board: 'boardId', team: 'team.name', progress: 'progressLabel', done: 'doneLabel' },
     prepare(entry) {
-      const labels = [entry.backlog, entry.progress, entry.done].filter(Boolean).join(' / ');
+      const labels = [entry.progress, entry.done].filter(Boolean).join(' / ');
       return { title: entry.board ? 'Board ' + entry.board : 'Board with no number', subtitle: [entry.team || 'No team', labels].filter(Boolean).join(' · ') };
     },
   },
@@ -110,7 +119,7 @@ export function mondayFields() {
       type: 'string',
       group: 'monday',
       readOnly: true,
-      description: 'Who the token belongs to and when the Mini last read Monday. The Mini writes this by itself, so there is nothing to type here.',
+      description: 'Who the token belongs to, when the Mini last read Monday, how many boards are chosen and how many tasks the Mini has made. There is nothing to type here.',
       components: { input: MondayStatusInput },
     }),
 

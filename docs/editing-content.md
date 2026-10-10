@@ -282,9 +282,10 @@ The Mini makes these tasks every 10 minutes from the boards chosen on the Monday
 Dashboard Settings (docs/monday.md). Besides the fields above, a task from the board has
 a due date, which opens read only too. The Mini writes the name (up to 22 characters),
 the subteam, the status, the priority, the due date and, when the owner names are on,
-the contact. An item that is deleted on the board, or that no longer has one of the
-three status labels, is not deleted here: its task is switched off and moves to the
-Hidden list.
+the contact. An item that is deleted on the board is not deleted here: its task is
+switched off and moves to the Hidden list. An item whose status is not the In progress
+or Done label is not switched off either: its task is Up next, which the Monday cards
+call Backlog.
 
 Show on TV is on every task, not only the ones from the board. It is a second switch
 beside Show on screen. A task is on the TV only when both are on and it has not expired.
@@ -919,21 +920,27 @@ folder lists under From the board.
 
 - Monday connection from the Mini: a block at the top that you cannot type in. It says
   who the token belongs to, when the Mini last read Monday, how many boards the token
-  can see, and the last error. With nothing yet it says No connection yet: a coach has
+  can see, and the last error. Below those it says how many boards are chosen under
+  Boards and how many tasks the Mini has made. With no board chosen it says so, and that
+  the Mini writes no tasks. With nothing yet it says No connection yet: a coach has
   to add the token on the Mini (docs/rebuilding-the-mini.md, step 18) and the first
-  read comes within 10 minutes.
+  read comes within 10 minutes. If tasks do not show up, see "If nothing shows up" in
+  docs/monday.md.
 - Boards: one entry for each board the screen reads, up to 10. Click Add item for a new
   one. An entry has:
   - Board: pick the board by name. The Mini fills in the list, so nobody types a
     number. A board the token cannot see is not in the list.
   - Team: the team the tasks of the board are for.
   - Status column: the column with the status of each item.
-  - Backlog label, In progress label and Done label: the words of that column for
-    not started, being worked on and finished. They start as Backlog, Working on it
-    and Done. An item with any other label gets no task.
+  - In progress label and Done label: the words of that column for being worked on
+    and finished. They start as Working on it and Done. Every other status is
+    Backlog, which is Up next in the Status of a task: Stuck, Not started, any other
+    label, and an empty status. Older entries may still hold a Backlog label, which is
+    hidden and not used.
   - Priority column, with High label, Medium label and Low label: optional. Leave the
     column empty to show no priority.
-  - Due date column: optional.
+  - Due date column: optional. A date column gives its day. A timeline column gives its
+    end date.
   - Owner column: optional. It is used only when Show owner first names on the TV is on.
   - Subteam column: optional. Empty uses the names of the groups on the board. A name
     that matches no Team lead puts the task under [Unmatched], which is not shown.

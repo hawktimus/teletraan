@@ -28,7 +28,7 @@ TV. The dashboard reads what they publish.
     show-on-tv-input.js   the Show on TV switch of a task, which draws a task with no value as on
     status-input.js       the Status of the Mini block at the top of the Screen tab of Dashboard Settings
     frc-status-input.js   the block at the top of the Competition tab of Dashboard Settings: when the Mini last read the competition data
-    monday-status-input.js  the block at the top of the Monday tab of Dashboard Settings: who the token belongs to and when the Mini last read Monday
+    monday-status-input.js  the block at the top of the Monday tab of Dashboard Settings: who the token belongs to, when the Mini last read Monday, the boards chosen and the tasks made
     monday-pickers.js     the board list and the column lists of a board entry on the Monday tab, which show names and store numbers and ids
     panel-order-input.js  the Panel order list in Dashboard Settings, which fills itself from the two older panel lists when it is empty
     schemas/              one file per kind of content

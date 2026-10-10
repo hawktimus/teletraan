@@ -403,7 +403,8 @@ export const defaultSettings = {
   // The Monday tab in the Studio (docs/monday.md). The Mini reads these (deploy/scripts/monday-sync.sh) and writes the
   // tasks, which carry what the cards need, so the screen only keeps them tidy.
   //   mondayBoards      the boards the Mini reads, one entry for each: the board, its team, the status column with
-  //                     the three labels, and the optional priority, due date, owner and team columns. None to start with
+  //                     the In progress and Done labels (any other status is Backlog), and the optional priority,
+  //                     due date, owner and team columns. None to start with
   //   mondayShowOwners  keeps the first name of the owner of an item. Off to start with
   mondayBoards: [],
   mondayShowOwners: false,

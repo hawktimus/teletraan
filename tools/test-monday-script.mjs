@@ -291,8 +291,9 @@ function filesUnder(folder) {
 
 // The made-up world. The team board has columns for the status, the priority, the
 // due date and the owner. It has six items: three that the screen shows with
-// different statuses, one with a label that is none of the three, one in a group
-// that no Team lead has, and one with a title that is too long.
+// different statuses, one with a status that is none of the labels (it is Backlog),
+// one in a group that no Team lead has, and one with a title that is too long.
+// backlogLabel is still stored on an entry and the script ignores it.
 const boardEntry = {
   boardId: '111',
   team: 'team-prime',
@@ -356,6 +357,7 @@ function stored(id, fields) {
     1001: { title: 'Wire the robot', subteam: 'subteam-build', team: 'team-prime', status: 'up-next', priority: 'high', dueDate: '2027-01-20', contact: null, show: true },
     1002: { title: 'Code the arm', subteam: 'subteam-programming', team: 'team-prime', status: 'in-progress', priority: 'medium', dueDate: '2027-01-14', contact: null, show: true },
     1003: { title: 'Pick up parts', subteam: 'subteam-build', team: 'team-prime', status: 'done', priority: 'low', dueDate: null, contact: null, show: true },
+    1004: { title: 'Waiting on a part', subteam: 'subteam-build', team: 'team-prime', status: 'up-next', priority: null, dueDate: null, contact: null, show: true },
     1005: { title: 'Order the pizza', subteam: 'subteam-unmatched', team: 'team-prime', status: 'up-next', priority: null, dueDate: null, contact: null, show: true },
     1006: { title: 'Plan the whole season', subteam: 'subteam-build', team: 'team-prime', status: 'in-progress', priority: null, dueDate: null, contact: null, show: true },
   };
@@ -401,7 +403,7 @@ test('one board: the requests go in the order of the work, the tasks are written
   assert.deepEqual(requestsOf(result.calls), firstSequence);
   assert.ok(result.text.includes('monday: 1 board(s) chosen in Dashboard Settings'), result.text);
   assert.ok(result.text.includes('monday: 6 item(s) read'), result.text);
-  assert.ok(result.text.includes('monday: 5 task(s) wanted, 5 new, 0 changed, 0 switched off'), result.text);
+  assert.ok(result.text.includes('monday: 6 task(s) wanted, 6 new, 0 changed, 0 switched off'), result.text);
   assert.ok(result.text.includes('monday: status written'), result.text);
   assert.equal(place.writes().length, 2);
   assert.deepEqual(fs.readdirSync(place.folder).sort(), ['.lock']);
@@ -460,7 +462,7 @@ test('Sanity is asked for the settings, the teams, the Team leads, the earlier t
   [project, dataset, version].forEach(value => assert.ok(!script.includes(value), 'the script should not contain ' + value));
 });
 
-test('a board with the mapped statuses and priorities: Backlog, Working on it and Done become up-next, in-progress and done, and a label that is none of them is left out', () => {
+test('a board with the mapped statuses and priorities: Working on it and Done become in-progress and done, and every other status, Stuck too, becomes up-next', () => {
   const place = setup('mapping', { tools: true });
   world(place);
   const result = place.run();
@@ -468,7 +470,7 @@ test('a board with the mapped statuses and priorities: Backlog, Working on it an
 
   const mutations = place.taskMutations();
   const made = mutations.filter(mutation => mutation.createIfNotExists && mutation.createIfNotExists._type === 'task').map(mutation => mutation.createIfNotExists);
-  assert.deepEqual(made.map(doc => doc._id), ['task-monday-1001', 'task-monday-1002', 'task-monday-1003', 'task-monday-1005', 'task-monday-1006'], 'the Stuck item has no task');
+  assert.deepEqual(made.map(doc => doc._id), ['task-monday-1001', 'task-monday-1002', 'task-monday-1003', 'task-monday-1004', 'task-monday-1005', 'task-monday-1006'], 'the Stuck item has a task too');
   made.forEach(doc => assert.deepEqual(Object.keys(doc), ['_id', '_type', 'source', 'mondayId']));
   assert.equal(made[0].source, 'monday');
   assert.equal(made[0].mondayId, '1001');
@@ -484,6 +486,8 @@ test('a board with the mapped statuses and priorities: Backlog, Working on it an
   assert.deepEqual(patch('task-monday-1002').set, { title: 'Code the arm', subteam: ref('subteam-programming'), team: ref('team-prime'), status: 'in-progress', show: true, priority: 'medium', dueDate: '2027-01-14' });
   assert.deepEqual(patch('task-monday-1003').set, { title: 'Pick up parts', subteam: ref('subteam-build'), team: ref('team-prime'), status: 'done', show: true, priority: 'low' });
   assert.deepEqual(patch('task-monday-1003').unset, ['dueDate', 'contact']);
+  assert.deepEqual(patch('task-monday-1004').set, { title: 'Waiting on a part', subteam: ref('subteam-build'), team: ref('team-prime'), status: 'up-next', show: true }, 'Stuck is Backlog');
+  assert.deepEqual(patch('task-monday-1004').unset, ['priority', 'dueDate', 'contact']);
   assert.deepEqual(patch('task-monday-1005').set, { title: 'Order the pizza', subteam: ref('subteam-unmatched'), team: ref('team-prime'), status: 'up-next', show: true });
   assert.deepEqual(patch('task-monday-1005').unset, ['priority', 'dueDate', 'contact'], 'an unknown priority label and a date that is not a day are no values');
   assert.equal(patch('task-monday-1006').set.title, 'Plan the whole season', 'the title is cut at 22 characters and the space at the cut goes');
@@ -511,7 +515,7 @@ test('owner names: off, no contact is written. On, only the first word of the fi
   on.taskMutations().filter(mutation => mutation.patch && mutation.patch.set).forEach(mutation => {
     contacts[mutation.patch.id] = mutation.patch.set.contact || null;
   });
-  assert.deepEqual(contacts, { 'task-monday-1001': 'Sam', 'task-monday-1002': 'Pat', 'task-monday-1003': null, 'task-monday-1005': null, 'task-monday-1006': 'Ana' });
+  assert.deepEqual(contacts, { 'task-monday-1001': 'Sam', 'task-monday-1002': 'Pat', 'task-monday-1003': null, 'task-monday-1004': null, 'task-monday-1005': null, 'task-monday-1006': 'Ana' });
 
   const longName = setup('owners-long', { tools: true });
   world(longName, { owners: true, items: [item('1001', 'Wire the robot', 'Build', { status: 'Backlog', priority: '', date4: '', person: 'Maximilian-Bartholomew Lee' })] });
@@ -522,7 +526,7 @@ test('owner names: off, no contact is written. On, only the first word of the fi
 
 test('owner names turned off later: the contact of a task that has one is unset, and a task with none is left alone', () => {
   const place = setup('owners-later', { tools: true });
-  world(place, { owners: false, tasks: [stored(1001, { contact: 'Sam' }), stored(1002), stored(1003), stored(1005), stored(1006)] });
+  world(place, { owners: false, tasks: [stored(1001, { contact: 'Sam' }), stored(1002), stored(1003), stored(1004), stored(1005), stored(1006)] });
   place.run();
   const mutations = place.taskMutations();
   assert.equal(mutations.length, 1);
@@ -573,7 +577,7 @@ test('a team column, when one is chosen, is used before the group, and the group
 test('Show on TV is never sent: a task that exists keeps it, a new one gets none, and a task that is up to date is not touched at all', () => {
   const place = setup('show-on-tv', { tools: true });
   world(place, {
-    tasks: [stored(1001, { showOnTv: false, priority: 'low' }), stored(1002), stored(1003), stored(1005), stored(1006)],
+    tasks: [stored(1001, { showOnTv: false, priority: 'low' }), stored(1002), stored(1003), stored(1004), stored(1005), stored(1006)],
   });
   const result = place.run();
   assert.equal(result.status, 0, result.errors);
@@ -585,10 +589,10 @@ test('Show on TV is never sent: a task that exists keeps it, a new one gets none
   assert.equal(mutations[0].patch.id, 'task-monday-1001');
   assert.equal(mutations[0].patch.set.priority, 'high');
   assert.ok(!mutations.some(mutation => mutation.createIfNotExists), 'a task that exists is not made again');
-  assert.ok(result.text.includes('5 task(s) wanted, 0 new, 1 changed, 0 switched off'), result.text);
+  assert.ok(result.text.includes('6 task(s) wanted, 0 new, 1 changed, 0 switched off'), result.text);
 
   const clean = setup('up-to-date', { tools: true });
-  world(clean, { tasks: [stored(1001), stored(1002), stored(1003), stored(1005), stored(1006)] });
+  world(clean, { tasks: [stored(1001), stored(1002), stored(1003), stored(1004), stored(1005), stored(1006)] });
   clean.run();
   assert.equal(clean.writes().length, 1, 'with nothing changed, only the status is written');
   assert.equal(clean.taskMutations().length, 0);
@@ -597,7 +601,7 @@ test('Show on TV is never sent: a task that exists keeps it, a new one gets none
 test('a task whose item has gone is switched off and never deleted, and one that is already off is left alone', () => {
   const place = setup('vanished', { tools: true });
   world(place, {
-    tasks: [stored(1001), stored(1002), stored(1003), stored(1005), stored(1006), stored(9001, { title: 'Gone', show: true }), stored(9002, { title: 'Gone for good', show: false })],
+    tasks: [stored(1001), stored(1002), stored(1003), stored(1004), stored(1005), stored(1006), stored(9001, { title: 'Gone', show: true }), stored(9002, { title: 'Gone for good', show: false })],
   });
   const result = place.run();
   assert.equal(result.status, 0, result.errors);
@@ -608,19 +612,24 @@ test('a task whose item has gone is switched off and never deleted, and one that
   assert.ok(result.text.includes('1 switched off'), result.text);
 });
 
-test('a task whose status is no longer one of the three labels is switched off, and comes back when the label does', () => {
+test('an item whose status is none of the labels is Backlog: a task made as in progress comes back to up-next, and nothing is switched off for it', () => {
   const place = setup('stuck', { tools: true });
-  world(place, { tasks: [stored(1001), stored(1002), stored(1003), stored(1005), stored(1006), stored(1004, { title: 'Waiting on a part', status: 'in-progress', subteam: 'subteam-build', team: 'team-prime' })] });
-  place.run();
-  assert.deepEqual(place.taskMutations(), [{ patch: { id: 'task-monday-1004', set: { show: false } } }]);
+  world(place, { tasks: [stored(1001), stored(1002), stored(1003), stored(1004, { status: 'in-progress' }), stored(1005), stored(1006)] });
+  const result = place.run();
+  assert.equal(result.status, 0, result.errors);
+  const mutations = place.taskMutations();
+  assert.equal(mutations.length, 1);
+  assert.equal(mutations[0].patch.id, 'task-monday-1004');
+  assert.equal(mutations[0].patch.set.status, 'up-next');
+  assert.ok(result.text.includes('6 task(s) wanted, 0 new, 1 changed, 0 switched off'), result.text);
 
   const back = setup('stuck-back', { tools: true });
-  world(back, { tasks: [stored(1001), stored(1002), stored(1003, { show: false }), stored(1005), stored(1006)] });
+  world(back, { tasks: [stored(1001), stored(1002), stored(1003, { show: false }), stored(1004), stored(1005), stored(1006)] });
   back.run();
-  const mutations = back.taskMutations();
-  assert.equal(mutations.length, 1);
-  assert.equal(mutations[0].patch.id, 'task-monday-1003');
-  assert.equal(mutations[0].patch.set.show, true);
+  const comeback = back.taskMutations();
+  assert.equal(comeback.length, 1);
+  assert.equal(comeback[0].patch.id, 'task-monday-1003');
+  assert.equal(comeback[0].patch.set.show, true);
 });
 
 test('when a board cannot be read to its end, nothing is switched off and no count is kept', () => {
@@ -628,7 +637,7 @@ test('when a board cannot be read to its end, nothing is switched off and no cou
   const place = setup('incomplete', { tools: true });
   world(place, {
     boards: [boardEntry, entry],
-    tasks: [stored(1001), stored(1002), stored(1003), stored(1005), stored(1006), stored(9001, { title: 'On the other board', show: true })],
+    tasks: [stored(1001), stored(1002), stored(1003), stored(1004), stored(1005), stored(1006), stored(9001, { title: 'On the other board', show: true })],
   });
   place.answer('items-222', undefined, { exit: 28 });
   const result = place.run();
@@ -666,7 +675,7 @@ test('a board entry that cannot be used is skipped and said so, and the others a
 });
 
 test('the label fields have the defaults when empty, and a label is matched whatever its capitals and spaces', () => {
-  const entry = Object.assign({}, boardEntry, { backlogLabel: '', progressLabel: null, doneLabel: undefined, priorityHigh: '  HIGH ', priorityMedium: '', priorityLow: '' });
+  const entry = Object.assign({}, boardEntry, { progressLabel: null, doneLabel: undefined, priorityHigh: '  HIGH ', priorityMedium: '', priorityLow: '' });
   const place = setup('labels', { tools: true });
   world(place, {
     boards: [entry],
@@ -680,6 +689,52 @@ test('the label fields have the defaults when empty, and a label is matched what
   const sets = {};
   place.taskMutations().filter(mutation => mutation.patch && mutation.patch.set).forEach(mutation => { sets[mutation.patch.id] = [mutation.patch.set.status, mutation.patch.set.priority || null]; });
   assert.deepEqual(sets, { 'task-monday-3001': ['up-next', 'high'], 'task-monday-3002': ['in-progress', null], 'task-monday-3003': ['done', null] }, 'empty priority labels map nothing');
+});
+
+test('every status that is not the In progress or Done label is Backlog, an empty one too, and the open count still leaves out only Done', () => {
+  const place = setup('backlog-rule', { tools: true });
+  world(place, {
+    items: [
+      item('3101', 'Stuck', 'Build', { status: 'Stuck' }),
+      item('3102', 'Not started', 'Build', { status: 'Not started' }),
+      item('3103', 'Empty', 'Build', { status: '' }),
+      item('3104', 'Nobody listed', 'Build', { status: 'Waiting for review' }),
+      item('3105', 'Backlog', 'Build', { status: 'Backlog' }),
+      item('3106', 'Working', 'Build', { status: 'Working on it' }),
+      item('3107', 'Finished', 'Build', { status: 'Done' }),
+    ],
+  });
+  const result = place.run();
+  assert.equal(result.status, 0, result.errors);
+
+  const statuses = {};
+  place.taskMutations().filter(mutation => mutation.patch && mutation.patch.set).forEach(mutation => { statuses[mutation.patch.id.slice(-4)] = mutation.patch.set.status; });
+  assert.deepEqual(statuses, { 3101: 'up-next', 3102: 'up-next', 3103: 'up-next', 3104: 'up-next', 3105: 'up-next', 3106: 'in-progress', 3107: 'done' });
+  assert.ok(result.text.includes('monday: 7 task(s) wanted, 7 new'), result.text);
+  assert.equal(place.document().snapshots[0].open, 6, 'six of the seven are not done');
+});
+
+test('the Backlog label that old board entries still store is ignored: the script does not ask for it and no status depends on it', () => {
+  const entry = Object.assign({}, boardEntry, { backlogLabel: 'Done' });
+  const place = setup('backlog-ignored', { tools: true });
+  world(place, {
+    boards: [entry],
+    items: [
+      item('3201', 'Finished', 'Build', { status: 'Done' }),
+      item('3202', 'Working', 'Build', { status: 'Working on it' }),
+      item('3203', 'Parked', 'Build', { status: 'Parked' }),
+    ],
+  });
+  const result = place.run();
+  assert.equal(result.status, 0, result.errors);
+
+  const statuses = {};
+  place.taskMutations().filter(mutation => mutation.patch && mutation.patch.set).forEach(mutation => { statuses[mutation.patch.id.slice(-4)] = mutation.patch.set.status; });
+  assert.deepEqual(statuses, { 3201: 'done', 3202: 'in-progress', 3203: 'up-next' }, 'a Backlog label of Done would have made Done items up-next');
+
+  const question = result.calls.split('\n').filter(line => line.includes('/data/query/'))[0];
+  assert.ok(!question.includes('backlogLabel'), 'the question to Sanity does not ask for the Backlog label');
+  assert.ok(!fs.readFileSync(syncFile, 'utf8').includes('backlogLabel'), 'the script does not name the Backlog label anywhere');
 });
 
 test('a date is a day or nothing: a day and a time give the day, and a day that is not on the calendar gives none', () => {
@@ -698,6 +753,59 @@ test('a date is a day or nothing: a day and a time give the day, and a day that 
   const days = {};
   place.taskMutations().filter(mutation => mutation.patch && mutation.patch.set).forEach(mutation => { days[mutation.patch.id.slice(-4)] = mutation.patch.set.dueDate || null; });
   assert.deepEqual(days, { 4001: '2027-03-01', 4002: null, 4003: '2028-02-29', 4004: null, 4005: null, 4006: null });
+});
+
+test('a date column gives its day and a timeline column gives its end day, which is the last real day in the text', () => {
+  const entry = Object.assign({}, boardEntry, { dueColumn: 'timeline1' });
+  const place = setup('timeline', { tools: true });
+  const cases = [
+    ['5001', '2026-10-12 - 2026-10-20', '2026-10-20'],
+    ['5002', '2026-10-20 - 2026-10-20', '2026-10-20'],
+    ['5003', '2026-10-12', '2026-10-12'],
+    ['5004', '2027-01-14 18:00', '2027-01-14'],
+    ['5005', '2026-10-12-2026-10-20', '2026-10-20'],
+    ['5006', '2026-10-12 to 2026-10-20', '2026-10-20'],
+    ['5007', '2028-02-27 - 2028-02-29', '2028-02-29'],
+    ['5008', '2027-02-27 - 2027-02-29', '2027-02-27'],
+    ['5009', '2027-02-30 - 2027-02-29', null],
+    ['5010', 'Oct 12 - Oct 20', null],
+    ['5011', '12/10/2026 - 20/10/2026', null],
+    ['5012', '1899-12-31 - 2100-01-01', null],
+    ['5013', '12026-10-12 - 2026-10-201', null],
+    ['5014', '2026-W41', null],
+    ['5015', '', null],
+    ['5016', 'next week', null],
+  ];
+  world(place, { boards: [entry], items: cases.map(row => item(row[0], 'Item ' + row[0], 'Build', { status: 'Backlog', timeline1: row[1] })) });
+  const result = place.run();
+  assert.equal(result.status, 0, result.errors);
+
+  const days = {};
+  place.taskMutations().filter(mutation => mutation.patch && mutation.patch.set).forEach(mutation => { days[mutation.patch.id.slice(-4)] = mutation.patch.set.dueDate || null; });
+  cases.forEach(row => assert.equal(days[row[0]], row[2], JSON.stringify(row[1])));
+  assert.deepEqual(place.variables()[1].columns, ['person', 'priority', 'status', 'timeline1'], 'the timeline column is asked for like any other');
+});
+
+test('a task whose timeline moves is changed to the new end day, and one with no day any more loses its due date', () => {
+  const entry = Object.assign({}, boardEntry, { dueColumn: 'timeline1', ownerColumn: null, priorityColumn: null });
+  const place = setup('timeline-moves', { tools: true });
+  world(place, {
+    boards: [entry],
+    items: [
+      item('5101', 'Moved', 'Build', { status: 'Backlog', timeline1: '2026-10-12 - 2026-10-27' }),
+      item('5102', 'Cleared', 'Build', { status: 'Backlog', timeline1: '' }),
+    ],
+    tasks: [
+      { _id: 'task-monday-5101', title: 'Moved', subteam: 'subteam-build', team: 'team-prime', status: 'up-next', priority: null, dueDate: '2026-10-20', contact: null, show: true },
+      { _id: 'task-monday-5102', title: 'Cleared', subteam: 'subteam-build', team: 'team-prime', status: 'up-next', priority: null, dueDate: '2026-10-20', contact: null, show: true },
+    ],
+  });
+  place.run();
+  const patches = {};
+  place.taskMutations().forEach(mutation => { patches[mutation.patch.id] = mutation.patch; });
+  assert.equal(patches['task-monday-5101'].set.dueDate, '2026-10-27');
+  assert.deepEqual(patches['task-monday-5102'].unset, ['priority', 'dueDate', 'contact']);
+  assert.ok(!('dueDate' in patches['task-monday-5102'].set));
 });
 
 test('the snapshot: one count a day of the items that are not done, over the chosen boards, and the first run of a day makes the entry', () => {
@@ -1060,7 +1168,7 @@ test('answers of an odd shape do not stop the run: missing names, groups and cel
     { _key: '222', id: '222', name: '', itemCount: 0, columns: [{ _key: 'ok', id: 'ok', title: '' }] },
   ]);
   const made = place.taskMutations().filter(mutation => mutation.createIfNotExists).map(mutation => mutation.createIfNotExists._id);
-  assert.deepEqual(made.filter(id => id.startsWith('task-monday-')), ['task-monday-9003']);
+  assert.deepEqual(made.filter(id => id.startsWith('task-monday-')), ['task-monday-9001', 'task-monday-9003', 'task-monday-9004'], 'an item with no status text is Backlog, and an item with no name has no task');
 });
 
 test('the token of Monday and the token of Sanity are never printed, never in an argument of curl, never written to a file or a document, and the other secrets are never read', () => {
@@ -1382,6 +1490,24 @@ test('local.example.env has a MONDAY_API_TOKEN line with a placeholder, and the 
   const feed = fs.readFileSync(path.join(repo, 'docs/monday.md'), 'utf8');
   ['monday-status', 'MONDAY_API_TOKEN', 'SANITY_WRITE_TOKEN', 'public', 'None of it has been tried', 'every 10 minutes', 'If an answer looks different', 'teletraan-monday.timer', 'task-monday-', 'Show on TV', 'subteam-unmatched', '500', '120', 'install-monday.sh'].forEach(word => {
     assert.ok(feed.includes(word), 'docs/monday.md should mention ' + word);
+  });
+});
+
+test('docs/monday.md has "If nothing shows up" with its six steps, the status rule and the due date rule, and no document still says that three labels matter', () => {
+  const feed = fs.readFileSync(path.join(repo, 'docs/monday.md'), 'utf8');
+  const section = feed.slice(feed.indexOf('## If nothing shows up'), feed.indexOf('## Limits'));
+  assert.ok(section.length > 200, 'the section is there, before Limits');
+  [/^1\. The connection block says connected/m, /^2\. A board is chosen/m, /^3\. Wait 10 minutes/m, /^4\. Look under Tasks, From the board/m, /^5\. Look at the Show on TV switch/m, /^6\. On the Mini/m].forEach(step => {
+    assert.ok(step.test(section), 'the section should have the step ' + step);
+  });
+  ['Status column', 'No board is chosen yet', 'sudo journalctl -u teletraan-monday.service -n 40', 'never prints the token', 'every other item is Backlog', 'Stuck', 'timeline column', 'end', '2026-10-12 - 2026-10-20', 'last real day'].forEach(word => {
+    assert.ok(section.includes(word), 'the section should mention ' + word);
+  });
+
+  ['docs/monday.md', 'docs/editing-content.md', 'docs/coaches-guide.md'].forEach(file => {
+    const text = fs.readFileSync(path.join(repo, file), 'utf8');
+    assert.ok(!/three (status )?labels/i.test(text), file + ' still speaks of three labels');
+    assert.ok(!/Backlog label, In progress label|The label for Backlog/.test(text), file + ' still lists the Backlog label among the labels that count');
   });
 });
 

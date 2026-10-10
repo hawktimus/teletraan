@@ -181,9 +181,8 @@ def first_name($limit):
     | if ($word | contains("@")) then null
       else ($word | gsub("[^\\p{L}\u0027.-]"; "") | sub("^[-.\u0027]+"; "") | sub("[-.\u0027]+$"; "") | .[0:$limit] | if . == "" then null else . end) end
   end;
-def due_date:
-  (plain | .[0:10]) as $day
-  | if ($day | test("\\A(19|20)[0-9]{2}-[0-9]{2}-[0-9]{2}\\z")) and ((try (($day + "T00:00:00Z") | fromdateiso8601 | todate | .[0:10]) catch "") == $day) then $day else null end;
+def real_day: . as $day | (try (($day + "T00:00:00Z") | fromdateiso8601 | todate | .[0:10]) catch "") == $day;
+def due_date: [scan("(?<![0-9])(?:19|20)[0-9]{2}-[0-9]{2}-[0-9]{2}(?![0-9])") | select(real_day)] | last;
 def first_of_each($key): reduce .[] as $item ([]; if any(.[]; .[$key] == $item[$key]) then . else . + [$item] end);
 '
 
@@ -360,7 +359,7 @@ query='{
   "zone": *[_id == "theme"][0].timeZone,
   "owners": *[_id == "dashboardSettings"][0].mondayShowOwners,
   "boards": *[_id == "dashboardSettings"][0].mondayBoards[] {
-    boardId, "team": team._ref, statusColumn, backlogLabel, progressLabel, doneLabel,
+    boardId, "team": team._ref, statusColumn, progressLabel, doneLabel,
     priorityColumn, priorityHigh, priorityMedium, priorityLow, dueColumn, ownerColumn, teamColumn
   },
   "teams": *[_type == "team" && !(_id in path("drafts.**"))] { _id },
@@ -402,7 +401,6 @@ jq -c --argjson label_limit "$label_limit" "$helpers"'
           board: (.boardId | whole_text(30)),
           team: (.team | if type == "string" then . else "" end),
           status_column: (.statusColumn | column_name),
-          backlog: (.backlogLabel | whole_text($label_limit) | if . == "" then "Backlog" else . end),
           progress: (.progressLabel | whole_text($label_limit) | if . == "" then "Working on it" else . end),
           done: (.doneLabel | whole_text($label_limit) | if . == "" then "Done" else . end),
           priority_column: (.priorityColumn | column_name),
@@ -524,7 +522,9 @@ if [ "$boards_read" = yes ] && [ "$chosen" -gt 0 ]; then
     head -n "$items_per_board" "$work/items.ndjson" > "$work/items-kept.ndjson"
     items_read=$((items_read + $(wc -l < "$work/items-kept.ndjson" | tr -d ' ')))
 
-    # One row for each item: what the screen would show of it, and whether it is open
+    # One row for each item: what the screen would show of it, and whether it is open.
+    # Only the In progress and Done labels are looked for. Any other status, or none,
+    # is Backlog, so an item is never left out for having a label nobody listed.
     jq -n -c --slurpfile config "$work/config.json" --slurpfile items "$work/items-kept.ndjson" \
       --argjson owners "$owners" --argjson title_limit "$title_limit" --argjson contact_limit "$contact_limit" "$helpers"'
       $config[0] as $c
@@ -537,10 +537,9 @@ if [ "$boards_read" = yes ] && [ "$chosen" -gt 0 ]; then
             title: (.name | whole_text($title_limit)),
             team_text: ((if $c.team_column == null then "" else text_of($c.team_column) end) as $named | if $named != "" then $named else (.group | if type == "string" then plain else "" end) end),
             team: $c.team,
-            status: (if is_label($state; $c.backlog) then "up-next"
-              elif is_label($state; $c.progress) then "in-progress"
+            status: (if is_label($state; $c.progress) then "in-progress"
               elif is_label($state; $c.done) then "done"
-              else null end),
+              else "up-next" end),
             priority: (if $c.priority_column == null then null
               else (text_of($c.priority_column) as $given
                 | if is_label($given; $c.high) then "high"
@@ -592,7 +591,7 @@ def patch_of($id; $task):
 $sanity[0].result as $found
 | ($found.subteams | arrays | map(select(._id | type == "string"))) as $subteams
 | ($found.tasks | arrays | map(select(._id | type == "string")) | map({key: ._id, value: .}) | from_entries) as $earlier
-| ([$rows[] | select(.status != null)] | unique_by(.id)) as $wanted
+| ($rows | unique_by(.id)) as $wanted
 | ($wanted | map(
     . as $row
     | ("task-monday-" + $row.id) as $id
