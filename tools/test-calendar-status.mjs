@@ -378,16 +378,31 @@ test('a failed download keeps listing the events of the old file, a calendar wit
   assert.equal(nofile.occurrences, undefined);
 });
 
-test('twelve events are listed, in date order, and the count is of every event in the next 30 days', () => {
-  const daily = calendarText([{ day: 1, title: 'Daily check', rule: 'FREQ=DAILY;COUNT=40' }]);
-  const place = setup('twelve', { localEnv: secretEnv, files: { 'sanity.json': sanityAnswer }, calendars: { 'daily.ics': daily }, sync: 'daily|2026-10-09T15:00:02Z|\n' });
+test('forty events are listed, in date order, and the count is of every event in the next 30 days', () => {
+  const daily = calendarText([{ day: 1, title: 'Daily check', rule: 'FREQ=DAILY;COUNT=40' }, { day: 1, title: 'Late check', rule: 'FREQ=DAILY;COUNT=40' }]);
+  const place = setup('forty', { localEnv: secretEnv, files: { 'sanity.json': sanityAnswer }, calendars: { 'daily.ics': daily }, sync: 'daily|2026-10-09T15:00:02Z|\n' });
   assert.equal(place.run('calendar-status.sh').status, 0);
 
   const [calendar] = place.document().calendars;
-  assert.equal(calendar.occurrences.length, 12);
-  assert.ok(calendar.eventCount >= 29 && calendar.eventCount <= 30, 'the days from tomorrow to day 30: ' + calendar.eventCount);
-  assert.deepEqual(calendar.occurrences.map(event => event._key), Array.from({ length: 12 }, (value, index) => 'o' + (index + 1)));
-  assert.equal(new Set(calendar.occurrences.map(event => event.date)).size, 12, 'one for each day, in order');
+  assert.equal(calendar.occurrences.length, 40);
+  assert.ok(calendar.eventCount >= 58 && calendar.eventCount <= 60, 'two for each day from tomorrow to day 30: ' + calendar.eventCount);
+  assert.deepEqual(calendar.occurrences.map(event => event._key), Array.from({ length: 40 }, (value, index) => 'o' + (index + 1)));
+  assert.equal(new Set(calendar.occurrences.map(event => event.date)).size, 20, 'two for each day, in order');
+  const days = calendar.occurrences.map(event => event.day);
+  assert.deepEqual(days, days.slice().sort(), 'in date order');
+});
+
+test('each listed event has its day like 2026-10-09, the first day in the time zone of the screen, and the order of the fields is the schema', () => {
+  const place = setup('day', { localEnv: secretEnv, files: { 'sanity.json': sanityAnswer }, calendars: { 'group.ics': groupCalendar }, sync: 'group|2026-10-09T15:00:02Z|\n' });
+  assert.equal(place.run('calendar-status.sh').status, 0);
+
+  const [group] = place.document().calendars;
+  group.occurrences.forEach(event => {
+    assert.match(event.day, /^\d{4}-\d{2}-\d{2}$/);
+    assert.deepEqual(Object.keys(event), ['_key', 'title', 'date', 'day', 'time', 'shown', 'rule']);
+  });
+  const kickoff = group.occurrences.find(event => event.title === 'Pre-Season Kickoff');
+  assert.equal(kickoff.day, noon(1).toISOString().slice(0, 10), 'noon in UTC is the early morning in New York, on the same date');
 });
 
 test('a long title is cut, a title with line breaks or quotes stays one safe line, and an untitled event says so', () => {
@@ -451,18 +466,18 @@ test('without Node the document still has every calendar and says why it lists n
 });
 
 test('a Node that is too old to read the dashboard files is not used, and the document says so', () => {
-  ['v18.19.0', 'v20.18.3', 'v21.7.3', 'v22.6.0', 'garbage', ''].forEach((version, index) => {
+  ['v17.9.1', 'v16.20.2', 'v14.21.3', 'v0.12.18', 'garbage', ''].forEach((version, index) => {
     const place = setup('old-node-' + index, { localEnv: secretEnv, oldNode: version, files: { 'sanity.json': sanityAnswer }, calendars: { 'group.ics': groupCalendar }, sync: 'group|2026-10-09T15:00:02Z|\n' });
     const result = place.run('calendar-status.sh');
 
     assert.equal(result.status, 0, result.errors);
-    assert.equal(place.document().eventsNote, 'Node on the Mini is too old to read the dashboard code, so it does not list the coming events. It needs version 20.19 or newer', version);
+    assert.equal(place.document().eventsNote, 'Node on the Mini is too old to read the dashboard code, so it does not list the coming events. It needs version 18 or newer', version);
     assert.equal(place.document().calendars[0].eventCount, undefined, version);
     assert.ok(!result.calls.includes('calendar-status.mjs'), 'the Node file was not run for ' + version + ': ' + result.calls);
     assert.ok(!result.calls.includes('curl'), 'Sanity was not asked for ' + version);
   });
 
-  ['v20.19.0', 'v20.20.1', 'v22.7.0', 'v22.12.0', 'v23.0.0', 'v26.4.0'].forEach((version, index) => {
+  ['v18.0.0', 'v18.19.0', 'v20.18.3', 'v22.6.0', 'v22.7.0', 'v23.0.0', 'v26.4.0'].forEach((version, index) => {
     const place = setup('new-node-' + index, { localEnv: secretEnv, files: { 'sanity.json': sanityAnswer }, calendars: { 'group.ics': groupCalendar }, sync: 'group|2026-10-09T15:00:02Z|\n' });
     const original = fs.readFileSync(path.join(place.root, 'deploy/scripts/calendar-status.sh'), 'utf8');
     const script = original.replace('version=$(node --version 2> /dev/null) || return 1', 'version=' + version);

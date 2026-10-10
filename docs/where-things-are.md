@@ -63,6 +63,8 @@ editors can sign in from anywhere.
     dashboard/
       index.html, shell.js    starts everything. index.html also draws the metal gradients
       registry.js             the list of every panel
+      package.json            tells Node that the .js files here are modules, so the calendar scripts on the
+                              Mini can read them (docs/calendars-page.md). Browsers do not use it
       config.js               the weather location, the Sanity project, the fallback content flag, the speeds, the defaults
       frame.js, frame.css     everything that moves: the page change (the slat change and the mechanical
                               change, docs/page-transitions.md), the screws, the logo's entrance, spin and
@@ -338,6 +340,12 @@ editors can sign in from anywhere.
                               (SHOWN or HIDDEN with the rule, the error case, no address anywhere, with and
                               without Node), and status-write.sh calendar-status, with a fake curl
       test-calendars-view.mjs checks for the rows and lines of the Calendars page in Studio
+      test-calendars-hide.mjs checks for the Hide buttons of the Calendars page: the rules they make, the same
+                              id for the same rule, the matching that follows the screen's, Show again, the
+                              day and the 40 events the Mini lists, and the size of the document
+      test-calendar-node.mjs  checks that the calendar scripts run on Node 18: dashboard/package.json makes the
+                              dashboard files modules, nothing in their imports needs a newer Node, and both
+                              scripts list events with the newer built-ins taken away
       test-frc-script.mjs     checks for deploy/scripts/frc-sync.sh and install-frc.sh, with a fake curl and made-up
                               answers: the requests, the status document, the ETags, the limit of 60 requests, the
                               snapshots, and that the key and the token are never printed or saved

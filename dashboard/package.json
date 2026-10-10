@@ -1,0 +1,5 @@
+{
+  "private": true,
+  "type": "module",
+  "description": "Tells Node that the .js files in this folder are ES modules, so the calendar scripts in deploy/scripts can read them. Browsers do not use this file."
+}

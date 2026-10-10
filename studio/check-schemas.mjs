@@ -4665,7 +4665,7 @@ function checkListAdds() {
 // words and rows in calendars-view-parts.js).
 const calendarStatusFields = ['updatedAt', 'eventsNote', 'calendars'];
 const calendarEntryFields = ['code', 'fetchedAt', 'error', 'eventCount', 'hiddenCount', 'occurrences'];
-const calendarEventFields = ['title', 'date', 'time', 'shown', 'rule'];
+const calendarEventFields = ['title', 'date', 'day', 'time', 'shown', 'rule'];
 
 function checkCalendarStatusType() {
   const problems = [];
@@ -4679,7 +4679,7 @@ function checkCalendarStatusType() {
   need(problems, names(entry) === calendarEntryFields.join(), 'a calendar of calendarStatus should have these fields, in this order: ' + calendarEntryFields.join(', '));
   need(problems, names(events) === calendarEventFields.join(), 'an event of calendarStatus should have these fields, in this order: ' + calendarEventFields.join(', '));
 
-  const kinds = { 'updatedAt': 'datetime', 'eventsNote': 'string', 'calendars': 'array', 'calendars.code': 'string', 'calendars.fetchedAt': 'datetime', 'calendars.error': 'string', 'calendars.eventCount': 'number', 'calendars.hiddenCount': 'number', 'calendars.occurrences': 'array', 'calendars.occurrences.title': 'string', 'calendars.occurrences.date': 'string', 'calendars.occurrences.time': 'string', 'calendars.occurrences.shown': 'boolean', 'calendars.occurrences.rule': 'string' };
+  const kinds = { 'updatedAt': 'datetime', 'eventsNote': 'string', 'calendars': 'array', 'calendars.code': 'string', 'calendars.fetchedAt': 'datetime', 'calendars.error': 'string', 'calendars.eventCount': 'number', 'calendars.hiddenCount': 'number', 'calendars.occurrences': 'array', 'calendars.occurrences.title': 'string', 'calendars.occurrences.date': 'string', 'calendars.occurrences.day': 'string', 'calendars.occurrences.time': 'string', 'calendars.occurrences.shown': 'boolean', 'calendars.occurrences.rule': 'string' };
   Object.keys(kinds).forEach(name => {
     const field = fieldAt('calendarStatus.' + name);
     need(problems, field && field.type === kinds[name], 'calendarStatus.' + name + ' should be a ' + kinds[name]);
@@ -4779,8 +4779,10 @@ function checkCalendarsPage() {
   need(problems, wordsIn(view.calendarsPage({ entries: [], status: status, entriesUnreadable: true, statusUnreadable: false }, '', () => {}, now)).indexOf('Dashboard Settings could not be read') !== -1, 'the page should say so when Dashboard Settings cannot be read, and still list the calendars of the Mini');
   need(problems, typeof view.CalendarsView === 'function' && JSON.stringify(view.CalendarsView()).indexOf('Reading the calendars') !== -1, 'CalendarsView should start by saying it is reading');
 
-  // Read only: the page never changes a document
-  need(problems, !/onChange|\.patch\(|\.create\(|\.createOrReplace\(|\.delete\(|\.mutate\(|\.transaction\(|useDocumentOperation/.test(world.calendarsViewSource), 'calendars-view.js should never change a document: no patch, create, delete, mutate or onChange');
+  // The page draws and never writes itself. The Hide buttons write through calendars-view-parts.js, which
+  // makes a rule with createIfNotExists and deletes it with delete, and does nothing else to a document.
+  need(problems, !/onChange|\.patch\(|\.create\(|\.createIfNotExists\(|\.createOrReplace\(|\.delete\(|\.mutate\(|\.transaction\(|useDocumentOperation/.test(world.calendarsViewSource), 'calendars-view.js should not write itself: its buttons call hideEvent and showAgain in calendars-view-parts.js');
+  need(problems, !/onChange|\.patch\(|\.create\(|\.createOrReplace\(|\.mutate\(|\.transaction\(|useDocumentOperation/.test(world.calendarsPartsSource), 'calendars-view-parts.js should write only with createIfNotExists and delete');
 
   // What a student reads is short plain sentences
   [parts.helpLine, parts.nothingYet, parts.settingsLine, parts.publicLine, parts.noCalendarsLine].forEach(text => checkPlainSentences(problems, 'the Calendars page ("' + text.slice(0, 30) + '")', text));
@@ -4817,6 +4819,254 @@ async function checkCalendarsRead() {
   need(problems, failing.entriesUnreadable === true && failing.statusUnreadable === true && failing.status === null && failing.entries.length === 0, 'a client that fails should give both as unreadable');
   const empty = await read({});
   need(problems, empty.entriesUnreadable === true && empty.statusUnreadable === true, 'a client with no fetch should give both as unreadable');
+  return problems;
+}
+
+// The kind of each calendar and the Hide buttons of the Calendars page (calendars-view.js, with the
+// rules in calendars-view-parts.js). The buttons make a rule in Calendar filters (schemas/calendarFilter.js).
+// Every rule the page can make is run through the checks of that schema, so a rule that Studio would
+// refuse can never be made. The kinds are the ones in schemas/dashboardSettings.js and dashboard/config.js.
+function refusalsOf(rule) {
+  const out = [];
+  const type = typeByName('calendarFilter');
+
+  const run = (item, value, where) => {
+    constraintsOf(item).forEach(constraint => {
+      const limit = constraint.args[0];
+      if (constraint.name === 'required' && (value === undefined || value === '')) out.push(where + ' is empty');
+      if (value === undefined) return;
+      if (constraint.name === 'max' && (item.type === 'date' ? value > limit : value.length > limit)) out.push(where + ' is over its limit of ' + limit);
+      if (constraint.name === 'min' && item.type === 'date' && value < limit) out.push(where + ' is under its limit of ' + limit);
+      if (constraint.name === 'regex' && !limit.test(value)) out.push(where + ' does not fit its pattern');
+      if (constraint.name === 'valid' && limit.indexOf(value) === -1) out.push(where + ' is not one of the choices');
+      if (constraint.name === 'custom' && limit(value, { document: rule }) !== true) out.push(where + ' is refused: ' + limit(value, { document: rule }));
+    });
+  };
+
+  fieldsIn(type).forEach(field => {
+    run(field, rule[field.name], field.name);
+    if (field.name === 'words' && Array.isArray(rule.words)) rule.words.forEach((word, index) => run(field.of[0], word, 'word ' + (index + 1)));
+  });
+  const whole = constraintNamed(constraintsOf(type), 'custom');
+  if (whole && whole.args[0](rule) !== true) out.push('the rule as a whole is refused: ' + whole.args[0](rule));
+  return out;
+}
+
+function checkCalendarsHide() {
+  const problems = [];
+  const parts = world.calendarsParts;
+  const view = world.calendarsView;
+  const config = world.dashboard;
+  const now = new Date('2026-10-09T15:00:00.000Z');
+
+  // The kinds are the ones of the schema and of config.js, with the same titles, in the same order
+  const offered = choicesOf('dashboardSettings.calendars.kind');
+  need(problems, sameData(parts.calendarKinds, offered), 'calendars-view-parts.js should list the kinds of dashboardSettings.calendars.kind, with the same titles and values, in the same order');
+  need(problems, parts.calendarKinds.map(kind => kind.value).join() === config.calendarKinds.join(), 'calendars-view-parts.js should list the kinds in calendarKinds of config.js');
+
+  const events = [
+    { _key: 'o1', title: 'Team meeting', date: 'MON OCT 12', day: '2026-10-12', time: '6:00 PM', shown: true, rule: '' },
+    { _key: 'o2', title: 'Pre-Season Meeting', date: 'TUE OCT 13', day: '2026-10-13', time: '6:30 PM', shown: false, rule: 'Hide Pre-Season' },
+    { _key: 'o3', title: 'Food drive', date: 'WED OCT 14', day: '2026-10-14', time: '', shown: false, rule: '' },
+    { _key: 'o4', title: 'No title', date: 'THU OCT 15', day: '2026-10-15', time: '', shown: true, rule: '' },
+    { _key: 'o5', title: 'Old list event', date: 'FRI OCT 16', time: '5:00 PM', shown: true, rule: '' },
+  ];
+  const madeRule = parts.hideRuleFor('team', events[2], false);
+  events[2].rule = madeRule ? madeRule.name : '';
+  const status = { _id: 'calendar-status', updatedAt: now.toISOString(), calendars: [{ code: 'team', fetchedAt: now.toISOString(), eventCount: 5, hiddenCount: 2, occurrences: events }] };
+  const entries = [{ id: 'team', name: 'Team calendar', show: true, kind: 'meetings' }, { id: 'outreach', name: 'Outreach', show: true }];
+  const read = { entries: entries, status: status, entriesUnreadable: false, statusUnreadable: false };
+
+  const calls = [];
+  const hiding = (changes) => Object.assign({
+    rules: [madeRule],
+    unreadable: false,
+    gone: [],
+    asking: '',
+    busy: false,
+    problem: '',
+    ask: row => calls.push('ask ' + row),
+    cancel: () => calls.push('cancel'),
+    hide: rule => calls.push('hide ' + rule._id),
+    show: rule => calls.push('show ' + rule._id),
+  }, changes);
+  const buttonsOf = node => nodesWhere(node, item => item.type === 'button');
+  const labels = node => buttonsOf(node).map(wordsIn).join(' | ');
+  const itemsOf = page => nodesWhere(page, node => node.type === 'li');
+
+  // The kind: a line in each row and a fact on the right, and a note under the help line while a calendar has none
+  const page = view.calendarsPage(read, 'team', () => {}, now, hiding());
+  const left = nodesWhere(page, node => node.props && node.props['data-side'] === 'calendars')[0];
+  const rowButtons = left ? buttonsOf(left) : [];
+  need(problems, rowButtons.length === 2 && /Kind: Meetings/.test(wordsIn(rowButtons[0])), 'a row of the left side should say the kind: Kind: Meetings');
+  need(problems, rowButtons[1] && /Kind: Other \(not set\)/.test(wordsIn(rowButtons[1])), 'a calendar with no kind should say Kind: Other (not set)');
+  const right = nodesWhere(page, node => node.props && node.props['data-side'] === 'events')[0];
+  need(problems, right && /Kind Meetings/.test(wordsIn(nodesWhere(right, node => node.type === 'p').slice(0, 5))), 'the facts of the right side should say Kind and the kind');
+  const paragraphs = nodesWhere(page, node => node.type === 'p').map(wordsIn);
+  need(problems, paragraphs[1] === parts.kindLine && /no kind shows Other/.test(parts.kindLine) && /Dashboard Settings/.test(parts.kindLine) && /Calendars tab/.test(parts.kindLine), 'a muted note under the help line should say that a calendar with no kind shows Other and where to set it');
+  const allKinds = view.calendarsPage({ entries: [entries[0], Object.assign({}, entries[1], { kind: 'outreach' })], status: status, entriesUnreadable: false, statusUnreadable: false }, 'team', () => {}, now, hiding());
+  need(problems, nodesWhere(allKinds, node => node.type === 'p').map(wordsIn).indexOf(parts.kindLine) === -1, 'the note about the kind should go when every calendar has one');
+  const unknown = view.calendarsPage({ entries: [Object.assign({}, entries[0], { kind: 'party' })], status: status, entriesUnreadable: false, statusUnreadable: false }, 'team', () => {}, now);
+  need(problems, /Kind: Other \(not set\)/.test(wordsIn(nodesWhere(unknown, node => node.type === 'button'))), 'a kind that is not in the list should read as Other (not set), as it does on the screen');
+
+  // The events: the buttons each one has
+  const items = itemsOf(page);
+  need(problems, items.length === 5, 'the right side should list the five events');
+  need(problems, items[0] && labels(items[0]) === 'Hide this one | Hide all like this', 'a shown event should have Hide this one and Hide all like this');
+  need(problems, items[1] && labels(items[1]) === '' && /Hidden by Hide Pre-Season\. Change it under Calendar filters\./.test(wordsIn(items[1])), 'an event that another rule hides should name the rule and say to change it under Calendar filters, with no button');
+  need(problems, items[2] && labels(items[2]) === 'Show again' && /Hidden by Hide: Food drive, 2026-10-14/.test(wordsIn(items[2])), 'an event that a rule made here hides should say so and have Show again');
+  need(problems, items[3] && labels(items[3]) === '' && !/Change it under/.test(wordsIn(items[3])), 'an event with the title No title should have no button');
+  need(problems, items[4] && labels(items[4]) === 'Hide all like this' && wordsIn(items[4]).indexOf(parts.noDayLine) !== -1, 'an event from an older list, with no day, should have only Hide all like this, and a note');
+  need(problems, items.every(item => buttonsOf(item).every(button => button.props.type === 'button' && button.props.disabled === false && typeof button.props.onClick === 'function')), 'every button should be a plain button that works while nothing is being saved');
+
+  // What each button does
+  const clicks = (item, label) => buttonsOf(item).filter(button => wordsIn(button) === label).forEach(button => button.props.onClick());
+  clicks(items[0], 'Hide this one');
+  clicks(items[0], 'Hide all like this');
+  clicks(items[2], 'Show again');
+  clicks(items[4], 'Hide all like this');
+  const one = parts.hideRuleFor('team', events[0], false);
+  need(problems, calls.join() === 'hide ' + one._id + ',ask team:o1,show ' + madeRule._id + ',ask team:o5', 'Hide this one should make its rule, Hide all like this should ask first, and Show again should delete the rule of the event. The buttons did: ' + calls.join());
+
+  // Hide all like this says what it does, and only Hide makes the rule
+  calls.length = 0;
+  const asking = view.calendarsPage(read, 'team', () => {}, now, hiding({ asking: 'team:o1' }));
+  const asked = itemsOf(asking)[0];
+  need(problems, asked && wordsIn(asked).indexOf(parts.askText('Team calendar', 'Team meeting')) !== -1 && parts.askText('Team calendar', 'Team meeting') === 'This hides every event in Team calendar with Team meeting in its title, on every day.', 'the question should say: This hides every event in Team calendar with Team meeting in its title, on every day.');
+  need(problems, asked && labels(asked) === 'Hide | Cancel', 'the question should have Hide and Cancel');
+  clicks(asked, 'Cancel');
+  clicks(asked, 'Hide');
+  const all = parts.hideRuleFor('team', events[0], true);
+  need(problems, calls.join() === 'cancel,hide ' + all._id, 'Cancel should only close the question and Hide should make the rule for every day. The buttons did: ' + calls.join());
+  need(problems, labels(itemsOf(asking)[2]) === 'Show again' && labels(itemsOf(asking)[4]) === 'Hide all like this', 'the question belongs to one event, and the other events keep their buttons');
+
+  // Nothing can be pressed while a change is saved, and a failed change shows one red line
+  const busy = view.calendarsPage(read, 'team', () => {}, now, hiding({ busy: true }));
+  need(problems, buttonsOf(itemsOf(busy)).length === 4 && buttonsOf(itemsOf(busy)).every(button => button.props.disabled === true), 'every button should be off while a change is being saved');
+  const failed = view.calendarsPage(read, 'team', () => {}, now, hiding({ problem: 'The change was not saved.' }));
+  need(problems, nodesWhere(failed, node => node.type === 'p').map(wordsIn).filter(text => text === 'The change was not saved.').length === 1, 'a failed change should show its line once');
+  const redLine = nodesWhere(failed, node => node.type === 'p' && wordsIn(node) === 'The change was not saved.')[0];
+  need(problems, redLine && /critical/.test(redLine.props.style.color), 'the line about a failed change should be red');
+  need(problems, redLine && redLine.props.style.position === 'sticky' && redLine.props.style.bottom === 0 && Boolean(redLine.props.style.background), 'the line about a failed change should stay in view at the bottom of the window, on a background, because the list has up to 40 events');
+
+  // The muted line under the list, and a page that only shows
+  need(problems, nodesWhere(page, node => node.type === 'p').map(wordsIn).indexOf(parts.hideLine) !== -1 && /at once/.test(parts.hideLine) && /Calendar filters/.test(parts.hideLine) && /edit or delete/.test(parts.hideLine), 'a muted line under the list should say that a rule made here is on the screen at once, and that Calendar filters lists it');
+  const plain = view.calendarsPage(read, 'team', () => {}, now);
+  need(problems, buttonsOf(itemsOf(plain)).length === 0 && nodesWhere(plain, node => node.type === 'p').map(wordsIn).indexOf(parts.hideLine) === -1, 'a page that is given no rules should only show: no button and no line about the buttons');
+  const waiting = view.calendarsPage(read, 'team', () => {}, now, hiding({ rules: null }));
+  need(problems, buttonsOf(itemsOf(waiting)).length === 0, 'there should be no button while the rules made here are being read');
+  const unreadable = view.calendarsPage(read, 'team', () => {}, now, hiding({ rules: null, unreadable: true }));
+  need(problems, buttonsOf(itemsOf(unreadable)).length === 0 && nodesWhere(unreadable, node => node.type === 'p').map(wordsIn).indexOf(parts.rulesUnreadableLine) !== -1, 'rules that cannot be read should turn the buttons off, and the page should say so');
+  const stale = view.calendarsPage(read, 'team', () => {}, now, hiding({ gone: [madeRule.name], rules: [] }));
+  need(problems, itemsOf(stale)[2] && labels(itemsOf(stale)[2]) === 'Hide this one | Hide all like this' && /SHOWN/.test(wordsIn(itemsOf(stale)[2])), 'an event that the list says a deleted rule hides should read as shown, with the Hide buttons');
+  const hidAtOnce = view.calendarsPage(read, 'team', () => {}, now, hiding({ rules: [madeRule, one] }));
+  need(problems, itemsOf(hidAtOnce)[0] && labels(itemsOf(hidAtOnce)[0]) === 'Show again' && /HIDDEN/.test(wordsIn(itemsOf(hidAtOnce)[0])), 'an event that a new rule hides should read as hidden at once, before the Mini lists it again');
+
+  // The sentences a student reads
+  [parts.kindLine, parts.hideLine, parts.changeLine, parts.noDayLine, parts.longCodeLine, parts.rulesUnreadableLine, parts.askText('Team calendar', 'Team meeting'), parts.failureText({ statusCode: 403, message: 'Insufficient permissions' }), parts.failureText(new Error('offline')), parts.restingText('Hide all: Team meeting')].forEach(text => checkPlainSentences(problems, 'the Hide buttons ("' + text.slice(0, 30) + '")', text));
+  ['Hide this one', 'Hide all like this', 'Show again', 'Hide', 'Cancel'].forEach(label => need(problems, [parts.hideOneLabel, parts.hideAllLabel, parts.showAgainLabel, parts.confirmLabel, parts.cancelLabel].indexOf(label) !== -1, 'the buttons should be called ' + label));
+
+  // Every rule the buttons can make is accepted by the schema, and the limits are the ones the schema has
+  const titles = ['Team meeting', 'Pre-Season Meeting...', 'A'.repeat(100), 'A'.repeat(60) + '...', 'x'.repeat(29) + '\u{1F600}\u{1F600}', 'Say "hello" \\ now', '会議'.repeat(40), ' ', '...', 'Food drive: 5k', 'a'];
+  const codes = ['team', 'a'.repeat(20), 'build_season', 'g1'];
+  const days = ['2026-10-12', '2020-01-01', '2099-12-31', '2028-02-29'];
+  let made = 0;
+  titles.forEach(title => codes.forEach(code => days.forEach(day => [true, false].forEach(whole => {
+    const rule = parts.hideRuleFor(code, { title: title, day: day }, whole);
+    if (rule === null) return;
+    made += 1;
+    const refused = refusalsOf(rule);
+    need(problems, refused.length === 0, 'Studio would refuse the rule for "' + title + '" in ' + code + ' on ' + day + ' (all ' + whole + '): ' + refused.join('; '));
+    need(problems, rule._id.indexOf('calendarFilter-hide-') === 0 && /^[A-Za-z0-9_-]+$/.test(rule._id), 'the id of a rule should be letters, digits, hyphens and underscores that start calendarFilter-hide-');
+    need(problems, rule.action === 'hide' && rule.show === true && rule.calendar === code && rule.words.length === 1 && rule.words[0].length <= 30, 'a rule should hide, be on, name its calendar and have one word of up to 30 characters');
+  }))));
+  need(problems, made > 100, 'the grid of titles, calendars and days should make many rules, not ' + made);
+
+  const longTitle = { title: 'A'.repeat(100), day: '2026-10-12' };
+  need(problems, parts.hideRuleFor('team', longTitle, false).name === 'Hide: ' + 'A'.repeat(19) + '..., 2026-10-12' && parts.hideRuleFor('team', longTitle, false).name.length === 40, 'a long title should be cut so that the name of the rule is 40 characters and keeps the day');
+  need(problems, parts.hideRuleFor('team', longTitle, true).name === 'Hide all: ' + 'A'.repeat(30), 'the name of a rule for every day should be Hide all: and the title cut to 30 characters');
+  need(problems, sameData(parts.hideRuleFor('team', { title: 'Team meeting', day: '2026-10-12' }, false), { _id: parts.hideRuleFor('team', { title: 'Team meeting', day: '2026-10-12' }, false)._id, _type: 'calendarFilter', name: 'Hide: Team meeting, 2026-10-12', action: 'hide', words: ['Team meeting'], calendar: 'team', fromDate: '2026-10-12', toDate: '2026-10-12', show: true }), 'Hide this one should make a published calendarFilter with the name, action, words, calendar, from date, to date and show');
+  need(problems, sameData(parts.hideRuleFor('team', { title: 'Team meeting', day: '2026-10-12' }, true), { _id: parts.hideRuleFor('team', { title: 'Team meeting' }, true)._id, _type: 'calendarFilter', name: 'Hide all: Team meeting', action: 'hide', words: ['Team meeting'], calendar: 'team', show: true }), 'Hide all like this should make the same rule with no dates');
+
+  // No rule where Studio would refuse one
+  [['Team', { title: 'x', day: '2026-10-12' }], ['a'.repeat(21), { title: 'x', day: '2026-10-12' }], ['bad-code', { title: 'x', day: '2026-10-12' }], ['team', { title: 'No title', day: '2026-10-12' }], ['team', { title: '', day: '2026-10-12' }], ['team', { title: '...' }]].forEach(item => {
+    need(problems, parts.hideRuleFor(item[0], item[1], false) === null && parts.hideRuleFor(item[0], item[1], true) === null, 'no rule should be made for the calendar "' + item[0] + '" and the title "' + item[1].title + '"');
+  });
+  ['2019-12-31', '2100-01-01', '2026-02-30', '', undefined, 5].forEach(day => {
+    need(problems, parts.hideRuleFor('team', { title: 'x', day: day }, false) === null && parts.hideRuleFor('team', { title: 'x', day: day }, true) !== null, 'a rule for one day should not be made for the day "' + day + '", and a rule for every day still can be');
+  });
+
+  // The limits of the schema, which the page keeps to
+  const filter = name => fieldAt('calendarFilter.' + name);
+  const maxOf = field => (constraintNamed(constraintsOf(field), 'max') || { args: [] }).args[0];
+  need(problems, maxOf(filter('name')) === 40, 'the rule name of the schema should allow 40 characters, which is what the page keeps to');
+  need(problems, maxOf(filter('words')) === 5 && maxOf(filter('words').of[0]) === 30, 'the schema should allow up to 5 words of 30 characters, which is what the page keeps to');
+  need(problems, maxOf(filter('calendar')) === 20, 'the calendar code of the schema should allow 20 characters, which is what the page keeps to');
+  need(problems, constraintNamed(constraintsOf(filter('fromDate')), 'min').args[0] === '2020-01-01' && constraintNamed(constraintsOf(filter('toDate')), 'max').args[0] === '2099-12-31', 'the dates of the schema should run from 2020-01-01 to 2099-12-31, which is what the page keeps to');
+  return problems;
+}
+
+// The writes of the Hide buttons, with a fake client that keeps documents in a list
+async function checkCalendarsHideWrite() {
+  const problems = [];
+  const parts = world.calendarsParts;
+  const documents = {};
+  const calls = [];
+  const client = {
+    createIfNotExists: async doc => {
+      calls.push('create ' + doc._id);
+      if (!documents[doc._id]) documents[doc._id] = doc;
+      return documents[doc._id];
+    },
+    delete: async id => {
+      calls.push('delete ' + id);
+      delete documents[id];
+    },
+  };
+
+  const rule = parts.hideRuleFor('team', { title: 'Team meeting', day: '2026-10-12' }, false);
+  const first = await parts.hideEvent(client, rule);
+  const second = await parts.hideEvent(client, rule);
+  need(problems, Object.keys(documents).length === 1 && documents[rule._id] === first && second === first, 'a second click should make no second rule: the same id is stored once and handed back');
+  need(problems, calls.join() === 'create ' + rule._id + ',create ' + rule._id, 'Hide should ask the client to createIfNotExists, and nothing else');
+
+  documents['drafts.' + rule._id] = { _id: 'drafts.' + rule._id };
+  calls.length = 0;
+  await parts.showAgain(client, rule);
+  need(problems, calls.join() === 'delete ' + rule._id + ',delete drafts.' + rule._id && Object.keys(documents).length === 0, 'Show again should delete the published rule and a draft of it');
+
+  const noDraft = { delete: async id => { if (id.indexOf('drafts.') === 0) throw new Error('no draft'); } };
+  let stopped = null;
+  await parts.showAgain(noDraft, rule).catch(error => { stopped = error; });
+  need(problems, stopped === null, 'a draft that cannot be deleted should not stop Show again');
+  let refused = null;
+  await parts.showAgain({ delete: async () => { throw new Error('Insufficient permissions'); } }, rule).catch(error => { refused = error; });
+  need(problems, refused && /permissions/.test(refused.message), 'a rule that cannot be deleted should be reported, not hidden');
+  let refusedHide = null;
+  await parts.hideEvent({ createIfNotExists: async () => { throw new Error('Insufficient permissions'); } }, rule).catch(error => { refusedHide = error; });
+  need(problems, refusedHide && /permissions/.test(refusedHide.message), 'a rule that cannot be made should be reported, not hidden');
+  need(problems, /refused/.test(parts.failureText(refusedHide)) && /permissions/.test(parts.failureText(refusedHide)) && /refused/.test(parts.failureText({ statusCode: 403 })) && !/refused/.test(parts.failureText(new Error('offline'))), 'a failure should say Studio refused it when the account may not edit, and give the reason');
+
+  // The rules made on the page are read by their id, from the published documents
+  const asked = [];
+  const answering = value => ({ fetch: async (...args) => { asked.push(args); if (value instanceof Error) throw value; return value; } });
+  const stored = [
+    { _id: 'calendarFilter-hide-0123456789abcdef', name: 'Hide all: Team meeting', words: ['Team meeting'], calendar: 'team', show: true },
+    { _id: 'calendarFilter-other', name: 'Hide Pre-Season', words: ['Pre-Season'] },
+    { _id: 'calendarFilter-hide-fedcba9876543210', name: 'Always: Kickoff', action: 'show', words: ['Kickoff'] },
+    { _id: 'calendarFilter-hide-1111111111111111' },
+    null,
+    'text',
+  ];
+  const found = await parts.readHideRules(answering(stored));
+  need(problems, found.unreadable === false && found.rules.length === 1 && found.rules[0]._id === 'calendarFilter-hide-0123456789abcdef', 'only the rules with the id prefix, with a name, that are not Always show rules, should be handed over');
+  need(problems, asked.length === 1 && /_type == "calendarFilter"/.test(asked[0][0]) && asked[0][2].perspective === 'published', 'readHideRules should ask for the published calendarFilter documents');
+  need(problems, sameData(await parts.readHideRules(answering(null)), { rules: [], unreadable: false }) && sameData(await parts.readHideRules(answering('text')), { rules: [], unreadable: false }), 'answers that are not a list should be read as no rules');
+  need(problems, sameData(await parts.readHideRules(answering(new Error('offline'))), { rules: [], unreadable: true }) && sameData(await parts.readHideRules({}), { rules: [], unreadable: true }), 'a client that fails should give the rules as unreadable');
+
+  // The list of rules the page keeps
+  const list = [{ _id: 'a' }, { _id: 'b' }];
+  need(problems, parts.withRule(list, { _id: 'c' }).map(item => item._id).join() === 'a,b,c' && parts.withRule(list, { _id: 'a', x: 1 }).map(item => item._id).join() === 'b,a' && parts.withoutRule(list, 'a').map(item => item._id).join() === 'b' && list.length === 2, 'withRule and withoutRule should give a new list and leave the old one alone');
   return problems;
 }
 
@@ -5331,6 +5581,7 @@ async function main() {
     world.calendarsParts = await load(path.join(folder, 'calendars-view-parts.js'));
     world.calendarsView = await load(path.join(folder, 'calendars-view.js'));
     world.calendarsViewSource = fs.readFileSync(path.join(here, 'calendars-view.js'), 'utf8');
+    world.calendarsPartsSource = fs.readFileSync(path.join(here, 'calendars-view-parts.js'), 'utf8');
     world.calendarStatusScript = fs.readFileSync(path.join(here, '..', 'deploy', 'scripts', 'calendar-status.sh'), 'utf8');
     world.calendarStatusHelper = fs.readFileSync(path.join(here, '..', 'deploy', 'scripts', 'calendar-status.mjs'), 'utf8');
   } finally {
@@ -5404,8 +5655,10 @@ async function main() {
   check('a task has a source, a priority and Show on TV, one from the board is read only except Show on TV, and the Tasks folder holds every task once', checkBoardTasks);
   check('each list under Every meeting, Events and Roster has a plus button that makes its own type with the starting values of the group, and the New menus are as they were', checkListAdds);
   check('the calendar status document has the fields the Mini writes, is kept out of the sidebar and the New menu, and the scripts on the Mini write the same document', checkCalendarStatusType);
-  check('the Calendars page has the help line, the calendars of Dashboard Settings on the left and the next events with SHOWN or HIDDEN on the right, and changes nothing', checkCalendarsPage);
+  check('the Calendars page has the help line, the calendars of Dashboard Settings on the left and the next events with SHOWN or HIDDEN on the right, and writes nothing itself', checkCalendarsPage);
   results.push({ name: 'the Calendars page asks for the published documents by their ids, and survives a client that fails', problems: await checkCalendarsRead().catch(error => ['the check stopped: ' + error.message]) });
+  check('the Calendars page shows the kind of each calendar and the Hide buttons of each event, and every rule they make is accepted by the Calendar filters schema', checkCalendarsHide);
+  results.push({ name: 'the Hide buttons make a rule once with createIfNotExists, Show again deletes the rule and its draft, and the rules made on the page are read by their id', problems: await checkCalendarsHideWrite().catch(error => ['the check stopped: ' + error.message]) });
   check('the Monday tab has the connection block, up to 10 board entries with pickers, the three labels and the owner switch, as in dashboard/config.js', checkMondayTab);
   check('the Monday data document has the fields the Mini writes, is kept out of the sidebar and the New menu, the script writes the same fields and task fields, and the connection block shows its lines in plain words', checkMondayStatus);
   results.push({ name: 'the connection block asks for the published Monday data document by its id, and survives a client that fails', problems: await checkMondayRead().catch(error => ['the check stopped: ' + error.message]) });

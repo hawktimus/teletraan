@@ -3,7 +3,8 @@
 For the coaches who look after what the TV shows. The team's BAND calendars send
 every event, including meetings that repeat every week. A Calendar filter is a
 rule in Studio that takes some of those events off the TV, or keeps some on it.
-Students can follow docs/hide-a-repeating-meeting.md for the usual case.
+Students can follow docs/hide-a-repeating-meeting.md for the usual case, which
+starts with a button on the Calendars page.
 
 Filters work on the BAND events, which are the only events the screen shows. A
 calendar's own Show on screen switch in Dashboard Settings, Calendars comes
@@ -15,7 +16,9 @@ looks at it.
 Open Calendar filters in the sidebar, click the plus button and fill in the form.
 
 - Rule name: up to 40 characters. It is only for editors. The Calendars page and
-  the check script show it beside each event the rule hides.
+  the check script show it beside each event the rule hides. A name that starts
+  with Hide: or Hide all: means the Calendars page made the rule, see "Rules made
+  on the Calendars page" below.
 - Action: Hide takes the matching events off the screen. Always show keeps them
   on, even when a Hide rule matches them. Hide is picked to start with.
 - Pin to page one: only an Always show rule has it. Off to start with. On puts
@@ -23,7 +26,8 @@ Open Calendar filters in the sidebar, click the plus button and fill in the form
   they are not one of the next 8. See "Pinning an event" below.
 - Title words: optional, up to 5 words of up to 30 characters each. An event
   matches when its title has any one of them in it, capitals ignored. A word can
-  be part of a longer word, so Kick matches Kickoff.
+  be part of a longer word, so Kick matches Kickoff. Two spaces in a row, or a
+  line break, count as one space in the title and in the word.
 - Days: optional. Tick the days of the week the rule applies to. Leave every box
   empty for any day.
 - Calendar: optional. The code of one calendar from Dashboard Settings,
@@ -56,6 +60,26 @@ Studio will not publish one with none, because it would match every event.
 - Rules that are off, past their Hide after time or still drafts do nothing.
 
 The Events panel and the Next event tile both use the list after the rules.
+
+## Rules made on the Calendars page
+
+The Calendars page in Studio, under Events, has a Hide this one and a Hide all like
+this button on every event that the TV shows (docs/calendars-page.md). A button
+makes a rule here, and it is published already. Rules whose name starts with Hide:
+or Hide all: come from the Calendars page.
+
+- Hide: with the title, a comma and the day is the rule of Hide this one. Title
+  words is the title cut to 30 characters, Calendar is the calendar of the event,
+  and From date and To date are both the day of the event.
+- Hide all: with the title is the rule of Hide all like this. It has the same
+  Title words and Calendar and no dates, so it applies to every day.
+- The id of such a rule starts with `calendarFilter-hide-`. The page reads and
+  deletes only rules with that id. Show again on the page deletes the rule and any
+  draft of it. A rule you made yourself is never touched by the page, even when
+  you name it Hide:.
+- You can edit, switch off or delete these rules here like any other. The page
+  follows: an event that a rule here hides says so, and Show again deletes the rule.
+  If you add an Always show rule for the same event, it wins, as always.
 
 ## Pinning an event
 
@@ -101,7 +125,7 @@ While the TV shows sample content it uses the two example rules in
 ## Checking the rules
 
 The TV only follows published rules. The quickest way to see what a rule does is
-the Calendars page in Studio, under Events. It lists the next events of each
+the Calendars page in Studio, under Events. It lists the next 40 events of each
 calendar, SHOWN or HIDDEN, with the name of the rule that hides each one
 (docs/calendars-page.md). It changes after the next calendar run, within 15
 minutes, and it lists the events only when Node is installed on the Mini.
@@ -138,6 +162,9 @@ docs/rebuilding-the-mini.md, "Adding or changing a calendar".
 - `dashboard/core/sanity.js`: reads the rules with the rest of the content.
 - `deploy/scripts/calendar-status.mjs`: judges the next events with the same code
   and the published rules, for the Calendars page.
+- `studio/calendars-view-parts.js`: makes, matches and deletes the rules of the
+  Hide buttons. `ruleMatchesEvent` there reads a rule the way `ruleMatches` does.
+- `tools/test-calendars-hide.mjs`: runs both on the same cases.
 - `tools/test-calendar.mjs`: the tests, run with `node tools/test-calendar.mjs`.
 - `tools/test-event-pages.mjs`: the tests for the two pages, the kinds and the
   pins.

@@ -144,7 +144,7 @@ test('the right side has the facts, and each event with its date, time, title, S
 
   assert.equal(detail.name, 'Team calendar');
   assert.equal(detail.code, 'team');
-  assert.deepEqual(detail.facts.map(fact => fact.label), ['On the screen', 'Last download', 'Events in the next 30 days']);
+  assert.deepEqual(detail.facts.map(fact => fact.label), ['On the screen', 'Last download', 'Events in the next 30 days', 'Kind']);
   assert.equal(detail.facts[0].text, 'On the screen');
   assert.match(detail.facts[1].text, /^5 minutes ago \(.+\)$/);
   assert.equal(detail.facts[2].text, '14 events, 3 hidden');

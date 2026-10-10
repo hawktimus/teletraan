@@ -1,16 +1,21 @@
 // The Calendars page, under Events in the sidebar (structure.js). It is a page of its own, not
-// a document. On the left are the calendars of Dashboard Settings, with how many events each
-// has and when it was last downloaded. On the right are the next 12 events of the calendar
+// a document. On the left are the calendars of Dashboard Settings, with their kind, how many events
+// each has and when it was last downloaded. On the right are the next 40 events of the calendar
 // picked on the left, SHOWN or HIDDEN, with the name of the Calendar filter that hides it.
 // The Mini writes what it shows into the document calendar-status (schemas/calendarStatus.js,
-// deploy/scripts/calendar-status.sh). Nothing here changes a document: the names and switches
-// are edited in Dashboard Settings.
+// deploy/scripts/calendar-status.sh).
+//
+// Each event has buttons that hide it. A button makes a Hide rule in Calendar filters, with an id
+// that starts calendarFilter-hide-, and Show again deletes that rule. Nothing else is changed here:
+// the names, kinds and switches of the calendars are edited in Dashboard Settings. The Mini lists
+// the events every 15 minutes, so the page also reads the rules it made and judges the events by
+// them at once.
 //
 // If a document is missing it says Nothing yet, and if one cannot be read it says so. Neither
 // stops the page from opening.
 //
-// The words and the rows are in calendars-view-parts.js, so that check-schemas.mjs can read
-// them with node. It is written without JSX, so it reads as plain JavaScript:
+// The words, the rows and the rules are in calendars-view-parts.js, so that check-schemas.mjs can
+// read them with node. It is written without JSX, so it reads as plain JavaScript:
 // h(tag, props, ...children) is React's createElement.
 
 import { createElement, useEffect, useState } from 'react';
@@ -21,11 +26,29 @@ import {
   settingsLine,
   publicLine,
   noCalendarsLine,
+  kindLine,
+  hideLine,
+  hideOneLabel,
+  hideAllLabel,
+  showAgainLabel,
+  confirmLabel,
+  cancelLabel,
+  changeLine,
+  rulesUnreadableLine,
+  askText,
   nothingYet,
   rowsOf,
   detailOf,
   notesFor,
   updatedText,
+  readHideRules,
+  hideEvent,
+  showAgain,
+  stillHides,
+  failureText,
+  restingText,
+  withRule,
+  withoutRule,
 } from './calendars-view-parts.js';
 
 const h = createElement;
@@ -72,6 +95,8 @@ const styles = {
   rowName: { display: 'block', fontSize: 16, fontWeight: 600 },
   rowLine: { display: 'block', marginTop: 2 },
   problem: { color: critical, margin: '8px 0 0', fontSize: 14 },
+  // The list has up to 40 events, so a line about a failed change stays in view at the bottom of the page
+  failure: { color: critical, margin: '8px 0 0', padding: '8px 0', fontSize: 14, position: 'sticky', bottom: 0, background: 'var(--card-bg-color, Canvas)', borderTop: border },
   subheading: { fontSize: 20, fontWeight: 600, margin: '0 0 8px' },
   fact: { display: 'flex', flexWrap: 'wrap', gap: '4px 16px', margin: '0 0 4px', fontSize: 14 },
   factLabel: { minWidth: 200, fontWeight: 600 },
@@ -84,6 +109,10 @@ const styles = {
   shown: { background: 'var(--card-badge-positive-bg-color, #dcfce7)', color: 'var(--card-badge-positive-fg-color, #166534)' },
   hidden: { background: 'var(--card-badge-caution-bg-color, #fef3c7)', color: 'var(--card-badge-caution-fg-color, #92400e)' },
   rule: { flexBasis: '100%', color: muted, fontSize: 13 },
+  controls: { flexBasis: '100%', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 8px' },
+  button: { fontFamily: 'inherit', fontSize: 13, padding: '4px 10px', color: 'inherit', background: 'transparent', border: border, borderRadius: 4, cursor: 'pointer' },
+  buttonBusy: { opacity: 0.5, cursor: 'default' },
+  controlNote: { color: muted, fontSize: 13 },
 };
 
 // The calendars of the published Dashboard Settings and the published status document. This
@@ -124,6 +153,7 @@ function leftSide(rows, chosen, select) {
         },
         h('span', { style: styles.rowName }, row.name),
         h('span', { style: styles.rowLine }, 'Code ' + row.code),
+        h('span', { style: styles.rowLine }, row.kind),
         h('span', { style: styles.rowLine }, row.screen),
         h('span', { style: styles.rowLine }, row.count),
         h('span', { style: styles.rowLine }, row.download),
@@ -134,7 +164,43 @@ function leftSide(rows, chosen, select) {
   );
 }
 
-function eventItem(event) {
+function plainButton(label, onClick, busy) {
+  return h('button', { type: 'button', disabled: busy, style: busy ? Object.assign({}, styles.button, styles.buttonBusy) : styles.button, onClick: onClick }, label);
+}
+
+// What can be done with an event: nothing, Show again, or the Hide buttons. Hide all like this first
+// asks, in words, what it will do. hiding is what calendarsPage was given.
+function controlsOf(event, calendarName, hiding) {
+  const control = event.control;
+  const busy = hiding.busy;
+  if (!control || control.state === 'other') return null;
+
+  if (control.state === 'made') {
+    return h('div', { style: styles.controls }, plainButton(showAgainLabel, () => hiding.show(control.rule), busy));
+  }
+
+  if (hiding.asking === event.rowKey && control.all) {
+    return h(
+      'div',
+      { style: styles.controls },
+      h('span', null, askText(calendarName, control.all.words[0])),
+      plainButton(confirmLabel, () => hiding.hide(control.all), busy),
+      plainButton(cancelLabel, () => hiding.cancel(), busy)
+    );
+  }
+
+  if (!control.one && !control.all && !control.note) return null;
+  return h(
+    'div',
+    { style: styles.controls },
+    control.one ? plainButton(hideOneLabel, () => hiding.hide(control.one), busy) : null,
+    control.all ? plainButton(hideAllLabel, () => hiding.ask(event.rowKey), busy) : null,
+    control.note ? h('span', { style: styles.controlNote }, control.note) : null
+  );
+}
+
+function eventItem(event, calendarName, hiding) {
+  const other = event.control && event.control.state === 'other';
   return h(
     'li',
     { key: event.key, style: styles.event },
@@ -142,11 +208,13 @@ function eventItem(event) {
     h('span', { style: styles.eventTime }, event.time),
     h('span', { style: styles.eventTitle }, event.title),
     h('span', { style: Object.assign({}, styles.badge, event.hidden ? styles.hidden : styles.shown) }, event.badge),
-    event.rule ? h('span', { style: styles.rule }, event.rule) : null
+    event.rule ? h('span', { style: styles.rule }, other ? event.rule + '. ' + changeLine : event.rule) : null,
+    hiding ? controlsOf(event, calendarName, hiding) : null
   );
 }
 
-function rightSide(detail) {
+// hiding is null while the rules made here are not known, and then no event has a button
+function rightSide(detail, hiding) {
   return h(
     'div',
     { style: styles.right, 'data-side': 'events' },
@@ -154,17 +222,31 @@ function rightSide(detail) {
     detail.facts.map(fact => h('p', { key: fact.label, style: styles.fact }, h('span', { style: styles.factLabel }, fact.label), h('span', null, fact.text))),
     detail.problem ? h('p', { style: styles.problem }, detail.problem) : null,
     detail.empty ? h('p', { style: styles.muted }, detail.empty) : null,
-    detail.events.length > 0 ? h('ul', { style: styles.events }, detail.events.map(eventItem)) : null
+    detail.events.length > 0 ? h('ul', { style: styles.events }, detail.events.map(event => eventItem(event, detail.name, hiding))) : null,
+    detail.more ? h('p', { style: Object.assign({}, styles.muted, { margin: '8px 0 0' }) }, detail.more) : null,
+    hiding && hiding.problem ? h('p', { style: styles.failure }, hiding.problem) : null,
+    hiding && detail.events.length > 0 ? h('p', { style: Object.assign({}, styles.muted, { margin: '8px 0 0' }) }, hideLine) : null
   );
 }
 
 // What the page shows for what was read: null while it is being read, then what readCalendars
 // gives. selected is the code picked on the left, and select picks one. now is the time to
-// count the ages from.
-export function calendarsPage(read, selected, select, now) {
+// count the ages from. hiding is what the page keeps about the rules it made, or nothing for a
+// page that only shows:
+//   rules      the published rules made here, or null while they are read or when they cannot be
+//   unreadable true when they cannot be read
+//   gone       the names of the rules deleted since the page opened
+//   asking     the row key of the event whose Hide all like this waits for a yes
+//   busy       true while a change is being saved
+//   problem    the red line, or empty
+//   ask, cancel, hide, show   what the buttons do
+export function calendarsPage(read, selected, select, now, hiding) {
   const rows = read ? rowsOf(read.entries, read.status, now) : [];
   const chosen = rows.filter(row => row.code === selected)[0] || rows[0];
-  const notes = notesFor(read).map(text => h('p', { key: text, style: styles.note }, text));
+  const marks = hiding && hiding.rules ? { rules: hiding.rules, gone: hiding.gone, now: now } : undefined;
+  const unreadable = hiding && hiding.unreadable ? [rulesUnreadableLine] : [];
+  const notes = notesFor(read).concat(unreadable).map(text => h('p', { key: text, style: styles.note }, text));
+  const kindNote = rows.some(row => row.kindMissing) ? h('p', { style: styles.muted }, kindLine) : null;
 
   let body;
   if (!read) {
@@ -176,7 +258,7 @@ export function calendarsPage(read, selected, select, now) {
     const updated = updatedText(read.status, now);
     body = [
       updated ? h('p', { key: 'updated', style: styles.muted }, updated) : null,
-      h('div', { key: 'panes', style: styles.panes }, leftSide(rows, chosen, select), rightSide(detailOf(chosen, read.status, now))),
+      h('div', { key: 'panes', style: styles.panes }, leftSide(rows, chosen, select), rightSide(detailOf(chosen, read.status, now, marks), marks ? hiding : null)),
       read.status ? h('p', { key: 'public', style: styles.muted }, publicLine) : null,
     ];
   }
@@ -184,7 +266,7 @@ export function calendarsPage(read, selected, select, now) {
   return h(
     'div',
     { style: styles.page },
-    h('div', { style: styles.column }, h('h1', { style: styles.heading }, 'Calendars'), h('p', { style: styles.help }, helpLine), notes, body)
+    h('div', { style: styles.column }, h('h1', { style: styles.heading }, 'Calendars'), h('p', { style: styles.help }, helpLine), kindNote, notes, body)
   );
 }
 
@@ -192,6 +274,10 @@ export function CalendarsView() {
   const client = useClient({ apiVersion: apiVersion });
   const [read, setRead] = useState(null);
   const [selected, setSelected] = useState('');
+  const [made, setMade] = useState({ rules: null, unreadable: false, gone: [] });
+  const [asking, setAsking] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState('');
 
   useEffect(() => {
     let stopped = false;
@@ -199,11 +285,53 @@ export function CalendarsView() {
     readCalendars(client).then(result => {
       if (!stopped) setRead(result);
     });
+    readHideRules(client).then(result => {
+      if (!stopped) setMade({ rules: result.unreadable ? null : result.rules, unreadable: result.unreadable, gone: [] });
+    });
 
     return () => {
       stopped = true;
     };
   }, []);
 
-  return calendarsPage(read, selected, setSelected, new Date());
+  // One change at a time. When it works the page keeps the new rules. When it fails the page
+  // keeps the old ones and says why.
+  async function change(work) {
+    setBusy(true);
+    setProblem('');
+    try {
+      await work();
+      setAsking('');
+    } catch (error) {
+      setProblem(failureText(error));
+    }
+    setBusy(false);
+  }
+
+  const hide = rule =>
+    change(async () => {
+      const stored = await hideEvent(client, rule);
+      setMade(state => ({ rules: withRule(state.rules, stored), unreadable: false, gone: state.gone }));
+      if (!stillHides(stored, new Date())) setProblem(restingText(stored.name));
+    });
+
+  const show = rule =>
+    change(async () => {
+      await showAgain(client, rule);
+      setMade(state => ({ rules: withoutRule(state.rules, rule._id), unreadable: false, gone: state.gone.concat([rule.name]) }));
+    });
+
+  const hiding = {
+    rules: made.rules,
+    unreadable: made.unreadable,
+    gone: made.gone,
+    asking: asking,
+    busy: busy,
+    problem: problem,
+    ask: setAsking,
+    cancel: () => setAsking(''),
+    hide: hide,
+    show: show,
+  };
+  return calendarsPage(read, selected, setSelected, new Date(), hiding);
 }

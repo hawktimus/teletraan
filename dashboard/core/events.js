@@ -55,15 +55,26 @@ function weekdayNumber(day) {
   return weekdayNames.indexOf(weekdayOf(day));
 }
 
+// Capitals do not matter and a run of spaces or line breaks counts as one space.
+// The Mini lists a title that way on the Calendars page, so a rule made from that
+// list must find the title as BAND wrote it.
+function squeezed(text) {
+  return String(text || '').replace(/[\s\u0000-\u001f\u007f]+/g, ' ').trim().toLowerCase();
+}
+
 // A rule matches when every condition it has matches. A rule with no condition
 // matches nothing, so a slip in the Studio cannot hide every event.
 function ruleMatches(rule, event) {
-  const words = rule.words || [];
+  const typed = rule.words || [];
   const days = rule.days || [];
-  if (words.length === 0 && days.length === 0 && !rule.calendar && !rule.fromDate && !rule.toDate) return false;
+  if (typed.length === 0 && days.length === 0 && !rule.calendar && !rule.fromDate && !rule.toDate) return false;
 
-  const title = String(event.title || '').toLowerCase();
-  if (words.length > 0 && !words.some(word => title.includes(String(word).toLowerCase()))) return false;
+  // A word of only control characters squeezes to nothing, and nothing is inside every title
+  const words = typed.map(squeezed).filter(word => word !== '');
+  if (typed.length > 0 && words.length === 0) return false;
+
+  const title = squeezed(event.title);
+  if (words.length > 0 && !words.some(word => title.includes(word))) return false;
   if (days.length > 0 && !days.includes(weekdayNumber(event.firstDay))) return false;
   if (rule.calendar && rule.calendar !== event.calendarId) return false;
   if (rule.fromDate && event.firstDay < rule.fromDate) return false;
@@ -178,6 +189,14 @@ function daysOf(event, timeZone) {
 
   const zone = isTimeZone(timeZone) ? timeZone : defaultThemeSettings.timeZone;
   return withDays(event, zone);
+}
+
+// The first day of an event like 2027-04-02, found the way the Calendar filters
+// find it, or empty when the event has no date that can be read. The Mini writes
+// it for the Calendars page, so a rule made there matches the same day.
+export function firstDayOf(event, timeZone) {
+  const days = daysOf(event || {}, timeZone);
+  return days === null ? '' : days.firstDay;
 }
 
 // The date of an event as the screen writes it, in capitals. timeZone is

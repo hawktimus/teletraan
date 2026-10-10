@@ -19,6 +19,7 @@ const occurrence = defineArrayMember({
   fields: [
     defineField({ name: 'title', title: 'Title', type: 'string', description: 'The title of the event as the calendar has it, cut at 60 characters.' }),
     defineField({ name: 'date', title: 'Date', type: 'string', description: 'The date as the screen writes it, such as FRI OCT 9.' }),
+    defineField({ name: 'day', title: 'Day', type: 'string', description: 'The first day of the event written like 2026-10-09, in the time zone of the screen. A rule made on the Calendars page uses it.' }),
     defineField({ name: 'time', title: 'Time', type: 'string', description: 'The start time as the screen writes it. Empty for an event that lasts all day.' }),
     defineField({ name: 'shown', title: 'Shown on the screen', type: 'boolean', description: 'Off when a Calendar filter hides the event.' }),
     defineField({ name: 'rule', title: 'Rule', type: 'string', description: 'The name of the Calendar filter that hides the event. Empty when the event is shown.' }),
@@ -40,7 +41,7 @@ const calendar = defineArrayMember({
     defineField({ name: 'error', title: 'Last error', type: 'string', description: 'Why the last download failed, in plain words. Empty when it worked.' }),
     defineField({ name: 'eventCount', title: 'Events in 30 days', type: 'number', description: 'How many events fall in the next 30 days, hidden ones included.' }),
     defineField({ name: 'hiddenCount', title: 'Hidden events', type: 'number', description: 'How many of those a Calendar filter hides from the screen.' }),
-    defineField({ name: 'occurrences', title: 'Next events', type: 'array', of: [occurrence], description: 'The next 12 events, in date order, shown or hidden.' }),
+    defineField({ name: 'occurrences', title: 'Next events', type: 'array', of: [occurrence], description: 'The next 40 events, in date order, shown or hidden.' }),
   ],
   preview: {
     select: { title: 'code' },
