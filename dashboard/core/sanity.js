@@ -29,8 +29,8 @@ import { tidyMondayStatus } from './monday.js';
 // that is missing is a list that is empty: the screen then follows Style and Team mode (core/look-rotation.js).
 // Calendar filter rules are cleaned in normalizeFilter. One that is off or past
 // its Hide after time stays in the list, and core/events.js leaves it out.
-// A person's photo is sent as a plain address with its size, crop and hotspot
-// (images.js builds the address the screen asks for). The photo's own record
+// A person's photo, and the photo of a team lead, is sent as a plain address with its size, crop and
+// hotspot (images.js builds the address the screen asks for). The photo's own record
 // has names that start with an underscore, which normalizeContent drops.
 // A Photo document is sent the same way, with its id and the time it was
 // created (the underscore names are not kept, so they are asked for under
@@ -67,7 +67,17 @@ export const contentQuery = `{
   },
   "sponsors": *[_type == "sponsor"] | order(_createdAt asc) { ..., "team": team->code },
   "tipsAndNews": *[_type == "tipOrNews"] | order(_createdAt asc) { ..., "team": team->code },
-  "subteams": *[_type == "subteam"] | order(_createdAt asc) { ..., "team": team->code },
+  "subteams": *[_type == "subteam"] | order(_createdAt asc) {
+    ...,
+    "team": team->code,
+    "photo": photo {
+      "url": asset->url,
+      "width": asset->metadata.dimensions.width,
+      "height": asset->metadata.dimensions.height,
+      crop,
+      hotspot
+    }
+  },
   "people": *[_type == "person"] | order(_createdAt asc) {
     ...,
     "team": team->code,
@@ -395,10 +405,17 @@ const maxMembers = 24;
 // text is kept, without the spaces at the ends. A name that is empty, or the
 // same as an earlier one apart from capital letters, is dropped, and so is
 // every name after the 24th. The order the editors gave is kept.
+// The photo of the lead is tidied like the photo of a person: none at all when it
+// cannot be used, and a missing "Show photo on screen" takes the default.
 function normalizeSubteam(raw) {
   const subteam = Object.assign({}, raw);
   const names = Array.isArray(raw.members) ? raw.members : [];
   const seen = [];
+
+  if (typeof subteam.showPhoto !== 'boolean') subteam.showPhoto = defaultPerson.showPhoto;
+  const photo = tidyPhoto(subteam.photo);
+  if (photo) subteam.photo = photo;
+  else delete subteam.photo;
 
   subteam.members = [];
   names.forEach(name => {

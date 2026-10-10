@@ -83,19 +83,20 @@ last step of every change. See "The Start here page" below.
 ### Roster
 
 - Leadership: coaches, captains and mentors, each with an optional photo. The
-  panel is one page of four rows: the coaches, then the captains, then the
-  mentors, and only the first four show (see Photos of people). Two coaches and
-  two captains are the four rows. Pick the role, type the name, and type a
+  panel shows four rows at a time: the coaches, then the captains, then the
+  mentors, and the next rows come the next time the panel comes round (see
+  Photos of people). Two coaches and two captains are one page of four rows.
+  Pick the role, type the name, and type a
   title if you want something other than the role under the name, for example
   Head Coach. The role also colours the frame round the portrait: Coach is red,
   Captain is gold and Mentor is silver. There is no separate role for a
   president: give a president the role Captain and the title President, and
   they are shown with the captains.
-- Team leads: each subteam, its lead and the students on it. Turn on "In the
-  spotlight" to feature one. Add a subteam here before you use it on a task.
-  The Team Leads panel shows every subteam as a row with its lead, four to a
-  page (see Photos of people). The Subteam roster panel shows the lead and the
-  members of each subteam (see Subteam members).
+- Team leads: each subteam, its lead, an optional photo of the lead and the
+  students on it. Turn on "In the spotlight" to feature one. Add a subteam here
+  before you use it on a task. The Team Leads panel shows every subteam as a row
+  with its lead, four to a page (see Photos of people). The Subteam roster panel
+  shows the lead and the members of each subteam (see Subteam members).
 - Sponsors: name, tier, a short line about them, a thank-you line for the
   ticker, and the web address of their logo.
 - Photos: the pictures for the Photo panel. Each has a picture you upload, an
@@ -455,14 +456,36 @@ The Screen tab of Dashboard Settings has five photo settings:
   photo and not Seconds per page.
 - Portrait size, percent is how big the portraits are on the Leadership and
   Team Leads panels, and the team lead portrait on the Subteam roster panel. It is a
-  whole number from 60 to 100 and starts at 100. 100 is the full size and the
-  largest that fits the frame. At 80 the portraits are four fifths as big in
-  both directions, frame and picture together. The names and roles next to
-  them keep their size, and a page still holds four rows. A smaller portrait
-  stays in the middle of its place. On the Subteam roster panel the name moves
-  up with it. A person with no photo, who shows the silhouette, follows the same size.
-  In a row the portrait is 124 square at 100, so that four rows fit. On the
-  Subteam roster panel it is 292.
+  whole number from 60 to 200 and starts at 100. 100 is the standard size and
+  200 is double. The names and roles next to a portrait keep their size. A
+  person with no photo, who shows the silhouette, follows the same size.
+  - Below 100 the portraits are smaller in both directions, frame and picture
+    together, and a page still holds four rows. At 80 they are four fifths as
+    big. A smaller portrait stays in the middle of its place. In a row the
+    portrait is 124 square at 100 and 74 square at 60. On the Subteam roster
+    panel it is 292 at 100, and the name moves up with it.
+  - Above 100 the Leadership and Team Leads rows get taller, to hold the bigger
+    portrait, so fewer rows fit on a page. The table below gives the numbers.
+    Everyone is still shown: each time the panel comes round it shows the next
+    rows, then starts again. Four leaders at 200 are two pages of two. At 120
+    they are a page of three and a page of one, so use 140 or more for two
+    pages of two.
+  - From 114 the role moves under the name, at the left, because the name and
+    the role no longer fit side by side. The text stays the same size.
+  - The Subteam roster panel never grows past 100, because the names sit beside
+    the portrait. A value above 100 leaves it as it is at 100.
+  - To pick a value, work from what you have. A saved 60 gives a portrait 74
+    square in a row. Double that is 120, which is 149 square with 3 rows to a
+    page. 200 is double the standard size, 248 square with 2 rows to a page.
+    Try a value on the sample content first (see "Sample content" below).
+
+  | Portrait size | Rows on a page | Row height | Portrait in a row | The role |
+  | --- | --- | --- | --- | --- |
+  | 60 to 100 | 4 | 144 | 74 to 124 | at the right end |
+  | 101 to 113 | 3 | 192 | 125 to 140 | at the right end |
+  | 114 to 139 | 3 | 192 | 141 to 172 | under the name |
+  | 140 to 200 | 2 | 288 | 174 to 248 | under the name |
+
 - Photo size, percent is how big the picture in the Photo panel is, from 60 to
   100, starting at 100. 100 is the full size and the largest that fits the
   frame, so the picture cannot be made bigger than that. A smaller picture is in
@@ -479,9 +502,10 @@ The Screen tab of Dashboard Settings has five photo settings:
   Dashboard Settings saved before Photo fit existed shows no choice marked, and
   the screen counts that as Fill the frame. Pick one and click Publish to mark it.
 
-Studio only accepts whole numbers from 60 to 100 for the two sizes. If a value
-outside that range ever reaches the screen it uses the nearest end, and an
-empty or odd value is 100. To see a size, set it, click Publish, and wait for
+Studio only accepts whole numbers for the two sizes, from 60 to 200 for the
+Portrait size and from 60 to 100 for the Photo size. If a value outside that
+range ever reaches the screen it uses the nearest end, and an empty or odd
+value is 100. To see a size, set it, click Publish, and wait for
 the panel to come round, or try it on the sample content first (see "Sample
 content" below).
 
@@ -525,26 +549,28 @@ instead. The second one is set to Show the whole photo.
 
 ## Photos of people
 
-Each person in Leadership has a Photo and a "Show photo on screen" switch. The
-Leadership and Team Leads panels show each person as a row: the framed photo at
-the left, the name beside it, and the title (the role if no title is typed) at
-the right end in the team color. The role colours the frame of the photo: Coach
-red, Captain gold and Mentor silver. The colours are the `roleMetals` list in
-`dashboard/panels/leadership/leadership.js`.
+Each person in Leadership has a Photo and a "Show photo on screen" switch, and
+so has each Team lead. The Leadership and Team Leads panels show each person
+as a row: the framed photo at the left, the name beside it, and the title (the
+role if no title is typed) at the right end in the team color. The role colours
+the frame of the photo: Coach red, Captain gold and Mentor silver. The colours
+are the `roleMetals` list in `dashboard/panels/leadership/leadership.js`.
 
-Four rows fit on a panel, spread over its height. The Leadership panel is one
-panel: the coaches come first, then the captains, then the mentors, each group
-in the order of the Order field, and the first four show. With two coaches and
-two captains there is nothing to cut. The Team Leads panel has a row for each
-subteam: the lead's name, and the subteam with LEAD after it at the right end.
-A subteam with no lead shows its own name and [lead] at the right end, so a
-gap can be seen from across the room. The subteams are in the order of the
-Order field. Twelve subteams are three panels of four, and each time the panel
-comes round it shows the next one, then starts again. The size of the
-photos can be changed together with Portrait size, percent in the Screen tab
-of Dashboard Settings (see "Order, time on screen and size" above). The text
-stays the same size. It never gets smaller to fit more people. A name is cut
-after about 17 characters.
+Four rows fit on a panel at the standard portrait size, spread over its height.
+The Leadership panel shows the coaches first, then the captains, then the
+mentors, each group in the order of the Order field. With two coaches and two
+captains the four rows are one page. With more people, each time the panel
+comes round it shows the next rows, then starts again, so the mentors come on
+the next turn. The Team Leads panel has a row for each subteam: the lead's
+name, and the subteam with LEAD after it at the right end. A subteam with no
+lead shows its own name and [lead] at the right end, so a gap can be seen from
+across the room. The subteams are in the order of the Order field. Twelve
+subteams are three panels of four, and each time the panel comes round it
+shows the next one, then starts again. The size of the photos can be changed
+together with Portrait size, percent in the Screen tab of Dashboard Settings
+(see "Order, time on screen and size" above). A bigger portrait means fewer
+rows on a page and more pages. The text stays the same size. It never gets
+smaller to fit more people. A name is cut after about 17 characters.
 
 When you upload a photo:
 
@@ -564,13 +590,24 @@ it. The same silhouette shows when a photo cannot be loaded, for example when
 the TV has lost its internet connection. The TV tries again the next time the
 page comes round.
 
-A subteam has only the name of its lead, with no photo of its own. The Team
-Leads panel and the Subteam roster panel show the photo of the person in
-Leadership whose name is the same
-as the lead's name, for example the lead Sam and the person Sam. The capital
-letters and spaces at the ends do not matter, but the spelling does. If nobody
-in Leadership has that name, or that person is hidden, the lead shows the
-silhouette.
+A Team lead entry has a Photo and a "Show photo on screen" switch, like a
+person in Leadership. Upload the photo of a lead on the Team lead entry, in
+Team leads in the sidebar. The Team Leads panel and the Subteam roster panel
+show that photo. The Photo field goes right after Lead, with the same advice as
+above: a square crop, a plain background, and the first name only in Lead.
+
+An entry with no photo of its own shows the photo of the person in Leadership
+whose name is the same as the lead's name, for example the lead Sam and the
+person Sam. This is how the panels worked before a Team lead could have a photo,
+so an entry that was never given a photo does not change. The capital letters
+and spaces at the ends do not matter, but the spelling does. If nobody in
+Leadership has that name, or that person is hidden, the lead shows the
+silhouette. A photo on the Team lead entry always wins over the one in
+Leadership.
+
+Turn "Show photo on screen" off on a Team lead entry to show the silhouette for
+that lead, even when Leadership has a photo with the same name. The photo stays
+in Studio.
 
 Photos in Studio can be opened by anyone who has their web address. Only
 upload a photo that may be shown.
@@ -594,8 +631,9 @@ columns on the right. The subteam's name is the title of the page.
   fit more names.
 - Each time the panel comes round it shows the next page, one subteam after
   another in the order of the Team leads list, and then starts again.
-- The lead is the Lead field of the subteam. The photo is the one of the person
-  in Leadership with the same name (see Photos of people), or the silhouette.
+- The lead is the Lead field of the subteam. The photo is the Photo of the Team
+  lead entry, or the one of the person in Leadership with the same name, or the
+  silhouette (see Photos of people).
 - A subteam with a lead and no members shows the lead alone. A subteam with
   members and no lead shows the names alone. A subteam with neither is left
   out, and so is one that is hidden or has passed its "Hide after" date.

@@ -1,11 +1,11 @@
-// The lead of each department, one row each, four to a page. When there are
-// more departments, each time the panel comes round it shows the next page
-// (core/team-leads.js).
+// The lead of each department, one row each, four to a page at the standard
+// portrait size and fewer at a bigger one. When there are more departments, each
+// time the panel comes round it shows the next page (core/team-leads.js).
 
 import { doubleSlash } from '../../core/marks.js';
 import { makePages } from '../../core/turns.js';
 import { departmentRows } from '../../core/team-leads.js';
-import { personNamed, photoAddress, preloadPhotos, rowsMarkup, rowsPerPage, watchPhotos } from '../../core/portrait.js';
+import { leadAddress, preloadLeadPhotos, rowLayout, rowsMarkup, rowsPerPage, watchPhotos } from '../../core/portrait.js';
 
 const nextPage = makePages(rowsPerPage);
 
@@ -14,7 +14,8 @@ export function hasContent(content) {
 }
 
 export function mount(host, content) {
-  const page = nextPage(departmentRows(content.subteams));
+  const scale = content.settings && content.settings.portraitScale;
+  const page = nextPage(departmentRows(content.subteams), rowLayout(scale).rows);
   const rows = page.items.map(row => leadRow(row, content));
 
   host.innerHTML = `
@@ -27,19 +28,19 @@ export function mount(host, content) {
         </div>
       </div>
 
-      ${rowsMarkup(rows, content.settings && content.settings.portraitScale)}
+      ${rowsMarkup(rows, scale)}
     </section>`;
 
   watchPhotos(host);
-  preloadPhotos(page.upcoming.map(row => personNamed(content.people, row.lead)));
+  preloadLeadPhotos(page.upcoming, content.people);
 }
 
-// A department has only the lead's name. The photo is the photo of the person
-// with that name under Leadership, if there is one.
+// The photo is the one of the Team lead entry. Without one, it is the photo of
+// the person with the lead's name under Leadership, if there is one.
 function leadRow(row, content) {
   return {
     name: row.name,
     role: row.role,
-    address: photoAddress(personNamed(content.people, row.lead)),
+    address: leadAddress(row, content.people),
   };
 }

@@ -162,6 +162,8 @@ function ruleOf(css, selector) {
 }
 
 const numberIn = (rule, property) => Number(new RegExp('(?:^|[;\\s])' + property + ': (\\d+)(?:px)?[;\\s]').exec(rule)[1]);
+// the height of a row at 100 is the fallback of the variable that rowsMarkup sets for a taller row
+const rowHeightIn = rule => Number(/height: var\(--row-height, (\d+)px\);/.exec(rule)[1]);
 
 // The portrait in a row
 
@@ -171,11 +173,11 @@ test('four rows to a page, and the portrait in a row is 124 square at 100 and fo
   assert.deepEqual(rowSizes(80), { card: 99, photo: 95, inset: 2 });
   assert.deepEqual(rowSizes(60), { card: 74, photo: 70, inset: 2 });
 
-  // no size, or an odd one, is 100, and the setting stays between 60 and 100
+  // no size, or an odd one, is 100, and the setting stays between 60 and 200
   assert.deepEqual(rowSizes(), rowSizes(100));
   assert.deepEqual(rowSizes('big'), rowSizes(100));
   assert.deepEqual(rowSizes(30), rowSizes(60));
-  assert.deepEqual(rowSizes(250), rowSizes(100));
+  assert.deepEqual(rowSizes(250), rowSizes(200), 'the setting stops at double');
 
   let before = 0;
   for (let percent = 60; percent <= 100; percent++) {
@@ -376,21 +378,22 @@ test('leaders puts the coaches, then the captains, then the mentors, whatever or
   const people = [].concat(crew('Mentor', 1), crew('Captain', 2), crew('Coach', 1), crew('Mentor', 1, { name: '[Mentor B]' }));
 
   assert.deepEqual(roleOrder, ['coach', 'captain', 'mentor']);
-  assert.deepEqual(namesOf(leaders(people)), ['[Coach 1]', '[Captain 1]', '[Captain 2]', '[Mentor 1]']);
+  assert.deepEqual(namesOf(leaders(people)), ['[Coach 1]', '[Captain 1]', '[Captain 2]', '[Mentor 1]', '[Mentor B]']);
 });
 
-test('two coaches then two captains are the four rows, and with more than four people the first four show', () => {
+// The panel used to cut the list to its first four. It pages now (tools/test-portrait-size.mjs), so the list is everyone.
+test('two coaches then two captains are the four rows at 100, and everyone else comes after them', () => {
   assert.deepEqual(namesOf(leaders([].concat(crew('Captain', 2), crew('Coach', 2)))), ['[Coach 1]', '[Coach 2]', '[Captain 1]', '[Captain 2]']);
-  assert.deepEqual(namesOf(leaders([].concat(crew('Coach', 2), crew('Captain', 2), crew('Mentor', 2)))), ['[Coach 1]', '[Coach 2]', '[Captain 1]', '[Captain 2]']);
-  assert.deepEqual(namesOf(leaders([].concat(crew('Coach', 3), crew('Captain', 3)))), ['[Coach 1]', '[Coach 2]', '[Coach 3]', '[Captain 1]']);
-  assert.equal(leaders(crew('Mentor', 9)).length, rowsPerPage);
+  assert.deepEqual(namesOf(leaders([].concat(crew('Coach', 2), crew('Captain', 2), crew('Mentor', 2)))), ['[Coach 1]', '[Coach 2]', '[Captain 1]', '[Captain 2]', '[Mentor 1]', '[Mentor 2]']);
+  assert.deepEqual(namesOf(leaders([].concat(crew('Coach', 3), crew('Captain', 3)))), ['[Coach 1]', '[Coach 2]', '[Coach 3]', '[Captain 1]', '[Captain 2]', '[Captain 3]']);
+  assert.equal(leaders(crew('Mentor', 9)).length, 9);
 
   // the people are in their typed order inside a role
-  assert.deepEqual(namesOf(leaders(crew('Coach', 6))), namesOf(crew('Coach', 4)));
+  assert.deepEqual(namesOf(leaders(crew('Coach', 6))), namesOf(crew('Coach', 6)));
 
   const people = sample().people;
   assert.deepEqual(people.map(person => person.role), ['Coach', 'Coach', 'Captain', 'Captain', 'Mentor', 'Mentor']);
-  assert.deepEqual(leaders(people).map(person => person.role), ['Coach', 'Coach', 'Captain', 'Captain']);
+  assert.deepEqual(leaders(people).map(person => person.role), ['Coach', 'Coach', 'Captain', 'Captain', 'Mentor', 'Mentor']);
 });
 
 test('a president is a captain with a title, so they are with the captains', () => {
@@ -402,7 +405,7 @@ test('a president is a captain with a title, so they are with the captains', () 
 test('leaders ignores capitals and spaces in a role, and puts any other role last', () => {
   const people = [].concat(crew('  CAPTAIN ', 1), crew('coach', 1), crew('Alumni', 1), crew('Mentor', 1), crew('', 1, { name: '[No role]' }), crew('Alumni', 1, { name: '[Alumni B]' }));
 
-  assert.deepEqual(namesOf(leaders(people)), ['[coach 1]', '[  CAPTAIN  1]', '[Mentor 1]', '[Alumni 1]']);
+  assert.deepEqual(namesOf(leaders(people)), ['[coach 1]', '[  CAPTAIN  1]', '[Mentor 1]', '[Alumni 1]', '[Alumni B]', '[No role]']);
   assert.deepEqual(namesOf(leaders(people.slice(2))), ['[Mentor 1]', '[Alumni 1]', '[Alumni B]', '[No role]']);
 });
 
@@ -427,20 +430,23 @@ test('leaders leaves out hidden and expired people and people with nothing to sh
   assert.deepEqual(namesOf(leaders(hidden)), ['[Coach 2]', '[Coach 3]', '[Coach 4]', '[Coach 5]']);
 });
 
-test('the Leadership panel is one page of rows, the same on every visit, with the frame of each picture in the colour of its role', () => withFakePage(() => {
+test('the Leadership panel shows four rows on each visit and then the rest, with the frame of each picture in the colour of its role', () => withFakePage(async () => {
+  const panel = await freshPanel('leadership');
   const people = [].concat(crew('Coach', 2, { title: 'Head coach' }), crew('Captain', 3), crew('Mentor', 1));
   people[1].title = undefined;
   const content = { people: people };
-  const visits = [mount(leadershipPanel, content), mount(leadershipPanel, content), mount(leadershipPanel, content)];
+  const visits = [mount(panel, content), mount(panel, content), mount(panel, content)];
 
-  assert.equal(leadershipPanel.hasContent(content), true);
-  assert.equal(leadershipPanel.hasContent({ people: [] }), false);
-  assert.equal(leadershipPanel.hasContent({ people: [{ role: 'Coach', name: '[Hidden]', show: false }] }), false);
-  assert.equal(leadershipPanel.hasContent({}), false);
+  assert.equal(panel.hasContent(content), true);
+  assert.equal(panel.hasContent({ people: [] }), false);
+  assert.equal(panel.hasContent({ people: [{ role: 'Coach', name: '[Hidden]', show: false }] }), false);
+  assert.equal(panel.hasContent({}), false);
 
-  visits.forEach(html => assert.equal(html, visits[0], 'one page, so every visit is the same'));
   assert.deepEqual(namesIn(visits[0]), ['[Coach 1]', '[Coach 2]', '[Captain 1]', '[Captain 2]']);
+  assert.deepEqual(namesIn(visits[1]), ['[Captain 3]', '[Mentor 1]']);
+  assert.equal(visits[2], visits[0], 'the third visit is the first page again');
   assert.deepEqual(rolesIn(visits[0]), ['HEAD COACH', 'COACH', 'CAPTAIN', 'CAPTAIN']);
+  assert.deepEqual(rolesIn(visits[1]), ['CAPTAIN', 'MENTOR']);
   assert.equal(countOf(visits[0], 'class="row-bar"'), 3);
   assert.equal(countOf(visits[0], 'class="portrait red-metal"'), 2);
   assert.equal(countOf(visits[0], 'data-metal="gold"'), 2);
@@ -479,15 +485,13 @@ test('both panels draw their rows at the Portrait size, and at 100 without it, a
 }));
 
 test('the panels draw through the shared rows and the header mark, have no animation code, and the Roster panel is as it was', () => {
-  ['panels/leadership/leadership.js', 'panels/team-leads/team-leads.js'].forEach(file => {
+  [['panels/leadership/leadership.js', 'photoAddress(', 'preloadPhotos('], ['panels/team-leads/team-leads.js', 'leadAddress(', 'preloadLeadPhotos(']].forEach(([file, address, preload]) => {
     const code = read(file);
-    ['rowsMarkup(', 'watchPhotos(', 'doubleSlash()', 'photoAddress('].forEach(piece => assert.ok(code.includes(piece), file + ' does not use ' + piece));
+    ['rowsMarkup(', 'watchPhotos(', 'doubleSlash()', 'rowLayout(', address, preload].forEach(piece => assert.ok(code.includes(piece), file + ' does not use ' + piece));
     assert.equal(/slotMarkup|slotsPerPage|MAX_CARDS|splitEvenly|leadershipPages/.test(code), false, file + ' still draws the cards');
     assert.equal(/setTimeout|setInterval|requestAnimationFrame|animate\(/.test(code), false, file + ' has animation code');
+    assert.ok(code.includes('makePages(rowsPerPage)'), file + ' does not show a page at a time');
   });
-  assert.ok(read('panels/team-leads/team-leads.js').includes('makePages(rowsPerPage)'), 'Team Leads does not show a page at a time');
-  assert.ok(read('panels/team-leads/team-leads.js').includes('preloadPhotos('), 'Team Leads does not load the next page\'s photos');
-  assert.equal(read('panels/leadership/leadership.js').includes('makePages'), false, 'Leadership is one page');
 
   const roster = read('panels/roster/roster.js');
   assert.ok(roster.includes('slotMarkup(') && !roster.includes('rowsMarkup('), 'the Roster panel still draws its team lead as a slot');
@@ -504,7 +508,7 @@ test('four rows of 144 fill the 576 body, the name is 64px, the role is 44px in 
 
   // the Events panel has the same body: 124 from the top, 576 high, 1152 wide
   assert.deepEqual([numberIn(rows, 'left'), numberIn(rows, 'top'), numberIn(rows, 'width'), numberIn(rows, 'height')], [0, 124, 1152, 576]);
-  assert.equal(numberIn(row, 'height') * rowsPerPage, numberIn(rows, 'height'));
+  assert.equal(rowHeightIn(row) * rowsPerPage, numberIn(rows, 'height'));
   assert.ok(/display: grid;/.test(row) && /grid-template-columns: auto auto minmax\(0, 1fr\);/.test(row) && /align-items: center;/.test(row), 'the picture, the name and the role are centred in the row');
   assert.ok(/grid-column: 2;/.test(name) && /grid-column: 3;/.test(role), 'the name and the role keep their columns when one of them is missing');
   assert.equal(/display: (inline-)?flex/.test(css.slice(css.indexOf('.person-rows {'), css.indexOf('.person-name:empty'))), false, 'a flex row in base.css would have to be named in the mirror test of test-layouts.mjs');
@@ -535,7 +539,8 @@ test('the rows fit the panel: the bar between them, the photo, the longest name,
   const gap = numberIn(row, 'column-gap');
 
   // the bar is the one the Events panel has: its line is 10px into its 20px picture, so it sits on the foot of the row
-  assert.equal(numberIn(bar, 'top') + 10, numberIn(row, 'height'));
+  assert.ok(/top: calc\(var\(--row-height, 144px\) - 10px\);/.test(bar), 'the bar sits 10px above the foot of the row, whatever the height of the row');
+  assert.equal(rowHeightIn(row) - 10, 134);
   assert.equal(numberIn(bar, 'left'), 14);
   assert.ok(read('core/portrait.js').includes('const rowBarLength = 1124;'));
   assert.equal(1152 - 2 * numberIn(bar, 'left'), 1124, 'the bar stops 14px short of the frame on each side');
@@ -549,11 +554,11 @@ test('the rows fit the panel: the bar between them, the photo, the longest name,
 
   // the last row is 556 to 700 down the panel, its role two lines at most, centred. Its lowest line ends at 676, and the cut corner
   // of the frame there is at x = 1148 - (676 - 640) * 80 / 64
-  const lastTop = 124 + 3 * numberIn(row, 'height');
-  const lowest = lastTop + numberIn(row, 'height') / 2 + 48;
+  const lastTop = 124 + 3 * rowHeightIn(row);
+  const lowest = lastTop + rowHeightIn(row) / 2 + 48;
   const cutAt = 1148 - (lowest - 640) * 80 / 64;
   assert.ok(1152 - numberIn(last, 'padding-right') <= cutAt, 'the role in the last row stays inside the cut corner');
-  assert.ok(lastTop + numberIn(row, 'height') <= 704, 'the rows end above the foot of the frame');
+  assert.ok(lastTop + rowHeightIn(row) <= 704, 'the rows end above the foot of the frame');
 
   // the cut corner numbers are the ones of the large frame
   assert.ok(read('core/plate.js').includes('body: [[4, 120], [1148, 120], [1148, 640], [1068, 704], [4, 704]]'));

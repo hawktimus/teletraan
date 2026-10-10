@@ -173,8 +173,9 @@ export function keepInRange(value, limit, fallback) {
 }
 
 // A size setting of the photo settings (portraitScale or photoScale): a whole percent
-// from 60 to 100, so 79.6 is 80. Anything missing or odd is 100, the full size.
-// The portrait and Photo panel code calls it too, so a size is never odd there.
+// inside the limits of the setting (60 to 200 for portraits, 60 to 100 for photos), so 79.6
+// is 80. Anything missing or odd is 100. The portrait and Photo panel code calls it too, so
+// a size is never odd there.
 export function tidyScale(name, value) {
   return Math.round(keepInRange(value, limits[name], defaultSettings[name]));
 }

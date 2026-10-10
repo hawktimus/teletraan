@@ -155,9 +155,10 @@ export const limits = {
   silverChance: { min: 0, max: 100 },
   // The photo settings. Below 6 seconds a photo is gone before it can be looked at.
   photoSeconds: { min: 6, max: 120 },
-  // The two size settings of the photo settings, in percent. 100 is the full size, the largest that
-  // fits the frames. At 60 a picture is still easy to see from across the room.
-  portraitScale: { min: 60, max: 100 },
+  // The two size settings of the photo settings, in percent. At 60 a picture is still easy to see from
+  // across the room. For the Photo panel 100 is the full size, the largest that fits the frame. For the
+  // portraits 100 is the standard size and 200 is double, which a page of two rows still has room for.
+  portraitScale: { min: 60, max: 200 },
   photoScale: { min: 60, max: 100 },
   // The night mode settings. At 120 pixels the logo is still clear from across the room, and at 800 it
   // still fits the 1080 pixel height with the number under it.
@@ -240,9 +241,11 @@ export const defaultSettings = {
   //   photoOrder    see photoOrders above
   //   photoSeconds  how long the Photo panel stays, when its row in the Panels
   //                 list has no seconds of its own. It is used instead of pageSeconds.
-  //   portraitScale how big the portraits are, as a percent of the full size: the Leadership and
+  //   portraitScale how big the portraits are, as a percent of the standard size: the Leadership and
   //                 Team Leads portraits and the team lead portrait of the Roster. 100 is the
-  //                 full size (core/portrait.js). The names and roles keep their size.
+  //                 standard size and 200 is double (core/portrait.js). Above 100 the rows of
+  //                 Leadership and Team Leads get taller and fewer fit on a page, and the Roster
+  //                 portrait stays at 100. The names and roles keep their size.
   //   photoScale    how big the picture in the Photo panel is, as a percent of the full size
   //                 (core/photos.js). 100 fills the panel. The caption keeps its size.
   //   photoFit      see photoFits above. fill is how the panel always drew a photo.
@@ -473,9 +476,9 @@ export const defaultDemo = {
   announcementText: '',
 };
 
-// Used for a person whose "Show photo on screen" switch is missing from the
-// saved content, such as a person added before the switch existed. The
-// Studio field starts at the same value.
+// Used for a person, or a team lead, whose "Show photo on screen" switch is
+// missing from the saved content, such as one added before the switch existed.
+// The Studio fields start at the same value.
 export const defaultPerson = {
   showPhoto: true,
 };

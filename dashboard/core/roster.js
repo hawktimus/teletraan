@@ -5,6 +5,7 @@
 import { hasText } from './text.js';
 import { visibleItems } from './content.js';
 import { makePages } from './turns.js';
+import { leadPhotoOf } from './team-leads.js';
 
 export const rowsPerColumn = 8;
 export const membersPerPage = rowsPerColumn * 2;
@@ -17,8 +18,10 @@ function membersOf(subteam) {
 // (the order content.subteams already has). Each page is
 //   { subteam, lead, members, pageNumber, pageCount }
 // subteam and lead are the typed texts, lead is empty when there is none, and
-// members are the names on this page. Hidden and expired subteams are left
-// out, and so is one with neither a lead nor a member, because there would
+// members are the names on this page. When the lead has a photo of its own, or
+// its switch is off, the page also has photo or showPhoto: false, for the
+// portrait (leadAddress in core/portrait.js). Hidden and expired subteams are
+// left out, and so is one with neither a lead nor a member, because there would
 // be nothing to show.
 export function rosterPages(subteams) {
   const pages = [];
@@ -31,13 +34,13 @@ export function rosterPages(subteams) {
     // A subteam with a lead and no members still gets one page
     const pageCount = Math.max(1, Math.ceil(members.length / membersPerPage));
     for (let index = 0; index < pageCount; index++) {
-      pages.push({
+      pages.push(Object.assign({
         subteam: String(subteam.name || '').trim(),
         lead: lead,
         members: members.slice(index * membersPerPage, (index + 1) * membersPerPage),
         pageNumber: index + 1,
         pageCount: pageCount,
-      });
+      }, lead === '' ? {} : leadPhotoOf(subteam)));
     }
   });
   return pages;

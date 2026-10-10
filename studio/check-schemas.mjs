@@ -94,6 +94,8 @@ const contract = {
   subteam: withFlags({
     name: text(11),
     lead: text(17),
+    photo: 'image',
+    showPhoto: 'boolean',
     members: strings(12, 24),
     spotlight: 'boolean',
     spotlightHeadline: text(40),
@@ -151,7 +153,7 @@ const contract = {
     silverChance: number(0, 100),
     photoOrder: 'string',
     photoSeconds: number(6, 120),
-    portraitScale: number(60, 100),
+    portraitScale: number(60, 200),
     photoScale: number(60, 100),
     photoFit: 'string',
     nightEnabled: 'boolean',
@@ -2609,8 +2611,9 @@ function checkPhotos() {
   need(problems, setting('portraitScale') && setting('portraitScale').title === 'Portrait size, percent', 'portraitScale should be titled Portrait size, percent');
   need(problems, setting('photoScale') && setting('photoScale').title === 'Photo size, percent', 'photoScale should be titled Photo size, percent');
 
-  // The two sizes: a whole percent from 60 to 100 that starts at 100, with a one line description that says what 100 is
-  ['portraitScale', 'photoScale'].forEach(name => {
+  // The Photo size: a whole percent from 60 to 100 that starts at 100, with a one line description that says what 100 is.
+  // The Portrait size has its own range and words, in checkPortraitSize.
+  ['photoScale'].forEach(name => {
     const words = setting(name) ? setting(name).description || '' : '';
     need(problems, words.length > 0 && words.indexOf('\n') === -1, name + ' needs a one-line description');
     need(problems, /100 is the full size/.test(words) && /largest that fits/.test(words), name + ' description should say that 100 is the full size and the largest that fits the frame');
@@ -2724,6 +2727,72 @@ function checkPersonPhoto() {
   const preview = typeByName('person').preview;
   need(problems, preview && preview.select && preview.select.media === 'photo', 'the person list should show each photo (select media: photo)');
   need(problems, world.sample.people.every(person => person.photo === undefined), 'the sample people should have no photo, so the sample shows silhouettes');
+  return problems;
+}
+
+// A team lead's photo and its switch, the same as a person's. The photo is optional and sits right
+// after the lead, the switch starts at the value defaultPerson has in config.js, the list shows each
+// photo, and the dashboard asks Sanity for the photo the way it does for a person.
+function checkLeadPhoto() {
+  const problems = [];
+  const photo = fieldAt('subteam.photo');
+  const shown = fieldAt('subteam.showPhoto');
+  const words = photo ? (photo.description || '').toLowerCase() : '';
+  const defaultPerson = world.dashboard.defaultPerson || {};
+  const names = fieldsIn(typeByName('subteam')).map(field => field.name);
+
+  need(problems, photo && photo.type === 'image' && photo.title === 'Photo', 'subteam.photo should be a picture titled Photo');
+  need(problems, photo && !constraintNamed(constraintsOf(photo), 'required'), 'subteam.photo should be optional, so a team lead can have no photo');
+  ['square', 'plain background', 'first name'].forEach(advice => {
+    need(problems, words.indexOf(advice) !== -1, 'the subteam.photo description should say "' + advice + '"');
+  });
+  need(problems, shown && shown.type === 'boolean' && shown.title === 'Show photo on screen', 'subteam.showPhoto should be a switch titled Show photo on screen');
+  need(problems, shown && shown.initialValue === true, 'subteam.showPhoto should start on');
+  need(problems, shown && defaultPerson.showPhoto === shown.initialValue, 'defaultPerson.showPhoto in config.js should be the same as the starting value of subteam.showPhoto');
+  need(problems, names.indexOf('lead') !== -1 && names[names.indexOf('lead') + 1] === 'photo' && names[names.indexOf('lead') + 2] === 'showPhoto', 'subteam.photo and subteam.showPhoto should come right after subteam.lead, not ' + names.join(', '));
+
+  const preview = typeByName('subteam').preview;
+  need(problems, preview && preview.select && preview.select.media === 'photo', 'the team lead list should show each photo (select media: photo)');
+  need(problems, preview && preview.prepare({ title: 'Build', lead: 'Sam', media: 'picture' }).media === 'picture', 'the team lead list should hand the photo over as its media');
+
+  // The dashboard asks for the photo of a team lead the way it asks for the photo of a person
+  const query = world.sanitySource.split('"subteams":')[1].split('"people":')[0];
+  ['"photo": photo {', '"url": asset->url', 'asset->metadata.dimensions.width', 'asset->metadata.dimensions.height', 'crop', 'hotspot'].forEach(piece => {
+    need(problems, query.indexOf(piece) !== -1, 'the subteams part of the content query in dashboard/core/sanity.js should ask for ' + piece);
+  });
+  need(problems, world.sample.subteams.every(subteam => subteam.photo === undefined), 'the sample team leads should have no photo, so the sample shows silhouettes');
+  return problems;
+}
+
+// The Portrait size: a whole percent from 60 to 200 that starts at 100. 100 is the standard size and 200 is
+// double. The description gives the number of rows a page holds above 100, and those numbers are worked out
+// here from rowLayout in core/portrait.js, so the words cannot drift from the screen.
+function checkPortraitSize() {
+  const problems = [];
+  const config = world.dashboard;
+  const field = fieldAt('dashboardSettings.portraitScale');
+  const words = field ? field.description || '' : '';
+  const rows = percent => world.portrait.rowLayout(percent).rows;
+  const limit = config.limits.portraitScale;
+
+  need(problems, limit && limit.min === 60 && limit.max === 200, 'limits.portraitScale in config.js should be 60 to 200');
+  need(problems, config.defaultSettings.portraitScale === 100, 'the default portraitScale in config.js should be 100');
+  need(problems, world.sample.settings.portraitScale === 100, 'the sample settings need portraitScale of 100');
+  need(problems, field && field.initialValue === 100, 'portraitScale should start at 100');
+  need(problems, field && /60 to 200/.test(words) && /100 is standard/.test(words) && /200 is double/.test(words), 'the portraitScale description should give the range, 60 to 200, and say that 100 is standard and 200 is double');
+  need(problems, /Leadership or Team Leads/.test(words) && /Roster stays at 100/.test(words), 'the portraitScale description should say that Leadership and Team Leads get fewer rows and that Roster stays at 100');
+  need(problems, config.limits.photoScale && config.limits.photoScale.max === 100, 'limits.photoScale in config.js should stay 60 to 100');
+
+  // The rows a page holds: 4 up to 100, then fewer. The description says where it changes.
+  let threeUntil = 0;
+  let twoFrom = 0;
+  for (let percent = limit.min; percent <= limit.max; percent++) {
+    if (percent <= 100) need(problems, rows(percent) === 4, 'a page should hold 4 rows at ' + percent + ' percent, not ' + rows(percent));
+    if (rows(percent) === 3) threeUntil = percent;
+    if (rows(percent) === 2 && twoFrom === 0) twoFrom = percent;
+    need(problems, rows(percent) >= 2, 'a page should hold at least 2 rows at ' + percent + ' percent');
+  }
+  need(problems, words.indexOf('3 rows (to ' + threeUntil + ') or 2 (from ' + twoFrom + ')') !== -1, 'the portraitScale description should say 3 rows (to ' + threeUntil + ') or 2 (from ' + twoFrom + '), as rowLayout works them out');
   return problems;
 }
 
@@ -5626,6 +5695,7 @@ async function main() {
     world.panelOrderInput = await load(path.join(folder, 'panel-order-input.js'));
     world.panelOrder = await load(path.join(dashboardFolder, 'core', 'panel-order.js'));
     world.constants = await load(path.join(dashboardFolder, 'core', 'constants.js'));
+    world.portrait = await load(path.join(dashboardFolder, 'core', 'portrait.js'));
     world.statusScript = fs.readFileSync(path.join(here, '..', 'deploy', 'scripts', 'status-write.sh'), 'utf8');
     world.sample = JSON.parse(fs.readFileSync(path.join(dashboardFolder, 'data', 'sample', 'content.json'), 'utf8'));
     world.seed = fs.readFileSync(path.join(here, '..', 'docs', 'seed', 'extra-events.ndjson'), 'utf8');
@@ -5671,6 +5741,8 @@ async function main() {
   check('Show connection status is a switch that starts off', checkConnectionStatus);
   check('a subteam has an optional list of first names, up to 24 of 12 characters, with no repeats', checkSubteamMembers);
   check('a person has an optional photo and a switch that starts on, as in dashboard/config.js', checkPersonPhoto);
+  check('a team lead has an optional photo right after the lead and a switch that starts on, and the dashboard asks Sanity for the photo', checkLeadPhoto);
+  check('the Portrait size is a whole percent from 60 to 200 that starts at 100, and its description gives the rows a page holds', checkPortraitSize);
   check('a photo has a picture, a short caption and a first name credit, and the photo settings agree with dashboard/config.js', checkPhotos);
   check('the themes and overlays in studio/themes.js are the ones in the dashboard registries', checkThemeLists);
   check('the Look page agrees with dashboard/config.js, needs a start and an end for each rule, and checks the time zone', checkTheme);

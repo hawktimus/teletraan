@@ -32,9 +32,9 @@ The folder `docs/content-templates/` has one CSV file for each kind of content.
 
 There is no template for the pages that exist once (Dashboard Settings, Look
 and Demo), for Meeting days, Presentations or Calendar filters, and none for
-photos. The pictures in Photos and the photo of a person in Leadership are
-uploaded in Studio, so there is no photo template and person.csv has no photo
-column.
+photos. The pictures in Photos and the photo of a person in Leadership or of a
+team lead are uploaded in Studio, so there is no photo template, and person.csv
+and subteam.csv have no photo column.
 
 Every template has three rows at the top:
 
@@ -75,8 +75,8 @@ someone made there by hand is not known to it: leave the cell empty and pick
 the place in the task in Studio, or add the place to place.csv if it is not in
 Studio yet.
 
-Every template except place.csv has a `team` column, last in all but task.csv. It is the code of the
-team the item is for: `prime` or `nova`, capitals ignored. Leave it empty to show
+Every template except place.csv has a `team` column, last in all but task.csv and
+subteam.csv. It is the code of the team the item is for: `prime` or `nova`, capitals ignored. Leave it empty to show
 the item for both teams, which is what happens to anything that was added
 before teams existed. A CSV saved from an older template, without the column,
 still imports. The script knows the two starting teams without a file (they are
@@ -84,10 +84,14 @@ in `docs/seed/teams.ndjson`) and refuses any other code. The teams have to be in
 Studio before the import, so import that file first (studio/README.md, "The
 starting teams").
 
-task.csv is the one template with columns after `team`. They are `priority` (`high`, `medium`
+task.csv has columns after `team`. They are `priority` (`high`, `medium`
 or `low`) and `showOnTv` (`yes` or `no`, and `yes` when the cell is empty). Both may be left
 empty. A task file saved from a template without them still imports. A sheet has no column for
 where a task comes from, so every task it makes is pinned.
+
+subteam.csv has one column after `team`, `showPhoto` (`yes` or `no`, and `yes` when the cell is
+empty). It is the "Show photo on screen" switch of a team lead. A subteam file saved from a
+template without it still imports.
 
 ### 2. Make the cells plain text
 

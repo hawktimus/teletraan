@@ -121,7 +121,8 @@ editors can sign in from anywhere.
                               images.js builds the addresses of photos from Sanity, photos.js says
                               which photos the Photo panel shows and in what order, portrait.js
                               draws a person's framed portrait, with the name under it or as a row,
-                              leadership.js picks the four people of the Leadership panel, team-leads.js
+                              and says how many rows a page holds, leadership.js lists the people of the
+                              Leadership panel, team-leads.js
                               makes the rows of the Team Leads panel, roster.js
                               makes the pages of the Subteam roster panel, task-source.js says whether a task
                               is pinned or from the team board and puts the pinned ones first, theme.js
@@ -381,6 +382,12 @@ editors can sign in from anywhere.
                               has, the numbers of the fill mode that did not change, the card in the shape of
                               a photo (wide, square, tall and extreme, at 100 and 60 percent), the centred
                               caption, the credit that a narrow card leaves out, and the sample photos
+      test-portrait-size.mjs  checks for a Portrait size above 100: the rows a page holds, the height of a row,
+                              where the role goes, that Leadership and Team Leads page through everyone and a
+                              change of the setting skips nobody (core/turns.js), and the table in the docs
+      test-lead-photo.mjs     checks for the photo of a team lead: which address a lead gets (its own photo, the
+                              silhouette, or the photo of the person with the same name), the reader, and the
+                              Team Leads and Subteam roster panels with their early loading
       test-presentation-mouse.mjs  checks for the mouse in presentation mode: what each button does, the second
                               click of a double click, a click on the card that says the slides are not ready,
                               the context menu, the hidden cursor, and the rotation that starts again
@@ -626,9 +633,12 @@ alone.
   no photo list file on the Mini.
 - **How big the pictures are.** Dashboard Settings, Screen tab: "Portrait size,
   percent" (`portraitScale`) and "Photo size, percent" (`photoScale`). Each is a
-  whole percent from 60 to 100, starting at 100, which is the full size and the
-  largest that fits the frames. The starting values and the limits are in
-  `dashboard/config.js` (`defaultSettings` and `limits`), and the Studio fields
+  whole percent starting at 100. The Photo size goes from 60 to 100, where 100 is
+  the full size and the largest that fits the frame. The Portrait size goes from
+  60 to 200, where 100 is the standard size and 200 is double (see "Photos of
+  people" below for what a bigger portrait changes). The starting values and
+  the limits are in `dashboard/config.js` (`defaultSettings` and `limits`), and
+  the Studio fields
   in `studio/schemas/settingsPhotos.js`. `fixSettingValues` in
   `core/content.js` rounds and clamps them (`tidyScale`), and anything missing
   or odd is 100. The portraits: `portraitSizes` in `core/portrait.js` works out
@@ -637,7 +647,8 @@ alone.
   element. The card is always drawn 292 square and the browser draws it
   smaller, which keeps its metal edge and cut corner in proportion. The slot
   stays 352 wide and the text keeps its size, so a smaller portrait is only
-  centred in its slot. The Photo panel: `photoLayout` in `core/photos.js` works
+  centred in its slot, and the slot never grows past 100. The Photo panel:
+  `photoLayout` in `core/photos.js` works
   out where the card and the caption go (1096 by 464, or 514 with no caption, at
   100). `cardMarkup` draws the card at that size with the same cut corner and
   edge, and the card sits in the middle of the panel with the caption directly
@@ -658,26 +669,45 @@ alone.
   `photo.css` shows the picture with `object-fit: contain` in the whole mode.
   `tools/test-photo-fit.mjs` has the tests.
 - **Photos of people.** Leadership in Studio, Photo and "Show photo on
-  screen" (docs/editing-content.md). The screen asks Sanity for each photo at
-  the size it is shown, 280 by 280 pixels, in `core/portrait.js`. The silhouette
-  for a person with no photo is drawn once in `dashboard/index.html`, and its
-  four colours are the `--silhouette-` variables in `dashboard/tokens.css`.
-  Four rows fit on a panel, set by `rowsPerPage` in `core/portrait.js`, and
-  `rowsMarkup` draws them. `core/leadership.js` picks the people of the
-  Leadership panel: the coaches, then the captains, then the mentors, the first
-  four. `core/team-leads.js` makes the rows of the Team Leads panel, one for each
-  subteam in the order of the Order field, and the panel shows four each time it
-  comes round. The rows are in the section People portraits in
+  screen" (docs/editing-content.md). A Team lead (`studio/schemas/subteam.js`)
+  has the same two fields, right after Lead. The screen asks Sanity for each
+  photo at the size it is shown, 280 by 280 pixels, in `core/portrait.js`, and
+  for a Team lead's photo in the same way as for a person's (`contentQuery` in
+  `core/sanity.js`, tidied by `normalizeSubteam`). `leadAddress` in
+  `core/portrait.js` gives the address for a team lead: its own photo, the
+  silhouette when its switch is off, and otherwise the photo of the person in
+  Leadership with the same name (`personNamed`), as before the field existed.
+  The Team Leads rows, the Subteam roster slot and their early loading all use
+  it. The silhouette for a person with no photo is drawn once in
+  `dashboard/index.html`, and its four colours are the `--silhouette-`
+  variables in `dashboard/tokens.css`.
+  Four rows fit on a panel at a Portrait size of 100 and below, set by
+  `rowsPerPage` in `core/portrait.js`, and `rowsMarkup` draws them. Above 100 a
+  row is taller and fewer fit: `rowLayout` gives `rows` (the body of 576 divided
+  by the portrait and 20 pixels for the bar, rounded down, so 3 from 101 to 139
+  and 2 from 140), the `height` of a row (192 or 288) and whether the role goes
+  under the name (`stacked`, from a portrait of 141 pixels, when the role would
+  have less than 336 pixels beside the longest name). `rowsMarkup` hands the
+  height to `base.css` as `--row-height` and adds the class `stacked`.
+  `core/leadership.js` lists the people of the Leadership panel: the coaches,
+  then the captains, then the mentors. `core/team-leads.js` makes the rows of the
+  Team Leads panel, one for each subteam in the order of the Order field. Both
+  panels show one page each time they come round, with the size of the page
+  from `rowLayout` at each turn (`makePages` in `core/turns.js` goes on from the
+  first person not shown yet when the size changes), so nobody is dropped. The
+  rows are in the section People portraits in
   `dashboard/base.css`: four of 144 pixels fill the 576 pixel body, as in the
-  Events panel. In a row the portrait is 124 pixels square (`rowSizes` in
-  `core/portrait.js`), and on the Subteam roster panel it is 292 pixels square with the
+  Events panel. In a row the portrait is 124 pixels square at 100 (`rowSizes` in
+  `core/portrait.js`), up to 248 at 200, and on the Subteam roster panel it is 292 pixels square with the
   280 pixel photo 6 pixels in from the edge (`portraitSize`). The photo is
   always asked for at 280, whatever the Portrait size setting says, so the copy
   loaded ahead of time is the one shown. `showcaseOf` in `core/team-leads.js` is
   there for a later mode that shows one subteam's lead and its members. Nothing
-  calls it yet. `tools/test-person-rows.mjs` has the tests of the rows.
+  calls it yet. `tools/test-person-rows.mjs`, `tools/test-portrait-size.mjs` and
+  `tools/test-lead-photo.mjs` have the tests of the rows and the photos.
   The starting value of the switch is `defaultPerson.showPhoto` in
-  `dashboard/config.js` and its copy in `studio/schemas/person.js`.
+  `dashboard/config.js` and its copy in `studio/schemas/person.js`, which
+  `studio/schemas/subteam.js` follows.
 - **Subteam members.** The Members list of a subteam in Studio
   (`studio/schemas/subteam.js`): first names, up to 24 of 12 characters, with no
   digits and no repeats. The screen tidies them in `normalizeSubteam` in

@@ -644,7 +644,18 @@ html[data-style="original"] .plate-id { display: block; }
    still has its role at the right end. The frame's cut corner runs from
    (1148, 640) to (1068, 704) and crosses the end of the last row's second line,
    so that row stops 16px sooner. The text sizes are the label and body sizes in
-   tokens.css. */
+   tokens.css.
+
+   Those are the rows at a Portrait size of 100 and below. Above 100 the portrait
+   is bigger, up to 248 square at 200, and a row has to be taller to hold it and
+   the bar under it: core/portrait.js (rowLayout) works out how many rows fit,
+   3 up to 139 percent and 2 from 140, and hands the height of a row over as
+   --row-height on .person-rows. The 144px here is the height at 100. Past a
+   portrait of 140px the role no longer fits beside the longest name, so the
+   class stacked puts it under the name, at the left, and the name and the role
+   are centred in the row as a pair. The 64px at the right of a stacked row keeps
+   the role's box clear of the frame's cut corner, whichever row is the last: the
+   lowest line of a 3 row page ends at y = 688, where the corner is at x = 1088. */
 .person-rows {
   position: absolute;
   left: 0;
@@ -659,7 +670,7 @@ html[data-style="original"] .plate-id { display: block; }
   align-items: center;
   column-gap: 24px;
   box-sizing: border-box;
-  height: 144px;
+  height: var(--row-height, 144px);
   padding: 0 40px 0 28px;
 }
 .person-row:nth-child(4) { padding-right: 56px; }
@@ -668,7 +679,7 @@ html[data-style="original"] .plate-id { display: block; }
    the frame on each side. */
 .person-row .row-bar {
   left: 14px;
-  top: 134px;
+  top: calc(var(--row-height, 144px) - 10px);
 }
 .person-row .portrait { margin: 0; }
 .person-name {
@@ -694,6 +705,24 @@ html[data-style="original"] .plate-id { display: block; }
 }
 .person-name:empty,
 .person-role:empty { display: none; }
+
+/* The role under the name. The outer rows take what the pair leaves, which keeps
+   the pair in the middle of the row when the role or the name is missing. The two
+   middle rows are max-content, not auto: the name and the role cut their text
+   (overflow: hidden), and an auto row shrinks to 20px round such a box, which
+   puts the role on top of the name. */
+.person-rows.stacked .person-row {
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) max-content max-content minmax(0, 1fr);
+  padding-right: 64px;
+}
+.person-rows.stacked .person-row .portrait { grid-column: 1; grid-row: 1 / 5; }
+.person-rows.stacked .person-name { grid-row: 2; }
+.person-rows.stacked .person-role {
+  grid-column: 2;
+  grid-row: 3;
+  text-align: left;
+}
 .slot { text-align: center; }
 
 /* The portrait is a card (cardMarkup, 292 square) with the picture inside its

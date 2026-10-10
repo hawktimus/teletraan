@@ -510,8 +510,8 @@ test('normalizeContent turns a full Sanity result into the sample content shape'
   ]);
 
   assert.deepEqual(content.subteams, [
-    { name: '[Subteam A]', lead: '[Lead A]', spotlight: true, spotlightHeadline: '[Headline]', spotlightText: '[Spotlight text]', order: 1, members: [] },
-    { name: '[Subteam B]', lead: '[Lead B]', spotlight: false, order: 2, members: [] },
+    { name: '[Subteam A]', lead: '[Lead A]', spotlight: true, spotlightHeadline: '[Headline]', spotlightText: '[Spotlight text]', order: 1, members: [], showPhoto: true },
+    { name: '[Subteam B]', lead: '[Lead B]', spotlight: false, order: 2, members: [], showPhoto: true },
   ]);
 
   assert.deepEqual(content.people, [
@@ -906,7 +906,7 @@ test('the new settings have the defaults the Studio starts with', () => {
     breakSeconds: { min: 0.3, max: 2 },
     silverChance: { min: 0, max: 100 },
     photoSeconds: { min: 6, max: 120 },
-    portraitScale: { min: 60, max: 100 },
+    portraitScale: { min: 60, max: 200 },
     photoScale: { min: 60, max: 100 },
     nightLogoWidth: { min: 120, max: 800 },
     demoSeconds: { min: 5, max: 300 },
@@ -2646,7 +2646,7 @@ test('at most 24 members are kept, the first 24, and a repeat does not use up a 
 
 test('the other fields of a subteam come through next to the members', () => {
   const subteam = subteamWith({ lead: '[Lead]', members: ['[Alex]'], spotlight: true, order: 3, show: false });
-  assert.deepEqual(subteam, { name: '[Subteam X]', lead: '[Lead]', members: ['[Alex]'], spotlight: true, order: 3, show: false });
+  assert.deepEqual(subteam, { name: '[Subteam X]', lead: '[Lead]', members: ['[Alex]'], spotlight: true, order: 3, show: false, showPhoto: true });
 });
 
 test('the sample subteams have members as marked placeholders, a different number each, and two pages for one', () => {
@@ -2809,8 +2809,8 @@ test('the query asks for each photo with its id, when it was made, its words, sw
   ['"id": _id', '"createdAt": _createdAt', 'caption,', 'credit,', 'show,', 'expires,', '"image": image {'].forEach(piece => {
     assert.ok(contentQuery.includes(piece), 'the query does not ask for ' + piece);
   });
-  // the same picture lines as a person's photo, asked for three times: a person, a photo and a team logo
-  assert.equal(contentQuery.split('"url": asset->url').length - 1, 3);
+  // the same picture lines as a person's photo, asked for four times: a person, a team lead, a photo and a team logo
+  assert.equal(contentQuery.split('"url": asset->url').length - 1, 4);
 });
 
 test('a photo from Studio gets the address the screen asks for: no wider than the screen, a small format', () => {
@@ -3954,16 +3954,17 @@ test('the portrait sizes in portrait.js, base.css and the text sizes agree', () 
 
 // The two size settings of the photo settings: Portrait size and Photo size
 
-test('Portrait size and Photo size start at 100, are whole percents from 60 to 100, and anything odd is 100', () => {
+test('Portrait size and Photo size start at 100, are whole percents from 60 to 200 and 60 to 100, and anything odd is 100', () => {
   const defaults = live.config.defaultSettings;
   assert.equal(defaults.portraitScale, 100);
   assert.equal(defaults.photoScale, 100);
-  assert.deepEqual(live.config.limits.portraitScale, { min: 60, max: 100 });
+  assert.deepEqual(live.config.limits.portraitScale, { min: 60, max: 200 });
   assert.deepEqual(live.config.limits.photoScale, { min: 60, max: 100 });
 
-  ['portraitScale', 'photoScale'].forEach(name => {
+  // the Portrait size goes up to double, the Photo size stops at the full size
+  [['portraitScale', 200], ['photoScale', 100]].forEach(([name, top]) => {
     // in range stays, a fraction is rounded, and what is outside is brought to the nearest end
-    [[60, 60], [80, 80], [100, 100], [79.6, 80], [60.4, 60], [99.5, 100], [59, 60], [0, 60], [-5, 60], [101, 100], [500, 100]].forEach(([value, wanted]) => {
+    [[60, 60], [80, 80], [100, 100], [79.6, 80], [60.4, 60], [99.5, 100], [59, 60], [0, 60], [-5, 60], [top, top], [top + 1, top], [500, top]].forEach(([value, wanted]) => {
       settingsThrough({ [name]: value }).forEach(settings => assert.equal(settings[name], wanted, name + ' ' + value));
     });
     // missing or not a number: the full size
@@ -4339,7 +4340,7 @@ test('the Subteam roster panel is in the registry with the topic of the other su
 
   const code = fs.readFileSync(path.join(dashboardFolder, 'panels/roster/roster.js'), 'utf8');
   const style = fs.readFileSync(path.join(dashboardFolder, 'panels/roster/roster.css'), 'utf8');
-  ['slotMarkup(', 'watchPhotos(', 'preloadPhotos(', 'personNamed(', 'makeRosterTurns(', 'doubleSlash()', 'escapeHtml('].forEach(piece => assert.ok(code.includes(piece), 'roster.js does not use ' + piece));
+  ['slotMarkup(', 'watchPhotos(', 'preloadLeadPhotos(', 'leadAddress(', 'makeRosterTurns(', 'doubleSlash()', 'escapeHtml('].forEach(piece => assert.ok(code.includes(piece), 'roster.js does not use ' + piece));
   assert.equal(/setTimeout|setInterval|requestAnimationFrame|animate\(/.test(code), false, 'the roster panel has animation code');
   assert.equal(/@keyframes|transition:|animation:|box-shadow|text-shadow|filter|blur/.test(style), false, 'roster.css uses an effect that is not allowed');
   assert.ok(/\.roster \.member\s*\{[^}]*font: 500 var\(--size-body\)\//.test(style), 'the names are not at the body size');
