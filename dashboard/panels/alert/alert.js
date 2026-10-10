@@ -2,6 +2,7 @@
 // off or its "until" time passes (takeover.js decides that).
 
 import { frameMarkup, rowBarMarkup } from '../../core/plate.js';
+import { trimNow } from '../../core/teams.js';
 import { escapeHtml, hasText } from '../../core/text.js';
 
 const FALLBACK_HEADLINE = 'ALERT';
@@ -22,7 +23,7 @@ export function mount(host, content) {
 
   host.innerHTML = `
     <section class="panel alert" data-sequence="alert">
-      ${frameMarkup({ red: true })}
+      ${frameMarkup({ red: true, corner: trimNow().corner })}
       <div class="scan-clip" style="width: 1920px; height: 1080px;">
         <div class="scan" data-part="scan" style="height: 1080px; --sweep: 1920px;"></div>
       </div>

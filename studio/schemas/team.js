@@ -6,7 +6,10 @@
 //
 // The two starting teams are in docs/seed/teams.ndjson. The starting colors of
 // a new team are the Prime ones, so a team that is typed in by hand has
-// colors that work until they are changed.
+// colors that work until they are changed. The trim starts the same way: eight choices in the
+// Trim box that make a team look like itself beyond its colors and the mirror (teamTrim in
+// dashboard/config.js, and "Team trim" in docs/layouts.md). The first choice of each is the one
+// Prime has, and a team made before the trim existed has none stored and reads as Prime.
 
 import { defineType, defineField } from 'sanity';
 import { tooLong, byOrder, aToZ } from './fields.js';
@@ -17,6 +20,33 @@ const hexMessage = 'Use # and six characters from 0 to 9 and A to F, such as #6C
 
 // The code is used in the data, so it has no capitals, spaces or marks
 const teamCode = /^[a-z0-9]+$/;
+
+// The values are the names in teamTrim in dashboard/config.js, in the same order
+const trimChoices = {
+  bolts: [{ title: 'Hex nuts', value: 'hex' }, { title: 'Round rivets', value: 'round' }],
+  cornerCut: [{ title: 'Top left and bottom right', value: 'tl-br' }, { title: 'Top right and bottom left', value: 'tr-bl' }],
+  headerNotch: [{ title: 'Notch', value: 'step' }, { title: 'Slant', value: 'slant' }],
+  grid: [{ title: 'Lines', value: 'lines' }, { title: 'Dots', value: 'dots' }],
+  logoPose: [{ title: 'Auto', value: 'auto' }, { title: 'Flight', value: 'flight' }],
+  nameStyle: [{ title: 'Solid', value: 'solid' }, { title: 'Outline', value: 'outline' }],
+  tickerLabel: [{ title: 'Plate', value: 'plate' }, { title: 'Bar', value: 'bar' }],
+  countAccent: [{ title: 'Red', value: 'red' }, { title: 'Neon', value: 'neon' }],
+};
+
+function trimField(name, title, description) {
+  const list = trimChoices[name];
+
+  return defineField({
+    name: name,
+    title: title,
+    type: 'string',
+    fieldset: 'trim',
+    description: description,
+    options: { list: list, layout: 'radio', direction: 'horizontal' },
+    initialValue: list[0].value,
+    validation: Rule => Rule.valid(list.map(item => item.value)).error('Pick ' + list.map(item => item.title.toLowerCase()).join(' or ') + '.'),
+  });
+}
 
 function colorField(name, title, description, start) {
   return defineField({
@@ -33,6 +63,14 @@ export default defineType({
   name: 'team',
   title: 'Teams',
   type: 'document',
+  fieldsets: [
+    {
+      name: 'trim',
+      title: 'Trim',
+      description: 'How the team looks on the screen beyond its colors. The first choice of each is how Hawktimus Prime looks.',
+      options: { collapsible: true, collapsed: false },
+    },
+  ],
   fields: [
     defineField({
       name: 'name',
@@ -95,6 +133,14 @@ export default defineType({
       description: 'Turn this on to flip the whole screen left to right while this team is showing.',
       initialValue: false,
     }),
+    trimField('bolts', 'Bolts', 'The bolts at the joints of the frames. Hex nuts have six sides. Round rivets are round, with a slot.'),
+    trimField('cornerCut', 'Cut corners', 'Which two corners every panel cuts. The other two stay square.'),
+    trimField('headerNotch', 'Header end', 'How the colored tab at the top of a panel ends. Notch is the usual step. Slant is one cut at 60 degrees.'),
+    trimField('grid', 'Page grid', 'The grid on the page behind Cybertron and Minimal. Lines cross the page. Dots are one in each square.'),
+    trimField('logoPose', 'Bird pose', 'How the bird sits in the banner when it is not moving. Auto is the emblem. Flight is the hawk with its wings up.'),
+    trimField('nameStyle', 'Team name look', 'The team name in the banner. Outline has letters with no fill, and a line under them in the accent color.'),
+    trimField('tickerLabel', 'Ticker label', 'The word at the start of the ticker. Plate is a cut plate. Bar is a thin bar with a block of the accent color in front.'),
+    trimField('countAccent', 'Countdown color', 'The color of the red parts of the countdown. Red is the usual. Neon is the neon color of this team.'),
     defineField({
       name: 'active',
       title: 'Active',

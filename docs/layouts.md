@@ -789,7 +789,8 @@ before it is scaled (1427 is `areaWidth` in `core/layout.js`), and its header ba
 so its cut corner is 32 and it has two bolts, and it has no conduit or slashes, which would
 cross its text. It also has no hazard stripe, because it has no header. The banner and the
 ticker are as big as their regions. A frame is not turned by the mirror. It keeps its
-shape and its corners, as the frames of the other layouts do, and only the regions move.
+shape and its corners, as the frames of the other layouts do, and only the regions move. A team
+can have the other two corners cut, and a header tab with one slant (see "Team trim").
 
 From the bottom up, each half of the edge is drawn like the other frames: the shadow, the
 dark rim, the steel face, the shade and the ridge. The steel is the metal in `tokens.css`
@@ -825,7 +826,7 @@ bars carry their neon lines and their bolts. Each bolt is in one piece. The bars
 end are the whole outline. Because the neon line is found by moving points of the outline,
 a piece finds its own the same way.
 
-To change a size, change it in `barFrames` in `core/plate.js`, and the same number in this
+To change a size, change it in `barOptions` in `core/plate.js`, and the same number in this
 section. The cut corner of Cybertron is also `--style-chamfer` in `styles/cybertron.css`, and
 Minimal's is the one in `styles/minimal.css`.
 Run `node tools/test-layouts.mjs`: it holds the shapes to the sizes of the layout, finds
@@ -1147,6 +1148,99 @@ press while the Monday cards are up moves past them.
 Look at it with `?sample=1`, which has both teams and the rotation. `node tools/test-look-rotation.mjs`
 checks the order of the passes, the style of the day, the boundary rule, a restart and the Next look now
 guard.
+
+## Team trim
+
+A team document has eight more fields, in the Trim box of the Teams list in the Studio. They make
+a team look like itself, beyond its colors and the mirror. Prime has the first choice of each,
+which is how the screen has always looked. Nova has the other. A team that was saved before the
+trim existed has none stored, and the screen reads it as Prime. The names and the choices are
+`teamTrim` in `config.js`, and the Studio copies them (`studio/schemas/team.js`).
+
+| Field | Prime | Nova | What it does |
+|-------|-------|------|--------------|
+| `bolts` | hex nuts | round rivets | The bolts at the joints of the frames are six sided, or round with a slot. |
+| `cornerCut` | top left and bottom right | top right and bottom left | The corners every panel cuts. |
+| `headerNotch` | notch | slant | The colored tab of a header ends in the notch it has always had, or in one slant at 60 degrees. |
+| `grid` | lines | dots | The grid on the page behind Cybertron and Minimal. |
+| `logoPose` | auto | flight | The bird idles as the emblem, or as the hawk with its wings up. |
+| `nameStyle` | solid | outline | The team name in the banner is solid letters, or outlined letters with a line in the accent under them. |
+| `tickerLabel` | plate | bar | The label of the ticker is the cut plate, or a thin bar with a block of the accent in front of it. |
+| `countAccent` | red | neon | The red parts of the countdown are red, or the team's neon. |
+
+Everything here is still. Nothing in trim moves, and nothing in it is a picture, a filter or a shadow.
+
+**The classes.** While a team is on the screen, `applyTeamLook` in `core/teams.js` puts a class on
+the html element for each field where the team has the other choice: `bolts-round`, `corner-cut-tr`,
+`header-slant`, `grid-dots`, `pose-flight`, `name-outline`, `ticker-bar` and `accent-neon`. Prime's
+choices have no class. The classes of the team before are taken off in the same call, together with the
+mirror, so a team that is put on never leaves a class of the last one. The rules that read them are in
+`trim.css`, linked after the styles in `index.html`, and every rule in it names one of the classes, so
+a page with none of them is drawn as it was. The exceptions are the five rules for the shapes of the
+bolts (below), which say with the fallback of a custom property what the page has without a class.
+
+**The bolts.** The screw (Original) and the hex bolt (Cybertron and Minimal) are each drawn once in
+`index.html`, and each holds a round rivet with a slot as well, hidden. `html.bolts-round` sets
+`--hex-part: none` and `--rivet-part: inline`, and the shapes read them with `display`. A custom
+property passes into a shape that is drawn with `<use>`, and that is why the class sets two of them and
+the shapes do not name the class.
+
+**The corners and the tab.** These two change the shape of every frame, so `core/plate.js` draws them.
+A frame for the other corners is the Prime frame turned across: its outline has the same points, so
+the bolts, the brackets, the pink conduit, the slashes, the rivets and the rust are on the points that
+were turned. The tab with one slant ends on a line at 60
+degrees from the top of the header, leaning the way the tabs of the bar frames do. The notch is what each
+frame has always had: the notch of the large frame, and a steep line on the others. The name of a frame
+for a trim is its name, then `-tr` for the other corners, then `-slant` for the slanted tab, so `grid1`
+becomes `grid1-tr-slant` and `bar-main-minimal` becomes `bar-main-minimal-tr`. A frame with no header
+(the countdown, the banners, the ticker) has no `-slant`. The frames are made the first time a page asks
+for them (`shapeFor` in `core/plate.js`), and `frameKind(region, layout, shapes, trim)` gives the name.
+
+The pieces of the mechanical page change keep their names and their order, and each is named for the place
+it holds, so the piece called `corner-top-left` is the top left corner, which is square for a team that cuts
+the other two, and `frame.css` moves it as it always has. The screws are in the pieces that hold the cut
+corners. The war clock's housing, the full screen frame of an alert and an announcement and the cards in the
+panels are turned the same way: the housing and the screen frame by `core/plate.js`, the cards by
+`trim.css` (the card is turned across, and the clips of the pictures in it have the other corner cut).
+
+**When the frames are drawn.** A team goes on at the moment the large frame is apart, like a style, and the
+frames are drawn again in that step. `useTrim` in `shell.js` listens for the team to change (`onTeamChange`),
+asks `frameTrim` in `core/teams.js` for the corners and the tab of the team that is on the page, and when they
+are not the ones the page has drawn (`trimNow`) it writes them (`recordTrim`: `data-corners` and `data-notch`
+on the html element, absent for the usual ones, like `data-shapes`), asks `redrawFrames` in `core/areas.js`
+to put the new frame round each area, and draws again the panels that have a plate of their own: the
+countdown, the banner of the bar layout, and the banner of Cybertron. The panels, the areas, the alert and
+the announcement ask for the trim the page has drawn, and not for the team's, so a frame is never drawn for
+a team that is not on the page yet. The page never reloads for it.
+
+**The rest.** The grid is the layer that Cybertron and Minimal draw behind everything (`#screen::before`),
+given dots in place of lines, a twelfth of a square in radius. The pose is the one a logo asked to fly has
+in calm motion (`frame.css`), applied to the logo at rest, at the start and in the spin; the acts of the
+hawk are not touched, and the logo goes back to the pose when one ends. The name has no fill and a stroke
+of 4 px in the text color, and a line of 4 px in the accent under every letter, spaces too. The label of
+the ticker keeps its plate hidden, so its width and the place of its word are as they were, and a block of
+16 by 52 and a bar of 4 are drawn in the accent. The countdown, the war clock and the countdown of the
+sidebar layout take the team's neon in place of `--danger`, and the team's background and plate colors in
+place of the dark reds. The edge of the red metal is the plain neon. A blocked task and the alert are not
+the countdown, so they keep their red.
+
+**Prime is unchanged.** The frames of Prime are the ones that were there, with the same markup, and the
+tests hold `trim.css` to rules that name a class. `node tools/test-team-trim.mjs` renders both teams of the
+sample content on a fake page and checks that the classes differ on every field, that every frame for
+the other corners is the Prime frame turned across, that the slanted tab is at 60 degrees, and that the
+pieces, the screws, the rivets and the rust are all there.
+
+**Looking at it.** `?sample=1&team=nova` shows Nova with the sample content, and `?team=prime` shows Prime.
+Add `&style=cybertron` or `&style=minimal` for the other two styles, and `&motion=calm` to see it still.
+Look at each of the eight, then the frames of the large panel, the small panel, the countdown, the banner and
+the ticker in all three styles. Then change the team on the open screen (Look tab, Team order) and watch the
+frames come back in the other corners at the moment the large frame is apart.
+
+**Adding a field.** Add its name and values to `teamTrim` in `config.js` and to `primeTeam`, give each value
+except the first a class, add the field to `normalizeTeamDocument` in `core/sanity.js`, to
+`studio/schemas/team.js` and to the contract and the trim check in `studio/check-schemas.mjs`, write the rules
+in `trim.css` for the class, and give the sample content and `docs/seed/teams.ndjson` the values. If the field
+changes the shape of a frame, add it to `frameTrim` in `core/teams.js` and to the names in `core/plate.js`.
 
 ## What else works in each layout
 

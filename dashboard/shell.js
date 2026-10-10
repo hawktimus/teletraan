@@ -53,7 +53,7 @@ import { holdBootLook } from './core/look-rotation.js';
 import { resumePreview } from './core/preview.js';
 import { loadPanel, mountPanel, updatePanel } from './core/panels.js';
 import { playlistOf, withPages } from './core/panel-order.js';
-import { askForTeam, changeTeamNow, onTeamChange, useTeams } from './core/teams.js';
+import { askForTeam, changeTeamNow, currentTeam, frameTrim, onTeamChange, recordTrim, trimNow, useTeams } from './core/teams.js';
 import { showPagesNow, startRotation, startTicker, startTogether } from './core/schedule.js';
 import { startTakeovers, runAnnouncement, takeoverRunning } from './core/takeover.js';
 
@@ -79,7 +79,8 @@ let stayStarted = false; // startWhatStays() has drawn the panels that stay, so 
 
 window.teletraanStarted = true; // index.html reloads the page if this never happens
 
-// The banner, the sidebar and the events follow a change of team
+// The frames follow the trim of the team on the page, and then the banner, the sidebar and the events follow its name
+onTeamChange(useTrim);
 onTeamChange(() => {
   if (content && !choosingTeam) rebuild();
 });
@@ -406,6 +407,31 @@ function redrawWhatStays() {
   if (!stayStarted || onlyTasks || layoutNow() !== 'standard') return;
 
   fixedPanels('standard').forEach(id => showFixedPanel(id, false));
+}
+
+// The corners a team cuts and the end of its header tab change the shape of every frame (core/plate.js,
+// frameKind). They are written on the page when the team goes on, like the corners of a style, and the areas and
+// the panels that draw their own plate draw their frames again in the same step. The sidebar layout has no
+// plate of its own. The banner has one only in Cybertron. A problem here never stops the team going on.
+function useTrim() {
+  try {
+    const wanted = frameTrim(currentTeam());
+    const drawn = trimNow();
+    if (wanted.corner === drawn.corner && wanted.notch === drawn.notch) return;
+
+    recordTrim(wanted);
+    redrawFrames();
+    redrawPlates();
+  } catch (error) {
+    console.error('Could not draw the frames for the team', error);
+  }
+}
+
+function redrawPlates() {
+  if (!stayStarted || onlyTasks) return;
+
+  const drawsPlate = id => id === 'countdown' || id === 'bar-banner' || (id === 'banner' && shapesNow() === 'cybertron');
+  fixedPanels(layoutNow()).filter(drawsPlate).forEach(id => showFixedPanel(id, false));
 }
 
 // The panels that come and go

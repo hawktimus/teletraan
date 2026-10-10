@@ -9,7 +9,7 @@
 import { nameMarkup } from '../../core/name.js';
 import { frameKind, plateMarkup } from '../../core/plate.js';
 import { shapesNow } from '../../core/style.js';
-import { teamShown } from '../../core/teams.js';
+import { teamShown, trimNow } from '../../core/teams.js';
 import { startWar, updateWar, warMarkup } from '../countdown/countdown.js';
 
 // The war clock's slot is 700 by 120 (barSettings.warClock in core/layout.js), and its place
@@ -17,7 +17,7 @@ import { startWar, updateWar, warMarkup } from '../countdown/countdown.js';
 export function mount(host, content) {
   host.innerHTML = `
     <section class="panel bar-banner" data-sequence="bar-banner">
-      ${plateMarkup(frameKind('banner', 'bar', shapesNow()))}
+      ${plateMarkup(frameKind('banner', 'bar', shapesNow(), trimNow()))}
       <h1 class="bar-name" data-part="title" data-name-effect></h1>
       <div class="bar-war" data-part="war">${warMarkup()}</div>
     </section>`;

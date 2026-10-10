@@ -450,6 +450,32 @@ export const defaultFilter = {
 export const calendarKinds = ['meetings', 'competitions', 'outreach', 'deadlines', 'other'];
 export const defaultCalendarKind = 'other';
 
+// The trim of a team (Studio: Teams, Trim): eight choices that make a team look like itself beyond its colors and
+// the mirror. Each name is a field of the team document. Under it is each value the field can have, and the class
+// that core/teams.js puts on the html element while a team that has the value is on the screen, which trim.css
+// and the style sheets read. The first value of each is the one Prime has, and the one a team document with no
+// value, or one that is not in the list, falls back to, so a team that was made before the trim existed looks
+// as it did. It has no class (''), because the screen is drawn for it without one. The Studio copies the values
+// (studio/schemas/team.js).
+//   bolts        the joint bolts are hex nuts, or round rivets with a slot
+//   cornerCut    the corners every panel chamfers: top left and bottom right, or top right and bottom left
+//   headerNotch  the header tab ends in the usual notch, or in one slant at 60 degrees
+//   grid         the grid on the page behind Cybertron and Minimal is lines or dots
+//   logoPose     the bird idles in its usual pose (auto), or with its wings up in flight
+//   nameStyle    the team name in the banner is solid letters, or outlined letters over a solid accent line
+//   tickerLabel  the label of the ticker is the cut plate, or a thin bar with an accent block before it
+//   countAccent  the red parts of the countdown are red, or the team's neon
+export const teamTrim = {
+  bolts: { hex: '', round: 'bolts-round' },
+  cornerCut: { 'tl-br': '', 'tr-bl': 'corner-cut-tr' },
+  headerNotch: { step: '', slant: 'header-slant' },
+  grid: { lines: '', dots: 'grid-dots' },
+  logoPose: { auto: '', flight: 'pose-flight' },
+  nameStyle: { solid: '', outline: 'name-outline' },
+  tickerLabel: { plate: '', bar: 'ticker-bar' },
+  countAccent: { red: '', neon: 'accent-neon' },
+};
+
 export const defaultTeam = {
   name: 'HAWKTIMUS PRIME',
   number: '3229',
@@ -477,6 +503,14 @@ export const primeTeam = {
     text: '#FFFFFF',
   },
   mirror: false,
+  bolts: 'hex',
+  cornerCut: 'tl-br',
+  headerNotch: 'step',
+  grid: 'lines',
+  logoPose: 'auto',
+  nameStyle: 'solid',
+  tickerLabel: 'plate',
+  countAccent: 'red',
   active: true,
   order: 10,
   builtIn: true,

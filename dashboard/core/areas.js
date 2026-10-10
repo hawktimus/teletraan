@@ -11,9 +11,10 @@
 //     <div class="page-host">the page of the panel on screen</div>
 //   </div>
 //
-// data-frame is the kind of frame that was drawn (frameKind in plate.js). The style decides
-// it, so when a style with other frames goes on while the screen runs, redrawFrames() puts
-// the new frame round each area and leaves its page where it is.
+// data-frame is the kind of frame that was drawn (frameKind in plate.js). The style and the
+// team's trim decide it, so when a style with other frames goes on while the screen runs, or a
+// team with other corners or another tab, redrawFrames() puts the new frame round each area and
+// leaves its page where it is.
 //
 // changePage() is the one call that moves a region from the page it shows to
 // the next. The scheduler decides which page and when; frame.js does the
@@ -41,7 +42,7 @@ import * as frame from '../frame.js';
 import { areaMarkup, frameKind } from './plate.js';
 import { hostFor, placeWholePanel } from './panels.js';
 import { changeThemeNow } from './theme-apply.js';
-import { changeTeamNow } from './teams.js';
+import { changeTeamNow, trimNow } from './teams.js';
 import { hasRegion, layoutNow } from './layout.js';
 import { hasSteel, shapesNow, styleNow } from './style.js';
 
@@ -53,9 +54,9 @@ const showing = {}; // region -> the page on screen there, as buildPage() made i
 
 // grid1 and grid2 have a frame. The ticker has none, only its two slats, except in
 // the bar layout and in Cybertron, where it has a frame of its own (frameKind in plate.js,
-// with the corners the page's style has).
+// with the corners the page's style has and the trim the frames were last drawn with).
 function makeArea(region) {
-  const kind = frameKind(region, layoutNow(), shapesNow());
+  const kind = frameKind(region, layoutNow(), shapesNow(), trimNow());
   const element = document.createElement('div');
   element.className = 'area';
   element.dataset.area = region;
@@ -70,16 +71,17 @@ function makeArea(region) {
 }
 
 // Draws the frame of every area on the screen again, for the frames the page has now
-// (core/style.js, recordShapes). Frames are drawn once for an area, and a style that
-// goes on later may have others (Original and Cybertron share a layout and not a frame),
-// so shell.js calls this in the step that puts the style on the page. Only the frame is
+// (core/style.js, recordShapes, and core/teams.js, recordTrim). Frames are drawn once for an area,
+// and a style that goes on later may have others (Original and Cybertron share a layout and not
+// a frame), and so may a team, so shell.js calls this in the step that puts the style on the
+// page and in the one that puts the team there. Only the frame is
 // replaced. The page-host and the page in it stay, and so do the area's state, its metal
 // and its change, so the new frame arrives in the state the old one was in. An area
 // whose frame is the right one is left alone.
 export function redrawFrames() {
   Object.keys(areaOf).forEach(region => {
     const area = areaOf[region];
-    const kind = frameKind(region, layoutNow(), shapesNow());
+    const kind = frameKind(region, layoutNow(), shapesNow(), trimNow());
     if (area.dataset.frame === kind) return;
 
     Array.from(area.children)

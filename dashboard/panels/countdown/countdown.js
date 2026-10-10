@@ -10,8 +10,9 @@
 // warMarkup() is put in a slot (here, or in panels/bar-banner), and startWar() gives
 // it the same dates, label and tick.
 
-import { plateMarkup, scanMarkup, warHousingMarkup } from '../../core/plate.js';
+import { plateMarkup, scanMarkup, trimmedKind, warHousingMarkup } from '../../core/plate.js';
 import { shapesNow } from '../../core/style.js';
+import { trimNow } from '../../core/teams.js';
 import { countdownParts, startCountdown, updateCountdown } from '../../core/countdown.js';
 
 // The war clock inside each panel that has one, which is the element the countdown code keeps
@@ -24,10 +25,12 @@ export function mount(host, content) {
     return;
   }
 
+  const kind = trimmedKind('countdown', trimNow()); // the frame with the corners the team on the page cuts
+
   host.innerHTML = `
     <section class="panel countdown" data-sequence="countdown" data-level="calm">
-      ${plateMarkup('countdown')}
-      ${scanMarkup('countdown')}
+      ${plateMarkup(kind)}
+      ${scanMarkup(kind)}
       ${countdownParts(564)}
     </section>`;
 
@@ -63,7 +66,7 @@ export function warMarkup(form = 'narrow') {
 
   return `
     <div class="war-clock${wide ? ' war-wide' : ''}" data-level="calm" data-over="no">
-      ${warHousingMarkup(wide ? 'wide' : 'narrow')}
+      ${warHousingMarkup(wide ? 'wide' : 'narrow', trimNow())}
       <span class="war-status"></span>
       <div class="war-lines">
         <span class="label"></span>

@@ -6,7 +6,8 @@
 //   filtering   showsForTeam() says whether an item belongs on the screen of that team.
 //               visibleItems() in content.js asks it, so a panel that leaves out hidden and
 //               expired items leaves out the other team's items too. No panel asks it itself
-//   putting on  applyTeamLook() sets the seven colors, the initials and the mirror class on the html element
+//   putting on  applyTeamLook() sets the seven colors, the initials, the mirror class and the eight trim
+//               classes on the html element
 //
 // A different team never goes on the page where people can watch it happen. useTeams() sees the
 // change, and the items follow at once, so every page built from then on is the new team's. The
@@ -19,7 +20,7 @@
 // core/team-run.js asks useTeams() once a second and moves the pages on when the team changes.
 // The one place that touches the page is applyTeamLook(), and it is given the page.
 
-import { defaultSettings, primeTeam, teamModes } from '../config.js';
+import { defaultSettings, primeTeam, teamModes, teamTrim } from '../config.js';
 
 // The class on the html element while the team on the screen has Mirror the layout on. It does
 // nothing by itself: the stylesheets that flip the layout read it.
@@ -36,6 +37,48 @@ export const colorProperties = {
   background: '--team-background',
   text: '--team-text',
 };
+
+// The trim of a team (docs/layouts.md, "Team trim"): a class on the html element for each of the eight fields
+// where the team has a value that is not Prime's, named in teamTrim in config.js. Prime's values have no class,
+// so the page of a team with the usual trim has none of them. trimClasses is every class there is, for taking the
+// last team's classes off
+export const trimClasses = Object.keys(teamTrim).reduce((all, field) => all.concat(Object.values(teamTrim[field]).filter(Boolean)), []);
+
+// The classes of a team, one for each field where its value is not the Prime one. A value that is missing, or not
+// in the list, is Prime's
+export function trimClassesOf(team) {
+  return Object.keys(teamTrim).map(field => {
+    const value = team ? team[field] : undefined;
+    return Object.prototype.hasOwnProperty.call(teamTrim[field], value) ? teamTrim[field][value] : '';
+  }).filter(Boolean);
+}
+
+// What the trim does to the shape of the frames: which corners are cut ('tl' for the top left and bottom
+// right, or 'tr') and how the tab of a header ends ('step' or 'slant'). core/plate.js draws the frames for it
+// (frameKind). The classes do the rest of the trim, in the stylesheets
+export function frameTrim(team) {
+  return {
+    corner: team && team.cornerCut === 'tr-bl' ? 'tr' : 'tl',
+    notch: team && team.headerNotch === 'slant' ? 'slant' : 'step',
+  };
+}
+
+// The trim the frames on the page were drawn with, which is not always the trim of the team on the page: the
+// frames are drawn again after the team changes (shell.js). It is written like data-shapes (core/style.js): as
+// data-corners and data-notch on the html element, and absent while the frames are Prime's
+export function trimNow(page = typeof document === 'undefined' ? null : document.documentElement) {
+  const data = page && page.dataset ? page.dataset : {};
+  return { corner: data.corners === 'tr' ? 'tr' : 'tl', notch: data.notch === 'slant' ? 'slant' : 'step' };
+}
+
+export function recordTrim(trim, page = typeof document === 'undefined' ? null : document.documentElement) {
+  if (!page || !page.dataset) return;
+
+  if (trim.corner === 'tr') page.dataset.corners = 'tr';
+  else delete page.dataset.corners;
+  if (trim.notch === 'slant') page.dataset.notch = 'slant';
+  else delete page.dataset.notch;
+}
 
 // The custom property that holds the letters at the front of the stamped id on each panel (HP in
 // HP-01). base.css writes it, in the Original style. The value is a quoted string, as content needs.
@@ -139,7 +182,7 @@ export function teamProperties(team) {
   return properties;
 }
 
-// Puts a team's colors, initials and mirror on the page. page is the html element, and only the
+// Puts a team's colors, initials, mirror and trim on the page. page is the html element, and only the
 // tests give another.
 export function applyTeamLook(team, page = typeof document === 'undefined' ? null : document.documentElement) {
   if (!page) return;
@@ -150,6 +193,10 @@ export function applyTeamLook(team, page = typeof document === 'undefined' ? nul
 
   if (team.mirror === true) page.classList.add(mirrorClass);
   else page.classList.remove(mirrorClass);
+
+  const wanted = trimClassesOf(team);
+  trimClasses.filter(name => !wanted.includes(name)).forEach(name => page.classList.remove(name));
+  wanted.forEach(name => page.classList.add(name));
 }
 
 // The one place a team goes on. The colors, the initials and the mirror are applied here, and the banner and the

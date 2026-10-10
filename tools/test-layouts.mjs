@@ -3748,7 +3748,7 @@ test('the steel and the bolts reach the frames of Cybertron through the tokens: 
   assert.ok(/function planFor\(area\) \{\s*const change = frame\.planChange\(area\);\s*return hasSteel\(styleNow\(\)\) \? \{ style: change\.style, finish: null \} : change;\s*\}/.test(areas));
   assert.equal(countOf(areas, 'frame\\.planChange\\(area\\)'), 1, 'planFor is the one place that asks');
   assert.equal(countOf(areas, 'const change = planFor\\(area\\);'), 2, 'and areas.js calls it for the two changes, the page change and the swap of a hidden transition');
-  assert.ok(/frameKind\(region, layoutNow\(\), shapesNow\(\)\)/.test(areas) && /kind === 'ticker' \? '' : areaMarkup\(kind\)/.test(areas), 'the ticker has a frame in the bar layout and in Cybertron and none in the others, with the corners of the page\'s style');
+  assert.ok(/frameKind\(region, layoutNow\(\), shapesNow\(\), trimNow\(\)\)/.test(areas) && /kind === 'ticker' \? '' : areaMarkup\(kind\)/.test(areas), 'the ticker has a frame in the bar layout and in Cybertron and none in the others, with the corners of the page\'s style');
 });
 
 // Minimal: the frames with corners of their own, and what the style paints
@@ -4503,7 +4503,7 @@ test('the war clock\'s plates, sizes and colors are the ones the order gives, an
     else if (entry.name.endsWith('.css') && /\.war-/.test(withoutComments(read(relative)))) mentions.push(relative);
   });
   walk('dashboard');
-  assert.deepEqual(mentions.sort(), [warCssFile, 'dashboard/styles/cybertron.css', 'dashboard/styles/minimal.css']);
+  assert.deepEqual(mentions.sort(), [warCssFile, 'dashboard/styles/cybertron.css', 'dashboard/styles/minimal.css', 'dashboard/trim.css'], 'trim.css gives the war clock the team\'s neon in place of its red, for a team that has Countdown color on Neon');
   assert.ok(!/war-/.test(withoutComments(read('dashboard/styles/original.css'))), 'Original has no war clock');
 });
 

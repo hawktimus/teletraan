@@ -45,7 +45,8 @@ teams, Prime and then Nova to start with.
 - How the look changes says how the screen goes from one team or style to the next:
   Assemble, Slats or Cut.
 
-The team sets the name, the number, the logo, the colors and the mirror. A team
+The team sets the name, the number, the logo, the colors, the mirror and the trim
+(the bolts, the cut corners and a few more small things, docs/add-the-nova-team.md). A team
 with Mirror the layout on has the whole screen flipped left to right: the
 columns, the banner and the tag on the ticker change sides. The sidebar layout of
 the theme Neon Prime is not flipped. A swap waits for the end of a pass and

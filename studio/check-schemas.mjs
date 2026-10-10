@@ -106,6 +106,14 @@ const contract = {
     logo: 'image',
     colors: object({ primary: hexColor, plate: hexColor, accent: hexColor, neon: hexColor, pink: hexColor, background: hexColor, text: hexColor }),
     mirror: 'boolean',
+    bolts: 'string',
+    cornerCut: 'string',
+    headerNotch: 'string',
+    grid: 'string',
+    logoPose: 'string',
+    nameStyle: 'string',
+    tickerLabel: 'string',
+    countAccent: 'string',
     active: 'boolean',
     order: 'number',
   },
@@ -3544,7 +3552,11 @@ function checkTeams() {
   if (!type) return ['team is missing from schemas/index.js'];
 
   need(problems, type.title === 'Teams', 'the team type should have the title Teams');
-  const titles = { name: 'Team name', shortName: 'Short name', number: 'Team number', code: 'Team code', logo: 'Logo', colors: 'Colors', mirror: 'Mirror the layout', active: 'Active', order: 'Order' };
+  const titles = {
+    name: 'Team name', shortName: 'Short name', number: 'Team number', code: 'Team code', logo: 'Logo', colors: 'Colors', mirror: 'Mirror the layout',
+    bolts: 'Bolts', cornerCut: 'Cut corners', headerNotch: 'Header end', grid: 'Page grid', logoPose: 'Bird pose', nameStyle: 'Team name look', tickerLabel: 'Ticker label', countAccent: 'Countdown color',
+    active: 'Active', order: 'Order',
+  };
   Object.keys(titles).forEach(name => need(problems, at(name) && at(name).title === titles[name], 'team.' + name + ' should be titled ' + titles[name]));
   need(problems, fieldsIn(type).map(field => field.name).join() === Object.keys(titles).join(), 'the team fields should be, in this order: ' + Object.keys(titles).join(', '));
 
@@ -4299,6 +4311,71 @@ function checkEventPages() {
   return problems;
 }
 
+// The trim of a team (dashboard/config.js, teamTrim): eight radio lists in the Trim box of the Team document. The choices
+// are the ones in config.js in the same order, the first is the one Prime has and the one each field starts with, and
+// none is required, because a team saved before the trim existed has none and must still publish. The seed file gives
+// Prime the first choice of each and Nova the values of the work order. The first choice has no class, and the others
+// have the one the dashboard puts on the page: plain lower case words with hyphens, and no two the same.
+const trimOfNova = { bolts: 'round', cornerCut: 'tr-bl', headerNotch: 'slant', grid: 'dots', logoPose: 'flight', nameStyle: 'outline', tickerLabel: 'bar', countAccent: 'neon' };
+
+function checkTeamTrim() {
+  const problems = [];
+  const config = world.dashboard;
+  const type = typeByName('team');
+  const names = Object.keys(config.teamTrim);
+  const classes = [];
+
+  need(problems, names.join() === Object.keys(trimOfNova).join(), 'teamTrim in config.js should have these fields, in this order: ' + Object.keys(trimOfNova).join(', '));
+  need(problems, type && (type.fieldsets || []).some(set => set.name === 'trim' && set.title === 'Trim'), 'the team should have a Trim box (a fieldset called trim)');
+
+  names.forEach(name => {
+    const field = fieldAt('team.' + name);
+    const values = Object.keys(config.teamTrim[name]);
+    const rules = field ? constraintsOf(field) : [];
+    const allowed = constraintNamed(rules, 'valid');
+    const where = 'team.' + name;
+
+    need(problems, field && field.type === 'string' && field.options && field.options.layout === 'radio', where + ' should be a radio list');
+    need(problems, choicesOf(where).map(item => item.value).join() === values.join(), where + ' should offer the values in teamTrim in config.js, in the same order: ' + values.join(', '));
+    need(problems, field && field.initialValue === values[0] && config.primeTeam[name] === values[0], where + ' should start as ' + values[0] + ', and so should primeTeam in config.js: it is the Prime value');
+    need(problems, field && field.fieldset === 'trim', where + ' should be in the Trim box');
+    need(problems, field && !constraintNamed(rules, 'required'), where + ' should not be required: a team saved before the trim existed has none');
+    need(problems, allowed && allowed.args[0].join() === values.join(), where + ' should only allow: ' + values.join(', '));
+    need(problems, rules.some(rule => rule.name === 'error' && rule.args[0]), where + ' has rules and no error message in plain words');
+    need(problems, field && /^[A-Z][^\n]*\.$/.test(field.description || '') && field.description.length <= 130, where + ' needs a description of one short sentence line that ends with a full stop');
+    need(problems, field && choicesOf(where).every(item => item.title && item.title !== item.value), where + ' should show each choice with a title in words');
+
+    values.forEach((value, index) => {
+      const word = config.teamTrim[name][value];
+      if (index === 0) return need(problems, word === '', where + ' ' + value + ' is the Prime value and should have no class');
+
+      need(problems, /^[a-z]+(-[a-z]+)+$/.test(word), where + ' ' + value + ' should have a class of lower case words and hyphens, not ' + word);
+      need(problems, classes.indexOf(word) === -1, 'the class ' + word + ' is used twice in teamTrim');
+      classes.push(word);
+    });
+  });
+
+  // The seed file: both teams have all eight, Prime the first choice of each and Nova the values of the table in the order
+  const docs = {};
+  world.teamSeed.split('\n').filter(line => line.trim() !== '').forEach(line => {
+    const doc = JSON.parse(line);
+    docs[doc._id] = doc;
+  });
+  names.forEach(name => {
+    const values = Object.keys(config.teamTrim[name]);
+    need(problems, docs['team-prime'] && docs['team-prime'][name] === values[0], 'team-prime in docs/seed/teams.ndjson should have ' + name + ' ' + values[0]);
+    need(problems, docs['team-nova'] && docs['team-nova'][name] === trimOfNova[name], 'team-nova in docs/seed/teams.ndjson should have ' + name + ' ' + trimOfNova[name]);
+  });
+
+  // and so do the two teams of the sample content
+  names.forEach(name => {
+    const sample = world.sample.teams.reduce((all, team) => Object.assign(all, { [team.code]: team }), {});
+    need(problems, sample.prime && sample.prime[name] === config.primeTeam[name], 'the Prime team of the sample content should have ' + name + ' ' + config.primeTeam[name]);
+    need(problems, sample.nova && sample.nova[name] === trimOfNova[name], 'the Nova team of the sample content should have ' + name + ' ' + trimOfNova[name]);
+  });
+  return problems;
+}
+
 async function main() {
   const folder = makeSandbox();
   try {
@@ -4403,6 +4480,7 @@ async function main() {
   check('the night times, the speaker wait, the overrun and the booking close time are hidden, keep their starting values and are not read by the dashboard', checkFixedValues);
   check('the look rotation fields offer the styles, teams and swaps the dashboard has, start as its defaults, and the old Style and Team mode are hidden but kept', checkLookRotation);
   check('the Events panel has two pages: each calendar has a kind, Group events by kind starts off, and an Always show rule can be pinned to page one', checkEventPages);
+  check('a team has the eight trim choices, each a radio list that agrees with dashboard/config.js and starts as Prime, and the seed file and the sample give Nova its own', checkTeamTrim);
   check('every theme and overlay is complete and readable (tools/check-themes.mjs)', checkThemeGuard);
   check('every seasonal pack is complete, and draws only in the empty places (tools/check-seasons.mjs)', checkSeasonGuard);
 

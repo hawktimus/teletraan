@@ -1,7 +1,7 @@
 // Talks to Sanity: the two queries, the addresses, and turning what comes back
 // into the content shape in data/sample/content.json. The sample is cleaned the same way.
 
-import { defaultFilter, defaultPerson, defaultSettings, defaultTalk, filterActions, limits, primeTeam, talkStatuses } from '../config.js';
+import { defaultFilter, defaultPerson, defaultSettings, defaultTalk, filterActions, limits, primeTeam, talkStatuses, teamTrim } from '../config.js';
 import { parseLocalDateTime, sameDay } from './time.js';
 import { fixSettingValues, isVisible, keepInRange, withDefaults } from './content.js';
 import { logoUrl, photoFocus, screenPhotoUrl, tidyPhoto } from './images.js';
@@ -511,14 +511,15 @@ function filtersFrom(list) {
 const hexColor = /^#[0-9A-Fa-f]{6}$/;
 const teamCode = /^[a-z0-9]+$/;
 
-// A team document from Studio becomes { code, name, shortName, number, logo, colors, mirror,
-// active, order }. The code is lowercase letters and digits, and it is what the items point to,
+// A team document from Studio becomes { code, name, shortName, number, logo, colors, mirror, the
+// eight trim fields, active, order }. The code is lowercase letters and digits, and it is what the items point to,
 // so a team without a usable one is dropped. The names are capitals, the way the team name
 // has always been written in the banner, and a missing one is the other, or the code. The
 // logo is the address of the picture at the width the screen needs (core/images.js), and
 // empty when there is none or it cannot be used, which means the shared hawk. A sample file
 // may give the logo as an address. A color that is not # and six hex digits is the Prime one.
-// The mirror is off unless it is on, and the team is active unless it is switched off.
+// The mirror is off unless it is on, and the team is active unless it is switched off. A trim field
+// that is missing or not one of its values is the Prime one (teamTrim in config.js).
 function normalizeTeamDocument(raw) {
   const code = trimmed(raw.code).toLowerCase();
   if (!teamCode.test(code)) return null;
@@ -539,9 +540,22 @@ function normalizeTeamDocument(raw) {
     logo: typeof raw.logo === 'string' ? raw.logo.trim() : logoUrl(raw.logo),
     colors: colors,
     mirror: raw.mirror === true,
+    bolts: trimValue(raw, 'bolts'),
+    cornerCut: trimValue(raw, 'cornerCut'),
+    headerNotch: trimValue(raw, 'headerNotch'),
+    grid: trimValue(raw, 'grid'),
+    logoPose: trimValue(raw, 'logoPose'),
+    nameStyle: trimValue(raw, 'nameStyle'),
+    tickerLabel: trimValue(raw, 'tickerLabel'),
+    countAccent: trimValue(raw, 'countAccent'),
     active: raw.active !== false,
     order: typeof raw.order === 'number' && isFinite(raw.order) ? raw.order : primeTeam.order,
   };
+}
+
+function trimValue(raw, name) {
+  const value = trimmed(raw[name]);
+  return Object.prototype.hasOwnProperty.call(teamTrim[name], value) ? value : primeTeam[name];
 }
 
 // The first team of a code is the one that counts. The list is in order.

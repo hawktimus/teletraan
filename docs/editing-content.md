@@ -490,8 +490,8 @@ on. Click Publish.
 ## Teams
 
 A team is what changes when the TV swaps from one team to the other: the name and
-number in the banner, the logo, the colors and whether the screen is flipped left to
-right. Open Settings, then Teams, click the plus button, fill in the form and click
+number in the banner, the logo, the colors, whether the screen is flipped left to
+right, and the trim. Open Settings, then Teams, click the plus button, fill in the form and click
 Publish. The fields:
 
 - Team name: needed, up to 20 characters.
@@ -505,6 +505,10 @@ Publish. The fields:
   starts with the Prime color.
 - Mirror the layout: off to start with. On, the whole screen is flipped left to
   right while this team is showing.
+- Trim: eight choices in a box, each one of two, such as round rivets in place of
+  hex nuts or the top right and bottom left corners cut in place of the top left
+  and bottom right. The first choice of each is how Prime looks, and each starts
+  on it. docs/add-the-nova-team.md has the list.
 - Active: on to start with. Off leaves the team out of Team order and out of the
   Team choice on items.
 - Order: a lower number comes first. It starts at 10.
