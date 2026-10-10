@@ -333,6 +333,41 @@ A place you delete in Studio comes back if you import again, because its id is
 missing again. Ids use hyphens and no dots on purpose: the screen reads without
 signing in, and Sanity keeps a document whose id has a dot private.
 
+## The Monday cards
+
+When a team has tasks from the team board that show on the TV, its pass of the look rotation ends with three cards
+that are drawn from them, in the Monday style (Dashboard Settings, Look tab). A team with none has no Monday pass. The
+cards are Monday tasks, Monday milestones and Monday progress. They are in the Panel order list so that you can see them,
+and they are not in its starting rows: they come in the Monday pass, and the Panel order list does not control them.
+
+### Tasks card
+
+The BUILD TEAM · PRIME card. There is one for each Team lead entry that has tasks, one after the other, and the name in
+the title is the name of the entry. It has three columns, Backlog, In progress and Done, and two cards in each. The cards are
+the tasks with the highest priority first, then the earliest due date, with the pinned tasks before the ones from the board.
+Under the columns are the number of overdue tasks, the number that are not done and the number that are done. A task needs a
+subteam whose name is the name of a Team lead entry, with or without capitals, or it is on no card. The sync matches the
+board's team column, or its group names, to the names of the Team leads, so spell them the same.
+
+### Milestones card
+
+A row for each Team lead entry that has a task with a due date that is not done, and a column each for This week, Next week
+and Later. A week is Monday to Sunday. A late task is in This week, with its date in red. Each cell shows the task due
+soonest in its week. At most six rows show, and +N more says how many entries did not fit.
+
+### Progress card
+
+A bar for each Team lead entry, in three colours for the backlog, in progress and done, with done out of all beside it, and a
+line of the items left on each day, with a dashed line to nothing on the day of the next countdown date. The line needs the
+counts of at least two days, which the Mini adds once a day. With fewer it says so.
+
+### Hiding a task, and empty cards
+
+To keep a task off all three cards, turn off Show on TV on it (Tasks, From the board). A card says so in a sentence when it has
+nothing to show, and it shows SAMPLE in the corner on the sample content and how old the data is when it is two
+hours old or more. Preview the cards on made up tasks with `?sample=1` on the screen's address, and wait for the Monday pass.
+The details are in docs/layouts.md, "The Monday cards".
+
 ## Adding many items from a spreadsheet
 
 To add a lot of items at once, for example the tasks and sponsors for a new

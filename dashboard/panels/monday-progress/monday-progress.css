@@ -1,0 +1,123 @@
+/* The header sits on top of the two header plates of the area's frame */
+.monday-progress .header {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  box-sizing: border-box;
+  width: 1152px;
+  height: 116px;
+  padding: 0 40px 0 76px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.monday-progress .title {
+  margin: 0;
+  font: 700 var(--size-heading)/96px var(--font-display);
+}
+.monday-progress .tag {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  color: var(--yellow);
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+/* The words are cut off with an ellipsis before they can reach the notch in the middle of the header. */
+.monday-progress .tag-text {
+  min-width: 0;
+  max-width: 316px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.monday-progress .tag .double-slash { flex: none; }
+
+/* The body is 1096 x 512, 28px in from the frame and 136px down, the room the Extra panels have. The chart
+   in it is an SVG of the same size, so a font size here is the size on the screen. */
+.monday-progress .body {
+  position: absolute;
+  left: 28px;
+  top: 136px;
+  width: 1096px;
+  height: 512px;
+}
+.monday-progress .chart { display: block; }
+
+/* One sentence in place of the chart, when there is nothing to show */
+.monday-progress .empty {
+  box-sizing: border-box;
+  height: 100%;
+  margin: 0;
+  padding: 0 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: normal;
+  color: var(--lilac);
+  font: 500 var(--size-body)/72px var(--font-text);
+}
+
+/* The bars: a name and the numbers on each row, and the three stacks as one bar. A thin dark edge keeps the
+   stacks apart, and the same squares and colours are the legend. */
+.monday-progress .lead {
+  fill: var(--yellow);
+  font: 700 var(--size-label)/48px var(--font-text);
+}
+.monday-progress .numbers {
+  fill: var(--white);
+  font: 700 var(--size-label)/48px var(--font-display);
+}
+.monday-progress .more {
+  fill: var(--lilac);
+  font: 600 var(--size-label)/48px var(--font-display);
+}
+.monday-progress .legend {
+  fill: var(--white);
+  font: 600 var(--size-label)/48px var(--font-text);
+}
+.monday-progress .seg {
+  stroke: var(--ground);
+  stroke-width: 3;
+}
+.monday-progress .seg-backlog { fill: var(--status-next); }
+.monday-progress .seg-progress { fill: var(--status-progress); }
+.monday-progress .seg-done { fill: var(--status-done); }
+
+/* The line of the items left, the dashed target line to nothing, and the line under the dates */
+.monday-progress .label {
+  fill: var(--yellow);
+  font: 600 var(--size-label)/48px var(--font-display);
+}
+.monday-progress .note {
+  fill: var(--lilac);
+  font: 500 var(--size-label)/48px var(--font-text);
+}
+.monday-progress .when {
+  fill: var(--lilac);
+  font: 600 var(--size-label)/48px var(--font-text);
+}
+.monday-progress .now {
+  fill: var(--white);
+  font: 700 var(--size-label)/48px var(--font-display);
+}
+.monday-progress .axis {
+  stroke: var(--lilac);
+  stroke-width: 3;
+}
+.monday-progress .target {
+  fill: none;
+  stroke: var(--lilac);
+  stroke-width: 4;
+  stroke-dasharray: 16 12;
+}
+.monday-progress .line {
+  fill: none;
+  stroke: var(--status-progress);
+  stroke-width: 6;
+  stroke-linejoin: round;
+}
+.monday-progress .dot {
+  fill: var(--yellow);
+  stroke: var(--ground);
+  stroke-width: 3;
+}

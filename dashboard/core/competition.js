@@ -104,8 +104,9 @@ function countdownName(text, fallback) {
   return label || fallback;
 }
 
-// The next date of the countdown, Kickoff and then Rollout, as a plain date in the zone, or null
-function countdownMarker(settings, zone, today) {
+// The next date of the countdown, Kickoff and then Rollout, as a plain date in the zone, or null.
+// The Monday progress card draws its target line to the same date.
+export function countdownMarker(settings, zone, today) {
   const dates = [
     { label: countdownName(settings.kickoffLabel, 'KICKOFF'), moment: parseLocalDateTime(settings.kickoff) },
     { label: countdownName(settings.rolloutLabel, 'ROLLOUT'), moment: parseLocalDateTime(settings.rollout) },

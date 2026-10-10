@@ -33,10 +33,10 @@ const defaultOutput = path.join(studioFolder, '..', 'docs', 'content-templates')
 // sidebar, but they keep their templates, since the importer still reads them.
 const skippedTypes = ['photo', 'presentationDay', 'presentation', 'calendarFilter', 'team', 'status', 'calendarStatus', 'frcStatus'];
 
-// Fields that are not columns. The board sync sets the source and the board item number of a
+// Fields that are not columns. The board sync sets the source, the board item number and the due date of a
 // task, and the note at the top of a task from the board stores nothing.
 const notColumns = {
-  task: ['source', 'mondayId', 'boardNote'],
+  task: ['source', 'mondayId', 'dueDate', 'boardNote'],
 };
 
 // The columns whose words make the id of a row, in order. The id is the type

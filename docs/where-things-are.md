@@ -187,6 +187,8 @@ editors can sign in from anywhere.
                               large panel, competition-draw.js is what the cards share, and competition-preview.js
                               decides when the Preview competition button shows the cards on sample data and
                               competition-preview-run.js starts it (docs/frc-feed.md),
+                              monday.js picks and ranks the board tasks for the Monday cards and monday-draw.js
+                              draws their page (docs/layouts.md, "The Monday cards"),
                               tick.js is the one clock of the screen: it tells every panel when a real
                               second starts by reading the time, not by counting, so the digits never
                               drift, and a panel should write to the page only what has changed
@@ -198,7 +200,8 @@ editors can sign in from anywhere.
                               second rendering of the countdown (docs/layouts.md, "The war clock").
                               panels/tonight is the Daily Agenda panel, headed AGENDA (docs/up-next.md).
                               panels/competition-* are the seven competition cards, each plain SVG
-                              (docs/frc-feed.md)
+                              (docs/frc-feed.md). panels/monday-* are the three Monday cards
+                              (docs/layouts.md, "The Monday cards")
       fonts/, assets/         fonts and pictures, all served from here
       data/sample/            sample content with marked placeholders, and a sample talk with six slides
                               (slides/presentation-sample)
@@ -336,6 +339,10 @@ editors can sign in from anywhere.
                               panels/competition-*): the cards due on each day of the season in each mode, the mix into the
                               large panel's list, each card from the sample and with nothing to show, that no text is under
                               44px or runs out of its body, and the guard of Preview competition
+      test-monday-cards.mjs   checks for the Monday cards (core/monday.js and the panels in panels/monday-*): the
+                              columns and the ranking, pinned tasks first, Show on TV off, the weeks around a Monday and
+                              the time zone, six rows and +N more, the line of at most 12 points, the sentences with
+                              nothing to show, that no text is under 44px, and that a team has the cards only with board tasks
       test-cybertron.mjs      checks for Cybertron on the layout of Original: which layout each style has, its four
                               frames, the stage, the banner and the ticker on their plates, the wide war clock, and
                               that the frames are drawn again when the style changes
@@ -518,6 +525,13 @@ alone.
   Preview competition button on Start here writes `competitionPreviewRequest`, and
   `core/competition-preview.js` and `core/competition-preview-run.js` show the cards on the sample data in
   `dashboard/data/sample/content.json`. The block at the top of the tab is `studio/frc-status-input.js`.
+- **The Monday cards.** The three panels `dashboard/panels/monday-tasks`, `monday-milestones` and `monday-progress`
+  (docs/layouts.md, "The Monday cards"), flagged `monday: true` in `registry.js` and offered in Panel order in
+  `studio/schemas/settingsRotation.js` but in no starting list. `mondayCards` in `dashboard/core/look-rotation.js`
+  gives them to a team that has tasks with the source monday, and `dashboard/core/monday.js` picks and ranks the
+  tasks. The tasks are the ones the board sync writes (`source` monday, `mondayId`, `priority`, `dueDate`, `showOnTv`),
+  and the daily counts are in the document `monday-status`, which `core/sanity.js` reads and `tidyMondayStatus` cleans.
+  `dashboard/data/sample/content.json` has board tasks for two Team lead entries and a `monday` document.
 - **The demo.** The Demo page in Studio (docs/demo.md), which has no buttons and no line in the sidebar now:
   the Steps and the Demo announcement text. The starting values
   are `defaultDemo` in `dashboard/config.js` and their copy in
@@ -800,6 +814,7 @@ exceptions are `test-slides-script.mjs` and `test-frc-script.mjs`, which need `j
     node tools/test-status-write.mjs
     node tools/test-frc-script.mjs
     node tools/test-competition.mjs
+    node tools/test-monday-cards.mjs
     node tools/test-cybertron.mjs
     node tools/test-minimal.mjs
     node tools/test-team-trim.mjs

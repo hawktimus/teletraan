@@ -44,6 +44,8 @@ const contract = {
     contact: text(12),
     location: { kind: 'reference', to: 'place' },
     source: 'string',
+    priority: 'string',
+    dueDate: 'date',
     showOnTv: 'boolean',
     team: teamRef,
     order: 'number',
@@ -248,7 +250,6 @@ const studioOnlyFields = {
   'dashboardSettings.graceMinutes': 'hidden. The screen uses the fixed number in dashboard/core/constants.js',
   'presentationDay.closeMinutesBefore': 'hidden. The booking script reads it, and the dashboard never does',
   'task.boardNote': 'the line at the top of a task from the team board. It stores nothing',
-  'task.priority': 'the board sync sets it and the list line shows it. The Tasks panel does not read it',
   'task.mondayId': 'hidden. The board sync uses it to find the task of a board item, and the dashboard never reads it',
 };
 const studioOnlyTypes = {
@@ -886,7 +887,7 @@ function differences(expected, actual, expectedName, actualName, problems) {
 // way round, or a new panel can never be switched on
 function checkPanelIds() {
   const problems = [];
-  const registered = world.registry.panels.filter(panel => !panel.testOnly && !panel.competition);
+  const registered = world.registry.panels.filter(panel => !panel.testOnly && !panel.competition && !panel.monday);
 
   rotationAreas.forEach(area => {
     const inRegistry = registered.filter(panel => panel.region === area).map(panel => panel.id);
@@ -4289,7 +4290,7 @@ function checkPanelOrder() {
   const problems = [];
   const config = world.dashboard;
   const at = name => fieldAt('dashboardSettings.rotation.' + name);
-  const registered = world.registry.panels.filter(panel => !panel.testOnly && !panel.competition);
+  const registered = world.registry.panels.filter(panel => !panel.testOnly && !panel.competition && !panel.monday);
   const ids = rotationAreas.reduce((all, area) => all.concat(registered.filter(panel => panel.region === area).map(panel => panel.id)), []);
 
   const order = at('order');
@@ -4298,10 +4299,12 @@ function checkPanelOrder() {
   need(problems, order && !constraintNamed(constraintsOf(order), 'required') && !constraintNamed(constraintsOf(order), 'min'), 'rotation.order should have no rules: a page saved before it existed has none, and must still publish');
   need(problems, order && /Drag/.test(order.description || ''), 'the rotation.order description should say to drag');
 
-  // One list with every panel the registry has for the large and the small frame, the large panels first
+  // One list with every panel the registry has for the large and the small frame, the large panels first, and then the
+  // Monday cards, which are offered so that a coach can see them and are not in the starting rows
+  const offeredIds = ids.concat(world.registry.panels.filter(panel => panel.monday).map(panel => panel.id));
   const offered = choicesOf('dashboardSettings.rotation.order.panel');
-  differences(ids, offered.map(item => item.value), 'registry.js', 'the Studio list for Panel order', problems);
-  need(problems, offered.map(item => item.value).join() === ids.join(), 'Panel order should offer the large panels and then the small panels, in the order of registry.js: ' + ids.join(', '));
+  differences(offeredIds, offered.map(item => item.value), 'registry.js', 'the Studio list for Panel order', problems);
+  need(problems, offered.map(item => item.value).join() === offeredIds.join(), 'Panel order should offer the large panels, the small panels and then the Monday cards, in the order of registry.js: ' + offeredIds.join(', '));
   offered.forEach(item => need(problems, isPlainTitle(item), 'Panel order: "' + item.title + '" is not a plain-words title'));
 
   // The older lists are kept and hidden, with no rules on their rows, and the ticker seconds stay in the form
@@ -4353,6 +4356,29 @@ function checkPanelOrder() {
   world.panelOrderInput.PanelOrderInput({ value: undefined, readOnly: false, onChange: () => problems.push('a page with no older lists should not be filled'), renderDefault: () => null });
   globalThis.studioEffects.forEach(effect => effect());
   globalThis.studioForm = undefined;
+  return problems;
+}
+
+// The Monday cards. Each is a panel of the large frame with the monday flag in registry.js, offered in Panel order
+// and in neither the starting rows nor the rotation lists of config.js, and each has its script and its stylesheet
+// (dashboard/core/monday.js, docs/layouts.md, "The Monday cards").
+function checkMondayCards() {
+  const problems = [];
+  const ids = ['monday-tasks', 'monday-milestones', 'monday-progress'];
+  const flagged = world.registry.panels.filter(panel => panel.monday).map(panel => panel.id);
+  need(problems, flagged.join() === ids.join(), 'registry.js should have the panels ' + ids.join(', ') + ' with monday: true, in that order');
+
+  const rotation = [].concat(world.dashboard.defaultSettings.rotation.grid1, world.dashboard.defaultSettings.rotation.grid2).map(step => step.panel);
+  const choices = choicesOf('dashboardSettings.rotation.order.panel').map(item => item.value);
+  const field = fieldAt('dashboardSettings.rotation.order');
+  ids.forEach(id => {
+    const entry = world.registry.panels.filter(panel => panel.id === id)[0];
+    need(problems, entry && entry.region === 'grid1', id + ' should be in the large panel, grid1');
+    need(problems, rotation.indexOf(id) === -1, id + ' should not be in the rotation lists of config.js');
+    need(problems, choices.indexOf(id) !== -1, id + ' should be offered in Panel order');
+    need(problems, field && field.initialValue.every(row => row.panel !== id), id + ' should not be in the starting rows of Panel order');
+    ['js', 'css'].forEach(kind => need(problems, fs.existsSync(path.join(dashboardFolder, 'panels', id, id + '.' + kind)), 'panels/' + id + '/' + id + '.' + kind + ' is missing'));
+  });
   return problems;
 }
 
@@ -5082,6 +5108,7 @@ async function main() {
   check('the FRC data document has the fields the Mini writes and the dashboard reads, is kept out of the sidebar and the New menu, and the connection block shows its lines in plain words', checkFrcStatus);
   results.push({ name: 'the connection block asks for the published FRC data document by its id, and survives a client that fails', problems: await checkFrcRead().catch(error => ['the check stopped: ' + error.message]) });
   check('Panel order is one list of every panel, the older lists are hidden, and the input fills an empty list from them as the dashboard does', checkPanelOrder);
+  check('the Monday cards are panels of the large frame, offered in Panel order and kept out of its starting rows and the lists of config.js', checkMondayCards);
   check('the night times, the speaker wait, the overrun and the booking close time are hidden, keep their starting values and are not read by the dashboard', checkFixedValues);
   check('the look rotation fields offer the styles, teams and swaps the dashboard has, start as its defaults, and the old Style and Team mode are hidden but kept', checkLookRotation);
   check('the Events panel has two pages: each calendar has a kind, Group events by kind starts off, and an Always show rule can be pinned to page one', checkEventPages);

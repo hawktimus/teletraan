@@ -91,6 +91,13 @@ const fields = [
     description: 'Optional. How urgent the task is. A task from the team board takes it from the board.',
     options: { list: priorities },
   }),
+  defineField({
+    name: 'dueDate',
+    title: 'Due date',
+    type: 'date',
+    description: 'The day the task is due on the team board. The board sync sets it, so it cannot be changed here.',
+    readOnly: true,
+  }),
   teamField(),
   orderField(),
   defineField({

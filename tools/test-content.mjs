@@ -537,9 +537,10 @@ test('normalizeContent turns a full Sanity result into the sample content shape'
     expires: '2099-01-01T00:00:00.000Z',
   });
 
-  // with no frc-status document the content has frc: null, the one null it may have
+  // with no frc-status document and no monday-status document the content has frc: null and monday: null, the only nulls it may have
   assert.equal(content.frc, null);
-  const text = JSON.stringify(content).replace('"frc":null', '');
+  assert.equal(content.monday, null);
+  const text = JSON.stringify(content).replace('"frc":null', '').replace('"monday":null', '');
   ['_id', '_rev', '_createdAt', '_updatedAt', '_key', '_type', 'undefined', 'null'].forEach(word => {
     assert.equal(text.includes(word), false, 'the content contains ' + word);
   });

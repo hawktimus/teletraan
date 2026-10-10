@@ -36,8 +36,9 @@ export function isVisible(item, now = new Date()) {
 
 // The items a panel may draw: the ones that are visible and are for the team on the screen
 // (core/teams.js). Every panel takes its items through here, so the team is judged in this one place.
-export function visibleItems(list, now = new Date()) {
-  return (list || []).filter(item => isVisible(item, now) && showsForTeam(item));
+// The look rotation asks about a team that is not on the screen yet, and gives its code.
+export function visibleItems(list, now = new Date(), teamCode) {
+  return (list || []).filter(item => isVisible(item, now) && showsForTeam(item, teamCode));
 }
 
 // Puts the defaults under whatever the editors have set. Anything they have
@@ -45,7 +46,7 @@ export function visibleItems(list, now = new Date()) {
 // whether settings exist.
 export function withDefaults(raw) {
   const source = raw || {};
-  const content = Object.assign({ tasks: [], plan: null, plans: [], teams: [], sponsors: [], tipsAndNews: [], subteams: [], people: [], photos: [], presentations: [], customPanels: [], calendarFilters: [], frc: null }, source);
+  const content = Object.assign({ tasks: [], plan: null, plans: [], teams: [], sponsors: [], tipsAndNews: [], subteams: [], people: [], photos: [], presentations: [], customPanels: [], calendarFilters: [], frc: null, monday: null }, source);
   content.team = Object.assign({}, defaultTeam, source.team);
   content.settings = Object.assign({}, defaultSettings, source.settings);
   content.settings.countdown = Object.assign({}, defaultSettings.countdown, content.settings.countdown);
