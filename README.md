@@ -14,7 +14,35 @@ For adjusting the content that gets displayed, Sanity will be used.
 
 Almost everything on the screen is typed into the Studio, which is the editing page for the dashboard. Open it at [Studio address] and sign in.
 
-The list on the left is what you can change. It opens with Start here and has four groups: Every meeting (Daily Agenda, Tasks, Tips and News), Events (Calendars, Calendar filters), Roster (Leadership, Team leads, Sponsors, Photos) and Coaches only (Settings, Extra panels). Daily Agenda, Tasks and Settings are folders. Daily Agenda holds Agenda items, Presentations and Meeting days. Tasks holds Pinned, From the board and Hidden. Settings holds Dashboard Settings, Look and Teams. Click the one you want, change it, and press **Publish**. Nothing shows on the TV until it is published, and it gets there within a few seconds.
+The list on the left is what you can change. It opens with Start here and has four groups. A name in capitals is a heading, and Daily Agenda, Tasks and Settings are folders:
+
+    Start here
+    EVERY MEETING
+      Daily Agenda
+        Agenda items
+        Presentations (Upcoming, Past)
+        Meeting days
+      Tasks
+        Pinned
+        From the board
+        Hidden
+      Tips and News
+    EVENTS
+      Calendars
+      Calendar filters
+    ROSTER
+      Leadership
+      Team leads
+      Sponsors
+      Photos
+    COACHES ONLY
+      Settings
+        Dashboard Settings
+        Look
+        Teams
+      Extra panels
+
+Click the one you want, change it, and press **Publish**. Nothing shows on the TV until it is published, and it gets there within a few seconds. Students start with docs/using-the-studio.md, which has the same parts as the Start here page. Coaches have docs/coaches-guide.md.
 
 - Every item has a **Show on screen** switch and an optional **Hide after** date, so things come down on their own.
 - Every field says how many characters fit on the screen. Studio will not let you publish text that is too long.
@@ -75,13 +103,32 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - Presentations: a student books a short talk in a Google Form, and the talk appears in Studio. At its time the TV shows a title card, then the student's Google Slides one picture at a time, moved by a clicker, then a thank you card. The Mini turns each deck into pictures before the talk (docs/presentations.md)
 - A Run presentation test button in Studio that plays a sample talk with six sample slides, with no internet
 - Preview buttons in Studio (Prime, Nova, Cybertron, Minimal and the next seasonal pack) that show that look on the TV for 2 minutes and then go back to the saved settings, without changing any setting. `?team=`, `?style=` and `?overlay=` on the address try any combination with the sample content
-- A Start here page in Studio with buttons that try the screen (docs/demo.md)
+- A Start here page in Studio, the first line of the sidebar: a picture of the screen with its five areas, the three steps of every meeting and five buttons that try the screen (Play announcement, Run presentation test, Next look now, Preview competition and Preview the screen). docs/using-the-studio.md is the same page in words. What is left of the old demo is in docs/demo.md
 - A calendar check (deploy/scripts/check-calendars.sh) that lists the next 30 days of events, says which ones the Calendar filters hide, and gives the Events page and the kind of each one that shows
 - A connection check for the Mini (deploy/scripts/check-connection.sh) and a small text on the screen that says why when Sanity cannot be reached
 - A boot and shutdown screen: a text drawing of a person pointing two fingers at each other, with TELETRAAN I under it, shows on the TV above the login prompt while the Mini starts and again while it shuts down (deploy/console, docs/rebuilding-the-mini.md, step 13)
 
+## What runs on the Mini
+
+The scripts are in `deploy/scripts/`, and the units that start them are in `deploy/systemd/`. A change to a unit file takes effect only when its install script is run again (deploy/README.md, "When a pull changes this folder").
+
+- `pull.sh`: every 5 minutes, gets new commits and writes `version.txt`, so an open screen reloads. A pull is a deploy
+- `fetch-calendars.sh`: every 15 minutes, downloads the BAND calendars named in `local.env`. After each run `calendar-status.sh` and `status-write.sh calendar-status` write the document for the Calendars page
+- `slides-sync.sh`: every 2 minutes, turns the Google Slides deck of each coming talk into pictures
+- `frc-sync.sh`: wakes every 5 minutes, and reads the public competition data about once an hour, or about every 5 minutes while a team has an event on
+- `monday-sync.sh`: every 10 minutes, reads the Monday boards named in Dashboard Settings and keeps their items in Sanity as tasks
+- `status-write.sh`: writes the time of a job into the status block at the top of Dashboard Settings
+- `kiosk.sh`: starts the browser full screen when the Mini boots, and writes `device.json` every minute
+- `install-timers.sh`, `install-calendars.sh`, `install-slides.sh`, `install-frc.sh`, `install-monday.sh` and `install-console.sh`: copy the unit files into place and turn on the timers, or the boot and shutdown screens. Run each once by hand, and again when its unit files change
+- `check-connection.sh`: one OK or FAIL line each for the Mini's connection to Sanity, BAND, Docker and the kiosk
+- `check-calendars.sh`: lists the next 30 days of events and says which ones the Calendar filters hide. It needs Node, so it runs on a computer that has it
+
+`deploy/local.env` holds three keys, `SANITY_WRITE_TOKEN`, `MONDAY_API_TOKEN` and `TBA_AUTH_KEY`, and one `CALENDAR_<ID>_URL` line for each calendar. It is never committed. A script that does not find its key does nothing and says so in one line. docs/coaches-guide.md says what each key is for.
+
 ## More guides
 
+- docs/using-the-studio.md: the students' page, with the same parts as the Start here page
+- docs/coaches-guide.md: the coaches' page, with the tabs of Dashboard Settings, the status block, the keys, the look rotation, Monday, the Calendars page and the competition feed
 - docs/editing-content.md: using the Studio
 - docs/publish-all.md: publishing many drafts at once, and what skipped and failed mean
 - docs/switch-the-look.md: the four steps that change the style, the team and the seasonal pack

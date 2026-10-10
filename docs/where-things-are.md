@@ -397,7 +397,10 @@ editors can sign in from anywhere.
       perf/                   the comparison page for the speed test: the Tasks panel built
                               from plain plates, in metal or flat, at
                               http://localhost:8080/tools/perf/plates.html
-    docs/                     how-to guides: editing-content.md, adding-a-field.md, adding-a-panel.md,
+    docs/                     how-to guides: using-the-studio.md (the students' page, with the parts of the
+                              Start here page), coaches-guide.md (the coaches' page: the tabs, the status block, the
+                              three keys, the look rotation and the feeds, with links to the detail),
+                              editing-content.md, adding-a-field.md, adding-a-panel.md,
                               adding-a-theme.md, layouts.md, adding-a-holiday-overlay.md, seasonal-packs.md, rebuilding-the-mini.md,
                               try-it-on-the-mini.md, the-logo.md, page-transitions.md, night-mode.md,
                               hidden-transitions.md, demo.md, publish-all.md, reordering-the-sidebar.md,
