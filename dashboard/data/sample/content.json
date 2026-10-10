@@ -114,7 +114,16 @@
     { "title": "[Next task]", "subteam": "[Subteam B]", "status": "up-next", "location": "[Place B]" },
     { "title": "[Queued task]", "subteam": "[Subteam E]", "status": "up-next" },
     { "title": "[Finished task]", "subteam": "[Subteam D]", "status": "done" },
-    { "title": "[Second finished task]", "subteam": "[Subteam F]", "status": "done" }
+    { "title": "[Second finished task]", "subteam": "[Subteam F]", "status": "done" },
+    { "title": "[Order spare modules]", "subteam": "[Subteam A]", "status": "up-next", "team": "prime", "source": "monday", "mondayId": "[item 1]", "priority": "high", "dueDate": "2026-10-14", "contact": "[Contact A]", "showOnTv": true },
+    { "title": "[Label the fasteners]", "subteam": "[Subteam A]", "status": "up-next", "team": "prime", "source": "monday", "mondayId": "[item 2]", "priority": "low", "dueDate": "2026-10-21", "contact": "[Contact B]", "showOnTv": true },
+    { "title": "[Reattach drivetrain]", "subteam": "[Subteam A]", "status": "in-progress", "team": "prime", "source": "monday", "mondayId": "[item 3]", "priority": "high", "dueDate": "2026-10-08", "contact": "[Contact C]", "showOnTv": true },
+    { "title": "[Assemble the robot]", "subteam": "[Subteam A]", "status": "in-progress", "team": "prime", "source": "monday", "mondayId": "[item 4]", "priority": "medium", "dueDate": "2026-10-19", "contact": "[Contact A]", "showOnTv": true },
+    { "title": "[Safety training]", "subteam": "[Subteam A]", "status": "done", "team": "prime", "source": "monday", "mondayId": "[item 5]", "priority": "high", "contact": "[Contact B]", "showOnTv": true },
+    { "title": "[Write the grant]", "subteam": "[Subteam B]", "status": "up-next", "team": "prime", "source": "monday", "mondayId": "[item 6]", "priority": "medium", "dueDate": "2026-10-16", "contact": "[Contact D]", "showOnTv": true },
+    { "title": "[Plan the fundraiser]", "subteam": "[Subteam B]", "status": "in-progress", "team": "prime", "source": "monday", "mondayId": "[item 7]", "priority": "high", "dueDate": "2026-11-04", "contact": "[Contact B]", "showOnTv": true },
+    { "title": "[Update the team site]", "subteam": "[Subteam B]", "status": "in-progress", "team": "prime", "source": "monday", "mondayId": "[item 8]", "dueDate": "2026-10-27", "contact": "[Contact A]", "showOnTv": true },
+    { "title": "[Send thank you notes]", "subteam": "[Subteam B]", "status": "done", "team": "prime", "source": "monday", "mondayId": "[item 9]", "priority": "low", "showOnTv": true }
   ],
 
   "plan": {
@@ -208,6 +217,27 @@
       ]
     }
   ],
+
+  "monday": {
+    "sample": true,
+    "lastSyncAt": "2026-10-08T14:00:00Z",
+    "snapshots": [
+      { "date": "2026-09-25", "open": 21 },
+      { "date": "2026-09-26", "open": 21 },
+      { "date": "2026-09-27", "open": 20 },
+      { "date": "2026-09-28", "open": 19 },
+      { "date": "2026-09-29", "open": 18 },
+      { "date": "2026-09-30", "open": 17 },
+      { "date": "2026-10-01", "open": 15 },
+      { "date": "2026-10-02", "open": 14 },
+      { "date": "2026-10-03", "open": 13 },
+      { "date": "2026-10-04", "open": 12 },
+      { "date": "2026-10-05", "open": 11 },
+      { "date": "2026-10-06", "open": 10 },
+      { "date": "2026-10-07", "open": 8 },
+      { "date": "2026-10-08", "open": 7 }
+    ]
+  },
 
   "frc": {
     "sample": true,

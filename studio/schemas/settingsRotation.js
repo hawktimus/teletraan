@@ -34,8 +34,16 @@ const smallPanels = [
   { title: 'Sponsor logo', value: 'sponsor-logo' },
 ];
 
-// The one list that Panel order offers, the large panels first
+// The one list that Panel order starts with, the large panels first
 const allPanels = largePanels.concat(smallPanels);
+
+// The Monday cards are offered in Panel order so that a coach can see them, but they are not in the starting list.
+// They run in the Monday pass of the look rotation (dashboard/core/monday.js).
+const mondayPanels = [
+  { title: 'Monday tasks', value: 'monday-tasks' },
+  { title: 'Monday milestones', value: 'monday-milestones' },
+  { title: 'Monday progress', value: 'monday-progress' },
+];
 
 // Not required: an empty field is allowed and means "follow Seconds per page".
 // The Photo panel follows Seconds per photo (Screen tab) instead.
@@ -125,7 +133,7 @@ export function rotationField() {
         title: 'Panel order',
         type: 'array',
         description: 'Every panel in one list. Drag to change the order. A row can have its own seconds. Large and small panels each follow their own order here.',
-        of: [stepMember(allPanels, true)],
+        of: [stepMember(allPanels.concat(mondayPanels), true)],
         initialValue: startingList(allPanels),
         components: { input: PanelOrderInput },
       }),

@@ -280,11 +280,16 @@ test('tasks with none of the new fields show on each team exactly as they did', 
   });
 });
 
-test('the sample tasks are all pinned and come out in the order they are written in', () => {
+test('the sample tasks typed by hand are pinned and come first, in the order they are written in, and the sample board tasks follow them', () => {
   const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const pinned = raw.tasks.filter(task => task.source !== 'monday');
+  const board = raw.tasks.filter(task => task.source === 'monday');
   const tasks = normalizeSample(raw).tasks;
-  assert.deepEqual(titlesOf(tasks), titlesOf(olderOrder(raw.tasks)));
-  assert.equal(tasks.some(task => isFromBoard(task) || 'showOnTv' in task), false);
+
+  assert.ok(pinned.length >= 6 && board.length >= 6, 'the sample has both kinds');
+  assert.deepEqual(titlesOf(tasks), titlesOf(olderOrder(pinned)).concat(titlesOf(olderOrder(board))));
+  assert.equal(tasks.slice(0, pinned.length).some(task => isFromBoard(task) || 'showOnTv' in task), false);
+  assert.equal(tasks.slice(pinned.length).every(task => isFromBoard(task)), true);
 });
 
 test('the cached copy of the content, which is already cleaned, is cleaned again without a change', () => {

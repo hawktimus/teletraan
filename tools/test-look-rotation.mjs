@@ -210,10 +210,87 @@ test('Nova first puts the Nova pass first, and a team with no Monday rows has no
   assert.deepEqual(none.map(pass => pass.team + ' ' + pass.kind), ['nova panels', 'prime panels', 'nova panels', 'prime panels']);
 });
 
-test('until the Monday cards are built no team has a Monday pass', () => {
+test('with no board tasks no team has a Monday pass, whatever the Monday cards are', () => {
   assert.deepEqual(mondayCards(contentWith({}), 'prime'), []);
   const shown = walk(makeLookRotation({ getContent: () => contentWith({}), storage: fakeStorage() }), noonOnTheTwelfth, 4);
   assert.deepEqual(shown.map(pass => pass.team + ' ' + pass.kind), ['prime panels', 'nova panels', 'prime panels', 'nova panels']);
+});
+
+// The Monday block with the real cards (core/monday.js): a team has it when it has board tasks that show on the TV
+
+// Board tasks for Prime only, for two lead entries, as the content has them once it is cleaned
+function boardContent(settings, change) {
+  const task = fields => Object.assign({ title: '[Task]', subteam: '[Lead A]', status: 'up-next', team: 'prime', source: 'monday', mondayId: '[1]', showOnTv: true }, fields);
+  const tasks = [task({}), task({ subteam: '[Lead B]', status: 'in-progress' })];
+  if (change) change(tasks);
+  return contentWith(settings, { tasks: tasks, subteams: [{ name: '[Lead A]' }, { name: '[Lead B]' }] });
+}
+
+const realCards = content => makeLookRotation({ getContent: () => content, storage: fakeStorage() });
+
+test('with board tasks on one team, a cycle is Prime in the style of the day, Prime in Minimal, and Nova in the style of the day, and tomorrow the style of the day is the other', () => {
+  const content = boardContent({});
+  const today = walk(realCards(content), noonOnTheTwelfth, 6);
+  const style = styleForDay(config.defaultSettings.dailyStyles, dayNumber('America/New_York', noonOnTheTwelfth));
+
+  assert.deepEqual(today.slice(0, 3), [
+    { team: 'prime', kind: 'panels', style: style },
+    { team: 'prime', kind: 'monday', style: 'minimal' },
+    { team: 'nova', kind: 'panels', style: style },
+  ]);
+  assert.deepEqual(today.slice(3), today.slice(0, 3), 'and over again');
+
+  const tomorrow = walk(realCards(content), days(noonOnTheTwelfth, 1), 3);
+  assert.deepEqual(tomorrow.map(pass => pass.team + ' ' + pass.kind + ' ' + pass.style), ['prime panels ' + other(style), 'prime monday minimal', 'nova panels ' + other(style)]);
+});
+
+test('Nova has no Monday pass when it has no board tasks, and has one when a task for both teams is a board task', () => {
+  const first = walk(realCards(boardContent({ teamOrder: ['nova', 'prime'] })), noonOnTheTwelfth, 3);
+  assert.deepEqual(first.map(pass => pass.team + ' ' + pass.kind), ['nova panels', 'prime panels', 'prime monday']);
+
+  const both = boardContent({}, tasks => tasks.push({ title: '[For both]', subteam: '[Lead A]', status: 'up-next', source: 'monday', mondayId: '[3]', showOnTv: true }));
+  assert.deepEqual(walk(realCards(both), noonOnTheTwelfth, 4).map(pass => pass.team + ' ' + pass.kind), ['prime panels', 'prime monday', 'nova panels', 'nova monday']);
+});
+
+test('a team whose board tasks are all off the TV, switched off, or expired has no Monday pass', () => {
+  [{ showOnTv: false }, { show: false }, { expires: '2020-01-01T00:00:00.000Z' }].forEach(fields => {
+    const content = boardContent({}, tasks => tasks.forEach(task => Object.assign(task, fields)));
+    assert.deepEqual(walk(realCards(content), noonOnTheTwelfth, 4).map(pass => pass.team + ' ' + pass.kind), ['prime panels', 'nova panels', 'prime panels', 'nova panels'], JSON.stringify(fields));
+  });
+
+  const one = boardContent({}, tasks => { tasks[0].showOnTv = false; });
+  assert.equal(walk(realCards(one), noonOnTheTwelfth, 3)[1].kind, 'monday', 'one row is enough');
+});
+
+test('the list of the large panel in Prime\'s Monday pass is the three cards, with a page of the tasks card for each lead entry that has tasks', () => {
+  const content = boardContent({});
+  const machine = realCards(content);
+  const usual = [{ panel: 'tasks', show: true }];
+
+  machine.begin(noonOnTheTwelfth);
+  assert.equal(machine.playlist(usual, content), usual);
+  machine.boundary(seconds(noonOnTheTwelfth, 20));
+  assert.equal(machine.pass().kind, 'monday');
+  assert.deepEqual(machine.playlist(usual, content), [
+    { panel: 'monday-tasks', show: true, page: 1 },
+    { panel: 'monday-tasks', show: true, page: 2 },
+    { panel: 'monday-milestones', show: true },
+    { panel: 'monday-progress', show: true },
+  ]);
+  machine.boundary(seconds(noonOnTheTwelfth, 40));
+  assert.deepEqual(machine.pass(), { team: 'nova', kind: 'panels' });
+  assert.equal(machine.playlist(usual, content), usual, 'Nova has the usual list');
+});
+
+test('Next look now moves into the Monday block and a second press moves past it, with the real cards', () => {
+  const content = boardContent({});
+  const machine = realCards(content);
+  machine.begin(noonOnTheTwelfth);
+
+  assert.equal(machine.next(seconds(noonOnTheTwelfth, 1)).kind, 'monday');
+  const past = machine.next(seconds(noonOnTheTwelfth, 2));
+  assert.equal(past.kind, 'panels');
+  assert.deepEqual(machine.pass(), { team: 'nova', kind: 'panels' });
 });
 
 test('the list of the large panel is the Monday cards of the team in a Monday pass, and the usual list in the others', () => {

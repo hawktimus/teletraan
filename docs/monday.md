@@ -4,7 +4,8 @@ For the coaches and the students who look after the Mini. The Mini reads the
 team's Monday boards and keeps their items in Sanity as tasks, so the screen can
 show what is not started, what is being worked on and what is done. This page says
 what it reads, what it writes, how often, how to set it up, what happens when an
-item is deleted, and what to do when it stops.
+item is deleted, and what to do when it stops. The three cards that draw the tasks on
+the screen are described in docs/layouts.md, "The Monday cards".
 
 None of it has been tried against the live Monday service. The address, the
 questions and the places in the answers were written from the public documentation

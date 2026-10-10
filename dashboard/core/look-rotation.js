@@ -23,6 +23,7 @@
 
 import { defaultSettings, defaultThemeSettings, lookResumeSeconds, lookShortestSeconds, lookSwaps, primeTeam, styles } from '../config.js';
 import { readHandled, rememberHandled, shouldRunDemo } from './demo.js';
+import { mondaySteps } from './monday.js';
 import { rotateStyle } from './style.js';
 import { dateIn, isTimeZone } from './theme.js';
 import { activeTeams, rotateTeam } from './teams.js';
@@ -90,9 +91,9 @@ export function teamsInOrder(order, teams) {
 }
 
 // The Monday cards of a team, as the rows of the list the large panel follows while its Monday pass
-// is up. A team with no Monday rows has none, and then it has no Monday pass. There are no cards yet.
+// is up (core/monday.js). A team with no Monday rows has none, and then it has no Monday pass.
 export function mondayCards(content, teamCode) {
-  return [];
+  return mondaySteps(content, teamCode);
 }
 
 // The passes of one cycle, in order: { team, style, kind }. team is a code, or '' when Team mode

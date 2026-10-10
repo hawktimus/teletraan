@@ -1,0 +1,171 @@
+/* The header sits on top of the two header plates of the area's frame */
+.monday-tasks .header {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  box-sizing: border-box;
+  width: 1152px;
+  height: 116px;
+  padding: 0 40px 0 76px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+/* BUILD at the size of a heading, then TEAM · PRIME in small yellow type on the same line. A long name is
+   drawn smaller, and is cut off with an ellipsis before it can reach the tag. */
+.monday-tasks .title {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  font: 700 var(--size-heading)/96px var(--font-display);
+}
+.monday-tasks .lead {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.monday-tasks .lead-long { font: 700 var(--size-body-large)/96px var(--font-display); }
+.monday-tasks .side {
+  flex: none;
+  color: var(--yellow);
+  font: 600 var(--size-label)/44px var(--font-display);
+  white-space: nowrap;
+}
+.monday-tasks .tag {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  color: var(--yellow);
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+.monday-tasks .tag-text {
+  min-width: 0;
+  max-width: 316px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.monday-tasks .tag .double-slash { flex: none; }
+
+/* The body is 1104 x 544, 24px in from the frame and 132px down. The three columns are 360px wide with 12px
+   between them, and the numbers are under them, clear of the cut corner at the bottom right. */
+.monday-tasks .body {
+  position: absolute;
+  left: 24px;
+  top: 132px;
+  width: 1104px;
+  height: 544px;
+}
+
+/* One sentence in place of the columns, when there is nothing to show */
+.monday-tasks .empty {
+  box-sizing: border-box;
+  height: 100%;
+  margin: 0;
+  padding: 0 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: normal;
+  color: var(--lilac);
+  font: 500 var(--size-body)/72px var(--font-text);
+}
+
+.monday-tasks .lanes {
+  display: flex;
+  gap: 12px;
+}
+.monday-tasks .lane {
+  flex: none;
+  width: 360px;
+}
+.monday-tasks .lane-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 56px;
+  margin-bottom: 8px;
+}
+.monday-tasks .lane-mark svg {
+  display: block;
+  width: 40px;
+  height: 40px;
+}
+.monday-tasks .lane-name { font: 700 var(--size-label)/48px var(--font-text); }
+.monday-tasks .lane-up-next .lane-name { color: var(--status-next); }
+.monday-tasks .lane-in-progress .lane-name { color: var(--status-progress); }
+.monday-tasks .lane-done .lane-name { color: var(--status-done); }
+
+/* A card is 156px high: the title on two lines at the most, and a line for the priority and the first name.
+   The bar at its left is the colour of the status. */
+.monday-tasks .item {
+  box-sizing: border-box;
+  height: 156px;
+  margin-bottom: 12px;
+  padding: 6px 14px;
+  border-left: 8px solid var(--status-next);
+  background: var(--card);
+}
+.monday-tasks .item:last-child { margin-bottom: 0; }
+.monday-tasks .lane-in-progress .item { border-left-color: var(--status-progress); }
+.monday-tasks .lane-done .item { border-left-color: var(--status-done); }
+
+/* The title is cut off with an ellipsis after its second line */
+.monday-tasks .item-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  height: 96px;
+  font: 500 var(--size-label)/48px var(--font-text);
+}
+.monday-tasks .meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 48px;
+}
+.monday-tasks .chip {
+  flex: none;
+  padding: 0 10px;
+  color: var(--ground);
+  font: 700 var(--size-label)/44px var(--font-display);
+}
+.monday-tasks .chip-high { background: var(--danger); }
+.monday-tasks .chip-medium { background: var(--yellow); }
+.monday-tasks .chip-low { background: var(--lilac); }
+.monday-tasks .contact {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--lilac);
+  font: 500 var(--size-label)/48px var(--font-text);
+}
+
+/* The numbers under the columns, each with a bar at its left */
+.monday-tasks .facts {
+  position: absolute;
+  left: 0;
+  top: 404px;
+  width: 1104px;
+  display: flex;
+  gap: 12px;
+}
+.monday-tasks .fact {
+  box-sizing: border-box;
+  flex: none;
+  width: 360px;
+  padding-left: 14px;
+  border-left: 4px solid var(--yellow);
+}
+.monday-tasks .fact-label {
+  color: var(--yellow);
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+.monday-tasks .fact-number { font: 700 var(--size-heading)/96px var(--font-display); }

@@ -8,6 +8,7 @@ import { logoUrl, photoFocus, screenPhotoUrl, tidyPhoto } from './images.js';
 import { classifyFailure } from './connection.js';
 import { pinnedFirst } from './task-source.js';
 import { tidyFrc } from './frc.js';
+import { tidyMondayStatus } from './monday.js';
 
 // Everything the screen needs, in one request. Lists come back in the order
 // they were created, and normalizeContent puts the ones with an Order first.
@@ -42,6 +43,9 @@ import { tidyFrc } from './frc.js';
 // deleted has no code either. A team's logo is sent like a person's photo.
 // The FRC data (frc-status) is one document that the Mini writes. It is sent as it is and
 // core/frc.js cleans it. No document means no competition cards.
+// The board status (monday-status) is one document that the Mini writes. Only the sync time and the
+// daily counts of open items are asked for, and core/monday.js cleans them. No document means the
+// progress card has no line to draw. The tasks from the board come with the other tasks, above.
 export const contentQuery = `{
   "settings": *[_id == "dashboardSettings"][0] {
     ...,
@@ -114,7 +118,8 @@ export const contentQuery = `{
       hotspot
     }
   },
-  "frc": *[_id == "frc-status"][0]
+  "frc": *[_id == "frc-status"][0],
+  "monday": *[_id == "monday-status"][0] { lastSyncAt, lastError, "snapshots": coalesce(snapshots, []) }
 }`;
 
 const requestSeconds = 15;
@@ -236,6 +241,7 @@ export function normalizeContent(result, now = new Date()) {
     calendarFilters: filtersFrom(data.calendarFilters),
     customPanels: customPanelsFrom(data.customPanels),
     frc: tidyFrc(data.frc),
+    monday: tidyMondayStatus(data.monday),
   });
 }
 
@@ -262,6 +268,7 @@ export function normalizeSample(raw) {
   content.presentations = presentationsFrom(data.presentations);
   content.calendarFilters = filtersFrom(data.calendarFilters);
   content.frc = tidyFrc(data.frc);
+  content.monday = tidyMondayStatus(data.monday);
   return withDefaults(content);
 }
 
