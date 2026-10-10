@@ -9,11 +9,11 @@ import { nameMarkup } from '../../core/name.js';
 import { frameKind, plateMarkup, teamPlateMarkup } from '../../core/plate.js';
 import { layoutNow } from '../../core/layout.js';
 import { shapesNow } from '../../core/style.js';
-import { teamShown } from '../../core/teams.js';
+import { teamShown, trimNow } from '../../core/teams.js';
 import { packExtras } from '../../core/theme.js';
 
 export function mount(host, content) {
-  const kind = frameKind('banner', layoutNow(), shapesNow());
+  const kind = frameKind('banner', layoutNow(), shapesNow(), trimNow());
 
   host.innerHTML = `
     <section class="panel banner" data-sequence="banner">

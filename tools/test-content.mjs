@@ -817,7 +817,7 @@ test('isVisible, visibleItems and withDefaults', () => {
   assert.deepEqual(content.tasks, []);
   assert.equal(content.plan, null);
   assert.deepEqual(withDefaults(null), withDefaults({}));
-  assert.deepEqual(content.settings.calendars, [{ id: 'team', name: 'Team calendar', show: true }]);
+  assert.deepEqual(content.settings.calendars, [{ id: 'team', name: 'Team calendar', show: true, kind: 'other' }]);
 });
 
 test('speed is one of four names, and anything else becomes normal', () => {
@@ -5699,11 +5699,13 @@ test('the two starting teams become the teams the screen uses, and the built-in 
     code: 'prime', name: 'HAWKTIMUS PRIME', shortName: 'PRIME', number: '3229', logo: '',
     colors: { primary: '#6C18B6', plate: '#3B2A7A', accent: '#FACA2A', neon: '#35F0FF', pink: '#FF2E8C', background: '#09060F', text: '#FFFFFF' },
     mirror: false, active: true, order: 10,
+    bolts: 'hex', cornerCut: 'tl-br', headerNotch: 'step', grid: 'lines', logoPose: 'auto', nameStyle: 'solid', tickerLabel: 'plate', countAccent: 'red',
   });
   assert.deepEqual(nova, {
     code: 'nova', name: 'HAWKTIMUS NOVA', shortName: 'NOVA', number: '3230', logo: '',
     colors: { primary: '#1F7AE0', plate: '#1E3A6E', accent: '#9BF0FF', neon: '#FF2E8C', pink: '#35F0FF', background: '#060D1A', text: '#FFFFFF' },
     mirror: true, active: true, order: 20,
+    bolts: 'round', cornerCut: 'tr-bl', headerNotch: 'slant', grid: 'dots', logoPose: 'flight', nameStyle: 'outline', tickerLabel: 'bar', countAccent: 'neon',
   });
 
   const builtIn = live.config.primeTeam;

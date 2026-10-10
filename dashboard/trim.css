@@ -1,0 +1,150 @@
+/* Team trim (docs/layouts.md, "Team trim"). While a team is on the screen, core/teams.js puts a class on
+   the html element for each of the eight trim fields of the team that has a value other than Prime's:
+
+     bolts-round        corner-cut-tr      header-slant       grid-dots
+     pose-flight        name-outline       ticker-bar         accent-neon
+
+   Prime's values have no class and every rule here is for one of these, so Prime is drawn as it always was.
+   The shape of the frames is drawn by core/plate.js: corner-cut-tr cuts the top right and bottom left
+   corners and header-slant ends the tab in one slant, and the frames are drawn again when the team changes
+   (core/areas.js, redrawFrames). What is left of corner-cut-tr is the cards, in the second part here, and
+   header-slant has nothing else to do. Nothing in this file moves. The classes are named in teamTrim in
+   config.js. */
+
+
+/* Bolts. The screw and the hex bolt (index.html) each hold a round rivet with a slot too, hidden. A custom
+   property reaches a shape that is drawn with <use> by inheritance, as the colors of the screw do (base.css),
+   so the class sets two of them and the shapes read them. */
+.screw-rim,
+.screw-face,
+.screw-ridge,
+.screw-slot,
+.bolt-rim,
+.bolt-face,
+.bolt-dot { display: var(--hex-part, inline); }
+.rivet-rim,
+.rivet-face,
+.rivet-slot { display: var(--rivet-part, none); }
+.rivet-rim { fill: var(--screw-rim); }
+.rivet-face { fill: var(--screw-face); }
+.rivet-slot { fill: var(--screw-slot); }
+
+html.bolts-round {
+  --hex-part: none;
+  --rivet-part: inline;
+}
+
+
+/* Cut corners, the part that is not a frame. A card has its bottom right corner cut (cardMarkup in
+   core/plate.js, and the clip of the picture in it), and with the other corners it is the bottom left. The
+   card is turned across, and it has no text inside it. The pictures are cut by a clip-path of their own. */
+html.corner-cut-tr .card-outline { transform: scaleX(-1); }
+html.corner-cut-tr .portrait-photo { clip-path: polygon(100% 0, 0 0, 0 89.214%, 13.464% 100%, 100% 100%); }
+html.corner-cut-tr .sponsor-feature .logo-card-picture,
+html.corner-cut-tr .photo .picture { clip-path: polygon(2px 2px, calc(100% - 2px) 2px, calc(100% - 2px) calc(100% - 2px), 42px calc(100% - 2px), 2px calc(100% - 34px)); }
+html.corner-cut-tr .custom .block-image img { clip-path: polygon(0 0, 100% 0, 100% 100%, 34px 100%, 0 calc(100% - 27px)); }
+
+
+/* The grid on the page behind Cybertron and Minimal (styles/cybertron.css and styles/minimal.css) is lines. With
+   dots it is one dot in the middle of each square of the grid, in the same color and faintness, with a radius
+   of a twelfth of the square. The layer is the one those two styles draw, and no other style draws it, so it
+   is only given another background */
+html.grid-dots[data-style] #screen::before {
+  background: radial-gradient(circle, var(--style-neon, transparent) 0, var(--style-neon, transparent) calc(var(--style-grid-size, 96px) / 12), transparent calc(var(--style-grid-size, 96px) / 12 + .5px)) 0 0 / var(--style-grid-size, 96px) var(--style-grid-size, 96px);
+}
+
+
+/* The pose of the bird. With auto it idles as the emblem, and with flight it idles as the hawk with its wings
+   up, the pose that a logo asked to fly has in calm motion (frame.css). The hawk's moves are still played
+   as they are, and the logo goes back to the pose when one ends. The rules are for the logo at rest,
+   at the start and in the spin, which are the acts that are flat */
+html.pose-flight .logo:not([data-act]) .emblem,
+html.pose-flight .logo[data-act="rest"] .emblem,
+html.pose-flight .logo[data-act="boot"] .emblem,
+html.pose-flight .logo[data-act="turn"] .emblem { opacity: 0; }
+
+html.pose-flight .logo:not([data-act]) .hawk-part,
+html.pose-flight .logo[data-act="rest"] .hawk-part,
+html.pose-flight .logo[data-act="boot"] .hawk-part,
+html.pose-flight .logo[data-act="turn"] .hawk-part { opacity: 1; }
+
+html.pose-flight .logo:not([data-act]) .hawk-near-wing,
+html.pose-flight .logo[data-act="rest"] .hawk-near-wing,
+html.pose-flight .logo[data-act="boot"] .hawk-near-wing,
+html.pose-flight .logo[data-act="turn"] .hawk-near-wing { transform: var(--lens) var(--view) translate(-30px, -137px) rotate3d(320, -50, 0, 134deg) translate(30px, 137px); }
+
+html.pose-flight .logo:not([data-act]) .hawk-far-wing,
+html.pose-flight .logo[data-act="rest"] .hawk-far-wing,
+html.pose-flight .logo[data-act="boot"] .hawk-far-wing,
+html.pose-flight .logo[data-act="turn"] .hawk-far-wing { transform: var(--lens) var(--view) translate(140px, -161px) rotate3d(160, -18, 0, -134deg) translate(-140px, 161px); }
+
+
+/* The team name. Outlined letters have no fill, and the stroke is the text color. The pieces the name effect
+   splits a letter into take the same color and stroke, because both are inherited. Under every letter, spaces too,
+   is a solid line in the accent, so it runs under the whole name. */
+html.name-outline .team-name,
+html.name-outline .bar-name,
+html.name-outline .side-name {
+  color: transparent;
+  -webkit-text-stroke: 4px var(--team-text);
+}
+html.name-outline .team-name .letter::after,
+html.name-outline .bar-name .letter::after,
+html.name-outline .side-name .letter::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: var(--team-accent);
+}
+
+
+/* The label of the ticker. The plate is kept, hidden, so the tag is as wide as it was and the word stays where
+   it is. In its place are a block of the accent at the front of the tag and a thin bar along its foot. */
+html.ticker-bar .ticker .tag .tag-plate { visibility: hidden; }
+html.ticker-bar .ticker .tag::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 16px;
+  height: 52px;
+  background: var(--team-accent);
+}
+html.ticker-bar .ticker .tag::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 4px;
+  width: 100%;
+  height: 4px;
+  background: var(--team-accent);
+}
+
+
+/* The red parts of the countdown. The countdown, the war clock and the countdown of the sidebar layout take
+   their red from the --danger colors, and a task that is blocked and the alert take theirs from the same
+   ones, so only these three are given other colors: the team's neon in place of the red, and the team's own
+   colors for the dark plates. The red metal of the frame is the one thing that is not a color but a set of
+   gradients, so its edge is the plain neon here. */
+html.accent-neon .countdown,
+html.accent-neon .war-clock,
+html.accent-neon .side-countdown {
+  --danger: var(--team-neon);
+  --danger-bright: var(--team-neon);
+  --danger-plate: var(--team-background);
+  --danger-hot: var(--team-plate);
+  --danger-dark: var(--team-plate);
+  --red-ridge: var(--team-text);
+  --red-4: var(--team-plate);
+}
+html.accent-neon .countdown .red-metal {
+  --edge-face: var(--team-neon);
+  --edge-rim: var(--team-background);
+  --edge-ridge: var(--team-text);
+  --edge-shade: transparent;
+  --edge-glint: var(--team-text);
+  --edge-flat: var(--team-neon);
+}

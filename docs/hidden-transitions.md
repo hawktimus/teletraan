@@ -245,9 +245,9 @@ What each button holds for 2 minutes:
 
 | Button | What the screen shows |
 |--------|-----------------------|
-| Preview Prime | the Prime team, whatever Team mode says |
-| Preview Nova | the Nova team, whatever Team mode says. With no Nova team document in Studio it stays on Prime |
-| Preview Cybertron | the Cybertron style, whatever Style says and whatever `?style=` says |
+| Preview Prime | the Prime team, whatever Team order says |
+| Preview Nova | the Nova team, whatever Team order says. With no Nova team document in Studio it stays on Prime |
+| Preview Cybertron | the Cybertron style, whatever Styles by day says and whatever `?style=` says |
 | Preview Minimal | the Minimal style, in the same way |
 | Preview next pack | the seasonal pack after the one on the screen, in the order of the list in `dashboard/themes/overlays/registry.js` |
 

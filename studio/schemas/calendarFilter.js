@@ -2,7 +2,8 @@
 // screen. The dashboard applies the rules in core/events.js, after repeating
 // events are expanded. A rule matches an event when every condition it has
 // matches. An event is hidden when a Hide rule matches and no Always show rule
-// does.
+// does. An Always show rule can also pin its events to page one of the Events
+// panel (force, core/event-pages.js). Only an Always show rule shows the switch.
 
 import { defineType, defineField, defineArrayMember } from 'sanity';
 import { tooLong, aToZ, titleOf, subtitleFor } from './fields.js';
@@ -93,6 +94,14 @@ export default defineType({
         Rule.required().error('Pick Hide or Always show.'),
         Rule.valid(actions.map(action => action.value)).error('Pick Hide or Always show.'),
       ],
+    }),
+    defineField({
+      name: 'force',
+      title: 'Pin to page one',
+      type: 'boolean',
+      hidden: ({ document }) => !document || document.action !== 'show',
+      description: 'Show this event even when it is not one of the next 8.',
+      initialValue: false,
     }),
     defineField({
       name: 'words',

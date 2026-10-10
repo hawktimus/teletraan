@@ -13,6 +13,10 @@
 // How long a page stays and the pause between pages follow the Speed
 // setting (frame.pace()). Announcements and alerts do not: the editors give
 // their seconds directly.
+//
+// The list of the large panel is gone through in passes. At the end of every pass, before the next
+// page is chosen, the look rotation is asked whether the screen moves to another look and another
+// list (setLookHooks below, core/look-rotation-run.js).
 
 import * as frame from '../frame.js';
 import { defaultSettings } from '../config.js';
@@ -54,6 +58,12 @@ let pagesRefreshed = 0;
 // from the first panel.
 let restarts = 0;
 
+// Starts every list again from its first panel at its next page change, and leaves the frames and the
+// pages where they are. Next look now uses it (core/look-rotation-run.js), for a new pass.
+export function rewindRotation() {
+  restarts += 1;
+}
+
 // Counts, for each region, how many times it has been asked to move on at once
 // (moveOn). Like pagesRefreshed, but for one region only.
 const moves = { grid1: 0, grid2: 0, ticker: 0 };
@@ -67,6 +77,18 @@ function changeCount(region) {
 // How many milliseconds of its stay each region still has to wait, while it is
 // holding a page still. A region that is changing page has no entry.
 const holdLeft = {};
+
+// The look rotation gives these two, once, when it starts (core/look-rotation-run.js):
+//   atPass(now)   asked for the large panel at the end of every pass of its list, before the next page is
+//                 chosen. It may take its time, for a swap of look that plays. It answers true when
+//                 the list has to start again from its first panel, because the next pass is another one.
+//   playlist(list)  the list the large panel follows: the Monday cards while a Monday pass is up,
+//                 and the list it was given otherwise
+let lookHooks = null;
+
+export function setLookHooks(hooks) {
+  lookHooks = hooks;
+}
 
 // Every page on screen leaves early and the next ones are chosen from the
 // newest content. Used when the screen switches between sample and real
@@ -153,7 +175,9 @@ function holdFor(stay, arrivedAfter) {
 }
 
 // region is 'grid1' or 'grid2'
-// getPlaylist() returns the list of { panel, show, seconds } for that region
+// getPlaylist() returns the list of { panel, show, seconds } for that region. A step of a panel with
+// more than one page also has page, counting from 1 (withPages in core/panel-order.js), which is
+// given to the panel's hasContent and mount.
 // getContent() returns the newest content
 // A region the layout does not have (the small frame in the sidebar layout,
 // core/layout.js) is never started, so none of its panels is ever drawn.
@@ -165,9 +189,23 @@ export function startRotation(region, getPlaylist, getContent) {
   let seenRestarts = restarts;
   let somePanelFailed = false; // set by pickPage when a panel could not be drawn
 
-  // The next step in the list that is allowed on screen right now
-  function chooseNext() {
-    const playlist = getPlaylist();
+  // The large panel follows the list the look rotation gives it. A problem there leaves the list as it is.
+  function readPlaylist() {
+    const list = getPlaylist();
+    if (region !== 'grid1' || !lookHooks) return list;
+
+    try {
+      return lookHooks.playlist(list);
+    } catch (error) {
+      console.error('The look rotation could not give the list of the large panel', error);
+      return list;
+    }
+  }
+
+  // The next step in the list that is allowed on screen right now, and whether getting to it goes
+  // round the end of the list (the first pass has ended). It changes nothing.
+  function findNext() {
+    const playlist = readPlaylist();
     const content = getContent();
 
     for (let tries = 1; tries <= playlist.length; tries++) {
@@ -175,22 +213,55 @@ export function startRotation(region, getPlaylist, getContent) {
       const step = playlist[index];
       if (step.show === false) continue;
       if (regionOf(step.panel) !== region) continue; // a panel in the wrong list is ignored
-      if (!canShow(step.panel, content)) continue;
+      if (!canShow(step.panel, content, step.page)) continue;
 
       const topic = topicOf(step.panel);
       if (topic && onScreen[otherRegion].includes(topic)) continue;
 
-      position = index;
-      return step;
+      return { index: index, step: step, wrapped: position + tries >= playlist.length };
     }
     return null;
+  }
+
+  function chooseNext() {
+    const found = findNext();
+    if (!found) return null;
+
+    position = found.index;
+    return found.step;
+  }
+
+  // The next page would be the first of the list again, or there is none to show: the pass is over
+  function passIsOver() {
+    const found = findNext();
+    return found === null || found.wrapped;
+  }
+
+  // A restart has been asked for: the list begins again at its first panel
+  function followRestarts() {
+    if (seenRestarts === restarts) return;
+
+    seenRestarts = restarts;
+    position = -1;
+  }
+
+  // The look rotation is asked once at the end of every pass of the large panel. A problem there
+  // leaves the pass going on.
+  async function askLookRotation() {
+    if (region !== 'grid1' || !lookHooks || !passIsOver()) return;
+
+    try {
+      if (await lookHooks.atPass(new Date())) position = -1;
+    } catch (error) {
+      console.error('The look rotation could not move to the next pass', error);
+    }
   }
 
   // The next page, built and ready, or null when nothing can be shown. A
   // panel that fails to draw is skipped and the one after it is tried, so
   // one bad panel can neither stop the region nor spin it.
   function pickPage() {
-    const attempts = getPlaylist().length;
+    const attempts = readPlaylist().length;
     somePanelFailed = false;
 
     for (let attempt = 0; attempt < attempts; attempt++) {
@@ -198,7 +269,7 @@ export function startRotation(region, getPlaylist, getContent) {
       if (!step) return null;
 
       try {
-        const page = buildPage(step.panel, getContent());
+        const page = buildPage(step.panel, getContent(), step.page);
         const topic = topicOf(step.panel);
         if (topic) onScreen[region].push(topic); // at once, so the other region sees it
         return { page: page, step: step, topic: topic };
@@ -215,10 +286,9 @@ export function startRotation(region, getPlaylist, getContent) {
     while (true) {
       try {
         await waitWhilePaused();
-        if (seenRestarts !== restarts) {
-          seenRestarts = restarts;
-          position = -1;
-        }
+        followRestarts();
+        await askLookRotation();
+        followRestarts(); // a swap of look can restart the lists
         const since = changeCount(region);
         const next = pickPage();
 

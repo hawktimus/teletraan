@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="styles/original.css">
   <link rel="stylesheet" href="styles/cybertron.css">
   <link rel="stylesheet" href="styles/minimal.css">
+  <link rel="stylesheet" href="trim.css">
   <link rel="stylesheet" href="themes/decor/neon-prime-decor.css">
   <link rel="stylesheet" href="neon-kit.css">
   <link rel="stylesheet" href="seasons/season.css">
@@ -281,22 +282,31 @@
            turn can be seen. frame.css turns it and nothing else here moves. The
            shadow is the same octagon moved 5 right and 7 down, and is a shape of
            its own so a turning head never turns its shadow. The colours are set
-           in base.css from the --screw tokens. -->
+           in base.css from the --screw tokens. The round rivet with a slot (the
+           rivet-parts) is hidden until a team that has Bolts on Round is on the
+           screen (trim.css), and then it takes the place of the octagon. -->
       <polygon id="screw-shadow-shape" points="-4,-15 14,-15 27,-2 27,16 14,29 -4,29 -17,16 -17,-2"/>
       <g id="screw-shape">
         <polygon class="screw-rim" points="-9,-22 9,-22 22,-9 22,9 9,22 -9,22 -22,9 -22,-9"/>
         <polygon class="screw-face" points="-8,-18 8,-18 18,-8 18,8 8,18 -8,18 -18,8 -18,-8"/>
         <polyline class="screw-ridge" points="-17,7 -17,-7 -8,-17 8,-17"/>
         <polygon class="screw-slot" points="-18,-3.5 18,-3.5 18,3.5 -18,3.5"/>
+        <circle class="rivet-rim" cx="0" cy="0" r="22"/>
+        <circle class="rivet-face" cx="0" cy="0" r="18"/>
+        <polygon class="rivet-slot" points="-15,-3.5 15,-3.5 15,3.5 -15,3.5"/>
       </g>
       <!-- A hex bolt, centred on 0,0, for the bar frames: a dark rim, a silver face and a
            pale dot in the middle. It is used where a screw is, with the same class and the
            same animation, and has no shadow of its own. The colours are the --screw
-           tokens, set in base.css. -->
+           tokens, set in base.css. The round rivet with a slot is the same as in the
+           screw, a little smaller. -->
       <g id="bolt-shape">
         <polygon class="bolt-rim" points="0,-19 16.5,-9.5 16.5,9.5 0,19 -16.5,9.5 -16.5,-9.5"/>
         <polygon class="bolt-face" points="0,-15 13,-7.5 13,7.5 0,15 -13,7.5 -13,-7.5"/>
         <circle class="bolt-dot" cx="0" cy="0" r="5"/>
+        <circle class="rivet-rim" cx="0" cy="0" r="19"/>
+        <circle class="rivet-face" cx="0" cy="0" r="15"/>
+        <polygon class="rivet-slot" points="-12,-3 12,-3 12,3 -12,3"/>
       </g>
       <!-- The silhouette shown for a person with no photo (core/portrait.js).
            It is a faceted, chamfered bust, drawn on the logo's own grid (see

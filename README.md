@@ -42,7 +42,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - Countdown timer to FRC Kickoff (January 9, 2027), then to Rollout
 - Team tasks, each with an optional point of contact, a place, picked in the Location field of the task, where Create new adds one, and a priority. A Show on TV switch keeps a task off the screen, and pinned tasks come before tasks from the team board
 - The Daily Agenda panel, headed AGENDA: the schedule for today's meeting, with the talks booked for today
-- Upcoming events and the next event, from the team's BAND calendars, with Calendar filters that hide or keep events, such as a meeting that repeats every week
+- Upcoming events and the next event, from the team's BAND calendars, with Calendar filters that hide or keep events, such as a meeting that repeats every week. The Events panel has two pages of four, each event has a chip for the kind of its calendar, and a coach can pin an event to page one
 - Sponsors, with sponsor logos and thank-yous
 - Photos, uploaded in Sanity and shown at random or newest first
 - Subteam spotlight, leadership, and team leads
@@ -58,7 +58,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - Polished gold or silver frame edges, picked in Studio
 - A Polish setting in Studio that turns the polish down: Polished (the normal look, and the default), Flat (plain colour edges and no glint) or Plain (Flat, with no screws and no // in the panel headers). Flat and Plain are lighter on the Mini, and `?look=flat` or `?look=plain` on the address tries one for a single page
 - A Style setting in Studio: Original (the screen as it has always been), Cybertron or Minimal. Original and Cybertron have the layout of the theme: a banner, the large frame, the countdown over the small frame and the ticker. Cybertron draws it in gunmetal plates with a steel edge, a neon line just inside the edge, hex bolts at the joints, a hazard stripe under each header, pink conduit and brackets, a row of neon slashes and a grid with scanlines behind the screen, and its countdown is the war clock, in a steel housing, in place of the red frame. Minimal has the bar layout: a banner across the top with the team name and the war clock, a thin side column and one main panel, in steel frames with smaller cut corners, rivets, rust at two corners, a weld seam on the main panel, tick marks along the header line and a finer grid (docs/layouts.md). `?style=cybertron` or `?style=minimal` on the address tries one for a single page
-- Teams: Hawktimus Prime and Hawktimus Nova, each with a name, number, logo, seven colors and a switch that flips the whole screen left to right. Team mode in Studio shows Prime only, Nova only, or swaps between the teams every few minutes, with everything changing together at a page change. Tasks, agenda items, sponsors and most other things have a Team choice, and empty means Both (docs/add-the-nova-team.md, docs/team-on-an-item.md)
+- Teams: Hawktimus Prime and Hawktimus Nova, each with a name, number, logo, seven colors and a switch that flips the whole screen left to right. Team order in Studio puts the teams on the screen in turn, each for a pass of the panels, with everything changing together at a page change, and Styles by day gives each day a style (docs/layouts.md, "The look rotation"). Tasks, agenda items, sponsors and most other things have a Team choice, and empty means Both (docs/add-the-nova-team.md, docs/team-on-an-item.md)
 - Switch the look: the style, the team and the seasonal pack are three separate settings, and four steps in Studio change them (docs/switch-the-look.md)
 - A fixed 1920 by 1080 screen. Every layout, the mirror and the war clock are placed in pixels inside it, and the page scales the whole picture to the window and never reflows (docs/layouts.md, "The screen is a fixed canvas")
 - Pages that flip like slats while the frames stay in place
@@ -74,7 +74,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - A Run presentation test button in Studio that plays a sample talk with six sample slides, with no internet
 - Preview buttons in Studio (Prime, Nova, Cybertron, Minimal and the next seasonal pack) that show that look on the TV for 2 minutes and then go back to the saved settings, without changing any setting. `?team=`, `?style=` and `?overlay=` on the address try any combination with the sample content
 - A Start here page in Studio with buttons that try the screen (docs/demo.md)
-- A calendar check (deploy/scripts/check-calendars.sh) that lists the next 30 days of events and says which ones the Calendar filters hide
+- A calendar check (deploy/scripts/check-calendars.sh) that lists the next 30 days of events, says which ones the Calendar filters hide, and gives the Events page and the kind of each one that shows
 - A connection check for the Mini (deploy/scripts/check-connection.sh) and a small text on the screen that says why when Sanity cannot be reached
 - A boot and shutdown screen: a text drawing of a person pointing two fingers at each other, with TELETRAAN I under it, shows on the TV above the login prompt while the Mini starts and again while it shuts down (deploy/console, docs/rebuilding-the-mini.md, step 13)
 

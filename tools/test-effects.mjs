@@ -1258,7 +1258,7 @@ test('every piece has a line in the table in frame.css with all seven numbers, a
   const tableNames = (frameCss.match(/^\[data-piece="[a-z-]+"\]/gm) || []).map(text => text.slice(13, -2));
   tableNames.forEach(name => assert.ok(names.indexOf(name) !== -1, 'frame.css moves a piece called ' + name + ' that plate.js does not make'));
 
-  assert.equal((plateJs.match(/, screws: '[ab]' \}/g) || []).length, 4, 'the corner pieces of grid1 and grid2 carry the screws');
+  assert.equal((plateJs.match(/, screws: '[ab]' \}/g) || []).length, 6, 'the corner pieces of grid1 and grid2 carry the screws, and so do the two pieces of their frames with the other corners cut');
   assert.ok(plateJs.includes("name: 'corner-top-left'") && plateJs.includes("name: 'corner-bottom-right'"));
 });
 

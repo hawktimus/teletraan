@@ -1041,7 +1041,7 @@ test('the frames are drawn again in the same step that puts the style on the pag
   // the areas module draws them again for the frames the page has
   const areas = read('dashboard/core/areas.js');
   assert.ok(areas.includes('export function redrawFrames() {'));
-  assert.ok(areas.includes('const kind = frameKind(region, layoutNow(), shapesNow());'));
+  assert.ok(areas.includes('const kind = frameKind(region, layoutNow(), shapesNow(), trimNow());'), 'for the corners of the style and the trim of the team');
   assert.ok(areas.includes("if (kind !== 'ticker') area.insertAdjacentHTML('afterbegin', areaMarkup(kind));"));
   assert.ok(areas.includes(".filter(child => !child.classList.contains('page-host'))"), 'the page host stays');
 

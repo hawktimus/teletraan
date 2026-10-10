@@ -13,6 +13,7 @@ import { nightFields } from './settingsNight.js';
 import { hiddenFields } from './settingsHidden.js';
 import { presentationsFields, presentationTestRequestField } from './settingsPresentations.js';
 import { teamsFields } from './settingsTeams.js';
+import { lookRotationFields } from './settingsLook.js';
 import { previewRequestField } from './settingsPreview.js';
 import { nextLookRequestField, competitionPreviewRequestField } from './settingsRequests.js';
 
@@ -147,19 +148,19 @@ const showConnectionStatusField = defineField({
   initialValue: false,
 });
 
-// The look of the whole screen. The starting value is the same as defaultSettings.style
-// in dashboard/config.js. dashboard/core/style.js turns the choice into the page
-// switch the stylesheets read and into a layout: Minimal has the bar layout whatever the
-// theme says, and Original and Cybertron have the layout of the theme. It is not required: Dashboard Settings published
-// before this field existed has no style, which the screen reads as Original, and a
-// required field would stop that page being published (an alert too) until somebody
-// picked one.
+// The look of the whole screen when Styles by day is empty. It is hidden, and the value saved in it stays. The
+// starting value is the same as defaultSettings.style in dashboard/config.js. dashboard/core/style.js turns the
+// choice into the page switch the stylesheets read and into a layout: Minimal has the bar layout whatever the
+// theme says, and Original and Cybertron have the layout of the theme. It is not required: Dashboard Settings
+// published before this field existed has no style, which the screen reads as Original, and a required field
+// would stop that page being published (an alert too) until somebody picked one.
 const styleField = defineField({
   name: 'style',
   title: 'Style',
   type: 'string',
   group: 'look',
-  description: 'Original is the screen as now. Cybertron is it in steel plates. Minimal has one main panel and a side column, whatever the theme. The team sets the colors.',
+  hidden: true,
+  description: 'Used only when Styles by day is empty. Original is the screen as now, Cybertron is steel plates, Minimal is one main panel, whatever the theme.',
   options: { list: styles, layout: 'radio', direction: 'horizontal' },
   initialValue: 'original',
   validation: Rule => Rule.valid(styles.map(style => style.value)).error('Pick original, cybertron or minimal.'),
@@ -393,14 +394,23 @@ const safetyDaysField = defineField({
 // that is not lowercase letters, digits and underscores never finds its file
 const calendarCode = /^[a-z0-9_]+$/;
 
+// The values are the names in calendarKinds in dashboard/config.js
+const calendarKinds = [
+  { title: 'Meetings', value: 'meetings' },
+  { title: 'Competitions', value: 'competitions' },
+  { title: 'Outreach', value: 'outreach' },
+  { title: 'Deadlines', value: 'deadlines' },
+  { title: 'Other', value: 'other' },
+];
+
 // The same row as defaultSettings.calendars in dashboard/config.js
 const calendarsField = defineField({
   name: 'calendars',
   title: 'Calendars',
   type: 'array',
   group: 'calendars',
-  description: 'Name each team calendar and choose which ones show events on the screen.',
-  initialValue: [{ id: 'team', name: 'Team calendar', show: true }],
+  description: 'Name each team calendar, say what kind it is and choose which ones show events on the screen.',
+  initialValue: [{ id: 'team', name: 'Team calendar', show: true, kind: 'other' }],
   of: [
     defineArrayMember({
       type: 'object',
@@ -425,6 +435,15 @@ const calendarsField = defineField({
           validation: Rule => [Rule.required().error('Give the calendar a name.'), tooLong(Rule, 20)],
         }),
         defineField({
+          name: 'kind',
+          title: 'Kind',
+          type: 'string',
+          description: 'What sort of events this calendar holds. The Events panel shows it as a small chip before each title.',
+          options: { list: calendarKinds, layout: 'radio', direction: 'horizontal' },
+          initialValue: 'other',
+          validation: Rule => Rule.valid(calendarKinds.map(kind => kind.value)).error('Pick meetings, competitions, outreach, deadlines or other.'),
+        }),
+        defineField({
           name: 'show',
           title: 'Show on screen',
           type: 'boolean',
@@ -433,9 +452,10 @@ const calendarsField = defineField({
         }),
       ],
       preview: {
-        select: { title: 'name', code: 'id', show: 'show' },
+        select: { title: 'name', code: 'id', show: 'show', kind: 'kind' },
         prepare(calendar) {
-          const subtitle = [calendar.show === false ? 'Hidden' : '', calendar.code].filter(Boolean).join(' · ');
+          const kind = calendarKinds.filter(item => item.value === calendar.kind).map(item => item.title)[0];
+          const subtitle = [calendar.show === false ? 'Hidden' : '', calendar.code, kind].filter(Boolean).join(' · ');
           return { title: calendar.title || 'Calendar with no name', subtitle: subtitle };
         },
       },
@@ -443,8 +463,19 @@ const calendarsField = defineField({
   ],
 });
 
-// The note on the Look tab points to the Look page, which points back (theme.js)
-const lookNoteField = noteField('lookNote', 'Which style and team come on is set here. Colors, seasonal packs and the time zone are in Look, in the sidebar.', 'look');
+// The same starting value as defaultSettings.groupEventsByKind in dashboard/config.js
+const groupEventsByKindField = defineField({
+  name: 'groupEventsByKind',
+  title: 'Group events by kind',
+  type: 'boolean',
+  group: 'calendars',
+  description: 'Off: both Events pages go in date order. On: page one has Meetings, Deadlines and Other, page two Competitions and Outreach.',
+  initialValue: false,
+});
+
+// The note on the Look tab points to the Look page, which points back (theme.js). The second says what a cycle is.
+const lookNoteField = noteField('lookNote', 'Which styles and teams come on, and how, is set here. Colors, seasonal packs and the time zone are in Look, in the sidebar.', 'look');
+const cycleNoteField = noteField('cycleNote', 'A cycle is each team in turn: its panels in the style of the day, then its Monday cards in the Monday style, then the next team.', 'look');
 
 // Replaced by the Monday settings and the competition settings when those are built
 const mondayNoteField = noteField('mondayNote', 'Nothing to set here yet. The Monday connection and boards will be set up on this tab.', 'monday');
@@ -459,6 +490,8 @@ export default defineType({
     statusBlockField(),
     teamField,
     lookNoteField,
+    cycleNoteField,
+    ...lookRotationFields(),
     styleField,
     motionField,
     speedField,
@@ -486,6 +519,7 @@ export default defineType({
     ...presentationsFields(),
     presentationTestRequestField(),
     calendarsField,
+    groupEventsByKindField,
     mondayNoteField,
     competitionNoteField,
     contentSourceField,

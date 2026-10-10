@@ -1,7 +1,7 @@
 // Talks to Sanity: the two queries, the addresses, and turning what comes back
 // into the content shape in data/sample/content.json. The sample is cleaned the same way.
 
-import { defaultFilter, defaultPerson, defaultSettings, defaultTalk, filterActions, limits, primeTeam, talkStatuses } from '../config.js';
+import { defaultFilter, defaultPerson, defaultSettings, defaultTalk, filterActions, limits, primeTeam, talkStatuses, teamTrim } from '../config.js';
 import { parseLocalDateTime, sameDay } from './time.js';
 import { fixSettingValues, isVisible, keepInRange, withDefaults } from './content.js';
 import { logoUrl, photoFocus, screenPhotoUrl, tidyPhoto } from './images.js';
@@ -23,6 +23,8 @@ import { pinnedFirst } from './task-source.js';
 // No Demo document means no demo (core/demo.js).
 // Events come from the BAND calendars (core/calendar.js). The Events Calendar
 // entries in Studio are not read.
+// Styles by day and Team order are sent as lists too, and Team order as the codes of its teams. A list
+// that is missing is a list that is empty: the screen then follows Style and Team mode (core/look-rotation.js).
 // Calendar filter rules are cleaned in normalizeFilter. One that is off or past
 // its Hide after time stays in the list, and core/events.js leaves it out.
 // A person's photo is sent as a plain address with its size, crop and hotspot
@@ -42,7 +44,9 @@ export const contentQuery = `{
     ...,
     "rotation": rotation { ..., "grid1": coalesce(grid1, []), "grid2": coalesce(grid2, []) },
     "announcements": coalesce(announcements, []),
-    "calendars": coalesce(calendars, [])
+    "calendars": coalesce(calendars, []),
+    "dailyStyles": coalesce(dailyStyles, []),
+    "teamOrder": coalesce(teamOrder[]->code, [])
   },
   "theme": *[_id == "theme"][0],
   "demo": *[_id == "demo"][0],
@@ -467,7 +471,9 @@ const plainDate = /^\d{4}-\d{2}-\d{2}$/;
 
 // A rule from the Calendar filters list becomes { name, action, words, days,
 // calendar, fromDate, toDate }, with the show switch and the Hide after time kept
-// as they are. The words lose the spaces at their ends and the empty ones go.
+// as they are, and force kept when it is on (an Always show rule pins its events
+// to page one of the Events panel). The words lose the spaces at their ends and
+// the empty ones go.
 // The days are a set of the numbers 0 to 6, Sunday first, in order. The calendar
 // and the two dates are text, empty when there is none, and a date that is not
 // like 2027-04-02 is none. An action that is not hide or show is hide, as the
@@ -493,6 +499,7 @@ function normalizeFilter(raw) {
   };
   if (raw.show === false) rule.show = false;
   if (raw.expires) rule.expires = raw.expires;
+  if (raw.force === true) rule.force = true;
 
   const hasCondition = words.length > 0 || days.length > 0 || rule.calendar !== '' || rule.fromDate !== '' || rule.toDate !== '';
   return hasCondition ? rule : null;
@@ -505,14 +512,15 @@ function filtersFrom(list) {
 const hexColor = /^#[0-9A-Fa-f]{6}$/;
 const teamCode = /^[a-z0-9]+$/;
 
-// A team document from Studio becomes { code, name, shortName, number, logo, colors, mirror,
-// active, order }. The code is lowercase letters and digits, and it is what the items point to,
+// A team document from Studio becomes { code, name, shortName, number, logo, colors, mirror, the
+// eight trim fields, active, order }. The code is lowercase letters and digits, and it is what the items point to,
 // so a team without a usable one is dropped. The names are capitals, the way the team name
 // has always been written in the banner, and a missing one is the other, or the code. The
 // logo is the address of the picture at the width the screen needs (core/images.js), and
 // empty when there is none or it cannot be used, which means the shared hawk. A sample file
 // may give the logo as an address. A color that is not # and six hex digits is the Prime one.
-// The mirror is off unless it is on, and the team is active unless it is switched off.
+// The mirror is off unless it is on, and the team is active unless it is switched off. A trim field
+// that is missing or not one of its values is the Prime one (teamTrim in config.js).
 function normalizeTeamDocument(raw) {
   const code = trimmed(raw.code).toLowerCase();
   if (!teamCode.test(code)) return null;
@@ -533,9 +541,22 @@ function normalizeTeamDocument(raw) {
     logo: typeof raw.logo === 'string' ? raw.logo.trim() : logoUrl(raw.logo),
     colors: colors,
     mirror: raw.mirror === true,
+    bolts: trimValue(raw, 'bolts'),
+    cornerCut: trimValue(raw, 'cornerCut'),
+    headerNotch: trimValue(raw, 'headerNotch'),
+    grid: trimValue(raw, 'grid'),
+    logoPose: trimValue(raw, 'logoPose'),
+    nameStyle: trimValue(raw, 'nameStyle'),
+    tickerLabel: trimValue(raw, 'tickerLabel'),
+    countAccent: trimValue(raw, 'countAccent'),
     active: raw.active !== false,
     order: typeof raw.order === 'number' && isFinite(raw.order) ? raw.order : primeTeam.order,
   };
+}
+
+function trimValue(raw, name) {
+  const value = trimmed(raw[name]);
+  return Object.prototype.hasOwnProperty.call(teamTrim[name], value) ? value : primeTeam[name];
 }
 
 // The first team of a code is the one that counts. The list is in order.

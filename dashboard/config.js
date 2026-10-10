@@ -60,6 +60,13 @@ export const styles = ['original', 'cybertron', 'minimal'];
 //   alternate  the two teams take turns, alternateMinutes each
 export const teamModes = ['prime', 'nova', 'alternate'];
 
+// The look rotation in Dashboard Settings (Look tab) (core/look-rotation.js): how the screen changes from
+// one look to the next. The Studio copies this list.
+//   assemble  everything leaves and comes in again, the way the screen starts
+//   slats     the page change of the large panel with the slats turning, and the frames stay
+//   cut       at once, at the next page change of the large panel
+export const lookSwaps = ['assemble', 'slats', 'cut'];
+
 // The page change settings in Dashboard Settings (Look tab) (core/transitions.js chooses from them)
 //   pageChangeStyles  alternate: the slat change and the mechanical change take turns.
 //                     slat: the old change only. mechanical: the new one only.
@@ -256,6 +263,17 @@ export const defaultSettings = {
   //   alternateMinutes  with alternate, how long each team stays before the screen swaps to the other
   teamMode: 'prime',
   alternateMinutes: 5,
+  // The look rotation in the Studio (Look tab) (core/look-rotation.js, docs/layouts.md, "The look rotation").
+  //   dailyStyles  the styles the screen goes through, one for each calendar day, in this order and then over
+  //                again (see styles above). Empty means the hidden style above decides
+  //   mondayStyle  the style while the Monday cards of a team are on the screen (see styles above)
+  //   teamOrder    the codes of the teams, in the order of their passes. Only teams that are switched on count.
+  //                Empty means the hidden teamMode above decides
+  //   lookSwap     see lookSwaps above
+  dailyStyles: ['original', 'cybertron'],
+  mondayStyle: 'minimal',
+  teamOrder: ['prime', 'nova'],
+  lookSwap: 'assemble',
   // The "Play announcements" button in the Studio (core/announce.js, core/announce-run.js, docs/hidden-transitions.md).
   //   announceRequest  the last click of the button. requestedAt is the time it was clicked and is empty until
   //                    it has been. The screen plays every announcement that is switched on, once, for a request
@@ -329,7 +347,11 @@ export const defaultSettings = {
       days: [0, 1, 2, 3, 4, 5, 6],
     },
   ],
-  calendars: [{ id: 'team', name: 'Team calendar', show: true }],
+  // The calendars (Calendars tab): a code, a name, the show switch and the kind (see calendarKinds below).
+  // groupEventsByKind off keeps both pages of the Events panel in date order. On, page one has the next
+  // four Meetings, Deadlines and Other events, and page two the next four Competitions and Outreach events.
+  calendars: [{ id: 'team', name: 'Team calendar', show: true, kind: 'other' }],
+  groupEventsByKind: false,
 };
 
 // Used for anything missing from the Look document in the Studio. The
@@ -380,6 +402,16 @@ export const hiddenGapHours = 4;
 // screen goes back to the saved settings.
 export const previewSeconds = 120;
 
+// The look rotation (core/look-rotation.js). The screen never ends a pass of a team sooner than
+// lookShortestSeconds after it began, so a team with nothing to show cannot make the looks flicker.
+// A page that reloads, for a change of layout or a new version, goes on in the same pass if it
+// reloads within lookResumeSeconds of the last time the pass was written down.
+export const lookShortestSeconds = 15;
+export const lookResumeSeconds = 600;
+
+// How long the cut swap keeps the pages of all three areas changing at once, in milliseconds
+export const lookCutMilliseconds = 1000;
+
 export const defaultDemo = {
   requestedAt: '',
   steps: [
@@ -412,6 +444,38 @@ export const defaultFilter = {
   action: 'hide',
 };
 
+// The kind of a calendar in Dashboard Settings (Calendars tab): what sort of events it holds. The Events
+// panel writes it as a small chip before each title (core/event-pages.js). A calendar with no kind, or one
+// that is not in this list, is other. The Studio copies this list.
+export const calendarKinds = ['meetings', 'competitions', 'outreach', 'deadlines', 'other'];
+export const defaultCalendarKind = 'other';
+
+// The trim of a team (Studio: Teams, Trim): eight choices that make a team look like itself beyond its colors and
+// the mirror. Each name is a field of the team document. Under it is each value the field can have, and the class
+// that core/teams.js puts on the html element while a team that has the value is on the screen, which trim.css
+// and the style sheets read. The first value of each is the one Prime has, and the one a team document with no
+// value, or one that is not in the list, falls back to, so a team that was made before the trim existed looks
+// as it did. It has no class (''), because the screen is drawn for it without one. The Studio copies the values
+// (studio/schemas/team.js).
+//   bolts        the joint bolts are hex nuts, or round rivets with a slot
+//   cornerCut    the corners every panel chamfers: top left and bottom right, or top right and bottom left
+//   headerNotch  the header tab ends in the usual notch, or in one slant at 60 degrees
+//   grid         the grid on the page behind Cybertron and Minimal is lines or dots
+//   logoPose     the bird idles in its usual pose (auto), or with its wings up in flight
+//   nameStyle    the team name in the banner is solid letters, or outlined letters over a solid accent line
+//   tickerLabel  the label of the ticker is the cut plate, or a thin bar with an accent block before it
+//   countAccent  the red parts of the countdown are red, or the team's neon
+export const teamTrim = {
+  bolts: { hex: '', round: 'bolts-round' },
+  cornerCut: { 'tl-br': '', 'tr-bl': 'corner-cut-tr' },
+  headerNotch: { step: '', slant: 'header-slant' },
+  grid: { lines: '', dots: 'grid-dots' },
+  logoPose: { auto: '', flight: 'pose-flight' },
+  nameStyle: { solid: '', outline: 'name-outline' },
+  tickerLabel: { plate: '', bar: 'ticker-bar' },
+  countAccent: { red: '', neon: 'accent-neon' },
+};
+
 export const defaultTeam = {
   name: 'HAWKTIMUS PRIME',
   number: '3229',
@@ -439,6 +503,14 @@ export const primeTeam = {
     text: '#FFFFFF',
   },
   mirror: false,
+  bolts: 'hex',
+  cornerCut: 'tl-br',
+  headerNotch: 'step',
+  grid: 'lines',
+  logoPose: 'auto',
+  nameStyle: 'solid',
+  tickerLabel: 'plate',
+  countAccent: 'red',
   active: true,
   order: 10,
   builtIn: true,

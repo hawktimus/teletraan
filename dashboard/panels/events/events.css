@@ -69,11 +69,35 @@
   flex: 1 1 0;
   min-width: 0;
 }
+
+/* The title line is the kind chip, the title and the pin of a pinned event. Only the
+   title gives way: it is cut off with an ellipsis when the line is full. */
 .events .event-title {
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 16px;
   font: 500 var(--size-body)/64px var(--font-text);
 }
+.events .kind-chip {
+  flex: none;
+  padding: 0 14px;
+  background: var(--yellow);
+  color: var(--ground);
+  font: 700 var(--size-label)/52px var(--font-display);
+}
+.events .event-name {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.events .pin-mark {
+  flex: none;
+  display: block;
+}
+.events .pin-mark polygon { fill: var(--yellow); }
+
 .events .event-when {
   overflow: hidden;
   text-overflow: ellipsis;

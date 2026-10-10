@@ -18,6 +18,9 @@ Open Calendar filters in the sidebar, click the plus button and fill in the form
   the check script show it beside each event the rule hides.
 - Action: Hide takes the matching events off the screen. Always show keeps them
   on, even when a Hide rule matches them. Hide is picked to start with.
+- Pin to page one: only an Always show rule has it. Off to start with. On puts
+  the events the rule matches first on page one of the Events panel, even when
+  they are not one of the next 8. See "Pinning an event" below.
 - Title words: optional, up to 5 words of up to 30 characters each. An event
   matches when its title has any one of them in it, capitals ignored. A word can
   be part of a longer word, so Kick matches Kickoff.
@@ -54,6 +57,28 @@ Studio will not publish one with none, because it would match every event.
 
 The Events panel and the Next event tile both use the list after the rules.
 
+## Pinning an event
+
+The Events panel has two pages that come one after the other. Page one shows the
+next 4 events and page two the 4 after them. An event that is later than the
+eighth is on neither page yet. An Always show rule with Pin to page one on puts
+its events on page one anyway.
+
+- A pinned event is first on page one and has a small pin after its title. The
+  pinned events are in date order among themselves. The other places on page one
+  fill with the next events by date, as before. A pin takes a place from the 8,
+  so page two starts one event later for each pin.
+- At most three events are pinned. If more match, the three that start first are
+  pinned. The rest are ordinary events and show only when they are among the
+  next 8.
+- A pin needs an Always show rule that is on and has not passed its Hide after
+  time. Pin to page one on a Hide rule does nothing.
+- A pinned event is first on page one whatever the kind of its calendar, also
+  when Group events by kind is on (docs/editing-content.md, "The two pages of the
+  Events panel").
+- The screen reads each calendar 60 days ahead, so an event that is further off
+  than that cannot be pinned yet.
+
 ## Examples
 
 Each one is a rule with the fields that are listed. The rest stay empty.
@@ -67,6 +92,8 @@ Each one is a rule with the fields that are listed. The rest stay empty.
 - Hide Pre-Season in one calendar only: Action Hide, Title words Pre-Season,
   Calendar group. The same title in another calendar stays.
 - Hide everything on one day: Action Hide, From date and To date both that day.
+- Keep Kickoff at the top of page one while it is weeks away: Action Always show,
+  Pin to page one on, Title words Kickoff.
 
 While the TV shows sample content it uses the two example rules in
 `dashboard/data/sample/content.json`, not the ones in Studio.
@@ -86,17 +113,31 @@ The Mini has no Node, unless a coach installed it for the Calendars page.
     deploy/scripts/check-calendars.sh
 
 It prints a line for each event, SHOWN or HIDDEN, and for a hidden one the name of
-the rule that hid it. It reads the published rules from Sanity the way the TV
-does. It names each calendar by its code and never prints a link. The lines are
-explained in docs/rebuilding-the-mini.md, "Adding or changing a calendar".
+the rule that hid it. A SHOWN line also says where the event is on the Events
+panel and the kind of its calendar, after the time and before the title:
+
+    SHOWN   group  FRI APR 2  6:30 PM  page 1 pinned · Meetings  Kickoff
+
+The place is page 1, page 1 pinned, page 2, later (the event shows, but it is not
+among the first 8 yet) or no page (the calendar has no row in Dashboard Settings,
+Calendars, or its row is switched off). The place counts all the calendars
+together, so the script downloads every calendar before it checks any. It reads
+the published rules from Sanity the way the TV does. It names each calendar by its
+code and never prints a link. The lines are explained in
+docs/rebuilding-the-mini.md, "Adding or changing a calendar".
 
 ## Where the code is
 
 - `studio/schemas/calendarFilter.js`: the fields and the check that a rule has a
   condition.
-- `dashboard/core/events.js`: `ruleMatches` and `hidingRule`. `mergeEvents` uses
-  them on the BAND events.
+- `dashboard/core/events.js`: `ruleMatches`, `hidingRule` and `forcingRule`.
+  `mergeEvents` uses `hidingRule` on the BAND events.
+- `dashboard/core/event-pages.js`: which events are on page one and page two,
+  and which are pinned. In the code a pinned event is called forced, as the field
+  is in Studio.
 - `dashboard/core/sanity.js`: reads the rules with the rest of the content.
 - `deploy/scripts/calendar-status.mjs`: judges the next events with the same code
   and the published rules, for the Calendars page.
 - `tools/test-calendar.mjs`: the tests, run with `node tools/test-calendar.mjs`.
+- `tools/test-event-pages.mjs`: the tests for the two pages, the kinds and the
+  pins.

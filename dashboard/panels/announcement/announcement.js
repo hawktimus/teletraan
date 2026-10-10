@@ -5,7 +5,7 @@ import * as frame from '../../frame.js';
 import { frameMarkup, rowBarMarkup } from '../../core/plate.js';
 import { escapeHtml } from '../../core/text.js';
 import { logoMarkup } from '../../core/logo.js';
-import { teamShown } from '../../core/teams.js';
+import { teamShown, trimNow } from '../../core/teams.js';
 
 const fallback = { text: 'WHAT TIME IS IT?', phase: 'title' };
 
@@ -83,7 +83,7 @@ export function mount(host, content) {
 
   host.innerHTML = `
     <section class="panel announcement ${info.phase}" data-sequence="announce">
-      ${frameMarkup()}
+      ${frameMarkup({ corner: trimNow().corner })}
       <div class="scan-clip" style="width: 1920px; height: 1080px;">
         <div class="scan" data-part="scan" style="height: 1080px; --sweep: 1920px;"></div>
       </div>

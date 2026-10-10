@@ -42,6 +42,13 @@ In calm and none motion nothing moves. The logo stays the still emblem, and a
 logo asked to fly shows the hawk still, with its wings up. In the flat finish
 (`?finish=flat`) the outline is one plain colour and the shadow is gone.
 
+A team can idle in that pose. The Bird pose field of the team (Teams, Trim, Flight) puts the class
+`pose-flight` on the page, and `trim.css` shows the hawk with its wings up and hides the emblem while the
+logo is at rest, in the entrance and in the spin. The acts of the flying hawk are not touched, and the
+logo goes back to the pose when one ends. The pose is the one in `frame.css` for a logo asked to fly in
+calm motion. Auto, which Prime has, is the still emblem described above. docs/layouts.md, "Team trim",
+has the rest of the trim.
+
 ## The logo settings
 
 The Look tab of Dashboard Settings has all of this, after Style and Team mode.

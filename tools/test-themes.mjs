@@ -938,6 +938,9 @@ function propertiesOf(team) {
   };
 }
 
+// The classes the page has with Nova on it: the mirror, and the eight trim classes that are not Prime's (teamTrim in config.js)
+const novaClasses = 'accent-neon bolts-round corner-cut-tr grid-dots header-slant mirrored name-outline pose-flight ticker-bar';
+
 // The properties the page has with a team on it: the seven colors, and the initials for the plate ids, in
 // quotes as content needs them
 function onThePage(team) {
@@ -969,7 +972,7 @@ async function onTeamPage(run) {
   }
 }
 
-test('the screen starts on the team the settings ask for, at once: the seven colors are on the html element, and only Nova has the mirror class', async () => {
+test('the screen starts on the team the settings ask for, at once: the seven colors are on the html element, and only Nova has the mirror class and the trim classes', async () => {
   const names = ['--team-primary', '--team-plate', '--team-accent', '--team-neon', '--team-pink', '--team-background', '--team-text'];
 
   await onTeamPage(async world => {
@@ -991,7 +994,7 @@ test('the screen starts on the team the settings ask for, at once: the seven col
       '--team-primary': '#1F7AE0', '--team-plate': '#1E3A6E', '--team-accent': '#9BF0FF', '--team-neon': '#FF2E8C',
       '--team-pink': '#35F0FF', '--team-background': '#060D1A', '--team-text': '#FFFFFF', '--team-initials': '"HN"',
     });
-    assert.equal(world.classes(), 'mirrored');
+    assert.equal(world.classes(), novaClasses);
   });
 });
 
@@ -1071,7 +1074,7 @@ test('Alternate keeps the team for its minutes, then asks for the other one, and
     assert.equal(currentTeam().code, second.code);
     assert.equal(teamPending(), false);
     assert.deepEqual(world.root.properties, onThePage(second));
-    assert.equal(world.classes(), second.mirror ? 'mirrored' : '');
+    assert.equal(world.classes(), second.mirror ? novaClasses : '');
     assert.equal(world.told, toldAtStart + 2);
 
     // and when nothing is waiting a page change changes nothing
@@ -1178,13 +1181,13 @@ test('a problem putting the team on the page never stops the page change that as
 
 test('the page calls changeTeamNow in the same two moments as it calls changeThemeNow, and the screen runs the team once a second', () => {
   const areas = fs.readFileSync(path.join(dashboardFolder, 'core/areas.js'), 'utf8');
-  assert.ok(areas.includes("import { changeTeamNow } from './teams.js';"));
+  assert.ok(areas.includes("import { changeTeamNow, trimNow } from './teams.js';"));
   assert.ok(/await frame\.leave\(area, change\);(?:\n[^\n]*){0,5}\n\s*if \(region === themeRegion\) changeThemeNow\(\);\n\s*if \(region === themeRegion\) changeTeamNow\(\);/.test(areas), 'after the old page has left, beside the theme');
   assert.ok(/host\.appendChild\(next\.element\);\n\s*if \(region === themeRegion\) changeThemeNow\(\);\n\s*if \(region === themeRegion\) changeTeamNow\(\);/.test(areas), 'in the moment a hidden transition has the screen apart, beside the theme');
   assert.equal(areas.split('changeTeamNow()').length - 1, 2);
 
   const shell = fs.readFileSync(path.join(dashboardFolder, 'shell.js'), 'utf8');
-  assert.ok(shell.includes("import { askForTeam, changeTeamNow, onTeamChange, useTeams } from './core/teams.js';"));
+  assert.ok(shell.includes("import { askForTeam, changeTeamNow, currentTeam, frameTrim, onTeamChange, recordTrim, trimNow, useTeams } from './core/teams.js';"));
   assert.ok(/showThemeNow\(\);[^\n]*\n\s*changeTeamNow\(\);/.test(shell), 'the first real content has its team on at once, as it has its theme');
   assert.ok(shell.indexOf('chooseTeam(); //') !== -1 && shell.indexOf('chooseTeam(); //') < shell.indexOf('content.events = mergedEvents();'), 'the team is chosen before the events are merged');
   assert.ok(/onTeamChange\(\(\) => \{\s*if \(content && !choosingTeam\) rebuild\(\);\s*\}\);/.test(shell), 'a change of team redraws the banner, and does not start a second redraw from inside one');

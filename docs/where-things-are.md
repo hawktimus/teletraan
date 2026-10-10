@@ -79,6 +79,10 @@ editors can sign in from anywhere.
       tokens.css              the two metals, the screws, sizes and timings
       teams.css               the seven team colors, started at the Prime values, and the four colors the
                               theme Hawktimus takes from them (core/teams.js sets them on the html element)
+      trim.css                the rules for the eight trim choices of a team (round bolts, the other corners cut on
+                              the cards, dots on the page, the bird in flight, the outlined name, the bar at the
+                              start of the ticker and the neon countdown), each for a class that core/teams.js
+                              puts on the html element (docs/layouts.md, "Team trim")
       themes/                 one CSS file of colour variables per theme, and registry.js listing them.
                               overlays/ has the seasonal packs' colours the same way (the overlays),
                               and required.js lists the variables a theme must set.
@@ -141,6 +145,8 @@ editors can sign in from anywhere.
                               look.js turns the Polish setting (polished, flat or plain) into the page
                               switches the stylesheets read (data-finish, data-glint and data-look),
                               events.js filters and sorts the BAND events, and writes the dates of an event,
+                              event-pages.js splits those events into the two pages of the Events panel,
+                              with the kind of each and the pinned ones first (docs/calendar-filters.md),
                               connection.js decides why Sanity could not be read and writes the
                               connection status text at the bottom right, device.js reads the Mini's
                               name and addresses (data/live/device.json) for the red version of it
@@ -171,6 +177,10 @@ editors can sign in from anywhere.
                               pack on the screen for 2 minutes, and preview-run.js starts it. What it holds is
                               kept by previewStyle in style.js, previewTeam in teams.js and previewPack in
                               theme.js (docs/hidden-transitions.md, "Preview a look"),
+                              look-rotation.js decides which look comes next (the style of the day, the
+                              order of the teams, their Monday cards and the Next look now guard), and
+                              look-rotation-run.js plays the three swaps and keeps the pass in localStorage
+                              (docs/layouts.md, "The look rotation"),
                               tick.js is the one clock of the screen: it tells every panel when a real
                               second starts by reading the time, not by counting, so the digits never
                               drift, and a panel should write to the page only what has changed
@@ -202,7 +212,8 @@ editors can sign in from anywhere.
                               Calendar filters (docs/calendar-filters.md), presentationDay.js the Meeting
                               days, presentation.js the booked talks and settingsPresentations.js the
                               Presentations tab of Dashboard Settings (docs/presentations.md). team.js is the
-                              Teams list and settingsTeams.js the team fields of the Look tab. status.js is the
+                              Teams list and settingsTeams.js the team fields of the Look tab, which are hidden now. settingsLook.js is
+                              Styles by day, Monday style, Team order and How the look changes. status.js is the
                               document the Mini writes (the status block, settingsStatus.js and status-input.js), and calendarStatus.js
                               the one it writes for the Calendars page. time-text.js has the ages in words that
                               both use. settingsRotation.js is the Panels
@@ -220,8 +231,9 @@ editors can sign in from anywhere.
                               scripts/calendar-status.sh makes the document for the Calendars page from it,
                               and lists the next events when Node is installed, with calendar-status.mjs
                               (docs/calendars-page.md).
-                              scripts/check-calendars.sh lists the events of each calendar in local.env and
-                              says which ones the Calendar filters hide. It needs Node, so it runs on a
+                              scripts/check-calendars.sh lists the events of each calendar in local.env,
+                              says which ones the Calendar filters hide, and for the others which page of
+                              the Events panel they are on and their kind. It needs Node, so it runs on a
                               computer that has it, not on the Mini. check-calendars.mjs is the part of it
                               that runs the dashboard's own calendar code.
                               scripts/slides-sync.sh downloads the slides of the coming talks and turns them
@@ -256,7 +268,8 @@ editors can sign in from anywhere.
                               show for which team in every panel, and the Teams settings
       test-themes.mjs         checks for which theme and overlay apply, for putting them on the page, for the
                               ticker prefix, banner line and corner art that a seasonal pack rule can carry, and
-                              for putting the team on the page: its seven colors, its initials and the mirror class
+                              for putting the team on the page: its seven colors, its initials, the mirror class
+                              and the classes of its trim
       test-layouts.mjs        checks for the layouts: which layout a theme and a style have, the numbers of the
                               sidebar and bar layouts, the mirror, that the screen is always 1920 x 1080,
                               the reload that changes layout and that it cannot loop, that the scheduler leaves
@@ -293,6 +306,9 @@ editors can sign in from anywhere.
       test-install-calendars.mjs  checks for deploy/scripts/install-calendars.sh: that it stops before it changes
                               anything, and that it installs the calendar units only
       test-calendars-script.mjs  checks for deploy/scripts/check-calendars.sh, with a fake curl
+      test-event-pages.mjs    checks for the two pages of the Events panel (core/event-pages.js): four events
+                              to a page, no second page for four or fewer, the kind chips, Group events by
+                              kind, the pinned events, and the step for each page in the rotation
       test-status-write.mjs   checks for deploy/scripts/status-write.sh, with a fake curl, that the services and
                               kiosk.sh run it, and that the dashboard never reads the status document
       test-calendar-status.mjs  checks for what the Mini writes for the Calendars page: the sync file of
@@ -306,6 +322,9 @@ editors can sign in from anywhere.
       test-minimal.mjs        checks for Minimal on the bar layout: what the order gives it, what it must not have
                               (stamped ids, hazard stripes, scanlines, slashes, conduit, brackets), and the list of
                               what it shares with Cybertron
+      test-team-trim.mjs      checks for the trim of a team: both teams of the sample content on a fake page, the
+                              classes of every field, the frames with the other corners cut and the slanted tab
+                              (the Prime frame turned across, the 60 degree line, the pieces), and the rules of trim.css
       test-pile.mjs           checks for the end of the hidden transitions: the plan of the fall, the pile and the
                               lift (at most 40 pieces, 5 seconds, every piece back in its place), the stylesheet
                               that moves them, the cube, and the script that finds the pieces on a fake page
@@ -314,6 +333,10 @@ editors can sign in from anywhere.
       test-presentation-mouse.mjs  checks for the mouse in presentation mode: what each button does, the second
                               click of a double click, a click on the card that says the slides are not ready,
                               the context menu, the hidden cursor, and the rotation that starts again
+      test-look-rotation.mjs  checks for the look rotation (core/look-rotation.js): the style of the day, the
+                              order of the passes in a cycle, the boundary rule, a restart, one look holding,
+                              empty lists, the Next look now guard, and the question schedule.js asks at the
+                              end of every pass
       test-console.mjs        checks for the boot and shutdown drawings (plain 7 bit text, the size, the
                               symmetry of the figure, the same text in the sample content), for
                               install-console.sh in a fake root (it stops before it changes anything, keeps the
@@ -639,16 +662,19 @@ alone.
   the sizes.
 - **The teams, and the team on the screen.** Teams in the Studio sidebar, under Settings
   (`studio/schemas/team.js`): a name, a short name, a number, a code, an optional logo, seven
-  colors, Mirror the layout, Active and Order. The two starting teams are in
+  colors, Mirror the layout, the eight trim choices (bolts, cut corners, header end, page grid,
+  bird pose, team name look, ticker label and countdown color), Active and Order. The two starting teams are in
   `docs/seed/teams.ndjson`, and the command to import them is in docs/add-the-nova-team.md.
   Dashboard Settings, Look tab: Team mode (`teamMode`, Prime only to start with, from
   `teamModes`) and Minutes for each team (`alternateMinutes`, 5 to start with, 1 to 30), in
-  `studio/schemas/settingsTeams.js`, so the whole section can be removed by deleting that file. The
-  starting values, the limits and the built-in Prime team (`primeTeam`, which the screen uses
+  `studio/schemas/settingsTeams.js`, so the whole section can be removed by deleting that file. Both
+  are hidden now, and the screen uses them only when Team order is empty (docs/layouts.md, "The look
+  rotation"). The starting values, the limits and the built-in Prime team (`primeTeam`, which the screen uses
   when the Studio has no teams) are in `dashboard/config.js`. `teamsFrom` in `core/sanity.js`
   cleans the documents, `core/teams.js` chooses the team (`chooseTeam`) and puts it on the page
   (`applyTeamLook`), and `core/areas.js` calls `changeTeamNow` while the large frame is apart, so
-  a swap never happens in the middle of a panel. `teams.css` has the starting colors. Try one
+  a swap never happens in the middle of a panel. `teams.css` has the starting colors, and `trim.css` and
+  the frames in `core/plate.js` have the trim. Try one
   with `?team=prime|nova|alternate`, or with the Preview Prime and Preview Nova buttons.
 - **Which team an item is for.** The Team field of a task, plan, subteam, person, sponsor, talk,
   meeting day, extra panel and tip or news line (`teamField` in
@@ -739,12 +765,15 @@ exception is `test-slides-script.mjs`, which needs `jq`.
     node tools/test-slides-script.mjs
     node tools/test-install-calendars.mjs
     node tools/test-calendars-script.mjs
+    node tools/test-event-pages.mjs
     node tools/test-status-write.mjs
     node tools/test-cybertron.mjs
     node tools/test-minimal.mjs
+    node tools/test-team-trim.mjs
     node tools/test-pile.mjs
     node tools/test-person-rows.mjs
     node tools/test-presentation-mouse.mjs
+    node tools/test-look-rotation.mjs
     node tools/test-console.mjs
     node tools/test-calendar-status.mjs
     node tools/test-calendars-view.mjs

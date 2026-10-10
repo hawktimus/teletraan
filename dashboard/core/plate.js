@@ -45,6 +45,13 @@
 // and when a style with other frames goes on later the frames are drawn again
 // (core/areas.js, redrawFrames). frameKind() gives the name of the frame for a style.
 //
+// Every frame here is the one Prime has: the top left and bottom right corners cut, and the
+// header tab ended the way each frame has always ended it. A team can have the other two corners
+// cut and a tab with one 60 degree slant (the Cut corners and Header end fields of the team, "Team
+// trim" in docs/layouts.md). Such a frame is made from the Prime one the first time a page asks for it,
+// and its name is the Prime name with -tr for the other corners and -slant for the slanted tab, in
+// that order (grid1-tr-slant). frameKind() gives the name for a style and a trim.
+//
 // There are three ways to get a frame. areaMarkup() is the frame of an area
 // that stays on screen while its pages change (the large panel, the small
 // panel, the ticker of Cybertron, and the main panel and the ticker of the bar
@@ -231,10 +238,141 @@ export function rivetsOf(points) {
 }
 
 // Each half of a frame carries the rivets of its own edges, so they lift with it
-[grid1, grid2, countdown].forEach(shape => {
+function giveRivets(shape) {
   const half = halves(shape);
   shape.rivets = { a: rivetsOf(half.a), b: rivetsOf(half.b) };
-});
+}
+
+[grid1, grid2, countdown].forEach(giveRivets);
+
+
+// The frames of a team's trim
+
+// One slant of 60 degrees in place of the line that ends a header tab. The line is a list of points from the
+// top of the header down. The slant starts where the line starts, and leans the way the tabs of the bar frames do
+const slantDegrees = 60;
+
+function slantOf(line) {
+  const top = line[0];
+  const bottom = line[line.length - 1];
+  return [top, [tenth(top[0] - (bottom[1] - top[1]) / Math.tan(slantDegrees * Math.PI / 180)), bottom[1]]];
+}
+
+// The lines of a Prime frame, and how far its cut corners reach along each edge. The outline of these frames
+// starts at the foot of the bottom left corner, has the cut corner at the top left in its second and third points,
+// and has the top right corner, which is square, third from the end
+function boxOf(prime) {
+  const corner = prime.outline[prime.outline.length - 3];
+
+  return {
+    left: prime.outline[0][0],
+    bottom: prime.outline[0][1],
+    top: corner[1],
+    right: corner[0],
+    cutX: prime.outline[2][0] - prime.outline[0][0],
+    cutY: prime.outline[1][1] - corner[1],
+  };
+}
+
+// The outline of a frame with the top right and bottom left corners cut, clockwise from the foot of the bottom left
+// cut, and the screws on the ends of the two cuts, the way the Prime frames have them
+function otherCorners(box) {
+  const { left, top, right, bottom, cutX, cutY } = box;
+
+  return {
+    outline: [[left + cutX, bottom], [left, bottom - cutY], [left, top], [right - cutX, top], [right, top + cutY], [right, bottom]],
+    split: 3,
+    screws: { a: [[left + cutX, bottom], [left, bottom - cutY]], b: [[right - cutX, top], [right, top + cutY]] },
+    idFoot: [right - cutX, bottom], // the foot of the cut corner that the stamped id stands by
+  };
+}
+
+// The large or the small frame with the top right and bottom left corners cut in place of the top left and
+// bottom right (corner is 'tr'), and with a slanted tab in place of the notch (notch is 'slant'). The sizes are
+// worked out from the Prime frame given, so the cut corners and the header are the ones written there
+function trimmedFrame(prime, corner, notch) {
+  const box = boxOf(prime);
+  const { left, top, right, bottom, cutX, cutY } = box;
+  const header = prime.body[0][1];
+  const tabEnd = notch === 'slant' ? slantOf(prime.seams[1]) : prime.seams[1];
+  const cutTopRight = corner === 'tr';
+
+  const shape = Object.assign({}, prime, {
+    headerLeft: [cutTopRight ? [left, top] : prime.outline[2]].concat(tabEnd, [[left, header]], cutTopRight ? [] : [prime.outline[1]]),
+    headerRight: [tabEnd[0]].concat(cutTopRight ? [[right - cutX, top], [right, top + cutY]] : [[right, top]], [[right, header]], tabEnd.slice(1).reverse()),
+    seams: [prime.seams[0], tabEnd],
+  });
+  if (cutTopRight) {
+    Object.assign(shape, otherCorners(box), {
+      body: [[left, header], [right, header], [right, bottom], [left + cutX, bottom], [left, bottom - cutY]],
+    });
+  }
+
+  shape.pieces = trimmedPieces(prime, shape, box, header);
+  giveRivets(shape);
+  return shape;
+}
+
+// The pieces of the frame for the mechanical page change: the list of the Prime frame, in the same order. The
+// header plates and the line of the notch follow the shape. With the other corners cut, so do the plates of the
+// body and the four pieces that hold a corner. A piece keeps the name of the place it holds, so the piece called
+// corner-top-left is the top left corner even when it is square, and frame.css moves it as it always has. The
+// screws are in the pieces that hold the corners that are cut
+function trimmedPieces(prime, shape, box, header) {
+  const { left, top, right, bottom, cutX, cutY } = box;
+  const lineOf = name => prime.pieces.find(piece => piece.name === name).line;
+  const bodyLeft = prime.pieces.find(piece => piece.name === 'plate-body-left');
+  const middle = bodyLeft ? bodyLeft.points[1][0] : 0;
+  const leftFrom = lineOf('corner-top-left')[0][1];
+  const topTo = lineOf('corner-top-left')[3][0];
+  const tabAt = lineOf('edge-top-left')[1][0];
+  const rightFrom = lineOf('edge-right')[0][1];
+  const rightTo = lineOf('edge-right')[1][1];
+  const bottomFrom = lineOf('edge-bottom')[0][0];
+  const bottomTo = lineOf('edge-bottom')[1][0];
+
+  const changed = {
+    'plate-header-left': { points: shape.headerLeft },
+    'plate-header-right': { points: shape.headerRight },
+    'seam-notch': { line: shape.seams[1] },
+  };
+  const swapped = shape.outline === prime.outline ? {} : {
+    'plate-body': { name: 'plate-body', fill: 'body', points: shape.body },
+    'plate-body-left': { name: 'plate-body-left', fill: 'body', points: [[left, header], [middle, header], [middle, bottom], [left + cutX, bottom], [left, bottom - cutY]] },
+    'plate-body-right': { name: 'plate-body-right', fill: 'body', points: [[middle, header], [right, header], [right, bottom], [middle, bottom]] },
+    'edge-top-right': { name: 'edge-top-right', line: [[tabAt, top], [right - cutX, top], [right, top + cutY], [right, rightFrom]], screws: 'b' },
+    'edge-bottom-left': { name: 'edge-bottom-left', line: [[left, leftFrom], [left, bottom - cutY], [left + cutX, bottom], [bottomFrom, bottom]], screws: 'a' },
+    'corner-top-left': { name: 'corner-top-left', line: [[left, leftFrom], [left, top], [topTo, top]] },
+    'corner-bottom-right': { name: 'corner-bottom-right', line: [[right, rightTo], [right, bottom], [bottomTo, bottom]] },
+  };
+
+  return prime.pieces.map(piece => swapped[piece.name] || (changed[piece.name] ? Object.assign({}, piece, changed[piece.name]) : piece));
+}
+
+// The countdown with the top right and bottom left corners cut. The teeth of its jaw are the Prime teeth turned
+// across the frame, so the last tooth is as clear of the screw at the top right as the first one is of the screw
+// at the top left
+function trimmedCountdown(prime) {
+  const box = boxOf(prime);
+  const { left, top, right, bottom, cutX, cutY } = box;
+  const jaw = prime.outline.slice(2, prime.outline.length - 2).map(point => [left + right - point[0], point[1]]).reverse();
+  const outline = [[left + cutX, bottom], [left, bottom - cutY]].concat(jaw, [[right, top + cutY], [right, bottom]]);
+
+  const shape = Object.assign({}, prime, {
+    body: [[left, top], [right - cutX, top], [right, top + cutY], [right, bottom], [left + cutX, bottom], [left, bottom - cutY]],
+    outline: outline,
+    split: outline.length - 3, // the top right corner, where the jaw ends
+    screws: { a: [[left + cutX, bottom]], b: [[right - cutX, top]] },
+    idFoot: [right - cutX, bottom],
+  });
+  giveRivets(shape);
+  return shape;
+}
+
+// The frame of the full screen alert and announcement with the top right and bottom left corners cut
+function trimmedScreenFrame(prime) {
+  return Object.assign({}, prime, otherCorners(boxOf(prime)));
+}
 
 // True when the point is on the line, which goes through the points
 function liesOn(point, line) {
@@ -262,7 +400,7 @@ function rivetsMarkup(centers, labelled, name = 'rivets') {
 // core/teams.js) and its number from the shape, and base.css writes both. Only the
 // frames of Original have one: a bar frame has no number.
 function idMarkup(shape) {
-  const foot = shape.outline[shape.outline.length - 1]; // the foot of the bottom right cut corner
+  const foot = shape.idFoot || shape.outline[shape.outline.length - 1]; // the foot of the bottom right cut corner
   const left = foot[0] - 34 - idWidth;
   const top = foot[1] - 14 - idHeight;
 
@@ -392,21 +530,24 @@ function tickPath(from, to, y) {
 // the left edge just above the step, bulging into the frame, and one on the bottom edge
 // just before the cut corner, bulging up. span is how long an arc is along its edge. The
 // anchor is a point on the edge, which is how a piece of the page change finds its own.
-function wearOf(outline, span) {
+// A frame with the top right and bottom left corners cut (turned is true) has them the other
+// way round: one on the right edge above the step, and one on the bottom edge after the cut
+function wearOf(outline, span, turned) {
   const bulge = Math.round(span / 3);
-  const edge = outline[0];
+  const side = turned ? -1 : 1; // which way the arc on the edge bulges
+  const edge = outline[turned ? 7 : 0];
   const end = edge[1] - 8;
   const start = end - span;
   const across = tenth((start + end) / 2);
 
-  const foot = outline[7];
-  const last = foot[0] - 36; // clear of the bolt at the foot of the cut corner
-  const first = last - span;
+  const foot = outline[turned ? 0 : 7];
+  const first = turned ? foot[0] + 36 : foot[0] - 36 - span; // clear of the bolt at the foot of the cut corner
+  const last = first + span;
   const along = tenth((first + last) / 2);
   const line = foot[1] - 2;
 
   return [
-    { anchor: [edge[0], across], arc: `M${edge[0] + 2} ${start}Q${edge[0] + 2 + 2 * bulge} ${across} ${edge[0] + 2} ${end}`, smudge: [edge[0] + 8, across] },
+    { anchor: [edge[0], across], arc: `M${edge[0] + 2 * side} ${start}Q${edge[0] + side * (2 + 2 * bulge)} ${across} ${edge[0] + 2 * side} ${end}`, smudge: [edge[0] + 8 * side, across] },
     { anchor: [along, foot[1]], arc: `M${first} ${line}Q${along} ${line - 2 * bulge} ${last} ${line}`, smudge: [along, foot[1] - 8] },
   ];
 }
@@ -433,6 +574,10 @@ function wearOf(outline, span) {
 //   weld            the x of a vertical weld seam under the header
 //   rivets          true for a row of rivets along every long straight edge
 //   wear            the length of the arcs of rust at the two bottom corners
+//   corner          'tr' for the top right and bottom left corners cut, with the steps at the top left and
+//                   the bottom right: the frame turned across, the way the team trim has it (the Cut
+//                   corners field of a team). Its outline has the same ten points in another order
+//   slant           true for a header tab that ends in one slant of 60 degrees
 export function makeBarShape(options) {
   const left = 4;
   const top = 4;
@@ -441,8 +586,20 @@ export function makeBarShape(options) {
   const chamfer = options.chamfer;
   const step = options.step;
   const run = options.run;
+  const turned = options.corner === 'tr';
 
-  const outline = [
+  const outline = turned ? [
+    [left + chamfer, bottom],
+    [left, bottom - chamfer],
+    [left, top + step],
+    [left + run - step, top + step],
+    [left + run, top],
+    [right - chamfer, top],
+    [right, top + chamfer],
+    [right, bottom - step],
+    [right - run + step, bottom - step],
+    [right - run, bottom],
+  ] : [
     [left, bottom - step],
     [left, top + chamfer],
     [left + chamfer, top],
@@ -457,10 +614,15 @@ export function makeBarShape(options) {
   const split = 5;
   const inner = offsetOutline(outline, barNeonInset);
 
+  // The numbers in this function are the places in the outline with the top left and bottom right corners cut,
+  // which are the points 0 to 9 in the notes at the top of "The frames of the bar layout". at() is the place of
+  // the same point in the frame that is turned across: what is point 7 there is point 0 here, and point 1 is 6
+  const at = index => (turned ? (17 - index) % 10 : index);
+
   // Bolts are shared out between the halves like screws. The one on point 0 is where
   // the halves meet, and goes with the second half so each has the same number
   const bolts = { a: [], b: [] };
-  options.bolts.forEach(index => bolts[index === 0 || index > split ? 'b' : 'a'].push(outline[index]));
+  options.bolts.forEach(index => bolts[at(index) === 0 || at(index) > split ? 'b' : 'a'].push(outline[at(index)]));
 
   const shape = {
     width: options.width,
@@ -479,10 +641,17 @@ export function makeBarShape(options) {
   const conduit = [];
   if (options.header) {
     const header = options.header;
-    shape.tab = [outline[1], outline[2], [header.tabTop, top], [header.tabBottom, header.bottom], [left, header.bottom]];
+    const tabBottom = options.slant ? tenth(header.tabTop - (header.bottom - top) / Math.tan(slantDegrees * Math.PI / 180)) : header.tabBottom;
+    shape.tab = turned ?
+      [outline[2], outline[3], outline[4], [header.tabTop, top], [tabBottom, header.bottom], [left, header.bottom]] :
+      [outline[1], outline[2], [header.tabTop, top], [tabBottom, header.bottom], [left, header.bottom]];
     shape.headerLeft = shape.tab;
-    shape.headerRight = [[header.tabBottom, header.bottom], [header.tabTop, top], outline[3], outline[4], outline[5], [right, header.bottom]];
-    shape.body = [[left, header.bottom], [right, header.bottom], outline[6], outline[7], outline[8], outline[9], outline[0]];
+    shape.headerRight = turned ?
+      [[tabBottom, header.bottom], [header.tabTop, top], outline[5], outline[6], [right, header.bottom]] :
+      [[tabBottom, header.bottom], [header.tabTop, top], outline[3], outline[4], outline[5], [right, header.bottom]];
+    shape.body = turned ?
+      [[left, header.bottom], [right, header.bottom], outline[7], outline[8], outline[9], outline[0], outline[1]] :
+      [[left, header.bottom], [right, header.bottom], outline[6], outline[7], outline[8], outline[9], outline[0]];
 
     if (options.hazard) {
       shape.art.hazard = hazardPath(left + barNeonInset, right - barNeonInset, header.bottom, header.bottom + hazardHeight);
@@ -491,19 +660,21 @@ export function makeBarShape(options) {
     if (options.headerLine) {
       // the ticks start 60 past the slanted end of the tab and stop 20 short of the end of the line
       shape.art.headerLine = pathData([[[left + barNeonInset, header.bottom], [right - barNeonInset, header.bottom]]]);
-      shape.art.ticks = tickPath(header.tabBottom + 60, right - barNeonInset - 20, header.bottom - 2);
+      shape.art.ticks = tickPath(tabBottom + 60, right - barNeonInset - 20, header.bottom - 2);
     }
   } else {
     shape.body = outline;
   }
 
   if (options.conduit) {
-    conduit.push([1, 2, 3].map(index => offsetPoint(outline, outline[index], barConduitInset)));
-    conduit.push([6, 7, 8].map(index => offsetPoint(outline, outline[index], barConduitInset)));
+    conduit.push([1, 2, 3].map(index => offsetPoint(outline, outline[at(index)], barConduitInset)));
+    conduit.push([6, 7, 8].map(index => offsetPoint(outline, outline[at(index)], barConduitInset)));
   }
   shape.art.conduit = pathData(conduit);
 
-  if (options.slashes) shape.art.slashes = slashPath(outline[7][0] - 12 - ((slashCount - 1) * slashPitch + slashSlant + slashWidth), bottom - barConduitInset - 6);
+  // The row of slashes ends 12 short of the foot of the cut corner at the bottom, or starts 12 past it
+  const slashRow = (slashCount - 1) * slashPitch + slashSlant + slashWidth;
+  if (options.slashes) shape.art.slashes = slashPath(turned ? outline[0][0] + 12 : outline[7][0] - 12 - slashRow, bottom - barConduitInset - 6);
   if (options.seams) shape.art.seams = pathData(options.seams.map(y => [[left + barNeonInset, y], [right - barNeonInset, y]]));
 
   if (options.weld) {
@@ -517,24 +688,25 @@ export function makeBarShape(options) {
     const half = halves(shape);
     shape.rivets = { a: rivetsOf(half.a), b: rivetsOf(half.b) };
   }
-  if (options.wear) shape.wear = wearOf(outline, options.wear);
+  if (options.wear) shape.wear = wearOf(outline, options.wear, turned);
 
-  // The brackets stand outside the two cut corners
+  // The brackets stand outside the two cut corners. Along the top and the bottom they reach toward the middle
   shape.bracketLines = [];
   if (options.legs) {
-    const out = index => offsetPoint(outline, outline[index], -barBracketOutset);
+    const out = index => offsetPoint(outline, outline[at(index)], -barBracketOutset);
+    const toward = turned ? -1 : 1;
     const down = out(1);
     const across = out(2);
     const up = out(6);
     const back = out(7);
     shape.bracketLines = [
-      [[down[0], tenth(down[1] + options.legs[0])], down, across, [tenth(across[0] + options.legs[1]), across[1]]],
-      [[up[0], tenth(up[1] - options.legs[0])], up, back, [tenth(back[0] - options.legs[1]), back[1]]],
+      [[down[0], tenth(down[1] + options.legs[0])], down, across, [tenth(across[0] + toward * options.legs[1]), across[1]]],
+      [[up[0], tenth(up[1] - options.legs[0])], up, back, [tenth(back[0] - toward * options.legs[1]), back[1]]],
     ];
     shape.art.brackets = pathData(shape.bracketLines);
   }
 
-  if (options.pieces) shape.pieces = barPieces(shape, options.pieces === true ? undefined : options.pieces);
+  if (options.pieces) shape.pieces = barPieces(shape, options.pieces === true ? undefined : options.pieces, turned);
   return shape;
 }
 
@@ -547,15 +719,17 @@ const barMarks = { top: [230, 750], right: [170, 520], bottom: [480, 1230], left
 // large frame's piece it stands for, so frame.css moves it the same way, and the
 // decoration is a plate of its own. A bar is a line made of points of the outline
 // (or of points on one of its edges) and has the neon line inside it, found the same
-// way, and the bolts that are on it. Each bolt is in one piece only.
-function barPieces(shape, marks = barMarks) {
+// way, and the bolts that are on it. Each bolt is in one piece only. With the top right
+// and bottom left corners cut (turned) the pieces keep the names of the places they
+// hold, so the piece called corner-top-left is the top left corner, which has the step
+function barPieces(shape, marks = barMarks, turned = false) {
   const outline = shape.outline;
   const left = 4;
   const top = 4;
   const right = shape.width - 4;
   const bottom = shape.height - 4;
   const middle = Math.round(shape.width / 2);
-  const header = shape.tab[4][1];
+  const header = shape.tab[shape.tab.length - 1][1];
 
   // A piece carries the bolts of its corners that the frame has: Minimal has four of the six
   const bolted = shape.screws.a.concat(shape.screws.b);
@@ -567,16 +741,40 @@ function barPieces(shape, marks = barMarks) {
     screws: (bolts || []).filter(has),
   });
 
+  const tab = { name: 'plate-header-left', fill: 'header-left', points: shape.headerLeft, art: () => tabMarkup(shape) };
+  const headerRight = { name: 'plate-header-right', fill: 'header-right', points: shape.headerRight };
+  const decor = { name: 'plate-decor', box: [[0, 0], [shape.width, shape.height]], art: () => decorMarkup(shape) };
+  const topLeftBar = bar('edge-top-left', [[marks.top[0], top], [marks.top[1], top]]);
+  const rightBar = bar('edge-right', [[right, marks.right[0]], [right, marks.right[1]]]);
+  const bottomBar = bar('edge-bottom', [[marks.bottom[0], bottom], [marks.bottom[1], bottom]]);
+
+  if (turned) {
+    return [
+      tab,
+      headerRight,
+      { name: 'plate-body-left', fill: 'body', points: [[left, header], [middle, header], [middle, bottom], outline[0], outline[1]] },
+      { name: 'plate-body-right', fill: 'body', points: [[middle, header], [right, header], outline[7], outline[8], outline[9], [middle, bottom]] },
+      decor,
+      topLeftBar,
+      bar('edge-top-right', [[marks.top[1], top], outline[5], outline[6], [right, marks.right[0]]], [outline[5], outline[6]]),
+      rightBar,
+      bottomBar,
+      bar('edge-bottom-left', [[left, marks.left], outline[1], outline[0], [marks.bottom[0], bottom]], [outline[1], outline[0]]),
+      bar('corner-top-left', [[left, marks.left], outline[2], outline[3], outline[4], [marks.top[0], top]], [outline[2]]),
+      bar('corner-bottom-right', [[right, marks.right[1]], outline[7], outline[8], outline[9], [marks.bottom[1], bottom]], [outline[7]]),
+    ];
+  }
+
   return [
-    { name: 'plate-header-left', fill: 'header-left', points: shape.headerLeft, art: () => tabMarkup(shape) },
-    { name: 'plate-header-right', fill: 'header-right', points: shape.headerRight },
+    tab,
+    headerRight,
     { name: 'plate-body-left', fill: 'body', points: [[left, header], [middle, header], [middle, bottom], outline[8], outline[9], outline[0]] },
     { name: 'plate-body-right', fill: 'body', points: [[middle, header], [right, header], outline[6], outline[7], [middle, bottom]] },
-    { name: 'plate-decor', box: [[0, 0], [shape.width, shape.height]], art: () => decorMarkup(shape) },
-    bar('edge-top-left', [[marks.top[0], top], [marks.top[1], top]]),
+    decor,
+    topLeftBar,
     bar('edge-top-right', [[marks.top[1], top], outline[3], outline[4], outline[5], [right, marks.right[0]]], [outline[5]]),
-    bar('edge-right', [[right, marks.right[0]], [right, marks.right[1]]]),
-    bar('edge-bottom', [[marks.bottom[0], bottom], [marks.bottom[1], bottom]]),
+    rightBar,
+    bottomBar,
     bar('edge-bottom-left', [[left, marks.left], outline[0], outline[9], outline[8], [marks.bottom[0], bottom]], [outline[0]]),
     bar('corner-top-left', [[left, marks.left], outline[1], outline[2], [marks.top[0], top]], [outline[1], outline[2]]),
     bar('corner-bottom-right', [[right, marks.right[1]], outline[6], outline[7], [marks.bottom[1], bottom]], [outline[6], outline[7]]),
@@ -591,41 +789,41 @@ function barPieces(shape, marks = barMarks) {
 // --bar-area-width), and its header is the same 116 high as the large frame's. The
 // banner and the ticker are the sizes of their regions (1856 by 160 and 1856 by 72), and
 // the ticker has no room for conduit or slashes, which would cross its text.
-const barFrames = {
-  'bar-main': makeBarShape({
+const barOptions = {
+  'bar-main': {
     width: 1427, height: 708, chamfer: 56, step: 24, run: 150,
     bolts: [1, 2, 5, 6, 7, 0], legs: [60, 70],
     header: { bottom: 120, tabTop: 664, tabBottom: 642 },
     hazard: true, seams: [264, 408, 552], conduit: true, slashes: true, pieces: true,
-  }),
-  'bar-banner': makeBarShape({
+  },
+  'bar-banner': {
     width: 1856, height: 160, chamfer: 56, step: 24, run: 150,
     bolts: [1, 2, 5, 6, 7, 0], legs: [60, 70], conduit: true, slashes: true,
-  }),
-  'bar-ticker': makeBarShape({
+  },
+  'bar-ticker': {
     width: 1856, height: 72, chamfer: 32, step: 16, run: 100,
     bolts: [2, 7], legs: [40, 50], still: true,
-  }),
+  },
 
   // The same three for Minimal: cut corners of 34 (20 on the ticker), a bolt at each of the
   // four joints, one neon line, rivets and rust at two corners. The main panel also has the
   // weld seam, 36 clear of the 1152 the pages are written for, and the line with ticks along
   // the foot of its header. None has a stamped id, and none has the hazard stripe, the
   // conduit, the slashes, the brackets or the plate seams, which are Cybertron's
-  'bar-main-minimal': makeBarShape({
+  'bar-main-minimal': {
     width: 1427, height: 708, chamfer: 34, step: 16, run: 100,
     bolts: [1, 2, 6, 7], wide: false, rivets: true, wear: 70,
     header: { bottom: 120, tabTop: 664, tabBottom: 642 },
     headerLine: true, weld: 1188, pieces: true,
-  }),
-  'bar-banner-minimal': makeBarShape({
+  },
+  'bar-banner-minimal': {
     width: 1856, height: 160, chamfer: 34, step: 16, run: 100,
     bolts: [1, 2, 6, 7], wide: false, rivets: true, wear: 56,
-  }),
-  'bar-ticker-minimal': makeBarShape({
+  },
+  'bar-ticker-minimal': {
     width: 1856, height: 72, chamfer: 20, step: 10, run: 60,
     bolts: [1, 2, 6, 7], wide: false, rivets: true, wear: 28, still: true,
-  }),
+  },
 
   // The frames of Cybertron, for the layouts of Original (core/style.js, forcedLayout). Each is
   // the size of the frame of the standard layout that it stands for, so the pages are drawn
@@ -636,43 +834,88 @@ const barFrames = {
   // steel and the neon. The banner and the ticker have the smaller cut corners. The large and
   // the small frame have all of Cybertron's decoration and the pieces of the mechanical page
   // change
-  'cybertron-grid1': makeBarShape({
+  'cybertron-grid1': {
     width: 1152, height: 708, chamfer: 56, step: 24, run: 150,
     bolts: [1, 2, 5, 6, 7, 0], legs: [60, 70],
     header: { bottom: 120, tabTop: 664, tabBottom: 642 },
     hazard: true, seams: [264, 408, 552], conduit: true, slashes: true,
     pieces: { top: [230, 750], right: [170, 520], bottom: [480, 930], left: 230 },
-  }),
-  'cybertron-grid2': makeBarShape({
+  },
+  'cybertron-grid2': {
     width: 656, height: 372, chamfer: 56, step: 24, run: 120,
     bolts: [1, 2, 5, 6, 7, 0], legs: [40, 50],
     header: { bottom: 84, tabTop: 480, tabBottom: 462 },
     hazard: true, seams: [160, 252], conduit: true, slashes: true,
     pieces: { top: [160, 480], right: [100, 240], bottom: [260, 500], left: 140 },
-  }),
-  'cybertron-banner': makeBarShape({
+  },
+  'cybertron-banner': {
     width: 1840, height: 228, chamfer: 32, step: 16, run: 100,
     bolts: [1, 2, 5, 6, 7, 0], legs: [40, 50], conduit: true,
-  }),
-  'cybertron-ticker': makeBarShape({
+  },
+  'cybertron-ticker': {
     width: 1840, height: 72, chamfer: 32, step: 16, run: 100,
     bolts: [2, 7], legs: [40, 50], still: true,
-  }),
+  },
 };
 
+const barFrames = {};
+Object.keys(barOptions).forEach(kind => {
+  barFrames[kind] = makeBarShape(barOptions[kind]);
+});
+
+Object.assign(shapes, barFrames);
+
+// The frames a team's trim asks for are made from the Prime ones, the first time they are asked for. The name of
+// one is the Prime name, then -tr for the top right and bottom left corners cut, then -slant for the tab with one
+// slant: grid1-tr, grid1-slant, grid1-tr-slant, bar-main-minimal-tr
+const trimmedShapes = {};
+
+function parseKind(kind) {
+  const found = /^(.*?)(-tr)?(-slant)?$/.exec(kind);
+  return { base: found[1], corner: found[2] ? 'tr' : 'tl', notch: found[3] ? 'slant' : 'step' };
+}
+
+function shapeFor(kind) {
+  if (shapes[kind]) return shapes[kind];
+  if (trimmedShapes[kind]) return trimmedShapes[kind];
+
+  const asked = parseKind(kind);
+  const prime = shapes[asked.base];
+  if (!prime || asked.base === kind) return undefined;
+
+  if (prime.bar) trimmedShapes[kind] = makeBarShape(Object.assign({}, barOptions[asked.base], { corner: asked.corner, slant: asked.notch === 'slant' }));
+  else if (prime.headerLeft) trimmedShapes[kind] = trimmedFrame(prime, asked.corner, asked.notch);
+  else trimmedShapes[kind] = asked.corner === 'tr' ? trimmedCountdown(prime) : prime;
+  return trimmedShapes[kind];
+}
+
+// The name of a frame for a trim, { corner, notch }: corner is 'tr' for the top right and bottom left corners cut,
+// and notch is 'slant' for the tab with one slant. Anything else is the Prime frame, whose name is the one
+// it was given. A frame with no header has no tab to slant, and a name that is not a frame is given back
+export function trimmedKind(kind, trim = {}) {
+  const prime = shapes[kind];
+  if (!prime) return kind;
+
+  const corner = trim && trim.corner === 'tr' ? '-tr' : '';
+  const notch = trim && trim.notch === 'slant' && (prime.tab || prime.headerLeft) ? '-slant' : '';
+  return kind + corner + notch;
+}
+
 export function barShape(kind) {
-  return barFrames[kind] || null;
+  const shape = shapeFor(kind);
+  return shape && shape.bar ? shape : null;
 }
 
 // The frame a region draws in a layout: the large panel, the ticker and the banner have the
 // bar frames in the bar layout, and the ticker has no frame in the others (core/areas.js)
 // unless the style is Cybertron, which has a frame for each region the standard layout
 // has and the sidebar layout shares. shapes is the corners the style has (core/style.js,
-// shapesFor): '', 'cybertron' or 'minimal'
+// shapesFor): '', 'cybertron' or 'minimal'. trim is the team's, { corner, notch } (core/teams.js,
+// frameTrim), and gives the name of the frame with the other corners cut or the slanted tab
 const barKinds = { grid1: 'bar-main', ticker: 'bar-ticker', banner: 'bar-banner' };
 const cybertronKinds = { grid1: 'cybertron-grid1', grid2: 'cybertron-grid2', ticker: 'cybertron-ticker', banner: 'cybertron-banner' };
 
-export function frameKind(region, layout, shapes = '') {
+function styleKind(region, layout, shapes) {
   if (layout !== 'bar') return shapes === 'cybertron' && cybertronKinds[region] ? cybertronKinds[region] : region;
   if (!barKinds[region]) return region;
 
@@ -680,11 +923,15 @@ export function frameKind(region, layout, shapes = '') {
   return shapes && barFrames[own] ? own : barKinds[region];
 }
 
+export function frameKind(region, layout, shapes = '', trim = {}) {
+  return trimmedKind(styleKind(region, layout, shapes), trim);
+}
+
 // How far a bar frame reaches from the corner of its box, in the units it is drawn
 // in: the box itself, the bolts and the shadow of the edge round the outline, and the
 // brackets. A frame has to be placed so that this stays on the screen.
 export function frameExtent(kind) {
-  const shape = barFrames[kind];
+  const shape = shapeFor(kind);
   const reach = 19; // the bolt is the widest part, 19 from its centre
   const xs = shape.outline.map(point => point[0]);
   const ys = shape.outline.map(point => point[1]);
@@ -698,8 +945,6 @@ export function frameExtent(kind) {
     bottom: Math.max.apply(null, ys.map(y => y + reach).concat(bracket.map(point => point[1] + 2), wear.map(point => point[1] + wearRadius))),
   };
 }
-
-Object.assign(shapes, barFrames);
 
 
 // Shapes drawn once
@@ -908,14 +1153,15 @@ function barFillsMarkup(shape) {
 }
 
 // The details of the armor header tab: the team's plate color inset in it, the dark
-// bevel round it and the bright line along its lit edges (up and left)
+// bevel round it and the bright line along its lit edges (up and left). The line is
+// every point but the last, which is the one at the foot of the left side
 function tabMarkup(shape) {
   const inside = offsetOutline(shape.tab, 14);
   const lit = offsetOutline(shape.tab, 6);
 
   return `<polygon class="tab-inset" points="${toPoints(inside)}"/>` +
     `<polygon class="tab-bevel" points="${toPoints(shape.tab)}"/>` +
-    `<polyline class="tab-line" points="${toPoints(lit.slice(0, 4))}"/>`;
+    `<polyline class="tab-line" points="${toPoints(lit.slice(0, shape.tab.length - 1))}"/>`;
 }
 
 // What Cybertron and Minimal draw on a bar frame besides its edge, each in the class of
@@ -1004,6 +1250,8 @@ function piecesMarkup(kind, shape) {
 // with the same edge as the frames: the line 4 inside the box, a cut corner at the top left
 // and the bottom right (22 on the narrow one and 34 on the wide one), four rivets, one weld
 // seam across the middle and rust at the bottom left and the top right. Everything in it is still.
+// A team that has the other corners cut has them at the top right and the bottom left, and the
+// rivets and the rust turned across with them.
 const warForms = {
   narrow: {
     box: { width: 700, height: 120, chamfer: 22 },
@@ -1029,34 +1277,46 @@ const warForms = {
   },
 };
 
-function warOutline(box) {
+function warOutline(box, turned) {
   const left = 4;
   const top = 4;
   const right = box.width - 4;
   const bottom = box.height - 4;
   const cut = box.chamfer;
 
+  if (turned) return otherCorners({ left: left, top: top, right: right, bottom: bottom, cutX: cut, cutY: cut }).outline;
   return [[left, bottom], [left, top + cut], [left + cut, top], [right, top], [right, bottom - cut], [right - cut, bottom]];
 }
 
-// form is 'narrow' (the default) or 'wide'
-export function warHousingMarkup(form = 'narrow') {
+// A path that is only pairs of numbers after its letters, turned across a box that is width wide
+function mirroredPath(data, width) {
+  return data.replace(/(-?[\d.]+) (-?[\d.]+)/g, (pair, x, y) => (width - Number(x)) + ' ' + y);
+}
+
+// form is 'narrow' (the default) or 'wide'. trim is the team's, { corner, notch }: with corner 'tr' the cut
+// corners are the top right and the bottom left, and the rivets and the rust are turned across with them
+export function warHousingMarkup(form = 'narrow', trim = {}) {
   const housing = warForms[form] || warForms.narrow;
   const box = housing.box;
-  const outline = warOutline(box);
-  const id = define(housing.id, `<polygon id="${housing.id}" points="${toPoints(outline)}"/>`);
+  const turned = Boolean(trim) && trim.corner === 'tr';
+  const outline = warOutline(box, turned);
+  const shapeId = housing.id + (turned ? '-tr' : '');
+  const id = define(shapeId, `<polygon id="${shapeId}" points="${toPoints(outline)}"/>`);
   const seam = [[[housing.seam.from, housing.seam.y], [housing.seam.to, housing.seam.y]]];
   const light = [[[housing.seam.from, housing.seam.y + weldGap], [housing.seam.to, housing.seam.y + weldGap]]];
   const patchRadius = housing.rust.patchRadius;
+  const patches = housing.rust.patches.map(item => ({ cx: turned ? box.width - item.cx : item.cx, cy: item.cy }));
   const patch = item => `<ellipse class="war-smudge" cx="${item.cx}" cy="${item.cy}" rx="${patchRadius.x}" ry="${patchRadius.y}"/>`;
+  const arcs = turned ? mirroredPath(housing.rust.arcs, box.width) : housing.rust.arcs;
+  const rivets = turned ? housing.rivets.map(center => [box.width - center[0], center[1]]) : housing.rivets;
 
   return `<svg class="war-housing" width="${box.width}" height="${box.height}" viewBox="0 0 ${box.width} ${box.height}">
     <polygon class="war-housing-fill" points="${toPoints(outline)}"/>
     <path class="war-weld-dark" d="${pathData(seam)}"/>
     <path class="war-weld-light" d="${pathData(light)}"/>
     ${edgeLayers(id)}
-    <g class="war-rust">${housing.rust.patches.map(patch).join('')}<path class="war-wear" d="${housing.rust.arcs}"/></g>
-    ${rivetsMarkup(housing.rivets, false, 'war-rivet')}
+    <g class="war-rust">${patches.map(patch).join('')}<path class="war-wear" d="${arcs}"/></g>
+    ${rivetsMarkup(rivets, false, 'war-rivet')}
   </svg>`;
 }
 
@@ -1067,7 +1327,7 @@ export function warHousingMarkup(form = 'narrow') {
 // the fills, the frame in two halves that draw line by line, and the glint.
 // kind is 'countdown', or a banner of the bar layout ('bar-banner', or 'bar-banner-minimal'), or the banner of Cybertron ('cybertron-banner'), which have no glint and no id.
 export function plateMarkup(kind) {
-  const shape = shapes[kind];
+  const shape = shapeFor(kind);
   const red = shape.red ? ' red-metal' : '';
   defineFrame(kind, shape);
 
@@ -1082,7 +1342,7 @@ export function plateMarkup(kind) {
 // pieces, which are the same frame cut up and stay hidden until a mechanical page
 // change shows them in its place (frame.css). A bar frame has no glint and no id.
 export function areaMarkup(kind) {
-  const shape = shapes[kind];
+  const shape = shapeFor(kind);
   defineFrame(kind, shape);
 
   if (shape.bar) return barFillsMarkup(shape) + areaHalves(kind, shape) + piecesMarkup(kind, shape);
@@ -1090,20 +1350,26 @@ export function areaMarkup(kind) {
 }
 
 // The frame behind the full screen alert and announcement: the plate, then
-// the frame in two halves. options.red makes the frame red.
+// the frame in two halves. options.red makes the frame red, and options.corner 'tr'
+// cuts the top right and bottom left corners (a team's trim, core/teams.js)
+const screenFrameTr = trimmedScreenFrame(screenFrame);
+
 export function frameMarkup(options = {}) {
   const red = options.red ? ' red-metal' : '';
-  defineFrame('screen', screenFrame);
+  const turned = options.corner === 'tr';
+  const frame = turned ? screenFrameTr : screenFrame;
+  const name = turned ? 'screen-tr' : 'screen';
+  defineFrame(name, frame);
 
   return `<svg class="plate${red}" width="1920" height="1080" viewBox="0 0 1920 1080">
-    <polygon class="body" points="${toPoints(screenFrame.outline)}"/>
-  </svg>` + frameHalves('screen', screenFrame, red, 'frame');
+    <polygon class="body" points="${toPoints(frame.outline)}"/>
+  </svg>` + frameHalves(name, frame, red, 'frame');
 }
 
 // A bar of light that sweeps across the panel once while it assembles.
 // It is cut to the panel's outline so it never shows outside the plate.
 export function scanMarkup(kind) {
-  const shape = shapes[kind];
+  const shape = shapeFor(kind);
   const clip = shape.outline.map(point => point[0] + 'px ' + point[1] + 'px').join(', ');
 
   return `<div class="scan-clip" style="width: ${shape.width}px; height: ${shape.height}px; clip-path: polygon(${clip});">

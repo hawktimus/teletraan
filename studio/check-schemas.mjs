@@ -78,6 +78,7 @@ const contract = {
   calendarFilter: {
     name: text(40),
     action: 'string',
+    force: 'boolean',
     words: strings(30, 5),
     days: { kind: 'weekdays', startsOn: 1 },
     calendar: text(20),
@@ -107,6 +108,14 @@ const contract = {
     logo: 'image',
     colors: object({ primary: hexColor, plate: hexColor, accent: hexColor, neon: hexColor, pink: hexColor, background: hexColor, text: hexColor }),
     mirror: 'boolean',
+    bolts: 'string',
+    cornerCut: 'string',
+    headerNotch: 'string',
+    grid: 'string',
+    logoPose: 'string',
+    nameStyle: 'string',
+    tickerLabel: 'string',
+    countAccent: 'string',
     active: 'boolean',
     order: 'number',
   },
@@ -157,6 +166,10 @@ const contract = {
     presentationTestRequest: object({ requestedAt: 'datetime' }),
     teamMode: 'string',
     alternateMinutes: number(1, 30),
+    dailyStyles: { kind: 'choiceList' },
+    mondayStyle: 'string',
+    teamOrder: { kind: 'references', to: 'team' },
+    lookSwap: 'string',
     announceRequest: object({ requestedAt: 'datetime' }),
     previewRequest: object({ kind: 'string', requestedAt: 'datetime' }),
     nextLookRequest: object({ requestedAt: 'datetime' }),
@@ -176,7 +189,8 @@ const contract = {
       days: { kind: 'weekdays' },
       show: 'boolean',
     }),
-    calendars: rows({ id: text(20), name: text(20), show: 'boolean' }),
+    calendars: rows({ id: text(20), name: text(20), kind: 'string', show: 'boolean' }),
+    groupEventsByKind: 'boolean',
     showConnectionStatus: 'boolean',
   },
   theme: {
@@ -216,6 +230,7 @@ const contract = {
 const studioOnlyFields = {
   'dashboardSettings.miniStatus': 'the status block at the top of the Screen tab. It stores nothing',
   'dashboardSettings.lookNote': 'the note on the Look tab. It stores nothing',
+  'dashboardSettings.cycleNote': 'the second note on the Look tab, which says what a cycle is. It stores nothing',
   'dashboardSettings.mondayNote': 'the note on the Monday tab. It stores nothing',
   'dashboardSettings.competitionNote': 'the note on the Competition tab. It stores nothing',
   'theme.settingsNote': 'the note on the Look page. It stores nothing',
@@ -241,6 +256,7 @@ const choices = {
   'task.priority': ['high', 'medium', 'low'],
   'tipOrNews.kind': ['tip', 'news', 'reminder'],
   'calendarFilter.action': ['hide', 'show'],
+  'dashboardSettings.calendars.kind': ['meetings', 'competitions', 'outreach', 'deadlines', 'other'],
   'presentation.subteam': ['Build', 'Programming', 'Design', 'Electrical', 'Outreach', 'Business', 'Other'],
   'presentation.status': ['scheduled', 'cancelled', 'done', 'skipped'],
   'person.role': ['Coach', 'Captain', 'Mentor'],
@@ -256,6 +272,8 @@ const choices = {
   'dashboardSettings.nightSpeed': ['slow', 'normal', 'fast'],
   'dashboardSettings.contentSource': ['production', 'sample'],
   'dashboardSettings.teamMode': ['prime', 'nova', 'alternate'],
+  'dashboardSettings.mondayStyle': ['original', 'cybertron', 'minimal'],
+  'dashboardSettings.lookSwap': ['assemble', 'slats', 'cut'],
   'dashboardSettings.hiddenRequest.kind': ['desktop', 'redEyes'],
   'dashboardSettings.previewRequest.kind': ['prime', 'nova', 'cybertron', 'minimal', 'next-pack'],
   'demo.steps.screen': ['announcement', 'all-announcements', 'night-mode'],
@@ -566,6 +584,8 @@ const kindChecks = {
   reference: checkReference,
   rows: checkRows,
   strings: checkStrings,
+  choiceList: checkChoiceList,
+  references: checkReferences,
   weekdays: checkWeekdays,
   blocks: checkBlocks,
   image: checkImage,
@@ -646,6 +666,21 @@ function checkStrings(field, want, say) {
 
   checkLimit(member, want.max, say, 'each line');
   checkLimit(field, want.maxItems, say, 'the list');
+}
+
+// A list of words, each picked from a list in its own row
+function checkChoiceList(field, want, say) {
+  const member = field.of && field.of[0];
+  if (field.type !== 'array' || !member || member.type !== 'string') return say('should be a list of strings');
+
+  if (!member.options || !member.options.list || member.options.list.length === 0) say('each row should be picked from a list');
+}
+
+// A list of references to one type
+function checkReferences(field, want, say) {
+  const member = field.of && field.of[0];
+  const target = member && member.to && member.to[0];
+  if (field.type !== 'array' || !member || member.type !== 'reference' || !target || target.type !== want.to) say('should be a list of references to ' + want.to);
 }
 
 function checkWeekdays(field, want, say) {
@@ -3538,7 +3573,11 @@ function checkTeams() {
   if (!type) return ['team is missing from schemas/index.js'];
 
   need(problems, type.title === 'Teams', 'the team type should have the title Teams');
-  const titles = { name: 'Team name', shortName: 'Short name', number: 'Team number', code: 'Team code', logo: 'Logo', colors: 'Colors', mirror: 'Mirror the layout', active: 'Active', order: 'Order' };
+  const titles = {
+    name: 'Team name', shortName: 'Short name', number: 'Team number', code: 'Team code', logo: 'Logo', colors: 'Colors', mirror: 'Mirror the layout',
+    bolts: 'Bolts', cornerCut: 'Cut corners', headerNotch: 'Header end', grid: 'Page grid', logoPose: 'Bird pose', nameStyle: 'Team name look', tickerLabel: 'Ticker label', countAccent: 'Countdown color',
+    active: 'Active', order: 'Order',
+  };
   Object.keys(titles).forEach(name => need(problems, at(name) && at(name).title === titles[name], 'team.' + name + ' should be titled ' + titles[name]));
   need(problems, fieldsIn(type).map(field => field.name).join() === Object.keys(titles).join(), 'the team fields should be, in this order: ' + Object.keys(titles).join(', '));
 
@@ -3787,6 +3826,7 @@ async function checkTeamInput() {
 // Neither is required, because Dashboard Settings published before the fields existed has
 // neither and must still publish, and the screen reads that as Prime only and 5 minutes.
 const teamNames = ['teamMode', 'alternateMinutes'];
+const rotationNames = ['dailyStyles', 'mondayStyle', 'teamOrder', 'lookSwap'];
 
 function checkTeamsTab() {
   const problems = [];
@@ -3844,9 +3884,9 @@ const logoNames = logoSwitches.concat(logoNumbers);
 const settingsTabs = {
   screen: ['miniStatus', 'team', 'motion', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'alert', 'pageSeconds', 'rotation', 'doneDays', 'safetyDaysSince']
     .concat(photoNames, ['announcements', 'announceRequest']),
-  look: ['lookNote', 'style'].concat(teamNames, logoNames, transitionNames),
+  look: ['lookNote', 'cycleNote'].concat(rotationNames, ['style'], teamNames, logoNames, transitionNames),
   countdown: ['countdown'],
-  calendars: ['calendars'],
+  calendars: ['calendars', 'groupEventsByKind'],
   presentations: presentationNames.concat('presentationTestRequest'),
   monday: ['mondayNote'],
   competition: ['competitionNote'],
@@ -3884,7 +3924,7 @@ function checkSettingsTabs() {
   ['contentSource', 'switchBackAt'].forEach(name => need(problems, fieldAt('dashboardSettings.' + name) && fieldAt('dashboardSettings.' + name).hidden === true, name + ' should be hidden but stay in the schema'));
 
   // The notes store nothing and say one thing each in one line, and the Look tab and the Look page point to each other
-  const notes = ['dashboardSettings.lookNote', 'dashboardSettings.mondayNote', 'dashboardSettings.competitionNote', 'theme.settingsNote'];
+  const notes = ['dashboardSettings.lookNote', 'dashboardSettings.cycleNote', 'dashboardSettings.mondayNote', 'dashboardSettings.competitionNote', 'theme.settingsNote'];
   notes.forEach(pathText => {
     const field = fieldAt(pathText);
     need(problems, field && field.type === 'string' && field.readOnly === true && field.title === 'Note', pathText + ' should be a read only string titled Note');
@@ -4587,6 +4627,197 @@ async function checkCalendarsRead() {
   return problems;
 }
 
+// The look rotation (schemas/settingsLook.js): the styles by day, the Monday style, the team order and the swap. The choices
+// and the starting values are the ones in dashboard/config.js. None is required, because an empty list gives the choice back
+// to Style and Team mode, which are hidden now and keep what is saved in them. The starting teams are the two of the seed file,
+// which the dashboard reads by their codes.
+function checkLookRotation() {
+  const problems = [];
+  const config = world.dashboard;
+  const at = name => fieldAt('dashboardSettings.' + name);
+  const rulesOf = field => (field ? constraintsOf(field) : []);
+  const titles = { original: 'Original', cybertron: 'Cybertron', minimal: 'Minimal', assemble: 'Assemble', slats: 'Slats', cut: 'Cut' };
+  const offered = list => list.map(item => item.value).join();
+
+  const names = fieldsIn(typeByName('dashboardSettings')).map(field => field.name);
+  const from = names.indexOf('lookNote');
+  need(problems, names.slice(from, from + 2 + rotationNames.length).join() === ['lookNote', 'cycleNote'].concat(rotationNames).join(), 'the Look tab should start with lookNote, cycleNote and then ' + rotationNames.join(', '));
+  rotationNames.forEach(name => {
+    need(problems, at(name) && at(name).group === 'look', name + ' should be in the Look tab');
+    need(problems, at(name) && !at(name).hidden, name + ' should show in the form');
+    need(problems, !constraintNamed(rulesOf(at(name)), 'required'), name + ' should not be required: an empty one gives the choice back to the old setting, and the page must still publish');
+    need(problems, rulesOf(at(name)).some(rule => rule.name === 'error' && rule.args[0]) || (at(name).of || []).some(member => constraintsOf(member).some(rule => rule.name === 'error' && rule.args[0])), name + ' has rules and no error message in plain words');
+  });
+  need(problems, at('dailyStyles') && at('dailyStyles').title === 'Styles by day', 'dailyStyles should be titled Styles by day');
+  need(problems, at('mondayStyle') && at('mondayStyle').title === 'Monday style', 'mondayStyle should be titled Monday style');
+  need(problems, at('teamOrder') && at('teamOrder').title === 'Team order', 'teamOrder should be titled Team order');
+  need(problems, at('lookSwap') && at('lookSwap').title === 'How the look changes', 'lookSwap should be titled How the look changes');
+
+  // The names the dashboard has, and the lists the Studio offers
+  need(problems, config.lookSwaps.join() === 'assemble,slats,cut', 'lookSwaps in config.js should be assemble, slats and cut, not ' + config.lookSwaps.join());
+  const rows = at('dailyStyles') && at('dailyStyles').of && at('dailyStyles').of[0];
+  const rowList = (rows && rows.options && rows.options.list) || [];
+  need(problems, offered(rowList) === config.styles.join(), 'each row of dailyStyles should offer the styles in config.js, in the same order: ' + config.styles.join(', '));
+  need(problems, offered(choicesOf('dashboardSettings.mondayStyle')) === config.styles.join(), 'mondayStyle should offer the styles in config.js, in the same order');
+  need(problems, offered(choicesOf('dashboardSettings.lookSwap')) === config.lookSwaps.join(), 'lookSwap should offer the swaps in config.js, in the same order');
+  rowList.concat(choicesOf('dashboardSettings.mondayStyle'), choicesOf('dashboardSettings.lookSwap')).forEach(item => need(problems, item.title === titles[item.value], 'the choice ' + item.value + ' should be titled ' + titles[item.value]));
+  ['mondayStyle', 'lookSwap'].forEach(name => {
+    const allowed = constraintNamed(rulesOf(at(name)), 'valid');
+    const known = name === 'lookSwap' ? config.lookSwaps : config.styles;
+    need(problems, at(name) && at(name).options && at(name).options.layout === 'radio', name + ' should be a radio list');
+    need(problems, allowed && allowed.args[0].join() === known.join(), name + ' should only allow: ' + known.join(', '));
+  });
+  const rowAllowed = rows && constraintNamed(constraintsOf(rows), 'valid');
+  need(problems, rowAllowed && rowAllowed.args[0].join() === config.styles.join(), 'each row of dailyStyles should only allow: ' + config.styles.join(', '));
+
+  // The starting values are the dashboard's defaults. The teams are written as references, to the ids of the seed file.
+  const settings = config.defaultSettings;
+  need(problems, sameData(at('dailyStyles') && at('dailyStyles').initialValue, settings.dailyStyles), 'dailyStyles should start as ' + JSON.stringify(settings.dailyStyles) + ', the default in config.js');
+  need(problems, at('mondayStyle') && at('mondayStyle').initialValue === settings.mondayStyle && settings.mondayStyle === 'minimal', 'mondayStyle should start as minimal, and so should its default in config.js');
+  need(problems, at('lookSwap') && at('lookSwap').initialValue === settings.lookSwap && settings.lookSwap === 'assemble', 'lookSwap should start as assemble, and so should its default in config.js');
+  need(problems, sameData(settings.dailyStyles, ['original', 'cybertron']) && sameData(settings.teamOrder, ['prime', 'nova']), 'the defaults in config.js should be Original then Cybertron, and Prime then Nova');
+  const seeded = world.teamSeed.split('\n').filter(line => line.trim() !== '').map(line => JSON.parse(line));
+  const starting = ((at('teamOrder') && at('teamOrder').initialValue) || []).map(item => {
+    const team = seeded.filter(doc => doc._id === item._ref)[0];
+    return item._type === 'reference' && team ? team.code : '(' + item._ref + ' is not in the seed file)';
+  });
+  need(problems, sameData(starting, settings.teamOrder), 'teamOrder should start with the teams ' + JSON.stringify(settings.teamOrder) + ', as references to the documents of docs/seed/teams.ndjson, not ' + JSON.stringify(starting));
+
+  // Only the teams that are switched on can be picked, and each once
+  const order = at('teamOrder') && at('teamOrder').of && at('teamOrder').of[0];
+  need(problems, order && order.options && order.options.filter === 'active != false', 'teamOrder should offer only the teams that are switched on (options.filter)');
+  need(problems, constraintNamed(rulesOf(at('teamOrder')), 'unique'), 'teamOrder should refuse a team that is in the list twice');
+
+  // The old choices stay in the schema, hidden, with their starting values. The screen uses them when a list is empty.
+  teamNames.concat('style').forEach(name => {
+    need(problems, at(name) && at(name).hidden === true, name + ' should be hidden but stay in the schema, so that a saved value is kept');
+    need(problems, at(name) && at(name).group === 'look', name + ' should stay in the Look tab');
+    need(problems, at(name) && /^Used only when (Styles by day|Team order) is empty/.test(at(name).description || ''), 'the ' + name + ' description should begin by saying that it is used only when its list is empty');
+  });
+
+  // The notes say what the tab does
+  const cycle = at('cycleNote');
+  need(problems, cycle && /cycle/.test(cycle.description || '') && /Monday/.test(cycle.description || ''), 'the second note on the Look tab should say what a cycle is, and mention the Monday cards');
+
+  // The sample content carries the four settings, with values the dashboard accepts
+  const sample = world.sample.settings;
+  need(problems, Array.isArray(sample.dailyStyles) && sample.dailyStyles.length > 0 && sample.dailyStyles.every(name => config.styles.indexOf(name) !== -1), 'the sample settings need dailyStyles, each of ' + config.styles.join(', '));
+  need(problems, config.styles.indexOf(sample.mondayStyle) !== -1, 'the sample settings need a mondayStyle of ' + config.styles.join(', '));
+  need(problems, config.lookSwaps.indexOf(sample.lookSwap) !== -1, 'the sample settings need a lookSwap of ' + config.lookSwaps.join(', '));
+  const codes = world.sample.teams.map(team => team.code);
+  need(problems, Array.isArray(sample.teamOrder) && sample.teamOrder.length > 0 && sample.teamOrder.every(code => codes.indexOf(code) !== -1), 'the sample settings need a teamOrder of the codes of the sample teams: ' + codes.join(', '));
+  return problems;
+}
+
+// The Events panel runs in two pages (dashboard/core/event-pages.js). Each calendar in Dashboard Settings has a kind,
+// the switch Group events by kind is in the Calendars tab, and an Always show rule in Calendar filters can pin its events
+// to page one. The choices and the starting values are the ones in dashboard/config.js. None is required, because a
+// calendar or a rule saved before these fields existed has none, and must still publish.
+function checkEventPages() {
+  const problems = [];
+  const config = world.dashboard;
+  const rulesOf = field => (field ? constraintsOf(field) : []);
+  const titles = { meetings: 'Meetings', competitions: 'Competitions', outreach: 'Outreach', deadlines: 'Deadlines', other: 'Other' };
+
+  const kind = fieldAt('dashboardSettings.calendars.kind');
+  const offered = choicesOf('dashboardSettings.calendars.kind');
+  need(problems, kind && kind.title === 'Kind', 'calendars.kind should be titled Kind');
+  need(problems, offered.map(item => item.value).join() === config.calendarKinds.join(), 'calendars.kind should offer the kinds in config.js, in the same order: ' + config.calendarKinds.join(', '));
+  offered.forEach(item => need(problems, item.title === titles[item.value], 'the kind ' + item.value + ' should be titled ' + titles[item.value]));
+  need(problems, kind && kind.options && kind.options.layout === 'radio', 'calendars.kind should be a radio list');
+  need(problems, kind && kind.initialValue === config.defaultCalendarKind && config.defaultCalendarKind === 'other', 'calendars.kind should start as other, and so should defaultCalendarKind in config.js');
+  need(problems, kind && !constraintNamed(rulesOf(kind), 'required'), 'calendars.kind should not be required: a calendar saved before kinds existed has none');
+  const allowed = constraintNamed(rulesOf(kind), 'valid');
+  need(problems, allowed && allowed.args[0].join() === config.calendarKinds.join(), 'calendars.kind should only allow: ' + config.calendarKinds.join(', '));
+  need(problems, rulesOf(kind).some(rule => rule.name === 'error' && rule.args[0]), 'calendars.kind has rules and no error message in plain words');
+  need(problems, config.defaultSettings.calendars.every(row => config.calendarKinds.indexOf(row.kind) !== -1), 'each default calendar in config.js should have a kind from calendarKinds');
+
+  const group = fieldAt('dashboardSettings.groupEventsByKind');
+  need(problems, group && group.type === 'boolean' && group.title === 'Group events by kind' && group.group === 'calendars', 'groupEventsByKind should be a switch titled Group events by kind, in the Calendars tab');
+  need(problems, group && group.initialValue === false && config.defaultSettings.groupEventsByKind === false, 'groupEventsByKind should start off, and so should its default in config.js');
+  need(problems, group && /Meetings, Deadlines and Other/.test(group.description || '') && /Competitions and Outreach/.test(group.description || ''), 'the groupEventsByKind description should say which kinds are on each page');
+  need(problems, [undefined, true, false].indexOf(world.sample.settings.groupEventsByKind) !== -1, 'the sample settings need groupEventsByKind to be on or off, or to leave it out');
+
+  const force = fieldAt('calendarFilter.force');
+  const names = fieldsIn(typeByName('calendarFilter')).map(field => field.name);
+  need(problems, force && force.type === 'boolean' && force.title === 'Pin to page one' && force.initialValue === false, 'calendarFilter.force should be a switch titled Pin to page one that starts off');
+  need(problems, force && force.description === 'Show this event even when it is not one of the next 8.', 'the calendarFilter.force description should be: Show this event even when it is not one of the next 8.');
+  need(problems, force && !constraintNamed(rulesOf(force), 'required'), 'calendarFilter.force should not be required: a rule saved before it existed has none');
+  need(problems, names.indexOf('force') === names.indexOf('action') + 1, 'calendarFilter.force should come straight after the action');
+  const showsFor = action => force && typeof force.hidden === 'function' ? !force.hidden({ document: { action: action } }) : null;
+  need(problems, showsFor('show') === true && showsFor('hide') === false, 'calendarFilter.force should show only on an Always show rule');
+  need(problems, force && typeof force.hidden === 'function' && force.hidden({ document: undefined }) === true, 'calendarFilter.force should stay hidden while the rule has no document yet');
+
+  const events = world.registry.panels.filter(panel => panel.id === 'events')[0];
+  need(problems, events && events.pages === 2, 'the events panel in registry.js should have pages: 2');
+  return problems;
+}
+
+// The trim of a team (dashboard/config.js, teamTrim): eight radio lists in the Trim box of the Team document. The choices
+// are the ones in config.js in the same order, the first is the one Prime has and the one each field starts with, and
+// none is required, because a team saved before the trim existed has none and must still publish. The seed file gives
+// Prime the first choice of each and Nova the values of the work order. The first choice has no class, and the others
+// have the one the dashboard puts on the page: plain lower case words with hyphens, and no two the same.
+const trimOfNova = { bolts: 'round', cornerCut: 'tr-bl', headerNotch: 'slant', grid: 'dots', logoPose: 'flight', nameStyle: 'outline', tickerLabel: 'bar', countAccent: 'neon' };
+
+function checkTeamTrim() {
+  const problems = [];
+  const config = world.dashboard;
+  const type = typeByName('team');
+  const names = Object.keys(config.teamTrim);
+  const classes = [];
+
+  need(problems, names.join() === Object.keys(trimOfNova).join(), 'teamTrim in config.js should have these fields, in this order: ' + Object.keys(trimOfNova).join(', '));
+  need(problems, type && (type.fieldsets || []).some(set => set.name === 'trim' && set.title === 'Trim'), 'the team should have a Trim box (a fieldset called trim)');
+
+  names.forEach(name => {
+    const field = fieldAt('team.' + name);
+    const values = Object.keys(config.teamTrim[name]);
+    const rules = field ? constraintsOf(field) : [];
+    const allowed = constraintNamed(rules, 'valid');
+    const where = 'team.' + name;
+
+    need(problems, field && field.type === 'string' && field.options && field.options.layout === 'radio', where + ' should be a radio list');
+    need(problems, choicesOf(where).map(item => item.value).join() === values.join(), where + ' should offer the values in teamTrim in config.js, in the same order: ' + values.join(', '));
+    need(problems, field && field.initialValue === values[0] && config.primeTeam[name] === values[0], where + ' should start as ' + values[0] + ', and so should primeTeam in config.js: it is the Prime value');
+    need(problems, field && field.fieldset === 'trim', where + ' should be in the Trim box');
+    need(problems, field && !constraintNamed(rules, 'required'), where + ' should not be required: a team saved before the trim existed has none');
+    need(problems, allowed && allowed.args[0].join() === values.join(), where + ' should only allow: ' + values.join(', '));
+    need(problems, rules.some(rule => rule.name === 'error' && rule.args[0]), where + ' has rules and no error message in plain words');
+    need(problems, field && /^[A-Z][^\n]*\.$/.test(field.description || '') && field.description.length <= 130, where + ' needs a description of one short sentence line that ends with a full stop');
+    need(problems, field && choicesOf(where).every(item => item.title && item.title !== item.value), where + ' should show each choice with a title in words');
+
+    values.forEach((value, index) => {
+      const word = config.teamTrim[name][value];
+      if (index === 0) return need(problems, word === '', where + ' ' + value + ' is the Prime value and should have no class');
+
+      need(problems, /^[a-z]+(-[a-z]+)+$/.test(word), where + ' ' + value + ' should have a class of lower case words and hyphens, not ' + word);
+      need(problems, classes.indexOf(word) === -1, 'the class ' + word + ' is used twice in teamTrim');
+      classes.push(word);
+    });
+  });
+
+  // The seed file: both teams have all eight, Prime the first choice of each and Nova the values of the table in the order
+  const docs = {};
+  world.teamSeed.split('\n').filter(line => line.trim() !== '').forEach(line => {
+    const doc = JSON.parse(line);
+    docs[doc._id] = doc;
+  });
+  names.forEach(name => {
+    const values = Object.keys(config.teamTrim[name]);
+    need(problems, docs['team-prime'] && docs['team-prime'][name] === values[0], 'team-prime in docs/seed/teams.ndjson should have ' + name + ' ' + values[0]);
+    need(problems, docs['team-nova'] && docs['team-nova'][name] === trimOfNova[name], 'team-nova in docs/seed/teams.ndjson should have ' + name + ' ' + trimOfNova[name]);
+  });
+
+  // and so do the two teams of the sample content
+  names.forEach(name => {
+    const sample = world.sample.teams.reduce((all, team) => Object.assign(all, { [team.code]: team }), {});
+    need(problems, sample.prime && sample.prime[name] === config.primeTeam[name], 'the Prime team of the sample content should have ' + name + ' ' + config.primeTeam[name]);
+    need(problems, sample.nova && sample.nova[name] === trimOfNova[name], 'the Nova team of the sample content should have ' + name + ' ' + trimOfNova[name]);
+  });
+  return problems;
+}
+
 async function main() {
   const folder = makeSandbox();
   try {
@@ -4697,6 +4928,9 @@ async function main() {
   results.push({ name: 'the status block asks for the published document by its id, and survives a client that fails', problems: await checkStatusRead().catch(error => ['the check stopped: ' + error.message]) });
   check('Panel order is one list of every panel, the older lists are hidden, and the input fills an empty list from them as the dashboard does', checkPanelOrder);
   check('the night times, the speaker wait, the overrun and the booking close time are hidden, keep their starting values and are not read by the dashboard', checkFixedValues);
+  check('the look rotation fields offer the styles, teams and swaps the dashboard has, start as its defaults, and the old Style and Team mode are hidden but kept', checkLookRotation);
+  check('the Events panel has two pages: each calendar has a kind, Group events by kind starts off, and an Always show rule can be pinned to page one', checkEventPages);
+  check('a team has the eight trim choices, each a radio list that agrees with dashboard/config.js and starts as Prime, and the seed file and the sample give Nova its own', checkTeamTrim);
   check('every theme and overlay is complete and readable (tools/check-themes.mjs)', checkThemeGuard);
   check('every seasonal pack is complete, and draws only in the empty places (tools/check-seasons.mjs)', checkSeasonGuard);
   check('a task has a source, a priority and Show on TV, one from the board is read only except Show on TV, and the Tasks folder holds every task once', checkBoardTasks);

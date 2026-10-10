@@ -9,12 +9,18 @@
     {
       "code": "prime", "name": "Hawktimus Prime", "shortName": "PRIME", "number": "3229",
       "colors": { "primary": "#6C18B6", "plate": "#3B2A7A", "accent": "#FACA2A", "neon": "#35F0FF", "pink": "#FF2E8C", "background": "#09060F", "text": "#FFFFFF" },
-      "mirror": false, "active": true, "order": 10
+      "mirror": false,
+      "bolts": "hex", "cornerCut": "tl-br", "headerNotch": "step", "grid": "lines",
+      "logoPose": "auto", "nameStyle": "solid", "tickerLabel": "plate", "countAccent": "red",
+      "active": true, "order": 10
     },
     {
       "code": "nova", "name": "Hawktimus Nova", "shortName": "NOVA", "number": "3230",
       "colors": { "primary": "#1F7AE0", "plate": "#1E3A6E", "accent": "#9BF0FF", "neon": "#FF2E8C", "pink": "#35F0FF", "background": "#060D1A", "text": "#FFFFFF" },
-      "mirror": true, "active": true, "order": 20
+      "mirror": true,
+      "bolts": "round", "cornerCut": "tr-bl", "headerNotch": "slant", "grid": "dots",
+      "logoPose": "flight", "nameStyle": "outline", "tickerLabel": "bar", "countAccent": "neon",
+      "active": true, "order": 20
     }
   ],
 
@@ -58,10 +64,15 @@
     "presentationsEnabled": true,
     "teamMode": "prime",
     "alternateMinutes": 5,
+    "dailyStyles": ["original", "cybertron"],
+    "mondayStyle": "minimal",
+    "teamOrder": ["prime", "nova"],
+    "lookSwap": "assemble",
     "crt": { "on": true, "everySeconds": 240, "durationSeconds": 2.7 },
     "calendars": [
-      { "id": "team", "name": "[Team calendar]", "show": true }
-    ]
+      { "id": "team", "name": "[Team calendar]", "show": true, "kind": "meetings" }
+    ],
+    "groupEventsByKind": false
   },
 
   "theme": {
