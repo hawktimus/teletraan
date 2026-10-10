@@ -394,14 +394,23 @@ const safetyDaysField = defineField({
 // that is not lowercase letters, digits and underscores never finds its file
 const calendarCode = /^[a-z0-9_]+$/;
 
+// The values are the names in calendarKinds in dashboard/config.js
+const calendarKinds = [
+  { title: 'Meetings', value: 'meetings' },
+  { title: 'Competitions', value: 'competitions' },
+  { title: 'Outreach', value: 'outreach' },
+  { title: 'Deadlines', value: 'deadlines' },
+  { title: 'Other', value: 'other' },
+];
+
 // The same row as defaultSettings.calendars in dashboard/config.js
 const calendarsField = defineField({
   name: 'calendars',
   title: 'Calendars',
   type: 'array',
   group: 'calendars',
-  description: 'Name each team calendar and choose which ones show events on the screen.',
-  initialValue: [{ id: 'team', name: 'Team calendar', show: true }],
+  description: 'Name each team calendar, say what kind it is and choose which ones show events on the screen.',
+  initialValue: [{ id: 'team', name: 'Team calendar', show: true, kind: 'other' }],
   of: [
     defineArrayMember({
       type: 'object',
@@ -426,6 +435,15 @@ const calendarsField = defineField({
           validation: Rule => [Rule.required().error('Give the calendar a name.'), tooLong(Rule, 20)],
         }),
         defineField({
+          name: 'kind',
+          title: 'Kind',
+          type: 'string',
+          description: 'What sort of events this calendar holds. The Events panel shows it as a small chip before each title.',
+          options: { list: calendarKinds, layout: 'radio', direction: 'horizontal' },
+          initialValue: 'other',
+          validation: Rule => Rule.valid(calendarKinds.map(kind => kind.value)).error('Pick meetings, competitions, outreach, deadlines or other.'),
+        }),
+        defineField({
           name: 'show',
           title: 'Show on screen',
           type: 'boolean',
@@ -434,14 +452,25 @@ const calendarsField = defineField({
         }),
       ],
       preview: {
-        select: { title: 'name', code: 'id', show: 'show' },
+        select: { title: 'name', code: 'id', show: 'show', kind: 'kind' },
         prepare(calendar) {
-          const subtitle = [calendar.show === false ? 'Hidden' : '', calendar.code].filter(Boolean).join(' · ');
+          const kind = calendarKinds.filter(item => item.value === calendar.kind).map(item => item.title)[0];
+          const subtitle = [calendar.show === false ? 'Hidden' : '', calendar.code, kind].filter(Boolean).join(' · ');
           return { title: calendar.title || 'Calendar with no name', subtitle: subtitle };
         },
       },
     }),
   ],
+});
+
+// The same starting value as defaultSettings.groupEventsByKind in dashboard/config.js
+const groupEventsByKindField = defineField({
+  name: 'groupEventsByKind',
+  title: 'Group events by kind',
+  type: 'boolean',
+  group: 'calendars',
+  description: 'Off: both Events pages go in date order. On: page one has Meetings, Deadlines and Other, page two Competitions and Outreach.',
+  initialValue: false,
 });
 
 // The note on the Look tab points to the Look page, which points back (theme.js). The second says what a cycle is.
@@ -490,6 +519,7 @@ export default defineType({
     ...presentationsFields(),
     presentationTestRequestField(),
     calendarsField,
+    groupEventsByKindField,
     mondayNoteField,
     competitionNoteField,
     contentSourceField,

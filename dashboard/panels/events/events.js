@@ -1,41 +1,30 @@
-// The next few things on the team calendar, one row each.
-// The list comes from core/events.js, already filtered and sorted.
+// The next few things on the team calendar, one row each. The panel comes round twice in a row in
+// the rotation: page one shows four events and page two the four after them. The pages are made by
+// core/event-pages.js from the list in core/events.js, already filtered and sorted.
 
 import { rowBarMarkup } from '../../core/plate.js';
 import { doubleSlash } from '../../core/marks.js';
 import { escapeHtml } from '../../core/text.js';
 import { eventDate, timeText } from '../../core/events.js';
-import { asDate } from '../../core/time.js';
+import { chipWord, pageRows } from '../../core/event-pages.js';
 
-// Four rows of 144px fill the 576px body. The row height is in events.css.
-const MAX_EVENTS = 4;
+// The pin of a pinned event, 44px square. Its colour is in events.css.
+const pinMark = `
+  <svg class="pin-mark" viewBox="0 0 44 44" width="44" height="44" aria-hidden="true">
+    <polygon points="12,2 32,2 32,9 12,9"/>
+    <polygon points="17,9 27,9 27,22 35,29 35,33 9,33 9,29 17,22"/>
+    <polygon points="20,33 24,33 24,42 22,44 20,42"/>
+  </svg>`;
 
-// When an event is over. An all-day event has no clock time, so it lasts
-// at least to the end of its first day, even if the calendar gives no end.
-function finishOf(event) {
-  const start = asDate(event.start);
-  const end = event.end ? asDate(event.end) : start;
-  if (!event.allDay) return end;
-
-  const nextMidnight = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1);
-  return end > nextMidnight ? end : nextMidnight;
+// The page is 1 or 2. A page with nothing on it does not run.
+export function hasContent(content, page = 1) {
+  return pageRows(content, page).length > 0;
 }
 
-// The events that have not finished yet, so one that is happening now stays
-function upcoming(content, now = new Date()) {
-  return (content.events || [])
-    .filter(event => !isNaN(asDate(event.start)) && finishOf(event) >= now)
-    .slice(0, MAX_EVENTS);
-}
-
-export function hasContent(content) {
-  return upcoming(content).length > 0;
-}
-
-export function mount(host, content) {
-  const events = upcoming(content);
+export function mount(host, content, page = 1) {
+  const rows = pageRows(content, page);
   const zone = (content.theme || {}).timeZone;
-  const lines = events.map((event, index) => rowMarkup(event, index === events.length - 1, zone)).join('');
+  const lines = rows.map((row, index) => rowMarkup(row, index === rows.length - 1, zone)).join('');
 
   host.innerHTML = `
     <section class="page events">
@@ -50,7 +39,10 @@ export function mount(host, content) {
 
 // Every row is a slat, and the thin metal bar under it turns over with it.
 // The last row has no bar under it, because the frame is there.
-function rowMarkup(event, isLast, timeZone) {
+// The title line is the kind chip, the title, which is cut with an ellipsis when
+// it does not fit, and the pin of a pinned event.
+function rowMarkup(row, isLast, timeZone) {
+  const event = row.event;
   const date = eventDate(event, timeZone);
 
   // The line under the title: the dates if the event lasts several days, the
@@ -66,7 +58,11 @@ function rowMarkup(event, isLast, timeZone) {
         <div class="month-day">${date.monthDay}</div>
       </div>
       <div class="details">
-        <div class="event-title">${escapeHtml(event.title)}</div>
+        <div class="event-title">
+          <span class="kind-chip">${chipWord(row.kind)}</span>
+          <span class="event-name">${escapeHtml(event.title)}</span>
+          ${row.forced ? pinMark : ''}
+        </div>
         ${line ? `<div class="event-when">${escapeHtml(line)}</div>` : ''}
       </div>
     </div>`;

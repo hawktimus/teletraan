@@ -470,7 +470,9 @@ const plainDate = /^\d{4}-\d{2}-\d{2}$/;
 
 // A rule from the Calendar filters list becomes { name, action, words, days,
 // calendar, fromDate, toDate }, with the show switch and the Hide after time kept
-// as they are. The words lose the spaces at their ends and the empty ones go.
+// as they are, and force kept when it is on (an Always show rule pins its events
+// to page one of the Events panel). The words lose the spaces at their ends and
+// the empty ones go.
 // The days are a set of the numbers 0 to 6, Sunday first, in order. The calendar
 // and the two dates are text, empty when there is none, and a date that is not
 // like 2027-04-02 is none. An action that is not hide or show is hide, as the
@@ -496,6 +498,7 @@ function normalizeFilter(raw) {
   };
   if (raw.show === false) rule.show = false;
   if (raw.expires) rule.expires = raw.expires;
+  if (raw.force === true) rule.force = true;
 
   const hasCondition = words.length > 0 || days.length > 0 || rule.calendar !== '' || rule.fromDate !== '' || rule.toDate !== '';
   return hasCondition ? rule : null;

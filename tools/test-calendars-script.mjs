@@ -336,6 +336,140 @@ test('the script has valid sh syntax, is executable, and never prints local.env'
   assert.ok(!/local\.env|CALENDAR_/.test(helper), 'the Node file never sees an address');
 });
 
+// The page and the kind of a SHOWN line (the Events panel is two pages of four, dashboard/core/event-pages.js).
+// The group calendar has six meetings and the competitions calendar four events, one every other day, so in date
+// order Meeting 1, Comp A, Meeting 2 and Comp B are page one, Meeting 3, Comp C, Meeting 4 and Comp D are page two,
+// and Meeting 5 and Meeting 6 are not one of the first eight yet.
+const pageCalendars = {
+  group: calendarText([1, 3, 5, 7, 9, 11].map((day, index) => ({ day: day, title: 'Meeting ' + (index + 1) }))),
+  comp: calendarText([2, 4, 6, 8].map((day, index) => ({ day: day, title: 'Comp ' + 'ABCD'[index] }))),
+  gone: calendarText([{ day: 1, title: 'Switched off' }]),
+};
+
+function pageAnswer(rules, settings) {
+  return JSON.stringify({
+    query: 'the content query',
+    result: {
+      calendarFilters: rules,
+      settings: Object.assign({
+        calendars: [
+          { id: 'group', name: 'Group', show: true, kind: 'meetings' },
+          { id: 'comp', name: 'Competitions', show: true, kind: 'competitions' },
+          { id: 'gone', name: 'Gone', show: false, kind: 'outreach' },
+        ],
+      }, settings),
+    },
+  });
+}
+
+const pageEnv = [
+  "CALENDAR_GROUP_URL='https://band.example/ical?token=SECRET-group'",
+  "CALENDAR_COMP_URL='https://band.example/ical?token=SECRET-comp'",
+  "CALENDAR_GONE_URL='https://band.example/ical?token=SECRET-gone'",
+  '',
+].join('\n');
+
+// The place and kind of each event title of a calendar, such as { 'Meeting 1': 'page 1 · Meetings' }
+function placesIn(result, id) {
+  const places = {};
+  linesFor(result, 'SHOWN', id).forEach(shownLine => {
+    const found = shownLine.match(/ {2}(page \d(?: pinned)?|later|no page) · ([A-Za-z]+) {2}(.*)$/);
+    assert.ok(found, 'a SHOWN line has its page and kind before the title: ' + shownLine);
+    places[found[3]] = found[1] + ' · ' + found[2];
+  });
+  return places;
+}
+
+function pagesFor(name, rules, settings, extraFiles) {
+  const files = Object.assign({ 'sanity.json': pageAnswer(rules, settings), 'group.ics': pageCalendars.group, 'comp.ics': pageCalendars.comp, 'gone.ics': pageCalendars.gone }, extraFiles);
+  const result = setup(name, { localEnv: pageEnv, files: files }).run();
+  assert.equal(result.status, 0, result.text);
+  return result;
+}
+
+test('a SHOWN line says which page of the Events panel the event is on and the kind of its calendar, counting all the calendars together', () => {
+  const result = pagesFor('pages', [], {});
+
+  assert.deepEqual(placesIn(result, 'group'), {
+    'Meeting 1': 'page 1 · Meetings',
+    'Meeting 2': 'page 1 · Meetings',
+    'Meeting 3': 'page 2 · Meetings',
+    'Meeting 4': 'page 2 · Meetings',
+    'Meeting 5': 'later · Meetings',
+    'Meeting 6': 'later · Meetings',
+  });
+  assert.deepEqual(placesIn(result, 'comp'), {
+    'Comp A': 'page 1 · Competitions',
+    'Comp B': 'page 1 · Competitions',
+    'Comp C': 'page 2 · Competitions',
+    'Comp D': 'page 2 · Competitions',
+  });
+  assert.deepEqual(linesFor(result, 'TOTAL', 'group'), ['TOTAL   group  6 shown, 0 hidden'], 'the counts are the same as before');
+});
+
+test('a calendar that is switched off is marked no page with its kind and takes no place on the pages', () => {
+  const result = pagesFor('pages-off', [], {});
+
+  assert.deepEqual(placesIn(result, 'gone'), { 'Switched off': 'no page · Outreach' });
+  assert.ok(linesFor(result, 'NOTE', 'gone')[0].includes('switched off'));
+  assert.equal(placesIn(result, 'group')['Meeting 1'], 'page 1 · Meetings', 'its event, a day before the first meeting, did not move it');
+});
+
+test('an Always show rule with Pin to page one puts its event first on page one and says pinned', () => {
+  const rules = [{ name: 'Pin Meeting 6', action: 'show', force: true, words: ['Meeting 6'] }];
+  const result = pagesFor('pages-pinned', rules, {});
+
+  assert.equal(placesIn(result, 'group')['Meeting 6'], 'page 1 pinned · Meetings');
+  assert.equal(placesIn(result, 'group')['Meeting 1'], 'page 1 · Meetings');
+  assert.equal(placesIn(result, 'group')['Meeting 2'], 'page 1 · Meetings');
+  assert.equal(placesIn(result, 'comp')['Comp A'], 'page 1 · Competitions');
+  assert.equal(placesIn(result, 'comp')['Comp B'], 'page 2 · Competitions', 'the pinned event took a place, so the fourth of page one moved to page two');
+  assert.equal(placesIn(result, 'group')['Meeting 4'], 'page 2 · Meetings');
+  assert.equal(placesIn(result, 'comp')['Comp D'], 'later · Competitions');
+  assert.equal(placesIn(result, 'group')['Meeting 5'], 'later · Meetings');
+});
+
+test('with Group events by kind on, the Meetings are page one and the Competitions page two', () => {
+  const result = pagesFor('pages-grouped', [], { groupEventsByKind: true });
+
+  assert.deepEqual(placesIn(result, 'group'), {
+    'Meeting 1': 'page 1 · Meetings',
+    'Meeting 2': 'page 1 · Meetings',
+    'Meeting 3': 'page 1 · Meetings',
+    'Meeting 4': 'page 1 · Meetings',
+    'Meeting 5': 'later · Meetings',
+    'Meeting 6': 'later · Meetings',
+  });
+  assert.deepEqual(placesIn(result, 'comp'), {
+    'Comp A': 'page 2 · Competitions',
+    'Comp B': 'page 2 · Competitions',
+    'Comp C': 'page 2 · Competitions',
+    'Comp D': 'page 2 · Competitions',
+  });
+});
+
+test('a hidden event has no page, and a calendar with no kind is Other', () => {
+  const rules = [{ name: 'Hide Meeting 1', action: 'hide', words: ['Meeting 1'] }];
+  const settings = { calendars: [{ id: 'group', name: 'Group', show: true }, { id: 'comp', name: 'Competitions', show: true, kind: 'competitions' }] };
+  const result = pagesFor('pages-hidden', rules, settings);
+
+  assert.ok(linesFor(result, 'HIDDEN', 'group')[0].endsWith('Meeting 1  (hidden by Hide Meeting 1)'), 'a HIDDEN line is as it was');
+  assert.ok(!/HIDDEN.*(page|later|Other)/.test(linesFor(result, 'HIDDEN', 'group')[0]));
+  assert.equal(placesIn(result, 'group')['Meeting 2'], 'page 1 · Other');
+  assert.equal(placesIn(result, 'group')['Meeting 5'], 'page 2 · Other', 'and the event that was hidden does not take a place');
+});
+
+test('a calendar that could not be downloaded is left out of the pages, and the others are still checked', () => {
+  const files = { 'sanity.json': pageAnswer([], {}), 'group.ics': pageCalendars.group, 'comp.exit': '22', 'gone.ics': pageCalendars.gone };
+  const result = setup('pages-failed', { localEnv: pageEnv, files: files }).run();
+
+  assert.equal(result.status, 1);
+  assert.equal(linesFor(result, 'FAIL', 'comp').length, 1);
+  assert.equal(placesIn(result, 'group')['Meeting 3'], 'page 1 · Meetings');
+  assert.equal(placesIn(result, 'group')['Meeting 5'], 'page 2 · Meetings');
+  assert.ok(!/SECRET|band\.example|token/i.test(result.text), 'still no address in the output');
+});
+
 let failures = 0;
 try {
   for (const entry of tests) {

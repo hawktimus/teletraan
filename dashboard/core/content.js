@@ -122,6 +122,8 @@ export function fixSettingValues(settings) {
   settings.nextLookRequest = tidyNextLookRequest(settings.nextLookRequest);
   settings.competitionPreviewRequest = tidyRequestTime(settings.competitionPreviewRequest);
   settings.crt = tidyGlitch(settings.crt);
+  // The Events panel: Group events by kind (Calendars tab) is a switch that starts off
+  if (typeof settings.groupEventsByKind !== 'boolean') settings.groupEventsByKind = defaultSettings.groupEventsByKind;
 }
 
 // The styles of Styles by day. Something that is not a list is the starting list. An empty list stays

@@ -175,7 +175,9 @@ function holdFor(stay, arrivedAfter) {
 }
 
 // region is 'grid1' or 'grid2'
-// getPlaylist() returns the list of { panel, show, seconds } for that region
+// getPlaylist() returns the list of { panel, show, seconds } for that region. A step of a panel with
+// more than one page also has page, counting from 1 (withPages in core/panel-order.js), which is
+// given to the panel's hasContent and mount.
 // getContent() returns the newest content
 // A region the layout does not have (the small frame in the sidebar layout,
 // core/layout.js) is never started, so none of its panels is ever drawn.
@@ -211,7 +213,7 @@ export function startRotation(region, getPlaylist, getContent) {
       const step = playlist[index];
       if (step.show === false) continue;
       if (regionOf(step.panel) !== region) continue; // a panel in the wrong list is ignored
-      if (!canShow(step.panel, content)) continue;
+      if (!canShow(step.panel, content, step.page)) continue;
 
       const topic = topicOf(step.panel);
       if (topic && onScreen[otherRegion].includes(topic)) continue;
@@ -267,7 +269,7 @@ export function startRotation(region, getPlaylist, getContent) {
       if (!step) return null;
 
       try {
-        const page = buildPage(step.panel, getContent());
+        const page = buildPage(step.panel, getContent(), step.page);
         const topic = topicOf(step.panel);
         if (topic) onScreen[region].push(topic); // at once, so the other region sees it
         return { page: page, step: step, topic: topic };

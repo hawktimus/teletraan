@@ -87,6 +87,17 @@ export function hidingRule(event, rules, timeZone, now) {
   return matching.find(rule => rule.action === 'hide') || null;
 }
 
+// The Always show rule with Pin to page one switched on that matches an event, or
+// null. The Events panel puts such an event first on page one (core/event-pages.js).
+// The arguments are the same as for hidingRule.
+export function forcingRule(event, rules, timeZone, now) {
+  const dated = daysOf(event || {}, timeZone);
+  if (dated === null || !Array.isArray(rules)) return null;
+
+  const matching = visibleItems(rules.filter(isRecord), now).filter(rule => ruleMatches(rule, dated));
+  return matching.find(rule => rule.action === 'show' && rule.force === true) || null;
+}
+
 // Merging
 
 // A BAND event with the dates it covers added. The last moment of the event is

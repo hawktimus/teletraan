@@ -44,3 +44,29 @@ export function panelOrder(rotation) {
 export function playlistOf(rotation, area) {
   return panelOrder(rotation).filter(step => step && regionOf(step.panel) === area);
 }
+
+// How many pages a panel has, 1 unless registry.js says more
+function pagesOf(id) {
+  const panel = panels.find(item => item.id === id);
+  return panel && panel.pages > 1 ? panel.pages : 1;
+}
+
+// The rows a list follows, with one row for each page of a panel that has more than one. The Events
+// panel is two rows, page 1 and page 2, one after the other. Each takes the switch and the seconds of
+// the row it comes from. A panel with one page keeps its row as it is. The list is the same however
+// many events there are: a page with nothing on it is skipped when the screen looks for the next panel
+// (core/schedule.js), so the rows do not move when the content changes.
+export function withPages(steps) {
+  const expanded = [];
+
+  steps.forEach(step => {
+    const count = pagesOf(step.panel);
+    if (count === 1) {
+      expanded.push(step);
+      return;
+    }
+
+    for (let page = 1; page <= count; page++) expanded.push(Object.assign({}, step, { page: page }));
+  });
+  return expanded;
+}

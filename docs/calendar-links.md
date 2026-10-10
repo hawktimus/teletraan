@@ -23,8 +23,10 @@ Three things that share one short ID, such as GROUP:
 2. The file the Mini saves from it: the ID in lowercase with `.ics` after it,
    here `group.ics`. You do not make this file. The Mini does.
 3. A row in Dashboard Settings, in the Calendars tab, with the Calendar code
-   `group` (the ID in lowercase), a Calendar name and Show on screen. The TV
-   shows nothing from a calendar that has no row, or whose row is switched off.
+   `group` (the ID in lowercase), a Calendar name, its Kind and Show on screen.
+   The TV shows nothing from a calendar that has no row, or whose row is
+   switched off. The Kind is Meetings, Competitions, Outreach, Deadlines or
+   Other. The Events panel writes it as a chip before each title.
 
 ## Add a calendar
 

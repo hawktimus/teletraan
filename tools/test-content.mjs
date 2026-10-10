@@ -817,7 +817,7 @@ test('isVisible, visibleItems and withDefaults', () => {
   assert.deepEqual(content.tasks, []);
   assert.equal(content.plan, null);
   assert.deepEqual(withDefaults(null), withDefaults({}));
-  assert.deepEqual(content.settings.calendars, [{ id: 'team', name: 'Team calendar', show: true }]);
+  assert.deepEqual(content.settings.calendars, [{ id: 'team', name: 'Team calendar', show: true, kind: 'other' }]);
 });
 
 test('speed is one of four names, and anything else becomes normal', () => {

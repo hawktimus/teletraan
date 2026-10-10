@@ -182,6 +182,13 @@ layout, and in the regions banner and countdown it takes the place of the panels
 that have no layout (`fixedPanels` in the same file). The `side` panel is the
 one example (docs/layouts.md, "The sidebar").
 
+A line may also have `pages: 2`. The panel then comes round that many times in a
+row, once for each page, and `hasContent` and `mount` get the page as a second
+argument, counting from 1. A page with nothing on it is skipped. The Events
+panel is the one example: page one has the next 4 events and page two the 4
+after them (`core/event-pages.js`). The rotation list in Studio still has one row
+for the panel.
+
 ## 8. Put it in the rotation
 
 The panel's id is written in two more places. They have to match

@@ -213,7 +213,7 @@ test('a page with no settings at all follows the default lists, and one with an 
 test('the screen asks for its playlists through playlistOf and does not read the older lists itself', () => {
   const shell = read('shell.js');
 
-  assert.ok(shell.includes("import { playlistOf } from './core/panel-order.js';"));
+  assert.ok(shell.includes("import { playlistOf, withPages } from './core/panel-order.js';"));
   assert.ok(shell.includes("playlistOf(rotation(), 'grid1')") && shell.includes("playlistOf(rotation(), 'grid2')"));
   assert.ok(!/rotation\(\)\.grid[12]/.test(shell), 'shell.js should not read rotation().grid1 or rotation().grid2');
 });

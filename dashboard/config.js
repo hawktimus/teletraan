@@ -347,7 +347,11 @@ export const defaultSettings = {
       days: [0, 1, 2, 3, 4, 5, 6],
     },
   ],
-  calendars: [{ id: 'team', name: 'Team calendar', show: true }],
+  // The calendars (Calendars tab): a code, a name, the show switch and the kind (see calendarKinds below).
+  // groupEventsByKind off keeps both pages of the Events panel in date order. On, page one has the next
+  // four Meetings, Deadlines and Other events, and page two the next four Competitions and Outreach events.
+  calendars: [{ id: 'team', name: 'Team calendar', show: true, kind: 'other' }],
+  groupEventsByKind: false,
 };
 
 // Used for anything missing from the Look document in the Studio. The
@@ -439,6 +443,12 @@ export const filterActions = ['hide', 'show'];
 export const defaultFilter = {
   action: 'hide',
 };
+
+// The kind of a calendar in Dashboard Settings (Calendars tab): what sort of events it holds. The Events
+// panel writes it as a small chip before each title (core/event-pages.js). A calendar with no kind, or one
+// that is not in this list, is other. The Studio copies this list.
+export const calendarKinds = ['meetings', 'competitions', 'outreach', 'deadlines', 'other'];
+export const defaultCalendarKind = 'other';
 
 export const defaultTeam = {
   name: 'HAWKTIMUS PRIME',

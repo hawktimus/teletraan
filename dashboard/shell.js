@@ -52,7 +52,7 @@ import { applyStyle, recordShapes, shapesFor, shapesNow, startStyle } from './co
 import { holdBootLook } from './core/look-rotation.js';
 import { resumePreview } from './core/preview.js';
 import { loadPanel, mountPanel, updatePanel } from './core/panels.js';
-import { playlistOf } from './core/panel-order.js';
+import { playlistOf, withPages } from './core/panel-order.js';
 import { askForTeam, changeTeamNow, onTeamChange, useTeams } from './core/teams.js';
 import { showPagesNow, startRotation, startTicker, startTogether } from './core/schedule.js';
 import { startTakeovers, runAnnouncement, takeoverRunning } from './core/takeover.js';
@@ -420,10 +420,11 @@ function startWhatComesAndGoes() {
     return;
   }
 
+  // A panel with two pages, the Events panel, is two steps one after the other (withPages)
   const rotation = () => content.settings.rotation;
-  startRotation('grid1', () => (onlyTasks ? [{ panel: 'tasks', show: true, seconds: 12 }] : playlistOf(rotation(), 'grid1')), getContent);
+  startRotation('grid1', () => (onlyTasks ? [{ panel: 'tasks', show: true, seconds: 12 }] : withPages(playlistOf(rotation(), 'grid1'))), getContent);
   if (!onlyTasks) {
-    startRotation('grid2', () => playlistOf(rotation(), 'grid2'), getContent); // does nothing in a layout with no small frame
+    startRotation('grid2', () => withPages(playlistOf(rotation(), 'grid2')), getContent); // does nothing in a layout with no small frame
 
     startTicker(getContent);
   }

@@ -7,6 +7,11 @@
 //   testOnly  only used by the hardware test (?stress)
 //   layout    only used in that layout (core/layout.js). A panel with no layout
 //             is used in every layout. See fixedPanels() below.
+//   pages     how many pages the panel shows one after the other each time it comes
+//             round, 1 if it does not say. Each page is a step of its own in the
+//             rotation (withPages in core/panel-order.js). The panel's hasContent
+//             and mount are given the page, counting from 1, and a page with nothing
+//             on it is skipped.
 //
 // A panel in grid1, grid2 or ticker draws only its page. The area it is shown
 // in supplies the frame and the page change (core/areas.js). The banner, the
@@ -25,7 +30,7 @@ export const panels = [
   { id: 'ticker', region: 'ticker' },
 
   { id: 'tasks', region: 'grid1', topic: 'tasks' },
-  { id: 'events', region: 'grid1', topic: 'events' },
+  { id: 'events', region: 'grid1', topic: 'events', pages: 2 },
   { id: 'tonight', region: 'grid1', topic: 'plan' },
   { id: 'spotlight', region: 'grid1', topic: 'subteams' },
   { id: 'sponsor-feature', region: 'grid1', topic: 'sponsors' },

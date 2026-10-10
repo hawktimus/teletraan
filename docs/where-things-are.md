@@ -140,6 +140,8 @@ editors can sign in from anywhere.
                               look.js turns the Polish setting (polished, flat or plain) into the page
                               switches the stylesheets read (data-finish, data-glint and data-look),
                               events.js filters and sorts the BAND events, and writes the dates of an event,
+                              event-pages.js splits those events into the two pages of the Events panel,
+                              with the kind of each and the pinned ones first (docs/calendar-filters.md),
                               connection.js decides why Sanity could not be read and writes the
                               connection status text at the bottom right, device.js reads the Mini's
                               name and addresses (data/live/device.json) for the red version of it
@@ -217,8 +219,9 @@ editors can sign in from anywhere.
                               OK or FAIL line each (docs/rebuilding-the-mini.md, "Checking the connection").
                               scripts/fetch-calendars.sh downloads the BAND calendars in local.env into the
                               data folder (docs/calendar-links.md).
-                              scripts/check-calendars.sh lists the events of each calendar in local.env and
-                              says which ones the Calendar filters hide. It needs Node, so it runs on a
+                              scripts/check-calendars.sh lists the events of each calendar in local.env,
+                              says which ones the Calendar filters hide, and for the others which page of
+                              the Events panel they are on and their kind. It needs Node, so it runs on a
                               computer that has it, not on the Mini. check-calendars.mjs is the part of it
                               that runs the dashboard's own calendar code.
                               scripts/slides-sync.sh downloads the slides of the coming talks and turns them
@@ -290,6 +293,9 @@ editors can sign in from anywhere.
       test-install-calendars.mjs  checks for deploy/scripts/install-calendars.sh: that it stops before it changes
                               anything, and that it installs the calendar units only
       test-calendars-script.mjs  checks for deploy/scripts/check-calendars.sh, with a fake curl
+      test-event-pages.mjs    checks for the two pages of the Events panel (core/event-pages.js): four events
+                              to a page, no second page for four or fewer, the kind chips, Group events by
+                              kind, the pinned events, and the step for each page in the rotation
       test-status-write.mjs   checks for deploy/scripts/status-write.sh, with a fake curl, that the services and
                               kiosk.sh run it, and that the dashboard never reads the status document
       test-cybertron.mjs      checks for Cybertron on the layout of Original: which layout each style has, its four

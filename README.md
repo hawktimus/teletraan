@@ -42,7 +42,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - Countdown timer to FRC Kickoff (January 9, 2027), then to Rollout
 - Team tasks, each with an optional point of contact and a place, picked in the Location field of the task, where Create new adds one
 - The Daily Agenda panel, headed AGENDA: the schedule for today's meeting, with the talks booked for today
-- Upcoming events and the next event, from the team's BAND calendars, with Calendar filters that hide or keep events, such as a meeting that repeats every week
+- Upcoming events and the next event, from the team's BAND calendars, with Calendar filters that hide or keep events, such as a meeting that repeats every week. The Events panel has two pages of four, each event has a chip for the kind of its calendar, and a coach can pin an event to page one
 - Sponsors, with sponsor logos and thank-yous
 - Photos, uploaded in Sanity and shown at random or newest first
 - Subteam spotlight, leadership, and team leads
@@ -74,7 +74,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - A Run presentation test button in Studio that plays a sample talk with six sample slides, with no internet
 - Preview buttons in Studio (Prime, Nova, Cybertron, Minimal and the next seasonal pack) that show that look on the TV for 2 minutes and then go back to the saved settings, without changing any setting. `?team=`, `?style=` and `?overlay=` on the address try any combination with the sample content
 - A Start here page in Studio with buttons that try the screen (docs/demo.md)
-- A calendar check (deploy/scripts/check-calendars.sh) that lists the next 30 days of events and says which ones the Calendar filters hide
+- A calendar check (deploy/scripts/check-calendars.sh) that lists the next 30 days of events, says which ones the Calendar filters hide, and gives the Events page and the kind of each one that shows
 - A connection check for the Mini (deploy/scripts/check-connection.sh) and a small text on the screen that says why when Sanity cannot be reached
 - A boot and shutdown screen: a text drawing of a person pointing two fingers at each other, with TELETRAAN I under it, shows on the TV above the login prompt while the Mini starts and again while it shuts down (deploy/console, docs/rebuilding-the-mini.md, step 13)
 

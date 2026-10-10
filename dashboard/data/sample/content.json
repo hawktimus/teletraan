@@ -64,8 +64,9 @@
     "lookSwap": "assemble",
     "crt": { "on": true, "everySeconds": 240, "durationSeconds": 2.7 },
     "calendars": [
-      { "id": "team", "name": "[Team calendar]", "show": true }
-    ]
+      { "id": "team", "name": "[Team calendar]", "show": true, "kind": "meetings" }
+    ],
+    "groupEventsByKind": false
   },
 
   "theme": {

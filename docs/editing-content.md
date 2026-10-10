@@ -61,7 +61,8 @@ last step of every change. See "The Start here page" below.
   the address of a new calendar on the Mini.
 - Calendar filters: rules that hide events from the BAND calendars, or keep them
   on the screen, such as a meeting that repeats every week
-  (docs/calendar-filters.md). Students can follow
+  (docs/calendar-filters.md). An Always show rule can also pin its events to
+  page one of the Events panel. Students can follow
   docs/hide-a-repeating-meeting.md.
 
 ### Roster
@@ -187,6 +188,37 @@ What the screen does with them:
   the month are never taken from the Mini's own clock. Keep the Time zone the same
   as the Mini's own time zone (docs/rebuilding-the-mini.md, step 3), because
   the screen writes times on the Mini's clock.
+
+### The two pages of the Events panel
+
+The Events panel comes round twice in a row. Page one shows the next 4 events and
+page two the 4 after them, both in order of start. Both pages have the same rows
+as before: the date on the left, the title, and under it the time and the place.
+With four or fewer events there is no page two, and the panel runs once. With no
+events the panel does not run.
+
+- Each row has a small chip before the title. It is the kind of the calendar the
+  event comes from, in the team's accent color: MEETING, COMP, OUTREACH, DEADLINE
+  or OTHER. COMP is Competitions, cut short because it is the longest word and
+  the chip takes its room from the title. The chip, the date and the text keep
+  their size. A title that does not fit on its line is cut off with three dots at
+  the end, and a pinned event gives up a little more room to its pin.
+- The kind is set for each calendar in Dashboard Settings, Calendars. A calendar
+  with no kind is Other.
+- Group events by kind is a switch in the same tab, off to start with. Off: both
+  pages are in date order, whatever the kinds. On: page one is the next 4
+  Meetings, Deadlines and Other events, and page two the next 4 Competitions and
+  Outreach events. Other goes with page one, so an event from a calendar with no
+  kind never waits on a page that may not run. Within a page the events are in
+  order of start. If one kind has more than four events, the later ones are not
+  shown. A page with none of its kinds does not run.
+- A coach can pin an event to page one with an Always show rule that has Pin to
+  page one on (docs/calendar-filters.md, "Pinning an event"). A pinned event is
+  first on page one, with a small pin after its title. At most three events are
+  pinned, and the other places on page one fill by date. This holds when Group
+  events by kind is on too.
+- In Panel order (Dashboard Settings, Screen tab) Upcoming events is still one
+  row. Its Show on screen switch and its seconds are for both pages.
 
 ### The old Events Calendar entries
 
@@ -696,6 +728,14 @@ problem would touch.
   switch is on. The code is lowercase letters, digits and underscores. Do not
   change a calendar's code unless you were told to. If you delete every row, no
   events show. To add a calendar, see docs/calendar-links.md.
+- Kind: on each calendar row. Meetings, Competitions, Outreach, Deadlines or
+  Other, and Other to start with. The Events panel writes it as a chip before the
+  title of each event of that calendar (see "The two pages of the Events panel").
+  A calendar saved before kinds existed has none, and counts as Other.
+- Group events by kind: off to start with. Off: the Events panel shows the next 8
+  events in date order, 4 to a page. On: page one has the next 4 Meetings,
+  Deadlines and Other events, and page two the next 4 Competitions and Outreach
+  events.
 
 ### Presentations
 

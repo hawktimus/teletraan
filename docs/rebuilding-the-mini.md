@@ -120,7 +120,8 @@ see studio/README.md.
    Adding or changing a calendar below.
 
    Then tell the dashboard which calendars to show. In Studio open Dashboard
-   Settings, then the Calendars tab, and add one row for each calendar. The
+   Settings, then the Calendars tab, and add one row for each calendar, with
+   its kind (Meetings, Competitions, Outreach, Deadlines or Other). The
    row's code must be the lowercase part of the name in `local.env`: `team`
    for `CALENDAR_TEAM_URL`. A code can be up to 20 characters. The Mini
    downloads every calendar in `local.env`, but the dashboard only shows a
@@ -643,7 +644,9 @@ Each BAND calendar is one line in `deploy/local.env` on the Mini. To add one:
        deploy/scripts/check-calendars.sh
 
    It prints a line for each event in the next 30 days, SHOWN or HIDDEN, and
-   for a hidden one the name of the Calendar filter that hides it. Each
+   for a hidden one the name of the Calendar filter that hides it. A SHOWN line
+   also says where the event is on the Events panel (page 1, page 1 pinned,
+   page 2, later or no page) and the kind of its calendar. Each
    calendar ends with a TOTAL line that gives the number shown and hidden. A
    FAIL line says why the download failed. A NOTE line says the screen shows
    none of the calendar, because it has no row in Calendars or the row is

@@ -1,9 +1,11 @@
 #!/bin/sh
 # Shows what the screen does with each calendar in local.env. For every event
 # in the next 30 days it prints one line, SHOWN, or HIDDEN with the name of the
-# Calendar filter that hides it, and then how many of each. It only reads:
-# nothing is saved and nothing is changed. The filters are read from Sanity
-# the way the screen reads them, and the events are expanded by the
+# Calendar filter that hides it, and then how many of each. A SHOWN line also
+# says where the event is on the Events panel (page 1, page 1 pinned, page 2, or
+# later when it is not one of the first eight) and the kind of its calendar. It
+# only reads: nothing is saved and nothing is changed. The filters are read
+# from Sanity the way the screen reads them, and the events are expanded by the
 # dashboard's own calendar code, which needs Node. The Mini does not have Node,
 # so run this on a computer that has Node, a copy of the repository and a
 # deploy/local.env with the calendar addresses:
@@ -120,6 +122,7 @@ if [ "$status" -ne 0 ] || ! grep -q '"result"' "$work/sanity.json"; then
 fi
 
 failed=0
+downloaded=""
 
 for name in $names; do
   id=${name#CALENDAR_}
@@ -133,7 +136,17 @@ for name in $names; do
       ;;
   esac
 
-  if ! fetch_one "$id" "$url" || ! node "$helper" "$work/sanity.json" "$id" "$work/$id.ics"; then
+  if fetch_one "$id" "$url"; then
+    downloaded="$downloaded $id"
+  else
+    failed=$((failed + 1))
+  fi
+done
+
+# The page of an event depends on all the calendars, so they are checked after
+# every download is done. The folder is where the downloads are.
+for id in $downloaded; do
+  if ! node "$helper" "$work/sanity.json" "$id" "$work/$id.ics" "$work"; then
     failed=$((failed + 1))
   fi
 done
