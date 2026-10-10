@@ -1,0 +1,17 @@
+[Unit]
+Description=Read the FRC competition data for Teletraan I
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# ACCOUNT is replaced by install-frc.sh with the account that owns the
+# repository, so this file does not depend on what the Mini's user is called.
+User=ACCOUNT
+# The script decides whether it is time. It tells Studio when it finished
+# (status-write.sh frc) only after a run that worked, so there is no
+# ExecStartPost here.
+ExecStart=/opt/teletraan/deploy/scripts/frc-sync.sh
+# Each request gives up after 30 seconds and a run makes at most 60. This is for
+# the whole run.
+TimeoutStartSec=15min

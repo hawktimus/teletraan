@@ -1098,7 +1098,8 @@ after it a pass of its Monday cards in the Monday style, if the team has Monday 
 none skips that pass. With two styles, Prime with Monday rows and Nova without, a cycle is Prime in
 the style of the day, Prime in Minimal, Nova in the style of the day, and tomorrow the same three
 with the other style. The panels that every team shares (the events, the tips, the photos and the
-countdown) are in the pass of each team, once. There are no Monday cards yet: `mondayCards` in
+countdown) are in the pass of each team, once, and so are the competition cards that are due, with the
+data of that team (docs/frc-feed.md). There are no Monday cards yet: `mondayCards` in
 `core/look-rotation.js` returns none, so no team has a Monday pass until that function gives its
 rows and the cards are in the panel list.
 

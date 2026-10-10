@@ -30,6 +30,11 @@
   --font-display: 'Tomorrow', 'Trebuchet MS', sans-serif;
   --font-text: 'Atkinson Hyperlegible Next', 'Verdana', sans-serif;
 
+  /* the two alliance colours of a match, the same in every theme because they are the colours of the field.
+     The competition cards use them (panels/competition-*), with white text on them. */
+  --alliance-red: #d8323a;
+  --alliance-blue: #2f6fd6;
+
   /* text sizes, for a 1920x1080 screen read from 20 feet away.
      Nothing on the screen is smaller than the label size. */
   --size-label: 44px;

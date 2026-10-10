@@ -181,6 +181,12 @@ editors can sign in from anywhere.
                               order of the teams, their Monday cards and the Next look now guard), and
                               look-rotation-run.js plays the three swaps and keeps the pass in localStorage
                               (docs/layouts.md, "The look rotation"),
+                              frc.js cleans the frc-status document the Mini writes and has the date helpers for
+                              it, competition.js decides which competition cards are due now (from the document,
+                              the clock and the Competition cards setting) and mixes them into the list of the
+                              large panel, competition-draw.js is what the cards share, and competition-preview.js
+                              decides when the Preview competition button shows the cards on sample data and
+                              competition-preview-run.js starts it (docs/frc-feed.md),
                               tick.js is the one clock of the screen: it tells every panel when a real
                               second starts by reading the time, not by counting, so the digits never
                               drift, and a panel should write to the page only what has changed
@@ -190,7 +196,9 @@ editors can sign in from anywhere.
                               the banner and the side column of the bar layout (docs/layouts.md, "The bar
                               layout"). The war clock in that banner is drawn by panels/countdown, as a
                               second rendering of the countdown (docs/layouts.md, "The war clock").
-                              panels/tonight is the Daily Agenda panel, headed AGENDA (docs/up-next.md)
+                              panels/tonight is the Daily Agenda panel, headed AGENDA (docs/up-next.md).
+                              panels/competition-* are the seven competition cards, each plain SVG
+                              (docs/frc-feed.md)
       fonts/, assets/         fonts and pictures, all served from here
       data/sample/            sample content with marked placeholders, and a sample talk with six slides
                               (slides/presentation-sample)
@@ -216,7 +224,9 @@ editors can sign in from anywhere.
                               Styles by day, Monday style, Team order and How the look changes. status.js is the
                               document the Mini writes (the status block, settingsStatus.js and status-input.js), and calendarStatus.js
                               the one it writes for the Calendars page. time-text.js has the ages in words that
-                              both use. settingsRotation.js is the Panels
+                              both use. frcStatus.js is the document the Mini writes for the competition cards,
+                              settingsCompetition.js the Competition tab and frc-status-input.js its connection block.
+                              settingsRotation.js is the Panels
                               box of Dashboard Settings, and panel-order-input.js fills its Panel order list when it is empty. The Team radio on tasks, sponsors and
                               the other kinds of content is team-input.js, put on each by teamField in fields.js
                               scripts/ has make-templates.mjs, which writes the CSV templates from the
@@ -241,6 +251,9 @@ editors can sign in from anywhere.
                               scripts/status-write.sh writes the time of a job into the status-mini document
                               in Sanity, for the status block in Dashboard Settings (docs/rebuilding-the-mini.md,
                               "Showing what the Mini did in Studio").
+                              scripts/frc-sync.sh reads the public FRC data of each team and writes it into
+                              the frc-status document in Sanity, and install-frc.sh turns on its timer
+                              (docs/frc-feed.md).
                               scripts/install-timers.sh turns on the calendar timer and the pull timer,
                               install-calendars.sh only the calendar timer and install-slides.sh the slides
                               timer (docs/rebuilding-the-mini.md, step 11). systemd/ has the unit files they
@@ -316,6 +329,13 @@ editors can sign in from anywhere.
                               (SHOWN or HIDDEN with the rule, the error case, no address anywhere, with and
                               without Node), and status-write.sh calendar-status, with a fake curl
       test-calendars-view.mjs checks for the rows and lines of the Calendars page in Studio
+      test-frc-script.mjs     checks for deploy/scripts/frc-sync.sh and install-frc.sh, with a fake curl and made-up
+                              answers: the requests, the status document, the ETags, the limit of 60 requests, the
+                              snapshots, and that the key and the token are never printed or saved
+      test-competition.mjs    checks for the competition cards (core/frc.js, core/competition.js and the panels in
+                              panels/competition-*): the cards due on each day of the season in each mode, the mix into the
+                              large panel's list, each card from the sample and with nothing to show, that no text is under
+                              44px or runs out of its body, and the guard of Preview competition
       test-cybertron.mjs      checks for Cybertron on the layout of Original: which layout each style has, its four
                               frames, the stage, the banner and the ticker on their plates, the wide war clock, and
                               that the frames are drawn again when the style changes
@@ -364,7 +384,7 @@ editors can sign in from anywhere.
                               hidden-transitions.md, demo.md, publish-all.md, reordering-the-sidebar.md,
                               importing-from-csv.md, presentations.md, up-next.md, calendar-filters.md,
                               calendar-links.md, calendars-page.md, hide-a-repeating-meeting.md, switch-the-look.md,
-                              add-the-nova-team.md and team-on-an-item.md.
+                              add-the-nova-team.md, team-on-an-item.md and frc-feed.md.
                               seed/ has content to import into the Studio: places.ndjson, the three
                               starting places, teams.ndjson, the two starting teams, and extra-events.ndjson, the
                               old Events Calendar entries, which the screen no longer reads. content-templates/ has one CSV template for each
@@ -487,6 +507,17 @@ alone.
   `competitionPreviewRequestField` in `studio/schemas/settingsRequests.js`), through `studio/screen-requests.js`.
   The starting values are in `defaultSettings` in `dashboard/config.js`, and `fixSettingValues` in
   `dashboard/core/content.js` keeps each one a time or empty.
+- **The competition cards.** Dashboard Settings, Competition tab (docs/frc-feed.md). The mode, Auto, Always or
+  Off, and a switch for each of the seven cards are in `studio/schemas/settingsCompetition.js`, with the
+  starting values in `defaultSettings`, the lists in `competitionModes` and `competitionSwitches` and
+  `competitionLeadDays` (2 days) and `competitionPreviewSeconds` (120) in `dashboard/config.js`. The cards
+  are the panels `dashboard/panels/competition-*`, flagged `competition: true` in `registry.js`, and the
+  list of them with the rule for each is `cards` in `dashboard/core/competition.js`. The data is the
+  document `frc-status` (type `frcStatus`, `studio/schemas/frcStatus.js`), which `deploy/scripts/frc-sync.sh`
+  writes and `core/sanity.js` reads with the rest of the content and `core/frc.js` cleans. It is public. The
+  Preview competition button on Start here writes `competitionPreviewRequest`, and
+  `core/competition-preview.js` and `core/competition-preview-run.js` show the cards on the sample data in
+  `dashboard/data/sample/content.json`. The block at the top of the tab is `studio/frc-status-input.js`.
 - **The demo.** The Demo page in Studio (docs/demo.md), which has no buttons and no line in the sidebar now:
   the Steps and the Demo announcement text. The starting values
   are `defaultDemo` in `dashboard/config.js` and their copy in
@@ -743,8 +774,8 @@ alone.
 ## Checking your work
 
 Run these in the terminal, from this folder. They need Node.js, the same
-version as the Studio (22.12 or newer), and nothing else installed. The one
-exception is `test-slides-script.mjs`, which needs `jq`.
+version as the Studio (22.12 or newer), and nothing else installed. The
+exceptions are `test-slides-script.mjs` and `test-frc-script.mjs`, which need `jq`.
 
     node tools/test-calendar.mjs
     node tools/test-weather.mjs
@@ -767,6 +798,8 @@ exception is `test-slides-script.mjs`, which needs `jq`.
     node tools/test-calendars-script.mjs
     node tools/test-event-pages.mjs
     node tools/test-status-write.mjs
+    node tools/test-frc-script.mjs
+    node tools/test-competition.mjs
     node tools/test-cybertron.mjs
     node tools/test-minimal.mjs
     node tools/test-team-trim.mjs

@@ -40,6 +40,7 @@ said yes.**
 | `xserver-xorg`, `xinit`, `x11-xserver-utils`, `chromium` | show the dashboard full screen | 12 |
 | `unclutter` (optional) | hide the mouse pointer when testing inside a desktop | 12 |
 | A changed `/etc/issue` (the old text is kept) and the unit `teletraan-console.service`. No package. | show the drawings on the TV while the Mini starts and shuts down | 13 |
+| A read key for The Blue Alliance, made on the team's account there. `curl` and `jq` are already installed in step 11. | read the public competition data of each team | 17 |
 
 The repository host needs an account that the team mentor holds. This page does
 not create it. The Sanity project already exists, and its ID is in
@@ -289,6 +290,42 @@ see studio/README.md.
 
     Then go through What to check.
 
+17. **Turn on the FRC feed.** This is optional, and it can be done at any time
+    after step 11, with no reboot. The Mini reads the public competition data of
+    each team and writes it into Sanity for the screen (docs/frc-feed.md). It
+    needs `curl` and `jq` from step 11 and the Sanity write token from "Showing
+    what the Mini did in Studio" below. It also needs a read key for The Blue
+    Alliance, which needs the team mentor's yes first. Make the key by signing
+    in at thebluealliance.com, opening Account, and adding a key under Read API
+    Keys with a short description such as `Teletraan Mini`. Copy it. Then add it
+    to `local.env`, in single quotes, on its own line:
+
+        nano /opt/teletraan/deploy/local.env
+
+        TBA_AUTH_KEY='[paste the read key here]'
+
+    Install the timer and check that the key works:
+
+        sudo apt install curl jq
+        sudo /opt/teletraan/deploy/scripts/install-frc.sh
+        /opt/teletraan/deploy/scripts/frc-sync.sh --check
+
+    The `apt` line only installs what is missing and needs the team mentor's yes.
+    `install-frc.sh` says what it will do and waits for Enter, like the other
+    install scripts. It stops with the `apt install` line if a package is
+    missing. `--check` prints `OK` for the key and for the token, or `FAIL` and
+    the reason. It asks one question and writes nothing. To read the data once
+    now, at any time of the day:
+
+        /opt/teletraan/deploy/scripts/frc-sync.sh --now
+
+    It prints a line for each team and `frc: status written`. In Studio, open
+    Dashboard Settings: the status block shows the time of the last FRC data
+    sync. The timer wakes the script every 5 minutes, and the script reads the
+    data about once an hour, or about every 5 minutes while a team has an event
+    on. The key is never printed or saved anywhere but `local.env`. Without it
+    the script does nothing, says so in one line, and ends without an error.
+
 ## Burn-in
 
 The plates, the metal frames, the banner and the countdown stay in the same
@@ -319,6 +356,10 @@ its settings. The Mini can keep running.
 - Events appear. `sudo journalctl -u teletraan-calendars.service -n 20`
   shows `updated` for every calendar. If a calendar says `updated` but its
   events never show, it has no row in Dashboard Settings, Calendars (step 8).
+- The FRC feed, if step 17 was done, runs. `systemctl list-timers 'teletraan-frc*'`
+  lists `teletraan-frc.timer`, and `/opt/teletraan/deploy/scripts/frc-sync.sh --check`
+  prints `OK` twice. `sudo journalctl -u teletraan-frc.service -n 20` is empty
+  most of the time, because the script ends at once when it is not time.
 - The slides service runs. `systemctl list-timers 'teletraan-*'` lists
   `teletraan-slides.timer`. `sudo journalctl -u teletraan-slides.service -n 20`
   has a line such as `talk [id]: 12 slides saved` for each talk in the next
@@ -527,6 +568,8 @@ Without one the Mini works as before and the block says No status yet.
   time.
 - `kiosk.sh` runs it in the background when the screen starts, to write the
   start time. It never holds the screen back.
+- `frc-sync.sh` runs it itself at the end of each run that worked, to write the
+  FRC time (step 17). Unlike the others, `teletraan-frc.service` does not run it.
 
 Each of these runs it with a leading minus in the unit file, so a failed write
 is ignored and never makes a download look as if it failed. The services only

@@ -502,7 +502,7 @@ test('the steps are the same however many events there are, and the default orde
 test('shell.js gives the rotation of the large and the small panels through withPages', () => {
   const shell = read('shell.js');
   assert.ok(shell.includes("import { playlistOf, withPages } from './core/panel-order.js';"));
-  assert.ok(shell.includes("withPages(playlistOf(rotation(), 'grid1'))"));
+  assert.ok(shell.includes("withPages(withCompetition(playlistOf(rotation(), 'grid1'), content, new Date()))"), 'the competition cards are mixed in first and then every panel with two pages becomes two steps');
   assert.ok(shell.includes("withPages(playlistOf(rotation(), 'grid2'))"));
   assert.ok(read('core/schedule.js').includes('buildPage(step.panel, getContent(), step.page)'));
   assert.ok(read('core/schedule.js').includes('canShow(step.panel, content, step.page)'));

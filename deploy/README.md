@@ -23,6 +23,9 @@ installing anything on the Mini, and whenever a step needs a login or a key.
 - A timer runs `slides-sync.sh` every 2 minutes. It downloads the slides of
   the talks that are coming up and saves them as pictures where the dashboard
   reads them.
+- A timer wakes `frc-sync.sh` every 5 minutes. The script reads the public FRC
+  data of each team and writes it into Sanity, about once an hour, or about every
+  5 minutes while a team has an event on (`docs/frc-feed.md`).
 - The kiosk service starts a browser full screen when the Mini boots. A kiosk
   is a browser with no address bar, tabs or menus.
 - Two text drawings, `console/startup.txt` and `console/shutdown.txt`, fill the
@@ -62,19 +65,22 @@ to attach the data folder to.
 | `scripts/check-calendars.sh` | Lists each event of the next 30 days of every calendar in `local.env`, SHOWN or HIDDEN with the name of the Calendar filter that hides it, and the counts. A SHOWN line also gives the page of the Events panel and the kind of the calendar. It only reads and prints no address. It needs Node, which the Mini does not have unless it was installed for the Calendars page, so run it on a computer that has Node and a copy of `local.env` |
 | `scripts/check-calendars.mjs` | The part of `check-calendars.sh` that runs the dashboard's own calendar code |
 | `scripts/slides-sync.sh` | Downloads the slides of the coming talks from Google Slides, turns them into pictures, and saves them with a `manifest.json`. `slides-sync.sh --test <link>` tries one deck and deletes what it made. Needs `poppler-utils`, `curl` and `jq` |
+| `scripts/frc-sync.sh` | Reads the public FRC data of each team from The Blue Alliance and Statbotics and writes the document `frc-status` in Sanity. Every address and every place in an answer is in one block at its top. `frc-sync.sh --check` tries the key, `--now` does a run whatever the time. Needs `curl` and `jq`, `TBA_AUTH_KEY` and `SANITY_WRITE_TOKEN` in `local.env`, and does nothing without them. See `docs/frc-feed.md` |
 | `scripts/status-write.sh` | Writes the time of a job into the document `status-mini` in Sanity, which Studio shows at the top of the Screen tab of Dashboard Settings. `status-write.sh calendar-status` sends the Calendars page document the same way. Needs `SANITY_WRITE_TOKEN` in `local.env` and does nothing without it. The calendar and slides services and `kiosk.sh` run it, see "Showing what the Mini did in Studio" in `docs/rebuilding-the-mini.md` |
 | `scripts/kiosk.sh` | Opens the browser full screen with the right settings, or any page given after its name. Also writes `device.json` every minute while the browser runs, and starts `status-write.sh kiosk` in the background |
 | `scripts/install-timers.sh` | Copies the unit files into place and turns on the calendar timer and the pull timer |
 | `scripts/install-calendars.sh` | Copies the two calendar unit files into place and turns on the calendar timer. Installs nothing else, so it leaves the pull timer off |
 | `scripts/install-slides.sh` | Copies the two slides unit files into place and turns on the slides timer. Does not install the packages, it prints the `apt install` line when one is missing |
+| `scripts/install-frc.sh` | Copies the two FRC unit files into place and turns on the FRC timer. Does not install the packages, it prints the `apt install` line when one is missing |
 | `scripts/install-console.sh` | Keeps a copy of `/etc/issue` once, writes the startup drawing above that text, copies `teletraan-console.service` and turns it on. Installs no package and is safe to run twice. The way back is in `docs/rebuilding-the-mini.md`, step 13 |
 | `console/startup.txt`, `console/shutdown.txt` | The drawing shown above the login prompt while the Mini starts, and the same drawing with the words "shutting down" for when it stops. Plain 7 bit text, at most 100 columns by 56 rows, with no backslash because the login prompt reads one as a code |
 | `systemd/*.service`, `*.timer` | What runs, and how often |
 
 ## local.env
 
-The real settings file is `local.env`. It holds the calendar feed addresses and
-the Sanity write token (`SANITY_WRITE_TOKEN`), which are secrets, so it is never
+The real settings file is `local.env`. It holds the calendar feed addresses, the
+Sanity write token (`SANITY_WRITE_TOKEN`) and the key for the FRC feed
+(`TBA_AUTH_KEY`), which are secrets, so it is never
 committed and only the Mini's account (the one that owns the repository) may
 read it:
 
@@ -100,6 +106,7 @@ Run these on the Mini. A command that starts with `sudo` needs administrator rig
     sudo journalctl -u teletraan-pull.service -n 30        what did the last pulls do?
     sudo journalctl -u teletraan-calendars.service -n 30   what did the last downloads do?
     sudo journalctl -u teletraan-slides.service -n 30      what did the last slide downloads do?
+    sudo journalctl -u teletraan-frc.service -n 30         what did the last FRC runs do?
     sudo journalctl -u teletraan-kiosk.service -n 30       why is the screen black?
     sudo systemctl restart teletraan-kiosk.service         restart the browser
     sudo systemctl stop teletraan-kiosk.service            stop the screen, to use the Mini's terminal
@@ -123,12 +130,14 @@ happens.
   `sudo /opt/teletraan/deploy/scripts/install-calendars.sh`
 - a slides file in `systemd/` changed: run
   `sudo /opt/teletraan/deploy/scripts/install-slides.sh`
+- an FRC file in `systemd/` changed: run
+  `sudo /opt/teletraan/deploy/scripts/install-frc.sh`
 - `console/startup.txt` changed: run
   `sudo /opt/teletraan/deploy/scripts/install-console.sh`, because `/etc/issue`
   is a copy of it. `console/shutdown.txt` changed: nothing to do, the unit
   reads the file when the Mini stops. `teletraan-console.service` changed: run
   the same script
-- `pull.sh`, `fetch-calendars.sh` or `slides-sync.sh` changed: nothing to do,
+- `pull.sh`, `fetch-calendars.sh`, `slides-sync.sh` or `frc-sync.sh` changed: nothing to do,
   the next run uses the new script
 - `kiosk.sh` changed: restart the kiosk service, because the browser only
   reads the script when it starts
@@ -144,7 +153,7 @@ the step that uses each one, is the table at the top of
 ## Names this folder assumes
 
 The unit files use the repository location `/opt/teletraan`.
-`install-timers.sh`, `install-calendars.sh`, `install-slides.sh` and
+`install-timers.sh`, `install-calendars.sh`, `install-slides.sh`, `install-frc.sh` and
 `install-console.sh` stop with an explanation if the repository is somewhere
 else. The account is not named
 in the unit files: they say `ACCOUNT`, and the install script fills in the

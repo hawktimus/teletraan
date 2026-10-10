@@ -11,7 +11,9 @@ and the page change" below.
 
 A new panel touches four places: its own folder, `registry.js`, `config.js`
 and the Studio's list of panels. A check tells you when they disagree. Do the
-steps in order.
+steps in order. The competition cards (docs/frc-feed.md) are the exception:
+they are in `registry.js` with `competition: true` and are not in the other
+two lists, because the Competition tab of Dashboard Settings switches them.
 
 ## 1. Pick the details
 

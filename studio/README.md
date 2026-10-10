@@ -27,6 +27,7 @@ TV. The dashboard reads what they publish.
     note-field.js         the one plain line of a note in a form (fields.js, noteField)
     show-on-tv-input.js   the Show on TV switch of a task, which draws a task with no value as on
     status-input.js       the Status of the Mini block at the top of the Screen tab of Dashboard Settings
+    frc-status-input.js   the block at the top of the Competition tab of Dashboard Settings: when the Mini last read the competition data
     panel-order-input.js  the Panel order list in Dashboard Settings, which fills itself from the two older panel lists when it is empty
     schemas/              one file per kind of content
     scripts/              make-templates.mjs writes the CSV templates from the schemas,

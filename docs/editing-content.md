@@ -163,7 +163,7 @@ The buttons try the screen without waiting for a time or for a booked talk:
   Monday cards of the team on the screen if it has any. A second press while the Monday cards
   are up moves past them to the next team.
 - Preview competition: shows the competition cards for 2 minutes, with sample
-  competition data.
+  competition data (docs/frc-feed.md).
 - Preview the screen: opens the screen in a new tab with the sample content, which
   is what `?sample=1` on the address does. The address is `dashboardAddress` in
   `studio/dashboard-address.js`. It is the Mini's own address, and the Mini's web
@@ -782,11 +782,39 @@ problem would touch.
   and are not shown. "Run presentation test" in the menu next to Publish (the
   three dots) starts a sample talk.
 
-### Monday and Competition
+### Monday
 
-- Monday and Competition: each tab has one line that says nothing is set up
-  there yet. The Monday boards and the competition cards will be set up on these
-  tabs.
+- Monday: the tab has one line that says nothing is set up there yet. The Monday
+  boards will be set up on this tab.
+
+### Competition
+
+The cards that show the season, the next match, the rank and the results
+(docs/frc-feed.md). The Mini reads the public data of each team and keeps it in
+Sanity, and the screen draws it.
+
+- Competition data from the Mini: a block at the top that you cannot type in. It
+  says when the Mini last read the data, how many events it found for each team,
+  any note, and the last error. With no data yet it says No connection yet: a coach
+  has to add the key for the data on the Mini (docs/rebuilding-the-mini.md,
+  step 17) and the first read comes within an hour.
+- Competition cards: Auto, Always or Off, and Auto to start with. Auto shows each
+  card in the time of its own: the cards about an event from two days before its
+  first day to its last day, with the next match first and the cards taking turns
+  with the other panels, the season timeline all season, last season until the
+  first event starts, and the district points once the first event has started.
+  Always shows every card that is on and has something to show, whatever the date.
+  Off shows none.
+- One switch for each card, all on to start with: Season timeline, Last season at
+  a glance, Live rank, Next match, Results strip, Alliance board and District
+  points. A card that is off is never shown, except in Preview competition.
+- The cards are not in Panel order. The mode, the switches and the data decide
+  when they come. Preview competition on the Start here page shows all seven
+  for 2 minutes on made-up data.
+- The data itself is a document the Mini writes, FRC data from the Mini. It has no
+  line in the list on the left and is not in the New menu. It is public, like the
+  rest of the dataset: team numbers, nicknames, match numbers and times, scores,
+  ranks, award names and ratings, and no person's name.
 
 ### Advanced
 

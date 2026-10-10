@@ -1,0 +1,13 @@
+[Unit]
+Description=Wake the FRC feed every 5 minutes
+
+[Timer]
+# One timer wakes the script every 5 minutes. The script reads the time of its
+# last run and the dates of the events it has seen, and ends at once unless it is
+# time: about once an hour, or every 5 minutes while a team has an event on. A
+# Mini that was off at the hour catches up at its next wake.
+OnBootSec=2min
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=timers.target

@@ -53,6 +53,7 @@ import { holdBootLook } from './core/look-rotation.js';
 import { resumePreview } from './core/preview.js';
 import { loadPanel, mountPanel, updatePanel } from './core/panels.js';
 import { playlistOf, withPages } from './core/panel-order.js';
+import { withCompetition } from './core/competition.js';
 import { askForTeam, changeTeamNow, currentTeam, frameTrim, onTeamChange, recordTrim, trimNow, useTeams } from './core/teams.js';
 import { showPagesNow, startRotation, startTicker, startTogether } from './core/schedule.js';
 import { startTakeovers, runAnnouncement, takeoverRunning } from './core/takeover.js';
@@ -177,6 +178,9 @@ async function run() {
 
       // The Preview buttons in the Studio. After the ones it asks about
       startOptional('./core/preview-run.js', module => module.startPreviewRunner(getContent));
+
+      // The Preview competition button on the Start here page. After the ones it asks about
+      startOptional('./core/competition-preview-run.js', module => module.startCompetitionPreviewRunner(getContent));
 
       // The team on the screen, which in Alternate mode changes with the clock (core/teams.js)
       startOptional('./core/team-run.js', module => module.startTeams(getContent));
@@ -446,9 +450,10 @@ function startWhatComesAndGoes() {
     return;
   }
 
-  // A panel with two pages, the Events panel, is two steps one after the other (withPages)
+  // A panel with two pages, the Events panel, is two steps one after the other (withPages).
+  // The competition cards that are due are mixed into the large panel's list each time it is read (core/competition.js)
   const rotation = () => content.settings.rotation;
-  startRotation('grid1', () => (onlyTasks ? [{ panel: 'tasks', show: true, seconds: 12 }] : withPages(playlistOf(rotation(), 'grid1'))), getContent);
+  startRotation('grid1', () => (onlyTasks ? [{ panel: 'tasks', show: true, seconds: 12 }] : withPages(withCompetition(playlistOf(rotation(), 'grid1'), content, new Date()))), getContent);
   if (!onlyTasks) {
     startRotation('grid2', () => withPages(playlistOf(rotation(), 'grid2')), getContent); // does nothing in a layout with no small frame
 

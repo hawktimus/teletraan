@@ -537,7 +537,9 @@ test('normalizeContent turns a full Sanity result into the sample content shape'
     expires: '2099-01-01T00:00:00.000Z',
   });
 
-  const text = JSON.stringify(content);
+  // with no frc-status document the content has frc: null, the one null it may have
+  assert.equal(content.frc, null);
+  const text = JSON.stringify(content).replace('"frc":null', '');
   ['_id', '_rev', '_createdAt', '_updatedAt', '_key', '_type', 'undefined', 'null'].forEach(word => {
     assert.equal(text.includes(word), false, 'the content contains ' + word);
   });

@@ -1,0 +1,107 @@
+/* The header sits on top of the two header plates of the area's frame */
+.competition-next-match .header {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  box-sizing: border-box;
+  width: 1152px;
+  height: 116px;
+  padding: 0 40px 0 76px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.competition-next-match .title {
+  margin: 0;
+  font: 700 var(--size-heading)/96px var(--font-display);
+}
+.competition-next-match .tag {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  color: var(--yellow);
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+/* The words are cut off with an ellipsis before they can reach the notch in the middle of the header. */
+.competition-next-match .tag-text {
+  min-width: 0;
+  max-width: 316px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.competition-next-match .tag .double-slash { flex: none; }
+
+/* The body is 1096 x 512, 28px in from the frame and 136px down, the room the Extra panels have. The chart
+   in it is an SVG of the same size, so a font size here is the size on the screen. */
+.competition-next-match .body {
+  position: absolute;
+  left: 28px;
+  top: 136px;
+  width: 1096px;
+  height: 512px;
+}
+.competition-next-match .chart { display: block; }
+
+/* One sentence in place of the chart, when there is nothing to show */
+.competition-next-match .empty {
+  box-sizing: border-box;
+  height: 100%;
+  margin: 0;
+  padding: 0 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: normal;
+  color: var(--lilac);
+  font: 500 var(--size-body)/72px var(--font-text);
+}
+
+.competition-next-match .match {
+  fill: var(--yellow);
+  font: 700 var(--size-heading)/96px var(--font-display);
+}
+.competition-next-match .when {
+  fill: var(--white);
+  font: 600 var(--size-body-large)/64px var(--font-display);
+}
+
+/* The red and the blue bands: the head of each column, the chip that says which side the team is on, and the
+   two ends of the bar of the win chance */
+.competition-next-match .band-red,
+.competition-next-match .share-red { fill: var(--alliance-red); }
+.competition-next-match .band-blue,
+.competition-next-match .share-blue { fill: var(--alliance-blue); }
+.competition-next-match .band-text {
+  fill: var(--white);
+  font: 700 var(--size-label)/48px var(--font-display);
+}
+
+/* A team in a column: its number, its nickname and its EPA. The team on the screen has a line round its row. */
+.competition-next-match .team {
+  fill: var(--white);
+  font: 700 var(--size-body)/56px var(--font-display);
+}
+.competition-next-match .nickname {
+  fill: var(--lilac);
+  font: 500 var(--size-label)/48px var(--font-text);
+}
+.competition-next-match .epa {
+  fill: var(--yellow);
+  font: 600 var(--size-label)/48px var(--font-display);
+}
+.competition-next-match .ours {
+  fill: none;
+  stroke: var(--yellow);
+  stroke-width: 4;
+}
+
+.competition-next-match .odds-red,
+.competition-next-match .odds-blue {
+  fill: var(--white);
+  font: 600 var(--size-label)/48px var(--font-display);
+}
+.competition-next-match .note {
+  fill: var(--lilac);
+  font: 500 var(--size-label)/48px var(--font-text);
+}

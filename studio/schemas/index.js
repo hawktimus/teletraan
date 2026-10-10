@@ -17,6 +17,7 @@ import theme from './theme.js';
 import demo from './demo.js';
 import status from './status.js';
 import calendarStatus from './calendarStatus.js';
+import frcStatus from './frcStatus.js';
 import { customPanelBlocks } from './customPanelBlocks.js';
 
 export const schemaTypes = [
@@ -39,4 +40,5 @@ export const schemaTypes = [
   demo,
   status,
   calendarStatus,
+  frcStatus,
 ].concat(customPanelBlocks);
