@@ -699,6 +699,7 @@ html[data-style="original"] .plate-id { display: block; }
   -webkit-line-clamp: 2;
   overflow: hidden;
   overflow-wrap: anywhere;
+  white-space: normal; /* #screen keeps every line on one line, and a role beside a long name needs its second line */
   text-align: right;
   color: var(--yellow);
   font: 600 var(--size-label)/48px var(--font-display);

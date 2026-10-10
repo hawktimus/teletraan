@@ -303,6 +303,17 @@ test('a stacked row holds the name and two lines of role inside it, and the last
   assert.equal(cornerAt(688), 1088);
 });
 
+// The screen keeps every line on one line (white-space: nowrap on #screen, inherited by everything), so a role
+// beside a 17 character name, which leaves it 366px, was cut at the frame (DRIVE TEA) instead of taking the
+// second line that the two line clamp and the comment promise. Found by rendering it.
+test('the role beside a name takes a second line instead of being cut: its rule turns wrapping back on', () => {
+  const css = read('base.css');
+  assert.ok(/white-space: nowrap;/.test(ruleOf(css, '#screen')), 'the screen keeps lines whole, so a role has to ask for wrapping');
+  assert.ok(/white-space: normal;/.test(ruleOf(css, '.person-role')), 'the role may wrap');
+  assert.ok(/white-space: nowrap;/.test(ruleOf(css, '.person-name')), 'the name stays on one line and ends in three dots');
+  assert.ok(/-webkit-line-clamp: 2;/.test(ruleOf(css, '.person-role')), 'at most two lines');
+});
+
 test('the stylesheet takes the height of a row and the place of the bar from one variable, which is 144px without it', () => {
   const css = read('base.css');
   assert.ok(/height: var\(--row-height, 144px\);/.test(ruleOf(css, '.person-row')));
