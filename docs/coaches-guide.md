@@ -172,14 +172,17 @@ cards").
 
 ## The Calendars page
 
-Calendars, under Events, shows each calendar the Mini downloads: when it last
-worked, why it failed, and the next 12 events with SHOWN or HIDDEN. A hidden event
-names the Calendar filter that hides it. The page only shows. Nothing on it can be
-changed.
+Calendars, under Events, shows each calendar the Mini downloads: its kind, when it
+last worked, why it failed, and the next 40 events with SHOWN or HIDDEN. A hidden
+event names the Calendar filter that hides it. Each event has Hide this one and
+Hide all like this, which make a rule under Calendar filters, and Show again, which
+deletes a rule the page made.
 
-- Left: a button for each row of Dashboard Settings, Calendars, with the number of
-  events in the next 30 days and how many a rule hides.
-- Right: the facts of the calendar you picked, then up to 12 events in date order.
+- Left: a button for each row of Dashboard Settings, Calendars, with its kind, the
+  number of events in the next 30 days and how many a rule hides. A calendar with no
+  kind shows Other on the screen. The page says Kind: Other (not set), and the kind
+  is set in Dashboard Settings, on the Calendars tab.
+- Right: the facts of the calendar you picked, then up to 40 events in date order.
 - A red line is a problem. "Download failed, the server said no" usually means BAND
   gave the calendar a new link (docs/calendar-links.md, "Change a link"). The TV
   keeps the events of the last good download.
@@ -189,7 +192,7 @@ changed.
   (docs/calendars-page.md, "Node on the Mini").
 
 The dataset is public, and so is the document behind this page. It holds the
-titles, dates and times of the next 12 events of every calendar, and that includes
+titles, dates and times of the next 40 events of every calendar, and that includes
 the events that a Calendar filter hides from the TV. Anyone who asks the dataset
 for it can read those titles. It holds no calendar address, no token and no
 location. Do not put anything private in the title of a BAND event. The status

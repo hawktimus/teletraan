@@ -16,7 +16,7 @@ TV. The dashboard reads what they publish.
     screen-requests.js    what the request buttons write (Play announcement, Run presentation test, Next look now, Preview competition, the Play and Preview buttons), used by actions.js and the Start here page
     dashboard-address.js  the address that Preview the screen opens on the Start here page, with ?sample=1 for the sample content
     calendars-view.js     the Calendars page under Events, written as a plain function (docs/calendars-page.md)
-    calendars-view-parts.js  the words and rows of the Calendars page, with no Studio in it, so node can test them
+    calendars-view-parts.js  the words and rows of the Calendars page and the rules of its Hide buttons, with no Studio in it, so node can test them
     time-text.js          ages in words and times as the editor's computer writes them, used by status-input.js and the Calendars page
     actions.js            the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons on Dashboard Settings
     themes.js             the list of themes and overlays, a copy of the dashboard's

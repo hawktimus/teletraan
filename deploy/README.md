@@ -61,7 +61,7 @@ to attach the data folder to.
 | `local.example.env` | The template for `local.env`, with placeholders only |
 | `scripts/pull.sh` | Gets new commits and writes `version.txt` so an open dashboard reloads |
 | `scripts/fetch-calendars.sh` | Downloads each calendar named in `local.env`, over https only. Leaves `calendar-sync.txt` in the data folder: for each calendar its code, when it was last downloaded properly and why the last try failed. It holds no address |
-| `scripts/calendar-status.sh` | Makes `calendar-status.json` in the data folder, the document for the Calendars page in Studio, from `calendar-sync.txt`. With Node on the Mini it also lists the next events of each calendar, SHOWN or HIDDEN. Without Node it says so in the document. Prints no address |
+| `scripts/calendar-status.sh` | Makes `calendar-status.json` in the data folder, the document for the Calendars page in Studio, from `calendar-sync.txt`. With Node 18 or newer on the Mini it also lists the next 40 events of each calendar, with the day of each, SHOWN or HIDDEN. Without Node it says so in the document. Prints no address |
 | `scripts/calendar-status.mjs` | The part of `calendar-status.sh` that runs the dashboard's own calendar code and the Calendar filters. It never sees an address |
 | `scripts/check-connection.sh` | Checks DNS, Sanity, CORS, BAND, the web container, the kiosk and the clock, one OK or FAIL line each. Run it over SSH, see "Checking the connection" in `docs/rebuilding-the-mini.md` |
 | `scripts/check-calendars.sh` | Lists each event of the next 30 days of every calendar in `local.env`, SHOWN or HIDDEN with the name of the Calendar filter that hides it, and the counts. A SHOWN line also gives the page of the Events panel and the kind of the calendar. It only reads and prints no address. It needs Node, which the Mini does not have unless it was installed for the Calendars page, so run it on a computer that has Node and a copy of `local.env` |
@@ -151,8 +151,8 @@ happens.
 
 ## Things that need the team mentor's yes
 
-Installing the packages on the Mini (and Node, if the Calendars page is to
-list events), Docker's apt source and key, the nginx image, the deploy key and
+Installing the packages on the Mini (and Node 18 or newer, if the Calendars page is
+to list events), Docker's apt source and key, the nginx image, the deploy key and
 the change to `/etc/issue` all need the team mentor's yes first. The list, with
 the step that uses each one, is the table at the top of
 `docs/rebuilding-the-mini.md`.

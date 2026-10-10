@@ -65,18 +65,16 @@ document_without_events() {
   printf ']}\n'
 }
 
-# The dashboard files are modules without a package.json beside them. Node reads
-# those as modules from 20.19 and from 22.7, and older ones stop with a syntax error.
+# The dashboard files are modules, and dashboard/package.json says so. Node 18 and
+# newer read them that way, and an older Node stops on the first import.
 node_is_new_enough() {
   version=$(node --version 2> /dev/null) || return 1
   version=${version#v}
   major=${version%%.*}
-  minor=${version#*.}
-  minor=${minor%%.*}
-  case $major$minor in
+  case $major in
     ''|*[!0-9]*) return 1 ;;
   esac
-  [ "$major" -gt 22 ] || { [ "$major" -eq 22 ] && [ "$minor" -ge 7 ]; } || { [ "$major" -eq 20 ] && [ "$minor" -ge 19 ]; }
+  [ "$major" -ge 18 ]
 }
 
 # Asks Sanity for the Calendar filters the way the screen does, and lets the
@@ -94,7 +92,7 @@ reason=""
 if ! command -v node > /dev/null 2>&1; then
   reason="Node is not installed on the Mini, so it does not list the coming events"
 elif ! node_is_new_enough; then
-  reason="Node on the Mini is too old to read the dashboard code, so it does not list the coming events. It needs version 20.19 or newer"
+  reason="Node on the Mini is too old to read the dashboard code, so it does not list the coming events. It needs version 18 or newer"
 else
   outcome=0
   document_with_events || outcome=$?

@@ -36,12 +36,12 @@ said yes.**
 | A read-only deploy key for the repository, if it is private | let the Mini pull updates | 6 |
 | The `nginx:1.28-alpine` container image, downloaded from Docker Hub by Docker the first time the server starts | the web server itself | 9 |
 | `poppler-utils` and `jq`. `curl` is already installed in step 4. | turn the slides of the talks into pictures, and read the list of talks from Sanity | 11 |
-| `nodejs`, optional, version 20.19 or newer (or 22.7 or newer): `sudo apt install nodejs` | list the coming events of each calendar on the Calendars page in Studio | 11 |
 | `xserver-xorg`, `xinit`, `x11-xserver-utils`, `chromium` | show the dashboard full screen | 12 |
 | `unclutter` (optional) | hide the mouse pointer when testing inside a desktop | 12 |
 | A changed `/etc/issue` (the old text is kept) and the unit `teletraan-console.service`. No package. | show the drawings on the TV while the Mini starts and shuts down | 13 |
 | A read key for The Blue Alliance, made on the team's account there. `curl` and `jq` are already installed in step 11. | read the public competition data of each team | 17 |
 | A personal API token for Monday, made on an account that can see only the team's boards. `curl` and `jq` are already installed in step 11. | read the team's boards and keep their items as tasks | 18 |
+| `nodejs`, optional, version 18 or newer: `sudo apt install nodejs` | list the coming events of each calendar on the Calendars page in Studio | 19 |
 
 The repository host needs an account that the team mentor holds. This page does
 not create it. The Sanity project already exists, and its ID is in
@@ -179,8 +179,8 @@ see studio/README.md.
 
     Node is not needed. Without it the Calendars page in Studio shows when each
     calendar was downloaded and why a download failed, but no events. With it
-    the page lists the next events too (docs/calendars-page.md). The install
-    scripts say when Node is missing, and they go on.
+    the page lists the next events too (docs/calendars-page.md, and step 19
+    below). The install scripts say when Node is missing, and they go on.
 
     To try the slides fetcher, give it the link of a deck that is shared with
     Anyone with the link:
@@ -365,6 +365,32 @@ see studio/README.md.
     the script 2 minutes after the Mini boots and then every 10 minutes. The token
     is never printed or saved anywhere but `local.env`. Without it the script does
     nothing, says so in one line, and ends without an error.
+
+19. **Install Node for the Calendars page.** This is optional, and it can be done
+    at any time after step 11, with no reboot. With Node, the Calendars page in
+    Studio lists the next 40 events of each calendar, shown or hidden, and has the
+    Hide buttons (docs/calendars-page.md). Without it the page still says when each
+    calendar was downloaded and why a download failed. The page also needs the
+    Sanity write token from "Showing what the Mini did in Studio" below. Installing
+    Node needs the team mentor's yes first.
+
+        sudo apt install nodejs
+        node --version
+
+    `node --version` must print `v18` or a higher number. The `dashboard` folder
+    has a `package.json` that tells Node its files are modules, and Node 18 and
+    newer read them that way. `apt policy nodejs` shows the version that apt would
+    install on this Mini. If that is lower than 18, stop and ask the team mentor.
+    The page then says that Node is too old, and nothing else breaks. Then run the
+    calendar service once, and look at its log:
+
+        sudo systemctl start teletraan-calendars.service
+        sudo journalctl -u teletraan-calendars.service -n 20
+
+    The log has `calendar status: wrote calendar-status.json` and `status: wrote
+    calendar-status`. In Studio, open Calendars under Events and pick a calendar:
+    its events are listed, and the line about Node is gone. The service does the
+    same by itself every 15 minutes.
 
 ## Burn-in
 
@@ -637,7 +663,7 @@ The dataset is public, so anyone who asks for the `status-mini` document can
 read it. It holds six times and nothing else.
 
 The `calendar-status` document is public in the same way and holds more: the
-titles, dates and times of the next 12 events of each calendar, including the
+titles, dates and times of the next 40 events of each calendar, including the
 events that a Calendar filter hides from the TV. It holds no calendar address.
 Anyone who asks the dataset for it can read those titles (docs/calendars-page.md,
 "Who can read it").

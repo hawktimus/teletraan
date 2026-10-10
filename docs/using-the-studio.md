@@ -50,7 +50,7 @@ is wrong with it. The TV changes within a few seconds.
 
 Events are not typed into the Studio. They come from the team's calendars. The
 Calendars page, under Events, shows what each calendar brings in and whether the
-TV shows each event.
+TV shows each event, and has buttons to hide one.
 
 To get an event on the screen, add it in the calendar app. It reaches the TV
 within 15 minutes. If it is in the calendar app and still not on the screen, a

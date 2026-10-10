@@ -69,10 +69,11 @@ last step of every change. See "The Start here page" below.
 ### Events
 
 - Calendars: the BAND calendars the Mini reads. Pick one on the left to see its
-  next 12 events on the right, each SHOWN or HIDDEN, and when the Mini last
-  downloaded it (docs/calendars-page.md). The page tells you to add a rule under
-  Calendar filters to hide a repeating meeting, and to ask a coach to add the
-  address of a new calendar on the Mini.
+  next 40 events on the right, each SHOWN or HIDDEN, and when the Mini last
+  downloaded it (docs/calendars-page.md). Hide this one and Hide all like this on an
+  event make a rule under Calendar filters, and Show again deletes it
+  (docs/hide-a-repeating-meeting.md). Ask a coach to add the address of a new
+  calendar on the Mini.
 - Calendar filters: rules that hide events from the BAND calendars, or keep them
   on the screen, such as a meeting that repeats every week
   (docs/calendar-filters.md). An Always show rule can also pin its events to
