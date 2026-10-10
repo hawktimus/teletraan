@@ -91,6 +91,12 @@ const fields = [
     description: 'Optional. How urgent the task is. A task from the team board takes it from the board.',
     options: { list: priorities },
   }),
+  defineField({
+    name: 'dueDate',
+    title: 'Due date',
+    type: 'date',
+    description: 'Optional. The day the task is due. A task from the team board takes it from the board.',
+  }),
   teamField(),
   orderField(),
   defineField({

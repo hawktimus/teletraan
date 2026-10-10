@@ -1,0 +1,16 @@
+[Unit]
+Description=Read the Monday boards for Teletraan I
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# ACCOUNT is replaced by install-monday.sh with the account that owns the
+# repository, so this file does not depend on what the Mini's user is called.
+User=ACCOUNT
+# The script tells Studio when it finished (status-write.sh monday) only after a
+# run that worked, so there is no ExecStartPost here.
+ExecStart=/opt/teletraan/deploy/scripts/monday-sync.sh
+# Each request gives up after 30 seconds and a run makes at most 60. This is for
+# the whole run.
+TimeoutStartSec=15min

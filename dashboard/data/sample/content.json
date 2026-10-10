@@ -75,7 +75,9 @@
     "groupEventsByKind": false,
     "competitionMode": "auto",
     "competitionTimeline": true, "competitionLastSeason": true, "competitionRank": true, "competitionNextMatch": true,
-    "competitionResults": true, "competitionAlliance": true, "competitionDistrict": true
+    "competitionResults": true, "competitionAlliance": true, "competitionDistrict": true,
+    "mondayBoards": [],
+    "mondayShowOwners": false
   },
 
   "theme": {

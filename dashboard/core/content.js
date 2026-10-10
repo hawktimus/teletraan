@@ -127,6 +127,9 @@ export function fixSettingValues(settings) {
   settings.crt = tidyGlitch(settings.crt);
   // The Events panel: Group events by kind (Calendars tab) is a switch that starts off
   if (typeof settings.groupEventsByKind !== 'boolean') settings.groupEventsByKind = defaultSettings.groupEventsByKind;
+  // The Monday tab: the boards are a list and the owner names a switch. The Mini reads both, and the screen has no use for them
+  if (!Array.isArray(settings.mondayBoards)) settings.mondayBoards = defaultSettings.mondayBoards.slice();
+  if (typeof settings.mondayShowOwners !== 'boolean') settings.mondayShowOwners = defaultSettings.mondayShowOwners;
 }
 
 // The styles of Styles by day. Something that is not a list is the starting list. An empty list stays

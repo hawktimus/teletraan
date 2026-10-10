@@ -41,6 +41,7 @@ said yes.**
 | `unclutter` (optional) | hide the mouse pointer when testing inside a desktop | 12 |
 | A changed `/etc/issue` (the old text is kept) and the unit `teletraan-console.service`. No package. | show the drawings on the TV while the Mini starts and shuts down | 13 |
 | A read key for The Blue Alliance, made on the team's account there. `curl` and `jq` are already installed in step 11. | read the public competition data of each team | 17 |
+| A personal API token for Monday, made on an account that can see only the team's boards. `curl` and `jq` are already installed in step 11. | read the team's boards and keep their items as tasks | 18 |
 
 The repository host needs an account that the team mentor holds. This page does
 not create it. The Sanity project already exists, and its ID is in
@@ -326,6 +327,45 @@ see studio/README.md.
     on. The key is never printed or saved anywhere but `local.env`. Without it
     the script does nothing, says so in one line, and ends without an error.
 
+18. **Turn on the Monday board.** This is optional, and it can be done at any time
+    after step 11, with no reboot. The Mini reads the team's Monday boards and
+    keeps their items in Sanity as tasks (docs/monday.md). It needs `curl` and
+    `jq` from step 11 and the Sanity write token from "Showing what the Mini did
+    in Studio" below. It also needs a personal API token from Monday, which needs
+    the team mentor's yes first. Make it in Monday: click your picture at the top
+    right, open Developers, then My access tokens, and copy the token. Use the
+    token of an account that can see only the team's boards, because the names of
+    the boards it sees are written to Sanity, which anyone can read. Then add it
+    to `local.env`, in single quotes, on its own line:
+
+        nano /opt/teletraan/deploy/local.env
+
+        MONDAY_API_TOKEN='[paste the Monday token here]'
+
+    Install the timer and check that the token works:
+
+        sudo apt install curl jq
+        sudo /opt/teletraan/deploy/scripts/install-monday.sh
+        /opt/teletraan/deploy/scripts/monday-sync.sh --check
+
+    The `apt` line only installs what is missing and needs the team mentor's yes.
+    `install-monday.sh` says what it will do and waits for Enter, like the other
+    install scripts. It stops with the `apt install` line if a package is
+    missing. `--check` prints `OK` for the token and for the write token, or
+    `FAIL` and the reason. It asks one question and writes nothing. To read the
+    boards once now:
+
+        /opt/teletraan/deploy/scripts/monday-sync.sh
+
+    It prints how many boards are chosen and how many items it read, and
+    `monday: status written`. Until a board is chosen it only writes the list of
+    boards. In Studio, open Dashboard Settings, Monday tab: the block at the top
+    says who the token belongs to and when the Mini last read Monday, and the lists
+    of an entry under Boards offer the boards and their columns. The timer starts
+    the script 2 minutes after the Mini boots and then every 10 minutes. The token
+    is never printed or saved anywhere but `local.env`. Without it the script does
+    nothing, says so in one line, and ends without an error.
+
 ## Burn-in
 
 The plates, the metal frames, the banner and the countdown stay in the same
@@ -360,6 +400,10 @@ its settings. The Mini can keep running.
   lists `teletraan-frc.timer`, and `/opt/teletraan/deploy/scripts/frc-sync.sh --check`
   prints `OK` twice. `sudo journalctl -u teletraan-frc.service -n 20` is empty
   most of the time, because the script ends at once when it is not time.
+- The Monday board, if step 18 was done, runs. `systemctl list-timers 'teletraan-monday*'`
+  lists `teletraan-monday.timer`, and `/opt/teletraan/deploy/scripts/monday-sync.sh --check`
+  prints `OK` twice. `sudo journalctl -u teletraan-monday.service -n 20` has the lines of the last
+  runs, and no `monday:` line on stderr when the last run worked.
 - The slides service runs. `systemctl list-timers 'teletraan-*'` lists
   `teletraan-slides.timer`. `sudo journalctl -u teletraan-slides.service -n 20`
   has a line such as `talk [id]: 12 slides saved` for each talk in the next
@@ -570,6 +614,8 @@ Without one the Mini works as before and the block says No status yet.
   start time. It never holds the screen back.
 - `frc-sync.sh` runs it itself at the end of each run that worked, to write the
   FRC time (step 17). Unlike the others, `teletraan-frc.service` does not run it.
+- `monday-sync.sh` runs it itself in the same way, to write the Monday time
+  (step 18). `teletraan-monday.service` does not run it either.
 
 Each of these runs it with a leading minus in the unit file, so a failed write
 is ignored and never makes a download look as if it failed. The services only
@@ -595,6 +641,11 @@ titles, dates and times of the next 12 events of each calendar, including the
 events that a Calendar filter hides from the TV. It holds no calendar address.
 Anyone who asks the dataset for it can read those titles (docs/calendars-page.md,
 "Who can read it").
+
+The `monday-status` document is public in the same way. It holds the name of every
+board the Monday token can see, with the titles of their columns, and the first name
+of the account, and the tasks made from the boards are public too (docs/monday.md,
+"The dataset is public").
 
 Every job writes a new version of the document, and the screen re-reads its
 content each time Sanity says something changed. The slides service runs every

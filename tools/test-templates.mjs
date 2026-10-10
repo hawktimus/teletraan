@@ -74,7 +74,7 @@ test('the files in docs/content-templates are what the schemas give', () => {
 });
 
 test('there is a template for every kind of content, and none for photos, meeting days, presentations, calendar filters, teams, the status documents or the settings pages', () => {
-  const noTemplate = ['photo', 'presentationDay', 'presentation', 'calendarFilter', 'team', 'status', 'calendarStatus', 'frcStatus'];
+  const noTemplate = ['photo', 'presentationDay', 'presentation', 'calendarFilter', 'team', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus'];
   const documents = types.filter(type => type.type === 'document' && singletons.indexOf(type.name) === -1 && noTemplate.indexOf(type.name) === -1);
   assert.deepEqual(Object.keys(templates).sort(), documents.map(type => type.name).sort());
   knownTypes.forEach(type => assert.ok(templates[type], 'no template for ' + type));

@@ -69,6 +69,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - Mechanical page changes: the frame breaks into plates and bars that fold away and click back together around the next page, with screws that turn at the joints. Studio can use these, the slat flip, or take turns
 - Hidden transitions: now and then the screen glitches blue, comes apart and cuts to a blue error screen, or glitches red and shows two red eyes in the dark. Each ends with the frames falling into a pile and a cube putting them back. Each has two pictures that take turns. They can be played on request from Studio
 - Competition cards: the season timeline, last season at a glance, the live rank, the next match with the chance of winning, the last results, the alliance and the district points, from the public data of each team that the Mini reads. They come two days before an event and take priority during it, and a Preview competition button on Start here shows them on sample data (docs/frc-feed.md)
+- Monday boards: the Mini reads the boards named on the Monday tab of Dashboard Settings every 10 minutes and keeps their items in Sanity as tasks, with the status, priority, due date and, if the switch is on, the first name of the owner. The tasks are listed under Tasks, From the board, and Show on TV keeps one off the screen (docs/monday.md)
 - A Play announcements button in Studio that plays every announcement that is switched on, once, without waiting for its time
 - A Publish all tool in the Studio's top bar that publishes all the drafts you tick, checking each one first and skipping any that would fail
 - Presentations: a student books a short talk in a Google Form, and the talk appears in Studio. At its time the TV shows a title card, then the student's Google Slides one picture at a time, moved by a clicker, then a thank you card. The Mini turns each deck into pictures before the talk (docs/presentations.md)
@@ -92,6 +93,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - docs/hide-a-repeating-meeting.md: the four steps for hiding the Pre-Season meetings
 - docs/calendar-links.md: adding a BAND calendar or changing its link
 - docs/frc-feed.md: the competition data the Mini reads, the seven cards on the screen, when they come and the Preview competition button
+- docs/monday.md: the Monday boards the Mini reads, how an item becomes a task, what happens when an item goes, and what is public
 - docs/adding-a-field.md: adding a field to something editors fill in
 - docs/adding-a-panel.md: adding a new board
 - docs/rebuilding-the-mini.md: setting up the Mini from scratch

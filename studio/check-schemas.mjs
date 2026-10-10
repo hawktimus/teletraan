@@ -44,6 +44,7 @@ const contract = {
     contact: text(12),
     location: { kind: 'reference', to: 'place' },
     source: 'string',
+    dueDate: 'date',
     showOnTv: 'boolean',
     team: teamRef,
     order: 'number',
@@ -200,6 +201,22 @@ const contract = {
     competitionResults: 'boolean',
     competitionAlliance: 'boolean',
     competitionDistrict: 'boolean',
+    mondayBoards: rows({
+      boardId: text(20),
+      team: teamRef,
+      statusColumn: text(50),
+      backlogLabel: text(30),
+      progressLabel: text(30),
+      doneLabel: text(30),
+      priorityColumn: text(50),
+      priorityHigh: text(30),
+      priorityMedium: text(30),
+      priorityLow: text(30),
+      dueColumn: text(50),
+      ownerColumn: text(50),
+      teamColumn: text(50),
+    }, 10),
+    mondayShowOwners: 'boolean',
   },
   theme: {
     defaultTheme: 'string',
@@ -239,7 +256,7 @@ const studioOnlyFields = {
   'dashboardSettings.miniStatus': 'the status block at the top of the Screen tab. It stores nothing',
   'dashboardSettings.lookNote': 'the note on the Look tab. It stores nothing',
   'dashboardSettings.cycleNote': 'the second note on the Look tab, which says what a cycle is. It stores nothing',
-  'dashboardSettings.mondayNote': 'the note on the Monday tab. It stores nothing',
+  'dashboardSettings.mondayConnection': 'the block at the top of the Monday tab. It stores nothing',
   'dashboardSettings.frcConnection': 'the block at the top of the Competition tab. It stores nothing',
   'theme.settingsNote': 'the note on the Look page. It stores nothing',
   'dashboardSettings.nightStart': 'hidden. The screen uses the fixed time in dashboard/core/constants.js',
@@ -260,6 +277,7 @@ const studioOnlyTypes = {
 // checkFrcStatus and not one by one against the contract above.
 const writtenByTheMini = {
   frcStatus: 'the Mini writes it, and the dashboard reads it to draw the competition cards',
+  mondayStatus: 'the Mini writes it, the Monday tab shows it, and the dashboard reads its daily counts',
 };
 
 const itemTypes = ['task', 'plan', 'sponsor', 'tipOrNews', 'subteam', 'person', 'photo', 'customPanel'];
@@ -328,6 +346,7 @@ const notInSidebar = {
   status: 'the Mini writes it, and Dashboard Settings shows it in the status block at the top of the Screen tab',
   calendarStatus: 'the Mini writes it, and the Calendars page shows it',
   frcStatus: 'the Mini writes it, and Dashboard Settings shows it in the block at the top of the Competition tab',
+  mondayStatus: 'the Mini writes it, and Dashboard Settings shows it in the block at the top of the Monday tab',
 };
 
 // The sidebar titles that people look for by name
@@ -441,7 +460,7 @@ function iconImportsOf(source) {
 
 function makeSandbox() {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-studio-'));
-  ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'calendars-view.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'publish-all.js', 'publish-all-tool.js', 'team-input.js', 'note-field.js', 'show-on-tv-input.js', 'status-input.js', 'frc-status-input.js', 'time-text.js', 'calendars-view-parts.js', 'panel-order-input.js', 'add-templates.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
+  ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'calendars-view.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'publish-all.js', 'publish-all-tool.js', 'team-input.js', 'note-field.js', 'show-on-tv-input.js', 'status-input.js', 'frc-status-input.js', 'monday-status-input.js', 'monday-pickers.js', 'time-text.js', 'calendars-view-parts.js', 'panel-order-input.js', 'add-templates.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
     fs.cpSync(path.join(here, name), path.join(folder, name), { recursive: true });
   });
   fs.writeFileSync(path.join(folder, 'package.json'), JSON.stringify({ type: 'module' }));
@@ -2503,7 +2522,7 @@ function checkSettingsPage() {
   // The New menu in the top bar offers the types an editor adds, and not the pages that exist once, the
   // status document that the Mini writes or the types with no line in the sidebar. A place is still
   // offered while a document is open, which is where the Location field of a task has Create new.
-  const templates = ['task', 'plan', 'presentation', 'dashboardSettings', 'theme', 'demo', 'status', 'calendarStatus', 'frcStatus', 'extraEvent', 'place'].map(name => ({ templateId: name }));
+  const templates = ['task', 'plan', 'presentation', 'dashboardSettings', 'theme', 'demo', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus', 'extraEvent', 'place'].map(name => ({ templateId: name }));
   const offeredIn = creationContext => world.config.document.newDocumentOptions(templates, creationContext === undefined ? {} : { creationContext: creationContext }).map(item => item.templateId).join();
   const menu = 'task,plan,presentation';
   if (offeredIn(undefined) !== menu) problems.push('the New menu should offer: ' + menu + '. It offers: ' + offeredIn(undefined));
@@ -3905,7 +3924,7 @@ const settingsTabs = {
   countdown: ['countdown'],
   calendars: ['calendars', 'groupEventsByKind'],
   presentations: presentationNames.concat('presentationTestRequest'),
-  monday: ['mondayNote'],
+  monday: ['mondayConnection', 'mondayBoards', 'mondayShowOwners'],
   competition: ['frcConnection', 'competitionMode'].concat(competitionNames),
   advanced: nightNames.concat(hiddenNames, ['contentSource', 'switchBackAt', 'showConnectionStatus']),
 };
@@ -3935,14 +3954,15 @@ function checkSettingsTabs() {
   // The status block and the notes are the first field of their tab
   const first = tab => fields.filter(field => field.group === tab)[0];
   need(problems, first('screen') && first('screen').name === 'miniStatus', 'the status block miniStatus should be the first field of the Screen tab');
-  ['look', 'monday'].forEach(tab => need(problems, first(tab) && first(tab).name === tab + 'Note', 'the first field of the ' + tab + ' tab should be its note, ' + tab + 'Note'));
+  need(problems, first('look') && first('look').name === 'lookNote', 'the first field of the Look tab should be its note, lookNote');
+  need(problems, first('monday') && first('monday').name === 'mondayConnection', 'the first field of the Monday tab should be the connection block, mondayConnection');
   need(problems, first('competition') && first('competition').name === 'frcConnection', 'the first field of the Competition tab should be the connection block, frcConnection');
 
   // The fields that leave the form stay in the schema
   ['contentSource', 'switchBackAt'].forEach(name => need(problems, fieldAt('dashboardSettings.' + name) && fieldAt('dashboardSettings.' + name).hidden === true, name + ' should be hidden but stay in the schema'));
 
   // The notes store nothing and say one thing each in one line, and the Look tab and the Look page point to each other
-  const notes = ['dashboardSettings.lookNote', 'dashboardSettings.cycleNote', 'dashboardSettings.mondayNote', 'theme.settingsNote'];
+  const notes = ['dashboardSettings.lookNote', 'dashboardSettings.cycleNote', 'theme.settingsNote'];
   notes.forEach(pathText => {
     const field = fieldAt(pathText);
     need(problems, field && field.type === 'string' && field.readOnly === true && field.title === 'Note', pathText + ' should be a read only string titled Note');
@@ -4601,7 +4621,7 @@ function checkListAdds() {
   need(problems, sameData(given.slice(0, plain.length), plain), 'sanity.config.js should keep the templates the Studio makes for every type, and add its own after them');
   need(problems, given.slice(plain.length).map(template => template.id).join() === templates.map(template => template.id).join(), 'sanity.config.js should add the templates of add-templates.js, and no others');
 
-  const hidden = pageTypes.concat(['extraEvent', 'status', 'calendarStatus', 'frcStatus']);
+  const hidden = pageTypes.concat(['extraEvent', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus']);
   const choicesIn = (list, creationContext) => world.config.document.newDocumentOptions(list, { creationContext: creationContext }).map(item => item.templateId).join();
   const plainChoices = plain.map(template => ({ templateId: template.id }));
   const allChoices = plainChoices.concat(templates.map(template => ({ templateId: template.id })));
@@ -4966,6 +4986,270 @@ function checkTeamTrim() {
   return problems;
 }
 
+// The Monday tab of Dashboard Settings (schemas/settingsMonday.js): the connection block, the list of
+// boards and the owner switch. The names and the starting values are the ones in dashboard/config.js.
+// A board entry is picked from lists that the Mini fills in (monday-pickers.js), and each entry needs
+// its board, its team and its status column.
+const mondayEntryNames = ['boardId', 'team', 'statusColumn', 'backlogLabel', 'progressLabel', 'doneLabel', 'priorityColumn', 'priorityHigh', 'priorityMedium', 'priorityLow', 'dueColumn', 'ownerColumn', 'teamColumn'];
+
+function checkMondayTab() {
+  const problems = [];
+  const config = world.dashboard;
+  const settings = typeByName('dashboardSettings');
+  const at = name => fieldAt('dashboardSettings.mondayBoards.' + name);
+  const rulesOf = field => (field ? constraintsOf(field) : []);
+  const inTab = fieldsIn(settings).filter(field => field.group === 'monday').map(field => field.name);
+
+  need(problems, inTab.join() === 'mondayConnection,mondayBoards,mondayShowOwners', 'the Monday tab should hold mondayConnection, mondayBoards and mondayShowOwners, in that order, not ' + inTab.join());
+  need(problems, fieldsIn(fieldAt('dashboardSettings.mondayBoards')).map(field => field.name).join() === mondayEntryNames.join(), 'a board entry should have these fields, in this order: ' + mondayEntryNames.join(', '));
+
+  // The connection block stores nothing, and its input never changes the value
+  const block = fieldAt('dashboardSettings.mondayConnection');
+  need(problems, block && block.type === 'string' && block.readOnly === true, 'mondayConnection should be a read only string');
+  need(problems, block && block.initialValue === undefined && !block.validation, 'mondayConnection should store nothing: no starting value and no rules');
+  need(problems, block && block.components && block.components.input === world.mondayStatusInput.MondayStatusInput, 'mondayConnection should draw itself with MondayStatusInput (monday-status-input.js)');
+  const source = fs.readFileSync(path.join(here, 'monday-status-input.js'), 'utf8');
+  need(problems, !/onChange|\bset\(|unset\(|patch/.test(source), 'monday-status-input.js should never change the value: no onChange, set, unset or patch');
+
+  // The list: up to 10 entries, none required on the page, and a board needs its board, team and status column
+  const list = fieldAt('dashboardSettings.mondayBoards');
+  need(problems, list && list.type === 'array' && list.group === 'monday', 'mondayBoards should be a list in the Monday tab');
+  need(problems, list && !list.initialValue && !constraintNamed(rulesOf(list), 'required'), 'mondayBoards should start empty and not be required: a page saved before it existed must still publish');
+  ['boardId', 'team', 'statusColumn'].forEach(name => need(problems, constraintNamed(rulesOf(at(name)), 'required'), name + ' should be required in a board entry'));
+  mondayEntryNames.filter(name => ['boardId', 'team', 'statusColumn'].indexOf(name) === -1).forEach(name => need(problems, !constraintNamed(rulesOf(at(name)), 'required'), name + ' should be optional in a board entry'));
+  need(problems, at('team') && at('team').type === 'reference' && at('team').to[0].type === 'team', 'a board entry should name its team with a reference to team');
+
+  // The pickers: the board and every column field have the input of monday-pickers.js
+  const inputs = { boardId: 'BoardInput', statusColumn: 'StatusColumnInput', priorityColumn: 'PriorityColumnInput', dueColumn: 'DueColumnInput', ownerColumn: 'OwnerColumnInput', teamColumn: 'TeamColumnInput' };
+  Object.keys(inputs).forEach(name => {
+    const field = at(name);
+    need(problems, field && field.type === 'string' && field.components && field.components.input === world.mondayPickers[inputs[name]], name + ' should be a string drawn by ' + inputs[name] + ' (monday-pickers.js)');
+    need(problems, field && /cannot be read/.test(field.description || '') && /type/.test(field.description || ''), name + ' should say in its description what to do when the list cannot be read');
+  });
+  need(problems, at('boardId') && constraintNamed(rulesOf(at('boardId')), 'regex') && constraintNamed(rulesOf(at('boardId')), 'regex').args[0].test('123456789') && !constraintNamed(rulesOf(at('boardId')), 'regex').args[0].test('12 34'), 'a board number should be digits only');
+  ['statusColumn', 'priorityColumn', 'dueColumn', 'ownerColumn', 'teamColumn'].forEach(name => {
+    const pattern = constraintNamed(rulesOf(at(name)), 'regex');
+    need(problems, pattern && pattern.args[0].test('color_mkx12abc') && pattern.args[0].test('date4') && !pattern.args[0].test('a b') && !pattern.args[0].test('a;b'), name + ' should only take the letters, digits, hyphens and underscores of a column id');
+  });
+
+  // The three labels start as Monday's own, the priority labels as High, Medium and Low
+  const starts = { backlogLabel: 'Backlog', progressLabel: 'Working on it', doneLabel: 'Done', priorityHigh: 'High', priorityMedium: 'Medium', priorityLow: 'Low' };
+  Object.keys(starts).forEach(name => need(problems, at(name) && at(name).initialValue === starts[name], name + ' should start as ' + starts[name]));
+  need(problems, at('statusColumn') && at('statusColumn').initialValue === undefined, 'a column should start empty');
+
+  // The owner switch starts off, and so do the starting values of config.js
+  const owners = fieldAt('dashboardSettings.mondayShowOwners');
+  need(problems, owners && owners.type === 'boolean' && owners.initialValue === false && owners.group === 'monday' && owners.title === 'Show owner first names on the TV', 'mondayShowOwners should be a switch titled Show owner first names on the TV that starts off, in the Monday tab');
+  need(problems, config.defaultSettings.mondayShowOwners === false && sameData(config.defaultSettings.mondayBoards, []), 'config.js should start with no boards and the owner names off');
+  need(problems, sameData(world.sample.settings.mondayBoards, []) && world.sample.settings.mondayShowOwners === false, 'the sample settings should have no boards and the owner names off');
+  need(problems, rulesOf(owners).length === 0, 'mondayShowOwners should have no rules');
+
+  // The line of a board entry in the list
+  const entry = (list.of || [])[0];
+  const line = fields => entry.preview.prepare(fields);
+  need(problems, entry && entry.preview && entry.preview.select.team === 'team.name', 'a board entry should select the name of its team');
+  need(problems, line({ board: '123456', team: 'Prime', backlog: 'Backlog', progress: 'Working on it', done: 'Done' }).title === 'Board 123456', 'a board entry should read "Board 123456"');
+  need(problems, line({ board: '123456', team: 'Prime', backlog: 'Backlog', progress: 'Working on it', done: 'Done' }).subtitle === 'Prime · Backlog / Working on it / Done', 'the second line of a board entry should read "Prime · Backlog / Working on it / Done"');
+  need(problems, line({}).title === 'Board with no number' && line({}).subtitle === 'No team', 'an empty board entry should read "Board with no number" and "No team"');
+
+  // Tasks: the due date is optional and the board sync writes it. The fixed rows per card are not a field.
+  const due = fieldAt('task.dueDate');
+  need(problems, due && due.type === 'date' && due.initialValue === undefined && !constraintNamed(rulesOf(due), 'required') && /optional/i.test(due.description || ''), 'task.dueDate should be an optional date with no starting value');
+  need(problems, !fieldsIn(settings).some(field => /rows/i.test(field.name) && /monday/i.test(field.name)), 'rows per card are fixed at 2, 2 and 2 and are not a field');
+  return problems;
+}
+
+// The Monday data document the Mini writes (schemas/mondayStatus.js, deploy/scripts/monday-sync.sh), the block
+// that shows it and the task fields the script writes
+const mondayStatusFields = ['connectedAs', 'lastSyncAt', 'lastError', 'boards', 'snapshots'];
+
+function checkMondayStatus() {
+  const problems = [];
+  const type = typeByName('mondayStatus');
+  const input = world.mondayStatusInput;
+  const script = world.mondayScript;
+  const names = item => fieldsIn(item || {}).map(field => field.name).join();
+
+  need(problems, type && type.type === 'document', 'mondayStatus should be a document type');
+  need(problems, names(type) === mondayStatusFields.join(), 'mondayStatus should have these fields, in this order: ' + mondayStatusFields.join(', '));
+  need(problems, names(fieldAt('mondayStatus.boards')) === 'id,name,itemCount,columns', 'a board of mondayStatus should have these fields, in this order: id, name, itemCount, columns');
+  need(problems, names(fieldAt('mondayStatus.boards.columns')) === 'id,title,type', 'a column of mondayStatus should have these fields, in this order: id, title, type');
+  need(problems, names(fieldAt('mondayStatus.snapshots')) === 'date,open', 'a count of mondayStatus should have these fields, in this order: date, open');
+  const kinds = { connectedAs: 'string', lastSyncAt: 'datetime', lastError: 'string', boards: 'array', snapshots: 'array', 'boards.id': 'string', 'boards.name': 'string', 'boards.itemCount': 'number', 'boards.columns': 'array', 'boards.columns.id': 'string', 'boards.columns.title': 'string', 'boards.columns.type': 'string', 'snapshots.date': 'date', 'snapshots.open': 'number' };
+  Object.keys(kinds).forEach(name => need(problems, fieldAt('mondayStatus.' + name) && fieldAt('mondayStatus.' + name).type === kinds[name], 'mondayStatus.' + name + ' should be a ' + kinds[name]));
+  need(problems, type && type.readOnly === true, 'mondayStatus should be read only: the Mini writes it');
+  need(problems, type && type.__experimental_omnisearch_visibility === false, 'mondayStatus should be kept out of Studio search');
+  eachField((where, field) => {
+    if (where.split('.')[0] !== 'mondayStatus') return;
+    need(problems, !constraintNamed(constraintsOf(field), 'required'), where + ' should not be required: the Mini leaves out what it did not find');
+  });
+
+  // Editors never find it: no line in the sidebar and no place in the New menu
+  need(problems, allLines(world.structure.sidebarEntries).every(entry => entry.type !== 'mondayStatus'), 'the sidebar should have no line for the Monday data document');
+  const offered = world.config.document.newDocumentOptions([{ templateId: 'mondayStatus' }, { templateId: 'task' }], {}).map(item => item.templateId).join();
+  need(problems, offered === 'task', 'the New menu should not offer the Monday data document');
+
+  // The script writes the same document, with the same fields, and the tasks with fields that a task has
+  need(problems, input.mondayStatusId === 'monday-status', 'the Monday data document should have the fixed id monday-status');
+  need(problems, script.indexOf('_id: "monday-status"') !== -1 && script.indexOf('_type: "mondayStatus"') !== -1, 'monday-sync.sh should write the document monday-status of the type mondayStatus');
+  ['connectedAs', 'lastSyncAt', 'lastError', 'boards', 'snapshots', 'itemCount', 'columns', 'title', 'type', 'date', 'open'].forEach(name => need(problems, script.indexOf(name + ':') !== -1, 'monday-sync.sh should write the field ' + name));
+  const task = typeByName('task');
+  const written = ['title', 'subteam', 'team', 'status', 'priority', 'dueDate', 'contact', 'show', 'source', 'mondayId'];
+  written.forEach(name => {
+    need(problems, fieldsIn(task).some(field => field.name === name), 'monday-sync.sh writes task.' + name + ', which the task does not have');
+    need(problems, script.indexOf(name) !== -1, 'monday-sync.sh should write the field ' + name + ' of a task');
+  });
+  need(problems, script.indexOf('showOnTv') === -1, 'monday-sync.sh should never write showOnTv: an editor owns it');
+  need(problems, script.indexOf('\ntitle_limit=' + contract.task.title.max + '\n') !== -1, 'title_limit in monday-sync.sh should be the limit of the task title, ' + contract.task.title.max);
+  need(problems, script.indexOf('\ncontact_limit=' + contract.task.contact.max + '\n') !== -1, 'contact_limit in monday-sync.sh should be the limit of the task contact, ' + contract.task.contact.max);
+  need(problems, script.indexOf('\nsnapshots_kept=120\n') !== -1, 'snapshots_kept in monday-sync.sh should be 120, as the description of mondayStatus.snapshots says');
+  const statuses = choicesOf('task.status').map(item => item.value);
+  ['up-next', 'in-progress', 'done'].forEach(value => need(problems, statuses.indexOf(value) !== -1 && script.indexOf('"' + value + '"') !== -1, 'monday-sync.sh should write the task status ' + value));
+  need(problems, script.indexOf('"blocked"') === -1, 'monday-sync.sh should never write the task status blocked');
+  choicesOf('task.priority').forEach(item => need(problems, script.indexOf('"' + item.value + '"') !== -1, 'monday-sync.sh should write the task priority ' + item.value));
+  const subteam = typeByName('subteam');
+  need(problems, script.indexOf("unmatched_name='[Unmatched]'") !== -1 && '[Unmatched]'.length <= contract.subteam.name.max, 'the subteam for items that match nobody should be [Unmatched], and fit the subteam name limit of ' + contract.subteam.name.max);
+  need(problems, fieldsIn(subteam).some(field => field.name === 'show'), 'the subteam made by the script needs the switch show, to stay off the screen');
+
+  // The lines of the block, in plain words, and a document that is missing or cannot be read
+  const now = new Date('2027-01-12T15:00:00.000Z');
+  const ago = minutes => new Date(now.getTime() - minutes * 60000).toISOString();
+  const none = input.describeMondayStatus(null, now);
+  need(problems, none.map(line => line.label).join() === 'Connected as,Last sync,Boards the token can see,Last error', 'the block should have these lines: Connected as, Last sync, Boards the token can see, Last error');
+  need(problems, none[0].text === 'Not known' && none[1].text === 'Not yet' && none[2].text === 'None' && none[3].text === 'None', 'a missing document should say Not known, Not yet, None and None');
+  const some = input.describeMondayStatus({ connectedAs: 'Jordan', lastSyncAt: ago(5), boards: 3, lastError: 'Monday refused the token.' }, now);
+  need(problems, some[0].text === 'Jordan' && /^5 minutes ago \(/.test(some[1].text) && some[2].text === '3 boards' && some[3].text === 'Monday refused the token.', 'the lines should say who, how long ago, how many boards and the last error');
+  need(problems, input.describeMondayStatus({ boards: 1 }, now)[2].text === '1 board', 'one board should read 1 board');
+  need(problems, JSON.stringify(input.mondayStatusView(null, now)).indexOf('Reading the connection to Monday') !== -1, 'the block should say it is reading while it waits');
+  const missing = JSON.stringify(input.mondayStatusView({ doc: null, unreadable: false }, now));
+  need(problems, missing.indexOf('No connection yet') !== -1 && missing.indexOf('MONDAY_API_TOKEN') !== -1 && missing.indexOf('local.env') !== -1 && missing.indexOf('10 minutes') !== -1, 'the block should say No connection yet, with the token to add to local.env on the Mini and the 10 minutes to wait, when the document is missing');
+  need(problems, JSON.stringify(input.mondayStatusView({ doc: null, unreadable: true }, now)).indexOf('could not be read') !== -1, 'the block should say so when the document cannot be read');
+  need(problems, JSON.stringify(input.mondayStatusView({ doc: { lastSyncAt: ago(5) }, unreadable: false }, now)).indexOf('Last sync') !== -1, 'the block should show the lines when there is a document');
+  need(problems, typeof input.MondayStatusInput === 'function' && JSON.stringify(input.MondayStatusInput()).indexOf('Reading the connection to Monday') !== -1, 'MondayStatusInput should start by saying it is reading');
+  return problems;
+}
+
+// readMondayStatus asks the published document by its id, and never fails. The stand-in client gives the answers.
+async function checkMondayRead() {
+  const problems = [];
+  const read = world.mondayStatusInput.readMondayStatus;
+  const asked = [];
+  const answering = value => ({ fetch: async (...args) => { asked.push(args); return value; } });
+
+  const found = await read(answering({ lastSyncAt: '2027-01-12T15:00:00.000Z', boards: 2 }));
+  need(problems, found.doc && found.doc.boards === 2 && found.unreadable === false, 'a document that is there should be handed over');
+  need(problems, asked.length === 1 && /_id == \$id/.test(asked[0][0]) && asked[0][1].id === 'monday-status' && asked[0][2].perspective === 'published', 'readMondayStatus should ask for the published document with the id monday-status');
+  need(problems, sameData(await read(answering(null)), { doc: null, unreadable: false }), 'no document is a good answer, not a failure');
+  need(problems, sameData(await read(answering('text')), { doc: null, unreadable: false }), 'an answer that is not a document should be read as no document');
+  need(problems, sameData(await read({ fetch: async () => { throw new Error('offline'); } }), { doc: null, unreadable: true }), 'a client that fails should give unreadable');
+  need(problems, sameData(await read({}), { doc: null, unreadable: true }), 'a client with no fetch should give unreadable');
+  return problems;
+}
+
+// The pickers of a board entry (monday-pickers.js): the lists they build, the plain box they fall back to,
+// and what they write
+function checkMondayPickers() {
+  const problems = [];
+  const pickers = world.mondayPickers;
+  const columns = [
+    { id: 'name', title: 'Name', type: 'name' },
+    { id: 'status', title: 'Status', type: 'status' },
+    { id: 'date4', title: 'Due', type: 'date' },
+    { id: 'person', title: 'Owner', type: 'people' },
+    { id: 'text', title: '', type: '' },
+  ];
+  const boards = [{ id: '111', name: '[Build board]', columns: columns }, { id: '222', name: '[Same name]', columns: [] }, { id: '333', name: '[Same name]', columns: [] }, { id: '444', name: '', columns: [] }];
+  const ids = list => list.map(choice => choice.id).join();
+  const labels = list => list.map(choice => choice.label).join(' | ');
+
+  // What is kept of the document
+  const cleaned = pickers.cleanBoards({ boards: [{ id: '1', name: 'A', columns: [{ id: 'x', title: 'X', type: 'status' }, { title: 'No id' }, 'text'] }, { name: 'No id' }, 'text', null, { id: 7 }] });
+  need(problems, sameData(cleaned, [{ id: '1', name: 'A', columns: [{ id: 'x', title: 'X', type: 'status' }] }]), 'cleanBoards should keep a board and a column only when it has an id');
+  need(problems, sameData(pickers.cleanBoards(null), []) && sameData(pickers.cleanBoards({ boards: 'text' }), []) && sameData(pickers.cleanBoards({}), []), 'cleanBoards should give no boards for a document that is not one');
+
+  // The board list: an empty line, the names, the number when two boards share a name, and a stored board that is gone
+  need(problems, ids(pickers.boardChoices(boards, '')) === ',111,222,333,444', 'the board list should start with an empty line and then list the boards in order');
+  need(problems, labels(pickers.boardChoices(boards, '')) === 'Pick the board | [Build board] | [Same name] (222) | [Same name] (333) | Board 444', 'the board list should show names, the number of a board that shares its name, and Board 444 for a board with no name');
+  need(problems, labels(pickers.boardChoices(boards, '999')).endsWith('Board 999 (not in the list)') && ids(pickers.boardChoices(boards, '999')).endsWith(',999'), 'a stored board that is not in the list should stay, with a note');
+  need(problems, !labels(pickers.boardChoices(boards, '111')).includes('not in the list'), 'a stored board that is in the list needs no note');
+
+  // The column lists: the columns that fit first, the others with their type, the empty line by kind, and nothing for a board that is not there
+  const status = pickers.columnChoices(boards, '111', 'status', '');
+  need(problems, ids(status) === ',status,name,date4,person,text' && status[0].label === 'Pick the column', 'the status column list should start with an empty line, then the columns that fit, then the others');
+  need(problems, status.filter(choice => choice.group === 'fits').map(choice => choice.id).join() === 'status' && status.filter(choice => choice.group === 'others').map(choice => choice.label).join() === 'Name (name),Due (date),Owner (people),text', 'the others should show their type, and a column with no title shows its id');
+  need(problems, labels(pickers.columnChoices(boards, '111', 'due', '')).startsWith('No due date column | Due |'), 'the due date list should offer No due date column first and the date column next');
+  need(problems, pickers.columnChoices(boards, '111', 'owner', '')[0].label === 'No owner column' && pickers.columnChoices(boards, '111', 'priority', '')[0].label === 'No priority column' && pickers.columnChoices(boards, '111', 'team', '')[0].label === 'Use the group names', 'the empty lines should say what no column means');
+  need(problems, pickers.columnChoices(boards, '111', 'owner', '').filter(choice => choice.group === 'fits').map(choice => choice.id).join() === 'person', 'the owner list should put the people column first');
+  need(problems, sameData(pickers.columnChoices(boards, '999', 'status', ''), []) && sameData(pickers.columnChoices(boards, '', 'status', ''), []), 'a board that is not in the list gives no columns');
+  need(problems, labels(pickers.columnChoices(boards, '111', 'status', 'gone')).endsWith('gone (not on the board)'), 'a stored column that is not on the board should stay, with a note');
+  need(problems, Object.keys(pickers.columnKinds).join() === 'status,priority,due,owner,team', 'the kinds of column field should be status, priority, due, owner and team');
+
+  // The path of the board in the same entry, and what a pick writes
+  need(problems, sameData(pickers.siblingPath(['mondayBoards', { _key: 'k1' }, 'statusColumn'], 'boardId'), ['mondayBoards', { _key: 'k1' }, 'boardId']) && sameData(pickers.siblingPath('text', 'boardId'), ['boardId']), 'siblingPath should swap the last name of the path');
+  need(problems, sameData(pickers.pickPatch('111'), { type: 'set', value: '111' }) && sameData(pickers.pickPatch(''), { type: 'unset' }), 'a pick should write the id, and the empty line should clear the field');
+
+  // The views. While reading, a note. Unreadable or empty, the plain box and the reason. Otherwise the list.
+  const written = [];
+  const props = value => ({ id: 'x', value: value, readOnly: false, onChange: patch => written.push(patch), renderDefault: () => ({ type: 'plain-box' }) });
+  const words = node => JSON.stringify(node);
+  need(problems, words(pickers.boardPickerView(null, props(''))).indexOf('Reading the list of boards') !== -1, 'the board picker should say it is reading while it waits');
+  const unreadable = pickers.boardPickerView({ boards: [], unreadable: true }, props('123'));
+  need(problems, words(unreadable).indexOf('plain-box') !== -1 && words(unreadable).indexOf('could not be read, so type the board number') !== -1, 'a board picker whose list cannot be read should be the plain box, with the reason');
+  const empty = pickers.boardPickerView({ boards: [], unreadable: false }, props(''));
+  need(problems, words(empty).indexOf('plain-box') !== -1 && words(empty).indexOf('has not listed any boards yet') !== -1, 'a board picker with no boards listed should be the plain box, with the reason');
+  need(problems, words(pickers.boardPickerView({ boards: [], unreadable: true }, { id: 'x', value: '1', onChange: () => {} })).indexOf('could not be read') !== -1, 'a picker should still work when renderDefault is missing');
+
+  const list = pickers.boardPickerView({ boards: boards, unreadable: false }, props('222'));
+  need(problems, list.type === 'select' && list.props.value === '222' && list.props.disabled === false, 'the board picker should be a list with the stored board picked');
+  need(problems, list.children.map(option => option.props.value).join() === ',111,222,333,444' && list.children[1].children[0] === '[Build board]', 'the board picker should list the boards by name, storing their numbers');
+  list.props.onChange({ target: { value: '111' } });
+  list.props.onChange({ target: { value: '' } });
+  need(problems, sameData(written, [{ type: 'set', value: '111' }, { type: 'unset' }]), 'picking a board should write its number, and the empty line should clear it');
+  need(problems, pickers.boardPickerView({ boards: boards, unreadable: false }, Object.assign(props(''), { readOnly: true })).props.disabled === true, 'the board picker should be disabled when the field is read only');
+
+  need(problems, words(pickers.columnPickerView(null, props(''), 'status', '111')).indexOf('Reading the list of columns') !== -1, 'the column picker should say it is reading while it waits');
+  need(problems, words(pickers.columnPickerView({ boards: [], unreadable: true }, props('status'), 'status', '111')).indexOf('could not be read, so type the column id') !== -1, 'a column picker whose list cannot be read should be the plain box, with the reason');
+  need(problems, words(pickers.columnPickerView({ boards: boards, unreadable: false }, props(''), 'status', '')).indexOf('Pick the board first') !== -1, 'a column picker with no board picked should say to pick the board first');
+  const away = pickers.columnPickerView({ boards: boards, unreadable: false }, props(''), 'status', '999');
+  need(problems, words(away).indexOf('plain-box') !== -1 && words(away).indexOf('This board is not in the list, so type the column id') !== -1, 'a column picker for a board that is not in the list should be the plain box, with the reason');
+
+  const columnList = pickers.columnPickerView({ boards: boards, unreadable: false }, props('date4'), 'status', '111');
+  need(problems, columnList.type === 'select' && columnList.props.value === 'date4', 'the column picker should be a list with the stored column picked');
+  need(problems, columnList.children.map(child => child.type + ':' + (child.props.label || child.props.value)).join() === 'option:,optgroup:Columns that fit,optgroup:Other columns', 'the column picker should have the empty line, the columns that fit and the other columns in groups');
+  need(problems, columnList.children[2].children[0].map(option => option.props.value).join() === 'name,date4,person,text', 'the other columns should store their ids');
+  const onlyOthers = pickers.columnPickerView({ boards: [{ id: '5', name: 'Five', columns: [{ id: 'a', title: 'A', type: 'text' }] }], unreadable: false }, props(''), 'status', '5');
+  need(problems, onlyOthers.children.map(child => child.type + ':' + (child.props.label || child.props.value)).join() === 'option:,optgroup:Columns', 'with no column that fits, the others are one group called Columns');
+
+  // The inputs: one for the board and one for each kind of column, reading the board of the same entry
+  ['BoardInput', 'StatusColumnInput', 'PriorityColumnInput', 'DueColumnInput', 'OwnerColumnInput', 'TeamColumnInput'].forEach(name => {
+    need(problems, typeof pickers[name] === 'function', name + ' should be a component');
+    const drawn = pickers[name]({ id: 'x', value: '', path: ['mondayBoards', 'k1', 'statusColumn'], onChange: () => {} });
+    need(problems, JSON.stringify(drawn).indexOf('Reading the list of') !== -1, name + ' should start by saying it is reading');
+  });
+
+  // Read only: the pickers write only what the person picks, and only through onChange
+  const text = fs.readFileSync(path.join(here, 'monday-pickers.js'), 'utf8');
+  need(problems, !/\.patch\(|\.create\(|\.createOrReplace\(|\.delete\(|\.mutate\(|\.transaction\(|useDocumentOperation/.test(text), 'monday-pickers.js should never change a document itself: no patch, create, delete or mutate');
+  return problems;
+}
+
+// readMondayBoards asks the published document by its id, and never fails
+async function checkMondayBoardsRead() {
+  const problems = [];
+  const read = world.mondayPickers.readMondayBoards;
+  const asked = [];
+  const answering = value => ({ fetch: async (...args) => { asked.push(args); return value; } });
+
+  const found = await read(answering({ boards: [{ id: '111', name: 'A', columns: [{ id: 'x', title: 'X', type: 'status' }] }] }));
+  need(problems, found.unreadable === false && found.boards.length === 1 && found.boards[0].columns[0].id === 'x', 'boards that are there should be handed over');
+  need(problems, asked.length === 1 && /_id == \$id/.test(asked[0][0]) && asked[0][1].id === 'monday-status' && asked[0][2].perspective === 'published', 'readMondayBoards should ask for the published document with the id monday-status');
+  need(problems, sameData(await read(answering(null)), { boards: [], unreadable: false }), 'no document is a good answer, not a failure');
+  need(problems, sameData(await read(answering('text')), { boards: [], unreadable: false }), 'an answer that is not a document should be read as no boards');
+  need(problems, sameData(await read({ fetch: async () => { throw new Error('offline'); } }), { boards: [], unreadable: true }), 'a client that fails should give unreadable');
+  need(problems, sameData(await read({}), { boards: [], unreadable: true }), 'a client with no fetch should give unreadable');
+  return problems;
+}
+
 async function main() {
   const folder = makeSandbox();
   try {
@@ -5002,9 +5286,12 @@ async function main() {
     world.showOnTvInput = await load(path.join(folder, 'show-on-tv-input.js'));
     world.statusInput = await load(path.join(folder, 'status-input.js'));
     world.frcStatusInput = await load(path.join(folder, 'frc-status-input.js'));
+    world.mondayStatusInput = await load(path.join(folder, 'monday-status-input.js'));
+    world.mondayPickers = await load(path.join(folder, 'monday-pickers.js'));
     world.competition = await load(path.join(dashboardFolder, 'core', 'competition.js'));
     world.sanitySource = fs.readFileSync(path.join(dashboardFolder, 'core', 'sanity.js'), 'utf8');
     world.frcScript = fs.readFileSync(path.join(here, '..', 'deploy', 'scripts', 'frc-sync.sh'), 'utf8');
+    world.mondayScript = fs.readFileSync(path.join(here, '..', 'deploy', 'scripts', 'monday-sync.sh'), 'utf8');
     world.panelOrderInput = await load(path.join(folder, 'panel-order-input.js'));
     world.panelOrder = await load(path.join(dashboardFolder, 'core', 'panel-order.js'));
     world.constants = await load(path.join(dashboardFolder, 'core', 'constants.js'));
@@ -5093,6 +5380,11 @@ async function main() {
   check('the calendar status document has the fields the Mini writes, is kept out of the sidebar and the New menu, and the scripts on the Mini write the same document', checkCalendarStatusType);
   check('the Calendars page has the help line, the calendars of Dashboard Settings on the left and the next events with SHOWN or HIDDEN on the right, and changes nothing', checkCalendarsPage);
   results.push({ name: 'the Calendars page asks for the published documents by their ids, and survives a client that fails', problems: await checkCalendarsRead().catch(error => ['the check stopped: ' + error.message]) });
+  check('the Monday tab has the connection block, up to 10 board entries with pickers, the three labels and the owner switch, as in dashboard/config.js', checkMondayTab);
+  check('the Monday data document has the fields the Mini writes, is kept out of the sidebar and the New menu, the script writes the same fields and task fields, and the connection block shows its lines in plain words', checkMondayStatus);
+  results.push({ name: 'the connection block asks for the published Monday data document by its id, and survives a client that fails', problems: await checkMondayRead().catch(error => ['the check stopped: ' + error.message]) });
+  check('the board and column pickers list the boards and columns, keep a stored value that is not in the list, fall back to the plain box with the reason, and write only the id', checkMondayPickers);
+  results.push({ name: 'the pickers ask for the published Monday data document by its id, and survive a client that fails', problems: await checkMondayBoardsRead().catch(error => ['the check stopped: ' + error.message]) });
 
   process.exitCode = report() > 0 ? 1 : 0;
 }
