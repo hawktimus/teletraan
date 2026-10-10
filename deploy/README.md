@@ -17,7 +17,9 @@ installing anything on the Mini, and whenever a step needs a login or a key.
 - `mac/ship.sh` runs on the Mac you work on, not on the Mini. It pushes, updates
   the Studio and tells the Mini to pull now (`docs/shipping-from-the-mac.md`).
 - A timer runs `fetch-calendars.sh` every 15 minutes. It saves the BAND
-  calendars where the dashboard reads them.
+  calendars where the dashboard reads them. After each run, failed or not, the
+  service also makes the document that the Calendars page in Studio shows
+  (`docs/calendars-page.md`).
 - A timer runs `slides-sync.sh` every 2 minutes. It downloads the slides of
   the talks that are coming up and saves them as pictures where the dashboard
   reads them.
@@ -53,12 +55,14 @@ to attach the data folder to.
 | `nginx.conf` | The web server's settings: no caching (except 10 seconds for a deck's `manifest.json`), file types, hidden files |
 | `local.example.env` | The template for `local.env`, with placeholders only |
 | `scripts/pull.sh` | Gets new commits and writes `version.txt` so an open dashboard reloads |
-| `scripts/fetch-calendars.sh` | Downloads each calendar named in `local.env`, over https only |
+| `scripts/fetch-calendars.sh` | Downloads each calendar named in `local.env`, over https only. Leaves `calendar-sync.txt` in the data folder: for each calendar its code, when it was last downloaded properly and why the last try failed. It holds no address |
+| `scripts/calendar-status.sh` | Makes `calendar-status.json` in the data folder, the document for the Calendars page in Studio, from `calendar-sync.txt`. With Node on the Mini it also lists the next events of each calendar, SHOWN or HIDDEN. Without Node it says so in the document. Prints no address |
+| `scripts/calendar-status.mjs` | The part of `calendar-status.sh` that runs the dashboard's own calendar code and the Calendar filters. It never sees an address |
 | `scripts/check-connection.sh` | Checks DNS, Sanity, CORS, BAND, the web container, the kiosk and the clock, one OK or FAIL line each. Run it over SSH, see "Checking the connection" in `docs/rebuilding-the-mini.md` |
-| `scripts/check-calendars.sh` | Lists each event of the next 30 days of every calendar in `local.env`, SHOWN or HIDDEN with the name of the Calendar filter that hides it, and the counts. It only reads and prints no address. It needs Node, which the Mini does not have, so run it on a computer that has Node and a copy of `local.env` |
+| `scripts/check-calendars.sh` | Lists each event of the next 30 days of every calendar in `local.env`, SHOWN or HIDDEN with the name of the Calendar filter that hides it, and the counts. It only reads and prints no address. It needs Node, which the Mini does not have unless it was installed for the Calendars page, so run it on a computer that has Node and a copy of `local.env` |
 | `scripts/check-calendars.mjs` | The part of `check-calendars.sh` that runs the dashboard's own calendar code |
 | `scripts/slides-sync.sh` | Downloads the slides of the coming talks from Google Slides, turns them into pictures, and saves them with a `manifest.json`. `slides-sync.sh --test <link>` tries one deck and deletes what it made. Needs `poppler-utils`, `curl` and `jq` |
-| `scripts/status-write.sh` | Writes the time of a job into the document `status-mini` in Sanity, which Studio shows at the top of the Screen tab of Dashboard Settings. Needs `SANITY_WRITE_TOKEN` in `local.env` and does nothing without it. The calendar and slides services and `kiosk.sh` run it, see "Showing what the Mini did in Studio" in `docs/rebuilding-the-mini.md` |
+| `scripts/status-write.sh` | Writes the time of a job into the document `status-mini` in Sanity, which Studio shows at the top of the Screen tab of Dashboard Settings. `status-write.sh calendar-status` sends the Calendars page document the same way. Needs `SANITY_WRITE_TOKEN` in `local.env` and does nothing without it. The calendar and slides services and `kiosk.sh` run it, see "Showing what the Mini did in Studio" in `docs/rebuilding-the-mini.md` |
 | `scripts/kiosk.sh` | Opens the browser full screen with the right settings, or any page given after its name. Also writes `device.json` every minute while the browser runs, and starts `status-write.sh kiosk` in the background |
 | `scripts/install-timers.sh` | Copies the unit files into place and turns on the calendar timer and the pull timer |
 | `scripts/install-calendars.sh` | Copies the two calendar unit files into place and turns on the calendar timer. Installs nothing else, so it leaves the pull timer off |
@@ -131,9 +135,9 @@ happens.
 
 ## Things that need the team mentor's yes
 
-Installing the packages on the Mini, Docker's apt source and key, the nginx
-image, the deploy key and the change to `/etc/issue` all need the team
-mentor's yes first. The list, with
+Installing the packages on the Mini (and Node, if the Calendars page is to
+list events), Docker's apt source and key, the nginx image, the deploy key and
+the change to `/etc/issue` all need the team mentor's yes first. The list, with
 the step that uses each one, is the table at the top of
 `docs/rebuilding-the-mini.md`.
 

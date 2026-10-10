@@ -1,7 +1,7 @@
-// Dates and times of a talk or a meeting day, written the way the lists in
-// Studio show them. A list cannot ask Sanity for the Look page's time zone, so
-// it uses the zone the Look page starts with (theme.js and defaultThemeSettings
-// in dashboard/config.js).
+// Dates and times in the lists of Studio, written the way the screen says them.
+// A list cannot ask Sanity for the Look page's time zone, so it uses the zone
+// the Look page starts with (theme.js and defaultThemeSettings in
+// dashboard/config.js).
 
 export const fallbackTimeZone = 'America/New_York';
 
@@ -54,4 +54,13 @@ export function clockIn(isoText, timeZone) {
     date: parts.month + ' ' + parts.day,
     time: (hour % 12 || 12) + ':' + parts.minute + ' ' + (hour < 12 ? 'AM' : 'PM'),
   };
+}
+
+// A date with no time, written 2026-10-08, as the screen says it: 'Thu Oct 8'.
+// Nothing for text that is not a date. It is read as noon in UTC, so the day stays the one typed.
+export function dayWords(dateText) {
+  if (typeof dateText !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(dateText)) return '';
+
+  const clock = clockIn(dateText + 'T12:00:00Z', 'UTC');
+  return clock ? clock.weekday + ' ' + clock.date : '';
 }

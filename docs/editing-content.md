@@ -23,8 +23,13 @@ received.
 ## The sidebar
 
 The sidebar is in groups, by how often you touch them. Start here is at the top.
-The group names, such as EVERY MEETING, are headings. Daily Agenda and Settings are
-folders: click one and its lines open beside it. Each line has an icon.
+The group names, such as EVERY MEETING, are headings. Daily Agenda, Tasks and Settings
+are folders: click one and its lines open beside it. Each line has an icon.
+
+A row in a list reads like the TV: the name or text, then what goes with it, such as
+the subteam and status of a task or the time and first name of a talk. Hidden or
+Expired in front of a row means the TV is not showing it, and Off means a calendar
+filter is switched off.
 
 Start here: a short page that says what the screen is and that Publish all is the
 last step of every change. See "The Start here page" below.
@@ -44,21 +49,30 @@ last step of every change. See "The Start here page" below.
     or move a talk (docs/presentations.md).
   - Meeting days: which days have talk slots and when they start. A day with no
     Meeting day has no slots.
-- Tasks: what the team is working on. Each task has a name, a subteam, an
-  optional point of contact, an optional location and a status (Blocked, In
-  progress, Up next or Done). The point of contact is a first name, up to 12
-  characters, with no last name. The location is a place, picked in the Location
-  field of the task (see "Places" below). When you set a task to Done, fill in
-  "Finished on". If you leave it empty, the time you last edited the task
+- Tasks: what the team is working on. It is a folder with three lists, and its plus
+  button says Pin a task. Each task has a name, a subteam, an optional point of
+  contact, an optional location, an optional priority (High, Medium or Low) and a
+  status (Blocked, In progress, Up next or Done). The point of contact is a first
+  name, up to 12 characters, with no last name. The location is a place, picked in
+  the Location field of the task (see "Places" below). When you set a task to Done,
+  fill in "Finished on". If you leave it empty, the time you last edited the task
   counts as the finish time. The task leaves the screen after the number of
   days set in Dashboard Settings. See "What the Tasks panel shows" below.
+  - Pinned: the tasks you type in the Studio, and every task that was made before
+    the team board was connected.
+  - From the board: the tasks the board sync makes from the team board. The list is
+    empty until the sync is set up. See "Tasks from the team board" below.
+  - Hidden: every task that is not on the TV, because Show on TV is off, Show on
+    screen is off or the Hide after time has passed. A task is in one list only.
 - Tips and News: the lines that run along the bottom of the screen.
 
 ### Events
 
-- Calendars: the BAND calendars the Mini reads. The page tells you to add a rule
-  under Calendar filters to hide a repeating meeting, and to ask a coach to add
-  the address of a new calendar on the Mini.
+- Calendars: the BAND calendars the Mini reads. Pick one on the left to see its
+  next 12 events on the right, each SHOWN or HIDDEN, and when the Mini last
+  downloaded it (docs/calendars-page.md). The page tells you to add a rule under
+  Calendar filters to hide a repeating meeting, and to ask a coach to add the
+  address of a new calendar on the Mini.
 - Calendar filters: rules that hide events from the BAND calendars, or keep them
   on the screen, such as a meeting that repeats every week
   (docs/calendar-filters.md). Students can follow
@@ -216,8 +230,26 @@ When the rows do not fit on one page, the panel shows the next page each time
 it comes round, and the first page again after the last. A blocked task is
 always on the first page. Giving tasks contacts and locations makes the pages
 hold fewer tasks, three at the least, so there are more pages. Hidden tasks,
-expired tasks and Done tasks past the number of days in Dashboard Settings are
-left out. The Open Tasks panel counts every open task however many pages there are.
+tasks with Show on TV off, expired tasks and Done tasks past the number of days in
+Dashboard Settings are left out. The Open Tasks panel counts every open task however
+many pages there are. Inside a status, pinned tasks come before tasks from the board,
+and each group keeps the order of the Order field.
+
+## Tasks from the team board
+
+A task from the team board is made by the board sync, not typed in the Studio. It
+opens read only, with this line at the top: "This task comes from the team board.
+Change it there. Use Show on TV to hide it here." The one thing you can change is
+Show on TV. Turn it off and the task leaves the TV and moves to the Hidden list.
+Turn it on and it comes back. The board sync keeps your choice the next time it runs.
+
+Show on TV is on every task, not only the ones from the board. It is a second switch
+beside Show on screen. A task is on the TV only when both are on and it has not expired.
+A task made before Show on TV existed counts as on, and the switch is drawn as on.
+
+To put a task of your own above the tasks from the board, use the plus button of the
+Tasks folder, Pin a task. Pinned tasks are always before the tasks from the board in the
+same status. A list line says Pinned or Board, and the priority when there is one.
 
 ## Places
 

@@ -14,8 +14,8 @@ looks at it.
 
 Open Calendar filters in the sidebar, click the plus button and fill in the form.
 
-- Rule name: up to 40 characters. It is only for editors. The check script prints
-  it beside each event the rule hides.
+- Rule name: up to 40 characters. It is only for editors. The Calendars page and
+  the check script show it beside each event the rule hides.
 - Action: Hide takes the matching events off the screen. Always show keeps them
   on, even when a Hide rule matches them. Hide is picked to start with.
 - Title words: optional, up to 5 words of up to 30 characters each. An event
@@ -73,9 +73,15 @@ While the TV shows sample content it uses the two example rules in
 
 ## Checking the rules
 
-The TV only follows published rules. To see what it does with each event of the
-next 30 days, run this on a computer that has Node, a copy of the repository and
-a `deploy/local.env` with the calendar links. The Mini has no Node.
+The TV only follows published rules. The quickest way to see what a rule does is
+the Calendars page in Studio, under Events. It lists the next events of each
+calendar, SHOWN or HIDDEN, with the name of the rule that hides each one
+(docs/calendars-page.md). It changes after the next calendar run, within 15
+minutes, and it lists the events only when Node is installed on the Mini.
+
+To see every event of the next 30 days at once, run this on a computer that has
+Node, a copy of the repository and a `deploy/local.env` with the calendar links.
+The Mini has no Node, unless a coach installed it for the Calendars page.
 
     deploy/scripts/check-calendars.sh
 
@@ -91,4 +97,6 @@ explained in docs/rebuilding-the-mini.md, "Adding or changing a calendar".
 - `dashboard/core/events.js`: `ruleMatches` and `hidingRule`. `mergeEvents` uses
   them on the BAND events.
 - `dashboard/core/sanity.js`: reads the rules with the rest of the content.
+- `deploy/scripts/calendar-status.mjs`: judges the next events with the same code
+  and the published rules, for the Calendars page.
 - `tools/test-calendar.mjs`: the tests, run with `node tools/test-calendar.mjs`.

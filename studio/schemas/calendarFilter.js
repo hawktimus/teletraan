@@ -5,7 +5,7 @@
 // does.
 
 import { defineType, defineField, defineArrayMember } from 'sanity';
-import { tooLong, aToZ, titleOf } from './fields.js';
+import { tooLong, aToZ, titleOf, subtitleFor } from './fields.js';
 
 const actions = [
   { title: 'Hide', value: 'hide' },
@@ -67,13 +67,6 @@ function dateText(from, to) {
   if (from && to) return from + ' to ' + to;
   if (from) return 'from ' + from;
   if (to) return 'until ' + to;
-  return '';
-}
-
-// Off or Expired in front of a list line: the rule does nothing then
-function noteFor(item) {
-  if (item.show === false) return 'Off';
-  if (item.expires && new Date(item.expires) < new Date()) return 'Expired';
   return '';
 }
 
@@ -167,7 +160,7 @@ export default defineType({
     prepare(item) {
       const words = (item.words || []).filter(Boolean).join(' or ');
       const text = [titleOf(actions, item.action), words, dayText(item.days), item.calendar, dateText(item.from, item.to)].filter(Boolean).join(' · ');
-      return { title: item.title || 'Rule with no name', subtitle: [noteFor(item), text].filter(Boolean).join(' · ') };
+      return { title: item.title || 'Rule with no name', subtitle: subtitleFor(text, item, 'Off') };
     },
   },
 });

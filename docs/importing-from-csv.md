@@ -75,7 +75,7 @@ someone made there by hand is not known to it: leave the cell empty and pick
 the place in the task in Studio, or add the place to place.csv if it is not in
 Studio yet.
 
-Every template except place.csv ends with a `team` column. It is the code of the
+Every template except place.csv has a `team` column, last in all but task.csv. It is the code of the
 team the item is for: `prime` or `nova`, capitals ignored. Leave it empty to show
 the item for both teams, which is what happens to anything that was added
 before teams existed. A CSV saved from an older template, without the column,
@@ -83,6 +83,11 @@ still imports. The script knows the two starting teams without a file (they are
 in `docs/seed/teams.ndjson`) and refuses any other code. The teams have to be in
 Studio before the import, so import that file first (studio/README.md, "The
 starting teams").
+
+task.csv is the one template with columns after `team`. They are `priority` (`high`, `medium`
+or `low`) and `showOnTv` (`yes` or `no`, and `yes` when the cell is empty). Both may be left
+empty. A task file saved from a template without them still imports. A sheet has no column for
+where a task comes from, so every task it makes is pinned.
 
 ### 2. Make the cells plain text
 

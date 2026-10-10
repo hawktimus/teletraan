@@ -1,5 +1,6 @@
 import { defineType, defineField } from 'sanity';
 import { showField, expiresField, orderField, teamField, tooLong, byOrder, aToZ, titleOf, subtitleFor } from './fields.js';
+import { clockIn, fallbackTimeZone } from './presentationTimes.js';
 
 const kinds = [
   { title: 'Tip', value: 'tip' },
@@ -37,7 +38,9 @@ export default defineType({
   preview: {
     select: { title: 'text', kind: 'kind', show: 'show', expires: 'expires' },
     prepare(item) {
-      return { title: item.title || 'Line with no text', subtitle: subtitleFor(titleOf(kinds, item.kind), item) };
+      const end = clockIn(item.expires, fallbackTimeZone);
+      const text = [titleOf(kinds, item.kind), end ? 'Until ' + end.date + ', ' + end.time : ''].filter(Boolean).join(' · ');
+      return { title: item.title || 'Line with no text', subtitle: subtitleFor(text, item) };
     },
   },
 });

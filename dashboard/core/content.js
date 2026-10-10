@@ -24,9 +24,10 @@ const reopenStreamAfter = 60 * 1000;
 // from the first failed read. The screen then says so (core/connection.js).
 const unreachableAfter = 2 * 60 * 1000;
 
-// An item is shown unless it is switched off or its expiry time has passed
+// An item is shown unless it is switched off or its expiry time has passed. Only a task
+// has Show on TV, and every panel that draws tasks comes through here, so it is read here.
 export function isVisible(item, now = new Date()) {
-  if (item.show === false) return false;
+  if (item.show === false || item.showOnTv === false) return false;
 
   const expires = parseLocalDateTime(item.expires);
   return !expires || expires > now;

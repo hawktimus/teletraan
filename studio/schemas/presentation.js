@@ -34,10 +34,10 @@ const statuses = [
   { title: 'Skipped', value: 'skipped' },
 ];
 
-// Thu 2:45 PM - Alex - the title of the talk
-function talkLine(item) {
-  const start = clockIn(item.start, fallbackTimeZone);
-  return [start ? start.weekday + ' ' + start.time : '', item.name, item.topic].filter(Boolean).join(' - ');
+// Thu Oct 8, 2:45 PM
+function startWords(isoText) {
+  const start = clockIn(isoText, fallbackTimeZone);
+  return start ? start.weekday + ' ' + start.date + ', ' + start.time : '';
 }
 
 export default defineType({
@@ -117,7 +117,7 @@ export default defineType({
     select: { start: 'start', name: 'name', topic: 'topic', subteam: 'subteam', status: 'status' },
     prepare(item) {
       const note = item.status && item.status !== 'scheduled' ? titleOf(statuses, item.status) : '';
-      return { title: talkLine(item) || 'Talk with no details', subtitle: [note, item.subteam].filter(Boolean).join(' · ') };
+      return { title: item.topic || 'Talk with no title', subtitle: [note, startWords(item.start), item.name, item.subteam].filter(Boolean).join(' · ') };
     },
   },
 });

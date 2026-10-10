@@ -12,6 +12,10 @@
 
 import { createElement, useEffect, useState } from 'react';
 import { useClient } from 'sanity';
+import { ageText, clockText } from './time-text.js';
+
+// ageText used to be written here, so it is still found here
+export { ageText };
 
 const h = createElement;
 
@@ -36,27 +40,6 @@ const styles = {
   line: { display: 'flex', flexWrap: 'wrap', gap: '4px 16px', margin: '0 0 4px', fontSize: 14 },
   label: { minWidth: 220, fontWeight: 600 },
 };
-
-// How long ago a time was, in words. A time that cannot be read gives nothing.
-export function ageText(isoText, now) {
-  const then = typeof isoText === 'string' ? Date.parse(isoText) : NaN;
-  if (isNaN(then)) return '';
-
-  const minutes = Math.round((now.getTime() - then) / 60000);
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return minutes + (minutes === 1 ? ' minute ago' : ' minutes ago');
-
-  const hours = Math.round(minutes / 60);
-  if (hours < 48) return hours + (hours === 1 ? ' hour ago' : ' hours ago');
-  return Math.round(hours / 24) + ' days ago';
-}
-
-// The time as the editor's own computer shows it, such as Oct 9, 2026, 2:14 PM
-function clockText(isoText) {
-  const date = new Date(isoText);
-  if (typeof isoText !== 'string' || isNaN(date.getTime())) return '';
-  return date.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
-}
 
 // The lines for a status document: a label and the words after it. A time the
 // Mini has not written yet says Not yet.

@@ -10,11 +10,14 @@ TV. The dashboard reads what they publish.
     sanity.config.js      the Studio's main settings
     sanity.cli.js         settings for the command line tool
     structure.js          the sidebar, one list with a line for each entry, so changing the order means moving a line (a folder holds lines of its own, and Events Calendar, Places and Demo have no line)
+    add-templates.js      what the plus button of each folder and list makes: a new document of its type, with the starting values of its group
     start-here.js         the Start here page, the first line of the sidebar, written as a plain function
     start-here-parts.js   the picture of the screen, the five buttons and their words, with no Studio in it, so node can test them
     screen-requests.js    what the request buttons write (Play announcement, Run presentation test, Next look now, Preview competition, the Play and Preview buttons), used by actions.js and the Start here page
     dashboard-address.js  the address that Preview the screen opens on the Start here page, with ?sample=1 for the sample content
-    calendars-view.js     the Calendars page under Events, written as a plain function
+    calendars-view.js     the Calendars page under Events, written as a plain function (docs/calendars-page.md)
+    calendars-view-parts.js  the words and rows of the Calendars page, with no Studio in it, so node can test them
+    time-text.js          ages in words and times as the editor's computer writes them, used by status-input.js and the Calendars page
     actions.js            the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons on Dashboard Settings
     themes.js             the list of themes and overlays, a copy of the dashboard's
     demo-screens.js       the list of screens a demo can show, a copy of the dashboard's
@@ -22,6 +25,7 @@ TV. The dashboard reads what they publish.
     previews.js           the list of Preview buttons (Prime, Nova, Cybertron, Minimal, next pack), a copy of the dashboard's
     team-input.js         the Team radio (Both, then each active team) that the Team field of each kind of content uses
     note-field.js         the one plain line of a note in a form (fields.js, noteField)
+    show-on-tv-input.js   the Show on TV switch of a task, which draws a task with no value as on
     status-input.js       the Status of the Mini block at the top of the Screen tab of Dashboard Settings
     panel-order-input.js  the Panel order list in Dashboard Settings, which fills itself from the two older panel lists when it is empty
     schemas/              one file per kind of content

@@ -27,11 +27,17 @@ const defaultOutput = path.join(studioFolder, '..', 'docs', 'content-templates')
 // or by the booking form. Calendar filters have day checkboxes and a list of
 // words, which a sheet does not hold well, so they are added in Studio. A team has
 // colors and a logo, so it is added in Studio too (the two starting teams are in
-// docs/seed/teams.ndjson). The status document is written by the Mini, so it has
-// no template. The pages that exist once (Dashboard Settings, Look, Demo) are
+// docs/seed/teams.ndjson). The status documents are written by the Mini, so they
+// have no template. The pages that exist once (Dashboard Settings, Look, Demo) are
 // listed in structure.js. Events Calendar entries and places have no line in the
 // sidebar, but they keep their templates, since the importer still reads them.
-const skippedTypes = ['photo', 'presentationDay', 'presentation', 'calendarFilter', 'team', 'status'];
+const skippedTypes = ['photo', 'presentationDay', 'presentation', 'calendarFilter', 'team', 'status', 'calendarStatus'];
+
+// Fields that are not columns. The board sync sets the source and the board item number of a
+// task, and the note at the top of a task from the board stores nothing.
+const notColumns = {
+  task: ['source', 'mondayId', 'boardNote'],
+};
 
 // The columns whose words make the id of a row, in order. The id is the type
 // plus a slug of these cells, so importing the same row twice changes nothing.
@@ -52,7 +58,7 @@ const idColumns = {
 // in. They stay at the end, whatever their place in the schema, so a sheet made
 // from the older template still lines up with the new one.
 const lastColumns = {
-  task: ['contact', 'location', 'team'],
+  task: ['contact', 'location', 'team', 'priority', 'showOnTv'],
   plan: ['team'],
   extraEvent: ['team'],
   sponsor: ['team'],
@@ -67,7 +73,7 @@ const lastColumns = {
 const examples = {
   task: {
     title: '[Task name]', subteam: '[Subteam A]', status: 'in-progress', order: '1', show: 'yes', expires: '2027-03-01 18:00',
-    contact: '[First name]', location: '[Place name]',
+    contact: '[First name]', location: '[Place name]', priority: 'medium', showOnTv: 'yes',
   },
   plan: {
     heading: '[Meeting heading]', date: '2027-01-12', location: '[Room or place]',
@@ -101,7 +107,7 @@ const examples = {
 export async function loadSchemas() {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-templates-'));
   try {
-    ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'publish-all.js', 'calendars-view.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'team-input.js', 'note-field.js', 'status-input.js', 'panel-order-input.js'].forEach(name => fs.cpSync(path.join(studioFolder, name), path.join(folder, name), { recursive: true }));
+    ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'publish-all.js', 'calendars-view.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'team-input.js', 'note-field.js', 'show-on-tv-input.js', 'status-input.js', 'time-text.js', 'calendars-view-parts.js', 'panel-order-input.js'].forEach(name => fs.cpSync(path.join(studioFolder, name), path.join(folder, name), { recursive: true }));
     fs.writeFileSync(path.join(folder, 'package.json'), JSON.stringify({ type: 'module' }));
     // the names that schemas/ and the inputs import: the radio of the team field, the other inputs and the Start here page are never drawn here
     const stubs = { sanity: ['defineType', 'defineField', 'defineArrayMember', 'set', 'unset', 'useClient', 'useFormValue'], react: ['createElement', 'useEffect', 'useState'] };
@@ -226,6 +232,7 @@ function groupColumns(field, typesByName) {
 function columnsFor(type, typesByName) {
   const columns = [];
   type.fields.forEach(field => {
+    if ((notColumns[type.name] || []).indexOf(field.name) !== -1) return;
     if (field.type === 'image') return; // pictures are uploaded in Studio, not imported
     const isGroup = field.type === 'array' && field.of[0].type !== 'string';
     if (isGroup) groupColumns(field, typesByName).forEach(column => columns.push(column));

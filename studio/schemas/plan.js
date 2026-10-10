@@ -1,5 +1,6 @@
 import { defineType, defineField, defineArrayMember } from 'sanity';
 import { showField, expiresField, teamField, tooLong, subtitleFor } from './fields.js';
+import { dayWords } from './presentationTimes.js';
 
 const rowFields = [
   defineField({
@@ -81,7 +82,7 @@ export default defineType({
   preview: {
     select: { title: 'heading', date: 'date', location: 'location', show: 'show', expires: 'expires' },
     prepare(item) {
-      const text = [item.date, item.location].filter(Boolean).join(' · ');
+      const text = [dayWords(item.date), item.location].filter(Boolean).join(' · ');
       return { title: item.title || 'Agenda item with no heading', subtitle: subtitleFor(text, item) };
     },
   },

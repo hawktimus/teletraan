@@ -47,6 +47,12 @@ echo "     changed schedule is used"
 echo "It does not turn on the kiosk. To do that later:"
 echo "  sudo systemctl enable teletraan-kiosk.service"
 echo
+if ! command -v node > /dev/null 2>&1; then
+  echo "Node is not installed here. The Calendars page in Studio will say when each calendar"
+  echo "was downloaded and why a download failed, but it will not list the coming events."
+  echo "docs/calendars-page.md says how to turn the list on."
+  echo
+fi
 printf 'Press Enter to go ahead, or Ctrl+C to stop. '
 read -r answer
 
