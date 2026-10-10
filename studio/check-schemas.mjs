@@ -5057,10 +5057,19 @@ function checkMondayTab() {
     need(problems, pattern && pattern.args[0].test('color_mkx12abc') && pattern.args[0].test('date4') && !pattern.args[0].test('a b') && !pattern.args[0].test('a;b'), name + ' should only take the letters, digits, hyphens and underscores of a column id');
   });
 
-  // The three labels start as Monday's own, the priority labels as High, Medium and Low
+  // The labels start as Monday's own, the priority labels as High, Medium and Low
   const starts = { backlogLabel: 'Backlog', progressLabel: 'Working on it', doneLabel: 'Done', priorityHigh: 'High', priorityMedium: 'Medium', priorityLow: 'Low' };
   Object.keys(starts).forEach(name => need(problems, at(name) && at(name).initialValue === starts[name], name + ' should start as ' + starts[name]));
   need(problems, at('statusColumn') && at('statusColumn').initialValue === undefined, 'a column should start empty');
+
+  // Every status that is not In progress or Done is Backlog, so the Backlog label is hidden and kept, and the Mini ignores it
+  need(problems, at('backlogLabel') && at('backlogLabel').hidden === true, 'backlogLabel should be hidden: the Mini no longer reads it, and a value saved earlier must still open and publish');
+  need(problems, world.mondayScript.indexOf('backlogLabel') === -1, 'monday-sync.sh should never read backlogLabel');
+  ['progressLabel', 'doneLabel'].forEach(name => need(problems, at(name) && /every status that is not/i.test(at(name).description || '') && /Backlog/.test(at(name).description || ''), name + ' should say in its description that every other status is Backlog'));
+
+  // The due date column takes a date column or a timeline column, and says which day it uses
+  need(problems, at('dueColumn') && /timeline/.test(at('dueColumn').description || '') && /end date/.test(at('dueColumn').description || ''), 'dueColumn should say that a timeline column gives its end date');
+  need(problems, world.mondayPickers.columnKinds.due.indexOf('date') !== -1 && world.mondayPickers.columnKinds.due.indexOf('timeline') !== -1, 'the due date list should offer date columns and timeline columns as the ones that fit');
 
   // The owner switch starts off, and so do the starting values of config.js
   const owners = fieldAt('dashboardSettings.mondayShowOwners');
@@ -5073,8 +5082,8 @@ function checkMondayTab() {
   const entry = (list.of || [])[0];
   const line = fields => entry.preview.prepare(fields);
   need(problems, entry && entry.preview && entry.preview.select.team === 'team.name', 'a board entry should select the name of its team');
-  need(problems, line({ board: '123456', team: 'Prime', backlog: 'Backlog', progress: 'Working on it', done: 'Done' }).title === 'Board 123456', 'a board entry should read "Board 123456"');
-  need(problems, line({ board: '123456', team: 'Prime', backlog: 'Backlog', progress: 'Working on it', done: 'Done' }).subtitle === 'Prime · Backlog / Working on it / Done', 'the second line of a board entry should read "Prime · Backlog / Working on it / Done"');
+  need(problems, line({ board: '123456', team: 'Prime', progress: 'Working on it', done: 'Done' }).title === 'Board 123456', 'a board entry should read "Board 123456"');
+  need(problems, line({ board: '123456', team: 'Prime', progress: 'Working on it', done: 'Done' }).subtitle === 'Prime · Working on it / Done', 'the second line of a board entry should read "Prime · Working on it / Done": the Backlog label does not count any more');
   need(problems, line({}).title === 'Board with no number' && line({}).subtitle === 'No team', 'an empty board entry should read "Board with no number" and "No team"');
 
   // Tasks: the due date is optional and the board sync writes it. The fixed rows per card are not a field.
@@ -5168,6 +5177,60 @@ async function checkMondayRead() {
   need(problems, sameData(await read(answering('text')), { doc: null, unreadable: false }), 'an answer that is not a document should be read as no document');
   need(problems, sameData(await read({ fetch: async () => { throw new Error('offline'); } }), { doc: null, unreadable: true }), 'a client that fails should give unreadable');
   need(problems, sameData(await read({}), { doc: null, unreadable: true }), 'a client with no fetch should give unreadable');
+  return problems;
+}
+
+// The lines under the connection block: the boards the form has chosen, the tasks the Mini has made, and the
+// plain line when no board is chosen. A number that cannot be read leaves its line out.
+function checkMondayCounts() {
+  const problems = [];
+  const input = world.mondayStatusInput;
+  const now = new Date('2027-01-12T15:00:00.000Z');
+  const doc = { connectedAs: 'Jordan', lastSyncAt: '2027-01-12T14:55:00.000Z', boards: 21 };
+  const words = node => JSON.stringify(node);
+
+  need(problems, input.describeMondayStatus(doc, now).map(line => line.label).join() === 'Connected as,Last sync,Boards the token can see,Last error', 'the four lines of the block should not change');
+  const some = input.describeMondayWork(2, 12);
+  need(problems, some.map(line => line.label).join() === 'Boards chosen,Tasks from the board' && some[0].text === '2 boards' && some[1].text === '12 tasks', 'the work lines should read Boards chosen: 2 boards and Tasks from the board: 12 tasks');
+  const one = input.describeMondayWork(1, 1);
+  need(problems, one[0].text === '1 board' && one[1].text === '1 task', 'one board and one task should read 1 board and 1 task');
+  const none = input.describeMondayWork(0, 0);
+  need(problems, none[0].text === 'None' && none[1].text === 'None', 'no boards and no tasks should read None');
+  need(problems, input.describeMondayWork(null, 3).map(line => line.label).join() === 'Tasks from the board' && input.describeMondayWork(2, null).map(line => line.label).join() === 'Boards chosen' && input.describeMondayWork(null, null).length === 0, 'a number that could not be read should leave its line out');
+  need(problems, input.describeMondayWork(undefined, 'text').length === 0, 'a value that is not a number should leave its line out');
+
+  // How the boards of the form are counted
+  need(problems, input.boardsChosen([{ boardId: '1' }, { boardId: '2' }]) === 2 && input.boardsChosen([]) === 0, 'boardsChosen should count the entries of the list');
+  need(problems, input.boardsChosen(undefined) === 0 && input.boardsChosen(null) === 0, 'a list nobody has filled in should count as no boards');
+  need(problems, input.boardsChosen('text') === null && input.boardsChosen({ 0: 1 }) === null && input.boardsChosen(7) === null, 'a value that is not a list cannot be counted');
+
+  // The view: the lines come after the four, and the plain line shows only when the form has no board
+  const noBoard = words(input.mondayStatusView({ doc: doc, unreadable: false }, now, { chosen: 0, tasks: 0 }));
+  need(problems, noBoard.indexOf('Boards chosen') !== -1 && noBoard.indexOf('Tasks from the board') !== -1 && noBoard.indexOf('Last error') < noBoard.indexOf('Boards chosen'), 'the work lines should come below the four lines');
+  need(problems, noBoard.indexOf('No board is chosen yet, so the Mini writes no tasks. Add a board under Boards below, with its Status column.') !== -1 && input.noBoardNote === 'No board is chosen yet, so the Mini writes no tasks. Add a board under Boards below, with its Status column.', 'with no board chosen the block should say so, in the words of docs/monday.md');
+  const chosen = words(input.mondayStatusView({ doc: doc, unreadable: false }, now, { chosen: 2, tasks: 12 }));
+  need(problems, chosen.indexOf('2 boards') !== -1 && chosen.indexOf('12 tasks') !== -1 && chosen.indexOf('No board is chosen') === -1, 'with boards chosen the block should show the numbers and not the plain line');
+  const unknown = words(input.mondayStatusView({ doc: doc, unreadable: false }, now, { chosen: null, tasks: null }));
+  need(problems, unknown.indexOf('Boards chosen') === -1 && unknown.indexOf('Tasks from the board') === -1 && unknown.indexOf('No board is chosen') === -1 && unknown.indexOf('Last error') !== -1, 'numbers that cannot be read should leave out their lines and the plain line, and keep the four');
+  need(problems, words(input.mondayStatusView({ doc: doc, unreadable: false }, now)).indexOf('Boards chosen') === -1, 'a view with no work argument should show the four lines only');
+  need(problems, words(input.mondayStatusView({ doc: null, unreadable: false }, now, { chosen: 0, tasks: 0 })).indexOf('No board is chosen') === -1, 'with no connection yet the block should say so and nothing else');
+  need(problems, words(input.mondayStatusView(null, now, { chosen: 0, tasks: 0 })).indexOf('Boards chosen') === -1 && words(input.mondayStatusView({ doc: null, unreadable: true }, now, { chosen: 0, tasks: 0 })).indexOf('Boards chosen') === -1, 'while reading, or when the document cannot be read, the block should show no work lines');
+  return problems;
+}
+
+// readMondayTaskCount asks for the number of published tasks with the source monday, and never fails
+async function checkMondayTaskCount() {
+  const problems = [];
+  const read = world.mondayStatusInput.readMondayTaskCount;
+  const asked = [];
+  const answering = value => ({ fetch: async (...args) => { asked.push(args); return value; } });
+
+  need(problems, await read(answering(21)) === 21 && await read(answering(0)) === 0, 'a number should be handed over, and so should 0');
+  need(problems, asked.length === 2 && /_type == "task"/.test(asked[0][0]) && /source == "monday"/.test(asked[0][0]) && /^count\(/.test(asked[0][0]) && asked[0][2].perspective === 'published', 'readMondayTaskCount should count the published tasks with the source monday');
+  need(problems, /drafts\.\*\*/.test(asked[0][0]), 'readMondayTaskCount should leave out drafts');
+  need(problems, await read(answering(null)) === null && await read(answering('text')) === null && await read(answering(-1)) === null && await read(answering({ count: 3 })) === null, 'an answer that is not a count should give null');
+  need(problems, await read({ fetch: async () => { throw new Error('offline'); } }) === null, 'a client that fails should give null');
+  need(problems, await read({}) === null, 'a client with no fetch should give null');
   return problems;
 }
 
@@ -5406,9 +5469,11 @@ async function main() {
   check('the calendar status document has the fields the Mini writes, is kept out of the sidebar and the New menu, and the scripts on the Mini write the same document', checkCalendarStatusType);
   check('the Calendars page has the help line, the calendars of Dashboard Settings on the left and the next events with SHOWN or HIDDEN on the right, and changes nothing', checkCalendarsPage);
   results.push({ name: 'the Calendars page asks for the published documents by their ids, and survives a client that fails', problems: await checkCalendarsRead().catch(error => ['the check stopped: ' + error.message]) });
-  check('the Monday tab has the connection block, up to 10 board entries with pickers, the three labels and the owner switch, as in dashboard/config.js', checkMondayTab);
+  check('the Monday tab has the connection block, up to 10 board entries with pickers, the labels for in progress and done (the Backlog label is hidden and ignored) and the owner switch, as in dashboard/config.js', checkMondayTab);
   check('the Monday data document has the fields the Mini writes, is kept out of the sidebar and the New menu, the script writes the same fields and task fields, and the connection block shows its lines in plain words', checkMondayStatus);
   results.push({ name: 'the connection block asks for the published Monday data document by its id, and survives a client that fails', problems: await checkMondayRead().catch(error => ['the check stopped: ' + error.message]) });
+  check('the connection block shows the boards chosen and the tasks made below its four lines, says so when no board is chosen, and leaves out a number it cannot read', checkMondayCounts);
+  results.push({ name: 'the connection block counts the published tasks from the board, and survives a client that fails', problems: await checkMondayTaskCount().catch(error => ['the check stopped: ' + error.message]) });
   check('the board and column pickers list the boards and columns, keep a stored value that is not in the list, fall back to the plain box with the reason, and write only the id', checkMondayPickers);
   results.push({ name: 'the pickers ask for the published Monday data document by its id, and survive a client that fails', problems: await checkMondayBoardsRead().catch(error => ['the check stopped: ' + error.message]) });
 

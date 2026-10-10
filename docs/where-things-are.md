@@ -342,7 +342,8 @@ editors can sign in from anywhere.
                               answers: the requests, the status document, the ETags, the limit of 60 requests, the
                               snapshots, and that the key and the token are never printed or saved
       test-monday-script.mjs  checks for deploy/scripts/monday-sync.sh and install-monday.sh, with a fake curl and
-                              made-up boards: the statuses and priorities, the owner names, the subteam that matches
+                              made-up boards: the statuses (every other status is Backlog) and priorities, the due
+                              dates from date and timeline columns, the owner names, the subteam that matches
                               nobody, Show on TV that is never written, a task that goes, the daily counts, the
                               limit of 500 items, errors from Monday, and that the tokens are never printed or saved
       test-monday-settings.mjs  checks for the two Monday settings on the screen's side: the list of boards and the

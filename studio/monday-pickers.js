@@ -32,7 +32,7 @@ const question = '*[_id == $id][0] { "boards": boards[] { id, name, "columns": c
 export const columnKinds = {
   status: ['status', 'color'],
   priority: ['status', 'color', 'dropdown'],
-  due: ['date'],
+  due: ['date', 'timeline'],
   owner: ['people', 'multiple-person'],
   team: ['status', 'color', 'dropdown', 'text'],
 };

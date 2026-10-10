@@ -87,6 +87,18 @@ test('a list of boards and an owner switch that is on are kept, and the shared s
   assert.deepEqual(withDefaults({}).settings.mondayBoards, []);
 });
 
+test('a board entry saved with a Backlog label keeps it, and nothing on the screen reads it: every status but In progress and Done is Backlog', () => {
+  const settings = normalizeContent({ settings: { mondayBoards: [entry] } }).settings;
+  assert.equal(settings.mondayBoards[0].backlogLabel, 'Backlog', 'the saved value is kept');
+
+  const read = folder => fs.readdirSync(folder, { withFileTypes: true }).reduce((names, item) => {
+    const full = path.join(folder, item.name);
+    if (item.isDirectory()) return names.concat(read(full));
+    return item.name.endsWith('.js') && fs.readFileSync(full, 'utf8').includes('backlogLabel') ? names.concat(full) : names;
+  }, []);
+  assert.deepEqual(read(dashboardFolder), [], 'no dashboard file names the Backlog label');
+});
+
 test('the Monday settings change nothing else on the screen: every other setting is as it was', () => {
   const plain = normalizeContent({ settings: { pageSeconds: 30, speed: 'fast' } }).settings;
   const withBoards = normalizeContent({ settings: { pageSeconds: 30, speed: 'fast', mondayBoards: [entry], mondayShowOwners: true } }).settings;

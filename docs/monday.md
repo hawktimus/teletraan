@@ -2,10 +2,10 @@
 
 For the coaches and the students who look after the Mini. The Mini reads the
 team's Monday boards and keeps their items in Sanity as tasks, so the screen can
-show what is not started, what is being worked on and what is done. This page says
+show what is in the backlog, what is being worked on and what is done. This page says
 what it reads, what it writes, how often, how to set it up, what happens when an
-item is deleted, and what to do when it stops. The three cards that draw the tasks on
-the screen are described in docs/layouts.md, "The Monday cards".
+item is deleted, and what to do when it stops or nothing shows up. The three cards
+that draw the tasks on the screen are described in docs/layouts.md, "The Monday cards".
 
 None of it has been tried against the live Monday service. The address, the
 questions and the places in the answers were written from the public documentation
@@ -36,12 +36,14 @@ Tasks. Each item becomes one published task with the id `task-monday-` and the
 item's number. Its fields:
 
 - `title`: the item's name, cut at 22 characters, the most a task name can have
-- `status`: the status label of the item. The label for Backlog gives `up-next`,
-  the one for In progress gives `in-progress` and the one for Done gives `done`. An
-  item with any other label, or none, gets no task. Blocked is never written
+- `status`: the status of the item. The In progress label gives `in-progress`, the Done
+  label gives `done`, and every other status gives `up-next`, which the screen calls
+  Backlog. That includes Stuck, Not started and an empty status, so no item is left
+  out. Blocked is never written
 - `priority`: `high`, `medium` or `low` from the priority labels, or nothing
-- `dueDate`: the day of the due date column, or nothing. A day and a time give the
-  day, and a date that is not on the calendar gives nothing
+- `dueDate`: the day of the due date column, or nothing. A date column gives its day,
+  and a timeline column gives its end day. A day and a time give the day, and a date
+  that is not on the calendar gives nothing
 - `contact`: the first name of the first owner, at most 12 characters, only when
   Show owner first names on the TV is on. Nothing else about a person is kept
 - `subteam`: the Team lead whose name is the name of the item's group, capitals
@@ -77,11 +79,12 @@ start of every run.
 
 ## When an item goes
 
-The script never deletes a task. A task whose item is no longer there, or no longer
-has one of the three status labels, is switched off: its `show` goes off and it moves
-to the Hidden list under Tasks. If the item comes back, so does the task. This
-happens only when every board was read to its end in that run. A run that missed a
-board, or stopped at 500 items or at 60 requests, switches nothing off.
+The script never deletes a task. A task whose item is no longer there is switched off:
+its `show` goes off and it moves to the Hidden list under Tasks. If the item comes
+back, so does the task. This happens only when every board was read to its end in that
+run. A run that missed a board, or stopped at 500 items or at 60 requests, switches
+nothing off. An item that changes to a status nobody listed is not gone: it becomes
+Backlog.
 
 Taking a board out of the list in Dashboard Settings switches its tasks off at the
 next run, because their items are no longer read. If the list is empty, or the page
@@ -134,15 +137,16 @@ going stops at once.
 3. Install the timer with `install-monday.sh`, and try the token with
    `monday-sync.sh --check`.
 4. Wait 10 minutes. Open Dashboard Settings in Studio, Monday tab. The block at the
-   top says who the token belongs to and when the Mini last read Monday. Until then it
-   says No connection yet.
+   top says who the token belongs to, when the Mini last read Monday, how many boards
+   are chosen and how many tasks the Mini has made. Until then it says No connection
+   yet.
 5. Add an entry under Boards. Pick the board by name, pick the team, and pick the
-   status column from its list. The three labels start as Backlog, Working on it and
-   Done: change them to the words the board uses. The priority column, the due date
-   column, the owner column and the subteam column are optional. The lists show the
-   columns of the board you picked. If a list cannot be read, the box is a plain one:
-   type the board number, which is in the address of the board in Monday, or the column
-   id, which Monday shows in the settings of the column.
+   status column from its list. The two labels start as Working on it and Done: change
+   them to the words the board uses. Every other status is Backlog. The priority
+   column, the due date column, the owner column and the subteam column are optional.
+   The lists show the columns of the board you picked. If a list cannot be read, the
+   box is a plain one: type the board number, which is in the address of the board in
+   Monday, or the column id, which Monday shows in the settings of the column.
 6. Click Publish. Within 10 minutes the tasks are in Tasks, From the board. Turn Show
    on TV off on a row to keep it off the screen.
 
@@ -162,6 +166,45 @@ read, how many tasks it made, changed or switched off, and `monday: status writt
 The journal has the same lines:
 
     sudo journalctl -u teletraan-monday.service -n 30
+
+## If nothing shows up
+
+Go down the list. Each step rules out one cause.
+
+1. The connection block says connected. Open Dashboard Settings, Monday tab. Connected
+   as shows a first name, and Last sync shows a recent time. If it says No connection
+   yet, the token is not in `local.env` on the Mini or the timer is not installed
+   (Setting it up, steps 2 and 3).
+2. A board is chosen. Boards chosen in the block is not None. Under Boards, an entry
+   needs a board, a team and its Status column. With no entry the block says
+   "No board is chosen yet, so the Mini writes no tasks", and the Mini only writes the
+   list of boards. Click Publish after you add the entry, because the Mini reads the
+   published settings.
+3. Wait 10 minutes. The Mini reads the boards 10 minutes after its last run, and Last
+   sync shows when that was.
+4. Look under Tasks, From the board. Tasks from the board in the connection block counts
+   them.
+5. Look at the Show on TV switch of each row. A task with Show on TV off is in the
+   list but not on the TV, and the Mini never changes that switch.
+6. On the Mini, run the line below and read the last lines. A line that starts with
+   `monday:` says how many boards are chosen, how many items were read and how many tasks
+   were made, or what went wrong. The script never prints the token.
+
+       sudo journalctl -u teletraan-monday.service -n 40
+
+**Which status an item gets.** Only two labels are looked for: the In progress label and
+the Done label of the board entry. Capitals and spaces around a label do not matter. An
+item with the In progress label is In progress, an item with the Done label is Done, and
+every other item is Backlog: Stuck, Not started, any label nobody listed, and an empty
+status. Older entries may still hold a Backlog label. Studio hides it and the Mini
+ignores it.
+
+**Which due date an item gets.** A date column gives its day. A timeline column gives
+two days joined by a dash, such as `2026-10-12 - 2026-10-20`, and the due date is the end
+day, `2026-10-20`. The script takes the last real day written as year, month and day in
+the text, so a column with one day works too. A day that is not on the calendar, or in a
+year before 1900 or after 2099, is skipped. A text with no such day, such as a week or a
+date written out in words, gives no due date, and the task has none.
 
 ## Limits
 
@@ -195,7 +238,8 @@ Change the made-up answer there when the block at the top changes.
 ## What the tests cover
 
 `tools/test-monday-script.mjs` runs the script with a fake `curl`, the real `jq`, and made-up
-boards: the statuses and priorities, the owner names on and off, the subteam that matches
-nobody, Show on TV that is never written, a task that goes, the daily counts, the 500 items,
-the request limit, errors from Monday, and that no token is printed or saved. It does not touch
-the network. `tools/test-monday-settings.mjs` checks the two settings on the screen's side.
+boards: the statuses (every other status is Backlog) and priorities, the due dates from date and
+timeline columns, the owner names on and off, the subteam that matches nobody, Show on TV that is
+never written, a task that goes, the daily counts, the 500 items, the request limit, errors from
+Monday, and that no token is printed or saved. It does not touch the network.
+`tools/test-monday-settings.mjs` checks the two settings on the screen's side.
