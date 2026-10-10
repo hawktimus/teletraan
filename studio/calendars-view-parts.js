@@ -11,7 +11,7 @@ import { ageText, clockText } from './time-text.js';
 export const calendarStatusId = 'calendar-status';
 
 // The one line at the top of the page
-export const helpLine = 'To hide a repeating meeting, add a rule under Calendar filters. To add a calendar, ask a coach to add its address on the Mini.';
+export const helpLine = 'Hide this one, beside an event, takes that one event off the screen. Hide all like this hides every event with the same title in the same calendar. Both make a rule, and the rules are listed under Calendar filters. To add a calendar, ask a coach to add its address on the Mini.';
 
 export const nothingYet = 'Nothing yet. The Mini writes this after it has downloaded the calendars.';
 export const settingsLine = 'To rename a calendar or switch it off, open Dashboard Settings and use the Calendars tab.';

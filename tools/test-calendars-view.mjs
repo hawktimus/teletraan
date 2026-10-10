@@ -191,7 +191,7 @@ test('the page notes say which document could not be read, and say nothing while
 });
 
 test('the words are short plain sentences: the help line, no dash, no exclamation mark and no emoji', () => {
-  assert.equal(parts.helpLine, 'To hide a repeating meeting, add a rule under Calendar filters. To add a calendar, ask a coach to add its address on the Mini.');
+  assert.equal(parts.helpLine, 'Hide this one, beside an event, takes that one event off the screen. Hide all like this hides every event with the same title in the same calendar. Both make a rule, and the rules are listed under Calendar filters. To add a calendar, ask a coach to add its address on the Mini.');
   assert.equal(parts.calendarStatusId, 'calendar-status');
 
   const texts = [parts.helpLine, parts.nothingYet, parts.settingsLine, parts.publicLine, parts.noCalendarsLine].concat(parts.notesFor({ entriesUnreadable: true, statusUnreadable: true }));

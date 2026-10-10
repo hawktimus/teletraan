@@ -321,7 +321,7 @@ test('the kind of each calendar is a line in its row and a fact, and a calendar 
 
 test('the words of the buttons are short plain sentences with no dash, exclamation mark or emoji, and none of the filler words', () => {
   const words = [
-    parts.kindLine, parts.hideLine, parts.changeLine, parts.noDayLine, parts.longCodeLine, parts.rulesUnreadableLine,
+    parts.helpLine, parts.kindLine, parts.hideLine, parts.changeLine, parts.noDayLine, parts.longCodeLine, parts.rulesUnreadableLine,
     parts.askText('Team calendar', 'Team meeting'), parts.restingText('Hide all: Team meeting'),
     parts.failureText({ statusCode: 403, message: 'Insufficient permissions' }), parts.failureText(new Error('offline')), parts.failureText(null),
     parts.hideOneLabel, parts.hideAllLabel, parts.showAgainLabel, parts.confirmLabel, parts.cancelLabel,
@@ -335,6 +335,9 @@ test('the words of the buttons are short plain sentences with no dash, exclamati
 
   assert.equal(parts.askText('Team calendar', 'Team meeting'), 'This hides every event in Team calendar with Team meeting in its title, on every day.');
   assert.equal(parts.hideOneLabel + '|' + parts.hideAllLabel + '|' + parts.showAgainLabel + '|' + parts.confirmLabel + '|' + parts.cancelLabel, 'Hide this one|Hide all like this|Show again|Hide|Cancel');
+  assert.equal(parts.helpLine, 'Hide this one, beside an event, takes that one event off the screen. Hide all like this hides every event with the same title in the same calendar. Both make a rule, and the rules are listed under Calendar filters. To add a calendar, ask a coach to add its address on the Mini.');
+  assert.ok(parts.helpLine.includes(parts.hideOneLabel) && parts.helpLine.includes(parts.hideAllLabel), 'the help line names the two buttons as they are written on them');
+  assert.ok(!/repeating meeting/.test(parts.helpLine), 'the help line no longer sends people to a rule for a repeating meeting');
   assert.equal(parts.changeLine, 'Change it under Calendar filters.');
   assert.ok(/at once/.test(parts.hideLine) && /Calendar filters/.test(parts.hideLine) && /edit or delete/.test(parts.hideLine));
   assert.ok(/no kind shows Other/.test(parts.kindLine) && /Dashboard Settings/.test(parts.kindLine) && /Calendars tab/.test(parts.kindLine));
@@ -595,6 +598,7 @@ test('the docs start with the button and give the rule form second, and name the
   const page = fs.readFileSync(path.join(root, 'docs/calendars-page.md'), 'utf8').replace(/\s+/g, ' ');
   ['next 40 events', 'Kind', 'no kind', 'Dashboard Settings', 'Hide this one', 'Show again', 'calendarFilter-hide-'].forEach(words => assert.ok(page.includes(words), 'docs/calendars-page.md should say: ' + words));
   assert.ok(!/next 12|up to 12/.test(page), 'docs/calendars-page.md should not still say 12');
+  assert.ok(page.includes(parts.helpLine), 'docs/calendars-page.md should quote the help line of the page as it is written');
 });
 
 test('the docs are plain: no dash, no exclamation mark, no emoji and no filler word', () => {

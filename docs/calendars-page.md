@@ -8,6 +8,11 @@ TV or bring it back.
 
 ## Reading the page
 
+- Top: one line of help under the heading. It reads: Hide this one, beside an
+  event, takes that one event off the screen. Hide all like this hides every
+  event with the same title in the same calendar. Both make a rule, and the
+  rules are listed under Calendar filters. To add a calendar, ask a coach to
+  add its address on the Mini.
 - Left: a button for each row of Dashboard Settings, Calendars. It says the
   calendar's name and code, its kind, whether the TV shows it, how many events it
   has in the next 30 days and how many of those a rule hides, and when the Mini

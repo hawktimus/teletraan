@@ -4813,7 +4813,8 @@ function checkCalendarsPage() {
   need(problems, wordsIn(nodesWhere(page, node => node.type === 'h1')) === 'Calendars', 'the page should open with the heading Calendars');
   const paragraphs = nodesWhere(page, node => node.type === 'p').map(wordsIn);
   need(problems, paragraphs[0] === parts.helpLine, 'the first line under the heading should be the help line');
-  need(problems, /Calendar filters/.test(parts.helpLine) && /ask a coach/.test(parts.helpLine) && /address on the Mini/.test(parts.helpLine), 'the help line should say to add a rule under Calendar filters and to ask a coach to add the address on the Mini');
+  need(problems, parts.helpLine.indexOf(parts.hideOneLabel) !== -1 && parts.helpLine.indexOf(parts.hideAllLabel) !== -1 && /same title/.test(parts.helpLine) && /rules are listed under Calendar filters/.test(parts.helpLine) && /ask a coach/.test(parts.helpLine) && /address on the Mini/.test(parts.helpLine), 'the help line should name the two Hide buttons, say what each one hides, say that the rules are listed under Calendar filters and say to ask a coach to add the address on the Mini');
+  need(problems, !/repeating meeting/.test(parts.helpLine), 'the help line should not send people to Calendar filters to hide a repeating meeting now that the events have Hide buttons');
   const left = nodesWhere(page, node => node.props && node.props['data-side'] === 'calendars')[0];
   const right = nodesWhere(page, node => node.props && node.props['data-side'] === 'events')[0];
   need(problems, left && right, 'the page should have a left side with the calendars and a right side with the events');
