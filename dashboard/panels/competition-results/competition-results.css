@@ -1,0 +1,91 @@
+/* The header sits on top of the two header plates of the area's frame */
+.competition-results .header {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  box-sizing: border-box;
+  width: 1152px;
+  height: 116px;
+  padding: 0 40px 0 76px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.competition-results .title {
+  margin: 0;
+  font: 700 var(--size-heading)/96px var(--font-display);
+}
+.competition-results .tag {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  color: var(--yellow);
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+/* The words are cut off with an ellipsis before they can reach the notch in the middle of the header. */
+.competition-results .tag-text {
+  min-width: 0;
+  max-width: 316px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.competition-results .tag .double-slash { flex: none; }
+
+/* The body is 1096 x 512, 28px in from the frame and 136px down, the room the Extra panels have. The chart
+   in it is an SVG of the same size, so a font size here is the size on the screen. */
+.competition-results .body {
+  position: absolute;
+  left: 28px;
+  top: 136px;
+  width: 1096px;
+  height: 512px;
+}
+.competition-results .chart { display: block; }
+
+/* One sentence in place of the chart, when there is nothing to show */
+.competition-results .empty {
+  box-sizing: border-box;
+  height: 100%;
+  margin: 0;
+  padding: 0 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: normal;
+  color: var(--lilac);
+  font: 500 var(--size-body)/72px var(--font-text);
+}
+
+/* A chip is the colour of the alliance the team was on. A match that was lost is dimmer. */
+.competition-results .chip-red { fill: var(--alliance-red); }
+.competition-results .chip-blue { fill: var(--alliance-blue); }
+.competition-results .chip-none { fill: var(--purple); }
+.competition-results .lost { opacity: .6; }
+
+.competition-results .chip-label {
+  fill: var(--white);
+  font: 600 var(--size-label)/48px var(--font-display);
+}
+.competition-results .chip-score {
+  fill: var(--white);
+  font: 700 var(--size-body-large)/64px var(--font-display);
+}
+.competition-results .chip-against {
+  fill: var(--white);
+  font: 600 var(--size-label)/48px var(--font-display);
+}
+
+/* The tick of a match that was won */
+.competition-results .check {
+  fill: none;
+  stroke: var(--white);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.competition-results .summary {
+  fill: var(--yellow);
+  font: 600 var(--size-label)/48px var(--font-display);
+}

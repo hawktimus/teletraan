@@ -1,0 +1,95 @@
+/* The header sits on top of the two header plates of the area's frame */
+.competition-timeline .header {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  box-sizing: border-box;
+  width: 1152px;
+  height: 116px;
+  padding: 0 40px 0 76px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.competition-timeline .title {
+  margin: 0;
+  font: 700 var(--size-heading)/96px var(--font-display);
+}
+.competition-timeline .tag {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  color: var(--yellow);
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+/* The words are cut off with an ellipsis before they can reach the notch in the middle of the header. */
+.competition-timeline .tag-text {
+  min-width: 0;
+  max-width: 316px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.competition-timeline .tag .double-slash { flex: none; }
+
+/* The body is 1096 x 512, 28px in from the frame and 136px down, the room the Extra panels have. The chart
+   in it is an SVG of the same size, so a font size here is the size on the screen. */
+.competition-timeline .body {
+  position: absolute;
+  left: 28px;
+  top: 136px;
+  width: 1096px;
+  height: 512px;
+}
+.competition-timeline .chart { display: block; }
+
+/* One sentence in place of the chart, when there is nothing to show */
+.competition-timeline .empty {
+  box-sizing: border-box;
+  height: 100%;
+  margin: 0;
+  padding: 0 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: normal;
+  color: var(--lilac);
+  font: 500 var(--size-body)/72px var(--font-text);
+}
+
+/* The line from today to the last date, a short stem from each dot to its words, and the dots. Today is a
+   ring. A date that is on now is a white dot with a ring. */
+.competition-timeline .axis {
+  stroke: var(--yellow);
+  stroke-width: 6;
+}
+.competition-timeline .stem {
+  stroke: var(--lilac);
+  stroke-width: 4;
+}
+.competition-timeline .dot {
+  fill: var(--yellow);
+  stroke: var(--ground);
+  stroke-width: 4;
+}
+.competition-timeline .dot-today {
+  fill: var(--ground);
+  stroke: var(--yellow);
+  stroke-width: 6;
+}
+.competition-timeline .dot-state { fill: var(--lilac); }
+.competition-timeline .dot.on {
+  fill: var(--white);
+  stroke: var(--yellow);
+  stroke-width: 6;
+}
+
+/* The days next to the line, and the name beyond them */
+.competition-timeline .days {
+  fill: var(--yellow);
+  font: 700 var(--size-label)/48px var(--font-display);
+}
+.competition-timeline .name {
+  fill: var(--white);
+  font: 500 var(--size-label)/48px var(--font-text);
+}

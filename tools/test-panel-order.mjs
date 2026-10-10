@@ -41,7 +41,7 @@ function test(name, run) {
 }
 
 const idsOf = rows => rows.map(row => row.panel);
-const registered = area => registry.panels.filter(panel => panel.region === area && !panel.testOnly).map(panel => panel.id);
+const registered = area => registry.panels.filter(panel => panel.region === area && !panel.testOnly && !panel.competition).map(panel => panel.id);
 
 // Settings as the Studio stores them for a page that was never given Panel order
 

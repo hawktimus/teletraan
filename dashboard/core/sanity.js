@@ -6,6 +6,7 @@ import { parseLocalDateTime, sameDay } from './time.js';
 import { fixSettingValues, isVisible, keepInRange, withDefaults } from './content.js';
 import { logoUrl, photoFocus, screenPhotoUrl, tidyPhoto } from './images.js';
 import { classifyFailure } from './connection.js';
+import { tidyFrc } from './frc.js';
 
 // Everything the screen needs, in one request. Lists come back in the order
 // they were created, and normalizeContent puts the ones with an Order first.
@@ -36,6 +37,8 @@ import { classifyFailure } from './connection.js';
 // The Teams come with the rest. Every kind of content that has a Team field is sent
 // with the code of its team, or nothing when it is for both teams. A team that was
 // deleted has no code either. A team's logo is sent like a person's photo.
+// The FRC data (frc-status) is one document that the Mini writes. It is sent as it is and
+// core/frc.js cleans it. No document means no competition cards.
 export const contentQuery = `{
   "settings": *[_id == "dashboardSettings"][0] {
     ...,
@@ -105,7 +108,8 @@ export const contentQuery = `{
       crop,
       hotspot
     }
-  }
+  },
+  "frc": *[_id == "frc-status"][0]
 }`;
 
 const requestSeconds = 15;
@@ -226,6 +230,7 @@ export function normalizeContent(result, now = new Date()) {
     presentations: presentationsFrom(data.presentations),
     calendarFilters: filtersFrom(data.calendarFilters),
     customPanels: customPanelsFrom(data.customPanels),
+    frc: tidyFrc(data.frc),
   });
 }
 
@@ -251,6 +256,7 @@ export function normalizeSample(raw) {
   content.photos = itemsFrom(data.photos).filter(photo => typeof photo.address === 'string');
   content.presentations = presentationsFrom(data.presentations);
   content.calendarFilters = filtersFrom(data.calendarFilters);
+  content.frc = tidyFrc(data.frc);
   return withDefaults(content);
 }
 

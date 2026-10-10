@@ -176,6 +176,14 @@ const contract = {
     }),
     calendars: rows({ id: text(20), name: text(20), show: 'boolean' }),
     showConnectionStatus: 'boolean',
+    competitionMode: 'string',
+    competitionTimeline: 'boolean',
+    competitionLastSeason: 'boolean',
+    competitionRank: 'boolean',
+    competitionNextMatch: 'boolean',
+    competitionResults: 'boolean',
+    competitionAlliance: 'boolean',
+    competitionDistrict: 'boolean',
   },
   theme: {
     defaultTheme: 'string',
@@ -215,7 +223,7 @@ const studioOnlyFields = {
   'dashboardSettings.miniStatus': 'the status block at the top of the Screen tab. It stores nothing',
   'dashboardSettings.lookNote': 'the note on the Look tab. It stores nothing',
   'dashboardSettings.mondayNote': 'the note on the Monday tab. It stores nothing',
-  'dashboardSettings.competitionNote': 'the note on the Competition tab. It stores nothing',
+  'dashboardSettings.frcConnection': 'the block at the top of the Competition tab. It stores nothing',
   'theme.settingsNote': 'the note on the Look page. It stores nothing',
   'dashboardSettings.nightStart': 'hidden. The screen uses the fixed time in dashboard/core/constants.js',
   'dashboardSettings.nightEnd': 'hidden. The screen uses the fixed time in dashboard/core/constants.js',
@@ -225,6 +233,12 @@ const studioOnlyFields = {
 };
 const studioOnlyTypes = {
   status: 'the Mini writes it for the status block, and the dashboard never reads it',
+};
+
+// Types the Mini writes and the dashboard reads as a whole. Their fields are checked together in
+// checkFrcStatus and not one by one against the contract above.
+const writtenByTheMini = {
+  frcStatus: 'the Mini writes it, and the dashboard reads it to draw the competition cards',
 };
 
 const itemTypes = ['task', 'plan', 'sponsor', 'tipOrNews', 'subteam', 'person', 'photo', 'customPanel'];
@@ -248,6 +262,7 @@ const choices = {
   'dashboardSettings.nightSpeed': ['slow', 'normal', 'fast'],
   'dashboardSettings.contentSource': ['production', 'sample'],
   'dashboardSettings.teamMode': ['prime', 'nova', 'alternate'],
+  'dashboardSettings.competitionMode': ['auto', 'always', 'off'],
   'dashboardSettings.hiddenRequest.kind': ['desktop', 'redEyes'],
   'dashboardSettings.previewRequest.kind': ['prime', 'nova', 'cybertron', 'minimal', 'next-pack'],
   'demo.steps.screen': ['announcement', 'all-announcements', 'night-mode'],
@@ -285,6 +300,7 @@ const notInSidebar = {
   place: 'a task\'s Location field adds a place with Create new and opens it from there',
   demo: 'its buttons are on Start here',
   status: 'the Mini writes it, and Dashboard Settings shows it in the status block at the top of the Screen tab',
+  frcStatus: 'the Mini writes it, and Dashboard Settings shows it in the block at the top of the Competition tab',
 };
 
 // The sidebar titles that people look for by name
@@ -397,7 +413,7 @@ function iconImportsOf(source) {
 
 function makeSandbox() {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-studio-'));
-  ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'calendars-view.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'publish-all.js', 'publish-all-tool.js', 'team-input.js', 'note-field.js', 'status-input.js', 'panel-order-input.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
+  ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'calendars-view.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'publish-all.js', 'publish-all-tool.js', 'team-input.js', 'note-field.js', 'status-input.js', 'frc-status-input.js', 'panel-order-input.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
     fs.cpSync(path.join(here, name), path.join(folder, name), { recursive: true });
   });
   fs.writeFileSync(path.join(folder, 'package.json'), JSON.stringify({ type: 'module' }));
@@ -693,7 +709,7 @@ function checkShape() {
     else problems.push(name + ' is missing from schemas/index.js');
   });
   world.types.forEach(type => {
-    if (!contract[type.name] && !studioOnlyTypes[type.name]) problems.push(type.name + ' is a type the dashboard does not read');
+    if (!contract[type.name] && !studioOnlyTypes[type.name] && !writtenByTheMini[type.name]) problems.push(type.name + ' is a type the dashboard does not read');
   });
   return problems;
 }
@@ -825,7 +841,7 @@ function differences(expected, actual, expectedName, actualName, problems) {
 // way round, or a new panel can never be switched on
 function checkPanelIds() {
   const problems = [];
-  const registered = world.registry.panels.filter(panel => !panel.testOnly);
+  const registered = world.registry.panels.filter(panel => !panel.testOnly && !panel.competition);
 
   rotationAreas.forEach(area => {
     const inRegistry = registered.filter(panel => panel.region === area).map(panel => panel.id);
@@ -2431,7 +2447,7 @@ function checkSettingsPage() {
   // The New menu in the top bar offers the types an editor adds, and not the pages that exist once, the
   // status document that the Mini writes or the types with no line in the sidebar. A place is still
   // offered while a document is open, which is where the Location field of a task has Create new.
-  const templates = ['task', 'plan', 'presentation', 'dashboardSettings', 'theme', 'demo', 'status', 'extraEvent', 'place'].map(name => ({ templateId: name }));
+  const templates = ['task', 'plan', 'presentation', 'dashboardSettings', 'theme', 'demo', 'status', 'frcStatus', 'extraEvent', 'place'].map(name => ({ templateId: name }));
   const offeredIn = creationContext => world.config.document.newDocumentOptions(templates, creationContext === undefined ? {} : { creationContext: creationContext }).map(item => item.templateId).join();
   const menu = 'task,plan,presentation';
   if (offeredIn(undefined) !== menu) problems.push('the New menu should offer: ' + menu + '. It offers: ' + offeredIn(undefined));
@@ -3818,6 +3834,7 @@ function checkTeamsTab() {
 // The order of the fields inside a tab is the order of the fields in dashboardSettings.js.
 const settingsTabTitles = ['Screen', 'Look', 'Countdown', 'Calendars', 'Presentations', 'Monday', 'Competition', 'Advanced'];
 const logoNames = logoSwitches.concat(logoNumbers);
+const competitionNames = ['competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict'];
 const settingsTabs = {
   screen: ['miniStatus', 'team', 'motion', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'alert', 'pageSeconds', 'rotation', 'doneDays', 'safetyDaysSince']
     .concat(photoNames, ['announcements', 'announceRequest']),
@@ -3826,7 +3843,7 @@ const settingsTabs = {
   calendars: ['calendars'],
   presentations: presentationNames.concat('presentationTestRequest'),
   monday: ['mondayNote'],
-  competition: ['competitionNote'],
+  competition: ['frcConnection', 'competitionMode'].concat(competitionNames),
   advanced: nightNames.concat(hiddenNames, ['contentSource', 'switchBackAt', 'showConnectionStatus']),
 };
 
@@ -3855,13 +3872,14 @@ function checkSettingsTabs() {
   // The status block and the notes are the first field of their tab
   const first = tab => fields.filter(field => field.group === tab)[0];
   need(problems, first('screen') && first('screen').name === 'miniStatus', 'the status block miniStatus should be the first field of the Screen tab');
-  ['look', 'monday', 'competition'].forEach(tab => need(problems, first(tab) && first(tab).name === tab + 'Note', 'the first field of the ' + tab + ' tab should be its note, ' + tab + 'Note'));
+  ['look', 'monday'].forEach(tab => need(problems, first(tab) && first(tab).name === tab + 'Note', 'the first field of the ' + tab + ' tab should be its note, ' + tab + 'Note'));
+  need(problems, first('competition') && first('competition').name === 'frcConnection', 'the first field of the Competition tab should be the connection block, frcConnection');
 
   // The fields that leave the form stay in the schema
   ['contentSource', 'switchBackAt'].forEach(name => need(problems, fieldAt('dashboardSettings.' + name) && fieldAt('dashboardSettings.' + name).hidden === true, name + ' should be hidden but stay in the schema'));
 
   // The notes store nothing and say one thing each in one line, and the Look tab and the Look page point to each other
-  const notes = ['dashboardSettings.lookNote', 'dashboardSettings.mondayNote', 'dashboardSettings.competitionNote', 'theme.settingsNote'];
+  const notes = ['dashboardSettings.lookNote', 'dashboardSettings.mondayNote', 'theme.settingsNote'];
   notes.forEach(pathText => {
     const field = fieldAt(pathText);
     need(problems, field && field.type === 'string' && field.readOnly === true && field.title === 'Note', pathText + ' should be a read only string titled Note');
@@ -3943,6 +3961,136 @@ async function checkStatusRead() {
   const found = await read(answering({ _id: 'status-mini', lastCalendarSyncAt: '2026-10-09T15:00:00.000Z' }));
   need(problems, found.doc && found.doc._id === 'status-mini' && found.unreadable === false, 'a document that is there should be handed over');
   need(problems, asked.length === 1 && /_id == \$id/.test(asked[0][0]) && asked[0][1].id === 'status-mini' && asked[0][2].perspective === 'published', 'readStatus should ask for the published document with the id status-mini');
+  need(problems, sameData(await read(answering(null)), { doc: null, unreadable: false }), 'no document is a good answer, not a failure');
+  need(problems, sameData(await read(answering('text')), { doc: null, unreadable: false }), 'an answer that is not a document should be read as no document');
+  need(problems, sameData(await read({ fetch: async () => { throw new Error('offline'); } }), { doc: null, unreadable: true }), 'a client that fails should give unreadable');
+  need(problems, sameData(await read({}), { doc: null, unreadable: true }), 'a client with no fetch should give unreadable');
+  return problems;
+}
+
+// The Competition tab of Dashboard Settings (schemas/settingsCompetition.js): the connection block, the
+// mode and one switch for each competition card. The names, the choices and the starting values are the
+// ones in dashboard/config.js, and each switch is a card in dashboard/core/competition.js and a panel in
+// dashboard/registry.js.
+function checkCompetitionTab() {
+  const problems = [];
+  const config = world.dashboard;
+  const at = name => fieldAt('dashboardSettings.' + name);
+  const rulesOf = field => (field ? constraintsOf(field) : []);
+
+  // The mode is a radio list of the names in config.js, Auto to start with, and not required
+  const mode = at('competitionMode');
+  const modeRules = rulesOf(mode);
+  const allowed = constraintNamed(modeRules, 'valid');
+  const offered = choicesOf('dashboardSettings.competitionMode');
+  const modeTitles = { auto: 'Auto', always: 'Always', off: 'Off' };
+  need(problems, config.competitionModes.join() === 'auto,always,off', 'competitionModes in config.js should be auto, always and off, not ' + config.competitionModes.join());
+  need(problems, mode && mode.type === 'string' && mode.options && mode.options.layout === 'radio', 'competitionMode should be a radio list');
+  need(problems, offered.map(item => item.value).join() === config.competitionModes.join(), 'competitionMode should offer the names in config.js, in the same order: ' + config.competitionModes.join(', '));
+  offered.forEach(item => need(problems, item.title === modeTitles[item.value], 'the competition mode ' + item.value + ' should be titled ' + modeTitles[item.value]));
+  need(problems, allowed && allowed.args[0].join() === config.competitionModes.join(), 'competitionMode should only allow: ' + config.competitionModes.join(', '));
+  need(problems, !constraintNamed(modeRules, 'required'), 'competitionMode should not be required: an empty mode is Auto, and the page must still publish');
+  need(problems, mode && mode.initialValue === 'auto' && config.defaultSettings.competitionMode === 'auto', 'competitionMode should start as auto, and so should its default in config.js');
+  need(problems, mode && /Auto/.test(mode.description || '') && /Always/.test(mode.description || '') && /Off/.test(mode.description || ''), 'the competitionMode description should say what Auto, Always and Off do');
+
+  // One switch for each card, in this order, all on to start with, in the names of config.js
+  const titles = ['Season timeline', 'Last season at a glance', 'Live rank', 'Next match', 'Results strip', 'Alliance board', 'District points'];
+  need(problems, config.competitionSwitches.join() === competitionNames.join(), 'competitionSwitches in config.js should be the switches of the Competition tab, in order: ' + competitionNames.join(', '));
+  competitionNames.forEach((name, index) => {
+    const field = at(name);
+    need(problems, field && field.type === 'boolean' && field.initialValue === true && config.defaultSettings[name] === true, name + ' should be a switch that starts on, and so should its default in config.js');
+    need(problems, field && field.title === titles[index], name + ' should be titled ' + titles[index]);
+    need(problems, field && field.group === 'competition' && rulesOf(field).length === 0, name + ' should be in the Competition tab and have no rules');
+    need(problems, world.sample.settings[name] === true, 'the sample settings need ' + name);
+  });
+  need(problems, config.competitionModes.indexOf(world.sample.settings.competitionMode) !== -1, 'the sample settings need a competitionMode of ' + config.competitionModes.join(', '));
+
+  // Each switch is a card of the dashboard, and each card is a panel with the competition flag in registry.js
+  const cards = world.competition.cards;
+  need(problems, cards.map(card => card.setting).sort().join() === competitionNames.slice().sort().join(), 'the cards in core/competition.js should have the switches of the Competition tab: ' + competitionNames.join(', '));
+  const flagged = world.registry.panels.filter(panel => panel.competition).map(panel => panel.id);
+  need(problems, flagged.slice().sort().join() === cards.map(card => card.id).sort().join(), 'registry.js should have a panel with competition: true for each card in core/competition.js: ' + cards.map(card => card.id).join(', '));
+  flagged.forEach(id => need(problems, world.registry.panels.filter(panel => panel.id === id)[0].region === 'grid1', id + ' should be in the large panel, grid1'));
+  const rotation = [].concat(config.defaultSettings.rotation.grid1, config.defaultSettings.rotation.grid2).map(step => step.panel);
+  flagged.forEach(id => need(problems, rotation.indexOf(id) === -1 && choicesOf('dashboardSettings.rotation.order.panel').every(item => item.value !== id), id + ' should not be in Panel order or the rotation lists of config.js: the Competition tab switches it'));
+
+  // The connection block stores nothing, and its input never changes the value
+  const block = at('frcConnection');
+  need(problems, block && block.type === 'string' && block.readOnly === true, 'frcConnection should be a read only string');
+  need(problems, block && block.initialValue === undefined && !block.validation, 'frcConnection should store nothing: no starting value and no rules');
+  need(problems, block && block.components && block.components.input === world.frcStatusInput.FrcStatusInput, 'frcConnection should draw itself with FrcStatusInput (frc-status-input.js)');
+  const source = fs.readFileSync(path.join(here, 'frc-status-input.js'), 'utf8');
+  need(problems, !/onChange|\bset\(|unset\(|patch/.test(source), 'frc-status-input.js should never change the value: no onChange, set, unset or patch');
+  return problems;
+}
+
+// The FRC data document the Mini writes (schemas/frcStatus.js, deploy/scripts/frc-sync.sh) and the
+// block that shows it. The dashboard reads the document with the rest of the content (core/sanity.js).
+function checkFrcStatus() {
+  const problems = [];
+  const type = typeByName('frcStatus');
+  const input = world.frcStatusInput;
+  const script = world.frcScript;
+
+  need(problems, type && type.type === 'document', 'frcStatus should be a document type');
+  need(problems, type && type.readOnly === true, 'frcStatus should be read only: the Mini writes it');
+  need(problems, type && type.__experimental_omnisearch_visibility === false, 'frcStatus should be kept out of Studio search');
+  need(problems, input.frcStatusId === 'frc-status', 'the FRC data document should have the fixed id frc-status');
+  need(problems, script.indexOf('_id: "frc-status"') !== -1 && script.indexOf('_type: "frcStatus"') !== -1, 'frc-sync.sh should write the document frc-status of the type frcStatus');
+  need(problems, world.sanitySource.indexOf('"frc": *[_id == "frc-status"][0]') !== -1, 'the content query in core/sanity.js should read the document frc-status');
+
+  // The Mini does not know which fields are required, so none is, at any depth
+  eachField((where, field) => {
+    if (where.split('.')[0] !== 'frcStatus') return;
+    need(problems, !constraintNamed(constraintsOf(field), 'required'), where + ' should not be required: the Mini leaves out what it did not find');
+  });
+
+  // The fields are the ones the dashboard cleans (core/frc.js), the sample uses, and the script writes
+  const sample = world.sample.frc;
+  need(problems, sample && sample.sample === true, 'the sample content needs frc with sample: true, so the cards say SAMPLE');
+  unknownKeys(without(sample || {}, 'sample'), fieldsIn(type || {}), 'sample frc').forEach(message => problems.push(message));
+  const named = fields => fields.map(field => field.name);
+  const teamFields = fieldsIn(fieldAt('frcStatus.teams'));
+  const eventFields = fieldsIn(fieldAt('frcStatus.teams.events'));
+  [named(fieldsIn(type || {})), named(teamFields), named(eventFields)].forEach(names => {
+    names.forEach(name => need(problems, script.indexOf(name + ':') !== -1, 'frc-sync.sh should write the field ' + name));
+  });
+  need(problems, named(teamFields).join() === 'team,number,key,events,focusEvent,nextMatch,results,ranking,alliance,awards,epa,districtPoints,snapshots,lastSeason', 'frcStatus.teams should have these fields, in this order: team, number, key, events, focusEvent, nextMatch, results, ranking, alliance, awards, epa, districtPoints, snapshots, lastSeason');
+
+  // Editors never find it: no line in the sidebar and no place in the New menu
+  need(problems, allLines(world.structure.sidebarEntries).every(entry => entry.type !== 'frcStatus'), 'the sidebar should have no line for the FRC data document');
+  const offered = world.config.document.newDocumentOptions([{ templateId: 'frcStatus' }, { templateId: 'task' }], {}).map(item => item.templateId).join();
+  need(problems, offered === 'task', 'the New menu should not offer the FRC data document');
+
+  // The lines of the block, in plain words, and a document that is missing or cannot be read
+  const now = new Date('2027-03-12T15:00:00.000Z');
+  const ago = minutes => new Date(now.getTime() - minutes * 60000).toISOString();
+  const none = input.describeFrcStatus(null, now);
+  need(problems, none.length === 3 && none[0].text === 'Not yet' && none[1].text === 'No team was read' && none[2].label === 'Last error' && none[2].text === 'None', 'a missing document should say Not yet, that no team was read, and no error');
+  const some = input.describeFrcStatus({ lastSyncAt: ago(5), lastError: 'a key was refused', notes: ['A source was skipped.'], teams: [{ team: 'prime', number: 3229, events: 3 }, { team: 'nova', number: 3230, events: 0 }] }, now);
+  need(problems, /^5 minutes ago \(/.test(some[0].text), 'the first line should say how long ago the Mini last read the data');
+  need(problems, some[1].label === 'Events found, prime 3229' && some[1].text === '3 events' && some[2].label === 'Events found, nova 3230' && some[2].text === 'None', 'each team should have a line with the number of events the Mini found');
+  need(problems, some[3].label === 'Notes' && some[3].text === 'A source was skipped.' && some[4].label === 'Last error' && some[4].text === 'a key was refused', 'the notes and the last error should be lines of their own');
+  need(problems, input.describeFrcStatus({ lastSyncAt: ago(5), teams: [{ team: 'prime', number: 3229, events: 1 }] }, now)[1].text === '1 event', 'one event should read 1 event');
+  need(problems, JSON.stringify(input.frcStatusView(null, now)).indexOf('Reading the competition data') !== -1, 'the block should say it is reading while it waits');
+  const missing = JSON.stringify(input.frcStatusView({ doc: null, unreadable: false }, now));
+  need(problems, missing.indexOf('No connection yet') !== -1 && missing.indexOf('TBA_AUTH_KEY') !== -1 && missing.indexOf('local.env') !== -1, 'the block should say No connection yet, with the key to add to local.env on the Mini, when the document is missing');
+  need(problems, JSON.stringify(input.frcStatusView({ doc: null, unreadable: true }, now)).indexOf('could not be read') !== -1, 'the block should say so when the data cannot be read');
+  need(problems, JSON.stringify(input.frcStatusView({ doc: { lastSyncAt: ago(5) }, unreadable: false }, now)).indexOf('Last sync') !== -1, 'the block should show the lines when there is a document');
+  need(problems, typeof input.FrcStatusInput === 'function' && JSON.stringify(input.FrcStatusInput()).indexOf('Reading the competition data') !== -1, 'FrcStatusInput should start by saying it is reading');
+  return problems;
+}
+
+// readFrcStatus asks the published document by its id, and never fails. The stand-in client gives the answers.
+async function checkFrcRead() {
+  const problems = [];
+  const read = world.frcStatusInput.readFrcStatus;
+  const asked = [];
+  const answering = value => ({ fetch: async (...args) => { asked.push(args); return value; } });
+
+  const found = await read(answering({ lastSyncAt: '2027-03-12T15:00:00.000Z', teams: [] }));
+  need(problems, found.doc && found.doc.lastSyncAt === '2027-03-12T15:00:00.000Z' && found.unreadable === false, 'a document that is there should be handed over');
+  need(problems, asked.length === 1 && /_id == \$id/.test(asked[0][0]) && asked[0][1].id === 'frc-status' && asked[0][2].perspective === 'published', 'readFrcStatus should ask for the published document with the id frc-status');
   need(problems, sameData(await read(answering(null)), { doc: null, unreadable: false }), 'no document is a good answer, not a failure');
   need(problems, sameData(await read(answering('text')), { doc: null, unreadable: false }), 'an answer that is not a document should be read as no document');
   need(problems, sameData(await read({ fetch: async () => { throw new Error('offline'); } }), { doc: null, unreadable: true }), 'a client that fails should give unreadable');
@@ -4078,7 +4226,7 @@ function checkPanelOrder() {
   const problems = [];
   const config = world.dashboard;
   const at = name => fieldAt('dashboardSettings.rotation.' + name);
-  const registered = world.registry.panels.filter(panel => !panel.testOnly);
+  const registered = world.registry.panels.filter(panel => !panel.testOnly && !panel.competition);
   const ids = rotationAreas.reduce((all, area) => all.concat(registered.filter(panel => panel.region === area).map(panel => panel.id)), []);
 
   const order = at('order');
@@ -4179,6 +4327,10 @@ async function main() {
     world.baseCss = fs.readFileSync(path.join(dashboardFolder, 'base.css'), 'utf8');
     world.noteField = await load(path.join(folder, 'note-field.js'));
     world.statusInput = await load(path.join(folder, 'status-input.js'));
+    world.frcStatusInput = await load(path.join(folder, 'frc-status-input.js'));
+    world.competition = await load(path.join(dashboardFolder, 'core', 'competition.js'));
+    world.sanitySource = fs.readFileSync(path.join(dashboardFolder, 'core', 'sanity.js'), 'utf8');
+    world.frcScript = fs.readFileSync(path.join(here, '..', 'deploy', 'scripts', 'frc-sync.sh'), 'utf8');
     world.panelOrderInput = await load(path.join(folder, 'panel-order-input.js'));
     world.panelOrder = await load(path.join(dashboardFolder, 'core', 'panel-order.js'));
     world.constants = await load(path.join(dashboardFolder, 'core', 'constants.js'));
@@ -4245,6 +4397,9 @@ async function main() {
   check('Dashboard Settings has its eight tabs, every field is in the tab the table says, and the notes and the status block store nothing', checkSettingsTabs);
   check('the status document has the fields the Mini writes, is kept out of the sidebar and the New menu, and the block shows its lines in plain words', checkStatusBlock);
   results.push({ name: 'the status block asks for the published document by its id, and survives a client that fails', problems: await checkStatusRead().catch(error => ['the check stopped: ' + error.message]) });
+  check('the Competition tab has the mode, one switch for each card and the connection block, as in dashboard/config.js, core/competition.js and registry.js', checkCompetitionTab);
+  check('the FRC data document has the fields the Mini writes and the dashboard reads, is kept out of the sidebar and the New menu, and the connection block shows its lines in plain words', checkFrcStatus);
+  results.push({ name: 'the connection block asks for the published FRC data document by its id, and survives a client that fails', problems: await checkFrcRead().catch(error => ['the check stopped: ' + error.message]) });
   check('Panel order is one list of every panel, the older lists are hidden, and the input fills an empty list from them as the dashboard does', checkPanelOrder);
   check('the night times, the speaker wait, the overrun and the booking close time are hidden, keep their starting values and are not read by the dashboard', checkFixedValues);
   check('every theme and overlay is complete and readable (tools/check-themes.mjs)', checkThemeGuard);

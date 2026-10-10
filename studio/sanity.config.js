@@ -27,10 +27,10 @@ function actionsFor(actions, context) {
 
 // Types with no line in the sidebar are left out of the New menu in the top bar. The screen no
 // longer reads Events Calendar entries, so they are not offered anywhere. The Mini writes the
-// status document (schemas/status.js), so nobody adds one by hand. A place is offered only
-// while a document is open, which is where the Location field of a task offers Create new,
-// and that is how a place is added now.
-const notOffered = ['extraEvent', 'status'];
+// status document (schemas/status.js) and the FRC data document (schemas/frcStatus.js), so nobody
+// adds one by hand. A place is offered only while a document is open, which is where the
+// Location field of a task offers Create new, and that is how a place is added now.
+const notOffered = ['extraEvent', 'status', 'frcStatus'];
 const offeredInDocuments = ['place'];
 
 function newDocumentChoices(templates, context) {

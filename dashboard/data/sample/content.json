@@ -61,7 +61,10 @@
     "crt": { "on": true, "everySeconds": 240, "durationSeconds": 2.7 },
     "calendars": [
       { "id": "team", "name": "[Team calendar]", "show": true }
-    ]
+    ],
+    "competitionMode": "auto",
+    "competitionTimeline": true, "competitionLastSeason": true, "competitionRank": true, "competitionNextMatch": true,
+    "competitionResults": true, "competitionAlliance": true, "competitionDistrict": true
   },
 
   "theme": {
@@ -192,6 +195,106 @@
       ]
     }
   ],
+
+  "frc": {
+    "sample": true,
+    "season": 2027,
+    "lastSyncAt": "2027-03-12T15:00:00Z",
+    "notes": [],
+    "districtEvents": [
+      { "key": "2027ncsa1", "name": "[District event one]", "city": "[City A]", "startDate": "2027-03-11", "endDate": "2027-03-13" },
+      { "key": "2027ncsa2", "name": "[District event two]", "city": "[City B]", "startDate": "2027-04-01", "endDate": "2027-04-03" },
+      { "key": "2027nccmp", "name": "[State championship]", "city": "[City C]", "startDate": "2027-04-14", "endDate": "2027-04-17", "championship": true }
+    ],
+    "teams": [
+      {
+        "team": "prime", "number": 3229,
+        "events": [
+          { "key": "2027ncsa1", "name": "[District event one]", "city": "[City A]", "startDate": "2027-03-11", "endDate": "2027-03-13", "rank": 4, "teamsRanked": 36, "matchesPlayed": 12, "record": { "wins": 8, "losses": 4, "ties": 0 }, "rankingPoints": 2.1, "epa": 31.2 },
+          { "key": "2027ncsa2", "name": "[District event two]", "city": "[City B]", "startDate": "2027-04-01", "endDate": "2027-04-03" }
+        ],
+        "focusEvent": "2027ncsa1",
+        "nextMatch": {
+          "match": "2027ncsa1_sf2m1", "label": "SF2-1", "level": "sf", "number": 1, "time": "2027-03-13T19:45:00Z", "alliance": "red",
+          "red": [
+            { "number": 3229, "nickname": "[Nickname]", "epa": 31.2 },
+            { "number": "[1121]", "nickname": "[Nickname A]", "epa": 28.4 },
+            { "number": "[1122]", "nickname": "[Nickname B]", "epa": 24.9 }
+          ],
+          "blue": [
+            { "number": "[1131]", "nickname": "[Nickname C]", "epa": 33.6 },
+            { "number": "[1132]", "nickname": "[Nickname D]", "epa": 27.0 },
+            { "number": "[1133]", "nickname": "[Nickname E]", "epa": 22.3 }
+          ],
+          "redWinProbability": 0.58
+        },
+        "results": [
+          { "match": "2027ncsa1_qm7", "label": "Q7", "alliance": "red", "scoreFor": 71, "scoreAgainst": 58, "won": true },
+          { "match": "2027ncsa1_qm8", "label": "Q8", "alliance": "blue", "scoreFor": 64, "scoreAgainst": 66, "won": false },
+          { "match": "2027ncsa1_qm9", "label": "Q9", "alliance": "red", "scoreFor": 80, "scoreAgainst": 52, "won": true },
+          { "match": "2027ncsa1_qm10", "label": "Q10", "alliance": "red", "scoreFor": 75, "scoreAgainst": 75, "won": null },
+          { "match": "2027ncsa1_qm11", "label": "Q11", "alliance": "blue", "scoreFor": 69, "scoreAgainst": 61, "won": true },
+          { "match": "2027ncsa1_qm12", "label": "Q12", "alliance": "blue", "scoreFor": 88, "scoreAgainst": 54, "won": true },
+          { "match": "2027ncsa1_qf3m1", "label": "QF3-1", "alliance": "red", "scoreFor": 92, "scoreAgainst": 70, "won": true },
+          { "match": "2027ncsa1_qf3m2", "label": "QF3-2", "alliance": "red", "scoreFor": 77, "scoreAgainst": 83, "won": false }
+        ],
+        "ranking": { "event": "2027ncsa1", "rank": 4, "teamsRanked": 36, "matchesPlayed": 12, "record": { "wins": 8, "losses": 4, "ties": 0 }, "rankingPoints": 2.1 },
+        "alliance": {
+          "event": "2027ncsa1", "number": 3,
+          "picks": [
+            { "number": 3229, "nickname": "[Nickname]", "epa": 31.2 },
+            { "number": "[1121]", "nickname": "[Nickname A]", "epa": 28.4 },
+            { "number": "[1122]", "nickname": "[Nickname B]", "epa": 24.9 }
+          ]
+        },
+        "awards": [{ "name": "[Award name]", "event": "2026ncsa1" }],
+        "epa": 31.2,
+        "districtPoints": { "total": 47, "rank": 5, "cutoff": 60 },
+        "snapshots": [
+          { "date": "2027-03-11", "epa": 29.8, "districtPoints": 0 },
+          { "date": "2027-03-12", "epa": 31.2, "districtPoints": 47 }
+        ],
+        "lastSeason": {
+          "season": 2026,
+          "events": [
+            { "key": "2026ncsa1", "name": "[Last year's event one]", "city": "[City A]", "startDate": "2026-03-06", "endDate": "2026-03-08", "rank": 7, "teamsRanked": 40, "matchesPlayed": 12, "record": { "wins": 6, "losses": 4, "ties": 2 }, "rankingPoints": 1.8, "epa": 24.1 },
+            { "key": "2026ncsa2", "name": "[Last year's event two]", "city": "[City B]", "startDate": "2026-03-27", "endDate": "2026-03-29", "rank": 3, "teamsRanked": 34, "matchesPlayed": 12, "record": { "wins": 9, "losses": 3, "ties": 0 }, "rankingPoints": 2.4, "epa": 29.8 },
+            { "key": "2026nccmp", "name": "[Last year's state championship]", "city": "[City C]", "startDate": "2026-04-15", "endDate": "2026-04-18", "rank": 12, "teamsRanked": 64, "matchesPlayed": 10, "record": { "wins": 5, "losses": 5, "ties": 0 }, "rankingPoints": 1.5, "epa": 31.0 }
+          ]
+        }
+      },
+      {
+        "team": "nova", "number": 3230,
+        "events": [
+          { "key": "2027ncsa1", "name": "[District event one]", "city": "[City A]", "startDate": "2027-03-11", "endDate": "2027-03-13", "rank": 11, "teamsRanked": 36, "matchesPlayed": 12, "record": { "wins": 6, "losses": 6, "ties": 0 }, "rankingPoints": 1.6, "epa": 22.7 }
+        ],
+        "focusEvent": "2027ncsa1",
+        "nextMatch": {
+          "match": "2027ncsa1_qm13", "label": "Q13", "level": "qm", "number": 13, "time": "2027-03-12T20:20:00Z", "alliance": "blue",
+          "red": [
+            { "number": "[1141]", "nickname": "[Nickname F]", "epa": 26.1 },
+            { "number": "[1142]", "nickname": "[Nickname G]", "epa": 20.8 },
+            { "number": "[1143]", "nickname": "[Nickname H]", "epa": 18.4 }
+          ],
+          "blue": [
+            { "number": 3230, "nickname": "[Nickname]", "epa": 22.7 },
+            { "number": "[1151]", "nickname": "[Nickname I]", "epa": 25.5 },
+            { "number": "[1152]", "nickname": "[Nickname J]", "epa": 21.2 }
+          ],
+          "redWinProbability": 0.49
+        },
+        "results": [
+          { "match": "2027ncsa1_qm9", "label": "Q9", "alliance": "red", "scoreFor": 58, "scoreAgainst": 62, "won": false },
+          { "match": "2027ncsa1_qm10", "label": "Q10", "alliance": "blue", "scoreFor": 66, "scoreAgainst": 49, "won": true },
+          { "match": "2027ncsa1_qm11", "label": "Q11", "alliance": "red", "scoreFor": 61, "scoreAgainst": 61, "won": null },
+          { "match": "2027ncsa1_qm12", "label": "Q12", "alliance": "blue", "scoreFor": 54, "scoreAgainst": 72, "won": false }
+        ],
+        "ranking": { "event": "2027ncsa1", "rank": 11, "teamsRanked": 36, "matchesPlayed": 12, "record": { "wins": 6, "losses": 6, "ties": 0 }, "rankingPoints": 1.6 },
+        "epa": 22.7,
+        "districtPoints": { "total": 21, "rank": 18, "cutoff": 60 }
+      }
+    ]
+  },
 
   "console": {
     "startup": "                                        .:###############:.\n                                   .:###:::::#########:::::###:.\n                               .:#::::::::###############::::::::#:.\n                             .:::::::#########################:::::::.\n                           .::::###################################::::.\n                          :#############################################:\n                         #################################################\n                         ######:################# #################:######\n                         ##############:#######     #######:##############\n                         #######  #####:#####         #####:#####  #######\n                         #######    ###:###             ###:###    #######\n                         #######      ###                 ###      #######\n                         ###:###                                   ###:###\n                         ###:###     _.--'               '--._     ###:###\n                         ###:###  .,-@@@@@@@-         -@@@@@@@-,.  ###:###\n                         ###:###  ( @@@@@@@ )         ( @@@@@@@ )  ###:###\n                         ###:###  ( @@@@oo@ )         ( @oo@@@@ )  ###:###\n                         ###:###  ( @@@@oo@ )         ( @oo@@@@ )  ###:###\n                         ###:###  ( %%%%%%% )         ( %%%%%%% )  ###:###\n                         ###:#### '. %%%%% .'         '. %%%%% .' ####:###\n                         ###:####   '-....-'           '-....-'   ####:###\n                         ###:##### :::           '           ::: #####:###\n                         ###:######                             ######:###\n                         ###:########         '.___.'         ########:###\n                         ###:##########                     ##########:###\n                         ###:############'-.___________.-'############:###\n                         ###:#############               #############:###\n                         ###:#############               #############:###\n                       .-#################               #################-.\n                    .-'  #################               #################  '-.\n                 .-'     .###############.'-.         .-'.###############.     '-.\n              .-'                            '-.   .-'                            '-.\n           .-'                                  '.'                                  '-.\n        .-'           _______                                         _______           '-.\n     .-'            .'       '._______________       _______________.'       '.            '-.\n     |             (                          )     (                          )             |\n     |             (            ______________)     (______________            )             |\n     |             (   (_)(_)(_))                                 ((_)(_)(_)   )             |\n     |             (____________)                                 (____________)             |\n     |         .'        .'                                             '.        '.         |\n     |       .'        .'                                                 '.        '.       |\n     |     .'        .'                                                     '.        '.     |\n     |   .'        .'                                                         '.        '.   |\n     | .'        .'                                                             '.        '. |\n\n########  ########  ##        ########  ########  #######     ####      ####    ##    ##     ######\n   ##     ##        ##        ##           ##     ##    ##   ##  ##    ##  ##   ###   ##       ##\n   ##     ##        ##        ##           ##     ##    ##  ##    ##  ##    ##  ####  ##       ##\n   ##     ######    ##        ######       ##     #######   ########  ########  ## ## ##       ##\n   ##     ##        ##        ##           ##     ##  ##    ##    ##  ##    ##  ##  ####       ##\n   ##     ##        ##        ##           ##     ##   ##   ##    ##  ##    ##  ##   ###       ##\n   ##     ########  ########  ########     ##     ##    ##  ##    ##  ##    ##  ##    ##     ######\n\n                                            starting up\n",

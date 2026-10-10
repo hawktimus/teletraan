@@ -1,7 +1,7 @@
 // Where the screen gets what it shows: startContent() hands over the content
 // once it has it, and again every time it changes. Same shape as data/sample/content.json.
 
-import { defaultSettings, defaultTeam, frameFinishes, limits, looks, metals, nightSpeeds, nightStyles, pageChangeStyles, photoOrders, sampleFolder, sanity, speeds, styles, teamModes } from '../config.js';
+import { competitionModes, competitionSwitches, defaultSettings, defaultTeam, frameFinishes, limits, looks, metals, nightSpeeds, nightStyles, pageChangeStyles, photoOrders, sampleFolder, sanity, speeds, styles, teamModes } from '../config.js';
 import { parseLocalDateTime } from './time.js';
 import { chosenSource } from './source.js';
 import { tidyTheme } from './theme.js';
@@ -43,7 +43,7 @@ export function visibleItems(list, now = new Date()) {
 // whether settings exist.
 export function withDefaults(raw) {
   const source = raw || {};
-  const content = Object.assign({ tasks: [], plan: null, plans: [], teams: [], sponsors: [], tipsAndNews: [], subteams: [], people: [], photos: [], presentations: [], customPanels: [], calendarFilters: [] }, source);
+  const content = Object.assign({ tasks: [], plan: null, plans: [], teams: [], sponsors: [], tipsAndNews: [], subteams: [], people: [], photos: [], presentations: [], customPanels: [], calendarFilters: [], frc: null }, source);
   content.team = Object.assign({}, defaultTeam, source.team);
   content.settings = Object.assign({}, defaultSettings, source.settings);
   content.settings.countdown = Object.assign({}, defaultSettings.countdown, content.settings.countdown);
@@ -79,6 +79,8 @@ export function fixSettingValues(settings) {
   if (!photoOrders.includes(settings.photoOrder)) settings.photoOrder = defaultSettings.photoOrder;
   // The team settings
   if (!teamModes.includes(settings.teamMode)) settings.teamMode = defaultSettings.teamMode;
+  // The competition cards: the mode here, and a switch for each card in the list of booleans below
+  if (!competitionModes.includes(settings.competitionMode)) settings.competitionMode = defaultSettings.competitionMode;
   // The night mode settings: two choices, a switch each way and the logo width. The times are fixed (constants.js)
   if (!nightStyles.includes(settings.nightStyle)) settings.nightStyle = defaultSettings.nightStyle;
   if (!Object.keys(nightSpeeds).includes(settings.nightSpeed)) settings.nightSpeed = defaultSettings.nightSpeed;
@@ -88,7 +90,7 @@ export function fixSettingValues(settings) {
   const logoNumbers = ['logoSpinEvery', 'logoSpinDuration', 'logoHawkEvery', 'logoHawkDuration', 'nameEvery', 'nameDuration'];
   const transitionNumbers = ['breakSeconds', 'silverChance'];
 
-  ['glint', 'showConnectionStatus', 'nightEnabled', 'nightPreview', 'hiddenEnabled', 'presentationsEnabled'].concat(logoSwitches).forEach(name => {
+  ['glint', 'showConnectionStatus', 'nightEnabled', 'nightPreview', 'hiddenEnabled', 'presentationsEnabled'].concat(logoSwitches, competitionSwitches).forEach(name => {
     if (typeof settings[name] !== 'boolean') settings[name] = defaultSettings[name];
   });
   // The hidden transition settings: each chance is a percent, and the last push from the Studio is a kind and a time

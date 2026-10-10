@@ -4,8 +4,8 @@
 // kept in the schema with no line here, so the documents already typed keep
 // opening: extraEvent (Events Calendar, which the screen no longer reads),
 // place (a task's Location field adds and opens them) and demo (its
-// buttons are on Start here). The status document, which the Mini writes and the
-// status block in Dashboard Settings shows, has no line either. check-schemas.mjs
+// buttons are on Start here). The status document and the FRC data document, which the
+// Mini writes and the Dashboard Settings blocks show, have no line either. check-schemas.mjs
 // lists them with the reason.
 //
 // One line is one entry:

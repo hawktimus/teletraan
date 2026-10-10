@@ -60,6 +60,32 @@ export const styles = ['original', 'cybertron', 'minimal'];
 //   alternate  the two teams take turns, alternateMinutes each
 export const teamModes = ['prime', 'nova', 'alternate'];
 
+// The competition cards setting in Dashboard Settings (Competition tab): when the cards of core/competition.js
+// are in the rotation. The Studio copies this list.
+//   auto    each card comes in its own window: the cards about an event from two days before its first day to its last,
+//           with the next match first, the season timeline all season, the look back before the first event, and the
+//           district points once the first event has started
+//   always  every card that is switched on, whatever the date
+//   off     no card
+export const competitionModes = ['auto', 'always', 'off'];
+
+// The switches of the cards, one for each card in core/competition.js, in the order of the Studio. All start on.
+export const competitionSwitches = [
+  'competitionTimeline',
+  'competitionLastSeason',
+  'competitionRank',
+  'competitionNextMatch',
+  'competitionResults',
+  'competitionAlliance',
+  'competitionDistrict',
+];
+
+// Auto brings the cards about an event this many days before its first day
+export const competitionLeadDays = 2;
+
+// The Preview competition button holds the cards on the screen for this many seconds, each card for an equal share
+export const competitionPreviewSeconds = 120;
+
 // The page change settings in Dashboard Settings (Look tab) (core/transitions.js chooses from them)
 //   pageChangeStyles  alternate: the slat change and the mechanical change take turns.
 //                     slat: the old change only. mechanical: the new one only.
@@ -330,6 +356,17 @@ export const defaultSettings = {
     },
   ],
   calendars: [{ id: 'team', name: 'Team calendar', show: true }],
+  // The competition cards (the Competition tab in the Studio, core/competition.js, docs/frc-feed.md).
+  //   competitionMode  see competitionModes above
+  //   the switches     one for each card, see competitionSwitches above
+  competitionMode: 'auto',
+  competitionTimeline: true,
+  competitionLastSeason: true,
+  competitionRank: true,
+  competitionNextMatch: true,
+  competitionResults: true,
+  competitionAlliance: true,
+  competitionDistrict: true,
 };
 
 // Used for anything missing from the Look document in the Studio. The

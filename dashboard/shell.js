@@ -51,6 +51,7 @@ import { applyStyle, recordShapes, shapesFor, shapesNow, startStyle } from './co
 import { resumePreview } from './core/preview.js';
 import { loadPanel, mountPanel, updatePanel } from './core/panels.js';
 import { playlistOf } from './core/panel-order.js';
+import { withCompetition } from './core/competition.js';
 import { askForTeam, changeTeamNow, onTeamChange, useTeams } from './core/teams.js';
 import { showPagesNow, startRotation, startTicker, startTogether } from './core/schedule.js';
 import { startTakeovers, runAnnouncement, takeoverRunning } from './core/takeover.js';
@@ -173,6 +174,9 @@ async function run() {
 
       // The Preview buttons in the Studio. After the ones it asks about
       startOptional('./core/preview-run.js', module => module.startPreviewRunner(getContent));
+
+      // The Preview competition button on the Start here page. After the ones it asks about
+      startOptional('./core/competition-preview-run.js', module => module.startCompetitionPreviewRunner(getContent));
 
       // The team on the screen, which in Alternate mode changes with the clock (core/teams.js)
       startOptional('./core/team-run.js', module => module.startTeams(getContent));
@@ -392,7 +396,8 @@ function startWhatComesAndGoes() {
   }
 
   const rotation = () => content.settings.rotation;
-  startRotation('grid1', () => (onlyTasks ? [{ panel: 'tasks', show: true, seconds: 12 }] : playlistOf(rotation(), 'grid1')), getContent);
+  // The competition cards that are due are mixed into the large panel's list each time it is read (core/competition.js)
+  startRotation('grid1', () => (onlyTasks ? [{ panel: 'tasks', show: true, seconds: 12 }] : withCompetition(playlistOf(rotation(), 'grid1'), content, new Date())), getContent);
   if (!onlyTasks) {
     startRotation('grid2', () => playlistOf(rotation(), 'grid2'), getContent); // does nothing in a layout with no small frame
 

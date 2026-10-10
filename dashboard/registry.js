@@ -7,6 +7,9 @@
 //   testOnly  only used by the hardware test (?stress)
 //   layout    only used in that layout (core/layout.js). A panel with no layout
 //             is used in every layout. See fixedPanels() below.
+//   competition  a competition card (core/competition.js). It is not in Panel order or in the
+//             rotation lists of config.js: the Competition tab of Dashboard Settings switches it,
+//             and core/competition.js puts the cards that are due in the large panel's rotation.
 //
 // A panel in grid1, grid2 or ticker draws only its page. The area it is shown
 // in supplies the frame and the page change (core/areas.js). The banner, the
@@ -34,6 +37,13 @@ export const panels = [
   { id: 'team-leads', region: 'grid1', topic: 'subteams' },
   { id: 'roster', region: 'grid1', topic: 'subteams' },
   { id: 'custom', region: 'grid1', topic: 'custom' },
+  { id: 'competition-next-match', region: 'grid1', topic: 'competition', competition: true },
+  { id: 'competition-rank', region: 'grid1', topic: 'competition', competition: true },
+  { id: 'competition-results', region: 'grid1', topic: 'competition', competition: true },
+  { id: 'competition-alliance', region: 'grid1', topic: 'competition', competition: true },
+  { id: 'competition-timeline', region: 'grid1', topic: 'competition', competition: true },
+  { id: 'competition-district', region: 'grid1', topic: 'competition', competition: true },
+  { id: 'competition-last-season', region: 'grid1', topic: 'competition', competition: true },
 
   { id: 'task-counts', region: 'grid2', topic: 'tasks' },
   { id: 'next-event', region: 'grid2', topic: 'events' },
