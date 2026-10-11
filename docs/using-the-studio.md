@@ -21,7 +21,7 @@ and a coach sets the looks. The boxes and what feeds them stay the same.
 | A | Banner | The team name and number, the school, the date, the time and the weather | Teams and Dashboard Settings, which are for coaches |
 | B | Main panel | The big panel. It takes turns showing the tasks, the agenda, the events, the team leads, the leadership, the sponsors, the photos and the extra panels | Monday Tasks, Daily Agenda, Calendars, Team leads, Leadership, Sponsors, Photos, Extra panels |
 | C | Countdown | The time left to Kickoff, then to Rollout | Dashboard Settings, which is for coaches |
-| D | Side panel | The small panel under the countdown. It takes turns showing the next event, the task counts, the safety days and a sponsor logo | Monday Tasks, Sponsors, Calendars, Dashboard Settings |
+| D | Side panel | The small panel under the countdown. It takes turns showing the next event, the task counts, the safety days, a sponsor logo and the forecast. When none of them has anything to show it shows the team's logo, number and name | Monday Tasks, Sponsors, Calendars, Dashboard Settings |
 | E | Ticker | One tip, news item, reminder or sponsor thanks at a time along the bottom | Tips and News, Sponsors |
 
 ## Every meeting

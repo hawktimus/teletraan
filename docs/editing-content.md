@@ -825,6 +825,12 @@ problem would touch.
   older lists, so to show nothing, turn off "Show on screen" on each row. While
   the theme Neon Prime is on there is no small frame, so the small panels in the
   list are not used and the large panels are the rotation of the one big frame.
+  In Original and Cybertron the small frame under the countdown is never empty.
+  It follows the small rows of the list, and a row that is off stays off. When none
+  of its rows has anything to show, it shows another small panel that has
+  content, even one that has no row in the list, and when no small panel has
+  anything it shows the team's logo, number, name and school. Turning off every
+  small row therefore shows that team panel and not an empty frame.
 - Photos: how the Photo panel works. "Photo order" is Random or Newest first,
   "Seconds per photo" is from 6 to 120 and starts at 16, and "Photo fit" is Fill
   the frame or Show the whole photo. See "Photos" above.

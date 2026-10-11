@@ -1,0 +1,67 @@
+.team-tile .label {
+  position: absolute;
+  left: 60px;
+  top: 4px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+
+/* The logo and the number side by side, then the name, then the school, which may take two lines (up to
+   30 characters are allowed). The column is 48px in from the frame on each side, like the next event, so
+   it stays clear of the cut corners of either team. Cybertron has neon slashes under the header and
+   along the foot of the frame, so the box starts 20px under the header and ends 20px above the foot.
+   The rows are 84, 52 and 88 high with 4 between. */
+.team-tile .content {
+  position: absolute;
+  left: 48px;
+  top: 104px;
+  width: 552px;
+  height: 244px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+
+.team-tile .mark {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  height: 84px;
+}
+
+/* The logo is drawn on a grid 1100 wide and shrunk to its box: --k is the box width over 1100 (104 / 1100),
+   and the height is the width times 884 over 1100 (see "The logo" in frame.css). */
+.team-tile .tile-logo {
+  --k: .0945;
+  position: relative;
+  flex: none;
+  width: 104px;
+  height: 84px;
+}
+
+.team-tile .number {
+  min-width: 0;
+  color: var(--yellow);
+  font: 700 var(--size-heading)/84px var(--font-display);
+}
+
+/* The widest name there is, HAWKTIMUS PRIME, is 535px at this size, so a longer one is cut with an ellipsis */
+.team-tile .name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font: 700 var(--size-body)/52px var(--font-text);
+}
+
+.team-tile .school {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  white-space: normal;
+  color: var(--lilac);
+  font: 500 var(--size-label)/44px var(--font-text);
+}

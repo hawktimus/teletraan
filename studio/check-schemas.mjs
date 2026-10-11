@@ -932,7 +932,7 @@ function differences(expected, actual, expectedName, actualName, problems) {
 // way round, or a new panel can never be switched on
 function checkPanelIds() {
   const problems = [];
-  const registered = world.registry.panels.filter(panel => !panel.testOnly && !panel.competition && !panel.monday);
+  const registered = world.registry.panels.filter(panel => !panel.testOnly && !panel.competition && !panel.monday && !panel.lastResort);
 
   rotationAreas.forEach(area => {
     const inRegistry = registered.filter(panel => panel.region === area).map(panel => panel.id);
@@ -4504,7 +4504,7 @@ function checkPanelOrder() {
   const problems = [];
   const config = world.dashboard;
   const at = name => fieldAt('dashboardSettings.rotation.' + name);
-  const registered = world.registry.panels.filter(panel => !panel.testOnly && !panel.competition && !panel.monday);
+  const registered = world.registry.panels.filter(panel => !panel.testOnly && !panel.competition && !panel.monday && !panel.lastResort);
   const ids = rotationAreas.reduce((all, area) => all.concat(registered.filter(panel => panel.region === area).map(panel => panel.id)), []);
 
   const order = at('order');

@@ -210,7 +210,8 @@ editors can sign in from anywhere.
                               panels/tonight is the Daily Agenda panel, headed AGENDA (docs/up-next.md).
                               panels/competition-* are the seven competition cards, each plain SVG
                               (docs/frc-feed.md). panels/monday-* are the three Monday cards
-                              (docs/layouts.md, "The Monday cards")
+                              (docs/layouts.md, "The Monday cards"). panels/team-tile is the small frame's last
+                              resort (docs/layouts.md, "Panel B, the small frame")
       fonts/, assets/         fonts and pictures, all served from here
       data/sample/            sample content with marked placeholders, and a sample talk with six slides
                               (slides/presentation-sample)
@@ -319,6 +320,10 @@ editors can sign in from anywhere.
                               each key of the clicker does
       test-panel-order.mjs    checks for the Panel order list (core/panel-order.js): the list built from the
                               two older lists, and what each area of the screen follows
+      test-panel-b.mjs        checks that the small frame under the countdown is never empty in the standard layout:
+                              the list with its spares and its last resort (core/panel-order.js), the order the real
+                              scheduler chooses in, that a row that is off stays off, that the sidebar and bar layouts
+                              have no small frame, and the team tile (panels/team-tile)
       test-fixed-values.mjs   checks that the screen ignores the stored night times, speaker wait and overrun,
                               and uses the fixed values in core/constants.js
       test-effects.mjs        checks for when the logo animations, the name effect and the screen glitch may start
