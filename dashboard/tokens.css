@@ -114,10 +114,20 @@
    panel area has one of its own, set at every page change (Frame finish in
    Dashboard Settings), so a page frame can be silver under a gold banner.
    Everything inside an area follows the area. Change the attribute and every
-   edge under it changes colour. */
+   edge under it changes colour.
+
+   The team has a metal of its own (Metal in the Colors of a Team, the class
+   metal-steel on the html element, core/teams.js). In Cybertron and Minimal it
+   decides every frame: gold for a team with no class, steel with it, whatever
+   Frame metal and the page change say. In Original a team with steel has steel
+   in place of gold and silver, and a team with gold changes nothing. */
 
 :root,
-[data-metal="gold"] {
+[data-metal="gold"],
+html[data-style="cybertron"]:not(.metal-steel),
+html[data-style="cybertron"]:not(.metal-steel) [data-metal],
+html[data-style="minimal"]:not(.metal-steel),
+html[data-style="minimal"]:not(.metal-steel) [data-metal] {
   --metal-1: #efe6c4; /* the brightest highlight, a pale cream */
   --metal-2: #cfba7f;
   --metal-3: #a98f43; /* the plain mid tone */
@@ -151,23 +161,21 @@
   --metal-flat: #7f8386;
 }
 
-/* Steel, the metal of the Cybertron and Minimal styles. It is cool and neutral and
-   has no warm grime, so the neon of the style is the only colour near it. The
+/* Steel, the metal of a team that has it (Nova). It is cool and neutral and
+   has no warm grime, so the neon of the team is the only colour near it. The
    gradients are in index.html, with data-metal="steel" so they take these colours.
 
    The second selector reaches the html element and every element with a data-metal
-   while one of those two styles is on. The banner and each area then have steel
+   while a team with steel is on the screen. The banner and each area then have steel
    whatever Frame metal and the page change say, and no code that sets data-metal
-   has to know about styles. The edge tokens are set here too, because they are
+   has to know about teams. The edge tokens are set here too, because they are
    worked out on the element that sets them (see "Which colours an edge uses"
    below). The row bars, the logo outline and the other things that read the metal
    follow in the same way. A style that wants one of them to be another colour sets it
    on its own. */
 [data-metal="steel"],
-html[data-style="cybertron"],
-html[data-style="cybertron"] [data-metal],
-html[data-style="minimal"],
-html[data-style="minimal"] [data-metal] {
+html.metal-steel,
+html.metal-steel [data-metal] {
   --metal-1: #d6dbe2; /* the brightest highlight, nowhere near white */
   --metal-2: #b3bac4;
   --metal-3: #8b94a0; /* the plain mid tone */
@@ -191,6 +199,20 @@ html[data-style="minimal"] [data-metal] {
    screen. It is the silver metal's second tone above. */
 :root {
   --silver: #a4a7a8;
+}
+
+/* The hex bolts and the small round heads of Cybertron and Minimal are the metal of the
+   team, where the screws of Original are silver on every frame. They are set on the html
+   element, so the gradient of the bolt face (index.html) and the shapes drawn with <use>
+   read them. The slot stays dark. */
+html[data-style="cybertron"],
+html[data-style="minimal"] {
+  --screw-light: var(--metal-1);
+  --screw-mid: var(--metal-3);
+  --screw-dark: var(--metal-4);
+  --screw-rim: var(--metal-rim);
+  --screw-ridge: var(--metal-ridge);
+  --screw-flat: var(--metal-flat);
 }
 
 /* The hidden transitions (core/hidden-run.js, frame.css). The flat red of the red
@@ -255,7 +277,11 @@ html[data-style="minimal"] [data-metal] {
   --edge-flat: var(--metal-flat);
 }
 :root,
-[data-metal="gold"] {
+[data-metal="gold"],
+html[data-style="cybertron"]:not(.metal-steel),
+html[data-style="cybertron"]:not(.metal-steel) [data-metal],
+html[data-style="minimal"]:not(.metal-steel),
+html[data-style="minimal"]:not(.metal-steel) [data-metal] {
   --edge-face: url(#edge-gold);
   --edge-ridge: url(#edge-ridge-gold);
   --edge-shade: url(#edge-shade-gold);

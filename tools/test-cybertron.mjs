@@ -274,7 +274,6 @@ test('the neon is 10 inside the edge with two wider and fainter lines behind it,
   await withPlatePage(() => {
     cybertronKinds.forEach(kind => {
       const shape = plate.barShape(kind);
-      assert.equal(shape.wide, true, kind + ': the wide neon lines');
       const neon = shape.neon.a.concat(shape.neon.b);
       assert.equal(neon.length, 12, 'the line is the outline moved in, with two points where the halves meet');
       shape.outline.forEach((corner, index) => {
@@ -368,7 +367,7 @@ test('the banner and the ticker are one plate each: the fills and the two halves
   });
 });
 
-test('the frames of Original are the ones they were: the same outlines, the same pieces, no steel decoration, and the rivets and the id still in their markup', async () => {
+test('the frames of Original are the ones they were: the same outlines, the same pieces, no steel decoration, and the rivets still in their markup', async () => {
   await withPlatePage(() => {
     const expected = {
       grid1: { outline: [[4, 704], [4, 68], [84, 4], [1148, 4], [1148, 640], [1068, 704]], pieces: 13 },
@@ -378,7 +377,7 @@ test('the frames of Original are the ones they were: the same outlines, the same
       const markup = plate.areaMarkup(kind);
       assert.equal(countOf(markup, 'class="plate piece"'), expected[kind].pieces, kind + ' pieces');
       assert.ok(!hasText(markup, 'art-cybertron') && !hasText(markup, 'bolt-shape') && !hasText(markup, 'edge-neon'), kind + ' has none of the steel decoration');
-      assert.ok(hasText(markup, 'class="glint"') && hasText(markup, 'class="plate-id"') && hasText(markup, 'class="rivets"'), kind + ' has its glint, its id and its rivets');
+      assert.ok(hasText(markup, 'class="glint"') && hasText(markup, 'class="rivets"') && !hasText(markup, 'plate-id'), kind + ' has its glint and its rivets, and no id');
     });
 
     // the outlines are in the group of shapes the first time a frame is drawn
@@ -675,12 +674,12 @@ test('the wide housing is one steel plate 616 by 200 with the edge of the frames
     assert.ok((markup.match(/<(svg|g|polygon|path|use|ellipse)[ >]/g) || []).length <= 20, 'a handful of elements');
     assert.ok(!/(filter|animate|<set|clipPath|<image|<mask|<pattern)/i.test(markup));
 
-    // The narrow one is what it was: 700 by 120, on a shape of its own, with the id it had
+    // The narrow one is the one Minimal has: 766 by 120, on a shape of its own, with the id it had
     const narrow = plate.warHousingMarkup();
     assert.equal(narrow, plate.warHousingMarkup('narrow'));
-    assert.ok(/^<svg class="war-housing" width="700" height="120" viewBox="0 0 700 120">/.test(narrow));
+    assert.ok(/^<svg class="war-housing" width="766" height="120" viewBox="0 0 766 120">/.test(narrow));
     assert.ok(narrow.includes('href="#war-housing-shape"') && !narrow.includes('wide'));
-    assert.deepEqual(rivetsIn(narrow), [[30, 22], [672, 22], [30, 92], [672, 92]]);
+    assert.deepEqual(rivetsIn(narrow), [[30, 22], [738, 22], [30, 92], [738, 92]]);
   });
 });
 
@@ -725,7 +724,7 @@ test('Original keeps the red countdown with its frame, its id and its rivets, an
   await onPage(async world => {
     await world.draw(teamContent(), 'dashboard/panels/countdown/countdown.js');
     assert.ok(/<section class="panel countdown" data-sequence="countdown" data-level="calm">/.test(world.markup));
-    assert.ok(hasText(world.markup, 'red-metal') && hasText(world.markup, 'class="plate-id"') && hasText(world.markup, 'class="rivets"'));
+    assert.ok(hasText(world.markup, 'red-metal') && hasText(world.markup, 'class="rivets"') && !hasText(world.markup, 'plate-id'));
     assert.ok(!hasText(world.markup, 'war-') && !hasText(world.markup, 'countdown-war'));
     assert.equal(countOf(world.markup, 'class="segment"'), 12, 'and the row of blocks');
   });
@@ -1052,10 +1051,10 @@ test('the frames are drawn again in the same step that puts the style on the pag
 
 // What Cybertron paints
 
-test('Cybertron paints the gunmetal plates, the steel edge and the page the order gives, on the layout of Original, and the steel reaches the frames through the tokens', () => {
+test('Cybertron paints the plates in the team\'s body color, the metal edge and the page the order gives, on the layout of Original, and the metal reaches the frames through the tokens', () => {
   const css = withoutComments(read('dashboard/styles/cybertron.css'));
   const value = property => new RegExp(property + ': ([^;]+);').exec(css)[1];
-  assert.equal(value('--style-body'), '#15181f', 'the body of a plate');
+  assert.equal(value('--style-body'), 'var(--team-body)', 'the body of a plate is the team\'s body color');
   assert.equal(value('--style-raised'), '#262b33', 'a raised plate');
   assert.equal(value('--style-chamfer'), '56px');
   assert.equal(value('--style-grid-size'), '96px');
@@ -1069,9 +1068,11 @@ test('Cybertron paints the gunmetal plates, the steel edge and the page the orde
   assert.ok(css.includes('html[data-style="cybertron"] .area .plate .header-left { fill: url(#armor-face); }'));
   assert.ok(/fill: var\(--team-plate\);/.test(withoutComments(read('dashboard/base.css'))), 'the tab has the team plate color inset (base.css)');
 
-  // the tokens give the steel to every area and to the page, whatever the page change says, and the style is not a bar style
+  // the tokens give the metal of the team to every area and to the page, whatever the page change says: steel to a team that has it, and
+  // gold to one that has not. The style is not a bar style
   const tokens = withoutComments(read('dashboard/tokens.css'));
-  assert.ok(tokens.includes('html[data-style="cybertron"] [data-metal]') && tokens.includes('html[data-style="cybertron"],'));
+  assert.ok(tokens.includes('html.metal-steel [data-metal]') && tokens.includes('html.metal-steel,'));
+  assert.ok(tokens.includes('html[data-style="cybertron"]:not(.metal-steel) [data-metal]') && tokens.includes('html[data-style="cybertron"]:not(.metal-steel),'));
   assert.ok(!/bar-/.test(css), 'nothing in the style file is for the bar layout');
 
   // the stylesheet of the style is for its own style only, and Original paints none of it

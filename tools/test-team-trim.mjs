@@ -175,7 +175,7 @@ test('rendered in sample mode, the page of Prime and the page of Nova differ in 
     const own = classes.nova.filter(name => Object.values(config.teamTrim[field]).includes(name));
     assert.deepEqual(own, [classOf(field, novaTeam[field])], field + ': Nova has the class of its value, and Prime has none, so the classes differ');
   });
-  assert.deepEqual(classes.nova, ['accent-neon', 'bolts-round', 'corner-cut-tr', 'grid-dots', 'header-slant', 'mirrored', 'name-outline', 'pose-flight', 'ticker-bar']);
+  assert.deepEqual(classes.nova, ['accent-neon', 'bolts-round', 'corner-cut-tr', 'grid-dots', 'header-slant', 'metal-steel', 'mirrored', 'name-outline', 'neon-glow', 'pose-flight', 'ticker-bar'], 'and the steel metal and the glow, which are not trim');
 });
 
 test('the classes of a team are cleared and replaced when the team changes, together with the mirror', async () => {
@@ -184,18 +184,20 @@ test('the classes of a team are cleared and replaced when the team changes, toge
   const withPrime = () => teams.applyTeamLook(primeTeam, page);
 
   withNova();
-  assert.equal(page.classes().length, 9, 'the mirror and the eight');
+  assert.equal(page.classes().length, 11, 'the mirror, the eight, the steel metal and the glow');
   withPrime();
   assert.deepEqual(page.classes(), [], 'all of them gone');
   withNova();
   withNova();
-  assert.equal(page.classes().length, 9, 'a team that is put on again changes nothing');
+  assert.equal(page.classes().length, 11, 'a team that is put on again changes nothing');
 
   // a team that has some of them: the others come off
   teams.applyTeamLook(Object.assign({}, primeTeam, { bolts: 'round', grid: 'dots' }), page);
   assert.deepEqual(page.classes(), ['bolts-round', 'grid-dots']);
   teams.applyTeamLook(Object.assign({}, novaTeam, { bolts: 'hex' }), page);
   assert.ok(!page.classes().includes('bolts-round') && page.classes().includes('mirrored') && page.classes().includes('accent-neon'));
+  teams.applyTeamLook(Object.assign({}, novaTeam, { metal: 'gold', glow: false }), page);
+  assert.ok(!page.classes().includes('metal-steel') && !page.classes().includes('neon-glow'), 'gold has no class, and the glow comes off');
 
   // a page that is not given, or has no classes to write on, is left alone
   assert.doesNotThrow(() => teams.applyTeamLook(novaTeam, null));
@@ -466,7 +468,7 @@ test('the full screen frame and the war clock\'s housing have the other corners 
       assert.equal(plate.warHousingMarkup(form, primeTrim), housing, 'the usual corners are the housing it has always had');
       assert.equal(plate.warHousingMarkup(form, { corner: 'tl', notch: 'slant' }), housing, 'a tab changes nothing here');
       const other = plate.warHousingMarkup(form, novaTrim);
-      const size = { narrow: 700, wide: 616 }[form];
+      const size = { narrow: 766, wide: 616 }[form];
 
       assert.ok(!/NaN|undefined/.test(other));
       const outlineOf = markup => /class="war-housing-fill" points="([^"]+)"/.exec(markup)[1].split(' ').map(pair => pair.split(',').map(Number));

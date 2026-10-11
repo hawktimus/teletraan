@@ -21,6 +21,7 @@
 // is a normal-speed time, and pace() says how much to stretch it.
 
 import { defaultSettings, defaultTeam, speeds } from './config.js';
+import { isBusy } from './core/busy.js';
 import { chooseFinish, chooseStyle } from './core/transitions.js';
 import { makeSecondTimer } from './core/tick.js';
 
@@ -69,7 +70,6 @@ export const sequences = {
     'segment':       ['pop', 1450, 35],
     'stud':          ['servo', 1300, 50],
     'rivets':        ['fade', 1350],
-    'plate-id':      ['fade', 1400],
     'scan':          ['scan', 1200],
   },
 
@@ -257,9 +257,9 @@ export function enter(panel, contentOnly = false) {
   });
 }
 
-// A part that is drawn inside the plate of the panel, or the stamped id or the sweep of light over it
+// A part that is drawn inside the plate of the panel, or the sweep of light over it
 function isFramePart(part) {
-  return part.closest('svg.plate') !== null || part.classList.contains('plate-id') || part.dataset.part === 'scan';
+  return part.closest('svg.plate') !== null || part.dataset.part === 'scan';
 }
 
 export function exit(panel) {
@@ -480,6 +480,10 @@ export function retire(area) {
 //
 // The seconds between plays are real seconds. The seconds one play lasts are
 // at normal speed, and the Speed setting stretches them like every other time.
+//
+// A transition holds the effects that come due on their own (core/busy.js): they do not start
+// while one runs, and the name effect and the glitch end if one is playing when it starts. A play
+// asked for by hand is not held.
 //
 // playNameEffect and playCrt ask for a play now, for the ?demo=crt address,
 // the announcements and the browser console. They wait in the same line, and
@@ -741,6 +745,7 @@ function askToPlay(name, byHand) {
 function lookAtEffects() {
   if (motion !== 'full' || nightCovers || hiddenPlaying) return;
   if (isPaused()) return;
+  if (isBusy()) endEffectsHeldByTransition();
 
   Object.keys(effects).forEach(name => {
     if (isDue(effects[name])) askToPlay(name, false);
@@ -773,8 +778,20 @@ function isWanted(entry) {
   return motion === 'full' && !nightCovers && !hiddenPlaying && !isPaused() && (entry.byHand || (isSwitchedOn(effect) && effect.everySeconds > 0));
 }
 
+// A transition runs: the name effect or the glitch that is playing, and that came due on its own,
+// ends on the spot. The logo's acts are not touched, and neither is a play asked for by hand.
+function endEffectsHeldByTransition() {
+  if (!playing || playing.byHand) return;
+
+  if (playing.name === 'name') stopNameEffect();
+  else if (playing.name === 'glitch') stopCrt();
+  else return;
+  playing = null;
+}
+
 // Starts the first effect in line that may start, if nothing is playing and
-// no area is changing page. Called by askToPlay and every 250 ms.
+// no area is changing page. A transition holds the ones that came due on their
+// own. Called by askToPlay and every 250 ms.
 function startNextEffect() {
   waiting = waiting.filter(isWanted);
 
@@ -784,18 +801,20 @@ function startNextEffect() {
   if (playing) return;
 
   const changing = areaIsChanging();
+  const busy = isBusy();
   const index = waiting.findIndex(entry => {
     const effect = effects[entry.name];
-    return effect.mayStart() && (effect.duringPageChange || !changing);
+    return effect.mayStart() && (effect.duringPageChange || (!changing && (entry.byHand || !busy)));
   });
   if (index === -1) return;
 
-  runEffect(waiting.splice(index, 1)[0].name);
+  const entry = waiting.splice(index, 1)[0];
+  runEffect(entry.name, entry.byHand);
 }
 
-async function runEffect(name) {
+async function runEffect(name, byHand) {
   const effect = effects[name];
-  const run = { name: name };
+  const run = { name: name, byHand: byHand === true };
   playing = run;
   effect.lastStarted = performance.now();
 
@@ -1155,14 +1174,14 @@ function disarmKitGlitch() {
 
 // The next glitch is set first, so that one that is skipped or fails never ends
 // the series. It plays only when nothing else is playing: not the name effect,
-// the logo or the glitch of the screen, and not while a page is changing.
+// the logo or the glitch of the screen, and not while a page is changing or a transition runs.
 function playKitGlitch() {
   kitGlitchTimer = null;
   armKitGlitch();
 
   try {
     const name = document.querySelector('[data-name-effect]');
-    if (!name || !kitMayFire() || playing || areaIsChanging()) return;
+    if (!name || !kitMayFire() || playing || areaIsChanging() || isBusy()) return;
 
     name.classList.add('glitching');
     kitGlitchEnd = setTimeout(endKitGlitch, kitGlitchSeconds * 1000 * pace());

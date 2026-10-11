@@ -2143,7 +2143,7 @@ const barInside = { x: bs.margin.left, y: bs.margin.top, width: layout.screen.wi
 
 test('the bar layout has the numbers of the pictures: a banner 1856 by 160, a column 300 wide with a rail of 12, a main panel 1484 by 736 with a header of 120, and a ticker 1856 by 72', () => {
   assert.deepEqual([b.banner.width, b.banner.height], [1856, 160]);
-  assert.deepEqual([b.war.width, b.war.height], [700, 120]);
+  assert.deepEqual([b.war.width, b.war.height], [766, 120]);
   assert.equal(b.column.width, 300);
   assert.equal(b.rail.width, 12);
   assert.deepEqual([b.main.width, b.main.height], [1484, 736]);
@@ -2519,7 +2519,7 @@ test('the variables the bar stylesheets read are the ones layout.js writes, and 
   assert.equal(variables['--bar-column-width'], '300px');
   assert.equal(variables['--bar-main-width'], '1484px');
   assert.equal(variables['--bar-main-height'], '736px');
-  assert.equal(variables['--bar-war-width'], '700px');
+  assert.equal(variables['--bar-war-width'], '766px');
   assert.equal(variables['--bar-war-height'], '120px');
   assert.equal(variables['--bar-ticker-width'], '1856px');
   assert.equal(variables['--bar-scale'], String(b.scale));
@@ -2559,7 +2559,7 @@ test('every rule in bar.css and in the two bar panels\' stylesheets is for the b
   assert.deepEqual(scaled, ['html[data-layout="bar"] .area[data-area="grid1"]']);
 });
 
-test('the text sizes below 44 px in the whole dashboard are an explicit list: the war clock labels at 20 and 24 px and the stamped plate ids at 20 px, and no bar or style file has one', () => {
+test('the text sizes below 44 px in the whole dashboard are an explicit list: the war clock labels at 20 and 24 px, and no bar or style file has one', () => {
   const allowed = [];
   const walk = folder => fs.readdirSync(path.join(root, folder), { withFileTypes: true }).forEach(entry => {
     const relative = folder + '/' + entry.name;
@@ -2569,17 +2569,17 @@ test('the text sizes below 44 px in the whole dashboard are an explicit list: th
   walk('dashboard');
   assert.ok(allowed.length >= 6, 'found the style and bar files: ' + allowed.join(', '));
 
-  // Text of 20 or 24 px is allowed only for the war clock's labels and the plate ids. The labels are in panels/countdown/countdown.css and the ids in base.css,
+  // Text of 20 or 24 px is allowed only for the war clock's labels. They are in panels/countdown/countdown.css,
   // which the next test lists one by one, so none of them is in a bar or style file
-  const small = [{ what: 'the war clock labels', sizes: [20, 24] }, { what: 'the stamped plate ids', sizes: [20] }];
-  assert.deepEqual(small.map(item => item.what), ['the war clock labels', 'the stamped plate ids']);
+  const small = [{ what: 'the war clock labels', sizes: [20, 24] }];
+  assert.deepEqual(small.map(item => item.what), ['the war clock labels']);
   allowed.forEach(file => {
     const css = withoutComments(read(file));
-    assert.ok(!/(^|[^-])font(-size)?: [^;]*\b([0-3]\d|4[0-3])px/.test(css), file + ' has text below 44 px, which only the war clock labels and the plate ids may have');
+    assert.ok(!/(^|[^-])font(-size)?: [^;]*\b([0-3]\d|4[0-3])px/.test(css), file + ' has text below 44 px, which only the war clock labels may have');
   });
 });
 
-test('every literal text size under 44 px in the dashboard stylesheets is on a list: the stamped plate id, 20 px in base.css, and the war clock\'s labels, 20 and 24 px in countdown.css', () => {
+test('every literal text size under 44 px in the dashboard stylesheets is on a list: the war clock\'s labels, 20 and 24 px in countdown.css', () => {
   const found = [];
   const walk = folder => fs.readdirSync(path.join(root, folder), { withFileTypes: true }).forEach(entry => {
     const relative = folder + '/' + entry.name;
@@ -2601,11 +2601,10 @@ test('every literal text size under 44 px in the dashboard stylesheets is on a l
   // the file and the rule of every size, in the same order whatever order the folders are read in
   const war = 'dashboard/panels/countdown/countdown.css';
   const allowed = [
-    { file: 'dashboard/base.css', selector: '.plate-id', size: 20 },
     { file: war, selector: 'html[data-layout="bar"] .war-lines span', size: 24 }, // the label and the date
     { file: war, selector: 'html[data-layout="bar"] .war-clock[data-over="yes"] .label', size: 20 }, // COUNTDOWN OVER and DATE NOT SET, on two lines
     { file: war, selector: 'html[data-layout="bar"] .war-days-group .days-word', size: 24 }, // DAYS
-    { file: war, selector: 'html[data-layout="bar"] .war-cell .unit', size: 20 }, // HRS, MIN and SEC
+    { file: war, selector: 'html[data-layout="bar"] .war-cell .unit', size: 24 }, // HRS, MIN and SEC
   ];
   // the third line of a row of Leadership or Team leads, 36 px, which the order for those rows sets
   allowed.push({ file: 'dashboard/base.css', selector: '.person-line', size: 36 });
@@ -2614,14 +2613,14 @@ test('every literal text size under 44 px in the dashboard stylesheets is on a l
   assert.deepEqual(order(found), order(allowed));
 });
 
-test('the mirror leaves the frames, their rivets and their ids as they are, and the ids are drawn for Original whether the layout is mirrored or not', () => {
+test('the mirror leaves the frames and their rivets as they are, and the rivets are drawn for Original whether the layout is mirrored or not', () => {
   const css = withoutComments(read('dashboard/styles/original.css'));
-  assert.equal(/rivets|plate-id|\.plate\b|\.area|scaleX|rotateY\(180/.test(css), false, 'the mirror of the standard layout moves the regions and never turns a frame round');
+  assert.equal(/rivets|\.plate\b|\.area|scaleX|rotateY\(180/.test(css), false, 'the mirror of the standard layout moves the regions and never turns a frame round');
 
   const base = withoutComments(read('dashboard/base.css'));
-  assert.ok(base.includes('html[data-style="original"] .rivets { display: inline; }') && base.includes('html[data-style="original"] .plate-id { display: block; }'), 'drawn for Original, mirrored or not');
-  assert.equal(/\.mirrored[^{]*(rivets|plate-id)/.test(base), false);
-  assert.ok(/--team-initials, "HP"/.test(base), 'before a team is on the page the letters are the Prime team\'s');
+  assert.ok(base.includes('html[data-style="original"] .rivets { display: inline; }'), 'drawn for Original, mirrored or not');
+  assert.equal(/\.mirrored[^{]*rivets/.test(base), false);
+  assert.equal(/plate-id|team-initials/.test(base), false, 'and there is no stamped id');
 });
 
 test('the three style files each set their own custom properties for their own style only', () => {
@@ -2656,7 +2655,7 @@ test('the three style files each set their own custom properties for their own s
   assert.equal(value('minimal', '--style-grid-size'), '48px');
   ['cybertron', 'minimal'].forEach(name => assert.equal(value(name, '--style-grid-opacity'), '.07', name));
   assert.equal(value('cybertron', '--style-scan-opacity'), '.035');
-  assert.equal(value('cybertron', '--style-body'), '#15181f');
+  assert.equal(value('cybertron', '--style-body'), 'var(--team-body)');
   assert.equal(value('cybertron', '--style-raised'), '#262b33');
 
   // Every custom property a style file or a bar panel reads comes from a style, a team or a token
@@ -2665,7 +2664,7 @@ test('the three style files each set their own custom properties for their own s
   ['panels/bar-banner/bar-banner.css', 'panels/bar-column/bar-column.css'].forEach(file => {
     (withoutComments(read('dashboard/' + file)).match(/var\(--style-[a-z-]+/g) || []).forEach(text => assert.ok(known.has(text.slice(4)), file + ' reads ' + text.slice(4) + ', which no style sets'));
   });
-  assert.ok(/--team-neon: #35f0ff;/.test(read('dashboard/teams.css')), 'the team neon the styles use is set in teams.css');
+  assert.ok(/--team-neon: #faca2a;/.test(read('dashboard/teams.css')), 'the team neon the styles use is set in teams.css, gold for Prime');
 });
 
 // The stylesheets of one style, each loaded with the css it overrides: the ones index.html links apart from the other two
@@ -2749,16 +2748,15 @@ const writtenByScript = {
   '--night-y-delay': 'core/night-screen.js',
 };
 
-// The only text under 44 px: the stamped plate id, which only Original draws (base.css has its rule, and hides it from the other
-// styles), and the labels of the narrow war clock, which the bar layout draws. Cybertron has the wide war clock, whose text is all 44 px or more
-const plateId = { file: 'base.css', selector: '.plate-id', size: 20 };
+// The only text under 44 px: the labels of the narrow war clock, which the bar layout draws. Cybertron has the wide war clock, whose
+// text is all 44 px or more
 const warLabels = [
   { file: 'panels/countdown/countdown.css', selector: 'html[data-layout="bar"] .war-lines span', size: 24 },
   { file: 'panels/countdown/countdown.css', selector: 'html[data-layout="bar"] .war-clock[data-over="yes"] .label', size: 20 },
   { file: 'panels/countdown/countdown.css', selector: 'html[data-layout="bar"] .war-days-group .days-word', size: 24 },
-  { file: 'panels/countdown/countdown.css', selector: 'html[data-layout="bar"] .war-cell .unit', size: 20 },
+  { file: 'panels/countdown/countdown.css', selector: 'html[data-layout="bar"] .war-cell .unit', size: 24 },
 ];
-const smallTextOf = { original: [plateId], cybertron: [plateId], minimal: [plateId].concat(warLabels) };
+const smallTextOf = { original: [], cybertron: [], minimal: warLabels.slice() };
 // and the third line of a row of Leadership or Team leads, 36 px, which the order for those rows sets, in every style
 Object.keys(smallTextOf).forEach(style => smallTextOf[style].push({ file: 'base.css', selector: '.person-line', size: 36 }));
 
@@ -2833,15 +2831,15 @@ function checkStylesheetsOf(style) {
   assert.equal(small.filter(item => item.file.startsWith('styles/')).length, 0, 'and none of it is in the style\'s own file');
 }
 
-test('Original with the css it overrides: every custom property that is read has a value, and no text is under 44 px but the stamped plate id', () => {
+test('Original with the css it overrides: every custom property that is read has a value, and no text is under 44 px', () => {
   checkStylesheetsOf('original');
 });
 
-test('Cybertron with the css it overrides: every custom property that is read has a value, and no text is under 44 px but the stamped plate id, which base.css hides for it', () => {
+test('Cybertron with the css it overrides: every custom property that is read has a value, and no text is under 44 px', () => {
   checkStylesheetsOf('cybertron');
 });
 
-test('Minimal with the css it overrides: every custom property that is read has a value, and no text is under 44 px but the war clock labels and the stamped plate id, which base.css hides for it', () => {
+test('Minimal with the css it overrides: every custom property that is read has a value, and no text is under 44 px but the war clock labels', () => {
   checkStylesheetsOf('minimal');
 });
 
@@ -2981,7 +2979,7 @@ test('the budget of the side column in docs/layouts.md is the top and height of 
   // everything is inside the column, and the parts do not touch
   const column = { x: 0, y: 0, width: b.column.width, height: b.column.height };
   parts.forEach(name => assert.ok(within({ x: rows[name].left, y: rows[name].top, width: rows[name].width, height: rows[name].height }, column), name + ' is inside the column'));
-  const stack = ['bar-clock', 'bar-team', 'bar-school', 'bar-sample', 'bar-logo'];
+  const stack = ['bar-clock', 'bar-team', 'bar-school', 'bar-logo'];
   stack.slice(1).forEach((name, index) => {
     const above = rows[stack[index]];
     assert.ok(above.top + above.height < rows[name].top, stack[index] + ' ends above ' + name);
@@ -2989,12 +2987,16 @@ test('the budget of the side column in docs/layouts.md is the top and height of 
   assert.equal(rows['bar-logo'].top + rows['bar-logo'].height, b.column.height, 'the logo is at the foot of the column');
   assert.equal(rows['bar-logo'].left + rows['bar-logo'].width / 2, b.column.width / 2, 'in the middle of it');
   assert.equal(rows['bar-sample'].left + rows['bar-sample'].width / 2, b.column.width / 2, 'and so is the label');
-  assert.ok(rows['bar-logo'].top - (rows['bar-sample'].top + rows['bar-sample'].height) >= 23, 'the logo\'s parts reach 23 px past its box while the show plays, and have the room above it too');
+  assert.ok(rows['bar-logo'].top - (rows['bar-school'].top + rows['bar-school'].height) >= 24, 'the hawk has at least the 24 that the other blocks have above it');
+  assert.equal(rows['bar-sample'].top, rows['bar-logo'].top, 'the label of the sample content is over the top of the hawk\'s box, because the column has no room for both');
+  assert.match(blockOf('.bar-sample'), /z-index: 1;/, 'and over it, not under it');
+  assert.equal(rows['bar-logo'].width, 280, 'the hawk is 280 wide');
   assert.equal(rows['bar-school'].height, 4 * 46, 'the school has room for four lines of 46 px');
   assert.equal(rows['bar-sample'].height, 2 * 44, 'the label is two lines of 44 px');
   assert.equal(rows['bar-team'].height, 76, 'the TEAM plate is the banner\'s height');
-  assert.ok(/\.bar-logo \{[^}]*--k: \.1545;[^}]*width: 170px;[^}]*height: 137px;/.test(css.replace(/html\[data-layout="bar"\] /g, '')), '--k is the width over 1100');
-  assert.ok(Math.abs(170 / 1100 - 0.1545) < 0.0001 && Math.abs(170 * 884 / 1100 - 137) < 0.5, 'and the height is the width times 884 over 1100');
+  assert.ok(/\.bar-logo \{[^}]*--k: \.2545;[^}]*width: 280px;[^}]*height: 225px;/.test(css.replace(/html\[data-layout="bar"\] /g, '')), '--k is the width over 1100');
+  assert.ok(Math.abs(280 / 1100 - 0.2545) < 0.0001 && Math.abs(280 * 884 / 1100 - 225) < 0.5, 'and the height is the width times 884 over 1100');
+  assert.ok(rows['bar-logo'].left >= 0 && rows['bar-logo'].left + rows['bar-logo'].width <= b.column.width, 'the hawk is inside the column, which is above the ticker and not over the main panel');
   assert.equal(Number(/const TEAM_PLATE_WIDTH = (\d+);/.exec(read('dashboard/panels/bar-column/bar-column.js'))[1]), b.column.width, 'the TEAM plate is drawn as wide as the column');
 });
 
@@ -3149,33 +3151,31 @@ test('in the side column the banner line is one line of 44 px under the weather,
   assert.equal(valueIn(on('.bar-school'), 'top'), 322);
   assert.equal(valueIn(on('.bar-school'), 'height'), 176);
   assert.match(on('.bar-school .school-text'), /line-height: 44px;/);
-  assert.equal(valueIn(on('.bar-sample'), 'top'), 504);
+  assert.equal(on('.bar-sample'), null, 'the label and the hawk stay where they are');
 
   const places = {
     line: { top: valueIn(line, 'top'), height: 44 },
     team: { top: valueIn(on('.bar-team'), 'top'), height: valueIn(blockOf('.bar-team'), 'height') },
     school: { top: valueIn(on('.bar-school'), 'top'), height: valueIn(on('.bar-school'), 'height') },
-    sample: { top: valueIn(on('.bar-sample'), 'top'), height: valueIn(blockOf('.bar-sample'), 'height') },
   };
   const logo = { top: valueIn(blockOf('.bar-logo'), 'top'), height: valueIn(blockOf('.bar-logo'), 'height') };
-  const stack = ['line', 'team', 'school', 'sample'];
+  const stack = ['line', 'team', 'school'];
   stack.slice(1).forEach((name, index) => assert.ok(places[stack[index]].top + places[stack[index]].height < places[name].top, stack[index] + ' ends above ' + name));
-  assert.ok(places.sample.top + places.sample.height < logo.top, 'the label ends above the logo');
+  assert.ok(places.school.top + places.school.height < logo.top, 'the school ends above the hawk');
   assert.equal(logo.top + logo.height, b.column.height, 'the logo is where it was, at the foot of the column');
   assert.equal(places.school.height, 4 * 44, 'the school keeps four lines, of 44 px now');
-  assert.equal(logo.top - (places.sample.top + places.sample.height), 7, 'the label is 7 px above the logo\'s box');
+  assert.equal(logo.top - (places.school.top + places.school.height), 13, 'the school ends 13 px above the hawk\'s box, which is what the 44 px of the line leave');
 
   // the docs say the same
   const rows = {};
   section.split('\n').forEach(row => {
-    const found = /^\| `\.(bar-line|bar-team|bar-school|bar-sample)` \| (\d+) \| (\d+) \| ([^|]+) \|$/.exec(row);
+    const found = /^\| `\.(bar-line|bar-team|bar-school)` \| (\d+) \| (\d+) \| ([^|]+) \|$/.exec(row);
     if (found) rows[found[1]] = { top: Number(found[2]), height: Number(found[3]), without: found[4].trim() };
   });
-  assert.deepEqual(Object.keys(rows).sort(), ['bar-line', 'bar-sample', 'bar-school', 'bar-team'], 'the docs have a row for each part that moves, and for the line');
+  assert.deepEqual(Object.keys(rows).sort(), ['bar-line', 'bar-school', 'bar-team'], 'the docs have a row for each part that moves, and for the line');
   stack.forEach(name => assert.deepEqual([rows['bar-' + name].top, rows['bar-' + name].height], [places[name].top, places[name].height], name + ' in the docs and in bar-column.css'));
   assert.equal(rows['bar-team'].without, 'top ' + valueIn(blockOf('.bar-team'), 'top'));
   assert.equal(rows['bar-school'].without, 'top ' + valueIn(blockOf('.bar-school'), 'top') + ', height ' + valueIn(blockOf('.bar-school'), 'height'));
-  assert.equal(rows['bar-sample'].without, 'top ' + valueIn(blockOf('.bar-sample'), 'top'));
 });
 
 test('the side column shows the banner line of the pack that is on the screen in its line part, sets data-line, and writes nothing when it is the same', async () => {
@@ -3527,7 +3527,7 @@ test('the frames are small: a handful of svg elements and five new gradients, an
     assert.ok(elements(plate.areaMarkup('bar-main')) <= 150, 'the main panel');
     assert.ok(elements(plate.plateMarkup('bar-banner')) <= 40, 'the banner');
     assert.ok(elements(plate.areaMarkup('bar-ticker')) <= 40, 'the ticker');
-    assert.ok(elements(plate.areaMarkup('bar-main-minimal')) <= 150, 'the main panel in Minimal, with its rivets, rust and ticks');
+    assert.ok(elements(plate.areaMarkup('bar-main-minimal')) <= 160, 'the main panel in Minimal, with its rivets, rust and ticks, and the lines of the glow, which are hidden unless the team has it');
     assert.ok(elements(plate.plateMarkup('bar-banner-minimal')) <= 40, 'the banner in Minimal');
     assert.ok(elements(plate.areaMarkup('bar-ticker-minimal')) <= 40, 'the ticker in Minimal');
   });
@@ -3596,8 +3596,8 @@ test('the numbers in the Frames section of docs/layouts.md are the numbers of th
 
   // The parts and their sizes, as plate.js and the stylesheets have them
   const css = withoutComments(read('dashboard/base.css') + read('dashboard/styles/cybertron.css'));
-  ['4 px, `--style-neon`', '14 px and .25 opacity', '24 px and .12', '12 px high, slanted bars 22 px wide every 44', 'six slanted bars in the neon, 22 px wide every 40', 'a leg of 60 px down the side and 70 px along the top', '3 px pink line'].forEach(text => assert.ok(section.includes(text), text));
-  assert.ok(/stroke-width: 4px;/.test(css) && /stroke-width: 14px;/.test(css) && /stroke-width: 24px;/.test(css));
+  ['4 px, `--style-neon`', '12 px and .35 opacity', '26 px and .12', '12 px high, slanted bars 22 px wide every 44', 'six slanted bars in the neon, 22 px wide every 40', 'a leg of 60 px down the side and 70 px along the top', '3 px pink line'].forEach(text => assert.ok(section.includes(text), text));
+  assert.ok(/stroke-width: 4px;/.test(css) && /stroke-width: 12px;/.test(css) && /stroke-width: 26px;/.test(css));
   const main = plate.barShape('bar-main');
   assert.equal(main.art.hazard.split('M').length - 1, 32, 'the stripes across the 1399 px under the header');
   assert.equal(main.art.slashes.split('M').length - 1, 6, 'six slashes');
@@ -3609,14 +3609,14 @@ test('the numbers in the Frames section of docs/layouts.md are the numbers of th
 
 // The steel
 
-test('steel is one more metal next to gold and silver: its tokens, its three gradients, and the same edge tokens, for Cybertron and Minimal and for nothing else', () => {
+test('steel is one more metal next to gold and silver: its tokens, its three gradients, and the same edge tokens, for a team that has it, in every style', () => {
   const tokens = withoutComments(read('dashboard/tokens.css'));
   const found = /([^{}]*\[data-metal="steel"\][^{}]*)\{([^{}]*)\}/.exec(tokens);
   assert.ok(found, 'tokens.css has a rule for the steel');
 
   const selectors = found[1].split(',').map(selector => selector.trim());
-  assert.deepEqual(selectors, ['[data-metal="steel"]', 'html[data-style="cybertron"]', 'html[data-style="cybertron"] [data-metal]', 'html[data-style="minimal"]', 'html[data-style="minimal"] [data-metal]']);
-  assert.ok(!selectors.some(selector => /original/.test(selector)), 'Original has the metal it always had');
+  assert.deepEqual(selectors, ['[data-metal="steel"]', 'html.metal-steel', 'html.metal-steel [data-metal]']);
+  assert.ok(!selectors.some(selector => /data-style/.test(selector)), 'it is the team\'s metal, and no style names it');
 
   const declared = {};
   found[2].split(';').map(line => line.trim()).filter(Boolean).forEach(line => { declared[line.split(':')[0].trim()] = line.slice(line.indexOf(':') + 1).trim(); });
@@ -3626,7 +3626,9 @@ test('steel is one more metal next to gold and silver: its tokens, its three gra
   assert.equal(declared['--edge-shade'], 'url(#edge-shade-steel)');
 
   // Gold and silver keep their rules: the steel never reaches the selectors the others have
-  assert.ok(/:root,\s*\[data-metal="gold"\] \{\s*--metal-1: #efe6c4;/.test(tokens));
+  assert.ok(/:root,\s*\[data-metal="gold"\],[^{}]*\{\s*--metal-1: #efe6c4;/.test(tokens));
+  const goldOnly = /:root,\s*\[data-metal="gold"\],([^{}]*)\{\s*--metal-1: #efe6c4;/.exec(tokens)[1].split(',').map(selector => selector.trim());
+  assert.deepEqual(goldOnly, ['html[data-style="cybertron"]:not(.metal-steel)', 'html[data-style="cybertron"]:not(.metal-steel) [data-metal]', 'html[data-style="minimal"]:not(.metal-steel)', 'html[data-style="minimal"]:not(.metal-steel) [data-metal]'], 'Cybertron and Minimal have gold for a team with no steel, and Original is not named');
   assert.ok(/\[data-metal="silver"\] \{\s*--metal-1: #c3c4c3;/.test(tokens));
 
   // The brightest stop is below pure white and the metal is cool: more blue than red at every stop
@@ -3651,7 +3653,7 @@ test('steel is one more metal next to gold and silver: its tokens, its three gra
   assert.ok(html.indexOf('id="edge-steel"') > html.indexOf('id="edge-shade-red"') && html.indexOf('id="edge-steel"') < html.indexOf('id="screw-face-silver"'));
 });
 
-test('the neon and the bolt are shared by both styles in base.css: the neon line is on, the wider ones are off until a style turns them on, and the flat finish has none of them', () => {
+test('the neon and the bolt are shared by both styles in base.css: the neon line is on, the wider ones are off until a team with Glow turns them on, and the flat finish has none of them', () => {
   const base = withoutComments(read('dashboard/base.css'));
   const rule = selector => {
     const found = new RegExp('(?:^|\\})\\s*' + selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' \\{([^}]*)\\}').exec(base);
@@ -3662,9 +3664,15 @@ test('the neon and the bolt are shared by both styles in base.css: the neon line
   assert.ok(/stroke: var\(--style-neon, var\(--team-neon\)\);/.test(base), 'the neon is the style\'s, and the team\'s without one');
   assert.ok(/stroke-width: 4px;/.test(rule('.edge-neon')));
   assert.ok(/display: none;/.test(rule('.edge-neon-wide-1')) && /display: none;/.test(rule('.edge-neon-wide-2')), 'the wide lines are off');
-  assert.ok(/stroke-width: 14px;/.test(rule('.edge-neon-wide-1')) && /stroke-opacity: \.25;/.test(rule('.edge-neon-wide-1')));
-  assert.ok(/stroke-width: 24px;/.test(rule('.edge-neon-wide-2')) && /stroke-opacity: \.12;/.test(rule('.edge-neon-wide-2')));
+  assert.ok(/stroke-width: 12px;/.test(rule('.edge-neon-wide-1')) && /stroke-opacity: \.35;/.test(rule('.edge-neon-wide-1')));
+  assert.ok(/stroke-width: 26px;/.test(rule('.edge-neon-wide-2')) && /stroke-opacity: \.12;/.test(rule('.edge-neon-wide-2')));
   assert.ok(/\[data-finish="flat"\] \.edge-neon-wide-1,\s*\[data-finish="flat"\] \.edge-neon-wide-2/.test(base), 'the flat finish has no wide lines');
+
+  // The glow: a team with it has a line of 5 and the two wider ones, on the frames and on the header line of Minimal, and not in the flat finish
+  assert.ok(/display: none;/.test(rule('.art-glow')) && /stroke-width: 12px;/.test(rule('.art-glow-header-1')) && /stroke-opacity: \.35;/.test(rule('.art-glow-header-1')));
+  assert.ok(/stroke-width: 26px;/.test(rule('.art-glow-header-2')) && /stroke-opacity: \.12;/.test(rule('.art-glow-header-2')));
+  assert.ok(base.includes('html.neon-glow:not([data-finish="flat"]) .edge-neon,\nhtml.neon-glow:not([data-finish="flat"]) .art-header-line { stroke-width: 5px; }'));
+  assert.ok(base.includes('html.neon-glow:not([data-finish="flat"]) .edge-neon-wide-1,\nhtml.neon-glow:not([data-finish="flat"]) .edge-neon-wide-2,\nhtml.neon-glow:not([data-finish="flat"]) .art-glow { display: inline; }'));
   assert.ok(/\.art-cybertron \{ display: none; \}/.test(base), 'what only Cybertron draws is off until it is on');
 
   // The armor tab: a bevel, a bright line and the team plate color, in lines of 3px or more
@@ -3672,7 +3680,7 @@ test('the neon and the bolt are shared by both styles in base.css: the neon line
   assert.ok(/fill: var\(--team-plate\);/.test(rule('.tab-inset')), 'the team plate color is inset in the tab');
 
   // Nothing in what the two styles share moves, glows or is a picture, and every line is 3px or more
-  const shared = [rule('.edge-neon'), rule('.edge-neon-wide-1'), rule('.edge-neon-wide-2'), rule('.tab-bevel'), rule('.tab-line'), rule('.tab-inset'), rule('.bolt-rim'), rule('.bolt-face'), rule('.bolt-dot')].join(' ');
+  const shared = [rule('.edge-neon'), rule('.edge-neon-wide-1'), rule('.edge-neon-wide-2'), rule('.art-glow'), rule('.art-glow-header-1'), rule('.art-glow-header-2'), rule('.tab-bevel'), rule('.tab-line'), rule('.tab-inset'), rule('.bolt-rim'), rule('.bolt-face'), rule('.bolt-dot')].join(' ');
   assert.ok(!/(animation|transition|filter|shadow|blur|url\()/.test(shared));
   (shared.match(/stroke-width: [\d.]+px/g) || []).forEach(text => assert.ok(parseFloat(/[\d.]+px/.exec(text)[0]) >= 3, text));
 });
@@ -3726,11 +3734,11 @@ test('the Cybertron stylesheet paints with the team\'s colors and gradients and 
   assert.ok(/fill: var\(--style-neon\);/.test(paint('slashes')));
   assert.ok(/stroke-opacity: \.6;/.test(paint('seams')), 'the seams are faint');
 
-  // The wide neon lines are on, except in the flat finish
-  assert.ok(css.includes('html[data-style="cybertron"]:not([data-finish="flat"]) .edge-neon-wide-1'));
-  // and the plates are the gunmetal: the body is the style's, the tab an armor plate, the TEAM plate and the tag the team's plate color
+  // The wide neon lines are not the style's: they are the glow of a team that has it (base.css)
+  assert.ok(!css.includes('edge-neon-wide'));
+  // and the plates are in the team's body color: the body is the style's, the tab an armor plate, the TEAM plate, the tag and the cards the team's plate color
   assert.ok(/--panel-face: var\(--style-body\);/.test(css) && css.includes('fill: url(#armor-face);'));
-  assert.ok(/\.team-fill,\s*html\[data-style="cybertron"\] \.tag-fill \{ fill: var\(--team-plate\); \}/.test(css));
+  assert.ok(/\.team-fill,\s*html\[data-style="cybertron"\] \.tag-fill,\s*html\[data-style="cybertron"\] \.card-fill \{ fill: var\(--team-plate\); \}/.test(css));
 });
 
 test('the page background of Cybertron is the grid at 96px and the scanlines, nothing else on the screen is drawn behind the stage, and Original has none of it', () => {
@@ -3747,9 +3755,9 @@ test('the steel and the bolts reach the frames of Cybertron through the tokens: 
   const css = withoutComments(read('dashboard/styles/cybertron.css'));
   assert.ok(css.includes('html[data-style="cybertron"] .banner .logo .drawing,\nhtml[data-style="cybertron"] .side-logo .drawing { --logo-edge: var(--team-accent); }'), 'the hawk of the banner and of the sidebar has the team accent');
 
-  // The tokens file gives the steel to the html element and to each element with a data-metal: that is the banner and every area
+  // The tokens file gives the metal of the team to the html element and to each element with a data-metal: that is the banner and every area
   const tokens = withoutComments(read('dashboard/tokens.css'));
-  assert.ok(tokens.includes('html[data-style="cybertron"] [data-metal]'), 'every area, whichever metal the page change gave it');
+  assert.ok(tokens.includes('html.metal-steel [data-metal]') && tokens.includes('html[data-style="cybertron"]:not(.metal-steel) [data-metal]'), 'every area, whichever metal the page change gave it');
   assert.ok(/:root,\s*\[data-metal\] \{\s*--edge-rim: var\(--metal-rim\);/.test(tokens), 'the rim is worked out on each of them from the steel');
 
   // The code that picks the metal of a page change never has to know: the steel styles make no finish change at all
@@ -3912,8 +3920,6 @@ test('the Minimal frames are the same ten-cornered plates with smaller cuts, 34 
     // a bolt at each of the four joints, which are the two ends of each cut corner, and no other part of Cybertron
     const bolts = shape.screws.a.concat(shape.screws.b).map(point => point.join(','));
     assert.deepEqual(bolts.slice().sort(), [1, 2, 6, 7].map(index => outline[index].join(',')).sort(), kind + ': four bolts');
-    assert.equal(shape.wide, false, kind + ': one neon line and no wide ones');
-    assert.equal(usual.wide, true, 'Cybertron keeps its two wide ones');
     assert.deepEqual(shape.bracketLines, [], kind + ': no brackets');
     ['hazard', 'conduit', 'slashes', 'seams', 'brackets'].forEach(name => assert.ok(!shape.art[name], kind + ' has no ' + name));
     assert.deepEqual(shape.neon.a, plate.offsetOutline(outline, 10).slice(0, 6), kind + ': the neon line is the outline 10 inside');
@@ -4007,7 +4013,8 @@ test('the main panel of Minimal has each of its parts where the frame has them: 
     assert.equal(countOf(markup, 'href="#bolt-shape"'), 4 + 4, 'four bolts in the frame and four in the pieces');
     assert.equal(countOf(markup, 'class="plate piece"'), 12, 'the same twelve pieces');
     assert.equal(countOf(markup, '<use class="edge-neon"'), 2 + 7, 'one neon line in each half and in each of the seven bars');
-    ['art-cybertron', 'edge-neon-wide', 'art-brackets', 'art-hazard', 'art-conduit', 'art-slashes', 'art-seams', 'screw-shadow', 'bolt-shadow', 'glint'].forEach(name => assert.ok(!hasText(markup, name), 'nothing of ' + name));
+    ['art-cybertron', 'art-brackets', 'art-hazard', 'art-conduit', 'art-slashes', 'art-seams', 'screw-shadow', 'bolt-shadow', 'glint'].forEach(name => assert.ok(!hasText(markup, name), 'nothing of ' + name));
+    assert.equal(countOf(markup, '<use class="edge-neon-wide-1"'), 2 + 7, 'the two wider lines are in the markup, hidden unless the team has Glow');
     ['class="tab-inset"', 'class="tab-bevel"', 'class="tab-line"'].forEach(text => assert.equal(countOf(markup, text), 2, text + ': the armor tab is the same as Cybertron\'s'));
 
     // the frame is the same order of parts as the other bar frames, and every shape it points at is drawn
@@ -4016,9 +4023,9 @@ test('the main panel of Minimal has each of its parts where the frame has them: 
     (markup.match(/href="#[a-z0-9-]+"/g) || []).forEach(found => assert.ok(drawn.has(found.slice(7, -1)) || staticIds.has(found.slice(7, -1)), found + ' is not drawn anywhere'));
     ['bar-main-minimal-a', 'bar-main-minimal-b', 'bar-main-minimal-neon-a', 'bar-main-minimal-neon-b'].forEach(id => assert.ok(drawn.has(id), id));
 
-    // Original's frames have the rivets and the id and none of the rest
+    // Original's frames have the rivets and none of the rest
     const original = plate.areaMarkup('grid1');
-    assert.ok(hasText(original, 'data-part="plate-id"') && hasText(original, 'class="rivets"'));
+    assert.ok(hasText(original, 'class="rivets"') && !hasText(original, 'plate-id'));
     ['art-minimal', 'art-wear', 'wear'].forEach(name => assert.ok(!hasText(original, name), 'the large frame of Original has no ' + name));
   });
 });
@@ -4097,7 +4104,7 @@ test('the Minimal stylesheet paints with the team\'s colors and gradients and no
   ['--team-accent', '--team-plate', '--style-neon', '--style-pink', '--style-body', '--style-rust', '--style-grid-size', '--style-grid-opacity', '--metal-ridge'].forEach(name => assert.ok(css.includes('var(' + name + ')'), 'it reads ' + name));
 
   const first = rules[0].body;
-  assert.ok(/--style-body: var\(--ground\);/.test(first) && /--style-rust: #[0-9a-f]{6};/.test(first) && /--style-armor-top: #[0-9a-f]{6};/.test(first) && /--style-armor-bottom: #[0-9a-f]{6};/.test(first));
+  assert.ok(/--style-body: var\(--team-body\);/.test(first) && /--style-rust: #[0-9a-f]{6};/.test(first) && /--style-armor-top: #[0-9a-f]{6};/.test(first) && /--style-armor-bottom: #[0-9a-f]{6};/.test(first));
   assert.ok(!/--style-raised|--style-scan-opacity/.test(css), 'Minimal has no raised plate and no scanlines');
 
   // The page background is the team's, with the grid at 48px in a layer behind the stage, and no scanlines
@@ -4115,7 +4122,7 @@ test('the Minimal stylesheet paints with the team\'s colors and gradients and no
 
   // The plates: the body is the team's background, the tab an armor plate, the team plate and the tag in the plate color
   assert.ok(/--panel-face: var\(--style-body\);/.test(css) && css.includes('fill: url(#armor-face);'));
-  assert.ok(/\.team-fill,\s*html\[data-style="minimal"\] \.tag-fill \{ fill: var\(--team-plate\); \}/.test(css));
+  assert.ok(/\.team-fill,\s*html\[data-style="minimal"\] \.tag-fill,\s*html\[data-style="minimal"\] \.card-fill \{ fill: var\(--team-plate\); \}/.test(css));
   assert.ok(css.includes('html[data-style="minimal"] .bar-logo .drawing { --logo-edge: var(--team-accent); }'));
 
   // The rivets are shown and the id is not, the // mark of the header is off, the weld seam is dark with a faint light line, the ticks are neon and the rust is a patch and an arc
@@ -4269,18 +4276,18 @@ const kickoffIn = days => {
 };
 const warContent = (kickoff, rollout) => teamContent({ settings: { countdown: { kickoff: kickoff, kickoffLabel: 'KICKOFF', rollout: rollout === undefined ? '2027-04-01T12:00' : rollout, rolloutLabel: 'ROLLOUT' } } });
 
-test('the housing of the war clock is one steel plate 700 by 120 with the edge of the frames, a cut corner of 22 at the top left and the bottom right, four rivets, one weld seam and rust at two corners', async () => {
+test('the housing of the war clock is one plate 766 by 120 with the edge of the frames, a cut corner of 22 at the top left and the bottom right, four rivets, one weld seam and rust at two corners', async () => {
   await withPlatePage(() => {
     const markup = plate.warHousingMarkup();
     assert.ok(isBalanced(markup));
-    assert.ok(/^<svg class="war-housing" width="700" height="120" viewBox="0 0 700 120">/.test(markup));
+    assert.ok(/^<svg class="war-housing" width="766" height="120" viewBox="0 0 766 120">/.test(markup));
     assert.equal(countOf(markup, '<svg '), 1, 'one drawing');
     assert.equal(countOf(markup, 'class="war-housing-fill"'), 1, 'one plate');
-    assert.deepEqual([700, 120], [b.war.width, b.war.height], 'the size of the slot in the banner');
+    assert.deepEqual([766, 120], [b.war.width, b.war.height], 'the size of the slot in the banner');
 
     // 4 inside the box, like every frame, with the cuts at the top left and the bottom right and the other two corners square
     const points = /<polygon class="war-housing-fill" points="([^"]*)"/.exec(markup)[1].split(' ').map(pair => pair.split(',').map(Number));
-    assert.deepEqual(points, [[4, 116], [4, 26], [26, 4], [696, 4], [696, 94], [674, 116]]);
+    assert.deepEqual(points, [[4, 116], [4, 26], [26, 4], [762, 4], [762, 94], [740, 116]]);
     assert.deepEqual([points[1][1] - points[2][1], points[2][0] - points[1][0]], [22, 22], 'the cut at the top left');
     assert.deepEqual([points[4][0] - points[5][0], points[5][1] - points[4][1]], [22, 22], 'and at the bottom right');
     assert.ok(signedArea(points) > 0, 'clockwise on the screen, like the frames');
@@ -4291,19 +4298,19 @@ test('the housing of the war clock is one steel plate 700 by 120 with the edge o
 
     // four rivets, one in each corner and clear of the cut corners
     const rivets = rivetsIn(markup);
-    assert.deepEqual(rivets, [[30, 22], [672, 22], [30, 92], [672, 92]]);
+    assert.deepEqual(rivets, [[30, 22], [738, 22], [30, 92], [738, 92]]);
     assert.equal(countOf(markup, 'class="war-rivet"'), 1, 'in one path');
     edgesOf(points).forEach(([from, to]) => rivets.forEach(center => assert.ok(distanceToSegment(center, from, to) >= 5 + 8, 'a rivet is clear of the rim of the edge: ' + center)));
 
     // one weld seam, horizontal, with the light line 4 below the dark one, as Minimal's seam is
     assert.equal(countOf(markup, 'class="war-weld-dark"'), 1);
     assert.equal(countOf(markup, 'class="war-weld-light"'), 1);
-    assert.ok(/class="war-weld-dark" d="M16 63L684 63"/.test(markup) && /class="war-weld-light" d="M16 67L684 67"/.test(markup));
+    assert.ok(/class="war-weld-dark" d="M16 63L750 63"/.test(markup) && /class="war-weld-light" d="M16 67L750 67"/.test(markup));
 
     // rust at the bottom left and the top right: two patches (gradients) and one stroke with two arcs
     const patches = (markup.match(/<ellipse class="war-smudge" cx="(\d+)" cy="(\d+)"/g) || []).map(text => /cx="(\d+)" cy="(\d+)"/.exec(text).slice(1).map(Number));
     assert.equal(patches.length, 2);
-    assert.ok(patches.some(([x, y]) => x < 350 && y > 60) && patches.some(([x, y]) => x > 350 && y < 60), 'one at the bottom left and one at the top right');
+    assert.ok(patches.some(([x, y]) => x < 383 && y > 60) && patches.some(([x, y]) => x > 383 && y < 60), 'one at the bottom left and one at the top right');
     assert.equal((/class="war-wear" d="([^"]*)"/.exec(markup)[1].match(/M/g) || []).length, 2, 'two arcs in one stroke');
 
     // the order: the plate, the seam, the edge over them, then the rust on the steel, then the rivets on top
@@ -4462,7 +4469,7 @@ test('a fault in the war clock leaves the name on the banner', async () => {
 test('the war clock\'s plates, sizes and colors are the ones the order gives, and only Cybertron and Minimal show it', () => {
   const section = warSection();
 
-  // The housing is the slot: 700 by 120, as barSettings has it
+  // The housing is the slot: 766 by 120, as barSettings has it
   assert.deepEqual([warNumber('.war-clock', 'width'), warNumber('.war-clock', 'height')], [layout.barSettings.warClock.width, layout.barSettings.warClock.height]);
 
   // The plates: #0c0b09 with a 3 px border of #2b2a26, and a gradient inside from a highlight at the top to a shade at the foot
@@ -4474,16 +4481,16 @@ test('the war clock\'s plates, sizes and colors are the ones the order gives, an
   assert.ok(gradient, 'a top to bottom gradient from a highlight to a shade, over the plate color');
   assert.ok(Number(gradient[1]) > 0 && Number(gradient[3]) > 0);
   assert.deepEqual([warNumber('.war-days-plate', 'width'), warNumber('.war-plate', 'height')], [176, 92]);
-  assert.equal(warNumber('.war-time-plate', 'width'), 250);
-  assert.ok(/box-sizing: border-box;/.test(plateRule), 'the 176 and the 250 are the whole plate, with its border');
+  assert.equal(warNumber('.war-time-plate', 'width'), 334);
+  assert.ok(/box-sizing: border-box;/.test(plateRule), 'the 176 and the 334 are the whole plate, with its border');
 
-  // The days at 76 px with DAYS at 24, the time at 48 with HRS, MIN and SEC at 20, the label and the date at 24, and three digits at 48
+  // The days at 76 px with DAYS at 24, the time at 72 with HRS, MIN and SEC at 24, the label and the date at 24, and three digits at 48
   const fontOf = selector => /font: (\d+) (\d+)px\/(\d+)px var\(--font-display\);/.exec(warRule(selector)).slice(1).map(Number);
   assert.deepEqual(fontOf('.war-days-group .days-number'), [700, 76, 76]);
   assert.equal(warNumber('.war-days-group .days-number.long', 'font-size'), 48);
   assert.deepEqual(fontOf('.war-days-group .days-word'), [600, 24, 28]);
-  assert.deepEqual(fontOf('.war-cell .digits'), [700, 48, 52]);
-  assert.deepEqual(fontOf('.war-cell .unit'), [600, 20, 22]);
+  assert.deepEqual(fontOf('.war-cell .digits'), [700, 72, 58]);
+  assert.deepEqual(fontOf('.war-cell .unit'), [600, 24, 26]);
   assert.deepEqual(fontOf('.war-lines span'), [700, 24, 28]);
   assert.equal(warNumber('.war-clock[data-over="yes"] .label', 'font-size'), 20);
   assert.ok(/letter-spacing: \.12em;/.test(warRule('.war-lines span')), 'the label is letter spaced');
@@ -4530,7 +4537,7 @@ test('the war clock\'s parts are inside the housing, clear of each other and of 
   assert.deepEqual(Object.keys(rows).sort(), Object.keys(parts).sort(), 'the budget has a row for each part, and no other');
   Object.keys(parts).forEach(name => assert.deepEqual(rows[name], parts[name], name + ' in the docs and in countdown.css'));
 
-  const housing = { x: 0, y: 0, width: 700, height: 120 };
+  const housing = { x: 0, y: 0, width: 766, height: 120 };
   Object.keys(parts).forEach(name => assert.ok(within(boxOf(parts[name]), housing), name + ' is inside the housing'));
   const names = Object.keys(parts);
   names.forEach((name, index) => names.slice(index + 1).forEach(other => assert.ok(apart(boxOf(parts[name]), boxOf(parts[other])), name + ' and ' + other + ' overlap')));
@@ -4543,7 +4550,7 @@ test('the war clock\'s parts are inside the housing, clear of each other and of 
   assert.equal(parts['war-lines'].height, 2 * 28, 'two lines of 28');
   assert.equal(parts['war-status'].top + parts['war-status'].height / 2, parts['war-lines'].top + 14, 'the square is level with the middle of the label');
 
-  // The time plate: 3 cells of 80 and 2 px each side, inside a 3 px border, are the 250 of the plate
+  // The time plate: 3 cells of 108 and 2 px each side, inside a 3 px border, are the 334 of the plate
   assert.equal(3 * warNumber('.war-cell', 'width') + 2 * 2 + 2 * 3, parts['war-time-plate'].width);
   assert.ok(/padding: 0 2px;/.test(warRule('.war-time-plate')));
 
@@ -4553,7 +4560,7 @@ test('the war clock\'s parts are inside the housing, clear of each other and of 
     rivetsIn(markup).forEach(([x, y]) => names.forEach(name => assert.ok(apart({ x: x - 5, y: y - 5, width: 10, height: 10 }, boxOf(parts[name])), 'a rivet is under ' + name)));
     const time = parts['war-time-plate'];
     const corner = [time.left + time.width, time.top + time.height];
-    assert.ok(distanceToLine(corner, [696, 94], [674, 116]) >= 8 + 6, 'the time plate is 6 clear of the rim at the cut corner');
+    assert.ok(distanceToLine(corner, [762, 94], [740, 116]) >= 8 + 6, 'the time plate is 6 clear of the rim at the cut corner');
 
     // the seam is between the two lines of the label
     const middle = parts['war-lines'].top + 28;
@@ -4588,18 +4595,21 @@ test('the digits and the labels of the war clock fit their boxes in the display 
   for (let count = 100; count <= 999; count++) worst = Math.max(worst, textWidth(String(count), 700, 48, -0.04) + gap + days);
   assert.ok(worst <= plateInside, 'every three digit count fits at 48 px: ' + worst);
 
-  // Two time digits at 48 px in the box of 76, and the labels under them in their cell of 80
+  // Two time digits at 72 px in the box of 106, and the labels under them at 24 px in their cell of 108
   let widest = 0;
-  for (let count = 0; count <= 99; count++) widest = Math.max(widest, textWidth(String(count).padStart(2, '0'), 700, 48, 0));
+  for (let count = 0; count <= 99; count++) widest = Math.max(widest, textWidth(String(count).padStart(2, '0'), 700, 72, 0));
   assert.ok(widest <= warNumber('.war-cell .digits', 'width'), 'two digits are ' + widest);
   assert.ok(warNumber('.war-cell .digits', 'width') <= warNumber('.war-cell', 'width'));
-  ['HRS', 'MIN', 'SEC'].forEach(unit => assert.ok(textWidth(unit, 600, 20, 0.12) <= warNumber('.war-cell', 'width'), unit));
+  ['HRS', 'MIN', 'SEC'].forEach(unit => assert.ok(textWidth(unit, 600, 24, 0.12) <= warNumber('.war-cell', 'width'), unit));
 
-  // The label and the date at 24 px with their letters spaced, in the line of 169: KICKOFF and ROLLOUT, NOW, and the widest date
+  // The digits and the label are in the 86 inside the border of the plate, which is 92 high with a border of 3
+  assert.ok(warNumber('.war-cell .digits', 'height') + 26 <= warNumber('.war-plate', 'height') - 2 * 3, 'the digits at 72 px and the label under them fit the plate');
+
+  // The label and the date at 24 px with their letters spaced, in the line of 158: KICKOFF and ROLLOUT, NOW, and the widest date
   ['KICKOFF', 'ROLLOUT', 'NOW'].forEach(word => assert.ok(textWidth(word, 700, 24, 0.12) <= room, word));
   ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'].forEach(month => assert.ok(textWidth(month + ' 30', 700, 24, 0.12) <= room, month));
 
-  // The end states are on two lines at 20 px, and each line of them is in the line of 169
+  // The end states are on two lines at 20 px, and each line of them is in the line of 158
   ['COUNTDOWN', 'OVER', 'DATE NOT', 'SET'].forEach(words => assert.ok(textWidth(words, 700, 20, 0.1) <= room, words));
   assert.ok(textWidth('COUNTDOWN OVER', 700, 24, 0.12) > room, 'COUNTDOWN OVER does not fit on one line at 24 px, which is why it has two at 20');
   assert.ok(/-webkit-line-clamp: 2;/.test(warRule('.war-clock[data-over="yes"] .label')));
@@ -4641,8 +4651,8 @@ test('the mirror moves the war clock with its slot and turns nothing in it: no r
   assert.ok(!/mirror-art/.test(read('dashboard/panels/countdown/countdown.js')) && !/mirror-art/.test(read('dashboard/core/plate.js')), 'nothing in it is turned');
 
   const m = layout.mirrorGeometry(b);
-  assert.deepEqual([b.war.x, m.war.x], [1148, 72], 'the slot is at the right end, and at the left end when mirrored');
-  assert.deepEqual([m.war.width, m.war.height], [700, 120]);
+  assert.deepEqual([b.war.x, m.war.x], [1082, 72], 'the slot is at the right end, and at the left end when mirrored');
+  assert.deepEqual([m.war.width, m.war.height], [766, 120]);
   assert.equal(m.war.y, b.war.y, 'at the same height');
 });
 

@@ -25,7 +25,7 @@ html[data-layout="bar"] .bar-banner {
 /* The name is a row of letters (core/name.js), so the name effect can split each
    one. Nothing is cut off, because the effect moves pieces of letters outside the
    line. A name too long for its slot squeezes its letters closer together instead,
-   so the war clock never moves. The slot is 1052 wide, and HAWKTIMUS PRIME is 985
+   so the war clock never moves. The slot is 986 wide, and HAWKTIMUS PRIME is 984.6
    at the heading size. */
 html[data-layout="bar"] .bar-name {
   position: relative;

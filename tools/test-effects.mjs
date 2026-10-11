@@ -17,8 +17,8 @@
 // and that the saved settings come back. And it
 // tests the screen of a booked talk (dashboard/core/presentation-run.js): the title card, the
 // slides, the keys, the thanks card, and what each does to the rest of the screen. And it
-// tests the frames that dashboard/core/plate.js draws: the pieces, and the rivets and the stamped
-// ids that only the Original style shows.
+// tests the frames that dashboard/core/plate.js draws: the pieces, and the rivets that only the Original
+// style shows.
 //
 //   node tools/test-effects.mjs
 //
@@ -39,7 +39,7 @@ const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-effects-'));
 fs.mkdirSync(path.join(workFolder, 'dashboard', 'core'), { recursive: true });
 fs.mkdirSync(path.join(workFolder, 'dashboard', 'themes', 'overlays'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
-['config.js', 'frame.js', 'core/transitions.js', 'core/tick.js', 'core/demo.js', 'core/demo-screens.js', 'core/hidden.js', 'core/hidden-transitions.js', 'core/hidden-pictures.js', 'core/images.js', 'core/announce.js', 'core/presentation-test.js', 'core/plate.js',
+['config.js', 'frame.js', 'core/busy.js', 'core/transitions.js', 'core/tick.js', 'core/demo.js', 'core/demo-screens.js', 'core/hidden.js', 'core/hidden-transitions.js', 'core/hidden-pictures.js', 'core/images.js', 'core/announce.js', 'core/presentation-test.js', 'core/plate.js',
   'core/preview.js', 'core/style.js', 'core/teams.js', 'core/theme.js', 'core/pack-extras.js', 'core/corner-art.js', 'themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
@@ -59,6 +59,7 @@ const preview = await import(pathToFileURL(path.join(workFolder, 'dashboard/core
 const styleModule = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/style.js')).href);
 const teamsModule = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/teams.js')).href);
 const themeModule = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/theme.js')).href);
+const busyModule = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/busy.js')).href);
 
 const realSetImmediate = globalThis.setImmediate;
 const second = 1000;
@@ -1389,12 +1390,15 @@ test('the screw is drawn once, as one symbol with a slot across the head, in the
 
 test('the metal is set by the nearest data-metal, with the colours worked out on that element', () => {
   assert.ok(!/html\[data-metal/.test(tokensCss), 'the metal blocks are not tied to the html element');
-  assert.ok(/:root,\s*\[data-metal="gold"\] \{\s*--metal-1:/.test(tokensCss));
+  // gold is the page's, and the metal of a team that has no steel in Cybertron and Minimal, whatever Frame metal and the page change say
+  const goldList = ':root,\\s*\\[data-metal="gold"\\],\\s*html\\[data-style="cybertron"\\]:not\\(\\.metal-steel\\),\\s*html\\[data-style="cybertron"\\]:not\\(\\.metal-steel\\) \\[data-metal\\],'
+    + '\\s*html\\[data-style="minimal"\\]:not\\(\\.metal-steel\\),\\s*html\\[data-style="minimal"\\]:not\\(\\.metal-steel\\) \\[data-metal\\] \\{\\s*';
+  assert.ok(new RegExp(goldList + '--metal-1:').test(tokensCss));
   assert.ok(/\[data-metal="silver"\] \{\s*--metal-1:/.test(tokensCss));
   // the variables made from the metal are made on every element that sets one, or an area would keep the page's
   assert.ok(/:root,\s*\[data-metal\] \{\s*--edge-rim: var\(--metal-rim\);\s*--edge-glint: var\(--metal-glint\);\s*--edge-flat: var\(--metal-flat\);/.test(tokensCss));
   assert.ok(/\[data-metal="silver"\] \{\s*--edge-face: url\(#edge-silver\);/.test(tokensCss));
-  assert.ok(/:root,\s*\[data-metal="gold"\] \{\s*--edge-face: url\(#edge-gold\);/.test(tokensCss));
+  assert.ok(new RegExp(goldList + '--edge-face: url\\(#edge-gold\\);').test(tokensCss));
 
   // the gradients the edges use are drawn for gold in index.html and copied for silver by plate.js
   ['edge-gold', 'edge-ridge-gold', 'edge-shade-gold'].forEach(id => {
@@ -1437,7 +1441,7 @@ test('makeSilverGradients copies each gold gradient once, with silver names and 
   }
 });
 
-// The rivets and the stamped ids that only the Original style shows (core/plate.js, base.css)
+// The rivets that only the Original style shows (core/plate.js, base.css)
 
 // plate.js adds each frame's shapes to a hidden group of the page, once. A page with only
 // that group stands in for it.
@@ -1481,7 +1485,6 @@ function screwCenters(svg) {
 const rivetFrames = {
   grid1: {
     make: () => plateModule.areaMarkup('grid1'),
-    number: '01',
     height: 708,
     edges: [
       { name: 'left', x: 4, from: 68, to: 704, half: 'a' },
@@ -1492,7 +1495,6 @@ const rivetFrames = {
   },
   countdown: {
     make: () => plateModule.plateMarkup('countdown'),
-    number: '02',
     height: 320,
     edges: [
       { name: 'left', x: 4, from: 52, to: 316, half: 'a' },
@@ -1502,7 +1504,6 @@ const rivetFrames = {
   },
   grid2: {
     make: () => plateModule.areaMarkup('grid2'),
-    number: '03',
     height: 372,
     edges: [
       { name: 'left', x: 4, from: 52, to: 368, half: 'a' },
@@ -1608,51 +1609,30 @@ test('the rivets of a frame are one path for each half and one for each bar of i
   });
 });
 
-test('the frame of an alert and of an announcement has no rivets and no id', () => {
+test('the frame of an alert and of an announcement has no rivets', () => {
   withPlatePage(() => {
     [plateModule.frameMarkup(), plateModule.frameMarkup({ red: true })].forEach(markup => {
       assert.equal(markup.includes('rivets'), false);
-      assert.equal(markup.includes('plate-id'), false);
     });
   });
 });
 
-test('each frame has one stamped id, numbered 01 for the large panel, 02 for the countdown and 03 for the small panel, in the bottom right corner and clear of the screw', () => {
+test('no frame has a stamped id: nothing in the markup, in the shapes, in frame.js or in base.css is left of the HP-01, HP-02 and HP-03 that Original had', () => {
   withPlatePage(() => {
     Object.keys(rivetFrames).forEach(name => {
-      const frame = rivetFrames[name];
-      const markup = frame.make();
-      const spans = markup.match(/<span class="plate-id"[^>]*><\/span>/g) || [];
-      assert.equal(spans.length, 1, name + ' has one id');
-
-      const found = /data-part="plate-id" data-number="(\d\d)" style="left: (\d+)px; top: (\d+)px; width: (\d+)px;"/.exec(spans[0]);
-      assert.ok(found, name + ': the id has its number and its place');
-      assert.equal(found[1], frame.number);
-      const box = { left: Number(found[2]), top: Number(found[3]), width: Number(found[4]), height: 20 };
-
-      // the whole box is on the plate, above the bottom line of the frame, which is 8px thick either side of it
-      const bottomLine = frame.edges.filter(edge => edge.name === 'bottom')[0].y;
-      assert.ok(box.top >= 0 && box.left >= 0, name + ': inside the panel');
-      assert.ok(box.top + box.height <= bottomLine - 8, name + ': above the bottom line of the frame');
-
-      // in the bottom right corner: nearer the right end than the left and in the lower part
-      const right = frame.edges.filter(edge => edge.name === 'bottom')[0].to;
-      assert.ok(box.left + box.width <= right, name + ': left of the foot of the cut corner');
-      assert.ok(box.left + box.width > right - 60, name + ': at the right end of the bottom edge');
-      assert.ok(bottomLine - (box.top + box.height) < 30, name + ': near the bottom');
-
-      // clear of the screws by their shadow
-      const parts = frameParts(markup);
-      screwCenters(parts.a).concat(screwCenters(parts.b)).forEach(screw => {
-        const nearX = Math.max(box.left, Math.min(screw[0], box.left + box.width));
-        const nearY = Math.max(box.top, Math.min(screw[1], box.top + box.height));
-        assert.ok(Math.hypot(screw[0] - nearX, screw[1] - nearY) >= 29, name + ': the id is under the screw at ' + screw);
-      });
+      const markup = rivetFrames[name].make();
+      assert.equal(/plate-id|data-number|HP-0/.test(markup), false, name + ' has no id');
     });
   });
+
+  const plateCode = fs.readFileSync(path.join(dashboardFolder, 'core/plate.js'), 'utf8').replace(/\/\/[^\n]*/g, '');
+  assert.equal(/idMarkup|idWidth|idHeight|idFoot|number: '0\d'/.test(plateCode), false, 'plate.js draws no id and has no number for one');
+  assert.equal(/plate-id/.test(fs.readFileSync(path.join(dashboardFolder, 'frame.js'), 'utf8')), false, 'frame.js has no line for one');
+  assert.equal(/plate-id|team-initials/.test(baseCss), false, 'and base.css has no rule for one');
+  assert.equal(/initialsProperty|teamInitials|team-initials/.test(fs.readFileSync(path.join(dashboardFolder, 'core/teams.js'), 'utf8')), false, 'and core/teams.js writes no initials');
 });
 
-test('base.css draws the rivets and the ids only while the style is Original, the id is 20px and dim, and no other stylesheet draws either, apart from the one that shows the rivets on Minimal\'s own frames', () => {
+test('base.css draws the rivets only while the style is Original, and no other stylesheet draws them, apart from the one that shows the rivets on Minimal\'s own frames', () => {
   const css = baseCss.replace(/\/\*[\s\S]*?\*\//g, '');
   const rule = selector => {
     const found = new RegExp('(?:^|\\n)' + selector.replace(/[.\[\]="]/g, '\\$&') + ' \\{([^}]*)\\}').exec(css);
@@ -1660,18 +1640,12 @@ test('base.css draws the rivets and the ids only while the style is Original, th
     return found[1];
   };
 
-  assert.ok(/display: none;/.test(rule('.rivets')) && /display: none;/.test(rule('.plate-id')), 'hidden unless a style shows them');
+  assert.ok(/display: none;/.test(rule('.rivets')), 'hidden unless a style shows them');
   assert.ok(/display: inline;/.test(rule('html[data-style="original"] .rivets')));
-  assert.ok(/display: block;/.test(rule('html[data-style="original"] .plate-id')));
-  assert.equal((css.match(/\.rivets|\.plate-id/g) || []).length, 5, 'no other rule in base.css names them');
+  assert.equal((css.match(/\.rivets/g) || []).length, 2, 'no other rule in base.css names them');
   assert.ok(/stroke-width: 2px;/.test(rule('.rivets')) && /fill: var\(--screw-mid\);/.test(rule('.rivets')) && /stroke: var\(--screw-rim\);/.test(rule('.rivets')), 'steel with a dark rim');
 
-  const id = rule('.plate-id');
-  assert.ok(/font: 700 20px\/1 var\(--font-display\);/.test(id), 'the id is 20px');
-  assert.ok(/opacity: \.3;/.test(id), 'and dim');
-  assert.ok(/position: absolute;/.test(id) && /pointer-events: none;/.test(id));
-  assert.ok(css.includes('.plate-id::after { content: var(--team-initials, "HP") "-" attr(data-number); }'), 'the letters are the team\'s, and the number is the frame\'s');
-  assert.equal(/animation|transition|filter|shadow|blur/.test(id + rule('.rivets')), false, 'static, with no effect');
+  assert.equal(/animation|transition|filter|shadow|blur/.test(rule('.rivets')), false, 'static, with no effect');
 
   // the other stylesheets leave them alone, apart from frame.css, which brings them in and takes them away with the frame,
   // and styles/minimal.css, which shows the rivets on the frames Minimal draws with them (docs/layouts.md, "Frames")
@@ -1679,31 +1653,29 @@ test('base.css draws the rivets and the ids only while the style is Original, th
   const walk = folder => fs.readdirSync(folder, { withFileTypes: true }).forEach(entry => {
     const full = path.join(folder, entry.name);
     if (entry.isDirectory()) { if (!['fonts', 'data', 'assets'].includes(entry.name)) walk(full); }
-    else if (entry.name.endsWith('.css') && !['base.css', 'frame.css'].includes(entry.name) && /rivets|plate-id/.test(fs.readFileSync(full, 'utf8'))) others.push(path.relative(dashboardFolder, full));
+    else if (entry.name.endsWith('.css') && !['base.css', 'frame.css'].includes(entry.name) && /rivets/.test(fs.readFileSync(full, 'utf8'))) others.push(path.relative(dashboardFolder, full));
   });
   walk(dashboardFolder);
   assert.deepEqual(others, ['styles/minimal.css'], 'a style or theme that draws or hides them');
   const minimalCss = fs.readFileSync(path.join(dashboardFolder, 'styles/minimal.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
-  assert.deepEqual(minimalCss.match(/[^\n]*(\.rivets|\.plate-id)[^\n]*/g), ['html[data-style="minimal"] .rivets { display: inline; }'], 'Minimal shows the rivets and has no id');
+  assert.deepEqual(minimalCss.match(/[^\n]*(\.rivets)[^\n]*/g), ['html[data-style="minimal"] .rivets { display: inline; }'], 'Minimal shows the rivets');
 });
 
-test('the rivets and the id come in after the lines are drawn, go with the frame in a page change, and are left out of the mechanical change with the plates', () => {
+test('the rivets come in after the lines are drawn, and go with the frame in a page change', () => {
   const css = frameCss.replace(/\/\*[\s\S]*?\*\//g, '');
 
-  const arrival = /\[data-motion="full"\] \.area\[data-state="in"\] \[data-part="rivets"\],\s*\[data-motion="full"\] \.area\[data-state="in"\] \[data-part="plate-id"\],\s*\[data-motion="full"\] \.area\[data-state="in"\] \[data-part="decor"\] \{\s*animation: fade-in var\(--time-fade-in\) linear calc\(var\(--assemble-draw\) \* var\(--pace\) \+ var\(--time-draw-in\)\) backwards;\s*\}/;
+  const arrival = /\[data-motion="full"\] \.area\[data-state="in"\] \[data-part="rivets"\],\s*\[data-motion="full"\] \.area\[data-state="in"\] \[data-part="decor"\] \{\s*animation: fade-in var\(--time-fade-in\) linear calc\(var\(--assemble-draw\) \* var\(--pace\) \+ var\(--time-draw-in\)\) backwards;\s*\}/;
   assert.ok(arrival.test(css), 'a fade, timed after the line drawing');
-  assert.ok(css.includes('[data-state="xo"] .plate-id,') && css.includes('[data-state="xi"] .plate-id,'), 'the id is hidden with the plates while the pieces are shown');
 
   // the countdown brings them in with its other parts, after its outline is drawn
   const sequence = /\n  countdown: \{([^}]*)\},/.exec(fs.readFileSync(path.join(dashboardFolder, 'frame.js'), 'utf8'))[1];
   const line = part => new RegExp("'" + part + "':\\s*\\['fade', (\\d+)\\]").exec(sequence);
   const drawn = /'outline':\s*\['draw', (\d+)\]/.exec(sequence);
-  assert.ok(line('rivets') && line('plate-id') && drawn);
+  assert.ok(line('rivets') && drawn);
   assert.ok(Number(line('rivets')[1]) >= Number(drawn[1]) + 650, 'after the outline is drawn, which takes 650 ms');
-  assert.ok(Number(line('plate-id')[1]) >= Number(line('rivets')[1]));
   withPlatePage(() => {
     const markup = plateModule.plateMarkup('countdown');
-    assert.ok(markup.includes('data-part="rivets"') && markup.includes('data-part="plate-id"'));
+    assert.ok(markup.includes('data-part="rivets"'));
   });
 });
 
@@ -2812,6 +2784,93 @@ test('a glitch that is playing when a hidden transition starts is ended at once,
     await world.advance(1500);
     assert.deepEqual(world.ends('glitch'), [30500, 34000], 'and end after their own 3 seconds');
     assert.equal(world.pageStyle.values['--crt-scale'], String(Math.round(3 / 2.7 * 1000) / 1000));
+  });
+});
+
+// frame.js: the effects that come due on their own hold still while a transition runs (core/busy.js)
+
+test('the busy flag is set while any reason holds it, and a reason is held once', () => {
+  assert.equal(busyModule.isBusy(), false, 'not busy to start with');
+  busyModule.setBusy(true);
+  assert.equal(busyModule.isBusy(), true);
+  busyModule.setBusy(true); // the same reason again is one hold
+  busyModule.setBusy(false);
+  assert.equal(busyModule.isBusy(), false);
+
+  busyModule.setBusy(true, 'swap');
+  busyModule.setBusy(true, 'hidden');
+  busyModule.setBusy(false, 'swap');
+  assert.equal(busyModule.isBusy(), true, 'the second transition still holds it');
+  busyModule.setBusy(false, 'hidden');
+  assert.equal(busyModule.isBusy(), false);
+  busyModule.setBusy(false, 'never held'); // letting go of what is not held changes nothing
+  assert.equal(busyModule.isBusy(), false);
+  busyModule.setBusy('yes'); // only true sets it
+  assert.equal(busyModule.isBusy(), false);
+});
+
+test('while a transition runs the glitch and the name effect do not start, and the ones that came due play once it is over, one late play and not a burst', async () => {
+  await inPage(async world => {
+    world.frame.setNameEffect(true, 300, 1.43);
+    world.frame.setCrt(true, 30, 2.7);
+    busyModule.setBusy(true);
+
+    try {
+      await world.advance(100 * second);
+      assert.deepEqual(world.log, [], 'the glitch has been due since 30 seconds, and the name effect since 2');
+
+      busyModule.setBusy(false);
+      await world.advance(10 * second);
+      assert.equal(world.starts('glitch').length, 1, 'one late play of the glitch');
+      assert.equal(world.starts('name').length, 1, 'and one of the name effect');
+    } finally {
+      busyModule.setBusy(false);
+    }
+  });
+});
+
+test('a glitch or a name effect that is playing when a transition starts ends at the next look, and one asked for by hand is not held', async () => {
+  await inPage(async world => {
+    world.frame.setNameEffect(false, 300, 1.43);
+    world.frame.setCrt(true, 30, 2.7);
+
+    try {
+      await world.advance(30500); // the glitch started at 30 seconds and plays until 32.7
+      assert.deepEqual(world.starts('glitch'), [30000]);
+
+      busyModule.setBusy(true);
+      await world.advance(250);
+      assert.deepEqual(world.ends('glitch'), [30750], 'ended at the next look');
+
+      world.frame.playCrt(); // by hand, as the announcement does between its lines
+      await world.advance(500);
+      assert.equal(world.starts('glitch').length, 2, 'a play asked for by hand goes ahead');
+      await world.advance(3 * second);
+      assert.equal(world.ends('glitch').length, 2);
+    } finally {
+      busyModule.setBusy(false);
+    }
+  });
+
+  await inPage(async world => {
+    world.frame.setNameEffect(true, 300, 10);
+    world.frame.setCrt(false, 240, 2.7);
+
+    try {
+      await world.advance(3000); // the name effect started at 2 seconds and lasts 10
+      assert.deepEqual(world.starts('name'), [2000]);
+      assert.equal(world.name.classList.contains('splitting'), true);
+
+      busyModule.setBusy(true);
+      await world.advance(250);
+      assert.equal(world.name.classList.contains('splitting'), false, 'the letters are put back together');
+      assert.deepEqual(world.ends('name'), [3250]);
+
+      await world.advance(20 * second);
+      assert.deepEqual(world.starts('name'), [2000], 'and it does not start again while the transition runs');
+    } finally {
+      busyModule.setBusy(false);
+    }
   });
 });
 
@@ -4536,6 +4595,36 @@ kitBlocks.forEach(entry => {
       assert.ok(starts[0] - resumed <= 25000, 'the first one is within the longest gap');
       assert.ok(starts.slice(1).every((start, place) => start - starts[place] >= 12000), 'still 12 seconds apart at least');
     });
+  });
+});
+
+test('the name glitch is silent while a transition runs, and is not saved up, but the page burst is part of the change and still plays', async () => {
+  await inKitPage(async world => {
+    world.frame.setKit(true);
+    await world.advance(40 * second);
+    const before = world.glitchStarts().length;
+    assert.ok(before >= 1);
+
+    busyModule.setBusy(true);
+    try {
+      assert.equal(world.pageData.kit, 'on', 'the kit keeps moving');
+      await world.advance(600 * second);
+      assert.equal(world.glitchStarts().length, before, 'no glitch while the transition runs');
+      assert.equal(world.name.classList.contains('glitching'), false);
+
+      world.frame.arrive(world.largeArea(), false);
+      const at = world.now;
+      await world.advance(1000);
+      assert.deepEqual(world.burstStarts().slice(-1), [at], 'the burst of a page that arrives is not held');
+    } finally {
+      busyModule.setBusy(false);
+    }
+
+    const resumed = world.now;
+    await world.advance(120 * second);
+    const starts = world.glitchStarts().slice(before);
+    assert.ok(starts.length >= 3 && starts.length <= 10, 'glitches go on at the normal gaps, and no burst of the ones missed: ' + starts.length);
+    assert.ok(starts[0] - resumed <= 25000, 'the first one is within the longest gap');
   });
 });
 

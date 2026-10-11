@@ -1,7 +1,7 @@
 // Tests for the Minimal style on the bar layout: what the order says it has (the banner with
 // the narrow war clock, the side column and its rail, the one main panel, the ticker, the steel
 // frames with the thin neon line, the 34 px cuts, four hex bolts, rivets, the weld seam, the rust
-// and the ticks), what it must not have (the stamped plate ids and any serial text, hazard
+// and the ticks), what it must not have (any serial text, hazard
 // stripes, scanlines, slashes, conduit and corner brackets, which are Cybertron's), and what it
 // shares with Cybertron. The two stylesheets are compared rule by rule, so a rule that makes the
 // two read alike has to be named here. Nothing touches the network or a browser.
@@ -111,13 +111,13 @@ function propertiesOf(file) {
 const unstyled = selector => selector.replace(/\[data-style="[a-z]+"\]/, '[style]');
 
 const minimalKinds = ['bar-main-minimal', 'bar-banner-minimal', 'bar-ticker-minimal'];
-const cybertronOnly = ['art-cybertron', 'art-hazard', 'art-conduit', 'art-slashes', 'art-brackets', 'art-seams', 'edge-neon-wide'];
+const cybertronOnly = ['art-cybertron', 'art-hazard', 'art-conduit', 'art-slashes', 'art-brackets', 'art-seams'];
 const b = layout.barGeometry;
 
 
 // What Minimal must not have
 
-test('no frame of Minimal has a stamped plate id or any serial text, a hazard stripe, conduit, slashes, brackets, plate seams, wide neon lines or a glint', async () => {
+test('no frame of Minimal has a stamped plate id or any serial text, a hazard stripe, conduit, slashes, brackets, plate seams or a glint, and its wide neon lines are the glow of a team that has it', async () => {
   await withPlatePage(() => {
     const markups = { 'bar-main-minimal': plate.areaMarkup('bar-main-minimal'), 'bar-banner-minimal': plate.plateMarkup('bar-banner-minimal'), 'bar-ticker-minimal': plate.areaMarkup('bar-ticker-minimal') };
 
@@ -127,7 +127,7 @@ test('no frame of Minimal has a stamped plate id or any serial text, a hazard st
 
       assert.equal(shape.number, undefined, kind + ' has no number for a stamped id');
       assert.deepEqual(shape.bracketLines, [], kind + ' has no brackets');
-      assert.equal(shape.wide, false, kind + ' has only the one neon line');
+      ['edge-neon-wide-2', 'edge-neon-wide-1', 'edge-neon'].forEach(name => assert.ok(countOf(markup, 'class="' + name + '"') >= 2, kind + ' has ' + name + ', and the wider ones are hidden unless the team has Glow (base.css)'));
       ['plate-id', 'data-number', 'HP-', 'glint', 'screw-shape', 'screw-shadow'].concat(cybertronOnly).forEach(text => assert.ok(!hasText(markup, text), kind + ' has no ' + text));
       ['hazard', 'conduit', 'slashes', 'brackets', 'seams'].forEach(name => assert.ok(!shape.art[name], kind + ' draws no ' + name));
     });
@@ -137,6 +137,12 @@ test('no frame of Minimal has a stamped plate id or any serial text, a hazard st
     assert.deepEqual(drawn('bar-main-minimal'), ['headerLine', 'ticks', 'weldDark', 'weldLight']);
     assert.deepEqual(drawn('bar-banner-minimal'), []);
     assert.deepEqual(drawn('bar-ticker-minimal'), []);
+
+    // The header line has its two wider lines for the glow, behind it
+    const main = plate.areaMarkup('bar-main-minimal');
+    assert.equal(countOf(main, 'class="art-glow art-glow-header-2"'), 2, 'once in the frame and once in the piece that it is cut into');
+    assert.equal(countOf(main, 'class="art-glow art-glow-header-1"'), 2);
+    assert.ok(main.indexOf('art-glow-header-2') < main.indexOf('art-glow-header-1') && main.indexOf('art-glow-header-1') < main.indexOf('art-header-line'), 'the wider lines are drawn first, so the line is over them');
   });
 
   // The option that gave a bar frame a stamped id is gone, and so is the code that drew it for a bar frame
@@ -161,7 +167,7 @@ test('the page of Minimal has no scanlines, no raised plate, no stamped id and n
     assert.equal(/content: ["'][^"']/.test(text), false, file + ' writes no text with css');
   });
 
-  // The id is shown by base.css for Original only, and no other stylesheet shows it
+  // No stylesheet shows a stamped id any more: Original had one and it was taken out
   const shown = [];
   const walk = folder => fs.readdirSync(path.join(root, folder), { withFileTypes: true }).forEach(entry => {
     const relative = folder + '/' + entry.name;
@@ -171,15 +177,15 @@ test('the page of Minimal has no scanlines, no raised plate, no stamped id and n
     rulesOf(relative).forEach(rule => rule.selectors.filter(selector => /plate-id/.test(selector) && /display: (block|inline)/.test(rule.body)).forEach(selector => shown.push(relative + ' ' + selector)));
   });
   walk('dashboard');
-  assert.deepEqual(shown, ['dashboard/base.css html[data-style="original"] .plate-id'], 'only Original shows the id');
+  assert.deepEqual(shown, [], 'no style shows an id');
 });
 
 
 // What Minimal has
 
-test('the layout of Minimal is the numbers of the order: the banner 1856 x 160 with the war clock 700 x 120 at one end, the rail 12 and the column 300, the main panel 1484 x 736, and the ticker 1856 x 72', () => {
+test('the layout of Minimal is the numbers of the order: the banner 1856 x 160 with the war clock 766 x 120 at one end, the rail 12 and the column 300, the main panel 1484 x 736, and the ticker 1856 x 72', () => {
   assert.deepEqual([b.banner.width, b.banner.height], [1856, 160]);
-  assert.deepEqual([b.war.width, b.war.height], [700, 120]);
+  assert.deepEqual([b.war.width, b.war.height], [766, 120]);
   assert.equal(b.war.x + b.war.width, b.banner.x + b.banner.width - layout.barSettings.bannerPadding, 'the clock is at the right end of the banner');
   assert.ok(b.name.x < b.war.x && b.name.x + b.name.width <= b.war.x, 'the name is at the other end');
   assert.deepEqual([b.rail.width, b.column.width], [12, 300]);
@@ -239,17 +245,17 @@ test('the frames of Minimal are the order\'s: steel with a thin neon line 10 ins
   assert.equal(properties['--style-chamfer'], '34px');
   assert.equal(properties['--style-grid-size'], '48px');
   assert.equal(properties['--style-grid-opacity'], '.07');
-  assert.equal(properties['--style-body'], 'var(--ground)', 'the plates are the team\'s background');
+  assert.equal(properties['--style-body'], 'var(--team-body)', 'the plates are the team\'s body color');
   assert.equal(properties['--style-digits'], 'var(--team-neon)', 'the digits of the war clock are the team\'s neon');
 });
 
-test('the war clock is the narrow form, 700 x 120, in Minimal and the wide form, 616 x 200, in Cybertron, and Original has neither', async () => {
+test('the war clock is the narrow form, 766 x 120, in Minimal and the wide form, 616 x 200, in Cybertron, and Original has neither', async () => {
   await withPlatePage(() => {
     const narrow = plate.warHousingMarkup('narrow');
     const wide = plate.warHousingMarkup('wide');
-    assert.ok(hasText(narrow, 'width="700" height="120" viewBox="0 0 700 120"'));
+    assert.ok(hasText(narrow, 'width="766" height="120" viewBox="0 0 766 120"'));
     assert.ok(hasText(wide, 'width="616" height="200" viewBox="0 0 616 200"'));
-    assert.ok(hasText(plate.warHousingMarkup(), 'width="700" height="120"'), 'narrow is the form when none is asked for');
+    assert.ok(hasText(plate.warHousingMarkup(), 'width="766" height="120"'), 'narrow is the form when none is asked for');
   });
 
   const minimal = withoutComments(read('dashboard/styles/minimal.css'));
@@ -267,7 +273,7 @@ test('the war clock is the narrow form, 700 x 120, in Minimal and the wide form,
 test('the mirror turns the regions of Minimal and nothing in them: the rail, the column and the main panel change places, and no rule of its style turns a frame', () => {
   const m = layout.mirrorGeometry(b);
   assert.deepEqual([m.rail.x, m.column.x, m.main.x, m.war.x], [1876, 1552, 32, 72], 'the rail and the column at the right, the main panel and the war clock at the left');
-  assert.deepEqual([m.main.width, m.main.height, m.war.width, m.war.height], [1484, 736, 700, 120], 'the same sizes');
+  assert.deepEqual([m.main.width, m.main.height, m.war.width, m.war.height], [1484, 736, 766, 120], 'the same sizes');
 
   const css = withoutComments(read('dashboard/layouts/bar.css') + read('dashboard/styles/minimal.css'));
   assert.ok(/html\.mirrored\[data-layout="bar"\] #bar-middle/.test(css), 'the row turns with the mirror');
@@ -293,11 +299,12 @@ test('Minimal and Cybertron share an explicit list of rules and of values, and e
     'html[style] #screen::before', // the grid layer: it reads --style-grid-size, which is 96 px in one and 48 px in the other
     'html[style] .area .plate .header-left', // the armor tab, which the order gives both
     'html[style] .area .plate .header-right',
-    'html[style] .team-fill, html[style] .tag-fill', // the TEAM plate and the ticker's tag in the team's plate color
+    'html[style] .team-fill, html[style] .tag-fill, html[style] .card-fill', // the TEAM plate, the ticker's tag and the cards in the team's plate color
+    'html[style] .sponsor-feature .card-fill, html[style] .photo .card-fill', // the cards that only hold a picture have no fill
     'html[style] .header svg.double-slash', // off in both, because the pictures of both have no // mark
     'html[style] .war-clock', // shown by both: the narrow form in one and the wide form in the other
   ]);
-  // The face of a plate is the same rule for the banner of each layout, and it reads --style-body, which is not the same color (below)
+  // The face of a plate is the same rule for the banner of each layout, and it reads --style-body, which is the team's body color in both
   assert.equal(bodyOf(minimal, 'html[style] .bar-banner'), '--panel-face: var(--style-body);');
   assert.equal(bodyOf(cybertron, 'html[style] .banner'), '--panel-face: var(--style-body);');
 
@@ -306,18 +313,18 @@ test('Minimal and Cybertron share an explicit list of rules and of values, and e
   const other = propertiesOf('dashboard/styles/cybertron.css');
   const same = Object.keys(one).filter(name => other[name] === one[name]).sort();
   const differ = Object.keys(one).filter(name => other[name] !== undefined && other[name] !== one[name]).sort();
-  assert.deepEqual(same, ['--style-armor-bottom', '--style-armor-top', '--style-grid-opacity', '--style-neon', '--style-pink', '--style-rust']);
-  assert.deepEqual(differ, ['--style-body', '--style-chamfer', '--style-digits', '--style-grid-size']);
+  assert.deepEqual(same, ['--style-armor-bottom', '--style-armor-top', '--style-body', '--style-grid-opacity', '--style-neon', '--style-pink', '--style-rust']);
+  assert.deepEqual(differ, ['--style-chamfer', '--style-digits', '--style-grid-size']);
   assert.deepEqual(Object.keys(other).filter(name => one[name] === undefined).sort(), ['--style-raised', '--style-scan-opacity']);
   assert.deepEqual(Object.keys(one).filter(name => other[name] === undefined), [], 'Minimal sets nothing that Cybertron does not');
 
-  // The gunmetal and the team's background are different colors, and so are the cuts and the grids
-  assert.equal(other['--style-body'], '#15181f');
+  // Both plates are the team's body color, and the cuts and the grids are different
+  assert.equal(other['--style-body'], 'var(--team-body)');
   assert.equal(other['--style-raised'], '#262b33');
   assert.equal(other['--style-chamfer'], '56px');
   assert.equal(other['--style-grid-size'], '96px');
   assert.equal(other['--style-scan-opacity'], '.035');
-  assert.equal(one['--style-body'], 'var(--ground)');
+  assert.equal(one['--style-body'], 'var(--team-body)');
   assert.equal(one['--style-chamfer'], '34px');
   assert.equal(one['--style-grid-size'], '48px');
 
@@ -327,8 +334,8 @@ test('Minimal and Cybertron share an explicit list of rules and of values, and e
   cybertronOnly.forEach(name => assert.ok(!text.minimal.includes(name), 'Minimal paints none of Cybertron\'s: ' + name));
   ['minimal', 'cybertron'].forEach(name => rulesOf('dashboard/styles/' + name + '.css').forEach(rule => rule.selectors.forEach(selector => assert.ok(selector.startsWith('html[data-style="' + name + '"]'), name + ' only has rules for itself: ' + selector))));
 
-  // The sheets that every style loads name a style in only three places: the steel in tokens.css for both, the rivets and the
-  // ids in base.css for Original, and the bolts of Cybertron's ticker in frame.css. Nothing else reaches Minimal from them.
+  // The sheets that every style loads name a style in only three places: the metal and the screws in tokens.css for both, the rivets
+  // in base.css for Original, and the bolts of Cybertron's ticker in frame.css. Nothing else reaches Minimal from them.
   const named = [];
   const walk = folder => fs.readdirSync(path.join(root, folder), { withFileTypes: true }).forEach(entry => {
     const relative = folder + '/' + entry.name;
@@ -340,10 +347,15 @@ test('Minimal and Cybertron share an explicit list of rules and of values, and e
   walk('dashboard');
   assert.deepEqual(named.filter(text => !text.endsWith('data-style="black"')).sort(), [
     'dashboard/base.css data-style="original"',
-    'dashboard/base.css data-style="original"',
     'dashboard/frame.css data-style="cybertron"',
     'dashboard/tokens.css data-style="cybertron"',
     'dashboard/tokens.css data-style="cybertron"',
+    'dashboard/tokens.css data-style="cybertron"',
+    'dashboard/tokens.css data-style="cybertron"',
+    'dashboard/tokens.css data-style="cybertron"',
+    'dashboard/tokens.css data-style="minimal"',
+    'dashboard/tokens.css data-style="minimal"',
+    'dashboard/tokens.css data-style="minimal"',
     'dashboard/tokens.css data-style="minimal"',
     'dashboard/tokens.css data-style="minimal"',
   ]);
@@ -354,7 +366,7 @@ test('docs/layouts.md says what Minimal does not have and what it shares with Cy
   const section = doc.slice(doc.indexOf('#### Minimal'), doc.indexOf('## Cybertron'));
   assert.ok(section.length > 500, 'docs/layouts.md has a section called Minimal');
 
-  ['stamped id', 'serial text', 'scanlines', 'raised plate', 'hazard stripe', 'conduit', 'slashes', 'brackets', 'plate seams', 'wide neon lines', '`//` mark'].forEach(text => assert.ok(section.includes(text), 'the section says ' + text));
+  ['serial text', 'scanlines', 'raised plate', 'hazard stripe', 'conduit', 'slashes', 'brackets', 'plate seams', 'wide neon lines', '`//` mark'].forEach(text => assert.ok(section.includes(text), 'the section says ' + text));
   assert.ok(section.includes('What Minimal and Cybertron share, and why'));
   assert.ok(section.includes('tools/test-minimal.mjs'));
   assert.ok(!/HP-0\d/.test(section) && !section.includes('| Stamped id |'), 'and no id for Minimal');

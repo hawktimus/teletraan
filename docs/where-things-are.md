@@ -135,8 +135,8 @@ editors can sign in from anywhere.
                               layout a style asks for (docs/layouts.md),
                               teams.js holds the teams, says which one the mode and the clock ask for,
                               says whether an item shows for it (showsForTeam, used by visibleItems in
-                              content.js) and puts its colors, its initials and the mirror class on the
-                              page, and team-run.js asks it once a second and moves the pages on when
+                              content.js) and puts its colors, the mirror class, its trim, its metal and its
+                              glow on the page, and team-run.js asks it once a second and moves the pages on when
                               the team changes (docs/team-on-an-item.md),
                               season.js draws the decorations of the overlay's seasonal pack in three layers
                               and hands its header mark to marks.js, which draws the picture at the right of
@@ -295,8 +295,8 @@ editors can sign in from anywhere.
                               show for which team in every panel, and the Teams settings
       test-themes.mjs         checks for which theme and overlay apply, for putting them on the page, for the
                               ticker prefix, banner line and corner art that a seasonal pack rule can carry, and
-                              for putting the team on the page: its seven colors, its initials, the mirror class
-                              and the classes of its trim
+                              for putting the team on the page: its nine colors, the mirror class,
+                              the classes of its trim, its metal and its glow
       test-layouts.mjs        checks for the layouts: which layout a theme and a style have, the numbers of the
                               sidebar and bar layouts, the mirror, that the screen is always 1920 x 1080,
                               the reload that changes layout and that it cannot loop, that the scheduler leaves
@@ -372,11 +372,13 @@ editors can sign in from anywhere.
                               frames, the stage, the banner and the ticker on their plates, the wide war clock, and
                               that the frames are drawn again when the style changes
       test-minimal.mjs        checks for Minimal on the bar layout: what the order gives it, what it must not have
-                              (stamped ids, hazard stripes, scanlines, slashes, conduit, brackets), and the list of
+                              (serial text, hazard stripes, scanlines, slashes, conduit, brackets), and the list of
                               what it shares with Cybertron
       test-team-trim.mjs      checks for the trim of a team: both teams of the sample content on a fake page, the
                               classes of every field, the frames with the other corners cut and the slanted tab
                               (the Prime frame turned across, the 60 degree line, the pieces), and the rules of trim.css
+      test-team-colors.mjs    checks for the colors, the metal and the glow of a team: both teams in each style, with the
+                              edge gradient and the body color worked out from the stylesheets, and that Prime is as it was in Original
       test-pile.mjs           checks for the end of the hidden transitions: the plan of the fall, the pile and the
                               lift (at most 40 pieces, 5 seconds, every piece back in its place), the stylesheet
                               that moves them, the cube, and the script that finds the pieces on a fake page
@@ -821,7 +823,7 @@ alone.
   in `dashboard/styles/`. Minimal has the bar layout whatever the theme says, and
   Original and Cybertron have the layout of the theme. `?style=cybertron` in the address
   shows one for a single page. The four steps for the editors are in docs/switch-the-look.md.
-- **The war clock.** The countdown drawn a second time: 700 by 120 in the banner of the bar
+- **The war clock.** The countdown drawn a second time: 766 by 120 in the banner of the bar
   layout, which is Minimal, and 616 by 200 in the countdown's place in Cybertron (the wide form,
   `warMarkup('wide')`, drawn into the countdown panel). It reads the same label and dates as the countdown
   (Dashboard Settings, Countdown tab), so there is nothing to set for it. The numbers come from
@@ -949,6 +951,7 @@ exceptions are `test-slides-script.mjs`, `test-frc-script.mjs` and `test-monday-
     node tools/test-cybertron.mjs
     node tools/test-minimal.mjs
     node tools/test-team-trim.mjs
+    node tools/test-team-colors.mjs
     node tools/test-pile.mjs
     node tools/test-person-rows.mjs
     node tools/test-photo-fit.mjs

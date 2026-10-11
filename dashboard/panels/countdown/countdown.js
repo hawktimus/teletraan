@@ -56,7 +56,7 @@ export function update(element, content) {
 }
 
 
-// The war clock. The narrow form is 700 by 120 and the wide form 616 by 200 (form is 'narrow'
+// The war clock. The narrow form is 766 by 120 and the wide form 616 by 200 (form is 'narrow'
 // or 'wide'). It has a few parts, all placed by hand (countdown.css): the housing, the label
 // and the date, the days on a plate and the hours, minutes and seconds on another. The
 // parts carry the class names that core/countdown.js looks for, and none of them is named

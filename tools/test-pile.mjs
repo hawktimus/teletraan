@@ -591,7 +591,7 @@ test('the large and the small frame, and the main panel of the bar layout, are c
     // the markup has the classes the script looks for
     const markup = plate.areaMarkup('grid1');
     assert.ok(markup.includes('class="plate shadow-layer"') && markup.includes('class="plate glint-layer"') && markup.includes('class="plate fills"') && markup.includes('class="plate piece"'));
-    assert.ok(markup.includes('class="plate-id"') || markup.includes('class="plate-id '), 'the stamped id');
+    assert.ok(!markup.includes('plate-id'), 'and no stamped id');
     assert.ok(markup.includes('<use class="screw"') && markup.includes('<use class="screw-shadow"'));
   });
 });

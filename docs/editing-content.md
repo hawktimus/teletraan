@@ -687,9 +687,11 @@ Publish. The fields:
 - Team code: needed, lowercase letters and digits, up to 10 characters, such as
   prime. The data uses it, so do not change it later.
 - Logo: optional. Leave it empty to use the shared Hawktimus bird.
-- Colors: the main, plate, accent, neon, second bright, background and text colors.
+- Colors: the main, plate, accent, neon, second bright, background, text, body and label colors.
   Each is # and six characters from 0 to 9 and A to F, such as #6C18B6, and each
   starts with the Prime color.
+- Metal: gold or steel, for the frame edges in Cybertron and Minimal. It starts on gold.
+- Glow: a switch for a soft glow round the neon lines. It starts off.
 - Mirror the layout: off to start with. On, the whole screen is flipped left to
   right while this team is showing.
 - Trim: eight choices in a box, each one of two, such as round rivets in place of
@@ -782,8 +784,9 @@ problem would touch.
   jumps sideways and the scan lines flicker. "Play the glitch" turns it on or
   off, "Seconds between glitches" is from 30 to 3600, or 0 to never play it, and
   starts at 240 (every four minutes), and "Glitch duration (seconds)" is from 0.5
-  to 10 and starts at 2.7. The announcements play the glitch between their two
-  lines whatever this tab says. The glitch used to be set in minutes. If an
+  to 10 and starts at 2.7. The glitch and the name effect wait while the screen is
+  changing from one look to another, and one that is playing then stops. The
+  announcements play the glitch between their two lines whatever this tab says. The glitch used to be set in minutes. If an
   older Studio page shows an "unknown field" box called everyMinutes, click
   Unset. The screen reads an old value of minutes as seconds until you set the
   new field.
@@ -831,7 +834,7 @@ problem would touch.
 - Styles by day: the styles the screen goes through, one for each day, in this order and then over
   again. Original and Cybertron to start with, so the screen is in Original one day and in Cybertron
   the next. Original is the screen as it is now, in the layout of its theme. Cybertron has the same
-  layout, drawn in plates of gunmetal and steel. Minimal has a banner across the top, a thin side
+  layout, drawn in plates in the team's body color with the team's metal. Minimal has a banner across the top, a thin side
   column and one main panel, whatever the theme says (docs/layouts.md, "Styles"). The day starts at
   midnight in the Time zone on the Look page, and the style of the day is picked at the first
   change of look after midnight, or when the screen starts, so a screen that restarts is in the

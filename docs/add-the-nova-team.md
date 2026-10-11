@@ -35,15 +35,23 @@ In Studio open Settings, then Teams, then Hawktimus Nova. These are the fields.
 - Team code: nova. The data uses it, so do not change it.
 - Logo: optional. A picture for the banner. Leave it empty to use the shared
   Hawktimus bird.
-- Colors: seven colors, each # and six characters from 0 to 9 and A to F, such as
-  #1F7AE0. The ones in the file are placeholders.
+- Colors: nine colors, each # and six characters from 0 to 9 and A to F, such as
+  #1B6FD6. The file starts Nova on the blue set: main #1B6FD6, plate #0E2A4A, accent #8FF0FF,
+  neon #3FD8FF, second bright #9BF0FF, background #050910, body #07131F and label #C58CFF.
   - Main color: the header tabs and the bird.
-  - Plate color: the team plate and the inset of the header tab.
+  - Plate color: the team plate, the inset of the header tab and the cards.
   - Accent color: small marks and key words.
-  - Neon color: the thin neon lines and the digits of the war clock in Minimal.
+  - Neon color: the thin neon lines, the page grid and the digits of the war clock in Minimal.
   - Second bright color: the conduit line and the corner brackets of Cybertron.
   - Background color: the color behind everything.
   - Text color: the main text.
+  - Body color: the inside of the panels in Cybertron and Minimal.
+  - Label color: the department names in rows. It is light purple on Nova, because light blue
+    is lost against the blue frame.
+- Metal: gold or steel. It is the metal of the frame edges, the bolts and the war clock in
+  Cybertron and Minimal. Nova has steel, and Prime has gold.
+- Glow: on for Nova. A soft glow round the neon lines of the frames in Cybertron and Minimal.
+  Prime has it off.
 - Mirror the layout: on to start with. The whole screen is flipped left to right
   while Nova is showing.
 - Trim: eight choices that make Nova look like its own team and not Prime in other colors.

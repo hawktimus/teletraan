@@ -17,8 +17,14 @@
        .bar-weather  144      48   the picture and the temperature, centred
      .bar-team       208      76   300 wide
      .bar-school     296     184   up to four lines of 46
-     .bar-sample     488      88   230 wide, two lines of 44, in the middle
-     .bar-logo       599     137   170 wide, at the foot of the column
+     .bar-sample     511      88   230 wide, two lines of 44, in the middle, over the top of the hawk
+     .bar-logo       511     225   280 wide, in the middle, at the foot of the column
+
+   The hawk is 280 wide and sits at the foot of the column, above the ticker. Its box starts 31 under
+   the school's (four lines end at 480), which is more than the 24 between the other blocks. There is
+   no room above it for the label of the sample content as well (the two are 313 high with 24
+   between, and the school ends at 480), so the label is drawn over the top of the hawk's box. It is
+   only there while the sample content shows.
 
    A seasonal pack can add a banner line (core/pack-extras.js) under the weather, and then
    the parts under it move down. Those places are at the end of this file (data-line).
@@ -183,12 +189,13 @@ html[data-layout="bar"] .bar-school .school-text {
    mistakes it for the team's real content. It is two lines of 44 px (SAMPLE, then
    CONTENT, which is 214 wide), solid yellow with dark text, the highest contrast on
    the screen. It is taken out of the flow (position: absolute), so showing or hiding
-   it can never move anything. bar-column.js leaves it empty when the content is the
-   editors' own, and an empty label is hidden. */
+   it can never move anything, and it is over the top of the hawk's box. bar-column.js
+   leaves it empty when the content is the editors' own, and an empty label is hidden. */
 html[data-layout="bar"] .bar-sample {
   position: absolute;
   left: 35px;
-  top: 488px;
+  top: 511px;
+  z-index: 1;
   box-sizing: border-box;
   width: 230px;
   height: 88px;
@@ -201,31 +208,31 @@ html[data-layout="bar"] .bar-sample {
 html[data-layout="bar"] .bar-sample:empty { display: none; }
 
 /* The logo is drawn on a grid 1100 wide and shrunk to fit its box: --k is the box's
-   width divided by 1100 (170 / 1100). Its parts reach past the box while the show
-   plays (see "The logo" in frame.css and .banner .logo), about 23 px each way at this
-   size, which fits in the gap of 24 under the column and the room at each side. */
+   width divided by 1100 (280 / 1100), and its height is the width times 884 over 1100.
+   Its parts reach past the box while the show plays (see "The logo" in frame.css and
+   .banner .logo), about 23 px each way at the old width of 170 and so about 38 at this
+   one. That is more than the gap of 24 under the column, so for a moment the wings may
+   pass over the top edge of the ticker, and it is less than the gap of 36 to the main
+   panel. This has been worked out and not looked at on a screen. */
 html[data-layout="bar"] .bar-logo {
-  --k: .1545;
+  --k: .2545;
   position: absolute;
-  left: 65px;
-  top: 599px;
-  width: 170px;
-  height: 137px;
+  left: 10px;
+  top: 511px;
+  width: 280px;
+  height: 225px;
 }
 
 
-/* While the pack has a banner line the 44 px of it come out of the gaps: the TEAM plate, the
-   school and the label move down, and the logo stays where it is. Nothing touches, and the
-   label is 7 px above the logo's box, not 23 (the logo's parts reach 23 px past its box
-   while the show plays, and may pass behind the label for a moment).
+/* While the pack has a banner line the 44 px of it come out of the gaps: the TEAM plate and
+   the school move down, and the logo and the label stay where they are. The school ends 13 px
+   above the hawk's box, not 31, which is the most the 44 px can leave.
 
      part            top   height
      .bar-line       192     44
      .bar-team       240     76
-     .bar-school     322    176   up to four lines of 44
-     .bar-sample     504     88 */
+     .bar-school     322    176   up to four lines of 44 */
 html[data-layout="bar"] .bar-column[data-line="on"] .bar-line { display: block; }
 html[data-layout="bar"] .bar-column[data-line="on"] .bar-team { top: 240px; }
 html[data-layout="bar"] .bar-column[data-line="on"] .bar-school { top: 322px; height: 176px; }
 html[data-layout="bar"] .bar-column[data-line="on"] .bar-school .school-text { line-height: 44px; }
-html[data-layout="bar"] .bar-column[data-line="on"] .bar-sample { top: 504px; }

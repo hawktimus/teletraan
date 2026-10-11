@@ -6,7 +6,8 @@
 //
 // The two starting teams are in docs/seed/teams.ndjson. The starting colors of
 // a new team are the Prime ones, so a team that is typed in by hand has
-// colors that work until they are changed. The trim starts the same way: eight choices in the
+// colors that work until they are changed, and so do the metal and the glow, which come
+// right after the Colors box. The trim starts the same way: eight choices in the
 // Trim box that make a team look like itself beyond its colors and the mirror (teamTrim in
 // dashboard/config.js, and "Team trim" in docs/layouts.md). The first choice of each is the one
 // Prime has, and a team made before the trim existed has none stored and reads as Prime.
@@ -32,6 +33,9 @@ const trimChoices = {
   tickerLabel: [{ title: 'Plate', value: 'plate' }, { title: 'Bar', value: 'bar' }],
   countAccent: [{ title: 'Red', value: 'red' }, { title: 'Neon', value: 'neon' }],
 };
+
+// The values are the names in teamMetals in dashboard/config.js
+const metalChoices = [{ title: 'Gold', value: 'gold' }, { title: 'Steel', value: 'steel' }];
 
 function trimField(name, title, description) {
   const list = trimChoices[name];
@@ -118,13 +122,31 @@ export default defineType({
       description: 'The colors of the team on the screen. Each is # and six characters from 0 to 9 and A to F, such as #6C18B6.',
       fields: [
         colorField('primary', 'Main color', 'The main color of the team, for header tabs and the bird.', '#6C18B6'),
-        colorField('plate', 'Plate color', 'The color of the team plate and of the header inset.', '#3B2A7A'),
+        colorField('plate', 'Plate color', 'The color of the team plate, the header inset and the cards.', '#3B2A7A'),
         colorField('accent', 'Accent color', 'The accent, for small marks and key words.', '#FACA2A'),
-        colorField('neon', 'Neon color', 'The bright color of thin lines and clock digits.', '#35F0FF'),
-        colorField('pink', 'Second bright color', 'A second bright color, for thin lines and small marks.', '#FF2E8C'),
+        colorField('neon', 'Neon color', 'The bright color of thin lines, the page grid and clock digits.', '#FACA2A'),
+        colorField('pink', 'Second bright color', 'A second bright color, for the conduit lines and small marks.', '#B23CFF'),
         colorField('background', 'Background color', 'The color behind everything, such as the page and the banner.', '#09060F'),
         colorField('text', 'Text color', 'The color of the main text.', '#FFFFFF'),
+        colorField('body', 'Body color', 'The color inside the panels in Cybertron and Minimal.', '#1A0F2E'),
+        colorField('label', 'Label color', 'The color of department names in rows, such as the left column of Milestones and Progress.', '#FACA2A'),
       ],
+    }),
+    defineField({
+      name: 'metal',
+      title: 'Metal',
+      type: 'string',
+      description: 'The metal of the frame edges, the bolts and the war clock in Cybertron and Minimal. In Original, steel takes the place of gold and silver.',
+      options: { list: metalChoices, layout: 'radio', direction: 'horizontal' },
+      initialValue: 'gold',
+      validation: Rule => Rule.valid(metalChoices.map(item => item.value)).error('Pick gold or steel.'),
+    }),
+    defineField({
+      name: 'glow',
+      title: 'Glow',
+      type: 'boolean',
+      description: 'Turn this on to put a soft glow round the neon lines of the frames in Cybertron and Minimal.',
+      initialValue: false,
     }),
     defineField({
       name: 'mirror',

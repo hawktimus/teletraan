@@ -265,9 +265,8 @@ svg [data-fx] { transform-box: fill-box; }
 [data-motion="full"] .area[data-state="in"] [data-slat] {
   animation: slat-in calc(.5s * var(--pace)) var(--ease-turn) calc((1s + var(--n) * 90ms) * var(--pace)) both;
 }
-/* the rivets and the id fade in once the lines have been drawn, and so does the decoration of a bar frame */
+/* the rivets fade in once the lines have been drawn, and so does the decoration of a bar frame */
 [data-motion="full"] .area[data-state="in"] [data-part="rivets"],
-[data-motion="full"] .area[data-state="in"] [data-part="plate-id"],
 [data-motion="full"] .area[data-state="in"] [data-part="decor"] {
   animation: fade-in var(--time-fade-in) linear calc(var(--assemble-draw) * var(--pace) + var(--time-draw-in)) backwards;
 }
@@ -479,13 +478,11 @@ html[data-style="cybertron"] .area[data-area="ticker"] .screw { animation-name: 
   will-change: transform, opacity;
 }
 [data-motion="full"] .area[data-change="mechanical"][data-state="xo"] .fills,
-[data-motion="full"] .area[data-change="mechanical"][data-state="xo"] .plate-id,
 [data-motion="full"] .area[data-change="mechanical"][data-state="xo"] [data-part="frame-a"],
 [data-motion="full"] .area[data-change="mechanical"][data-state="xo"] [data-part="frame-b"],
 [data-motion="full"] .area[data-change="mechanical"][data-state="xo"] [data-part="shadow-a"],
 [data-motion="full"] .area[data-change="mechanical"][data-state="xo"] [data-part="shadow-b"],
 [data-motion="full"] .area[data-change="mechanical"][data-state="xi"] .fills,
-[data-motion="full"] .area[data-change="mechanical"][data-state="xi"] .plate-id,
 [data-motion="full"] .area[data-change="mechanical"][data-state="xi"] [data-part="frame-a"],
 [data-motion="full"] .area[data-change="mechanical"][data-state="xi"] [data-part="frame-b"],
 [data-motion="full"] .area[data-change="mechanical"][data-state="xi"] [data-part="shadow-a"],

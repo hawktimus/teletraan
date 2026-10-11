@@ -8,7 +8,8 @@
   "teams": [
     {
       "code": "prime", "name": "Hawktimus Prime", "shortName": "PRIME", "number": "3229",
-      "colors": { "primary": "#6C18B6", "plate": "#3B2A7A", "accent": "#FACA2A", "neon": "#35F0FF", "pink": "#FF2E8C", "background": "#09060F", "text": "#FFFFFF" },
+      "colors": { "primary": "#6C18B6", "plate": "#3B2A7A", "accent": "#FACA2A", "neon": "#FACA2A", "pink": "#B23CFF", "background": "#09060F", "text": "#FFFFFF", "body": "#1A0F2E", "label": "#FACA2A" },
+      "metal": "gold", "glow": false,
       "mirror": false,
       "bolts": "hex", "cornerCut": "tl-br", "headerNotch": "step", "grid": "lines",
       "logoPose": "auto", "nameStyle": "solid", "tickerLabel": "plate", "countAccent": "red",
@@ -16,7 +17,8 @@
     },
     {
       "code": "nova", "name": "Hawktimus Nova", "shortName": "NOVA", "number": "3230",
-      "colors": { "primary": "#1F7AE0", "plate": "#1E3A6E", "accent": "#9BF0FF", "neon": "#FF2E8C", "pink": "#35F0FF", "background": "#060D1A", "text": "#FFFFFF" },
+      "colors": { "primary": "#1B6FD6", "plate": "#0E2A4A", "accent": "#8FF0FF", "neon": "#3FD8FF", "pink": "#9BF0FF", "background": "#050910", "text": "#FFFFFF", "body": "#07131F", "label": "#C58CFF" },
+      "metal": "steel", "glow": true,
       "mirror": true,
       "bolts": "round", "cornerCut": "tr-bl", "headerNotch": "slant", "grid": "dots",
       "logoPose": "flight", "nameStyle": "outline", "tickerLabel": "bar", "countAccent": "neon",

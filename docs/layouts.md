@@ -17,7 +17,8 @@ three:
   whatever theme is on (see "The bar layout").
 
 Original and Cybertron are the two styles that have the layout of their theme. Cybertron
-draws the same arrangement as Original in plates of gunmetal and steel (see "Cybertron").
+draws the same arrangement as Original in plates in the team's body color, with the metal of the team for
+their edges (see "Cybertron" and "Team colors, metal and glow").
 
 A team with Mirror the layout switched on turns the standard and the bar layout left
 to right (see "The mirror"). The sidebar layout is not turned. Every layout is placed in
@@ -461,8 +462,8 @@ run the tests.
 | Part | x | y | width | height |
 |------|---|---|-------|--------|
 | Banner | 32 | 32 | 1856 | 160 |
-| Name slot | 72 | 32 | 1052 | 160 |
-| War clock slot | 1148 | 52 | 700 | 120 |
+| Name slot | 72 | 32 | 986 | 160 |
+| War clock slot | 1082 | 52 | 766 | 120 |
 | Row | 32 | 216 | 1856 | 736 |
 | Rail | 32 | 216 | 12 | 736 |
 | Side column | 68 | 216 | 300 | 736 |
@@ -478,7 +479,7 @@ y 0  +--------------------------------------------------------------------+
      |                          margin 32                                 |
   32 |   +------------------------------------------------------------+   |
      |   | BANNER 1856 x 160                                          |   |
-     |   | NAME slot 1052 wide          war clock slot 700 x 120      |   |
+     |   | NAME slot 986 wide           war clock slot 766 x 120      |   |
  192 |   +------------------------------------------------------------+   |
      |         row gap 24                                                 |
  216 |   +-+  +-------+  +-------------------------------------------+   |
@@ -507,15 +508,15 @@ panel may show any topic.
 ### The banner
 
 `panels/bar-banner` draws it into `#region-banner`. The team name is at one end, one
-line at the heading size (96 px), in a slot 1052 wide: HAWKTIMUS PRIME is 985 wide
+line at the heading size (96 px), in a slot 986 wide: HAWKTIMUS PRIME is 984.6 wide
 at that size, and a longer name squeezes its letters together, as the banner's name
-does, so the war clock never moves. The war clock's slot is at the other end, 700 by
+does, so the war clock never moves. The war clock's slot is at the other end, 766 by
 120, in the middle of the banner's height, and the war clock is drawn in it (see "The war
 clock"). Both are 40 in from the ends of the banner, with 24 between them.
 
 ### The war clock
 
-The war clock is the countdown drawn a third time, 700 by 120, in the banner's slot. It has
+The war clock is the countdown drawn a third time, 766 by 120, in the banner's slot. It has
 the same source as the countdown in the standard layout and in the sidebar: the dates, the
 labels and the second tick, all from Dashboard Settings (`core/countdown.js` works them out,
 and `startCountdown` is given `{ war: true }`). Only the look is its own. The code is in
@@ -536,15 +537,15 @@ by hand, counted from the top left corner of the housing:
 | Part | Top | Height | Left | Width | What it holds |
 |------|-----|--------|------|-------|---------------|
 | `.war-status` | 46 | 10 | 28 | 10 | the red square, which is `--danger` |
-| `.war-lines` | 37 | 56 | 46 | 169 | the label in capitals, 24 px with the letters spaced, and under it the date in the same size, a line of 28 each |
-| `.war-days-plate` | 14 | 92 | 223 | 176 | the days at 76 px and DAYS beside them at 24 px |
-| `.war-time-plate` | 14 | 92 | 414 | 250 | the hours, minutes and seconds at 48 px, with HRS, MIN and SEC under them at 20 px, in three cells of 80 with a bar of 3 px between two cells |
+| `.war-lines` | 37 | 56 | 46 | 158 | the label in capitals, 24 px with the letters spaced, and under it the date in the same size, a line of 28 each |
+| `.war-days-plate` | 14 | 92 | 212 | 176 | the days at 76 px and DAYS beside them at 24 px |
+| `.war-time-plate` | 14 | 92 | 396 | 334 | the hours, minutes and seconds at 72 px, with HRS, MIN and SEC under them at 24 px, in three cells of 108 with a bar of 3 px between two cells |
 
 The plates are `#0c0b09` with a 3 px border of `#2b2a26` and a gradient inside, from a faint
 highlight at the top to a shade at the foot. The digits are the team's neon in Minimal, and amber
 (`#ffb327`) in Cybertron, which is `--style-digits`. The date, DAYS and the small labels are a little
 fainter. The rivets are 5 px, in the corners, 3 px clear of the plates. The labels, 20 and 24 px,
-are text under 44 px, which only the war clock and the stamped ids may have. The list is in
+are text under 44 px, which only the war clock may have. The list is in
 `tools/test-layouts.mjs`.
 
 **What it shows.** The label is the label from Dashboard Settings in capitals, with no IN, and the
@@ -564,10 +565,19 @@ together and DAYS .03 em, with 2 px between the days and DAYS. The 3 counts that
 (69, 96 and 99) are wider than the plate by 1.4 px at the most, shared by both sides, and the
 plate cuts off what is outside it. Three digits at 76 px would be 199 with DAYS, so a count of
 100 or more is drawn at 48 px, like the time, and the widest of those, 999, is 166. The widest
-pair of time digits at 48 px is 70 wide in its box of 76. KICKOFF at 24 px with its spaced letters
-is 128 wide and ROLLOUT is 137, in the 169 of the label. COUNTDOWN at 20 px is 155. A label of up
+pair of time digits at 72 px is 105 wide in its box of 106 and its cell of 108, and HRS, MIN and
+SEC at 24 px with their spaced letters are up to 58. The digits and the label are 58 and 26 high
+in the 86 inside the border of the plate. KICKOFF at 24 px with its spaced letters
+is 128 wide and ROLLOUT is 137, in the 158 of the label. COUNTDOWN at 20 px is 155. A label of up
 to 12 characters that is wider than the line is cut off with an ellipsis, as the standard
 countdown's is. This has been worked out from the font and not looked at on a screen.
+
+**Why 766.** The time plate had digits of 48 px and labels of 20, which were hard to read from across the
+room. At 72 px the digits of the time are 105 wide, and three cells of them need a plate of 334, where
+the plate was 250. The room for it comes from the name: the slot of the name is 1052 wide at 700 and
+HAWKTIMUS PRIME needs 984.6, so the war clock grows until the name has 1.4 px to spare, which is 766. The label block is
+11 px narrower and the gaps between the three parts are 8, to make up the rest. A name longer than
+HAWKTIMUS PRIME squeezes its letters as it always did.
 
 **The mirror.** The slot is at the other end of the banner when the layout is mirrored, and the
 war clock in it is the same picture: the label block at the left, then the days, then the time.
@@ -589,32 +599,39 @@ are in `bar-column.css`, and `node tools/test-layouts.mjs` fails if they differ.
 | `.bar-weather` | 144 | 48 | 0 | 300 | the weather picture (48 px) and the temperature (44 px), centred |
 | `.bar-team` | 208 | 76 | 0 | 300 | the TEAM plate, as wide as the column |
 | `.bar-school` | 296 | 184 | 0 | 300 | the school, in up to four lines of 46 px |
-| `.bar-sample` | 488 | 88 | 35 | 230 | the SAMPLE CONTENT label, only while the sample content is on, in two lines of 44 px |
-| `.bar-logo` | 599 | 137 | 65 | 170 | the animated logo, at the foot of the column |
+| `.bar-sample` | 511 | 88 | 35 | 230 | the SAMPLE CONTENT label, only while the sample content is on, in two lines of 44 px, over the top of the hawk's box |
+| `.bar-logo` | 511 | 225 | 10 | 280 | the animated logo, the hawk, at the foot of the column |
 
 The widest time (10:59 at 84 px is 245 wide) with PM (71 wide) is 316, and the
 column is 300, so the letters of the time are 5 px closer together (297). The TEAM
 plate is 300 wide, and the words TEAM 3229 fit it at 44 px. A five digit number is
-wider than the plate allows beside its cut corner. The logo's parts reach about 23 px
-past its box while the show plays, which fits in the 24 between the column and the
-ticker. All text is 44 px or more.
+wider than the plate allows beside its cut corner.
+
+The hawk is 280 wide and 225 high (the width times 884 over 1100, and `--k` is .2545), in the
+middle of the column and at its foot, so it sits above the ticker and not over the main panel. Its
+box starts 31 under the school's box, which is more than the 24 between the other blocks. The column
+has no room above it for the label of the sample content as well (the label is 88 high, the school
+ends at 480 and the hawk starts at 511), so the label is drawn over the top of the hawk's box, and
+only while the sample content shows. The hawk's parts reach about 23 px past its box at the old
+width of 170 while the show plays, so about 38 px at this width. That is less than the 36 between
+the column and the main panel at the side and more than the 24 under the column, so for a moment
+the wings may pass over the top edge of the ticker. This has been worked out from the numbers and
+not looked at on a screen. All text is 44 px or more.
 
 A seasonal pack can add a banner line (docs/seasonal-packs.md, "Banner line"). It is
 `.bar-line`, one line of 44 px under the weather, centred and cut off with an ellipsis, and about
 10 characters of it fit in 300 px. While there is a line, `bar-column.js` sets `data-line` on the
-panel to `on`, and the parts under it move down. The 44 px come out of the gaps, and the logo stays
-where it is. These are the places while the line is on:
+panel to `on`, and the parts under it move down. The 44 px come out of the gaps, and the hawk and the
+label stay where they are. These are the places while the line is on:
 
 | Part | Top | Height | Without a line |
 |------|-----|--------|----------------|
 | `.bar-line` | 192 | 44 | not there |
 | `.bar-team` | 240 | 76 | top 208 |
 | `.bar-school` | 322 | 176 | top 296, height 184 |
-| `.bar-sample` | 504 | 88 | top 488 |
 
-The school keeps its four lines, now of 44 px instead of 46. The label ends 7 px above the logo's
-box instead of 23, so while the show plays the logo's parts may pass behind the label for a moment.
-The label is only there while the sample content shows, so this happens only then.
+The school keeps its four lines, now of 44 px instead of 46. It ends 13 px above the hawk's box
+instead of 31, which is the most that the 44 px of the line leave.
 
 ### The width of the main panel
 
@@ -694,8 +711,8 @@ screen between two equal margins, so each is its own mirror.
 | Mirrored rail | 1876 | 216 | 12 | 736 |
 | Mirrored side column | 1552 | 216 | 300 | 736 |
 | Mirrored main panel | 32 | 216 | 1484 | 736 |
-| Mirrored name slot | 796 | 32 | 1052 | 160 |
-| Mirrored war clock slot | 72 | 52 | 700 | 120 |
+| Mirrored name slot | 862 | 32 | 986 | 160 |
+| Mirrored war clock slot | 72 | 52 | 766 | 120 |
 
 The standard layout is mirrored by `styles/original.css`, as the same idea: the two
 columns change places, the banner's logo goes to the far end and its clock to the
@@ -721,35 +738,30 @@ the bar layout (`layouts/bar.css`), and the team gives the colors.
 | File | What it has |
 |------|-------------|
 | `styles/original.css` | no custom properties, and the mirror of the standard layout, which Cybertron has too |
-| `styles/cybertron.css` | `--style-body` and `--style-raised` (the gunmetal plates), the two colors of the armor tab, the 56 px chamfer, the neon and pink of the team, amber digits and rust for the war clock, a 96 px grid at .07 and scanlines at .035. Then the rules that paint the page background, the plates and the decoration of the frames, and lay out the stage, the banner and the ticker for their plates (see "Cybertron") |
-| `styles/minimal.css` | the 34 px chamfer, the neon and pink of the team, digits in the team's neon, the team's background for the plates, the two colors of the armor tab, the rust, a 48 px grid at .07 and no scanlines. Then the rules that paint the grid, the plates, the rail and the rivets that Original also has, take the `//` mark off the headers, and paint what only Minimal draws on a frame (see "Minimal") |
+| `styles/cybertron.css` | `--style-body` (the team's body color) and `--style-raised`, the two colors of the armor tab, the 56 px chamfer, the neon and pink of the team, amber digits and rust for the war clock, a 96 px grid at .07 and scanlines at .035. Then the rules that paint the page background, the plates and the decoration of the frames, and lay out the stage, the banner and the ticker for their plates (see "Cybertron") |
+| `styles/minimal.css` | the 34 px chamfer, the neon and pink of the team, digits in the team's neon, the team's body color for the plates, the two colors of the armor tab, the rust, a 48 px grid at .07 and no scanlines. Then the rules that paint the grid, the plates, the rail and the rivets that Original also has, take the `//` mark off the headers, and paint what only Minimal draws on a frame (see "Minimal") |
 
 The style goes on the page at the same moment as a new theme (`theme-apply.js`
 carries it in the look), and a style with another layout reloads the page once, with
 the guard above. The frames are drawn by `core/plate.js` and are described under "Frames"
 and "Cybertron".
 
-Original also has rivets and stamped plate ids on its frames. `core/plate.js` puts
-both in the markup of every frame that has them, and `base.css` shows them while
-`data-style` is `original`. Minimal draws the rivets on its own frames too, with the same
-code, and `styles/minimal.css` shows them there (see "Minimal"). Minimal has no stamped id:
-none of its frames has one in its markup, and neither has Cybertron's. The rivets are a row of dots, one every 90 px, along each long straight
-edge of the large frame, the small frame and the countdown. An edge under 180 px has
-none, so the cut corners and the countdown's teeth have none. The ids are `HP-01` on
-the large frame, `HP-02` on the countdown and `HP-03` on the small frame. The letters
-are the initials of the team's name (`teamInitials` in `core/teams.js`), so the Nova
-team gives `HN`, and they change with the team at the same moment as the colors. The id
-is 20 px, which is under the 44 px rule. It is the one text that may be, and the list
-is in `tools/test-layouts.mjs`. A mirrored screen has the same frames, so the same
-rivets and ids. Alerts and announcements have neither.
+Original also has rivets on its frames. `core/plate.js` puts them in the markup of every
+frame that has them, and `base.css` shows them while `data-style` is `original`. Minimal draws
+the rivets on its own frames too, with the same code, and `styles/minimal.css` shows them there
+(see "Minimal"). Cybertron's frames have none. The rivets are a row of dots, one every 90 px, along
+each long straight edge of the large frame, the small frame and the countdown. An edge under 180 px has
+none, so the cut corners and the countdown's teeth have none. A mirrored screen has the same
+frames, so the same rivets. Alerts and announcements have none. No frame has a stamped id: Original
+had one at the foot of each panel (`HP-01`, `HP-02` and `HP-03`), and it was taken out.
 
 `tools/test-layouts.mjs` has one test for each style. It loads the stylesheet of the style
 with the css it overrides, which is every stylesheet `index.html` links apart from the other
 two styles, and the stylesheet of every panel. It fails when a custom property that a rule
 for that style reads has no value in those files, in a script (the numbers of the layouts,
 and the few names that a script writes) or in a fallback, and when a text is under 44 px.
-The text that may be is the explicit list: the stamped plate id, 20 px, which only Original shows,
-and for Minimal the labels of the narrow war clock, 20 and 24 px. Cybertron's wide war clock has none. A rule for
+The text that may be is the explicit list: for Minimal the labels of the narrow war clock, 20 and 24 px.
+Cybertron's wide war clock has none, and neither has Original. A rule for
 another style, or for a layout the style never has, is not looked at.
 
 ### Frames
@@ -793,17 +805,18 @@ shape and its corners, as the frames of the other layouts do, and only the regio
 can have the other two corners cut, and a header tab with one slant (see "Team trim").
 
 From the bottom up, each half of the edge is drawn like the other frames: the shadow, the
-dark rim, the steel face, the shade and the ridge. The steel is the metal in `tokens.css`
-(`--metal` tokens for `data-metal="steel"`) with its three gradients in `index.html`. Both
-styles give it to the html element and to every area, so the frame metal and the page change
-never change it, and `core/areas.js` makes no change of metal for either style. Then come the
-neon lines, on one path that is the outline 10 px inside, so they follow every corner.
+dark rim, the face, the shade and the ridge. The metal is the team's (see "Team colors, metal and
+glow"): the `--metal` tokens in `tokens.css` for steel, which a team with steel has, and for gold
+otherwise, with the three gradients of each in `index.html`. Both styles give it to the html element
+and to every area, so the frame metal and the page change never change it, and `core/areas.js`
+makes no change of metal for either style. Then come the neon lines, on one path that is the outline
+10 px inside, so they follow every corner.
 
 | Part | What it is | Where it is |
 |------|------------|-------------|
-| Neon line | 4 px, `--style-neon` | 10 px inside the edge, both styles |
-| Wide neon lines | the same path at 14 px and .25 opacity, and at 24 px and .12 | Cybertron only, and not in the flat finish |
-| Hex bolt | a hexagon 33 px wide and 38 high, with a dark rim, a silver face and a dot | at the joints: corners 1, 2, 5, 6, 7 and 0 (the ticker has 2 and 7) |
+| Neon line | 4 px, `--style-neon`, and 5 px for a team with Glow | 10 px inside the edge, both styles |
+| Wide neon lines | the same path at 12 px and .35 opacity, and at 26 px and .12 | both styles, for a team with Glow only, and not in the flat finish |
+| Hex bolt | a hexagon 33 px wide and 38 high, with a dark rim, a face in the metal of the team and a dot | at the joints: corners 1, 2, 5, 6, 7 and 0 (the ticker has 2 and 7) |
 | Armor tab | a gradient, a dark bevel, a bright line up and left, and the team's plate color inset | the header of the main panel, 664 px across at the top and slanted at the end |
 | Hazard stripe | 12 px high, slanted bars 22 px wide every 44, in the team's accent | under the header, Cybertron only |
 | Conduit | a 3 px pink line, `--style-pink` | 16 px inside the edge along the top left corner and the top, and along the bottom right corner and the bottom, and under the hazard stripe |
@@ -853,39 +866,39 @@ with the same guard (`drawnFor` and `mustReload` in `core/layout.js`). A page th
 colors, the theme or the team does not.
 
 What Minimal draws on a frame is in the same markup as the rest, and `styles/minimal.css`
-paints it. It has none of Cybertron's decoration: no wide neon lines, hazard stripe,
-conduit, slashes, brackets or plate seams. Its frames have no stamped id or any other
-serial text, and its page has no scanlines and no raised plate. The `//` mark at the right end
+paints it. It has none of Cybertron's decoration: no hazard stripe,
+conduit, slashes, brackets or plate seams, and the wide neon lines are not its own: a team with Glow
+has them in both styles. Its frames have no serial text, and its page has no scanlines and no raised plate. The `//` mark at the right end
 of a panel's header is off, as the pictures of Minimal have none and the ticks stand there.
 
 | Part | What it is | Where it is |
 |------|------------|-------------|
-| Neon line | 4 px, `--style-neon`: one neon line, with none of the wide ones | 10 px inside the edge |
+| Neon line | 4 px, `--style-neon`: one neon line, with the two wide ones hidden unless the team has Glow | 10 px inside the edge |
 | Hex bolt | the same bolt as Cybertron's | the four joints: both ends of the top left and of the bottom right cut corner |
 | Rivets | dots of 5 px radius with a dark rim, one every 90 px, as Original's | every straight edge of 180 px or more |
 | Rust | rust at the two bottom corners of every frame: an arc of 4 px, `--style-rust`, with a soft patch under it that is a radial gradient (`wear-rust` in `index.html`) | one arc on the left edge just above the step, bulging into the frame, and one on the bottom edge just before the cut corner |
 | Weld seam | a dark 3 px line with a faint light 3 px line 4 px beside it | the main panel only, at x = 1188, from under the header to just above the bottom. It is 36 px past the 1152 the pages are written for, so it crosses no text |
-| Header line | a 3 px neon line | along the foot of the header, with 39 ticks standing on it: every 18, 4 wide and 10 high, from the slanted end of the tab to the right edge |
+| Header line | a 3 px neon line, 5 px for a team with Glow, which also has the two wide lines behind it | along the foot of the header, with 39 ticks standing on it: every 18, 4 wide and 10 high, from the slanted end of the tab to the right edge |
 
 The armor tab is the same as Cybertron's, with the team's plate color inset and two colors of
-its own (`--style-armor-top` and `--style-armor-bottom`). The plates are the team's background
-color. The rust is on the steel, in the second half of the frame and in the pieces of the page
+its own (`--style-armor-top` and `--style-armor-bottom`). The plates are the team's body
+color. The rust is on the metal, in the second half of the frame and in the pieces of the page
 change that have the corners, and it comes in with the rivets once the lines are drawn. The
 flat finish leaves it off. The grid, the rivets and the rust never move. The mirror turns the
 regions and not the frames, so the same frames, rivets, rust and seam are at the same
 corners of a mirrored screen.
 
-What Minimal and Cybertron share, and why. The order gives both a steel edge with a neon line
+What Minimal and Cybertron share, and why. The order gives both a metal edge with a neon line
 inside it, hex bolts, a raised armor header with the team's plate color inset, and a grid on the
-page, and one function in `core/plate.js` draws both. So they share the steel (`tokens.css`), the
-4 px neon line, the hex bolt, the armor tab, the rule that gives a plate its face (it reads
-`--style-body`, which is gunmetal in one and the team's background in the other), the TEAM plate
-and the ticker's tag in the plate color, the hawk's outline in the team's accent, the grid layer (96 px in Cybertron and 48 px in
+page, and one function in `core/plate.js` draws both. So they share the metal (`tokens.css`), the
+4 px neon line and its glow, the hex bolt, the armor tab, the rule that gives a plate its face (it reads
+`--style-body`, the team's body color in both), the TEAM plate, the ticker's tag and the cards
+in the plate color, the hawk's outline in the team's accent, the grid layer (96 px in Cybertron and 48 px in
 Minimal, both at .07, each in its own stylesheet), the header without a `//` mark, and the war
 clock, which is the same clock in two forms. Everything else is one style's. In
 `styles/minimal.css`: the rivets, the rust, the weld seam, the header line and its ticks, the rail,
-the 34 px cuts and the plates in the team's background color. In `styles/cybertron.css`: the
-gunmetal body, the wide neon lines, the hazard stripe, the conduit, the slashes, the brackets, the
+the 34 px cuts and the digits in the team's neon. In `styles/cybertron.css`: the
+raised plate, the hazard stripe, the conduit, the slashes, the brackets, the
 plate seams, the scanlines, the 56 px cuts and the amber digits. `tools/test-minimal.mjs` lists
 what is shared, so a new shared rule fails it until the list says so.
 
@@ -899,9 +912,9 @@ panel is scaled up (see "The width of the main panel").
 Cybertron has the layout of its theme, as Original does: the banner across the top, the
 large frame on the left, the countdown over the small frame on the right and the ticker
 across the bottom, or the sidebar layout for Neon Prime. What it changes is the drawing. Every
-frame is a plate of gunmetal (`--style-body`, `#15181f`) with a steel edge, the neon of the team
-just inside the edge and two wider and fainter lines of the same neon outside it, and the
-countdown is the war clock in place of the red frame. `styles/cybertron.css` paints it and
+frame is a plate in the team's body color (`--style-body`) with the metal of the team for its edge,
+the neon of the team just inside the edge, and for a team with Glow two wider and fainter lines of the same
+neon outside it, and the countdown is the war clock in place of the red frame. `styles/cybertron.css` paints it and
 `core/plate.js` draws the four frames. The mirror turns it as it turns Original, with the same
 rules (`styles/original.css`). Nothing Cybertron draws moves of its own, apart from the arrival and the
 page change that every frame has.
@@ -959,9 +972,9 @@ frame, at 264, 408 and 552, and two on the small one, at 160 and 252), and the 1
 mechanical page change. The banner has the conduit and the brackets, and the ticker only the
 brackets, with legs of 40 and 50: it is 72 high and has no room for more. The banner and the ticker
 are one plate each, and the ticker holds still while its message changes. None of the four has
-rivets, rust or a stamped plate id. The rivets are Original's and Minimal's, the rust is Minimal's
-and the id is Original's. All of it is in the markup,
-and `styles/cybertron.css` shows it. The wide neon lines are left off in the flat finish.
+rivets or rust. The rivets are Original's and Minimal's, and the rust is Minimal's. All of it is in the markup,
+and `styles/cybertron.css` shows it. The wide neon lines are the glow of a team that has it, and they are left
+off in the flat finish.
 
 The `//` mark at the right end of a panel's header is not drawn in Cybertron (`.header
 svg.double-slash` is hidden, as the Plain look hides it). The step at the top right is where its
@@ -998,7 +1011,7 @@ The plates, the digits and the colors are the narrow clock's: `#0c0b09` with a 3
 `#2b2a26`, amber digits from `--style-digits`, a date, DAYS and labels that are a little fainter,
 orange in the last 30 days, and white with red borders in the last 7. The rivets are 5 px, one at
 each corner, clear of the plates and of the rim. The text is all 44 px or more, so the wide clock is
-not on the list of text under 44 px, which only the narrow clock and the stamped ids are on.
+not on the list of text under 44 px, which only the narrow clock is on.
 
 **What it shows.** The label is the label from Dashboard Settings in capitals, with no IN, and the
 date is at the right end of the same line, as `JAN 9`, or `NOW` for the rest of the day when the time
@@ -1334,6 +1347,53 @@ except the first a class, add the field to `normalizeTeamDocument` in `core/sani
 in `trim.css` for the class, and give the sample content and `docs/seed/teams.ndjson` the values. If the field
 changes the shape of a frame, add it to `frameTrim` in `core/teams.js` and to the names in `core/plate.js`.
 
+## Team colors, metal and glow
+
+A team sets its plates, its metal and its neon, and not only an accent, so the two teams can be told apart
+from across the room in every style. The nine colors are in the Colors box of the Team document in the Studio,
+and `core/teams.js` writes each one on the html element as a `--team-` custom property (`teams.css` starts them at
+the Prime values). The metal and the glow come after the box.
+
+| Color | Property | Prime | Nova | What it paints |
+|-------|----------|-------|------|----------------|
+| Main color | `--team-primary` | `#6C18B6` | `#1B6FD6` | header tabs and the bird, and the theme Hawktimus |
+| Plate color | `--team-plate` | `#3B2A7A` | `#0E2A4A` | the TEAM plate, the ticker's tag, the header inset and the cards |
+| Accent color | `--team-accent` | `#FACA2A` | `#8FF0FF` | small marks, key words and the hazard stripe |
+| Neon color | `--team-neon` | `#FACA2A` | `#3FD8FF` | the neon lines, the page grid at .07 and the digits of the war clock in Minimal |
+| Second bright color | `--team-pink` | `#B23CFF` | `#9BF0FF` | the conduit lines and the brackets of Cybertron |
+| Background color | `--team-background` | `#09060F` | `#050910` | the page, and the theme Hawktimus |
+| Text color | `--team-text` | `#FFFFFF` | `#FFFFFF` | the main text |
+| Body color | `--team-body` | `#1A0F2E` | `#07131F` | the inside of the panels in Cybertron and Minimal |
+| Label color | `--team-label` | `#FACA2A` | `#C58CFF` | the department names in rows |
+
+The status colors (in progress, backlog and done) are the same for both teams. A team document that has no
+Body or Label has Prime's, and one with no Metal or Glow has gold and no glow, so a team made before they existed
+looks as Prime does. The Prime background is the one it always had, `#09060F`, because Original takes its page
+color from the team and Prime must look in Original as it always has. It is the same as the `--ground` of
+`themes/hawktimus.css`, and `studio/check-schemas.mjs` holds the two together. The neon and the second bright
+color of Prime are not drawn by Original, so they could change: Prime has gold neon with a purple conduit and no
+cyan anywhere.
+
+**Metal.** Gold or steel (`teamMetals` in `config.js`). A team with steel has the class `metal-steel` on the html
+element, and `tokens.css` gives it the steel `--metal` tokens and the steel edge gradients on the html element
+and on every area, whatever Frame metal and the page change say. In Cybertron and Minimal a team with no steel
+has gold the same way. The hex bolts and the rivets read the same metal through `--screw-` tokens that those two styles set
+on the html element. In Original a team with gold changes nothing, so Prime is drawn as it always was, and a
+team with steel has steel in place of the gold and silver.
+
+**Glow.** A switch, off for Prime and on for Nova (`glowClass` in `config.js`). A team with it has the class
+`neon-glow`, and `base.css` then draws the neon line at 5 px with two wider strokes of the same color behind it, at
+12 px with .35 opacity and at 26 px with .12, on every frame edge and on the header line of Minimal. They are strokes
+and never a filter. They are in the markup of every frame and hidden unless the class is there, and the flat finish has none.
+
+**Looking at it.** `?sample=1&team=nova&style=minimal` and `?sample=1&team=prime&style=cybertron` show the four
+that differ most. `node tools/test-team-colors.mjs` works out the edge gradient and the body color for both teams
+in each style from the stylesheets, and checks that they differ.
+
+**Adding a color.** Add it to `primeTeam` in `config.js` and to `colorProperties` in `core/teams.js`, give `teams.css` the
+Prime value, add the field to `studio/schemas/team.js`, to `studio/check-schemas.mjs` and to `docs/seed/teams.ndjson`,
+and give the sample content the values. A team with none of it falls back to the Prime value in `core/sanity.js`.
+
 ## What else works in each layout
 
 - **Page changes** (slats and the mechanical change) are the same, inside the
@@ -1606,12 +1666,13 @@ and in the mirror:
 1. The cut corners are smaller: 34 on the main panel and the banner and 20 on the ticker. There
    is a bolt at both ends of the top left and of the bottom right cut corner, and none at the
    steps.
-2. There is one neon line just inside the steel, with no wider glow lines, and there is no
-   hazard stripe, conduit, slashes, brackets, plate seams or scanlines, and no `//` mark in a header.
+2. There is one neon line just inside the metal, with no wider glow lines unless the team has Glow (Nova
+   does), and there is no hazard stripe, conduit, slashes, brackets, plate seams or scanlines, and no
+   `//` mark in a header.
 3. Rivets run along the long straight edges, one every 90 px, and none along a short one.
 4. There is rust at the bottom left and the bottom right of each frame, and it holds still.
    The Flat look takes it away.
-5. There is no stamped id and no serial text anywhere. The weld seam stands to the right of the
+5. There is no stamped id and no serial text anywhere, in any style. The weld seam stands to the right of the
    pages, and it crosses no text on any large panel of the Panel order list. The ticks stand on the
    neon line at the foot of the header and do not touch the title.
 6. With the screen open, change Style in Dashboard Settings between Cybertron and Minimal. The

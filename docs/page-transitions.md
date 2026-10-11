@@ -139,8 +139,7 @@ exactly. Where a corner is turned, the corner is inside one piece.
 
 The rivets of the Original style are in the pieces too. Each bar holds the rivets that
 sit on its own line, and each rivet is in one piece only, so the dots fly away and come
-back with the frame. The stamped id is not in a piece: it is hidden while the pieces are
-shown, like the plates.
+back with the frame.
 
 The frame of the main panel in the bar layout (Minimal), and the large and the small frame of
 Cybertron, are cut into 12 pieces with the names of the large frame's pieces, so the table in
