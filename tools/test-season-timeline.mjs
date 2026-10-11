@@ -70,7 +70,7 @@ function eventsOf(events, change) {
 const event = (number, fields) => Object.assign({ key: '2027x' + number, name: 'Event ' + number, city: 'City ' + number, startDate: '2027-05-' + String(number).padStart(2, '0'), endDate: '2027-05-' + String(number).padStart(2, '0') }, fields);
 
 const rowsOf = (html, cssClass) => Array.from(html.matchAll(new RegExp('<span class="' + cssClass + '">([^<]*)</span>', 'g'))).map(match => match[1]);
-const dashes = /[–—]/;
+const dashes = /[\u2013\u2014]/;
 
 
 // The names
