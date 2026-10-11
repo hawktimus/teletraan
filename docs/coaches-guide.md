@@ -232,14 +232,15 @@ docs/calendar-filters.md, "Pinning an event".
 ## Team leads and Leadership
 
 Both panels show rows, four to a panel at the standard portrait size. A row has
-the framed photo at the left, the name beside it and the role at the right end in
-the team color.
+the framed photo at the left, the name beside it with the role under it in the team
+color and an optional line under that, and a chip at the right end. The line shows
+when a page holds three people or fewer.
 
 - Leadership shows the coaches, then the captains, then the mentors, each group in
   Order. Two coaches and two captains fill the four rows. With more people, the
   panel shows the next rows each time it comes round.
-- Team leads has a row for each subteam, in Order: the name of the lead, and the
-  subteam with LEAD after it at the right end. Twelve subteams are three panels of
+- Team leads has a row for each subteam, in Order: the name of the lead, TEAM LEAD
+  under it, and the subteam name in the chip at the right end. Twelve subteams are three panels of
   four, and the panel shows the next four each time it comes round. A subteam with
   no lead shows its own name and [lead], so a gap can be seen from across the room.
 - The photo of a lead is the Photo on its Team lead entry. An entry with no photo
@@ -247,12 +248,14 @@ the team color.
   match the row shows the silhouette. Turn off Show photo on screen on the entry
   to show the silhouette whatever Leadership has.
 
-Portrait size, percent in the Screen tab changes the photos and never the text.
-It goes from 60 to 200: 100 is the standard size and 200 is double. Above 100 the
-rows get taller, so a page holds 3 rows (to 139) or 2 (from 140), and the panels
-show the next rows each time they come round. Subteam roster stays at 100. The
-table and the way to pick a value are in docs/editing-content.md, under "Order,
-time on screen and size".
+The Portraits box in the Screen tab changes the photos and never the text. The
+Leadership portrait size and the Team leads and Roster portrait size go from 60 to
+220: 100 is a portrait that fills a row of four. Above 100 the rows get taller, so
+a page holds 3 people (to 138), 2 (to 200) or 1 (to 220), and the panels
+show the next rows each time they come round. The two sizes are set apart, and the
+Roster portrait stays at 100. Portrait shape (Square, Rounded or Circle) and Portrait
+frame (Metal, Thin line or None) are the same on all three panels. The
+table and the way to pick a value are in docs/editing-content.md, under "Portraits".
 
 ## Hidden effects by hours
 

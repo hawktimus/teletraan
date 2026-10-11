@@ -645,7 +645,7 @@ fixed length, and a variable cannot reach that:
 | Subteam spotlight | header and story 1152, name card 1096 | name card 1096 by 128 (`spotlight.js`) |
 | Sponsor feature | header and story 1152, name card 1096 | cards 1096 by 128 and 360 by 280 (`sponsor-feature.js`) |
 | Photo | header 1152 | card 1096 wide and the caption's edge at 1056 (`core/photos.js`) |
-| Leadership, Team leads | header and rows 1152 | row bars 1124 and portrait cards (`portrait.js`) |
+| Leadership, Team leads | header and rows 1152 | portrait cards, drawn at the size of the setting (`portrait.js`) |
 | Roster | header 1152, the body in a box 1096 wide, in the middle of it | portrait card 292 square |
 | Custom | header 1152, page 1096, blocks 1056 and 1034 | block cards and bars 1056 (`custom.js`) |
 

@@ -8,7 +8,7 @@ import { rotationField } from './settingsRotation.js';
 import { announcementsField, announceRequestField } from './settingsAnnouncements.js';
 import { logoFields } from './settingsLogo.js';
 import { transitionsFields } from './settingsTransitions.js';
-import { photosFields } from './settingsPhotos.js';
+import { photosFields, portraitFieldsets } from './settingsPhotos.js';
 import { nightFields } from './settingsNight.js';
 import { hiddenFields } from './settingsHidden.js';
 import { presentationsFields, presentationTestRequestField } from './settingsPresentations.js';
@@ -483,6 +483,7 @@ export default defineType({
   title: 'Dashboard Settings',
   type: 'document',
   groups: groups,
+  fieldsets: portraitFieldsets,
   fields: [
     statusBlockField(),
     teamField,

@@ -4,8 +4,9 @@
 
 import { doubleSlash } from '../../core/marks.js';
 import { makePages } from '../../core/turns.js';
+import { portraitPercentOf } from '../../core/content.js';
 import { departmentRows } from '../../core/team-leads.js';
-import { leadAddress, preloadLeadPhotos, rowLayout, rowsMarkup, rowsPerPage, watchPhotos } from '../../core/portrait.js';
+import { leadAddress, portraitLook, preloadLeadPhotos, rowLayout, rowsMarkup, rowsPerPage, watchPhotos } from '../../core/portrait.js';
 
 const nextPage = makePages(rowsPerPage);
 
@@ -14,7 +15,7 @@ export function hasContent(content) {
 }
 
 export function mount(host, content) {
-  const scale = content.settings && content.settings.portraitScale;
+  const scale = portraitPercentOf(content.settings, 'rosterPortrait');
   const page = nextPage(departmentRows(content.subteams), rowLayout(scale).rows);
   const rows = page.items.map(row => leadRow(row, content));
 
@@ -28,7 +29,7 @@ export function mount(host, content) {
         </div>
       </div>
 
-      ${rowsMarkup(rows, scale)}
+      ${rowsMarkup(rows, scale, portraitLook(content.settings))}
     </section>`;
 
   watchPhotos(host);
@@ -41,6 +42,8 @@ function leadRow(row, content) {
   return {
     name: row.name,
     role: row.role,
+    line: row.line,
+    chip: row.chip,
     address: leadAddress(row, content.people),
   };
 }

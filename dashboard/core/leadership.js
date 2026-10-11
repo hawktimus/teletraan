@@ -1,5 +1,5 @@
 // The people on the Leadership panel: the coaches first, then the captains, then
-// the mentors. The panel shows as many rows as the Portrait size leaves room for,
+// the mentors. The panel shows as many rows as the Leadership size leaves room for,
 // four at 100, and each time it comes round it shows the next rows, so everyone is
 // shown. With two coaches and two captains, which is the team, those four are one
 // page at 100.
@@ -15,6 +15,20 @@ export const roleOrder = ['coach', 'captain', 'mentor'];
 
 function roleOf(person) {
   return String(person.role || '').trim().toLowerCase();
+}
+
+// The words that can be in the chip at the right end of a row, the choices of the Group field
+export const groupNames = ['COACH', 'CAPTAIN', 'MENTOR'];
+
+// The chip of a row: the Group field when it has one of the choices, and otherwise what the role
+// says. A role with coach in it is COACH, one with mentor in it is MENTOR, and the rest are CAPTAIN.
+export function groupOf(person) {
+  const typed = String(person.group || '').trim().toUpperCase();
+  if (groupNames.includes(typed)) return typed;
+
+  const role = roleOf(person);
+  if (role.includes('coach')) return 'COACH';
+  return role.includes('mentor') ? 'MENTOR' : 'CAPTAIN';
 }
 
 // The people in a list as groups, one group for each role, in the order of

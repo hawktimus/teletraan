@@ -96,6 +96,7 @@ const contract = {
     lead: text(17),
     photo: 'image',
     showPhoto: 'boolean',
+    line: text(48),
     members: strings(12, 24),
     spotlight: 'boolean',
     spotlightHeadline: text(40),
@@ -103,7 +104,7 @@ const contract = {
     team: teamRef,
     order: 'number',
   }),
-  person: withFlags({ role: 'string', name: text(17), title: text(22), photo: 'image', showPhoto: 'boolean', team: teamRef, order: 'number' }),
+  person: withFlags({ role: 'string', name: text(17), title: text(22), line: text(48), group: 'string', photo: 'image', showPhoto: 'boolean', team: teamRef, order: 'number' }),
   team: {
     name: text(20),
     shortName: text(8),
@@ -156,6 +157,10 @@ const contract = {
     portraitScale: number(60, 200),
     photoScale: number(60, 100),
     photoFit: 'string',
+    leadershipPortrait: number(60, 220),
+    rosterPortrait: number(60, 220),
+    portraitShape: 'string',
+    portraitFrame: 'string',
     nightEnabled: 'boolean',
     nightStyle: 'string',
     nightLogoWidth: number(120, 800),
@@ -319,6 +324,9 @@ const choices = {
   'dashboardSettings.hiddenRequest.kind': ['desktop', 'redEyes'],
   'dashboardSettings.previewRequest.kind': ['prime', 'nova', 'cybertron', 'minimal', 'next-pack'],
   'demo.steps.screen': ['announcement', 'all-announcements', 'night-mode'],
+  'dashboardSettings.portraitShape': ['square', 'rounded', 'circle'],
+  'dashboardSettings.portraitFrame': ['metal', 'line', 'none'],
+  'person.group': ['COACH', 'CAPTAIN', 'MENTOR'],
 };
 
 // The panels that can be put in each area of the screen. The Studio lists and
@@ -1016,7 +1024,7 @@ function checkLogoTab(problems) {
 // and Silver chance. The section is all in schemas/settingsTransitions.js. The
 // number fields and their limits are compared with config.js in checkLookAndTiming.
 const transitionNames = ['pageChangeStyle', 'breakSeconds', 'frameFinish', 'silverChance'];
-const photoNames = ['photoOrder', 'photoSeconds', 'portraitScale', 'photoScale', 'photoFit'];
+const photoNames = ['photoOrder', 'photoSeconds', 'portraitScale', 'photoScale', 'photoFit', 'leadershipPortrait', 'rosterPortrait', 'portraitShape', 'portraitFrame'];
 const nightNames = ['nightEnabled', 'nightStyle', 'nightStart', 'nightEnd', 'nightLogoWidth', 'nightSpeed', 'nightPreview'];
 const hiddenNames = ['hiddenEnabled', 'desktopEveryHours', 'desktopChance', 'redEyesEveryHours', 'redEyesChance', 'hiddenRequest'];
 const presentationNames = ['presentationsEnabled', 'noShowMinutes', 'graceMinutes'];
@@ -2627,7 +2635,7 @@ function checkPhotos() {
   need(problems, setting('photoScale') && setting('photoScale').title === 'Photo size, percent', 'photoScale should be titled Photo size, percent');
 
   // The Photo size: a whole percent from 60 to 100 that starts at 100, with a one line description that says what 100 is.
-  // The Portrait size has its own range and words, in checkPortraitSize.
+  // The portrait sizes have their own range and words, in checkPortraitSettings.
   ['photoScale'].forEach(name => {
     const words = setting(name) ? setting(name).description || '' : '';
     need(problems, words.length > 0 && words.indexOf('\n') === -1, name + ' needs a one-line description');
@@ -2779,35 +2787,121 @@ function checkLeadPhoto() {
   return problems;
 }
 
-// The Portrait size: a whole percent from 60 to 200 that starts at 100. 100 is the standard size and 200 is
-// double. The description gives the number of rows a page holds above 100, and those numbers are worked out
-// here from rowLayout in core/portrait.js, so the words cannot drift from the screen.
-function checkPortraitSize() {
+// The Portraits box of the Screen tab: two sizes, a shape and a frame. A size is a whole percent from 60
+// to 220 that starts at 100, and is not required, so Dashboard Settings published before it can still be
+// published. The descriptions give the people a page holds at each size, and those numbers are worked
+// out here from rowLayout in core/portrait.js, so the words cannot drift from the screen. The old
+// portraitScale stays, hidden, and the screen reads it only while neither size is saved.
+function checkPortraitSettings() {
   const problems = [];
   const config = world.dashboard;
-  const field = fieldAt('dashboardSettings.portraitScale');
-  const words = field ? field.description || '' : '';
   const rows = percent => world.portrait.rowLayout(percent).rows;
-  const limit = config.limits.portraitScale;
+  const sizes = ['leadershipPortrait', 'rosterPortrait'];
+  const old = fieldAt('dashboardSettings.portraitScale');
 
-  need(problems, limit && limit.min === 60 && limit.max === 200, 'limits.portraitScale in config.js should be 60 to 200');
-  need(problems, config.defaultSettings.portraitScale === 100, 'the default portraitScale in config.js should be 100');
-  need(problems, world.sample.settings.portraitScale === 100, 'the sample settings need portraitScale of 100');
-  need(problems, field && field.initialValue === 100, 'portraitScale should start at 100');
-  need(problems, field && /60 to 200/.test(words) && /100 is standard/.test(words) && /200 is double/.test(words), 'the portraitScale description should give the range, 60 to 200, and say that 100 is standard and 200 is double');
-  need(problems, /Leadership or Team Leads/.test(words) && /Roster stays at 100/.test(words), 'the portraitScale description should say that Leadership and Team Leads get fewer rows and that Roster stays at 100');
+  need(problems, old && old.hidden === true, 'portraitScale should be hidden but stay in the schema, so that a saved value is kept');
+  need(problems, config.limits.portraitScale && config.limits.portraitScale.min === 60 && config.limits.portraitScale.max === 200, 'limits.portraitScale in config.js should stay 60 to 200');
+  need(problems, config.defaultSettings.portraitScale === 100 && world.sample.settings.portraitScale === 100, 'portraitScale should still be 100 in config.js and in the sample settings');
+  need(problems, old && /neither/.test(old.description || ''), 'the portraitScale description should say that it is used only while neither new size has a value');
   need(problems, config.limits.photoScale && config.limits.photoScale.max === 100, 'limits.photoScale in config.js should stay 60 to 100');
 
-  // The rows a page holds: 4 up to 100, then fewer. The description says where it changes.
-  let threeUntil = 0;
-  let twoFrom = 0;
-  for (let percent = limit.min; percent <= limit.max; percent++) {
-    if (percent <= 100) need(problems, rows(percent) === 4, 'a page should hold 4 rows at ' + percent + ' percent, not ' + rows(percent));
-    if (rows(percent) === 3) threeUntil = percent;
-    if (rows(percent) === 2 && twoFrom === 0) twoFrom = percent;
-    need(problems, rows(percent) >= 2, 'a page should hold at least 2 rows at ' + percent + ' percent');
+  // The steps of the table, worked out for every size: the largest percent that still holds each number of people
+  const steps = [];
+  for (let percent = config.limits.leadershipPortrait.min; percent <= config.limits.leadershipPortrait.max; percent++) {
+    const last = steps[steps.length - 1];
+    if (last && last.rows === rows(percent)) last.upTo = percent;
+    else steps.push({ rows: rows(percent), upTo: percent });
   }
-  need(problems, words.indexOf('3 rows (to ' + threeUntil + ') or 2 (from ' + twoFrom + ')') !== -1, 'the portraitScale description should say 3 rows (to ' + threeUntil + ') or 2 (from ' + twoFrom + '), as rowLayout works them out');
+  const table = steps.map(step => step.rows + ' up to ' + step.upTo).join(', ') + '.';
+  need(problems, steps.map(step => step.rows).join() === '4,3,2,1', 'a page should hold 4, then 3, 2 and 1 rows as the size grows, not ' + steps.map(step => step.rows).join());
+
+  sizes.forEach(name => {
+    const field = fieldAt('dashboardSettings.' + name);
+    const words = field ? field.description || '' : '';
+    const rules = field ? constraintsOf(field) : [];
+    const low = constraintNamed(rules, 'min');
+    const high = constraintNamed(rules, 'max');
+    const limit = config.limits[name];
+
+    need(problems, field && field.type === 'number' && field.group === 'screen' && field.fieldset === 'portraits', name + ' should be a number in the Portraits box of the Screen tab');
+    need(problems, limit && limit.min === 60 && limit.max === 220, 'limits.' + name + ' in config.js should be 60 to 220');
+    need(problems, config.defaultSettings[name] === 100, 'the default ' + name + ' in config.js should be 100');
+    need(problems, world.sample.settings[name] === 100, 'the sample settings need ' + name + ' of 100');
+    need(problems, field && field.initialValue === 100, name + ' should start at 100');
+    need(problems, low && high && low.args[0] === 60 && high.args[0] === 220 && !!constraintNamed(rules, 'integer'), name + ' should be a whole number from 60 to 220');
+    need(problems, !constraintNamed(rules, 'required'), name + ' should not be required: Dashboard Settings saved before it existed has none');
+    need(problems, words.length > 0 && words.indexOf('\n') === -1, name + ' needs a one-line description');
+    need(problems, /60 to 220/.test(words) && /100 fills a row of four/.test(words), 'the ' + name + ' description should give the range, 60 to 220, and say that 100 fills a row of four');
+    need(problems, words.indexOf('People per page on ') !== -1 && words.indexOf(table) !== -1, 'the ' + name + ' description should give the people a page holds, as rowLayout works them out: ' + table);
+  });
+  need(problems, /Leadership/.test((fieldAt('dashboardSettings.leadershipPortrait') || {}).description || ''), 'the leadershipPortrait description should say that it is for Leadership');
+  need(problems, /Team leads/.test((fieldAt('dashboardSettings.rosterPortrait') || {}).description || '') && /Roster portrait stays at 100/.test((fieldAt('dashboardSettings.rosterPortrait') || {}).description || ''), 'the rosterPortrait description should say that it is for Team leads and that the Roster portrait stays at 100');
+
+  // The shape and the frame: a radio list of the names in config.js, starting at the first, not required
+  [['portraitShape', config.portraitShapes, 'portraitShapes', 'square'], ['portraitFrame', config.portraitFrames, 'portraitFrames', 'metal']].forEach(([name, list, listName, first]) => {
+    const field = fieldAt('dashboardSettings.' + name);
+    const rules = field ? constraintsOf(field) : [];
+    const allowed = constraintNamed(rules, 'valid');
+    const words = field ? field.description || '' : '';
+
+    need(problems, field && field.type === 'string' && field.group === 'screen' && field.fieldset === 'portraits', name + ' should be a string in the Portraits box of the Screen tab');
+    need(problems, field && field.options && field.options.layout === 'radio', name + ' should be a radio list');
+    need(problems, choicesOf('dashboardSettings.' + name).map(item => item.value).join() === list.join(), name + ' should offer the names in config.js: ' + list.join(', '));
+    need(problems, allowed && allowed.args[0].join() === list.join(), name + ' should only allow: ' + list.join(', '));
+    need(problems, !constraintNamed(rules, 'required'), name + ' should not be required: Dashboard Settings saved before it existed has none');
+    need(problems, field && field.initialValue === first && config.defaultSettings[name] === first, name + ' should start as ' + first + ', here and in config.js');
+    need(problems, world.sample.settings[name] === first, 'the sample settings need ' + name + ' of ' + first);
+    need(problems, words.length > 0 && words.indexOf('\n') === -1 && /same on all three panels/.test(words), name + ' needs a one-line description that says it is the same on all three panels');
+    need(problems, rules.some(rule => rule.name === 'error' && rule.args[0]), name + ' has rules and no error message in plain words');
+    need(problems, Array.isArray(config[listName]) && config[listName][0] === first, listName + ' in config.js should start with ' + first);
+  });
+
+  // The box itself, and the order of the fields: the two sizes, then the shape, then the frame
+  const settings = typeByName('dashboardSettings');
+  need(problems, (settings.fieldsets || []).some(set => set.name === 'portraits' && set.title === 'Portraits'), 'Dashboard Settings should have a Portraits box (a fieldset called portraits)');
+  const inBox = fieldsIn(settings).filter(field => field.fieldset === 'portraits').map(field => field.name);
+  need(problems, inBox.join() === 'leadershipPortrait,rosterPortrait,portraitShape,portraitFrame', 'the Portraits box should hold leadershipPortrait, rosterPortrait, portraitShape and portraitFrame, in that order, not ' + inBox.join());
+  return problems;
+}
+
+// The rows of Leadership and Team leads: a line under the role (person.line and subteam.line, up to 48
+// characters) and the chip at the right end of a Leadership row (person.group). Each is optional and
+// has no starting value, so what is saved before they existed stays as it is. The choices of the group
+// are the names in core/leadership.js, and the sample people and team leads have a line.
+function checkPersonRows() {
+  const problems = [];
+  const leadership = world.leadershipModule;
+  const personNames = fieldsIn(typeByName('person')).map(field => field.name);
+  const checkLine = (pathText, wanted) => {
+    const field = fieldAt(pathText);
+    const words = field ? field.description || '' : '';
+
+    need(problems, field && field.type === 'string' && !constraintNamed(constraintsOf(field), 'required') && field.initialValue === undefined, pathText + ' should be an optional string with no starting value');
+    need(problems, words.indexOf('One short line under ') === 0 && words.indexOf(wanted) !== -1, pathText + ' should say it is one short line under the role and ' + wanted);
+  };
+
+  checkLine('person.line', 'Leave blank to hide.');
+  checkLine('subteam.line', 'Leave blank to show the subteam name.');
+  need(problems, /3 people or fewer/.test((fieldAt('person.line') || {}).description || '') && /3 people or fewer/.test((fieldAt('subteam.line') || {}).description || ''), 'the line descriptions should say that it shows on pages of 3 people or fewer, because a row of four has no room for it');
+  need(problems, personNames.indexOf('line') === personNames.indexOf('title') + 1 && personNames.indexOf('group') === personNames.indexOf('line') + 1, 'person.line and person.group should come right after person.title, not ' + personNames.join(', '));
+
+  const group = fieldAt('person.group');
+  const rules = group ? constraintsOf(group) : [];
+  const allowed = constraintNamed(rules, 'valid');
+  need(problems, group && group.type === 'string' && group.options && group.options.layout === 'radio', 'person.group should be a radio list');
+  need(problems, choicesOf('person.group').map(item => item.value).join() === leadership.groupNames.join(), 'person.group should offer the names in core/leadership.js: ' + leadership.groupNames.join(', '));
+  need(problems, allowed && allowed.args[0].join() === leadership.groupNames.join(), 'person.group should only allow: ' + leadership.groupNames.join(', '));
+  need(problems, !constraintNamed(rules, 'required') && group && group.initialValue === undefined, 'person.group should not be required and should have no starting value, so that the role gives it');
+  need(problems, group && /Leave blank to follow the role/.test(group.description || ''), 'the person.group description should say that a blank follows the role');
+
+  // What a blank group gives, from the role: the words of the description
+  [['Coach', 'COACH'], ['Mentor', 'MENTOR'], ['Captain', 'CAPTAIN'], ['Head Coach', 'COACH'], ['', 'CAPTAIN']].forEach(([role, chip]) => {
+    need(problems, leadership.groupOf({ role: role }) === chip, 'a person with the role "' + role + '" and no group should have the chip ' + chip);
+  });
+  need(problems, leadership.groupOf({ role: 'Coach', group: 'MENTOR' }) === 'MENTOR' && leadership.groupOf({ role: 'Coach', group: 'chief' }) === 'COACH', 'the group should win when it is one of the choices, and be ignored otherwise');
+
+  world.sample.people.forEach(person => need(problems, typeof person.line === 'string' && person.line.length > 0 && person.line.length <= 48, 'every sample person should have a line of up to 48 characters, ' + person.name + ' has none'));
+  world.sample.subteams.forEach(subteam => need(problems, typeof subteam.line === 'string' && subteam.line.length > 0 && subteam.line.length <= 48, 'every sample team lead should have a line of up to 48 characters, ' + subteam.name + ' has none'));
   return problems;
 }
 
@@ -5998,6 +6092,7 @@ async function main() {
     world.panelOrder = await load(path.join(dashboardFolder, 'core', 'panel-order.js'));
     world.constants = await load(path.join(dashboardFolder, 'core', 'constants.js'));
     world.portrait = await load(path.join(dashboardFolder, 'core', 'portrait.js'));
+    world.leadershipModule = await load(path.join(dashboardFolder, 'core', 'leadership.js'));
     world.statusScript = fs.readFileSync(path.join(here, '..', 'deploy', 'scripts', 'status-write.sh'), 'utf8');
     world.sample = JSON.parse(fs.readFileSync(path.join(dashboardFolder, 'data', 'sample', 'content.json'), 'utf8'));
     world.seed = fs.readFileSync(path.join(here, '..', 'docs', 'seed', 'extra-events.ndjson'), 'utf8');
@@ -6048,7 +6143,8 @@ async function main() {
   check('a subteam has an optional list of first names, up to 24 of 12 characters, with no repeats', checkSubteamMembers);
   check('a person has an optional photo and a switch that starts on, as in dashboard/config.js', checkPersonPhoto);
   check('a team lead has an optional photo right after the lead and a switch that starts on, and the dashboard asks Sanity for the photo', checkLeadPhoto);
-  check('the Portrait size is a whole percent from 60 to 200 that starts at 100, and its description gives the rows a page holds', checkPortraitSize);
+  check('the Portraits box has two sizes from 60 to 220, a shape and a frame, agrees with dashboard/config.js, and its descriptions give the people a page holds', checkPortraitSettings);
+  check('a person and a team lead have an optional line under the role, and a person has an optional chip that follows the role', checkPersonRows);
   check('a photo has a picture, a short caption and a first name credit, and the photo settings agree with dashboard/config.js', checkPhotos);
   check('the themes and overlays in studio/themes.js are the ones in the dashboard registries', checkThemeLists);
   check('the Look page agrees with dashboard/config.js, needs a start and an end for each rule, and checks the time zone', checkTheme);

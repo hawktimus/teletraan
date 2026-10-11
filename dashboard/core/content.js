@@ -1,7 +1,7 @@
 // Where the screen gets what it shows: startContent() hands over the content
 // once it has it, and again every time it changes. Same shape as data/sample/content.json.
 
-import { competitionModes, competitionSwitches, defaultSettings, defaultTeam, frameFinishes, limits, looks, lookSwaps, metals, nightSpeeds, nightStyles, pageChangeStyles, photoFits, photoOrders, sampleFolder, sanity, speeds, styles, teamModes } from '../config.js';
+import { competitionModes, competitionSwitches, defaultSettings, defaultTeam, frameFinishes, limits, looks, lookSwaps, metals, nightSpeeds, nightStyles, pageChangeStyles, photoFits, photoOrders, portraitFrames, portraitShapes, sampleFolder, sanity, speeds, styles, teamModes } from '../config.js';
 import { parseLocalDateTime } from './time.js';
 import { chosenSource } from './source.js';
 import { tidyTheme } from './theme.js';
@@ -62,15 +62,17 @@ export function withDefaults(raw) {
   content.demo = tidyDemo(source.demo);
 
   // normalizeSettings in sanity.js already does this for the editors' content.
-  // This covers content that did not come through it.
-  fixSettingValues(content.settings);
+  // This covers content that did not come through it. The settings as they were saved, before the
+  // defaults went under them, say whether the two portrait sizes were ever set.
+  fixSettingValues(content.settings, source.settings || {});
   return content;
 }
 
 // Settings that are one of a few words, an on/off switch, or a number in a
 // range. Anything that does not fit becomes the default, so the panels never
-// have to check. A number outside its range is moved to the nearest end.
-export function fixSettingValues(settings) {
+// have to check. A number outside its range is moved to the nearest end. saved is the settings as
+// the editors saved them, which is the same object unless defaults were put under it first.
+export function fixSettingValues(settings, saved = settings) {
   if (!Object.keys(speeds).includes(settings.speed)) settings.speed = defaultSettings.speed;
   if (!metals.includes(settings.frameMetal)) settings.frameMetal = defaultSettings.frameMetal;
   if (!looks.includes(settings.look)) settings.look = defaultSettings.look;
@@ -81,6 +83,8 @@ export function fixSettingValues(settings) {
   // The photo settings
   if (!photoOrders.includes(settings.photoOrder)) settings.photoOrder = defaultSettings.photoOrder;
   if (!photoFits.includes(settings.photoFit)) settings.photoFit = defaultSettings.photoFit;
+  if (!portraitShapes.includes(settings.portraitShape)) settings.portraitShape = defaultSettings.portraitShape;
+  if (!portraitFrames.includes(settings.portraitFrame)) settings.portraitFrame = defaultSettings.portraitFrame;
   // The team settings
   if (!teamModes.includes(settings.teamMode)) settings.teamMode = defaultSettings.teamMode;
   // The look rotation: the styles by day, the Monday style, the teams in order and the swap
@@ -111,6 +115,11 @@ export function fixSettingValues(settings) {
   });
   ['portraitScale', 'photoScale'].forEach(name => {
     settings[name] = tidyScale(name, settings[name]);
+  });
+  // Both are worked out before either is set, because setting one would make the other look saved
+  const portraitSizes = portraitNames.map(name => portraitPercentOf(saved, name));
+  portraitNames.forEach((name, index) => {
+    settings[name] = portraitSizes[index];
   });
   // The hours between hidden transitions: 1 to 1000, or 0 when not set, and then the percent is used
   hoursFields().forEach(name => {
@@ -172,12 +181,25 @@ export function keepInRange(value, limit, fallback) {
   return Math.min(limit.max, Math.max(limit.min, value));
 }
 
-// A size setting of the photo settings (portraitScale or photoScale): a whole percent
-// inside the limits of the setting (60 to 200 for portraits, 60 to 100 for photos), so 79.6
-// is 80. Anything missing or odd is 100. The portrait and Photo panel code calls it too, so
-// a size is never odd there.
+// A size setting (leadershipPortrait, rosterPortrait, the old portraitScale or photoScale): a whole
+// percent inside the limits of the setting (60 to 220 for portraits, 60 to 200 for the old portrait size,
+// 60 to 100 for photos), so 79.6 is 80. Anything missing or odd is 100. The portrait and Photo panel
+// code calls it too, so a size is never odd there.
 export function tidyScale(name, value) {
   return Math.round(keepInRange(value, limits[name], defaultSettings[name]));
+}
+
+// The size of the portraits of one panel, a whole percent. leadershipPortrait and rosterPortrait replace
+// portraitScale. When neither has been saved, both are the old Portrait size, so a screen that was set up
+// before them looks the same. When one has been saved, the other is its starting value. The Roster
+// panel and the code that draws the rows call this with their settings, saved or not tidied yet.
+export const portraitNames = ['leadershipPortrait', 'rosterPortrait'];
+
+export function portraitPercentOf(settings, name) {
+  const source = settings || {};
+  const saved = portraitNames.some(own => typeof source[own] === 'number');
+
+  return tidyScale(name, saved ? source[name] : source.portraitScale);
 }
 
 // The screen glitch setting, always complete: on, everySeconds, durationSeconds.

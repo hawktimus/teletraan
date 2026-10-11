@@ -5,8 +5,9 @@
 
 import { doubleSlash } from '../../core/marks.js';
 import { escapeHtml } from '../../core/text.js';
+import { portraitPercentOf } from '../../core/content.js';
 import { makeRosterTurns, rosterPages, rowsPerColumn } from '../../core/roster.js';
-import { leadAddress, preloadLeadPhotos, slotMarkup, watchPhotos } from '../../core/portrait.js';
+import { leadAddress, portraitLook, preloadLeadPhotos, slotMarkup, watchPhotos } from '../../core/portrait.js';
 
 const nextTurn = makeRosterTurns();
 
@@ -39,7 +40,7 @@ export function mount(host, content) {
 }
 
 // A subteam with no lead has no portrait, and the names take the whole page. The
-// slot does not grow with a Portrait size above 100 (portraitSizes in core/portrait.js)
+// slot does not grow with a Roster size above 100 (portraitSizes in core/portrait.js)
 function leadMarkup(page, content) {
   if (page.lead === '') return '';
 
@@ -47,7 +48,8 @@ function leadMarkup(page, content) {
     name: page.lead,
     role: 'TEAM LEAD',
     address: leadAddress(page, content.people),
-    scale: content.settings && content.settings.portraitScale,
+    scale: portraitPercentOf(content.settings, 'rosterPortrait'),
+    look: portraitLook(content.settings),
   });
 }
 

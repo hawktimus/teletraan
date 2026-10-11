@@ -7,6 +7,13 @@ const roles = [
   { title: 'Mentor', value: 'Mentor' },
 ];
 
+// The values are the names in groupNames in dashboard/core/leadership.js
+const groups = [
+  { title: 'Coach', value: 'COACH' },
+  { title: 'Captain', value: 'CAPTAIN' },
+  { title: 'Mentor', value: 'MENTOR' },
+];
+
 export default defineType({
   name: 'person',
   title: 'Person',
@@ -33,6 +40,21 @@ export default defineType({
       type: 'string',
       description: 'Optional. Type what is shown under the name, for example Head Coach. Leave it empty to show the role. Up to 22 characters fit.',
       validation: Rule => tooLong(Rule, 22),
+    }),
+    defineField({
+      name: 'line',
+      title: 'Line under the title',
+      type: 'string',
+      description: 'One short line under the role, such as a year, a department, or a note. Leave blank to hide. Up to 48 characters fit. Shown on pages of 3 people or fewer.',
+      validation: Rule => tooLong(Rule, 48),
+    }),
+    defineField({
+      name: 'group',
+      title: 'Chip at the right end',
+      type: 'string',
+      description: 'The word in the chip at the right end. Leave blank to follow the role: coach is COACH, mentor is MENTOR, any other role is CAPTAIN.',
+      options: { list: groups, layout: 'radio', direction: 'horizontal' },
+      validation: Rule => Rule.valid(groups.map(group => group.value)).error('Pick coach, captain or mentor.'),
     }),
     defineField({
       name: 'photo',
