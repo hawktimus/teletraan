@@ -4272,13 +4272,13 @@ function countOf(text, piece) {
   return text.split(piece).length - 1;
 }
 
-test('the Subteam roster panel draws the heading, the subteam in the tag, the team lead and the members in two columns', () => withFakePage(() => {
+test('the Subteam roster panel draws the subteam and TEAM as the heading, the name of the team in a chip, the team lead and the members in two columns', () => withFakePage(() => {
   const content = { people: [], subteams: [team('[Build]', '[Lead A]', namesCalled(16))] };
   const html = rosterMarkup(content);
 
   assert.ok(live.rosterPanel.hasContent(content));
-  assert.ok(html.includes('<h2 class="title" data-slat="title">ROSTER</h2>'));
-  assert.ok(html.includes('<span class="tag-text">[Build]</span>'));
+  assert.ok(html.includes('data-slat="title">[BUILD] TEAM</h2>'));
+  assert.ok(html.includes('<span class="team-chip">BOTH TEAMS</span>'), 'a subteam that is for both teams says so');
   assert.ok(html.includes('<div class="slot-name">[Lead A]</div>'));
   assert.ok(html.includes('<div class="slot-role">TEAM LEAD</div>'));
   assert.equal(countOf(html, 'class="column"'), 2);
@@ -4288,7 +4288,7 @@ test('the Subteam roster panel draws the heading, the subteam in the tag, the te
   assert.deepEqual(columns, [8, 8]);
 }));
 
-test('the Subteam roster panel shares a short list between the columns, and a longer subteam continues with its tag', () => withFakePage(() => {
+test('the Subteam roster panel shares a short list between the columns, and a longer subteam continues with its heading', () => withFakePage(() => {
   const nine = rosterMarkup({ people: [], subteams: [team('[Build]', '[Lead A]', namesCalled(9))] });
   const sizes = nine.split('class="column"').slice(1).map(part => countOf(part.split('</div></div>')[0], 'class="member"'));
   assert.deepEqual(sizes, [5, 4]);
@@ -4300,8 +4300,8 @@ test('the Subteam roster panel shares a short list between the columns, and a lo
   const content = { people: [], subteams: [team('[Long]', '[Lead A]', namesCalled(18))] };
   const firstVisit = rosterMarkup(content);
   const secondVisit = rosterMarkup(content);
-  assert.ok(firstVisit.includes('<span class="tag-text">[Long]</span>'));
-  assert.ok(secondVisit.includes('<span class="tag-text">[Long]</span>'));
+  assert.ok(firstVisit.includes('data-slat="title">[LONG] TEAM</h2>'));
+  assert.ok(secondVisit.includes('data-slat="title">[LONG] TEAM</h2>'));
   assert.deepEqual([firstVisit, secondVisit].map(html => countOf(html, 'class="member"')).sort((a, b) => a - b), [2, 16]);
   assert.equal(countOf(firstVisit, 'class="member"') + countOf(secondVisit, 'class="member"'), 18);
   assert.ok(firstVisit.includes('TEAM LEAD') && secondVisit.includes('TEAM LEAD'));
@@ -4325,7 +4325,7 @@ test('the Subteam roster panel has no portrait without a lead, and nothing on th
 test('the Subteam roster panel escapes what editors typed, and shows the lead\'s photo from Leadership', () => withFakePage(() => {
   const html = rosterMarkup({ people: [], subteams: [team('<b>Hi</b>', '<i>Lead</i>', ['<u>Alex</u>'])] });
   assert.equal(/<(b|i|u)>/.test(html), false);
-  assert.ok(html.includes('&lt;b&gt;Hi&lt;/b&gt;') && html.includes('&lt;i&gt;Lead&lt;/i&gt;') && html.includes('&lt;u&gt;Alex&lt;/u&gt;'));
+  assert.ok(html.includes('&lt;B&gt;HI&lt;/B&gt; TEAM') && html.includes('&lt;i&gt;Lead&lt;/i&gt;') && html.includes('&lt;u&gt;Alex&lt;/u&gt;'), 'the heading is the subteam in capitals, and still never markup');
   assert.ok(html.includes('<use href="#person-silhouette"'));
 
   const photo = tidyPhoto(photoRecord());

@@ -189,8 +189,8 @@ content showing. Every header of the large panel is the same plate, 116 px high,
 - **Height.** On the right half of the header the plate colour is free from y 274 to y 367 on the screen: 94 px,
   between the metal edge above and the one below. The slashes are 54 x 72 and sit in the middle (y 282 to 354).
   A 76 px mark leaves 6 px above and 11 px below.
-- **Width.** The mark is the last thing in the tag, with the tag's text (LEADERSHIP, TEAM LEADS, the subteam
-  name in Roster, the tier in Sponsor feature, the date in Daily Agenda) to its left. The text has to stay
+- **Width.** The mark is the last thing in the tag, with the tag's text (the chip with the name of a team in Roster,
+  Leadership and Team leads, the tier in Sponsor feature, the date in Daily Agenda) to its left. The text has to stay
   clear of the notch in the middle of the header, and a mark that is wider would push it towards the notch.
   The free plate colour goes on 27 px past the slashes (to x 1179, where the metal edge begins), so a mark
   may be 6 px wider than the slashes without moving the text: `.pack-mark` in `base.css` has

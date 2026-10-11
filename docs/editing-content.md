@@ -370,7 +370,8 @@ end of the row counts the tasks due later, such as +3 later. At most five rows s
 
 ### Progress card
 
-A bar for each Team lead entry, in three colours for the backlog, in progress and done, with done out of all beside it, and a
+A bar for each Team lead entry, in three colours for the backlog, in progress and done, with done out of all beside it, and under the
+bars the totals of the team, such as 66 OPEN · 5 OVERDUE. It counts the same tasks as the tasks card. On the right is a
 line of the items left on each day, with a dashed line to nothing on the day of the next countdown date. The line needs the
 counts of at least two days, which the Mini adds once a day. With fewer it says so.
 
@@ -647,8 +648,9 @@ columns on the right. The subteam's name is the title of the page.
 - A subteam with a lead and no members shows the lead alone. A subteam with
   members and no lead shows the names alone. A subteam with neither is left
   out, and so is one that is hidden or has passed its "Hide after" date.
-- The heading always says ROSTER. The name of the subteam is shown in capital
-  letters in the corner tag, where all 11 letters the field allows fit.
+- The heading is the name of the subteam in capital letters and TEAM, such as BUILD TEAM. The name of the team is in a chip at
+  the right end of the header: PRIME or NOVA, or BOTH TEAMS when the subteam is for both teams. A long name is drawn at 60 px
+  when it does not fit beside the chip. The Leadership and Team Leads headers have the chip too.
 
 To put the panel on the screen, open Dashboard Settings, then the Screen tab,
 then "Panel order". A Studio set up before this panel existed has a saved list

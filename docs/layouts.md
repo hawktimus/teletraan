@@ -1186,7 +1186,9 @@ team on the screen and of both teams. The look rotation asks about the team of a
 name of the team is a chip of 44 px in the accent of the team at the right end of the header: PRIME or NOVA, which is the
 `shortName` of the team that the items follow. A page whose tasks are all for both teams says BOTH TEAMS in the chip, and so do the cards of both
 teams (`core/team-title.js`). A department name that already ends in TEAM does not get a second one. The title is 60 px (`--size-team`). The Roster,
-Leadership and Team leads headers have the same chip.
+Leadership and Team leads headers have the same chip, with BUILD TEAM, LEADERSHIP and TEAM LEADS as their titles, which are at the size of a heading
+(96 px) when they fit beside the chip and the slashes and at 60 px when they do not (`titleClass` in `core/team-title.js`). Leadership and Team leads
+say BOTH TEAMS only when everyone on their list is for both teams, and Roster asks about the subteam of its page.
 
 ### The tasks card
 
@@ -1225,16 +1227,20 @@ how many entries did not fit. An entry with nothing due has no row, so it does n
 
 ### The progress card
 
-The bars are on the left: one for each Team lead entry that has board tasks, six at most (and `+N more`),
-as long as the entry has tasks, the longest being 324 px. The three stacks are the backlog, in progress and done, in the
-colours of the status marks, and the numbers at the right of the bar are done out of all. A pinned task is not counted, because
-the daily counts that the line is drawn from are the board's. On the right is the line of the items left: the open board
+The bars are on the left: one for each Team lead entry that has board tasks, six at most, as long as the entry has tasks, the longest being
+206 px. A row is the department in 36 px letters in 330 px, cut off with an ellipsis (PROGRAMMING and ELECTRICAL fit), the bar, and done out of all.
+The three stacks are the backlog, in progress and done, in the colours of the status marks. The legend is along the top and does not wrap. Under
+the rows, `+N more` says how many entries did not fit, and the totals of the team are under that: `66 OPEN · 5 OVERDUE` and nothing longer. Open is
+every board task of the entries that is not done, as the tasks card counts it, and overdue is the open ones with a due date before today. The card counts
+exactly the rows the tasks card shows (`groupsFor` in `core/monday.js`): a task that is not from the board is on neither, so one never says No board
+items are showing yet while the other has a row. On the right is the line of the items left: the open board
 tasks on each day, from the document `monday-status`. `core/sanity.js` asks for `lastSyncAt`, `lastError` and `snapshots` of it,
 and `tidyMondayStatus` in `core/monday.js` cleans them to one count a day, oldest first, 120 at the most. The line has at
 most 12 points, taken evenly from the first count to the last with both ends kept, and a point is as far along as its day is,
 so a gap of days is a gap in the line. The dashed target line goes from the first point down to nothing on the next date of the
 countdown, the one the season timeline uses (`countdownMarker` in `core/competition.js`), and it is left out when no date
-is still to come. With fewer than two counts a sentence stands in the place of the line, and the bars stay.
+is still to come. With fewer than two counts a sentence stands in the place of the line, and the bars stay. The line is an SVG of 1096 by
+512 and the rows are HTML on the left of it, so that a font size in the stylesheet is the size on the screen.
 
 ### The cards of both teams
 

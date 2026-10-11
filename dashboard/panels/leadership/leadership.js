@@ -6,6 +6,8 @@ import { doubleSlash } from '../../core/marks.js';
 import { makePages } from '../../core/turns.js';
 import { leaders } from '../../core/leadership.js';
 import { photoAddress, preloadPhotos, rowLayout, rowsMarkup, rowsPerPage, watchPhotos } from '../../core/portrait.js';
+import { pageTeamName, teamChipMarkup, teamNameOf, titleClass } from '../../core/team-title.js';
+import { wantedTeam } from '../../core/teams.js';
 
 const nextPage = makePages(rowsPerPage);
 
@@ -23,12 +25,15 @@ export function mount(host, content) {
   const page = nextPage(leaders(content.people), rowLayout(scale).rows);
   const rows = page.items.map(personRow);
 
+  // the header names the team: the team on the screen, or both teams when everyone on the list is for both
+  const chip = pageTeamName(leaders(content.people), teamNameOf(wantedTeam()));
+
   host.innerHTML = `
     <section class="page leadership">
       <div class="header">
-        <h2 class="title" data-slat="title">TEAM</h2>
+        <h2 class="${titleClass('LEADERSHIP', chip)}" data-slat="title">LEADERSHIP</h2>
         <div class="tag" data-slat="tag">
-          <span class="tag-text">LEADERSHIP</span>
+          ${teamChipMarkup(chip)}
           ${doubleSlash()}
         </div>
       </div>

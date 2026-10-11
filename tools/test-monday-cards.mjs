@@ -491,11 +491,14 @@ test('each lead entry has one bar of its board tasks in the three stacks, and th
   assert.equal(found.more, 0);
 
   const html = panels.progress.markupFor(content, monday12);
-  const bars = Array.from(html.matchAll(/<rect class="seg seg-(\w+)" x="(\d+)" y="(\d+)" width="(\d+)" height="44"\/>/g)).map(match => [match[1], Number(match[2]), Number(match[4])]);
-  assert.deepEqual(bars, [['backlog', 224, 81], ['progress', 305, 162], ['done', 467, 81], ['backlog', 224, 81], ['done', 305, 81]], 'the longest bar is 324 wide and the others in proportion, each stack after the one before');
-  assert.ok(html.includes('>1/4</text>') && html.includes('>1/2</text>'), 'done out of all, at the right of each bar');
-  assert.equal(countOf(html, 'height="28"'), 3, 'a square for each stack in the legend');
-  ['BACKLOG', 'IN PROGRESS', 'DONE'].forEach(label => assert.ok(html.includes('>' + label + '</text>'), label));
+  const bars = Array.from(html.matchAll(/<rect class="seg seg-(\w+)" x="(\d+)" y="0" width="(\d+)" height="44"\/>/g)).map(match => [match[1], Number(match[2]), Number(match[3])]);
+  // the longest bar is 206 wide and the others in proportion, each stack after the one before, each ending where the count so far says
+  assert.deepEqual(bars, [['backlog', 0, 52], ['progress', 52, 103], ['done', 155, 51], ['backlog', 0, 52], ['done', 52, 51]]);
+  assert.deepEqual(Array.from(html.matchAll(/<span class="department">([^<]*)<\/span>/g)).map(match => match[1]), ['[SUBTEAM A]', '[SUBTEAM B]']);
+  assert.deepEqual(Array.from(html.matchAll(/<span class="count">([^<]*)<\/span>/g)).map(match => match[1]), ['1/4', '1/2'], 'done out of all, at the right of each bar');
+  assert.equal(countOf(html, 'class="swatch'), 3, 'a square for each stack in the legend');
+  ['BACKLOG', 'IN PROGRESS', 'DONE'].forEach(label => assert.ok(html.includes('</span>' + label + '</span>'), label));
+  assert.ok(html.includes('<div class="totals">5 OPEN · 0 OVERDUE</div>'), 'the totals of the team, under the bars: every task of its entries that is not done, as the tasks card counts');
 });
 
 test('there are six bars at most, and a lead entry with no board tasks has none', () => {
@@ -504,9 +507,10 @@ test('there are six bars at most, and a lead entry with no board tasks has none'
   const found = panels.progress.barsFor(content, monday12);
 
   assert.deepEqual([found.rows.length, found.more], [6, 2]);
-  assert.ok(panels.progress.markupFor(content, monday12).includes('>+2 MORE</text>'));
+  assert.ok(panels.progress.markupFor(content, monday12).includes('<div class="more">+2 MORE</div>'));
   assert.equal(panels.progress.markupFor(content, monday12).includes('[LEAD Z]'), false);
   assert.equal(panels.progress.barsFor(contentOf([board({ subteam: names[0] }), board({ subteam: names[1], showOnTv: false })], names), monday12).rows.length, 1);
+  assert.equal(panels.progress.markupFor(contentOf([board({ subteam: names[0] })], names), monday12).includes('class="more"'), false);
 });
 
 test('the line has at most 12 points taken evenly from the first count to the last, and one for each count when there are fewer', () => {
@@ -854,7 +858,7 @@ test('the milestones card fits its body: the heading row, five rows of 84, the c
   assert.ok(pixels(body, 'left') + pixels(body, 'width') <= 1148);
 });
 
-test('the text of the progress card stays inside its body and does not run into the text beside it, even with the longest names', () => {
+test('the text of the line of the progress card stays inside its body and does not run into the text beside it, even with the longest labels', () => {
   const rules = rulesOf(read('panels/monday-progress/monday-progress.css'));
   const names = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map(letter => 'Subteam ' + letter + 'W');
   const crowded = contentOf(names.map((name, index) => board({ subteam: name, status: ['up-next', 'in-progress', 'done'][index % 3] })).concat(names.map(name => board({ subteam: name, status: 'done' }))), names, raw => {
@@ -887,13 +891,12 @@ test('the text of the progress card stays inside its body and does not run into 
       assert.ok(font, entry[0] + ': the class ' + text.cssClass + ' has no font');
       return { text: text, reach: reachOf(text, font) };
     });
-    assert.ok(reaches.length > 10, entry[0] + ' draws text');
+    assert.ok(reaches.length >= 4, entry[0] + ' draws text');
 
     reaches.forEach(item => {
       if (item.reach.left < -1 || item.reach.right > 1097) problems.push(entry[0] + ': "' + item.text.text + '" runs ' + Math.round(item.reach.left) + ' to ' + Math.round(item.reach.right));
       if (item.reach.top < 0 || item.reach.bottom > 512) problems.push(entry[0] + ': "' + item.text.text + '" is outside the body at the top or bottom');
-      if (item.text.cssClass === 'lead' && item.reach.right > 224) problems.push(entry[0] + ': the name "' + item.text.text + '" runs into its bar');
-      if (item.text.cssClass === 'numbers' && item.reach.left < 548) problems.push(entry[0] + ': "' + item.text.text + '" is over its bar');
+      if (item.reach.left < 700) problems.push(entry[0] + ': "' + item.text.text + '" is over the bars, which have the 700px at the left');
     });
     reaches.forEach((first, index) => reaches.slice(index + 1).forEach(second => {
       const across = Math.min(first.reach.right, second.reach.right) - Math.max(first.reach.left, second.reach.left);
@@ -902,6 +905,42 @@ test('the text of the progress card stays inside its body and does not run into 
     }));
   });
   assert.deepEqual(problems, []);
+});
+
+test('the progress card fits its body: the legend, six rows of 64, the line for more and the totals at the left, clear of the line at the right, and the names fit their column', async () => {
+  const rules = rulesOf(read('panels/monday-progress/monday-progress.css'));
+  const shared = rulesOf(read('monday.css'));
+  const { textWidth } = await import(base + 'core/text-width.js');
+  const bodyHeight = pixels(shared['.monday .body'], 'height');
+
+  // from the top: the legend of 52, six rows of 64 from 56, the line for more under them, and the totals
+  const row = pixels(rules['.monday-progress .bar-row'], 'height');
+  const rowsTop = pixels(rules['.monday-progress .bars'], 'top');
+  assert.equal(row, 64);
+  assert.ok(pixels(rules['.monday-progress .legend'], 'height') <= rowsTop);
+  assert.ok(rowsTop + panels.progress.mostRows * row <= pixels(rules['.monday-progress .more'], 'top'), 'the line for more is under the sixth row');
+  assert.ok(pixels(rules['.monday-progress .more'], 'top') + fontOf(rules['.monday-progress .more']).line <= pixels(rules['.monday-progress .totals'], 'top'), 'and over the totals');
+  assert.ok(pixels(rules['.monday-progress .totals'], 'top') + fontOf(rules['.monday-progress .totals']).line <= bodyHeight, 'which end inside the body');
+
+  // a row is the department in 330 at 36px, the bar of 206 and the count of 140, with 12 between: all of the 700 the bars have
+  const gap = pixels(rules['.monday-progress .bar-row'], 'gap');
+  assert.equal(330 + 2 * gap + 206 + pixels(rules['.monday-progress .count'], 'width'), pixels(rules['.monday-progress .bars'], 'width'));
+  assert.equal(pixels(shared['.monday .department'], 'width'), 330);
+  assert.equal(fontOf(shared['.monday .department']).size, 36);
+  assert.ok(/text-overflow: ellipsis/.test(shared['.monday .department']) && /white-space: nowrap/.test(shared['.monday .department']));
+  ['PROGRAMMING', 'ELECTRICAL', 'MECHANICAL', 'BUSINESS'].forEach(name => assert.ok(textWidth(name, 700, 36) + 8 <= 330, name + ' fits without an ellipsis'));
+  // the slash is not in the table, so it is counted at half of the size, which is more than it is
+  assert.ok(textWidth('12', 700, 44) + textWidth('59', 700, 44) + 0.5 * 44 <= pixels(rules['.monday-progress .count'], 'width'), 'done out of all fits its place with two digits each');
+
+  // the totals line is the shortest it can be and fits the 700 even with three digits in both numbers
+  assert.equal(panels.progress.totalsText({ open: 66, overdue: 5 }), '66 OPEN · 5 OVERDUE');
+  assert.ok(textWidth(panels.progress.totalsText({ open: 999, overdue: 999 }), 600, 44) <= 700);
+  assert.deepEqual(panels.progress.totalsFor(contentOf([board({}), board({ status: 'done' }), board({ dueDate: '2026-10-01' }), board({ status: 'in-progress', dueDate: '2026-10-12' }), board({ status: 'done', dueDate: '2026-10-01' })]), monday12), { open: 3, overdue: 1 });
+
+  // the legend does not wrap, and ends in the body. The legend is over the line's words, which start lower.
+  assert.ok(/white-space: nowrap/.test(rules['.monday-progress .legend']));
+  assert.ok(3 * (28 + 12) + textWidth('BACKLOG', 600, 44) + textWidth('IN PROGRESS', 600, 44) + textWidth('DONE', 600, 44) + 2 * 32 <= 1104, 'the legend fits in one line');
+  assert.ok(pixels(rules['.monday-progress .legend'], 'height') < 124 - 44 * 0.72, 'and ends over the first word of the line, ITEMS LEFT');
 });
 
 test('the chart is 1096 by 512 at one pixel to the unit, and the geometry of the bars and the line stays inside it', () => {

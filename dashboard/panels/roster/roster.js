@@ -6,7 +6,10 @@
 import { doubleSlash } from '../../core/marks.js';
 import { escapeHtml } from '../../core/text.js';
 import { makeRosterTurns, rosterPages, rowsPerColumn } from '../../core/roster.js';
+import { visibleItems } from '../../core/content.js';
 import { leadAddress, preloadLeadPhotos, slotMarkup, watchPhotos } from '../../core/portrait.js';
+import { departmentTitle, pageTeamName, teamChipMarkup, teamNameOf, titleClass } from '../../core/team-title.js';
+import { wantedTeam } from '../../core/teams.js';
 
 const nextTurn = makeRosterTurns();
 
@@ -18,12 +21,17 @@ export function mount(host, content) {
   const turn = nextTurn(content.subteams);
   const page = turn.page || { subteam: '', lead: '', members: [], pageNumber: 1, pageCount: 1 };
 
+  // the header names the department and the team: BUILD TEAM and PRIME, or BOTH TEAMS when the subteam is for both
+  const owner = visibleItems(content.subteams).filter(item => String(item.name || '').trim() === page.subteam);
+  const chip = pageTeamName(owner.slice(0, 1), teamNameOf(wantedTeam()));
+  const title = departmentTitle(page.subteam);
+
   host.innerHTML = `
     <section class="page roster">
       <div class="header">
-        <h2 class="title" data-slat="title">ROSTER</h2>
+        <h2 class="${titleClass(title, chip)}" data-slat="title">${escapeHtml(title)}</h2>
         <div class="tag" data-slat="tag">
-          <span class="tag-text">${escapeHtml(page.subteam)}</span>
+          ${teamChipMarkup(chip)}
           ${doubleSlash()}
         </div>
       </div>

@@ -38,6 +38,10 @@ cardNames.forEach(name => {
   fs.mkdirSync(path.join(root, 'panels', id), { recursive: true });
   fs.copyFileSync(path.join(dashboardFolder, 'panels', id, id + '.js'), path.join(root, 'panels', id, id + '.js'));
 });
+['leadership', 'team-leads', 'roster'].forEach(id => {
+  fs.mkdirSync(path.join(root, 'panels', id), { recursive: true });
+  fs.copyFileSync(path.join(dashboardFolder, 'panels', id, id + '.js'), path.join(root, 'panels', id, id + '.js'));
+});
 
 const base = pathToFileURL(root).href + '/';
 const config = await import(base + 'config.js');
@@ -51,6 +55,8 @@ const textWidthModule = await import(base + 'core/text-width.js');
 const panelOrder = await import(base + 'core/panel-order.js');
 const panels = {};
 for (const name of cardNames) panels[name] = await import(base + 'panels/monday-' + name + '/monday-' + name + '.js');
+const people = {};
+for (const name of ['leadership', 'team-leads', 'roster']) people[name] = await import(base + 'panels/' + name + '/' + name + '.js');
 
 const tests = [];
 function test(name, run) {
@@ -691,6 +697,132 @@ test('the text width is the sum of the advance widths of the display font, and a
   assert.equal(width('A', 500, 100), width('A', 700, 100), 'a weight that is not known is 700');
 });
 
+
+// The rows that every Monday card counts
+
+test('the progress card counts the same rows the tasks card shows: one board task is a row on both, and a task that is not from the board is a row on neither', () => {
+  const one = contentOf([board({ title: 'the board task' }), { title: 'a pinned task', subteam: '[Subteam A]', status: 'up-next' }]);
+  const tasks = panels.tasks.markupFor(one, monday12, 1);
+  const progress = panels.progress.markupFor(one, monday12);
+
+  assert.equal(countOf(tasks, 'class="row"'), 1);
+  assert.equal(countOf(progress, 'class="bar-row"'), 1, 'the card that said No board items are showing yet while the tasks card had a row');
+  assert.ok(progress.includes('<span class="count">0/1</span>') && progress.includes('1 OPEN · 0 OVERDUE'));
+  assert.equal(progress.includes('class="empty"'), false);
+
+  const pinned = contentOf([{ title: 'a pinned task', subteam: '[Subteam A]', status: 'up-next' }]);
+  assert.equal(panels.tasks.hasContent(pinned, 1), false, 'no page of the tasks card');
+  assert.equal(panels.progress.markupFor(pinned, monday12).includes('class="empty"'), true, 'and the progress card has nothing either');
+  assert.equal(monday.groupsFor(pinned, monday12).length, 0);
+
+  // for every content, the leads that have a page of the tasks card are the leads that have a bar
+  [contentWith(), contentOf(many(3, 'done').concat(many(3, 'in-progress', { subteam: '[Subteam B]' }), many(1, 'up-next', { subteam: '[Subteam C]', showOnTv: false }))), contentOf([board({ team: '' })])].forEach(content => {
+    const pages = [];
+    for (let page = 1; panels.tasks.hasContent(content, page); page++) pages.push(/data-slat="title">([^<]*)<\/h2>/.exec(panels.tasks.markupFor(content, monday12, page))[1]);
+    const bars = Array.from(panels.progress.markupFor(content, monday12).matchAll(/<span class="department">([^<]*)<\/span>/g)).map(match => match[1] + ' TEAM');
+    assert.deepEqual(bars, pages);
+  });
+});
+
+test('the milestones card counts board tasks only, as the others do', () => {
+  const pinned = contentOf([{ title: 'a pinned task', subteam: '[Subteam A]', status: 'up-next', dueDate: '2026-10-13' }, board({ title: 'the board task', dueDate: '2026-10-14' })]);
+  const html = panels.milestones.markupFor(pinned, monday12);
+
+  assert.equal(html.includes('a pinned task'), false);
+  assert.ok(html.includes('the board task'));
+  assert.ok(panels.milestones.markupFor(contentOf([{ title: 'a pinned task', subteam: '[Subteam A]', status: 'up-next', dueDate: '2026-10-13' }]), monday12).includes('<p class="empty">No board is chosen yet.</p>'));
+});
+
+
+// The names of the teams on the Roster, Leadership and Team leads headers
+
+// plate.js draws each card and bar shape once into a hidden group of the page. This stands in for the page.
+async function withFakePage(run) {
+  const drawn = [];
+  globalThis.document = {
+    getElementById: id => {
+      if (id === 'metal-shapes') return { insertAdjacentHTML: (where, markup) => drawn.push(markup.match(/id="([^"]+)"/)[1]) };
+      return drawn.includes(id) ? {} : null;
+    },
+  };
+  globalThis.Image = class { set src(address) {} };
+
+  try {
+    await run();
+  } finally {
+    delete globalThis.document;
+    delete globalThis.Image;
+  }
+}
+
+function mounted(panel, content) {
+  const host = { innerHTML: '', querySelectorAll: () => [] };
+  panel.mount(host, content);
+  return host.innerHTML;
+}
+
+const headerOf = html => ({
+  title: wordsOf(/<h2 class="([^"]*)" data-slat="title">([\s\S]*?)<\/h2>/.exec(html)[2]),
+  titleClass: /<h2 class="([^"]*)" data-slat="title">/.exec(html)[1],
+  chip: (/<span class="team-chip">([^<]*)<\/span>/.exec(html) || [])[1],
+});
+
+test('the Leadership and Team leads headers name the team: PRIME or NOVA, and BOTH TEAMS when everything on the list is for both', async () => {
+  await withFakePage(async () => {
+    const person = fields => Object.assign({ name: '[Alex]', role: 'Captain' }, fields);
+    const department = fields => Object.assign({ name: '[Build]', lead: '[Lead A]', members: [] }, fields);
+
+    const shared = { people: [person({}), person({ name: '[Sam]' })], subteams: [department({})], settings: {} };
+    assert.deepEqual(headerOf(mounted(people.leadership, shared)), { title: 'LEADERSHIP', titleClass: 'title title-small', chip: 'BOTH TEAMS' });
+    assert.deepEqual(headerOf(mounted(people['team-leads'], shared)), { title: 'TEAM LEADS', titleClass: 'title title-small', chip: 'BOTH TEAMS' });
+
+    const mixed = { people: [person({}), person({ name: '[Sam]', team: 'prime' })], subteams: [department({}), department({ name: '[Wiring]', team: 'prime' })], settings: {} };
+    assert.deepEqual(headerOf(mounted(people.leadership, mixed)), { title: 'LEADERSHIP', titleClass: 'title', chip: 'PRIME' }, 'one person for the team makes it the team\'s, and the heading keeps its size');
+    assert.deepEqual(headerOf(mounted(people['team-leads'], mixed)), { title: 'TEAM LEADS', titleClass: 'title', chip: 'PRIME' });
+
+    const onlyNova = { people: [person({ team: 'nova' })], subteams: [department({ team: 'nova' })], settings: {} };
+    onTeamScreen('nova', () => {
+      assert.equal(headerOf(mounted(people.leadership, onlyNova)).chip, 'NOVA');
+      assert.equal(headerOf(mounted(people['team-leads'], onlyNova)).chip, 'NOVA');
+    });
+    assert.equal(mounted(people.leadership, shared).includes('class="tag-text"'), false, 'the tag text of the old header is gone');
+    assert.ok(mounted(people.leadership, shared).includes('class="double-slash"'), 'and the slashes stay');
+  });
+});
+
+test('the Roster header is the subteam and TEAM with the name of the team in a chip, for each subteam its own team', async () => {
+  await withFakePage(async () => {
+    const subteam = (name, fields) => Object.assign({ name: name, lead: '[Lead A]', members: ['[Alex]', '[Sam]'] }, fields);
+    const content = { people: [], subteams: [subteam('Build', {}), subteam('Programming', { team: 'prime' }), subteam('Strategy', { team: 'nova' })], settings: {} };
+    const seen = [];
+
+    for (let visit = 0; visit < 4; visit++) seen.push(headerOf(mounted(people.roster, content)));
+    assert.deepEqual(seen.map(header => [header.title, header.chip]), [['BUILD TEAM', 'BOTH TEAMS'], ['PROGRAMMING TEAM', 'PRIME'], ['BUILD TEAM', 'BOTH TEAMS'], ['PROGRAMMING TEAM', 'PRIME']], 'the subteam of the other team has no page on this screen, and each of the others says its own team');
+  });
+});
+
+test('a title is at the size of a heading when it fits beside the chip and the slashes, and at 60px when it does not', () => {
+  assert.equal(teamTitle.titleClass('LEADERSHIP', 'PRIME'), 'title');
+  assert.equal(teamTitle.titleClass('LEADERSHIP', 'NOVA'), 'title');
+  assert.equal(teamTitle.titleClass('LEADERSHIP', 'BOTH TEAMS'), 'title title-small');
+  assert.equal(teamTitle.titleClass('TEAM LEADS', 'BOTH TEAMS'), 'title title-small');
+  assert.equal(teamTitle.titleClass('BUILD TEAM', 'PRIME'), 'title');
+  assert.equal(teamTitle.titleClass('PROGRAMMING TEAM', 'PRIME'), 'title title-small');
+
+  // the choice is by the room: whatever is at 96px fits, and what is at 60px did not fit at 96px
+  const room = 1036;
+  const taken = (title, chip, size) => textWidthModule.textWidth(title, 700, size) + 24 + textWidthModule.textWidth(chip, 700, 44) + 28 + 84;
+  ['LEADERSHIP', 'TEAM LEADS', 'BUILD TEAM', 'DESIGN TEAM', 'PROGRAMMING TEAM', 'ELECTRICAL TEAM', 'A TEAM'].forEach(title => ['PRIME', 'NOVA', 'BOTH TEAMS'].forEach(chip => {
+    const big = teamTitle.titleClass(title, chip) === 'title';
+    assert.equal(taken(title, chip, 96) <= room, big, title + ' ' + chip);
+  }));
+  ['leadership', 'team-leads', 'roster'].forEach(name => {
+    const css = fs.readFileSync(path.join(dashboardFolder, 'panels', name, name + '.css'), 'utf8');
+    assert.ok(/\.title \{[^}]*overflow: hidden;[^}]*text-overflow: ellipsis;/.test(css), name + ': a title that still does not fit is cut off with an ellipsis');
+    assert.ok(/\.title-small \{ font: 700 var\(--size-team\)\/64px/.test(css), name);
+    assert.equal(/tag-text/.test(css), false, name + ' has no rule for the old tag text');
+  });
+});
 
 // The Panel order list
 
