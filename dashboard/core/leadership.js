@@ -17,6 +17,20 @@ function roleOf(person) {
   return String(person.role || '').trim().toLowerCase();
 }
 
+// The words that can be in the chip at the right end of a row, the choices of the Group field
+export const groupNames = ['COACH', 'CAPTAIN', 'MENTOR'];
+
+// The chip of a row: the Group field when it has one of the choices, and otherwise what the role
+// says. A role with coach in it is COACH, one with mentor in it is MENTOR, and the rest are CAPTAIN.
+export function groupOf(person) {
+  const typed = String(person.group || '').trim().toUpperCase();
+  if (groupNames.includes(typed)) return typed;
+
+  const role = roleOf(person);
+  if (role.includes('coach')) return 'COACH';
+  return role.includes('mentor') ? 'MENTOR' : 'CAPTAIN';
+}
+
 // The people in a list as groups, one group for each role, in the order of
 // roleOrder. People of one role stay in the order the list has them in, which
 // is the order of the Order field. A role nobody has is left out.

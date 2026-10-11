@@ -385,7 +385,7 @@ editors can sign in from anywhere.
                               a photo (wide, square, tall and extreme, at 100 and 60 percent), the centred
                               caption, the credit that a narrow card leaves out, and the sample photos
       test-portrait-size.mjs  checks for a portrait size above 100: the rows a page holds, the height of a row,
-                              where the role goes, that Leadership and Team Leads page through everyone and a
+                              the classes that say how many rows are on a page, that Leadership and Team Leads page through everyone and a
                               change of the setting skips nobody (core/turns.js), and the table in the docs
       test-portrait-settings.mjs  checks for the Portraits settings: the two sizes set apart, the old Portrait
                               size copied into both while neither is set, and the shape and the frame
@@ -702,10 +702,10 @@ alone.
   `rowsPerPage` in `core/portrait.js`, and `rowsMarkup` draws them. Above 100 a
   row is taller and fewer fit: `rowLayout` gives `rows` from the table `rowSteps`
   (4 up to 100, 3 up to 138, 2 up to 200 and 1 up to 220), the `height` of a row
-  (the body of 576 divided by the rows: 144, 192, 288 or 576) and whether the role goes
-  under the name (`stacked`, from a portrait of 141 pixels, when the role would
-  have less than 336 pixels beside the longest name). `rowsMarkup` hands the
-  height to `base.css` as `--row-height` and adds the class `stacked`. Leadership
+  (the body of 576 divided by the rows: 144, 192, 288 or 576). `rowsMarkup` hands the
+  height to `base.css` as `--row-height` and adds the class `rows-4`, `rows-3`,
+  `rows-2` or `rows-1`, which the stylesheet reads: a page of four has no room for the
+  third line, and a page of two or one lets the name take two lines. Leadership
   takes its size from `leadershipPortrait`, and Team Leads and the Roster slot
   from `rosterPortrait`, so the two panels can be at different sizes.
   `core/leadership.js` lists the people of the Leadership panel: the coaches,
@@ -716,7 +716,12 @@ alone.
   first person not shown yet when the size changes), so nobody is dropped. The
   rows are in the section People portraits in
   `dashboard/base.css`: four of 144 pixels fill the 576 pixel body, as in the
-  Events panel. In a row the portrait is 120 pixels square at 100 (`rowSizes` in
+  Events panel. A row is the portrait, then the name (72 pixels), the role (44, in
+  the team accent) and the line (36, quiet) stacked beside it, and a chip at the
+  right end; a 2 pixel rule in the team's plate color is under each row but the last.
+  Leadership's chip is `groupOf` in `core/leadership.js`: the Group field of the
+  person, or what the role says. The Team Leads chip is the subteam name, and its
+  third line is the Line field of the subteam, or the subteam name. In a row the portrait is 120 pixels square at 100 (`rowSizes` in
   `core/portrait.js`), up to 264 at 220, and on the Subteam roster panel it is 292 pixels square with the
   280 pixel photo 6 pixels in from the edge (`portraitSize`). The photo is
   always asked for at 280, whatever the portrait size setting says, so the copy

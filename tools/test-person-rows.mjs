@@ -1,7 +1,8 @@
 // Tests for the rows of the Team Leads and Leadership panels (dashboard/core/portrait.js,
-// core/team-leads.js, core/leadership.js and the two panels). The plain functions are run for
-// real. The panels are run against a fake page that records what they draw. The stylesheet is
-// checked by reading it, because the sizes need a browser to be seen.
+// core/team-leads.js, core/leadership.js and the two panels): the portrait fills the row, the
+// name, the role and a line are stacked beside it, and a chip is at the right end. The plain
+// functions are run for real. The panels are run against a fake page that records what they
+// draw. The stylesheet is checked by reading it, because the sizes need a browser to be seen.
 //
 //   node tools/test-person-rows.mjs
 
@@ -53,7 +54,7 @@ async function freshPanel(name) {
 
 const { rowSizes, rowsMarkup, rowsPerPage, portraitSizes } = portrait;
 const { departmentRows, showcaseOf } = teamLeads;
-const { leaders, roleOrder } = leadership;
+const { groupNames, groupOf, leaders, roleOrder } = leadership;
 
 const tests = [];
 function test(name, run) {
@@ -131,6 +132,14 @@ function rolesIn(html) {
   return Array.from(html.matchAll(/<div class="person-role">([^<]*)<\/div>/g)).map(match => match[1]);
 }
 
+function linesIn(html) {
+  return Array.from(html.matchAll(/<div class="person-line">([^<]*)<\/div>/g)).map(match => match[1]);
+}
+
+function chipsIn(html) {
+  return Array.from(html.matchAll(/<div class="person-chip">([^<]*)<\/div>/g)).map(match => match[1]);
+}
+
 function department(name, lead, more) {
   return Object.assign({ name: name, lead: lead, members: [] }, more);
 }
@@ -158,6 +167,13 @@ const sample = () => sanity.normalizeSample(JSON.parse(fs.readFileSync(sampleFil
 function ruleOf(css, selector) {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const found = new RegExp('(?:^|[}\\s])' + escaped + '\\s*\\{([^}]*)\\}').exec(css);
+  return found ? found[1] : '';
+}
+
+// The rule of a selector that stands alone in front of its braces, and is not the end of a longer selector or of a list
+function soleRuleOf(css, selector) {
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const found = new RegExp('(?:^|\\}|\\*\\/)\\s*' + escaped + '\\s*\\{([^}]*)\\}').exec(css);
   return found ? found[1] : '';
 }
 
@@ -193,31 +209,42 @@ test('four rows to a page, and the portrait in a row is 120 square at 100 and fo
   assert.deepEqual(portraitSizes(100), { card: 292, photo: 280, inset: 6 });
 });
 
-test('a row is the portrait, the name and the role, as one slat, with a bar under it except the last, and escapes what editors typed', () => withFakePage(drawn => {
+test('a row is the portrait, the name, the role, the line and the chip, as one slat, and escapes what editors typed', () => withFakePage(drawn => {
   const address = 'https://cdn.sanity.io/images/abc123/production/0123abcd-800x600.jpg?w=280&h=280';
   const html = rowsMarkup([
-    { name: '<b>Alexandria Joseph</b>', role: 'HEAD COACH', address: address, metal: 'red' },
-    { name: '[Sam]', role: 'CAPTAIN', address: '', metal: 'gold' },
+    { name: '<b>Alexandria Joseph</b>', role: 'HEAD COACH', line: 'Since <2019>', chip: 'COACH', address: address, metal: 'red' },
+    { name: '[Sam]', role: 'CAPTAIN', line: '', chip: 'CAPTAIN', address: '', metal: 'gold' },
     { name: '[Pat]', role: '', address: '' },
   ], 100);
 
-  assert.ok(html.startsWith('<div class="person-rows">'));
+  assert.ok(html.startsWith('<div class="person-rows rows-4">'));
   assert.equal(countOf(html, '<div class="person-row" data-slat="item">'), 3);
-  assert.equal(countOf(html, 'class="row-bar"'), 2, 'a bar under every row but the last');
+  assert.equal(countOf(html, 'row-bar'), 0, 'the rule between rows is the border of the row, not a metal bar');
   assert.ok(html.includes('&lt;b&gt;Alexandria Joseph&lt;/b&gt;') && !html.includes('<b>'));
   assert.ok(html.includes('<div class="person-role">HEAD COACH</div>'));
+  assert.ok(html.includes('<div class="person-line">Since &lt;2019&gt;</div>') && html.includes('<div class="person-chip">COACH</div>'));
   assert.ok(html.includes('<img src="' + address.replace(/&/g, '&amp;') + '" width="116" height="116" alt="">'));
   assert.equal(countOf(html, '<use href="#person-silhouette"'), 2, 'a row with no address has the silhouette');
 
-  // the metal is the frame of the picture, not of the row, so the bars keep the panel's own
+  // the name, the role and the line are one block, and the chip is the last part of the row
+  assert.equal(countOf(html, '<div class="person-text">'), 3);
+  assert.ok(/<div class="person-name">[^<]*<\/div>\s*<div class="person-role">[^<]*<\/div>\s*<div class="person-line">[^<]*<\/div>\s*<\/div>\s*<div class="person-chip">/.test(html));
+  assert.deepEqual([namesIn(html), rolesIn(html), linesIn(html), chipsIn(html)], [
+    ['&lt;b&gt;Alexandria Joseph&lt;/b&gt;', '[Sam]', '[Pat]'],
+    ['HEAD COACH', 'CAPTAIN', ''],
+    ['Since &lt;2019&gt;', '', ''],
+    ['COACH', 'CAPTAIN', ''],
+  ]);
+
+  // the metal is the frame of the picture, not of the row
   assert.ok(html.includes('<div class="portrait red-metal" style="--portrait-card: 120px; --portrait-photo: 116px; --portrait-inset: 2px">'));
   assert.ok(html.includes('<div class="portrait" data-metal="gold" style='));
   assert.ok(html.includes('<div class="portrait" style='));
   assert.equal(/<div class="person-row"[^>]*(metal|red)/.test(html), false);
 
-  // the card is the one shape of 292 and the bar the one of 1124, drawn once however many rows there are
-  assert.deepEqual(Array.from(new Set(drawn)).sort(), ['bar-1124', 'card-292x292']);
-  assert.ok(html.includes('href="#card-292x292"') && html.includes('href="#bar-1124"'));
+  // the card is the one shape of 292, drawn once however many rows there are
+  assert.deepEqual(Array.from(new Set(drawn)), ['card-292x292']);
+  assert.ok(html.includes('href="#card-292x292"'));
 }));
 
 test('a row follows the portrait size and keeps its text, and the markup is the same apart from the sizes', () => withFakePage(() => {
@@ -236,21 +263,25 @@ test('a row follows the portrait size and keeps its text, and the markup is the 
 
 // The Team Leads panel
 
-test('departmentRows: the lead and the department, in the order of the list, and [lead] for a department with no lead', () => {
+test('departmentRows: the lead, TEAM LEAD, the line and the department, in the order of the list, and [lead] for a department with no lead', () => {
   const rows = departmentRows([
     department('  [Build] ', '  [Lead A]  '),
     department('[Software]', ''),
     department('[Media]', undefined),
     department('', '[Lead B]'),
     { name: '[Bare]' },
+    department('[Safety]', '[Lead C]', { line: '  [Junior, since 2026]  ' }),
+    department('[Gap]', '', { line: '[Open for a student]' }),
   ]);
 
   assert.deepEqual(rows, [
-    { name: '[Lead A]', role: '[BUILD] LEAD', lead: '[Lead A]' },
-    { name: '[Software]', role: '[lead]', lead: '' },
-    { name: '[Media]', role: '[lead]', lead: '' },
-    { name: '[Lead B]', role: 'LEAD', lead: '[Lead B]' },
-    { name: '[Bare]', role: '[lead]', lead: '' },
+    { name: '[Lead A]', role: 'TEAM LEAD', line: '[Build]', chip: '[BUILD]', lead: '[Lead A]' },
+    { name: '[Software]', role: '[lead]', line: '', chip: '', lead: '' },
+    { name: '[Media]', role: '[lead]', line: '', chip: '', lead: '' },
+    { name: '[Lead B]', role: 'TEAM LEAD', line: '', chip: '', lead: '[Lead B]' },
+    { name: '[Bare]', role: '[lead]', line: '', chip: '', lead: '' },
+    { name: '[Lead C]', role: 'TEAM LEAD', line: '[Junior, since 2026]', chip: '[SAFETY]', lead: '[Lead C]' },
+    { name: '[Gap]', role: '[lead]', line: '[Open for a student]', chip: '', lead: '' },
   ]);
 });
 
@@ -292,11 +323,12 @@ test('the Team Leads panel shows four departments on each visit, in order, and c
     ['[Lead 9]', '[Lead 10]'],
     ['[Lead 1]', '[Lead 2]', '[Lead 3]', '[Lead 4]'],
   ]);
-  assert.deepEqual(rolesIn(visits[0]), ['[DEPT 1] LEAD', '[DEPT 2] LEAD', '[DEPT 3] LEAD', '[DEPT 4] LEAD']);
+  assert.deepEqual(rolesIn(visits[0]), ['TEAM LEAD', 'TEAM LEAD', 'TEAM LEAD', 'TEAM LEAD']);
+  assert.deepEqual(chipsIn(visits[0]), ['[DEPT 1]', '[DEPT 2]', '[DEPT 3]', '[DEPT 4]'], 'the department is the chip at the right end');
+  assert.deepEqual(linesIn(visits[0]), ['[Dept 1]', '[Dept 2]', '[Dept 3]', '[Dept 4]'], 'with no line typed the third line is the department');
 
-  // a full page has three bars and the last row none, and a short page keeps its rows at the top
-  assert.equal(countOf(visits[0], 'class="row-bar"'), 3);
-  assert.equal(countOf(visits[2], 'class="row-bar"'), 1);
+  // a short page keeps its rows at the top
+  assert.ok(visits[0].includes('<div class="person-rows rows-4">') && visits[2].includes('<div class="person-rows rows-4">'));
   assert.ok(visits[0].includes('<h2 class="title" data-slat="title">TEAM</h2>') && visits[0].includes('<span class="tag-text">TEAM LEADS</span>'));
 }));
 
@@ -312,6 +344,10 @@ test('twelve departments are three panels of four, and the last department with 
   assert.deepEqual(namesIn(visits[2]).slice(-1), ['[Subteam L]']);
   assert.deepEqual(rolesIn(visits[2]).slice(-1), ['[lead]']);
   assert.equal(rolesIn(visits[0]).includes('[lead]'), false);
+
+  // every sample team lead has a line, and the one with no lead has no chip
+  assert.deepEqual(linesIn(visits[0]), ['[A year or a short note]', '[A year or a short note]', '[A year or a short note]', '[A year or a short note]']);
+  assert.deepEqual(chipsIn(visits[2]).slice(-1), ['']);
 }));
 
 test('the Team Leads panel with nothing to show has no content, and with fewer than four has fewer rows', () => withFakePage(() => {
@@ -321,7 +357,6 @@ test('the Team Leads panel with nothing to show has no content, and with fewer t
 
   const one = mount(teamLeadsPanel, { subteams: [department('[Build]', '[Lead A]')], people: [] });
   assert.equal(countOf(one, 'data-slat="item"'), 1);
-  assert.equal(countOf(one, 'class="row-bar"'), 0);
 }));
 
 test('the photo of a lead is the photo of the person with the same name in Leadership, and the photo of the next page is loaded early', () => withFakePage(() => withFakeImages(asked => {
@@ -447,7 +482,8 @@ test('the Leadership panel shows four rows on each visit and then the rest, with
   assert.equal(visits[2], visits[0], 'the third visit is the first page again');
   assert.deepEqual(rolesIn(visits[0]), ['HEAD COACH', 'COACH', 'CAPTAIN', 'CAPTAIN']);
   assert.deepEqual(rolesIn(visits[1]), ['CAPTAIN', 'MENTOR']);
-  assert.equal(countOf(visits[0], 'class="row-bar"'), 3);
+  assert.deepEqual(chipsIn(visits[0]), ['COACH', 'COACH', 'CAPTAIN', 'CAPTAIN'], 'the chip follows the role');
+  assert.deepEqual(chipsIn(visits[1]), ['CAPTAIN', 'MENTOR']);
   assert.equal(countOf(visits[0], 'class="portrait red-metal"'), 2);
   assert.equal(countOf(visits[0], 'data-metal="gold"'), 2);
   assert.ok(visits[0].includes('<h2 class="title" data-slat="title">TEAM</h2>') && visits[0].includes('<span class="tag-text">LEADERSHIP</span>'));
@@ -457,8 +493,55 @@ test('the Leadership panel with three people has three rows, and a person with n
   const html = mount(leadershipPanel, { people: [].concat(crew('Coach', 1), crew('Captain', 2)) });
 
   assert.equal(countOf(html, 'data-slat="item"'), 3);
-  assert.equal(countOf(html, 'class="row-bar"'), 2);
   assert.equal(countOf(html, '<use href="#person-silhouette"'), 3);
+}));
+
+test('the chip of a Leadership row is the Group field, or follows the role: coach is COACH, mentor is MENTOR and the rest are CAPTAIN', () => {
+  assert.deepEqual(groupNames, ['COACH', 'CAPTAIN', 'MENTOR']);
+
+  [['Coach', 'COACH'], ['coach', 'COACH'], ['Head Coach', 'COACH'], ['Mentor', 'MENTOR'], ['Captain', 'CAPTAIN'], ['  Captain ', 'CAPTAIN'], ['Alumni', 'CAPTAIN'], ['', 'CAPTAIN']].forEach(([role, chip]) => {
+    assert.equal(groupOf({ role: role }), chip, 'role ' + JSON.stringify(role));
+  });
+  assert.equal(groupOf({}), 'CAPTAIN');
+
+  // a Group that is one of the choices wins, in any case and with spaces, and anything else is ignored
+  assert.equal(groupOf({ role: 'Mentor', group: 'COACH' }), 'COACH');
+  assert.equal(groupOf({ role: 'Captain', group: ' mentor ' }), 'MENTOR');
+  assert.equal(groupOf({ role: 'Coach', group: 'CHIEF' }), 'COACH');
+  assert.equal(groupOf({ role: 'Coach', group: '' }), 'COACH');
+  assert.equal(groupOf({ role: 'Coach', group: null }), 'COACH');
+});
+
+test('a Leadership row has the typed line without its spaces, and no line when there is none, and the Group changes only the chip', () => withFakePage(() => {
+  const people = [
+    { role: 'Coach', name: '[Coach A]', title: 'Head coach', line: '  [Since 2019]  ' },
+    { role: 'Captain', name: '[Captain A]', line: '   ' },
+    { role: 'Mentor', name: '[Mentor A]', group: 'COACH' },
+  ];
+  const html = mount(leadershipPanel, { people: people, settings: { leadershipPortrait: 101 } });
+
+  assert.deepEqual(namesIn(html), ['[Coach A]', '[Captain A]', '[Mentor A]']);
+  assert.deepEqual(rolesIn(html), ['HEAD COACH', 'CAPTAIN', 'MENTOR'], 'the role line does not follow the Group');
+  assert.deepEqual(linesIn(html), ['[Since 2019]', '', '']);
+  assert.deepEqual(chipsIn(html), ['COACH', 'CAPTAIN', 'COACH']);
+}));
+
+test('the reader keeps the line of a person and of a team lead, and the group of a person, and a row made from them shows them', () => withFakePage(() => {
+  const content = sanity.normalizeContent({
+    people: [{ role: 'Captain', name: '[Captain A]', line: '[Since 2026]', group: 'MENTOR' }],
+    subteams: [department('[Build]', '[Lead A]', { line: '[Junior]' })],
+  });
+
+  assert.equal(content.people[0].line, '[Since 2026]');
+  assert.equal(content.people[0].group, 'MENTOR');
+  assert.equal(content.subteams[0].line, '[Junior]');
+
+  const leaderRows = mount(leadershipPanel, { people: content.people });
+  assert.deepEqual([linesIn(leaderRows), chipsIn(leaderRows)], [['[Since 2026]'], ['MENTOR']], 'the chip is the group, and the line is there for the stylesheet to hide on a page of four rows');
+  assert.ok(leaderRows.includes('<div class="person-rows rows-4">'));
+  const detail = mount(leadershipPanel, { people: content.people, settings: { leadershipPortrait: 101 } });
+  assert.deepEqual(linesIn(detail), ['[Since 2026]']);
+  assert.deepEqual(linesIn(mount(teamLeadsPanel, { subteams: content.subteams, people: [], settings: { rosterPortrait: 101 } })), ['[Junior]']);
 }));
 
 // Both panels
@@ -500,29 +583,35 @@ test('the panels draw through the shared rows and the header mark, have no anima
   assert.ok(read('registry.js').includes("{ id: 'leadership', region: 'grid1', topic: 'people' },"));
 });
 
-test('four rows of 144 fill the 576 body, the name is 64px, the role is 44px in the team colour at the right end, and nothing is smaller than 44px', () => {
+test('four rows of 144 fill the 576 body, the name is 72px, the role 44px in the team colour, the line 36px, and the chip 44px at the right end', () => {
   const css = read('base.css');
+  const tokens = read('tokens.css');
   const rows = ruleOf(css, '.person-rows');
   const row = ruleOf(css, '.person-row');
-  const name = ruleOf(css, '.person-name');
-  const role = ruleOf(css, '.person-role');
+  const name = soleRuleOf(css, '.person-name');
+  const role = soleRuleOf(css, '.person-role');
+  const line = soleRuleOf(css, '.person-line');
+  const chip = soleRuleOf(css, '.person-chip');
 
   // the Events panel has the same body: 124 from the top, 576 high, 1152 wide
   assert.deepEqual([numberIn(rows, 'left'), numberIn(rows, 'top'), numberIn(rows, 'width'), numberIn(rows, 'height')], [0, 124, 1152, 576]);
   assert.equal(rowHeightIn(row) * rowsPerPage, numberIn(rows, 'height'));
-  assert.ok(/display: grid;/.test(row) && /grid-template-columns: auto auto minmax\(0, 1fr\);/.test(row) && /align-items: center;/.test(row), 'the picture, the name and the role are centred in the row');
-  assert.ok(/grid-column: 2;/.test(name) && /grid-column: 3;/.test(role), 'the name and the role keep their columns when one of them is missing');
-  assert.equal(/display: (inline-)?flex/.test(css.slice(css.indexOf('.person-rows {'), css.indexOf('.person-name:empty'))), false, 'a flex row in base.css would have to be named in the mirror test of test-layouts.mjs');
+  assert.ok(/display: grid;/.test(row) && /grid-template-columns: auto minmax\(0, 1fr\) auto;/.test(row), 'the portrait, the text that takes what is left, and the chip');
+  assert.ok(/align-items: center;/.test(row), 'the content of a row is centred in it');
+  assert.ok(/border-bottom: 2px solid var\(--team-plate\);/.test(row), 'a 2px rule in the plate color between rows');
+  assert.ok(/border-bottom: 0;/.test(ruleOf(css, '.person-row:last-child')), 'and none under the last row, where the frame is');
+  assert.equal(/display: (inline-)?flex/.test(css.slice(css.indexOf('.person-rows {'), css.indexOf('.person-chip:empty'))), false, 'a flex row in base.css would have to be named in the mirror test of test-layouts.mjs');
 
-  assert.ok(/font: 500 var\(--size-body-large\)\/72px var\(--font-text\);/.test(name), 'the name is 64px');
-  assert.ok(/white-space: nowrap;/.test(name) && /text-overflow: ellipsis;/.test(name), 'a long name is cut, not wrapped');
-  assert.ok(/font: 600 var\(--size-label\)\/48px var\(--font-display\);/.test(role), 'the role is 44px');
+  assert.ok(/font: 500 var\(--size-person\)\/72px var\(--font-text\);/.test(name) && /--size-person: 72px;/.test(tokens), 'the name is 72px');
+  assert.ok(/font: 600 var\(--size-label\)\/48px var\(--font-display\);/.test(role) && /--size-label: 44px;/.test(tokens), 'the role is 44px');
   assert.ok(/color: var\(--yellow\);/.test(role), 'the role is in the team accent');
-  assert.ok(/text-align: right;/.test(role), 'the role takes what is left and ends at the right');
-  assert.ok(/-webkit-line-clamp: 2;/.test(role), 'the role has at most two lines');
-  assert.ok(/--size-body-large: 64px;/.test(read('tokens.css')) && /--size-label: 44px;/.test(read('tokens.css')));
+  assert.ok(/font: 500 36px\/40px var\(--font-text\);/.test(line) && /color: var\(--lilac\);/.test(line), 'the line is 36px in the quiet color');
+  assert.ok(/font: 700 var\(--size-label\)\/52px var\(--font-display\);/.test(chip), 'the chip is 44px');
+  assert.ok(/background: var\(--yellow\);/.test(chip) && /color: var\(--ground\);/.test(chip) && /padding: 0 14px;/.test(chip), 'the chip is the accent plate the Events panel has for its kind');
+  const group = ruleOf(css, '.person-name,\n.person-role,\n.person-line');
+  assert.ok(/overflow: hidden;/.test(group) && /text-overflow: ellipsis;/.test(group) && /white-space: nowrap;/.test(group), 'a long name, role or line is cut, not wrapped');
 
-  [rows, row, name, role, ruleOf(css, '.person-row .portrait'), ruleOf(css, '.person-row .row-bar')].forEach(rule => {
+  [rows, row, name, role, line, chip, ruleOf(css, '.person-row .portrait'), ruleOf(css, '.person-text')].forEach(rule => {
     assert.equal(/font-size|@keyframes|transition:|animation:|box-shadow|text-shadow|filter|blur/.test(rule), false);
   });
   ['panels/leadership/leadership.css', 'panels/team-leads/team-leads.css'].forEach(file => {
@@ -531,43 +620,52 @@ test('four rows of 144 fill the 576 body, the name is 64px, the role is 44px in 
   });
 });
 
-test('the rows fit the panel: the bar between them, the photo, the longest name, the role and the cut corner', () => {
+test('the lines fit the row: two lines in a row of 144, three in a row of 192, the name may take two lines when it has room, and the chip stays inside the cut corner', () => {
   const css = read('base.css');
-  const row = ruleOf(css, '.person-row');
-  const last = ruleOf(css, '.person-row:nth-child(4)');
-  const name = ruleOf(css, '.person-name');
-  const bar = ruleOf(css, '.person-row .row-bar');
-  const gap = numberIn(row, 'column-gap');
+  const lineOf = rule => Number(/\/(\d+)px var\(--font-/.exec(rule)[1]);
+  const nameLine = lineOf(soleRuleOf(css, '.person-name'));
+  const roleLine = lineOf(soleRuleOf(css, '.person-role'));
+  const thirdLine = lineOf(soleRuleOf(css, '.person-line'));
+  const chipLine = lineOf(soleRuleOf(css, '.person-chip'));
+  const rule = 2;
 
-  // the bar is the one the Events panel has: its line is 10px into its 20px picture, so it sits on the foot of the row
-  assert.ok(/top: calc\(var\(--row-height, 144px\) - 10px\);/.test(bar), 'the bar sits 10px above the foot of the row, whatever the height of the row');
-  assert.equal(rowHeightIn(row) - 10, 134);
-  assert.equal(numberIn(bar, 'left'), 14);
-  assert.ok(read('core/portrait.js').includes('const rowBarLength = 1124;'));
-  assert.equal(1152 - 2 * numberIn(bar, 'left'), 1124, 'the bar stops 14px short of the frame on each side');
+  assert.deepEqual([nameLine, roleLine, thirdLine, chipLine], [72, 48, 40, 52]);
 
-  // the room for the name and the role in a row, and in the last row, which stops sooner
-  const padding = /padding: 0 (\d+)px 0 (\d+)px;/.exec(row);
-  const innerWidth = 1152 - Number(padding[1]) - Number(padding[2]);
-  const lastInnerWidth = 1152 - numberIn(last, 'padding-right') - Number(padding[2]);
-  const roleRoom = width => width - rowSizes(100).card - 2 * gap - numberIn(name, 'max-width');
-  assert.ok(roleRoom(innerWidth) >= 336 && roleRoom(lastInnerWidth) >= 336, 'the role has 336px or more beside the longest name');
+  // a row of 144 holds the name and the role, with 11px above and below, and has no room for the third line, which it hides
+  assert.ok(144 - rule - (nameLine + roleLine) >= 20, 'two lines fit a row of four');
+  assert.ok(144 - rule - (nameLine + roleLine + thirdLine) < 0, 'three lines do not');
+  assert.ok(/display: none;/.test(ruleOf(css, '.person-rows.rows-4 .person-line')), 'so a page of four rows has no third line');
+  [3, 2, 1].forEach(count => {
+    assert.ok(576 / count - rule - (nameLine + roleLine + thirdLine) >= 24, 'three lines fit a row of ' + 576 / count);
+    assert.equal(ruleOf(css, '.person-rows.rows-' + count + ' .person-line'), '', 'and a page of ' + count + ' shows the line');
+  });
 
-  // the last row is 556 to 700 down the panel, its role two lines at most, centred. Its lowest line ends at 676, and the cut corner
-  // of the frame there is at x = 1148 - (676 - 640) * 80 / 64
-  const lastTop = 124 + 3 * rowHeightIn(row);
-  const lowest = lastTop + rowHeightIn(row) / 2 + 48;
-  const cutAt = 1148 - (lowest - 640) * 80 / 64;
-  assert.ok(1152 - numberIn(last, 'padding-right') <= cutAt, 'the role in the last row stays inside the cut corner');
-  assert.ok(lastTop + rowHeightIn(row) <= 704, 'the rows end above the foot of the frame');
+  // with one or two rows the name may take two lines, and the three lines still fit
+  [2, 1].forEach(count => {
+    const name = ruleOf(css, '.person-rows.rows-2 .person-name,\n.person-rows.rows-1 .person-name');
+    assert.ok(/-webkit-line-clamp: 2;/.test(name) && /white-space: normal;/.test(name), 'the name of a row of ' + 576 / count + ' may take two lines');
+    assert.ok(576 / count - rule - (2 * nameLine + roleLine + thirdLine) >= 24, 'two lines of name and the others fit a row of ' + 576 / count);
+  });
+  assert.ok(/white-space: nowrap;/.test(ruleOf(css, '#screen')), 'the screen keeps lines whole, so the name has to ask for wrapping');
 
-  // the cut corner numbers are the ones of the large frame
+  // the cut corner of the large frame runs from (1148, 640) to (1068, 704). The last row stops 16px sooner on the right, and its chip,
+  // centred in the row, is 52 high
+  const cornerAt = y => (y <= 640 ? 1148 : 1148 - (y - 640) * 80 / 64);
   assert.ok(read('core/plate.js').includes('body: [[4, 120], [1148, 120], [1148, 640], [1068, 704], [4, 704]]'));
+  const last = ruleOf(css, '.person-row:last-child');
+  const right = numberIn(last, 'padding-right');
+  assert.equal(right, 56);
+  [4, 3, 2, 1].forEach(count => {
+    const height = 576 / count;
+    const centre = 124 + (count - 1) * height + height / 2;
+    assert.ok(1152 - right <= cornerAt(centre + chipLine / 2), 'the chip of the last row stays inside the cut corner on a page of ' + count);
+    assert.ok(124 + count * height <= 704, 'the rows end above the foot of the frame');
+  });
 });
 
 test('the rows have no rule for a style or a layout, so Original, Cybertron, Minimal and the sidebar layout draw the same panel code', () => {
   const css = read('base.css');
-  ['.person-rows', '.person-row', '.person-name', '.person-role', '.person-row .portrait'].forEach(selector => assert.notEqual(ruleOf(css, selector), '', selector));
+  ['.person-rows', '.person-row', '.person-text', '.person-name', '.person-role', '.person-line', '.person-chip', '.person-row .portrait'].forEach(selector => assert.notEqual(ruleOf(css, selector), '', selector));
 
   const sheets = ['styles/original.css', 'styles/cybertron.css', 'styles/minimal.css', 'layouts/bar.css', 'layouts/sidebar.css', 'panels/leadership/leadership.css', 'panels/team-leads/team-leads.css'];
   sheets.forEach(file => assert.equal(/\.person-|\.slots?\b|\.slot-/.test(read(file).replace(/\/\*[\s\S]*?\*\//g, '')), false, file + ' has a rule for the rows'));

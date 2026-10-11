@@ -1,5 +1,5 @@
 // Tests for the portrait size above 100: the range of the old setting, the rows a page holds, the height of
-// a row, where the role goes, and the paging of the Leadership and Team Leads panels, which must show
+// a row, the classes that say how many rows are on a page, and the paging of the Leadership and Team Leads panels, which must show
 // everyone however few rows fit (dashboard/core/portrait.js, core/turns.js, core/leadership.js,
 // core/team-leads.js, base.css and the three panels). The plain functions are run for real. The panels
 // are run against a fake page that records what they draw. The stylesheet is checked by reading it,
@@ -142,9 +142,6 @@ const numberIn = (rule, property) => Number(new RegExp('(?:^|[;\\s])' + property
 const bodyHeight = 576;
 const bodyWidth = 1152;
 const bodyTop = 124;
-// What is left for the role beside a name of 560px, at 100 in the last row, which stops 16px sooner
-// (tools/test-person-rows.mjs pins it)
-const roleBesideMinimum = 336;
 const percents = [];
 for (let percent = 60; percent <= 220; percent++) percents.push(percent);
 
@@ -209,9 +206,9 @@ test('a page holds 4 rows up to 100, 3 from 101 to 138, 2 from 139 to 200 and 1 
   assert.equal(rowSizes(220).card, 264, '264 in a row of 576');
 });
 
-test('the rows at 100 and below are four of 144 and not stacked, the same for every setting', () => {
+test('the rows at 100 and below are four of 144, the same for every setting', () => {
   for (let percent = 60; percent <= 100; percent++) {
-    assert.deepEqual(rowLayout(percent), { rows: 4, height: 144, stacked: false }, 'at ' + percent);
+    assert.deepEqual(rowLayout(percent), { rows: 4, height: 144 }, 'at ' + percent);
   }
   assert.deepEqual(rowLayout(), rowLayout(100));
   assert.deepEqual(rowLayout('big'), rowLayout(100));
@@ -219,126 +216,46 @@ test('the rows at 100 and below are four of 144 and not stacked, the same for ev
   assert.deepEqual(rowLayout(900), rowLayout(220));
 });
 
-// Where the role goes
-
-test('the role stays beside the name while it keeps 336px, and goes under the name from a portrait of 142px, which is 118 percent', () => {
+// The text of a row is stacked beside the portrait at every size, so there is no class for the role under the name
+test('the role is under the name at every size: the portrait is as wide as the setting says and the text has what is left', () => {
   const css = read('base.css');
   const row = ruleOf(css, '.person-row');
-  const stacked = ruleOf(css, '.person-rows.stacked .person-row');
-  const name = ruleOf(css, '.person-name');
   const padding = /padding: 0 (\d+)px 0 (\d+)px;/.exec(row);
   const gap = numberIn(row, 'column-gap');
-  const nameWidth = numberIn(name, 'max-width');
-  const inner = bodyWidth - Number(padding[1]) - Number(padding[2]);
+  const chip = 358; // PROGRAMMING, 11 letters at 44px, in its plate
 
-  assert.deepEqual([Number(padding[1]), Number(padding[2]), gap, nameWidth], [40, 28, 24, 560], 'the numbers the widths are worked out from');
+  assert.equal(/\.stacked|person-rows stacked|layout\.stacked|stacked:/.test(css + read('core/portrait.js')), false, 'no class for a role beside the name, and no rule for it');
+  assert.deepEqual([Number(padding[1]), Number(padding[2]), gap], [40, 28, 24]);
 
-  // beside the name the role has what is left of the row, and it has the 336px of the rows at 100
-  const widest = 476 - roleBesideMinimum;
-  assert.equal(inner - 2 * gap - nameWidth - widest, roleBesideMinimum);
-  assert.equal(widest, 140, 'the widest portrait that leaves the role its 336px');
-
+  // the name has room beside the portrait and the longest chip: 15 letters at 72px or more at a row of four, and at least 400px at the widest portrait
   percents.forEach(percent => {
     const card = rowSizes(percent).card;
-    const layout = rowLayout(percent);
-
-    assert.equal(layout.stacked, card > widest, 'stacked at ' + percent);
-    if (!layout.stacked) {
-      assert.ok(inner - card - 2 * gap - nameWidth >= roleBesideMinimum, 'the role has 336px beside the longest name at ' + percent);
-    }
+    const room = bodyWidth - Number(padding[1]) - Number(padding[2]) - card - 2 * gap - chip;
+    assert.ok(room >= 400, 'the name has ' + room + 'px beside the portrait and the longest chip at ' + percent);
   });
-  assert.equal(rowSizes(117).card, 140);
-  assert.equal(rowLayout(117).stacked, false);
-  assert.equal(rowSizes(118).card, 142);
-  assert.equal(rowLayout(118).stacked, true);
-  assert.ok(inner - 142 - 2 * gap - nameWidth < roleBesideMinimum, '142px would leave the role under 336px beside the name');
-
-  // stacked, the role is in the column the name is in, in the row under the name, at the left
-  assert.ok(/grid-template-columns: auto minmax\(0, 1fr\);/.test(stacked) && /grid-template-rows: minmax\(0, 1fr\) max-content max-content minmax\(0, 1fr\);/.test(stacked), 'the portrait, then one column for the name and the role');
-  // an auto row round a box that cuts its text (overflow: hidden) shrinks to 20px in a browser, and the role lands on the name
-  assert.equal(/grid-template-rows:[^;]*\bauto\b/.test(stacked), false, 'the rows of the name and the role are max-content, never auto');
-  assert.ok(/grid-row: 2;/.test(ruleOf(css, '.person-rows.stacked .person-name')), 'the name is in the row above the role');
-  const role = ruleOf(css, '.person-rows.stacked .person-role');
-  assert.ok(/grid-column: 2;/.test(role) && /grid-row: 3;/.test(role) && /text-align: left;/.test(role), 'the role is under the name, at the left');
-  assert.ok(/grid-row: 1 \/ 5;/.test(ruleOf(css, '.person-rows.stacked .person-row .portrait')), 'the portrait spans the rows, so it is centred in the row');
-
-  // the column of a stacked row is as wide as the longest name, whatever the portrait
-  const right = numberIn(stacked, 'padding-right');
-  assert.equal(right, 64);
-  percents.filter(percent => rowLayout(percent).stacked).forEach(percent => {
-    assert.ok(bodyWidth - Number(padding[2]) - right - rowSizes(percent).card - gap >= nameWidth, 'the name and the role have 560px beside the portrait at ' + percent);
-  });
+  assert.ok(bodyWidth - 40 - 28 - rowSizes(100).card - 2 * gap - chip >= 550, 'a name of 15 letters fits beside a portrait of 120 and the longest chip');
 });
 
-test('a stacked row holds the name and two lines of role inside it, and the last row stays inside the cut corner of the frame', () => {
-  const css = read('base.css');
-  const row = ruleOf(css, '.person-row');
-  const lineOf = rule => Number(/\/(\d+)px var\(--font-/.exec(rule)[1]);
-  const nameLine = lineOf(ruleOf(css, '.person-name'));
-  const roleLine = lineOf(ruleOf(css, '.person-role'));
-  const stackedRight = numberIn(ruleOf(css, '.person-rows.stacked .person-row'), 'padding-right');
-  const rowRight = Number(/padding: 0 (\d+)px 0 \d+px;/.exec(row)[1]);
-  const roleLines = Number(/-webkit-line-clamp: (\d+);/.exec(ruleOf(css, '.person-role'))[1]);
-
-  assert.deepEqual([nameLine, roleLine, roleLines], [72, 48, 2], 'the name keeps its 72px line and the role its 48px lines, two at most');
-  assert.equal(/font(-size)?:/.test(ruleOf(css, '.person-rows.stacked .person-name') + ruleOf(css, '.person-rows.stacked .person-role') + ruleOf(css, '.person-rows.stacked .person-row')), false, 'the stacked rows do not change a text size');
-
-  // the cut corner of the large frame runs from (1148, 640) to (1068, 704)
-  const cornerAt = y => (y <= 640 ? 1148 : 1148 - (y - 640) * 80 / 64);
-  assert.ok(read('core/plate.js').includes('body: [[4, 120], [1148, 120], [1148, 640], [1068, 704], [4, 704]]'));
-
-  percents.forEach(percent => {
-    const layout = rowLayout(percent);
-    const lastCentre = bodyTop + (layout.rows - 1) * layout.height + layout.height / 2;
-
-    assert.ok(bodyTop + bodyHeight <= 704, 'the rows end above the foot of the frame');
-    if (layout.stacked) {
-      const pair = nameLine + roleLines * roleLine;
-      assert.ok((layout.height - pair) / 2 >= 10, 'the name and two lines of role fit the row with the bar clear at ' + percent);
-      assert.ok(bodyWidth - stackedRight <= cornerAt(lastCentre + pair / 2), 'the role in the last row stays inside the cut corner at ' + percent);
-    } else if (layout.rows < 4) {
-      assert.ok(bodyWidth - rowRight <= cornerAt(lastCentre + roleLines * roleLine / 2), 'the role in the last row stays inside the cut corner at ' + percent);
-    }
-  });
-  // the number the stylesheet comment gives: the lowest line of a page of three rows ends at 688, where the corner is at 1088
-  assert.equal(bodyTop + 2 * 192 + 96 + 84, 688);
-  assert.equal(cornerAt(688), 1088);
-});
-
-// The screen keeps every line on one line (white-space: nowrap on #screen, inherited by everything), so a role
-// beside a 17 character name, which leaves it 366px, was cut at the frame (DRIVE TEA) instead of taking the
-// second line that the two line clamp and the comment promise. Found by rendering it.
-test('the role beside a name takes a second line instead of being cut: its rule turns wrapping back on', () => {
-  const css = read('base.css');
-  assert.ok(/white-space: nowrap;/.test(ruleOf(css, '#screen')), 'the screen keeps lines whole, so a role has to ask for wrapping');
-  assert.ok(/white-space: normal;/.test(ruleOf(css, '.person-role')), 'the role may wrap');
-  assert.ok(/white-space: nowrap;/.test(ruleOf(css, '.person-name')), 'the name stays on one line and ends in three dots');
-  assert.ok(/-webkit-line-clamp: 2;/.test(ruleOf(css, '.person-role')), 'at most two lines');
-});
-
-test('the stylesheet takes the height of a row and the place of the bar from one variable, which is 144px without it', () => {
+test('the class of a page says how many rows it holds, and the stylesheet takes the height of a row from one variable, which is 144px without it', () => {
   const css = read('base.css');
   assert.ok(/height: var\(--row-height, 144px\);/.test(ruleOf(css, '.person-row')));
-  assert.ok(/top: calc\(var\(--row-height, 144px\) - 10px\);/.test(ruleOf(css, '.person-row .row-bar')), 'the bar stays on the foot of the row');
   assert.ok(ruleOf(css, '.person-rows').includes('height: 576px;'));
   assert.equal(/--row-height/.test(read('tokens.css')), false, 'only the rows set it');
+  assert.equal(/row-bar/.test(css.slice(css.indexOf('/* People portraits'), css.indexOf('.slot { text-align: center; }'))), false, 'the rows have no metal bar between them');
+  assert.ok(read('core/portrait.js').includes('rows-${layout.rows}'), 'the class is rows- and the number of rows');
 });
 
-test('the rows markup is the old markup up to 100, and above it has the height of a row, and the class stacked from 118', () => withFakePage(() => {
+test('the rows markup says how many rows are on the page, and above 100 has the height of a row', () => withFakePage(() => {
   const rows = [{ name: '[Alex]', role: 'CAPTAIN', address: 'https://example.test/a.jpg' }, { name: '[Sam]', role: 'COACH', address: '' }];
 
   [undefined, 60, 80, 100].forEach(percent => {
     const html = rowsMarkup(rows, percent);
-    assert.ok(html.startsWith('<div class="person-rows">'), 'at ' + percent);
+    assert.ok(html.startsWith('<div class="person-rows rows-4">'), 'at ' + percent);
     assert.equal(html.includes('--row-height'), false, 'at ' + percent);
   });
-  assert.ok(rowsMarkup(rows, 101).startsWith('<div class="person-rows" style="--row-height: 192px">'));
-  assert.ok(rowsMarkup(rows, 117).startsWith('<div class="person-rows" style="--row-height: 192px">'));
-  assert.ok(rowsMarkup(rows, 118).startsWith('<div class="person-rows stacked" style="--row-height: 192px">'));
-  assert.ok(rowsMarkup(rows, 138).startsWith('<div class="person-rows stacked" style="--row-height: 192px">'));
-  assert.ok(rowsMarkup(rows, 139).startsWith('<div class="person-rows stacked" style="--row-height: 288px">'));
-  assert.ok(rowsMarkup(rows, 200).startsWith('<div class="person-rows stacked" style="--row-height: 288px">'));
-  assert.ok(rowsMarkup(rows, 201).startsWith('<div class="person-rows stacked" style="--row-height: 576px">'));
+  [[101, 3, 192], [117, 3, 192], [118, 3, 192], [138, 3, 192], [139, 2, 288], [200, 2, 288], [201, 1, 576], [220, 1, 576]].forEach(([percent, count, height]) => {
+    assert.ok(rowsMarkup(rows, percent).startsWith('<div class="person-rows rows-' + count + '" style="--row-height: ' + height + 'px">'), 'at ' + percent);
+  });
 
   // the portrait and the picture follow the setting to 240 and 230 at double, and 264 and 254 at the most
   const at200 = rowsMarkup(rows, 200);
@@ -347,13 +264,12 @@ test('the rows markup is the old markup up to 100, and above it has the height o
   assert.ok(rowsMarkup(rows, 220).includes('--portrait-card: 264px; --portrait-photo: 254px; --portrait-inset: 5px'));
   assert.equal(rowsMarkup(rows, 500), rowsMarkup(rows, 220), 'a setting past 220 is 220');
 
-  // the rest is the same markup: the text, the bar and the metal do not depend on the size
+  // the rest is the same markup: the text and the metal do not depend on the size
   const withoutSizes = html => html
-    .replace(/^<div class="person-rows( stacked)?"( style="--row-height: \d+px")?>/, '<div class="person-rows">')
+    .replace(/^<div class="person-rows rows-\d"( style="--row-height: \d+px")?>/, '<div class="person-rows">')
     .replace(/ style="--portrait[^"]*"/g, '')
     .replace(/ width="\d+" height="\d+" alt=""/g, '');
   assert.equal(withoutSizes(at200), withoutSizes(rowsMarkup(rows, 100)));
-  assert.equal(countOf(at200, 'class="row-bar"'), 1, 'a bar under every row but the last');
 }));
 
 // The Roster slot
@@ -488,18 +404,15 @@ test('four leaders are one page of four at 100, two pages of two at double, and 
 
   const at100 = await run(100);
   assert.deepEqual(at100.map(namesIn), [namesOf(leaders), namesOf(leaders), namesOf(leaders)]);
-  assert.ok(at100[0].includes('<section class="page leadership">') && at100[0].includes('<div class="person-rows">'));
+  assert.ok(at100[0].includes('<section class="page leadership">') && at100[0].includes('<div class="person-rows rows-4">'));
 
   const at200 = await run(200);
   assert.deepEqual(at200.map(namesIn), [['[Coach 1]', '[Coach 2]'], ['[Captain 1]', '[Captain 2]'], ['[Coach 1]', '[Coach 2]']]);
-  at200.forEach(html => assert.ok(html.includes('<div class="person-rows stacked" style="--row-height: 288px">')));
-  assert.equal(countOf(at200[0], 'class="row-bar"'), 1);
+  at200.forEach(html => assert.ok(html.includes('<div class="person-rows rows-2" style="--row-height: 288px">')));
 
   const at120 = await run(120);
   assert.deepEqual(at120.map(namesIn), [['[Coach 1]', '[Coach 2]', '[Captain 1]'], ['[Captain 2]'], ['[Coach 1]', '[Coach 2]', '[Captain 1]']]);
-  assert.ok(at120[0].includes('<div class="person-rows stacked" style="--row-height: 192px">'));
-  assert.equal(countOf(at120[0], 'class="row-bar"'), 2);
-  assert.equal(countOf(at120[1], 'class="row-bar"'), 0);
+  assert.ok(at120[0].includes('<div class="person-rows rows-3" style="--row-height: 192px">'));
 }));
 
 test('Team Leads shows every department at every setting, and twelve of them are three pages of four at 100 and six of two at 200', () => withFakePage(async () => {
@@ -603,23 +516,23 @@ test('the docs give the rows a page holds and the sizes the code works out', () 
   const section = text.slice(start, text.indexOf('\n### ', start + 5));
 
   assert.ok(start > 0 && section.length > 0, 'the Portraits part is in the Photos part');
-  ['whole number from 60 to 220', '100 is a portrait', '120 square', '264 square', 'Roster panel', 'taller', 'set apart', 'Portrait size, percent', 'neither'].forEach(piece => {
+  ['whole number from 60 to 220', '100 is a portrait', '120 square', '264 square', 'Roster panel', 'taller', 'set apart', 'Portrait size, percent', 'neither', 'under the name'].forEach(piece => {
     assert.ok(section.replace(/\s+/g, ' ').includes(piece), 'the Portraits part does not say ' + piece);
   });
   assert.equal(/from 60 to 200/.test(section), false, 'the Portraits part still gives the old range');
 
   // every row of the table is what rowLayout and rowSizes give for every size in its range, and the ranges meet
   const table = section.split('\n').filter(line => /^\s*\| \d+ to \d+ \|/.test(line)).map(line => line.split('|').map(cell => cell.trim()).filter(cell => cell !== ''));
-  assert.equal(table.length, 5);
+  assert.equal(table.length, 4);
   let next = 60;
-  table.forEach(([range, rows, height, card, role]) => {
+  table.forEach(([range, rows, height, card]) => {
     const [from, to] = range.split(' to ').map(Number);
     const [cardFrom, cardTo] = card.split(' to ').map(Number);
 
     assert.equal(from, next, 'the ranges of the table meet');
     next = to + 1;
     for (let percent = from; percent <= to; percent++) {
-      assert.deepEqual(rowLayout(percent), { rows: Number(rows), height: Number(height), stacked: role === 'under the name' }, range + ' at ' + percent);
+      assert.deepEqual(rowLayout(percent), { rows: Number(rows), height: Number(height) }, range + ' at ' + percent);
     }
     assert.deepEqual([rowSizes(from).card, rowSizes(to).card], [cardFrom, cardTo], 'the portrait in a row for ' + range);
   });
@@ -627,8 +540,7 @@ test('the docs give the rows a page holds and the sizes the code works out', () 
 
   // the words of the Studio fields give the same table
   const field = fs.readFileSync(path.join(docsFolder, '..', 'studio', 'schemas', 'settingsPhotos.js'), 'utf8');
-  const steps = table.filter((row, index) => index === 0 || row[1] !== table[index - 1][1]);
-  const words = steps.map((row, index) => row[1] + ' up to ' + (index + 1 < steps.length ? Number(steps[index + 1][0].split(' to ')[0]) - 1 : 220)).join(', ');
+  const words = table.map(row => row[1] + ' up to ' + row[0].split(' to ')[1]).join(', ');
   assert.ok(field.includes("const peopleFit = '" + words + ".';"), 'the description in Studio gives the table\'s steps: ' + words);
 });
 

@@ -1,14 +1,16 @@
 // The rows of the Team Leads panel: one for each department (a subteam in
 // Studio), in the order of the Order field. A department with a lead shows the
-// lead's name and, at the right end, the department. A department with no lead
-// shows its own name and [lead], so a gap in the list can be seen from across
-// the room. The panel shows as many rows as the Roster size leaves room for,
-// four at 100, each time it comes round.
+// lead's name, TEAM LEAD, a line (the typed Line, or the department) and, at the
+// right end, the department in a chip. A department with no lead shows its own
+// name and [lead], so a gap in the list can be seen from across the room. The
+// panel shows as many rows as the Roster size leaves room for, four at 100, each
+// time it comes round.
 
 import { hasText } from './text.js';
 import { visibleItems } from './content.js';
 
 const noLeadRole = '[lead]';
+const leadRole = 'TEAM LEAD';
 
 function trimmed(text) {
   return hasText(text) ? String(text).trim() : '';
@@ -25,8 +27,9 @@ export function leadPhotoOf(subteam) {
   return own;
 }
 
-// Every row, as { name, role, lead }. lead is the typed name of the lead, or an
-// empty text, and the panel uses it to find the lead's photo when the department
+// Every row, as { name, role, line, chip, lead }. line is the third line, the typed Line
+// or the department, and chip is the department in capitals. lead is the typed name of the
+// lead, or an empty text, and the panel uses it to find the lead's photo when the department
 // has none of its own (photo and showPhoto, see leadPhotoOf). Hidden and
 // expired departments are left out, and so is one with neither a name nor a
 // lead, because there would be nothing to show.
@@ -36,10 +39,12 @@ export function departmentRows(subteams) {
     .map(subteam => {
       const department = trimmed(subteam.name);
       const lead = trimmed(subteam.lead);
+      const typedLine = trimmed(subteam.line);
 
-      // a department with no lead is a gap on purpose, so it never takes a photo
-      if (lead === '') return { name: department, role: noLeadRole, lead: '' };
-      return Object.assign({ name: lead, role: department === '' ? 'LEAD' : department.toUpperCase() + ' LEAD', lead: lead }, leadPhotoOf(subteam));
+      // a department with no lead is a gap on purpose, so it never takes a photo, and its name is
+      // already the first line, so it has no chip
+      if (lead === '') return { name: department, role: noLeadRole, line: typedLine, chip: '', lead: '' };
+      return Object.assign({ name: lead, role: leadRole, line: typedLine || department, chip: department.toUpperCase(), lead: lead }, leadPhotoOf(subteam));
     });
 }
 

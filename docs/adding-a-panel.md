@@ -155,11 +155,12 @@ panel. A panel that needs a line, a card or a bar uses one of these:
   settings, and leaving it out is the usual look. `roster.js` draws one as
   the team lead beside a list of names.
 - **Rows of people.** `rowsMarkup(rows, scale, look)` in `core/portrait.js` draws up
-  to `rowLayout(scale).rows` rows, each `{ name, role, address, metal }`: the
-  photo at the left, the name beside it and the role at the right end. That is
+  to `rowLayout(scale).rows` rows, each `{ name, role, line, chip, address, metal }`: the
+  photo at the left, the name, the role and the line stacked beside it, and the chip
+  at the right end. `line` and `chip` may be empty. That is
   4 rows up to a portrait size of 100, then 3, 2 and 1, because a bigger portrait
   needs a taller row. `scale` is the size setting of the panel and `look` is
-  `portraitLook(content.settings)`. `rowLayout` also says whether the role goes under the name.
+  `portraitLook(content.settings)`. The rows have no animation code: each is a slat.
   `leadership.js` and `team-leads.js` use it. Both get a page of rows at a time
   from `makePages(rowsPerPage)` in `core/turns.js`, which counts the pages
   between turns of the panel, and each turn gives it the size of the page from

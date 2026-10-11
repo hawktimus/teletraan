@@ -42,6 +42,8 @@ function leadRow(row, content) {
   return {
     name: row.name,
     role: row.role,
+    line: row.line,
+    chip: row.chip,
     address: leadAddress(row, content.people),
   };
 }

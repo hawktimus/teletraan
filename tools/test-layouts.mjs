@@ -2607,6 +2607,8 @@ test('every literal text size under 44 px in the dashboard stylesheets is on a l
     { file: war, selector: 'html[data-layout="bar"] .war-days-group .days-word', size: 24 }, // DAYS
     { file: war, selector: 'html[data-layout="bar"] .war-cell .unit', size: 20 }, // HRS, MIN and SEC
   ];
+  // the third line of a row of Leadership or Team leads, 36 px, which the order for those rows sets
+  allowed.push({ file: 'dashboard/base.css', selector: '.person-line', size: 36 });
   const order = list => list.map(item => item.file + ' ' + item.selector + ' ' + item.size).sort();
   assert.deepEqual(order(found), order(allowed));
 });
@@ -2756,6 +2758,8 @@ const warLabels = [
   { file: 'panels/countdown/countdown.css', selector: 'html[data-layout="bar"] .war-cell .unit', size: 20 },
 ];
 const smallTextOf = { original: [plateId], cybertron: [plateId], minimal: [plateId].concat(warLabels) };
+// and the third line of a row of Leadership or Team leads, 36 px, which the order for those rows sets, in every style
+Object.keys(smallTextOf).forEach(style => smallTextOf[style].push({ file: 'base.css', selector: '.person-line', size: 36 }));
 
 function checkStylesheetsOf(style) {
   const sheets = stylesheetsOf(style);

@@ -58,6 +58,13 @@ export default defineType({
       initialValue: true,
     }),
     defineField({
+      name: 'line',
+      title: 'Line under the lead',
+      type: 'string',
+      description: 'One short line under TEAM LEAD, such as a year or a note. Leave blank to show the subteam name. Up to 48 characters fit. Shown on pages of 3 people or fewer.',
+      validation: Rule => tooLong(Rule, 48),
+    }),
+    defineField({
       name: 'members',
       title: 'Members',
       type: 'array',

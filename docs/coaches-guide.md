@@ -224,14 +224,15 @@ docs/calendar-filters.md, "Pinning an event".
 ## Team leads and Leadership
 
 Both panels show rows, four to a panel at the standard portrait size. A row has
-the framed photo at the left, the name beside it and the role at the right end in
-the team color.
+the framed photo at the left, the name beside it with the role under it in the team
+color and an optional line under that, and a chip at the right end. The line shows
+when a page holds three people or fewer.
 
 - Leadership shows the coaches, then the captains, then the mentors, each group in
   Order. Two coaches and two captains fill the four rows. With more people, the
   panel shows the next rows each time it comes round.
-- Team leads has a row for each subteam, in Order: the name of the lead, and the
-  subteam with LEAD after it at the right end. Twelve subteams are three panels of
+- Team leads has a row for each subteam, in Order: the name of the lead, TEAM LEAD
+  under it, and the subteam name in the chip at the right end. Twelve subteams are three panels of
   four, and the panel shows the next four each time it comes round. A subteam with
   no lead shows its own name and [lead], so a gap can be seen from across the room.
 - The photo of a lead is the Photo on its Team lead entry. An entry with no photo

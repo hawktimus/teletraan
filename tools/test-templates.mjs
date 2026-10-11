@@ -193,7 +193,7 @@ test('a few rows become documents with fixed ids, and a second run gives the sam
 });
 
 test('an empty switch gets the value Studio gives a new item, and a needed field never does', () => {
-  assert.equal(rowsOf(templates.subteam)[1][8], 'yes/no; default yes');
+  assert.equal(rowsOf(templates.subteam)[1][rowsOf(templates.subteam)[0].indexOf('show')], 'yes/no; default yes');
   const result = runImporter({ 'person.csv': csvFor('person', [{ role: 'Coach', name: 'Pat' }]) });
   assert.equal(result.status, 0, result.message);
   assert.equal(result.docs[0].show, true);

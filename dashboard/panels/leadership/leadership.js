@@ -5,7 +5,7 @@
 import { doubleSlash } from '../../core/marks.js';
 import { makePages } from '../../core/turns.js';
 import { portraitPercentOf } from '../../core/content.js';
-import { leaders } from '../../core/leadership.js';
+import { groupOf, leaders } from '../../core/leadership.js';
 import { photoAddress, portraitLook, preloadPhotos, rowLayout, rowsMarkup, rowsPerPage, watchPhotos } from '../../core/portrait.js';
 
 const nextPage = makePages(rowsPerPage);
@@ -41,12 +41,15 @@ export function mount(host, content) {
   preloadPhotos(page.upcoming);
 }
 
-// What is written at the right end is the typed title, or the role if there is none.
+// The second line is the typed title, or the role if there is none. The third is the typed line, and
+// the chip at the right end is the group.
 function personRow(person) {
   const role = String(person.role || '').trim().toLowerCase();
   return {
     name: person.name,
     role: String(person.title || person.role || '').toUpperCase(),
+    line: String(person.line || '').trim(),
+    chip: groupOf(person),
     address: photoAddress(person),
     metal: roleMetals[role],
   };

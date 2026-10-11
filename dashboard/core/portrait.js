@@ -1,7 +1,7 @@
 // A portrait: a framed picture of a person. The Roster panel draws one slot for its
 // team lead, with the name and role under it. The Leadership and Team Leads panels
-// draw rows instead (rowsMarkup below): the portrait at the left, the name beside it
-// and the role at the right end, or under the name for a big portrait.
+// draw rows instead (rowsMarkup below): the portrait at the left, the name, the role
+// and a quiet line stacked beside it, and a chip at the right end.
 //
 // The picture is the person's photo, or the silhouette when there is no photo,
 // the photo is hidden, or it cannot be loaded. The silhouette is drawn once
@@ -23,7 +23,7 @@
 
 import { defaultPerson, defaultSettings, portraitFrames, portraitShapes } from '../config.js';
 import { photoUrl, preloadImages } from './images.js';
-import { cardMarkup, rowBarMarkup } from './plate.js';
+import { cardMarkup } from './plate.js';
 import { escapeHtml } from './text.js';
 import { tidyScale, visibleItems } from './content.js';
 
@@ -34,11 +34,6 @@ const photoSize = 280;
 const photoInset = 6; // from the edge of the card to the photo, (292 - 280) / 2
 const slotScaleLimit = 100;
 const rowPortraitSize = 120; // the portrait in a row at 100 percent
-const rowBarLength = 1124; // the same bar as the Events panel has between its rows
-// The widest portrait that leaves the role 336px at the right end beside a name of 560px:
-// the body is 1152 wide, the row has 28px at the left and 40px at the right and a gap of 24px
-// on each side of the name, so 1152 - 68 - 48 - 560 - 336
-const roleBesideLimit = 140;
 const bodyHeight = 576; // the rows fill the body of the large panel
 const cornerCut = 24; // the corner cut of the rounded shape, as deep as it gets, in pixels on the screen
 const lineWidth = 3; // the thin line frame
@@ -87,17 +82,15 @@ export function rowSizes(percent, frame = 'metal') {
 }
 
 // How the rows of a page are laid out at a percent of the row portrait:
-//   rows     how many rows a page holds, 4 at 100 and below
-//   height   the height of a row, the body divided by the rows
-//   stacked  the role goes under the name instead of at the right end, when the portrait is so wide
-//            that the role would have less than 336px beside the name
+//   rows    how many rows a page holds, 4 at 100 and below
+//   height  the height of a row, the body divided by the rows
 // The portrait is centred in its row. The steps of rowSteps keep it 24px or more shorter than
 // the row, for every percent from 60 to 220.
 export function rowLayout(percent) {
   const size = tidyScale('leadershipPortrait', percent);
   const step = rowSteps.find(each => size <= each.upTo);
 
-  return { rows: step.rows, height: bodyHeight / step.rows, stacked: rowSizes(size).card > roleBesideLimit };
+  return { rows: step.rows, height: bodyHeight / step.rows };
 }
 
 // The shape and the frame to draw with, from the settings. A value that is not in the lists of
@@ -283,32 +276,34 @@ export function slotMarkup(slot) {
     </div>`;
 }
 
-// One row: { name, role, address, metal }, as for a slot. The metal is the frame
-// of the picture only. The thin bar under the row is left out for the last row,
-// because the frame of the panel is there.
-function rowMarkup(row, size, look, isLast) {
+// One row: { name, role, line, chip, address, metal }. The metal is the frame of the picture
+// only. The name is the first line beside the picture, the role the second and line the third.
+// The chip is at the right end. role, line and chip may be empty, and then they are not drawn.
+function rowMarkup(row, size, look) {
   return `
     <div class="person-row" data-slat="item">
-      ${isLast ? '' : rowBarMarkup(rowBarLength)}
       ${portraitMarkup(size, row.address, row.metal, look)}
-      <div class="person-name">${escapeHtml(row.name)}</div>
-      <div class="person-role">${escapeHtml(row.role)}</div>
+      <div class="person-text">
+        <div class="person-name">${escapeHtml(row.name)}</div>
+        <div class="person-role">${escapeHtml(row.role)}</div>
+        <div class="person-line">${escapeHtml(row.line)}</div>
+      </div>
+      <div class="person-chip">${escapeHtml(row.chip)}</div>
     </div>`;
 }
 
 // A page of rows, at most rowLayout(percent).rows of them, one under the other. percent is
 // the size setting of the panel, and no percent is 100. look is portraitLook(settings). Each
-// row is a slat, so it turns over by itself when the page changes. At 100 and below the markup is
-// the one the rows always had. Above it the rows are taller (--row-height, read by
-// base.css) and from roleBesideLimit up the class stacked puts the role under the name.
+// row is a slat, so it turns over by itself when the page changes. The class rows-4, rows-3 and
+// so on tells base.css how many rows are on the page, and above 100 percent the rows are taller
+// (--row-height, read by base.css).
 export function rowsMarkup(rows, percent, look = portraitLook()) {
   const size = rowSizes(percent, look.frame);
   const layout = rowLayout(percent);
-  const lines = rows.map((row, index) => rowMarkup(row, size, look, index === rows.length - 1));
-  const className = layout.stacked ? 'person-rows stacked' : 'person-rows';
+  const lines = rows.map(row => rowMarkup(row, size, look));
   const height = layout.height === bodyHeight / rowsPerPage ? '' : ` style="--row-height: ${layout.height}px"`;
 
-  return `<div class="${className}"${height}>${lines.join('')}</div>`;
+  return `<div class="person-rows rows-${layout.rows}"${height}>${lines.join('')}</div>`;
 }
 
 // A photo that cannot be loaded (the address is wrong, or there is no

@@ -169,10 +169,10 @@ test('a row of the Team Leads panel and a page of the Subteam roster carry the p
   ];
 
   assert.deepEqual(departmentRows(list), [
-    { name: '[Sam]', role: '[BUILD] LEAD', lead: '[Sam]', photo: photoNumbered(1) },
-    { name: '[Pat]', role: '[MEDIA] LEAD', lead: '[Pat]' },
-    { name: '[Lee]', role: '[SAFETY] LEAD', lead: '[Lee]', photo: photoNumbered(3), showPhoto: false },
-    { name: '[Gap]', role: '[lead]', lead: '' },
+    { name: '[Sam]', role: 'TEAM LEAD', line: '[Build]', chip: '[BUILD]', lead: '[Sam]', photo: photoNumbered(1) },
+    { name: '[Pat]', role: 'TEAM LEAD', line: '[Media]', chip: '[MEDIA]', lead: '[Pat]' },
+    { name: '[Lee]', role: 'TEAM LEAD', line: '[Safety]', chip: '[SAFETY]', lead: '[Lee]', photo: photoNumbered(3), showPhoto: false },
+    { name: '[Gap]', role: '[lead]', line: '', chip: '', lead: '' },
   ]);
 
   const pages = rosterPages(list.concat(department('[Big]', '[Kim]', { photo: photoNumbered(5), members: Array.from({ length: 20 }, (_, index) => '[Member ' + (index + 1) + ']') })));

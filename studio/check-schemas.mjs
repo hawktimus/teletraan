@@ -96,6 +96,7 @@ const contract = {
     lead: text(17),
     photo: 'image',
     showPhoto: 'boolean',
+    line: text(48),
     members: strings(12, 24),
     spotlight: 'boolean',
     spotlightHeadline: text(40),
@@ -103,7 +104,7 @@ const contract = {
     team: teamRef,
     order: 'number',
   }),
-  person: withFlags({ role: 'string', name: text(17), title: text(22), photo: 'image', showPhoto: 'boolean', team: teamRef, order: 'number' }),
+  person: withFlags({ role: 'string', name: text(17), title: text(22), line: text(48), group: 'string', photo: 'image', showPhoto: 'boolean', team: teamRef, order: 'number' }),
   team: {
     name: text(20),
     shortName: text(8),
@@ -321,6 +322,7 @@ const choices = {
   'demo.steps.screen': ['announcement', 'all-announcements', 'night-mode'],
   'dashboardSettings.portraitShape': ['square', 'rounded', 'circle'],
   'dashboardSettings.portraitFrame': ['metal', 'line', 'none'],
+  'person.group': ['COACH', 'CAPTAIN', 'MENTOR'],
 };
 
 // The panels that can be put in each area of the screen. The Studio lists and
@@ -2844,6 +2846,47 @@ function checkPortraitSettings() {
   need(problems, (settings.fieldsets || []).some(set => set.name === 'portraits' && set.title === 'Portraits'), 'Dashboard Settings should have a Portraits box (a fieldset called portraits)');
   const inBox = fieldsIn(settings).filter(field => field.fieldset === 'portraits').map(field => field.name);
   need(problems, inBox.join() === 'leadershipPortrait,rosterPortrait,portraitShape,portraitFrame', 'the Portraits box should hold leadershipPortrait, rosterPortrait, portraitShape and portraitFrame, in that order, not ' + inBox.join());
+  return problems;
+}
+
+// The rows of Leadership and Team leads: a line under the role (person.line and subteam.line, up to 48
+// characters) and the chip at the right end of a Leadership row (person.group). Each is optional and
+// has no starting value, so what is saved before they existed stays as it is. The choices of the group
+// are the names in core/leadership.js, and the sample people and team leads have a line.
+function checkPersonRows() {
+  const problems = [];
+  const leadership = world.leadershipModule;
+  const personNames = fieldsIn(typeByName('person')).map(field => field.name);
+  const checkLine = (pathText, wanted) => {
+    const field = fieldAt(pathText);
+    const words = field ? field.description || '' : '';
+
+    need(problems, field && field.type === 'string' && !constraintNamed(constraintsOf(field), 'required') && field.initialValue === undefined, pathText + ' should be an optional string with no starting value');
+    need(problems, words.indexOf('One short line under ') === 0 && words.indexOf(wanted) !== -1, pathText + ' should say it is one short line under the role and ' + wanted);
+  };
+
+  checkLine('person.line', 'Leave blank to hide.');
+  checkLine('subteam.line', 'Leave blank to show the subteam name.');
+  need(problems, /3 people or fewer/.test((fieldAt('person.line') || {}).description || '') && /3 people or fewer/.test((fieldAt('subteam.line') || {}).description || ''), 'the line descriptions should say that it shows on pages of 3 people or fewer, because a row of four has no room for it');
+  need(problems, personNames.indexOf('line') === personNames.indexOf('title') + 1 && personNames.indexOf('group') === personNames.indexOf('line') + 1, 'person.line and person.group should come right after person.title, not ' + personNames.join(', '));
+
+  const group = fieldAt('person.group');
+  const rules = group ? constraintsOf(group) : [];
+  const allowed = constraintNamed(rules, 'valid');
+  need(problems, group && group.type === 'string' && group.options && group.options.layout === 'radio', 'person.group should be a radio list');
+  need(problems, choicesOf('person.group').map(item => item.value).join() === leadership.groupNames.join(), 'person.group should offer the names in core/leadership.js: ' + leadership.groupNames.join(', '));
+  need(problems, allowed && allowed.args[0].join() === leadership.groupNames.join(), 'person.group should only allow: ' + leadership.groupNames.join(', '));
+  need(problems, !constraintNamed(rules, 'required') && group && group.initialValue === undefined, 'person.group should not be required and should have no starting value, so that the role gives it');
+  need(problems, group && /Leave blank to follow the role/.test(group.description || ''), 'the person.group description should say that a blank follows the role');
+
+  // What a blank group gives, from the role: the words of the description
+  [['Coach', 'COACH'], ['Mentor', 'MENTOR'], ['Captain', 'CAPTAIN'], ['Head Coach', 'COACH'], ['', 'CAPTAIN']].forEach(([role, chip]) => {
+    need(problems, leadership.groupOf({ role: role }) === chip, 'a person with the role "' + role + '" and no group should have the chip ' + chip);
+  });
+  need(problems, leadership.groupOf({ role: 'Coach', group: 'MENTOR' }) === 'MENTOR' && leadership.groupOf({ role: 'Coach', group: 'chief' }) === 'COACH', 'the group should win when it is one of the choices, and be ignored otherwise');
+
+  world.sample.people.forEach(person => need(problems, typeof person.line === 'string' && person.line.length > 0 && person.line.length <= 48, 'every sample person should have a line of up to 48 characters, ' + person.name + ' has none'));
+  world.sample.subteams.forEach(subteam => need(problems, typeof subteam.line === 'string' && subteam.line.length > 0 && subteam.line.length <= 48, 'every sample team lead should have a line of up to 48 characters, ' + subteam.name + ' has none'));
   return problems;
 }
 
@@ -5811,6 +5854,7 @@ async function main() {
     world.panelOrder = await load(path.join(dashboardFolder, 'core', 'panel-order.js'));
     world.constants = await load(path.join(dashboardFolder, 'core', 'constants.js'));
     world.portrait = await load(path.join(dashboardFolder, 'core', 'portrait.js'));
+    world.leadershipModule = await load(path.join(dashboardFolder, 'core', 'leadership.js'));
     world.statusScript = fs.readFileSync(path.join(here, '..', 'deploy', 'scripts', 'status-write.sh'), 'utf8');
     world.sample = JSON.parse(fs.readFileSync(path.join(dashboardFolder, 'data', 'sample', 'content.json'), 'utf8'));
     world.seed = fs.readFileSync(path.join(here, '..', 'docs', 'seed', 'extra-events.ndjson'), 'utf8');
@@ -5858,6 +5902,7 @@ async function main() {
   check('a person has an optional photo and a switch that starts on, as in dashboard/config.js', checkPersonPhoto);
   check('a team lead has an optional photo right after the lead and a switch that starts on, and the dashboard asks Sanity for the photo', checkLeadPhoto);
   check('the Portraits box has two sizes from 60 to 220, a shape and a frame, agrees with dashboard/config.js, and its descriptions give the people a page holds', checkPortraitSettings);
+  check('a person and a team lead have an optional line under the role, and a person has an optional chip that follows the role', checkPersonRows);
   check('a photo has a picture, a short caption and a first name credit, and the photo settings agree with dashboard/config.js', checkPhotos);
   check('the themes and overlays in studio/themes.js are the ones in the dashboard registries', checkThemeLists);
   check('the Look page agrees with dashboard/config.js, needs a start and an end for each rule, and checks the time zone', checkTheme);

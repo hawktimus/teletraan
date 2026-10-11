@@ -91,11 +91,17 @@ last step of every change. See "The Start here page" below.
   Head Coach. The role also colours the frame round the portrait: Coach is red,
   Captain is gold and Mentor is silver. There is no separate role for a
   president: give a president the role Captain and the title President, and
-  they are shown with the captains.
+  they are shown with the captains. A person can have a Line under the title,
+  one short line such as a year or a note, and a Chip at the right end, which is
+  COACH, CAPTAIN or MENTOR. Leave the Chip blank and it follows the role: a role
+  with coach in it is COACH, a role with mentor in it is MENTOR, and any other
+  is CAPTAIN.
 - Team leads: each subteam, its lead, an optional photo of the lead and the
   students on it. Turn on "In the spotlight" to feature one. Add a subteam here
   before you use it on a task. The Team Leads panel shows every subteam as a row
-  with its lead, four to a page (see Photos of people). The Subteam roster panel
+  with its lead, four to a page (see Photos of people). A Team lead can have a
+  Line under TEAM LEAD, one short line such as a year or a note. Leave it blank and
+  the row shows the subteam name there. The Subteam roster panel
   shows the lead and the members of each subteam (see Subteam members).
 - Sponsors: name, tier, a short line about them, a thank-you line for the
   ticker, and the web address of their logo.
@@ -509,22 +515,21 @@ size. The names and roles next to a portrait keep their size.
   are a page of three and a page of one, so use 139 or more for two pages of two.
 - The two sizes are set apart. Leadership can be at 100 with four rows while Team
   leads is at 200 with two.
-- When the role would have less than 336 pixels beside the name, from a portrait
-  of 142 pixels, it moves under the name, at the left. The text stays the same
-  size.
 - The Roster panel never grows past 100, because the names sit beside the
   portrait. A value above 100 leaves it as it is at 100.
 - The old Portrait size, percent setting is no longer in the form. A screen that
   was set with it keeps its look: while neither of the two new sizes has a value,
   both take the old value. Nothing is written to Sanity. Type a new size to end it.
 
-  | Size | People on a page | Row height | Portrait in a row | The role |
-  | --- | --- | --- | --- | --- |
-  | 60 to 100 | 4 | 144 | 72 to 120 | at the right end |
-  | 101 to 117 | 3 | 192 | 121 to 140 | at the right end |
-  | 118 to 138 | 3 | 192 | 142 to 166 | under the name |
-  | 139 to 200 | 2 | 288 | 167 to 240 | under the name |
-  | 201 to 220 | 1 | 576 | 241 to 264 | under the name |
+  | Size | People on a page | Row height | Portrait in a row |
+  | --- | --- | --- | --- |
+  | 60 to 100 | 4 | 144 | 72 to 120 |
+  | 101 to 138 | 3 | 192 | 121 to 166 |
+  | 139 to 200 | 2 | 288 | 167 to 240 |
+  | 201 to 220 | 1 | 576 | 241 to 264 |
+
+The role is under the name at every size, and the portrait is never taller than its
+row less 24 pixels, so it has 12 pixels above and below it.
 
 Try a size on the sample content first (see "Sample content" below).
 
@@ -570,19 +575,25 @@ instead. The second one is set to Show the whole photo.
 
 Each person in Leadership has a Photo and a "Show photo on screen" switch, and
 so has each Team lead. The Leadership and Team Leads panels show each person
-as a row: the framed photo at the left, the name beside it, and the title (the
-role if no title is typed) at the right end in the team color. The role colours
-the frame of the photo: Coach red, Captain gold and Mentor silver. The colours
-are the `roleMetals` list in `dashboard/panels/leadership/leadership.js`.
+as a row: the framed photo at the left, filling the row, and beside it three lines:
+the name, the title (the role if no title is typed) in the team color, and the Line
+if there is one, smaller and quieter. At the right end is a chip: COACH, CAPTAIN or
+MENTOR on Leadership, and the subteam name on Team Leads. A thin line in the team's
+plate color is between the rows. The role colours the frame of the photo: Coach red,
+Captain gold and Mentor silver. The colours are the `roleMetals` list in
+`dashboard/panels/leadership/leadership.js`.
 
-Four rows fit on a panel at the standard portrait size, spread over its height.
+Four rows fit on a panel at the standard portrait size, spread over its height. A row
+of four has room for the name and the title but not for the Line, so the Line shows
+when a page holds three people or fewer, which is a Portrait size above 100.
 The Leadership panel shows the coaches first, then the captains, then the
 mentors, each group in the order of the Order field. With two coaches and two
 captains the four rows are one page. With more people, each time the panel
 comes round it shows the next rows, then starts again, so the mentors come on
 the next turn. The Team Leads panel has a row for each subteam: the lead's
-name, and the subteam with LEAD after it at the right end. A subteam with no
-lead shows its own name and [lead] at the right end, so a gap can be seen from
+name, TEAM LEAD under it, the Line or the subteam name under that, and the subteam
+name in the chip at the right end. A subteam with no
+lead shows its own name and [lead] under it, with no chip, so a gap can be seen from
 across the room. The subteams are in the order of the Order field. Twelve
 subteams are three panels of four, and each time the panel comes round it
 shows the next one, then starts again. The size, shape and frame of the photos
