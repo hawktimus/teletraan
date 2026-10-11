@@ -50,6 +50,15 @@ function rotationPaused() {
   return pauses > 0 || frame.isPaused();
 }
 
+// A swap (core/swap-run.js) holds the clock of the pages for as long as it plays: the seconds a page has
+// left to stay do not run down. The areas still pick their next pages and swap them, which a pause
+// would stop.
+let clockHeld = 0;
+
+export function holdClock(on) {
+  clockHeld = Math.max(0, clockHeld + (on ? 1 : -1));
+}
+
 // Counts the calls to showPagesNow(). A page that was chosen before a call
 // does not get its full stay.
 let pagesRefreshed = 0;
@@ -136,7 +145,7 @@ async function hold(milliseconds, since, region) {
     while (left > 0 && changeCount(region) === since) {
       if (region) holdLeft[region] = left;
       await frame.wait(250);
-      if (!rotationPaused()) left -= 250;
+      if (!rotationPaused() && clockHeld === 0) left -= 250;
     }
   } finally {
     if (region) delete holdLeft[region];

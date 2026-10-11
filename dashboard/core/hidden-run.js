@@ -7,19 +7,17 @@
 //
 // How a transition goes on the screen. #world carries data-hidden:
 //   glitch  glitches over the screen, red or blue (data-tint says which)
-//   break   the blocks fly apart in 3D. The standard layout has five (the banner, the
-//           countdown, the large panel, the small panel and the ticker, marked
-//           data-block in index.html), and the sidebar layout four (the top strip,
-//           the sidebar, the large panel and the ticker, core/layout.js, blocksOf)
-//   apart   the blocks are out of sight and #backdrop shows what is behind them.
-//           The pages of all three areas are swapped now (core/areas.js)
-//   fall    the screen is whole, showing the next pages, and its frames break: every piece
-//           of metal falls into a pile, a cube rises out of it and, with data-lift added,
-//           the pieces fly back (core/hidden-pile.js, "The frames fall and come back" in
-//           frame.css). The rotation clock is held for as long as it lasts
-//   build   the content comes back in as it does at the first assembly
-// and nothing at all when no transition is playing. A glitch can also play while
-// the blocks are apart, and then data-hidden stays apart and only data-tint is added.
+//   break   the collapse: every piece of metal falls into a pile along the bottom edge (core/hidden-pile.js,
+//           "The frames collapse and come back" in frame.css) and the content fades away. #backdrop
+//           fades in behind. When the content is gone the pages of all three areas are swapped
+//           (core/areas.js)
+//   apart   the pile lies, and the effect plays over it: the picture, or a glitch. Then the cube
+//           rises, turns, pulses and shrinks, and, with data-lift added, the pieces rise from the pile
+//           to their places. The rotation clock is held from the cube on
+//   build   the frames are whole, #backdrop fades out and the content fades in
+// and nothing at all when no transition is playing. While the metal is down #world also has
+// data-pieces, which frame.css reads. A glitch can also play while the pile lies, and then data-hidden
+// stays apart and only data-tint is added.
 //
 // The four pictures (core/hidden-pictures.js) are loaded when this starts and sit
 // in #backdrop, each one hidden until a step shows it, so a cut to one is one frame.
@@ -31,6 +29,7 @@
 
 import * as frame from '../frame.js';
 import { hiddenAdvanceSeconds } from '../config.js';
+import { setBusy } from './busy.js';
 import { allPictures, makePictureChooser, pictureAddress } from './hidden-pictures.js';
 import { chooseHidden, holdReason, pushedKind, readHandledRequest, readLastFired, rememberHandledRequest, rememberLastFired } from './hidden.js';
 import { hiddenTransitions } from './hidden-transitions.js';
@@ -39,16 +38,14 @@ import { preloadImages } from './images.js';
 import { setHiddenOffer, startWholeScreen } from './areas.js';
 import { moveOn, pauseRotation, resumeRotation, secondsUntilChange } from './schedule.js';
 import { layoutNow, otherAreas } from './layout.js';
+import { swapRunning } from './swap-run.js';
 import { takeoverRunning } from './takeover.js';
 import { pileTimes } from './transitions.js';
 
-// How long the blocks take to fly apart, at normal speed. frame.css has the same number as
-// --hidden-seconds in tokens.css, and it is the length of the fall of the frames too
-// (pileTimes.fallMs in core/transitions.js). The last block starts .3 of it late and
-// each block takes .6 of it, so all the blocks are apart after .9 of it.
-const flySeconds = 1.6;
-const apartAfter = 0.9;
-const togetherAfter = 0.9; // the build: the backdrop fades out and the content comes in
+// How long the frames take to collapse, at normal speed. frame.css has the same number as
+// --hidden-seconds in tokens.css (pileTimes.fallMs in core/transitions.js).
+const flySeconds = 1.7;
+const contentGoneAfter = 0.35; // seconds. The content has faded away by then (.3), so the pages can be swapped unseen
 const longestRest = 3000; // milliseconds to wait for the three areas to stop moving before giving up
 
 const world = document.getElementById('world');
@@ -69,7 +66,8 @@ let nightIsUp = () => false;
 let chooser = null; // picks the picture of each play, so the two of a set take turns
 const pictureElements = {}; // file name -> the img in #backdrop, once the picture has loaded. A picture that failed is not here.
 let showing = null; // the img on the backdrop now, or null
-let pile = null; // the frames that fall at the end of this transition, or null
+let pile = null; // the frames that collapse in this transition, or null
+let plan = null; // what pile.release() planned: when each piece rises, and when the last one is home
 let rotationHeld = false; // this transition has paused the rotation clock
 
 class Stopped extends Error {}
@@ -154,7 +152,7 @@ function screenState() {
     takeover: takeoverRunning(),
     demo: demoRunning(),
     night: nightIsUp(),
-    playing: playing,
+    playing: playing || swapRunning(),
   };
 }
 
@@ -227,7 +225,7 @@ async function sleep(seconds) {
 }
 
 // A transition begins only when the areas are all at rest. A page change that is
-// half done would be carried away with its block, which looks wrong.
+// half done would be carried away with the pieces, which looks wrong.
 async function waitForRest() {
   const until = performance.now() + longestRest;
   while (performance.now() < until) {
@@ -240,16 +238,18 @@ async function waitForRest() {
 
 // Plays the transition. swapPage() puts the large panel's next page in; the other
 // areas swap theirs by themselves (core/areas.js, startWholeScreen). Resolves with
-// how many milliseconds the blocks took to fly back together, or 0 when the
+// how many milliseconds the screen took to come back together, or 0 when the
 // transition did not start or was stopped before it got that far.
 async function play(choice, requestedAt, swapPage) {
   if (playing) return 0;
   playing = true;
 
-  // From now on the other areas wait at the gate rather than change page
-  const screen = startWholeScreen();
+  // From now on the other areas wait at the gate rather than change page. The look stays as it is: the
+  // frames fall into a pile, and a look that drew them again would leave some behind
+  const screen = startWholeScreen(true);
   let cameBack = 0;
 
+  setBusy(true, 'hidden');
   try {
     if (!await waitForRest()) return 0;
 
@@ -312,27 +312,32 @@ function makeScene(screen, swapPage) {
       world.style.setProperty('--glitch-seconds', String(seconds));
       world.dataset.tint = blue ? 'blue' : 'red';
       (blue ? blueGlitch : redWash).hidden = false;
-      if (!world.dataset.hidden) world.dataset.hidden = 'glitch'; // while the blocks are apart, the screen stays apart
+      if (!world.dataset.hidden) world.dataset.hidden = 'glitch'; // while the pile lies, the state stays as it is
       if (!blue) frame.playGlitch(seconds);
       await sleep(seconds);
 
-      // Over the empty backdrop no break follows to fade the layers out, so this takes them away
+      // Over the empty backdrop no collapse follows to fade the layers out, so this takes them away
       if (world.dataset.hidden === 'apart') clearGlitch();
     },
 
-    // The blocks fly apart and the backdrop shows behind them. When they are
-    // apart the pages are swapped, and the areas that were waiting swap theirs.
-    async breakApart(look) {
+    // The frames collapse into a pile and the backdrop shows behind them. When the content has faded
+    // away the pages are swapped, and the areas that were waiting swap theirs. The pile stays down.
+    async collapse(look) {
       backdrop.dataset.look = look;
       backdrop.hidden = false;
       world.dataset.hidden = 'break';
+      world.dataset.pieces = '';
       moveOn(otherAreas(layoutNow())); // the areas the layout has besides the large one pick their next page and wait at the gate for this moment
 
-      await sleep(flySeconds * apartAfter);
-      world.dataset.hidden = 'apart';
-      clearGlitch();
+      pile = makePile();
+      plan = pile.release(Math.floor(Math.random() * 4294967296));
+      await sleep(contentGoneAfter);
       swapPage();
       screen.apart();
+
+      await sleep(flySeconds - contentGoneAfter);
+      world.dataset.hidden = 'apart';
+      clearGlitch();
     },
 
     wait: seconds => sleep(seconds),
@@ -358,31 +363,27 @@ function makeScene(screen, swapPage) {
       await sleep(seconds);
     },
 
-    // The screen comes back: the frames of the next screen fall into a pile, a cube rises and the
-    // frames fly back (core/hidden-pile.js), and then the content comes in. The three parts
-    // take 5 seconds at the most, and nothing else moves meanwhile. cameBack is the last part only,
-    // since the rotation clock was held for the rest
+    // The screen comes back: a cube rises, turns, pulses and shrinks to a point, the pieces rise from the pile
+    // to their places, and the content fades in (core/hidden-pile.js). The three parts take 5.5 seconds with the
+    // collapse, and nothing else moves meanwhile. The rotation clock is held from the cube on. cameBack is the
+    // rebuild only: the pieces rising and the content coming in
     async rebuild() {
       screen.together();
       pauseRotation();
       rotationHeld = true;
+      if (pile === null) return; // the show did not collapse the frames, so there is nothing to put back
 
-      pile = makePile();
-      if (!pile.empty) {
-        world.dataset.hidden = 'fall';
-        const plan = pile.release(Math.floor(Math.random() * 4294967296));
-        await sleep(pileTimes.cubeAtMs / 1000);
-        pile.showCube();
-        await sleep((pileTimes.liftAtMs - pileTimes.cubeAtMs) / 1000);
-        world.dataset.lift = ''; // the second pulse: the pieces lift
-        await sleep((plan.lockedMs - pileTimes.liftAtMs) / 1000);
-        pile.finish();
-      }
+      pile.showCube();
+      await sleep(pileTimes.cubeMs / 1000);
 
       const started = performance.now();
+      world.dataset.lift = ''; // the pieces rise
+      await sleep(plan.riseMs / 1000);
+      pile.finish();
+      delete world.dataset.pieces;
       world.dataset.hidden = 'build';
       pile.contentIn();
-      await sleep(flySeconds * togetherAfter);
+      await sleep(pileTimes.contentMs / 1000);
       cameBackIn = performance.now() - started;
     },
 
@@ -395,6 +396,7 @@ function makeScene(screen, swapPage) {
 function putBack(screen) {
   delete world.dataset.hidden;
   delete world.dataset.lift;
+  delete world.dataset.pieces;
   if (rotationHeld) resumeRotation();
   rotationHeld = false;
   try {
@@ -403,6 +405,7 @@ function putBack(screen) {
     console.error('The frames of the hidden transition could not be put back', error);
   }
   pile = null;
+  plan = null;
   world.style.removeProperty('--glitch-seconds');
   backdrop.hidden = true;
   delete backdrop.dataset.look;
@@ -414,5 +417,6 @@ function putBack(screen) {
   frame.stopGlitch();
   frame.setHiddenPlaying(false);
   screen.end();
+  setBusy(false, 'hidden');
   playing = false;
 }

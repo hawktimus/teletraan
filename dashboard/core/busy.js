@@ -1,5 +1,6 @@
 // A flag that says a transition is running: a change of look, a hidden transition, any move of the
-// whole screen. Whatever runs one calls setBusy(true) when it starts and setBusy(false) when it ends.
+// whole screen. Whatever runs one calls setBusy(true, reason) when it starts and setBusy(false, reason)
+// when it ends: the swap (core/swap-run.js) is 'swap' and a hidden transition (core/hidden-run.js) is 'hidden'.
 //
 // frame.js asks isBusy() before it starts an effect that comes due on its own: the name effect, the
 // glitch of the screen and the name glitch of the Neon Prime kit do not start while it is set, and

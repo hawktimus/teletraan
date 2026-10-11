@@ -1,8 +1,9 @@
-// The end of the red eyes and the blue screen: the frames fall into a pile, a cube rises out
-// of it and the frames fly back (docs/hidden-transitions.md, "The frames fall and come back").
-// This file finds what falls on the page, measures it, hands the list to planPile()
-// (core/transitions.js) and writes the answer on the page. frame.css does all the moving, and
-// core/hidden-run.js starts each part at its time.
+// The red eyes and the blue screen: the frames collapse into a pile, stay there while the effect plays,
+// and rise again after a cube has risen, turned and shrunk (docs/hidden-transitions.md, "The frames
+// collapse and come back"). This file finds what falls on the page, measures it, hands the list to
+// planPile() (core/transitions.js) and writes the answer on the page. frame.css does all the moving, and
+// core/hidden-run.js starts each part at its time. A swap (core/swap-run.js) finds the same pieces with
+// the functions exported here.
 //
 // What it writes on the page, all of it taken away again by clear():
 //   data-pile="pieces"    on an area or a panel whose frame is cut into pieces. Its pieces show
@@ -11,7 +12,6 @@
 //                         properties on it (--pile-...)
 //   data-pile="released"  on a bolt that falls by itself, as a copy of its own in #pile
 //   data-pile="content"   on text, lists and pictures, which fade away before the metal falls
-//   data-content="in"     on an area whose page comes back in at the end
 // and the copies of the bolts in #pile.
 //
 // What falls is every piece of metal the page draws as a separate element: the pieces of a cut up
@@ -22,19 +22,15 @@ import { enter, pace } from '../frame.js';
 import { pileShape, pileTimes, planPile } from './transitions.js';
 
 const svgNamespace = 'http://www.w3.org/2000/svg';
-const boltBox = 48; // a copy of a bolt is a square this wide, with the bolt in the middle, before the zoom of its frame
-
-// Where the middle of the cube is when it rests. base.css puts #cube at left 900 and top 840, 120 wide
-const cubeMiddle = { x: 960, y: 900 };
+export const boltBox = 48; // a copy of a bolt is a square this wide, with the bolt in the middle, before the zoom of its frame
 
 const poseProperties = ['--pile-x', '--pile-y', '--pile-tip', '--pile-twist', '--pile-scale', '--pile-delay', '--pile-lift-delay'];
-const cubeProperties = ['--cube-dx', '--cube-dy', '--cube-shrink-delay', '--cube-shrink-time'];
 
 // The plates that fall. A frame that is cut into pieces (the large and the small panel, the main panel
 // of the bar layout) falls as its pieces, which the page keeps hidden until now. A frame that is not
 // (the countdown, the banners, the ticker of the bar layout) falls as its fills and its two halves.
 // The shadows, the glint and the stamped id stay behind, and frame.css hides them.
-function findPlates(stage) {
+export function findPlates(stage) {
   const plates = [];
 
   stage.querySelectorAll('.area, .panel').forEach(root => {
@@ -51,7 +47,7 @@ function findPlates(stage) {
 // A region that paints a box of its own with a style sheet falls whole. It has a background, or a ::before
 // that draws its frame, as the strip and the sidebar of the sidebar layout have. A region that holds
 // plates is not one: its plates fall by themselves
-function findBoxes(stage) {
+export function findBoxes(stage) {
   return Array.from(stage.querySelectorAll('[data-block]')).filter(region => {
     const style = window.getComputedStyle(region);
     const before = window.getComputedStyle(region, '::before').content;
@@ -61,7 +57,7 @@ function findBoxes(stage) {
 }
 
 // Everything in the frames that is not metal. It fades away in the first part of the break
-function findContent(stage, boxes) {
+export function findContent(stage, boxes) {
   const content = [];
 
   stage.querySelectorAll('.panel').forEach(panel => {
@@ -77,7 +73,7 @@ function findContent(stage, boxes) {
 }
 
 // The bolts on the plates that fall, that can be seen
-function findBolts(stage, plates) {
+export function findBolts(stage, plates) {
   return Array.from(stage.querySelectorAll('.screw')).filter(bolt => {
     const plate = bolt.closest('svg.plate');
     return plate !== null && plates.indexOf(plate) !== -1 && bolt.getBoundingClientRect().width > 0;
@@ -85,7 +81,7 @@ function findBolts(stage, plates) {
 }
 
 // Where the 1920 x 1080 screen is in the window. shell.js shrinks it to fit a smaller window
-function screenPlace() {
+export function screenPlace() {
   const box = document.getElementById('screen').getBoundingClientRect();
   return { left: box.left, top: box.top, scale: box.width / pileShape.screenWidth };
 }
@@ -94,7 +90,7 @@ function screenPlace() {
 // of its own is. It is 1, except in the frames that the sidebar layout and the bar layout scale to fit
 // (layouts/sidebar.css and layouts/bar.css). A distance on the screen is a distance in the element's own
 // pixels once it is divided by the zoom, which is what the transform in frame.css moves by.
-function boxOf(element, place) {
+export function boxOf(element, place) {
   const box = element.getBoundingClientRect();
   const width = box.width / place.scale;
   const ownWidth = element.offsetWidth || Number(element.getAttribute('width')) || 0;
@@ -111,7 +107,7 @@ function boxOf(element, place) {
 // A bolt falls by itself, so it gets a copy in #pile, which lies over the whole stage and is moved by
 // nothing. The bolt on the frame stays hidden until the pieces are back. middle is where the bolt is
 // on the screen, and size how wide the copy is there: the bolt drawn as the frame draws it
-function boltCopy(bolt, middle, size) {
+export function boltCopy(bolt, middle, size) {
   const copy = document.createElementNS(svgNamespace, 'svg');
   copy.setAttribute('class', 'plate pile-bolt');
   copy.setAttribute('width', String(size));
@@ -142,20 +138,6 @@ function writePose(element, entry, zoom) {
   element.dataset.pile = 'piece';
 }
 
-// The cube shrinks to a point in the middle of the large panel, and is gone when the last piece is back
-function writeCube(cube, plan, place) {
-  const grid = document.getElementById('region-grid1');
-  const box = grid ? boxOf(grid, place) : null;
-  const target = box && box.width > 0
-    ? { x: box.left + box.width / 2, y: box.top + box.height / 2 }
-    : { x: pileShape.screenWidth / 2, y: pileShape.screenHeight / 2 };
-
-  cube.style.setProperty('--cube-dx', Math.round(target.x - cubeMiddle.x) + 'px');
-  cube.style.setProperty('--cube-dy', Math.round(target.y - cubeMiddle.y) + 'px');
-  cube.style.setProperty('--cube-shrink-delay', Math.round((pileTimes.liftAtMs - pileTimes.cubeAtMs) * pace()) + 'ms');
-  cube.style.setProperty('--cube-shrink-time', Math.round((plan.lockedMs - pileTimes.liftAtMs) * pace()) + 'ms');
-}
-
 // Finds what falls and marks the areas whose frames are cut up. Nothing moves until release().
 // empty is true when the page has no metal to drop, and then the screen should just come back.
 export function makePile() {
@@ -182,16 +164,14 @@ export function makePile() {
       poseProperties.forEach(name => element.style.removeProperty(name));
       delete element.dataset.pile;
     });
-    cubeProperties.forEach(name => cube.style.removeProperty(name));
-    document.querySelectorAll('.area[data-content]').forEach(area => { delete area.dataset.content; });
   }
 
   return {
     empty: plates.length + boxes.length === 0,
 
-    // Call it once #world has data-hidden="fall", which shows the pieces. It measures everything,
-    // plans the fall and the lift, and starts the fall: the content fades and the metal lets go.
-    // Returns the plan.
+    // Call it once #world has data-pieces, which shows the pieces. It measures everything,
+    // plans the collapse and the rise, and starts the collapse: the content fades and the metal
+    // lets go. Returns the plan.
     release(seed) {
       const place = screenPlace();
       const pieces = [];
@@ -227,7 +207,6 @@ export function makePile() {
         writePose(item.element, entry, item.zoom);
       });
       content.forEach(node => { node.dataset.pile = 'content'; });
-      writeCube(cube, plan, place);
       return plan;
     },
 
@@ -237,10 +216,9 @@ export function makePile() {
 
     finish: finish,
 
-    // The first assembly again, for the content only: each area turns its page in, and each
-    // panel brings its own parts in as it does at the start (frame.js, enter)
+    // The content comes back: frame.css fades it in, and each panel brings its own parts in as it
+    // does at the start (frame.js, enter)
     contentIn() {
-      document.querySelectorAll('.area').forEach(area => { area.dataset.content = 'in'; });
       stage.querySelectorAll('.panel[data-sequence]').forEach(panel => {
         try {
           enter(panel, true);

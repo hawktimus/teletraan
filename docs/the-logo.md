@@ -38,6 +38,10 @@ The announcement with the logo (the second one) shows the act `fly`: the same
 wingbeats with no end, for as long as the announcement is up. It has no timing
 of its own. The master switch below turns it into the still emblem.
 
+The swap (docs/layouts.md, "The swap") has an act of its own, `swap`. It shows the hawk and hides the emblem, and moves
+nothing: `core/swap-run.js` copies the logo, gives the copy this act, beats its wings and flies it with
+`element.animate()`. It plays only in full motion.
+
 In calm and none motion nothing moves. The logo stays the still emblem, and a
 logo asked to fly shows the hawk still, with its wings up. In the flat finish
 (`?finish=flat`) the outline is one plain colour and the shadow is gone.

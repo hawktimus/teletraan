@@ -1,10 +1,11 @@
 // The look rotation fields of Dashboard Settings, in the Look tab: which styles and which teams the
-// screen goes through, and how it changes from one look to the next. Four fields:
+// screen goes through. Four fields, the last of them hidden:
 //
 //   dailyStyles  the styles of the days, in order: Original and then Cybertron to start with
 //   mondayStyle  the style while the Monday cards of a team are up, Minimal to start with
 //   teamOrder    the teams, in the order they take the screen: Prime and then Nova to start with
-//   lookSwap     assemble (the default), slats or cut
+//   lookSwap     assemble (the default), slats or cut. It is hidden: every change of look is the same
+//                swap now (dashboard/core/swap-run.js), and the screen ignores the value
 //
 // The choices are the names in styles and lookSwaps in dashboard/config.js, and the starting values
 // are the same as defaultSettings there. check-schemas.mjs fails if they differ. The starting teams are
@@ -91,7 +92,8 @@ export function lookRotationFields() {
       title: 'How the look changes',
       type: 'string',
       group: 'look',
-      description: 'Assemble takes the screen apart and builds it again. Slats turns the panel over. Cut changes at once. Each waits for the end of a pass.',
+      description: 'No longer used. Every change of look is the same move now, and the screen ignores this choice. It stays so that a saved value is kept.',
+      hidden: true,
       options: { list: swaps, layout: 'radio', direction: 'horizontal' },
       initialValue: 'assemble',
       validation: Rule => Rule.valid(swaps.map(swap => swap.value)).error('Pick assemble, slats or cut.'),

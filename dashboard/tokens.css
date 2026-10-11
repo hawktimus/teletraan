@@ -77,7 +77,7 @@
   --time-calm: calc(300ms * var(--pace));
   --break-seconds: .6; /* frame.js sets it from Break and rebuild time: the mechanical page change breaks the frame apart in this many seconds, and rebuilds it in the same again */
   --time-break: calc(var(--break-seconds) * 1s * var(--pace));
-  --hidden-seconds: 1.6; /* core/hidden-run.js sets it, with the same number: the blocks of a hidden transition fly apart in this many seconds, and fly back in the same again */
+  --hidden-seconds: 1.7; /* core/hidden-run.js sets it, with the same number: the frames of a hidden transition collapse into a pile in this many seconds */
   --time-hidden: calc(var(--hidden-seconds) * 1s * var(--pace));
   --glitch-seconds: 1.5; /* the glitches of a hidden transition last this long. hidden-run.js sets it from the transition's list of steps */
   --look-seconds: 1; /* how long a picture takes to fade in or out in a hidden transition. hidden-run.js sets it, step by step */

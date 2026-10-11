@@ -180,6 +180,15 @@ export function holdForLayout(look, busy) {
     return false;
   }
 
+  reloading = true;
   window.location.reload();
   return true;
+}
+
+// True once holdForLayout has asked the page to reload for a layout. The swap (core/swap-run.js) asks, so
+// that it keeps the screen apart until the page is gone and does not put the old look back
+let reloading = false;
+
+export function layoutIsReloading() {
+  return reloading;
 }

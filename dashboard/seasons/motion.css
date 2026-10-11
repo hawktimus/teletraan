@@ -174,10 +174,9 @@ html[data-paused] .season-piece { animation-play-state: paused; }
 
 /* A hidden transition (core/hidden-run.js). The back layer is under #backdrop,
    so the backdrop covers it and nothing is needed. The front layer and the over
-   layer are over the stage, so they fade out as the blocks fly apart (break),
-   stay out of sight while the screen is apart or shows something else and while
-   the frames fall and fly back (fall), and fade back in as the screen comes back
-   (build). During the red glitches they stay as they are. Any other value of
+   layer are over the stage, so they fade out as the frames collapse (break),
+   stay out of sight while the pile lies, the effect plays and the frames rise
+   (apart), and fade back in as the screen comes back (build). During the red glitches they stay as they are. Any other value of
    data-hidden hides them, so a new step of a transition never has decorations
    over it. The first rule names break and build in its :not() parts so that it
    never matches them: it has more parts than the two rules after it and would
@@ -192,5 +191,5 @@ html[data-motion="full"] #world[data-hidden="break"] .season-over {
 }
 html[data-motion="full"] #world[data-hidden="build"] .season-front,
 html[data-motion="full"] #world[data-hidden="build"] .season-over {
-  animation: season-in calc(var(--time-hidden) * .4) linear calc(var(--time-hidden) * .6) both;
+  animation: season-in calc(.25s * var(--pace)) linear both;
 }

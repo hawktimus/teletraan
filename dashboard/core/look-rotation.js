@@ -22,7 +22,7 @@
 // Next look now (a button on the Start here page) moves to the next pass at once. Where a pass is
 // written down in localStorage, a page that reloads for a change of layout goes on in the same pass.
 
-import { defaultSettings, defaultThemeSettings, lookResumeSeconds, lookShortestSeconds, lookSwaps, primeTeam, styles } from '../config.js';
+import { defaultSettings, defaultThemeSettings, lookResumeSeconds, lookShortestSeconds, primeTeam, styles } from '../config.js';
 import { readHandled, rememberHandled, shouldRunDemo } from './demo.js';
 import { bothSteps, mondaySteps } from './monday.js';
 import { rotateStyle } from './style.js';
@@ -111,6 +111,23 @@ function codesOf(content) {
   return teamsInOrder(Array.isArray(settings.teamOrder) ? settings.teamOrder : [], source.teams).map(team => team.code);
 }
 
+// The Monday cards belong to the Monday passes (a team's, and the one of both teams) and nowhere else. A
+// list that holds one in another pass, for example a Panel order saved when the cards could be picked
+// there, shows without it. cardIds are the ids of the panels the registry flags monday
+// (core/look-rotation-run.js reads them from registry.js).
+export function withoutMondayCards(steps, cardIds) {
+  return steps.filter(step => cardIds.indexOf(step.panel) === -1);
+}
+
+// Whether a style can go on a page that is drawn for one layout. The page is drawn for onPage (core/layout.js,
+// drawnFor) and the style asks for wanted. A style of another layout goes on by a reload, and the reload is
+// made impossible when the page has reloaded for that layout already, or cannot keep a note (mustReload in
+// core/layout.js). canReload says whether it may. A style that cannot go on is left out: the Monday cards, which
+// belong to the Monday style, wait for another pass and are never drawn in the wrong frames.
+export function styleCanGoOn(onPage, wanted, canReload) {
+  return wanted === onPage || canReload === true;
+}
+
 // The passes of one cycle, in order: { team, style, kind }. team is a code, or '' when Team mode
 // decides the team, and style is '' when Style decides the style. teams is the codes in order.
 // hasMonday(code) says whether a team has Monday rows. The cycle always has at least one pass. When
@@ -182,9 +199,12 @@ function writeState(storage, state) {
 //                     hidden transition has the screen
 //   mondayCards       the Monday cards of a team (the function above, unless a test gives another)
 //   bothCards         the Monday cards of both teams (bothCards above, unless a test gives another)
+//   canShow(style)    false when the Monday style cannot go on the page now (styleCanGoOn). The cards of a
+//                     team, and of both teams, then have no pass: they are never drawn in another style
 export function makeLookRotation(deps) {
   const cardsOf = deps.mondayCards || mondayCards;
   const bothOf = deps.bothCards || bothCards;
+  const canShow = deps.canShow || (() => true);
   const busy = deps.busy || (() => false);
   const keepPlace = deps.keepPlace !== false;
 
@@ -203,16 +223,16 @@ export function makeLookRotation(deps) {
     const list = Array.isArray(settings.dailyStyles) ? settings.dailyStyles : [];
     const style = styleForDay(list, dayNumber(theme.timeZone, now));
     const codes = codesOf(source);
+    const mondayStyle = styles.includes(settings.mondayStyle) ? settings.mondayStyle : defaultSettings.mondayStyle;
 
     return {
       passes: planCycle({
         style: style,
-        mondayStyle: styles.includes(settings.mondayStyle) ? settings.mondayStyle : defaultSettings.mondayStyle,
+        mondayStyle: mondayStyle,
         teams: codes,
-        hasMonday: code => cardsOf(source, code).length > 0,
-        hasBoth: bothOf(source, codes).length > 0,
+        hasMonday: code => cardsOf(source, code).length > 0 && canShow(mondayStyle),
+        hasBoth: bothOf(source, codes).length > 0 && canShow(mondayStyle),
       }),
-      swap: lookSwaps.includes(settings.lookSwap) ? settings.lookSwap : defaultSettings.lookSwap,
     };
   }
 
@@ -241,13 +261,12 @@ export function makeLookRotation(deps) {
   // Moves to the next pass when it may, and says what to do about it:
   //   moved  the list of the large panel has to start again, because the pass is another one
   //   look   { style, team } to hold now, or null when the look is the one already held
-  //   swap   how the look changes (lookSwaps in config.js)
   //   kind   'panels' or 'monday', the kind of the pass the screen is in now
   // forced is Next look now, which does not wait for the pass to have run its shortest time. One pass
   // alone has nowhere to move to. While the screen is busy nothing changes, and the next ask tries again.
   function move(now, forced) {
     if (current === null) begin(now);
-    if (busy()) return { moved: false, look: null, swap: planFor(now).swap, kind: current.kind };
+    if (busy()) return { moved: false, look: null, kind: current.kind };
 
     const plan = planFor(now);
     let index = indexOfPass(plan.passes, current);
@@ -269,7 +288,7 @@ export function makeLookRotation(deps) {
     if (moved) since = now.getTime();
     if (changed) applied = look;
     if (moved || changed) save(now);
-    return { moved: moved, look: changed ? look : null, swap: plan.swap, kind: pass.kind };
+    return { moved: moved, look: changed ? look : null, kind: pass.kind };
   }
 
   return {

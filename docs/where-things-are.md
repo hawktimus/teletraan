@@ -144,7 +144,7 @@ editors can sign in from anywhere.
                               the four ornaments of line art that go in the cut corners, pack-extras.js
                               decides the ticker prefix, banner line and corner art of the pack on the page,
                               transitions.js chooses the style and the metal of the next page change and
-                              plans how the frames fall into a pile and come back at the end of a hidden
+                              plans how the frames collapse into a pile and rise again in a hidden
                               transition,
                               look.js turns the Polish setting (polished, flat or plain) into the page
                               switches the stylesheets read (data-finish, data-glint and data-look),
@@ -183,8 +183,12 @@ editors can sign in from anywhere.
                               theme.js (docs/hidden-transitions.md, "Preview a look"),
                               look-rotation.js decides which look comes next (the style of the day, the
                               order of the teams, their Monday cards and the Next look now guard), and
-                              look-rotation-run.js plays the three swaps and keeps the pass in localStorage
+                              look-rotation-run.js hands a look to the screen and keeps the pass in localStorage
                               (docs/layouts.md, "The look rotation"),
+                              swap-plan.js decides the one swap of every change of look and of Monday card
+                              (which piece starts when, where it re-forms, how the hawk flies), swap-run.js
+                              plays it on the page, and busy.js says that a transition has the screen
+                              (docs/layouts.md, "The swap"),
                               frc.js cleans the frc-status document the Mini writes and has the date helpers for
                               it, competition.js decides which competition cards are due now (from the document,
                               the clock and the Competition cards setting) and mixes them into the list of the
@@ -230,7 +234,7 @@ editors can sign in from anywhere.
                               days, presentation.js the booked talks and settingsPresentations.js the
                               Presentations tab of Dashboard Settings (docs/presentations.md). team.js is the
                               Teams list and settingsTeams.js the team fields of the Look tab, which are hidden now. settingsLook.js is
-                              Styles by day, Monday style, Team order and How the look changes. status.js is the
+                              Styles by day, Monday style, Team order and the hidden How the look changes. status.js is the
                               document the Mini writes (the status block, settingsStatus.js and status-input.js), and calendarStatus.js
                               the one it writes for the Calendars page. time-text.js has the ages in words that
                               both use. frcStatus.js is the document the Mini writes for the competition cards,
@@ -386,8 +390,8 @@ editors can sign in from anywhere.
                               (the Prime frame turned across, the 60 degree line, the pieces), and the rules of trim.css
       test-team-colors.mjs    checks for the colors, the metal and the glow of a team: both teams in each style, with the
                               edge gradient and the body color worked out from the stylesheets, and that Prime is as it was in Original
-      test-pile.mjs           checks for the end of the hidden transitions: the plan of the fall, the pile and the
-                              lift (at most 40 pieces, 5 seconds, every piece back in its place), the stylesheet
+      test-pile.mjs           checks for the hidden transitions' pile: the plan of the collapse, the pile and the
+                              rise (at most 40 pieces, 5.5 seconds, every piece back in its place), the stylesheet
                               that moves them, the cube, and the script that finds the pieces on a fake page
       test-person-rows.mjs    checks for the rows of the Team Leads and Leadership panels: four rows to a
                               panel, who is in them, the portrait size, and the sizes in base.css
@@ -409,6 +413,12 @@ editors can sign in from anywhere.
       test-presentation-mouse.mjs  checks for the mouse in presentation mode: what each button does, the second
                               click of a double click, a click on the card that says the slides are not ready,
                               the context menu, the hidden cursor, and the rotation that starts again
+      test-swap.mjs           checks for the swap (core/swap-plan.js): the pull apart, the re-form, the match of old and
+                              new pieces and the flight of the hawk, and core/swap-run.js against a small stand-in
+                              for the page and a clock moved by hand
+      test-monday-style.mjs   checks that the Monday cards are in the Monday pass and in the Monday style only: the list
+                              of the large panel in each pass, the pass left out while the style cannot go on the
+                              page, and a held look going on in a swap (core/look-rotation-run.js on a small page)
       test-look-rotation.mjs  checks for the look rotation (core/look-rotation.js): the style of the day, the
                               order of the passes in a cycle, the boundary rule, a restart, one look holding,
                               empty lists, the Next look now guard, and the question schedule.js asks at the
@@ -536,9 +546,9 @@ alone.
   `studio/hidden-transitions.js`, a copy of `hiddenTransitions` in
   `dashboard/core/hidden-transitions.js`. A new transition is one entry in each, plus an hours
   field and a chance field. `core/hidden.js` decides, `core/hidden-run.js` plays, and `frame.css` ("Hidden
-  transitions" and "The blue glitch") moves the five blocks and the glitches. Both end with
-  the frames falling into a pile and a cube putting them back (`core/hidden-pile.js`,
-  `planPile` in `core/transitions.js`, and "The frames fall and come back" in `frame.css`). The four
+  transitions" and "The blue glitch") moves the glitches. Both collapse the frames into a pile
+  before the effect and end with a cube putting them back (`core/hidden-pile.js`,
+  `planPile` in `core/transitions.js`, and "The frames collapse and come back" in `frame.css`). The four
   pictures are in `dashboard/assets/hidden/`, and `core/hidden-pictures.js` says how each one
   fills the screen and which one plays next. Try one with `?hidden=desktop` or `?hidden=redEyes`.
 - **Play announcements.** A button in the menu beside Publish on Dashboard Settings
@@ -965,6 +975,8 @@ exceptions are `test-slides-script.mjs`, `test-frc-script.mjs` and `test-monday-
     node tools/test-photo-fit.mjs
     node tools/test-presentation-mouse.mjs
     node tools/test-look-rotation.mjs
+    node tools/test-swap.mjs
+    node tools/test-monday-style.mjs
     node tools/test-console.mjs
     node tools/test-calendar-status.mjs
     node tools/test-calendars-view.mjs

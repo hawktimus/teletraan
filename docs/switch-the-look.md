@@ -43,15 +43,17 @@ teams, Prime and then Nova to start with.
 - Each team in the list takes the screen for a pass of the panels, and then the next
   team does. Drag a team to change the order. A team that is switched off is left out.
 - One team in the list shows that team all the time.
-- How the look changes says how the screen goes from one team or style to the next:
-  Assemble, Slats or Cut.
+- The screen goes from one team or style to the next in one move: the frames pull apart, the new look
+  goes on while they are apart, and they re-form, with the hawk flying to the logo's new place. The
+  move is the same for every change, so there is nothing to pick (docs/layouts.md, "The swap").
 
 The team sets the name, the number, the logo, the colors, the mirror and the trim
 (the bolts, the cut corners and a few more small things, docs/add-the-nova-team.md). A team
 with Mirror the layout on has the whole screen flipped left to right: the
 columns, the banner and the tag on the ticker change sides. The sidebar layout of
 the theme Neon Prime is not flipped. A swap waits for the end of a pass and
-then everything changes together, so nothing changes in the middle of a panel.
+then everything changes together, so nothing changes in the middle of a panel. The Monday
+cards are always in the Monday style, and only in the Monday pass.
 
 Items that have a Team show only for that team. Items with Both, the countdown, the
 weather, the BAND events and the photos show for every team

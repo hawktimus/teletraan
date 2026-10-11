@@ -1092,13 +1092,15 @@ the numbers in this section against the code.
 ## The look rotation
 
 The screen goes through looks by itself. A look is a style and a team. Dashboard Settings, Look tab,
-has four settings, with their starting values in `defaultSettings` in `config.js`:
+has three settings, with their starting values in `defaultSettings` in `config.js`, and a fourth that is hidden:
 
 - Styles by day (`dailyStyles`): Original and then Cybertron.
 - Monday style (`mondayStyle`): Minimal.
 - Team order (`teamOrder`): Prime and then Nova. The Studio keeps references to the teams and the
   query in `core/sanity.js` sends their codes.
-- How the look changes (`lookSwap`): assemble, slats or cut. Assemble is the starting one.
+- How the look changes (`lookSwap`) is hidden and the screen ignores it. It used to be assemble, slats or
+  cut. Every change of look is the one swap now ("The swap" below). The field stays in the schema, with
+  what was saved in it, so that nothing is lost.
 
 **The style of the day.** The number of the calendar day in the time zone of the Look page, counted
 from 1970, modulo the length of the list, says which style the day has (`dayNumber` and `styleForDay`
@@ -1112,9 +1114,22 @@ none skips that pass. With two styles, Prime with Monday rows and Nova without, 
 the style of the day, Prime in Minimal, Nova in the style of the day, and tomorrow the same three
 with the other style. The panels that every team shares (the events, the tips, the photos and the
 countdown) are in the pass of each team, once, and so are the competition cards that are due, with the
-data of that team (docs/frc-feed.md). The Monday cards are the panels in the next section. `mondayCards` in `core/look-rotation.js` gives them to a team that has board tasks, and a team
-that has none has no Monday pass. After the last team there is one more pass in the Monday style, the two cards of both teams, when two teams
-or more have Monday rows (`bothCards`). It is held in the team of the pass before it, and it is written down in localStorage with `both: true`.
+data of that team (docs/frc-feed.md). The Monday cards are the panels in the section after "The swap".
+`mondayCards` in `core/look-rotation.js` gives them to a team that has board tasks, and a team that has none
+has no Monday pass. After the last team there is one more pass in the Monday style, the two cards of both
+teams, when two teams or more have Monday rows (`bothCards`). It is held in the team of the pass before it,
+and it is written down in localStorage with `both: true`. It is part of the Monday block, so it is drawn in
+the Monday style and enters and leaves with the one swap, as the pass of a team does.
+
+**The Monday cards come in the Monday pass and nowhere else.** The large panel follows the Monday cards of the
+team, or the cards of both teams in their pass, while a Monday pass is up, and in every other pass it follows the
+usual list without them, even when a Panel order saved before this had them in it (`withoutMondayCards` in
+`core/look-rotation.js`, called from `playlistNow` in `core/look-rotation-run.js`). Every Monday pass, a team's or
+the one of both teams, is in the Monday style or it does not happen. A
+Monday style with another layout than the page has goes on by a reload, and a page that reloaded for that
+layout a moment ago, or cannot keep the note that stops a reload loop, does not reload (`mustReload` in `core/layout.js`).
+Then the pass is left out of the cycle until the page can take the style (`styleCanGoOn`, asked through
+`canShow` in `makeLookRotation`), and the cards are never drawn in the frames of another style.
 
 **When it moves.** A pass is over when the list of the large panel has been through once.
 `core/schedule.js` asks the rotation then, before the next page is chosen (`setLookHooks`), and the
@@ -1126,22 +1141,14 @@ the end of the next pass.
 **How the look goes on.** The style and the team are held by `rotateStyle` in `core/style.js` and
 `rotateTeam` in `core/teams.js`, the two modules that hold them for a preview. A preview and `?style=`
 or `?team=` in the address win over the rotation, and the rotation wins over the old Style and Team
-mode settings. Both go on the page in one step, at the moment the large frame is apart, where
+mode settings. A held look waits for the next page change of the large panel, and that page change is a swap
+("The swap" below). Both go on the page in one step, at the moment the screen is apart, where
 `core/areas.js` calls `changeThemeNow` and `changeTeamNow`. The page also keeps the rotation from
 running at all while the address has `?style=` or `?team=`, and in the test views (`?show=`, `?stress`
 and `?only=tasks`).
 
-**The three swaps** (`core/look-rotation-run.js`):
-
-- assemble: the banner, the countdown and the areas leave, the look goes on while nothing is on the
-  screen, and everything comes in again. The lists start from their first panel, so the frames
-  assemble as they do when the screen starts.
-- slats: the next page change of each area is the slat change, whatever Page change style says. The
-  frames stay.
-- cut: for `lookCutMilliseconds` the screen counts as apart, as in a hidden transition, so each area
-  swaps its page at once with nothing leaving or arriving.
-
-A change to or from Minimal is a change of layout, and the page reloads once whichever swap is set.
+A change to or from Minimal is a change of layout, and the page reloads once ("The swap" says what the
+screen does meanwhile).
 
 **Starting again.** The pass the screen is in is written down in localStorage (`teletraan-look-pass`),
 and again every half minute. A page that reloads within `lookResumeSeconds` (600) of that goes on in
@@ -1162,6 +1169,81 @@ press while the Monday cards are up moves past them.
 Look at it with `?sample=1`, which has both teams and the rotation. `node tools/test-look-rotation.mjs`
 checks the order of the passes, the style of the day, the boundary rule, a restart and the Next look now
 guard.
+
+## The swap
+
+One move changes the screen, whatever changes: the style, the team, one Monday card for the next, going into the
+Monday block and coming out of it. The pieces of the screen pull apart, the new look goes on while they are
+apart, and they re-form in it, with the hawk flying beside them. `core/swap-plan.js` has the plain functions
+that decide it, with no page in them, and `core/swap-run.js` finds the pieces on the page, plays the plan with
+`element.animate()` and puts the page back. Only transform and opacity move.
+
+**When it plays.** A swap replaces the page change of the large panel (`setSwapOffer` in `core/areas.js`) when
+
+- the look rotation has held a new style or team, which it says with `queueSwap` (`changeLook` in
+  `core/look-rotation-run.js`, at the end of a pass and when Next look now is pressed), or
+- the page on screen or the page to come is a Monday card. That is one card to the next, or the next
+  page of the tasks card, and it is the first card and the last one too.
+
+It never starts while an alert, an announcement, a talk, the demo, the night screen or a hidden transition has
+the screen, and not in calm or no motion. The page change is then the usual one, and a held look goes on in it
+as it always did. It waits for the three areas to be at rest, up to 1.5 seconds. The rotation clock of the pages
+is held while it plays (`holdClock` in `core/schedule.js`), the other two areas pick their next pages and wait at the
+gate of `core/areas.js`, as they do in a hidden transition, and `core/busy.js` says that a transition has the
+screen. The logo effects and the neon kit are held (`setSwapPlaying` in `frame.js`).
+
+**The times,** in milliseconds from the start at normal speed. The Speed setting stretches them all
+(`swapTimes` in `core/swap-plan.js`):
+
+| Time | What happens |
+|------|--------------|
+| 0 | The page content starts to fade out, in 250. Every piece starts after a delay of its own, 0 to 180 (seeded for each run), and moves out from the middle of the screen by 18 percent of its distance from it. It tips back 20 to 70 degrees (`perspective(1600px) rotateX`) and turns up to 25 degrees in the plane. The logo becomes a hawk that flaps and lifts |
+| 350 | Every piece is nearly out. The look goes on: the style, the team and the next pages, in one step, while nothing can be seen. The pieces of the new look take over from the old ones at the pose they had |
+| 350 to 1250 | Each piece travels to its place in the new look and untips, with the easing of the first assembly. The metal, the neon color and the corners are the new look's from the first moment |
+| 1000 to 1250 | The page content fades in |
+| 350 to 2000 | The hawk flies to the new place of the logo, in one arc, and lands. The swap is over when it has landed |
+
+**The pieces** are every piece of metal the page draws as a separate element, the ones that fall in a hidden
+transition (`core/hidden-pile.js`, "The frames collapse and come back" in docs/hidden-transitions.md): the pieces of a frame
+that is cut up (the edges, the header plates, the plates of the body), the fills and the two halves of a frame that is not,
+and every bolt. A bolt moves as a copy of its own in `#pile`, and the bolt on the frame is out of sight meanwhile. At most
+40 pieces move: past that the smallest bolts are folded into the plate they are bolted to. While the pieces move,
+`#world` has `data-pieces`, and `frame.css` shows the pieces in place of the whole frame and leaves out the
+shadows, the glint and the kit. No piece leaves the screen: a piece that the 18 percent would take past an
+edge is moved back, and made smaller if it must be.
+
+**Old and new pieces.** The look changes the frames (Cybertron has other ones than Original, a team can cut
+other corners), so the pieces after it are not the pieces before it. `matchPieces` gives each new piece the old piece of
+its kind that is in the same part of the screen and has the same number there (the `region-` element it is in, and its
+place in the list). The pieces that are left take the nearest old piece, and a piece with none starts out of place on its own.
+A new piece starts with the middle, the size, the tip and the turn that the old piece had at that moment, so
+nothing jumps when one takes over from the other (`planReform`). Every new piece ends with no offset, no tip and
+no turn, which is what the tests check.
+
+**The hawk.** The logo is copied into `#pile` and the logo itself is out of sight until the hawk lands. The copy
+shows the hawk (the act `swap` in `frame.css`), beats its wings every 320 milliseconds to 35 percent of the beat
+of the flying logo, hovers and lifts for 350 and then flies. When the place of the logo does not change, it hops
+120 pixels and lands. Otherwise it flies in one arc 300 pixels high, tilting nose up into the climb and nose
+down out of the descent, and it faces the way it flies (`scaleX(-1)` when it heads left). The colors of the
+hawk are the old look's until the top of the arc, and then the new look's. The arc rises where the whole hawk
+stays on the screen. In the banner, which is at the top of the screen, there is no room, so it dips down
+instead. At the end the hawk and the logo cross-fade for 150 milliseconds. `planHawk` has the numbers, `hawkShape`
+the rest.
+
+**A change of layout** (Original or Cybertron to Minimal and back) cannot be drawn in the page that is on
+screen, because the regions are drawn for one layout, so the page reloads (`core/layout-apply.js`). A swap for such a
+change pulls the pieces apart, and then the screen stays apart until the page is gone (`layoutIsReloading`).
+The new page starts as the screen starts. The Monday cards of a team that are in the same layout as its other
+panels, for example with the Monday style set to Cybertron and the style of the day Original, swap in the page
+without a reload.
+
+**Hidden transitions** keep the look they have while they play (`startWholeScreen(true)` in `core/areas.js`).
+Their frames lie in a pile, and a look that drew them again would leave some of them behind. A look that is waiting
+goes on at the next page change.
+
+Look at it with `?sample=1`, with Next look now on the Start here page, and with the Monday style set to the style of the
+day in Dashboard Settings (no reload). `node tools/test-swap.mjs` checks the plan, and runs `swap-run.js` against a
+small stand-in for the page and a clock it moves by hand.
 
 ## The Monday cards
 
@@ -1436,21 +1518,15 @@ and give the sample content the values. A team with none of it falls back to the
   scaled pane. The frame's metal comes from Dashboard Settings, as in the
   standard layout, unless the theme sets its own. Neon Prime does: gunmetal,
   whatever Frame metal says (docs/adding-a-theme.md, "Neon Prime").
-- **Hidden transitions** break apart the blocks that exist in the layout. The
-  standard layout has five (banner, large frame, countdown, small frame, ticker).
-  The sidebar layout has four: the strip, the sidebar, the pane and the ticker. The
-  strip flies up and the ticker down, as the banner and the ticker do in the
-  standard layout, the sidebar to the left and the pane to the right, one after
-  another (the strip first, the ticker last). Each block's pose (how far it flies,
-  how it turns, how late it starts) is a line in the table in `frame.css`, and for
-  the sidebar layout in `layouts/sidebar.css`. `layout-apply.js` marks the four
-  with `data-block`, and the blocks of the standard layout that the sidebar layout
-  does not have lose the mark. A transition still ends in a clean rebuild, and
-  waits for no small frame. The bar layout has four too: the banner, the side
-  column, the main panel and the ticker, with the poses of the column and the main
-  panel in `layouts/bar.css`. The rebuild is the frames falling into a pile and
-  coming back (docs/hidden-transitions.md): they fall as the pieces they are drawn
-  in, in every layout, and the strip and the sidebar fall whole.
+- **Hidden transitions** collapse the frames of the blocks that exist in the layout into a pile
+  (docs/hidden-transitions.md). The standard layout has five blocks (banner, large frame, countdown,
+  small frame, ticker). The sidebar layout has four: the strip, the sidebar, the pane and the ticker.
+  The bar layout has four too: the banner, the side column, the main panel and the ticker.
+  `layout-apply.js` marks them with `data-block`, and the blocks of the standard layout that the layout
+  does not have lose the mark. The blocks no longer fly apart: only their `--hold`, how late each one starts
+  to jump in the blue glitch, is read from the table in `frame.css` and the lines in `layouts/sidebar.css`
+  and `layouts/bar.css`. The frames fall as the pieces they are drawn in, in every layout, and the strip
+  and the sidebar fall whole. A transition still ends in a clean rebuild, and waits for no small frame.
 - **Alerts, announcements, the night screen, the demo and the connection text**
   are layers as big as the screen. They do not depend on the layout, and cover it.
   The connection text is as wide as the ticker at most, as it is in the standard

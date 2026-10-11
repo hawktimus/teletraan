@@ -45,7 +45,7 @@ fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n'
 });
 const frameUrl = pathToFileURL(path.join(workFolder, 'dashboard/frame.js')).href;
 const config = await import(pathToFileURL(path.join(workFolder, 'dashboard/config.js')).href);
-const { chooseStyle, chooseFinish } = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/transitions.js')).href);
+const { chooseStyle, chooseFinish, pileTimes } = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/transitions.js')).href);
 const demo = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/demo.js')).href);
 const demoRegistry = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/demo-screens.js')).href);
 const hidden = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/hidden.js')).href);
@@ -1307,11 +1307,11 @@ test('the pieces and the perspective are there only while a mechanical change ru
   assert.ok(/\.piece \{ display: none; \}/.test(frameCss));
   const shown = frameCss.match(/\[data-motion="full"\] \.area\[data-change="mechanical"\]\[data-state="xo"\] \.piece,\s*\[data-motion="full"\] \.area\[data-change="mechanical"\]\[data-state="xi"\] \.piece \{[^}]*\}/);
   assert.ok(shown && shown[0].includes('display: block;') && shown[0].includes('will-change: transform, opacity;'));
-  assert.equal((frameCss.match(/will-change: transform, opacity;/g) || []).length, 2, 'only the pieces and the blocks of the hidden transitions are promoted this way');
+  assert.equal((frameCss.match(/will-change: transform, opacity;/g) || []).length, 1, 'only the pieces are promoted this way: the blocks of the hidden transitions no longer fly');
 
   const lens = frameCss.match(/\.area\[data-change="mechanical"\]\[data-state="xi"\] \{[^}]*\}/);
   assert.ok(lens && lens[0].includes('perspective: 1800px;'));
-  assert.equal((frameCss.match(/^\s*perspective: /gm) || []).length, 2, 'the perspective on the area, and the one on the stage for the hidden transitions');
+  assert.equal((frameCss.match(/^\s*perspective: /gm) || []).length, 1, 'the perspective on the area only: the stage has none now, because the blocks no longer fly');
 
   // nothing of the change is written for calm or none motion
   const lines = frameCss.split('\n').filter(line => /piece|time-break/.test(line) && !/^\s*(\/?\*|--)/.test(line));
@@ -2383,30 +2383,30 @@ test('the registry has a name, a chance field and a run function for each hidden
 function recordingScene() {
   const steps = [];
   const scene = {};
-  ['glitch', 'breakApart', 'wait', 'pictureIn', 'pictureCut', 'pictureOut', 'rebuild'].forEach(name => {
+  ['glitch', 'collapse', 'wait', 'pictureIn', 'pictureCut', 'pictureOut', 'rebuild'].forEach(name => {
     scene[name] = async (...args) => { steps.push([name].concat(args)); };
   });
   return { scene: scene, steps: steps };
 }
 
-test('the desktop reveal glitches blue, breaks apart over a deep blue, glitches blue again, cuts to a blue screen for 3 seconds and rebuilds', async () => {
+test('the desktop reveal glitches blue, collapses over a deep blue, glitches blue again, cuts to a blue screen for 3 seconds and rebuilds', async () => {
   const { scene, steps } = recordingScene();
   await hiddenRegistry.hiddenTransitions.desktop.run(scene);
   assert.deepEqual(steps, [
     ['glitch', 2, 'blue'],
-    ['breakApart', 'blue'],
+    ['collapse', 'blue'],
     ['glitch', 1, 'blue'],
     ['pictureCut', 'blueScreen', 3],
     ['rebuild'],
   ]);
 });
 
-test('red eyes glitch red, break apart to black, fade a red eyes picture in, hold it 2.5 seconds, fade it out and rebuild', async () => {
+test('red eyes glitch red, collapse over black, fade a red eyes picture in, hold it 2.5 seconds, fade it out and rebuild', async () => {
   const { scene, steps } = recordingScene();
   await hiddenRegistry.hiddenTransitions.redEyes.run(scene);
   assert.deepEqual(steps, [
     ['glitch', 1.5],
-    ['breakApart', 'black'],
+    ['collapse', 'black'],
     ['pictureIn', 'redEyes', 0.6],
     ['wait', 2.5],
     ['pictureOut', 0.6],
@@ -2426,19 +2426,20 @@ test('the second blue glitch is shorter than the first, and the cut has no fade 
   const names = steps.map(step => step[0]);
   assert.equal(names[names.indexOf('pictureCut') - 1], 'glitch', 'the cut comes straight out of the second glitch');
   assert.ok(!names.includes('pictureIn') && !names.includes('pictureOut'), 'no fade in the desktop reveal');
-  assert.equal(names[names.indexOf('pictureCut') + 1], 'rebuild', 'and the blocks come back right after the hold');
+  assert.equal(names[names.indexOf('pictureCut') + 1], 'rebuild', 'and the frames come back right after the hold');
   assert.ok(steps[names.indexOf('pictureCut')][2] >= 2.5 && steps[names.indexOf('pictureCut')][2] <= 4, 'held for about 3 seconds');
 });
 
-test('every transition ends with rebuild and breaks the screen apart before it, so the screen is never left apart', async () => {
+test('every transition collapses the frames before the effect and ends with rebuild, so the screen is never left in the pile', async () => {
   for (const kind of hiddenKinds) {
     const { scene, steps } = recordingScene();
     await hiddenRegistry.hiddenTransitions[kind].run(scene);
     const names = steps.map(step => step[0]);
     assert.equal(names[names.length - 1], 'rebuild', kind);
     assert.equal(names.filter(name => name === 'rebuild').length, 1, kind);
-    assert.equal(names.filter(name => name === 'breakApart').length, 1, kind);
-    assert.ok(names.indexOf('breakApart') < names.indexOf('rebuild'), kind);
+    assert.equal(names.filter(name => name === 'collapse').length, 1, kind);
+    assert.ok(names.indexOf('collapse') < names.indexOf('rebuild'), kind);
+    names.filter(name => name.startsWith('picture')).forEach(name => assert.ok(names.indexOf('collapse') < names.indexOf(name), kind + ': the collapse comes before the picture, not after it'));
   }
 });
 
@@ -2694,24 +2695,25 @@ test('scene.glitch takes a tint: red is the default and plays the old television
   assert.ok(glitch.includes('(blue ? blueGlitch : redWash).hidden = false;'));
   assert.ok(glitch.includes('if (!blue) frame.playGlitch(seconds);'), 'only the red glitch is the old television one');
   assert.equal((glitch.match(/frame\.playGlitch/g) || []).length, 1);
-  assert.ok(glitch.includes("if (!world.dataset.hidden) world.dataset.hidden = 'glitch';"), 'a glitch while the screen is apart does not bring the blocks back');
-  assert.ok(glitch.includes("if (world.dataset.hidden === 'apart') clearGlitch();"), 'and takes its own layers away, as no break follows it');
+  assert.ok(glitch.includes("if (!world.dataset.hidden) world.dataset.hidden = 'glitch';"), 'a glitch while the pile lies does not change the state');
+  assert.ok(glitch.includes("if (world.dataset.hidden === 'apart') clearGlitch();"), 'and takes its own layers away, as no collapse follows it');
   assert.ok(glitch.indexOf("world.dataset.tint = ") < glitch.indexOf('await sleep(seconds);'));
 
-  // the break takes the glitch layers away when the blocks are apart, as it took the red wash
-  const breakApart = run.slice(run.indexOf('async breakApart(look) {'), run.indexOf('wait: seconds'));
-  assert.ok(breakApart.indexOf("world.dataset.hidden = 'apart';") < breakApart.indexOf('clearGlitch();'));
-  assert.ok(breakApart.indexOf('clearGlitch();') < breakApart.indexOf('swapPage();'));
+  // the collapse takes the glitch layers away when the pile is down, as the break took the red wash: the pages are swapped
+  // once the content has faded, and the state is apart before the layers go
+  const collapse = run.slice(run.indexOf('async collapse(look) {'), run.indexOf('wait: seconds'));
+  assert.ok(collapse.indexOf('swapPage();') < collapse.indexOf("world.dataset.hidden = 'apart';"));
+  assert.ok(collapse.indexOf("world.dataset.hidden = 'apart';") < collapse.indexOf('clearGlitch();'));
 });
 
-test('the desktop reveal breaks apart over a deep blue and red eyes over black, and nothing of the drawn wallpaper or face is left', async () => {
+test('the desktop reveal collapses over a deep blue and red eyes over black, and nothing of the drawn wallpaper or face is left', async () => {
   assert.ok(/#backdrop \{ background: #000; \}/.test(baseCss));
   assert.ok(/#backdrop\[data-look="blue"\] \{ background: var\(--hidden-blue-deep\); \}/.test(baseCss));
   assert.ok(/--hidden-blue-deep: #[0-9a-f]{6};/.test(tokensCss));
   const lookOf = async kind => {
     const { scene, steps } = recordingScene();
     await hiddenRegistry.hiddenTransitions[kind].run(scene);
-    return steps.find(step => step[0] === 'breakApart')[1];
+    return steps.find(step => step[0] === 'collapse')[1];
   };
   assert.equal(await lookOf('desktop'), 'blue');
   assert.equal(await lookOf('redEyes'), 'black');
@@ -2911,25 +2913,28 @@ test('the blocks of the hidden transitions: five regions are marked, each has a 
   });
 });
 
-test('the hidden transition times: the blocks are apart after .9 of the break time and the build takes .9 with the backdrop gone inside it, as hidden-run.js waits, and the number is one number', () => {
+test('the hidden transition times: the collapse takes the time the frames fall in, the backdrop is gone inside the build, as hidden-run.js waits, and the number is one number', () => {
   const run = fs.readFileSync(path.join(dashboardFolder, 'core/hidden-run.js'), 'utf8');
   const fly = Number(run.match(/const flySeconds = ([0-9.]+);/)[1]);
-  assert.equal(fly, 1.6);
+  assert.equal(fly, 1.7);
+  assert.equal(fly * 1000, pileTimes.fallMs, 'the collapse takes as long as the plan says');
   assert.ok(tokensCss.includes('--hidden-seconds: ' + fly + ';'), 'tokens.css starts with the same number');
   assert.ok(tokensCss.includes('--time-hidden: calc(var(--hidden-seconds) * 1s * var(--pace));'));
   assert.ok(run.includes("document.documentElement.style.setProperty('--hidden-seconds', String(flySeconds));"), 'set on the html element, where --time-hidden is worked out');
 
-  const apartAfter = Number(run.match(/const apartAfter = ([0-9.]+);/)[1]);
-  const togetherAfter = Number(run.match(/const togetherAfter = ([0-9.]+);/)[1]);
-  const breakRule = frameCss.match(/#world\[data-hidden="break"\] \[data-block\] \{\s*animation: piece-break calc\(var\(--time-hidden\) \* ([0-9.]+)\) linear calc\(var\(--time-hidden\) \* var\(--hold\)\) both;/);
-  assert.ok(breakRule, 'the break rule');
-  assert.ok(!/data-hidden="build"\] \[data-block\]/.test(frameCss), 'the blocks do not fly back any more: the frames fall and come back');
+  // the blocks no longer fly apart or back: the frames collapse and rise
+  assert.ok(!/animation: piece-break calc\(var\(--time-hidden\)/.test(frameCss), 'no break rule for the blocks');
+  assert.ok(!/data-hidden="build"\] \[data-block\]/.test(frameCss), 'and none for the build');
   const latest = Math.max(...frameCss.split('\n').filter(line => /^#region-[a-z0-9]+ +\{/.test(line)).map(line => Number(line.match(/--hold: ([0-9.]+)/)[1])));
-  assert.equal(latest, 0.3);
+  assert.equal(latest, 0.3, 'the blocks keep --hold, which the blue glitch reads');
 
-  assert.ok(Math.abs(Number(breakRule[1]) + latest - apartAfter) < 1e-9, 'the last block is apart after ' + apartAfter);
+  // the pages are swapped when the content has faded: after .3 s, before the pieces are down
+  const gone = Number(run.match(/const contentGoneAfter = ([0-9.]+);/)[1]);
+  assert.ok(gone >= 0.3 && gone < fly, 'the pages swap at ' + gone + ' s');
+  assert.ok(/#world\[data-pieces\] \[data-pile="content"\] \{\s*animation: fade-out calc\(\.3s \* var\(--pace\)\) linear both;/.test(frameCss), 'the content is gone after .3 s');
+
   const fade = frameCss.match(/#world\[data-hidden="build"\] #backdrop \{\s*animation: fade-out calc\(var\(--time-hidden\) \* ([0-9.]+)\) linear both;/);
-  assert.ok(fade && Number(fade[1]) <= togetherAfter, 'the backdrop is gone inside the build');
+  assert.ok(fade && Number(fade[1]) * fly * 1000 <= pileTimes.contentMs + 10, 'the backdrop is gone inside the build');
 });
 
 test('every time in the hidden transitions comes from --time-hidden, --glitch-seconds or --look-seconds, times --pace', () => {
@@ -2939,7 +2944,7 @@ test('every time in the hidden transitions comes from --time-hidden, --glitch-se
   const section = frameCss.slice(start, end).replace(/\/\*[\s\S]*?\*\//g, '');
 
   const timings = section.split('\n').filter(line => /animation: /.test(line));
-  assert.equal(timings.length, 14, 'the break, the backdrop twice, the red wash twice, the picture in and out, the three blue washes, the torn pieces, the blue layer fading, the stage and the blocks');
+  assert.equal(timings.length, 13, 'the backdrop twice, the red wash twice, the picture in and out, the three blue washes, the torn pieces, the blue layer fading, the stage and the blocks');
   timings.forEach(line => {
     assert.ok(/var\(--(time-hidden|glitch-seconds|look-seconds)\)/.test(line), line);
     if (/--(glitch|look)-seconds/.test(line)) assert.ok(line.includes('var(--pace)'), 'the Speed setting stretches it: ' + line);
@@ -2983,24 +2988,15 @@ test('the hidden transitions move only transform and opacity: their keyframes, t
   assert.ok(section.includes('@keyframes blue-tear-b'), 'the whole section is looked at');
   assert.ok(!/(filter|box-shadow|text-shadow|drop-shadow|blur\(|blend)/.test(section), 'a filter, blend, shadow or blur');
 
-  // the layers are promoted only while the blocks fly apart (break)
+  // nothing here is promoted to a layer or given a lens: the blocks no longer fly apart, and the pieces that fall have
+  // the perspective in their own transform
   const promoted = css.match(/[^{}]*\{[^{}]*will-change: transform, opacity;[^{}]*\}/g) || [];
-  const mine = promoted.filter(block => /data-hidden/.test(block));
-  assert.equal(mine.length, 1);
-  assert.ok(/data-hidden="break"\] \[data-block\]/.test(mine[0]) && !/data-hidden="build"/.test(mine[0]));
-  assert.ok(!/data-hidden="apart"[^{]*\{[^}]*will-change/.test(css), 'nothing is promoted while the blocks are out of sight');
-  assert.ok(/data-hidden="apart"\] \[data-block\] \{\s*visibility: hidden;/.test(css));
-
-  // the perspective and the 3D pass-through are only there while they fly apart, in full motion
-  const lens = css.match(/[^{}]*\{[^{}]*perspective: 1800px;[^{}]*\}/g).filter(block => /data-hidden/.test(block));
-  assert.equal(lens.length, 1);
-  assert.ok(/data-motion="full"\] #world\[data-hidden="break"\] #stage/.test(lens[0]) && !/data-hidden="build"/.test(lens[0]));
-  assert.equal((css.match(/transform-style: preserve-3d/g) || []).length, 1);
+  assert.equal(promoted.filter(block => /data-hidden/.test(block)).length, 0);
+  assert.equal((css.match(/[^{}]*\{[^{}]*perspective: 1800px;[^{}]*\}/g) || []).filter(block => /data-hidden/.test(block)).length, 0);
+  assert.equal((css.match(/transform-style: preserve-3d/g) || []).length, 0);
 
   // nothing of the hidden transitions is written for calm or none motion
   css.split('\n').filter(line => /data-hidden/.test(line)).forEach(line => assert.ok(!/data-motion="(calm|none)"/.test(line), line));
-  // the blocks use the keyframes of the mechanical change to fly apart, so the overshoot and settle are the same
-  assert.ok(/#world\[data-hidden="break"\] \[data-block\] \{\s*animation: piece-break /.test(css));
 });
 
 test('the red wash never flashes more than twice in any second, never brighter than .45, and ends at .3 where the break takes over', () => {
@@ -4911,7 +4907,7 @@ test('only frame.js, schedule.js and takeover.js ask whether the screen is pause
   // the rotation and the ticker wait, and a page does not use up its stay
   const schedule = code(read('core/schedule.js'));
   assert.ok(/function rotationPaused\(\) \{\s*return pauses > 0 \|\| frame\.isPaused\(\);\s*\}/.test(schedule));
-  assert.ok(schedule.includes('if (!rotationPaused()) left -= 250;'));
+  assert.ok(schedule.includes('if (!rotationPaused() && clockHeld === 0) left -= 250;'), 'and neither does it while a swap holds the clock');
   assert.ok(schedule.includes('while (rotationPaused()) await frame.wait(250);'));
   assert.equal((schedule.match(/frame\.isPaused\(\)/g) || []).length, 1, 'asked in one place');
 
@@ -4927,7 +4923,7 @@ test('only frame.js, schedule.js and takeover.js ask whether the screen is pause
 
   const frame = code(read('frame.js'));
   assert.ok(frame.includes('export function pause(reason)') && frame.includes('export function resume(reason)') && frame.includes('export function isPaused()'));
-  assert.ok(frame.includes("if (motion !== 'full' || nightCovers || hiddenPlaying) return;\n  if (isPaused()) return;"), 'no effect comes due while it is paused');
+  assert.ok(frame.includes("if (motion !== 'full' || nightCovers || screenHeld()) return;\n  if (isPaused()) return;"), 'no effect comes due while it is paused');
 });
 
 // takeover.js on a fake page. The real file runs with stand-ins for frame.js, the panels and the

@@ -13,16 +13,19 @@ change, the whole screen does something else. There are two:
      panel and the ticker) jumps and shears on its own so the picture tears, thin blue
      bands jump across, and flat layers in three blues flicker at different strengths. Three
      times the screen is almost solid blue for about a tenth of a second.
-  2. All five blocks come apart in 3D and fly away over a deep blue.
-  3. A second glitch, about a second long, over the empty blue.
+  2. The frames collapse. Every piece of metal falls into a loose pile along the bottom of the
+     screen over a deep blue, and the content fades away (see "The frames collapse and come back").
+  3. A second glitch, about a second long, over the empty blue, with the pile lying at the bottom.
   4. A cut, with no fade, to a blue screen picture. It stays for 3 seconds.
-  5. The screen comes back whole over the picture, showing the next page of each panel.
-     Its frames break and fall into a pile, a cube rises out of the pile, and the frames fly
-     back to their places (see "The frames fall and come back").
-- **Red eyes.** The screen glitches with flat red flashes, then everything breaks
-  apart and the screen goes black. A picture of two glowing red eyes fades in, stays
-  for 2.5 seconds and fades out. The screen comes back whole, showing the next page of
-  each panel, and its frames fall and come back as they do in the desktop reveal.
+  5. A cube rises, turns, pulses and shrinks to a point, and the pieces rise from the pile to their
+     places. The content fades in.
+- **Red eyes.** The screen glitches with flat red flashes, then the frames collapse into a pile
+  and the screen goes black. A picture of two glowing red eyes fades in, stays
+  for 2.5 seconds and fades out. The cube and the rise of the pieces follow, as in the desktop reveal.
+
+The pages of all three areas are swapped while the pile falls, when the content has faded away, so
+the screen comes back showing the next page of each panel. A hidden transition keeps the look it has: a
+look that is waiting goes on at the next ordinary page change or swap.
 
 The pictures are four files that the team supplied, in `dashboard/assets/hidden/`.
 Each transition has two, and they take turns (see "The pictures" below).
@@ -292,31 +295,33 @@ the next page change of the large panel, once, whatever the hours and the gap sa
 `?hidden=off` never plays any. Add `?night=off` too when it is night in the Look
 time zone, or the night screen will stop it. docs/try-it-on-the-mini.md lists every switch.
 
-## The frames fall and come back
+## The frames collapse and come back
 
-This is how both transitions end. The screen comes back whole with the next page of each
-panel, and then the metal of the frames falls, a cube rises, and the metal flies back. The three
-parts take 5 seconds at the most. Nothing else on the screen moves meanwhile, and the rotation
-clock is held, so no panel changes page until the content is back.
+This is the heart of both transitions. The collapse comes first, before the effect plays, and the
+cube and the rise come after it. No other change of the screen drops its pieces: a swap
+(docs/layouts.md, "The swap") pulls them apart and brings them back. The three parts take 5.5 seconds,
+and the effect plays between the first and the second.
 
-1. **Fall, 1.6 seconds.** The words, lists and pictures fade away in the first .3 seconds, so only
+1. **Collapse, 1.7 seconds.** The words, lists and pictures fade away in the first .3 seconds, so only
    the metal is left. Every piece of metal lets go at its own moment, from 0 to .4 seconds after the
    start, tips back by 20 to 70 degrees, turns up to 25 degrees in the plane and falls to the bottom
-   of the screen. It makes one bounce of 30 pixels and settles. The pieces end in a loose pile in the
-   bottom 120 pixels, side by side from left to right in the order they fell. A piece that is taller
-   than the band is scaled down until it fits.
-2. **Cube.** While the last pieces are still falling, at 1 second, a cube of 120 pixels rises from below
-   the bottom edge in .6 seconds and sits above the middle of the pile. It is drawn in lines in the
-   team accent. It turns once about its upright axis in .8 seconds, and its opacity pulses twice from 1 to
-   .4 and back to 1, .4 seconds for each pulse.
-3. **Lift.** On the second pulse, at 2 seconds, the pieces lift from the pile in the opposite order, one every
-   60 milliseconds, and fly back to their places in .5 seconds with the easing of the first assembly. Each
-   one undoes its own tip and turn. The cube shrinks to a point in the middle of the large panel and is gone
-   when the last piece is home. With 40 pieces that is at 4.84 seconds. If there were more pieces the gap
-   would shrink so that the last one is home by 5 seconds.
-4. **Build.** The frames show again as they were. The backdrop fades out and the content comes in the way it does
-   at the first assembly: the pages of the panels turn in, and the banner and the countdown bring in their own
-   parts. This part is not in the 5 seconds.
+   of the screen. It lands with one bounce of 30 pixels, settles, makes a small second bounce of 8
+   pixels and stays. The pieces end in a loose pile in the bottom 120 pixels, side by side from left to
+   right in the order they fell. A piece that is taller than the band is scaled down until it fits.
+2. **The effect** plays over the pile for its usual length: the blue screen, or the red eyes.
+3. **Cube, 2.6 seconds.** A cube of 120 pixels rises from below the bottom edge to the middle of the
+   screen in .6 seconds. It is drawn in lines in the team accent. It turns once about its upright axis
+   in .8 seconds, its opacity pulses twice from 1 to .4 and back to 1, .4 seconds for each pulse, and it
+   shrinks to a point in .4 seconds, as the pieces are about to leave the pile.
+4. **Rebuild, 1.2 seconds.** The pieces rise from the pile in the opposite order they fell in, 45
+   milliseconds apart, and fly back to their places in .5 seconds with the easing of the first assembly. Each
+   one undoes its own tip and turn. With 40 pieces the gap shrinks to 11 milliseconds, so that the last piece is
+   home .95 seconds after the first one rises. Then the frames show again as they were, and the content
+   fades in over .25 seconds, while the banner and the countdown bring in their own parts.
+
+The collapse, the cube and the rebuild take 5.5 seconds, so the transition takes the length of the effect and
+5.5 seconds, and never more than the 6 that tools/test-pile.mjs allows. Nothing else on the screen moves meanwhile,
+and the rotation clock is held from the cube on, so no panel changes page until the content is back.
 
 What falls is every piece of metal the page draws as a separate element:
 
@@ -335,32 +340,32 @@ the frame hides until the pieces are home. The Original banner and ticker have n
 fade.
 
 Each run uses a new random seed, so the order and the pile are different every time. A seed always gives the
-same run, which is how `tools/test-pile.mjs` tests it.
+same run, which is how `tools/test-pile.mjs` tests it. The test checks that every piece comes home to its
+origin, with no tip, no turn and no offset, and that the whole stays under the 6 seconds.
 
 The numbers are in `pileTimes` and `pileShape` in `dashboard/core/transitions.js`. The same times are in
-`frame.css` (the section "The frames fall and come back"), and `tools/test-pile.mjs` fails when the two
+`frame.css` (the section "The frames collapse and come back"), and `tools/test-pile.mjs` fails when the two
 differ. After a change run `node tools/test-pile.mjs` and `node tools/test-effects.mjs`.
 
 ## How it works
 
-The five blocks are the five regions marked `data-block` in `dashboard/index.html`.
-That is the standard layout. The sidebar layout (docs/layouts.md) has four blocks:
-the top strip, the sidebar, the large panel and the ticker. `core/layout-apply.js` moves `data-block`
-to them when the page starts, and their poses are in `layouts/sidebar.css`. Everything
-else here is the same, and the transition waits for no small panel there.
+The five blocks are the five regions marked `data-block` in `dashboard/index.html`. That is the standard layout.
+The sidebar layout (docs/layouts.md) has four blocks: the top strip, the sidebar, the large panel and the ticker.
+`core/layout-apply.js` moves `data-block` to them when the page starts. The blocks no longer fly apart: they are
+the regions that jump in the blue glitch, and the regions that fall whole when they paint a box of their own.
 When a transition plays, `core/hidden-run.js` sets `data-hidden` on `#world`, and
-`frame.css` (the section "Hidden transitions") does all the moving:
+`frame.css` (the section "Hidden transitions") does all the moving. While the metal is down it also sets
+`data-pieces`, which shows the pieces in place of the whole frames:
 
 | `data-hidden` | What happens                                                                  |
 |---------------|-------------------------------------------------------------------------------|
 | `glitch`      | Red: the screen jumps (the old television glitch) and a flat red layer flickers. At most two flashes in any second, and never brighter than .45. Blue: the blue glitch above |
-| `break`       | The blocks fly apart in 3D (`translate3d`, `rotateX`, `rotateY`, `rotateZ`) and fade. The backdrop layer fades in behind them |
-| `apart`       | The blocks are out of sight. The pages of all three areas are swapped now, so nobody sees it |
-| `fall`        | The screen is whole again. The frames fall, the cube rises and, once `data-lift` is also on `#world`, the frames fly back. The backdrop stays as it is |
-| `build`       | The backdrop fades out and the content comes in as it does at the first assembly |
+| `break`       | The collapse: the frames fall into a pile, the content fades away and the backdrop layer fades in behind. The pages are swapped when the content is gone |
+| `apart`       | The pile lies and the effect plays over it. The cube rises, and once `data-lift` is also on `#world` the pieces rise |
+| `build`       | The frames are whole, the backdrop fades out and the content fades in |
 
 `data-tint` is on `#world` while a glitch plays: `red` or `blue`. A glitch can also
-play while the blocks are apart, and then `data-hidden` stays `apart` and only `data-tint`
+play while the pile lies, and then `data-hidden` stays `apart` and only `data-tint`
 is there.
 
 The backdrop is under the stage. `data-look` says what it shows: black (the default),
@@ -378,23 +383,22 @@ moves in steps, never in a smooth slide, at times that are not evenly spaced. At
 big flashes happen in one glitch, so never more than three in a second, and the pale blue
 is never more than a fifth opaque. A test in `tools/test-effects.mjs` counts them.
 
-The blocks are promoted to layers (`will-change`) and given a perspective only while
-they fly apart, in `break`. Between those, and the rest of the time, there is
-nothing extra for the Mini to hold. The blocks (five, or four in the sidebar layout), the backdrop, the picture and, for the
-glitches, the red layer or the blue layers (three washes and six pieces, for about 2 and 1
-seconds) are the only layers a hidden transition adds, apart from the pieces that fall. Those
-are up to 40 for the 5 seconds of the fall, the lift and the cube, with the perspective in the
-`transform` of each one. The four pictures wait in the backdrop, which is not drawn until a
+Nothing is promoted to a layer and nothing is given a perspective of its own: the perspective is in the
+`transform` of each piece. The backdrop, the picture and, for the glitches, the red layer or the blue layers
+(three washes and six pieces, for about 2 and 1 seconds) are the only layers a hidden transition adds,
+apart from the pieces that fall. Those are up to 40 for the 5.5 seconds of the collapse, the effect and
+the rise, and the cube. The four pictures wait in the backdrop, which is not drawn until a
 transition plays.
 
-Swapping the pages: when the large panel's page change comes up, it asks for a hidden
-transition (`core/areas.js`). If one plays, the transition first waits for the three
-areas to be at rest. When the blocks are apart it swaps the large panel's next page,
-and it asks the small panel and the ticker (only the ticker in the sidebar layout) to
+Swapping the pages: when the large panel's page change comes up, it asks for a swap first
+(docs/layouts.md, "The swap") and then for a hidden transition (`core/areas.js`). If one plays, the transition
+first waits for the three areas to be at rest. When the content has faded away it swaps the large panel's
+next page, and it asks the small panel and the ticker (only the ticker in the sidebar layout) to
 move on to theirs. They pick their next
 page as they always do, wait at a gate in `core/areas.js` until the screen is apart,
 and swap it unseen. A region that is late carries on with an ordinary page change once
-the screen is whole again.
+the screen is whole again. The gate is made with `startWholeScreen(true)`, which keeps the look: the
+frames lie in a pile, and a look that drew them again would leave some behind.
 
 The Speed setting stretches every time, as it does for every other move. Calm and no
 motion never play one. `?finish=flat` works as always.
@@ -410,19 +414,19 @@ chance setting.
    percent setting, which only a page saved before the hours existed still uses.
    `run(scene)` is the show, one line
    for each step. The steps are `scene.glitch(seconds)` (red) or `scene.glitch(seconds,
-   'blue')`, `scene.breakApart('black')` or `scene.breakApart('blue')`,
+   'blue')`, `scene.collapse('black')` or `scene.collapse('blue')` (the frames
+   collapse into a pile over that backdrop),
    `scene.wait(seconds)`, `scene.pictureIn(set, seconds)` (fades the next picture of the
    set in), `scene.pictureCut(set, seconds)` (shows it at once and holds it),
-   `scene.pictureOut(seconds)` and `scene.rebuild()` (the screen comes back whole and the
-   frames fall and come back, see above). A set is `'redEyes'` or
-   `'blueScreen'`. It must end with `scene.rebuild()`.
+   `scene.pictureOut(seconds)` and `scene.rebuild()` (the cube and the rise of the pieces, see above). A set is `'redEyes'` or
+   `'blueScreen'`. It must start the show with `scene.collapse(...)` and end with `scene.rebuild()`.
 
        myTransition: {
          name: 'My transition',
          hoursField: 'myEveryHours',
          chanceField: 'myChance',
          async run(scene) {
-           await scene.breakApart('black');
+           await scene.collapse('black');
            await scene.wait(1);
            await scene.rebuild();
          },
@@ -457,14 +461,15 @@ chance setting.
   are in `tools/test-effects.mjs`, and the hours and the gap are in
   `tools/test-hidden-hours.mjs`.
 - `dashboard/core/hidden-run.js`: plays a transition: asks at each page change, sets
-  the attributes, waits, and puts the screen back whatever happens. `scene.rebuild()` in it
-  times the fall, the cube, the lift and the build, and holds the rotation clock
-  (`pauseRotation` and `resumeRotation` in `core/schedule.js`).
+  the attributes, waits, and puts the screen back whatever happens. `scene.collapse()` in it
+  times the collapse, and `scene.rebuild()` the cube, the rise and the content. The rebuild holds the
+  rotation clock (`pauseRotation` and `resumeRotation` in `core/schedule.js`).
 - `dashboard/core/hidden-pile.js`: finds what falls on the page, measures it, hands the list
-  to `planPile` and writes the answer on the pieces, the cube and the content. `makePile()`
-  returns `release`, `showCube`, `finish`, `contentIn` and `clear`.
+  to `planPile` and writes the answer on the pieces and the content. `makePile()`
+  returns `release`, `showCube`, `finish`, `contentIn` and `clear`. The functions that find the pieces are
+  exported too, and the swap (`core/swap-run.js`) uses them.
 - `dashboard/core/transitions.js` (the second half): `planPile`, `mergeSmall`, `boxInPose`,
-  `seededRandom` and the numbers `pileTimes` and `pileShape`. They have no page in them.
+  `seededRandom` and the numbers `pileTimes`, `pileExtraMs` and `pileShape`. They have no page in them.
   The tests are in `tools/test-pile.mjs`.
 - `dashboard/core/hidden-pictures.js`: the four pictures (file name, size, how each fills the
   screen) and which one plays next. Plain functions, tested in `tools/test-effects.mjs`.
@@ -494,13 +499,15 @@ chance setting.
   read by the code that chooses the style, the team and the pack, so no setting is written.
 - `dashboard/core/areas.js` and `core/schedule.js`: the hook at the large panel's page
   change, the gate for the other areas, and `moveOn` (ask a region to change page now).
-- `dashboard/frame.css` ("The frames fall and come back", "Hidden transitions" and "The blue
+- `dashboard/frame.css` ("The frames collapse and come back", "Hidden transitions" and "The blue
   glitch"), `base.css` (the layers, the pictures and the cube), `tokens.css` (the colours and
   times) and `index.html` (`#backdrop`, `#red-wash`, `#blue-glitch`, `#pile` with the cube, and
   `data-block`).
 - `dashboard/core/busy.js`: a flag, `setBusy(on, reason)` and `isBusy()`. `frame.js` does not start the
   name effect, the screen glitch or the name glitch of the Neon Prime kit while it is set, and ends the
-  first two if they are playing. Whatever runs a transition of the whole screen sets it.
+  first two if they are playing. Whatever runs a transition of the whole screen sets it, with a reason of its
+  own: `core/hidden-run.js` is `hidden` and the swap (`core/swap-run.js`) is `swap`, so one letting go does not
+  end the other's hold.
 - `dashboard/frame.js`: `setHiddenPlaying` holds the logo effects and the screen glitch
   still while one plays, and `playGlitch` gives it its red glitches. `enter(panel, true)`
   brings in the content of a panel without drawing its frame again, which is what the build does.

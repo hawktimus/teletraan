@@ -60,8 +60,10 @@ export const styles = ['original', 'cybertron', 'minimal'];
 //   alternate  the two teams take turns, alternateMinutes each
 export const teamModes = ['prime', 'nova', 'alternate'];
 
-// The look rotation in Dashboard Settings (Look tab) (core/look-rotation.js): how the screen changes from
-// one look to the next. The Studio copies this list.
+// The look rotation in Dashboard Settings used to let the editors pick how the screen changes from one look
+// to the next. There is one swap now (core/swap-run.js) and the setting is hidden in the Studio. The field and
+// its stored value stay, so that nothing already saved is lost, and the screen ignores the value. The Studio
+// copies this list.
 //   assemble  everything leaves and comes in again, the way the screen starts
 //   slats     the page change of the large panel with the slats turning, and the frames stay
 //   cut       at once, at the next page change of the large panel
@@ -329,7 +331,7 @@ export const defaultSettings = {
   //   mondayStyle  the style while the Monday cards of a team are on the screen (see styles above)
   //   teamOrder    the codes of the teams, in the order of their passes. Only teams that are switched on count.
   //                Empty means the hidden teamMode above decides
-  //   lookSwap     see lookSwaps above
+  //   lookSwap     hidden, and ignored by the screen (see lookSwaps above)
   dailyStyles: ['original', 'cybertron'],
   mondayStyle: 'minimal',
   teamOrder: ['prime', 'nova'],
@@ -489,9 +491,6 @@ export const previewSeconds = 120;
 // reloads within lookResumeSeconds of the last time the pass was written down.
 export const lookShortestSeconds = 15;
 export const lookResumeSeconds = 600;
-
-// How long the cut swap keeps the pages of all three areas changing at once, in milliseconds
-export const lookCutMilliseconds = 1000;
 
 export const defaultDemo = {
   requestedAt: '',

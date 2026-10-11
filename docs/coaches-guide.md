@@ -19,7 +19,7 @@ docs/editing-content.md, "Dashboard Settings".
 | Tab | What is in it |
 |-----|---------------|
 | Screen | The status block, the team name, number and school, motion, speed, frame metal, glint, polish, the screen glitch, the alert, Panel order and the seconds per page, photos, announcements, how many days finished tasks stay and the date the safety day count starts |
-| Look | Styles by day, Monday style, Team order, How the look changes, the logo and name effects and the page changes |
+| Look | Styles by day, Monday style, Team order, the logo and name effects and the page changes |
 | Countdown | The labels and dates for Kickoff and Rollout |
 | Calendars | A row for each calendar with its code, name, kind and Show on screen switch, and Group events by kind |
 | Presentations | Run presentations, the one switch for booked talks |
@@ -99,15 +99,14 @@ in Dashboard Settings, Look tab, with the name each is stored under:
   start with.
 - Team order (`teamOrder`): the teams in the order they take the screen. Prime and
   then Nova to start with. Only teams that are switched on count.
-- How the look changes (`lookSwap`): Assemble, Slats or Cut. Assemble takes the
-  screen apart and builds it again, Slats turns the panels and keeps the frames, and
-  Cut changes at once.
+- How the look changes (`lookSwap`) is hidden. Every change of look is one move now: the
+  frames pull apart, the new look goes on, and they re-form (docs/layouts.md, "The swap").
 
 A cycle goes through the teams in order. For each team it runs a pass of its
 panels in the style of the day, then a pass of its Monday cards in the Monday
 style if the team has any, and then it swaps to the next team. A team with no
-Monday cards skips that pass. A swap waits for the end of a pass and never happens
-during an alert, an announcement or a talk. The style and the team change
+Monday cards skips that pass. The Monday cards are never in another style. A swap waits for the end of a
+pass and never happens during an alert, an announcement or a talk. The style and the team change
 together.
 
 Next look now, on the Start here page, moves to the next pass at once. A second
@@ -277,17 +276,18 @@ To play one now, open the menu next to Publish on Dashboard Settings and click P
 desktop reveal or Play red eyes. The TV plays it within about 20 seconds.
 Detail: docs/hidden-transitions.md.
 
-## The break and reassemble sequence
+## The collapse and rebuild sequence
 
-Both hidden effects end the same way. The screen comes back whole with the next
-page of each panel. Then the words fade, and every piece of metal that is drawn on
-its own lets go, tips and falls into a loose pile along the bottom. A line-drawn
-cube rises out of the pile and pulses twice. On the second pulse the pieces lift
-out in the opposite order and fly back to their places, and the cube shrinks away.
-The fall, the cube and the lift take 5 seconds at the most, and then the content
-builds in again. Nothing else on the screen moves meanwhile, and the pages wait.
-No part of it is a setting. Detail: docs/hidden-transitions.md, "The frames fall
-and come back".
+Both hidden effects use the same collapse. After the glitch the words fade, and every
+piece of metal that is drawn on its own lets go, tips and falls into a loose pile
+along the bottom, with a bounce. It stays there while the blue screen or the red eyes
+play over it, and the next page of each panel is swapped in unseen. Then a line-drawn
+cube rises, turns, pulses twice and shrinks to a point, and the pieces rise from the
+pile in the opposite order and fly back to their places. The words fade in again. The
+collapse, the cube and the rise take 5.5 seconds. Nothing else on the screen moves
+meanwhile, and the pages wait. No part of it is a setting. Detail:
+docs/hidden-transitions.md, "The frames collapse and come back". A change of look
+or of Monday card is a different move, the swap (docs/layouts.md, "The swap").
 
 ## Mouse control in presentations
 

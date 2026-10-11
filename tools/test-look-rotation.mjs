@@ -306,15 +306,16 @@ test('the list of the large panel is the Monday cards of the team in a Monday pa
   assert.equal(machine.playlist(usual, contentWith({})), usual);
 });
 
-test('the swap is the setting, and assemble when the setting is not one', () => {
-  ['assemble', 'slats', 'cut'].forEach(how => {
+test('the swap is not a setting: whatever lookSwap holds, a boundary answers the same and names no swap', () => {
+  const answers = ['assemble', 'slats', 'cut', 'fade', undefined].map(how => {
     const machine = rotationFor(contentWith({ lookSwap: how }));
     machine.begin(noonOnTheTwelfth);
-    assert.equal(machine.boundary(seconds(noonOnTheTwelfth, 20)).swap, how);
+    return machine.boundary(seconds(noonOnTheTwelfth, 20));
   });
-  const odd = rotationFor({ settings: { lookSwap: 'fade', dailyStyles: ['original'], teamOrder: ['prime'] }, teams: [prime] });
-  odd.begin(noonOnTheTwelfth);
-  assert.equal(odd.boundary(seconds(noonOnTheTwelfth, 20)).swap, 'assemble');
+  answers.forEach(answer => {
+    assert.deepEqual(Object.keys(answer).sort(), ['kind', 'look', 'moved']);
+    assert.deepEqual(answer, answers[0]);
+  });
 });
 
 // The boundary rule
@@ -369,20 +370,26 @@ test('nothing moves while an alert, an announcement, a talk, a demo, the night s
 test('the page asks for the screen through one busy check that has every one of those, and the swap itself', () => {
   const run = read('core/look-rotation-run.js');
   const busy = /function busy\(\) \{\s*return ([^;]+);/.exec(run);
+  const elsewhere = /function busyElsewhere\(\) \{\s*return ([^;]+);/.exec(run);
 
-  assert.ok(busy, 'look-rotation-run.js has a busy function');
-  ['swapping', 'takeoverRunning()', 'demoRunning()', 'nightIsUp()', 'hiddenPlaying()'].forEach(name => assert.ok(busy[1].includes(name), 'busy checks ' + name));
-  assert.ok(run.includes('makeLookRotation({ getContent: getContent, storage: storage, busy: busy })'));
+  assert.ok(busy && elsewhere, 'look-rotation-run.js has a busy function and one for what is not the swap');
+  assert.ok(busy[1].includes('swapRunning()') && busy[1].includes('busyElsewhere()'), 'busy checks the swap and the rest');
+  ['takeoverRunning()', 'demoRunning()', 'nightIsUp()', 'hiddenPlaying()'].forEach(name => assert.ok(elsewhere[1].includes(name), 'busy checks ' + name));
+  assert.ok(!elsewhere[1].includes('swapRunning'), 'a swap asks about everything but itself');
+  assert.ok(run.includes('makeLookRotation({ getContent: getContent, storage: storage, busy: busy, canShow: mondayStyleFits })'));
   assert.ok(run.includes('makeNextLookRunner({ getContent: getContent, storage: storage, busy: busy, next: pressed })'));
   assert.ok(read('core/takeover.js').includes('return running !== null || frame.isPaused();'), 'takeoverRunning is true for an alert, an announcement and a talk');
 });
 
-test('the swap pauses the rotation by the count other callers use, and gives it back whatever happens', () => {
-  const run = read('core/look-rotation-run.js');
-  assert.ok(/async function assemble\(look\) \{\s*pauseRotation\(\);\s*try \{/.test(run));
-  assert.ok(/\} finally \{\s*restartRotation\(\);\s*resumeRotation\(\);/.test(run), 'the lists restart and the pause is let go in finally');
-  assert.equal((run.match(/pauseRotation\(\)/g) || []).length, 1);
-  assert.equal((run.match(/resumeRotation\(\)/g) || []).length, 1);
+test('the swap holds the clock of the pages with its own count, and gives it back whatever happens', () => {
+  const run = read('core/swap-run.js');
+  const schedule = read('core/schedule.js');
+  assert.ok(!read('core/look-rotation-run.js').includes('pauseRotation'), 'the look rotation pauses nothing: the swap holds the clock');
+  assert.ok(/holdClock\(true\);\s*try \{[\s\S]*\} finally \{[\s\S]*holdClock\(false\);/.test(run), 'the clock is held in play() and let go in finally');
+  assert.equal((run.match(/holdClock\(true\)/g) || []).length, 1);
+  assert.equal((run.match(/holdClock\(false\)/g) || []).length, 1);
+  assert.ok(schedule.includes('if (!rotationPaused() && clockHeld === 0) left -= 250;'), 'a page does not use up its seconds while the clock is held');
+  assert.ok(!/clockHeld[^;]*waitWhilePaused/.test(schedule), 'and the areas still pick and swap their pages, which a pause would stop');
 });
 
 // A screen that restarts
@@ -801,40 +808,41 @@ test('a press where there is one pass moves nothing, and a press moves nothing w
   assert.deepEqual([result.moved, result.look], [false, null]);
 });
 
-test('a press hands on the swap of the setting', () => {
+test('a press names no swap either, whatever lookSwap holds', () => {
   const machine = rotationFor(contentWith({ lookSwap: 'cut' }));
   machine.begin(noonOnTheTwelfth);
-  assert.equal(machine.next(seconds(noonOnTheTwelfth, 2)).swap, 'cut');
+  assert.deepEqual(Object.keys(machine.next(seconds(noonOnTheTwelfth, 2))).sort(), ['kind', 'look', 'moved']);
 });
 
-test('the page gives the runner a press that starts every list again, and a look that goes on through the same hold', () => {
+test('the page gives the runner a press that starts every list again, and a look that goes on through the same hold and the swap', () => {
   const run = read('core/look-rotation-run.js');
-  assert.ok(/function pressed\(now\) \{\s*const result = rotation\.next\(now\);\s*if \(!result\.moved && !result\.look\) return;\s*rewindRotation\(\);\s*if \(result\.look\) swap\(result\.look, result\.swap\);\s*else pagesAgain\(\);\s*\}/.test(run));
-  assert.ok(/async function atPass\(now\) \{\s*const result = rotation\.boundary\(now\);\s*if \(result\.look\) await swap\(result\.look, result\.swap\);\s*return result\.moved;\s*\}/.test(run));
-  assert.ok(run.includes("setLookHooks({ atPass: atPass, playlist: list => rotation.playlist(list, getContent()) });"));
+  assert.ok(/function pressed\(now\) \{\s*const result = rotation\.next\(now\);\s*if \(!result\.moved && !result\.look\) return;\s*rewindRotation\(\);\s*if \(result\.look\) changeLook\(result\.look\);\s*pagesAgain\(\);\s*\}/.test(run));
+  assert.ok(/function atPass\(now\) \{\s*const result = rotation\.boundary\(now\);\s*if \(result\.look\) changeLook\(result\.look\);\s*return result\.moved;\s*\}/.test(run));
+  assert.ok(/function changeLook\(look\) \{\s*holdLook\(look\);\s*queueSwap\(\);\s*\}/.test(run), 'a held look is a swap at the next page change of the large panel');
+  assert.ok(run.includes('setLookHooks({ atPass: atPass, playlist: playlistNow });'));
 });
 
 // The swaps
 
-test('the three swaps are the ones in config.js, and each has its branch in the page', () => {
-  const run = read('core/look-rotation-run.js');
+test('there is one swap: lookSwap stays in config.js and the Studio, and nothing in the page reads it', () => {
   assert.deepEqual(config.lookSwaps, ['assemble', 'slats', 'cut']);
-  config.lookSwaps.forEach(how => assert.ok(run.includes("how === '" + how + "'"), how + ' has a branch'));
-  assert.ok(/if \(how === 'slats'\) useSlatsOnce\(\);/.test(run));
-  assert.ok(/if \(how === 'cut'\) setTimeout\(cutScreen\(\), lookCutMilliseconds\);/.test(run));
+  assert.equal(config.defaultSettings.lookSwap, 'assemble');
+  assert.equal(config.lookCutMilliseconds, undefined, 'the length of the cut is gone with the cut');
+
+  const files = fs.readdirSync(path.join(dashboardFolder, 'core')).map(file => 'core/' + file).concat(['shell.js', 'frame.js']).filter(file => file.endsWith('.js'));
+  const readers = files.filter(file => /lookSwap|useSlatsOnce|cutScreen|retireAreas|lookCutMilliseconds/.test(read(file).replace(/\/\/.*$/gm, '')));
+  assert.deepEqual(readers, ['core/content.js'], 'only the tidying of the saved settings names the field');
 });
 
-test('the swaps use what the page already has: the first assembly, the slat change and the screen that is apart', () => {
-  const run = read('core/look-rotation-run.js');
+test('the swap is the page change of the large panel: areas.js asks for it first, then for a hidden transition, and a look goes on at the moment the screen is apart', () => {
   const areas = read('core/areas.js');
-
-  assert.ok(run.includes('restartRotation();'), 'assemble starts the lists again, so the frames get their first assembly');
-  assert.ok(run.includes('frame.exit(element)') && run.includes('frame.enter(element)'), 'the banner and the countdown leave and come in again');
-  assert.ok(/export function useSlatsOnce\(\) \{\s*areaRegions\.forEach\(region => slatsFor\.add\(region\)\);/.test(areas));
-  assert.ok(areas.includes("if (slatsFor.delete(region)) change.style = 'slat';"), 'the slat change is forced for one page change of each area');
-  assert.ok(/export function cutScreen\(\) \{\s*const screen = startWholeScreen\(\);\s*screen\.apart\(\);\s*return screen\.end;/.test(areas), 'the cut is the gate of the hidden transitions, held apart');
-  assert.ok(/export async function retireAreas\(\) \{\s*await Promise\.all\(areaRegions\.filter\(region => areaOf\[region\]\)\.map\(region => frame\.retire\(areaOf\[region\]\)\)\);/.test(areas));
-  assert.ok(config.lookCutMilliseconds >= 500 && config.lookCutMilliseconds <= 2000);
+  const asked = areas.indexOf('swapOffer(old, next)');
+  assert.ok(asked !== -1 && asked < areas.indexOf('const offered = hiddenOffer();'), 'a swap is asked for before a hidden transition');
+  assert.ok(/export function setSwapOffer\(offer\) \{\s*swapOffer = offer;\s*\}/.test(areas));
+  assert.ok(/export function startWholeScreen\(keepLook = false\) \{\s*const mine = \{ state: 'before', keepLook: keepLook \};/.test(areas), 'a hidden transition keeps the look, a swap does not');
+  assert.ok(/if \(region === themeRegion && !\(gate && gate\.keepLook\)\) \{\s*changeThemeNow\(\);\s*changeTeamNow\(\);\s*\}/.test(areas), 'the style and the team go on together, when the screen is apart');
+  assert.ok(areas.includes('if (swapped) return took;'), 'a swap that did not start leaves the usual page change to run');
+  ['slatsFor', 'useSlatsOnce', 'cutScreen', 'retireAreas'].forEach(name => assert.ok(!areas.includes(name), 'areas.js has no ' + name + ' now'));
 });
 
 test('the swaps move only transform, opacity and lines: the new code has no animation of its own', () => {
@@ -1076,15 +1084,19 @@ test('the rotation is not asked again right after a restart, and starts the new 
 
 // The docs
 
-test('the docs name the four settings, the three swaps and the rule for an empty list', () => {
+test('the docs name the settings, the one swap and the rule for an empty list', () => {
   const layouts = fs.readFileSync(path.join(docsFolder, 'layouts.md'), 'utf8').replace(/\s+/g, ' ');
   const editing = fs.readFileSync(path.join(docsFolder, 'editing-content.md'), 'utf8').replace(/\s+/g, ' ');
 
   assert.ok(layouts.includes('## The look rotation'), 'layouts.md has the section');
-  ['Styles by day', 'Monday style', 'Team order', 'How the look changes', 'assemble', 'slats', 'cut', 'lookResumeSeconds', 'lookShortestSeconds', 'teletraan-look-pass'].forEach(word => assert.ok(layouts.includes(word), 'layouts.md names ' + word));
-  ['Styles by day', 'Monday style', 'Team order', 'How the look changes', 'Assemble', 'Slats', 'Cut', 'Next look now'].forEach(word => assert.ok(editing.includes(word), 'editing-content.md names ' + word));
+  assert.ok(layouts.includes('## The swap'), 'and the swap');
+  ['Styles by day', 'Monday style', 'Team order', 'How the look changes', 'lookSwap', 'is hidden', 'lookResumeSeconds', 'lookShortestSeconds', 'teletraan-look-pass', 'withoutMondayCards', 'styleCanGoOn'].forEach(word => assert.ok(layouts.includes(word), 'layouts.md names ' + word));
+  ['Styles by day', 'Monday style', 'Team order', 'How the look changes', 'Next look now', 'hidden and the screen ignores it'].forEach(word => assert.ok(editing.includes(word), 'editing-content.md names ' + word));
   assert.ok(layouts.includes('empty') && editing.includes('is empty'), 'both say what an empty list does');
   assert.ok(layouts.includes(String(config.lookResumeSeconds)) && layouts.includes(String(config.lookShortestSeconds)), 'layouts.md gives the two times');
+  ['coaches-guide.md', 'switch-the-look.md', 'add-the-nova-team.md'].forEach(file => {
+    assert.ok(!/Assemble, Slats or Cut/.test(fs.readFileSync(path.join(docsFolder, file), 'utf8')), file + ' no longer offers the three swaps');
+  });
 });
 
 // Run them
