@@ -113,6 +113,17 @@ export const photoOrders = ['random', 'newest-first'];
 //   whole  the card takes the shape of the photo, so nothing is cut
 export const photoFits = ['fill', 'whole'];
 
+// How the portraits of Leadership, Team Leads and the Roster slot are drawn (core/portrait.js). The
+// shape and the frame are one setting each, for all three.
+//   square   the card as it has always been, with the cut corner of the frame
+//   rounded  every corner cut, 24px at most
+//   circle   a circle
+//   metal    the metal edge of the card, as it has always been
+//   line     a thin line in the team accent
+//   none     the picture alone
+export const portraitShapes = ['square', 'rounded', 'circle'];
+export const portraitFrames = ['metal', 'line', 'none'];
+
 // The night mode settings in Dashboard Settings (Advanced tab) (core/night.js and core/night-screen.js)
 //   nightStyles  bounce: the logo drifts round the black screen. black: only black.
 //   nightSpeeds  the seconds the logo takes to cross the screen sideways (across) and
@@ -156,8 +167,8 @@ export const limits = {
   // The photo settings. Below 6 seconds a photo is gone before it can be looked at.
   photoSeconds: { min: 6, max: 120 },
   // The two size settings of the photo settings, in percent. At 60 a picture is still easy to see from
-  // across the room. For the Photo panel 100 is the full size, the largest that fits the frame. For the
-  // portraits 100 is the standard size and 200 is double, which a page of two rows still has room for.
+  // across the room. For the Photo panel 100 is the full size, the largest that fits the frame. The old
+  // portraitScale is replaced by the two portrait sizes at the end of this list and stays only to be read.
   portraitScale: { min: 60, max: 200 },
   photoScale: { min: 60, max: 100 },
   // The night mode settings. At 120 pixels the logo is still clear from across the room, and at 800 it
@@ -176,6 +187,10 @@ export const limits = {
   talkMinutes: { min: 5, max: 30 },
   // The team settings, in minutes: how long each team stays on the screen in Alternate mode
   alternateMinutes: { min: 1, max: 30 },
+  // The portrait sizes, in percent of the 120px portrait that fills a row of four. 100 is 120px and 220
+  // is 264px, the largest that fits the 576px body with a row to itself.
+  leadershipPortrait: { min: 60, max: 220 },
+  rosterPortrait: { min: 60, max: 220 },
 };
 
 // Used for anything the editors have not filled in yet
@@ -241,17 +256,25 @@ export const defaultSettings = {
   //   photoOrder    see photoOrders above
   //   photoSeconds  how long the Photo panel stays, when its row in the Panels
   //                 list has no seconds of its own. It is used instead of pageSeconds.
-  //   portraitScale how big the portraits are, as a percent of the standard size: the Leadership and
-  //                 Team Leads portraits and the team lead portrait of the Roster. 100 is the
-  //                 standard size and 200 is double (core/portrait.js). Above 100 the rows of
-  //                 Leadership and Team Leads get taller and fewer fit on a page, and the Roster
-  //                 portrait stays at 100. The names and roles keep their size.
+  //   portraitScale the old Portrait size. It is hidden in the Studio and used only when neither of the two
+  //                 sizes below has been set: then both take its value (core/content.js, portraitPercentOf)
+  //   leadershipPortrait  how big the portraits of the Leadership rows are, as a percent of 120px
+  //   rosterPortrait      the same for the Team leads rows and for the Roster slot. 100 is a row of
+  //                 four. A bigger portrait gets a taller row, so fewer fit on a page: 3 rows up to
+  //                 138, 2 up to 200 and 1 up to 220 (core/portrait.js, rowLayout). The Roster slot stays
+  //                 at 100. The names and roles keep their size.
+  //   portraitShape see portraitShapes above. Square is how the portraits have always been.
+  //   portraitFrame see portraitFrames above. Metal is how the portraits have always been.
   //   photoScale    how big the picture in the Photo panel is, as a percent of the full size
   //                 (core/photos.js). 100 fills the panel. The caption keeps its size.
   //   photoFit      see photoFits above. fill is how the panel always drew a photo.
   photoOrder: 'random',
   photoSeconds: 16,
   portraitScale: 100,
+  leadershipPortrait: 100,
+  rosterPortrait: 100,
+  portraitShape: 'square',
+  portraitFrame: 'metal',
   photoScale: 100,
   photoFit: 'fill',
   // The night mode settings in the Studio (Advanced tab): the screensaver. The signal is never turned off. From

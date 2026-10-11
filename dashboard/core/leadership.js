@@ -1,5 +1,5 @@
 // The people on the Leadership panel: the coaches first, then the captains, then
-// the mentors. The panel shows as many rows as the Portrait size leaves room for,
+// the mentors. The panel shows as many rows as the Leadership size leaves room for,
 // four at 100, and each time it comes round it shows the next rows, so everyone is
 // shown. With two coaches and two captains, which is the team, those four are one
 // page at 100.

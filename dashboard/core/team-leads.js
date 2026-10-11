@@ -2,7 +2,7 @@
 // Studio), in the order of the Order field. A department with a lead shows the
 // lead's name and, at the right end, the department. A department with no lead
 // shows its own name and [lead], so a gap in the list can be seen from across
-// the room. The panel shows as many rows as the Portrait size leaves room for,
+// the room. The panel shows as many rows as the Roster size leaves room for,
 // four at 100, each time it comes round.
 
 import { hasText } from './text.js';

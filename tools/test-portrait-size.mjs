@@ -1,10 +1,11 @@
-// Tests for the Portrait size above 100: the range of the setting, the rows a page holds, the height of
+// Tests for the portrait size above 100: the range of the old setting, the rows a page holds, the height of
 // a row, where the role goes, and the paging of the Leadership and Team Leads panels, which must show
 // everyone however few rows fit (dashboard/core/portrait.js, core/turns.js, core/leadership.js,
 // core/team-leads.js, base.css and the three panels). The plain functions are run for real. The panels
 // are run against a fake page that records what they draw. The stylesheet is checked by reading it,
 // because the sizes need a browser to be seen. The rows at 100 and below are in
-// tools/test-person-rows.mjs, and the photo of a team lead is in tools/test-lead-photo.mjs.
+// tools/test-person-rows.mjs, the two sizes set apart are in tools/test-portrait-settings.mjs, and the
+// photo of a team lead is in tools/test-lead-photo.mjs.
 //
 //   node tools/test-portrait-size.mjs
 
@@ -145,7 +146,7 @@ const bodyTop = 124;
 // (tools/test-person-rows.mjs pins it)
 const roleBesideMinimum = 336;
 const percents = [];
-for (let percent = 60; percent <= 200; percent++) percents.push(percent);
+for (let percent = 60; percent <= 220; percent++) percents.push(percent);
 
 // The setting
 
@@ -166,13 +167,15 @@ test('the Portrait size goes from 60 to 200, starts at 100, and anything outside
 
 // The portrait in a row
 
-test('a row portrait is 124 square at 100, 74 at 60, 149 at 120 and 248 at 200, and never shrinks when the setting grows', () => {
-  assert.deepEqual(rowSizes(100), { card: 124, photo: 118, inset: 3 });
-  assert.deepEqual(rowSizes(60), { card: 74, photo: 70, inset: 2 });
-  assert.deepEqual(rowSizes(120), { card: 149, photo: 143, inset: 3 });
-  assert.deepEqual(rowSizes(200), { card: 248, photo: 238, inset: 5 });
-  assert.ok(Math.abs(rowSizes(120).card - 2 * rowSizes(60).card) <= 1, 'twice the saved 60 is twice the portrait, to the pixel');
+test('a row portrait is 120 square at 100, 72 at 60, 144 at 120, 240 at 200 and 264 at 220, and never shrinks when the setting grows', () => {
+  assert.deepEqual(rowSizes(100), { card: 120, photo: 116, inset: 2 });
+  assert.deepEqual(rowSizes(60), { card: 72, photo: 70, inset: 1 });
+  assert.deepEqual(rowSizes(120), { card: 144, photo: 138, inset: 3 });
+  assert.deepEqual(rowSizes(200), { card: 240, photo: 230, inset: 5 });
+  assert.deepEqual(rowSizes(220), { card: 264, photo: 254, inset: 5 });
+  assert.equal(rowSizes(120).card, 2 * rowSizes(60).card, 'twice the saved 60 is twice the portrait, to the pixel');
   assert.equal(rowSizes(200).card, 2 * rowSizes(100).card);
+  assert.deepEqual(rowSizes(250), rowSizes(220), 'a setting past 220 is 220');
 
   let before = 0;
   percents.forEach(percent => {
@@ -185,42 +188,40 @@ test('a row portrait is 124 square at 100, 74 at 60, 149 at 120 and 248 at 200, 
 
 // Rows per page
 
-test('a page holds 4 rows up to 100, 3 from 101 to 139 and 2 from 140 to 200, and a row is the body divided by the rows', () => {
+test('a page holds 4 rows up to 100, 3 from 101 to 138, 2 from 139 to 200 and 1 from 201 to 220, and a row is the body divided by the rows', () => {
   assert.equal(rowsPerPage, 4);
-  [[60, 4, 144], [100, 4, 144], [101, 3, 192], [113, 3, 192], [120, 3, 192], [139, 3, 192], [140, 2, 288], [150, 2, 288], [200, 2, 288]].forEach(([percent, rows, height]) => {
+  [[60, 4, 144], [100, 4, 144], [101, 3, 192], [120, 3, 192], [138, 3, 192], [139, 2, 288], [150, 2, 288], [200, 2, 288], [201, 1, 576], [220, 1, 576]].forEach(([percent, rows, height]) => {
     assert.deepEqual([rowLayout(percent).rows, rowLayout(percent).height], [rows, height], 'at ' + percent);
   });
 
   percents.forEach(percent => {
     const card = rowSizes(percent).card;
     const layout = rowLayout(percent);
-    const wanted = percent <= 100 ? 4 : Math.floor(bodyHeight / (card + 20));
 
-    assert.equal(layout.rows, wanted, 'rows at ' + percent);
     assert.equal(layout.rows * layout.height, bodyHeight, 'the rows fill the body at ' + percent);
-    assert.ok(layout.rows >= 2, 'a page holds at least two rows at ' + percent);
-    assert.ok(card + 20 <= layout.height, 'the portrait and 10px above and below it for the bar fit the row at ' + percent);
-    assert.ok(layout.rows === 4 || bodyHeight / (layout.rows + 1) < card + 20, 'one more row would not fit at ' + percent);
+    assert.ok(card <= layout.height - 24, 'the portrait is 24px or more shorter than its row at ' + percent);
   });
 
-  // 100 is exactly full: 124 and 20 for the bar is 144, and four of them are 576. A single percent more has 3 rows.
-  assert.equal(rowSizes(100).card + 20, bodyHeight / 4);
-  assert.equal(Math.floor(bodyHeight / (rowSizes(101).card + 20)), 3);
+  // 100 is exactly full: 120 and 24 is 144, and four of them are 576. A single percent more has 3 rows.
+  assert.equal(rowSizes(100).card + 24, bodyHeight / 4);
+  assert.equal(rowSizes(138).card, 166, '166 in a row of 192');
+  assert.equal(rowSizes(139).card, 167, '167 in a row of 288');
+  assert.equal(rowSizes(220).card, 264, '264 in a row of 576');
 });
 
-test('the rows at 100 and below are what they always were: four of 144, not stacked, the same for every setting', () => {
+test('the rows at 100 and below are four of 144 and not stacked, the same for every setting', () => {
   for (let percent = 60; percent <= 100; percent++) {
     assert.deepEqual(rowLayout(percent), { rows: 4, height: 144, stacked: false }, 'at ' + percent);
   }
   assert.deepEqual(rowLayout(), rowLayout(100));
   assert.deepEqual(rowLayout('big'), rowLayout(100));
   assert.deepEqual(rowLayout(30), rowLayout(60));
-  assert.deepEqual(rowLayout(900), rowLayout(200));
+  assert.deepEqual(rowLayout(900), rowLayout(220));
 });
 
 // Where the role goes
 
-test('the role stays beside the name while it keeps 336px, and goes under the name from a portrait of 141px, which is 114 percent', () => {
+test('the role stays beside the name while it keeps 336px, and goes under the name from a portrait of 142px, which is 118 percent', () => {
   const css = read('base.css');
   const row = ruleOf(css, '.person-row');
   const stacked = ruleOf(css, '.person-rows.stacked .person-row');
@@ -246,10 +247,11 @@ test('the role stays beside the name while it keeps 336px, and goes under the na
       assert.ok(inner - card - 2 * gap - nameWidth >= roleBesideMinimum, 'the role has 336px beside the longest name at ' + percent);
     }
   });
-  assert.equal(rowLayout(113).stacked, false);
-  assert.equal(rowSizes(114).card, 141);
-  assert.equal(rowLayout(114).stacked, true);
-  assert.ok(inner - 141 - 2 * gap - nameWidth < roleBesideMinimum, '141px would leave the role under 336px beside the name');
+  assert.equal(rowSizes(117).card, 140);
+  assert.equal(rowLayout(117).stacked, false);
+  assert.equal(rowSizes(118).card, 142);
+  assert.equal(rowLayout(118).stacked, true);
+  assert.ok(inner - 142 - 2 * gap - nameWidth < roleBesideMinimum, '142px would leave the role under 336px beside the name');
 
   // stacked, the role is in the column the name is in, in the row under the name, at the left
   assert.ok(/grid-template-columns: auto minmax\(0, 1fr\);/.test(stacked) && /grid-template-rows: minmax\(0, 1fr\) max-content max-content minmax\(0, 1fr\);/.test(stacked), 'the portrait, then one column for the name and the role');
@@ -322,7 +324,7 @@ test('the stylesheet takes the height of a row and the place of the bar from one
   assert.equal(/--row-height/.test(read('tokens.css')), false, 'only the rows set it');
 });
 
-test('the rows markup is the old markup up to 100, and above it has the height of a row, and the class stacked from 114', () => withFakePage(() => {
+test('the rows markup is the old markup up to 100, and above it has the height of a row, and the class stacked from 118', () => withFakePage(() => {
   const rows = [{ name: '[Alex]', role: 'CAPTAIN', address: 'https://example.test/a.jpg' }, { name: '[Sam]', role: 'COACH', address: '' }];
 
   [undefined, 60, 80, 100].forEach(percent => {
@@ -331,17 +333,19 @@ test('the rows markup is the old markup up to 100, and above it has the height o
     assert.equal(html.includes('--row-height'), false, 'at ' + percent);
   });
   assert.ok(rowsMarkup(rows, 101).startsWith('<div class="person-rows" style="--row-height: 192px">'));
-  assert.ok(rowsMarkup(rows, 113).startsWith('<div class="person-rows" style="--row-height: 192px">'));
-  assert.ok(rowsMarkup(rows, 114).startsWith('<div class="person-rows stacked" style="--row-height: 192px">'));
-  assert.ok(rowsMarkup(rows, 139).startsWith('<div class="person-rows stacked" style="--row-height: 192px">'));
-  assert.ok(rowsMarkup(rows, 140).startsWith('<div class="person-rows stacked" style="--row-height: 288px">'));
+  assert.ok(rowsMarkup(rows, 117).startsWith('<div class="person-rows" style="--row-height: 192px">'));
+  assert.ok(rowsMarkup(rows, 118).startsWith('<div class="person-rows stacked" style="--row-height: 192px">'));
+  assert.ok(rowsMarkup(rows, 138).startsWith('<div class="person-rows stacked" style="--row-height: 192px">'));
+  assert.ok(rowsMarkup(rows, 139).startsWith('<div class="person-rows stacked" style="--row-height: 288px">'));
   assert.ok(rowsMarkup(rows, 200).startsWith('<div class="person-rows stacked" style="--row-height: 288px">'));
+  assert.ok(rowsMarkup(rows, 201).startsWith('<div class="person-rows stacked" style="--row-height: 576px">'));
 
-  // the portrait and the picture follow the setting to 248 and 238 at double
+  // the portrait and the picture follow the setting to 240 and 230 at double, and 264 and 254 at the most
   const at200 = rowsMarkup(rows, 200);
-  assert.ok(at200.includes('--portrait-card: 248px; --portrait-photo: 238px; --portrait-inset: 5px'));
-  assert.ok(at200.includes('<img src="https://example.test/a.jpg" width="238" height="238" alt="">'));
-  assert.equal(rowsMarkup(rows, 500), at200, 'a setting past 200 is 200');
+  assert.ok(at200.includes('--portrait-card: 240px; --portrait-photo: 230px; --portrait-inset: 5px'));
+  assert.ok(at200.includes('<img src="https://example.test/a.jpg" width="230" height="230" alt="">'));
+  assert.ok(rowsMarkup(rows, 220).includes('--portrait-card: 264px; --portrait-photo: 254px; --portrait-inset: 5px'));
+  assert.equal(rowsMarkup(rows, 500), rowsMarkup(rows, 220), 'a setting past 220 is 220');
 
   // the rest is the same markup: the text, the bar and the metal do not depend on the size
   const withoutSizes = html => html
@@ -451,11 +455,11 @@ function leadershipOf(count) {
   return [].concat(crew('Coach', coaches), crew('Captain', captains), crew('Mentor', mentors));
 }
 
-const settingsOf = percent => ({ portraitScale: percent });
+const settingsOf = percent => ({ leadershipPortrait: percent, rosterPortrait: percent });
 const namesOf = list => list.map(item => item.name);
 
 test('Leadership shows everyone at every setting: each visit is one page, and the visits together are the whole list in order', () => withFakePage(async () => {
-  for (const percent of [undefined, 60, 100, 101, 113, 114, 120, 139, 140, 175, 200]) {
+  for (const percent of [undefined, 60, 100, 101, 117, 118, 120, 138, 139, 175, 200, 201, 220]) {
     for (let count = 1; count <= 9; count++) {
       const panel = await freshPanel('leadership');
       const people = leadershipOf(count);
@@ -499,7 +503,7 @@ test('four leaders are one page of four at 100, two pages of two at double, and 
 }));
 
 test('Team Leads shows every department at every setting, and twelve of them are three pages of four at 100 and six of two at 200', () => withFakePage(async () => {
-  for (const percent of [undefined, 60, 100, 101, 114, 120, 140, 200]) {
+  for (const percent of [undefined, 60, 100, 101, 118, 120, 139, 200, 201, 220]) {
     for (const count of [1, 3, 4, 5, 9, 12]) {
       const panel = await freshPanel('team-leads');
       const subteams = departments(count);
@@ -526,10 +530,11 @@ test('Team Leads shows every department at every setting, and twelve of them are
   assert.deepEqual(await sizes(100), [4, 4, 4, 4, 4, 4, 4, 4]);
   assert.deepEqual(await sizes(120), [3, 3, 3, 3, 3, 3, 3, 3]);
   assert.deepEqual(await sizes(200), [2, 2, 2, 2, 2, 2, 2, 2]);
+  assert.deepEqual(await sizes(220), [1, 1, 1, 1, 1, 1, 1, 1]);
 }));
 
 test('a change of the setting between visits never skips a person, on Leadership or on Team Leads', () => withFakePage(async () => {
-  const settings = [100, 200, 200, 100, 120, 60, 200, 140, 100, 100, 113, 200, 200, 200, 114];
+  const settings = [100, 200, 200, 100, 120, 60, 220, 139, 100, 100, 117, 200, 201, 220, 118];
 
   for (const [name, data, namesOfPanel, everyone] of [
     ['leadership', { people: leadershipOf(8) }, namesIn, namesOf(leadershipOf(8))],
@@ -594,18 +599,18 @@ test('the Leadership and Team Leads panels page with the same machinery, from th
 
 test('the docs give the rows a page holds and the sizes the code works out', () => {
   const text = fs.readFileSync(path.join(docsFolder, 'editing-content.md'), 'utf8');
-  const start = text.indexOf('Portrait size, percent is how big');
-  const section = text.slice(start, text.indexOf('Photo size, percent is how big', start));
+  const start = text.indexOf('### Portraits');
+  const section = text.slice(start, text.indexOf('\n### ', start + 5));
 
-  assert.ok(start > 0 && section.length > 0, 'the Portrait size item is in the Photos part');
-  ['whole number from 60 to 200', '100 is the standard size', '200 is double', 'Subteam roster', 'taller', '3 rows', '2 rows', '248', '74', '120'].forEach(piece => {
-    assert.ok(section.replace(/\s+/g, ' ').includes(piece), 'the Portrait size item does not say ' + piece);
+  assert.ok(start > 0 && section.length > 0, 'the Portraits part is in the Photos part');
+  ['whole number from 60 to 220', '100 is a portrait', '120 square', '264 square', 'Roster panel', 'taller', 'set apart', 'Portrait size, percent', 'neither'].forEach(piece => {
+    assert.ok(section.replace(/\s+/g, ' ').includes(piece), 'the Portraits part does not say ' + piece);
   });
-  assert.equal(/whole\s+number from 60 to 100/.test(section), false, 'the Portrait size item still gives the old range');
+  assert.equal(/from 60 to 200/.test(section), false, 'the Portraits part still gives the old range');
 
   // every row of the table is what rowLayout and rowSizes give for every size in its range, and the ranges meet
   const table = section.split('\n').filter(line => /^\s*\| \d+ to \d+ \|/.test(line)).map(line => line.split('|').map(cell => cell.trim()).filter(cell => cell !== ''));
-  assert.equal(table.length, 4);
+  assert.equal(table.length, 5);
   let next = 60;
   table.forEach(([range, rows, height, card, role]) => {
     const [from, to] = range.split(' to ').map(Number);
@@ -618,11 +623,13 @@ test('the docs give the rows a page holds and the sizes the code works out', () 
     }
     assert.deepEqual([rowSizes(from).card, rowSizes(to).card], [cardFrom, cardTo], 'the portrait in a row for ' + range);
   });
-  assert.equal(next, 201, 'the table goes up to 200');
+  assert.equal(next, 221, 'the table goes up to 220');
 
-  // the words of the Studio field give the same two changes of the table
+  // the words of the Studio fields give the same table
   const field = fs.readFileSync(path.join(docsFolder, '..', 'studio', 'schemas', 'settingsPhotos.js'), 'utf8');
-  assert.ok(field.includes('holds 3 rows (to ' + table[2][0].split(' to ')[1] + ') or 2 (from ' + table[3][0].split(' to ')[0] + ')'), 'the description in Studio gives the table\'s changes');
+  const steps = table.filter((row, index) => index === 0 || row[1] !== table[index - 1][1]);
+  const words = steps.map((row, index) => row[1] + ' up to ' + (index + 1 < steps.length ? Number(steps[index + 1][0].split(' to ')[0]) - 1 : 220)).join(', ');
+  assert.ok(field.includes("const peopleFit = '" + words + ".';"), 'the description in Studio gives the table\'s steps: ' + words);
 });
 
 // Run them

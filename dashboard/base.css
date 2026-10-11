@@ -635,8 +635,9 @@ html[data-style="original"] .plate-id { display: block; }
    box it sits in is in roster.css). The Leadership and Team Leads panels draw
    rows, four to a page, built like the rows of the Events panel: four rows of
    144px fill the 576px body, and the thin metal bar under a row is part of it,
-   except under the last. A row has the portrait at the left (124 square, so the
-   bar has room on each side), the name beside it, and the role at the right end.
+   except under the last. A row has the portrait at the left (120 square at 100
+   percent, so the bar has room on each side), the name beside it, and the role at
+   the right end.
    The name takes the room it needs, up to 560px, and is cut with an ellipsis
    after that. The longest name the Studio allows is 17 characters, which is
    about 550px at this size. The role takes what is left, 336px or more, and may
@@ -646,11 +647,11 @@ html[data-style="original"] .plate-id { display: block; }
    so that row stops 16px sooner. The text sizes are the label and body sizes in
    tokens.css.
 
-   Those are the rows at a Portrait size of 100 and below. Above 100 the portrait
-   is bigger, up to 248 square at 200, and a row has to be taller to hold it and
+   Those are the rows at a size of 100 percent and below. Above 100 the portrait
+   is bigger, up to 264 square at 220, and a row has to be taller to hold it and
    the bar under it: core/portrait.js (rowLayout) works out how many rows fit,
-   3 up to 139 percent and 2 from 140, and hands the height of a row over as
-   --row-height on .person-rows. The 144px here is the height at 100. Past a
+   3 up to 138 percent, 2 up to 200 and 1 up to 220, and hands the height of a row
+   over as --row-height on .person-rows. The 144px here is the height at 100. Past a
    portrait of 140px the role no longer fits beside the longest name, so the
    class stacked puts it under the name, at the left, and the name and the role
    are centred in the row as a pair. The 64px at the right of a stacked row keeps
@@ -736,7 +737,12 @@ html[data-style="original"] .plate-id { display: block; }
    card is drawn at 292 and the svg is stretched down to the variable, which
    shrinks its metal edge and cut corner with it. The picture's cut corner is
    in percent for the same reason: 10.786% of 280 is 30.2px and 13.464% is
-   37.7px. margin: 0 auto keeps a smaller portrait in the middle of its slot. */
+   37.7px. margin: 0 auto keeps a smaller portrait in the middle of its slot.
+
+   The shape and the frame are settings (Portraits in Dashboard Settings). A shape or
+   frame other than square and metal puts the class shape-rounded, shape-circle,
+   frame-line or frame-none on the portrait, and portrait.js hands the clip of the
+   picture over as --portrait-clip (and --portrait-clip-flipped for trim.css). */
 .portrait {
   position: relative;
   width: var(--portrait-card, 292px);
@@ -754,7 +760,13 @@ html[data-style="original"] .plate-id { display: block; }
   width: var(--portrait-photo, 280px);
   height: var(--portrait-photo, 280px);
   overflow: hidden;
-  clip-path: polygon(0 0, 100% 0, 100% 89.214%, 86.536% 100%, 0 100%);
+  clip-path: var(--portrait-clip, polygon(0 0, 100% 0, 100% 89.214%, 86.536% 100%, 0 100%));
+}
+/* The thin line frame, drawn over the picture at the size of the card (core/portrait.js) */
+.portrait-line {
+  fill: none;
+  stroke: var(--yellow);
+  stroke-width: 3px;
 }
 .portrait-photo img,
 .silhouette {

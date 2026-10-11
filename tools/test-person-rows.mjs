@@ -167,17 +167,17 @@ const rowHeightIn = rule => Number(/height: var\(--row-height, (\d+)px\);/.exec(
 
 // The portrait in a row
 
-test('four rows to a page, and the portrait in a row is 124 square at 100 and follows the Portrait size', () => {
+test('four rows to a page, and the portrait in a row is 120 square at 100 and follows the portrait size', () => {
   assert.equal(rowsPerPage, 4);
-  assert.deepEqual(rowSizes(100), { card: 124, photo: 118, inset: 3 });
-  assert.deepEqual(rowSizes(80), { card: 99, photo: 95, inset: 2 });
-  assert.deepEqual(rowSizes(60), { card: 74, photo: 70, inset: 2 });
+  assert.deepEqual(rowSizes(100), { card: 120, photo: 116, inset: 2 });
+  assert.deepEqual(rowSizes(80), { card: 96, photo: 92, inset: 2 });
+  assert.deepEqual(rowSizes(60), { card: 72, photo: 70, inset: 1 });
 
-  // no size, or an odd one, is 100, and the setting stays between 60 and 200
+  // no size, or an odd one, is 100, and the setting stays between 60 and 220
   assert.deepEqual(rowSizes(), rowSizes(100));
   assert.deepEqual(rowSizes('big'), rowSizes(100));
   assert.deepEqual(rowSizes(30), rowSizes(60));
-  assert.deepEqual(rowSizes(250), rowSizes(200), 'the setting stops at double');
+  assert.deepEqual(rowSizes(250), rowSizes(220), 'the setting stops at 220');
 
   let before = 0;
   for (let percent = 60; percent <= 100; percent++) {
@@ -187,7 +187,7 @@ test('four rows to a page, and the portrait in a row is 124 square at 100 and fo
     before = size.card;
   }
 
-  // the thin bar under a row is centred on the row's foot, and the card leaves it room: 144 less 124 is 10 each side
+  // the thin bar under a row is centred on the row's foot, and the card leaves it room: 144 less 120 is 12 each side
   assert.ok(144 - rowSizes(100).card >= 20);
   // the full size portrait of the Roster panel is not touched
   assert.deepEqual(portraitSizes(100), { card: 292, photo: 280, inset: 6 });
@@ -206,11 +206,11 @@ test('a row is the portrait, the name and the role, as one slat, with a bar unde
   assert.equal(countOf(html, 'class="row-bar"'), 2, 'a bar under every row but the last');
   assert.ok(html.includes('&lt;b&gt;Alexandria Joseph&lt;/b&gt;') && !html.includes('<b>'));
   assert.ok(html.includes('<div class="person-role">HEAD COACH</div>'));
-  assert.ok(html.includes('<img src="' + address.replace(/&/g, '&amp;') + '" width="118" height="118" alt="">'));
+  assert.ok(html.includes('<img src="' + address.replace(/&/g, '&amp;') + '" width="116" height="116" alt="">'));
   assert.equal(countOf(html, '<use href="#person-silhouette"'), 2, 'a row with no address has the silhouette');
 
   // the metal is the frame of the picture, not of the row, so the bars keep the panel's own
-  assert.ok(html.includes('<div class="portrait red-metal" style="--portrait-card: 124px; --portrait-photo: 118px; --portrait-inset: 3px">'));
+  assert.ok(html.includes('<div class="portrait red-metal" style="--portrait-card: 120px; --portrait-photo: 116px; --portrait-inset: 2px">'));
   assert.ok(html.includes('<div class="portrait" data-metal="gold" style='));
   assert.ok(html.includes('<div class="portrait" style='));
   assert.equal(/<div class="person-row"[^>]*(metal|red)/.test(html), false);
@@ -220,15 +220,15 @@ test('a row is the portrait, the name and the role, as one slat, with a bar unde
   assert.ok(html.includes('href="#card-292x292"') && html.includes('href="#bar-1124"'));
 }));
 
-test('a row follows the Portrait size and keeps its text, and the markup is the same apart from the sizes', () => withFakePage(() => {
+test('a row follows the portrait size and keeps its text, and the markup is the same apart from the sizes', () => withFakePage(() => {
   const rows = [{ name: '[Alex]', role: 'CAPTAIN', address: 'https://example.test/a.jpg' }, { name: '[Sam]', role: 'COACH', address: '' }];
   const at100 = rowsMarkup(rows, 100);
   const at60 = rowsMarkup(rows, 60);
 
   assert.equal(rowsMarkup(rows), at100, 'no size is 100');
-  assert.ok(at60.includes('--portrait-card: 74px; --portrait-photo: 70px; --portrait-inset: 2px'));
+  assert.ok(at60.includes('--portrait-card: 72px; --portrait-photo: 70px; --portrait-inset: 1px'));
   assert.ok(at60.includes('width="70" height="70" alt=""'));
-  assert.ok(rowsMarkup(rows, 80).includes('--portrait-card: 99px; --portrait-photo: 95px; --portrait-inset: 2px'));
+  assert.ok(rowsMarkup(rows, 80).includes('--portrait-card: 96px; --portrait-photo: 92px; --portrait-inset: 2px'));
 
   const withoutSizes = html => html.replace(/ style="--portrait[^"]*"/g, '').replace(/ width="\d+" height="\d+" alt=""/g, '');
   assert.equal(withoutSizes(at60), withoutSizes(at100));
@@ -463,21 +463,22 @@ test('the Leadership panel with three people has three rows, and a person with n
 
 // Both panels
 
-test('both panels draw their rows at the Portrait size, and at 100 without it, and the text keeps its size', () => withFakePage(() => {
+test('both panels draw their rows at their own portrait size, and at 100 without it, and the text keeps its size', () => withFakePage(() => {
   const people = [{ role: 'Coach', name: '[Coach A]' }, { role: 'Captain', name: '[Captain A]' }];
   const subteams = [department('[Build]', '[Lead A]')];
 
-  [['leadership', leadershipPanel], ['team leads', teamLeadsPanel]].forEach(([name, panel]) => {
+  [['leadership', leadershipPanel, 'leadershipPortrait'], ['team leads', teamLeadsPanel, 'rosterPortrait']].forEach(([name, panel, setting]) => {
     const draw = settings => mount(panel, { people: people, subteams: subteams, settings: settings });
-    const at60 = draw({ portraitScale: 60 });
-    const at80 = draw({ portraitScale: 80, photoScale: 60 });
-    const at100 = draw({ portraitScale: 100 });
+    const at60 = draw({ [setting]: 60 });
+    const at80 = draw({ [setting]: 80, photoScale: 60 });
+    const at100 = draw({ [setting]: 100 });
 
-    assert.ok(at60.includes('--portrait-card: 74px; --portrait-photo: 70px; --portrait-inset: 2px'), name + ' at 60');
-    assert.ok(at80.includes('--portrait-card: 99px; --portrait-photo: 95px; --portrait-inset: 2px'), name + ' at 80, and the Photo size does not change it');
-    assert.ok(at100.includes('--portrait-card: 124px; --portrait-photo: 118px; --portrait-inset: 3px'), name + ' at 100');
-    assert.ok(draw(undefined).includes('--portrait-card: 124px'), name + ' with no settings');
-    assert.ok(draw({}).includes('--portrait-card: 124px'), name + ' with no size');
+    assert.ok(at60.includes('--portrait-card: 72px; --portrait-photo: 70px; --portrait-inset: 1px'), name + ' at 60');
+    assert.ok(at80.includes('--portrait-card: 96px; --portrait-photo: 92px; --portrait-inset: 2px'), name + ' at 80, and the Photo size does not change it');
+    assert.ok(at100.includes('--portrait-card: 120px; --portrait-photo: 116px; --portrait-inset: 2px'), name + ' at 100');
+    assert.ok(draw(undefined).includes('--portrait-card: 120px'), name + ' with no settings');
+    assert.ok(draw({}).includes('--portrait-card: 120px'), name + ' with no size');
+    assert.ok(draw({ portraitScale: 60 }).includes('--portrait-card: 72px'), name + ' with only the old Portrait size');
 
     const withoutSizes = html => html.replace(/ style="--portrait[^"]*"/g, '').replace(/ width="\d+" height="\d+"/g, '');
     assert.equal(withoutSizes(at60), withoutSizes(at100), name);

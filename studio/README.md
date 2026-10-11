@@ -92,7 +92,8 @@ docs/where-things-are.md).
    announcements. It should show Frame metal on Gold with Glint on
    and Screen glitch on every 240 seconds, Seconds per page at 20,
    Photo order on Random, Seconds per photo 16,
-   Portrait size and Photo size at 100, and Photo fit on Fill the frame.
+   Photo size at 100, Photo fit on Fill the frame, and the Portraits box with
+   both portrait sizes at 100, the shape on Square and the frame on Metal.
    The Look tab should show Logo
    animations on, Spin every 72 seconds, Flying hawk every 24 seconds and Name
    effect every 300 seconds, and Page change style
@@ -236,10 +237,15 @@ never enlarged, in a small format (`screenPhotoUrl` in
 `dashboard/core/images.js`), and needs no CORS origin beyond the one in step 6.
 The photo settings in the Screen tab of Dashboard Settings (`schemas/settingsPhotos.js`) have Photo
 order (Random or Newest first), Seconds per photo (6 to 120, starting at
-16), Portrait size (a whole percent from 60 to 200, starting at 100, which is
-the standard size; 200 is double), Photo size (a whole percent from 60 to 100,
+16), Photo size (a whole percent from 60 to 100,
 starting at 100, which is the full size) and Photo fit (Fill the frame or Show
-the whole photo, which a photo can override with its own Fit field). Nothing needs setting up beyond the steps above. Run `npm run deploy`
+the whole photo, which a photo can override with its own Fit field). The same
+file has the Portraits box: the Leadership portrait size and the Team leads and
+Roster portrait size (each a whole percent from 60 to 220, starting at 100, which is
+a portrait 120 pixels square that fills a row of four), the Portrait shape (Square,
+Rounded or Circle) and the Portrait frame (Metal, Thin line or None). The old Portrait size is
+hidden and stays in the schema: the screen uses it only while neither new size has a value.
+Nothing needs setting up beyond the steps above. Run `npm run deploy`
 after you change `schemas/photo.js` or `schemas/settingsPhotos.js`, so the
 editors see the change. docs/editing-content.md has the advice for the people
 who upload: first names only, no last names in captions, location tagging off

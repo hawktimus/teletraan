@@ -268,19 +268,19 @@ test('the Team Leads panel loads the photos of the next page early: the own phot
   const people = [person('[Lead 7]', 17)];
   const panel = await freshPanel('team-leads');
 
-  mount(panel, { subteams: subteams, people: people, settings: { portraitScale: 100 } });
+  mount(panel, { subteams: subteams, people: people, settings: { rosterPortrait: 100 } });
   assert.deepEqual(asked, [addressOf(5), addressOf(17), addressOf(8)], 'the second page of four');
 
   asked.length = 0;
-  mount(panel, { subteams: subteams, people: people, settings: { portraitScale: 100 } });
+  mount(panel, { subteams: subteams, people: people, settings: { rosterPortrait: 100 } });
   assert.deepEqual(asked, [], 'the first page has no photo to load');
 
   // at a bigger portrait the next page is the next two
   asked.length = 0;
   const wide = await freshPanel('team-leads');
-  mount(wide, { subteams: subteams, people: people, settings: { portraitScale: 200 } });
+  mount(wide, { subteams: subteams, people: people, settings: { rosterPortrait: 200 } });
   assert.deepEqual(asked, [], 'leads 3 and 4 have no photo');
-  mount(wide, { subteams: subteams, people: people, settings: { portraitScale: 200 } });
+  mount(wide, { subteams: subteams, people: people, settings: { rosterPortrait: 200 } });
   assert.deepEqual(asked, [addressOf(5)], 'then leads 5 and 6: only the first has a photo to show');
 })));
 
@@ -310,12 +310,13 @@ test('the Subteam roster draws the portrait of the lead by the same rule, and lo
   assert.deepEqual(asked, [addressOf(1)], 'then back to the first page, whose lead has a photo of their own');
 })));
 
-test('the Subteam roster keeps the portrait at 100 for a lead with a photo, whatever the Portrait size says', () => withFakePage(async () => {
+test('the Subteam roster keeps the portrait at 100 for a lead with a photo, whatever the Roster size says', () => withFakePage(async () => {
   const subteams = [department('[Build]', '[Sam]', { photo: photoNumbered(1), members: ['[Alex]'] })];
   const draw = async settings => mount(await freshPanel('roster'), { subteams: subteams, people: [], settings: settings });
 
-  const at100 = await draw({ portraitScale: 100 });
-  assert.equal(await draw({ portraitScale: 200 }), at100);
+  const at100 = await draw({ rosterPortrait: 100 });
+  assert.equal(await draw({ rosterPortrait: 200 }), at100);
+  assert.equal(await draw({ rosterPortrait: 220 }), at100);
   assert.ok(at100.includes('--portrait-card: 292px; --portrait-photo: 280px; --portrait-inset: 6px'));
   assert.ok(at100.includes('width="280" height="280"'));
 }));

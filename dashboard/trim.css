@@ -39,7 +39,7 @@ html.bolts-round {
    core/plate.js, and the clip of the picture in it), and with the other corners it is the bottom left. The
    card is turned across, and it has no text inside it. The pictures are cut by a clip-path of their own. */
 html.corner-cut-tr .card-outline { transform: scaleX(-1); }
-html.corner-cut-tr .portrait-photo { clip-path: polygon(100% 0, 0 0, 0 89.214%, 13.464% 100%, 100% 100%); }
+html.corner-cut-tr .portrait-photo { clip-path: var(--portrait-clip-flipped, polygon(100% 0, 0 0, 0 89.214%, 13.464% 100%, 100% 100%)); }
 html.corner-cut-tr .sponsor-feature .logo-card-picture,
 html.corner-cut-tr .photo .picture { clip-path: polygon(2px 2px, calc(100% - 2px) 2px, calc(100% - 2px) calc(100% - 2px), 42px calc(100% - 2px), 2px calc(100% - 34px)); }
 html.corner-cut-tr .custom .block-image img { clip-path: polygon(0 0, 100% 0, 100% 100%, 34px 100%, 0 calc(100% - 27px)); }

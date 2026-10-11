@@ -239,12 +239,14 @@ the team color.
   match the row shows the silhouette. Turn off Show photo on screen on the entry
   to show the silhouette whatever Leadership has.
 
-Portrait size, percent in the Screen tab changes the photos and never the text.
-It goes from 60 to 200: 100 is the standard size and 200 is double. Above 100 the
-rows get taller, so a page holds 3 rows (to 139) or 2 (from 140), and the panels
-show the next rows each time they come round. Subteam roster stays at 100. The
-table and the way to pick a value are in docs/editing-content.md, under "Order,
-time on screen and size".
+The Portraits box in the Screen tab changes the photos and never the text. The
+Leadership portrait size and the Team leads and Roster portrait size go from 60 to
+220: 100 is a portrait that fills a row of four. Above 100 the rows get taller, so
+a page holds 3 people (to 138), 2 (to 200) or 1 (to 220), and the panels
+show the next rows each time they come round. The two sizes are set apart, and the
+Roster portrait stays at 100. Portrait shape (Square, Rounded or Circle) and Portrait
+frame (Metal, Thin line or None) are the same on all three panels. The
+table and the way to pick a value are in docs/editing-content.md, under "Portraits".
 
 ## Hidden effects by hours
 

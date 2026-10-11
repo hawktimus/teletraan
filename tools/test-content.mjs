@@ -916,6 +916,8 @@ test('the new settings have the defaults the Studio starts with', () => {
     redEyesEveryHours: { min: 1, max: 1000 },
     talkMinutes: { min: 5, max: 30 },
     alternateMinutes: { min: 1, max: 30 },
+    leadershipPortrait: { min: 60, max: 220 },
+    rosterPortrait: { min: 60, max: 220 },
   });
 
   // the photo settings: random order, and 16 seconds a photo

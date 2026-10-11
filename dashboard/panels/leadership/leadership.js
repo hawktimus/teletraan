@@ -4,8 +4,9 @@
 
 import { doubleSlash } from '../../core/marks.js';
 import { makePages } from '../../core/turns.js';
+import { portraitPercentOf } from '../../core/content.js';
 import { leaders } from '../../core/leadership.js';
-import { photoAddress, preloadPhotos, rowLayout, rowsMarkup, rowsPerPage, watchPhotos } from '../../core/portrait.js';
+import { photoAddress, portraitLook, preloadPhotos, rowLayout, rowsMarkup, rowsPerPage, watchPhotos } from '../../core/portrait.js';
 
 const nextPage = makePages(rowsPerPage);
 
@@ -19,7 +20,7 @@ export function hasContent(content) {
 }
 
 export function mount(host, content) {
-  const scale = content.settings && content.settings.portraitScale;
+  const scale = portraitPercentOf(content.settings, 'leadershipPortrait');
   const page = nextPage(leaders(content.people), rowLayout(scale).rows);
   const rows = page.items.map(personRow);
 
@@ -33,7 +34,7 @@ export function mount(host, content) {
         </div>
       </div>
 
-      ${rowsMarkup(rows, scale)}
+      ${rowsMarkup(rows, scale, portraitLook(content.settings))}
     </section>`;
 
   watchPhotos(host);

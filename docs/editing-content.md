@@ -444,7 +444,8 @@ are none, the panel is skipped.
 
 ### Order, time on screen and size
 
-The Screen tab of Dashboard Settings has five photo settings:
+The Screen tab of Dashboard Settings has four photo settings, and a Portraits box
+for the people panels (see "Portraits" below):
 
 - Photo order is Random (the default) or Newest first. Random never shows the
   same photo twice in a row. Newest first goes from the photo uploaded last to
@@ -455,38 +456,6 @@ The Screen tab of Dashboard Settings has five photo settings:
   starts at 16. A Photo row in Panel order, in the Screen tab, that has seconds of its own wins
   over it. With the row's seconds empty, the Photo panel follows Seconds per
   photo and not Seconds per page.
-- Portrait size, percent is how big the portraits are on the Leadership and
-  Team Leads panels, and the team lead portrait on the Subteam roster panel. It is a
-  whole number from 60 to 200 and starts at 100. 100 is the standard size and
-  200 is double. The names and roles next to a portrait keep their size. A
-  person with no photo, who shows the silhouette, follows the same size.
-  - Below 100 the portraits are smaller in both directions, frame and picture
-    together, and a page still holds four rows. At 80 they are four fifths as
-    big. A smaller portrait stays in the middle of its place. In a row the
-    portrait is 124 square at 100 and 74 square at 60. On the Subteam roster
-    panel it is 292 at 100, and the name moves up with it.
-  - Above 100 the Leadership and Team Leads rows get taller, to hold the bigger
-    portrait, so fewer rows fit on a page. The table below gives the numbers.
-    Everyone is still shown: each time the panel comes round it shows the next
-    rows, then starts again. Four leaders at 200 are two pages of two. At 120
-    they are a page of three and a page of one, so use 140 or more for two
-    pages of two.
-  - From 114 the role moves under the name, at the left, because the name and
-    the role no longer fit side by side. The text stays the same size.
-  - The Subteam roster panel never grows past 100, because the names sit beside
-    the portrait. A value above 100 leaves it as it is at 100.
-  - To pick a value, work from what you have. A saved 60 gives a portrait 74
-    square in a row. Double that is 120, which is 149 square with 3 rows to a
-    page. 200 is double the standard size, 248 square with 2 rows to a page.
-    Try a value on the sample content first (see "Sample content" below).
-
-  | Portrait size | Rows on a page | Row height | Portrait in a row | The role |
-  | --- | --- | --- | --- | --- |
-  | 60 to 100 | 4 | 144 | 74 to 124 | at the right end |
-  | 101 to 113 | 3 | 192 | 125 to 140 | at the right end |
-  | 114 to 139 | 3 | 192 | 141 to 172 | under the name |
-  | 140 to 200 | 2 | 288 | 174 to 248 | under the name |
-
 - Photo size, percent is how big the picture in the Photo panel is, from 60 to
   100, starting at 100. 100 is the full size and the largest that fits the
   frame, so the picture cannot be made bigger than that. A smaller picture is in
@@ -503,12 +472,61 @@ The Screen tab of Dashboard Settings has five photo settings:
   Dashboard Settings saved before Photo fit existed shows no choice marked, and
   the screen counts that as Fill the frame. Pick one and click Publish to mark it.
 
-Studio only accepts whole numbers for the two sizes, from 60 to 200 for the
-Portrait size and from 60 to 100 for the Photo size. If a value outside that
-range ever reaches the screen it uses the nearest end, and an empty or odd
-value is 100. To see a size, set it, click Publish, and wait for
+Studio only accepts whole numbers for the Photo size, from 60 to 100. If a value
+outside that range ever reaches the screen it uses the nearest end, and an empty
+or odd value is 100. To see a size, set it, click Publish, and wait for
 the panel to come round, or try it on the sample content first (see "Sample
 content" below).
+
+### Portraits
+
+The Portraits box in the Screen tab of Dashboard Settings sets how the portraits
+look on the Leadership, Team leads and Roster panels. It has four settings:
+
+- Leadership portrait size, percent is how big the portraits are on the
+  Leadership panel.
+- Team leads and Roster portrait size, percent is how big they are on the Team
+  leads panel, and the team lead portrait on the Roster panel.
+- Portrait shape is Square (the starting choice), Rounded or Circle. Square is
+  the card as it has always been, with the cut corner of the frame. Rounded cuts
+  every corner. Circle is round. It is the same on all three panels.
+- Portrait frame is Metal (the starting choice), Thin line or None. Metal is the
+  edge the portraits have always had. Thin line is 3 pixels in the team accent.
+  None shows the picture alone. It is the same on all three panels.
+
+Each size is a whole number from 60 to 220 and starts at 100. 100 is a portrait
+120 square, which fills a row of four. 220 is 264 square, which fills the panel
+with one row. A person with no photo, who shows the silhouette, follows the same
+size. The names and roles next to a portrait keep their size.
+
+- Below 100 the portraits are smaller in both directions, frame and picture
+  together, and a page still holds four rows. At 60 a portrait is 72 square. A
+  smaller portrait stays in the middle of its row.
+- Above 100 the Leadership and Team leads rows get taller, to hold the bigger
+  portrait, so fewer rows fit on a page. The table below gives the numbers.
+  Everyone is still shown: each time the panel comes round it shows the next
+  rows, then starts again. Four leaders at 200 are two pages of two. At 120 they
+  are a page of three and a page of one, so use 139 or more for two pages of two.
+- The two sizes are set apart. Leadership can be at 100 with four rows while Team
+  leads is at 200 with two.
+- When the role would have less than 336 pixels beside the name, from a portrait
+  of 142 pixels, it moves under the name, at the left. The text stays the same
+  size.
+- The Roster panel never grows past 100, because the names sit beside the
+  portrait. A value above 100 leaves it as it is at 100.
+- The old Portrait size, percent setting is no longer in the form. A screen that
+  was set with it keeps its look: while neither of the two new sizes has a value,
+  both take the old value. Nothing is written to Sanity. Type a new size to end it.
+
+  | Size | People on a page | Row height | Portrait in a row | The role |
+  | --- | --- | --- | --- | --- |
+  | 60 to 100 | 4 | 144 | 72 to 120 | at the right end |
+  | 101 to 117 | 3 | 192 | 121 to 140 | at the right end |
+  | 118 to 138 | 3 | 192 | 142 to 166 | under the name |
+  | 139 to 200 | 2 | 288 | 167 to 240 | under the name |
+  | 201 to 220 | 1 | 576 | 241 to 264 | under the name |
+
+Try a size on the sample content first (see "Sample content" below).
 
 ### Fill the frame or show the whole photo
 
@@ -567,9 +585,9 @@ name, and the subteam with LEAD after it at the right end. A subteam with no
 lead shows its own name and [lead] at the right end, so a gap can be seen from
 across the room. The subteams are in the order of the Order field. Twelve
 subteams are three panels of four, and each time the panel comes round it
-shows the next one, then starts again. The size of the photos can be changed
-together with Portrait size, percent in the Screen tab of Dashboard Settings
-(see "Order, time on screen and size" above). A bigger portrait means fewer
+shows the next one, then starts again. The size, shape and frame of the photos
+can be changed in the Portraits box in the Screen tab of Dashboard Settings
+(see "Portraits" above). A bigger portrait means fewer
 rows on a page and more pages. The text stays the same size. It never gets
 smaller to fit more people. A name is cut after about 17 characters.
 
