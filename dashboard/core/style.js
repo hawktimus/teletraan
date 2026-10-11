@@ -36,7 +36,7 @@ const forcedLayout = { original: null, cybertron: null, minimal: 'bar' };
 // The corners of the frames a style draws, or '' for the usual ones. Frames are drawn
 // once for each area, so a style that goes on while the screen runs has them drawn again
 // (core/areas.js, redrawFrames). Minimal's frames are the ones of the bar layout, which
-// is another layout, so a page that goes to it or from it reloads (core/layout.js, drawnFor)
+// is another layout, so a page that goes to it or from it changes layout too (core/layout-apply.js, changeLayout)
 const shapeOf = { original: '', cybertron: 'cybertron', minimal: 'minimal' };
 export const shapeSets = Object.values(shapeOf).filter(Boolean);
 

@@ -20,7 +20,8 @@
 // A look is { theme, overlay, style }. The style (core/style.js) is the Style
 // setting, or ?style=, and it waits for the same moment as the theme. This file
 // only carries it: onLook puts data-style on the page, in the same step as the
-// classes, and a style with another layout reloads the page like a theme does.
+// classes. A style or theme with another layout waits for a swap (core/swap-run.js), which
+// changes the layout in the page while its pieces are apart (core/layout-apply.js).
 // A preview (core/preview.js) holds a style or a pack through the same look, so it goes on
 // at the same moment.
 
@@ -40,7 +41,7 @@ let asked = { theme: null, overlay: null, style: null }; // ?theme=, ?overlay= a
 let showing = { theme: '', overlay: '', style: '' }; // what the classes and data-style on the page say now
 let waiting = null; // { look, since }: a look that is not on screen yet
 let followLook = null; // called with the look each time it goes on the page. shell.js gives it, to show the overlay's decorations
-let holdLook = null; // asked before a look goes on the page: true means not now. shell.js gives it, for a theme with another layout (core/layout-apply.js)
+let holdLook = null; // asked before a look goes on the page, with the milliseconds it has waited: true means not now. shell.js gives it, for a theme with another layout (core/layout-apply.js)
 
 // The one stylesheet index.html links itself is hawktimus.css, because the
 // screen needs it before anything is drawn. Every other theme and overlay is
@@ -93,11 +94,11 @@ function wantedLook() {
 // The old theme class and overlay class go and the new ones come in one step,
 // so the screen is never drawn with half of each
 function applyLook(look) {
-  // A theme with another layout cannot go on by changing variables. The page
-  // reloads to change layout, so this look is not put on this page.
+  // A theme with another layout cannot go on by changing variables. It waits for the
+  // moment a swap has the screen, and this look is not put on the page before then.
   if (holdLook) {
     try {
-      if (holdLook(look)) return;
+      if (holdLook(look, waiting ? Date.now() - waiting.since : 0)) return;
     } catch (error) {
       console.error('Could not check the layout of the theme', error);
     }
@@ -141,6 +142,11 @@ export function checkTheme() {
   }
 }
 
+// True while a look is waiting to go on the page: the swap takes it at the next page change of the large panel
+export function lookIsWaiting() {
+  return waiting !== null;
+}
+
 // The look from the newest content, on the page now
 export function showThemeNow() {
   const look = wantedLook();
@@ -154,8 +160,8 @@ export function changeThemeNow() {
 }
 
 // Gives the function that is asked before a look goes on the page. It is called
-// with { theme, overlay, style } and answers true to keep the look off the page for now.
-// shell.js gives it, call this before startThemes().
+// with { theme, overlay, style } and the milliseconds the look has waited, and answers true
+// to keep the look off the page for now. shell.js gives it, call this before startThemes().
 export function holdLooksFor(hold) {
   holdLook = typeof hold === 'function' ? hold : null;
 }

@@ -29,8 +29,10 @@
 // The look rotation (core/look-rotation-run.js) changes the style and the team at a page change of the
 // large panel, and so does a change from one Monday card to the next. Every one of them is a swap
 // (core/swap-run.js, docs/layouts.md, "The swap"): the pieces of the screen pull apart, the look goes on
-// and the pages of all three areas are swapped while nothing can be seen, and the pieces re-form. This
-// file asks for a swap at each page change of the large panel, and makes the gate it needs.
+// and the pages of all three areas are swapped while nothing can be seen, and the pieces re-form. The
+// look may have another layout, which is then changed in the same step (core/layout-apply.js), and the small
+// frame comes or goes with it. This file asks for a swap at each page change of the large panel, and makes the
+// gate it needs.
 //
 // Now and then a hidden transition replaces the page change of the large panel
 // (core/hidden-run.js, docs/hidden-transitions.md). The whole screen comes
@@ -126,14 +128,58 @@ let gate = null;
 
 export function startWholeScreen(keepLook = false) {
   const mine = { state: 'before', keepLook: keepLook };
+  mine.waiting = []; // the regions at the gate: { region, run, release }. run swaps the region's page, release lets it go on
+
   gate = mine;
 
   return {
-    apart: () => { mine.state = 'apart'; },
+    // Every region that waits swaps its page now, in this step, so that nothing is drawn between one and the next
+    apart: () => {
+      mine.state = 'apart';
+      mine.waiting.splice(0).forEach(entry => entry.run());
+    },
     together: () => { mine.state = 'after'; },
     // Ends the transition, however it ended. Regions that waited carry on.
-    end: () => { if (gate === mine) gate = null; },
+    end: () => {
+      if (gate === mine) gate = null;
+      mine.waiting.splice(0).forEach(entry => entry.release());
+    },
+    // Resolves when each of these regions is at the gate, or when maxMs have gone by
+    waitForRegions: (regions, maxMs) => waitForRegions(mine, regions, maxMs),
   };
+}
+
+// A region that wants to change page while the whole screen is taken waits here for the moment it is apart, and
+// swaps its page in that step. Resolves true when it did, and false when the transition ended some other way.
+function waitAtGate(mine, region, swap) {
+  return new Promise(resolve => {
+    const run = () => {
+      try {
+        swap();
+      } catch (error) {
+        console.error('The ' + region + ' page could not be swapped while the screen was apart', error);
+      }
+      resolve(true);
+    };
+    mine.waiting.push({ region: region, run: run, release: () => resolve(false) });
+  });
+}
+
+async function waitForRegions(mine, regions, maxMs) {
+  const until = performance.now() + maxMs;
+  const arrived = () => regions.every(region => mine.waiting.some(entry => entry.region === region));
+
+  while (!arrived() && performance.now() < until) await frame.wait(25);
+  return arrived();
+}
+
+// A region that the layout has not got yet waits at the gate like the others, because the look that goes on in the
+// moment the screen is apart may give it the region. swapUnseen drops the page if it does not.
+async function changeAtGate(region, next) {
+  const mine = gate;
+
+  if (mine.state === 'before') await waitAtGate(mine, region, () => swapUnseen(region, next));
+  return 0;
 }
 
 // The change a frame makes now, from frame.planChange(). Cybertron and Minimal have steel
@@ -149,6 +195,15 @@ function planFor(area) {
 // is apart. The frame's metal is chosen as in a page change, so it still varies.
 function swapUnseen(region, next) {
   const area = areaOf[region] || null;
+
+  // The look that goes on in this step may have a layout without this region, and then the area goes with it
+  if (!hasRegion(layoutNow(), region)) {
+    if (area) area.remove();
+    delete areaOf[region];
+    showing[region] = null;
+    return;
+  }
+  showing[region] = next;
 
   if (!next) {
     if (area) area.remove();
@@ -177,6 +232,7 @@ function swapUnseen(region, next) {
 // page leaving is not counted). It is not called again for a region until it
 // resolves.
 export async function changePage(region, next) {
+  if (gate && areaRegions.includes(region) && !hasRegion(layoutNow(), region)) return changeAtGate(region, next);
   if (!hasRegion(layoutNow(), region)) return 0; // the layout has no such region, so no area is made for it
   if (!areaRegions.includes(region)) return changeWholePanel(region, next);
 
@@ -188,8 +244,9 @@ export async function changePage(region, next) {
   // swap the page then. If it ends some other way, change page as usual once the
   // screen is whole again.
   if (gate) {
-    while (gate && gate.state === 'before') await frame.wait(100);
-    if (gate && gate.state === 'apart') {
+    const mine = gate;
+    if (mine.state === 'before' && await waitAtGate(mine, region, () => swapUnseen(region, next))) return 0;
+    if (gate === mine && mine.state === 'apart') {
       swapUnseen(region, next);
       return 0;
     }

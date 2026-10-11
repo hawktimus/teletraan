@@ -224,8 +224,8 @@ Run each of these for 30 minutes, write down typical, p95, worst, late and
 
 Then leave `?theme=neon-prime&perf` running overnight. Also run the screen with
 Neon Prime chosen in Studio (Look, Use a theme now) and not in the address,
-watch that the page reloads once at the next page change, and that nothing
-reloads after that.
+watch that the layout changes in a swap at the next page change, and that the page
+does not reload at all.
 
 What to expect. On a desktop browser the "animations running" number averaged
 8.6 in this layout with `kit=off` and 18.5 with the kit on, against 15.5 in the

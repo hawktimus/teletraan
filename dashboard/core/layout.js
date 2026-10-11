@@ -21,10 +21,11 @@
 // the page, before any region is drawn, and the stylesheets layouts/sidebar.css
 // and layouts/bar.css do the placing, from the numbers below.
 //
-// A layout cannot change while the screen runs, because the regions are drawn
-// for one layout. When the theme or the style changes to one with another layout,
-// the page reloads once (mustReload below). A change between Original and Cybertron
-// keeps the layout and only draws the frames again (core/areas.js, redrawFrames).
+// The regions are drawn for one layout at a time. When the theme or the style changes to
+// one with another layout, the page changes layout while the screen runs, in a swap
+// (core/layout-apply.js, changeLayout). Only if that fails does the page reload, once
+// (mustReload below). A change between Original and Cybertron keeps the layout and only
+// draws the frames again (core/areas.js, redrawFrames).
 
 import { themes } from '../themes/registry.js';
 import { isKnownTheme, resolveTheme } from './theme.js';

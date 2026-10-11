@@ -861,7 +861,8 @@ problem would touch.
   and so it does on a page published before the list existed.
 - A change of look is one move: the frames pull apart, the new look goes on, and they re-form. It waits
   until the large panel has been through its panels once, and never happens while an alert, an announcement
-  or a talk has the screen. A change to or from Minimal reloads the screen once (docs/layouts.md, "The swap").
+  or a talk has the screen. A change to or from Minimal changes the layout in the same move, and the screen does not reload
+  (docs/layouts.md, "The swap").
   The old setting How the look changes is hidden and the screen ignores it.
   To see the next look now, click Next look now on the Start here page. To see a style or a team
   for 2 minutes without saving anything, open the menu next to Publish (the three dots) and click Preview
@@ -1100,7 +1101,8 @@ the countdown and the logo, one big frame on the right and the ticker under it.
 It has no small frame, so the small panels in the Panel order list in Dashboard
 Settings are not used while it is on (the large panels are the whole rotation), and it has
 frames of dark steel whatever Frame metal says. When the screen changes to or
-from Neon Prime it reloads once, at the next page change of the large frame.
+from Neon Prime the layout changes at the next page change of the large frame, in the same move
+as a change of style, and the screen does not reload.
 A seasonal pack is a holiday look: a few accent colours laid
 over the theme for a set of dates, plus decorations: a small picture in place of
 the double slash at the right of every panel header (a tree, a pumpkin, a

@@ -129,9 +129,9 @@ Put `layout: 'sidebar'` in the line in `dashboard/themes/registry.js` and in the
 same line in `studio/themes.js`, and say in the description that the theme has a
 sidebar and no small frame, so editors know what they are picking. The layout is
 set before anything is drawn. When the screen is running in one layout and the
-theme changes to a theme with another, the page reloads once, in the moment the
-new theme would have gone on. Changing between themes with the same layout is
-only colours. docs/layouts.md has the numbers, how the big frame is scaled and
+theme changes to a theme with another, the layout is changed in the page, in the moment the
+new theme would have gone on, in a swap, and the page does not reload. Changing between themes
+with the same layout is only colours. docs/layouts.md has the numbers, how the big frame is scaled and
 how to add a layout.
 
 The Style setting in Dashboard Settings can name a layout too, and it wins over the

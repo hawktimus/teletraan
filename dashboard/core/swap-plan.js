@@ -3,18 +3,23 @@
 // no page in them, so tools/test-swap.mjs can run them. core/swap-run.js measures the pieces on the
 // page, hands them to the functions here and plays the answer.
 //
-// The pieces pull apart, the look goes on while they are apart, and they re-form in the new look.
+// The pieces pull apart, the look goes on while they are apart, and they re-form in the new look. It is
+// one gesture: a piece leaves its place slowly, gathers speed, comes to rest at the far end of the pull,
+// and from rest leaves for its new place the same way. The pull and the travel have the same kind of
+// easing, slow at the start and soft at the end, so nothing jumps at the moment between them.
 // Every time is in milliseconds at normal speed, from the start of the swap:
 //
 //      0       the page content starts to fade out (250). Each piece starts after a delay of its own,
 //              0 to 180, and moves out from the middle of the screen by 18 percent of its distance
 //              from it, tipping back and turning in the plane. No piece leaves the screen
-//    350       every piece is nearly out. The look goes on (style, team, the next pages) and the
-//              pieces of the new look take over from the old ones, at the pose they had
-//    350 to 1250   each piece travels to its place in the new look and untips, with the easing of
-//              the first assembly. The metal, the neon color and the corners are the new look's from
-//              the first moment of this part
-//   1000 to 1250   the page content fades in
+//    450       every piece is out and at rest. The look goes on (style, team, layout, the next pages) and
+//              the pieces of the new look take over from the old ones, at the pose they had. For
+//              a moment around it the pieces are a little fainter, so that a new shape or color
+//              does not jump (swapReform)
+//    450 to 1250   each piece, after a delay of its own, 0 to 150, travels to its place in the new look
+//              and untips, and is home by 1250. The metal, the neon color and the corners are the new
+//              look's from the first moment of this part
+//   1000 to 1250   the page content fades in, over the last of the travel
 //
 // The hawk flies beside it, from the old place of the logo to the new one in 2000 (planHawk below).
 //
@@ -28,9 +33,22 @@ export const swapTimes = {
   fadeMs: 250,         // the content fades out in the first of these, and in during the last
   delayMostMs: 180,    // a piece starts after a delay of its own, 0 to this
   pullMs: 450,         // a piece is fully out by this time, counted from the start of the swap
-  switchMs: 350,       // the look goes on and the new pieces take over
+  switchMs: 450,       // the look goes on and the new pieces take over: every piece is out and at rest
   reformEndMs: 1250,   // every piece is home and the content is back
   hawkMs: 2000,        // the hawk lands
+};
+
+// The re-form: a piece leaves for its place after a delay of its own, 0 to reformDelayMostMs after the look
+// went on, and is home at reformEndMs. When the look goes on late, because the other areas were late, the travel
+// still takes travelLeastMs after the last delay. The dip is the moment of the switch: the old pieces fade to
+// dipLeast of their strength in the dipBeforeMs before it, and the new ones come back to full in the dipAfterMs
+// after it. A piece never goes out of sight, so the screen is never empty.
+export const swapReform = {
+  reformDelayMostMs: 150,
+  travelLeastMs: 300,
+  dipLeast: 0.4,
+  dipBeforeMs: 100,
+  dipAfterMs: 140,
 };
 
 export const swapShape = {
@@ -43,9 +61,16 @@ export const swapShape = {
 };
 
 // The easing of the first assembly (--ease-in in tokens.css). frame.css and this file say it twice,
-// and tools/test-swap.mjs holds the two together.
+// and tools/test-swap.mjs holds the two together. The swap does not use it: it starts too fast to follow.
 export const standardEase = [0.2, 0.8, 0.2, 1];
 export const standardEaseText = 'cubic-bezier(.2, .8, .2, 1)';
+
+// The easing of the pull and of the travel. Both start slowly and end softly: a piece that has just come to
+// rest leaves again from rest, and settles into its place. tools/test-swap-smooth.mjs checks their shape.
+export const pullEase = [0.25, 0, 0.15, 1];
+export const pullEaseText = 'cubic-bezier(.25, 0, .15, 1)';
+export const reformEase = [0.35, 0, 0.15, 1];
+export const reformEaseText = 'cubic-bezier(.35, 0, .15, 1)';
 
 // Where a piece is: x and y pixels from its place, tipped back by tip degrees, turned in the plane by
 // twist degrees, and sx and sy times as wide and as high
@@ -142,11 +167,11 @@ export function planPull(pieces, seed) {
   };
 }
 
-// How far along its pull a piece is at a time, from 0 (in place) to 1 (out), with the standard easing
+// How far along its pull a piece is at a time, from 0 (in place) to 1 (out), with the easing of the pull
 export function pullProgress(entry, ms) {
   if (ms <= entry.delayMs) return 0;
   if (ms >= entry.delayMs + entry.ms) return 1;
-  return bezierAt(standardEase, (ms - entry.delayMs) / entry.ms);
+  return bezierAt(pullEase, (ms - entry.delayMs) / entry.ms);
 }
 
 // The pose of a piece at a time
@@ -167,32 +192,83 @@ export function poseAt(entry, ms) {
 
 // Re-forming
 
-// Which old piece each new piece takes over from, as { newId: oldId }. A new piece takes the old
-// piece of its kind that is in the same part of the screen and has the same number there. Those that
-// are left take the nearest old piece of their kind, which may be taken already, and then the nearest
-// of any kind. A new piece with no old piece to take over from has the empty string.
+// How much bigger or smaller one piece may be than the one it takes over from, in either direction, for the two to be
+// of a like size. A piece that takes over from one that is bigger or smaller than this would be stretched too far.
+const likeSize = 2;
+
+// How many times bigger the bigger of two sizes is than the smaller, never less than 1
+function ratio(a, b) {
+  return Math.max(a, b, 1) / Math.max(Math.min(a, b), 1);
+}
+
+// How much the size of a piece differs from another's, as a number that is 0 for the same size and grows with
+// the difference: the sum of the logarithms of the two ratios, the width's and the height's
+function sizeGap(piece, other) {
+  return Math.log(ratio(piece.width, other.width)) + Math.log(ratio(piece.height, other.height));
+}
+
+// The box that all the pieces of a part of the screen fill, by the id of the part. A piece's place in its part, from 0 to 1 across
+// and down, says what it is: the left edge, the top, the body, whichever look it is in
+function boxesOfRegions(pieces) {
+  const boxes = {};
+  pieces.forEach(piece => {
+    const box = boxes[piece.region] || (boxes[piece.region] = { left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity });
+    box.left = Math.min(box.left, piece.left);
+    box.top = Math.min(box.top, piece.top);
+    box.right = Math.max(box.right, piece.left + piece.width);
+    box.bottom = Math.max(box.bottom, piece.top + piece.height);
+  });
+  return boxes;
+}
+
+function placeInRegion(piece, boxes) {
+  const box = boxes[piece.region];
+  const middle = middleOf(piece);
+  return { x: (middle.x - box.left) / Math.max(box.right - box.left, 1), y: (middle.y - box.top) / Math.max(box.bottom - box.top, 1) };
+}
+
+// Which old piece each new piece takes over from, as { newId: oldId }. A new piece takes the old piece of its kind
+// that is in the same part of the screen and has the same number there, when the two are of a like size: the frames of
+// one style are drawn the same way every time, so the same number is the same piece. Those that are left, and the ones
+// whose old piece is a very different size (the pieces of another style's frame are numbered another way), take the old
+// piece of their kind that is most like them in size and in place within its part of the screen, and one that nobody has taken yet is
+// preferred. A kind with no old piece takes the nearest old piece of any kind. A new piece with no old piece
+// to take over from has the empty string.
 export function matchPieces(olds, news) {
   const partner = {};
   const taken = {};
   const place = piece => piece.kind + '|' + piece.region + '|' + piece.index;
   const byPlace = {};
   olds.forEach(piece => { byPlace[place(piece)] = piece; });
+  const alike = (piece, other) => ratio(piece.width, other.width) <= likeSize && ratio(piece.height, other.height) <= likeSize;
 
   news.forEach(piece => {
     const same = byPlace[place(piece)];
-    if (same && !taken[same.id]) {
+    if (same && !taken[same.id] && alike(piece, same)) {
       partner[piece.id] = same.id;
       taken[same.id] = true;
     }
   });
 
-  news.filter(piece => !(piece.id in partner)).forEach(piece => {
+  const oldBoxes = boxesOfRegions(olds);
+  const newBoxes = boxesOfRegions(news);
+  const bigFirst = (a, b) => b.width * b.height - a.width * a.height;
+
+  news.filter(piece => !(piece.id in partner)).sort(bigFirst).forEach(piece => {
     const middle = middleOf(piece);
     const distance = other => Math.hypot(middleOf(other).x - middle.x, middleOf(other).y - middle.y);
     const nearest = list => list.reduce((best, other) => (best === null || distance(other) < distance(best) ? other : best), null);
+    const here = placeInRegion(piece, newBoxes);
+    const unlike = other => {
+      const there = placeInRegion(other, oldBoxes);
+      return sizeGap(piece, other) + 2 * (Math.abs(here.x - there.x) + Math.abs(here.y - there.y)) + (piece.region === other.region ? 0 : 1.5) + (taken[other.id] ? 0.8 : 0);
+    };
+    const mostLike = list => list.reduce((best, other) => (best === null || unlike(other) < unlike(best) ? other : best), null);
 
-    const found = nearest(olds.filter(other => other.kind === piece.kind)) || nearest(olds);
+    const ofKind = olds.filter(other => other.kind === piece.kind);
+    const found = ofKind.length > 0 ? mostLike(ofKind) : nearest(olds);
     partner[piece.id] = found ? found.id : '';
+    if (found) taken[found.id] = true;
   });
   return partner;
 }
@@ -213,13 +289,38 @@ function carried(oldPiece, pose, newPiece) {
   };
 }
 
-// Plans the re-form. pull is what planPull gave for the old pieces, olds and news are the pieces before
-// and after the look went on, and atMs is when the look went on (swapTimes.switchMs). seed is for a new piece
-// that has no old one to take over from. Returns
-//   pieces   one entry for each new piece that moves, { id, partner, from, to, delayMs, ms }. from is where it
-//            starts, to is restPose for every one of them, and ms is the time left until reformEndMs
+// Where each old piece goes. The pieces that a new piece took over from go to it. The pieces that none took over
+// from, because the new look has fewer in that part of the screen, go to the nearest new piece of their kind, or
+// of any kind: they are folded into it, which is what the dip hides. Returns { oldId: newId }, with an entry for every
+// old piece when there is a new piece at all, and the empty string when there is not.
+export function destinationsOf(olds, news, partner) {
+  const destination = {};
+  news.forEach(piece => {
+    if (partner[piece.id] && !(partner[piece.id] in destination)) destination[partner[piece.id]] = piece.id;
+  });
+
+  olds.filter(piece => !(piece.id in destination)).forEach(piece => {
+    const middle = middleOf(piece);
+    const distance = other => Math.hypot(middleOf(other).x - middle.x, middleOf(other).y - middle.y);
+    const nearest = list => list.reduce((best, other) => (best === null || distance(other) < distance(best) ? other : best), null);
+
+    const found = nearest(news.filter(other => other.kind === piece.kind)) || nearest(news);
+    destination[piece.id] = found ? found.id : '';
+  });
+  return destination;
+}
+
+// Plans the re-form. pull is what planPull gave for the old pieces, olds and news are the pieces before and after
+// the look went on, and atMs is when the look went on (swapTimes.switchMs). seed is for a new piece that has no
+// old one to take over from, and for the delays. Returns
+//   pieces   one entry for each new piece that moves, { id, partner, from, to, delayMs, ms, fadesIn }. from is where it
+//            starts, to is restPose for every one of them, delayMs is when it leaves, 0 to reformDelayMostMs after
+//            the look went on, and ms is the time left from then until reformEndMs. fadesIn is true for a piece
+//            with no old piece to take over from, which comes into sight as it goes
 //   merged   the ids of the new pieces that ride on another
-export function planReform(pull, olds, news, atMs, seed) {
+//   destinations   where each old piece goes (destinationsOf)
+// endMs is when every piece is home: reformEndMs, unless the look went on so late that there is too little time left
+export function planReform(pull, olds, news, atMs, seed, endMs = swapTimes.reformEndMs) {
   const random = seededRandom(seed);
   const partner = matchPieces(olds, news);
   const { kept, merged } = mergeSmall(news);
@@ -231,6 +332,7 @@ export function planReform(pull, olds, news, atMs, seed) {
   const pieces = kept.map(piece => {
     const old = oldById[partner[piece.id]];
     const entry = old ? pullById[old.id] : undefined;
+    const delayMs = Math.floor(random() * (swapReform.reformDelayMostMs + 1));
     let from;
 
     if (old && entry) {
@@ -244,9 +346,33 @@ export function planReform(pull, olds, news, atMs, seed) {
       const twist = round((random() * 2 - 1) * swapShape.twistMost, 1);
       from = outPose(piece, tip, twist);
     }
-    return { id: piece.id, partner: old ? old.id : '', from: from, to: restPose, delayMs: 0, ms: swapTimes.reformEndMs - atMs };
+    return { id: piece.id, partner: old ? old.id : '', from: from, to: restPose, delayMs: delayMs, ms: endMs - atMs - delayMs, fadesIn: !old };
   });
-  return { pieces: pieces, merged: merged.map(piece => piece.id) };
+  return { pieces: pieces, merged: merged.map(piece => piece.id), destinations: destinationsOf(olds, news, partner) };
+}
+
+// How far along its travel a new piece is at a time counted from the start of the swap, from 0 (where the old
+// piece was) to 1 (home), with the easing of the travel. atMs is when the look went on.
+export function reformProgress(entry, atMs, ms) {
+  const start = atMs + entry.delayMs;
+  if (ms <= start) return 0;
+  if (ms >= start + entry.ms) return 1;
+  return bezierAt(reformEase, (ms - start) / entry.ms);
+}
+
+// The pose of a new piece at a time counted from the start of the swap, in the new piece's own terms
+export function reformPoseAt(entry, atMs, ms) {
+  const progress = reformProgress(entry, atMs, ms);
+  const from = entry.from;
+
+  return {
+    x: round(from.x * (1 - progress), 2),
+    y: round(from.y * (1 - progress), 2),
+    tip: round(from.tip * (1 - progress), 2),
+    twist: round(from.twist * (1 - progress), 2),
+    sx: round(from.sx + (1 - from.sx) * progress, 4),
+    sy: round(from.sy + (1 - from.sy) * progress, 4),
+  };
 }
 
 // When the last piece is home, counted from the start of the swap
@@ -363,11 +489,12 @@ export function flapFrames(share = hawkShape.wingShare) {
 
 // The content
 
-// When the content of the page fades, as { out, in } where each is { delayMs, ms }
-export function contentFade() {
+// When the content of the page fades, as { out, in } where each is { delayMs, ms }. The content comes back over
+// the last of the travel, which ends at endMs
+export function contentFade(endMs = swapTimes.reformEndMs) {
   return {
     out: { delayMs: 0, ms: swapTimes.fadeMs },
-    in: { delayMs: swapTimes.reformEndMs - swapTimes.fadeMs, ms: swapTimes.fadeMs },
+    in: { delayMs: endMs - swapTimes.fadeMs, ms: swapTimes.fadeMs },
   };
 }
 

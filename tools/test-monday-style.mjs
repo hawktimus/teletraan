@@ -299,7 +299,7 @@ test('Next look now holds the look, starts every list again, and moves the pages
   assert.deepEqual(idsOf(world.hooks.playlist(steps('tasks', 'monday-tasks'))), ['tasks']);
 });
 
-test('the Monday pass is skipped when the page cannot reload for the Monday style, and taken when it can', async () => {
+test('the Monday pass is always taken while the page changes layout as it runs, and is skipped only after a change has failed and the page cannot reload for the Monday style', async () => {
   const kinds = async options => {
     const world = await start(options);
     const result = [];
@@ -309,13 +309,30 @@ test('the Monday pass is skipped when the page cannot reload for the Monday styl
     }
     return result;
   };
-
-  assert.deepEqual(await kinds({}), ['monday', 'panels', 'panels'], 'a page that may reload goes into Minimal and out of it');
-
   const noted = fakeStorage();
   noted.setItem(layoutModule.reloadKey, 'bar-minimal');
-  assert.deepEqual(await kinds({ session: noted }), ['panels', 'panels', 'panels'], 'a page that has just reloaded for that layout does not reload again, so Minimal does not come');
 
+  assert.deepEqual(await kinds({}), ['monday', 'panels', 'panels'], 'a page goes into Minimal and out of it');
+  assert.deepEqual(await kinds({ session: noted }), ['monday', 'panels', 'panels'], 'the note of a reload has nothing to do with it: the layout is changed in the page');
+  assert.deepEqual(await kinds({ session: brokenStorage }), ['monday', 'panels', 'panels'], 'nor has a storage that cannot keep a note');
+  assert.deepEqual(await kinds({ session: null }), ['monday', 'panels', 'panels'], 'or no storage');
+
+  // a change of layout fails once: the page then reloads for a layout, and the old rules about the note come back
+  const apply = await import(base + 'core/layout-apply.js');
+  const html = { dataset: { layout: 'standard' }, style: { setProperty() {}, removeProperty() {} } };
+  const quiet = console.error;
+  console.error = () => {};
+  globalThis.window = { sessionStorage: fakeStorage(), location: { reload() {} } };
+  globalThis.document = { documentElement: html, getElementById: () => null };
+  try {
+    apply.changeLayout({ theme: 'hawktimus', overlay: '', style: 'minimal' }, html);
+  } finally {
+    console.error = quiet;
+  }
+  assert.equal(apply.layoutsChangeLive(), false);
+
+  assert.deepEqual(await kinds({}), ['monday', 'panels', 'panels'], 'a page that may reload goes into Minimal and out of it');
+  assert.deepEqual(await kinds({ session: noted }), ['panels', 'panels', 'panels'], 'a page that has just reloaded for that layout does not reload again, so Minimal does not come');
   assert.deepEqual(await kinds({ session: brokenStorage }), ['panels', 'panels', 'panels'], 'nor does a page that cannot keep the note');
   assert.deepEqual(await kinds({ session: null }), ['panels', 'panels', 'panels'], 'or has no storage');
 

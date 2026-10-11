@@ -20,7 +20,7 @@
 //      the old setting: Style for Styles by day, and Team mode for Team order.
 //
 // Next look now (a button on the Start here page) moves to the next pass at once. Where a pass is
-// written down in localStorage, a page that reloads for a change of layout goes on in the same pass.
+// written down in localStorage, a page that reloads, for a new version, goes on in the same pass.
 
 import { defaultSettings, defaultThemeSettings, lookResumeSeconds, lookShortestSeconds, primeTeam, styles } from '../config.js';
 import { readHandled, rememberHandled, shouldRunDemo } from './demo.js';
@@ -120,7 +120,8 @@ export function withoutMondayCards(steps, cardIds) {
 }
 
 // Whether a style can go on a page that is drawn for one layout. The page is drawn for onPage (core/layout.js,
-// drawnFor) and the style asks for wanted. A style of another layout goes on by a reload, and the reload is
+// drawnFor) and the style asks for wanted. A page changes layout while it runs, so it can take any style
+// (core/layout-apply.js, layoutsChangeLive). One whose change has failed goes on by a reload, and the reload is
 // made impossible when the page has reloaded for that layout already, or cannot keep a note (mustReload in
 // core/layout.js). canReload says whether it may. A style that cannot go on is left out: the Monday cards, which
 // belong to the Monday style, wait for another pass and are never drawn in the wrong frames.

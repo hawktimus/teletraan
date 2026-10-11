@@ -156,6 +156,12 @@ async function waitWhilePaused() {
   while (rotationPaused()) await frame.wait(250);
 }
 
+// Waits, but ends at once when the region is asked to move on (moveOn): a region with nothing to show must not make a swap
+// wait for it (core/swap-run.js). since is changeCount(region) when the wait began.
+async function waitUnlessAsked(milliseconds, since, region) {
+  for (let waited = 0; waited < milliseconds && changeCount(region) === since; waited += 100) await frame.wait(100);
+}
+
 // How long a page stays, in milliseconds, with the Speed setting applied.
 // A row's own seconds win. The Photo panel's row, with none, follows Seconds
 // per photo (Screen tab, see ownSeconds in photos.js). Otherwise the whole
@@ -209,6 +215,18 @@ function pagesOfCard(id, content, page) {
 export function startRotation(region, getPlaylist, getContent) {
   if (!hasRegion(layoutNow(), region)) return;
 
+  runRotation(region, getPlaylist, getContent);
+}
+
+// The same, for a region that the layout may have later: the small frame, which a change of layout gives the screen
+// while it runs (core/layout-apply.js). While the layout has no such region the list waits, and a swap that is
+// about to give it asks it to move on, so that its first page is waiting at the gate when the layout changes
+// (core/areas.js).
+export function startRotationForLayouts(region, getPlaylist, getContent) {
+  runRotation(region, getPlaylist, getContent);
+}
+
+function runRotation(region, getPlaylist, getContent) {
   const otherRegion = region === 'grid1' ? 'grid2' : 'grid1';
   let position = -1;
   let seenRestarts = restarts;
@@ -306,10 +324,21 @@ export function startRotation(region, getPlaylist, getContent) {
     return null;
   }
 
+  // The layout has not got this region now. Nothing is chosen until the region is asked to move on, which the swap does for
+  // a region that the next look brings, or until the layout has it. answered is the number of asks this list has acted on:
+  // an ask that woke the list from its stay counts as one it has not.
+  let answered = changeCount(region);
+
+  async function waitForLayout() {
+    while (!hasRegion(layoutNow(), region) && changeCount(region) === answered) await frame.wait(250);
+    answered = changeCount(region);
+  }
+
   // not awaited by the caller: this runs in the background and never ends
   async function loop() {
     while (true) {
       try {
+        await waitForLayout();
         await waitWhilePaused();
         followRestarts();
         await askLookRotation();
@@ -325,7 +354,7 @@ export function startRotation(region, getPlaylist, getContent) {
 
         // the old page leaves and the next arrives, or the region empties
         const arrivedAfter = await changePage(region, next ? next.page : null);
-        onScreen[region] = next && next.topic ? [next.topic] : [];
+        onScreen[region] = next && next.topic && hasRegion(layoutNow(), region) ? [next.topic] : [];
 
         if (next) {
           const settings = getContent().settings;
@@ -339,7 +368,7 @@ export function startRotation(region, getPlaylist, getContent) {
             await hold(held, since, region);
           }
         } else {
-          await frame.wait(1000); // nothing to show right now
+          await waitUnlessAsked(1000, since, region); // nothing to show right now
         }
       } catch (error) {
         console.error('The ' + region + ' rotation hit a problem and will try again', error);
@@ -374,7 +403,7 @@ export function startTicker(getContent) {
         const lines = module && module.items ? module.items(content) : [];
         if (lines.length === 0) {
           await changePage('ticker', null);
-          await frame.wait(5000);
+          await waitUnlessAsked(5000, since, 'ticker');
           continue;
         }
 

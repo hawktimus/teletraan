@@ -32,8 +32,9 @@ the next event, task counts, safety days and sponsor logo do not show with it, a
 main panel shows the large panels of the Panel order list, one after another, with the
 rows and the line limits each panel always had. Cybertron shows every panel Original does.
 
-When the style gives another layout than the one on the TV, the screen reloads
-once, at the next page change.
+When the style gives another layout than the one on the TV, the layout changes at the next
+page change, in the same move as the look: the frames pull apart and re-form in the new
+layout. The screen does not reload.
 
 ## 2. Pick the team
 
