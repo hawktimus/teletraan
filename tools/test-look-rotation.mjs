@@ -376,7 +376,7 @@ test('the page asks for the screen through one busy check that has every one of 
   assert.ok(busy[1].includes('swapRunning()') && busy[1].includes('busyElsewhere()'), 'busy checks the swap and the rest');
   ['takeoverRunning()', 'demoRunning()', 'nightIsUp()', 'hiddenPlaying()'].forEach(name => assert.ok(elsewhere[1].includes(name), 'busy checks ' + name));
   assert.ok(!elsewhere[1].includes('swapRunning'), 'a swap asks about everything but itself');
-  assert.ok(run.includes('makeLookRotation({ getContent: getContent, storage: storage, busy: busy })'));
+  assert.ok(run.includes('makeLookRotation({ getContent: getContent, storage: storage, busy: busy, canShow: mondayStyleFits })'));
   assert.ok(run.includes('makeNextLookRunner({ getContent: getContent, storage: storage, busy: busy, next: pressed })'));
   assert.ok(read('core/takeover.js').includes('return running !== null || frame.isPaused();'), 'takeoverRunning is true for an alert, an announcement and a talk');
 });
@@ -819,7 +819,7 @@ test('the page gives the runner a press that starts every list again, and a look
   assert.ok(/function pressed\(now\) \{\s*const result = rotation\.next\(now\);\s*if \(!result\.moved && !result\.look\) return;\s*rewindRotation\(\);\s*if \(result\.look\) changeLook\(result\.look\);\s*pagesAgain\(\);\s*\}/.test(run));
   assert.ok(/function atPass\(now\) \{\s*const result = rotation\.boundary\(now\);\s*if \(result\.look\) changeLook\(result\.look\);\s*return result\.moved;\s*\}/.test(run));
   assert.ok(/function changeLook\(look\) \{\s*holdLook\(look\);\s*queueSwap\(\);\s*\}/.test(run), 'a held look is a swap at the next page change of the large panel');
-  assert.ok(run.includes('setLookHooks({ atPass: atPass, playlist: list => rotation.playlist(list, getContent()) });'));
+  assert.ok(run.includes('setLookHooks({ atPass: atPass, playlist: playlistNow });'));
 });
 
 // The swaps
@@ -1090,7 +1090,7 @@ test('the docs name the settings, the one swap and the rule for an empty list', 
 
   assert.ok(layouts.includes('## The look rotation'), 'layouts.md has the section');
   assert.ok(layouts.includes('## The swap'), 'and the swap');
-  ['Styles by day', 'Monday style', 'Team order', 'How the look changes', 'lookSwap', 'is hidden', 'lookResumeSeconds', 'lookShortestSeconds', 'teletraan-look-pass'].forEach(word => assert.ok(layouts.includes(word), 'layouts.md names ' + word));
+  ['Styles by day', 'Monday style', 'Team order', 'How the look changes', 'lookSwap', 'is hidden', 'lookResumeSeconds', 'lookShortestSeconds', 'teletraan-look-pass', 'withoutMondayCards', 'styleCanGoOn'].forEach(word => assert.ok(layouts.includes(word), 'layouts.md names ' + word));
   ['Styles by day', 'Monday style', 'Team order', 'How the look changes', 'Next look now', 'hidden and the screen ignores it'].forEach(word => assert.ok(editing.includes(word), 'editing-content.md names ' + word));
   assert.ok(layouts.includes('empty') && editing.includes('is empty'), 'both say what an empty list does');
   assert.ok(layouts.includes(String(config.lookResumeSeconds)) && layouts.includes(String(config.lookShortestSeconds)), 'layouts.md gives the two times');

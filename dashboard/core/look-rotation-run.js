@@ -14,14 +14,19 @@
 // the pass it was reloaded for is written down in localStorage, so the page goes on in it.
 
 import * as frame from '../frame.js';
-import { makeLookRotation, makeNextLookRunner } from './look-rotation.js';
+import { panels } from '../registry.js';
+import { drawnFor, layoutNow, layoutOf, reloadKey } from './layout.js';
+import { makeLookRotation, makeNextLookRunner, styleCanGoOn, withoutMondayCards } from './look-rotation.js';
 import { moveOn, rewindRotation, setLookHooks } from './schedule.js';
-import { rotateStyle } from './style.js';
+import { layoutFor, rotateStyle, shapesFor, shapesNow } from './style.js';
 import { queueSwap, startSwaps, swapRunning } from './swap-run.js';
 import { noteWantedTeam } from './team-run.js';
 import { takeoverRunning } from './takeover.js';
 import { rotateTeam, useTeams } from './teams.js';
 import { checkTheme } from './theme-apply.js';
+import { resolveTheme } from './theme.js';
+
+const mondayCardIds = panels.filter(panel => panel.monday).map(panel => panel.id);
 
 let getContent = null;
 let rotation = null;
@@ -82,6 +87,38 @@ function changeLook(look) {
   queueSwap();
 }
 
+// Whether the Monday style can go on the page now (styleCanGoOn in core/look-rotation.js). The layout the style asks for
+// is worked out as holdForLayout does in core/layout-apply.js, and the page may reload for it when it has
+// not just done so (mustReload in core/layout.js).
+function mondayStyleFits(style) {
+  try {
+    const theme = resolveTheme(getContent().theme, new Date()).theme;
+    const wanted = drawnFor(layoutFor(style, layoutOf(theme)), shapesFor(style));
+    const onPage = drawnFor(layoutNow(), shapesNow());
+    if (wanted === onPage) return true;
+
+    let canReload = false;
+    try {
+      canReload = window.sessionStorage.getItem(reloadKey) !== wanted;
+    } catch (error) {
+      canReload = false; // a note that cannot be kept cannot stop a reload loop, so the page does not reload
+    }
+    return styleCanGoOn(onPage, wanted, canReload);
+  } catch (error) {
+    console.error('The look rotation cannot tell whether the Monday style fits the page', error);
+    return true;
+  }
+}
+
+// The list the large panel follows now: the Monday cards of the team in a Monday pass, and in every other
+// pass the usual list without them
+function playlistNow(list) {
+  const steps = rotation.playlist(list, getContent());
+  const pass = rotation.pass();
+
+  return pass !== null && pass.kind === 'monday' ? steps : withoutMondayCards(steps, mondayCardIds);
+}
+
 // schedule.js asks at the end of every pass of the large panel. True means the list starts again.
 function atPass(now) {
   const result = rotation.boundary(now);
@@ -112,10 +149,10 @@ export async function startLookRotation(contentGetter, addressAsks) {
   hiddenPlaying = await askOptional('./hidden-run.js', 'hiddenPlaying');
 
   const storage = savedStorage();
-  rotation = makeLookRotation({ getContent: getContent, storage: storage, busy: busy });
+  rotation = makeLookRotation({ getContent: getContent, storage: storage, busy: busy, canShow: mondayStyleFits });
   holdLook(rotation.begin(new Date()));
   startSwaps(busyElsewhere);
-  setLookHooks({ atPass: atPass, playlist: list => rotation.playlist(list, getContent()) });
+  setLookHooks({ atPass: atPass, playlist: playlistNow });
 
   const button = makeNextLookRunner({ getContent: getContent, storage: storage, busy: busy, next: pressed });
   frame.onSecond(now => {

@@ -399,6 +399,9 @@ editors can sign in from anywhere.
       test-swap.mjs           checks for the swap (core/swap-plan.js): the pull apart, the re-form, the match of old and
                               new pieces and the flight of the hawk, and core/swap-run.js against a small stand-in
                               for the page and a clock moved by hand
+      test-monday-style.mjs   checks that the Monday cards are in the Monday pass and in the Monday style only: the list
+                              of the large panel in each pass, the pass left out while the style cannot go on the
+                              page, and a held look going on in a swap (core/look-rotation-run.js on a small page)
       test-look-rotation.mjs  checks for the look rotation (core/look-rotation.js): the style of the day, the
                               order of the passes in a cycle, the boundary rule, a restart, one look holding,
                               empty lists, the Next look now guard, and the question schedule.js asks at the
@@ -917,6 +920,7 @@ exceptions are `test-slides-script.mjs`, `test-frc-script.mjs` and `test-monday-
     node tools/test-presentation-mouse.mjs
     node tools/test-look-rotation.mjs
     node tools/test-swap.mjs
+    node tools/test-monday-style.mjs
     node tools/test-console.mjs
     node tools/test-calendar-status.mjs
     node tools/test-calendars-view.mjs

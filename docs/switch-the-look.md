@@ -51,7 +51,8 @@ The team sets the name, the number, the logo, the colors, the mirror and the tri
 with Mirror the layout on has the whole screen flipped left to right: the
 columns, the banner and the tag on the ticker change sides. The sidebar layout of
 the theme Neon Prime is not flipped. A swap waits for the end of a pass and
-then everything changes together, so nothing changes in the middle of a panel.
+then everything changes together, so nothing changes in the middle of a panel. The Monday
+cards are always in the Monday style, and only in the Monday pass.
 
 Items that have a Team show only for that team. Items with Both, the countdown, the
 weather, the BAND events and the photos show for every team

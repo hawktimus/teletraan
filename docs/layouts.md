@@ -1105,6 +1105,15 @@ data of that team (docs/frc-feed.md). The Monday cards are the three panels in t
 "The swap". `mondayCards` in `core/look-rotation.js` gives them to a team that has board tasks, and a team
 that has none has no Monday pass.
 
+**The Monday cards come in the Monday pass and nowhere else.** The large panel follows the Monday cards of the
+team while its Monday pass is up, and in every other pass it follows the usual list without them, even when
+a Panel order saved before this had them in it (`withoutMondayCards` in `core/look-rotation.js`, called from
+`playlistNow` in `core/look-rotation-run.js`). The Monday pass is in the Monday style or it does not happen. A
+Monday style with another layout than the page has goes on by a reload, and a page that has just reloaded for that
+layout, or cannot keep the note that stops a reload loop, does not reload (`mustReload` in `core/layout.js`).
+Then the pass is left out of the cycle until the page can take the style (`styleCanGoOn`, asked through
+`canShow` in `makeLookRotation`), and the cards are never drawn in the frames of another style.
+
 **When it moves.** A pass is over when the list of the large panel has been through once.
 `core/schedule.js` asks the rotation then, before the next page is chosen (`setLookHooks`), and the
 answer decides whether the list starts again from its first panel. A pass is never ended sooner than

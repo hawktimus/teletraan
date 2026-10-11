@@ -105,7 +105,7 @@ in Dashboard Settings, Look tab, with the name each is stored under:
 A cycle goes through the teams in order. For each team it runs a pass of its
 panels in the style of the day, then a pass of its Monday cards in the Monday
 style if the team has any, and then it swaps to the next team. A team with no
-Monday cards skips that pass. A swap waits for the end of a
+Monday cards skips that pass. The Monday cards are never in another style. A swap waits for the end of a
 pass and never happens during an alert, an announcement or a talk. The style and the team change
 together.
 

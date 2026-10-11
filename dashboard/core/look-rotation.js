@@ -96,6 +96,22 @@ export function mondayCards(content, teamCode) {
   return mondaySteps(content, teamCode);
 }
 
+// The Monday cards belong to the Monday pass and nowhere else. A list that holds one in another pass, for
+// example a Panel order saved when the cards could be picked there, shows without it. cardIds are the ids of
+// the panels the registry flags monday (core/look-rotation-run.js reads them from registry.js).
+export function withoutMondayCards(steps, cardIds) {
+  return steps.filter(step => cardIds.indexOf(step.panel) === -1);
+}
+
+// Whether a style can go on a page that is drawn for one layout. The page is drawn for onPage (core/layout.js,
+// drawnFor) and the style asks for wanted. A style of another layout goes on by a reload, and the reload is
+// made impossible when the page has reloaded for that layout already, or cannot keep a note (mustReload in
+// core/layout.js). canReload says whether it may. A style that cannot go on is left out: the Monday cards, which
+// belong to the Monday style, wait for another pass and are never drawn in the wrong frames.
+export function styleCanGoOn(onPage, wanted, canReload) {
+  return wanted === onPage || canReload === true;
+}
+
 // The passes of one cycle, in order: { team, style, kind }. team is a code, or '' when Team mode
 // decides the team, and style is '' when Style decides the style. teams is the codes in order.
 // hasMonday(code) says whether a team has Monday rows. The cycle always has at least one pass.
@@ -154,8 +170,11 @@ function writeState(storage, state) {
 //   busy()            true while an alert, an announcement, a talk, a demo, the night screen or a
 //                     hidden transition has the screen
 //   mondayCards       the Monday cards of a team (the function above, unless a test gives another)
+//   canShow(style)    false when the Monday style cannot go on the page now (styleCanGoOn). The cards of a
+//                     team then have no pass: they are never drawn in another style
 export function makeLookRotation(deps) {
   const cardsOf = deps.mondayCards || mondayCards;
+  const canShow = deps.canShow || (() => true);
   const busy = deps.busy || (() => false);
   const keepPlace = deps.keepPlace !== false;
 
@@ -175,13 +194,14 @@ export function makeLookRotation(deps) {
     const order = Array.isArray(settings.teamOrder) ? settings.teamOrder : [];
     const style = styleForDay(list, dayNumber(theme.timeZone, now));
     const codes = teamsInOrder(order, source.teams).map(team => team.code);
+    const mondayStyle = styles.includes(settings.mondayStyle) ? settings.mondayStyle : defaultSettings.mondayStyle;
 
     return {
       passes: planCycle({
         style: style,
-        mondayStyle: styles.includes(settings.mondayStyle) ? settings.mondayStyle : defaultSettings.mondayStyle,
+        mondayStyle: mondayStyle,
         teams: codes,
-        hasMonday: code => cardsOf(source, code).length > 0,
+        hasMonday: code => cardsOf(source, code).length > 0 && canShow(mondayStyle),
       }),
     };
   }
