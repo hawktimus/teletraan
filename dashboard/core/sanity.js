@@ -1,7 +1,7 @@
 // Talks to Sanity: the two queries, the addresses, and turning what comes back
 // into the content shape in data/sample/content.json. The sample is cleaned the same way.
 
-import { defaultFilter, defaultPerson, defaultSettings, defaultTalk, filterActions, limits, photoFits, primeTeam, talkStatuses, teamTrim } from '../config.js';
+import { defaultFilter, defaultPerson, defaultSettings, defaultTalk, filterActions, limits, photoFits, primeTeam, talkStatuses, teamMetals, teamTrim } from '../config.js';
 import { parseLocalDateTime, sameDay } from './time.js';
 import { fixSettingValues, isVisible, keepInRange, withDefaults } from './content.js';
 import { keptSize, logoUrl, photoFocus, screenPhotoUrl, tidyPhoto } from './images.js';
@@ -549,14 +549,15 @@ function filtersFrom(list) {
 const hexColor = /^#[0-9A-Fa-f]{6}$/;
 const teamCode = /^[a-z0-9]+$/;
 
-// A team document from Studio becomes { code, name, shortName, number, logo, colors, mirror, the
+// A team document from Studio becomes { code, name, shortName, number, logo, colors, metal, glow, mirror, the
 // eight trim fields, active, order }. The code is lowercase letters and digits, and it is what the items point to,
 // so a team without a usable one is dropped. The names are capitals, the way the team name
 // has always been written in the banner, and a missing one is the other, or the code. The
 // logo is the address of the picture at the width the screen needs (core/images.js), and
 // empty when there is none or it cannot be used, which means the shared hawk. A sample file
-// may give the logo as an address. A color that is not # and six hex digits is the Prime one.
-// The mirror is off unless it is on, and the team is active unless it is switched off. A trim field
+// may give the logo as an address. A color that is not # and six hex digits is the Prime one, so a team made
+// before Body and Label existed has Prime's. The metal is gold unless it says steel, and the glow is off unless
+// it is on, so a team made before they existed is Prime's. The mirror is off unless it is on, and the team is active unless it is switched off. A trim field
 // that is missing or not one of its values is the Prime one (teamTrim in config.js).
 function normalizeTeamDocument(raw) {
   const code = trimmed(raw.code).toLowerCase();
@@ -577,6 +578,8 @@ function normalizeTeamDocument(raw) {
     number: typeof raw.number === 'number' ? String(raw.number) : trimmed(raw.number),
     logo: typeof raw.logo === 'string' ? raw.logo.trim() : logoUrl(raw.logo),
     colors: colors,
+    metal: Object.prototype.hasOwnProperty.call(teamMetals, trimmed(raw.metal)) ? trimmed(raw.metal) : primeTeam.metal,
+    glow: raw.glow === true,
     mirror: raw.mirror === true,
     bolts: trimValue(raw, 'bolts'),
     cornerCut: trimValue(raw, 'cornerCut'),

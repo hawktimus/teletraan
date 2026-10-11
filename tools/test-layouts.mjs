@@ -2653,7 +2653,7 @@ test('the three style files each set their own custom properties for their own s
   assert.equal(value('minimal', '--style-grid-size'), '48px');
   ['cybertron', 'minimal'].forEach(name => assert.equal(value(name, '--style-grid-opacity'), '.07', name));
   assert.equal(value('cybertron', '--style-scan-opacity'), '.035');
-  assert.equal(value('cybertron', '--style-body'), '#15181f');
+  assert.equal(value('cybertron', '--style-body'), 'var(--team-body)');
   assert.equal(value('cybertron', '--style-raised'), '#262b33');
 
   // Every custom property a style file or a bar panel reads comes from a style, a team or a token
@@ -2662,7 +2662,7 @@ test('the three style files each set their own custom properties for their own s
   ['panels/bar-banner/bar-banner.css', 'panels/bar-column/bar-column.css'].forEach(file => {
     (withoutComments(read('dashboard/' + file)).match(/var\(--style-[a-z-]+/g) || []).forEach(text => assert.ok(known.has(text.slice(4)), file + ' reads ' + text.slice(4) + ', which no style sets'));
   });
-  assert.ok(/--team-neon: #35f0ff;/.test(read('dashboard/teams.css')), 'the team neon the styles use is set in teams.css');
+  assert.ok(/--team-neon: #faca2a;/.test(read('dashboard/teams.css')), 'the team neon the styles use is set in teams.css, gold for Prime');
 });
 
 // The stylesheets of one style, each loaded with the css it overrides: the ones index.html links apart from the other two
@@ -3518,7 +3518,7 @@ test('the frames are small: a handful of svg elements and five new gradients, an
     assert.ok(elements(plate.areaMarkup('bar-main')) <= 150, 'the main panel');
     assert.ok(elements(plate.plateMarkup('bar-banner')) <= 40, 'the banner');
     assert.ok(elements(plate.areaMarkup('bar-ticker')) <= 40, 'the ticker');
-    assert.ok(elements(plate.areaMarkup('bar-main-minimal')) <= 150, 'the main panel in Minimal, with its rivets, rust and ticks');
+    assert.ok(elements(plate.areaMarkup('bar-main-minimal')) <= 160, 'the main panel in Minimal, with its rivets, rust and ticks, and the lines of the glow, which are hidden unless the team has it');
     assert.ok(elements(plate.plateMarkup('bar-banner-minimal')) <= 40, 'the banner in Minimal');
     assert.ok(elements(plate.areaMarkup('bar-ticker-minimal')) <= 40, 'the ticker in Minimal');
   });
@@ -3587,8 +3587,8 @@ test('the numbers in the Frames section of docs/layouts.md are the numbers of th
 
   // The parts and their sizes, as plate.js and the stylesheets have them
   const css = withoutComments(read('dashboard/base.css') + read('dashboard/styles/cybertron.css'));
-  ['4 px, `--style-neon`', '14 px and .25 opacity', '24 px and .12', '12 px high, slanted bars 22 px wide every 44', 'six slanted bars in the neon, 22 px wide every 40', 'a leg of 60 px down the side and 70 px along the top', '3 px pink line'].forEach(text => assert.ok(section.includes(text), text));
-  assert.ok(/stroke-width: 4px;/.test(css) && /stroke-width: 14px;/.test(css) && /stroke-width: 24px;/.test(css));
+  ['4 px, `--style-neon`', '12 px and .35 opacity', '26 px and .12', '12 px high, slanted bars 22 px wide every 44', 'six slanted bars in the neon, 22 px wide every 40', 'a leg of 60 px down the side and 70 px along the top', '3 px pink line'].forEach(text => assert.ok(section.includes(text), text));
+  assert.ok(/stroke-width: 4px;/.test(css) && /stroke-width: 12px;/.test(css) && /stroke-width: 26px;/.test(css));
   const main = plate.barShape('bar-main');
   assert.equal(main.art.hazard.split('M').length - 1, 32, 'the stripes across the 1399 px under the header');
   assert.equal(main.art.slashes.split('M').length - 1, 6, 'six slashes');
@@ -3600,14 +3600,14 @@ test('the numbers in the Frames section of docs/layouts.md are the numbers of th
 
 // The steel
 
-test('steel is one more metal next to gold and silver: its tokens, its three gradients, and the same edge tokens, for Cybertron and Minimal and for nothing else', () => {
+test('steel is one more metal next to gold and silver: its tokens, its three gradients, and the same edge tokens, for a team that has it, in every style', () => {
   const tokens = withoutComments(read('dashboard/tokens.css'));
   const found = /([^{}]*\[data-metal="steel"\][^{}]*)\{([^{}]*)\}/.exec(tokens);
   assert.ok(found, 'tokens.css has a rule for the steel');
 
   const selectors = found[1].split(',').map(selector => selector.trim());
-  assert.deepEqual(selectors, ['[data-metal="steel"]', 'html[data-style="cybertron"]', 'html[data-style="cybertron"] [data-metal]', 'html[data-style="minimal"]', 'html[data-style="minimal"] [data-metal]']);
-  assert.ok(!selectors.some(selector => /original/.test(selector)), 'Original has the metal it always had');
+  assert.deepEqual(selectors, ['[data-metal="steel"]', 'html.metal-steel', 'html.metal-steel [data-metal]']);
+  assert.ok(!selectors.some(selector => /data-style/.test(selector)), 'it is the team\'s metal, and no style names it');
 
   const declared = {};
   found[2].split(';').map(line => line.trim()).filter(Boolean).forEach(line => { declared[line.split(':')[0].trim()] = line.slice(line.indexOf(':') + 1).trim(); });
@@ -3617,7 +3617,9 @@ test('steel is one more metal next to gold and silver: its tokens, its three gra
   assert.equal(declared['--edge-shade'], 'url(#edge-shade-steel)');
 
   // Gold and silver keep their rules: the steel never reaches the selectors the others have
-  assert.ok(/:root,\s*\[data-metal="gold"\] \{\s*--metal-1: #efe6c4;/.test(tokens));
+  assert.ok(/:root,\s*\[data-metal="gold"\],[^{}]*\{\s*--metal-1: #efe6c4;/.test(tokens));
+  const goldOnly = /:root,\s*\[data-metal="gold"\],([^{}]*)\{\s*--metal-1: #efe6c4;/.exec(tokens)[1].split(',').map(selector => selector.trim());
+  assert.deepEqual(goldOnly, ['html[data-style="cybertron"]:not(.metal-steel)', 'html[data-style="cybertron"]:not(.metal-steel) [data-metal]', 'html[data-style="minimal"]:not(.metal-steel)', 'html[data-style="minimal"]:not(.metal-steel) [data-metal]'], 'Cybertron and Minimal have gold for a team with no steel, and Original is not named');
   assert.ok(/\[data-metal="silver"\] \{\s*--metal-1: #c3c4c3;/.test(tokens));
 
   // The brightest stop is below pure white and the metal is cool: more blue than red at every stop
@@ -3642,7 +3644,7 @@ test('steel is one more metal next to gold and silver: its tokens, its three gra
   assert.ok(html.indexOf('id="edge-steel"') > html.indexOf('id="edge-shade-red"') && html.indexOf('id="edge-steel"') < html.indexOf('id="screw-face-silver"'));
 });
 
-test('the neon and the bolt are shared by both styles in base.css: the neon line is on, the wider ones are off until a style turns them on, and the flat finish has none of them', () => {
+test('the neon and the bolt are shared by both styles in base.css: the neon line is on, the wider ones are off until a team with Glow turns them on, and the flat finish has none of them', () => {
   const base = withoutComments(read('dashboard/base.css'));
   const rule = selector => {
     const found = new RegExp('(?:^|\\})\\s*' + selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' \\{([^}]*)\\}').exec(base);
@@ -3653,9 +3655,15 @@ test('the neon and the bolt are shared by both styles in base.css: the neon line
   assert.ok(/stroke: var\(--style-neon, var\(--team-neon\)\);/.test(base), 'the neon is the style\'s, and the team\'s without one');
   assert.ok(/stroke-width: 4px;/.test(rule('.edge-neon')));
   assert.ok(/display: none;/.test(rule('.edge-neon-wide-1')) && /display: none;/.test(rule('.edge-neon-wide-2')), 'the wide lines are off');
-  assert.ok(/stroke-width: 14px;/.test(rule('.edge-neon-wide-1')) && /stroke-opacity: \.25;/.test(rule('.edge-neon-wide-1')));
-  assert.ok(/stroke-width: 24px;/.test(rule('.edge-neon-wide-2')) && /stroke-opacity: \.12;/.test(rule('.edge-neon-wide-2')));
+  assert.ok(/stroke-width: 12px;/.test(rule('.edge-neon-wide-1')) && /stroke-opacity: \.35;/.test(rule('.edge-neon-wide-1')));
+  assert.ok(/stroke-width: 26px;/.test(rule('.edge-neon-wide-2')) && /stroke-opacity: \.12;/.test(rule('.edge-neon-wide-2')));
   assert.ok(/\[data-finish="flat"\] \.edge-neon-wide-1,\s*\[data-finish="flat"\] \.edge-neon-wide-2/.test(base), 'the flat finish has no wide lines');
+
+  // The glow: a team with it has a line of 5 and the two wider ones, on the frames and on the header line of Minimal, and not in the flat finish
+  assert.ok(/display: none;/.test(rule('.art-glow')) && /stroke-width: 12px;/.test(rule('.art-glow-header-1')) && /stroke-opacity: \.35;/.test(rule('.art-glow-header-1')));
+  assert.ok(/stroke-width: 26px;/.test(rule('.art-glow-header-2')) && /stroke-opacity: \.12;/.test(rule('.art-glow-header-2')));
+  assert.ok(base.includes('html.neon-glow:not([data-finish="flat"]) .edge-neon,\nhtml.neon-glow:not([data-finish="flat"]) .art-header-line { stroke-width: 5px; }'));
+  assert.ok(base.includes('html.neon-glow:not([data-finish="flat"]) .edge-neon-wide-1,\nhtml.neon-glow:not([data-finish="flat"]) .edge-neon-wide-2,\nhtml.neon-glow:not([data-finish="flat"]) .art-glow { display: inline; }'));
   assert.ok(/\.art-cybertron \{ display: none; \}/.test(base), 'what only Cybertron draws is off until it is on');
 
   // The armor tab: a bevel, a bright line and the team plate color, in lines of 3px or more
@@ -3663,7 +3671,7 @@ test('the neon and the bolt are shared by both styles in base.css: the neon line
   assert.ok(/fill: var\(--team-plate\);/.test(rule('.tab-inset')), 'the team plate color is inset in the tab');
 
   // Nothing in what the two styles share moves, glows or is a picture, and every line is 3px or more
-  const shared = [rule('.edge-neon'), rule('.edge-neon-wide-1'), rule('.edge-neon-wide-2'), rule('.tab-bevel'), rule('.tab-line'), rule('.tab-inset'), rule('.bolt-rim'), rule('.bolt-face'), rule('.bolt-dot')].join(' ');
+  const shared = [rule('.edge-neon'), rule('.edge-neon-wide-1'), rule('.edge-neon-wide-2'), rule('.art-glow'), rule('.art-glow-header-1'), rule('.art-glow-header-2'), rule('.tab-bevel'), rule('.tab-line'), rule('.tab-inset'), rule('.bolt-rim'), rule('.bolt-face'), rule('.bolt-dot')].join(' ');
   assert.ok(!/(animation|transition|filter|shadow|blur|url\()/.test(shared));
   (shared.match(/stroke-width: [\d.]+px/g) || []).forEach(text => assert.ok(parseFloat(/[\d.]+px/.exec(text)[0]) >= 3, text));
 });
@@ -3717,11 +3725,11 @@ test('the Cybertron stylesheet paints with the team\'s colors and gradients and 
   assert.ok(/fill: var\(--style-neon\);/.test(paint('slashes')));
   assert.ok(/stroke-opacity: \.6;/.test(paint('seams')), 'the seams are faint');
 
-  // The wide neon lines are on, except in the flat finish
-  assert.ok(css.includes('html[data-style="cybertron"]:not([data-finish="flat"]) .edge-neon-wide-1'));
-  // and the plates are the gunmetal: the body is the style's, the tab an armor plate, the TEAM plate and the tag the team's plate color
+  // The wide neon lines are not the style's: they are the glow of a team that has it (base.css)
+  assert.ok(!css.includes('edge-neon-wide'));
+  // and the plates are in the team's body color: the body is the style's, the tab an armor plate, the TEAM plate, the tag and the cards the team's plate color
   assert.ok(/--panel-face: var\(--style-body\);/.test(css) && css.includes('fill: url(#armor-face);'));
-  assert.ok(/\.team-fill,\s*html\[data-style="cybertron"\] \.tag-fill \{ fill: var\(--team-plate\); \}/.test(css));
+  assert.ok(/\.team-fill,\s*html\[data-style="cybertron"\] \.tag-fill,\s*html\[data-style="cybertron"\] \.card-fill \{ fill: var\(--team-plate\); \}/.test(css));
 });
 
 test('the page background of Cybertron is the grid at 96px and the scanlines, nothing else on the screen is drawn behind the stage, and Original has none of it', () => {
@@ -3738,9 +3746,9 @@ test('the steel and the bolts reach the frames of Cybertron through the tokens: 
   const css = withoutComments(read('dashboard/styles/cybertron.css'));
   assert.ok(css.includes('html[data-style="cybertron"] .banner .logo .drawing,\nhtml[data-style="cybertron"] .side-logo .drawing { --logo-edge: var(--team-accent); }'), 'the hawk of the banner and of the sidebar has the team accent');
 
-  // The tokens file gives the steel to the html element and to each element with a data-metal: that is the banner and every area
+  // The tokens file gives the metal of the team to the html element and to each element with a data-metal: that is the banner and every area
   const tokens = withoutComments(read('dashboard/tokens.css'));
-  assert.ok(tokens.includes('html[data-style="cybertron"] [data-metal]'), 'every area, whichever metal the page change gave it');
+  assert.ok(tokens.includes('html.metal-steel [data-metal]') && tokens.includes('html[data-style="cybertron"]:not(.metal-steel) [data-metal]'), 'every area, whichever metal the page change gave it');
   assert.ok(/:root,\s*\[data-metal\] \{\s*--edge-rim: var\(--metal-rim\);/.test(tokens), 'the rim is worked out on each of them from the steel');
 
   // The code that picks the metal of a page change never has to know: the steel styles make no finish change at all
@@ -3903,8 +3911,6 @@ test('the Minimal frames are the same ten-cornered plates with smaller cuts, 34 
     // a bolt at each of the four joints, which are the two ends of each cut corner, and no other part of Cybertron
     const bolts = shape.screws.a.concat(shape.screws.b).map(point => point.join(','));
     assert.deepEqual(bolts.slice().sort(), [1, 2, 6, 7].map(index => outline[index].join(',')).sort(), kind + ': four bolts');
-    assert.equal(shape.wide, false, kind + ': one neon line and no wide ones');
-    assert.equal(usual.wide, true, 'Cybertron keeps its two wide ones');
     assert.deepEqual(shape.bracketLines, [], kind + ': no brackets');
     ['hazard', 'conduit', 'slashes', 'seams', 'brackets'].forEach(name => assert.ok(!shape.art[name], kind + ' has no ' + name));
     assert.deepEqual(shape.neon.a, plate.offsetOutline(outline, 10).slice(0, 6), kind + ': the neon line is the outline 10 inside');
@@ -3998,7 +4004,8 @@ test('the main panel of Minimal has each of its parts where the frame has them: 
     assert.equal(countOf(markup, 'href="#bolt-shape"'), 4 + 4, 'four bolts in the frame and four in the pieces');
     assert.equal(countOf(markup, 'class="plate piece"'), 12, 'the same twelve pieces');
     assert.equal(countOf(markup, '<use class="edge-neon"'), 2 + 7, 'one neon line in each half and in each of the seven bars');
-    ['art-cybertron', 'edge-neon-wide', 'art-brackets', 'art-hazard', 'art-conduit', 'art-slashes', 'art-seams', 'screw-shadow', 'bolt-shadow', 'glint'].forEach(name => assert.ok(!hasText(markup, name), 'nothing of ' + name));
+    ['art-cybertron', 'art-brackets', 'art-hazard', 'art-conduit', 'art-slashes', 'art-seams', 'screw-shadow', 'bolt-shadow', 'glint'].forEach(name => assert.ok(!hasText(markup, name), 'nothing of ' + name));
+    assert.equal(countOf(markup, '<use class="edge-neon-wide-1"'), 2 + 7, 'the two wider lines are in the markup, hidden unless the team has Glow');
     ['class="tab-inset"', 'class="tab-bevel"', 'class="tab-line"'].forEach(text => assert.equal(countOf(markup, text), 2, text + ': the armor tab is the same as Cybertron\'s'));
 
     // the frame is the same order of parts as the other bar frames, and every shape it points at is drawn
@@ -4088,7 +4095,7 @@ test('the Minimal stylesheet paints with the team\'s colors and gradients and no
   ['--team-accent', '--team-plate', '--style-neon', '--style-pink', '--style-body', '--style-rust', '--style-grid-size', '--style-grid-opacity', '--metal-ridge'].forEach(name => assert.ok(css.includes('var(' + name + ')'), 'it reads ' + name));
 
   const first = rules[0].body;
-  assert.ok(/--style-body: var\(--ground\);/.test(first) && /--style-rust: #[0-9a-f]{6};/.test(first) && /--style-armor-top: #[0-9a-f]{6};/.test(first) && /--style-armor-bottom: #[0-9a-f]{6};/.test(first));
+  assert.ok(/--style-body: var\(--team-body\);/.test(first) && /--style-rust: #[0-9a-f]{6};/.test(first) && /--style-armor-top: #[0-9a-f]{6};/.test(first) && /--style-armor-bottom: #[0-9a-f]{6};/.test(first));
   assert.ok(!/--style-raised|--style-scan-opacity/.test(css), 'Minimal has no raised plate and no scanlines');
 
   // The page background is the team's, with the grid at 48px in a layer behind the stage, and no scanlines
@@ -4106,7 +4113,7 @@ test('the Minimal stylesheet paints with the team\'s colors and gradients and no
 
   // The plates: the body is the team's background, the tab an armor plate, the team plate and the tag in the plate color
   assert.ok(/--panel-face: var\(--style-body\);/.test(css) && css.includes('fill: url(#armor-face);'));
-  assert.ok(/\.team-fill,\s*html\[data-style="minimal"\] \.tag-fill \{ fill: var\(--team-plate\); \}/.test(css));
+  assert.ok(/\.team-fill,\s*html\[data-style="minimal"\] \.tag-fill,\s*html\[data-style="minimal"\] \.card-fill \{ fill: var\(--team-plate\); \}/.test(css));
   assert.ok(css.includes('html[data-style="minimal"] .bar-logo .drawing { --logo-edge: var(--team-accent); }'));
 
   // The rivets are shown and the id is not, the // mark of the header is off, the weld seam is dark with a faint light line, the ticks are neon and the rust is a patch and an arc

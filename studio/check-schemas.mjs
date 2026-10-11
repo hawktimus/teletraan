@@ -110,7 +110,9 @@ const contract = {
     number: text(6),
     code: text(10),
     logo: 'image',
-    colors: object({ primary: hexColor, plate: hexColor, accent: hexColor, neon: hexColor, pink: hexColor, background: hexColor, text: hexColor }),
+    colors: object({ primary: hexColor, plate: hexColor, accent: hexColor, neon: hexColor, pink: hexColor, background: hexColor, text: hexColor, body: hexColor, label: hexColor }),
+    metal: 'string',
+    glow: 'boolean',
     mirror: 'boolean',
     bolts: 'string',
     cornerCut: 'string',
@@ -3665,12 +3667,12 @@ function checkPresentations() {
   return problems;
 }
 
-// The Team type: a name, a short name, a number and a code, an optional logo, seven
-// colors, the mirror switch, the active switch and the order. The starting colors are
+// The Team type: a name, a short name, a number and a code, an optional logo, nine
+// colors, the metal and the glow, the mirror switch, the active switch and the order. The starting colors are
 // the Prime ones, which are the colors of the screen today (themes/hawktimus.css). The
 // seed file docs/seed/teams.ndjson holds the two teams, and the Teams list comes right
 // after Look in the sidebar.
-const teamColorNames = ['primary', 'plate', 'accent', 'neon', 'pink', 'background', 'text'];
+const teamColorNames = ['primary', 'plate', 'accent', 'neon', 'pink', 'background', 'text', 'body', 'label'];
 
 function checkTeams() {
   const problems = [];
@@ -3681,7 +3683,7 @@ function checkTeams() {
 
   need(problems, type.title === 'Teams', 'the team type should have the title Teams');
   const titles = {
-    name: 'Team name', shortName: 'Short name', number: 'Team number', code: 'Team code', logo: 'Logo', colors: 'Colors', mirror: 'Mirror the layout',
+    name: 'Team name', shortName: 'Short name', number: 'Team number', code: 'Team code', logo: 'Logo', colors: 'Colors', metal: 'Metal', glow: 'Glow', mirror: 'Mirror the layout',
     bolts: 'Bolts', cornerCut: 'Cut corners', headerNotch: 'Header end', grid: 'Page grid', logoPose: 'Bird pose', nameStyle: 'Team name look', tickerLabel: 'Ticker label', countAccent: 'Countdown color',
     active: 'Active', order: 'Order',
   };
@@ -3704,7 +3706,7 @@ function checkTeams() {
     ['Prime', 'my team', 'team-2', 'team_2', 'prime\n', ''].forEach(bad => need(problems, !code.args[0].test(bad), 'the team code pattern accepts "' + bad + '"'));
   }
 
-  // The seven colors, in this order, each needed and starting at the Prime value
+  // The nine colors, in this order, each needed and starting at the Prime value
   const seeded = {};
   world.teamSeed.split('\n').filter(line => line.trim() !== '').forEach(line => {
     try {
@@ -3723,6 +3725,14 @@ function checkTeams() {
     need(problems, field && constraintNamed(rulesOf(field), 'required'), 'team.colors.' + name + ' should be required');
     need(problems, field && field.initialValue === prime.colors[name], 'team.colors.' + name + ' should start as ' + prime.colors[name] + ', the Prime value in the seed file, and it starts as ' + (field && field.initialValue));
   });
+
+  // The metal is gold or steel, as teamMetals in dashboard/config.js has it, and starts on gold. The glow is a switch that starts off
+  const metal = at('metal');
+  need(problems, metal && metal.type === 'string' && metal.initialValue === 'gold' && metal.options && metal.options.layout === 'radio', 'team.metal should be a radio that starts on gold');
+  need(problems, metal && metal.options && (metal.options.list || []).map(item => item.value).join() === Object.keys(world.dashboard.teamMetals).join(), 'team.metal should offer ' + Object.keys(world.dashboard.teamMetals).join(' and ') + ', as teamMetals in dashboard/config.js has them');
+  need(problems, metal && constraintNamed(rulesOf(metal), 'valid'), 'team.metal should only accept its two values');
+  const glow = at('glow');
+  need(problems, glow && glow.type === 'boolean' && glow.initialValue === false, 'team.glow should be a switch that starts off');
 
   // The switches and the order
   const mirror = at('mirror');
@@ -3770,8 +3780,8 @@ function checkTeamSeed(type) {
   const hex = /^#[0-9A-Fa-f]{6}$/;
 
   const wanted = {
-    'team-prime': { number: '3229', code: 'prime', mirror: false, colors: { primary: '#6C18B6', plate: '#3B2A7A', accent: '#FACA2A', neon: '#35F0FF', pink: '#FF2E8C' } },
-    'team-nova': { number: '3230', code: 'nova', mirror: true, colors: { primary: '#1F7AE0', plate: '#1E3A6E', accent: '#9BF0FF', neon: '#FF2E8C', pink: '#35F0FF' } },
+    'team-prime': { number: '3229', code: 'prime', mirror: false, metal: 'gold', glow: false, colors: { primary: '#6C18B6', plate: '#3B2A7A', accent: '#FACA2A', neon: '#FACA2A', pink: '#B23CFF', body: '#1A0F2E', label: '#FACA2A' } },
+    'team-nova': { number: '3230', code: 'nova', mirror: true, metal: 'steel', glow: true, colors: { primary: '#1B6FD6', plate: '#0E2A4A', accent: '#8FF0FF', neon: '#3FD8FF', pink: '#9BF0FF', background: '#050910', body: '#07131F', label: '#C58CFF' } },
   };
   need(problems, lines.length === 2, 'docs/seed/teams.ndjson should have two teams, Prime and Nova, it has ' + lines.length);
 
@@ -3795,6 +3805,8 @@ function checkTeamSeed(type) {
     need(problems, doc.colors && Object.keys(doc.colors).join() === teamColorNames.join(), where + ' should have the colors ' + teamColorNames.join(', ') + ', in this order');
     teamColorNames.forEach(name => need(problems, doc.colors && hex.test(doc.colors[name]), where + ': colors.' + name + ' should be # and six hex characters'));
     need(problems, typeof doc.mirror === 'boolean', where + ' should have mirror true or false');
+    need(problems, Object.keys(world.dashboard.teamMetals).indexOf(doc.metal) !== -1, where + ' should have the metal gold or steel');
+    need(problems, typeof doc.glow === 'boolean', where + ' should have glow true or false');
     need(problems, doc.active === true, where + ' should have active true');
     need(problems, Number.isInteger(doc.order), where + ' should have a whole number for order');
   });
@@ -3804,6 +3816,7 @@ function checkTeamSeed(type) {
     if (!doc) return problems.push('docs/seed/teams.ndjson should have the team ' + id);
     const want = wanted[id];
     need(problems, doc.number === want.number && doc.code === want.code && doc.mirror === want.mirror, id + ' should have number ' + want.number + ', code ' + want.code + ' and mirror ' + want.mirror);
+    need(problems, doc.metal === want.metal && doc.glow === want.glow, id + ' should have metal ' + want.metal + ' and glow ' + want.glow);
     Object.keys(want.colors).forEach(name => need(problems, doc.colors && doc.colors[name] === want.colors[name], id + ' should have colors.' + name + ' ' + want.colors[name]));
   });
 

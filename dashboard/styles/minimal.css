@@ -12,16 +12,16 @@
 
    The frames are drawn by core/plate.js with shapes of their own for this style, cut
    at 34 px (bar-main-minimal and the other two, "The frames of the bar layout"). What
-   only Cybertron has is not here: no wide neon lines, no hazard stripe, no conduit, no
+   only Cybertron has is not here: no hazard stripe, no conduit, no
    slashes, no brackets, no plate seams, no scanlines and no raised plate. Minimal has no
    stamped id either, which is Original's. What it has on a frame is a thin neon line just
-   inside the steel edge, a hex bolt at each of the four joints, the rivets that Original
-   also has, rust, a weld seam on the main panel, and a line with ticks along the foot of
-   its header. The plates are the team's background color, and the header tab is an armor
-   plate with the team's plate color inset. */
+   inside the metal edge (steel or gold, tokens.css), a hex bolt at each of the four joints, the
+   rivets that Original also has, rust, a weld seam on the main panel, and a line with ticks
+   along the foot of its header. The plates are the team's body color, and the header tab is an
+   armor plate with the team's plate color inset. */
 
 html[data-style="minimal"] {
-  --style-body: var(--ground);
+  --style-body: var(--team-body);
   --style-armor-top: #323843;
   --style-armor-bottom: #1d2128;
   --style-chamfer: 34px;
@@ -54,7 +54,7 @@ html[data-style="minimal"] #screen::before {
 }
 
 
-/* The plates. The body of an area's frame and of the banner's is the team's background
+/* The plates. The body of an area's frame and of the banner's is the team's body
    color. The header tab is a raised armor plate: a gradient, with the bevel, the bright line
    and the team's plate color inset that plate.js draws on it (base.css). The rest of the
    header is the same as the body. */
@@ -65,9 +65,13 @@ html[data-style="minimal"] .bar-banner {
 html[data-style="minimal"] .area .plate .header-left { fill: url(#armor-face); }
 html[data-style="minimal"] .area .plate .header-right { fill: var(--style-body); }
 
-/* The TEAM plate and the ticker's tag are plates in the team's plate color */
+/* The TEAM plate, the ticker's tag and the cards are plates in the team's plate color. The
+   cards that only hold a picture have no fill */
 html[data-style="minimal"] .team-fill,
-html[data-style="minimal"] .tag-fill { fill: var(--team-plate); }
+html[data-style="minimal"] .tag-fill,
+html[data-style="minimal"] .card-fill { fill: var(--team-plate); }
+html[data-style="minimal"] .sponsor-feature .card-fill,
+html[data-style="minimal"] .photo .card-fill { fill: none; }
 
 /* The hawk has the team's accent for its outline, and keeps the colors the theme gives its
    plates */

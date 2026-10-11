@@ -17,7 +17,8 @@ three:
   whatever theme is on (see "The bar layout").
 
 Original and Cybertron are the two styles that have the layout of their theme. Cybertron
-draws the same arrangement as Original in plates of gunmetal and steel (see "Cybertron").
+draws the same arrangement as Original in plates in the team's body color, with the metal of the team for
+their edges (see "Cybertron" and "Team colors, metal and glow").
 
 A team with Mirror the layout switched on turns the standard and the bar layout left
 to right (see "The mirror"). The sidebar layout is not turned. Every layout is placed in
@@ -721,8 +722,8 @@ the bar layout (`layouts/bar.css`), and the team gives the colors.
 | File | What it has |
 |------|-------------|
 | `styles/original.css` | no custom properties, and the mirror of the standard layout, which Cybertron has too |
-| `styles/cybertron.css` | `--style-body` and `--style-raised` (the gunmetal plates), the two colors of the armor tab, the 56 px chamfer, the neon and pink of the team, amber digits and rust for the war clock, a 96 px grid at .07 and scanlines at .035. Then the rules that paint the page background, the plates and the decoration of the frames, and lay out the stage, the banner and the ticker for their plates (see "Cybertron") |
-| `styles/minimal.css` | the 34 px chamfer, the neon and pink of the team, digits in the team's neon, the team's background for the plates, the two colors of the armor tab, the rust, a 48 px grid at .07 and no scanlines. Then the rules that paint the grid, the plates, the rail and the rivets that Original also has, take the `//` mark off the headers, and paint what only Minimal draws on a frame (see "Minimal") |
+| `styles/cybertron.css` | `--style-body` (the team's body color) and `--style-raised`, the two colors of the armor tab, the 56 px chamfer, the neon and pink of the team, amber digits and rust for the war clock, a 96 px grid at .07 and scanlines at .035. Then the rules that paint the page background, the plates and the decoration of the frames, and lay out the stage, the banner and the ticker for their plates (see "Cybertron") |
+| `styles/minimal.css` | the 34 px chamfer, the neon and pink of the team, digits in the team's neon, the team's body color for the plates, the two colors of the armor tab, the rust, a 48 px grid at .07 and no scanlines. Then the rules that paint the grid, the plates, the rail and the rivets that Original also has, take the `//` mark off the headers, and paint what only Minimal draws on a frame (see "Minimal") |
 
 The style goes on the page at the same moment as a new theme (`theme-apply.js`
 carries it in the look), and a style with another layout reloads the page once, with
@@ -793,17 +794,18 @@ shape and its corners, as the frames of the other layouts do, and only the regio
 can have the other two corners cut, and a header tab with one slant (see "Team trim").
 
 From the bottom up, each half of the edge is drawn like the other frames: the shadow, the
-dark rim, the steel face, the shade and the ridge. The steel is the metal in `tokens.css`
-(`--metal` tokens for `data-metal="steel"`) with its three gradients in `index.html`. Both
-styles give it to the html element and to every area, so the frame metal and the page change
-never change it, and `core/areas.js` makes no change of metal for either style. Then come the
-neon lines, on one path that is the outline 10 px inside, so they follow every corner.
+dark rim, the face, the shade and the ridge. The metal is the team's (see "Team colors, metal and
+glow"): the `--metal` tokens in `tokens.css` for steel, which a team with steel has, and for gold
+otherwise, with the three gradients of each in `index.html`. Both styles give it to the html element
+and to every area, so the frame metal and the page change never change it, and `core/areas.js`
+makes no change of metal for either style. Then come the neon lines, on one path that is the outline
+10 px inside, so they follow every corner.
 
 | Part | What it is | Where it is |
 |------|------------|-------------|
-| Neon line | 4 px, `--style-neon` | 10 px inside the edge, both styles |
-| Wide neon lines | the same path at 14 px and .25 opacity, and at 24 px and .12 | Cybertron only, and not in the flat finish |
-| Hex bolt | a hexagon 33 px wide and 38 high, with a dark rim, a silver face and a dot | at the joints: corners 1, 2, 5, 6, 7 and 0 (the ticker has 2 and 7) |
+| Neon line | 4 px, `--style-neon`, and 5 px for a team with Glow | 10 px inside the edge, both styles |
+| Wide neon lines | the same path at 12 px and .35 opacity, and at 26 px and .12 | both styles, for a team with Glow only, and not in the flat finish |
+| Hex bolt | a hexagon 33 px wide and 38 high, with a dark rim, a face in the metal of the team and a dot | at the joints: corners 1, 2, 5, 6, 7 and 0 (the ticker has 2 and 7) |
 | Armor tab | a gradient, a dark bevel, a bright line up and left, and the team's plate color inset | the header of the main panel, 664 px across at the top and slanted at the end |
 | Hazard stripe | 12 px high, slanted bars 22 px wide every 44, in the team's accent | under the header, Cybertron only |
 | Conduit | a 3 px pink line, `--style-pink` | 16 px inside the edge along the top left corner and the top, and along the bottom right corner and the bottom, and under the hazard stripe |
@@ -853,39 +855,40 @@ with the same guard (`drawnFor` and `mustReload` in `core/layout.js`). A page th
 colors, the theme or the team does not.
 
 What Minimal draws on a frame is in the same markup as the rest, and `styles/minimal.css`
-paints it. It has none of Cybertron's decoration: no wide neon lines, hazard stripe,
-conduit, slashes, brackets or plate seams. Its frames have no stamped id or any other
+paints it. It has none of Cybertron's decoration: no hazard stripe,
+conduit, slashes, brackets or plate seams, and the wide neon lines are not its own: a team with Glow
+has them in both styles. Its frames have no stamped id or any other
 serial text, and its page has no scanlines and no raised plate. The `//` mark at the right end
 of a panel's header is off, as the pictures of Minimal have none and the ticks stand there.
 
 | Part | What it is | Where it is |
 |------|------------|-------------|
-| Neon line | 4 px, `--style-neon`: one neon line, with none of the wide ones | 10 px inside the edge |
+| Neon line | 4 px, `--style-neon`: one neon line, with the two wide ones hidden unless the team has Glow | 10 px inside the edge |
 | Hex bolt | the same bolt as Cybertron's | the four joints: both ends of the top left and of the bottom right cut corner |
 | Rivets | dots of 5 px radius with a dark rim, one every 90 px, as Original's | every straight edge of 180 px or more |
 | Rust | rust at the two bottom corners of every frame: an arc of 4 px, `--style-rust`, with a soft patch under it that is a radial gradient (`wear-rust` in `index.html`) | one arc on the left edge just above the step, bulging into the frame, and one on the bottom edge just before the cut corner |
 | Weld seam | a dark 3 px line with a faint light 3 px line 4 px beside it | the main panel only, at x = 1188, from under the header to just above the bottom. It is 36 px past the 1152 the pages are written for, so it crosses no text |
-| Header line | a 3 px neon line | along the foot of the header, with 39 ticks standing on it: every 18, 4 wide and 10 high, from the slanted end of the tab to the right edge |
+| Header line | a 3 px neon line, 5 px for a team with Glow, which also has the two wide lines behind it | along the foot of the header, with 39 ticks standing on it: every 18, 4 wide and 10 high, from the slanted end of the tab to the right edge |
 
 The armor tab is the same as Cybertron's, with the team's plate color inset and two colors of
-its own (`--style-armor-top` and `--style-armor-bottom`). The plates are the team's background
-color. The rust is on the steel, in the second half of the frame and in the pieces of the page
+its own (`--style-armor-top` and `--style-armor-bottom`). The plates are the team's body
+color. The rust is on the metal, in the second half of the frame and in the pieces of the page
 change that have the corners, and it comes in with the rivets once the lines are drawn. The
 flat finish leaves it off. The grid, the rivets and the rust never move. The mirror turns the
 regions and not the frames, so the same frames, rivets, rust and seam are at the same
 corners of a mirrored screen.
 
-What Minimal and Cybertron share, and why. The order gives both a steel edge with a neon line
+What Minimal and Cybertron share, and why. The order gives both a metal edge with a neon line
 inside it, hex bolts, a raised armor header with the team's plate color inset, and a grid on the
-page, and one function in `core/plate.js` draws both. So they share the steel (`tokens.css`), the
-4 px neon line, the hex bolt, the armor tab, the rule that gives a plate its face (it reads
-`--style-body`, which is gunmetal in one and the team's background in the other), the TEAM plate
-and the ticker's tag in the plate color, the hawk's outline in the team's accent, the grid layer (96 px in Cybertron and 48 px in
+page, and one function in `core/plate.js` draws both. So they share the metal (`tokens.css`), the
+4 px neon line and its glow, the hex bolt, the armor tab, the rule that gives a plate its face (it reads
+`--style-body`, the team's body color in both), the TEAM plate, the ticker's tag and the cards
+in the plate color, the hawk's outline in the team's accent, the grid layer (96 px in Cybertron and 48 px in
 Minimal, both at .07, each in its own stylesheet), the header without a `//` mark, and the war
 clock, which is the same clock in two forms. Everything else is one style's. In
 `styles/minimal.css`: the rivets, the rust, the weld seam, the header line and its ticks, the rail,
-the 34 px cuts and the plates in the team's background color. In `styles/cybertron.css`: the
-gunmetal body, the wide neon lines, the hazard stripe, the conduit, the slashes, the brackets, the
+the 34 px cuts and the digits in the team's neon. In `styles/cybertron.css`: the
+raised plate, the hazard stripe, the conduit, the slashes, the brackets, the
 plate seams, the scanlines, the 56 px cuts and the amber digits. `tools/test-minimal.mjs` lists
 what is shared, so a new shared rule fails it until the list says so.
 
@@ -899,9 +902,9 @@ panel is scaled up (see "The width of the main panel").
 Cybertron has the layout of its theme, as Original does: the banner across the top, the
 large frame on the left, the countdown over the small frame on the right and the ticker
 across the bottom, or the sidebar layout for Neon Prime. What it changes is the drawing. Every
-frame is a plate of gunmetal (`--style-body`, `#15181f`) with a steel edge, the neon of the team
-just inside the edge and two wider and fainter lines of the same neon outside it, and the
-countdown is the war clock in place of the red frame. `styles/cybertron.css` paints it and
+frame is a plate in the team's body color (`--style-body`) with the metal of the team for its edge,
+the neon of the team just inside the edge, and for a team with Glow two wider and fainter lines of the same
+neon outside it, and the countdown is the war clock in place of the red frame. `styles/cybertron.css` paints it and
 `core/plate.js` draws the four frames. The mirror turns it as it turns Original, with the same
 rules (`styles/original.css`). Nothing Cybertron draws moves of its own, apart from the arrival and the
 page change that every frame has.
@@ -961,7 +964,8 @@ brackets, with legs of 40 and 50: it is 72 high and has no room for more. The ba
 are one plate each, and the ticker holds still while its message changes. None of the four has
 rivets, rust or a stamped plate id. The rivets are Original's and Minimal's, the rust is Minimal's
 and the id is Original's. All of it is in the markup,
-and `styles/cybertron.css` shows it. The wide neon lines are left off in the flat finish.
+and `styles/cybertron.css` shows it. The wide neon lines are the glow of a team that has it, and they are left
+off in the flat finish.
 
 The `//` mark at the right end of a panel's header is not drawn in Cybertron (`.header
 svg.double-slash` is hidden, as the Plain look hides it). The step at the top right is where its
@@ -1334,6 +1338,53 @@ except the first a class, add the field to `normalizeTeamDocument` in `core/sani
 in `trim.css` for the class, and give the sample content and `docs/seed/teams.ndjson` the values. If the field
 changes the shape of a frame, add it to `frameTrim` in `core/teams.js` and to the names in `core/plate.js`.
 
+## Team colors, metal and glow
+
+A team sets its plates, its metal and its neon, and not only an accent, so the two teams can be told apart
+from across the room in every style. The nine colors are in the Colors box of the Team document in the Studio,
+and `core/teams.js` writes each one on the html element as a `--team-` custom property (`teams.css` starts them at
+the Prime values). The metal and the glow come after the box.
+
+| Color | Property | Prime | Nova | What it paints |
+|-------|----------|-------|------|----------------|
+| Main color | `--team-primary` | `#6C18B6` | `#1B6FD6` | header tabs and the bird, and the theme Hawktimus |
+| Plate color | `--team-plate` | `#3B2A7A` | `#0E2A4A` | the TEAM plate, the ticker's tag, the header inset and the cards |
+| Accent color | `--team-accent` | `#FACA2A` | `#8FF0FF` | small marks, key words and the hazard stripe |
+| Neon color | `--team-neon` | `#FACA2A` | `#3FD8FF` | the neon lines, the page grid at .07 and the digits of the war clock in Minimal |
+| Second bright color | `--team-pink` | `#B23CFF` | `#9BF0FF` | the conduit lines and the brackets of Cybertron |
+| Background color | `--team-background` | `#09060F` | `#050910` | the page, and the theme Hawktimus |
+| Text color | `--team-text` | `#FFFFFF` | `#FFFFFF` | the main text |
+| Body color | `--team-body` | `#1A0F2E` | `#07131F` | the inside of the panels in Cybertron and Minimal |
+| Label color | `--team-label` | `#FACA2A` | `#C58CFF` | the department names in rows |
+
+The status colors (in progress, backlog and done) are the same for both teams. A team document that has no
+Body or Label has Prime's, and one with no Metal or Glow has gold and no glow, so a team made before they existed
+looks as Prime does. The Prime background is the one it always had, `#09060F`, because Original takes its page
+color from the team and Prime must look in Original as it always has. It is the same as the `--ground` of
+`themes/hawktimus.css`, and `studio/check-schemas.mjs` holds the two together. The neon and the second bright
+color of Prime are not drawn by Original, so they could change: Prime has gold neon with a purple conduit and no
+cyan anywhere.
+
+**Metal.** Gold or steel (`teamMetals` in `config.js`). A team with steel has the class `metal-steel` on the html
+element, and `tokens.css` gives it the steel `--metal` tokens and the steel edge gradients on the html element
+and on every area, whatever Frame metal and the page change say. In Cybertron and Minimal a team with no steel
+has gold the same way. The hex bolts and the rivets read the same metal through `--screw-` tokens that those two styles set
+on the html element. In Original a team with gold changes nothing, so Prime is drawn as it always was, and a
+team with steel has steel in place of the gold and silver.
+
+**Glow.** A switch, off for Prime and on for Nova (`glowClass` in `config.js`). A team with it has the class
+`neon-glow`, and `base.css` then draws the neon line at 5 px with two wider strokes of the same color behind it, at
+12 px with .35 opacity and at 26 px with .12, on every frame edge and on the header line of Minimal. They are strokes
+and never a filter. They are in the markup of every frame and hidden unless the class is there, and the flat finish has none.
+
+**Looking at it.** `?sample=1&team=nova&style=minimal` and `?sample=1&team=prime&style=cybertron` show the four
+that differ most. `node tools/test-team-colors.mjs` works out the edge gradient and the body color for both teams
+in each style from the stylesheets, and checks that they differ.
+
+**Adding a color.** Add it to `primeTeam` in `config.js` and to `colorProperties` in `core/teams.js`, give `teams.css` the
+Prime value, add the field to `studio/schemas/team.js`, to `studio/check-schemas.mjs` and to `docs/seed/teams.ndjson`,
+and give the sample content the values. A team with none of it falls back to the Prime value in `core/sanity.js`.
+
 ## What else works in each layout
 
 - **Page changes** (slats and the mechanical change) are the same, inside the
@@ -1606,8 +1657,9 @@ and in the mirror:
 1. The cut corners are smaller: 34 on the main panel and the banner and 20 on the ticker. There
    is a bolt at both ends of the top left and of the bottom right cut corner, and none at the
    steps.
-2. There is one neon line just inside the steel, with no wider glow lines, and there is no
-   hazard stripe, conduit, slashes, brackets, plate seams or scanlines, and no `//` mark in a header.
+2. There is one neon line just inside the metal, with no wider glow lines unless the team has Glow (Nova
+   does), and there is no hazard stripe, conduit, slashes, brackets, plate seams or scanlines, and no
+   `//` mark in a header.
 3. Rivets run along the long straight edges, one every 90 px, and none along a short one.
 4. There is rust at the bottom left and the bottom right of each frame, and it holds still.
    The Flat look takes it away.

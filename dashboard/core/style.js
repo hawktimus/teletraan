@@ -40,8 +40,8 @@ const forcedLayout = { original: null, cybertron: null, minimal: 'bar' };
 const shapeOf = { original: '', cybertron: 'cybertron', minimal: 'minimal' };
 export const shapeSets = Object.values(shapeOf).filter(Boolean);
 
-// The styles with steel for the metal of every frame. The page change never gives their
-// frames another metal (core/areas.js)
+// The styles whose frames have the metal of the team, steel or gold (tokens.css). The page change
+// never gives their frames another metal (core/areas.js)
 const steelStyles = ['cybertron', 'minimal'];
 
 export function hasSteel(style) {

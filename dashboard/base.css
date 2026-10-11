@@ -446,17 +446,18 @@ html[data-style="original"] .plate-id { display: block; }
 
 /* The frames of the bar layout (core/plate.js, "The frames of the bar layout"). The
    Cybertron and Minimal styles draw them from the same markup, so what they share is here
-   and what only one of them has is in its own file in styles/. The steel of the edge is
+   and what only one of them has is in its own file in styles/. The metal of the edge is
    the --metal tokens in tokens.css.
 
    The hex bolt is where a screw is, in the same place in the markup and with the same
    class, so it turns in and out with the same animation. Its rim and face are the screw's.
 
-   The neon line sits just inside the steel edge, on a path of its own that is inset from the
+   The neon line sits just inside the metal edge, on a path of its own that is inset from the
    edge (plate.js). The team's neon is --style-neon, which each style sets. The other two are
-   the same path with a much wider and fainter stroke each, for a style that wants a glow
-   without a filter. They are off here, and a style turns them on. The flat finish has none of
-   them.
+   the same path with a much wider and fainter stroke each, for a team that has Glow on (the
+   class neon-glow, core/teams.js): a glow made of strokes, without a filter. They are off
+   here, and so are the two that go with the header line of Minimal (art-glow). The flat finish
+   has none of them.
 
    The armor header tab has three parts of its own: the dark bevel round it, the bright line
    along its lit edges and the team's plate color inset in it. */
@@ -473,14 +474,32 @@ html[data-style="original"] .plate-id { display: block; }
 .edge-neon { stroke-width: 4px; }
 .edge-neon-wide-1 {
   display: none;
-  stroke-width: 14px;
-  stroke-opacity: .25;
+  stroke-width: 12px;
+  stroke-opacity: .35;
 }
 .edge-neon-wide-2 {
   display: none;
-  stroke-width: 24px;
+  stroke-width: 26px;
   stroke-opacity: .12;
 }
+.art-glow {
+  display: none;
+  fill: none;
+  stroke: var(--style-neon, var(--team-neon));
+}
+.art-glow-header-1 {
+  stroke-width: 12px;
+  stroke-opacity: .35;
+}
+.art-glow-header-2 {
+  stroke-width: 26px;
+  stroke-opacity: .12;
+}
+html.neon-glow:not([data-finish="flat"]) .edge-neon,
+html.neon-glow:not([data-finish="flat"]) .art-header-line { stroke-width: 5px; }
+html.neon-glow:not([data-finish="flat"]) .edge-neon-wide-1,
+html.neon-glow:not([data-finish="flat"]) .edge-neon-wide-2,
+html.neon-glow:not([data-finish="flat"]) .art-glow { display: inline; }
 
 .tab-bevel {
   fill: none;

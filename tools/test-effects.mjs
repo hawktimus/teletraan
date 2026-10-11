@@ -1389,12 +1389,15 @@ test('the screw is drawn once, as one symbol with a slot across the head, in the
 
 test('the metal is set by the nearest data-metal, with the colours worked out on that element', () => {
   assert.ok(!/html\[data-metal/.test(tokensCss), 'the metal blocks are not tied to the html element');
-  assert.ok(/:root,\s*\[data-metal="gold"\] \{\s*--metal-1:/.test(tokensCss));
+  // gold is the page's, and the metal of a team that has no steel in Cybertron and Minimal, whatever Frame metal and the page change say
+  const goldList = ':root,\\s*\\[data-metal="gold"\\],\\s*html\\[data-style="cybertron"\\]:not\\(\\.metal-steel\\),\\s*html\\[data-style="cybertron"\\]:not\\(\\.metal-steel\\) \\[data-metal\\],'
+    + '\\s*html\\[data-style="minimal"\\]:not\\(\\.metal-steel\\),\\s*html\\[data-style="minimal"\\]:not\\(\\.metal-steel\\) \\[data-metal\\] \\{\\s*';
+  assert.ok(new RegExp(goldList + '--metal-1:').test(tokensCss));
   assert.ok(/\[data-metal="silver"\] \{\s*--metal-1:/.test(tokensCss));
   // the variables made from the metal are made on every element that sets one, or an area would keep the page's
   assert.ok(/:root,\s*\[data-metal\] \{\s*--edge-rim: var\(--metal-rim\);\s*--edge-glint: var\(--metal-glint\);\s*--edge-flat: var\(--metal-flat\);/.test(tokensCss));
   assert.ok(/\[data-metal="silver"\] \{\s*--edge-face: url\(#edge-silver\);/.test(tokensCss));
-  assert.ok(/:root,\s*\[data-metal="gold"\] \{\s*--edge-face: url\(#edge-gold\);/.test(tokensCss));
+  assert.ok(new RegExp(goldList + '--edge-face: url\\(#edge-gold\\);').test(tokensCss));
 
   // the gradients the edges use are drawn for gold in index.html and copied for silver by plate.js
   ['edge-gold', 'edge-ridge-gold', 'edge-shade-gold'].forEach(id => {

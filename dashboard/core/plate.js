@@ -568,8 +568,6 @@ function wearOf(outline, span, turned) {
 //                   the pieces of the main panel, or { top, right, bottom, left }: where the
 //                   bars of the edge end, along the top, down the right side and along the
 //                   bottom (each a pair of numbers) and down the left side (one)
-//   wide            false for a frame with only the one neon line. Without it, a frame has
-//                   the two wider and fainter ones as well
 //   headerLine      a neon line along the foot of the header, with a row of ticks over it
 //   weld            the x of a vertical weld seam under the header
 //   rivets          true for a row of rivets along every long straight edge
@@ -629,7 +627,6 @@ export function makeBarShape(options) {
     height: options.height,
     bar: true,
     still: options.still === true,
-    wide: options.wide !== false,
     outline: outline,
     split: split,
     neon: { a: inner.slice(0, split + 1), b: inner.slice(split).concat([inner[0]]) },
@@ -812,17 +809,17 @@ const barOptions = {
   // conduit, the slashes, the brackets or the plate seams, which are Cybertron's
   'bar-main-minimal': {
     width: 1427, height: 708, chamfer: 34, step: 16, run: 100,
-    bolts: [1, 2, 6, 7], wide: false, rivets: true, wear: 70,
+    bolts: [1, 2, 6, 7], rivets: true, wear: 70,
     header: { bottom: 120, tabTop: 664, tabBottom: 642 },
     headerLine: true, weld: 1188, pieces: true,
   },
   'bar-banner-minimal': {
     width: 1856, height: 160, chamfer: 34, step: 16, run: 100,
-    bolts: [1, 2, 6, 7], wide: false, rivets: true, wear: 56,
+    bolts: [1, 2, 6, 7], rivets: true, wear: 56,
   },
   'bar-ticker-minimal': {
     width: 1856, height: 72, chamfer: 20, step: 10, run: 60,
-    bolts: [1, 2, 6, 7], wide: false, rivets: true, wear: 28, still: true,
+    bolts: [1, 2, 6, 7], rivets: true, wear: 28, still: true,
   },
 
   // The frames of Cybertron, for the layouts of Original (core/style.js, forcedLayout). Each is
@@ -1029,12 +1026,12 @@ function edgeLayers(id, part, names = allLayers, extra = '') {
   return part ? `<g data-part="${part}">${layers}</g>` : layers;
 }
 
-// The neon line, and the two wider and fainter ones behind it, all on one inset shape. A
-// frame with wide false (Minimal's) has only the line
+// The neon line, and the two wider and fainter ones behind it, all on one inset shape. The
+// wider ones are hidden unless the team has Glow on (base.css)
 const neonNames = ['edge-neon-wide-2', 'edge-neon-wide-1', 'edge-neon'];
 
-function neonLayers(id, wide = true) {
-  return (wide ? neonNames : neonNames.slice(-1)).map(layer => `<use class="${layer}" href="#${id}"/>`).join('');
+function neonLayers(id) {
+  return neonNames.map(layer => `<use class="${layer}" href="#${id}"/>`).join('');
 }
 
 // A screw centred on a corner: its shadow, and the head. They arrive, unscrew
@@ -1059,7 +1056,7 @@ function screwPair(center, index, bolt) {
 function halfMarkup(kind, side, shape, red, drawPart, firstScrew) {
   const screws = shape.screws[side].map((center, index) => screwPair(center, firstScrew + index, shape.bar)).join('');
   const rivets = shape.rivets ? rivetsMarkup(shape.rivets[side], true) : '';
-  const neon = shape.neon ? neonLayers(kind + '-neon-' + side, shape.wide) : '';
+  const neon = shape.neon ? neonLayers(kind + '-neon-' + side) : '';
   const wear = side === 'b' ? wearMarkup(shape.wear, true) : '';
 
   return `<svg class="plate${red}" data-part="frame-${side}" width="${shape.width}" height="${shape.height}" viewBox="0 0 ${shape.width} ${shape.height}">
@@ -1090,7 +1087,7 @@ function areaLayer(kind, shape, side, firstScrew, shadow) {
     const screw = shadow ? screwShadowMarkup(firstScrew + index) : screwHeadMarkup(firstScrew + index, shape.bar);
     return `<g transform="translate(${center[0]} ${center[1]})">${screw}</g>`;
   }).join('');
-  const neon = !shadow && shape.neon ? neonLayers(kind + '-neon-' + side, shape.wide) : '';
+  const neon = !shadow && shape.neon ? neonLayers(kind + '-neon-' + side) : '';
   const layers = edgeLayers(kind + '-' + side, 'outline', shadow ? shadowOnly : withoutShadow, neon);
   const rivets = shadow || !shape.rivets ? '' : rivetsMarkup(shape.rivets[side], true);
   const wear = shadow || side !== 'b' ? '' : wearMarkup(shape.wear, true);
@@ -1165,7 +1162,9 @@ function tabMarkup(shape) {
 }
 
 // What Cybertron and Minimal draw on a bar frame besides its edge, each in the class of
-// its own style. Each part is one path, and a frame that has none of a part leaves it out
+// its own style. Each part is one path, and a frame that has none of a part leaves it out. The
+// header line has the two wider and fainter lines of a team with Glow behind it, hidden
+// unless the team has it (base.css)
 function decorMarkup(shape) {
   const art = shape.art;
   const path = (style, name, data) => (data ? `<path class="art-${style} art-${name}" d="${data}"/>` : '');
@@ -1173,6 +1172,7 @@ function decorMarkup(shape) {
   return path('cybertron', 'seams', art.seams) + path('cybertron', 'hazard', art.hazard) + path('cybertron', 'conduit', art.conduit) +
     path('cybertron', 'slashes', art.slashes) + path('cybertron', 'brackets', art.brackets) +
     path('minimal', 'weld-dark', art.weldDark) + path('minimal', 'weld-light', art.weldLight) +
+    path('glow', 'glow-header-2', art.headerLine) + path('glow', 'glow-header-1', art.headerLine) +
     path('minimal', 'header-line', art.headerLine) + path('minimal', 'ticks', art.ticks);
 }
 
@@ -1201,7 +1201,7 @@ function pieceMarkup(kind, shape, piece, rivets, wear) {
     let neon = '';
     if (piece.neon) {
       define(id + '-neon', `<polyline id="${id}-neon" points="${toPoints(piece.neon)}"/>`);
-      neon = neonLayers(id + '-neon', shape.wide);
+      neon = neonLayers(id + '-neon');
     }
     art = edgeLayers(id, undefined, allLayers, neon) + (rivets ? rivetsMarkup(rivets, false) : '') + wearMarkup(wear);
   } else {

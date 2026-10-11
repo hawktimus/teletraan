@@ -293,8 +293,8 @@ editors can sign in from anywhere.
                               show for which team in every panel, and the Teams settings
       test-themes.mjs         checks for which theme and overlay apply, for putting them on the page, for the
                               ticker prefix, banner line and corner art that a seasonal pack rule can carry, and
-                              for putting the team on the page: its seven colors, its initials, the mirror class
-                              and the classes of its trim
+                              for putting the team on the page: its nine colors, its initials, the mirror class,
+                              the classes of its trim, its metal and its glow
       test-layouts.mjs        checks for the layouts: which layout a theme and a style have, the numbers of the
                               sidebar and bar layouts, the mirror, that the screen is always 1920 x 1080,
                               the reload that changes layout and that it cannot loop, that the scheduler leaves
@@ -374,6 +374,8 @@ editors can sign in from anywhere.
       test-team-trim.mjs      checks for the trim of a team: both teams of the sample content on a fake page, the
                               classes of every field, the frames with the other corners cut and the slanted tab
                               (the Prime frame turned across, the 60 degree line, the pieces), and the rules of trim.css
+      test-team-colors.mjs    checks for the colors, the metal and the glow of a team: both teams in each style, with the
+                              edge gradient and the body color worked out from the stylesheets, and that Prime is as it was in Original
       test-pile.mjs           checks for the end of the hidden transitions: the plan of the fall, the pile and the
                               lift (at most 40 pieces, 5 seconds, every piece back in its place), the stylesheet
                               that moves them, the cube, and the script that finds the pieces on a fake page
@@ -904,6 +906,7 @@ exceptions are `test-slides-script.mjs`, `test-frc-script.mjs` and `test-monday-
     node tools/test-cybertron.mjs
     node tools/test-minimal.mjs
     node tools/test-team-trim.mjs
+    node tools/test-team-colors.mjs
     node tools/test-pile.mjs
     node tools/test-person-rows.mjs
     node tools/test-photo-fit.mjs

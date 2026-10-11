@@ -532,6 +532,15 @@ export const teamTrim = {
   countAccent: { red: '', neon: 'accent-neon' },
 };
 
+// The metal of a team's frames (Studio: Teams, Colors, Metal) and the class that core/teams.js puts on the html
+// element while a team with that metal is on the screen, which tokens.css reads. Gold is the metal Prime has and
+// the one a team document with no metal falls back to, so it has no class. The Studio copies the two names.
+export const teamMetals = { gold: '', steel: 'metal-steel' };
+
+// The class for a team with Glow on (Studio: Teams, Colors, Glow): the neon lines of its frames and header lines get two
+// wider and fainter lines of the same color outside them (base.css). They are strokes, never a filter.
+export const glowClass = 'neon-glow';
+
 export const defaultTeam = {
   name: 'HAWKTIMUS PRIME',
   number: '3229',
@@ -540,9 +549,16 @@ export const defaultTeam = {
 
 // The team the screen shows when the Studio has no Teams, and the colors that a team
 // document with a missing or mistyped color falls back to (core/sanity.js). It is Prime
-// with the colors the screen has always had: teams.css starts at the same seven.
+// with the colors the screen has always had in Original: teams.css starts at the same nine.
 // The name and number are the ones in defaultTeam, and the Team box in Dashboard Settings
 // changes them. The logo is empty, which means the shared hawk.
+//   neon, pink   the lines and the conduit of Cybertron and Minimal. Original draws neither
+//   background   the same as the theme Hawktimus has for the page (themes/hawktimus.css), because Original
+//                takes it from the team, and Prime in Original has to look as it always has
+//   body         the inside of the panels in Cybertron and Minimal
+//   label        the department names in the rows of the Monday cards and the people panels
+//   metal        see teamMetals above
+//   glow         see glowClass above
 export const primeTeam = {
   code: 'prime',
   name: defaultTeam.name,
@@ -553,11 +569,15 @@ export const primeTeam = {
     primary: '#6C18B6',
     plate: '#3B2A7A',
     accent: '#FACA2A',
-    neon: '#35F0FF',
-    pink: '#FF2E8C',
+    neon: '#FACA2A',
+    pink: '#B23CFF',
     background: '#09060F',
     text: '#FFFFFF',
+    body: '#1A0F2E',
+    label: '#FACA2A',
   },
+  metal: 'gold',
+  glow: false,
   mirror: false,
   bolts: 'hex',
   cornerCut: 'tl-br',

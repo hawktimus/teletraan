@@ -17,12 +17,13 @@ while the Monday cards of a team are on the screen. The styles are:
 
 - Original is the screen as it has always been. Its layout comes from the theme.
 - Cybertron has the same layout as Original: the banner, the large frame, the
-  countdown over the small frame and the ticker. The frames are gunmetal plates with
-  a steel edge, a neon line inside the edge, bolts at the joints and a hazard stripe
-  under each header. The countdown is the war clock in place of the red frame.
+  countdown over the small frame and the ticker. The frames are plates in the team's
+  body color with the team's metal for the edge (gold for Prime, steel for Nova), a neon
+  line inside the edge, bolts at the joints and a hazard stripe under each header. The
+  countdown is the war clock in place of the red frame.
 - Minimal has a banner across the top with the team name at one end and the war
   clock at the other, a thin side column, one main panel and the ticker across the
-  bottom. Its frames are steel with smaller cut corners, rivets, rust at two corners
+  bottom. Its frames have the team's metal with smaller cut corners, rivets, rust at two corners
   and tick marks along the header line.
 
 The war clock is the countdown to Kickoff, then to Rollout, in a steel housing. It

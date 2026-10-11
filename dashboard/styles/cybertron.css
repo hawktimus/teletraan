@@ -1,7 +1,8 @@
 /* The Cybertron style (core/style.js, Style in Dashboard Settings): the sharp style.
    It has the layout of its theme, like Original (the standard layout, or the sidebar
    layout for Neon Prime), and any team's colors. What it changes is the drawing: the
-   frames are gunmetal plates with a steel edge and neon (core/plate.js, "The frames of
+   frames are plates in the team's body color with the metal of the team for their edge (steel
+   or gold, tokens.css) and its neon (core/plate.js, "The frames of
    Cybertron"), and the countdown is the war clock. The first rule sets custom
    properties, which the frame drawing reads. The team's colors are --team-neon,
    --team-pink and the others in teams.css, and they are the ones to use for anything
@@ -9,7 +10,7 @@
    the frames that only this style has, and put the banner and the ticker on their
    plates. Everything it paints is still: nothing here moves.
 
-     --style-body            the body of a plate
+     --style-body            the body of a plate: the team's body color
      --style-raised          a raised plate
      --style-armor-top       the top and the bottom of the armor header tab and of the war
      --style-armor-bottom    clock's housing, which are lighter and darker than --style-raised
@@ -26,7 +27,7 @@
    index.html, and what Cybertron and Minimal share of them is in base.css. */
 
 html[data-style="cybertron"] {
-  --style-body: #15181f;
+  --style-body: var(--team-body);
   --style-raised: #262b33;
   --style-armor-top: #323843;
   --style-armor-bottom: #1d2128;
@@ -66,10 +67,10 @@ html[data-style="cybertron"] #screen::before {
 }
 
 
-/* The plates. The body of an area's frame and of the banner's is the gunmetal. The header
-   tab is a raised armor plate: a gradient, with the bevel, the bright line and the team's
-   plate color inset that plate.js draws on it (base.css). The rest of the header is the same
-   gunmetal as the body. */
+/* The plates. The body of an area's frame and of the banner's is the team's body color. The
+   header tab is a raised armor plate: a gradient, with the bevel, the bright line and the
+   team's plate color inset that plate.js draws on it (base.css). The rest of the header is the
+   same as the body. */
 html[data-style="cybertron"] .area,
 html[data-style="cybertron"] .banner {
   --panel-face: var(--style-body);
@@ -77,9 +78,13 @@ html[data-style="cybertron"] .banner {
 html[data-style="cybertron"] .area .plate .header-left { fill: url(#armor-face); }
 html[data-style="cybertron"] .area .plate .header-right { fill: var(--style-body); }
 
-/* The TEAM plate and the ticker's tag are plates in the team's plate color */
+/* The TEAM plate, the ticker's tag and the cards are plates in the team's plate color. The
+   cards that only hold a picture have no fill */
 html[data-style="cybertron"] .team-fill,
-html[data-style="cybertron"] .tag-fill { fill: var(--team-plate); }
+html[data-style="cybertron"] .tag-fill,
+html[data-style="cybertron"] .card-fill { fill: var(--team-plate); }
+html[data-style="cybertron"] .sponsor-feature .card-fill,
+html[data-style="cybertron"] .photo .card-fill { fill: none; }
 
 /* The hawk in the banner (and in the sidebar of Neon Prime) has the team's accent for its outline,
    and keeps the colors the theme gives its plates */
@@ -90,12 +95,6 @@ html[data-style="cybertron"] .side-logo .drawing { --logo-edge: var(--team-accen
    is where its top would be, and the pictures have none there. A seasonal pack's mark is
    another picture (pack-mark) and stays. */
 html[data-style="cybertron"] .header svg.double-slash { display: none; }
-
-/* The neon line of a frame has the two wider and fainter ones behind it, except in the flat
-   finish (base.css) */
-html[data-style="cybertron"]:not([data-finish="flat"]) .edge-neon-wide-1,
-html[data-style="cybertron"]:not([data-finish="flat"]) .edge-neon-wide-2 { display: inline; }
-
 
 /* What only Cybertron draws on a frame (plate.js, decorMarkup): the hazard stripe in the
    team's accent under the header, the pink conduit along two inner edges, a row of neon
