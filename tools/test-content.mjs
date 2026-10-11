@@ -361,10 +361,10 @@ function sanityFixture() {
     }),
 
     tasks: [
-      document('task', 't1', { title: '[Task A]', subteam: '[Subteam A]', status: 'in-progress', order: 2 }),
-      document('task', 't2', { title: '[Task B]', subteam: null, status: 'blocked', order: 1, show: false }),
-      document('task', 't3', { title: '[Task C]', subteam: '[Subteam B]', status: 'done', finishedOn: '2026-09-30T20:00:00.000Z' }),
-      document('task', 't4', { title: '[Task D]', subteam: '[Subteam C]', status: 'up-next', expires: '2020-01-01T00:00:00.000Z' }),
+      document('task', 't1', { title: '[Task A]', subteam: '[Subteam A]', status: 'in-progress', source: 'monday', order: 2 }),
+      document('task', 't2', { title: '[Task B]', subteam: null, status: 'blocked', source: 'monday', order: 1, show: false }),
+      document('task', 't3', { title: '[Task C]', subteam: '[Subteam B]', status: 'done', source: 'monday', finishedOn: '2026-09-30T20:00:00.000Z' }),
+      document('task', 't4', { title: '[Task D]', subteam: '[Subteam C]', status: 'up-next', source: 'monday', expires: '2020-01-01T00:00:00.000Z' }),
     ],
 
     sponsors: [
@@ -492,10 +492,10 @@ test('normalizeContent turns a full Sanity result into the sample content shape'
   assert.equal('team' in settings, false);
 
   assert.deepEqual(content.tasks, [
-    { title: '[Task B]', status: 'blocked', order: 1, show: false },
-    { title: '[Task A]', subteam: '[Subteam A]', status: 'in-progress', order: 2 },
-    { title: '[Task C]', subteam: '[Subteam B]', status: 'done', finishedOn: '2026-09-30T20:00:00.000Z' },
-    { title: '[Task D]', subteam: '[Subteam C]', status: 'up-next', expires: '2020-01-01T00:00:00.000Z' },
+    { title: '[Task B]', status: 'blocked', source: 'monday', order: 1, show: false },
+    { title: '[Task A]', subteam: '[Subteam A]', status: 'in-progress', source: 'monday', order: 2 },
+    { title: '[Task C]', subteam: '[Subteam B]', status: 'done', source: 'monday', finishedOn: '2026-09-30T20:00:00.000Z' },
+    { title: '[Task D]', subteam: '[Subteam C]', status: 'up-next', source: 'monday', expires: '2020-01-01T00:00:00.000Z' },
   ]);
 
   assert.deepEqual(content.sponsors, [
@@ -571,7 +571,7 @@ test('normalizeContent orders by order: numbered first, the rest in stored order
   const titles = ['none-1', 'five', 'one-first', 'none-2', 'one-second', 'zero'];
   const orders = [undefined, 5, 1, undefined, 1, 0];
   const result = {
-    tasks: titles.map((title, index) => document('task', 'id' + index, { title: title, order: orders[index] })),
+    tasks: titles.map((title, index) => document('task', 'id' + index, { title: title, source: 'monday', order: orders[index] })),
   };
 
   const sorted = normalizeContent(result).tasks.map(task => task.title);
@@ -707,7 +707,7 @@ test('the query keeps lists in the order they were created, and dates a finished
 
   // the Tasks panel reads finishedOn, so the answer has to carry that name
   assert.ok(contentQuery.includes('"finishedOn": coalesce(finishedOn, _updatedAt)'));
-  const finished = document('task', 't9', { title: '[Done]', status: 'done', finishedOn: '2026-09-30T10:00:00Z' });
+  const finished = document('task', 't9', { title: '[Done]', status: 'done', source: 'monday', finishedOn: '2026-09-30T10:00:00Z' });
   assert.equal(normalizeContent({ tasks: [finished] }).tasks[0].finishedOn, '2026-09-30T10:00:00Z');
 });
 
@@ -1689,7 +1689,7 @@ test('sample content is cleaned the same way as content from Sanity', async () =
   await inWorld(async world => {
     const file = {
       settings: settings,
-      tasks: [null, { title: '[Second]', order: 2 }, 7, { title: '[First]', order: 1 }],
+      tasks: [null, { title: '[Second]', source: 'monday', order: 2 }, 7, { title: '[First]', source: 'monday', order: 1 }],
       tipsAndNews: [null, { kind: 'tip', text: '[A tip]', logoAddress: '' }, 'text'],
       sponsors: 'not a list',
       subteams: { name: '[One]' },
@@ -5449,25 +5449,25 @@ test('the query follows the task\'s place reference, and says whether the place 
 test('a task keeps its contact and the name of its place, and nothing else about it changes', () => {
   const result = {
     tasks: [
-      document('task', 't1', { title: '[A]', status: 'in-progress', contact: ' Sam ', location: 'Classroom', locationShown: true, order: 2 }),
-      document('task', 't2', { title: '[B]', status: 'up-next', contact: '', location: null, locationShown: true, order: 1 }),
+      document('task', 't1', { title: '[A]', status: 'in-progress', source: 'monday', contact: ' Sam ', location: 'Classroom', locationShown: true, order: 2 }),
+      document('task', 't2', { title: '[B]', status: 'up-next', source: 'monday', contact: '', location: null, locationShown: true, order: 1 }),
     ],
   };
   const tasks = normalizeContent(result, today).tasks;
   assert.deepEqual(tasks, [
-    { title: '[B]', status: 'up-next', order: 1 },
-    { title: '[A]', status: 'in-progress', contact: 'Sam', location: 'Classroom', order: 2 },
+    { title: '[B]', status: 'up-next', source: 'monday', order: 1 },
+    { title: '[A]', status: 'in-progress', source: 'monday', contact: 'Sam', location: 'Classroom', order: 2 },
   ]);
 });
 
 test('a hidden, deleted or nameless place gives no location, and the task stays', () => {
-  const task = fields => document('task', 't1', Object.assign({ title: '[A]', status: 'in-progress', contact: 'Sam' }, fields));
+  const task = fields => document('task', 't1', Object.assign({ title: '[A]', status: 'in-progress', source: 'monday', contact: 'Sam' }, fields));
   const only = fields => normalizeContent({ tasks: [task(fields)] }, today).tasks[0];
 
   // hidden: the query sends the name and locationShown false
-  assert.deepEqual(only({ location: 'Classroom', locationShown: false }), { title: '[A]', status: 'in-progress', contact: 'Sam' });
+  assert.deepEqual(only({ location: 'Classroom', locationShown: false }), { title: '[A]', status: 'in-progress', source: 'monday', contact: 'Sam' });
   // deleted, or never published: the query sends null for both
-  assert.deepEqual(only({ location: null, locationShown: null }), { title: '[A]', status: 'in-progress', contact: 'Sam' });
+  assert.deepEqual(only({ location: null, locationShown: null }), { title: '[A]', status: 'in-progress', source: 'monday', contact: 'Sam' });
   // a place with no name, a name of spaces, or something that is not text
   assert.equal('location' in only({ location: '   ', locationShown: true }), false);
   assert.equal('location' in only({ location: 7, locationShown: true }), false);
@@ -5487,8 +5487,8 @@ test('the sample content is cleaned the same way, and has a contact and a place'
   assert.ok(sample.tasks.some(task => task.contact && !task.location));
   assert.ok(sample.tasks.some(task => !task.contact && task.location));
 
-  const odd = normalizeSample({ tasks: [{ title: '[A]', status: 'up-next', contact: '  ', location: ' Hallway ', locationShown: false }] });
-  assert.deepEqual(odd.tasks, [{ title: '[A]', status: 'up-next' }]);
+  const odd = normalizeSample({ tasks: [{ title: '[A]', status: 'up-next', source: 'monday', contact: '  ', location: ' Hallway ', locationShown: false }] });
+  assert.deepEqual(odd.tasks, [{ title: '[A]', status: 'up-next', source: 'monday' }]);
 });
 
 // Each mount of the panel shows the next page, so a test that mounts it gets its own copy
@@ -5777,7 +5777,7 @@ test('the teams come out in order, through the editors\' content and the sample,
 
 // Every kind of content with a Team field, as the query sends it, and as the sample file has it
 const teamItems = {
-  tasks: { title: '[Task]', status: 'in-progress' },
+  tasks: { title: '[Task]', status: 'in-progress', source: 'monday' },
   sponsors: { name: '[Sponsor]', thankYou: '[Thanks]' },
   tipsAndNews: { kind: 'tip', text: '[Tip]' },
   subteams: { name: '[Subteam]', lead: '[Lead]', members: ['[Student]'], spotlight: true, spotlightHeadline: '[Headline]' },

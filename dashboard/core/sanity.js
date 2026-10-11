@@ -6,7 +6,7 @@ import { parseLocalDateTime, sameDay } from './time.js';
 import { fixSettingValues, isVisible, keepInRange, withDefaults } from './content.js';
 import { keptSize, logoUrl, photoFocus, screenPhotoUrl, tidyPhoto } from './images.js';
 import { classifyFailure } from './connection.js';
-import { pinnedFirst } from './task-source.js';
+import { fromBoardOnly } from './task-source.js';
 import { tidyFrc } from './frc.js';
 import { tidyMondayStatus } from './monday.js';
 
@@ -45,7 +45,8 @@ import { tidyMondayStatus } from './monday.js';
 // core/frc.js cleans it. No document means no competition cards.
 // The board status (monday-status) is one document that the Mini writes. Only the sync time and the
 // daily counts of open items are asked for, and core/monday.js cleans them. No document means the
-// progress card has no line to draw. The tasks from the board come with the other tasks, above.
+// progress card has no line to draw. The tasks from the board come with the other tasks, above, and
+// normalizeContent keeps only those (core/task-source.js).
 export const contentQuery = `{
   "settings": *[_id == "dashboardSettings"][0] {
     ...,
@@ -240,7 +241,7 @@ export function normalizeContent(result, now = new Date()) {
     settings: settings,
     theme: data.theme,
     demo: data.demo,
-    tasks: pinnedFirst(itemsFrom(data.tasks).map(normalizeTask)),
+    tasks: fromBoardOnly(itemsFrom(data.tasks).map(normalizeTask)),
     plan: plans[0] || null,
     plans: plans,
     sponsors: itemsFrom(data.sponsors),
@@ -272,7 +273,7 @@ export function normalizeSample(raw) {
   ['tasks', 'sponsors', 'tipsAndNews', 'subteams', 'people', 'customPanels'].forEach(name => {
     content[name] = itemsFrom(data[name]);
   });
-  content.tasks = pinnedFirst(content.tasks.map(normalizeTask));
+  content.tasks = fromBoardOnly(content.tasks.map(normalizeTask));
   content.subteams = content.subteams.map(normalizeSubteam);
   content.people = content.people.map(normalizePerson);
   content.photos = itemsFrom(data.photos).filter(photo => typeof photo.address === 'string');

@@ -87,7 +87,8 @@ starting teams").
 task.csv has columns after `team`. They are `priority` (`high`, `medium`
 or `low`) and `showOnTv` (`yes` or `no`, and `yes` when the cell is empty). Both may be left
 empty. A task file saved from a template without them still imports. A sheet has no column for
-where a task comes from, so every task it makes is pinned.
+where a task comes from, so every task it makes was typed by hand. The screen shows only the tasks
+from the team board, so a task imported from a sheet is in Hidden and is never shown.
 
 subteam.csv has one column after `team`, `showPhoto` (`yes` or `no`, and `yes` when the cell is
 empty). It is the "Show photo on screen" switch of a team lead. A subteam file saved from a

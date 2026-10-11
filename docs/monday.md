@@ -80,7 +80,7 @@ start of every run.
 ## When an item goes
 
 The script never deletes a task. A task whose item is no longer there is switched off:
-its `show` goes off and it moves to the Hidden list under Tasks. If the item comes
+its `show` goes off and it moves to the Hidden list under Monday Tasks. If the item comes
 back, so does the task. This happens only when every board was read to its end in that
 run. A run that missed a board, or stopped at 500 items or at 60 requests, switches
 nothing off. An item that changes to a status nobody listed is not gone: it becomes
@@ -147,8 +147,9 @@ going stops at once.
    The lists show the columns of the board you picked. If a list cannot be read, the
    box is a plain one: type the board number, which is in the address of the board in
    Monday, or the column id, which Monday shows in the settings of the column.
-6. Click Publish. Within 10 minutes the tasks are in Tasks, From the board. Turn Show
-   on TV off on a row to keep it off the screen.
+6. Click Publish. Within 10 minutes the tasks are in Monday Tasks, On the TV. Turn Show
+   on TV off on a row to keep it off the screen. Monday Boards, under Tasks in the
+   sidebar, lists every board the token can see and which ones are chosen.
 
 Up to 10 boards can be read. An entry needs its board, its team and its status column.
 An entry that is missing one is skipped, and the last error says which.
@@ -182,7 +183,7 @@ Go down the list. Each step rules out one cause.
    published settings.
 3. Wait 10 minutes. The Mini reads the boards 10 minutes after its last run, and Last
    sync shows when that was.
-4. Look under Tasks, From the board. Tasks from the board in the connection block counts
+4. Look under Monday Tasks, On the TV. Tasks from the board in the connection block counts
    them.
 5. Look at the Show on TV switch of each row. A task with Show on TV off is in the
    list but not on the TV, and the Mini never changes that switch.

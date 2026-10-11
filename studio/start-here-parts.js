@@ -22,7 +22,7 @@ export const areas = [
   {
     letter: 'B',
     name: 'Main panel',
-    feeds: [['Tasks', 'Daily Agenda', 'Calendars'], ['Team leads', 'Leadership', 'Sponsors'], ['Photos', 'Extra panels']],
+    feeds: [['Monday Tasks', 'Daily Agenda'], ['Calendars', 'Team leads', 'Leadership'], ['Sponsors', 'Photos', 'Extra panels']],
     x: 40,
     y: 256,
     width: 1152,
@@ -32,7 +32,7 @@ export const areas = [
   {
     letter: 'D',
     name: 'Side panel',
-    feeds: [['Tasks', 'Sponsors'], ['Calendars'], ['Dashboard Settings']],
+    feeds: [['Monday Tasks'], ['Sponsors', 'Calendars'], ['Dashboard Settings']],
     x: 1224,
     y: 592,
     width: 656,

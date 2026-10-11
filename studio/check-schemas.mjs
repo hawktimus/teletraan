@@ -269,7 +269,10 @@ const studioOnlyFields = {
   'dashboardSettings.graceMinutes': 'hidden. The screen uses the fixed number in dashboard/core/constants.js',
   'presentationDay.closeMinutesBefore': 'hidden. The booking script reads it, and the dashboard never does',
   'task.boardNote': 'the line at the top of a task from the team board. It stores nothing',
+  'task.manualNote': 'the line at the top of a task typed by hand, which the screen does not show. It stores nothing',
   'task.mondayId': 'hidden. The board sync uses it to find the task of a board item, and the dashboard never reads it',
+  'task.mondayBoardId': 'hidden. The board sync writes the board of the item, and Monday Boards uses it to list the tasks of a board',
+  'task.mondayBoardName': 'hidden. The board sync writes the name of the board, and Monday Tasks lists the tasks by it',
 };
 const studioOnlyTypes = {
   status: 'the Mini writes it for the status block, and the dashboard never reads it',
@@ -324,7 +327,7 @@ const rotationAreas = ['grid1', 'grid2'];
 // The field each sidebar list is sorted by. Where a line sits in structure.js
 // is up to whoever edits that file, so only the sort of each list is checked.
 const listSort = {
-  task: 'order',
+  task: 'mondayBoardName',
   plan: 'date',
   calendarFilter: 'name',
   sponsor: 'order',
@@ -382,7 +385,7 @@ const typeTitles = {
 // the colon, and the lines under it come after. The first group has no heading.
 const sidebarGroups = [
   'Start here',
-  'EVERY MEETING: Daily Agenda, Tasks, Tips and News',
+  'TASKS: Daily Agenda, Monday Tasks, Monday Boards, Tips and News',
   'EVENTS: Calendars, Calendar filters',
   'ROSTER: Leadership, Team leads, Sponsors, Photos',
   'COACHES ONLY: Settings, Extra panels',
@@ -391,12 +394,12 @@ const sidebarGroups = [
 // What each folder holds, in order. A folder inside a folder has its lines in brackets.
 const folderLines = {
   'Daily Agenda': 'Agenda items, Presentations (Upcoming, Past), Meeting days',
-  'Tasks': 'Pinned, From the board, Hidden',
+  'Monday Tasks': 'On the TV, Hidden',
   'Settings': 'Dashboard Settings, Look, Teams',
 };
 
 // The types, or the templates of add-templates.js, that the plus button of a folder offers
-const folderAdds = { 'Daily Agenda': 'plan,presentation', 'Tasks': 'pinnedTask' };
+const folderAdds = { 'Daily Agenda': 'plan,presentation' };
 
 // The titles the sidebar used to have, in the first rebuild or before it. None of them may be left
 // in a title, a description or a message that an editor reads.
@@ -409,6 +412,8 @@ const oldTitles = [
   { words: /\bTheme (page|document)\b/i, was: 'Theme', now: 'Look' },
   { words: /\bUp Next\b/, was: 'Up Next', now: 'Daily Agenda' },
   { words: /\bTest the screen\b/i, was: 'Test the screen', now: 'Demo' },
+  { words: /\bPin a task\b/, was: 'Pin a task', now: 'Monday Tasks' },
+  { words: /\bFrom the board\b/, was: 'From the board', now: 'On the TV' },
 ];
 
 // The real 'sanity' and 'react' packages are not installed, so stand-ins with
@@ -443,7 +448,11 @@ const standIns = {
       '  publish: { execute: () => globalThis.studioCalls.push({ publish: true }) },',
       '});',
     ].join('\n'),
-    'structure.js': 'export const structureTool = options => ({ options: options });',
+    // the Monday Boards page (monday-boards-view.js) takes its links from the pane router: a check can put its own in globalThis.studioPaneRouter
+    'structure.js': [
+      'export const structureTool = options => ({ options: options });',
+      "export const usePaneRouter = () => globalThis.studioPaneRouter || { ChildLink: 'ChildLink', navigateIntent: (...given) => { (globalThis.studioIntents = globalThis.studioIntents || []).push(given); } };",
+    ].join('\n'),
     'cli.js': 'export const defineCliConfig = config => config;',
   },
   react: {
@@ -465,7 +474,7 @@ function iconImportsOf(source) {
 
 function makeSandbox() {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-studio-'));
-  ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'calendars-view.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'publish-all.js', 'publish-all-tool.js', 'team-input.js', 'note-field.js', 'show-on-tv-input.js', 'status-input.js', 'frc-status-input.js', 'monday-status-input.js', 'monday-pickers.js', 'time-text.js', 'calendars-view-parts.js', 'panel-order-input.js', 'add-templates.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
+  ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'calendars-view.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'publish-all.js', 'publish-all-tool.js', 'team-input.js', 'note-field.js', 'show-on-tv-input.js', 'status-input.js', 'frc-status-input.js', 'monday-status-input.js', 'monday-pickers.js', 'time-text.js', 'calendars-view-parts.js', 'monday-boards-view.js', 'monday-boards-parts.js', 'panel-order-input.js', 'add-templates.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
     fs.cpSync(path.join(here, name), path.join(folder, name), { recursive: true });
   });
   fs.writeFileSync(path.join(folder, 'package.json'), JSON.stringify({ type: 'module' }));
@@ -2227,7 +2236,7 @@ function folderShape(entries) {
   return entries.map(entry => entry.title + (entry.kind === 'group' ? ' (' + folderShape(entry.entries || []) + ')' : '')).join(', ');
 }
 
-// The headings and the lines under each, as text such as "EVERY MEETING: Daily Agenda, Tasks"
+// The headings and the lines under each, as text such as "TASKS: Daily Agenda, Monday Tasks"
 function sidebarShape(entries) {
   const groups = [];
   entries.forEach(entry => {
@@ -2325,7 +2334,7 @@ function checkSidebarLines(problems) {
 
   entries.forEach((entry, index) => {
     const line = 'structure.js line ' + (index + 1) + ' of sidebarEntries';
-    if (entry.kind === 'divider') return need(problems, typeof entry.title === 'string' && entry.title !== '', line + ' is a divider with no heading. Give it a title, such as EVERY MEETING.');
+    if (entry.kind === 'divider') return need(problems, typeof entry.title === 'string' && entry.title !== '', line + ' is a divider with no heading. Give it a title, such as TASKS.');
     if (entry.kind === 'component') return checkComponent(entry, line);
     if (entry.kind === 'group') return checkFolder(entry, line, 1);
 
@@ -2351,7 +2360,7 @@ function checkSidebarGroups(problems) {
   const shape = sidebarShape(entries);
   need(problems, shape.join('\n') === sidebarGroups.join('\n'), 'the sidebar should read, with a heading and then its lines:\n    ' + sidebarGroups.join('\n    ') + '\nstructure.js has:\n    ' + shape.join('\n    '));
 
-  // Daily Agenda and Settings are the folders, and Presentations is the one folder inside a folder.
+  // Daily Agenda, Monday Tasks and Settings are the folders, and Presentations is the one folder inside a folder.
   // A heading is a divider, not a folder.
   const folders = entries.filter(entry => entry.kind === 'group');
   need(problems, folders.map(entry => entry.title).join() === Object.keys(folderLines).join(), 'The only folders in the sidebar should be ' + Object.keys(folderLines).join(' and ') + ', and the headings should be dividers with a title. The folders are: ' + (folders.map(entry => entry.title).join() || 'none'));
@@ -2360,7 +2369,7 @@ function checkSidebarGroups(problems) {
     if (want) need(problems, folderShape(folder.entries) === want, folder.title + ' should hold: ' + want + '. It holds: ' + folderShape(folder.entries));
     need(problems, (folder.add || []).join() === (folderAdds[folder.title] || ''), 'the plus button of ' + folder.title + ' should offer: ' + (folderAdds[folder.title] || 'nothing') + '. It offers: ' + ((folder.add || []).join() || 'nothing'));
   });
-  need(problems, allLines(entries).filter(entry => entry.kind === 'group').length === 4, 'the sidebar should have four folders in all: Daily Agenda, Presentations inside it, Tasks and Settings');
+  need(problems, allLines(entries).filter(entry => entry.kind === 'group').length === 4, 'the sidebar should have four folders in all: Daily Agenda, Presentations inside it, Monday Tasks and Settings');
 
   ['Start here', 'Calendars'].forEach(title => {
     const entry = entries.filter(item => item.title === title)[0];
@@ -2411,6 +2420,8 @@ function checkBuiltItem(entry, item, what, problems) {
     const pageOk = child && child.component === entry.component && child.id === entry.id && child.title === entry.title;
     need(problems, pageOk, what + ' should open the page ' + entry.title + ', drawn by its component, with the id ' + entry.id);
     need(problems, item.id === entry.id, what + ' should have the id ' + entry.id + ', it has ' + item.id);
+    // a page that links to a pane of its own (Monday Boards) is given the function that builds the pane
+    need(problems, (typeof entry.children === 'function') === (child && typeof child.child === 'function'), what + (entry.children ? ' should give its page a function that builds the pane its links open' : ' should not give its page a pane to open'));
   } else if (entry.kind === 'list') {
     const listOk = child && child.type === entry.type && child.title === entry.title && child.defaultOrdering[0].field === entry.sort.field;
     need(problems, listOk, what + ' should open the ' + entry.type + ' list, titled ' + entry.title + ', sorted by ' + entry.sort.field);
@@ -2525,16 +2536,17 @@ function checkSettingsPage() {
   if (demoActions !== 'publish,discardChanges') problems.push('the Demo page should have these actions: publish,discardChanges. It has: ' + demoActions);
 
   // The New menu in the top bar offers the types an editor adds, and not the pages that exist once, the
-  // status document that the Mini writes or the types with no line in the sidebar. A place is still
-  // offered while a document is open, which is where the Location field of a task has Create new.
+  // status document that the Mini writes, the tasks that the Mini makes or the types with no line in the
+  // sidebar. A place is still offered while a document is open, which is where the Location field of a task
+  // has Create new.
   const templates = ['task', 'plan', 'presentation', 'dashboardSettings', 'theme', 'demo', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus', 'extraEvent', 'place'].map(name => ({ templateId: name }));
   const offeredIn = creationContext => world.config.document.newDocumentOptions(templates, creationContext === undefined ? {} : { creationContext: creationContext }).map(item => item.templateId).join();
-  const menu = 'task,plan,presentation';
+  const menu = 'plan,presentation';
   if (offeredIn(undefined) !== menu) problems.push('the New menu should offer: ' + menu + '. It offers: ' + offeredIn(undefined));
   if (offeredIn({ type: 'global' }) !== menu) problems.push('the New menu in the top bar should offer: ' + menu + '. It offers: ' + offeredIn({ type: 'global' }));
   if (offeredIn({ type: 'structure', schemaType: 'task' }) !== menu) problems.push('the plus button of a list should offer: ' + menu + '. It offers: ' + offeredIn({ type: 'structure', schemaType: 'task' }));
   const inField = offeredIn({ type: 'document', documentId: 'task-1', schemaType: 'task' });
-  if (inField !== 'task,plan,presentation,place') problems.push('a reference field should be able to create a place, and nothing is changed for the other types. It offers: ' + inField);
+  if (inField !== 'plan,presentation,place') problems.push('a reference field should be able to create a place, and nothing is changed for the other types. It offers: ' + inField);
 
   const named = world.structure.settingsType === 'dashboardSettings' && world.structure.settingsId === 'dashboardSettings';
   need(problems, named, 'structure.js should name the settings type and id dashboardSettings');
@@ -4078,8 +4090,8 @@ function checkStatusBlock() {
 
   // Editors never find it: no line in the sidebar and no place in the New menu
   need(problems, allLines(world.structure.sidebarEntries).every(entry => entry.type !== 'status'), 'the sidebar should have no line for the status document');
-  const offered = world.config.document.newDocumentOptions([{ templateId: 'status' }, { templateId: 'task' }], {}).map(item => item.templateId).join();
-  need(problems, offered === 'task', 'the New menu should not offer the status document');
+  const offered = world.config.document.newDocumentOptions([{ templateId: 'status' }, { templateId: 'plan' }], {}).map(item => item.templateId).join();
+  need(problems, offered === 'plan', 'the New menu should not offer the status document');
 
   // The script on the Mini writes the same document and fields
   const script = world.statusScript;
@@ -4214,8 +4226,8 @@ function checkFrcStatus() {
 
   // Editors never find it: no line in the sidebar and no place in the New menu
   need(problems, allLines(world.structure.sidebarEntries).every(entry => entry.type !== 'frcStatus'), 'the sidebar should have no line for the FRC data document');
-  const offered = world.config.document.newDocumentOptions([{ templateId: 'frcStatus' }, { templateId: 'task' }], {}).map(item => item.templateId).join();
-  need(problems, offered === 'task', 'the New menu should not offer the FRC data document');
+  const offered = world.config.document.newDocumentOptions([{ templateId: 'frcStatus' }, { templateId: 'plan' }], {}).map(item => item.templateId).join();
+  need(problems, offered === 'plan', 'the New menu should not offer the FRC data document');
 
   // The lines of the block, in plain words, and a document that is missing or cannot be read
   const now = new Date('2027-03-12T15:00:00.000Z');
@@ -4473,24 +4485,26 @@ function checkMondayCards() {
   return problems;
 }
 
-// Tasks from the team board and tasks pinned by hand. A task has a source, a board item number,
-// a priority and a Show on TV switch. A task from the board opens read only except Show on TV,
-// with one line at the top. The Tasks folder has three lists, Pinned, From the board and Hidden,
-// and between them they hold every task once, which is tried below with the real filters of
-// structure.js (docs/editing-content.md, "Tasks").
+// Tasks from the team board. A task has a source, a board item number, the number and name of its board,
+// a priority and a Show on TV switch. Every task opens read only except Show on TV, with one line at the
+// top that says where it comes from. Nobody adds a task: there is no plus button and no template. Monday
+// Tasks has two lists, On the TV and Hidden, and between them they hold every task once, which is tried
+// below with the real filters of structure.js (docs/editing-content.md, "Tasks").
 const boardNoteText = 'This task comes from the team board. Change it there. Use Show on TV to hide it here.';
-const editableOnBoard = ['boardNote', 'source', 'mondayId', 'showOnTv'];
+const manualNoteText = 'This task was typed by hand. The screen shows only the tasks from the team board, so it is not shown. It stays here until it is deleted.';
+const stayEditable = ['boardNote', 'manualNote', 'source', 'mondayId', 'mondayBoardId', 'mondayBoardName', 'showOnTv'];
 
 // A filter of structure.js as a function of a task, so a test can run it. Only the forms the
-// three task filters use are turned over: ==, != and defined().
+// task filters use are turned over: ==, != and defined().
 function filterOf(filter) {
   const js = filter
     .replace(/(?<![=!<>])==/g, '===')
     .replace(/!=/g, '!==')
     .replace(/defined\((\w+)\)/g, '($1 !== undefined && $1 !== null)')
-    .replace(/\$now/g, 'now');
-  const test = new Function('source', 'showOnTv', 'show', 'expires', 'now', 'return ' + js + ';');
-  return (task, now) => test(task.source, task.showOnTv, task.show, task.expires, now);
+    .replace(/\$now/g, 'now')
+    .replace(/\$board/g, 'board');
+  const test = new Function('source', 'showOnTv', 'show', 'expires', 'mondayBoardId', 'now', 'board', 'return ' + js + ';');
+  return (task, now, board) => test(task.source, task.showOnTv, task.show, task.expires, task.mondayBoardId, now, board);
 }
 
 function checkBoardTasks() {
@@ -4498,11 +4512,13 @@ function checkBoardTasks() {
   const at = name => fieldAt('task.' + name);
   const rulesOf = field => (field ? constraintsOf(field) : []);
 
-  // the four new fields
+  // the fields the board sync sets, and the ones an editor sees
   const source = at('source');
   need(problems, source && source.type === 'string' && source.hidden === true && source.initialValue === 'manual', 'task.source should be a string, hidden, that starts on manual');
-  const mondayId = at('mondayId');
-  need(problems, mondayId && mondayId.type === 'string' && mondayId.hidden === true, 'task.mondayId should be a string, hidden');
+  ['mondayId', 'mondayBoardId', 'mondayBoardName'].forEach(name => {
+    const field = at(name);
+    need(problems, field && field.type === 'string' && field.hidden === true, 'task.' + name + ' should be a string, hidden');
+  });
   const priority = at('priority');
   need(problems, priority && priority.type === 'string' && priority.hidden === undefined && priority.initialValue === undefined && !constraintNamed(rulesOf(priority), 'required'), 'task.priority should be an optional string with no starting value');
   need(problems, priority && /optional/i.test(priority.description || ''), 'the task.priority description should say it is optional');
@@ -4510,46 +4526,48 @@ function checkBoardTasks() {
   need(problems, showOnTv && showOnTv.type === 'boolean' && showOnTv.title === 'Show on TV' && showOnTv.initialValue === true && showOnTv.hidden === undefined, 'task.showOnTv should be a switch titled Show on TV that starts on');
   need(problems, showOnTv && showOnTv.components && showOnTv.components.input === world.showOnTvInput.ShowOnTvInput, 'task.showOnTv should use the input in studio/show-on-tv-input.js, which draws a task with no value as on');
 
-  // the line at the top of a task from the board: first in the form, shown only for that task, stores nothing
-  const note = at('boardNote');
+  // the two lines at the top: one for a task from the board and one for any other, each shown for its own tasks and storing nothing
   const names = fieldsIn(typeByName('task')).map(field => field.name);
-  need(problems, names[0] === 'boardNote', 'the note should be the first field of a task, and the first is ' + names[0]);
-  need(problems, note && note.description === boardNoteText, 'the note should say: ' + boardNoteText);
-  need(problems, note && note.readOnly === true && note.components && note.components.field === world.noteField.NoteField && !note.validation, 'the note should be read only, drawn by the note field, with no rules');
+  need(problems, names[0] === 'boardNote' && names[1] === 'manualNote', 'the notes should be the first two fields of a task, and the first two are ' + names.slice(0, 2).join(', '));
   const board = { document: { source: 'monday', status: 'in-progress' } };
-  const pinned = { document: { source: 'manual', status: 'up-next' } };
+  const typed = { document: { source: 'manual', status: 'up-next' } };
   const older = { document: { title: 'A task made before the board' } };
-  if (note && typeof note.hidden === 'function') {
-    need(problems, note.hidden(board) === false, 'the note should show on a task from the board');
-    need(problems, note.hidden(pinned) === true && note.hidden(older) === true && note.hidden({ document: undefined }) === true, 'the note should be hidden on a pinned task, on one with no source and on a new one');
-  } else {
-    problems.push('the note should have a hidden function that shows it only on a task from the board');
-  }
-
-  // read only: every field but the four above, and only on a task from the board
-  fieldsIn(typeByName('task')).forEach(field => {
-    const where = 'task.' + field.name;
-    if (editableOnBoard.indexOf(field.name) !== -1) {
-      need(problems, field.name === 'boardNote' || !field.readOnly, where + ' should stay editable on a task from the board');
-      return;
+  [['boardNote', boardNoteText, true], ['manualNote', manualNoteText, false]].forEach(item => {
+    const note = at(item[0]);
+    need(problems, note && note.description === item[1], 'the note ' + item[0] + ' should say: ' + item[1]);
+    need(problems, note && note.readOnly === true && note.components && note.components.field === world.noteField.NoteField && !note.validation, 'the note ' + item[0] + ' should be read only, drawn by the note field, with no rules');
+    if (note && typeof note.hidden === 'function') {
+      const shows = context => note.hidden(context) === false;
+      need(problems, shows(board) === item[2], 'the note ' + item[0] + (item[2] ? ' should show on a task from the board' : ' should be hidden on a task from the board'));
+      need(problems, shows(typed) === !item[2] && shows(older) === !item[2] && shows({ document: undefined }) === !item[2], 'the note ' + item[0] + (item[2] ? ' should be hidden on a task typed by hand, on one with no source and on a new one' : ' should show on a task typed by hand, on one with no source and on a new one'));
+    } else {
+      problems.push('the note ' + item[0] + ' should have a hidden function');
     }
-    if (typeof field.readOnly !== 'function') return problems.push(where + ' should be read only on a task from the board: it needs a readOnly function');
-    need(problems, field.readOnly(board) === true, where + ' should be read only on a task from the board');
-    need(problems, field.readOnly(pinned) === false && field.readOnly(older) === false && field.readOnly({ document: undefined }) === false && field.readOnly({}) === false, where + ' should be editable on a pinned task, on one with no source and on a new one');
   });
 
-  // a list line says the subteam and the status, the priority when there is one, Board or Pinned, and Hidden when the task is off the TV
+  // read only: every field but the ones above, on every task
+  fieldsIn(typeByName('task')).forEach(field => {
+    const where = 'task.' + field.name;
+    if (stayEditable.indexOf(field.name) !== -1) return need(problems, field.name === 'boardNote' || field.name === 'manualNote' || !field.readOnly, where + ' should stay editable');
+    need(problems, field.readOnly === true, where + ' should be read only on every task');
+  });
+
+  // a list line says the status, the priority, the owner, the due date and the board, Hidden when the task is off the TV, and Manual (not shown) for a task typed by hand
   const preview = typeByName('task').preview;
-  const line = fields => preview.prepare(Object.assign({ title: 'Wire the robot', status: 'in-progress', subteam: 'Build' }, fields)).subtitle;
-  need(problems, line({ source: 'monday' }) === 'Build · In progress · Board', 'a task from the board should read "Build · In progress · Board", it reads "' + line({ source: 'monday' }) + '"');
-  need(problems, line({ source: 'manual' }) === 'Build · In progress · Pinned', 'a pinned task should read "Build · In progress · Pinned", it reads "' + line({ source: 'manual' }) + '"');
-  need(problems, line({}) === 'Build · In progress · Pinned', 'a task with no source should read as pinned');
-  need(problems, line({ priority: 'high', source: 'monday', contact: 'Sam', place: 'Classroom' }) === 'Build · In progress · High priority · Board · Sam · Classroom', 'the priority should come before Board or Pinned, then the contact and the place, it reads "' + line({ priority: 'high', source: 'monday', contact: 'Sam', place: 'Classroom' }) + '"');
-  need(problems, line({ priority: 'urgent' }) === 'Build · In progress · Pinned', 'a priority that is not high, medium or low should not be shown');
-  need(problems, line({ subteam: undefined }) === 'In progress · Pinned', 'a task with no subteam should start with its status');
-  need(problems, line({ showOnTv: false }) === 'Hidden · Build · In progress · Pinned', 'a task kept off the TV should read as hidden, it reads "' + line({ showOnTv: false }) + '"');
-  need(problems, line({ showOnTv: true }) === 'Build · In progress · Pinned' && line({ show: false }) === 'Hidden · Build · In progress · Pinned', 'Show on TV on should change nothing, and Show on screen off should still read as hidden');
-  need(problems, preview.select.source === 'source' && preview.select.priority === 'priority' && preview.select.showOnTv === 'showOnTv', 'the preview should select source, priority and showOnTv');
+  const line = fields => preview.prepare(Object.assign({ title: 'Wire the robot', status: 'in-progress', board: 'Build board', source: 'monday' }, fields)).subtitle;
+  const says = (fields, want) => need(problems, line(fields) === want, 'a task with ' + JSON.stringify(fields) + ' should read "' + want + '", it reads "' + line(fields) + '"');
+  says({}, 'In progress · Build board');
+  says({ priority: 'high', contact: 'Sam', due: '2026-10-14' }, 'In progress · High priority · Sam · Due Oct 14 · Build board');
+  says({ priority: 'urgent' }, 'In progress · Build board');
+  says({ due: 'next week' }, 'In progress · Build board');
+  says({ board: undefined }, 'In progress');
+  says({ showOnTv: false }, 'Hidden · In progress · Build board');
+  says({ show: false }, 'Hidden · In progress · Build board');
+  says({ showOnTv: true }, 'In progress · Build board');
+  says({ source: 'manual' }, 'Manual (not shown) · In progress · Build board');
+  says({ source: undefined, board: undefined }, 'Manual (not shown) · In progress');
+  says({ source: 'manual', showOnTv: false }, 'Hidden · Manual (not shown) · In progress · Build board');
+  need(problems, preview.select.source === 'source' && preview.select.priority === 'priority' && preview.select.showOnTv === 'showOnTv' && preview.select.board === 'mondayBoardName' && preview.select.due === 'dueDate', 'the preview should select source, priority, showOnTv, the board name and the due date');
 
   // the input: a task with no value is drawn as on, nothing is written on opening, a click writes the switch
   const input = world.showOnTvInput;
@@ -4564,43 +4582,42 @@ function checkBoardTasks() {
   need(problems, JSON.stringify(written) === JSON.stringify([{ type: 'set', value: false }, { type: 'set', value: true }]), 'a click should write the switch, off and then on');
   need(problems, input.ShowOnTvInput({ value: true, readOnly: true, onChange: () => {} }).children[0].props.disabled === true, 'the box should be disabled when the field is read only');
 
-  // the Tasks folder: three lists in order, one add button, the template with its defaults
-  const folder = world.structure.sidebarEntries.filter(entry => entry.title === 'Tasks')[0];
-  if (!folder || folder.kind !== 'group') return problems.concat('the Tasks line of the sidebar should be a folder');
-  need(problems, folder.entries.map(entry => entry.title).join() === 'Pinned,From the board,Hidden', 'the Tasks folder should hold Pinned, From the board and Hidden, in that order');
-  need(problems, folder.add && folder.add.join() === 'pinnedTask', 'the Tasks folder should offer only pinnedTask in its plus button');
+  // Monday Tasks: two lists in order, no plus button, no template, and no New menu offers a task
+  const folder = world.structure.sidebarEntries.filter(entry => entry.title === 'Monday Tasks')[0];
+  if (!folder || folder.kind !== 'group') return problems.concat('the Monday Tasks line of the sidebar should be a folder');
+  need(problems, folder.entries.map(entry => entry.title).join() === 'On the TV,Hidden', 'the Monday Tasks folder should hold On the TV and Hidden, in that order');
+  need(problems, folder.add === undefined, 'the Monday Tasks folder should have no plus button');
   folder.entries.forEach(entry => {
-    need(problems, entry.type === 'task' && entry.sort.field === 'order' && entry.sort.direction === 'asc' && entry.thenBy && entry.thenBy.field === '_createdAt' && entry.thenBy.direction === 'asc', entry.title + ' should list tasks by Order, then the oldest first, as the screen does');
+    need(problems, entry.type === 'task' && entry.sort.field === 'mondayBoardName' && entry.sort.direction === 'asc' && entry.thenBy && entry.thenBy.field === '_createdAt' && entry.thenBy.direction === 'asc', entry.title + ' should list tasks by the name of their board, then the oldest first');
+    need(problems, Array.isArray(entry.add) && entry.add.length === 0, entry.title + ' should have no plus button: its add should be an empty list');
   });
-
-  const template = world.addTemplates.filter(item => item.id === 'pinnedTask')[0];
-  need(problems, template && template.title === 'Pin a task' && template.schemaType === 'task', 'the template pinnedTask should be titled Pin a task and make a task');
-  need(problems, template && template.value.source === 'manual' && template.value.showOnTv === true && template.value.show === true && template.value.status === 'up-next' && !('team' in template.value), 'Pin a task should start a manual task, shown on the TV and on screen, with no team');
+  need(problems, !world.addTemplates.some(item => item.id === 'pinnedTask' || item.schemaType === 'task'), 'add-templates.js should have no template that makes a task');
   const offered = world.config.schema.templates([{ id: 'task' }]).map(item => item.id).join();
   need(problems, offered === ['task'].concat(world.addTemplates.map(item => item.id)).join(), 'sanity.config.js should add the templates of add-templates.js to the templates of the Studio. It gives: ' + offered);
-  const choicesIn = creationContext => world.config.document.newDocumentOptions([{ templateId: 'task' }, { templateId: 'pinnedTask' }], { creationContext: creationContext }).map(item => item.templateId).join();
+  const choicesIn = creationContext => world.config.document.newDocumentOptions([{ templateId: 'task' }], { creationContext: creationContext }).map(item => item.templateId).join();
   [undefined, { type: 'global' }, { type: 'structure', schemaType: 'task' }, { type: 'document', documentId: 'task-1', schemaType: 'task' }].forEach(creationContext => {
-    need(problems, choicesIn(creationContext) === 'task', 'the New menus should offer a task and not Pin a task, which only the Tasks folder offers. They offer: ' + choicesIn(creationContext));
+    need(problems, choicesIn(creationContext) === '', 'no New menu should offer a task, because the Mini makes them. They offer: ' + choicesIn(creationContext));
   });
 
-  // the three lists hold every task once. The filters are the ones structure.js gives the Studio.
+  // the two lists hold every task once. The filters are the ones structure.js gives the Studio.
   const now = '2026-10-09T12:00:00.000Z';
   const past = '2026-10-01T12:00:00.000Z';
   const future = '2026-11-01T12:00:00.000Z';
   const tasks = [
-    { name: 'a task made before the board: no new field', where: 'Pinned' },
-    { name: 'no source, empty values', task: { source: null, showOnTv: null, show: null, expires: null }, where: 'Pinned' },
-    { name: 'pinned', task: { source: 'manual', showOnTv: true, show: true }, where: 'Pinned' },
-    { name: 'pinned and expiring later', task: { source: 'manual', expires: future }, where: 'Pinned' },
-    { name: 'from the board', task: { source: 'monday', showOnTv: true }, where: 'From the board' },
-    { name: 'from the board, expiring later', task: { source: 'monday', expires: future }, where: 'From the board' },
-    { name: 'pinned and off the TV', task: { source: 'manual', showOnTv: false }, where: 'Hidden' },
+    { name: 'a task made before the board: no new field', where: 'Hidden' },
+    { name: 'no source, empty values', task: { source: null, showOnTv: null, show: null, expires: null }, where: 'Hidden' },
+    { name: 'typed by hand', task: { source: 'manual', showOnTv: true, show: true }, where: 'Hidden' },
+    { name: 'typed by hand and expiring later', task: { source: 'manual', expires: future }, where: 'Hidden' },
+    { name: 'from the board', task: { source: 'monday', showOnTv: true }, where: 'On the TV' },
+    { name: 'from the board with no switches at all', task: { source: 'monday' }, where: 'On the TV' },
+    { name: 'from the board, expiring later', task: { source: 'monday', expires: future }, where: 'On the TV' },
+    { name: 'typed by hand and off the TV', task: { source: 'manual', showOnTv: false }, where: 'Hidden' },
     { name: 'from the board and off the TV', task: { source: 'monday', showOnTv: false }, where: 'Hidden' },
     { name: 'switched off on screen', task: { show: false }, where: 'Hidden' },
     { name: 'from the board and switched off on screen', task: { source: 'monday', show: false }, where: 'Hidden' },
     { name: 'expired', task: { expires: past }, where: 'Hidden' },
     { name: 'from the board and expired', task: { source: 'monday', expires: past }, where: 'Hidden' },
-    { name: 'expiring this second', task: { expires: now }, where: 'Hidden' },
+    { name: 'from the board and expiring this second', task: { source: 'monday', expires: now }, where: 'Hidden' },
   ];
   tasks.forEach(item => {
     const sits = folder.entries.filter(entry => filterOf(entry.filter)(item.task || {}, now)).map(entry => entry.title);
@@ -4610,12 +4627,13 @@ function checkBoardTasks() {
   return problems;
 }
 
-// The plus button of each list under Every meeting, Events and Roster. A list makes the template
+// The plus button of each list under Tasks, Events and Roster. A list makes the template
 // named in its add (add-templates.js): a new document of the type the list shows, with the starting
 // values of the group, which are no team, the switch that puts it on the screen turned on and, for
-// a tip, the kind set. The New menus of the Studio, and the templates they offer, stay as they were
-// (docs/reordering-the-sidebar.md).
-const addGroups = ['EVERY MEETING', 'EVENTS', 'ROSTER'];
+// a tip, the kind set. The two lists of Monday Tasks have no plus button, because the Mini makes
+// the tasks, and their add is an empty list. The New menus of the Studio, and the templates they
+// offer, stay as they were, except that none offers a task (docs/reordering-the-sidebar.md).
+const addGroups = ['TASKS', 'EVENTS', 'ROSTER'];
 
 // The template each list makes, by the title of the list
 const listAdds = {
@@ -4623,9 +4641,8 @@ const listAdds = {
   Upcoming: 'newPresentation',
   Past: 'newPresentation',
   'Meeting days': 'newPresentationDay',
-  Pinned: 'pinnedTask',
-  'From the board': 'pinnedTask',
-  Hidden: 'pinnedTask',
+  'On the TV': '',
+  Hidden: '',
   'Tips and News': 'newTip',
   'Calendar filters': 'newCalendarFilter',
   Leadership: 'newPerson',
@@ -4692,6 +4709,8 @@ function checkListAdds() {
   const inGroups = lines.filter(item => addGroups.indexOf(item.heading) !== -1 && item.line.kind === 'list').map(item => item.line);
   need(problems, inGroups.map(line => line.title).join() === Object.keys(listAdds).join(), 'the lists under ' + addGroups.join(', ') + ' should be: ' + Object.keys(listAdds).join(', ') + '. They are: ' + inGroups.map(line => line.title).join(', ') + '. Add the new list to listAdds in check-schemas.mjs.');
   inGroups.forEach(line => {
+    if (listAdds[line.title] === '') return need(problems, Array.isArray(line.add) && line.add.length === 0, line.title + ' should have no plus button. Its add should be an empty list.');
+
     const template = templates.filter(item => item.id === listAdds[line.title])[0];
     need(problems, (line.add || []).join() === listAdds[line.title], line.title + ' should make ' + listAdds[line.title] + ' in its plus button. Its add is: ' + ((line.add || []).join() || 'empty'));
     need(problems, template && template.schemaType === line.type, line.title + ' lists ' + line.type + ', and its template makes ' + (template && template.schemaType));
@@ -4718,7 +4737,7 @@ function checkListAdds() {
   need(problems, sameData(given.slice(0, plain.length), plain), 'sanity.config.js should keep the templates the Studio makes for every type, and add its own after them');
   need(problems, given.slice(plain.length).map(template => template.id).join() === templates.map(template => template.id).join(), 'sanity.config.js should add the templates of add-templates.js, and no others');
 
-  const hidden = pageTypes.concat(['extraEvent', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus']);
+  const hidden = pageTypes.concat(['extraEvent', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus', 'task']);
   const choicesIn = (list, creationContext) => world.config.document.newDocumentOptions(list, { creationContext: creationContext }).map(item => item.templateId).join();
   const plainChoices = plain.map(template => ({ templateId: template.id }));
   const allChoices = plainChoices.concat(templates.map(template => ({ templateId: template.id })));
@@ -4762,8 +4781,8 @@ function checkCalendarStatusType() {
 
   // Editors never find it: no line in the sidebar and no place in the New menu
   need(problems, allLines(world.structure.sidebarEntries).every(entry => entry.type !== 'calendarStatus'), 'the sidebar should have no line for the calendar status document');
-  const offered = world.config.document.newDocumentOptions([{ templateId: 'calendarStatus' }, { templateId: 'task' }], {}).map(item => item.templateId).join();
-  need(problems, offered === 'task', 'the New menu should not offer the calendar status document');
+  const offered = world.config.document.newDocumentOptions([{ templateId: 'calendarStatus' }, { templateId: 'plan' }], {}).map(item => item.templateId).join();
+  need(problems, offered === 'plan', 'the New menu should not offer the calendar status document');
 
   // The page and the scripts on the Mini use the same id and the same type
   need(problems, world.calendarsParts.calendarStatusId === 'calendar-status', 'the Calendars page should read the document calendar-status');
@@ -5418,7 +5437,7 @@ function checkMondayTab() {
 
 // The Monday data document the Mini writes (schemas/mondayStatus.js, deploy/scripts/monday-sync.sh), the block
 // that shows it and the task fields the script writes
-const mondayStatusFields = ['connectedAs', 'lastSyncAt', 'lastError', 'boards', 'snapshots'];
+const mondayStatusFields = ['connectedAs', 'lastSyncAt', 'lastError', 'boards', 'readings', 'snapshots'];
 
 function checkMondayStatus() {
   const problems = [];
@@ -5432,7 +5451,8 @@ function checkMondayStatus() {
   need(problems, names(fieldAt('mondayStatus.boards')) === 'id,name,itemCount,columns', 'a board of mondayStatus should have these fields, in this order: id, name, itemCount, columns');
   need(problems, names(fieldAt('mondayStatus.boards.columns')) === 'id,title,type', 'a column of mondayStatus should have these fields, in this order: id, title, type');
   need(problems, names(fieldAt('mondayStatus.snapshots')) === 'date,open', 'a count of mondayStatus should have these fields, in this order: date, open');
-  const kinds = { connectedAs: 'string', lastSyncAt: 'datetime', lastError: 'string', boards: 'array', snapshots: 'array', 'boards.id': 'string', 'boards.name': 'string', 'boards.itemCount': 'number', 'boards.columns': 'array', 'boards.columns.id': 'string', 'boards.columns.title': 'string', 'boards.columns.type': 'string', 'snapshots.date': 'date', 'snapshots.open': 'number' };
+  need(problems, names(fieldAt('mondayStatus.readings')) === 'boardId,boardName,itemsRead,readAt,note', 'a reading of mondayStatus should have these fields, in this order: boardId, boardName, itemsRead, readAt, note');
+  const kinds = { connectedAs: 'string', lastSyncAt: 'datetime', lastError: 'string', boards: 'array', readings: 'array', 'readings.boardId': 'string', 'readings.boardName': 'string', 'readings.itemsRead': 'number', 'readings.readAt': 'datetime', 'readings.note': 'string', snapshots: 'array', 'boards.id': 'string', 'boards.name': 'string', 'boards.itemCount': 'number', 'boards.columns': 'array', 'boards.columns.id': 'string', 'boards.columns.title': 'string', 'boards.columns.type': 'string', 'snapshots.date': 'date', 'snapshots.open': 'number' };
   Object.keys(kinds).forEach(name => need(problems, fieldAt('mondayStatus.' + name) && fieldAt('mondayStatus.' + name).type === kinds[name], 'mondayStatus.' + name + ' should be a ' + kinds[name]));
   need(problems, type && type.readOnly === true, 'mondayStatus should be read only: the Mini writes it');
   need(problems, type && type.__experimental_omnisearch_visibility === false, 'mondayStatus should be kept out of Studio search');
@@ -5443,8 +5463,8 @@ function checkMondayStatus() {
 
   // Editors never find it: no line in the sidebar and no place in the New menu
   need(problems, allLines(world.structure.sidebarEntries).every(entry => entry.type !== 'mondayStatus'), 'the sidebar should have no line for the Monday data document');
-  const offered = world.config.document.newDocumentOptions([{ templateId: 'mondayStatus' }, { templateId: 'task' }], {}).map(item => item.templateId).join();
-  need(problems, offered === 'task', 'the New menu should not offer the Monday data document');
+  const offered = world.config.document.newDocumentOptions([{ templateId: 'mondayStatus' }, { templateId: 'plan' }], {}).map(item => item.templateId).join();
+  need(problems, offered === 'plan', 'the New menu should not offer the Monday data document');
 
   // The script writes the same document, with the same fields, and the tasks with fields that a task has
   need(problems, input.mondayStatusId === 'monday-status', 'the Monday data document should have the fixed id monday-status');
@@ -5714,6 +5734,149 @@ function checkPhotoFit() {
   return problems;
 }
 
+// The Monday Boards page, under Tasks (monday-boards-view.js, with its words and rows in
+// monday-boards-parts.js). It lists the boards the token can see, opens Dashboard Settings at the board
+// rows, and links each chosen board to the tasks of that board, which structure.js builds in two lists.
+function checkMondayBoardsPage() {
+  const problems = [];
+  const parts = world.mondayBoardsParts;
+  const view = world.mondayBoardsView;
+  const line = world.structure.sidebarEntries.filter(entry => entry.title === 'Monday Boards')[0];
+  const now = new Date('2026-10-09T15:00:00.000Z');
+  const ago = minutes => new Date(now.getTime() - minutes * 60000).toISOString();
+
+  need(problems, line && line.kind === 'component' && line.component === view.MondayBoardsView && typeof line.children === 'function', 'the Monday Boards line of the sidebar should open MondayBoardsView and give it the function that builds the tasks of a board');
+  need(problems, typeof view.boardsPage === 'function' && typeof parts.readBoardsPage === 'function', 'the Monday Boards files should export boardsPage and readBoardsPage');
+
+  // Choose boards goes to the board rows, which sit on the Monday tab
+  const rows = fieldAt('dashboardSettings.mondayBoards');
+  need(problems, parts.chooseTarget.id === 'dashboardSettings' && parts.chooseTarget.type === 'dashboardSettings' && parts.chooseTarget.path === 'mondayBoards', 'Choose boards should open the field mondayBoards of the document dashboardSettings');
+  need(problems, rows && rows.group === 'monday', 'the field mondayBoards should be on the Monday tab, because Choose boards opens it');
+
+  const status = {
+    lastSyncAt: ago(3),
+    boards: [{ id: '111', name: 'Build board', itemCount: 12 }, { id: '222', name: 'Outreach board', itemCount: 1 }, { id: '333', name: 'Parts board', itemCount: 0 }],
+    readings: [{ boardId: '111', itemsRead: 12, readAt: ago(5), note: '' }],
+  };
+  const entries = [{ boardId: '111', team: 'PRIME' }, { boardId: '999', team: 'NOVA' }];
+  const read = { status: status, entries: entries, statusUnreadable: false, entriesUnreadable: false };
+  const clicks = [];
+  const links = { ChildLink: 'ChildLink', choose: () => clicks.push('choose') };
+
+  const page = view.boardsPage(read, now, links);
+  need(problems, wordsIn(nodesWhere(page, node => node.type === 'h1')) === 'Monday Boards', 'the page should open with the heading Monday Boards');
+  const paragraphs = nodesWhere(page, node => node.type === 'p').map(wordsIn);
+  need(problems, paragraphs[0] === parts.helpLine && /pick the board, the team, and how the status is read/.test(parts.helpLine), 'the first line under the heading should say: pick the board, the team, and how the status is read');
+  const button = nodesWhere(page, node => node.type === 'button')[0];
+  need(problems, button && wordsIn(button) === 'Choose boards' && button.props.onClick === links.choose, 'the page should have a Choose boards button');
+  need(problems, nodesWhere(page, node => node.type === 'h1' || node.type === 'p' || node.type === 'button').findIndex(node => node.type === 'button') === 2, 'the button should come right after the heading and the first line');
+
+  // One row for each board: the chosen ones first, the board the token cannot see too, then the others
+  const items = nodesWhere(page, node => node.type === 'li').map(wordsIn);
+  need(problems, items.length === 4, 'the page should list the three boards of the token and the chosen board it cannot see. It lists ' + items.length);
+  need(problems, items[0] === 'Build board 12 items · Read 5 minutes ago · Chosen for PRIME', 'a chosen board should say its items, when it was read and its team. It reads "' + items[0] + '"');
+  need(problems, items[1] === 'Board 999 Items not counted · Not read yet · Chosen for NOVA The token cannot see this board, or the board number is wrong.', 'a chosen board the token cannot see should say so. It reads "' + items[1] + '"');
+  need(problems, items[2] === 'Outreach board 1 item · Not read · Not chosen' && items[3] === 'Parts board 0 items · Not read · Not chosen', 'a board that is not chosen should say Not read and Not chosen. They read "' + items[2] + '" and "' + items[3] + '"');
+  const linked = nodesWhere(page, node => node.type === 'ChildLink');
+  need(problems, linked.length === 1 && linked[0].props.childId === '111' && wordsIn(linked[0]) === 'Build board', 'only the name of the chosen board that the token can see should open its tasks, with the board number as the child');
+  const noted = view.boardsPage({ status: status, entries: [{ boardId: '111', team: '' }], statusUnreadable: false, entriesUnreadable: false }, now, links);
+  need(problems, /Chosen, with no team/.test(wordsIn(noted)), 'a chosen board with no team should say so');
+  const reasons = view.boardsPage({ status: Object.assign({}, status, { readings: [{ boardId: '111', itemsRead: 0, readAt: ago(2), note: 'monday gave no items for this board' }] }), entries: entries, statusUnreadable: false, entriesUnreadable: false }, now, links);
+  need(problems, /Monday gave no items for this board\./.test(wordsIn(reasons)), 'the note of a reading should be a sentence under its board');
+  need(problems, /The Mini last read Monday 3 minutes ago\./.test(wordsIn(page)) && wordsIn(page).indexOf(parts.openLine) !== -1 && wordsIn(page).indexOf(parts.publicLine) !== -1, 'the page should say when the Mini last read Monday, how to open the tasks of a board, and that the names are public');
+  need(problems, /dataset/.test(parts.publicLine) && /anyone can read/.test(parts.publicLine), 'the page should say the names are in the dataset that anyone can read');
+  need(problems, wordsIn(view.boardsPage({ status: Object.assign({}, status, { lastError: 'Monday refused the token' }), entries: entries, statusUnreadable: false, entriesUnreadable: false }, now, links)).indexOf('Monday refused the token.') !== -1, 'the last error of the Mini should show as a sentence');
+
+  // Nothing yet, reading, nothing to list, and documents that cannot be read
+  need(problems, wordsIn(view.boardsPage(null, now, links)).indexOf('Reading the boards') !== -1, 'the page should say it is reading while it waits');
+  need(problems, wordsIn(view.boardsPage({ status: null, entries: [], statusUnreadable: false, entriesUnreadable: false }, now, links)).indexOf(parts.nothingYet) !== -1, 'with no status document the page should say Nothing yet');
+  need(problems, wordsIn(view.boardsPage({ status: { boards: [] }, entries: [], statusUnreadable: false, entriesUnreadable: false }, now, links)).indexOf(parts.noBoardsLine) !== -1, 'with no boards the page should say the token can see none');
+  need(problems, wordsIn(view.boardsPage({ status: null, entries: [], statusUnreadable: true, entriesUnreadable: false }, now, links)).indexOf(parts.unreadableLine) !== -1, 'the page should say so when the status cannot be read');
+  need(problems, wordsIn(view.boardsPage({ status: status, entries: [], statusUnreadable: false, entriesUnreadable: true }, now, links)).indexOf(parts.settingsUnreadableLine) !== -1, 'the page should say so when Dashboard Settings cannot be read, and still list the boards');
+  const odd = view.boardsPage({ status: { boards: [null, 'text', { id: 5 }, { id: '7', name: 7, itemCount: 'many' }], readings: 'text' }, entries: [null, { boardId: 3 }], statusUnreadable: false, entriesUnreadable: false }, now, links);
+  need(problems, nodesWhere(odd, node => node.type === 'li').map(wordsIn).join() === 'Board 7 Items not counted · Not read · Not chosen', 'answers of an odd shape should be left out or read as missing, not stop the page');
+
+  // The component: it starts by saying it is reading, and Choose boards asks the pane router for Dashboard Settings
+  globalThis.studioIntents = [];
+  const start = view.MondayBoardsView();
+  need(problems, wordsIn(start).indexOf('Reading the boards') !== -1, 'MondayBoardsView should start by saying it is reading');
+  nodesWhere(start, node => node.type === 'button')[0].props.onClick();
+  need(problems, sameData(globalThis.studioIntents, [['edit', parts.chooseTarget]]), 'Choose boards should ask the pane router for the edit intent of Dashboard Settings at mondayBoards. It asked for ' + JSON.stringify(globalThis.studioIntents));
+  globalThis.studioIntents = undefined;
+
+  // The page shows and never writes
+  need(problems, !/\.patch\(|\.create\(|\.createIfNotExists\(|\.createOrReplace\(|\.delete\(|\.mutate\(|\.transaction\(|useDocumentOperation/.test(world.mondayBoardsViewSource + world.mondayBoardsPartsSource), 'the Monday Boards page should not write anything');
+
+  // What a student reads is short plain sentences
+  [parts.helpLine, parts.nothingYet, parts.noBoardsLine, parts.openLine, parts.publicLine, parts.unreadableLine, parts.settingsUnreadableLine].forEach(text => checkPlainSentences(problems, 'the Monday Boards page ("' + text.slice(0, 30) + '")', text));
+
+  // A board of the page opens its tasks in the same two lists as Monday Tasks, kept to that board
+  const built = world.structure.structure(fakeBuilder()).made.items.map(item => item.made).filter(item => item.title === 'Monday Boards')[0];
+  const resolver = built && built.child && built.child.made && built.child.made.child;
+  if (typeof resolver !== 'function') return problems.concat('the Monday Boards page should be given a function that builds the tasks of a board');
+
+  const opened = resolver('111', {}).made;
+  const lists = (opened.items || []).map(item => item.made);
+  need(problems, lists.map(item => item.title).join() === 'On the TV,Hidden', 'a board should open two lists, On the TV and Hidden. It opens: ' + lists.map(item => item.title).join());
+  const folder = world.structure.sidebarEntries.filter(entry => entry.title === 'Monday Tasks')[0];
+  lists.forEach((item, index) => {
+    const list = item.child && item.child.made;
+    const want = folder.entries[index];
+    need(problems, list && list.type === 'task' && list.params && list.params.board === '111' && list.params.type === 'task', item.title + ' of a board should list tasks and pass the board number as $board');
+    need(problems, list && list.filter === '_type == $type && (mondayBoardId == $board && (' + want.filter + '))', item.title + ' of a board should keep the filter of ' + want.title + ' of Monday Tasks and add the board');
+    need(problems, list && Array.isArray(list.initialValueTemplates) && list.initialValueTemplates.length === 0, item.title + ' of a board should have no plus button');
+    need(problems, list && sameData(list.defaultOrdering, [want.sort, want.thenBy]), item.title + ' of a board should be ordered as ' + want.title + ' of Monday Tasks');
+  });
+  need(problems, resolver('111', {}).made.id !== resolver('222', {}).made.id && lists[0].id !== resolver('222', {}).made.items[0].made.id, 'each board should have lists with ids of their own, so Studio keeps them apart');
+
+  // The filters keep each task in one list of one board
+  const now2 = '2026-10-09T12:00:00.000Z';
+  const sample = [
+    { task: { source: 'monday', mondayBoardId: '111' }, board: '111', where: 'On the TV' },
+    { task: { source: 'monday', mondayBoardId: '111', showOnTv: false }, board: '111', where: 'Hidden' },
+    { task: { source: 'monday', mondayBoardId: '222' }, board: '111', where: '' },
+    { task: { source: 'monday' }, board: '111', where: '' },
+    { task: { source: 'manual', mondayBoardId: '111' }, board: '111', where: 'Hidden' },
+    { task: { source: 'manual' }, board: '111', where: '' },
+  ];
+  sample.forEach((item, index) => {
+    const sits = lists.map(list => ({ title: list.title, filter: list.child.made.filter.replace(/^_type == \$type && /, '') })).filter(list => filterOf(list.filter)(item.task, now2, item.board)).map(list => list.title);
+    need(problems, sits.join() === item.where, 'task ' + (index + 1) + ' of the check should be in ' + (item.where || 'no list of the board') + '. It is in: ' + (sits.join() || 'no list'));
+  });
+  return problems;
+}
+
+// readBoardsPage asks for the published status document and the published board rows by their ids, and never fails
+async function checkMondayBoardsPageRead() {
+  const problems = [];
+  const read = world.mondayBoardsParts.readBoardsPage;
+  const asked = [];
+  const answering = answers => ({
+    fetch: async (...args) => {
+      asked.push(args);
+      const answer = answers[args[1].id];
+      if (answer instanceof Error) throw answer;
+      return answer;
+    },
+  });
+
+  const found = await read(answering({ 'monday-status': { lastSyncAt: 'x', boards: [] }, dashboardSettings: { entries: [{ boardId: '111', team: 'PRIME' }] } }));
+  need(problems, found.status && found.entries.length === 1 && !found.statusUnreadable && !found.entriesUnreadable, 'both answers that are there should be handed over');
+  need(problems, asked.length === 2 && asked.every(call => call[2].perspective === 'published' && /_id == \$id/.test(call[0])), 'readBoardsPage should ask for the published documents by their ids');
+  need(problems, asked.map(call => call[1].id).join() === 'monday-status,dashboardSettings', 'readBoardsPage should ask for monday-status and dashboardSettings');
+  need(problems, /readings\[\]/.test(asked[0][0]) && /boards\[\]/.test(asked[0][0]) && /mondayBoards\[\]/.test(asked[1][0]), 'readBoardsPage should ask for the boards, the readings and the board rows');
+
+  need(problems, sameData(await read(answering({ 'monday-status': null, dashboardSettings: null })), { status: null, entries: [], statusUnreadable: false, entriesUnreadable: false }), 'no documents are a good answer, not a failure');
+  need(problems, sameData(await read(answering({ 'monday-status': 'text', dashboardSettings: { entries: 'text' } })), { status: null, entries: [], statusUnreadable: false, entriesUnreadable: false }), 'answers that are not documents should be read as no documents');
+  const oneBad = await read(answering({ 'monday-status': new Error('offline'), dashboardSettings: { entries: [] } }));
+  need(problems, oneBad.statusUnreadable === true && oneBad.entriesUnreadable === false, 'one document that cannot be read should not stop the other');
+  const failing = await read({ fetch: async () => { throw new Error('offline'); } });
+  need(problems, failing.statusUnreadable === true && failing.entriesUnreadable === true && failing.status === null && failing.entries.length === 0, 'a client that fails should give both as unreadable');
+  const empty = await read({});
+  need(problems, empty.statusUnreadable === true && empty.entriesUnreadable === true, 'a client with no fetch should give both as unreadable');
+  return problems;
+}
+
 async function main() {
   const folder = makeSandbox();
   try {
@@ -5772,6 +5935,10 @@ async function main() {
     world.calendarsView = await load(path.join(folder, 'calendars-view.js'));
     world.calendarsViewSource = fs.readFileSync(path.join(here, 'calendars-view.js'), 'utf8');
     world.calendarsPartsSource = fs.readFileSync(path.join(here, 'calendars-view-parts.js'), 'utf8');
+    world.mondayBoardsParts = await load(path.join(folder, 'monday-boards-parts.js'));
+    world.mondayBoardsView = await load(path.join(folder, 'monday-boards-view.js'));
+    world.mondayBoardsViewSource = fs.readFileSync(path.join(here, 'monday-boards-view.js'), 'utf8');
+    world.mondayBoardsPartsSource = fs.readFileSync(path.join(here, 'monday-boards-parts.js'), 'utf8');
     world.calendarStatusScript = fs.readFileSync(path.join(here, '..', 'deploy', 'scripts', 'calendar-status.sh'), 'utf8');
     world.calendarStatusHelper = fs.readFileSync(path.join(here, '..', 'deploy', 'scripts', 'calendar-status.mjs'), 'utf8');
   } finally {
@@ -5844,8 +6011,8 @@ async function main() {
   check('a team has the eight trim choices, each a radio list that agrees with dashboard/config.js and starts as Prime, and the seed file and the sample give Nova its own', checkTeamTrim);
   check('every theme and overlay is complete and readable (tools/check-themes.mjs)', checkThemeGuard);
   check('every seasonal pack is complete, and draws only in the empty places (tools/check-seasons.mjs)', checkSeasonGuard);
-  check('a task has a source, a priority and Show on TV, one from the board is read only except Show on TV, and the Tasks folder holds every task once', checkBoardTasks);
-  check('each list under Every meeting, Events and Roster has a plus button that makes its own type with the starting values of the group, and the New menus are as they were', checkListAdds);
+  check('a task has a source, a board, a priority and Show on TV, every task is read only except Show on TV, no New menu offers one, and Monday Tasks holds every task once', checkBoardTasks);
+  check('each list under Tasks, Events and Roster has a plus button that makes its own type with the starting values of the group, and the New menus are as they were', checkListAdds);
   check('the calendar status document has the fields the Mini writes, is kept out of the sidebar and the New menu, and the scripts on the Mini write the same document', checkCalendarStatusType);
   check('the Calendars page has the help line, the calendars of Dashboard Settings on the left and the next events with SHOWN or HIDDEN on the right, and writes nothing itself', checkCalendarsPage);
   results.push({ name: 'the Calendars page asks for the published documents by their ids, and survives a client that fails', problems: await checkCalendarsRead().catch(error => ['the check stopped: ' + error.message]) });
@@ -5858,6 +6025,8 @@ async function main() {
   results.push({ name: 'the connection block counts the published tasks from the board, and survives a client that fails', problems: await checkMondayTaskCount().catch(error => ['the check stopped: ' + error.message]) });
   check('the board and column pickers list the boards and columns, keep a stored value that is not in the list, fall back to the plain box with the reason, and write only the id', checkMondayPickers);
   results.push({ name: 'the pickers ask for the published Monday data document by its id, and survive a client that fails', problems: await checkMondayBoardsRead().catch(error => ['the check stopped: ' + error.message]) });
+  check('the Monday Boards page lists the boards, has a Choose boards button, links each chosen board to its tasks in the two lists of Monday Tasks, and writes nothing', checkMondayBoardsPage);
+  results.push({ name: 'the Monday Boards page asks for the published status document and board rows by their ids, and survives a client that fails', problems: await checkMondayBoardsPageRead().catch(error => ['the check stopped: ' + error.message]) });
   check('the Photo fit setting and the Fit of a photo agree with dashboard/config.js, start as fill and as the setting, and the sample shows both on photos of different shapes', checkPhotoFit);
 
   process.exitCode = report() > 0 ? 1 : 0;

@@ -33,10 +33,10 @@ const defaultOutput = path.join(studioFolder, '..', 'docs', 'content-templates')
 // sidebar, but they keep their templates, since the importer still reads them.
 const skippedTypes = ['photo', 'presentationDay', 'presentation', 'calendarFilter', 'team', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus'];
 
-// Fields that are not columns. The board sync sets the source, the board item number and the due
-// date of a task, and the note at the top of a task from the board stores nothing.
+// Fields that are not columns. The board sync sets the source, the board item number, the board and
+// the due date of a task, and the two notes at the top of a task store nothing.
 const notColumns = {
-  task: ['source', 'mondayId', 'boardNote', 'dueDate'],
+  task: ['source', 'mondayId', 'mondayBoardId', 'mondayBoardName', 'boardNote', 'manualNote', 'dueDate'],
 };
 
 // The columns whose words make the id of a row, in order. The id is the type
@@ -107,16 +107,18 @@ const examples = {
 export async function loadSchemas() {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-templates-'));
   try {
-    ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'publish-all.js', 'calendars-view.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'team-input.js', 'note-field.js', 'show-on-tv-input.js', 'status-input.js', 'frc-status-input.js', 'monday-status-input.js', 'monday-pickers.js', 'time-text.js', 'calendars-view-parts.js', 'panel-order-input.js'].forEach(name => fs.cpSync(path.join(studioFolder, name), path.join(folder, name), { recursive: true }));
+    ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'publish-all.js', 'calendars-view.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'team-input.js', 'note-field.js', 'show-on-tv-input.js', 'status-input.js', 'frc-status-input.js', 'monday-status-input.js', 'monday-pickers.js', 'time-text.js', 'calendars-view-parts.js', 'monday-boards-view.js', 'monday-boards-parts.js', 'panel-order-input.js'].forEach(name => fs.cpSync(path.join(studioFolder, name), path.join(folder, name), { recursive: true }));
     fs.writeFileSync(path.join(folder, 'package.json'), JSON.stringify({ type: 'module' }));
     // the names that schemas/ and the inputs import: the radio of the team field, the other inputs and the Start here page are never drawn here
     const stubs = { sanity: ['defineType', 'defineField', 'defineArrayMember', 'set', 'unset', 'useClient', 'useFormValue'], react: ['createElement', 'useEffect', 'useState'] };
     Object.keys(stubs).forEach(packageName => {
       const stub = path.join(folder, 'node_modules', packageName);
       fs.mkdirSync(stub, { recursive: true });
-      fs.writeFileSync(path.join(stub, 'package.json'), JSON.stringify({ name: packageName, type: 'module', exports: './index.js' }));
+      fs.writeFileSync(path.join(stub, 'package.json'), JSON.stringify({ name: packageName, type: 'module', exports: packageName === 'sanity' ? { '.': './index.js', './structure': './structure.js' } : './index.js' }));
       fs.writeFileSync(path.join(stub, 'index.js'), stubs[packageName].map(name => 'export const ' + name + ' = value => value;').join('\n'));
     });
+    // the Monday Boards page takes its links from the pane router of sanity/structure
+    fs.writeFileSync(path.join(folder, 'node_modules', 'sanity', 'structure.js'), 'export const usePaneRouter = value => value;');
 
     // structure.js imports each icon from its own file of @sanity/icons, such as '@sanity/icons/Home'
     const iconFolder = path.join(folder, 'node_modules', '@sanity', 'icons');

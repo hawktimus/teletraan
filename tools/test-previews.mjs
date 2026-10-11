@@ -38,12 +38,13 @@ function lineOf(typeName, document) {
 const lines = {
   task: [
     {
-      document: { title: 'Wire the robot', subteam: { name: 'Build' }, status: 'in-progress', priority: 'high', source: 'monday', contact: 'Sam', location: { name: 'Classroom' } },
+      document: { title: 'Wire the robot', status: 'in-progress', priority: 'high', source: 'monday', contact: 'Sam', dueDate: '2026-10-14', mondayBoardName: 'Build board' },
       title: 'Wire the robot',
-      subtitle: 'Build · In progress · High priority · Board · Sam · Classroom',
+      subtitle: 'In progress · High priority · Sam · Due Oct 14 · Build board',
     },
-    { document: { title: 'Wire the robot', subteam: { name: 'Build' }, status: 'up-next' }, title: 'Wire the robot', subtitle: 'Build · Up next · Pinned' },
-    { document: { title: 'Wire the robot', status: 'done', source: 'manual' }, title: 'Wire the robot', subtitle: 'Done · Pinned' },
+    { document: { title: 'Wire the robot', status: 'up-next', source: 'monday', mondayBoardName: 'Build board' }, title: 'Wire the robot', subtitle: 'Up next · Build board' },
+    { document: { title: 'Wire the robot', status: 'done', source: 'manual' }, title: 'Wire the robot', subtitle: 'Manual (not shown) · Done' },
+    { document: { title: 'Wire the robot', status: 'done' }, title: 'Wire the robot', subtitle: 'Manual (not shown) · Done' },
   ],
   plan: [
     { document: { heading: 'Build meeting', date: '2026-10-08', location: 'Room 12' }, title: 'Build meeting', subtitle: 'Thu Oct 8 · Room 12' },
@@ -138,8 +139,8 @@ withFlags.forEach(typeName => {
 
 test('a task kept off the TV with Show on TV starts with Hidden', () => {
   const document = lines.task[1].document;
-  assert.equal(lineOf('task', Object.assign({}, document, { showOnTv: false })).subtitle, 'Hidden · Build · Up next · Pinned');
-  assert.equal(lineOf('task', Object.assign({}, document, { showOnTv: true })).subtitle, 'Build · Up next · Pinned');
+  assert.equal(lineOf('task', Object.assign({}, document, { showOnTv: false })).subtitle, 'Hidden · Up next · Build board');
+  assert.equal(lineOf('task', Object.assign({}, document, { showOnTv: true })).subtitle, 'Up next · Build board');
 });
 
 test('a calendar filter that is switched off starts with Off, and one that has run out starts with Expired', () => {

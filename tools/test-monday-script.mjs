@@ -1497,7 +1497,7 @@ test('docs/monday.md has "If nothing shows up" with its six steps, the status ru
   const feed = fs.readFileSync(path.join(repo, 'docs/monday.md'), 'utf8');
   const section = feed.slice(feed.indexOf('## If nothing shows up'), feed.indexOf('## Limits'));
   assert.ok(section.length > 200, 'the section is there, before Limits');
-  [/^1\. The connection block says connected/m, /^2\. A board is chosen/m, /^3\. Wait 10 minutes/m, /^4\. Look under Tasks, From the board/m, /^5\. Look at the Show on TV switch/m, /^6\. On the Mini/m].forEach(step => {
+  [/^1\. The connection block says connected/m, /^2\. A board is chosen/m, /^3\. Wait 10 minutes/m, /^4\. Look under Monday Tasks, On the TV/m, /^5\. Look at the Show on TV switch/m, /^6\. On the Mini/m].forEach(step => {
     assert.ok(step.test(section), 'the section should have the step ' + step);
   });
   ['Status column', 'No board is chosen yet', 'sudo journalctl -u teletraan-monday.service -n 40', 'never prints the token', 'every other item is Backlog', 'Stuck', 'timeline column', 'end', '2026-10-12 - 2026-10-20', 'last real day'].forEach(word => {

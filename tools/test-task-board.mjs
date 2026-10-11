@@ -1,8 +1,8 @@
-// Tests for tasks from the team board and tasks pinned by hand (dashboard/core/task-source.js,
+// Tests for tasks from the team board and tasks typed by hand (dashboard/core/task-source.js,
 // isVisible in core/content.js, normalizeContent in core/sanity.js, and the Tasks and Open Tasks
-// panels): a task kept off the TV never shows, pinned tasks come before board tasks, and a task
-// with none of the new fields behaves exactly as it did. Nothing is drawn and nothing touches
-// the network.
+// panels): the screen draws only the tasks from the board, a task kept off the TV never shows,
+// and a task from the board keeps the older switches (Show on screen, Hide after, Team) and the
+// older order. Nothing is drawn and nothing touches the network.
 //
 //   node tools/test-task-board.mjs
 
@@ -43,7 +43,7 @@ const teams = await import(base + 'core/teams.js');
 const tasksPanel = await import(base + 'panels/tasks/tasks.js');
 const taskCountsPanel = await import(base + 'panels/task-counts/task-counts.js');
 
-const { isFromBoard, pinnedFirst } = taskSource;
+const { isFromBoard, fromBoardOnly } = taskSource;
 const { normalizeContent, normalizeSample, contentQuery } = sanity;
 const { visibleItems, isVisible } = content;
 
@@ -85,78 +85,85 @@ function openCountText(tasks) {
 
 // A task is from the board only when its source is monday
 
-test('a task is from the board only when its source is monday, so a task with no source is pinned', () => {
+test('a task is from the board only when its source is monday, so a task with no source was typed by hand', () => {
   assert.equal(isFromBoard({ source: 'monday' }), true);
   [{ source: 'manual' }, {}, { source: null }, { source: '' }, { source: 'Monday' }, { source: 7 }, null, undefined].forEach(task => {
     assert.equal(isFromBoard(task), false, JSON.stringify(task));
   });
 });
 
-test('pinnedFirst puts pinned tasks before board tasks and keeps the order inside each group', () => {
+test('fromBoardOnly keeps the tasks from the board in the order they have, and the list given is not changed', () => {
   const list = [
     { title: 'board 1', source: 'monday' },
-    { title: 'pinned 1', source: 'manual' },
+    { title: 'typed 1', source: 'manual' },
     { title: 'board 2', source: 'monday' },
     { title: 'old 1' },
-    { title: 'pinned 2', source: 'manual' },
+    { title: 'board 3', source: 'monday' },
   ];
-  assert.deepEqual(titlesOf(pinnedFirst(list)), ['pinned 1', 'old 1', 'pinned 2', 'board 1', 'board 2']);
-  assert.deepEqual(titlesOf(list), ['board 1', 'pinned 1', 'board 2', 'old 1', 'pinned 2'], 'the list given is not changed');
-  assert.deepEqual(pinnedFirst([]), []);
-  assert.deepEqual(titlesOf(pinnedFirst([{ title: 'only' }])), ['only']);
+  assert.deepEqual(titlesOf(fromBoardOnly(list)), ['board 1', 'board 2', 'board 3']);
+  assert.deepEqual(titlesOf(list), ['board 1', 'typed 1', 'board 2', 'old 1', 'board 3'], 'the list given is not changed');
+  assert.deepEqual(fromBoardOnly([]), []);
+  assert.deepEqual(fromBoardOnly([{ title: 'only' }]), []);
 });
 
-// Pinned above board
+// Only the board
 
-test('normalizeContent sorts by Order as before, then puts pinned tasks above board tasks', () => {
+test('normalizeContent sorts by Order as before, and leaves out every task that is not from the board', () => {
   const result = {
     tasks: [
       document('a', { title: 'board 1', source: 'monday', order: 1 }),
-      document('b', { title: 'pinned 5', source: 'manual', order: 5 }),
+      document('b', { title: 'typed 5', source: 'manual', order: 5 }),
       document('c', { title: 'board 2', source: 'monday', order: 2 }),
-      document('d', { title: 'pinned none' }),
+      document('d', { title: 'typed none' }),
       document('e', { title: 'board none', source: 'monday' }),
-      document('f', { title: 'pinned 3', order: 3 }),
+      document('f', { title: 'typed 3', order: 3 }),
     ],
   };
-  assert.deepEqual(titlesOf(normalizeContent(result, now).tasks), ['pinned 3', 'pinned 5', 'pinned none', 'board 1', 'board 2', 'board none']);
+  assert.deepEqual(titlesOf(normalizeContent(result, now).tasks), ['board 1', 'board 2', 'board none']);
 });
 
-test('the sample content is sorted the same way', () => {
+test('the sample content is cleaned the same way', () => {
   const raw = {
     tasks: [
       { title: 'board', source: 'monday', status: 'up-next', order: 1 },
-      { title: 'pinned', status: 'up-next', order: 9 },
+      { title: 'typed', status: 'up-next', order: 9 },
     ],
   };
-  assert.deepEqual(titlesOf(normalizeSample(raw).tasks), ['pinned', 'board']);
+  assert.deepEqual(titlesOf(normalizeSample(raw).tasks), ['board']);
 });
 
-test('inside a team, pinned tasks are above board tasks, and tasks for both teams are in with them', () => {
+test('inside a team, the tasks from the board for that team and for both are in, and no task typed by hand is', () => {
   const result = {
     tasks: [
       document('a', { title: 'board prime', source: 'monday', team: 'prime', order: 1 }),
       document('b', { title: 'board both', source: 'monday', order: 2 }),
       document('c', { title: 'board nova', source: 'monday', team: 'nova', order: 3 }),
-      document('d', { title: 'pinned nova', team: 'nova', order: 4 }),
-      document('e', { title: 'pinned both', order: 5 }),
-      document('f', { title: 'pinned prime', team: 'prime', order: 6 }),
+      document('d', { title: 'typed nova', team: 'nova', order: 4 }),
+      document('e', { title: 'typed both', order: 5 }),
+      document('f', { title: 'typed prime', team: 'prime', order: 6 }),
     ],
   };
   const tasks = normalizeContent(result, now).tasks;
-  onTeamScreen('prime', () => assert.deepEqual(titlesOf(visibleItems(tasks, now)), ['pinned both', 'pinned prime', 'board prime', 'board both']));
-  onTeamScreen('nova', () => assert.deepEqual(titlesOf(visibleItems(tasks, now)), ['pinned nova', 'pinned both', 'board both', 'board nova']));
+  onTeamScreen('prime', () => assert.deepEqual(titlesOf(visibleItems(tasks, now)), ['board prime', 'board both']));
+  onTeamScreen('nova', () => assert.deepEqual(titlesOf(visibleItems(tasks, now)), ['board both', 'board nova']));
 });
 
-test('the Tasks panel puts a pinned task before a board task of the same status', () => {
+test('the Tasks panel draws the tasks from the board only', () => {
   const result = {
     tasks: [
       document('a', { title: 'board first', source: 'monday', status: 'in-progress', order: 1 }),
-      document('b', { title: 'pinned second', status: 'in-progress', order: 2 }),
+      document('b', { title: 'typed second', status: 'in-progress', order: 2 }),
+      document('c', { title: 'typed third', source: 'manual', status: 'up-next', order: 3 }),
     ],
   };
   const rows = tasksPanel.rowsFor(normalizeContent(result, now), now);
-  assert.deepEqual(rows.map(row => titlesOf(row.tasks)), [['pinned second', 'board first']]);
+  assert.deepEqual(rows.map(row => titlesOf(row.tasks)), [['board first']]);
+  assert.ok(openCountText(result.tasks).includes('<div class="count">1</div>'), 'the Open Tasks panel counts the one task from the board');
+
+  const onlyTyped = normalizeContent({ tasks: [document('d', { title: 'typed', source: 'manual' }), document('e', { title: 'older' })] }, now);
+  assert.deepEqual(onlyTyped.tasks, []);
+  assert.equal(tasksPanel.hasContent(onlyTyped), false);
+  assert.equal(taskCountsPanel.hasContent(onlyTyped), false);
 });
 
 // Show on TV
@@ -177,22 +184,22 @@ test('a task with Show on TV off never shows, whatever its source, and nothing e
 
 test('the Tasks panel and the Open Tasks panel leave out a task with Show on TV off', () => {
   const tasks = [
-    document('a', { title: 'pinned on', status: 'in-progress', showOnTv: true }),
-    document('b', { title: 'pinned off', status: 'in-progress', showOnTv: false }),
+    document('a', { title: 'in progress on', status: 'in-progress', source: 'monday', showOnTv: true }),
+    document('b', { title: 'in progress off', status: 'in-progress', source: 'monday', showOnTv: false }),
     document('c', { title: 'board on', status: 'up-next', source: 'monday' }),
     document('d', { title: 'board off', status: 'up-next', source: 'monday', showOnTv: false }),
-    document('e', { title: 'blocked off', status: 'blocked', showOnTv: false }),
+    document('e', { title: 'blocked off', status: 'blocked', source: 'monday', showOnTv: false }),
   ];
   const all = normalizeContent({ tasks: tasks }, now);
   const shown = tasksPanel.rowsFor(all, now).reduce((titles, row) => titles.concat(titlesOf(row.tasks)), []);
-  assert.deepEqual(shown, ['pinned on', 'board on']);
+  assert.deepEqual(shown, ['in progress on', 'board on']);
 
   const text = openCountText(tasks);
   assert.ok(text.includes('<div class="count">2</div>'), text);
   assert.ok(text.includes('1 in progress') && text.includes('1 up next') && !text.includes('blocked'), text);
 
   // when nothing is left the panels have nothing to show, as they do with no tasks
-  const allOff = normalizeContent({ tasks: [document('f', { title: 'off', showOnTv: false })] }, now);
+  const allOff = normalizeContent({ tasks: [document('f', { title: 'off', source: 'monday', showOnTv: false })] }, now);
   assert.equal(tasksPanel.hasContent(allOff), false);
   assert.equal(taskCountsPanel.hasContent(allOff), false);
 });
@@ -210,7 +217,7 @@ test('the query sends every field of a task, so the new ones reach the screen wi
   assert.ok(/\{\s*\.\.\.,/.test(part), part);
 });
 
-// A task with none of the new fields
+// A task from the board with only the older switches
 
 // The rule as it was before the new fields: Order first and lowest first, the rest in the order
 // they were made, and a task is shown unless it is switched off, expired or for the other team.
@@ -230,14 +237,15 @@ function olderShown(tasks, teamCode) {
   return olderOrder(tasks).filter(task => task.show !== false && (!task.expires || new Date(task.expires) > now) && (!task.team || task.team === teamCode));
 }
 
-// Every mix of the old switches: 3 for show, 3 for expiry, 3 for team, with Order going round
+// Every mix of the old switches: 3 for show, 3 for expiry, 3 for team, with Order going round.
+// Each is a task from the board, because the screen draws no other.
 function olderTasks() {
   const orders = [undefined, 3, 1, 2];
   const list = [];
   [undefined, true, false].forEach(show => {
     [undefined, past, future].forEach(expires => {
       ['', 'prime', 'nova'].forEach(team => {
-        const fields = { title: 'task ' + (list.length + 1), status: ['in-progress', 'up-next', 'blocked'][list.length % 3] };
+        const fields = { title: 'task ' + (list.length + 1), status: ['in-progress', 'up-next', 'blocked'][list.length % 3], source: 'monday' };
         if (show !== undefined) fields.show = show;
         if (expires) fields.expires = expires;
         if (team) fields.team = team;
@@ -249,7 +257,7 @@ function olderTasks() {
   return list;
 }
 
-test('tasks with none of the new fields come out in the same order, with the same fields, and nothing is added to them', () => {
+test('tasks from the board with only the older switches come out in the same order, with the same fields, and nothing is added to them', () => {
   const documents = olderTasks();
   const tasks = normalizeContent({ tasks: documents }, now).tasks;
   assert.equal(tasks.length, documents.length);
@@ -259,11 +267,11 @@ test('tasks with none of the new fields come out in the same order, with the sam
     const original = documents.filter(item => item.title === task.title)[0];
     const expected = Object.keys(original).filter(name => name.charAt(0) !== '_').sort();
     assert.deepEqual(Object.keys(task).sort(), expected, task.title);
-    ['source', 'showOnTv', 'priority', 'mondayId'].forEach(name => assert.equal(name in task, false, task.title + ' has ' + name));
+    ['showOnTv', 'priority', 'mondayId'].forEach(name => assert.equal(name in task, false, task.title + ' has ' + name));
   });
 });
 
-test('tasks with none of the new fields show on each team exactly as they did', () => {
+test('tasks from the board with only the older switches show on each team exactly as they did', () => {
   const documents = olderTasks();
   const tasks = normalizeContent({ tasks: documents }, now).tasks;
 
@@ -280,30 +288,39 @@ test('tasks with none of the new fields show on each team exactly as they did', 
   });
 });
 
-test('the sample tasks typed by hand are pinned and come first, in the order they are written in, and the sample board tasks follow them', () => {
+test('a task with none of the new fields, or typed by hand, reaches no panel, whatever its switches say', () => {
+  const documents = olderTasks().map(task => {
+    const copy = Object.assign({}, task);
+    delete copy.source;
+    return copy;
+  });
+  assert.deepEqual(normalizeContent({ tasks: documents }, now).tasks, []);
+  assert.deepEqual(normalizeContent({ tasks: documents.map(task => Object.assign({}, task, { source: 'manual' })) }, now).tasks, []);
+});
+
+test('every sample task is from the board, and the screen keeps them all in the order they are written in', () => {
   const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
-  const pinned = raw.tasks.filter(task => task.source !== 'monday');
-  const board = raw.tasks.filter(task => task.source === 'monday');
   const tasks = normalizeSample(raw).tasks;
 
-  assert.ok(pinned.length >= 6 && board.length >= 6, 'the sample has both kinds');
-  assert.deepEqual(titlesOf(tasks), titlesOf(olderOrder(pinned)).concat(titlesOf(olderOrder(board))));
-  assert.equal(tasks.slice(0, pinned.length).some(task => isFromBoard(task) || 'showOnTv' in task), false);
-  assert.equal(tasks.slice(pinned.length).every(task => isFromBoard(task)), true);
+  assert.ok(raw.tasks.length >= 12, 'the sample has tasks');
+  assert.equal(raw.tasks.every(task => task.source === 'monday' && task.showOnTv === true), true, 'each sample task says it is from the board');
+  assert.deepEqual(titlesOf(tasks), titlesOf(olderOrder(raw.tasks)));
+  assert.equal(tasks.every(task => isFromBoard(task)), true);
 });
 
 test('the cached copy of the content, which is already cleaned, is cleaned again without a change', () => {
   const result = {
     tasks: [
       document('a', { title: 'board', source: 'monday', priority: 'high', mondayId: '1234', showOnTv: false, order: 1 }),
-      document('b', { title: 'pinned', source: 'manual', showOnTv: true, order: 2 }),
+      document('b', { title: 'typed', source: 'manual', showOnTv: true, order: 2 }),
+      document('c', { title: 'second board', source: 'monday', mondayId: '1235', order: 3 }),
     ],
   };
   const first = normalizeContent(result, now);
   const stored = JSON.parse(JSON.stringify(first));
   assert.deepEqual(stored.tasks, [
-    { title: 'pinned', status: 'up-next', source: 'manual', showOnTv: true, order: 2 },
     { title: 'board', status: 'up-next', source: 'monday', priority: 'high', mondayId: '1234', showOnTv: false, order: 1 },
+    { title: 'second board', status: 'up-next', source: 'monday', mondayId: '1235', order: 3 },
   ]);
   assert.deepEqual(normalizeSample(stored).tasks, stored.tasks);
 });

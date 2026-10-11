@@ -5,19 +5,19 @@ The list on the left of the Studio is one list in `studio/structure.js`, called
 order, move a line.
 
 The sidebar reads like this. A heading in capitals is a divider with a title, not
-a folder. Daily Agenda, Tasks and Settings are folders, and Presentations is a folder
+a folder. Daily Agenda, Monday Tasks and Settings are folders, and Presentations is a folder
 inside Daily Agenda:
 
     Start here
-    EVERY MEETING
+    TASKS
       Daily Agenda
         Agenda items
         Presentations (Upcoming, Past)
         Meeting days
-      Tasks
-        Pinned
-        From the board
+      Monday Tasks
+        On the TV
         Hidden
+      Monday Boards
       Tips and News
     EVENTS
       Calendars
@@ -40,7 +40,7 @@ inside Daily Agenda:
     { kind: 'page', title: 'Look', icon: ColorWheelIcon, type: themeType, id: themeId },
     { kind: 'group', title: 'Settings', icon: CogIcon, id: 'settings', entries: [ ... ] },
     { kind: 'component', title: 'Start here', id: 'startHere', icon: HomeIcon, component: StartHere },
-    { kind: 'divider', title: 'EVERY MEETING' },
+    { kind: 'divider', title: 'TASKS' },
 
 - `list` opens the list of one kind of document. `title` is what editors read
   in the sidebar and at the top of the list. `type` is the document type, the
@@ -50,22 +50,25 @@ inside Daily Agenda:
   the first talk of a meeting day (`byFirstTalk`), or by the start of a talk with
   the soonest first (`soonestStart`) or the latest first (`latestStart`). They are
   defined just above the list. A list can also have `thenBy`, a second sort for the
-  documents that sort alike. The three lists of Tasks are sorted by Order and then
-  `oldestFirst`, which is how the screen sorts tasks.
+  documents that sort alike. The two lists of Monday Tasks are sorted by the name of
+  their board (`byBoard`) and then `oldestFirst`. `add: []` takes the plus button away,
+  which both lists of Monday Tasks do, because the Mini makes the tasks.
 - `page` opens the one document of its type, which has a fixed id: Dashboard
   Settings and Look. A page opens the document itself, with no list of one in
   between. Demo is the third page that exists once, and it has no line.
 - `group` is a folder. It opens a list of the lines under `entries`, one line
   each. A folder holds lists and pages, and one more folder, which holds lists
   only. Daily Agenda holds Agenda items, Presentations (Upcoming and Past) and
-  Meeting days. Tasks holds Pinned, From the board and Hidden. Settings holds
+  Meeting days. Monday Tasks holds On the TV and Hidden. Settings holds
   Dashboard Settings, Look and Teams.
 - `component` opens a page that is not a document. `component` is a plain
   function that draws it. Start here is `StartHere` in `studio/start-here.js`
   and Calendars is `CalendarsView` in `studio/calendars-view.js`. A component
-  line needs an `id`.
+  line needs an `id`. Monday Boards is `MondayBoardsView` in
+  `studio/monday-boards-view.js`, and its line has `children`, a function that builds
+  the two lists of the tasks of a board, which the name of a board on the page opens.
 - `divider` is a thin line between groups. Give it a `title` and it is a
-  heading, such as EVERY MEETING. Every divider in the sidebar has a title.
+  heading, such as TASKS. Every divider in the sidebar has a title.
 
 A folder can have `add`, a list of document types. The plus button of the
 folder then offers a new document of each type. Daily Agenda has
@@ -75,13 +78,12 @@ is found there. The words in the menu are the titles of the types in
 `studio/schemas/`, one document at a time: Agenda item and Presentation.
 
 The `add` of a folder can also name a template from `studio/add-templates.js`,
-which is a new document with its own words and starting values. Tasks has
-`add: ['pinnedTask']`, and the template pinnedTask is titled Pin a task and makes a task with
-the source manual, shown on the TV and on screen. `sanity.config.js` gives the templates to
-the Studio and keeps them out of the New menus, so only the folder or list that names one
-offers it. Every list under Every meeting, Events and Roster has an `add` with one template,
-so its plus button makes that type with no team and the switch on the screen turned on
-(a tip, for Tips and News).
+which is a new document with its own words and starting values. `sanity.config.js` gives
+the templates to the Studio and keeps them out of the New menus, so only the folder or list
+that names one offers it. Every list under Tasks, Events and Roster has an `add` with one
+template, so its plus button makes that type with no team and the switch on the screen
+turned on (a tip, for Tips and News). The exception is Monday Tasks, whose lists have
+no plus button. No New menu offers a task either, because the Mini makes them.
 
 Every line except a divider has an `icon`, and no two lines share one. The icons
 come from `@sanity/icons`, which comes with the Studio and is not listed in
@@ -97,10 +99,10 @@ A `list` line can have a `filter`, which keeps some of the documents of its
 type. Upcoming and Past are both the type `presentation`, so each has an `id`
 of its own. In a filter, `$since` is the time a day ago and `$now` is the time the
 sidebar opened, both worked out when the sidebar opens. Do not use `now()`: Studio keeps
-a list live, and a live filter cannot use it. Pinned, From the board and Hidden use
+a list live, and a live filter cannot use it. On the TV and Hidden use
 `$now` to tell an expired task from one that is still showing, and between them they hold
 every task once. A task that expires while the Studio is open moves to Hidden when the
-page is loaded again.
+page is loaded again. The lists of one board add `$board`, the number of the board.
 
 Events are not edited in the Studio. They come from the BAND calendars, and
 Calendars is a page that shows what each one brings in (docs/calendars-page.md).

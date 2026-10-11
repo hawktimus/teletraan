@@ -185,17 +185,19 @@ test('tidyMondayStatus keeps the sync time, the last error and one count of open
   assert.equal(monday.tidyMondayStatus({ sample: true }).sample, true);
 });
 
-test('the sample has board tasks for two lead entries, all in brackets and short enough for the Studio, and a status with 14 counts that ends at the open tasks', () => {
+test('the sample has only board tasks, nine for Prime and six for both teams, all in brackets and short enough for the Studio, and a status with 14 counts that ends at the open tasks', () => {
   const raw = sampleRaw();
   const boardTasks = raw.tasks.filter(task => task.source === 'monday');
-  assert.deepEqual(Array.from(new Set(boardTasks.map(task => task.subteam))), ['[Subteam A]', '[Subteam B]']);
+  assert.equal(boardTasks.length, raw.tasks.length, 'the screen shows no other task');
+  assert.deepEqual(Array.from(new Set(boardTasks.map(task => task.subteam))), ['[Subteam A]', '[Subteam C]', '[Subteam B]', '[Subteam E]', '[Subteam D]', '[Subteam F]']);
+  assert.deepEqual([boardTasks.filter(task => task.team === 'prime').length, boardTasks.filter(task => task.team === undefined).length], [9, 6]);
 
   boardTasks.forEach(task => {
     ['title', 'subteam', 'mondayId', 'contact'].forEach(name => {
       if (task[name] !== undefined) assert.ok(/^\[.+\]$/.test(task[name]), task.title + ' ' + name + ' is in brackets');
     });
     assert.ok(task.title.length <= 22, task.title + ' fits the 22 characters of a task name');
-    assert.equal(task.team, 'prime');
+    assert.ok(task.team === 'prime' || task.team === undefined, task.title + ' is for Prime or for both teams');
     assert.equal(task.showOnTv, true);
     assert.ok(['up-next', 'in-progress', 'done'].includes(task.status), task.title);
     if (task.priority !== undefined) assert.ok(monday.priorities.includes(task.priority), task.title);
@@ -204,12 +206,12 @@ test('the sample has board tasks for two lead entries, all in brackets and short
 
   assert.equal(raw.monday.sample, true);
   assert.equal(raw.monday.snapshots.length, 14);
-  assert.equal(raw.monday.snapshots[13].open, boardTasks.filter(task => task.status !== 'done').length);
+  assert.equal(raw.monday.snapshots[13].open, boardTasks.filter(task => task.team === 'prime' && task.status !== 'done').length, 'the counts are those of the nine tasks of the board for Prime');
   assert.equal(contentWith().monday.snapshots.length, 14);
 
   const content = contentWith();
   assert.ok(rotation.mondayCards(content, 'prime').length > 0, 'Prime has Monday rows');
-  assert.deepEqual(rotation.mondayCards(content, 'nova'), [], 'Nova has none, so it has no Monday pass');
+  assert.ok(rotation.mondayCards(content, 'nova').length > 0, 'Nova has the six tasks for both teams, so it has a Monday pass');
 });
 
 
@@ -270,22 +272,22 @@ test('the due soonest list puts the earliest date first, and equal dates in rank
   assert.deepEqual(titlesOf(monday.dueSoonestFirst(list)), ['sooner', 'soon high', 'soon low', 'late low']);
 });
 
-test('the card puts the pinned task first in its column, and ranks the rest, so the two it shows are the top two', () => {
+test('the card ranks the tasks of its column, so the two it shows are the top two, and a task typed by hand is not one of them', () => {
   const content = contentOf([
-    board({ title: 'board high', status: 'up-next', priority: 'high' }),
-    board({ title: 'board med', status: 'up-next', priority: 'medium' }),
-    { title: 'pinned', subteam: '[Subteam A]', status: 'up-next', team: 'prime' },
     board({ title: 'board low', status: 'up-next', priority: 'low' }),
+    board({ title: 'board high', status: 'up-next', priority: 'high' }),
+    { title: 'typed', subteam: '[Subteam A]', status: 'up-next', team: 'prime' },
+    board({ title: 'board med', status: 'up-next', priority: 'medium' }),
   ]);
   const html = panels.tasks.markupFor(content, monday12, 1);
 
-  assert.ok(html.indexOf('>pinned<') < html.indexOf('>board high<'));
-  assert.equal(html.includes('board med'), false, 'two cards fit, and the third task of the column is not drawn');
-  assert.equal(html.includes('board low'), false);
+  assert.ok(html.indexOf('>board high<') < html.indexOf('>board med<'));
+  assert.equal(html.includes('typed'), false, 'the screen shows no task typed by hand');
+  assert.equal(html.includes('board low'), false, 'two cards fit, and the third task of the column is not drawn');
   assert.equal(countOf(html, 'class="item"'), 2);
 });
 
-test('a task with Show on TV off, switched off, expired or for the other team never shows, whatever its source', () => {
+test('a task with Show on TV off, switched off, expired or for the other team never shows, and neither does one typed by hand', () => {
   const content = contentOf([
     board({ title: 'shown' }),
     board({ title: 'off tv', showOnTv: false }),
@@ -297,12 +299,12 @@ test('a task with Show on TV off, switched off, expired or for the other team ne
   ]);
 
   const html = panels.tasks.markupFor(content, monday12, 1);
-  ['shown', 'pinned shown'].forEach(title => assert.ok(html.includes('>' + title + '<'), title));
-  ['off tv', 'off', 'expired', 'nova only', 'pinned off'].forEach(title => assert.equal(html.includes('>' + title + '<'), false, title));
+  assert.ok(html.includes('>shown<'));
+  ['off tv', 'off', 'expired', 'nova only', 'pinned off', 'pinned shown'].forEach(title => assert.equal(html.includes('>' + title + '<'), false, title));
 
   onTeamScreen('nova', () => {
     const nova = panels.tasks.markupFor(content, monday12, 1);
-    assert.ok(nova.includes('>nova only<') && nova.includes('>pinned shown<'), 'tasks for both teams show for Nova too');
+    assert.ok(nova.includes('>nova only<') && !nova.includes('>pinned shown<'), 'a task for Nova shows for Nova, and one typed by hand does not');
     assert.equal(nova.includes('>shown<'), false, 'a task for Prime does not show on the Nova screen');
   });
   assert.equal(monday.boardTasksFor(content, monday12, 'nova').length, 1, 'the question can be asked about a team that is not on the screen');

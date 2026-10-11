@@ -144,12 +144,12 @@ Sanity as tasks (docs/monday.md). It needs the team mentor's yes at the first st
    other status is Backlog. The priority, due date, owner and subteam columns are
    optional. If a list cannot be read, the box is a plain one: type the board number
    or the column id.
-6. Click Publish. Within 10 minutes the tasks are in Tasks, From the board. If they do
-   not show up, go down "If nothing shows up" in docs/monday.md.
+6. Click Publish. Within 10 minutes the tasks are in Monday Tasks, On the TV. If they
+   do not show up, go down "If nothing shows up" in docs/monday.md.
 
-Show on TV is a switch on every task. On a task from the board it is the one thing
-you can change: turn it off and the task leaves the TV and the three Monday cards
-and moves to Hidden, and the Mini keeps your choice. Show owner first names on the
+Show on TV is the one thing you can change on a task: turn it off and the task
+leaves the TV and the three Monday cards and moves to Hidden, and the Mini keeps
+your choice. Show owner first names on the
 TV starts off. On, a task keeps the first name of the first owner of its item.
 
 The tasks and the board names are public, like the rest of the dataset. Anyone who
@@ -157,21 +157,25 @@ asks Sanity can read the task names, the names of every board the token can see
 and, with the owner switch on, the first names (docs/monday.md, "The dataset is
 public").
 
-## Pinned tasks
+## Monday Tasks and Monday Boards
 
-Tasks is a folder with three lists, and its plus button says Pin a task.
+Both are under Tasks in the sidebar. Nobody types a task: the Mini makes each one
+from an item on a Monday board, and the screen shows only those.
 
-- Pinned: the tasks typed in Studio, and every task made before the board was
-  connected.
-- From the board: the tasks the Mini makes from Monday. They open read only, except
-  for Show on TV.
-- Hidden: every task that is not on the TV, because Show on TV is off, Show on
-  screen is off or Hide after has passed. A task is in one list only.
+- Monday Tasks has two lists, On the TV and Hidden, each sorted by board. A task
+  opens read only, except for Show on TV. Hidden holds every task that is not on the
+  TV, because Show on TV is off, Show on screen is off or Hide after has passed. A
+  task is in one list only.
+- A task typed by hand, and every task made before the board was connected, is in
+  Hidden with Manual (not shown) in its line. The screen never shows it. It stays
+  until someone deletes it.
+- Monday Boards lists every board the token can see, with its items and when the
+  Mini last read it, and says which boards Dashboard Settings has chosen. The name of
+  a chosen board opens its tasks in the same two lists. Choose boards opens Dashboard
+  Settings, and the board rows are on its Monday tab.
 
-In the same status, pinned tasks come before tasks from the board, and each group
-keeps the Order field. A team gets the Monday cards only when it has tasks from the
-board, so pinned tasks alone do not start them (docs/layouts.md, "The Monday
-cards").
+A team gets the Monday cards only when it has tasks from the board (docs/layouts.md,
+"The Monday cards").
 
 ## The Calendars page
 

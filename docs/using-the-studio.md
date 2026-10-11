@@ -19,14 +19,14 @@ and a coach sets the looks. The boxes and what feeds them stay the same.
 | Box | Area | What it shows | Where you change it |
 |-----|------|---------------|---------------------|
 | A | Banner | The team name and number, the school, the date, the time and the weather | Teams and Dashboard Settings, which are for coaches |
-| B | Main panel | The big panel. It takes turns showing the tasks, the agenda, the events, the team leads, the leadership, the sponsors, the photos and the extra panels | Tasks, Daily Agenda, Calendars, Team leads, Leadership, Sponsors, Photos, Extra panels |
+| B | Main panel | The big panel. It takes turns showing the tasks, the agenda, the events, the team leads, the leadership, the sponsors, the photos and the extra panels | Monday Tasks, Daily Agenda, Calendars, Team leads, Leadership, Sponsors, Photos, Extra panels |
 | C | Countdown | The time left to Kickoff, then to Rollout | Dashboard Settings, which is for coaches |
-| D | Side panel | The small panel under the countdown. It takes turns showing the next event, the task counts, the safety days and a sponsor logo | Tasks, Sponsors, Calendars, Dashboard Settings |
+| D | Side panel | The small panel under the countdown. It takes turns showing the next event, the task counts, the safety days and a sponsor logo | Monday Tasks, Sponsors, Calendars, Dashboard Settings |
 | E | Ticker | One tip, news item, reminder or sponsor thanks at a time along the bottom | Tips and News, Sponsors |
 
 ## Every meeting
 
-1. Open Daily Agenda or Tasks.
+1. Open Daily Agenda or Monday Tasks.
 2. Make the change.
 3. Click Publish all in the top bar.
 
@@ -36,10 +36,16 @@ is wrong with it. The TV changes within a few seconds.
 
 - Daily Agenda, Agenda items: the schedule for today's meeting. Make one for
   each meeting, with its date. The panel is headed AGENDA (docs/up-next.md).
-- Tasks: the plus button says Pin a task. A pinned task shows before the tasks
-  that come from the team board in the same status. A task from the board is
-  made by the Mini and opens read only. The one thing you can change on it is
-  Show on TV (docs/editing-content.md, "Tasks from the team board").
+- Monday Tasks: the tasks come from the team's Monday boards. Nobody types
+  one here, so there is no plus button. The Mini reads the boards every 10
+  minutes and makes a task for each item. A task opens read only. The one thing
+  you can change on it is Show on TV. The lists are On the TV and Hidden, and
+  each is sorted by board. A task typed by hand before the boards were connected
+  is in Hidden, marked Manual (not shown), and the screen never shows it
+  (docs/editing-content.md, "Tasks from the team board").
+- Monday Boards: every board the Mini can see, with its items and when it was
+  last read. The name of a board that is chosen opens the tasks of that board.
+  Choose boards opens Dashboard Settings, which is for coaches.
 - To take something off the screen without losing it, turn off Show on screen
   and publish. An optional Hide after date takes it down by itself.
 - If a change does not show, check that it is published, that Show on screen is
