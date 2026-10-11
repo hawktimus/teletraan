@@ -119,7 +119,7 @@ test('Choose boards goes to the board rows of Dashboard Settings, and the words 
   assert.equal(parts.mondayStatusId, 'monday-status');
 
   [parts.helpLine, parts.nothingYet, parts.noBoardsLine, parts.openLine, parts.publicLine, parts.unreadableLine, parts.settingsUnreadableLine].forEach(text => {
-    assert.ok(!/[—–!]/.test(text), text);
+    assert.ok(!/[\u2014\u2013!]/.test(text), text);
     text.split(/[.?]\s+|[.?]$/).forEach(sentence => assert.ok(sentence.trim().split(/\s+/).length <= 20, sentence));
   });
 });

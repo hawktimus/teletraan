@@ -1543,7 +1543,7 @@ function statusesOf(place) {
 test('group names: the title of the group gives the status, whatever its capitals, spaces and punctuation, and every other title is Backlog', () => {
   const groups = {
     5001: ['To Do', 'up-next'], 5002: ['todo', 'up-next'], 5003: ['TO-DO', 'up-next'], 5004: ['Backlog', 'up-next'], 5005: ['Not started', 'up-next'], 5006: ['Planned', 'up-next'],
-    5007: ['In Progress', 'in-progress'], 5008: ['in-progress', 'in-progress'], 5009: ['Working on it', 'in-progress'], 5010: ['Doing', 'in-progress'], 5011: ['  started!  ', 'in-progress'],
+    5007: ['In Progress', 'in-progress'], 5008: ['in-progress', 'in-progress'], 5009: ['Working on it', 'in-progress'], 5010: ['Doing', 'in-progress'], 5011: ['  started?  ', 'in-progress'],
     5012: ['Done', 'done'], 5013: ['COMPLETE', 'done'], 5014: ['Completed', 'done'], 5015: ['Finished.', 'done'],
     5016: ['Stuck', 'up-next'], 5017: ['Review', 'up-next'], 5018: ['', 'up-next'], 5019: ['Done and dusted', 'up-next'],
   };

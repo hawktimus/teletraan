@@ -241,7 +241,7 @@ test('a calendar name becomes the middle of CALENDAR_<ID>_URL, and the code Stud
   const out = inTool(`
     calendar_id 'Build season'; printf '|'
     calendar_id '  team  '; printf '|'
-    calendar_id 'Outreach & events!'; printf '|'
+    calendar_id 'Outreach & events?'; printf '|'
     calendar_id '???'; printf '|'
     calendar_code CALENDAR_BUILD_SEASON_URL; printf '|'
     calendar_code CALENDAR_Group_URL`);

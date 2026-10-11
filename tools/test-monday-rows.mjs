@@ -630,7 +630,7 @@ test('a title that fits beside the chip has the words BOARD and how long ago, th
   const room = 1036;
   const longest = (title, chip, words) => textWidthModule.textWidth(title, 700, 60) + 24 + 20 + textWidthModule.textWidth(chip, 700, 44) + 28 + 84 + textWidthModule.textWidth(words, 600, 44);
 
-  assert.equal(draw.wordsBesideChip('AI TEAM', 'PRIME', '4 MIN AGO'), 'BOARD · 4 MIN AGO');
+  assert.equal(draw.wordsBesideChip('IT TEAM', 'PRIME', '4 MIN AGO'), 'BOARD · 4 MIN AGO');
   assert.equal(draw.wordsBesideChip('BUILD TEAM', 'PRIME', '4 MIN AGO'), '4 MIN AGO', 'with the slashes at the right end there is no room for BOARD beside BUILD TEAM');
   assert.equal(draw.wordsBesideChip('DESIGN TEAM', 'PRIME', '4 MIN AGO'), '4 MIN AGO');
   assert.equal(draw.wordsBesideChip('ELECTRICAL TEAM', 'PRIME', '4 MIN AGO'), '', 'and none beside the longer names');
@@ -638,7 +638,7 @@ test('a title that fits beside the chip has the words BOARD and how long ago, th
   assert.equal(draw.wordsBesideChip('BUILD TEAM', 'PRIME', ''), '');
 
   // whatever is chosen fits, and nothing is left out that would have fitted
-  const titles = ['A', 'AI TEAM', 'BUILD TEAM', 'DESIGN TEAM', 'BUSINESS TEAM', 'ELECTRICAL TEAM', 'PROGRAMMING TEAM', 'MECHANICAL TEAM', 'PROGRESS', 'MILESTONES', 'TASKS'];
+  const titles = ['A', 'IT TEAM', 'BUILD TEAM', 'DESIGN TEAM', 'BUSINESS TEAM', 'ELECTRICAL TEAM', 'PROGRAMMING TEAM', 'MECHANICAL TEAM', 'PROGRESS', 'MILESTONES', 'TASKS'];
   const words = ['NOW', '4 MIN AGO', '59 MIN AGO', '47 HR AGO', '12 DAYS AGO', 'SAMPLE'];
   titles.forEach(title => ['PRIME', 'NOVA', 'BOTH TEAMS'].forEach(chip => words.forEach(text => {
     const chosen = draw.wordsBesideChip(title, chip, text);
