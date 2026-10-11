@@ -17,6 +17,8 @@ TV. The dashboard reads what they publish.
     dashboard-address.js  the address that Preview the screen opens on the Start here page, with ?sample=1 for the sample content
     calendars-view.js     the Calendars page under Events, written as a plain function (docs/calendars-page.md)
     calendars-view-parts.js  the words and rows of the Calendars page and the rules of its Hide buttons, with no Studio in it, so node can test them
+    monday-boards-view.js the Monday Boards page under Tasks, written as a plain function (docs/monday.md)
+    monday-boards-parts.js  the words and rows of the Monday Boards page, with no Studio in it, so node can test them
     time-text.js          ages in words and times as the editor's computer writes them, used by status-input.js and the Calendars page
     actions.js            the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons on Dashboard Settings
     themes.js             the list of themes and overlays, a copy of the dashboard's
@@ -28,7 +30,7 @@ TV. The dashboard reads what they publish.
     show-on-tv-input.js   the Show on TV switch of a task, which draws a task with no value as on
     status-input.js       the Status of the Mini block at the top of the Screen tab of Dashboard Settings
     frc-status-input.js   the block at the top of the Competition tab of Dashboard Settings: when the Mini last read the competition data
-    monday-status-input.js  the block at the top of the Monday tab of Dashboard Settings: who the token belongs to, when the Mini last read Monday, the boards chosen and the tasks made
+    monday-status-input.js  the block at the top of the Monday tab of Dashboard Settings: who the token belongs to, when the Mini last read Monday, the boards chosen and the tasks made, and a line for each board entry
     monday-pickers.js     the board list and the column lists of a board entry on the Monday tab, which show names and store numbers and ids
     panel-order-input.js  the Panel order list in Dashboard Settings, which fills itself from the two older panel lists when it is empty
     schemas/              one file per kind of content

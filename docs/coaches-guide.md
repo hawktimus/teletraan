@@ -139,11 +139,15 @@ Sanity as tasks (docs/monday.md). It needs the team mentor's yes at the first st
 4. Wait 10 minutes. Open Dashboard Settings, Monday tab. The block at the top says
    who the token belongs to, when the Mini last read Monday, how many boards are
    chosen and how many tasks the Mini has made.
-5. Under Boards click Add item. Pick the board by name, the team and the status
-   column. Change the In progress and Done labels to the words the board uses. Every
-   other status is Backlog. The priority, due date, owner and subteam columns are
-   optional. If a list cannot be read, the box is a plain one: type the board number
-   or the column id.
+5. Under Boards click Add item. Pick the board by name, the team, and where the status
+   comes from. Group names is the starting choice: the group an item is in, such as To Do,
+   In Progress or Done, gives its status, and every other group name is Backlog. With A
+   status column, pick the column and change the In progress and Done labels to the words
+   the board uses. The priority, due date, owner and subteam columns are optional, and
+   each list shows only the columns of the board you picked. If a list cannot be read, the
+   box is a plain one: type the board number or the column id. Once the Mini has read the
+   board, the block at the top has a line for the entry with the items read, the tasks on
+   the TV and when it was read.
 6. Click Publish. Within 10 minutes the tasks are in Monday Tasks, On the TV. If they
    do not show up, go down "If nothing shows up" in docs/monday.md.
 

@@ -212,8 +212,9 @@ editors can sign in from anywhere.
     studio/                   the Sanity editing screen, its sidebar (structure.js: one list with a line
                               for each entry, so changing the order means moving a line,
                               docs/reordering-the-sidebar.md), its buttons (actions.js: the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons),
-                              its two pages that are not documents (start-here.js and calendars-view.js,
-                              whose rows and words are in calendars-view-parts.js, docs/calendars-page.md),
+                              its three pages that are not documents (start-here.js, calendars-view.js and
+                              monday-boards-view.js, whose rows and words are in calendars-view-parts.js,
+                              docs/calendars-page.md, and monday-boards-parts.js),
                               the words and picture of Start here (start-here-parts.js), what its request
                               buttons write, shared with actions.js (screen-requests.js), and the address
                               that Preview the screen opens (dashboard-address.js),
@@ -357,6 +358,7 @@ editors can sign in from anywhere.
                               limit of 500 items, errors from Monday, and that the tokens are never printed or saved
       test-monday-settings.mjs  checks for the two Monday settings on the screen's side: the list of boards and the
                               owner switch, and their starting values
+      test-monday-boards.mjs  checks for the rows and lines of the Monday Boards page in Studio
       test-competition.mjs    checks for the competition cards (core/frc.js, core/competition.js and the panels in
                               panels/competition-*): the cards due on each day of the season in each mode, the mix into the
                               large panel's list, each card from the sample and with nothing to show, that no text is under
@@ -561,15 +563,17 @@ alone.
   `core/competition-preview.js` and `core/competition-preview-run.js` show the cards on the sample data in
   `dashboard/data/sample/content.json`. The block at the top of the tab is `studio/frc-status-input.js`.
 - **The Monday board.** Dashboard Settings, Monday tab (docs/monday.md). The boards, as entries with their
-  team, status column and labels, and the owner switch, are in `studio/schemas/settingsMonday.js`, with the
+  team, where the status comes from (group names or a status column, with its labels), and the owner switch, are in `studio/schemas/settingsMonday.js`, with the
   starting values `mondayBoards` and `mondayShowOwners` in `defaultSettings` in `dashboard/config.js`. The
   Mini reads them, and `fixSettingValues` in `dashboard/core/content.js` only keeps them tidy.
   `deploy/scripts/monday-sync.sh` writes the tasks (id `task-monday-` and the item number, `source` monday,
-  `dueDate` the one field only these tasks have) and the document `monday-status` (type `mondayStatus`,
-  `studio/schemas/mondayStatus.js`). The questions to Monday and the places in its answers are in one
-  block at the top of the script. The block at the top of the tab is `studio/monday-status-input.js`, and the
+  `mondayBoardId` and `mondayBoardName`, `dueDate` the one field only these tasks have) and the document
+  `monday-status` (type `mondayStatus`, `studio/schemas/mondayStatus.js`, with the boards the token can see and
+  a reading for each chosen board). The questions to Monday and the places in its answers are in one
+  block at the top of the script, and the group titles that mean In progress and Done are the two lists
+  after it. The block at the top of the tab is `studio/monday-status-input.js`, with a line for each board entry, and the
   lists of an entry are `studio/monday-pickers.js`, which read `monday-status`. The CSV template of a task
-  has no column for `dueDate`.
+  has no column for `dueDate` or the board.
 - **The Monday cards.** The three panels `dashboard/panels/monday-tasks`, `monday-milestones` and `monday-progress`
   (docs/layouts.md, "The Monday cards"), flagged `monday: true` in `registry.js` and offered in Panel order in
   `studio/schemas/settingsRotation.js` but in no starting list. `mondayCards` in `dashboard/core/look-rotation.js`
@@ -902,6 +906,7 @@ exceptions are `test-slides-script.mjs`, `test-frc-script.mjs` and `test-monday-
     node tools/test-frc-script.mjs
     node tools/test-monday-script.mjs
     node tools/test-monday-settings.mjs
+    node tools/test-monday-boards.mjs
     node tools/test-competition.mjs
     node tools/test-monday-cards.mjs
     node tools/test-cybertron.mjs

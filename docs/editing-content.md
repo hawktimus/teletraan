@@ -920,8 +920,10 @@ Tasks lists under On the TV.
 - Monday connection from the Mini: a block at the top that you cannot type in. It says
   who the token belongs to, when the Mini last read Monday, how many boards the token
   can see, and the last error. Below those it says how many boards are chosen under
-  Boards and how many tasks the Mini has made. With no board chosen it says so, and that
-  the Mini writes no tasks. With nothing yet it says No connection yet: a coach has
+  Boards and how many tasks the Mini has made, then has a line for each entry under
+  Boards: the items the Mini read from that board, the tasks on the TV and when it was
+  last read. A board the token cannot see, or whose number is wrong, says 0 items read
+  and why. With no board chosen it says so, and that the Mini writes no tasks. With nothing yet it says No connection yet: a coach has
   to add the token on the Mini (docs/rebuilding-the-mini.md, step 18) and the first
   read comes within 10 minutes. If tasks do not show up, see "If nothing shows up" in
   docs/monday.md.
@@ -930,7 +932,12 @@ Tasks lists under On the TV.
   - Board: pick the board by name. The Mini fills in the list, so nobody types a
     number. A board the token cannot see is not in the list.
   - Team: the team the tasks of the board are for.
-  - Status column: the column with the status of each item.
+  - Status comes from: Group names, to start with, or A status column. With Group
+    names the title of the group an item is in gives its status: In progress, Working on
+    it, Doing and Started are In progress, Done, Complete, Completed and Finished are Done,
+    and every other title, such as To Do, Backlog, Not started and Planned, is Backlog. Capitals
+    and punctuation do not matter. The three fields below are hidden then.
+  - Status column: the column with the status of each item, for A status column.
   - In progress label and Done label: the words of that column for being worked on
     and finished. They start as Working on it and Done. Every other status is
     Backlog, which is Up next in the Status of a task: Stuck, Not started, any other
@@ -941,10 +948,14 @@ Tasks lists under On the TV.
   - Due date column: optional. A date column gives its day. A timeline column gives its
     end date.
   - Owner column: optional. It is used only when Show owner first names on the TV is on.
-  - Subteam column: optional. Empty uses the names of the groups on the board. A name
-    that matches no Team lead puts the task under [Unmatched], which is not shown.
-  An entry needs its board, its team and its status column. The lists show the columns of
-  the board you picked. When a list cannot be read, the box is a plain one, and it says so:
+  - Subteam column: optional. Empty uses the name of the board with Group names, and the
+    names of the groups with A status column. A name that matches no Team lead puts the
+    task under [Unmatched], which is not shown.
+  An entry needs its board and its team, and its status column for A status column. Each
+  column list shows the columns of the board picked in the same entry, with their types, the
+  ones that fit under Fits and the others under Other. Changing the board clears the columns.
+  If the Mini has not listed the columns of the board yet, the list says to wait for the
+  next sync. When the list of boards cannot be read, the box is a plain one, and it says so:
   type the board number or the column id.
 - Show owner first names on the TV: a switch, off to start with. On, a task keeps the
   first name of the first owner of its item, up to 12 characters. Off, no name from the

@@ -99,6 +99,18 @@ test('a board entry saved with a Backlog label keeps it, and nothing on the scre
   assert.deepEqual(read(dashboardFolder), [], 'no dashboard file names the Backlog label');
 });
 
+test('a board entry keeps where its status comes from as it was saved, and nothing on the screen reads it', () => {
+  const settings = normalizeContent({ settings: { mondayBoards: [Object.assign({}, entry, { statusFrom: 'groups' }), Object.assign({}, entry, { statusFrom: 'column' }), entry] } }).settings;
+  assert.deepEqual(settings.mondayBoards.map(board => board.statusFrom), ['groups', 'column', undefined], 'an entry saved before the choice existed stays as it was');
+
+  const read = folder => fs.readdirSync(folder, { withFileTypes: true }).reduce((names, item) => {
+    const full = path.join(folder, item.name);
+    if (item.isDirectory()) return names.concat(read(full));
+    return item.name.endsWith('.js') && fs.readFileSync(full, 'utf8').includes('statusFrom') ? names.concat(full) : names;
+  }, []);
+  assert.deepEqual(read(dashboardFolder), [], 'no dashboard file names the choice: the Mini reads it');
+});
+
 test('the Monday settings change nothing else on the screen: every other setting is as it was', () => {
   const plain = normalizeContent({ settings: { pageSeconds: 30, speed: 'fast' } }).settings;
   const withBoards = normalizeContent({ settings: { pageSeconds: 30, speed: 'fast', mondayBoards: [entry], mondayShowOwners: true } }).settings;
