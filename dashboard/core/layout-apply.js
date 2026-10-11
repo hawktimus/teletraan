@@ -1,4 +1,4 @@
-// Puts the layout on the page (core/layout.js decides which one). Two jobs:
+// Puts the layout on the page (core/layout.js decides which one). Three jobs:
 //
 //   startLayout()      the first thing the screen does, before any region, area
 //                      or panel is drawn. It sets data-layout on the html element,
@@ -8,15 +8,21 @@
 //                      it hands the numbers to layouts/bar.css, shows the row of
 //                      the side column and the main panel, and moves the large
 //                      frame into it.
+//   changeLayout()     the same, for a screen that is running: a look with another layout
+//                      than the page has is put on while the swap has the pieces apart
+//                      (core/swap-run.js). The regions of the layout the page has are put
+//                      back where index.html has them, and the new layout's are placed.
+//                      The page does not reload.
 //   holdForLayout()    asked by theme-apply.js each time a look is about to go
-//                      on. When the theme and the style give another layout than
-//                      the page has, the page reloads, once, and starts in the
-//                      right one.
+//                      on. A look with another layout waits until a swap has the screen
+//                      (or the screen is covered, or it has waited a minute), and then
+//                      goes on. If the layout cannot be changed in the page, the page
+//                      reloads, once, and starts in the right one.
 //
-// Nothing here moves anything. docs/layouts.md explains the layouts.
+// Only the elements of the layout move. docs/layouts.md explains the layouts.
 
 import { barCssVariables, blocksOf, chooseLayout, cssVariables, defaultLayout, drawnFor, everyBlock, kitMarkup, layoutNow, layoutOf, mustReload } from './layout.js';
-import { layoutFor, shapesFor, shapesNow, styleNow } from './style.js';
+import { applyStyle, layoutFor, recordShapes, shapesFor, shapesNow, styleNow } from './style.js';
 
 // address is ?theme= from the address bar, or null. readTheme() gives the Theme
 // document as it was saved the last time the content was read from Sanity, or
@@ -146,6 +152,75 @@ function addKit() {
   }
 }
 
+// Putting the page back as index.html has it, which is the standard layout: the regions that a layout moved or
+// showed go back, and what it set on the html element and put in the blocks is taken away. The panels that were drawn
+// in the regions are not touched here: shell.js draws the new layout's again (changeLayout below).
+function placeStandard(layout, page) {
+  const stage = find('stage');
+
+  if (layout === 'bar') {
+    stage.insertBefore(find('region-grid1'), find('region-right'));
+    find('bar-middle').hidden = true;
+    find('region-column').hidden = true;
+    removeVariables(barCssVariables(), page);
+  }
+
+  if (layout === 'sidebar') {
+    stage.insertBefore(find('region-banner'), stage.firstChild);
+    const right = find('region-right');
+    right.insertBefore(find('region-countdown'), right.firstChild);
+    find('region-strip').hidden = true;
+    find('region-sidebar').hidden = true;
+    removeVariables(cssVariables(), page);
+    document.querySelectorAll('.kit').forEach(kit => kit.remove());
+  }
+
+  // the slots of the layouts hold what the panels moved into them, and the panels are drawn again
+  ['strip-name', 'strip-clock', 'region-column', 'sidebar-bottom'].forEach(id => { find(id).innerHTML = ''; });
+  markBlocks(defaultLayout);
+}
+
+function removeVariables(variables, page) {
+  Object.keys(variables).forEach(name => page.style.removeProperty(name));
+}
+
+// True when the layout on the page can be changed while the screen runs. It is until a change fails.
+let changeFailed = false;
+
+export function layoutsChangeLive() {
+  return !changeFailed;
+}
+
+// The look of a running screen has another layout than the page has: the page is changed to it in this step. The
+// style goes on first, because the frames of the layout are drawn for its corners (core/style.js, recordShapes). Returns
+// true when the layout changed, and false when it did not need to or could not. A layout that cannot be changed in
+// the page is changed by a reload instead, once (reloadFor below), and the style stays the one the page has.
+// look is { theme, overlay, style }. page is the html element, and only the tests give another.
+export function changeLayout(look, page = document.documentElement) {
+  const wanted = layoutFor(look.style, layoutOf(look.theme));
+  const was = layoutNow();
+  if (wanted === was) return false;
+
+  const style = styleNow(page);
+  try {
+    applyStyle(look.style, page);
+    recordShapes(look.style, page);
+    if (was !== defaultLayout) placeStandard(was, page);
+    if (wanted !== defaultLayout) placeRegions(wanted, page);
+    page.dataset.layout = wanted;
+    return true;
+  } catch (error) {
+    console.error('Could not change the layout while the screen runs. The page reloads for it.', error);
+    changeFailed = true;
+    const asked = look.style;
+    look.style = style;
+    applyStyle(style, page);
+    recordShapes(style, page);
+    reloadFor(drawnFor(wanted, shapesFor(asked)), drawnFor(layoutNow(), shapesNow()));
+    return false;
+  }
+}
+
 // Even asking for sessionStorage can throw, for example when the browser has storage switched off
 function savedStorage() {
   try {
@@ -156,15 +231,18 @@ function savedStorage() {
 }
 
 // look is { theme, overlay, style }. Returns true when this look must not go on the
-// page now: the page is reloading to change layout (or to draw the frames of the bar
-// layout with the corners of another style), or it has to wait for the
-// moment it can, because an alert or an announcement has the screen and the
-// new page would not bring it back. theme-apply.js asks again at its next
-// page change and once a minute. When the layout is the same, or the page
-// cannot safely reload (core/layout.js, mustReload), it returns false and the
-// colours go on as usual, with the style the page already has. busy() is true while
-// something has the screen. A look with no style is the original style, which leaves the layout to the theme.
-export function holdForLayout(look, busy) {
+// page now. A look with the layout the page has goes on at once. A look with another layout
+// goes on when a swap has the screen (swapPlaying(): the pieces are apart and the layout is
+// changed in the page, changeLayout above), when something covers the screen (busy(): an alert or
+// an announcement), or when it has waited waitedMs, a minute (core/theme-apply.js asks again
+// at its next page change and once a minute). It waits otherwise, so that the layout never
+// changes in front of people.
+// If the page cannot change layout, because a change failed before, the page reloads for it, once: before it
+// reloads it writes down the layout it is reloading for in sessionStorage, and a page that finds the same
+// layout written down does not reload again (core/layout.js, mustReload). Then, when it
+// cannot safely reload, it returns false and the colours go on as usual, with the style the
+// page already has. A look with no style is the original style, which leaves the layout to the theme.
+export function holdForLayout(look, busy, waitedMs = 0, swapPlaying = () => false) {
   const wanted = drawnFor(layoutFor(look.style, layoutOf(look.theme)), shapesFor(look.style));
   const onPage = drawnFor(layoutNow(), shapesNow());
   const storage = savedStorage();
@@ -173,10 +251,19 @@ export function holdForLayout(look, busy) {
     mustReload(onPage, wanted, storage); // rubs the note out
     return false;
   }
+  if (layoutsChangeLive()) return layoutFor(look.style, layoutOf(look.theme)) !== layoutNow() && !(swapPlaying() || (busy && busy()) || waitedMs >= waitedTooLong);
   if (busy && busy()) return true;
-  if (!mustReload(onPage, wanted, storage)) {
-    // The page stays as it was drawn, so the style stays too: a style would not fit regions drawn for another layout
-    look.style = styleNow();
+
+  return reloadFor(wanted, onPage, look);
+}
+
+const waitedTooLong = 60 * 1000;
+
+// Reloads the page for a layout, once. Returns true when it does, and false when it must not: the look then goes on in the
+// layout the page has, with the style the page has.
+function reloadFor(wanted, onPage, look) {
+  if (!mustReload(onPage, wanted, savedStorage())) {
+    if (look) look.style = styleNow(); // a style would not fit regions drawn for another layout
     return false;
   }
 

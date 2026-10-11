@@ -54,6 +54,27 @@ const mainTree = makeTree('main', [
 ]);
 const layout = await import(urlOf(mainTree, 'dashboard/core/layout.js'));
 const apply = await import(urlOf(mainTree, 'dashboard/core/layout-apply.js'));
+
+// The same module on a page that has had a change of layout fail: from then on a look with another layout waits for a reload,
+// once, as the page did before the layout could be changed while the screen runs. A page whose index.html has no regions makes it fail
+const fallback = await (async () => {
+  const module = await import(urlOf(mainTree, 'dashboard/core/layout-apply.js') + '?failed');
+  const html = { dataset: { layout: 'standard' }, style: { setProperty() {}, removeProperty() {} } };
+  const window = { sessionStorage: { getItem: () => null, setItem() {}, removeItem() {} }, location: { reload() {} } };
+  const quiet = console.error;
+  console.error = () => {};
+  Object.defineProperty(globalThis, 'document', { value: { documentElement: html, getElementById: () => null }, configurable: true, writable: true });
+  Object.defineProperty(globalThis, 'window', { value: window, configurable: true, writable: true });
+  try {
+    module.changeLayout({ theme: 'neon-prime', overlay: '', style: 'original' }, html);
+  } finally {
+    console.error = quiet;
+    delete globalThis.document;
+    delete globalThis.window;
+  }
+  assert.equal(module.layoutsChangeLive(), false, 'the page cannot change layout while it runs');
+  return module;
+})();
 const season = await import(urlOf(mainTree, 'dashboard/core/season.js'));
 const styles = await import(urlOf(mainTree, 'dashboard/core/style.js'));
 const { themes } = await import(urlOf(mainTree, 'dashboard/themes/registry.js'));
@@ -576,35 +597,35 @@ test('if the layout cannot be set up the screen starts in the standard layout, a
   assert.ok(logged.length >= 1 && logged.some(line => /standard layout/.test(line)));
 });
 
-test('a theme with another layout reloads the page once and not again, never while something has the screen, and a failing storage never reloads', async () => {
+test('when the layout cannot be changed in the page, a theme with another layout reloads the page once and not again, never while something has the screen, and a failing storage never reloads', async () => {
   let reloads = 0;
   const store = fakeStorage();
   const window = { sessionStorage: store, location: { reload: () => { reloads += 1; } } };
 
   await withGlobals({ window: window, document: pageWith('standard') }, () => {
-    assert.equal(apply.holdForLayout({ theme: 'hawktimus', overlay: '' }), false, 'the same layout goes on as usual');
+    assert.equal(fallback.holdForLayout({ theme: 'hawktimus', overlay: '' }), false, 'the same layout goes on as usual');
     assert.equal(reloads, 0);
 
-    assert.equal(apply.holdForLayout({ theme: 'neon-prime', overlay: '' }, () => true), true, 'held while something has the screen');
+    assert.equal(fallback.holdForLayout({ theme: 'neon-prime', overlay: '' }, () => true), true, 'held while something has the screen');
     assert.equal(reloads, 0);
     assert.deepEqual(store.data, {}, 'nothing was written down, because nothing was done');
 
-    assert.equal(apply.holdForLayout({ theme: 'neon-prime', overlay: '' }, () => false), true, 'reloading, so the look is not put on this page');
+    assert.equal(fallback.holdForLayout({ theme: 'neon-prime', overlay: '' }, () => false), true, 'reloading, so the look is not put on this page');
     assert.equal(reloads, 1);
-    assert.equal(apply.holdForLayout({ theme: 'neon-prime', overlay: '' }, () => false), false, 'back in the wrong layout: no second reload, and the colours go on');
+    assert.equal(fallback.holdForLayout({ theme: 'neon-prime', overlay: '' }, () => false), false, 'back in the wrong layout: no second reload, and the colours go on');
     assert.equal(reloads, 1);
   });
 
   await withGlobals({ window: window, document: pageWith('sidebar') }, () => {
-    assert.equal(apply.holdForLayout({ theme: 'neon-prime', overlay: '' }), false, 'the page is in the layout now');
+    assert.equal(fallback.holdForLayout({ theme: 'neon-prime', overlay: '' }), false, 'the page is in the layout now');
     assert.deepEqual(store.data, {}, 'so the note is gone');
-    assert.equal(apply.holdForLayout({ theme: 'hawktimus', overlay: '' }), true, 'a later change reloads again');
+    assert.equal(fallback.holdForLayout({ theme: 'hawktimus', overlay: '' }), true, 'a later change reloads again');
     assert.equal(reloads, 2);
   });
 
   const broken = { get sessionStorage() { throw new Error('no storage'); }, location: { reload: () => { reloads += 1; } } };
   await withGlobals({ window: broken, document: pageWith('standard') }, () => {
-    assert.equal(apply.holdForLayout({ theme: 'neon-prime', overlay: '' }), false);
+    assert.equal(fallback.holdForLayout({ theme: 'neon-prime', overlay: '' }), false);
     assert.equal(reloads, 2);
   });
 });
@@ -886,7 +907,7 @@ test('shell.js gives season.js the layers before it asks for a pack, and the pag
 
 // The wiring, the stylesheet and the docs
 
-test('shell.js sets the layout before anything else is drawn, and keeps an alert or announcement from being lost to a reload', () => {
+test('shell.js sets the layout before anything else is drawn, and keeps a look with another layout waiting for a swap, or for an alert or announcement to be over', () => {
   const shell = read('dashboard/shell.js');
   const code = shell.split('\n').filter(line => !line.trim().startsWith('//')).join('\n');
   const first = code.indexOf('startLayout(params.get(\'theme\'), savedTheme, document.documentElement, style);');
@@ -897,7 +918,7 @@ test('shell.js sets the layout before anything else is drawn, and keeps an alert
   assert.ok(first < code.indexOf('frame.start('), 'before the frame starts');
   assert.ok(first < code.indexOf('await Promise.race([waitForFonts()'), 'before the fonts, the panels and the content');
   assert.ok(first < code.indexOf('startWhatStays();'), 'before anything is drawn');
-  assert.ok(code.indexOf('holdLooksFor(look => holdForLayout(look, takeoverRunning));') > code.indexOf('async function run()'));
+  assert.ok(code.indexOf('holdLooksFor((look, waitedMs) => holdForLayout(look, takeoverRunning, waitedMs, () => !stayStarted || swapIsPlaying()));') > code.indexOf('async function run()'));
   assert.ok(code.indexOf('holdLooksFor(') < code.indexOf('await startThemes('), 'the hold is in place before the first theme goes on');
 });
 
@@ -2030,48 +2051,48 @@ test('styleNow reads data-style from the page, and is Original with no page, no 
   assert.equal(styles.styleNow({ dataset: { style: 'oops' } }), 'original');
 });
 
-test('a style that gives another layout than the page has reloads once, and Original and Cybertron, which have the same layout, never reload: their frames are drawn again', async () => {
+test('when the layout cannot be changed in the page, a style that gives another layout than the page has reloads once, and Original and Cybertron, which have the same layout, never reload: their frames are drawn again', async () => {
   let reloads = 0;
   const store = fakeStorage();
   const window = { sessionStorage: store, location: { reload: () => { reloads += 1; } } };
   const look = (theme, style) => ({ theme: theme, overlay: '', style: style });
 
   await withGlobals({ window: window, document: pageWith('standard') }, () => {
-    assert.equal(apply.holdForLayout(look('hawktimus', 'original')), false, 'Original and the standard theme: the same layout');
-    assert.equal(apply.holdForLayout(look('hawktimus', 'cybertron'), () => true), false, 'Cybertron has the same layout, so nothing is held for it');
-    assert.equal(apply.holdForLayout(look('hawktimus', 'cybertron'), () => false), false, 'and it never reloads');
+    assert.equal(fallback.holdForLayout(look('hawktimus', 'original')), false, 'Original and the standard theme: the same layout');
+    assert.equal(fallback.holdForLayout(look('hawktimus', 'cybertron'), () => true), false, 'Cybertron has the same layout, so nothing is held for it');
+    assert.equal(fallback.holdForLayout(look('hawktimus', 'cybertron'), () => false), false, 'and it never reloads');
     assert.equal(reloads, 0);
-    assert.equal(apply.holdForLayout(look('hawktimus', 'minimal'), () => true), true, 'held while something has the screen');
+    assert.equal(fallback.holdForLayout(look('hawktimus', 'minimal'), () => true), true, 'held while something has the screen');
     assert.equal(reloads, 0);
-    assert.equal(apply.holdForLayout(look('hawktimus', 'minimal'), () => false), true, 'reloading');
+    assert.equal(fallback.holdForLayout(look('hawktimus', 'minimal'), () => false), true, 'reloading');
     assert.equal(reloads, 1);
     assert.equal(store.data[layout.reloadKey], 'bar-minimal');
-    assert.equal(apply.holdForLayout(look('hawktimus', 'minimal'), () => false), false, 'back in the wrong layout: no second reload');
+    assert.equal(fallback.holdForLayout(look('hawktimus', 'minimal'), () => false), false, 'back in the wrong layout: no second reload');
     assert.equal(reloads, 1);
   });
 
   await withGlobals({ window: window, document: pageWith('bar', 'minimal') }, () => {
-    assert.equal(apply.holdForLayout(look('hawktimus', 'minimal')), false, 'the page is in the bar layout now');
+    assert.equal(fallback.holdForLayout(look('hawktimus', 'minimal')), false, 'the page is in the bar layout now');
     assert.deepEqual(store.data, {}, 'so the note is gone');
-    assert.equal(apply.holdForLayout(look('neon-prime', 'minimal')), false, 'Minimal and a sidebar theme: still the bar layout with the same corners, so colours only');
-    assert.equal(apply.holdForLayout(look('hawktimus', 'original')), true, 'back to Original reloads again');
+    assert.equal(fallback.holdForLayout(look('neon-prime', 'minimal')), false, 'Minimal and a sidebar theme: still the bar layout with the same corners, so colours only');
+    assert.equal(fallback.holdForLayout(look('hawktimus', 'original')), true, 'back to Original reloads again');
     assert.equal(reloads, 2);
   });
 
   await withGlobals({ window: window, document: pageWith('sidebar') }, () => {
-    assert.equal(apply.holdForLayout(look('neon-prime', 'original')), false, 'the sidebar theme with Original is the sidebar layout');
-    assert.equal(apply.holdForLayout(look('neon-prime', 'cybertron')), false, 'and with Cybertron');
-    assert.equal(apply.holdForLayout(look('neon-prime', 'minimal')), true, 'Minimal takes the sidebar theme to the bar layout');
+    assert.equal(fallback.holdForLayout(look('neon-prime', 'original')), false, 'the sidebar theme with Original is the sidebar layout');
+    assert.equal(fallback.holdForLayout(look('neon-prime', 'cybertron')), false, 'and with Cybertron');
+    assert.equal(fallback.holdForLayout(look('neon-prime', 'minimal')), true, 'Minimal takes the sidebar theme to the bar layout');
     assert.equal(reloads, 3);
   });
 
   await withGlobals({ window: window, document: pageWith('standard') }, () => {
-    assert.equal(apply.holdForLayout({ theme: 'hawktimus', overlay: '' }), false, 'a look with no style is Original');
+    assert.equal(fallback.holdForLayout({ theme: 'hawktimus', overlay: '' }), false, 'a look with no style is Original');
     assert.equal(reloads, 3);
   });
 });
 
-test('when the page cannot reload for the layout a style needs, the look goes on with the style the page has, so no style is put on regions drawn for another layout', async () => {
+test('when the layout cannot be changed in the page and the page cannot reload for it, the look goes on with the style the page has, so no style is put on regions drawn for another layout', async () => {
   let reloads = 0;
   const store = fakeStorage();
   const window = { sessionStorage: store, location: { reload: () => { reloads += 1; } } };
@@ -2081,10 +2102,10 @@ test('when the page cannot reload for the layout a style needs, the look goes on
   // a page that started in Original and standard: the sample content says Minimal, and the page has nothing saved to start from
   await withGlobals({ window: window, document: pageWith('standard') }, () => {
     const first = look('minimal');
-    assert.equal(apply.holdForLayout(first, () => false), true, 'it reloads once');
+    assert.equal(fallback.holdForLayout(first, () => false), true, 'it reloads once');
     assert.equal(first.style, 'minimal', 'and the look is not changed while it does');
     const second = look('minimal');
-    assert.equal(apply.holdForLayout(second, () => false), false, 'it comes back in the standard layout, with the colours going on');
+    assert.equal(fallback.holdForLayout(second, () => false), false, 'it comes back in the standard layout, with the colours going on');
     assert.equal(second.style, 'original', 'but the style is the one the page has');
     assert.equal(reloads, 1);
   });
@@ -2092,7 +2113,7 @@ test('when the page cannot reload for the layout a style needs, the look goes on
   // Cybertron has the layout of the page, so nothing is reloaded and the look keeps its style
   await withGlobals({ window: window, document: pageWith('standard') }, () => {
     const cybertron = look('cybertron');
-    assert.equal(apply.holdForLayout(cybertron, () => false), false);
+    assert.equal(fallback.holdForLayout(cybertron, () => false), false);
     assert.equal(cybertron.style, 'cybertron');
     assert.equal(reloads, 1);
   });
@@ -2100,21 +2121,21 @@ test('when the page cannot reload for the layout a style needs, the look goes on
   // storage that cannot be used never reloads, and the style stays the page\'s
   await withGlobals({ window: broken, document: pageWith('standard') }, () => {
     const minimal = look('minimal');
-    assert.equal(apply.holdForLayout(minimal), false);
+    assert.equal(fallback.holdForLayout(minimal), false);
     assert.equal(minimal.style, 'original');
   });
 
   // a page drawn for Minimal keeps Minimal when it cannot reload to go back to Original
   await withGlobals({ window: broken, document: { documentElement: { dataset: { layout: 'bar', shapes: 'minimal', style: 'minimal' } } } }, () => {
     const back = look('original');
-    assert.equal(apply.holdForLayout(back), false);
+    assert.equal(fallback.holdForLayout(back), false);
     assert.equal(back.style, 'minimal');
   });
 
   // a look whose layout is the page's is left alone
   await withGlobals({ window: window, document: pageWith('bar', 'minimal') }, () => {
     const fits = look('minimal');
-    assert.equal(apply.holdForLayout(fits), false);
+    assert.equal(fallback.holdForLayout(fits), false);
     assert.equal(fits.style, 'minimal');
   });
 });
@@ -3848,7 +3869,7 @@ test('frameKind gives the frames of Minimal for its corners, in the bar layout o
   minimalKinds.forEach(kind => assert.ok(plate.barShape(kind), kind + ' is a frame'));
 });
 
-test('a style with other corners on its frames in the bar layout reloads once, like a layout: Minimal to Original and back, and never between two looks that have the same layout', async () => {
+test('when the layout cannot be changed in the page, a style with other corners on its frames in the bar layout reloads once, like a layout: Minimal to Original and back, and never between two looks that have the same layout', async () => {
   assert.equal(layout.drawnFor('bar', 'minimal'), 'bar-minimal');
   assert.equal(layout.drawnFor('bar', ''), 'bar');
   assert.equal(layout.drawnFor('bar', 'oops'), 'bar');
@@ -3872,35 +3893,35 @@ test('a style with other corners on its frames in the bar layout reloads once, l
   const look = (theme, style) => ({ theme: theme, overlay: '', style: style });
 
   await withGlobals({ window: window, document: pageWith('standard', 'cybertron') }, () => {
-    assert.equal(apply.holdForLayout(look('hawktimus', 'original')), false, 'a page drawn for Cybertron, and Original: the frames are drawn again, and the page stays');
-    assert.equal(apply.holdForLayout(look('hawktimus', 'cybertron')), false);
+    assert.equal(fallback.holdForLayout(look('hawktimus', 'original')), false, 'a page drawn for Cybertron, and Original: the frames are drawn again, and the page stays');
+    assert.equal(fallback.holdForLayout(look('hawktimus', 'cybertron')), false);
     assert.equal(reloads, 0);
   });
 
   await withGlobals({ window: window, document: pageWith('bar') }, () => {
-    assert.equal(apply.holdForLayout(look('hawktimus', 'minimal'), () => true), true, 'held while something has the screen');
+    assert.equal(fallback.holdForLayout(look('hawktimus', 'minimal'), () => true), true, 'held while something has the screen');
     assert.equal(reloads, 0);
-    assert.equal(apply.holdForLayout(look('hawktimus', 'minimal'), () => false), true, 'Minimal has other corners, so the page is drawn again');
+    assert.equal(fallback.holdForLayout(look('hawktimus', 'minimal'), () => false), true, 'Minimal has other corners, so the page is drawn again');
     assert.equal(reloads, 1);
     assert.equal(store.data[layout.reloadKey], 'bar-minimal');
-    assert.equal(apply.holdForLayout(look('hawktimus', 'minimal'), () => false), false, 'back in the wrong corners: no second reload, and the colors go on');
+    assert.equal(fallback.holdForLayout(look('hawktimus', 'minimal'), () => false), false, 'back in the wrong corners: no second reload, and the colors go on');
     assert.equal(reloads, 1);
   });
 
   await withGlobals({ window: window, document: pageWith('bar', 'minimal') }, () => {
-    assert.equal(apply.holdForLayout(look('neon-prime', 'minimal')), false, 'drawn for Minimal, and Minimal on any theme');
+    assert.equal(fallback.holdForLayout(look('neon-prime', 'minimal')), false, 'drawn for Minimal, and Minimal on any theme');
     assert.deepEqual(store.data, {});
-    assert.equal(apply.holdForLayout(look('hawktimus', 'cybertron')), true, 'Minimal to Cybertron is a layout change');
+    assert.equal(fallback.holdForLayout(look('hawktimus', 'cybertron')), true, 'Minimal to Cybertron is a layout change');
     assert.equal(reloads, 2);
   });
 
   await withGlobals({ window: window, document: pageWith('bar', 'minimal') }, () => {
-    assert.equal(apply.holdForLayout(look('neon-prime', 'original')), true, 'Minimal to Original, which has the sidebar layout with this theme');
+    assert.equal(fallback.holdForLayout(look('neon-prime', 'original')), true, 'Minimal to Original, which has the sidebar layout with this theme');
     assert.equal(reloads, 3);
   });
 
   await withGlobals({ window: window, document: pageWith('standard') }, () => {
-    assert.equal(apply.holdForLayout(look('hawktimus', 'minimal')), true, 'Original to Minimal is a layout change as before');
+    assert.equal(fallback.holdForLayout(look('hawktimus', 'minimal')), true, 'Original to Minimal is a layout change as before');
     assert.equal(reloads, 4);
     assert.equal(store.data[layout.reloadKey], 'bar-minimal');
   });

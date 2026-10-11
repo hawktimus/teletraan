@@ -45,7 +45,7 @@ import { makeSilverGradients } from './core/plate.js';
 import { showDeviceInfo } from './core/device.js';
 import { checkTheme, holdLooksFor, showThemeNow, startThemes } from './core/theme-apply.js';
 import { overlayShown, ruleExtras } from './core/theme.js';
-import { holdForLayout, startLayout } from './core/layout-apply.js';
+import { changeLayout, holdForLayout, startLayout } from './core/layout-apply.js';
 import { decorationLayers, hasKit, layoutNow } from './core/layout.js';
 import { redrawFrames } from './core/areas.js';
 import { applyStyle, recordShapes, shapesFor, shapesNow, startStyle } from './core/style.js';
@@ -55,7 +55,7 @@ import { loadPanel, mountPanel, updatePanel } from './core/panels.js';
 import { playlistOf, withPages, withStandIns } from './core/panel-order.js';
 import { withCompetition } from './core/competition.js';
 import { askForTeam, changeTeamNow, currentTeam, frameTrim, onTeamChange, recordTrim, trimNow, useTeams } from './core/teams.js';
-import { showPagesNow, startRotation, startTicker, startTogether } from './core/schedule.js';
+import { showPagesNow, startRotation, startRotationForLayouts, startTicker, startTogether } from './core/schedule.js';
 import { startTakeovers, runAnnouncement, takeoverRunning } from './core/takeover.js';
 
 const params = new URLSearchParams(window.location.search);
@@ -77,6 +77,7 @@ let deviceText = []; // the Mini's name and ssh line, read only while Sanity can
 let decorationsUsed = false; // core/season.js has been asked for a pack, so it has to be asked again when the pack goes
 let choosingTeam = false; // rebuild() is choosing the team, so a change of team that it finds does not start another rebuild
 let stayStarted = false; // startWhatStays() has drawn the panels that stay, so a style with other frames has to draw them again
+let swapIsPlaying = () => false; // core/swap-run.js gives the real one when it has loaded
 
 window.teletraanStarted = true; // index.html reloads the page if this never happens
 
@@ -91,8 +92,8 @@ async function run() {
   // The style and the layout go on first of all, so that no region, area or panel is ever
   // drawn in the wrong place. The layout is the one the last saved content chose: the
   // theme's, or the one the style forces (Minimal), or ?theme= and ?style=.
-  // A theme or style with another layout reloads the page later. A preview that was on at that
-  // reload goes on first, so the style and the layout are the ones it holds.
+  // A theme or style with another layout is put on the running page later, in a swap (useLayout below).
+  // A preview that was on when the page reloaded goes on first, so the style and the layout are the ones it holds.
   resumeSavedPreview();
   askForSample(params.get('sample'));
   askForTeam(params.get('team'));
@@ -136,9 +137,10 @@ async function run() {
     }
 
     // The theme goes on before the first panel is drawn, so nothing flashes in the wrong colours.
-    // A theme with another layout than the page reloads it, but never while an alert or an announcement has the screen.
+    // A look with another layout than the page has waits for a swap to have the screen, which changes the layout in the page.
+    // Before anything is drawn there is nothing to wait for.
     try {
-      holdLooksFor(look => holdForLayout(look, takeoverRunning));
+      holdLooksFor((look, waitedMs) => holdForLayout(look, takeoverRunning, waitedMs, () => !stayStarted || swapIsPlaying()));
       await startThemes(getContent, { theme: params.get('theme'), overlay: params.get('overlay'), style: params.get('style') }, showDecorations);
     } catch (error) {
       console.error('The theme could not be started. The screen keeps the default look.', error);
@@ -188,6 +190,7 @@ async function run() {
       // The look rotation: the style and team of each pass, the swaps, and the Next look now button in the Studio.
       // After the ones it asks about. ?style= and ?team= in the address win over it, so then it does nothing
       if (!onlyTasks) {
+        startOptional('./core/swap-run.js', module => { swapIsPlaying = module.swapRunning; });
         startOptional('./core/look-rotation-run.js', module => module.startLookRotation(getContent, params.has('style') || params.has('team')));
       }
     }
@@ -403,6 +406,29 @@ function showFixedPanel(id, animate) {
   }
 }
 
+// A look with another layout than the page has: the layout is changed in the page, in the step that puts the look on
+// (core/layout-apply.js, changeLayout), and a swap has the screen apart for it (core/swap-run.js). The areas draw their
+// frames again for the layout, and the panels that stay on screen are the layout's own. A problem here never stops the colors.
+function useLayout(look) {
+  try {
+    if (!changeLayout(look)) return;
+
+    redrawFrames();
+    drawWhatStays();
+  } catch (error) {
+    console.error('Could not put the layout on the page', error);
+  }
+}
+
+// The banner, the countdown and the side column are not the same panels in every layout, so their regions are emptied
+// and the panels of the layout are drawn
+function drawWhatStays() {
+  if (!stayStarted || onlyTasks) return;
+
+  ['banner', 'countdown', 'column'].forEach(region => { document.getElementById('region-' + region).innerHTML = ''; });
+  fixedPanels(layoutNow()).forEach(id => showFixedPanel(id, false));
+}
+
 // The banner and the countdown of the standard layout draw their own frame, and Cybertron
 // gives them another (a plate behind the banner, and the war clock in place of the red
 // countdown). They are drawn again when that style goes on. The other layouts draw the same
@@ -455,7 +481,7 @@ function startWhatComesAndGoes() {
   const rotation = () => content.settings.rotation;
   startRotation('grid1', () => (onlyTasks ? [{ panel: 'tasks', show: true, seconds: 12 }] : withPages(withCompetition(playlistOf(rotation(), 'grid1'), content, new Date()))), getContent);
   if (!onlyTasks) {
-    startRotation('grid2', () => withStandIns(withPages(playlistOf(rotation(), 'grid2'))), getContent); // does nothing in a layout with no small frame
+    startRotationForLayouts('grid2', () => withStandIns(withPages(playlistOf(rotation(), 'grid2'))), getContent); // waits while the layout has no small frame
 
     startTicker(getContent);
   }
@@ -552,6 +578,7 @@ function useStyle(look) {
 // the page. The module is read only when a pack is wanted, or when one has to be
 // taken away, and a problem in it is logged and never stops the colours.
 function showDecorations(look) {
+  useLayout(look);
   useStyle(look);
   useKit(look);
   if (!look.overlay && !decorationsUsed) return;

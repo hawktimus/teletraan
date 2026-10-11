@@ -214,6 +214,9 @@ async function inRotation(layoutName, run) {
     // the small frame as shell.js starts it, from the rows of Panel order
     world.startSmall = rows => world.module.startRotation('grid2', () => withStandIns(withPages(playlistOf({ order: rows }, 'grid2'))), () => world.content);
     world.startLarge = ids => world.module.startRotation('grid1', () => ids.map(panel => ({ panel: panel, show: true })), () => world.content);
+    // the way shell.js starts it, in a layout that may get the small frame later (core/layout-apply.js changes the layout live)
+    world.startSmallLive = rows => world.module.startRotationForLayouts('grid2', () => withStandIns(withPages(playlistOf({ order: rows }, 'grid2'))), () => world.content);
+    world.changeLayout = name => { globalThis.document.documentElement.dataset.layout = name; };
     await run(world);
   });
 }
@@ -413,6 +416,86 @@ test('the sidebar and the bar layouts never start the small frame: the list is n
   }
 });
 
+test('started for layouts, as shell.js does, the small frame idles in the sidebar and bar layouts: nothing is read, built or shown', async () => {
+  for (const name of ['sidebar', 'bar']) {
+    await inRotation(name, async world => {
+      let asked = 0;
+      world.module.startRotationForLayouts('grid2', () => { asked += 1; return withStandIns([]); }, () => world.content);
+      await world.settle();
+      await world.pass(60);
+
+      assert.equal(asked, 0, name);
+      assert.deepEqual(world.log, [], name);
+    });
+  }
+});
+
+test('a live change from the bar or sidebar layout to the standard one starts Panel B with a panel at once', async () => {
+  for (const name of ['bar', 'sidebar']) {
+    // the swap asks the small frame to move on, and the layout changes while the screen is apart (core/swap-run.js)
+    await inRotation(name, async world => {
+      world.canShow = has(['team-tile']);
+      world.startSmallLive([]);
+      await world.settle();
+      await world.pass(30);
+      assert.deepEqual(world.log, [], name + ': nothing before the swap');
+
+      world.module.moveOn(['grid2']);
+      await world.pass(1);
+      assert.deepEqual(world.pagesOf('grid2'), ['team-tile'], name + ': the first page is waiting at the gate, and it is the last resort');
+
+      world.changeLayout('standard');
+      await world.pass(90);
+      const pages = world.pagesOf('grid2');
+      assert.ok(pages.length >= 5, name + ': ' + pages.join(' '));
+      pages.forEach(page => assert.equal(page, 'team-tile'));
+      assert.ok(!world.log.includes('grid2 none') && !world.log.includes('clear grid2'), name);
+    });
+
+    // the weather exists, so the first page is the forecast and team-tile is not used
+    await inRotation(name, async world => {
+      world.canShow = has(['forecast', 'team-tile']);
+      world.startSmallLive([]);
+      await world.settle();
+      world.module.moveOn(['grid2']);
+      await world.pass(1);
+      world.changeLayout('standard');
+      await world.pass(90);
+      assert.ok(world.pagesOf('grid2').length >= 5);
+      world.pagesOf('grid2').forEach(page => assert.equal(page, 'forecast'), name);
+    });
+
+    // with no ask at all the list notices the layout within a second, and a row that is switched off stays off
+    await inRotation(name, async world => {
+      world.canShow = has(['forecast', 'next-event', 'team-tile']);
+      world.startSmallLive(rows(['forecast', 'next-event'], ['forecast']));
+      await world.settle();
+      await world.pass(10);
+      assert.deepEqual(world.log, [], name);
+
+      world.changeLayout('standard');
+      await world.pass(1);
+      assert.deepEqual(world.pagesOf('grid2'), ['next-event'], name);
+    });
+
+    // and the other way: the standard layout gives it up, and the list stops drawing
+    await inRotation('standard', async world => {
+      world.canShow = has(['team-tile']);
+      world.startSmallLive([]);
+      await world.settle();
+      await world.pass(2);
+      assert.deepEqual(world.pagesOf('grid2'), ['team-tile']);
+
+      world.changeLayout(name);
+      world.module.moveOn(['grid2']);
+      await world.pass(1);
+      const drawn = world.pagesOf('grid2').length;
+      await world.pass(90);
+      assert.equal(world.pagesOf('grid2').length, drawn, name + ': nothing more is chosen in a layout with no small frame');
+    });
+  }
+});
+
 test('the sidebar and the bar layouts still give the large frame its pages, and the standard layout gives both frames pages', async () => {
   for (const name of ['sidebar', 'bar', 'standard']) {
     await inRotation(name, async world => {
@@ -434,7 +517,7 @@ test('the sidebar and the bar layouts still give the large frame its pages, and 
 
 test('shell.js gives the small frame the list with its spares and its last resort', () => {
   const shell = read('dashboard/shell.js');
-  assert.ok(shell.includes("startRotation('grid2', () => withStandIns(withPages(playlistOf(rotation(), 'grid2'))), getContent);"));
+  assert.ok(shell.includes("startRotationForLayouts('grid2', () => withStandIns(withPages(playlistOf(rotation(), 'grid2'))), getContent);"));
   assert.ok(shell.includes("withStandIns } from './core/panel-order.js';"));
 });
 

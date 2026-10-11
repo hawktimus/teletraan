@@ -129,9 +129,9 @@ editors can sign in from anywhere.
                               is from the team board and keeps only those, theme.js
                               works out which theme and overlay apply, theme-apply.js puts them on the page,
                               layout.js says which layout a theme has, which regions and blocks a layout
-                              has, the numbers of the sidebar and bar layouts and when a change of layout must
-                              reload the page, layout-apply.js sets the layout on the page before
-                              anything is drawn, and style.js says which style the screen has and which
+                              has, the numbers of the sidebar and bar layouts and when a change of layout
+                              that failed may reload the page, layout-apply.js sets the layout on the page before
+                              anything is drawn and changes it while the screen runs, and style.js says which style the screen has and which
                               layout a style asks for (docs/layouts.md),
                               teams.js holds the teams, says which one the mode and the clock ask for,
                               says whether an item shows for it (showsForTeam, used by visibleItems in
@@ -186,8 +186,9 @@ editors can sign in from anywhere.
                               look-rotation-run.js hands a look to the screen and keeps the pass in localStorage
                               (docs/layouts.md, "The look rotation"),
                               swap-plan.js decides the one swap of every change of look and of Monday card
-                              (which piece starts when, where it re-forms, how the hawk flies), swap-run.js
-                              plays it on the page, and busy.js says that a transition has the screen
+                              (which piece starts when, which old piece each new one takes over from, where it
+                              re-forms, how the hawk flies), swap-run.js plays it on the page, in full motion,
+                              calm motion or none, and busy.js says that a transition has the screen
                               (docs/layouts.md, "The swap"),
                               frc.js cleans the frc-status document the Mini writes and has the date helpers for
                               it, competition.js decides which competition cards are due now (from the document,
@@ -305,7 +306,7 @@ editors can sign in from anywhere.
                               the classes of its trim, its metal and its glow
       test-layouts.mjs        checks for the layouts: which layout a theme and a style have, the numbers of the
                               sidebar and bar layouts, the mirror, that the screen is always 1920 x 1080,
-                              the reload that changes layout and that it cannot loop, that the scheduler leaves
+                              the reload that a failed change of layout falls back to and that it cannot loop, that the scheduler leaves
                               out the small frame, the blocks of a hidden transition, that a seasonal pack
                               draws only what a layout allows, and the war clock: its housing, its digits and
                               labels, its sizes and that it does not move
@@ -421,6 +422,11 @@ editors can sign in from anywhere.
       test-swap.mjs           checks for the swap (core/swap-plan.js): the pull apart, the re-form, the match of old and
                               new pieces and the flight of the hawk, and core/swap-run.js against a small stand-in
                               for the page and a clock moved by hand
+      test-swap-smooth.mjs    checks that the swap is one gesture: every piece of the old look has a place in the new one
+                              (the pieces of seven looks are in testdata/swap-pieces.json), nothing jumps at the switch,
+                              something always moves, and the calm and no motion paths; also the layout changed on the
+                              running page (core/layout-apply.js), the regions at the gate (core/areas.js) and the list
+                              of the small frame that runs in every layout (core/schedule.js)
       test-monday-style.mjs   checks that the Monday cards are in the Monday pass and in the Monday style only: the list
                               of the large panel in each pass, the pass left out while the style cannot go on the
                               page, and a held look going on in a swap (core/look-rotation-run.js on a small page)
@@ -450,7 +456,8 @@ editors can sign in from anywhere.
       mini/                   the Mac tool that updates the Mini and keeps its keys and calendars:
                               teletraan-mini (the menu), Teletraan Mini.command (double-click it) and
                               merge-env.sh, which runs on the Mini (docs/updating-the-mini.md)
-      testdata/               the calendar files test-calendar.mjs reads
+      testdata/               the calendar files test-calendar.mjs reads, and the pieces of seven looks that
+                              test-swap-smooth.mjs reads (swap-pieces.json, measured in a render at 1920 x 1080)
       icons.html              every weather picture on one page, at
                               http://localhost:8080/tools/icons.html
       logo.html               the hawk logo large, with every act and key pose, at
@@ -984,6 +991,7 @@ exceptions are `test-slides-script.mjs`, `test-frc-script.mjs` and `test-monday-
     node tools/test-presentation-mouse.mjs
     node tools/test-look-rotation.mjs
     node tools/test-swap.mjs
+    node tools/test-swap-smooth.mjs
     node tools/test-monday-style.mjs
     node tools/test-console.mjs
     node tools/test-calendar-status.mjs

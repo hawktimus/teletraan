@@ -5,21 +5,23 @@
 //
 // A swap replaces the page change of the large panel (core/areas.js, setSwapOffer) when
 //   - the look rotation has held a new style or team (queueSwap, called by core/look-rotation-run.js), or
-//   - the page on screen or the page to come is a Monday card, which covers going from one card to the
-//     next, entering the Monday block and leaving it.
+//   - a look is waiting to go on, which is a preview, a team of Alternate mode or a theme from the Look page, or
+//   - the page on screen or the page to come is a Monday card, in full motion, which covers going from one
+//     card to the next, entering the Monday block and leaving it.
 // It never starts while an alert, an announcement, a talk, the demo, the night screen or a hidden
-// transition has the screen, and not in calm or no motion. The page change is then the usual one, and a
-// look that was held goes on in it.
+// transition has the screen. The page change is then the usual one, and a look that was held goes on in it.
 //
-// How it goes, with the times of swap-plan.js:
+// How it goes in full motion, with the times of swap-plan.js:
 //   1. The frames show as their pieces (#world gets data-pieces, which frame.css reads). The pieces
 //      pull apart, the content fades out and the logo becomes a hawk that lifts off.
-//   2. At the moment the pieces are out, one step does it all: the look goes on, the large panel's page is
-//      swapped, and the other areas swap theirs at the gate of core/areas.js, as in a hidden transition.
-//      The pieces are measured again, in the new look, and each takes over from an old piece.
+//   2. At the moment the pieces are out, one step does it all: the look goes on (the style, the team and
+//      the layout), the large panel's page is swapped, and the other areas swap theirs, which they waited to
+//      do at the gate of core/areas.js. The pieces are measured again, in the new look, and each takes
+//      over from an old piece.
 //   3. The pieces travel to their places, the content fades in, and the hawk lands.
-// A change between two layouts reloads the page (core/layout-apply.js): then the screen stays apart
-// until the page is gone, and the new page starts as the screen does.
+// In calm motion the whole stage fades out, the look goes on, and the stage fades in. With motion off the
+// look goes on at once. Neither has pieces. A change of layout is the same step in every case: the page does not
+// reload for it (core/layout-apply.js, changeLayoutNow).
 
 import * as frame from '../frame.js';
 import { panels } from '../registry.js';
@@ -27,17 +29,21 @@ import { setSwapOffer, startWholeScreen } from './areas.js';
 import { setBusy } from './busy.js';
 import { boltBox, boltCopy, boxOf, findBolts, findBoxes, findContent, findPlates, screenPlace } from './hidden-pile.js';
 import { layoutIsReloading } from './layout-apply.js';
-import { layoutNow, otherAreas } from './layout.js';
 import { holdClock, moveOn } from './schedule.js';
-import { contentFade, flapFrames, hawkShape, hawkTransform, planHawk, planPull, planReform, poseFrames, restPose, standardEaseText, swapTimes } from './swap-plan.js';
+import { teamPending } from './teams.js';
+import { lookIsWaiting } from './theme-apply.js';
+import { contentFade, flapFrames, hawkShape, hawkTransform, planHawk, planPull, planReform, poseFrames, pullEaseText, reformEaseText, restPose, swapReform, swapTimes } from './swap-plan.js';
 import { takeoverRunning } from './takeover.js';
 
-const longestRest = 1500; // milliseconds to wait for the three areas to stop moving before giving up
-const reloadWait = 8000; // how long the screen stays apart for a page that is about to reload
-const hawkLiftMs = 350; // the hawk hovers and lifts until the new place is known, then flies
+const longestRest = 8000; // milliseconds to wait for the three areas to stop moving before giving up. A page change takes two seconds and the small areas may be in one
+const regionWait = 1200; // milliseconds to wait, once the pieces are out, for the other areas to have chosen their pages
+const reloadWait = 8000; // how long the screen stays apart for a page that is about to reload, which only a failed change of layout does
+const calmFadeMs = 300; // the stage fades out and in, in calm motion, in this time each
+const hawkLiftMs = swapTimes.switchMs; // the hawk hovers and lifts until the new place is known, then flies
 const hawkLiftPixels = 40;
 const hawkLandMs = 150; // the hawk and the logo cross-fade for this long at the end
 const hawkColors = ['--logo-purple', '--logo-tail', '--logo-far'];
+const otherRegions = ['grid2', 'ticker']; // the small frame and the ticker, in every layout: one that the layout does not have waits and drops its page
 
 let askBusy = () => false; // true while an announcement, the demo, the night screen or a hidden transition has the screen
 let queued = false; // the look rotation has held a look, so the next page change of the large panel is a swap
@@ -59,6 +65,11 @@ export function startSwaps(busyElsewhere) {
   setSwapOffer(offer);
 }
 
+// A look that nobody queued, a preview, a team of Alternate mode or a theme from the Look page, still goes on in a swap
+function lookWaiting() {
+  return lookIsWaiting() || teamPending();
+}
+
 function isMondayCard(id) {
   const panel = panels.find(item => item.id === id);
   return Boolean(panel && panel.monday);
@@ -66,11 +77,12 @@ function isMondayCard(id) {
 
 // Called at each page change of the large panel, with the page on screen and the next one
 function offer(old, next) {
-  const looked = queued;
+  const looked = queued || lookWaiting();
   queued = false;
 
-  if (playing || frame.motionNow() !== 'full' || takeoverRunning() || askBusy()) return null;
-  if (!looked && !isMondayCard(old.id) && !isMondayCard(next.id)) return null;
+  if (playing || takeoverRunning() || askBusy()) return null;
+  // One Monday card to the next has no look to change, so in calm motion and with none it is the usual page change
+  if (!looked && (frame.motionNow() !== 'full' || (!isMondayCard(old.id) && !isMondayCard(next.id)))) return null;
 
   return { play: swapPage => play(swapPage) };
 }
@@ -192,10 +204,11 @@ function hideLogo(run, logo) {
   run.hiddenLogos.push(logo);
 }
 
-// The new place is known: the hawk flies there in one arc, changes color at the top of it and lands
+// The new place is known: the hawk flies there in one arc, changes color at the top of it and lands. Returns how
+// many milliseconds the flight takes at normal speed
 function flyHawk(run, logos, pace) {
   const hawk = run.hawk;
-  if (!hawk) return;
+  if (!hawk) return 0;
 
   const target = logos[0];
   logos.forEach(logo => hideLogo(run, logo.element));
@@ -209,6 +222,7 @@ function flyHawk(run, logos, pace) {
   hawk.lift.cancel();
   run.hawkAnimations.push(hawk.clone.animate(frames, { duration: Math.round(plan.durationMs * pace), easing: 'linear', fill: 'forwards' }));
   run.hawkColorTimer = setTimeout(() => hawkColors.forEach(name => hawk.clone.style.removeProperty(name)), Math.round(plan.apexMs * pace));
+  return plan.durationMs;
 }
 
 // The hawk is gone and the logo is back, with a short fade between them
@@ -230,11 +244,12 @@ async function landHawk(run, pace) {
 // The swap
 
 function interrupted() {
-  return takeoverRunning() || askBusy() || frame.motionNow() !== 'full';
+  return takeoverRunning() || askBusy();
 }
 
 // A swap begins only when the areas are all at rest. A page change that is half done would be carried
-// away with its frame, which looks wrong.
+// away with its frame, which looks wrong. The gate (startWholeScreen) is up already, so no area starts
+// another change: the ones that are changing page finish, and that is all there is to wait for.
 async function waitForRest() {
   const until = performance.now() + longestRest;
   while (performance.now() < until) {
@@ -260,7 +275,7 @@ async function play(swapPage) {
   frame.setSwapPlaying(true);
   holdClock(true);
   try {
-    if (await waitForRest()) cameBack = await perform(run, screen, swapPage);
+    if (await waitForRest()) cameBack = frame.motionNow() === 'full' ? await perform(run, screen, swapPage) : await performFade(run, screen, swapPage);
   } catch (error) {
     console.error('The swap failed', error);
   } finally {
@@ -297,19 +312,24 @@ async function perform(run, screen, swapPage) {
 
   pull.pieces.forEach(entry => {
     const piece = beforeById[entry.id];
-    run.animations.push(targetOf(piece, layer, run.copies).animate(poseFrames(restPose, entry.out, piece.zoom), { delay: ms(entry.delayMs), duration: ms(entry.ms), easing: standardEaseText, fill: 'both' }));
+    const target = targetOf(piece, layer, run.copies);
+    run.animations.push(target.animate(poseFrames(restPose, entry.out, piece.zoom), { delay: ms(entry.delayMs), duration: ms(entry.ms), easing: pullEaseText, fill: 'both' }));
+    // a little fainter for a moment before the look goes on, so that the new shape does not jump in
+    run.animations.push(target.animate([{ opacity: 1 }, { opacity: swapReform.dipLeast }], { delay: ms(swapTimes.switchMs - swapReform.dipBeforeMs), duration: ms(swapReform.dipBeforeMs), easing: 'ease-in', fill: 'forwards' }));
   });
   const fade = contentFade();
   before.content.forEach(node => {
     run.animations.push(node.animate([{ opacity: 1 }, { opacity: 0 }], { delay: ms(fade.out.delayMs), duration: ms(fade.out.ms), easing: 'linear', fill: 'forwards' }));
   });
   startHawk(run, before.logos, layer);
-  moveOn(otherAreas(layoutNow())); // the other areas pick their next pages and wait at the gate for the moment the screen is apart
+  moveOn(otherRegions); // the other areas pick their next pages and wait at the gate for the moment the screen is apart
 
   await until(swapTimes.switchMs);
+  await screen.waitForRegions(otherRegions, regionWait); // they are in place, which matters when the layout gives them or takes them away
 
   // 2. The look goes on and the pages swap, in one step, so that nothing is drawn in between
-  const atMs = Math.min(elapsed(), swapTimes.reformEndMs - 100);
+  const atMs = elapsed();
+  const endMs = Math.max(swapTimes.reformEndMs, atMs + swapReform.reformDelayMostMs + swapReform.travelLeastMs);
   swapPage();
   screen.apart();
   if (layoutIsReloading()) await frame.wait(reloadWait);
@@ -322,30 +342,61 @@ async function perform(run, screen, swapPage) {
 
   const place = screenPlace();
   const after = capture(stage, place);
-  const reform = planReform(pull, before.pieces, after.pieces, atMs, seed + 1);
+  const reform = planReform(pull, before.pieces, after.pieces, atMs, seed + 1, endMs);
   const afterById = {};
   after.pieces.forEach(piece => { afterById[piece.id] = piece; });
 
   // 3. The pieces re-form, the content comes back and the hawk flies
   reform.pieces.forEach(entry => {
     const piece = afterById[entry.id];
-    run.animations.push(targetOf(piece, layer, run.copies).animate(poseFrames(entry.from, entry.to, piece.zoom), { delay: ms(entry.delayMs), duration: ms(entry.ms), easing: standardEaseText, fill: 'both' }));
+    const target = targetOf(piece, layer, run.copies);
+    run.animations.push(target.animate(poseFrames(entry.from, entry.to, piece.zoom), { delay: ms(entry.delayMs), duration: ms(entry.ms), easing: reformEaseText, fill: 'both' }));
+    run.animations.push(target.animate([{ opacity: entry.fadesIn ? 0 : swapReform.dipLeast }, { opacity: 1 }], { duration: ms(swapReform.dipAfterMs), easing: 'ease-out', fill: 'both' }));
   });
-  const left = swapTimes.reformEndMs - atMs;
-  const hold = (fade.in.delayMs - atMs) / left;
+  const left = endMs - atMs;
+  const hold = (endMs - swapTimes.fadeMs - atMs) / left;
   after.content.forEach(node => {
     run.animations.push(node.animate([{ opacity: 0 }, { opacity: 0, offset: hold }, { opacity: 1 }], { duration: ms(left), easing: 'linear', fill: 'both' }));
   });
-  flyHawk(run, after.logos, pace);
+  const flight = flyHawk(run, after.logos, pace);
 
-  await until(swapTimes.reformEndMs);
+  await until(endMs);
   putBackPieces(run);
 
   if (run.hawk) {
-    await until(swapTimes.hawkMs - hawkLandMs);
+    await until(atMs + flight - hawkLandMs);
     await landHawk(run, pace);
   }
   return ms(left);
+}
+
+// Calm motion and no motion have no pieces. In calm the whole stage fades out, the look goes on while it is out of
+// sight, and the stage fades in. With no motion the look goes on at once. The other areas wait at the gate as they do
+// in the swap, because the layout may give them or take them away.
+async function performFade(run, screen, swapPage) {
+  const stage = document.getElementById('stage');
+  const calm = frame.motionNow() === 'calm';
+  const pace = frame.pace();
+  const ms = normal => Math.round(normal * pace);
+
+  moveOn(otherRegions);
+  if (calm) {
+    run.animations.push(stage.animate([{ opacity: 1 }, { opacity: 0 }], { duration: ms(calmFadeMs), easing: 'linear', fill: 'forwards' }));
+    await frame.wait(ms(calmFadeMs));
+  }
+  await screen.waitForRegions(otherRegions, regionWait);
+
+  swapPage();
+  screen.apart();
+  if (layoutIsReloading()) await frame.wait(reloadWait);
+
+  if (!calm) return 0;
+
+  run.animations.forEach(animation => animation.cancel());
+  run.animations = [];
+  run.animations.push(stage.animate([{ opacity: 0 }, { opacity: 1 }], { duration: ms(calmFadeMs), easing: 'linear', fill: 'both' }));
+  await frame.wait(ms(calmFadeMs));
+  return ms(calmFadeMs);
 }
 
 // The screen as it was, whatever happened: the animations, the copies of the bolts, the marks on the

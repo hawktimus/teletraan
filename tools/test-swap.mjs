@@ -31,7 +31,7 @@ const base = pathToFileURL(root).href + '/';
 const plan = await import(base + 'core/swap-plan.js');
 const { boxInPose } = await import(base + 'core/transitions.js');
 
-const { bezierAt, contentFade, flapFrames, hawkShape, hawkTransform, matchPieces, outPose, planHawk, planPull, planReform, poseAt, poseFrames, poseTransform, pullProgress, reformEnd, restPose, standardEase, standardEaseText, swapMs, swapShape, swapTimes } = plan;
+const { bezierAt, contentFade, flapFrames, hawkShape, hawkTransform, matchPieces, outPose, planHawk, planPull, planReform, poseAt, poseFrames, poseTransform, pullEaseText, pullProgress, reformEaseText, reformEnd, restPose, standardEase, standardEaseText, swapMs, swapShape, swapTimes } = plan;
 
 const tests = [];
 function test(name, run) {
@@ -67,10 +67,10 @@ const byId = (list, id) => list.find(item => item.id === id);
 const middleOf = piece => ({ x: piece.left + piece.width / 2, y: piece.top + piece.height / 2 });
 
 test('the times are the ones of the order: pull apart, re-form, content, and the hawk', () => {
-  assert.deepEqual(swapTimes, { fadeMs: 250, delayMostMs: 180, pullMs: 450, switchMs: 350, reformEndMs: 1250, hawkMs: 2000 });
+  assert.deepEqual(swapTimes, { fadeMs: 250, delayMostMs: 180, pullMs: 450, switchMs: 450, reformEndMs: 1250, hawkMs: 2000 });
   assert.equal(swapShape.outwardShare, 0.18);
   assert.deepEqual([swapShape.tipLeast, swapShape.tipMost, swapShape.twistMost], [20, 70, 25]);
-  assert.ok(swapTimes.switchMs >= swapTimes.delayMostMs && swapTimes.switchMs < swapTimes.pullMs, 'the new pieces take over while the old ones are still on their way out');
+  assert.ok(swapTimes.switchMs >= swapTimes.delayMostMs && swapTimes.switchMs === swapTimes.pullMs, 'the new pieces take over when every old one is out and at rest');
   assert.deepEqual(contentFade(), { out: { delayMs: 0, ms: 250 }, in: { delayMs: 1000, ms: 250 } });
   assert.equal(swapMs(false), 1250);
   assert.equal(swapMs(true), 2000);
@@ -178,10 +178,10 @@ test('a piece is in place until its delay, out at the end of the pull, and on th
   });
 });
 
-test('at 350 ms the pieces are nearly out: the new pieces take over from the pose the old ones had', () => {
+test('when the look goes on every piece is out and at rest: the new pieces take over from the pose the old ones had', () => {
   const pull = planPull(somePieces(30, 0), 9);
   pull.pieces.forEach(entry => {
-    assert.ok(pullProgress(entry, swapTimes.switchMs) > 0.9, entry.id + ' is ' + pullProgress(entry, swapTimes.switchMs) + ' of the way out');
+    assert.equal(pullProgress(entry, swapTimes.switchMs), 1, entry.id + ' is ' + pullProgress(entry, swapTimes.switchMs) + ' of the way out');
   });
 });
 
@@ -226,8 +226,8 @@ test('every new piece ends in its place with no tip, no turn and no offset, and 
   reform.pieces.forEach(entry => {
     assert.deepEqual(entry.to, restPose, entry.id + ' returns to its origin');
     assert.deepEqual(entry.to, { x: 0, y: 0, tip: 0, twist: 0, sx: 1, sy: 1 });
-    assert.equal(entry.delayMs, 0);
-    assert.equal(entry.ms, 900);
+    assert.ok(entry.delayMs >= 0 && entry.delayMs <= 150, 'it leaves after a delay of its own');
+    assert.equal(entry.delayMs + entry.ms, 800, 'and is home 800 ms after the look went on');
 
     const old = byId(olds, entry.partner);
     const wasAt = poseAt(byId(pull.pieces, entry.partner), swapTimes.switchMs);
@@ -263,7 +263,7 @@ test('a piece with no old piece to take over from starts out and tipped, and is 
     assert.ok(entry.from.tip >= 20 && entry.from.tip <= 70);
     assert.deepEqual(entry.to, restPose);
   });
-  assert.deepEqual(planReform(planPull([], 1), [], [], 350, 2), { pieces: [], merged: [] });
+  assert.deepEqual(planReform(planPull([], 1), [], [], 350, 2), { pieces: [], merged: [], destinations: {} });
 });
 
 test('at most 40 pieces move: more are folded into the piece they ride on, and a bolt that rode on a piece starts with it', () => {
@@ -455,6 +455,7 @@ const standIns = {
     "    apart: () => globalThis.world.log.push('apart'),",
     "    together: () => globalThis.world.log.push('together'),",
     "    end: () => globalThis.world.log.push('end'),",
+    '    waitForRegions: () => Promise.resolve(true),',
     '  };',
     '}',
   ],
@@ -469,15 +470,13 @@ const standIns = {
     "export const boltCopy = (bolt, middle, size) => globalThis.world.makeBoltCopy(bolt, middle, size);",
   ],
   'core/layout-apply.js': ['export const layoutIsReloading = () => globalThis.world.reloading;'],
-  'core/layout.js': [
-    "export const layoutNow = () => 'standard';",
-    "export const otherAreas = () => ['grid2', 'ticker'];",
-  ],
   'core/schedule.js': [
     "export const holdClock = on => globalThis.world.log.push('clock ' + on);",
     "export const moveOn = regions => globalThis.world.log.push('moveOn ' + regions.join(' '));",
   ],
   'core/takeover.js': ['export const takeoverRunning = () => globalThis.world.takeover;'],
+  'core/teams.js': ['export const teamPending = () => false;'],
+  'core/theme-apply.js': ['export const lookIsWaiting = () => false;'],
 };
 Object.keys(standIns).forEach(file => fs.writeFileSync(path.join(runRoot, file), standIns[file].join('\n') + '\n'));
 
@@ -710,7 +709,7 @@ test('the swap is offered for a held look, and for a Monday card on either side,
   assert.equal(offer(otherPage('tasks'), otherPage('events')), null, 'and the next page change is the usual one');
 });
 
-test('a swap is never offered in calm or no motion, while something else has the screen, or while one plays', async () => {
+test('a swap is never offered for a Monday card turn in calm or no motion, nor while something else has the screen, or while one plays', async () => {
   const world = await loadRun();
   const offer = world.offer;
   const monday = () => offer(mondayPage('monday-tasks'), mondayPage('monday-milestones'));
@@ -730,10 +729,10 @@ test('a swap is never offered in calm or no motion, while something else has the
 
   swapRun.queueSwap();
   world.motion = 'calm';
-  assert.equal(monday(), null);
+  assert.ok(monday(), 'a look that was held is a swap in calm motion too (tools/test-swap-smooth.mjs plays it)');
   world.motion = 'full';
-  assert.ok(monday(), 'and a look that was held is not kept for later: the page change took it');
-  assert.equal(offer(otherPage('tasks'), otherPage('events')), null);
+  assert.equal(monday() !== null, true);
+  assert.equal(offer(otherPage('tasks'), otherPage('events')), null, 'and a look that was held is not kept for later: the page change took it');
 });
 
 // What a swap does to a page: the look goes on while the pieces are apart, so the page after it is another one
@@ -754,7 +753,7 @@ function newLook(world) {
   };
 }
 
-test('a swap pulls the pieces apart, puts the look on at 350 ms, re-forms them by 1250 ms and lands the hawk at 2000 ms', async () => {
+test('a swap pulls the pieces apart, puts the look on at 450 ms, re-forms them by 1250 ms and lands the hawk at 2000 ms', async () => {
   const world = await loadRun();
   const busy = await import(busyModuleUrl);
   const playing = world.offer(otherPage('events'), mondayPage('monday-tasks')).play(newLook(world));
@@ -764,15 +763,15 @@ test('a swap pulls the pieces apart, puts the look on at 350 ms, re-forms them b
   const took = await drive(playing);
 
   // the order of things: the gate, the screen held (so the logo is at rest when it is measured), the clock held, the
-  // other areas asked to move on, the look at 350 ms, and everything let go in the reverse order
+  // other areas asked to move on, the look at 450 ms, and everything let go in the reverse order
   const log = world.log.filter(line => !line.startsWith('copy'));
-  assert.deepEqual(log, ['gate false', 'swapPlaying true', 'clock true', 'moveOn grid2 ticker', 'swapPage at 350', 'apart', 'together', 'end', 'clock false', 'swapPlaying false']);
+  assert.deepEqual(log, ['gate false', 'swapPlaying true', 'clock true', 'moveOn grid2 ticker', 'swapPage at 450', 'apart', 'together', 'end', 'clock false', 'swapPlaying false']);
 
   // done, and everything back
   assert.equal(swapRun.swapRunning(), false);
   assert.equal(busy.isBusy(), false);
   assert.equal(world.now, 2000, 'the hawk lands at 2000 ms');
-  assert.equal(took, 900, 'the pieces took 900 ms to re-form');
+  assert.equal(took, 800, 'the pieces took 800 ms to re-form');
   assert.equal(world.elements.pile.hidden, true);
   assert.equal(world.elements.world.dataset.pieces, undefined);
   assert.deepEqual(world.elements.pile.children, [world.elements.cube], 'the copies of the bolts and the hawk are gone');
@@ -781,7 +780,7 @@ test('a swap pulls the pieces apart, puts the look on at 350 ms, re-forms them b
   assert.equal(world.page.content.every(node => node.dataset.pile === undefined), true);
 });
 
-test('before 350 ms every piece pulls out with the standard easing, the content fades out, and the logo becomes a hawk that flaps and lifts', async () => {
+test('before 450 ms every piece pulls out, slowly at first and softly at the end, the content fades out, and the logo becomes a hawk that flaps and lifts', async () => {
   const world = await loadRun();
   const swapPage = newLook(world);
   const playing = world.offer(otherPage('events'), mondayPage('monday-tasks')).play(swapPage);
@@ -791,16 +790,18 @@ test('before 350 ms every piece pulls out with the standard easing, the content 
   assert.equal(world.elements.pile.hidden, false);
   const [bannerPlate, largePlate, tickerPlate] = world.page.plates;
   [bannerPlate, largePlate, tickerPlate].forEach(piece => {
-    assert.equal(piece.animations.length, 1, piece.name + ' moves');
+    assert.equal(piece.animations.length, 2, piece.name + ' moves, and is a little fainter for a moment before the look goes on');
     const options = piece.animations[0].options;
-    assert.equal(options.easing, 'cubic-bezier(.2, .8, .2, 1)');
+    assert.equal(options.easing, 'cubic-bezier(.25, 0, .15, 1)');
     assert.ok(options.delay >= 0 && options.delay <= 180 && options.delay + options.duration === 450);
+    assert.deepEqual(piece.animations[1].frames, [{ opacity: 1 }, { opacity: 0.4 }]);
+    assert.deepEqual([piece.animations[1].options.delay, piece.animations[1].options.duration], [350, 100]);
     assert.equal(piece.animations[0].frames[0].transform, 'translate(0px, 0px) perspective(1600px) rotateZ(0deg) rotateX(0deg) scale(1, 1)');
     assert.ok(/rotateX\((2\d|[3-6]\d|70)(\.\d)?deg\)/.test(piece.animations[0].frames[1].transform), piece.animations[0].frames[1].transform);
   });
   const copies = world.elements.pile.children.filter(child => child.classes.has('pile-bolt'));
   assert.equal(copies.length, 2, 'a bolt moves as a copy of its own');
-  copies.forEach(copy => assert.equal(copy.animations.length, 1));
+  copies.forEach(copy => assert.equal(copy.animations.length, 2));
   world.page.bolts.forEach(bolt => assert.equal(bolt.dataset.pile, 'released', 'and the bolt on the frame is out of sight'));
 
   world.page.content.forEach(node => {
@@ -824,12 +825,12 @@ test('before 350 ms every piece pulls out with the standard easing, the content 
     assert.equal(wing.animations[0].options.iterations, Infinity);
   });
   assert.equal(hawk.animations.length, 1, 'and it lifts');
-  assert.equal(hawk.animations[0].options.duration, 350);
+  assert.equal(hawk.animations[0].options.duration, 450, 'until the pieces are out');
 
   await drive(playing);
 });
 
-test('at 350 ms the old animations stop, the new pieces start where the old ones were, and the content comes back at 1000 ms', async () => {
+test('at 450 ms the old animations stop, the new pieces start where the old ones were, and the content comes back at 1000 ms', async () => {
   const world = await loadRun();
   const swapPage = newLook(world);
   const oldPlates = world.page.plates.slice();
@@ -857,27 +858,30 @@ test('at 350 ms the old animations stop, the new pieces start where the old ones
     piece('bolt-0', 'bolt', 'region-grid1', 0, 55, 215, 48, 48, 'plate-1'),
   ];
   const pull = planPull(olds, 1073741824);
-  const reform = planReform(pull, olds, news, 350, 1073741825);
+  const reform = planReform(pull, olds, news, 450, 1073741825);
 
   oldPlates.forEach(old => assert.ok(old.animations[0].cancelled, old.name + ' stopped being pulled'));
   const now = world.page.plates;
   assert.equal(now[1].name, 'large plate in the new style');
 
-  // each plate was pulled out by its entry of the plan, and re-forms from where that entry had it at 350 ms
+  // each plate was pulled out by its entry of the plan, and re-forms from where that entry had it at 450 ms
   [0, 1, 2].forEach(index => {
     const entry = byId(pull.pieces, 'plate-' + index);
     const pulled = oldPlates[index].animations[0];
     assert.deepEqual(pulled.frames, poseFrames(restPose, entry.out, 1), 'plate-' + index + ' is pulled to the pose of the plan');
-    assert.deepEqual(pulled.options, { delay: entry.delayMs, duration: entry.ms, easing: standardEaseText, fill: 'both' });
+    assert.deepEqual(pulled.options, { delay: entry.delayMs, duration: entry.ms, easing: pullEaseText, fill: 'both' });
 
     const home = byId(reform.pieces, 'plate-' + index);
-    const moving = now[index].animations[now[index].animations.length - 1];
+    const moving = now[index].animations[now[index].animations.length - 2];
     assert.deepEqual(moving.frames, poseFrames(home.from, home.to, 1), 'plate-' + index + ' re-forms from the pose the old one had');
-    assert.deepEqual(moving.options, { delay: 0, duration: 900, easing: standardEaseText, fill: 'both' });
+    assert.deepEqual(moving.options, { delay: home.delayMs, duration: home.ms, easing: reformEaseText, fill: 'both' });
     assert.equal(moving.cancelled, true, 'and the animation is taken off at the end');
+    const fainter = now[index].animations[now[index].animations.length - 1];
+    assert.deepEqual(fainter.frames, [{ opacity: 0.4 }, { opacity: 1 }], 'the new piece comes back to full strength');
+    assert.deepEqual(fainter.options, { duration: 140, easing: 'ease-out', fill: 'both' });
   });
 
-  // the one bolt left is a copy of its own that re-forms, and the old copies were taken away at 350 ms
+  // the one bolt left is a copy of its own that re-forms, and the old copies were taken away at 450 ms
   assert.equal(world.log.filter(line => line.startsWith('copy')).length, 3, 'two copies before, one after');
   assert.equal(byId(reform.pieces, 'bolt-0').partner, 'bolt-0');
 
@@ -885,9 +889,9 @@ test('at 350 ms the old animations stop, the new pieces start where the old ones
   const host = world.page.content[0];
   const back = host.animations[host.animations.length - 1];
   assert.deepEqual(back.frames.map(frame => frame.opacity), [0, 0, 1]);
-  assert.ok(Math.abs(back.frames[1].offset - (1000 - 350) / 900) < 0.0001);
-  assert.deepEqual(back.options, { duration: 900, easing: 'linear', fill: 'both' });
-  assert.equal(host.animations[0].cancelled, true, 'the fade out is replaced at 350 ms by the wait and the fade in');
+  assert.ok(Math.abs(back.frames[1].offset - (1000 - 450) / 800) < 0.0001);
+  assert.deepEqual(back.options, { duration: 800, easing: 'linear', fill: 'both' });
+  assert.equal(host.animations[0].cancelled, true, 'the fade out is replaced at 450 ms by the wait and the fade in');
 });
 
 test('the hawk flies to the new place when it is known, changes color at the top of the arc, and lands', async () => {
@@ -907,18 +911,18 @@ test('the hawk flies to the new place when it is known, changes color at the top
     for (let flush = 0; flush < 20; flush++) await new Promise(resolve => setImmediate(resolve));
   };
 
-  await hawkAfter(400);
+  await hawkAfter(500);
   const hawk = world.elements.pile.children.find(child => child.classes.has('swap-hawk'));
   assert.equal(hawk.animations[0].cancelled, true, 'the lift is over');
   const flight = hawk.animations[hawk.animations.length - 1];
-  assert.equal(flight.options.duration, 1650, 'the flight takes what is left of the 2 seconds');
+  assert.equal(flight.options.duration, 1550, 'the flight takes what is left of the 2 seconds');
   const last = flight.frames[flight.frames.length - 1].transform;
   assert.ok(last.includes('translate(1440px, 0px)'), 'it ends on the new place, 1440 px to the right: ' + last);
   assert.ok(last.endsWith('scaleX(1)'));
   assert.equal(hawk.style.values['--logo-purple'], '#6c18b6', 'still the old colors');
   assert.equal(world.newLogo.style.visibility, 'hidden', 'the new logo waits out of sight');
 
-  await hawkAfter(1200);
+  await hawkAfter(1300);
   assert.equal(hawk.style.values['--logo-purple'], undefined, 'the colors are the new look\'s after the top of the arc');
   await hawkAfter(1900);
   assert.equal(hawk.removed, undefined);
@@ -935,8 +939,8 @@ test('a page that is about to reload stays apart until it is gone, and the Speed
   await drive(playing);
 
   const log = world.log.filter(line => line.startsWith('swapPage'));
-  assert.deepEqual(log, ['swapPage at 700'], 'the look goes on at 350 ms, at half speed');
-  assert.ok(world.now >= 700 + 8000, 'the screen waited ' + world.now);
+  assert.deepEqual(log, ['swapPage at 900'], 'the look goes on at 450 ms, at half speed');
+  assert.ok(world.now >= 900 + 8000, 'the screen waited ' + world.now);
   const oldPlate = world.animations.find(animation => animation.element.name === 'banner plate');
   assert.equal(oldPlate.options.delay + oldPlate.options.duration, 900, 'a pull of 450 ms takes 900 ms');
 });
@@ -970,7 +974,7 @@ test('a swap that fails puts everything back, and one that finds the areas never
   assert.equal(swapped, false, 'the usual page change runs instead');
   assert.equal(swapRun.swapRunning(), false);
   assert.equal(second.log.includes('end'), true);
-  assert.ok(second.now >= 1500 && second.now < 1700, 'it gave up after 1.5 seconds');
+  assert.ok(second.now >= 8000 && second.now < 8200, 'it gave up after 8 seconds: a page change takes two, and the small areas may be in one');
 });
 
 

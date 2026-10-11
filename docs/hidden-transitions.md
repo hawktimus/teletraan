@@ -259,9 +259,9 @@ What the screen does with it:
 - A team goes on at the next page change, in the moment the large frame is apart, like a swap in Alternate
   mode. The name, the number, the logo, the colors and the mirror change together.
 - A style or a pack goes on at the next page change too, and the pages are asked to move on at once, so it
-  takes a few seconds. A style with another layout reloads the page once when it goes on and once when it
-  goes back. The preview is kept in the browser's storage (`localStorage`, under
-  `teletraan-preview-active`) so that the reload does not lose it. A preview that is over, or not
+  takes a few seconds. A look that is waiting goes on in a swap (docs/layouts.md, "The swap"), which
+  also changes the layout when the style has another one, so the page does not reload for it. The preview is kept in the browser's
+  storage (`localStorage`, under `teletraan-preview-active`), so that a page that reloads for an update does not lose it. A preview that is over, or not
   readable, is dropped.
 - Next pack takes the pack on the screen now, whether the Look page or an earlier preview put it
   there, and moves to the one after it. After the last it goes round to the first. The placeholder overlay
@@ -275,8 +275,8 @@ What the screen does with it:
   over, if that happens inside the minute. Otherwise it is dropped. An alert that comes on while it is
   showing does not end it and does not make it longer.
 - Another click while a preview is showing replaces it, and the 2 minutes count from the new click.
-- At the end the screen goes back to the settings at the next page change, and the page reloads once more
-  if the style it goes back to has another layout.
+- At the end the screen goes back to the settings at the next page change, in a swap, which changes the layout
+  too if the style it goes back to has another one.
 - While a page shows sample content (`?sample=1` on its address) it reads the settings from
   `dashboard/data/sample/content.json`, not from Studio, so the buttons do nothing. To try every style,
   team and pack with the sample content, put `?style=`, `?team=` and `?overlay=` on the address

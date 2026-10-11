@@ -10,12 +10,14 @@
 // changes: the style, the team, a Monday card, or going into or out of the Monday block. Dashboard
 // Settings still has How the look changes (lookSwap), hidden, and the screen ignores it.
 //
-// A change of layout (to or from Minimal) reloads the page in every case (core/layout-apply.js), and
-// the pass it was reloaded for is written down in localStorage, so the page goes on in it.
+// A change of layout (to or from Minimal) is put on the running page in the same step (core/layout-apply.js,
+// changeLayout). The page does not reload. If that ever fails, the page reloads once, and the pass it was
+// reloaded for is written down in localStorage, so the page goes on in it.
 
 import * as frame from '../frame.js';
 import { panels } from '../registry.js';
 import { drawnFor, layoutNow, layoutOf, reloadKey } from './layout.js';
+import { layoutsChangeLive } from './layout-apply.js';
 import { makeLookRotation, makeNextLookRunner, styleCanGoOn, withoutMondayCards } from './look-rotation.js';
 import { moveOn, rewindRotation, setLookHooks } from './schedule.js';
 import { layoutFor, rotateStyle, shapesFor, shapesNow } from './style.js';
@@ -88,14 +90,14 @@ function changeLook(look) {
 }
 
 // Whether the Monday style can go on the page now (styleCanGoOn in core/look-rotation.js). The layout the style asks for
-// is worked out as holdForLayout does in core/layout-apply.js, and the page may reload for it unless it
-// reloaded for that layout a moment ago (mustReload in core/layout.js).
+// is worked out as holdForLayout does in core/layout-apply.js. A page that changes layout while it runs can always
+// show it. One that cannot may reload for it, unless it reloaded for that layout a moment ago (mustReload in core/layout.js).
 function mondayStyleFits(style) {
   try {
     const theme = resolveTheme(getContent().theme, new Date()).theme;
     const wanted = drawnFor(layoutFor(style, layoutOf(theme)), shapesFor(style));
     const onPage = drawnFor(layoutNow(), shapesNow());
-    if (wanted === onPage) return true;
+    if (wanted === onPage || layoutsChangeLive()) return true;
 
     let canReload = false;
     try {

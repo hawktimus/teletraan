@@ -92,7 +92,7 @@ const useNowField = defineField({
       name: 'theme',
       title: 'Theme',
       type: 'string',
-      description: 'Optional. The theme to show now. Leave empty to follow the schedule. Neon Prime has a sidebar and no small frame, and reloads the screen once.',
+      description: 'Optional. The theme to show now. Leave empty to follow the schedule. Neon Prime has a sidebar and no small frame.',
       options: { list: themeChoices },
       validation: Rule => Rule.valid(ids(themeChoices)).error('Pick a theme from the list.'),
     }),
@@ -141,7 +141,7 @@ const ruleMember = defineArrayMember({
       name: 'theme',
       title: 'Theme',
       type: 'string',
-      description: 'The theme to show on these dates. Neon Prime has a sidebar and no small frame, and reloads the screen once.',
+      description: 'The theme to show on these dates. Neon Prime has a sidebar and no small frame.',
       options: { list: themeChoices },
       hidden: ({ parent }) => !parent || parent.kind !== 'theme',
       validation: Rule => [

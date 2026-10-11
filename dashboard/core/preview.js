@@ -18,9 +18,9 @@
 //      names (previewTeam in core/teams.js, previewStyle in core/style.js and previewPack
 //      in core/theme.js). Nothing is written to the settings. When the time is up the
 //      screen goes back to what they say.
-//   6. A style with another layout reloads the page (core/layout.js). The preview that
-//      was on is kept in localStorage and goes on after the reload for the time it has
-//      left (resumePreview).
+//   6. A style with another layout goes on in a swap, which changes the layout of the running
+//      page. The preview that was on is kept in localStorage and goes on after a reload (a new
+//      version, or a layout change that failed) for the time it has left (resumePreview).
 
 import { previewSeconds, styles, teamModes } from '../config.js';
 import { overlays } from '../themes/overlays/registry.js';

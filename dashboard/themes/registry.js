@@ -11,7 +11,7 @@
 // layout is optional: 'standard' (the banner across the top, two frames and the
 // ticker) when it is left out, or 'sidebar' (a column on the left, one big frame
 // and the ticker, no small frame). A layout is placed before anything is drawn,
-// and changing to a theme with another layout reloads the page once
+// and changing to a theme with another layout changes the layout of the running page, in a swap
 // (core/layout.js, docs/layouts.md).
 
 export const themes = [

@@ -57,30 +57,33 @@ the address win, like they do for colours. When
 there is nothing saved yet, or the saved copy cannot be read, the screen starts
 in the standard layout. While the screen shows the sample content there is no saved
 copy to read (the sample is a file), so a sample whose theme has the sidebar layout, or
-whose style is Minimal, reloads once and then stays in the standard layout
-with the new colours and the style Original. Use `?theme=` and `?style=` to look at a
-layout with the sample. With `?team=` and `?overlay=` as well, every style, team and
-seasonal pack can be looked at with the sample content, which has both teams. The same
-holds for any page that cannot reload: it keeps the style it was drawn for.
+whose style is Minimal, starts in the standard layout and changes to the layout at its
+first swap. Use `?theme=` and `?style=` to look at a layout from the start with the sample. With
+`?team=` and `?overlay=` as well, every style, team and
+seasonal pack can be looked at with the sample content, which has both teams.
 
 When the theme and the style that should be on screen give another layout than
-the page has, for example an editor switches the theme or the style in Studio,
-colours alone cannot do it,
-because the regions are drawn for one layout. The page **reloads once**, in the
-moment the new theme would have gone on (at the next page change of the large
-frame, or at once at start). Before it reloads it writes the layout it is
-reloading for in `sessionStorage`, and a page that finds the same layout written
-down does not reload again, so a screen can never reload in a loop. The note is
-rubbed out as soon as the page is in the layout wanted. If the browser's storage
-does not work, the page does not reload at all and the colours go on in the old
-layout. It also does not reload while an alert or an announcement has the screen,
-and tries again at the next page change and once a minute. Changing between two
-themes that have the same layout is only colours and does not reload. Original and
-Cybertron have the same layout but not the same frames, and the page does not reload for
-that: it draws the frames again in the step that puts the style on the page (see
-"Cybertron", "When the style changes"). Minimal has the bar layout, so changing to or from
-it reloads once, in the same way as a change of layout. Changing the colours of any style,
-or the theme or the team under it, does not.
+the page has, for example an editor switches the theme or the style in Studio, or the
+look rotation goes from the panels of a team to its Monday cards, colours alone cannot
+do it, because the regions are drawn for one layout. The layout is **changed in the page that is
+on screen, and the page does not reload**. The new look waits for a swap to have the screen
+(`holdForLayout` in `core/layout-apply.js`): the swap pulls the pieces of the frames apart, and
+in the moment they are apart `changeLayout` puts the regions of the old layout back where
+`index.html` has them and places the new layout's (`placeStandard` and `placeRegions`), `shell.js`
+draws the frames and the panels that stay on screen for the layout (`useLayout`), and the
+swap measures the pieces again and re-forms them. A look with another layout also goes on, without
+waiting for a swap, while an alert or an announcement covers the screen, and when it has waited a
+minute (the check that `theme-apply.js` makes once a minute). Nothing changes layout in front
+of people. The small frame (Panel B) comes with the standard layout and goes with the
+others: its list of pages runs in every layout and waits while there is no frame
+(`startRotationForLayouts` in `core/schedule.js`). If a change of layout ever fails, the page
+reloads for it, once, and keeps the old layout if it cannot: before it reloads it writes the layout it
+is reloading for in `sessionStorage`, and a page that finds the same layout written down does not reload
+again, so a screen can never reload in a loop (`mustReload` in `core/layout.js`). Changing between two
+themes that have the same layout is only colours. Original and
+Cybertron have the same layout but not the same frames, and the page draws the frames again in the
+step that puts the style on the page (see "Cybertron", "When the style changes"). Minimal has the bar
+layout, so changing to or from it is a change of layout, as above.
 
 ## The screen is a fixed canvas
 
@@ -743,8 +746,8 @@ the bar layout (`layouts/bar.css`), and the team gives the colors.
 | `styles/minimal.css` | the 34 px chamfer, the neon and pink of the team, digits in the team's neon, the team's body color for the plates, the two colors of the armor tab, the rust, a 48 px grid at .07 and no scanlines. Then the rules that paint the grid, the plates, the rail and the rivets that Original also has, take the `//` mark off the headers, and paint what only Minimal draws on a frame (see "Minimal") |
 
 The style goes on the page at the same moment as a new theme (`theme-apply.js`
-carries it in the look), and a style with another layout reloads the page once, with
-the guard above. The frames are drawn by `core/plate.js` and are described under "Frames"
+carries it in the look), and a style with another layout changes the layout in the same step,
+in a swap ("How a layout is chosen"). The frames are drawn by `core/plate.js` and are described under "Frames"
 and "Cybertron".
 
 Original also has rivets on its frames. `core/plate.js` puts them in the markup of every
@@ -902,11 +905,12 @@ cuts, and the table is read as the one above.
 | `bar-banner-minimal` | 1856 x 160 | 34 | 16 | 100 | 4 |
 | `bar-ticker-minimal` | 1856 x 77 | 20 | 10 | 60 | 4 |
 
-Frames are drawn once and stay for as long as the page is up, so the corners are chosen
+Frames are drawn once for an area and stay until the style or the layout changes, so the corners are chosen
 when the page starts. `core/style.js` writes `data-shapes` on the html element then
 (`shapesFor`), and `frameKind` in `core/plate.js` gives the name of the frame for it. A page
-that goes to Minimal, or back from it, is drawn again: it changes layout, so it reloads once,
-with the same guard (`drawnFor` and `mustReload` in `core/layout.js`). A page that changes the
+that goes to Minimal, or back from it, changes layout: the frames are drawn again for the
+layout in the step that changes it, in a swap ("How a layout is chosen"), and the page does not
+reload (`drawnFor` and `mustReload` in `core/layout.js` are only for a change that fails). A page that changes the
 colors, the theme or the team does not.
 
 What Minimal draws on a frame is in the same markup as the rest, and `styles/minimal.css`
@@ -1121,13 +1125,13 @@ hawk and the bottom row are as far from the cut corners as they are when it is n
 ### When the style changes
 
 Frames are drawn once for an area, so a style with other frames has to draw them again. Original and
-Cybertron share a layout, so the page does not reload when the style changes between them. In the
+Cybertron share a layout, so only the frames change when the style changes between them. In the
 step that puts the style on the page (`useStyle` in `shell.js`, at the moment the large frame is
 apart), `shell.js` writes the corners of the new style (`recordShapes` in `core/style.js`), asks
 `redrawFrames` in `core/areas.js` to put the new frame round each area that is on screen, and
 draws the banner and the countdown again, because those two draw their own. Only the frame is
 replaced: the page in each area stays where it is. A change to or from Minimal is a change of
-layout and reloads the page once, as before.
+layout, which is changed in the same step (`useLayout` in `shell.js`, which runs first) and does not reload the page.
 
 Look at it with `?style=cybertron&night=off&hidden=off` on the address, with `?team=nova` for the
 mirror, and with Style in Dashboard Settings changed between Original and Cybertron on the open
@@ -1171,7 +1175,8 @@ team, or the cards of both teams in their pass, while a Monday pass is up, and i
 usual list without them, even when a Panel order saved before this had them in it (`withoutMondayCards` in
 `core/look-rotation.js`, called from `playlistNow` in `core/look-rotation-run.js`). Every Monday pass, a team's or
 the one of both teams, is in the Monday style or it does not happen. A
-Monday style with another layout than the page has goes on by a reload, and a page that reloaded for that
+Monday style with another layout than the page has goes on in the swap that enters the Monday block, which
+changes the layout in the page. Only a page whose layout change has failed once reloads for it, and a page that reloaded for that
 layout a moment ago, or cannot keep the note that stops a reload loop, does not reload (`mustReload` in `core/layout.js`).
 Then the pass is left out of the cycle until the page can take the style (`styleCanGoOn`, asked through
 `canShow` in `makeLookRotation`), and the cards are never drawn in the frames of another style.
@@ -1192,12 +1197,11 @@ mode settings. A held look waits for the next page change of the large panel, an
 running at all while the address has `?style=` or `?team=`, and in the test views (`?show=`, `?stress`
 and `?only=tasks`).
 
-A change to or from Minimal is a change of layout, and the page reloads once ("The swap" says what the
-screen does meanwhile).
+A change to or from Minimal is a change of layout, which the swap makes in the page ("The swap" says how).
 
 **Starting again.** The pass the screen is in is written down in localStorage (`teletraan-look-pass`),
 and again every half minute. A page that reloads within `lookResumeSeconds` (600) of that goes on in
-the same pass, which is what a reload for a change of layout needs. A page that starts any other way
+the same pass, which is what a page that reloads for an update, or for a change of layout that failed, needs. A page that starts any other way
 starts the first pass. The screen reads its saved copy of the content for this, before anything is drawn.
 
 **One look, and empty lists.** One style and one team make one pass for ever, and nothing changes. A
@@ -1217,9 +1221,11 @@ guard.
 
 ## The swap
 
-One move changes the screen, whatever changes: the style, the team, one Monday card for the next, going into the
+One move changes the screen, whatever changes: the style, the team, the layout, one Monday card for the next, going into the
 Monday block and coming out of it. The pieces of the screen pull apart, the new look goes on while they are
-apart, and they re-form in it, with the hawk flying beside them. `core/swap-plan.js` has the plain functions
+apart, and they travel to their places in it and re-form, with the hawk flying beside them. It is one gesture and
+the screen never reloads for it: a piece leaves its place slowly, gathers speed, comes to rest at the far end of the pull,
+and from rest leaves again the same way for its new place. `core/swap-plan.js` has the plain functions
 that decide it, with no page in them, and `core/swap-run.js` finds the pieces on the page, plays the plan with
 `element.animate()` and puts the page back. Only transform and opacity move.
 
@@ -1227,26 +1233,37 @@ that decide it, with no page in them, and `core/swap-run.js` finds the pieces on
 
 - the look rotation has held a new style or team, which it says with `queueSwap` (`changeLook` in
   `core/look-rotation-run.js`, at the end of a pass and when Next look now is pressed), or
-- the page on screen or the page to come is a Monday card. That is one card to the next, or the next
+- a look is waiting to go on the page, which a preview, the team of Alternate mode and a theme from the Look page
+  are (`lookIsWaiting` in `core/theme-apply.js` and `teamPending` in `core/teams.js`), or
+- the page on screen or the page to come is a Monday card, in full motion. That is one card to the next, or the next
   page of the tasks card, and it is the first card and the last one too.
 
 It never starts while an alert, an announcement, a talk, the demo, the night screen or a hidden transition has
-the screen, and not in calm or no motion. The page change is then the usual one, and a held look goes on in it
-as it always did. It waits for the three areas to be at rest, up to 1.5 seconds. The rotation clock of the pages
-is held while it plays (`holdClock` in `core/schedule.js`), the other two areas pick their next pages and wait at the
-gate of `core/areas.js`, as they do in a hidden transition, and `core/busy.js` says that a transition has the
-screen. The logo effects and the neon kit are held (`setSwapPlaying` in `frame.js`).
+the screen. The page change is then the usual one, and a held look goes on in it, unless it has another
+layout, which waits until a swap can have the screen. In **calm** motion there are no pieces: the whole stage
+fades out in 300 milliseconds, the look goes on, and the stage fades in. With motion **off** the look goes on at once.
+Both still change the layout. A swap waits for the three areas to be at rest, up to 8 seconds: a page change takes two seconds, and the
+small frame or the ticker may be in the middle of one when the large frame asks, which Next look now and a preview make
+likely. Once the swap has its gate (`startWholeScreen` in `core/areas.js`) no area starts another change, so what it waits for is
+only the changes already on their way. The rotation clock of the pages is held while it plays (`holdClock` in `core/schedule.js`),
+the other two areas pick their next pages and wait at the gate, as they do in a hidden transition, and `core/busy.js` says that a
+transition has the screen. The logo effects and the neon kit are held (`setSwapPlaying` in `frame.js`).
 
 **The times,** in milliseconds from the start at normal speed. The Speed setting stretches them all
-(`swapTimes` in `core/swap-plan.js`):
+(`swapTimes` and `swapReform` in `core/swap-plan.js`):
 
 | Time | What happens |
 |------|--------------|
-| 0 | The page content starts to fade out, in 250. Every piece starts after a delay of its own, 0 to 180 (seeded for each run), and moves out from the middle of the screen by 18 percent of its distance from it. It tips back 20 to 70 degrees (`perspective(1600px) rotateX`) and turns up to 25 degrees in the plane. The logo becomes a hawk that flaps and lifts |
-| 350 | Every piece is nearly out. The look goes on: the style, the team and the next pages, in one step, while nothing can be seen. The pieces of the new look take over from the old ones at the pose they had |
-| 350 to 1250 | Each piece travels to its place in the new look and untips, with the easing of the first assembly. The metal, the neon color and the corners are the new look's from the first moment |
-| 1000 to 1250 | The page content fades in |
-| 350 to 2000 | The hawk flies to the new place of the logo, in one arc, and lands. The swap is over when it has landed |
+| 0 | The page content starts to fade out, in 250. Every piece starts after a delay of its own, 0 to 180 (seeded for each run), and moves out from the middle of the screen by 18 percent of its distance from it. It tips back 20 to 70 degrees (`perspective(1600px) rotateX`) and turns up to 25 degrees in the plane. It starts slowly and settles softly (`cubic-bezier(.25, 0, .15, 1)`). The logo becomes a hawk that flaps and lifts |
+| 350 | The old pieces begin to fade, to 40 percent, so that the screen is never empty and the new shape does not jump in |
+| 450 | Every piece is out and at rest. The other areas are at the gate with their next pages (the swap waits up to 1.2 seconds for them, and the pieces wait with it). The look goes on, in one step: the style, the team, the layout, the next pages. The pieces of the new look take over from the old ones at the pose they had, and come back to full strength in 140 |
+| 450 to 1250 | Each piece, after a delay of its own, 0 to 150, travels to its place in the new look and untips, and is home by 1250. It starts from rest and settles softly (`cubic-bezier(.35, 0, .15, 1)`). The metal, the neon color and the corners are the new look's from the first moment of this part |
+| 1000 to 1250 | The page content fades in, over the last of the travel |
+| 450 to 2000 | The hawk flies to the new place of the logo, in one arc, and lands. The swap is over when it has landed |
+
+If the other areas are late (the swap waited for them), the look goes on later, and the travel is as long as the time left to
+1250 allows, but at least 450. Nothing is empty at any time: there are pieces on the screen from the first moment to the last, and the
+content is the only thing that is not.
 
 **The pieces** are every piece of metal the page draws as a separate element, the ones that fall in a hidden
 transition (`core/hidden-pile.js`, "The frames collapse and come back" in docs/hidden-transitions.md): the pieces of a frame
@@ -1258,16 +1275,21 @@ shadows, the glint and the kit. No piece leaves the screen: a piece that the 18 
 edge is moved back, and made smaller if it must be.
 
 **Old and new pieces.** The look changes the frames (Cybertron has other ones than Original, a team can cut
-other corners), so the pieces after it are not the pieces before it. `matchPieces` gives each new piece the old piece of
-its kind that is in the same part of the screen and has the same number there (the `region-` element it is in, and its
-place in the list). The pieces that are left take the nearest old piece, and a piece with none starts out of place on its own.
-A new piece starts with the middle, the size, the tip and the turn that the old piece had at that moment, so
+other corners, and Minimal has the frames of the bar layout), so the pieces after it are not the pieces before it. `matchPieces` gives
+each new piece the old piece of its kind that is in the same part of the screen and has the same number there (the `region-` element it is
+in, and its place in the list), when the two are of a like size, within a factor of 2 each way. The frames of one style are drawn the same way
+every time, so the same number is the same piece. The pieces that are left, and the ones whose old piece is a very different size (another
+style numbers its pieces another way, so the third piece of one frame can be a thin bar and of the next a plate), take the old piece of their kind that is
+most like them in size and in place within its part of the screen: the left edge takes the left edge, the body takes the body. An old piece that
+nobody has taken is preferred. A kind with no old piece takes the nearest old piece. An old piece that no new piece took
+over from has its destination too (`destinationsOf`): the nearest new piece of its kind, which it is folded into, and that is what the fading
+at 350 hides. A new piece starts with the middle, the size, the tip and the turn that the old piece had at that moment, so
 nothing jumps when one takes over from the other (`planReform`). Every new piece ends with no offset, no tip and
 no turn, which is what the tests check.
 
 **The hawk.** The logo is copied into `#pile` and the logo itself is out of sight until the hawk lands. The copy
 shows the hawk (the act `swap` in `frame.css`), beats its wings every 320 milliseconds to 35 percent of the beat
-of the flying logo, hovers and lifts for 350 and then flies. When the place of the logo does not change, it hops
+of the flying logo, hovers and lifts until the pieces are out (450) and then flies. When the place of the logo does not change, it hops
 120 pixels and lands. Otherwise it flies in one arc 300 pixels high, tilting nose up into the climb and nose
 down out of the descent, and it faces the way it flies (`scaleX(-1)` when it heads left). The colors of the
 hawk are the old look's until the top of the arc, and then the new look's. The arc rises where the whole hawk
@@ -1275,20 +1297,26 @@ stays on the screen. In the banner, which is at the top of the screen, there is 
 instead. At the end the hawk and the logo cross-fade for 150 milliseconds. `planHawk` has the numbers, `hawkShape`
 the rest.
 
-**A change of layout** (Original or Cybertron to Minimal and back) cannot be drawn in the page that is on
-screen, because the regions are drawn for one layout, so the page reloads (`core/layout-apply.js`). A swap for such a
-change pulls the pieces apart, and then the screen stays apart until the page is gone (`layoutIsReloading`).
-The new page starts as the screen starts. The Monday cards of a team that are in the same layout as its other
-panels, for example with the Monday style set to Cybertron and the style of the day Original, swap in the page
-without a reload.
+**A change of layout** (Original or Cybertron to Minimal and back, and a theme with the sidebar layout) is made in the page, in the moment the pieces
+are apart, and the page does not reload. `changeLayout` in `core/layout-apply.js` takes the old layout's changes off the page and puts the
+new one's on (the regions go back to where `index.html` has them, then the new layout moves and shows its own), and `shell.js` (`useLayout`) draws
+the frames again, empties the regions of the banner, the countdown and the side column, and draws the panels of the new layout. The areas that
+the new layout has not got go (`swapUnseen` in `core/areas.js`), and the ones it brings, the small frame, are made in the same step: the list of
+the small frame runs in every layout, and the swap asks it to move on when it starts, so its first page is at the gate when the layout
+changes (`startRotationForLayouts` in `core/schedule.js`, `waitForRegions` in `core/areas.js`). The pieces are measured after all that, so every
+piece of the new layout is one of the pieces that re-form. A look with another layout is held until a swap has the screen
+(`holdForLayout`), so the layout never changes in front of people. If the change fails, the page reloads once as it used to, and the swap keeps
+the screen apart until the page is gone.
 
 **Hidden transitions** keep the look they have while they play (`startWholeScreen(true)` in `core/areas.js`).
 Their frames lie in a pile, and a look that drew them again would leave some of them behind. A look that is waiting
 goes on at the next page change.
 
-Look at it with `?sample=1`, with Next look now on the Start here page, and with the Monday style set to the style of the
-day in Dashboard Settings (no reload). `node tools/test-swap.mjs` checks the plan, and runs `swap-run.js` against a
-small stand-in for the page and a clock it moves by hand.
+Look at it with `?sample=1`, with Next look now on the Start here page, with the Monday style set to another style than the one of the
+day in Dashboard Settings (the layout changes), with Preview Minimal and Preview Cybertron, and with `?motion=calm` and `?motion=none`.
+`node tools/test-swap.mjs` checks the plan, and runs `swap-run.js` against a small stand-in for the page and a clock it moves by
+hand. `node tools/test-swap-smooth.mjs` checks that every piece of the old look has a place in the new one, that nothing jumps at the
+moment between the pull and the travel, and the calm and no motion paths.
 
 ## The Monday cards
 
@@ -1598,9 +1626,16 @@ the Custom panel keeps the blocks that do not fit inside its own box, which clip
 page in the standard layout and look at what is on top of each point of Panel B (`document.elementFromPoint`),
 for every page of Panel A in Original and Cybertron, Prime and Nova.
 
+The list of Panel B runs in every layout (`startRotationForLayouts`, see "A change of layout"). While the
+layout has no small frame it chooses nothing and draws nothing. When a swap brings the standard layout back
+from Minimal or from the sidebar layout, the swap asks the list to move on as it starts, the list chooses its
+page by the same five steps, and that page is drawn in the step that brings the frame. Panel B has a panel the
+moment it comes, and with no content anywhere it is the team tile.
+
 `tools/test-panel-b.mjs` runs the real `schedule.js` with stand-ins for the page and tries every
 set of small panels that have content with five kinds of list. It checks that the small frame is never empty,
-that a row that is off stays off, and that the sidebar and bar layouts never start Panel B.
+that a row that is off stays off, that the sidebar and bar layouts never start Panel B, and that a live change
+from either of them to the standard layout starts it with a panel at once.
 
 ## What else works in each layout
 
@@ -1829,7 +1864,7 @@ Add `?theme=neon-prime` to the address, with `?night=off&hidden=off` to keep
 those away while you look: `http://localhost:8080/dashboard/?theme=neon-prime&night=off&hidden=off`.
 `?show=<panel id>` shows one panel in the pane. `?hidden=desktop` and
 `?hidden=redEyes` play the hidden transitions, and `?demo=alert` the alert.
-Without `?theme=` the screen follows the Look page, and reloads once when the
+Without `?theme=` the screen follows the Look page, and changes layout in a swap when a
 theme with another layout comes on. For the bar layout use `?style=minimal`, for example
 `http://localhost:8080/dashboard/?style=minimal&night=off&hidden=off`, and for Cybertron
 `?style=cybertron`, which has the layout of the theme.
@@ -1878,7 +1913,8 @@ and in the mirror:
    pages, and it crosses no text on any large panel of the Panel order list. The ticks stand on the
    neon line at the foot of the header and do not touch the title.
 6. With the screen open, change Style in Dashboard Settings between Cybertron and Minimal. The
-   screen reloads once, because the layout changes, and then has the new style.
+   screen does not reload: the next page change of the large frame is a swap, and the pieces re-form in the
+   new layout and the new style.
 
 To check a layout by hand, look at every large panel of the Panel order list with
 `?show=` (tasks, events, tonight, spotlight, sponsor-feature, photo, leadership,

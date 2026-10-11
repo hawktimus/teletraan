@@ -487,7 +487,7 @@ export const previewSeconds = 120;
 
 // The look rotation (core/look-rotation.js). The screen never ends a pass of a team sooner than
 // lookShortestSeconds after it began, so a team with nothing to show cannot make the looks flicker.
-// A page that reloads, for a change of layout or a new version, goes on in the same pass if it
+// A page that reloads, for a new version or for a change of layout that failed, goes on in the same pass if it
 // reloads within lookResumeSeconds of the last time the pass was written down.
 export const lookShortestSeconds = 15;
 export const lookResumeSeconds = 600;
