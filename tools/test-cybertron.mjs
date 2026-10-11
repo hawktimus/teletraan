@@ -119,7 +119,11 @@ const within = (inner, outer) => inner.x >= outer.x && inner.y >= outer.y && inn
 const apart = (a, b) => a.x + a.width <= b.x || b.x + b.width <= a.x || a.y + a.height <= b.y || b.y + b.height <= a.y;
 
 const cybertronKinds = ['cybertron-grid1', 'cybertron-grid2', 'cybertron-banner', 'cybertron-ticker'];
-const sizes = { 'cybertron-grid1': [1152, 708], 'cybertron-grid2': [656, 372], 'cybertron-banner': [1840, 228], 'cybertron-ticker': [1840, 72] };
+// The ticker has the thin plate edge (base.css, "The thin plate edge"), so its frame is drawn for a box 5 higher than its row
+// of 72, and its line is 1 inside the box where the others have it 4 inside, and its neon 7 inside the line where the others have it 10
+const sizes = { 'cybertron-grid1': [1152, 708], 'cybertron-grid2': [656, 372], 'cybertron-banner': [1840, 228], 'cybertron-ticker': [1840, 77] };
+const lineIn = kind => (kind.endsWith('ticker') ? 1 : 4);
+const neonIn = kind => (kind.endsWith('ticker') ? 7 : 10);
 
 
 // Which layout each style has
@@ -175,7 +179,7 @@ test('frameKind gives Cybertron a frame for each region of the standard layout, 
 
 // The four frames
 
-test('the four frames are ten-cornered plates with a cut corner at the top left and the bottom right (56 on the panels, 32 on the banner and the ticker) and a step at the other two, 4 inside the box of the frame they stand in for', () => {
+test('the four frames are ten-cornered plates with a cut corner at the top left and the bottom right (56 on the panels, 32 on the banner and the ticker) and a step at the other two, 4 inside the box of the frame they stand in for (1 inside on the ticker)', () => {
   const chamfers = { 'cybertron-grid1': 56, 'cybertron-grid2': 56, 'cybertron-banner': 32, 'cybertron-ticker': 32 };
   const steps = { 'cybertron-grid1': 24, 'cybertron-grid2': 24, 'cybertron-banner': 16, 'cybertron-ticker': 16 };
   const runs = { 'cybertron-grid1': 150, 'cybertron-grid2': 120, 'cybertron-banner': 100, 'cybertron-ticker': 100 };
@@ -190,7 +194,7 @@ test('the four frames are ten-cornered plates with a cut corner at the top left 
 
     const xs = outline.map(point => point[0]);
     const ys = outline.map(point => point[1]);
-    assert.deepEqual([Math.min.apply(null, xs), Math.max.apply(null, xs), Math.min.apply(null, ys), Math.max.apply(null, ys)], [4, shape.width - 4, 4, shape.height - 4], kind + ': the line is 4 inside the box');
+    assert.deepEqual([Math.min.apply(null, xs), Math.max.apply(null, xs), Math.min.apply(null, ys), Math.max.apply(null, ys)], [lineIn(kind), shape.width - lineIn(kind), lineIn(kind), shape.height - lineIn(kind)], kind + ': the line is ' + lineIn(kind) + ' inside the box');
 
     // the cut corners at the top left and the bottom right are 45 degrees
     assert.deepEqual([outline[1][1] - outline[2][1], outline[2][0] - outline[1][0]], [chamfers[kind], chamfers[kind]], kind + ': the cut corner at the top left');
@@ -200,10 +204,10 @@ test('the four frames are ten-cornered plates with a cut corner at the top left 
     assert.equal(outline[4][1] - outline[3][1], steps[kind], kind + ': the step at the top right');
     assert.equal(outline[4][0] - outline[3][0], steps[kind], kind + ': at 45 degrees');
     assert.equal(outline[5][1] - outline[3][1], steps[kind], kind + ': the top right corner is one step below the top line');
-    assert.equal(outline[0][1], shape.height - 4 - steps[kind], kind + ': the bottom left corner is one step above the bottom line');
+    assert.equal(outline[0][1], shape.height - lineIn(kind) - steps[kind], kind + ': the bottom left corner is one step above the bottom line');
     assert.equal(outline[9][1], outline[0][1], kind + ': the step at the bottom left');
     assert.equal(outline[8][1] - outline[9][1], steps[kind]);
-    assert.equal(shape.width - 4 - outline[3][0], runs[kind], kind + ': the run');
+    assert.equal(shape.width - lineIn(kind) - outline[3][0], runs[kind], kind + ': the run');
   });
 
   assert.equal(plate.barShape('cybertron-grid1').outline[2][0] - plate.barShape('cybertron-grid1').outline[1][0], Number(/--style-chamfer: (\d+)px;/.exec(withoutComments(read('dashboard/styles/cybertron.css')))[1]), '--style-chamfer is the cut corner of the large frame');
@@ -270,14 +274,14 @@ test('the large and the small frame have an armor header, a hazard stripe in the
   assert.equal(plate.barShape('cybertron-banner').still, false);
 });
 
-test('the neon is 10 inside the edge with two wider and fainter lines behind it, and the frames have no rivets, no rust and no stamped id', async () => {
+test('the neon is 10 inside the edge (7 on the ticker, which has the thin edge) with two wider and fainter lines behind it, and the frames have no rivets, no rust and no stamped id', async () => {
   await withPlatePage(() => {
     cybertronKinds.forEach(kind => {
       const shape = plate.barShape(kind);
       const neon = shape.neon.a.concat(shape.neon.b);
       assert.equal(neon.length, 12, 'the line is the outline moved in, with two points where the halves meet');
       shape.outline.forEach((corner, index) => {
-        const inner = plate.offsetPoint(shape.outline, corner, 10);
+        const inner = plate.offsetPoint(shape.outline, corner, neonIn(kind));
         assert.ok(shape.neon.a.concat(shape.neon.b).some(point => Math.abs(point[0] - inner[0]) < .05 && Math.abs(point[1] - inner[1]) < .05), kind + ': corner ' + index + ' has its neon corner');
       });
 
@@ -360,7 +364,7 @@ test('the banner and the ticker are one plate each: the fills and the two halves
     assert.equal(countOf(ticker, 'art-brackets'), 1, 'only the brackets');
     assert.equal(countOf(ticker, 'href="#bolt-shape"'), 2);
     assert.ok(elements(ticker) <= 40, 'the ticker is under 40 elements: ' + elements(ticker));
-    assert.ok(ticker.includes('width="1840" height="72" viewBox="0 0 1840 72"'));
+    assert.ok(ticker.includes('width="1840" height="77" viewBox="0 0 1840 77"'));
 
     const frameCss = withoutComments(read('dashboard/frame.css'));
     assert.ok(/html\[data-layout="bar"\] \.area\[data-area="ticker"\] \.screw,\s*html\[data-style="cybertron"\] \.area\[data-area="ticker"\] \.screw \{ animation-name: none; \}/.test(frameCss), 'its bolts do not turn');
@@ -557,16 +561,17 @@ test('the banner draws its plate only when the page has the frames of Cybertron:
   ['body', 'outline', 'decor', 'stud'].forEach(part => assert.equal(new RegExp("'" + part + "':\\s*(\\[[^\\]]*\\])").exec(sequence)[1], new RegExp("'" + part + "':\\s*(\\[[^\\]]*\\])").exec(bar)[1], part + ' comes in as it does in the bar banner'));
 });
 
-test('the ticker is as high as its plate and has the same 16 at both ends as in the bar layout, and the mirror turns it', () => {
+test('the ticker is as high as its plate, which hangs 5 below the row, and has the same 16 at both ends as in the bar layout, and the mirror turns it', () => {
   const css = withoutComments(read('dashboard/styles/cybertron.css'));
   const rule = ruleOf(css, 'html[data-style="cybertron"] .ticker');
   assert.ok(/box-sizing: border-box;/.test(rule) && /padding: 0 16px;/.test(rule));
   const shape = plate.barShape('cybertron-ticker');
-  assert.deepEqual([shape.width, shape.height], [1840, 72], 'the area of the ticker (.area[data-area="ticker"] in base.css)');
+  assert.deepEqual([shape.width, shape.height - 5], [1840, 72], 'the area of the ticker (.area[data-area="ticker"] in base.css), and the 5 that the thin edge hangs below it');
 
-  // the tag is 72 high, as high as the plate, and starts over the cut corner
+  // the tag is 72 high like the row, its picture is 77 high like the plate, and it starts over the cut corner
   const tag = withoutComments(read('dashboard/panels/ticker/ticker.css'));
-  assert.equal(numberIn(ruleOf(tag, '.ticker .tag'), 'height'), shape.height);
+  assert.equal(numberIn(ruleOf(tag, '.ticker .tag'), 'height'), shape.height - 5);
+  assert.equal(numberIn(ruleOf(tag, '.ticker .tag span'), 'height'), shape.height, 'the word is in the middle of the picture');
 
   // the mirror turns the ticker's row and puts the message against the tag, for Cybertron as for Original
   const mirror = withoutComments(read('dashboard/styles/original.css'));
@@ -1102,7 +1107,7 @@ test('docs/layouts.md describes the two styles and which layout each uses, and t
     assert.equal(cells[2], shape.width + ' x ' + shape.height, kind + ': drawn for');
     assert.equal(Number(cells[3]), shape.outline[2][0] - shape.outline[1][0], kind + ': the cut corner');
     assert.equal(Number(cells[4]), shape.outline[4][1] - shape.outline[3][1], kind + ': the step');
-    assert.equal(Number(cells[5]), (shape.width - 4) - shape.outline[3][0], kind + ': the run');
+    assert.equal(Number(cells[5]), (shape.width - lineIn(kind)) - shape.outline[3][0], kind + ': the run');
     assert.equal(Number(cells[6]), shape.screws.a.length + shape.screws.b.length, kind + ': the bolts');
     assert.deepEqual([Number(cells[3]), Number(cells[4]), Number(cells[5]), Number(cells[6])], kinds[kind]);
   });

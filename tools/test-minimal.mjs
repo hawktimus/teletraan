@@ -222,7 +222,8 @@ test('the frames of Minimal are the order\'s: steel with a thin neon line 10 ins
       const shape = plate.barShape(kind);
       const bolts = shape.screws.a.concat(shape.screws.b).map(point => point.join(',')).sort();
       assert.deepEqual(bolts, [1, 2, 6, 7].map(index => shape.outline[index].join(',')).sort(), kind + ': a bolt at each of the four joints');
-      assert.deepEqual(shape.neon.a, plate.offsetOutline(shape.outline, 10).slice(0, 6), kind + ': the neon line is the outline 10 inside');
+      const neonIn = kind === 'bar-ticker-minimal' ? 7 : 10; // the ticker has the thin plate edge (base.css), so its neon is 7 inside the line
+      assert.deepEqual(shape.neon.a, plate.offsetOutline(shape.outline, neonIn).slice(0, 6), kind + ': the neon line is the outline ' + neonIn + ' inside');
       assert.ok(shape.rivets.a.length + shape.rivets.b.length >= 10, kind + ': rivets along the long edges');
       assert.equal(shape.wear.length, 2, kind + ': rust at two corners');
       assert.ok(shape.wear.every(item => /^M[\d. ]+Q[\d. -]+$/.test(item.arc)), kind + ': each arc is a stroked curve');

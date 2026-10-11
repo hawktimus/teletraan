@@ -90,10 +90,13 @@
   align-items: center;
   justify-content: center;
   font: 700 var(--size-team)/60px var(--font-display);
-  /* The frame's rim and its shadow cover the top of the plate, so the clear
-     purple sits lower than the middle. The padding moves the words down to it. */
+  /* The plain purple is 15 to 64 of the 76 (core/plate.js, teamPlateMarkup), and the letters
+     of the display face sit 2 below the middle of their line, so the padding at the foot
+     puts the middle of the capitals in the middle of the purple, which leaves 2 clear above and
+     below them. */
   box-sizing: border-box;
-  padding-top: 5px;
+  padding-bottom: 1px;
+  padding-right: 20px; /* away from the cut corner, which six wide digits would touch otherwise */
 }
 .banner .team-plate b {
   margin-left: 16px;

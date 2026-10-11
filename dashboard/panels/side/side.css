@@ -355,11 +355,10 @@ html[data-layout="sidebar"] .side-team span {
   /* The label size, because TEAM with a five digit number is 292 at 44 px and
      372 at 56, which the plate's cut corner would cut into */
   font: 700 var(--size-label)/44px var(--font-display);
-  /* The frame's rim and its shadow cover the top of the plate, so the clear
-     purple sits lower than the middle. The padding at the top moves the words
-     down to it, and the padding at the right moves them away from the cut
-     corner. */
-  padding-top: 5px;
+  /* The plain purple is 15 to 64 high, and the letters sit 1 below the middle of their
+     line, so the padding at the top puts the words in the middle of it, and the padding
+     at the right moves them away from the cut corner. */
+  padding-top: 1px;
   padding-right: 16px;
 }
 html[data-layout="sidebar"] .side-team b {

@@ -606,6 +606,34 @@ html.neon-glow:not([data-finish="flat"]) .art-glow { display: inline; }
 .team-fill,
 .tag-fill { fill: var(--purple); }
 
+/* The thin plate edge. The TEAM plate, the ticker's tag and the frame round the ticker (the
+   bar frames of Cybertron and Minimal) are small and hold text, and the full edge above (a rim 16
+   wide, a face of 12) covered some of it. Theirs is a rim of 10 and a face of 6, with the same five
+   layers, the same metal, and a shadow that falls 2 down and to the right. Everything else in
+   them is as it was: the screws, the bolts, the neon and the rivets are not touched here.
+   plate.js puts the line of each shape where the outer edge of the metal stays where it was. */
+.team-plate-art .edge-shadow,
+.tag-plate .edge-shadow,
+.area[data-area="ticker"] .edge-shadow {
+  stroke-width: 10px;
+  transform: translate(2px, 2px);
+}
+.team-plate-art .edge-rim,
+.tag-plate .edge-rim,
+.area[data-area="ticker"] .edge-rim { stroke-width: 10px; }
+.team-plate-art .edge-face,
+.tag-plate .edge-face,
+.area[data-area="ticker"] .edge-face { stroke-width: 6px; }
+.team-plate-art .edge-shade,
+.tag-plate .edge-shade,
+.area[data-area="ticker"] .edge-shade {
+  stroke-width: 3px;
+  transform: translate(2px, 2px);
+}
+.team-plate-art .edge-ridge,
+.tag-plate .edge-ridge,
+.area[data-area="ticker"] .edge-ridge { transform: translate(-2.5px, -2.5px); }
+
 /* Small pictures */
 .double-slash { display: block; }
 .double-slash polygon { fill: var(--yellow); }

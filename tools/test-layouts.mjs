@@ -3267,6 +3267,11 @@ test('the standard banner puts the line in place of DASHBOARD and the bar on its
 const plateTree = makeTree('plate', ['dashboard/core/plate.js']);
 const plate = await import(urlOf(plateTree, 'dashboard/core/plate.js'));
 const frameKinds = ['bar-main', 'bar-banner', 'bar-ticker'];
+// The ticker's frames have the thin plate edge (base.css): the line is 1 inside the box where the others have it 4 inside, and the
+// neon 7 inside the line where the others have it 10. The box is 5 higher than the row of 72, which the thin metal and the clear
+// neon round the text of the ticker need
+const lineIn = kind => (kind.includes('ticker') ? 1 : 4);
+const neonIn = kind => (kind.includes('ticker') ? 7 : 10);
 
 // plate.js adds each frame's shapes to a hidden group of the page, once. A page with only that group stands in for it.
 // run is given the set of ids that were drawn into the group
@@ -3319,7 +3324,7 @@ test('the three bar frames are drawn for the boxes of the layout: the main panel
 
   assert.deepEqual([main.width, main.height], [b.areaWidth, bs.area.height], 'the area before it is scaled (core/layout.js, areaWidth)');
   assert.deepEqual([banner.width, banner.height], [b.banner.width, b.banner.height]);
-  assert.deepEqual([ticker.width, ticker.height], [b.ticker.width, b.ticker.height]);
+  assert.deepEqual([ticker.width, ticker.height - 5], [b.ticker.width, b.ticker.height], 'the ticker is drawn for its region and the 5 that the thin edge hangs below it');
   assert.equal(plate.barShape('grid1'), null, 'the frames of the other layouts are not bar frames');
 
   assert.equal(main.tab[4][1], 120, 'the header band ends at y = 120, as the large frame\'s does');
@@ -3335,7 +3340,7 @@ test('the three bar frames are drawn for the boxes of the layout: the main panel
   assert.equal(plate.frameKind('grid2', 'bar'), 'grid2');
 });
 
-test('every bar frame is a rectangle with ten corners, 4 inside its box, with a cut corner at the top left and the bottom right and a step at the other two, the same turned half way round', () => {
+test('every bar frame is a rectangle with ten corners, 4 inside its box (1 inside on the ticker), with a cut corner at the top left and the bottom right and a step at the other two, the same turned half way round', () => {
   const chamfers = { 'bar-main': 56, 'bar-banner': 56, 'bar-ticker': 32 };
   const steps = { 'bar-main': 24, 'bar-banner': 24, 'bar-ticker': 16 };
 
@@ -3347,7 +3352,7 @@ test('every bar frame is a rectangle with ten corners, 4 inside its box, with a 
 
     const xs = outline.map(point => point[0]);
     const ys = outline.map(point => point[1]);
-    assert.deepEqual([Math.min.apply(null, xs), Math.max.apply(null, xs), Math.min.apply(null, ys), Math.max.apply(null, ys)], [4, shape.width - 4, 4, shape.height - 4], kind + ': the line is 4 inside the box');
+    assert.deepEqual([Math.min.apply(null, xs), Math.max.apply(null, xs), Math.min.apply(null, ys), Math.max.apply(null, ys)], [lineIn(kind), shape.width - lineIn(kind), lineIn(kind), shape.height - lineIn(kind)], kind + ': the line is ' + lineIn(kind) + ' inside the box');
 
     edgesOf(outline).forEach(([from, to], index) => {
       const across = Math.abs(to[0] - from[0]);
@@ -3397,10 +3402,10 @@ test('a point of the outline moves along the line half way between its two edges
   });
 });
 
-test('the neon line is the outline 10 inside, in two halves that join where the halves of the edge join, and the conduit and the brackets are made from the same corners', () => {
+test('the neon line is the outline 10 inside (7 on the ticker), in two halves that join where the halves of the edge join, and the conduit and the brackets are made from the same corners', () => {
   frameKinds.forEach(kind => {
     const shape = plate.barShape(kind);
-    const inner = plate.offsetOutline(shape.outline, 10);
+    const inner = plate.offsetOutline(shape.outline, neonIn(kind));
 
     assert.deepEqual(shape.neon.a, inner.slice(0, shape.split + 1), kind + ': the first half');
     assert.deepEqual(shape.neon.b, inner.slice(shape.split).concat([inner[0]]), kind + ': and the second');
@@ -3607,7 +3612,7 @@ test('the numbers in the Frames section of docs/layouts.md are the numbers of th
     assert.equal(Number(cells[3]), chamfers[kind], kind + ': the cut corner');
     assert.equal(Number(cells[3]), outline[2][0] - outline[1][0], kind + ': is what the shape has');
     assert.equal(Number(cells[4]), outline[4][1] - outline[3][1], kind + ': the step');
-    assert.equal(Number(cells[5]), (shape.width - 4) - outline[3][0], kind + ': the run');
+    assert.equal(Number(cells[5]), (shape.width - lineIn(kind)) - outline[3][0], kind + ': the run');
     assert.equal(Number(cells[6]), shape.screws.a.length + shape.screws.b.length, kind + ': the bolts');
   });
 
@@ -3917,7 +3922,7 @@ test('the Minimal frames are the same ten-cornered plates with smaller cuts, 34 
 
     const xs = outline.map(point => point[0]);
     const ys = outline.map(point => point[1]);
-    assert.deepEqual([Math.min.apply(null, xs), Math.max.apply(null, xs), Math.min.apply(null, ys), Math.max.apply(null, ys)], [4, shape.width - 4, 4, shape.height - 4], kind + ': the line is 4 inside the box');
+    assert.deepEqual([Math.min.apply(null, xs), Math.max.apply(null, xs), Math.min.apply(null, ys), Math.max.apply(null, ys)], [lineIn(kind), shape.width - lineIn(kind), lineIn(kind), shape.height - lineIn(kind)], kind + ': the line is ' + lineIn(kind) + ' inside the box');
     edgesOf(outline).forEach(([from, to], index) => {
       const across = Math.abs(to[0] - from[0]);
       const down = Math.abs(to[1] - from[1]);
@@ -3939,7 +3944,7 @@ test('the Minimal frames are the same ten-cornered plates with smaller cuts, 34 
     assert.deepEqual(bolts.slice().sort(), [1, 2, 6, 7].map(index => outline[index].join(',')).sort(), kind + ': four bolts');
     assert.deepEqual(shape.bracketLines, [], kind + ': no brackets');
     ['hazard', 'conduit', 'slashes', 'seams', 'brackets'].forEach(name => assert.ok(!shape.art[name], kind + ' has no ' + name));
-    assert.deepEqual(shape.neon.a, plate.offsetOutline(outline, 10).slice(0, 6), kind + ': the neon line is the outline 10 inside');
+    assert.deepEqual(shape.neon.a, plate.offsetOutline(outline, neonIn(kind)).slice(0, 6), kind + ': the neon line is the outline ' + neonIn(kind) + ' inside');
   });
 
   // Cybertron's frames have none of what Minimal adds
@@ -3958,7 +3963,7 @@ test('the Minimal frames are the same ten-cornered plates with smaller cuts, 34 
     assert.ok(all.length >= 30, kind + ' has a row of rivets along each long edge');
     const between = (value, one, other) => value >= Math.min(one, other) - 0.1 && value <= Math.max(one, other) + 0.1;
     all.forEach(center => assert.ok(edgesOf(shape.outline).some(([from, to]) => distanceToLine(center, from, to) < 0.1 && between(center[0], from[0], to[0]) && between(center[1], from[1], to[1])), kind + ': a rivet at ' + center + ' is on an edge'));
-    const top = shape.rivets.a.filter(center => center[1] === 4);
+    const top = shape.rivets.a.filter(center => center[1] === lineIn(kind));
     top.slice(1).forEach((center, index) => assert.ok(Math.abs(center[0] - top[index][0] - 90) < 0.11, kind + ': 90 apart along the top'));
   });
 });
@@ -3970,9 +3975,9 @@ test('the rust, the weld seam and the header line of Minimal are where the order
     const shape = plate.barShape(kind);
     assert.equal(shape.wear.length, 2, kind + ': rust at two corners');
     const [left, bottom] = shape.wear;
-    assert.equal(left.anchor[0], 4, kind + ': the first arc is on the left edge');
+    assert.equal(left.anchor[0], lineIn(kind), kind + ': the first arc is on the left edge');
     assert.ok(left.anchor[1] > shape.outline[1][1] && left.anchor[1] < shape.outline[0][1], kind + ': above the step at the bottom left');
-    assert.equal(bottom.anchor[1], shape.height - 4, kind + ': the second is on the bottom edge');
+    assert.equal(bottom.anchor[1], shape.height - lineIn(kind), kind + ': the second is on the bottom edge');
     assert.ok(bottom.anchor[0] < shape.outline[7][0] && bottom.anchor[0] > shape.width / 2, kind + ': before the cut corner at the bottom right');
     shape.wear.forEach(item => assert.doesNotThrow(() => plate.offsetPoint(shape.outline, item.anchor, 1), kind + ': the anchor is on the outline'));
     assert.ok(shape.wear.every(item => /^M[\d. ]+Q[\d. -]+$/.test(item.arc)), kind + ': each is one stroked curve');
@@ -4202,7 +4207,7 @@ test('the numbers in the Frames section of docs/layouts.md for the frames of Min
     assert.equal(Number(cells[3]), chamfers[kind], kind + ': the cut corner');
     assert.equal(Number(cells[3]), shape.outline[2][0] - shape.outline[1][0], kind + ': is what the shape has');
     assert.equal(Number(cells[4]), shape.outline[4][1] - shape.outline[3][1], kind + ': the step');
-    assert.equal(Number(cells[5]), (shape.width - 4) - shape.outline[3][0], kind + ': the run');
+    assert.equal(Number(cells[5]), (shape.width - lineIn(kind)) - shape.outline[3][0], kind + ': the run');
     assert.equal(Number(cells[6]), shape.screws.a.length + shape.screws.b.length, kind + ': the bolts');
   });
 

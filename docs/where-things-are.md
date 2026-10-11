@@ -430,6 +430,9 @@ editors can sign in from anywhere.
       test-mini-tool.mjs      checks for the Mac tool in tools/mini/ and for merge-env.sh, with fake ssh, scp
                               and rsync: the masking, webcal to https, the merge into local.env, the menu
                               choices, and that no key or calendar link is printed or put on a command line
+      test-plate-edges.mjs    checks for the thin plate edge: its widths against the other frames', the TEAM plate and
+                              the ticker's tag and frame, and that the text on them (TEAM and the number, the name
+                              above, TELETRAAN I under, the ticker's line and its word) has 2 px clear of the metal
       check-seasons.mjs       fails if a seasonal pack is not in the data format, has a piece outside its zone, too
                               many pieces, a forbidden word, no header mark, a mark bigger than its box (60 x 76),
                               fewer than 8 or more than 14 pieces over the panels, an over piece that is too big,
@@ -981,6 +984,7 @@ exceptions are `test-slides-script.mjs`, `test-frc-script.mjs` and `test-monday-
     node tools/test-calendar-status.mjs
     node tools/test-calendars-view.mjs
     node tools/test-mini-tool.mjs
+    node tools/test-plate-edges.mjs
     node tools/check-themes.mjs
     node tools/check-seasons.mjs
     node studio/check-schemas.mjs
