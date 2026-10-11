@@ -13,7 +13,9 @@ when its disk is wiped:
 - the password of the `hawktimus` account
 
 Before you wipe anything, keep a copy of each wherever the team mentor keeps
-the team's passwords.
+the team's passwords. The keys and calendar links in `local.env` can also be
+copied to a Mac with the tool in `docs/updating-the-mini.md` (choice 3), and the
+same tool puts them back on a rebuilt Mini (choice 2).
 
 ## Before you start
 
@@ -32,6 +34,7 @@ said yes.**
 | `openssh-server` (optional) | fix the Mini from another computer | 2 |
 | `systemd-timesyncd`, only if step 3 says the clock is not kept in sync: `sudo apt install systemd-timesyncd`, then `sudo timedatectl set-ntp true` | keep the clock right | 3 |
 | `git`, `curl`, `ca-certificates` | download the repository and the calendars | 4 |
+| `rsync`, only for a Mini that gets its files from a Mac (`docs/updating-the-mini.md`) | receive the files the Mac tool copies | 4 |
 | Docker Engine and the Compose plugin: `docker-ce`, `docker-ce-cli`, `containerd.io`, `docker-buildx-plugin`, `docker-compose-plugin`. They come from Docker's own apt source, so Docker's apt repository and its signing key are added too. Debian's `docker.io` also works if `docker compose version` then runs. | run the web server | 5 |
 | A read-only deploy key for the repository, if it is private | let the Mini pull updates | 6 |
 | The `nginx:1.28-alpine` container image, downloaded from Docker Hub by Docker the first time the server starts | the web server itself | 9 |
@@ -80,6 +83,9 @@ see studio/README.md.
        sudo apt update
        sudo apt install git curl ca-certificates
 
+   A Mini that gets its files from a Mac with `docs/updating-the-mini.md` also
+   needs `rsync`: `sudo apt install rsync`, after the team mentor's yes.
+
 5. **Install Docker.** Follow "Install Docker Engine on Debian" on
    docs.docker.com. Then check that both of these print a version:
 
@@ -121,6 +127,10 @@ see studio/README.md.
    quotes. Use the `https://` or `webcal://` address. `fetch-calendars.sh`
    refuses a plain `http://` one. Adding a calendar later is the same, see
    Adding or changing a calendar below.
+
+   From a Mac, choice 2 of the tool in `docs/updating-the-mini.md` fills in the
+   calendar lines and the three keys from a form, so nothing is typed into `nano`.
+   It needs ssh (step 2) and the repository on the Mini (step 6).
 
    Then tell the dashboard which calendars to show. In Studio open Dashboard
    Settings, then the Calendars tab, and add one row for each calendar, with
@@ -305,6 +315,7 @@ see studio/README.md.
 
         TBA_AUTH_KEY='[paste the read key here]'
 
+    The tool in `docs/updating-the-mini.md` can add this line from a Mac (choice 2).
     Install the timer and check that the key works:
 
         sudo apt install curl jq
@@ -342,6 +353,7 @@ see studio/README.md.
 
         MONDAY_API_TOKEN='[paste the Monday token here]'
 
+    The tool in `docs/updating-the-mini.md` can add this line from a Mac (choice 2).
     Install the timer and check that the token works:
 
         sudo apt install curl jq
@@ -407,6 +419,8 @@ its settings. The Mini can keep running.
 - The dashboard is on the screen within two minutes of the Mini starting.
 - `ssh hawktimus@<address> /opt/teletraan/deploy/scripts/check-connection.sh`
   ends with `OK` (see Checking the connection below).
+- Choice 5 of the tool in `docs/updating-the-mini.md` shows when the Mini last
+  wrote each time in the status block, and the check of the calendars.
 - The clock matches a phone, and the date is right.
 - All four sides of the frames and the whole ticker are visible. If
   an edge is cut off, go back to step 15. The frames are metal, gold unless
@@ -613,7 +627,8 @@ Without one the Mini works as before and the block says No status yet.
    access can change anything in the dataset, so it goes in this file and
    nowhere else: not in the repository, not in a message and not in Studio.
    `local.example.env` has the line with a placeholder, and the script ignores a
-   value that still starts with `[`.
+   value that still starts with `[`. The tool in `docs/updating-the-mini.md` can
+   add the line from a Mac (choice 2), so the token is not typed on the Mini.
 
 3. Run the install scripts again. The calendar and slides services each have
    a new line in their unit files that runs `status-write.sh` after the job, and
@@ -748,7 +763,11 @@ Reboot and repeat the test with the Mini first.
 
 ## Adding or changing a calendar
 
-Each BAND calendar is one line in `deploy/local.env` on the Mini. To add one:
+Each BAND calendar is one line in `deploy/local.env` on the Mini. From a Mac,
+choice 2 of the tool in `docs/updating-the-mini.md` does steps 2 and 4 below: it
+writes the line into `local.env` on the Mini and runs the calendar service once.
+Getting the link from BAND and adding the row in Studio stay with you. To do it by
+hand:
 
 1. Get the calendar's iCal link from BAND. It starts with `https://` or
    `webcal://`.

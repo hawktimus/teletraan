@@ -18,7 +18,7 @@ const kioskFile = path.join(repo, 'deploy/scripts/kiosk.sh');
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-status-'));
 
 // The tools the script needs that are not the ones being faked
-const ordinaryTools = ['sed', 'tail', 'head', 'grep', 'date', 'dirname', 'cat'];
+const ordinaryTools = ['sed', 'tail', 'head', 'grep', 'date', 'dirname', 'cat', 'awk'];
 
 function findTool(name) {
   const found = spawnSync('/bin/sh', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
@@ -351,6 +351,129 @@ test('the project, the dataset and the API version come from dashboard/config.js
     assert.ok(result.errors.includes('Could not read the project ID, dataset and API version'), name + ': ' + result.errors);
     assert.equal(result.calls, '', name);
   });
+});
+
+// A time this long before now, in the form the Mini writes
+function timeAgo(milliseconds) {
+  return new Date(Date.now() - milliseconds).toISOString().replace(/\.\d{3}Z$/, 'Z');
+}
+
+function clockOf(isoText) {
+  return isoText.replace(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}).*$/, '$1 $2 UTC');
+}
+
+const minute = 60 * 1000;
+const hour = 60 * minute;
+const day = 24 * hour;
+
+test('--print asks for the status document with no token, writes nothing, and gives each time with its age', () => {
+  const times = {
+    lastContentSeenAt: timeAgo(10 * 1000),
+    lastCalendarSyncAt: timeAgo(5 * minute),
+    lastSlidesFetchAt: timeAgo(minute),
+    lastMondaySyncAt: timeAgo(2 * hour),
+    lastFrcSyncAt: timeAgo(3 * day),
+    kioskStartedAt: null,
+  };
+  const place = setup('print', {});
+  place.answer({ ms: 3, query: 'q', result: times });
+  const result = place.run(['--print']);
+
+  assert.equal(result.status, 0, result.errors);
+  assert.equal(result.errors, '');
+  assert.equal(place.hasBody(), false, 'nothing is written');
+  assert.deepEqual(place.addresses(), []);
+
+  const lines = result.calls.trim().split('\n');
+  assert.equal(lines.length, 1, 'one question and nothing else');
+  assert.ok(lines[0].includes('https://' + project + '.api.sanity.io/v' + version + '/data/query/' + dataset), lines[0]);
+  assert.ok(lines[0].includes('perspective=published'), lines[0]);
+  assert.ok(lines[0].includes('status-mini'), lines[0]);
+  assert.ok(!lines[0].includes('--config') && !lines[0].includes('Authorization'), 'the dataset is public, so no token is sent: ' + lines[0]);
+
+  const printed = result.text.trim().split('\n');
+  assert.deepEqual(printed, [
+    'Last content update seen  just now (' + clockOf(times.lastContentSeenAt) + ')',
+    'Last calendar sync        5 minutes ago (' + clockOf(times.lastCalendarSyncAt) + ')',
+    'Last slides fetch         1 minute ago (' + clockOf(times.lastSlidesFetchAt) + ')',
+    'Last Monday sync          2 hours ago (' + clockOf(times.lastMondaySyncAt) + ')',
+    'Last FRC data sync        3 days ago (' + clockOf(times.lastFrcSyncAt) + ')',
+    'Screen started            Not yet',
+  ]);
+});
+
+test('--print counts the age the way the Studio does, across a leap day and the first two months', () => {
+  ['2024-02-29T12:00:00Z', '2026-01-15T00:00:00Z', '2025-03-01T00:00:00Z', '2026-10-08T21:15:30.123Z'].forEach((time, index) => {
+    const place = setup('print-age-' + index, {});
+    place.answer({ ms: 1, query: 'q', result: { lastCalendarSyncAt: time } });
+    const result = place.run(['--print']);
+    assert.equal(result.status, 0, result.errors);
+
+    const minutes = Math.round((Date.now() - Date.parse(time)) / minute);
+    const hours = Math.round(minutes / 60);
+    const expected = hours < 48 ? hours + ' hours ago' : Math.round(hours / 24) + ' days ago';
+    const line = result.text.split('\n').find(entry => entry.startsWith('Last calendar sync'));
+    assert.ok(line.includes(expected + ' ('), time + ': ' + line + ', wanted ' + expected);
+  });
+
+  const oneHour = setup('print-one-hour', {});
+  oneHour.answer({ ms: 1, query: 'q', result: { lastCalendarSyncAt: timeAgo(hour) } });
+  assert.ok(oneHour.run(['--print']).text.includes('1 hour ago ('));
+});
+
+test('--print says No status yet for a missing document and stops with a reason when Sanity gives nothing usable', () => {
+  const none = setup('print-none', {});
+  none.answer({ ms: 1, query: 'q', result: null });
+  const empty = none.run(['--print']);
+  assert.equal(empty.status, 0);
+  assert.equal(empty.text.trim(), 'No status yet. Nothing has written status-mini.');
+
+  const bad = {
+    'an error answer': { error: { description: 'no' } },
+    'text that is not json': 'not json at all',
+    'a result that is not a document': { ms: 1, query: 'q', result: 42 },
+  };
+  Object.keys(bad).forEach(name => {
+    const place = setup('print-bad-' + name.replace(/\W+/g, '-'), {});
+    place.answer(bad[name]);
+    const result = place.run(['--print']);
+    assert.equal(result.status, 1, name);
+    assert.ok(result.errors.includes('did not answer with the status document'), name + ': ' + result.errors);
+    assert.equal(result.text, '', name);
+  });
+
+  const words = { 6: 'network may be down', 7: 'could not connect', 28: 'took too long', 99: 'curl failed with exit code 99' };
+  Object.keys(words).forEach(code => {
+    const place = setup('print-down-' + code, {});
+    place.failQuery(code);
+    const result = place.run(['--print']);
+    assert.equal(result.status, 1, code);
+    assert.ok(result.errors.includes('could not read status-mini'), result.errors);
+    assert.ok(result.errors.includes(words[code]), code + ': ' + result.errors);
+    assert.ok(!result.errors.includes(project), 'the project is not printed');
+  });
+});
+
+test('--print never prints or sends the token, even when local.env has one', () => {
+  const place = setup('print-token', { localEnv: goodEnv });
+  place.answer({ ms: 1, query: 'q', result: { kioskStartedAt: timeAgo(minute) } });
+  const result = place.run(['--print']);
+
+  assert.equal(result.status, 0, result.errors);
+  assertNoToken(result, '--print');
+  assert.equal(place.hasBody(), false);
+
+  const odd = setup('print-odd-token', { localEnv: 'SANITY_WRITE_TOKEN=abc"def\n' });
+  odd.answer({ ms: 1, query: 'q', result: { kioskStartedAt: timeAgo(minute) } });
+  assert.equal(odd.run(['--print']).status, 0, 'the token is not read for --print, so an odd one does not stop it');
+});
+
+test('the usage line lists --print, and --print takes no second word', () => {
+  const place = setup('print-usage', { localEnv: goodEnv });
+  const result = place.run(['--print', 'content']);
+  assert.equal(result.status, 2);
+  assert.ok(result.errors.includes('content|calendar|slides|monday|frc|kiosk|calendar-status|--print'), result.errors);
+  assert.equal(result.calls, '');
 });
 
 test('the script has valid sh syntax, is executable, and local.env is never printed', () => {

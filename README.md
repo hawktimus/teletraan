@@ -107,6 +107,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - A calendar check (deploy/scripts/check-calendars.sh) that lists the next 30 days of events, says which ones the Calendar filters hide, and gives the Events page and the kind of each one that shows
 - A connection check for the Mini (deploy/scripts/check-connection.sh) and a small text on the screen that says why when Sanity cannot be reached
 - A boot and shutdown screen: a text drawing of a person pointing two fingers at each other, with TELETRAAN I under it, shows on the TV above the login prompt while the Mini starts and again while it shuts down (deploy/console, docs/rebuilding-the-mini.md, step 13)
+- A Mac tool, tools/mini/teletraan-mini, that copies the files to the Mini and restarts the screen, keeps the three keys and the calendar links in a form (saved on the Mac in ~/.teletraan/, merged into deploy/local.env on the Mini, never printed), installs the services, and shows what the Mini last did. Double-click tools/mini/Teletraan Mini.command (docs/updating-the-mini.md)
 
 ## What runs on the Mini
 
@@ -117,13 +118,13 @@ The scripts are in `deploy/scripts/`, and the units that start them are in `depl
 - `slides-sync.sh`: every 2 minutes, turns the Google Slides deck of each coming talk into pictures
 - `frc-sync.sh`: wakes every 5 minutes, and reads the public competition data about once an hour, or about every 5 minutes while a team has an event on
 - `monday-sync.sh`: every 10 minutes, reads the Monday boards named in Dashboard Settings and keeps their items in Sanity as tasks
-- `status-write.sh`: writes the time of a job into the status block at the top of Dashboard Settings
+- `status-write.sh`: writes the time of a job into the status block at the top of Dashboard Settings. `status-write.sh --print` reads the block back and shows each time with its age
 - `kiosk.sh`: starts the browser full screen when the Mini boots, and writes `device.json` every minute
 - `install-timers.sh`, `install-calendars.sh`, `install-slides.sh`, `install-frc.sh`, `install-monday.sh` and `install-console.sh`: copy the unit files into place and turn on the timers, or the boot and shutdown screens. Run each once by hand, and again when its unit files change
 - `check-connection.sh`: one OK or FAIL line each for the Mini's connection to Sanity, BAND, Docker and the kiosk
 - `check-calendars.sh`: lists the next 30 days of events and says which ones the Calendar filters hide. It needs Node, so it runs on a computer that has it
 
-`deploy/local.env` holds three keys, `SANITY_WRITE_TOKEN`, `MONDAY_API_TOKEN` and `TBA_AUTH_KEY`, and one `CALENDAR_<ID>_URL` line for each calendar. It is never committed. A script that does not find its key does nothing and says so in one line. docs/coaches-guide.md says what each key is for.
+`deploy/local.env` holds three keys, `SANITY_WRITE_TOKEN`, `MONDAY_API_TOKEN` and `TBA_AUTH_KEY`, and one `CALENDAR_<ID>_URL` line for each calendar. It is never committed. A script that does not find its key does nothing and says so in one line. docs/coaches-guide.md says what each key is for, and the Mac tool in docs/updating-the-mini.md can write these lines from a form.
 
 ## More guides
 
@@ -145,6 +146,7 @@ The scripts are in `deploy/scripts/`, and the units that start them are in `depl
 - docs/adding-a-panel.md: adding a new board
 - docs/rebuilding-the-mini.md: setting up the Mini from scratch
 - docs/shipping-from-the-mac.md: one window that commits, pushes, updates the Studio and tells the Mini to pull
+- docs/updating-the-mini.md: the Mac tool that copies the files to the Mini, keeps its keys and calendar links, installs the services, shows its status and restarts the screen
 - docs/where-things-are.md: what each folder is for, where the settings live, and how to check your work
 - docs/try-it-on-the-mini.md: testing speed on the Mini
 - docs/the-logo.md: how the hawk logo moves

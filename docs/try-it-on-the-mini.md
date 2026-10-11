@@ -14,8 +14,10 @@ keeps `/opt/teletraan` up to date from the repository, and the web server
 shows it at `http://localhost:3229/dashboard/` (3229 is `TELETRAAN_PORT` in
 `deploy/local.env`, so use the number that file has). The test runs the code that
 has been pushed. To test a change, push it, then wait up to 5 minutes or run
-`/opt/teletraan/deploy/scripts/pull.sh`. Do not push while a test is running:
-the screen reloads itself on every update, and the readout starts again.
+`/opt/teletraan/deploy/scripts/pull.sh`. A Mini that does not pull gets the files
+from a Mac instead: choice 1 of the tool in `docs/updating-the-mini.md` copies
+them and restarts the screen. Do not push or copy while a test is running: the
+screen reloads itself on every update, and the readout starts again.
 
 ## 2. Open the dashboard the way the screen does
 

@@ -16,6 +16,10 @@ installing anything on the Mini, and whenever a step needs a login or a key.
   (`docs/rebuilding-the-mini.md`, step 11).
 - `mac/ship.sh` runs on the Mac you work on, not on the Mini. It pushes, updates
   the Studio and tells the Mini to pull now (`docs/shipping-from-the-mac.md`).
+- `tools/mini/teletraan-mini` also runs on a Mac. It copies the files to the Mini
+  instead of pulling, keeps the keys and calendar lines of `local.env`, installs
+  the services and shows the status (`docs/updating-the-mini.md`). A Mini follows
+  `ship.sh` or this tool for its files, not both.
 - A timer runs `fetch-calendars.sh` every 15 minutes. It saves the BAND
   calendars where the dashboard reads them. After each run, failed or not, the
   service also makes the document that the Calendars page in Studio shows
@@ -69,7 +73,7 @@ to attach the data folder to.
 | `scripts/slides-sync.sh` | Downloads the slides of the coming talks from Google Slides, turns them into pictures, and saves them with a `manifest.json`. `slides-sync.sh --test <link>` tries one deck and deletes what it made. Needs `poppler-utils`, `curl` and `jq` |
 | `scripts/frc-sync.sh` | Reads the public FRC data of each team from The Blue Alliance and Statbotics and writes the document `frc-status` in Sanity. Every address and every place in an answer is in one block at its top. `frc-sync.sh --check` tries the key, `--now` does a run whatever the time. Needs `curl` and `jq`, `TBA_AUTH_KEY` and `SANITY_WRITE_TOKEN` in `local.env`, and does nothing without them. See `docs/frc-feed.md` |
 | `scripts/monday-sync.sh` | Reads the Monday boards named in Dashboard Settings and writes their items into Sanity as tasks, and the document `monday-status` with the boards the token can see. Every address, question and place in an answer is in one block at its top. `monday-sync.sh --check` tries the token. Needs `curl` and `jq`, `MONDAY_API_TOKEN` and `SANITY_WRITE_TOKEN` in `local.env`, and does nothing without them. See `docs/monday.md` |
-| `scripts/status-write.sh` | Writes the time of a job into the document `status-mini` in Sanity, which Studio shows at the top of the Screen tab of Dashboard Settings. `status-write.sh calendar-status` sends the Calendars page document the same way. Needs `SANITY_WRITE_TOKEN` in `local.env` and does nothing without it. The calendar and slides services and `kiosk.sh` run it, see "Showing what the Mini did in Studio" in `docs/rebuilding-the-mini.md` |
+| `scripts/status-write.sh` | Writes the time of a job into the document `status-mini` in Sanity, which Studio shows at the top of the Screen tab of Dashboard Settings. `status-write.sh calendar-status` sends the Calendars page document the same way. Needs `SANITY_WRITE_TOKEN` in `local.env` and does nothing without it. `status-write.sh --print` needs no key: it reads the document back and shows each time with its age. The calendar and slides services and `kiosk.sh` run it, see "Showing what the Mini did in Studio" in `docs/rebuilding-the-mini.md` |
 | `scripts/kiosk.sh` | Opens the browser full screen with the right settings, or any page given after its name. Also writes `device.json` every minute while the browser runs, and starts `status-write.sh kiosk` in the background |
 | `scripts/install-timers.sh` | Copies the unit files into place and turns on the calendar timer and the pull timer |
 | `scripts/install-calendars.sh` | Copies the two calendar unit files into place and turns on the calendar timer. Installs nothing else, so it leaves the pull timer off |
@@ -98,6 +102,10 @@ and the Sanity CORS origin (studio/README.md, step 6) both use this port.
 Git ignores the file wherever it sits, and also copies an editor leaves next
 to it, such as `local.env.save`. Never paste a feed address into a file that
 is committed, into a chat or into an issue.
+
+The Mac tool (`docs/updating-the-mini.md`) can write the three keys and the
+calendar lines from a form. It replaces the lines it is given, keeps every other
+line and leaves the file at mode 600.
 
 ## Everyday commands
 
