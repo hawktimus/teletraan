@@ -590,32 +590,39 @@ are in `bar-column.css`, and `node tools/test-layouts.mjs` fails if they differ.
 | `.bar-weather` | 144 | 48 | 0 | 300 | the weather picture (48 px) and the temperature (44 px), centred |
 | `.bar-team` | 208 | 76 | 0 | 300 | the TEAM plate, as wide as the column |
 | `.bar-school` | 296 | 184 | 0 | 300 | the school, in up to four lines of 46 px |
-| `.bar-sample` | 488 | 88 | 35 | 230 | the SAMPLE CONTENT label, only while the sample content is on, in two lines of 44 px |
-| `.bar-logo` | 599 | 137 | 65 | 170 | the animated logo, at the foot of the column |
+| `.bar-sample` | 511 | 88 | 35 | 230 | the SAMPLE CONTENT label, only while the sample content is on, in two lines of 44 px, over the top of the hawk's box |
+| `.bar-logo` | 511 | 225 | 10 | 280 | the animated logo, the hawk, at the foot of the column |
 
 The widest time (10:59 at 84 px is 245 wide) with PM (71 wide) is 316, and the
 column is 300, so the letters of the time are 5 px closer together (297). The TEAM
 plate is 300 wide, and the words TEAM 3229 fit it at 44 px. A five digit number is
-wider than the plate allows beside its cut corner. The logo's parts reach about 23 px
-past its box while the show plays, which fits in the 24 between the column and the
-ticker. All text is 44 px or more.
+wider than the plate allows beside its cut corner.
+
+The hawk is 280 wide and 225 high (the width times 884 over 1100, and `--k` is .2545), in the
+middle of the column and at its foot, so it sits above the ticker and not over the main panel. Its
+box starts 31 under the school's box, which is more than the 24 between the other blocks. The column
+has no room above it for the label of the sample content as well (the label is 88 high, the school
+ends at 480 and the hawk starts at 511), so the label is drawn over the top of the hawk's box, and
+only while the sample content shows. The hawk's parts reach about 23 px past its box at the old
+width of 170 while the show plays, so about 38 px at this width. That is less than the 36 between
+the column and the main panel at the side and more than the 24 under the column, so for a moment
+the wings may pass over the top edge of the ticker. This has been worked out from the numbers and
+not looked at on a screen. All text is 44 px or more.
 
 A seasonal pack can add a banner line (docs/seasonal-packs.md, "Banner line"). It is
 `.bar-line`, one line of 44 px under the weather, centred and cut off with an ellipsis, and about
 10 characters of it fit in 300 px. While there is a line, `bar-column.js` sets `data-line` on the
-panel to `on`, and the parts under it move down. The 44 px come out of the gaps, and the logo stays
-where it is. These are the places while the line is on:
+panel to `on`, and the parts under it move down. The 44 px come out of the gaps, and the hawk and the
+label stay where they are. These are the places while the line is on:
 
 | Part | Top | Height | Without a line |
 |------|-----|--------|----------------|
 | `.bar-line` | 192 | 44 | not there |
 | `.bar-team` | 240 | 76 | top 208 |
 | `.bar-school` | 322 | 176 | top 296, height 184 |
-| `.bar-sample` | 504 | 88 | top 488 |
 
-The school keeps its four lines, now of 44 px instead of 46. The label ends 7 px above the logo's
-box instead of 23, so while the show plays the logo's parts may pass behind the label for a moment.
-The label is only there while the sample content shows, so this happens only then.
+The school keeps its four lines, now of 44 px instead of 46. It ends 13 px above the hawk's box
+instead of 31, which is the most that the 44 px of the line leave.
 
 ### The width of the main panel
 

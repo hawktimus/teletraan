@@ -2972,7 +2972,7 @@ test('the budget of the side column in docs/layouts.md is the top and height of 
   // everything is inside the column, and the parts do not touch
   const column = { x: 0, y: 0, width: b.column.width, height: b.column.height };
   parts.forEach(name => assert.ok(within({ x: rows[name].left, y: rows[name].top, width: rows[name].width, height: rows[name].height }, column), name + ' is inside the column'));
-  const stack = ['bar-clock', 'bar-team', 'bar-school', 'bar-sample', 'bar-logo'];
+  const stack = ['bar-clock', 'bar-team', 'bar-school', 'bar-logo'];
   stack.slice(1).forEach((name, index) => {
     const above = rows[stack[index]];
     assert.ok(above.top + above.height < rows[name].top, stack[index] + ' ends above ' + name);
@@ -2980,12 +2980,16 @@ test('the budget of the side column in docs/layouts.md is the top and height of 
   assert.equal(rows['bar-logo'].top + rows['bar-logo'].height, b.column.height, 'the logo is at the foot of the column');
   assert.equal(rows['bar-logo'].left + rows['bar-logo'].width / 2, b.column.width / 2, 'in the middle of it');
   assert.equal(rows['bar-sample'].left + rows['bar-sample'].width / 2, b.column.width / 2, 'and so is the label');
-  assert.ok(rows['bar-logo'].top - (rows['bar-sample'].top + rows['bar-sample'].height) >= 23, 'the logo\'s parts reach 23 px past its box while the show plays, and have the room above it too');
+  assert.ok(rows['bar-logo'].top - (rows['bar-school'].top + rows['bar-school'].height) >= 24, 'the hawk has at least the 24 that the other blocks have above it');
+  assert.equal(rows['bar-sample'].top, rows['bar-logo'].top, 'the label of the sample content is over the top of the hawk\'s box, because the column has no room for both');
+  assert.match(blockOf('.bar-sample'), /z-index: 1;/, 'and over it, not under it');
+  assert.equal(rows['bar-logo'].width, 280, 'the hawk is 280 wide');
   assert.equal(rows['bar-school'].height, 4 * 46, 'the school has room for four lines of 46 px');
   assert.equal(rows['bar-sample'].height, 2 * 44, 'the label is two lines of 44 px');
   assert.equal(rows['bar-team'].height, 76, 'the TEAM plate is the banner\'s height');
-  assert.ok(/\.bar-logo \{[^}]*--k: \.1545;[^}]*width: 170px;[^}]*height: 137px;/.test(css.replace(/html\[data-layout="bar"\] /g, '')), '--k is the width over 1100');
-  assert.ok(Math.abs(170 / 1100 - 0.1545) < 0.0001 && Math.abs(170 * 884 / 1100 - 137) < 0.5, 'and the height is the width times 884 over 1100');
+  assert.ok(/\.bar-logo \{[^}]*--k: \.2545;[^}]*width: 280px;[^}]*height: 225px;/.test(css.replace(/html\[data-layout="bar"\] /g, '')), '--k is the width over 1100');
+  assert.ok(Math.abs(280 / 1100 - 0.2545) < 0.0001 && Math.abs(280 * 884 / 1100 - 225) < 0.5, 'and the height is the width times 884 over 1100');
+  assert.ok(rows['bar-logo'].left >= 0 && rows['bar-logo'].left + rows['bar-logo'].width <= b.column.width, 'the hawk is inside the column, which is above the ticker and not over the main panel');
   assert.equal(Number(/const TEAM_PLATE_WIDTH = (\d+);/.exec(read('dashboard/panels/bar-column/bar-column.js'))[1]), b.column.width, 'the TEAM plate is drawn as wide as the column');
 });
 
@@ -3140,33 +3144,31 @@ test('in the side column the banner line is one line of 44 px under the weather,
   assert.equal(valueIn(on('.bar-school'), 'top'), 322);
   assert.equal(valueIn(on('.bar-school'), 'height'), 176);
   assert.match(on('.bar-school .school-text'), /line-height: 44px;/);
-  assert.equal(valueIn(on('.bar-sample'), 'top'), 504);
+  assert.equal(on('.bar-sample'), null, 'the label and the hawk stay where they are');
 
   const places = {
     line: { top: valueIn(line, 'top'), height: 44 },
     team: { top: valueIn(on('.bar-team'), 'top'), height: valueIn(blockOf('.bar-team'), 'height') },
     school: { top: valueIn(on('.bar-school'), 'top'), height: valueIn(on('.bar-school'), 'height') },
-    sample: { top: valueIn(on('.bar-sample'), 'top'), height: valueIn(blockOf('.bar-sample'), 'height') },
   };
   const logo = { top: valueIn(blockOf('.bar-logo'), 'top'), height: valueIn(blockOf('.bar-logo'), 'height') };
-  const stack = ['line', 'team', 'school', 'sample'];
+  const stack = ['line', 'team', 'school'];
   stack.slice(1).forEach((name, index) => assert.ok(places[stack[index]].top + places[stack[index]].height < places[name].top, stack[index] + ' ends above ' + name));
-  assert.ok(places.sample.top + places.sample.height < logo.top, 'the label ends above the logo');
+  assert.ok(places.school.top + places.school.height < logo.top, 'the school ends above the hawk');
   assert.equal(logo.top + logo.height, b.column.height, 'the logo is where it was, at the foot of the column');
   assert.equal(places.school.height, 4 * 44, 'the school keeps four lines, of 44 px now');
-  assert.equal(logo.top - (places.sample.top + places.sample.height), 7, 'the label is 7 px above the logo\'s box');
+  assert.equal(logo.top - (places.school.top + places.school.height), 13, 'the school ends 13 px above the hawk\'s box, which is what the 44 px of the line leave');
 
   // the docs say the same
   const rows = {};
   section.split('\n').forEach(row => {
-    const found = /^\| `\.(bar-line|bar-team|bar-school|bar-sample)` \| (\d+) \| (\d+) \| ([^|]+) \|$/.exec(row);
+    const found = /^\| `\.(bar-line|bar-team|bar-school)` \| (\d+) \| (\d+) \| ([^|]+) \|$/.exec(row);
     if (found) rows[found[1]] = { top: Number(found[2]), height: Number(found[3]), without: found[4].trim() };
   });
-  assert.deepEqual(Object.keys(rows).sort(), ['bar-line', 'bar-sample', 'bar-school', 'bar-team'], 'the docs have a row for each part that moves, and for the line');
+  assert.deepEqual(Object.keys(rows).sort(), ['bar-line', 'bar-school', 'bar-team'], 'the docs have a row for each part that moves, and for the line');
   stack.forEach(name => assert.deepEqual([rows['bar-' + name].top, rows['bar-' + name].height], [places[name].top, places[name].height], name + ' in the docs and in bar-column.css'));
   assert.equal(rows['bar-team'].without, 'top ' + valueIn(blockOf('.bar-team'), 'top'));
   assert.equal(rows['bar-school'].without, 'top ' + valueIn(blockOf('.bar-school'), 'top') + ', height ' + valueIn(blockOf('.bar-school'), 'height'));
-  assert.equal(rows['bar-sample'].without, 'top ' + valueIn(blockOf('.bar-sample'), 'top'));
 });
 
 test('the side column shows the banner line of the pack that is on the screen in its line part, sets data-line, and writes nothing when it is the same', async () => {
