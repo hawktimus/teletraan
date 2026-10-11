@@ -80,7 +80,7 @@ is found there. The words in the menu are the titles of the types in
 The `add` of a folder can also name a template from `studio/add-templates.js`,
 which is a new document with its own words and starting values. `sanity.config.js` gives
 the templates to the Studio and keeps them out of the New menus, so only the folder or list
-that names one offers it. Every list under Tasks, Events and Roster has an `add` with one
+that names one offers it. Every list under TASKS, EVENTS and ROSTER has an `add` with one
 template, so its plus button makes that type with no team and the switch on the screen
 turned on (a tip, for Tips and News). The exception is Monday Tasks, whose lists have
 no plus button. No New menu offers a task either, because the Mini makes them.

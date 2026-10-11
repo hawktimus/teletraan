@@ -162,7 +162,7 @@ public").
 
 ## Monday Tasks and Monday Boards
 
-Both are under Tasks in the sidebar. Nobody types a task: the Mini makes each one
+Both are under TASKS in the sidebar. Nobody types a task: the Mini makes each one
 from an item on a Monday board, and the screen shows only those.
 
 - Monday Tasks has two lists, On the TV and Hidden, each sorted by board. A task

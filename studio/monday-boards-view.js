@@ -1,4 +1,4 @@
-// The Monday Boards page, under Tasks in the sidebar (structure.js). It is a page of its own, not a
+// The Monday Boards page, under TASKS in the sidebar (structure.js). It is a page of its own, not a
 // document. It lists every board the token of the Mini can see, with the number of items, when the
 // Mini last read it and whether Dashboard Settings has chosen it. The Mini writes what it shows into
 // the document monday-status (schemas/mondayStatus.js, deploy/scripts/monday-sync.sh).

@@ -155,9 +155,9 @@ to publish on it. It has five parts, top to bottom:
 2. A picture of the screen. The boxes A to E are the banner, the main panel, the
    countdown, the side panel and the ticker, drawn in the shape of the screen.
    Each box names the sidebar items that fill it.
-3. The three steps of every meeting: open Daily Agenda or Tasks, make the change,
-   click Publish all in the top bar. You edit on Draft, and the screen shows
-   Published.
+3. The three steps of every meeting: open Daily Agenda or Monday Tasks, make the
+   change, click Publish all in the top bar. You edit on Draft, and the screen
+   shows Published.
 4. A row of five buttons, described below.
 5. One line: anything under Coaches only is for a coach.
 

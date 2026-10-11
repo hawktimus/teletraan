@@ -171,7 +171,7 @@ going stops at once.
 4. Wait 10 minutes. Open Dashboard Settings in Studio, Monday tab. The block at the
    top says who the token belongs to, when the Mini last read Monday, how many boards
    are chosen and how many tasks the Mini has made. Until then it says No connection
-   yet. Monday Boards, under Tasks in the sidebar, lists the boards the token can see.
+   yet. Monday Boards, under TASKS in the sidebar, lists the boards the token can see.
 5. Add an entry under Boards. Pick the board by name, pick the team, and choose where the
    status comes from. Group names is the starting choice: the group an item is in, such as
    To Do, In Progress or Done, gives its status. For A status column, pick the column, and
@@ -183,7 +183,7 @@ going stops at once.
    settings of the column. The block at the top then has a line for each entry: the
    items the Mini read, the tasks on the TV and when it last read the board.
 6. Click Publish. Within 10 minutes the tasks are in Monday Tasks, On the TV. Turn Show
-   on TV off on a row to keep it off the screen. Monday Boards, under Tasks in the
+   on TV off on a row to keep it off the screen. Monday Boards, under TASKS in the
    sidebar, lists every board the token can see and which ones are chosen.
 
 Up to 10 boards can be read. An entry needs its board, its team and its status column.
