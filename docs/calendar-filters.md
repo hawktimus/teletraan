@@ -136,10 +136,13 @@ The Mini has no Node, unless a coach installed it for the Calendars page.
 
     deploy/scripts/check-calendars.sh
 
-It prints a line for each event, SHOWN or HIDDEN, and for a hidden one the name of
+It prints the kind of each calendar on a KIND line (no chip when the calendar has
+none), a line for each event, SHOWN or HIDDEN, and for a hidden one the name of
 the rule that hid it. A SHOWN line also says where the event is on the Events
-panel and the kind of its calendar, after the time and before the title:
+panel and the kind of its calendar, after the time and before the title, or no
+chip when the calendar has no kind:
 
+    KIND    group  Meetings
     SHOWN   group  FRI APR 2  6:30 PM  page 1 pinned · Meetings  Kickoff
 
 The place is page 1, page 1 pinned, page 2, later (the event shows, but it is not

@@ -5,12 +5,12 @@
 //   node check-calendars.mjs address
 //       prints the address that asks Sanity for the content, as the dashboard does
 //   node check-calendars.mjs <Sanity answer file> <calendar code> <calendar file> [folder]
-//       prints a line for each event of the next 30 days, SHOWN or HIDDEN, and then
-//       how many of each. A SHOWN line also says which page of the Events panel the
-//       event is on, and the kind of its calendar. The page depends on every calendar
-//       that is switched on, so the folder holds the downloaded file of each one,
-//       named <code>.ics. Without the folder only this calendar is counted.
-//       Only the code, the dates, the titles and the rule names are printed.
+//       prints the kind of the calendar (a KIND line, or no chip when it has none), a line
+//       for each event of the next 30 days, SHOWN or HIDDEN, and then how many of each. A
+//       SHOWN line also says which page of the Events panel the event is on, and the kind of
+//       its calendar. The page depends on every calendar that is switched on, so the folder
+//       holds the downloaded file of each one, named <code>.ics. Without the folder only this
+//       calendar is counted. Only the code, the dates, the titles and the rule names are printed.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -90,6 +90,7 @@ function check(content, id, text, folder) {
     line('NOTE', id, 'is switched off in Dashboard Settings, Calendars, so the screen shows none of it');
   }
   const isRead = Boolean(row) && row.show !== false;
+  if (row) line('KIND', id, kindTitle(kindOf({ calendarId: id }, content.settings.calendars)));
   const places = placesOf(content, id, text, folder, now);
 
   const events = readEvents(text, id, row ? row.name : '', now, daysAhead)

@@ -373,7 +373,7 @@ const pageEnv = [
 function placesIn(result, id) {
   const places = {};
   linesFor(result, 'SHOWN', id).forEach(shownLine => {
-    const found = shownLine.match(/ {2}(page \d(?: pinned)?|later|no page) · ([A-Za-z]+) {2}(.*)$/);
+    const found = shownLine.match(/ {2}(page \d(?: pinned)?|later|no page) · ([A-Za-z ]+?) {2}(.*)$/);
     assert.ok(found, 'a SHOWN line has its page and kind before the title: ' + shownLine);
     places[found[3]] = found[1] + ' · ' + found[2];
   });
@@ -448,15 +448,36 @@ test('with Group events by kind on, the Meetings are page one and the Competitio
   });
 });
 
-test('a hidden event has no page, and a calendar with no kind is Other', () => {
+test('a hidden event has no page, and a calendar with no kind is no chip', () => {
   const rules = [{ name: 'Hide Meeting 1', action: 'hide', words: ['Meeting 1'] }];
   const settings = { calendars: [{ id: 'group', name: 'Group', show: true }, { id: 'comp', name: 'Competitions', show: true, kind: 'competitions' }] };
   const result = pagesFor('pages-hidden', rules, settings);
 
   assert.ok(linesFor(result, 'HIDDEN', 'group')[0].endsWith('Meeting 1  (hidden by Hide Meeting 1)'), 'a HIDDEN line is as it was');
-  assert.ok(!/HIDDEN.*(page|later|Other)/.test(linesFor(result, 'HIDDEN', 'group')[0]));
-  assert.equal(placesIn(result, 'group')['Meeting 2'], 'page 1 · Other');
-  assert.equal(placesIn(result, 'group')['Meeting 5'], 'page 2 · Other', 'and the event that was hidden does not take a place');
+  assert.ok(!/HIDDEN.*(page|later|no chip)/.test(linesFor(result, 'HIDDEN', 'group')[0]));
+  assert.equal(placesIn(result, 'group')['Meeting 2'], 'page 1 · no chip');
+  assert.equal(placesIn(result, 'group')['Meeting 5'], 'page 2 · no chip', 'and the event that was hidden does not take a place');
+});
+
+test('a KIND line says the kind of each calendar, or no chip when it has none, says other or has a kind that is not in the list', () => {
+  const result = pagesFor('pages-kind', [], {});
+  assert.deepEqual(linesFor(result, 'KIND', 'group'), ['KIND    group  Meetings']);
+  assert.deepEqual(linesFor(result, 'KIND', 'comp'), ['KIND    comp  Competitions']);
+  assert.deepEqual(linesFor(result, 'KIND', 'gone'), ['KIND    gone  Outreach'], 'also for a calendar that is switched off');
+
+  // no kind, the old starting value other and a kind that is not in the list are all no chip
+  [undefined, 'other', 'party'].forEach(kind => {
+    const row = kind === undefined ? { id: 'group', name: 'Group', show: true } : { id: 'group', name: 'Group', show: true, kind: kind };
+    const plain = pagesFor('pages-kind-' + String(kind), [], { calendars: [row, { id: 'comp', name: 'Competitions', show: true, kind: 'competitions' }] });
+    assert.deepEqual(linesFor(plain, 'KIND', 'group'), ['KIND    group  no chip'], String(kind));
+    assert.equal(placesIn(plain, 'group')['Meeting 1'], 'page 1 · no chip', String(kind));
+    assert.deepEqual(linesFor(plain, 'KIND', 'comp'), ['KIND    comp  Competitions']);
+  });
+
+  // a calendar with no row in Dashboard Settings is not read by the screen, so it has no kind line, only the note
+  const none = pagesFor('pages-kind-no-row', [], { calendars: [{ id: 'comp', name: 'Competitions', show: true, kind: 'competitions' }] });
+  assert.deepEqual(linesFor(none, 'KIND', 'group'), []);
+  assert.equal(linesFor(none, 'NOTE', 'group').length, 1);
 });
 
 test('a calendar that could not be downloaded is left out of the pages, and the others are still checked', () => {

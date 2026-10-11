@@ -221,19 +221,22 @@ as before: the date on the left, the title, and under it the time and the place.
 With four or fewer events there is no page two, and the panel runs once. With no
 events the panel does not run.
 
-- Each row has a small chip before the title. It is the kind of the calendar the
-  event comes from, in the team's accent color: MEETING, COMP, OUTREACH, DEADLINE
-  or OTHER. COMP is Competitions, cut short because it is the longest word and
+- A row has a small chip before the title when the calendar the event comes from
+  has a kind. The chip is in the team's accent color: MEETING, COMP, OUTREACH or
+  DEADLINE. COMP is Competitions, cut short because it is the longest word and
   the chip takes its room from the title. The chip, the date and the text keep
-  their size. A title that does not fit on its line is cut off with three dots at
-  the end, and a pinned event gives up a little more room to its pin.
-- The kind is set for each calendar in Dashboard Settings, Calendars. A calendar
-  with no kind is Other.
+  their size. A row from a calendar with no kind has no chip, and its title
+  starts at the left. A title that does not fit on its line is cut off with three
+  dots at the end, and a pinned event gives up a little more room to its pin.
+- The kind is set for each calendar in Dashboard Settings, Calendars, and starts
+  blank. Pick a kind to show a chip on each event from that calendar. Leave it
+  blank for no chip. Other, which a calendar used to start with, is the same as
+  blank: no chip.
 - Group events by kind is a switch in the same tab, off to start with. Off: both
   pages are in date order, whatever the kinds. On: page one is the next 4
   Meetings, Deadlines and Other events, and page two the next 4 Competitions and
-  Outreach events. Other goes with page one, so an event from a calendar with no
-  kind never waits on a page that may not run. Within a page the events are in
+  Outreach events. An event from a calendar with no kind counts as Other and goes
+  with page one, so it never waits on a page that may not run. Within a page the events are in
   order of start. If one kind has more than four events, the later ones are not
   shown. A page with none of its kinds does not run.
 - A coach can pin an event to page one with an Always show rule that has Pin to
@@ -393,12 +396,14 @@ only adds items and never changes one that is already there.
 
 ## Photos
 
-The Photo panel shows one photo at a time, with its caption under it and the
-photographer's first name at the lower left of the picture ("Photo: Sam").
-Photos are uploaded to Studio. Nothing is kept on the Mini. A photo is either cut
-to a card that has the same shape for every photo, or shown whole in a card of
-its own shape. Photo fit in Dashboard Settings picks one for all photos, and a
-photo can pick its own (see "Fill the frame or show the whole photo" below).
+The Photo panel shows one photo at a time, and the photo fills the whole panel
+under the header, up to the frame. The caption and the photographer's first name
+("Photo: Sam") are on a plate at the lower left of the photo. Photos are uploaded
+to Studio. Nothing is kept on the Mini. A photo is either cut to fill the panel,
+or shown whole with the color of the panel round it. Photo fit in Dashboard
+Settings picks one for all photos, and a photo can pick its own (see "Fill the
+frame or show the whole photo" below). When the panel stays up long enough it
+shows several photos, one after another (see "Order, time on screen and size").
 
 ### Adding a photo
 
@@ -409,12 +414,14 @@ photo can pick its own (see "Fill the frame or show the whole photo" below).
    shrink it first.
 3. Open the crop and hotspot tool (the crop button on the picture). Crop out
    anything you do not want, and drag the circle onto the main subject, such as
-   a face. When the photo is cut to its card, the screen keeps the circle in view.
-4. Caption is optional: a short line under the picture, up to 36 characters. No
-   last names.
+   a face. When the photo is cut to fill the panel, the screen keeps the circle
+   in view.
+4. Caption is optional: a short line on the plate at the lower left of the photo,
+   up to 36 characters. No last names.
 5. Credit is optional: the first name of the person who took the photo, up to
    14 characters. Studio refuses a space or a number, so use a hyphen in a name
-   such as Mary-Anne. The screen shows it as "Photo: Sam".
+   such as Mary-Anne. The screen shows it as "Photo: Sam" under the caption. A
+   photo with no caption and no credit has no plate.
 6. Fit is optional. Leave it on Same as Dashboard Settings to follow the Photo fit
    setting. Pick Fill the frame or Show the whole photo to give this photo its own.
 7. Click Publish. There is no approval step: a photo shows on the TV as soon as
@@ -439,7 +446,7 @@ are none, the panel is skipped.
   phone: open the Camera app, open its settings and turn off Location tags (the
   name changes a little between makes).
 - Take the photo in landscape, with the phone turned sideways. With Fill the
-  frame the picture box on the TV is about twice as wide as it is tall. A square
+  frame the photo box on the TV is about twice as wide as it is tall. A square
   photo loses about half its height and a tall photo loses most of it, so
   landscape is best and the circle in the crop and hotspot tool matters most for
   the others. If a photo has to be tall or square, set its Fit to Show the whole
@@ -449,7 +456,7 @@ are none, the panel is skipped.
 
 ### Order, time on screen and size
 
-The Screen tab of Dashboard Settings has four photo settings, and a Portraits box
+The Screen tab of Dashboard Settings has three photo settings, and a Portraits box
 for the people panels (see "Portraits" below):
 
 - Photo order is Random (the default) or Newest first. Random never shows the
@@ -457,31 +464,30 @@ for the people panels (see "Portraits" below):
   the one uploaded first, then starts over. "Newest" is the time the photo was
   added to Studio, not the time it was taken. A photo added while the screen
   is running comes at the start of the next round.
-- Seconds per photo is how long the Photo panel stays up, from 6 to 120, and
-  starts at 16. A Photo row in Panel order, in the Screen tab, that has seconds of its own wins
-  over it. With the row's seconds empty, the Photo panel follows Seconds per
-  photo and not Seconds per page.
-- Photo size, percent is how big the picture in the Photo panel is, from 60 to
-  100, starting at 100. 100 is the full size and the largest that fits the
-  frame, so the picture cannot be made bigger than that. A smaller picture is in
-  the middle of the panel with its caption directly under it. A photo shown
-  whole is made smaller by it in the same way. The caption and the "Photo:"
-  credit keep their size. With Fill the frame the caption starts a little way
-  in from the left edge of the picture and always ends in the same place, so a
-  smaller picture leaves it less room. At 80 or more the longest caption Studio
-  allows (36 characters) still fits. Below 80 a caption of more than about 30
-  characters may be cut with three dots, so check a long caption after you
-  change the size.
+- Seconds per photo is how long the Photo panel stays up each time it comes
+  round, from 6 to 120, and starts at 16. A Photo row in Panel order, in the
+  Screen tab, that has seconds of its own wins over it. With the row's seconds
+  empty, the Photo panel follows Seconds per photo and not Seconds per page.
+  With more than one photo the panel shares that time between them, evenly,
+  and no photo is up for less than 8 seconds. Three photos at 30 seconds are
+  10 seconds each. Seven photos at 30 seconds would be under 8 seconds each, so
+  the panel shows three, 10 seconds each, and the next time it comes round it
+  carries on with the next three, then the last one and the first two, and so
+  on until every photo has had its turn. At 16 seconds, the starting value, it
+  shows two photos of 8 seconds. A stay under 8 seconds shows one photo. The
+  photos are in the order of Photo order. The Speed setting stretches the time
+  as it does for every panel. One photo takes the place of the one before it by
+  fading in over it.
 - Photo fit is Fill the frame (the starting choice) or Show the whole photo. It
   applies to every photo that has Same as Dashboard Settings in its Fit field.
   Dashboard Settings saved before Photo fit existed shows no choice marked, and
   the screen counts that as Fill the frame. Pick one and click Publish to mark it.
 
-Studio only accepts whole numbers for the Photo size, from 60 to 100. If a value
-outside that range ever reaches the screen it uses the nearest end, and an empty
-or odd value is 100. To see a size, set it, click Publish, and wait for
-the panel to come round, or try it on the sample content first (see "Sample
-content" below).
+Photo size, percent is not used any more and is hidden: a photo now fills the
+whole panel. The number saved in it stays, and the screen does not read it.
+
+To see a change, set it, click Publish, and wait for the panel to come round, or
+try it on the sample content first (see "Sample content" below).
 
 ### Portraits
 
@@ -534,41 +540,33 @@ Try a size on the sample content first (see "Sample content" below).
 
 ### Fill the frame or show the whole photo
 
-Fill the frame is how the Photo panel always drew a photo. The card is the same
-shape for every photo: 1096 wide and 464 high at size 100, or 514 high when the
-photo has no caption. The photo is cut to it, and the circle from the crop and
-hotspot tool stays in view.
+Fill the frame cuts the photo to fill the whole body of the panel, from the
+header down to the frame, and from side to side. The photo goes right up to the
+metal of the frame and is cut to its corners. How much is cut depends on the
+shape of the photo. The circle from the crop and hotspot tool stays in view.
 
-Show the whole photo gives the card the shape of the photo, the part that is
-left after your crop. The card is the biggest card of that shape that fits in
-the same box, so it is never bigger than the card of Fill the frame. No side of
-the picture is cut away. Only the small cut corner at the bottom right, which
-every card has, covers a little of it. Photo size, percent makes it smaller.
-The card stays in the middle of the panel, and the caption is centred under it.
-The circle is not used, because nothing is cut. A tall photo gives a narrow
-card, with empty space at each side.
+Show the whole photo fits all of the photo, the part that is left after your
+crop, inside the same body. Nothing is cut away. The empty space beside a tall
+photo, or above and below a wide one, is the color of the panel, with nothing
+drawn round the picture. The circle is not used, because nothing is cut.
 
-- An extremely wide or tall photo does not turn into a thin strip. At size 100
-  the short side of the card is at least 240 pixels. The picture keeps its own
-  shape inside that card, and the card colour shows beside it, or above and
-  below it.
-- A card narrower than 370 pixels has no "Photo:" credit, because the name would
-  be cut to its first letters or to three dots. At size 100 a 9 by 16 phone
-  photo with a caption is 261 wide and a 3 by 4 photo with a caption is 348
-  wide, so neither has its credit. A 3 by 4 photo with no caption is 386 wide
-  and a square photo with a caption is 464 wide, and both have it. At size 60 a
-  3 by 4 photo with a caption is 209 wide and does not. On a card up to about 600
-  pixels wide a long first name is cut with three dots.
+The caption and the credit are on a plate in the lower left corner of the
+photo, in the color of the team's plates. The caption is 44 pixels high and
+stays on one line: one that is too long ends in three dots. The credit is under
+it, smaller. When both are empty there is no plate. The plate is a little way in
+from the corner, so the cut corners of the frame never touch it.
 
 A photo's own Fit wins over the setting. A new photo starts on Same as Dashboard
 Settings. A photo saved before Fit existed shows no choice marked, and counts as
 Same as Dashboard Settings.
 
-While one photo is up, the screen starts downloading the next one, so it is
-ready at the page change. If a photo cannot be loaded, the card says so and the
-next page change tries the next photo. While a page shows the sample content
-(`?sample=1`), the Photo panel shows three sample photos of different shapes
-instead. The second one is set to Show the whole photo.
+While a turn is up, the screen starts downloading the photo that opens the next
+turn, so it is ready at the page change. A photo that cannot be loaded is left
+out: the photos after it come in earlier, so the last one stays up longer. If
+none can be loaded, the panel says so. The pictures are asked for no wider than 1920 pixels.
+While a page shows the sample content (`?sample=1`), the Photo panel shows three
+sample photos of different shapes instead. The second one is set to Show the
+whole photo.
 
 ## Photos of people
 
@@ -922,10 +920,11 @@ problem would touch.
   switch is on. The code is lowercase letters, digits and underscores. Do not
   change a calendar's code unless you were told to. If you delete every row, no
   events show. To add a calendar, see docs/calendar-links.md.
-- Kind: on each calendar row. Meetings, Competitions, Outreach, Deadlines or
-  Other, and Other to start with. The Events panel writes it as a chip before the
-  title of each event of that calendar (see "The two pages of the Events panel").
-  A calendar saved before kinds existed has none, and counts as Other.
+- Kind: on each calendar row. Meetings, Competitions, Outreach or Deadlines. It
+  starts blank, and a calendar with a kind has a chip before the title of each of
+  its events (see "The two pages of the Events panel"). Blank means no chip. Other
+  (no chip) is the old starting choice and means the same as blank, so a calendar
+  that was saved as Other has no chip, and so has one saved before kinds existed.
 - Group events by kind: off to start with. Off: the Events panel shows the next 8
   events in date order, 4 to a page. On: page one has the next 4 Meetings,
   Deadlines and Other events, and page two the next 4 Competitions and Outreach

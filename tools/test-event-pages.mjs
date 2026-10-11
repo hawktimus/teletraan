@@ -222,7 +222,7 @@ test('the panel draws the page it is given, four rows to a page, with the same h
 
 // The kind
 
-test('the kind of an event is the kind of its calendar, and Other when the calendar has none, a kind that is not in the list, or no row', () => {
+test('the kind of an event is the kind of its calendar, and no kind (other) when the calendar has none, says other, has a kind that is not in the list, or has no row', () => {
   const kinds = calendarRows.map(row => kindOf({ calendarId: row.id }, calendarRows));
   assert.deepEqual(kinds, ['meetings', 'competitions', 'outreach', 'deadlines', 'other', 'other', 'other']);
 
@@ -231,27 +231,40 @@ test('the kind of an event is the kind of its calendar, and Other when the calen
   assert.equal(kindOf({ calendarId: 'meetings' }, undefined), 'other');
   assert.equal(kindOf({ calendarId: 'meetings' }, [null, 'text', {}]), 'other');
   assert.deepEqual(config.calendarKinds, ['meetings', 'competitions', 'outreach', 'deadlines', 'other']);
-  assert.equal(config.defaultCalendarKind, 'other');
+  assert.equal(config.noCalendarKind, 'other');
+  assert.equal('defaultCalendarKind' in config, false, 'a calendar has no starting kind');
 });
 
-test('each kind has a chip word and a name, and anything else is OTHER', () => {
-  assert.deepEqual(config.calendarKinds.map(chipWord), ['MEETING', 'COMP', 'OUTREACH', 'DEADLINE', 'OTHER']);
-  assert.deepEqual(config.calendarKinds.map(kindTitle), ['Meetings', 'Competitions', 'Outreach', 'Deadlines', 'Other']);
-  ['parties', '', undefined, null].forEach(kind => {
-    assert.equal(chipWord(kind), 'OTHER');
-    assert.equal(kindTitle(kind), 'Other');
+test('each kind has a chip word and a name, and other and anything else has no chip', () => {
+  assert.deepEqual(config.calendarKinds.map(chipWord), ['MEETING', 'COMP', 'OUTREACH', 'DEADLINE', '']);
+  assert.deepEqual(config.calendarKinds.map(kindTitle), ['Meetings', 'Competitions', 'Outreach', 'Deadlines', 'no chip']);
+  ['parties', '', undefined, null, 'constructor', 'toString', '__proto__'].forEach(kind => {
+    assert.equal(chipWord(kind), '', String(kind));
+    assert.equal(kindTitle(kind), 'no chip', String(kind));
   });
 });
 
-test('every row has a chip with the word of its calendar kind, before the title', () => {
+test('a row has a chip with the word of its calendar kind, before the title, and no chip when the calendar has no kind', () => {
   const events = ['meetings', 'competitions', 'outreach', 'deadlines', 'other', 'plain'].map((id, index) => band(index + 1, index + 1, id));
   const html = drawn(contentFor(events), 1);
 
   assert.deepEqual(chipsIn(html), ['MEETING', 'COMP', 'OUTREACH', 'DEADLINE']);
-  assert.deepEqual(chipsIn(drawn(contentFor(events), 2)), ['OTHER', 'OTHER']);
   assert.equal(countOf(html, 'class="kind-chip"'), countOf(html, 'class="row"'), 'one chip in each row');
   assert.ok(html.indexOf('class="kind-chip"') < html.indexOf('class="event-name"'), 'the chip comes before the title');
   assert.equal(/<span class="kind-chip">[^<]*<\/span>\s*<span class="event-name">/.test(html), true);
+
+  // the calendar that says other, the one that is not in the list and the one with no kind: no chip, and no empty one
+  const second = drawn(contentFor(events), 2);
+  assert.deepEqual(titlesIn(second), ['Event 5', 'Event 6']);
+  assert.equal(countOf(second, 'class="row"'), 2);
+  assert.equal(countOf(second, 'kind-chip'), 0);
+  assert.ok(/<div class="event-title">\s*<span class="event-name">Event 5<\/span>/.test(second), 'the title is the first thing on its line');
+
+  // a calendar with a kind and one without, together on a page
+  const mixed = drawn(contentFor([band(1, 1, 'odd'), band(2, 2, 'meetings'), band(3, 3, 'plain'), band(4, 4, 'outreach')]), 1);
+  assert.deepEqual(titlesIn(mixed), ['Event 1', 'Event 2', 'Event 3', 'Event 4']);
+  assert.deepEqual(chipsIn(mixed), ['MEETING', 'OUTREACH']);
+  assert.equal(countOf(mixed, 'class="row"'), 4);
 });
 
 test('what editors typed in the title is escaped, and the chip is plain words the editors cannot change', () => {
@@ -436,7 +449,7 @@ test('each calendar keeps its kind through the reader, Group events by kind star
   ['yes', 1, null, undefined].forEach(value => {
     assert.equal(normalizeContent({ settings: { groupEventsByKind: value } }, new Date()).settings.groupEventsByKind, false, String(value));
   });
-  config.defaultSettings.calendars.forEach(row => assert.ok(config.calendarKinds.includes(row.kind), 'the starting calendar has a kind'));
+  config.defaultSettings.calendars.forEach(row => assert.equal('kind' in row, false, 'the starting calendar has no kind'));
 });
 
 test('the sample content has a kind on its calendar and enough events for both pages, in date order', () => {

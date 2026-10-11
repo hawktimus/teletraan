@@ -1133,7 +1133,7 @@ function checkLookAndTiming() {
 
     need(problems, start === entry[2], 'the default ' + name + ' in config.js should be ' + entry[2] + ', not ' + start);
     need(problems, limit && low && high && low.args[0] === limit.min && high.args[0] === limit.max, name + ' should have the limits in config.js, ' + JSON.stringify(limit));
-    need(problems, constraintNamed(rules, 'required'), name + ' should be required');
+    need(problems, constraintNamed(rules, 'required') || (field && field.hidden === true), name + ' should be required, unless it is hidden');
     need(problems, !!constraintNamed(rules, 'integer') === entry[3], name + (entry[3] ? ' should be a whole number' : ' should allow decimals, so no integer rule'));
   });
 
@@ -2625,7 +2625,7 @@ function checkPhotos() {
   need(problems, newest, 'photo needs an ordering by _createdAt, newest first');
   need(problems, type.preview && type.preview.select && type.preview.select.media === 'image', 'the photo list should show each picture (select media: image)');
 
-  // The five photo settings come in this order
+  // The photo settings come in this order
   const settings = typeByName('dashboardSettings');
   const inOrder = fieldsIn(settings).map(field => field.name).filter(name => photoNames.indexOf(name) !== -1);
   need(problems, inOrder.join() === photoNames.join(), 'the photo settings should come in this order: ' + photoNames.join(', ') + ', not ' + inOrder.join(', '));
@@ -2634,13 +2634,14 @@ function checkPhotos() {
   need(problems, setting('portraitScale') && setting('portraitScale').title === 'Portrait size, percent', 'portraitScale should be titled Portrait size, percent');
   need(problems, setting('photoScale') && setting('photoScale').title === 'Photo size, percent', 'photoScale should be titled Photo size, percent');
 
-  // The Photo size: a whole percent from 60 to 100 that starts at 100, with a one line description that says what 100 is.
+  // The Photo size is hidden, because a photo fills the panel: it stays in the schema with its limits and its starting
+  // value, so what was saved in it stays, and it is not required, because nobody can fill in a hidden field.
   // The portrait sizes have their own range and words, in checkPortraitSettings.
   ['photoScale'].forEach(name => {
     const words = setting(name) ? setting(name).description || '' : '';
-    need(problems, words.length > 0 && words.indexOf('\n') === -1, name + ' needs a one-line description');
-    need(problems, /100 is the full size/.test(words) && /largest that fits/.test(words), name + ' description should say that 100 is the full size and the largest that fits the frame');
-    need(problems, /from 60 to 100/.test(words), name + ' description should give the range, from 60 to 100');
+    need(problems, setting(name) && setting(name).hidden === true, name + ' should be hidden but stay in the schema');
+    need(problems, !constraintNamed(rulesOf(setting(name)), 'required'), name + ' should not be required: nobody can fill in a hidden field');
+    need(problems, words.length > 0 && words.indexOf('\n') === -1 && /Not used any more/.test(words), name + ' needs a one-line description that says it is not used any more');
     need(problems, config.limits[name] && config.limits[name].min === 60 && config.limits[name].max === 100, 'limits.' + name + ' in config.js should be 60 to 100');
     need(problems, config.defaultSettings[name] === 100, 'the default ' + name + ' in config.js should be 100');
     need(problems, world.sample.settings[name] === 100, 'the sample settings need ' + name + ' of 100');
@@ -5088,15 +5089,15 @@ function checkCalendarsHide() {
   const left = nodesWhere(page, node => node.props && node.props['data-side'] === 'calendars')[0];
   const rowButtons = left ? buttonsOf(left) : [];
   need(problems, rowButtons.length === 2 && /Kind: Meetings/.test(wordsIn(rowButtons[0])), 'a row of the left side should say the kind: Kind: Meetings');
-  need(problems, rowButtons[1] && /Kind: Other \(not set\)/.test(wordsIn(rowButtons[1])), 'a calendar with no kind should say Kind: Other (not set)');
+  need(problems, rowButtons[1] && /Kind: no chip/.test(wordsIn(rowButtons[1])), 'a calendar with no kind should say Kind: no chip');
   const right = nodesWhere(page, node => node.props && node.props['data-side'] === 'events')[0];
   need(problems, right && /Kind Meetings/.test(wordsIn(nodesWhere(right, node => node.type === 'p').slice(0, 5))), 'the facts of the right side should say Kind and the kind');
   const paragraphs = nodesWhere(page, node => node.type === 'p').map(wordsIn);
-  need(problems, paragraphs[1] === parts.kindLine && /no kind shows Other/.test(parts.kindLine) && /Dashboard Settings/.test(parts.kindLine) && /Calendars tab/.test(parts.kindLine), 'a muted note under the help line should say that a calendar with no kind shows Other and where to set it');
+  need(problems, paragraphs[1] === parts.kindLine && /Leave it blank for no chip/.test(parts.kindLine) && /Dashboard Settings/.test(parts.kindLine) && /Calendars tab/.test(parts.kindLine), 'a muted note under the help line should say that a kind left blank has no chip and where to set it');
   const allKinds = view.calendarsPage({ entries: [entries[0], Object.assign({}, entries[1], { kind: 'outreach' })], status: status, entriesUnreadable: false, statusUnreadable: false }, 'team', () => {}, now, hiding());
   need(problems, nodesWhere(allKinds, node => node.type === 'p').map(wordsIn).indexOf(parts.kindLine) === -1, 'the note about the kind should go when every calendar has one');
   const unknown = view.calendarsPage({ entries: [Object.assign({}, entries[0], { kind: 'party' })], status: status, entriesUnreadable: false, statusUnreadable: false }, 'team', () => {}, now);
-  need(problems, /Kind: Other \(not set\)/.test(wordsIn(nodesWhere(unknown, node => node.type === 'button'))), 'a kind that is not in the list should read as Other (not set), as it does on the screen');
+  need(problems, /Kind: no chip/.test(wordsIn(nodesWhere(unknown, node => node.type === 'button'))), 'a kind that is not in the list should read as no chip, as it does on the screen');
 
   // The events: the buttons each one has
   const items = itemsOf(page);
@@ -5349,7 +5350,7 @@ function checkEventPages() {
   const problems = [];
   const config = world.dashboard;
   const rulesOf = field => (field ? constraintsOf(field) : []);
-  const titles = { meetings: 'Meetings', competitions: 'Competitions', outreach: 'Outreach', deadlines: 'Deadlines', other: 'Other' };
+  const titles = { meetings: 'Meetings', competitions: 'Competitions', outreach: 'Outreach', deadlines: 'Deadlines', other: 'Other (no chip)' };
 
   const kind = fieldAt('dashboardSettings.calendars.kind');
   const offered = choicesOf('dashboardSettings.calendars.kind');
@@ -5357,12 +5358,19 @@ function checkEventPages() {
   need(problems, offered.map(item => item.value).join() === config.calendarKinds.join(), 'calendars.kind should offer the kinds in config.js, in the same order: ' + config.calendarKinds.join(', '));
   offered.forEach(item => need(problems, item.title === titles[item.value], 'the kind ' + item.value + ' should be titled ' + titles[item.value]));
   need(problems, kind && kind.options && kind.options.layout === 'radio', 'calendars.kind should be a radio list');
-  need(problems, kind && kind.initialValue === config.defaultCalendarKind && config.defaultCalendarKind === 'other', 'calendars.kind should start as other, and so should defaultCalendarKind in config.js');
+  // A calendar has no kind until somebody picks one, so there is no starting value and its events have no chip. Other is
+  // the old starting value: it stays offered and valid, and the screen counts it as no kind (noCalendarKind in config.js)
+  need(problems, kind && kind.initialValue === undefined, 'calendars.kind should have no starting value: a calendar has no kind until somebody picks one');
+  need(problems, config.noCalendarKind === 'other' && !('defaultCalendarKind' in config), 'config.js should name noCalendarKind as other, and have no defaultCalendarKind');
+  need(problems, kind && kind.description === 'Pick a kind to show a chip on each event from this calendar. Leave it blank for no chip.', 'the calendars.kind description should read: Pick a kind to show a chip on each event from this calendar. Leave it blank for no chip.');
+  const calendars = fieldAt('dashboardSettings.calendars');
+  need(problems, calendars && calendars.initialValue.every(row => !('kind' in row)), 'the starting calendar row in dashboardSettings.js should have no kind');
   need(problems, kind && !constraintNamed(rulesOf(kind), 'required'), 'calendars.kind should not be required: a calendar saved before kinds existed has none');
   const allowed = constraintNamed(rulesOf(kind), 'valid');
   need(problems, allowed && allowed.args[0].join() === config.calendarKinds.join(), 'calendars.kind should only allow: ' + config.calendarKinds.join(', '));
   need(problems, rulesOf(kind).some(rule => rule.name === 'error' && rule.args[0]), 'calendars.kind has rules and no error message in plain words');
-  need(problems, config.defaultSettings.calendars.every(row => config.calendarKinds.indexOf(row.kind) !== -1), 'each default calendar in config.js should have a kind from calendarKinds');
+  need(problems, config.defaultSettings.calendars.every(row => !('kind' in row)), 'each default calendar in config.js should have no kind');
+  need(problems, sameData(calendars.initialValue, config.defaultSettings.calendars), 'the starting calendar row in dashboardSettings.js should be the default calendar in config.js');
 
   const group = fieldAt('dashboardSettings.groupEventsByKind');
   need(problems, group && group.type === 'boolean' && group.title === 'Group events by kind' && group.group === 'calendars', 'groupEventsByKind should be a switch titled Group events by kind, in the Calendars tab');
@@ -5883,8 +5891,8 @@ function checkPhotoFit() {
   const ownAllowed = constraintNamed(rulesOf(own), 'valid');
   need(problems, ownAllowed && ownAllowed.args[0].join() === ['setting'].concat(config.photoFits).join(), 'photo.fit should only allow setting and the names in config.js');
 
-  const scale = fieldAt('dashboardSettings.photoScale');
-  need(problems, scale && /shown whole/.test(scale.description || ''), 'the photoScale description should say that a photo shown whole is made smaller by it too');
+  // The Photo size does nothing now, so the choices of the Photo fit say what the photo fills
+  need(problems, setting && /whole panel/.test(setting.description || '') && own && /fill the panel/.test(own.description || ''), 'the photoFit and photo.fit descriptions should say that a photo fills the panel');
 
   // The screen asks for the field, and the sample content shows both fits on photos of different shapes
   need(problems, /"photos": \*\[_type == "photo"\][^}]*\bfit,/.test(world.sanitySource), 'the photos part of contentQuery should ask for fit');

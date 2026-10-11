@@ -5,18 +5,19 @@
 //
 // With Group events by kind off the pages go by date. Page one is the pinned events first, then the
 // next ones until it has four, and page two is the four after those. With it on, page one is the next
-// Meetings, Deadlines and Other events and page two the next Competitions and Outreach events, four on
-// each. Other goes with page one so that an event from a calendar nobody gave a kind to is never left
-// to page two, which does not run when it is empty.
+// Meetings, Deadlines and events with no kind, and page two the next Competitions and Outreach events,
+// four on each. An event with no kind goes with page one so that an event from a calendar nobody gave a
+// kind to is never left to page two, which does not run when it is empty.
 //
 // A pinned event is one that an Always show rule with Pin to page one switched on matches (core/events.js,
 // forcingRule). It comes first on page one, the earliest first, whatever its kind. At most three events are
 // pinned, the earliest. The rest are shown or left out like any other event. In the code the word
 // for a pinned event is forced, the name of the field in Studio.
 //
-// The kind of an event is the kind of its calendar in Dashboard Settings, Calendars.
+// The kind of an event is the kind of its calendar in Dashboard Settings, Calendars. A calendar with no
+// kind has no chip on its events.
 
-import { calendarKinds, defaultCalendarKind } from '../config.js';
+import { calendarKinds, noCalendarKind } from '../config.js';
 import { forcingRule } from './events.js';
 import { asDate } from './time.js';
 
@@ -28,13 +29,12 @@ export const mostForcedEvents = 3;
 const secondPageKinds = ['competitions', 'outreach'];
 
 // The words in the chip before a title. Competition is cut to COMP: it is the longest word, and
-// the chip takes its room from the title.
+// the chip takes its room from the title. No kind has no word, so no chip.
 const chipWords = {
   meetings: 'MEETING',
   competitions: 'COMP',
   outreach: 'OUTREACH',
   deadlines: 'DEADLINE',
-  other: 'OTHER',
 };
 
 // The names of the kinds as the Studio shows them. check-calendars.sh prints them.
@@ -43,22 +43,24 @@ const kindTitles = {
   competitions: 'Competitions',
   outreach: 'Outreach',
   deadlines: 'Deadlines',
-  other: 'Other',
 };
 
-// calendars is content.settings.calendars. A calendar with no kind, one that is not in the list, and an
-// event whose calendar has no row are other.
+// calendars is content.settings.calendars. A calendar with no kind, one that is not in the list, one that
+// says other (the old starting value) and an event whose calendar has no row all have no kind, which is
+// noCalendarKind here.
 export function kindOf(event, calendars) {
   const row = (Array.isArray(calendars) ? calendars : []).find(calendar => calendar && calendar.id === event.calendarId);
-  return row && calendarKinds.includes(row.kind) ? row.kind : defaultCalendarKind;
+  return row && calendarKinds.includes(row.kind) ? row.kind : noCalendarKind;
 }
 
+// The word in the chip of a kind, or an empty text when the kind has none: then there is no chip
 export function chipWord(kind) {
-  return chipWords[kind] || chipWords[defaultCalendarKind];
+  return Object.prototype.hasOwnProperty.call(chipWords, kind) ? chipWords[kind] : '';
 }
 
+// The name of a kind, or no chip for a calendar with no kind
 export function kindTitle(kind) {
-  return kindTitles[kind] || kindTitles[defaultCalendarKind];
+  return Object.prototype.hasOwnProperty.call(kindTitles, kind) ? kindTitles[kind] : 'no chip';
 }
 
 // When an event is over. An all-day event has no clock time, so it lasts

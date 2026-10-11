@@ -803,10 +803,11 @@ hand:
 
        deploy/scripts/check-calendars.sh
 
-   It prints a line for each event in the next 30 days, SHOWN or HIDDEN, and
+   It prints a KIND line with the kind of the calendar (no chip when it has none),
+   a line for each event in the next 30 days, SHOWN or HIDDEN, and
    for a hidden one the name of the Calendar filter that hides it. A SHOWN line
    also says where the event is on the Events panel (page 1, page 1 pinned,
-   page 2, later or no page) and the kind of its calendar. Each
+   page 2, later or no page) and the kind of its calendar, or no chip. Each
    calendar ends with a TOTAL line that gives the number shown and hidden. A
    FAIL line says why the download failed. A NOTE line says the screen shows
    none of the calendar, because it has no row in Calendars or the row is

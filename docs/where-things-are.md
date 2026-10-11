@@ -383,9 +383,12 @@ editors can sign in from anywhere.
       test-person-rows.mjs    checks for the rows of the Team Leads and Leadership panels: four rows to a
                               panel, who is in them, the portrait size, and the sizes in base.css
       test-photo-fit.mjs      checks for the Photo fit setting and the Fit of a photo: which mode a photo
-                              has, the numbers of the fill mode that did not change, the card in the shape of
-                              a photo (wide, square, tall and extreme, at 100 and 60 percent), the centred
-                              caption, the credit that a narrow card leaves out, and the sample photos
+                              has, the photo that fills the body of the panel and the cut that photo.css makes
+                              for each frame (worked out from core/plate.js), the plate of the caption and
+                              the credit, the fade in frame.css, and the sample photos
+      test-photo-pages.mjs    checks for the pages of the Photo panel: how a stay is shared between photos
+                              (3 photos at 30 seconds, 7 photos at 30 seconds), the stay worked out from the
+                              Panel order row and the Speed setting, and the turns of both orders
       test-portrait-size.mjs  checks for a portrait size above 100: the rows a page holds, the height of a row,
                               the classes that say how many rows are on a page, that Leadership and Team Leads page through everyone and a
                               change of the setting skips nobody (core/turns.js), and the table in the docs
@@ -636,19 +639,20 @@ alone.
   (`studio/schemas/photo.js`): a picture, an optional caption, a first name
   credit, "Show on screen" and "Hide after". Dashboard Settings, Screen tab: Photo
   order (random or newest first) and Seconds per photo (`photoOrder` and
-  `photoSeconds` in `dashboard/config.js`), the two size settings below and
+  `photoSeconds` in `dashboard/config.js`), the Portraits box below and
   Photo fit (`photoFit`, with `photoFits` in `dashboard/config.js`).
   The screen reads them with the rest of
   the content (`photos` in `core/sanity.js`) and asks Sanity for each at no more
   than 1920 pixels wide (`screenPhotoUrl` in `core/images.js`). `core/photos.js`
-  chooses the photo and the one after it, and the panel in `panels/photo/` starts
-  loading the next one. docs/editing-content.md has the advice for the people who
-  upload. The sample content's `photos` list is what shows on the sample. There is
+  chooses the photos of each turn of the panel (`makePhotoQueue`) and says how
+  many there are and for how long each stays (`turnPlan`, from the stay that
+  `photoStay` works out), and the panel in `panels/photo/` starts loading the
+  photo that opens the next turn. docs/editing-content.md has the advice for the
+  people who upload. The sample content's `photos` list is what shows on the sample. There is
   no photo list file on the Mini.
-- **How big the pictures are.** Dashboard Settings, Screen tab: "Photo size,
-  percent" (`photoScale`), a whole percent from 60 to 100 starting at 100, where
-  100 is the full size and the largest that fits the frame, and the Portraits
-  box. The Portraits box has "Leadership portrait size, percent"
+- **How big the pictures are.** Dashboard Settings, Screen tab: the Portraits
+  box, and "Photo size, percent" (`photoScale`, hidden and not used, because a
+  photo fills the panel). The Portraits box has "Leadership portrait size, percent"
   (`leadershipPortrait`), "Team leads and Roster portrait size, percent"
   (`rosterPortrait`), "Portrait shape" (`portraitShape`: `square`, `rounded` or
   `circle`) and "Portrait frame" (`portraitFrame`: `metal`, `line` or `none`).
@@ -674,12 +678,8 @@ alone.
   (`shape-rounded`, `shape-circle`, `frame-line`, `frame-none`) and hands the
   clip of the picture to `base.css` as `--portrait-clip`, and
   `--portrait-clip-flipped` for the team trim that cuts the other corner
-  (`trim.css`). The Photo panel:
-  `photoLayout` in `core/photos.js` works
-  out where the card and the caption go (1096 by 464, or 514 with no caption, at
-  100). `cardMarkup` draws the card at that size with the same cut corner and
-  edge, and the card sits in the middle of the panel with the caption directly
-  under it.
+  (`trim.css`). The Photo panel has
+  no size of its own: the photo fills the body of the frame (next point).
 - **Fill the frame or show the whole photo.** Dashboard Settings, Screen tab,
   Photo fit (`photoFit`: `fill` or `whole`, starting at `fill`), and the Fit
   field of a Photo (`fit`: `setting`, `fill` or `whole`) in
@@ -687,14 +687,21 @@ alone.
   in `core/content.js` turns an unknown setting into `fill`, and `normalizePhoto`
   in `core/sanity.js` keeps a photo's `fit` only when it is `fill` or `whole`,
   and adds its `size`, the part the editor kept in pixels (`keptSize` in
-  `core/images.js`). `fitOf` and `wholeShape` in `core/photos.js` say how a photo
-  is drawn: a photo shown whole with a usable size gives its shape to
-  `photoLayout`, which makes the card the biggest of that shape inside the card
-  of the fill mode, never narrower than 240 on its short side at 100, and
-  centres the caption under it. `hasRoomForCredit` leaves the credit plate off
-  a card narrower than 370. `panels/photo/photo.js` only draws, and
-  `photo.css` shows the picture with `object-fit: contain` in the whole mode.
-  `tools/test-photo-fit.mjs` has the tests.
+  `core/images.js`), which the panel no longer reads. `fitOf` in `core/photos.js` says
+  how a photo is drawn. `panels/photo/photo.js` only draws: one `figure.shot` for
+  each photo of the turn, each with `data-fit`, on top of each other in
+  `.photo-body`, which is one slat. In `photo.css` a shot is cut with `object-fit:
+  cover` or, shown whole, `contain` on the color of the body of the frame.
+  `.photo-body` is the whole panel under the header and is cut to the body of the
+  frame on screen: the rules in `photo.css` are written for each frame the large
+  panel can have, found by the `data-frame` of the area (`frameKind` in
+  `core/plate.js`), a little in from the metal because the page lies over the
+  frame. `tools/test-photo-fit.mjs` works the shapes out from `core/plate.js`
+  and holds the stylesheet to them, so when a frame changes, that test says which
+  rule to change. The fade from one photo to the next is in `frame.css` (`.photo
+  .shot`), and `--hold` and `--shot` on the page time it. The caption and the credit
+  are on one plate (`.note`, in the color of the team's plates) in each shot.
+  `tools/test-photo-fit.mjs` and `tools/test-photo-pages.mjs` have the tests.
 - **Photos of people.** Leadership in Studio, Photo and "Show photo on
   screen" (docs/editing-content.md). A Team lead (`studio/schemas/subteam.js`)
   has the same two fields, right after Lead. The screen asks Sanity for each

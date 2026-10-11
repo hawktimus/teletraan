@@ -139,9 +139,8 @@ export const photoMaxWidth = 1920;
 
 // The address of a photo for the Photo panel: the part the editor kept, no
 // wider than the screen, never enlarged, in a small format. The panel fits it
-// to its card with the browser (see photoFocus and keptSize), so the same copy
-// fits with or without a caption. Gives back an empty text when there is no
-// usable photo.
+// to its body with the browser (photoFocus says where to keep in view when it
+// is cut). Gives back an empty text when there is no usable photo.
 export function screenPhotoUrl(photo) {
   return fittedUrl(photo, photoMaxWidth);
 }
@@ -167,9 +166,9 @@ function fittedUrl(photo, width) {
   return clean.url + '?' + rect + 'w=' + width + '&fit=max&auto=format';
 }
 
-// The size in pixels of the part the editor kept. A photo that the Photo panel
-// shows whole gets a card in this shape. Gives back null when there is no
-// usable photo.
+// The size in pixels of the part the editor kept. The Photo panel no longer reads
+// it, since a photo fills the body of the panel whatever its shape. Gives back
+// null when there is no usable photo.
 export function keptSize(photo) {
   const clean = tidyPhoto(photo);
   if (!clean) return null;
@@ -180,7 +179,7 @@ export function keptSize(photo) {
 
 // Where the hotspot is in the part the editor kept, as { x, y } in percent
 // (0 is the left or top edge). The panel gives it to object-position, so when
-// the card cuts the photo it keeps the face. A photo with no hotspot gives the middle.
+// the panel cuts the photo it keeps the face. A photo with no hotspot gives the middle.
 export function photoFocus(photo) {
   const clean = tidyPhoto(photo);
   if (!clean) return { x: 50, y: 50 };

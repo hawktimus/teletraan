@@ -2609,6 +2609,7 @@ test('every literal text size under 44 px in the dashboard stylesheets is on a l
   ];
   // the third line of a row of Leadership or Team leads, 36 px, which the order for those rows sets
   allowed.push({ file: 'dashboard/base.css', selector: '.person-line', size: 36 });
+  allowed.push({ file: 'dashboard/panels/photo/photo.css', selector: '.photo .credit', size: 30 }); // the credit under the caption of a photo
   const order = list => list.map(item => item.file + ' ' + item.selector + ' ' + item.size).sort();
   assert.deepEqual(order(found), order(allowed));
 });
@@ -2760,6 +2761,10 @@ const warLabels = [
 const smallTextOf = { original: [plateId], cybertron: [plateId], minimal: [plateId].concat(warLabels) };
 // and the third line of a row of Leadership or Team leads, 36 px, which the order for those rows sets, in every style
 Object.keys(smallTextOf).forEach(style => smallTextOf[style].push({ file: 'base.css', selector: '.person-line', size: 36 }));
+
+// and the credit under the caption of a photo, 30 px, which every style draws
+const photoCredit = { file: 'panels/photo/photo.css', selector: '.photo .credit', size: 30 };
+Object.keys(smallTextOf).forEach(style => smallTextOf[style].push(photoCredit));
 
 function checkStylesheetsOf(style) {
   const sheets = stylesheetsOf(style);

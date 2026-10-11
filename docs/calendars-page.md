@@ -39,12 +39,14 @@ Calendars. To add a calendar, ask a coach to add its address on the Mini
 
 ## The kind of a calendar
 
-Each row and the facts say Kind: Meetings, Competitions, Outreach, Deadlines or
-Other. The Events panel writes the kind as a small chip before each title.
-Dashboard Settings stores no kind until someone picks one, and a calendar with no
-kind shows Other on the screen. The page says Kind: Other (not set) for it, and a
-note under the heading says to set the kind in Dashboard Settings, on the
-Calendars tab. The page never guesses a kind from the name of a calendar.
+Each row and the facts say Kind: Meetings, Competitions, Outreach or Deadlines.
+The Events panel writes the kind as a small chip before each title. Dashboard
+Settings stores no kind until someone picks one, and the events of a calendar with
+no kind have no chip. The page says Kind: no chip for it, and so for a calendar
+that was saved as Other, the choice every calendar used to start with. A note
+under the heading says: Pick a kind to show a chip on each event from a calendar.
+Leave it blank for no chip. It also says to set the kind in Dashboard Settings, on
+the Calendars tab. The page never guesses a kind from the name of a calendar.
 
 ## Hide an event from the page
 

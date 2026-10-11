@@ -70,8 +70,8 @@
   min-width: 0;
 }
 
-/* The title line is the kind chip, the title and the pin of a pinned event. Only the
-   title gives way: it is cut off with an ellipsis when the line is full. */
+/* The title line is the kind chip (only when the calendar has a kind), the title and the pin
+   of a pinned event. Only the title gives way: it is cut off with an ellipsis when the line is full. */
 .events .event-title {
   display: flex;
   align-items: center;

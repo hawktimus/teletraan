@@ -17,7 +17,7 @@ export const nothingYet = 'Nothing yet. The Mini writes this after it has downlo
 export const settingsLine = 'To rename a calendar or switch it off, open Dashboard Settings and use the Calendars tab.';
 export const publicLine = 'These titles are saved in the dataset, which anyone can read. That includes the ones a rule hides from the screen.';
 export const noCalendarsLine = 'Dashboard Settings has no calendars yet. Add one on its Calendars tab.';
-export const kindLine = 'A calendar with no kind shows Other on the screen. Set the kind in Dashboard Settings, on the Calendars tab.';
+export const kindLine = 'Pick a kind to show a chip on each event from a calendar. Leave it blank for no chip. Set the kind in Dashboard Settings, on the Calendars tab.';
 
 // The words of the Hide buttons
 export const hideLine = 'A rule made here is on the screen at once. It is listed under Calendar filters, where you can edit or delete it.';
@@ -43,7 +43,7 @@ export const calendarKinds = [
   { title: 'Competitions', value: 'competitions' },
   { title: 'Outreach', value: 'outreach' },
   { title: 'Deadlines', value: 'deadlines' },
-  { title: 'Other', value: 'other' },
+  { title: 'Other (no chip)', value: 'other' },
 ];
 
 function isRecord(value) {
@@ -98,14 +98,14 @@ function screenText(entry) {
   return entry.show === false ? 'Switched off on the screen' : 'On the screen';
 }
 
-// The kind of a calendar in words, and whether the calendar has none. A kind that is not in the list
-// is Other on the screen, as one that is missing is. A calendar that is not in Dashboard Settings is
-// not on the screen at all, so it has no kind to be missing.
+// The kind of a calendar in words, and whether the calendar has none. A calendar with no kind, a kind that
+// is not in the list and a kind of other have no chip on the screen. A calendar that is not in Dashboard
+// Settings is not on the screen at all, so it has no kind to be missing.
 function kindOf(entry) {
   if (!entry) return { name: 'Not set', missing: false };
 
-  const found = calendarKinds.filter(kind => kind.value === entry.kind)[0];
-  return found ? { name: found.title, missing: false } : { name: 'Other (not set)', missing: true };
+  const found = calendarKinds.filter(kind => kind.value === entry.kind && kind.value !== 'other')[0];
+  return found ? { name: found.title, missing: false } : { name: 'no chip', missing: true };
 }
 
 // The rows on the left: the calendars of Dashboard Settings in their order, then any calendar
