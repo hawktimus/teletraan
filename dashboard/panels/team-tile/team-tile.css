@@ -11,14 +11,15 @@
 /* The logo and the number side by side, then the name, then the school, which may take two lines (up to
    30 characters are allowed). The column is 48px in from the frame on each side, like the next event, so
    it stays clear of the cut corners of either team. Cybertron has neon slashes under the header and
-   along the foot of the frame, so the box starts 20px under the header and ends 20px above the foot.
+   along the foot of the frame, 332 to 346 down it, so the box starts 20px under the header and ends at 336, which
+   puts the letters of the last line above the slashes.
    The rows are 84, 52 and 88 high with 4 between. */
 .team-tile .content {
   position: absolute;
   left: 48px;
   top: 104px;
   width: 552px;
-  height: 244px;
+  height: 232px;
   display: flex;
   flex-direction: column;
   justify-content: center;

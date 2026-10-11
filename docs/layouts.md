@@ -1024,6 +1024,12 @@ rivets or rust. The rivets are Original's and Minimal's, and the rust is Minimal
 and `styles/cybertron.css` shows it. The wide neon lines are the glow of a team that has it, and they are left
 off in the flat finish.
 
+The slashes of the small frame are 332 to 346 down it. The pages of the small panels were laid out for the plainer
+foot of Original, so in Cybertron the forecast, the sponsor, the safety days and the next event have a shorter box
+(`styles/cybertron.css`, "The foot of the small frame"), and the team tile is laid out for it. The last line of each
+ends above the slashes, with the same words at the same sizes. `tools/test-small-foot.mjs` adds up the rows of each
+box and compares them with the slashes.
+
 The `//` mark at the right end of a panel's header is not drawn in Cybertron (`.header
 svg.double-slash` is hidden, as the Plain look hides it). The step at the top right is where its
 top would be, and the pictures of Cybertron have no mark there. A seasonal pack's own mark is

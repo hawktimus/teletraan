@@ -209,6 +209,44 @@ html[data-style="cybertron"].mirrored .ticker .message {
 }
 
 
+/* The foot of the small frame has the neon slashes, 332 to 346 down the frame (core/plate.js,
+   cybertron-grid2). The small pages are laid out for the plainer foot of Original, where the last line
+   of the weather, of a sponsor's name, of the safety caption and of the next event ends 20 to 30
+   lower, on the slashes. Their boxes end by 336 here, with the same words at the same sizes: the
+   letters of the last line end by 328, and the first line starts 4 or more under the line below the
+   hazard stripe (96). The thin bar of the weather and of the safety caption is moved to the middle of its
+   shorter gap. */
+html[data-style="cybertron"] .forecast .content {
+  top: 102px;
+  height: 226px;
+  gap: 8px;
+}
+html[data-style="cybertron"] .forecast .row-bar { top: -14px; }
+html[data-style="cybertron"] .sponsor-logo .content {
+  top: 102px;
+  height: 226px;
+  gap: 0;
+}
+html[data-style="cybertron"] .sponsor-logo .name { line-height: 48px; }
+html[data-style="cybertron"] .safety-days .content {
+  top: 104px;
+  height: 232px;
+}
+html[data-style="cybertron"] .safety-days .stacked .number { line-height: 124px; }
+html[data-style="cybertron"] .safety-days .stacked .caption {
+  margin-top: 18px;
+  line-height: 40px;
+}
+html[data-style="cybertron"] .safety-days .row-bar { top: -19px; }
+html[data-style="cybertron"] .next-event .content {
+  top: 100px;
+  height: 228px;
+}
+html[data-style="cybertron"] .next-event .title { line-height: 56px; }
+html[data-style="cybertron"] .next-event .when { line-height: 44px; }
+html[data-style="cybertron"] .next-event .location { line-height: 44px; }
+
+
 /* The war clock (panels/countdown) is shown by this style and by Minimal, and by no other. The
    style's countdown is the wide one, in the region of the red countdown. Its digits are
    --style-digits, amber here. The flat finish leaves off the rust of its housing, like the other
