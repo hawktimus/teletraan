@@ -1,9 +1,9 @@
-// Tests for how the Photo panel fits a photo to its card (dashboard/core/photos.js,
+// Tests for how the Photo panel fits a photo to its body (dashboard/core/photos.js,
 // core/images.js, core/sanity.js, core/content.js and panels/photo): the Photo fit setting, the Fit
-// of one photo, the card in the shape of a photo that is shown whole, and the caption and credit
-// under and in it. The plain functions are run for real. The panel is run against a fake page that
-// records what it draws. The stylesheet is checked by reading it, because the picture needs a
-// browser to be seen.
+// of one photo, the photo that fills the body of the panel, cut to the frame on screen, and the
+// caption and credit on their plate. The plain functions are run for real. The panel is run against a
+// fake page that records what it draws. The stylesheets are checked by reading them, because the
+// picture needs a browser to be seen. How many photos a turn shows is in tools/test-photo-pages.mjs.
 //
 //   node tools/test-photo-fit.mjs
 
@@ -39,44 +39,50 @@ const config = await import(base + 'config.js');
 const content = await import(base + 'core/content.js');
 const images = await import(base + 'core/images.js');
 const photos = await import(base + 'core/photos.js');
+const plate = await import(base + 'core/plate.js');
 const sanity = await import(base + 'core/sanity.js');
 const photoPanel = await import(base + 'panels/photo/photo.js');
 
-const { photoLayout, fitOf, wholeShape, hasRoomForCredit } = photos;
+const { fitOf } = photos;
 
 const tests = [];
 function test(name, run) {
   tests.push({ name: name, run: run });
 }
 
-// plate.js draws each card shape once into a hidden group of the page. This
-// stands in for the page, and says which shapes were drawn.
-async function withFakePage(run) {
-  const drawn = [];
+// plate.js draws each frame's shapes once into a hidden group of the page. This
+// stands in for the page, so a frame can be drawn to read its body from the markup.
+function withFakePage(run) {
   globalThis.document = {
-    getElementById: id => {
-      if (id === 'metal-shapes') return { insertAdjacentHTML: (where, markup) => drawn.push(markup.match(/id="([^"]+)"/)[1]) };
-      return drawn.includes(id) ? {} : null;
-    },
+    getElementById: () => ({ insertAdjacentHTML: () => {} }),
   };
 
   try {
-    await run(drawn);
+    return run();
   } finally {
     delete globalThis.document;
   }
 }
 
-// The panel draws into a host, and starts loading the next photo with an image
-function mount(settings, photo) {
-  const host = { innerHTML: '', querySelector: () => null };
+// The panel draws into a host, finds the pictures in it to listen for the ones that fail, and starts
+// loading the first photo of the next turn with an image
+function fakeHost() {
+  return { innerHTML: '', querySelectorAll: () => [] };
+}
+
+function mountAll(settings, list) {
+  const host = fakeHost();
   globalThis.Image = class {};
   try {
-    photoPanel.mount(host, { photos: [photo], settings: settings });
+    photoPanel.mount(host, { photos: list, settings: settings });
   } finally {
     delete globalThis.Image;
   }
   return host.innerHTML;
+}
+
+function mount(settings, photo) {
+  return mountAll(settings, [photo]);
 }
 
 const photoBase = 'https://cdn.sanity.io/images/abc123/production/0123abcd-800x600.jpg';
@@ -87,17 +93,6 @@ const photoRecord = changes => Object.assign({
   crop: { left: 0, right: 0, top: 0, bottom: 0 },
   hotspot: { x: 0.5, y: 0.5 },
 }, changes);
-
-const wide = { width: 1600, height: 900 };
-const fourThree = { width: 800, height: 600 };
-const square = { width: 1000, height: 1000 };
-const tall = { width: 600, height: 800 };
-const phoneTall = { width: 900, height: 1600 };
-const panorama = { width: 4000, height: 400 };
-const sliver = { width: 300, height: 3000 };
-
-// The frame's cut corner runs from (1148, 640) to (1068, 704): the most x a point can have at a height
-const frameLimit = y => (y <= 640 ? 1148 : 1148 - (y - 640) * 80 / 64);
 
 // The rule of a selector in a stylesheet, or '' when there is none
 function ruleOf(css, selector) {
@@ -111,8 +106,6 @@ function ruleOf(css, selector) {
 test('photoFits and the starting value: fill, as the panel always drew a photo', () => {
   assert.deepEqual(config.photoFits, ['fill', 'whole']);
   assert.equal(config.defaultSettings.photoFit, 'fill');
-  assert.deepEqual(config.limits.photoScale, { min: 60, max: 100 });
-  assert.equal(config.defaultSettings.photoScale, 100);
 });
 
 test('the Photo fit setting keeps fill and whole, and anything else is fill', () => {
@@ -152,240 +145,37 @@ test('fitOf: the fit of a photo is its own when it is fill or whole, and otherwi
   assert.equal(fitOf({ fit: 'whole' }, 'cover'), 'whole');
 });
 
-test('wholeShape: only a photo that is shown whole and has a size gives its shape', () => {
-  const sized = { size: { width: 720, height: 960 } };
-  assert.deepEqual(wholeShape(Object.assign({ fit: 'whole' }, sized), 'fill'), { width: 720, height: 960 });
-  assert.deepEqual(wholeShape(sized, 'whole'), { width: 720, height: 960 });
-  assert.equal(wholeShape(sized, 'fill'), null);
-  assert.equal(wholeShape(Object.assign({ fit: 'fill' }, sized), 'whole'), null);
-
-  // a photo with no size we can use is cut to the card, whatever its fit
-  [undefined, null, {}, { width: 0, height: 5 }, { width: 5, height: -1 }, { width: '5', height: 5 }, { width: NaN, height: 5 }, { width: Infinity, height: 5 }, 'big'].forEach(size => {
-    assert.equal(wholeShape({ fit: 'whole', size: size }, 'whole'), null, JSON.stringify(size));
-  });
-  assert.equal(wholeShape(null, 'whole'), null);
-  assert.equal(wholeShape(undefined, 'whole'), null);
-});
-
-// The card in the fill mode: the numbers that were there before
-
-test('fill mode: photoLayout gives the numbers it always gave, with no shape or one that cannot be used', () => {
-  assert.deepEqual(photoLayout(100, true), { card: { left: 28, top: 142, width: 1096, height: 464 }, caption: { left: 52, top: 622, width: 1004 } });
-  assert.deepEqual(photoLayout(100, false), { card: { left: 28, top: 142, width: 1096, height: 514 }, caption: { left: 52, top: 672, width: 1004 } });
-  assert.deepEqual(photoLayout(80, true), { card: { left: 138, top: 189, width: 877, height: 371 }, caption: { left: 162, top: 576, width: 894 } });
-  assert.deepEqual(photoLayout(80, false).card, { left: 138, top: 194, width: 877, height: 411 });
-  assert.deepEqual(photoLayout(60, true), { card: { left: 247, top: 235, width: 658, height: 278 }, caption: { left: 271, top: 529, width: 785 } });
-  assert.deepEqual(photoLayout(60, false).card, { left: 247, top: 245, width: 658, height: 308 });
-
-  [undefined, null, {}, { width: 0, height: 10 }, { width: 10 }, { width: 'a', height: 'b' }, { width: NaN, height: 4 }].forEach(shape => {
-    [100, 80, 60].forEach(percent => {
-      [true, false].forEach(hasCaption => {
-        assert.deepEqual(photoLayout(percent, hasCaption, shape), photoLayout(percent, hasCaption), JSON.stringify(shape) + ' at ' + percent);
-      });
-    });
-  });
-});
-
-// The card in the whole mode
-
-test('whole mode at 100 percent: the card is the shape of the photo, as big as the card of the fill mode allows', () => {
-  const card = (shape, hasCaption) => photoLayout(100, hasCaption, shape).card;
-
-  // with a caption the box is 1096 by 464, and without one 1096 by 514
-  assert.deepEqual(card(wide, true), { left: 164, top: 142, width: 825, height: 464 });
-  assert.deepEqual(card(wide, false), { left: 119, top: 142, width: 914, height: 514 });
-  assert.deepEqual(card(fourThree, true), { left: 267, top: 142, width: 619, height: 464 });
-  assert.deepEqual(card(fourThree, false), { left: 234, top: 142, width: 685, height: 514 });
-  assert.deepEqual(card(square, true), { left: 344, top: 142, width: 464, height: 464 });
-  assert.deepEqual(card(square, false), { left: 319, top: 142, width: 514, height: 514 });
-  assert.deepEqual(card(tall, true), { left: 402, top: 142, width: 348, height: 464 });
-  assert.deepEqual(card(tall, false), { left: 383, top: 142, width: 386, height: 514 });
-  assert.deepEqual(card(phoneTall, true), { left: 446, top: 142, width: 261, height: 464 });
-
-  // a photo as wide as the box is the box, and one that is wider than it is limited by the width
-  assert.deepEqual(card({ width: 1096, height: 464 }, true), { left: 28, top: 142, width: 1096, height: 464 });
-  assert.deepEqual(card({ width: 2400, height: 1000 }, true), { left: 28, top: 146, width: 1096, height: 457 });
-  assert.deepEqual(card({ width: 2400, height: 1000 }, false), { left: 28, top: 171, width: 1096, height: 457 });
-
-  // the size of the photo in pixels does not matter, only its shape: a small photo is not smaller, and a big one is not bigger
-  assert.deepEqual(card({ width: 80, height: 60 }, true), card({ width: 8000, height: 6000 }, true));
-  assert.deepEqual(card({ width: 80, height: 60 }, true), card(fourThree, true));
-});
-
-test('whole mode: an extremely wide or tall photo gets a card with a short side of 240, and the picture keeps its own shape', () => {
-  const layout = (shape, hasCaption, percent = 100) => photoLayout(percent, hasCaption, shape);
-
-  assert.deepEqual(layout(panorama, true).card, { left: 28, top: 254, width: 1096, height: 240 });
-  assert.deepEqual(layout(panorama, false).card, { left: 28, top: 279, width: 1096, height: 240 });
-  assert.deepEqual(layout(sliver, true).card, { left: 456, top: 142, width: 240, height: 464 });
-  assert.deepEqual(layout(sliver, false).card, { left: 456, top: 142, width: 240, height: 514 });
-
-  // the widest shape that is kept is 1096 by 240, and the narrowest is 240 by the height of the box
-  assert.deepEqual(layout({ width: 1096, height: 240 }, true).card, layout(panorama, true).card);
-  assert.deepEqual(layout({ width: 1096, height: 241 }, true).card, { left: 28, top: 254, width: 1096, height: 241 });
-  assert.deepEqual(layout({ width: 240, height: 464 }, true).card, layout(sliver, true).card);
-  assert.deepEqual(layout({ width: 241, height: 464 }, true).card, { left: 456, top: 142, width: 241, height: 464 });
-
-  // any shape at all gives a sane card: no side under 240, none over the box
-  [0.001, 0.05, 0.1, 0.2, 1, 5, 50, 1000, 1e6].forEach(aspect => {
-    [true, false].forEach(hasCaption => {
-      const card = layout({ width: aspect * 1000, height: 1000 }, hasCaption).card;
-      assert.ok(Math.min(card.width, card.height) >= 240, 'the short side at ' + aspect);
-      assert.ok(card.width <= 1096 && card.height <= (hasCaption ? 464 : 514), 'inside the box at ' + aspect);
-    });
-  });
-
-  // at 60 percent it is made smaller in proportion, 144 for the short side
-  assert.deepEqual(layout(panorama, true, 60).card, { left: 247, top: 302, width: 658, height: 144 });
-  assert.deepEqual(layout(sliver, true, 60).card, { left: 504, top: 235, width: 144, height: 278 });
-});
-
-test('whole mode at 60 and 80 percent: the same shape, made smaller, in the middle of the same space', () => {
-  assert.deepEqual(photoLayout(60, true, fourThree).card, { left: 391, top: 235, width: 371, height: 278 });
-  assert.deepEqual(photoLayout(60, false, fourThree).card, { left: 371, top: 245, width: 411, height: 308 });
-  assert.deepEqual(photoLayout(60, true, square).card, { left: 437, top: 235, width: 278, height: 278 });
-  assert.deepEqual(photoLayout(60, false, square).card, { left: 422, top: 245, width: 308, height: 308 });
-  assert.deepEqual(photoLayout(60, true, tall).card, { left: 472, top: 235, width: 209, height: 278 });
-  assert.deepEqual(photoLayout(60, true, wide).card, { left: 329, top: 235, width: 495, height: 278 });
-
-  // the top is the same as the fill mode has at that size: a card that is as high as the box is as high in both
-  [60, 70, 80, 90, 100].forEach(percent => {
-    [true, false].forEach(hasCaption => {
-      assert.equal(photoLayout(percent, hasCaption, tall).card.top, photoLayout(percent, hasCaption).card.top, percent + ' ' + hasCaption);
-      assert.equal(photoLayout(percent, hasCaption, tall).card.height, photoLayout(percent, hasCaption).card.height, percent + ' ' + hasCaption);
-    });
-  });
-
-  // no size, or an odd one, is 100, and the setting stays between 60 and 100
-  assert.deepEqual(photoLayout(undefined, true, tall), photoLayout(100, true, tall));
-  assert.deepEqual(photoLayout('large', false, tall), photoLayout(100, false, tall));
-  assert.deepEqual(photoLayout(59, true, tall), photoLayout(60, true, tall));
-  assert.deepEqual(photoLayout(1000, true, tall), photoLayout(100, true, tall));
-});
-
-test('whole mode, every size and shape: inside the box, in the shape of the photo, in the middle, and clear of the frame', () => {
-  const aspects = [0.2, 0.3, 0.45, 0.5, 0.5625, 2 / 3, 0.75, 1, 1.25, 4 / 3, 1.5, 16 / 9, 2, 2.3, 2.4, 3, 4, 4.5, 5, 6, 10];
-
-  aspects.forEach(aspect => {
-    [true, false].forEach(hasCaption => {
-      const boxHeight = hasCaption ? 464 : 514;
-      const widest = 1096 / 240;
-      const narrowest = 240 / boxHeight;
-      const kept = Math.min(widest, Math.max(narrowest, aspect));
-
-      for (let percent = 60; percent <= 100; percent++) {
-        const layout = photoLayout(percent, hasCaption, { width: aspect * 1000, height: 1000 });
-        const card = layout.card;
-        const where = aspect.toFixed(3) + ' at ' + percent + (hasCaption ? ' with' : ' without') + ' a caption';
-
-        // never bigger than the box, made smaller by the setting
-        assert.ok(card.width <= Math.round(1096 * percent / 100) && card.height <= Math.round(boxHeight * percent / 100), 'inside the box, ' + where);
-        // as big as the box allows: one side is the box's
-        const touches = card.width === Math.round(1096 * percent / 100) || card.height === Math.round(boxHeight * percent / 100);
-        assert.ok(touches, 'as big as it can be, ' + where);
-        // the shape of the photo, held to the limits, to the pixel
-        assert.ok(Math.abs(card.width - card.height * kept) <= 0.5 + 0.5 * kept + 0.01, 'the shape, ' + where);
-        // in the middle of the panel, across and down
-        assert.ok(Math.abs(card.left - (1152 - card.width - card.left)) <= 1, 'centred across, ' + where);
-        assert.ok(card.top >= 142, 'below the header, ' + where);
-        const bottom = hasCaption ? layout.caption.top + 64 : card.top + card.height;
-        assert.ok(bottom <= (hasCaption ? 686 : 656), 'inside the space it has at 100, ' + where);
-        // the card's own cut corner is clear of the frame's
-        assert.ok(card.left + card.width <= frameLimit(card.top + card.height - 34) - 20, 'right of the card, ' + where);
-        assert.ok(card.left + card.width - 42 <= frameLimit(card.top + card.height) - 20, 'cut corner, ' + where);
-        // no side of a card at 100 is under 240
-        if (percent === 100) assert.ok(Math.min(card.width, card.height) >= 240, 'the short side, ' + where);
-
-        if (hasCaption) {
-          const caption = layout.caption;
-          const middle = card.left + card.width / 2;
-          assert.equal(caption.top, card.top + card.height + 16, 'the caption is directly under the card, ' + where);
-          // centred under the card, to the pixel
-          assert.ok(Math.abs(caption.left + caption.width / 2 - middle) <= 1, 'the caption is centred, ' + where);
-          // it stops where it stops in the fill mode, and starts no further left than the caption at full size
-          assert.equal(caption.left + caption.width, 1056, 'the caption stops at 1056, ' + where);
-          assert.ok(caption.left >= 52, 'the caption starts at 52 or later, ' + where);
-          assert.ok(caption.width > 0 && caption.width <= 1004, 'caption width, ' + where);
-          assert.ok(caption.left + caption.width <= frameLimit(caption.top + 64) - 30, 'the caption is clear of the cut corner, ' + where);
-        }
-      }
-    });
-  });
-});
-
-test('whole mode: the caption box is centred under the card, 960 wide, and the same for a narrow card as for a wide one', () => {
-  assert.deepEqual(photoLayout(100, true, square).caption, { left: 96, top: 622, width: 960 });
-  assert.deepEqual(photoLayout(100, true, tall).caption, { left: 96, top: 622, width: 960 });
-  assert.deepEqual(photoLayout(100, true, sliver).caption, { left: 96, top: 622, width: 960 });
-  assert.deepEqual(photoLayout(100, true, panorama).caption, { left: 96, top: 510, width: 960 });
-  assert.deepEqual(photoLayout(60, true, tall).caption, { left: 97, top: 529, width: 959 });
-
-  // a card of the fill mode keeps its caption at the left, in from the card
-  assert.equal(photoLayout(100, true).caption.left, 52);
-  assert.equal(photoLayout(60, true).caption.left, 271);
-});
-
-// The credit
-
-test('the credit plate needs a card at least 370 wide, and a card of the fill mode always has room', () => {
-  assert.equal(hasRoomForCredit(370), true);
-  assert.equal(hasRoomForCredit(369), false);
-  assert.equal(hasRoomForCredit(1096), true);
-  assert.equal(hasRoomForCredit(0), false);
-  for (let percent = 60; percent <= 100; percent++) {
-    assert.ok(hasRoomForCredit(photoLayout(percent, true).card.width), 'fill at ' + percent);
-    assert.ok(hasRoomForCredit(photoLayout(percent, false).card.width), 'fill at ' + percent);
-  }
-});
-
 // The panel
 
-test('the panel draws a photo shown whole in a card of its shape, with the edge at that size, no hotspot and a centred caption', () => withFakePage(drawn => {
-  const photo = { address: 'data/sample/photo-2.svg', caption: '[Caption]', credit: '[Name]', focus: { x: 30, y: 40 }, size: { width: 600, height: 800 }, fit: 'whole' };
-  const html = mount({ photoOrder: 'random', photoScale: 100, photoFit: 'fill' }, photo);
+test('the panel draws the photo in the body, with the hotspot when it is cut and the fit it is shown with', () => {
+  const photo = { address: 'data/sample/photo-1.svg', caption: '[Caption]', credit: '[Name]', focus: { x: 30, y: 40 } };
+  const html = mount({ photoOrder: 'random', photoFit: 'fill' }, photo);
 
-  assert.ok(html.includes('<div class="card whole" data-slat="item" style="left: 402px; top: 142px; width: 348px; height: 464px">'));
-  assert.ok(html.includes('<div class="caption centred" data-slat="item" style="left: 96px; top: 622px; width: 960px">[Caption]</div>'));
-  assert.ok(html.includes('width="348" height="464" viewBox="0 0 348 464"'));
-  assert.deepEqual(drawn, ['card-348x464']);
-  // the whole photo is not cut, so the hotspot is not used
-  assert.ok(html.includes('<img src="data/sample/photo-2.svg" alt="">'));
-  assert.equal(html.includes('object-position'), false);
-  // this card is 348 wide, which is too narrow for the credit plate
-  assert.equal(html.includes('class="credit"'), false);
+  assert.ok(html.includes('<div class="photo-body" data-slat="item" style="--hold: 16s">'));
+  assert.ok(html.includes('<figure class="shot" data-fit="fill" style="--shot: 0">'));
+  assert.ok(html.includes('<img src="data/sample/photo-1.svg" style="object-position: 30% 40%" alt="">'));
+  assert.ok(html.includes('PHOTOS'));
 
-  // with no caption the box is taller and there is no caption box
-  const bare = mount({ photoScale: 100 }, Object.assign({}, photo, { caption: '' }));
-  assert.ok(bare.includes('<div class="card whole" data-slat="item" style="left: 383px; top: 142px; width: 386px; height: 514px">'));
-  assert.equal(bare.includes('class="caption'), false);
-  assert.ok(bare.includes('<div class="credit">Photo: [Name]</div>'));
+  // shown whole, nothing is cut, so the hotspot is not used
+  const whole = mount({ photoFit: 'whole' }, photo);
+  assert.ok(whole.includes('<figure class="shot" data-fit="whole" style="--shot: 0">'));
+  assert.ok(whole.includes('<img src="data/sample/photo-1.svg" alt="">'));
+  assert.equal(whole.includes('object-position'), false);
 
-  // smaller by the Photo size setting
-  const small = mount({ photoScale: 60 }, photo);
-  assert.ok(small.includes('<div class="card whole" data-slat="item" style="left: 472px; top: 235px; width: 209px; height: 278px">'));
-  assert.ok(small.includes('<div class="caption centred" data-slat="item" style="left: 97px; top: 529px; width: 959px">[Caption]</div>'));
-}));
+  // a photo with no hotspot (the sample photos) is centred
+  const centred = mount({}, Object.assign({}, photo, { focus: undefined }));
+  assert.equal(centred.includes('object-position'), false);
+  assert.ok(centred.includes('data-fit="fill"'));
 
-test('the panel leaves the credit off a card narrower than 370 and keeps it on a wider one', () => withFakePage(() => {
-  const photo = (size, caption = '[Caption]') => ({ address: 'data/sample/photo-2.svg', caption: caption, credit: '[Name]', size: size, fit: 'whole' });
-  const hasCredit = html => html.includes('class="credit"');
+  // the starting settings and the Photo size, which is not used any more, change nothing
+  assert.equal(mount(undefined, photo), mount({}, photo));
+  assert.equal(mount({ photoScale: 60 }, photo), mount({ photoScale: 100 }, photo));
+  assert.equal(mount({ portraitScale: 60 }, photo), mount({}, photo));
+});
 
-  // with a caption at 100: 9 by 16 is 261 wide, 3 by 4 is 348 and a square is 464
-  assert.equal(hasCredit(mount({}, photo({ width: 900, height: 1600 }))), false);
-  assert.equal(hasCredit(mount({}, photo({ width: 600, height: 800 }))), false);
-  assert.equal(hasCredit(mount({}, photo({ width: 1000, height: 1000 }))), true);
-  // with no caption the box is higher: 3 by 4 is 386 wide
-  assert.equal(hasCredit(mount({}, photo({ width: 600, height: 800 }, ''))), true);
-  // 3 by 4 at 60 with a caption is 209 wide, and 16 by 9 is 495
-  assert.equal(hasCredit(mount({ photoScale: 60 }, photo({ width: 600, height: 800 }))), false);
-  assert.equal(hasCredit(mount({ photoScale: 60 }, photo({ width: 1600, height: 900 }))), true);
-  // a photo with no credit has no plate on any card
-  assert.equal(mount({}, Object.assign(photo({ width: 1600, height: 900 }), { credit: '' })).includes('class="credit"'), false);
-}));
-
-test('which mode the panel uses: the photo\'s own fit, otherwise the setting, and fill for a photo with no size', () => withFakePage(() => {
-  const photo = changes => Object.assign({ address: 'data/sample/photo-2.svg', caption: '[Caption]', credit: '[Name]', focus: { x: 30, y: 40 }, size: { width: 600, height: 800 } }, changes);
-  const isWhole = html => html.includes('class="card whole"');
+test('which fit the panel uses: the photo\'s own fit, otherwise the setting, and fill when neither says', () => {
+  const photo = changes => Object.assign({ address: 'data/sample/photo-2.svg', caption: '[Caption]', focus: { x: 30, y: 40 } }, changes);
+  const isWhole = html => html.includes('data-fit="whole"');
 
   assert.equal(isWhole(mount({ photoFit: 'whole' }, photo())), true);
   assert.equal(isWhole(mount({ photoFit: 'fill' }, photo())), false);
@@ -400,47 +190,232 @@ test('which mode the panel uses: the photo\'s own fit, otherwise the setting, an
     assert.equal(isWhole(mount({ photoFit: 'whole' }, photo({ fit: fit }))), true, fit);
     assert.equal(isWhole(mount({ photoFit: 'fill' }, photo({ fit: fit }))), false, fit);
   });
+});
 
-  // a photo with no size we can use is drawn in the fill mode, with the hotspot, whatever it asks for
-  const fallback = mount({ photoFit: 'whole' }, photo({ fit: 'whole', size: undefined }));
-  assert.equal(isWhole(fallback), false);
-  assert.ok(fallback.includes('<div class="card" data-slat="item" style="left: 28px; top: 142px; width: 1096px; height: 464px">'));
-  assert.ok(fallback.includes('style="object-position: 30% 40%"'));
-  assert.equal(fallback.includes('caption centred'), false);
-}));
+test('the caption and the credit are on one plate, and there is no plate when both are empty', () => {
+  const photo = changes => Object.assign({ address: 'data/sample/photo-1.svg' }, changes);
 
-test('the panel draws the fill mode exactly as it did: the same card, the same caption, the hotspot and the credit', () => withFakePage(drawn => {
-  const photo = { address: 'data/sample/photo-1.svg', caption: '[Caption]', credit: '[Name]', focus: { x: 30, y: 40 }, size: { width: 1152, height: 708 } };
-  const html = mount({ photoOrder: 'random', photoScale: 100, photoFit: 'fill' }, photo);
+  const both = mount({}, photo({ caption: '[Caption]', credit: '[Name]' }));
+  assert.ok(both.includes('<div class="note"><div class="caption">[Caption]</div><div class="credit">Photo: [Name]</div></div>'));
 
-  assert.ok(html.includes('<div class="card" data-slat="item" style="left: 28px; top: 142px; width: 1096px; height: 464px">'));
-  assert.ok(html.includes('<div class="caption" data-slat="item" style="left: 52px; top: 622px; width: 1004px">[Caption]</div>'));
-  assert.ok(html.includes('<img src="data/sample/photo-1.svg" style="object-position: 30% 40%" alt="">'));
-  assert.ok(html.includes('<div class="credit">Photo: [Name]</div>'));
-  assert.deepEqual(drawn, ['card-1096x464']);
+  const captionOnly = mount({}, photo({ caption: '[Caption]' }));
+  assert.ok(captionOnly.includes('<div class="note"><div class="caption">[Caption]</div></div>'));
+  assert.equal(captionOnly.includes('class="credit"'), false);
 
-  // the size of the photo changes nothing in this mode
-  assert.equal(mount({ photoOrder: 'random', photoScale: 100, photoFit: 'fill' }, Object.assign({}, photo, { size: undefined })), html);
-  assert.equal(mount({ photoOrder: 'random', photoScale: 100 }, photo), html);
+  const creditOnly = mount({}, photo({ credit: '[Name]' }));
+  assert.ok(creditOnly.includes('<div class="note"><div class="credit">Photo: [Name]</div></div>'));
+  assert.equal(creditOnly.includes('class="caption"'), false);
 
-  const small = mount({ photoScale: 60 }, photo);
-  assert.ok(small.includes('style="left: 247px; top: 235px; width: 658px; height: 278px"'));
-  assert.ok(small.includes('<div class="caption" data-slat="item" style="left: 271px; top: 529px; width: 785px">[Caption]</div>'));
-}));
+  ['', '   ', undefined].forEach(empty => {
+    const neither = mount({}, photo({ caption: empty, credit: empty }));
+    assert.equal(neither.includes('class="note"'), false, JSON.stringify(empty));
+  });
 
-test('the stylesheet shows the whole picture with contain, keeps cover for the other mode and leaves the places to photo.js', () => {
+  // the credit is a first name even when a last name got in, and the text is made safe
+  assert.ok(mount({}, photo({ credit: 'Sam Smith' })).includes('Photo: Sam</div>'));
+  assert.ok(mount({}, photo({ caption: '<b>[Caption]</b>' })).includes('&lt;b&gt;[Caption]&lt;/b&gt;'));
+});
+
+test('a photo that cannot be loaded is taken out and the others move up, and the panel says so when none is left', () => {
+  const shots = [];
+  const body = { innerHTML: '', querySelectorAll: () => shots.slice() };
+  const makeShot = place => {
+    const shot = { place: place, values: {}, parentNode: body, listeners: {} };
+    shot.style = { setProperty: (name, value) => { shot.values[name] = value; } };
+    shot.remove = () => { shots.splice(shots.indexOf(shot), 1); };
+    shot.image = { addEventListener: (type, listener) => { shot.listeners[type] = listener; }, closest: () => shot };
+    return shot;
+  };
+  [0, 1, 2].forEach(place => shots.push(makeShot(place)));
+  const all = shots.slice();
+
+  const host = { innerHTML: '', querySelectorAll: selector => (selector === '.shot img' ? all.map(shot => shot.image) : []) };
+  globalThis.Image = class {};
+  try {
+    photoPanel.mount(host, { photos: [1, 2, 3].map(number => ({ address: 'data/sample/photo-' + number + '.svg' })), settings: { photoSeconds: 30 } });
+  } finally {
+    delete globalThis.Image;
+  }
+  all.forEach(shot => assert.equal(typeof shot.listeners.error, 'function', 'every picture is listened to'));
+
+  // the second one fails: the third becomes the second, and the first stays where it is
+  all[1].listeners.error();
+  assert.deepEqual(shots.map(shot => shot.place), [0, 2]);
+  assert.deepEqual(shots.map(shot => shot.values['--shot']), [0, 1]);
+  assert.equal(body.innerHTML, '');
+
+  // the first fails: the last one is the first
+  all[0].listeners.error();
+  assert.deepEqual(shots.map(shot => shot.values['--shot']), [0]);
+
+  all[2].listeners.error();
+  assert.equal(shots.length, 0);
+  assert.equal(body.innerHTML, '<div class="missing">[Photo not available]</div>');
+});
+
+test('the first photo of the next turn starts loading while this turn is up, and one that is in this turn does not', () => {
+  const loaded = [];
+  const mountLoading = (list, settings) => {
+    globalThis.Image = class {
+      set src(address) { loaded.push(address); }
+    };
+    try {
+      photoPanel.mount(fakeHost(), { photos: list, settings: settings });
+    } finally {
+      delete globalThis.Image;
+    }
+  };
+
+  // newest first: d, c, b, a. 16 seconds is two photos of 8, so the first turn is d and c and the next opens with b
+  const list = ['a', 'b', 'c', 'd'].map((name, index) => ({ id: name, address: 'data/sample/' + name + '.svg', createdAt: '2026-09-0' + (index + 1) + 'T10:00:00Z' }));
+  const settings = { photoOrder: 'newest-first', photoSeconds: 16 };
+
+  mountLoading(list, settings);
+  assert.deepEqual(loaded, ['data/sample/b.svg']);
+  mountLoading(list, settings);
+  assert.deepEqual(loaded, ['data/sample/b.svg', 'data/sample/d.svg']);
+
+  // with one photo there is nothing to load ahead: it is the one on screen
+  loaded.length = 0;
+  mountLoading([{ address: 'data/sample/only.svg' }], {});
+  assert.deepEqual(loaded, []);
+});
+
+// The shape of the body, for every frame the large panel can have
+
+// The body polygon of a frame, read from the markup the frame is drawn with
+function bodyOf(kind) {
+  return withFakePage(() => {
+    const found = /<polygon class="body"[^>]*points="([^"]+)"/.exec(plate.areaMarkup(kind));
+    assert.ok(found, kind + ' has no body');
+    return found[1].split(' ').map(pair => pair.split(',').map(Number));
+  });
+}
+
+const tenth = number => String(Math.round(number * 10) / 10);
+
+// What photo.css says for a frame: the body cut in by inset from the line of the frame, the corner of
+// the body box (4, 120) taken off, and a point near the right measured from the right side of the box
+function expectedCut(kind, inset, areaWidth) {
+  const inner = plate.offsetOutline(bodyOf(kind), inset);
+  const right = areaWidth - 4;
+  const point = ([x, y]) => (x < 300 ? tenth(x - 4) + 'px' : 'calc(100% - ' + tenth(right - x) + 'px)') + ' ' + tenth(y - 120) + 'px';
+  return 'polygon(' + inner.map(point).join(', ') + ')';
+}
+
+// The rules of a stylesheet, as [{ selectors, body }], with the comments taken out
+function rulesOfSheet(css) {
+  const plain = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  return Array.from(plain.matchAll(/([^{}]+)\{([^{}]*)\}/g)).map(match => ({
+    selectors: match[1].split(',').map(selector => selector.trim()),
+    body: match[2],
+  }));
+}
+
+// The frames the large panel gets: every layout, style and trim the page can have
+function framesOfTheLargePanel() {
+  const kinds = new Set();
+  ['standard', 'sidebar', 'bar'].forEach(layout => {
+    ['', 'cybertron', 'minimal'].forEach(shapes => {
+      ['tl', 'tr'].forEach(corner => {
+        ['step', 'slant'].forEach(notch => {
+          kinds.add(plate.frameKind('grid1', layout, shapes, { corner: corner, notch: notch }));
+        });
+      });
+    });
+  });
+  return Array.from(kinds);
+}
+
+const widthOf = kind => (kind.startsWith('bar-main') ? 1427 : 1152);
+const insetOf = kind => (kind.startsWith('grid1') ? 7 : 12);
+
+test('photo.css cuts the body of the photo to the body of each frame the large panel can have', () => {
+  const css = read('panels/photo/photo.css');
+  const rules = rulesOfSheet(css);
+  const kinds = framesOfTheLargePanel();
+
+  assert.deepEqual(kinds.sort(), [
+    'bar-main', 'bar-main-minimal', 'bar-main-minimal-slant', 'bar-main-minimal-tr', 'bar-main-minimal-tr-slant', 'bar-main-slant', 'bar-main-tr', 'bar-main-tr-slant',
+    'cybertron-grid1', 'cybertron-grid1-slant', 'cybertron-grid1-tr', 'cybertron-grid1-tr-slant',
+    'grid1', 'grid1-slant', 'grid1-tr', 'grid1-tr-slant',
+  ]);
+
+  kinds.forEach(kind => {
+    const selector = '.area[data-frame="' + kind + '"] .photo-body';
+    const found = rules.filter(rule => rule.selectors.includes(selector));
+    assert.equal(found.length, 1, selector + ' should be in one rule');
+
+    const cut = /clip-path:\s*([^;]+);/.exec(found[0].body);
+    assert.ok(cut, selector + ' has no clip-path');
+    assert.equal(cut[1], expectedCut(kind, insetOf(kind), widthOf(kind)), 'the cut of ' + kind);
+  });
+
+  // the other selectors of the stylesheet that name a frame are frames there are
+  rules.forEach(rule => rule.selectors.forEach(selector => {
+    const named = /^\.area\[data-frame="([^"]+)"\] \.photo-body$/.exec(selector);
+    if (named) assert.ok(kinds.includes(named[1]), named[1] + ' is not a frame the large panel can have');
+  }));
+
+  // anything else gets a plain rectangle, and the body is all of the panel under the header
+  const body = ruleOf(css, '.photo .photo-body');
+  assert.ok(body.includes('clip-path: inset(7px);'));
+  ['left: 4px;', 'top: 120px;', 'width: calc(100% - 8px);', 'height: calc(100% - 124px);'].forEach(piece => assert.ok(body.includes(piece), piece));
+});
+
+// Is the point inside the polygon (a ray to the right of it crosses an odd number of edges)
+function inside(point, polygon) {
+  let crossings = 0;
+  polygon.forEach((from, index) => {
+    const to = polygon[(index + 1) % polygon.length];
+    if ((from[1] > point[1]) !== (to[1] > point[1]) && point[0] < from[0] + (point[1] - from[1]) * (to[0] - from[0]) / (to[1] - from[1])) crossings += 1;
+  });
+  return crossings % 2 === 1;
+}
+
+test('the plate of the caption is clear of the cut corners and the steps of every frame, by at least 8px', () => {
+  const css = read('panels/photo/photo.css');
+  const note = ruleOf(css, '.photo .note');
+  const left = Number(/left: (\d+)px;/.exec(note)[1]);
+  const bottom = Number(/bottom: (\d+)px;/.exec(note)[1]);
+  const width = Number(/max-width: (\d+)px;/.exec(note)[1]);
+  const high = 10 + 52 + 38 + 10; // the padding, the caption's line and the credit's line
+
+  // the box of the body starts at (4, 120) and ends 4px from the bottom of the area
+  const corners = [[4 + left, 704 - bottom], [4 + left + width, 704 - bottom], [4 + left, 704 - bottom - high], [4 + left + width, 704 - bottom - high]];
+
+  framesOfTheLargePanel().forEach(kind => {
+    const clear = plate.offsetOutline(plate.offsetOutline(bodyOf(kind), insetOf(kind)), 8);
+    corners.forEach(corner => assert.ok(inside(corner, clear), 'the plate at ' + corner.join(',') + ' in ' + kind));
+  });
+});
+
+test('the stylesheet shows the photo with cover, or contain when it is shown whole, and sets the sizes of the text', () => {
   const css = read('panels/photo/photo.css');
 
-  assert.ok(ruleOf(css, '.photo .whole .picture img').includes('object-fit: contain;'));
-  assert.ok(ruleOf(css, '.photo .picture img').includes('object-fit: cover;'));
-  assert.ok(ruleOf(css, '.photo .caption.centred').includes('text-align: center;'));
-  assert.equal(ruleOf(css, '.photo .whole'), '', 'the whole card has no place or size of its own');
-  assert.equal(/\.photo \.card\s*\{[^}]*(left|top|width|height):/.test(css), false, 'the card has a place or a size in photo.css');
-  assert.equal(/\.photo \.caption(\.centred)?\s*\{[^}]*(left|top|width):/.test(css), false, 'the caption has a place or a width in photo.css');
-  assert.ok(/\.photo \.caption\s*\{[^}]*height: 64px;[^}]*font: 500 var\(--size-body\)\/64px/.test(css), 'the caption keeps its height and its text size');
-  assert.ok(ruleOf(css, '.photo .credit').includes('max-width: min(700px, calc(100% - 88px));'), 'the credit follows the width of the card');
-  assert.ok(/\.photo \.credit\s*\{[^}]*font: 500 var\(--size-label\)\/56px/.test(css), 'the credit is not at least 44px');
-  assert.equal(/blur|box-shadow|text-shadow|filter/.test(css), false, 'the photo panel uses an effect that is not allowed');
+  assert.ok(ruleOf(css, '.photo .shot img').includes('object-fit: cover;'));
+  assert.ok(ruleOf(css, '.photo .shot[data-fit="whole"] img').includes('object-fit: contain;'));
+  // a photo shown whole has the color of the body of the frame round it, and nothing drawn
+  assert.ok(ruleOf(css, '.photo .shot').includes('background: var(--panel-face);'));
+  assert.equal(/border|outline|box-shadow/.test(ruleOf(css, '.photo .shot')), false);
+
+  // the plate is in the color of the team's plates, the caption is 44px and the credit 30px
+  assert.ok(ruleOf(css, '.photo .note').includes('background: var(--team-plate);'));
+  assert.ok(/\.photo \.caption\s*\{[^}]*font: 500 var\(--size-label\)\/52px/.test(css), 'the caption is not at 44px');
+  assert.ok(/\.photo \.credit\s*\{[^}]*font: 500 30px\/38px/.test(css), 'the credit is not at 30px');
+  assert.ok(/\.photo \.caption,\s*\.photo \.credit\s*\{[^}]*white-space: nowrap;[^}]*text-overflow: ellipsis;/.test(css), 'a long caption is not cut with three dots');
+
+  assert.equal(/blur|box-shadow|text-shadow|filter|animation|transition/.test(css), false, 'the photo panel uses an effect that is not allowed, or an animation that belongs in frame.css');
+});
+
+test('frame.css fades each photo in over the one below at its turn, with opacity only, and at once with motion off', () => {
+  const css = read('frame.css');
+  const rule = /\.photo \.shot \{ animation: ([^;]+); \}/.exec(css);
+
+  assert.ok(rule, 'frame.css has no rule for .photo .shot');
+  assert.equal(rule[1], 'fade-in var(--time-fade-in) linear calc(var(--hold) * var(--shot)) both');
+  assert.ok(css.includes('[data-motion="none"] .photo .shot { animation-duration: 0s; }'));
+  assert.ok(/@keyframes fade-in\s*\{ from \{ opacity: 0; \} \}/.test(css), 'fade-in is opacity only');
 });
 
 // What comes from Studio
@@ -486,13 +461,13 @@ test('keptSize gives the kept part in pixels, and null for a picture that cannot
   });
 });
 
-test('a photo from Studio shown whole gets a card in the shape of the part that was kept', () => withFakePage(() => {
-  const [photo] = sanity.normalizeContent({ photos: [{ id: 'a1', caption: '[Caption]', fit: 'whole', image: photoRecord({ crop: { left: 0.25, right: 0.25, top: 0, bottom: 0 } }) }] }).photos;
+test('a photo from Studio is asked for no wider than the screen, with the hotspot kept for the cut', () => {
+  const [photo] = sanity.normalizeContent({ photos: [{ id: 'a1', caption: '[Caption]', fit: 'whole', image: photoRecord({ hotspot: { x: 0.25, y: 0.75 } }) }] }).photos;
 
-  // 400 by 600 is a 2 by 3 card: 464 high and 309 wide
-  assert.deepEqual(wholeShape(photo, 'fill'), { width: 400, height: 600 });
-  assert.ok(mount({}, photo).includes('<div class="card whole" data-slat="item" style="left: 422px; top: 142px; width: 309px; height: 464px">'));
-}));
+  assert.equal(photo.address, photoBase + '?w=1920&fit=max&auto=format');
+  assert.deepEqual(photo.focus, { x: 25, y: 75 });
+  assert.ok(mount({}, photo).includes('<figure class="shot" data-fit="whole" style="--shot: 0">'));
+});
 
 // The sample content
 
@@ -514,13 +489,11 @@ test('the sample content has photos of different shapes and one that is shown wh
     assert.deepEqual([Number(box[1]), Number(box[2])], [photo.size.width, photo.size.height], photo.address);
   });
 
-  // the cleaning keeps the fit and the size, and the whole photo gets its own shape on the screen
+  // the cleaning keeps the fit and the size, and the whole photo is the one that is not cut
   assert.deepEqual(shown.photos.map(photo => photo.fit), [undefined, 'whole', undefined]);
   assert.deepEqual(shown.photos.map(photo => photo.size), raw.photos.map(photo => photo.size));
-  assert.equal(wholeShape(shown.photos[0], shown.settings.photoFit), null);
-  assert.deepEqual(wholeShape(shown.photos[1], shown.settings.photoFit), { width: 720, height: 960 });
-  assert.equal(wholeShape(shown.photos[2], shown.settings.photoFit), null);
-  assert.equal(wholeShape(shown.photos[2], 'whole') !== null, true, 'with the setting on whole, every sample photo is whole');
+  assert.deepEqual(shown.photos.map(photo => fitOf(photo, shown.settings.photoFit)), ['fill', 'whole', 'fill']);
+  assert.deepEqual(shown.photos.map(photo => fitOf(photo, 'whole')), ['whole', 'whole', 'whole'], 'with the setting on whole, every sample photo is whole');
 });
 
 // Run them

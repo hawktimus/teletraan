@@ -16,89 +16,120 @@
   font: 700 var(--size-heading)/96px var(--font-display);
 }
 
-/* The picture card is 28px in from the frame at full size, and in the middle
-   of the panel when the Photo size setting makes it smaller. Its left, top,
-   width and height are set in photo.js (the numbers are in photoLayout, in
-   core/photos.js). */
-.photo .card {
+/* The body of the panel is all of it under the header: from the frame line at the left, the
+   right and the bottom (4px in) to the seam under the header (120px down), whatever the width
+   of the area is (1152, or 1427 in the bar layout). The photo fills it. The page lies over the
+   frame, so the photo cannot be drawn under the metal. It is cut to stop at the metal instead:
+   7px in from the frame line in Original, where the metal is 16px wide, and 12px in on the steel
+   frames, where a neon line lies just inside the metal. The cut also follows the corners of the
+   frame's body. They are written out for each frame the large panel can have, because the frame
+   changes with the style and the team and a polygon cannot be worked out here. data-frame on the
+   area says which one is drawn (frameKind in core/plate.js) and is changed with the frame, so the
+   cut always follows the frame on screen. The -tr frames are the ones a team turns across, and
+   the -slant frames only end the header tab differently, so they share the cut of the frame
+   they come from. tools/test-photo-fit.mjs works the shapes out from core/plate.js and holds
+   these rules to them. Any other frame gets a plain rectangle. */
+.photo .photo-body {
+  --hold: 8s;
   position: absolute;
+  left: 4px;
+  top: 120px;
+  width: calc(100% - 8px);
+  height: calc(100% - 124px);
+  clip-path: inset(7px);
 }
 
-/* The picture is cut to the same shape as the card (the points are the ones in
-   cardMarkup), and the card's picture is drawn over it with no fill of its
-   own, so only its metal edge shows. The dark background is only seen while
-   the picture loads, or when it cannot be loaded. */
-.photo .picture {
+/* Original */
+.area[data-frame="grid1"] .photo-body,
+.area[data-frame="grid1-slant"] .photo-body {
+  clip-path: polygon(7px 7px, calc(100% - 7px) 7px, calc(100% - 7px) 516.6px, calc(100% - 82.5px) 577px, 7px 577px);
+}
+.area[data-frame="grid1-tr"] .photo-body,
+.area[data-frame="grid1-tr-slant"] .photo-body {
+  clip-path: polygon(7px 7px, calc(100% - 7px) 7px, calc(100% - 7px) 577px, 82.5px 577px, 7px 516.6px);
+}
+
+/* Cybertron, and the bar frame without a style of its own: the same cut corners and step */
+.area[data-frame="cybertron-grid1"] .photo-body,
+.area[data-frame="cybertron-grid1-slant"] .photo-body,
+.area[data-frame="bar-main"] .photo-body,
+.area[data-frame="bar-main-slant"] .photo-body {
+  clip-path: polygon(12px 12px, calc(100% - 12px) 12px, calc(100% - 12px) 523px, calc(100% - 61px) 572px, 155px 572px, 131px 548px, 12px 548px);
+}
+.area[data-frame="cybertron-grid1-tr"] .photo-body,
+.area[data-frame="cybertron-grid1-tr-slant"] .photo-body,
+.area[data-frame="bar-main-tr"] .photo-body,
+.area[data-frame="bar-main-tr-slant"] .photo-body {
+  clip-path: polygon(12px 12px, calc(100% - 12px) 12px, calc(100% - 12px) 548px, calc(100% - 131px) 548px, calc(100% - 155px) 572px, 61px 572px, 12px 523px);
+}
+
+/* Minimal */
+.area[data-frame="bar-main-minimal"] .photo-body,
+.area[data-frame="bar-main-minimal-slant"] .photo-body {
+  clip-path: polygon(12px 12px, calc(100% - 12px) 12px, calc(100% - 12px) 545px, calc(100% - 39px) 572px, 105px 572px, 89px 556px, 12px 556px);
+}
+.area[data-frame="bar-main-minimal-tr"] .photo-body,
+.area[data-frame="bar-main-minimal-tr-slant"] .photo-body {
+  clip-path: polygon(12px 12px, calc(100% - 12px) 12px, calc(100% - 12px) 556px, calc(100% - 89px) 556px, calc(100% - 105px) 572px, 39px 572px, 12px 545px);
+}
+
+/* A photo of the turn. They lie on top of each other and each one fills the body; the
+   panel color behind a photo shown whole is the color of the body of the frame, with
+   nothing drawn round the picture. How one comes in over the one below is in frame.css. */
+.photo .shot {
+  --shot: 0;
   position: absolute;
   left: 0;
   top: 0;
   width: 100%;
   height: 100%;
-  background: var(--card);
-  clip-path: polygon(2px 2px, calc(100% - 2px) 2px, calc(100% - 2px) calc(100% - 34px), calc(100% - 42px) calc(100% - 2px), 2px calc(100% - 2px));
+  margin: 0;
+  background: var(--panel-face);
 }
-.photo .picture img {
+.photo .shot img {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
-/* A photo shown whole has a card in its own shape, so the picture fills it and
-   nothing is cut. contain is the safe value: it cuts nothing even where the
-   card is a pixel off, or is held to a shape the photo is too extreme for (see
-   photoLayout), and then the card colour shows beside the picture. */
-.photo .whole .picture img {
+.photo .shot[data-fit="whole"] img {
   object-fit: contain;
 }
+
+/* The caption and the credit, on a plate in the lower left corner of the body in the color
+   of the team's plates. The plate is 40px in and 56px up: that leaves it clear of the cut
+   corners and the step of every frame above, also when the team has them turned across. The
+   caption is one line and a longer one ends in three dots (the three dots need nowrap). The
+   credit is the one text on the panel under 44px, at the size the design gives it. */
+.photo .note {
+  position: absolute;
+  left: 40px;
+  bottom: 56px;
+  box-sizing: border-box;
+  max-width: 960px;
+  padding: 10px 24px;
+  background: var(--team-plate);
+  color: var(--white);
+}
+.photo .caption,
+.photo .credit {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.photo .caption {
+  font: 500 var(--size-label)/52px var(--font-text);
+}
+.photo .credit {
+  font: 500 30px/38px var(--font-text);
+}
+
 .photo .missing {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
   height: 100%;
+  background: var(--panel-face);
   font: 500 var(--size-body)/64px var(--font-text);
-}
-/* The credit sits on the lower left of the picture, on a plain plate in the
-   card colour so it can be read over any photo. It stops well short of the cut
-   corner on the right: at most 700px wide, and in a smaller card at most the
-   card's width less 88px (the cut corner starts 42px from the right). It comes
-   before the card's outline in the markup, so the metal edge is drawn over it. */
-.photo .credit {
-  position: absolute;
-  left: 2px;
-  bottom: 2px;
-  box-sizing: border-box;
-  max-width: min(700px, calc(100% - 88px));
-  padding: 0 24px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  background: var(--card);
-  color: var(--white);
-  font: 500 var(--size-label)/56px var(--font-text);
-}
-.photo .card-outline {
-  left: 0;
-  top: 0;
-}
-.photo .card-fill { fill: none; }
-
-/* The caption lines up with the text of the other panels and stops at x=1056
-   so it stays clear of the cut corner. It is one line: a longer one ends in
-   three dots (the three dots need nowrap). Studio stops it at 36 characters,
-   which fits when the text is ordinary mixed case. Its left, top and width
-   are set in photo.js, because a smaller card moves it up and in. Its height
-   and its text size never change. */
-.photo .caption {
-  position: absolute;
-  height: 64px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  font: 500 var(--size-body)/64px var(--font-text);
-}
-/* The box under a card in the shape of its photo is as wide as the frame allows
-   however narrow the card is, so the text is centred and does not hang to one side */
-.photo .caption.centred {
-  text-align: center;
 }

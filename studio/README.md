@@ -236,9 +236,10 @@ never enlarged, in a small format (`screenPhotoUrl` in
 `dashboard/core/images.js`), and needs no CORS origin beyond the one in step 6.
 The photo settings in the Screen tab of Dashboard Settings (`schemas/settingsPhotos.js`) have Photo
 order (Random or Newest first), Seconds per photo (6 to 120, starting at
-16), Portrait size (a whole percent from 60 to 200, starting at 100, which is
-the standard size; 200 is double), Photo size (a whole percent from 60 to 100,
-starting at 100, which is the full size) and Photo fit (Fill the frame or Show
+16, the time the panel stays up each turn, shared between its photos),
+Portrait size (a whole percent from 60 to 200, starting at 100, which is
+the standard size; 200 is double), Photo size (hidden and not used, because a
+photo fills the panel) and Photo fit (Fill the frame or Show
 the whole photo, which a photo can override with its own Fit field). Nothing needs setting up beyond the steps above. Run `npm run deploy`
 after you change `schemas/photo.js` or `schemas/settingsPhotos.js`, so the
 editors see the change. docs/editing-content.md has the advice for the people

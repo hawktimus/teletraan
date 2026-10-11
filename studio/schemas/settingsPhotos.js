@@ -1,20 +1,18 @@
 // The photo fields of Dashboard Settings, in the Screen tab: the order the Photo
-// panel shows its photos in, how long it stays up, how big the pictures are
-// and whether a photo is cut to its card or shown whole. Five fields:
+// panel shows its photos in, how long it stays up, how big the portraits are
+// and whether a photo is cut to fill the panel or shown whole. Five fields:
 //
 //   photoOrder     random (the default) or newest first
 //   photoSeconds   seconds the panel stays up, from 6 to 120, starting at 16
 //   portraitScale  size of the portraits, in percent, from 60 to 200, starting at 100
-//   photoScale     size of the picture in the Photo panel, from 60 to 100
-//   photoFit       fill (the default) cuts a photo to the card, whole keeps its shape
+//   photoScale     hidden: the size of the picture, which is not used since a photo fills the panel
+//   photoFit       fill (the default) cuts a photo to fill the panel, whole fits all of it inside
 //
 // The choices are the names in photoOrders and photoFits in dashboard/config.js,
 // and the starting values and limits are the same as defaultSettings and limits there.
 // check-schemas.mjs fails if they differ. The photos themselves are in
-// photo.js. For the Photo panel 100 percent is the full size, the largest that
-// fits the frame (core/photos.js works out the smaller sizes). For the
-// portraits 100 is the standard size and 200 is double: above 100 the rows of
-// Leadership and Team Leads get taller and fewer fit on a page
+// photo.js. For the portraits 100 is the standard size and 200 is double: above
+// 100 the rows of Leadership and Team Leads get taller and fewer fit on a page
 // (core/portrait.js, rowLayout).
 //
 // photoFit is not required. Dashboard Settings published before it existed has
@@ -61,7 +59,7 @@ export function photosFields() {
       title: 'Seconds per photo',
       type: 'number',
       group: 'screen',
-      description: 'How long the Photo panel stays up, from 6 to 120 seconds. A row in Panels with its own seconds wins.',
+      description: 'How long the Photo panel stays up each turn, from 6 to 120 seconds. Photos share it, 8 seconds each at least. A row in Panels with its own seconds wins.',
       initialValue: 16,
       validation: Rule => [
         Rule.required().error('Enter the number of seconds.'),
@@ -82,17 +80,18 @@ export function photosFields() {
       ],
     }),
 
+    // Hidden, and the value saved in it stays. A photo fills the whole body of the panel, so there is
+    // no size to set. It is not required: nobody can fill in a hidden field, and a page saved before
+    // the field existed must still publish.
     defineField({
       name: 'photoScale',
       title: 'Photo size, percent',
       type: 'number',
       group: 'screen',
-      description: 'How big the picture is, from 60 to 100. 100 is the full size and the largest that fits the frame. A photo shown whole is made smaller by it too.',
+      hidden: true,
+      description: 'Not used any more. A photo fills the whole panel.',
       initialValue: 100,
-      validation: Rule => [
-        Rule.required().error('Enter a percent from 60 to 100.'),
-        Rule.integer().min(60).max(100).error('Use a whole number from 60 to 100.'),
-      ],
+      validation: Rule => Rule.integer().min(60).max(100).error('Use a whole number from 60 to 100.'),
     }),
 
     defineField({
@@ -100,7 +99,7 @@ export function photosFields() {
       title: 'Photo fit',
       type: 'string',
       group: 'screen',
-      description: 'Fill the frame cuts every photo to the same card. Show the whole photo gives each card the shape of its photo, so nothing is cut. A photo can pick its own.',
+      description: 'Fill the frame cuts every photo to fill the whole panel. Show the whole photo fits all of it inside the panel, so nothing is cut. A photo can pick its own.',
       options: { list: fits, layout: 'radio', direction: 'horizontal' },
       initialValue: 'fill',
       validation: Rule => Rule.valid(fits.map(fit => fit.value)).error('Pick fill the frame or show the whole photo.'),

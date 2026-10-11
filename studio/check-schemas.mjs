@@ -1113,7 +1113,7 @@ function checkLookAndTiming() {
 
     need(problems, start === entry[2], 'the default ' + name + ' in config.js should be ' + entry[2] + ', not ' + start);
     need(problems, limit && low && high && low.args[0] === limit.min && high.args[0] === limit.max, name + ' should have the limits in config.js, ' + JSON.stringify(limit));
-    need(problems, constraintNamed(rules, 'required'), name + ' should be required');
+    need(problems, constraintNamed(rules, 'required') || (field && field.hidden === true), name + ' should be required, unless it is hidden');
     need(problems, !!constraintNamed(rules, 'integer') === entry[3], name + (entry[3] ? ' should be a whole number' : ' should allow decimals, so no integer rule'));
   });
 
@@ -2611,13 +2611,14 @@ function checkPhotos() {
   need(problems, setting('portraitScale') && setting('portraitScale').title === 'Portrait size, percent', 'portraitScale should be titled Portrait size, percent');
   need(problems, setting('photoScale') && setting('photoScale').title === 'Photo size, percent', 'photoScale should be titled Photo size, percent');
 
-  // The Photo size: a whole percent from 60 to 100 that starts at 100, with a one line description that says what 100 is.
+  // The Photo size is hidden, because a photo fills the panel: it stays in the schema with its limits and its starting
+  // value, so what was saved in it stays, and it is not required, because nobody can fill in a hidden field.
   // The Portrait size has its own range and words, in checkPortraitSize.
   ['photoScale'].forEach(name => {
     const words = setting(name) ? setting(name).description || '' : '';
-    need(problems, words.length > 0 && words.indexOf('\n') === -1, name + ' needs a one-line description');
-    need(problems, /100 is the full size/.test(words) && /largest that fits/.test(words), name + ' description should say that 100 is the full size and the largest that fits the frame');
-    need(problems, /from 60 to 100/.test(words), name + ' description should give the range, from 60 to 100');
+    need(problems, setting(name) && setting(name).hidden === true, name + ' should be hidden but stay in the schema');
+    need(problems, !constraintNamed(rulesOf(setting(name)), 'required'), name + ' should not be required: nobody can fill in a hidden field');
+    need(problems, words.length > 0 && words.indexOf('\n') === -1 && /Not used any more/.test(words), name + ' needs a one-line description that says it is not used any more');
     need(problems, config.limits[name] && config.limits[name].min === 60 && config.limits[name].max === 100, 'limits.' + name + ' in config.js should be 60 to 100');
     need(problems, config.defaultSettings[name] === 100, 'the default ' + name + ' in config.js should be 100');
     need(problems, world.sample.settings[name] === 100, 'the sample settings need ' + name + ' of 100');
@@ -5694,8 +5695,8 @@ function checkPhotoFit() {
   const ownAllowed = constraintNamed(rulesOf(own), 'valid');
   need(problems, ownAllowed && ownAllowed.args[0].join() === ['setting'].concat(config.photoFits).join(), 'photo.fit should only allow setting and the names in config.js');
 
-  const scale = fieldAt('dashboardSettings.photoScale');
-  need(problems, scale && /shown whole/.test(scale.description || ''), 'the photoScale description should say that a photo shown whole is made smaller by it too');
+  // The Photo size does nothing now, so the choices of the Photo fit say what the photo fills
+  need(problems, setting && /whole panel/.test(setting.description || '') && own && /fill the panel/.test(own.description || ''), 'the photoFit and photo.fit descriptions should say that a photo fills the panel');
 
   // The screen asks for the field, and the sample content shows both fits on photos of different shapes
   need(problems, /"photos": \*\[_type == "photo"\][^}]*\bfit,/.test(world.sanitySource), 'the photos part of contentQuery should ask for fit');

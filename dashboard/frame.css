@@ -1794,6 +1794,15 @@ html:not([data-motion="full"]) .logo[data-act="fly"] .hawk-far-wing { transform:
 [data-motion="none"] .talk .chip { animation: none; }
 
 
+/* The Photo panel (panels/photo, core/photos.js). The photos of one turn lie on top of each other,
+   the first at the bottom. Each one fades in over the one below it, --hold seconds after the one
+   before: --hold is already in real seconds, with the Speed setting in it, and --shot is the place
+   of the photo in the turn. The first one has no wait. Opacity only. With motion off the change
+   is at once, which is a fade that takes no time. */
+.photo .shot { animation: fade-in var(--time-fade-in) linear calc(var(--hold) * var(--shot)) both; }
+[data-motion="none"] .photo .shot { animation-duration: 0s; }
+
+
 /* Calm mode: no travel, no drawing, no effects. The whole panel fades as
    one piece, which looks the same as fading every part but is one
    animation instead of dozens. */

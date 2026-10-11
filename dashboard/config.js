@@ -246,8 +246,8 @@ export const defaultSettings = {
   //                 standard size and 200 is double (core/portrait.js). Above 100 the rows of
   //                 Leadership and Team Leads get taller and fewer fit on a page, and the Roster
   //                 portrait stays at 100. The names and roles keep their size.
-  //   photoScale    how big the picture in the Photo panel is, as a percent of the full size
-  //                 (core/photos.js). 100 fills the panel. The caption keeps its size.
+  //   photoScale    not used. It was how big the picture in the Photo panel is, and a photo now fills
+  //                 the panel. The Studio field is hidden and keeps what was saved in it.
   //   photoFit      see photoFits above. fill is how the panel always drew a photo.
   photoOrder: 'random',
   photoSeconds: 16,

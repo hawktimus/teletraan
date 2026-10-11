@@ -3788,20 +3788,22 @@ test('photos are read from Sanity with the rest of the content, and nothing read
   assert.ok(schedule.includes('stayFor(region, ownSeconds(next.step, settings), settings)'));
 });
 
-test('the Photo panel uses the visible photos, the order setting, the credit at 44px, and loads the next photo', () => {
+test('the Photo panel uses the visible photos, the order setting, the credit at 30px on the team plate, and loads the next photo', () => {
   const panel = fs.readFileSync(path.join(dashboardFolder, 'panels/photo/photo.js'), 'utf8');
   const style = fs.readFileSync(path.join(dashboardFolder, 'panels/photo/photo.css'), 'utf8');
 
-  assert.ok(panel.includes('queue.take(photosToShow(content), content.settings && content.settings.photoOrder)'));
+  assert.ok(panel.includes('queue.takeTurn(photosToShow(content), settings.photoOrder, plan.photos)'));
   assert.ok(panel.includes('return photosToShow(content).length > 0;'));
   assert.ok(panel.includes('preloadImages([turn.next.address])'), 'the next photo is not loaded');
   assert.ok(panel.includes('Photo: ${escapeHtml(credit)}'), 'the credit does not say Photo: and the name');
   assert.ok(panel.includes('object-position'), 'the hotspot is not used');
   assert.equal(/Math\.random/.test(panel), false, 'the panel chooses by itself, not through the queue');
 
-  assert.ok(/\.photo \.credit\s*\{[^}]*font: 500 var\(--size-label\)\/56px/.test(style), 'the credit is not at least 44px');
-  const credit = style.match(/\.photo \.credit\s*\{[^}]*\}/)[0];
-  assert.ok(credit.includes('background: var(--card);') && credit.includes('color: var(--white);'), 'the credit is not white on the card colour, a pair check-themes.mjs tests');
+  // the order sets the credit at 30px and the caption at 44px, on a plate in the color of the team's plates
+  assert.ok(/\.photo \.credit\s*\{[^}]*font: 500 30px\/38px/.test(style), 'the credit is not at 30px');
+  assert.ok(/\.photo \.caption\s*\{[^}]*font: 500 var\(--size-label\)\/52px/.test(style), 'the caption is not at 44px');
+  const note = style.match(/\.photo \.note\s*\{[^}]*\}/)[0];
+  assert.ok(note.includes('background: var(--team-plate);') && note.includes('color: var(--white);'), 'the plate is not white on the team plate color');
   assert.ok(/--size-label: 44px;/.test(fs.readFileSync(path.join(dashboardFolder, 'tokens.css'), 'utf8')));
   assert.equal(/blur|box-shadow|text-shadow|filter/.test(style), false, 'the photo panel uses an effect that is not allowed');
 });
@@ -4055,104 +4057,6 @@ test('a slot follows the Portrait size, keeps the card shape and the text, and i
   const noPhoto = slotMarkup({ name: '[Alex]', role: '', address: '', scale: 60 });
   assert.ok(noPhoto.includes('<svg class="silhouette" width="280" height="280" viewBox="0 0 280 280">'));
   assert.ok(noPhoto.includes('--portrait-card: 175px; --portrait-photo: 167px'));
-}));
-
-test('photoLayout: the card and the caption at 60, 80 and 100 percent, with and without a caption', () => {
-  const { photoLayout } = live.photos;
-
-  // 100 is where the Photo panel always was: 28 from the left, 142 from the top, the caption at 622
-  assert.deepEqual(photoLayout(100, true), { card: { left: 28, top: 142, width: 1096, height: 464 }, caption: { left: 52, top: 622, width: 1004 } });
-  assert.deepEqual(photoLayout(100, false).card, { left: 28, top: 142, width: 1096, height: 514 });
-  assert.deepEqual(photoLayout(undefined, true), photoLayout(100, true));
-  assert.deepEqual(photoLayout('large', false), photoLayout(100, false));
-
-  assert.deepEqual(photoLayout(80, true), { card: { left: 138, top: 189, width: 877, height: 371 }, caption: { left: 162, top: 576, width: 894 } });
-  assert.deepEqual(photoLayout(80, false).card, { left: 138, top: 194, width: 877, height: 411 });
-  assert.deepEqual(photoLayout(60, true), { card: { left: 247, top: 235, width: 658, height: 278 }, caption: { left: 271, top: 529, width: 785 } });
-  assert.deepEqual(photoLayout(60, false).card, { left: 247, top: 245, width: 658, height: 308 });
-  assert.deepEqual(photoLayout(59, true), photoLayout(60, true));
-  assert.deepEqual(photoLayout(1000, true), photoLayout(100, true));
-
-  // the frame's cut corner runs from (1148, 640) to (1068, 704): the most x a point can have at a height
-  const frameLimit = y => (y <= 640 ? 1148 : 1148 - (y - 640) * 80 / 64);
-
-  [true, false].forEach(hasCaption => {
-    for (let percent = 60; percent <= 100; percent++) {
-      const layout = photoLayout(percent, hasCaption);
-      const card = layout.card;
-      const where = percent + (hasCaption ? ' with' : ' without') + ' a caption';
-
-      // in proportion to the full card, in whole pixels
-      assert.ok(Math.abs(card.width - 1096 * percent / 100) <= 0.5, 'width at ' + where);
-      assert.ok(Math.abs(card.height - (hasCaption ? 464 : 514) * percent / 100) <= 0.5, 'height at ' + where);
-      // in the middle of the panel (1152 wide), to the pixel
-      assert.ok(Math.abs(card.left - (1152 - card.width - card.left)) <= 1, 'centred across at ' + where);
-      // never above the header's plate (the body starts at 120) and never below the space it has at 100
-      assert.ok(card.top >= 142, 'below the header at ' + where);
-      const bottom = hasCaption ? layout.caption.top + 64 : card.top + card.height;
-      assert.ok(bottom <= (hasCaption ? 686 : 656), 'inside the space it has at 100, ' + where);
-      // the card's own cut corner is clear of the frame's
-      assert.ok(card.left + card.width <= frameLimit(card.top + card.height - 34) - 20, 'right of the card at ' + where);
-      assert.ok(card.left + card.width - 42 <= frameLimit(card.top + card.height) - 20, 'cut corner at ' + where);
-
-      if (hasCaption) {
-        const caption = layout.caption;
-        assert.equal(caption.top, card.top + card.height + 16, 'the caption is directly under the card at ' + where);
-        assert.equal(caption.left, card.left + 24, 'the caption lines up with the card at ' + where);
-        assert.ok(caption.width > 0 && caption.width <= 1004, 'caption width at ' + where);
-        // it always stops where it stops at full size, which is clear of the frame's cut corner
-        assert.equal(caption.left + caption.width, 1056, 'the caption stops at 1056 at ' + where);
-        assert.ok(caption.left + caption.width <= frameLimit(caption.top + 64) - 30, 'the caption is clear of the cut corner at ' + where);
-      }
-      // the credit plate: at most 700 wide and at most the card less 88, from 2 in, so it ends well left of the card's cut corner
-      const creditEnd = 2 + Math.min(700, card.width - 88);
-      assert.ok(creditEnd <= card.width - 42 - 40, 'the credit is clear of the cut corner at ' + where);
-    }
-  });
-});
-
-test('the Photo panel draws the card and the caption at the Photo size, and the picture still fills the card', () => withFakePage(drawn => {
-  const photo = { address: 'data/sample/photo-1.svg', caption: '[Caption]', credit: '[Name]', focus: { x: 30, y: 40 } };
-  const draw = (settings, shown) => {
-    const target = { innerHTML: '', querySelector: () => null };
-    live.photoPanel.mount(target, { photos: [shown || photo], settings: settings });
-    return target.innerHTML;
-  };
-
-  const full = draw({ photoOrder: 'random', photoScale: 100 });
-  assert.ok(full.includes('<div class="card" data-slat="item" style="left: 28px; top: 142px; width: 1096px; height: 464px">'));
-  assert.ok(full.includes('<div class="caption" data-slat="item" style="left: 52px; top: 622px; width: 1004px">[Caption]</div>'));
-  // content with no settings, or no size in them, is the full size
-  assert.equal(draw(undefined), full);
-  assert.equal(draw({ photoOrder: 'random' }), full);
-
-  const small = draw({ photoOrder: 'random', photoScale: 60 });
-  assert.ok(small.includes('<div class="card" data-slat="item" style="left: 247px; top: 235px; width: 658px; height: 278px">'));
-  assert.ok(small.includes('<div class="caption" data-slat="item" style="left: 271px; top: 529px; width: 785px">[Caption]</div>'));
-  // the card's edge is drawn at the new size, and the picture, the hotspot and the credit are still in it
-  assert.ok(small.includes('width="658" height="278" viewBox="0 0 658 278"'));
-  assert.ok(small.includes('<img src="data/sample/photo-1.svg" style="object-position: 30% 40%" alt="">'));
-  assert.ok(small.includes('<div class="credit">Photo: [Name]</div>'));
-  assert.ok(small.includes('<div class="picture">') && small.includes('PHOTOS'));
-  assert.ok(drawn.includes('card-1096x464') && drawn.includes('card-658x278'));
-
-  // with no caption the card is taller, and there is no caption box
-  const bare = draw({ photoScale: 60 }, { address: 'data/sample/photo-3.svg' });
-  assert.ok(bare.includes('style="left: 247px; top: 245px; width: 658px; height: 308px"'));
-  assert.equal(bare.includes('class="caption"'), false);
-  assert.ok(drawn.includes('card-658x308'));
-  assert.ok(draw({ photoScale: 100 }, { address: 'data/sample/photo-3.svg' }).includes('style="left: 28px; top: 142px; width: 1096px; height: 514px"'));
-
-  // the Portrait size does not touch the Photo panel
-  assert.equal(draw({ portraitScale: 60 }), full);
-
-  // the stylesheet leaves the place and the size to photo.js, and keeps the text sizes and the cut of the picture
-  const style = fs.readFileSync(path.join(dashboardFolder, 'panels/photo/photo.css'), 'utf8');
-  assert.equal(/\.photo \.card\s*\{[^}]*(left|top|width|height):/.test(style), false, 'the card has a place or a size in photo.css');
-  assert.equal(/\.photo \.caption\s*\{[^}]*(left|top|width):/.test(style), false, 'the caption has a place or a width in photo.css');
-  assert.ok(/\.photo \.caption\s*\{[^}]*height: 64px;[^}]*font: 500 var\(--size-body\)\/64px/.test(style), 'the caption keeps its height and its text size');
-  assert.ok(style.includes('max-width: min(700px, calc(100% - 88px));'), 'the credit does not shrink with a smaller card');
-  assert.ok(style.includes('object-fit: cover;'));
 }));
 
 // The Subteam roster panel: its pages (core/roster.js) and what it draws
