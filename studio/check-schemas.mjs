@@ -2620,7 +2620,7 @@ function checkPhotos() {
   need(problems, setting('photoScale') && setting('photoScale').title === 'Photo size, percent', 'photoScale should be titled Photo size, percent');
 
   // The Photo size: a whole percent from 60 to 100 that starts at 100, with a one line description that says what 100 is.
-  // The Portrait size has its own range and words, in checkPortraitSize.
+  // The portrait sizes have their own range and words, in checkPortraitSettings.
   ['photoScale'].forEach(name => {
     const words = setting(name) ? setting(name).description || '' : '';
     need(problems, words.length > 0 && words.indexOf('\n') === -1, name + ' needs a one-line description');

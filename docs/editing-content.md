@@ -585,7 +585,7 @@ Captain gold and Mentor silver. The colours are the `roleMetals` list in
 
 Four rows fit on a panel at the standard portrait size, spread over its height. A row
 of four has room for the name and the title but not for the Line, so the Line shows
-when a page holds three people or fewer, which is a Portrait size above 100.
+when a page holds three people or fewer, which is a portrait size above 100.
 The Leadership panel shows the coaches first, then the captains, then the
 mentors, each group in the order of the Order field. With two coaches and two
 captains the four rows are one page. With more people, each time the panel

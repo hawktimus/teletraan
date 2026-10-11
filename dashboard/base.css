@@ -714,7 +714,7 @@ html[data-style="original"] .plate-id { display: block; }
    edge. The picture is 280 square, 6px in. Its bottom right corner is cut to
    run beside the card's own cut corner, about 4px inside it.
 
-   Those are the sizes at 100 percent. The Portrait size setting makes them
+   Those are the sizes at 100 percent. The Roster size setting makes them
    smaller, and portrait.js hands the three sizes over as variables on the
    .portrait element. The numbers after the commas are the sizes at 100. The
    card is drawn at 292 and the svg is stretched down to the variable, which

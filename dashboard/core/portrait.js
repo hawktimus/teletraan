@@ -55,7 +55,7 @@ const rowSteps = [
 ];
 
 // The photo is always asked for at the full size, 280 square, whatever the
-// Portrait size setting says. One address for every size means the copy that
+// portrait size setting says. One address for every size means the copy that
 // was loaded ahead of time is the copy that is shown.
 
 // The sizes of the portrait in the Roster slot, in pixels, at a percent of the standard
