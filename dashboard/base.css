@@ -146,11 +146,11 @@ html, body {
 #blue-glitch .tear-5 { left: 500px;  top: 760px; width: 1300px; height: 90px;  background: var(--hidden-blue-new); }
 #blue-glitch .tear-6 { left: 0;      top: 930px; width: 1920px; height: 22px;  background: var(--hidden-blue-pale); }
 
-/* The frames that fall at the end of a hidden transition (core/hidden-pile.js,
-   docs/hidden-transitions.md). #pile is a full screen layer over the stage. It holds the copies of
-   the bolts that fall, which the script adds, and the cube. The cube is 120 by 120 and rests on the
-   pile, in the middle of the screen, with its line drawing in the team accent. Each box inside it
-   is the size of the drawing, and every move is in frame.css. */
+/* The frames that collapse in a hidden transition (core/hidden-pile.js, docs/hidden-transitions.md)
+   and the pieces and the hawk of a swap (core/swap-run.js). #pile is a full screen layer over the
+   stage. It holds the copies of the bolts that move, which the script adds, the hawk of a swap, and the
+   cube. The cube is 120 by 120 and its place is the middle of the screen, with its line drawing in the
+   team accent. Each box inside it is the size of the drawing, and every move is in frame.css. */
 #pile {
   position: absolute;
   left: 0;
@@ -163,7 +163,7 @@ html, body {
 #cube {
   position: absolute;
   left: 900px;
-  top: 840px;
+  top: 480px;
   width: 120px;
   height: 120px;
 }

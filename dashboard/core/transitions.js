@@ -12,8 +12,8 @@
 //
 // To add a third style, see docs/page-transitions.md.
 //
-// The second half of this file is not a page change. It plans how the frames fall
-// and come back at the end of the red eyes and the blue screen (planPile).
+// The second half of this file is not a page change. It plans how the frames collapse into a pile, lie
+// there while the blue screen or the red eyes play, and rise again (planPile).
 
 import { defaultSettings } from '../config.js';
 
@@ -46,14 +46,15 @@ export function chooseFinish(mode, chance, last, random) {
 }
 
 
-// The frames fall and come back
+// The frames collapse and come back
 //
-// At the end of the red eyes and the blue screen every piece of metal on the screen (the
-// pieces of the frames, the halves of the frames that are not cut up, and every bolt) lets go
-// at its own moment, tips, turns and falls into a pile along the bottom edge. A cube rises out
-// of the pile. On its second pulse the pieces lift in the opposite order and fly back to
-// their places. docs/hidden-transitions.md explains it, core/hidden-pile.js measures the pieces
-// on the page and hands them to planPile(), and frame.css does the moving.
+// In the red eyes and the blue screen every piece of metal on the screen (the pieces of the frames, the
+// halves of the frames that are not cut up, and every bolt) lets go at its own moment, tips, turns and
+// falls into a loose pile along the bottom edge, and stays there while the effect plays. Then a cube
+// rises, turns, pulses and shrinks to a point, and the pieces rise from the pile to their places, one
+// after another. It is the only time the pieces fall: a swap pulls them apart and brings them back
+// (core/swap-plan.js). docs/hidden-transitions.md explains it, core/hidden-pile.js measures the pieces on
+// the page and hands them to planPile(), and frame.css does the moving.
 
 // The most pieces that fall. Past it the smallest ones are folded into the piece they ride on.
 export const pieceLimit = 40;
@@ -61,29 +62,38 @@ export const pieceLimit = 40;
 // Milliseconds at normal speed. fallMs is the one time that core/hidden-run.js and
 // --hidden-seconds in tokens.css also have (flySeconds). frame.css has the times of the cube and
 // of one piece flying back, and tools/test-pile.mjs holds the two together.
-//   fallMs     from the start to the last piece at rest in the pile
-//   letGoMs    a piece lets go at a random moment from 0 to this
-//   cubeAtMs   the cube starts to rise
-//   cube       its parts, counted from the moment it starts: it rises, turns once, then pulses
-//              twice (opacity 1 to .4 to 1)
-//   liftAtMs   the second pulse starts and the first piece lifts
-//   flyMs      one piece flying back
-//   gapMs      from one piece lifting to the next
-//   totalMs    the three parts are over by this time at the latest
+//   fallMs      the collapse: from the start to the last piece at rest in the pile
+//   letGoMs     a piece lets go at a random moment from 0 to this
+//   cubeMs      the cube: it rises, turns, pulses and shrinks to a point, in this time
+//   cube        its parts, counted from the moment it starts: it rises, turns once, pulses twice
+//               (opacity 1 to .4 to 1) and shrinks to a point, one after the other
+//   flyMs       one piece rising to its place
+//   gapMs       from one piece rising to the next, or less when 40 pieces would not be home in riseMs
+//   riseMs      the last piece is home by this long after the first one rises
+//   contentMs   the content fades in, after the last piece is home
+//   rebuildMs   the rebuild: the pieces rise and the content comes in, in this time at the most
 export const pileTimes = {
-  fallMs: 1600,
+  fallMs: 1700,
   letGoMs: 400,
-  cubeAtMs: 1000,
-  cube: { riseMs: 600, turnAfterMs: 300, turnMs: 800, pulseAfterMs: 600, pulseMs: 400 },
-  liftAtMs: 2000,
+  cubeMs: 2600,
+  cube: { riseMs: 600, turnAfterMs: 600, turnMs: 800, pulseAfterMs: 1400, pulseMs: 400, shrinkAfterMs: 2200, shrinkMs: 400 },
   flyMs: 500,
-  gapMs: 60,
-  totalMs: 5000,
+  gapMs: 45,
+  riseMs: 950,
+  contentMs: 250,
+  rebuildMs: 1200,
 };
+
+// What the collapse, the cube and the rebuild take in all. The red eyes or the blue screen play between the
+// collapse and the cube, so the whole transition after the glitch is the length of the effect and this,
+// and the order allows pileLimitMs for this at the most.
+export const pileExtraMs = pileTimes.fallMs + pileTimes.cubeMs + pileTimes.rebuildMs;
+export const pileLimitMs = 6000;
 
 // Pixels and degrees. The pile lies in the bottom band of the screen. Pieces tip back by
 // between tipLeast and tipMost and turn in the plane by up to twistMost either way. lens is the
-// perspective in frame.css, and bounceHeight is the one bounce a piece makes.
+// perspective in frame.css. A piece makes one bounce of bounceHeight when it lands, and a small second
+// one of secondBounceHeight.
 export const pileShape = {
   screenWidth: 1920,
   screenHeight: 1080,
@@ -94,6 +104,7 @@ export const pileShape = {
   twistMost: 25,
   lens: 1600,
   bounceHeight: 30,
+  secondBounceHeight: 8,
 };
 
 // Where a piece is: x and y pixels from its place, tipped back by tip degrees, turned in the
@@ -173,19 +184,19 @@ export function mergeSmall(pieces, limit = pieceLimit) {
   return { kept: kept, merged: merged };
 }
 
-// Plans the fall and the lift. pieces is a list of { id, left, top, width, height, parent } on the
+// Plans the collapse and the rise. pieces is a list of { id, left, top, width, height, parent } on the
 // 1920 x 1080 screen (see mergeSmall), and seed is a whole number: the same pieces and the same seed
 // always give the same plan. Returns
 //   pieces    one entry for each piece that falls, in the order they came, with
 //               rank   0 for the first piece to let go. The pile is laid out from left to right in this order
 //               pose   how it lies in the pile
-//               fall   { from, to, delayMs, ms }  the break: from its place to the pile
-//               lift   { from, to, delayMs, ms }  the reassembly: from the pile to its place. The last to
-//                      fall lifts first, and the first to fall is the last one back
+//               fall   { from, to, delayMs, ms }  the collapse: from its place to the pile
+//               lift   { from, to, delayMs, ms }  the rebuild: from the pile to its place. The last to
+//                      fall rises first, and the first to fall is the last one back
 //             Every delay counts from the start of its own part
 //   merged    the ids of the pieces folded into another, which do not fall by themselves
-//   fellMs    when the last piece is at rest, counted from the start of the break
-//   lockedMs  when the last piece is back in its place, counted from the same moment
+//   fellMs    when the last piece is at rest, counted from the start of the collapse
+//   riseMs    when the last piece is back in its place, counted from the moment the first one rises
 export function planPile(pieces, seed) {
   const random = seededRandom(seed);
   const { kept, merged } = mergeSmall(pieces);
@@ -203,7 +214,7 @@ export function planPile(pieces, seed) {
   const fallen = drawn.slice().sort((a, b) => a.delayMs - b.delayMs || a.index - b.index);
 
   const slot = (shape.screenWidth - 2 * shape.sideMargin) / Math.max(count, 1);
-  const gapMs = count > 1 ? Math.min(pileTimes.gapMs, (pileTimes.totalMs - pileTimes.liftAtMs - pileTimes.flyMs) / (count - 1)) : 0;
+  const gapMs = count > 1 ? Math.min(pileTimes.gapMs, (pileTimes.riseMs - pileTimes.flyMs) / (count - 1)) : 0;
 
   const placed = {};
   fallen.forEach((item, rank) => {
@@ -238,6 +249,6 @@ export function planPile(pieces, seed) {
     pieces: entries,
     merged: merged.map(piece => piece.id),
     fellMs: entries.reduce((latest, entry) => Math.max(latest, entry.fall.delayMs + entry.fall.ms), 0),
-    lockedMs: entries.reduce((latest, entry) => Math.max(latest, pileTimes.liftAtMs + entry.lift.delayMs + entry.lift.ms), pileTimes.liftAtMs),
+    riseMs: entries.reduce((latest, entry) => Math.max(latest, entry.lift.delayMs + entry.lift.ms), 0),
   };
 }

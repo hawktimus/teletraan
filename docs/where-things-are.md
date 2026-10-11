@@ -143,7 +143,7 @@ editors can sign in from anywhere.
                               the four ornaments of line art that go in the cut corners, pack-extras.js
                               decides the ticker prefix, banner line and corner art of the pack on the page,
                               transitions.js chooses the style and the metal of the next page change and
-                              plans how the frames fall into a pile and come back at the end of a hidden
+                              plans how the frames collapse into a pile and rise again in a hidden
                               transition,
                               look.js turns the Polish setting (polished, flat or plain) into the page
                               switches the stylesheets read (data-finish, data-glint and data-look),
@@ -378,8 +378,8 @@ editors can sign in from anywhere.
       test-team-trim.mjs      checks for the trim of a team: both teams of the sample content on a fake page, the
                               classes of every field, the frames with the other corners cut and the slanted tab
                               (the Prime frame turned across, the 60 degree line, the pieces), and the rules of trim.css
-      test-pile.mjs           checks for the end of the hidden transitions: the plan of the fall, the pile and the
-                              lift (at most 40 pieces, 5 seconds, every piece back in its place), the stylesheet
+      test-pile.mjs           checks for the hidden transitions' pile: the plan of the collapse, the pile and the
+                              rise (at most 40 pieces, 5.5 seconds, every piece back in its place), the stylesheet
                               that moves them, the cube, and the script that finds the pieces on a fake page
       test-person-rows.mjs    checks for the rows of the Team Leads and Leadership panels: four rows to a
                               panel, who is in them, the portrait size, and the sizes in base.css
@@ -520,9 +520,9 @@ alone.
   `studio/hidden-transitions.js`, a copy of `hiddenTransitions` in
   `dashboard/core/hidden-transitions.js`. A new transition is one entry in each, plus an hours
   field and a chance field. `core/hidden.js` decides, `core/hidden-run.js` plays, and `frame.css` ("Hidden
-  transitions" and "The blue glitch") moves the five blocks and the glitches. Both end with
-  the frames falling into a pile and a cube putting them back (`core/hidden-pile.js`,
-  `planPile` in `core/transitions.js`, and "The frames fall and come back" in `frame.css`). The four
+  transitions" and "The blue glitch") moves the glitches. Both collapse the frames into a pile
+  before the effect and end with a cube putting them back (`core/hidden-pile.js`,
+  `planPile` in `core/transitions.js`, and "The frames collapse and come back" in `frame.css`). The four
   pictures are in `dashboard/assets/hidden/`, and `core/hidden-pictures.js` says how each one
   fills the screen and which one plays next. Try one with `?hidden=desktop` or `?hidden=redEyes`.
 - **Play announcements.** A button in the menu beside Publish on Dashboard Settings

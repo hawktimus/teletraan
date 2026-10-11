@@ -32,13 +32,13 @@ moves nothing. Both ignore Page change style. The mechanical change only
 exists in full motion.
 
 Now and then a hidden transition replaces a page change of the large panel: the
-whole screen comes apart, with a blue error screen or a picture of two
-red eyes behind it, and then it comes back and its frames fall into a pile and are put
-back by a cube.
-The blocks fly apart with the same keyframes (`piece-break`) as the pieces of the
-mechanical change, for five big blocks instead of a frame's pieces. The frames fall
-as these same pieces, which the area shows in place of the whole frame while the metal is
+frames of the whole screen collapse into a pile, with a blue error screen or a picture of two
+red eyes behind them, and then a cube puts them back. The frames fall
+as the same pieces the mechanical change uses, which the area shows in place of the whole frame while the metal is
 down, and come back with `piece-fall` and `piece-lift`. See docs/hidden-transitions.md.
+
+A change of style, team or Monday card is another move, the swap, which pulls the pieces apart
+and brings them back with `element.animate()` (docs/layouts.md, "The swap").
 
 ## The metal
 
@@ -126,7 +126,7 @@ together into the frame at rest, and the metal bands carry on from one to the
 next. The large frame has 13 pieces and the small frame 12. The pieces are in the
 area from the start but hidden (`display: none`). During a mechanical change they
 are shown, and the frame at rest is hidden in their place. The same happens while
-the frames fall at the end of a hidden transition.
+the frames collapse in a hidden transition and move in a swap.
 
 Only the pieces are layers, and only while the change runs: `will-change` is set
 on them in the two states of a mechanical change and nowhere else, and the area has

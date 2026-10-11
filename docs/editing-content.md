@@ -1007,11 +1007,11 @@ Sanity, and the screen draws it.
   for 4 hours. To make one rarer, raise its hours. To stop them all, turn off
   "Allow hidden transitions". A settings page saved before the hours existed
   has them empty, and keeps its old percent until you fill them in and publish.
-  In the desktop reveal the screen glitches blue, comes apart, cuts to a blue
-  error screen for 3 seconds and comes back with the next pages. In red eyes it
-  glitches red, breaks apart to black, shows a picture of two red eyes for a few
-  seconds and comes back. Both end the same way: the frames fall into a pile at
-  the bottom, a cube rises out of it, and the frames fly back to their places.
+  In the desktop reveal the screen glitches blue, its frames collapse into a pile at
+  the bottom, and it cuts to a blue error screen for 3 seconds. In red eyes it
+  glitches red, the frames collapse over black, and a picture of two red eyes shows for a few
+  seconds. Both end the same way: a cube rises, turns and shrinks, and the frames rise
+  from the pile and fly back to their places, with the next pages.
   Each has two pictures that take turns, and they can be
   swapped for others (docs/hidden-transitions.md).
   To play one now, open the menu next to Publish (the three dots) and click

@@ -1178,7 +1178,7 @@ screen. The logo effects and the neon kit are held (`setSwapPlaying` in `frame.j
 | 350 to 2000 | The hawk flies to the new place of the logo, in one arc, and lands. The swap is over when it has landed |
 
 **The pieces** are every piece of metal the page draws as a separate element, the ones that fall in a hidden
-transition (`core/hidden-pile.js`, "The frames fall and come back" in docs/hidden-transitions.md): the pieces of a frame
+transition (`core/hidden-pile.js`, "The frames collapse and come back" in docs/hidden-transitions.md): the pieces of a frame
 that is cut up (the edges, the header plates, the plates of the body), the fills and the two halves of a frame that is not,
 and every bolt. A bolt moves as a copy of its own in `#pile`, and the bolt on the frame is out of sight meanwhile. At most
 40 pieces move: past that the smallest bolts are folded into the plate they are bolted to. While the pieces move,
@@ -1410,21 +1410,15 @@ changes the shape of a frame, add it to `frameTrim` in `core/teams.js` and to th
   scaled pane. The frame's metal comes from Dashboard Settings, as in the
   standard layout, unless the theme sets its own. Neon Prime does: gunmetal,
   whatever Frame metal says (docs/adding-a-theme.md, "Neon Prime").
-- **Hidden transitions** break apart the blocks that exist in the layout. The
-  standard layout has five (banner, large frame, countdown, small frame, ticker).
-  The sidebar layout has four: the strip, the sidebar, the pane and the ticker. The
-  strip flies up and the ticker down, as the banner and the ticker do in the
-  standard layout, the sidebar to the left and the pane to the right, one after
-  another (the strip first, the ticker last). Each block's pose (how far it flies,
-  how it turns, how late it starts) is a line in the table in `frame.css`, and for
-  the sidebar layout in `layouts/sidebar.css`. `layout-apply.js` marks the four
-  with `data-block`, and the blocks of the standard layout that the sidebar layout
-  does not have lose the mark. A transition still ends in a clean rebuild, and
-  waits for no small frame. The bar layout has four too: the banner, the side
-  column, the main panel and the ticker, with the poses of the column and the main
-  panel in `layouts/bar.css`. The rebuild is the frames falling into a pile and
-  coming back (docs/hidden-transitions.md): they fall as the pieces they are drawn
-  in, in every layout, and the strip and the sidebar fall whole.
+- **Hidden transitions** collapse the frames of the blocks that exist in the layout into a pile
+  (docs/hidden-transitions.md). The standard layout has five blocks (banner, large frame, countdown,
+  small frame, ticker). The sidebar layout has four: the strip, the sidebar, the pane and the ticker.
+  The bar layout has four too: the banner, the side column, the main panel and the ticker.
+  `layout-apply.js` marks them with `data-block`, and the blocks of the standard layout that the layout
+  does not have lose the mark. The blocks no longer fly apart: only their `--hold`, how late each one starts
+  to jump in the blue glitch, is read from the table in `frame.css` and the lines in `layouts/sidebar.css`
+  and `layouts/bar.css`. The frames fall as the pieces they are drawn in, in every layout, and the strip
+  and the sidebar fall whole. A transition still ends in a clean rebuild, and waits for no small frame.
 - **Alerts, announcements, the night screen, the demo and the connection text**
   are layers as big as the screen. They do not depend on the layout, and cover it.
   The connection text is as wide as the ticker at most, as it is in the standard

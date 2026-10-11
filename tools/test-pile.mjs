@@ -1,6 +1,6 @@
-// Tests for the end of the red eyes and the blue screen, where the frames fall into a pile, a cube
-// rises out of it and the frames fly back (docs/hidden-transitions.md, "The frames fall and come
-// back"). The plan is run for real: planPile in dashboard/core/transitions.js decides which piece
+// Tests for the red eyes and the blue screen, where the frames collapse into a pile, stay there while the
+// effect plays, and rise again after a cube has risen, turned and shrunk (docs/hidden-transitions.md, "The frames
+// collapse and come back"). The plan is run for real: planPile in dashboard/core/transitions.js decides which piece
 // lets go when and how it lies. The file that finds the pieces on the page, dashboard/core/hidden-pile.js,
 // is run against a small fake page. The stylesheets and the runner are checked by reading them,
 // because the moves need a browser to be seen.
@@ -40,7 +40,7 @@ const plate = await import(base + 'core/plate.js');
 const pileModule = await import(base + 'core/hidden-pile.js');
 const frameStandIn = await import(base + 'frame.js');
 
-const { boxInPose, inPlace, mergeSmall, pieceLimit, pileShape, pileTimes, planPile, seededRandom } = transitions;
+const { boxInPose, inPlace, mergeSmall, pieceLimit, pileExtraMs, pileLimitMs, pileShape, pileTimes, planPile, seededRandom } = transitions;
 
 const tests = [];
 function test(name, run) {
@@ -84,7 +84,7 @@ test('the same pieces and the same seed always give the same plan, and another s
   assert.notEqual(new Set(numbers).size, 1);
 });
 
-test('every piece lets go between 0 and 400 ms, tips between 20 and 70 degrees, turns up to 25 degrees in the plane, and falls for 1.2 s', () => {
+test('every piece lets go between 0 and 400 ms, tips between 20 and 70 degrees, turns up to 25 degrees in the plane, and falls for 1.3 s', () => {
   [1, 2, 3, 99, 4242].forEach(seed => {
     const plan = planPile(somePieces(30, 10), seed);
     plan.pieces.forEach(piece => {
@@ -92,10 +92,10 @@ test('every piece lets go between 0 and 400 ms, tips between 20 and 70 degrees, 
       assert.ok(Number.isInteger(piece.fall.delayMs));
       assert.ok(piece.pose.tip >= 20 && piece.pose.tip <= 70, piece.id + ' tips ' + piece.pose.tip);
       assert.ok(Math.abs(piece.pose.twist) <= 25, piece.id + ' turns ' + piece.pose.twist);
-      assert.equal(piece.fall.ms, 1200);
+      assert.equal(piece.fall.ms, 1300);
     });
     assert.ok(plan.fellMs <= pileTimes.fallMs, 'the last piece is down by ' + plan.fellMs);
-    assert.equal(pileTimes.fallMs, 1600);
+    assert.equal(pileTimes.fallMs, 1700, 'the collapse takes 1.7 s');
   });
 
   // the delays are spread over the whole range, not all the same
@@ -186,8 +186,8 @@ test('the box of a piece in a pose is the box of the piece when it is in place, 
   assert.ok(Math.abs(turned.right - 50) < 1e-9 && Math.abs(turned.bottom - 100) < 1e-9, 'a quarter turn swaps the sides');
 });
 
-test('the pieces lift in the opposite order, 60 ms apart, each flies back in 500 ms to where it was with no tip, no turn and no offset', () => {
-  const pieces = somePieces(20, 10);
+test('the pieces rise in the opposite order, 45 ms apart, each flies back in 500 ms to where it was with no tip, no turn and no offset', () => {
+  const pieces = somePieces(6, 2);
   const plan = planPile(pieces, 21);
   const fallen = plan.pieces.slice().sort((a, b) => a.rank - b.rank);
 
@@ -201,40 +201,59 @@ test('the pieces lift in the opposite order, 60 ms apart, each flies back in 500
   assert.deepEqual(inPlace, { x: 0, y: 0, tip: 0, twist: 0, scale: 1 });
 
   const lifted = plan.pieces.slice().sort((a, b) => a.lift.delayMs - b.lift.delayMs);
-  assert.deepEqual(lifted.map(entry => entry.id), fallen.slice().reverse().map(entry => entry.id), 'the last to fall lifts first');
+  assert.deepEqual(lifted.map(entry => entry.id), fallen.slice().reverse().map(entry => entry.id), 'the last to fall rises first');
   assert.equal(lifted[0].lift.delayMs, 0);
-  lifted.slice(1).forEach((entry, index) => assert.ok(Math.abs(entry.lift.delayMs - lifted[index].lift.delayMs - 60) < 1e-9, 'one every 60 ms'));
+  lifted.slice(1).forEach((entry, index) => assert.ok(Math.abs(entry.lift.delayMs - lifted[index].lift.delayMs - 45) < 1e-9, 'one every 45 ms'));
 });
 
-test('the three parts take 5 seconds at the most, with 40 pieces too, and the cube starts to rise before the last piece is down', () => {
-  assert.equal(pileTimes.totalMs, 5000);
+test('the collapse, the cube and the rebuild take 5.5 seconds, under the 6 that the effect leaves, with 40 pieces too, and every piece returns to its origin', () => {
+  assert.equal(pileTimes.fallMs + pileTimes.cubeMs + pileTimes.rebuildMs, 5500);
+  assert.equal(pileExtraMs, 5500);
+  assert.ok(pileExtraMs < pileLimitMs && pileLimitMs === 6000, 'the whole is the length of the effect and less than 6 seconds');
+  assert.equal(pileTimes.riseMs + pileTimes.contentMs, pileTimes.rebuildMs, 'the pieces are home by .95 s and the content takes the last .25 s');
+  assert.equal(pileTimes.cubeMs, 2600);
+
   [0, 1, 2, 10, 39, 40].forEach(count => {
     const plan = planPile(somePieces(count, 0), count);
     assert.equal(plan.pieces.length, count);
-    assert.ok(plan.lockedMs <= pileTimes.totalMs, count + ' pieces are home at ' + plan.lockedMs);
-    assert.ok(plan.lockedMs >= pileTimes.liftAtMs + (count > 0 ? pileTimes.flyMs : 0));
+    assert.ok(plan.fellMs <= pileTimes.fallMs, count + ' pieces are down at ' + plan.fellMs);
+    assert.ok(plan.riseMs <= pileTimes.riseMs + 1e-9, count + ' pieces are home ' + plan.riseMs + ' ms after the first one rises');
+    assert.ok(plan.riseMs >= (count > 0 ? pileTimes.flyMs : 0));
+    plan.pieces.forEach(entry => {
+      assert.deepEqual(entry.lift.to, inPlace, entry.id + ' returns to its origin');
+      assert.ok(entry.lift.delayMs + entry.lift.ms <= pileTimes.riseMs + 1e-9);
+    });
+    assert.ok(plan.fellMs + pileTimes.cubeMs + pileTimes.riseMs + pileTimes.contentMs <= pileLimitMs);
   });
 
+  // with few pieces the gap is 45 ms, and with 40 it is as small as it must be to be home in .95 s
+  const few = planPile(somePieces(10, 0), 1);
+  const gapsFew = few.pieces.map(entry => entry.lift.delayMs).sort((a, b) => a - b);
+  assert.equal(gapsFew[1] - gapsFew[0], 45);
+  assert.equal(few.riseMs, 9 * 45 + 500);
   const full = planPile(somePieces(40, 0), 40);
-  assert.ok(full.lockedMs > 4500, 'with 40 pieces the 60 ms gap is kept: ' + full.lockedMs);
-  const gaps = full.pieces.map(entry => entry.lift.delayMs).sort((a, b) => a - b);
-  assert.equal(gaps[1] - gaps[0], 60);
+  const gapsFull = full.pieces.map(entry => entry.lift.delayMs).sort((a, b) => a - b);
+  assert.ok(gapsFull[1] - gapsFull[0] < 45 && gapsFull[1] - gapsFull[0] > 10);
+  assert.ok(Math.abs(full.riseMs - pileTimes.riseMs) < 1e-6, 'the last piece of 40 is home at .95 s: ' + full.riseMs);
 
-  // fewer pieces than the limit are home sooner
-  assert.ok(planPile(somePieces(10, 0), 1).lockedMs < full.lockedMs);
-
-  // the cube rises while the last pieces are falling, so that the 60 ms gap fits in 5 seconds
-  assert.ok(pileTimes.cubeAtMs < pileTimes.fallMs);
-  // and the pieces lift when the second pulse starts
+  // the cube: it rises, turns, pulses twice and shrinks, one after the other, in 2.6 s
   const cube = pileTimes.cube;
-  assert.equal(pileTimes.cubeAtMs + cube.pulseAfterMs + cube.pulseMs, pileTimes.liftAtMs, 'the second pulse starts when the pieces lift');
-  assert.ok(cube.riseMs <= cube.pulseAfterMs, 'the cube is up before the first pulse');
-  assert.ok(pileTimes.cubeAtMs + cube.turnAfterMs + cube.turnMs < pileTimes.liftAtMs + 200, 'and has turned by about the time the pieces lift');
+  assert.equal(cube.riseMs, cube.turnAfterMs, 'it turns when it is up');
+  assert.equal(cube.turnAfterMs + cube.turnMs, cube.pulseAfterMs, 'and pulses when it has turned');
+  assert.equal(cube.pulseAfterMs + 2 * cube.pulseMs, cube.shrinkAfterMs, 'twice');
+  assert.equal(cube.shrinkAfterMs + cube.shrinkMs, pileTimes.cubeMs, 'and shrinks to a point as the pieces rise');
 });
 
-test('no pieces make an empty plan that is over when the pieces would lift', () => {
+test('no pieces make an empty plan that is over when the pieces would rise', () => {
   const plan = planPile([], 1);
-  assert.deepEqual(plan, { pieces: [], merged: [], fellMs: 0, lockedMs: pileTimes.liftAtMs });
+  assert.deepEqual(plan, { pieces: [], merged: [], fellMs: 0, riseMs: 0 });
+});
+
+test('the numbers the plan is made from are the ones of the order: 1.7 s, 45 ms, 30 px and a small second bounce', () => {
+  assert.equal(pileShape.bounceHeight, 30);
+  assert.equal(pileShape.secondBounceHeight, 8);
+  assert.equal(pileTimes.gapMs, 45);
+  assert.equal(pileShape.bandHeight, 120);
 });
 
 
@@ -268,15 +287,17 @@ const functionNames = transform => (transform.match(/[a-zA-Z]+(?=\()/g) || []).f
 const identity = 'translate(0px, 0px) perspective(1600px) rotateZ(0deg) rotateX(0deg) scale(1)';
 const inThePile = 'translate(var(--pile-x), var(--pile-y)) perspective(1600px) rotateZ(var(--pile-twist)) rotateX(var(--pile-tip)) scale(var(--pile-scale))';
 
-test('piece-fall starts in place, is down after 62 percent, bounces up 30 px by 80 and settles, and the times are the plan\'s', () => {
+test('piece-fall starts in place, is down after 58 percent, bounces up 30 px by 72, settles by 84, bounces up 8 px by 91 and settles, and the times are the plan\'s', () => {
   const steps = stepsOf(frameCss, 'piece-fall');
-  assert.deepEqual(steps.map(step => step.at), ['0%', '62%', '80%', '100%']);
+  assert.deepEqual(steps.map(step => step.at), ['0%', '58%', '72%', '84%', '91%', '100%']);
 
   assert.equal(transformOf(steps[0]), identity, 'the start is the piece in its place');
   assert.equal(transformOf(steps[1]), inThePile);
-  assert.equal(transformOf(steps[3]), inThePile, 'and it ends where it came down');
+  assert.equal(transformOf(steps[3]), inThePile, 'it settles where it came down');
+  assert.equal(transformOf(steps[5]), inThePile, 'and ends where it came down');
   assert.equal(transformOf(steps[2]), inThePile.replace('var(--pile-y))', 'calc(var(--pile-y) - ' + pileShape.bounceHeight + 'px))'), 'one bounce of ' + pileShape.bounceHeight + ' px');
-  assert.equal(pileShape.bounceHeight, 30);
+  assert.equal(transformOf(steps[4]), inThePile.replace('var(--pile-y))', 'calc(var(--pile-y) - ' + pileShape.secondBounceHeight + 'px))'), 'and a small second one of ' + pileShape.secondBounceHeight + ' px');
+  assert.ok(pileShape.secondBounceHeight < pileShape.bounceHeight / 2);
   assert.equal(pileShape.lens, 1600);
 
   // the same functions in the same order in every step, so the browser can blend them
@@ -287,9 +308,11 @@ test('piece-fall starts in place, is down after 62 percent, bounces up 30 px by 
   // only transform and the timing of the next step change
   steps.forEach(step => (step.text.match(/[a-z-]+(?=:)/g) || []).forEach(word => assert.ok(['transform', 'animation-timing-function'].includes(word), step.at + ' changes ' + word)));
 
-  const rule = /\[data-motion="full"\] #world\[data-hidden="fall"\] \[data-pile="piece"\] \{\s*animation: piece-fall calc\(var\(--time-hidden\) \* ([.0-9]+)\) linear var\(--pile-delay\) both;\s*\}/.exec(frameCss);
+  const rule = /\[data-motion="full"\] #world\[data-pieces\] \[data-pile="piece"\] \{\s*animation: piece-fall calc\(var\(--time-hidden\) - ([.0-9]+)s \* var\(--pace\)\) linear var\(--pile-delay\) both;\s*\}/.exec(frameCss);
   assert.ok(rule, 'the rule that plays the fall');
-  assert.ok(Math.abs(Number(rule[1]) * pileTimes.fallMs - (pileTimes.fallMs - pileTimes.letGoMs)) < 1e-6, 'the fall takes 1.2 s of the 1.6 s');
+  assert.equal(Math.round(Number(rule[1]) * 1000), pileTimes.letGoMs, 'the time of the collapse less the longest wait to let go');
+  assert.equal(pileTimes.fallMs - pileTimes.letGoMs, 1300, 'the fall takes 1.3 s of the 1.7 s');
+  assert.ok(read('tokens.css').includes('--hidden-seconds: ' + pileTimes.fallMs / 1000 + ';'), 'and --time-hidden is the 1.7 s');
 });
 
 test('piece-lift goes from the pile back to the piece in its place, in 500 ms with the easing of the first assembly, one piece after another', () => {
@@ -300,14 +323,14 @@ test('piece-lift goes from the pile back to the piece in its place, in 500 ms wi
   assert.equal(functionNames(transformOf(steps[0])).join(' '), functionNames(transformOf(steps[1])).join(' '));
   steps.forEach(step => (step.text.match(/[a-z-]+(?=:)/g) || []).forEach(word => assert.equal(word, 'transform')));
 
-  const rule = /\[data-motion="full"\] #world\[data-hidden="fall"\]\[data-lift\] \[data-pile="piece"\] \{\s*animation: piece-lift calc\(([.0-9]+)s \* var\(--pace\)\) var\(--ease-in\) var\(--pile-lift-delay\) both;\s*\}/.exec(frameCss);
+  const rule = /\[data-motion="full"\] #world\[data-pieces\]\[data-lift\] \[data-pile="piece"\] \{\s*animation: piece-lift calc\(([.0-9]+)s \* var\(--pace\)\) var\(--ease-in\) var\(--pile-lift-delay\) both;\s*\}/.exec(frameCss);
   assert.ok(rule, 'the rule that plays the lift');
   assert.equal(Math.round(Number(rule[1]) * 1000), pileTimes.flyMs);
   assert.ok(/--ease-in: cubic-bezier\(\.2, \.8, \.2, 1\);/.test(read('tokens.css')));
   assert.ok(/animation: rise-in var\(--time-move-in\) var\(--ease-in\)/.test(frameCss), 'the easing is the one the first assembly uses');
 });
 
-test('the cube rises .6 s from the bottom edge, turns once in .8 s, pulses twice for .4 s each, and shrinks to a point, each move on a box of its own', () => {
+test('the cube rises .6 s from below the bottom edge to the middle of the screen, turns once in .8 s, pulses twice for .4 s each, and shrinks to a point in .4 s, each move on a box of its own', () => {
   const cube = pileTimes.cube;
   const rules = {};
   frameCss.replace(/\[data-motion="full"\] #cube \.([a-z-]+) \{\s*animation: ([^;]+);\s*\}/g, (all, name, value) => {
@@ -319,13 +342,15 @@ test('the cube rises .6 s from the bottom edge, turns once in .8 s, pulses twice
   const seconds = text => Math.round(Number(/([.0-9]+)s/.exec(text)[1]) * 1000);
   assert.equal(seconds(rules['cube-rise']), cube.riseMs);
   assert.ok(/^cube-rise calc\(\.6s \* var\(--pace\)\) var\(--ease-in\) both$/.test(rules['cube-rise']));
-  assert.ok(/^cube-turn calc\(\.8s \* var\(--pace\)\) var\(--ease-hard\) calc\(\.3s \* var\(--pace\)\) both$/.test(rules['cube-turn']));
+  assert.ok(/^cube-turn calc\(\.8s \* var\(--pace\)\) var\(--ease-hard\) calc\(\.6s \* var\(--pace\)\) both$/.test(rules['cube-turn']), 'it turns when it is up');
   assert.equal(cube.turnMs, 800);
-  assert.equal(cube.turnAfterMs, 300);
-  assert.ok(/^cube-pulse calc\(\.4s \* var\(--pace\)\) linear calc\(\.6s \* var\(--pace\)\) 2 both$/.test(rules['cube-art']), 'two pulses');
+  assert.equal(cube.turnAfterMs, 600);
+  assert.ok(/^cube-pulse calc\(\.4s \* var\(--pace\)\) linear calc\(1\.4s \* var\(--pace\)\) 2 both$/.test(rules['cube-art']), 'two pulses, when it has turned');
   assert.equal(cube.pulseMs, 400);
-  assert.equal(cube.pulseAfterMs, 600);
-  assert.equal(rules['cube-travel'], 'cube-shrink var(--cube-shrink-time) linear var(--cube-shrink-delay) both');
+  assert.equal(cube.pulseAfterMs, 1400);
+  assert.ok(/^cube-shrink calc\(\.4s \* var\(--pace\)\) linear calc\(2\.2s \* var\(--pace\)\) both$/.test(rules['cube-travel']), 'it shrinks when it has pulsed, and is gone at 2.6 s');
+  assert.equal(cube.shrinkAfterMs, 2200);
+  assert.equal(cube.shrinkMs, 400);
 
   // 1 to .4 to 1
   const pulse = stepsOf(frameCss, 'cube-pulse');
@@ -336,24 +361,20 @@ test('the cube rises .6 s from the bottom edge, turns once in .8 s, pulses twice
   assert.equal(transformOf(turn[0]), 'perspective(1600px) rotateY(0deg)');
   assert.equal(transformOf(turn[1]), 'perspective(1600px) rotateY(360deg)');
 
-  // it shrinks to a point, at the place the script gives it
+  // it shrinks to a point where it is
   const shrink = stepsOf(frameCss, 'cube-shrink');
-  assert.equal(transformOf(shrink[0]), 'translate(0px, 0px) scale(1)');
-  assert.equal(transformOf(shrink[1]), 'translate(var(--cube-dx), var(--cube-dy)) scale(0)');
+  assert.equal(transformOf(shrink[0]), 'scale(1)');
+  assert.equal(transformOf(shrink[1]), 'scale(0)');
 
-  // it rises from below the bottom edge: its top is at 840 and it rises the 240 px to the edge of the screen
+  // it rises from below the bottom edge to the middle of the screen: its top is at 480 and it starts at 1080
   const cubeBox = /#cube \{\s*position: absolute;\s*left: (\d+)px;\s*top: (\d+)px;\s*width: (\d+)px;\s*height: (\d+)px;\s*\}/.exec(baseCss);
   assert.ok(cubeBox, 'the place of the cube in base.css');
   const [left, top, width, height] = cubeBox.slice(1).map(Number);
   assert.deepEqual([width, height], [120, 120], 'a cube of 120 px');
-  assert.equal(left + width / 2, pileShape.screenWidth / 2, 'in the middle of the bottom edge');
+  assert.equal(left + width / 2, pileShape.screenWidth / 2, 'in the middle of the screen across');
+  assert.equal(top + height / 2, pileShape.screenHeight / 2, 'and down');
   assert.ok(/@keyframes cube-rise \{\s*from \{ transform: translateY\((\d+)px\); \}/.test(frameCss));
   assert.equal(Number(/@keyframes cube-rise \{\s*from \{ transform: translateY\((\d+)px\); \}/.exec(frameCss)[1]), pileShape.screenHeight - top, 'it starts at the bottom edge');
-  assert.ok(top + height <= pileShape.screenHeight - pileShape.bandHeight, 'it rests above the band of the pile');
-
-  const code = read('core/hidden-pile.js');
-  const middle = /const cubeMiddle = \{ x: (\d+), y: (\d+) \};/.exec(code);
-  assert.deepEqual([Number(middle[1]), Number(middle[2])], [left + width / 2, top + height / 2], 'the script knows where the middle of the cube is');
 });
 
 test('the cube is a line drawing in the team accent, 120 px, with lines of 5 px, and nothing glows or blurs', () => {
@@ -388,7 +409,7 @@ test('the cube is a line drawing in the team accent, 120 px, with lines of 5 px,
 
 test('the new section of frame.css changes only transform and opacity, promotes nothing, is for full motion only, and every number it reads has a first value', () => {
   const source = read('frame.css');
-  const first = source.indexOf('/* The frames fall and come back');
+  const first = source.indexOf('/* The frames collapse and come back');
   const start = source.indexOf('/* In their place, until core/hidden-pile.js');
   const end = source.indexOf('/* Hidden transitions. core/hidden-run.js');
   assert.ok(first !== -1 && start > first && end > start, 'the section is found');
@@ -402,19 +423,19 @@ test('the new section of frame.css changes only transform and opacity, promotes 
   });
   assert.ok(!/(filter|box-shadow|text-shadow|drop-shadow|blur\(|blend|will-change|\bperspective:|preserve-3d)/.test(section), 'no filter, shadow, blur or blend, no layer of its own, no lens on a parent');
   assert.ok(!/data-motion="(calm|none)"/.test(section), 'calm and none motion play nothing');
-  section.split('}').map(chunk => chunk.split('{')[0].trim()).filter(selector => /data-hidden|data-content|#cube \./.test(selector)).forEach(selector => {
+  section.split('}').map(chunk => chunk.split('{')[0].trim()).filter(selector => /data-hidden|data-pieces|#cube \./.test(selector)).forEach(selector => {
     selector.split(',').forEach(part => assert.ok(part.trim().startsWith('[data-motion="full"]'), 'full motion only: ' + part.trim()));
   });
 
   // every time is stretched by the Speed setting
   section.split('\n').filter(line => /animation: /.test(line)).forEach(line => {
-    assert.ok(/var\(--pace\)|var\(--time-hidden\)|var\(--time-fade-in\)|var\(--cube-shrink-time\)/.test(line), line);
+    assert.ok(/var\(--pace\)|var\(--time-hidden\)/.test(line), line);
   });
 
   // the numbers the script writes: each one that the stylesheet reads has a first value, and the script clears the same ones
   const reads = Array.from(new Set((section.match(/var\((--(?:pile|cube)-[a-z-]+)\)/g) || []).map(text => text.slice(4, -1))));
   const code = read('core/hidden-pile.js');
-  const cleared = (code.match(/const (poseProperties|cubeProperties) = \[([^\]]+)\]/g) || []).join(',').match(/--[a-z-]+/g);
+  const cleared = (code.match(/const poseProperties = \[([^\]]+)\]/g) || []).join(',').match(/--[a-z-]+/g);
   assert.deepEqual(reads.slice().sort(), cleared.slice().sort(), 'the script clears what the stylesheet reads');
   reads.forEach(name => {
     assert.ok(new RegExp('\\n  ' + name + ': [^;]+;').test(section), name + ' has a first value');
@@ -443,47 +464,70 @@ test('the frame at rest gives way to its pieces, and the shadows, the glint, the
     '[data-pile="released"]',
   ]);
 
-  // the content fades in the first .3 s and stays gone until the build, where the first assembly brings it back
-  assert.ok(/#world\[data-hidden="fall"\] \[data-pile="content"\] \{\s*animation: fade-out calc\(\.3s \* var\(--pace\)\) linear both;/.test(frameCss));
-  assert.ok(/#world\[data-hidden="build"\] \[data-pile="content"\] \{\s*animation: fade-in var\(--time-fade-in\) linear both;/.test(frameCss));
-  assert.ok(/\.area\[data-content="in"\] \[data-slat\] \{\s*animation: slat-in calc\(\.5s \* var\(--pace\)\) var\(--ease-turn\) calc\(var\(--n\) \* 90ms \* var\(--pace\)\) both;/.test(frameCss), 'the slats turn in as they do at the first assembly');
-  assert.ok(/\.area\[data-state="in"\] \[data-slat\] \{\s*animation: slat-in calc\(\.5s \* var\(--pace\)\) var\(--ease-turn\) calc\(\(1s \+ var\(--n\) \* 90ms\) \* var\(--pace\)\) both;/.test(frameCss), 'and that is the animation of the first assembly');
+  // the content fades away in the first .3 s and stays gone until the build, where it fades in over .25 s
+  assert.ok(/#world\[data-pieces\] \[data-pile="content"\] \{\s*animation: fade-out calc\(\.3s \* var\(--pace\)\) linear both;/.test(frameCss));
+  assert.ok(/#world\[data-hidden="build"\] \[data-pile="content"\] \{\s*animation: fade-in calc\(\.25s \* var\(--pace\)\) linear both;/.test(frameCss));
+  assert.equal(pileTimes.contentMs, 250);
+  assert.ok(!/data-content/.test(frameCss), 'no area turns its slats in: the pages fade in with the rest of the content');
 });
 
 
 // The runner
 
-test('hidden-run.js holds the rotation clock, plays the three parts at the times of the plan, and puts everything back whatever happened', () => {
+test('hidden-run.js collapses the frames before the effect, holds the rotation clock from the cube on, plays the parts at the times of the plan, and puts everything back whatever happened', () => {
   const run = read('core/hidden-run.js');
   const code = run.split('\n').filter(line => !line.trim().startsWith('//')).join('\n');
 
-  // one number for the fall: the runner, the stylesheet variable, and the plan
+  // one number for the collapse: the runner, the stylesheet variable, and the plan
   const fly = Number(/const flySeconds = ([0-9.]+);/.exec(code)[1]);
   assert.equal(fly * 1000, pileTimes.fallMs);
   assert.ok(read('tokens.css').includes('--hidden-seconds: ' + fly + ';'));
 
+  const order = (text, steps, name) => steps.forEach((step, index) => {
+    assert.ok(text.includes(step), name + ' lacks ' + step);
+    if (index > 0) assert.ok(text.indexOf(step) > text.indexOf(steps[index - 1]), step + ' is out of order');
+  });
+
+  // the collapse: the frames fall first, the pages are swapped when the content has faded, the pile stays down
+  const collapse = code.slice(code.indexOf('async collapse(look) {'), code.indexOf('wait: seconds'));
+  order(collapse, [
+    "world.dataset.hidden = 'break';",
+    "world.dataset.pieces = '';",
+    'pile = makePile();',
+    'plan = pile.release(',
+    'await sleep(contentGoneAfter);',
+    'swapPage();',
+    'screen.apart();',
+    'await sleep(flySeconds - contentGoneAfter);',
+    "world.dataset.hidden = 'apart';",
+  ], 'collapse');
+
+  // the rebuild: the cube first, then the pieces rise, then the content comes in
   const rebuild = code.slice(code.indexOf('async rebuild() {'), code.indexOf('cameBack: () => cameBackIn'));
-  const order = [
+  order(rebuild, [
     'screen.together();',
     'pauseRotation();',
-    'pile = makePile();',
-    "world.dataset.hidden = 'fall';",
-    'pile.release(',
-    'await sleep(pileTimes.cubeAtMs / 1000);',
     'pile.showCube();',
-    'await sleep((pileTimes.liftAtMs - pileTimes.cubeAtMs) / 1000);',
+    'await sleep(pileTimes.cubeMs / 1000);',
     "world.dataset.lift = '';",
-    'await sleep((plan.lockedMs - pileTimes.liftAtMs) / 1000);',
+    'await sleep(plan.riseMs / 1000);',
     'pile.finish();',
+    'delete world.dataset.pieces;',
     "world.dataset.hidden = 'build';",
     'pile.contentIn();',
-    'await sleep(flySeconds * togetherAfter);',
-  ];
-  order.forEach((text, index) => {
-    assert.ok(rebuild.includes(text), 'rebuild lacks ' + text);
-    if (index > 0) assert.ok(rebuild.indexOf(text) > rebuild.indexOf(order[index - 1]), text + ' is out of order');
+    'await sleep(pileTimes.contentMs / 1000);',
+  ], 'rebuild');
+  assert.ok(rebuild.includes('if (pile === null) return;'), 'a show that did not collapse the frames has nothing to put back');
+
+  // the effect plays between the two, over the pile
+  const registry = read('core/hidden-transitions.js');
+  ['desktop', 'redEyes'].forEach(kind => {
+    const show = registry.slice(registry.indexOf('async run(scene) {', registry.indexOf(kind + ': {')), registry.indexOf('},', registry.indexOf('async run(scene) {', registry.indexOf(kind + ': {'))));
+    assert.ok(show.indexOf('scene.collapse(') < show.indexOf('scene.picture'), kind + ': the collapse comes before the effect');
+    assert.ok(show.indexOf('scene.picture') < show.indexOf('scene.rebuild('), kind + ': and the effect before the cube');
   });
-  assert.ok(rebuild.includes('if (!pile.empty) {'), 'a page with nothing to drop just comes back');
+  assert.equal((registry.match(/await scene\.rebuild\(\);/g) || []).length, 2);
+  assert.ok(!registry.includes('piece-build') && !registry.includes('breakApart'));
 
   // the rotation is held with the pause that is there for it, and let go once, in putBack
   assert.ok(code.includes("import { moveOn, pauseRotation, resumeRotation, secondsUntilChange } from './schedule.js';"));
@@ -491,17 +535,17 @@ test('hidden-run.js holds the rotation clock, plays the three parts at the times
   assert.equal((code.match(/resumeRotation\(\)/g) || []).length, 1);
   assert.ok(!/isPaused|frame\.pause|frame\.resume/.test(code), 'the whole-screen hold of a talk is not used');
 
+  // a hidden transition keeps the look, and says that a transition has the screen
+  assert.ok(code.includes('startWholeScreen(true)'));
+  assert.equal((code.match(/setBusy\(true\)/g) || []).length, 1);
+  assert.equal((code.match(/setBusy\(false\)/g) || []).length, 1);
+
   const putBack = code.slice(code.indexOf('function putBack('));
-  ['delete world.dataset.hidden;', 'delete world.dataset.lift;', 'if (rotationHeld) resumeRotation();', 'rotationHeld = false;', 'if (pile) pile.clear();', 'pile = null;'].forEach(text => {
+  ['delete world.dataset.hidden;', 'delete world.dataset.lift;', 'delete world.dataset.pieces;', 'if (rotationHeld) resumeRotation();', 'rotationHeld = false;', 'if (pile) pile.clear();', 'pile = null;', 'plan = null;'].forEach(text => {
     assert.ok(putBack.includes(text), 'putBack lacks ' + text);
   });
   assert.ok(putBack.indexOf('if (rotationHeld) resumeRotation();') < putBack.indexOf('if (pile) pile.clear();'), 'the clock is let go before anything that could fail');
   assert.ok(putBack.indexOf('screen.end();') > putBack.indexOf('pile = null;') && putBack.indexOf('playing = false;') > putBack.indexOf('screen.end();'));
-
-  // the registry still ends both effects with rebuild, which is now this
-  const registry = read('core/hidden-transitions.js');
-  assert.equal((registry.match(/await scene\.rebuild\(\);/g) || []).length, 2);
-  assert.ok(!registry.includes('piece-build'));
 });
 
 test('the frames no longer fly back as blocks, and the seasonal decorations stay out of sight while they fall', () => {
@@ -569,7 +613,7 @@ test('every layout and style draws pieces to drop and bolts on them, and with th
       const plan = planPile(pieces, 1);
       assert.ok(plan.pieces.length <= pieceLimit, name + ': ' + plan.pieces.length + ' pieces');
       assert.equal(plan.pieces.length + plan.merged.length, plates + bolts);
-      assert.ok(plan.lockedMs <= pileTimes.totalMs, name + ': home by ' + plan.lockedMs);
+      assert.ok(plan.riseMs <= pileTimes.riseMs + 1e-9, name + ': home by ' + plan.riseMs);
       if (plates + bolts <= pieceLimit) assert.deepEqual(plan.merged, [], name + ' needs no folding');
       else plan.merged.forEach(id => assert.ok(id.startsWith('bolt-'), name + ': only bolts are folded in ' + id));
     });
@@ -849,7 +893,7 @@ test('a bolt falls as a copy of its own in #pile, the bolt on the frame hides, a
   });
 });
 
-test('every piece gets its numbers from the plan, the delays are stretched by the Speed setting, and the cube is given the place of the large panel', async () => {
+test('every piece gets its numbers from the plan, and the delays are stretched by the Speed setting', async () => {
   const page = standardPage();
   page.stage.children[0].rect = box(40, 200, 1152, 708);
   await onPage(page, () => {
@@ -869,11 +913,8 @@ test('every piece gets its numbers from the plan, the delays are stretched by th
     // no piece is given a stacking of its own: the words of a panel stay above its plates while they fade
     page.body.querySelectorAll('[data-pile="piece"]').forEach(element => assert.equal(element.style.zIndex, ''));
 
-    // 40 + 576 = 616 across and 200 + 354 = 554 down, from the middle of the cube at 960, 900
-    assert.equal(page.cube.properties['--cube-dx'], (616 - 960) + 'px');
-    assert.equal(page.cube.properties['--cube-dy'], (554 - 900) + 'px');
-    assert.equal(page.cube.properties['--cube-shrink-delay'], (pileTimes.liftAtMs - pileTimes.cubeAtMs) * 2 + 'ms');
-    assert.equal(page.cube.properties['--cube-shrink-time'], (plan.lockedMs - pileTimes.liftAtMs) * 2 + 'ms');
+    // the cube has no numbers written on it: it is in the middle of the screen and shrinks to a point there (frame.css)
+    assert.deepEqual(Object.keys(page.cube.properties), []);
     assert.equal(page.layer.hidden, false);
     pile.clear();
   });
@@ -935,7 +976,7 @@ test('more than 40 pieces fold the smallest bolts into their plates: those bolts
   });
 });
 
-test('contentIn turns the pages of the areas in and brings the content of each panel in without its frame, and clear takes everything off the page', async () => {
+test('contentIn brings the content of each panel in without its frame, and clear takes everything off the page', async () => {
   const page = standardPage();
   await onPage(page, () => {
     const pile = pileModule.makePile();
@@ -943,7 +984,7 @@ test('contentIn turns the pages of the areas in and brings the content of each p
     pile.showCube();
     frameStandIn.entered.length = 0;
     pile.contentIn();
-    assert.equal(page.area.dataset.content, 'in');
+    assert.equal(page.area.dataset.content, undefined, 'the pages fade in with the rest of the content: no area is told to turn its slats');
     assert.deepEqual(frameStandIn.entered.map(call => call.panel.attributes['data-sequence']).sort(), ['banner', 'countdown']);
     assert.ok(frameStandIn.entered.every(call => call.contentOnly === true), 'the frame is not drawn again');
 
@@ -952,7 +993,6 @@ test('contentIn turns the pages of the areas in and brings the content of each p
     page.body.querySelectorAll('*').forEach(element => {
       assert.deepEqual(pileProperties(element), [], 'no number is left');
     });
-    assert.equal(page.area.dataset.content, undefined);
     assert.equal(page.layer.children.filter(child => child.classes.has('pile-bolt')).length, 0);
     assert.ok(page.cube.hidden && page.layer.hidden);
     assert.deepEqual(Object.keys(page.cube.properties), []);

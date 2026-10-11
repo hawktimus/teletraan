@@ -130,8 +130,8 @@ the gap between the two columns.
 All three let every click through. Everything that takes over the screen is above them: the red
 glitch layer, the connection status text, the night screen, an alert, an announcement and the demo.
 The hidden transitions: the back layer is under `#backdrop`, so the backdrop covers it, and the
-front and over layers fade out as the blocks fly apart, stay out of sight while the screen is apart, and
-fade back in as the blocks come home (the end of `dashboard/seasons/motion.css`). The night screen
+front and over layers fade out as the frames collapse, stay out of sight while the pile lies, and
+fade back in as the frames come home (the end of `dashboard/seasons/motion.css`). The night screen
 covers all three, and the pieces are paused while it does.
 
 A pack shows when the screen's look has an overlay with decorations. `core/theme-apply.js` tells
@@ -290,8 +290,8 @@ after `#season-front`, so it is above the stage and under everything that takes 
 and blue glitch layers, the connection status text, the night screen, an alert, an announcement and the demo.
 It lets every click through and clips what is inside it. A pack with no `over` list gets no layer. The shapes
 are the same shapes the other layers use, drawn once in the back layer. During a hidden transition it
-behaves like the front layer: it fades out as the blocks fly apart, stays out of sight while the screen is
-apart, and fades back in as the blocks come home. The night screen covers it, and its pieces wait while it does.
+behaves like the front layer: it fades out as the frames collapse, stays out of sight while the pile lies,
+and fades back in as the frames come home. The night screen covers it, and its pieces wait while it does.
 
 The layer is **not drawn at all in calm or none motion**, because a piece that stopped would sit on a word
 (`season.css`: `.season-over` is `display: none`, and only `html[data-motion="full"]` turns it on). It is

@@ -264,17 +264,18 @@ To play one now, open the menu next to Publish on Dashboard Settings and click P
 desktop reveal or Play red eyes. The TV plays it within about 20 seconds.
 Detail: docs/hidden-transitions.md.
 
-## The break and reassemble sequence
+## The collapse and rebuild sequence
 
-Both hidden effects end the same way. The screen comes back whole with the next
-page of each panel. Then the words fade, and every piece of metal that is drawn on
-its own lets go, tips and falls into a loose pile along the bottom. A line-drawn
-cube rises out of the pile and pulses twice. On the second pulse the pieces lift
-out in the opposite order and fly back to their places, and the cube shrinks away.
-The fall, the cube and the lift take 5 seconds at the most, and then the content
-builds in again. Nothing else on the screen moves meanwhile, and the pages wait.
-No part of it is a setting. Detail: docs/hidden-transitions.md, "The frames fall
-and come back".
+Both hidden effects use the same collapse. After the glitch the words fade, and every
+piece of metal that is drawn on its own lets go, tips and falls into a loose pile
+along the bottom, with a bounce. It stays there while the blue screen or the red eyes
+play over it, and the next page of each panel is swapped in unseen. Then a line-drawn
+cube rises, turns, pulses twice and shrinks to a point, and the pieces rise from the
+pile in the opposite order and fly back to their places. The words fade in again. The
+collapse, the cube and the rise take 5.5 seconds. Nothing else on the screen moves
+meanwhile, and the pages wait. No part of it is a setting. Detail:
+docs/hidden-transitions.md, "The frames collapse and come back". A change of look
+or of Monday card is a different move, the swap (docs/layouts.md, "The swap").
 
 ## Mouse control in presentations
 
