@@ -395,23 +395,26 @@ const safetyDaysField = defineField({
 // that is not lowercase letters, digits and underscores never finds its file
 const calendarCode = /^[a-z0-9_]+$/;
 
-// The values are the names in calendarKinds in dashboard/config.js
+// The values are the names in calendarKinds in dashboard/config.js. Other was the starting value once, so
+// the screen counts it as no kind and gives its events no chip. It stays in the list so that a calendar saved
+// as other is still valid, and it is the way to put a kind back to none.
 const calendarKinds = [
   { title: 'Meetings', value: 'meetings' },
   { title: 'Competitions', value: 'competitions' },
   { title: 'Outreach', value: 'outreach' },
   { title: 'Deadlines', value: 'deadlines' },
-  { title: 'Other', value: 'other' },
+  { title: 'Other (no chip)', value: 'other' },
 ];
 
-// The same row as defaultSettings.calendars in dashboard/config.js
+// The same row as defaultSettings.calendars in dashboard/config.js. It has no kind: a calendar has none until
+// somebody picks one.
 const calendarsField = defineField({
   name: 'calendars',
   title: 'Calendars',
   type: 'array',
   group: 'calendars',
   description: 'Name each team calendar, say what kind it is and choose which ones show events on the screen.',
-  initialValue: [{ id: 'team', name: 'Team calendar', show: true, kind: 'other' }],
+  initialValue: [{ id: 'team', name: 'Team calendar', show: true }],
   of: [
     defineArrayMember({
       type: 'object',
@@ -439,9 +442,8 @@ const calendarsField = defineField({
           name: 'kind',
           title: 'Kind',
           type: 'string',
-          description: 'What sort of events this calendar holds. The Events panel shows it as a small chip before each title.',
+          description: 'Pick a kind to show a chip on each event from this calendar. Leave it blank for no chip.',
           options: { list: calendarKinds, layout: 'radio', direction: 'horizontal' },
-          initialValue: 'other',
           validation: Rule => Rule.valid(calendarKinds.map(kind => kind.value)).error('Pick meetings, competitions, outreach, deadlines or other.'),
         }),
         defineField({
@@ -455,7 +457,7 @@ const calendarsField = defineField({
       preview: {
         select: { title: 'name', code: 'id', show: 'show', kind: 'kind' },
         prepare(calendar) {
-          const kind = calendarKinds.filter(item => item.value === calendar.kind).map(item => item.title)[0];
+          const kind = calendarKinds.filter(item => item.value === calendar.kind).map(item => item.title)[0] || 'No chip';
           const subtitle = [calendar.show === false ? 'Hidden' : '', calendar.code, kind].filter(Boolean).join(' · ');
           return { title: calendar.title || 'Calendar with no name', subtitle: subtitle };
         },

@@ -183,8 +183,8 @@ deletes a rule the page made.
 
 - Left: a button for each row of Dashboard Settings, Calendars, with its kind, the
   number of events in the next 30 days and how many a rule hides. A calendar with no
-  kind shows Other on the screen. The page says Kind: Other (not set), and the kind
-  is set in Dashboard Settings, on the Calendars tab.
+  kind has no chip on its events. The page says Kind: no chip, and the kind is set in
+  Dashboard Settings, on the Calendars tab.
 - Right: the facts of the calendar you picked, then up to 40 events in date order.
 - A red line is a problem. "Download failed, the server said no" usually means BAND
   gave the calendar a new link (docs/calendar-links.md, "Change a link"). The TV
@@ -206,9 +206,10 @@ documents of the Mini, Monday and the competition feed are public in the same wa
 The Events panel shows the next 4 events, and the page that follows it in the
 rotation shows the 4 after them. With 4 events or fewer there is no second page.
 
-- Kind: each calendar row in Dashboard Settings, Calendars has a kind (Meetings,
-  Competitions, Outreach, Deadlines or Other, and Other to start with). Each event
-  has a small chip with the kind of its calendar before the title.
+- Kind: each calendar row in Dashboard Settings, Calendars can have a kind
+  (Meetings, Competitions, Outreach or Deadlines), and starts with none. An event
+  from a calendar with a kind has a small chip with that kind before the title.
+  With no kind there is no chip.
 - Group events by kind: off to start with. Off, both pages are in date order. On,
   page one has the next 4 Meetings, Deadlines and Other events, and page two the
   next 4 Competitions and Outreach events.

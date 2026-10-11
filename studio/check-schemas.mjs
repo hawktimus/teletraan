@@ -4973,15 +4973,15 @@ function checkCalendarsHide() {
   const left = nodesWhere(page, node => node.props && node.props['data-side'] === 'calendars')[0];
   const rowButtons = left ? buttonsOf(left) : [];
   need(problems, rowButtons.length === 2 && /Kind: Meetings/.test(wordsIn(rowButtons[0])), 'a row of the left side should say the kind: Kind: Meetings');
-  need(problems, rowButtons[1] && /Kind: Other \(not set\)/.test(wordsIn(rowButtons[1])), 'a calendar with no kind should say Kind: Other (not set)');
+  need(problems, rowButtons[1] && /Kind: no chip/.test(wordsIn(rowButtons[1])), 'a calendar with no kind should say Kind: no chip');
   const right = nodesWhere(page, node => node.props && node.props['data-side'] === 'events')[0];
   need(problems, right && /Kind Meetings/.test(wordsIn(nodesWhere(right, node => node.type === 'p').slice(0, 5))), 'the facts of the right side should say Kind and the kind');
   const paragraphs = nodesWhere(page, node => node.type === 'p').map(wordsIn);
-  need(problems, paragraphs[1] === parts.kindLine && /no kind shows Other/.test(parts.kindLine) && /Dashboard Settings/.test(parts.kindLine) && /Calendars tab/.test(parts.kindLine), 'a muted note under the help line should say that a calendar with no kind shows Other and where to set it');
+  need(problems, paragraphs[1] === parts.kindLine && /Leave it blank for no chip/.test(parts.kindLine) && /Dashboard Settings/.test(parts.kindLine) && /Calendars tab/.test(parts.kindLine), 'a muted note under the help line should say that a kind left blank has no chip and where to set it');
   const allKinds = view.calendarsPage({ entries: [entries[0], Object.assign({}, entries[1], { kind: 'outreach' })], status: status, entriesUnreadable: false, statusUnreadable: false }, 'team', () => {}, now, hiding());
   need(problems, nodesWhere(allKinds, node => node.type === 'p').map(wordsIn).indexOf(parts.kindLine) === -1, 'the note about the kind should go when every calendar has one');
   const unknown = view.calendarsPage({ entries: [Object.assign({}, entries[0], { kind: 'party' })], status: status, entriesUnreadable: false, statusUnreadable: false }, 'team', () => {}, now);
-  need(problems, /Kind: Other \(not set\)/.test(wordsIn(nodesWhere(unknown, node => node.type === 'button'))), 'a kind that is not in the list should read as Other (not set), as it does on the screen');
+  need(problems, /Kind: no chip/.test(wordsIn(nodesWhere(unknown, node => node.type === 'button'))), 'a kind that is not in the list should read as no chip, as it does on the screen');
 
   // The events: the buttons each one has
   const items = itemsOf(page);
@@ -5234,7 +5234,7 @@ function checkEventPages() {
   const problems = [];
   const config = world.dashboard;
   const rulesOf = field => (field ? constraintsOf(field) : []);
-  const titles = { meetings: 'Meetings', competitions: 'Competitions', outreach: 'Outreach', deadlines: 'Deadlines', other: 'Other' };
+  const titles = { meetings: 'Meetings', competitions: 'Competitions', outreach: 'Outreach', deadlines: 'Deadlines', other: 'Other (no chip)' };
 
   const kind = fieldAt('dashboardSettings.calendars.kind');
   const offered = choicesOf('dashboardSettings.calendars.kind');
@@ -5242,12 +5242,19 @@ function checkEventPages() {
   need(problems, offered.map(item => item.value).join() === config.calendarKinds.join(), 'calendars.kind should offer the kinds in config.js, in the same order: ' + config.calendarKinds.join(', '));
   offered.forEach(item => need(problems, item.title === titles[item.value], 'the kind ' + item.value + ' should be titled ' + titles[item.value]));
   need(problems, kind && kind.options && kind.options.layout === 'radio', 'calendars.kind should be a radio list');
-  need(problems, kind && kind.initialValue === config.defaultCalendarKind && config.defaultCalendarKind === 'other', 'calendars.kind should start as other, and so should defaultCalendarKind in config.js');
+  // A calendar has no kind until somebody picks one, so there is no starting value and its events have no chip. Other is
+  // the old starting value: it stays offered and valid, and the screen counts it as no kind (noCalendarKind in config.js)
+  need(problems, kind && kind.initialValue === undefined, 'calendars.kind should have no starting value: a calendar has no kind until somebody picks one');
+  need(problems, config.noCalendarKind === 'other' && !('defaultCalendarKind' in config), 'config.js should name noCalendarKind as other, and have no defaultCalendarKind');
+  need(problems, kind && kind.description === 'Pick a kind to show a chip on each event from this calendar. Leave it blank for no chip.', 'the calendars.kind description should read: Pick a kind to show a chip on each event from this calendar. Leave it blank for no chip.');
+  const calendars = fieldAt('dashboardSettings.calendars');
+  need(problems, calendars && calendars.initialValue.every(row => !('kind' in row)), 'the starting calendar row in dashboardSettings.js should have no kind');
   need(problems, kind && !constraintNamed(rulesOf(kind), 'required'), 'calendars.kind should not be required: a calendar saved before kinds existed has none');
   const allowed = constraintNamed(rulesOf(kind), 'valid');
   need(problems, allowed && allowed.args[0].join() === config.calendarKinds.join(), 'calendars.kind should only allow: ' + config.calendarKinds.join(', '));
   need(problems, rulesOf(kind).some(rule => rule.name === 'error' && rule.args[0]), 'calendars.kind has rules and no error message in plain words');
-  need(problems, config.defaultSettings.calendars.every(row => config.calendarKinds.indexOf(row.kind) !== -1), 'each default calendar in config.js should have a kind from calendarKinds');
+  need(problems, config.defaultSettings.calendars.every(row => !('kind' in row)), 'each default calendar in config.js should have no kind');
+  need(problems, sameData(calendars.initialValue, config.defaultSettings.calendars), 'the starting calendar row in dashboardSettings.js should be the default calendar in config.js');
 
   const group = fieldAt('dashboardSettings.groupEventsByKind');
   need(problems, group && group.type === 'boolean' && group.title === 'Group events by kind' && group.group === 'calendars', 'groupEventsByKind should be a switch titled Group events by kind, in the Calendars tab');

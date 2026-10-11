@@ -297,7 +297,7 @@ test('the list says when it shows fewer events than the calendar has, and nothin
   assert.equal(parts.detailOf(parts.rowsOf(entries, null, now)[0], null, now).more, '');
 });
 
-test('the kind of each calendar is a line in its row and a fact, and a calendar with no kind, or an unknown one, is Other (not set)', () => {
+test('the kind of each calendar is a line in its row and a fact, and a calendar with no kind, or other, or an unknown one, is no chip', () => {
   const entries = [
     { id: 'a', name: 'A', kind: 'meetings' },
     { id: 'b', name: 'B', kind: 'competitions' },
@@ -311,10 +311,11 @@ test('the kind of each calendar is a line in its row and a fact, and a calendar 
   ];
   const rows = parts.rowsOf(entries, { calendars: [{ code: 'only', error: 'no address set yet' }] }, now);
 
-  assert.deepEqual(rows.map(row => row.kind), ['Kind: Meetings', 'Kind: Competitions', 'Kind: Outreach', 'Kind: Deadlines', 'Kind: Other', 'Kind: Other (not set)', 'Kind: Other (not set)', 'Kind: Other (not set)', 'Kind: Other (not set)', 'Kind: Not set']);
-  assert.deepEqual(rows.map(row => row.kindMissing), [false, false, false, false, false, true, true, true, true, false], 'a calendar the Mini only knows about is not on the screen, so it has no kind to miss');
+  assert.deepEqual(rows.map(row => row.kind), ['Kind: Meetings', 'Kind: Competitions', 'Kind: Outreach', 'Kind: Deadlines', 'Kind: no chip', 'Kind: no chip', 'Kind: no chip', 'Kind: no chip', 'Kind: no chip', 'Kind: Not set']);
+  assert.deepEqual(rows.map(row => row.kindMissing), [false, false, false, false, true, true, true, true, true, false], 'a calendar the Mini only knows about is not on the screen, so it has no kind to miss');
   assert.equal(parts.detailOf(rows[3], null, now).facts.filter(fact => fact.label === 'Kind')[0].text, 'Deadlines');
-  assert.equal(parts.detailOf(rows[5], null, now).facts.filter(fact => fact.label === 'Kind')[0].text, 'Other (not set)');
+  assert.equal(parts.detailOf(rows[4], null, now).facts.filter(fact => fact.label === 'Kind')[0].text, 'no chip', 'other is the old starting value and counts as no kind');
+  assert.equal(parts.detailOf(rows[5], null, now).facts.filter(fact => fact.label === 'Kind')[0].text, 'no chip');
   assert.equal(parts.detailOf(rows[9], null, now).facts.filter(fact => fact.label === 'Kind')[0].text, 'Not set');
   assert.deepEqual(parts.calendarKinds.map(kind => kind.value), ['meetings', 'competitions', 'outreach', 'deadlines', 'other']);
 });
@@ -340,7 +341,7 @@ test('the words of the buttons are short plain sentences with no dash, exclamati
   assert.ok(!/repeating meeting/.test(parts.helpLine), 'the help line no longer sends people to a rule for a repeating meeting');
   assert.equal(parts.changeLine, 'Change it under Calendar filters.');
   assert.ok(/at once/.test(parts.hideLine) && /Calendar filters/.test(parts.hideLine) && /edit or delete/.test(parts.hideLine));
-  assert.ok(/no kind shows Other/.test(parts.kindLine) && /Dashboard Settings/.test(parts.kindLine) && /Calendars tab/.test(parts.kindLine));
+  assert.ok(/Pick a kind to show a chip/.test(parts.kindLine) && /Leave it blank for no chip/.test(parts.kindLine) && /Dashboard Settings/.test(parts.kindLine) && /Calendars tab/.test(parts.kindLine));
 });
 
 test('a refused change says so and gives the reason, and any other failure gives the reason too', () => {

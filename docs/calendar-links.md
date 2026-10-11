@@ -25,8 +25,9 @@ Three things that share one short ID, such as GROUP:
 3. A row in Dashboard Settings, in the Calendars tab, with the Calendar code
    `group` (the ID in lowercase), a Calendar name, its Kind and Show on screen.
    The TV shows nothing from a calendar that has no row, or whose row is
-   switched off. The Kind is Meetings, Competitions, Outreach, Deadlines or
-   Other. The Events panel writes it as a chip before each title.
+   switched off. The Kind is Meetings, Competitions, Outreach or Deadlines, and
+   starts blank. The Events panel writes it as a chip before each title, and a
+   calendar with no kind has no chip.
 
 ## Add a calendar
 

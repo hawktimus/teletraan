@@ -213,19 +213,22 @@ as before: the date on the left, the title, and under it the time and the place.
 With four or fewer events there is no page two, and the panel runs once. With no
 events the panel does not run.
 
-- Each row has a small chip before the title. It is the kind of the calendar the
-  event comes from, in the team's accent color: MEETING, COMP, OUTREACH, DEADLINE
-  or OTHER. COMP is Competitions, cut short because it is the longest word and
+- A row has a small chip before the title when the calendar the event comes from
+  has a kind. The chip is in the team's accent color: MEETING, COMP, OUTREACH or
+  DEADLINE. COMP is Competitions, cut short because it is the longest word and
   the chip takes its room from the title. The chip, the date and the text keep
-  their size. A title that does not fit on its line is cut off with three dots at
-  the end, and a pinned event gives up a little more room to its pin.
-- The kind is set for each calendar in Dashboard Settings, Calendars. A calendar
-  with no kind is Other.
+  their size. A row from a calendar with no kind has no chip, and its title
+  starts at the left. A title that does not fit on its line is cut off with three
+  dots at the end, and a pinned event gives up a little more room to its pin.
+- The kind is set for each calendar in Dashboard Settings, Calendars, and starts
+  blank. Pick a kind to show a chip on each event from that calendar. Leave it
+  blank for no chip. Other, which a calendar used to start with, is the same as
+  blank: no chip.
 - Group events by kind is a switch in the same tab, off to start with. Off: both
   pages are in date order, whatever the kinds. On: page one is the next 4
   Meetings, Deadlines and Other events, and page two the next 4 Competitions and
-  Outreach events. Other goes with page one, so an event from a calendar with no
-  kind never waits on a page that may not run. Within a page the events are in
+  Outreach events. An event from a calendar with no kind counts as Other and goes
+  with page one, so it never waits on a page that may not run. Within a page the events are in
   order of start. If one kind has more than four events, the later ones are not
   shown. A page with none of its kinds does not run.
 - A coach can pin an event to page one with an Always show rule that has Pin to
@@ -890,10 +893,11 @@ problem would touch.
   switch is on. The code is lowercase letters, digits and underscores. Do not
   change a calendar's code unless you were told to. If you delete every row, no
   events show. To add a calendar, see docs/calendar-links.md.
-- Kind: on each calendar row. Meetings, Competitions, Outreach, Deadlines or
-  Other, and Other to start with. The Events panel writes it as a chip before the
-  title of each event of that calendar (see "The two pages of the Events panel").
-  A calendar saved before kinds existed has none, and counts as Other.
+- Kind: on each calendar row. Meetings, Competitions, Outreach or Deadlines. It
+  starts blank, and a calendar with a kind has a chip before the title of each of
+  its events (see "The two pages of the Events panel"). Blank means no chip. Other
+  (no chip) is the old starting choice and means the same as blank, so a calendar
+  that was saved as Other has no chip, and so has one saved before kinds existed.
 - Group events by kind: off to start with. Off: the Events panel shows the next 8
   events in date order, 4 to a page. On: page one has the next 4 Meetings,
   Deadlines and Other events, and page two the next 4 Competitions and Outreach

@@ -40,7 +40,8 @@ export function mount(host, content, page = 1) {
 // Every row is a slat, and the thin metal bar under it turns over with it.
 // The last row has no bar under it, because the frame is there.
 // The title line is the kind chip, the title, which is cut with an ellipsis when
-// it does not fit, and the pin of a pinned event.
+// it does not fit, and the pin of a pinned event. An event from a calendar with no
+// kind has no chip.
 function rowMarkup(row, isLast, timeZone) {
   const event = row.event;
   const date = eventDate(event, timeZone);
@@ -49,6 +50,7 @@ function rowMarkup(row, isLast, timeZone) {
   // time unless it is an all-day event, then the place. The weekday and date
   // on the left already say when an all-day event starts.
   const line = [date.range, timeText(event), event.location].filter(Boolean).join(' · ');
+  const word = chipWord(row.kind);
 
   return `
     <div class="row" data-slat="item">
@@ -59,7 +61,7 @@ function rowMarkup(row, isLast, timeZone) {
       </div>
       <div class="details">
         <div class="event-title">
-          <span class="kind-chip">${chipWord(row.kind)}</span>
+          ${word ? `<span class="kind-chip">${word}</span>` : ''}
           <span class="event-name">${escapeHtml(event.title)}</span>
           ${row.forced ? pinMark : ''}
         </div>

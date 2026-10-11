@@ -384,10 +384,11 @@ export const defaultSettings = {
       days: [0, 1, 2, 3, 4, 5, 6],
     },
   ],
-  // The calendars (Calendars tab): a code, a name, the show switch and the kind (see calendarKinds below).
+  // The calendars (Calendars tab): a code, a name, the show switch and the kind (see calendarKinds below). A
+  // calendar has no kind until a coach picks one, so the starting row has none and its events have no chip.
   // groupEventsByKind off keeps both pages of the Events panel in date order. On, page one has the next
-  // four Meetings, Deadlines and Other events, and page two the next four Competitions and Outreach events.
-  calendars: [{ id: 'team', name: 'Team calendar', show: true, kind: 'other' }],
+  // four Meetings, Deadlines and events with no kind, and page two the next four Competitions and Outreach events.
+  calendars: [{ id: 'team', name: 'Team calendar', show: true }],
   groupEventsByKind: false,
   // The competition cards (the Competition tab in the Studio, core/competition.js, docs/frc-feed.md).
   //   competitionMode  see competitionModes above
@@ -501,10 +502,13 @@ export const defaultFilter = {
 };
 
 // The kind of a calendar in Dashboard Settings (Calendars tab): what sort of events it holds. The Events
-// panel writes it as a small chip before each title (core/event-pages.js). A calendar with no kind, or one
-// that is not in this list, is other. The Studio copies this list.
+// panel writes it as a small chip before each title (core/event-pages.js). A calendar has no kind until a
+// coach picks one, and its events have no chip. A calendar with no kind, one whose kind is not in this list
+// and one that was saved as other all count as having no kind: other was the starting value once, so a
+// calendar that still says it was never picked. noCalendarKind is the name the code gives to that, and
+// when the events are grouped by kind they go with the Meetings and the Deadlines. The Studio copies this list.
 export const calendarKinds = ['meetings', 'competitions', 'outreach', 'deadlines', 'other'];
-export const defaultCalendarKind = 'other';
+export const noCalendarKind = 'other';
 
 // The trim of a team (Studio: Teams, Trim): eight choices that make a team look like itself beyond its colors and
 // the mirror. Each name is a field of the team document. Under it is each value the field can have, and the class
