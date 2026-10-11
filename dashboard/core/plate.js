@@ -51,6 +51,10 @@
 // and its name is the Prime name with -tr for the other corners and -slant for the slanted tab, in
 // that order (grid1-tr-slant). frameKind() gives the name for a style and a trim.
 //
+// The TEAM plate (teamPlateMarkup), the ticker's tag (tagMarkup) and the frame round the ticker have a
+// thinner metal edge than the other frames, so that no text is cut by it (base.css, "The thin plate edge").
+// Their lines are placed so that the outer edge of the metal stays where it was.
+//
 // There are three ways to get a frame. areaMarkup() is the frame of an area
 // that stays on screen while its pages change (the large panel, the small
 // panel, the ticker of Cybertron, and the main panel and the ticker of the bar
@@ -421,6 +425,13 @@ function wearMarkup(items, labelled) {
 const barNeonInset = 10; // the neon line, from the line of the edge
 const barConduitInset = 16; // the pink conduit line, just inside the neon
 const barBracketOutset = 22; // the pink brackets, outside the edge
+
+// The ticker's frames have the thin edge (base.css, "The thin plate edge"). Their line is 1 in from the
+// box, which keeps the outer edge of the metal where the thick edge had it, and the neon is 7 in
+// from the line, against the metal. The frame is 5 higher than the row of 72, so the text of the ticker,
+// which is 53 high with its descenders, has the neon 2 clear on both sides. The pink brackets are 18
+// outside the line, so the lower one stays on the screen.
+const thinEdge = { line: 1, neon: 7, bracket: 18 };
 const hazardHeight = 12; // the stripe under the header
 const hazardPitch = 44;
 const hazardWidth = 22;
@@ -553,11 +564,16 @@ function wearOf(outline, span, turned) {
 //                   the bottom right: the frame turned across, the way the team trim has it (the Cut
 //                   corners field of a team). Its outline has the same ten points in another order
 //   slant           true for a header tab that ends in one slant of 60 degrees
+//   thin            true for the thin edge of the ticker (base.css, "The thin plate edge"): the line of
+//                   the frame is thinEdge.line in from the box, the neon thinEdge.neon in from the line,
+//                   and the brackets thinEdge.bracket outside it
 export function makeBarShape(options) {
-  const left = 4;
-  const top = 4;
-  const right = options.width - 4;
-  const bottom = options.height - 4;
+  const lineAt = options.thin ? thinEdge.line : 4;
+  const neonAt = options.thin ? thinEdge.neon : barNeonInset;
+  const left = lineAt;
+  const top = lineAt;
+  const right = options.width - lineAt;
+  const bottom = options.height - lineAt;
   const chamfer = options.chamfer;
   const step = options.step;
   const run = options.run;
@@ -587,7 +603,7 @@ export function makeBarShape(options) {
     [left + run - step, bottom - step],
   ];
   const split = 5;
-  const inner = offsetOutline(outline, barNeonInset);
+  const inner = offsetOutline(outline, neonAt);
 
   // The numbers in this function are the places in the outline with the top left and bottom right corners cut,
   // which are the points 0 to 9 in the notes at the top of "The frames of the bar layout". at() is the place of
@@ -667,7 +683,7 @@ export function makeBarShape(options) {
   // The brackets stand outside the two cut corners. Along the top and the bottom they reach toward the middle
   shape.bracketLines = [];
   if (options.legs) {
-    const out = index => offsetPoint(outline, outline[at(index)], -barBracketOutset);
+    const out = index => offsetPoint(outline, outline[at(index)], -(options.thin ? thinEdge.bracket : barBracketOutset));
     const toward = turned ? -1 : 1;
     const down = out(1);
     const across = out(2);
@@ -775,8 +791,8 @@ const barOptions = {
     bolts: [1, 2, 5, 6, 7, 0], legs: [60, 70], conduit: true, slashes: true,
   },
   'bar-ticker': {
-    width: 1856, height: 72, chamfer: 32, step: 16, run: 100,
-    bolts: [2, 7], legs: [40, 50], still: true,
+    width: 1856, height: 77, chamfer: 32, step: 16, run: 100,
+    bolts: [2, 7], legs: [40, 50], still: true, thin: true,
   },
 
   // The same three for Minimal: cut corners of 34 (20 on the ticker), a bolt at each of the
@@ -795,8 +811,8 @@ const barOptions = {
     bolts: [1, 2, 6, 7], rivets: true, wear: 56,
   },
   'bar-ticker-minimal': {
-    width: 1856, height: 72, chamfer: 20, step: 10, run: 60,
-    bolts: [1, 2, 6, 7], rivets: true, wear: 28, still: true,
+    width: 1856, height: 77, chamfer: 20, step: 10, run: 60,
+    bolts: [1, 2, 6, 7], rivets: true, wear: 28, still: true, thin: true,
   },
 
   // The frames of Cybertron, for the layouts of Original (core/style.js, forcedLayout). Each is
@@ -827,8 +843,8 @@ const barOptions = {
     bolts: [1, 2, 5, 6, 7, 0], legs: [40, 50], conduit: true,
   },
   'cybertron-ticker': {
-    width: 1840, height: 72, chamfer: 32, step: 16, run: 100,
-    bolts: [2, 7], legs: [40, 50], still: true,
+    width: 1840, height: 77, chamfer: 32, step: 16, run: 100,
+    bolts: [2, 7], legs: [40, 50], still: true, thin: true,
   },
 };
 
@@ -1377,16 +1393,25 @@ export function cardMarkup(width, height) {
 // The team plate in the banner (520 x 76). The sidebar layout draws it at
 // another width, and each width is its own shape, so the id carries the width
 // (the 520 one keeps the id it has always had).
+//
+// The metal of this plate and of the ticker's tag is the thin plate edge (base.css, "The thin
+// plate edge"): a rim 10 wide, not 16. The line of the shape runs 1 in from the sides, which puts the
+// outer edge of the metal where it was, and 8 in from the top and 7 in from the bottom, which
+// keeps the metal and its shadow inside the 76, so it never reaches the name above it or the
+// wordmark below it. The plain plate, between the metal and the dark that its shadow throws
+// inside the top and the left, is 15 to 64 high.
 export function teamPlateMarkup(width = 520) {
-  const points = [[4, 4], [width - 4, 4], [width - 4, 40], [width - 44, 72], [4, 72]];
+  const points = [[1, 8], [width - 1, 8], [width - 1, 38], [width - 41, 69], [1, 69]];
   const id = width === 520 ? 'team-plate-shape' : 'team-plate-shape-' + width;
   return edgedShape(id, points, 'team-fill', 'team-plate-art', width, 76);
 }
 
 // The slanted label at the left end of the ticker. A longer word needs a
-// wider tag, so the width is passed in.
+// wider tag, so the width is passed in. It is 77 high, 5 more than the row: the thin edge
+// and the same line 1 in from the sides and the top put the metal where it was, and the ticker's
+// frame is as high (barOptions, bar-ticker), so the tag fits into it.
 export function tagMarkup(width = 208) {
-  const right = width - 4;
-  const points = [[25.3, 4], [right - 21.3, 4], [right, 68], [4, 68]];
-  return edgedShape('tag-' + width, points, 'tag-fill', 'tag-plate', width, 72);
+  const right = width - 1;
+  const points = [[26, 1], [right - 25, 1], [right, 76], [1, 76]];
+  return edgedShape('tag-' + width, points, 'tag-fill', 'tag-plate', width, 77);
 }

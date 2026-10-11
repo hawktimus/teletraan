@@ -97,13 +97,23 @@ html[data-layout="bar"] .area[data-area="ticker"] {
 }
 
 /* The ticker has a frame of its own here (core/plate.js, "The frames of the bar layout"), with
-   its line 4 in from the edge of the row and its steel and neon about 20 wide. The tag and the
+   its line 1 in from the edge of the row and its steel and neon about 12 wide (the thin plate
+   edge, base.css). The tag and the
    message start 16 in from each end of the row, which puts the tag over the frame's cut corner
    the way the pictures have it. The mirror turns the row round and the padding is the same on
    both sides. */
 html[data-layout="bar"] .ticker {
   box-sizing: border-box;
   padding: 0 16px;
+}
+
+/* The message stops 70 short of its end of the row, the end that has no tag, where the frame is
+   stepped (its run is 60 in Minimal, 100 in Cybertron, which has 94: see styles/cybertron.css) and
+   has a patch of rust at the foot. */
+html[data-layout="bar"] .ticker .message { margin-right: 70px; }
+html.mirrored[data-layout="bar"] .ticker .message {
+  margin-right: 0;
+  margin-left: 70px;
 }
 
 /* The connection status text (base.css) sits at the bottom right, level with the ticker.

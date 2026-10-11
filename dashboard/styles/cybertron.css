@@ -171,7 +171,13 @@ html[data-style="cybertron"] .banner .banner-text {
 }
 html[data-style="cybertron"] .banner .banner-top { height: 148px; }
 html[data-style="cybertron"] .banner .banner-left { gap: 0; }
-html[data-style="cybertron"] .banner .team-name { height: 72px; }
+/* The letters are 72 high, and a line of 76 left their feet 4 under the box, where the TEAM plate
+   begins. At 70 they end 2 above its metal, and the outline of Nova's letters, which is 2 wider,
+   touches it. */
+html[data-style="cybertron"] .banner .team-name {
+  height: 72px;
+  line-height: 70px;
+}
 html[data-style="cybertron"] .banner .banner-right { margin-top: 8px; }
 html[data-style="cybertron"] .banner .sample-badge { top: 90px; }
 
@@ -189,6 +195,17 @@ html[data-style="cybertron"].mirrored[data-layout="standard"] .banner {
 html[data-style="cybertron"] .ticker {
   box-sizing: border-box;
   padding: 0 16px;
+}
+
+/* The message stops 94 short of its end of the row, the end that has no tag. The plate is
+   stepped there: its top edge drops 16 over the last 100 (the run of cybertron-ticker, core/plate.js),
+   and the metal and the neon of the lower edge are over the tops of the tall letters, and the
+   cut corner at the foot of the letters. 94 and the 16 of the row's padding keep the last letter
+   short of the step. The tag's end needs nothing, the tag covers the step and the cut corner. */
+html[data-style="cybertron"] .ticker .message { margin-right: 94px; }
+html[data-style="cybertron"].mirrored .ticker .message {
+  margin-right: 0;
+  margin-left: 94px;
 }
 
 

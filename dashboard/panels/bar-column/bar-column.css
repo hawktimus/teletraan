@@ -124,10 +124,13 @@ html[data-layout="bar"] .bar-line {
 
 
 /* The TEAM plate is the banner's, as wide as the column (core/plate.js, teamPlateMarkup).
-   The plate's cut corner (bottom right) starts 44 px from its right edge, and the
-   frame's rim and its shadow cover the top of the plate, so the clear part sits lower than the middle. The padding at
-   the top moves the words down to it, and the padding at the right moves them away
-   from the cut corner. */
+   The plate's cut corner (bottom right) starts 40 px from its right edge, and the plain
+   part is 15 to 64 high. The letters of the display face sit 1 below the middle of their
+   line at this size, so the padding at the top puts the words in the middle of the plain part.
+   TEAM 3229 at 44 px is 263 wide, and the plain part, under the cut corner, is 256 with the 2 px
+   to keep clear at both ends. So the letters are .9 px closer together (as the time's are, below)
+   and the number 10 from the word, which is 254, and the padding at the right moves the words
+   away from the cut corner and puts them in the middle of what is left. */
 html[data-layout="bar"] .bar-team {
   position: absolute;
   left: 0;
@@ -151,12 +154,13 @@ html[data-layout="bar"] .bar-team span {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-top: 5px;
-  padding-right: 16px;
+  padding-top: 1px;
+  padding-right: 25px;
+  letter-spacing: -.02em;
   font: 700 var(--size-label)/44px var(--font-display);
 }
 html[data-layout="bar"] .bar-team b {
-  margin-left: 12px;
+  margin-left: 10px;
   color: var(--yellow);
 }
 

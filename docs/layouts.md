@@ -780,7 +780,8 @@ frames of that layout (see "Cybertron"). All of them are made by the same functi
 same markup. The markup has everything, and `base.css` and the style's own stylesheet show
 what the style has.
 
-Every frame is a rectangle with ten corners, its line 4 px inside the edge of its box. It has
+Every frame is a rectangle with ten corners, its line 4 px inside the edge of its box (1 px for
+the ticker's frames, which have the thin edge, see "The thin plate edge"). It has
 a cut corner at the top left and the bottom right, and a step at the top right and the bottom
 left, which is the cut corners turned half way round. The corners run clockwise from the
 bottom left: 0 is the bottom left corner, one step above the bottom line, 1 and 2 are the
@@ -792,14 +793,15 @@ right cut corner, and 8 and 9 are the ends of the step at the bottom left.
 |-------|-----------|------------|------|-----|-------|
 | `bar-main` | 1427 x 708 | 56 | 24 | 150 | 6 |
 | `bar-banner` | 1856 x 160 | 56 | 24 | 150 | 6 |
-| `bar-ticker` | 1856 x 72 | 32 | 16 | 100 | 2 |
+| `bar-ticker` | 1856 x 77 | 32 | 16 | 100 | 2 |
 
 The run is how far from its corner a step starts. The main panel is drawn for the area
 before it is scaled (1427 is `areaWidth` in `core/layout.js`), and its header band is the same
 116 px high as the large frame's, which is 120 px on the screen. The ticker is only 72 high,
 so its cut corner is 32 and it has two bolts, and it has no conduit or slashes, which would
-cross its text. It also has no hazard stripe, because it has no header. The banner and the
-ticker are as big as their regions. A frame is not turned by the mirror. It keeps its
+cross its text. It also has no hazard stripe, because it has no header. The banner is as big
+as its region, and the ticker's frame is drawn for its region and 5 px more, which hang below it
+(see "The thin plate edge"). A frame is not turned by the mirror. It keeps its
 shape and its corners, as the frames of the other layouts do, and only the regions move. A team
 can have the other two corners cut, and a header tab with one slant (see "Team trim").
 
@@ -809,11 +811,11 @@ glow"): the `--metal` tokens in `tokens.css` for steel, which a team with steel 
 otherwise, with the three gradients of each in `index.html`. Both styles give it to the html element
 and to every area, so the frame metal and the page change never change it, and `core/areas.js`
 makes no change of metal for either style. Then come the neon lines, on one path that is the outline
-10 px inside, so they follow every corner.
+10 px inside (7 px on the ticker), so they follow every corner.
 
 | Part | What it is | Where it is |
 |------|------------|-------------|
-| Neon line | 4 px, `--style-neon`, and 5 px for a team with Glow | 10 px inside the edge, both styles |
+| Neon line | 4 px, `--style-neon`, and 5 px for a team with Glow | 10 px inside the edge, both styles, and 7 px inside the ticker's |
 | Wide neon lines | the same path at 12 px and .35 opacity, and at 26 px and .12 | both styles, for a team with Glow only, and not in the flat finish |
 | Hex bolt | a hexagon 33 px wide and 38 high, with a dark rim, a face in the metal of the team and a dot | at the joints: corners 1, 2, 5, 6, 7 and 0 (the ticker has 2 and 7) |
 | Armor tab | a gradient, a dark bevel, a bright line up and left, and the team's plate color inset | the header of the main panel, 664 px across at the top and slanted at the end |
@@ -838,6 +840,48 @@ bars carry their neon lines and their bolts. Each bolt is in one piece. The bars
 end are the whole outline. Because the neon line is found by moving points of the outline,
 a piece finds its own the same way.
 
+#### The thin plate edge
+
+The TEAM plate and the ticker's tag and frame are small and hold text, and the edge the other
+frames have (a rim 16 wide with a face of 12) covered some of it: the foot of the TEAM text, the
+foot of the team name above the plate, the top of TELETRAAN I under it, and the descenders of
+the ticker's line. They have a thinner edge, in the same five layers and the same metal, so the gold
+and the steel, the bevel, the screws, the bolts and the neon are as they were. The numbers are in
+`base.css`, under "The thin plate edge".
+
+| Layer | Other frames | The thin edge |
+|-------|--------------|---------------|
+| Shadow and rim | 16 px | 10 px |
+| Face | 12 px | 6 px |
+| Shade | 4 px, 3.5 right and down | 3 px, 2 right and down |
+| Ridge | 3 px, 4 left and up | 3 px, 2.5 left and up |
+| Shadow offset | 5 right, 6 down | 2 right and down |
+
+The TEAM plate (`teamPlateMarkup`, 520 x 76, and 384 and 300 wide in the sidebar layout and in the
+side column of the bar layout) has its line 1 px in from the sides, which keeps the outer edge of the metal where it
+was, and 8 px in from the top and 7 px in from the bottom, so the metal and its shadow stay inside the 76 and never
+reach the name above it or TELETRAAN I under it. The shadow throws some dark inside the top and the
+left of the plate, so the plain purple is 15 to 64 high. The words are put in the middle of it with the
+padding of the span: 1 px at the foot at 60 px and 1 px at the top at 44 px, which leaves 2 px clear
+above and below the capitals at 60 px (they are 45 high). The padding at the right keeps the words off the cut corner: 20 px in the banner,
+where even six digits of the widest kind (the Studio allows 6 characters) have 2 px to spare, and 25 px in the
+bar layout, where the plate is only 300 wide and TEAM with four digits nearly fills it, so its letters are .9 px closer together
+(`letter-spacing`) and the number is 10 px from the word. Five digits fit in the sidebar layout and four in the bar layout; the bar layout's plate cannot hold five at 44 px. In Cybertron the plate is under the name with no gap, so the name has a line height of 70
+there, where a line of 76 left the foot of its letters 4 px under the plate's top. At 70 the foot of the letters is 2 px
+above the metal, and the outline of the letters of a team with Outline (Nova) touches it.
+
+The ticker's tag (`tagMarkup`) and its frames (`cybertron-ticker`, `bar-ticker` and
+`bar-ticker-minimal`) have their line 1 px in from the sides and the top, which keeps the outer
+edge of the metal where it was, and are 77 high, 5 more than the row. The extra hangs below the row, where the
+screen has 24 px free. The neon is 7 px inside the line, against the metal, and the brackets of the
+frame are 18 px outside it. The text of the ticker is 56 px, and its letters are 53 high with the
+descenders (12 to 65 in the row), so the clear room between the two neon lines, 10 to 67, leaves
+2 px above and below. The frame is stepped at the end of the row that has no tag: its top edge drops
+over the last run (100 px in Cybertron, 60 in Minimal), and the metal and the neon there are over the
+tops of the tall letters. The message stops short of the step: 94 px from the end of its box in Cybertron and 70 in Minimal (which has a patch of rust at the foot there),
+with the 16 px of padding of the row, which is the run less the 16 and a little more. 52 characters
+of ordinary text still fit beside the longest tag (REMINDER). The mirror puts that margin at the other end.
+
 To change a size, change it in `barOptions` in `core/plate.js`, and the same number in this
 section. The cut corner of Cybertron is also `--style-chamfer` in `styles/cybertron.css`, and
 Minimal's is the one in `styles/minimal.css`.
@@ -855,7 +899,7 @@ cuts, and the table is read as the one above.
 |-------|-----------|------------|------|-----|-------|
 | `bar-main-minimal` | 1427 x 708 | 34 | 16 | 100 | 4 |
 | `bar-banner-minimal` | 1856 x 160 | 34 | 16 | 100 | 4 |
-| `bar-ticker-minimal` | 1856 x 72 | 20 | 10 | 60 | 4 |
+| `bar-ticker-minimal` | 1856 x 77 | 20 | 10 | 60 | 4 |
 
 Frames are drawn once and stay for as long as the page is up, so the corners are chosen
 when the page starts. `core/style.js` writes `data-shapes` on the html element then
@@ -960,7 +1004,7 @@ the banner draw them. The corners are numbered and drawn as in "Frames".
 | `cybertron-grid1` | 1152 x 708 | 56 | 24 | 150 | 6 |
 | `cybertron-grid2` | 656 x 372 | 56 | 24 | 120 | 6 |
 | `cybertron-banner` | 1840 x 228 | 32 | 16 | 100 | 6 |
-| `cybertron-ticker` | 1840 x 72 | 32 | 16 | 100 | 2 |
+| `cybertron-ticker` | 1840 x 77 | 32 | 16 | 100 | 2 |
 
 The large and the small frame have a header as high as the ones they stand in for (120 and 84), an
 armor tab with the team's plate color inset, the hazard stripe in the team's accent under it, the
@@ -1058,10 +1102,11 @@ the place of DASHBOARD and the bar, as it does in Original.
 
 ### The ticker
 
-The ticker's frame is `cybertron-ticker`, as big as its area (1840 by 72). The tag and the message
+The ticker's frame is `cybertron-ticker`, drawn for its area (1840 by 72) and 5 px more, which hang below it
+(see "The thin plate edge"). The tag and the message
 start 16 in from each end, which puts the tag over the plate's cut corner as the bar layout has it.
-The mirror turns the row round and the padding is the same on both sides. In Original the ticker has
-no frame, and the area draws only its two slats.
+The mirror turns the row round and the padding is the same on both sides. The message stops 94 short of
+the end that has no tag, where the frame is stepped. In Original the ticker has no frame, and the area draws only its two slats.
 
 ### The mirror
 
