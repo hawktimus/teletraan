@@ -24,7 +24,7 @@ fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n'
 ['config.js', 'frame.js', 'themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
-['theme.js', 'theme-apply.js', 'teams.js', 'style.js', 'transitions.js', 'tick.js', 'corner-art.js', 'pack-extras.js'].forEach(file => {
+['theme.js', 'theme-apply.js', 'teams.js', 'style.js', 'busy.js', 'transitions.js', 'tick.js', 'corner-art.js', 'pack-extras.js'].forEach(file => {
   fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(workFolder, 'dashboard/core', file));
 });
 
@@ -33,7 +33,7 @@ const config = await import(base + 'config.js');
 const { resolveTheme, tidyTheme, ruleCovers, dateIn, isTimeZone, ruleExtras, overlayShown, packExtras } = await import(base + 'core/theme.js');
 const packExtrasModule = await import(base + 'core/pack-extras.js');
 const cornerArtModule = await import(base + 'core/corner-art.js');
-const { teamProperties, teamInitials } = await import(base + 'core/teams.js');
+const { teamProperties } = await import(base + 'core/teams.js');
 const { themes } = await import(base + 'themes/registry.js');
 const { overlays } = await import(base + 'themes/overlays/registry.js');
 
@@ -944,11 +944,9 @@ function propertiesOf(team) {
 // and the steel metal and the glow
 const novaClasses = 'accent-neon bolts-round corner-cut-tr grid-dots header-slant metal-steel mirrored name-outline neon-glow pose-flight ticker-bar';
 
-// The properties the page has with a team on it: the seven colors, and the initials for the plate ids, in
-// quotes as content needs them
+// The properties the page has with a team on it: the nine colors
 function onThePage(team) {
-  const initials = { prime: '"HP"', nova: '"HN"' };
-  return Object.assign(propertiesOf(team), { '--team-initials': initials[team.code] });
+  return propertiesOf(team);
 }
 
 // The Teams settings and the team list, as the content has them. teams.js reads nothing else.
@@ -985,7 +983,6 @@ test('the screen starts on the team the settings ask for, at once: the nine colo
     assert.deepEqual(world.root.properties, {
       '--team-primary': '#6C18B6', '--team-plate': '#3B2A7A', '--team-accent': '#FACA2A', '--team-neon': '#FACA2A',
       '--team-pink': '#B23CFF', '--team-background': '#09060F', '--team-text': '#FFFFFF', '--team-body': '#1A0F2E', '--team-label': '#FACA2A',
-      '--team-initials': '"HP"',
     });
     assert.equal(world.classes(), '');
     assert.equal(world.teams.mirrorClass, 'mirrored');
@@ -997,7 +994,6 @@ test('the screen starts on the team the settings ask for, at once: the nine colo
     assert.deepEqual(world.root.properties, {
       '--team-primary': '#1B6FD6', '--team-plate': '#0E2A4A', '--team-accent': '#8FF0FF', '--team-neon': '#3FD8FF',
       '--team-pink': '#9BF0FF', '--team-background': '#050910', '--team-text': '#FFFFFF', '--team-body': '#07131F', '--team-label': '#C58CFF',
-      '--team-initials': '"HN"',
     });
     assert.equal(world.classes(), novaClasses);
   });
@@ -1007,23 +1003,6 @@ test('the properties of a team are its nine colors, whatever team it is, and the
   [seededPrime, seededNova].forEach(team => assert.deepEqual(teamProperties(team), propertiesOf(team)));
   assert.deepEqual(teamProperties(config.primeTeam), propertiesOf(seededPrime));
   assert.equal(config.primeTeam.mirror, seededPrime.mirror);
-});
-
-test('the initials of a team are the first letter of each word of its name, in capitals, for the stamped plate ids: HP for Prime and HN for Nova', () => {
-  assert.equal(teamInitials(seededPrime), 'HP');
-  assert.equal(teamInitials(seededNova), 'HN');
-  assert.equal(teamInitials(config.primeTeam), 'HP', 'the built-in team, named in capitals');
-  assert.equal(teamInitials({ name: 'hawktimus nova' }), 'HN');
-  assert.equal(teamInitials({ name: '  Hawktimus   Prime ' }), 'HP', 'spaces round and between the words');
-  assert.equal(teamInitials({ name: 'Robo-Hawks Gold' }), 'RHG', 'a hyphen starts a new word');
-  assert.equal(teamInitials({ name: 'Hawktimus Prime Second Team' }), 'HPS', 'at most three letters');
-  assert.equal(teamInitials({ name: 'Hawktimus' }), 'HA', 'one word gives its first two letters');
-  assert.equal(teamInitials({ name: 'X' }), 'X');
-  assert.equal(teamInitials({ name: 'Équipe Étoile' }), 'ÉÉ', 'letters that are not in English');
-  assert.equal(teamInitials({ name: 'Team 3229' }), 'TE', 'a number is not a word');
-
-  [null, undefined, {}, { name: '' }, { name: '3229' }, { name: 7 }, 'Hawktimus Prime'].forEach(odd => assert.equal(teamInitials(odd), '', JSON.stringify(odd)));
-  assert.ok(!/["\\]/.test(teamInitials({ name: 'Prime "Hawk" \\ Team' })), 'only letters, so the quoted value is always safe');
 });
 
 test('with no team documents the page gets the starting Prime colors and no mirror', async () => {

@@ -468,7 +468,7 @@ test('the full screen frame and the war clock\'s housing have the other corners 
       assert.equal(plate.warHousingMarkup(form, primeTrim), housing, 'the usual corners are the housing it has always had');
       assert.equal(plate.warHousingMarkup(form, { corner: 'tl', notch: 'slant' }), housing, 'a tab changes nothing here');
       const other = plate.warHousingMarkup(form, novaTrim);
-      const size = { narrow: 700, wide: 616 }[form];
+      const size = { narrow: 766, wide: 616 }[form];
 
       assert.ok(!/NaN|undefined/.test(other));
       const outlineOf = markup => /class="war-housing-fill" points="([^"]+)"/.exec(markup)[1].split(' ').map(pair => pair.split(',').map(Number));

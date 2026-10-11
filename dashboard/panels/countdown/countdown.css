@@ -175,8 +175,8 @@
 
 
 /* The war clock (warMarkup in countdown.js): the countdown drawn a third time, in the banner of
-   the bar layout, 700 by 120, in the slot that panels/bar-banner has for it. It has the same
-   dates, label and tick, and its own look: a steel housing (core/plate.js, warHousingMarkup),
+   the bar layout, 766 by 120, in the slot that panels/bar-banner has for it. It has the same
+   dates, label and tick, and its own look: a housing in the metal of the team (core/plate.js, warHousingMarkup),
    the label over the date, the days on a dark plate and the hours, minutes and seconds on
    another. Everything is placed by hand, counted from the top left corner of the housing, and
    docs/layouts.md ("The war clock") has the same numbers. Nothing here moves: the digits change
@@ -185,8 +185,7 @@
 
    This narrow form is shown by Minimal (styles/minimal.css). Cybertron shows the wide form, whose
    rules are at the end of this file. Each style sets the color of the digits, --style-digits. The
-   labels of this form are 20 and 24 px, which is under 44 px: the one text that is, besides the
-   stamped ids. */
+   labels of this form are 20 and 24 px, which is under 44 px: the one text that is. */
 
 .war-clock { display: none; }
 
@@ -198,7 +197,7 @@ html[data-layout="bar"] .war-clock {
   position: absolute;
   left: 0;
   top: 0;
-  width: 700px;
+  width: 766px;
   height: 120px;
   color: var(--war-ink);
 }
@@ -210,7 +209,7 @@ html[data-layout="bar"] .war-clock[data-level="critical"] {
   --war-plate-border: var(--danger);
 }
 
-/* The housing: the plate, the weld seam and the rust are in the svg, with the steel edge
+/* The housing: the plate, the weld seam and the rust are in the svg, with the edge in the team's metal
    over them. The rust is a soft patch (a gradient) and a short stroke, and the flat finish
    leaves it off. */
 html[data-layout="bar"] .war-housing {
@@ -264,7 +263,7 @@ html[data-layout="bar"] .war-lines {
   position: absolute;
   left: 46px;
   top: 37px;
-  width: 169px;
+  width: 158px;
   height: 56px;
 }
 html[data-layout="bar"] .war-lines span {
@@ -289,7 +288,7 @@ html[data-layout="bar"] .war-clock[data-over="yes"] .label {
 }
 
 /* The two digit plates: 3 px border, and a gradient inside from a faint highlight at the top
-   to a shade at the foot. The time plate has 2 px each side, so its three cells of 80 fill it. */
+   to a shade at the foot. The time plate has 2 px each side, so its three cells of 108 fill it. */
 html[data-layout="bar"] .war-plate {
   position: absolute;
   top: 14px;
@@ -305,12 +304,12 @@ html[data-layout="bar"] .war-plate {
     var(--war-plate);
 }
 html[data-layout="bar"] .war-days-plate {
-  left: 223px;
+  left: 212px;
   width: 176px;
 }
 html[data-layout="bar"] .war-time-plate {
-  left: 414px;
-  width: 250px;
+  left: 396px;
+  width: 334px;
   padding: 0 2px;
   align-items: stretch;
   justify-content: flex-start;
@@ -339,13 +338,14 @@ html[data-layout="bar"] .war-days-group .days-word {
   letter-spacing: -.03em;
 }
 
-/* The hours, minutes and seconds at 48 px, each over its label at 20 px, and a thin bar at the
-   left of the second and the third. The digits have a box as wide as their widest pair, so the
-   labels stay where they are. */
+/* The hours, minutes and seconds at 72 px, each over its label at 24 px, and a thin bar at the
+   left of the second and the third. The digits have a box as wide as their widest pair (105
+   px), so the labels stay where they are. Their line is 58 high, which puts the digits and
+   the label in the 86 inside the border. */
 html[data-layout="bar"] .war-cell {
   position: relative;
   flex: none;
-  width: 80px;
+  width: 108px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -355,22 +355,22 @@ html[data-layout="bar"] .war-cell + .war-cell::before {
   content: "";
   position: absolute;
   left: -1px;
-  top: 12px;
+  top: 8px;
   width: 3px;
-  height: 64px;
+  height: 70px;
   background: var(--war-plate-border);
 }
 html[data-layout="bar"] .war-cell .digits {
   display: block;
-  width: 76px;
-  height: 52px;
+  width: 106px;
+  height: 58px;
   text-align: center;
-  font: 700 48px/52px var(--font-display);
+  font: 700 72px/58px var(--font-display);
 }
 html[data-layout="bar"] .war-cell .digits span { display: block; }
 html[data-layout="bar"] .war-cell .unit {
   opacity: var(--war-dim);
-  font: 600 20px/22px var(--font-display);
+  font: 600 24px/26px var(--font-display);
   letter-spacing: .12em;
 }
 
@@ -402,7 +402,7 @@ html[data-layout="bar"] .war-cell .unit {
   --war-plate-border: var(--danger);
 }
 
-/* The housing: the plate, the weld seam and the rust are in the svg, with the steel edge over
+/* The housing: the plate, the weld seam and the rust are in the svg, with the edge in the team's metal over
    them, and the four round heads on top */
 .war-clock.war-wide .war-housing {
   position: absolute;

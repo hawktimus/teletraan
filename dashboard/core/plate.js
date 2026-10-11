@@ -19,15 +19,14 @@
 // sizes here are repeated in base.css and in each panel's own stylesheet.
 // Change them together.
 //
-// The Original style adds two things to the frames of the large panel, the small
-// panel and the countdown: rivets along their long straight edges, and a small
-// stamped id in the bottom right corner (HP-01, HP-02, HP-03). Both are always
+// The Original style adds rivets to the frames of the large panel, the small
+// panel and the countdown, along their long straight edges. They are always
 // in the markup. base.css draws them only while the style is Original, and
 // nothing about them moves. The rivets are in the halves of the frame and in its
-// pieces, so they go where the frame goes. The id is under the page.
+// pieces, so they go where the frame goes.
 //
 // The frames of the steel styles are made by makeBarShape() below ("The frames of the
-// bar layout"): the steel edge, a neon line just inside it, hex bolts where the screws
+// bar layout"): the metal edge, a neon line just inside it, hex bolts where the screws
 // are, and what only a style draws. All of it is in the markup, and base.css and the
 // style's own stylesheet show what the style has.
 //
@@ -40,7 +39,7 @@
 // The Minimal style has three frames of its own in the bar layout, the main panel, the
 // banner and the ticker, cut less deep (bar-main-minimal and the other two). It adds to
 // them the rivets that Original has, and rust at two corners, a weld seam, and a row of
-// ticks along the foot of the header. It has no stamped id, which is Original's. The style
+// ticks along the foot of the header. The style
 // whose frames the page draws is chosen when the page starts (core/style.js, shapesFor),
 // and when a style with other frames goes on later the frames are drawn again
 // (core/areas.js, redrawFrames). frameKind() gives the name of the frame for a style.
@@ -65,7 +64,6 @@
 const grid1 = {
   width: 1152,
   height: 708,
-  number: '01', // the number in the stamped id
   body: [[4, 120], [1148, 120], [1148, 640], [1068, 704], [4, 704]],
   headerLeft: [[84, 4], [664, 4], [648, 52], [688, 52], [665.3, 120], [4, 120], [4, 68]],
   headerRight: [[664, 4], [1148, 4], [1148, 120], [665.3, 120], [688, 52], [648, 52]],
@@ -87,7 +85,6 @@ const grid1 = {
 const grid2 = {
   width: 656,
   height: 372,
-  number: '03',
   body: [[4, 84], [652, 84], [652, 320], [592, 368], [4, 368]],
   headerLeft: [[64, 4], [480, 4], [453.3, 84], [4, 84], [4, 52]],
   headerRight: [[480, 4], [652, 4], [652, 84], [453.3, 84]],
@@ -158,7 +155,6 @@ const countdown = (function () {
   return {
     width: 656,
     height: 320,
-    number: '02',
     red: true,
     // the plate is flat along the top. The teeth are only in the frame.
     body: [[64, 4], [652, 4], [652, 268], [592, 316], [4, 316], [4, 52]],
@@ -199,7 +195,7 @@ function halves(shape) {
 }
 
 
-// Rivets and the stamped id
+// Rivets
 
 // A long straight edge carries a row of rivets, one every 90px, the row centred on
 // the edge. An edge under 180px has none, which leaves out the cut corners, where
@@ -207,12 +203,6 @@ function halves(shape) {
 const rivetGap = 90;
 const rivetRadius = 5;
 const rivetEdgeLeast = 2 * rivetGap;
-
-// The stamped id is a box 112px wide and 20px high, with its text at the right. It
-// stands 34px left of the foot of the cut corner, which keeps it clear of the
-// screw there, and 14px above the bottom line of the frame.
-const idWidth = 112;
-const idHeight = 20;
 
 function tenth(number) {
   return Math.round(number * 10) / 10;
@@ -283,7 +273,6 @@ function otherCorners(box) {
     outline: [[left + cutX, bottom], [left, bottom - cutY], [left, top], [right - cutX, top], [right, top + cutY], [right, bottom]],
     split: 3,
     screws: { a: [[left + cutX, bottom], [left, bottom - cutY]], b: [[right - cutX, top], [right, top + cutY]] },
-    idFoot: [right - cutX, bottom], // the foot of the cut corner that the stamped id stands by
   };
 }
 
@@ -363,7 +352,6 @@ function trimmedCountdown(prime) {
     outline: outline,
     split: outline.length - 3, // the top right corner, where the jaw ends
     screws: { a: [[left + cutX, bottom]], b: [[right - cutX, top]] },
-    idFoot: [right - cutX, bottom],
   });
   giveRivets(shape);
   return shape;
@@ -394,17 +382,6 @@ function rivetsMarkup(centers, labelled, name = 'rivets') {
   const size = 2 * rivetRadius;
   const circles = centers.map(center => `M${tenth(center[0] - rivetRadius)} ${center[1]}a${rivetRadius} ${rivetRadius} 0 1 0 ${size} 0a${rivetRadius} ${rivetRadius} 0 1 0 -${size} 0`).join('');
   return `<path class="${name}"${labelled ? ' data-part="rivets"' : ''} d="${circles}"/>`;
-}
-
-// The id of a panel. Its letters come from the team (--team-initials, set by
-// core/teams.js) and its number from the shape, and base.css writes both. Only the
-// frames of Original have one: a bar frame has no number.
-function idMarkup(shape) {
-  const foot = shape.idFoot || shape.outline[shape.outline.length - 1]; // the foot of the bottom right cut corner
-  const left = foot[0] - 34 - idWidth;
-  const top = foot[1] - 14 - idHeight;
-
-  return `<span class="plate-id" data-part="plate-id" data-number="${shape.number}" style="left: ${left}px; top: ${top}px; width: ${idWidth}px;"></span>`;
 }
 
 
@@ -805,7 +782,7 @@ const barOptions = {
   // The same three for Minimal: cut corners of 34 (20 on the ticker), a bolt at each of the
   // four joints, one neon line, rivets and rust at two corners. The main panel also has the
   // weld seam, 36 clear of the 1152 the pages are written for, and the line with ticks along
-  // the foot of its header. None has a stamped id, and none has the hazard stripe, the
+  // the foot of its header. None has the hazard stripe, the
   // conduit, the slashes, the brackets or the plate seams, which are Cybertron's
   'bar-main-minimal': {
     width: 1427, height: 708, chamfer: 34, step: 16, run: 100,
@@ -1245,8 +1222,8 @@ function piecesMarkup(kind, shape) {
 // The war clock's housing
 
 // The war clock (panels/countdown, docs/layouts.md, "The war clock") is drawn in two forms.
-// The narrow one is 700 by 120, in the banner of the bar layout (Minimal). The wide one is
-// 616 by 200, in the countdown's place in Cybertron. The housing of each is a plate of steel
+// The narrow one is 766 by 120, in the banner of the bar layout (Minimal). The wide one is
+// 616 by 200, in the countdown's place in Cybertron. The housing of each is a plate in the metal of the team
 // with the same edge as the frames: the line 4 inside the box, a cut corner at the top left
 // and the bottom right (22 on the narrow one and 34 on the wide one), four rivets, one weld
 // seam across the middle and rust at the bottom left and the top right. Everything in it is still.
@@ -1254,14 +1231,14 @@ function piecesMarkup(kind, shape) {
 // rivets and the rust turned across with them.
 const warForms = {
   narrow: {
-    box: { width: 700, height: 120, chamfer: 22 },
+    box: { width: 766, height: 120, chamfer: 22 },
     id: 'war-housing-shape',
-    rivets: [[30, 22], [672, 22], [30, 92], [672, 92]],
-    seam: { y: 63, from: 16, to: 684 }, // between the label and the date. The light line is weldGap below the dark one
+    rivets: [[30, 22], [738, 22], [30, 92], [738, 92]],
+    seam: { y: 63, from: 16, to: 750 }, // between the label and the date. The light line is weldGap below the dark one
     rust: {
-      patches: [{ cx: 50, cy: 100 }, { cx: 650, cy: 20 }],
+      patches: [{ cx: 50, cy: 100 }, { cx: 716, cy: 20 }],
       patchRadius: { x: 56, y: 16 },
-      arcs: 'M6 72Q28 90 6 108M650 6Q668 24 686 6',
+      arcs: 'M6 72Q28 90 6 108M716 6Q734 24 752 6',
     },
   },
   wide: {
@@ -1325,14 +1302,14 @@ export function warHousingMarkup(form = 'narrow', trim = {}) {
 
 // The whole plate of a panel that sits outside the areas and draws its own:
 // the fills, the frame in two halves that draw line by line, and the glint.
-// kind is 'countdown', or a banner of the bar layout ('bar-banner', or 'bar-banner-minimal'), or the banner of Cybertron ('cybertron-banner'), which have no glint and no id.
+// kind is 'countdown', or a banner of the bar layout ('bar-banner', or 'bar-banner-minimal'), or the banner of Cybertron ('cybertron-banner'), which have no glint.
 export function plateMarkup(kind) {
   const shape = shapeFor(kind);
   const red = shape.red ? ' red-metal' : '';
   defineFrame(kind, shape);
 
   if (shape.bar) return barFillsMarkup(shape) + frameHalves(kind, shape, red, 'outline');
-  return fillsMarkup(kind, shape, red) + idMarkup(shape) + frameHalves(kind, shape, red, 'outline') + glintMarkup(kind, shape, red);
+  return fillsMarkup(kind, shape, red) + frameHalves(kind, shape, red, 'outline') + glintMarkup(kind, shape, red);
 }
 
 // The frame of the large or the small panel area, drawn once for as long as
@@ -1340,13 +1317,13 @@ export function plateMarkup(kind) {
 // gives for a steel style: 'cybertron-grid1', 'cybertron-grid2' and 'cybertron-ticker', or in the
 // bar layout 'bar-main' or 'bar-ticker'. After the frame come its
 // pieces, which are the same frame cut up and stay hidden until a mechanical page
-// change shows them in its place (frame.css). A bar frame has no glint and no id.
+// change shows them in its place (frame.css). A bar frame has no glint.
 export function areaMarkup(kind) {
   const shape = shapeFor(kind);
   defineFrame(kind, shape);
 
   if (shape.bar) return barFillsMarkup(shape) + areaHalves(kind, shape) + piecesMarkup(kind, shape);
-  return fillsMarkup(kind, shape, '') + idMarkup(shape) + areaHalves(kind, shape) + glintMarkup(kind, shape, '') + piecesMarkup(kind, shape);
+  return fillsMarkup(kind, shape, '') + areaHalves(kind, shape) + glintMarkup(kind, shape, '') + piecesMarkup(kind, shape);
 }
 
 // The frame behind the full screen alert and announcement: the plate, then

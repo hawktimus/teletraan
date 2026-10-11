@@ -329,7 +329,7 @@ What falls is every piece of metal the page draws as a separate element:
 
 That makes 38 pieces in the standard layout in Original, 50 in Cybertron, 19 in the sidebar layout and 32 and
 30 in the bar layout (Minimal has 30). The most that fall is 40. Above that the smallest ones, which are always bolts, are
-folded into the plate they are bolted to and fall with it. The shadows, the glint and the stamped id are not
+folded into the plate they are bolted to and fall with it. The shadows and the glint are not
 pieces: they are left out while the metal is down. A bolt gets a copy of its own in `#pile` and the bolt on
 the frame hides until the pieces are home. The Original banner and ticker have no frame, so only their words
 fade.
@@ -498,6 +498,9 @@ chance setting.
   glitch"), `base.css` (the layers, the pictures and the cube), `tokens.css` (the colours and
   times) and `index.html` (`#backdrop`, `#red-wash`, `#blue-glitch`, `#pile` with the cube, and
   `data-block`).
+- `dashboard/core/busy.js`: a flag, `setBusy(on, reason)` and `isBusy()`. `frame.js` does not start the
+  name effect, the screen glitch or the name glitch of the Neon Prime kit while it is set, and ends the
+  first two if they are playing. Whatever runs a transition of the whole screen sets it.
 - `dashboard/frame.js`: `setHiddenPlaying` holds the logo effects and the screen glitch
   still while one plays, and `playGlitch` gives it its red glitches. `enter(panel, true)`
   brings in the content of a panel without drawing its frame again, which is what the build does.

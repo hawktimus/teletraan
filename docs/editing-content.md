@@ -758,8 +758,9 @@ problem would touch.
   jumps sideways and the scan lines flicker. "Play the glitch" turns it on or
   off, "Seconds between glitches" is from 30 to 3600, or 0 to never play it, and
   starts at 240 (every four minutes), and "Glitch duration (seconds)" is from 0.5
-  to 10 and starts at 2.7. The announcements play the glitch between their two
-  lines whatever this tab says. The glitch used to be set in minutes. If an
+  to 10 and starts at 2.7. The glitch and the name effect wait while the screen is
+  changing from one look to another, and one that is playing then stops. The
+  announcements play the glitch between their two lines whatever this tab says. The glitch used to be set in minutes. If an
   older Studio page shows an "unknown field" box called everyMinutes, click
   Unset. The screen reads an old value of minutes as seconds until you set the
   new field.

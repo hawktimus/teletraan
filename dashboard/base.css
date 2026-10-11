@@ -417,32 +417,17 @@ html[data-night="on"] #stage { visibility: hidden; }
 .screw-slot { fill: var(--screw-slot); }
 .screw-shadow { fill: var(--edge-shadow); }
 
-/* Rivets and the stamped id (core/plate.js). Only the Original style draws them:
-   they are hidden unless data-style says original, and the other styles show their
-   own or none. The rivets are steel with a dark rim, like the screws. The id is the
-   small number in the bottom right corner of a panel: the letters are the team's
-   initials (--team-initials, set by core/teams.js), and the number is data-number.
-   It is the one text on the screen under 44px, and it is dim on purpose. Nothing
-   here moves or shifts anything, because both are positioned over the frame. */
+/* Rivets (core/plate.js). Only the Original style draws them here: they are hidden
+   unless data-style says original, and the other styles show their own or none. The
+   rivets are steel with a dark rim, like the screws. Nothing here moves or shifts
+   anything. */
 .rivets {
   display: none;
   fill: var(--screw-mid);
   stroke: var(--screw-rim);
   stroke-width: 2px;
 }
-.plate-id {
-  display: none;
-  position: absolute;
-  font: 700 20px/1 var(--font-display);
-  letter-spacing: .12em;
-  text-align: right;
-  color: var(--white);
-  opacity: .3;
-  pointer-events: none;
-}
-.plate-id::after { content: var(--team-initials, "HP") "-" attr(data-number); }
 html[data-style="original"] .rivets { display: inline; }
-html[data-style="original"] .plate-id { display: block; }
 
 /* The frames of the bar layout (core/plate.js, "The frames of the bar layout"). The
    Cybertron and Minimal styles draw them from the same markup, so what they share is here

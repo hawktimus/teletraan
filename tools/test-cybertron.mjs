@@ -367,7 +367,7 @@ test('the banner and the ticker are one plate each: the fills and the two halves
   });
 });
 
-test('the frames of Original are the ones they were: the same outlines, the same pieces, no steel decoration, and the rivets and the id still in their markup', async () => {
+test('the frames of Original are the ones they were: the same outlines, the same pieces, no steel decoration, and the rivets still in their markup', async () => {
   await withPlatePage(() => {
     const expected = {
       grid1: { outline: [[4, 704], [4, 68], [84, 4], [1148, 4], [1148, 640], [1068, 704]], pieces: 13 },
@@ -377,7 +377,7 @@ test('the frames of Original are the ones they were: the same outlines, the same
       const markup = plate.areaMarkup(kind);
       assert.equal(countOf(markup, 'class="plate piece"'), expected[kind].pieces, kind + ' pieces');
       assert.ok(!hasText(markup, 'art-cybertron') && !hasText(markup, 'bolt-shape') && !hasText(markup, 'edge-neon'), kind + ' has none of the steel decoration');
-      assert.ok(hasText(markup, 'class="glint"') && hasText(markup, 'class="plate-id"') && hasText(markup, 'class="rivets"'), kind + ' has its glint, its id and its rivets');
+      assert.ok(hasText(markup, 'class="glint"') && hasText(markup, 'class="rivets"') && !hasText(markup, 'plate-id'), kind + ' has its glint and its rivets, and no id');
     });
 
     // the outlines are in the group of shapes the first time a frame is drawn
@@ -674,12 +674,12 @@ test('the wide housing is one steel plate 616 by 200 with the edge of the frames
     assert.ok((markup.match(/<(svg|g|polygon|path|use|ellipse)[ >]/g) || []).length <= 20, 'a handful of elements');
     assert.ok(!/(filter|animate|<set|clipPath|<image|<mask|<pattern)/i.test(markup));
 
-    // The narrow one is what it was: 700 by 120, on a shape of its own, with the id it had
+    // The narrow one is the one Minimal has: 766 by 120, on a shape of its own, with the id it had
     const narrow = plate.warHousingMarkup();
     assert.equal(narrow, plate.warHousingMarkup('narrow'));
-    assert.ok(/^<svg class="war-housing" width="700" height="120" viewBox="0 0 700 120">/.test(narrow));
+    assert.ok(/^<svg class="war-housing" width="766" height="120" viewBox="0 0 766 120">/.test(narrow));
     assert.ok(narrow.includes('href="#war-housing-shape"') && !narrow.includes('wide'));
-    assert.deepEqual(rivetsIn(narrow), [[30, 22], [672, 22], [30, 92], [672, 92]]);
+    assert.deepEqual(rivetsIn(narrow), [[30, 22], [738, 22], [30, 92], [738, 92]]);
   });
 });
 
@@ -724,7 +724,7 @@ test('Original keeps the red countdown with its frame, its id and its rivets, an
   await onPage(async world => {
     await world.draw(teamContent(), 'dashboard/panels/countdown/countdown.js');
     assert.ok(/<section class="panel countdown" data-sequence="countdown" data-level="calm">/.test(world.markup));
-    assert.ok(hasText(world.markup, 'red-metal') && hasText(world.markup, 'class="plate-id"') && hasText(world.markup, 'class="rivets"'));
+    assert.ok(hasText(world.markup, 'red-metal') && hasText(world.markup, 'class="rivets"') && !hasText(world.markup, 'plate-id'));
     assert.ok(!hasText(world.markup, 'war-') && !hasText(world.markup, 'countdown-war'));
     assert.equal(countOf(world.markup, 'class="segment"'), 12, 'and the row of blocks');
   });

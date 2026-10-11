@@ -13,9 +13,8 @@
    The frames are drawn by core/plate.js with shapes of their own for this style, cut
    at 34 px (bar-main-minimal and the other two, "The frames of the bar layout"). What
    only Cybertron has is not here: no hazard stripe, no conduit, no
-   slashes, no brackets, no plate seams, no scanlines and no raised plate. Minimal has no
-   stamped id either, which is Original's. What it has on a frame is a thin neon line just
-   inside the metal edge (steel or gold, tokens.css), a hex bolt at each of the four joints, the
+   slashes, no brackets, no plate seams, no scanlines and no raised plate. What it has on a
+   frame is a thin neon line just inside the metal edge (steel or gold, tokens.css), a hex bolt at each of the four joints, the
    rivets that Original also has, rust, a weld seam on the main panel, and a line with ticks
    along the foot of its header. The plates are the team's body color, and the header tab is an
    armor plate with the team's plate color inset. */
@@ -79,8 +78,7 @@ html[data-style="minimal"] .bar-logo .drawing { --logo-edge: var(--team-accent);
 
 
 /* The rivets are the Original style's (base.css, plate.js): they are in the markup of every
-   frame that has them, and are shown here and for Original only. The stamped id is Original's
-   alone, and no frame of this style has one in its markup */
+   frame that has them, and are shown here and for Original only */
 html[data-style="minimal"] .rivets { display: inline; }
 
 /* The // mark at the right end of a header is left off, as the pictures have none. The ticks
@@ -158,5 +156,5 @@ html[data-style="minimal"] .bar-rail::after {
 
 
 /* The war clock in the banner (panels/countdown) is shown by this style and by Cybertron, and by no
-   other. Here it is the narrow form, 700 by 120. Its digits are --style-digits, the team's neon here. */
+   other. Here it is the narrow form, 766 by 120. Its digits are --style-digits, the team's neon here. */
 html[data-style="minimal"] .war-clock { display: block; }
