@@ -9,6 +9,11 @@ the same window, when they need it.
 The Mini pulls from GitHub by itself every 5 minutes. This script only makes
 the change arrive now instead of within 5 minutes.
 
+A Mini can also be updated by copying the files from this Mac, without GitHub:
+`tools/mini/teletraan-mini` does that, and it keeps the Mini's keys and calendar
+links too (`docs/updating-the-mini.md`). A Mini follows one of the two ways, not
+both. This page is for the Mini that pulls.
+
 ## Start it
 
 Pick one:

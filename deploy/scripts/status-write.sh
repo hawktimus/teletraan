@@ -13,11 +13,14 @@
 #   status-write.sh calendar-status
 #                              sends the document that the Calendars page in Studio
 #                              shows, which calendar-status.sh made in the data folder
+#   status-write.sh --print    writes nothing: prints each time in the document and how
+#                              long ago it was, which tools/mini/teletraan-mini shows
 #
 # Writing needs a token with Editor access, SANITY_WRITE_TOKEN in local.env
 # (docs/rebuilding-the-mini.md). With no token this exits quietly, and Studio
 # shows No status yet. The token is never printed, and it is handed to curl on
-# standard input so it never shows in the process list.
+# standard input so it never shows in the process list. --print needs no token,
+# because the dataset is public.
 set -eu
 
 deploy=$(cd "$(dirname "$0")/.." && pwd)
@@ -29,7 +32,7 @@ env_file="$deploy/local.env"
 document=status-mini
 
 usage() {
-  echo "Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|calendar-status" >&2
+  echo "Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|calendar-status|--print" >&2
   exit 2
 }
 
@@ -44,6 +47,7 @@ case $1 in
   frc) field=lastFrcSyncAt ;;
   kiosk) field=kioskStartedAt ;;
   calendar-status) field=calendar-status ;;
+  --print) field=print ;;
   *) usage ;;
 esac
 
@@ -74,18 +78,21 @@ explain() {
   esac
 }
 
-token=$(setting SANITY_WRITE_TOKEN)
+token=''
+if [ "$field" != print ]; then
+  token=$(setting SANITY_WRITE_TOKEN)
 
-# No token, or the placeholder from local.example.env that starts with [
-case $token in
-  ''|'['*) exit 0 ;;
-esac
+  # No token, or the placeholder from local.example.env that starts with [
+  case $token in
+    ''|'['*) exit 0 ;;
+  esac
 
-# A token is letters, digits and a few signs. Anything else would not be one,
-# and must not be put in a curl setting.
-if ! printf '%s' "$token" | grep -Eq '^[A-Za-z0-9_.-]+$'; then
-  echo "SANITY_WRITE_TOKEN in local.env does not look like a token. Paste it again, with nothing else on the line." >&2
-  exit 1
+  # A token is letters, digits and a few signs. Anything else would not be one,
+  # and must not be put in a curl setting.
+  if ! printf '%s' "$token" | grep -Eq '^[A-Za-z0-9_.-]+$'; then
+    echo "SANITY_WRITE_TOKEN in local.env does not look like a token. Paste it again, with nothing else on the line." >&2
+    exit 1
+  fi
 fi
 
 project=$(config_value projectId)
@@ -113,6 +120,73 @@ newest_update() {
   [ "$status" -eq 0 ] || return 0
   printf '%s' "$answer" | sed -n 's/.*"result":"\([^"]*\)".*/\1/p' | head -n 1
 }
+
+# The words after a time: how long ago it was, counted the way the Studio counts
+# it (studio/time-text.js). $1 is the time, $2 is now in seconds.
+age_text() {
+  awk -v text="$1" -v now="$2" 'BEGIN {
+    year = substr(text, 1, 4) + 0
+    month = substr(text, 6, 2) + 0
+    day = substr(text, 9, 2) + 0
+    if (month <= 2) year -= 1
+    era = int(year / 400)
+    yoe = year - era * 400
+    shifted = month > 2 ? month - 3 : month + 9
+    doy = int((153 * shifted + 2) / 5) + day - 1
+    doe = yoe * 365 + int(yoe / 4) - int(yoe / 100) + doy
+    then = (era * 146097 + doe - 719468) * 86400 + substr(text, 12, 2) * 3600 + substr(text, 15, 2) * 60 + substr(text, 18, 2)
+    minutes = int((now - then) / 60 + 0.5)
+    hours = int(minutes / 60 + 0.5)
+    if (minutes < 1) print "just now"
+    else if (minutes < 60) print minutes (minutes == 1 ? " minute ago" : " minutes ago")
+    else if (hours < 48) print hours (hours == 1 ? " hour ago" : " hours ago")
+    else print int(hours / 24 + 0.5) " days ago"
+  }'
+}
+
+# One line of --print: the label, how long ago, and the time. A time the Mini
+# has not written yet says Not yet.
+time_line() {
+  value=$(printf '%s' "$answer" | sed -n "s/.*\"$1\":\"\([^\"]*\)\".*/\1/p" | head -n 1)
+  if printf '%s' "$value" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z$'; then
+    clock=$(printf '%s' "$value" | sed 's/^\(....-..-..\)T\(..:..\).*/\1 \2 UTC/')
+    printf '%-26s%s (%s)\n' "$2" "$(age_text "$value" "$now")" "$clock"
+  else
+    printf '%-26s%s\n' "$2" "Not yet"
+  fi
+}
+
+if [ "$field" = print ]; then
+  query="*[_id == \"$document\"][0]{lastContentSeenAt, lastCalendarSyncAt, lastSlidesFetchAt, lastMondaySyncAt, lastFrcSyncAt, kioskStartedAt}"
+  status=0
+  answer=$(curl --silent --max-time 20 --connect-timeout 10 --get "$host/v$version/data/query/$dataset" \
+    --data-urlencode "query=$query" --data-urlencode 'perspective=published' 2> /dev/null) || status=$?
+  if [ "$status" -ne 0 ]; then
+    echo "status: could not read $document, $(explain "$status")." >&2
+    exit 1
+  fi
+
+  case $answer in
+    *'"result":null'*)
+      echo "No status yet. Nothing has written $document."
+      exit 0
+      ;;
+    *'"result":{'*) ;;
+    *)
+      echo "status: Sanity did not answer with the status document." >&2
+      exit 1
+      ;;
+  esac
+
+  now=$(date -u +%s)
+  time_line lastContentSeenAt 'Last content update seen'
+  time_line lastCalendarSyncAt 'Last calendar sync'
+  time_line lastSlidesFetchAt 'Last slides fetch'
+  time_line lastMondaySyncAt 'Last Monday sync'
+  time_line lastFrcSyncAt 'Last FRC data sync'
+  time_line kioskStartedAt 'Screen started'
+  exit 0
+fi
 
 body=""
 

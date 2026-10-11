@@ -400,6 +400,9 @@ editors can sign in from anywhere.
                               symmetry of the figure, the same text in the sample content), for
                               install-console.sh in a fake root (it stops before it changes anything, keeps the
                               copy of /etc/issue, and does nothing the second time) and for the unit
+      test-mini-tool.mjs      checks for the Mac tool in tools/mini/ and for merge-env.sh, with fake ssh, scp
+                              and rsync: the masking, webcal to https, the merge into local.env, the menu
+                              choices, and that no key or calendar link is printed or put on a command line
       check-seasons.mjs       fails if a seasonal pack is not in the data format, has a piece outside its zone, too
                               many pieces, a forbidden word, no header mark, a mark bigger than its box (60 x 76),
                               fewer than 8 or more than 14 pieces over the panels, an over piece that is too big,
@@ -409,6 +412,9 @@ editors can sign in from anywhere.
                               http://localhost:8080/tools/zones.html
       check-themes.mjs        fails if a theme or overlay is missing a variable or has text that is
                               hard to read
+      mini/                   the Mac tool that updates the Mini and keeps its keys and calendars:
+                              teletraan-mini (the menu), Teletraan Mini.command (double-click it) and
+                              merge-env.sh, which runs on the Mini (docs/updating-the-mini.md)
       testdata/               the calendar files test-calendar.mjs reads
       icons.html              every weather picture on one page, at
                               http://localhost:8080/tools/icons.html
@@ -426,7 +432,7 @@ editors can sign in from anywhere.
                               hidden-transitions.md, demo.md, publish-all.md, reordering-the-sidebar.md,
                               importing-from-csv.md, presentations.md, up-next.md, calendar-filters.md,
                               calendar-links.md, calendars-page.md, hide-a-repeating-meeting.md, switch-the-look.md,
-                              add-the-nova-team.md, team-on-an-item.md, frc-feed.md and monday.md.
+                              add-the-nova-team.md, team-on-an-item.md, frc-feed.md, monday.md and updating-the-mini.md.
                               seed/ has content to import into the Studio: places.ndjson, the three
                               starting places, teams.ndjson, the two starting teams, and extra-events.ndjson, the
                               old Events Calendar entries, which the screen no longer reads. content-templates/ has one CSV template for each
@@ -912,6 +918,7 @@ exceptions are `test-slides-script.mjs`, `test-frc-script.mjs` and `test-monday-
     node tools/test-console.mjs
     node tools/test-calendar-status.mjs
     node tools/test-calendars-view.mjs
+    node tools/test-mini-tool.mjs
     node tools/check-themes.mjs
     node tools/check-seasons.mjs
     node studio/check-schemas.mjs
