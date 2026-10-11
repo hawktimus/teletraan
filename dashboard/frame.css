@@ -1174,7 +1174,7 @@ html:not([data-motion="full"]) .logo[data-act="fly"] .hawk-far-wing { transform:
    the plane and falls to the bottom of the screen. It lands with one bounce of 30 px, settles, makes a
    small second bounce of 8 px and stays. They end in a loose pile in the bottom 120 px, side by side in
    the order they fell. A frame that is cut into pieces shows its pieces in place of the whole frame,
-   as the mechanical page change does. The shadows, the glint and the stamped id are left out. The
+   as the mechanical page change does. The shadows and the glint are left out. The
    pile stays down (data-hidden="apart") while the effect plays over it.
 
    Cube, 2.6 s. It rises from below the bottom edge to the middle of the screen over .6 s, turns once
@@ -1215,7 +1215,6 @@ html:not([data-motion="full"]) .logo[data-act="fly"] .hawk-far-wing { transform:
 [data-motion="full"] #world[data-pieces] [data-pile="pieces"] [data-part="shadow-b"],
 [data-motion="full"] #world[data-pieces] .shadow-layer,
 [data-motion="full"] #world[data-pieces] .glint-layer,
-[data-motion="full"] #world[data-pieces] .plate-id,
 [data-motion="full"] #world[data-pieces] .screw-shadow,
 [data-motion="full"] #world[data-pieces] .kit,
 [data-motion="full"] #world[data-pieces] [data-pile="released"] {

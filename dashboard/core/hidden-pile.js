@@ -29,7 +29,7 @@ const poseProperties = ['--pile-x', '--pile-y', '--pile-tip', '--pile-twist', '-
 // The plates that fall. A frame that is cut into pieces (the large and the small panel, the main panel
 // of the bar layout) falls as its pieces, which the page keeps hidden until now. A frame that is not
 // (the countdown, the banners, the ticker of the bar layout) falls as its fills and its two halves.
-// The shadows, the glint and the stamped id stay behind, and frame.css hides them.
+// The shadows and the glint stay behind, and frame.css hides them.
 export function findPlates(stage) {
   const plates = [];
 
@@ -62,7 +62,7 @@ export function findContent(stage, boxes) {
 
   stage.querySelectorAll('.panel').forEach(panel => {
     Array.from(panel.children)
-      .filter(child => !child.matches('svg.plate, .plate-id, .scan-clip'))
+      .filter(child => !child.matches('svg.plate, .scan-clip'))
       .forEach(child => content.push(child));
   });
   stage.querySelectorAll('.page-host').forEach(host => content.push(host));

@@ -443,7 +443,7 @@ test('the new section of frame.css changes only transform and opacity, promotes 
   });
 });
 
-test('the frame at rest gives way to its pieces, and the shadows, the glint, the id, the kit and a released bolt are left out while the metal is down', () => {
+test('the frame at rest gives way to its pieces, and the shadows, the glint, the kit and a released bolt are left out while the metal is down', () => {
   assert.ok(/\.piece \{ display: none; \}/.test(frameCss));
   assert.ok(/\[data-motion="full"\] #world\[data-pieces\] \[data-pile="pieces"\] \.piece \{\s*display: block;\s*\}/.test(frameCss));
 
@@ -458,7 +458,6 @@ test('the frame at rest gives way to its pieces, and the shadows, the glint, the
     '[data-pile="pieces"] [data-part="shadow-b"]',
     '.shadow-layer',
     '.glint-layer',
-    '.plate-id',
     '.screw-shadow',
     '.kit',
     '[data-pile="released"]',
@@ -758,7 +757,6 @@ function standardPage(extra = {}) {
   const area = makeElement('div', { classes: 'area', attributes: { 'data-area': 'grid1' } });
   holding(area,
     makeElement('svg', { classes: 'plate fills', attributes: { width: '1152' } }),
-    makeElement('span', { classes: 'plate-id' }),
     makeElement('svg', { classes: 'plate shadow-layer', attributes: { width: '1152' } }),
     makeElement('svg', { classes: 'plate', attributes: { 'data-part': 'frame-a', width: '1152' } }, ),
     makeElement('svg', { classes: 'plate glint-layer', attributes: { width: '1152' }, rect: box(100, 100, 1152, 708) }),
@@ -776,7 +774,6 @@ function standardPage(extra = {}) {
     holding(makeElement('svg', { classes: 'plate', attributes: { 'data-part': 'frame-a', width: '656' }, rect: box(1300, 100, 656, 320) }), bolt(1320, 120)),
     holding(makeElement('svg', { classes: 'plate', attributes: { 'data-part': 'frame-b', width: '656' }, rect: box(1300, 100, 656, 320) }), bolt(1900, 400)),
     makeElement('svg', { classes: 'plate glint-layer', attributes: { width: '656' }, rect: box(1300, 100, 656, 320) }),
-    makeElement('span', { classes: 'plate-id' }),
     makeElement('div', { classes: 'scan-clip' }),
     makeElement('div', { classes: 'days' }),
   );
@@ -835,8 +832,8 @@ test('the script marks the areas whose frames are cut up, and finds the pieces, 
     const names = marked.map(element => element.attributes['data-piece'] || element.attributes['data-part'] || element.classes.has('fills') && 'fills' || element.classes.has('pile-bolt') && 'bolt');
     assert.deepEqual(names.sort(), ['bolt', 'bolt', 'bolt', 'bolt', 'bolt', 'corner-bottom-right', 'edge-top-left', 'fills', 'frame-a', 'frame-b', 'plate-header-left']);
 
-    // the frame at rest, the shadows, the glint and the id are not marked: the stylesheet hides them
-    ['fills', 'shadow-layer', 'glint-layer', 'plate-id'].forEach(name => {
+    // the frame at rest, the shadows and the glint are not marked: the stylesheet hides them
+    ['fills', 'shadow-layer', 'glint-layer'].forEach(name => {
       page.body.querySelectorAll('.' + name).filter(element => element.parentNode === page.area).forEach(element => assert.equal(element.dataset.pile, undefined, name));
     });
     assert.equal(page.area.children.find(child => child.classes.has('glint-layer')).dataset.pile, undefined);
@@ -847,7 +844,7 @@ test('the script marks the areas whose frames are cut up, and finds the pieces, 
     const content = page.body.querySelectorAll('[data-pile="content"]');
     assert.equal(content.length, 3, 'the page, the banner text and the days');
     assert.ok(content.some(element => element.classes.has('page-host')) && content.some(element => element.classes.has('banner-text')) && content.some(element => element.classes.has('days')));
-    assert.ok(!content.some(element => element.classes.has('scan-clip') || element.classes.has('plate-id') || element.tag === 'svg'), 'the sweep, the id and the plates are not content');
+    assert.ok(!content.some(element => element.classes.has('scan-clip') || element.tag === 'svg'), 'the sweep and the plates are not content');
 
     pile.clear();
   });

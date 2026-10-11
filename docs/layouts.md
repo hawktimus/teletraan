@@ -752,8 +752,7 @@ the rivets on its own frames too, with the same code, and `styles/minimal.css` s
 (see "Minimal"). Cybertron's frames have none. The rivets are a row of dots, one every 90 px, along
 each long straight edge of the large frame, the small frame and the countdown. An edge under 180 px has
 none, so the cut corners and the countdown's teeth have none. A mirrored screen has the same
-frames, so the same rivets. Alerts and announcements have none. No frame has a stamped id: Original
-had one at the foot of each panel (`HP-01`, `HP-02` and `HP-03`), and it was taken out.
+frames, so the same rivets. Alerts and announcements have none. No frame has a stamped id.
 
 `tools/test-layouts.mjs` has one test for each style. It loads the stylesheet of the style
 with the css it overrides, which is every stylesheet `index.html` links apart from the other
