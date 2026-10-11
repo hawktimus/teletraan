@@ -475,7 +475,7 @@ const groupEventsByKindField = defineField({
 });
 
 // The note on the Look tab points to the Look page, which points back (theme.js). The second says what a cycle is.
-const lookNoteField = noteField('lookNote', 'Which styles and teams come on, and how, is set here. Colors, seasonal packs and the time zone are in Look, in the sidebar.', 'look');
+const lookNoteField = noteField('lookNote', 'Which styles and teams come on is set here. Colors, seasonal packs and the time zone are in Look, in the sidebar.', 'look');
 const cycleNoteField = noteField('cycleNote', 'A cycle is each team in turn: its panels in the style of the day, then its Monday cards in the Monday style, then the next team.', 'look');
 
 export default defineType({

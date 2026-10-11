@@ -182,8 +182,12 @@ editors can sign in from anywhere.
                               theme.js (docs/hidden-transitions.md, "Preview a look"),
                               look-rotation.js decides which look comes next (the style of the day, the
                               order of the teams, their Monday cards and the Next look now guard), and
-                              look-rotation-run.js plays the three swaps and keeps the pass in localStorage
+                              look-rotation-run.js hands a look to the screen and keeps the pass in localStorage
                               (docs/layouts.md, "The look rotation"),
+                              swap-plan.js decides the one swap of every change of look and of Monday card
+                              (which piece starts when, where it re-forms, how the hawk flies), swap-run.js
+                              plays it on the page, and busy.js says that a transition has the screen
+                              (docs/layouts.md, "The swap"),
                               frc.js cleans the frc-status document the Mini writes and has the date helpers for
                               it, competition.js decides which competition cards are due now (from the document,
                               the clock and the Competition cards setting) and mixes them into the list of the
@@ -227,7 +231,7 @@ editors can sign in from anywhere.
                               days, presentation.js the booked talks and settingsPresentations.js the
                               Presentations tab of Dashboard Settings (docs/presentations.md). team.js is the
                               Teams list and settingsTeams.js the team fields of the Look tab, which are hidden now. settingsLook.js is
-                              Styles by day, Monday style, Team order and How the look changes. status.js is the
+                              Styles by day, Monday style, Team order and the hidden How the look changes. status.js is the
                               document the Mini writes (the status block, settingsStatus.js and status-input.js), and calendarStatus.js
                               the one it writes for the Calendars page. time-text.js has the ages in words that
                               both use. frcStatus.js is the document the Mini writes for the competition cards,
@@ -392,6 +396,9 @@ editors can sign in from anywhere.
       test-presentation-mouse.mjs  checks for the mouse in presentation mode: what each button does, the second
                               click of a double click, a click on the card that says the slides are not ready,
                               the context menu, the hidden cursor, and the rotation that starts again
+      test-swap.mjs           checks for the swap (core/swap-plan.js): the pull apart, the re-form, the match of old and
+                              new pieces and the flight of the hawk, and core/swap-run.js against a small stand-in
+                              for the page and a clock moved by hand
       test-look-rotation.mjs  checks for the look rotation (core/look-rotation.js): the style of the day, the
                               order of the passes in a cycle, the boundary rule, a restart, one look holding,
                               empty lists, the Next look now guard, and the question schedule.js asks at the
@@ -909,6 +916,7 @@ exceptions are `test-slides-script.mjs`, `test-frc-script.mjs` and `test-monday-
     node tools/test-photo-fit.mjs
     node tools/test-presentation-mouse.mjs
     node tools/test-look-rotation.mjs
+    node tools/test-swap.mjs
     node tools/test-console.mjs
     node tools/test-calendar-status.mjs
     node tools/test-calendars-view.mjs

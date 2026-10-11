@@ -819,11 +819,10 @@ problem would touch.
   changes, the name, the number, the logo, the colors and the mirror change together. If the list
   is empty, the screen uses the old Team mode setting, which is hidden too, with Minutes for each team,
   and so it does on a page published before the list existed.
-- How the look changes: Assemble, Slats or Cut, with Assemble to start with. Assemble takes the screen
-  apart and builds it again, from the first panel. Slats changes the panels with the slats turning and
-  keeps the frames. Cut changes at once. Each waits until the large panel has been through its panels
-  once, and never changes while an alert, an announcement or a talk has the screen. A change to or from
-  Minimal reloads the screen once, whichever one is picked (docs/layouts.md, "The look rotation").
+- A change of look is one move: the frames pull apart, the new look goes on, and they re-form. It waits
+  until the large panel has been through its panels once, and never happens while an alert, an announcement
+  or a talk has the screen. A change to or from Minimal reloads the screen once (docs/layouts.md, "The swap").
+  The old setting How the look changes is hidden and the screen ignores it.
   To see the next look now, click Next look now on the Start here page. To see a style or a team
   for 2 minutes without saving anything, open the menu next to Publish (the three dots) and click Preview
   Prime, Preview Nova, Preview Cybertron or Preview Minimal, or add `?style=cybertron`, `?style=minimal`

@@ -22,7 +22,7 @@ import { enter, pace } from '../frame.js';
 import { pileShape, pileTimes, planPile } from './transitions.js';
 
 const svgNamespace = 'http://www.w3.org/2000/svg';
-const boltBox = 48; // a copy of a bolt is a square this wide, with the bolt in the middle, before the zoom of its frame
+export const boltBox = 48; // a copy of a bolt is a square this wide, with the bolt in the middle, before the zoom of its frame
 
 // Where the middle of the cube is when it rests. base.css puts #cube at left 900 and top 840, 120 wide
 const cubeMiddle = { x: 960, y: 900 };
@@ -34,7 +34,7 @@ const cubeProperties = ['--cube-dx', '--cube-dy', '--cube-shrink-delay', '--cube
 // of the bar layout) falls as its pieces, which the page keeps hidden until now. A frame that is not
 // (the countdown, the banners, the ticker of the bar layout) falls as its fills and its two halves.
 // The shadows, the glint and the stamped id stay behind, and frame.css hides them.
-function findPlates(stage) {
+export function findPlates(stage) {
   const plates = [];
 
   stage.querySelectorAll('.area, .panel').forEach(root => {
@@ -51,7 +51,7 @@ function findPlates(stage) {
 // A region that paints a box of its own with a style sheet falls whole. It has a background, or a ::before
 // that draws its frame, as the strip and the sidebar of the sidebar layout have. A region that holds
 // plates is not one: its plates fall by themselves
-function findBoxes(stage) {
+export function findBoxes(stage) {
   return Array.from(stage.querySelectorAll('[data-block]')).filter(region => {
     const style = window.getComputedStyle(region);
     const before = window.getComputedStyle(region, '::before').content;
@@ -61,7 +61,7 @@ function findBoxes(stage) {
 }
 
 // Everything in the frames that is not metal. It fades away in the first part of the break
-function findContent(stage, boxes) {
+export function findContent(stage, boxes) {
   const content = [];
 
   stage.querySelectorAll('.panel').forEach(panel => {
@@ -77,7 +77,7 @@ function findContent(stage, boxes) {
 }
 
 // The bolts on the plates that fall, that can be seen
-function findBolts(stage, plates) {
+export function findBolts(stage, plates) {
   return Array.from(stage.querySelectorAll('.screw')).filter(bolt => {
     const plate = bolt.closest('svg.plate');
     return plate !== null && plates.indexOf(plate) !== -1 && bolt.getBoundingClientRect().width > 0;
@@ -85,7 +85,7 @@ function findBolts(stage, plates) {
 }
 
 // Where the 1920 x 1080 screen is in the window. shell.js shrinks it to fit a smaller window
-function screenPlace() {
+export function screenPlace() {
   const box = document.getElementById('screen').getBoundingClientRect();
   return { left: box.left, top: box.top, scale: box.width / pileShape.screenWidth };
 }
@@ -94,7 +94,7 @@ function screenPlace() {
 // of its own is. It is 1, except in the frames that the sidebar layout and the bar layout scale to fit
 // (layouts/sidebar.css and layouts/bar.css). A distance on the screen is a distance in the element's own
 // pixels once it is divided by the zoom, which is what the transform in frame.css moves by.
-function boxOf(element, place) {
+export function boxOf(element, place) {
   const box = element.getBoundingClientRect();
   const width = box.width / place.scale;
   const ownWidth = element.offsetWidth || Number(element.getAttribute('width')) || 0;
@@ -111,7 +111,7 @@ function boxOf(element, place) {
 // A bolt falls by itself, so it gets a copy in #pile, which lies over the whole stage and is moved by
 // nothing. The bolt on the frame stays hidden until the pieces are back. middle is where the bolt is
 // on the screen, and size how wide the copy is there: the bolt drawn as the frame draws it
-function boltCopy(bolt, middle, size) {
+export function boltCopy(bolt, middle, size) {
   const copy = document.createElementNS(svgNamespace, 'svg');
   copy.setAttribute('class', 'plate pile-bolt');
   copy.setAttribute('width', String(size));

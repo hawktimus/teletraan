@@ -5160,7 +5160,12 @@ function checkLookRotation() {
   need(problems, names.slice(from, from + 2 + rotationNames.length).join() === ['lookNote', 'cycleNote'].concat(rotationNames).join(), 'the Look tab should start with lookNote, cycleNote and then ' + rotationNames.join(', '));
   rotationNames.forEach(name => {
     need(problems, at(name) && at(name).group === 'look', name + ' should be in the Look tab');
-    need(problems, at(name) && !at(name).hidden, name + ' should show in the form');
+    if (name === 'lookSwap') {
+      need(problems, at(name) && at(name).hidden === true, 'lookSwap should be hidden but stay in the schema: every change of look is one swap now, and a saved value is kept');
+      need(problems, /^No longer used/.test((at(name) && at(name).description) || ''), 'the lookSwap description should begin by saying that it is no longer used');
+    } else {
+      need(problems, at(name) && !at(name).hidden, name + ' should show in the form');
+    }
     need(problems, !constraintNamed(rulesOf(at(name)), 'required'), name + ' should not be required: an empty one gives the choice back to the old setting, and the page must still publish');
     need(problems, rulesOf(at(name)).some(rule => rule.name === 'error' && rule.args[0]) || (at(name).of || []).some(member => constraintsOf(member).some(rule => rule.name === 'error' && rule.args[0])), name + ' has rules and no error message in plain words');
   });

@@ -602,6 +602,7 @@ let waiting = []; // effects that want to start, first come first served: { name
 let nightCovers = false; // the night screen covers the picture, so nothing behind it is worth playing
 let effectsPaused = false; // a demo is playing: the effects that come due on their own wait
 let hiddenPlaying = false; // a hidden transition has the whole screen: no effect starts, and none waits
+let swapPlaying = false; // a swap (core/swap-run.js) has it, and holds it the same way
 
 // Called by the night screen (core/night-screen.js) when it covers the picture
 // and when it lets go. While it covers, no effect starts and none waits, and
@@ -634,6 +635,19 @@ export function setHiddenPlaying(on) {
   hiddenPlaying = on === true;
   showKit();
   if (hiddenPlaying) endEffectsPlaying();
+}
+
+// Called by the swap (core/swap-run.js) for as long as it plays. It holds the screen as a hidden
+// transition does: whatever is playing ends on the spot, nothing starts, and the neon kit is still.
+export function setSwapPlaying(on) {
+  swapPlaying = on === true;
+  showKit();
+  if (swapPlaying) endEffectsPlaying();
+}
+
+// True while a hidden transition or a swap has the whole screen
+function screenHeld() {
+  return hiddenPlaying || swapPlaying;
 }
 
 function endEffectsPlaying() {
@@ -739,7 +753,7 @@ function askToPlay(name, byHand) {
 }
 
 function lookAtEffects() {
-  if (motion !== 'full' || nightCovers || hiddenPlaying) return;
+  if (motion !== 'full' || nightCovers || screenHeld()) return;
   if (isPaused()) return;
 
   Object.keys(effects).forEach(name => {
@@ -770,7 +784,7 @@ function isDue(effect) {
 // transition has the screen or the screen is paused.
 function isWanted(entry) {
   const effect = effects[entry.name];
-  return motion === 'full' && !nightCovers && !hiddenPlaying && !isPaused() && (entry.byHand || (isSwitchedOn(effect) && effect.everySeconds > 0));
+  return motion === 'full' && !nightCovers && !screenHeld() && !isPaused() && (entry.byHand || (isSwitchedOn(effect) && effect.everySeconds > 0));
 }
 
 // Starts the first effect in line that may start, if nothing is playing and
@@ -1121,7 +1135,7 @@ export function setTakeoverCovers(covers) {
 
 // The parts that run by themselves, and the two events, may move now
 function kitMoves() {
-  return kitOn && motion === 'full' && !nightCovers && !takeoverCovers && !hiddenPlaying && !isPaused();
+  return kitOn && motion === 'full' && !nightCovers && !takeoverCovers && !screenHeld() && !isPaused();
 }
 
 function kitMayFire() {

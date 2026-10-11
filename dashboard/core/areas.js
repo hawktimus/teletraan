@@ -27,9 +27,10 @@
 // sends one through changePage, and then it takes the second path below.
 //
 // The look rotation (core/look-rotation-run.js) changes the style and the team at a page change of the
-// large panel, and asks this file for the way it looks: useSlatsOnce() makes the next page change of each
-// area the slat change, cutScreen() makes the pages of all three areas swap at once with nothing leaving
-// or arriving, and retireAreas() takes every area away whole, for the swap that assembles the screen again.
+// large panel, and so does a change from one Monday card to the next. Every one of them is a swap
+// (core/swap-run.js, docs/layouts.md, "The swap"): the pieces of the screen pull apart, the look goes on
+// and the pages of all three areas are swapped while nothing can be seen, and the pieces re-form. This
+// file asks for a swap at each page change of the large panel, and makes the gate it needs.
 //
 // Now and then a hidden transition replaces the page change of the large panel
 // (core/hidden-run.js, docs/hidden-transitions.md). The whole screen comes
@@ -92,6 +93,17 @@ export function redrawFrames() {
   });
 }
 
+// core/swap-run.js gives this function, once, when it starts. It is called at each page change of the
+// large panel that has a page on screen and a page to come, with both pages ({ id, region, element }, as
+// buildPage() made them), and answers null (change page as usual) or { play(swapPage) }. play() pulls the
+// screen apart and calls swapPage() at the moment the screen is apart, as a hidden transition does. It
+// resolves with how many milliseconds the screen took to come back together, and never throws.
+let swapOffer = null;
+
+export function setSwapOffer(offer) {
+  swapOffer = offer;
+}
+
 // core/hidden-run.js gives this function, once, when it starts. It is called at
 // each page change of hiddenRegion and answers null (change page as usual) or
 // { play(swapPage) }. play() puts on the show and calls swapPage() at the moment
@@ -107,11 +119,13 @@ export function setHiddenOffer(offer) {
 // 'before' (the screen is still together) to 'apart' (swap the pages now,
 // nobody can see it) to 'after' (the screen is coming back together). A region
 // that wants to change page in the meantime waits at the gate. startWholeScreen()
-// makes it and hands the transition the way to move it along.
+// makes it and hands the transition the way to move it along. A swap puts the new look on at the moment the
+// screen is apart, as a page change does. A hidden transition keeps the look it has, because its frames lie
+// in a pile and a look that redrew them would leave some behind: it asks for keepLook.
 let gate = null;
 
-export function startWholeScreen() {
-  const mine = { state: 'before' };
+export function startWholeScreen(keepLook = false) {
+  const mine = { state: 'before', keepLook: keepLook };
   gate = mine;
 
   return {
@@ -129,27 +143,6 @@ export function startWholeScreen() {
 function planFor(area) {
   const change = frame.planChange(area);
   return hasSteel(styleNow()) ? { style: change.style, finish: null } : change;
-}
-
-// The regions whose next page change is the slat change, whatever Page change style says
-const slatsFor = new Set();
-
-export function useSlatsOnce() {
-  areaRegions.forEach(region => slatsFor.add(region));
-}
-
-// Counts the screen as apart until the function this gives is called: the page of each area that changes
-// in the meantime is swapped at once, as it is while a hidden transition has the screen apart
-export function cutScreen() {
-  const screen = startWholeScreen();
-  screen.apart();
-  return screen.end;
-}
-
-// Takes every area on the screen away, frame and page, and resolves when they are gone. The areas stay in
-// the document, so restartRotation() in core/schedule.js is what clears them.
-export async function retireAreas() {
-  await Promise.all(areaRegions.filter(region => areaOf[region]).map(region => frame.retire(areaOf[region])));
 }
 
 // Puts the next page in a region at once, with nothing to see: for a screen that
@@ -172,8 +165,10 @@ function swapUnseen(region, next) {
   const host = made.querySelector('.page-host');
   host.innerHTML = '';
   host.appendChild(next.element);
-  if (region === themeRegion) changeThemeNow();
-  if (region === themeRegion) changeTeamNow();
+  if (region === themeRegion && !(gate && gate.keepLook)) {
+    changeThemeNow();
+    changeTeamNow();
+  }
 }
 
 // Moves a region from its page to the next one. next is what buildPage()
@@ -203,7 +198,19 @@ export async function changePage(region, next) {
     return changePage(region, next);
   }
 
-  // The page change of the large panel may become a hidden transition
+  // The page change of the large panel may become a swap, or a hidden transition
+  if (old && next && region === hiddenRegion && swapOffer) {
+    const offered = swapOffer(old, next);
+    if (offered) {
+      let swapped = false;
+      const took = await offered.play(() => {
+        swapped = true;
+        swapUnseen(region, next);
+      });
+      // If the screen was needed by something else before the pages swapped, change page as usual below
+      if (swapped) return took;
+    }
+  }
   if (old && next && region === hiddenRegion && hiddenOffer) {
     const offered = hiddenOffer();
     if (offered) {
@@ -221,7 +228,6 @@ export async function changePage(region, next) {
     // The old page leaves, in the style planChange picked. The frame stays, or
     // breaks into pieces, depending on the style.
     const change = planFor(area);
-    if (slatsFor.delete(region)) change.style = 'slat';
     await frame.leave(area, change);
     // The frame is apart now, the moment the new metal goes on and a waiting
     // theme goes on (core/theme-apply.js)

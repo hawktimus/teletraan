@@ -479,7 +479,7 @@ test('the alerts and announcements are wired in, and the night screen sits betwe
 
   const frame = read('frame.js');
   assert.ok(frame.includes('export function setNightCovers(covers)'));
-  assert.ok(frame.includes("if (motion !== 'full' || nightCovers || hiddenPlaying) return;"), 'no effect comes due while it covers');
+  assert.ok(frame.includes("if (motion !== 'full' || nightCovers || screenHeld()) return;"), 'no effect comes due while it covers');
 });
 
 test('the number is 64px in the display face under the logo, the sizes come from CSS, and the stage is hidden under the screen', () => {

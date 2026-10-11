@@ -19,7 +19,7 @@ docs/editing-content.md, "Dashboard Settings".
 | Tab | What is in it |
 |-----|---------------|
 | Screen | The status block, the team name, number and school, motion, speed, frame metal, glint, polish, the screen glitch, the alert, Panel order and the seconds per page, photos, announcements, how many days finished tasks stay and the date the safety day count starts |
-| Look | Styles by day, Monday style, Team order, How the look changes, the logo and name effects and the page changes |
+| Look | Styles by day, Monday style, Team order, the logo and name effects and the page changes |
 | Countdown | The labels and dates for Kickoff and Rollout |
 | Calendars | A row for each calendar with its code, name, kind and Show on screen switch, and Group events by kind |
 | Presentations | Run presentations, the one switch for booked talks |
@@ -99,15 +99,14 @@ in Dashboard Settings, Look tab, with the name each is stored under:
   start with.
 - Team order (`teamOrder`): the teams in the order they take the screen. Prime and
   then Nova to start with. Only teams that are switched on count.
-- How the look changes (`lookSwap`): Assemble, Slats or Cut. Assemble takes the
-  screen apart and builds it again, Slats turns the panels and keeps the frames, and
-  Cut changes at once.
+- How the look changes (`lookSwap`) is hidden. Every change of look is one move now: the
+  frames pull apart, the new look goes on, and they re-form (docs/layouts.md, "The swap").
 
 A cycle goes through the teams in order. For each team it runs a pass of its
 panels in the style of the day, then a pass of its Monday cards in the Monday
 style if the team has any, and then it swaps to the next team. A team with no
-Monday cards skips that pass. A swap waits for the end of a pass and never happens
-during an alert, an announcement or a talk. The style and the team change
+Monday cards skips that pass. A swap waits for the end of a
+pass and never happens during an alert, an announcement or a talk. The style and the team change
 together.
 
 Next look now, on the Start here page, moves to the next pass at once. A second

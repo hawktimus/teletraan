@@ -31,6 +31,7 @@
 
 import * as frame from '../frame.js';
 import { hiddenAdvanceSeconds } from '../config.js';
+import { setBusy } from './busy.js';
 import { allPictures, makePictureChooser, pictureAddress } from './hidden-pictures.js';
 import { chooseHidden, holdReason, pushedKind, readHandledRequest, readLastFired, rememberHandledRequest, rememberLastFired } from './hidden.js';
 import { hiddenTransitions } from './hidden-transitions.js';
@@ -39,6 +40,7 @@ import { preloadImages } from './images.js';
 import { setHiddenOffer, startWholeScreen } from './areas.js';
 import { moveOn, pauseRotation, resumeRotation, secondsUntilChange } from './schedule.js';
 import { layoutNow, otherAreas } from './layout.js';
+import { swapRunning } from './swap-run.js';
 import { takeoverRunning } from './takeover.js';
 import { pileTimes } from './transitions.js';
 
@@ -154,7 +156,7 @@ function screenState() {
     takeover: takeoverRunning(),
     demo: demoRunning(),
     night: nightIsUp(),
-    playing: playing,
+    playing: playing || swapRunning(),
   };
 }
 
@@ -246,10 +248,12 @@ async function play(choice, requestedAt, swapPage) {
   if (playing) return 0;
   playing = true;
 
-  // From now on the other areas wait at the gate rather than change page
-  const screen = startWholeScreen();
+  // From now on the other areas wait at the gate rather than change page. The look stays as it is: the
+  // frames fall into a pile, and a look that drew them again would leave some behind
+  const screen = startWholeScreen(true);
   let cameBack = 0;
 
+  setBusy(true);
   try {
     if (!await waitForRest()) return 0;
 
@@ -370,6 +374,7 @@ function makeScene(screen, swapPage) {
       pile = makePile();
       if (!pile.empty) {
         world.dataset.hidden = 'fall';
+        world.dataset.pieces = '';
         const plan = pile.release(Math.floor(Math.random() * 4294967296));
         await sleep(pileTimes.cubeAtMs / 1000);
         pile.showCube();
@@ -377,6 +382,7 @@ function makeScene(screen, swapPage) {
         world.dataset.lift = ''; // the second pulse: the pieces lift
         await sleep((plan.lockedMs - pileTimes.liftAtMs) / 1000);
         pile.finish();
+        delete world.dataset.pieces;
       }
 
       const started = performance.now();
@@ -395,6 +401,7 @@ function makeScene(screen, swapPage) {
 function putBack(screen) {
   delete world.dataset.hidden;
   delete world.dataset.lift;
+  delete world.dataset.pieces;
   if (rotationHeld) resumeRotation();
   rotationHeld = false;
   try {
@@ -414,5 +421,6 @@ function putBack(screen) {
   frame.stopGlitch();
   frame.setHiddenPlaying(false);
   screen.end();
+  setBusy(false);
   playing = false;
 }

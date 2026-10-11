@@ -4822,7 +4822,7 @@ test('only frame.js, schedule.js and takeover.js ask whether the screen is pause
   // the rotation and the ticker wait, and a page does not use up its stay
   const schedule = code(read('core/schedule.js'));
   assert.ok(/function rotationPaused\(\) \{\s*return pauses > 0 \|\| frame\.isPaused\(\);\s*\}/.test(schedule));
-  assert.ok(schedule.includes('if (!rotationPaused()) left -= 250;'));
+  assert.ok(schedule.includes('if (!rotationPaused() && clockHeld === 0) left -= 250;'), 'and neither does it while a swap holds the clock');
   assert.ok(schedule.includes('while (rotationPaused()) await frame.wait(250);'));
   assert.equal((schedule.match(/frame\.isPaused\(\)/g) || []).length, 1, 'asked in one place');
 
@@ -4838,7 +4838,7 @@ test('only frame.js, schedule.js and takeover.js ask whether the screen is pause
 
   const frame = code(read('frame.js'));
   assert.ok(frame.includes('export function pause(reason)') && frame.includes('export function resume(reason)') && frame.includes('export function isPaused()'));
-  assert.ok(frame.includes("if (motion !== 'full' || nightCovers || hiddenPlaying) return;\n  if (isPaused()) return;"), 'no effect comes due while it is paused');
+  assert.ok(frame.includes("if (motion !== 'full' || nightCovers || screenHeld()) return;\n  if (isPaused()) return;"), 'no effect comes due while it is paused');
 });
 
 // takeover.js on a fake page. The real file runs with stand-ins for frame.js, the panels and the

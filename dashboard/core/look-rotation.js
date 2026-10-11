@@ -21,7 +21,7 @@
 // Next look now (a button on the Start here page) moves to the next pass at once. Where a pass is
 // written down in localStorage, a page that reloads for a change of layout goes on in the same pass.
 
-import { defaultSettings, defaultThemeSettings, lookResumeSeconds, lookShortestSeconds, lookSwaps, primeTeam, styles } from '../config.js';
+import { defaultSettings, defaultThemeSettings, lookResumeSeconds, lookShortestSeconds, primeTeam, styles } from '../config.js';
 import { readHandled, rememberHandled, shouldRunDemo } from './demo.js';
 import { mondaySteps } from './monday.js';
 import { rotateStyle } from './style.js';
@@ -183,7 +183,6 @@ export function makeLookRotation(deps) {
         teams: codes,
         hasMonday: code => cardsOf(source, code).length > 0,
       }),
-      swap: lookSwaps.includes(settings.lookSwap) ? settings.lookSwap : defaultSettings.lookSwap,
     };
   }
 
@@ -212,13 +211,12 @@ export function makeLookRotation(deps) {
   // Moves to the next pass when it may, and says what to do about it:
   //   moved  the list of the large panel has to start again, because the pass is another one
   //   look   { style, team } to hold now, or null when the look is the one already held
-  //   swap   how the look changes (lookSwaps in config.js)
   //   kind   'panels' or 'monday', the kind of the pass the screen is in now
   // forced is Next look now, which does not wait for the pass to have run its shortest time. One pass
   // alone has nowhere to move to. While the screen is busy nothing changes, and the next ask tries again.
   function move(now, forced) {
     if (current === null) begin(now);
-    if (busy()) return { moved: false, look: null, swap: planFor(now).swap, kind: current.kind };
+    if (busy()) return { moved: false, look: null, kind: current.kind };
 
     const plan = planFor(now);
     let index = indexOfPass(plan.passes, current);
@@ -240,7 +238,7 @@ export function makeLookRotation(deps) {
     if (moved) since = now.getTime();
     if (changed) applied = look;
     if (moved || changed) save(now);
-    return { moved: moved, look: changed ? look : null, swap: plan.swap, kind: pass.kind };
+    return { moved: moved, look: changed ? look : null, kind: pass.kind };
   }
 
   return {

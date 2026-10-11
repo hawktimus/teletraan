@@ -1183,7 +1183,7 @@ test('the page calls changeTeamNow in the same two moments as it calls changeThe
   const areas = fs.readFileSync(path.join(dashboardFolder, 'core/areas.js'), 'utf8');
   assert.ok(areas.includes("import { changeTeamNow, trimNow } from './teams.js';"));
   assert.ok(/await frame\.leave\(area, change\);(?:\n[^\n]*){0,5}\n\s*if \(region === themeRegion\) changeThemeNow\(\);\n\s*if \(region === themeRegion\) changeTeamNow\(\);/.test(areas), 'after the old page has left, beside the theme');
-  assert.ok(/host\.appendChild\(next\.element\);\n\s*if \(region === themeRegion\) changeThemeNow\(\);\n\s*if \(region === themeRegion\) changeTeamNow\(\);/.test(areas), 'in the moment a hidden transition has the screen apart, beside the theme');
+  assert.ok(/host\.appendChild\(next\.element\);\n\s*if \(region === themeRegion && !\(gate && gate\.keepLook\)\) \{\n\s*changeThemeNow\(\);\n\s*changeTeamNow\(\);\n\s*\}/.test(areas), 'in the moment a swap has the screen apart, beside the theme (a hidden transition keeps the look it has)');
   assert.equal(areas.split('changeTeamNow()').length - 1, 2);
 
   const shell = fs.readFileSync(path.join(dashboardFolder, 'shell.js'), 'utf8');

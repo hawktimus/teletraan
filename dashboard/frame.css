@@ -625,6 +625,8 @@ html[data-style="cybertron"] .area[data-area="ticker"] .screw { animation-name: 
      flight    the hawk beats its wings five times
      hawk-out  the hawk turns back into the plates (2 s)
      fly       a flight with no end, for the announcement
+     swap      the hawk of the swap (core/swap-run.js): the hawk shows, still, and the swap beats its
+               wings and moves it with element.animate()
 
    With no data-act, and in calm and none motion, the logo is the still
    emblem. frame.js plays the acts: the entrance (boot), the spin (turn) and
@@ -767,7 +769,8 @@ html[data-style="cybertron"] .area[data-area="ticker"] .screw { animation-name: 
 .logo[data-act="hawk-in"] .hawk-part,
 .logo[data-act="flight"] .hawk-part,
 .logo[data-act="hawk-out"] .hawk-part,
-.logo[data-act="fly"] .hawk-part { opacity: 1; }
+.logo[data-act="fly"] .hawk-part,
+.logo[data-act="swap"] .hawk-part { opacity: 1; }
 
 
 /* Boot. Each plate flies in to its place. */
@@ -921,7 +924,8 @@ html[data-style="cybertron"] .area[data-area="ticker"] .screw { animation-name: 
 
 /* The emblem is gone while the hawk flies */
 .logo[data-act="flight"] .emblem,
-.logo[data-act="fly"] .emblem { opacity: 0; }
+.logo[data-act="fly"] .emblem,
+.logo[data-act="swap"] .emblem { opacity: 0; }
 
 @keyframes flap-near {
   0%, 100% { transform: var(--lens) var(--view) translate(-30px, -137px) rotate3d(320, -50, 0, -18deg) translate(30px, 137px); }
@@ -1199,21 +1203,23 @@ html:not([data-motion="full"]) .logo[data-act="fly"] .hawk-far-wing { transform:
   --cube-shrink-time: 1ms;
 }
 
-/* The frame at rest gives way to its pieces, and the parts that are only for show stay out of the way */
-[data-motion="full"] #world[data-hidden="fall"] [data-pile="pieces"] .piece {
+/* The frame at rest gives way to its pieces, and the parts that are only for show stay out of the way.
+   #world has data-pieces for as long as the pieces move: while the frames fall and come back (core/hidden-run.js)
+   and during a swap (core/swap-run.js). */
+[data-motion="full"] #world[data-pieces] [data-pile="pieces"] .piece {
   display: block;
 }
-[data-motion="full"] #world[data-hidden="fall"] [data-pile="pieces"] .fills,
-[data-motion="full"] #world[data-hidden="fall"] [data-pile="pieces"] [data-part="frame-a"],
-[data-motion="full"] #world[data-hidden="fall"] [data-pile="pieces"] [data-part="frame-b"],
-[data-motion="full"] #world[data-hidden="fall"] [data-pile="pieces"] [data-part="shadow-a"],
-[data-motion="full"] #world[data-hidden="fall"] [data-pile="pieces"] [data-part="shadow-b"],
-[data-motion="full"] #world[data-hidden="fall"] .shadow-layer,
-[data-motion="full"] #world[data-hidden="fall"] .glint-layer,
-[data-motion="full"] #world[data-hidden="fall"] .plate-id,
-[data-motion="full"] #world[data-hidden="fall"] .screw-shadow,
-[data-motion="full"] #world[data-hidden="fall"] .kit,
-[data-motion="full"] #world[data-hidden="fall"] [data-pile="released"] {
+[data-motion="full"] #world[data-pieces] [data-pile="pieces"] .fills,
+[data-motion="full"] #world[data-pieces] [data-pile="pieces"] [data-part="frame-a"],
+[data-motion="full"] #world[data-pieces] [data-pile="pieces"] [data-part="frame-b"],
+[data-motion="full"] #world[data-pieces] [data-pile="pieces"] [data-part="shadow-a"],
+[data-motion="full"] #world[data-pieces] [data-pile="pieces"] [data-part="shadow-b"],
+[data-motion="full"] #world[data-pieces] .shadow-layer,
+[data-motion="full"] #world[data-pieces] .glint-layer,
+[data-motion="full"] #world[data-pieces] .plate-id,
+[data-motion="full"] #world[data-pieces] .screw-shadow,
+[data-motion="full"] #world[data-pieces] .kit,
+[data-motion="full"] #world[data-pieces] [data-pile="released"] {
   display: none;
 }
 

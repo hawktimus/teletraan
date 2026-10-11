@@ -80,9 +80,8 @@ Open Dashboard Settings, then the Look tab.
 - Team order: a list of the teams. Prime and then Nova are in it to start with. Add Nova
   if it is not there. Each team takes the screen for a pass of the panels, in the order of
   the list. Take Prime out to show Nova all the time.
-- How the look changes: Assemble, Slats or Cut, for the swap from one team to the next.
 
-Click Publish. The swap waits for the end of a pass. The name, the number, the logo, the
+Click Publish. The swap from one team to the next waits for the end of a pass. The name, the number, the logo, the
 colors and the mirror change together, and nothing changes in the middle of a panel.
 
 ## 4. Check the TV

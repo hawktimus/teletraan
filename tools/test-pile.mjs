@@ -424,11 +424,11 @@ test('the new section of frame.css changes only transform and opacity, promotes 
 
 test('the frame at rest gives way to its pieces, and the shadows, the glint, the id, the kit and a released bolt are left out while the metal is down', () => {
   assert.ok(/\.piece \{ display: none; \}/.test(frameCss));
-  assert.ok(/\[data-motion="full"\] #world\[data-hidden="fall"\] \[data-pile="pieces"\] \.piece \{\s*display: block;\s*\}/.test(frameCss));
+  assert.ok(/\[data-motion="full"\] #world\[data-pieces\] \[data-pile="pieces"\] \.piece \{\s*display: block;\s*\}/.test(frameCss));
 
-  const hidden = /((?:\[data-motion="full"\] #world\[data-hidden="fall"\][^,{]*,\s*)+)\[data-motion="full"\] #world\[data-hidden="fall"\] \[data-pile="released"\] \{\s*display: none;\s*\}/.exec(frameCss);
+  const hidden = /((?:\[data-motion="full"\] #world\[data-pieces\][^,{]*,\s*)+)\[data-motion="full"\] #world\[data-pieces\] \[data-pile="released"\] \{\s*display: none;\s*\}/.exec(frameCss);
   assert.ok(hidden, 'the rule that hides them');
-  const selectors = (hidden[1] + '[data-pile="released"]').split(',').map(text => text.replace(/\[data-motion="full"\] #world\[data-hidden="fall"\] /, '').trim());
+  const selectors = (hidden[1] + '[data-pile="released"]').split(',').map(text => text.replace(/\[data-motion="full"\] #world\[data-pieces\] /, '').trim());
   assert.deepEqual(selectors, [
     '[data-pile="pieces"] .fills',
     '[data-pile="pieces"] [data-part="frame-a"]',
