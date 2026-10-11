@@ -11,20 +11,23 @@
   justify-content: space-between;
   align-items: center;
 }
-/* The heading is always ROSTER, so it stays at the full heading size. The
-   subteam name goes in the tag, where 11 letters fit at 44px. */
+/* The heading is the subteam and TEAM, such as BUILD TEAM, with the name of the team in the chip at the right end.
+   It is at the size of a heading, or at 60px when it does not fit beside the chip (core/team-title.js, titleClass).
+   A longer title is cut off with an ellipsis before it reaches the chip. */
 .roster .title {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font: 700 var(--size-heading)/96px var(--font-display);
 }
+.roster .title-small { font: 700 var(--size-team)/64px var(--font-display); }
 .roster .tag {
+  flex: none;
   display: flex;
   align-items: center;
   gap: 24px;
-}
-.roster .tag-text {
-  color: var(--yellow);
-  font: 600 var(--size-label)/44px var(--font-display);
-  text-transform: uppercase;
 }
 
 /* A box 1096 by 516 below the header, with the lead and the names side by side

@@ -1,80 +1,55 @@
-/* The header sits on top of the two header plates of the area's frame */
-.monday-progress .header {
+/* The header, the body and the sentence are in monday.css. The line of the items left is an SVG of 1096 by 512 at
+   the top left of the body, at one pixel to the unit, so a font size here is the size on the screen. The legend is
+   the top 52px, and under it six rows of 64px, the line that says how many more, and the totals, in the 700px on
+   the left, clear of the line. */
+.monday-progress .chart {
   position: absolute;
   left: 0;
-  top: 4px;
-  box-sizing: border-box;
-  width: 1152px;
-  height: 116px;
-  padding: 0 40px 0 76px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.monday-progress .title {
-  margin: 0;
-  font: 700 var(--size-heading)/96px var(--font-display);
-}
-.monday-progress .tag {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  color: var(--yellow);
-  font: 600 var(--size-label)/44px var(--font-display);
-}
-/* The words are cut off with an ellipsis before they can reach the notch in the middle of the header. */
-.monday-progress .tag-text {
-  min-width: 0;
-  max-width: 316px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.monday-progress .tag .double-slash { flex: none; }
-
-/* The body is 1096 x 512, 28px in from the frame and 136px down, the room the Extra panels have. The chart
-   in it is an SVG of the same size, so a font size here is the size on the screen. */
-.monday-progress .body {
-  position: absolute;
-  left: 28px;
-  top: 136px;
-  width: 1096px;
-  height: 512px;
-}
-.monday-progress .chart { display: block; }
-
-/* One sentence in place of the chart, when there is nothing to show */
-.monday-progress .empty {
-  box-sizing: border-box;
-  height: 100%;
-  margin: 0;
-  padding: 0 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  white-space: normal;
-  color: var(--lilac);
-  font: 500 var(--size-body)/72px var(--font-text);
-}
-
-/* The bars: a name and the numbers on each row, and the three stacks as one bar. A thin dark edge keeps the
-   stacks apart, and the same squares and colours are the legend. */
-.monday-progress .lead {
-  fill: var(--yellow);
-  font: 700 var(--size-label)/48px var(--font-text);
-}
-.monday-progress .numbers {
-  fill: var(--white);
-  font: 700 var(--size-label)/48px var(--font-display);
-}
-.monday-progress .more {
-  fill: var(--lilac);
-  font: 600 var(--size-label)/48px var(--font-display);
+  top: 0;
+  display: block;
 }
 .monday-progress .legend {
-  fill: var(--white);
-  font: 600 var(--size-label)/48px var(--font-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  gap: 32px;
+  height: 52px;
+  white-space: nowrap;
+  font: 600 var(--size-label)/52px var(--font-text);
 }
+.monday-progress .key {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.monday-progress .swatch {
+  width: 28px;
+  height: 28px;
+}
+
+/* A row is the department in 330px, the bar and done out of all, which is 700px with the gaps. The department is
+   cut off with an ellipsis. */
+.monday-progress .bars {
+  position: absolute;
+  left: 0;
+  top: 56px;
+  width: 700px;
+}
+.monday-progress .bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 64px;
+}
+.monday-progress .stack { flex: none; }
+.monday-progress .count {
+  flex: none;
+  width: 140px;
+  font: 700 var(--size-label)/52px var(--font-display);
+}
+
+/* The three stacks, with a thin dark edge to keep them apart. The same colours are the legend. */
 .monday-progress .seg {
   stroke: var(--ground);
   stroke-width: 3;
@@ -82,6 +57,25 @@
 .monday-progress .seg-backlog { fill: var(--status-next); }
 .monday-progress .seg-progress { fill: var(--status-progress); }
 .monday-progress .seg-done { fill: var(--status-done); }
+.monday-progress .swatch.seg-backlog { background: var(--status-next); }
+.monday-progress .swatch.seg-progress { background: var(--status-progress); }
+.monday-progress .swatch.seg-done { background: var(--status-done); }
+
+.monday-progress .more {
+  position: absolute;
+  left: 0;
+  top: 444px;
+  color: var(--lilac);
+  white-space: nowrap;
+  font: 600 var(--size-label)/48px var(--font-display);
+}
+.monday-progress .totals {
+  position: absolute;
+  left: 0;
+  top: 496px;
+  white-space: nowrap;
+  font: 600 var(--size-label)/44px var(--font-display);
+}
 
 /* The line of the items left, the dashed target line to nothing, and the line under the dates */
 .monday-progress .label {

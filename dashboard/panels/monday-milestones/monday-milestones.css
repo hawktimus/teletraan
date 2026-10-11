@@ -1,68 +1,12 @@
-/* The header sits on top of the two header plates of the area's frame */
-.monday-milestones .header {
-  position: absolute;
-  left: 0;
-  top: 4px;
-  box-sizing: border-box;
-  width: 1152px;
-  height: 116px;
-  padding: 0 40px 0 76px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.monday-milestones .title {
-  margin: 0;
-  font: 700 var(--size-heading)/96px var(--font-display);
-}
-.monday-milestones .tag {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  color: var(--yellow);
-  font: 600 var(--size-label)/44px var(--font-display);
-}
-/* The words are cut off with an ellipsis before they can reach the notch in the middle of the header. */
-.monday-milestones .tag-text {
-  min-width: 0;
-  max-width: 316px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.monday-milestones .tag .double-slash { flex: none; }
-
-/* The body is 1104 x 544, 24px in from the frame and 132px down. A heading row of 52px, then up to six rows of
-   72px, then +N MORE, which stays clear of the cut corner at the bottom right. */
-.monday-milestones .body {
-  position: absolute;
-  left: 24px;
-  top: 132px;
-  width: 1104px;
-  height: 544px;
-}
-
-/* One sentence in place of the rows, when there is nothing to show */
-.monday-milestones .empty {
-  box-sizing: border-box;
-  height: 100%;
-  margin: 0;
-  padding: 0 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  white-space: normal;
-  color: var(--lilac);
-  font: 500 var(--size-body)/72px var(--font-text);
-}
-
-/* The name of the lead, then the three weeks. A name that is too long is cut off with an ellipsis. */
+/* The header, the body and the sentence are in monday.css. A heading row of 52px, then up to five rows of 84px,
+   then +N MORE, which stays clear of the cut corner at the bottom right. A row is the department in 330px, the two
+   weeks, and 230px at the end for the chip that counts the tasks due later. */
 .monday-milestones .milestone-row {
   display: grid;
-  grid-template-columns: 190px repeat(3, minmax(0, 1fr));
-  column-gap: 8px;
+  grid-template-columns: 330px repeat(2, minmax(0, 1fr)) 230px;
+  column-gap: 12px;
   align-items: center;
-  height: 72px;
+  height: 84px;
 }
 .monday-milestones .milestone-row:first-child { height: 52px; }
 .monday-milestones .milestone-lead {
@@ -70,52 +14,65 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--yellow);
-  font: 700 var(--size-label)/48px var(--font-text);
+  color: var(--team-label, var(--yellow));
+  font: 700 36px/44px var(--font-text);
 }
 .monday-milestones .week-head {
   border-bottom: 4px solid var(--yellow);
+  white-space: nowrap;
   font: 600 var(--size-label)/44px var(--font-display);
 }
 
-/* A cell is the title, cut off with an ellipsis, and the date. The bar at its left is the colour of the week. */
+/* A cell is the title on one line, cut off with an ellipsis, and the date under it. The bar at its left is the
+   colour of the week. The date is 36px and muted in the colour of the accent: the one size under 44px on this card. */
 .monday-milestones .cell {
   box-sizing: border-box;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  justify-content: center;
   min-width: 0;
-  height: 64px;
-  padding: 0 8px 0 10px;
+  height: 80px;
+  padding: 0 10px 0 12px;
   border-left: 6px solid var(--lilac);
   background: var(--card);
 }
 .monday-milestones .cell-this-week { border-left-color: var(--status-progress); }
 .monday-milestones .cell-next-week { border-left-color: var(--yellow); }
-.monday-milestones .cell-later { border-left-color: var(--lilac); }
 .monday-milestones .cell-empty {
   border-left: 0;
   background: none;
 }
 .monday-milestones .cell-title {
-  flex: 1 1 0;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font: 500 var(--size-label)/48px var(--font-text);
+  font: 500 var(--size-label)/44px var(--font-text);
 }
 .monday-milestones .cell-date {
-  flex: none;
   color: var(--yellow);
-  font: 700 var(--size-label)/48px var(--font-text);
+  white-space: nowrap;
+  font: 700 36px/36px var(--font-text);
 }
 .monday-milestones .cell-date.late { color: var(--danger-bright); }
+
+/* The count of the tasks due later, as a chip with an outline at the end of the row */
+.monday-milestones .later { text-align: right; }
+.monday-milestones .later-chip {
+  display: inline-block;
+  box-sizing: border-box;
+  padding: 0 8px;
+  border: 3px solid var(--lilac);
+  color: var(--lilac);
+  white-space: nowrap;
+  font: 600 var(--size-label)/46px var(--font-display);
+}
 
 .monday-milestones .more {
   position: absolute;
   left: 0;
-  top: 488px;
+  top: 480px;
   color: var(--lilac);
+  white-space: nowrap;
   font: 600 var(--size-label)/48px var(--font-display);
 }

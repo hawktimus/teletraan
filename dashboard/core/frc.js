@@ -73,6 +73,7 @@ function tidyEvent(raw) {
   return {
     key: textOf(raw.key, 30),
     name: textOf(raw.name, 80),
+    shortName: textOf(raw.shortName, 60),
     city: textOf(raw.city, 40),
     startDate: dateOrEmpty(raw.startDate),
     endDate: dateOrEmpty(raw.endDate),
@@ -182,7 +183,15 @@ function tidyTeam(raw) {
 
 function tidyDistrictEvent(raw) {
   const event = tidyEvent(raw);
-  return { key: event.key, name: event.name, city: event.city, startDate: event.startDate, endDate: event.endDate, championship: raw.championship === true };
+  return { key: event.key, name: event.name, shortName: event.shortName, city: event.city, startDate: event.startDate, endDate: event.endDate, championship: raw.championship === true };
+}
+
+// The name of an event as a card writes it: the short name TBA gives when it has one, and the name otherwise,
+// without a year at the front, because the season is on the card already. A name that is only a year is kept.
+export function eventName(event) {
+  const name = (event.shortName || event.name || '').trim();
+  const stripped = name.replace(/^(19|20)\d{2}(?!\d)\s*[-:.,]?\s*/, '');
+  return stripped === '' ? name : stripped;
 }
 
 // The frc-status document as the cards use it, or null when there is none. A sample may

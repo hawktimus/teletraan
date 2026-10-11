@@ -31,8 +31,9 @@
 }
 .competition-timeline .tag .double-slash { flex: none; }
 
-/* The body is 1096 x 512, 28px in from the frame and 136px down, the room the Extra panels have. The chart
-   in it is an SVG of the same size, so a font size here is the size on the screen. */
+/* The body is 1096 x 512, 28px in from the frame and 136px down, the room the Extra panels have. The line is an
+   SVG 1096 wide and 140 high at the top of it, at one pixel to the unit, so a font size here is the size on the
+   screen, and the legend is under it. */
 .competition-timeline .body {
   position: absolute;
   left: 28px;
@@ -57,15 +58,11 @@
   font: 500 var(--size-body)/72px var(--font-text);
 }
 
-/* The line from today to the last date, a short stem from each dot to its words, and the dots. Today is a
-   ring. A date that is on now is a white dot with a ring. */
+/* The line from today to the last date and the dots on it. Today is a ring. A date that is on now is a white dot
+   with a ring. The words on the line are TODAY and the label of the countdown. */
 .competition-timeline .axis {
   stroke: var(--yellow);
   stroke-width: 6;
-}
-.competition-timeline .stem {
-  stroke: var(--lilac);
-  stroke-width: 4;
 }
 .competition-timeline .dot {
   fill: var(--yellow);
@@ -83,13 +80,67 @@
   stroke: var(--yellow);
   stroke-width: 6;
 }
-
-/* The days next to the line, and the name beyond them */
-.competition-timeline .days {
+.competition-timeline .label {
   fill: var(--yellow);
   font: 700 var(--size-label)/48px var(--font-display);
 }
-.competition-timeline .name {
-  fill: var(--white);
-  font: 500 var(--size-label)/48px var(--font-text);
+.competition-timeline .number {
+  fill: var(--ground);
+  font: 700 var(--size-label)/48px var(--font-display);
+}
+
+/* The legend is 148px down in the body, a row of 52 for each dot. The name is on one line and is cut off with an
+   ellipsis at the room it has. The city and the day are 36px and muted, the one size on this card under 44px, and the
+   days left are at the right in the accent. */
+.competition-timeline .legend {
+  position: absolute;
+  left: 0;
+  top: 148px;
+  width: 1096px;
+}
+.competition-timeline .entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 52px;
+}
+.competition-timeline .entry-number {
+  flex: none;
+  width: 56px;
+  color: var(--yellow);
+  font: 700 var(--size-label)/52px var(--font-display);
+}
+.competition-timeline .event {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 500 var(--size-label)/52px var(--font-text);
+}
+.competition-timeline .where {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 380px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--lilac);
+  font: 500 36px/52px var(--font-text);
+}
+.competition-timeline .days {
+  flex: none;
+  min-width: 230px;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--yellow);
+  font: 700 var(--size-label)/52px var(--font-display);
+}
+.competition-timeline .more {
+  position: absolute;
+  left: 0;
+  top: 460px;
+  color: var(--lilac);
+  white-space: nowrap;
+  font: 600 var(--size-label)/48px var(--font-display);
 }

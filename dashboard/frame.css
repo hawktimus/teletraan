@@ -602,6 +602,15 @@ html[data-style="cybertron"] .area[data-area="ticker"] .screw { animation-name: 
 [data-motion="none"] .area[data-state="out"] { animation: none; }
 
 
+/* A card with more rows than fit (the Monday cards, panels/monday-*) keeps its rows in a list inside a window
+   of five rows. frame.js (scrollCard) puts the page in view in --scroll-page on the card, and the list is
+   that many steps up. The card says how long a step is in --scroll-step. The move between two pages is
+   played by frame.js, in full motion only. */
+[data-scroll-list] {
+  transform: translateY(calc(var(--scroll-page, 0) * var(--scroll-step, 0px) * -1));
+}
+
+
 /* The logo. px in this section means the logo's own 1100 x 884 drawing
    units, not screen pixels: the banner shows it about a fifth of that size.
    Every time is multiplied by --pace, so the Speed setting changes it too.

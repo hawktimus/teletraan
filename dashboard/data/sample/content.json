@@ -130,7 +130,13 @@
     { "title": "[Write the grant]", "subteam": "[Subteam B]", "status": "up-next", "team": "prime", "source": "monday", "mondayId": "[item 6]", "priority": "medium", "dueDate": "2026-10-16", "contact": "[Contact D]", "showOnTv": true },
     { "title": "[Plan the fundraiser]", "subteam": "[Subteam B]", "status": "in-progress", "team": "prime", "source": "monday", "mondayId": "[item 7]", "priority": "high", "dueDate": "2026-11-04", "contact": "[Contact B]", "showOnTv": true },
     { "title": "[Update the team site]", "subteam": "[Subteam B]", "status": "in-progress", "team": "prime", "source": "monday", "mondayId": "[item 8]", "dueDate": "2026-10-27", "contact": "[Contact A]", "showOnTv": true },
-    { "title": "[Send thank you notes]", "subteam": "[Subteam B]", "status": "done", "team": "prime", "source": "monday", "mondayId": "[item 9]", "priority": "low", "showOnTv": true }
+    { "title": "[Send thank you notes]", "subteam": "[Subteam B]", "status": "done", "team": "prime", "source": "monday", "mondayId": "[item 9]", "priority": "low", "showOnTv": true },
+    { "title": "[Cut the base plates]", "subteam": "[Subteam A]", "status": "in-progress", "team": "nova", "source": "monday", "mondayId": "[item 10]", "priority": "high", "dueDate": "2026-10-15", "contact": "[Contact E]", "showOnTv": true },
+    { "title": "[Order the bearings]", "subteam": "[Subteam A]", "status": "up-next", "team": "nova", "source": "monday", "mondayId": "[item 11]", "priority": "medium", "dueDate": "2026-10-22", "contact": "[Contact F]", "showOnTv": true },
+    { "title": "[Plan the outreach]", "subteam": "[Subteam B]", "status": "in-progress", "team": "nova", "source": "monday", "mondayId": "[item 12]", "priority": "medium", "dueDate": "2026-10-20", "contact": "[Contact D]", "showOnTv": true },
+    { "title": "[Test the auto modes]", "subteam": "[Subteam C]", "status": "up-next", "team": "nova", "source": "monday", "mondayId": "[item 13]", "priority": "high", "dueDate": "2026-10-13", "contact": "[Contact G]", "showOnTv": true },
+    { "title": "[Draw the field]", "subteam": "[Subteam D]", "status": "in-progress", "team": "nova", "source": "monday", "mondayId": "[item 14]", "priority": "low", "dueDate": "2026-11-02", "contact": "[Contact H]", "showOnTv": true },
+    { "title": "[Check the scouting]", "subteam": "[Subteam E]", "status": "done", "team": "nova", "source": "monday", "mondayId": "[item 15]", "priority": "low", "showOnTv": true }
   ],
 
   "plan": {
@@ -229,20 +235,20 @@
     "sample": true,
     "lastSyncAt": "2026-10-08T14:00:00Z",
     "snapshots": [
-      { "date": "2026-09-25", "open": 21 },
-      { "date": "2026-09-26", "open": 21 },
-      { "date": "2026-09-27", "open": 20 },
-      { "date": "2026-09-28", "open": 19 },
-      { "date": "2026-09-29", "open": 18 },
-      { "date": "2026-09-30", "open": 17 },
-      { "date": "2026-10-01", "open": 15 },
-      { "date": "2026-10-02", "open": 14 },
-      { "date": "2026-10-03", "open": 13 },
-      { "date": "2026-10-04", "open": 12 },
-      { "date": "2026-10-05", "open": 11 },
-      { "date": "2026-10-06", "open": 10 },
-      { "date": "2026-10-07", "open": 8 },
-      { "date": "2026-10-08", "open": 7 }
+      { "date": "2026-09-25", "open": 30 },
+      { "date": "2026-09-26", "open": 30 },
+      { "date": "2026-09-27", "open": 29 },
+      { "date": "2026-09-28", "open": 28 },
+      { "date": "2026-09-29", "open": 27 },
+      { "date": "2026-09-30", "open": 26 },
+      { "date": "2026-10-01", "open": 24 },
+      { "date": "2026-10-02", "open": 23 },
+      { "date": "2026-10-03", "open": 22 },
+      { "date": "2026-10-04", "open": 21 },
+      { "date": "2026-10-05", "open": 20 },
+      { "date": "2026-10-06", "open": 19 },
+      { "date": "2026-10-07", "open": 17 },
+      { "date": "2026-10-08", "open": 16 }
     ]
   },
 
@@ -252,7 +258,7 @@
     "lastSyncAt": "2027-03-12T15:00:00Z",
     "notes": [],
     "districtEvents": [
-      { "key": "2027ncsa1", "name": "[District event one]", "city": "[City A]", "startDate": "2027-03-11", "endDate": "2027-03-13" },
+      { "key": "2027ncsa1", "name": "[District event one]", "shortName": "[Event one]", "city": "[City A]", "startDate": "2027-03-11", "endDate": "2027-03-13" },
       { "key": "2027ncsa2", "name": "[District event two]", "city": "[City B]", "startDate": "2027-04-01", "endDate": "2027-04-03" },
       { "key": "2027nccmp", "name": "[State championship]", "city": "[City C]", "startDate": "2027-04-14", "endDate": "2027-04-17", "championship": true }
     ],
@@ -260,7 +266,7 @@
       {
         "team": "prime", "number": 3229,
         "events": [
-          { "key": "2027ncsa1", "name": "[District event one]", "city": "[City A]", "startDate": "2027-03-11", "endDate": "2027-03-13", "rank": 4, "teamsRanked": 36, "matchesPlayed": 12, "record": { "wins": 8, "losses": 4, "ties": 0 }, "rankingPoints": 2.1, "epa": 31.2 },
+          { "key": "2027ncsa1", "name": "[District event one]", "shortName": "[Event one]", "city": "[City A]", "startDate": "2027-03-11", "endDate": "2027-03-13", "rank": 4, "teamsRanked": 36, "matchesPlayed": 12, "record": { "wins": 8, "losses": 4, "ties": 0 }, "rankingPoints": 2.1, "epa": 31.2 },
           { "key": "2027ncsa2", "name": "[District event two]", "city": "[City B]", "startDate": "2027-04-01", "endDate": "2027-04-03" }
         ],
         "focusEvent": "2027ncsa1",
@@ -316,7 +322,7 @@
       {
         "team": "nova", "number": 3230,
         "events": [
-          { "key": "2027ncsa1", "name": "[District event one]", "city": "[City A]", "startDate": "2027-03-11", "endDate": "2027-03-13", "rank": 11, "teamsRanked": 36, "matchesPlayed": 12, "record": { "wins": 6, "losses": 6, "ties": 0 }, "rankingPoints": 1.6, "epa": 22.7 }
+          { "key": "2027ncsa1", "name": "[District event one]", "shortName": "[Event one]", "city": "[City A]", "startDate": "2027-03-11", "endDate": "2027-03-13", "rank": 11, "teamsRanked": 36, "matchesPlayed": 12, "record": { "wins": 6, "losses": 6, "ties": 0 }, "rankingPoints": 1.6, "epa": 22.7 }
         ],
         "focusEvent": "2027ncsa1",
         "nextMatch": {

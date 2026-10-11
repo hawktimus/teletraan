@@ -186,7 +186,7 @@ test('tidyFrc gives a complete shape, keeps nothing it cannot use, caps the list
   assert.equal(messy.lastSyncAt, '');
   assert.equal(messy.lastError.length, 300);
   assert.deepEqual(messy.notes, ['A note', 'Another', 'c', 'd', 'e'], 'at most 5 notes, none empty');
-  assert.deepEqual(messy.districtEvents, [{ key: 'a', name: '', city: '', startDate: '2027-04-01', endDate: '', championship: false }], 'an event with no first day is left out, and only true is a championship');
+  assert.deepEqual(messy.districtEvents, [{ key: 'a', name: '', shortName: '', city: '', startDate: '2027-04-01', endDate: '', championship: false }], 'an event with no first day is left out, and only true is a championship');
   assert.deepEqual(messy.teams.map(team => team.team), ['prime', 'nova'], 'a team needs a code of lowercase letters and digits');
   assert.equal(messy.teams[0].events.length, 12, 'at most 12 events');
   assert.equal(messy.teams[0].epa, null);
@@ -407,7 +407,7 @@ test('the cards are for the team on the screen: Nova has its own entry, and a te
   assert.equal(frcModule.teamEntry({ teams: [] }), null);
 });
 
-test('the season timeline has the countdown date, the events that are not over and the state championship, earliest first, seven at most', () => {
+test('the season timeline has the countdown date, the events that are not over and the state championship, earliest first, six dots at the most', () => {
   const content = contentWith();
   const entry = frcModule.teamEntry(content.frc);
   const summary = markers => markers.map(marker => [marker.kind, marker.label, marker.days, marker.now].join(' '));
@@ -419,22 +419,28 @@ test('the season timeline has the countdown date, the events that are not over a
   assert.deepEqual(summary(competition.timelineMarkers(content, entry, noon('2027-03-14'))), ['event [City B] 18 false', 'state STATE 31 false'], 'an event that is over has gone');
   assert.deepEqual(competition.timelineMarkers(content, entry, noon('2027-04-18')), []);
 
+  // each marker has the name and the city the legend of the card writes: the short name of an event when it has one, and the label of the countdown
+  const [kickoff, first, second, state] = competition.timelineMarkers(content, entry, noon('2026-10-09'));
+  assert.deepEqual([kickoff.name, kickoff.city, first.name, first.city, second.name, state.name, state.city], ['KICKOFF', '', '[Event one]', '[City A]', '[District event two]', '[State championship]', '[City C]']);
+
   // Kickoff on the day is now, and after it the Rollout date is next
   const rollout = contentWith(raw => { raw.settings.countdown.rollout = '2027-01-30T17:00:00.000Z'; });
   assert.deepEqual(summary(competition.timelineMarkers(rollout, entry, noon('2027-01-09'))).slice(0, 2), ['countdown KICKOFF 0 true', 'event [City A] 61 false'], 'only the next date of the countdown is on the line');
   assert.deepEqual(summary(competition.timelineMarkers(rollout, entry, noon('2027-01-10'))).slice(0, 1), ['countdown ROLLOUT 20 false']);
   assert.equal(competition.timelineMarkers(contentWith(raw => { raw.settings.countdown.kickoffLabel = 'LIFTOFF'; }), entry, noon('2026-10-09'))[0].label, 'LIFTOFF');
 
-  // the state championship is not listed twice when it is one of the team's own events, and at most seven are drawn
+  // the state championship is not listed twice when it is one of the team's own events, and at most six are drawn, which is all the card has dots for
   const shared = contentWith(raw => { primeOf(raw.frc).events.push({ key: '2027nccmp', name: '[State championship]', city: '[City C]', startDate: '2027-04-14', endDate: '2027-04-17' }); });
   assert.equal(competition.timelineMarkers(shared, frcModule.teamEntry(shared.frc), noon('2026-10-09')).filter(marker => marker.date === '2027-04-14').length, 1);
   const crowded = contentWith(raw => {
     for (let number = 3; number <= 12; number++) primeOf(raw.frc).events.push({ key: '2027x' + number, name: 'Event ' + number, startDate: '2027-05-' + String(number).padStart(2, '0'), endDate: '2027-05-' + String(number).padStart(2, '0') });
   });
-  const many = competition.timelineMarkers(crowded, frcModule.teamEntry(crowded.frc), noon('2026-10-09'));
+  const crowdedEntry = frcModule.teamEntry(crowded.frc);
+  const many = competition.timelineMarkers(crowded, crowdedEntry, noon('2026-10-09'));
   assert.equal(many.length, competition.timelineDates);
-  assert.equal(competition.timelineDates, 7);
+  assert.equal(competition.timelineDates, 6);
   assert.deepEqual(many.map(marker => marker.date), many.map(marker => marker.date).slice().sort());
+  assert.equal(competition.timelineMarkers(crowded, crowdedEntry, noon('2026-10-09'), Infinity).length, 14, 'the card asks for them all, to say how many more there are: 12 events, the countdown and the state championship');
 });
 
 // The rotation
@@ -640,29 +646,36 @@ test('the district points: the total, the rank and a bar to the cutoff, with the
   assert.ok(unknown.includes('class="total">47</text>'));
 });
 
-test('the season timeline: the dots, the days left, the names, and spacing that keeps the words apart', () => {
+test('the season timeline: a numbered dot for each date, TODAY and the countdown on the line, and a row of the legend for each dot', () => {
   const html = panels.timeline.markupFor(contentWith(), eventDay);
   assert.ok(html.includes('<h2 class="title" data-slat="title">SEASON</h2>'));
   assert.equal(countOf(html, '<circle '), 4, 'today and three dates');
   assert.ok(html.includes('class="dot dot-today"') && html.includes('class="dot dot-event on"') && html.includes('class="dot dot-state"'));
-  ['TODAY', 'MAR 12', 'NOW', '[City A]', '20 DAYS', '[City B]', '33 DAYS', 'STATE'].forEach(word => assert.ok(html.includes('>' + word + '</text>'), word));
+  ['TODAY', '1', '2'].forEach(word => assert.ok(html.includes('>' + word + '</text>'), word));
+  assert.equal(countOf(html, 'class="number"'), 3, 'a number in each dot, and none in today\'s');
+  assert.equal(countOf(html, '<text '), 4, 'TODAY and the three numbers are the only words on the line, and no countdown label is on it this day');
 
   const places = Array.from(html.matchAll(/<circle class="dot[^"]*" cx="(\d+)"/g)).map(match => Number(match[1]));
-  assert.equal(places[0], 124, 'today is at the left end');
-  assert.equal(places[places.length - 1], 972, 'the last date is at the right end');
-  places.slice(1).forEach((place, index) => assert.ok(place - places[index] >= 120, 'dots ' + index + ' and ' + (index + 1) + ' are 120 apart or more'));
-  assert.ok(html.includes('<line class="axis" x1="124" y1="256" x2="972" y2="256"/>'));
+  assert.equal(places[0], 32, 'today is at the left end');
+  assert.equal(places[places.length - 1], 1064, 'the last date is at the right end');
+  places.slice(1).forEach((place, index) => assert.ok(place - places[index] >= 76, 'dots ' + index + ' and ' + (index + 1) + ' are 76 apart or more'));
+  assert.ok(html.includes('<line class="axis" x1="32" y1="96" x2="1064" y2="96"/>'));
+
+  // under the line, a row for each dot: the number, the name, the city and the day, and the days left
+  assert.deepEqual(Array.from(html.matchAll(/<span class="entry-number">(\d+)<\/span>/g)).map(match => match[1]), ['1', '2', '3']);
+  assert.deepEqual(Array.from(html.matchAll(/<span class="event">([^<]*)<\/span>/g)).map(match => match[1]), ['[Event one]', '[District event two]', '[State championship]']);
+  assert.deepEqual(Array.from(html.matchAll(/<span class="where">([^<]*)<\/span>/g)).map(match => match[1]), ['[City A] · MAR 11', '[City B] · APR 1', '[City C] · APR 14']);
+  assert.deepEqual(Array.from(html.matchAll(/<span class="days">([^<]*)<\/span>/g)).map(match => match[1]), ['NOW', '20 DAYS', '33 DAYS']);
+  assert.equal(html.includes('class="more"'), false, 'three dates are all of them');
 
   // the dots are as far along as their dates, until they would be too close
-  assert.deepEqual(panelsDots([0, 50, 100]), [124, 548, 972]);
-  assert.deepEqual(panelsDots([0, 1, 2, 100]), [124, 244, 364, 972], 'close dates are pushed apart');
-  assert.deepEqual(panelsDots([0, 100, 101, 102]), [124, 732, 852, 972], 'when the last would pass the end, the ones before it are pulled back');
-  assert.deepEqual(panelsDots([0, 0, 0]), [124, 244, 364]);
-  assert.deepEqual(panelsDots([0, 5]), [124, 972]);
-  const eight = panelsDots([0, 1, 2, 3, 4, 5, 6, 7]);
-  assert.equal(eight[7], 972);
-  assert.equal(eight[0], 124, 'eight dots just fit: 7 gaps of 120 are 840 of the 848');
-  assert.ok(eight.slice(1).every((place, index) => place - eight[index] >= 120));
+  assert.deepEqual(panelsDots([0, 50, 100]), [32, 548, 1064]);
+  assert.deepEqual(panelsDots([0, 1, 2, 100]), [32, 108, 184, 1064], 'close dates are pushed apart');
+  assert.deepEqual(panelsDots([0, 100, 101, 102]), [32, 912, 988, 1064], 'when the last would pass the end, the ones before it are pulled back');
+  assert.deepEqual(panelsDots([0, 0, 0]), [32, 108, 184]);
+  assert.deepEqual(panelsDots([0, 5]), [32, 1064]);
+  assert.deepEqual(panelsDots([0, 1, 2, 3, 4, 5, 6]), [32, 204, 376, 548, 720, 892, 1064], 'today and six dates a day apart fill the line');
+  assert.deepEqual(panelsDots([0, 1, 2, 3, 4, 5, 600]), [32, 108, 184, 260, 336, 412, 1064], 'and five close to today and one far away keep the gap');
 });
 
 function panelsDots(days) {
@@ -829,7 +842,9 @@ test('nothing on a card is smaller than 44px, no line is thinner than 3px, and t
       if (declaration.startsWith('font:')) {
         const font = fontOf(declaration);
         assert.ok(font, name + ' has a font line that cannot be read: ' + declaration);
-        assert.ok(font.size >= 44, name + ' has text of ' + font.size + 'px: ' + declaration);
+        // the one size under 44 is the order's: the city and the day in a row of the legend of the season timeline, 36px and muted
+        const legendSize = name === 'timeline' && Object.keys(rules).some(selector => selector === '.competition-timeline .where' && rules[selector].includes(declaration));
+        assert.ok(font.size >= 44 || (legendSize && font.size === 36), name + ' has text of ' + font.size + 'px: ' + declaration);
         assert.ok(font.line >= font.size, name + ' has a line height under its size: ' + declaration);
       }
     });
@@ -856,7 +871,8 @@ test('markup has no text of its own size, and the chart is 1096 by 512 at one pi
   cardNames.forEach(name => {
     const html = panels[name].markupFor(content, eventDay);
     assert.equal(/font-size|style=|<style/.test(html), false, name);
-    assert.ok(html.includes('<svg class="chart" width="1096" height="512" viewBox="0 0 1096 512"'), name);
+    // the line of the season timeline is the top 140 of its body, with the legend in HTML under it
+    assert.ok(html.includes(name === 'timeline' ? '<svg class="chart" width="1096" height="140" viewBox="0 0 1096 140"' : '<svg class="chart" width="1096" height="512" viewBox="0 0 1096 512"'), name);
     assert.equal(countOf(html, 'role="img"'), 1);
     assert.equal(/aria-label="[^"]+"/.test(html), true);
   });

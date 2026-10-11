@@ -329,7 +329,7 @@ test('the Team Leads panel shows four departments on each visit, in order, and c
 
   // a short page keeps its rows at the top
   assert.ok(visits[0].includes('<div class="person-rows rows-4">') && visits[2].includes('<div class="person-rows rows-4">'));
-  assert.ok(visits[0].includes('<h2 class="title" data-slat="title">TEAM</h2>') && visits[0].includes('<span class="tag-text">TEAM LEADS</span>'));
+  assert.ok(visits[0].includes('data-slat="title">TEAM LEADS</h2>') && visits[0].includes('<span class="team-chip">BOTH TEAMS</span>'), 'the header names the team, and these departments are for both');
 }));
 
 test('twelve departments are three panels of four, and the last department with no lead says [lead]', () => withFakePage(async () => {
@@ -486,7 +486,7 @@ test('the Leadership panel shows four rows on each visit and then the rest, with
   assert.deepEqual(chipsIn(visits[1]), ['CAPTAIN', 'MENTOR']);
   assert.equal(countOf(visits[0], 'class="portrait red-metal"'), 2);
   assert.equal(countOf(visits[0], 'data-metal="gold"'), 2);
-  assert.ok(visits[0].includes('<h2 class="title" data-slat="title">TEAM</h2>') && visits[0].includes('<span class="tag-text">LEADERSHIP</span>'));
+  assert.ok(visits[0].includes('data-slat="title">LEADERSHIP</h2>') && visits[0].includes('<span class="team-chip">BOTH TEAMS</span>'), 'the header names the team, and these people are for both');
 }));
 
 test('the Leadership panel with three people has three rows, and a person with no photo has the silhouette', () => withFakePage(() => {

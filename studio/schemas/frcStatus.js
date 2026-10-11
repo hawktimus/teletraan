@@ -53,6 +53,7 @@ const personFields = [
 const eventFields = [
   textField('key', 'Event key', 'The code of the event, such as 2027ncwak.'),
   textField('name', 'Event name', 'The name of the event.'),
+  textField('shortName', 'Short name', 'The short name of the event, when the source has one. The season timeline writes it in place of the name.'),
   textField('city', 'City', 'The city the event is in.'),
   dateField('startDate', 'First day', 'The first day of the event.'),
   dateField('endDate', 'Last day', 'The last day of the event.'),
@@ -144,6 +145,7 @@ export default defineType({
     listOf('districtEvents', 'District events', 'The events of the district, with the championship marked.', [
       textField('key', 'Event key', 'The code of the event.'),
       textField('name', 'Event name', 'The name of the event.'),
+      textField('shortName', 'Short name', 'The short name of the event, when the source has one.'),
       textField('city', 'City', 'The city the event is in.'),
       dateField('startDate', 'First day', 'The first day of the event.'),
       dateField('endDate', 'Last day', 'The last day of the event.'),

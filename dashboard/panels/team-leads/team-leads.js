@@ -4,9 +4,11 @@
 
 import { doubleSlash } from '../../core/marks.js';
 import { makePages } from '../../core/turns.js';
-import { portraitPercentOf } from '../../core/content.js';
+import { portraitPercentOf, visibleItems } from '../../core/content.js';
 import { departmentRows } from '../../core/team-leads.js';
 import { leadAddress, portraitLook, preloadLeadPhotos, rowLayout, rowsMarkup, rowsPerPage, watchPhotos } from '../../core/portrait.js';
+import { pageTeamName, teamChipMarkup, teamNameOf, titleClass } from '../../core/team-title.js';
+import { wantedTeam } from '../../core/teams.js';
 
 const nextPage = makePages(rowsPerPage);
 
@@ -19,12 +21,15 @@ export function mount(host, content) {
   const page = nextPage(departmentRows(content.subteams), rowLayout(scale).rows);
   const rows = page.items.map(row => leadRow(row, content));
 
+  // the header names the team: the team on the screen, or both teams when every department is for both
+  const chip = pageTeamName(visibleItems(content.subteams), teamNameOf(wantedTeam()));
+
   host.innerHTML = `
     <section class="page team-leads">
       <div class="header">
-        <h2 class="title" data-slat="title">TEAM</h2>
+        <h2 class="${titleClass('TEAM LEADS', chip)}" data-slat="title">TEAM LEADS</h2>
         <div class="tag" data-slat="tag">
-          <span class="tag-text">TEAM LEADS</span>
+          ${teamChipMarkup(chip)}
           ${doubleSlash()}
         </div>
       </div>

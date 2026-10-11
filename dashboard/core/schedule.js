@@ -174,6 +174,22 @@ function holdFor(stay, arrivedAfter) {
   return Math.max(stay - arrivedAfter - frame.turnMs(), shortestHold);
 }
 
+// How many pages a card is held for. A card with more rows than fit (the Monday cards, panels/monday-*)
+// says so with scrollPages(content, page) in its script: it is held for its time, then its list moves up
+// by a page of rows and it is held for the same time again. Every other panel is one page. A problem
+// in the panel's answer is one page.
+function pagesOfCard(id, content, page) {
+  const module = moduleOf(id);
+  if (!module || !module.scrollPages) return 1;
+
+  try {
+    return Math.max(1, Math.floor(Number(module.scrollPages(content, page))) || 1);
+  } catch (error) {
+    console.error('Panel "' + id + '" could not say how many pages it has', error);
+    return 1;
+  }
+}
+
 // region is 'grid1' or 'grid2'
 // getPlaylist() returns the list of { panel, show, seconds } for that region. A step of a panel with
 // more than one page also has page, counting from 1 (withPages in core/panel-order.js), which is
@@ -272,7 +288,7 @@ export function startRotation(region, getPlaylist, getContent) {
         const page = buildPage(step.panel, getContent(), step.page);
         const topic = topicOf(step.panel);
         if (topic) onScreen[region].push(topic); // at once, so the other region sees it
-        return { page: page, step: step, topic: topic };
+        return { page: page, step: step, topic: topic, pages: pagesOfCard(step.panel, getContent(), step.page) };
       } catch (error) {
         somePanelFailed = true;
         console.error('Panel "' + step.panel + '" could not be drawn and is skipped', error);
@@ -304,7 +320,15 @@ export function startRotation(region, getPlaylist, getContent) {
 
         if (next) {
           const settings = getContent().settings;
-          await hold(holdFor(stayFor(region, ownSeconds(next.step, settings), settings), arrivedAfter), since, region);
+          const held = holdFor(stayFor(region, ownSeconds(next.step, settings), settings), arrivedAfter);
+          await hold(held, since, region);
+
+          // a card with more rows than fit moves its list up and is held again, for the same time. A
+          // page that was ended early (changeCount moved) does not go on.
+          for (let shown = 1; shown < next.pages && changeCount(region) === since; shown++) {
+            frame.scrollCard(next.page.element, shown);
+            await hold(held, since, region);
+          }
         } else {
           await frame.wait(1000); // nothing to show right now
         }

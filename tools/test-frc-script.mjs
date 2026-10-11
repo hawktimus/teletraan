@@ -356,7 +356,7 @@ function world(place, options) {
     previous: given.previous || null,
   });
 
-  place.tba('/team/frc3229/events/2027/simple', [
+  place.tba('/team/frc3229/events/2027', [
     { key: eventKey, name: '[Sample Regional]', city: '[City]', state_prov: 'NC', start_date: '2027-03-12', end_date: '2027-03-14', event_type: 1 },
   ]);
   const matches = [];
@@ -383,7 +383,7 @@ function world(place, options) {
   for (let number = 11; number <= 14; number += 1) {
     place.statbotics('/match/' + eventKey + '_qm' + number, { key: eventKey + '_qm' + number, pred: { winner: 'red', red_win_prob: 0.6 + number / 1000 } });
   }
-  place.tba('/district/2027nc/events/simple', [
+  place.tba('/district/2027nc/events', [
     { key: '2027nccmp', name: '[Sample District Championship]', city: '[City]', start_date: '2027-04-09', end_date: '2027-04-10', event_type: 2 },
     { key: eventKey, name: '[Sample Regional]', city: '[City]', start_date: '2027-03-12', end_date: '2027-03-14', event_type: 1 },
   ]);
@@ -397,7 +397,7 @@ function world(place, options) {
 
 const firstSequence = [
   'sanity-query',
-  'tba /team/frc3229/events/2027/simple',
+  'tba /team/frc3229/events/2027',
   'tba /team/frc3229/event/' + eventKey + '/matches',
   'tba /event/' + eventKey + '/rankings',
   'tba /event/' + eventKey + '/alliances',
@@ -412,7 +412,7 @@ const firstSequence = [
   'sb /team_year/9003/2027',
   'sb /team_year/9004/2027',
   'sb /team_year/9005/2027',
-  'tba /district/2027nc/events/simple',
+  'tba /district/2027nc/events',
   'tba /district/2027nc/rankings',
   'sanity-write',
 ];
@@ -660,7 +660,7 @@ test('a team that The Blue Alliance does not know is skipped without an error, a
 
   assert.equal(result.status, 0, result.errors);
   assert.equal(result.errors, '');
-  assert.deepEqual(requestsOf(result.calls).filter(request => request.includes('3230') || request.includes('blank') || request.includes('ghost')), ['tba /team/frc3230/events/2027/simple']);
+  assert.deepEqual(requestsOf(result.calls).filter(request => request.includes('3230') || request.includes('blank') || request.includes('ghost')), ['tba /team/frc3230/events/2027']);
   assert.ok(result.text.includes('team nova: not found on The Blue Alliance, skipped'), result.text);
   ['blank', 'ghost', 'letters', 'long'].forEach(code => assert.ok(result.text.includes('team ' + code + ': no team number, skipped'), code + '\n' + result.text));
   assert.deepEqual(place.document().teams.map(team => team.team), ['prime']);
@@ -671,7 +671,7 @@ test('a team that The Blue Alliance does not know is skipped without an error, a
 test('two teams are read one after the other, a number with spaces is trimmed, and an event both attend is read once', () => {
   const place = setup('two-teams', { tools: true });
   world(place, { teams: [{ code: 'prime', number: '3229' }, { code: 'nova', number: ' 3230 ' }] });
-  place.tba('/team/frc3230/events/2027/simple', [
+  place.tba('/team/frc3230/events/2027', [
     { key: eventKey, name: '[Sample Regional]', city: '[City]', start_date: '2027-03-12', end_date: '2027-03-14', event_type: 1 },
   ]);
   place.tba('/team/frc3230/event/' + eventKey + '/matches', [matchOf(1, true)]);
@@ -686,12 +686,34 @@ test('two teams are read one after the other, a number with spaces is trimmed, a
   assert.deepEqual(place.document().teams.map(team => [team.team, team.number, team.epa]), [['prime', 3229, 55.12], ['nova', 3230, 40]]);
 });
 
+test('an event that has a short name keeps it in the status, and one that has none has no field for it', () => {
+  const place = setup('short-name', { tools: true });
+  world(place);
+  place.tba('/team/frc3229/events/2027', [
+    { key: eventKey, name: '[Sample Regional]', short_name: '[Sample]', city: '[City]', start_date: '2027-03-12', end_date: '2027-03-14', event_type: 1 },
+    { key: '2027ncx01', name: '[Second Event]', short_name: '', city: '[City]', start_date: '2027-04-02', end_date: '2027-04-03', event_type: 1 },
+    { key: '2027ncx02', name: '[Third Event]', city: '[City]', start_date: '2027-04-09', end_date: '2027-04-10', event_type: 1 },
+  ]);
+  place.tba('/district/2027nc/events', [
+    { key: '2027nccmp', name: '[Sample District Championship]', short_name: '[State]', city: '[City]', start_date: '2027-04-16', end_date: '2027-04-17', event_type: 2 },
+    { key: '2027ncx03', name: '[Fourth Event]', city: '[City]', start_date: '2027-04-23', end_date: '2027-04-24', event_type: 1 },
+  ]);
+  const result = place.run();
+  assert.equal(result.status, 0, result.errors);
+
+  const document = place.document();
+  const team = document.teams[0];
+  assert.deepEqual(team.events.map(event => [event.name, event.shortName]), [['[Sample Regional]', '[Sample]'], ['[Second Event]', undefined], ['[Third Event]', undefined]]);
+  assert.equal('shortName' in team.events[1], false, 'an empty short name is not written');
+  assert.deepEqual(document.districtEvents.map(event => [event.name, event.shortName]), [['[Sample District Championship]', '[State]'], ['[Fourth Event]', undefined]]);
+});
+
 test('a team listed twice, or inactive teams the query leaves out, are asked for once', () => {
   const place = setup('twice', { tools: true });
   world(place, { teams: [{ code: 'prime', number: '3229' }, { code: 'copy', number: '3229' }] });
   const result = place.run();
 
-  assert.equal(requestsOf(result.calls).filter(request => request === 'tba /team/frc3229/events/2027/simple').length, 1);
+  assert.equal(requestsOf(result.calls).filter(request => request === 'tba /team/frc3229/events/2027').length, 1);
   assert.deepEqual(place.document().teams.map(team => team.team), ['prime']);
 });
 
@@ -737,7 +759,7 @@ test('a run stops after 60 requests, says so, and the next run carries on where 
   for (let number = 1; number <= 20; number += 1) {
     events.push({ key: '2027ncx' + String(number).padStart(2, '0'), name: '[Event ' + number + ']', city: '[City]', start_date: '2027-05-01', end_date: '2027-05-02', event_type: 0 });
   }
-  place.tba('/team/frc3229/events/2027/simple', events);
+  place.tba('/team/frc3229/events/2027', events);
 
   const first = place.run();
   const firstRequests = serviceRequests(first.calls);
@@ -780,7 +802,7 @@ test('the ETag of each answer is kept, sent back with the next request, and an a
   place.run();
 
   const etags = JSON.parse(fs.readFileSync(path.join(place.frc, 'etags.json'), 'utf8'));
-  assert.equal(etags['tba-events-2027-frc3229'], '"team_frc3229_events_2027_simple-1"');
+  assert.equal(etags['tba-events-2027-frc3229'], '"team_frc3229_events_2027-1"');
   assert.equal(etags['tba-rankings-' + eventKey], '"event_' + eventKey + '_rankings-1"');
   assert.ok(!Object.keys(etags).some(name => name.startsWith('statbotics-')), 'Statbotics sends none');
   assert.ok(fs.statSync(path.join(place.frc, 'etags.json')).size < 4000, 'a small file');
@@ -943,7 +965,7 @@ test('the events of the season before are kept for the glance back when the year
 test('the rating of an event is read while the event is on, kept after it, and empty before it starts', () => {
   const place = setup('event-ratings', { tools: true });
   world(place);
-  place.tba('/team/frc3229/events/2027/simple', [
+  place.tba('/team/frc3229/events/2027', [
     { key: '2027ncold', name: '[Old Event]', city: '[City]', start_date: '2027-03-05', end_date: '2027-03-07', event_type: 1 },
     { key: eventKey, name: '[Sample Regional]', city: '[City]', start_date: '2027-03-12', end_date: '2027-03-14', event_type: 1 },
     { key: '2027nclate', name: '[Late Event]', city: '[City]', start_date: '2027-04-02', end_date: '2027-04-04', event_type: 1 },
@@ -1008,11 +1030,11 @@ test('a team key in the next match that is not plain is never asked for', () => 
 test('a refused key stops the run at once, is written as the error, and the time of the run is not sent to status-mini', () => {
   const place = setup('refused', { tools: true });
   world(place);
-  place.tba('/team/frc3229/events/2027/simple', { Error: 'no' }, { code: 401 });
+  place.tba('/team/frc3229/events/2027', { Error: 'no' }, { code: 401 });
   const result = place.run();
 
   assert.equal(result.status, 1);
-  assert.deepEqual(serviceRequests(result.calls), ['tba /team/frc3229/events/2027/simple'], 'the first refusal ends the asking');
+  assert.deepEqual(serviceRequests(result.calls), ['tba /team/frc3229/events/2027'], 'the first refusal ends the asking');
   assert.ok(result.errors.includes('frc: The Blue Alliance refused the key. Check TBA_AUTH_KEY in local.env.'), result.errors);
   assert.ok(!result.calls.includes('status-write.sh'));
   const document = place.document();
@@ -1023,7 +1045,7 @@ test('a refused key stops the run at once, is written as the error, and the time
 test('three failed requests in a row stop the run, and the cause is in the error', () => {
   const place = setup('network', { tools: true });
   world(place);
-  ['/team/frc3229/events/2027/simple', '/district/2027nc/events/simple', '/district/2027nc/rankings'].forEach(address => place.tba(address, [], { exit: 6 }));
+  ['/team/frc3229/events/2027', '/district/2027nc/events', '/district/2027nc/rankings'].forEach(address => place.tba(address, [], { exit: 6 }));
   const result = place.run();
 
   assert.equal(result.status, 1);
@@ -1095,8 +1117,8 @@ test('a status that cannot be written is reported, status-mini is not told, and 
 test('the key and the token are never in the output, the arguments of curl, or any file the script writes, and only standard input carries them', () => {
   const runs = [
     { name: 'good', set: place => place },
-    { name: 'refused', set: place => place.tba('/team/frc3229/events/2027/simple', {}, { code: 401 }) },
-    { name: 'network', set: place => place.tba('/team/frc3229/events/2027/simple', [], { exit: 28 }) },
+    { name: 'refused', set: place => place.tba('/team/frc3229/events/2027', {}, { code: 401 }) },
+    { name: 'network', set: place => place.tba('/team/frc3229/events/2027', [], { exit: 28 }) },
     { name: 'server-error', set: place => place.tba('/event/' + eventKey + '/rankings', {}, { code: 500 }) },
     { name: 'write-refused', set: place => fs.writeFileSync(path.join(place.stub, 'mutate.exit'), '22') },
     { name: 'statbotics', set: place => place.statbotics('/team_year/3229/2027', {}, { code: 401 }) },
@@ -1145,7 +1167,7 @@ test('the key goes to The Blue Alliance only: Statbotics and Sanity questions ca
 test('text from the services never reaches a shell or an address: an odd event key, match key or team name is inert', () => {
   const place = setup('inert', { tools: true });
   world(place);
-  place.tba('/team/frc3229/events/2027/simple', [
+  place.tba('/team/frc3229/events/2027', [
     { key: eventKey, name: '$(touch PWNED)', city: '`touch PWNED`', start_date: '2027-03-12', end_date: '2027-03-14', event_type: 1 },
     { key: '2027nc;touch PWNED', name: 'a', start_date: '2027-03-12', end_date: '2027-03-14' },
     { key: '../../evil', name: 'b', start_date: '2027-03-12', end_date: '2027-03-14' },
@@ -1182,8 +1204,8 @@ test('the time zone of the Look page decides the day and the season', () => {
   const place = setup('zone', { tools: true });
   world(place, { zone: 'America/Chicago' });
   place.at('2026-12-31T23:30:00Z', '2026-12-31');
-  place.tba('/team/frc3229/events/2026/simple', []);
-  place.tba('/district/2026nc/events/simple', []);
+  place.tba('/team/frc3229/events/2026', []);
+  place.tba('/district/2026nc/events', []);
   place.tba('/district/2026nc/rankings', []);
   place.tba('/team/frc3229/awards/2026', []);
   place.statbotics('/team_year/3229/2026', undefined);
@@ -1191,7 +1213,7 @@ test('the time zone of the Look page decides the day and the season', () => {
 
   assert.ok(result.calls.includes('date TZ=America/Chicago +%Y'), result.calls);
   assert.ok(result.calls.includes('date TZ=America/Chicago +%Y-%m-%d'));
-  assert.ok(requestsOf(result.calls).includes('tba /team/frc3229/events/2026/simple'), 'the season is the year where the screen is');
+  assert.ok(requestsOf(result.calls).includes('tba /team/frc3229/events/2026'), 'the season is the year where the screen is');
   assert.equal(place.document().season, 2026);
 
   const odd = setup('zone-odd', { tools: true });
@@ -1204,7 +1226,7 @@ test('the time zone of the Look page decides the day and the season', () => {
 test('it is only time to run once an hour, every 5 minutes while an event is on, and at once after a run that was cut short', () => {
   const place = setup('timing', { tools: true });
   world(place);
-  place.tba('/team/frc3229/events/2027/simple', [{ key: eventKey, name: '[Sample Regional]', city: '[City]', start_date: '2027-04-23', end_date: '2027-04-25', event_type: 1 }]);
+  place.tba('/team/frc3229/events/2027', [{ key: eventKey, name: '[Sample Regional]', city: '[City]', start_date: '2027-04-23', end_date: '2027-04-25', event_type: 1 }]);
   place.at('2027-03-13T15:00:00Z');
 
   const first = place.run();
@@ -1224,7 +1246,7 @@ test('it is only time to run once an hour, every 5 minutes while an event is on,
   assert.ok(requestsOf(runAt('2027-03-13T15:51:00Z').calls).length > 0, 'no event, 51 minutes');
 
   // Now an event is on today
-  place.tba('/team/frc3229/events/2027/simple', [{ key: eventKey, name: '[Sample Regional]', city: '[City]', start_date: '2027-03-12', end_date: '2027-03-14', event_type: 1 }], { etag: '"moved"' });
+  place.tba('/team/frc3229/events/2027', [{ key: eventKey, name: '[Sample Regional]', city: '[City]', start_date: '2027-03-12', end_date: '2027-03-14', event_type: 1 }], { etag: '"moved"' });
   runAt('2027-03-13T17:00:00Z', ['--now']);
   assert.equal(requestsOf(runAt('2027-03-13T17:03:00Z').calls).length, 0, 'an event is on, 3 minutes');
   assert.ok(requestsOf(runAt('2027-03-13T17:05:00Z').calls).length > 0, 'an event is on, 5 minutes');
@@ -1513,12 +1535,12 @@ test('every address and every place in an answer is in the block at the top, and
   assert.equal(block.split('thebluealliance.com').length, 2);
   assert.equal(block.split('api.statbotics.io').length, 2);
   assert.ok(!rest.includes('api.statbotics.io') && !rest.includes('thebluealliance.com/api'));
-  ['/team/{team}/events/{year}/simple', '/team/{team}/event/{event}/matches', '/event/{event}/rankings', '/event/{event}/alliances', '/event/{event}/teams/simple', '/team/{team}/awards/{year}', '/district/{district}/events/simple', '/district/{district}/rankings', '/team_year/{number}/{year}', '/match/{match}'].forEach(address => {
+  ['/team/{team}/events/{year}', '/team/{team}/event/{event}/matches', '/event/{event}/rankings', '/event/{event}/alliances', '/event/{event}/teams/simple', '/team/{team}/awards/{year}', '/district/{district}/events', '/district/{district}/rankings', '/team_year/{number}/{year}', '/match/{match}'].forEach(address => {
     assert.equal(text.split("'" + address + "'").length, 2, address + ' appears once, in the block');
     assert.ok(block.includes("'" + address + "'"), address);
   });
 
-  ['.start_date', '.end_date', '.comp_level', '.team_keys', '.sort_orders', '.point_total', '.picks', '.nickname', '.total_points.mean', '.red_win_prob', '.winning_alliance', '.matches_played', '.event_key'].forEach(path => {
+  ['.start_date', '.end_date', '.short_name', '.comp_level', '.team_keys', '.sort_orders', '.point_total', '.picks', '.nickname', '.total_points.mean', '.red_win_prob', '.winning_alliance', '.matches_played', '.event_key'].forEach(path => {
     assert.ok(block.includes(path), 'the block has ' + path);
     assert.ok(!rest.includes(path), 'the rest of the script does not have ' + path);
   });

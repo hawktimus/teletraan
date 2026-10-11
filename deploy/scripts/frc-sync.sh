@@ -29,13 +29,13 @@ env_file="$deploy/local.env"
 # (2027ncwak), {match} (2027ncwak_qm12) or {district} (2027nc) in it.
 tba_host='https://www.thebluealliance.com/api/v3'
 tba_status='/status'
-tba_team_events='/team/{team}/events/{year}/simple'
+tba_team_events='/team/{team}/events/{year}'
 tba_team_matches='/team/{team}/event/{event}/matches'
 tba_rankings='/event/{event}/rankings'
 tba_alliances='/event/{event}/alliances'
 tba_event_teams='/event/{event}/teams/simple'
 tba_awards='/team/{team}/awards/{year}'
-tba_district_events='/district/{district}/events/simple'
+tba_district_events='/district/{district}/events'
 tba_district_rankings='/district/{district}/rankings'
 statbotics_host='https://api.statbotics.io/v3'
 statbotics_team_year='/team_year/{number}/{year}'
@@ -53,6 +53,7 @@ district_slots=
 paths='
 def event_key: .key;
 def event_name: .name;
+def event_short_name: .short_name;
 def event_city: .city;
 def event_start: .start_date;
 def event_end: .end_date;
@@ -767,6 +768,11 @@ def event_epa($event; $key; $old):
   elif ($event | event_end) >= $today then epa_of($key | ltrimstr("frc"))
   else (($old.epa // null) | numeric) end;
 
+# The short name TBA gives an event, in an object of its own so that an event without one has no field
+def short_name_of($event):
+  ($event | event_short_name) as $short
+  | if ($short | type) == "string" and ($short | length) > 0 then {shortName: $short} else {} end;
+
 # The rank of an event that is over is no longer asked for. What was written
 # while it was on stays, and is taken from the status written last time.
 def event_entry($event; $key; $old):
@@ -778,7 +784,7 @@ def event_entry($event; $key; $old):
       startDate: ($event | event_start),
       endDate: ($event | event_end),
       epa: event_epa($event; $key; $old)
-    } + ($fresh // (if $old == null then empty_ranking else ($old | {rank, teamsRanked, matchesPlayed, record, rankingPoints}) end));
+    } + short_name_of($event) + ($fresh // (if $old == null then empty_ranking else ($old | {rank, teamsRanked, matchesPlayed, record, rankingPoints}) end));
 
 def alliance_of($event; $key; $roster):
   stored("tba-alliances-" + ($event | event_key)) | listing as $list
@@ -808,7 +814,7 @@ def district_of($key):
 
 def district_events:
   [stored("tba-district-events-" + $year) | listing | sort_by(event_start)[]
-    | {key: event_key, name: event_name, city: event_city, startDate: event_start, endDate: event_end, championship: event_is_championship}]
+    | {key: event_key, name: event_name, city: event_city, startDate: event_start, endDate: event_end, championship: event_is_championship} + short_name_of(.)]
   | .[0:30];
 
 def snapshot_list($old):

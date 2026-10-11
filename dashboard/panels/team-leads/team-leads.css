@@ -11,18 +11,22 @@
   justify-content: space-between;
   align-items: center;
 }
+/* TEAM LEADS at the size of a heading, or at 60px when it does not fit beside the chip with the name of the
+   team (core/team-title.js, titleClass). A longer title is cut off with an ellipsis before it reaches the chip. */
 .team-leads .title {
+  min-width: 0;
   margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font: 700 var(--size-heading)/96px var(--font-display);
 }
+.team-leads .title-small { font: 700 var(--size-team)/64px var(--font-display); }
 .team-leads .tag {
+  flex: none;
   display: flex;
   align-items: center;
   gap: 24px;
-}
-.team-leads .tag-text {
-  color: var(--yellow);
-  font: 600 var(--size-label)/44px var(--font-display);
 }
 
 /* The rows are in base.css, under People portraits */

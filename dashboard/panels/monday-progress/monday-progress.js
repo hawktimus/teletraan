@@ -1,25 +1,24 @@
 // The progress card of the Monday pass. On the left, one stacked bar for each Team lead entry that has board
-// tasks: how many are in the backlog, in progress and done, and done out of all of them at its right. On the
+// tasks: how many are in the backlog, in progress and done, and done out of all of them at its right, with
+// the legend over the bars and the totals of the team, such as 66 OPEN · 5 OVERDUE, under them. On the
 // right, a line of the items left (the open tasks, all the board's tasks that are not done) from the daily
 // counts in monday-status, with a dashed target line from the first count down to nothing on the date of the
-// countdown. Both are plain SVG in a body of 1096 x 512, drawn once. The card always draws, with a sentence
-// in place of what has no data, because the look rotation chooses it (core/monday.js, mondaySteps).
+// countdown. The line is plain SVG in a body of 1096 x 512, drawn once, and the rows are HTML on the left of
+// it, so that the name of a department is cut off with an ellipsis at its real width. The card counts the
+// same rows as the tasks card (groupsFor in core/monday.js). It always draws, with a sentence in place of
+// what has no data, because the look rotation chooses it (core/monday.js, mondaySteps).
 
-import { chartMarkup, cut, emptyMarkup, tagTextFor, textAt } from '../../core/competition-draw.js';
+import { chartMarkup, emptyMarkup, textAt, cut } from '../../core/competition-draw.js';
 import { countdownMarker, todayOf, zoneOf } from '../../core/competition.js';
 import { daysFromTo, shortDate } from '../../core/frc.js';
-import { boardTasksFor, columns as stacks, groupByLead, leadEntries } from '../../core/monday.js';
-import { pageMarkup } from '../../core/monday-draw.js';
+import { dueDateOf, groupsFor, statuses as stacks } from '../../core/monday.js';
+import { headerMarkup, noRowsSentence, pageMarkup, teamNameShown } from '../../core/monday-draw.js';
+import { escapeHtml } from '../../core/text.js';
 
-// The bars. A row is 68px high with a bar of 44px in it, and there are six of them. The name of the lead is
-// cut to fit its 216px, and the numbers of the row are at the right end of the bar's room.
+// The bars. A row is 64px high with a bar of 44px in it, and there are six of them. The bar is as wide as this
+// at the most, in a row of the department in 330px, the bar and the numbers.
 export const mostRows = 6;
-const ROW_TOP = 76;
-const ROW_PITCH = 68;
-const BAR = { left: 224, width: 324, height: 44 };
-const NUMBERS_LEFT = 560;
-const NAME_FITS = 7;
-const LEGEND_Y = 44;
+const BAR = { width: 206, height: 44 };
 
 // The line. It is at most this many points. The plot is the part of the right side that the points and the
 // target line are drawn in, and the dates of its two ends are written under it.
@@ -33,7 +32,7 @@ const LINE_WORDS_FIT = 17;
 // tasks of that lead. A task from the board that has no lead entry, or a status that is not one of the three
 // stacks, is not counted. more is how many lead entries did not fit in six rows.
 export function barsFor(content, now) {
-  const groups = groupByLead(boardTasksFor(content, now), leadEntries(content, now));
+  const groups = groupsFor(content, now);
 
   const rows = groups.map(group => {
     const row = { name: group.name };
@@ -102,41 +101,43 @@ export function wrapWords(text, fits) {
   return lines;
 }
 
-function barParts(bars) {
+// One bar, the three stacks each as long as the count so far says, so that rounding never makes it longer than its room
+function stackMarkup(row, widest) {
   const parts = [];
-  const widest = Math.max(1, ...bars.rows.map(row => row.total));
-
-  bars.rows.forEach((row, index) => {
-    const top = ROW_TOP + index * ROW_PITCH;
-    let counted = 0;
-    let left = BAR.left;
-
-    parts.push(textAt(0, top + 35, cut(row.name.toUpperCase(), NAME_FITS), 'lead'));
-    stacks.forEach(stack => {
-      // each stack ends where the count so far says, so rounding never makes the bar longer than its room
-      counted += row[stack.id];
-      const end = BAR.left + Math.round((counted / widest) * BAR.width);
-      if (end > left) parts.push(`<rect class="seg seg-${stack.id}" x="${left}" y="${top}" width="${end - left}" height="${BAR.height}"/>`);
-      left = end;
-    });
-    parts.push(textAt(NUMBERS_LEFT, top + 35, row.done + '/' + row.total, 'numbers'));
-  });
-
-  if (bars.more > 0) parts.push(textAt(0, ROW_TOP + (mostRows - 1) * ROW_PITCH + BAR.height + 40, '+' + bars.more + ' MORE', 'more'));
-  return parts;
-}
-
-// A square and a word for each stack, along the top
-function legendParts() {
-  const parts = [];
+  let counted = 0;
   let left = 0;
 
   stacks.forEach(stack => {
-    parts.push(`<rect class="seg seg-${stack.id}" x="${left}" y="${LEGEND_Y - 28}" width="28" height="28"/>`);
-    parts.push(textAt(left + 40, LEGEND_Y, stack.label, 'legend'));
-    left += 40 + stack.label.length * 29 + 28;
+    counted += row[stack.id];
+    const end = Math.round((counted / widest) * BAR.width);
+    if (end > left) parts.push(`<rect class="seg seg-${stack.id}" x="${left}" y="0" width="${end - left}" height="${BAR.height}"/>`);
+    left = end;
   });
-  return parts;
+  return `<svg class="stack" width="${BAR.width}" height="${BAR.height}" viewBox="0 0 ${BAR.width} ${BAR.height}" aria-hidden="true">${parts.join('')}</svg>`;
+}
+
+function rowMarkup(row, widest) {
+  return `<div class="bar-row"><span class="department">${escapeHtml(row.name.toUpperCase())}</span>${stackMarkup(row, widest)}<span class="count">${row.done}/${row.total}</span></div>`;
+}
+
+// A square and a word for each stack, along the top
+function legendMarkup() {
+  return `<div class="legend">${stacks.map(stack => `<span class="key"><span class="swatch seg-${stack.id}"></span>${stack.label}</span>`).join('')}</div>`;
+}
+
+// The open tasks of the team and how many of them are past their due date: every board task of every lead entry
+// the card has a bar for, counted once. today is a plain date in the time zone of the Look page.
+export function totalsFor(content, now) {
+  const tasks = groupsFor(content, now).reduce((all, group) => all.concat(group.tasks), []);
+  const open = tasks.filter(task => task.status !== 'done');
+  const today = todayOf(content, now);
+
+  return { open: open.length, overdue: open.filter(task => dueDateOf(task) !== '' && dueDateOf(task) < today).length };
+}
+
+// The totals line under the bars, and nothing longer
+export function totalsText(totals) {
+  return totals.open + ' OPEN · ' + totals.overdue + ' OVERDUE';
 }
 
 function lineParts(line) {
@@ -172,12 +173,20 @@ function describe(bars, line) {
 // The page as markup, for the time given. now is a Date.
 export function markupFor(content, now) {
   const bars = barsFor(content, now);
-  const tag = tagTextFor(content.monday, now);
-  if (bars.rows.length === 0) return pageMarkup('monday-progress', 'PROGRESS', tag, emptyMarkup('No board items are showing yet.'));
+  const header = headerMarkup('PROGRESS', teamNameShown(), content.monday, now);
+  if (bars.rows.length === 0) return pageMarkup('monday-progress', header, emptyMarkup(noRowsSentence(content)));
 
   const line = lineFor(content, now);
-  const parts = legendParts().concat(barParts(bars), line ? lineParts(line) : noLineParts());
-  return pageMarkup('monday-progress', 'PROGRESS', tag, chartMarkup(describe(bars, line), parts));
+  const widest = Math.max(1, ...bars.rows.map(row => row.total));
+  const more = bars.more > 0 ? `<div class="more">+${bars.more} MORE</div>` : '';
+  const inner = `
+      ${chartMarkup(describe(bars, line), line ? lineParts(line) : noLineParts())}
+      ${legendMarkup()}
+      <div class="bars">${bars.rows.map(row => rowMarkup(row, widest)).join('')}</div>
+      ${more}
+      <div class="totals">${totalsText(totalsFor(content, now))}</div>`;
+
+  return pageMarkup('monday-progress', header, inner);
 }
 
 export function mount(host, content) {
