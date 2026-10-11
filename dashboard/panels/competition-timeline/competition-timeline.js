@@ -1,40 +1,37 @@
-// The season timeline: a line from today to the last of the coming dates, with a dot for each date and
-// the days left under or over it. The dates are the next date of the countdown, each event of the team
-// that is not over, and the state championship (core/competition.js, timelineMarkers). It runs all
-// season. The line and the dots are plain SVG, drawn once in a body of 1096 x 512.
+// The season timeline: a line from today to the last of the coming dates with a numbered dot for each date,
+// and under it a legend with a row for each dot. The dates are the next date of the countdown, each event of
+// the team that is not over, and the state championship (core/competition.js, timelineMarkers). It runs all
+// season. The line and the dots are plain SVG, drawn once. The only words on the line are TODAY at the left dot
+// and the label of the countdown above its dot. The legend is HTML, so that a long name is cut off with an
+// ellipsis at its real width. Six dots at the most, and +N more events says how many more there are.
 
-import { cardState, chartMarkup, cut, daysText, emptyMarkup, pageMarkup, tagTextFor, textAt } from '../../core/competition-draw.js';
-import { timelineMarkers } from '../../core/competition.js';
+import { bodySize, cardState, daysText, emptyMarkup, pageMarkup, tagTextFor, textAt } from '../../core/competition-draw.js';
+import { timelineDates, timelineMarkers } from '../../core/competition.js';
 import { shortDate } from '../../core/frc.js';
+import { escapeHtml } from '../../core/text.js';
+import { textWidth } from '../../core/text-width.js';
 
-// The line is drawn at the middle of the body. Its dots are between LINE_LEFT and LINE_RIGHT, which
-// leaves room for the text of the first and the last, 124 px each side of its dot.
-const LINE_Y = 256;
-const LINE_LEFT = 124;
-const LINE_RIGHT = 972;
+// The line is drawn in a strip across the top of the body, 140 high, with the legend under it. The dots are
+// between LINE_LEFT and LINE_RIGHT: a numbered dot is 60 wide, and today's dot is 44.
+const TRACK = { y: 96, height: 140, left: 32, right: 1064, dot: 30, today: 22 };
+const LABEL_Y = 50;
+const LABEL_GAP = 16;
 
-// Neighbouring dots are at least this far apart. The text of one dot is on one side of the line and the
-// text of the next on the other, so two on the same side are twice as far apart, enough for 9 letters.
-const MIN_GAP = 120;
-const NAME_FITS = 9;
-
-// Where the text goes: the days next to the line and the name beyond them. Above the line for the
-// dots 0, 2, 4 and so on (today is 0), and below it for the others.
-const above = { near: 206, far: 154, stemFrom: 238, stemTo: 218 };
-const below = { near: 336, far: 388, stemFrom: 274, stemTo: 294 };
+// Neighbouring dots are at least this far apart, which leaves 16 between two numbered dots
+const MIN_GAP = 76;
 
 // The horizontal place of each dot, from the days left to each. The first is today, at the left end.
 // A dot is as far along the line as its date is along the season, but never closer than MIN_GAP to the
 // one before it. When that pushes the last dot past the right end, the dots are pulled back from the right.
 export function dotPositions(days) {
   const furthest = Math.max(1, ...days);
-  const places = days.map(day => LINE_LEFT + (day / furthest) * (LINE_RIGHT - LINE_LEFT));
+  const places = days.map(day => TRACK.left + (day / furthest) * (TRACK.right - TRACK.left));
 
   for (let index = 1; index < places.length; index++) {
     places[index] = Math.max(places[index], places[index - 1] + MIN_GAP);
   }
-  if (places.length > 1 && places[places.length - 1] > LINE_RIGHT) {
-    places[places.length - 1] = LINE_RIGHT;
+  if (places.length > 1 && places[places.length - 1] > TRACK.right) {
+    places[places.length - 1] = TRACK.right;
     for (let index = places.length - 2; index >= 0; index--) {
       places[index] = Math.min(places[index], places[index + 1] - MIN_GAP);
     }
@@ -42,41 +39,69 @@ export function dotPositions(days) {
   return places.map(place => Math.round(place));
 }
 
-function daysLabel(marker) {
+// What the legend says at the right of a row: NOW while the event is on, TODAY on the day, otherwise the days left
+export function daysLabel(marker) {
   if (marker.now) return 'NOW';
   return marker.days === 0 ? 'TODAY' : daysText(marker.days);
 }
 
-// Today first, then the coming dates. A dot has the days text next to the line and the name beyond it.
-function dotsFor(markers, today) {
-  const dots = [{ kind: 'today', days: 0, big: 'TODAY', small: shortDate(today) }];
-  markers.forEach(marker => dots.push({ kind: marker.kind, days: marker.days, big: daysLabel(marker), small: cut(marker.label, NAME_FITS), now: marker.now }));
-  return dots;
+// The second line of a row of the legend: the city and the day, or only the day for a date with no city
+function whereText(marker) {
+  const day = shortDate(marker.date);
+  return marker.city ? marker.city + ' · ' + day : day;
 }
 
-function chart(markers, today) {
-  const dots = dotsFor(markers, today);
-  const places = dotPositions(dots.map(dot => dot.days));
-  const parts = [`<line class="axis" x1="${LINE_LEFT}" y1="${LINE_Y}" x2="${places[places.length - 1]}" y2="${LINE_Y}"/>`];
+// The place of the label of the countdown over its dot. It is centred on the dot, kept inside the body
+// and clear of TODAY, which is at the left end. The left end of the text.
+export function labelLeft(center, width, todayRight) {
+  const centred = center - width / 2;
+  return Math.round(Math.max(Math.min(centred, bodySize.width - width), todayRight + LABEL_GAP));
+}
 
-  dots.forEach((dot, index) => {
-    const side = index % 2 === 0 ? above : below;
-    const on = dot.now ? ' on' : '';
+// The dots and the line, as an SVG the width of the body. markers are the ones that get a dot, at most six.
+function trackMarkup(markers, today) {
+  const places = dotPositions([0].concat(markers.map(marker => marker.days)));
+  const parts = [`<line class="axis" x1="${places[0]}" y1="${TRACK.y}" x2="${places[places.length - 1]}" y2="${TRACK.y}"/>`];
+  const todayWidth = textWidth('TODAY', 700, 44);
 
-    parts.push(`<line class="stem" x1="${places[index]}" y1="${side.stemFrom}" x2="${places[index]}" y2="${side.stemTo}"/>`);
-    parts.push(`<circle class="dot dot-${dot.kind}${on}" cx="${places[index]}" cy="${LINE_Y}" r="14"/>`);
-    parts.push(textAt(places[index], side.near, dot.big, 'days', 'middle'));
-    if (dot.small) parts.push(textAt(places[index], side.far, dot.small, 'name', 'middle'));
+  parts.push(`<circle class="dot dot-today" cx="${places[0]}" cy="${TRACK.y}" r="${TRACK.today}"/>`);
+  parts.push(textAt(0, LABEL_Y, 'TODAY', 'label'));
+
+  markers.forEach((marker, index) => {
+    const x = places[index + 1];
+    const on = marker.now ? ' on' : '';
+
+    parts.push(`<circle class="dot dot-${marker.kind}${on}" cx="${x}" cy="${TRACK.y}" r="${TRACK.dot}"/>`);
+    parts.push(textAt(x, TRACK.y + 15, String(index + 1), 'number', 'middle'));
+
+    if (marker.kind === 'countdown') {
+      const width = textWidth(marker.name, 700, 44);
+      parts.push(textAt(labelLeft(x, width, todayWidth), LABEL_Y, marker.name, 'label'));
+    }
   });
 
-  return chartMarkup('The season timeline: ' + dots.map(dot => dot.big + (dot.small ? ' ' + dot.small : '')).join(', '), parts);
+  const description = 'The season timeline from ' + shortDate(today) + ': ' + markers.map((marker, index) => (index + 1) + ' ' + marker.name + ' ' + shortDate(marker.date)).join(', ');
+  return `<svg class="chart" width="${bodySize.width}" height="${TRACK.height}" viewBox="0 0 ${bodySize.width} ${TRACK.height}" role="img" aria-label="${escapeHtml(description)}">${parts.join('')}</svg>`;
+}
+
+// A row of the legend: the number of its dot, the name of the event on one line, the city and the day, and the days left
+function entryMarkup(marker, index) {
+  return `<div class="entry"><span class="entry-number">${index + 1}</span><span class="event">${escapeHtml(marker.name)}</span><span class="where">${escapeHtml(whereText(marker))}</span><span class="days">${daysLabel(marker)}</span></div>`;
+}
+
+function moreMarkup(extra) {
+  if (extra === 0) return '';
+  return `<div class="more">+${extra} more ${extra === 1 ? 'event' : 'events'}</div>`;
 }
 
 // The page as markup, for the time given. now is a Date.
 export function markupFor(content, now) {
   const state = cardState(content, now);
-  const markers = state.entry ? timelineMarkers(content, state.entry, now) : [];
-  const inner = markers.length === 0 ? emptyMarkup('No dates are coming up yet.') : chart(markers, state.today);
+  const markers = state.entry ? timelineMarkers(content, state.entry, now, Infinity) : [];
+  const shown = markers.slice(0, timelineDates);
+  const inner = markers.length === 0
+    ? emptyMarkup('No dates are coming up yet.')
+    : trackMarkup(shown, state.today) + `<div class="legend">${shown.map(entryMarkup).join('')}</div>` + moreMarkup(markers.length - shown.length);
 
   return pageMarkup('competition-timeline', 'SEASON', tagTextFor(state.frc, now), inner);
 }

@@ -364,8 +364,11 @@ editors can sign in from anywhere.
                               44px or runs out of its body, and the guard of Preview competition
       test-monday-cards.mjs   checks for the Monday cards (core/monday.js and the panels in panels/monday-*): the
                               ranking, Show on TV off, the weeks around a Monday and
-                              the time zone, six rows and +N more, the line of at most 12 points, the sentences with
+                              the time zone, five rows and +N more, the line of at most 12 points, the sentences with
                               nothing to show, that no text is under 44px but the sizes the order sets, and that a team has the cards only with board tasks
+      test-season-timeline.mjs  checks for the season timeline card: the names of the events (the short name, without a year),
+                              the numbered dots, TODAY and the countdown on the line, the legend of six rows, +N more events, and
+                              that it fits its body
       test-monday-rows.mjs    checks for the rows of the tasks card and the cards of both teams: the mix of ten rows, the page marker
                               and the scroll (frame.js and core/schedule.js with stand-ins), the pass of both teams in the look
                               rotation, the words beside the chip in a header, the names of a team (core/team-title.js)

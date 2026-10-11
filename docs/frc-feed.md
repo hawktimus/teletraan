@@ -43,10 +43,10 @@ One document in Sanity with the fixed id `frc-status` and the type `frcStatus`.
   or nothing) and `notes` (things that are not errors, such as Statbotics being
   skipped)
 - `districtEvents`: the district's events, with `championship` true on the
-  district championship
+  district championship, and the `shortName` of each when The Blue Alliance has one
 - `teams`, one for each team that was read:
   - `team` (the team's code), `number`, `key`
-  - `events`: key, name, city, start and end date, the rank, number of teams
+  - `events`: key, name, `shortName` (when The Blue Alliance has one), city, start and end date, the rank, number of teams
     ranked, matches played, record and ranking points the team had there, and the
     team's rating (`epa`) while the event was on. The rating is read while the event
     is on, kept after it, and empty before it starts
@@ -205,7 +205,7 @@ left out, and a sentence says so.
 
 | Card | Header | What it shows | When it comes in Auto |
 |------|--------|---------------|-----------------------|
-| Season timeline | SEASON | A line from today to the last coming date. The dates are the next date of the countdown (Kickoff, then Rollout), each event of the team that is not over, and the state championship, each a dot with the days left. | All season, while there is a date ahead. |
+| Season timeline | SEASON | A line from today to the last coming date, with a numbered dot for each date, and a legend under it with a row for each dot. The dates are the next date of the countdown (Kickoff, then Rollout), each event of the team that is not over, and the state championship. | All season, while there is a date ahead. |
 | Last season at a glance | the year, such as 2026 | The record of the whole season, the rank at each event, and the EPA after each event as a short line. | Before the first event of the season starts, when the Mini has kept last season. |
 | Live rank | RANK | The rank as the biggest number, how many teams are ranked, the record and the ranking points. | From two days before an event to its last day. |
 | Next match | MATCH | The match and its time, the three teams on each alliance with their EPA, which side the team is on, and the chance that red wins as one bar split red and blue. | The same days, and it comes first. |
@@ -215,7 +215,16 @@ left out, and a sentence says so.
 
 The days of an event are in the time zone on the Look page, from the first day to
 the last day. The state championship is on the timeline when the district list
-has it. The district points card shows no bar until `district_slots` is set (see
+has it.
+
+**The season timeline.** The line has a dot for today at the left, with TODAY over it, and a dot with a number for
+each date, six at the most, in the order of their dates. The label of the countdown (KICKOFF or ROLLOUT) is over its
+dot. There is no other text on the line. Under it is a legend with a row for each dot, up to six: the number, the name
+of the event on one line at 44px, cut off with an ellipsis if it is too long, the city and the day at 36px in the muted color, and the
+days left at the right in the accent (NOW while the event is on). With more than six dates the card says how many are left out, such as +2
+more events. The name of an event is the `short_name` that The Blue Alliance gives it when it has one and its `name` when it has
+none, with a year at the front taken off. The Mini reads the full event lists (`/team/{team}/events/{year}` and
+`/district/{district}/events`) and not the simple ones, because only the full event has `short_name`. The district points card shows no bar until `district_slots` is set (see
 "The district cutoff"), and says so.
 
 A header can say more. Sample data says SAMPLE. Data the Mini wrote more than 2

@@ -364,9 +364,9 @@ capitals, or it is on no card. The sync matches the board's team column, or its 
 
 ### Milestones card
 
-A row for each Team lead entry that has a task with a due date that is not done, and a column each for This week, Next week
-and Later. A week is Monday to Sunday. A late task is in This week, with its date in red. Each cell shows the task due
-soonest in its week. At most six rows show, and +N more says how many entries did not fit.
+A row for each Team lead entry that has a task with a due date that is not done, and a column each for This week and Next. A week is Monday to
+Sunday. A late task is in This week, with its date in red. Each cell shows the task due soonest in its week, with its date under it. A chip at the
+end of the row counts the tasks due later, such as +3 later. At most five rows show, and +N more says how many entries did not fit.
 
 ### Progress card
 

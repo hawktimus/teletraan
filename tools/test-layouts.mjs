@@ -2607,8 +2607,8 @@ test('every literal text size under 44 px in the dashboard stylesheets is on a l
     { file: war, selector: 'html[data-layout="bar"] .war-days-group .days-word', size: 24 }, // DAYS
     { file: war, selector: 'html[data-layout="bar"] .war-cell .unit', size: 20 }, // HRS, MIN and SEC
   ];
-  // and the sizes the order sets for the Monday cards (mondaySmall, below)
-  allowed.push.apply(allowed, mondaySmall.map(item => ({ file: 'dashboard/' + item.file, selector: item.selector, size: item.size })));
+  // and the sizes the order sets for the Monday cards and the season timeline (orderSmall, below)
+  allowed.push.apply(allowed, orderSmall.map(item => ({ file: 'dashboard/' + item.file, selector: item.selector, size: item.size })));
   const order = list => list.map(item => item.file + ' ' + item.selector + ' ' + item.size).sort();
   assert.deepEqual(order(found), order(allowed));
 });
@@ -2759,15 +2759,20 @@ const warLabels = [
 ];
 const smallTextOf = { original: [plateId], cybertron: [plateId], minimal: [plateId].concat(warLabels) };
 
-// The Monday cards have the sizes under 44 px that the order for them sets, in every style: the status of a row at 30 (a
-// colored label), the first name of the owner at 40, and the labels of the numbers and of a department at 36
-const mondaySmall = [
+// The Monday cards and the season timeline have the sizes under 44 px that the order for them sets, in every style: the
+// status of a row at 30 (a colored label), the first name of the owner at 40, the labels of the numbers and of a department
+// at 36, the city and the day in a row of the timeline's legend at 36, and the department and the date in a row of the
+// milestones card at 36
+const orderSmall = [
   { file: 'monday.css', selector: '.monday .department', size: 36 },
   { file: 'panels/monday-tasks/monday-tasks.css', selector: '.monday-tasks .status', size: 30 },
   { file: 'panels/monday-tasks/monday-tasks.css', selector: '.monday-tasks .owner', size: 40 },
   { file: 'panels/monday-tasks/monday-tasks.css', selector: '.monday-tasks .fact-label', size: 36 },
+  { file: 'panels/competition-timeline/competition-timeline.css', selector: '.competition-timeline .where', size: 36 },
+  { file: 'panels/monday-milestones/monday-milestones.css', selector: '.monday-milestones .milestone-lead', size: 36 },
+  { file: 'panels/monday-milestones/monday-milestones.css', selector: '.monday-milestones .cell-date', size: 36 },
 ];
-Object.keys(smallTextOf).forEach(style => { smallTextOf[style] = smallTextOf[style].concat(mondaySmall); });
+Object.keys(smallTextOf).forEach(style => { smallTextOf[style] = smallTextOf[style].concat(orderSmall); });
 
 function checkStylesheetsOf(style) {
   const sheets = stylesheetsOf(style);

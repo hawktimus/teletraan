@@ -252,7 +252,7 @@
     "lastSyncAt": "2027-03-12T15:00:00Z",
     "notes": [],
     "districtEvents": [
-      { "key": "2027ncsa1", "name": "[District event one]", "city": "[City A]", "startDate": "2027-03-11", "endDate": "2027-03-13" },
+      { "key": "2027ncsa1", "name": "[District event one]", "shortName": "[Event one]", "city": "[City A]", "startDate": "2027-03-11", "endDate": "2027-03-13" },
       { "key": "2027ncsa2", "name": "[District event two]", "city": "[City B]", "startDate": "2027-04-01", "endDate": "2027-04-03" },
       { "key": "2027nccmp", "name": "[State championship]", "city": "[City C]", "startDate": "2027-04-14", "endDate": "2027-04-17", "championship": true }
     ],
@@ -260,7 +260,7 @@
       {
         "team": "prime", "number": 3229,
         "events": [
-          { "key": "2027ncsa1", "name": "[District event one]", "city": "[City A]", "startDate": "2027-03-11", "endDate": "2027-03-13", "rank": 4, "teamsRanked": 36, "matchesPlayed": 12, "record": { "wins": 8, "losses": 4, "ties": 0 }, "rankingPoints": 2.1, "epa": 31.2 },
+          { "key": "2027ncsa1", "name": "[District event one]", "shortName": "[Event one]", "city": "[City A]", "startDate": "2027-03-11", "endDate": "2027-03-13", "rank": 4, "teamsRanked": 36, "matchesPlayed": 12, "record": { "wins": 8, "losses": 4, "ties": 0 }, "rankingPoints": 2.1, "epa": 31.2 },
           { "key": "2027ncsa2", "name": "[District event two]", "city": "[City B]", "startDate": "2027-04-01", "endDate": "2027-04-03" }
         ],
         "focusEvent": "2027ncsa1",
@@ -316,7 +316,7 @@
       {
         "team": "nova", "number": 3230,
         "events": [
-          { "key": "2027ncsa1", "name": "[District event one]", "city": "[City A]", "startDate": "2027-03-11", "endDate": "2027-03-13", "rank": 11, "teamsRanked": 36, "matchesPlayed": 12, "record": { "wins": 6, "losses": 6, "ties": 0 }, "rankingPoints": 1.6, "epa": 22.7 }
+          { "key": "2027ncsa1", "name": "[District event one]", "shortName": "[Event one]", "city": "[City A]", "startDate": "2027-03-11", "endDate": "2027-03-13", "rank": 11, "teamsRanked": 36, "matchesPlayed": 12, "record": { "wins": 6, "losses": 6, "ties": 0 }, "rankingPoints": 1.6, "epa": 22.7 }
         ],
         "focusEvent": "2027ncsa1",
         "nextMatch": {

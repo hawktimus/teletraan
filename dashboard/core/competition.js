@@ -23,12 +23,12 @@
 // again every time).
 
 import { competitionLeadDays, competitionModes, competitionPreviewSeconds, defaultSettings, defaultThemeSettings } from '../config.js';
-import { addDays, daysFromTo, teamEntry } from './frc.js';
+import { addDays, daysFromTo, eventName, teamEntry } from './frc.js';
 import { dateIn, isTimeZone } from './theme.js';
 import { parseLocalDateTime } from './time.js';
 
-// The most dates the season timeline draws, not counting today. They are 120 px apart at least.
-export const timelineDates = 7;
+// The most dates the season timeline draws as dots, not counting today. The card says how many more there are.
+export const timelineDates = 6;
 
 // What a card needs to be due. window says whether its time has come, and data whether it has
 // something to show. They are given the facts of the team on the screen (competitionPlan below).
@@ -123,8 +123,10 @@ export function countdownMarker(settings, zone, today) {
 
 // The dates the timeline draws, earliest first: the countdown date, each of the team's events that
 // is not over, and the state championship. An event that is on has days of 0 and now true. At most
-// timelineDates of them.
-export function timelineMarkers(content, entry, now = new Date()) {
+// limit of them, timelineDates to start with. A marker has the kind, the label the old line wrote (the
+// city of an event), the name and the city for the legend of the card, the date, the days left and whether
+// it is on now.
+export function timelineMarkers(content, entry, now = new Date(), limit = timelineDates) {
   const frc = frcOf(content, now);
   const settings = content && content.settings ? content.settings : defaultSettings;
   const zone = zoneOf(content);
@@ -132,20 +134,20 @@ export function timelineMarkers(content, entry, now = new Date()) {
   const markers = [];
 
   const countdown = countdownMarker(settings.countdown || {}, zone, today);
-  if (countdown) markers.push(countdown);
+  if (countdown) markers.push(Object.assign({ name: countdown.label, city: '' }, countdown));
 
   entry.events.filter(event => endOf(event) >= today).forEach(event => {
-    markers.push({ kind: 'event', label: event.city || event.name, date: event.startDate, days: Math.max(0, daysFromTo(today, event.startDate)), now: event.startDate <= today, key: event.key });
+    markers.push({ kind: 'event', label: event.city || event.name, name: eventName(event), city: event.city, date: event.startDate, days: Math.max(0, daysFromTo(today, event.startDate)), now: event.startDate <= today, key: event.key });
   });
 
   // The state championship, unless it is one of the team's own events
   const championship = (frc && Array.isArray(frc.districtEvents) ? frc.districtEvents : [])
     .filter(event => event.championship && endOf(event) >= today && !markers.some(marker => marker.key !== '' && marker.key === event.key))[0];
   if (championship) {
-    markers.push({ kind: 'state', label: 'STATE', date: championship.startDate, days: Math.max(0, daysFromTo(today, championship.startDate)), now: championship.startDate <= today, key: championship.key });
+    markers.push({ kind: 'state', label: 'STATE', name: eventName(championship) || 'STATE CHAMPIONSHIP', city: championship.city, date: championship.startDate, days: Math.max(0, daysFromTo(today, championship.startDate)), now: championship.startDate <= today, key: championship.key });
   }
 
-  return markers.sort((first, second) => (first.date < second.date ? -1 : first.date > second.date ? 1 : 0)).slice(0, timelineDates);
+  return markers.sort((first, second) => (first.date < second.date ? -1 : first.date > second.date ? 1 : 0)).slice(0, limit);
 }
 
 // The plan

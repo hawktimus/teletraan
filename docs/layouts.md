@@ -1214,13 +1214,14 @@ at the most make two pages, which is all the marker has room for.
 
 ### The milestones card
 
-A row for each Team lead entry that has an open task with a due date, and three columns, This
-week, Next week and Later. Only a task whose status is not done and that has a due date counts. A week is Monday to Sunday,
-and the day today is the date in the time zone of the Look page, so the week turns over at midnight there and not by the
-clock of the computer. A due date before this week is in This week, so a task that is late is not lost, and its date is
-drawn in red. A cell shows the task of the entry that is due soonest in that week, with its date, and the other tasks of the
-week are not drawn. There are six rows at most, in the order of the Team leads list, and `+N more` says how many entries
-did not fit. An entry with nothing due has no row, so it does not use one of the six.
+A row for each Team lead entry that has an open task with a due date, and two columns, This week and Next. Only a task from the board whose status
+is not done and that has a due date counts. A week is Monday to Sunday, and the day today is the date in the time zone of the Look page, so the
+week turns over at midnight there and not by the clock of the computer. A due date before this week is in This week, so a task that is late is not
+lost, and its date is drawn in red. A cell shows the task of the entry that is due soonest in that week: the title on one line at 44 px, cut off
+with an ellipsis, and the date under it at 36 px. The other tasks of the week are not drawn. A chip at the end of the row counts the tasks that are
+due after next week, such as +3 later, and a row with nothing due later has no chip. A row is 84 px: the department in 36 px letters in 330 px, two
+cells and 230 px for the chip, so PROGRAMMING and ELECTRICAL fit. There are five rows at most, in the order of the Team leads list, and `+N more` says
+how many entries did not fit. An entry with nothing due has no row, so it does not use one of the five.
 
 ### The progress card
 

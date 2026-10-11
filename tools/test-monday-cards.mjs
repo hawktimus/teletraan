@@ -395,31 +395,40 @@ test('the time zone says which day it is, so the week turns over at midnight the
   assert.equal(settle('Nowhere/Land').today, '2026-10-11', 'a zone that is not one is the Look page default');
 });
 
-test('a row has the soonest open task of the lead in each week, and tasks that are done or have no due date are not in it', () => {
+test('a row has the soonest open task of the lead in this week and the next, a count of the tasks due later, and tasks that are done or have no due date are not in it', () => {
   const content = contentOf([
     board({ title: 'this late', dueDate: '2026-10-16' }),
     board({ title: 'this soon', dueDate: '2026-10-13', priority: 'low' }),
     board({ title: 'next', dueDate: '2026-10-22' }),
     board({ title: 'later', dueDate: '2026-12-01' }),
     board({ title: 'later too', dueDate: '2026-11-01' }),
+    board({ title: 'later still', dueDate: '2027-01-01' }),
     board({ title: 'done', status: 'done', dueDate: '2026-10-12' }),
     board({ title: 'no date' }),
     board({ title: 'other lead', subteam: '[Subteam B]', dueDate: '2026-10-30' }),
     board({ title: 'hidden', dueDate: '2026-10-12', showOnTv: false }),
+    { title: 'pinned', subteam: '[Subteam A]', status: 'up-next', dueDate: '2026-10-12' },
   ]);
   const found = panels.milestones.milestonesFor(content, monday12);
 
   assert.equal(found.today, '2026-10-12');
   assert.deepEqual(found.rows.map(row => row.name), ['[Subteam A]', '[Subteam B]']);
-  assert.deepEqual(found.rows[0].cells.map(cell => cell && cell.title), ['this soon', 'next', 'later too']);
-  assert.deepEqual(found.rows[1].cells.map(cell => cell && cell.title), [null, null, 'other lead']);
+  assert.deepEqual(found.rows[0].cells.map(cell => cell && cell.title), ['this soon', 'next']);
+  assert.equal(found.rows[0].later, 3, 'the three tasks that are due after next week');
+  assert.deepEqual(found.rows[1].cells, [null, null]);
+  assert.equal(found.rows[1].later, 1, 'a lead with only a later task has a row');
   assert.equal(found.more, 0);
 
   const html = panels.milestones.markupFor(content, monday12);
-  assert.deepEqual(['THIS WEEK', 'NEXT WEEK', 'LATER'].map(label => html.includes('<div class="week-head">' + label + '</div>')), [true, true, true]);
+  assert.deepEqual(['THIS WEEK', 'NEXT'].map(label => html.includes('<div class="week-head">' + label + '</div>')), [true, true]);
+  assert.equal(html.includes('LATER'), false, 'there is no column for later, only the chip');
   assert.ok(html.includes('<span class="cell-title">this soon</span><span class="cell-date">OCT 13</span>'));
-  assert.equal(countOf(html, 'cell-empty'), 2);
-  ['done', 'no date', 'hidden', 'this late'].forEach(title => assert.equal(html.includes('>' + title + '<'), false, title));
+  assert.ok(html.includes('<span class="later-chip">+3 later</span>') && html.includes('<span class="later-chip">+1 later</span>'));
+  assert.equal(countOf(html, 'cell-empty'), 2, 'the two cells of the second lead, and the heading row has none');
+  ['done', 'no date', 'hidden', 'this late', 'pinned'].forEach(title => assert.equal(html.includes('>' + title + '<'), false, title));
+
+  const none = panels.milestones.markupFor(contentOf([board({ title: 'a', dueDate: '2026-10-13' })]), monday12);
+  assert.equal(none.includes('later-chip'), false, 'no chip when nothing is due later');
 });
 
 test('a task that is already late is in this week, with its date marked late', () => {
@@ -429,25 +438,25 @@ test('a task that is already late is in this week, with its date marked late', (
   assert.ok(html.includes('<span class="cell-title">on time</span><span class="cell-date">OCT 14</span>'));
 });
 
-test('the card has six rows at most, and +N MORE says how many lead entries did not fit', () => {
+test('the card has five rows at most, and +N MORE says how many lead entries did not fit', () => {
   const names = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map(letter => '[Lead ' + letter + ']');
   const content = count => contentOf(names.slice(0, count).map((name, index) => board({ title: 'task ' + index, subteam: name, dueDate: '2026-10-14' })), names);
 
-  assert.equal(panels.milestones.mostRows, 6);
+  assert.equal(panels.milestones.mostRows, 5);
   const eight = panels.milestones.milestonesFor(content(8), monday12);
-  assert.deepEqual([eight.rows.length, eight.more], [6, 2]);
-  assert.deepEqual(eight.rows.map(row => row.name), names.slice(0, 6), 'the first six in the order of the Team leads list');
-  assert.ok(panels.milestones.markupFor(content(8), monday12).includes('<div class="more">+2 MORE</div>'));
+  assert.deepEqual([eight.rows.length, eight.more], [5, 3]);
+  assert.deepEqual(eight.rows.map(row => row.name), names.slice(0, 5), 'the first five in the order of the Team leads list');
+  assert.ok(panels.milestones.markupFor(content(8), monday12).includes('<div class="more">+3 MORE</div>'));
 
-  const seven = panels.milestones.markupFor(content(7), monday12);
-  assert.ok(seven.includes('+1 MORE'));
   const six = panels.milestones.markupFor(content(6), monday12);
-  assert.equal(six.includes('MORE'), false, 'six fit, so there is nothing more');
-  assert.equal(countOf(six, 'class="milestone-row"'), 7, 'the heading row and six rows');
+  assert.ok(six.includes('+1 MORE'));
+  const five = panels.milestones.markupFor(content(5), monday12);
+  assert.equal(five.includes('MORE'), false, 'five fit, so there is nothing more');
+  assert.equal(countOf(five, 'class="milestone-row"'), 6, 'the heading row and five rows');
 });
 
-test('a lead entry with nothing due is not a row, so it does not use one of the six', () => {
-  const names = ['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(letter => '[Lead ' + letter + ']');
+test('a lead entry with nothing due is not a row, so it does not use one of the five', () => {
+  const names = ['A', 'B', 'C', 'D', 'E', 'F'].map(letter => '[Lead ' + letter + ']');
   const tasks = names.map((name, index) => board({ title: 'task ' + index, subteam: name, dueDate: index === 0 ? '' : '2026-10-14' }));
   const found = panels.milestones.milestonesFor(contentOf(tasks, names), monday12);
 
@@ -725,8 +734,9 @@ function fontOf(rule) {
 const pixels = (rule, property) => Number(new RegExp('(?:^|[;\\s])' + property + ':\\s*(\\d+)px').exec(rule)[1]);
 
 // The sizes under 44px that the order for the Monday cards sets, and only these. The status of a row is a colored
-// label and not text to read, the first name of the owner is 40, and the labels of the numbers and of a department are 36.
-const smaller = { '.monday-tasks .status': 30, '.monday-tasks .owner': 40, '.monday-tasks .fact-label': 36, '.monday .department': 36 };
+// label and not text to read, the first name of the owner is 40, and the labels of the numbers and of a department are 36. The date
+// in a cell of the milestones card is 36 as well, muted like the date of a legend row of the season timeline.
+const smaller = { '.monday-tasks .status': 30, '.monday-tasks .owner': 40, '.monday-tasks .fact-label': 36, '.monday .department': 36, '.monday-milestones .milestone-lead': 36, '.monday-milestones .cell-date': 36 };
 
 test('nothing on a card is smaller than 44px except the sizes the order sets, no line is thinner than 3px, and the stylesheets have no animation, blur or shadow', () => {
   assert.equal(tokens['size-label'], 44);
@@ -815,19 +825,33 @@ test('the tasks card fits the large panel: five rows of 84 and the numbers insid
   assert.ok(pixels(body, 'top') + 5 * row <= bottom - markerHeight, 'and under the rows');
 });
 
-test('the milestones card fits its body: the heading row, six rows of 72 and the line that says how many more', () => {
+test('the milestones card fits its body: the heading row, five rows of 84, the cells and the chip in a row, and the line that says how many more', async () => {
   const rules = rulesOf(read('panels/monday-milestones/monday-milestones.css'));
   const body = rulesOf(read('monday.css'))['.monday .body'];
+  const { textWidth } = await import(base + 'core/text-width.js');
   const row = pixels(rules['.monday-milestones .milestone-row'], 'height');
   const head = pixels(rules['.monday-milestones .milestone-row:first-child'], 'height');
 
-  assert.equal(row, 72);
-  assert.ok(head + 6 * row <= pixels(rules['.monday-milestones .more'], 'top'), 'the line for more is under the sixth row');
+  assert.equal(row, 84);
+  assert.equal(panels.milestones.mostRows, 5);
+  assert.ok(head + 5 * row <= pixels(rules['.monday-milestones .more'], 'top'), 'the line for more is under the fifth row');
   assert.ok(pixels(rules['.monday-milestones .more'], 'top') + fontOf(rules['.monday-milestones .more']).line <= pixels(body, 'height'));
   assert.ok(pixels(rules['.monday-milestones .cell'], 'height') <= row);
-  assert.equal(/grid-template-columns:\s*190px repeat\(3, minmax\(0, 1fr\)\)/.test(rules['.monday-milestones .milestone-row']), true);
-  assert.ok(190 + 3 * 8 + 3 * 290 <= pixels(body, 'width'), 'the name column, the gaps and the three weeks fit the body');
-  assert.equal(panels.milestones.mostRows * row + head + 48 <= pixels(body, 'height'), true);
+  assert.equal(pixels(rules['.monday-milestones .cell'], 'height'), fontOf(rules['.monday-milestones .cell-title']).line + fontOf(rules['.monday-milestones .cell-date']).line, 'the title and the date fill the cell');
+  assert.equal(fontOf(rules['.monday-milestones .cell-title']).size, 44, 'the title is one line of 44px');
+  assert.equal(fontOf(rules['.monday-milestones .milestone-lead']).size, 36);
+
+  // the columns: 330 for the department, two cells, 230 for the chip, with 12 between the four
+  const columns = /grid-template-columns:\s*(\d+)px repeat\(2, minmax\(0, 1fr\)\) (\d+)px/.exec(rules['.monday-milestones .milestone-row']);
+  const gap = pixels(rules['.monday-milestones .milestone-row'], 'column-gap');
+  assert.deepEqual([Number(columns[1]), Number(columns[2]), gap], [330, 230, 12]);
+  const cell = (pixels(body, 'width') - 330 - 230 - 3 * gap) / 2;
+  assert.equal(cell, 254);
+  assert.ok(330 >= textWidth('PROGRAMMING', 700, 36) + 8 && 330 >= textWidth('ELECTRICAL', 700, 36) + 8, 'PROGRAMMING and ELECTRICAL fit the department column without an ellipsis');
+  // lower case is not in the table of text-width.js, so the word later is counted as 2.5 times its size, which is wider than it is
+  assert.ok(230 >= 6 + 16 + textWidth('+3 ', 600, 44) + 2.5 * 44, '+3 later fits the chip column');
+  assert.ok(textWidth('THIS WEEK', 600, 44) <= cell, 'THIS WEEK fits its column');
+  assert.ok(pixels(body, 'left') + pixels(body, 'width') <= 1148);
 });
 
 test('the text of the progress card stays inside its body and does not run into the text beside it, even with the longest names', () => {
@@ -936,7 +960,7 @@ test('the docs say what each card shows, where the code is, and what the rotatio
   const where = fs.readFileSync(path.join(docsFolder, 'where-things-are.md'), 'utf8').replace(/\s+/g, ' ');
 
   assert.ok(layouts.includes('## The Monday cards'));
-  ['monday-tasks', 'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both', 'core/monday.js', 'BUILD TEAM', 'BOTH TEAMS', 'This week', 'Next week', 'Later', '+N more', 'items left', 'mondayCards', 'bothCards', 'Monday to Sunday', 'two cards', 'showOnTv', 'scrollPages', 'scrollCard'].forEach(word => assert.ok(layouts.includes(word), 'layouts.md names ' + word));
+  ['monday-tasks', 'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both', 'core/monday.js', 'BUILD TEAM', 'BOTH TEAMS', 'This week', '+3 later', '+N more', 'items left', 'mondayCards', 'bothCards', 'Monday to Sunday', 'two cards', 'showOnTv', 'scrollPages', 'scrollCard'].forEach(word => assert.ok(layouts.includes(word), 'layouts.md names ' + word));
   assert.equal(layouts.includes('There are no Monday cards yet'), false, 'the old sentence that said there were none is gone');
   assert.ok(editing.includes('## The Monday cards'));
   ['Tasks card', 'Milestones card', 'Progress card', 'Show on TV', 'Panel order', 'Monday pass'].forEach(word => assert.ok(editing.includes(word), 'editing-content.md names ' + word));
