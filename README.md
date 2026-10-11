@@ -14,18 +14,18 @@ For adjusting the content that gets displayed, Sanity will be used.
 
 Almost everything on the screen is typed into the Studio, which is the editing page for the dashboard. Open it at [Studio address] and sign in.
 
-The list on the left is what you can change. It opens with Start here and has four groups. A name in capitals is a heading, and Daily Agenda, Tasks and Settings are folders:
+The list on the left is what you can change. It opens with Start here and has four groups. A name in capitals is a heading, and Daily Agenda, Monday Tasks and Settings are folders:
 
     Start here
-    EVERY MEETING
+    TASKS
       Daily Agenda
         Agenda items
         Presentations (Upcoming, Past)
         Meeting days
-      Tasks
-        Pinned
-        From the board
+      Monday Tasks
+        On the TV
         Hidden
+      Monday Boards
       Tips and News
     EVENTS
       Calendars
@@ -68,7 +68,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - Team name, number, and school, with the animated hawk logo
 - Date, time, and weather for Holly Springs
 - Countdown timer to FRC Kickoff (January 9, 2027), then to Rollout
-- Team tasks, each with an optional point of contact, a place, picked in the Location field of the task, where Create new adds one, and a priority. A Show on TV switch keeps a task off the screen, and pinned tasks come before tasks from the team board
+- Team tasks, which the Mini makes from the team's Monday boards, each with an optional point of contact, a priority and a due date. A Show on TV switch keeps a task off the screen, and a task typed by hand is never shown
 - The Daily Agenda panel, headed AGENDA: the schedule for today's meeting, with the talks booked for today
 - Upcoming events and the next event, from the team's BAND calendars, with Calendar filters that hide or keep events, such as a meeting that repeats every week. The Events panel has two pages of four, each event has a chip for the kind of its calendar, and a coach can pin an event to page one
 - Sponsors, with sponsor logos and thank-yous
@@ -97,7 +97,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - Mechanical page changes: the frame breaks into plates and bars that fold away and click back together around the next page, with screws that turn at the joints. Studio can use these, the slat flip, or take turns
 - Hidden transitions: now and then the screen glitches blue, comes apart and cuts to a blue error screen, or glitches red and shows two red eyes in the dark. Each ends with the frames falling into a pile and a cube putting them back. Each has two pictures that take turns. They can be played on request from Studio
 - Competition cards: the season timeline, last season at a glance, the live rank, the next match with the chance of winning, the last results, the alliance and the district points, from the public data of each team that the Mini reads. They come two days before an event and take priority during it, and a Preview competition button on Start here shows them on sample data (docs/frc-feed.md)
-- Monday boards: the Mini reads the boards named on the Monday tab of Dashboard Settings every 10 minutes and keeps their items in Sanity as tasks, with the status, priority, due date and, if the switch is on, the first name of the owner. The tasks are listed under Tasks, From the board, and Show on TV keeps one off the screen (docs/monday.md). A team that has such tasks on the TV ends its pass of the look rotation with three Monday cards: tasks by Team lead, milestones by week and progress over time (docs/layouts.md, "The Monday cards")
+- Monday boards: the Mini reads the boards named on the Monday tab of Dashboard Settings every 10 minutes and keeps their items in Sanity as tasks, with the status, priority, due date and, if the switch is on, the first name of the owner. The tasks are listed under Monday Tasks, On the TV, the boards are listed under Monday Boards, and Show on TV keeps one off the screen (docs/monday.md). A team that has such tasks on the TV ends its pass of the look rotation with three Monday cards: tasks by Team lead, milestones by week and progress over time (docs/layouts.md, "The Monday cards")
 - A Play announcements button in Studio that plays every announcement that is switched on, once, without waiting for its time
 - A Publish all tool in the Studio's top bar that publishes all the drafts you tick, checking each one first and skipping any that would fail
 - Presentations: a student books a short talk in a Google Form, and the talk appears in Studio. At its time the TV shows a title card, then the student's Google Slides one picture at a time, moved by a clicker, then a thank you card. The Mini turns each deck into pictures before the talk (docs/presentations.md)

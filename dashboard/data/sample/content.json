@@ -110,12 +110,12 @@
   },
 
   "tasks": [
-    { "title": "[Task in progress]", "subteam": "[Subteam A]", "status": "in-progress", "contact": "[Contact A]", "location": "[Place A]" },
-    { "title": "[Second task]", "subteam": "[Subteam C]", "status": "in-progress", "contact": "[Contact B]" },
-    { "title": "[Next task]", "subteam": "[Subteam B]", "status": "up-next", "location": "[Place B]" },
-    { "title": "[Queued task]", "subteam": "[Subteam E]", "status": "up-next" },
-    { "title": "[Finished task]", "subteam": "[Subteam D]", "status": "done" },
-    { "title": "[Second finished task]", "subteam": "[Subteam F]", "status": "done" },
+    { "title": "[Task in progress]", "subteam": "[Subteam A]", "status": "in-progress", "contact": "[Contact A]", "location": "[Place A]", "source": "monday", "mondayId": "[item 10]", "showOnTv": true },
+    { "title": "[Second task]", "subteam": "[Subteam C]", "status": "in-progress", "contact": "[Contact B]", "source": "monday", "mondayId": "[item 11]", "showOnTv": true },
+    { "title": "[Next task]", "subteam": "[Subteam B]", "status": "up-next", "location": "[Place B]", "source": "monday", "mondayId": "[item 12]", "showOnTv": true },
+    { "title": "[Queued task]", "subteam": "[Subteam E]", "status": "up-next", "source": "monday", "mondayId": "[item 13]", "showOnTv": true },
+    { "title": "[Finished task]", "subteam": "[Subteam D]", "status": "done", "source": "monday", "mondayId": "[item 14]", "showOnTv": true },
+    { "title": "[Second finished task]", "subteam": "[Subteam F]", "status": "done", "source": "monday", "mondayId": "[item 15]", "showOnTv": true },
     { "title": "[Order spare modules]", "subteam": "[Subteam A]", "status": "up-next", "team": "prime", "source": "monday", "mondayId": "[item 1]", "priority": "high", "dueDate": "2026-10-14", "contact": "[Contact A]", "showOnTv": true },
     { "title": "[Label the fasteners]", "subteam": "[Subteam A]", "status": "up-next", "team": "prime", "source": "monday", "mondayId": "[item 2]", "priority": "low", "dueDate": "2026-10-21", "contact": "[Contact B]", "showOnTv": true },
     { "title": "[Reattach drivetrain]", "subteam": "[Subteam A]", "status": "in-progress", "team": "prime", "source": "monday", "mondayId": "[item 3]", "priority": "high", "dueDate": "2026-10-08", "contact": "[Contact C]", "showOnTv": true },

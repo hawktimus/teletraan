@@ -11,7 +11,6 @@ export const addTemplates = [
   { id: 'newPlan', title: 'Agenda item', schemaType: 'plan', value: { show: true } },
   { id: 'newPresentation', title: 'Presentation', schemaType: 'presentation', value: { status: 'scheduled' } },
   { id: 'newPresentationDay', title: 'Meeting day', schemaType: 'presentationDay', value: { open: true } },
-  { id: 'pinnedTask', title: 'Pin a task', schemaType: 'task', value: { source: 'manual', showOnTv: true, show: true, status: 'up-next' } },
   { id: 'newTip', title: 'Tip', schemaType: 'tipOrNews', value: { kind: 'tip', show: true } },
   { id: 'newCalendarFilter', title: 'Calendar filter', schemaType: 'calendarFilter', value: { show: true } },
   { id: 'newPerson', title: 'Person', schemaType: 'person', value: { show: true } },

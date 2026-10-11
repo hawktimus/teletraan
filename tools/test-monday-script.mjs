@@ -293,10 +293,13 @@ function filesUnder(folder) {
 // due date and the owner. It has six items: three that the screen shows with
 // different statuses, one with a status that is none of the labels (it is Backlog),
 // one in a group that no Team lead has, and one with a title that is too long.
-// backlogLabel is still stored on an entry and the script ignores it.
+// backlogLabel is still stored on an entry and the script ignores it. The entry reads its status from
+// a column, which most of the tests below are about. The tests under "Group names" are about the
+// other choice.
 const boardEntry = {
   boardId: '111',
   team: 'team-prime',
+  statusFrom: 'column',
   statusColumn: 'status',
   backlogLabel: 'Backlog',
   progressLabel: 'Working on it',
@@ -361,6 +364,8 @@ function stored(id, fields) {
     1005: { title: 'Order the pizza', subteam: 'subteam-unmatched', team: 'team-prime', status: 'up-next', priority: null, dueDate: null, contact: null, show: true },
     1006: { title: 'Plan the whole season', subteam: 'subteam-build', team: 'team-prime', status: 'in-progress', priority: null, dueDate: null, contact: null, show: true },
   };
+  // every task already has the number and the name of its board, so that only a real change is written
+  Object.keys(known).forEach(number => Object.assign(known[number], { mondayBoardId: '111', mondayBoardName: '[Build board]' }));
   return Object.assign({ _id: 'task-monday-' + id }, known[id], fields || {});
 }
 
@@ -378,6 +383,7 @@ function world(place, options) {
     subteams: given.subteams || leads.concat(given.tasks ? [{ _id: 'subteam-unmatched', name: '[Unmatched]' }] : []),
     tasks: given.tasks || [],
     snapshots: given.snapshots === undefined ? null : given.snapshots,
+    readings: given.readings === undefined ? null : given.readings,
   });
   place.answer('boards', boardsAnswer());
   place.answer('me', { data: { me: { name: 'Jordan Example' } } });
@@ -478,24 +484,25 @@ test('a board with the mapped statuses and priorities: Working on it and Done be
   const patch = id => mutations.filter(mutation => mutation.patch && mutation.patch.id === id).map(mutation => mutation.patch)[0];
   const ref = id => ({ _type: 'reference', _ref: id });
 
+  const board = { mondayBoardId: '111', mondayBoardName: '[Build board]' };
   assert.deepEqual(patch('task-monday-1001'), {
     id: 'task-monday-1001',
-    set: { title: 'Wire the robot', subteam: ref('subteam-build'), team: ref('team-prime'), status: 'up-next', show: true, priority: 'high', dueDate: '2027-01-20' },
+    set: Object.assign({ title: 'Wire the robot', subteam: ref('subteam-build'), team: ref('team-prime'), status: 'up-next', show: true, priority: 'high', dueDate: '2027-01-20' }, board),
     unset: ['contact'],
   });
-  assert.deepEqual(patch('task-monday-1002').set, { title: 'Code the arm', subteam: ref('subteam-programming'), team: ref('team-prime'), status: 'in-progress', show: true, priority: 'medium', dueDate: '2027-01-14' });
-  assert.deepEqual(patch('task-monday-1003').set, { title: 'Pick up parts', subteam: ref('subteam-build'), team: ref('team-prime'), status: 'done', show: true, priority: 'low' });
+  assert.deepEqual(patch('task-monday-1002').set, Object.assign({ title: 'Code the arm', subteam: ref('subteam-programming'), team: ref('team-prime'), status: 'in-progress', show: true, priority: 'medium', dueDate: '2027-01-14' }, board));
+  assert.deepEqual(patch('task-monday-1003').set, Object.assign({ title: 'Pick up parts', subteam: ref('subteam-build'), team: ref('team-prime'), status: 'done', show: true, priority: 'low' }, board));
   assert.deepEqual(patch('task-monday-1003').unset, ['dueDate', 'contact']);
-  assert.deepEqual(patch('task-monday-1004').set, { title: 'Waiting on a part', subteam: ref('subteam-build'), team: ref('team-prime'), status: 'up-next', show: true }, 'Stuck is Backlog');
+  assert.deepEqual(patch('task-monday-1004').set, Object.assign({ title: 'Waiting on a part', subteam: ref('subteam-build'), team: ref('team-prime'), status: 'up-next', show: true }, board), 'Stuck is Backlog');
   assert.deepEqual(patch('task-monday-1004').unset, ['priority', 'dueDate', 'contact']);
-  assert.deepEqual(patch('task-monday-1005').set, { title: 'Order the pizza', subteam: ref('subteam-unmatched'), team: ref('team-prime'), status: 'up-next', show: true });
+  assert.deepEqual(patch('task-monday-1005').set, Object.assign({ title: 'Order the pizza', subteam: ref('subteam-unmatched'), team: ref('team-prime'), status: 'up-next', show: true }, board));
   assert.deepEqual(patch('task-monday-1005').unset, ['priority', 'dueDate', 'contact'], 'an unknown priority label and a date that is not a day are no values');
   assert.equal(patch('task-monday-1006').set.title, 'Plan the whole season', 'the title is cut at 22 characters and the space at the cut goes');
   assert.ok(patch('task-monday-1006').set.title.length <= 22);
 
   mutations.forEach(mutation => {
     if (mutation.patch) {
-      assert.deepEqual(Object.keys(mutation.patch.set), Object.keys(mutation.patch.set).filter(name => ['title', 'subteam', 'team', 'status', 'show', 'priority', 'dueDate', 'contact'].includes(name)));
+      assert.deepEqual(Object.keys(mutation.patch.set), Object.keys(mutation.patch.set).filter(name => ['title', 'subteam', 'team', 'status', 'show', 'priority', 'dueDate', 'contact', 'mondayBoardId', 'mondayBoardName'].includes(name)));
     }
   });
   assert.ok(!JSON.stringify(mutations).includes('"status":"blocked"'), 'blocked is never written');
@@ -657,7 +664,7 @@ test('a board entry that cannot be used is skipped and said so, and the others a
     boards: [
       { boardId: 'abc', team: 'team-prime', statusColumn: 'status' },
       { boardId: '777', team: 'team-gone', statusColumn: 'status' },
-      { boardId: '888', team: 'team-prime', statusColumn: '' },
+      { boardId: '888', team: 'team-prime', statusFrom: 'column', statusColumn: '' },
       boardEntry,
       Object.assign({}, boardEntry, { team: 'team-nova' }),
     ],
@@ -866,7 +873,7 @@ test('the status document has the fixed id, the first name, the visible boards w
   place.run();
   const document = place.document();
 
-  assert.deepEqual(Object.keys(document), ['_id', '_type', 'connectedAs', 'lastSyncAt', 'boards', 'snapshots']);
+  assert.deepEqual(Object.keys(document), ['_id', '_type', 'connectedAs', 'lastSyncAt', 'boards', 'readings', 'snapshots']);
   assert.equal(document._id, 'monday-status');
   assert.equal(document._type, 'mondayStatus');
   assert.equal(document.connectedAs, 'Jordan');
@@ -1497,7 +1504,7 @@ test('docs/monday.md has "If nothing shows up" with its six steps, the status ru
   const feed = fs.readFileSync(path.join(repo, 'docs/monday.md'), 'utf8');
   const section = feed.slice(feed.indexOf('## If nothing shows up'), feed.indexOf('## Limits'));
   assert.ok(section.length > 200, 'the section is there, before Limits');
-  [/^1\. The connection block says connected/m, /^2\. A board is chosen/m, /^3\. Wait 10 minutes/m, /^4\. Look under Tasks, From the board/m, /^5\. Look at the Show on TV switch/m, /^6\. On the Mini/m].forEach(step => {
+  [/^1\. The connection block says connected/m, /^2\. A board is chosen/m, /^3\. Wait 10 minutes/m, /^4\. Look under Monday Tasks, On the TV/m, /^5\. Look at the Show on TV switch/m, /^6\. On the Mini/m].forEach(step => {
     assert.ok(step.test(section), 'the section should have the step ' + step);
   });
   ['Status column', 'No board is chosen yet', 'sudo journalctl -u teletraan-monday.service -n 40', 'never prints the token', 'every other item is Backlog', 'Stuck', 'timeline column', 'end', '2026-10-12 - 2026-10-20', 'last real day'].forEach(word => {
@@ -1509,6 +1516,250 @@ test('docs/monday.md has "If nothing shows up" with its six steps, the status ru
     assert.ok(!/three (status )?labels/i.test(text), file + ' still speaks of three labels');
     assert.ok(!/Backlog label, In progress label|The label for Backlog/.test(text), file + ' still lists the Backlog label among the labels that count');
   });
+});
+
+// Group names
+
+// A board entry that reads the status of an item from the title of its group. It has no status column.
+const groupEntry = {
+  boardId: '111',
+  team: 'team-prime',
+  statusFrom: 'groups',
+  priorityColumn: 'priority',
+  priorityHigh: 'High',
+  priorityMedium: 'Medium',
+  priorityLow: 'Low',
+  dueColumn: 'date4',
+  ownerColumn: 'person',
+  teamColumn: null,
+};
+
+function statusesOf(place) {
+  const statuses = {};
+  place.taskMutations().filter(mutation => mutation.patch && mutation.patch.set).forEach(mutation => { statuses[mutation.patch.id.slice(-4)] = mutation.patch.set.status; });
+  return statuses;
+}
+
+test('group names: the title of the group gives the status, whatever its capitals, spaces and punctuation, and every other title is Backlog', () => {
+  const groups = {
+    5001: ['To Do', 'up-next'], 5002: ['todo', 'up-next'], 5003: ['TO-DO', 'up-next'], 5004: ['Backlog', 'up-next'], 5005: ['Not started', 'up-next'], 5006: ['Planned', 'up-next'],
+    5007: ['In Progress', 'in-progress'], 5008: ['in-progress', 'in-progress'], 5009: ['Working on it', 'in-progress'], 5010: ['Doing', 'in-progress'], 5011: ['  started!  ', 'in-progress'],
+    5012: ['Done', 'done'], 5013: ['COMPLETE', 'done'], 5014: ['Completed', 'done'], 5015: ['Finished.', 'done'],
+    5016: ['Stuck', 'up-next'], 5017: ['Review', 'up-next'], 5018: ['', 'up-next'], 5019: ['Done and dusted', 'up-next'],
+  };
+  // the status cell of every item says Done, to show that a board entry that reads group names ignores it
+  const items = Object.keys(groups).map(id => item(id, 'Task ' + id, groups[id][0], { status: 'Done' }));
+  items.push({ id: '5020', name: 'No group', group: null, column_values: [] }, { id: '5021', name: 'Odd group', group: { title: 7 }, column_values: [] });
+
+  const place = setup('groups-status', { tools: true });
+  world(place, { boards: [groupEntry], items: items });
+  const result = place.run();
+  assert.equal(result.status, 0, result.errors);
+
+  const want = {};
+  Object.keys(groups).forEach(id => { want[id] = groups[id][1]; });
+  want[5020] = 'up-next';
+  want[5021] = 'up-next';
+  assert.deepEqual(statusesOf(place), want);
+  assert.equal(place.document().snapshots[0].open, Object.keys(want).filter(id => want[id] !== 'done').length, 'the open count leaves out only the items in a Done group');
+  assert.ok(!place.variables()[1].columns.includes('status'), 'the status column is not asked for');
+});
+
+test('group names need no status column: an entry with only a board and a team is read, and Monday is asked for the name column alone', () => {
+  const bare = setup('groups-bare', { tools: true });
+  world(bare, { boards: [{ boardId: '111', team: 'team-prime', statusFrom: 'groups' }], items: [item('5101', 'Wire it', 'In Progress', {}), item('5102', 'Test it', 'To Do', {})] });
+  const result = bare.run();
+  assert.equal(result.status, 0, result.errors);
+  assert.equal(result.errors, '');
+  assert.deepEqual(statusesOf(bare), { 5101: 'in-progress', 5102: 'up-next' });
+  assert.deepEqual(bare.variables()[1], { board: ['111'], columns: ['name'], limit: 100 });
+
+  const some = setup('groups-columns', { tools: true });
+  world(some, { boards: [groupEntry] });
+  some.run();
+  assert.deepEqual(some.variables()[1].columns, ['date4', 'person', 'priority'], 'only the columns the entry names');
+});
+
+test('an entry that does not say where the status comes from reads the group names, even when it still has a status column', () => {
+  const older = { boardId: '111', team: 'team-prime', statusColumn: 'status', progressLabel: 'Working on it', doneLabel: 'Done' };
+  const place = setup('groups-default', { tools: true });
+  world(place, {
+    boards: [older],
+    items: [item('5201', 'In a status group', 'In Progress', { status: 'Backlog' }), item('5202', 'In a column only', 'Build', { status: 'Working on it' }), item('5203', 'Finished', 'Done', {})],
+  });
+  const result = place.run();
+  assert.equal(result.status, 0, result.errors);
+  assert.deepEqual(statusesOf(place), { 5201: 'in-progress', 5202: 'up-next', 5203: 'done' });
+  assert.ok(!place.variables()[1].columns.includes('status'), 'a stored status column is not asked for');
+
+  const blank = setup('groups-blank', { tools: true });
+  world(blank, { boards: [{ boardId: '111', team: 'team-prime', statusFrom: 'surprise', statusColumn: 'status' }], items: [item('5301', 'Odd choice', 'Doing', { status: 'Done' })] });
+  blank.run();
+  assert.deepEqual(statusesOf(blank), { 5301: 'in-progress' }, 'a choice that is neither is read as group names');
+});
+
+test('a status column is read only when the entry says so, and an entry that says so with no column is skipped and said so', () => {
+  const place = setup('column-choice', { tools: true });
+  world(place, {
+    boards: [
+      Object.assign({}, boardEntry, { boardId: '111' }),
+      { boardId: '222', team: 'team-prime', statusFrom: 'column', statusColumn: '' },
+      { boardId: '333', team: 'team-prime', statusFrom: 'groups', statusColumn: '' },
+    ],
+    items: [item('5401', 'Column says working', 'To Do', { status: 'Working on it' })],
+  });
+  place.pages('333', [item('5402', 'Group says done', 'Done', {})], 100);
+  const result = place.run();
+
+  assert.equal(result.status, 1);
+  assert.ok(result.errors.includes('monday: Board 222 has no status column, so it was skipped.'), result.errors);
+  assert.deepEqual(requestsOf(result.calls).filter(line => line.startsWith('monday ')), ['monday boards', 'monday items-111', 'monday items-333'], 'the board with no column is not read, the board that reads group names is');
+  assert.deepEqual(statusesOf(place), { 5401: 'in-progress', 5402: 'done' }, 'the first reads its column and the third reads its group');
+});
+
+// The board of a task
+
+test('a task keeps the number and the name of its board, and a board with no name leaves the name out', () => {
+  const place = setup('board-fields', { tools: true });
+  world(place, { items: [item('5501', 'Wire it', 'Build', { status: 'Backlog' })] });
+  place.run();
+  const patch = place.taskMutations().filter(mutation => mutation.patch)[0].patch;
+  assert.equal(patch.set.mondayBoardId, '111');
+  assert.equal(patch.set.mondayBoardName, '[Build board]');
+  assert.ok(!(patch.unset || []).includes('mondayBoardName'));
+
+  const nameless = setup('board-nameless', { tools: true });
+  world(nameless, { items: [item('5502', 'Wire it', 'Build', { status: 'Backlog' })] });
+  nameless.answer('boards', boardsAnswer([{ id: '111', name: '', type: 'board', items_count: 1, columns: [] }]).data.boards.length ? { data: { me: { name: 'Jordan Example' }, boards: [{ id: '111', name: '', type: 'board', items_count: 1, columns: [] }] } } : {});
+  nameless.run();
+  const bare = nameless.taskMutations().filter(mutation => mutation.patch)[0].patch;
+  assert.equal(bare.set.mondayBoardId, '111');
+  assert.ok(!('mondayBoardName' in bare.set));
+  assert.ok(bare.unset.includes('mondayBoardName'));
+
+  const two = setup('board-two', { tools: true });
+  world(two, { boards: [boardEntry, Object.assign({}, boardEntry, { boardId: '222', team: 'team-nova' })] });
+  two.pages('222', [item('5503', 'Nova task', 'Build', { status: 'Backlog' })], 100);
+  two.run();
+  const boards = {};
+  two.taskMutations().filter(mutation => mutation.patch).forEach(mutation => { boards[mutation.patch.id] = [mutation.patch.set.mondayBoardId, mutation.patch.set.mondayBoardName]; });
+  assert.deepEqual(boards['task-monday-1001'], ['111', '[Build board]']);
+  assert.deepEqual(boards['task-monday-5503'], ['222', '[Outreach board]']);
+});
+
+test('a task made before the board fields existed is changed once, to get them, and then left alone', () => {
+  const place = setup('board-fields-late', { tools: true });
+  world(place, { tasks: [stored(1001, { mondayBoardId: undefined, mondayBoardName: undefined }), stored(1002), stored(1003), stored(1004), stored(1005), stored(1006)] });
+  const result = place.run();
+  assert.equal(result.status, 0, result.errors);
+  const mutations = place.taskMutations();
+  assert.equal(mutations.length, 1);
+  assert.equal(mutations[0].patch.id, 'task-monday-1001');
+  assert.equal(mutations[0].patch.set.mondayBoardId, '111');
+  assert.ok(result.text.includes('6 task(s) wanted, 0 new, 1 changed, 0 switched off'), result.text);
+
+  const renamed = setup('board-renamed', { tools: true });
+  world(renamed, { tasks: [stored(1001, { mondayBoardName: 'Old name' }), stored(1002), stored(1003), stored(1004), stored(1005), stored(1006)] });
+  renamed.run();
+  assert.equal(renamed.taskMutations().length, 1, 'a board that was renamed changes its tasks');
+  assert.equal(renamed.taskMutations()[0].patch.set.mondayBoardName, '[Build board]');
+});
+
+test('under group names the subteam is the Team lead with the name of the board, the team column still comes first, and a status column entry keeps using the group', () => {
+  const named = boardsAnswer();
+  named.data.boards[0].name = 'Build';
+  const items = [item('5601', 'From the board name', 'To Do', {}), item('5602', 'From the team column', 'To Do', { team_label: 'Programming' })];
+
+  const groups = setup('subteam-groups', { tools: true });
+  world(groups, { boards: [Object.assign({}, groupEntry, { teamColumn: 'team_label' })], items: items });
+  groups.answer('boards', named);
+  groups.run();
+  const subteams = {};
+  groups.taskMutations().filter(mutation => mutation.patch).forEach(mutation => { subteams[mutation.patch.id] = mutation.patch.set.subteam._ref; });
+  assert.deepEqual(subteams, { 'task-monday-5601': 'subteam-build', 'task-monday-5602': 'subteam-programming' });
+
+  const column = setup('subteam-column', { tools: true });
+  world(column, { items: [item('5603', 'Group is a lead', 'Programming', { status: 'Backlog' }), item('5604', 'Board is not', 'Food', { status: 'Backlog' })] });
+  column.answer('boards', named);
+  column.run();
+  const kept = {};
+  column.taskMutations().filter(mutation => mutation.patch).forEach(mutation => { kept[mutation.patch.id] = mutation.patch.set.subteam._ref; });
+  assert.deepEqual(kept, { 'task-monday-5603': 'subteam-programming', 'task-monday-5604': 'subteam-unmatched' });
+});
+
+// What was read from each board
+
+test('the status document says, for each chosen board, its name, the items read, when, and nothing else when all went well', () => {
+  const place = setup('readings', { tools: true });
+  world(place);
+  place.run();
+  const document = place.document();
+
+  assert.deepEqual(document.readings, [{ _key: '111', boardId: '111', boardName: '[Build board]', itemsRead: 6, readAt: '2027-01-12T15:00:00Z' }]);
+  assert.deepEqual(Object.keys(document), ['_id', '_type', 'connectedAs', 'lastSyncAt', 'boards', 'readings', 'snapshots']);
+});
+
+test('a board the token cannot see is read as 0 items with the reason, and the chosen boards that are not read keep their place', () => {
+  const place = setup('readings-unseen', { tools: true });
+  world(place, { boards: [boardEntry, Object.assign({}, boardEntry, { boardId: '222' }), Object.assign({}, boardEntry, { boardId: '999' })] });
+  place.answer('items-222', { data: { boards: [] } });
+  place.answer('items-999', { data: { boards: [] } });
+  place.run();
+
+  const readings = place.document().readings;
+  assert.deepEqual(readings.map(reading => reading.boardId), ['111', '222', '999']);
+  assert.deepEqual(readings[1], { _key: '222', boardId: '222', boardName: '[Outreach board]', itemsRead: 0, readAt: '2027-01-12T15:00:00Z', note: 'Monday gave no items for board 222, so the account of the token may not be able to see it.' });
+  assert.deepEqual(readings[2], { _key: '999', boardId: '999', itemsRead: 0, readAt: '2027-01-12T15:00:00Z', note: 'Monday gave no items for board 999, so the account of the token may not be able to see it.' }, 'a board that is not on the list has no name');
+});
+
+test('a board that stops half way keeps the reading of the run before and gets the reason, and a board no longer chosen loses its reading', () => {
+  const earlier = [
+    { boardId: '111', boardName: '[Build board]', itemsRead: 6, readAt: '2027-01-12T14:00:00Z' },
+    { boardId: '222', boardName: '[Outreach board]', itemsRead: 3, readAt: '2027-01-12T14:00:00Z', note: 'An old reason' },
+    { boardId: '777', boardName: '[Dropped board]', itemsRead: 9, readAt: '2027-01-12T14:00:00Z' },
+  ];
+  const place = setup('readings-kept', { tools: true });
+  world(place, { boards: [boardEntry, Object.assign({}, boardEntry, { boardId: '222' })], readings: earlier });
+  place.answer('items-222', undefined, { exit: 28 });
+  place.run();
+
+  const readings = place.document().readings;
+  assert.deepEqual(readings.map(reading => reading.boardId), ['111', '222']);
+  assert.deepEqual(readings[0], { _key: '111', boardId: '111', boardName: '[Build board]', itemsRead: 6, readAt: '2027-01-12T15:00:00Z' }, 'a board that was read gets the new time and drops the old reason');
+  assert.deepEqual(readings[1], { _key: '222', boardId: '222', boardName: '[Outreach board]', itemsRead: 3, readAt: '2027-01-12T14:00:00Z', note: 'Monday did not answer, the server took too long to answer.' });
+});
+
+test('a board over the item limit is read as 500 items with the reason, and boards after the request limit say the run stopped', () => {
+  const many = [];
+  for (let number = 1; number <= 650; number += 1) many.push(item(String(8000 + number), 'Task ' + number, 'Build', { status: 'Backlog' }));
+  const capped = setup('readings-capped', { tools: true });
+  world(capped, { items: many });
+  capped.run();
+  assert.deepEqual(capped.document().readings, [{ _key: '111', boardId: '111', boardName: '[Build board]', itemsRead: 500, readAt: '2027-01-12T15:00:00Z', note: 'Board 111 has more than 500 items, so only the first 500 were read.' }]);
+
+  const place = setup('readings-requests', { tools: true, edits: [['max_requests=60', 'max_requests=2']] });
+  world(place, { boards: [boardEntry, Object.assign({}, boardEntry, { boardId: '222' }), Object.assign({}, boardEntry, { boardId: '444' })] });
+  place.run();
+  const readings = place.document().readings;
+  assert.deepEqual(readings.map(reading => reading.boardId), ['111', '222', '444']);
+  assert.equal(readings[0].itemsRead, 6);
+  assert.equal(readings[1].note, 'This run stopped after 2 requests to Monday and goes on at the next run.');
+  assert.equal(readings[2].note, 'This run stopped before it read this board, and goes on at the next run.');
+  assert.ok(!('itemsRead' in readings[1]) && !('readAt' in readings[1]), 'a board with no reading before has none now');
+});
+
+test('with no board chosen there are no readings, and a run that cannot list the boards leaves the readings as they were', () => {
+  const none = setup('readings-none', { tools: true });
+  world(none, { boards: [], readings: [{ boardId: '111', itemsRead: 6, readAt: '2027-01-12T14:00:00Z' }] });
+  none.run();
+  assert.deepEqual(none.document().readings, []);
+
+  const failing = setup('readings-error', { tools: true });
+  world(failing, { readings: [{ boardId: '111', itemsRead: 6, readAt: '2027-01-12T14:00:00Z' }] });
+  failing.answer('boards', { error_message: 'Not Authenticated' }, { code: 401 });
+  failing.run();
+  const body = failing.writes()[0];
+  assert.deepEqual(Object.keys(body.mutations[1].patch.set), ['lastError'], 'only the reason is written, so the readings stay');
 });
 
 let failures = 0;

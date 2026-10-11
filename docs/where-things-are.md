@@ -125,7 +125,7 @@ editors can sign in from anywhere.
                               Leadership panel, team-leads.js
                               makes the rows of the Team Leads panel, roster.js
                               makes the pages of the Subteam roster panel, task-source.js says whether a task
-                              is pinned or from the team board and puts the pinned ones first, theme.js
+                              is from the team board and keeps only those, theme.js
                               works out which theme and overlay apply, theme-apply.js puts them on the page,
                               layout.js says which layout a theme has, which regions and blocks a layout
                               has, the numbers of the sidebar and bar layouts and when a change of layout must
@@ -212,8 +212,9 @@ editors can sign in from anywhere.
     studio/                   the Sanity editing screen, its sidebar (structure.js: one list with a line
                               for each entry, so changing the order means moving a line,
                               docs/reordering-the-sidebar.md), its buttons (actions.js: the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons),
-                              its two pages that are not documents (start-here.js and calendars-view.js,
-                              whose rows and words are in calendars-view-parts.js, docs/calendars-page.md),
+                              its three pages that are not documents (start-here.js, calendars-view.js and
+                              monday-boards-view.js, whose rows and words are in calendars-view-parts.js,
+                              docs/calendars-page.md, and monday-boards-parts.js),
                               the words and picture of Start here (start-here-parts.js), what its request
                               buttons write, shared with actions.js (screen-requests.js), and the address
                               that Preview the screen opens (dashboard-address.js),
@@ -357,6 +358,7 @@ editors can sign in from anywhere.
                               limit of 500 items, errors from Monday, and that the tokens are never printed or saved
       test-monday-settings.mjs  checks for the two Monday settings on the screen's side: the list of boards and the
                               owner switch, and their starting values
+      test-monday-boards.mjs  checks for the rows and lines of the Monday Boards page in Studio
       test-competition.mjs    checks for the competition cards (core/frc.js, core/competition.js and the panels in
                               panels/competition-*): the cards due on each day of the season in each mode, the mix into the
                               large panel's list, each card from the sample and with nothing to show, that no text is under
@@ -567,15 +569,17 @@ alone.
   `core/competition-preview.js` and `core/competition-preview-run.js` show the cards on the sample data in
   `dashboard/data/sample/content.json`. The block at the top of the tab is `studio/frc-status-input.js`.
 - **The Monday board.** Dashboard Settings, Monday tab (docs/monday.md). The boards, as entries with their
-  team, status column and labels, and the owner switch, are in `studio/schemas/settingsMonday.js`, with the
+  team, where the status comes from (group names or a status column, with its labels), and the owner switch, are in `studio/schemas/settingsMonday.js`, with the
   starting values `mondayBoards` and `mondayShowOwners` in `defaultSettings` in `dashboard/config.js`. The
   Mini reads them, and `fixSettingValues` in `dashboard/core/content.js` only keeps them tidy.
   `deploy/scripts/monday-sync.sh` writes the tasks (id `task-monday-` and the item number, `source` monday,
-  `dueDate` the one field only these tasks have) and the document `monday-status` (type `mondayStatus`,
-  `studio/schemas/mondayStatus.js`). The questions to Monday and the places in its answers are in one
-  block at the top of the script. The block at the top of the tab is `studio/monday-status-input.js`, and the
+  `mondayBoardId` and `mondayBoardName`, `dueDate` the one field only these tasks have) and the document
+  `monday-status` (type `mondayStatus`, `studio/schemas/mondayStatus.js`, with the boards the token can see and
+  a reading for each chosen board). The questions to Monday and the places in its answers are in one
+  block at the top of the script, and the group titles that mean In progress and Done are the two lists
+  after it. The block at the top of the tab is `studio/monday-status-input.js`, with a line for each board entry, and the
   lists of an entry are `studio/monday-pickers.js`, which read `monday-status`. The CSV template of a task
-  has no column for `dueDate`.
+  has no column for `dueDate` or the board.
 - **The Monday cards.** The three panels `dashboard/panels/monday-tasks`, `monday-milestones` and `monday-progress`
   (docs/layouts.md, "The Monday cards"), flagged `monday: true` in `registry.js` and offered in Panel order in
   `studio/schemas/settingsRotation.js` but in no starting list. `mondayCards` in `dashboard/core/look-rotation.js`
@@ -853,19 +857,22 @@ alone.
   docs/editing-content.md. In the CSV templates `contact` and `location` come
   before the `team` column of task.csv, and the importer knows the starting places
   (docs/importing-from-csv.md).
-- **Tasks from the team board, pinned tasks and Show on TV.** A task has four more
-  fields in `studio/schemas/task.js`: `source` (manual or monday, hidden, a task with
-  none is pinned), `mondayId` (hidden), `priority` and `showOnTv`. The Tasks line of
-  the sidebar is a folder of three lists, Pinned, From the board and Hidden, whose
-  filters are at the top of `studio/structure.js`. Every task is in one list. A task
-  with source monday opens read only except Show on TV, with one line at the top, and
-  `studio/show-on-tv-input.js` draws a task with no value as on. The folder's plus
-  button, Pin a task, is the template `pinnedTask` in `studio/add-templates.js`, which
-  `sanity.config.js` hands to the Studio and keeps out of the New menus. On the screen,
-  `isVisible` in `core/content.js` is the one place that reads `showOnTv`, so both task
-  panels leave out a task that is off. `core/sanity.js` puts
-  pinned tasks before board tasks with `pinnedFirst` from `core/task-source.js`, and
-  each group keeps its Order. `priority` and `mondayId` are not read by the screen.
+- **Tasks from the team board and Show on TV.** A task has more fields in
+  `studio/schemas/task.js`: `source` (manual or monday, hidden, a task with none was
+  typed by hand), `mondayId`, `mondayBoardId` and `mondayBoardName` (hidden), `priority`
+  and `showOnTv`. The Monday Tasks line of the sidebar is a folder of two lists, On the
+  TV and Hidden, whose filters are at the top of `studio/structure.js`. Every task is in
+  one list, and a task typed by hand is in Hidden. Every task opens read only except
+  Show on TV, with one line at the top, and `studio/show-on-tv-input.js` draws a task
+  with no value as on. There is no plus button and no template, and
+  `sanity.config.js` keeps `task` out of the New menus. Monday Boards is a page,
+  `studio/monday-boards-view.js` with its rows in `studio/monday-boards-parts.js`: the
+  name of a chosen board opens the same two lists kept to that board, which
+  `tasksOfBoard` in `studio/structure.js` builds. On the screen, `isVisible` in
+  `core/content.js` is the one place that reads `showOnTv`, so both task panels leave
+  out a task that is off. `core/sanity.js` keeps only the tasks from the board with
+  `fromBoardOnly` from `core/task-source.js`, and they keep their Order. `priority`,
+  `mondayId`, `mondayBoardId` and `mondayBoardName` are not read by the screen.
   `tools/test-task-board.mjs` tests the screen side. In the CSV templates `priority`
   and `showOnTv` are the last two columns of task.csv, and `source` and `mondayId`
   have no column.
@@ -905,6 +912,7 @@ exceptions are `test-slides-script.mjs`, `test-frc-script.mjs` and `test-monday-
     node tools/test-frc-script.mjs
     node tools/test-monday-script.mjs
     node tools/test-monday-settings.mjs
+    node tools/test-monday-boards.mjs
     node tools/test-competition.mjs
     node tools/test-monday-cards.mjs
     node tools/test-cybertron.mjs

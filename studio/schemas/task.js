@@ -23,22 +23,25 @@ const priorities = [
 ];
 
 const sources = [
-  { title: 'Pinned by hand', value: 'manual' },
+  { title: 'Typed by hand', value: 'manual' },
   { title: 'From the team board', value: 'monday' },
 ];
 
 const boardNote = 'This task comes from the team board. Change it there. Use Show on TV to hide it here.';
+const manualNote = 'This task was typed by hand. The screen shows only the tasks from the team board, so it is not shown. It stays here until it is deleted.';
 
-// The board sync makes the tasks with the source monday. A task with no source is pinned.
+// The board sync makes the tasks with the source monday. A task with no source was typed by hand,
+// before the team board was connected.
 function fromBoard({ document }) {
   return Boolean(document) && document.source === 'monday';
 }
 
-// The fields of a task from the board that an editor can still change
-const editableOnBoard = ['boardNote', 'source', 'mondayId', 'showOnTv'];
+// The fields of a task that an editor can still change. The others open read only.
+const editable = ['boardNote', 'manualNote', 'source', 'mondayId', 'mondayBoardId', 'mondayBoardName', 'showOnTv'];
 
 const fields = [
   Object.assign(noteField('boardNote', boardNote), { hidden: context => !fromBoard(context) }),
+  Object.assign(noteField('manualNote', manualNote), { hidden: fromBoard }),
   defineField({
     name: 'title',
     title: 'Task name',
@@ -103,7 +106,7 @@ const fields = [
     name: 'showOnTv',
     title: 'Show on TV',
     type: 'boolean',
-    description: 'Turn this off to keep the task off the TV. It works on every task, including the ones from the team board.',
+    description: 'Turn this off to keep the task off the TV. It is the one thing you can change on a task from the team board.',
     initialValue: true,
     components: { input: ShowOnTvInput },
   }),
@@ -125,11 +128,34 @@ const fields = [
     description: 'The number of the item on the team board. The board sync sets it, so it is hidden here.',
     hidden: true,
   }),
+  defineField({
+    name: 'mondayBoardId',
+    title: 'Board number',
+    type: 'string',
+    description: 'The number of the board the item is on. The board sync sets it, so it is hidden here.',
+    hidden: true,
+  }),
+  defineField({
+    name: 'mondayBoardName',
+    title: 'Board name',
+    type: 'string',
+    description: 'The name of the board the item is on. The board sync sets it, so it is hidden here.',
+    hidden: true,
+  }),
 ];
 
 fields.forEach(field => {
-  if (editableOnBoard.indexOf(field.name) === -1) field.readOnly = fromBoard;
+  if (editable.indexOf(field.name) === -1) field.readOnly = true;
 });
+
+// Oct 14, from 2026-10-14
+const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function dayText(date) {
+  const parts = typeof date === 'string' ? date.split('-') : [];
+  const month = months[Number(parts[1]) - 1];
+  return month && Number(parts[2]) > 0 ? month + ' ' + Number(parts[2]) : '';
+}
 
 export default defineType({
   name: 'task',
@@ -138,13 +164,17 @@ export default defineType({
   fields: fields,
   orderings: [byOrder, aToZ('title')],
   preview: {
-    select: { title: 'title', subteam: 'subteam.name', status: 'status', contact: 'contact', place: 'location.name', source: 'source', priority: 'priority', showOnTv: 'showOnTv', show: 'show', expires: 'expires' },
+    select: { title: 'title', status: 'status', contact: 'contact', due: 'dueDate', board: 'mondayBoardName', source: 'source', priority: 'priority', showOnTv: 'showOnTv', show: 'show', expires: 'expires' },
     prepare(item) {
       const priority = titleOf(priorities, item.priority);
-      const text = [item.subteam, titleOf(statuses, item.status), priority ? priority + ' priority' : '', item.source === 'monday' ? 'Board' : 'Pinned', item.contact, item.place].filter(Boolean).join(' · ');
+      const due = dayText(item.due);
+      const text = [titleOf(statuses, item.status), priority ? priority + ' priority' : '', item.contact, due ? 'Due ' + due : '', item.board].filter(Boolean).join(' · ');
+      // a task typed by hand is never on the screen, whatever its switches say
+      const line = item.source === 'monday' ? text : ['Manual (not shown)', text].filter(Boolean).join(' · ');
+
       // a task kept off the TV is hidden, however it is listed
       const hidden = item.show === false || item.showOnTv === false;
-      return { title: item.title || 'Task with no name', subtitle: subtitleFor(text, { show: hidden ? false : item.show, expires: item.expires }) };
+      return { title: item.title || 'Task with no name', subtitle: subtitleFor(line, { show: hidden ? false : item.show, expires: item.expires }) };
     },
   },
 });

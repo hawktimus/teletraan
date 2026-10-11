@@ -23,7 +23,7 @@ received.
 ## The sidebar
 
 The sidebar is in groups, by how often you touch them. Start here is at the top.
-The group names, such as EVERY MEETING, are headings. Daily Agenda, Tasks and Settings
+The group names, such as TASKS, are headings. Daily Agenda, Monday Tasks and Settings
 are folders: click one and its lines open beside it. Each line has an icon.
 
 A row in a list reads like the TV: the name or text, then what goes with it, such as
@@ -34,7 +34,7 @@ filter is switched off.
 Start here: a short page that says what the screen is and that Publish all is the
 last step of every change. See "The Start here page" below.
 
-### Every meeting
+### Tasks
 
 - Daily Agenda: a folder with three lines. Its plus button adds an Agenda item or a
   Presentation.
@@ -49,21 +49,23 @@ last step of every change. See "The Start here page" below.
     or move a talk (docs/presentations.md).
   - Meeting days: which days have talk slots and when they start. A day with no
     Meeting day has no slots.
-- Tasks: what the team is working on. It is a folder with three lists, and its plus
-  button says Pin a task. Each task has a name, a subteam, an optional point of
-  contact, an optional location, an optional priority (High, Medium or Low) and a
-  status (Blocked, In progress, Up next or Done). The point of contact is a first
-  name, up to 12 characters, with no last name. The location is a place, picked in
-  the Location field of the task (see "Places" below). When you set a task to Done,
-  fill in "Finished on". If you leave it empty, the time you last edited the task
-  counts as the finish time. The task leaves the screen after the number of
-  days set in Dashboard Settings. See "What the Tasks panel shows" below.
-  - Pinned: the tasks you type in the Studio, and every task that was made before
-    the team board was connected.
-  - From the board: the tasks the board sync makes from the team board. The list is
-    empty until the sync is set up. See "Tasks from the team board" below.
+- Monday Tasks: what the team is working on, from its Monday boards. It is a folder
+  with two lists, On the TV and Hidden, and it has no plus button, because the Mini
+  makes the tasks. A task has a name, a subteam, an optional point of contact, an
+  optional priority (High, Medium or Low), an optional due date, a status (In progress,
+  Up next or Done) and the name of its board. The point of contact is a first name, up
+  to 12 characters, with no last name. A task opens read only, and Show on TV is the
+  one thing you can change. The task leaves the screen after the number of days set in
+  Dashboard Settings. See "What the Tasks panel shows" below.
+  - On the TV: the tasks from the board that are switched on, sorted by board. See
+    "Tasks from the team board" below.
   - Hidden: every task that is not on the TV, because Show on TV is off, Show on
-    screen is off or the Hide after time has passed. A task is in one list only.
+    screen is off or the Hide after time has passed. It also holds the tasks typed by
+    hand before the board was connected, marked Manual (not shown), which the screen
+    never shows. A task is in one list only.
+- Monday Boards: a page of the boards the Mini can see, with their items and when
+  each was read. The name of a chosen board opens its tasks, and Choose boards opens
+  Dashboard Settings, where the Monday tab has the board rows.
 - Tips and News: the lines that run along the bottom of the screen.
 
 ### Events
@@ -267,8 +269,7 @@ always on the first page. Giving tasks contacts and locations makes the pages
 hold fewer tasks, three at the least, so there are more pages. Hidden tasks,
 tasks with Show on TV off, expired tasks and Done tasks past the number of days in
 Dashboard Settings are left out. The Open Tasks panel counts every open task however
-many pages there are. Inside a status, pinned tasks come before tasks from the board,
-and each group keeps the order of the Order field.
+many pages there are. Inside a status, tasks keep the order of the Order field.
 
 ## Tasks from the team board
 
@@ -287,13 +288,11 @@ switched off and moves to the Hidden list. An item whose status is not the In pr
 or Done label is not switched off either: its task is Up next, which the Monday cards
 call Backlog.
 
-Show on TV is on every task, not only the ones from the board. It is a second switch
-beside Show on screen. A task is on the TV only when both are on and it has not expired.
-A task made before Show on TV existed counts as on, and the switch is drawn as on.
-
-To put a task of your own above the tasks from the board, use the plus button of the
-Tasks folder, Pin a task. Pinned tasks are always before the tasks from the board in the
-same status. A list line says Pinned or Board, and the priority when there is one.
+Show on TV is a second switch beside Show on screen. A task is on the TV only when both
+are on and it has not expired. A task made before Show on TV existed counts as on, and the
+switch is drawn as on. The screen shows only tasks from the board. A task typed by hand
+stays in the dataset, in Hidden, and is never drawn. A list line says the status, the
+priority when there is one, the owner, the due date and the board.
 
 ## Places
 
@@ -374,7 +373,7 @@ counts of at least two days, which the Mini adds once a day. With fewer it says 
 
 ### Hiding a task, and empty cards
 
-To keep a task off all three cards, turn off Show on TV on it (Tasks, From the board). A card says so in a sentence when it has
+To keep a task off all three cards, turn off Show on TV on it (Monday Tasks, On the TV). A card says so in a sentence when it has
 nothing to show, and it shows SAMPLE in the corner on the sample content and how old the data is when it is two
 hours old or more. Preview the cards on made up tasks with `?sample=1` on the screen's address, and wait for the Monday pass.
 The details are in docs/layouts.md, "The Monday cards".
@@ -915,14 +914,16 @@ problem would touch.
 ### Monday
 
 The boards the Mini reads and how an item becomes a task (docs/monday.md). The Mini
-reads Monday every 10 minutes and keeps the items in Sanity as tasks, which the Tasks
-folder lists under From the board.
+reads Monday every 10 minutes and keeps the items in Sanity as tasks, which Monday
+Tasks lists under On the TV.
 
 - Monday connection from the Mini: a block at the top that you cannot type in. It says
   who the token belongs to, when the Mini last read Monday, how many boards the token
   can see, and the last error. Below those it says how many boards are chosen under
-  Boards and how many tasks the Mini has made. With no board chosen it says so, and that
-  the Mini writes no tasks. With nothing yet it says No connection yet: a coach has
+  Boards and how many tasks the Mini has made, then has a line for each entry under
+  Boards: the items the Mini read from that board, the tasks on the TV and when it was
+  last read. A board the token cannot see, or whose number is wrong, says 0 items read
+  and why. With no board chosen it says so, and that the Mini writes no tasks. With nothing yet it says No connection yet: a coach has
   to add the token on the Mini (docs/rebuilding-the-mini.md, step 18) and the first
   read comes within 10 minutes. If tasks do not show up, see "If nothing shows up" in
   docs/monday.md.
@@ -931,7 +932,12 @@ folder lists under From the board.
   - Board: pick the board by name. The Mini fills in the list, so nobody types a
     number. A board the token cannot see is not in the list.
   - Team: the team the tasks of the board are for.
-  - Status column: the column with the status of each item.
+  - Status comes from: Group names, to start with, or A status column. With Group
+    names the title of the group an item is in gives its status: In progress, Working on
+    it, Doing and Started are In progress, Done, Complete, Completed and Finished are Done,
+    and every other title, such as To Do, Backlog, Not started and Planned, is Backlog. Capitals
+    and punctuation do not matter. The three fields below are hidden then.
+  - Status column: the column with the status of each item, for A status column.
   - In progress label and Done label: the words of that column for being worked on
     and finished. They start as Working on it and Done. Every other status is
     Backlog, which is Up next in the Status of a task: Stuck, Not started, any other
@@ -942,10 +948,14 @@ folder lists under From the board.
   - Due date column: optional. A date column gives its day. A timeline column gives its
     end date.
   - Owner column: optional. It is used only when Show owner first names on the TV is on.
-  - Subteam column: optional. Empty uses the names of the groups on the board. A name
-    that matches no Team lead puts the task under [Unmatched], which is not shown.
-  An entry needs its board, its team and its status column. The lists show the columns of
-  the board you picked. When a list cannot be read, the box is a plain one, and it says so:
+  - Subteam column: optional. Empty uses the name of the board with Group names, and the
+    names of the groups with A status column. A name that matches no Team lead puts the
+    task under [Unmatched], which is not shown.
+  An entry needs its board and its team, and its status column for A status column. Each
+  column list shows the columns of the board picked in the same entry, with their types, the
+  ones that fit under Fits and the others under Other. Changing the board clears the columns.
+  If the Mini has not listed the columns of the board yet, the list says to wait for the
+  next sync. When the list of boards cannot be read, the box is a plain one, and it says so:
   type the board number or the column id.
 - Show owner first names on the TV: a switch, off to start with. On, a task keeps the
   first name of the first owner of its item, up to 12 characters. Off, no name from the

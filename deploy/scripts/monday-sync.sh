@@ -3,8 +3,9 @@
 # writes their items into Sanity as tasks (published documents with the ids
 # task-monday-<item number>), so the screen can show them. It also writes the
 # document monday-status, which the Monday tab uses to offer the boards and their
-# columns, and keeps one count of the open items for each day. Needs curl and jq
-# (docs/rebuilding-the-mini.md, step 18, and docs/monday.md).
+# columns and to say what was read from each board, and keeps one count of the
+# open items for each day. Needs curl and jq (docs/rebuilding-the-mini.md, step 18,
+# and docs/monday.md).
 #
 #   monday-sync.sh           one run, which the timer starts every 10 minutes
 #   monday-sync.sh --check   asks Monday who the token belongs to, and writes nothing
@@ -66,6 +67,12 @@ def error_messages: [(.errors[]?.message?), .error_message?] | map(strings);
 title_limit=22
 contact_limit=12
 label_limit=40
+
+# The titles of a group that give an item a status, for a board entry that reads its status from
+# group names. Case, spaces and punctuation do not matter. To do, todo, backlog, not started and
+# planned mean Backlog, and so does every other title (docs/monday.md, "How the status is read").
+groups_in_progress='["in progress","working on it","doing","started"]'
+groups_done='["done","complete","completed","finished"]'
 
 # Items read from one board, items asked for in one page, and requests to Monday in
 # one run. A run that reaches the request limit stops and says so, and the next
@@ -184,6 +191,7 @@ def first_name($limit):
 def real_day: . as $day | (try (($day + "T00:00:00Z") | fromdateiso8601 | todate | .[0:10]) catch "") == $day;
 def due_date: [scan("(?<![0-9])(?:19|20)[0-9]{2}-[0-9]{2}-[0-9]{2}(?![0-9])") | select(real_day)] | last;
 def first_of_each($key): reduce .[] as $item ([]; if any(.[]; .[$key] == $item[$key]) then . else . + [$item] end);
+def group_key: ascii_downcase | gsub("[^a-z0-9]"; "");
 '
 
 # Counts the requests made to Monday in this run, and why the run stopped asking
@@ -359,15 +367,16 @@ query='{
   "zone": *[_id == "theme"][0].timeZone,
   "owners": *[_id == "dashboardSettings"][0].mondayShowOwners,
   "boards": *[_id == "dashboardSettings"][0].mondayBoards[] {
-    boardId, "team": team._ref, statusColumn, progressLabel, doneLabel,
+    boardId, "team": team._ref, statusFrom, statusColumn, progressLabel, doneLabel,
     priorityColumn, priorityHigh, priorityMedium, priorityLow, dueColumn, ownerColumn, teamColumn
   },
   "teams": *[_type == "team" && !(_id in path("drafts.**"))] { _id },
   "subteams": *[_type == "subteam" && !(_id in path("drafts.**"))] { _id, name },
   "tasks": *[_type == "task" && source == "monday" && !(_id in path("drafts.**"))] {
-    _id, title, "subteam": subteam._ref, "team": team._ref, status, priority, dueDate, contact, show
+    _id, title, "subteam": subteam._ref, "team": team._ref, status, priority, dueDate, contact, show, mondayBoardId, mondayBoardName
   },
-  "snapshots": *[_id == "monday-status"][0].snapshots[] { date, open }
+  "snapshots": *[_id == "monday-status"][0].snapshots[] { date, open },
+  "readings": *[_id == "monday-status"][0].readings[] { boardId, boardName, itemsRead, readAt, note }
 }'
 
 status=0
@@ -393,14 +402,16 @@ if [ "$(jq -r '.result.owners' "$work/sanity.json")" = true ]; then
 fi
 
 # The board entries that can be used, as one list, and a line for each one that
-# cannot be. A board needs a number, a team that exists and a status column.
+# cannot be. A board needs a number and a team that exists, and a status column when its status
+# comes from a column. An entry that does not say so reads its status from the group names.
 jq -c --argjson label_limit "$label_limit" "$helpers"'
   (.result.teams | arrays | map(._id)) as $team_ids
   | [.result.boards | arrays | .[] | objects
       | {
           board: (.boardId | whole_text(30)),
           team: (.team | if type == "string" then . else "" end),
-          status_column: (.statusColumn | column_name),
+          status_from: (.statusFrom | if . == "column" then "column" else "groups" end),
+          status_column: (if .statusFrom == "column" then (.statusColumn | column_name) else null end),
           progress: (.progressLabel | whole_text($label_limit) | if . == "" then "Working on it" else . end),
           done: (.doneLabel | whole_text($label_limit) | if . == "" then "Done" else . end),
           priority_column: (.priorityColumn | column_name),
@@ -414,11 +425,11 @@ jq -c --argjson label_limit "$label_limit" "$helpers"'
   | def number_ok: .board | test("\\A[0-9]{1,20}\\z");
     def team_ok: .team as $team | any($team_ids[]; . == $team);
   {
-    chosen: ([$entries[] | select(number_ok and team_ok and .status_column != null)] | first_of_each("board")),
+    chosen: ([$entries[] | select(number_ok and team_ok and (.status_from == "groups" or .status_column != null))] | first_of_each("board")),
     problems: [$entries[]
       | if number_ok | not then "A board in Dashboard Settings has no usable board number, so it was skipped."
         elif team_ok | not then "Board \(.board) has no team that exists, so it was skipped."
-        elif .status_column == null then "Board \(.board) has no status column, so it was skipped."
+        elif .status_from == "column" and .status_column == null then "Board \(.board) has no status column, so it was skipped."
         else empty end]
   }' "$work/sanity.json" > "$work/chosen.json"
 
@@ -449,6 +460,7 @@ if [ "$outcome" = ok ]; then
 fi
 
 : > "$work/rows.ndjson"
+: > "$work/readings.ndjson"
 items_read=0
 
 # Reads the items of the chosen boards, but only when the list of boards worked,
@@ -458,11 +470,15 @@ if [ "$boards_read" = yes ] && [ "$chosen" -gt 0 ]; then
 
   while read -r board; do
     jq -c --arg board "$board" '.chosen[] | select(.board == $board)' "$work/chosen.json" > "$work/config.json"
-    jq -c '[.status_column, .priority_column, .due_column, .owner_column, .team_column] | map(select(. != null)) | unique' "$work/config.json" > "$work/columns.json"
+    # Monday is asked for the name column when no other column is needed, so that it does not send them all
+    jq -c '[.status_column, .priority_column, .due_column, .owner_column, .team_column] | map(select(. != null)) | unique | if length == 0 then ["name"] else . end' "$work/config.json" > "$work/columns.json"
+    board_title=$(jq -r --arg board "$board" "$paths$helpers"'[board_list | arrays | .[] | objects | select((board_id | tostring) == $board) | (board_name | whole_text(60))][0] // ""' "$work/boards-answer.json" 2> /dev/null || true)
     : > "$work/items.ndjson"
+    errors_before=$(wc -l < "$work/errors.txt" | tr -d ' ')
     cursor=""
     read_all=no
     capped=no
+    seen=yes
 
     while :; do
       if [ -z "$cursor" ]; then
@@ -479,6 +495,7 @@ if [ "$boards_read" = yes ] && [ "$chosen" -gt 0 ]; then
 
       if ! jq -e "$paths$page"' | page_items | arrays' "$work/page.json" > /dev/null 2>&1; then
         problem "Monday gave no items for board $board, so the account of the token may not be able to see it."
+        seen=no
         break
       fi
 
@@ -520,26 +537,60 @@ if [ "$boards_read" = yes ] && [ "$chosen" -gt 0 ]; then
     fi
 
     head -n "$items_per_board" "$work/items.ndjson" > "$work/items-kept.ndjson"
-    items_read=$((items_read + $(wc -l < "$work/items-kept.ndjson" | tr -d ' ')))
+    board_items=$(wc -l < "$work/items-kept.ndjson" | tr -d ' ')
+    items_read=$((items_read + board_items))
 
-    # One row for each item: what the screen would show of it, and whether it is open.
-    # Only the In progress and Done labels are looked for. Any other status, or none,
-    # is Backlog, so an item is never left out for having a label nobody listed.
-    jq -n -c --slurpfile config "$work/config.json" --slurpfile items "$work/items-kept.ndjson" \
+    # What this run read from the board, for the Monday Boards page and the connection block. A board
+    # that was read to its end, or to the item limit, or that the token cannot see, is up to date. A board
+    # that stopped half way keeps the reading of the run before, and only gets the reason.
+    board_note=""
+    if [ "$(wc -l < "$work/errors.txt" | tr -d ' ')" -gt "$errors_before" ]; then
+      board_note=$(tail -n 1 "$work/errors.txt")
+    fi
+    board_ok=false
+    if [ "$read_all" = yes ] || [ "$capped" = yes ] || [ "$seen" = no ]; then
+      board_ok=true
+    elif [ -z "$board_note" ]; then
+      board_note="This run stopped before it read this board, and goes on at the next run."
+    fi
+    jq -n -c --arg board "$board" --arg name "$board_title" --argjson items "$board_items" --argjson ok "$board_ok" --arg note "$board_note" \
+      '{board: $board, name: $name, items: $items, ok: $ok, note: $note}' >> "$work/readings.ndjson"
+
+    # One row for each item: what the screen would show of it, and whether it is open. A board entry
+    # that reads its status from group names takes it from the title of the group of the item: the
+    # group titles for In progress and Done are the lists at the top, and every other title is Backlog.
+    # A board entry that reads a status column looks for the In progress and Done labels only. Any
+    # other status, or none, is Backlog, so an item is never left out for having a label nobody listed.
+    jq -n -c --slurpfile config "$work/config.json" --slurpfile items "$work/items-kept.ndjson" --arg board_title "$board_title" \
+      --argjson in_progress_groups "$groups_in_progress" --argjson done_groups "$groups_done" \
       --argjson owners "$owners" --argjson title_limit "$title_limit" --argjson contact_limit "$contact_limit" "$helpers"'
       $config[0] as $c
       | def text_of($column): if $column == null then "" else (.values[$column] // "" | if type == "string" then plain else "" end) end;
         def is_label($text; $label): $label != "" and ($text | ascii_downcase) == ($label | ascii_downcase);
+        def group_status($group):
+          ($group | if type == "string" then group_key else "" end) as $key
+          | if any($done_groups[]; group_key == $key) then "done"
+            elif any($in_progress_groups[]; group_key == $key) then "in-progress"
+            else "up-next" end;
         $items[]
         | text_of($c.status_column) as $state
+        | (if $c.status_from == "column"
+            then {
+              status: (if is_label($state; $c.progress) then "in-progress" elif is_label($state; $c.done) then "done" else "up-next" end),
+              open: (is_label($state; $c.done) | not)
+            }
+            else group_status(.group) as $by_group | {status: $by_group, open: ($by_group != "done")} end) as $kind
         | {
             id: (.id | if test("\\A[0-9]{1,20}\\z") then . else null end),
             title: (.name | whole_text($title_limit)),
-            team_text: ((if $c.team_column == null then "" else text_of($c.team_column) end) as $named | if $named != "" then $named else (.group | if type == "string" then plain else "" end) end),
+            team_text: ((if $c.team_column == null then "" else text_of($c.team_column) end) as $named
+              | if $named != "" then $named
+                elif $c.status_from == "groups" then $board_title
+                else (.group | if type == "string" then plain else "" end) end),
             team: $c.team,
-            status: (if is_label($state; $c.progress) then "in-progress"
-              elif is_label($state; $c.done) then "done"
-              else "up-next" end),
+            board: $c.board,
+            board_title: $board_title,
+            status: $kind.status,
             priority: (if $c.priority_column == null then null
               else (text_of($c.priority_column) as $given
                 | if is_label($given; $c.high) then "high"
@@ -548,7 +599,7 @@ if [ "$boards_read" = yes ] && [ "$chosen" -gt 0 ]; then
                   else null end) end),
             due: (if $c.due_column == null then null else (text_of($c.due_column) | due_date) end),
             contact: (if $owners and $c.owner_column != null then (text_of($c.owner_column) | first_name($contact_limit)) else null end),
-            open: (is_label($state; $c.done) | not)
+            open: $kind.open
           }
         | select(.id != null and .title != "")' >> "$work/rows.ndjson"
   done < "$work/board-list.txt"
@@ -564,29 +615,31 @@ echo "monday: $items_read item(s) read"
 plan='
 def reference($id): {_type: "reference", _ref: $id};
 
-# The Team lead whose name is the group or the team column of the item, or the one
-# for items that match nobody
+# The Team lead whose name is the team column of the item, or else the title of its board when
+# the board entry reads group names (the groups are then statuses), or else the group, or the
+# one for items that match nobody
 def subteam_of($row; $subteams):
   if $row.team_text == "" then $unmatched_id
   else (([$subteams[] | select((.name | if type == "string" then plain | ascii_downcase else "" end) == ($row.team_text | ascii_downcase))][0]._id) // $unmatched_id) end;
 
 # What a task should be, with a null for each value it should not have
 def wanted_task($row; $subteam):
-  {title: $row.title, subteam: $subteam, team: $row.team, status: $row.status, priority: $row.priority, dueDate: $row.due, contact: $row.contact, show: true};
+  {title: $row.title, subteam: $subteam, team: $row.team, status: $row.status, priority: $row.priority, dueDate: $row.due, contact: $row.contact, show: true, mondayBoardId: $row.board, mondayBoardName: (if $row.board_title == "" then null else $row.board_title end)};
 
 # What a task is now, in the same shape. A task with no Show on screen is on.
 def stored_task:
-  {title, subteam, team, status, priority, dueDate, contact, show: (if .show == false then false else true end)};
+  {title, subteam, team, status, priority, dueDate, contact, show: (if .show == false then false else true end), mondayBoardId, mondayBoardName};
 
 # The patch that brings a task to what it should be. A value it should not have is unset.
 def patch_of($id; $task):
   {patch: ({
       id: $id,
-      set: ({title: $task.title, subteam: reference($task.subteam), team: reference($task.team), status: $task.status, show: true}
+      set: ({title: $task.title, subteam: reference($task.subteam), team: reference($task.team), status: $task.status, show: true, mondayBoardId: $task.mondayBoardId}
         + (if $task.priority == null then {} else {priority: $task.priority} end)
         + (if $task.dueDate == null then {} else {dueDate: $task.dueDate} end)
-        + (if $task.contact == null then {} else {contact: $task.contact} end))
-    } + ([("priority", "dueDate", "contact") as $name | select($task[$name] == null) | $name] as $absent | if ($absent | length) == 0 then {} else {unset: $absent} end))};
+        + (if $task.contact == null then {} else {contact: $task.contact} end)
+        + (if $task.mondayBoardName == null then {} else {mondayBoardName: $task.mondayBoardName} end))
+    } + ([("priority", "dueDate", "contact", "mondayBoardName") as $name | select($task[$name] == null) | $name] as $absent | if ($absent | length) == 0 then {} else {unset: $absent} end))};
 
 $sanity[0].result as $found
 | ($found.subteams | arrays | map(select(._id | type == "string"))) as $subteams
@@ -662,6 +715,22 @@ def kept_columns:
       + (column_type | if type == "string" and test("\\A[a-z_]{1,40}\\z") then {type: .} else {} end)]
   | first_of_each("id") | .[0:$columns_kept];
 
+# What the run read from each chosen board. A board that was read keeps the number of items and the time
+# of this run. A board that stopped half way keeps the number and the time of the run before it, and only
+# gets the reason. The reason of a board that gave no items is kept, and is left out when there is none.
+def reading_list($old):
+  [$readings[] | . as $r
+    | ([$old | arrays | .[] | objects | select(.boardId == $r.board)][0] // {}) as $before
+    | {
+        _key: $r.board,
+        boardId: $r.board,
+        boardName: (if $r.name != "" then $r.name else $before.boardName end),
+        itemsRead: (if $r.ok then $r.items else $before.itemsRead end),
+        readAt: (if $r.ok then $now else $before.readAt end),
+        note: (if $r.note != "" then $r.note else null end)
+      }
+    | with_entries(select(.value != null))];
+
 def kept_boards:
   [board_list | arrays | .[] | objects | select(board_is_offered)
     | select((board_id | tostring) | test("\\A[0-9]{1,20}\\z"))
@@ -676,6 +745,7 @@ def kept_boards:
   lastSyncAt: $now,
   lastError: ([$errors | split("\n")[] | select(. != "")] | unique | if length == 0 then null else (.[0:3] | join("; ") | .[0:300]) end),
   boards: kept_boards,
+  readings: reading_list($sanity[0].result.readings),
   snapshots: with_today(snapshot_list($sanity[0].result.snapshots))
 }
 | with_entries(select(.value != null))
@@ -690,7 +760,7 @@ if [ "$boards_read" = yes ]; then
   fi
   open=$(jq -s '[.[] | select(.open)] | length' "$work/rows.ndjson")
 
-  jq -n --slurpfile sanity "$work/sanity.json" --slurpfile answer "$work/boards-answer.json" \
+  jq -n --slurpfile sanity "$work/sanity.json" --slurpfile answer "$work/boards-answer.json" --slurpfile readings "$work/readings.ndjson" \
     --rawfile errors "$work/errors.txt" --arg now "$now_iso" --arg today "$today" \
     --argjson count_today "$count_today" --argjson open "$open" \
     --argjson boards_kept "$boards_kept" --argjson columns_kept "$columns_kept" --argjson snapshots_kept "$snapshots_kept" \
