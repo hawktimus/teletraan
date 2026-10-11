@@ -77,3 +77,30 @@ export function withPages(steps) {
   });
   return expanded;
 }
+
+// The small frame is never left empty. The list it follows is its own rows of Panel order, then every small
+// panel the list does not name (the spares), then the one panel that always has something to show (the last
+// resort, lastResort in registry.js). core/schedule.js tries them in that order, and only goes on to the next
+// kind when the one before it has nothing with content, so the rows keep their order and their switches. A
+// panel that has a row, switched on or off, is never a spare: a row that is off stays off. Each step has
+// standIn: 'spare' or 'last', and a row of the list has none.
+//
+// The forecast comes first among the spares because it needs nothing from the editors, only the weather.
+const sparesFirst = ['forecast', 'next-event', 'sponsor-logo', 'safety-days', 'task-counts'];
+
+function spareRank(panel) {
+  const place = sparesFirst.indexOf(panel.id);
+  return place === -1 ? sparesFirst.length : place;
+}
+
+export function withStandIns(steps) {
+  const named = steps.map(step => step.panel);
+  const small = panels.filter(panel => panel.region === 'grid2' && !panel.testOnly);
+  const spares = small
+    .filter(panel => !panel.lastResort && !named.includes(panel.id))
+    .sort((first, second) => spareRank(first) - spareRank(second))
+    .map(panel => ({ panel: panel.id, show: true, standIn: 'spare' }));
+  const last = small.filter(panel => panel.lastResort).map(panel => ({ panel: panel.id, show: true, standIn: 'last' }));
+
+  return steps.concat(spares, last);
+}

@@ -194,6 +194,12 @@ layout, and in the regions banner and countdown it takes the place of the panels
 that have no layout (`fixedPanels` in the same file). The `side` panel is the
 one example (docs/layouts.md, "The sidebar").
 
+A line may also have `lastResort: true`. Only a small panel (`grid2`) can have it, and
+`team-tile` is the one example. The small frame shows such a panel when no other small panel has
+content, so the frame is never empty (docs/layouts.md, "Panel B, the small frame"). It is not in Panel
+order, in `config.js` or in the Studio's list, and `check-schemas.mjs` leaves it out of the comparison.
+It needs no `hasContent`, because it always has something to show.
+
 A line may also have `pages: 2`. The panel then comes round that many times in a
 row, once for each page, and `hasContent` and `mount` get the page as a second
 argument, counting from 1. A page with nothing on it is skipped. The Events

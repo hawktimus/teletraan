@@ -245,9 +245,8 @@ export function teamPending() {
 
 // The team the banner and the sidebar draw. The team the screen starts with, when the Studio has
 // no Teams, takes its name and number from the Team box in Dashboard Settings (content.team), as the
-// banner always has.
-export function teamShown(content) {
-  const team = currentTeam();
+// banner always has. A page that is built for the team that is about to go on gives it as team.
+export function teamShown(content, team = currentTeam()) {
   if (!team.builtIn) return team;
 
   const details = content && content.team ? content.team : {};

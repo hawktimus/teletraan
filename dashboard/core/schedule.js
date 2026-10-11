@@ -2,7 +2,8 @@
 //
 // Each region (grid1, grid2, ticker) steps through its list on its own timer.
 // One rule links them: Grid 1 and Grid 2 never show the same topic at the
-// same moment, so while Tasks is on the left, the task counts are skipped.
+// same moment, so while Tasks is on the left, the task counts are skipped. The
+// small frame is the one exception, when nothing else would fill it (rounds below).
 //
 // A region keeps its frame and swaps only the page (areas.js). A page's
 // seconds count from the moment it starts to arrive until it has left: the
@@ -199,6 +200,21 @@ function pagesOfCard(id, content, page) {
   }
 }
 
+// How the small frame chooses its next page. Its list has three kinds of step (withStandIns in
+// core/panel-order.js): the rows of Panel order, then the small panels the list does not name (standIn
+// 'spare'), then the one that always has something to show (standIn 'last'). A round is tried only when
+// every round before it found nothing. The rows come first, and no round before the third lets Grid 1 and
+// Grid 2 show the same topic. A panel that is not in the list is better than a repeated topic, a repeated
+// topic is better than an empty frame, and the panel that is always there is the last choice of all. A
+// step that is switched off is skipped in every round. The large frame has the first round only.
+const rounds = [
+  { standIn: '', sameTopic: false },
+  { standIn: 'spare', sameTopic: false },
+  { standIn: '', sameTopic: true },
+  { standIn: 'spare', sameTopic: true },
+  { standIn: 'last', sameTopic: true },
+];
+
 // region is 'grid1' or 'grid2'
 // getPlaylist() returns the list of { panel, show, seconds } for that region. A step of a panel with
 // more than one page also has page, counting from 1 (withPages in core/panel-order.js), which is
@@ -228,28 +244,33 @@ export function startRotation(region, getPlaylist, getContent) {
   }
 
   // The next step in the list that is allowed on screen right now, and whether getting to it goes
-  // round the end of the list (the first pass has ended). It changes nothing.
-  function findNext() {
+  // round the end of the list (the first pass has ended). It changes nothing. skip holds the places of
+  // the steps that could not be drawn this time.
+  function findNext(skip = []) {
     const playlist = readPlaylist();
     const content = getContent();
+    const myRounds = region === 'grid2' ? rounds : rounds.slice(0, 1);
 
-    for (let tries = 1; tries <= playlist.length; tries++) {
-      const index = (position + tries) % playlist.length;
-      const step = playlist[index];
-      if (step.show === false) continue;
-      if (regionOf(step.panel) !== region) continue; // a panel in the wrong list is ignored
-      if (!canShow(step.panel, content, step.page)) continue;
+    for (const round of myRounds) {
+      for (let tries = 1; tries <= playlist.length; tries++) {
+        const index = (position + tries) % playlist.length;
+        const step = playlist[index];
+        if (step.show === false || skip.includes(index)) continue;
+        if ((step.standIn || '') !== round.standIn) continue;
+        if (regionOf(step.panel) !== region) continue; // a panel in the wrong list is ignored
+        if (!canShow(step.panel, content, step.page)) continue;
 
-      const topic = topicOf(step.panel);
-      if (topic && onScreen[otherRegion].includes(topic)) continue;
+        const topic = topicOf(step.panel);
+        if (topic && !round.sameTopic && onScreen[otherRegion].includes(topic)) continue;
 
-      return { index: index, step: step, wrapped: position + tries >= playlist.length };
+        return { index: index, step: step, wrapped: position + tries >= playlist.length };
+      }
     }
     return null;
   }
 
-  function chooseNext() {
-    const found = findNext();
+  function chooseNext(skip) {
+    const found = findNext(skip);
     if (!found) return null;
 
     position = found.index;
@@ -287,10 +308,11 @@ export function startRotation(region, getPlaylist, getContent) {
   // one bad panel can neither stop the region nor spin it.
   function pickPage() {
     const attempts = readPlaylist().length;
+    const failed = [];
     somePanelFailed = false;
 
     for (let attempt = 0; attempt < attempts; attempt++) {
-      const step = chooseNext();
+      const step = chooseNext(failed);
       if (!step) return null;
 
       try {
@@ -300,6 +322,7 @@ export function startRotation(region, getPlaylist, getContent) {
         return { page: page, step: step, topic: topic, pages: pagesOfCard(step.panel, getContent(), step.page) };
       } catch (error) {
         somePanelFailed = true;
+        failed.push(position);
         console.error('Panel "' + step.panel + '" could not be drawn and is skipped', error);
       }
     }

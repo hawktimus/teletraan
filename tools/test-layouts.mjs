@@ -629,7 +629,7 @@ test('the sidebar layout has no small frame, and every other region of the stand
 test('the small panels are the ones the sidebar layout skips, and the Large panels list is untouched', () => {
   // a panel that names a layout of its own (the bar layout's two) is not one the sidebar skips for its region
   const skipped = panels.filter(panel => !panel.layout && !layout.hasRegion('sidebar', panel.region)).map(panel => panel.id);
-  assert.deepEqual(skipped.sort(), ['forecast', 'next-event', 'safety-days', 'sponsor-logo', 'stand-in-tile', 'task-counts']);
+  assert.deepEqual(skipped.sort(), ['forecast', 'next-event', 'safety-days', 'sponsor-logo', 'stand-in-tile', 'task-counts', 'team-tile']);
   assert.ok(panels.filter(panel => panel.region === 'grid2').every(panel => skipped.indexOf(panel.id) !== -1), 'every small panel');
 
   const regionOf = id => panels.filter(panel => panel.id === id)[0].region;

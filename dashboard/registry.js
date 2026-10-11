@@ -5,6 +5,9 @@
 //   topic     what it is about. Grid 1 and Grid 2 never show the same topic
 //             at the same moment, so tasks and task-counts share one.
 //   testOnly  only used by the hardware test (?stress)
+//   lastResort  a small panel that always has something to show. The small frame shows it only when no other
+//             small panel has content, so the frame is never empty (core/schedule.js). Editors do not
+//             switch it on or off: it is not in Panel order or in the rotation lists of config.js
 //   layout    only used in that layout (core/layout.js). A panel with no layout
 //             is used in every layout. See fixedPanels() below.
 //   pages     how many pages the panel shows one after the other each time it comes
@@ -68,6 +71,7 @@ export const panels = [
   { id: 'forecast', region: 'grid2', topic: 'weather' },
   { id: 'safety-days', region: 'grid2', topic: 'safety' },
   { id: 'sponsor-logo', region: 'grid2', topic: 'sponsors' },
+  { id: 'team-tile', region: 'grid2', lastResort: true },
 
   { id: 'alert', region: 'overlay' },
   { id: 'announcement', region: 'overlay' },

@@ -6,7 +6,8 @@ three:
 
 - **standard**: the banner across the top, the large frame (Grid 1) on the left,
   the countdown and the small frame (Grid 2) on the right, and the ticker across
-  the bottom. Every theme has it unless it says otherwise.
+  the bottom. Every theme has it unless it says otherwise. The small frame
+  always has a page ("Panel B, the small frame").
 - **sidebar**: a strip across the top with the team name on one line and the
   clock at its right end, under it a column on the left and one large frame on the
   right, and the ticker across the whole bottom, as in the standard layout. There is
@@ -1510,6 +1511,51 @@ in each style from the stylesheets, and checks that they differ.
 **Adding a color.** Add it to `primeTeam` in `config.js` and to `colorProperties` in `core/teams.js`, give `teams.css` the
 Prime value, add the field to `studio/schemas/team.js`, to `studio/check-schemas.mjs` and to `docs/seed/teams.ndjson`,
 and give the sample content the values. A team with none of it falls back to the Prime value in `core/sanity.js`.
+
+## Panel B, the small frame
+
+The three kinds of main panel have letters when people talk about the screen. **Panel A** is the large
+frame (Grid 1). **Panel B** is the small frame under the countdown (Grid 2). **Panel C** is the one big
+pane of the sidebar layout and of the bar layout, which is the only place a panel is drawn extra large:
+Neon Prime, Minimal, and the Monday cards while the Monday style is Minimal. The standard layout, which
+Original and Cybertron have, never has a Panel C and always has both Panel A and Panel B. The sidebar and
+bar layouts have no Panel B (see "No small frame" and "The bar layout").
+
+Panel B is never an empty frame. It follows the small rows of Panel order, as it always did, and the
+scheduler (`dashboard/core/schedule.js`, `rounds`) goes down this list and takes the first page it finds:
+
+1. A row of the list that has content and does not share a topic with Panel A. Rows are used in their order.
+2. A small panel that has no row in the list and has content, and does not share a topic with Panel A.
+   The forecast comes first, because it needs only the weather. Then next event, sponsor logo, safety days
+   and task counts.
+3. A row of the list that has content and does share a topic with Panel A, so Tasks on the left may have the
+   task counts beside it. An empty frame is worse than a repeated topic.
+4. A small panel that has no row and shares a topic with Panel A.
+5. The team tile (`dashboard/panels/team-tile/`): the team's logo, number, name and school. It is the last
+   resort and never the first choice, and it has no content to wait for, so Panel B always has something.
+
+A row that is switched off stays off in every step, and its panel is not one of the spares in steps 2 and 4.
+The rows are the rows of Panel order and the list is built in `core/panel-order.js` (`withStandIns`), which
+adds the spares and the team tile after them. If an editor deletes every small row, or the saved list has
+none, the small frame still shows the forecast and the other small panels that have content. The Studio does not
+offer the team tile in Panel order. It has no row, no seconds and no switch, and it is marked
+`lastResort: true` in `registry.js`.
+
+The team tile is drawn for the team that is about to go on the screen, as the items of the other panels are
+(`wantedTeam` in `core/teams.js`), so after a swap to the other team it is not the old team's tile. Its text
+is 44 px or more: the number at 96 px, the name at 56 px, the school at 44 px on one or two lines, up to the
+30 characters the Studio allows. Its logo is the team's own picture when the team has one and the hawk when it
+does not, in the pose of the team. Only Panel B can show it. It follows the style like the other small panels:
+Original and Cybertron draw their own frame round it.
+
+Panel A pages never reach into Panel B. Every page of Panel A is drawn inside the 1152 by 708 area, and
+the Custom panel keeps the blocks that do not fit inside its own box, which clips them. The check is to render the
+page in the standard layout and look at what is on top of each point of Panel B (`document.elementFromPoint`),
+for every page of Panel A in Original and Cybertron, Prime and Nova.
+
+`tools/test-panel-b.mjs` runs the real `schedule.js` with stand-ins for the page and tries every
+set of small panels that have content with five kinds of list. It checks that the small frame is never empty,
+that a row that is off stays off, and that the sidebar and bar layouts never start Panel B.
 
 ## What else works in each layout
 
