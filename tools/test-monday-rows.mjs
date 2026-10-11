@@ -1,0 +1,729 @@
+// Tests for the Monday cards as rows: the mix and the order of the rows of the tasks card, the page marker and
+// the scroll of a card with more than five rows, the cards of both teams, the pass of both teams in the look
+// rotation, the header of a card (the chip with the name of the team and the words that fit beside it), the
+// names of a team (core/team-title.js), and what the Panel order list does with a Monday card. frame.js
+// (scrollCard) and core/schedule.js are run with stand-ins for the page. The board data is made up: the sample
+// in data/sample/content.json, changed here and there.
+//
+//   node tools/test-monday-rows.mjs
+
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
+const sampleFile = path.join(dashboardFolder, 'data/sample/content.json');
+const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+
+// The dashboard files are browser modules named .js. Copying them next to a
+// package.json that says "type": "module" lets any version of node read them.
+const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-monday-rows-'));
+const root = path.join(workFolder, 'dashboard');
+fs.mkdirSync(path.join(root, 'core'), { recursive: true });
+fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
+['config.js', 'registry.js', 'frame.js'].forEach(file => fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file)));
+fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith('.js')).forEach(file => {
+  fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(root, 'core', file));
+});
+['themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
+  fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+  fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file));
+});
+
+const cardNames = ['tasks', 'milestones', 'progress', 'milestones-both', 'progress-both'];
+cardNames.forEach(name => {
+  const id = 'monday-' + name;
+  fs.mkdirSync(path.join(root, 'panels', id), { recursive: true });
+  fs.copyFileSync(path.join(dashboardFolder, 'panels', id, id + '.js'), path.join(root, 'panels', id, id + '.js'));
+});
+
+const base = pathToFileURL(root).href + '/';
+const config = await import(base + 'config.js');
+const monday = await import(base + 'core/monday.js');
+const draw = await import(base + 'core/monday-draw.js');
+const rotation = await import(base + 'core/look-rotation.js');
+const sanity = await import(base + 'core/sanity.js');
+const teams = await import(base + 'core/teams.js');
+const teamTitle = await import(base + 'core/team-title.js');
+const textWidthModule = await import(base + 'core/text-width.js');
+const panelOrder = await import(base + 'core/panel-order.js');
+const panels = {};
+for (const name of cardNames) panels[name] = await import(base + 'panels/monday-' + name + '/monday-' + name + '.js');
+
+const tests = [];
+function test(name, run) {
+  tests.push({ name: name, run: run });
+}
+
+const at = text => new Date(text); // always written with a Z, so it means the same on every computer
+const sampleRaw = () => JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+const countOf = (text, piece) => text.split(piece).length - 1;
+const titlesOf = tasks => tasks.map(task => task.title);
+
+// Noon on Monday October 12 2026 in Holly Springs
+const monday12 = at('2026-10-12T16:00:00Z');
+
+// The sample content, cleaned as the screen cleans it. Anything else is changed by the function given, which is given the raw sample.
+function contentWith(change) {
+  const raw = sampleRaw();
+  raw.settings.countdown = { kickoffLabel: 'KICKOFF IN', kickoff: '2027-01-09T17:00:00.000Z', rolloutLabel: 'ROLLOUT IN', rollout: '' };
+  if (change) change(raw);
+  return sanity.normalizeSample(raw);
+}
+
+// A task from the board, the way the board sync makes it, with what a test changes
+function board(fields) {
+  return Object.assign({ title: '[Task]', subteam: '[Subteam A]', status: 'up-next', team: 'prime', source: 'monday', mondayId: '[item]', showOnTv: true }, fields);
+}
+
+// The sample with these tasks in place of its own, and these lead entries when there are some
+function contentOf(tasks, leads, change) {
+  return contentWith(raw => {
+    raw.tasks = tasks;
+    if (leads) raw.subteams = leads.map(name => ({ name: name }));
+    if (change) change(raw);
+  });
+}
+
+// Runs a check with a team on the screen, and puts the built-in team back after it
+function onTeamScreen(code, run) {
+  teams.useTeams({ teams: contentWith().teams, settings: { teamMode: code, alternateMinutes: 5 } });
+  teams.changeTeamNow();
+  try {
+    run();
+  } finally {
+    teams.useTeams(null);
+    teams.changeTeamNow();
+  }
+}
+
+const wordsOf = html => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+const textOf = (html, cssClass) => Array.from(html.matchAll(new RegExp('<span class="' + cssClass + '[^"]*">([^<]*)</span>', 'g'))).map(match => match[1]);
+
+// Some tasks of one status, with a number in the title so that they can be told apart
+const many = (count, status, fields) => Array.from({ length: count }, (nothing, index) => board(Object.assign({ title: status + ' ' + String(index + 1).padStart(2, '0'), status: status }, fields)));
+
+
+// The rows of the tasks card
+
+test('a card has ten rows at the most, in the mix of 2 done, 3 in the backlog and the rest in progress', () => {
+  assert.deepEqual([monday.mostRows, monday.rowsPerPage, monday.shares], [10, 5, { done: 2, backlog: 3 }]);
+
+  const tasks = many(4, 'done').concat(many(6, 'up-next'), many(8, 'in-progress'));
+  const rows = monday.pickRows(tasks);
+  const count = status => rows.filter(task => task.status === status).length;
+
+  assert.equal(rows.length, 10);
+  assert.deepEqual([count('done'), count('up-next'), count('in-progress')], [2, 3, 5]);
+  assert.deepEqual(titlesOf(rows.filter(task => task.status === 'in-progress')), titlesOf(many(5, 'in-progress')), 'each status gives its first ones, which are the first by rank');
+  assert.equal(titlesOf(tasks)[0], 'done 01', 'the list given is not changed');
+});
+
+test('a status with fewer than its share leaves its slots to the others, in progress first, then the backlog, then done', () => {
+  const count = (rows, status) => rows.filter(task => task.status === status).length;
+  const shape = rows => [count(rows, 'done'), count(rows, 'up-next'), count(rows, 'in-progress')];
+
+  assert.deepEqual(shape(monday.pickRows(many(3, 'done').concat(many(8, 'up-next'), many(2, 'in-progress')))), [2, 6, 2], 'two in progress leave three slots, which the backlog takes');
+  assert.deepEqual(shape(monday.pickRows(many(3, 'done').concat(many(1, 'up-next'), many(1, 'in-progress')))), [3, 1, 1], 'every task is shown when there are fewer than ten');
+  assert.deepEqual(shape(monday.pickRows(many(9, 'done').concat(many(1, 'up-next')))), [9, 1, 0], 'done tasks fill what nothing else takes');
+  assert.deepEqual(shape(monday.pickRows(many(8, 'in-progress'))), [0, 0, 8]);
+  assert.deepEqual(shape(monday.pickRows(many(12, 'in-progress'))), [0, 0, 10]);
+  assert.deepEqual(monday.pickRows([]), []);
+  assert.deepEqual(monday.pickRows([board({ status: 'blocked' })]), [], 'a blocked task has no row');
+});
+
+test('the rows are ranked high, medium, low and none, then the earliest due date, then the title, whatever their status', () => {
+  const rows = monday.pickRows([
+    board({ title: 'd low', status: 'done', priority: 'low' }),
+    board({ title: 'c backlog medium', status: 'up-next', priority: 'medium', dueDate: '2026-10-14' }),
+    board({ title: 'b progress high late', status: 'in-progress', priority: 'high', dueDate: '2026-10-20' }),
+    board({ title: 'a progress high soon', status: 'in-progress', priority: 'high', dueDate: '2026-10-13' }),
+    board({ title: 'e backlog none', status: 'up-next' }),
+    board({ title: 'f done high', status: 'done', priority: 'high', dueDate: '2026-10-13' }),
+  ]);
+  assert.deepEqual(titlesOf(rows), ['a progress high soon', 'f done high', 'b progress high late', 'c backlog medium', 'd low', 'e backlog none']);
+});
+
+test('a row is the status, the title, the first name of the owner when there is one, and the priority as a shape', () => {
+  const content = contentOf([
+    board({ title: 'with all', status: 'in-progress', priority: 'high', contact: 'Sam' }),
+    board({ title: 'medium', status: 'up-next', priority: 'medium', dueDate: '2026-10-14' }),
+    board({ title: 'low', status: 'done', priority: 'low' }),
+    board({ title: '<i>x</i>', status: 'in-progress', priority: 'urgent', contact: '<b>Al</b>' }),
+  ]);
+  const html = panels.tasks.markupFor(content, monday12, 1);
+
+  assert.equal(countOf(html, 'class="row"'), 4);
+  assert.deepEqual(textOf(html, 'status'), ['IN PROGRESS', 'BACKLOG', 'DONE', 'IN PROGRESS'], 'high, medium, low and then the one whose priority is not one of them, and each row says its status in words');
+  assert.ok(html.includes('<span class="row-title">with all</span><span class="owner">Sam</span>'));
+  assert.ok(html.includes('<span class="row-title">medium</span><span class="owner"></span>'), 'no owner leaves the place empty');
+  assert.equal(countOf(html, 'triangle-high'), 1);
+  assert.equal(countOf(html, 'triangle-medium'), 1);
+  assert.equal(countOf(html, 'class="triangle-'), 2, 'low and none have no shape');
+  assert.equal(countOf(html, 'class="priority"'), 4, 'but they keep their place');
+  assert.equal(html.includes('<i>') || html.includes('<b>'), false);
+  assert.ok(html.includes('&lt;i&gt;x&lt;/i&gt;') && html.includes('&lt;b&gt;Al&lt;/b&gt;'));
+  assert.equal(/style="/.test(html), false);
+});
+
+test('the numbers under the rows count all the tasks of the lead, not only the rows that show', () => {
+  const content = contentOf(many(4, 'done').concat(many(6, 'up-next', { dueDate: '2026-10-05' }), many(8, 'in-progress')));
+  const html = panels.tasks.markupFor(content, monday12, 1);
+
+  assert.equal(countOf(html, 'class="row"'), 10);
+  assert.ok(html.includes('<div class="fact-label">OVERDUE</div><div class="fact-number">6</div>'));
+  assert.ok(html.includes('<div class="fact-label">OPEN</div><div class="fact-number">14</div>'));
+  assert.ok(html.includes('<div class="fact-label">DONE</div><div class="fact-number">4</div>'));
+});
+
+
+// The page marker and the scroll
+
+test('a card with more than five rows has a page marker and holds for two pages, and one with five or fewer has neither', () => {
+  const html = count => panels.tasks.markupFor(contentOf(many(count, 'in-progress')), monday12, 1);
+
+  [1, 5].forEach(count => {
+    assert.equal(html(count).includes('class="marker"'), false, count + ' rows have no marker');
+    assert.equal(panels.tasks.scrollPages(contentOf(many(count, 'in-progress')), 1), 1);
+  });
+  [6, 7, 10, 14].forEach(count => {
+    const shown = Math.min(count, 10);
+    assert.equal(panels.tasks.scrollPages(contentOf(many(count, 'in-progress')), 1), 2, count + ' tasks');
+    assert.ok(html(count).includes('<span class="place place-1">1 OF 2 · ' + shown + ' TASKS</span><span class="place place-2">2 OF 2 · ' + shown + ' TASKS</span>'), count + ' tasks');
+    assert.equal(countOf(html(count), 'class="square square-'), 2, 'a square for each page');
+  });
+  assert.equal(panels.tasks.scrollPages(contentOf([]), 1), 1, 'a page that does not exist is one page');
+  assert.equal(monday.pagesOf(0), 1);
+  assert.deepEqual([5, 6, 10].map(monday.pagesOf), [1, 2, 2]);
+  assert.ok(monday.pagesOf(monday.mostRows) <= 2, 'the page marker has a square and a place for two pages, which are all that ten rows make');
+});
+
+test('a card that scrolls says so on its section, starting at page 1, and the list is marked for frame.js', () => {
+  const html = panels.tasks.markupFor(contentOf(many(8, 'in-progress')), monday12, 1);
+
+  assert.ok(html.includes('<section class="page monday monday-tasks" data-scroll-page="1">'));
+  assert.equal(countOf(html, 'data-scroll-list'), 1);
+  assert.ok(html.indexOf('data-scroll-list') < html.indexOf('class="row"'), 'the rows are in the list');
+  assert.equal(panels.milestones.markupFor(contentWith(), monday12).includes('data-scroll'), false, 'the card of one team that does not scroll has none of it');
+});
+
+// frame.js with a fake page and a fake list that records the animation it is given
+async function withFrame(motion, run) {
+  const real = globalThis.document;
+  globalThis.document = fakeDocument();
+
+  try {
+    const frame = await import(base + 'frame.js?motion=' + motion);
+    frame.setMotion(motion);
+    await run(frame);
+  } finally {
+    globalThis.document = real;
+  }
+}
+
+function fakeDocument() {
+  return { documentElement: { dataset: {}, style: { setProperty: () => {} } }, getElementById: () => null, querySelector: () => null, querySelectorAll: () => [] };
+}
+
+function fakeCard(animate) {
+  const properties = {};
+  const list = { animate: animate };
+  return { dataset: { scrollPage: '1' }, style: { setProperty: (name, value) => { properties[name] = value; } }, querySelector: selector => (selector === '[data-scroll-list]' ? list : null), properties: properties };
+}
+
+test('frame.js moves the list of a card up by a page in 600 ms with the easing of the slats, in full motion, and at once in calm and none', async () => {
+  await withFrame('full', frame => {
+    const played = [];
+    const card = fakeCard((keyframes, options) => played.push({ keyframes: keyframes, options: options }));
+
+    frame.scrollCard(card, 1);
+    assert.equal(card.dataset.scrollPage, '2', 'the page marker follows this');
+    assert.equal(card.properties['--scroll-page'], '1');
+    assert.equal(played.length, 1);
+    assert.deepEqual(played[0].options, { duration: 600, easing: 'cubic-bezier(.5, 0, .2, 1)' });
+    assert.deepEqual(played[0].keyframes.map(keyframe => Object.keys(keyframe)), [['transform'], ['transform']], 'only the transform moves');
+    assert.ok(played[0].keyframes[0].transform.startsWith('translateY(calc(0 * var(--scroll-step') && played[0].keyframes[1].transform.startsWith('translateY(calc(1 * var(--scroll-step'));
+
+    frame.scrollCard(card, 0);
+    assert.equal(card.dataset.scrollPage, '1');
+    assert.ok(played[1].keyframes[0].transform.includes('calc(1 *'), 'and back to the first page, from the second');
+
+    frame.setSpeed('slow');
+    frame.scrollCard(card, 1);
+    assert.equal(played[2].options.duration, 900, 'the Speed setting stretches it like every other time');
+    frame.setSpeed('normal');
+
+    const none = { dataset: {}, style: { setProperty: () => {} }, querySelector: () => null };
+    frame.scrollCard(none, 1);
+    assert.equal(none.dataset.scrollPage, '2', 'a page with no list still says which page it is on');
+  });
+
+  for (const motion of ['calm', 'none']) {
+    await withFrame(motion, frame => {
+      const played = [];
+      const card = fakeCard(() => played.push('animated'));
+      frame.scrollCard(card, 1);
+      assert.deepEqual([card.dataset.scrollPage, card.properties['--scroll-page'], played.length], ['2', '1', 0], motion + ': the list is at its place and nothing moves');
+    });
+  }
+});
+
+test('frame.css keeps the list a page up for each page in view, and the stylesheets of the cards have no animation of their own', () => {
+  const frameCss = read('frame.css');
+  assert.ok(/\[data-scroll-list\] \{\s*transform: translateY\(calc\(var\(--scroll-page, 0\) \* var\(--scroll-step, 0px\) \* -1\)\);\s*\}/.test(frameCss));
+
+  const shared = read('monday.css');
+  assert.ok(/--scroll-step: 420px;/.test(shared), 'a step is five rows of 84');
+  assert.ok(/\.monday\.monday-progress-both \{\s*--scroll-step: 380px;/.test(read('panels/monday-progress-both/monday-progress-both.css')), 'and five rows of 76 on the progress card of both teams');
+  assert.equal(/transform|transition|animation|keyframes/.test(shared), false);
+});
+
+
+// core/schedule.js, with stand-ins for the page
+
+const scheduleTree = path.join(workFolder, 'schedule-tree');
+['config.js', 'core/schedule.js'].forEach(file => {
+  fs.mkdirSync(path.dirname(path.join(scheduleTree, 'dashboard', file)), { recursive: true });
+  fs.copyFileSync(path.join(dashboardFolder, file), path.join(scheduleTree, 'dashboard', file));
+});
+fs.writeFileSync(path.join(scheduleTree, 'package.json'), '{ "type": "module" }\n');
+fs.writeFileSync(path.join(scheduleTree, 'dashboard/frame.js'), [
+  'export const pace = () => 1;',
+  'export const turnMs = () => 0;',
+  'export const isPaused = () => false;',
+  'export const wait = () => new Promise(resolve => globalThis.scheduleWorld.waits.push(resolve));',
+  'export const scrollCard = (card, index) => globalThis.scheduleWorld.log.push("scroll " + card.name + " " + index);',
+].join('\n') + '\n');
+fs.writeFileSync(path.join(scheduleTree, 'dashboard/core/panels.js'), [
+  'export function buildPage(id) {',
+  "  globalThis.scheduleWorld.log.push('build ' + id);",
+  '  return { id: id, element: { name: id } };',
+  '}',
+  'export const canShow = () => true;',
+  'export const moduleOf = id => globalThis.scheduleWorld.modules[id] || null;',
+  'export const regionOf = () => "grid1";',
+  'export const topicOf = () => null;',
+].join('\n') + '\n');
+fs.writeFileSync(path.join(scheduleTree, 'dashboard/core/photos.js'), 'export const ownSeconds = () => 0;\n');
+fs.writeFileSync(path.join(scheduleTree, 'dashboard/core/layout.js'), [
+  'export const hasRegion = () => true;',
+  "export const layoutNow = () => 'standard';",
+].join('\n') + '\n');
+fs.writeFileSync(path.join(scheduleTree, 'dashboard/core/areas.js'), [
+  'export async function changePage(region, page) {',
+  "  globalThis.scheduleWorld.log.push('page ' + (page ? page.id : 'none'));",
+  '  return 0;',
+  '}',
+  'export function clearRegion() {}',
+].join('\n') + '\n');
+let scheduleRuns = 0;
+
+async function inRotation(modules, run) {
+  const world = { log: [], waits: [], modules: modules };
+  globalThis.scheduleWorld = world;
+
+  try {
+    scheduleRuns += 1;
+    world.module = await import(pathToFileURL(path.join(scheduleTree, 'dashboard/core/schedule.js')).href + '?run=' + scheduleRuns);
+    world.content = { settings: { pageSeconds: 20, rotation: {} } };
+    world.settle = async () => {
+      for (let turn = 0; turn < 8; turn++) await new Promise(resolve => setImmediate(resolve));
+    };
+    // lets every wait go, a quarter of a second at a time, until this many seconds have passed
+    world.pass = async count => {
+      for (let quarter = 0; quarter < count * 4; quarter++) {
+        world.waits.splice(0).forEach(resolve => resolve());
+        await world.settle();
+      }
+    };
+    await run(world);
+  } finally {
+    delete globalThis.scheduleWorld;
+  }
+}
+
+const steps = ids => ids.map(panel => ({ panel: panel, show: true }));
+
+test('a card that scrolls is held for its time, then its list moves up and it is held for the same time again, and then the next page comes', async () => {
+  await inRotation({ a: { scrollPages: () => 2 } }, async world => {
+    world.module.startRotation('grid1', () => steps(['a', 'b']), () => world.content);
+    await world.settle();
+
+    // a page is held 20 seconds less the second it takes to leave, which here is none
+    await world.pass(19);
+    assert.deepEqual(world.log, ['build a', 'page a'], 'held, and not scrolled yet');
+    await world.pass(2);
+    assert.deepEqual(world.log, ['build a', 'page a', 'scroll a 1'], 'the list moves up by a page');
+    await world.pass(18);
+    assert.deepEqual(world.log, ['build a', 'page a', 'scroll a 1'], 'and holds again');
+    await world.pass(3);
+    assert.deepEqual(world.log.slice(3), ['build b', 'page b'], 'then the next card');
+  });
+});
+
+test('a card with one page, a panel that says nothing, and a panel whose answer is a problem are held once and never scrolled', async () => {
+  const modules = { a: { scrollPages: () => 1 }, b: {}, c: { scrollPages: () => { throw new Error('broken'); } }, d: { scrollPages: () => 'many' } };
+  const real = console.error;
+  console.error = () => {};
+
+  try {
+    await inRotation(modules, async world => {
+      world.module.startRotation('grid1', () => steps(['a', 'b', 'c', 'd']), () => world.content);
+      await world.settle();
+      await world.pass(100);
+      assert.deepEqual(world.log.filter(line => line.startsWith('scroll')), []);
+      assert.deepEqual(world.log.filter(line => line.startsWith('page')).slice(0, 4), ['page a', 'page b', 'page c', 'page d']);
+    });
+  } finally {
+    console.error = real;
+  }
+});
+
+test('a card with three pages scrolls twice, and a refresh of the pages ends the holds', async () => {
+  await inRotation({ a: { scrollPages: () => 3 } }, async world => {
+    world.module.startRotation('grid1', () => steps(['a', 'b']), () => world.content);
+    await world.settle();
+    await world.pass(60);
+    assert.deepEqual(world.log.filter(line => line.startsWith('scroll')), ['scroll a 1', 'scroll a 2']);
+
+    world.module.showPagesNow();
+    await world.pass(2);
+    assert.ok(world.log.includes('page b'), 'the next page comes at once');
+  });
+
+  await inRotation({ a: { scrollPages: () => 3 } }, async world => {
+    world.module.startRotation('grid1', () => steps(['a', 'b']), () => world.content);
+    await world.settle();
+    await world.pass(25);
+    assert.deepEqual(world.log.filter(line => line.startsWith('scroll')), ['scroll a 1']);
+
+    world.module.showPagesNow();
+    await world.pass(2);
+    assert.deepEqual(world.log.filter(line => line.startsWith('scroll')), ['scroll a 1'], 'and the second scroll never happens');
+    assert.ok(world.log.includes('page b'));
+  });
+});
+
+
+// The cards of both teams
+
+test('the rows of both teams are one for each department and each team that has board tasks, alternating, in the order of the Team leads list', () => {
+  const content = contentWith();
+  const rows = monday.bothRows(content, teamsOf(content), monday12);
+
+  assert.deepEqual(rows.map(row => row.team.code + ' ' + row.lead), [
+    'prime [Subteam A]', 'nova [Subteam A]', 'prime [Subteam B]', 'nova [Subteam B]', 'nova [Subteam C]', 'nova [Subteam D]', 'nova [Subteam E]',
+  ]);
+  assert.equal(rows[0].tasks.length, 5);
+  assert.ok(rows.every(row => row.tasks.every(task => task.team === row.team.code)), 'a row has the tasks of its own team');
+
+  const swapped = monday.bothRows(content, teamsOf(content).reverse(), monday12);
+  assert.deepEqual(swapped.slice(0, 4).map(row => row.team.code), ['nova', 'prime', 'nova', 'prime'], 'the teams are in the order given');
+  assert.deepEqual(monday.bothRows(contentOf([]), teamsOf(content), monday12), []);
+});
+
+function teamsOf(content) {
+  return rotation.teamsInOrder(content.settings.teamOrder, content.teams);
+}
+
+test('the pass of both teams has two cards, and only when two teams or more have board tasks', () => {
+  const cards = [{ panel: 'monday-milestones-both', show: true }, { panel: 'monday-progress-both', show: true }];
+  const content = contentWith();
+
+  assert.deepEqual(monday.bothSteps(content, ['prime', 'nova'], monday12), cards);
+  assert.deepEqual(rotation.bothCards(content, ['prime', 'nova']), cards);
+  assert.deepEqual(monday.bothSteps(content, ['prime'], monday12), [], 'one team has its own cards');
+  assert.deepEqual(monday.bothSteps(content, ['prime', 'nova', 'other'], monday12), cards, 'a team with no rows does not count');
+  assert.deepEqual(monday.bothSteps(contentOf([board({})]), ['prime', 'nova'], monday12), [], 'Nova has none');
+  assert.deepEqual(monday.bothSteps(contentOf([board({ team: '' })]), ['prime', 'nova'], monday12), cards, 'a board task for both teams is each team\'s');
+  assert.deepEqual(monday.bothSteps(contentOf([board({ showOnTv: false }), board({ team: 'nova' })]), ['prime', 'nova'], monday12), [], 'a task that is off the TV is not a row');
+  [null, undefined, {}, [], 'text'].forEach(value => assert.deepEqual(monday.bothSteps(value, ['prime', 'nova']), [], String(value)));
+  assert.deepEqual(monday.bothSteps(content, null), []);
+});
+
+test('the progress card of both teams has a row for each department and team: the team, the department, a bar of done, in progress and backlog, and the count', () => {
+  const html = panels['progress-both'].markupFor(contentWith(), monday12);
+  const found = panels['progress-both'].progressFor(contentWith(), monday12);
+
+  assert.equal(found.total, 7);
+  assert.equal(found.rows.length, 7);
+  assert.deepEqual(found.rows[0], { team: found.rows[0].team, lead: '[Subteam A]', backlog: 2, progress: 2, done: 1, total: 5 });
+  assert.deepEqual(textOf(html, 'team-tag'), ['PRIME', 'NOVA', 'PRIME', 'NOVA', 'NOVA', 'NOVA', 'NOVA'], 'the teams alternate while both have a department');
+  assert.deepEqual(textOf(html, 'department').slice(0, 4), ['[SUBTEAM A]', '[SUBTEAM A]', '[SUBTEAM B]', '[SUBTEAM B]']);
+  assert.deepEqual(textOf(html, 'count'), ['1/5', '0/2', '1/4', '0/1', '0/1', '0/1', '1/1']);
+  assert.ok(html.includes('team-tag team-tag-prime') && html.includes('team-tag team-tag-nova'));
+  assert.equal(countOf(html, '<svg class="stack"'), 7, 'a bar for each row');
+
+  // the stacks of the first row follow each other, done, in progress, backlog, and the longest bar fills the room
+  const first = Array.from(html.split('<svg class="stack"')[1].matchAll(/<rect class="seg seg-(\w+)" x="(\d+)" y="0" width="(\d+)" height="44"\/>/g)).map(match => [match[1], Number(match[2]), Number(match[3])]);
+  assert.deepEqual(first, [['done', 0, 80], ['progress', 80, 160], ['backlog', 240, 160]]);
+  assert.deepEqual(['DONE', 'IN PROGRESS', 'BACKLOG'].map(label => html.includes('</span>' + label + '</span>')), [true, true, true], 'the legend names them in the same order');
+  assert.equal(titleOf(html), 'PROGRESS');
+  assert.equal(/<span class="team-chip">([^<]*)<\/span>/.exec(html)[1], 'BOTH TEAMS');
+  assert.ok(html.includes('1 OF 2 · 7 ROWS'));
+});
+
+test('the milestones card of both teams has a row for each department and team with an open task that has a due date: the team, the department, the next milestone and its date', () => {
+  const html = panels['milestones-both'].markupFor(contentWith(), monday12);
+  const found = panels['milestones-both'].milestonesFor(contentWith(), monday12);
+
+  assert.deepEqual(found.rows.map(row => row.team.code + ' ' + row.lead + ' ' + row.task.title), [
+    'prime [Subteam A] [Reattach drivetrain]', 'nova [Subteam A] [Cut the base plates]', 'prime [Subteam B] [Write the grant]', 'nova [Subteam B] [Plan the outreach]', 'nova [Subteam C] [Test the auto modes]', 'nova [Subteam D] [Draw the field]',
+  ]);
+  assert.equal(found.total, 6, 'Subteam E has only a task that is done');
+  assert.deepEqual(textOf(html, 'milestone'), ['[Reattach drivetrain]', '[Cut the base plates]', '[Write the grant]', '[Plan the outreach]', '[Test the auto modes]', '[Draw the field]']);
+  assert.deepEqual(textOf(html, 'date'), ['OCT 8', 'OCT 15', 'OCT 16', 'OCT 20', 'OCT 13', 'NOV 2']);
+  assert.ok(html.includes('<span class="date late">OCT 8</span>'), 'a date that is past is marked late');
+  assert.ok(html.includes('1 OF 2 · 6 MILESTONES'));
+  assert.equal(/<span class="team-chip">([^<]*)<\/span>/.exec(html)[1], 'BOTH TEAMS');
+  assert.equal(titleOf(html), 'MILESTONES');
+
+  const none = panels['milestones-both'].markupFor(contentOf([board({ title: 'a' }), board({ title: 'b', team: 'nova' })]), monday12);
+  assert.ok(none.includes('<p class="empty">No open board items have a due date yet.</p>'));
+  assert.equal(panels['milestones-both'].scrollPages(contentOf([board({ title: 'a' }), board({ title: 'b', team: 'nova' })])), 1);
+  const empty = panels['milestones-both'].markupFor(contentOf([]), monday12);
+  assert.ok(empty.includes('<p class="empty">No board is chosen yet.</p>'));
+  assert.ok(panels['progress-both'].markupFor(contentOf([]), monday12).includes('<p class="empty">No board is chosen yet.</p>'));
+});
+
+function titleOf(html) {
+  return wordsOf(/<h2 class="title"[^>]*>([\s\S]*?)<\/h2>/.exec(html)[1]);
+}
+
+test('the cards of both teams show ten rows at the most, five at a time, and hold for two pages', () => {
+  const names = ['A', 'B', 'C', 'D', 'E', 'F'].map(letter => '[Lead ' + letter + ']');
+  const tasks = [];
+  names.forEach(name => ['prime', 'nova'].forEach(code => tasks.push(board({ subteam: name, team: code, status: 'in-progress', dueDate: '2026-10-14', title: code + ' ' + name }))));
+  const content = contentOf(tasks, names);
+
+  const found = panels['progress-both'].progressFor(content, monday12);
+  assert.deepEqual([found.rows.length, found.total], [10, 12]);
+  assert.deepEqual(found.rows.map(row => row.team.code).join(' '), 'prime nova prime nova prime nova prime nova prime nova');
+  assert.equal(panels['progress-both'].scrollPages(content), 2);
+  assert.ok(panels['progress-both'].markupFor(content, monday12).includes('1 OF 2 · 10 ROWS'));
+  assert.equal(panels['milestones-both'].milestonesFor(content, monday12).rows.length, 10);
+  assert.equal(panels['milestones-both'].scrollPages(content), 2);
+
+  const few = contentOf(tasks.slice(0, 4), names);
+  assert.equal(panels['progress-both'].scrollPages(few), 1);
+  assert.equal(panels['progress-both'].markupFor(few, monday12).includes('class="marker"'), false);
+});
+
+test('a name from the board is never markup on the cards of both teams, and no card of either has a dash', () => {
+  const content = contentOf([board({ title: '<b>bold</b> & more', subteam: '<u>lead</u>', dueDate: '2026-10-14' }), board({ title: '<i>x</i>', subteam: '<u>lead</u>', team: 'nova', dueDate: '2026-10-15' })], ['<u>lead</u>']);
+  const dashes = /[\u2013\u2014]/;
+
+  ['milestones-both', 'progress-both'].forEach(name => {
+    const html = panels[name].markupFor(content, monday12);
+    assert.equal(/<(b|u|i)>/.test(html), false, name + ' has markup from a name');
+    assert.equal(dashes.test(html), false, name);
+    assert.ok(html.includes('&lt;U&gt;LEAD&lt;/U&gt;'), name);
+  });
+  ['core/team-title.js', 'core/text-width.js', 'monday.css', 'panels/monday-milestones-both/monday-milestones-both.js', 'panels/monday-progress-both/monday-progress-both.js', 'panels/monday-milestones-both/monday-milestones-both.css', 'panels/monday-progress-both/monday-progress-both.css'].forEach(file => {
+    assert.equal(dashes.test(read(file)), false, file + ' has an em or en dash');
+  });
+});
+
+
+// The pass of both teams in the look rotation
+
+const fakeStorage = () => {
+  const kept = {};
+  return { kept: kept, getItem: name => (name in kept ? kept[name] : null), setItem: (name, value) => { kept[name] = String(value); } };
+};
+const seconds = (from, count) => new Date(from.getTime() + count * 1000);
+
+test('a cycle ends with the pass of both teams in the Monday style, held in the team before it, when the cycle asks for it', () => {
+  const options = { style: 'original', mondayStyle: 'minimal', teams: ['prime', 'nova'], hasMonday: () => true };
+
+  assert.deepEqual(rotation.planCycle(options).map(pass => [pass.team, pass.style, pass.kind, Boolean(pass.both)].join(' ')), [
+    'prime original panels false', 'prime minimal monday false', 'nova original panels false', 'nova minimal monday false',
+  ]);
+  assert.deepEqual(rotation.planCycle(Object.assign({ hasBoth: true }, options)).map(pass => [pass.team, pass.style, pass.kind, Boolean(pass.both)].join(' ')), [
+    'prime original panels false', 'prime minimal monday false', 'nova original panels false', 'nova minimal monday false', 'nova minimal monday true',
+  ]);
+  assert.deepEqual(rotation.planCycle({ style: '', mondayStyle: 'minimal', teams: [], hasMonday: () => false, hasBoth: true }).map(pass => pass.kind), ['panels'], 'with Team mode choosing the team there is no pass of both');
+  const noMonday = rotation.planCycle({ style: 'original', mondayStyle: 'minimal', teams: ['prime', 'nova'], hasMonday: () => false, hasBoth: true });
+  assert.deepEqual(noMonday.map(pass => [pass.team, pass.kind, Boolean(pass.both)].join(' ')), ['prime panels false', 'nova panels false', 'nova monday true']);
+});
+
+test('the real cards decide: Prime and Nova both have rows, so the screen goes through Prime, Nova and then both, and the list of the large panel is the two cards', () => {
+  const content = contentWith();
+  const machine = rotation.makeLookRotation({ getContent: () => content, storage: fakeStorage() });
+  const start = at('2026-10-12T16:00:00Z');
+  const shown = [];
+
+  let held = machine.begin(start);
+  shown.push([held.style, held.team, machine.pass().kind, Boolean(machine.pass().both)]);
+  for (let step = 1; step < 6; step++) {
+    const result = machine.boundary(seconds(start, step * 20));
+    held = result.look || held;
+    shown.push([held.style, held.team, machine.pass().kind, Boolean(machine.pass().both)]);
+  }
+  assert.deepEqual(shown.map(item => item.slice(1).join(' ')), [
+    'prime panels false', 'prime monday false', 'nova panels false', 'nova monday false', 'nova monday true', 'prime panels false',
+  ]);
+  assert.equal(shown[4][0], 'minimal', 'in the Monday style');
+  assert.equal(shown[3][0], 'minimal');
+  assert.deepEqual(shown[0][0], shown[2][0], 'and the panels in the style of the day');
+
+  // the list at each pass: the panels' own list, a team's cards, both teams' cards
+  const list = [{ panel: 'tasks', show: true }];
+  const again = rotation.makeLookRotation({ getContent: () => content, storage: fakeStorage() });
+  again.begin(start);
+  assert.deepEqual(again.playlist(list, content), list);
+  again.boundary(seconds(start, 20));
+  assert.equal(again.playlist(list, content)[0].panel, 'monday-tasks');
+  again.boundary(seconds(start, 40));
+  again.boundary(seconds(start, 60));
+  assert.deepEqual(again.playlist(list, content).map(step => step.panel + (step.page ? ' ' + step.page : '')), ['monday-tasks 1', 'monday-tasks 2', 'monday-tasks 3', 'monday-tasks 4', 'monday-tasks 5', 'monday-milestones', 'monday-progress']);
+  again.boundary(seconds(start, 80));
+  assert.deepEqual(again.pass(), { team: 'nova', kind: 'monday', both: true });
+  assert.deepEqual(again.playlist(list, content), [{ panel: 'monday-milestones-both', show: true }, { panel: 'monday-progress-both', show: true }]);
+});
+
+test('without rows for two teams the cycle has no pass of both, and a page that reloads in the pass of both goes on in it', () => {
+  const only = contentOf([board({ title: 'a' })]);
+  const machine = rotation.makeLookRotation({ getContent: () => only, storage: fakeStorage() });
+  const start = at('2026-10-12T16:00:00Z');
+  machine.begin(start);
+  const kinds = [];
+  for (let step = 1; step < 6; step++) {
+    machine.boundary(seconds(start, step * 20));
+    const pass = machine.pass();
+    kinds.push(pass.team + ' ' + pass.kind + (pass.both ? ' both' : ''));
+  }
+  assert.deepEqual(kinds, ['prime monday', 'nova panels', 'prime panels', 'prime monday', 'nova panels']);
+
+  // the place of the pass is written down, with both, and a page that reloads comes back to it
+  const content = contentWith();
+  const storage = fakeStorage();
+  const first = rotation.makeLookRotation({ getContent: () => content, storage: storage });
+  first.begin(start);
+  [20, 40, 60, 80].forEach(count => first.boundary(seconds(start, count)));
+  assert.deepEqual(first.pass(), { team: 'nova', kind: 'monday', both: true });
+  first.keep(seconds(start, 120));
+  assert.equal(JSON.parse(storage.kept[rotation.stateKey]).both, true);
+
+  const second = rotation.makeLookRotation({ getContent: () => content, storage: storage });
+  second.begin(seconds(start, 125));
+  assert.deepEqual(second.pass(), { team: 'nova', kind: 'monday', both: true }, 'and not in the Monday pass of Nova, which has the same team and kind');
+  const plain = rotation.makeLookRotation({ getContent: () => content, storage: fakeStorage() });
+  plain.begin(start);
+  assert.equal(JSON.parse(JSON.stringify(plain.pass())).both, undefined, 'an ordinary pass says nothing about both');
+});
+
+
+// The header
+
+test('a title that fits beside the chip has the words BOARD and how long ago, then only how long ago, and then nothing', () => {
+  const room = 1036;
+  const longest = (title, chip, words) => textWidthModule.textWidth(title, 700, 60) + 24 + 20 + textWidthModule.textWidth(chip, 700, 44) + 28 + 84 + textWidthModule.textWidth(words, 600, 44);
+
+  assert.equal(draw.wordsBesideChip('AI TEAM', 'PRIME', '4 MIN AGO'), 'BOARD · 4 MIN AGO');
+  assert.equal(draw.wordsBesideChip('BUILD TEAM', 'PRIME', '4 MIN AGO'), '4 MIN AGO', 'with the slashes at the right end there is no room for BOARD beside BUILD TEAM');
+  assert.equal(draw.wordsBesideChip('DESIGN TEAM', 'PRIME', '4 MIN AGO'), '4 MIN AGO');
+  assert.equal(draw.wordsBesideChip('ELECTRICAL TEAM', 'PRIME', '4 MIN AGO'), '', 'and none beside the longer names');
+  assert.equal(draw.wordsBesideChip('PROGRAMMING TEAM', 'PRIME', '4 MIN AGO'), '');
+  assert.equal(draw.wordsBesideChip('BUILD TEAM', 'PRIME', ''), '');
+
+  // whatever is chosen fits, and nothing is left out that would have fitted
+  const titles = ['A', 'AI TEAM', 'BUILD TEAM', 'DESIGN TEAM', 'BUSINESS TEAM', 'ELECTRICAL TEAM', 'PROGRAMMING TEAM', 'MECHANICAL TEAM', 'PROGRESS', 'MILESTONES', 'TASKS'];
+  const words = ['NOW', '4 MIN AGO', '59 MIN AGO', '47 HR AGO', '12 DAYS AGO', 'SAMPLE'];
+  titles.forEach(title => ['PRIME', 'NOVA', 'BOTH TEAMS'].forEach(chip => words.forEach(text => {
+    const chosen = draw.wordsBesideChip(title, chip, text);
+    if (chosen !== '') assert.ok(longest(title, chip, chosen) <= room, title + ' ' + chip + ' ' + chosen + ' fits');
+    if (chosen === '') assert.ok(longest(title, chip, text) > room, title + ' ' + chip + ' ' + text + ' would not have fit');
+    if (chosen !== 'BOARD · ' + text && chosen !== '') assert.ok(longest(title, chip, 'BOARD · ' + text) > room, title + ' ' + chip + ': BOARD would not have fit');
+  })));
+  // with no words, the title and the chip fit in the styles that hide the slashes (Cybertron and Minimal), even PROGRAMMING TEAM beside BOTH TEAMS
+  assert.ok(titles.every(title => textWidthModule.textWidth(title, 700, 60) + 24 + textWidthModule.textWidth('BOTH TEAMS', 700, 44) + 28 <= room), 'the title and the longest chip fit with no words at all');
+});
+
+test('the header has the title, the words, the chip and the slashes in that order, and a long title is cut off with an ellipsis rather than pushed over the chip', () => {
+  const header = draw.headerMarkup('BUILD TEAM', 'PRIME', { lastSyncAt: '2026-10-12T15:56:00Z' }, monday12);
+
+  assert.ok(header.includes('<h2 class="title" data-slat="title">BUILD TEAM</h2>'));
+  assert.ok(header.indexOf('class="ago"') < header.indexOf('class="team-chip"') && header.indexOf('class="team-chip"') < header.indexOf('class="double-slash"'));
+  assert.ok(header.includes('<span class="ago">4 MIN AGO</span><span class="team-chip">PRIME</span>'));
+  assert.equal(draw.headerMarkup('BUILD TEAM', 'PRIME', null, monday12).includes('class="ago"'), false, 'with no status there are no words');
+
+  const css = fs.readFileSync(path.join(dashboardFolder, 'monday.css'), 'utf8');
+  assert.ok(/\.monday \.title \{[^}]*min-width: 0;[^}]*text-overflow: ellipsis;[^}]*white-space: nowrap;/.test(css));
+  assert.ok(/\.monday \.tag \{\s*flex: none;/.test(css), 'the chip is never made narrower');
+});
+
+
+// Team names
+
+test('a team is named by its short name, a department by itself and TEAM, and a page of shared items says BOTH TEAMS', () => {
+  assert.equal(teamTitle.teamNameOf({ shortName: 'prime', name: 'Hawktimus Prime', code: 'prime' }), 'PRIME');
+  assert.equal(teamTitle.teamNameOf({ name: 'Hawktimus Nova', code: 'nova' }), 'HAWKTIMUS NOVA');
+  assert.equal(teamTitle.teamNameOf({ code: 'nova' }), 'NOVA');
+  assert.equal(teamTitle.teamNameOf(null), '');
+  assert.equal(teamTitle.bothTeamsName, 'BOTH TEAMS');
+
+  assert.equal(teamTitle.departmentTitle('Build'), 'BUILD TEAM');
+  assert.equal(teamTitle.departmentTitle(' programming '), 'PROGRAMMING TEAM');
+  assert.equal(teamTitle.departmentTitle('Safety Team'), 'SAFETY TEAM', 'a name that ends in TEAM does not get a second one');
+  assert.equal(teamTitle.departmentTitle('Teamwork'), 'TEAMWORK TEAM', 'only the word TEAM counts');
+  assert.equal(teamTitle.departmentTitle(''), 'TEAM');
+  assert.equal(teamTitle.departmentTitle(undefined), 'TEAM');
+
+  assert.equal(teamTitle.pageTeamName([{ team: '' }, {}], 'PRIME'), 'BOTH TEAMS');
+  assert.equal(teamTitle.pageTeamName([{ team: 'prime' }, { team: '' }], 'PRIME'), 'PRIME', 'one item of the team makes it the team\'s');
+  assert.equal(teamTitle.pageTeamName([{ team: 'nova' }], 'NOVA'), 'NOVA');
+  assert.equal(teamTitle.pageTeamName([], 'PRIME'), 'PRIME', 'a page with no items is the team on the screen');
+  assert.equal(teamTitle.pageTeamName(null, 'PRIME'), 'PRIME');
+  assert.equal(teamTitle.teamChipMarkup('<b>x'), '<span class="team-chip">&lt;b&gt;x</span>');
+});
+
+test('the text width is the sum of the advance widths of the display font, and a character that is not known is counted wide', () => {
+  const width = textWidthModule.textWidth;
+
+  assert.equal(Math.round(width('BUILD TEAM', 700, 60)), 387);
+  assert.equal(Math.round(width('PROGRAMMING TEAM', 700, 60)), 685);
+  assert.equal(Math.round(width('4 MIN AGO', 600, 44)), 237);
+  assert.equal(width('', 700, 44), 0);
+  assert.ok(width('é', 700, 44) >= width('W', 700, 44) * 0.79, 'an unknown character is counted as wide');
+  assert.equal(width('A', 500, 100), width('A', 700, 100), 'a weight that is not known is 700');
+});
+
+
+// The Panel order list
+
+test('a saved Panel order that still names a Monday card is ignored, and the cards are not offered in Studio', () => {
+  const rotationOf = order => ({ order: order });
+  const saved = rotationOf([{ panel: 'tasks', show: true }, { panel: 'monday-tasks', show: true }, { panel: 'monday-progress-both', show: true }, { panel: 'task-counts', show: true }]);
+
+  assert.deepEqual(panelOrder.playlistOf(saved, 'grid1').map(step => step.panel), ['tasks']);
+  assert.deepEqual(panelOrder.playlistOf(saved, 'grid2').map(step => step.panel), ['task-counts']);
+  assert.deepEqual(panelOrder.orderFromLists({ grid1: [{ panel: 'tasks' }, { panel: 'monday-milestones' }], grid2: [] }).map(step => step.panel), ['tasks']);
+  assert.equal(panelOrder.playlistOf({ order: [{ panel: 'monday-tasks' }] }, 'grid1').length, 0);
+  assert.equal(/monday/.test(read('core/competition.js')), false, 'withCompetition never held the Monday cards, and a Monday pass has no competition cards in it');
+  assert.equal(/monday/i.test(fs.readFileSync(path.join(dashboardFolder, '../studio/schemas/settingsRotation.js'), 'utf8').replace(/\/\/.*$/gm, '')), false, 'the Panel order choices of Studio have no Monday card');
+});
+
+
+// Run them
+
+let failures = 0;
+try {
+  for (const entry of tests) {
+    try {
+      await entry.run();
+      console.log('ok    ' + entry.name);
+    } catch (error) {
+      failures += 1;
+      console.log('FAIL  ' + entry.name);
+      console.log(error);
+    }
+  }
+} finally {
+  fs.rmSync(workFolder, { recursive: true, force: true });
+}
+
+console.log('\n' + (tests.length - failures) + ' of ' + tests.length + ' passed');
+if (failures > 0) process.exitCode = 1;

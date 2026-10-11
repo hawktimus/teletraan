@@ -5,11 +5,11 @@
 // most six rows, and +N MORE says how many entries did not fit. The card always draws, with a sentence when
 // no task has a due date, because the look rotation chooses it (core/monday.js, mondaySteps).
 
-import { emptyMarkup, tagTextFor } from '../../core/competition-draw.js';
+import { emptyMarkup } from '../../core/competition-draw.js';
 import { todayOf } from '../../core/competition.js';
 import { daysFromTo, shortDate } from '../../core/frc.js';
-import { dueDateOf, dueSoonestFirst, groupByLead, leadEntries, tasksFor } from '../../core/monday.js';
-import { pageMarkup } from '../../core/monday-draw.js';
+import { boardTasksFor, dueDateOf, dueSoonestFirst, groupByLead, leadEntries } from '../../core/monday.js';
+import { headerMarkup, noRowsSentence, pageMarkup, teamNameShown } from '../../core/monday-draw.js';
 import { escapeHtml } from '../../core/text.js';
 
 export const weeks = [
@@ -35,7 +35,7 @@ export function weekIndexOf(date, today) {
 // in that week, or null.
 export function milestonesFor(content, now) {
   const today = todayOf(content, now);
-  const open = tasksFor(content, now).filter(task => task.status !== 'done' && dueDateOf(task) !== '');
+  const open = boardTasksFor(content, now).filter(task => task.status !== 'done' && dueDateOf(task) !== '');
 
   const rows = groupByLead(open, leadEntries(content, now)).map(group => {
     const soonest = dueSoonestFirst(group.tasks);
@@ -59,8 +59,11 @@ function rowMarkup(row, today) {
 // The page as markup, for the time given. now is a Date.
 export function markupFor(content, now) {
   const found = milestonesFor(content, now);
-  const tag = tagTextFor(content.monday, now);
-  if (found.rows.length === 0) return pageMarkup('monday-milestones', 'MILESTONES', tag, emptyMarkup('No open board items have a due date yet.'));
+  const header = headerMarkup('MILESTONES', teamNameShown(), content.monday, now);
+  if (found.rows.length === 0) {
+    const rows = boardTasksFor(content, now).length > 0;
+    return pageMarkup('monday-milestones', header, emptyMarkup(rows ? 'No open board items have a due date yet.' : noRowsSentence(content)));
+  }
 
   const heads = weeks.map(week => `<div class="week-head">${week.label}</div>`).join('');
   const more = found.more > 0 ? `<div class="more">+${found.more} MORE</div>` : '';
@@ -68,7 +71,7 @@ export function markupFor(content, now) {
         <div class="milestone-row"><div class="milestone-lead"></div>${heads}</div>${found.rows.map(row => rowMarkup(row, found.today)).join('')}
       ${more}`;
 
-  return pageMarkup('monday-milestones', 'MILESTONES', tag, inner);
+  return pageMarkup('monday-milestones', header, inner);
 }
 
 export function mount(host, content) {

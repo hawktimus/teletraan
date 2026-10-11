@@ -1099,8 +1099,9 @@ none skips that pass. With two styles, Prime with Monday rows and Nova without, 
 the style of the day, Prime in Minimal, Nova in the style of the day, and tomorrow the same three
 with the other style. The panels that every team shares (the events, the tips, the photos and the
 countdown) are in the pass of each team, once, and so are the competition cards that are due, with the
-data of that team (docs/frc-feed.md). The Monday cards are the three panels in the next section. `mondayCards` in `core/look-rotation.js` gives them to a team that has board tasks, and a team
-that has none has no Monday pass.
+data of that team (docs/frc-feed.md). The Monday cards are the panels in the next section. `mondayCards` in `core/look-rotation.js` gives them to a team that has board tasks, and a team
+that has none has no Monday pass. After the last team there is one more pass in the Monday style, the two cards of both teams, when two teams
+or more have Monday rows (`bothCards`). It is held in the team of the pass before it, and it is written down in localStorage with `both: true`.
 
 **When it moves.** A pass is over when the list of the large panel has been through once.
 `core/schedule.js` asks the rotation then, before the next page is chosen (`setLookHooks`), and the
@@ -1151,53 +1152,65 @@ guard.
 
 ## The Monday cards
 
-The Monday pass of the look rotation is three cards, one after the other, in the Monday style. They are
-panels of the large frame, `monday-tasks`, `monday-milestones` and `monday-progress`, each a folder in
-`dashboard/panels/` with a script and a stylesheet. They draw the tasks that the board sync on the Mini
-keeps in Sanity: a task with the source `monday` (docs/editing-content.md, "The Monday cards"). The
-plain functions that pick and rank the tasks are in `core/monday.js`, and `core/monday-draw.js` has the
-page with its header. The sentence a card says when it has nothing to show, the text in a chart and the age
-of the data are the ones the competition cards use (`core/competition-draw.js`). `node tools/test-monday-cards.mjs`
-checks them, and `node tools/test-look-rotation.mjs` checks the pass.
+The Monday pass of the look rotation is three cards, one after the other, in the Monday style: the tasks card, the milestones card and
+the progress card. After the last team there is a pass of two more, the milestones card and the progress card of both teams. They are
+panels of the large frame, `monday-tasks`, `monday-milestones`, `monday-progress`, `monday-milestones-both` and `monday-progress-both`,
+each a folder in `dashboard/panels/` with a script and a stylesheet. What they share is in `dashboard/monday.css`. They draw the tasks that the
+board sync on the Mini keeps in Sanity: a task with the source `monday` (docs/editing-content.md, "The Monday cards"). The plain
+functions that pick and rank the tasks are in `core/monday.js`, and `core/monday-draw.js` has the header, the rows and the page marker.
+The sentence a card says when it has nothing else to show and the text in a chart are the ones the competition cards use
+(`core/competition-draw.js`). `node tools/test-monday-cards.mjs` and `node tools/test-monday-rows.mjs` check them, and
+`node tools/test-look-rotation.mjs` checks the pass.
 
 **Who has the cards.** A team has board tasks when a task with the source `monday` shows on the TV for it:
 Show on TV and Show on screen are on, it has not expired, and it is for the team or for both. `mondayCards`
 in `core/look-rotation.js` asks `mondaySteps` in `core/monday.js`, which gives the steps of the large panel's
 list for the pass: one page of the tasks card for each Team lead entry that has tasks, then the milestones card,
-then the progress card. A team with no board tasks gets none, and then it has no Monday pass. A task that
-is only pinned does not count, whatever its status. A board task of any status counts, and a task with
-`showOnTv` off never shows on any card.
+then the progress card. A team with no board tasks gets none, and then it has no Monday pass. Every card counts the
+board tasks and nothing else (`boardTasksFor`), whatever its status, so the cards always agree on how many rows there are. A task that is
+not from the board is never on a Monday card, and a task with `showOnTv` off never shows on any card. The pass of both teams has two cards,
+and it is in the cycle only when two teams or more have board tasks (`bothSteps`), because one team alone has its own cards.
 
-The registry flags the three panels `monday: true`. They are offered in the Panel order list of Dashboard
-Settings, so that a coach can see them, but they are not in its starting rows or in the lists of `config.js`, and
-they come in the Monday pass. They have the topic monday, as the competition cards have the topic competition, so the
-pass never waits for the small frame to leave the topic tasks, which it would if all three cards had to
-avoid the task counts. No card has an animation of its own. Every card is drawn for a frame of 1152 by 708, as every panel is, and the bar
+The registry flags the five panels `monday: true`. They are not in the Panel order list of Dashboard Settings and not in the lists of
+`config.js`: they are the Monday block of the look rotation, and a saved Panel order that still names one is ignored
+(`core/panel-order.js`). `withCompetition` in `core/competition.js` never held them, and a Monday pass has no competition cards in it. They have the topic
+monday, as the competition cards have the topic competition, so the pass never waits for the small frame to leave the topic tasks, which it
+would if all the cards had to avoid the task counts. Every card is drawn for a frame of 1152 by 708, as every panel is, and the bar
 layout scales the frame.
 
 **The team.** The cards take their tasks the way every panel does, through `visibleItems`, so they are the tasks of the
 team on the screen and of both teams. The look rotation asks about the team of a pass before it is on the screen, so
-`visibleItems` takes the code of a team as a third argument. The name of the team in the header is the `shortName` of the
-team that the items follow.
+`visibleItems` takes the code of a team as a third argument. The cards of both teams ask about each team in turn.
+
+**The name of the team.** A header that names a department reads the department in capitals and TEAM, such as BUILD TEAM, and the
+name of the team is a chip of 44 px in the accent of the team at the right end of the header: PRIME or NOVA, which is the
+`shortName` of the team that the items follow. A page whose tasks are all for both teams says BOTH TEAMS in the chip, and so do the cards of both
+teams (`core/team-title.js`). A department name that already ends in TEAM does not get a second one. The title is 60 px (`--size-team`). The Roster,
+Leadership and Team leads headers have the same chip.
 
 ### The tasks card
 
 One page for each Team lead entry that has tasks, in the order of the Team leads list. A task is
 matched to an entry by its subteam name, without regard to capitals. An entry that is switched off, has expired, is for
-the other team or has the same name as an earlier one has no page, and a task that no entry has is on no card. The
-header reads the name of the entry in capitals, then TEAM and the name of the team, such as BUILD TEAM · PRIME. The
-name is at the size of a heading up to 7 letters and at 64 px for a longer one, so that it stays clear of the
-words after it, and the words after it are 44 px, in the colour of the tags. A name that already ends in TEAM does
-not get a second one.
+the other team or has the same name as an earlier one has no page, and a task that no entry has is on no card.
 
-There are three columns, Backlog, In progress and Done. They hold the tasks with the status up next, in progress and done.
-A blocked task has no column. Each column has room for two cards, 156 px high: the title on two lines at the
-most, then the priority (HIGH, MED or LOW, with no chip when there is none) and the first name of the contact. The two
-cards are the first two of the column once the tasks are ranked (`rankTasks`): the pinned tasks first, then high,
-medium, low and none, then the earliest due date, with none last, and the order they had for the rest. Done tasks
-are not dropped after some days, as they are on the Tasks panel. Under the columns are three numbers of the
-tasks of the entry: OVERDUE, which is the open tasks with a due date before today, OPEN, which is every task that is not
-done, and DONE.
+The body is up to ten rows of 84 px, in the mix of two done tasks, up to three in the backlog and the rest in progress
+(`pickRows` in `core/monday.js`). A status that has fewer tasks than its share leaves its slots to the others, in progress
+first, then the backlog, then done, so two in progress and seven in the backlog is a card. A blocked task has no row. The rows are
+ranked by priority (high, medium, low, none), then the earliest due date, with none last, then the title. A row is a status label
+236 by 44 (IN PROGRESS, BACKLOG or DONE, in 30 px letters: the one size on a card under 44 px that is a label and not reading text), the
+title at 52 px on one line with an ellipsis, the first name of the owner at 40 px in the muted color when the board gives one, and
+the priority as a shape at the far right: a filled red triangle for high, an outlined triangle in the accent for medium, and nothing for
+low. Under the rows at the bottom left are three numbers with a rule at the left of each, the labels at 36 px and the numbers at 72
+px: OVERDUE, which is the open tasks of the entry with a due date before today, OPEN, which is every task that is not done, and DONE.
+They count all the tasks of the entry, not only the rows that show.
+
+**Scrolling.** Five rows show at a time. A card with more than five rows is held for its time, then the list moves up by five rows and
+it is held again for the same time. `core/schedule.js` asks the panel how many pages it holds for (`scrollPages`) and calls `scrollCard`
+in `frame.js` between them. The move is transform only, 600 ms with the easing of the slats, in full motion. In calm and none the list is at its
+place at once. The frame does not move. A page marker at the bottom right shows a filled square for the page in view and an
+outline for the other, and its place in words, such as 1 OF 2 · 10 TASKS. A card of five rows or fewer has no marker and does not scroll. Ten rows
+at the most make two pages, which is all the marker has room for.
 
 ### The milestones card
 
@@ -1222,24 +1235,40 @@ so a gap of days is a gap in the line. The dashed target line goes from the firs
 countdown, the one the season timeline uses (`countdownMarker` in `core/competition.js`), and it is left out when no date
 is still to come. With fewer than two counts a sentence stands in the place of the line, and the bars stay.
 
+### The cards of both teams
+
+The milestones card and the progress card of both teams come once in each cycle, after the last team, with BOTH TEAMS in the chip of the header.
+They have a row for each department and each team that has board tasks for it, and the rows alternate between the teams: a department's rows
+together, Prime first and then Nova, in the order of Team order. No columns side by side. Every row starts with a label of the team, PRIME
+in gold and NOVA in silver. There are ten rows at the most, five at a time, which scroll and have a page marker as the tasks card does
+(`scrollPages`).
+
+The progress card of both teams has a row of the team, the department in 36 px letters in 330 px, one bar of the team's board tasks in
+three stacks, done, then in progress, then backlog, and done out of all of them. The bars are as long as the tasks are many, the longest filling
+400 px, and the legend is along the top. The milestones card of both teams has a row of the team, the department, the open task with a due date that
+is due soonest, on one line with an ellipsis, and its date, which is orange when it is past. A department and team with nothing due has no row.
+With no rows each says one plain sentence.
+
 ### What is on every card
 
-**The tag.** The words at the right end of the header are SAMPLE on the sample, how old the data is when
-`lastSyncAt` is two hours old or more, such as 4 HR OLD, and nothing otherwise.
+**The words about the board.** At the right end of the header, before the chip, are the words BOARD · 4 MIN AGO: how long ago the Mini read the
+board, in minutes, hours or days, and SAMPLE on the sample. They are muted. They go only where they fit (`wordsBesideChip` in `core/monday-draw.js`,
+which counts the width of the title, the words and the chip with `core/text-width.js`). When BOARD does not fit the words go without it, and when they still
+do not fit they are left out. With the chip PRIME and the slashes at the right end, 4 MIN AGO fits beside BUILD TEAM and DESIGN TEAM and no words
+fit beside PROGRAMMING TEAM. Cybertron and Minimal draw no slashes, but the room is kept for them.
 
-**With nothing to show.** A card says one plain sentence in place of its body: No tasks from the team board are showing yet. for
-the tasks card, No open board items have a due date yet. for the milestones, and No board items are showing yet. for the
-progress card. The look rotation does not give a team the cards unless it has board tasks, so these are what the `?show=`
+**With nothing to show.** A card says one plain sentence in place of its body, and the sentence says why. No board is chosen yet. when Dashboard
+Settings, Monday has no board. Waiting for the first sync from the board. when there is a board and the Mini has not written the status yet. Nothing
+on the chosen boards is showing yet. when the board is read and no board task shows on the TV. The milestones cards say No open board items have a due
+date yet. when there are board tasks and none has a due date. The look rotation does not give a team the cards unless it has board tasks, so these are what the `?show=`
 address shows when there are none. No card invents a number.
 
-**Sizes.** No text is under 44 px, no line is under 3 px, and a card has no blur, glow, shadow or filter. The tasks card has
-a body of 1104 by 544, 24 px in from the frame and 132 px down: three columns of 360 px with 12 between them, and the numbers
-at 404 px, which is above the cut corner. The milestones card has the same body, with a row of 52 px for the weeks and rows of
-72 px. The progress card has the 1096 by 512 body of the competition cards, one chart, and its numbers are pixels, so a font
-size in the stylesheet is the size on the screen. The text of the chart is in `monday-progress.css`.
+**Sizes.** No text is under 44 px except the sizes the cards themselves set: the status label of a row at 30, the first name of the owner at 40, and
+the labels of the numbers and of a department at 36. No line is under 3 px, and a card has no blur, glow, shadow or filter. The body is 1104 by 544,
+24 px in from the frame and 132 px down. The rows stay clear of the cut corner at the bottom right: the page marker ends 68 px in from the right edge of the body.
 
-The sample content has board tasks for two Team lead entries and a `monday` document with 14 daily counts, all in brackets, so
-`?sample=1` shows the cards on made up tasks.
+The sample content has board tasks for both teams, two Team lead entries for Prime and five for Nova, and a `monday` document with 14 daily
+counts, all in brackets, so `?sample=1` shows the cards on made up tasks, and the pass of both teams.
 
 ## Team trim
 

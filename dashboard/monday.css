@@ -1,0 +1,139 @@
+/* What the Monday cards share (core/monday-draw.js): the header, the body, the sentence a card says when it has
+   nothing to show, the window the rows are in, the page marker, the labels of a department and a team. Each
+   card's own stylesheet in panels/monday-* has the rest. The page is the large panel's, 1152 by 708, with
+   its header 120 high. Nothing here moves: a card that scrolls is moved by frame.js (scrollCard). */
+
+/* The header sits on top of the two header plates of the area's frame. The title is the department and
+   TEAM at 60px. At the right end are the words about the board, the chip with the name of the team (in
+   base.css) and the slashes. The words are left out by core/monday-draw.js when they do not fit. */
+.monday .header {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  box-sizing: border-box;
+  width: 1152px;
+  height: 116px;
+  padding: 0 40px 0 76px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+.monday .title {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 700 var(--size-team)/64px var(--font-display);
+}
+.monday .tag {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.monday .ago {
+  color: var(--lilac);
+  white-space: nowrap;
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+.monday .tag .double-slash { flex: none; }
+
+/* The body is 1104 x 544, 24px in from the frame and 132px down. The rows end 420px down and what is
+   under them stays clear of the cut corner at the bottom right. */
+.monday .body {
+  position: absolute;
+  left: 24px;
+  top: 132px;
+  width: 1104px;
+  height: 544px;
+}
+
+/* One sentence in place of the rows, when there is nothing to show */
+.monday .empty {
+  box-sizing: border-box;
+  height: 100%;
+  margin: 0;
+  padding: 0 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: normal;
+  color: var(--lilac);
+  font: 500 var(--size-body)/72px var(--font-text);
+}
+
+/* Five rows of 84 are in the window. A card with more rows is moved up in it by five rows at a time
+   (frame.js, scrollCard, and frame.css, which has the position of the list). The two tags are the colors
+   of the teams on the cards of both teams, the same on every team's screen. */
+.monday {
+  --scroll-step: 420px;
+  --prime-tag: #faca2a;
+  --nova-tag: var(--silver);
+}
+.monday .rows-window {
+  height: 420px;
+  overflow: hidden;
+}
+
+/* The page marker: a square for each page, the one in view filled, and its place in words. frame.js puts the
+   page in view in data-scroll-page on the card, and the rules here show the square and the words of that page. */
+.monday .marker {
+  position: absolute;
+  right: 68px;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.monday .squares {
+  display: flex;
+  gap: 8px;
+}
+.monday .square {
+  box-sizing: border-box;
+  width: 28px;
+  height: 28px;
+  border: 4px solid var(--yellow);
+}
+.monday[data-scroll-page="1"] .square-1,
+.monday[data-scroll-page="2"] .square-2 { background: var(--yellow); }
+.monday .place {
+  display: none;
+  white-space: nowrap;
+  color: var(--lilac);
+  font: 600 var(--size-label)/48px var(--font-display);
+}
+.monday[data-scroll-page="1"] .place-1,
+.monday[data-scroll-page="2"] .place-2 { display: block; }
+
+/* The name of a department in a row, in the label color of the team, 330px wide and cut off with an ellipsis
+   if it is longer. PROGRAMMING and ELECTRICAL fit at this size. */
+.monday .department {
+  flex: none;
+  box-sizing: border-box;
+  width: 330px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--team-label, var(--yellow));
+  font: 700 36px/44px var(--font-text);
+}
+
+/* The team of a row of the cards of both teams: PRIME in gold and NOVA in silver. A team that is neither has
+   the accent of the screen. */
+.monday .team-tag {
+  flex: none;
+  box-sizing: border-box;
+  width: 174px;
+  text-align: center;
+  color: var(--ground);
+  font: 700 var(--size-label)/52px var(--font-display);
+  background: var(--yellow);
+}
+.monday .team-tag-prime { background: var(--prime-tag); }
+.monday .team-tag-nova { background: var(--nova-tag); }

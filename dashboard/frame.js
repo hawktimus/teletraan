@@ -443,6 +443,23 @@ export function retire(area) {
   return whenDone(area);
 }
 
+// A card that has more rows than fit (the Monday cards, panels/monday-*) moves its list up by one page of
+// rows: index is the page to show, counting from 0. The card, which is the page's own element, says which
+// page is in view in data-scroll-page and in --scroll-page, which frame.css moves the list by and the page
+// marker follows. In full motion the list takes 600 ms to get there, with the easing of the slats. In calm
+// and none it is at its place at once.
+export function scrollCard(card, index) {
+  const list = card.querySelector('[data-scroll-list]');
+  const before = Number(card.dataset.scrollPage || 1) - 1;
+
+  card.dataset.scrollPage = String(index + 1);
+  card.style.setProperty('--scroll-page', String(index));
+  if (!list || motion !== 'full' || !list.animate) return;
+
+  const place = step => 'translateY(calc(' + step + ' * var(--scroll-step, 0px) * -1))';
+  list.animate([{ transform: place(before) }, { transform: place(index) }], { duration: 600 * pace(), easing: 'cubic-bezier(.5, 0, .2, 1)' });
+}
+
 
 // Effects that play now and then
 //

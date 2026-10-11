@@ -9,7 +9,8 @@
 //   2. A cycle is a row of passes. For each team of Team order there is a pass of its panels in the
 //      style of the day, and after it a pass of its Monday cards in the Monday style, if the team has
 //      Monday rows. The panels that every team shares (events, tips, photos, the countdown) are in the
-//      pass of each team, once.
+//      pass of each team, once. After the last team there is one more pass in the Monday style, the cards
+//      of both teams together (bothSteps in core/monday.js), when two teams or more have Monday rows.
 //   3. A pass is over when the list of the large panel has been through once. Only then does the
 //      screen move to the next pass, and only when no alert, announcement, talk, demo, night screen
 //      or hidden transition has the screen. The pass waits and is asked again at the next one.
@@ -23,7 +24,7 @@
 
 import { defaultSettings, defaultThemeSettings, lookResumeSeconds, lookShortestSeconds, lookSwaps, primeTeam, styles } from '../config.js';
 import { readHandled, rememberHandled, shouldRunDemo } from './demo.js';
-import { mondaySteps } from './monday.js';
+import { bothSteps, mondaySteps } from './monday.js';
 import { rotateStyle } from './style.js';
 import { dateIn, isTimeZone } from './theme.js';
 import { activeTeams, rotateTeam } from './teams.js';
@@ -96,9 +97,25 @@ export function mondayCards(content, teamCode) {
   return mondaySteps(content, teamCode);
 }
 
+// The cards of both teams, as the rows of the list the large panel follows while that pass is up. codes are
+// the teams of the cycle, in order. There are none unless two teams or more have Monday rows.
+export function bothCards(content, codes) {
+  return bothSteps(content, codes);
+}
+
+// The codes of the teams of a cycle for this content, in the order of Team order
+function codesOf(content) {
+  const source = isRecord(content) ? content : {};
+  const settings = isRecord(source.settings) ? source.settings : {};
+
+  return teamsInOrder(Array.isArray(settings.teamOrder) ? settings.teamOrder : [], source.teams).map(team => team.code);
+}
+
 // The passes of one cycle, in order: { team, style, kind }. team is a code, or '' when Team mode
 // decides the team, and style is '' when Style decides the style. teams is the codes in order.
-// hasMonday(code) says whether a team has Monday rows. The cycle always has at least one pass.
+// hasMonday(code) says whether a team has Monday rows. The cycle always has at least one pass. When
+// hasBoth is true the last pass is the Monday cards of both teams, { kind: 'monday', both: true }, held in
+// the team of the pass before it.
 export function planCycle(options) {
   const codes = options.teams.length > 0 ? options.teams : [''];
   const passes = [];
@@ -107,6 +124,7 @@ export function planCycle(options) {
     passes.push({ team: code, style: options.style, kind: 'panels' });
     if (code !== '' && options.hasMonday(code)) passes.push({ team: code, style: options.mondayStyle, kind: 'monday' });
   });
+  if (options.hasBoth && codes[0] !== '') passes.push({ team: codes[codes.length - 1], style: options.mondayStyle, kind: 'monday', both: true });
   return passes;
 }
 
@@ -114,8 +132,15 @@ function lookOf(pass) {
   return { style: pass.style, team: pass.team };
 }
 
+// The place of a pass, { team, kind }, and both: true for the pass of both teams. Only that pass has it.
+function placeOf(pass) {
+  const place = { team: pass.team, kind: pass.kind };
+  if (pass.both) place.both = true;
+  return place;
+}
+
 function indexOfPass(passes, wanted) {
-  return passes.findIndex(pass => pass.team === wanted.team && pass.kind === wanted.kind);
+  return passes.findIndex(pass => pass.team === wanted.team && pass.kind === wanted.kind && Boolean(pass.both) === Boolean(wanted.both));
 }
 
 
@@ -132,7 +157,9 @@ function readState(storage, now) {
     if (!isTime(saved.since) || !isTime(saved.savedAt)) return null;
     if (now.getTime() - saved.savedAt > lookResumeSeconds * 1000) return null;
 
-    return { team: saved.team, kind: saved.kind, since: Math.min(saved.since, now.getTime()) };
+    const place = { team: saved.team, kind: saved.kind, since: Math.min(saved.since, now.getTime()) };
+    if (saved.both === true) place.both = true;
+    return place;
   } catch (error) {
     return null;
   }
@@ -154,12 +181,14 @@ function writeState(storage, state) {
 //   busy()            true while an alert, an announcement, a talk, a demo, the night screen or a
 //                     hidden transition has the screen
 //   mondayCards       the Monday cards of a team (the function above, unless a test gives another)
+//   bothCards         the Monday cards of both teams (bothCards above, unless a test gives another)
 export function makeLookRotation(deps) {
   const cardsOf = deps.mondayCards || mondayCards;
+  const bothOf = deps.bothCards || bothCards;
   const busy = deps.busy || (() => false);
   const keepPlace = deps.keepPlace !== false;
 
-  let current = null; // { team, kind }: the pass the screen is in
+  let current = null; // { team, kind, both }: the pass the screen is in
   let since = 0; // when that pass began, in milliseconds
   let applied = null; // { style, team }: the look last handed on
   let writtenAt = 0;
@@ -172,9 +201,8 @@ export function makeLookRotation(deps) {
     const theme = isRecord(source.theme) ? source.theme : {};
 
     const list = Array.isArray(settings.dailyStyles) ? settings.dailyStyles : [];
-    const order = Array.isArray(settings.teamOrder) ? settings.teamOrder : [];
     const style = styleForDay(list, dayNumber(theme.timeZone, now));
-    const codes = teamsInOrder(order, source.teams).map(team => team.code);
+    const codes = codesOf(source);
 
     return {
       passes: planCycle({
@@ -182,6 +210,7 @@ export function makeLookRotation(deps) {
         mondayStyle: styles.includes(settings.mondayStyle) ? settings.mondayStyle : defaultSettings.mondayStyle,
         teams: codes,
         hasMonday: code => cardsOf(source, code).length > 0,
+        hasBoth: bothOf(source, codes).length > 0,
       }),
       swap: lookSwaps.includes(settings.lookSwap) ? settings.lookSwap : defaultSettings.lookSwap,
     };
@@ -191,7 +220,7 @@ export function makeLookRotation(deps) {
     if (!keepPlace || current === null) return;
 
     writtenAt = now.getTime();
-    writeState(deps.storage, { team: current.team, kind: current.kind, since: since, savedAt: writtenAt });
+    writeState(deps.storage, Object.assign({}, current, { since: since, savedAt: writtenAt }));
   }
 
   // Works out where the screen starts and returns that look, { style, team }, for the caller to hold.
@@ -202,7 +231,7 @@ export function makeLookRotation(deps) {
     const found = saved ? indexOfPass(passes, saved) : -1;
     const pass = passes[found === -1 ? 0 : found];
 
-    current = { team: pass.team, kind: pass.kind };
+    current = placeOf(pass);
     since = found === -1 ? now.getTime() : saved.since;
     applied = lookOf(pass);
     save(now);
@@ -236,7 +265,7 @@ export function makeLookRotation(deps) {
     const look = lookOf(pass);
     const changed = applied === null || look.style !== applied.style || look.team !== applied.team;
 
-    current = { team: pass.team, kind: pass.kind };
+    current = placeOf(pass);
     if (moved) since = now.getTime();
     if (changed) applied = look;
     if (moved || changed) save(now);
@@ -249,8 +278,11 @@ export function makeLookRotation(deps) {
     boundary: now => move(now, false),
     // Next look now
     next: now => move(now, true),
-    // The list the large panel follows now: the Monday cards while a Monday pass is up
-    playlist: (list, content) => (current !== null && current.kind === 'monday' ? cardsOf(content, current.team) : list),
+    // The list the large panel follows now: the Monday cards while a Monday pass is up, a team's or both teams'
+    playlist: (list, content) => {
+      if (current === null || current.kind !== 'monday') return list;
+      return current.both ? bothOf(content, codesOf(content)) : cardsOf(content, current.team);
+    },
     // The pass the screen is in, or null before it has begun
     pass: () => (current === null ? null : Object.assign({}, current)),
     // Asked once a second: writes the pass down again now and then, so that a reload long into a pass goes on in it

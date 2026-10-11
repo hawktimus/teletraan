@@ -348,17 +348,19 @@ signing in, and Sanity keeps a document whose id has a dot private.
 
 When a team has tasks from the team board that show on the TV, its pass of the look rotation ends with three cards
 that are drawn from them, in the Monday style (Dashboard Settings, Look tab). A team with none has no Monday pass. The
-cards are Monday tasks, Monday milestones and Monday progress. They are in the Panel order list so that you can see them,
-and they are not in its starting rows: they come in the Monday pass, and the Panel order list does not control them.
+cards are the tasks card, the milestones card and the progress card. After the last team there is one more pass, the milestones card and the
+progress card of both teams, when two teams or more have tasks from the board. The cards are not in the Panel order list: they come in the
+Monday pass, and the Panel order list does not control them. Every card counts the same tasks, the ones from the board that show on the TV.
 
 ### Tasks card
 
-The BUILD TEAM · PRIME card. There is one for each Team lead entry that has tasks, one after the other, and the name in
-the title is the name of the entry. It has three columns, Backlog, In progress and Done, and two cards in each. The cards are
-the tasks with the highest priority first, then the earliest due date, with the pinned tasks before the ones from the board.
-Under the columns are the number of overdue tasks, the number that are not done and the number that are done. A task needs a
-subteam whose name is the name of a Team lead entry, with or without capitals, or it is on no card. The sync matches the
-board's team column, or its group names, to the names of the Team leads, so spell them the same.
+The BUILD TEAM card, with the name of the team in a chip at the right end. There is one for each Team lead entry that has tasks, one after
+the other, and the name in the title is the name of the entry. It shows up to ten tasks, five at a time: two done, up to three in the
+backlog and the rest in progress, with the highest priority first and then the earliest due date. Each row has the status, the title, the first
+name of the owner when the board gives one, and the priority as a triangle. When there are more than five rows the card holds, the list moves up
+by five rows and the card holds again, and a marker at the bottom right says 1 OF 2 or 2 OF 2. Under the rows are the number of overdue tasks, the
+number that are not done and the number that are done. A task needs a subteam whose name is the name of a Team lead entry, with or without
+capitals, or it is on no card. The sync matches the board's team column, or its group names, to the names of the Team leads, so spell them the same.
 
 ### Milestones card
 
@@ -372,11 +374,18 @@ A bar for each Team lead entry, in three colours for the backlog, in progress an
 line of the items left on each day, with a dashed line to nothing on the day of the next countdown date. The line needs the
 counts of at least two days, which the Mini adds once a day. With fewer it says so.
 
+### Cards of both teams
+
+Once in each cycle, after the last team, the milestones card and the progress card show both teams together, with BOTH TEAMS in the chip. Each
+row starts with PRIME in gold or NOVA in silver, then the department, and the rows of a department follow each other, Prime and then Nova. The progress
+row has one bar of done, in progress and backlog, and done out of all. The milestones row has the next task with a due date and its date. Up to ten rows
+show, five at a time, and the list moves up by five rows after the card has been held.
+
 ### Hiding a task, and empty cards
 
-To keep a task off all three cards, turn off Show on TV on it (Tasks, From the board). A card says so in a sentence when it has
-nothing to show, and it shows SAMPLE in the corner on the sample content and how old the data is when it is two
-hours old or more. Preview the cards on made up tasks with `?sample=1` on the screen's address, and wait for the Monday pass.
+To keep a task off all the cards, turn off Show on TV on it (Tasks, From the board). A card says in a sentence when it has
+nothing to show, and why: no board is chosen, the first sync is not done, or nothing on the chosen boards shows. The header says how long ago the
+board was read, when there is room, and SAMPLE on the sample content. Preview the cards on made up tasks with `?sample=1` on the screen's address, and wait for the Monday pass.
 The details are in docs/layouts.md, "The Monday cards".
 
 ## Adding many items from a spreadsheet

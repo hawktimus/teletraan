@@ -2607,6 +2607,8 @@ test('every literal text size under 44 px in the dashboard stylesheets is on a l
     { file: war, selector: 'html[data-layout="bar"] .war-days-group .days-word', size: 24 }, // DAYS
     { file: war, selector: 'html[data-layout="bar"] .war-cell .unit', size: 20 }, // HRS, MIN and SEC
   ];
+  // and the sizes the order sets for the Monday cards (mondaySmall, below)
+  allowed.push.apply(allowed, mondaySmall.map(item => ({ file: 'dashboard/' + item.file, selector: item.selector, size: item.size })));
   const order = list => list.map(item => item.file + ' ' + item.selector + ' ' + item.size).sort();
   assert.deepEqual(order(found), order(allowed));
 });
@@ -2756,6 +2758,16 @@ const warLabels = [
   { file: 'panels/countdown/countdown.css', selector: 'html[data-layout="bar"] .war-cell .unit', size: 20 },
 ];
 const smallTextOf = { original: [plateId], cybertron: [plateId], minimal: [plateId].concat(warLabels) };
+
+// The Monday cards have the sizes under 44 px that the order for them sets, in every style: the status of a row at 30 (a
+// colored label), the first name of the owner at 40, and the labels of the numbers and of a department at 36
+const mondaySmall = [
+  { file: 'monday.css', selector: '.monday .department', size: 36 },
+  { file: 'panels/monday-tasks/monday-tasks.css', selector: '.monday-tasks .status', size: 30 },
+  { file: 'panels/monday-tasks/monday-tasks.css', selector: '.monday-tasks .owner', size: 40 },
+  { file: 'panels/monday-tasks/monday-tasks.css', selector: '.monday-tasks .fact-label', size: 36 },
+];
+Object.keys(smallTextOf).forEach(style => { smallTextOf[style] = smallTextOf[style].concat(mondaySmall); });
 
 function checkStylesheetsOf(style) {
   const sheets = stylesheetsOf(style);

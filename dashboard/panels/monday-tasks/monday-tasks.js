@@ -1,28 +1,31 @@
-// The tasks card of the Monday pass: the tasks of one Team lead entry in three columns, Backlog, In progress
-// and Done, with room for two cards in each, and three numbers under them. The step of the look rotation
-// says which entry: page 1 is the first entry that has tasks, page 2 the next, and so on (core/monday.js,
-// mondaySteps). Inside a column the tasks are ranked by priority and then by due date, with the pinned
-// tasks first. A task with Show on TV off never shows (visibleItems, through tasksFor).
+// The tasks card of the Monday pass: the tasks of one Team lead entry as rows, up to ten, five at a time.
+// The step of the look rotation says which entry: page 1 is the first entry that has tasks, page 2 the
+// next, and so on (core/monday.js, mondaySteps). The rows are ranked by priority, then due date, then
+// title, in a mix of done, backlog and in progress tasks (pickRows). With more than five rows the card
+// holds, then the list scrolls up by five rows and holds again (scrollPages, which core/schedule.js reads,
+// and scrollCard in frame.js). A task with Show on TV off never shows (visibleItems, through tasksFor), and
+// only tasks from the board count (boardTasksFor).
 
-import { emptyMarkup, tagTextFor } from '../../core/competition-draw.js';
+import { emptyMarkup } from '../../core/competition-draw.js';
 import { todayOf } from '../../core/competition.js';
-import { statusMark } from '../../core/marks.js';
-import { columnsOf, dueDateOf, groupByLead, leadEntries, priorities, priorityText, tasksFor } from '../../core/monday.js';
-import { leadTitleMarkup, pageMarkup, teamNameShown } from '../../core/monday-draw.js';
+import { dueDateOf, groupsFor, pickRows, pagesOf } from '../../core/monday.js';
+import { departmentHeader, headerMarkup, markerMarkup, noRowsSentence, pageMarkup, priorityMark, rowsWindow, statusChip, teamNameShown } from '../../core/monday-draw.js';
+import { pageTeamName } from '../../core/team-title.js';
 import { escapeHtml, hasText } from '../../core/text.js';
-
-// The lead entries that have tasks, in the order of the Team leads list. Each is one page of the card.
-function groupsFor(content, now) {
-  return groupByLead(tasksFor(content, now), leadEntries(content, now));
-}
 
 export function hasContent(content, page = 1) {
   return groupsFor(content, new Date())[page - 1] !== undefined;
 }
 
-// The three numbers under the columns, for the tasks of one lead: how many open tasks are past their
-// due date, how many are open at all (everything that is not done), and how many are done. today is a
-// plain date in the time zone of the Look page.
+// How many pages the card has to hold for: one, and one more for each five rows past the first five
+export function scrollPages(content, page = 1) {
+  const group = groupsFor(content, new Date())[page - 1];
+  return group ? pagesOf(pickRows(group.tasks).length) : 1;
+}
+
+// The three numbers under the rows, for the tasks of one lead: how many open tasks are past their due date,
+// how many are open at all (everything that is not done), and how many are done. today is a plain date in
+// the time zone of the Look page.
 export function factsOf(tasks, today) {
   const open = tasks.filter(task => task.status !== 'done');
   const late = open.filter(task => dueDateOf(task) !== '' && dueDateOf(task) < today);
@@ -34,22 +37,11 @@ export function factsOf(tasks, today) {
   ];
 }
 
-// A card is the title, and under it the priority and who it is for. Either of those may be missing.
-function itemMarkup(task) {
-  const priority = priorities.indexOf(task.priority) === -1 ? '' : `<span class="chip chip-${task.priority}">${priorityText[task.priority]}</span>`;
-  const contact = hasText(task.contact) ? `<span class="contact">${escapeHtml(task.contact)}</span>` : '';
-  const meta = priority || contact ? `<div class="meta">${priority}${contact}</div>` : '';
+// A row: the status, the title on one line, the first name of the owner when there is one, and the priority
+function rowMarkup(task) {
+  const owner = hasText(task.contact) ? escapeHtml(task.contact) : '';
 
-  return `<div class="item"><div class="item-title">${escapeHtml(task.title)}</div>${meta}</div>`;
-}
-
-// A column is its heading, with the status mark so that the status is a shape, a word and a colour, and its cards
-function laneMarkup(column) {
-  return `
-        <div class="lane lane-${column.status}">
-          <div class="lane-head"><span class="lane-mark">${statusMark(column.status)}</span><span class="lane-name">${column.label}</span></div>
-          ${column.shown.map(itemMarkup).join('')}
-        </div>`;
+  return `<div class="row">${statusChip(task.status)}<span class="row-title">${escapeHtml(task.title)}</span><span class="owner">${owner}</span>${priorityMark(task.priority)}</div>`;
 }
 
 function factsMarkup(facts) {
@@ -59,15 +51,16 @@ function factsMarkup(facts) {
 // The page as markup, for the time given and the page of the step. now is a Date.
 export function markupFor(content, now, page = 1) {
   const group = groupsFor(content, now)[page - 1];
-  const tag = tagTextFor(content.monday, now);
-  if (!group) return pageMarkup('monday-tasks', 'TASKS', tag, emptyMarkup('No tasks from the team board are showing yet.'));
+  if (!group) return pageMarkup('monday-tasks', headerMarkup('TASKS', teamNameShown(), content.monday, now), emptyMarkup(noRowsSentence(content)));
 
+  const rows = pickRows(group.tasks);
   const inner = `
-      <div class="lanes">${columnsOf(group.tasks).map(laneMarkup).join('')}
-      </div>
-      <div class="facts">${factsMarkup(factsOf(group.tasks, todayOf(content, now)))}</div>`;
+      ${rowsWindow(rows.map(rowMarkup))}
+      <div class="facts">${factsMarkup(factsOf(group.tasks, todayOf(content, now)))}</div>
+      ${markerMarkup(rows.length, 'TASKS')}`;
 
-  return pageMarkup('monday-tasks', leadTitleMarkup(group.name, teamNameShown()), tag, inner);
+  const header = departmentHeader(group.name, pageTeamName(group.tasks, teamNameShown()), content.monday, now);
+  return pageMarkup('monday-tasks', header, inner, true);
 }
 
 export function mount(host, content, page = 1) {

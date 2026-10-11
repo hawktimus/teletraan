@@ -5,11 +5,11 @@
 // countdown. Both are plain SVG in a body of 1096 x 512, drawn once. The card always draws, with a sentence
 // in place of what has no data, because the look rotation chooses it (core/monday.js, mondaySteps).
 
-import { chartMarkup, cut, emptyMarkup, tagTextFor, textAt } from '../../core/competition-draw.js';
+import { chartMarkup, cut, emptyMarkup, textAt } from '../../core/competition-draw.js';
 import { countdownMarker, todayOf, zoneOf } from '../../core/competition.js';
 import { daysFromTo, shortDate } from '../../core/frc.js';
-import { boardTasksFor, columns as stacks, groupByLead, leadEntries } from '../../core/monday.js';
-import { pageMarkup } from '../../core/monday-draw.js';
+import { groupsFor, statuses as stacks } from '../../core/monday.js';
+import { headerMarkup, noRowsSentence, pageMarkup, teamNameShown } from '../../core/monday-draw.js';
 
 // The bars. A row is 68px high with a bar of 44px in it, and there are six of them. The name of the lead is
 // cut to fit its 216px, and the numbers of the row are at the right end of the bar's room.
@@ -33,7 +33,7 @@ const LINE_WORDS_FIT = 17;
 // tasks of that lead. A task from the board that has no lead entry, or a status that is not one of the three
 // stacks, is not counted. more is how many lead entries did not fit in six rows.
 export function barsFor(content, now) {
-  const groups = groupByLead(boardTasksFor(content, now), leadEntries(content, now));
+  const groups = groupsFor(content, now);
 
   const rows = groups.map(group => {
     const row = { name: group.name };
@@ -172,12 +172,12 @@ function describe(bars, line) {
 // The page as markup, for the time given. now is a Date.
 export function markupFor(content, now) {
   const bars = barsFor(content, now);
-  const tag = tagTextFor(content.monday, now);
-  if (bars.rows.length === 0) return pageMarkup('monday-progress', 'PROGRESS', tag, emptyMarkup('No board items are showing yet.'));
+  const header = headerMarkup('PROGRESS', teamNameShown(), content.monday, now);
+  if (bars.rows.length === 0) return pageMarkup('monday-progress', header, emptyMarkup(noRowsSentence(content)));
 
   const line = lineFor(content, now);
   const parts = legendParts().concat(barParts(bars), line ? lineParts(line) : noLineParts());
-  return pageMarkup('monday-progress', 'PROGRESS', tag, chartMarkup(describe(bars, line), parts));
+  return pageMarkup('monday-progress', header, chartMarkup(describe(bars, line), parts));
 }
 
 export function mount(host, content) {

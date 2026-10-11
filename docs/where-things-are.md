@@ -191,7 +191,8 @@ editors can sign in from anywhere.
                               decides when the Preview competition button shows the cards on sample data and
                               competition-preview-run.js starts it (docs/frc-feed.md),
                               monday.js picks and ranks the board tasks for the Monday cards and monday-draw.js
-                              draws their page (docs/layouts.md, "The Monday cards"),
+                              draws their header and rows (docs/layouts.md, "The Monday cards"), team-title.js writes
+                              the name of a team on a header, text-width.js counts the width of a line of capitals,
                               tick.js is the one clock of the screen: it tells every panel when a real
                               second starts by reading the time, not by counting, so the digits never
                               drift, and a panel should write to the page only what has changed
@@ -362,9 +363,12 @@ editors can sign in from anywhere.
                               large panel's list, each card from the sample and with nothing to show, that no text is under
                               44px or runs out of its body, and the guard of Preview competition
       test-monday-cards.mjs   checks for the Monday cards (core/monday.js and the panels in panels/monday-*): the
-                              columns and the ranking, pinned tasks first, Show on TV off, the weeks around a Monday and
+                              ranking, Show on TV off, the weeks around a Monday and
                               the time zone, six rows and +N more, the line of at most 12 points, the sentences with
-                              nothing to show, that no text is under 44px, and that a team has the cards only with board tasks
+                              nothing to show, that no text is under 44px but the sizes the order sets, and that a team has the cards only with board tasks
+      test-monday-rows.mjs    checks for the rows of the tasks card and the cards of both teams: the mix of ten rows, the page marker
+                              and the scroll (frame.js and core/schedule.js with stand-ins), the pass of both teams in the look
+                              rotation, the words beside the chip in a header, the names of a team (core/team-title.js)
       test-cybertron.mjs      checks for Cybertron on the layout of Original: which layout each style has, its four
                               frames, the stage, the banner and the ticker on their plates, the wide war clock, and
                               that the frames are drawn again when the style changes
@@ -570,13 +574,14 @@ alone.
   block at the top of the script. The block at the top of the tab is `studio/monday-status-input.js`, and the
   lists of an entry are `studio/monday-pickers.js`, which read `monday-status`. The CSV template of a task
   has no column for `dueDate`.
-- **The Monday cards.** The three panels `dashboard/panels/monday-tasks`, `monday-milestones` and `monday-progress`
-  (docs/layouts.md, "The Monday cards"), flagged `monday: true` in `registry.js` and offered in Panel order in
-  `studio/schemas/settingsRotation.js` but in no starting list. `mondayCards` in `dashboard/core/look-rotation.js`
-  gives them to a team that has tasks with the source monday, and `dashboard/core/monday.js` picks and ranks the
-  tasks. The tasks are the ones the board sync writes (`source` monday, `mondayId`, `priority`, `dueDate`, `showOnTv`),
+- **The Monday cards.** The panels `dashboard/panels/monday-tasks`, `monday-milestones` and `monday-progress`, and
+  `monday-milestones-both` and `monday-progress-both` for both teams (docs/layouts.md, "The Monday cards"), flagged `monday: true`
+  in `registry.js`, in no Panel order list and in no starting list. `dashboard/monday.css` has what they share, and `dashboard/core/team-title.js`
+  has the names of a team on a header. `mondayCards` and `bothCards` in `dashboard/core/look-rotation.js`
+  give them to a team that has tasks with the source monday, and to both teams after the last one, and `dashboard/core/monday.js` picks and ranks the
+  tasks. A card with more than five rows scrolls: `scrollPages` in its script, `core/schedule.js` and `scrollCard` in `dashboard/frame.js`. The tasks are the ones the board sync writes (`source` monday, `mondayId`, `priority`, `dueDate`, `showOnTv`),
   and the daily counts are in the document `monday-status`, which `core/sanity.js` reads and `tidyMondayStatus` cleans.
-  `dashboard/data/sample/content.json` has board tasks for two Team lead entries and a `monday` document.
+  `dashboard/data/sample/content.json` has board tasks for both teams and a `monday` document.
 - **The demo.** The Demo page in Studio (docs/demo.md), which has no buttons and no line in the sidebar now:
   the Steps and the Demo announcement text. The starting values
   are `defaultDemo` in `dashboard/config.js` and their copy in

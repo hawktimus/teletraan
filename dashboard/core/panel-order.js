@@ -20,11 +20,18 @@ function regionOf(id) {
   return panel ? panel.region : null;
 }
 
+// A Monday card is not a panel an editor orders: it runs in the Monday block of the look rotation
+// (core/look-rotation.js). A row that names one, from a page saved when Panel order offered them, is left out.
+function isMondayCard(id) {
+  const panel = panels.find(item => item.id === id);
+  return Boolean(panel && panel.monday);
+}
+
 // The rows of one of the older lists. A panel in the wrong list is left out, as
 // the schedule always did.
 function rowsOf(list, area) {
   return (Array.isArray(list) ? list : [])
-    .filter(step => step && regionOf(step.panel) === area)
+    .filter(step => step && regionOf(step.panel) === area && !isMondayCard(step.panel))
     .map(step => Object.assign({}, step));
 }
 
@@ -42,7 +49,7 @@ export function panelOrder(rotation) {
 
 // The rows of one area, 'grid1' or 'grid2', in order
 export function playlistOf(rotation, area) {
-  return panelOrder(rotation).filter(step => step && regionOf(step.panel) === area);
+  return panelOrder(rotation).filter(step => step && regionOf(step.panel) === area && !isMondayCard(step.panel));
 }
 
 // How many pages a panel has, 1 unless registry.js says more
