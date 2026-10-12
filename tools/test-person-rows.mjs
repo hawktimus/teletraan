@@ -662,12 +662,20 @@ test('the lines fit the row: two lines in a row of 144, three in a row of 192, t
   });
 });
 
-test('the rows have no rule for a style or a layout, so Original, Cybertron, Minimal and the sidebar layout draw the same panel code', () => {
+test('the rows have no rule for a style or a layout but the foot of the large frame in Cybertron, so Original, Minimal and the sidebar layout draw the same panel code', () => {
   const css = read('base.css');
   ['.person-rows', '.person-row', '.person-text', '.person-name', '.person-role', '.person-line', '.person-chip', '.person-row .portrait'].forEach(selector => assert.notEqual(ruleOf(css, selector), '', selector));
 
-  const sheets = ['styles/original.css', 'styles/cybertron.css', 'styles/minimal.css', 'layouts/bar.css', 'layouts/sidebar.css', 'panels/leadership/leadership.css', 'panels/team-leads/team-leads.css'];
+  const sheets = ['styles/original.css', 'styles/minimal.css', 'layouts/bar.css', 'layouts/sidebar.css', 'panels/leadership/leadership.css', 'panels/team-leads/team-leads.css'];
   sheets.forEach(file => assert.equal(/\.person-|\.slots?\b|\.slot-/.test(read(file).replace(/\/\*[\s\S]*?\*\//g, '')), false, file + ' has a rule for the rows'));
+
+  // Cybertron has neon slashes along the foot of the large frame, so its rows are a little shorter (tools/test-stripe-foot.mjs).
+  // Those rules move and size the rows and nothing else, and no other rule of the style names a row.
+  const cybertron = read('styles/cybertron.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  const rules = Array.from(cybertron.matchAll(/^html\[data-style="cybertron"\] (\.person-[^{]*)\{([^}]*)\}/gm));
+  assert.deepEqual(rules.map(found => found[1].trim()), ['.person-rows', '.person-rows.rows-4 .person-row', '.person-rows.rows-3 .person-row', '.person-rows.rows-2 .person-row', '.person-rows.rows-1 .person-row']);
+  rules.forEach(found => assert.ok(/^\s*(top|height): \d+px;\s*(height: \d+px;\s*)?$/.test(found[2]), found[1] + ' sets only the top and the height'));
+  assert.equal(cybertron.replace(/^html\[data-style="cybertron"\] \.person-[^{]*\{[^}]*\}/gm, '').includes('.person-'), false, 'no other rule of Cybertron names a row');
 
   // the extra width of Minimal's main panel is not used by any panel, so the rows stay 1152 wide as the other panels do
   assert.ok(ruleOf(css, '.person-rows').includes('width: 1152px;'));
