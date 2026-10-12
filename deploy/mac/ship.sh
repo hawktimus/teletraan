@@ -148,6 +148,27 @@ preflight() {
   say "  ready"
 }
 
+# The Mac tool copies this folder as it is, so a folder that is behind GitHub
+# (the other computer pushed since the last git pull) would put older files on
+# the Mini. This looks first and stops before anything is sent.
+check_up_to_date() {
+  step "Comparing this folder with GitHub"
+  command -v git >/dev/null 2>&1 || return 0
+  if ! run git -C "$repo" fetch --quiet; then
+    say "GitHub could not be reached, so this folder was not compared with it."
+    return 0
+  fi
+  local behind
+  behind=$(git -C "$repo" rev-list --count 'HEAD..@{u}' 2>/dev/null || echo 0)
+  if [ "$behind" != 0 ]; then
+    say "GitHub has $behind newer commit(s) that this folder does not have. Shipping now would put older files on the Mini. Run:"
+    say "  cd \"$repo\" && git pull --no-rebase"
+    say "and then run this again."
+    fail "this folder is behind GitHub."
+  fi
+  say "  up to date"
+}
+
 # Step 1: the same checks a student can run by hand (docs/where-things-are.md).
 # They take a few seconds. A failing check is a warning you can overrule.
 run_checks() {
@@ -316,10 +337,10 @@ if [ "$dry_run" = yes ]; then say "Dry run: nothing below is run."; fi
 
 preflight "$action"
 case "$action" in
-  all)     run_checks; commit_and_push; update_studio; update_mini ;;
+  all)     check_up_to_date; run_checks; commit_and_push; update_studio; update_mini ;;
   push)    run_checks; commit_and_push ;;
   studio)  update_studio ;;
-  mini)    update_mini ;;
+  mini)    check_up_to_date; update_mini ;;
   status)  status_mini ;;
   restart) restart_mini ;;
 esac

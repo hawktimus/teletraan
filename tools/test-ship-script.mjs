@@ -53,14 +53,19 @@ case "$1" in
   status) cat "$STUB_DIR/changes.txt" 2> /dev/null ;;
   diff) cat "$STUB_DIR/diff-names.txt" 2> /dev/null ;;
   ls-files) cat "$STUB_DIR/untracked.txt" 2> /dev/null ;;
-  rev-list) cat "$STUB_DIR/waiting.txt" 2> /dev/null || echo 0 ;;
+  rev-list)
+    case "$*" in
+      *HEAD..@*) cat "$STUB_DIR/behind.txt" 2> /dev/null || echo 0 ;;
+      *) cat "$STUB_DIR/waiting.txt" 2> /dev/null || echo 0 ;;
+    esac
+    ;;
   config)
     case "$2" in
       user.name) cat "$STUB_DIR/user-name.txt" 2> /dev/null || echo Test Person ;;
       user.email) cat "$STUB_DIR/user-email.txt" 2> /dev/null || echo test@example.test ;;
     esac
     ;;
-  add|commit|push) [ -f "$STUB_DIR/git-$1.exit" ] && exit "$(cat "$STUB_DIR/git-$1.exit")" ;;
+  add|commit|push|fetch) [ -f "$STUB_DIR/git-$1.exit" ] && exit "$(cat "$STUB_DIR/git-$1.exit")" ;;
 esac
 exit 0
 `,
@@ -205,7 +210,7 @@ function lines(text) {
 }
 
 // Calls that only look at things. Everything else changes or sends something.
-const readOnly = /^(git (-C \S+ )?(branch|status|diff|ls-files|rev-list|config)\b|node --version)/;
+const readOnly = /^(git (-C \S+ )?(branch|status|diff|ls-files|rev-list|config|fetch)\b|node --version)/;
 function changes(calls) {
   return lines(calls).filter(line => !readOnly.test(line));
 }
@@ -233,6 +238,7 @@ test('all checks, commits, pushes, deploys the Studio, then updates the Mini and
 
   const calls = lines(result.calls);
   const find = start => calls.findIndex(line => line.startsWith(start));
+  const fetched = find('git -C ' + place.repo + ' fetch');
   const lastCheck = Math.max(find('node ' + path.join(place.repo, 'tools/test-one.mjs')), find('node ' + path.join(place.repo, 'tools/check-two.mjs')), find('node ' + path.join(place.repo, 'studio/check-schemas.mjs')));
   const add = find('git add -A');
   const commit = find('git commit -q -m Change the agenda header');
@@ -240,7 +246,8 @@ test('all checks, commits, pushes, deploys the Studio, then updates the Mini and
   const deploy = find('npm run deploy (in studio)');
   const copy = find('rsync ');
   const restart = find('ssh -t -o ConnectTimeout=10 ' + miniAddress + ' sudo systemctl restart teletraan-kiosk.service');
-  [lastCheck, add, commit, push, deploy, copy, restart].forEach((index, position) => assert.ok(index !== -1, 'step ' + position + ' ran: ' + calls.join(' / ')));
+  [fetched, lastCheck, add, commit, push, deploy, copy, restart].forEach((index, position) => assert.ok(index !== -1, 'step ' + position + ' ran: ' + calls.join(' / ')));
+  assert.ok(fetched < Math.min(find('node ' + path.join(place.repo, 'tools/test-one.mjs')), add), 'GitHub is looked at before anything else');
   assert.ok(lastCheck < add && add < commit && commit < push && push < deploy && deploy < copy && copy < restart, 'the order is check, commit, push, Studio, Mini: ' + calls.join(' / '));
   assert.equal(calls.filter(line => line.startsWith('node ' + path.join(place.repo, 'tools')) || line.startsWith('node ' + path.join(place.repo, 'studio'))).length, 3, 'every check ran once');
 
@@ -402,6 +409,35 @@ test('an unreachable Mini and a Mini that still pulls by itself stop the run aft
   assert.equal(agreed.run(['mini'], { input: ['y'] }).status, 0, 'a yes copies');
 });
 
+test('a folder that is behind GitHub stops all and mini before anything is sent, and push does not mind', () => {
+  ['all', 'mini'].forEach(action => {
+    const place = makePlace('behind-' + action);
+    place.stubFile('changes.txt', changed);
+    place.stubFile('behind.txt', '2\n');
+    const result = place.run([action], { message: 'A change' });
+    assert.notEqual(result.status, 0, action);
+    assert.ok(result.text.includes('GitHub has 2 newer commit(s) that this folder does not have'), result.text);
+    assert.ok(result.text.includes('cd "' + place.repo + '" && git pull --no-rebase'), result.text);
+    assert.ok(result.errors.includes('this folder is behind GitHub.') && result.errors.includes('Nothing had been done'), result.errors);
+    assert.deepEqual(changes(result.calls), [], action + ' sent nothing: ' + result.calls);
+  });
+
+  const push = makePlace('behind-push');
+  push.stubFile('behind.txt', '2\n');
+  assert.equal(push.run(['push']).status, 0, 'a push is refused by GitHub itself if it needs to be');
+
+  const offline = makePlace('behind-offline');
+  offline.stubFile('git-fetch.exit', '128');
+  offline.stubFile('behind.txt', '2\n');
+  const offlineResult = offline.run(['mini']);
+  assert.equal(offlineResult.status, 0, offlineResult.errors);
+  assert.ok(offlineResult.text.includes('GitHub could not be reached, so this folder was not compared with it.'), offlineResult.text);
+
+  const fine = makePlace('behind-none');
+  const fineResult = fine.run(['mini']);
+  assert.ok(fineResult.text.includes('up to date'), fineResult.text);
+});
+
 test('--dry-run runs nothing for any action: no commit, push, deploy, copy, restart or check, and no question', () => {
   ['all', 'all-restart', 'push', 'studio', 'mini', 'status', 'restart'].forEach(action => {
     const place = makePlace('dry-' + action);
@@ -409,6 +445,7 @@ test('--dry-run runs nothing for any action: no commit, push, deploy, copy, rest
     const result = place.run([action, '--dry-run']);
     assert.equal(result.status, 0, action + ': ' + result.errors);
     assert.deepEqual(changes(result.calls), [], action + ' changed or sent something: ' + result.calls);
+    assert.ok(!/ fetch/.test(result.calls), action + ' did not even look at GitHub: ' + result.calls);
     assert.ok(result.text.includes('Dry run: nothing below is run.') && result.text.includes('[dry run]'), result.text);
     assert.ok(result.text.includes('Dry run: these steps would run:'), result.text);
     assert.ok(!result.text.includes('Done:'), 'a dry run does not say it did anything');
