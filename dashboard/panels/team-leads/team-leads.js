@@ -21,7 +21,7 @@ export function mount(host, content) {
   const page = nextPage(departmentRows(content.subteams), rowLayout(scale).rows);
   const rows = page.items.map(row => leadRow(row, content));
 
-  // the header names the team: the team on the screen, or both teams when every department is for both
+  // the header names the team on the screen, and has no chip when every department is for both teams
   const chip = pageTeamName(visibleItems(content.subteams), teamNameOf(wantedTeam()));
 
   host.innerHTML = `

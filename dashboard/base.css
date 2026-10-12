@@ -817,9 +817,9 @@ html.neon-glow:not([data-finish="flat"]) .art-glow { display: inline; }
 .bust-cut { fill: var(--silhouette-cut); }
 .bust-slash { fill: var(--silhouette-slash); }
 
-/* The chip at the right end of a header that names a team: PRIME, NOVA or BOTH TEAMS, in the accent of
-   the team on the screen (core/team-title.js). The Monday cards, the Roster, Leadership and Team leads
-   have one. */
+/* The chip at the right end of a header that names a team: PRIME or NOVA, in the accent of the team on the
+   screen (core/team-title.js). The Monday cards, the Roster, Leadership and Team leads have one, unless
+   what they show is for both teams. */
 .team-chip {
   flex: none;
   padding: 0 14px;

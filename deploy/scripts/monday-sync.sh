@@ -402,8 +402,9 @@ if [ "$(jq -r '.result.owners' "$work/sanity.json")" = true ]; then
 fi
 
 # The board entries that can be used, as one list, and a line for each one that
-# cannot be. A board needs a number and a team that exists, and a status column when its status
-# comes from a column. An entry that does not say so reads its status from the group names.
+# cannot be. A board needs a number, a team that exists when it names one (a board with no team
+# makes tasks for both teams), and a status column when its status comes from a column. An entry
+# that does not say so reads its status from the group names.
 jq -c --argjson label_limit "$label_limit" "$helpers"'
   (.result.teams | arrays | map(._id)) as $team_ids
   | [.result.boards | arrays | .[] | objects
@@ -423,7 +424,7 @@ jq -c --argjson label_limit "$label_limit" "$helpers"'
           team_column: (.teamColumn | column_name)
         }] as $entries
   | def number_ok: .board | test("\\A[0-9]{1,20}\\z");
-    def team_ok: .team as $team | any($team_ids[]; . == $team);
+    def team_ok: .team as $team | $team == "" or any($team_ids[]; . == $team);
   {
     chosen: ([$entries[] | select(number_ok and team_ok and (.status_from == "groups" or .status_column != null))] | first_of_each("board")),
     problems: [$entries[]
@@ -622,9 +623,10 @@ def subteam_of($row; $subteams):
   if $row.team_text == "" then $unmatched_id
   else (([$subteams[] | select((.name | if type == "string" then plain | ascii_downcase else "" end) == ($row.team_text | ascii_downcase))][0]._id) // $unmatched_id) end;
 
-# What a task should be, with a null for each value it should not have
+# What a task should be, with a null for each value it should not have. A board with no team makes
+# tasks with no team.
 def wanted_task($row; $subteam):
-  {title: $row.title, subteam: $subteam, team: $row.team, status: $row.status, priority: $row.priority, dueDate: $row.due, contact: $row.contact, show: true, mondayBoardId: $row.board, mondayBoardName: (if $row.board_title == "" then null else $row.board_title end)};
+  {title: $row.title, subteam: $subteam, team: (if $row.team == "" then null else $row.team end), status: $row.status, priority: $row.priority, dueDate: $row.due, contact: $row.contact, show: true, mondayBoardId: $row.board, mondayBoardName: (if $row.board_title == "" then null else $row.board_title end)};
 
 # What a task is now, in the same shape. A task with no Show on screen is on.
 def stored_task:
@@ -634,12 +636,13 @@ def stored_task:
 def patch_of($id; $task):
   {patch: ({
       id: $id,
-      set: ({title: $task.title, subteam: reference($task.subteam), team: reference($task.team), status: $task.status, show: true, mondayBoardId: $task.mondayBoardId}
+      set: ({title: $task.title, subteam: reference($task.subteam), status: $task.status, show: true, mondayBoardId: $task.mondayBoardId}
+        + (if $task.team == null then {} else {team: reference($task.team)} end)
         + (if $task.priority == null then {} else {priority: $task.priority} end)
         + (if $task.dueDate == null then {} else {dueDate: $task.dueDate} end)
         + (if $task.contact == null then {} else {contact: $task.contact} end)
         + (if $task.mondayBoardName == null then {} else {mondayBoardName: $task.mondayBoardName} end))
-    } + ([("priority", "dueDate", "contact", "mondayBoardName") as $name | select($task[$name] == null) | $name] as $absent | if ($absent | length) == 0 then {} else {unset: $absent} end))};
+    } + ([("team", "priority", "dueDate", "contact", "mondayBoardName") as $name | select($task[$name] == null) | $name] as $absent | if ($absent | length) == 0 then {} else {unset: $absent} end))};
 
 $sanity[0].result as $found
 | ($found.subteams | arrays | map(select(._id | type == "string"))) as $subteams

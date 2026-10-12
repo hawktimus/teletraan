@@ -330,7 +330,7 @@ test('a lead entry that is switched off, expired, for the other team, or has the
   assert.deepEqual(monday.leadEntries(content, monday12).map(entry => entry.name), ['[Subteam A]']);
 });
 
-test('the header reads the department and TEAM, the name of the team is in a chip, and shared tasks say BOTH TEAMS', () => {
+test('the header reads the department and TEAM, the name of the team is in a chip, and tasks for both teams have no chip', () => {
   const content = contentOf([board({ title: 'a', subteam: 'Build' }), board({ title: 'b', subteam: 'Electrical' }), board({ title: 'c', subteam: 'Safety Team' })], ['Build', 'Electrical', 'Safety Team']);
   const chipOf = html => /<span class="team-chip">([^<]*)<\/span>/.exec(html)[1];
 
@@ -342,7 +342,7 @@ test('the header reads the department and TEAM, the name of the team is in a chi
   onTeamScreen('nova', () => assert.equal(chipOf(panels.tasks.markupFor(nova, monday12, 1)), 'NOVA'));
 
   const shared = contentOf([board({ title: 'a', subteam: 'Build', team: '' })], ['Build']);
-  assert.equal(chipOf(panels.tasks.markupFor(shared, monday12, 1)), 'BOTH TEAMS', 'a board task for both teams makes a page for both');
+  assert.equal(panels.tasks.markupFor(shared, monday12, 1).includes('team-chip'), false, 'a board task for both teams makes a page for both, with no chip');
   assert.ok(panels.tasks.markupFor(content, monday12, 1).includes('<h2 class="title" data-slat="title">BUILD TEAM</h2>'), 'a name is never markup, and the title is plain text');
   assert.ok(draw.departmentHeader('<b>x', 'PRIME', null, monday12).includes('&lt;B&gt;X TEAM'), 'a name is never markup');
   assert.equal(dashes.test(draw.departmentHeader('Build', 'PRIME', { lastSyncAt: '2026-10-12T15:56:00Z' }, monday12)), false, 'the dot is a middle dot, and no dash is used');
@@ -1017,7 +1017,7 @@ test('the docs say what each card shows, where the code is, and what the rotatio
   const where = fs.readFileSync(path.join(docsFolder, 'where-things-are.md'), 'utf8').replace(/\s+/g, ' ');
 
   assert.ok(layouts.includes('## The Monday cards'));
-  ['monday-tasks', 'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both', 'core/monday.js', 'BUILD TEAM', 'BOTH TEAMS', 'This week', '+3 later', '+N more', 'items left', 'mondayCards', 'bothCards', 'Monday to Sunday', 'two cards', 'showOnTv', 'scrollPages', 'scrollCard'].forEach(word => assert.ok(layouts.includes(word), 'layouts.md names ' + word));
+  ['monday-tasks', 'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both', 'core/monday.js', 'BUILD TEAM', 'This week', '+3 later', '+N more', 'items left', 'mondayCards', 'bothCards', 'Monday to Sunday', 'two cards', 'showOnTv', 'scrollPages', 'scrollCard'].forEach(word => assert.ok(layouts.includes(word), 'layouts.md names ' + word));
   assert.equal(layouts.includes('There are no Monday cards yet'), false, 'the old sentence that said there were none is gone');
   assert.ok(editing.includes('## The Monday cards'));
   ['Tasks card', 'Milestones card', 'Progress card', 'Show on TV', 'Panel order', 'Monday pass'].forEach(word => assert.ok(editing.includes(word), 'editing-content.md names ' + word));

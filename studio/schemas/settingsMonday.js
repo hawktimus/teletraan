@@ -4,7 +4,7 @@
 //   mondayConnection   a read only block that says who the token belongs to and when the
 //                      Mini last read Monday (../monday-status-input.js). It stores nothing
 //   mondayBoards       one entry for each board the screen reads. An entry has the board and
-//                      its team, where the status comes from (the group names of the board, or
+//                      its team (blank for both teams), where the status comes from (the group names of the board, or
 //                      a status column with the labels that mean being worked on and finished,
 //                      and any other status is Backlog), and optional columns for the priority,
 //                      the due date, the owner and the subteam
@@ -20,9 +20,9 @@
 // defaultSettings in dashboard/config.js. check-schemas.mjs fails if they differ.
 //
 // None of the fields is required on the page: Dashboard Settings published before these
-// fields existed has none, and the Mini then reads no board. A board entry needs its board and
-// its team, and its status column when the status comes from a column, or the Mini has nothing
-// to read. An entry with no choice of where the status comes from reads the group names.
+// fields existed has none, and the Mini then reads no board. A board entry needs its board, and
+// its status column when the status comes from a column, or the Mini has nothing to read. Its
+// team is optional: a board with no team makes tasks for both teams. An entry with no choice of where the status comes from reads the group names.
 //
 // To take the whole section out later: delete this file, remove its import and the line that
 // uses mondayFields in dashboardSettings.js, and remove the same names from check-schemas.mjs
@@ -104,9 +104,8 @@ const board = defineArrayMember({
       title: 'Team',
       type: 'reference',
       to: [{ type: 'team' }],
-      description: 'Which team the tasks of this board are for.',
+      description: 'Leave blank when it is for both teams.',
       options: { filter: 'active != false' },
-      validation: Rule => Rule.required().error('Pick the team.'),
     }),
     defineField({
       name: 'statusFrom',
@@ -141,7 +140,7 @@ const board = defineArrayMember({
     select: { board: 'boardId', team: 'team.name', from: 'statusFrom', progress: 'progressLabel', done: 'doneLabel' },
     prepare(entry) {
       const labels = entry.from === 'column' ? [entry.progress, entry.done].filter(Boolean).join(' / ') : 'Group names';
-      return { title: entry.board ? 'Board ' + entry.board : 'Board with no number', subtitle: [entry.team || 'No team', labels].filter(Boolean).join(' · ') };
+      return { title: entry.board ? 'Board ' + entry.board : 'Board with no number', subtitle: [entry.team || 'Both teams', labels].filter(Boolean).join(' · ') };
     },
   },
 });

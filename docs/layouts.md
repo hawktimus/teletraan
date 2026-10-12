@@ -1358,11 +1358,11 @@ team on the screen and of both teams. The look rotation asks about the team of a
 
 **The name of the team.** A header that names a department reads the department in capitals and TEAM, such as BUILD TEAM, and the
 name of the team is a chip of 44 px in the accent of the team at the right end of the header: PRIME or NOVA, which is the
-`shortName` of the team that the items follow. A page whose tasks are all for both teams says BOTH TEAMS in the chip, and so do the cards of both
-teams (`core/team-title.js`). A department name that already ends in TEAM does not get a second one. The title is 60 px (`--size-team`). The Roster,
+`shortName` of the team that the items follow. A page whose tasks are all for both teams, and each of the cards of both teams, has no chip
+(`core/team-title.js`), and its title has the room of the chip. A department name that already ends in TEAM does not get a second one. The title is 60 px (`--size-team`). The Roster,
 Leadership and Team leads headers have the same chip, with BUILD TEAM, LEADERSHIP and TEAM LEADS as their titles, which are at the size of a heading
 (96 px) when they fit beside the chip and the slashes and at 60 px when they do not (`titleClass` in `core/team-title.js`). Leadership and Team leads
-say BOTH TEAMS only when everyone on their list is for both teams, and Roster asks about the subteam of its page.
+have no chip only when everyone on their list is for both teams, and Roster asks about the subteam of its page.
 
 ### The tasks card
 
@@ -1418,9 +1418,9 @@ is still to come. With fewer than two counts a sentence stands in the place of t
 
 ### The cards of both teams
 
-The milestones card and the progress card of both teams come once in each cycle, after the last team, with BOTH TEAMS in the chip of the header.
-They have a row for each department and each team that has board tasks for it, and the rows alternate between the teams: a department's rows
-together, Prime first and then Nova, in the order of Team order. No columns side by side. Every row starts with a label of the team, PRIME
+The milestones card and the progress card of both teams come once in each cycle, after the last team. Their headers read MILESTONES and PROGRESS
+with no chip. They have a row for each department and each team that has board tasks for it, and the rows alternate between the teams: a department's rows
+together, Prime first and then Nova, in the order of Team order. A department whose tasks all come from boards with no team is one row with no team. No columns side by side. Every row starts with a label of the team, PRIME
 in gold and NOVA in silver. There are ten rows at the most, five at a time, which scroll and have a page marker as the tasks card does
 (`scrollPages`).
 

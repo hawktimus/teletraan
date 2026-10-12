@@ -33,16 +33,16 @@ export function orderField() {
   });
 }
 
-// Which team the item is for. It has no starting value: empty means Both, so an
-// item that was made before teams existed keeps showing for every team. The
-// radio is in team-input.js.
+// Which team the item is for. It has no starting value and is never required: blank
+// means both teams, so an item that was made before teams existed keeps showing
+// for every team. The radio is in team-input.js, where Both is the blank choice.
 export function teamField() {
   return defineField({
     name: 'team',
     title: 'Team',
     type: 'reference',
     to: [{ type: 'team' }],
-    description: 'Optional. Pick a team to show this only while that team is on the screen. Leave it on Both to always show it.',
+    description: 'Leave blank when it is for both teams.',
     components: { input: TeamInput },
   });
 }

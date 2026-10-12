@@ -8,7 +8,6 @@
 import { emptyMarkup } from '../../core/competition-draw.js';
 import { bothRows, mostRows, pagesOf, statuses } from '../../core/monday.js';
 import { headerMarkup, markerMarkup, noRowsSentence, pageMarkup, rowsWindow, teamTagMarkup, teamsForBoth } from '../../core/monday-draw.js';
-import { bothTeamsName } from '../../core/team-title.js';
 import { escapeHtml } from '../../core/text.js';
 
 // The bar is 44 high and as wide as this at the most. The stacks follow each other in this order.
@@ -50,8 +49,9 @@ function barMarkup(row, widest) {
   return `<svg class="stack" width="${BAR.width}" height="${BAR.height}" viewBox="0 0 ${BAR.width} ${BAR.height}" aria-hidden="true">${parts.join('')}</svg>`;
 }
 
-function rowMarkup(row, widest) {
-  return `<div class="row">${teamTagMarkup(row.team)}<span class="department">${escapeHtml(row.lead.toUpperCase())}</span>${barMarkup(row, widest)}<span class="count">${row.done}/${row.total}</span></div>`;
+// tagged is true when any row of the card has a team, so a row with none keeps the room of the label
+function rowMarkup(row, widest, tagged) {
+  return `<div class="row">${teamTagMarkup(row.team, tagged)}<span class="department">${escapeHtml(row.lead.toUpperCase())}</span>${barMarkup(row, widest)}<span class="count">${row.done}/${row.total}</span></div>`;
 }
 
 // A square and a word for each stack, along the top, in the order of the bars
@@ -62,13 +62,14 @@ function legendMarkup() {
 // The page as markup, for the time given. now is a Date.
 export function markupFor(content, now) {
   const found = progressFor(content, now);
-  const header = headerMarkup('PROGRESS', bothTeamsName, content.monday, now);
+  const header = headerMarkup('PROGRESS', '', content.monday, now);
   if (found.rows.length === 0) return pageMarkup('monday-progress-both', header, emptyMarkup(noRowsSentence(content)));
 
   const widest = Math.max(1, ...found.rows.map(row => row.total));
+  const tagged = found.rows.some(row => row.team);
   const inner = `
       ${legendMarkup()}
-      ${rowsWindow(found.rows.map(row => rowMarkup(row, widest)))}
+      ${rowsWindow(found.rows.map(row => rowMarkup(row, widest, tagged)))}
       ${markerMarkup(found.rows.length, 'ROWS')}`;
 
   return pageMarkup('monday-progress-both', header, inner, true);

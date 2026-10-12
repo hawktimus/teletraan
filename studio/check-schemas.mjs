@@ -3964,7 +3964,7 @@ function checkTeamField() {
     need(problems, field.title === 'Team', where + ' should be titled Team');
     need(problems, !constraintNamed(constraintsOf(field), 'required'), where + ' should be optional, because empty means Both');
     need(problems, field.initialValue === undefined, where + ' should have no starting value, so it starts on Both');
-    need(problems, /optional/i.test(words) && /Both/.test(words), 'the ' + where + ' description should say that it is optional and that Both shows it always');
+    need(problems, words === 'Leave blank when it is for both teams.', 'the ' + where + ' description should be "Leave blank when it is for both teams."');
     need(problems, field.components && field.components.input === world.teamInput.TeamInput, where + ' should use the radio input, TeamInput in studio/team-input.js (components.input)');
     need(problems, !(field.options && (field.options.disableNew || field.options.filter)), where + ' should be an ordinary reference to a team');
   });
@@ -5501,12 +5501,13 @@ function checkMondayTab() {
   const source = fs.readFileSync(path.join(here, 'monday-status-input.js'), 'utf8');
   need(problems, !/onChange|\bset\(|unset\(|patch/.test(source), 'monday-status-input.js should never change the value: no onChange, set, unset or patch');
 
-  // The list: up to 10 entries, none required on the page, and a board needs its board and team, and its status column when the status comes from a column
+  // The list: up to 10 entries, none required on the page, and a board needs its board, and its status column when the status comes from a column. Its team is optional
   const list = fieldAt('dashboardSettings.mondayBoards');
   need(problems, list && list.type === 'array' && list.group === 'monday', 'mondayBoards should be a list in the Monday tab');
   need(problems, list && !list.initialValue && !constraintNamed(rulesOf(list), 'required'), 'mondayBoards should start empty and not be required: a page saved before it existed must still publish');
-  ['boardId', 'team'].forEach(name => need(problems, constraintNamed(rulesOf(at(name)), 'required'), name + ' should be required in a board entry'));
-  mondayEntryNames.filter(name => ['boardId', 'team'].indexOf(name) === -1).forEach(name => need(problems, !constraintNamed(rulesOf(at(name)), 'required'), name + ' should not be required on its own in a board entry'));
+  need(problems, constraintNamed(rulesOf(at('boardId')), 'required'), 'boardId should be required in a board entry');
+  mondayEntryNames.filter(name => name !== 'boardId').forEach(name => need(problems, !constraintNamed(rulesOf(at(name)), 'required'), name + ' should not be required on its own in a board entry'));
+  need(problems, at('team') && at('team').description === 'Leave blank when it is for both teams.', 'the team of a board entry should say: Leave blank when it is for both teams.');
 
   // Where the status comes from: a radio of Group names and A status column that starts on Group names. The status column is needed, and
   // shown, only for A status column, and so are the In progress and Done labels. An entry with no choice reads the group names.
@@ -5568,7 +5569,7 @@ function checkMondayTab() {
   need(problems, line({ board: '123456', team: 'Prime', from: 'column', progress: 'Working on it', done: 'Done' }).subtitle === 'Prime · Working on it / Done', 'the second line of a board entry with a status column should read "Prime · Working on it / Done": the Backlog label does not count any more');
   need(problems, line({ board: '123456', team: 'Prime', from: 'groups', progress: 'Working on it', done: 'Done' }).subtitle === 'Prime · Group names' && line({ board: '123456', team: 'Prime' }).subtitle === 'Prime · Group names', 'the second line of a board entry that reads group names, or has no choice, should read "Prime · Group names"');
   need(problems, entry.preview.select.from === 'statusFrom', 'a board entry should select statusFrom');
-  need(problems, line({}).title === 'Board with no number' && line({}).subtitle === 'No team · Group names', 'an empty board entry should read "Board with no number" and "No team · Group names"');
+  need(problems, line({}).title === 'Board with no number' && line({}).subtitle === 'Both teams · Group names', 'an empty board entry should read "Board with no number" and "Both teams · Group names"');
 
   // Tasks: the due date is optional and the board sync writes it. The fixed rows per card are not a field.
   const due = fieldAt('task.dueDate');
@@ -5975,7 +5976,7 @@ function checkMondayBoardsPage() {
   const linked = nodesWhere(page, node => node.type === 'ChildLink');
   need(problems, linked.length === 1 && linked[0].props.childId === '111' && wordsIn(linked[0]) === 'Build board', 'only the name of the chosen board that the token can see should open its tasks, with the board number as the child');
   const noted = view.boardsPage({ status: status, entries: [{ boardId: '111', team: '' }], statusUnreadable: false, entriesUnreadable: false }, now, links);
-  need(problems, /Chosen, with no team/.test(wordsIn(noted)), 'a chosen board with no team should say so');
+  need(problems, /Chosen for both teams/.test(wordsIn(noted)), 'a chosen board with no team should say it is for both teams');
   const reasons = view.boardsPage({ status: Object.assign({}, status, { readings: [{ boardId: '111', itemsRead: 0, readAt: ago(2), note: 'monday gave no items for this board' }] }), entries: entries, statusUnreadable: false, entriesUnreadable: false }, now, links);
   need(problems, /Monday gave no items for this board\./.test(wordsIn(reasons)), 'the note of a reading should be a sentence under its board');
   need(problems, /The Mini last read Monday 3 minutes ago\./.test(wordsIn(page)) && wordsIn(page).indexOf(parts.openLine) !== -1 && wordsIn(page).indexOf(parts.publicLine) !== -1, 'the page should say when the Mini last read Monday, how to open the tasks of a board, and that the names are public');

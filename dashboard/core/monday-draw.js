@@ -8,7 +8,7 @@ import { teamsInOrder } from './look-rotation.js';
 import { doubleSlash } from './marks.js';
 import { pagesOf, rowsPerPage } from './monday.js';
 import { departmentTitle, teamChipMarkup, teamNameOf } from './team-title.js';
-import { escapeHtml } from './text.js';
+import { escapeHtml, hasText } from './text.js';
 import { textWidth } from './text-width.js';
 import { wantedTeam } from './teams.js';
 
@@ -50,10 +50,12 @@ export function agoWords(status, now) {
 
 // The words beside the chip, BOARD · 4 MIN AGO, as long as the title, the words and the chip fit in the
 // header together. When they do not, the words go without BOARD, and when they still do not, they are left out.
+// A header with no chip, because the card is for both teams, has the room of the chip for the words.
 export function wordsBesideChip(title, chip, words) {
   if (words === '') return '';
 
-  const taken = textWidth(title, 700, titleSize) + titleGap + chipGap + textWidth(chip, 700, chipSize) + chipPadding + markRoom;
+  const chipRoom = hasText(chip) ? chipGap + textWidth(chip, 700, chipSize) + chipPadding : 0;
+  const taken = textWidth(title, 700, titleSize) + titleGap + chipRoom + markRoom;
   return ['BOARD · ' + words, words].find(text => taken + textWidth(text, 600, chipSize) <= headerRoom) || '';
 }
 
@@ -78,8 +80,12 @@ export function teamsForBoth(content) {
 }
 
 // The label at the start of a row of the cards of both teams: PRIME in gold and NOVA in silver. The class
-// carries the code of the team, which is letters and digits and nothing else.
-export function teamTagMarkup(team) {
+// carries the code of the team, which is letters and digits and nothing else. A row of tasks from a board
+// with no team has no team, and so no label. It keeps the room of one when other rows of the card have a
+// label (kept), so the columns line up.
+export function teamTagMarkup(team, kept = false) {
+  if (!team) return kept ? '<span class="team-tag team-tag-blank"></span>' : '';
+
   const code = String(team.code || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   return `<span class="team-tag team-tag-${code}">${escapeHtml(teamNameOf(team))}</span>`;
 }

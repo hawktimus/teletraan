@@ -138,8 +138,8 @@ Sanity as tasks (docs/monday.md). It needs the team mentor's yes at the first st
 4. Wait 10 minutes. Open Dashboard Settings, Monday tab. The block at the top says
    who the token belongs to, when the Mini last read Monday, how many boards are
    chosen and how many tasks the Mini has made.
-5. Under Boards click Add item. Pick the board by name, the team, and where the status
-   comes from. Group names is the starting choice: the group an item is in, such as To Do,
+5. Under Boards click Add item. Pick the board by name, the team (leave it blank when the
+   board is for both teams), and where the status comes from. Group names is the starting choice: the group an item is in, such as To Do,
    In Progress or Done, gives its status, and every other group name is Backlog. With A
    status column, pick the column and change the In progress and Done labels to the words
    the board uses. The priority, due date, owner and subteam columns are optional, and

@@ -53,7 +53,7 @@ test('a row says the name, the items and whether the board is chosen and for whi
   assert.equal(parts.chosenText(build), 'Chosen for PRIME');
   assert.equal(rowFor(rows, '222').items, '1 item', 'one item is not items');
   assert.equal(rowFor(rows, '333').items, '0 items');
-  assert.equal(parts.chosenText(rowFor(rows, '333')), 'Chosen, with no team');
+  assert.equal(parts.chosenText(rowFor(rows, '333')), 'Chosen for both teams');
   assert.equal(parts.chosenText(rowFor(rows, '222')), 'Not chosen');
 });
 

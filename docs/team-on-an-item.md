@@ -2,14 +2,15 @@
 
 For everyone who adds content, and for the students who add a kind of content.
 Most things you type in Studio can be for one team or for both. The Team field
-says which. Empty means Both.
+says which. Leave it blank when it is for both teams. Blank is the Both choice.
 
 ## The field
 
 These have a Team field: Tasks, Agenda items, Team leads, Leadership, Sponsors, Tips
 and News, Extra panels, Meeting days and booked talks. It is
 a row of choices: Both, then one for each team that is Active under Teams, with the
-name of the team. Both is picked to start with, and it stores nothing.
+name of the team. Both is picked to start with, and it stores nothing. No team is
+ever required, and a page of things for both teams has no team chip in its header.
 
 An item made before teams existed has no team, so it shows for both teams. Nothing
 needs to be moved or edited. If the Teams cannot be read when you open an item, the
@@ -53,6 +54,8 @@ shows for both teams.
 - A Meeting day has the field, but the screen does not read Meeting days, so a team
   on a Meeting day changes nothing on the screen.
 - A team that has been deleted counts as no team, so its items show for both.
+- A board in the Monday tab of Dashboard Settings has the same field. A board with
+  no team makes tasks with no team, and they show for both teams.
 - In the CSV templates the last column is `team`: `prime`, `nova` or empty
   (docs/importing-from-csv.md).
 

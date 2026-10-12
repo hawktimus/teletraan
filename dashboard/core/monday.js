@@ -198,6 +198,8 @@ export function pagesOf(rows) {
 // The rows of the both-teams cards: one for each lead entry and each team that has board tasks for it, as
 // { team, lead, tasks }. The entries are in the order of the Team leads list, and under each one the teams
 // are in the order given, so the rows alternate between the teams. teams is a list of { code, ... }.
+// An entry whose tasks all have no team, because their boards have none, is one row with no team (null):
+// it is not the row of either team.
 export function bothRows(content, teams, now = new Date()) {
   const order = [];
   const groups = teams.map(team => ({ team: team, groups: groupsFor(content, now, team.code) }));
@@ -212,10 +214,17 @@ export function bothRows(content, teams, now = new Date()) {
   order.sort((first, second) => place(first) - place(second));
 
   const rows = [];
-  order.forEach(key => groups.forEach(entry => {
-    const group = entry.groups.find(item => leadKey(item.name) === key);
-    if (group) rows.push({ team: entry.team, lead: group.name, tasks: group.tasks });
-  }));
+  order.forEach(key => {
+    const found = groups
+      .map(entry => ({ team: entry.team, group: entry.groups.find(item => leadKey(item.name) === key) }))
+      .filter(entry => entry.group);
+
+    if (found.every(entry => entry.group.tasks.every(task => !hasText(task.team)))) {
+      rows.push({ team: null, lead: found[0].group.name, tasks: found[0].group.tasks });
+    } else {
+      found.forEach(entry => rows.push({ team: entry.team, lead: entry.group.name, tasks: entry.group.tasks }));
+    }
+  });
   return rows;
 }
 

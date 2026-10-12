@@ -385,6 +385,9 @@ editors can sign in from anywhere.
       test-monday-rows.mjs    checks for the rows of the tasks card and the cards of both teams: the mix of ten rows, the page marker
                               and the scroll (frame.js and core/schedule.js with stand-ins), the pass of both teams in the look
                               rotation, the words beside the chip in a header, the names of a team (core/team-title.js)
+      test-blank-team.mjs     checks for a blank team: an item with no team shows for either team, a header has no team chip
+                              for things that are for both teams, the cards of both teams read MILESTONES or PROGRESS alone,
+                              a row from a board with no team has no label, and no panel has a Prime or Nova flavor
       test-cybertron.mjs      checks for Cybertron on the layout of Original: which layout each style has, its four
                               frames, the stage, the banner and the ticker on their plates, the wide war clock, and
                               that the frames are drawn again when the style changes
@@ -883,7 +886,7 @@ alone.
   with `?team=prime|nova|alternate`, or with the Preview Prime and Preview Nova buttons.
 - **Which team an item is for.** The Team field of a task, plan, subteam, person, sponsor, talk,
   meeting day, extra panel and tip or news line (`teamField` in
-  `studio/schemas/fields.js`, the radio in `studio/team-input.js`). Empty means Both. The query in
+  `studio/schemas/fields.js`, the radio in `studio/team-input.js`). Leave it blank when it is for both teams. The query in
   `core/sanity.js` asks for `team->code`, and every panel takes its items through `visibleItems` in
   `core/content.js`, which asks `showsForTeam` in `core/teams.js`. docs/team-on-an-item.md says
   how it works and how to give another kind of content the field. In the CSV templates `team` is
@@ -979,6 +982,7 @@ exceptions are `test-slides-script.mjs`, `test-frc-script.mjs` and `test-monday-
     node tools/test-monday-script.mjs
     node tools/test-monday-settings.mjs
     node tools/test-monday-boards.mjs
+    node tools/test-blank-team.mjs
     node tools/test-competition.mjs
     node tools/test-monday-cards.mjs
     node tools/test-cybertron.mjs
