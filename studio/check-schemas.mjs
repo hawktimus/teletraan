@@ -5409,11 +5409,11 @@ function checkLookRotation() {
   need(problems, order && order.options && order.options.filter === 'active != false', 'teamOrder should offer only the teams that are switched on (options.filter)');
   need(problems, constraintNamed(rulesOf(at('teamOrder')), 'unique'), 'teamOrder should refuse a team that is in the list twice');
 
-  // The old choices stay in the schema, hidden, with their starting values. The screen uses them when a list is empty.
+  // The old choices stay in the schema, hidden, with their starting values. The screen uses them until a Screen has chosen a style or a team.
   teamNames.concat('style').forEach(name => {
     need(problems, at(name) && at(name).hidden === true, name + ' should be hidden but stay in the schema, so that a saved value is kept');
     need(problems, at(name) && at(name).group === 'look', name + ' should stay in the Look tab');
-    need(problems, at(name) && /^Used only when (Styles by day|Team order) is empty/.test(at(name).description || ''), 'the ' + name + ' description should begin by saying that it is used only when its list is empty');
+    need(problems, at(name) && /^Used only until a Screen has chosen the (style|team)/.test(at(name).description || ''), 'the ' + name + ' description should begin by saying that it is used only until a Screen has chosen the style or the team');
   });
 
   // The notes say what the tab does

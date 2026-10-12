@@ -1,10 +1,10 @@
-// The milestones card of the Monday pass: a row for each Team lead entry that has an open task with a due date,
+// The milestones card of a Monday row: a row for each Team lead entry that has an open task with a due date,
 // and two columns, This week and Next. A cell shows the task of that lead that is due soonest in that week, with
 // its date under it, and a chip at the end of the row counts the tasks that are due later, such as +3 later.
 // A week is Monday to Sunday, by the date today in the time zone of the Look page. A task that is already late is
 // in This week, with its date in red. Only tasks from the board whose status is not done count. There are at most
 // five rows, and +N MORE says how many entries did not fit. The card always draws, with a sentence when no task has
-// a due date, because the look rotation chooses it (core/monday.js, mondaySteps).
+// a due date, because the Screen chooses it (core/monday.js, mondaySteps).
 
 import { emptyMarkup } from '../../core/competition-draw.js';
 import { todayOf } from '../../core/competition.js';

@@ -1,4 +1,4 @@
-// The progress card of both teams, the last card of the pass of both teams (core/monday.js, bothSteps). A
+// The progress card of both teams, the last of the two (core/monday.js, bothSteps). A
 // row for each department and each team that has board tasks: the team, the department, one bar of its
 // tasks in three stacks, done, in progress and backlog, and how many are done out of all of them. The rows
 // alternate between the teams, a department's rows together, and there are ten at the most, five at a time,

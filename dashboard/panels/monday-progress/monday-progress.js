@@ -1,4 +1,4 @@
-// The progress card of the Monday pass. On the left, one stacked bar for each Team lead entry that has board
+// The progress card of a Monday row. On the left, one stacked bar for each Team lead entry that has board
 // tasks: how many are in the backlog, in progress and done, and done out of all of them at its right, with
 // the legend over the bars and the totals of the team, such as 66 OPEN · 5 OVERDUE, under them. On the
 // right, a line of the items left (the open tasks, all the board's tasks that are not done) from the daily
@@ -6,7 +6,7 @@
 // countdown. The line is plain SVG in a body of 1096 x 512, drawn once, and the rows are HTML on the left of
 // it, so that the name of a department is cut off with an ellipsis at its real width. The card counts the
 // same rows as the tasks card (groupsFor in core/monday.js). It always draws, with a sentence in place of
-// what has no data, because the look rotation chooses it (core/monday.js, mondaySteps).
+// what has no data, because the Screen chooses it (core/monday.js, mondaySteps).
 
 import { chartMarkup, emptyMarkup, textAt, cut } from '../../core/competition-draw.js';
 import { countdownMarker, todayOf, zoneOf } from '../../core/competition.js';

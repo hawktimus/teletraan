@@ -296,7 +296,7 @@ function stepsOfRow(row, content, now, teams) {
   if (!isMondayPanel(row.panel)) return [Object.assign({ panel: row.panel }, step)];
 
   // A team that has no board tasks has no steps, and the cards of both teams need two teams with board tasks, as the
-  // pass of both teams always did. The tasks card has a step for each Team lead entry that has tasks (core/monday.js).
+  // cards of both teams always did. The tasks card has a step for each Team lead entry that has tasks (core/monday.js).
   const cards = row.team === 'both' ? bothSteps(content, teams, now) : mondaySteps(content, row.team, now);
   const panel = row.team === 'both' ? mondayBothCards[row.panel] : row.panel;
 

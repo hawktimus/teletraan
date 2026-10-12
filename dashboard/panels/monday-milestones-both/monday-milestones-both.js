@@ -1,4 +1,4 @@
-// The milestones card of both teams, the second to last card of the pass of both teams (core/monday.js,
+// The milestones card of both teams, the first of the two (core/monday.js,
 // bothSteps). A row for each department and each team that has an open board task with a due date: the team,
 // the department, the next milestone and its date. The rows alternate between the teams, a department's
 // rows together, and there are ten at the most, five at a time, scrolled like the tasks card (scrollPages and

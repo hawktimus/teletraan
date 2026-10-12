@@ -149,7 +149,8 @@ const showConnectionStatusField = defineField({
   initialValue: false,
 });
 
-// The look of the whole screen when Styles by day is empty. It is hidden, and the value saved in it stays. The
+// The look of the whole screen until a Screen has chosen the style, which is when it starts without saved content.
+// It is hidden, and the value saved in it stays. The
 // starting value is the same as defaultSettings.style in dashboard/config.js. dashboard/core/style.js turns the
 // choice into the page switch the stylesheets read and into a layout: Minimal has the bar layout whatever the
 // theme says, and Original and Cybertron have the layout of the theme. It is not required: Dashboard Settings
@@ -161,7 +162,7 @@ const styleField = defineField({
   type: 'string',
   group: 'look',
   hidden: true,
-  description: 'Used only when Styles by day is empty. Original is the screen as now, Cybertron is steel plates, Minimal is one main panel, whatever the theme.',
+  description: 'Used only until a Screen has chosen the style. Original is the screen as now, Cybertron is steel plates, Minimal is one main panel, whatever the theme.',
   options: { list: styles, layout: 'radio', direction: 'horizontal' },
   initialValue: 'original',
   validation: Rule => Rule.valid(styles.map(style => style.value)).error('Pick original, cybertron or minimal.'),

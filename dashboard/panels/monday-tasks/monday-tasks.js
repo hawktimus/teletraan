@@ -1,5 +1,5 @@
-// The tasks card of the Monday pass: the tasks of one Team lead entry as rows, up to ten, five at a time.
-// The step of the look rotation says which entry: page 1 is the first entry that has tasks, page 2 the
+// The tasks card of a Monday row: the tasks of one Team lead entry as rows, up to ten, five at a time.
+// The step of the Screen says which entry: page 1 is the first entry that has tasks, page 2 the
 // next, and so on (core/monday.js, mondaySteps). The rows are ranked by priority, then due date, then
 // title, in a mix of done, backlog and in progress tasks (pickRows). With more than five rows the card
 // holds, then the list scrolls up by five rows and holds again (scrollPages, which core/schedule.js reads,
