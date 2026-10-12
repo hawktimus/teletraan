@@ -139,7 +139,7 @@ export function lookRotationFields() {
       title: 'How the look changes',
       type: 'string',
       group: 'look',
-      description: 'No longer used. Every change of look is the same move now, and the screen ignores this choice. It stays so that a saved value is kept.',
+      description: 'Not used any more. Every change of look is the same move now. It stays so that a saved value is kept.',
       hidden: true,
       options: { list: swaps, layout: 'radio', direction: 'horizontal' },
       initialValue: 'assemble',

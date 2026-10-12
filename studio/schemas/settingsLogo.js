@@ -7,10 +7,11 @@
 // effect).
 //
 // The starting values and limits are the same as defaultSettings and limits in
-// dashboard/config.js, and check-schemas.mjs fails if they differ. The name
-// effect keeps its old names (nameTransform, nameEvery, nameDuration) so the
-// content already published still works. nameDuration is how long the effect
-// takes on HAWKTIMUS PRIME today, and the flying hawk lasts 11 seconds today.
+// dashboard/config.js, and check-schemas.mjs fails if they differ. How often the flying hawk and
+// the name effect play is set on each Screen now, so logoHawkEvery and nameEvery are hidden and not
+// read. The name effect keeps its old names (nameTransform, nameEvery, nameDuration) so the
+// content already published still works. nameDuration is how long the effect takes on HAWKTIMUS
+// PRIME today, and the flying hawk lasts 11 seconds today.
 //
 // To take the whole section out later: delete this file, remove its import and
 // the line that uses logoFields in dashboardSettings.js, and remove the same
@@ -48,6 +49,11 @@ function everyField(name, title, description, start, shortest, largest) {
   });
 }
 
+// A field the screen does not read any more: hidden, and kept with its stored value
+function notUsed(field, reason) {
+  return Object.assign({}, field, { hidden: true, description: 'Not used any more. ' + reason });
+}
+
 // How long one play lasts at Normal speed, with decimals allowed
 function durationField(name, title, description, start, shortest, longest) {
   return defineField({
@@ -81,15 +87,17 @@ export function logoFields() {
 
     switchField('logoHawk', 'Flying hawk',
       'Now and then the logo folds into a robot, changes into a hawk, flies and changes back. Turn it off to stop it.'),
-    everyField('logoHawkEvery', 'Flying hawk every (seconds)',
+    notUsed(everyField('logoHawkEvery', 'Flying hawk every (seconds)',
       'Seconds between flights, from 10 to 3600. Use 0 to never fly.', 24, 10, 3600),
+    'Each Screen sets the minutes between flights of the hawk (Settings, Screens, A).'),
     durationField('logoHawkDuration', 'Flying hawk duration (seconds)',
       'How long the whole flight lasts, from 6 to 30 seconds, at Normal speed.', 11, 6, 30),
 
     switchField('nameTransform', 'Name effect',
       'Now and then each letter of the team name splits apart, turns and locks back together. Turn it off to keep the name still.'),
-    everyField('nameEvery', 'Name effect every (seconds)',
+    notUsed(everyField('nameEvery', 'Name effect every (seconds)',
       'Seconds between plays of the name effect, from 30 to 900. Use 0 to never play it.', 300, 30, 900),
+    'Each Screen sets the minutes between plays of the name effect (Settings, Screens, A).'),
     durationField('nameDuration', 'Name effect duration (seconds)',
       'How long one play of the name effect lasts, from 0.5 to 10 seconds, at Normal speed.', 1.43, 0.5, 10),
   ];

@@ -1202,7 +1202,9 @@ function checkLookAndTiming() {
     const shortest = entry[2];
 
     need(problems, limit && limit.min === 0 && limit.shortest === shortest, 'limits.' + entry[1] + ' in config.js should have min 0 and shortest ' + shortest);
-    need(problems, field && /0 to never|never/.test(field.description || ''), entry[0] + ' description should say that 0 means never');
+    const notUsed = field && field.hidden === true;
+    need(problems, field && (notUsed ? /^Not used any more\./.test(field.description || '') : /0 to never|never/.test(field.description || '')), entry[0] + (notUsed ? ' is hidden, so its description should begin Not used any more' : ' description should say that 0 means never'));
+    need(problems, entry[0] !== 'nameEvery' && entry[0] !== 'logoHawkEvery' ? !notUsed : notUsed, entry[0] + (entry[0] === 'nameEvery' || entry[0] === 'logoHawkEvery' ? ' should be hidden: each Screen sets how often the effect plays' : ' should not be hidden'));
     if (!custom) return problems.push(entry[0] + ' should refuse 1 to ' + (shortest - 1) + ' with a custom rule (0 or at least ' + shortest + ')');
 
     const check = custom.args[0];
@@ -5355,7 +5357,7 @@ function checkLookRotation() {
     need(problems, at(name) && at(name).group === 'look', name + ' should be in the Look tab');
     if (name === 'lookSwap') {
       need(problems, at(name) && at(name).hidden === true, 'lookSwap should be hidden but stay in the schema: every change of look is one swap now, and a saved value is kept');
-      need(problems, /^No longer used/.test((at(name) && at(name).description) || ''), 'the lookSwap description should begin by saying that it is no longer used');
+      need(problems, /^Not used any more\./.test((at(name) && at(name).description) || ''), 'the lookSwap description should begin Not used any more');
     } else {
       need(problems, at(name) && at(name).hidden === true, name + ' should be hidden but stay in the schema: the Screens replace it, and a saved value is kept');
       need(problems, /^Not used any more\./.test((at(name) && at(name).description) || ''), 'the ' + name + ' description should begin Not used any more');
