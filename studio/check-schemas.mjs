@@ -126,6 +126,7 @@ const contract = {
     grid: 'string',
     logoPose: 'string',
     nameStyle: 'string',
+    outlinedName: 'boolean',
     tickerLabel: 'string',
     countAccent: 'string',
     active: 'boolean',
@@ -187,6 +188,7 @@ const contract = {
     mondayStyle: 'string',
     teamOrder: { kind: 'references', to: 'team' },
     lookSwap: 'string',
+    screenSchedule: object({ monday: 'string', tuesday: 'string', wednesday: 'string', thursday: 'string', friday: 'string', saturday: 'string', sunday: 'string' }),
     announceRequest: object({ requestedAt: 'datetime' }),
     previewRequest: object({ kind: 'string', requestedAt: 'datetime' }),
     nextLookRequest: object({ requestedAt: 'datetime' }),
@@ -258,6 +260,15 @@ const contract = {
     steps: rows({ screen: 'string', seconds: number(5, 300) }, 10),
     announcementText: text(24),
   },
+  // the three Screens: a row names a registry panel, and the team of a row is a team code, both or nothing
+  screen: {
+    nameEffectEveryMinutes: number(1, 240),
+    hawkEveryMinutes: number(1, 240),
+    swapSeconds: number(0.5, 3),
+    mainRows: rows({ panel: 'string', team: { kind: 'plainString' }, seconds: number(6, 120) }),
+    mondayStyle: 'string',
+    sideRows: rows({ panel: 'string', seconds: number(6, 120) }),
+  },
   headingBlock: { text: text(30) },
   textBlock: { text: text(100) },
   statBlock: { value: text(6), label: text(24) },
@@ -286,6 +297,9 @@ const studioOnlyFields = {
   'task.mondayId': 'hidden. The board sync uses it to find the task of a board item, and the dashboard never reads it',
   'task.mondayBoardId': 'hidden. The board sync writes the board of the item, and Monday Boards uses it to list the tasks of a board',
   'task.mondayBoardName': 'hidden. The board sync writes the name of the board, and Monday Tasks lists the tasks by it',
+  'screen.bannerTeam': 'the button of the Banner section that opens the Team document. It stores nothing',
+  'screen.countdownShown': 'the title and dates of the Countdown section, shown from Dashboard Settings. It stores nothing',
+  'screen.tickerLink': 'the link of the Ticker section to Tips and News. It stores nothing',
 };
 const studioOnlyTypes = {
   status: 'the Mini writes it for the status block, and the dashboard never reads it',
@@ -357,8 +371,10 @@ const listSort = {
   presentation: 'start',
 };
 
-// The pages that exist once. Each is one document whose id is its type.
-const pageTypes = ['dashboardSettings', 'theme', 'demo'];
+// The pages that exist once. Each is one document whose id is its type, except the three Screens, which are
+// three pages of the type screen with an id each.
+const pageTypes = ['dashboardSettings', 'theme', 'demo', 'screen'];
+const screenPageIds = ['screen-original', 'screen-cybertron', 'screen-minimal'];
 
 // Document types that have no line in structure.js, with the reason for each.
 // Types that are only objects inside another document are not documents and
@@ -411,7 +427,7 @@ const sidebarGroups = [
 const folderLines = {
   'Daily Agenda': 'Agenda items, Presentations (Upcoming, Past), Meeting days',
   'Monday Tasks': 'On the TV, Hidden',
-  'Settings': 'Dashboard Settings, Look, Teams',
+  'Settings': 'Dashboard Settings, Screens (Original, Cybertron, Minimal), Look, Teams',
 };
 
 // The types, or the templates of add-templates.js, that the plus button of a folder offers
@@ -439,7 +455,7 @@ const standIns = {
     'package.json': JSON.stringify({
       name: 'sanity',
       type: 'module',
-      exports: { '.': './index.js', './structure': './structure.js', './cli': './cli.js' },
+      exports: { '.': './index.js', './structure': './structure.js', './cli': './cli.js', './router': './router.js' },
     }),
     'index.js': [
       'export const defineType = type => type;',
@@ -454,7 +470,8 @@ const standIns = {
       'export const useWorkspace = () => ({});',
       'export const useCurrentUser = () => null;',
       // only the names the team input (team-input.js) imports besides useClient: the two patches it writes
-      "export const set = value => ({ type: 'set', value: value });",
+      // set takes a path when a form patches a field other than its own (screen-input.js)
+      "export const set = (value, path) => (path ? { type: 'set', value: value, path: path } : { type: 'set', value: value });",
       "export const unset = () => ({ type: 'unset' });",
       // the panel order input (panel-order-input.js) reads two lists of the document, which a check puts in globalThis.studioForm
       "export const useFormValue = path => (globalThis.studioForm || {})[path.join('.')];",
@@ -470,11 +487,16 @@ const standIns = {
       "export const usePaneRouter = () => globalThis.studioPaneRouter || { ChildLink: 'ChildLink', navigateIntent: (...given) => { (globalThis.studioIntents = globalThis.studioIntents || []).push(given); } };",
     ].join('\n'),
     'cli.js': 'export const defineCliConfig = config => config;',
+    // the link of the Ticker section (screen-fields.js)
+    'router.js': "export const Link = 'a';",
   },
   react: {
     'package.json': JSON.stringify({ name: 'react', type: 'module', exports: { '.': './index.js' } }),
     'index.js': [
       'export const useState = value => [value, () => {}];',
+      // a context holds its starting value, and a check can put the value a field should see in globalThis.studioContextValue
+      "export const createContext = value => ({ current: value, Provider: 'ContextProvider' });",
+      'export const useContext = context => (globalThis.studioContextValue === undefined ? context.current : globalThis.studioContextValue);',
       // a ref holds its starting value, which a check can read back
       'export const useRef = value => ({ current: value });',
       // writes down the effect, so a check can run it
@@ -492,7 +514,7 @@ function iconImportsOf(source) {
 
 function makeSandbox() {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-studio-'));
-  ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'calendars-view.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'publish-all.js', 'publish-all-tool.js', 'team-input.js', 'note-field.js', 'show-on-tv-input.js', 'status-input.js', 'frc-status-input.js', 'monday-status-input.js', 'monday-pickers.js', 'time-text.js', 'calendars-view-parts.js', 'monday-boards-view.js', 'monday-boards-parts.js', 'panel-order-input.js', 'add-templates.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
+  ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'calendars-view.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'publish-all.js', 'publish-all-tool.js', 'team-input.js', 'note-field.js', 'show-on-tv-input.js', 'status-input.js', 'frc-status-input.js', 'monday-status-input.js', 'monday-pickers.js', 'time-text.js', 'calendars-view-parts.js', 'monday-boards-view.js', 'monday-boards-parts.js', 'panel-order-input.js', 'add-templates.js', 'screen-ids.js', 'screen-panels.js', 'screen-seed.js', 'screen-parts.js', 'screen-map.js', 'screen-context.js', 'screen-fields.js', 'screen-input.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
     fs.cpSync(path.join(here, name), path.join(folder, name), { recursive: true });
   });
   fs.writeFileSync(path.join(folder, 'package.json'), JSON.stringify({ type: 'module' }));
@@ -658,6 +680,9 @@ const kindChecks = {
   blocks: checkBlocks,
   image: checkImage,
   hex: checkHex,
+  plainString: (field, want, say) => {
+    if (field.type !== 'string') say('should be a string');
+  },
 };
 
 function checkField(where, field, spec, problems) {
@@ -1870,6 +1895,8 @@ function checkStartHere() {
   need(problems, picture && picture.props.viewBox === '0 0 ' + size.width + ' ' + size.height, 'the picture should be an inline svg drawn on the 1920 by 1080 of the screen');
   need(problems, size.width * 9 === size.height * 16, 'the picture should have the 16 to 9 shape of the screen');
   need(problems, picture && picture.props.role === 'img' && String(picture.props['aria-label'] || '') !== '', 'the picture should have role img and a label for a screen reader');
+  const caption = nodesWhere(page, node => node.type === 'figcaption').map(wordsIn)[0] || '';
+  need(problems, parts.clickLine === 'Click a letter in Settings, Screens to change what plays there.' && caption.indexOf(parts.clickLine) !== -1, 'the line under the picture should say: Click a letter in Settings, Screens to change what plays there.');
   const shown = picture ? nodesWhere(picture, node => node.type === 'text').map(wordsIn) : [];
   need(problems, shown.filter(text => /^[A-Z]$/.test(text)).join('') === 'ABCDE', 'the picture should have the letters A to E, in order, one for each area. It has: ' + shown.filter(text => /^[A-Z]$/.test(text)).join(''));
   need(problems, parts.areas.map(area => area.letter + ' ' + area.name).join() === startAreas.join(), 'the picture should have the areas ' + startAreas.join(', '));
@@ -2316,7 +2343,8 @@ function checkSidebarLines(problems) {
 
     if (entry.kind === 'page') {
       need(problems, pageTypes.indexOf(entry.type) !== -1, where + ' is a page, but "' + entry.type + '" is not one of the pages that exist once: ' + pageTypes.join(', '));
-      need(problems, entry.id === entry.type, where + ' should open the document with id ' + entry.type + ', not ' + entry.id);
+      if (entry.type === 'screen') need(problems, screenPageIds.indexOf(entry.id) !== -1, where + ' should open one of the Screens: ' + screenPageIds.join(', ') + ', not ' + entry.id);
+      else need(problems, entry.id === entry.type, where + ' should open the document with id ' + entry.type + ', not ' + entry.id);
       return;
     }
 
@@ -2348,7 +2376,7 @@ function checkSidebarLines(problems) {
   }
 
   // A folder: an id, an icon and lines. depth is 1 for a folder in the sidebar and 2 for one inside it.
-  // A folder holds lists and pages, and at depth 1 one more folder, which holds lists only.
+  // A folder holds lists and pages, and at depth 1 one more folder, which holds lists or pages.
   function checkFolder(entry, line, depth) {
     const where = line + ' ("' + entry.title + '")';
     if (!entry.title) problems.push(line + ' has no title');
@@ -2363,8 +2391,7 @@ function checkSidebarLines(problems) {
         need(problems, depth === 1, innerLine + ' is a folder inside a folder inside a folder. Only one folder may sit inside another.');
         return checkFolder(inner, innerLine, depth + 1);
       }
-      if (inner.kind === 'page') need(problems, depth === 1, innerLine + ' is a page inside the inner folder, which holds lists only.');
-      else if (inner.kind !== 'list') return problems.push(innerLine + ' has the kind "' + inner.kind + '". A folder holds lists, pages and one more folder.');
+      if (inner.kind !== 'page' && inner.kind !== 'list') return problems.push(innerLine + ' has the kind "' + inner.kind + '". A folder holds lists, pages and one more folder.');
       checkLine(inner, innerLine);
     });
   }
@@ -2406,7 +2433,7 @@ function checkSidebarGroups(problems) {
     if (want) need(problems, folderShape(folder.entries) === want, folder.title + ' should hold: ' + want + '. It holds: ' + folderShape(folder.entries));
     need(problems, (folder.add || []).join() === (folderAdds[folder.title] || ''), 'the plus button of ' + folder.title + ' should offer: ' + (folderAdds[folder.title] || 'nothing') + '. It offers: ' + ((folder.add || []).join() || 'nothing'));
   });
-  need(problems, allLines(entries).filter(entry => entry.kind === 'group').length === 4, 'the sidebar should have four folders in all: Daily Agenda, Presentations inside it, Monday Tasks and Settings');
+  need(problems, allLines(entries).filter(entry => entry.kind === 'group').length === 5, 'the sidebar should have five folders in all: Daily Agenda, Presentations inside it, Monday Tasks, Settings and Screens inside it');
 
   ['Start here', 'Calendars'].forEach(title => {
     const entry = entries.filter(item => item.title === title)[0];
@@ -3831,7 +3858,7 @@ function checkTeams() {
   need(problems, type.title === 'Teams', 'the team type should have the title Teams');
   const titles = {
     name: 'Team name', shortName: 'Short name', number: 'Team number', code: 'Team code', logo: 'Logo', colors: 'Colors', metal: 'Metal', glow: 'Glow', mirror: 'Mirror the layout',
-    bolts: 'Bolts', cornerCut: 'Cut corners', headerNotch: 'Header end', grid: 'Page grid', logoPose: 'Bird pose', nameStyle: 'Team name look', tickerLabel: 'Ticker label', countAccent: 'Countdown color',
+    bolts: 'Bolts', cornerCut: 'Cut corners', headerNotch: 'Header end', grid: 'Page grid', logoPose: 'Bird pose', nameStyle: 'Team name look', outlinedName: 'Outlined name', tickerLabel: 'Ticker label', countAccent: 'Countdown color',
     active: 'Active', order: 'Order',
   };
   Object.keys(titles).forEach(name => need(problems, at(name) && at(name).title === titles[name], 'team.' + name + ' should be titled ' + titles[name]));
@@ -4152,7 +4179,7 @@ const competitionNames = ['competitionTimeline', 'competitionLastSeason', 'compe
 const settingsTabs = {
   screen: ['miniStatus', 'team', 'motion', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'alert', 'pageSeconds', 'rotation', 'doneDays', 'safetyDaysSince']
     .concat(photoNames, ['announcements', 'announceRequest']),
-  look: ['lookNote', 'cycleNote'].concat(rotationNames, ['style'], teamNames, logoNames, transitionNames),
+  look: ['lookNote', 'cycleNote', 'screenSchedule'].concat(rotationNames, ['style'], teamNames, logoNames, transitionNames),
   countdown: ['countdown'],
   calendars: ['calendars', 'groupEventsByKind'],
   presentations: presentationNames.concat('presentationTestRequest'),
@@ -4546,9 +4573,8 @@ function checkPanelOrder() {
 
   const order = at('order');
   need(problems, order && order.type === 'array' && order.title === 'Panel order', 'rotation.order should be a list titled Panel order');
-  need(problems, order && !order.hidden, 'rotation.order should show in the form');
+  need(problems, order && order.hidden === true && /^Not used any more\./.test(order.description || ''), 'rotation.order should be hidden but stay in the schema, with a description that begins Not used any more: the rows of the Screens replace it');
   need(problems, order && !constraintNamed(constraintsOf(order), 'required') && !constraintNamed(constraintsOf(order), 'min'), 'rotation.order should have no rules: a page saved before it existed has none, and must still publish');
-  need(problems, order && /Drag/.test(order.description || ''), 'the rotation.order description should say to drag');
 
   // One list with every panel the registry has for the large and the small frame, the large panels first. The Monday
   // cards are not in it: they are the Monday block of the look rotation
@@ -5324,14 +5350,15 @@ function checkLookRotation() {
 
   const names = fieldsIn(typeByName('dashboardSettings')).map(field => field.name);
   const from = names.indexOf('lookNote');
-  need(problems, names.slice(from, from + 2 + rotationNames.length).join() === ['lookNote', 'cycleNote'].concat(rotationNames).join(), 'the Look tab should start with lookNote, cycleNote and then ' + rotationNames.join(', '));
+  need(problems, names.slice(from, from + 3 + rotationNames.length).join() === ['lookNote', 'cycleNote', 'screenSchedule'].concat(rotationNames).join(), 'the Look tab should start with lookNote, cycleNote, screenSchedule and then ' + rotationNames.join(', '));
   rotationNames.forEach(name => {
     need(problems, at(name) && at(name).group === 'look', name + ' should be in the Look tab');
     if (name === 'lookSwap') {
       need(problems, at(name) && at(name).hidden === true, 'lookSwap should be hidden but stay in the schema: every change of look is one swap now, and a saved value is kept');
       need(problems, /^No longer used/.test((at(name) && at(name).description) || ''), 'the lookSwap description should begin by saying that it is no longer used');
     } else {
-      need(problems, at(name) && !at(name).hidden, name + ' should show in the form');
+      need(problems, at(name) && at(name).hidden === true, name + ' should be hidden but stay in the schema: the Screens replace it, and a saved value is kept');
+      need(problems, /^Not used any more\./.test((at(name) && at(name).description) || ''), 'the ' + name + ' description should begin Not used any more');
     }
     need(problems, !constraintNamed(rulesOf(at(name)), 'required'), name + ' should not be required: an empty one gives the choice back to the old setting, and the page must still publish');
     need(problems, rulesOf(at(name)).some(rule => rule.name === 'error' && rule.args[0]) || (at(name).of || []).some(member => constraintsOf(member).some(rule => rule.name === 'error' && rule.args[0])), name + ' has rules and no error message in plain words');
@@ -5385,7 +5412,9 @@ function checkLookRotation() {
 
   // The notes say what the tab does
   const cycle = at('cycleNote');
-  need(problems, cycle && /cycle/.test(cycle.description || '') && /Monday/.test(cycle.description || ''), 'the second note on the Look tab should say what a cycle is, and mention the Monday cards');
+  need(problems, cycle && /Settings, Screens/.test(cycle.description || '') && /swaps/.test(cycle.description || ''), 'the second note on the Look tab should say that the rows are set in Settings, Screens, and that the screen swaps when the team changes');
+  need(problems, at('lookNote') && /Which Screen plays on each day/.test(at('lookNote').description || ''), 'the first note on the Look tab should say that it sets which Screen plays on each day');
+  need(problems, at('screenSchedule') && !at('screenSchedule').hidden, 'screenSchedule should show in the form');
 
   // The sample content carries the four settings, with values the dashboard accepts
   const sample = world.sample.settings;
@@ -5510,6 +5539,16 @@ function checkTeamTrim() {
     need(problems, sample.prime && sample.prime[name] === config.primeTeam[name], 'the Prime team of the sample content should have ' + name + ' ' + config.primeTeam[name]);
     need(problems, sample.nova && sample.nova[name] === trimOfNova[name], 'the Nova team of the sample content should have ' + name + ' ' + trimOfNova[name]);
   });
+  // Team name look is not read any more, so Nova keeps its stored value; the switch Outlined name is off on both teams, which draws the name solid
+  ['team-prime', 'team-nova'].forEach(id => need(problems, docs[id] && docs[id].outlinedName === false, id + ' in docs/seed/teams.ndjson should have outlinedName false: both starting teams draw the name solid'));
+
+  // Team name look is hidden and kept, and Outlined name, a switch in the Trim box that starts off, replaces it
+  const look = fieldAt('team.nameStyle');
+  need(problems, look && look.hidden === true && /^Not used any more\./.test(look.description || ''), 'team.nameStyle should be hidden but stay in the schema, with a description that begins Not used any more');
+  const outlined = fieldAt('team.outlinedName');
+  need(problems, outlined && outlined.type === 'boolean' && outlined.initialValue === false && outlined.fieldset === 'trim' && !outlined.hidden, 'team.outlinedName should be a switch in the Trim box that starts off');
+  need(problems, outlined && outlined.description === 'Off draws the name solid' && !constraintNamed(outlined ? constraintsOf(outlined) : [], 'required'), 'the team.outlinedName description should be: Off draws the name solid. It is optional');
+  need(problems, world.dashboard.primeTeam.outlinedName === undefined || world.dashboard.primeTeam.outlinedName === false, 'the built-in Prime team should draw its name solid');
   return problems;
 }
 
@@ -6110,6 +6149,398 @@ async function checkMondayBoardsPageRead() {
   return problems;
 }
 
+// The three Screens (schemas/screen.js, structure.js, screen-input.js). Original, Cybertron and Minimal are three
+// documents of the type screen, each with an id of its own. The form opens on a map of the screen whose letters are
+// the five tabs, A Banner, B Main panel, C Countdown, D Side panel and E Ticker. The weekday schedule that picks
+// the Screen of a day is a field of Dashboard Settings, Look tab. The names, starting values and limits are the
+// ones in dashboard/config.js.
+const screenGroupFields = {
+  banner: ['bannerTeam', 'nameEffectEveryMinutes', 'hawkEveryMinutes', 'swapSeconds'],
+  main: ['mainRows', 'mondayStyle'],
+  countdown: ['countdownShown'],
+  side: ['sideRows'],
+  ticker: ['tickerLink'],
+};
+const mainRowTip = 'Keep the Prime rows together and the Nova rows together. The screen transforms every time the team changes.';
+const weekdayStarts = { monday: 'original', tuesday: 'cybertron', wednesday: 'original', thursday: 'cybertron', friday: 'original', saturday: 'cybertron', sunday: 'original' };
+
+function checkScreenType() {
+  const problems = [];
+  const config = world.dashboard;
+  const type = typeByName('screen');
+  if (!type) return ['screen is missing from schemas/index.js'];
+
+  const at = name => fieldAt('screen.' + name);
+  const rulesOf = field => (field ? constraintsOf(field) : []);
+  const registered = area => world.registry.panels.filter(panel => panel.region === area && !panel.testOnly && !panel.competition && !panel.monday && !panel.lastResort).map(panel => panel.id);
+  const listOf = pathText => choicesOf(pathText).map(item => item.value + '=' + item.title).join();
+  const titleFor = id => ({ tasks: 'Tasks', events: 'Upcoming events', tonight: 'Daily Agenda', spotlight: 'Subteam spotlight', 'sponsor-feature': 'Sponsor feature', photo: 'Photo', leadership: 'Leadership', 'team-leads': 'Team leads', roster: 'Subteam roster', custom: 'Extra panel', 'task-counts': 'Task counts', 'next-event': 'Next event', forecast: 'Weather forecast', 'safety-days': 'Safety days', 'sponsor-logo': 'Sponsor logo' }[id]);
+  const monday = ['monday-tasks=Monday: Build team', 'monday-milestones=Monday: Milestones', 'monday-progress=Monday: Progress'];
+
+  // the tabs are the five letters of the map, in order
+  need(problems, type.type === 'document' && type.title === 'Screen', 'screen should be a document titled Screen');
+  need(problems, (type.groups || []).map(group => group.title).join() === startAreas.join(), 'the Screen should have these tabs, in this order: ' + startAreas.join(', '));
+  need(problems, (type.groups || []).filter(group => group.default === true).map(group => group.name).join() === 'banner', 'A Banner should be the tab that opens first (default: true)');
+  need(problems, Object.keys(world.screenMap.letterGroups).join() === 'A,B,C,D,E' && Object.values(world.screenMap.letterGroups).join() === (type.groups || []).map(group => group.name).join(), 'the letters of the map should open the tabs of the Screen, in order: ' + (type.groups || []).map(group => group.name).join(', '));
+  need(problems, world.startHereParts.areas.map(area => area.letter + ' ' + area.name).join() === (type.groups || []).map(group => group.title).join(), 'the tabs of the Screen should be the areas of Start here: ' + startAreas.join(', '));
+  need(problems, type.components && type.components.input === world.screenInput.ScreenInput, 'the Screen should draw itself with ScreenInput (screen-input.js)');
+  Object.keys(screenGroupFields).forEach(group => screenGroupFields[group].forEach(name => need(problems, at(name) && at(name).group === group, 'screen.' + name + ' should be in the ' + group + ' tab')));
+  need(problems, fieldsIn(type).map(field => field.name).join() === Object.keys(screenGroupFields).reduce((all, group) => all.concat(screenGroupFields[group]), []).join(), 'the fields of the Screen should be in the order of the tabs');
+  need(problems, fieldsIn(type).every(field => !constraintNamed(rulesOf(field), 'required')), 'no field of a Screen should be required: a Screen with none uses the starting values, and the rows are filled by the form');
+  checkPlainMessages('screen', problems);
+
+  // the banner settings: whole minutes from 1 to 240 and a swap time from 0.5 to 3, as in config.js
+  const defaults = config.defaultScreen;
+  need(problems, sameData(defaults, { nameEffectEveryMinutes: 10, hawkEveryMinutes: 15, swapSeconds: 1.25 }), 'defaultScreen in config.js should be 10 minutes, 15 minutes and 1.25 seconds');
+  need(problems, sameData(config.screenLimits, { nameEffectEveryMinutes: { min: 1, max: 240 }, hawkEveryMinutes: { min: 1, max: 240 }, swapSeconds: { min: 0.5, max: 3 } }), 'screenLimits in config.js should be 1 to 240, 1 to 240 and 0.5 to 3');
+  ['nameEffectEveryMinutes', 'hawkEveryMinutes', 'swapSeconds'].forEach(name => {
+    const field = at(name);
+    const rules = rulesOf(field);
+    need(problems, field && field.type === 'number' && field.initialValue === defaults[name], 'screen.' + name + ' should be a number that starts as ' + defaults[name] + ', the default in config.js');
+    need(problems, constraintNamed(rules, 'min') && constraintNamed(rules, 'min').args[0] === config.screenLimits[name].min && constraintNamed(rules, 'max') && constraintNamed(rules, 'max').args[0] === config.screenLimits[name].max, 'screen.' + name + ' should have the limits in config.js, ' + JSON.stringify(config.screenLimits[name]));
+    need(problems, (name === 'swapSeconds') === !constraintNamed(rules, 'integer'), 'screen.' + name + (name === 'swapSeconds' ? ' should allow decimals' : ' should be a whole number'));
+    need(problems, field && new RegExp('from ' + config.screenLimits[name].min + ' to ' + config.screenLimits[name].max).test(field.description || '') && new RegExp('Starts at ' + defaults[name] + '\\.').test(field.description || ''), 'the screen.' + name + ' description should give the range and the starting value');
+  });
+  need(problems, config.swapSecondsStandard === 1.25 && config.defaultScreen.swapSeconds === config.swapSecondsStandard, 'swapSecondsStandard in config.js should be 1.25, the length of the swap until now');
+
+  // the sections that store nothing: a button or a link, drawn by an input of their own
+  [['bannerTeam', world.screenFields.BannerTeamInput], ['countdownShown', world.screenFields.CountdownInput], ['tickerLink', world.screenFields.TickerInput]].forEach(entry => {
+    const field = at(entry[0]);
+    need(problems, field && field.type === 'string' && field.readOnly === true && field.initialValue === undefined && !field.validation, 'screen.' + entry[0] + ' should be a read only string that stores nothing');
+    need(problems, field && field.components && field.components.input === entry[1], 'screen.' + entry[0] + ' should draw itself with its input (screen-fields.js)');
+  });
+  need(problems, at('tickerLink') && at('tickerLink').description === 'The ticker shows every published tip and news item in order.', 'the Ticker section should say: The ticker shows every published tip and news item in order.');
+
+  // B Main panel: the tip, then rows of a panel, a team and seconds. The Monday rows are offered like any other panel.
+  const rows = at('mainRows');
+  need(problems, rows && rows.type === 'array' && rows.description === mainRowTip, 'screen.mainRows should have the tip as its description: ' + mainRowTip);
+  need(problems, listOf('screen.mainRows.panel') === registered('grid1').map(id => id + '=' + titleFor(id)).concat(monday).join(), 'a row of the main panel should offer the large panels of registry.js and then the three Monday rows: ' + registered('grid1').concat(['monday-tasks', 'monday-milestones', 'monday-progress']).join(', '));
+  need(problems, fieldsIn(rows || {}).map(field => field.name).join() === 'panel,team,seconds', 'a row of the main panel should have a panel, a team and seconds');
+  const panelRules = rulesOf(fieldAt('screen.mainRows.panel'));
+  need(problems, constraintNamed(panelRules, 'required') && messageAfter(panelRules, 'required') === 'Pick a panel.', 'the panel of a row should be required, with the message Pick a panel.');
+  need(problems, fieldAt('screen.mainRows.team') && fieldAt('screen.mainRows.team').components && fieldAt('screen.mainRows.team').components.input === world.screenFields.RowTeamInput, 'the team of a row should be drawn by RowTeamInput (screen-fields.js)');
+  const secondsRules = rulesOf(fieldAt('screen.mainRows.seconds'));
+  need(problems, constraintNamed(secondsRules, 'integer') && constraintNamed(secondsRules, 'min').args[0] === 6 && constraintNamed(secondsRules, 'max').args[0] === 120 && !constraintNamed(secondsRules, 'required'), 'the seconds of a row should be a whole number from 6 to 120, and optional');
+  const teamRule = constraintNamed(rulesOf(fieldAt('screen.mainRows.team')), 'custom');
+  const teamSays = (panel, team) => (teamRule ? teamRule.args[0](team, { parent: { panel: panel } }) : 'no rule');
+  need(problems, teamSays('monday-tasks', '') === 'Pick the team for this Monday row.' && teamSays('monday-milestones', 'both') === true && teamSays('monday-tasks', 'both') !== true && teamSays('photo', 'nova') === 'This panel is for both teams. Clear the team.' && teamSays('tasks', '') === true && teamSays('tasks', 'nova') === true, 'the team of a row should follow the rules of its panel: a Monday row needs a team, Milestones and Progress may be for both, and a panel for both teams has none');
+  const mainRow = rows && rows.of && rows.of[0];
+  const mainLine = fields => mainRow.preview.prepare(fields);
+  need(problems, mainRow && mainLine({}).title === 'Panel not chosen' && mainLine({ panel: 'tasks', team: 'prime' }).title === 'Tasks' && mainLine({ panel: 'tasks', team: 'prime' }).subtitle === 'Prime · Follows Seconds per page', 'a row of the main panel should read the panel, then the team and the seconds');
+  need(problems, mainRow && mainLine({ panel: 'tasks' }).subtitle === 'Keeps the team on the screen · Follows Seconds per page' && mainLine({ panel: 'events', seconds: 30 }).subtitle === '30 seconds' && mainLine({ panel: 'monday-progress', team: 'both' }).subtitle === 'Both teams · Follows Seconds per page', 'a row with no team should say whether it keeps the team on the screen, and a row for both teams should say Both teams');
+  need(problems, mainRow && mainLine({ panel: 'photo' }).subtitle === 'Follows Seconds per photo', 'the Photo row should say that it follows Seconds per photo');
+
+  // Monday style: one of the styles, and no starting value, so that the form can copy the old setting into it
+  const mondayStyle = at('mondayStyle');
+  const mondayAllowed = constraintNamed(rulesOf(mondayStyle), 'valid');
+  need(problems, mondayStyle && mondayStyle.type === 'string' && mondayStyle.options && mondayStyle.options.layout === 'radio' && mondayStyle.initialValue === undefined, 'screen.mondayStyle should be a radio list with no starting value');
+  need(problems, listOf('screen.mondayStyle') === config.styles.map(style => style + '=' + style.charAt(0).toUpperCase() + style.slice(1)).join() && mondayAllowed && mondayAllowed.args[0].join() === config.styles.join(), 'screen.mondayStyle should offer the styles in config.js, in the same order');
+
+  // D Side panel: the small panels, no team, and none at all for Minimal
+  const side = at('sideRows');
+  need(problems, side && side.type === 'array' && fieldsIn(side).map(field => field.name).join() === 'panel,seconds', 'the side panel list should hold rows of a panel and seconds, and no team');
+  need(problems, listOf('screen.sideRows.panel') === registered('grid2').map(id => id + '=' + titleFor(id)).join(), 'a row of the side panel should offer the small panels of registry.js: ' + registered('grid2').join(', '));
+  need(problems, side && typeof side.hidden === 'function' && side.hidden({ document: { _id: 'drafts.screen-minimal' } }) === true && side.hidden({ document: { _id: 'screen-minimal' } }) === true && side.hidden({ document: { _id: 'drafts.screen-original' } }) === false && side.hidden({ document: { _id: 'screen-cybertron' } }) === false && side.hidden({ document: undefined }) === false, 'the side panel list should be hidden on Minimal and shown on the others');
+  const sideRow = side && side.of && side.of[0];
+  need(problems, sideRow && sideRow.preview.prepare({ panel: 'forecast', seconds: 9 }).subtitle === '9 seconds' && sideRow.preview.prepare({}).title === 'Panel not chosen', 'a row of the side panel should read the panel and the seconds');
+
+  // the list line of a Screen, and Publish all
+  const line = id => type.preview.prepare({ id: id }).title;
+  need(problems, type.preview.select && type.preview.select.id === '_id' && line('drafts.screen-original') === 'Original' && line('screen-cybertron') === 'Cybertron' && line('screen-minimal') === 'Minimal' && type.preview.prepare({}).title === 'Screen', 'the list line of a Screen should be its name: Original, Cybertron or Minimal');
+  const schema = { get: name => typeByName(name) };
+  const draft = world.publishAll.chooseDrafts([{ _id: 'drafts.screen-cybertron', _type: 'screen' }], schema, world.publishAllTool.singletonIds)[0];
+  need(problems, draft && draft.problem === '' && draft.publishedId === 'screen-cybertron' && draft.title === 'Cybertron' && world.publishAll.labelOf(draft) === 'Screen: Cybertron', 'Publish all should publish a draft of each Screen under its own id and call it Screen: Cybertron');
+
+  // the three pages in the sidebar, and what a page of a Screen can and cannot do
+  const folder = allLines(world.structure.sidebarEntries).filter(entry => entry.title === 'Screens' && entry.kind === 'group')[0];
+  need(problems, folder && folder.entries.map(entry => entry.title + '=' + entry.id + '=' + entry.type).join() === 'Original=screen-original=screen,Cybertron=screen-cybertron=screen,Minimal=screen-minimal=screen', 'Settings, Screens should list the pages Original, Cybertron and Minimal, each of the type screen with the id screen- and its style');
+  need(problems, world.structure.screenIds.join() === screenPageIds.join() && world.screenIds.screenStyles.join() === config.styles.join() && Object.keys(config.screenIds).join() === config.styles.join() && config.styles.every(style => config.screenIds[style] === 'screen-' + style && world.screenIds.screenIdOf(style) === 'screen-' + style), 'the ids of the Screens should be screen-original, screen-cybertron and screen-minimal in the Studio and in config.js');
+  const actions = ['publish', 'discardChanges', 'delete', 'duplicate', 'unpublish'].map(action => ({ action: action }));
+  need(problems, world.config.document.actions(actions, { schemaType: 'screen' }).map(item => item.action).join() === 'publish,discardChanges', 'a Screen should have these actions: publish,discardChanges. Nothing copies it or takes it away');
+  need(problems, world.config.document.newDocumentOptions([{ templateId: 'screen' }, { templateId: 'plan' }], { creationContext: { type: 'document' } }).map(item => item.templateId).join() === 'plan', 'the New menu should not offer a Screen, not even while a document is open');
+
+  // the fields the Screens replace: hidden, kept in the schema with their starting values, and described as not used
+  [['dashboardSettings.rotation.order', true], ['dashboardSettings.dailyStyles', true], ['dashboardSettings.mondayStyle', true], ['dashboardSettings.teamOrder', true], ['team.nameStyle', false]].forEach(entry => {
+    const field = fieldAt(entry[0]);
+    need(problems, field && field.hidden === true && /^Not used any more\./.test(field.description || ''), entry[0] + ' should be hidden, kept in the schema, and described as Not used any more');
+    need(problems, !entry[1] || (field && field.initialValue !== undefined), entry[0] + ' should keep its starting value');
+  });
+
+  // the weekday schedule: Monday to Sunday, each one of the Screens, and the starting week of config.js
+  const schedule = fieldAt('dashboardSettings.screenSchedule');
+  const days = config.weekdays;
+  need(problems, days.join() === Object.keys(weekdayStarts).join(), 'weekdays in config.js should be monday to sunday, in that order');
+  need(problems, sameData(config.defaultSettings.screenSchedule, weekdayStarts), 'screenSchedule in config.js should be Original on Monday, Wednesday, Friday and Sunday, and Cybertron on Tuesday, Thursday and Saturday: Minimal is not scheduled');
+  need(problems, schedule && schedule.type === 'object' && schedule.group === 'look' && schedule.title === 'Weekday schedule', 'screenSchedule should be an object titled Weekday schedule in the Look tab');
+  need(problems, schedule && fieldsIn(schedule).map(field => field.name).join() === days.join() && fieldsIn(schedule).map(field => field.title).join() === days.map(day => day.charAt(0).toUpperCase() + day.slice(1)).join(), 'screenSchedule should have a picker for each day, Monday to Sunday, titled with the day');
+  days.forEach(day => {
+    const field = fieldAt('dashboardSettings.screenSchedule.' + day);
+    const allowed = constraintNamed(rulesOf(field), 'valid');
+    need(problems, field && field.type === 'string' && field.options && field.options.layout === 'radio' && field.initialValue === config.defaultSettings.screenSchedule[day], 'screenSchedule.' + day + ' should be a radio list that starts as ' + config.defaultSettings.screenSchedule[day] + ', as in config.js');
+    need(problems, listOf('dashboardSettings.screenSchedule.' + day) === config.styles.map(style => style + '=' + style.charAt(0).toUpperCase() + style.slice(1)).join(), 'screenSchedule.' + day + ' should offer the Screens Original, Cybertron and Minimal');
+    need(problems, allowed && allowed.args[0].join() === config.styles.join() && !constraintNamed(rulesOf(field), 'required'), 'screenSchedule.' + day + ' should only allow ' + config.styles.join(', ') + ', and not be required: a day with none follows the starting week');
+    checkPlainSentences(problems, 'the screenSchedule.' + day + ' description', (field && field.description) || '');
+  });
+  return problems;
+}
+
+// The map: the boxes are where the layout puts the parts, the words fit their boxes, and nothing overlaps.
+// Original and Cybertron have the boxes of Start here (base.css). Minimal has the bar layout of core/layout.js.
+function checkScreenMap() {
+  const problems = [];
+  const map = world.screenMap;
+  const bar = world.layoutModule.barGeometry;
+  const above = 0.8;
+  const below = 0.25;
+  const same = (box, want) => want && ['x', 'y', 'width', 'height'].every(key => box[key] === want[key]);
+  const find = (boxes, letter, index) => boxes.filter(box => box.letter === letter)[index || 0];
+
+  ['original', 'cybertron', 'minimal'].forEach(style => {
+    const picture = map.mapFor(style, { main: 16, side: 5 });
+    const letters = Array.from(new Set(picture.boxes.map(box => box.letter))).sort().join('');
+    need(problems, letters === 'ABCDE', style + ': the map should have the letters A to E');
+    need(problems, picture.width === 1920 && picture.height >= 1080, style + ': the map should be drawn on the 1920 by 1080 of the screen');
+    picture.boxes.forEach((box, index) => {
+      const name = style + ' ' + box.letter + ' ' + box.name;
+      need(problems, box.x >= 0 && box.y >= 0 && box.x + box.width <= picture.width && box.y + box.height <= picture.height, name + ' should be inside the picture');
+      picture.boxes.slice(index + 1).forEach(other => {
+        const apart = other.x >= box.x + box.width || box.x >= other.x + other.width || other.y >= box.y + box.height || box.y >= other.y + other.height;
+        need(problems, apart, name + ' and ' + other.letter + ' ' + other.name + ' should not overlap');
+      });
+
+      // the words fit the box. The width is a wide guess (widthOf), since nothing is drawn here.
+      const labels = map.labelsFor(box);
+      const inside = (left, right, top, bottom) => left >= box.x && right <= box.x + box.width && top >= box.y && bottom <= box.y + box.height;
+      need(problems, inside(labels.badge.x, labels.badge.x + labels.badge.size, labels.badge.y, labels.badge.y + labels.badge.size), name + ': the square with the letter should be inside its box');
+      need(problems, labels.letter.x - world.startHereParts.widthOf(labels.letter.text, labels.letter.size) / 2 >= labels.badge.x && labels.letter.y <= labels.badge.y + labels.badge.size, name + ': the letter should be inside its square');
+      [labels.name].concat(labels.lines).forEach(words => need(problems, inside(words.x, words.x + world.startHereParts.widthOf(words.text, words.size), words.y - words.size * above, words.y + words.size * below), name + ': "' + words.text + '" should fit inside its box'));
+    });
+  });
+
+  // Original and Cybertron: the standard layout, the boxes of base.css and of Start here
+  const standard = standardBoxes();
+  ['original', 'cybertron'].forEach(style => {
+    const boxes = map.mapFor(style).boxes;
+    need(problems, boxes.map(box => box.letter + ' ' + box.name).join() === startAreas.join(), style + ': the map should have the areas ' + startAreas.join(', '));
+    boxes.forEach((box, index) => need(problems, same(box, standard[index]) && box.opens === true && box.dashed === false, style + ' ' + box.letter + ' should be the box of the standard layout in dashboard/base.css: ' + JSON.stringify(standard[index])));
+  });
+
+  // Minimal: the bar layout. The name's slot, the side column with its rail, the war clock, the main panel
+  // and the ticker are the boxes of barGeometry. D is dashed, under the screen, and opens nothing.
+  const minimal = map.mapFor('minimal', { main: 16, side: 0 });
+  need(problems, same(find(minimal.boxes, 'A', 0), bar.name) && same(find(minimal.boxes, 'A', 1), bar.side), 'minimal: A should be the name slot of the banner and the side column, as in barGeometry in dashboard/core/layout.js');
+  need(problems, same(find(minimal.boxes, 'C'), bar.war), 'minimal: C should be the slot of the war clock, as in barGeometry');
+  need(problems, same(find(minimal.boxes, 'B'), bar.main), 'minimal: B should be the main panel, as in barGeometry');
+  need(problems, same(find(minimal.boxes, 'E'), bar.ticker), 'minimal: E should be the ticker, as in barGeometry');
+  const none = find(minimal.boxes, 'D');
+  need(problems, none && none.dashed === true && none.opens === false && none.y >= 1080 && none.lines.join() === 'This screen has no side panel.', 'minimal: D should be dashed under the screen, say This screen has no side panel, and open nothing');
+  need(problems, minimal.boxes.filter(box => box.letter !== 'D').every(box => box.opens === true && box.dashed === false), 'minimal: every box but D should open its section');
+
+  // the words under the letters
+  const lines = style => map.mapFor(style, { main: 16, side: 5 }).boxes.map(box => box.letter + ':' + box.lines.join('|')).join(' ');
+  need(problems, lines('original') === 'A:Team and effects B:16 rows C:Title and dates D:5 rows E:Tips and News', 'the map should say the rows of the two lists and what the other parts hold, it says: ' + lines('original'));
+  need(problems, map.mapFor('original', {}).boxes.filter(box => box.letter === 'B' || box.letter === 'D').every(box => box.lines.join() === 'No rows yet') && map.mapFor('original', { main: 1 }).boxes[1].lines.join() === '1 row', 'a list with no rows should say No rows yet and a list with one should say 1 row');
+  return problems;
+}
+
+// The form of a Screen: the map and the switch above the fields, the letters that open the tabs, the first fill of a Screen
+// from the Panel order, and the inputs inside the sections.
+async function checkScreenForm() {
+  const problems = [];
+  const input = world.screenInput;
+  const fields = world.screenFields;
+  const parts = world.screenParts;
+  const wait = () => new Promise(resolve => setTimeout(resolve, 0));
+  const prime = { _id: 'team-prime', name: 'Hawktimus Prime', shortName: 'PRIME', code: 'prime' };
+  const nova = { _id: 'team-nova', name: 'Hawktimus Nova', shortName: 'NOVA', code: 'nova' };
+  const ownersOrder = ['tonight', 'forecast', 'leadership', 'team-leads', 'photo', 'next-event', 'task-counts', 'sponsor-logo', 'task-counts', 'events', 'tasks'].map(panel => ({ _key: 'k' + panel, panel: panel, show: true }));
+  const countdown = { kickoffLabel: 'KICKOFF IN', kickoff: '2027-01-09T17:00:00.000Z', rolloutLabel: 'ROLLOUT IN' };
+  const answer = { settings: { rotation: { order: ownersOrder }, mondayStyle: 'cybertron', countdown: countdown }, teams: [prime, nova] };
+  const clientAnswering = result => {
+    const asked = [];
+    return { asked: asked, fetch: async (question, params, options) => { asked.push({ question: question, options: options }); if (result instanceof Error) throw result; return result; } };
+  };
+  const resetGlobals = () => {
+    globalThis.studioClient = undefined;
+    globalThis.studioForm = undefined;
+    globalThis.studioEffects = [];
+    globalThis.studioContextValue = undefined;
+  };
+  const groupsOpen = name => ['banner', 'main', 'countdown', 'side', 'ticker'].map(group => ({ name: group, selected: group === name }));
+  const letterOf = node => node.props['data-letter'];
+  const boxes = tree => nodesWhere(tree, node => node.type === 'g' && node.props && node.props['data-letter'] !== undefined);
+
+  // reading: the published settings and teams, and nothing that throws
+  const good = clientAnswering(answer);
+  const read = await parts.readSources(good);
+  need(problems, read.unreadable === false && read.teams.length === 2 && read.settings && read.settings.mondayStyle === 'cybertron', 'readSources should give the settings and the teams it is given');
+  need(problems, good.asked[0] && good.asked[0].options && good.asked[0].options.perspective === 'published' && /_id == "dashboardSettings"/.test(good.asked[0].question) && /_type == "team" && active != false/.test(good.asked[0].question) && /order\(order asc/.test(good.asked[0].question), 'readSources should ask for the published Dashboard Settings and the active teams, by order');
+  const failing = [['a question that fails', clientAnswering(new Error('offline'))], ['a client with no fetch', {}], ['no client', null]];
+  for (const entry of failing) {
+    need(problems, JSON.stringify(await parts.readSources(entry[1])) === JSON.stringify({ settings: null, teams: [], unreadable: true }), 'readSources with ' + entry[0] + ' should give nothing and say it could not be read');
+  }
+  const bare = await parts.readSources(clientAnswering(null));
+  need(problems, bare.unreadable === false && bare.settings === null && bare.teams.length === 0, 'readSources with no answer should give no settings and no teams, and not say they could not be read');
+
+  // the teams for the pickers and for the first rows
+  need(problems, parts.pickerTeams([prime, nova]).map(team => team.code + '=' + team.label + '=' + team.id).join() === 'prime=Prime=team-prime,nova=Nova=team-nova', 'the pickers should list each active team by its short name, with the id of its document');
+  need(problems, parts.pickerTeams([]).map(team => team.code + '=' + team.label + '=' + team.id).join() === 'prime=Prime=,nova=Nova=', 'with no team document the pickers should offer the two built-in teams, with no document');
+  need(problems, parts.teamCodes([prime, nova]).join() === 'prime,nova' && parts.teamCodes([]).length === 0, 'the first rows should be worked out from the codes of the active teams, and from none when there is no team document');
+  need(problems, parts.teamLabel({ code: 'x', name: 'Team X' }) === 'Team X' && parts.teamLabel({ code: 'x' }) === 'X', 'a team with no short name should be shown by its name, or its code');
+
+  // the first fill of a Screen: the rows, the side rows and the Monday style, and when nothing is filled
+  const owners = (style, value, readOnly, result) => input.fillPatches(value, style, result === undefined ? read : result, readOnly);
+  const patchOf = (patches, field) => patches.filter(patch => patch.path && patch.path[0] === field)[0];
+  const filled = owners('original', { mainRows: [] }, false);
+  need(problems, filled.length === 3 && filled.every(patch => patch.type === 'set'), 'an empty Screen should be filled with three patches: the main panel rows, the side panel rows and the Monday style');
+  need(problems, patchOf(filled, 'mainRows') && patchOf(filled, 'mainRows').value.length === 16 && patchOf(filled, 'mainRows').value[0].panel === 'tonight' && patchOf(filled, 'mainRows').value[0].team === 'prime' && patchOf(filled, 'mainRows').value[15].panel === 'events', 'the owner Panel order should give 16 main rows, Prime tonight first and events last');
+  need(problems, new Set(patchOf(filled, 'mainRows').value.map(row => row._key)).size === 16, 'every main row needs a key of its own');
+  need(problems, patchOf(filled, 'sideRows') && patchOf(filled, 'sideRows').value.map(row => row.panel).join() === 'forecast,next-event,task-counts,sponsor-logo,task-counts', 'the owner Panel order should give the five side rows, task counts twice');
+  need(problems, patchOf(filled, 'mondayStyle') && patchOf(filled, 'mondayStyle').value === 'cybertron', 'the Monday style should be copied from Dashboard Settings');
+  need(problems, !patchOf(owners('minimal', {}, false), 'sideRows') && patchOf(owners('minimal', undefined, false), 'mainRows'), 'Minimal should be filled with main rows and no side rows');
+  need(problems, owners('original', { mainRows: [{ _key: 'a', panel: 'tasks' }] }, false).length === 0, 'a Screen that has main rows should be left as it is');
+  need(problems, owners('original', { mainRows: [] }, true).length === 0, 'a Screen that cannot be edited should not be filled');
+  need(problems, owners('original', { mainRows: [] }, false, { settings: null, teams: [], unreadable: true }).length === 0, 'a Screen should not be filled when the Panel order could not be read');
+  need(problems, owners('original', { mainRows: [] }, false, null).length === 0, 'a Screen should not be filled before anything is read');
+  const kept = owners('original', { sideRows: [{ _key: 's', panel: 'forecast' }], mondayStyle: 'original' }, false);
+  need(problems, !patchOf(kept, 'sideRows') && !patchOf(kept, 'mondayStyle') && patchOf(kept, 'mainRows'), 'side rows and a Monday style that are there already should be kept');
+  const empty = owners('original', {}, false, { settings: null, teams: [], unreadable: false });
+  need(problems, patchOf(empty, 'mainRows') && patchOf(empty, 'mainRows').value.length === 13 && patchOf(empty, 'sideRows') && patchOf(empty, 'sideRows').value.length === 5 && patchOf(empty, 'mondayStyle').value === 'minimal', 'with no Dashboard Settings and no team document the Screen should be filled with every panel for the built-in team, and the Monday style minimal');
+
+  // the form: switch, map and the usual form. Opened on an empty Original Screen with a client that answers.
+  resetGlobals();
+  globalThis.studioClient = clientAnswering(answer);
+  globalThis.studioForm = { _id: 'drafts.screen-original' };
+  const changes = [];
+  const selected = [];
+  const open = (extra, style) => {
+    globalThis.studioForm = { _id: 'drafts.screen-' + (style || 'original') };
+    return input.ScreenInput(Object.assign({ value: { mainRows: [] }, readOnly: false, groups: groupsOpen('banner'), onFieldGroupSelect: name => selected.push(name), onChange: patch => changes.push(patch), renderDefault: () => 'the usual form' }, extra));
+  };
+  const tree = open({});
+  await Promise.all(globalThis.studioEffects.map(effect => effect())).then(wait);
+  need(problems, changes.length === 1 && Array.isArray(changes[0]) && changes[0].length === 3, 'opening an empty Screen should fill it once, in one change');
+  need(problems, tree && tree.props && typeof tree.props.value === 'object' && tree.props.value.style === 'original' && tree.props.value.editing === 'prime' && tree.props.value.teams.length === 2, 'the form should share the style, the team of the switch and the teams with the inputs inside it');
+  need(problems, wordsIn(nodesWhere(tree, node => node.props && node.props['data-block'] === 'section')) === 'the usual form', 'the fields should be drawn by Studio below the map (renderDefault)');
+  const radios = nodesWhere(tree, node => node.type === 'input' && node.props.type === 'radio');
+  need(problems, radios.length === 2 && wordsIn(nodesWhere(tree, node => node.props && node.props['data-block'] === 'switch')) === 'Editing: Prime Nova' && radios[0].props.checked === true && radios[1].props.checked === false, 'the Editing switch should show Prime and Nova, with Prime picked');
+  need(problems, boxes(tree).map(letterOf).join('') === 'ABCDE' && boxes(tree).every(node => node.props.role === 'button' && node.props.tabIndex === 0 && typeof node.props.onClick === 'function' && typeof node.props.onKeyDown === 'function'), 'the map should have a box for each letter A to E, and each should be a button for the mouse and the keyboard');
+
+  // a click on a letter opens its tab, and the open tab has its box highlighted
+  ['A:banner', 'B:main', 'C:countdown', 'D:side', 'E:ticker'].forEach(entry => {
+    const node = boxes(open({})).filter(item => letterOf(item) === entry[0])[0];
+    node.props.onClick();
+    need(problems, selected[selected.length - 1] === entry.split(':')[1], 'a click on ' + entry[0] + ' should open the ' + entry.split(':')[1] + ' tab');
+  });
+  const keyed = boxes(open({})).filter(item => letterOf(item) === 'B')[0];
+  const before = selected.length;
+  keyed.props.onKeyDown({ key: 'Enter', preventDefault: () => {} });
+  keyed.props.onKeyDown({ key: ' ', preventDefault: () => {} });
+  keyed.props.onKeyDown({ key: 'Tab', preventDefault: () => problems.push('the Tab key should not open a section') });
+  need(problems, selected.length === before + 2 && selected.slice(before).join() === 'main,main', 'Enter and Space on a box should open its section, and no other key');
+  const lit = group => boxes(open({ groups: groupsOpen(group) })).filter(node => node.props['aria-pressed'] === true).map(letterOf).join('');
+  need(problems, lit('banner') === 'A' && lit('main') === 'B' && lit('countdown') === 'C' && lit('side') === 'D' && lit('ticker') === 'E', 'the box of the open tab, and only that one, should be highlighted');
+  const outline = group => nodesWhere(boxes(open({ groups: groupsOpen(group) })).filter(node => letterOf(node) === 'B')[0], node => node.type === 'rect')[0].props.style.strokeWidth;
+  need(problems, outline('main') > outline('banner'), 'the box of the open tab should have a heavier outline');
+  need(problems, boxes(open({ groups: [] })).every(node => node.props['aria-pressed'] === false) && boxes(open({ groups: undefined })).length === 5, 'with no groups the map should still be drawn, with nothing highlighted');
+
+  // Minimal: D is drawn, dashed, with its line, and opens nothing
+  const minimalTree = open({}, 'minimal');
+  const minimalD = boxes(minimalTree).filter(node => letterOf(node) === 'D')[0];
+  need(problems, minimalD && minimalD.props.onClick === undefined && minimalD.props.role === undefined && wordsIn(minimalD).indexOf('This screen has no side panel.') !== -1, 'on Minimal the D box should be drawn with the line This screen has no side panel, and open nothing');
+  need(problems, boxes(minimalTree).filter(node => letterOf(node) !== 'D').every(node => typeof node.props.onClick === 'function') && boxes(minimalTree).map(letterOf).join('') === 'AACBED', 'on Minimal the other boxes should open their sections');
+  need(problems, nodesWhere(minimalTree, node => node.type === 'svg')[0].props.viewBox === '0 0 1920 ' + world.screenMap.mapFor('minimal').height, 'the picture of Minimal should be taller than the screen to hold the dashed D box');
+  need(problems, nodesWhere(tree, node => node.type === 'svg')[0].props.viewBox === '0 0 1920 1080' && nodesWhere(tree, node => node.type === 'svg')[0].props.role === 'group', 'the picture of Original should be drawn on the 1920 by 1080 of the screen');
+  const rowsWord = value => wordsIn(boxes(open({ value: value })).filter(node => letterOf(node) === 'B')[0]);
+  need(problems, /16 rows/.test(rowsWord({ mainRows: new Array(16).fill({}) })) && /No rows yet/.test(rowsWord({})), 'the B box should say how many rows the list has');
+
+  // nothing is filled while the Screen cannot be edited, nor when the read fails
+  resetGlobals();
+  const quiet = [];
+  globalThis.studioClient = clientAnswering(answer);
+  open({ readOnly: true, onChange: patch => quiet.push(patch) });
+  await Promise.all(globalThis.studioEffects.map(effect => effect())).then(wait);
+  resetGlobals();
+  globalThis.studioClient = clientAnswering(new Error('offline'));
+  open({ onChange: patch => quiet.push(patch) });
+  await Promise.all(globalThis.studioEffects.map(effect => effect())).then(wait);
+  need(problems, quiet.length === 0, 'a Screen that cannot be edited, or whose settings cannot be read, should not be filled');
+  resetGlobals();
+  globalThis.studioClient = clientAnswering(answer);
+  open({ value: { mainRows: [{ _key: 'a', panel: 'tasks' }] }, onChange: patch => quiet.push(patch) });
+  await Promise.all(globalThis.studioEffects.map(effect => effect())).then(wait);
+  need(problems, quiet.length === 0, 'a Screen with rows should not be filled again');
+  resetGlobals();
+
+  // the team link of the Banner section, for the team the switch is on
+  const context = (editing, teams) => ({ style: 'original', teams: teams || parts.pickerTeams([prime, nova]), editing: editing, settings: { countdown: countdown }, read: true, unreadable: false });
+  const navigated = [];
+  globalThis.studioPaneRouter = { navigateIntent: (...given) => navigated.push(given), ChildLink: 'ChildLink' };
+  globalThis.studioContextValue = context('nova');
+  const link = fields.BannerTeamInput();
+  link.props.onClick();
+  need(problems, link.type === 'button' && /Nova/.test(wordsIn(link)) && JSON.stringify(navigated[0]) === JSON.stringify(['edit', { id: 'team-nova', type: 'team' }]), 'the Banner section should open the Team document of the team the switch is on (' + JSON.stringify(navigated[0]) + ')');
+  globalThis.studioContextValue = context('', parts.pickerTeams([prime, nova]));
+  need(problems, /Prime/.test(wordsIn(fields.BannerTeamInput())), 'with the switch on no team the Banner section should open the first team');
+  globalThis.studioContextValue = context('prime', parts.pickerTeams([]));
+  need(problems, fields.BannerTeamInput().type === 'p' && wordsIn(fields.BannerTeamInput()) === parts.words.noTeamDocument, 'with no team document the Banner section should say there is none yet');
+
+  // the Countdown section: the title and dates, read only, and the button that opens them in Dashboard Settings
+  globalThis.studioContextValue = context('prime');
+  const shown = fields.CountdownInput();
+  const countdownText = wordsIn(shown);
+  need(problems, countdownText.indexOf(parts.words.sharedCountdown) !== -1 && countdownText.indexOf('KICKOFF IN') !== -1 && countdownText.indexOf('ROLLOUT IN') !== -1 && /Kickoff date .*2027/.test(countdownText) && /Rollout date Not set/.test(countdownText), 'the Countdown section should say the title and dates are shared, and show both titles and both dates (' + countdownText + ')');
+  nodesWhere(shown, node => node.type === 'button')[0].props.onClick();
+  need(problems, JSON.stringify(navigated[1]) === JSON.stringify(['edit', { id: 'dashboardSettings', type: 'dashboardSettings', path: 'countdown' }]), 'the Countdown section should open Dashboard Settings at the countdown (' + JSON.stringify(navigated[1]) + ')');
+  need(problems, parts.countdownTarget.id === world.structure.settingsId && parts.settingsTarget.type === world.structure.settingsType, 'the Countdown section should open the page of settingsType and settingsId in structure.js');
+  globalThis.studioContextValue = Object.assign(context('prime'), { read: false });
+  need(problems, wordsIn(fields.CountdownInput()).indexOf(parts.words.readingCountdown) !== -1, 'the Countdown section should say that it is reading the countdown');
+  globalThis.studioContextValue = Object.assign(context('prime'), { unreadable: true, settings: null });
+  need(problems, wordsIn(fields.CountdownInput()).indexOf(parts.words.countdownUnreadable) !== -1, 'the Countdown section should say when the countdown could not be read');
+  globalThis.studioContextValue = Object.assign(context('prime'), { settings: null });
+  need(problems, wordsIn(fields.CountdownInput()).indexOf(parts.words.noSettings) !== -1, 'the Countdown section should say when Dashboard Settings has not been published');
+  need(problems, parts.countdownLines({ kickoffLabel: '  ' }).every(line => line.text === 'Not set') && parts.countdownLines(null).length === 4, 'a countdown with nothing in it should say Not set for every line');
+
+  // the Ticker section: a link to the line of Tips and News in the sidebar
+  const tips = world.structure.sidebarEntries.filter(entry => entry.title === 'Tips and News')[0];
+  const tipsLink = fields.TickerInput();
+  need(problems, tips && parts.tipsAndNewsPath === '/structure/' + (tips.id || tips.type) && tipsLink.props.href === parts.tipsAndNewsPath && wordsIn(tipsLink) === 'Open Tips and News', 'the Ticker section should link to Tips and News in the sidebar (' + parts.tipsAndNewsPath + ')');
+
+  // the team of a row: the choices of its panel, a patch for each, and a team that is no longer in the list
+  const teamsNow = parts.pickerTeams([prime, nova]);
+  const radiosOf = (panel, value, readOnly) => {
+    globalThis.studioContextValue = context('prime', teamsNow);
+    globalThis.studioForm = { 'mainRows.row.panel': panel };
+    const patches = [];
+    const view = fields.RowTeamInput({ id: 'team', value: value, readOnly: readOnly, path: ['mainRows', 'row', 'team'], onChange: patch => patches.push(patch) });
+    return { view: view, patches: patches, radios: nodesWhere(view, node => node.type === 'input' && node.props.type === 'radio') };
+  };
+  need(problems, radiosOf('tasks', undefined).radios.length === 3 && wordsIn(radiosOf('tasks', undefined).view).indexOf('Keep the team on the screen') !== -1, 'a team-specific panel should offer Keep the team on the screen, Prime and Nova');
+  const keep = radiosOf('tasks', undefined);
+  need(problems, keep.radios[0].props.checked === true && keep.radios[1].props.checked === false, 'a row with no team should have Keep the team on the screen picked');
+  keep.radios[2].props.onChange();
+  keep.radios[0].props.onChange();
+  need(problems, JSON.stringify(keep.patches) === JSON.stringify([{ type: 'set', value: 'nova' }, { type: 'unset' }]), 'picking a team should write its code, and Keep the team on the screen should clear the field');
+  need(problems, radiosOf('monday-tasks', 'prime').radios.map(node => node.props.checked).join() === 'true,false' && radiosOf('monday-milestones', 'both').radios.map(node => node.props.checked).join() === 'false,false,true', 'a Monday row should offer the teams, and Milestones and Progress also Both teams');
+  need(problems, radiosOf('monday-tasks', 'nova', true).radios.every(node => node.props.disabled === true), 'a team that cannot be edited should have every line off');
+  const stale = radiosOf('tasks', 'oldteam');
+  need(problems, stale.radios.length === 4 && stale.radios[3].props.checked === true, 'a team that is not in the list should stay on the list, picked, so it can be seen and changed');
+  const shared = radiosOf('photo', 'nova');
+  const clear = nodesWhere(shared.view, node => node.type === 'button')[0];
+  need(problems, shared.radios.length === 0 && wordsIn(shared.view).indexOf(parts.words.bothTeamsPanel) !== -1 && clear && wordsIn(clear) === parts.words.clearTeam, 'a panel for both teams should say so, and offer to clear a team left on the row');
+  clear.props.onClick();
+  need(problems, JSON.stringify(shared.patches) === JSON.stringify([{ type: 'unset' }]), 'clearing the team of a row on a panel for both teams should clear the field');
+  need(problems, nodesWhere(radiosOf('photo', undefined).view, node => node.type === 'button').length === 0, 'a panel for both teams with no team should have nothing to clear');
+  need(problems, wordsIn(radiosOf(undefined, undefined).view) === parts.words.pickPanelFirst, 'a row with no panel should say to pick the panel first');
+  globalThis.studioContextValue = undefined;
+  globalThis.studioPaneRouter = undefined;
+  globalThis.studioForm = undefined;
+
+  // the words an editor reads
+  Object.keys(parts.words).forEach(name => checkPlainSentences(problems, 'the Screen form words.' + name, parts.words[name]));
+  return problems;
+}
+
 async function main() {
   const folder = makeSandbox();
   try {
@@ -6153,6 +6584,11 @@ async function main() {
     world.frcScript = fs.readFileSync(path.join(here, '..', 'deploy', 'scripts', 'frc-sync.sh'), 'utf8');
     world.mondayScript = fs.readFileSync(path.join(here, '..', 'deploy', 'scripts', 'monday-sync.sh'), 'utf8');
     world.panelOrderInput = await load(path.join(folder, 'panel-order-input.js'));
+    world.screenIds = await load(path.join(folder, 'screen-ids.js'));
+    world.screenMap = await load(path.join(folder, 'screen-map.js'));
+    world.screenParts = await load(path.join(folder, 'screen-parts.js'));
+    world.screenFields = await load(path.join(folder, 'screen-fields.js'));
+    world.screenInput = await load(path.join(folder, 'screen-input.js'));
     world.panelOrder = await load(path.join(dashboardFolder, 'core', 'panel-order.js'));
     world.constants = await load(path.join(dashboardFolder, 'core', 'constants.js'));
     world.portrait = await load(path.join(dashboardFolder, 'core', 'portrait.js'));
@@ -6264,6 +6700,9 @@ async function main() {
   check('the Monday Boards page lists the boards, has a Choose boards button, links each chosen board to its tasks in the two lists of Monday Tasks, and writes nothing', checkMondayBoardsPage);
   results.push({ name: 'the Monday Boards page asks for the published status document and board rows by their ids, and survives a client that fails', problems: await checkMondayBoardsPageRead().catch(error => ['the check stopped: ' + error.message]) });
   check('the Photo fit setting and the Fit of a photo agree with dashboard/config.js, start as fill and as the setting, and the sample shows both on photos of different shapes', checkPhotoFit);
+  check('a Screen has the five tabs of the map, banner settings that start as in dashboard/config.js, rows of a panel, a team and seconds, and the weekday schedule picks one of the three Screens for each day', checkScreenType);
+  check('the map of a Screen has the boxes of its layout, words that fit them and no overlap, and Minimal has a dashed D under the screen', checkScreenMap);
+  results.push({ name: 'the form of a Screen has the Editing switch and the map, a click or a key on a letter opens its tab, an empty Screen is filled once from the Panel order, and the inputs of the sections work', problems: await checkScreenForm().catch(error => ['the check stopped: ' + error.message]) });
 
   process.exitCode = report() > 0 ? 1 : 0;
 }

@@ -251,12 +251,12 @@ test('no file of the dashboard, the Studio or the docs writes the old chip text'
   assert.deepEqual(found, []);
 });
 
-test('the registry and the Panel order choices have no Prime or Nova flavor of a panel, and the small panels take their colors from the page', () => {
+test('the registry and the panel choices of a Screen row have no Prime or Nova flavor of a panel, and the small panels take their colors from the page', () => {
   const small = registry.panels.filter(panel => panel.region === 'grid2');
   assert.ok(small.length >= 5);
   registry.panels.forEach(panel => assert.equal(/prime|nova/i.test(panel.id), false, panel.id + ' is not a flavor of a team'));
 
-  const order = read('studio/schemas/settingsRotation.js');
+  const order = read('studio/screen-panels.js');
   const values = Array.from(order.matchAll(/value: '([^']+)'/g)).map(match => match[1]);
   assert.ok(values.length >= 15);
   values.forEach(value => assert.equal(/prime|nova/i.test(value), false, value));

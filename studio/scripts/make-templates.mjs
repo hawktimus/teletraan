@@ -29,9 +29,11 @@ const defaultOutput = path.join(studioFolder, '..', 'docs', 'content-templates')
 // colors and a logo, so it is added in Studio too (the two starting teams are in
 // docs/seed/teams.ndjson). The status documents are written by the Mini, so they
 // have no template. The pages that exist once (Dashboard Settings, Look, Demo) are
-// listed in structure.js. Events Calendar entries and places have no line in the
-// sidebar, but they keep their templates, since the importer still reads them.
-const skippedTypes = ['photo', 'presentationDay', 'presentation', 'calendarFilter', 'team', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus'];
+// listed in structure.js. The three Screens exist once each too, with lists of rows
+// that a sheet does not hold, so the type screen has no template. Events Calendar
+// entries and places have no line in the sidebar, but they keep their templates,
+// since the importer still reads them.
+const skippedTypes = ['photo', 'presentationDay', 'presentation', 'calendarFilter', 'team', 'screen', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus'];
 
 // Fields that are not columns. The board sync sets the source, the board item number, the board and
 // the due date of a task, and the two notes at the top of a task store nothing.
@@ -107,18 +109,20 @@ const examples = {
 export async function loadSchemas() {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-templates-'));
   try {
-    ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'publish-all.js', 'calendars-view.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'team-input.js', 'note-field.js', 'show-on-tv-input.js', 'status-input.js', 'frc-status-input.js', 'monday-status-input.js', 'monday-pickers.js', 'time-text.js', 'calendars-view-parts.js', 'monday-boards-view.js', 'monday-boards-parts.js', 'panel-order-input.js'].forEach(name => fs.cpSync(path.join(studioFolder, name), path.join(folder, name), { recursive: true }));
+    ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'publish-all.js', 'calendars-view.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'team-input.js', 'note-field.js', 'show-on-tv-input.js', 'status-input.js', 'frc-status-input.js', 'monday-status-input.js', 'monday-pickers.js', 'time-text.js', 'calendars-view-parts.js', 'monday-boards-view.js', 'monday-boards-parts.js', 'panel-order-input.js', 'screen-ids.js', 'screen-panels.js', 'screen-seed.js', 'screen-parts.js', 'screen-map.js', 'screen-context.js', 'screen-fields.js', 'screen-input.js'].forEach(name => fs.cpSync(path.join(studioFolder, name), path.join(folder, name), { recursive: true }));
     fs.writeFileSync(path.join(folder, 'package.json'), JSON.stringify({ type: 'module' }));
     // the names that schemas/ and the inputs import: the radio of the team field, the other inputs and the Start here page are never drawn here
-    const stubs = { sanity: ['defineType', 'defineField', 'defineArrayMember', 'set', 'unset', 'useClient', 'useFormValue'], react: ['createElement', 'useEffect', 'useRef', 'useState'] };
+    const stubs = { sanity: ['defineType', 'defineField', 'defineArrayMember', 'set', 'unset', 'useClient', 'useFormValue'], react: ['createElement', 'createContext', 'useContext', 'useEffect', 'useRef', 'useState'] };
     Object.keys(stubs).forEach(packageName => {
       const stub = path.join(folder, 'node_modules', packageName);
       fs.mkdirSync(stub, { recursive: true });
-      fs.writeFileSync(path.join(stub, 'package.json'), JSON.stringify({ name: packageName, type: 'module', exports: packageName === 'sanity' ? { '.': './index.js', './structure': './structure.js' } : './index.js' }));
+      fs.writeFileSync(path.join(stub, 'package.json'), JSON.stringify({ name: packageName, type: 'module', exports: packageName === 'sanity' ? { '.': './index.js', './structure': './structure.js', './router': './router.js' } : './index.js' }));
       fs.writeFileSync(path.join(stub, 'index.js'), stubs[packageName].map(name => 'export const ' + name + ' = value => value;').join('\n'));
     });
     // the Monday Boards page takes its links from the pane router of sanity/structure
     fs.writeFileSync(path.join(folder, 'node_modules', 'sanity', 'structure.js'), 'export const usePaneRouter = value => value;');
+    // the Ticker section of a Screen takes its link from sanity/router
+    fs.writeFileSync(path.join(folder, 'node_modules', 'sanity', 'router.js'), 'export const Link = value => value;');
 
     // structure.js imports each icon from its own file of @sanity/icons, such as '@sanity/icons/Home'
     const iconFolder = path.join(folder, 'node_modules', '@sanity', 'icons');

@@ -1,38 +1,16 @@
-// Which panels appear in each area of the screen, in what order, and for how
-// long. The panel names must match the ids in dashboard/registry.js. Seconds
-// are optional: a row or the ticker with none follows Seconds per page, which
-// is in dashboardSettings.js.
+// How long each line of the ticker stays, and the older lists of panels. The panels of the main and
+// side area, their order and their seconds are rows of the three Screens now (Settings, Screens,
+// schemas/screen.js). The panel names must match the ids in dashboard/registry.js.
 //
-// The order is one list, Panel order, with every panel in it. The large panels
-// and the small panels each follow the rows that are theirs, in the order they
-// have there. The two older lists, Large panels and Small panels, stay in the
-// schema, hidden, with what was saved in them. The screen follows Panel order,
-// and builds it from the older lists when it is empty (dashboard/core/panel-order.js).
+// The order was one list, Panel order, with every panel in it. It stays in the schema, hidden, with
+// what was saved in it, and so do the two lists before it, Large panels and Small panels. The first
+// time a Screen is opened its rows are worked out from them (studio/screen-seed.js), and the
+// dashboard does the same for a Screen that has none (dashboard/core/panel-order.js).
 
 import { defineField, defineArrayMember } from 'sanity';
 import { titleOf } from './fields.js';
 import { PanelOrderInput } from '../panel-order-input.js';
-
-const largePanels = [
-  { title: 'Tasks', value: 'tasks' },
-  { title: 'Upcoming events', value: 'events' },
-  { title: 'Daily Agenda', value: 'tonight' },
-  { title: 'Subteam spotlight', value: 'spotlight' },
-  { title: 'Sponsor feature', value: 'sponsor-feature' },
-  { title: 'Photo', value: 'photo' },
-  { title: 'Leadership', value: 'leadership' },
-  { title: 'Team leads', value: 'team-leads' },
-  { title: 'Subteam roster', value: 'roster' },
-  { title: 'Extra panel', value: 'custom' },
-];
-
-const smallPanels = [
-  { title: 'Task counts', value: 'task-counts' },
-  { title: 'Next event', value: 'next-event' },
-  { title: 'Weather forecast', value: 'forecast' },
-  { title: 'Safety days', value: 'safety-days' },
-  { title: 'Sponsor logo', value: 'sponsor-logo' },
-];
+import { largePanels, smallPanels } from '../screen-panels.js';
 
 // The one list that Panel order starts with, the large panels first
 const allPanels = largePanels.concat(smallPanels);
@@ -115,16 +93,17 @@ function panelList(name, title, description, panels) {
 export function rotationField() {
   return defineField({
     name: 'rotation',
-    title: 'Panels',
+    title: 'Ticker',
     type: 'object',
     group: 'screen',
-    description: 'Which panels appear on the screen, in what order, and for how long. Neon Prime shows no small panels.',
+    description: 'How long each ticker line stays. The panels, their order and their seconds are set in Settings, Screens.',
     fields: [
       defineField({
         name: 'order',
         title: 'Panel order',
         type: 'array',
-        description: 'Every panel in one list. Drag to change the order. A row can have its own seconds. Large and small panels each follow their own order here.',
+        hidden: true,
+        description: 'Not used any more. The rows of each Screen (Settings, Screens) replace this list. It stays so that a saved list is kept.',
         of: [stepMember(allPanels, true)],
         initialValue: startingList(allPanels),
         components: { input: PanelOrderInput },
@@ -136,8 +115,8 @@ export function rotationField() {
         description: 'Optional. Leave empty and each line stays one and a half times Seconds per page. Otherwise from 6 to 120 seconds.',
         validation: secondsRule,
       }),
-      panelList('grid1', 'Large panels', 'The big panels, one at a time. Not used any more: the screen follows Panel order, and builds it from this list while it is empty.', largePanels),
-      panelList('grid2', 'Small panels', 'The small panels, one at a time. Not used any more: the screen follows Panel order, and builds it from this list while it is empty.', smallPanels),
+      panelList('grid1', 'Large panels', 'The big panels, one at a time. Not used any more: a Screen with no rows builds them from this list.', largePanels),
+      panelList('grid2', 'Small panels', 'The small panels, one at a time. Not used any more: a Screen with no rows builds them from this list.', smallPanels),
     ],
   });
 }

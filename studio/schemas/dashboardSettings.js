@@ -358,7 +358,7 @@ const alertField = defineField({
   ],
 });
 
-// A row in Panel order, or the ticker, can have seconds of its own. With
+// A row of a Screen, or the ticker, can have seconds of its own. With
 // none it follows this. The small panel and ticker times are worked out from it
 // as described at defaultSettings in dashboard/config.js.
 const pageSecondsField = defineField({
@@ -480,9 +480,9 @@ const groupEventsByKindField = defineField({
   initialValue: false,
 });
 
-// The note on the Look tab points to the Look page, which points back (theme.js). The second says what a cycle is.
-const lookNoteField = noteField('lookNote', 'Which styles and teams come on is set here. Colors, seasonal packs and the time zone are in Look, in the sidebar.', 'look');
-const cycleNoteField = noteField('cycleNote', 'A cycle is each team in turn: its panels in the style of the day, then its Monday cards in the Monday style, then the next team.', 'look');
+// The note on the Look tab points to the Look page, which points back (theme.js). The second says where the rows are.
+const lookNoteField = noteField('lookNote', 'Which Screen plays on each day is set here. Colors, seasonal packs and the time zone are in Look, in the sidebar.', 'look');
+const cycleNoteField = noteField('cycleNote', 'What plays on a Screen is set in Settings, Screens, in the sidebar. Its rows play top to bottom, and the screen swaps when the team changes.', 'look');
 
 export default defineType({
   name: 'dashboardSettings',

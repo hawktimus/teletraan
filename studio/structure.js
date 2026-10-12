@@ -17,9 +17,10 @@
 //                     thenBy sorts the documents that sort alike by a second field. add names
 //                     the template in add-templates.js that the plus button of the list makes.
 //                     add: [] takes the plus button away
-//   kind 'page'       opens the one document of its type, which has a fixed id
+//   kind 'page'       opens the one document of its type, which has a fixed id. The three Screens
+//                     are three pages of one type, each with an id of its own (screen-ids.js)
 //   kind 'group'      a folder: opens a list of the lines under entries. A folder holds
-//                     lists, pages and one more folder, which holds lists only. add names
+//                     lists, pages and one more folder, which holds lists or pages. add names
 //                     the types, or the templates in add-templates.js, that the plus button
 //                     of the folder offers
 //   kind 'component'  opens a page that is not a document. component is a plain function
@@ -33,6 +34,7 @@
 // A new kind of document needs a line here: check-schemas.mjs fails without it.
 
 import { ArchiveIcon } from '@sanity/icons/Archive';
+import { BoltIcon } from '@sanity/icons/Bolt';
 import { BulbOutlineIcon } from '@sanity/icons/BulbOutline';
 import { CalendarIcon } from '@sanity/icons/Calendar';
 import { ClockIcon } from '@sanity/icons/Clock';
@@ -46,7 +48,10 @@ import { HeartIcon } from '@sanity/icons/Heart';
 import { HomeIcon } from '@sanity/icons/Home';
 import { ImagesIcon } from '@sanity/icons/Images';
 import { MicrophoneIcon } from '@sanity/icons/Microphone';
+import { PanelLeftIcon } from '@sanity/icons/PanelLeft';
 import { PresentationIcon } from '@sanity/icons/Presentation';
+import { SquareIcon } from '@sanity/icons/Square';
+import { StackIcon } from '@sanity/icons/Stack';
 import { StarIcon } from '@sanity/icons/Star';
 import { SyncIcon } from '@sanity/icons/Sync';
 import { TaskIcon } from '@sanity/icons/Task';
@@ -58,6 +63,7 @@ import { UsersIcon } from '@sanity/icons/Users';
 import { StartHere } from './start-here.js';
 import { CalendarsView } from './calendars-view.js';
 import { MondayBoardsView } from './monday-boards-view.js';
+import { screenType, screenStyles, screenTitles, screenIdOf } from './screen-ids.js';
 
 // Pages that exist once. Each is a single document with a fixed id.
 export const settingsType = 'dashboardSettings';
@@ -67,6 +73,12 @@ export const themeId = 'theme';
 export const demoType = 'demo';
 export const demoId = 'demo';
 export const singletonTypes = [settingsType, themeType, demoType];
+
+// The three Screens, Original, Cybertron and Minimal, are pages of one type with an id each
+export { screenType };
+export const screenIds = screenStyles.map(screenIdOf);
+const screenIcons = { original: SquareIcon, cybertron: BoltIcon, minimal: PanelLeftIcon };
+const screenPages = screenStyles.map(style => ({ kind: 'page', title: screenTitles[style], icon: screenIcons[style], type: screenType, id: screenIdOf(style) }));
 
 // The same version as the screen's own questions to Sanity
 const apiVersion = '2025-02-19';
@@ -151,6 +163,7 @@ export const sidebarEntries = [
     id: 'settings',
     entries: [
       { kind: 'page', title: 'Dashboard Settings', icon: DesktopIcon, type: settingsType, id: settingsId },
+      { kind: 'group', title: 'Screens', icon: StackIcon, id: 'screens', entries: screenPages },
       { kind: 'page', title: 'Look', icon: ColorWheelIcon, type: themeType, id: themeId },
       { kind: 'list', title: 'Teams', icon: TokenIcon, type: 'team', sort: byOrder },
     ],

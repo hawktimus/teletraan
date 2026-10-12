@@ -356,11 +356,11 @@ test('the page side names the cards through the registry, asks the layout the wa
   ['applyStyle', 'dataset.style', 'classList', 'setProperty'].forEach(name => assert.ok(!file.includes(name), 'the page side does not touch the page with ' + name));
 });
 
-test('the docs say where the Monday cards come and in what style, and the Panel order rows that name them are left out of the other passes', () => {
+test('the docs say where the Monday cards come and in what style, and the Panel order rows that name them are ignored', () => {
   const layouts = fs.readFileSync(path.join(docsFolder, 'layouts.md'), 'utf8').replace(/\s+/g, ' ');
-  ['withoutMondayCards', 'styleCanGoOn', 'canShow', 'never drawn in the frames of another style', 'come in the Monday pass and nowhere else'].forEach(word => assert.ok(layouts.includes(word), 'layouts.md names ' + word));
-  assert.ok(fs.readFileSync(path.join(docsFolder, 'switch-the-look.md'), 'utf8').includes('always in the Monday style'));
-  assert.ok(fs.readFileSync(path.join(docsFolder, 'coaches-guide.md'), 'utf8').includes('never in another style'));
+  ['Monday style', 'Monday rows of a Screen', 'a saved Panel order that still names one is ignored'].forEach(word => assert.ok(layouts.includes(word), 'layouts.md names ' + word));
+  assert.ok(fs.readFileSync(path.join(docsFolder, 'switch-the-look.md'), 'utf8').includes('takes the Monday style of the Screen'));
+  assert.ok(fs.readFileSync(path.join(docsFolder, 'coaches-guide.md'), 'utf8').includes('Monday style: the style the Screen takes while a Monday row plays'));
   assert.equal(config.defaultSettings.mondayStyle, 'minimal');
 });
 

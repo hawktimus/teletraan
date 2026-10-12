@@ -248,16 +248,16 @@ What each button holds for 2 minutes:
 
 | Button | What the screen shows |
 |--------|-----------------------|
-| Preview Prime | the Prime team, whatever Team order says |
-| Preview Nova | the Nova team, whatever Team order says. With no Nova team document in Studio it stays on Prime |
-| Preview Cybertron | the Cybertron style, whatever Styles by day says and whatever `?style=` says |
+| Preview Prime | the Prime team, whatever the rows of the Screen say |
+| Preview Nova | the Nova team, whatever the rows of the Screen say. With no Nova team document in Studio it stays on Prime |
+| Preview Cybertron | the Cybertron style, whatever the Weekday schedule says and whatever `?style=` says |
 | Preview Minimal | the Minimal style, in the same way |
 | Preview next pack | the seasonal pack after the one on the screen, in the order of the list in `dashboard/themes/overlays/registry.js` |
 
 What the screen does with it:
 
-- A team goes on at the next page change, in the moment the large frame is apart, like a swap in Alternate
-  mode. The name, the number, the logo, the colors and the mirror change together.
+- A team goes on at the next page change, in the moment the large frame is apart, like the swap when
+  the team of the next row changes. The name, the number, the logo, the colors and the mirror change together.
 - A style or a pack goes on at the next page change too, and the pages are asked to move on at once, so it
   takes a few seconds. A look that is waiting goes on in a swap (docs/layouts.md, "The swap"), which
   also changes the layout when the style has another one, so the page does not reload for it. The preview is kept in the browser's

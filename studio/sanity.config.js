@@ -5,22 +5,25 @@ import { schemaTypes } from './schemas/index.js';
 import { publishAllTool } from './publish-all-tool.js';
 import { structure, settingsType, singletonTypes } from './structure.js';
 import { addTemplates } from './add-templates.js';
+import { screenType } from './screen-ids.js';
 import { playHiddenActions, usePlayAnnouncementsAction, useRunPresentationTestAction, previewActions } from './actions.js';
 
 // Dashboard Settings, Look and Demo each exist once (singletonTypes in
-// structure.js). Their pages are made the long-standing way, by removing the
+// structure.js), and so does each of the three Screens, which are three pages of the type screen.
+// Their pages are made the long-standing way, by removing the
 // actions that would copy them or take them away, because Sanity's newer
 // singleton option is still in beta. Dashboard Settings also gets a Play button
 // for each hidden transition, Play announcements, Run presentation test and a
 // Preview button for each look (actions.js).
 const removedFromSingletons = ['delete', 'duplicate', 'unpublish'];
+const pageTypes = singletonTypes.concat([screenType]);
 
 const buttonsOf = {
   [settingsType]: playHiddenActions.concat([usePlayAnnouncementsAction, useRunPresentationTestAction], previewActions),
 };
 
 function actionsFor(actions, context) {
-  if (singletonTypes.indexOf(context.schemaType) === -1) return actions;
+  if (pageTypes.indexOf(context.schemaType) === -1) return actions;
 
   const kept = actions.filter(item => removedFromSingletons.indexOf(item.action) === -1);
   return kept.concat(buttonsOf[context.schemaType] || []);
@@ -42,7 +45,7 @@ function newDocumentChoices(templates, context) {
 
   return templates.filter(template => {
     const type = template.templateId;
-    if (singletonTypes.indexOf(type) !== -1 || notOffered.indexOf(type) !== -1) return false;
+    if (pageTypes.indexOf(type) !== -1 || notOffered.indexOf(type) !== -1) return false;
     return inDocument || offeredInDocuments.indexOf(type) === -1;
   });
 }

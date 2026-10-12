@@ -64,7 +64,7 @@ seasonal pack can be looked at with the sample content, which has both teams.
 
 When the theme and the style that should be on screen give another layout than
 the page has, for example an editor switches the theme or the style in Studio, or the
-look rotation goes from the panels of a team to its Monday cards, colours alone cannot
+screen goes from a row of the main panel to a Monday row, colours alone cannot
 do it, because the regions are drawn for one layout. The layout is **changed in the page that is
 on screen, and the page does not reload**. The new look waits for a swap to have the screen
 (`holdForLayout` in `core/layout-apply.js`): the swap pulls the pieces of the frames apart, and
@@ -237,9 +237,8 @@ ticker's bottom, as it does in the standard layout.
 **No small frame.** The sidebar layout never makes Grid 2 (`#region-grid2` is
 empty and out of the way), and the scheduler leaves out every panel whose region
 is `grid2` in `dashboard/registry.js`: the task counts, safety days, next event,
-sponsor logo and forecast panels. The large panels in the Panel order list in
-Dashboard Settings are the rotation of the pane. The small panels in that list
-are not used while a sidebar theme is on. The countdown is not a small panel: it lives in the sidebar. Grid 1 and
+sponsor logo and forecast panels. The large panels in the main panel rows of the Screen are the rotation of the pane. The small panels
+in the side panel rows are not used while a sidebar theme is on. The countdown is not a small panel: it lives in the sidebar. Grid 1 and
 Grid 2 never show the same topic, so with no Grid 2 the pane may show any topic.
 `?show=` with a small panel shows nothing in this layout.
 
@@ -503,7 +502,7 @@ y 0  +--------------------------------------------------------------------+
 The margin is 32 on every side, and the rows are 24 apart, so the heights add up:
 32 + 160 + 24 + 736 + 24 + 72 + 32 = 1080, and so do the widths: 32 + 336 + 36 + 1484
 + 32 = 1920. The rail is 12 wide, 24 from the column, and the column is 36 from the
-main panel. The main panel is one frame for every topic in the large panels of the Panel order list.
+main panel. The main panel is one frame for every topic in the large panels of the main panel rows.
 There is no small frame and no countdown panel: the war clock has its slot in the
 banner, and the scheduler leaves out every panel whose region is `grid2`, as it does in the
 sidebar layout. Grid 1 and Grid 2 never show the same topic, so with no Grid 2 the main
@@ -1220,86 +1219,61 @@ screen") and refuses more than 40. Titles of ordinary words fit at 32 px or more
 more up to 40 in all three clocks. `tools/test-countdown-title.mjs` has the widths. The numbers have been worked
 out from the font and not looked at on a screen.
 
-## The look rotation
+## The Screens
 
-The screen goes through looks by itself. A look is a style and a team. Dashboard Settings, Look tab,
-has three settings, with their starting values in `defaultSettings` in `config.js`, and a fourth that is hidden:
+What plays on the screen is set by three documents, Original, Cybertron and Minimal (Settings, Screens in the Studio;
+the type `screen`, with the ids `screen-original`, `screen-cybertron` and `screen-minimal`). The id is the style of the
+Screen, so no style is stored. A Screen holds, with the starting values in `config.js`
+(`defaultScreen`, `screenLimits`):
 
-- Styles by day (`dailyStyles`): Original and then Cybertron.
-- Monday style (`mondayStyle`): Minimal.
-- Team order (`teamOrder`): Prime and then Nova. The Studio keeps references to the teams and the
-  query in `core/sanity.js` sends their codes.
-- How the look changes (`lookSwap`) is hidden and the screen ignores it. It used to be assemble, slats or
-  cut. Every change of look is the one swap now ("The swap" below). The field stays in the schema, with
-  what was saved in it, so that nothing is lost.
+- `mainRows`: the rows of the main panel (area B). A row is a panel from `registry.js`, a team and, if wanted, seconds from 6 to
+  120. The team is a team code (`prime`, `nova`), `both` or nothing. The three Monday cards are the panels `monday-tasks`,
+  `monday-milestones` and `monday-progress`. A Monday row has a team, and `both` on the milestones or progress row means the
+  card of both teams (`monday-milestones-both`, `monday-progress-both`). The Events panel is one row that plays its two pages.
+- `sideRows`: the rows of the side panel (area D), a panel and, if wanted, seconds. A row has no team. Minimal has no side panel.
+- `nameEffectEveryMinutes` (10), `hawkEveryMinutes` (15) and `swapSeconds` (1.25): how often the name effect and the flying hawk
+  play, and how long the swap takes. Every timing of the swap scales with `swapSeconds` over 1.25, the length it had before.
+- `mondayStyle`: the style while a Monday row plays. A Screen with none uses `mondayStyle` of Dashboard Settings, which is Minimal
+  to start with.
 
-**The style of the day.** The number of the calendar day in the time zone of the Look page, counted
-from 1970, modulo the length of the list, says which style the day has (`dayNumber` and `styleForDay`
-in `core/look-rotation.js`). Every screen has the same style on the same day, and a screen that
-restarts lands on it again. It is worked out when the screen starts and at the end of every pass, so
-the style changes at the first pass that ends after midnight.
+The countdown (area C) has no field on a Screen: its title and dates are in Dashboard Settings, Countdown tab, and are the same
+for every Screen and both teams. The ticker (area E) has none either: it shows every published tip and news item in order.
 
-**A cycle.** For each team in Team order there is a pass of its panels in the style of the day, and
-after it a pass of its Monday cards in the Monday style, if the team has Monday rows. A team with
-none skips that pass. With two styles, Prime with Monday rows and Nova without, a cycle is Prime in
-the style of the day, Prime in Minimal, Nova in the style of the day, and tomorrow the same three
-with the other style. The panels that every team shares (the events, the tips, the photos and the
-countdown) are in the pass of each team, once, and so are the competition cards that are due, with the
-data of that team (docs/frc-feed.md). The Monday cards are the panels in the section after "The swap".
-`mondayCards` in `core/look-rotation.js` gives them to a team that has board tasks, and a team that has none
-has no Monday pass. After the last team there is one more pass in the Monday style, the two cards of both
-teams, when two teams or more have Monday rows (`bothCards`). It is held in the team of the pass before it,
-and it is written down in localStorage with `both: true`. It is part of the Monday block, so it is drawn in
-the Monday style and enters and leaves with the one swap, as the pass of a team does.
+**The Screen of the day.** Dashboard Settings, Look tab, has the Weekday schedule (`screenSchedule`), a style for each day from
+`monday` to `sunday`: Original on Monday, Wednesday, Friday and Sunday, Cybertron on Tuesday, Thursday and Saturday, and Minimal
+on no day. The day is the calendar day in the time zone of the Look page. The screen picks the Screen of the day when it starts
+and at the first row change after midnight, so every screen has the same Screen on the same day and a screen that restarts lands
+on it again.
 
-**The Monday cards come in the Monday pass and nowhere else.** The large panel follows the Monday cards of the
-team, or the cards of both teams in their pass, while a Monday pass is up, and in every other pass it follows the
-usual list without them, even when a Panel order saved before this had them in it (`withoutMondayCards` in
-`core/look-rotation.js`, called from `playlistNow` in `core/look-rotation-run.js`). Every Monday pass, a team's or
-the one of both teams, is in the Monday style or it does not happen. A
-Monday style with another layout than the page has goes on in the swap that enters the Monday block, which
-changes the layout in the page. Only a page whose layout change has failed once reloads for it, and a page that reloaded for that
-layout a moment ago, or cannot keep the note that stops a reload loop, does not reload (`mustReload` in `core/layout.js`).
-Then the pass is left out of the cycle until the page can take the style (`styleCanGoOn`, asked through
-`canShow` in `makeLookRotation`), and the cards are never drawn in the frames of another style.
+**How the rows play.** The main panel plays `mainRows` from the top to the bottom and then starts again. The team on the banner
+is the current team. A row with a team other than the current team is a swap into that team, in the style of the day. A row
+with no team keeps the current team. A Monday row plays in the Monday style of the Screen: the swap into it comes when the
+first Monday row begins, if the style is another one, and the swap back to the style of the day comes when the next row is not a
+Monday row. A Monday row for both teams keeps the colors of the current team. A Monday row of a team with no tasks from the
+board has nothing to show and is skipped, as a page with nothing on it always was. The competition cards still come in from two
+days before an event, as the Competition tab says, and they are not rows. The side panel plays `sideRows` on its own timer and
+is never empty (`withStandIns` in `core/panel-order.js`, "No small frame" and "Panel B"). Next look now, on the Start here page, moves
+the main panel to its next row at once.
 
-**When it moves.** A pass is over when the list of the large panel has been through once.
-`core/schedule.js` asks the rotation then, before the next page is chosen (`setLookHooks`), and the
-answer decides whether the list starts again from its first panel. A pass is never ended sooner than
-`lookShortestSeconds` (15) after it began. Nothing moves while an alert, an announcement, a talk, a
-demo, the night screen, a hidden transition or a swap has the screen. The rotation is asked again at
-the end of the next pass.
+A swap never starts while an alert, an announcement, a talk, the night screen or a hidden transition has the screen, and the
+style and the team change in the same frame ("The swap" below). A change to or from Minimal is a change of layout, which the
+swap makes in the page.
 
-**How the look goes on.** The style and the team are held by `rotateStyle` in `core/style.js` and
-`rotateTeam` in `core/teams.js`, the two modules that hold them for a preview. A preview and `?style=`
-or `?team=` in the address win over the rotation, and the rotation wins over the old Style and Team
-mode settings. A held look waits for the next page change of the large panel, and that page change is a swap
-("The swap" below). Both go on the page in one step, at the moment the screen is apart, where
-`core/areas.js` calls `changeThemeNow` and `changeTeamNow`. The page also keeps the rotation from
-running at all while the address has `?style=` or `?team=`, and in the test views (`?show=`, `?stress`
-and `?only=tasks`).
+**The first rows.** A Screen with no `mainRows` gets rows worked out from the Panel order that was saved before Screens existed
+(`rotation.order`, or `rotation.grid1` and `rotation.grid2` while that is empty). For each active team, Prime first, they are the
+panels for one team (Tasks, Daily Agenda, Subteam spotlight, Sponsor feature, Leadership, Team leads, Subteam roster and Extra
+panel) as rows with that team, then the three Monday rows of that team. After the last team come the panels for both teams
+(Upcoming events and Photo), with no team. Seconds carry over, a panel that was in the order twice has a row for each place, and a
+row that was switched off is left out. The side rows are the small rows of the same order. Minimal has no side rows. The Studio
+fills a Screen this way the first time it is opened (`studio/screen-seed.js`, checked by `tools/test-screen-seed.mjs`), and the
+screen works out the same rows for a Screen that has none, so nothing goes blank before anyone opens Studio.
 
-A change to or from Minimal is a change of layout, which the swap makes in the page ("The swap" says how).
+**What is not read any more.** Styles by day (`dailyStyles`), Team order (`teamOrder`), Monday style in Dashboard Settings
+(`mondayStyle`), How the look changes (`lookSwap`), Panel order (`rotation.order`) and Team name look (`nameStyle`) stay in the schema, hidden, with what was saved in
+them, so that nothing is lost. Outlined name (`outlinedName`, off to start with) on the team document decides whether the team
+name is drawn outlined.
 
-**Starting again.** The pass the screen is in is written down in localStorage (`teletraan-look-pass`),
-and again every half minute. A page that reloads within `lookResumeSeconds` (600) of that goes on in
-the same pass, which is what a page that reloads for an update, or for a change of layout that failed, needs. A page that starts any other way
-starts the first pass. The screen reads its saved copy of the content for this, before anything is drawn.
-
-**One look, and empty lists.** One style and one team make one pass for ever, and nothing changes. A
-list that is empty gives the choice back to the old Style setting (Styles by day) or the old Team mode
-(Team order), which are hidden in the Studio and keep what is saved in them. Both empty hold nothing, so
-the screen is as it was before the rotation. A page published before the lists existed has them empty.
-
-**Next look now** (the Start here page) writes `nextLookRequest`. The screen answers a request once,
-when it is less than a minute old and is not the one handled before (kept in localStorage under
-`teletraan-next-look-handled`), and waits while something has the screen. It moves to the next pass
-at once, without waiting for the pass to end, and every list starts again from its first panel. A
-press while the Monday cards are up moves past them.
-
-Look at it with `?sample=1`, which has both teams and the rotation. `node tools/test-look-rotation.mjs`
-checks the order of the passes, the style of the day, the boundary rule, a restart and the Next look now
-guard.
+Look at it with `?sample=1`, which has both teams, and with Next look now on the Start here page.
 
 ## The swap
 
@@ -1313,8 +1287,8 @@ that decide it, with no page in them, and `core/swap-run.js` finds the pieces on
 
 **When it plays.** A swap replaces the page change of the large panel (`setSwapOffer` in `core/areas.js`) when
 
-- the look rotation has held a new style or team, which it says with `queueSwap` (`changeLook` in
-  `core/look-rotation-run.js`, at the end of a pass and when Next look now is pressed), or
+- the next row of the main panel is for another team than the one on the banner, or a Monday row begins or ends ("The Screens"),
+  or Next look now moves to a row like that, or
 - a look is waiting to go on the page, which a preview, the team of Alternate mode and a theme from the Look page
   are (`lookIsWaiting` in `core/theme-apply.js` and `teamPending` in `core/teams.js`), or
 - the page on screen or the page to come is a Monday card, in full motion. That is one card to the next, or the next
@@ -1395,41 +1369,38 @@ Their frames lie in a pile, and a look that drew them again would leave some of 
 goes on at the next page change.
 
 Look at it with `?sample=1`, with Next look now on the Start here page, with the Monday style set to another style than the one of the
-day in Dashboard Settings (the layout changes), with Preview Minimal and Preview Cybertron, and with `?motion=calm` and `?motion=none`.
+day in the Weekday schedule (the layout changes), with Preview Minimal and Preview Cybertron, and with `?motion=calm` and `?motion=none`.
 `node tools/test-swap.mjs` checks the plan, and runs `swap-run.js` against a small stand-in for the page and a clock it moves by
 hand. `node tools/test-swap-smooth.mjs` checks that every piece of the old look has a place in the new one, that nothing jumps at the
 moment between the pull and the travel, and the calm and no motion paths.
 
 ## The Monday cards
 
-The Monday pass of the look rotation is three cards, one after the other, in the Monday style: the tasks card, the milestones card and
-the progress card. After the last team there is a pass of two more, the milestones card and the progress card of both teams. They are
+The Monday rows of a Screen are three cards, one after the other, in the Monday style: the tasks card, the milestones card and
+the progress card. A milestones or a progress row for both teams plays the card of both teams. They are
 panels of the large frame, `monday-tasks`, `monday-milestones`, `monday-progress`, `monday-milestones-both` and `monday-progress-both`,
 each a folder in `dashboard/panels/` with a script and a stylesheet. What they share is in `dashboard/monday.css`. They draw the tasks that the
 board sync on the Mini keeps in Sanity: a task with the source `monday` (docs/editing-content.md, "The Monday cards"). The plain
 functions that pick and rank the tasks are in `core/monday.js`, and `core/monday-draw.js` has the header, the rows and the page marker.
 The sentence a card says when it has nothing else to show and the text in a chart are the ones the competition cards use
-(`core/competition-draw.js`). `node tools/test-monday-cards.mjs` and `node tools/test-monday-rows.mjs` check them, and
-`node tools/test-look-rotation.mjs` checks the pass.
+(`core/competition-draw.js`). `node tools/test-monday-cards.mjs` and `node tools/test-monday-rows.mjs` check them.
 
 **Who has the cards.** A team has board tasks when a task with the source `monday` shows on the TV for it:
-Show on TV and Show on screen are on, it has not expired, and it is for the team or for both. `mondayCards`
-in `core/look-rotation.js` asks `mondaySteps` in `core/monday.js`, which gives the steps of the large panel's
-list for the pass: one page of the tasks card for each Team lead entry that has tasks, then the milestones card,
-then the progress card. A team with no board tasks gets none, and then it has no Monday pass. Every card counts the
+Show on TV and Show on screen are on, it has not expired, and it is for the team or for both. `mondaySteps` in
+`core/monday.js` gives the steps of the large panel's list for a Monday row: one page of the tasks card for each Team lead
+entry that has tasks. A team with no board tasks gets none, and its Monday rows are skipped. Every card counts the
 board tasks and nothing else (`boardTasksFor`), whatever its status, so the cards always agree on how many rows there are. A task that is
-not from the board is never on a Monday card, and a task with `showOnTv` off never shows on any card. The pass of both teams has two cards,
-and it is in the cycle only when two teams or more have board tasks (`bothSteps`), because one team alone has its own cards.
+not from the board is never on a Monday card, and a task with `showOnTv` off never shows on any card.
 
-The registry flags the five panels `monday: true`. They are not in the Panel order list of Dashboard Settings and not in the lists of
-`config.js`: they are the Monday block of the look rotation, and a saved Panel order that still names one is ignored
-(`core/panel-order.js`). `withCompetition` in `core/competition.js` never held them, and a Monday pass has no competition cards in it. They have the topic
-monday, as the competition cards have the topic competition, so the pass never waits for the small frame to leave the topic tasks, which it
+The registry flags the five panels `monday: true`. They are not in the older Panel order list of Dashboard Settings and not in the
+lists of `config.js`: they are the Monday rows of a Screen, and a saved Panel order that still names one is ignored
+(`core/panel-order.js`). `withCompetition` in `core/competition.js` never held them, and a Monday row has no competition cards in it. They have the topic
+monday, as the competition cards have the topic competition, so a Monday row never waits for the small frame to leave the topic tasks, which it
 would if all the cards had to avoid the task counts. Every card is drawn for a frame of 1152 by 708, as every panel is, and the bar
 layout scales the frame.
 
 **The team.** The cards take their tasks the way every panel does, through `visibleItems`, so they are the tasks of the
-team on the screen and of both teams. The look rotation asks about the team of a pass before it is on the screen, so
+team on the screen and of both teams. A Monday row can ask about the team of the next row before it is on the screen, so
 `visibleItems` takes the code of a team as a third argument. The cards of both teams ask about each team in turn.
 
 **The name of the team.** A header that names a department reads the department in capitals and TEAM, such as BUILD TEAM, and the
@@ -1494,9 +1465,9 @@ is still to come. With fewer than two counts a sentence stands in the place of t
 
 ### The cards of both teams
 
-The milestones card and the progress card of both teams come once in each cycle, after the last team. Their headers read MILESTONES and PROGRESS
+The milestones card and the progress card of both teams play when a milestones or a progress row of a Screen has the team Both teams. Their headers read MILESTONES and PROGRESS
 with no chip. They have a row for each department and each team that has board tasks for it, and the rows alternate between the teams: a department's rows
-together, Prime first and then Nova, in the order of Team order. A department whose tasks all come from boards with no team is one row with no team. No columns side by side. Every row starts with a label of the team, PRIME
+together, Prime first and then Nova, in the order of the active teams. A department whose tasks all come from boards with no team is one row with no team. No columns side by side. Every row starts with a label of the team, PRIME
 in gold and NOVA in silver. There are ten rows at the most, five at a time, which scroll and have a page marker as the tasks card does
 (`scrollPages`).
 
@@ -1517,7 +1488,7 @@ fit beside PROGRAMMING TEAM. Cybertron and Minimal draw no slashes, but the room
 **With nothing to show.** A card says one plain sentence in place of its body, and the sentence says why. No board is chosen yet. when Dashboard
 Settings, Monday has no board. Waiting for the first sync from the board. when there is a board and the Mini has not written the status yet. Nothing
 on the chosen boards is showing yet. when the board is read and no board task shows on the TV. The milestones cards say No open board items have a due
-date yet. when there are board tasks and none has a due date. The look rotation does not give a team the cards unless it has board tasks, so these are what the `?show=`
+date yet. when there are board tasks and none has a due date. A team with no board tasks has its Monday rows skipped, so these are what the `?show=`
 address shows when there are none. No card invents a number.
 
 **Sizes.** No text is under 44 px except the sizes the cards themselves set: the status label of a row at 30, the first name of the owner at 40, and
@@ -1525,7 +1496,7 @@ the labels of the numbers and of a department at 36. No line is under 3 px, and 
 24 px in from the frame and 132 px down. The rows stay clear of the cut corner at the bottom right: the page marker ends 68 px in from the right edge of the body.
 
 The sample content has board tasks only: six for both teams, nine for Prime and six for Nova, on six Team lead entries, and a `monday` document with
-14 daily counts, all in brackets, so `?sample=1` shows the cards on made up tasks, and the pass of both teams.
+14 daily counts, all in brackets, so `?sample=1` shows the cards on made up tasks, and the cards of both teams.
 
 ## Team trim
 
@@ -1611,7 +1582,7 @@ pieces, the screws, the rivets and the rust are all there.
 **Looking at it.** `?sample=1&team=nova` shows Nova with the sample content, and `?team=prime` shows Prime.
 Add `&style=cybertron` or `&style=minimal` for the other two styles, and `&motion=calm` to see it still.
 Look at each of the eight, then the frames of the large panel, the small panel, the countdown, the banner and
-the ticker in all three styles. Then change the team on the open screen (Look tab, Team order) and watch the
+the ticker in all three styles. Then change the team on the open screen (the team of a row, Settings, Screens) and watch the
 frames come back in the other corners at the moment the large frame is apart.
 
 **Adding a field.** Add its name and values to `teamTrim` in `config.js` and to `primeTeam`, give each value
@@ -1676,7 +1647,7 @@ Neon Prime, Minimal, and the Monday cards while the Monday style is Minimal. The
 Original and Cybertron have, never has a Panel C and always has both Panel A and Panel B. The sidebar and
 bar layouts have no Panel B (see "No small frame" and "The bar layout").
 
-Panel B is never an empty frame. It follows the small rows of Panel order, as it always did, and the
+Panel B is never an empty frame. It follows the side panel rows of the Screen, as it always followed the small rows of the Panel order, and the
 scheduler (`dashboard/core/schedule.js`, `rounds`) goes down this list and takes the first page it finds:
 
 1. A row of the list that has content and does not share a topic with Panel A. Rows are used in their order.
@@ -1690,10 +1661,10 @@ scheduler (`dashboard/core/schedule.js`, `rounds`) goes down this list and takes
    resort and never the first choice, and it has no content to wait for, so Panel B always has something.
 
 A row that is switched off stays off in every step, and its panel is not one of the spares in steps 2 and 4.
-The rows are the rows of Panel order and the list is built in `core/panel-order.js` (`withStandIns`), which
+The rows are the side panel rows and the list is built in `core/panel-order.js` (`withStandIns`), which
 adds the spares and the team tile after them. If an editor deletes every small row, or the saved list has
 none, the small frame still shows the forecast and the other small panels that have content. The Studio does not
-offer the team tile in Panel order. It has no row, no seconds and no switch, and it is marked
+offer the team tile in a Screen. It has no row, no seconds and no switch, and it is marked
 `lastResort: true` in `registry.js`.
 
 The team tile is drawn for the team that is about to go on the screen, as the items of the other panels are
@@ -1752,7 +1723,7 @@ from either of them to the standard layout starts it with a panel at once.
 - **The test switches** work: `?stress` shows the large frame and the ticker
   together (there is no small frame to show), `?only=tasks` shows only the large
   frame, `?perf` shows the readout in the bottom right corner, and `?show=` with
-  a large panel of the Panel order list shows that panel. `?show=` with a small panel
+  a large panel shows that panel. `?show=` with a small panel
   (task counts, next event, forecast, safety days, sponsor logo) shows an empty
   screen, because the layout has no place for it.
 - **The kit**: Neon Prime has a set of moving neon, the kit (below). It stops
@@ -1767,7 +1738,7 @@ from either of them to the standard layout starts it with a panel at once.
 
 ## What does not show in the sidebar layout
 
-- The small frame (Grid 2) and the five small panels of the Panel order list: task
+- The small frame (Grid 2) and the five small panels: task
   counts, safety days, next event, sponsor logo and the weather forecast. The
   sidebar shows only the temperature and the picture of the weather, not the
   high and the low. Task counts, next event and the sponsor logo have larger
@@ -1992,13 +1963,13 @@ and in the mirror:
 4. There is rust at the bottom left and the bottom right of each frame, and it holds still.
    The Flat look takes it away.
 5. There is no stamped id and no serial text anywhere, in any style. The weld seam stands to the right of the
-   pages, and it crosses no text on any large panel of the Panel order list. The ticks stand on the
+   pages, and it crosses no text on any large panel. The ticks stand on the
    neon line at the foot of the header and do not touch the title.
 6. With the screen open, change Style in Dashboard Settings between Cybertron and Minimal. The
    screen does not reload: the next page change of the large frame is a swap, and the pieces re-form in the
    new layout and the new style.
 
-To check a layout by hand, look at every large panel of the Panel order list with
+To check a layout by hand, look at every large panel with
 `?show=` (tasks, events, tonight, spotlight, sponsor-feature, photo, leadership,
 team-leads, roster and custom). For each one:
 

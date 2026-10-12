@@ -3,7 +3,7 @@
 For the coaches. This page says where each coach setting is, what to know before
 you change it, and which page has the detail. Students use
 docs/using-the-studio.md. Everything under Coaches only in the sidebar is here:
-Settings (Dashboard Settings, Look and Teams) and Extra panels.
+Settings (Dashboard Settings, Screens, Look and Teams) and Extra panels.
 
 The Monday feed, the competition feed and the status documents have not been tried
 against the live services, because they need keys that only the Mini holds. Their
@@ -18,8 +18,8 @@ docs/editing-content.md, "Dashboard Settings".
 
 | Tab | What is in it |
 |-----|---------------|
-| Screen | The status block, the team name, number and school, motion, speed, frame metal, glint, polish, the screen glitch, the alert, Panel order and the seconds per page, photos, announcements, how many days finished tasks stay and the date the safety day count starts |
-| Look | Styles by day, Monday style, Team order, the logo and name effects and the page changes |
+| Screen | The status block, the team name, number and school, motion, speed, frame metal, glint, polish, the screen glitch, the alert, the seconds per page and per ticker line, photos, announcements, how many days finished tasks stay and the date the safety day count starts |
+| Look | The Weekday schedule, the logo and name effects and the page changes |
 | Countdown | The labels and dates for Kickoff and Rollout |
 | Calendars | A row for each calendar with its code, name, kind and Show on screen switch, and Group events by kind |
 | Presentations | Run presentations, the one switch for booked talks |
@@ -27,9 +27,10 @@ docs/editing-content.md, "Dashboard Settings".
 | Competition | When the competition cards come, and a switch for each card |
 | Advanced | Night mode, hidden transitions and the connection text on the screen |
 
-The Look tab here is the look rotation. The Look line under Settings in the
-sidebar is another page: the colors of the whole screen, the seasonal packs and
-the time zone (docs/switch-the-look.md).
+The Look tab here has the Weekday schedule, which picks the Screen of each day
+(see Screens below). The Look line under Settings in the sidebar is another page:
+the colors of the whole screen, the seasonal packs and the time zone
+(docs/switch-the-look.md).
 
 Some values have one right answer and are not settings: night mode from 11:30 pm
 to 11:30 am, how long a talk waits for its speaker (5 minutes) and how far a talk
@@ -86,37 +87,95 @@ calendar addresses are in the same file, one `CALENDAR_<ID>_URL` line each
 (docs/calendar-links.md). None of them goes in the repository, in Studio or in a
 message.
 
-## The look rotation
+## Screens
 
-The screen goes through looks by itself. A look is a style and a team. These are
-in Dashboard Settings, Look tab, with the name each is stored under:
+A Screen is what plays on the TV. There are three, Original, Cybertron and
+Minimal, under Settings, Screens in the sidebar. Each is one document that
+always exists, so you cannot add, copy or delete one. Original and Cybertron
+have the standard arrangement: the banner, the main panel, the countdown over
+the side panel, and the ticker. Cybertron draws it in gunmetal plates. Minimal
+has the banner with the war clock across the top, a thin column at the left, one
+main panel and the ticker, and no side panel.
 
-- Styles by day (`dailyStyles`): the styles in order, one for each calendar day,
-  and then over again. Original and then Cybertron to start with. The day is read
-  in the time zone on the Look page, so a screen that restarts lands on the same
-  style.
-- Monday style (`mondayStyle`): the style while the Monday cards are up. Minimal to
-  start with.
-- Team order (`teamOrder`): the teams in the order they take the screen. Prime and
-  then Nova to start with. Only teams that are switched on count.
-- How the look changes (`lookSwap`) is hidden. Every change of look is one move now: the
-  frames pull apart, the new look goes on, and they re-form (docs/layouts.md, "The swap").
+A Screen opens on a map of the screen. Click a letter or its box and that
+part opens below the map, with its box lit. The letters are the ones on Start
+here. Above the map, Editing, Prime or Nova, changes which team document A opens
+and nothing else. The Screen is the same for both teams.
 
-A cycle goes through the teams in order. For each team it runs a pass of its
-panels in the style of the day, then a pass of its Monday cards in the Monday
-style if the team has any, and then it swaps to the next team. A team with no
-Monday cards skips that pass. The Monday cards are never in another style. A swap waits for the end of a
-pass and never happens during an alert, an announcement or a talk. The style and the team change
-together.
+| Letter | Part | What is there |
+|--------|------|---------------|
+| A | Banner | A button that opens the document of the team in the Editing switch (name, number, logo, colors and the Outlined name switch). Under it, Name effect every (10 minutes to start with), Flying hawk every (15) and Swap time (1.25 seconds) |
+| B | Main panel | The rows the main panel plays, top to bottom, and then over again. The Monday style |
+| C | Countdown | The title and the dates of Kickoff and Rollout, shown from Dashboard Settings, Countdown tab. They are the same on every Screen and for both teams, so change them there |
+| D | Side panel | The rows the small panel plays, on its own timer. A row has no team. Minimal has no side panel, so its D opens nothing |
+| E | Ticker | A link that opens Tips and News. The ticker shows every published tip and news item in order, and has no settings on the Screen |
 
-Next look now, on the Start here page, moves to the next pass at once. A second
-press while the Monday cards are up moves past them. To see a style or a team for
-2 minutes without saving anything, open the menu next to Publish on Dashboard
-Settings (the three dots) and click one of the Preview buttons
+Name effect every and Flying hawk every are in minutes, from 1 to 240. Swap time
+is how long the frames take to pull apart and re-form when the team or the style
+changes, from 0.5 to 3 seconds. Every other timing of the swap scales with it.
+Outlined name is a switch on the team document: off draws the team name solid,
+and both teams are off to start with.
+
+### The rows of the main panel
+
+A row is a panel, a team and, if you want, the seconds. Without seconds the row
+follows Seconds per page on the Screen tab of Dashboard Settings (the Photo row
+follows Seconds per photo).
+
+- Panel: the large panels (Tasks, Upcoming events, Daily Agenda, Subteam
+  spotlight, Sponsor feature, Photo, Leadership, Team leads, Subteam roster and
+  Extra panel) and three Monday rows: Monday: Build team, Monday: Milestones and
+  Monday: Progress. Upcoming events is one row that plays its two pages.
+- Team: shown with the choices the panel allows. A panel for one team can be left
+  on Keep the team on the screen, or set to Prime or Nova. Photo and Upcoming
+  events are for both teams and have no team. A Monday row needs a team. Milestones
+  and Progress can also be Both teams, which draws the card of both teams. The
+  Build team card is for one team.
+- The screen swaps when the team of the next row is another team than the one
+  on the banner, and when a Monday row begins and ends. A row with no team keeps
+  the team on the banner. So keep the Prime rows together and the Nova rows
+  together: the screen transforms every time the team changes.
+- Monday style: the style the Screen takes while a Monday row plays. The screen
+  swaps into it when the first Monday row begins and back to the day's Screen
+  when the next row is not a Monday row. A team with no tasks from the board
+  has no Monday cards, so its Monday rows are skipped (docs/layouts.md, "The Monday cards").
+- The competition cards still come in by themselves from two days before an event,
+  as the Competition tab says. They are not rows.
+
+### Which Screen plays on which day
+
+Dashboard Settings, Look tab, Weekday schedule has a picker for each day,
+Monday to Sunday. Original plays on Monday, Wednesday, Friday and Sunday, and
+Cybertron on Tuesday, Thursday and Saturday. Minimal is not scheduled to start
+with. The day is the calendar day in the time zone on the Look page. The screen
+picks the Screen of the day when it starts and at the first row change after
+midnight, so a screen that restarts lands on the same Screen.
+
+### The first time a Screen opens
+
+If the main panel list is empty, the Screen fills it once from the Panel order
+that the screen followed before Screens existed:
+
+1. For each active team, Prime first: its team-specific panels (Tasks, Daily
+   Agenda, Subteam spotlight, Sponsor feature, Leadership, Team leads, Subteam
+   roster and Extra panel) as rows with that team, in the order they had, and
+   then its three Monday rows.
+2. After the last team, the panels for both teams (Upcoming events and Photo),
+   with no team.
+3. Seconds carry over. A panel that was in the order twice has two rows.
+   A row that was switched off is left out.
+
+The side panel list is filled from the small panels of the same order, with no
+team. Minimal gets the main rows and no side rows. The Monday style is copied from
+the old setting. The screen works out the same rows for a Screen that has none, so
+nothing goes blank before anyone opens Studio. The old Panel order, Styles by day,
+Team order and Monday style in Dashboard Settings are hidden now, with what was
+saved in them, and the screen does not read them for the rows.
+
+Next look now, on the Start here page, moves the main panel to its next row at once. To
+see a style or a team for 2 minutes without saving anything, open the menu next to
+Publish on Dashboard Settings (the three dots) and click one of the Preview buttons
 (docs/hidden-transitions.md, "Preview a look").
-
-The old Style and Team mode settings are hidden. The screen reads them only while
-the lists above are empty. Detail: docs/layouts.md, "The look rotation".
 
 ## Monday setup
 
@@ -321,10 +380,12 @@ docs/rebuilding-the-mini.md, step 13.
 
 ## The Nova trim fields
 
-A team document has eight Trim choices, in Settings, Teams, that make a team look
+A team document has seven Trim choices, in Settings, Teams, that make a team look
 like itself beyond its colors and the mirror. Each is one of two. Prime has the
 first of each, which is how the screen has always looked, and Nova has the other.
-A team saved before the trim existed looks like Prime.
+A team saved before the trim existed looks like Prime. Outlined name is a switch
+in the same box. Off draws the team name solid, and it is off on both teams. The
+older choice Team name look is hidden and the screen does not read it.
 
 | Field | Prime | Nova |
 |-------|-------|------|
@@ -333,7 +394,6 @@ A team saved before the trim existed looks like Prime.
 | Header end | Notch | Slant at 60 degrees |
 | Page grid | Lines | Dots |
 | Bird pose | Auto | Flight |
-| Team name look | Solid letters | Outlined letters |
 | Ticker label | Cut plate | Thin bar |
 | Countdown color | Red | The team's neon |
 
@@ -385,7 +445,8 @@ numbers and times, scores, ranks, award names and ratings, and no person's name.
 - docs/calendars-page.md: the Calendars page and what the Mini writes for it
 - docs/calendar-filters.md and docs/calendar-links.md: the rules, and adding a
   calendar
-- docs/layouts.md: the look rotation, the Monday cards and team trim
+- docs/layouts.md: the layouts, the swap, the Monday cards and team trim
+- docs/switch-the-look.md: the Weekday schedule, the Look page and the seasonal packs
 - docs/hidden-transitions.md: the hidden effects, the frames that fall and come
   back, and the Preview buttons
 - docs/presentations.md: booking talks, the clicker and the mouse

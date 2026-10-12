@@ -41,6 +41,10 @@ export const areas = [
   { letter: 'E', name: 'Ticker', feeds: [['Tips and News', 'Sponsors']], x: 40, y: 984, width: 1840, height: 72 },
 ];
 
+// The line under the picture that says where the letters can be clicked. The picture on this page has
+// no links: the map at the top of each Screen (Settings, Screens) has them.
+export const clickLine = 'Click a letter in Settings, Screens to change what plays there.';
+
 // A wide guess at the width of some text, since the page cannot measure it before it is drawn.
 // A letter is about 0.55 of its size wide, so 0.6 leaves room.
 export function widthOf(text, size) {
@@ -92,7 +96,7 @@ export const buttons = [
   {
     id: 'next-look',
     label: 'Next look now',
-    says: 'Moves the screen on to the next look.',
+    says: 'Moves the main panel on to its next row.',
     request: nextLookRequest,
   },
   {

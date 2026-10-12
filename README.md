@@ -14,7 +14,7 @@ For adjusting the content that gets displayed, Sanity will be used.
 
 Almost everything on the screen is typed into the Studio, which is the editing page for the dashboard. Open it at [Studio address] and sign in.
 
-The list on the left is what you can change. It opens with Start here and has four groups. A name in capitals is a heading, and Daily Agenda, Monday Tasks and Settings are folders:
+The list on the left is what you can change. It opens with Start here and has four groups. A name in capitals is a heading, and Daily Agenda, Monday Tasks and Settings are folders, with Presentations inside Daily Agenda and Screens inside Settings:
 
     Start here
     TASKS
@@ -38,6 +38,10 @@ The list on the left is what you can change. It opens with Start here and has fo
     COACHES ONLY
       Settings
         Dashboard Settings
+        Screens
+          Original
+          Cybertron
+          Minimal
         Look
         Teams
       Extra panels
@@ -47,7 +51,8 @@ Click the one you want, change it, and press **Publish**. Nothing shows on the T
 - Every item has a **Show on screen** switch and an optional **Hide after** date, so things come down on their own.
 - Every field says how many characters fit on the screen. Studio will not let you publish text that is too long.
 - **Publish all**, in the top bar, lists every document that has a draft and publishes the ticked ones in one go. Each is checked first with the same rules as its Publish button, and one that fails is skipped with the reason while the rest are published.
-- **Dashboard Settings** is the one page for the whole board: which boards show and in what order, how long each stays, the countdown dates, the announcement times and words, an alert, how presentations run, which team is on the screen, how big the portraits and photos are and how the portraits are drawn, and the style, the polish and the speed.
+- **Screens** (Settings, Screens) is what plays on the TV: Original, Cybertron and Minimal, each with a map of the screen. Click a letter to change the rows of the main panel and the side panel, or the banner settings. The Weekday schedule in Dashboard Settings picks the Screen of each day (docs/coaches-guide.md, "Screens").
+- **Dashboard Settings** is the one page for the whole board: how long each page stays, the countdown dates, the announcement times and words, an alert, how presentations run, how big the portraits and photos are and how the portraits are drawn, and the Weekday schedule, the polish and the speed.
 - Under Daily Agenda, Presentations holds the talks students have booked and the ones added by hand, and Meeting days holds the talk slots (docs/presentations.md). The plus button of Daily Agenda adds an Agenda item or a Presentation.
 - Events are not typed in here. They come from the team's BAND calendars, and the Calendars page says how to add or hide one. To get an event on the screen, add it in the calendar app, or ask a coach for an Always show rule. A Calendar filter hides some BAND events, such as a meeting that repeats every week (docs/calendar-filters.md).
 - Events Calendar, Places and Demo are not in the list on the left any more. The screen does not read Events Calendar entries. A place is added with Create new in the Location field of a task. The buttons that try the screen are on Start here.
@@ -86,7 +91,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - Polished gold or silver frame edges, picked in Studio
 - A Polish setting in Studio that turns the polish down: Polished (the normal look, and the default), Flat (plain colour edges and no glint) or Plain (Flat, with no screws and no // in the panel headers). Flat and Plain are lighter on the Mini, and `?look=flat` or `?look=plain` on the address tries one for a single page
 - A Style setting in Studio: Original (the screen as it has always been), Cybertron or Minimal. Original and Cybertron have the layout of the theme: a banner, the large frame, the countdown over the small frame and the ticker. Cybertron draws it in plates in the team's body color with the metal of the team for the edge, a neon line just inside the edge, hex bolts at the joints, a hazard stripe under each header, pink conduit and brackets, a row of neon slashes and a grid with scanlines behind the screen, and its countdown is the war clock, in a steel housing, in place of the red frame. Minimal has the bar layout: a banner across the top with the team name and the war clock, a thin side column and one main panel, in steel frames with smaller cut corners, rivets, rust at two corners, a weld seam on the main panel, tick marks along the header line and a finer grid (docs/layouts.md). `?style=cybertron` or `?style=minimal` on the address tries one for a single page
-- Teams: Hawktimus Prime and Hawktimus Nova, each with a name, number, logo, nine colors, a metal (gold or steel), a glow switch and a switch that flips the whole screen left to right. Team order in Studio puts the teams on the screen in turn, each for a pass of the panels, with everything changing together at a page change, and Styles by day gives each day a style (docs/layouts.md, "The look rotation"). Tasks, agenda items, sponsors and most other things have a Team choice, and empty means Both (docs/add-the-nova-team.md, docs/team-on-an-item.md)
+- Teams: Hawktimus Prime and Hawktimus Nova, each with a name, number, logo, nine colors, a metal (gold or steel), a glow switch and a switch that flips the whole screen left to right. The team of each row of a Screen puts the teams on the screen in turn, with everything changing together in a swap, and the Weekday schedule gives each day a Screen (docs/layouts.md, "The Screens"). Tasks, agenda items, sponsors and most other things have a Team choice, and empty means Both (docs/add-the-nova-team.md, docs/team-on-an-item.md)
 - Switch the look: the style, the team and the seasonal pack are three separate settings, and four steps in Studio change them (docs/switch-the-look.md)
 - A fixed 1920 by 1080 screen. Every layout, the mirror and the war clock are placed in pixels inside it, and the page scales the whole picture to the window and never reflows (docs/layouts.md, "The screen is a fixed canvas")
 - Pages that flip like slats while the frames stay in place
@@ -97,7 +102,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - Mechanical page changes: the frame breaks into plates and bars that fold away and click back together around the next page, with screws that turn at the joints. Studio can use these, the slat flip, or take turns
 - Hidden transitions: now and then the screen glitches blue, its frames collapse into a pile and it cuts to a blue error screen, or it glitches red and shows two red eyes in the dark. Each ends with a cube putting the frames back. Each has two pictures that take turns. They can be played on request from Studio
 - Competition cards: the season timeline, last season at a glance, the live rank, the next match with the chance of winning, the last results, the alliance and the district points, from the public data of each team that the Mini reads. They come two days before an event and take priority during it, and a Preview competition button on Start here shows them on sample data (docs/frc-feed.md)
-- Monday boards: the Mini reads the boards named on the Monday tab of Dashboard Settings every 10 minutes and keeps their items in Sanity as tasks, with the status, priority, due date and, if the switch is on, the first name of the owner. The tasks are listed under Monday Tasks, On the TV, the boards are listed under Monday Boards, and Show on TV keeps one off the screen (docs/monday.md). A team that has such tasks on the TV ends its pass of the look rotation with three Monday cards: tasks by Team lead, milestones by week and progress over time (docs/layouts.md, "The Monday cards")
+- Monday boards: the Mini reads the boards named on the Monday tab of Dashboard Settings every 10 minutes and keeps their items in Sanity as tasks, with the status, priority, due date and, if the switch is on, the first name of the owner. The tasks are listed under Monday Tasks, On the TV, the boards are listed under Monday Boards, and Show on TV keeps one off the screen (docs/monday.md). A team that has such tasks on the TV has three Monday rows in a Screen: tasks by Team lead, milestones by week and progress over time (docs/layouts.md, "The Monday cards")
 - A Play announcements button in Studio that plays every announcement that is switched on, once, without waiting for its time
 - A Publish all tool in the Studio's top bar that publishes all the drafts you tick, checking each one first and skipping any that would fail
 - Presentations: a student books a short talk in a Google Form, and the talk appears in Studio. At its time the TV shows a title card, then the student's Google Slides one picture at a time, moved by a clicker, then a thank you card. The Mini turns each deck into pictures before the talk (docs/presentations.md)
@@ -129,7 +134,7 @@ The scripts are in `deploy/scripts/`, and the units that start them are in `depl
 ## More guides
 
 - docs/using-the-studio.md: the students' page, with the same parts as the Start here page
-- docs/coaches-guide.md: the coaches' page, with the tabs of Dashboard Settings, the status block, the keys, the look rotation, Monday, the Calendars page and the competition feed
+- docs/coaches-guide.md: the coaches' page, with the tabs of Dashboard Settings, the status block, the keys, the Screens, Monday, the Calendars page and the competition feed
 - docs/editing-content.md: using the Studio
 - docs/publish-all.md: publishing many drafts at once, and what skipped and failed mean
 - docs/switch-the-look.md: the four steps that change the style, the team and the seasonal pack
