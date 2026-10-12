@@ -292,8 +292,10 @@ editors can sign in from anywhere.
                               /etc/issue and turns on teletraan-console.service, which shows the shutdown
                               drawing. The two drawings are console/startup.txt and console/shutdown.txt
                               (docs/rebuilding-the-mini.md, step 13).
-                              mac/ is for the Mac you work on: ship.sh commits, pushes, updates the Studio
-                              and tells the Mini to pull (docs/shipping-from-the-mac.md)
+                              mac/ is for the Mac you work on: ship.sh checks the code, commits, pushes,
+                              deploys the Studio and has the Mac tool update the Mini and restart the screen;
+                              make-app.sh makes Ship Teletraan.app (docs/shipping-from-the-mac.md,
+                              docs/laptop-setup.md for a second Mac)
     tools/
       serve.py                the server above
       presentation-booking/   the Apps Script code behind the Google Form where students book a talk
@@ -463,6 +465,15 @@ editors can sign in from anywhere.
       test-mini-tool.mjs      checks for the Mac tool in tools/mini/ and for merge-env.sh, with fake ssh, scp
                               and rsync: the masking, webcal to https, the merge into local.env, the menu
                               choices, and that no key or calendar link is printed or put on a command line
+      test-mini-tool-commands.mjs  checks for the words of the Mac tool (update, status, restart, --yes and
+                              --mini), with the same fake tools: the steps in order, the exit code of a failing
+                              step, and that nothing secret is printed
+      test-ship-script.mjs    checks for deploy/mac/ship.sh, with a fake git, node, npm, ssh and rsync on a PATH
+                              that holds no real one: the steps in order, a failing step stops the rest, --dry-run
+                              runs nothing, no question about a hostname, the look at this Mac and at GitHub
+                              first, and that no key is printed
+      test-laptop-docs.mjs    checks for docs/laptop-setup.md and the shipping docs: the steps, one command in
+                              each code block, the plain style, and that the commands the guide names exist
       test-plate-edges.mjs    checks for the thin plate edge: its widths against the other frames', the TEAM plate and
                               the ticker's tag and frame, and that the text on them (TEAM and the number, the name
                               above, TELETRAAN I under, the ticker's line and its word) has 2 px clear of the metal
@@ -480,8 +491,9 @@ editors can sign in from anywhere.
       check-themes.mjs        fails if a theme or overlay is missing a variable or has text that is
                               hard to read
       mini/                   the Mac tool that updates the Mini and keeps its keys and calendars:
-                              teletraan-mini (the menu), Teletraan Mini.command (double-click it) and
-                              merge-env.sh, which runs on the Mini (docs/updating-the-mini.md)
+                              teletraan-mini (the menu, and the words update, status and restart),
+                              Teletraan Mini.command (double-click it) and merge-env.sh, which runs on the
+                              Mini (docs/updating-the-mini.md)
       testdata/               the calendar files test-calendar.mjs reads, and the pieces of seven looks that
                               test-swap-smooth.mjs reads (swap-pieces.json, measured in a render at 1920 x 1080)
       icons.html              every weather picture on one page, at
@@ -500,7 +512,8 @@ editors can sign in from anywhere.
                               hidden-transitions.md, demo.md, publish-all.md, reordering-the-sidebar.md,
                               importing-from-csv.md, presentations.md, up-next.md, calendar-filters.md,
                               calendar-links.md, calendars-page.md, hide-a-repeating-meeting.md, switch-the-look.md,
-                              add-the-nova-team.md, team-on-an-item.md, frc-feed.md, monday.md and updating-the-mini.md.
+                              add-the-nova-team.md, team-on-an-item.md, frc-feed.md, monday.md, updating-the-mini.md,
+                              shipping-from-the-mac.md and laptop-setup.md.
                               seed/ has content to import into the Studio: places.ndjson, the three
                               starting places, teams.ndjson, the two starting teams, and extra-events.ndjson, the
                               old Events Calendar entries, which the screen no longer reads. content-templates/ has one CSV template for each
@@ -1035,6 +1048,9 @@ exceptions are `test-slides-script.mjs`, `test-frc-script.mjs` and `test-monday-
     node tools/test-calendar-status.mjs
     node tools/test-calendars-view.mjs
     node tools/test-mini-tool.mjs
+    node tools/test-mini-tool-commands.mjs
+    node tools/test-ship-script.mjs
+    node tools/test-laptop-docs.mjs
     node tools/test-plate-edges.mjs
     node tools/test-countdown-title.mjs
     node tools/check-themes.mjs

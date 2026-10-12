@@ -1,8 +1,11 @@
 #!/bin/bash
 # Makes "Ship Teletraan.app", a small app that opens Terminal and runs ship.sh,
 # so it can sit in the Dock or in Applications. The app only holds the path to
-# "Ship Teletraan.command" in this folder, so if you move the repository, run
-# this again. Nothing is installed: it writes one app to the folder you give.
+# "Ship Teletraan.command" in this folder, so a change to ship.sh reaches the app
+# on this Mac without making it again, and if you move the repository, run this
+# again. A second Mac makes its own app, once, with this script
+# (docs/laptop-setup.md). Nothing is installed: it writes one app to the folder
+# you give.
 #
 #   deploy/mac/make-app.sh                  puts the app on the Desktop
 #   deploy/mac/make-app.sh ~/Applications   puts it in that folder

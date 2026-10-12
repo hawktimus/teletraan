@@ -2,9 +2,15 @@
 # Updates the Mini from this Mac, and keeps its keys and its calendar links.
 # Run it by double-clicking "Teletraan Mini.command" in Finder, or in a terminal:
 #
-#   tools/mini/teletraan-mini
+#   tools/mini/teletraan-mini                 the menu
+#   tools/mini/teletraan-mini update          copy the files, then restart the screen
+#   tools/mini/teletraan-mini status          show what the Mini last did
+#   tools/mini/teletraan-mini restart         restart the screen
 #
-# docs/updating-the-mini.md explains each choice in the menu.
+# A word after the name does what the same choice in the menu does, with no menu,
+# and the exit code is not zero when a step fails, so deploy/mac/ship.sh can rely on
+# it. --yes skips the "Go ahead?" question of update, and --mini NAME picks a saved
+# Mini other than the one in use. docs/updating-the-mini.md explains each choice.
 #
 # The keys and the calendar links are secrets. They live in ~/.teletraan/secrets.env
 # on this Mac and in deploy/local.env on the Mini, and nowhere else. This script
@@ -62,23 +68,40 @@ clean_value=''
 clean_reason=''
 answer=''
 
+# Set when a command word is given instead of the menu. The steps are the same.
+# What differs: a question that nobody answers counts as no, and a step that did
+# not happen is a failure, because a script is waiting for the exit code.
+command_mode=no
+assume_yes=no
+declined_status=0
+
 say() { printf '%s\n' "$*"; }
 
 step() { printf '\n\033[1m==> %s\033[0m\n' "$*"; }
 
 problem() { printf '\nStopped: %s\n' "$*" >&2; }
 
-# Asks a question and reads one line into $answer. The tool ends when the input
-# does, so a closed terminal cannot loop.
+# The menu ends quietly when the input does, so a closed terminal cannot loop. A
+# command has nobody to ask, so it stops, and says why.
+input_ended() {
+  printf '\n'
+  if [ "$command_mode" = yes ]; then
+    problem "a question needed an answer and none came, so nothing more was done."
+    exit 1
+  fi
+  exit 0
+}
+
+# Asks a question and reads one line into $answer
 prompt() {
   printf '%s' "$1"
-  IFS= read -r answer || { printf '\n'; exit 0; }
+  IFS= read -r answer || input_ended
 }
 
 # The same, with the typing hidden, for a key or a link
 prompt_hidden() {
   printf '%s' "$1"
-  IFS= read -rs answer || { printf '\n'; exit 0; }
+  IFS= read -rs answer || input_ended
   printf '\n'
 }
 
@@ -90,6 +113,12 @@ ask_yes() {
   reply=$(printf '%s' "$answer" | tr '[:upper:]' '[:lower:]')
   [ -n "$reply" ] || reply=$2
   [ "$reply" = y ] || [ "$reply" = yes ]
+}
+
+# A hint names another step as a menu choice in the menu and as a command word on
+# the command line
+words() {
+  if [ "$command_mode" = yes ]; then printf '%s' "$2"; else printf '%s' "$1"; fi
 }
 
 # The first 4 characters, then dots. A value too short to show 4 characters of
@@ -508,9 +537,11 @@ update_mini() {
     say ""
     say "This Mini also pulls from GitHub by itself (the pull timer is on). A pull stops with an error once a file changed here is also changed by a new commit."
     say "Use this copy or the pull, not both. docs/updating-the-mini.md says how to turn the pull timer off."
-    ask_yes "Copy anyway?" no || { say "Nothing was copied."; return 0; }
+    ask_yes "Copy anyway?" no || { say "Nothing was copied."; return "$declined_status"; }
+  elif [ "$assume_yes" = yes ]; then
+    say "Going ahead (--yes)."
   else
-    ask_yes "Go ahead?" yes || { say "Nothing was copied."; return 0; }
+    ask_yes "Go ahead?" yes || { say "Nothing was copied."; return "$declined_status"; }
   fi
 
   rsync -a --delete \
@@ -529,10 +560,10 @@ update_mini() {
   status=$?
   if [ "$status" -ne 0 ]; then
     explain_failure "$status"
-    say "The files are on the Mini. Choose 6 to restart the screen again."
+    say "The files are on the Mini. $(words 'Choose 6 to restart the screen again.' 'Run teletraan-mini restart to restart the screen again.')"
     return 1
   fi
-  say "Done. If this update changed anything in deploy/systemd, choose 4 to install the services again."
+  say "Done. If this update changed anything in deploy/systemd, $(words 'choose 4' 'run teletraan-mini with no word after it and choose 4') to install the services again."
 }
 
 show_keys() {
@@ -847,7 +878,7 @@ EOF
 
 # 5. What the Mini last did, and what the screen does with each calendar
 mini_status() {
-  local status
+  local status result=0
   step "Status of the Mini $mini_name"
   mini_run "$MINI_REPO/deploy/scripts/status-write.sh --print" 2>&1 | hide_secrets
   status=${PIPESTATUS[0]}
@@ -855,13 +886,20 @@ mini_status() {
     explain_failure "$status"
     return 1
   elif [ "$status" = 2 ]; then
-    say "The Mini has an older status-write.sh. Choose 1 to update it."
+    say "The Mini has an older status-write.sh. $(words 'Choose 1 to update it.' 'Run teletraan-mini update.')"
+    result=1
+  elif [ "$status" -ne 0 ]; then
+    result=1
   fi
 
   say ""
   say "Calendars:"
   mini_run "$MINI_REPO/deploy/scripts/check-calendars.sh" 2>&1 | hide_secrets
-  return 0
+  if [ "${PIPESTATUS[0]}" = 255 ]; then
+    explain_failure 255
+    return 1
+  fi
+  return "$result"
 }
 
 # 6. Restart the browser that fills the TV
@@ -894,8 +932,58 @@ show_menu() {
   say ""
 }
 
+usage() {
+  say "Usage: teletraan-mini [--mini NAME] [--yes] [update | status | restart]"
+  say ""
+  say "  (no word)  show the menu"
+  say "  update     copy the files to the Mini, then restart the screen"
+  say "  status     show what the Mini last did"
+  say "  restart    restart the screen"
+  say "  --yes      with update, do not ask Go ahead?"
+  say "  --mini     use the saved Mini with this name instead of the one in use"
+}
+
+# A wrong word is not repeated back, in case it was a key or an address typed by mistake
+bad_arguments() {
+  problem "$1"
+  usage >&2
+  exit 2
+}
+
+saved_names() {
+  local i=0 list=''
+  while [ "$i" -lt "$mini_count" ]; do
+    if [ -n "$list" ]; then list="$list, "; fi
+    list="$list${mini_names[$i]}"
+    i=$((i + 1))
+  done
+  printf '%s' "$list"
+}
+
 main() {
-  local command
+  local command command_word='' wanted_mini='' wanted i=0 found=no
+  while [ "$#" -gt 0 ]; do
+    case $1 in
+      update|status|restart)
+        if [ -n "$command_word" ]; then bad_arguments "give one word, not two."; fi
+        command_word=$1
+        ;;
+      --yes|-y) assume_yes=yes ;;
+      --mini)
+        if [ "$#" -lt 2 ]; then bad_arguments "--mini needs the name of a saved Mini."; fi
+        wanted_mini=$2
+        shift
+        ;;
+      --mini=*) wanted_mini=${1#--mini=} ;;
+      -h|--help|help) usage; exit 0 ;;
+      *) bad_arguments "that is not a word this tool knows." ;;
+    esac
+    shift
+  done
+  if [ "$assume_yes" = yes ] && [ -z "$command_word" ]; then
+    bad_arguments "--yes goes with update, status or restart."
+  fi
+
   for command in ssh scp rsync; do
     if ! command -v "$command" > /dev/null 2>&1; then
       problem "$command is not installed on this Mac. It comes with macOS, so something is wrong with this Mac."
@@ -916,16 +1004,37 @@ main() {
 
   mkdir -p "$state_dir" && chmod 700 "$state_dir" || { problem "could not make $state_dir."; exit 1; }
   load_config
-  if [ "$mini_count" = 0 ]; then
-    first_run || exit 1
-  else
-    local wanted=$current_name i=0
-    use_mini 0
-    while [ "$i" -lt "$mini_count" ]; do
-      if [ "${mini_names[$i]}" = "$wanted" ]; then use_mini "$i"; fi
-      i=$((i + 1))
-    done
+  if [ -n "$command_word" ]; then
+    command_mode=yes
+    declined_status=1
   fi
+  if [ "$mini_count" = 0 ]; then
+    if [ "$command_mode" = yes ]; then
+      problem "no Mini is saved on this Mac yet. Run tools/mini/teletraan-mini with no word after it, once, and give it the Mini's address."
+      exit 1
+    fi
+    first_run || exit 1
+  fi
+
+  wanted=${wanted_mini:-$current_name}
+  use_mini 0
+  while [ "$i" -lt "$mini_count" ]; do
+    if [ "${mini_names[$i]}" = "$wanted" ]; then
+      use_mini "$i"
+      found=yes
+    fi
+    i=$((i + 1))
+  done
+  if [ -n "$wanted_mini" ] && [ "$found" = no ]; then
+    problem "no saved Mini has that name. The saved names are: $(saved_names)."
+    exit 1
+  fi
+
+  case $command_word in
+    update) update_mini; exit $? ;;
+    status) mini_status; exit $? ;;
+    restart) restart_screen; exit $? ;;
+  esac
 
   while true; do
     show_menu

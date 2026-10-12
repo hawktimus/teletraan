@@ -1,32 +1,36 @@
 #!/bin/bash
 # Ships a change from this Mac to the screen: checks the code, commits and
-# pushes it to GitHub, updates the Studio, and tells the Mini to pull (and,
-# if you ask, to restart the screen). docs/shipping-from-the-mac.md explains
-# each step and what to do when one stops.
+# pushes it to GitHub, updates the Studio, then has the Mac tool copy the files
+# to the Mini and restart the screen. docs/shipping-from-the-mac.md explains each
+# step and what to do when one stops.
 #
-# Run it by double-clicking "Ship Teletraan.command" in Finder, or in a terminal:
+# Run it by double-clicking "Ship Teletraan.command" in Finder, from
+# "Ship Teletraan.app" (deploy/mac/make-app.sh makes it), or in a terminal:
 #
 #   deploy/mac/ship.sh             a menu
-#   deploy/mac/ship.sh all         check, commit, push, Studio, Mini pull
-#   deploy/mac/ship.sh all-restart the same, then restart the screen
+#   deploy/mac/ship.sh all         check, commit, push, Studio, update the Mini and restart the screen
 #   deploy/mac/ship.sh push        check, commit and push only
 #   deploy/mac/ship.sh studio      update the Studio only
-#   deploy/mac/ship.sh mini        the Mini pulls only
-#   deploy/mac/ship.sh restart     restart the screen on the Mini only
+#   deploy/mac/ship.sh mini        update the Mini and restart the screen only
+#   deploy/mac/ship.sh status      show the status of the Mini
+#
+# Older words still work: all-restart is the same as all, and restart restarts
+# the screen without copying anything.
 #
 # Add --dry-run to any of them to see what would run without running it.
-# Every step stops the whole run when it fails, so nothing later runs on top
-# of a broken step. No password is stored anywhere: ssh and sudo ask you.
+# Every step stops the whole run when it fails, so nothing later runs on top of
+# a broken step, and the last lines say what had worked. No password is stored
+# anywhere: git, Sanity, ssh and sudo ask you in this window.
+#
+# The Mini's address is not here. The Mac tool keeps it in ~/.teletraan/config
+# (tools/mini/teletraan-mini, docs/updating-the-mini.md).
 
 set -u
 
-# The Mini. These are not secrets; change them here if the Mini changes.
-MINI_ADDRESS=${MINI_ADDRESS:-hawktimus@teletraan.local}
-MINI_REPO=${MINI_REPO:-/opt/teletraan}
-MINI_KIOSK=${MINI_KIOSK:-teletraan-kiosk.service}
-
 here=$(cd "$(dirname "$0")" && pwd)
 repo=$(cd "$here/../.." && pwd)
+mini_tool=$repo/tools/mini/teletraan-mini
+mini_config=$HOME/.teletraan/config
 
 dry_run=no
 action=''
@@ -35,6 +39,7 @@ for argument in "$@"; do
 done
 
 finished=''  # the steps that worked, for the summary at the end
+problems=''  # what this Mac is missing, one line each
 
 say() { printf '%s\n' "$*"; }
 
@@ -44,12 +49,16 @@ step() {
 
 fail() {
   printf '\n\033[1mStopped: %s\033[0m\n' "$*" >&2
-  if [ -n "$finished" ]; then say "Done before it stopped:$finished" | sed 's/,$//' >&2; fi
+  if [ -n "$finished" ]; then
+    say "Done before it stopped:$finished" | sed 's/,$//' >&2
+  else
+    say "Nothing had been done before it stopped." >&2
+  fi
   exit 1
 }
 
-# Asks a yes or no question. The second word is the answer for just pressing
-# Return, so a risky question can default to no.
+# Asks a yes or no question. The second word is the answer for pressing Return,
+# so a risky question can default to no.
 ask() {
   local reply
   if [ "$2" = yes ]; then read -r -p "$1 [Y/n] " reply; else read -r -p "$1 [y/N] " reply; fi
@@ -67,16 +76,110 @@ run() {
   "$@"
 }
 
+missing() {
+  problems="$problems  - $*"$'\n'
+}
+
+need_tool() {
+  command -v "$1" >/dev/null 2>&1 || missing "$1 is not installed. $2"
+}
+
+# The Studio needs Node 22.12 or newer (studio/package.json)
+node_is_new_enough() {
+  local version major minor
+  version=$(node --version 2>/dev/null) || return 1
+  version=${version#v}
+  major=${version%%.*}
+  minor=${version#*.}
+  minor=${minor%%.*}
+  case "$major$minor" in
+    ''|*[!0-9]*) return 1 ;;
+  esac
+  [ "$major" -gt 22 ] || { [ "$major" -eq 22 ] && [ "$minor" -ge 12 ]; }
+}
+
+# Step 0: everything the run needs, looked at before anything is committed or
+# sent, so a missing piece cannot leave the run half done. All the gaps are
+# listed together, each with the one command that fills it.
+preflight() {
+  local tools='' modules=no identity=no mini=no tool
+  case $1 in
+    all)            tools='git node npm ssh rsync'; modules=yes; identity=yes; mini=yes ;;
+    push)           tools='git node'; identity=yes ;;
+    studio)         tools='node npm'; modules=yes ;;
+    mini|status|restart) tools='ssh rsync'; mini=yes ;;
+  esac
+
+  step "Checking this Mac"
+  for tool in $tools; do
+    case $tool in
+      git)   need_tool git "Install it first (docs/laptop-setup.md, step 1)." ;;
+      node)  need_tool node "Install Node first (docs/laptop-setup.md, step 1)." ;;
+      npm)   need_tool npm "It comes with Node (docs/laptop-setup.md, step 1)." ;;
+      *)     need_tool "$tool" "It comes with macOS, so something is wrong with this Mac." ;;
+    esac
+  done
+
+  if [ "$modules" = yes ]; then
+    if command -v node >/dev/null 2>&1 && ! node_is_new_enough; then
+      missing "the Studio needs Node 22.12 or newer, and this Mac has $(node --version 2>/dev/null). Install a newer Node (docs/laptop-setup.md, step 1)."
+    fi
+    [ -d "$repo/studio/node_modules" ] || missing "the Studio's packages are not installed. Run once: cd \"$repo/studio\" && npm install"
+  fi
+
+  if [ "$identity" = yes ] && command -v git >/dev/null 2>&1; then
+    [ -n "$(git -C "$repo" config user.name 2>/dev/null)" ] || missing "git does not know your name. Run once: git config --global user.name \"Your Name\""
+    [ -n "$(git -C "$repo" config user.email 2>/dev/null)" ] || missing "git does not know your email. Run once: git config --global user.email \"you@example.com\""
+  fi
+
+  if [ "$mini" = yes ]; then
+    if [ ! -x "$mini_tool" ]; then
+      missing "the Mac tool is missing or cannot run: $mini_tool"
+    elif ! grep -Eq '^mini\.[a-z0-9_-]+=' "$mini_config" 2>/dev/null; then
+      missing "this Mac has no saved Mini yet. Run once, and give it the Mini's address: \"$mini_tool\""
+    fi
+  fi
+
+  if [ -n "$problems" ]; then
+    say "This Mac is not ready:"
+    printf '%s' "$problems"
+    fail "fix the lines above and run this again. Nothing was changed."
+  fi
+  say "  ready"
+}
+
+# The Mac tool copies this folder as it is, so a folder that is behind GitHub
+# (the other computer pushed since the last git pull) would put older files on
+# the Mini. This looks first and stops before anything is sent.
+check_up_to_date() {
+  step "Comparing this folder with GitHub"
+  command -v git >/dev/null 2>&1 || return 0
+  if ! run git -C "$repo" fetch --quiet; then
+    say "GitHub could not be reached, so this folder was not compared with it."
+    return 0
+  fi
+  local behind
+  behind=$(git -C "$repo" rev-list --count 'HEAD..@{u}' 2>/dev/null || echo 0)
+  if [ "$behind" != 0 ]; then
+    say "GitHub has $behind newer commit(s) that this folder does not have. Shipping now would put older files on the Mini. Run:"
+    say "  cd \"$repo\" && git pull --no-rebase"
+    say "and then run this again."
+    fail "this folder is behind GitHub."
+  fi
+  say "  up to date"
+}
+
 # Step 1: the same checks a student can run by hand (docs/where-things-are.md).
 # They take a few seconds. A failing check is a warning you can overrule.
 run_checks() {
   step "Checking the code"
-  command -v node >/dev/null 2>&1 || fail "node is not installed on this Mac, so the checks cannot run."
 
-  local failed='' file name
+  local failed='' file name count=0
   for file in "$repo"/tools/test-*.mjs "$repo"/tools/check-*.mjs "$repo"/studio/check-schemas.mjs; do
     [ -f "$file" ] || continue
     name=${file#"$repo"/}
+    count=$((count + 1))
+    if [ "$dry_run" = yes ]; then continue; fi
     if (cd "$repo" && node "$file" >/dev/null 2>&1); then
       say "  ok      $name"
     else
@@ -85,7 +188,9 @@ run_checks() {
     fi
   done
 
-  if [ -n "$failed" ]; then
+  if [ "$dry_run" = yes ]; then
+    say "  [dry run] would run $count checks with node"
+  elif [ -n "$failed" ]; then
     say ""
     say "To see why one failed, run it in a terminal, for example: node $(printf '%s' "$failed" | awk '{print $1}')"
     ask "Some checks failed. Go on anyway?" no || fail "a check failed. Fix it and run this again."
@@ -93,7 +198,8 @@ run_checks() {
   finished="$finished checks,"
 }
 
-# Step 2: commit what changed and push it. The Mini follows GitHub's main.
+# Step 2: commit what changed and push it. GitHub's main is the copy the
+# laptop and any other computer start from.
 commit_and_push() {
   step "Commit and push"
   cd "$repo" || fail "the repository folder is missing: $repo"
@@ -102,8 +208,10 @@ commit_and_push() {
   branch=$(git branch --show-current)
   [ -n "$branch" ] || fail "git is not on a branch. Check out main first."
   if [ "$branch" != main ]; then
-    say "You are on the branch '$branch'. The Mini follows main, so this will not reach the screen."
-    ask "Push '$branch' anyway?" no || fail "switch to main first (git checkout main)."
+    say "You are on the branch '$branch'. Other computers start from main, so this will not reach them."
+    if [ "$dry_run" = no ]; then
+      ask "Push '$branch' anyway?" no || fail "switch to main first (git checkout main)."
+    fi
   fi
 
   local committed=no
@@ -125,7 +233,9 @@ commit_and_push() {
     fi
 
     local message=${SHIP_MESSAGE:-}
-    if [ -z "$message" ]; then
+    if [ -z "$message" ] && [ "$dry_run" = yes ]; then
+      message='(you would be asked for a short description)'
+    elif [ -z "$message" ]; then
       read -r -p "Describe the change in a few words: " message
     fi
     [ -n "$message" ] || fail "a commit needs a short description."
@@ -149,8 +259,8 @@ commit_and_push() {
   if ! run git push; then
     say ""
     say "The push was refused. Most often GitHub has a change this Mac does not have"
-    say "(an edit made on github.com, for example). Nothing was forced. Run:"
-    say "  cd $repo && git pull --no-rebase"
+    say "(an edit made on github.com, or a push from the other computer). Nothing was forced. Run:"
+    say "  cd \"$repo\" && git pull --no-rebase"
     say "then fix any conflict it reports, and run this again."
     fail "the push did not go through."
   fi
@@ -158,123 +268,89 @@ commit_and_push() {
 }
 
 # Step 3: the Studio's own page on sanity.io. Editors see new fields after this.
+# studio/sanity.cli.js names the hosted Studio, so Sanity asks nothing.
 update_studio() {
   step "Updating the Studio"
-  if [ "$dry_run" = no ] && [ ! -d "$repo/studio/node_modules" ]; then
-    fail "the Studio's packages are not installed. Run once: cd $repo/studio && npm install"
+  if ! grep -q 'appId' "$repo/studio/sanity.cli.js" 2>/dev/null; then
+    say "studio/sanity.cli.js has no appId, so Sanity will ask which hostname to use. Pick teletraan (docs/shipping-from-the-mac.md)."
   fi
-
-  say "If it asks you to log in, stop it, run 'npx sanity login' in the studio folder, and start again."
+  say "If it says you are not logged in, stop, run 'npx sanity login' in the studio folder, and start again."
   if ! (cd "$repo/studio" && run npm run deploy); then
-    fail "the Studio did not deploy. The lines above say why. If it is a login, run: cd $repo/studio && npx sanity login"
+    fail "the Studio did not deploy. The lines above say why. If it is a login, run: cd \"$repo/studio\" && npx sanity login"
   fi
   finished="$finished Studio,"
 }
 
-# Step 4: the Mini pulls the repository, as its own user. The pull is run
-# without sudo on purpose: a pull run as root leaves root-owned files in the
-# repository, and the Mini's own timer (which runs as hawktimus) could then
-# no longer update them. Only the restart needs sudo, and ssh -t lets sudo ask
-# for the password here in this window.
+# Step 4: the Mac tool copies this folder to the Mini and restarts the screen.
+# It asks for the Mini's passwords here, in this window, and stores none.
 update_mini() {
-  local restart=$1
-  step "Updating the Mini ($MINI_ADDRESS)"
-
-  # What GitHub has now, so the Mini can be compared with it afterwards
-  local branch expected
-  branch=$(git -C "$repo" branch --show-current)
-  expected=$(git -C "$repo" ls-remote origin "refs/heads/$branch" 2>/dev/null | cut -f1)
-
-  local restart_line=''
-  if [ "$restart" = yes ]; then
-    restart_line="echo 'Restarting the screen. It is black for about ten seconds.'; sudo systemctl restart $MINI_KIOSK"
+  step "Updating the Mini and restarting the screen"
+  if ! run "$mini_tool" update --yes; then
+    fail "the Mini was not updated. The lines above say why."
   fi
+  finished="$finished Mini update and restart,"
+}
 
-  local remote
-  remote=$(cat <<EOF
-set -e
-$MINI_REPO/deploy/scripts/pull.sh
-now=\$(git -C $MINI_REPO rev-parse HEAD)
-echo "The Mini is at \$(echo "\$now" | cut -c1-7)."
-if [ -n "$expected" ] && [ "\$now" != "$expected" ]; then
-  echo "That is not the commit on GitHub ($(printf '%s' "$expected" | cut -c1-7)). The pull may have stopped; see Recovering in docs/rebuilding-the-mini.md." >&2
-  exit 1
-fi
-$restart_line
-EOF
-)
-
-  if [ "$dry_run" = yes ]; then
-    say "  [dry run] ssh -t -o ConnectTimeout=10 $MINI_ADDRESS '...'"
-    say "$remote" | sed 's/^/            /'
-    finished="$finished Mini pull,"
-    return 0
-  fi
-
-  ssh -t -o ConnectTimeout=10 "$MINI_ADDRESS" "$remote"
-  local status=$?
-  if [ "$status" = 255 ]; then
-    fail "could not reach $MINI_ADDRESS. Is the Mini on, and on the same network as this Mac? You can use its IP address instead: MINI_ADDRESS=hawktimus@<ip address> deploy/mac/ship.sh"
-  elif [ "$status" != 0 ]; then
-    fail "the Mini reported a problem (exit $status). The lines above say what."
-  fi
-
-  if [ "$restart" = yes ]; then finished="$finished Mini pull and restart,"; else finished="$finished Mini pull,"; fi
+status_mini() {
+  step "Status of the Mini"
+  run "$mini_tool" status || fail "the status could not be read. The lines above say why."
+  finished="$finished Mini status,"
 }
 
 # Only the restart, for a screen that looks wrong
 restart_mini() {
-  step "Restarting the screen on the Mini ($MINI_ADDRESS)"
-  if [ "$dry_run" = yes ]; then
-    say "  [dry run] ssh -t $MINI_ADDRESS sudo systemctl restart $MINI_KIOSK"
-    finished="$finished restart,"
-    return 0
-  fi
-
-  ssh -t -o ConnectTimeout=10 "$MINI_ADDRESS" "sudo systemctl restart $MINI_KIOSK"
-  local status=$?
-  if [ "$status" = 255 ]; then fail "could not reach $MINI_ADDRESS."; fi
-  if [ "$status" != 0 ]; then fail "the restart failed (exit $status)."; fi
+  step "Restarting the screen on the Mini"
+  run "$mini_tool" restart || fail "the screen was not restarted. The lines above say why."
   finished="$finished restart,"
 }
 
 menu() {
   say "Ship Teletraan I"
   say ""
-  say "  1  Everything: check, commit, push, update the Studio, Mini pulls"
-  say "  2  Everything, then restart the screen on the Mini"
-  say "  3  Commit and push only"
-  say "  4  Update the Studio only"
-  say "  5  Mini pulls only"
-  say "  6  Restart the screen on the Mini only"
+  say "  1  Ship everything: check the code, commit, push, deploy the Studio,"
+  say "     update the Mini and restart the screen"
+  say "  2  Push only: check the code, commit and push"
+  say "  3  Studio only"
+  say "  4  Update the Mini only, and restart the screen"
+  say "  5  Status of the Mini"
   say "  q  Quit"
   say ""
   local choice
   read -r -p "Choose: " choice
   case "$choice" in
     1) action=all ;;
-    2) action=all-restart ;;
-    3) action=push ;;
-    4) action=studio ;;
-    5) action=mini ;;
-    6) action=restart ;;
+    2) action=push ;;
+    3) action=studio ;;
+    4) action=mini ;;
+    5) action=status ;;
     *) say "Nothing done."; exit 0 ;;
   esac
 }
 
 [ -n "$action" ] || menu
-if [ "$dry_run" = yes ]; then say "Dry run: nothing below is really run."; fi
-
+if [ "$action" = all-restart ]; then action=all; fi
 case "$action" in
-  all)          run_checks; commit_and_push; update_studio; update_mini no ;;
-  all-restart)  run_checks; commit_and_push; update_studio; update_mini yes ;;
-  push)         run_checks; commit_and_push ;;
-  studio)       update_studio ;;
-  mini)         update_mini no ;;
-  restart)      restart_mini ;;
-  *)            fail "I do not know '$action'. Use all, all-restart, push, studio, mini or restart." ;;
+  all|push|studio|mini|status|restart) ;;
+  *) fail "I do not know that word. Use all, push, studio, mini or status." ;;
+esac
+if [ "$dry_run" = yes ]; then say "Dry run: nothing below is run."; fi
+
+preflight "$action"
+case "$action" in
+  all)     check_up_to_date; run_checks; commit_and_push; update_studio; update_mini ;;
+  push)    run_checks; commit_and_push ;;
+  studio)  update_studio ;;
+  mini)    check_up_to_date; update_mini ;;
+  status)  status_mini ;;
+  restart) restart_mini ;;
 esac
 
 step "Finished"
-say "Done:$finished" | sed 's/,$//'
-say "The screen reloads itself within a minute of a pull."
+if [ "$dry_run" = yes ]; then
+  say "Dry run: these steps would run:$finished" | sed 's/,$//'
+else
+  say "Done:$finished" | sed 's/,$//'
+  case "$action" in
+    all|mini|restart) say "The screen was restarted, so it shows the new files." ;;
+  esac
+fi

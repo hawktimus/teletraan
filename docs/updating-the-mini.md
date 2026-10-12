@@ -6,13 +6,15 @@ the Mini last did and restarts the screen. It works from any Mac that has the
 repository, so a coach with a laptop can use it as well as the Mac in the room.
 
 It replaces the loose update script that used to sit in one person's home folder.
-The keys and calendar links are secrets, so they never go in the repository and
+`deploy/mac/ship.sh` uses it too: its last step is `teletraan-mini update --yes`
+(`docs/shipping-from-the-mac.md`). The keys and calendar links are secrets, so they never go in the repository and
 never go in Sanity, which anyone can read. They live on the Mac in `~/.teletraan/`
 and on the Mini in `deploy/local.env`.
 
 ## Before you start
 
 - The repository on the Mac (`git clone`, then `git pull` for the newest tool).
+  `docs/laptop-setup.md` goes through a new Mac from the start.
 - The Mini's address as `user@host`. A Tailscale name works from anywhere, for
   example `hawktimus@teletraan`. On the school network the name the Mini has there
   works, or its address from `docs/rebuilding-the-mini.md`, "Finding the Mini on
@@ -28,6 +30,9 @@ Pick one:
 - Double-click `tools/mini/Teletraan Mini.command` in Finder. If macOS says it
   cannot open the file, right-click it, choose Open, and choose Open again.
 - In Terminal, from the repository folder: `tools/mini/teletraan-mini`.
+- In Terminal with a word after the name, to do one thing with no menu:
+  `tools/mini/teletraan-mini update`, `status` or `restart`
+  (see "From the command line" below).
 
 ## The first run
 
@@ -69,11 +74,12 @@ If the update changed a file in `deploy/systemd/`, choose 4 to install the
 services again. If it changed `docker-compose.yml` or `nginx.conf`, follow
 `deploy/README.md`, "When a pull changes this folder".
 
-The Mini gets new files in one of two ways. Either it pulls them from GitHub every
-5 minutes (`docs/shipping-from-the-mac.md`), or this tool copies them. Use one. A
-copy leaves the Mini's git folder looking changed, and a later pull stops with an
-error when a new commit changes the same file. The tool asks first when the pull
-timer is on. To make the Mini a copy-only Mini, turn the timer off on the Mini:
+The Mini gets new files in one of two ways. Either this tool copies them, which is
+what `deploy/mac/ship.sh` does (`docs/shipping-from-the-mac.md`), or the Mini pulls
+them from GitHub every 5 minutes with its pull timer. Use one. A copy leaves the
+Mini's git folder looking changed, and a later pull stops with an error when a new
+commit changes the same file. The tool asks first when the pull timer is on. To
+make the Mini a copy-only Mini, turn the timer off on the Mini:
 
     sudo systemctl disable --now teletraan-pull.timer
 
@@ -165,6 +171,34 @@ Restarts the browser that fills the TV. Use it when the screen looks stuck or
 wrong. The screen is black for about ten seconds. It does not restart the web
 server container.
 
+## From the command line
+
+A word after the name does what the same menu choice does, for the Mini in use,
+with no menu. `deploy/mac/ship.sh` runs these.
+
+| Command | Same as | What it does |
+|---------|---------|--------------|
+| `tools/mini/teletraan-mini update` | 1 | copies the files, then restarts the screen |
+| `tools/mini/teletraan-mini status` | 5 | shows what the Mini last did and the calendars |
+| `tools/mini/teletraan-mini restart` | 6 | restarts the screen |
+
+- `--yes` skips the Go ahead question of `update`, so nobody has to press Return.
+  It does not answer the Copy anyway question that appears when the Mini's pull
+  timer is on. That one is a warning, and no is its answer if nobody gives one.
+- `--mini NAME` uses the saved Mini with that name for this one run. It does not
+  change the Mini in use. A name that is not saved stops the run and lists the
+  names that are. Example: `tools/mini/teletraan-mini --mini spare restart`.
+- The exit code is 0 when every step worked and not 0 when one failed or did not
+  happen: a Mini that cannot be reached, a copy that stopped, a restart that
+  failed, a question that nobody answered. A failed copy does not restart the
+  screen. A script can rely on this.
+- It prints no key and no calendar link, the same as the menu. A word the tool
+  does not know prints the usage and exits with 2, and the word is not repeated.
+- With no Mini saved yet it stops and says to run the tool once with no word, to
+  give it the Mini's address. It does not ask for the address in a command.
+
+Choices 2, 3, 4 and 7 stay in the menu, because they ask questions.
+
 ## What stays secret
 
 - `~/.teletraan/config` holds the Mini's address. `~/.teletraan/secrets.env` holds
@@ -185,7 +219,9 @@ server container.
 | The copy stopped (rsync exit code) | Run choice 1 again. The Mini may have some of the new files until then. If the lines above say `rsync: command not found`, the Mini needs `sudo apt install rsync`, after the team mentor's yes. |
 | Line N of the new values is not a key or a calendar | Nothing was changed on the Mini. `~/.teletraan/secrets.env` was edited by hand. Delete the line or use the form. |
 | The calendar service did not run | The service is not installed on this Mini. Choose 4, or see step 11 of `docs/rebuilding-the-mini.md`. |
-| The Mini has an older status-write.sh | Choose 1 to copy the newest files. |
+| The Mini has an older status-write.sh | Choose 1 to copy the newest files, or run `tools/mini/teletraan-mini update`. |
+| no Mini is saved on this Mac yet | A command word needs a saved Mini. Run `tools/mini/teletraan-mini` with no word, once, and give it the address. |
+| a question needed an answer and none came | The Mini's pull timer is on and the command had nobody to ask. Run the update by hand and answer, or turn the pull timer off. |
 | A calendar was added and the screen shows nothing from it | It needs a row in Dashboard Settings, Calendars, with the code the tool printed. |
 | macOS will not open the .command file | Right-click it, choose Open, and choose Open again. |
 
@@ -198,5 +234,6 @@ three keys and the `CALENDAR_<ID>_URL` lines, so it cannot change the port or th
 data folder.
 
 The tool runs on the bash that comes with macOS, version 3.2, so it uses no newer
-shell features. `node tools/test-mini-tool.mjs` checks it with fake `ssh`, `scp`
-and `rsync`. Nothing in that test touches a real Mini.
+shell features. `node tools/test-mini-tool.mjs` checks the menu and
+`node tools/test-mini-tool-commands.mjs` checks the command words, both with fake
+`ssh`, `scp` and `rsync`. Nothing in those tests touches a real Mini.
