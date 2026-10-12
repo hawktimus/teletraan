@@ -21,7 +21,8 @@
 //              look's from the first moment of this part
 //   1000 to 1250   the page content fades in, over the last of the travel
 //
-// The hawk flies beside it, from the old place of the logo to the new one in 2000 (planHawk below).
+// The icon of the logo goes with the pieces, from its old place to the new one, and is a bird for a moment only when a
+// team or a style changes (hawkMotionFor and planHawk below).
 //
 // A piece is { id, kind, region, index, left, top, width, height, parent } on the 1920 x 1080 screen.
 // kind is 'plate', 'box' or 'bolt'. region is the id of the part of the screen it is in and index its
@@ -35,7 +36,7 @@ export const swapTimes = {
   pullMs: 450,         // a piece is fully out by this time, counted from the start of the swap
   switchMs: 450,       // the look goes on and the new pieces take over: every piece is out and at rest
   reformEndMs: 1250,   // every piece is home and the content is back
-  hawkMs: 2000,        // the hawk lands
+  landMs: 150,         // the icon that travelled and the logo cross-fade, after the pieces are home
 };
 
 // The re-form: a piece leaves for its place after a delay of its own, 0 to reformDelayMostMs after the look
@@ -395,78 +396,85 @@ export function poseFrames(from, to, zoom = 1) {
 
 
 // The hawk
-
+//
+// The logo is copied for the swap and the copy moves, over everything, while the logo itself waits out of sight. How
+// much of a bird the copy is depends on what the swap does (the pieces and the look are the same for all of them):
+//   none    calm motion and no motion have no pieces, so no icon moves
+//   slight  a team or a style changes: the icon goes to its new place with the pieces, and as the new look goes on it
+//           flutters for hawkShape.birdMs: the emblem turns into the hawk, the wings beat twice, and the emblem is back
+//           before the icon lands. The path rises a little in the middle, so the flutter is a small hop
+//   carry   a Monday card is on either side and the team stays: the icon goes to its new place with the pieces, as
+//           it is, lower in the bar layout and higher when it comes back. It is never a bird
+// The bird that changes and flies every few minutes is another thing: the flying hawk of frame.js.
 export const hawkShape = {
-  arcHeight: 300,      // how high the arc of a flight rises above the line between the two places
-  hopHeight: 120,      // and the hop of a hawk that stays where it is
-  sameSpot: 24,        // two places closer than this are the same place
-  flapMs: 320,         // one beat of the wings
+  hopHeight: 40,       // how high the path of a slight swap rises in the middle
+  birdMs: 600,         // how long the icon is a hawk in a slight swap, counted from the moment the look goes on
+  beats: 2,            // wing beats in it
+  fadeMs: 100,         // the emblem turns into the hawk, and back, in this long
   wingShare: 0.35,     // how far the wings go, as a share of the beat the flying logo makes
-  tiltMost: 20,        // degrees of tilt, nose up in the climb and nose down in the descent
-  steps: 16,           // the arc is written as this many straight pieces
-  colorAt: 0.5,        // the colors change at the top of the arc
+  steps: 16,           // the path is written as this many straight pieces
+  colorAt: 0.5,        // the colors of the new look come at the middle of the travel
   easing: 'cubic-bezier(.45, 0, .55, 1)',
 };
 
-// The easing of the hawk along its line: slow at the start and the end
-function smooth(time) {
-  return bezierAt([0.45, 0, 0.55, 1], time);
+// What the icon does in a swap. swap is { motion, team, fromMonday, intoMonday }: the motion setting, whether the team
+// changes, and whether the page that leaves or the page that comes is a Monday card. Only full motion has pieces, so
+// calm motion and no motion have no icon (none). Going into a Monday card, or from one card to the next, carries the icon. Coming
+// out of one carries it too, unless the team changes there: Prime to Nova and Nova to Prime are slight wherever they
+// happen. A style or a look that changes alone is slight as well.
+export function hawkMotionFor(swap) {
+  if (swap.motion !== 'full') return 'none';
+  if (swap.intoMonday) return 'carry';
+  if (swap.team) return 'slight';
+  if (swap.fromMonday) return 'carry';
+  return 'slight';
 }
 
-// Plans the flight of the hawk. from and to are the box of the logo before and after, { x, y, width,
-// height }, with x and y the middle of the box on the screen. durationMs is how long the flight takes
-// and lift how many pixels higher than the old place it starts, because the hawk hovers and lifts while the
-// new place is not yet known. It rises in one arc and settles. When the place is the same, or nearly,
-// it hops and lands. The hawk faces the way it flies. The top of the arc is 300 pixels above the line
-// between the places (a hop 120) when the whole hawk stays on the screen. Where the logo is too near the
-// top for that, as in the banner, the arc dips down instead, and where there is no room either way it is
-// as high as the room is.
-// Returns { hop, direction, durationMs, rise, height, apexMs, keyframes }. direction is 1 when it flies
-// to the right and -1 to the left. rise is how far the top of the arc is above the line between the two
-// places, negative for a dip, and height is its size without the sign. Each keyframe is { offset, x, y,
-// tilt, scale }: x and y are pixels from the old place, tilt is degrees nose up (negative is nose
-// down), and scale is the size compared with the old box.
-export function planHawk(from, to, durationMs = swapTimes.hawkMs, lift = 0) {
-  const distance = Math.hypot(to.x - from.x, to.y - from.y);
-  const hop = distance < hawkShape.sameSpot;
+// Plans the path of the icon. from and to are the box of the logo before and after, { x, y, width, height }, with x and
+// y the middle of the box on the screen. durationMs is how long it travels, from the moment the look goes on to the moment
+// the pieces are home, and hop is how many pixels the path rises in the middle (0 for a path that is straight), less when
+// the logo is too near the top of the screen for that. The icon travels with the easing of the pieces. Returns
+// { direction, durationMs, rise, apexMs, keyframes }. direction is 1 when it goes to the right and -1 to the left, and
+// the picture of the hawk, which looks to the right, is turned over for the left. Each keyframe is { offset, x, y, scale }:
+// x and y are pixels from the old place and scale is the size compared with the old box.
+export function planHawk(from, to, durationMs, hop = 0) {
   const direction = to.x < from.x ? -1 : 1;
-  const wanted = hop ? hawkShape.hopHeight : hawkShape.arcHeight;
-
-  const line = (from.y + to.y) / 2;
-  const half = Math.max(from.height, to.height) / 2;
-  const above = line - half;
-  const below = swapShape.screenHeight - (line + half);
-  let rise = wanted;
-  if (above < wanted) rise = below >= wanted ? -wanted : above >= below ? Math.max(above, 0) : -Math.max(below, 0);
-  rise = round(rise, 1);
-
-  // The lift is half of it at the top of the arc, so the arc is that much lower and the top is where it was asked to be
-  const arc = rise - lift / 2;
+  const room = Math.max(0, Math.min(from.y - from.height / 2, to.y - to.height / 2));
+  const rise = round(Math.min(hop, room), 1);
   const keyframes = [];
+
   for (let step = 0; step <= hawkShape.steps; step++) {
     const time = step / hawkShape.steps;
-    const along = smooth(time);
-    const climb = (1 - 2 * time) * (rise < 0 ? -1 : 1); // 1 while it climbs, 0 at the top and -1 while it comes down
+    const along = bezierAt(reformEase, time);
 
     keyframes.push({
       offset: round(time, 4),
       x: round((to.x - from.x) * along, 1),
-      y: round((to.y - from.y) * along - lift * (1 - along) - 4 * arc * time * (1 - time), 1),
-      tilt: round(hawkShape.tiltMost * climb * (hop ? 0.5 : 1), 1),
+      y: round((to.y - from.y) * along - 4 * rise * time * (1 - time), 1),
       scale: round(1 + (to.width / Math.max(from.width, 1) - 1) * along, 3),
     });
   }
-  return { hop: hop, direction: direction, durationMs: durationMs, rise: rise, height: Math.abs(rise), apexMs: hawkShape.colorAt * durationMs, keyframes: keyframes };
+  return { direction: direction, durationMs: durationMs, rise: rise, apexMs: hawkShape.colorAt * durationMs, keyframes: keyframes };
 }
 
-// The transform of one keyframe of the flight. The picture of the hawk looks to the right, so a hawk flying
-// to the left is turned over (scaleX(-1)), and the nose-up tilt is a turn the other way for it.
+// The transform of one keyframe of the path. A hawk going to the left is turned over (scaleX(-1)).
 export function hawkTransform(keyframe, direction) {
-  return 'translate(' + keyframe.x + 'px, ' + keyframe.y + 'px) rotate(' + round(-direction * keyframe.tilt, 1) + 'deg) scale(' + keyframe.scale + ') scaleX(' + direction + ')';
+  return 'translate(' + keyframe.x + 'px, ' + keyframe.y + 'px) scale(' + keyframe.scale + ') scaleX(' + direction + ')';
+}
+
+// How the emblem and the hawk trade places in a slight swap, as the opacity of each over birdMs: the emblem goes out
+// in fadeMs, the hawk is there, and the hawk goes out in the last fadeMs as the emblem comes back
+export function birdFades() {
+  const edge = hawkShape.fadeMs / hawkShape.birdMs;
+
+  return {
+    emblem: [{ opacity: 1 }, { opacity: 0, offset: edge }, { opacity: 0, offset: 1 - edge }, { opacity: 1 }],
+    hawk: [{ opacity: 0 }, { opacity: 1, offset: edge }, { opacity: 1, offset: 1 - edge }, { opacity: 0 }],
+  };
 }
 
 // The wings. frame.css has the flap of the flying logo (flap-near and flap-far): from the resting wing
-// to 138 degrees and back. The swap beats at wingShare of that, once every flapMs. The lens and the view
+// to 138 degrees and back. The swap beats at wingShare of that, hawkShape.beats times in birdMs. The lens and the view
 // are the ones the logo's parts have in frame.css (.logo .drawing).
 const lens = 'perspective(2400px)';
 const view = 'rotateX(-14deg) rotateY(-24deg)';
@@ -498,7 +506,7 @@ export function contentFade(endMs = swapTimes.reformEndMs) {
   };
 }
 
-// How long the whole swap takes: the pieces and the content, or the hawk if there is one
-export function swapMs(withHawk) {
-  return withHawk ? Math.max(swapTimes.reformEndMs, swapTimes.hawkMs) : swapTimes.reformEndMs;
+// How long the whole swap takes: the pieces and the content, and the landing of the icon if there is one
+export function swapMs(withIcon) {
+  return withIcon ? swapTimes.reformEndMs + swapTimes.landMs : swapTimes.reformEndMs;
 }

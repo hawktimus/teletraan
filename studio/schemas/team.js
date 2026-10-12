@@ -13,6 +13,7 @@
 // Prime has, and a team made before the trim existed has none stored and reads as Prime.
 // Team name look, one of the eight, is hidden and the screen ignores it: Outlined name, a switch in the
 // same box, replaces it. Off draws the name solid, and both starting teams are solid.
+// Bird pose is hidden too and the screen ignores it: the icon is always the usual mark, whatever a team stored.
 
 import { defineType, defineField } from 'sanity';
 import { tooLong, byOrder, aToZ, subtitleFor } from './fields.js';
@@ -162,7 +163,7 @@ export default defineType({
     trimField('cornerCut', 'Cut corners', 'Which two corners every panel cuts. The other two stay square.'),
     trimField('headerNotch', 'Header end', 'How the colored tab at the top of a panel ends. Notch is the usual step. Slant is one cut at 60 degrees.'),
     trimField('grid', 'Page grid', 'The grid on the page behind Cybertron and Minimal. Lines cross the page. Dots are one in each square.'),
-    trimField('logoPose', 'Bird pose', 'How the bird sits in the banner when it is not moving. Auto is the emblem. Flight is the hawk with its wings up.'),
+    trimField('logoPose', 'Bird pose', 'Not used any more. The icon is always the usual Hawktimus mark.', true),
     trimField('nameStyle', 'Team name look', 'Not used any more. Outlined name replaces it.', true),
     defineField({
       name: 'outlinedName',

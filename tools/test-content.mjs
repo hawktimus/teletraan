@@ -5626,7 +5626,7 @@ test('the two starting teams become the teams the screen uses, and the built-in 
     colors: { primary: '#1B6FD6', plate: '#0E2A4A', accent: '#8FF0FF', neon: '#3FD8FF', pink: '#9BF0FF', background: '#050910', text: '#FFFFFF', body: '#07131F', label: '#C58CFF' },
     metal: 'steel', glow: true,
     mirror: true, active: true, order: 20,
-    bolts: 'round', cornerCut: 'tr-bl', headerNotch: 'slant', grid: 'dots', logoPose: 'flight', nameStyle: 'solid', tickerLabel: 'bar', countAccent: 'neon',
+    bolts: 'round', cornerCut: 'tr-bl', headerNotch: 'slant', grid: 'dots', logoPose: 'auto', nameStyle: 'solid', tickerLabel: 'bar', countAccent: 'neon',
   });
 
   const builtIn = live.config.primeTeam;

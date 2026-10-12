@@ -21,7 +21,7 @@
       "metal": "steel", "glow": true,
       "mirror": true,
       "bolts": "round", "cornerCut": "tr-bl", "headerNotch": "slant", "grid": "dots",
-      "logoPose": "flight", "nameStyle": "solid", "outlinedName": false, "tickerLabel": "bar", "countAccent": "neon",
+      "logoPose": "auto", "nameStyle": "solid", "outlinedName": false, "tickerLabel": "bar", "countAccent": "neon",
       "active": true, "order": 20
     }
   ],
@@ -259,7 +259,7 @@
         { "_key": "o3", "panel": "task-counts" },
         { "_key": "o4", "panel": "sponsor-logo" }
       ],
-      "nameEffectEveryMinutes": 10, "hawkEveryMinutes": 15, "swapSeconds": 1.25, "mondayStyle": "minimal"
+      "nameEffectEveryMinutes": 10, "hawkEveryMinutes": 5, "swapSeconds": 1.25, "mondayStyle": "minimal"
     },
     {
       "_id": "screen-cybertron",
@@ -287,7 +287,7 @@
         { "_key": "c3", "panel": "task-counts" },
         { "_key": "c4", "panel": "sponsor-logo" }
       ],
-      "nameEffectEveryMinutes": 10, "hawkEveryMinutes": 15, "swapSeconds": 1.25, "mondayStyle": "minimal"
+      "nameEffectEveryMinutes": 10, "hawkEveryMinutes": 5, "swapSeconds": 1.25, "mondayStyle": "minimal"
     },
     {
       "_id": "screen-minimal",
@@ -310,7 +310,7 @@
         { "_key": "m16", "panel": "photo", "team": "" }
       ],
       "sideRows": [],
-      "nameEffectEveryMinutes": 10, "hawkEveryMinutes": 15, "swapSeconds": 1.25, "mondayStyle": "minimal"
+      "nameEffectEveryMinutes": 10, "hawkEveryMinutes": 5, "swapSeconds": 1.25, "mondayStyle": "minimal"
     }
   ],
 

@@ -73,12 +73,12 @@ export const defaultSchedule = {
 // What a Screen has when its document does not say, or there is no document yet. The Studio starts at the same values
 // and has the same limits (studio/schemas/screen.js), and studio/check-schemas.mjs compares them.
 //   nameEffectEveryMinutes  minutes between plays of the team name effect in the banner
-//   hawkEveryMinutes        minutes between flights of the hawk
+//   hawkEveryMinutes        minutes between changes of the logo into the flying hawk
 //   swapSeconds             how long a swap takes. 1.25 is the length the swap was built for (core/swap-plan.js), and every
 //                           time of the swap is scaled by swapSeconds / standardSwapSeconds
 //   mondayStyle             not here: a Screen with none uses mondayStyle in defaultSettings below
 export const standardSwapSeconds = 1.25;
-export const defaultScreen = { nameEffectEveryMinutes: 10, hawkEveryMinutes: 15, swapSeconds: standardSwapSeconds };
+export const defaultScreen = { nameEffectEveryMinutes: 10, hawkEveryMinutes: 5, swapSeconds: standardSwapSeconds };
 
 // The large panels whose content follows the team on the screen, because the items they draw carry the Team field
 // and core/content.js filters them (visibleItems). A row of one of these can name a team. Every other large panel
@@ -591,7 +591,8 @@ export const noCalendarKind = 'other';
 //   cornerCut    the corners every panel chamfers: top left and bottom right, or top right and bottom left
 //   headerNotch  the header tab ends in the usual notch, or in one slant at 60 degrees
 //   grid         the grid on the page behind Cybertron and Minimal is lines or dots
-//   logoPose     the bird idles in its usual pose (auto), or with its wings up in flight
+//   logoPose     not used any more: the icon is always the usual mark. A team that still stores flight reads as auto,
+//                and flight has no class
 //   nameStyle    the team name in the banner is solid letters, or outlined letters over a solid accent line
 //   tickerLabel  the label of the ticker is the cut plate, or a thin bar with an accent block before it
 //   countAccent  the red parts of the countdown are red, or the team's neon
@@ -600,7 +601,7 @@ export const teamTrim = {
   cornerCut: { 'tl-br': '', 'tr-bl': 'corner-cut-tr' },
   headerNotch: { step: '', slant: 'header-slant' },
   grid: { lines: '', dots: 'grid-dots' },
-  logoPose: { auto: '', flight: 'pose-flight' },
+  logoPose: { auto: '', flight: '' },
   nameStyle: { solid: '', outline: 'name-outline' },
   tickerLabel: { plate: '', bar: 'ticker-bar' },
   countAccent: { red: '', neon: 'accent-neon' },

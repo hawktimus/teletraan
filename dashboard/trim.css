@@ -1,10 +1,11 @@
 /* Team trim (docs/layouts.md, "Team trim"). While a team is on the screen, core/teams.js puts a class on
-   the html element for each of the eight trim fields of the team that has a value other than Prime's:
+   the html element for each of the trim fields of the team that has a value other than Prime's:
 
      bolts-round        corner-cut-tr      header-slant       grid-dots
-     pose-flight        name-outline       ticker-bar         accent-neon
+     name-outline       ticker-bar         accent-neon
 
    Prime's values have no class and every rule here is for one of these, so Prime is drawn as it always was.
+   The bird pose, another trim field, is not used any more and has no class.
    The shape of the frames is drawn by core/plate.js: corner-cut-tr cuts the top right and bottom left
    corners and header-slant ends the tab in one slant, and the frames are drawn again when the team changes
    (core/areas.js, redrawFrames). What is left of corner-cut-tr is the cards, in the second part here, and
@@ -52,31 +53,6 @@ html.corner-cut-tr .custom .block-image img { clip-path: polygon(0 0, 100% 0, 10
 html.grid-dots[data-style] #screen::before {
   background: radial-gradient(circle, var(--style-neon, transparent) 0, var(--style-neon, transparent) calc(var(--style-grid-size, 96px) / 12), transparent calc(var(--style-grid-size, 96px) / 12 + .5px)) 0 0 / var(--style-grid-size, 96px) var(--style-grid-size, 96px);
 }
-
-
-/* The pose of the bird. With auto it idles as the emblem, and with flight it idles as the hawk with its wings
-   up, the pose that a logo asked to fly has in calm motion (frame.css). The hawk's moves are still played
-   as they are, and the logo goes back to the pose when one ends. The rules are for the logo at rest,
-   at the start and in the spin, which are the acts that are flat */
-html.pose-flight .logo:not([data-act]) .emblem,
-html.pose-flight .logo[data-act="rest"] .emblem,
-html.pose-flight .logo[data-act="boot"] .emblem,
-html.pose-flight .logo[data-act="turn"] .emblem { opacity: 0; }
-
-html.pose-flight .logo:not([data-act]) .hawk-part,
-html.pose-flight .logo[data-act="rest"] .hawk-part,
-html.pose-flight .logo[data-act="boot"] .hawk-part,
-html.pose-flight .logo[data-act="turn"] .hawk-part { opacity: 1; }
-
-html.pose-flight .logo:not([data-act]) .hawk-near-wing,
-html.pose-flight .logo[data-act="rest"] .hawk-near-wing,
-html.pose-flight .logo[data-act="boot"] .hawk-near-wing,
-html.pose-flight .logo[data-act="turn"] .hawk-near-wing { transform: var(--lens) var(--view) translate(-30px, -137px) rotate3d(320, -50, 0, 134deg) translate(30px, 137px); }
-
-html.pose-flight .logo:not([data-act]) .hawk-far-wing,
-html.pose-flight .logo[data-act="rest"] .hawk-far-wing,
-html.pose-flight .logo[data-act="boot"] .hawk-far-wing,
-html.pose-flight .logo[data-act="turn"] .hawk-far-wing { transform: var(--lens) var(--view) translate(140px, -161px) rotate3d(160, -18, 0, -134deg) translate(-140px, 161px); }
 
 
 /* The team name. Outlined letters have no fill, and the stroke is the text color. The pieces the name effect

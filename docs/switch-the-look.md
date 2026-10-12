@@ -51,7 +51,7 @@ swaps the screen to that team. A row with no team keeps the team that is on the 
   time the team changes, so a list that goes Prime, Nova, Prime, Nova transforms four times.
 - A Monday row needs a team. Milestones and Progress can also be Both teams.
 - The screen goes from one team or style to the next in one move: the frames pull apart, the new look
-  goes on while they are apart, and they re-form, with the hawk flying to the logo's new place. The
+  goes on while they are apart, and they re-form, with the icon of the logo going to its new place. The
   move is the same for every change, so there is nothing to pick (docs/layouts.md, "The swap").
   Swap time on A changes how long it takes.
 

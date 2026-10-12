@@ -1231,7 +1231,7 @@ Screen, so no style is stored. A Screen holds, with the starting values in `conf
   `monday-milestones` and `monday-progress`. A Monday row has a team, and `both` on the milestones or progress row means the
   card of both teams (`monday-milestones-both`, `monday-progress-both`). The Events panel is one row that plays its two pages.
 - `sideRows`: the rows of the side panel (area D), a panel and, if wanted, seconds. A row has no team. Minimal has no side panel.
-- `nameEffectEveryMinutes` (10), `hawkEveryMinutes` (15) and `swapSeconds` (1.25): how often the name effect and the flying hawk
+- `nameEffectEveryMinutes` (10), `hawkEveryMinutes` (5) and `swapSeconds` (1.25): how often the name effect and the flying hawk
   play, and how long the swap takes. Every timing of the swap scales with `swapSeconds` over 1.25, the length it had before.
 - `mondayStyle`: the style while a Monday row plays. A Screen with none uses `mondayStyle` of Dashboard Settings, which is Minimal
   to start with.
@@ -1281,7 +1281,7 @@ Look at it with `?sample=1`, which has both teams, and with Next look now on the
 
 One move changes the screen, whatever changes: the style, the team, the layout, one Monday card for the next, going into the
 Monday block and coming out of it. The pieces of the screen pull apart, the new look goes on while they are
-apart, and they travel to their places in it and re-form, with the hawk flying beside them. It is one gesture and
+apart, and they travel to their places in it and re-form, with the icon of the logo going beside them. It is one gesture and
 the screen never reloads for it: a piece leaves its place slowly, gathers speed, comes to rest at the far end of the pull,
 and from rest leaves again the same way for its new place. `core/swap-plan.js` has the plain functions
 that decide it, with no page in them, and `core/swap-run.js` finds the pieces on the page, plays the plan with
@@ -1312,12 +1312,13 @@ transition has the screen. The logo effects and the neon kit are held (`setSwapP
 
 | Time | What happens |
 |------|--------------|
-| 0 | The page content starts to fade out, in 250. Every piece starts after a delay of its own, 0 to 180 (seeded for each run), and moves out from the middle of the screen by 18 percent of its distance from it. It tips back 20 to 70 degrees (`perspective(1600px) rotateX`) and turns up to 25 degrees in the plane. It starts slowly and settles softly (`cubic-bezier(.25, 0, .15, 1)`). The logo becomes a hawk that flaps and lifts |
+| 0 | The page content starts to fade out, in 250. Every piece starts after a delay of its own, 0 to 180 (seeded for each run), and moves out from the middle of the screen by 18 percent of its distance from it. It tips back 20 to 70 degrees (`perspective(1600px) rotateX`) and turns up to 25 degrees in the plane. It starts slowly and settles softly (`cubic-bezier(.25, 0, .15, 1)`). The logo is copied, and the copy stays where the logo was |
 | 350 | The old pieces begin to fade, to 40 percent, so that the screen is never empty and the new shape does not jump in |
 | 450 | Every piece is out and at rest. The other areas are at the gate with their next pages (the swap waits up to 1.2 seconds for them, and the pieces wait with it). The look goes on, in one step: the style, the team, the layout, the next pages. The pieces of the new look take over from the old ones at the pose they had, and come back to full strength in 140 |
 | 450 to 1250 | Each piece, after a delay of its own, 0 to 150, travels to its place in the new look and untips, and is home by 1250. It starts from rest and settles softly (`cubic-bezier(.35, 0, .15, 1)`). The metal, the neon color and the corners are the new look's from the first moment of this part |
 | 1000 to 1250 | The page content fades in, over the last of the travel |
-| 450 to 2000 | The hawk flies to the new place of the logo, in one arc, and lands. The swap is over when it has landed |
+| 450 to 1250 | The copy of the logo travels to the new place of the logo, with the pieces. A swap that changes a team or a style makes it a hawk for 600 milliseconds of that, and a swap with a Monday card in it does not (the paragraph on the icon below) |
+| 1250 to 1400 | The copy and the logo cross-fade, and the swap is over |
 
 If the other areas are late (the swap waited for them), the look goes on later, and the travel is as long as the time left to
 1250 allows, but at least 450. Nothing is empty at any time: there are pieces on the screen from the first moment to the last, and the
@@ -1345,15 +1346,27 @@ at 350 hides. A new piece starts with the middle, the size, the tip and the turn
 nothing jumps when one takes over from the other (`planReform`). Every new piece ends with no offset, no tip and
 no turn, which is what the tests check.
 
-**The hawk.** The logo is copied into `#pile` and the logo itself is out of sight until the hawk lands. The copy
-shows the hawk (the act `swap` in `frame.css`), beats its wings every 320 milliseconds to 35 percent of the beat
-of the flying logo, hovers and lifts until the pieces are out (450) and then flies. When the place of the logo does not change, it hops
-120 pixels and lands. Otherwise it flies in one arc 300 pixels high, tilting nose up into the climb and nose
-down out of the descent, and it faces the way it flies (`scaleX(-1)` when it heads left). The colors of the
-hawk are the old look's until the top of the arc, and then the new look's. The arc rises where the whole hawk
-stays on the screen. In the banner, which is at the top of the screen, there is no room, so it dips down
-instead. At the end the hawk and the logo cross-fade for 150 milliseconds. `planHawk` has the numbers, `hawkShape`
-the rest.
+**The icon.** The logo is copied into `#pile` and the logo itself is out of sight until the copy lands. The copy is
+the logo as it is: the emblem for both teams, or the picture a team has put in its Logo field. It stays where the logo was until the
+look goes on, then travels to the new place of the logo from 450 to 1250, in a straight line, with the easing of the pieces (`cubic-bezier(.35, 0, .15, 1)`),
+and changes in size from the old logo to the new one. Its colors are the old look's until the middle of the travel, and then the new look's.
+At the end the copy and the logo cross-fade for 150 milliseconds. `hawkMotionFor` in `core/swap-plan.js` says how much of a bird it is,
+from the motion setting, whether the team changes and whether a Monday card is on either side:
+
+| Swap | Icon |
+|------|------|
+| Calm motion and no motion | None. There are no pieces and the logo is not moved |
+| Into a Monday card, from one Monday card to the next, and out of one with the team staying | Carried: it goes lower in the bar layout, or back up, and is never a bird |
+| A team changes (Prime to Nova, Nova to Prime), including out of a Monday card | Slight |
+| A style or a look changes alone, such as Original to Cybertron | Slight |
+
+A slight swap is the carried one with a flutter in it. As the look goes on the emblem turns into the hawk (the emblem and the hawk cross-fade in
+100 milliseconds), the wings beat twice at 35 percent of the beat of the flying logo, 300 milliseconds a beat, and the hawk turns back
+into the emblem, all in 600 milliseconds, before the icon lands. The path rises 40 pixels in the middle, less where the logo is near the top of the
+screen, so it is a small hop. The picture of the hawk looks to the right, so the copy is turned over (`scaleX(-1)`) when it goes to the left.
+`planHawk` has the path, `birdFades` and `flapFrames` the flutter, and `hawkShape` the numbers. A team with a picture of its own is carried
+as that picture, and the flutter does not show. The bird that changes and flies every few minutes is another thing: the flying
+hawk of `frame.js` (docs/the-logo.md).
 
 **A change of layout** (Original or Cybertron to Minimal and back, and a theme with the sidebar layout) is made in the page, in the moment the pieces
 are apart, and the page does not reload. `changeLayout` in `core/layout-apply.js` takes the old layout's changes off the page and puts the
@@ -1502,7 +1515,7 @@ The sample content has board tasks only: six for both teams, nine for Prime and 
 
 ## Team trim
 
-A team document has eight more fields, in the Trim box of the Teams list in the Studio. They make
+A team document has eight more fields, in the Trim box of the Teams list in the Studio (the bird pose is hidden). They make
 a team look like itself, beyond its colors and the mirror. Prime has the first choice of each,
 which is how the screen has always looked. Nova has the other. A team that was saved before the
 trim existed has none stored, and the screen reads it as Prime. The names and the choices are
@@ -1514,7 +1527,7 @@ trim existed has none stored, and the screen reads it as Prime. The names and th
 | `cornerCut` | top left and bottom right | top right and bottom left | The corners every panel cuts. |
 | `headerNotch` | notch | slant | The colored tab of a header ends in the notch it has always had, or in one slant at 60 degrees. |
 | `grid` | lines | dots | The grid on the page behind Cybertron and Minimal. |
-| `logoPose` | auto | flight | The bird idles as the emblem, or as the hawk with its wings up. |
+| `logoPose` | auto | auto | Not used any more. The icon is always the usual mark: a team that stores `flight` is read as `auto`, and `flight` has no class. The field is hidden in the Studio. |
 | `outlinedName` | off | off | The team name in the banner is solid letters. With the switch on it is outlined letters with a line in the accent under them. The older `nameStyle` is stored solid on both and not read. |
 | `tickerLabel` | plate | bar | The label of the ticker is the cut plate, or a thin bar with a block of the accent in front of it. |
 | `countAccent` | red | neon | The red parts of the countdown are red, or the team's neon. |
@@ -1523,7 +1536,7 @@ Everything here is still. Nothing in trim moves, and nothing in it is a picture,
 
 **The classes.** While a team is on the screen, `applyTeamLook` in `core/teams.js` puts a class on
 the html element for each field where the team has the other choice: `bolts-round`, `corner-cut-tr`,
-`header-slant`, `grid-dots`, `pose-flight`, `name-outline`, `ticker-bar` and `accent-neon`. Prime's
+`header-slant`, `grid-dots`, `name-outline`, `ticker-bar` and `accent-neon`. Prime's
 choices have no class. The classes of the team before are taken off in the same call, together with the
 mirror, so a team that is put on never leaves a class of the last one. The rules that read them are in
 `trim.css`, linked after the styles in `index.html`, and every rule in it names one of the classes, so
@@ -1565,9 +1578,8 @@ the announcement ask for the trim the page has drawn, and not for the team's, so
 a team that is not on the page yet. The page never reloads for it.
 
 **The rest.** The grid is the layer that Cybertron and Minimal draw behind everything (`#screen::before`),
-given dots in place of lines, a twelfth of a square in radius. The pose is the one a logo asked to fly has
-in calm motion (`frame.css`), applied to the logo at rest, at the start and in the spin; the acts of the
-hawk are not touched, and the logo goes back to the pose when one ends. The name has no fill and a stroke
+given dots in place of lines, a twelfth of a square in radius. The bird pose is not used any more: the logo
+at rest is the emblem for every team. The name has no fill and a stroke
 of 4 px in the text color, and a line of 4 px in the accent under every letter, spaces too. The label of
 the ticker keeps its plate hidden, so its width and the place of its word are as they were, and a block of
 16 by 52 and a bar of 4 are drawn in the accent. The countdown, the war clock and the countdown of the

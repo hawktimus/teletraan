@@ -141,8 +141,8 @@ export default defineType({
       title: 'Flying hawk every (minutes)',
       type: 'number',
       group: 'banner',
-      description: 'How often the logo changes into a hawk and flies, from 1 to 240 minutes. Starts at 15.',
-      initialValue: 15,
+      description: 'How often the logo changes into a hawk and flies, from 1 to 240 minutes. Starts at 5.',
+      initialValue: 5,
       validation: Rule => Rule.integer().min(1).max(240).error('Use a whole number of minutes from 1 to 240.'),
     }),
     defineField({

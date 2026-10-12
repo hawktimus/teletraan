@@ -54,7 +54,7 @@ In Studio open Settings, then Teams, then Hawktimus Nova. These are the fields.
   Prime has it off.
 - Mirror the layout: on to start with. The whole screen is flipped left to right
   while Nova is showing.
-- Trim: seven choices that make Nova look like its own team and not Prime in other colors.
+- Trim: six choices that make Nova look like its own team and not Prime in other colors.
   Each is one of two. The first of each is how Prime looks, and the file starts Nova on the
   second:
   - Bolts: hex nuts, or round rivets with a slot. Nova has round rivets.
@@ -63,7 +63,6 @@ In Studio open Settings, then Teams, then Hawktimus Nova. These are the fields.
   - Header end: the notch at the end of the colored tab on every panel header, or one slant at
     60 degrees. Nova has the slant.
   - Page grid: lines or dots, on the page behind Cybertron and Minimal. Nova has dots.
-  - Bird pose: auto is the emblem, and flight is the hawk with its wings up. Nova has flight.
   - Ticker label: the cut plate, or a thin bar with a block of the accent color in front of it.
     Nova has the bar.
   - Countdown color: red, or the neon color of the team. Nova has neon.

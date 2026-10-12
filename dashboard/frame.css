@@ -631,8 +631,9 @@ html[data-style="cybertron"] .area[data-area="ticker"] .screw { animation-name: 
      flight    the hawk beats its wings five times
      hawk-out  the hawk turns back into the plates (2 s)
      fly       a flight with no end, for the announcement
-     swap      the hawk of the swap (core/swap-run.js): the hawk shows, still, and the swap beats its
-               wings and moves it with element.animate()
+
+   The swap (core/swap-run.js) has no act of its own: it copies the logo and moves the copy, and turns the emblem into the
+   hawk and back, with element.animate().
 
    With no data-act, and in calm and none motion, the logo is the still
    emblem. frame.js plays the acts: the entrance (boot), the spin (turn) and
@@ -775,8 +776,7 @@ html[data-style="cybertron"] .area[data-area="ticker"] .screw { animation-name: 
 .logo[data-act="hawk-in"] .hawk-part,
 .logo[data-act="flight"] .hawk-part,
 .logo[data-act="hawk-out"] .hawk-part,
-.logo[data-act="fly"] .hawk-part,
-.logo[data-act="swap"] .hawk-part { opacity: 1; }
+.logo[data-act="fly"] .hawk-part { opacity: 1; }
 
 
 /* Boot. Each plate flies in to its place. */
@@ -930,8 +930,7 @@ html[data-style="cybertron"] .area[data-area="ticker"] .screw { animation-name: 
 
 /* The emblem is gone while the hawk flies */
 .logo[data-act="flight"] .emblem,
-.logo[data-act="fly"] .emblem,
-.logo[data-act="swap"] .emblem { opacity: 0; }
+.logo[data-act="fly"] .emblem { opacity: 0; }
 
 @keyframes flap-near {
   0%, 100% { transform: var(--lens) var(--view) translate(-30px, -137px) rotate3d(320, -50, 0, -18deg) translate(30px, 137px); }
