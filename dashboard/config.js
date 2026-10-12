@@ -54,6 +54,15 @@ export const looks = ['polished', 'flat', 'plain'];
 //   minimal    the industrial style, in the bar layout whatever the theme says
 export const styles = ['original', 'cybertron', 'minimal'];
 
+// The large panels whose content follows the team on the screen, because the items they draw carry the Team field
+// and core/content.js filters them (visibleItems). A row of one of these can name a team. Every other large panel
+// (events, photo, the competition cards) is the same for both teams, and a row of it has no team. The Studio
+// copies this list for the Team field of a row.
+export const teamPanels = ['tasks', 'tonight', 'spotlight', 'team-leads', 'roster', 'leadership', 'sponsor-feature', 'custom'];
+
+// The Monday cards a team has, in the order they play. A Monday row of a Screen names one of them and a team.
+export const mondayRows = ['monday-tasks', 'monday-milestones', 'monday-progress'];
+
 // The team settings in Dashboard Settings (Look tab): which team the screen shows. The Studio copies this list.
 //   prime      the Prime team all the time
 //   nova       the Nova team all the time
