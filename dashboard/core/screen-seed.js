@@ -1,7 +1,7 @@
 // The rows of a Screen built from the Panel order: the plain functions. They know nothing about the page, so
 // tools/test-screen-seed-dashboard.mjs can run them. core/screens.js plays them for a Screen that has no rows, and the Studio
 // fills an empty list of rows with the same rule, written again there, so the first rows an editor sees are the ones
-// the screen was playing.
+// the screen was playing. tools/test-screen-seed-parity.mjs runs both copies on the same input.
 //
 // The Panel order is rotation in Dashboard Settings: one list, or the two older lists while it is empty
 // (core/panel-order.js, playlistOf). The rows of the large panel come out in this order:
