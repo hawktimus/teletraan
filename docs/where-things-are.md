@@ -781,9 +781,11 @@ alone.
   always asked for at 280, whatever the portrait size setting says, so the copy
   loaded ahead of time is the one shown. `showcaseOf` in `core/team-leads.js` is
   there for a later mode that shows one subteam's lead and its members. Nothing
-  calls it yet. `tools/test-person-rows.mjs`, `tools/test-portrait-size.mjs`,
-  `tools/test-portrait-settings.mjs` and
+  calls it yet. `tools/test-person-rows.mjs`, `tools/test-leadership-role.mjs`,
+  `tools/test-portrait-size.mjs`, `tools/test-portrait-settings.mjs` and
   `tools/test-lead-photo.mjs` have the tests of the rows and the photos.
+  In Cybertron the rows end above the slashes of the frame
+  (`tools/test-stripe-foot.mjs`).
   The starting value of the switch is `defaultPerson.showPhoto` in
   `dashboard/config.js` and its copy in `studio/schemas/person.js`, which
   `studio/schemas/subteam.js` follows.

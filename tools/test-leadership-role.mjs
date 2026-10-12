@@ -189,7 +189,7 @@ test('the chip is 44px with 14px each side, up to 400px wide, and a longer Role 
   const chip = ruleOf(css, '.person-chip');
   const inner = 400 - 2 * 14;
 
-  assert.ok(/max-width: 400px;/.test(chip) && /white-space: normal;/.test(chip) && /overflow-wrap: anywhere;/.test(chip) && /text-align: center;/.test(chip));
+  assert.ok(/box-sizing: border-box;/.test(chip) && /max-width: 400px;/.test(chip) && /white-space: normal;/.test(chip) && /overflow-wrap: anywhere;/.test(chip) && /text-align: center;/.test(chip));
   assert.ok(/font: 700 var\(--size-label\)\/52px var\(--font-display\);/.test(chip), 'the text is 44px with a line of 52');
 
   assert.equal(chipLines('CO-PRESIDENT', inner), 1, 'the Role of the order is one line');

@@ -722,6 +722,7 @@ html.neon-glow:not([data-finish="flat"]) .art-glow { display: inline; }
   font: 500 36px/40px var(--font-text);
 }
 .person-chip {
+  box-sizing: border-box;
   max-width: 400px;
   padding: 0 14px;
   background: var(--yellow);
