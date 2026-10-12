@@ -78,7 +78,7 @@ export function startSwaps(busyElsewhere, scaleNow = () => 1) {
   setSwapOffer(offer);
 }
 
-// A look that nobody queued, a preview, a team of Alternate mode or a theme from the Look page, still goes on in a swap
+// A look that nobody queued, a preview, a team that is waiting to go on or a theme from the Look page, still goes on in a swap
 function lookWaiting() {
   return lookIsWaiting() || teamPending();
 }

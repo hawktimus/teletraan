@@ -13,7 +13,7 @@ import { nightFields } from './settingsNight.js';
 import { hiddenFields } from './settingsHidden.js';
 import { presentationsFields, presentationTestRequestField } from './settingsPresentations.js';
 import { teamsFields } from './settingsTeams.js';
-import { lookRotationFields } from './settingsLook.js';
+import { lookScheduleFields } from './settingsLook.js';
 import { previewRequestField } from './settingsPreview.js';
 import { nextLookRequestField, competitionPreviewRequestField } from './settingsRequests.js';
 import { competitionFields } from './settingsCompetition.js';
@@ -495,7 +495,7 @@ export default defineType({
     teamField,
     lookNoteField,
     cycleNoteField,
-    ...lookRotationFields(),
+    ...lookScheduleFields(),
     styleField,
     motionField,
     speedField,

@@ -36,7 +36,7 @@ function requestField(name, title, button, what) {
 }
 
 export function nextLookRequestField() {
-  return requestField('nextLookRequest', 'Last next look', 'Next look now', 'The screen moves on to the next look, once.');
+  return requestField('nextLookRequest', 'Last next look', 'Next look now', 'The main panel moves on to its next row, once.');
 }
 
 export function competitionPreviewRequestField() {

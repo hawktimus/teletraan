@@ -1,4 +1,4 @@
-// The weekday schedule and the older look rotation fields of Dashboard Settings, in the Look tab.
+// The weekday schedule and the fields the Screens replaced, in the Look tab of Dashboard Settings.
 //
 //   screenSchedule  a picker for each day of the week, Monday to Sunday, that chooses the Screen
 //                   (Settings, Screens) that plays that day: Original on Monday, Wednesday, Friday and
@@ -6,7 +6,8 @@
 //                   not scheduled. The day is the calendar day in the time zone of the Look page.
 //
 // The four fields the Screens replaced stay in the schema, hidden, with what was saved in them, so
-// that nothing already published is lost, and the screen ignores them:
+// that nothing already published is lost, and the screen does not read them for what plays. The only
+// one it still looks at is mondayStyle, as the starting Monday style of a Screen that has none:
 //
 //   dailyStyles  the styles of the days, in order: now the weekday schedule
 //   mondayStyle  the style while the Monday cards of a team are up: now a field of each Screen, which
@@ -22,7 +23,7 @@
 // the screen uses the starting week.
 //
 // To take the whole section out later: delete this file, remove its import and the line that uses
-// lookRotationFields in dashboardSettings.js, and remove the same names from check-schemas.mjs and
+// lookScheduleFields in dashboardSettings.js, and remove the same names from check-schemas.mjs and
 // config.js. The dashboard uses the starting values for anything missing from the published settings.
 
 import { defineField, defineArrayMember } from 'sanity';
@@ -78,7 +79,7 @@ function scheduleField() {
   });
 }
 
-export function lookRotationFields() {
+export function lookScheduleFields() {
   return [
     scheduleField(),
 
