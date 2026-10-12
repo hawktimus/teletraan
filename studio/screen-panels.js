@@ -37,7 +37,7 @@ export const mondayPanels = [
 // The large panels whose items carry a Team field and are filtered by the team on the screen
 // (visibleItems in dashboard/core/content.js). Photo and Upcoming events are for both teams:
 // a photo has no team, and the events come from the calendars. The dashboard has the same list.
-export const teamSpecificPanels = ['tasks', 'tonight', 'spotlight', 'sponsor-feature', 'leadership', 'team-leads', 'roster', 'custom'];
+export const teamSpecificPanels = ['tasks', 'tonight', 'spotlight', 'team-leads', 'roster', 'leadership', 'sponsor-feature', 'custom'];
 
 // The team of a row that is for both teams. Only the Milestones and Progress cards have one.
 export const bothTeams = 'both';

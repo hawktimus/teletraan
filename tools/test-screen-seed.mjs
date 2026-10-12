@@ -126,7 +126,7 @@ test('a row for a Monday card, a competition card or an unknown panel is left ou
 });
 
 test('with nothing saved every panel is a row, in the order of the pickers', () => {
-  [undefined, null, {}, { order: [], grid1: [], grid2: [] }].forEach(none => {
+  [undefined, null, {}, { order: [] }].forEach(none => {
     const order = currentOrder(none);
     assert.deepEqual(order.map(step => step.panel), largePanels.concat(smallPanels).map(panel => panel.value));
     assert.ok(order.every(step => step.show === true));
@@ -134,6 +134,17 @@ test('with nothing saved every panel is a row, in the order of the pickers', () 
   const rows = seedRows(undefined, [prime, nova]);
   assert.equal(rows.mainRows.length, 2 * (teamSpecificPanels.length + 3) + 2);
   assert.equal(rows.sideRows.length, smallPanels.length);
+});
+
+test('an older list that was never saved is the starting list, and one that was saved empty has no rows', () => {
+  const large = largePanels.map(panel => panel.value);
+  const small = smallPanels.map(panel => panel.value);
+  assert.deepEqual(currentOrder({ grid1: shown(['photo']) }).map(step => step.panel), ['photo'].concat(small));
+  assert.deepEqual(currentOrder({ grid2: shown(['forecast']) }).map(step => step.panel), large.concat(['forecast']));
+  assert.deepEqual(currentOrder({ order: [], grid1: [], grid2: [] }), []);
+  const rows = seedRows({ order: [], grid1: [], grid2: [] }, [prime]);
+  assert.deepEqual(rows.mainRows.map(main => main.panel), ['monday-tasks', 'monday-milestones', 'monday-progress']);
+  assert.deepEqual(rows.sideRows, []);
 });
 
 test('a Screen is filled with the rows and the Monday style of the old setting; Minimal has no side rows', () => {

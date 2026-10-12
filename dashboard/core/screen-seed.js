@@ -10,7 +10,15 @@
 // The rows of the small panel are the small panels of the same order, with no team.
 
 import { mondayRows, teamPanels } from '../config.js';
+import { panels } from '../registry.js';
 import { playlistOf } from './panel-order.js';
+
+// The panels the pickers of a row offer (studio/screen-panels.js): not a Monday card, which a Monday row
+// makes, not a competition card, which the competition mode mixes in, and not the spare tile or a test panel.
+function isOffered(step) {
+  const panel = panels.find(item => item.id === step.panel);
+  return Boolean(panel) && !panel.monday && !panel.competition && !panel.lastResort && !panel.testOnly;
+}
 
 function seedRow(step, team) {
   const row = { panel: step.panel };
@@ -22,7 +30,7 @@ function seedRow(step, team) {
 // The rows of the large panel. A row that is switched off is not carried over, because a row of a Screen has no
 // switch. Seconds carry over, and a panel that comes twice comes twice. teams is a list of { code }.
 export function seedMainRows(rotation, teams) {
-  const large = playlistOf(rotation, 'grid1').filter(step => step.show !== false);
+  const large = playlistOf(rotation, 'grid1').filter(step => step.show !== false && isOffered(step));
   const rows = [];
 
   teams.forEach(team => {
@@ -35,5 +43,5 @@ export function seedMainRows(rotation, teams) {
 
 // The rows of the small panel: its small panels, in the order they have there
 export function seedSideRows(rotation) {
-  return playlistOf(rotation, 'grid2').filter(step => step.show !== false).map(step => seedRow(step));
+  return playlistOf(rotation, 'grid2').filter(step => step.show !== false && isOffered(step)).map(step => seedRow(step));
 }

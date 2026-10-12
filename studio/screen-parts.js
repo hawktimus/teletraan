@@ -7,7 +7,7 @@ import { clockText } from './time-text.js';
 // What the form reads, from the published documents: the Dashboard Settings that hold the Panel
 // order, the Monday style and the countdown, and the active teams in order. The published copy
 // is the one the screen follows.
-const sourcesQuestion = '{ "settings": *[_id == "dashboardSettings"][0]{ rotation, mondayStyle, countdown }, "teams": *[_type == "team" && active != false] | order(order asc, name asc) { _id, name, shortName, code } }';
+const sourcesQuestion = '{ "settings": *[_id == "dashboardSettings"][0]{ rotation, mondayStyle, countdown }, "teams": *[_type == "team" && active != false] | order(order asc, _createdAt asc) { _id, name, shortName, code } }';
 
 // What the form shows for a team when no team document has been made yet: the two built-in
 // codes, with no document to open

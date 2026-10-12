@@ -11,8 +11,11 @@
 // The side panel rows (D) are the small rows of the same Panel order, in order, with no team.
 //
 // The Panel order is the list rotation.order of Dashboard Settings. While that is empty it is the
-// older list rotation.grid1 (large panels) followed by rotation.grid2 (small panels), and with
-// none of them saved, every panel in the order of the pickers.
+// older list rotation.grid1 (large panels) followed by rotation.grid2 (small panels). An older list
+// that was never saved is the starting list, every panel of its area in the order of the pickers,
+// because the page puts the starting settings under the saved ones (withDefaults in
+// dashboard/core/content.js). A list that was saved empty stays empty. The dashboard works the rows
+// out the same way (dashboard/core/screen-seed.js) and tools/test-screen-seed-parity.mjs checks both.
 //
 // Plain functions only, so that tools/test-screen-seed.mjs can run them with node.
 
@@ -30,17 +33,20 @@ export const startingMondayStyle = 'minimal';
 // dashboard/config.js.
 export const builtInTeam = 'prime';
 
+function startingRows(ids) {
+  return ids.map(panel => ({ panel: panel, show: true }));
+}
+
 function rowsOf(list, ids) {
-  return (Array.isArray(list) ? list : []).filter(step => step && ids.indexOf(step.panel) !== -1);
+  return Array.isArray(list) ? list.filter(step => step && ids.indexOf(step.panel) !== -1) : startingRows(ids);
 }
 
 // The rows of the Panel order, large and small together, as the screen follows them now
 export function currentOrder(rotation) {
   const source = rotation && typeof rotation === 'object' ? rotation : {};
-  const saved = Array.isArray(source.order) && source.order.length > 0 ? source.order : rowsOf(source.grid1, largeIds).concat(rowsOf(source.grid2, smallIds));
 
-  if (saved.length > 0) return saved;
-  return largeIds.concat(smallIds).map(panel => ({ panel: panel, show: true }));
+  if (Array.isArray(source.order) && source.order.length > 0) return source.order;
+  return rowsOf(source.grid1, largeIds).concat(rowsOf(source.grid2, smallIds));
 }
 
 function secondsOf(step) {
