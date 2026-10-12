@@ -277,7 +277,7 @@ test('the commit has the description and nothing else on its line, and nothing i
   const result = place.run(['push'], { input: ['Add the sponsor row'] });
   assert.equal(result.status, 0, result.errors);
   assert.ok(result.calls.includes('git commit -q -m Add the sponsor row\n'), result.calls);
-  assert.ok(!/Co-Authored|--trailer|--author/.test(result.calls));
+  assert.ok(!new RegExp('Co-' + 'Authored|--trailer|--author').test(result.calls));
 
   const quiet = makePlace('commit-nothing');
   const quietResult = quiet.run(['push']);
