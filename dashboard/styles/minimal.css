@@ -156,5 +156,5 @@ html[data-style="minimal"] .bar-rail::after {
 
 
 /* The war clock in the banner (panels/countdown) is shown by this style and by Cybertron, and by no
-   other. Here it is the narrow form, 766 by 120. Its digits are --style-digits, the team's neon here. */
+   other. Here it is the narrow form, 766 by 128. Its digits are --style-digits, the team's neon here. */
 html[data-style="minimal"] .war-clock { display: block; }

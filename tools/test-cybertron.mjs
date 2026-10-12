@@ -475,6 +475,10 @@ test('every frame of Cybertron, with its bolts, its brackets and its shadow, is 
   assert.ok(within({ x: boxes.countdown.x + 20, y: boxes.countdown.y + 60, width: 616, height: 200 }, boxes.countdown));
   assert.ok(apart({ x: boxes.countdown.x + 20, y: boxes.countdown.y + 60, width: 616, height: 200 }, place('cybertron-banner', boxes.banner)), 'the war clock is clear of the banner\'s frame');
   assert.ok(apart({ x: boxes.countdown.x + 20, y: boxes.countdown.y + 60, width: 616, height: 200 }, place('cybertron-grid2', boxes.grid2)), 'and of the small frame\'s');
+  // the same for the clock with a title on two lines, which is 240 high and 20 higher than its slot at both ends
+  const tall = { x: boxes.countdown.x + 20, y: boxes.countdown.y + 40, width: 616, height: 240 };
+  assert.ok(within(tall, boxes.countdown), 'the tall clock is inside its region');
+  assert.ok(apart(tall, place('cybertron-banner', boxes.banner)) && apart(tall, place('cybertron-grid2', boxes.grid2)), 'and clear of the banner\'s frame and of the small frame\'s');
 });
 
 
@@ -636,12 +640,20 @@ function textWidth(text, weight, size, spacing) {
   }, 0);
 }
 
-// Where each part of the wide clock is, in the housing's own pixels, from the stylesheet
-const wideParts = () => ({
-  'war-status': { top: wideNumber('.war-status', 'top'), height: wideNumber('.war-status', 'height'), left: wideNumber('.war-status', 'left'), width: wideNumber('.war-status', 'width') },
-  'war-lines': { top: wideNumber('.war-lines', 'top'), height: wideNumber('.war-lines', 'height'), left: wideNumber('.war-lines', 'left'), width: wideNumber('.war-lines', 'width') },
-  'war-days-plate': { top: wideNumber('.war-plate', 'top'), height: wideNumber('.war-plate', 'height'), left: wideNumber('.war-days-plate', 'left'), width: wideNumber('.war-days-plate', 'width') },
-  'war-time-plate': { top: wideNumber('.war-plate', 'top'), height: wideNumber('.war-plate', 'height'), left: wideNumber('.war-time-plate', 'left'), width: wideNumber('.war-time-plate', 'width') },
+// The wide clock's second rule, for a title on two lines, and a number from it or else from the first rule: the custom properties it sets,
+// and its height
+const wideTwoRule = () => ruleOf(wideSection(), '.war-clock.war-wide[data-title="two"]');
+const wideVariable = (state, name) => {
+  const changed = state === 'two' ? numberIn(wideTwoRule(), name) : null;
+  return changed !== null ? changed : wideNumber('', name);
+};
+
+// Where each part of the wide clock is for a title on one line ('one') or two ('two'), in the housing's own pixels, from the stylesheet
+const wideParts = state => ({
+  'war-status': { top: wideVariable(state, '--status-top'), height: wideNumber('.war-status', 'height'), left: wideNumber('.war-status', 'left'), width: wideNumber('.war-status', 'width') },
+  'war-lines': { top: wideNumber('.war-lines', 'top'), height: wideVariable(state, '--lines-height'), left: wideNumber('.war-lines', 'left'), width: wideNumber('.war-lines', 'width') },
+  'war-days-plate': { top: wideVariable(state, '--plates-top'), height: wideNumber('.war-plate', 'height'), left: wideNumber('.war-days-plate', 'left'), width: wideNumber('.war-days-plate', 'width') },
+  'war-time-plate': { top: wideVariable(state, '--plates-top'), height: wideNumber('.war-plate', 'height'), left: wideNumber('.war-time-plate', 'left'), width: wideNumber('.war-time-plate', 'width') },
 });
 const boxOf = part => ({ x: part.left, y: part.top, width: part.width, height: part.height });
 
@@ -679,12 +691,24 @@ test('the wide housing is one steel plate 616 by 200 with the edge of the frames
     assert.ok((markup.match(/<(svg|g|polygon|path|use|ellipse)[ >]/g) || []).length <= 20, 'a handful of elements');
     assert.ok(!/(filter|animate|<set|clipPath|<image|<mask|<pattern)/i.test(markup));
 
-    // The narrow one is the one Minimal has: 766 by 120, on a shape of its own, with the id it had
+    // The tall one is for a title on two lines: 40 higher, with the same corners, and the seam, the rivets at the foot and the rust moved down by 40
+    const tall = plate.warHousingMarkup('wide', {}, true);
+    assert.ok(isBalanced(tall));
+    assert.ok(/^<svg class="war-housing war-housing-tall" width="616" height="240" viewBox="0 0 616 240">/.test(tall));
+    const tallPoints = /<polygon class="war-housing-fill" points="([^"]*)"/.exec(tall)[1].split(' ').map(pair => pair.split(',').map(Number));
+    assert.deepEqual(tallPoints, [[4, 236], [4, 38], [38, 4], [612, 4], [612, 202], [578, 236]]);
+    assert.deepEqual((tall.match(/<use class="edge-[a-z]+" href="#war-housing-wide-tall-shape"\/>/g) || []).length, 5, 'the five layers of the edge, on a shape of its own');
+    assert.deepEqual(rivetsIn(tall), [[30, 38], [586, 38], [30, 218], [572, 218]]);
+    tallPoints.map((point, index) => [point, tallPoints[(index + 1) % tallPoints.length]]).forEach(([from, to]) => rivetsIn(tall).forEach(center => assert.ok(distanceToSegment(center, from, to) >= 5 + 8, 'a rivet is clear of the rim of the edge: ' + center)));
+    assert.ok(/class="war-weld-dark" d="M16 104L600 104"/.test(tall) && /class="war-weld-light" d="M16 108L600 108"/.test(tall), 'the seam, 40 lower');
+    assert.equal(countOf(tall, 'class="war-smudge"'), 2, 'rust at two corners');
+
+    // The narrow one is the one Minimal has: 766 by 128, on a shape of its own, with the id it had
     const narrow = plate.warHousingMarkup();
     assert.equal(narrow, plate.warHousingMarkup('narrow'));
-    assert.ok(/^<svg class="war-housing" width="766" height="120" viewBox="0 0 766 120">/.test(narrow));
+    assert.ok(/^<svg class="war-housing" width="766" height="128" viewBox="0 0 766 128">/.test(narrow));
     assert.ok(narrow.includes('href="#war-housing-shape"') && !narrow.includes('wide'));
-    assert.deepEqual(rivetsIn(narrow), [[30, 22], [738, 22], [30, 92], [738, 92]]);
+    assert.deepEqual(rivetsIn(narrow), [[30, 22], [738, 22], [30, 100], [738, 100]]);
   });
 });
 
@@ -696,13 +720,16 @@ test('the wide war clock markup has the same parts as the narrow one, once each,
     assert.ok(isBalanced(wide));
     assert.ok(/^\s*<div class="war-clock war-wide" data-level="calm" data-over="no">/.test(wide), 'one root, calm, and not over');
     assert.ok(/^\s*<div class="war-clock" data-level="calm" data-over="no">/.test(narrow), 'the narrow form is as it was');
-    assert.equal(wide.replace(/<svg class="war-housing"[\s\S]*?<\/svg>/, '').replace(' war-wide', ''), narrow.replace(/<svg class="war-housing"[\s\S]*?<\/svg>/, ''), 'the same parts in the same order, apart from the housing');
+    const withoutHousings = markup => markup.replace(/<svg class="war-housing[^"]*"[\s\S]*?<\/svg>/g, '');
+    assert.equal(withoutHousings(wide).replace(' war-wide', ''), withoutHousings(narrow), 'the same parts in the same order, apart from the housings');
+    assert.equal(countOf(wide, 'class="war-housing war-housing-tall"') + countOf(wide, 'class="war-housing"'), 2, 'one housing for a title on one line and a tall one for two');
     assert.equal(countOf(wide, 'data-part'), 0, 'no part of the clock arrives of its own');
     assert.ok(wide.includes('width="616" height="200"'));
 
     const classes = [];
     wide.replace(/class="([^"]*)"/g, (all, list) => { list.split(/\s+/).filter(Boolean).forEach(name => classes.push(name)); return all; });
-    ['war-clock', 'war-wide', 'war-housing', 'war-status', 'war-lines', 'label', 'date', 'war-days-plate', 'war-days-group', 'days-number', 'days-word', 'war-time-plate', 'hours', 'minutes', 'seconds'].forEach(name => assert.equal(classes.filter(found => found === name).length, 1, name + ' appears once'));
+    ['war-clock', 'war-wide', 'war-housing-tall', 'war-status', 'war-lines', 'label', 'date', 'war-days-plate', 'war-days-group', 'days-number', 'days-word', 'war-time-plate', 'hours', 'minutes', 'seconds'].forEach(name => assert.equal(classes.filter(found => found === name).length, 1, name + ' appears once'));
+    assert.equal(classes.filter(found => found === 'war-housing').length, 2, 'the two housings');
     assert.equal(classes.filter(found => found === 'war-cell').length, 3);
     ['lamp', 'chevron', 'segment', 'stripes', 'top-line', 'time-row', 'days-row'].forEach(name => assert.ok(!classes.some(found => found.includes(name)), 'no ' + name + ' of the red countdown'));
   });
@@ -773,7 +800,7 @@ test('the wide war clock shows the same data as the countdown: the label without
       assert.equal(world.countdown.nodes['.date'].textContent, date, name);
       assert.equal(world.countdown.dataset.level, level, name);
       assert.equal(world.countdown.dataset.over, over, name);
-      assert.equal(world.measured.length, 0, 'nothing is measured: the label has a line of its own');
+      assert.equal(world.measured.length, 0, 'nothing is measured: the table of the font decides where the title breaks');
     }, 'cybertron');
   }
 
@@ -789,58 +816,71 @@ test('the wide war clock shows the same data as the countdown: the label without
   }, 'cybertron');
 });
 
-test('the parts of the wide war clock are inside the housing, clear of each other and of the rivets and the cut corners, and the budget in docs/layouts.md is the numbers in countdown.css', async () => {
-  const parts = wideParts();
+test('the parts of the wide war clock are inside the housing, clear of each other and of the rivets and the cut corners, for a title on one line and on two, and the budgets in docs/layouts.md are the numbers in countdown.css', async () => {
   const doc = read('docs/layouts.md');
   const start = doc.indexOf('\n### The wide war clock\n');
   assert.ok(start !== -1, 'docs/layouts.md has a section called The wide war clock');
   const section = doc.slice(start, doc.indexOf('\n### ', start + 10));
   assert.ok(section.length > 800, 'and it is long enough to say what the clock is');
+  const cut = section.indexOf('**A title on two lines.**');
+  assert.ok(cut !== -1, 'the section says what a title on two lines does');
+  const tables = { one: section.slice(0, cut), two: section.slice(cut) };
+  const heights = { one: 200, two: 240 };
 
-  const rows = {};
-  section.split('\n').forEach(line => {
-    const row = /^\| `\.([a-z-]+)` \| (\d+) \| (\d+) \| (\d+) \| (\d+) \|/.exec(line);
-    if (row) rows[row[1]] = { top: Number(row[2]), height: Number(row[3]), left: Number(row[4]), width: Number(row[5]) };
-  });
-  assert.deepEqual(Object.keys(rows).sort(), Object.keys(parts).sort(), 'the budget has a row for each part, and no other');
-  Object.keys(parts).forEach(name => assert.deepEqual(rows[name], parts[name], name + ' in the docs and in countdown.css'));
+  for (const state of ['one', 'two']) {
+    const parts = wideParts(state);
+    const rows = {};
+    tables[state].split('\n').forEach(line => {
+      const row = /^\| `\.([a-z-]+)` \| (\d+) \| (\d+) \| (\d+) \| (\d+) \|/.exec(line);
+      if (row) rows[row[1]] = { top: Number(row[2]), height: Number(row[3]), left: Number(row[4]), width: Number(row[5]) };
+    });
+    assert.deepEqual(Object.keys(rows).sort(), Object.keys(parts).sort(), state + ': the budget has a row for each part, and no other');
+    Object.keys(parts).forEach(name => assert.deepEqual(rows[name], parts[name], state + ': ' + name + ' in the docs and in countdown.css'));
 
-  const housing = { x: 0, y: 0, width: 616, height: 200 };
-  assert.deepEqual([wideNumber('', 'width'), wideNumber('', 'height')], [616, 200], 'the clock is the size of the housing');
-  Object.keys(parts).forEach(name => assert.ok(within(boxOf(parts[name]), housing), name + ' is inside the housing'));
-  const names = Object.keys(parts);
-  names.forEach((name, index) => names.slice(index + 1).forEach(other => assert.ok(apart(boxOf(parts[name]), boxOf(parts[other])), name + ' and ' + other + ' overlap')));
-  assert.ok(parts['war-days-plate'].left + parts['war-days-plate'].width < parts['war-time-plate'].left, 'the days, a gap, the time');
-  assert.equal(parts['war-status'].top + parts['war-status'].height / 2, parts['war-lines'].top + parts['war-lines'].height / 2, 'the square is level with the middle of the line');
-  assert.equal(parts['war-status'].left + parts['war-status'].width + 8, parts['war-lines'].left, 'the label is 8 from its square');
-  assert.equal(parts['war-days-plate'].top, parts['war-time-plate'].top);
-  assert.equal(parts['war-days-plate'].height, parts['war-time-plate'].height);
+    const housing = { x: 0, y: 0, width: 616, height: heights[state] };
+    assert.deepEqual([wideNumber('', 'width'), wideVariable('one', 'height')], [616, 200], 'the clock is the size of the housing');
+    assert.equal(wideVariable('two', 'height'), 240, 'and 40 higher for two lines');
+    Object.keys(parts).forEach(name => assert.ok(within(boxOf(parts[name]), housing), state + ': ' + name + ' is inside the housing'));
+    const names = Object.keys(parts);
+    names.forEach((name, index) => names.slice(index + 1).forEach(other => assert.ok(apart(boxOf(parts[name]), boxOf(parts[other])), state + ': ' + name + ' and ' + other + ' overlap')));
+    assert.ok(parts['war-days-plate'].left + parts['war-days-plate'].width < parts['war-time-plate'].left, state + ': the days, a gap, the time');
+    assert.equal(parts['war-status'].top + parts['war-status'].height / 2, parts['war-lines'].top + wideVariable(state, '--lines-leading') / 2, state + ': the square is level with the middle of the first line');
+    assert.equal(parts['war-status'].left + parts['war-status'].width + 8, parts['war-lines'].left, state + ': the title is 8 from its square');
+    assert.equal(parts['war-lines'].height, (state === 'one' ? 1 : 2) * wideVariable(state, '--lines-leading'), state + ': one line or two');
+    assert.equal(parts['war-days-plate'].top, parts['war-time-plate'].top);
+    assert.equal(parts['war-days-plate'].height, parts['war-time-plate'].height);
+    assert.equal(parts['war-days-plate'].top + parts['war-days-plate'].height + 30, housing.height, state + ': 30 under the plates, as the clock has always had');
 
-  // The slot is the clock's place in the region of the countdown: 20 from the sides and in the middle of the 320
+    // The rivets stand in the corners and no part covers one. The time plate keeps clear of the cut corner at the bottom right
+    await withPlatePage(() => {
+      const markup = plate.warHousingMarkup('wide', {}, state === 'two');
+      rivetsIn(markup).forEach(([x, y]) => names.forEach(name => assert.ok(apart({ x: x - 5, y: y - 5, width: 10, height: 10 }, boxOf(parts[name])), state + ': a rivet is under ' + name)));
+      const points = /<polygon class="war-housing-fill" points="([^"]*)"/.exec(markup)[1].split(' ').map(pair => pair.split(',').map(Number));
+      const time = parts['war-time-plate'];
+      const corner = [time.left + time.width, time.top + time.height];
+      assert.ok(distanceToLine(corner, points[4], points[5]) >= 8 + 6, state + ': the time plate is 6 clear of the rim at the cut corner');
+      const days = parts['war-days-plate'];
+      assert.ok(distanceToLine([days.left, days.top], points[1], points[2]) >= 8 + 6, state + ': and the days plate at the top left');
+      const dark = Number(/war-weld-dark" d="M\d+ (\d+)/.exec(markup)[1]);
+      assert.ok(dark > parts['war-lines'].top + parts['war-lines'].height && dark < parts['war-days-plate'].top, state + ': the weld seam is between the title and the plates');
+    });
+  }
+
+  // The slot is the clock's place in the region of the countdown: 20 from the sides and in the middle of the 320. The clock with two lines is
+  // 20 above and below the slot, so it is in the middle of the region too, and inside it
   const css = warCss();
   const slot = ruleOf(css, '.war-slot');
   assert.deepEqual([numberIn(slot, 'left'), numberIn(slot, 'top'), numberIn(slot, 'width'), numberIn(slot, 'height')], [20, 60, 616, 200]);
   assert.equal(numberIn(slot, 'left') * 2 + 616, 656, 'the same on both sides');
   assert.equal(numberIn(slot, 'top') * 2 + 200, 320, 'and above and below');
   assert.deepEqual([numberIn(ruleOf(css, '.countdown-war'), 'width'), numberIn(ruleOf(css, '.countdown-war'), 'height')], [656, 320], 'the region of the red countdown');
-
-  // The rivets stand in the corners and no part covers one. The time plate keeps clear of the cut corner at the bottom right
-  await withPlatePage(() => {
-    const markup = plate.warHousingMarkup('wide');
-    rivetsIn(markup).forEach(([x, y]) => names.forEach(name => assert.ok(apart({ x: x - 5, y: y - 5, width: 10, height: 10 }, boxOf(parts[name])), 'a rivet is under ' + name)));
-    const time = parts['war-time-plate'];
-    const corner = [time.left + time.width, time.top + time.height];
-    assert.ok(distanceToLine(corner, [612, 162], [578, 196]) >= 8 + 6, 'the time plate is 6 clear of the rim at the cut corner');
-    const days = parts['war-days-plate'];
-    assert.ok(distanceToLine([days.left, days.top], [4, 38], [38, 4]) >= 8 + 6, 'and the days plate at the top left');
-    const dark = Number(/war-weld-dark" d="M\d+ (\d+)/.exec(markup)[1]);
-    assert.ok(dark > parts['war-lines'].top + parts['war-lines'].height && dark < parts['war-days-plate'].top, 'the weld seam is between the label and the plates');
-  });
+  const tallTop = numberIn(wideTwoRule(), 'top');
+  assert.deepEqual([tallTop, numberIn(slot, 'top') + tallTop], [-20, 40], 'the tall clock is 20 above the slot, 40 from the top of the region');
+  assert.equal(numberIn(slot, 'top') + tallTop + wideVariable('two', 'height') + 40, 320, 'and 40 from the bottom');
 });
 
-test('the digits and the labels of the wide war clock fit their boxes in the display font, every one of them is 44 px or more, and three digit days are drawn smaller', () => {
+test('the digits and the labels of the wide war clock fit their boxes in the display font, every one of them but the title and the date is 44 px or more, and three digit days are drawn smaller', () => {
   const lines = wideRule('.war-lines');
-  assert.equal(numberIn(lines, 'gap'), 24, 'the label and the date are 24 apart at the least');
   const plateInside = wideNumber('.war-days-plate', 'width') - 2 * 3;
   const gap = wideNumber('.war-days-group', 'gap');
   const word = textWidth('DAYS', 600, 44, -0.03);
@@ -865,20 +905,22 @@ test('the digits and the labels of the wide war clock fit their boxes in the dis
   assert.equal(3 * wideNumber('.war-cell', 'width') + 2 * 3, wideNumber('.war-time-plate', 'width'), 'three cells inside a 3 px border');
   assert.equal(wideNumber('.war-cell .digits', 'height') + 44, wideNumber('.war-plate', 'height') - 2 * 3, 'the digits and the label fill the plate');
 
-  // The label and the date share the line of 494: KICKOFF and ROLLOUT with the widest date, and NOW, and the end states alone
+  // The title and the date at 36 px share the line of 494: KICKOFF and ROLLOUT with the widest date, and NOW, and the end states alone
   const spacing = 0.06;
   const dates = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'].map(month => month + ' 30');
-  const widestDate = Math.max.apply(null, dates.map(date => textWidth(date, 700, 44, spacing)));
-  ['KICKOFF', 'ROLLOUT'].forEach(label => assert.ok(textWidth(label, 700, 44, spacing) + 24 + widestDate <= numberIn(lines, 'width'), label + ' and the widest date fit the line'));
-  ['KICKOFF', 'ROLLOUT'].forEach(label => assert.ok(textWidth(label, 700, 44, spacing) + 24 + textWidth('NOW', 700, 44, spacing) <= numberIn(lines, 'width'), label + ' and NOW'));
-  ['COUNTDOWN OVER', 'DATE NOT SET'].forEach(words => assert.ok(textWidth(words, 700, 44, spacing) <= numberIn(lines, 'width'), words + ' fits the line alone'));
+  const widestDate = Math.max.apply(null, dates.map(date => textWidth(date, 700, 36, spacing)));
+  ['KICKOFF', 'ROLLOUT'].forEach(label => assert.ok(textWidth(label, 700, 36, spacing) + 24 + widestDate <= numberIn(lines, 'width'), label + ' and the widest date fit the line'));
+  ['KICKOFF', 'ROLLOUT'].forEach(label => assert.ok(textWidth(label, 700, 36, spacing) + 24 + textWidth('NOW', 700, 36, spacing) <= numberIn(lines, 'width'), label + ' and NOW'));
+  ['COUNTDOWN OVER', 'DATE NOT SET'].forEach(words => assert.ok(textWidth(words, 700, 36, spacing) <= numberIn(lines, 'width'), words + ' fits the line alone'));
+  assert.ok(/font: 700 36px\/var\(--lines-leading\) var\(--font-display\);/.test(wideRule('.war-lines span')), 'the title and the date are 36 px');
   assert.ok(/letter-spacing: \.06em;/.test(wideRule('.war-lines span')));
-  assert.ok(/text-overflow: ellipsis;/.test(wideRule('.war-lines span')), 'a label that is too wide for its line is cut off with an ellipsis');
+  assert.ok(/white-space: pre;/.test(wideRule('.war-lines .label')), 'the title breaks where core/countdown.js wrote the line break');
+  assert.ok(!/text-overflow|line-clamp/.test(wideSection()), 'nothing in the wide clock is cut off with an ellipsis');
 
-  // No text under 44 px in the wide clock, and no text in the file of the style
+  // No text under 44 px in the wide clock but the title and the date at 36, and no text in the file of the style
   const small = [];
   (wideSection().match(/font(-size)?: [^;]*/g) || []).forEach(text => (text.match(/(?<![\/\d.])\d+(\.\d+)?px/g) || []).filter(size => parseFloat(size) < 44).forEach(size => small.push(size)));
-  assert.deepEqual(small, [], 'every text of the wide clock is 44 px or more');
+  assert.deepEqual(small, ['36px'], 'every text of the wide clock is 44 px or more, but the title and the date');
   assert.ok(!/(^|[^-])font(-size)?:/.test(withoutComments(read('dashboard/styles/cybertron.css'))), 'the style file has no text of its own');
 });
 

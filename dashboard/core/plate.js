@@ -1238,8 +1238,10 @@ function piecesMarkup(kind, shape) {
 // The war clock's housing
 
 // The war clock (panels/countdown, docs/layouts.md, "The war clock") is drawn in two forms.
-// The narrow one is 766 by 120, in the banner of the bar layout (Minimal). The wide one is
-// 616 by 200, in the countdown's place in Cybertron. The housing of each is a plate in the metal of the team
+// The narrow one is 766 by 128, in the banner of the bar layout (Minimal). The wide one is
+// 616 by 200, in the countdown's place in Cybertron. Each has a tall housing as well, 16 and 40
+// higher, which the clock shows while its title takes two lines (the clock holds both and the
+// stylesheet shows one). The housing of each is a plate in the metal of the team
 // with the same edge as the frames: the line 4 inside the box, a cut corner at the top left
 // and the bottom right (22 on the narrow one and 34 on the wide one), four rivets, one weld
 // seam across the middle and rust at the bottom left and the top right. Everything in it is still.
@@ -1247,25 +1249,47 @@ function piecesMarkup(kind, shape) {
 // rivets and the rust turned across with them.
 const warForms = {
   narrow: {
-    box: { width: 766, height: 120, chamfer: 22 },
+    box: { width: 766, height: 128, chamfer: 22 },
     id: 'war-housing-shape',
-    rivets: [[30, 22], [738, 22], [30, 92], [738, 92]],
-    seam: { y: 63, from: 16, to: 750 }, // between the label and the date. The light line is weldGap below the dark one
+    rivets: [[30, 22], [738, 22], [30, 100], [738, 100]],
+    seam: { y: 48, from: 16, to: 750 }, // between the title and the plates. The light line is weldGap below the dark one
     rust: {
-      patches: [{ cx: 50, cy: 100 }, { cx: 716, cy: 20 }],
+      patches: [{ cx: 50, cy: 108 }, { cx: 716, cy: 20 }],
       patchRadius: { x: 56, y: 16 },
-      arcs: 'M6 72Q28 90 6 108M716 6Q734 24 752 6',
+      arcs: 'M6 80Q28 98 6 116M716 6Q734 24 752 6',
+    },
+  },
+  'narrow-tall': {
+    box: { width: 766, height: 144, chamfer: 22 },
+    id: 'war-housing-tall-shape',
+    rivets: [[30, 22], [738, 22], [30, 116], [738, 116]],
+    seam: { y: 78, from: 16, to: 750 },
+    rust: {
+      patches: [{ cx: 50, cy: 124 }, { cx: 716, cy: 20 }],
+      patchRadius: { x: 56, y: 16 },
+      arcs: 'M6 96Q28 114 6 132M716 6Q734 24 752 6',
     },
   },
   wide: {
     box: { width: 616, height: 200, chamfer: 34 },
     id: 'war-housing-wide-shape',
     rivets: [[30, 38], [586, 38], [30, 178], [572, 178]], // the last one is clear of the cut corner
-    seam: { y: 64, from: 16, to: 600 }, // between the label and the two plates
+    seam: { y: 64, from: 16, to: 600 }, // between the title and the two plates
     rust: {
       patches: [{ cx: 56, cy: 172 }, { cx: 560, cy: 24 }],
       patchRadius: { x: 56, y: 16 },
       arcs: 'M6 128Q28 148 6 168M536 6Q554 24 572 6',
+    },
+  },
+  'wide-tall': {
+    box: { width: 616, height: 240, chamfer: 34 },
+    id: 'war-housing-wide-tall-shape',
+    rivets: [[30, 38], [586, 38], [30, 218], [572, 218]],
+    seam: { y: 104, from: 16, to: 600 },
+    rust: {
+      patches: [{ cx: 56, cy: 212 }, { cx: 560, cy: 24 }],
+      patchRadius: { x: 56, y: 16 },
+      arcs: 'M6 168Q28 188 6 208M536 6Q554 24 572 6',
     },
   },
 };
@@ -1286,10 +1310,11 @@ function mirroredPath(data, width) {
   return data.replace(/(-?[\d.]+) (-?[\d.]+)/g, (pair, x, y) => (width - Number(x)) + ' ' + y);
 }
 
-// form is 'narrow' (the default) or 'wide'. trim is the team's, { corner, notch }: with corner 'tr' the cut
-// corners are the top right and the bottom left, and the rivets and the rust are turned across with them
-export function warHousingMarkup(form = 'narrow', trim = {}) {
-  const housing = warForms[form] || warForms.narrow;
+// form is 'narrow' (the default) or 'wide', and tall is true for the housing of a title on two lines. trim is the
+// team's, { corner, notch }: with corner 'tr' the cut corners are the top right and the bottom left, and the rivets
+// and the rust are turned across with them
+export function warHousingMarkup(form = 'narrow', trim = {}, tall = false) {
+  const housing = warForms[tall ? form + '-tall' : form] || warForms.narrow;
   const box = housing.box;
   const turned = Boolean(trim) && trim.corner === 'tr';
   const outline = warOutline(box, turned);
@@ -1303,7 +1328,7 @@ export function warHousingMarkup(form = 'narrow', trim = {}) {
   const arcs = turned ? mirroredPath(housing.rust.arcs, box.width) : housing.rust.arcs;
   const rivets = turned ? housing.rivets.map(center => [box.width - center[0], center[1]]) : housing.rivets;
 
-  return `<svg class="war-housing" width="${box.width}" height="${box.height}" viewBox="0 0 ${box.width} ${box.height}">
+  return `<svg class="war-housing${tall ? ' war-housing-tall' : ''}" width="${box.width}" height="${box.height}" viewBox="0 0 ${box.width} ${box.height}">
     <polygon class="war-housing-fill" points="${toPoints(outline)}"/>
     <path class="war-weld-dark" d="${pathData(seam)}"/>
     <path class="war-weld-light" d="${pathData(light)}"/>

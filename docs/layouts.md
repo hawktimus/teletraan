@@ -467,7 +467,7 @@ run the tests.
 |------|---|---|-------|--------|
 | Banner | 32 | 32 | 1856 | 160 |
 | Name slot | 72 | 32 | 986 | 160 |
-| War clock slot | 1082 | 52 | 766 | 120 |
+| War clock slot | 1082 | 48 | 766 | 128 |
 | Row | 32 | 216 | 1856 | 736 |
 | Rail | 32 | 216 | 12 | 736 |
 | Side column | 68 | 216 | 300 | 736 |
@@ -483,7 +483,7 @@ y 0  +--------------------------------------------------------------------+
      |                          margin 32                                 |
   32 |   +------------------------------------------------------------+   |
      |   | BANNER 1856 x 160                                          |   |
-     |   | NAME slot 986 wide           war clock slot 766 x 120      |   |
+     |   | NAME slot 986 wide           war clock slot 766 x 128      |   |
  192 |   +------------------------------------------------------------+   |
      |         row gap 24                                                 |
  216 |   +-+  +-------+  +-------------------------------------------+   |
@@ -515,15 +515,15 @@ panel may show any topic.
 line at the heading size (96 px), in a slot 986 wide: HAWKTIMUS PRIME is 984.6 wide
 at that size, and a longer name squeezes its letters together, as the banner's name
 does, so the war clock never moves. The war clock's slot is at the other end, 766 by
-120, in the middle of the banner's height, and the war clock is drawn in it (see "The war
+128, in the middle of the banner's height, and the war clock is drawn in it (see "The war
 clock"). Both are 40 in from the ends of the banner, with 24 between them.
 
 ### The war clock
 
-The war clock is the countdown drawn a third time, 766 by 120, in the banner's slot. It has
+The war clock is the countdown drawn a third time, 766 by 128, in the banner's slot. It has
 the same source as the countdown in the standard layout and in the sidebar: the dates, the
 labels and the second tick, all from Dashboard Settings (`core/countdown.js` works them out,
-and `startCountdown` is given `{ war: true }`). Only the look is its own. The code is in
+and `startCountdown` is given `{ war: true }` and the room of its title). Only the look is its own. The code is in
 `panels/countdown` (`warMarkup`, `startWar` and `updateWar` in `countdown.js`, the rules in
 `countdown.css`) and the housing is drawn by `warHousingMarkup` in `core/plate.js`.
 `panels/bar-banner` puts it in its slot, and Minimal shows it (`styles/minimal.css`). Cybertron
@@ -533,58 +533,80 @@ clock", under "Cybertron"), and Original shows neither.
 The housing is a plate of steel, with the edge of the frames (the shadow, the rim, the face, the
 shade and the ridge, as in "Frames"), the same gradient as the armor tab, a cut corner of 22 at the
 top left and the bottom right, four rivets at the corners, one horizontal weld seam between the
-label and the date, and rust at the bottom left and the top right. The rust is a soft patch and a
-short stroke, the flat finish leaves it off, and it never moves. Inside it, from left to right,
-are a label block, a dark plate with the days and a dark plate with the time. Every part is placed
-by hand, counted from the top left corner of the housing:
+title and the plates, and rust at the bottom left and the top right. The rust is a soft patch and a
+short stroke, the flat finish leaves it off, and it never moves. Inside it there are two lines. The
+first has the title at the left and the date at the right end, both at 36 px. The second has a dark
+plate with the days and a dark plate with the time. Every part is placed by hand, counted from the
+top left corner of the housing:
 
 | Part | Top | Height | Left | Width | What it holds |
 |------|-----|--------|------|-------|---------------|
-| `.war-status` | 46 | 10 | 28 | 10 | the red square, which is `--danger` |
-| `.war-lines` | 37 | 56 | 46 | 158 | the label in capitals, 24 px with the letters spaced, and under it the date in the same size, a line of 28 each |
-| `.war-days-plate` | 14 | 92 | 212 | 176 | the days at 76 px and DAYS beside them at 24 px |
-| `.war-time-plate` | 14 | 92 | 396 | 334 | the hours, minutes and seconds at 72 px, with HRS, MIN and SEC under them at 24 px, in three cells of 108 with a bar of 3 px between two cells |
+| `.war-status` | 26 | 10 | 42 | 10 | the red square, which is `--danger` |
+| `.war-lines` | 14 | 34 | 60 | 660 | the title in capitals at 36 px with the letters spaced, and the date at the right end of the same line |
+| `.war-days-plate` | 50 | 66 | 46 | 176 | the days at 64 px and DAYS beside them at 24 px |
+| `.war-time-plate` | 50 | 66 | 230 | 490 | the hours, minutes and seconds at 56 px, each with HRS, MIN or SEC after it at 24 px, in three cells of 160 with a bar of 3 px between two cells |
 
 The plates are `#0c0b09` with a 3 px border of `#2b2a26` and a gradient inside, from a faint
 highlight at the top to a shade at the foot. The digits are the team's neon in Minimal, and amber
 (`#ffb327`) in Cybertron, which is `--style-digits`. The date, DAYS and the small labels are a little
-fainter. The rivets are 5 px, in the corners, 3 px clear of the plates. The labels, 20 and 24 px,
-are text under 44 px, which only the war clock may have. The list is in
-`tools/test-layouts.mjs`.
+fainter. The rivets are 5 px, in the corners, clear of the plates. The title and the date are 36 px
+and the labels 24 px, which are text under 44 px, and the only text under 44 px that the clock has.
+The list is in `tools/test-layouts.mjs`.
 
-**What it shows.** The label is the label from Dashboard Settings in capitals, with no IN, and the
-date is under it, as `JAN 9`, or `NOW` for the rest of the day when the time has come. The days
+**A title on two lines.** The title is never cut off and has no ellipsis. When it does not fit
+beside the date on the first line, `core/countdown.js` writes it on two lines and sets `data-title="two"`
+on the clock (`core/countdown-title.js` decides, with the advance widths of the font). The clock
+grows from 128 to 144, 8 above and 8 below its slot. The banner is 160 and the edge of its frame takes 12 of each
+end, and the rim of a housing reaches 4 outside its box, so the clock of 128 touches the edge of the frame and
+the clock of 144 covers 8 px of it. The name is far away and is not touched. The housing is drawn twice, and the
+second one, which is taller, is the one shown then. The title takes two lines of 32, the date stays at the right end of the
+first, the plates get lower and the digits smaller. The values that differ are custom properties on
+the clock, in the second rule:
+
+| Part | Top | Height | Left | Width | What it holds |
+|------|-----|--------|------|-------|---------------|
+| `.war-status` | 23 | 10 | 42 | 10 | the red square, level with the first line |
+| `.war-lines` | 12 | 64 | 60 | 660 | the title on two lines of 32, and the date at the right end of the first |
+| `.war-days-plate` | 80 | 52 | 46 | 176 | the days at 48 px, three digits too, and DAYS beside them at 24 px |
+| `.war-time-plate` | 80 | 52 | 230 | 490 | the hours, minutes and seconds at 44 px, with the labels after them at 24 px |
+
+A title that two lines at 36 px do not hold is set at 32, then 28, 24 and 20 px until it fits, so that
+nothing is cut off. The Studio warns above 28 characters (Dashboard Settings, Countdown) and refuses
+more than 40. Titles of ordinary words fit at 32 px or more up to 28 characters and at 24 px or more up to 40
+(`tools/test-countdown-title.mjs`). A single word wider than a line is clipped and has no ellipsis.
+
+**What it shows.** The title is the label from Dashboard Settings in capitals, with no IN, and the
+date is at the right end of its first line, as `JAN 9`, or `NOW` for the rest of the day when the time has come. The days
 are two digits, three when there are 100 or more, and the hours, minutes and seconds are two
 each. They change with the same tick as the countdown, at once: there is no roll, no nudge of
-chevrons, no lamp row, no serial plate and no pipes. After Rollout the label is COUNTDOWN
+chevrons, no lamp row, no serial plate and no pipes. After Rollout the title is COUNTDOWN
 OVER, and while no date is set it is DATE NOT SET, which are the words the standard countdown
-shows. They take both lines at 20 px (COUNTDOWN over OVER, and DATE NOT over SET), with the days
-at 00 and the time at 00 00 00. In the last 30 days the digits and the labels turn orange (`--danger-bright`), and in the
-last 7 they turn white and the borders of the plates turn red (`--danger`).
+shows. They have the first line to themselves, with the days at 00 and the time at 00 00 00. In the last 30 days the digits
+and the labels turn orange (`--danger-bright`), and in the last 7 they turn white and the borders of the plates
+turn red (`--danger`).
 
 **What fits.** The numbers come from the advance widths of the display font, without kerning,
-which only makes a word narrower. Two digits at 76 px are up to 111 wide and DAYS at 24 px is
-about 64, and the plate has 170 inside its border, so the digits are set .04 em closer
-together and DAYS .03 em, with 2 px between the days and DAYS. The 3 counts that are still wider
-(69, 96 and 99) are wider than the plate by 1.4 px at the most, shared by both sides, and the
-plate cuts off what is outside it. Three digits at 76 px would be 199 with DAYS, so a count of
-100 or more is drawn at 48 px, like the time, and the widest of those, 999, is 166. The widest
-pair of time digits at 72 px is 105 wide in its box of 106 and its cell of 108, and HRS, MIN and
-SEC at 24 px with their spaced letters are up to 58. The digits and the label are 58 and 26 high
-in the 86 inside the border of the plate. KICKOFF at 24 px with its spaced letters
-is 128 wide and ROLLOUT is 137, in the 158 of the label. COUNTDOWN at 20 px is 155. A label of up
-to 12 characters that is wider than the line is cut off with an ellipsis, as the standard
-countdown's is. This has been worked out from the font and not looked at on a screen.
+which only makes a word narrower. Two digits at 64 px are up to 88 wide and DAYS at 24 px is
+about 65, so with the 2 px between them the widest count, 99, is 154.8, in the 170 inside the
+plate's border. Three digits at 64 px would not fit, so a count of 100 or more is drawn at 48 px, like the
+time, and the widest of those, 999, is 165.9. The widest pair of time digits at 56 px is 82 wide in a
+box of 84, and HRS, MIN and SEC at 24 px with their spaced letters are 61, 58 and 57, so a box, 6 and a label
+are at most 151 in the cell of 160. On two lines the digits are 48 and 44 px, and the widest pair of the time is
+64 in a box of 66. The digits have the line of the whole plate, 60 inside the border (46 on two lines), so
+they are in the middle of it. KICKOFF at 36 px with its spaced letters is 177 wide and ROLLOUT is 190, and the
+widest date, MAR 29, is 158, so with 24 between them a title and a date are at most 372 of the 660, and
+COUNTDOWN OVER is 390 by itself. This has been worked out from the font and not looked at on a screen.
 
-**Why 766.** The time plate had digits of 48 px and labels of 20, which were hard to read from across the
-room. At 72 px the digits of the time are 105 wide, and three cells of them need a plate of 334, where
-the plate was 250. The room for it comes from the name: the slot of the name is 1052 wide at 700 and
-HAWKTIMUS PRIME needs 984.6, so the war clock grows until the name has 1.4 px to spare, which is 766. The label block is
-11 px narrower and the gaps between the three parts are 8, to make up the rest. A name longer than
+**Why 766 by 128.** The time plate had digits of 48 px and labels of 20, which were hard to read from across the
+room. The room for bigger ones came from the name: the slot of the name is 1052 wide at 700 and
+HAWKTIMUS PRIME needs 984.6, so the war clock grew until the name had 1.4 px to spare, which is 766. The title now has a
+line of its own, which takes 36 px of height, so the clock is 8 higher than it was, 128, and the days and the time are
+64 and 56 px where they were 76 and 72. The banner has no more room: it is 160 with the edge of its frame 12 in from
+each end, and the main panel under it cannot give up height without its text going under 44 px. A name longer than
 HAWKTIMUS PRIME squeezes its letters as it always did.
 
 **The mirror.** The slot is at the other end of the banner when the layout is mirrored, and the
-war clock in it is the same picture: the label block at the left, then the days, then the time.
+war clock in it is the same picture: the title and the date on the first line, then the days, then the time.
 It reads from the left like every plate, and nothing turns it round.
 
 ### The side column
@@ -716,7 +738,7 @@ screen between two equal margins, so each is its own mirror.
 | Mirrored side column | 1552 | 216 | 300 | 736 |
 | Mirrored main panel | 32 | 216 | 1484 | 736 |
 | Mirrored name slot | 862 | 32 | 986 | 160 |
-| Mirrored war clock slot | 72 | 52 | 766 | 120 |
+| Mirrored war clock slot | 72 | 48 | 766 | 128 |
 
 The standard layout is mirrored by `styles/original.css`, as the same idea: the two
 columns change places, the banner's logo goes to the far end and its clock to the
@@ -1041,15 +1063,15 @@ The countdown of Cybertron is the war clock in its wide form, 616 by 200, in the
 countdown's region (656 by 320): 20 from each side and 60 above and below. It is the war clock of
 the bar layout (see "The war clock") laid out for 616 by 200, and it has the same source: the dates,
 the labels and the second tick come from Dashboard Settings, and `startCountdown` is given
-`{ war: true }`, so the label has no IN, the days are two digits (three from 100) and every number
+`{ war: true }` and the room of its title, so the label has no IN, the days are two digits (three from 100) and every number
 changes at once. The code is `warMarkup('wide')` in `panels/countdown/countdown.js`, which `mount`
 puts in a slot (`.war-slot`) of a panel of its own (`.countdown-war`), the rules at the end of
 `panels/countdown/countdown.css`, and `warHousingMarkup('wide')` in `core/plate.js`. The panel has
 one part that arrives, the slot (`countdown-war` in the table of `frame.js`), and no part of the
-clock has a line of its own. The narrow form is as it was, and Minimal keeps it.
+clock has a line of its own.
 
 The housing is the narrow one's at another size: a plate of steel with the edge of the frames, a cut
-corner of 34 at the top left and the bottom right, four rivets, one weld seam between the label and
+corner of 34 at the top left and the bottom right, four rivets, one weld seam between the title and
 the plates, and rust at the bottom left and the top right. The rust is a soft patch and a short
 stroke, the flat finish leaves it off, and it never moves. Every part is placed by hand, counted from
 the top left corner of the housing:
@@ -1057,20 +1079,37 @@ the top left corner of the housing:
 | Part | Top | Height | Left | Width | What it holds |
 |------|-----|--------|------|-------|---------------|
 | `.war-status` | 33 | 14 | 52 | 14 | the red square, which is `--danger` |
-| `.war-lines` | 18 | 44 | 74 | 494 | the label in capitals on the left and the date at the right end, on one line at 44 px with the letters spaced |
+| `.war-lines` | 18 | 44 | 74 | 494 | the title in capitals on the left and the date at the right end, on one line at 36 px with the letters spaced |
 | `.war-days-plate` | 68 | 102 | 22 | 248 | the days at 76 px and DAYS beside them at 44 px |
 | `.war-time-plate` | 68 | 102 | 278 | 300 | the hours, minutes and seconds at 52 px, with HRS, MIN and SEC under them at 44 px, in three cells of 98 with a bar of 3 px between two cells |
 
 The plates, the digits and the colors are the narrow clock's: `#0c0b09` with a 3 px border of
 `#2b2a26`, amber digits from `--style-digits`, a date, DAYS and labels that are a little fainter,
 orange in the last 30 days, and white with red borders in the last 7. The rivets are 5 px, one at
-each corner, clear of the plates and of the rim. The text is all 44 px or more, so the wide clock is
-not on the list of text under 44 px, which only the narrow clock is on.
+each corner, clear of the plates and of the rim. The title and the date are 36 px, the one text under
+44 px that the wide clock has, and the rest is 44 px or more.
 
-**What it shows.** The label is the label from Dashboard Settings in capitals, with no IN, and the
-date is at the right end of the same line, as `JAN 9`, or `NOW` for the rest of the day when the time
-has come. After Rollout the label is COUNTDOWN OVER, and while no date is set it is DATE NOT SET, the
-words the standard countdown shows, on the same line with no date, with the days at 00 and the time
+**A title on two lines.** The title is never cut off and has no ellipsis. When it does not fit
+beside the date on the first line, `core/countdown.js` writes it on two lines and sets `data-title="two"`
+on the clock (`core/countdown-title.js` decides, with the advance widths of the font). The clock
+grows from 200 to 240, 20 above and 20 below its slot, and is still in the middle of the region and clear
+of the frames above and below it. The housing is drawn twice, and the second one, which is 40 taller, is the one
+shown then. The title takes two lines of 42, and the plates and everything under the title move down by 40:
+
+| Part | Top | Height | Left | Width | What it holds |
+|------|-----|--------|------|-------|---------------|
+| `.war-status` | 32 | 14 | 52 | 14 | the red square, level with the first line |
+| `.war-lines` | 18 | 84 | 74 | 494 | the title on two lines of 42, and the date at the right end of the first |
+| `.war-days-plate` | 108 | 102 | 22 | 248 | the days at 76 px and DAYS beside them at 44 px |
+| `.war-time-plate` | 108 | 102 | 278 | 300 | the hours, minutes and seconds at 52 px, with HRS, MIN and SEC under them at 44 px |
+
+A title that two lines at 36 px do not hold is set at 32, then 28, 24 and 20 px until it fits, so that
+nothing is cut off. The Studio warns above 28 characters and refuses more than 40 (see "The war clock").
+
+**What it shows.** The title is the label from Dashboard Settings in capitals, with no IN, and the
+date is at the right end of its first line, as `JAN 9`, or `NOW` for the rest of the day when the time
+has come. After Rollout the title is COUNTDOWN OVER, and while no date is set it is DATE NOT SET, the
+words the standard countdown shows, on the first line with no date, with the days at 00 and the time
 at 00 00 00.
 
 **What fits.** The numbers come from the advance widths of the display font, without kerning, which
@@ -1078,13 +1117,12 @@ only makes a word narrower. Two digits at 76 px with DAYS at 44 px and the lette
 em closer are up to 225 wide (at 99 days), in the 242 that is inside the plate's border. Three digits
 at that size would not fit, so 100 days or more is drawn at 56 px, and the widest of those is 236. The
 widest pair of time digits at 52 px is 76 wide in its box of 96, and HRS, MIN and SEC are 93, 88 and 87
-in their cells of 98. KICKOFF is 217 wide and the widest date is 192, so with 24 between them they are
-433 of the 494, and ROLLOUT is 232 and makes 448. COUNTDOWN OVER, with no date, is 476. A label that
-is too wide for what the date leaves is cut off with an ellipsis, as the standard countdown's is.
-This has been worked out from the font and not looked at on a screen.
+in their cells of 98. KICKOFF at 36 px with its spaced letters is 177 wide, ROLLOUT is 190 and the widest
+date, MAR 29, is 158, so with 24 between them a title and a date are at most 372 of the 494. COUNTDOWN
+OVER, with no date, is 390. This has been worked out from the font and not looked at on a screen.
 
 **The mirror.** The slot is in the countdown's region, which is in the left column when the layout is
-mirrored, and the clock in it is the same picture: the label at the left, then the days, then the
+mirrored, and the clock in it is the same picture: the title at the left, then the days, then the
 time. It reads from the left like every plate, and nothing turns it round.
 
 ### The banner
@@ -1143,6 +1181,36 @@ Look at it with `?style=cybertron&night=off&hidden=off` on the address, with `?t
 mirror, and with Style in Dashboard Settings changed between Original and Cybertron on the open
 screen ("Looking at a layout" has the list of what to check). `node tools/test-cybertron.mjs` checks
 the numbers in this section against the code.
+
+## The title of the countdown
+
+The title on the countdown is the label from Dashboard Settings (Countdown tab), and it is never cut
+off or ended with an ellipsis. Three clocks show it: the red countdown of Original, the wide war clock of
+Cybertron and the narrow war clock of Minimal (see "The war clock" and "The wide war clock"). Each has the
+title at the left of its first line and the date at the right end of it. `core/countdown-title.js` decides, from
+the advance widths of the display font (`core/text-width.js`), whether the two fit side by side. When they do
+not, the title takes a second line, never a third: as many words on the first line as fit beside the date, and
+the rest on the second, which has the whole room. `core/countdown.js` writes the result and sets `data-title`
+on the clock, which its stylesheet reads:
+
+| Clock | Room of a line | Size | `data-title` | What a second line does |
+|-------|----------------|------|--------------|-------------------------|
+| Red countdown, Original | 528 | 44 px, then 36 px | `normal`, `small`, `two` | two lines of 32 in the room of the row of bars, which is not drawn then |
+| Wide war clock, Cybertron | 494 | 36 px | `normal`, `two` | the clock grows from 200 to 240 and the plates move down by 40 |
+| Narrow war clock, Minimal | 660 | 36 px | `normal`, `two` | the clock grows from 128 to 144, and the plates and the digits are smaller |
+
+The red countdown keeps its title at 44 px, with the IN, while the title and the date fit there, which is how it
+has always been drawn (it measures with a canvas, as before). A title that does not fit at 44 px is set at 36
+px, on one line when it fits there and on two when it does not (`small` and `two`). The date is never dropped.
+Its room is 528: the top line is 564 wide, less the lamp (20) and the 16 after it. Two lines of 32 from the
+top of the line end at 86, where the days are, and the first line is clear of the teeth of the frame. The war
+clocks have no IN. The countdown in the sidebar layout (Neon Prime) is as it was and does not wrap.
+
+A title that two lines at 36 px do not hold is set at 32, then 28, 24 and 20 px until it fits, and the size is
+written on the title and the date. The Studio warns above 28 characters ("Long titles wrap to two lines on the
+screen") and refuses more than 40. Titles of ordinary words fit at 32 px or more up to 28 characters and at 24 px or
+more up to 40 in all three clocks. `tools/test-countdown-title.mjs` has the widths. The numbers have been worked
+out from the font and not looked at on a screen.
 
 ## The look rotation
 

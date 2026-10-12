@@ -2164,7 +2164,7 @@ const barInside = { x: bs.margin.left, y: bs.margin.top, width: layout.screen.wi
 
 test('the bar layout has the numbers of the pictures: a banner 1856 by 160, a column 300 wide with a rail of 12, a main panel 1484 by 736 with a header of 120, and a ticker 1856 by 72', () => {
   assert.deepEqual([b.banner.width, b.banner.height], [1856, 160]);
-  assert.deepEqual([b.war.width, b.war.height], [766, 120]);
+  assert.deepEqual([b.war.width, b.war.height], [766, 128]);
   assert.equal(b.column.width, 300);
   assert.equal(b.rail.width, 12);
   assert.deepEqual([b.main.width, b.main.height], [1484, 736]);
@@ -2541,7 +2541,7 @@ test('the variables the bar stylesheets read are the ones layout.js writes, and 
   assert.equal(variables['--bar-main-width'], '1484px');
   assert.equal(variables['--bar-main-height'], '736px');
   assert.equal(variables['--bar-war-width'], '766px');
-  assert.equal(variables['--bar-war-height'], '120px');
+  assert.equal(variables['--bar-war-height'], '128px');
   assert.equal(variables['--bar-ticker-width'], '1856px');
   assert.equal(variables['--bar-scale'], String(b.scale));
   assert.equal(variables['--bar-area-width'], b.areaWidth + 'px');
@@ -2580,7 +2580,7 @@ test('every rule in bar.css and in the two bar panels\' stylesheets is for the b
   assert.deepEqual(scaled, ['html[data-layout="bar"] .area[data-area="grid1"]']);
 });
 
-test('the text sizes below 44 px in the whole dashboard are an explicit list: the war clock labels at 20 and 24 px, and no bar or style file has one', () => {
+test('the text sizes below 44 px in the whole dashboard are an explicit list: the war clock labels at 24 px and the titles of the clocks at 36 px, and no bar or style file has one', () => {
   const allowed = [];
   const walk = folder => fs.readdirSync(path.join(root, folder), { withFileTypes: true }).forEach(entry => {
     const relative = folder + '/' + entry.name;
@@ -2590,9 +2590,9 @@ test('the text sizes below 44 px in the whole dashboard are an explicit list: th
   walk('dashboard');
   assert.ok(allowed.length >= 6, 'found the style and bar files: ' + allowed.join(', '));
 
-  // Text of 20 or 24 px is allowed only for the war clock's labels. They are in panels/countdown/countdown.css,
+  // Text of 24 or 36 px is allowed only for the clocks' labels, titles and dates. They are in panels/countdown/countdown.css,
   // which the next test lists one by one, so none of them is in a bar or style file
-  const small = [{ what: 'the war clock labels', sizes: [20, 24] }];
+  const small = [{ what: 'the war clock labels', sizes: [24, 36] }];
   assert.deepEqual(small.map(item => item.what), ['the war clock labels']);
   allowed.forEach(file => {
     const css = withoutComments(read(file));
@@ -2600,7 +2600,7 @@ test('the text sizes below 44 px in the whole dashboard are an explicit list: th
   });
 });
 
-test('every literal text size under 44 px in the dashboard stylesheets is on a list: the war clock\'s labels, 20 and 24 px in countdown.css', () => {
+test('every literal text size under 44 px in the dashboard stylesheets is on a list: the war clock\'s labels at 24 px and the titles and dates of the clocks at 36 px, in countdown.css', () => {
   const found = [];
   const walk = folder => fs.readdirSync(path.join(root, folder), { withFileTypes: true }).forEach(entry => {
     const relative = folder + '/' + entry.name;
@@ -2622,10 +2622,12 @@ test('every literal text size under 44 px in the dashboard stylesheets is on a l
   // the file and the rule of every size, in the same order whatever order the folders are read in
   const war = 'dashboard/panels/countdown/countdown.css';
   const allowed = [
-    { file: war, selector: 'html[data-layout="bar"] .war-lines span', size: 24 }, // the label and the date
-    { file: war, selector: 'html[data-layout="bar"] .war-clock[data-over="yes"] .label', size: 20 }, // COUNTDOWN OVER and DATE NOT SET, on two lines
+    { file: war, selector: 'html[data-layout="bar"] .war-lines span', size: 36 }, // the title and the date
     { file: war, selector: 'html[data-layout="bar"] .war-days-group .days-word', size: 24 }, // DAYS
     { file: war, selector: 'html[data-layout="bar"] .war-cell .unit', size: 24 }, // HRS, MIN and SEC
+    { file: war, selector: '.war-clock.war-wide .war-lines span', size: 36 }, // the title and the date of the wide clock
+    { file: war, selector: '.countdown[data-title="small"] .top-line', size: 36 }, // the title of the red countdown that does not fit at 44
+    { file: war, selector: '.countdown[data-title="two"] .top-line', size: 36 }, // and on two lines
   ];
   // the third line of a row of Leadership or Team leads, 36 px, which the order for those rows sets
   allowed.push({ file: 'dashboard/base.css', selector: '.person-line', size: 36 });
@@ -2771,15 +2773,21 @@ const writtenByScript = {
   '--night-y-delay': 'core/night-screen.js',
 };
 
-// The only text under 44 px: the labels of the narrow war clock, which the bar layout draws. Cybertron has the wide war clock, whose
-// text is all 44 px or more
+// The text under 44 px of the clocks. The narrow war clock, which the bar layout draws, has its title and date at 36 px and its
+// labels at 24. Cybertron's wide war clock has the title and the date at 36 and the rest at 44 or more, and the red countdown of
+// Original sets a title that does not fit at 44 px at 36 (one line or two). The rules of the wide clock and of the red countdown
+// are in every style's stylesheets, so they are in every style's list
 const warLabels = [
-  { file: 'panels/countdown/countdown.css', selector: 'html[data-layout="bar"] .war-lines span', size: 24 },
-  { file: 'panels/countdown/countdown.css', selector: 'html[data-layout="bar"] .war-clock[data-over="yes"] .label', size: 20 },
+  { file: 'panels/countdown/countdown.css', selector: 'html[data-layout="bar"] .war-lines span', size: 36 },
   { file: 'panels/countdown/countdown.css', selector: 'html[data-layout="bar"] .war-days-group .days-word', size: 24 },
   { file: 'panels/countdown/countdown.css', selector: 'html[data-layout="bar"] .war-cell .unit', size: 24 },
 ];
-const smallTextOf = { original: [], cybertron: [], minimal: warLabels.slice() };
+const clockTitles = [
+  { file: 'panels/countdown/countdown.css', selector: '.war-clock.war-wide .war-lines span', size: 36 },
+  { file: 'panels/countdown/countdown.css', selector: '.countdown[data-title="small"] .top-line', size: 36 },
+  { file: 'panels/countdown/countdown.css', selector: '.countdown[data-title="two"] .top-line', size: 36 },
+];
+const smallTextOf = { original: clockTitles.slice(), cybertron: clockTitles.slice(), minimal: warLabels.concat(clockTitles) };
 // and the third line of a row of Leadership or Team leads, 36 px, which the order for those rows sets, in every style
 Object.keys(smallTextOf).forEach(style => smallTextOf[style].push({ file: 'base.css', selector: '.person-line', size: 36 }));
 
@@ -2922,7 +2930,6 @@ test('the mirror of the standard layout turns every flex row the layout declares
     'panels/countdown/countdown.css .countdown .days-row': 'the countdown is one block that changes columns, and its lines are read left to right',
     'panels/countdown/countdown.css .countdown .time-row': 'the countdown is one block that changes columns, and its lines are read left to right',
     'panels/countdown/countdown.css .countdown .segments': 'the countdown is one block that changes columns, and its lines are read left to right',
-    'panels/countdown/countdown.css .war-clock.war-wide .war-lines': 'the wide war clock is one block that changes columns, and its label and its date are read left to right',
     'panels/countdown/countdown.css .war-clock.war-wide .war-plate': 'the wide war clock is one block that changes columns, and its plates are read left to right',
     'panels/countdown/countdown.css .war-clock.war-wide .war-days-group': 'the wide war clock is one block that changes columns, and its days are read left to right',
   };
@@ -4319,53 +4326,74 @@ const kickoffIn = days => {
 };
 const warContent = (kickoff, rollout) => teamContent({ settings: { countdown: { kickoff: kickoff, kickoffLabel: 'KICKOFF', rollout: rollout === undefined ? '2027-04-01T12:00' : rollout, rolloutLabel: 'ROLLOUT' } } });
 
-test('the housing of the war clock is one plate 766 by 120 with the edge of the frames, a cut corner of 22 at the top left and the bottom right, four rivets, one weld seam and rust at two corners', async () => {
+// The war clock's custom properties: the ones of the clock with its title on one line, and for two lines the ones its second rule changes
+const barVariable = (state, name) => {
+  const changed = state === 'two' ? new RegExp('(?:^|[;\\s])' + name + ': (-?\\d+)px;').exec(warRule('.war-clock[data-title="two"]')) : null;
+  return changed ? Number(changed[1]) : warNumber('.war-clock', name);
+};
+
+// Where each part of the narrow war clock is for a title on one line ('one') or two ('two'), in the housing's own pixels
+const barParts = state => ({
+  'war-status': { top: barVariable(state, '--status-top'), height: warNumber('.war-status', 'height'), left: warNumber('.war-status', 'left'), width: warNumber('.war-status', 'width') },
+  'war-lines': { top: barVariable(state, '--lines-top'), height: barVariable(state, '--lines-height'), left: warNumber('.war-lines', 'left'), width: warNumber('.war-lines', 'width') },
+  'war-days-plate': { top: barVariable(state, '--plates-top'), height: barVariable(state, '--plates-height'), left: warNumber('.war-days-plate', 'left'), width: warNumber('.war-days-plate', 'width') },
+  'war-time-plate': { top: barVariable(state, '--plates-top'), height: barVariable(state, '--plates-height'), left: warNumber('.war-time-plate', 'left'), width: warNumber('.war-time-plate', 'width') },
+});
+
+test('the housing of the war clock is one plate 766 by 128 with the edge of the frames, a cut corner of 22 at the top left and the bottom right, four rivets, one weld seam and rust at two corners, and a taller one for a title on two lines', async () => {
+  const forms = [
+    { tall: false, height: 128, shape: 'war-housing-shape', cut: [[4, 124], [4, 26], [26, 4], [762, 4], [762, 102], [740, 124]], rivets: [[30, 22], [738, 22], [30, 100], [738, 100]], seam: 48 },
+    { tall: true, height: 144, shape: 'war-housing-tall-shape', cut: [[4, 140], [4, 26], [26, 4], [762, 4], [762, 118], [740, 140]], rivets: [[30, 22], [738, 22], [30, 116], [738, 116]], seam: 78 },
+  ];
+
   await withPlatePage(() => {
-    const markup = plate.warHousingMarkup();
-    assert.ok(isBalanced(markup));
-    assert.ok(/^<svg class="war-housing" width="766" height="120" viewBox="0 0 766 120">/.test(markup));
-    assert.equal(countOf(markup, '<svg '), 1, 'one drawing');
-    assert.equal(countOf(markup, 'class="war-housing-fill"'), 1, 'one plate');
-    assert.deepEqual([766, 120], [b.war.width, b.war.height], 'the size of the slot in the banner');
+    forms.forEach(form => {
+      const markup = plate.warHousingMarkup('narrow', {}, form.tall);
+      assert.ok(isBalanced(markup));
+      assert.ok(markup.startsWith('<svg class="war-housing' + (form.tall ? ' war-housing-tall' : '') + '" width="766" height="' + form.height + '" viewBox="0 0 766 ' + form.height + '">'));
+      assert.equal(countOf(markup, '<svg '), 1, 'one drawing');
+      assert.equal(countOf(markup, 'class="war-housing-fill"'), 1, 'one plate');
+      assert.equal(form.height, b.war.height + (form.tall ? 16 : 0), 'the size of the slot in the banner, and 8 more above and below it for two lines');
 
-    // 4 inside the box, like every frame, with the cuts at the top left and the bottom right and the other two corners square
-    const points = /<polygon class="war-housing-fill" points="([^"]*)"/.exec(markup)[1].split(' ').map(pair => pair.split(',').map(Number));
-    assert.deepEqual(points, [[4, 116], [4, 26], [26, 4], [762, 4], [762, 94], [740, 116]]);
-    assert.deepEqual([points[1][1] - points[2][1], points[2][0] - points[1][0]], [22, 22], 'the cut at the top left');
-    assert.deepEqual([points[4][0] - points[5][0], points[5][1] - points[4][1]], [22, 22], 'and at the bottom right');
-    assert.ok(signedArea(points) > 0, 'clockwise on the screen, like the frames');
+      // 4 inside the box, like every frame, with the cuts at the top left and the bottom right and the other two corners square
+      const points = /<polygon class="war-housing-fill" points="([^"]*)"/.exec(markup)[1].split(' ').map(pair => pair.split(',').map(Number));
+      assert.deepEqual(points, form.cut);
+      assert.deepEqual([points[1][1] - points[2][1], points[2][0] - points[1][0]], [22, 22], 'the cut at the top left');
+      assert.deepEqual([points[4][0] - points[5][0], points[5][1] - points[4][1]], [22, 22], 'and at the bottom right');
+      assert.ok(signedArea(points) > 0, 'clockwise on the screen, like the frames');
 
-    // the five layers of the edge, back to front, on the one shape that the plate has
-    const layers = (markup.match(/<use class="edge-[a-z]+" href="#war-housing-shape"\/>/g) || []).map(text => /edge-([a-z]+)/.exec(text)[1]);
-    assert.deepEqual(layers, ['shadow', 'rim', 'face', 'shade', 'ridge']);
+      // the five layers of the edge, back to front, on the one shape that the plate has
+      const layers = (markup.match(new RegExp('<use class="edge-[a-z]+" href="#' + form.shape + '"/>', 'g')) || []).map(text => /edge-([a-z]+)/.exec(text)[1]);
+      assert.deepEqual(layers, ['shadow', 'rim', 'face', 'shade', 'ridge']);
 
-    // four rivets, one in each corner and clear of the cut corners
-    const rivets = rivetsIn(markup);
-    assert.deepEqual(rivets, [[30, 22], [738, 22], [30, 92], [738, 92]]);
-    assert.equal(countOf(markup, 'class="war-rivet"'), 1, 'in one path');
-    edgesOf(points).forEach(([from, to]) => rivets.forEach(center => assert.ok(distanceToSegment(center, from, to) >= 5 + 8, 'a rivet is clear of the rim of the edge: ' + center)));
+      // four rivets, one in each corner and clear of the cut corners
+      const rivets = rivetsIn(markup);
+      assert.deepEqual(rivets, form.rivets);
+      assert.equal(countOf(markup, 'class="war-rivet"'), 1, 'in one path');
+      edgesOf(points).forEach(([from, to]) => rivets.forEach(center => assert.ok(distanceToSegment(center, from, to) >= 5 + 8, 'a rivet is clear of the rim of the edge: ' + center)));
 
-    // one weld seam, horizontal, with the light line 4 below the dark one, as Minimal's seam is
-    assert.equal(countOf(markup, 'class="war-weld-dark"'), 1);
-    assert.equal(countOf(markup, 'class="war-weld-light"'), 1);
-    assert.ok(/class="war-weld-dark" d="M16 63L750 63"/.test(markup) && /class="war-weld-light" d="M16 67L750 67"/.test(markup));
+      // one weld seam, horizontal, with the light line 4 below the dark one, as Minimal's seam is
+      assert.equal(countOf(markup, 'class="war-weld-dark"'), 1);
+      assert.equal(countOf(markup, 'class="war-weld-light"'), 1);
+      assert.ok(markup.includes('class="war-weld-dark" d="M16 ' + form.seam + 'L750 ' + form.seam + '"') && markup.includes('class="war-weld-light" d="M16 ' + (form.seam + 4) + 'L750 ' + (form.seam + 4) + '"'));
 
-    // rust at the bottom left and the top right: two patches (gradients) and one stroke with two arcs
-    const patches = (markup.match(/<ellipse class="war-smudge" cx="(\d+)" cy="(\d+)"/g) || []).map(text => /cx="(\d+)" cy="(\d+)"/.exec(text).slice(1).map(Number));
-    assert.equal(patches.length, 2);
-    assert.ok(patches.some(([x, y]) => x < 383 && y > 60) && patches.some(([x, y]) => x > 383 && y < 60), 'one at the bottom left and one at the top right');
-    assert.equal((/class="war-wear" d="([^"]*)"/.exec(markup)[1].match(/M/g) || []).length, 2, 'two arcs in one stroke');
+      // rust at the bottom left and the top right: two patches (gradients) and one stroke with two arcs
+      const patches = (markup.match(/<ellipse class="war-smudge" cx="(\d+)" cy="(\d+)"/g) || []).map(text => /cx="(\d+)" cy="(\d+)"/.exec(text).slice(1).map(Number));
+      assert.equal(patches.length, 2);
+      assert.ok(patches.some(([x, y]) => x < 383 && y > form.height / 2) && patches.some(([x, y]) => x > 383 && y < form.height / 2), 'one at the bottom left and one at the top right');
+      assert.equal((/class="war-wear" d="([^"]*)"/.exec(markup)[1].match(/M/g) || []).length, 2, 'two arcs in one stroke');
 
-    // the order: the plate, the seam, the edge over them, then the rust on the steel, then the rivets on top
-    const at = text => markup.indexOf(text);
-    assert.ok(at('war-housing-fill') < at('war-weld-dark') && at('war-weld-dark') < at('edge-shadow') && at('edge-ridge') < at('war-rust') && at('war-rust') < at('war-rivet'));
+      // the order: the plate, the seam, the edge over them, then the rust on the steel, then the rivets on top
+      const at = text => markup.indexOf(text);
+      assert.ok(at('war-housing-fill') < at('war-weld-dark') && at('war-weld-dark') < at('edge-shadow') && at('edge-ridge') < at('war-rust') && at('war-rust') < at('war-rivet'));
 
-    assert.ok((markup.match(/<(svg|g|polygon|path|use|ellipse)[ >]/g) || []).length <= 20, 'a handful of elements');
-    assert.ok(!/(filter|animate|<set|clipPath|<image|<mask|<pattern)/i.test(markup), 'no filter, picture, mask, clip or animation');
+      assert.ok((markup.match(/<(svg|g|polygon|path|use|ellipse)[ >]/g) || []).length <= 20, 'a handful of elements');
+      assert.ok(!/(filter|animate|<set|clipPath|<image|<mask|<pattern)/i.test(markup), 'no filter, picture, mask, clip or animation');
+    });
   });
 });
 
-test('the war clock markup has each part once with the class names core/countdown.js looks for, and none of the parts of the other countdowns', async () => {
+test('the war clock markup has each part once with the class names core/countdown.js looks for, a second housing for two lines, and none of the parts of the other countdowns', async () => {
   await onSidebar(async world => {
     const countdown = await import(urlOf(world.folder, 'dashboard/panels/countdown/countdown.js'));
     const markup = countdown.warMarkup();
@@ -4373,16 +4401,17 @@ test('the war clock markup has each part once with the class names core/countdow
 
     assert.ok(isBalanced(markup));
     assert.ok(/^\s*<div class="war-clock" data-level="calm" data-over="no">/.test(markup), 'one root, calm, and not over');
-    ['war-clock', 'war-housing', 'war-status', 'war-lines', 'label', 'date', 'war-days-plate', 'war-days-group', 'days-number', 'days-word', 'war-time-plate', 'hours', 'minutes', 'seconds'].forEach(name => {
+    ['war-clock', 'war-housing-tall', 'war-status', 'war-lines', 'label', 'date', 'war-days-plate', 'war-days-group', 'days-number', 'days-word', 'war-time-plate', 'hours', 'minutes', 'seconds'].forEach(name => {
       assert.equal(classes.filter(found => found === name).length, 1, name + ' appears once');
     });
+    assert.equal(classes.filter(found => found === 'war-housing').length, 2, 'two housings, one for a title on one line and the tall one for two');
     assert.equal(classes.filter(found => found === 'war-plate').length, 2, 'two plates');
     assert.equal(classes.filter(found => found === 'war-cell').length, 3, 'three cells');
     assert.deepEqual((markup.match(/class="unit">[A-Z]+/g) || []).map(text => text.slice(13)), ['HRS', 'MIN', 'SEC']);
 
-    // the plates and the housing are in the order they are drawn: the housing first, so the plates are over it
+    // the housings and the plates are in the order they are drawn: the housings first, so the plates are over them
     const at = name => markup.search(new RegExp('class="[^"]*\\b' + name + '\\b'));
-    ['war-housing', 'war-status', 'war-lines', 'war-days-plate', 'war-time-plate'].reduce((before, name) => { assert.ok(at(name) > before, name + ' follows the part before it'); return at(name); }, -1);
+    ['war-housing', 'war-housing-tall', 'war-status', 'war-lines', 'war-days-plate', 'war-time-plate'].reduce((before, name) => { assert.ok(at(name) > before, name + ' follows the part before it'); return at(name); }, -1);
 
     // no lamp, no chevrons, no row of blocks, no bars of the countdown, no serial plate, no pipes, and nothing that arrives by itself
     ['lamp', 'chevron', 'segment', 'segments', 'stripes', 'top-line', 'time-row', 'days-row', 'serial', 'pipe'].forEach(name => assert.ok(!classes.some(found => found.includes(name)), 'no ' + name));
@@ -4422,7 +4451,7 @@ test('the war clock shows the days as two digits, three from 100, and the hours,
   }, new Date(2026, 9, 28, 13, 59, 0).getTime());
 });
 
-test('the war clock has the label from Dashboard Settings with no IN and the date under it, and says NOW, COUNTDOWN OVER and DATE NOT SET in the standard countdown\'s words', async () => {
+test('the war clock has the label from Dashboard Settings with no IN and the date at the right end of the first line, and says NOW, COUNTDOWN OVER and DATE NOT SET in the standard countdown\'s words', async () => {
   const states = [
     // kickoff, rollout, label, date, level, over, days (when they are not a matter of the time zone)
     ['2027-03-01T12:00', '2027-04-01T12:00', 'KICKOFF', 'MAR 1', 'calm', 'no', null],
@@ -4451,7 +4480,7 @@ test('the war clock has the label from Dashboard Settings with no IN and the dat
   await onSidebar(async world => {
     await world.draw(teamContent({ settings: { countdown: { kickoff: '2027-01-09T12:00', kickoffLabel: 'Kickoff in', rollout: '', rolloutLabel: '' } } }), barBannerFile);
     assert.deepEqual([world.countdown.nodes['.label'].textContent, world.countdown.nodes['.date'].textContent], ['KICKOFF', 'JAN 9']);
-    assert.equal(world.measured.length, 0, 'nothing is measured: the label has a line of its own');
+    assert.equal(world.measured.length, 0, 'nothing is measured: the table of the font decides where the title breaks');
   });
 
   // new dates from the editors are used on the next second, and a changed level and the end state follow
@@ -4512,8 +4541,9 @@ test('a fault in the war clock leaves the name on the banner', async () => {
 test('the war clock\'s plates, sizes and colors are the ones the order gives, and only Cybertron and Minimal show it', () => {
   const section = warSection();
 
-  // The housing is the slot: 766 by 120, as barSettings has it
+  // The housing is the slot: 766 by 128, as barSettings has it, and 144 high for a title on two lines, 8 above the slot and 8 below it
   assert.deepEqual([warNumber('.war-clock', 'width'), warNumber('.war-clock', 'height')], [layout.barSettings.warClock.width, layout.barSettings.warClock.height]);
+  assert.deepEqual([warNumber('.war-clock[data-title="two"]', 'height'), warNumber('.war-clock[data-title="two"]', 'top')], [layout.barSettings.warClock.height + 16, -8]);
 
   // The plates: #0c0b09 with a 3 px border of #2b2a26, and a gradient inside from a highlight at the top to a shade at the foot
   const clock = warRule('.war-clock');
@@ -4523,25 +4553,35 @@ test('the war clock\'s plates, sizes and colors are the ones the order gives, an
   const gradient = /linear-gradient\(180deg, rgba\(255, 255, 255, ([.\d]+)\) 0, rgba\(255, 255, 255, 0\) (\d+)%, rgba\(0, 0, 0, ([.\d]+)\) 100%\),\s*var\(--war-plate\);/.exec(plateRule);
   assert.ok(gradient, 'a top to bottom gradient from a highlight to a shade, over the plate color');
   assert.ok(Number(gradient[1]) > 0 && Number(gradient[3]) > 0);
-  assert.deepEqual([warNumber('.war-days-plate', 'width'), warNumber('.war-plate', 'height')], [176, 92]);
-  assert.equal(warNumber('.war-time-plate', 'width'), 334);
-  assert.ok(/box-sizing: border-box;/.test(plateRule), 'the 176 and the 334 are the whole plate, with its border');
+  assert.ok(/box-sizing: border-box;/.test(plateRule), 'the widths and the heights of the plates are the whole plate, with its border');
 
-  // The days at 76 px with DAYS at 24, the time at 72 with HRS, MIN and SEC at 24, the label and the date at 24, and three digits at 48
+  // The plates are 176 and 490 wide, and 66 high with 60 inside the border, or 52 high with 46 inside when the title takes two lines
+  assert.deepEqual([warNumber('.war-days-plate', 'width'), warNumber('.war-time-plate', 'width')], [176, 490]);
+  assert.deepEqual(['--plates-height', '--plates-inner'].map(name => barVariable('one', name)), [66, 60]);
+  assert.deepEqual(['--plates-height', '--plates-inner'].map(name => barVariable('two', name)), [52, 46]);
+  ['one', 'two'].forEach(state => assert.equal(barVariable(state, '--plates-height') - 2 * 3, barVariable(state, '--plates-inner'), state + ': the inside is the plate less its border'));
+
+  // The days at 64 px with DAYS at 24 (three digits at 48), the time at 56 with HRS, MIN and SEC at 24 beside it, and the title and the date at 36.
+  // On two lines the days are 48, three digits too, and the time 44
+  assert.deepEqual(['--days-size', '--days-long-size', '--time-size', '--digits-width'].map(name => barVariable('one', name)), [64, 48, 56, 84]);
+  assert.deepEqual(['--days-size', '--days-long-size', '--time-size', '--digits-width'].map(name => barVariable('two', name)), [48, 48, 44, 66]);
+  assert.ok(/font: 700 var\(--days-size\)\/var\(--plates-inner\) var\(--font-display\);/.test(warRule('.war-days-group .days-number')), 'the digits have the line of the whole plate');
+  assert.ok(/font-size: var\(--days-long-size\);/.test(warRule('.war-days-group .days-number.long')));
+  assert.ok(/font: 700 var\(--time-size\)\/var\(--plates-inner\) var\(--font-display\);/.test(warRule('.war-cell .digits')) && /width: var\(--digits-width\);/.test(warRule('.war-cell .digits')));
   const fontOf = selector => /font: (\d+) (\d+)px\/(\d+)px var\(--font-display\);/.exec(warRule(selector)).slice(1).map(Number);
-  assert.deepEqual(fontOf('.war-days-group .days-number'), [700, 76, 76]);
-  assert.equal(warNumber('.war-days-group .days-number.long', 'font-size'), 48);
   assert.deepEqual(fontOf('.war-days-group .days-word'), [600, 24, 28]);
-  assert.deepEqual(fontOf('.war-cell .digits'), [700, 72, 58]);
   assert.deepEqual(fontOf('.war-cell .unit'), [600, 24, 26]);
-  assert.deepEqual(fontOf('.war-lines span'), [700, 24, 28]);
-  assert.equal(warNumber('.war-clock[data-over="yes"] .label', 'font-size'), 20);
-  assert.ok(/letter-spacing: \.12em;/.test(warRule('.war-lines span')), 'the label is letter spaced');
+  assert.ok(/font: 700 36px\/var\(--lines-leading\) var\(--font-display\);/.test(warRule('.war-lines span')), 'the title and the date are 36 px');
+  assert.ok(/letter-spacing: \.06em;/.test(warRule('.war-lines span')), 'the title is letter spaced');
+  assert.deepEqual(['one', 'two'].map(state => barVariable(state, '--lines-leading')), [34, 32]);
+  assert.ok(/white-space: pre;/.test(warRule('.war-lines .label')), 'the title breaks where core/countdown.js wrote the line break');
+  assert.ok(/position: absolute;/.test(warRule('.war-lines .date')) && /right: 0;/.test(warRule('.war-lines .date')), 'the date is at the right end of the first line');
+  assert.ok(!/text-overflow|line-clamp/.test(section), 'nothing in the war clocks is cut off with an ellipsis, and the end states have no clamp');
 
-  // Text under 44 px in this part is the labels: 20 and 24, and nothing else
+  // Text under 44 px in this part is the labels and the title: 24 and 36, and nothing else
   const small = new Set();
   (section.match(/font(-size)?: [^;]*/g) || []).forEach(text => (text.match(/(?<![\/\d.])\d+(\.\d+)?px/g) || []).filter(size => parseFloat(size) < 44).forEach(size => small.add(parseFloat(size))));
-  assert.deepEqual(Array.from(small).sort(), [20, 24]);
+  assert.deepEqual(Array.from(small).sort(), [24, 36]);
 
   // The digits and the labels are --style-digits: amber in Cybertron, the team's neon in Minimal. The last month is orange and the last week is white with red borders
   assert.ok(/--war-ink: var\(--style-digits\);/.test(clock) && /color: var\(--war-ink\);/.test(clock));
@@ -4566,97 +4606,93 @@ test('the war clock\'s plates, sizes and colors are the ones the order gives, an
   assert.ok(!/war-/.test(withoutComments(read('dashboard/styles/original.css'))), 'Original has no war clock');
 });
 
-test('the war clock\'s parts are inside the housing, clear of each other and of the rivets, and the budget in docs/layouts.md is the numbers in countdown.css', async () => {
-  const parts = warParts();
+test('the war clock\'s parts are inside the housing, clear of each other and of the rivets, for a title on one line and on two, and the budgets in docs/layouts.md are the numbers in countdown.css', async () => {
   const doc = read('docs/layouts.md');
   const section = doc.slice(doc.indexOf('### The war clock'), doc.indexOf('### The side column'));
   assert.ok(section.length > 1000, 'docs/layouts.md has a section called The war clock');
+  const cut = section.indexOf('**A title on two lines.**');
+  assert.ok(cut !== -1, 'the section says what a title on two lines does');
+  const tables = { one: section.slice(0, cut), two: section.slice(cut) };
+  const heights = { one: 128, two: 144 };
 
-  const rows = {};
-  section.split('\n').forEach(line => {
-    const row = /^\| `\.([a-z-]+)` \| (\d+) \| (\d+) \| (\d+) \| (\d+) \|/.exec(line);
-    if (row) rows[row[1]] = { top: Number(row[2]), height: Number(row[3]), left: Number(row[4]), width: Number(row[5]) };
-  });
-  assert.deepEqual(Object.keys(rows).sort(), Object.keys(parts).sort(), 'the budget has a row for each part, and no other');
-  Object.keys(parts).forEach(name => assert.deepEqual(rows[name], parts[name], name + ' in the docs and in countdown.css'));
+  for (const state of ['one', 'two']) {
+    const parts = barParts(state);
+    const rows = {};
+    tables[state].split('\n').forEach(line => {
+      const row = /^\| `\.([a-z-]+)` \| (\d+) \| (\d+) \| (\d+) \| (\d+) \|/.exec(line);
+      if (row) rows[row[1]] = { top: Number(row[2]), height: Number(row[3]), left: Number(row[4]), width: Number(row[5]) };
+    });
+    assert.deepEqual(Object.keys(rows).sort(), Object.keys(parts).sort(), state + ': the budget has a row for each part, and no other');
+    Object.keys(parts).forEach(name => assert.deepEqual(rows[name], parts[name], state + ': ' + name + ' in the docs and in countdown.css'));
 
-  const housing = { x: 0, y: 0, width: 766, height: 120 };
-  Object.keys(parts).forEach(name => assert.ok(within(boxOf(parts[name]), housing), name + ' is inside the housing'));
-  const names = Object.keys(parts);
-  names.forEach((name, index) => names.slice(index + 1).forEach(other => assert.ok(apart(boxOf(parts[name]), boxOf(parts[other])), name + ' and ' + other + ' overlap')));
+    const housing = { x: 0, y: 0, width: 766, height: heights[state] };
+    Object.keys(parts).forEach(name => assert.ok(within(boxOf(parts[name]), housing), state + ': ' + name + ' is inside the housing'));
+    const names = Object.keys(parts);
+    names.forEach((name, index) => names.slice(index + 1).forEach(other => assert.ok(apart(boxOf(parts[name]), boxOf(parts[other])), state + ': ' + name + ' and ' + other + ' overlap')));
 
-  // From left to right: the label block, a gap, the days, a gap, the time
-  assert.ok(parts['war-lines'].left + parts['war-lines'].width < parts['war-days-plate'].left);
-  assert.ok(parts['war-days-plate'].left + parts['war-days-plate'].width < parts['war-time-plate'].left);
-  assert.equal(parts['war-days-plate'].top + parts['war-days-plate'].height / 2, 60, 'the plates are in the middle of the housing\'s height');
-  assert.equal(parts['war-status'].left + parts['war-status'].width + 8, parts['war-lines'].left, 'the label is 8 from its square');
-  assert.equal(parts['war-lines'].height, 2 * 28, 'two lines of 28');
-  assert.equal(parts['war-status'].top + parts['war-status'].height / 2, parts['war-lines'].top + 14, 'the square is level with the middle of the label');
-
-  // The time plate: 3 cells of 108 and 2 px each side, inside a 3 px border, are the 334 of the plate
-  assert.equal(3 * warNumber('.war-cell', 'width') + 2 * 2 + 2 * 3, parts['war-time-plate'].width);
-  assert.ok(/padding: 0 2px;/.test(warRule('.war-time-plate')));
-
-  // The rivets stand in the corners and no part covers one. The bottom right plate corner keeps clear of the cut corner and its rim
-  await withPlatePage(() => {
-    const markup = plate.warHousingMarkup();
-    rivetsIn(markup).forEach(([x, y]) => names.forEach(name => assert.ok(apart({ x: x - 5, y: y - 5, width: 10, height: 10 }, boxOf(parts[name])), 'a rivet is under ' + name)));
+    // The title and the date on the first line, then the days, a gap, the time, under them
+    const lines = parts['war-lines'];
+    const days = parts['war-days-plate'];
     const time = parts['war-time-plate'];
-    const corner = [time.left + time.width, time.top + time.height];
-    assert.ok(distanceToLine(corner, [762, 94], [740, 116]) >= 8 + 6, 'the time plate is 6 clear of the rim at the cut corner');
+    assert.ok(lines.top + lines.height <= days.top, state + ': the title is above the plates');
+    assert.ok(days.left + days.width < time.left, state + ': the days, a gap, the time');
+    assert.equal(days.left + days.width + 8, time.left, state + ': 8 between the plates');
+    assert.equal(lines.left + lines.width, time.left + time.width, state + ': the title ends where the time plate does');
+    assert.equal(days.top + days.height, housing.height - 12, state + ': the plates end at the metal of the edge');
+    assert.equal(parts['war-status'].left + parts['war-status'].width + 8, lines.left, state + ': the title is 8 from its square');
+    assert.equal(parts['war-status'].top + parts['war-status'].height / 2, lines.top + barVariable(state, '--lines-leading') / 2, state + ': the square is level with the middle of the first line');
+    assert.equal(lines.height, (state === 'one' ? 1 : 2) * barVariable(state, '--lines-leading'), state + ': one line or two');
 
-    // the seam is between the two lines of the label
-    const middle = parts['war-lines'].top + 28;
-    const dark = Number(/war-weld-dark" d="M\d+ (\d+)/.exec(markup)[1]);
-    assert.ok(dark < middle && dark + 4 > middle, 'the weld seam is between the label and the date');
-  });
+    // The time plate: 3 cells of 160 and 2 px each side, inside a 3 px border, are the 490 of the plate
+    assert.equal(3 * warNumber('.war-cell', 'width') + 2 * 2 + 2 * 3, time.width);
+    assert.ok(/padding: 0 2px;/.test(warRule('.war-time-plate')));
+
+    // The rivets stand in the corners and no part covers one. The bottom right plate corner keeps clear of the cut corner and its rim
+    await withPlatePage(() => {
+      const markup = plate.warHousingMarkup('narrow', {}, state === 'two');
+      rivetsIn(markup).forEach(([x, y]) => names.forEach(name => assert.ok(apart({ x: x - 5, y: y - 5, width: 10, height: 10 }, boxOf(parts[name])), state + ': a rivet is under ' + name)));
+      const points = /<polygon class="war-housing-fill" points="([^"]*)"/.exec(markup)[1].split(' ').map(pair => pair.split(',').map(Number));
+      const corner = [time.left + time.width, time.top + time.height];
+      assert.ok(distanceToLine(corner, points[4], points[5]) >= 8 + 6, state + ': the time plate is 6 clear of the rim at the cut corner');
+
+      // the seam is between the title and the plates
+      const dark = Number(/war-weld-dark" d="M\d+ (\d+)/.exec(markup)[1]);
+      assert.ok(dark >= lines.top + lines.height && dark < days.top, state + ': the weld seam is between the title and the plates');
+    });
+  }
 });
 
 test('the digits and the labels of the war clock fit their boxes in the display font, and three digit days are drawn smaller', () => {
-  const room = warNumber('.war-lines', 'width');
   const plateInside = warNumber('.war-days-plate', 'width') - 2 * 3;
   const gap = warNumber('.war-days-group', 'gap');
   const days = textWidth('DAYS', 600, 24, -0.03);
   assert.ok(/letter-spacing: -\.04em;/.test(warRule('.war-days-group .days-number')) && /letter-spacing: -\.03em;/.test(warRule('.war-days-group .days-word')));
   assert.equal(gap, 2);
 
-  // Every two digit count, and the ones that do not fit the 170 inside the plate, which the plate cuts off
-  const wide = [];
-  let most = 0;
-  for (let count = 10; count <= 99; count++) {
-    const width = textWidth(String(count), 700, 76, -0.04) + gap + days;
-    if (width > plateInside) wide.push(count);
-    most = Math.max(most, width - plateInside);
-  }
-  assert.deepEqual(wide, [69, 96, 99], 'the counts that are wider than the plate');
-  assert.ok(most <= 2, 'by 2 px at the most, which the two sides share: ' + most);
-  assert.ok(textWidth('99', 700, 76, 0) <= 111.1 && days < 66, 'the numbers in countdown.css');
+  ['one', 'two'].forEach(state => {
+    const size = barVariable(state, '--days-size');
+    const long = barVariable(state, '--days-long-size');
+    const timeSize = barVariable(state, '--time-size');
+    const box = barVariable(state, '--digits-width');
 
-  // Three digits at 76 px do not fit, and at 48 px (the long size) every one does
-  assert.ok(textWidth('100', 700, 76, -0.04) + gap + days > plateInside + 20, 'three digits at 76 px do not fit');
-  let worst = 0;
-  for (let count = 100; count <= 999; count++) worst = Math.max(worst, textWidth(String(count), 700, 48, -0.04) + gap + days);
-  assert.ok(worst <= plateInside, 'every three digit count fits at 48 px: ' + worst);
+    // Every two digit count fits the 170 inside the plate, and so does every three digit count at the long size
+    let most = 0;
+    for (let count = 10; count <= 99; count++) most = Math.max(most, textWidth(String(count), 700, size, -0.04) + gap + days);
+    assert.ok(most <= plateInside, state + ': the widest two digit count is ' + most);
+    let worst = 0;
+    for (let count = 100; count <= 999; count++) worst = Math.max(worst, textWidth(String(count), 700, long, -0.04) + gap + days);
+    assert.ok(worst <= plateInside, state + ': the widest three digit count is ' + worst);
+    assert.equal(textWidth('100', 700, size, -0.04) + gap + days > plateInside, state === 'one', state + ': three digits at the days size fit on two lines, and do not on one, which is why they are smaller there');
 
-  // Two time digits at 72 px in the box of 106, and the labels under them at 24 px in their cell of 108
-  let widest = 0;
-  for (let count = 0; count <= 99; count++) widest = Math.max(widest, textWidth(String(count).padStart(2, '0'), 700, 72, 0));
-  assert.ok(widest <= warNumber('.war-cell .digits', 'width'), 'two digits are ' + widest);
-  assert.ok(warNumber('.war-cell .digits', 'width') <= warNumber('.war-cell', 'width'));
-  ['HRS', 'MIN', 'SEC'].forEach(unit => assert.ok(textWidth(unit, 600, 24, 0.12) <= warNumber('.war-cell', 'width'), unit));
+    // Two time digits in their box, and the box and the label after it in the cell of 160
+    let widest = 0;
+    for (let count = 0; count <= 99; count++) widest = Math.max(widest, textWidth(String(count).padStart(2, '0'), 700, timeSize, 0));
+    assert.ok(widest <= box, state + ': two digits are ' + widest + ' in a box of ' + box);
+    ['HRS', 'MIN', 'SEC'].forEach(unit => assert.ok(box + warNumber('.war-cell', 'gap') + textWidth(unit, 600, 24, 0.12) <= warNumber('.war-cell', 'width'), state + ': ' + unit + ' fits its cell'));
 
-  // The digits and the label are in the 86 inside the border of the plate, which is 92 high with a border of 3
-  assert.ok(warNumber('.war-cell .digits', 'height') + 26 <= warNumber('.war-plate', 'height') - 2 * 3, 'the digits at 72 px and the label under them fit the plate');
-
-  // The label and the date at 24 px with their letters spaced, in the line of 158: KICKOFF and ROLLOUT, NOW, and the widest date
-  ['KICKOFF', 'ROLLOUT', 'NOW'].forEach(word => assert.ok(textWidth(word, 700, 24, 0.12) <= room, word));
-  ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'].forEach(month => assert.ok(textWidth(month + ' 30', 700, 24, 0.12) <= room, month));
-
-  // The end states are on two lines at 20 px, and each line of them is in the line of 158
-  ['COUNTDOWN', 'OVER', 'DATE NOT', 'SET'].forEach(words => assert.ok(textWidth(words, 700, 20, 0.1) <= room, words));
-  assert.ok(textWidth('COUNTDOWN OVER', 700, 24, 0.12) > room, 'COUNTDOWN OVER does not fit on one line at 24 px, which is why it has two at 20');
-  assert.ok(/-webkit-line-clamp: 2;/.test(warRule('.war-clock[data-over="yes"] .label')));
-  assert.ok(/text-overflow: ellipsis;/.test(warRule('.war-lines span')), 'a label that is too wide for its line is cut off with an ellipsis');
+    // The digits have the line of the whole plate, so they are in the middle of it, and a label at 24 px is lower than that
+    assert.ok(Math.max(size, timeSize) <= barVariable(state, '--plates-inner') + 4, state + ': the digits are about as high as the plate inside its border');
+  });
 });
 
 test('nothing in the war clock moves: no animation, transition, glow, shadow or transform in its rules, no animation code, and no line of its own in the table of frame.js', () => {
@@ -4695,7 +4731,7 @@ test('the mirror moves the war clock with its slot and turns nothing in it: no r
 
   const m = layout.mirrorGeometry(b);
   assert.deepEqual([b.war.x, m.war.x], [1082, 72], 'the slot is at the right end, and at the left end when mirrored');
-  assert.deepEqual([m.war.width, m.war.height], [766, 120]);
+  assert.deepEqual([m.war.width, m.war.height], [766, 128]);
   assert.equal(m.war.y, b.war.y, 'at the same height');
 });
 

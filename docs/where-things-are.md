@@ -116,7 +116,8 @@ editors can sign in from anywhere.
                               panel-order.js says in what order (the Panel order list in Dashboard Settings),
                               logo.js and name.js draw the hawk and the team name (name.js can also put the
                               name on two lines, which nothing uses now), countdown.js is the countdown's parts and
-                              the code that writes its numbers, for every layout and for the war clock, source.js
+                              the code that writes its numbers, for every layout and for the war clock,
+                              countdown-title.js says where the title of the countdown breaks onto a second line, source.js
                               decides sample or production content from ?sample=1 in the address,
                               images.js builds the addresses of photos from Sanity, photos.js says
                               which photos the Photo panel shows and in what order, portrait.js
@@ -444,6 +445,10 @@ editors can sign in from anywhere.
       test-plate-edges.mjs    checks for the thin plate edge: its widths against the other frames', the TEAM plate and
                               the ticker's tag and frame, and that the text on them (TEAM and the number, the name
                               above, TELETRAAN I under, the ticker's line and its word) has 2 px clear of the metal
+      test-countdown-title.mjs  checks for the title of the countdown: how wide it is in the display font and where it
+                              breaks, what the red countdown and the two war clocks write for it (one line at 36 px,
+                              two lines, a smaller size), the room in countdown.css, and the Studio field that warns
+                              above 28 characters
       check-seasons.mjs       fails if a seasonal pack is not in the data format, has a piece outside its zone, too
                               many pieces, a forbidden word, no header mark, a mark bigger than its box (60 x 76),
                               fewer than 8 or more than 14 pieces over the panels, an over piece that is too big,
@@ -856,14 +861,16 @@ alone.
   in `dashboard/styles/`. Minimal has the bar layout whatever the theme says, and
   Original and Cybertron have the layout of the theme. `?style=cybertron` in the address
   shows one for a single page. The four steps for the editors are in docs/switch-the-look.md.
-- **The war clock.** The countdown drawn a second time: 766 by 120 in the banner of the bar
+- **The war clock.** The countdown drawn a second time: 766 by 128 in the banner of the bar
   layout, which is Minimal, and 616 by 200 in the countdown's place in Cybertron (the wide form,
   `warMarkup('wide')`, drawn into the countdown panel). It reads the same label and dates as the countdown
   (Dashboard Settings, Countdown tab), so there is nothing to set for it. The numbers come from
   `core/countdown.js`, `panels/countdown/countdown.js` writes them (`warMarkup`, `startWar` and
   `updateWar`), `panels/bar-banner` puts it in its slot, `core/plate.js` draws the housing
   (`warHousingMarkup`) and `panels/countdown/countdown.css` places every part. The digits are
-  amber in Cybertron and the team's neon in Minimal. docs/layouts.md, "The war clock" and "The wide war clock", has
+  amber in Cybertron and the team's neon in Minimal. The title has the first line with the date at its
+  right end, at 36 px, and takes a second line when it does not fit, in both clocks and in the red countdown
+  of Original (`core/countdown-title.js`). docs/layouts.md, "The war clock" and "The wide war clock", has
   the sizes.
 - **The teams, and the team on the screen.** Teams in the Studio sidebar, under Settings
   (`studio/schemas/team.js`): a name, a short name, a number, a code, an optional logo, seven
@@ -998,6 +1005,7 @@ exceptions are `test-slides-script.mjs`, `test-frc-script.mjs` and `test-monday-
     node tools/test-calendars-view.mjs
     node tools/test-mini-tool.mjs
     node tools/test-plate-edges.mjs
+    node tools/test-countdown-title.mjs
     node tools/check-themes.mjs
     node tools/check-seasons.mjs
     node studio/check-schemas.mjs

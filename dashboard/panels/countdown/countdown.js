@@ -9,11 +9,15 @@
 // war clock instead, in its narrow form. The war clock is this countdown again:
 // warMarkup() is put in a slot (here, or in panels/bar-banner), and startWar() gives
 // it the same dates, label and tick.
+//
+// None of the three cuts the title off. A title that does not fit beside the date goes
+// to a second line (core/countdown-title.js), and the clock reads data-title to grow.
 
 import { plateMarkup, scanMarkup, trimmedKind, warHousingMarkup } from '../../core/plate.js';
 import { shapesNow } from '../../core/style.js';
 import { trimNow } from '../../core/teams.js';
 import { countdownParts, startCountdown, updateCountdown } from '../../core/countdown.js';
+import { titleRooms, titleSpacing } from '../../core/countdown-title.js';
 
 // The war clock inside each panel that has one, which is the element the countdown code keeps
 // its state for
@@ -34,7 +38,7 @@ export function mount(host, content) {
       ${countdownParts(564)}
     </section>`;
 
-  startCountdown(host.firstElementChild, content);
+  startCountdown(host.firstElementChild, content, { title: { room: titleRooms.original, spacing: titleSpacing.original, single: 'small' } });
 }
 
 // The wide war clock is 616 of the region's 656, in the middle of its height
@@ -47,7 +51,7 @@ function mountWar(host, content) {
 
   const clock = host.querySelector('.war-clock');
   clocks.set(host.firstElementChild, clock);
-  startWar(clock, content);
+  startWar(clock, content, 'wide');
 }
 
 // New content from the editors, for example a changed date
@@ -56,9 +60,10 @@ export function update(element, content) {
 }
 
 
-// The war clock. The narrow form is 766 by 120 and the wide form 616 by 200 (form is 'narrow'
-// or 'wide'). It has a few parts, all placed by hand (countdown.css): the housing, the label
-// and the date, the days on a plate and the hours, minutes and seconds on another. The
+// The war clock. The narrow form is 766 by 128 and the wide form 616 by 200 (form is 'narrow'
+// or 'wide'). It has a few parts, all placed by hand (countdown.css): the housing, the title
+// and the date on the first line, then the days on a plate and the hours, minutes and seconds on
+// another. The housing is there twice, the second one taller, for a title on two lines. The
 // parts carry the class names that core/countdown.js looks for, and none of them is named
 // in the entrance table of frame.js, so the clock arrives with the slot it is in.
 export function warMarkup(form = 'narrow') {
@@ -67,6 +72,7 @@ export function warMarkup(form = 'narrow') {
   return `
     <div class="war-clock${wide ? ' war-wide' : ''}" data-level="calm" data-over="no">
       ${warHousingMarkup(wide ? 'wide' : 'narrow', trimNow())}
+      ${warHousingMarkup(wide ? 'wide' : 'narrow', trimNow(), true)}
       <span class="war-status"></span>
       <div class="war-lines">
         <span class="label"></span>
@@ -86,8 +92,9 @@ export function warMarkup(form = 'narrow') {
     </div>`;
 }
 
-export function startWar(element, content) {
-  startCountdown(element, content, { war: true });
+export function startWar(element, content, form = 'narrow') {
+  const name = form === 'wide' ? 'wide' : 'narrow';
+  startCountdown(element, content, { war: true, title: { room: titleRooms[name], spacing: titleSpacing[name], single: 'normal' } });
 }
 
 export function updateWar(element, content) {
