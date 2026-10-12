@@ -893,7 +893,7 @@ where even six digits of the widest kind (the Studio allows 6 characters) have 2
 bar layout, where the plate is only 300 wide and TEAM with four digits nearly fills it, so its letters are .9 px closer together
 (`letter-spacing`) and the number is 10 px from the word. Five digits fit in the sidebar layout and four in the bar layout; the bar layout's plate cannot hold five at 44 px. In Cybertron the plate is under the name with no gap, so the name has a line height of 70
 there, where a line of 76 left the foot of its letters 4 px under the plate's top. At 70 the foot of the letters is 2 px
-above the metal, and the outline of the letters of a team with Outline (Nova) touches it.
+above the metal, and the outline of the letters of a team with Outlined name on touches it.
 
 The ticker's tag (`tagMarkup`) and its frames (`cybertron-ticker`, `bar-ticker` and
 `bar-ticker-minimal`) have their line 1 px in from the sides and the top, which keeps the outer
@@ -1513,7 +1513,7 @@ trim existed has none stored, and the screen reads it as Prime. The names and th
 | `headerNotch` | notch | slant | The colored tab of a header ends in the notch it has always had, or in one slant at 60 degrees. |
 | `grid` | lines | dots | The grid on the page behind Cybertron and Minimal. |
 | `logoPose` | auto | flight | The bird idles as the emblem, or as the hawk with its wings up. |
-| `nameStyle` | solid | outline | The team name in the banner is solid letters, or outlined letters with a line in the accent under them. |
+| `outlinedName` | off | off | The team name in the banner is solid letters. With the switch on it is outlined letters with a line in the accent under them. The older `nameStyle` is stored solid on both and not read. |
 | `tickerLabel` | plate | bar | The label of the ticker is the cut plate, or a thin bar with a block of the accent in front of it. |
 | `countAccent` | red | neon | The red parts of the countdown are red, or the team's neon. |
 

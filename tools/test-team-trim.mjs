@@ -155,6 +155,11 @@ test('the sample content gives each team all eight, Prime the usual ones and Nov
     assert.equal(novaTeam[field], field === 'nameStyle' ? values[0] : values[1], 'Nova ' + field);
   });
   assert.deepEqual(trimFields.map(field => novaTeam[field]), ['round', 'tr-bl', 'slant', 'dots', 'flight', 'solid', 'bar', 'neon']);
+
+  // the stored name look is hidden and not read; the sample says solid for both, with the switch off, so nothing contradicts it
+  const stored = JSON.parse(read('dashboard/data/sample/content.json')).teams;
+  assert.deepEqual(stored.map(team => [team.nameStyle, team.outlinedName]), [['solid', false], ['solid', false]]);
+  assert.equal(teams.trimClassesOf(novaTeam).includes('name-outline'), false, 'Nova draws the name solid');
 });
 
 test('rendered in sample mode, the page of Prime and the page of Nova differ in the classes of every field, and in the mirror', async () => {

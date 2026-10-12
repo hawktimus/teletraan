@@ -5480,9 +5480,9 @@ function checkEventPages() {
 // The trim of a team (dashboard/config.js, teamTrim): eight radio lists in the Trim box of the Team document. The choices
 // are the ones in config.js in the same order, the first is the one Prime has and the one each field starts with, and
 // none is required, because a team saved before the trim existed has none and must still publish. The seed file gives
-// Prime the first choice of each and Nova the values of the work order. The first choice has no class, and the others
+// Prime the first choice of each and Nova the values of the work order, except the name look, which is solid on both. The first choice has no class, and the others
 // have the one the dashboard puts on the page: plain lower case words with hyphens, and no two the same.
-const trimOfNova = { bolts: 'round', cornerCut: 'tr-bl', headerNotch: 'slant', grid: 'dots', logoPose: 'flight', nameStyle: 'outline', tickerLabel: 'bar', countAccent: 'neon' };
+const trimOfNova = { bolts: 'round', cornerCut: 'tr-bl', headerNotch: 'slant', grid: 'dots', logoPose: 'flight', nameStyle: 'solid', tickerLabel: 'bar', countAccent: 'neon' };
 
 function checkTeamTrim() {
   const problems = [];
@@ -5539,7 +5539,7 @@ function checkTeamTrim() {
     need(problems, sample.prime && sample.prime[name] === config.primeTeam[name], 'the Prime team of the sample content should have ' + name + ' ' + config.primeTeam[name]);
     need(problems, sample.nova && sample.nova[name] === trimOfNova[name], 'the Nova team of the sample content should have ' + name + ' ' + trimOfNova[name]);
   });
-  // Team name look is not read any more, so Nova keeps its stored value; the switch Outlined name is off on both teams, which draws the name solid
+  // Team name look is not read any more and both teams store solid, so nothing contradicts the switch Outlined name, which is off on both teams and draws the name solid
   ['team-prime', 'team-nova'].forEach(id => need(problems, docs[id] && docs[id].outlinedName === false, id + ' in docs/seed/teams.ndjson should have outlinedName false: both starting teams draw the name solid'));
 
   // Team name look is hidden and kept, and Outlined name, a switch in the Trim box that starts off, replaces it

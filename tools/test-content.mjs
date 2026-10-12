@@ -5609,6 +5609,11 @@ test('the query asks for the teams, and for the team code of every kind of conte
 test('the two starting teams become the teams the screen uses, and the built-in team is the starting Prime', () => {
   const [prime, nova] = startingTeams();
 
+  // the stored name look is hidden and not read, so the seed says solid for both and the switch Outlined name is off
+  assert.deepEqual(seededTeams.map(team => [team.nameStyle, team.outlinedName]), [['solid', false], ['solid', false]]);
+  assert.equal(startingTeams().every(team => team.nameStyle === 'solid'), true, 'both draw the name solid');
+  assert.equal(normalizeContent({ teams: [Object.assign({}, seededTeams[1], { outlinedName: true })] }, today).teams[0].nameStyle, 'outline', 'Nova outlines the name only when the switch is on');
+
   assert.deepEqual(prime, {
     code: 'prime', name: 'HAWKTIMUS PRIME', shortName: 'PRIME', number: '3229', logo: '',
     colors: { primary: '#6C18B6', plate: '#3B2A7A', accent: '#FACA2A', neon: '#FACA2A', pink: '#B23CFF', background: '#09060F', text: '#FFFFFF', body: '#1A0F2E', label: '#FACA2A' },

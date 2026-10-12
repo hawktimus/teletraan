@@ -21,7 +21,7 @@
       "metal": "steel", "glow": true,
       "mirror": true,
       "bolts": "round", "cornerCut": "tr-bl", "headerNotch": "slant", "grid": "dots",
-      "logoPose": "flight", "nameStyle": "outline", "outlinedName": false, "tickerLabel": "bar", "countAccent": "neon",
+      "logoPose": "flight", "nameStyle": "solid", "outlinedName": false, "tickerLabel": "bar", "countAccent": "neon",
       "active": true, "order": 20
     }
   ],
