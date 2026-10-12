@@ -571,7 +571,7 @@ test('without studio/node_modules the Studio actions stop first and give the one
     const result = place.run([action], { message: 'A change' });
     assert.notEqual(result.status, 0, action);
     assert.ok(result.text.includes("the Studio's packages are not installed"), result.text);
-    assert.ok(result.text.includes('cd "' + path.join(place.repo, 'studio') + '" && npm install'), result.text);
+    assert.ok(result.text.includes('cd "' + path.join(place.repo, 'studio') + '" && npm ci'), result.text);
     assert.deepEqual(changes(result.calls), [], action + ' committed nothing before it found out: ' + result.calls);
   });
   assert.equal(makePlace('no-modules-push', { noModules: true }).run(['push'], { message: 'x' }).status, 0, 'push does not need the packages');

@@ -56,7 +56,7 @@ Which of these it looks at depends on the action:
 
 - `git`, `node`, `npm`, `ssh` and `rsync` are installed.
 - For the Studio, Node is 22.12 or newer and `studio/node_modules` exists. If
-  it does not, the line says `cd studio && npm install` with the full path.
+  it does not, the line says `cd studio && npm ci` with the full path.
 - For a commit, git knows a name and an email (`git config --global user.name`
   and `user.email`).
 - For the Mini, the Mac tool has a saved Mini. If not, the line says to run

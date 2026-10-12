@@ -109,14 +109,17 @@ git config --global user.email "you@example.com"
 ## 4. Install the Studio's packages
 
 Once, and it takes a few minutes. It downloads the Studio's packages into
-`studio/node_modules`, which git leaves out:
+`studio/node_modules`, which git leaves out. Use `npm ci` and not `npm install`:
+`npm ci` installs exactly what the lock file lists and leaves the lock file as
+it is, while `npm install` can rewrite it on a different version of npm, and
+then git shows the file as changed:
 
 ```
 cd studio
 ```
 
 ```
-npm install
+npm ci
 ```
 
 ```

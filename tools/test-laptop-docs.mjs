@@ -72,7 +72,7 @@ test('the guide names the commands in the order a coach needs them', () => {
     'gh auth setup-git',
     'git config --global user.name "Your Name"',
     'git config --global user.email "you@example.com"',
-    'npm install',
+    'npm ci',
     'npx sanity login',
     'npx sanity projects list',
     'deploy/mac/make-app.sh',
@@ -81,7 +81,7 @@ test('the guide names the commands in the order a coach needs them', () => {
     'ssh-keygen -t ed25519',
   ];
   let at = 0;
-  const firstOrder = ['git --version', 'node --version', 'git clone https://github.com/Hawktimus/teletraan.git', 'npm install', 'npx sanity login', 'deploy/mac/make-app.sh', 'tools/mini/teletraan-mini'];
+  const firstOrder = ['git --version', 'node --version', 'git clone https://github.com/Hawktimus/teletraan.git', 'npm ci', 'npx sanity login', 'deploy/mac/make-app.sh', 'tools/mini/teletraan-mini'];
   firstOrder.forEach(command => {
     const found = commands.indexOf(command, at);
     assert.ok(found !== -1, 'comes in this order: ' + command);

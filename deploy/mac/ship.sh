@@ -124,7 +124,7 @@ preflight() {
     if command -v node >/dev/null 2>&1 && ! node_is_new_enough; then
       missing "the Studio needs Node 22.12 or newer, and this Mac has $(node --version 2>/dev/null). Install a newer Node (docs/laptop-setup.md, step 1)."
     fi
-    [ -d "$repo/studio/node_modules" ] || missing "the Studio's packages are not installed. Run once: cd \"$repo/studio\" && npm install"
+    [ -d "$repo/studio/node_modules" ] || missing "the Studio's packages are not installed. Run once: cd \"$repo/studio\" && npm ci"
   fi
 
   if [ "$identity" = yes ] && command -v git >/dev/null 2>&1; then
