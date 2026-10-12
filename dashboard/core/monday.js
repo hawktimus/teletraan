@@ -3,13 +3,11 @@
 // (docs/editing-content.md, "The Monday cards") writes the rows of the team board into Sanity as
 // tasks with the source monday, and keeps one count of open items a day in the document
 // monday-status. The cards are the panels monday-tasks, monday-milestones and monday-progress, and
-// monday-milestones-both and monday-progress-both for the pass of both teams.
+// monday-milestones-both and monday-progress-both for the rows that are for both teams.
 //
-// A team has board rows when a task from the board shows on the TV for it. Only then does the look
-// rotation give it a Monday pass (mondaySteps below, which mondayCards in core/look-rotation.js
-// calls), and the pass is these three cards one after the other, one page of the tasks card for
-// each Team lead entry that has tasks. Once in each cycle, after the last team, the cards of both
-// teams follow (bothSteps below).
+// A team has board rows when a task from the board shows on the TV for it. Only then do the Monday rows of
+// the Screens (core/screens.js) play for it. mondaySteps below gives the steps of its three cards, one
+// page of the tasks card for each Team lead entry that has tasks, and bothSteps the two cards of both teams.
 
 import { visibleItems } from './content.js';
 import { isFromBoard } from './task-source.js';
@@ -220,11 +218,11 @@ export function bothRows(content, teams, now = new Date()) {
 }
 
 
-// The Monday pass of the look rotation
+// The steps of the Monday rows
 
-// The steps of the large panel's list while a team's Monday pass is up: one page of the tasks card for
-// each lead entry that has tasks, then the milestones card and the progress card. A team with no
-// board tasks has none, and then it has no Monday pass. teamCode is the team of the pass.
+// The steps of the Monday cards of a team: one page of the tasks card for each lead entry that has tasks,
+// then the milestones card and the progress card. A team with no board tasks has none, and then its Monday
+// rows are left out. teamCode is the team of the rows.
 export function mondaySteps(content, teamCode, now = new Date()) {
   if (!isRecord(content) || boardTasksFor(content, now, teamCode).length === 0) return [];
 
@@ -235,9 +233,9 @@ export function mondaySteps(content, teamCode, now = new Date()) {
   return steps.concat({ panel: 'monday-milestones', show: true }, { panel: 'monday-progress', show: true });
 }
 
-// The steps of the pass of both teams, once in each cycle after the last team: the milestones and the
-// progress of both teams together. codes are the teams of the cycle, in order. It is only a pass when two
-// or more of them have board tasks, because one team alone has its own cards.
+// The steps of the cards of both teams: the milestones and the progress of both teams together. codes are
+// the teams that are switched on. There are steps only when two or more of them have board tasks, because
+// one team alone has its own cards.
 export function bothSteps(content, codes, now = new Date()) {
   if (!isRecord(content) || !Array.isArray(codes)) return [];
 

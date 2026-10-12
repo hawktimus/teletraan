@@ -4,7 +4,7 @@
 // text in a chart are the competition cards' too (core/competition-draw.js). A card is a panel in
 // panels/monday-*, and core/monday.js decides what it draws.
 
-import { teamsInOrder } from './look-rotation.js';
+import { teamsOf } from './screens.js';
 import { doubleSlash } from './marks.js';
 import { pagesOf, rowsPerPage } from './monday.js';
 import { departmentTitle, teamChipMarkup, teamNameOf } from './team-title.js';
@@ -70,11 +70,10 @@ export function headerMarkup(title, chip, status, now) {
       </div>`;
 }
 
-// The teams of the cards of both teams, in the order of Team order in Dashboard Settings. Only teams that are
-// switched on are in it.
+// The teams of the cards of both teams, in the order of the Teams in the Studio. Only teams that are switched on
+// are in it.
 export function teamsForBoth(content) {
-  const settings = content && content.settings ? content.settings : {};
-  return teamsInOrder(settings.teamOrder, content && content.teams);
+  return teamsOf(content);
 }
 
 // The label at the start of a row of the cards of both teams: PRIME in gold and NOVA in silver. The class

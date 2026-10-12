@@ -1,9 +1,8 @@
 // Tests for the Monday cards as rows: the mix and the order of the rows of the tasks card, the page marker and
-// the scroll of a card with more than five rows, the cards of both teams, the pass of both teams in the look
-// rotation, the header of a card (the chip with the name of the team and the words that fit beside it), the
-// names of a team (core/team-title.js), and what the Panel order list does with a Monday card. frame.js
-// (scrollCard) and core/schedule.js are run with stand-ins for the page. The board data is made up: the sample
-// in data/sample/content.json, changed here and there.
+// the scroll of a card with more than five rows, the cards of both teams, the header of a card (the chip with the
+// name of the team and the words that fit beside it), the names of a team (core/team-title.js), and what the Panel
+// order list does with a Monday card. frame.js (scrollCard) and core/schedule.js are run with stand-ins for the
+// page. The board data is made up: the sample in data/sample/content.json, changed here and there.
 //
 //   node tools/test-monday-rows.mjs
 
@@ -47,7 +46,7 @@ const base = pathToFileURL(root).href + '/';
 const config = await import(base + 'config.js');
 const monday = await import(base + 'core/monday.js');
 const draw = await import(base + 'core/monday-draw.js');
-const rotation = await import(base + 'core/look-rotation.js');
+const screens = await import(base + 'core/screens.js');
 const sanity = await import(base + 'core/sanity.js');
 const teams = await import(base + 'core/teams.js');
 const teamTitle = await import(base + 'core/team-title.js');
@@ -433,7 +432,7 @@ test('the rows of both teams are one for each department and each team that has 
 });
 
 function teamsOf(content) {
-  return rotation.teamsInOrder(content.settings.teamOrder, content.teams);
+  return screens.teamsOf(content);
 }
 
 test('the pass of both teams has two cards, and only when two teams or more have board tasks', () => {
@@ -441,7 +440,6 @@ test('the pass of both teams has two cards, and only when two teams or more have
   const content = contentWith();
 
   assert.deepEqual(monday.bothSteps(content, ['prime', 'nova'], monday12), cards);
-  assert.deepEqual(rotation.bothCards(content, ['prime', 'nova']), cards);
   assert.deepEqual(monday.bothSteps(content, ['prime'], monday12), [], 'one team has its own cards');
   assert.deepEqual(monday.bothSteps(content, ['prime', 'nova', 'other'], monday12), cards, 'a team with no rows does not count');
   assert.deepEqual(monday.bothSteps(contentOf([board({})]), ['prime', 'nova'], monday12), [], 'Nova has none');
@@ -532,95 +530,6 @@ test('a name from the board is never markup on the cards of both teams, and no c
   ['core/team-title.js', 'core/text-width.js', 'monday.css', 'panels/monday-milestones-both/monday-milestones-both.js', 'panels/monday-progress-both/monday-progress-both.js', 'panels/monday-milestones-both/monday-milestones-both.css', 'panels/monday-progress-both/monday-progress-both.css'].forEach(file => {
     assert.equal(dashes.test(read(file)), false, file + ' has an em or en dash');
   });
-});
-
-
-// The pass of both teams in the look rotation
-
-const fakeStorage = () => {
-  const kept = {};
-  return { kept: kept, getItem: name => (name in kept ? kept[name] : null), setItem: (name, value) => { kept[name] = String(value); } };
-};
-const seconds = (from, count) => new Date(from.getTime() + count * 1000);
-
-test('a cycle ends with the pass of both teams in the Monday style, held in the team before it, when the cycle asks for it', () => {
-  const options = { style: 'original', mondayStyle: 'minimal', teams: ['prime', 'nova'], hasMonday: () => true };
-
-  assert.deepEqual(rotation.planCycle(options).map(pass => [pass.team, pass.style, pass.kind, Boolean(pass.both)].join(' ')), [
-    'prime original panels false', 'prime minimal monday false', 'nova original panels false', 'nova minimal monday false',
-  ]);
-  assert.deepEqual(rotation.planCycle(Object.assign({ hasBoth: true }, options)).map(pass => [pass.team, pass.style, pass.kind, Boolean(pass.both)].join(' ')), [
-    'prime original panels false', 'prime minimal monday false', 'nova original panels false', 'nova minimal monday false', 'nova minimal monday true',
-  ]);
-  assert.deepEqual(rotation.planCycle({ style: '', mondayStyle: 'minimal', teams: [], hasMonday: () => false, hasBoth: true }).map(pass => pass.kind), ['panels'], 'with Team mode choosing the team there is no pass of both');
-  const noMonday = rotation.planCycle({ style: 'original', mondayStyle: 'minimal', teams: ['prime', 'nova'], hasMonday: () => false, hasBoth: true });
-  assert.deepEqual(noMonday.map(pass => [pass.team, pass.kind, Boolean(pass.both)].join(' ')), ['prime panels false', 'nova panels false', 'nova monday true']);
-});
-
-test('the real cards decide: Prime and Nova both have rows, so the screen goes through Prime, Nova and then both, and the list of the large panel is the two cards', () => {
-  const content = contentWith();
-  const machine = rotation.makeLookRotation({ getContent: () => content, storage: fakeStorage() });
-  const start = at('2026-10-12T16:00:00Z');
-  const shown = [];
-
-  let held = machine.begin(start);
-  shown.push([held.style, held.team, machine.pass().kind, Boolean(machine.pass().both)]);
-  for (let step = 1; step < 6; step++) {
-    const result = machine.boundary(seconds(start, step * 20));
-    held = result.look || held;
-    shown.push([held.style, held.team, machine.pass().kind, Boolean(machine.pass().both)]);
-  }
-  assert.deepEqual(shown.map(item => item.slice(1).join(' ')), [
-    'prime panels false', 'prime monday false', 'nova panels false', 'nova monday false', 'nova monday true', 'prime panels false',
-  ]);
-  assert.equal(shown[4][0], 'minimal', 'in the Monday style');
-  assert.equal(shown[3][0], 'minimal');
-  assert.deepEqual(shown[0][0], shown[2][0], 'and the panels in the style of the day');
-
-  // the list at each pass: the panels' own list, a team's cards, both teams' cards
-  const list = [{ panel: 'tasks', show: true }];
-  const again = rotation.makeLookRotation({ getContent: () => content, storage: fakeStorage() });
-  again.begin(start);
-  assert.deepEqual(again.playlist(list, content), list);
-  again.boundary(seconds(start, 20));
-  assert.equal(again.playlist(list, content)[0].panel, 'monday-tasks');
-  again.boundary(seconds(start, 40));
-  again.boundary(seconds(start, 60));
-  assert.deepEqual(again.playlist(list, content).map(step => step.panel + (step.page ? ' ' + step.page : '')), ['monday-tasks 1', 'monday-tasks 2', 'monday-tasks 3', 'monday-tasks 4', 'monday-tasks 5', 'monday-tasks 6', 'monday-milestones', 'monday-progress']);
-  again.boundary(seconds(start, 80));
-  assert.deepEqual(again.pass(), { team: 'nova', kind: 'monday', both: true });
-  assert.deepEqual(again.playlist(list, content), [{ panel: 'monday-milestones-both', show: true }, { panel: 'monday-progress-both', show: true }]);
-});
-
-test('without rows for two teams the cycle has no pass of both, and a page that reloads in the pass of both goes on in it', () => {
-  const only = contentOf([board({ title: 'a' })]);
-  const machine = rotation.makeLookRotation({ getContent: () => only, storage: fakeStorage() });
-  const start = at('2026-10-12T16:00:00Z');
-  machine.begin(start);
-  const kinds = [];
-  for (let step = 1; step < 6; step++) {
-    machine.boundary(seconds(start, step * 20));
-    const pass = machine.pass();
-    kinds.push(pass.team + ' ' + pass.kind + (pass.both ? ' both' : ''));
-  }
-  assert.deepEqual(kinds, ['prime monday', 'nova panels', 'prime panels', 'prime monday', 'nova panels']);
-
-  // the place of the pass is written down, with both, and a page that reloads comes back to it
-  const content = contentWith();
-  const storage = fakeStorage();
-  const first = rotation.makeLookRotation({ getContent: () => content, storage: storage });
-  first.begin(start);
-  [20, 40, 60, 80].forEach(count => first.boundary(seconds(start, count)));
-  assert.deepEqual(first.pass(), { team: 'nova', kind: 'monday', both: true });
-  first.keep(seconds(start, 120));
-  assert.equal(JSON.parse(storage.kept[rotation.stateKey]).both, true);
-
-  const second = rotation.makeLookRotation({ getContent: () => content, storage: storage });
-  second.begin(seconds(start, 125));
-  assert.deepEqual(second.pass(), { team: 'nova', kind: 'monday', both: true }, 'and not in the Monday pass of Nova, which has the same team and kind');
-  const plain = rotation.makeLookRotation({ getContent: () => content, storage: fakeStorage() });
-  plain.begin(start);
-  assert.equal(JSON.parse(JSON.stringify(plain.pass())).both, undefined, 'an ordinary pass says nothing about both');
 });
 
 

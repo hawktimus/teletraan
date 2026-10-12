@@ -1,9 +1,8 @@
-// Tests for the look rotation (dashboard/core/look-rotation.js): the style of the day, the order of
-// the passes in a cycle, the boundary rule, a screen that restarts, one style and one team holding for
-// ever, empty lists giving the choice back to Style and Team mode, the Next look now guard and what
-// each press does. The two modules that hold the style and the team (core/style.js and core/teams.js)
-// are run too, and so is core/schedule.js with stand-ins for the page, for the question it asks at the
-// end of every pass. Nothing is drawn and no clock runs.
+// Tests for the page side of the Screens: what the large panel asks the Screens (core/schedule.js, run for
+// real with stand-ins for the page), the files that hand a look to the screen (core/screens-run.js), the style
+// and the team being held the way a preview holds them, the Next look now guard, and the swap being the one way a
+// look goes on. The Screens themselves (the documents, the weekday, the rows and the choices between rows) are in
+// tools/test-screens.mjs. Nothing is drawn and no clock runs.
 //
 //   node tools/test-look-rotation.mjs
 
@@ -14,8 +13,8 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
-const docsFolder = fileURLToPath(new URL('../docs/', import.meta.url));
 const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+const withoutComments = text => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
 
 // The dashboard files are browser modules named .js. Copying them next to a
 // package.json that says "type": "module" lets any version of node read them.
@@ -31,15 +30,13 @@ fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith(
 });
 const base = pathToFileURL(path.join(workFolder, 'dashboard')).href + '/';
 const config = await import(base + 'config.js');
-const rotation = await import(base + 'core/look-rotation.js');
+const screens = await import(base + 'core/screens.js');
 const styleModule = await import(base + 'core/style.js');
 const teamsModule = await import(base + 'core/teams.js');
 const previewModule = await import(base + 'core/preview.js');
-const { contentQuery, normalizeContent, normalizeSample } = await import(base + 'core/sanity.js');
-const { withDefaults } = await import(base + 'core/content.js');
 const { handledKey: announceKey } = await import(base + 'core/announce.js');
 
-const { bootLook, dayNumber, makeLookRotation, makeNextLookRunner, mondayCards, planCycle, styleForDay, teamsInOrder, tidyNextLookRequest } = rotation;
+const { makeNextLookRunner, tidyNextLookRequest } = screens;
 
 const tests = [];
 function test(name, run) {
@@ -49,18 +46,9 @@ function test(name, run) {
 // The calendar in New York, which is the time zone of the Look page. October 12 2026 is a Monday.
 const noonOnTheTwelfth = new Date('2026-10-12T16:00:00Z');
 const seconds = (from, count) => new Date(from.getTime() + count * 1000);
-const days = (from, count) => new Date(from.getTime() + count * 86400 * 1000);
 
 const prime = { code: 'prime', name: 'HAWKTIMUS PRIME', active: true };
 const nova = { code: 'nova', name: 'HAWKTIMUS NOVA', active: true };
-
-// Content with the starting settings and both teams, and what a test changes
-function contentWith(settings, extra) {
-  return withDefaults(Object.assign({ teams: [prime, nova], settings: settings || {} }, extra));
-}
-
-// Prime has Monday rows and Nova has none
-const primeHasMonday = (content, code) => (code === 'prime' ? [{ panel: 'monday-tasks', show: true }, { panel: 'monday-charts', show: true }] : []);
 
 // A stand-in for localStorage that keeps its values in an object
 function fakeStorage() {
@@ -78,527 +66,12 @@ const brokenStorage = {
   setItem: () => { throw new Error('storage is off'); },
 };
 
-// A rotation over this content, with a storage of its own unless a test gives one
-function rotationFor(content, extra) {
-  return makeLookRotation(Object.assign({ getContent: () => content, storage: fakeStorage(), mondayCards: primeHasMonday }, extra));
-}
-
-// Walks a rotation from its start through this many passes, each one lasting twenty seconds (the
-// shortest pass is 15). Returns what the screen showed in each pass: { team, kind, style }.
-function walk(machine, from, count) {
-  const shown = [];
-  let held = machine.begin(from);
-  shown.push(Object.assign({ kind: machine.pass().kind }, held));
-
-  for (let step = 1; step < count; step++) {
-    const result = machine.boundary(seconds(from, step * 20));
-    held = result.look || held;
-    shown.push({ team: held.team, kind: machine.pass().kind, style: held.style });
-  }
-  return shown;
-}
-
-const other = style => (style === 'original' ? 'cybertron' : 'original');
-
-// The day
-
-test('a day is the same number from midnight to midnight in the time zone of the Look page, and one more after it', () => {
-  const zone = 'America/New_York'; // 4 hours behind UTC in October
-  const first = dayNumber(zone, new Date('2026-10-12T04:00:00Z')); // midnight in New York
-  assert.equal(dayNumber(zone, new Date('2026-10-12T03:59:59Z')), first - 1);
-  assert.equal(dayNumber(zone, new Date('2026-10-12T04:00:00Z')), first);
-  assert.equal(dayNumber(zone, new Date('2026-10-12T16:00:00Z')), first);
-  assert.equal(dayNumber(zone, new Date('2026-10-13T03:59:59Z')), first);
-  assert.equal(dayNumber(zone, new Date('2026-10-13T04:00:00Z')), first + 1);
-});
-
-test('the day changes at midnight on the clock of the zone, also on the night the clocks go back', () => {
-  const zone = 'America/New_York';
-  const november = dayNumber(zone, new Date('2026-11-01T12:00:00Z')); // the clocks go back at 2 AM that morning
-  assert.equal(dayNumber(zone, new Date('2026-11-02T04:59:59Z')), november, 'still the first, at 11:59 PM in standard time');
-  assert.equal(dayNumber(zone, new Date('2026-11-02T05:00:00Z')), november + 1);
-  assert.equal(dayNumber(zone, new Date('2026-03-08T12:00:00Z')) + 1, dayNumber(zone, new Date('2026-03-09T12:00:00Z')), 'and when they go forward');
-});
-
-test('the zone, and not the computer, says which day it is, and a zone that is not one is the Look page default', () => {
-  const instant = new Date('2026-10-12T20:00:00Z'); // 4 PM in New York and 5 AM the next day in Tokyo
-  assert.equal(dayNumber('Asia/Tokyo', instant), dayNumber('America/New_York', instant) + 1);
-  [undefined, null, '', 'Nowhere/Land', 5].forEach(zone => assert.equal(dayNumber(zone, instant), dayNumber(config.defaultThemeSettings.timeZone, instant), String(zone)));
-});
-
-test('the style of a day is the list taken round and round by the number of the day', () => {
-  const list = ['original', 'cybertron'];
-  assert.equal(styleForDay(list, 20000), 'original');
-  assert.equal(styleForDay(list, 20001), 'cybertron');
-  assert.equal(styleForDay(list, 20002), 'original');
-
-  const three = ['original', 'cybertron', 'minimal'];
-  assert.deepEqual([6, 7, 8, 9, 10].map(number => styleForDay(three, number)), ['original', 'cybertron', 'minimal', 'original', 'cybertron']);
-  assert.equal(styleForDay(three, -1), 'minimal', 'a day before 1970 still has a style');
-  assert.equal(styleForDay(['cybertron', 'cybertron', 'original'], 3), 'cybertron', 'a style that comes twice has two days of three');
-});
-
-test('a list with nothing in it has no style, and a name that is not a style is left out', () => {
-  [[], undefined, null, 'original', {}, ['red', '']].forEach(list => assert.equal(styleForDay(list, 5), '', JSON.stringify(list)));
-  assert.equal(styleForDay(['red', 'cybertron'], 8), 'cybertron');
-});
-
-// The cycle
-
-test('a cycle of two styles, two teams and Monday rows on one team is Prime, Prime Monday, Nova, in that order', () => {
-  const passes = planCycle({ style: 'original', mondayStyle: 'minimal', teams: ['prime', 'nova'], hasMonday: code => code === 'prime' });
-  assert.deepEqual(passes, [
-    { team: 'prime', style: 'original', kind: 'panels' },
-    { team: 'prime', style: 'minimal', kind: 'monday' },
-    { team: 'nova', style: 'original', kind: 'panels' },
-  ]);
-});
-
-test('the screen walks that cycle, and starts it again after the last pass', () => {
-  const content = contentWith({});
-  const today = styleForDay(config.defaultSettings.dailyStyles, dayNumber('America/New_York', noonOnTheTwelfth));
-  const shown = walk(rotationFor(content), noonOnTheTwelfth, 6);
-
-  assert.deepEqual(shown.slice(0, 3), [
-    { team: 'prime', kind: 'panels', style: today },
-    { team: 'prime', kind: 'monday', style: 'minimal' },
-    { team: 'nova', kind: 'panels', style: today },
-  ]);
-  assert.deepEqual(shown.slice(3), shown.slice(0, 3), 'and over again');
-});
-
-test('tomorrow the cycle is the same passes in the other style, and the Monday pass keeps its own', () => {
-  const content = contentWith({});
-  const today = walk(rotationFor(content), noonOnTheTwelfth, 3);
-  const tomorrow = walk(rotationFor(content), days(noonOnTheTwelfth, 1), 3);
-  const style = today[0].style;
-
-  assert.deepEqual(today.map(pass => pass.style), [style, 'minimal', style]);
-  assert.deepEqual(tomorrow.map(pass => pass.style), [other(style), 'minimal', other(style)]);
-  assert.deepEqual(tomorrow.map(pass => pass.team + ' ' + pass.kind), today.map(pass => pass.team + ' ' + pass.kind));
-  assert.deepEqual(walk(rotationFor(content), days(noonOnTheTwelfth, 2), 1)[0].style, style, 'and the day after is the first again');
-});
-
-test('the style of the day is picked at the first pass that ends after midnight', () => {
-  const content = contentWith({}, { teams: [prime] });
-  const late = new Date('2026-10-13T03:59:30Z'); // 11:59:30 PM in New York
-  const machine = rotationFor(content, { mondayCards: () => [] });
-  const first = machine.begin(late);
-  assert.equal(first.style, styleForDay(config.defaultSettings.dailyStyles, dayNumber('America/New_York', late)));
-
-  assert.equal(machine.boundary(seconds(late, 20)).look, null, 'twenty seconds on it is midnight, and the pass has not ended yet');
-  const result = machine.boundary(seconds(late, 40));
-  assert.deepEqual(result.look, { style: other(first.style), team: 'prime' }, 'the next pass end brings the new style');
-  assert.equal(result.moved, false, 'with one team there is no other pass to go to');
-});
-
-test('the teams in order are the ones that are in the list and switched on, each once, in the order of the setting', () => {
-  const off = Object.assign({}, nova, { active: false });
-  assert.deepEqual(teamsInOrder(['nova', 'prime'], [prime, nova]).map(team => team.code), ['nova', 'prime']);
-  assert.deepEqual(teamsInOrder(['prime', 'nova'], [prime, off]).map(team => team.code), ['prime'], 'a team that is switched off does not count');
-  assert.deepEqual(teamsInOrder(['prime', 'nova', 'prime', 'ghost'], [prime, nova]).map(team => team.code), ['prime', 'nova'], 'a repeat and a team that is not there are left out');
-  assert.deepEqual(teamsInOrder(['prime', 'nova'], []).map(team => team.code), ['prime'], 'with no teams in the Studio there is the built-in Prime');
-  assert.deepEqual(teamsInOrder(undefined, [prime]), []);
-});
-
-test('Nova first puts the Nova pass first, and a team with no Monday rows has no Monday pass', () => {
-  const content = contentWith({ teamOrder: ['nova', 'prime'] });
-  const shown = walk(rotationFor(content), noonOnTheTwelfth, 3);
-  assert.deepEqual(shown.map(pass => pass.team + ' ' + pass.kind), ['nova panels', 'prime panels', 'prime monday']);
-
-  const none = walk(rotationFor(content, { mondayCards: () => [] }), noonOnTheTwelfth, 4);
-  assert.deepEqual(none.map(pass => pass.team + ' ' + pass.kind), ['nova panels', 'prime panels', 'nova panels', 'prime panels']);
-});
-
-test('with no board tasks no team has a Monday pass, whatever the Monday cards are', () => {
-  assert.deepEqual(mondayCards(contentWith({}), 'prime'), []);
-  const shown = walk(makeLookRotation({ getContent: () => contentWith({}), storage: fakeStorage() }), noonOnTheTwelfth, 4);
-  assert.deepEqual(shown.map(pass => pass.team + ' ' + pass.kind), ['prime panels', 'nova panels', 'prime panels', 'nova panels']);
-});
-
-// The Monday block with the real cards (core/monday.js): a team has it when it has board tasks that show on the TV
-
-// Board tasks for Prime only, for two lead entries, as the content has them once it is cleaned
-function boardContent(settings, change) {
-  const task = fields => Object.assign({ title: '[Task]', subteam: '[Lead A]', status: 'up-next', team: 'prime', source: 'monday', mondayId: '[1]', showOnTv: true }, fields);
-  const tasks = [task({}), task({ subteam: '[Lead B]', status: 'in-progress' })];
-  if (change) change(tasks);
-  return contentWith(settings, { tasks: tasks, subteams: [{ name: '[Lead A]' }, { name: '[Lead B]' }] });
-}
-
-const realCards = content => makeLookRotation({ getContent: () => content, storage: fakeStorage() });
-
-test('with board tasks on one team, a cycle is Prime in the style of the day, Prime in Minimal, and Nova in the style of the day, and tomorrow the style of the day is the other', () => {
-  const content = boardContent({});
-  const today = walk(realCards(content), noonOnTheTwelfth, 6);
-  const style = styleForDay(config.defaultSettings.dailyStyles, dayNumber('America/New_York', noonOnTheTwelfth));
-
-  assert.deepEqual(today.slice(0, 3), [
-    { team: 'prime', kind: 'panels', style: style },
-    { team: 'prime', kind: 'monday', style: 'minimal' },
-    { team: 'nova', kind: 'panels', style: style },
-  ]);
-  assert.deepEqual(today.slice(3), today.slice(0, 3), 'and over again');
-
-  const tomorrow = walk(realCards(content), days(noonOnTheTwelfth, 1), 3);
-  assert.deepEqual(tomorrow.map(pass => pass.team + ' ' + pass.kind + ' ' + pass.style), ['prime panels ' + other(style), 'prime monday minimal', 'nova panels ' + other(style)]);
-});
-
-test('Nova has no Monday pass when it has no board tasks, and has one when a task for both teams is a board task', () => {
-  const first = walk(realCards(boardContent({ teamOrder: ['nova', 'prime'] })), noonOnTheTwelfth, 3);
-  assert.deepEqual(first.map(pass => pass.team + ' ' + pass.kind), ['nova panels', 'prime panels', 'prime monday']);
-
-  const both = boardContent({}, tasks => tasks.push({ title: '[For both]', subteam: '[Lead A]', status: 'up-next', source: 'monday', mondayId: '[3]', showOnTv: true }));
-  assert.deepEqual(walk(realCards(both), noonOnTheTwelfth, 4).map(pass => pass.team + ' ' + pass.kind), ['prime panels', 'prime monday', 'nova panels', 'nova monday']);
-});
-
-test('a team whose board tasks are all off the TV, switched off, or expired has no Monday pass', () => {
-  [{ showOnTv: false }, { show: false }, { expires: '2020-01-01T00:00:00.000Z' }].forEach(fields => {
-    const content = boardContent({}, tasks => tasks.forEach(task => Object.assign(task, fields)));
-    assert.deepEqual(walk(realCards(content), noonOnTheTwelfth, 4).map(pass => pass.team + ' ' + pass.kind), ['prime panels', 'nova panels', 'prime panels', 'nova panels'], JSON.stringify(fields));
-  });
-
-  const one = boardContent({}, tasks => { tasks[0].showOnTv = false; });
-  assert.equal(walk(realCards(one), noonOnTheTwelfth, 3)[1].kind, 'monday', 'one row is enough');
-});
-
-test('the list of the large panel in Prime\'s Monday pass is the three cards, with a page of the tasks card for each lead entry that has tasks', () => {
-  const content = boardContent({});
-  const machine = realCards(content);
-  const usual = [{ panel: 'tasks', show: true }];
-
-  machine.begin(noonOnTheTwelfth);
-  assert.equal(machine.playlist(usual, content), usual);
-  machine.boundary(seconds(noonOnTheTwelfth, 20));
-  assert.equal(machine.pass().kind, 'monday');
-  assert.deepEqual(machine.playlist(usual, content), [
-    { panel: 'monday-tasks', show: true, page: 1 },
-    { panel: 'monday-tasks', show: true, page: 2 },
-    { panel: 'monday-milestones', show: true },
-    { panel: 'monday-progress', show: true },
-  ]);
-  machine.boundary(seconds(noonOnTheTwelfth, 40));
-  assert.deepEqual(machine.pass(), { team: 'nova', kind: 'panels' });
-  assert.equal(machine.playlist(usual, content), usual, 'Nova has the usual list');
-});
-
-test('Next look now moves into the Monday block and a second press moves past it, with the real cards', () => {
-  const content = boardContent({});
-  const machine = realCards(content);
-  machine.begin(noonOnTheTwelfth);
-
-  assert.equal(machine.next(seconds(noonOnTheTwelfth, 1)).kind, 'monday');
-  const past = machine.next(seconds(noonOnTheTwelfth, 2));
-  assert.equal(past.kind, 'panels');
-  assert.deepEqual(machine.pass(), { team: 'nova', kind: 'panels' });
-});
-
-test('the list of the large panel is the Monday cards of the team in a Monday pass, and the usual list in the others', () => {
-  const machine = rotationFor(contentWith({}));
-  const usual = [{ panel: 'tasks', show: true }];
-  machine.begin(noonOnTheTwelfth);
-  assert.equal(machine.playlist(usual, contentWith({})), usual);
-
-  machine.boundary(seconds(noonOnTheTwelfth, 20));
-  assert.equal(machine.pass().kind, 'monday');
-  assert.deepEqual(machine.playlist(usual, contentWith({})), primeHasMonday(null, 'prime'));
-  machine.boundary(seconds(noonOnTheTwelfth, 40));
-  assert.equal(machine.playlist(usual, contentWith({})), usual);
-});
-
-test('the swap is not a setting: whatever lookSwap holds, a boundary answers the same and names no swap', () => {
-  const answers = ['assemble', 'slats', 'cut', 'fade', undefined].map(how => {
-    const machine = rotationFor(contentWith({ lookSwap: how }));
-    machine.begin(noonOnTheTwelfth);
-    return machine.boundary(seconds(noonOnTheTwelfth, 20));
-  });
-  answers.forEach(answer => {
-    assert.deepEqual(Object.keys(answer).sort(), ['kind', 'look', 'moved']);
-    assert.deepEqual(answer, answers[0]);
-  });
-});
-
-// The boundary rule
-
-test('the rotation moves only when it is asked at the end of a pass, and then only if the pass has run its shortest time', () => {
-  const machine = rotationFor(contentWith({}));
-  machine.begin(noonOnTheTwelfth);
-  const asked = seconds(noonOnTheTwelfth, 5);
-
-  machine.keep(asked); // a once-a-second look is not a boundary
-  assert.deepEqual(machine.pass(), { team: 'prime', kind: 'panels' });
-  assert.equal(config.lookShortestSeconds, 15);
-
-  const early = machine.boundary(seconds(noonOnTheTwelfth, config.lookShortestSeconds - 1));
-  assert.deepEqual([early.moved, early.look], [false, null], 'a pass that has run 14 seconds goes on');
-  assert.deepEqual(machine.pass(), { team: 'prime', kind: 'panels' });
-
-  const due = machine.boundary(seconds(noonOnTheTwelfth, config.lookShortestSeconds));
-  assert.equal(due.moved, true);
-  assert.deepEqual(machine.pass(), { team: 'prime', kind: 'monday' });
-  assert.deepEqual(due.look, { style: 'minimal', team: 'prime' });
-  assert.equal(due.kind, 'monday');
-});
-
-test('the look is handed on only when it is not the one held, so a pass in the same look has no swap', () => {
-  const content = contentWith({ mondayStyle: 'original', dailyStyles: ['original'], teamOrder: ['prime'] });
-  const machine = rotationFor(content);
-  machine.begin(noonOnTheTwelfth);
-
-  const result = machine.boundary(seconds(noonOnTheTwelfth, 20));
-  assert.equal(result.moved, true, 'the Monday cards are another list');
-  assert.equal(result.look, null, 'in the same style and the same team');
-});
-
-test('nothing moves while an alert, an announcement, a talk, a demo, the night screen or a hidden transition has the screen', () => {
-  let busy = false;
-  const machine = rotationFor(contentWith({}), { busy: () => busy });
-  machine.begin(noonOnTheTwelfth);
-
-  busy = true;
-  const waiting = machine.boundary(seconds(noonOnTheTwelfth, 60));
-  assert.deepEqual([waiting.moved, waiting.look], [false, null]);
-  assert.deepEqual(machine.pass(), { team: 'prime', kind: 'panels' }, 'it is in the same pass when the screen is free again');
-  assert.equal(machine.next(seconds(noonOnTheTwelfth, 61)).moved, false, 'and Next look now waits too');
-
-  busy = false;
-  const free = machine.boundary(seconds(noonOnTheTwelfth, 62));
-  assert.equal(free.moved, true);
-  assert.deepEqual(machine.pass(), { team: 'prime', kind: 'monday' });
-});
-
-test('the page asks for the screen through one busy check that has every one of those, and the swap itself', () => {
-  const run = read('core/look-rotation-run.js');
-  const busy = /function busy\(\) \{\s*return ([^;]+);/.exec(run);
-  const elsewhere = /function busyElsewhere\(\) \{\s*return ([^;]+);/.exec(run);
-
-  assert.ok(busy && elsewhere, 'look-rotation-run.js has a busy function and one for what is not the swap');
-  assert.ok(busy[1].includes('swapRunning()') && busy[1].includes('busyElsewhere()'), 'busy checks the swap and the rest');
-  ['takeoverRunning()', 'demoRunning()', 'nightIsUp()', 'hiddenPlaying()'].forEach(name => assert.ok(elsewhere[1].includes(name), 'busy checks ' + name));
-  assert.ok(!elsewhere[1].includes('swapRunning'), 'a swap asks about everything but itself');
-  assert.ok(run.includes('makeLookRotation({ getContent: getContent, storage: storage, busy: busy, canShow: mondayStyleFits })'));
-  assert.ok(run.includes('makeNextLookRunner({ getContent: getContent, storage: storage, busy: busy, next: pressed })'));
-  assert.ok(read('core/takeover.js').includes('return running !== null || frame.isPaused();'), 'takeoverRunning is true for an alert, an announcement and a talk');
-});
-
-test('the swap holds the clock of the pages with its own count, and gives it back whatever happens', () => {
-  const run = read('core/swap-run.js');
-  const schedule = read('core/schedule.js');
-  assert.ok(!read('core/look-rotation-run.js').includes('pauseRotation'), 'the look rotation pauses nothing: the swap holds the clock');
-  assert.ok(/holdClock\(true\);\s*try \{[\s\S]*\} finally \{[\s\S]*holdClock\(false\);/.test(run), 'the clock is held in play() and let go in finally');
-  assert.equal((run.match(/holdClock\(true\)/g) || []).length, 1);
-  assert.equal((run.match(/holdClock\(false\)/g) || []).length, 1);
-  assert.ok(schedule.includes('if (!rotationPaused() && clockHeld === 0) left -= 250;'), 'a page does not use up its seconds while the clock is held');
-  assert.ok(!/clockHeld[^;]*waitWhilePaused/.test(schedule), 'and the areas still pick and swap their pages, which a pause would stop');
-});
-
-// A screen that restarts
-
-test('a screen that restarts lands on the style of the day, however long it was off and whatever it had kept', () => {
-  const content = contentWith({});
-  const style = walk(rotationFor(content), noonOnTheTwelfth, 1)[0].style;
-
-  [noonOnTheTwelfth, seconds(noonOnTheTwelfth, 3 * 3600), seconds(noonOnTheTwelfth, -9 * 3600), new Date('2026-10-13T03:59:00Z')].forEach(moment => {
-    const booted = bootLook(content, null, moment);
-    assert.deepEqual(booted, { style: style, team: 'prime' }, moment.toISOString());
-  });
-  assert.equal(bootLook(content, null, days(noonOnTheTwelfth, 1)).style, other(style), 'and the next day the other');
-});
-
-test('a screen that restarts with a pass written down a moment ago goes on in that pass', () => {
-  const content = contentWith({});
-  const storage = fakeStorage();
-  const machine = rotationFor(content, { storage: storage });
-  machine.begin(noonOnTheTwelfth);
-  machine.boundary(seconds(noonOnTheTwelfth, 20)); // the Monday pass, in Minimal: the page reloads for the layout
-  assert.ok(storage.kept[rotation.stateKey], 'the pass is written down');
-
-  const booted = bootLook(content, storage, seconds(noonOnTheTwelfth, 25), primeHasMonday);
-  assert.deepEqual(booted, { style: 'minimal', team: 'prime' });
-
-  const again = rotationFor(content, { storage: storage });
-  assert.deepEqual(again.begin(seconds(noonOnTheTwelfth, 25)), { style: 'minimal', team: 'prime' });
-  assert.deepEqual(again.pass(), { team: 'prime', kind: 'monday' });
-  assert.equal(again.boundary(seconds(noonOnTheTwelfth, 30)).moved, false, 'and its time began when the pass did, so 15 seconds are not over yet');
-  assert.equal(again.boundary(seconds(noonOnTheTwelfth, 36)).moved, true);
-});
-
-test('a pass written down long ago, one that is no longer in the cycle, and a storage that fails all start at the first pass', () => {
-  const content = contentWith({});
-  const storage = fakeStorage();
-  const machine = rotationFor(content, { storage: storage });
-  machine.begin(noonOnTheTwelfth);
-  machine.boundary(seconds(noonOnTheTwelfth, 20));
-  const stale = seconds(noonOnTheTwelfth, 20 + config.lookResumeSeconds + 1);
-
-  assert.equal(bootLook(content, storage, stale, primeHasMonday).team, 'prime');
-  assert.equal(bootLook(content, storage, stale, primeHasMonday).style, walk(rotationFor(content), noonOnTheTwelfth, 1)[0].style, 'the first pass, in the style of the day');
-
-  // Prime has no Monday rows any more
-  const gone = makeLookRotation({ getContent: () => content, storage: storage, mondayCards: () => [] });
-  assert.equal(gone.begin(seconds(noonOnTheTwelfth, 25)).style, walk(rotationFor(content), noonOnTheTwelfth, 1)[0].style);
-  assert.deepEqual(gone.pass(), { team: 'prime', kind: 'panels' });
-
-  assert.deepEqual(bootLook(content, brokenStorage, noonOnTheTwelfth).team, 'prime');
-  assert.doesNotThrow(() => rotationFor(content, { storage: brokenStorage }).begin(noonOnTheTwelfth));
-  ['not json', '{}', '{"team":"prime"}', 'null', '5'].forEach(text => {
-    const odd = fakeStorage();
-    odd.kept[rotation.stateKey] = text;
-    assert.equal(bootLook(content, odd, noonOnTheTwelfth).team, 'prime', text);
-  });
-});
-
-test('the screen starts with nothing held when there is no saved copy of the content', () => {
-  assert.deepEqual(bootLook(null, fakeStorage(), noonOnTheTwelfth), { style: '', team: '' });
-  assert.deepEqual(bootLook(undefined, null, noonOnTheTwelfth), { style: '', team: '' });
-});
-
-test('a pass worked out only to start with writes nothing down', () => {
-  const storage = fakeStorage();
-  bootLook(contentWith({}), storage, noonOnTheTwelfth);
-  assert.deepEqual(storage.kept, {});
-});
-
-test('the pass is written down again every half minute, so a reload long into a pass goes on in it', () => {
-  const storage = fakeStorage();
-  const machine = rotationFor(contentWith({}), { storage: storage });
-  machine.begin(noonOnTheTwelfth);
-  const first = storage.kept[rotation.stateKey];
-
-  machine.keep(seconds(noonOnTheTwelfth, 10));
-  assert.equal(storage.kept[rotation.stateKey], first, 'not before 30 seconds');
-  machine.keep(seconds(noonOnTheTwelfth, 31));
-  assert.notEqual(storage.kept[rotation.stateKey], first);
-  assert.equal(JSON.parse(storage.kept[rotation.stateKey]).since, noonOnTheTwelfth.getTime(), 'with the time the pass began');
-});
-
-// One look holds, and empty lists give the choice back
-
-test('one style and one team make one pass for ever, over days, and nothing is ever handed on', () => {
-  const content = contentWith({ dailyStyles: ['cybertron'], teamOrder: ['prime'] });
-  const machine = rotationFor(content, { mondayCards: () => [] });
-  assert.deepEqual(machine.begin(noonOnTheTwelfth), { style: 'cybertron', team: 'prime' });
-
-  for (let step = 1; step <= 40; step++) {
-    const result = machine.boundary(seconds(noonOnTheTwelfth, step * 20000));
-    assert.deepEqual([result.moved, result.look], [false, null], 'boundary ' + step);
-  }
-  assert.equal(machine.next(days(noonOnTheTwelfth, 5)).moved, false);
-});
-
-test('one style and two teams change the team and never the style, and two styles and one team change the style at midnight', () => {
-  const styles = walk(rotationFor(contentWith({ dailyStyles: ['minimal'] }), { mondayCards: () => [] }), noonOnTheTwelfth, 4);
-  assert.deepEqual(styles.map(pass => pass.style), ['minimal', 'minimal', 'minimal', 'minimal']);
-  assert.deepEqual(styles.map(pass => pass.team), ['prime', 'nova', 'prime', 'nova']);
-
-  const one = rotationFor(contentWith({ teamOrder: ['nova'] }), { mondayCards: () => [] });
-  const start = one.begin(noonOnTheTwelfth);
-  assert.equal(one.boundary(seconds(noonOnTheTwelfth, 20)).look, null);
-  const tomorrow = one.boundary(days(noonOnTheTwelfth, 1));
-  assert.deepEqual(tomorrow.look, { style: other(start.style), team: 'nova' });
-  assert.equal(tomorrow.moved, false);
-});
-
-test('a team that is not there or is switched off leaves the order, and only teams that are not leave one pass', () => {
-  const off = contentWith({ teamOrder: ['nova', 'prime'] }, { teams: [prime, Object.assign({}, nova, { active: false })] });
-  assert.deepEqual(walk(rotationFor(off, { mondayCards: () => [] }), noonOnTheTwelfth, 3).map(pass => pass.team), ['prime', 'prime', 'prime']);
-});
-
-test('an empty Styles by day gives the style back to Style, and an empty Team order gives the team back to Team mode', () => {
-  const noStyles = contentWith({ dailyStyles: [] });
-  const withoutStyles = walk(rotationFor(noStyles, { mondayCards: () => [] }), noonOnTheTwelfth, 2);
-  assert.deepEqual(withoutStyles.map(pass => pass.style), ['', ''], 'no style is held, and the setting decides');
-  assert.deepEqual(withoutStyles.map(pass => pass.team), ['prime', 'nova'], 'the teams still take turns');
-
-  const noTeams = contentWith({ teamOrder: [] });
-  const withoutTeams = walk(rotationFor(noTeams), noonOnTheTwelfth, 3);
-  assert.deepEqual(withoutTeams.map(pass => pass.team), ['', '', ''], 'no team is held, and Team mode decides');
-  assert.deepEqual(withoutTeams.map(pass => pass.kind), ['panels', 'panels', 'panels'], 'with no team there is no Monday pass');
-  assert.equal(withoutTeams[0].style, styleForDay(config.defaultSettings.dailyStyles, dayNumber('America/New_York', noonOnTheTwelfth)));
-});
-
-test('both lists empty hold nothing at all, so the screen is as it was before the rotation', () => {
-  const both = contentWith({ dailyStyles: [], teamOrder: [] });
-  const machine = rotationFor(both);
-  assert.deepEqual(machine.begin(noonOnTheTwelfth), { style: '', team: '' });
-  for (let step = 1; step <= 5; step++) {
-    const result = machine.boundary(days(noonOnTheTwelfth, step));
-    assert.deepEqual([result.moved, result.look], [false, null]);
-  }
-  assert.deepEqual(bootLook(both, null, noonOnTheTwelfth), { style: '', team: '' });
-});
-
-test('teams named in Team order that do not exist count as an empty list', () => {
-  const ghosts = contentWith({ teamOrder: ['ghost', 'spook'] });
-  assert.equal(rotationFor(ghosts).begin(noonOnTheTwelfth).team, '');
-});
-
-test('a content with no settings at all holds nothing', () => {
-  const machine = makeLookRotation({ getContent: () => ({}), storage: null });
-  assert.deepEqual(machine.begin(noonOnTheTwelfth), { style: '', team: '' });
-  const nothing = makeLookRotation({ getContent: () => null, storage: null });
-  assert.deepEqual(nothing.begin(noonOnTheTwelfth), { style: '', team: '' });
-});
-
-// Cleaning the settings
-
-test('settings that are missing are the starting ones: Original then Cybertron, Minimal, Prime then Nova, assemble', () => {
-  const settings = withDefaults({}).settings;
-  assert.deepEqual(settings.dailyStyles, ['original', 'cybertron']);
-  assert.equal(settings.mondayStyle, 'minimal');
-  assert.deepEqual(settings.teamOrder, ['prime', 'nova']);
-  assert.equal(settings.lookSwap, 'assemble');
-  assert.deepEqual(config.defaultSettings.dailyStyles, ['original', 'cybertron']);
-});
-
-test('a list the editors emptied stays empty, and a list that is not a list is the starting list', () => {
-  [normalizeSample, normalizeContent, withDefaults].forEach(through => {
-    const emptied = through({ settings: { dailyStyles: [], teamOrder: [] } }).settings;
-    assert.deepEqual([emptied.dailyStyles, emptied.teamOrder], [[], []]);
-
-    ['text', 5, {}, null].forEach(value => {
-      const odd = through({ settings: { dailyStyles: value, teamOrder: value } }).settings;
-      assert.deepEqual([odd.dailyStyles, odd.teamOrder], [['original', 'cybertron'], ['prime', 'nova']], JSON.stringify(value));
-    });
-  });
-});
-
-test('a name that is not a style goes, a style may come twice, and a team code is lowercase and comes once', () => {
-  const settings = normalizeContent({ settings: { dailyStyles: ['original', 'red', 'original', 'cybertron', 5, null], teamOrder: [' Prime ', 'NOVA', 'nova', 7, '', null, 'prime'] } }).settings;
-  assert.deepEqual(settings.dailyStyles, ['original', 'original', 'cybertron']);
-  assert.deepEqual(settings.teamOrder, ['prime', 'nova']);
-});
-
-test('a Monday style or a swap that is not one is the starting one', () => {
-  ['plain', '', 5, null].forEach(value => {
-    const settings = withDefaults({ settings: { mondayStyle: value, lookSwap: value } }).settings;
-    assert.equal(settings.mondayStyle, 'minimal', String(value));
-    assert.equal(settings.lookSwap, 'assemble', String(value));
-  });
-  const kept = withDefaults({ settings: { mondayStyle: 'cybertron', lookSwap: 'cut' } }).settings;
-  assert.deepEqual([kept.mondayStyle, kept.lookSwap], ['cybertron', 'cut']);
-});
-
-test('the query sends the lists as lists, and Team order as the codes of its teams, so that a missing list is an empty one', () => {
-  assert.ok(contentQuery.includes('"dailyStyles": coalesce(dailyStyles, [])'));
-  assert.ok(contentQuery.includes('"teamOrder": coalesce(teamOrder[]->code, [])'));
-  const fromSanity = normalizeContent({ settings: { dailyStyles: [], teamOrder: [] } }).settings;
-  assert.deepEqual([fromSanity.dailyStyles, fromSanity.teamOrder], [[], []], 'a page published before the fields existed follows Style and Team mode');
-});
-
-test('the sample content has the rotation, with codes of the sample teams', () => {
-  const sample = JSON.parse(read('data/sample/content.json'));
-  const settings = normalizeSample(sample).settings;
-  const codes = sample.teams.map(team => team.code);
-
-  assert.deepEqual(settings.dailyStyles, ['original', 'cybertron']);
-  assert.deepEqual(settings.teamOrder, ['prime', 'nova']);
-  settings.teamOrder.forEach(code => assert.ok(codes.includes(code), code));
-});
 
 // Style and team are held, not set
 
-test('a style the rotation holds wins over the setting and loses to the address and to a preview', () => {
+// Style and team are held, not set
+
+test('a style the Screens hold wins over the setting and loses to the address and to a preview', () => {
   const later = new Date(Date.now() + 60000);
   styleModule.rotateStyle('cybertron');
   try {
@@ -621,7 +94,7 @@ test('a style the rotation holds wins over the setting and loses to the address 
   }
 });
 
-test('a team the rotation holds wins over Team mode and loses to a preview and the address', () => {
+test('a team the Screens hold wins over Team mode and loses to a preview and the address', () => {
   const content = { teams: [prime, nova], settings: { teamMode: 'prime', alternateMinutes: 5 } };
   const now = new Date();
   const wantedAfter = (rotated, extra) => {
@@ -632,7 +105,7 @@ test('a team the rotation holds wins over Team mode and loses to a preview and t
   };
 
   try {
-    assert.equal(wantedAfter('nova'), 'nova', 'Team mode says Prime and the rotation says Nova');
+    assert.equal(wantedAfter('nova'), 'nova', 'Team mode says Prime and the Screens say Nova');
     assert.equal(wantedAfter(''), 'prime', 'an empty code lets go');
     assert.equal(wantedAfter('ghost'), 'prime', 'a team that is not there lets go');
 
@@ -651,11 +124,16 @@ test('a team the rotation holds wins over Team mode and loses to a preview and t
 });
 
 test('the style and the team go on the page only through the modules a preview uses, and the page change puts both on in one step', () => {
-  const run = read('core/look-rotation-run.js');
+  const run = read('core/screens-run.js');
+  const held = read('core/screens.js');
   const areas = read('core/areas.js');
 
-  assert.ok(/function holdLook\(look\) \{\s*rotateStyle\(look\.style\);\s*rotateTeam\(look\.team\);\s*useTeams\(getContent\(\), new Date\(\)\);\s*noteWantedTeam\(\);\s*checkTheme\(\);\s*\}/.test(run));
-  ['applyStyle', 'applyTeamLook', 'dataset.style', 'classList', 'setProperty'].forEach(name => assert.ok(!run.includes(name), 'look-rotation-run.js should not touch the page with ' + name));
+  assert.ok(/function holdLook\(look\) \{\s*holdScreenLook\(look\);\s*useTeams\(getContent\(\), new Date\(\)\);\s*noteWantedTeam\(\);\s*checkTheme\(\);\s*\}/.test(run));
+  assert.ok(/held = \{ team: look\.team, style: look\.style, monday: look\.monday === true \};\s*rotateStyle\(held\.style\);\s*rotateTeam\(held\.team\);/.test(held), 'holdScreenLook hands both to the modules a preview uses');
+  ['applyStyle', 'applyTeamLook', 'dataset.style', 'classList', 'setProperty'].forEach(name => {
+    assert.ok(!run.includes(name), 'screens-run.js should not touch the page with ' + name);
+    assert.ok(!held.includes(name), 'screens.js should not touch the page with ' + name);
+  });
   assert.ok(areas.includes('if (region === themeRegion) changeThemeNow();\n    if (region === themeRegion) changeTeamNow();'), 'the page change still puts the style and the team on together');
   assert.ok(previewModule.previewKinds.cybertron.style === 'cybertron', 'the previews hold the style in the same module');
 });
@@ -713,9 +191,9 @@ test('the click handled before is kept in localStorage under a name of its own, 
   const world = runnerFor(asked);
   world.runner.look(new Date(asked));
 
-  assert.equal(world.storage.kept[rotation.handledKey], asked);
-  assert.notEqual(rotation.handledKey, announceKey, 'apart from the announcements');
-  assert.equal(rotation.handledKey, 'teletraan-next-look-handled');
+  assert.equal(world.storage.kept[screens.handledKey], asked);
+  assert.notEqual(screens.handledKey, announceKey, 'apart from the announcements');
+  assert.equal(screens.handledKey, 'teletraan-next-look-handled');
 
   const restarted = runnerFor(asked, { storage: world.storage });
   restarted.runner.look(seconds(new Date(asked), 10));
@@ -762,65 +240,55 @@ test('a click in the settings of content that has none is no click', () => {
   assert.equal(world.calls.length, 0);
 });
 
-test('each press moves one pass: to the Monday cards, and a second press while they are up moves past them', () => {
-  const machine = rotationFor(contentWith({}));
-  const style = machine.begin(noonOnTheTwelfth).style;
-  const seen = [];
-  const press = step => {
-    const result = machine.next(seconds(noonOnTheTwelfth, step));
-    seen.push(machine.pass().team + ' ' + machine.pass().kind);
-    return result;
-  };
+test('a press moves the large panel to the next row, and the page gives the runner nothing else to do', () => {
+  const run = read('core/screens-run.js');
 
-  const first = press(1); // one second into the pass, which a press does not wait out
-  assert.deepEqual(first.look, { style: 'minimal', team: 'prime' });
-  assert.equal(first.moved, true);
-  const second = press(2); // while the Monday cards are up
-  assert.deepEqual(second.look, { style: style, team: 'nova' });
-  const third = press(3);
-  assert.deepEqual(third.look, { style: style, team: 'prime' }, 'and round to the first pass again');
-  assert.deepEqual(seen, ['prime monday', 'nova panels', 'prime panels']);
+  assert.ok(/function pressed\(\) \{\s*skipRow\(\);\s*\}/.test(run));
+  assert.ok(run.includes('makeNextLookRunner({ getContent: getContent, storage: savedStorage(), busy: busy, next: pressed })'));
+  assert.ok(/function begin\(step\) \{[\s\S]*?holdLook\(to\);\s*if \(changes\.swap\) queueSwap\(\);\s*\}/.test(run), 'a look that is held is a swap at the next page change of the large panel');
+  assert.ok(run.includes('setLookHooks({ viewAs: viewAs, fits: fits, begin: begin });'));
+  assert.ok(run.includes('startSwaps(busyElsewhere, swapScaleNow);'));
 });
 
-test('a press with no Monday rows moves from team to team', () => {
-  const machine = rotationFor(contentWith({}), { mondayCards: () => [] });
-  machine.begin(noonOnTheTwelfth);
-  const teams = [1, 2, 3].map(step => {
-    machine.next(seconds(noonOnTheTwelfth, step));
-    return machine.pass().team;
-  });
-  assert.deepEqual(teams, ['nova', 'prime', 'nova']);
+test('the page asks for the screen through one busy check that has every one of those, and the swap itself', () => {
+  const run = read('core/screens-run.js');
+  const busy = /function busy\(\) \{\s*return ([^;]+);/.exec(run);
+  const elsewhere = /function busyElsewhere\(\) \{\s*return ([^;]+);/.exec(run);
+
+  assert.ok(busy && elsewhere, 'screens-run.js has a busy function and one for what is not the swap');
+  assert.ok(busy[1].includes('swapRunning()') && busy[1].includes('busyElsewhere()'), 'busy checks the swap and the rest');
+  ['takeoverRunning()', 'demoRunning()', 'nightIsUp()', 'hiddenPlaying()'].forEach(name => assert.ok(elsewhere[1].includes(name), 'busy checks ' + name));
+  assert.ok(!elsewhere[1].includes('swapRunning'), 'a swap asks about everything but itself');
+  assert.ok(read('core/takeover.js').includes('return running !== null || frame.isPaused();'), 'takeoverRunning is true for an alert, an announcement and a talk');
 });
 
-test('a press that follows a press gives a pass its own time, so the next end of a pass does not skip it', () => {
-  const machine = rotationFor(contentWith({}));
-  machine.begin(noonOnTheTwelfth);
-  machine.next(seconds(noonOnTheTwelfth, 100));
-
-  assert.equal(machine.boundary(seconds(noonOnTheTwelfth, 105)).moved, false, 'five seconds into the Monday cards');
-  assert.equal(machine.boundary(seconds(noonOnTheTwelfth, 116)).moved, true);
+test('a swap never starts while something else has the screen: swap-run.js refuses, and the look goes on in the usual page change', () => {
+  const run = read('core/swap-run.js');
+  assert.ok(/if \(playing \|\| takeoverRunning\(\) \|\| askBusy\(\)\) return null;/.test(run));
+  assert.ok(run.includes('askBusy = busyElsewhere;'));
 });
 
-test('a press where there is one pass moves nothing, and a press moves nothing while the screen is busy', () => {
-  const alone = rotationFor(contentWith({ dailyStyles: ['original'], teamOrder: ['prime'] }), { mondayCards: () => [] });
-  alone.begin(noonOnTheTwelfth);
-  const result = alone.next(seconds(noonOnTheTwelfth, 30));
-  assert.deepEqual([result.moved, result.look], [false, null]);
+test('the swap holds the clock of the pages with its own count, and gives it back whatever happens', () => {
+  const run = read('core/swap-run.js');
+  const schedule = read('core/schedule.js');
+  assert.ok(!read('core/screens-run.js').includes('pauseRotation'), 'the Screens pause nothing: the swap holds the clock');
+  assert.ok(/holdClock\(true\);\s*try \{[\s\S]*\} finally \{[\s\S]*holdClock\(false\);/.test(run), 'the clock is held in play() and let go in finally');
+  assert.equal((run.match(/holdClock\(true\)/g) || []).length, 1);
+  assert.equal((run.match(/holdClock\(false\)/g) || []).length, 1);
+  assert.ok(schedule.includes('if (!rotationPaused() && clockHeld === 0) left -= 250;'), 'a page does not use up its seconds while the clock is held');
+  assert.ok(!/clockHeld[^;]*waitWhilePaused/.test(schedule), 'and the areas still pick and swap their pages, which a pause would stop');
 });
 
-test('a press names no swap either, whatever lookSwap holds', () => {
-  const machine = rotationFor(contentWith({ lookSwap: 'cut' }));
-  machine.begin(noonOnTheTwelfth);
-  assert.deepEqual(Object.keys(machine.next(seconds(noonOnTheTwelfth, 2))).sort(), ['kind', 'look', 'moved']);
+test('a swap takes as long as the Screen it goes to says: every time of it follows the one pace, and nothing else in swap-run.js reads the speed', () => {
+  const run = withoutComments(read('core/swap-run.js'));
+
+  assert.equal((run.match(/frame\.pace\(\)/g) || []).length, 1, 'frame.pace() is read in one place');
+  assert.ok(/function paceNow\(\) \{\s*const scale = swapScale\(\);\s*return frame\.pace\(\) \* \(typeof scale === 'number' && isFinite\(scale\) && scale > 0 \? scale : 1\);\s*\}/.test(run));
+  assert.equal((run.match(/const pace = paceNow\(\);/g) || []).length, 2, 'the swap and the fade take the pace from it');
+  assert.ok(run.includes('startHawk(run, before.logos, layer, pace);'), 'the hawk too');
+  assert.ok(/export function startSwaps\(busyElsewhere, scaleNow = \(\) => 1\) \{/.test(run));
 });
 
-test('the page gives the runner a press that starts every list again, and a look that goes on through the same hold and the swap', () => {
-  const run = read('core/look-rotation-run.js');
-  assert.ok(/function pressed\(now\) \{\s*const result = rotation\.next\(now\);\s*if \(!result\.moved && !result\.look\) return;\s*rewindRotation\(\);\s*if \(result\.look\) changeLook\(result\.look\);\s*pagesAgain\(\);\s*\}/.test(run));
-  assert.ok(/function atPass\(now\) \{\s*const result = rotation\.boundary\(now\);\s*if \(result\.look\) changeLook\(result\.look\);\s*return result\.moved;\s*\}/.test(run));
-  assert.ok(/function changeLook\(look\) \{\s*holdLook\(look\);\s*queueSwap\(\);\s*\}/.test(run), 'a held look is a swap at the next page change of the large panel');
-  assert.ok(run.includes('setLookHooks({ atPass: atPass, playlist: playlistNow });'));
-});
 
 // The swaps
 
@@ -846,23 +314,54 @@ test('the swap is the page change of the large panel: areas.js asks for it first
 });
 
 test('the swaps move only transform, opacity and lines: the new code has no animation of its own', () => {
-  ['core/look-rotation.js', 'core/look-rotation-run.js'].forEach(file => {
+  ['core/screens.js', 'core/screens-run.js'].forEach(file => {
     const source = read(file);
     ['blur', 'box-shadow', 'drop-shadow', 'requestAnimationFrame', '.animate(', 'keyframes', 'style.transform', 'style.opacity'].forEach(word => assert.ok(!source.includes(word), file + ' should not contain ' + word));
   });
 });
 
-test('the page starts the rotation after the team, before the style, and leaves it out of the test views and when the address asks', () => {
+test('the page holds the Screen of the day before it draws, starts the Screens after the team, and leaves them out of the test views and when the address asks', () => {
   const shell = read('shell.js');
   const team = shell.indexOf("askForTeam(params.get('team'));");
-  const held = shell.indexOf('resumeSavedLook();', team);
+  const held = shell.indexOf('holdSavedScreen();', team);
   const style = shell.indexOf("startStyle(params.get('style'), savedStyle);");
   assert.ok(team !== -1 && held > team && style > held, 'the look is held after the team is asked for and before the style is chosen');
   assert.ok(shell.includes("if (params.get('show') || stress || onlyTasks) return;"));
-  assert.ok(shell.includes("holdBootLook(savedContent(), storage, new Date());"));
-  assert.ok(shell.includes("module.startLookRotation(getContent, params.has('style') || params.has('team'))"));
-  assert.ok(shell.indexOf("'./core/look-rotation-run.js'") > shell.indexOf("'./core/team-run.js'"), 'after the ones it asks about');
-  assert.ok(/if \(addressAsks\) return;/.test(read('core/look-rotation-run.js')));
+  assert.ok(shell.includes('holdBootScreen(savedContent(), new Date());'));
+  assert.ok(shell.includes("module.startScreens(getContent, params.has('style') || params.has('team'))"));
+  assert.ok(shell.indexOf("'./core/screens-run.js'") > shell.indexOf("'./core/team-run.js'"), 'after the ones it asks about');
+  assert.ok(/if \(addressAsks\) return;/.test(read('core/screens-run.js')));
+});
+
+test('the lists come from the Screen on the screen, and the name effect and the hawk follow its minutes', () => {
+  const shell = read('shell.js');
+
+  assert.ok(shell.includes("withPages(withCompetition(mainPlaylist(content, new Date()), content, new Date()))"), 'the competition cards are mixed in first and then every panel with more than one page becomes its steps');
+  assert.ok(shell.includes("startRotationForLayouts('grid2', () => withStandIns(withPages(sidePlaylist(content, new Date()))), getContent);"), 'the small frame has its list in every layout, with its spares and its last resort');
+  assert.ok(shell.includes('frame.setHawk(settings.logoHawk, cadence.hawkEverySeconds, settings.logoHawkDuration);'));
+  assert.ok(shell.includes('frame.setNameEffect(settings.nameTransform, cadence.nameEverySeconds, settings.nameDuration);'));
+  assert.ok(shell.includes('useLogoSettings(content.settings, currentScreen(content));'));
+  assert.ok(/onScreenChange\(\(\) => \{\s*if \(content\) useLogoSettings\(content\.settings, currentScreen\(content\)\);\s*\}\);/.test(shell), 'and they follow it when it changes');
+});
+
+test('nothing in the page reads Styles by day, Team order or the seconds between the name effect and the hawk any more', () => {
+  const files = [];
+  const walk = folder => fs.readdirSync(path.join(dashboardFolder, folder), { withFileTypes: true }).forEach(entry => {
+    const place = path.join(folder, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name !== 'data' && entry.name !== 'fonts' && entry.name !== 'assets') walk(place);
+    } else if (entry.name.endsWith('.js')) {
+      files.push(place);
+    }
+  });
+  walk('.');
+
+  const readers = pattern => files.filter(file => pattern.test(withoutComments(read(file))));
+  assert.deepEqual(readers(/dailyStyles|teamOrder|teamsInOrder|styleForDay|planCycle/), ['config.js'], 'only the starting values the Studio copies');
+  assert.deepEqual(readers(/\bnameEvery\b|\blogoHawkEvery\b/), ['config.js', path.join('core', 'content.js')], 'the setting is kept tidy and no more');
+  assert.deepEqual(readers(/look-rotation|rewindRotation|lookShortestSeconds|lookResumeSeconds/), []);
+  assert.equal(fs.existsSync(path.join(dashboardFolder, 'core/look-rotation.js')), false);
+  assert.equal(fs.existsSync(path.join(dashboardFolder, 'core/look-rotation-run.js')), false);
 });
 
 // core/schedule.js, with stand-ins for the page
@@ -936,74 +435,111 @@ async function inRotation(run) {
 const steps = ids => ids.map(panel => ({ panel: panel, show: true }));
 const gridPlaylist = steps(['a', 'b', 'c']);
 
-test('the large panel asks the rotation once at the end of each pass of its list, and not at the start or in between', async () => {
+// What a Screens stand-in writes in the log of the world, for the order of the questions
+function hooksFor(world, extra) {
+  return Object.assign({
+    viewAs: (step, run) => run(),
+    fits: () => true,
+    begin: step => world.log.push('begin ' + step.panel),
+  }, extra);
+}
+
+test('the large panel tells the Screens which step it has chosen before it builds the page, once for each step, and in order', async () => {
+  await inRotation(async world => {
+    world.module.setLookHooks(hooksFor(world));
+    world.module.startRotation('grid1', () => gridPlaylist, () => world.content);
+    await world.settle();
+    await world.pass(60);
+
+    assert.deepEqual(world.log.slice(0, 9), ['begin a', 'build a', 'grid1 a', 'begin b', 'build b', 'grid1 b', 'begin c', 'build c', 'grid1 c']);
+    assert.deepEqual(world.pagesOf('grid1'), ['a', 'b', 'c', 'a'], 'and the list goes round');
+    assert.equal(world.log.filter(line => line === 'begin a').length, 2);
+  });
+});
+
+test('the small panel and the ticker never ask the Screens', async () => {
   await inRotation(async world => {
     const asked = [];
-    world.module.setLookHooks({ atPass: async () => { asked.push(world.pagesOf('grid1').join(' ')); return false; }, playlist: list => list });
-    world.module.startRotation('grid1', () => gridPlaylist, () => world.content);
+    world.module.setLookHooks({
+      viewAs: (step, run) => { asked.push('viewAs'); return run(); },
+      fits: () => { asked.push('fits'); return true; },
+      begin: () => asked.push('begin'),
+    });
+    world.module.startRotation('grid2', () => steps(['d']), () => world.content);
     await world.settle();
-    await world.pass(20);
-    await world.pass(20);
-    assert.deepEqual(asked, [], 'a b are not the end of the list');
-    await world.pass(20);
-    assert.deepEqual(asked, ['a b c'], 'after c, before the next page');
-    assert.deepEqual(world.pagesOf('grid1'), ['a', 'b', 'c', 'a'], 'and the pass goes on when the answer is no');
-    await world.pass(60);
-    assert.deepEqual(asked, ['a b c', 'a b c a b c']);
+    await world.pass(120);
+
+    assert.deepEqual(asked, []);
+    assert.ok(world.pagesOf('grid2').length >= 4);
+    assert.ok(world.pagesOf('grid2').every(page => page === 'd'));
   });
 });
 
-test('an answer of yes starts the list the rotation gives from its first panel', async () => {
+test('a step is asked whether it has content as the team it is drawn for, so the team is on the screen only once the step is chosen', async () => {
   await inRotation(async world => {
-    let list = gridPlaylist;
-    world.module.setLookHooks({ atPass: async () => { list = steps(['x', 'y']); return true; }, playlist: () => list });
-    world.module.startRotation('grid1', () => gridPlaylist, () => world.content);
+    world.team = 'prime';
+    world.viewing = '';
+    world.canShow = id => (id === 'x' ? (world.viewing || world.team) === 'nova' : true);
+    const list = [{ panel: 'a', show: true, team: 'prime' }, { panel: 'x', show: true, team: 'nova' }, { panel: 'b', show: true }];
+    world.module.setLookHooks({
+      viewAs: (step, run) => {
+        world.viewing = step.team || world.team;
+        try {
+          return run();
+        } finally {
+          world.viewing = '';
+        }
+      },
+      fits: () => true,
+      begin: step => { if (step.team) world.team = step.team; world.log.push('begin ' + step.panel + ' as ' + world.team); },
+    });
+    world.module.startRotation('grid1', () => list, () => world.content);
     await world.settle();
     await world.pass(60);
-    await world.pass(20);
-    await world.pass(20);
-    await world.pass(20);
 
-    assert.deepEqual(world.pagesOf('grid1'), ['a', 'b', 'c', 'x', 'y', 'x', 'y'].slice(0, world.pagesOf('grid1').length));
-    assert.deepEqual(world.pagesOf('grid1').slice(0, 5), ['a', 'b', 'c', 'x', 'y']);
+    assert.deepEqual(world.log.filter(line => line.startsWith('begin')).slice(0, 4), ['begin a as prime', 'begin x as nova', 'begin b as nova', 'begin a as prime'], 'the Nova step has content while Prime is on the screen');
   });
 });
 
-test('an answer of yes starts the next pass at the first panel it has content for, not where the last pass left off', async () => {
+test('a step that has no content for its team is left out and the Screens are not told about it', async () => {
   await inRotation(async world => {
-    world.canShow = id => id !== 'c'; // the team of the first pass has nothing for c
-    world.module.setLookHooks({ atPass: async () => { world.canShow = () => true; return true; }, playlist: list => list });
+    world.canShow = id => id !== 'b';
+    world.module.setLookHooks(hooksFor(world));
     world.module.startRotation('grid1', () => gridPlaylist, () => world.content);
     await world.settle();
     await world.pass(60);
-    assert.deepEqual(world.pagesOf('grid1'), ['a', 'b', 'a', 'b'], 'the pass ended after b, and the next one began again at a');
-    await world.pass(20);
-    assert.deepEqual(world.pagesOf('grid1').slice(4), ['c'], 'and now has c too');
+
+    assert.deepEqual(world.pagesOf('grid1').slice(0, 4), ['a', 'c', 'a', 'c']);
+    assert.equal(world.log.some(line => line === 'begin b'), false);
   });
 });
 
-test('the page waits for the rotation to answer, and a rotation that fails leaves the pass going', async () => {
+test('a step the Screens say does not fit is left out for now, and comes back when it fits', async () => {
   await inRotation(async world => {
-    let answer = null;
-    world.module.setLookHooks({ atPass: () => new Promise(resolve => { answer = resolve; }), playlist: list => list });
-    world.module.startRotation('grid1', () => steps(['a', 'b']), () => world.content);
+    let fits = false;
+    world.module.setLookHooks(hooksFor(world, { fits: step => step.panel !== 'b' || fits }));
+    world.module.startRotation('grid1', () => gridPlaylist, () => world.content);
     await world.settle();
+    await world.pass(60);
+    assert.deepEqual(world.pagesOf('grid1').slice(0, 4), ['a', 'c', 'a', 'c']);
+
+    fits = true;
     await world.pass(40);
-    assert.deepEqual(world.pagesOf('grid1'), ['a', 'b']);
-    await world.pass(40);
-    assert.deepEqual(world.pagesOf('grid1'), ['a', 'b'], 'nothing changes while it is asked');
-
-    answer(false);
-    await world.settle();
-    assert.deepEqual(world.pagesOf('grid1'), ['a', 'b', 'a']);
+    assert.ok(world.pagesOf('grid1').includes('b'));
   });
+});
 
+test('Screens that fail leave the step as it is: it is drawn, and the problem is written in the console', async () => {
   await inRotation(async world => {
     const complaints = [];
     const real = console.error;
     console.error = (...args) => complaints.push(args.join(' '));
     try {
-      world.module.setLookHooks({ atPass: async () => { throw new Error('broken'); }, playlist: () => { throw new Error('broken too'); } });
+      world.module.setLookHooks({
+        viewAs: () => { throw new Error('broken'); },
+        fits: () => { throw new Error('broken too'); },
+        begin: () => { throw new Error('broken again'); },
+      });
       world.module.startRotation('grid1', () => steps(['a', 'b']), () => world.content);
       await world.settle();
       await world.pass(60);
@@ -1011,38 +547,13 @@ test('the page waits for the rotation to answer, and a rotation that fails leave
       console.error = real;
     }
     assert.deepEqual(world.pagesOf('grid1').slice(0, 3), ['a', 'b', 'a']);
-    assert.ok(complaints.some(line => line.includes('could not move to the next pass')));
-    assert.ok(complaints.some(line => line.includes('could not give the list of the large panel')));
+    assert.ok(complaints.some(line => line.includes('could not answer fits')));
+    assert.ok(complaints.some(line => line.includes('could not say which team')));
+    assert.ok(complaints.some(line => line.includes('could not answer begin')));
   });
 });
 
-test('the small panel and the ticker are never asked, and never use the list of the rotation', async () => {
-  await inRotation(async world => {
-    let asked = 0;
-    let listed = 0;
-    world.module.setLookHooks({ atPass: async () => { asked += 1; return false; }, playlist: () => { listed += 1; return steps(['a']); } });
-    world.module.startRotation('grid2', () => steps(['d']), () => world.content);
-    await world.settle();
-    await world.pass(120);
-    assert.equal(asked, 0);
-    assert.equal(listed, 0);
-    assert.ok(world.pagesOf('grid2').length >= 4);
-    assert.ok(world.pagesOf('grid2').every(page => page === 'd'));
-  });
-});
-
-test('a list of one panel is a pass of its own, so the rotation is asked at every page', async () => {
-  await inRotation(async world => {
-    let asked = 0;
-    world.module.setLookHooks({ atPass: async () => { asked += 1; return false; }, playlist: list => list });
-    world.module.startRotation('grid1', () => steps(['a']), () => world.content);
-    await world.settle();
-    await world.pass(60);
-    assert.equal(asked, 3);
-  });
-});
-
-test('without a rotation the lists go round as they always did', async () => {
+test('without the Screens the lists go round as they always did', async () => {
   await inRotation(async world => {
     world.module.startRotation('grid1', () => gridPlaylist, () => world.content);
     await world.settle();
@@ -1051,51 +562,54 @@ test('without a rotation the lists go round as they always did', async () => {
   });
 });
 
-test('rewindRotation starts the lists again from the first panel and leaves the frames where they are', async () => {
+// Five steps in three rows: a is row 0, b c and x are row 1, y is row 2
+const rowsList = [['a', 0], ['b', 1], ['c', 1], ['x', 1], ['y', 2]].map(entry => ({ panel: entry[0], show: true, row: entry[1] }));
+
+test('Next look now leaves the row on screen with every step of it, and plays the first step of the next row', async () => {
   await inRotation(async world => {
-    world.module.startRotation('grid1', () => gridPlaylist, () => world.content);
+    world.module.startRotation('grid1', () => rowsList, () => world.content);
     await world.settle();
     await world.pass(20);
-    assert.deepEqual(world.pagesOf('grid1'), ['a', 'b']);
+    assert.deepEqual(world.pagesOf('grid1'), ['a', 'b'], 'b is on screen, the first step of row 1');
 
-    world.module.rewindRotation();
-    world.module.moveOn(['grid1']);
+    world.module.skipRow();
     await world.pass(1);
-    assert.deepEqual(world.pagesOf('grid1'), ['a', 'b', 'a'], 'the first panel and not the third');
-    assert.ok(!world.log.some(line => line.startsWith('clear')), 'no frame was cleared');
+    assert.deepEqual(world.pagesOf('grid1'), ['a', 'b', 'y'], 'c and x are the rest of its row');
   });
 });
 
-test('the rotation is not asked again right after a restart, and starts the new list at once', async () => {
+test('Next look now on a row of one step, or on steps that have no row, plays the step after it', async () => {
   await inRotation(async world => {
-    let asked = 0;
-    world.module.setLookHooks({ atPass: async () => { asked += 1; return false; }, playlist: list => list });
+    world.module.startRotation('grid1', () => rowsList, () => world.content);
+    await world.settle();
+    world.module.skipRow();
+    await world.pass(1);
+    assert.deepEqual(world.pagesOf('grid1'), ['a', 'b'], 'a is a row of one step');
+    world.module.skipRow();
+    await world.pass(1);
+    assert.deepEqual(world.pagesOf('grid1'), ['a', 'b', 'y']);
+    world.module.skipRow();
+    await world.pass(1);
+    assert.deepEqual(world.pagesOf('grid1'), ['a', 'b', 'y', 'a'], 'and over again');
+  });
+
+  await inRotation(async world => {
     world.module.startRotation('grid1', () => gridPlaylist, () => world.content);
     await world.settle();
-    await world.pass(40);
-    world.module.rewindRotation();
-    world.module.moveOn(['grid1']);
+    world.module.skipRow();
     await world.pass(1);
-
-    assert.equal(asked, 0, 'the end of the list was next, but the list began again');
-    assert.deepEqual(world.pagesOf('grid1'), ['a', 'b', 'c', 'a']);
+    assert.deepEqual(world.pagesOf('grid1'), ['a', 'b'], 'steps with no row number are one step each');
   });
 });
 
-// The docs
-
-test('the docs name the settings, the one swap and the rule for an empty list', () => {
-  const layouts = fs.readFileSync(path.join(docsFolder, 'layouts.md'), 'utf8').replace(/\s+/g, ' ');
-  const editing = fs.readFileSync(path.join(docsFolder, 'editing-content.md'), 'utf8').replace(/\s+/g, ' ');
-
-  assert.ok(layouts.includes('## The look rotation'), 'layouts.md has the section');
-  assert.ok(layouts.includes('## The swap'), 'and the swap');
-  ['Styles by day', 'Monday style', 'Team order', 'How the look changes', 'lookSwap', 'is hidden', 'lookResumeSeconds', 'lookShortestSeconds', 'teletraan-look-pass', 'withoutMondayCards', 'styleCanGoOn'].forEach(word => assert.ok(layouts.includes(word), 'layouts.md names ' + word));
-  ['Styles by day', 'Monday style', 'Team order', 'How the look changes', 'Next look now', 'hidden and the screen ignores it'].forEach(word => assert.ok(editing.includes(word), 'editing-content.md names ' + word));
-  assert.ok(layouts.includes('empty') && editing.includes('is empty'), 'both say what an empty list does');
-  assert.ok(layouts.includes(String(config.lookResumeSeconds)) && layouts.includes(String(config.lookShortestSeconds)), 'layouts.md gives the two times');
-  ['coaches-guide.md', 'switch-the-look.md', 'add-the-nova-team.md'].forEach(file => {
-    assert.ok(!/Assemble, Slats or Cut/.test(fs.readFileSync(path.join(docsFolder, file), 'utf8')), file + ' no longer offers the three swaps');
+test('Next look now moves nothing but the large panel', async () => {
+  await inRotation(async world => {
+    world.module.startRotation('grid2', () => steps(['d']), () => world.content);
+    await world.settle();
+    const before = world.pagesOf('grid2').length;
+    world.module.skipRow();
+    await world.pass(1);
+    assert.equal(world.pagesOf('grid2').length, before, 'the small panel keeps its own timer');
   });
 });
 

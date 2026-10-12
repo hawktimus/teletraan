@@ -1189,37 +1189,33 @@ test('startRotation still starts nothing for a region the layout has not got, an
 });
 
 
-// The style of each day
+// The Screen of each day
 
-test('the style of the day changes once a day, at midnight, and goes Original, Cybertron, Minimal and round again', async () => {
-  const rotation = await import(urlOf(areaTree, 'core/look-rotation.js'));
-  const list = ['original', 'cybertron', 'minimal'];
+test('the Screen of the day changes once a day, at midnight, and follows the weekday in the time zone of the Look page', async () => {
+  const screens = await import(urlOf(areaTree, 'core/screens.js'));
   const zone = 'America/New_York';
   const at = text => new Date(text);
 
   // two moments of every day, a second after midnight and a second before the next one, in the time zone of the kiosk
   const days = ['2026-10-12', '2026-10-13', '2026-10-14', '2026-10-15', '2026-10-16', '2026-10-17', '2026-10-18'];
   const styles = days.map(day => {
-    const early = rotation.styleForDay(list, rotation.dayNumber(zone, at(day + 'T00:00:01-04:00')));
-    const late = rotation.styleForDay(list, rotation.dayNumber(zone, at(day + 'T23:59:59-04:00')));
-    assert.equal(early, late, day + ' has one style from its first second to its last');
+    const early = screens.screenStyleFor(undefined, zone, at(day + 'T00:00:01-04:00'));
+    const late = screens.screenStyleFor(undefined, zone, at(day + 'T23:59:59-04:00'));
+    assert.equal(early, late, day + ' has one Screen from its first second to its last');
     return early;
   });
-  assert.deepEqual(styles.slice(0, 3).concat(styles.slice(3, 6)), styles.slice(0, 3).concat(styles.slice(0, 3)), 'a day takes the next style of the list, and the list goes round');
-  assert.deepEqual(styles.slice(0, 3).slice().sort(), list.slice().sort(), 'every style has a day');
-  assert.notEqual(styles[0], styles[1]);
-  assert.notEqual(styles[1], styles[2]);
-  assert.equal(rotation.styleForDay(list, rotation.dayNumber(zone, at('2026-10-12T23:59:59-04:00'))) === rotation.styleForDay(list, rotation.dayNumber(zone, at('2026-10-13T00:00:00-04:00'))), false, 'the style changes at midnight');
+  assert.deepEqual(styles, ['original', 'cybertron', 'original', 'cybertron', 'original', 'cybertron', 'original'], 'Monday to Sunday');
+  assert.equal(screens.screenStyleFor(undefined, zone, at('2026-10-12T23:59:59-04:00')) === screens.screenStyleFor(undefined, zone, at('2026-10-13T00:00:00-04:00')), false, 'the Screen changes at midnight');
 
-  // a screen in another time zone than the kiosk's has the same style at the same moment, because the day is the Look page's
-  assert.equal(rotation.dayNumber(zone, at('2026-10-13T03:30:00Z')), rotation.dayNumber(zone, at('2026-10-12T23:30:00-04:00')), 'the day is counted in the time zone of the Look page');
+  // a screen in another time zone than the kiosk's has the same Screen at the same moment, because the day is the Look page's
+  assert.equal(screens.weekdayIn(zone, at('2026-10-13T03:30:00Z')), screens.weekdayIn(zone, at('2026-10-12T23:30:00-04:00')), 'the day is counted in the time zone of the Look page');
 });
 
 
 // The page side
 
 test('the page does not reload for a change of look: only a layout change that failed does, in core/layout-apply.js', () => {
-  ['core/swap-run.js', 'core/swap-plan.js', 'core/look-rotation-run.js', 'core/areas.js', 'core/schedule.js', 'core/theme-apply.js'].forEach(file => {
+  ['core/swap-run.js', 'core/swap-plan.js', 'core/screens-run.js', 'core/areas.js', 'core/schedule.js', 'core/theme-apply.js'].forEach(file => {
     assert.ok(!/location\.reload/.test(withoutComments(read(file))), file + ' does not reload the page');
   });
   const apply = withoutComments(read('core/layout-apply.js'));
@@ -1236,13 +1232,13 @@ test('shell.js puts the layout on in the step that puts the look on, before the 
   assert.ok(body.includes('catch'), 'a problem never stops the colors');
   assert.ok(/holdLooksFor\(\(look, waitedMs\) => holdForLayout\(look, takeoverRunning, waitedMs, \(\) => !stayStarted \|\| swapIsPlaying\(\)\)\);/.test(shell), 'a look with another layout goes on when a swap has the screen, or before anything is drawn');
   assert.ok(shell.includes("startOptional('./core/swap-run.js', module => { swapIsPlaying = module.swapRunning; });"));
-  assert.ok(shell.includes("startRotationForLayouts('grid2', () => withStandIns(withPages(playlistOf(rotation(), 'grid2'))), getContent);"), 'the small frame has its list in every layout, with its spares and its last resort');
+  assert.ok(shell.includes("startRotationForLayouts('grid2', () => withStandIns(withPages(sidePlaylist(content, new Date()))), getContent);"), 'the small frame has its list in every layout, with its spares and its last resort');
   assert.ok(shell.includes("['banner', 'countdown', 'column'].forEach(region => { document.getElementById('region-' + region).innerHTML = ''; });"), 'the panels of the old layout are taken away');
   assert.ok(/fixedPanels\(layoutNow\(\)\)\.forEach\(id => showFixedPanel\(id, false\)\);\n\}/.test(shell), 'and the panels of the new one are drawn');
 });
 
-test('the look rotation takes the Monday style as one a page can always show while its layout changes live', () => {
-  const run = read('core/look-rotation-run.js');
+test('the Screens take the Monday style as one a page can always show while its layout changes live', () => {
+  const run = read('core/screens-run.js');
   assert.ok(run.includes("import { layoutsChangeLive } from './layout-apply.js';"));
   assert.ok(run.includes('if (wanted === onPage || layoutsChangeLive()) return true;'));
   assert.ok(run.includes('window.sessionStorage.getItem(reloadKey) !== wanted'), 'the old answer is still there for a page whose change has failed');

@@ -26,7 +26,7 @@
 // and frame.exit). shell.js and takeover.js show them directly. Only ?show
 // sends one through changePage, and then it takes the second path below.
 //
-// The look rotation (core/look-rotation-run.js) changes the style and the team at a page change of the
+// The Screens (core/screens-run.js) change the style and the team at a page change of the
 // large panel, and so does a change from one Monday card to the next. Every one of them is a swap
 // (core/swap-run.js, docs/layouts.md, "The swap"): the pieces of the screen pull apart, the look goes on
 // and the pages of all three areas are swapped while nothing can be seen, and the pieces re-form. The

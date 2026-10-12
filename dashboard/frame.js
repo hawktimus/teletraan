@@ -20,7 +20,7 @@
 // to think about it. The speed setting is handled here too: every time below
 // is a normal-speed time, and pace() says how much to stretch it.
 
-import { defaultSettings, defaultTeam, speeds } from './config.js';
+import { defaultScreen, defaultSettings, defaultTeam, speeds } from './config.js';
 import { isBusy } from './core/busy.js';
 import { chooseFinish, chooseStyle } from './core/transitions.js';
 import { makeSecondTimer } from './core/tick.js';
@@ -466,7 +466,9 @@ export function scrollCard(card, index) {
 // Four effects play on a timer. Dashboard Settings has the same three
 // settings for each: a switch, the seconds between plays (0 is never) and the
 // seconds one play lasts. shell.js passes them to setNameEffect, setSpin,
-// setHawk and setCrt every time the content changes.
+// setHawk and setCrt every time the content changes. The seconds between plays
+// of the name effect and the hawk are the minutes of the Screen that is on the
+// screen instead (core/screens.js, cadenceOf).
 //
 //   name    the team name effect: the letters split and turn (Look tab)
 //   spin    the logo makes one full turn, drawn flat (Look tab)
@@ -510,6 +512,11 @@ export function scrollCard(card, index) {
 // lines, and the banner is hidden under it, so the logo has nothing to finish.
 
 const lookEveryMs = 250;
+
+// How often the name effect and the hawk play until a Screen says (core/screens.js, cadenceOf): the Screen gives the
+// minutes, and the effects count in seconds
+const nameEverySeconds = defaultScreen.nameEffectEveryMinutes * 60;
+const hawkEverySeconds = defaultScreen.hawkEveryMinutes * 60;
 
 // How long the name effect lasts today, measured from the keyframes in
 // frame.css: .8 s for a letter, and each letter after the first starts
@@ -575,7 +582,7 @@ function newEffect(fields) {
 
 const effects = {
   name: newEffect({
-    everySeconds: defaultSettings.nameEvery,
+    everySeconds: nameEverySeconds,
     seconds: defaultNameSeconds,
     firstAfter: entranceSeconds, // the old show's first rest
     mayStart: () => !!document.querySelector('[data-name-effect]'),
@@ -590,7 +597,7 @@ const effects = {
     play: playSpinNow,
   }),
   hawk: newEffect({
-    everySeconds: defaultSettings.logoHawkEvery,
+    everySeconds: hawkEverySeconds,
     seconds: defaultSettings.logoHawkDuration,
     firstAfter: 13, // where the old show first started the robot act
     cuttable: true,
@@ -730,7 +737,7 @@ function setTiming(effect, on, everySeconds, seconds, fallback) {
 }
 
 export function setNameEffect(on, everySeconds, seconds) {
-  setTiming(effects.name, on, everySeconds, seconds, { everySeconds: defaultSettings.nameEvery, seconds: defaultNameSeconds });
+  setTiming(effects.name, on, everySeconds, seconds, { everySeconds: nameEverySeconds, seconds: defaultNameSeconds });
 }
 
 export function setCrt(on, everySeconds, seconds) {
@@ -742,7 +749,7 @@ export function setSpin(on, everySeconds, seconds) {
 }
 
 export function setHawk(on, everySeconds, seconds) {
-  setTiming(effects.hawk, on, everySeconds, seconds, { everySeconds: defaultSettings.logoHawkEvery, seconds: defaultSettings.logoHawkDuration });
+  setTiming(effects.hawk, on, everySeconds, seconds, { everySeconds: hawkEverySeconds, seconds: defaultSettings.logoHawkDuration });
 }
 
 // The master switch, and the switch of the entrance. Turning the master off

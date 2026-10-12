@@ -7,10 +7,10 @@
 //   speed=very-slow|slow|normal|fast  how fast things move and how long panels stay
 //   style=original|cybertron|minimal  the style of the whole screen (Style in Dashboard Settings), for this page only. minimal
 //                                     has the bar layout (core/layout.js) whatever the theme says, and the other two keep the
-//                                     layout of the theme. The look rotation (core/look-rotation.js) stops while it is there
+//                                     layout of the theme. The Screens (core/screens.js) hold no look while it is there
 //   team=prime|nova|alternate         the team on the screen (Team mode in Dashboard Settings), for this page only. A team that
-//                                     the Studio has no document for is the built-in Prime. The look rotation stops while it
-//                                     is there too
+//                                     the Studio has no document for is the built-in Prime. The Screens hold no look while it
+//                                     is there too, and prime or nova leave out the rows of the other team
 //   look=polished|flat|plain          how much polish the frames have (Look in Dashboard Settings). flat is
 //                                     the flat finish with no glint, plain also has no screws and no // in the
 //                                     panel headers. finish= and glint= below win over it
@@ -49,10 +49,10 @@ import { changeLayout, holdForLayout, startLayout } from './core/layout-apply.js
 import { decorationLayers, hasKit, layoutNow } from './core/layout.js';
 import { redrawFrames } from './core/areas.js';
 import { applyStyle, recordShapes, shapesFor, shapesNow, startStyle } from './core/style.js';
-import { holdBootLook } from './core/look-rotation.js';
+import { cadenceOf, currentScreen, holdBootScreen, mainPlaylist, onScreenChange, sidePlaylist } from './core/screens.js';
 import { resumePreview } from './core/preview.js';
 import { loadPanel, mountPanel, updatePanel } from './core/panels.js';
-import { playlistOf, withPages, withStandIns } from './core/panel-order.js';
+import { withPages, withStandIns } from './core/panel-order.js';
 import { withCompetition } from './core/competition.js';
 import { askForTeam, changeTeamNow, currentTeam, frameTrim, onTeamChange, recordTrim, trimNow, useTeams } from './core/teams.js';
 import { showPagesNow, startRotation, startRotationForLayouts, startTicker, startTogether } from './core/schedule.js';
@@ -86,6 +86,10 @@ onTeamChange(useTrim);
 onTeamChange(() => {
   if (content && !choosingTeam) rebuild();
 });
+// The Screen on the screen says how often the name effect and the hawk play, so they follow it when it changes
+onScreenChange(() => {
+  if (content) useLogoSettings(content.settings, currentScreen(content));
+});
 run();
 
 async function run() {
@@ -97,7 +101,7 @@ async function run() {
   resumeSavedPreview();
   askForSample(params.get('sample'));
   askForTeam(params.get('team'));
-  resumeSavedLook();
+  holdSavedScreen();
   const style = startStyle(params.get('style'), savedStyle);
   startLayout(params.get('theme'), savedTheme, document.documentElement, style);
 
@@ -187,11 +191,11 @@ async function run() {
       // The team on the screen, which in Alternate mode changes with the clock (core/teams.js)
       startOptional('./core/team-run.js', module => module.startTeams(getContent));
 
-      // The look rotation: the style and team of each pass, the swaps, and the Next look now button in the Studio.
-      // After the ones it asks about. ?style= and ?team= in the address win over it, so then it does nothing
+      // The Screens: the look of each row of the large panel, the swaps, and the Next look now button in the Studio.
+      // After the ones they ask about. ?style= and ?team= in the address win over them, so then they do nothing
       if (!onlyTasks) {
         startOptional('./core/swap-run.js', module => { swapIsPlaying = module.swapRunning; });
-        startOptional('./core/look-rotation-run.js', module => module.startLookRotation(getContent, params.has('style') || params.has('team')));
+        startOptional('./core/screens-run.js', module => module.startScreens(getContent, params.has('style') || params.has('team')));
       }
     }
 
@@ -211,21 +215,13 @@ async function run() {
   }
 }
 
-// The look rotation (core/look-rotation.js) holds the style and the team of the pass the screen was in, from the
-// saved copy of the content, so that the screen starts in them. A page that reloaded for a change of layout
-// goes on in the same pass. The test views leave the rotation out.
-function resumeSavedLook() {
+// The Screens (core/screens.js) hold the style and the team of the first row of the Screen of the day, from the
+// saved copy of the content, so that the screen starts in them. The test views leave the Screens out.
+function holdSavedScreen() {
   if (params.get('show') || stress || onlyTasks) return;
 
   try {
-    let storage = null;
-    try {
-      storage = window.localStorage;
-    } catch (error) {
-      console.error('Could not look for the pass the screen was in', error);
-    }
-
-    holdBootLook(savedContent(), storage, new Date());
+    holdBootScreen(savedContent(), new Date());
   } catch (error) {
     console.error('Could not work out the look to start with', error);
   }
@@ -298,7 +294,7 @@ function rebuild() {
   if (!params.has('speed')) frame.setSpeed(content.settings.speed);
   const glitch = content.settings.crt;
   frame.setCrt(glitch.on, glitch.everySeconds, glitch.durationSeconds);
-  useLogoSettings(content.settings);
+  useLogoSettings(content.settings, currentScreen(content));
   usePageChangeSettings(content.settings);
   useSeasonSwitch();
   usePackExtras();
@@ -325,12 +321,15 @@ function rebuild() {
 
 // The logo settings of Dashboard Settings (Look tab): the master switch, the entrance, and the
 // switch, seconds between plays and seconds one play lasts of the spin, the
-// flying hawk and the name effect (see "Effects that play now and then" in frame.js)
-function useLogoSettings(settings) {
+// flying hawk and the name effect (see "Effects that play now and then" in frame.js). How often the hawk and the name
+// effect play is the minutes of the Screen on the screen, not a setting of Dashboard Settings
+function useLogoSettings(settings, screen) {
+  const cadence = cadenceOf(screen);
+
   frame.setLogoAnimations(settings.logoAnimations, settings.logoEntrance);
   frame.setSpin(settings.logoSpin, settings.logoSpinEvery, settings.logoSpinDuration);
-  frame.setHawk(settings.logoHawk, settings.logoHawkEvery, settings.logoHawkDuration);
-  frame.setNameEffect(settings.nameTransform, settings.nameEvery, settings.nameDuration);
+  frame.setHawk(settings.logoHawk, cadence.hawkEverySeconds, settings.logoHawkDuration);
+  frame.setNameEffect(settings.nameTransform, cadence.nameEverySeconds, settings.nameDuration);
 }
 
 // The page change settings of Dashboard Settings (Look tab): how a page change looks and what
@@ -476,12 +475,12 @@ function startWhatComesAndGoes() {
     return;
   }
 
-  // A panel with two pages, the Events panel, is two steps one after the other (withPages).
+  // The large panel plays the rows of the Screen that is on the screen, and the small panel its side rows
+  // (core/screens.js). A panel with two pages, the Events panel, is two steps one after the other (withPages).
   // The competition cards that are due are mixed into the large panel's list each time it is read (core/competition.js)
-  const rotation = () => content.settings.rotation;
-  startRotation('grid1', () => (onlyTasks ? [{ panel: 'tasks', show: true, seconds: 12 }] : withPages(withCompetition(playlistOf(rotation(), 'grid1'), content, new Date()))), getContent);
+  startRotation('grid1', () => (onlyTasks ? [{ panel: 'tasks', show: true, seconds: 12 }] : withPages(withCompetition(mainPlaylist(content, new Date()), content, new Date()))), getContent);
   if (!onlyTasks) {
-    startRotationForLayouts('grid2', () => withStandIns(withPages(playlistOf(rotation(), 'grid2'))), getContent); // waits while the layout has no small frame
+    startRotationForLayouts('grid2', () => withStandIns(withPages(sidePlaylist(content, new Date()))), getContent); // waits while the layout has no small frame
 
     startTicker(getContent);
   }

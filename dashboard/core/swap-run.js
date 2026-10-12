@@ -4,12 +4,15 @@
 // plan gives and nothing else: transform and opacity.
 //
 // A swap replaces the page change of the large panel (core/areas.js, setSwapOffer) when
-//   - the look rotation has held a new style or team (queueSwap, called by core/look-rotation-run.js), or
+//   - the Screens have held a new style or team, or gone into the Monday cards or out of them (queueSwap, called by
+//     core/screens-run.js), or
 //   - a look is waiting to go on, which is a preview, a team of Alternate mode or a theme from the Look page, or
 //   - the page on screen or the page to come is a Monday card, in full motion, which covers going from one
 //     card to the next, entering the Monday block and leaving it.
 // It never starts while an alert, an announcement, a talk, the demo, the night screen or a hidden
 // transition has the screen. The page change is then the usual one, and a look that was held goes on in it.
+// Every time of a swap is stretched or shortened by the length the Screen it goes to gives (swapScale), on top of the
+// Speed setting.
 //
 // How it goes in full motion, with the times of swap-plan.js:
 //   1. The frames show as their pieces (#world gets data-pieces, which frame.css reads). The pieces
@@ -46,12 +49,20 @@ const hawkColors = ['--logo-purple', '--logo-tail', '--logo-far'];
 const otherRegions = ['grid2', 'ticker']; // the small frame and the ticker, in every layout: one that the layout does not have waits and drops its page
 
 let askBusy = () => false; // true while an announcement, the demo, the night screen or a hidden transition has the screen
-let queued = false; // the look rotation has held a look, so the next page change of the large panel is a swap
+let swapScale = () => 1; // how many times the standard length the swap into the Screen on screen takes (core/screens.js, swapScaleOf)
+let queued = false; // the Screens have held a look, so the next page change of the large panel is a swap
 let playing = false;
 
-// The look rotation says that the look it has held goes on in the next page change of the large panel
+// The Screens say that the look they have held goes on in the next page change of the large panel
 export function queueSwap() {
   queued = true;
+}
+
+// The pace of everything a swap does: the Speed setting times the length of the Screen. A scale that is not a
+// number above zero is the standard length.
+function paceNow() {
+  const scale = swapScale();
+  return frame.pace() * (typeof scale === 'number' && isFinite(scale) && scale > 0 ? scale : 1);
 }
 
 // True while a swap plays. The hidden transitions ask, so they wait for it to be over.
@@ -59,9 +70,11 @@ export function swapRunning() {
   return playing;
 }
 
-// busyElsewhere() is true while something else has the screen (core/look-rotation-run.js gives it)
-export function startSwaps(busyElsewhere) {
+// busyElsewhere() is true while something else has the screen, and scaleNow() is the scale of the swap into the Screen
+// on screen (core/screens-run.js gives both)
+export function startSwaps(busyElsewhere, scaleNow = () => 1) {
   askBusy = busyElsewhere;
+  swapScale = scaleNow;
   setSwapOffer(offer);
 }
 
@@ -163,7 +176,7 @@ function targetOf(piece, layer, copies) {
 
 // The logo becomes a hawk, a copy of the logo over everything, that flaps on the spot and lifts. It flies
 // when the new place is known (flyHawk). The logo itself is out of sight until the hawk lands.
-function startHawk(run, logos, layer) {
+function startHawk(run, logos, layer, pace) {
   const old = logos[0];
   if (!old) return;
 
@@ -184,7 +197,7 @@ function startHawk(run, logos, layer) {
   hideLogo(run, original);
 
   const flap = flapFrames();
-  const beat = { duration: Math.round(hawkShape.flapMs * frame.pace()), iterations: Infinity, easing: hawkShape.easing };
+  const beat = { duration: Math.round(hawkShape.flapMs * pace), iterations: Infinity, easing: hawkShape.easing };
   const wings = [['.hawk-near-wing', flap.near], ['.hawk-far-wing', flap.far]];
   wings.forEach(wing => {
     const part = clone.querySelector(wing[0]);
@@ -193,7 +206,7 @@ function startHawk(run, logos, layer) {
 
   const lift = clone.animate(
     [{ transform: 'translate(0px, 0px) rotate(0deg) scale(1) scaleX(1)' }, { transform: 'translate(0px, ' + (-hawkLiftPixels) + 'px) rotate(0deg) scale(1) scaleX(1)' }],
-    { duration: Math.round(hawkLiftMs * frame.pace()), easing: 'ease-out', fill: 'forwards' }
+    { duration: Math.round(hawkLiftMs * pace), easing: 'ease-out', fill: 'forwards' }
   );
   run.hawkAnimations.push(lift);
   run.hawk = { clone: clone, old: old, lift: lift };
@@ -295,7 +308,7 @@ async function perform(run, screen, swapPage) {
   const world = document.getElementById('world');
   const stage = document.getElementById('stage');
   const layer = document.getElementById('pile');
-  const pace = frame.pace();
+  const pace = paceNow();
   const started = performance.now();
   const ms = normal => Math.round(normal * pace);
   const elapsed = () => (performance.now() - started) / pace; // milliseconds at normal speed
@@ -321,7 +334,7 @@ async function perform(run, screen, swapPage) {
   before.content.forEach(node => {
     run.animations.push(node.animate([{ opacity: 1 }, { opacity: 0 }], { delay: ms(fade.out.delayMs), duration: ms(fade.out.ms), easing: 'linear', fill: 'forwards' }));
   });
-  startHawk(run, before.logos, layer);
+  startHawk(run, before.logos, layer, pace);
   moveOn(otherRegions); // the other areas pick their next pages and wait at the gate for the moment the screen is apart
 
   await until(swapTimes.switchMs);
@@ -376,7 +389,7 @@ async function perform(run, screen, swapPage) {
 async function performFade(run, screen, swapPage) {
   const stage = document.getElementById('stage');
   const calm = frame.motionNow() === 'calm';
-  const pace = frame.pace();
+  const pace = paceNow();
   const ms = normal => Math.round(normal * pace);
 
   moveOn(otherRegions);

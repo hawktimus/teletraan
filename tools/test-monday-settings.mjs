@@ -22,7 +22,7 @@ fs.mkdirSync(path.join(workFolder, 'dashboard/core'), { recursive: true });
 fs.mkdirSync(path.join(workFolder, 'dashboard/themes/overlays'), { recursive: true });
 fs.mkdirSync(path.join(workFolder, 'dashboard/data/sample'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
-['config.js', 'themes/registry.js', 'themes/overlays/registry.js', 'data/sample/content.json'].forEach(file => {
+['config.js', 'registry.js', 'themes/registry.js', 'themes/overlays/registry.js', 'data/sample/content.json'].forEach(file => {
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
 fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith('.js')).forEach(file => {

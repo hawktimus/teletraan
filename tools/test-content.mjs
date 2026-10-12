@@ -35,9 +35,9 @@ async function loadCopy(name, changeConfig) {
       fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(root, 'dashboard/core', file));
     });
 
-  // core/theme.js reads the two registries of themes and overlays
+  // core/theme.js reads the two registries of themes and overlays, and core/screens.js the registry of panels
   fs.mkdirSync(path.join(root, 'dashboard/themes/overlays'), { recursive: true });
-  ['themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
+  ['registry.js', 'themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
     fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, 'dashboard', file));
   });
 
@@ -918,6 +918,10 @@ test('the new settings have the defaults the Studio starts with', () => {
     alternateMinutes: { min: 1, max: 30 },
     leadershipPortrait: { min: 60, max: 220 },
     rosterPortrait: { min: 60, max: 220 },
+    rowSeconds: { min: 6, max: 120 },
+    nameEffectEveryMinutes: { min: 1, max: 240 },
+    hawkEveryMinutes: { min: 1, max: 240 },
+    swapSeconds: { min: 0.5, max: 3 },
   });
 
   // the photo settings: random order, and 16 seconds a photo
@@ -5617,7 +5621,7 @@ test('the two starting teams become the teams the screen uses, and the built-in 
     colors: { primary: '#1B6FD6', plate: '#0E2A4A', accent: '#8FF0FF', neon: '#3FD8FF', pink: '#9BF0FF', background: '#050910', text: '#FFFFFF', body: '#07131F', label: '#C58CFF' },
     metal: 'steel', glow: true,
     mirror: true, active: true, order: 20,
-    bolts: 'round', cornerCut: 'tr-bl', headerNotch: 'slant', grid: 'dots', logoPose: 'flight', nameStyle: 'outline', tickerLabel: 'bar', countAccent: 'neon',
+    bolts: 'round', cornerCut: 'tr-bl', headerNotch: 'slant', grid: 'dots', logoPose: 'flight', nameStyle: 'solid', tickerLabel: 'bar', countAccent: 'neon',
   });
 
   const builtIn = live.config.primeTeam;
