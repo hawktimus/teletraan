@@ -336,6 +336,17 @@ export const defaultSettings = {
   mondayStyle: 'minimal',
   teamOrder: ['prime', 'nova'],
   lookSwap: 'assemble',
+  // The weekday schedule in the Studio (Look tab): the Screen that plays on each day of the week, as a style (see
+  // styles above). The day is the calendar day in the kiosk time zone. Minimal is not scheduled to start with
+  screenSchedule: {
+    monday: 'original',
+    tuesday: 'cybertron',
+    wednesday: 'original',
+    thursday: 'cybertron',
+    friday: 'original',
+    saturday: 'cybertron',
+    sunday: 'original',
+  },
   // The "Play announcements" button in the Studio (core/announce.js, core/announce-run.js, docs/hidden-transitions.md).
   //   announceRequest  the last click of the button. requestedAt is the time it was clicked and is empty until
   //                    it has been. The screen plays every announcement that is switched on, once, for a request
@@ -617,4 +628,26 @@ export const primeTeam = {
   active: true,
   order: 10,
   builtIn: true,
+};
+
+// The Screens (Studio: Settings, Screens): three documents with the fixed ids screen-original, screen-cybertron and
+// screen-minimal. The style of a Screen is its id, and no style is stored. A Screen with no value for a field below, or
+// no document at all, uses the value here. The Studio copies the starting values and the limits (studio/schemas/screen.js).
+//   nameEffectEveryMinutes  how often the team name effect plays (banner settings, area A)
+//   hawkEveryMinutes        how often the flying hawk plays
+//   swapSeconds             the length of the swap between two looks. Every swap timing is scaled by swapSeconds over
+//                           swapSecondsStandard, the length the swap has had until now
+//   mondayStyle             not here: a Screen with none uses mondayStyle in defaultSettings above
+export const weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+export const screenIds = { original: 'screen-original', cybertron: 'screen-cybertron', minimal: 'screen-minimal' };
+export const swapSecondsStandard = 1.25;
+export const defaultScreen = {
+  nameEffectEveryMinutes: 10,
+  hawkEveryMinutes: 15,
+  swapSeconds: swapSecondsStandard,
+};
+export const screenLimits = {
+  nameEffectEveryMinutes: { min: 1, max: 240 },
+  hawkEveryMinutes: { min: 1, max: 240 },
+  swapSeconds: { min: 0.5, max: 3 },
 };

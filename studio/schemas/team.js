@@ -11,6 +11,8 @@
 // Trim box that make a team look like itself beyond its colors and the mirror (teamTrim in
 // dashboard/config.js, and "Team trim" in docs/layouts.md). The first choice of each is the one
 // Prime has, and a team made before the trim existed has none stored and reads as Prime.
+// Outlined name is a switch in the same box. Off draws the name solid, and both starting teams
+// are solid.
 
 import { defineType, defineField } from 'sanity';
 import { tooLong, byOrder, aToZ, subtitleFor } from './fields.js';
@@ -161,6 +163,14 @@ export default defineType({
     trimField('grid', 'Page grid', 'The grid on the page behind Cybertron and Minimal. Lines cross the page. Dots are one in each square.'),
     trimField('logoPose', 'Bird pose', 'How the bird sits in the banner when it is not moving. Auto is the emblem. Flight is the hawk with its wings up.'),
     trimField('nameStyle', 'Team name look', 'The team name in the banner. Outline has letters with no fill, and a line under them in the accent color.'),
+    defineField({
+      name: 'outlinedName',
+      title: 'Outlined name',
+      type: 'boolean',
+      fieldset: 'trim',
+      description: 'Off draws the name solid',
+      initialValue: false,
+    }),
     trimField('tickerLabel', 'Ticker label', 'The word at the start of the ticker. Plate is a cut plate. Bar is a thin bar with a block of the accent color in front.'),
     trimField('countAccent', 'Countdown color', 'The color of the red parts of the countdown. Red is the usual. Neon is the neon color of this team.'),
     defineField({

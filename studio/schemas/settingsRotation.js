@@ -12,27 +12,7 @@
 import { defineField, defineArrayMember } from 'sanity';
 import { titleOf } from './fields.js';
 import { PanelOrderInput } from '../panel-order-input.js';
-
-const largePanels = [
-  { title: 'Tasks', value: 'tasks' },
-  { title: 'Upcoming events', value: 'events' },
-  { title: 'Daily Agenda', value: 'tonight' },
-  { title: 'Subteam spotlight', value: 'spotlight' },
-  { title: 'Sponsor feature', value: 'sponsor-feature' },
-  { title: 'Photo', value: 'photo' },
-  { title: 'Leadership', value: 'leadership' },
-  { title: 'Team leads', value: 'team-leads' },
-  { title: 'Subteam roster', value: 'roster' },
-  { title: 'Extra panel', value: 'custom' },
-];
-
-const smallPanels = [
-  { title: 'Task counts', value: 'task-counts' },
-  { title: 'Next event', value: 'next-event' },
-  { title: 'Weather forecast', value: 'forecast' },
-  { title: 'Safety days', value: 'safety-days' },
-  { title: 'Sponsor logo', value: 'sponsor-logo' },
-];
+import { largePanels, smallPanels } from '../screen-panels.js';
 
 // The one list that Panel order starts with, the large panels first
 const allPanels = largePanels.concat(smallPanels);

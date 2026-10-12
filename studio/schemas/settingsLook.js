@@ -36,8 +36,47 @@ const swaps = [
   { title: 'Cut', value: 'cut' },
 ];
 
+// The days of the week, Monday first, with the Screen each plays to start with. The names and the
+// starting values are the ones in screenSchedule in defaultSettings in dashboard/config.js.
+// Minimal is not scheduled to start with.
+const weekdays = [
+  { name: 'monday', title: 'Monday', start: 'original' },
+  { name: 'tuesday', title: 'Tuesday', start: 'cybertron' },
+  { name: 'wednesday', title: 'Wednesday', start: 'original' },
+  { name: 'thursday', title: 'Thursday', start: 'cybertron' },
+  { name: 'friday', title: 'Friday', start: 'original' },
+  { name: 'saturday', title: 'Saturday', start: 'cybertron' },
+  { name: 'sunday', title: 'Sunday', start: 'original' },
+];
+
+function dayField(day) {
+  return defineField({
+    name: day.name,
+    title: day.title,
+    type: 'string',
+    description: 'The Screen that plays on ' + day.title + '. What plays on it is set in Settings, Screens.',
+    options: { list: styles, layout: 'radio', direction: 'horizontal' },
+    initialValue: day.start,
+    validation: Rule => Rule.valid(styles.map(style => style.value)).error('Pick original, cybertron or minimal.'),
+  });
+}
+
+// One picker for each day. The day is the calendar day in the time zone of the Look page.
+function scheduleField() {
+  return defineField({
+    name: 'screenSchedule',
+    title: 'Weekday schedule',
+    type: 'object',
+    group: 'look',
+    description: 'Which Screen plays on each day of the week. The day is picked at start-up and at the first row change after midnight.',
+    fields: weekdays.map(dayField),
+  });
+}
+
 export function lookRotationFields() {
   return [
+    scheduleField(),
+
     defineField({
       name: 'dailyStyles',
       title: 'Styles by day',
