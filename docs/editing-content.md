@@ -930,6 +930,12 @@ problem would touch.
   running. With the Cybertron and Minimal styles the same label and dates are in
   the war clock, with no IN: in the countdown's place with Cybertron, and at one end
   of the banner with Minimal.
+- The label is the title of the countdown, for example GAMEDROP, and it is never cut
+  off. It is on the first line with the date at the right end. A title that does not fit
+  beside the date goes to a second line, and the clock grows to hold it. The red countdown
+  of Original keeps its title at the size it has until it does not fit, then sets it at
+  a smaller size, on two lines if it needs them. Studio warns above 28 characters, "Long
+  titles wrap to two lines on the screen", and refuses more than 40.
 
 ### Calendars
 

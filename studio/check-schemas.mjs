@@ -17,12 +17,17 @@ const dashboardFolder = path.join(here, '..', 'dashboard');
 //   'string'   a string picked from a fixed list
 //   hexColor   a string written as # and six hex characters, such as #6C18B6
 const text = max => ({ kind: 'text', max: max });
+//   title(28, 40, 'words')   a string that is only warned about above 28 characters, with the words of the
+//                            warning, and refused above 40
+const title = (warn, max, message) => ({ kind: 'title', warn: warn, max: max, message: message });
 const number = (min, max) => ({ kind: 'number', min: min, max: max });
 const object = fields => ({ kind: 'object', fields: fields });
 const rows = (fields, maxItems) => ({ kind: 'rows', fields: fields, maxItems: maxItems });
 const strings = (max, maxItems) => ({ kind: 'strings', max: max, maxItems: maxItems });
 const teamRef = { kind: 'reference', to: 'team' };
 const hexColor = { kind: 'hex' };
+
+const titleOfClock = title(28, 40, 'Long titles wrap to two lines on the screen.');
 
 const blockNames = ['headingBlock', 'textBlock', 'statBlock', 'listBlock', 'imageBlock', 'progressBlock', 'countdownBlock'];
 const weekdayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -186,7 +191,7 @@ const contract = {
     previewRequest: object({ kind: 'string', requestedAt: 'datetime' }),
     nextLookRequest: object({ requestedAt: 'datetime' }),
     competitionPreviewRequest: object({ requestedAt: 'datetime' }),
-    countdown: object({ kickoffLabel: text(12), kickoff: 'datetime', rolloutLabel: text(12), rollout: 'datetime' }),
+    countdown: object({ kickoffLabel: titleOfClock, kickoff: 'datetime', rolloutLabel: titleOfClock, rollout: 'datetime' }),
     alert: object({ on: 'boolean', headline: text(24), message: text(90), until: 'datetime' }),
     rotation: object({ order: rows(panelStep), grid1: rows(olderStep), grid2: rows(olderStep), tickerSeconds: number(6, 120) }),
     doneDays: 'number',
@@ -639,6 +644,7 @@ function compareFields(where, fields, expected, problems) {
 // Kinds with their own check. Any other kind is a plain Sanity type name.
 const kindChecks = {
   text: checkText,
+  title: checkTitle,
   string: checkChoice,
   time: checkTime,
   number: checkNumber,
@@ -675,6 +681,24 @@ function checkText(field, want, say) {
   if (field.type !== 'string' && field.type !== 'text') say('should be a string or text field');
   checkLimit(field, want.max, say, 'it');
   if ((field.description || '').indexOf(String(want.max)) === -1) say('the description does not mention the limit of ' + want.max);
+}
+
+function checkTitle(field, want, say) {
+  if (field.type !== 'string') say('should be a string');
+
+  const constraints = constraintsOf(field);
+  const wordsAfter = (limit, name) => {
+    const index = constraints.findIndex(constraint => constraint.name === 'max' && constraint.args[0] === limit);
+    const next = constraints[index + 1];
+    return index !== -1 && next && next.name === name ? String(next.args[0]) : null;
+  };
+
+  if (wordsAfter(want.warn, 'warning') !== want.message) say('it needs a warning above ' + want.warn + ' characters that says: ' + want.message);
+  const refusal = wordsAfter(want.max, 'error');
+  if (refusal === null || refusal.indexOf(String(want.max)) === -1) say('it needs an error above ' + want.max + ' characters that says ' + want.max);
+  [want.warn, want.max].forEach(number => {
+    if ((field.description || '').indexOf(String(number)) === -1) say('the description does not mention ' + number);
+  });
 }
 
 function checkChoice(field, want, say) {

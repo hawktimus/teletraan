@@ -320,13 +320,13 @@ export const barSettings = {
   rowGap: 24,
 
   // The banner across the top: the team name at one end and the war clock at the
-  // other, 40 in from each end of the banner. The war clock is 766 x 120 and in the
+  // other, 40 in from each end of the banner. The war clock is 766 x 128 and in the
   // middle of the banner's height. The name has the rest, less the gap: 986, which is 1.4
   // more than HAWKTIMUS PRIME needs at 96 px, so the war clock is as wide as it can be
   bannerHeight: 160,
   bannerPadding: 40,
   nameGap: 24,
-  warClock: { width: 766, height: 120 },
+  warClock: { width: 766, height: 128 },
 
   // The side column: a rail 12 wide at the edge of the screen, 24 of space, then the
   // column itself, 300 wide. The column and the main panel are 36 apart, and both are

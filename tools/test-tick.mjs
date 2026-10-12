@@ -253,6 +253,7 @@ function makeNode(name, log) {
   let html = '';
   const node = {
     isConnected: true,
+    style: {},
     dataset: new Proxy({}, {
       set(target, key, value) {
         log.push(name + '.data-' + key);

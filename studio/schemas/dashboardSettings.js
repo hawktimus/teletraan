@@ -276,7 +276,11 @@ const crtField = defineField({
 });
 
 // The same labels as defaultSettings.countdown in dashboard/config.js. The
-// kickoff time is 12:00 noon in Holly Springs (17:00 UTC in January).
+// kickoff time is 12:00 noon in Holly Springs (17:00 UTC in January). A title
+// is never cut off on the screen: over 28 characters it takes a second line
+// (dashboard/core/countdown-title.js), and over 40 it would not fit even at
+// the smallest size it is set in.
+const titleWarning = 'Long titles wrap to two lines on the screen.';
 const countdownField = defineField({
   name: 'countdown',
   title: 'Countdown',
@@ -288,9 +292,9 @@ const countdownField = defineField({
       name: 'kickoffLabel',
       title: 'Kickoff label',
       type: 'string',
-      description: 'The words shown while counting to Kickoff. Up to 12 characters fit.',
+      description: 'The title on the countdown while it counts to Kickoff, for example GAMEDROP. Over 28 characters wrap to two lines, and up to 40 fit.',
       initialValue: 'KICKOFF IN',
-      validation: Rule => tooLong(Rule, 12),
+      validation: Rule => [Rule.max(28).warning(titleWarning), tooLong(Rule, 40)],
     }),
     defineField({
       name: 'kickoff',
@@ -303,9 +307,9 @@ const countdownField = defineField({
       name: 'rolloutLabel',
       title: 'Rollout label',
       type: 'string',
-      description: 'The words shown while counting to Rollout. Up to 12 characters fit.',
+      description: 'The title on the countdown while it counts to Rollout. Over 28 characters wrap to two lines, and up to 40 fit.',
       initialValue: 'ROLLOUT IN',
-      validation: Rule => tooLong(Rule, 12),
+      validation: Rule => [Rule.max(28).warning(titleWarning), tooLong(Rule, 40)],
     }),
     defineField({
       name: 'rollout',

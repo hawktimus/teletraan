@@ -6,12 +6,15 @@
 // the more serious it looks (data-level, set on the box, which the stylesheet of
 // each panel reads). The bar layout has a third drawing, the war clock
 // (panels/countdown, warMarkup), which has its own parts and starts with
-// { war: true }.
+// { war: true }. The war clocks and the red countdown of Original never cut the
+// title off: they start with options.title, and the title goes to a second line
+// when it needs one (core/countdown-title.js).
 
 import * as frame from '../frame.js';
 import { timeLeft, monthName, parseLocalDateTime, pad } from './time.js';
 import { hasText } from './text.js';
 import { threat } from '../config.js';
+import { titleLines, titleSize } from './countdown-title.js';
 
 const SEGMENTS = 12; // the bar under the numbers fills 5 seconds at a time
 const LINE_ROOM = 528; // px for the label and the date: the 564px top line, less the lamp (20) and the gap after it (16)
@@ -75,14 +78,18 @@ export function countdownParts(stripesWidth) {
 // are written now and again every second, for as long as the element is on the
 // page. options.lineRoom is how many px the label and the date have on the top
 // line (LINE_ROOM when it is left out): the width of the top line, less the
-// lamp (20) and the gap after it (16). options.war is for the war clock: the
-// label has a line to itself and the date another, so nothing is fitted and
-// there is no IN, the days are two digits at least, and every number changes at
-// once, with no roll and no nudge.
+// lamp (20) and the gap after it (16). options.war is for the war clock: there
+// is no IN, the days are two digits at least, and every number changes at
+// once, with no roll and no nudge. options.title is { room, spacing, single }
+// for a clock that wraps its title, which every war clock does: the room of a
+// line shared with the date, the letter spacing in em, and the name of the mode
+// while the title is one line at 36 px ('normal' for the war clocks, 'small' for
+// the red countdown, which is at 44 px until the title does not fit).
 export function startCountdown(element, content, options) {
   const state = {
     content: content,
     war: Boolean(options && options.war),
+    title: (options && options.title) || null,
     lastMinute: null,
     shown: {}, // what each part shows now, so a part is written only when it changes
     lineRoom: (options && options.lineRoom) || LINE_ROOM,
@@ -175,7 +182,8 @@ function dateOf(stage) {
 // The two pieces of the top line: "KICKOFF IN" on the left and the date on
 // the right ("JAN 9", or NOW once the time has come). When both do not fit in
 // the room, the IN goes first, then the date. A label too long even by itself
-// is cut off with an ellipsis by the stylesheet.
+// is cut off with an ellipsis by the stylesheet. The clocks that wrap their
+// title (state.title) do not stop at the date: see lineOf below.
 export function topLine(stage, room = LINE_ROOM) {
   const date = dateOf(stage);
   const fits = text => lineWidth(text) + LINE_GAP + lineWidth(date) <= room;
@@ -214,19 +222,29 @@ function showNumber(state, name, text) {
   return true;
 }
 
-// The label and the date as they are written. A message with no date has no IN
-// and nothing to fit beside it, and the war clock puts the date under the label
-// instead of beside it.
+// The title on one line or two, at the date's side: the title and the date as they are written, how
+// the title sits (mode, which the stylesheet reads as data-title) and its size
+function titled(state, label, date) {
+  const found = titleLines(label, date, state.title.room, state.title.spacing);
+  return { label: found.lines.join('\n'), date: date, mode: found.lines.length === 2 ? 'two' : state.title.single, size: found.size };
+}
+
+// The label and the date as they are written. A message with no date has no IN and nothing to fit
+// beside it. The war clock has no IN either, and always wraps its title. The red countdown of
+// Original keeps its title as it was, at 44 px, while it fits with the date, and wraps it when it does not.
 function lineOf(state, stage) {
+  const date = stage.target ? dateOf(stage) : '';
+  if (state.war) return titled(state, stage.label, date);
   if (!stage.target) return { label: stage.label, date: '' };
-  if (state.war) return { label: stage.label, date: dateOf(stage) };
-  return topLine(stage, state.lineRoom);
+
+  const line = topLine(stage, state.lineRoom);
+  return line.date !== '' || !state.title ? line : titled(state, stage.label, date);
 }
 
 // The words on the top line. Fitting them measures text, which is the one
 // slow thing here, so it is done only when the words could be different: a new
 // label, a new date, or the stage going from counting to NOW.
-function drawTopLine(state, stage) {
+function drawTopLine(state, stage, element) {
   const key = [stage.label, stage.reached, stage.target ? stage.target.getTime() : 'none', fontLoads].join('|');
   if (key !== state.lineKey) {
     state.lineKey = key;
@@ -235,6 +253,21 @@ function drawTopLine(state, stage) {
 
   if (isNew(state, 'label', state.line.label)) state.label.textContent = state.line.label;
   if (isNew(state, 'date', state.line.date)) state.date.textContent = state.line.date;
+  if (state.title) drawTitleMode(state, element);
+}
+
+// How the title sits, for the stylesheet: data-title is normal, small or two, and a title that needed
+// a size under 36 px is written on the label and the date, which are the only text it applies to
+function drawTitleMode(state, element) {
+  const mode = state.line.mode || 'normal';
+  const size = state.line.size || titleSize;
+
+  if (isNew(state, 'titleMode', mode)) element.dataset.title = mode;
+  if (!isNew(state, 'titleSize', size)) return;
+
+  const written = size === titleSize ? '' : size + 'px';
+  state.label.style.fontSize = written;
+  state.date.style.fontSize = written;
 }
 
 function refresh(element, now) {
@@ -242,7 +275,7 @@ function refresh(element, now) {
   const stage = currentStage(state.content.settings.countdown, now);
   const left = stage.target ? timeLeft(stage.target, now) : timeLeft(now, now);
 
-  drawTopLine(state, stage);
+  drawTopLine(state, stage, element);
 
   // Only the seconds change on most ticks, and each part is written only
   // when it is different from last time
@@ -258,7 +291,7 @@ function refresh(element, now) {
   const level = stage.target ? threatLevel(left.days) : 'calm';
   if (isNew(state, 'level', level)) element.dataset.level = level;
 
-  // yes when there is no date to count to (after Rollout, or none set), which the war clock writes in another size
+  // yes when there is no date to count to (after Rollout, or none set)
   const over = stage.target ? 'no' : 'yes';
   if (isNew(state, 'over', over)) element.dataset.over = over;
 

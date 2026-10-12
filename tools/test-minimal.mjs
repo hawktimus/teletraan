@@ -183,9 +183,9 @@ test('the page of Minimal has no scanlines, no raised plate, no stamped id and n
 
 // What Minimal has
 
-test('the layout of Minimal is the numbers of the order: the banner 1856 x 160 with the war clock 766 x 120 at one end, the rail 12 and the column 300, the main panel 1484 x 736, and the ticker 1856 x 72', () => {
+test('the layout of Minimal is the numbers of the order: the banner 1856 x 160 with the war clock 766 x 128 at one end, the rail 12 and the column 300, the main panel 1484 x 736, and the ticker 1856 x 72', () => {
   assert.deepEqual([b.banner.width, b.banner.height], [1856, 160]);
-  assert.deepEqual([b.war.width, b.war.height], [766, 120]);
+  assert.deepEqual([b.war.width, b.war.height], [766, 128]);
   assert.equal(b.war.x + b.war.width, b.banner.x + b.banner.width - layout.barSettings.bannerPadding, 'the clock is at the right end of the banner');
   assert.ok(b.name.x < b.war.x && b.name.x + b.name.width <= b.war.x, 'the name is at the other end');
   assert.deepEqual([b.rail.width, b.column.width], [12, 300]);
@@ -250,13 +250,15 @@ test('the frames of Minimal are the order\'s: steel with a thin neon line 10 ins
   assert.equal(properties['--style-digits'], 'var(--team-neon)', 'the digits of the war clock are the team\'s neon');
 });
 
-test('the war clock is the narrow form, 766 x 120, in Minimal and the wide form, 616 x 200, in Cybertron, and Original has neither', async () => {
+test('the war clock is the narrow form, 766 x 128, in Minimal and the wide form, 616 x 200, in Cybertron, and Original has neither', async () => {
   await withPlatePage(() => {
     const narrow = plate.warHousingMarkup('narrow');
     const wide = plate.warHousingMarkup('wide');
-    assert.ok(hasText(narrow, 'width="766" height="120" viewBox="0 0 766 120"'));
+    assert.ok(hasText(narrow, 'width="766" height="128" viewBox="0 0 766 128"'));
     assert.ok(hasText(wide, 'width="616" height="200" viewBox="0 0 616 200"'));
-    assert.ok(hasText(plate.warHousingMarkup(), 'width="766" height="120"'), 'narrow is the form when none is asked for');
+    assert.ok(hasText(plate.warHousingMarkup(), 'width="766" height="128"'), 'narrow is the form when none is asked for');
+    assert.ok(hasText(plate.warHousingMarkup('narrow', {}, true), 'width="766" height="144" viewBox="0 0 766 144"'), 'and 16 higher for a title on two lines');
+    assert.ok(hasText(plate.warHousingMarkup('wide', {}, true), 'width="616" height="240" viewBox="0 0 616 240"'), 'and the wide one 40 higher');
   });
 
   const minimal = withoutComments(read('dashboard/styles/minimal.css'));
@@ -274,7 +276,7 @@ test('the war clock is the narrow form, 766 x 120, in Minimal and the wide form,
 test('the mirror turns the regions of Minimal and nothing in them: the rail, the column and the main panel change places, and no rule of its style turns a frame', () => {
   const m = layout.mirrorGeometry(b);
   assert.deepEqual([m.rail.x, m.column.x, m.main.x, m.war.x], [1876, 1552, 32, 72], 'the rail and the column at the right, the main panel and the war clock at the left');
-  assert.deepEqual([m.main.width, m.main.height, m.war.width, m.war.height], [1484, 736, 766, 120], 'the same sizes');
+  assert.deepEqual([m.main.width, m.main.height, m.war.width, m.war.height], [1484, 736, 766, 128], 'the same sizes');
 
   const css = withoutComments(read('dashboard/layouts/bar.css') + read('dashboard/styles/minimal.css'));
   assert.ok(/html\.mirrored\[data-layout="bar"\] #bar-middle/.test(css), 'the row turns with the mirror');

@@ -12,7 +12,7 @@ import { shapesNow } from '../../core/style.js';
 import { teamShown, trimNow } from '../../core/teams.js';
 import { startWar, updateWar, warMarkup } from '../countdown/countdown.js';
 
-// The war clock's slot is 766 by 120 (barSettings.warClock in core/layout.js), and its place
+// The war clock's slot is 766 by 128 (barSettings.warClock in core/layout.js), and its place
 // at the other end of the banner from the name is what the mirror turns round (layouts/bar.css)
 export function mount(host, content) {
   host.innerHTML = `
