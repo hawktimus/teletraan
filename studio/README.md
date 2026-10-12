@@ -39,7 +39,7 @@ TV. The dashboard reads what they publish.
     screen-context.js     what the form of a Screen shares with the inputs inside it
     screen-parts.js       the words of the Screen form and what it reads from Sanity, with no Studio in it
     screen-panels.js      the panels a row of a Screen can name and the rules for the team of a row, with no Studio in it
-    screen-seed.js        the first rows of a Screen, worked out from the Panel order, with no Studio in it (tools/test-screen-seed.mjs)
+    screen-seed.js        the first rows of a Screen, worked out from the Panel order, with no Studio in it (tools/test-screen-seed.mjs; the dashboard has the same rule, and tools/test-screen-seed-parity.mjs runs both)
     screen-ids.js         the ids of the three Screens and the style each one stands for
     schemas/              one file per kind of content
     scripts/              make-templates.mjs writes the CSV templates from the schemas,
@@ -104,11 +104,12 @@ docs/where-things-are.md).
    Photo order on Random, Seconds per photo 16,
    Photo fit on Fill the frame, and the Portraits box with
    both portrait sizes at 100, the shape on Square and the frame on Metal.
-   The Look tab should show Logo
-   animations on, Spin every 72 seconds, Flying hawk every 24 seconds and Name
-   effect every 300 seconds, and Page change style
+   The Look tab should show the Weekday schedule with Original on Monday,
+   Wednesday, Friday and Sunday and Cybertron on Tuesday, Thursday and Saturday,
+   Logo animations on, Spin every 72 seconds, and Page change style
    on Alternate, Break and rebuild time 0.6, Frame finish on Mostly gold and
-   Silver chance 10.
+   Silver chance 10. How often the flying hawk and the name effect play is set on
+   each Screen (Settings, Screens, A).
    The Advanced tab should show Use night mode on, Bouncing logo, 23:30 to
    11:30, Logo width 300 and Normal speed with the preview off,
    and Allow hidden transitions on and both set to every 60 hours.

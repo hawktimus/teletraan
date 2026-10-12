@@ -67,10 +67,10 @@ later in one go (see the end of this page).
 | Spin every (seconds) | 72 | 0 for never, or 10 to 3600. |
 | Spin duration (seconds) | 1.6 | 0.5 to 10, decimals allowed. |
 | Flying hawk | on | A switch. |
-| Flying hawk every (seconds) | 24 | 0 for never, or 10 to 3600. |
+| Flying hawk every (seconds) | 24 | Hidden and not read. Each Screen sets the minutes between flights. |
 | Flying hawk duration (seconds) | 11 | 6 to 30, decimals allowed. |
 | Name effect | on | A switch. |
-| Name effect every (seconds) | 300 | 0 for never, or 30 to 900. |
+| Name effect every (seconds) | 300 | Hidden and not read. Each Screen sets the minutes between plays. |
 | Name effect duration (seconds) | 1.43 | 0.5 to 10, decimals allowed. |
 
 A duration is how long one play lasts at Normal speed. The Speed setting
@@ -80,7 +80,8 @@ the whole sequence at half speed, with five wingbeats of 1.6 seconds. The
 seconds between plays are real seconds, and they are counted from when the
 animation last started, so a flight of 11 seconds every 24 leaves 13 seconds
 of rest, and an interval shorter than the duration plays the animation again
-as soon as the line is free.
+as soon as the line is free. The hawk and the name effect follow the minutes on
+the Screen (Settings, Screens, A) instead of their own seconds.
 
 The name effect keeps the stored names it had before the tab was renamed
 (`nameTransform`, `nameEvery`, `nameDuration`), so content that was already
@@ -111,7 +112,7 @@ All of them, and the screen glitch, go through one scheduler in
 
 ### The team name
 
-Every Name effect every seconds (300 by default, 0 for never) each letter of
+Every Name effect every minutes of the Screen (10 by default) each letter of
 the team name splits along two slanted cuts into three pieces. The pieces pull
 apart, turn once and lock back, one letter after another. A letter takes 0.8
 seconds and each starts 45 milliseconds after the one before, so on HAWKTIMUS
@@ -121,7 +122,7 @@ in `frame.css` is multiplied by it.
 
 - It never starts while the logo is moving, because only one animation plays at
   a time. The first time is 2 seconds after the logo starts (the entrance has
-  finished by then), then once every Name effect every seconds, counted from
+  finished by then), then once every Name effect every minutes of the Screen, counted from
   when it last started. Those are real seconds. The Speed setting changes how
   fast the effect moves, not how often it plays.
 - It never starts at the same moment as the screen glitch, or while a page is

@@ -395,8 +395,8 @@ editors can sign in from anywhere.
                               the numbered dots, TODAY and the countdown on the line, the legend of six rows, +N more events, and
                               that it fits its body
       test-monday-rows.mjs    checks for the rows of the tasks card and the cards of both teams: the mix of ten rows, the page marker
-                              and the scroll (frame.js and core/schedule.js with stand-ins), the pass of both teams in the look
-                              rotation, the words beside the chip in a header, the names of a team (core/team-title.js)
+                              and the scroll (frame.js and core/schedule.js with stand-ins), the two cards of both teams, the
+                              words beside the chip in a header, the names of a team (core/team-title.js)
       test-blank-team.mjs     checks for a blank team: an item with no team shows for either team, a header has no team chip
                               for things that are for both teams, the cards of both teams read MILESTONES or PROGRESS alone,
                               a row from a board with no team has no label, and no panel has a Prime or Nova flavor
@@ -453,6 +453,9 @@ editors can sign in from anywhere.
                               now guard, the swap as the one way a look goes on, and the docs
       test-screen-seed-dashboard.mjs  checks for the first rows of a Screen on the screen side
                               (core/screen-seed.js): the same Panel order and the same rows as the Studio side
+      test-screen-seed-parity.mjs  runs the Studio rule (studio/screen-seed.js) and the screen rule (core/screens.js,
+                              core/screen-seed.js) on the same Panel orders and the same Team documents, and checks
+                              that the main rows, the side rows and the Monday style come out the same
       test-console.mjs        checks for the boot and shutdown drawings (plain 7 bit text, the size, the
                               symmetry of the figure, the same text in the sample content), for
                               install-console.sh in a fake root (it stops before it changes anything, keeps the
@@ -666,7 +669,9 @@ alone.
   `logoAnimations`, `logoEntrance`, `logoSpin`, `logoSpinEvery`,
   `logoSpinDuration`, `logoHawk`, `logoHawkEvery`, `logoHawkDuration`,
   `nameTransform`, `nameEvery` and `nameDuration` in `defaultSettings` in
-  `dashboard/config.js`, and the limits are `limits` there. The Studio fields
+  `dashboard/config.js`, and the limits are `limits` there. `logoHawkEvery` and
+  `nameEvery` are hidden and not read: each Screen says in minutes how often the
+  hawk and the name effect play. The Studio fields
   are all in `studio/schemas/settingsLogo.js`, so the whole section can be removed
   by deleting that file. `frame.js` decides when any of them may start (one at
   a time, never while a page is changing), and `frame.css` has the motion.

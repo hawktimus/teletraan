@@ -1899,6 +1899,10 @@ function checkStartHere() {
   need(problems, picture && picture.props.role === 'img' && String(picture.props['aria-label'] || '') !== '', 'the picture should have role img and a label for a screen reader');
   const caption = nodesWhere(page, node => node.type === 'figcaption').map(wordsIn)[0] || '';
   need(problems, parts.clickLine === 'Click a letter in Settings, Screens to change what plays there.' && caption.indexOf(parts.clickLine) !== -1, 'the line under the picture should say: Click a letter in Settings, Screens to change what plays there.');
+  // The words of that line are a path in the sidebar: Screens is a folder inside Settings and holds the three Screens
+  const settingsFolder = allLines(world.structure.sidebarEntries).filter(entry => entry.kind === 'group' && entry.title === 'Settings')[0];
+  const screensFolder = settingsFolder ? settingsFolder.entries.filter(entry => entry.kind === 'group' && entry.title === 'Screens')[0] : null;
+  need(problems, screensFolder && screensFolder.entries.map(entry => entry.title).join() === 'Original,Cybertron,Minimal' && parts.clickLine.indexOf('Settings, Screens') !== -1, 'the line under the picture names Settings, Screens, which should be a folder inside Settings that holds Original, Cybertron and Minimal');
   const shown = picture ? nodesWhere(picture, node => node.type === 'text').map(wordsIn) : [];
   need(problems, shown.filter(text => /^[A-Z]$/.test(text)).join('') === 'ABCDE', 'the picture should have the letters A to E, in order, one for each area. It has: ' + shown.filter(text => /^[A-Z]$/.test(text)).join(''));
   need(problems, parts.areas.map(area => area.letter + ' ' + area.name).join() === startAreas.join(), 'the picture should have the areas ' + startAreas.join(', '));

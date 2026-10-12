@@ -1260,13 +1260,15 @@ style and the team change in the same frame ("The swap" below). A change to or f
 swap makes in the page.
 
 **The first rows.** A Screen with no `mainRows` gets rows worked out from the Panel order that was saved before Screens existed
-(`rotation.order`, or `rotation.grid1` and `rotation.grid2` while that is empty). For each active team, Prime first, they are the
+(`rotation.order`, or `rotation.grid1` and `rotation.grid2` while that is empty, and an older list that was never saved is the
+starting list of `defaultSettings.rotation`). For each active team, in the order of the Team documents, they are the
 panels for one team (Tasks, Daily Agenda, Subteam spotlight, Sponsor feature, Leadership, Team leads, Subteam roster and Extra
 panel) as rows with that team, then the three Monday rows of that team. After the last team come the panels for both teams
 (Upcoming events and Photo), with no team. Seconds carry over, a panel that was in the order twice has a row for each place, and a
 row that was switched off is left out. The side rows are the small rows of the same order. Minimal has no side rows. The Studio
 fills a Screen this way the first time it is opened (`studio/screen-seed.js`, checked by `tools/test-screen-seed.mjs`), and the
-screen works out the same rows for a Screen that has none, so nothing goes blank before anyone opens Studio.
+screen works out the same rows for a Screen that has none, so nothing goes blank before anyone opens Studio. The two copies of the
+rule are run on the same input by `tools/test-screen-seed-parity.mjs`.
 
 **What is not read any more.** Styles by day (`dailyStyles`), Team order (`teamOrder`), Monday style in Dashboard Settings
 (`mondayStyle`), How the look changes (`lookSwap`), Panel order (`rotation.order`) and Team name look (`nameStyle`) stay in the schema, hidden, with what was saved in
@@ -1289,8 +1291,8 @@ that decide it, with no page in them, and `core/swap-run.js` finds the pieces on
 
 - the next row of the main panel is for another team than the one on the banner, or a Monday row begins or ends ("The Screens"),
   or Next look now moves to a row like that, or
-- a look is waiting to go on the page, which a preview, the team of Alternate mode and a theme from the Look page
-  are (`lookIsWaiting` in `core/theme-apply.js` and `teamPending` in `core/teams.js`), or
+- a look is waiting to go on the page, which a preview, the team that the next row of a Screen asks for and a theme
+  from the Look page are (`lookIsWaiting` in `core/theme-apply.js` and `teamPending` in `core/teams.js`), or
 - the page on screen or the page to come is a Monday card, in full motion. That is one card to the next, or the next
   page of the tasks card, and it is the first card and the last one too.
 

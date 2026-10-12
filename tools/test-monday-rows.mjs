@@ -436,7 +436,7 @@ function teamsOf(content) {
   return screens.teamsOf(content);
 }
 
-test('the pass of both teams has two cards, and only when two teams or more have board tasks', () => {
+test('the cards of both teams are two, and only when two teams or more have board tasks', () => {
   const cards = [{ panel: 'monday-milestones-both', show: true }, { panel: 'monday-progress-both', show: true }];
   const content = contentWith();
 
@@ -748,7 +748,7 @@ test('a saved Panel order that still names a Monday card is ignored, and the car
   assert.deepEqual(panelOrder.playlistOf(saved, 'grid2').map(step => step.panel), ['task-counts']);
   assert.deepEqual(panelOrder.orderFromLists({ grid1: [{ panel: 'tasks' }, { panel: 'monday-milestones' }], grid2: [] }).map(step => step.panel), ['tasks']);
   assert.equal(panelOrder.playlistOf({ order: [{ panel: 'monday-tasks' }] }, 'grid1').length, 0);
-  assert.equal(/monday/.test(read('core/competition.js')), false, 'withCompetition never held the Monday cards, and a Monday pass has no competition cards in it');
+  assert.equal(/monday/.test(read('core/competition.js')), false, 'withCompetition never held the Monday cards, and the Monday rows have no competition cards in them');
   assert.equal(/monday/i.test(fs.readFileSync(path.join(dashboardFolder, '../studio/schemas/settingsRotation.js'), 'utf8').replace(/\/\/.*$/gm, '')), false, 'the Panel order choices of Studio have no Monday card');
 });
 

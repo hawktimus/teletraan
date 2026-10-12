@@ -169,7 +169,8 @@ The side panel list is filled from the small panels of the same order, with no
 team. Minimal gets the main rows and no side rows. The Monday style is copied from
 the old setting. The screen works out the same rows for a Screen that has none, so
 nothing goes blank before anyone opens Studio. The old Panel order, Styles by day,
-Team order and Monday style in Dashboard Settings are hidden now, with what was
+Team order and Monday style in Dashboard Settings, and Flying hawk every and Name
+effect every in seconds on the Look tab, are hidden now, with what was
 saved in them, and the screen does not read them for the rows.
 
 Next look now, on the Start here page, moves the main panel to its next row at once. To

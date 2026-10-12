@@ -73,7 +73,7 @@ seconds.
 - Play announcement: plays every announcement that is switched on, once.
 - Run presentation test: runs a sample talk with six sample slides. Press the
   clicker as at a real talk (docs/presentations.md).
-- Next look now: moves the screen on to the next look.
+- Next look now: moves the main panel on to its next row, which can change the team or the Screen.
 - Preview competition: shows the competition cards for 2 minutes, on sample data.
 - Preview the screen: opens the screen with sample content in a new tab. The
   address is the Mini's own, so on another computer the tab shows no page.
