@@ -111,8 +111,9 @@ function fits(step) {
   return !isMondayPanel(step.panel) || mondayStyleFits(planFor(getContent(), new Date()).mondayStyle);
 }
 
-// A step is chosen and its page is about to be built. When its look is not the one held, it is held now, and the next
-// page change of the large panel is a swap. A step that goes into the Monday cards or out of them is a swap too.
+// A step is chosen and its page is about to be built. When its look is not the one held, it is held now, and when the
+// team or the style changes the next page change of the large panel is a swap. Going into the Monday cards or out of
+// them with the same style is only noted: swap-run.js swaps at every Monday card in full motion.
 function begin(step) {
   const from = heldLook();
   const to = lookOf(step);

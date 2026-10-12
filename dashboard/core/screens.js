@@ -9,10 +9,11 @@
 //      row plays.
 //   2. The Screen of the day is picked from the weekday in the time zone of the Look page (planFor). It is picked
 //      at boot and at the first row change after midnight, because the plan is worked out again at every row.
-//   3. The large panel plays the rows of the Screen from the top and starts again at the end. The team on the
+//   3. The large panel plays the rows of the Screen of the day from the top and starts again at the end. The team on the
 //      screen is a state: a row with a team other than the one on the screen is a swap into that team, and a row
-//      with no team keeps it. A Monday row plays in the Monday style of the Screen. Going into it is a swap and
-//      so is coming out of it (lookForStep and changesBetween).
+//      with no team keeps it. A Monday row plays in the Monday style of the Screen. Going into it is a swap when the
+//      style changes and so is coming out of it (lookForStep and changesBetween). In full motion every move from
+//      a Monday card or to one is a swap, also with the same style (core/swap-run.js).
 //   4. The small panel plays the side rows of the Screen that is on the screen, on its own timer.
 //   5. A Screen with no rows, or with no document at all, plays rows built from the Panel order (seedMainRows
 //      and seedSideRows), so nothing is blank before anyone has opened the Screens in the Studio.
@@ -270,12 +271,13 @@ export function swapScaleOf(screen) {
 
 // The lists
 
-// The steps of the large panel: the rows of the Screen, in order, as { panel, show, team, seconds, row }. row is the
-// number of the row the step comes from, so that Next look now can leave all the steps of a row at once. A step is
-// left out when its row is for a team that is not switched on, or for another team than ?team= asks for, and a Monday
-// row is left out while it has nothing to show. core/panel-order.js (withPages) makes a step for each page of the
-// panels that have more than one, and core/competition.js mixes in the competition cards.
-export function mainPlaylist(content, now = new Date(), screen = currentScreen(content, now)) {
+// The steps of the large panel: the rows of the Screen of the day, in order, as { panel, show, team, seconds, row }. They are
+// the rows of that Screen also while a Monday row plays in the style of another one. row is the number of the row the
+// step comes from, so that Next look now can leave all the steps of a row at once. A step is left out when its row is for
+// a team that is not switched on, or for another team than ?team= asks for, and a Monday row is left out while it has
+// nothing to show. core/panel-order.js (withPages) makes a step for each page of the panels that have more than one, and
+// core/competition.js mixes in the competition cards.
+export function mainPlaylist(content, now = new Date(), screen = planFor(content, now).screen) {
   const teams = teamsOf(content).map(team => team.code);
   const only = addressTeam();
   const steps = [];
@@ -332,13 +334,14 @@ export function lookForStep(step, from, plan) {
   return { team: isTeamCode(step.team) ? step.team : from.team, style: monday ? plan.mondayStyle : plan.style, monday: monday };
 }
 
-// What changes from one look to the next. The team and the style are what goes on the page. Going into the
-// Monday cards or out of them is a swap too, also when the Monday style is the style of the day. A screen that
-// holds nothing yet (it has no style) has nothing to swap from.
+// What changes from one look to the next. The team and the style are what goes on the page, and a change of either
+// is a swap. Going into the Monday cards or out of them is noted as monday: with the Monday style of the day it
+// changes no style, and the swap for it is the one core/swap-run.js plays at every Monday card in full motion.
+// A screen that holds nothing yet (it has no style) has nothing to swap from.
 export function changesBetween(from, to) {
   const changes = { team: from.team !== to.team, style: from.style !== to.style, monday: from.monday !== to.monday };
 
-  changes.swap = from.style !== '' && (changes.team || changes.style || changes.monday);
+  changes.swap = from.style !== '' && (changes.team || changes.style);
   return changes;
 }
 

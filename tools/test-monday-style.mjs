@@ -189,19 +189,23 @@ test('a Monday row goes into the Monday style with a swap, the cards between hol
   assert.deepEqual(screens.heldLook(), { team: 'nova', style: 'original', monday: false });
 });
 
-test('a Monday row in the style of the day holds no new style and is still a swap, going in and coming out', async () => {
+test('a Monday row in the style of the day holds no new style and queues no swap: the cards are a swap by themselves in full motion', async () => {
   const world = await start({ content: contentWith(raw => { raw.screens.forEach(screen => { screen.mondayStyle = 'original'; }); }) });
 
   world.hooks.begin(step('tasks', 'prime'));
   world.log.length = 0;
   world.hooks.begin(step('monday-progress', 'prime'));
-  assert.deepEqual(world.log, ['checkTheme', 'queueSwap']);
+  assert.deepEqual(world.log, ['checkTheme'], 'the look is the same, so nothing is queued');
   assert.equal(screens.heldLook().style, 'original');
-  assert.equal(screens.heldLook().monday, true);
+  assert.equal(screens.heldLook().monday, true, 'but the screen knows it is in the Monday cards');
 
   world.log.length = 0;
   world.hooks.begin(step('photo'));
-  assert.deepEqual(world.log, ['checkTheme', 'queueSwap'], 'and out again');
+  assert.deepEqual(world.log, ['checkTheme'], 'and out again');
+  assert.equal(screens.heldLook().monday, false);
+
+  const swap = read('core/swap-run.js');
+  assert.ok(swap.includes("if (!looked && (frame.motionNow() !== 'full' || (!isMondayCard(old.id) && !isMondayCard(next.id)))) return null;"), 'a Monday card on either side is a swap in full motion');
 });
 
 test('a row with no team, and a row for both teams, keep the team and hold no look when the style is the same', async () => {

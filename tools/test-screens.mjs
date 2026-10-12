@@ -367,6 +367,19 @@ test('the Screen on the screen is the one of the style that is held, and the one
   clean();
 });
 
+test('the rows of the large panel are the ones of the Screen of the day, also while another style is held for a Monday row', () => {
+  clean();
+  const content = contentWith(raw => {
+    raw.screens = [doc('original', { mainRows: [{ panel: 'photo' }, { panel: 'events' }] }), doc('minimal', { mainRows: [{ panel: 'tonight', team: 'prime' }] })];
+  });
+
+  assert.deepEqual(screens.mainPlaylist(content, mondayNoon).map(step => step.panel), ['photo', 'events']);
+  screens.holdScreenLook({ team: 'prime', style: 'minimal', monday: true });
+  assert.deepEqual(screens.mainPlaylist(content, mondayNoon).map(step => step.panel), ['photo', 'events'], 'Monday, which is an Original day');
+  assert.ok(screens.mainPlaylist(content, dayAfter(1)).length > 2, 'Tuesday is Cybertron, which has no document and is built from the Panel order');
+  clean();
+});
+
 test('a Monday row has a step for each page of the tasks card, one for each of the other cards, and none for a team with no board tasks', () => {
   clean();
   const content = contentWith(raw => {
@@ -495,13 +508,13 @@ test('a Monday row is in the Monday style going in, and the Screen of the day co
   assert.deepEqual(other.map(entry => entry.look.style), ['cybertron', 'original', 'original', 'original', 'cybertron'], 'the Monday style of the Screen, and the style of the day coming out');
 });
 
-test('a Monday style that is the style of the day still swaps going in and coming out, and holds no new style', () => {
+test('a Monday style that is the style of the day changes no style going in and coming out, and the Monday cards are noted for the swap of full motion', () => {
   const list = [plain('tasks', 'prime'), plain('monday-progress', 'prime'), plain('photo')];
   const walk = screens.walkSteps(list, { style: 'original', mondayStyle: 'original' }, startOfDay);
 
-  assert.deepEqual(walk.map(entry => entry.changes.swap), [false, true, true]);
+  assert.deepEqual(walk.map(entry => entry.changes.swap), [false, false, false], 'no style and no team changes');
   assert.deepEqual(walk.map(entry => entry.changes.style), [false, false, false]);
-  assert.deepEqual(walk.map(entry => entry.changes.monday), [false, true, true]);
+  assert.deepEqual(walk.map(entry => entry.changes.monday), [false, true, true], 'but the screen goes into the Monday cards and out of them');
 });
 
 test('a row with no team keeps the team, also after a Monday row, and a row for both teams keeps it too', () => {
@@ -509,7 +522,8 @@ test('a row with no team keeps the team, also after a Monday row, and a row for 
   const walk = screens.walkSteps(list, originalDay, { team: 'prime', style: 'original', monday: false });
 
   assert.deepEqual(walk.map(entry => entry.look.team), ['nova', 'nova', 'nova', 'nova', 'nova', 'nova']);
-  assert.deepEqual(walk.map(entry => entry.changes.swap), [true, false, true, true, true, true], 'the team changes once; the cards of both teams are a Monday row in the Monday style');
+  assert.deepEqual(walk.map(entry => entry.changes.swap), [true, false, true, true, true, true], 'the team changes once; every Monday card is a swap in and the row after it a swap out');
+  assert.deepEqual(walk.map(entry => entry.look.style), ['original', 'original', 'minimal', 'original', 'minimal', 'original']);
   assert.equal(screens.isTeamCode('both'), false);
   assert.equal(screens.isTeamCode(''), false);
   assert.equal(screens.isTeamCode(undefined), false);
