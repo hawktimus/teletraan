@@ -483,7 +483,7 @@ const groupEventsByKindField = defineField({
 
 // The note on the Look tab points to the Look page, which points back (theme.js). The second says where the rows are.
 const lookNoteField = noteField('lookNote', 'Which Screen plays on each day is set here. Colors, seasonal packs and the time zone are in Look, in the sidebar.', 'look');
-const cycleNoteField = noteField('cycleNote', 'What plays on a Screen is set in Settings, Screens, in the sidebar. Its rows play top to bottom, and the screen swaps when the team changes.', 'look');
+const cycleNoteField = noteField('cycleNote', 'What plays on a Screen is set in Screens, under Start here in the sidebar. Its rows play top to bottom, and the screen swaps when the team changes.', 'look');
 
 export default defineType({
   name: 'dashboardSettings',

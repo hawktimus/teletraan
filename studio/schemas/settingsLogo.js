@@ -89,7 +89,7 @@ export function logoFields() {
       'Now and then the logo folds into a robot, changes into a hawk, flies and changes back. Turn it off to stop it.'),
     notUsed(everyField('logoHawkEvery', 'Flying hawk every (seconds)',
       'Seconds between flights, from 10 to 3600. Use 0 to never fly.', 24, 10, 3600),
-    'Each Screen sets the minutes between flights of the hawk (Settings, Screens, A).'),
+    'Each Screen sets the minutes between flights of the hawk (Screens, A).'),
     durationField('logoHawkDuration', 'Flying hawk duration (seconds)',
       'How long the whole flight lasts, from 6 to 30 seconds, at Normal speed.', 11, 6, 30),
 
@@ -97,7 +97,7 @@ export function logoFields() {
       'Now and then each letter of the team name splits apart, turns and locks back together. Turn it off to keep the name still.'),
     notUsed(everyField('nameEvery', 'Name effect every (seconds)',
       'Seconds between plays of the name effect, from 30 to 900. Use 0 to never play it.', 300, 30, 900),
-    'Each Screen sets the minutes between plays of the name effect (Settings, Screens, A).'),
+    'Each Screen sets the minutes between plays of the name effect (Screens, A).'),
     durationField('nameDuration', 'Name effect duration (seconds)',
       'How long one play of the name effect lasts, from 0.5 to 10 seconds, at Normal speed.', 1.43, 0.5, 10),
   ];

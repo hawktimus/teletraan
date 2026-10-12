@@ -81,7 +81,7 @@ seconds between plays are real seconds, and they are counted from when the
 animation last started, so a flight of 11 seconds every 24 leaves 13 seconds
 of rest, and an interval shorter than the duration plays the animation again
 as soon as the line is free. The hawk and the name effect follow the minutes on
-the Screen (Settings, Screens, A) instead of their own seconds.
+the Screen (Screens, A) instead of their own seconds.
 
 The name effect keeps the stored names it had before the tab was renamed
 (`nameTransform`, `nameEvery`, `nameDuration`), so content that was already

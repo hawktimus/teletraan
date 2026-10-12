@@ -85,7 +85,7 @@ the screen draws the frames again, so give it a moment.
 
 ## 3. Put Nova in the rows of a Screen
 
-Open Settings, then Screens, then a Screen, and click B on the map. Each row of the main
+Open Screens, under Start here, then a Screen, and click B on the map. Each row of the main
 panel has a Team. The rows of Prime and the rows of Nova are separate: keep the Prime rows
 together and the Nova rows together, because the screen transforms every time the team
 changes. A Screen that was filled from the old Panel order already has the rows of Prime,

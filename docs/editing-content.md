@@ -22,10 +22,10 @@ received.
 
 ## The sidebar
 
-The sidebar is in groups, by how often you touch them. Start here is at the top.
-The group names, such as TASKS, are headings. Daily Agenda, Monday Tasks and Settings
-are folders, and so are Presentations inside Daily Agenda and Screens inside Settings:
-click one and its lines open beside it. Each line has an icon.
+The sidebar is in groups, by how often you touch them. Start here is at the top, and
+Screens is the second line, right under it. The group names, such as TASKS, are headings.
+Screens, Daily Agenda, Monday Tasks and Settings are folders, and so is Presentations
+inside Daily Agenda: click one and its lines open beside it. Each line has an icon.
 
 A row in a list reads like the TV: the name or text, then what goes with it, such as
 the subteam and status of a task or the time and first name of a talk. Hidden or
@@ -34,6 +34,10 @@ filter is switched off.
 
 Start here: a short page that says what the screen is and that Publish all is the
 last step of every change. See "The Start here page" below.
+
+Screens: a folder with three pages, Original, Cybertron and Minimal. Each is what plays
+on the TV on the days it is picked for: the rows of the main panel, the rows of the side
+panel and the settings of the banner. See "Screens" below.
 
 ### Tasks
 
@@ -114,11 +118,8 @@ last step of every change. See "The Start here page" below.
 
 If you are not a coach, leave these alone and ask a coach.
 
-- Settings: a folder with four lines.
+- Settings: a folder with three lines.
   - Dashboard Settings: the settings for the whole screen, described below.
-  - Screens: a folder with three pages, Original, Cybertron and Minimal. Each is what plays
-    on the TV on the days it is picked for: the rows of the main panel, the rows of the side
-    panel and the settings of the banner. See "Screens" below.
   - Look: the colours of the whole screen, and holiday colours for set dates.
     See "Look" below.
   - Teams: the teams the TV can show, each with a name, a number, a logo, seven
@@ -157,7 +158,7 @@ to publish on it. It has five parts, top to bottom:
 2. A picture of the screen. The boxes A to E are the banner, the main panel, the
    countdown, the side panel and the ticker, drawn in the shape of the screen.
    Each box names the sidebar items that fill it. The line under it says: Click a
-   letter in Settings, Screens to change what plays there.
+   letter in Screens to change what plays there.
 3. The three steps of every meeting: open Daily Agenda or Monday Tasks, make the
    change, click Publish all in the top bar. You edit on Draft, and the screen
    shows Published.
@@ -246,7 +247,7 @@ events the panel does not run.
   first on page one, with a small pin after its title. At most three events are
   pinned, and the other places on page one fill by date. This holds when Group
   events by kind is on too.
-- In the main panel rows of a Screen (Settings, Screens) Upcoming events is still one
+- In the main panel rows of a Screen (in Screens) Upcoming events is still one
   row. Its seconds are for both pages.
 
 ### The old Events Calendar entries
@@ -679,7 +680,7 @@ columns on the right. The subteam's name is the title of the page.
   the right end of the header: PRIME or NOVA, and no chip when the subteam is for both teams. A long name is drawn at 60 px
   when it does not fit beside the chip. The Leadership and Team Leads headers have the chip too.
 
-To put the panel on the screen, open Settings, then Screens, pick a Screen and
+To put the panel on the screen, open Screens, under Start here, pick a Screen and
 click B on the map. A Screen has only the rows that are in its list, so the panel
 stays off until you add it. Use "Add item", pick Subteam roster, pick the team if
 the panel is for one team, and drag the row to where you want it in the list.
@@ -723,10 +724,10 @@ steps. With no Teams at all the TV shows the built-in Prime team, as it always h
 
 ## Screens
 
-Settings, Screens has three pages, Original, Cybertron and Minimal. Each is one document that always
-exists: nothing adds, copies or deletes one. A page opens on a map of the screen with the letters of Start
-here. Click a letter or its box to open that part below the map. Editing, Prime or Nova, above the map only
-changes which team document A opens. The detail for coaches is in docs/coaches-guide.md, "Screens".
+Screens, the second line of the sidebar, under Start here, has three pages, Original, Cybertron and
+Minimal. Each is one document that always exists: nothing adds, copies or deletes one. A page opens on a
+map of the screen with the letters of Start here. Click a letter or its box to open that part below the
+map. Editing, Prime or Nova, above the map only changes which team document A opens. The detail for coaches is in docs/coaches-guide.md, "Screens".
 
 - A Banner: a button that opens the team document of the team in Editing. Name effect every (minutes, from
   1 to 240, 10 to start with), Flying hawk every (minutes, from 1 to 240, 15 to start with) and Swap time
@@ -841,7 +842,7 @@ problem would touch.
   this, so Slow makes every page stay longer than the number you typed. This tab
   also has how many days finished tasks stay, and the date the safety day count
   starts. Which panels appear and in what order is not here any more: it is the
-  rows of a Screen (Settings, Screens). The old list "Panel order" and its two older
+  rows of a Screen (in Screens). The old list "Panel order" and its two older
   lists are hidden and keep what was saved in them.
   While the theme Neon Prime is on there is no small frame, so the side panel rows
   are not used and the large panels are the rotation of the one big frame.
@@ -877,7 +878,7 @@ problem would touch.
   column and one main panel, whatever the theme says (docs/layouts.md, "Styles"). The day starts at
   midnight in the Time zone on the Look page, and the Screen of the day is picked when the screen
   starts and at the first row change after midnight, so a screen that restarts plays the same
-  Screen. What plays on a Screen is set in Settings, Screens (see "Screens" below).
+  Screen. What plays on a Screen is set in Screens, under Start here (see "Screens" below).
 - The old Styles by day, Monday style and Team order are hidden and keep what was saved in
   them. The Monday style is a field of each Screen now, copied from the old one the first time the
   Screen was opened. How the look changes is hidden too, and the screen ignores it.

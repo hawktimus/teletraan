@@ -3,7 +3,8 @@
 For the coaches. This page says where each coach setting is, what to know before
 you change it, and which page has the detail. Students use
 docs/using-the-studio.md. Everything under Coaches only in the sidebar is here:
-Settings (Dashboard Settings, Screens, Look and Teams) and Extra panels.
+Settings (Dashboard Settings, Look and Teams) and Extra panels. So is Screens,
+the second line of the sidebar, under Start here.
 
 The Monday feed, the competition feed and the status documents have not been tried
 against the live services, because they need keys that only the Mini holds. Their
@@ -90,12 +91,12 @@ message.
 ## Screens
 
 A Screen is what plays on the TV. There are three, Original, Cybertron and
-Minimal, under Settings, Screens in the sidebar. Each is one document that
-always exists, so you cannot add, copy or delete one. Original and Cybertron
-have the standard arrangement: the banner, the main panel, the countdown over
-the side panel, and the ticker. Cybertron draws it in gunmetal plates. Minimal
-has the banner with the war clock across the top, a thin column at the left, one
-main panel and the ticker, and no side panel.
+Minimal, in Screens, the second line of the sidebar, under Start here. Each is
+one document that always exists, so you cannot add, copy or delete one. Original
+and Cybertron have the standard arrangement: the banner, the main panel, the
+countdown over the side panel, and the ticker. Cybertron draws it in gunmetal
+plates. Minimal has the banner with the war clock across the top, a thin column
+at the left, one main panel and the ticker, and no side panel.
 
 A Screen opens on a map of the screen. Click a letter or its box and that
 part opens below the map, with its box lit. The letters are the ones on Start

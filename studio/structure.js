@@ -74,7 +74,8 @@ export const demoType = 'demo';
 export const demoId = 'demo';
 export const singletonTypes = [settingsType, themeType, demoType];
 
-// The three Screens, Original, Cybertron and Minimal, are pages of one type with an id each
+// The three Screens, Original, Cybertron and Minimal, are pages of one type with an id each. They
+// are the second line of the sidebar, right under Start here.
 export { screenType };
 export const screenIds = screenStyles.map(screenIdOf);
 const screenIcons = { original: SquareIcon, cybertron: BoltIcon, minimal: PanelLeftIcon };
@@ -112,6 +113,7 @@ const tasksHidden = 'source != "monday" || showOnTv == false || show == false ||
 
 export const sidebarEntries = [
   { kind: 'component', title: 'Start here', id: 'startHere', icon: HomeIcon, component: StartHere },
+  { kind: 'group', title: 'Screens', icon: StackIcon, id: 'screens', entries: screenPages },
   { kind: 'divider', title: 'TASKS' },
   {
     kind: 'group',
@@ -163,7 +165,6 @@ export const sidebarEntries = [
     id: 'settings',
     entries: [
       { kind: 'page', title: 'Dashboard Settings', icon: DesktopIcon, type: settingsType, id: settingsId },
-      { kind: 'group', title: 'Screens', icon: StackIcon, id: 'screens', entries: screenPages },
       { kind: 'page', title: 'Look', icon: ColorWheelIcon, type: themeType, id: themeId },
       { kind: 'list', title: 'Teams', icon: TokenIcon, type: 'team', sort: byOrder },
     ],

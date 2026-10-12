@@ -5,10 +5,15 @@ The list on the left of the Studio is one list in `studio/structure.js`, called
 order, move a line.
 
 The sidebar reads like this. A heading in capitals is a divider with a title, not
-a folder. Daily Agenda, Monday Tasks and Settings are folders, Presentations is a folder
-inside Daily Agenda, and Screens is a folder inside Settings:
+a folder. Screens, Daily Agenda, Monday Tasks and Settings are folders, and
+Presentations is a folder inside Daily Agenda. Screens is the second line, right
+under Start here:
 
     Start here
+    Screens
+      Original
+      Cybertron
+      Minimal
     TASKS
       Daily Agenda
         Agenda items
@@ -30,10 +35,6 @@ inside Daily Agenda, and Screens is a folder inside Settings:
     COACHES ONLY
       Settings
         Dashboard Settings
-        Screens
-          Original
-          Cybertron
-          Minimal
         Look
         Teams
       Extra panels
@@ -66,8 +67,8 @@ inside Daily Agenda, and Screens is a folder inside Settings:
 - `group` is a folder. It opens a list of the lines under `entries`, one line
   each. A folder holds lists and pages, and one more folder, which holds lists
   or pages. Daily Agenda holds Agenda items, Presentations (Upcoming and Past) and
-  Meeting days. Monday Tasks holds On the TV and Hidden. Settings holds
-  Dashboard Settings, Screens (Original, Cybertron and Minimal), Look and Teams.
+  Meeting days. Monday Tasks holds On the TV and Hidden. Screens holds Original,
+  Cybertron and Minimal. Settings holds Dashboard Settings, Look and Teams.
 - `component` opens a page that is not a document. `component` is a plain
   function that draws it. Start here is `StartHere` in `studio/start-here.js`
   and Calendars is `CalendarsView` in `studio/calendars-view.js`. A component

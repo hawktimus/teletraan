@@ -13,8 +13,8 @@ A style is a Screen. In Studio open Dashboard Settings, then the Look tab, and f
 Weekday schedule. It has a picker for each day, Monday to Sunday. Original plays
 on Monday, Wednesday, Friday and Sunday, and Cybertron on Tuesday, Thursday and
 Saturday. Minimal is not scheduled to start with. Pick Minimal for a day to use it.
-What plays on each Screen is set in Settings, Screens, in the sidebar. The Screen
-of a day goes on at the first row change after midnight. The styles are:
+What plays on each Screen is set in Screens, the second line of the sidebar,
+under Start here. The Screen of a day goes on at the first row change after midnight. The styles are:
 
 - Original is the screen as it has always been. Its layout comes from the theme.
 - Cybertron has the same layout as Original: the banner, the large frame, the
@@ -43,8 +43,8 @@ does not reload.
 
 ## 2. Pick the team
 
-The team changes by the rows of a Screen. In Settings, Screens, open a Screen and click
-B on the map. Each row has a Team. A row with a team other than the one on the banner
+The team changes by the rows of a Screen. In Screens, under Start here, open a Screen and
+click B on the map. Each row has a Team. A row with a team other than the one on the banner
 swaps the screen to that team. A row with no team keeps the team that is on the banner.
 
 - Keep the Prime rows together and the Nova rows together. The screen transforms every

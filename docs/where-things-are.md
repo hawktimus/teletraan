@@ -527,7 +527,7 @@ alone.
   `dashboard/config.js`, 20 to start). The small panel stays three quarters as
   long and the ticker one and a half times as long. A row of a Screen can
   have seconds of its own, and then that is used instead. The order is the rows of
-  the three Screens (Settings, Screens, `studio/schemas/screen.js`): `mainRows` and `sideRows`.
+  the three Screens (Screens, under Start here, `studio/schemas/screen.js`): `mainRows` and `sideRows`.
   A Screen with no rows gets them from the older Panel order list (`rotation.order`, hidden now),
   and while that is empty from the lists in `defaultSettings.rotation` (`core/panel-order.js`,
   `studio/screen-seed.js`). The panels a row can name are in `studio/screen-panels.js`.

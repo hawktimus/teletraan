@@ -1,7 +1,7 @@
 // A Screen: what plays on the TV on the days it is picked for (Dashboard Settings, Look tab). There
 // are three, Original, Cybertron and Minimal, each a document that exists once with a fixed id
 // (screen-original, screen-cybertron, screen-minimal). The id says which style the Screen is, so
-// no style is stored. They are in the sidebar under Settings, Screens (structure.js).
+// no style is stored. They are the second line of the sidebar, Screens, under Start here (structure.js).
 //
 // The form opens on a map of the screen (screen-input.js). Its five letters are the five tabs:
 //   A Banner      the Team document of the team chosen in the Editing switch, and how often the

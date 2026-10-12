@@ -1,5 +1,5 @@
 // How long each line of the ticker stays, and the older lists of panels. The panels of the main and
-// side area, their order and their seconds are rows of the three Screens now (Settings, Screens,
+// side area, their order and their seconds are rows of the three Screens now (Screens in the sidebar,
 // schemas/screen.js). The panel names must match the ids in dashboard/registry.js.
 //
 // The order was one list, Panel order, with every panel in it. It stays in the schema, hidden, with
@@ -96,14 +96,14 @@ export function rotationField() {
     title: 'Ticker',
     type: 'object',
     group: 'screen',
-    description: 'How long each ticker line stays. The panels, their order and their seconds are set in Settings, Screens.',
+    description: 'How long each ticker line stays. The panels, their order and their seconds are set in Screens, under Start here in the sidebar.',
     fields: [
       defineField({
         name: 'order',
         title: 'Panel order',
         type: 'array',
         hidden: true,
-        description: 'Not used any more. The rows of each Screen (Settings, Screens) replace this list. It stays so that a saved list is kept.',
+        description: 'Not used any more. The rows of each Screen (Screens in the sidebar) replace this list. It stays so that a saved list is kept.',
         of: [stepMember(allPanels, true)],
         initialValue: startingList(allPanels),
         components: { input: PanelOrderInput },

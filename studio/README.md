@@ -33,7 +33,7 @@ TV. The dashboard reads what they publish.
     monday-status-input.js  the block at the top of the Monday tab of Dashboard Settings: who the token belongs to, when the Mini last read Monday, the boards chosen and the tasks made, and a line for each board entry
     monday-pickers.js     the board list and the column lists of a board entry on the Monday tab, which show names and store numbers and ids
     panel-order-input.js  the Panel order list in Dashboard Settings, which is hidden now and fills itself from the two older panel lists when it is empty
-    screen-input.js       the form of a Screen (Settings, Screens): the Editing switch, the map with the letters A to E, and the first fill of the rows
+    screen-input.js       the form of a Screen (Screens, the second line of the sidebar): the Editing switch, the map with the letters A to E, and the first fill of the rows
     screen-map.js         the boxes and the words of the map in the arrangement of each Screen, with no Studio in it
     screen-fields.js      the inputs inside the sections of a Screen: the team document button, the countdown, the Tips and News link and the team of a row
     screen-context.js     what the form of a Screen shares with the inputs inside it
@@ -109,7 +109,7 @@ docs/where-things-are.md).
    Logo animations on, Spin every 72 seconds, and Page change style
    on Alternate, Break and rebuild time 0.6, Frame finish on Mostly gold and
    Silver chance 10. How often the flying hawk and the name effect play is set on
-   each Screen (Settings, Screens, A).
+   each Screen (Screens, A).
    The Advanced tab should show Use night mode on, Bouncing logo, 23:30 to
    11:30, Logo width 300 and Normal speed with the preview off,
    and Allow hidden transitions on and both set to every 60 hours.

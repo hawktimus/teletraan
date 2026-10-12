@@ -1,7 +1,7 @@
 // The weekday schedule and the fields the Screens replaced, in the Look tab of Dashboard Settings.
 //
 //   screenSchedule  a picker for each day of the week, Monday to Sunday, that chooses the Screen
-//                   (Settings, Screens) that plays that day: Original on Monday, Wednesday, Friday and
+//                   (Screens, under Start here) that plays that day: Original on Monday, Wednesday, Friday and
 //                   Sunday and Cybertron on Tuesday, Thursday and Saturday to start with. Minimal is
 //                   not scheduled. The day is the calendar day in the time zone of the Look page.
 //
@@ -60,7 +60,7 @@ function dayField(day) {
     name: day.name,
     title: day.title,
     type: 'string',
-    description: 'The Screen that plays on ' + day.title + '. What plays on it is set in Settings, Screens.',
+    description: 'The Screen that plays on ' + day.title + '. What plays on it is set in Screens, under Start here in the sidebar.',
     options: { list: styles, layout: 'radio', direction: 'horizontal' },
     initialValue: day.start,
     validation: Rule => Rule.valid(styles.map(style => style.value)).error('Pick original, cybertron or minimal.'),

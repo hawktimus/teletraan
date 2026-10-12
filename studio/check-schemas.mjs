@@ -416,7 +416,7 @@ const typeTitles = {
 // The sidebar as the owner asked for it. A heading is the first thing before
 // the colon, and the lines under it come after. The first group has no heading.
 const sidebarGroups = [
-  'Start here',
+  'Start here, Screens',
   'TASKS: Daily Agenda, Monday Tasks, Monday Boards, Tips and News',
   'EVENTS: Calendars, Calendar filters',
   'ROSTER: Leadership, Team leads, Sponsors, Photos',
@@ -425,9 +425,10 @@ const sidebarGroups = [
 
 // What each folder holds, in order. A folder inside a folder has its lines in brackets.
 const folderLines = {
+  'Screens': 'Original, Cybertron, Minimal',
   'Daily Agenda': 'Agenda items, Presentations (Upcoming, Past), Meeting days',
   'Monday Tasks': 'On the TV, Hidden',
-  'Settings': 'Dashboard Settings, Screens (Original, Cybertron, Minimal), Look, Teams',
+  'Settings': 'Dashboard Settings, Look, Teams',
 };
 
 // The types, or the templates of add-templates.js, that the plus button of a folder offers
@@ -1898,11 +1899,11 @@ function checkStartHere() {
   need(problems, size.width * 9 === size.height * 16, 'the picture should have the 16 to 9 shape of the screen');
   need(problems, picture && picture.props.role === 'img' && String(picture.props['aria-label'] || '') !== '', 'the picture should have role img and a label for a screen reader');
   const caption = nodesWhere(page, node => node.type === 'figcaption').map(wordsIn)[0] || '';
-  need(problems, parts.clickLine === 'Click a letter in Settings, Screens to change what plays there.' && caption.indexOf(parts.clickLine) !== -1, 'the line under the picture should say: Click a letter in Settings, Screens to change what plays there.');
-  // The words of that line are a path in the sidebar: Screens is a folder inside Settings and holds the three Screens
-  const settingsFolder = allLines(world.structure.sidebarEntries).filter(entry => entry.kind === 'group' && entry.title === 'Settings')[0];
-  const screensFolder = settingsFolder ? settingsFolder.entries.filter(entry => entry.kind === 'group' && entry.title === 'Screens')[0] : null;
-  need(problems, screensFolder && screensFolder.entries.map(entry => entry.title).join() === 'Original,Cybertron,Minimal' && parts.clickLine.indexOf('Settings, Screens') !== -1, 'the line under the picture names Settings, Screens, which should be a folder inside Settings that holds Original, Cybertron and Minimal');
+  need(problems, parts.clickLine === 'Click a letter in Screens to change what plays there.' && caption.indexOf(parts.clickLine) !== -1, 'the line under the picture should say: Click a letter in Screens to change what plays there.');
+  // The words of that line are a line of the sidebar: Screens is the second one, right under Start here, and it is a folder that holds the three Screens
+  const topLines = world.structure.sidebarEntries;
+  const screensFolder = topLines[1];
+  need(problems, topLines[0] && topLines[0].title === 'Start here' && screensFolder && screensFolder.kind === 'group' && screensFolder.title === 'Screens' && screensFolder.entries.map(entry => entry.title).join() === 'Original,Cybertron,Minimal' && parts.clickLine.indexOf('Screens') !== -1, 'the line under the picture names Screens, which should be the second line of the sidebar, right under Start here, and a folder that holds Original, Cybertron and Minimal');
   const shown = picture ? nodesWhere(picture, node => node.type === 'text').map(wordsIn) : [];
   need(problems, shown.filter(text => /^[A-Z]$/.test(text)).join('') === 'ABCDE', 'the picture should have the letters A to E, in order, one for each area. It has: ' + shown.filter(text => /^[A-Z]$/.test(text)).join(''));
   need(problems, parts.areas.map(area => area.letter + ' ' + area.name).join() === startAreas.join(), 'the picture should have the areas ' + startAreas.join(', '));
@@ -2430,7 +2431,7 @@ function checkSidebarGroups(problems) {
   const shape = sidebarShape(entries);
   need(problems, shape.join('\n') === sidebarGroups.join('\n'), 'the sidebar should read, with a heading and then its lines:\n    ' + sidebarGroups.join('\n    ') + '\nstructure.js has:\n    ' + shape.join('\n    '));
 
-  // Daily Agenda, Monday Tasks and Settings are the folders, and Presentations is the one folder inside a folder.
+  // Screens, Daily Agenda, Monday Tasks and Settings are the folders, and Presentations is the one folder inside a folder.
   // A heading is a divider, not a folder.
   const folders = entries.filter(entry => entry.kind === 'group');
   need(problems, folders.map(entry => entry.title).join() === Object.keys(folderLines).join(), 'The only folders in the sidebar should be ' + Object.keys(folderLines).join(' and ') + ', and the headings should be dividers with a title. The folders are: ' + (folders.map(entry => entry.title).join() || 'none'));
@@ -2439,7 +2440,7 @@ function checkSidebarGroups(problems) {
     if (want) need(problems, folderShape(folder.entries) === want, folder.title + ' should hold: ' + want + '. It holds: ' + folderShape(folder.entries));
     need(problems, (folder.add || []).join() === (folderAdds[folder.title] || ''), 'the plus button of ' + folder.title + ' should offer: ' + (folderAdds[folder.title] || 'nothing') + '. It offers: ' + ((folder.add || []).join() || 'nothing'));
   });
-  need(problems, allLines(entries).filter(entry => entry.kind === 'group').length === 5, 'the sidebar should have five folders in all: Daily Agenda, Presentations inside it, Monday Tasks, Settings and Screens inside it');
+  need(problems, allLines(entries).filter(entry => entry.kind === 'group').length === 5, 'the sidebar should have five folders in all: Screens, Daily Agenda, Presentations inside it, Monday Tasks and Settings');
 
   ['Start here', 'Calendars'].forEach(title => {
     const entry = entries.filter(item => item.title === title)[0];
@@ -5418,7 +5419,7 @@ function checkLookRotation() {
 
   // The notes say what the tab does
   const cycle = at('cycleNote');
-  need(problems, cycle && /Settings, Screens/.test(cycle.description || '') && /swaps/.test(cycle.description || ''), 'the second note on the Look tab should say that the rows are set in Settings, Screens, and that the screen swaps when the team changes');
+  need(problems, cycle && /set in Screens, under Start here/.test(cycle.description || '') && /swaps/.test(cycle.description || ''), 'the second note on the Look tab should say that the rows are set in Screens, under Start here, and that the screen swaps when the team changes');
   need(problems, at('lookNote') && /Which Screen plays on each day/.test(at('lookNote').description || ''), 'the first note on the Look tab should say that it sets which Screen plays on each day');
   need(problems, at('screenSchedule') && !at('screenSchedule').hidden, 'screenSchedule should show in the form');
 
@@ -6259,7 +6260,7 @@ function checkScreenType() {
 
   // the three pages in the sidebar, and what a page of a Screen can and cannot do
   const folder = allLines(world.structure.sidebarEntries).filter(entry => entry.title === 'Screens' && entry.kind === 'group')[0];
-  need(problems, folder && folder.entries.map(entry => entry.title + '=' + entry.id + '=' + entry.type).join() === 'Original=screen-original=screen,Cybertron=screen-cybertron=screen,Minimal=screen-minimal=screen', 'Settings, Screens should list the pages Original, Cybertron and Minimal, each of the type screen with the id screen- and its style');
+  need(problems, folder && folder.entries.map(entry => entry.title + '=' + entry.id + '=' + entry.type).join() === 'Original=screen-original=screen,Cybertron=screen-cybertron=screen,Minimal=screen-minimal=screen', 'Screens, the second line of the sidebar, should list the pages Original, Cybertron and Minimal, each of the type screen with the id screen- and its style');
   need(problems, world.structure.screenIds.join() === screenPageIds.join() && world.screenIds.screenStyles.join() === config.styles.join() && Object.keys(config.screenIds).join() === config.styles.join() && config.styles.every(style => config.screenIds[style] === 'screen-' + style && world.screenIds.screenIdOf(style) === 'screen-' + style), 'the ids of the Screens should be screen-original, screen-cybertron and screen-minimal in the Studio and in config.js');
   const actions = ['publish', 'discardChanges', 'delete', 'duplicate', 'unpublish'].map(action => ({ action: action }));
   need(problems, world.config.document.actions(actions, { schemaType: 'screen' }).map(item => item.action).join() === 'publish,discardChanges', 'a Screen should have these actions: publish,discardChanges. Nothing copies it or takes it away');

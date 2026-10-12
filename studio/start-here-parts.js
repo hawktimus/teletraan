@@ -42,8 +42,8 @@ export const areas = [
 ];
 
 // The line under the picture that says where the letters can be clicked. The picture on this page has
-// no links: the map at the top of each Screen (Settings, Screens) has them.
-export const clickLine = 'Click a letter in Settings, Screens to change what plays there.';
+// no links: the map at the top of each Screen (Screens, under Start here) has them.
+export const clickLine = 'Click a letter in Screens to change what plays there.';
 
 // A wide guess at the width of some text, since the page cannot measure it before it is drawn.
 // A letter is about 0.55 of its size wide, so 0.6 leaves room.

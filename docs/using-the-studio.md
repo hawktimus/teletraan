@@ -15,7 +15,8 @@ shows. Publish all is the last step of every change.
 The Start here page draws the screen as five boxes, A to E. Each box lists the
 sidebar items that fill it. Some Screens leave a box out or move it. A coach
 chooses which Screen plays each day and which panels play in each box, in
-Settings, Screens. The boxes and what feeds them stay the same.
+Screens, the second line of the sidebar, under Start here. The boxes and what
+feeds them stay the same.
 
 | Box | Area | What it shows | Where you change it |
 |-----|------|---------------|---------------------|

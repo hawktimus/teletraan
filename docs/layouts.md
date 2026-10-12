@@ -1221,7 +1221,7 @@ out from the font and not looked at on a screen.
 
 ## The Screens
 
-What plays on the screen is set by three documents, Original, Cybertron and Minimal (Settings, Screens in the Studio;
+What plays on the screen is set by three documents, Original, Cybertron and Minimal (Screens, the second line of the sidebar, in the Studio;
 the type `screen`, with the ids `screen-original`, `screen-cybertron` and `screen-minimal`). The id is the style of the
 Screen, so no style is stored. A Screen holds, with the starting values in `config.js`
 (`defaultScreen`, `screenLimits`):
@@ -1584,7 +1584,7 @@ pieces, the screws, the rivets and the rust are all there.
 **Looking at it.** `?sample=1&team=nova` shows Nova with the sample content, and `?team=prime` shows Prime.
 Add `&style=cybertron` or `&style=minimal` for the other two styles, and `&motion=calm` to see it still.
 Look at each of the eight, then the frames of the large panel, the small panel, the countdown, the banner and
-the ticker in all three styles. Then change the team on the open screen (the team of a row, Settings, Screens) and watch the
+the ticker in all three styles. Then change the team on the open screen (the team of a row, in Screens) and watch the
 frames come back in the other corners at the moment the large frame is apart.
 
 **Adding a field.** Add its name and values to `teamTrim` in `config.js` and to `primeTeam`, give each value

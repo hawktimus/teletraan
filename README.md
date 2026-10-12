@@ -14,9 +14,13 @@ For adjusting the content that gets displayed, Sanity will be used.
 
 Almost everything on the screen is typed into the Studio, which is the editing page for the dashboard. Open it at [Studio address] and sign in.
 
-The list on the left is what you can change. It opens with Start here and has four groups. A name in capitals is a heading, and Daily Agenda, Monday Tasks and Settings are folders, with Presentations inside Daily Agenda and Screens inside Settings:
+The list on the left is what you can change. It opens with Start here and has four groups. A name in capitals is a heading, and Screens, Daily Agenda, Monday Tasks and Settings are folders, with Presentations inside Daily Agenda. Screens is the second line, right under Start here:
 
     Start here
+    Screens
+      Original
+      Cybertron
+      Minimal
     TASKS
       Daily Agenda
         Agenda items
@@ -38,10 +42,6 @@ The list on the left is what you can change. It opens with Start here and has fo
     COACHES ONLY
       Settings
         Dashboard Settings
-        Screens
-          Original
-          Cybertron
-          Minimal
         Look
         Teams
       Extra panels
@@ -51,7 +51,7 @@ Click the one you want, change it, and press **Publish**. Nothing shows on the T
 - Every item has a **Show on screen** switch and an optional **Hide after** date, so things come down on their own.
 - Every field says how many characters fit on the screen. Studio will not let you publish text that is too long.
 - **Publish all**, in the top bar, lists every document that has a draft and publishes the ticked ones in one go. Each is checked first with the same rules as its Publish button, and one that fails is skipped with the reason while the rest are published.
-- **Screens** (Settings, Screens) is what plays on the TV: Original, Cybertron and Minimal, each with a map of the screen. Click a letter to change the rows of the main panel and the side panel, or the banner settings. The Weekday schedule in Dashboard Settings picks the Screen of each day (docs/coaches-guide.md, "Screens").
+- **Screens** (the second line of the list, under Start here) is what plays on the TV: Original, Cybertron and Minimal, each with a map of the screen. Click a letter to change the rows of the main panel and the side panel, or the banner settings. The Weekday schedule in Dashboard Settings picks the Screen of each day (docs/coaches-guide.md, "Screens").
 - **Dashboard Settings** is the one page for the whole board: how long each page stays, the countdown dates, the announcement times and words, an alert, how presentations run, how big the portraits and photos are and how the portraits are drawn, and the Weekday schedule, the polish and the speed.
 - Under Daily Agenda, Presentations holds the talks students have booked and the ones added by hand, and Meeting days holds the talk slots (docs/presentations.md). The plus button of Daily Agenda adds an Agenda item or a Presentation.
 - Events are not typed in here. They come from the team's BAND calendars, and the Calendars page says how to add or hide one. To get an event on the screen, add it in the calendar app, or ask a coach for an Always show rule. A Calendar filter hides some BAND events, such as a meeting that repeats every week (docs/calendar-filters.md).

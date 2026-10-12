@@ -1,5 +1,5 @@
 // The team fields of Dashboard Settings, in the Look tab: which team the screen
-// shows. Two fields, both hidden since the rows of a Screen (Settings, Screens) choose the team. They stay
+// shows. Two fields, both hidden since the rows of a Screen (Screens in the sidebar) choose the team. They stay
 // in the schema, with what is saved in them, and the screen uses them only until a Screen has chosen a team:
 //
 //   teamMode          prime (Prime only, the default), nova (Nova only) or alternate
