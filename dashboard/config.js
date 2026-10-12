@@ -54,13 +54,51 @@ export const looks = ['polished', 'flat', 'plain'];
 //   minimal    the industrial style, in the bar layout whatever the theme says
 export const styles = ['original', 'cybertron', 'minimal'];
 
+// The Screens (core/screens.js): three documents in the Studio, one for each style. The id of a document says its
+// style, so no field does. Dashboard Settings (Look tab) names the Screen that plays on each day of the week. Original
+// plays on Monday, Wednesday, Friday and Sunday and Cybertron on the other three. Minimal is not scheduled: it plays
+// while a Monday row does.
+export const screenIds = { original: 'screen-original', cybertron: 'screen-cybertron', minimal: 'screen-minimal' };
+export const weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+export const defaultSchedule = {
+  monday: 'original',
+  tuesday: 'cybertron',
+  wednesday: 'original',
+  thursday: 'cybertron',
+  friday: 'original',
+  saturday: 'cybertron',
+  sunday: 'original',
+};
+
+// What a Screen has when its document does not say, or there is no document yet. The Studio starts at the same values
+// and has the same limits (studio/schemas/screen.js), and studio/check-schemas.mjs compares them.
+//   nameEffectEveryMinutes  minutes between plays of the team name effect in the banner
+//   hawkEveryMinutes        minutes between flights of the hawk
+//   swapSeconds             how long a swap takes. 1.25 is the length the swap was built for (core/swap-plan.js), and every
+//                           time of the swap is scaled by swapSeconds / standardSwapSeconds
+//   mondayStyle             not here: a Screen with none uses mondayStyle in defaultSettings below
+export const standardSwapSeconds = 1.25;
+export const defaultScreen = { nameEffectEveryMinutes: 10, hawkEveryMinutes: 15, swapSeconds: standardSwapSeconds };
+
+// The large panels whose content follows the team on the screen, because the items they draw carry the Team field
+// and core/content.js filters them (visibleItems). A row of one of these can name a team. Every other large panel
+// (events, photo, the competition cards) is the same for both teams, and a row of it has no team. The Studio
+// copies this list for the Team field of a row.
+export const teamPanels = ['tasks', 'tonight', 'spotlight', 'team-leads', 'roster', 'leadership', 'sponsor-feature', 'custom'];
+
+// The Monday cards a team has, in the order they play. A Monday row of a Screen names one of them and a team.
+export const mondayRows = ['monday-tasks', 'monday-milestones', 'monday-progress'];
+
+// The card that stands for each of two of them when a Monday row says both teams. The Build team card has none.
+export const mondayBothCards = { 'monday-milestones': 'monday-milestones-both', 'monday-progress': 'monday-progress-both' };
+
 // The team settings in Dashboard Settings (Look tab): which team the screen shows. The Studio copies this list.
 //   prime      the Prime team all the time
 //   nova       the Nova team all the time
 //   alternate  the two teams take turns, alternateMinutes each
 export const teamModes = ['prime', 'nova', 'alternate'];
 
-// The look rotation in Dashboard Settings used to let the editors pick how the screen changes from one look
+// How the look changes (lookSwap) in Dashboard Settings used to let the editors pick how the screen changes from one look
 // to the next. There is one swap now (core/swap-run.js) and the setting is hidden in the Studio. The field and
 // its stored value stay, so that nothing already saved is lost, and the screen ignores the value. The Studio
 // copies this list.
@@ -193,6 +231,20 @@ export const limits = {
   // is 264px, the largest that fits the 576px body with a row to itself.
   leadershipPortrait: { min: 60, max: 220 },
   rosterPortrait: { min: 60, max: 220 },
+  // The Screens (core/screens.js): the seconds a row stays, the minutes between the name effect and the flying hawk, and
+  // the seconds a swap takes
+  rowSeconds: { min: 6, max: 120 },
+  nameEffectEveryMinutes: { min: 1, max: 240 },
+  hawkEveryMinutes: { min: 1, max: 240 },
+  swapSeconds: { min: 0.5, max: 3 },
+};
+
+// The limits of the banner settings of a Screen, the three that sit beside defaultScreen. The Studio uses the same
+// numbers (studio/schemas/screen.js), and studio/check-schemas.mjs compares them
+export const screenLimits = {
+  nameEffectEveryMinutes: limits.nameEffectEveryMinutes,
+  hawkEveryMinutes: limits.hawkEveryMinutes,
+  swapSeconds: limits.swapSeconds,
 };
 
 // Used for anything the editors have not filled in yet
@@ -231,6 +283,8 @@ export const defaultSettings = {
   //                 nameEvery and nameDuration. nameDuration is the length of
   //                 the effect on HAWKTIMUS PRIME today: .8 s for a letter plus
   //                 45 ms for each of the 14 letters after the first.
+  // logoHawkEvery and nameEvery are not read any more: how often the hawk and the name effect play is the
+  // minutes of the Screen on the screen (defaultScreen above).
   logoAnimations: true,
   logoEntrance: true,
   logoSpin: true,
@@ -325,28 +379,17 @@ export const defaultSettings = {
   //   alternateMinutes  with alternate, how long each team stays before the screen swaps to the other
   teamMode: 'prime',
   alternateMinutes: 5,
-  // The look rotation in the Studio (Look tab) (core/look-rotation.js, docs/layouts.md, "The look rotation").
-  //   dailyStyles  the styles the screen goes through, one for each calendar day, in this order and then over
-  //                again (see styles above). Empty means the hidden style above decides
-  //   mondayStyle  the style while the Monday cards of a team are on the screen (see styles above)
-  //   teamOrder    the codes of the teams, in the order of their passes. Only teams that are switched on count.
-  //                Empty means the hidden teamMode above decides
-  //   lookSwap     hidden, and ignored by the screen (see lookSwaps above)
-  dailyStyles: ['original', 'cybertron'],
+  // The Screens (core/screens.js, docs/coaches-guide.md) replaced the look rotation. The Look tab keeps these:
+  //   screenSchedule  the Screen that plays on each day of the week, one of the styles above (see defaultSchedule)
+  //   mondayStyle     the style while a Monday row plays, for a Screen that has not set its own. It seeds the Screens
+  screenSchedule: defaultSchedule,
   mondayStyle: 'minimal',
+  // The Studio hides these, and the screen does not read them any more. The stored values stay. nameEvery and
+  // logoHawkEvery, in seconds, are not read either: the name effect and the flying hawk follow the minutes of the
+  // Screen that is on the screen (defaultScreen above)
+  dailyStyles: ['original', 'cybertron'],
   teamOrder: ['prime', 'nova'],
   lookSwap: 'assemble',
-  // The weekday schedule in the Studio (Look tab): the Screen that plays on each day of the week, as a style (see
-  // styles above). The day is the calendar day in the kiosk time zone. Minimal is not scheduled to start with
-  screenSchedule: {
-    monday: 'original',
-    tuesday: 'cybertron',
-    wednesday: 'original',
-    thursday: 'cybertron',
-    friday: 'original',
-    saturday: 'cybertron',
-    sunday: 'original',
-  },
   // The "Play announcements" button in the Studio (core/announce.js, core/announce-run.js, docs/hidden-transitions.md).
   //   announceRequest  the last click of the button. requestedAt is the time it was clicked and is empty until
   //                    it has been. The screen plays every announcement that is switched on, once, for a request
@@ -496,13 +539,6 @@ export const hiddenGapHours = 4;
 // screen goes back to the saved settings.
 export const previewSeconds = 120;
 
-// The look rotation (core/look-rotation.js). The screen never ends a pass of a team sooner than
-// lookShortestSeconds after it began, so a team with nothing to show cannot make the looks flicker.
-// A page that reloads, for a new version or for a change of layout that failed, goes on in the same pass if it
-// reloads within lookResumeSeconds of the last time the pass was written down.
-export const lookShortestSeconds = 15;
-export const lookResumeSeconds = 600;
-
 export const defaultDemo = {
   requestedAt: '',
   steps: [
@@ -628,26 +664,4 @@ export const primeTeam = {
   active: true,
   order: 10,
   builtIn: true,
-};
-
-// The Screens (Studio: Settings, Screens): three documents with the fixed ids screen-original, screen-cybertron and
-// screen-minimal. The style of a Screen is its id, and no style is stored. A Screen with no value for a field below, or
-// no document at all, uses the value here. The Studio copies the starting values and the limits (studio/schemas/screen.js).
-//   nameEffectEveryMinutes  how often the team name effect plays (banner settings, area A)
-//   hawkEveryMinutes        how often the flying hawk plays
-//   swapSeconds             the length of the swap between two looks. Every swap timing is scaled by swapSeconds over
-//                           swapSecondsStandard, the length the swap has had until now
-//   mondayStyle             not here: a Screen with none uses mondayStyle in defaultSettings above
-export const weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-export const screenIds = { original: 'screen-original', cybertron: 'screen-cybertron', minimal: 'screen-minimal' };
-export const swapSecondsStandard = 1.25;
-export const defaultScreen = {
-  nameEffectEveryMinutes: 10,
-  hawkEveryMinutes: 15,
-  swapSeconds: swapSecondsStandard,
-};
-export const screenLimits = {
-  nameEffectEveryMinutes: { min: 1, max: 240 },
-  hawkEveryMinutes: { min: 1, max: 240 },
-  swapSeconds: { min: 0.5, max: 3 },
 };

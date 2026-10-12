@@ -210,12 +210,15 @@ test('a page with no settings at all follows the default lists, and one with an 
   assert.deepEqual(idsOf(playlistOf(set, 'grid2')), ['safety-days']);
 });
 
-test('the screen asks for its playlists through playlistOf and does not read the older lists itself', () => {
+test('the screen plays the rows of a Screen, and only the Screens read the Panel order, through playlistOf, to build rows that are missing', () => {
   const shell = read('shell.js');
+  const seed = read('core/screen-seed.js');
 
-  assert.ok(shell.includes("import { playlistOf, withPages, withStandIns } from './core/panel-order.js';"));
-  assert.ok(shell.includes("playlistOf(rotation(), 'grid1')") && shell.includes("playlistOf(rotation(), 'grid2')"));
-  assert.ok(!/rotation\(\)\.grid[12]/.test(shell), 'shell.js should not read rotation().grid1 or rotation().grid2');
+  assert.ok(shell.includes("import { withPages, withStandIns } from './core/panel-order.js';"));
+  assert.ok(shell.includes('mainPlaylist(content, new Date())') && shell.includes('sidePlaylist(content, new Date())'));
+  assert.ok(!/playlistOf|rotation\(\)/.test(shell), 'shell.js should not read the Panel order');
+  assert.ok(seed.includes("playlistOf(rotation, 'grid1')") && seed.includes("playlistOf(rotation, 'grid2')"));
+  assert.ok(!/rotation\.grid[12]|\.grid[12]\b/.test(seed + read('core/screens.js')), 'the Screens should not read the older lists themselves');
 });
 
 // Run them

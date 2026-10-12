@@ -38,6 +38,7 @@ async function loadFilterModules() {
   fs.mkdirSync(path.join(folder, 'dashboard/themes/overlays'), { recursive: true });
 
   fs.copyFileSync(new URL('config.js', dashboard), path.join(folder, 'dashboard/config.js'));
+  fs.copyFileSync(new URL('registry.js', dashboard), path.join(folder, 'dashboard/registry.js'));
   fs.readdirSync(new URL('core/', dashboard))
     .filter(file => file.endsWith('.js'))
     .forEach(file => fs.copyFileSync(new URL('core/' + file, dashboard), path.join(folder, 'dashboard/core', file)));

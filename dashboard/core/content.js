@@ -10,7 +10,7 @@ import { chanceFields, hoursFields, tidyHiddenRequest, tidyHours } from './hidde
 import { tidyAnnounceRequest } from './announce.js';
 import { tidyTestRequest } from './presentation-test.js';
 import { tidyPreviewRequest } from './preview.js';
-import { tidyNextLookRequest } from './look-rotation.js';
+import { tidyNextLookRequest, tidySchedule } from './screens.js';
 import { fetchResult, liveEventsUrl, normalizeContent, normalizeSample } from './sanity.js';
 import { reasons } from './connection.js';
 import { showsForTeam } from './teams.js';
@@ -36,7 +36,7 @@ export function isVisible(item, now = new Date()) {
 
 // The items a panel may draw: the ones that are visible and are for the team on the screen
 // (core/teams.js). Every panel takes its items through here, so the team is judged in this one place.
-// The look rotation asks about a team that is not on the screen yet, and gives its code.
+// The Screens ask about a team that is not on the screen yet, and give its code.
 export function visibleItems(list, now = new Date(), teamCode) {
   return (list || []).filter(item => isVisible(item, now) && showsForTeam(item, teamCode));
 }
@@ -46,7 +46,7 @@ export function visibleItems(list, now = new Date(), teamCode) {
 // whether settings exist.
 export function withDefaults(raw) {
   const source = raw || {};
-  const content = Object.assign({ tasks: [], plan: null, plans: [], teams: [], sponsors: [], tipsAndNews: [], subteams: [], people: [], photos: [], presentations: [], customPanels: [], calendarFilters: [], frc: null, monday: null }, source);
+  const content = Object.assign({ tasks: [], plan: null, plans: [], teams: [], sponsors: [], tipsAndNews: [], subteams: [], people: [], photos: [], presentations: [], customPanels: [], calendarFilters: [], frc: null, monday: null, screens: [] }, source);
   content.team = Object.assign({}, defaultTeam, source.team);
   content.settings = Object.assign({}, defaultSettings, source.settings);
   content.settings.countdown = Object.assign({}, defaultSettings.countdown, content.settings.countdown);
@@ -87,10 +87,10 @@ export function fixSettingValues(settings, saved = settings) {
   if (!portraitFrames.includes(settings.portraitFrame)) settings.portraitFrame = defaultSettings.portraitFrame;
   // The team settings
   if (!teamModes.includes(settings.teamMode)) settings.teamMode = defaultSettings.teamMode;
-  // The look rotation: the styles by day, the Monday style, the teams in order and the swap
-  settings.dailyStyles = tidyStyleList(settings.dailyStyles);
+  // The Screens: the Screen of each weekday, and the Monday style a Screen has when it has not set its own. The swap is
+  // not a setting any more (lookSwaps in config.js) and the stored value is only kept tidy
+  settings.screenSchedule = tidySchedule(settings.screenSchedule);
   if (!styles.includes(settings.mondayStyle)) settings.mondayStyle = defaultSettings.mondayStyle;
-  settings.teamOrder = tidyTeamOrder(settings.teamOrder);
   if (!lookSwaps.includes(settings.lookSwap)) settings.lookSwap = defaultSettings.lookSwap;
   // The competition cards: the mode here, and a switch for each card in the list of booleans below
   if (!competitionModes.includes(settings.competitionMode)) settings.competitionMode = defaultSettings.competitionMode;
@@ -141,27 +141,6 @@ export function fixSettingValues(settings, saved = settings) {
   // The Monday tab: the boards are a list and the owner names a switch. The Mini reads both, and the screen has no use for them
   if (!Array.isArray(settings.mondayBoards)) settings.mondayBoards = defaultSettings.mondayBoards.slice();
   if (typeof settings.mondayShowOwners !== 'boolean') settings.mondayShowOwners = defaultSettings.mondayShowOwners;
-}
-
-// The styles of Styles by day. Something that is not a list is the starting list. An empty list stays
-// empty: the editors emptied it on purpose, and the Style setting decides. A name that is not a style
-// goes, and a style that comes twice stays, because Original, Original, Cybertron is a pattern.
-function tidyStyleList(value) {
-  if (!Array.isArray(value)) return defaultSettings.dailyStyles.slice();
-
-  return value.filter(name => styles.includes(name));
-}
-
-// The codes of Team order, in lowercase and each once. Something that is not a list is the starting
-// list, and an empty list stays empty, so that Team mode decides.
-function tidyTeamOrder(value) {
-  if (!Array.isArray(value)) return defaultSettings.teamOrder.slice();
-
-  const codes = value
-    .filter(code => typeof code === 'string')
-    .map(code => code.trim().toLowerCase())
-    .filter(code => code !== '');
-  return codes.filter((code, index) => codes.indexOf(code) === index);
 }
 
 // A request that is only a time, always complete: { requestedAt }. A time that is not a time
@@ -350,7 +329,7 @@ export function savedStyle() {
 }
 
 // The content in the saved copy, cleaned the way content from Sanity is, or null. Only when the screen will
-// start on the editors' content, like savedStyle. core/look-rotation.js uses it to work out the look the
+// start on the editors' content, like savedStyle. core/screens.js uses it to work out the look the
 // screen starts with, before anything is drawn.
 export function savedContent() {
   try {

@@ -539,6 +539,7 @@ test('the hawk plays the acts of the old show at the old seconds, 11 seconds in 
 test('the hawk first plays at 13 seconds, then 24 seconds after its last start, and the spin at 50 and then every 72, with no overlap', async () => {
   await inPage(async world => {
     onlyTheLogoMoves(world);
+    world.frame.setHawk(true, 24, 11); // the Screens set the seconds between flights; this is the old show's
     world.frame.startLogo(world.logo);
 
     await world.advance(300 * second);
@@ -770,6 +771,7 @@ test('the master switch turned off while the name effect plays ends it', async (
 test('a play asked for by hand ends a spin or a hawk on the spot and takes over: the announcement glitch never waits for the logo', async () => {
   await inPage(async world => {
     onlyTheLogoMoves(world);
+    world.frame.setHawk(true, 24, 11);
     world.frame.startLogo(world.logo);
 
     await world.advance(15 * second); // in the robot act of the hawk

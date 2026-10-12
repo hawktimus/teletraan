@@ -20,8 +20,8 @@ function regionOf(id) {
   return panel ? panel.region : null;
 }
 
-// A Monday card is not a panel an editor orders: it runs in the Monday block of the look rotation
-// (core/look-rotation.js). A row that names one, from a page saved when Panel order offered them, is left out.
+// A Monday card is not a panel an editor orders here: it is a Monday row of a Screen (core/screens.js). A row that
+// names one, from a page saved when Panel order offered them, is left out.
 function isMondayCard(id) {
   const panel = panels.find(item => item.id === id);
   return Boolean(panel && panel.monday);

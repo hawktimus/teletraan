@@ -9,6 +9,7 @@ import { classifyFailure } from './connection.js';
 import { fromBoardOnly } from './task-source.js';
 import { tidyFrc } from './frc.js';
 import { tidyMondayStatus } from './monday.js';
+import { tidyScreens } from './screens.js';
 
 // Everything the screen needs, in one request. Lists come back in the order
 // they were created, and normalizeContent puts the ones with an Order first.
@@ -25,8 +26,8 @@ import { tidyMondayStatus } from './monday.js';
 // No Demo document means no demo (core/demo.js).
 // Events come from the BAND calendars (core/calendar.js). The Events Calendar
 // entries in Studio are not read.
-// Styles by day and Team order are sent as lists too, and Team order as the codes of its teams. A list
-// that is missing is a list that is empty: the screen then follows Style and Team mode (core/look-rotation.js).
+// The three Screens are sent with the ids that say which style each one is, and their rows as lists. A Screen
+// that is missing, or whose list of rows is empty, is built from the Panel order (core/screens.js).
 // Calendar filter rules are cleaned in normalizeFilter. One that is off or past
 // its Hide after time stays in the list, and core/events.js leaves it out.
 // A person's photo, and the photo of a team lead, is sent as a plain address with its size, crop and
@@ -52,9 +53,7 @@ export const contentQuery = `{
     ...,
     "rotation": rotation { ..., "grid1": coalesce(grid1, []), "grid2": coalesce(grid2, []) },
     "announcements": coalesce(announcements, []),
-    "calendars": coalesce(calendars, []),
-    "dailyStyles": coalesce(dailyStyles, []),
-    "teamOrder": coalesce(teamOrder[]->code, [])
+    "calendars": coalesce(calendars, [])
   },
   "theme": *[_id == "theme"][0],
   "demo": *[_id == "demo"][0],
@@ -129,6 +128,15 @@ export const contentQuery = `{
       crop,
       hotspot
     }
+  },
+  "screens": *[_type == "screen"] | order(_id asc) {
+    _id,
+    "mainRows": coalesce(mainRows, []),
+    "sideRows": coalesce(sideRows, []),
+    nameEffectEveryMinutes,
+    hawkEveryMinutes,
+    swapSeconds,
+    mondayStyle
   },
   "frc": *[_id == "frc-status"][0],
   "monday": *[_id == "monday-status"][0] { lastSyncAt, lastError, "snapshots": coalesce(snapshots, []) }
@@ -254,6 +262,7 @@ export function normalizeContent(result, now = new Date()) {
     customPanels: customPanelsFrom(data.customPanels),
     frc: tidyFrc(data.frc),
     monday: tidyMondayStatus(data.monday),
+    screens: tidyScreens(data.screens, settings.mondayStyle),
   });
 }
 
@@ -281,6 +290,7 @@ export function normalizeSample(raw) {
   content.calendarFilters = filtersFrom(data.calendarFilters);
   content.frc = tidyFrc(data.frc);
   content.monday = tidyMondayStatus(data.monday);
+  content.screens = tidyScreens(data.screens, content.settings.mondayStyle);
   return withDefaults(content);
 }
 
@@ -551,7 +561,8 @@ const hexColor = /^#[0-9A-Fa-f]{6}$/;
 const teamCode = /^[a-z0-9]+$/;
 
 // A team document from Studio becomes { code, name, shortName, number, logo, colors, metal, glow, mirror, the
-// eight trim fields, active, order }. The code is lowercase letters and digits, and it is what the items point to,
+// eight trim fields, active, order }. The name look (nameStyle) is not read from the document: the switch Outlined name
+// (outlinedName) says it, outline when it is on and solid otherwise. The code is lowercase letters and digits, and it is what the items point to,
 // so a team without a usable one is dropped. The names are capitals, the way the team name
 // has always been written in the banner, and a missing one is the other, or the code. The
 // logo is the address of the picture at the width the screen needs (core/images.js), and
@@ -587,7 +598,7 @@ function normalizeTeamDocument(raw) {
     headerNotch: trimValue(raw, 'headerNotch'),
     grid: trimValue(raw, 'grid'),
     logoPose: trimValue(raw, 'logoPose'),
-    nameStyle: trimValue(raw, 'nameStyle'),
+    nameStyle: raw.outlinedName === true ? 'outline' : 'solid',
     tickerLabel: trimValue(raw, 'tickerLabel'),
     countAccent: trimValue(raw, 'countAccent'),
     active: raw.active !== false,

@@ -6201,7 +6201,7 @@ function checkScreenType() {
     need(problems, (name === 'swapSeconds') === !constraintNamed(rules, 'integer'), 'screen.' + name + (name === 'swapSeconds' ? ' should allow decimals' : ' should be a whole number'));
     need(problems, field && new RegExp('from ' + config.screenLimits[name].min + ' to ' + config.screenLimits[name].max).test(field.description || '') && new RegExp('Starts at ' + defaults[name] + '\\.').test(field.description || ''), 'the screen.' + name + ' description should give the range and the starting value');
   });
-  need(problems, config.swapSecondsStandard === 1.25 && config.defaultScreen.swapSeconds === config.swapSecondsStandard, 'swapSecondsStandard in config.js should be 1.25, the length of the swap until now');
+  need(problems, config.standardSwapSeconds === 1.25 && config.defaultScreen.swapSeconds === config.standardSwapSeconds, 'standardSwapSeconds in config.js should be 1.25, the length of the swap until now');
 
   // the sections that store nothing: a button or a link, drawn by an input of their own
   [['bannerTeam', world.screenFields.BannerTeamInput], ['countdownShown', world.screenFields.CountdownInput], ['tickerLink', world.screenFields.TickerInput]].forEach(entry => {

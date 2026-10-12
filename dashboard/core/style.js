@@ -14,7 +14,7 @@
 //                screen runs (recordShapes, and redrawFrames in core/areas.js)
 //
 // The team (core/teams.js) is a different thing: it sets the colors and the mirror
-// switch, and any style can have either team. The look rotation (core/look-rotation.js) changes
+// switch, and any style can have either team. The Screens (core/screens.js) change
 // both together, through rotateStyle below and rotateTeam in core/teams.js, and they go on the
 // page in the same step as a preview does.
 //
@@ -61,7 +61,7 @@ export function previewStyle(style, until) {
   previewed = isStyle(style) && typeof until === 'number' && isFinite(until) ? { style: style, until: until } : null;
 }
 
-// The look rotation (core/look-rotation.js) holds the style of the pass it is in, the way a preview
+// The Screens (core/screens.js) hold the style of the row that plays, the way a preview
 // holds one, but weaker: a preview and ?style= win over it, and it wins over Style in Dashboard
 // Settings. A name that is not a style lets go, and the setting decides again.
 let rotated = '';
@@ -73,7 +73,7 @@ export function rotateStyle(style) {
 // saved is Style from Dashboard Settings, and asked is ?style= in the address. The
 // address wins, for this page only, like the other switches. Anything that is not a
 // style is ignored. A preview that has time left wins over both, and the style the
-// look rotation holds comes after the address and before the setting. now is a Date.
+// Screens hold comes after the address and before the setting. now is a Date.
 export function chooseStyle(saved, asked, now = new Date()) {
   if (previewed && now.getTime() < previewed.until) return previewed.style;
   if (isStyle(asked)) return asked;

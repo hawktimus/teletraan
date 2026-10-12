@@ -24,6 +24,7 @@ const root = path.join(workFolder, 'dashboard');
 fs.mkdirSync(path.join(root, 'core'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
 fs.copyFileSync(path.join(dashboardFolder, 'config.js'), path.join(root, 'config.js'));
+fs.copyFileSync(path.join(dashboardFolder, 'registry.js'), path.join(root, 'registry.js'));
 fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith('.js')).forEach(file => {
   fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(root, 'core', file));
 });

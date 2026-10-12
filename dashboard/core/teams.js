@@ -2,7 +2,7 @@
 //
 //   choosing    chooseTeam() says which team the mode and the clock ask for. A preview (core/preview.js)
 //               or ?team= in the address can hold a mode in place of the setting (previewTeam, askForTeam),
-//               and the look rotation (core/look-rotation.js) can hold a team in place of the mode (rotateTeam)
+//               and the Screens (core/screens.js) can hold a team in place of the mode (rotateTeam)
 //   filtering   showsForTeam() says whether an item belongs on the screen of that team.
 //               visibleItems() in content.js asks it, so a panel that leaves out hidden and
 //               expired items leaves out the other team's items too. No panel asks it itself
@@ -95,7 +95,8 @@ const waitedTooLong = 60 * 1000;
 let teams = [primeTeam]; // every team there is, in order
 let previewed = null; // { mode, until }: a preview (core/preview.js) holds a mode on the screen for a while
 let asked = ''; // ?team= in the address, for this page only
-let rotated = ''; // the code of the team the look rotation holds (core/look-rotation.js), or '' for none
+let rotated = ''; // the code of the team the Screens hold (core/screens.js), or '' for none
+let viewing = ''; // the code of a team that showsForTeam judges for, while a row asks whether a panel has content (asTeam)
 let wanted = primeTeam; // the team the mode and the clock ask for. The items follow this one
 let showing = null; // the team that is on the page, or null before the first one goes on
 let waitingSince = null; // the time, in milliseconds, that wanted first differed from showing
@@ -118,10 +119,26 @@ export function askForTeam(mode) {
   asked = teamModes.indexOf(mode) !== -1 ? mode : '';
 }
 
-// The look rotation holds a team for the pass it is in, the way a preview holds a mode, but weaker: a
+// ?team= in the address as it was typed, or '' when it asks for none or asks for Alternate mode, which has no one team
+export function addressTeam() {
+  return asked === 'prime' || asked === 'nova' ? asked : '';
+}
+
+// The Screens hold the team of the row that plays, the way a preview holds a mode, but weaker: a
 // preview and ?team= win over it, and it wins over Team mode. A code that is not an active team lets go.
 export function rotateTeam(code) {
   rotated = typeof code === 'string' ? code : '';
+}
+
+// Runs a question as if the team with this code were on the screen, for a row that has not started yet: does its
+// panel have content for that team. Nothing is held and nothing is told. An empty code asks about the team now.
+export function asTeam(code, run) {
+  viewing = typeof code === 'string' ? code : '';
+  try {
+    return run();
+  } finally {
+    viewing = '';
+  }
 }
 
 function previewing(now) {
@@ -134,7 +151,7 @@ function modeFor(settings, now) {
   return asked || settings.teamMode;
 }
 
-// The team the look rotation holds, or null when it holds none, a preview or the address asks for another, or
+// The team the Screens hold, or null when they hold none, a preview or the address asks for another, or
 // its team is not in the list or is switched off
 function rotatedTeam(list, now) {
   if (rotated === '' || previewing(now) || asked !== '') return null;
@@ -164,8 +181,8 @@ export function chooseTeam(list, mode, minutes, now = new Date()) {
 }
 
 // True when the item is for the team with this code, or for both teams: its team is empty.
-// Without a code it is the team the screen is changing to, or already showing.
-export function showsForTeam(item, code = wanted.code) {
+// Without a code it is the team the screen is changing to, or already showing, or the one asTeam is asking about.
+export function showsForTeam(item, code = viewing || wanted.code) {
   const team = item && typeof item.team === 'string' ? item.team : '';
   return team === '' || team === code;
 }

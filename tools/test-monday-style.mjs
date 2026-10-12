@@ -1,8 +1,8 @@
-// Tests for the Monday block in the Monday style (docs/layouts.md, "The look rotation" and "The swap"): the Monday
-// cards belong to the Monday pass and to no other, the Monday pass is in the Monday style or it does not happen, and
-// a held look goes on in a swap. dashboard/core/look-rotation.js is run for real, and so is the page side of it,
-// dashboard/core/look-rotation-run.js, with stand-ins for the swap, the schedule and the other parts of the screen,
-// and a small page that says which layout it is drawn for. The swap itself is in tools/test-swap.mjs.
+// Tests for the Monday rows in the Monday style (docs/layouts.md, "The Screens" and "The swap"): a Monday row is in
+// the Monday style or it waits, going into the Monday cards and out of them is a swap, and a held look goes on in
+// a swap. The choices between rows are in dashboard/core/screens.js and tools/test-screens.mjs. Here the page side of
+// them, dashboard/core/screens-run.js, is run for real, with stand-ins for the swap, the schedule and the other parts
+// of the screen, and a small page that says which layout it is drawn for. The swap itself is in tools/test-swap.mjs.
 //
 //   node tools/test-monday-style.mjs
 
@@ -36,12 +36,11 @@ const standIns = {
   'frame.js': ['export const onSecond = listener => { globalThis.mondayWorld.seconds = listener; };'],
   'core/schedule.js': [
     'export const setLookHooks = hooks => { globalThis.mondayWorld.hooks = hooks; };',
-    "export const moveOn = regions => globalThis.mondayWorld.log.push('moveOn ' + regions.join(' '));",
-    "export const rewindRotation = () => globalThis.mondayWorld.log.push('rewind');",
+    "export const skipRow = () => globalThis.mondayWorld.log.push('skipRow');",
   ],
   'core/swap-run.js': [
     "export const queueSwap = () => globalThis.mondayWorld.log.push('queueSwap');",
-    "export const startSwaps = busy => { globalThis.mondayWorld.swapBusy = busy; };",
+    "export const startSwaps = (busy, scale) => { globalThis.mondayWorld.swapBusy = busy; globalThis.mondayWorld.swapScale = scale; };",
     'export const swapRunning = () => globalThis.mondayWorld.swapping;',
   ],
   'core/team-run.js': ['export const noteWantedTeam = () => {};'],
@@ -55,13 +54,13 @@ Object.keys(standIns).forEach(file => fs.writeFileSync(path.join(root, file), st
 
 const base = pathToFileURL(root).href + '/';
 const config = await import(base + 'config.js');
-const rotation = await import(base + 'core/look-rotation.js');
+const screens = await import(base + 'core/screens.js');
 const layoutModule = await import(base + 'core/layout.js');
 const sanity = await import(base + 'core/sanity.js');
 const registry = await import(base + 'registry.js');
-const run = await import(base + 'core/look-rotation-run.js');
+const teamsModule = await import(base + 'core/teams.js');
 
-const { makeLookRotation, styleCanGoOn, withoutMondayCards } = rotation;
+const { styleCanGoOn } = screens;
 
 const tests = [];
 function test(name, body) {
@@ -69,15 +68,14 @@ function test(name, body) {
 }
 
 
-// The content: the sample, with a board task for Prime and none for Nova
+// The content: the sample, with the Screens it has, every day of the week on Original
 
 const sampleRaw = () => JSON.parse(fs.readFileSync(path.join(dashboardFolder, 'data/sample/content.json'), 'utf8'));
-function contentWith(settings, moreTasks) {
+function contentWith(change) {
   const raw = sampleRaw();
   raw.settings.countdown = { kickoffLabel: 'KICKOFF IN', kickoff: '2027-01-09T17:00:00.000Z', rolloutLabel: 'ROLLOUT IN', rollout: '' };
-  raw.tasks = [{ title: '[Task]', subteam: '[Subteam A]', status: 'up-next', team: 'prime', source: 'monday', mondayId: '[item]', showOnTv: true }].concat(moreTasks || []);
-  raw.subteams = [{ name: '[Subteam A]' }];
-  Object.assign(raw.settings, { dailyStyles: ['original'], mondayStyle: 'minimal', teamOrder: ['prime', 'nova'] }, settings || {});
+  Object.keys(raw.settings.screenSchedule).forEach(day => { raw.settings.screenSchedule[day] = 'original'; });
+  if (change) change(raw);
   return sanity.normalizeSample(raw);
 }
 
@@ -106,41 +104,36 @@ function setPage(drawn) {
   globalThis.document = { documentElement: page };
 }
 
-// Starts the look rotation of the page side over this content and page, and gives back what it hands to the schedule
+// Starts the page side of the Screens over this content and page, and gives back what it hands to the schedule
 async function start(options = {}) {
   const content = options.content || contentWith();
-  const world = { log: [], hooks: null, seconds: null, swapBusy: null, swapping: false };
+  const world = { log: [], hooks: null, seconds: null, swapBusy: null, swapScale: null, swapping: false };
   globalThis.mondayWorld = world;
   setPage(options.page || 'standard');
   globalThis.window = { localStorage: fakeStorage(), sessionStorage: options.session === undefined ? fakeStorage() : options.session };
+  screens.holdScreenLook({ team: '', style: '', monday: false });
+  teamsModule.rotateTeam('');
 
-  const file = pathToFileURL(path.join(root, 'core/look-rotation-run.js')).href + '?' + Math.random();
+  const file = pathToFileURL(path.join(root, 'core/screens-run.js')).href + '?' + Math.random();
   const module = await import(file);
-  await module.startLookRotation(() => content, false);
+  await module.startScreens(() => content, options.addressAsks === true);
 
-  // moves the rotation to the next pass as the schedule does at the end of one
-  world.nextPass = seconds => world.hooks.atPass(new Date(Date.now() + seconds * 1000));
   world.content = content;
   return world;
 }
 
-const steps = (...ids) => ids.map(id => ({ panel: id, show: true }));
-const idsOf = list => list.map(step => step.panel);
+const step = (panel, team) => ({ panel: panel, show: true, team: team || '' });
 
 
-// The cards and the pass
+// The cards and the style
 
-test('the Monday cards are the five panels the registry flags, and a list without them is the list it was', () => {
+test('the Monday cards are the five panels the registry flags, and the rows name the three of a team', () => {
   const cards = registry.panels.filter(panel => panel.monday).map(panel => panel.id);
   assert.deepEqual(cards, ['monday-tasks', 'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both']);
-
-  const usual = steps('tasks', 'events', 'tonight');
-  assert.deepEqual(withoutMondayCards(usual, cards), usual);
-  assert.deepEqual(idsOf(withoutMondayCards(steps('tasks', 'monday-tasks', 'events', 'monday-progress', 'monday-milestones', 'photo'), cards)), ['tasks', 'events', 'photo']);
-  const list = steps('monday-tasks');
-  withoutMondayCards(list, cards);
-  assert.equal(list.length, 1, 'the list that was given is not changed');
-  assert.deepEqual(withoutMondayCards([], cards), []);
+  assert.deepEqual(config.mondayRows, cards.slice(0, 3));
+  assert.deepEqual(Object.values(config.mondayBothCards), cards.slice(3));
+  cards.forEach(id => assert.equal(screens.isMondayPanel(id), true, id));
+  ['tasks', 'events', 'photo', 'forecast', 'no-such-panel'].forEach(id => assert.equal(screens.isMondayPanel(id), false, id));
 });
 
 test('a style of the layout the page has goes on, and a style of another layout goes on only while the page may reload for it', () => {
@@ -152,170 +145,131 @@ test('a style of the layout the page has goes on, and a style of another layout 
   assert.equal(styleCanGoOn('bar-minimal', 'standard', undefined), false, 'anything but true is no');
 });
 
-test('a Monday pass is left out of the cycle while the Monday style cannot go on, and is back when it can', () => {
-  const content = contentWith();
-  let fits = true;
-  const machine = makeLookRotation({ getContent: () => content, storage: fakeStorage(), canShow: () => fits });
-  const start = new Date('2026-10-12T16:00:00Z');
-  const after = seconds => new Date(start.getTime() + seconds * 1000);
-
-  machine.begin(start);
-  assert.deepEqual(machine.boundary(after(20)).kind, 'monday', 'with the style fitting, Prime is followed by its Monday cards');
-  assert.equal(machine.pass().kind, 'monday');
-
-  // the cards are up and the style stops fitting: the pass is gone, and the cycle starts again at its first pass
-  fits = false;
-  const answer = machine.boundary(after(40));
-  assert.equal(answer.moved, true);
-  assert.deepEqual(machine.pass(), { team: 'prime', kind: 'panels' });
-
-  const kinds = [];
-  for (let step = 1; step <= 4; step++) {
-    machine.boundary(after(40 + step * 20));
-    kinds.push(machine.pass().team + ' ' + machine.pass().kind);
-  }
-  assert.deepEqual(kinds, ['nova panels', 'prime panels', 'nova panels', 'prime panels'], 'no Monday cards while they cannot be in their style');
-
-  fits = true;
-  machine.boundary(after(200));
-  machine.boundary(after(220));
-  assert.ok(['prime monday', 'nova panels'].includes(machine.pass().team + ' ' + machine.pass().kind));
-  const seen = [];
-  for (let step = 1; step <= 4; step++) {
-    machine.boundary(after(220 + step * 20));
-    seen.push(machine.pass().kind);
-  }
-  assert.ok(seen.includes('monday'), 'and the cards come back');
-});
-
-test('canShow is asked about the Monday style only, and only for a team that has Monday cards', () => {
-  const content = contentWith();
-  const asked = [];
-  const machine = makeLookRotation({ getContent: () => content, storage: fakeStorage(), canShow: style => { asked.push(style); return true; } });
-  machine.begin(new Date('2026-10-12T16:00:00Z'));
-  machine.boundary(new Date('2026-10-12T16:00:20Z'));
-
-  assert.ok(asked.length > 0);
-  assert.deepEqual(Array.from(new Set(asked)), [content.settings.mondayStyle], 'never about the style of the day');
-
-  const none = [];
-  const without = makeLookRotation({ getContent: () => contentWith(), storage: fakeStorage(), mondayCards: () => [], canShow: style => { none.push(style); return true; } });
-  without.begin(new Date('2026-10-12T16:00:00Z'));
-  assert.deepEqual(none, [], 'with no Monday cards the question does not come up');
-});
-
-
-test('the pass of both teams is a Monday pass: it needs the Monday style to fit as a team\'s does, and it is the last of the cycle', () => {
-  const nova = { title: '[Task N]', subteam: '[Subteam A]', status: 'up-next', team: 'nova', source: 'monday', mondayId: '[item N]', showOnTv: true };
-  const content = contentWith({}, [nova]);
-  const start = new Date('2026-10-12T16:00:00Z');
-  const after = seconds => new Date(start.getTime() + seconds * 1000);
-  const walk = fits => {
-    const machine = makeLookRotation({ getContent: () => content, storage: fakeStorage(), canShow: () => fits });
-    const found = [];
-    machine.begin(start);
-    found.push(machine.pass());
-    for (let step = 1; step <= 5; step++) {
-      machine.boundary(after(step * 20));
-      found.push(machine.pass());
-    }
-    return found.map(pass => [pass.team, pass.kind].concat(pass.both ? ['both'] : []).join(' '));
-  };
-
-  assert.deepEqual(walk(true), ['prime panels', 'prime monday', 'nova panels', 'nova monday', 'nova monday both', 'prime panels']);
-  assert.deepEqual(walk(false), ['prime panels', 'nova panels', 'prime panels', 'nova panels', 'prime panels', 'nova panels'], 'neither the cards of a team nor the cards of both are drawn in another style');
-});
-
-// The page side
-
-test('in a Monday pass the large panel follows the cards of the team, and in every other pass the usual list without them', async () => {
+test('the Screens hand the schedule three questions, and the swap its length', async () => {
   const world = await start();
-  const cards = rotation.mondayCards(world.content, 'prime');
-  assert.ok(cards.length >= 3, 'Prime has the cards');
-  const usual = steps('tasks', 'monday-tasks', 'events', 'monday-milestones', 'monday-progress');
+  assert.deepEqual(Object.keys(world.hooks).sort(), ['begin', 'fits', 'viewAs']);
+  assert.equal(typeof world.swapBusy, 'function');
+  assert.equal(world.swapScale(), 1, 'a Screen with the standard 1.25 seconds');
 
-  assert.deepEqual(idsOf(world.hooks.playlist(usual)), ['tasks', 'events'], 'the first pass is Prime\'s panels: no card in it');
-  assert.equal(world.hooks.atPass(new Date(Date.now() + 20000)), true, 'the pass is over and another begins');
-  assert.deepEqual(world.hooks.playlist(usual), cards, 'now the Monday cards of Prime');
-  assert.equal(world.hooks.atPass(new Date(Date.now() + 40000)), true);
-  assert.deepEqual(idsOf(world.hooks.playlist(usual)), ['tasks', 'events'], 'and the panels again, without the cards');
+  const slow = await start({ content: contentWith(raw => { raw.screens[0].swapSeconds = 2.5; }) });
+  assert.equal(slow.swapScale(), 2);
+  const quick = await start({ content: contentWith(raw => { raw.screens[0].swapSeconds = 0.5; }) });
+  assert.equal(quick.swapScale(), 0.4);
 });
 
-test('in the pass of both teams the large panel follows the two cards of both, and going into it holds no look: the swap is the move from card to card', async () => {
-  const nova = { title: '[Task N]', subteam: '[Subteam A]', status: 'up-next', team: 'nova', source: 'monday', mondayId: '[item N]', showOnTv: true };
-  const world = await start({ content: contentWith({}, [nova]) });
-  const usual = steps('tasks', 'events');
-
-  for (let step = 1; step <= 3; step++) world.hooks.atPass(new Date(Date.now() + step * 20000));
-  assert.equal(world.hooks.playlist(usual)[0].panel, 'monday-tasks', 'the cards of Nova');
-
-  world.log.length = 0;
-  assert.equal(world.hooks.atPass(new Date(Date.now() + 80000)), true);
-  assert.deepEqual(idsOf(world.hooks.playlist(usual)), ['monday-milestones-both', 'monday-progress-both'], 'the cards of both teams are not taken out of the Monday pass');
-  assert.deepEqual(world.log, [], 'the style and the team are Nova in Minimal, as before, so nothing is held');
-
-  world.log.length = 0;
-  world.hooks.atPass(new Date(Date.now() + 100000));
-  assert.deepEqual(idsOf(world.hooks.playlist(usual)), ['tasks', 'events'], 'and after it the panels of Prime, without the cards');
-  assert.deepEqual(world.log, ['checkTheme', 'queueSwap'], 'with the look held, for the swap');
+test('when the address asks for a style or a team the Screens hold nothing and ask nothing', async () => {
+  const world = await start({ addressAsks: true });
+  assert.equal(world.hooks, null);
+  assert.equal(world.swapBusy, null);
+  assert.deepEqual(world.log, []);
 });
 
-test('a held look is handed to the screen and goes on in a swap: the style into the Monday pass, and back after it', async () => {
+
+// A step is chosen: the look it needs is held
+
+test('a Monday row goes into the Monday style with a swap, the cards between hold one look, and the next row comes out with a swap', async () => {
   const world = await start();
-  assert.deepEqual(world.log.filter(line => line !== 'checkTheme'), [], 'nothing is queued at the start');
+
+  world.hooks.begin(step('tasks', 'prime'));
+  assert.deepEqual(world.log, ['checkTheme'], 'the first row holds its look, and there is nothing to swap from');
+  assert.deepEqual(screens.heldLook(), { team: 'prime', style: 'original', monday: false });
 
   world.log.length = 0;
-  world.hooks.atPass(new Date(Date.now() + 20000));
+  world.hooks.begin(step('monday-tasks', 'prime'));
   assert.deepEqual(world.log, ['checkTheme', 'queueSwap'], 'Prime in Minimal: the look is held and the next page change is a swap');
+  assert.deepEqual(screens.heldLook(), { team: 'prime', style: 'minimal', monday: true });
 
   world.log.length = 0;
-  world.hooks.atPass(new Date(Date.now() + 40000));
-  assert.deepEqual(world.log, ['checkTheme', 'queueSwap'], 'and Nova back in the style of the day');
+  world.hooks.begin(step('monday-milestones', 'prime'));
+  world.hooks.begin(step('monday-progress', 'prime'));
+  assert.deepEqual(world.log, [], 'the cards between are one look');
+
+  world.hooks.begin(step('tasks', 'nova'));
+  assert.deepEqual(world.log, ['checkTheme', 'queueSwap'], 'Nova back in the style of the day');
+  assert.deepEqual(screens.heldLook(), { team: 'nova', style: 'original', monday: false });
 });
 
-test('a Monday pass in the style of the day holds no look, so no swap is queued for it: the cards are a swap by themselves', async () => {
-  const world = await start({ content: contentWith({ mondayStyle: 'original', teamOrder: ['prime'] }) });
+test('a Monday row in the style of the day holds no new style and queues no swap: the cards are a swap by themselves in full motion', async () => {
+  const world = await start({ content: contentWith(raw => { raw.screens.forEach(screen => { screen.mondayStyle = 'original'; }); }) });
+
+  world.hooks.begin(step('tasks', 'prime'));
   world.log.length = 0;
+  world.hooks.begin(step('monday-progress', 'prime'));
+  assert.deepEqual(world.log, ['checkTheme'], 'the look is the same, so nothing is queued');
+  assert.equal(screens.heldLook().style, 'original');
+  assert.equal(screens.heldLook().monday, true, 'but the screen knows it is in the Monday cards');
 
-  assert.equal(world.hooks.atPass(new Date(Date.now() + 20000)), true);
-  assert.deepEqual(world.log, [], 'the style and the team are the same, so nothing is held');
-  assert.equal(world.hooks.playlist(steps('tasks')).length >= 3, true, 'but the Monday cards are up');
+  world.log.length = 0;
+  world.hooks.begin(step('photo'));
+  assert.deepEqual(world.log, ['checkTheme'], 'and out again');
+  assert.equal(screens.heldLook().monday, false);
+
+  const swap = read('core/swap-run.js');
+  assert.ok(swap.includes("if (!looked && (frame.motionNow() !== 'full' || (!isMondayCard(old.id) && !isMondayCard(next.id)))) return null;"), 'a Monday card on either side is a swap in full motion');
 });
 
-test('Next look now holds the look, starts every list again, and moves the pages on; a second press moves past the Monday cards', async () => {
+test('a row with no team, and a row for both teams, keep the team and hold no look when the style is the same', async () => {
   const world = await start();
-  const request = at => { world.content.settings.nextLookRequest = { requestedAt: new Date(at).toISOString() }; };
-  world.log.length = 0;
 
-  request(Date.now());
-  world.seconds(new Date());
-  assert.deepEqual(world.log, ['rewind', 'checkTheme', 'queueSwap', 'moveOn grid1 grid2 ticker']);
-  assert.deepEqual(world.hooks.playlist(steps('tasks')).length >= 3, true, 'a press from Prime\'s panels goes to its Monday cards');
-
+  world.hooks.begin(step('tasks', 'nova'));
   world.log.length = 0;
-  request(Date.now() + 2000);
-  world.seconds(new Date(Date.now() + 2000));
-  assert.deepEqual(world.log, ['rewind', 'checkTheme', 'queueSwap', 'moveOn grid1 grid2 ticker'], 'the second press moves past them, to Nova');
-  assert.deepEqual(idsOf(world.hooks.playlist(steps('tasks', 'monday-tasks'))), ['tasks']);
+  world.hooks.begin(step('photo'));
+  world.hooks.begin(step('events'));
+  world.hooks.begin({ panel: 'competition-rank', show: true });
+  assert.deepEqual(world.log, []);
+  assert.equal(screens.heldLook().team, 'nova');
+
+  world.hooks.begin(step('monday-milestones-both', 'both'));
+  assert.deepEqual(world.log, ['checkTheme', 'queueSwap'], 'the cards of both teams are in the Monday style');
+  assert.deepEqual(screens.heldLook(), { team: 'nova', style: 'minimal', monday: true }, 'in the colors of the team that was on the screen');
 });
 
-test('the Monday pass is always taken while the page changes layout as it runs, and is skipped only after a change has failed and the page cannot reload for the Monday style', async () => {
-  const kinds = async options => {
-    const world = await start(options);
-    const result = [];
-    for (let step = 1; step <= 3; step++) {
-      world.hooks.atPass(new Date(Date.now() + step * 20000));
-      result.push(world.hooks.playlist(steps('tasks')).length >= 3 ? 'monday' : 'panels');
-    }
-    return result;
-  };
+test('a step is asked about as the team it is drawn for, without that team being held', async () => {
+  const world = await start();
+  world.hooks.begin(step('tasks', 'prime'));
+  teamsModule.useTeams(world.content, new Date());
+
+  const items = [{ team: 'nova' }, { team: 'prime' }, {}];
+  const asked = team => world.hooks.viewAs(step('tasks', team), () => items.map(item => teamsModule.showsForTeam(item)));
+  assert.deepEqual(asked('nova'), [true, false, true]);
+  assert.deepEqual(asked('prime'), [false, true, true]);
+  assert.deepEqual(asked(''), [false, true, true], 'a step with no team is asked as the team on the screen');
+  assert.deepEqual(asked('both'), [false, true, true]);
+  assert.deepEqual(screens.heldLook().team, 'prime');
+  assert.equal(teamsModule.wantedTeam().code, 'prime');
+});
+
+test('the Screen of the day decides the style of the plain rows, and the Monday style of that Screen the style of the Monday rows', async () => {
+  const world = await start({ content: contentWith(raw => {
+    Object.keys(raw.settings.screenSchedule).forEach(day => { raw.settings.screenSchedule[day] = 'cybertron'; });
+    raw.screens.filter(screen => screen._id === 'screen-cybertron')[0].mondayStyle = 'original';
+  }) });
+
+  world.hooks.begin(step('tasks', 'prime'));
+  assert.equal(screens.heldLook().style, 'cybertron');
+  world.hooks.begin(step('monday-tasks', 'prime'));
+  assert.equal(screens.heldLook().style, 'original', 'the Monday style of Cybertron, which is Original');
+  world.hooks.begin(step('tasks', 'prime'));
+  assert.equal(screens.heldLook().style, 'cybertron');
+});
+
+
+// Monday rows wait when their style cannot go on the page
+
+test('a Monday row waits while the Monday style cannot go on the page, and is back when it can; every other row always fits', async () => {
+  const world = await start();
+  const fits = id => world.hooks.fits(step(id, 'prime'));
   const noted = fakeStorage();
   noted.setItem(layoutModule.reloadKey, 'bar-minimal');
 
-  assert.deepEqual(await kinds({}), ['monday', 'panels', 'panels'], 'a page goes into Minimal and out of it');
-  assert.deepEqual(await kinds({ session: noted }), ['monday', 'panels', 'panels'], 'the note of a reload has nothing to do with it: the layout is changed in the page');
-  assert.deepEqual(await kinds({ session: brokenStorage }), ['monday', 'panels', 'panels'], 'nor has a storage that cannot keep a note');
-  assert.deepEqual(await kinds({ session: null }), ['monday', 'panels', 'panels'], 'or no storage');
+  ['tasks', 'events', 'photo', 'competition-rank'].forEach(id => assert.equal(fits(id), true, id));
+  ['monday-tasks', 'monday-milestones', 'monday-progress', 'monday-milestones-both'].forEach(id => assert.equal(fits(id), true, id + ' fits a page that changes layout as it runs'));
+
+  // a page that changes layout as it runs takes the Monday style whatever the note of a reload says
+  for (const session of [noted, brokenStorage, null]) {
+    const again = await start({ session: session });
+    assert.equal(again.hooks.fits(step('monday-tasks', 'prime')), true);
+  }
 
   // a change of layout fails once: the page then reloads for a layout, and the old rules about the note come back
   const apply = await import(base + 'core/layout-apply.js');
@@ -331,29 +285,52 @@ test('the Monday pass is always taken while the page changes layout as it runs, 
   }
   assert.equal(apply.layoutsChangeLive(), false);
 
-  assert.deepEqual(await kinds({}), ['monday', 'panels', 'panels'], 'a page that may reload goes into Minimal and out of it');
-  assert.deepEqual(await kinds({ session: noted }), ['panels', 'panels', 'panels'], 'a page that has just reloaded for that layout does not reload again, so Minimal does not come');
-  assert.deepEqual(await kinds({ session: brokenStorage }), ['panels', 'panels', 'panels'], 'nor does a page that cannot keep the note');
-  assert.deepEqual(await kinds({ session: null }), ['panels', 'panels', 'panels'], 'or has no storage');
+  const monday = async options => (await start(options)).hooks.fits(step('monday-tasks', 'prime'));
+  assert.equal(await monday({}), true, 'a page that may reload goes into Minimal and out of it');
+  assert.equal(await monday({ session: noted }), false, 'a page that reloaded a moment ago for that layout does not reload again, so Minimal does not come');
+  assert.equal(await monday({ session: brokenStorage }), false, 'nor does a page that cannot keep the note');
+  assert.equal(await monday({ session: null }), false, 'or has no storage');
+  assert.equal(await monday({ session: noted, page: 'bar-minimal' }), true, 'a page that is drawn for Minimal already needs no reload, whatever the note says');
 
-  // a page that is drawn for Minimal already needs no reload, whatever the note says
-  assert.deepEqual((await kinds({ page: 'bar-minimal', session: noted })).slice(0, 1), ['monday']);
+  const plain = await start({ session: noted });
+  assert.equal(plain.hooks.fits(step('tasks', 'prime')), true, 'and the rows of the style of the day are never asked about');
 });
 
 
-// The page file and the docs
+// Next look now
 
-test('the page side names the cards through the registry, asks the layout the way holdForLayout does, and leaves the look to the swap', () => {
-  const file = read('core/look-rotation-run.js');
+test('Next look now moves the large panel to the next row, once for each click, and holds no look of its own', async () => {
+  const world = await start();
+  const request = at => { world.content.settings.nextLookRequest = { requestedAt: new Date(at).toISOString() }; };
+  world.log.length = 0;
 
-  assert.ok(file.includes("const mondayCardIds = panels.filter(panel => panel.monday).map(panel => panel.id);"));
+  request(Date.now());
+  world.seconds(new Date());
+  assert.deepEqual(world.log, ['skipRow']);
+
+  world.seconds(new Date());
+  assert.deepEqual(world.log, ['skipRow'], 'the same click is not run twice');
+
+  request(Date.now() + 2000);
+  world.seconds(new Date(Date.now() + 2000));
+  assert.deepEqual(world.log, ['skipRow', 'skipRow'], 'a new click is a new request');
+  assert.deepEqual(screens.heldLook(), { team: '', style: '', monday: false }, 'the look is held when the next row is chosen, not by the press');
+});
+
+
+// The page file
+
+test('the page side names the cards through the screens, asks the layout the way holdForLayout does, and leaves the look to the swap', () => {
+  const file = read('core/screens-run.js');
+
+  assert.ok(file.includes("return !isMondayPanel(step.panel) || mondayStyleFits(planFor(getContent(), new Date()).mondayStyle);"));
   assert.ok(file.includes('const wanted = drawnFor(layoutFor(style, layoutOf(theme)), shapesFor(style));'), 'the layout is worked out as layout-apply.js does');
   assert.ok(read('core/layout-apply.js').includes('const wanted = drawnFor(layoutFor(look.style, layoutOf(look.theme)), shapesFor(look.style));'));
   assert.ok(file.includes('window.sessionStorage.getItem(reloadKey) !== wanted'), 'the note of mustReload');
   assert.ok(file.includes("canReload = false; // a note that cannot be kept"), 'and a note that cannot be kept stops the reload');
-  assert.ok(file.includes('canShow: mondayStyleFits'));
-  assert.ok(/function playlistNow\(list\) \{[\s\S]*?pass\.kind === 'monday' \? steps : withoutMondayCards\(steps, mondayCardIds\)/.test(file));
+  assert.ok(file.includes('asTeam(lookOf(step).team, run)'));
   ['applyStyle', 'dataset.style', 'classList', 'setProperty'].forEach(name => assert.ok(!file.includes(name), 'the page side does not touch the page with ' + name));
+  assert.equal(config.defaultSettings.mondayStyle, 'minimal');
 });
 
 test('the docs say where the Monday cards come and in what style, and the Panel order rows that name them are ignored', () => {
@@ -361,7 +338,6 @@ test('the docs say where the Monday cards come and in what style, and the Panel 
   ['Monday style', 'Monday rows of a Screen', 'a saved Panel order that still names one is ignored'].forEach(word => assert.ok(layouts.includes(word), 'layouts.md names ' + word));
   assert.ok(fs.readFileSync(path.join(docsFolder, 'switch-the-look.md'), 'utf8').includes('takes the Monday style of the Screen'));
   assert.ok(fs.readFileSync(path.join(docsFolder, 'coaches-guide.md'), 'utf8').includes('Monday style: the style the Screen takes while a Monday row plays'));
-  assert.equal(config.defaultSettings.mondayStyle, 'minimal');
 });
 
 

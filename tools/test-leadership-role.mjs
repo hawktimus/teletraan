@@ -26,7 +26,7 @@ fs.copyFileSync(path.join(dashboardFolder, 'config.js'), path.join(root, 'config
 fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith('.js')).forEach(file => {
   fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(root, 'core', file));
 });
-['themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
+['registry.js', 'themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
   fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file));
 });

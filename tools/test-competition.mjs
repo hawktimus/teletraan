@@ -24,6 +24,7 @@ const root = path.join(workFolder, 'dashboard');
 fs.mkdirSync(path.join(root, 'core'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
 fs.copyFileSync(path.join(dashboardFolder, 'config.js'), path.join(root, 'config.js'));
+fs.copyFileSync(path.join(dashboardFolder, 'registry.js'), path.join(root, 'registry.js'));
 fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith('.js')).forEach(file => {
   fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(root, 'core', file));
 });
@@ -1175,10 +1176,10 @@ test('requestTimeOf reads the time of the request and nothing else, and the hand
 test('the screen starts the preview runner after the other runners, hands the large panel its list through withCompetition, and the page glue asks the right questions', () => {
   const shell = read('shell.js');
   assert.ok(shell.includes("import { withCompetition } from './core/competition.js';"));
-  assert.ok(shell.includes("withCompetition(playlistOf(rotation(), 'grid1'), content, new Date())"));
+  assert.ok(shell.includes("withCompetition(mainPlaylist(content, new Date()), content, new Date())"));
   assert.ok(shell.indexOf("./core/preview-run.js") < shell.indexOf("./core/competition-preview-run.js") && shell.indexOf('./core/competition-preview-run.js') < shell.indexOf('./core/team-run.js'));
   assert.ok(shell.includes("startOptional('./core/competition-preview-run.js', module => module.startCompetitionPreviewRunner(getContent));"));
-  assert.ok(!shell.includes("withCompetition(playlistOf(rotation(), 'grid2')"), 'the small panel has no cards');
+  assert.ok(!shell.includes('withCompetition(sidePlaylist('), 'the small panel has no cards');
 
   const run = read('core/competition-preview-run.js');
   ['frame.onSecond(runner.look);', "sampleFolder + 'content.json'", 'normalizeSample(await response.json()).frc', "moveOn(['grid1'])", 'previewCompetition(frc, until)', 'previewCompetition(null, 0)', 'takeoverRunning: takeoverRunning'].forEach(piece => assert.ok(run.includes(piece), piece));

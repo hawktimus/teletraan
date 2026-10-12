@@ -183,10 +183,11 @@ editors can sign in from anywhere.
                               pack on the screen for 2 minutes, and preview-run.js starts it. What it holds is
                               kept by previewStyle in style.js, previewTeam in teams.js and previewPack in
                               theme.js (docs/hidden-transitions.md, "Preview a look"),
-                              look-rotation.js decides which look comes next (the style of the day, the
-                              order of the teams, their Monday cards and the Next look now guard), and
-                              look-rotation-run.js hands a look to the screen and keeps the pass in localStorage
-                              (docs/layouts.md, "The look rotation"),
+                              screens.js decides what plays: the three Screens, the Screen of the day, the
+                              rows of the large panel with the team and the style of each, the Monday rows
+                              and the Next look now guard, screen-seed.js works out the first rows of a Screen
+                              from the Panel order, and screens-run.js hands a look to the screen
+                              (docs/layouts.md, "The Screens"),
                               swap-plan.js decides the one swap of every change of look and of Monday card
                               (which piece starts when, which old piece each new one takes over from, where it
                               re-forms, how the hawk flies), swap-run.js plays it on the page, in full motion,
@@ -441,13 +442,17 @@ editors can sign in from anywhere.
                               something always moves, and the calm and no motion paths; also the layout changed on the
                               running page (core/layout-apply.js), the regions at the gate (core/areas.js) and the list
                               of the small frame that runs in every layout (core/schedule.js)
-      test-monday-style.mjs   checks that the Monday cards are in the Monday pass and in the Monday style only: the list
-                              of the large panel in each pass, the pass left out while the style cannot go on the
-                              page, and a held look going on in a swap (core/look-rotation-run.js on a small page)
-      test-look-rotation.mjs  checks for the look rotation (core/look-rotation.js): the style of the day, the
-                              order of the passes in a cycle, the boundary rule, a restart, one look holding,
-                              empty lists, the Next look now guard, and the question schedule.js asks at the
-                              end of every pass
+      test-monday-style.mjs   checks that the Monday rows are in the Monday style only: the Monday row left out
+                              while the style cannot go on the page, and a held look going on in a swap
+                              (core/screens-run.js on a small page)
+      test-screens.mjs        checks for the Screens (core/screens.js): the three documents as they are read, the
+                              Screen of each weekday, the rows built from the Panel order, the list of the large
+                              panel, and the swap between two rows
+      test-look-rotation.mjs  checks the page side of the Screens (core/screens-run.js): what the large panel asks
+                              schedule.js, a style and a team held the way a preview holds them, the Next look
+                              now guard, the swap as the one way a look goes on, and the docs
+      test-screen-seed-dashboard.mjs  checks for the first rows of a Screen on the screen side
+                              (core/screen-seed.js): the same Panel order and the same rows as the Studio side
       test-console.mjs        checks for the boot and shutdown drawings (plain 7 bit text, the size, the
                               symmetry of the figure, the same text in the sample content), for
                               install-console.sh in a fake root (it stops before it changes anything, keeps the
@@ -642,9 +647,9 @@ alone.
 - **The Monday cards.** The panels `dashboard/panels/monday-tasks`, `monday-milestones` and `monday-progress`, and
   `monday-milestones-both` and `monday-progress-both` for both teams (docs/layouts.md, "The Monday cards"), flagged `monday: true`
   in `registry.js`, in no Panel order list and in no starting list. `dashboard/monday.css` has what they share, and `dashboard/core/team-title.js`
-  has the names of a team on a header. `mondayCards` and `bothCards` in `dashboard/core/look-rotation.js`
-  give them to a team that has tasks with the source monday, and to both teams after the last one, and `dashboard/core/monday.js` picks and ranks the
-  tasks. A card with more than five rows scrolls: `scrollPages` in its script, `core/schedule.js` and `scrollCard` in `dashboard/frame.js`. The tasks are the ones the board sync writes (`source` monday, `mondayId`, `priority`, `dueDate`, `showOnTv`),
+  has the names of a team on a header. `mondaySteps` and `bothSteps` in `dashboard/core/monday.js` give the steps of
+  the cards to the Monday rows of a Screen (`dashboard/core/screens.js`) for a team that has tasks with the source monday,
+  and for both teams, and `dashboard/core/monday.js` picks and ranks the tasks. A card with more than five rows scrolls: `scrollPages` in its script, `core/schedule.js` and `scrollCard` in `dashboard/frame.js`. The tasks are the ones the board sync writes (`source` monday, `mondayId`, `priority`, `dueDate`, `showOnTv`),
   and the daily counts are in the document `monday-status`, which `core/sanity.js` reads and `tidyMondayStatus` cleans.
   `dashboard/data/sample/content.json` has board tasks for both teams and a `monday` document.
 - **The demo.** The Demo page in Studio (docs/demo.md), which has no buttons and no line in the sidebar now:
@@ -1015,6 +1020,9 @@ exceptions are `test-slides-script.mjs`, `test-frc-script.mjs` and `test-monday-
     node tools/test-photo-fit.mjs
     node tools/test-presentation-mouse.mjs
     node tools/test-look-rotation.mjs
+    node tools/test-screens.mjs
+    node tools/test-screen-seed.mjs
+    node tools/test-screen-seed-dashboard.mjs
     node tools/test-swap.mjs
     node tools/test-swap-smooth.mjs
     node tools/test-monday-style.mjs

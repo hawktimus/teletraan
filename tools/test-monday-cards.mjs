@@ -2,7 +2,7 @@
 // dashboard/panels/monday-*). The plain functions are run for real. Each card is run against a fake host
 // that keeps the markup it draws, and the stylesheets are checked by reading them, because the sizes need
 // a browser to be seen. The board data is made up: the sample in data/sample/content.json, changed here and
-// there. The look rotation that runs the cards is in tools/test-look-rotation.mjs, and the Studio side (the
+// there. The Screens that play the cards are in tools/test-screens.mjs, and the Studio side (the
 // Panel order choices and the due date field) is in studio/check-schemas.mjs.
 //
 //   node tools/test-monday-cards.mjs
@@ -47,7 +47,6 @@ const config = await import(base + 'config.js');
 const registry = await import(base + 'registry.js');
 const monday = await import(base + 'core/monday.js');
 const draw = await import(base + 'core/monday-draw.js');
-const rotation = await import(base + 'core/look-rotation.js');
 const sanity = await import(base + 'core/sanity.js');
 const contentModule = await import(base + 'core/content.js');
 const teams = await import(base + 'core/teams.js');
@@ -215,9 +214,9 @@ test('the sample has only board tasks, six for both teams, nine for Prime and si
   assert.equal(contentWith().monday.snapshots.length, 14);
 
   const content = contentWith();
-  assert.ok(rotation.mondayCards(content, 'prime').length > 0, 'Prime has Monday rows');
-  assert.ok(rotation.mondayCards(content, 'nova').length > 0, 'Nova has tasks of its own and the six for both teams, so it has a Monday pass');
-  assert.equal(rotation.bothCards(content, ['prime', 'nova']).length, 2, 'so there is a pass of both teams');
+  assert.ok(monday.mondaySteps(content, 'prime').length > 0, 'Prime has Monday rows');
+  assert.ok(monday.mondaySteps(content, 'nova').length > 0, 'Nova has tasks of its own and the six for both teams, so it has a Monday pass');
+  assert.equal(monday.bothSteps(content, ['prime', 'nova']).length, 2, 'so there is a pass of both teams');
 });
 
 
@@ -307,7 +306,7 @@ test('there is one page for each lead entry that has tasks, in the order of the 
   assert.equal(panels.tasks.hasContent(content, 3), false);
   assert.ok(panels.tasks.markupFor(content, monday12, 1).includes('>a task<'));
   assert.ok(panels.tasks.markupFor(content, monday12, 2).includes('>c task<'));
-  assert.deepEqual(rotation.mondayCards(content, 'prime'), [
+  assert.deepEqual(monday.mondaySteps(content, 'prime'), [
     { panel: 'monday-tasks', show: true, page: 1 },
     { panel: 'monday-tasks', show: true, page: 2 },
     { panel: 'monday-milestones', show: true },
@@ -637,7 +636,7 @@ test('a card mounts into its host as one section, the way the other panels do, w
     assert.equal(countOf(html, 'data-slat="item"'), 1, 'the body is one slat');
     assert.equal(typeof panels[name].mount, 'function');
   });
-  ['milestones', 'progress', 'milestones-both', 'progress-both'].forEach(name => assert.equal('hasContent' in panels[name], false, name + ': the look rotation chooses it, so it always draws'));
+  ['milestones', 'progress', 'milestones-both', 'progress-both'].forEach(name => assert.equal('hasContent' in panels[name], false, name + ': the Screens choose it, so it always draws'));
   assert.equal(typeof panels.tasks.hasContent, 'function', 'the tasks card says whether it has a page for a lead entry');
   ['tasks', 'milestones-both', 'progress-both'].forEach(name => assert.equal(typeof panels[name].scrollPages, 'function', name + ' says how many pages it holds for'));
   ['milestones', 'progress'].forEach(name => assert.equal('scrollPages' in panels[name], false, name + ' does not scroll'));
@@ -689,35 +688,35 @@ test('the cards are not given a team: the team on the screen decides, as for eve
 });
 
 
-// The look rotation hook
+// The steps of the Monday rows
 
 test('a team has the Monday cards when it has board tasks that show on the TV, and not otherwise', () => {
   const content = contentOf([board({ title: 'a' }), board({ title: 'b', status: 'done' })]);
   const steps = [{ panel: 'monday-tasks', show: true, page: 1 }, { panel: 'monday-milestones', show: true }, { panel: 'monday-progress', show: true }];
 
-  assert.deepEqual(rotation.mondayCards(content, 'prime'), steps);
-  assert.deepEqual(rotation.mondayCards(content, 'nova'), [], 'tasks for Prime are not Nova\'s');
-  assert.equal(rotation.mondayCards(contentOf([board({ team: '' })]), 'nova').length, 3, 'a task for both teams is each team\'s');
+  assert.deepEqual(monday.mondaySteps(content, 'prime'), steps);
+  assert.deepEqual(monday.mondaySteps(content, 'nova'), [], 'tasks for Prime are not Nova\'s');
+  assert.equal(monday.mondaySteps(contentOf([board({ team: '' })]), 'nova').length, 3, 'a task for both teams is each team\'s');
 
-  assert.deepEqual(rotation.mondayCards(contentOf([]), 'prime'), []);
-  assert.deepEqual(rotation.mondayCards(contentOf([{ title: 'pinned', subteam: '[Subteam A]', status: 'up-next', team: 'prime' }]), 'prime'), [], 'a pinned task is not a board row');
-  assert.deepEqual(rotation.mondayCards(contentOf([board({ showOnTv: false })]), 'prime'), [], 'a row with Show on TV off is not one either');
-  assert.deepEqual(rotation.mondayCards(contentOf([board({ show: false })]), 'prime'), []);
-  assert.deepEqual(rotation.mondayCards(contentOf([board({ expires: '2020-01-01T00:00:00.000Z' })]), 'prime'), []);
-  assert.equal(rotation.mondayCards(contentOf([board({ status: 'done' })]), 'prime').length, 3, 'any status counts');
-  [null, undefined, {}, [], 'text'].forEach(value => assert.deepEqual(rotation.mondayCards(value, 'prime'), [], String(value)));
-  assert.deepEqual(rotation.mondayCards(content, ''), [], 'a team code that is empty has no rows of its own');
+  assert.deepEqual(monday.mondaySteps(contentOf([]), 'prime'), []);
+  assert.deepEqual(monday.mondaySteps(contentOf([{ title: 'pinned', subteam: '[Subteam A]', status: 'up-next', team: 'prime' }]), 'prime'), [], 'a pinned task is not a board row');
+  assert.deepEqual(monday.mondaySteps(contentOf([board({ showOnTv: false })]), 'prime'), [], 'a row with Show on TV off is not one either');
+  assert.deepEqual(monday.mondaySteps(contentOf([board({ show: false })]), 'prime'), []);
+  assert.deepEqual(monday.mondaySteps(contentOf([board({ expires: '2020-01-01T00:00:00.000Z' })]), 'prime'), []);
+  assert.equal(monday.mondaySteps(contentOf([board({ status: 'done' })]), 'prime').length, 3, 'any status counts');
+  [null, undefined, {}, [], 'text'].forEach(value => assert.deepEqual(monday.mondaySteps(value, 'prime'), [], String(value)));
+  assert.deepEqual(monday.mondaySteps(content, ''), [], 'a team code that is empty has no rows of its own');
   assert.deepEqual(monday.mondaySteps(content, 'prime', monday12), steps);
 });
 
-test('a Monday pass of a team with board rows has a page of the tasks card for each lead entry that has tasks, and every step is one the screen can show', () => {
+test('the Monday rows of a team with board rows have a page of the tasks card for each lead entry that has tasks, and every step is one the screen can show', () => {
   const content = contentWith();
-  const steps = rotation.mondayCards(content, 'prime');
+  const steps = monday.mondaySteps(content, 'prime');
 
   // the six tasks for both teams are for six lead entries, and the tasks of Prime and of Nova are for entries among those
   const sixPages = ['monday-tasks 1', 'monday-tasks 2', 'monday-tasks 3', 'monday-tasks 4', 'monday-tasks 5', 'monday-tasks 6', 'monday-milestones', 'monday-progress'];
   assert.deepEqual(steps.map(step => step.panel + (step.page ? ' ' + step.page : '')), sixPages);
-  assert.deepEqual(rotation.mondayCards(content, 'nova').map(step => step.panel + (step.page ? ' ' + step.page : '')), sixPages);
+  assert.deepEqual(monday.mondaySteps(content, 'nova').map(step => step.panel + (step.page ? ' ' + step.page : '')), sixPages);
   steps.forEach(step => {
     const entry = registry.panels.filter(panel => panel.id === step.panel)[0];
     assert.ok(entry && entry.region === 'grid1', step.panel + ' is a panel of the large frame');
@@ -1011,7 +1010,7 @@ test('every class a card writes has a rule in its own stylesheet or in monday.cs
 
 // The docs
 
-test('the docs say what each card shows, where the code is, and what the rotation does with the cards', () => {
+test('the docs say what each card shows, where the code is, and where the cards are played', () => {
   const layouts = fs.readFileSync(path.join(docsFolder, 'layouts.md'), 'utf8').replace(/\s+/g, ' ');
   const editing = fs.readFileSync(path.join(docsFolder, 'editing-content.md'), 'utf8').replace(/\s+/g, ' ');
   const where = fs.readFileSync(path.join(docsFolder, 'where-things-are.md'), 'utf8').replace(/\s+/g, ' ');

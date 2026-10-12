@@ -147,14 +147,14 @@ test('the eight fields are in config.js, in the order of the Studio, and Prime h
   assert.deepEqual(teams.trimClasses, ['bolts-round', 'corner-cut-tr', 'header-slant', 'grid-dots', 'pose-flight', 'name-outline', 'ticker-bar', 'accent-neon']);
 });
 
-test('the sample content gives each team all eight, Prime the usual ones and Nova the other of each', () => {
+test('the sample content gives each team all eight, Prime the usual ones and Nova the other of each, except the name, which both draw solid', () => {
   assert.ok(primeTeam && novaTeam, 'the sample has Prime and Nova');
   trimFields.forEach(field => {
     const values = Object.keys(config.teamTrim[field]);
     assert.equal(primeTeam[field], values[0], 'Prime ' + field);
-    assert.equal(novaTeam[field], values[1], 'Nova ' + field);
+    assert.equal(novaTeam[field], field === 'nameStyle' ? values[0] : values[1], 'Nova ' + field);
   });
-  assert.deepEqual(trimFields.map(field => novaTeam[field]), ['round', 'tr-bl', 'slant', 'dots', 'flight', 'outline', 'bar', 'neon']);
+  assert.deepEqual(trimFields.map(field => novaTeam[field]), ['round', 'tr-bl', 'slant', 'dots', 'flight', 'solid', 'bar', 'neon']);
 });
 
 test('rendered in sample mode, the page of Prime and the page of Nova differ in the classes of every field, and in the mirror', async () => {
@@ -173,9 +173,9 @@ test('rendered in sample mode, the page of Prime and the page of Nova differ in 
   assert.deepEqual(classes.prime, [], 'Prime has no class on the page');
   trimFields.forEach(field => {
     const own = classes.nova.filter(name => Object.values(config.teamTrim[field]).includes(name));
-    assert.deepEqual(own, [classOf(field, novaTeam[field])], field + ': Nova has the class of its value, and Prime has none, so the classes differ');
+    assert.deepEqual(own, [classOf(field, novaTeam[field])].filter(Boolean), field + ': Nova has the class of its value, and Prime has none, so the classes differ (the name is solid for both)');
   });
-  assert.deepEqual(classes.nova, ['accent-neon', 'bolts-round', 'corner-cut-tr', 'grid-dots', 'header-slant', 'metal-steel', 'mirrored', 'name-outline', 'neon-glow', 'pose-flight', 'ticker-bar'], 'and the steel metal and the glow, which are not trim');
+  assert.deepEqual(classes.nova, ['accent-neon', 'bolts-round', 'corner-cut-tr', 'grid-dots', 'header-slant', 'metal-steel', 'mirrored', 'neon-glow', 'pose-flight', 'ticker-bar'], 'and the steel metal and the glow, which are not trim');
 });
 
 test('the classes of a team are cleared and replaced when the team changes, together with the mirror', async () => {
@@ -184,12 +184,12 @@ test('the classes of a team are cleared and replaced when the team changes, toge
   const withPrime = () => teams.applyTeamLook(primeTeam, page);
 
   withNova();
-  assert.equal(page.classes().length, 11, 'the mirror, the eight, the steel metal and the glow');
+  assert.equal(page.classes().length, 10, 'the mirror, the seven, the steel metal and the glow');
   withPrime();
   assert.deepEqual(page.classes(), [], 'all of them gone');
   withNova();
   withNova();
-  assert.equal(page.classes().length, 11, 'a team that is put on again changes nothing');
+  assert.equal(page.classes().length, 10, 'a team that is put on again changes nothing');
 
   // a team that has some of them: the others come off
   teams.applyTeamLook(Object.assign({}, primeTeam, { bolts: 'round', grid: 'dots' }), page);
@@ -211,12 +211,17 @@ test('a team document with no trim fields, or values that are not in the list, i
   assert.deepEqual(teams.frameTrim(plain), { corner: 'tl', notch: 'step' });
 
   const odd = normalized({ bolts: 'Round', cornerCut: 7, headerNotch: null, grid: ['dots'], logoPose: 'toString', nameStyle: ' outline ', tickerLabel: '', countAccent: 'neon\n' });
-  assert.deepEqual(trimFields.map(field => odd[field]), ['hex', 'tl-br', 'step', 'lines', 'auto', 'outline', 'plate', 'neon'], 'a value is the Prime one unless it is exactly one of the two, and spaces at its ends are dropped');
+  assert.deepEqual(trimFields.map(field => odd[field]), ['hex', 'tl-br', 'step', 'lines', 'auto', 'solid', 'plate', 'neon'], 'a value is the Prime one unless it is exactly one of the two, and spaces at its ends are dropped. The stored name look is not read');
+  assert.equal(normalized({ nameStyle: 'outline' }).nameStyle, 'solid', 'the name is outlined by the switch Outlined name and by nothing else');
+  assert.equal(normalized({ outlinedName: true, nameStyle: 'solid' }).nameStyle, 'outline');
+  assert.equal(normalized({ outlinedName: 'true' }).nameStyle, 'solid', 'only a switch that is on outlines it');
+  assert.deepEqual(teams.trimClassesOf(normalized({ outlinedName: true })), ['name-outline']);
 
   assert.deepEqual(teams.trimClassesOf(config.primeTeam), []);
   assert.deepEqual(teams.trimClassesOf(null), [], 'no team is Prime');
   assert.deepEqual(teams.trimClassesOf({ bolts: 'round' }), ['bolts-round']);
-  assert.equal(teams.trimClassesOf(novaTeam).length, 8);
+  assert.equal(teams.trimClassesOf(novaTeam).length, 7, 'Nova draws its name solid');
+  assert.equal(teams.trimClassesOf(Object.assign({}, novaTeam, { nameStyle: 'outline' })).length, 8);
 });
 
 test('the corners and the tab that the frames are drawn for are the team\'s, and the page writes down which frames it has drawn', () => {

@@ -12,7 +12,7 @@
       "metal": "gold", "glow": false,
       "mirror": false,
       "bolts": "hex", "cornerCut": "tl-br", "headerNotch": "step", "grid": "lines",
-      "logoPose": "auto", "nameStyle": "solid", "tickerLabel": "plate", "countAccent": "red",
+      "logoPose": "auto", "nameStyle": "solid", "outlinedName": false, "tickerLabel": "plate", "countAccent": "red",
       "active": true, "order": 10
     },
     {
@@ -21,7 +21,7 @@
       "metal": "steel", "glow": true,
       "mirror": true,
       "bolts": "round", "cornerCut": "tr-bl", "headerNotch": "slant", "grid": "dots",
-      "logoPose": "flight", "nameStyle": "outline", "tickerLabel": "bar", "countAccent": "neon",
+      "logoPose": "flight", "nameStyle": "outline", "outlinedName": false, "tickerLabel": "bar", "countAccent": "neon",
       "active": true, "order": 20
     }
   ],
@@ -75,6 +75,7 @@
     "mondayStyle": "minimal",
     "teamOrder": ["prime", "nova"],
     "lookSwap": "assemble",
+    "screenSchedule": { "monday": "original", "tuesday": "cybertron", "wednesday": "original", "thursday": "cybertron", "friday": "original", "saturday": "cybertron", "sunday": "original" },
     "crt": { "on": true, "everySeconds": 240, "durationSeconds": 2.7 },
     "calendars": [
       { "id": "team", "name": "[Team calendar]", "show": true, "kind": "meetings" }
@@ -228,6 +229,88 @@
         { "type": "list", "items": ["[First item]", "[Second item]", "[Third item]"] },
         { "type": "image", "address": "data/sample/photo-1.svg" }
       ]
+    }
+  ],
+
+  "screens": [
+    {
+      "_id": "screen-original",
+      "mainRows": [
+        { "_key": "o1", "panel": "tasks", "team": "prime" },
+        { "_key": "o2", "panel": "tonight", "team": "prime" },
+        { "_key": "o3", "panel": "leadership", "team": "prime" },
+        { "_key": "o4", "panel": "team-leads", "team": "prime" },
+        { "_key": "o5", "panel": "monday-tasks", "team": "prime" },
+        { "_key": "o6", "panel": "monday-milestones", "team": "prime" },
+        { "_key": "o7", "panel": "monday-progress", "team": "prime" },
+        { "_key": "o8", "panel": "tasks", "team": "nova" },
+        { "_key": "o9", "panel": "tonight", "team": "nova" },
+        { "_key": "o10", "panel": "leadership", "team": "nova" },
+        { "_key": "o11", "panel": "team-leads", "team": "nova" },
+        { "_key": "o12", "panel": "monday-tasks", "team": "nova" },
+        { "_key": "o13", "panel": "monday-milestones", "team": "nova" },
+        { "_key": "o14", "panel": "monday-progress", "team": "nova" },
+        { "_key": "o15", "panel": "events", "team": "" },
+        { "_key": "o16", "panel": "photo", "team": "" }
+      ],
+      "sideRows": [
+        { "_key": "o1", "panel": "forecast" },
+        { "_key": "o2", "panel": "next-event" },
+        { "_key": "o3", "panel": "task-counts" },
+        { "_key": "o4", "panel": "sponsor-logo" }
+      ],
+      "nameEffectEveryMinutes": 10, "hawkEveryMinutes": 15, "swapSeconds": 1.25, "mondayStyle": "minimal"
+    },
+    {
+      "_id": "screen-cybertron",
+      "mainRows": [
+        { "_key": "c1", "panel": "tasks", "team": "prime" },
+        { "_key": "c2", "panel": "tonight", "team": "prime" },
+        { "_key": "c3", "panel": "leadership", "team": "prime" },
+        { "_key": "c4", "panel": "team-leads", "team": "prime" },
+        { "_key": "c5", "panel": "monday-tasks", "team": "prime" },
+        { "_key": "c6", "panel": "monday-milestones", "team": "prime" },
+        { "_key": "c7", "panel": "monday-progress", "team": "prime" },
+        { "_key": "c8", "panel": "tasks", "team": "nova" },
+        { "_key": "c9", "panel": "tonight", "team": "nova" },
+        { "_key": "c10", "panel": "leadership", "team": "nova" },
+        { "_key": "c11", "panel": "team-leads", "team": "nova" },
+        { "_key": "c12", "panel": "monday-tasks", "team": "nova" },
+        { "_key": "c13", "panel": "monday-milestones", "team": "nova" },
+        { "_key": "c14", "panel": "monday-progress", "team": "nova" },
+        { "_key": "c15", "panel": "events", "team": "" },
+        { "_key": "c16", "panel": "photo", "team": "" }
+      ],
+      "sideRows": [
+        { "_key": "c1", "panel": "forecast" },
+        { "_key": "c2", "panel": "next-event" },
+        { "_key": "c3", "panel": "task-counts" },
+        { "_key": "c4", "panel": "sponsor-logo" }
+      ],
+      "nameEffectEveryMinutes": 10, "hawkEveryMinutes": 15, "swapSeconds": 1.25, "mondayStyle": "minimal"
+    },
+    {
+      "_id": "screen-minimal",
+      "mainRows": [
+        { "_key": "m1", "panel": "tasks", "team": "prime" },
+        { "_key": "m2", "panel": "tonight", "team": "prime" },
+        { "_key": "m3", "panel": "leadership", "team": "prime" },
+        { "_key": "m4", "panel": "team-leads", "team": "prime" },
+        { "_key": "m5", "panel": "monday-tasks", "team": "prime" },
+        { "_key": "m6", "panel": "monday-milestones", "team": "prime" },
+        { "_key": "m7", "panel": "monday-progress", "team": "prime" },
+        { "_key": "m8", "panel": "tasks", "team": "nova" },
+        { "_key": "m9", "panel": "tonight", "team": "nova" },
+        { "_key": "m10", "panel": "leadership", "team": "nova" },
+        { "_key": "m11", "panel": "team-leads", "team": "nova" },
+        { "_key": "m12", "panel": "monday-tasks", "team": "nova" },
+        { "_key": "m13", "panel": "monday-milestones", "team": "nova" },
+        { "_key": "m14", "panel": "monday-progress", "team": "nova" },
+        { "_key": "m15", "panel": "events", "team": "" },
+        { "_key": "m16", "panel": "photo", "team": "" }
+      ],
+      "sideRows": [],
+      "nameEffectEveryMinutes": 10, "hawkEveryMinutes": 15, "swapSeconds": 1.25, "mondayStyle": "minimal"
     }
   ],
 
