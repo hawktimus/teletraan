@@ -16,12 +16,15 @@
 //
 // How it goes in full motion, with the times of swap-plan.js:
 //   1. The frames show as their pieces (#world gets data-pieces, which frame.css reads). The pieces
-//      pull apart, the content fades out and the logo becomes a hawk that lifts off.
+//      pull apart, the content fades out and the logo is copied: the copy stays where the logo was.
 //   2. At the moment the pieces are out, one step does it all: the look goes on (the style, the team and
 //      the layout), the large panel's page is swapped, and the other areas swap theirs, which they waited to
 //      do at the gate of core/areas.js. The pieces are measured again, in the new look, and each takes
 //      over from an old piece.
-//   3. The pieces travel to their places, the content fades in, and the hawk lands.
+//   3. The pieces travel to their places, the content fades in, and the copy of the logo travels to the new place
+//      of the logo with them. A team or a style that changes makes it flutter for a moment as a hawk. A Monday card on
+//      either side only carries it, and never makes it a bird (hawkMotionFor in core/swap-plan.js). Then the copy and
+//      the logo cross-fade.
 // In calm motion the whole stage fades out, the look goes on, and the stage fades in. With motion off the
 // look goes on at once. Neither has pieces. A change of layout is the same step in every case: the page does not
 // reload for it (core/layout-apply.js, changeLayoutNow).
@@ -35,16 +38,13 @@ import { layoutIsReloading } from './layout-apply.js';
 import { holdClock, moveOn } from './schedule.js';
 import { teamPending } from './teams.js';
 import { lookIsWaiting } from './theme-apply.js';
-import { contentFade, flapFrames, hawkShape, hawkTransform, planHawk, planPull, planReform, poseFrames, pullEaseText, reformEaseText, restPose, swapReform, swapTimes } from './swap-plan.js';
+import { birdFades, contentFade, flapFrames, hawkMotionFor, hawkShape, hawkTransform, planHawk, planPull, planReform, poseFrames, pullEaseText, reformEaseText, restPose, swapReform, swapTimes } from './swap-plan.js';
 import { takeoverRunning } from './takeover.js';
 
 const longestRest = 8000; // milliseconds to wait for the three areas to stop moving before giving up. A page change takes two seconds and the small areas may be in one
 const regionWait = 1200; // milliseconds to wait, once the pieces are out, for the other areas to have chosen their pages
 const reloadWait = 8000; // how long the screen stays apart for a page that is about to reload, which only a failed change of layout does
 const calmFadeMs = 300; // the stage fades out and in, in calm motion, in this time each
-const hawkLiftMs = swapTimes.switchMs; // the hawk hovers and lifts until the new place is known, then flies
-const hawkLiftPixels = 40;
-const hawkLandMs = 150; // the hawk and the logo cross-fade for this long at the end
 const hawkColors = ['--logo-purple', '--logo-tail', '--logo-far'];
 const otherRegions = ['grid2', 'ticker']; // the small frame and the ticker, in every layout: one that the layout does not have waits and drops its page
 
@@ -97,7 +97,8 @@ function offer(old, next) {
   // One Monday card to the next has no look to change, so in calm motion and with none it is the usual page change
   if (!looked && (frame.motionNow() !== 'full' || (!isMondayCard(old.id) && !isMondayCard(next.id)))) return null;
 
-  return { play: swapPage => play(swapPage) };
+  const icon = hawkMotionFor({ motion: frame.motionNow(), team: teamPending(), fromMonday: isMondayCard(old.id), intoMonday: isMondayCard(next.id) });
+  return { play: swapPage => play(swapPage, icon) };
 }
 
 
@@ -172,11 +173,12 @@ function targetOf(piece, layer, copies) {
 }
 
 
-// The hawk
+// The icon
 
-// The logo becomes a hawk, a copy of the logo over everything, that flaps on the spot and lifts. It flies
-// when the new place is known (flyHawk). The logo itself is out of sight until the hawk lands.
-function startHawk(run, logos, layer, pace) {
+// The logo is copied into #pile, over everything, and the logo itself is out of sight until the copy lands. The copy
+// stays where the logo was until the new place is known (flyHawk). It is a copy and not the logo that moves, because
+// the banner is drawn again in the moment the look goes on, and a team's own picture is carried as it is.
+function startHawk(run, logos, layer) {
   const old = logos[0];
   if (!old) return;
 
@@ -185,31 +187,14 @@ function startHawk(run, logos, layer, pace) {
   const styles = window.getComputedStyle(original);
 
   clone.classList.add('swap-hawk');
-  clone.removeAttribute('data-team-logo');
-  clone.querySelectorAll('.team-logo').forEach(picture => picture.remove());
-  clone.dataset.act = 'swap';
   clone.style.cssText = 'position: absolute; left: ' + old.left + 'px; top: ' + old.top + 'px; width: ' + old.width + 'px; height: ' + old.height + 'px; margin: 0; transform-origin: 50% 50%;';
   const k = styles.getPropertyValue('--k');
   if (k) clone.style.setProperty('--k', k);
-  hawkColors.forEach(name => clone.style.setProperty(name, styles.getPropertyValue(name))); // the old colors, until the top of the arc
+  hawkColors.forEach(name => clone.style.setProperty(name, styles.getPropertyValue(name))); // the old colors, until the middle of the travel
 
   layer.appendChild(clone);
   hideLogo(run, original);
-
-  const flap = flapFrames();
-  const beat = { duration: Math.round(hawkShape.flapMs * pace), iterations: Infinity, easing: hawkShape.easing };
-  const wings = [['.hawk-near-wing', flap.near], ['.hawk-far-wing', flap.far]];
-  wings.forEach(wing => {
-    const part = clone.querySelector(wing[0]);
-    if (part) run.hawkAnimations.push(part.animate(wing[1], beat));
-  });
-
-  const lift = clone.animate(
-    [{ transform: 'translate(0px, 0px) rotate(0deg) scale(1) scaleX(1)' }, { transform: 'translate(0px, ' + (-hawkLiftPixels) + 'px) rotate(0deg) scale(1) scaleX(1)' }],
-    { duration: Math.round(hawkLiftMs * pace), easing: 'ease-out', fill: 'forwards' }
-  );
-  run.hawkAnimations.push(lift);
-  run.hawk = { clone: clone, old: old, lift: lift };
+  run.hawk = { clone: clone, old: old };
 }
 
 function hideLogo(run, logo) {
@@ -217,11 +202,12 @@ function hideLogo(run, logo) {
   run.hiddenLogos.push(logo);
 }
 
-// The new place is known: the hawk flies there in one arc, changes color at the top of it and lands. Returns how
-// many milliseconds the flight takes at normal speed
-function flyHawk(run, logos, pace) {
+// The new place is known: the copy travels there with the pieces, from the moment the look went on to the moment they are
+// home, and takes the colors of the new look half way. icon is what hawkMotionFor said, and a slight swap makes the copy a
+// hawk for a moment on the way (flutter). travelMs is how long the pieces take, at normal speed.
+function flyHawk(run, logos, pace, icon, travelMs) {
   const hawk = run.hawk;
-  if (!hawk) return 0;
+  if (!hawk) return;
 
   const target = logos[0];
   logos.forEach(logo => hideLogo(run, logo.element));
@@ -229,21 +215,36 @@ function flyHawk(run, logos, pace) {
   const old = hawk.old;
   const from = { x: old.left + old.width / 2, y: old.top + old.height / 2, width: old.width, height: old.height };
   const to = target ? { x: target.left + target.width / 2, y: target.top + target.height / 2, width: target.width, height: target.height } : from;
-  const plan = planHawk(from, to, swapTimes.hawkMs - hawkLiftMs, hawkLiftPixels);
+  const plan = planHawk(from, to, travelMs, icon === 'slight' ? hawkShape.hopHeight : 0);
 
   const frames = plan.keyframes.map(keyframe => ({ offset: keyframe.offset, transform: hawkTransform(keyframe, plan.direction) }));
-  hawk.lift.cancel();
   run.hawkAnimations.push(hawk.clone.animate(frames, { duration: Math.round(plan.durationMs * pace), easing: 'linear', fill: 'forwards' }));
   run.hawkColorTimer = setTimeout(() => hawkColors.forEach(name => hawk.clone.style.removeProperty(name)), Math.round(plan.apexMs * pace));
-  return plan.durationMs;
+  if (icon === 'slight') flutter(run, hawk.clone, pace);
 }
 
-// The hawk is gone and the logo is back, with a short fade between them
+// The emblem turns into the hawk and back in birdMs, and the wings beat. The animations end with the flutter, and the parts go
+// back to what frame.css says: the emblem shown and the hawk hidden
+function flutter(run, clone, pace) {
+  const fades = birdFades();
+  const flap = flapFrames();
+  const beat = { duration: Math.round(hawkShape.birdMs / hawkShape.beats * pace), iterations: hawkShape.beats, easing: hawkShape.easing };
+  const fade = { duration: Math.round(hawkShape.birdMs * pace), easing: 'linear' };
+
+  clone.querySelectorAll('.emblem').forEach(part => run.hawkAnimations.push(part.animate(fades.emblem, fade)));
+  clone.querySelectorAll('.hawk-part').forEach(part => run.hawkAnimations.push(part.animate(fades.hawk, fade)));
+  [['.hawk-near-wing', flap.near], ['.hawk-far-wing', flap.far]].forEach(wing => {
+    const part = clone.querySelector(wing[0]);
+    if (part) run.hawkAnimations.push(part.animate(wing[1], beat));
+  });
+}
+
+// The copy is gone and the logo is back, with a short fade between them
 async function landHawk(run, pace) {
   const hawk = run.hawk;
   if (!hawk) return;
 
-  const fade = Math.round(hawkLandMs * pace);
+  const fade = Math.round(swapTimes.landMs * pace);
   hawk.clone.animate([{ opacity: 1 }, { opacity: 0 }], { duration: fade, fill: 'forwards' });
   run.hiddenLogos.forEach(logo => {
     logo.style.removeProperty('visibility');
@@ -276,7 +277,7 @@ async function waitForRest() {
 // Plays the swap. swapPage() puts the large panel's next page in and puts the held look on; the other
 // areas swap their pages by themselves (core/areas.js, startWholeScreen). Resolves with how many
 // milliseconds the pieces took to re-form, or 0 when the swap did not start or failed before the pages swapped.
-async function play(swapPage) {
+async function play(swapPage, icon) {
   if (playing) return 0;
   playing = true;
 
@@ -288,7 +289,7 @@ async function play(swapPage) {
   frame.setSwapPlaying(true);
   holdClock(true);
   try {
-    if (await waitForRest()) cameBack = frame.motionNow() === 'full' ? await perform(run, screen, swapPage) : await performFade(run, screen, swapPage);
+    if (await waitForRest()) cameBack = frame.motionNow() === 'full' ? await perform(run, screen, swapPage, icon) : await performFade(run, screen, swapPage);
   } catch (error) {
     console.error('The swap failed', error);
   } finally {
@@ -304,7 +305,7 @@ async function play(swapPage) {
   return cameBack;
 }
 
-async function perform(run, screen, swapPage) {
+async function perform(run, screen, swapPage, icon) {
   const world = document.getElementById('world');
   const stage = document.getElementById('stage');
   const layer = document.getElementById('pile');
@@ -334,7 +335,7 @@ async function perform(run, screen, swapPage) {
   before.content.forEach(node => {
     run.animations.push(node.animate([{ opacity: 1 }, { opacity: 0 }], { delay: ms(fade.out.delayMs), duration: ms(fade.out.ms), easing: 'linear', fill: 'forwards' }));
   });
-  startHawk(run, before.logos, layer, pace);
+  startHawk(run, before.logos, layer);
   moveOn(otherRegions); // the other areas pick their next pages and wait at the gate for the moment the screen is apart
 
   await until(swapTimes.switchMs);
@@ -371,15 +372,11 @@ async function perform(run, screen, swapPage) {
   after.content.forEach(node => {
     run.animations.push(node.animate([{ opacity: 0 }, { opacity: 0, offset: hold }, { opacity: 1 }], { duration: ms(left), easing: 'linear', fill: 'both' }));
   });
-  const flight = flyHawk(run, after.logos, pace);
+  flyHawk(run, after.logos, pace, icon, left);
 
   await until(endMs);
   putBackPieces(run);
-
-  if (run.hawk) {
-    await until(atMs + flight - hawkLandMs);
-    await landHawk(run, pace);
-  }
+  await landHawk(run, pace);
   return ms(left);
 }
 

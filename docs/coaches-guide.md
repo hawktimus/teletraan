@@ -105,7 +105,7 @@ and nothing else. The Screen is the same for both teams.
 
 | Letter | Part | What is there |
 |--------|------|---------------|
-| A | Banner | A button that opens the document of the team in the Editing switch (name, number, logo, colors and the Outlined name switch). Under it, Name effect every (10 minutes to start with), Flying hawk every (15) and Swap time (1.25 seconds) |
+| A | Banner | A button that opens the document of the team in the Editing switch (name, number, logo, colors and the Outlined name switch). Under it, Name effect every (10 minutes to start with), Flying hawk every (5) and Swap time (1.25 seconds) |
 | B | Main panel | The rows the main panel plays, top to bottom, and then over again. The Monday style |
 | C | Countdown | The title and the dates of Kickoff and Rollout, shown from Dashboard Settings, Countdown tab. They are the same on every Screen and for both teams, so change them there |
 | D | Side panel | The rows the small panel plays, on its own timer. A row has no team. Minimal has no side panel, so its D opens nothing |
@@ -114,6 +114,9 @@ and nothing else. The Screen is the same for both teams.
 Name effect every and Flying hawk every are in minutes, from 1 to 240. Swap time
 is how long the frames take to pull apart and re-form when the team or the style
 changes, from 0.5 to 3 seconds. Every other timing of the swap scales with it.
+A Screen that was saved before Flying hawk every started at 5 keeps the number it
+has, which is 15 on the Screens made then, so change it there to 5 if the hawk
+should come every 5 minutes.
 Outlined name is a switch on the team document: off draws the team name solid,
 and both teams are off to start with.
 
@@ -382,12 +385,13 @@ docs/rebuilding-the-mini.md, step 13.
 
 ## The Nova trim fields
 
-A team document has seven Trim choices, in Settings, Teams, that make a team look
+A team document has six Trim choices, in Settings, Teams, that make a team look
 like itself beyond its colors and the mirror. Each is one of two. Prime has the
 first of each, which is how the screen has always looked, and Nova has the other.
 A team saved before the trim existed looks like Prime. Outlined name is a switch
 in the same box. Off draws the team name solid, and it is off on both teams. The
-older choice Team name look is hidden and the screen does not read it.
+older choices Team name look and Bird pose are hidden and the screen does not read
+them: the icon is always the usual Hawktimus mark.
 
 | Field | Prime | Nova |
 |-------|-------|------|
@@ -395,7 +399,6 @@ older choice Team name look is hidden and the screen does not read it.
 | Cut corners | Top left and bottom right | Top right and bottom left |
 | Header end | Notch | Slant at 60 degrees |
 | Page grid | Lines | Dots |
-| Bird pose | Auto | Flight |
 | Ticker label | Cut plate | Thin bar |
 | Countdown color | Red | The team's neon |
 

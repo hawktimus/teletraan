@@ -5487,9 +5487,10 @@ function checkEventPages() {
 // The trim of a team (dashboard/config.js, teamTrim): eight radio lists in the Trim box of the Team document. The choices
 // are the ones in config.js in the same order, the first is the one Prime has and the one each field starts with, and
 // none is required, because a team saved before the trim existed has none and must still publish. The seed file gives
-// Prime the first choice of each and Nova the values of the work order, except the name look, which is solid on both. The first choice has no class, and the others
-// have the one the dashboard puts on the page: plain lower case words with hyphens, and no two the same.
-const trimOfNova = { bolts: 'round', cornerCut: 'tr-bl', headerNotch: 'slant', grid: 'dots', logoPose: 'flight', nameStyle: 'solid', tickerLabel: 'bar', countAccent: 'neon' };
+// Prime the first choice of each and Nova the values of the work order, except the name look, which is solid on both, and the
+// bird pose, which is auto on both. The first choice has no class, and the others have the one the dashboard puts on the page:
+// plain lower case words with hyphens, and no two the same. The bird pose is the exception: flight is not used any more and has none.
+const trimOfNova = { bolts: 'round', cornerCut: 'tr-bl', headerNotch: 'slant', grid: 'dots', logoPose: 'auto', nameStyle: 'solid', tickerLabel: 'bar', countAccent: 'neon' };
 
 function checkTeamTrim() {
   const problems = [];
@@ -5521,6 +5522,7 @@ function checkTeamTrim() {
     values.forEach((value, index) => {
       const word = config.teamTrim[name][value];
       if (index === 0) return need(problems, word === '', where + ' ' + value + ' is the Prime value and should have no class');
+      if (name === 'logoPose') return need(problems, word === '', where + ' ' + value + ' is not used any more and should have no class');
 
       need(problems, /^[a-z]+(-[a-z]+)+$/.test(word), where + ' ' + value + ' should have a class of lower case words and hyphens, not ' + word);
       need(problems, classes.indexOf(word) === -1, 'the class ' + word + ' is used twice in teamTrim');
@@ -5548,6 +5550,10 @@ function checkTeamTrim() {
   });
   // Team name look is not read any more and both teams store solid, so nothing contradicts the switch Outlined name, which is off on both teams and draws the name solid
   ['team-prime', 'team-nova'].forEach(id => need(problems, docs[id] && docs[id].outlinedName === false, id + ' in docs/seed/teams.ndjson should have outlinedName false: both starting teams draw the name solid'));
+
+  // Bird pose is hidden and kept, and the screen ignores it: the seed and the sample leave both teams at auto
+  const pose = fieldAt('team.logoPose');
+  need(problems, pose && pose.hidden === true && /^Not used any more\./.test(pose.description || ''), 'team.logoPose should be hidden but stay in the schema, with a description that begins Not used any more');
 
   // Team name look is hidden and kept, and Outlined name, a switch in the Trim box that starts off, replaces it
   const look = fieldAt('team.nameStyle');
@@ -6198,7 +6204,7 @@ function checkScreenType() {
 
   // the banner settings: whole minutes from 1 to 240 and a swap time from 0.5 to 3, as in config.js
   const defaults = config.defaultScreen;
-  need(problems, sameData(defaults, { nameEffectEveryMinutes: 10, hawkEveryMinutes: 15, swapSeconds: 1.25 }), 'defaultScreen in config.js should be 10 minutes, 15 minutes and 1.25 seconds');
+  need(problems, sameData(defaults, { nameEffectEveryMinutes: 10, hawkEveryMinutes: 5, swapSeconds: 1.25 }), 'defaultScreen in config.js should be 10 minutes, 5 minutes and 1.25 seconds');
   need(problems, sameData(config.screenLimits, { nameEffectEveryMinutes: { min: 1, max: 240 }, hawkEveryMinutes: { min: 1, max: 240 }, swapSeconds: { min: 0.5, max: 3 } }), 'screenLimits in config.js should be 1 to 240, 1 to 240 and 0.5 to 3');
   ['nameEffectEveryMinutes', 'hawkEveryMinutes', 'swapSeconds'].forEach(name => {
     const field = at(name);

@@ -153,17 +153,17 @@ test('seconds are 6 to 120, and a row with seconds that are not a number has non
   assert.deepEqual(found, [6, 6, 20.5, 120, 120, undefined, undefined, undefined, undefined, undefined]);
 });
 
-test('the banner settings and the length of a swap start at 10 minutes, 15 minutes and 1.25 seconds, and stay inside their limits', () => {
+test('the banner settings and the length of a swap start at 10 minutes, 5 minutes and 1.25 seconds, and stay inside their limits', () => {
   const empty = screens.tidyScreen(null, 'original', 'minimal');
-  assert.deepEqual([empty.nameEffectEveryMinutes, empty.hawkEveryMinutes, empty.swapSeconds], [10, 15, 1.25]);
-  assert.deepEqual(config.defaultScreen, { nameEffectEveryMinutes: 10, hawkEveryMinutes: 15, swapSeconds: 1.25 });
+  assert.deepEqual([empty.nameEffectEveryMinutes, empty.hawkEveryMinutes, empty.swapSeconds], [10, 5, 1.25]);
+  assert.deepEqual(config.defaultScreen, { nameEffectEveryMinutes: 10, hawkEveryMinutes: 5, swapSeconds: 1.25 });
 
   const low = screens.tidyScreen({ nameEffectEveryMinutes: 0, hawkEveryMinutes: -3, swapSeconds: 0.1 }, 'original', 'minimal');
   assert.deepEqual([low.nameEffectEveryMinutes, low.hawkEveryMinutes, low.swapSeconds], [1, 1, 0.5]);
   const high = screens.tidyScreen({ nameEffectEveryMinutes: 999, hawkEveryMinutes: 241, swapSeconds: 9 }, 'original', 'minimal');
   assert.deepEqual([high.nameEffectEveryMinutes, high.hawkEveryMinutes, high.swapSeconds], [240, 240, 3]);
   const odd = screens.tidyScreen({ nameEffectEveryMinutes: '5', hawkEveryMinutes: null, swapSeconds: NaN }, 'original', 'minimal');
-  assert.deepEqual([odd.nameEffectEveryMinutes, odd.hawkEveryMinutes, odd.swapSeconds], [10, 15, 1.25]);
+  assert.deepEqual([odd.nameEffectEveryMinutes, odd.hawkEveryMinutes, odd.swapSeconds], [10, 5, 1.25]);
   const own = screens.tidyScreen({ nameEffectEveryMinutes: 5, hawkEveryMinutes: 30, swapSeconds: 2.5 }, 'original', 'minimal');
   assert.deepEqual([own.nameEffectEveryMinutes, own.hawkEveryMinutes, own.swapSeconds], [5, 30, 2.5]);
 });
@@ -293,7 +293,7 @@ test('with no Screen documents the dashboard plays rows built from the Panel ord
   assert.deepEqual(rowsOf(screen.mainRows).slice(0, 4), ['tonight prime', 'leadership prime', 'team-leads prime', 'tasks prime']);
   assert.equal(screen.mainRows.length, 16);
   assert.deepEqual(rowsOf(screen.sideRows), ['forecast', 'next-event', 'task-counts', 'sponsor-logo', 'task-counts']);
-  assert.deepEqual([screen.nameEffectEveryMinutes, screen.hawkEveryMinutes, screen.swapSeconds, screen.mondayStyle], [10, 15, 1.25, 'minimal']);
+  assert.deepEqual([screen.nameEffectEveryMinutes, screen.hawkEveryMinutes, screen.swapSeconds, screen.mondayStyle], [10, 5, 1.25, 'minimal']);
 
   const playlist = screens.mainPlaylist(content, mondayNoon);
   assert.ok(playlist.length > 10);
@@ -647,7 +647,7 @@ test('a team can be asked about without being held, and nothing is told', () => 
 test('the effects follow the minutes of the Screen, and a swap is as long as the Screen says', () => {
   const screen = screens.tidyScreen({ nameEffectEveryMinutes: 4, hawkEveryMinutes: 20, swapSeconds: 2.5 }, 'original', 'minimal');
   assert.deepEqual(screens.cadenceOf(screen), { nameEverySeconds: 240, hawkEverySeconds: 1200 });
-  assert.deepEqual(screens.cadenceOf(screens.tidyScreen(null, 'original', 'minimal')), { nameEverySeconds: 600, hawkEverySeconds: 900 });
+  assert.deepEqual(screens.cadenceOf(screens.tidyScreen(null, 'original', 'minimal')), { nameEverySeconds: 600, hawkEverySeconds: 300 });
 
   assert.equal(screens.swapScaleOf(screen), 2);
   assert.equal(screens.swapScaleOf(screens.tidyScreen(null, 'original', 'minimal')), 1, '1.25 seconds is the swap as it was built');

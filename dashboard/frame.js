@@ -1059,20 +1059,27 @@ async function playHawkNow(seconds, run) {
 
 // Takes over the logo that the effects move, and starts them counting. The
 // entrance plays first, if its switch and the master switch are on. Starting a
-// logo again (tools/logo.html) starts it all again.
+// logo again (tools/logo.html) starts it all again, once it has been stopped.
+// A logo that takes the place of the one on screen is the same show: a swap
+// draws the banner again when the style or the layout changes, and the counts
+// go on, or the hawk would play again 13 seconds after every swap.
 export function startLogo(logo) {
+  const replaced = showLogo !== null;
+
   showLogo = logo;
   restLogo(logo);
 
   // Anything waiting for the old logo is dropped, so the entrance comes first
   waiting = waiting.filter(entry => !effects[entry.name].logo);
 
-  const now = performance.now();
-  Object.keys(effects).forEach(name => {
-    if (!effects[name].logo) return;
-    effects[name].lastStarted = null;
-    effects[name].countFrom = now;
-  });
+  if (!replaced) {
+    const now = performance.now();
+    Object.keys(effects).forEach(name => {
+      if (!effects[name].logo) return;
+      effects[name].lastStarted = null;
+      effects[name].countFrom = now;
+    });
+  }
 
   if (logoAnimationsOn && entranceOn) askToPlay('entrance', true);
 }

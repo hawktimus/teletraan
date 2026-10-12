@@ -81,8 +81,8 @@ editors can sign in from anywhere.
       tokens.css              the two metals, the screws, sizes and timings
       teams.css               the seven team colors, started at the Prime values, and the four colors the
                               theme Hawktimus takes from them (core/teams.js sets them on the html element)
-      trim.css                the rules for the eight trim choices of a team (round bolts, the other corners cut on
-                              the cards, dots on the page, the bird in flight, the outlined name, the bar at the
+      trim.css                the rules for the trim choices of a team (round bolts, the other corners cut on
+                              the cards, dots on the page, the outlined name, the bar at the
                               start of the ticker and the neon countdown), each for a class that core/teams.js
                               puts on the html element (docs/layouts.md, "Team trim")
       themes/                 one CSS file of colour variables per theme, and registry.js listing them.
@@ -190,7 +190,7 @@ editors can sign in from anywhere.
                               (docs/layouts.md, "The Screens"),
                               swap-plan.js decides the one swap of every change of look and of Monday card
                               (which piece starts when, which old piece each new one takes over from, where it
-                              re-forms, how the hawk flies), swap-run.js plays it on the page, in full motion,
+                              re-forms, whether the icon of the logo flutters or only goes with them, and how), swap-run.js plays it on the page, in full motion,
                               calm motion or none, and busy.js says that a transition has the screen
                               (docs/layouts.md, "The swap"),
                               frc.js cleans the frc-status document the Mini writes and has the date helpers for
@@ -435,7 +435,7 @@ editors can sign in from anywhere.
                               click of a double click, a click on the card that says the slides are not ready,
                               the context menu, the hidden cursor, and the rotation that starts again
       test-swap.mjs           checks for the swap (core/swap-plan.js): the pull apart, the re-form, the match of old and
-                              new pieces and the flight of the hawk, and core/swap-run.js against a small stand-in
+                              new pieces and the path of the icon of the logo, and core/swap-run.js against a small stand-in
                               for the page and a clock moved by hand
       test-swap-smooth.mjs    checks that the swap is one gesture: every piece of the old look has a place in the new one
                               (the pieces of seven looks are in testdata/swap-pieces.json), nothing jumps at the switch,
@@ -470,6 +470,9 @@ editors can sign in from anywhere.
                               breaks, what the red countdown and the two war clocks write for it (one line at 36 px,
                               two lines, a smaller size), the room in countdown.css, and the Studio field that warns
                               above 28 characters
+      test-hawk-cadence.mjs   checks for the Hawktimus icon: the usual mark at rest for both teams, the flying hawk every
+                              5 minutes with a swap not starting the count again, and what the icon does in a swap
+                              (a slight flutter, only carried by a Monday card, none in calm and no motion)
       check-seasons.mjs       fails if a seasonal pack is not in the data format, has a piece outside its zone, too
                               many pieces, a forbidden word, no header mark, a mark bigger than its box (60 x 76),
                               fewer than 8 or more than 14 pieces over the panels, an over piece that is too big,
@@ -902,8 +905,8 @@ alone.
   the sizes.
 - **The teams, and the team on the screen.** Teams in the Studio sidebar, under Settings
   (`studio/schemas/team.js`): a name, a short name, a number, a code, an optional logo, seven
-  colors, Mirror the layout, seven trim choices (bolts, cut corners, header end, page grid,
-  bird pose, ticker label and countdown color), the Outlined name switch (the older Team name look is hidden), Active and Order. The two starting teams are in
+  colors, Mirror the layout, six trim choices (bolts, cut corners, header end, page grid,
+  ticker label and countdown color), the Outlined name switch (the older Team name look and Bird pose are hidden), Active and Order. The two starting teams are in
   `docs/seed/teams.ndjson`, and the command to import them is in docs/add-the-nova-team.md.
   Dashboard Settings, Look tab: Team mode (`teamMode`, Prime only to start with, from
   `teamModes`) and Minutes for each team (`alternateMinutes`, 5 to start with, 1 to 30), in

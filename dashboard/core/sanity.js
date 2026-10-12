@@ -562,7 +562,8 @@ const teamCode = /^[a-z0-9]+$/;
 
 // A team document from Studio becomes { code, name, shortName, number, logo, colors, metal, glow, mirror, the
 // eight trim fields, active, order }. The name look (nameStyle) is not read from the document: the switch Outlined name
-// (outlinedName) says it, outline when it is on and solid otherwise. The code is lowercase letters and digits, and it is what the items point to,
+// (outlinedName) says it, outline when it is on and solid otherwise. The bird pose (logoPose) is not read either: the
+// icon is always the usual mark, so a team that stores flight reads as auto. The code is lowercase letters and digits, and it is what the items point to,
 // so a team without a usable one is dropped. The names are capitals, the way the team name
 // has always been written in the banner, and a missing one is the other, or the code. The
 // logo is the address of the picture at the width the screen needs (core/images.js), and
@@ -597,7 +598,7 @@ function normalizeTeamDocument(raw) {
     cornerCut: trimValue(raw, 'cornerCut'),
     headerNotch: trimValue(raw, 'headerNotch'),
     grid: trimValue(raw, 'grid'),
-    logoPose: trimValue(raw, 'logoPose'),
+    logoPose: primeTeam.logoPose,
     nameStyle: raw.outlinedName === true ? 'outline' : 'solid',
     tickerLabel: trimValue(raw, 'tickerLabel'),
     countAccent: trimValue(raw, 'countAccent'),

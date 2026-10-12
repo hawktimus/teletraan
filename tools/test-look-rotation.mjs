@@ -286,7 +286,7 @@ test('a swap takes as long as the Screen it goes to says: every time of it follo
   assert.equal((run.match(/frame\.pace\(\)/g) || []).length, 1, 'frame.pace() is read in one place');
   assert.ok(/function paceNow\(\) \{\s*const scale = swapScale\(\);\s*return frame\.pace\(\) \* \(typeof scale === 'number' && isFinite\(scale\) && scale > 0 \? scale : 1\);\s*\}/.test(run));
   assert.equal((run.match(/const pace = paceNow\(\);/g) || []).length, 2, 'the swap and the fade take the pace from it');
-  assert.ok(run.includes('startHawk(run, before.logos, layer, pace);'), 'the hawk too');
+  assert.ok(run.includes('flyHawk(run, after.logos, pace, icon, left);'), 'the icon of the logo too');
   assert.ok(/export function startSwaps\(busyElsewhere, scaleNow = \(\) => 1\) \{/.test(run));
 });
 

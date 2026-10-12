@@ -706,13 +706,13 @@ Publish. The fields:
 - Glow: a switch for a soft glow round the neon lines. It starts off.
 - Mirror the layout: off to start with. On, the whole screen is flipped left to
   right while this team is showing.
-- Trim: seven choices in a box, each one of two, such as round rivets in place of
+- Trim: six choices in a box, each one of two, such as round rivets in place of
   hex nuts or the top right and bottom left corners cut in place of the top left
   and bottom right. The first choice of each is how Prime looks, and each starts
   on it. docs/add-the-nova-team.md has the list. The box also has Outlined name,
   a switch that is off to start with: off draws the team name solid, on draws
-  outlined letters with a line under them. The older choice Team name look is
-  hidden and the screen does not read it.
+  outlined letters with a line under them. The older choices Team name look and
+  Bird pose are hidden and the screen does not read them.
 - Active: on to start with. Off leaves the team out of the team pickers of a Screen
   and out of the Team choice on items.
 - Order: a lower number comes first. It starts at 10.
@@ -730,7 +730,7 @@ map of the screen with the letters of Start here. Click a letter or its box to o
 map. Editing, Prime or Nova, above the map only changes which team document A opens. The detail for coaches is in docs/coaches-guide.md, "Screens".
 
 - A Banner: a button that opens the team document of the team in Editing. Name effect every (minutes, from
-  1 to 240, 10 to start with), Flying hawk every (minutes, from 1 to 240, 15 to start with) and Swap time
+  1 to 240, 10 to start with), Flying hawk every (minutes, from 1 to 240, 5 to start with) and Swap time
   (seconds, from 0.5 to 3, 1.25 to start with).
 - B Main panel: the rows. Each row has a panel, a team and, if you want, seconds from 6 to 120. The panel is one
   of the large panels or one of three Monday rows. A team shows only when the panel can have one: leave it on Keep

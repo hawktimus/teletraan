@@ -31,7 +31,7 @@ const base = pathToFileURL(root).href + '/';
 const plan = await import(base + 'core/swap-plan.js');
 const { boxInPose } = await import(base + 'core/transitions.js');
 
-const { bezierAt, contentFade, flapFrames, hawkShape, hawkTransform, matchPieces, outPose, planHawk, planPull, planReform, poseAt, poseFrames, poseTransform, pullEaseText, pullProgress, reformEaseText, reformEnd, restPose, standardEase, standardEaseText, swapMs, swapShape, swapTimes } = plan;
+const { bezierAt, birdFades, contentFade, flapFrames, hawkShape, hawkTransform, matchPieces, outPose, planHawk, planPull, planReform, poseAt, poseFrames, poseTransform, pullEaseText, pullProgress, reformEase, reformEaseText, reformEnd, restPose, standardEase, standardEaseText, swapMs, swapShape, swapTimes } = plan;
 
 const tests = [];
 function test(name, run) {
@@ -66,14 +66,14 @@ function somePieces(plates, bolts) {
 const byId = (list, id) => list.find(item => item.id === id);
 const middleOf = piece => ({ x: piece.left + piece.width / 2, y: piece.top + piece.height / 2 });
 
-test('the times are the ones of the order: pull apart, re-form, content, and the hawk', () => {
-  assert.deepEqual(swapTimes, { fadeMs: 250, delayMostMs: 180, pullMs: 450, switchMs: 450, reformEndMs: 1250, hawkMs: 2000 });
+test('the times are the ones of the order: pull apart, re-form, content, and the landing of the icon', () => {
+  assert.deepEqual(swapTimes, { fadeMs: 250, delayMostMs: 180, pullMs: 450, switchMs: 450, reformEndMs: 1250, landMs: 150 });
   assert.equal(swapShape.outwardShare, 0.18);
   assert.deepEqual([swapShape.tipLeast, swapShape.tipMost, swapShape.twistMost], [20, 70, 25]);
   assert.ok(swapTimes.switchMs >= swapTimes.delayMostMs && swapTimes.switchMs === swapTimes.pullMs, 'the new pieces take over when every old one is out and at rest');
   assert.deepEqual(contentFade(), { out: { delayMs: 0, ms: 250 }, in: { delayMs: 1000, ms: 250 } });
   assert.equal(swapMs(false), 1250);
-  assert.equal(swapMs(true), 2000);
+  assert.equal(swapMs(true), 1400, 'the icon lands 150 ms after the pieces are home');
 });
 
 test('the same pieces and the same seed always give the same plan, and another seed gives another', () => {
@@ -315,96 +315,73 @@ test('a pose is one transform with the same functions in the same order, and a f
 
 const logoAt = (x, y) => ({ x: x, y: y, width: 219, height: 176 });
 
-test('the hawk flies in one arc 300 px high from the old place to the new one, and faces the way it flies', () => {
-  const right = planHawk(logoAt(300, 700), logoAt(1500, 700));
-  const left = planHawk(logoAt(1500, 700), logoAt(300, 700));
+test('the icon travels from the old place to the new one with the easing of the pieces, in a straight line when it is carried, and faces the way it goes', () => {
+  const right = planHawk(logoAt(300, 700), logoAt(1500, 700), 800);
+  const left = planHawk(logoAt(1500, 700), logoAt(300, 700), 800);
 
-  assert.equal(right.hop, false);
   assert.equal(right.direction, 1);
-  assert.equal(left.direction, -1, 'it turns over to fly to the left');
-  [right, left].forEach(flight => {
-    assert.equal(flight.durationMs, 2000);
-    assert.equal(flight.height, 300);
-    assert.equal(flight.rise, 300);
-    assert.deepEqual(flight.keyframes[0], { offset: 0, x: 0, y: 0, tilt: 20, scale: 1 }, 'it lifts from the old place');
-    const last = flight.keyframes[flight.keyframes.length - 1];
-    assert.equal(last.offset, 1);
-    assert.equal(last.y, 0, 'and settles on the same height');
-    assert.ok(Math.abs(Math.min(...flight.keyframes.map(keyframe => keyframe.y)) + 300) < 1, 'the top of the arc is 300 px above the line');
+  assert.equal(left.direction, -1, 'it turns over to go to the left');
+  [right, left].forEach(path => {
+    assert.equal(path.durationMs, 800);
+    assert.equal(path.rise, 0);
+    assert.equal(path.keyframes.length, hawkShape.steps + 1);
+    assert.deepEqual(path.keyframes[0], { offset: 0, x: 0, y: 0, scale: 1 }, 'it starts where the logo was');
+    assert.ok(path.keyframes.every(keyframe => keyframe.y === 0), 'and never leaves the line');
+    assert.ok(path.keyframes.every((keyframe, index) => index === 0 || Math.abs(keyframe.x) >= Math.abs(path.keyframes[index - 1].x)), 'it never turns back');
   });
-  const last = right.keyframes[right.keyframes.length - 1];
-  assert.equal(last.x, 1200, 'and settles on the new place');
-  assert.equal(left.keyframes[left.keyframes.length - 1].x, -1200);
-  assert.equal(hawkTransform(right.keyframes[0], 1).endsWith('scaleX(1)'), true);
+  assert.equal(right.keyframes[hawkShape.steps].x, 1200, 'and ends on the new place');
+  assert.equal(left.keyframes[hawkShape.steps].x, -1200);
+
+  // the easing of the travel of the pieces: slow at first, soft at the end
+  const first = right.keyframes[1].x;
+  const middle = right.keyframes[hawkShape.steps / 2].x;
+  assert.ok(first < 1200 / hawkShape.steps, 'slower than a straight line at the start: ' + first);
+  assert.equal(middle, Math.round(bezierAt(reformEase, 0.5) * 1200 * 10) / 10);
+  assert.ok(right.keyframes[hawkShape.steps].x - right.keyframes[hawkShape.steps - 1].x < 1200 / hawkShape.steps, 'and softer than a straight line at the end');
+
+  assert.equal(hawkTransform(right.keyframes[0], 1), 'translate(0px, 0px) scale(1) scaleX(1)');
   assert.equal(hawkTransform(left.keyframes[0], -1).endsWith('scaleX(-1)'), true, 'scaleX(-1) when heading left');
+  assert.ok(!hawkTransform(right.keyframes[3], 1).includes('rotate'), 'the icon is not tilted: it is carried, not flown');
 });
 
-test('the hawk tilts into the climb, is level at the top and tilts out of the descent', () => {
-  const flight = planHawk(logoAt(300, 700), logoAt(1500, 700));
-  const tilts = flight.keyframes.map(keyframe => keyframe.tilt);
-  const top = Math.floor(tilts.length / 2);
+test('a slight swap rises 40 px in the middle of the path and lands on the same height, and a hop never leaves the top of the screen', () => {
+  const path = planHawk(logoAt(300, 700), logoAt(1500, 700), 800, hawkShape.hopHeight);
+  const top = path.keyframes[hawkShape.steps / 2];
 
-  assert.ok(tilts[0] > 0 && tilts[1] > 0, 'nose up while it climbs');
-  assert.equal(tilts[top], 0, 'level at the top');
-  assert.ok(tilts[tilts.length - 1] < 0 && tilts[tilts.length - 2] < 0, 'nose down while it comes down');
-  assert.ok(Math.max(...tilts.map(Math.abs)) <= hawkShape.tiltMost);
-  assert.ok(tilts.every((tilt, index) => index === 0 || tilt <= tilts[index - 1]), 'from the climb to the descent without turning back');
+  assert.equal(hawkShape.hopHeight, 40);
+  assert.equal(path.rise, 40);
+  assert.equal(top.y, -40, 'the middle of the path is 40 px above the line');
+  assert.equal(path.keyframes[0].y, 0);
+  assert.equal(path.keyframes[hawkShape.steps].y, 0, 'and it settles on the line');
+  assert.ok(Math.min(...path.keyframes.map(keyframe => keyframe.y)) >= -40.5, 'no large arc');
 
-  // nose up is a turn to the left for a hawk that faces right, and to the right for one that faces left (it is turned over first)
-  assert.ok(hawkTransform({ x: 0, y: 0, tilt: 15, scale: 1 }, 1).includes('rotate(-15deg)'));
-  assert.ok(hawkTransform({ x: 0, y: 0, tilt: 15, scale: 1 }, -1).includes('rotate(15deg)'));
+  // a logo with 42 px above it, as in the banner of Original, and one with 10
+  assert.equal(planHawk({ x: 130, y: 130, width: 219, height: 176 }, { x: 1700, y: 130, width: 219, height: 176 }, 800, 40).rise, 40);
+  const squeezed = planHawk({ x: 130, y: 98, width: 219, height: 176 }, { x: 1700, y: 98, width: 219, height: 176 }, 800, 40);
+  assert.equal(squeezed.rise, 10, 'the hop is as high as the room above the logo is');
+  const none = planHawk({ x: 130, y: 88, width: 219, height: 176 }, { x: 1700, y: 88, width: 219, height: 176 }, 800, 40);
+  assert.equal(none.rise, 0);
+  assert.ok(none.keyframes.every(keyframe => keyframe.y === 0));
 });
 
-test('a hawk that stays where it is hops 120 px and lands', () => {
-  const same = planHawk(logoAt(300, 700), logoAt(300, 700));
-  const near = planHawk(logoAt(300, 700), logoAt(310, 705));
-  [same, near].forEach(flight => {
-    assert.equal(flight.hop, true);
-    assert.equal(flight.height, 120);
-    assert.ok(Math.abs(Math.min(...flight.keyframes.map(keyframe => keyframe.y)) + 120) < 3, 'the top is 120 px above the line between the two places');
-    assert.equal(flight.keyframes[flight.keyframes.length - 1].y, near === flight ? 5 : 0);
-  });
-  assert.equal(planHawk(logoAt(300, 700), logoAt(300 + hawkShape.sameSpot, 700)).hop, false, 'a place 24 px away is another place');
-});
-
-test('where the logo is too near the top for the arc to rise, it dips down instead, and the whole hawk stays on the screen', () => {
-  const banner = planHawk(logoAt(150, 110), logoAt(1700, 110));
-  assert.equal(banner.height, 300);
-  assert.equal(banner.rise, -300, 'a dip');
-  assert.ok(Math.min(...banner.keyframes.map(keyframe => keyframe.y)) > -1, 'it never goes above the old place');
-  assert.ok(Math.max(...banner.keyframes.map(keyframe => keyframe.y)) > 299);
-  assert.ok(banner.keyframes[0].tilt < 0 && banner.keyframes[0].tilt >= -hawkShape.tiltMost, 'and tilts down into the dip');
-
-  const squeezed = planHawk(logoAt(150, 300), logoAt(1700, 300));
-  assert.ok(squeezed.height <= 300 && squeezed.height > 0);
-  [banner, squeezed].forEach(flight => flight.keyframes.forEach(keyframe => {
-    const absoluteY = (flight === banner ? 110 : 300) + keyframe.y;
-    assert.ok(absoluteY - 88 >= -1 && absoluteY + 88 <= 1081, 'on the screen at ' + absoluteY);
-  }));
-});
-
-test('the hawk lifts first: a flight that starts higher than the old place still has its top where it was asked to be', () => {
-  const flight = planHawk(logoAt(300, 700), logoAt(1500, 700), 1650, 40);
-  assert.equal(flight.durationMs, 1650);
-  assert.equal(flight.keyframes[0].y, -40, 'it starts 40 px up');
-  assert.ok(Math.abs(Math.min(...flight.keyframes.map(keyframe => keyframe.y)) + 300) < 1.5, 'the top is 300 px above the line');
-  assert.equal(flight.keyframes[flight.keyframes.length - 1].y, 0);
-  assert.equal(flight.apexMs, 825, 'the colors change half way along the flight');
-});
-
-test('the hawk changes size from the old logo to the new one, and the colors change at the top of the arc', () => {
-  const flight = planHawk(logoAt(300, 700), { x: 1500, y: 700, width: 438, height: 352 });
-  assert.equal(flight.keyframes[0].scale, 1);
-  assert.equal(flight.keyframes[flight.keyframes.length - 1].scale, 2);
+test('the icon changes size from the old logo to the new one, and the colors change half way', () => {
+  const path = planHawk(logoAt(300, 700), { x: 1500, y: 700, width: 438, height: 352 }, 1000);
+  assert.equal(path.keyframes[0].scale, 1);
+  assert.equal(path.keyframes[path.keyframes.length - 1].scale, 2);
   assert.equal(hawkShape.colorAt, 0.5);
-  assert.equal(flight.apexMs, 1000);
-  const top = flight.keyframes.reduce((best, keyframe) => (keyframe.y < best.y ? keyframe : best));
-  assert.ok(Math.abs(top.offset - 0.5) < 0.07, 'the top of the arc is half way');
+  assert.equal(path.apexMs, 500);
+  assert.ok(path.keyframes.every((keyframe, index) => index === 0 || keyframe.scale >= path.keyframes[index - 1].scale));
 });
 
-test('the wings beat every 320 ms, to 35 percent of the beat of the flying logo, from the resting wing and back', () => {
-  assert.equal(hawkShape.flapMs, 320);
-  assert.equal(hawkShape.wingShare, 0.35);
+test('in a slight swap the emblem turns into the hawk and back in 600 ms, and the wings beat twice in it, to 35 percent of the beat of the flying logo', () => {
+  assert.deepEqual([hawkShape.birdMs, hawkShape.beats, hawkShape.fadeMs, hawkShape.wingShare], [600, 2, 100, 0.35]);
+  assert.ok(hawkShape.birdMs <= 600, 'about 600 ms at most');
+
+  const fades = birdFades();
+  assert.deepEqual(fades.hawk.map(frame => frame.opacity), [0, 1, 1, 0], 'the hawk comes in, stays, and goes');
+  assert.deepEqual(fades.emblem.map(frame => frame.opacity), [1, 0, 0, 1], 'the emblem goes and comes back');
+  assert.deepEqual(fades.hawk.map(frame => frame.offset), [undefined, 1 / 6, 5 / 6, undefined], 'each change takes 100 of the 600 ms');
+  assert.deepEqual(fades.emblem.map(frame => frame.offset), fades.hawk.map(frame => frame.offset));
 
   const frames = flapFrames();
   const css = withoutComments(read('frame.css'));
@@ -475,7 +452,7 @@ const standIns = {
     "export const moveOn = regions => globalThis.world.log.push('moveOn ' + regions.join(' '));",
   ],
   'core/takeover.js': ['export const takeoverRunning = () => globalThis.world.takeover;'],
-  'core/teams.js': ['export const teamPending = () => false;'],
+  'core/teams.js': ['export const teamPending = () => globalThis.world.teamPending === true;'],
   'core/theme-apply.js': ['export const lookIsWaiting = () => false;'],
 };
 Object.keys(standIns).forEach(file => fs.writeFileSync(path.join(runRoot, file), standIns[file].join('\n') + '\n'));
@@ -519,7 +496,7 @@ class Fake {
 
   querySelectorAll(selector) {
     if (selector === '.logo') return this.found.logos.slice();
-    if (selector === '.team-logo') return this.children.filter(child => child.classes.has('team-logo'));
+    if (selector.startsWith('.')) return this.children.filter(child => child.classes.has(selector.slice(1)));
     return [];
   }
 
@@ -590,7 +567,8 @@ function makePage() {
   });
   const logo = new Fake('logo', { left: 60, top: 40, width: 219, height: 176 }, { parent: banner, classes: ['logo'], props: { '--k': '.1991', '--logo-purple': '#6c18b6', '--logo-tail': '#53048f', '--logo-far': '#3d036d' } });
   logo.children.push(Object.assign(new Fake('drawing', null, { classes: ['drawing'] }), { parent: logo }));
-  ['hawk-near-wing', 'hawk-far-wing'].forEach(name => logo.children.push(Object.assign(new Fake(name, null, { classes: [name] }), { parent: logo })));
+  ['emblem', 'emblem'].forEach(name => logo.children.push(Object.assign(new Fake(name, null, { classes: [name] }), { parent: logo })));
+  ['hawk-near-wing', 'hawk-far-wing', 'hawk-body'].forEach(name => logo.children.push(Object.assign(new Fake(name, null, { classes: ['hawk-part', name] }), { parent: logo })));
   logo.children.push(Object.assign(new Fake('team picture', null, { classes: ['team-logo'] }), { parent: logo }));
   logo.attributes['data-team-logo'] = 'on';
   page.logos = [logo];
@@ -753,7 +731,7 @@ function newLook(world) {
   };
 }
 
-test('a swap pulls the pieces apart, puts the look on at 450 ms, re-forms them by 1250 ms and lands the hawk at 2000 ms', async () => {
+test('a swap pulls the pieces apart, puts the look on at 450 ms, re-forms them by 1250 ms and lands the icon at 1400 ms', async () => {
   const world = await loadRun();
   const busy = await import(busyModuleUrl);
   const playing = world.offer(otherPage('events'), mondayPage('monday-tasks')).play(newLook(world));
@@ -770,17 +748,17 @@ test('a swap pulls the pieces apart, puts the look on at 450 ms, re-forms them b
   // done, and everything back
   assert.equal(swapRun.swapRunning(), false);
   assert.equal(busy.isBusy(), false);
-  assert.equal(world.now, 2000, 'the hawk lands at 2000 ms');
+  assert.equal(world.now, 1400, 'the icon lands 150 ms after the pieces are home');
   assert.equal(took, 800, 'the pieces took 800 ms to re-form');
   assert.equal(world.elements.pile.hidden, true);
   assert.equal(world.elements.world.dataset.pieces, undefined);
-  assert.deepEqual(world.elements.pile.children, [world.elements.cube], 'the copies of the bolts and the hawk are gone');
+  assert.deepEqual(world.elements.pile.children, [world.elements.cube], 'the copies of the bolts and of the logo are gone');
   assert.ok(world.animations.every(animation => animation.cancelled || animation.options.iterations !== Infinity || animation.element.removed), 'no animation is left going');
   assert.equal(world.page.logos[0].style.visibility, undefined, 'the logo is back');
   assert.equal(world.page.content.every(node => node.dataset.pile === undefined), true);
 });
 
-test('before 450 ms every piece pulls out, slowly at first and softly at the end, the content fades out, and the logo becomes a hawk that flaps and lifts', async () => {
+test('before 450 ms every piece pulls out, slowly at first and softly at the end, the content fades out, and the logo is copied and stays where it was', async () => {
   const world = await loadRun();
   const swapPage = newLook(world);
   const playing = world.offer(otherPage('events'), mondayPage('monday-tasks')).play(swapPage);
@@ -811,21 +789,14 @@ test('before 450 ms every piece pulls out, slowly at first and softly at the end
   });
 
   const hawk = world.elements.pile.children.find(child => child.classes.has('swap-hawk'));
-  assert.ok(hawk, 'the hawk is in the layer over everything');
-  assert.equal(hawk.dataset.act, 'swap');
-  assert.equal(hawk.attributes['data-team-logo'], undefined, 'it is the hawk, not the picture of a team');
-  assert.equal(hawk.children.some(child => child.classes.has('team-logo')), false);
-  assert.equal(hawk.style.values['--logo-purple'], '#6c18b6', 'it keeps the old colors until the top of the arc');
+  assert.ok(hawk, 'the copy of the logo is in the layer over everything');
+  assert.equal(hawk.dataset.act, undefined, 'and has no act of its own: it is the logo as it is');
+  assert.equal(hawk.children.some(child => child.classes.has('team-logo')), true, 'a team\'s own picture is carried with it');
+  assert.equal(hawk.style.values['--logo-purple'], '#6c18b6', 'it keeps the old colors until the middle of the travel');
   assert.equal(hawk.style.values['--k'], '.1991');
   assert.equal(world.page.logos[0].style.visibility, 'hidden', 'and the logo waits out of sight');
-  const wings = hawk.children.filter(child => child.classes.has('hawk-near-wing') || child.classes.has('hawk-far-wing'));
-  assert.equal(wings.length, 2);
-  wings.forEach(wing => {
-    assert.equal(wing.animations[0].options.duration, 320, 'a beat every 320 ms');
-    assert.equal(wing.animations[0].options.iterations, Infinity);
-  });
-  assert.equal(hawk.animations.length, 1, 'and it lifts');
-  assert.equal(hawk.animations[0].options.duration, 450, 'until the pieces are out');
+  assert.equal(hawk.animations.length, 0, 'it stays where the logo was: no lift, no flap');
+  hawk.children.forEach(child => assert.equal(child.animations.length, 0, child.name + ' does not move'));
 
   await drive(playing);
 });
@@ -894,41 +865,105 @@ test('at 450 ms the old animations stop, the new pieces start where the old ones
   assert.equal(host.animations[0].cancelled, true, 'the fade out is replaced at 450 ms by the wait and the fade in');
 });
 
-test('the hawk flies to the new place when it is known, changes color at the top of the arc, and lands', async () => {
+// Lets the clock run to a time, with the promises settling between the timers
+async function runTo(world, milliseconds) {
+  while (world.now < milliseconds) {
+    for (let flush = 0; flush < 20; flush++) await new Promise(resolve => setImmediate(resolve));
+    world.timers.sort((a, b) => a.due - b.due);
+    const next = world.timers[0];
+    if (!next || next.due > milliseconds) { world.now = milliseconds; break; }
+    world.timers.shift();
+    world.now = Math.max(world.now, next.due);
+    next.run();
+  }
+  for (let flush = 0; flush < 20; flush++) await new Promise(resolve => setImmediate(resolve));
+}
+
+test('a carried icon goes to the new place with the pieces, in a straight line, changes color half way, and lands. It is never a hawk', async () => {
   const world = await loadRun();
   const swapPage = newLook(world);
   const playing = world.offer(otherPage('events'), mondayPage('monday-tasks')).play(swapPage);
-  const hawkAfter = async milliseconds => {
-    while (world.now < milliseconds) {
-      for (let flush = 0; flush < 20; flush++) await new Promise(resolve => setImmediate(resolve));
-      world.timers.sort((a, b) => a.due - b.due);
-      const next = world.timers[0];
-      if (!next || next.due > milliseconds) { world.now = milliseconds; break; }
-      world.timers.shift();
-      world.now = Math.max(world.now, next.due);
-      next.run();
-    }
-    for (let flush = 0; flush < 20; flush++) await new Promise(resolve => setImmediate(resolve));
-  };
 
-  await hawkAfter(500);
+  await runTo(world, 500);
   const hawk = world.elements.pile.children.find(child => child.classes.has('swap-hawk'));
-  assert.equal(hawk.animations[0].cancelled, true, 'the lift is over');
-  const flight = hawk.animations[hawk.animations.length - 1];
-  assert.equal(flight.options.duration, 1550, 'the flight takes what is left of the 2 seconds');
-  const last = flight.frames[flight.frames.length - 1].transform;
-  assert.ok(last.includes('translate(1440px, 0px)'), 'it ends on the new place, 1440 px to the right: ' + last);
-  assert.ok(last.endsWith('scaleX(1)'));
+  assert.equal(hawk.animations.length, 1, 'one animation: the travel');
+  const travel = hawk.animations[0];
+  assert.equal(travel.options.duration, 800, 'from the moment the look goes on to the moment the pieces are home');
+  assert.equal(travel.options.easing, 'linear');
+  const last = travel.frames[travel.frames.length - 1].transform;
+  assert.equal(last, 'translate(1440px, 0px) scale(1) scaleX(1)', 'it ends on the new place, 1440 px to the right');
+  assert.ok(travel.frames.every(frame => !frame.transform.includes('rotate')) && travel.frames.every(frame => /^translate\([-\d.]+px, 0px\)/.test(frame.transform)), 'straight, and not tilted');
+  hawk.children.forEach(child => assert.equal(child.animations.length, 0, child.name + ' stays what it is: the emblem is never turned into the hawk'));
   assert.equal(hawk.style.values['--logo-purple'], '#6c18b6', 'still the old colors');
   assert.equal(world.newLogo.style.visibility, 'hidden', 'the new logo waits out of sight');
 
-  await hawkAfter(1300);
-  assert.equal(hawk.style.values['--logo-purple'], undefined, 'the colors are the new look\'s after the top of the arc');
-  await hawkAfter(1900);
+  await runTo(world, 800);
+  assert.equal(hawk.style.values['--logo-purple'], '#6c18b6', 'not yet half way');
+  await runTo(world, 900);
+  assert.equal(hawk.style.values['--logo-purple'], undefined, 'the colors are the new look\'s after half of the travel');
+  await runTo(world, 1300);
   assert.equal(hawk.removed, undefined);
   await drive(playing);
   assert.equal(hawk.removed, true);
-  assert.equal(world.newLogo.style.visibility, undefined, 'the logo is back where the hawk landed');
+  assert.equal(world.newLogo.style.visibility, undefined, 'the logo is back where the icon landed');
+  assert.equal(world.now, 1400);
+});
+
+test('a slight swap makes the icon a hawk for 600 ms as it goes, with a hop of 40 px, and the emblem is back before it lands', async () => {
+  const world = await loadRun();
+  const swapPage = newLook(world);
+  world.teamPending = true;
+  const playing = world.offer(otherPage('events'), otherPage('tasks')).play(swapPage);
+
+  await runTo(world, 500);
+  const hawk = world.elements.pile.children.find(child => child.classes.has('swap-hawk'));
+  const travel = hawk.animations[0];
+  assert.equal(travel.options.duration, 800);
+  assert.equal(Math.min(...travel.frames.map(frame => Number(/translate\([-\d.]+px, ([-\d.]+)px\)/.exec(frame.transform)[1]))), -40, 'the middle of the path is 40 px above the line');
+  assert.equal(travel.frames[travel.frames.length - 1].transform, 'translate(1440px, 0px) scale(1) scaleX(1)', 'and it lands on the new place of the logo');
+
+  const fades = birdFades();
+  const emblems = hawk.children.filter(child => child.classes.has('emblem'));
+  const parts = hawk.children.filter(child => child.classes.has('hawk-part'));
+  assert.equal(emblems.length, 2);
+  emblems.forEach(part => {
+    assert.deepEqual(part.animations.map(animation => animation.frames), [fades.emblem]);
+    assert.deepEqual(part.animations[0].options, { duration: 600, easing: 'linear' }, 'and it comes back when the 600 ms are over');
+  });
+  parts.forEach(part => assert.deepEqual(part.animations[0].frames, fades.hawk, part.name + ' fades in and out'));
+  [parts.find(part => part.classes.has('hawk-near-wing')), parts.find(part => part.classes.has('hawk-far-wing'))].forEach(wing => {
+    assert.equal(wing.animations.length, 2, 'the wings fade, and beat');
+    assert.equal(wing.animations[1].options.duration, 300, 'a beat every 300 ms');
+    assert.equal(wing.animations[1].options.iterations, 2, 'twice');
+  });
+  assert.equal(parts.find(part => part.classes.has('hawk-body')).animations.length, 1, 'the body only fades');
+
+  await drive(playing);
+  assert.equal(hawk.removed, true);
+  assert.ok(world.animations.every(animation => animation.cancelled || animation.element.removed || animation.options.iterations !== Infinity), 'nothing is left going');
+  assert.equal(world.now, 1400, 'a slight swap is as long as a carried one');
+});
+
+test('a swap into the other team, or a style, is slight, and one with a Monday card in it is carried, whatever the page it comes from', async () => {
+  const flutters = async (from, to, held) => {
+    const fresh = await loadRun();
+    if (held.team) fresh.teamPending = true;
+    if (held.queued) swapRun.queueSwap();
+    const playing = fresh.offer(from, to).play(newLook(fresh));
+    await runTo(fresh, 500);
+    const hawk = fresh.elements.pile.children.find(child => child.classes.has('swap-hawk'));
+    const result = hawk.children.some(child => child.animations.length > 0);
+    await drive(playing);
+    return result;
+  };
+
+  assert.equal(await flutters(otherPage('events'), otherPage('tasks'), { team: true }), true, 'Nova to Prime');
+  assert.equal(await flutters(otherPage('events'), otherPage('tasks'), { queued: true }), true, 'Original to Cybertron');
+  assert.equal(await flutters(mondayPage('monday-progress'), otherPage('tasks'), { team: true, queued: true }), true, 'Prime to Nova, out of the Monday cards');
+  assert.equal(await flutters(otherPage('events'), mondayPage('monday-tasks'), { queued: true }), false, 'into the Monday cards');
+  assert.equal(await flutters(mondayPage('monday-tasks'), mondayPage('monday-milestones'), {}), false, 'from one Monday card to the next');
+  assert.equal(await flutters(mondayPage('monday-progress'), otherPage('tasks'), { queued: true }), false, 'out of them, with the team staying');
+  assert.equal(await flutters(otherPage('events'), mondayPage('monday-tasks'), { team: true, queued: true }), false, 'into a Monday card of the other team');
 });
 
 test('a page that is about to reload stays apart until it is gone, and the Speed setting stretches every time', async () => {
@@ -979,7 +1014,7 @@ test('a swap that fails puts everything back, and one that finds the areas never
 
 
 // The stylesheets
-test('frame.css shows the pieces while #world has data-pieces, and has an act for the hawk of the swap', () => {
+test('frame.css shows the pieces while #world has data-pieces, and the swap has no act for the hawk: it animates the copy of the logo itself', () => {
   const css = withoutComments(read('frame.css'));
 
   assert.ok(/\[data-motion="full"\] #world\[data-pieces\] \[data-pile="pieces"\] \.piece \{\s*display: block;/.test(css));
@@ -989,9 +1024,8 @@ test('frame.css shows the pieces while #world has data-pieces, and has an act fo
   ['.shadow-layer', '.glint-layer', '.screw-shadow', '.kit', '[data-pile="released"]'].forEach(part => {
     assert.ok(css.includes('#world[data-pieces] ' + part), part + ' is left out while the metal moves');
   });
-  assert.ok(/\.logo\[data-act="swap"\] \.hawk-part[\s\S]*?\{ opacity: 1; \}/.test(css));
-  assert.ok(/\.logo\[data-act="swap"\] \.emblem \{ opacity: 0; \}/.test(css));
-  assert.ok(!/data-act="swap"[^{]*\{[^}]*animation/.test(css), 'the swap moves the hawk with element.animate(), not with a stylesheet');
+  assert.ok(!css.includes('data-act="swap"'), 'the swap moves the copy of the logo and turns its emblem into the hawk with element.animate(), not with a stylesheet');
+  assert.ok(/\.logo \.hawk-part \{[^}]*opacity: 0;/.test(css), 'the hawk is hidden until the swap fades it in');
 });
 
 test('the five Monday cards are marked in the registry, and nothing else is', () => {

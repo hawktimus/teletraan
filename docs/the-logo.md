@@ -15,7 +15,7 @@ from then.
 |-----------|--------|------|-------|--------------|
 | Entrance | at 0 | never again | about 2 seconds | The four plates fly in and settle (the act `boot`). It plays once, so it has a switch and no timing. |
 | Name effect | at 2 seconds | every 300 seconds | 1.43 seconds | Each letter of the team name splits and turns (see The team name). |
-| Flying hawk | at 13 seconds | every 24 seconds | 11 seconds | Four acts one after the other, below. |
+| Flying hawk | at 13 seconds | every 5 minutes (each Screen sets it) | 11 seconds | Four acts one after the other, below. |
 | Spin | at 50 seconds | every 72 seconds | 1.6 seconds | The logo makes one full turn, drawn flat (the act `turn`). |
 
 The flying hawk is these acts, with the seconds each takes at the starting
@@ -38,20 +38,19 @@ The announcement with the logo (the second one) shows the act `fly`: the same
 wingbeats with no end, for as long as the announcement is up. It has no timing
 of its own. The master switch below turns it into the still emblem.
 
-The swap (docs/layouts.md, "The swap") has an act of its own, `swap`. It shows the hawk and hides the emblem, and moves
-nothing: `core/swap-run.js` copies the logo, gives the copy this act, beats its wings and flies it with
-`element.animate()`. It plays only in full motion.
+The swap (docs/layouts.md, "The swap") has no act of its own. `core/swap-run.js` copies the logo and moves the copy with
+`element.animate()`. A swap that changes a team or a style turns the emblem of the copy into the hawk and back in 600
+milliseconds, with two wingbeats, and a swap with a Monday card in it only carries the emblem to its new place. It plays
+only in full motion. The flying hawk above is the big change into a bird, and it is the only one that is a full flight:
+a swap never plays it.
 
 In calm and none motion nothing moves. The logo stays the still emblem, and a
 logo asked to fly shows the hawk still, with its wings up. In the flat finish
 (`?finish=flat`) the outline is one plain colour and the shadow is gone.
 
-A team can idle in that pose. The Bird pose field of the team (Teams, Trim, Flight) puts the class
-`pose-flight` on the page, and `trim.css` shows the hawk with its wings up and hides the emblem while the
-logo is at rest, in the entrance and in the spin. The acts of the flying hawk are not touched, and the
-logo goes back to the pose when one ends. The pose is the one in `frame.css` for a logo asked to fly in
-calm motion. Auto, which Prime has, is the still emblem described above. docs/layouts.md, "Team trim",
-has the rest of the trim.
+The logo at rest is the emblem for every team. The Bird pose field of the team (Teams, Trim) is not used any more: the
+screen ignores it, a team that stored Flight reads as Auto, and the field is hidden in the Studio. docs/layouts.md,
+"Team trim", has the rest of the trim.
 
 ## The logo settings
 
@@ -81,7 +80,14 @@ seconds between plays are real seconds, and they are counted from when the
 animation last started, so a flight of 11 seconds every 24 leaves 13 seconds
 of rest, and an interval shorter than the duration plays the animation again
 as soon as the line is free. The hawk and the name effect follow the minutes on
-the Screen (Screens, A) instead of their own seconds.
+the Screen (Screens, A) instead of their own seconds. The hawk starts at 5 minutes on a Screen that has no number of its
+own. A Screen that stored one keeps it, so the Screens that were made when 15 was the starting value say 15 until someone
+changes them.
+
+A swap draws the banner again when the style or the layout changes, and the logo in it is a new element. It is the same
+show: `startLogo` in `frame.js` keeps the counts of every logo effect when it takes the place of the logo on screen, so the
+hawk does not come 13 seconds after each swap. A logo that was stopped (`stopLogo`) and is started again counts from the
+start, as the tool page `tools/logo.html` needs.
 
 The name effect keeps the stored names it had before the tab was renamed
 (`nameTransform`, `nameEvery`, `nameDuration`), so content that was already
@@ -99,6 +105,9 @@ All of them, and the screen glitch, go through one scheduler in
 - None starts while a page is changing in the large panel, the small panel or
   the ticker. The entrance is the one exception, because it plays as the
   screen starts, beside the banner arriving.
+- None starts while a swap or a hidden transition has the screen, and one that
+  is playing ends on the spot. The one that came due plays when the screen is
+  back together.
 - Calm and none motion play none of them, and switching to either puts the
   logo back to the still emblem at once.
 - An animation that waited plays once, late. It never plays extra times to

@@ -133,28 +133,29 @@ function sameSet(points, other) {
 
 // The eight fields, in the content and in the classes
 
-test('the eight fields are in config.js, in the order of the Studio, and Prime has the first value of each with no class', () => {
+test('the eight fields are in config.js, in the order of the Studio, and Prime has the first value of each with no class. The bird pose is the one with no class for the other value', () => {
   assert.deepEqual(trimFields, ['bolts', 'cornerCut', 'headerNotch', 'grid', 'logoPose', 'nameStyle', 'tickerLabel', 'countAccent']);
   trimFields.forEach(field => {
     const values = Object.keys(config.teamTrim[field]);
     assert.equal(values.length, 2, field + ' has two values');
     assert.equal(config.primeTeam[field], values[0], field + ' is Prime\'s first value');
     assert.equal(classOf(field, values[0]), '', 'Prime\'s value has no class');
-    assert.ok(/^[a-z]+(-[a-z]+)+$/.test(classOf(field, values[1])), 'the other value has a class of words and hyphens');
+    if (field === 'logoPose') assert.equal(classOf(field, values[1]), '', 'flight is not used any more and has no class');
+    else assert.ok(/^[a-z]+(-[a-z]+)+$/.test(classOf(field, values[1])), 'the other value has a class of words and hyphens');
   });
   assert.deepEqual(Object.values(config.teamTrim).map(choices => Object.values(choices)[1]),
-    ['bolts-round', 'corner-cut-tr', 'header-slant', 'grid-dots', 'pose-flight', 'name-outline', 'ticker-bar', 'accent-neon']);
-  assert.deepEqual(teams.trimClasses, ['bolts-round', 'corner-cut-tr', 'header-slant', 'grid-dots', 'pose-flight', 'name-outline', 'ticker-bar', 'accent-neon']);
+    ['bolts-round', 'corner-cut-tr', 'header-slant', 'grid-dots', '', 'name-outline', 'ticker-bar', 'accent-neon']);
+  assert.deepEqual(teams.trimClasses, ['bolts-round', 'corner-cut-tr', 'header-slant', 'grid-dots', 'name-outline', 'ticker-bar', 'accent-neon']);
 });
 
-test('the sample content gives each team all eight, Prime the usual ones and Nova the other of each, except the name, which both draw solid', () => {
+test('the sample content gives each team all eight, Prime the usual ones and Nova the other of each, except the name, which both draw solid, and the bird pose, which both leave at auto', () => {
   assert.ok(primeTeam && novaTeam, 'the sample has Prime and Nova');
   trimFields.forEach(field => {
     const values = Object.keys(config.teamTrim[field]);
     assert.equal(primeTeam[field], values[0], 'Prime ' + field);
-    assert.equal(novaTeam[field], field === 'nameStyle' ? values[0] : values[1], 'Nova ' + field);
+    assert.equal(novaTeam[field], field === 'nameStyle' || field === 'logoPose' ? values[0] : values[1], 'Nova ' + field);
   });
-  assert.deepEqual(trimFields.map(field => novaTeam[field]), ['round', 'tr-bl', 'slant', 'dots', 'flight', 'solid', 'bar', 'neon']);
+  assert.deepEqual(trimFields.map(field => novaTeam[field]), ['round', 'tr-bl', 'slant', 'dots', 'auto', 'solid', 'bar', 'neon']);
 
   // the stored name look is hidden and not read; the sample says solid for both, with the switch off, so nothing contradicts it
   const stored = JSON.parse(read('dashboard/data/sample/content.json')).teams;
@@ -180,7 +181,7 @@ test('rendered in sample mode, the page of Prime and the page of Nova differ in 
     const own = classes.nova.filter(name => Object.values(config.teamTrim[field]).includes(name));
     assert.deepEqual(own, [classOf(field, novaTeam[field])].filter(Boolean), field + ': Nova has the class of its value, and Prime has none, so the classes differ (the name is solid for both)');
   });
-  assert.deepEqual(classes.nova, ['accent-neon', 'bolts-round', 'corner-cut-tr', 'grid-dots', 'header-slant', 'metal-steel', 'mirrored', 'neon-glow', 'pose-flight', 'ticker-bar'], 'and the steel metal and the glow, which are not trim');
+  assert.deepEqual(classes.nova, ['accent-neon', 'bolts-round', 'corner-cut-tr', 'grid-dots', 'header-slant', 'metal-steel', 'mirrored', 'neon-glow', 'ticker-bar'], 'and the steel metal and the glow, which are not trim');
 });
 
 test('the classes of a team are cleared and replaced when the team changes, together with the mirror', async () => {
@@ -189,12 +190,12 @@ test('the classes of a team are cleared and replaced when the team changes, toge
   const withPrime = () => teams.applyTeamLook(primeTeam, page);
 
   withNova();
-  assert.equal(page.classes().length, 10, 'the mirror, the seven, the steel metal and the glow');
+  assert.equal(page.classes().length, 9, 'the mirror, the six, the steel metal and the glow');
   withPrime();
   assert.deepEqual(page.classes(), [], 'all of them gone');
   withNova();
   withNova();
-  assert.equal(page.classes().length, 10, 'a team that is put on again changes nothing');
+  assert.equal(page.classes().length, 9, 'a team that is put on again changes nothing');
 
   // a team that has some of them: the others come off
   teams.applyTeamLook(Object.assign({}, primeTeam, { bolts: 'round', grid: 'dots' }), page);
@@ -225,8 +226,11 @@ test('a team document with no trim fields, or values that are not in the list, i
   assert.deepEqual(teams.trimClassesOf(config.primeTeam), []);
   assert.deepEqual(teams.trimClassesOf(null), [], 'no team is Prime');
   assert.deepEqual(teams.trimClassesOf({ bolts: 'round' }), ['bolts-round']);
-  assert.equal(teams.trimClassesOf(novaTeam).length, 7, 'Nova draws its name solid');
-  assert.equal(teams.trimClassesOf(Object.assign({}, novaTeam, { nameStyle: 'outline' })).length, 8);
+  assert.equal(teams.trimClassesOf(novaTeam).length, 6, 'Nova draws its name solid, and the bird pose has no class');
+  assert.equal(teams.trimClassesOf(Object.assign({}, novaTeam, { nameStyle: 'outline' })).length, 7);
+  assert.equal(normalized({ logoPose: 'flight' }).logoPose, 'auto', 'a stored flight is read as auto');
+  assert.deepEqual(teams.trimClassesOf(normalized({ logoPose: 'flight' })), []);
+  assert.deepEqual(teams.trimClassesOf({ logoPose: 'flight' }), [], 'and a team that says flight has no class either');
 });
 
 test('the corners and the tab that the frames are drawn for are the team\'s, and the page writes down which frames it has drawn', () => {
@@ -525,27 +529,17 @@ test('every rule in trim.css is for one of the eight classes, apart from the bol
 
   // nothing moves, and nothing glows
   assert.ok(!/animation|transition|@keyframes|filter|box-shadow|text-shadow|blur|drop-shadow/.test(css), 'trim.css is still: no animation, shadow or filter');
-  assert.deepEqual(css.match(/transform: [^;]+;/g), [
-    'transform: scaleX(-1);',
-    'transform: var(--lens) var(--view) translate(-30px, -137px) rotate3d(320, -50, 0, 134deg) translate(30px, 137px);',
-    'transform: var(--lens) var(--view) translate(140px, -161px) rotate3d(160, -18, 0, -134deg) translate(-140px, 161px);',
-  ], 'the card is turned across and the wings are put in their pose, and nothing else is turned');
+  assert.deepEqual(css.match(/transform: [^;]+;/g), ['transform: scaleX(-1);'], 'the card is turned across, and nothing else is turned');
   assert.ok(!/(^|[^a-z-])font[:-]|font-size|line-height/.test(css), 'and no text is made smaller');
 });
 
-test('the flight pose is the pose of a logo asked to fly in calm motion (frame.css), and it is only for the logo at rest, at the start and in the spin', () => {
+test('the bird pose is not used any more: no class, no rule in trim.css, and the logo at rest is the emblem for every team', () => {
   const css = withoutComments(read('dashboard/trim.css'));
-  const frame = withoutComments(read('dashboard/frame.css'));
-  const wings = { near: 'translate(-30px, -137px) rotate3d(320, -50, 0, 134deg) translate(30px, 137px)', far: 'translate(140px, -161px) rotate3d(160, -18, 0, -134deg) translate(-140px, 161px)' };
+  const all = [css, withoutComments(read('dashboard/frame.css')), read('dashboard/index.html')].join('\n');
 
-  assert.ok(frame.includes('.logo[data-act="fly"] .hawk-near-wing { transform: var(--lens) var(--view) ' + wings.near + '; }'), 'the pose of the near wing is the one in frame.css');
-  assert.ok(frame.includes('.logo[data-act="fly"] .hawk-far-wing { transform: var(--lens) var(--view) ' + wings.far + '; }'));
-  assert.ok(css.includes(wings.near) && css.includes(wings.far));
-
-  const selectors = [];
-  css.replace(/([^{}]+)\{[^{}]*\}/g, (all, list) => { list.split(',').map(text => text.trim()).filter(text => text.startsWith('html.pose-flight')).forEach(text => selectors.push(text)); return all; });
-  assert.ok(selectors.length > 0);
-  selectors.forEach(selector => assert.ok(/^html\.pose-flight \.logo(:not\(\[data-act\]\)|\[data-act="(rest|boot|turn)"\]) \.(emblem|hawk-part|hawk-near-wing|hawk-far-wing)$/.test(selector), selector));
+  assert.ok(!all.includes('pose-flight'), 'nothing in the stylesheets or the page names the class');
+  assert.ok(!/\.logo[^{]*\.emblem[^{]*\{[^}]*opacity: 0/.test(css), 'trim.css does not hide the emblem');
+  assert.deepEqual(Object.keys(config.teamTrim.logoPose), ['auto', 'flight'], 'the stored values are still known');
   assert.ok(!/data-act="(robot|hawk-in|flight|hawk-out|fly)"/.test(css), 'the hawk\'s own acts are not touched');
 });
 
