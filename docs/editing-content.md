@@ -88,16 +88,14 @@ last step of every change. See "The Start here page" below.
   panel shows four rows at a time: the coaches, then the captains, then the
   mentors, and the next rows come the next time the panel comes round (see
   Photos of people). Two coaches and two captains are one page of four rows.
-  Pick the role, type the name, and type a
-  title if you want something other than the role under the name, for example
-  Head Coach. The role also colours the frame round the portrait: Coach is red,
-  Captain is gold and Mentor is silver. There is no separate role for a
-  president: give a president the role Captain and the title President, and
-  they are shown with the captains. A person can have a Line under the title,
-  one short line such as a year or a note, and a Chip at the right end, which is
-  COACH, CAPTAIN or MENTOR. Leave the Chip blank and it follows the role: a role
-  with coach in it is COACH, a role with mentor in it is MENTOR, and any other
-  is CAPTAIN.
+  Pick who the person is Listed with, type the name, and type the Role, for
+  example Head Coach, Co-President, Mentor or Parent. The Role is the chip at the
+  right end of the row, in capitals, and every person needs one. Listed with only
+  sets the order: coaches, then captains, then mentors. There is no separate group
+  for a president: list a president with the captains and give them the Role
+  Co-President. A person can have a Line under the name, one short line such as
+  a year or a note. The old Chip at the right end field is hidden and the
+  screen does not read it.
 - Team leads: each subteam, its lead, an optional photo of the lead and the
   students on it. Turn on "In the spotlight" to feature one. Add a subteam here
   before you use it on a task. The Team Leads panel shows every subteam as a row
@@ -582,17 +580,16 @@ whole photo.
 
 Each person in Leadership has a Photo and a "Show photo on screen" switch, and
 so has each Team lead. The Leadership and Team Leads panels show each person
-as a row: the framed photo at the left, filling the row, and beside it three lines:
-the name, the title (the role if no title is typed) in the team color, and the Line
-if there is one, smaller and quieter. At the right end is a chip: COACH, CAPTAIN or
-MENTOR on Leadership, and the subteam name on Team Leads. A thin line in the team's
-plate color is between the rows. The role colours the frame of the photo: Coach red,
-Captain gold and Mentor silver. The colours are the `roleMetals` list in
-`dashboard/panels/leadership/leadership.js`.
+as a row: the framed photo at the left, filling the row, and beside it the name and,
+on Leadership, the Line if there is one, smaller and quieter. At the right end is a
+chip: the Role on Leadership, and the subteam name on Team Leads. A Role too long for
+one line takes a second line in the chip. Team Leads has TEAM LEAD under the name in
+the team color. A thin line in the team's plate color is between the rows. The frame
+of every photo is the team's own.
 
 Four rows fit on a panel at the standard portrait size, spread over its height. A row
-of four has room for the name and the title but not for the Line, so the Line shows
-when a page holds three people or fewer, which is a portrait size above 100.
+of four is the name and the chip, so the Line shows when a page holds three people or
+fewer, which is a portrait size above 100.
 The Leadership panel shows the coaches first, then the captains, then the
 mentors, each group in the order of the Order field. With two coaches and two
 captains the four rows are one page. With more people, each time the panel

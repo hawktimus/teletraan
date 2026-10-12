@@ -92,7 +92,7 @@ const examples = {
     spotlightText: "[Two or three short sentences about the subteam's work.]", order: '1', show: 'yes', showPhoto: 'yes',
   },
   place: { name: '[Place name]', show: 'yes' },
-  person: { role: 'Captain', name: '[Person name]', showPhoto: 'yes', order: '1', show: 'yes' },
+  person: { role: 'Captain', name: '[Person name]', title: 'Captain', showPhoto: 'yes', order: '1', show: 'yes' },
   customPanel: {
     title: '[Title]',
     'blocks.1._type': 'headingBlock', 'blocks.1.text': '[A heading]',

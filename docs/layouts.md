@@ -1052,6 +1052,14 @@ foot of Original, so in Cybertron the forecast, the sponsor, the safety days and
 ends above the slashes, with the same words at the same sizes. `tools/test-small-foot.mjs` adds up the rows of each
 box and compares them with the slashes.
 
+The slashes of the large frame are 668 to 682 down it, at the right end for Prime and at the left end for a team with
+the other corners cut. The pages of the large panels were laid out for the foot of Original, which ends at 700, so in
+Cybertron every box ends at 664 (`styles/cybertron.css`, "The foot of the large frame"). The rows of Tasks, Events,
+Leadership and Team leads start at 136 and are shorter, and the Tonight rows, the Spotlight, the Sponsor and the
+Monday cards have shorter boxes, with the same words at the same sizes. Original and Minimal have no stripe and keep
+their numbers. `tools/test-stripe-foot.mjs` adds up the last row of every page and compares it with the slashes, for
+every style, layout and team.
+
 The `//` mark at the right end of a panel's header is not drawn in Cybertron (`.header
 svg.double-slash` is hidden, as the Plain look hides it). The step at the top right is where its
 top would be, and the pictures of Cybertron have no mark there. A seasonal pack's own mark is

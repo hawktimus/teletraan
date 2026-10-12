@@ -232,9 +232,10 @@ docs/calendar-filters.md, "Pinning an event".
 ## Team leads and Leadership
 
 Both panels show rows, four to a panel at the standard portrait size. A row has
-the framed photo at the left, the name beside it with the role under it in the team
-color and an optional line under that, and a chip at the right end. The line shows
-when a page holds three people or fewer.
+the framed photo at the left, the name beside it and an optional line under it, and a
+chip at the right end. On Leadership the chip is the Role you typed, and on Team leads
+the lead's name has TEAM LEAD under it in the team color. The line shows when a page
+holds three people or fewer.
 
 - Leadership shows the coaches, then the captains, then the mentors, each group in
   Order. Two coaches and two captains fill the four rows. With more people, the

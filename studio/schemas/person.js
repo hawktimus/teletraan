@@ -7,12 +7,14 @@ const roles = [
   { title: 'Mentor', value: 'Mentor' },
 ];
 
-// The values are the names in groupNames in dashboard/core/leadership.js
+// The screen does not read the group any more, so the choices only keep a saved value valid
 const groups = [
   { title: 'Coach', value: 'COACH' },
   { title: 'Captain', value: 'CAPTAIN' },
   { title: 'Mentor', value: 'MENTOR' },
 ];
+
+const roleHelp = 'Shown in the chip at the right of the row, for example Coach, Co-President, Mentor, Parent. Up to 22 characters fit.';
 
 export default defineType({
   name: 'person',
@@ -21,9 +23,9 @@ export default defineType({
   fields: [
     defineField({
       name: 'role',
-      title: 'Role',
+      title: 'Listed with',
       type: 'string',
-      description: 'Coach, Captain or Mentor. This also sets the colour of the frame round the portrait.',
+      description: 'Coach, Captain or Mentor. Coaches are listed first, then captains, then mentors, and the Order field sorts people inside each. The screen shows the Role below.',
       options: { list: roles, layout: 'radio', direction: 'horizontal' },
       validation: Rule => Rule.required().error('Pick a role.'),
     }),
@@ -36,23 +38,24 @@ export default defineType({
     }),
     defineField({
       name: 'title',
-      title: 'Title on screen',
+      title: 'Role',
       type: 'string',
-      description: 'Optional. Type what is shown under the name, for example Head Coach. Leave it empty to show the role. Up to 22 characters fit.',
-      validation: Rule => tooLong(Rule, 22),
+      description: roleHelp,
+      validation: Rule => [Rule.required().error(roleHelp), tooLong(Rule, 22)],
     }),
     defineField({
       name: 'line',
       title: 'Line under the title',
       type: 'string',
-      description: 'One short line under the role, such as a year, a department, or a note. Leave blank to hide. Up to 48 characters fit. Shown on pages of 3 people or fewer.',
+      description: 'One short line under the name, such as a year, a department, or a note. Leave blank to hide. Up to 48 characters fit. Shown on pages of 3 people or fewer.',
       validation: Rule => tooLong(Rule, 48),
     }),
     defineField({
       name: 'group',
       title: 'Chip at the right end',
       type: 'string',
-      description: 'The word in the chip at the right end. Leave blank to follow the role: coach is COACH, mentor is MENTOR, any other role is CAPTAIN.',
+      hidden: true,
+      description: 'Not used any more',
       options: { list: groups, layout: 'radio', direction: 'horizontal' },
       validation: Rule => Rule.valid(groups.map(group => group.value)).error('Pick coach, captain or mentor.'),
     }),

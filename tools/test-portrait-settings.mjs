@@ -347,9 +347,9 @@ test('the shape and the frame are for every panel: the two sets of rows and the 
   });
   assert.equal(countOf(leadership, 'class="portrait shape-rounded frame-line'), 2);
 
-  // the role still gives the metal of the frame of a person
+  // the role gives no metal to the frame of a person: every frame is the panel's own
   const metal = mount(await freshPanel('leadership'), { people: crew('Coach', 1), settings: { portraitFrame: 'metal', portraitShape: 'circle' } });
-  assert.ok(metal.includes('class="portrait shape-circle red-metal"'));
+  assert.ok(metal.includes('class="portrait shape-circle"') && !metal.includes('red-metal'));
 }));
 
 test('the stylesheets take the clip from the portrait, and the thin line is 3px in the team accent', () => {

@@ -209,6 +209,54 @@ html[data-style="cybertron"].mirrored .ticker .message {
 }
 
 
+/* The foot of the large frame has the neon slashes, 668 to 682 down the frame (core/plate.js,
+   cybertron-grid1). They are at the right end for Prime and at the left end for a team with the other
+   corners cut, and they are on the same two lines for both. The large pages are laid out for the plainer
+   foot of Original, where the last row ends at 700, on the slashes. Their boxes end at 664 here, with
+   the same words at the same sizes. The rows start at 136, 4 under the stripe below the header (132), so
+   that a portrait does not touch it: three rows are 176, four are 132, and the bar under a row moves up
+   with its row. The label of the tasks is 40 high, so two plain tasks and the label (168) fit a row of
+   176. The Extra panels, the competition cards, the roster and the photo caption already end above 664.
+   The boxes of the pages are in each panel's stylesheet and the numbers of Original stay there
+   (tools/test-stripe-foot.mjs adds them up). */
+html[data-style="cybertron"] .tasks .rows {
+  top: 136px;
+  height: 528px;
+}
+html[data-style="cybertron"] .tasks .row { height: 176px; }
+html[data-style="cybertron"] .tasks .row-bar { top: 166px; }
+html[data-style="cybertron"] .tasks .row-label { line-height: 40px; }
+html[data-style="cybertron"] .events .rows {
+  top: 136px;
+  height: 528px;
+}
+html[data-style="cybertron"] .events .row { height: 132px; }
+html[data-style="cybertron"] .events .row-bar { top: 122px; }
+html[data-style="cybertron"] .person-rows {
+  top: 136px;
+  height: 528px;
+}
+html[data-style="cybertron"] .person-rows.rows-4 .person-row { height: 132px; }
+html[data-style="cybertron"] .person-rows.rows-3 .person-row { height: 176px; }
+html[data-style="cybertron"] .person-rows.rows-2 .person-row { height: 264px; }
+html[data-style="cybertron"] .person-rows.rows-1 .person-row { height: 528px; }
+html[data-style="cybertron"] .tonight .rows { height: 368px; }
+html[data-style="cybertron"] .spotlight .story {
+  top: 140px;
+  height: 524px;
+}
+html[data-style="cybertron"] .spotlight .details { gap: 0; }
+html[data-style="cybertron"] .sponsor-feature .story {
+  top: 140px;
+  height: 524px;
+}
+html[data-style="cybertron"] .monday .body { height: 532px; }
+html[data-style="cybertron"] .monday-tasks .fact-label { line-height: 36px; }
+html[data-style="cybertron"] .monday-tasks .fact-number { line-height: 72px; }
+html[data-style="cybertron"] .monday-progress .more { top: 440px; }
+html[data-style="cybertron"] .monday-progress .totals { top: 488px; }
+
+
 /* The foot of the small frame has the neon slashes, 332 to 346 down the frame (core/plate.js,
    cybertron-grid2). The small pages are laid out for the plainer foot of Original, where the last line
    of the weather, of a sponsor's name, of the safety caption and of the next event ends 20 to 30

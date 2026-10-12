@@ -190,12 +190,12 @@
   ],
 
   "people": [
-    { "role": "Coach", "name": "[Coach name]", "title": "[Head coach]", "line": "[A year or a short note]" },
-    { "role": "Coach", "name": "[Coach name]", "line": "[A year or a short note]" },
-    { "role": "Captain", "name": "[Captain name]", "line": "[A year or a short note]" },
-    { "role": "Captain", "name": "[Captain name]", "line": "[A year or a short note]" },
-    { "role": "Mentor", "name": "[Mentor name]", "line": "[A year or a short note]" },
-    { "role": "Mentor", "name": "[Mentor name]", "line": "[A year or a short note]" }
+    { "role": "Coach", "name": "[Coach name]", "title": "Head Coach", "line": "[A year or a short note]" },
+    { "role": "Coach", "name": "[Coach name]", "title": "Coach", "line": "[A year or a short note]" },
+    { "role": "Captain", "name": "[Captain name]", "title": "Co-President", "line": "[A year or a short note]" },
+    { "role": "Captain", "name": "[Captain name]", "title": "Captain", "line": "[A year or a short note]" },
+    { "role": "Mentor", "name": "[Mentor name]", "title": "Mentor", "line": "[A year or a short note]" },
+    { "role": "Mentor", "name": "[Parent name]", "title": "Parent", "line": "[A year or a short note]" }
   ],
 
   "photos": [

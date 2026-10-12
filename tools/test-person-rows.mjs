@@ -1,6 +1,7 @@
 // Tests for the rows of the Team Leads and Leadership panels (dashboard/core/portrait.js,
 // core/team-leads.js, core/leadership.js and the two panels): the portrait fills the row, the
-// name, the role and a line are stacked beside it, and a chip is at the right end. The plain
+// name, the role and a line are stacked beside it, and a chip is at the right end. A Leadership
+// row has no role line: its Role is the chip (tools/test-leadership-role.mjs). The plain
 // functions are run for real. The panels are run against a fake page that records what they
 // draw. The stylesheet is checked by reading it, because the sizes need a browser to be seen.
 //
@@ -54,7 +55,7 @@ async function freshPanel(name) {
 
 const { rowSizes, rowsMarkup, rowsPerPage, portraitSizes } = portrait;
 const { departmentRows, showcaseOf } = teamLeads;
-const { groupNames, groupOf, leaders, roleOrder } = leadership;
+const { chipOf, leaders, roleOrder } = leadership;
 
 const tests = [];
 function test(name, run) {
@@ -465,7 +466,7 @@ test('leaders leaves out hidden and expired people and people with nothing to sh
   assert.deepEqual(namesOf(leaders(hidden)), ['[Coach 2]', '[Coach 3]', '[Coach 4]', '[Coach 5]']);
 });
 
-test('the Leadership panel shows four rows on each visit and then the rest, with the frame of each picture in the colour of its role', () => withFakePage(async () => {
+test('the Leadership panel shows four rows on each visit and then the rest, with the Role of each person in the chip', () => withFakePage(async () => {
   const panel = await freshPanel('leadership');
   const people = [].concat(crew('Coach', 2, { title: 'Head coach' }), crew('Captain', 3), crew('Mentor', 1));
   people[1].title = undefined;
@@ -480,12 +481,12 @@ test('the Leadership panel shows four rows on each visit and then the rest, with
   assert.deepEqual(namesIn(visits[0]), ['[Coach 1]', '[Coach 2]', '[Captain 1]', '[Captain 2]']);
   assert.deepEqual(namesIn(visits[1]), ['[Captain 3]', '[Mentor 1]']);
   assert.equal(visits[2], visits[0], 'the third visit is the first page again');
-  assert.deepEqual(rolesIn(visits[0]), ['HEAD COACH', 'COACH', 'CAPTAIN', 'CAPTAIN']);
-  assert.deepEqual(rolesIn(visits[1]), ['CAPTAIN', 'MENTOR']);
-  assert.deepEqual(chipsIn(visits[0]), ['COACH', 'COACH', 'CAPTAIN', 'CAPTAIN'], 'the chip follows the role');
+  assert.deepEqual(rolesIn(visits[0]), ['', '', '', ''], 'no role line under the name');
+  assert.deepEqual(rolesIn(visits[1]), ['', '']);
+  assert.deepEqual(chipsIn(visits[0]), ['HEAD COACH', 'COACH', 'CAPTAIN', 'CAPTAIN'], 'the chip is the Role, and an old entry with none shows its role');
   assert.deepEqual(chipsIn(visits[1]), ['CAPTAIN', 'MENTOR']);
-  assert.equal(countOf(visits[0], 'class="portrait red-metal"'), 2);
-  assert.equal(countOf(visits[0], 'data-metal="gold"'), 2);
+  assert.equal(countOf(visits[0], 'red-metal'), 0, 'every frame is the panel\'s own, whatever the role');
+  assert.equal(countOf(visits[0], 'data-metal'), 0);
   assert.ok(visits[0].includes('data-slat="title">LEADERSHIP</h2>') && visits[0].includes('<span class="team-chip">BOTH TEAMS</span>'), 'the header names the team, and these people are for both');
 }));
 
@@ -496,23 +497,21 @@ test('the Leadership panel with three people has three rows, and a person with n
   assert.equal(countOf(html, '<use href="#person-silhouette"'), 3);
 }));
 
-test('the chip of a Leadership row is the Group field, or follows the role: coach is COACH, mentor is MENTOR and the rest are CAPTAIN', () => {
-  assert.deepEqual(groupNames, ['COACH', 'CAPTAIN', 'MENTOR']);
-
-  [['Coach', 'COACH'], ['coach', 'COACH'], ['Head Coach', 'COACH'], ['Mentor', 'MENTOR'], ['Captain', 'CAPTAIN'], ['  Captain ', 'CAPTAIN'], ['Alumni', 'CAPTAIN'], ['', 'CAPTAIN']].forEach(([role, chip]) => {
-    assert.equal(groupOf({ role: role }), chip, 'role ' + JSON.stringify(role));
+test('the chip of a Leadership row is the Role in capitals, and an entry with no Role shows its role', () => {
+  assert.equal(chipOf({ role: 'Captain', title: 'Co-President' }), 'CO-PRESIDENT');
+  assert.equal(chipOf({ role: 'Mentor', title: '  Parent ' }), 'PARENT');
+  [['Coach', 'COACH'], ['coach', 'COACH'], ['Head Coach', 'HEAD COACH'], ['Mentor', 'MENTOR'], ['  Captain ', 'CAPTAIN'], ['', '']].forEach(([role, chip]) => {
+    assert.equal(chipOf({ role: role }), chip, 'role ' + JSON.stringify(role));
+    assert.equal(chipOf({ role: role, title: '   ' }), chip, 'a Role of spaces is no Role');
   });
-  assert.equal(groupOf({}), 'CAPTAIN');
+  assert.equal(chipOf({}), '');
 
-  // a Group that is one of the choices wins, in any case and with spaces, and anything else is ignored
-  assert.equal(groupOf({ role: 'Mentor', group: 'COACH' }), 'COACH');
-  assert.equal(groupOf({ role: 'Captain', group: ' mentor ' }), 'MENTOR');
-  assert.equal(groupOf({ role: 'Coach', group: 'CHIEF' }), 'COACH');
-  assert.equal(groupOf({ role: 'Coach', group: '' }), 'COACH');
-  assert.equal(groupOf({ role: 'Coach', group: null }), 'COACH');
+  // the group is not read any more
+  assert.equal(chipOf({ role: 'Mentor', group: 'COACH' }), 'MENTOR');
+  assert.equal(chipOf({ role: 'Coach', title: 'Parent', group: 'CAPTAIN' }), 'PARENT');
 });
 
-test('a Leadership row has the typed line without its spaces, and no line when there is none, and the Group changes only the chip', () => withFakePage(() => {
+test('a Leadership row has the typed line without its spaces, and no line when there is none, and the Group changes nothing', () => withFakePage(() => {
   const people = [
     { role: 'Coach', name: '[Coach A]', title: 'Head coach', line: '  [Since 2019]  ' },
     { role: 'Captain', name: '[Captain A]', line: '   ' },
@@ -521,12 +520,12 @@ test('a Leadership row has the typed line without its spaces, and no line when t
   const html = mount(leadershipPanel, { people: people, settings: { leadershipPortrait: 101 } });
 
   assert.deepEqual(namesIn(html), ['[Coach A]', '[Captain A]', '[Mentor A]']);
-  assert.deepEqual(rolesIn(html), ['HEAD COACH', 'CAPTAIN', 'MENTOR'], 'the role line does not follow the Group');
+  assert.deepEqual(rolesIn(html), ['', '', ''], 'the Role is the chip, so there is no role line');
   assert.deepEqual(linesIn(html), ['[Since 2019]', '', '']);
-  assert.deepEqual(chipsIn(html), ['COACH', 'CAPTAIN', 'COACH']);
+  assert.deepEqual(chipsIn(html), ['HEAD COACH', 'CAPTAIN', 'MENTOR']);
 }));
 
-test('the reader keeps the line of a person and of a team lead, and the group of a person, and a row made from them shows them', () => withFakePage(() => {
+test('the reader keeps the line of a person and of a team lead, and the group of a person, and a row made from them shows the line', () => withFakePage(() => {
   const content = sanity.normalizeContent({
     people: [{ role: 'Captain', name: '[Captain A]', line: '[Since 2026]', group: 'MENTOR' }],
     subteams: [department('[Build]', '[Lead A]', { line: '[Junior]' })],
@@ -537,7 +536,7 @@ test('the reader keeps the line of a person and of a team lead, and the group of
   assert.equal(content.subteams[0].line, '[Junior]');
 
   const leaderRows = mount(leadershipPanel, { people: content.people });
-  assert.deepEqual([linesIn(leaderRows), chipsIn(leaderRows)], [['[Since 2026]'], ['MENTOR']], 'the chip is the group, and the line is there for the stylesheet to hide on a page of four rows');
+  assert.deepEqual([linesIn(leaderRows), chipsIn(leaderRows)], [['[Since 2026]'], ['CAPTAIN']], 'the chip is the Role, and the line is there for the stylesheet to hide on a page of four rows');
   assert.ok(leaderRows.includes('<div class="person-rows rows-4">'));
   const detail = mount(leadershipPanel, { people: content.people, settings: { leadershipPortrait: 101 } });
   assert.deepEqual(linesIn(detail), ['[Since 2026]']);
@@ -663,12 +662,20 @@ test('the lines fit the row: two lines in a row of 144, three in a row of 192, t
   });
 });
 
-test('the rows have no rule for a style or a layout, so Original, Cybertron, Minimal and the sidebar layout draw the same panel code', () => {
+test('the rows have no rule for a style or a layout but the foot of the large frame in Cybertron, so Original, Minimal and the sidebar layout draw the same panel code', () => {
   const css = read('base.css');
   ['.person-rows', '.person-row', '.person-text', '.person-name', '.person-role', '.person-line', '.person-chip', '.person-row .portrait'].forEach(selector => assert.notEqual(ruleOf(css, selector), '', selector));
 
-  const sheets = ['styles/original.css', 'styles/cybertron.css', 'styles/minimal.css', 'layouts/bar.css', 'layouts/sidebar.css', 'panels/leadership/leadership.css', 'panels/team-leads/team-leads.css'];
+  const sheets = ['styles/original.css', 'styles/minimal.css', 'layouts/bar.css', 'layouts/sidebar.css', 'panels/leadership/leadership.css', 'panels/team-leads/team-leads.css'];
   sheets.forEach(file => assert.equal(/\.person-|\.slots?\b|\.slot-/.test(read(file).replace(/\/\*[\s\S]*?\*\//g, '')), false, file + ' has a rule for the rows'));
+
+  // Cybertron has neon slashes along the foot of the large frame, so its rows are a little shorter (tools/test-stripe-foot.mjs).
+  // Those rules move and size the rows and nothing else, and no other rule of the style names a row.
+  const cybertron = read('styles/cybertron.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  const rules = Array.from(cybertron.matchAll(/^html\[data-style="cybertron"\] (\.person-[^{]*)\{([^}]*)\}/gm));
+  assert.deepEqual(rules.map(found => found[1].trim()), ['.person-rows', '.person-rows.rows-4 .person-row', '.person-rows.rows-3 .person-row', '.person-rows.rows-2 .person-row', '.person-rows.rows-1 .person-row']);
+  rules.forEach(found => assert.ok(/^\s*(top|height): \d+px;\s*(height: \d+px;\s*)?$/.test(found[2]), found[1] + ' sets only the top and the height'));
+  assert.equal(cybertron.replace(/^html\[data-style="cybertron"\] \.person-[^{]*\{[^}]*\}/gm, '').includes('.person-'), false, 'no other rule of Cybertron names a row');
 
   // the extra width of Minimal's main panel is not used by any panel, so the rows stay 1152 wide as the other panels do
   assert.ok(ruleOf(css, '.person-rows').includes('width: 1152px;'));

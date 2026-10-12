@@ -672,7 +672,8 @@ html.neon-glow:not([data-finish="flat"]) .art-glow { display: inline; }
    stacked beside it, and a chip at the right end. The name is 72px, the role is
    44px in the team accent, and the line is 36px in the quiet color, which is the
    one text under 44px in the rows. A long name is cut with an ellipsis, so the chip
-   always has its room. The frame's cut corner runs from (1148, 640) to (1068, 704),
+   always has its room. Leadership leaves the role line empty: its Role is the chip,
+   and a Role too long for 400px takes a second line in the chip, up to 22 characters. The frame's cut corner runs from (1148, 640) to (1068, 704),
    and the last row stops 16px sooner on the right, so its chip stays clear of it.
 
    core/portrait.js (rowLayout) works out how many rows fit and puts it in the class
@@ -721,9 +722,14 @@ html.neon-glow:not([data-finish="flat"]) .art-glow { display: inline; }
   font: 500 36px/40px var(--font-text);
 }
 .person-chip {
+  box-sizing: border-box;
+  max-width: 400px;
   padding: 0 14px;
   background: var(--yellow);
   color: var(--ground);
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
   font: 700 var(--size-label)/52px var(--font-display);
 }
 .person-name:empty,
