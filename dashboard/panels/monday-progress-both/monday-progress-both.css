@@ -30,8 +30,15 @@
   border-bottom: 3px solid var(--plate);
 }
 
-/* The bar: a thin dark edge keeps the stacks apart, and the same colors are the legend */
+/* The bar: a thin dark edge keeps the stacks apart, and the same colors are the legend. In the bar layout (monday.css) the
+   bar takes the width that the label, the department and the count leave, stretched along its length only. */
 .monday-progress-both .stack { flex: none; }
+html[data-layout="bar"] .monday-progress-both .stack {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+}
+html[data-layout="bar"] .monday-progress-both .seg { vector-effect: non-scaling-stroke; }
 .monday-progress-both .seg {
   stroke: var(--ground);
   stroke-width: 3;
