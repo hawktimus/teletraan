@@ -112,13 +112,14 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - A calendar check (deploy/scripts/check-calendars.sh) that lists the next 30 days of events, says which ones the Calendar filters hide, and gives the Events page and the kind of each one that shows
 - A connection check for the Mini (deploy/scripts/check-connection.sh) and a small text on the screen that says why when Sanity cannot be reached
 - A boot and shutdown screen: a text drawing of a person pointing two fingers at each other, with TELETRAAN I under it, shows on the TV above the login prompt while the Mini starts and again while it shuts down (deploy/console, docs/rebuilding-the-mini.md, step 13)
-- A Mac tool, tools/mini/teletraan-mini, that copies the files to the Mini and restarts the screen, keeps the three keys and the calendar links in a form (saved on the Mac in ~/.teletraan/, merged into deploy/local.env on the Mini, never printed), installs the services, and shows what the Mini last did. Double-click tools/mini/Teletraan Mini.command (docs/updating-the-mini.md)
+- A Mac tool, tools/mini/teletraan-mini, that copies the files to the Mini and restarts the screen, keeps the three keys and the calendar links in a form (saved on the Mac in ~/.teletraan/, merged into deploy/local.env on the Mini, never printed), installs the services, and shows what the Mini last did. Double-click tools/mini/Teletraan Mini.command (docs/updating-the-mini.md). The words update, status and restart after its name do one thing with no menu and give an exit code, which is how the Ship app uses it
+- A Ship app for a Mac, deploy/mac/ship.sh (Ship Teletraan.app opens it): one window that checks the code, commits and pushes to GitHub, deploys the Studio without a question and has the Mac tool update the Mini and restart the screen. Each step stops the run when it fails, and it looks at the Mac and at GitHub before it starts (docs/shipping-from-the-mac.md). A second Mac is set up with docs/laptop-setup.md
 
 ## What runs on the Mini
 
 The scripts are in `deploy/scripts/`, and the units that start them are in `deploy/systemd/`. A change to a unit file takes effect only when its install script is run again (deploy/README.md, "When a pull changes this folder").
 
-- `pull.sh`: every 5 minutes, gets new commits and writes `version.txt`, so an open screen reloads. A pull is a deploy
+- `pull.sh`: every 5 minutes on a Mini that pulls by itself, gets new commits and writes `version.txt`, so an open screen reloads. A pull is a deploy. A Mini that gets its files from a Mac (docs/shipping-from-the-mac.md) leaves this timer off
 - `fetch-calendars.sh`: every 15 minutes, downloads the BAND calendars named in `local.env`. After each run `calendar-status.sh` and `status-write.sh calendar-status` write the document for the Calendars page
 - `slides-sync.sh`: every 2 minutes, turns the Google Slides deck of each coming talk into pictures
 - `frc-sync.sh`: wakes every 5 minutes, and reads the public competition data about once an hour, or about every 5 minutes while a team has an event on
@@ -150,7 +151,8 @@ The scripts are in `deploy/scripts/`, and the units that start them are in `depl
 - docs/adding-a-field.md: adding a field to something editors fill in
 - docs/adding-a-panel.md: adding a new board
 - docs/rebuilding-the-mini.md: setting up the Mini from scratch
-- docs/shipping-from-the-mac.md: one window that commits, pushes, updates the Studio and tells the Mini to pull
+- docs/shipping-from-the-mac.md: one window that checks, commits and pushes, deploys the Studio, and has the Mac tool update the Mini and restart the screen
+- docs/laptop-setup.md: a new Mac from the start: git and Node, the clone, the GitHub and Sanity sign-ins, the Ship app, the Mac tool, what is not in GitHub, and a checklist
 - docs/updating-the-mini.md: the Mac tool that copies the files to the Mini, keeps its keys and calendar links, installs the services, shows its status and restarts the screen
 - docs/where-things-are.md: what each folder is for, where the settings live, and how to check your work
 - docs/try-it-on-the-mini.md: testing speed on the Mini

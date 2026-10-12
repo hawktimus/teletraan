@@ -10,16 +10,19 @@ installing anything on the Mini, and whenever a step needs a login or a key.
 - A web server container shows the `dashboard` folder at
   `http://localhost:3229/dashboard/`, the port in `TELETRAAN_PORT` in
   `local.env`. It can only be reached from the Mini.
-- A timer runs `pull.sh` every 5 minutes. A pull is a deploy: the files in the
-  repository are the files on the screen. A Mini that must not pull by itself
-  leaves this timer off and installs only the calendar and slides services
-  (`docs/rebuilding-the-mini.md`, step 11).
-- `mac/ship.sh` runs on the Mac you work on, not on the Mini. It pushes, updates
-  the Studio and tells the Mini to pull now (`docs/shipping-from-the-mac.md`).
-- `tools/mini/teletraan-mini` also runs on a Mac. It copies the files to the Mini
+- A timer can run `pull.sh` every 5 minutes. A pull is a deploy: the files in the
+  repository are the files on the screen. A Mini that gets its files from a Mac
+  (below) leaves this timer off and installs only the calendar and slides
+  services (`docs/rebuilding-the-mini.md`, step 11).
+- `tools/mini/teletraan-mini` runs on a Mac. It copies the files to the Mini
   instead of pulling, keeps the keys and calendar lines of `local.env`, installs
-  the services and shows the status (`docs/updating-the-mini.md`). A Mini follows
-  `ship.sh` or this tool for its files, not both.
+  the services and shows the status (`docs/updating-the-mini.md`). Its words
+  `update`, `status` and `restart` do one thing with no menu.
+- `mac/ship.sh` runs on the Mac you work on, not on the Mini. It checks the code,
+  pushes to GitHub, deploys the Studio and runs `teletraan-mini update --yes`, so
+  the Mini gets the files from that Mac and the screen restarts
+  (`docs/shipping-from-the-mac.md`). `docs/laptop-setup.md` sets up a second Mac
+  for it. A Mini gets its files from this tool or from the pull timer, not both.
 - A timer runs `fetch-calendars.sh` every 15 minutes. It saves the BAND
   calendars where the dashboard reads them. After each run, failed or not, the
   service also makes the document that the Calendars page in Studio shows
