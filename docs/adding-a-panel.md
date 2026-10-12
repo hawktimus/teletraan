@@ -94,9 +94,13 @@ the same way, and do not write a date from `start` with `getDate()`.
         </section>`;
     }
 
-A panel draws no plate and no frame. In Grid 1 the title must stay left of
-x=664, about 9 capital letters. Keep everything 16px inside the frame and
-clear of the cut corner at the bottom right.
+A panel draws no plate and no frame. In Grid 1 the title must stay inside the
+656px before the line that ends the tab, about 10 capital letters at 96px
+(`titleRoom` in `core/header-room.js`), and the words at the right end of the
+header inside the 289px after it. Draw the mark of the header with
+`markBeside(width)` when there are words beside it, so it is left out when they
+need the room. Keep everything 16px inside the frame and clear of the cut
+corner at the bottom right.
 
 ## 4. Mark the slats
 
@@ -362,7 +366,7 @@ Plain).
 **The plain look.** Plain is the flat finish with the screws and the default //
 in the panel headers hidden (`data-look="plain"`, two rules in `base.css`). A
 panel gets it with no code of its own if its header has class `header` and draws
-the mark with `doubleSlash()`. A seasonal pack's mark and the status shapes stay.
+the mark with `doubleSlash()` or `markBeside()`. A seasonal pack's mark and the status shapes stay.
 
 **Do not:**
 

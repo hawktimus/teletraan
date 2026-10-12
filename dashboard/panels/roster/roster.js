@@ -3,12 +3,12 @@
 // continues on the next page. Each time the panel comes round it shows the
 // next page (core/roster.js).
 
-import { doubleSlash } from '../../core/marks.js';
+import { markBeside } from '../../core/marks.js';
 import { escapeHtml } from '../../core/text.js';
 import { portraitPercentOf, visibleItems } from '../../core/content.js';
 import { makeRosterTurns, rosterPages, rowsPerColumn } from '../../core/roster.js';
 import { leadAddress, portraitLook, preloadLeadPhotos, slotMarkup, watchPhotos } from '../../core/portrait.js';
-import { departmentTitle, pageTeamName, teamChipMarkup, teamNameOf, titleClass } from '../../core/team-title.js';
+import { chipWidth, departmentTitle, pageTeamName, teamChipMarkup, teamNameOf, titleClass } from '../../core/team-title.js';
 import { wantedTeam } from '../../core/teams.js';
 
 const nextTurn = makeRosterTurns();
@@ -29,10 +29,10 @@ export function mount(host, content) {
   host.innerHTML = `
     <section class="page roster">
       <div class="header">
-        <h2 class="${titleClass(title, chip)}" data-slat="title">${escapeHtml(title)}</h2>
+        <h2 class="${titleClass(title)}" data-slat="title">${escapeHtml(title)}</h2>
         <div class="tag" data-slat="tag">
           ${teamChipMarkup(chip)}
-          ${doubleSlash()}
+          ${markBeside(chipWidth(chip))}
         </div>
       </div>
 

@@ -2,8 +2,9 @@
 // for today share the lines that the plan leaves free.
 
 import { rowBarMarkup, cardMarkup } from '../../core/plate.js';
-import { doubleSlash } from '../../core/marks.js';
+import { markBeside } from '../../core/marks.js';
 import { escapeHtml, hasText } from '../../core/text.js';
+import { textWidth } from '../../core/text-width.js';
 import { visibleItems } from '../../core/content.js';
 import { defaultThemeSettings } from '../../config.js';
 import { minutesIn } from '../../core/night.js';
@@ -114,14 +115,15 @@ export function mount(host, content) {
   const lines = rows.map((row, index) => rowMarkup(row, index === rows.length - 1)).join('');
 
   const date = parseLocalDateTime(plan.date);
-  const dateText = date ? `<span class="tag-text">${formatDate(date)}</span>` : '';
+  const dateWords = date ? formatDate(date) : '';
+  const dateText = date ? `<span class="tag-text">${dateWords}</span>` : '';
 
   // The heading and place are one card, a slat like each row below it
   host.innerHTML = `
     <section class="page tonight">
       <div class="header">
         <h2 class="title" data-slat="title">AGENDA</h2>
-        <div class="tag" data-slat="tag">${dateText}${doubleSlash()}</div>
+        <div class="tag" data-slat="tag">${dateText}${markBeside(textWidth(dateWords, 600, 44))}</div>
       </div>
 
       <div class="plan" data-slat="item">

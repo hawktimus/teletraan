@@ -50,6 +50,7 @@ const screens = await import(base + 'core/screens.js');
 const sanity = await import(base + 'core/sanity.js');
 const teams = await import(base + 'core/teams.js');
 const teamTitle = await import(base + 'core/team-title.js');
+const headerRoom = await import(base + 'core/header-room.js');
 const textWidthModule = await import(base + 'core/text-width.js');
 const panelOrder = await import(base + 'core/panel-order.js');
 const panels = {};
@@ -536,28 +537,22 @@ test('a name from the board is never markup on the cards of both teams, and no c
 
 // The header
 
-test('a title that fits beside the chip has the words BOARD and how long ago, then only how long ago, and then nothing', () => {
-  const room = 1036;
-  const longest = (title, chip, words) => textWidthModule.textWidth(title, 700, 60) + 24 + 20 + textWidthModule.textWidth(chip, 700, 44) + 28 + 84 + textWidthModule.textWidth(words, 600, 44);
+test('the words about the board are how long ago and nothing else, and are left out when they do not fit in the room at the right end', () => {
+  const room = headerRoom.wordsRoom;
 
-  assert.equal(draw.wordsBesideChip('IT TEAM', 'PRIME', '4 MIN AGO'), 'BOARD · 4 MIN AGO');
-  assert.equal(draw.wordsBesideChip('BUILD TEAM', 'PRIME', '4 MIN AGO'), '4 MIN AGO', 'with the slashes at the right end there is no room for BOARD beside BUILD TEAM');
-  assert.equal(draw.wordsBesideChip('DESIGN TEAM', 'PRIME', '4 MIN AGO'), '4 MIN AGO');
-  assert.equal(draw.wordsBesideChip('ELECTRICAL TEAM', 'PRIME', '4 MIN AGO'), '', 'and none beside the longer names');
-  assert.equal(draw.wordsBesideChip('PROGRAMMING TEAM', 'PRIME', '4 MIN AGO'), '');
-  assert.equal(draw.wordsBesideChip('BUILD TEAM', 'PRIME', ''), '');
+  assert.equal(draw.wordsAtRight('4 MIN AGO'), '4 MIN AGO');
+  assert.equal(draw.wordsAtRight('59 MIN AGO'), '59 MIN AGO');
+  assert.equal(draw.wordsAtRight('9 DAYS AGO'), '9 DAYS AGO');
+  assert.equal(draw.wordsAtRight('12 DAYS AGO'), '', 'a board that was read ten days ago or more has no words: they are 290 wide');
+  assert.equal(draw.wordsAtRight('SAMPLE'), 'SAMPLE');
+  assert.equal(draw.wordsAtRight('BOARD · 4 MIN AGO'), '', 'BOARD is too much for the room');
+  assert.equal(draw.wordsAtRight(''), '');
 
   // whatever is chosen fits, and nothing is left out that would have fitted
-  const titles = ['A', 'IT TEAM', 'BUILD TEAM', 'DESIGN TEAM', 'BUSINESS TEAM', 'ELECTRICAL TEAM', 'PROGRAMMING TEAM', 'MECHANICAL TEAM', 'PROGRESS', 'MILESTONES', 'TASKS'];
-  const words = ['NOW', '4 MIN AGO', '59 MIN AGO', '47 HR AGO', '12 DAYS AGO', 'SAMPLE'];
-  titles.forEach(title => ['PRIME', 'NOVA'].forEach(chip => words.forEach(text => {
-    const chosen = draw.wordsBesideChip(title, chip, text);
-    if (chosen !== '') assert.ok(longest(title, chip, chosen) <= room, title + ' ' + chip + ' ' + chosen + ' fits');
-    if (chosen === '') assert.ok(longest(title, chip, text) > room, title + ' ' + chip + ' ' + text + ' would not have fit');
-    if (chosen !== 'BOARD · ' + text && chosen !== '') assert.ok(longest(title, chip, 'BOARD · ' + text) > room, title + ' ' + chip + ': BOARD would not have fit');
-  })));
-  // with no words, the title and the chip fit in the styles that hide the slashes (Cybertron and Minimal), even PROGRAMMING TEAM beside PRIME
-  assert.ok(titles.every(title => textWidthModule.textWidth(title, 700, 60) + 24 + textWidthModule.textWidth('PRIME', 700, 44) + 28 <= room), 'the title and the longest chip fit with no words at all');
+  ['NOW', '4 MIN AGO', '59 MIN AGO', '47 HR AGO', '12 DAYS AGO', '100 DAYS AGO', 'SAMPLE', 'BOARD · 4 MIN AGO'].forEach(text => {
+    const wide = textWidthModule.textWidth(text, 600, 44);
+    assert.equal(draw.wordsAtRight(text) === text, wide <= room, text + ' is ' + Math.round(wide) + ' wide in ' + room);
+  });
 });
 
 test('the header has the title, the words, the chip and the slashes in that order, and a long title is cut off with an ellipsis rather than pushed over the chip', () => {
@@ -566,6 +561,7 @@ test('the header has the title, the words, the chip and the slashes in that orde
   assert.ok(header.includes('<h2 class="title" data-slat="title">BUILD TEAM</h2>'));
   assert.ok(header.indexOf('class="ago"') < header.indexOf('class="team-chip"') && header.indexOf('class="team-chip"') < header.indexOf('class="double-slash"'));
   assert.ok(header.includes('<span class="ago">4 MIN AGO</span><span class="team-chip">PRIME</span>'));
+  assert.ok(header.includes('<div class="tag tag-with-chip" data-slat="tag">'), 'a header with a chip says so, and the stylesheet decides where the words fit beside it');
   assert.equal(draw.headerMarkup('BUILD TEAM', 'PRIME', null, monday12).includes('class="ago"'), false, 'with no status there are no words');
 
   const css = fs.readFileSync(path.join(dashboardFolder, 'monday.css'), 'utf8');
@@ -714,22 +710,18 @@ test('the Roster header is the subteam and TEAM with the name of the team in a c
   });
 });
 
-test('a title is at the size of a heading when it fits beside the chip and the slashes, and at 60px when it does not', () => {
-  assert.equal(teamTitle.titleClass('LEADERSHIP', 'PRIME'), 'title');
-  assert.equal(teamTitle.titleClass('LEADERSHIP', 'NOVA'), 'title');
-  assert.equal(teamTitle.titleClass('LEADERSHIP', ''), 'title', 'with no chip the title has the room of the chip');
-  assert.equal(teamTitle.titleClass('TEAM LEADS', ''), 'title');
-  assert.equal(teamTitle.titleClass('PROGRAMMING TEAM', ''), 'title title-small');
-  assert.equal(teamTitle.titleClass('BUILD TEAM', 'PRIME'), 'title');
-  assert.equal(teamTitle.titleClass('PROGRAMMING TEAM', 'PRIME'), 'title title-small');
+test('a title is at the size of a heading when it fits before the line that ends the tab, and at 60px when it does not', () => {
+  assert.equal(teamTitle.titleClass('LEADERSHIP'), 'title');
+  assert.equal(teamTitle.titleClass('TEAM LEADS'), 'title');
+  assert.equal(teamTitle.titleClass('PROGRAMMING TEAM'), 'title title-tight', 'PROGRAMMING TEAM is 685 wide at 60px, and the room is 656');
+  assert.equal(teamTitle.titleClass('BUILD TEAM'), 'title');
+  assert.equal(teamTitle.titleClass('ELECTRICAL TEAM'), 'title title-small');
 
-  // the choice is by the room: whatever is at 96px fits, and what is at 60px did not fit at 96px
-  const room = 1036;
-  const taken = (title, chip, size) => textWidthModule.textWidth(title, 700, size) + 24 + textWidthModule.textWidth(chip, 700, 44) + 28 + 84;
-  ['LEADERSHIP', 'TEAM LEADS', 'BUILD TEAM', 'DESIGN TEAM', 'PROGRAMMING TEAM', 'ELECTRICAL TEAM', 'A TEAM'].forEach(title => ['PRIME', 'NOVA'].forEach(chip => {
-    const big = teamTitle.titleClass(title, chip) === 'title';
-    assert.equal(taken(title, chip, 96) <= room, big, title + ' ' + chip);
-  }));
+  // the choice is by the room before the line: whatever is at 96px fits in it, and what is at 60px did not fit at 96px. The chip is on the other side of the line
+  ['LEADERSHIP', 'TEAM LEADS', 'BUILD TEAM', 'DESIGN TEAM', 'PROGRAMMING TEAM', 'ELECTRICAL TEAM', 'A TEAM'].forEach(title => {
+    const big = teamTitle.titleClass(title) === 'title';
+    assert.equal(textWidthModule.textWidth(title, 700, 96) <= headerRoom.titleRoom, big, title);
+  });
   ['leadership', 'team-leads', 'roster'].forEach(name => {
     const css = fs.readFileSync(path.join(dashboardFolder, 'panels', name, name + '.css'), 'utf8');
     assert.ok(/\.title \{[^}]*overflow: hidden;[^}]*text-overflow: ellipsis;/.test(css), name + ': a title that still does not fit is cut off with an ellipsis');

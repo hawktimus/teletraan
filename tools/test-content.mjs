@@ -1229,7 +1229,7 @@ test('the rules for Plain never match a pack mark or a status shape, and the pan
     if (!fs.existsSync(file)) return;
 
     const code = fs.readFileSync(file, 'utf8');
-    const uses = code.split('${doubleSlash()}').length - 1;
+    const uses = code.split('${doubleSlash()}').length - 1 + code.split('${markBeside(').length - 1;
     if (uses === 0) return;
 
     const bullets = code.split('<span class="list-marker">${doubleSlash()}</span>').length - 1;
@@ -1237,7 +1237,7 @@ test('the rules for Plain never match a pack mark or a status shape, and the pan
     assert.ok(uses - bullets === 1 && code.includes('<div class="header">'), name + ' draws its header mark once, inside a header');
     drawn += 1;
   });
-  assert.equal(drawn, 10, 'the ten panels with a header mark');
+  assert.equal(drawn, 9, 'the nine panels with a header mark: the Photo panel has no header any more');
 });
 
 test('shell.js applies Look through core/look.js at the start and at every content change, so a change in Studio shows at once', () => {
@@ -4250,7 +4250,7 @@ test('the Subteam roster panel is in the registry with the topic of the other su
 
   const code = fs.readFileSync(path.join(dashboardFolder, 'panels/roster/roster.js'), 'utf8');
   const style = fs.readFileSync(path.join(dashboardFolder, 'panels/roster/roster.css'), 'utf8');
-  ['slotMarkup(', 'watchPhotos(', 'preloadLeadPhotos(', 'leadAddress(', 'makeRosterTurns(', 'doubleSlash()', 'escapeHtml('].forEach(piece => assert.ok(code.includes(piece), 'roster.js does not use ' + piece));
+  ['slotMarkup(', 'watchPhotos(', 'preloadLeadPhotos(', 'leadAddress(', 'makeRosterTurns(', 'markBeside(', 'escapeHtml('].forEach(piece => assert.ok(code.includes(piece), 'roster.js does not use ' + piece));
   assert.equal(/setTimeout|setInterval|requestAnimationFrame|animate\(/.test(code), false, 'the roster panel has animation code');
   assert.equal(/@keyframes|transition:|animation:|box-shadow|text-shadow|filter|blur/.test(style), false, 'roster.css uses an effect that is not allowed');
   assert.ok(/\.roster \.member\s*\{[^}]*font: 500 var\(--size-body\)\//.test(style), 'the names are not at the body size');

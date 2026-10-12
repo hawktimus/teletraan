@@ -1,6 +1,8 @@
 // Small pictures used on more than one panel. Each function returns SVG
 // markup. The colours are set in base.css.
 
+import { markFits } from './header-room.js';
+
 // The biggest a seasonal pack's header mark may be, in pixels. It was measured
 // on the large panel's header (docs/seasonal-packs.md, "The header mark"): the
 // free space round the slashes is 94 px high and the tag text beside them has
@@ -53,6 +55,13 @@ export function doubleSlash() {
     <polygon points="0,56 70,0 70,16 0,72"/>
     <polygon points="8,71.6 64,26.8 64,42.8 8,87.6"/>
   </svg>`;
+}
+
+// The picture at the right end of a header that has words there, such as a date or the chip of a team. The
+// words are as wide as width says. They keep their room, and the picture is left out when it would not fit
+// beside them (core/header-room.js).
+export function markBeside(width) {
+  return markFits(width) ? doubleSlash() : '';
 }
 
 // A task status is always shown as a shape, a word and a colour together,

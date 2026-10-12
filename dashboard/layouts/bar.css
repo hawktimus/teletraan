@@ -76,6 +76,13 @@ html[data-layout="bar"] .area[data-area="grid1"] {
   transform-origin: 0 0;
 }
 
+/* The header of the main panel is as wide as the panel, and not 1152 like the page it sits on, so what is at its
+   right end is at the right end of the panel. A Monday card has the room there for the words about the board
+   beside the chip (monday.css). */
+html[data-layout="bar"] .area[data-area="grid1"] .page .header {
+  width: var(--bar-area-width);
+}
+
 /* There is no small frame, and the war clock is in the banner. The region with
    the countdown and the small frame, with nothing in it, is taken out of the way. */
 html[data-layout="bar"] #region-right {

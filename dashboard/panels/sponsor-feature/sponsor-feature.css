@@ -26,7 +26,7 @@
    middle of the header. */
 .sponsor-feature .tag-text {
   min-width: 0;
-  max-width: 316px;
+  max-width: 289px;
   overflow: hidden;
   text-overflow: ellipsis;
 }

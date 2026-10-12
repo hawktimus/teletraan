@@ -1,22 +1,5 @@
-/* The header sits on top of the two header plates of the area's frame */
-.photo .header {
-  position: absolute;
-  left: 0;
-  top: 4px;
-  box-sizing: border-box;
-  width: 1152px;
-  height: 116px;
-  padding: 0 40px 0 76px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.photo .title {
-  margin: 0;
-  font: 700 var(--size-heading)/96px var(--font-display);
-}
-
-/* The body of the panel is all of it under the header: from the frame line at the left, the
+/* The panel has no title: the header of the frame stays as it is, empty, and the picture is under it.
+   The body of the panel is all of it under the header: from the frame line at the left, the
    right and the bottom (4px in) to the seam under the header (120px down), whatever the width
    of the area is (1152, or 1427 in the bar layout). The photo fills it. The page lies over the
    frame, so the photo cannot be drawn under the metal. It is cut to stop at the metal instead:

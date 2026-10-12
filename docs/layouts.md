@@ -686,10 +686,15 @@ fixed length, and a variable cannot reach that:
 | Daily Agenda (`tonight`) | header and rows 1152, plan card 1096 | plan card 1096 by 140 and row bars 1124 (`tonight.js`) |
 | Subteam spotlight | header and story 1152, name card 1096 | name card 1096 by 128 (`spotlight.js`) |
 | Sponsor feature | header and story 1152, name card 1096 | cards 1096 by 128 and 360 by 280 (`sponsor-feature.js`) |
-| Photo | header 1152 | card 1096 wide and the caption's edge at 1056 (`core/photos.js`) |
+| Photo | the body fills the panel under its header, which is empty | card 1096 wide and the caption's edge at 1056 (`core/photos.js`) |
 | Leadership, Team leads | header and rows 1152 | portrait cards, drawn at the size of the setting (`portrait.js`) |
 | Roster | header 1152, the body in a box 1096 wide, in the middle of it | portrait card 292 square |
 | Custom | header 1152, page 1096, blocks 1056 and 1034 | block cards and bars 1056 (`custom.js`) |
+
+The one box that does use the width is the header. In the bar layout it is as wide as the area, 1427 before the
+scale (`layouts/bar.css`), and not 1152 like the page it sits on, so what is at the right end of a header, the chip of a team,
+the date, the tier and the words about the board, is at the right end of the panel. The title and the line that ends the tab
+stay where they are. A Monday card has the room there for the words about the board beside the chip (see "What is on every card").
 
 The one panel whose content is in the middle of a box (Roster) is the one a variable
 could stretch from the stylesheet alone, and it is left like the rest. To fill the width, those fixed lengths in the code would have to
@@ -843,7 +848,7 @@ makes no change of metal for either style. Then come the neon lines, on one path
 | Neon line | 4 px, `--style-neon`, and 5 px for a team with Glow | 10 px inside the edge, both styles, and 7 px inside the ticker's |
 | Wide neon lines | the same path at 12 px and .35 opacity, and at 26 px and .12 | both styles, for a team with Glow only, and not in the flat finish |
 | Hex bolt | a hexagon 33 px wide and 38 high, with a dark rim, a face in the metal of the team and a dot | at the joints: corners 1, 2, 5, 6, 7 and 0 (the ticker has 2 and 7) |
-| Armor tab | a gradient, a dark bevel, a bright line up and left, and the team's plate color inset | the header of the main panel, 664 px across at the top and slanted at the end |
+| Armor tab | a gradient, a dark bevel, a bright line up and left, and the team's plate color inset | the header of the main panel, 772 px across at the top and slanted at the end |
 | Hazard stripe | 12 px high, slanted bars 22 px wide every 44, in the team's accent | under the header, Cybertron only |
 | Conduit | a 3 px pink line, `--style-pink` | 16 px inside the edge along the top left corner and the top, and along the bottom right corner and the bottom, and under the hazard stripe |
 | Slashes | six slanted bars in the neon, 22 px wide every 40 | along the bottom, at the right end, Cybertron only |
@@ -947,7 +952,7 @@ of a panel's header is off, as the pictures of Minimal have none and the ticks s
 | Rivets | dots of 5 px radius with a dark rim, one every 90 px, as Original's | every straight edge of 180 px or more |
 | Rust | rust at the two bottom corners of every frame: an arc of 4 px, `--style-rust`, with a soft patch under it that is a radial gradient (`wear-rust` in `index.html`) | one arc on the left edge just above the step, bulging into the frame, and one on the bottom edge just before the cut corner |
 | Weld seam | a dark 3 px line with a faint light 3 px line 4 px beside it | the main panel only, at x = 1188, from under the header to just above the bottom. It is 36 px past the 1152 the pages are written for, so it crosses no text |
-| Header line | a 3 px neon line, 5 px for a team with Glow, which also has the two wide lines behind it | along the foot of the header, with 39 ticks standing on it: every 18, 4 wide and 10 high, from the slanted end of the tab to the right edge |
+| Header line | a 3 px neon line, 5 px for a team with Glow, which also has the two wide lines behind it | along the foot of the header, with 33 ticks standing on it: every 18, 4 wide and 10 high, from 60 past the slanted end of the tab to the right edge |
 
 The armor tab is the same as Cybertron's, with the team's plate color inset and two colors of
 its own (`--style-armor-top` and `--style-armor-bottom`). The plates are the team's body
@@ -1389,6 +1394,45 @@ day in the Weekday schedule (the layout changes), with Preview Minimal and Previ
 hand. `node tools/test-swap-smooth.mjs` checks that every piece of the old look has a place in the new one, that nothing jumps at the
 moment between the pull and the travel, and the calm and no motion paths.
 
+## The header of a large panel
+
+Every page of the large panel has a header on the tab and the plate of the frame, 116 px high from the line of the frame at 4 to the line under it at 120.
+The title is at the left. The colored tab ends in a line, and at the right end are the words (a date, a tier, the age of the data), the chip of a team and
+the slashes. All the numbers here are pixels of the 1152 wide panel that every page is written for, and `core/header-room.js` holds the ones that the text
+is measured against:
+
+| Part | Width | From the left edge of the panel |
+|------|-------|---------------------------------|
+| Padding | 76 | 0 to 76 |
+| The title: `titleRoom` | 656 | 76 to 732 |
+| Clear space | 16 | 732 to 748 |
+| The metal of the notch of Original, its left half | 8 | 748 to 756 |
+| The notch of Original | 40 | 756 to 796 |
+| Its metal and its shadow, at the right | 13 | 796 to 809 |
+| Clear space | 14 | 809 to 823 |
+| The words: `wordsRoom` | 289 | 823 to 1112 |
+| Padding | 40 | 1112 to 1152 |
+
+The line is at x = 772 along the top of the tab (`tabTop` in `core/plate.js`). The notch of Original goes from 772 at the top to 756, steps across to 796 and ends at
+773 at the foot. The line of Cybertron and Minimal leans 22 px to the left over the header, from 772 at the top to 750 at the foot. A tab with one slant of 60
+degrees (Header end in the trim of a team) starts at 811 and is at 756 by the foot of the capitals of a title, so the title has the same room in every frame.
+`tools/test-title-plate.mjs` works the line out of the plates of every frame the large panel can have, for every layout, style and trim, and holds the two rooms to it.
+The small frame is not changed: the labels of its panels are short.
+
+A title is at the size of a heading, 96 px, when it fits in the 656, and at 60 px when it does not (`titleClass` in `core/team-title.js`). A department as long as
+PROGRAMMING TEAM, which is the longest the Studio allows (11 letters) and is 685 wide at 60 px, is at 56 px (`title-tight` in the stylesheets of Roster and the Monday
+cards, and `smallTitleClass` for the cards, whose titles start at 60). A name that is longer than the room even at that size is cut off with an ellipsis (the stylesheets of
+Extra panel, Leadership, Team leads, Roster and the Monday cards). LEADERSHIP is the widest title that is always at 96 px, 652 wide. The panels with a title that is always
+the same, TASKS to SPOTLIGHT and the competition cards, are all narrower.
+
+The words at the right end have 289 px: the widest Daily Agenda date of the year, MON MAR 29, is 288 wide. The slashes need 78 more (their 54 and the gap of 24 before
+them), so they are left out of a header whose words are wider than 211 (`markBeside` in `core/marks.js`, which a seasonal pack's mark goes through as well). The date,
+the tier of a sponsor and the words of a competition card are cut off with an ellipsis at 289 (`max-width` in their stylesheets). Cybertron and Minimal draw no
+slashes, and keep the room. In the bar layout the header is as wide as the panel (see "The width of the main panel").
+
+The Photo panel has no title and nothing at the right end: the header of its frame is empty, and the photo is under it. The picture cannot be drawn over the header,
+because the page lies over the frame and the header plates would be covered with the tab and the line that every other panel shows.
+
 ## The Monday cards
 
 The Monday rows of a Screen are three cards, one after the other, in the Monday style: the tasks card, the milestones card and
@@ -1421,10 +1465,10 @@ team on the screen and of both teams. A Monday row can ask about the team of the
 **The name of the team.** A header that names a department reads the department in capitals and TEAM, such as BUILD TEAM, and the
 name of the team is a chip of 44 px in the accent of the team at the right end of the header: PRIME or NOVA, which is the
 `shortName` of the team that the items follow. A page whose tasks are all for both teams, and each of the cards of both teams, has no chip
-(`core/team-title.js`), and its title has the room of the chip. A department name that already ends in TEAM does not get a second one. The title is 60 px (`--size-team`). The Roster,
+(`core/team-title.js`). A department name that already ends in TEAM does not get a second one. The title is 60 px (`--size-team`). The Roster,
 Leadership and Team leads headers have the same chip, with BUILD TEAM, LEADERSHIP and TEAM LEADS as their titles, which are at the size of a heading
-(96 px) when they fit beside the chip and the slashes and at 60 px when they do not (`titleClass` in `core/team-title.js`). Leadership and Team leads
-have no chip only when everyone on their list is for both teams, and Roster asks about the subteam of its page.
+(96 px) when they fit before the line that ends the tab and at 60 px when they do not (`titleClass` in `core/team-title.js`, and "The header of a
+large panel" above). Leadership and Team leads have no chip only when everyone on their list is for both teams, and Roster asks about the subteam of its page.
 
 ### The tasks card
 
@@ -1494,11 +1538,13 @@ With no rows each says one plain sentence.
 
 ### What is on every card
 
-**The words about the board.** At the right end of the header, before the chip, are the words BOARD · 4 MIN AGO: how long ago the Mini read the
-board, in minutes, hours or days, and SAMPLE on the sample. They are muted. They go only where they fit (`wordsBesideChip` in `core/monday-draw.js`,
-which counts the width of the title, the words and the chip with `core/text-width.js`). When BOARD does not fit the words go without it, and when they still
-do not fit they are left out. With the chip PRIME and the slashes at the right end, 4 MIN AGO fits beside BUILD TEAM and DESIGN TEAM and no words
-fit beside PROGRAMMING TEAM. Cybertron and Minimal draw no slashes, but the room is kept for them.
+**The words about the board.** At the right end of the header, before the chip, are the words 4 MIN AGO: how long ago the Mini read the
+board, in minutes, hours or days, and SAMPLE on the sample. They are muted. They go only where they fit (`wordsAtRight` in `core/monday-draw.js`,
+which counts the width of the words with `core/text-width.js`): they have the 289 px at the right end of every header, and a board that was read ten
+days ago or more has no words, because 10 DAYS AGO is 291 wide. Beside the chip of a team they do not fit in a header 1152 wide, so the header says it has a chip
+(`tag-with-chip`) and `monday.css` hides the words there. In the bar layout, which Minimal uses and the Monday cards are drawn in, the header is as wide as the panel,
+and the words are shown beside the chip. A card of both teams has no chip, and its words are shown in every layout. The slashes are left out when they would not
+fit beside the chip, or beside the words when there is no chip.
 
 **With nothing to show.** A card says one plain sentence in place of its body, and the sentence says why. No board is chosen yet. when Dashboard
 Settings, Monday has no board. Waiting for the first sync from the board. when there is a board and the Mini has not written the status yet. Nothing
@@ -1553,7 +1599,9 @@ the shapes do not name the class.
 A frame for the other corners is the Prime frame turned across: its outline has the same points, so
 the bolts, the brackets, the pink conduit, the slashes, the rivets and the rust are on the points that
 were turned. The tab with one slant ends on a line at 60
-degrees from the top of the header, leaning the way the tabs of the bar frames do. The notch is what each
+degrees from the top of the header, leaning the way the tabs of the bar frames do. On the large frame the slant starts
+further right than the notch does (`slantTop` in `core/plate.js`, 811), so that it is at the left end of the notch by the foot
+of the capitals of a title and the title has the same room ("The header of a large panel"). The notch is what each
 frame has always had: the notch of the large frame, and a steep line on the others. The name of a frame
 for a trim is its name, then `-tr` for the other corners, then `-slant` for the slanted tab, so `grid1`
 becomes `grid1-tr-slant` and `bar-main-minimal` becomes `bar-main-minimal-tr`. A frame with no header

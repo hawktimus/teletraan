@@ -5,7 +5,6 @@
 // does the change from one to the next. The next turn's first photo is already
 // downloading while this turn is up.
 
-import { doubleSlash } from '../../core/marks.js';
 import { escapeHtml, hasText } from '../../core/text.js';
 import { preloadImages } from '../../core/images.js';
 import { creditText, fitOf, makePhotoQueue, photoStay, photosToShow, turnPlan } from '../../core/photos.js';
@@ -69,11 +68,6 @@ export function mount(host, content) {
 
   host.innerHTML = `
     <section class="page photo">
-      <div class="header">
-        <h2 class="title" data-slat="title">PHOTOS</h2>
-        <div data-slat="tag">${doubleSlash()}</div>
-      </div>
-
       <div class="photo-body" data-slat="item" style="--hold: ${hold}s">
       ${shots || missingMarkup}
       </div>

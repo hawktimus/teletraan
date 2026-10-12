@@ -659,7 +659,7 @@ test('the header says how long ago the board was read, SAMPLE for the sample, an
 
   const agoOf = (content, at) => { const found = /<span class="ago">([^<]*)<\/span>/.exec(panels.progress.markupFor(content, at)); return found ? found[1] : null; };
   const real = change => contentWith(raw => { delete raw.monday.sample; Object.assign(raw.monday, change); });
-  assert.equal(agoOf(real({ lastSyncAt: '2026-10-12T15:56:00Z' }), now), '4 MIN AGO', 'BOARD · is in front of it when there is room, and with PRIME and the slashes there is not');
+  assert.equal(agoOf(real({ lastSyncAt: '2026-10-12T15:56:00Z' }), now), '4 MIN AGO', 'the words are written beside the chip, and the stylesheet shows them where the header is wide enough');
   assert.equal(agoOf(real({ lastSyncAt: '' }), now), null);
   assert.equal(agoOf(contentWith(raw => { delete raw.monday; }), now), null);
 });

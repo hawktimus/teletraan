@@ -202,6 +202,8 @@ editors can sign in from anywhere.
                               monday.js picks and ranks the board tasks for the Monday cards and monday-draw.js
                               draws their header and rows (docs/layouts.md, "The Monday cards"), team-title.js writes
                               the name of a team on a header, text-width.js counts the width of a line of capitals,
+                              header-room.js has the room a header leaves for its title and for the words at its right
+                              end (docs/layouts.md, "The header of a large panel"),
                               tick.js is the one clock of the screen: it tells every panel when a real
                               second starts by reading the time, not by counting, so the digits never
                               drift, and a panel should write to the page only what has changed
@@ -474,6 +476,10 @@ editors can sign in from anywhere.
                               first, and that no key is printed
       test-laptop-docs.mjs    checks for docs/laptop-setup.md and the shipping docs: the steps, one command in
                               each code block, the plain style, and that the commands the guide names exist
+      test-title-plate.mjs    checks for the header of a large panel: where the line that ends the tab is in every frame
+                              (Original, Cybertron and Minimal, both teams, the slanted tab), that the title has its room
+                              before it and the words theirs after it, the widest titles and dates, the slashes left out
+                              when the words need the room, and that the Photo panel has no title
       test-plate-edges.mjs    checks for the thin plate edge: its widths against the other frames', the TEAM plate and
                               the ticker's tag and frame, and that the text on them (TEAM and the number, the name
                               above, TELETRAAN I under, the ticker's line and its word) has 2 px clear of the metal
@@ -1055,6 +1061,7 @@ exceptions are `test-slides-script.mjs`, `test-frc-script.mjs` and `test-monday-
     node tools/test-ship-script.mjs
     node tools/test-laptop-docs.mjs
     node tools/test-plate-edges.mjs
+    node tools/test-title-plate.mjs
     node tools/test-countdown-title.mjs
     node tools/check-themes.mjs
     node tools/check-seasons.mjs

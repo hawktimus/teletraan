@@ -3,6 +3,7 @@
 // department reads BUILD TEAM, with the name of the team in a chip at its right end. These are plain
 // functions, so tools/test-monday-rows.mjs can run them.
 
+import { titleRoom } from './header-room.js';
 import { escapeHtml, hasText } from './text.js';
 import { textWidth } from './text-width.js';
 
@@ -31,18 +32,26 @@ export function teamChipMarkup(name) {
   return hasText(name) ? `<span class="team-chip">${escapeHtml(name)}</span>` : '';
 }
 
-// The class of the title of a header that has the chip of a team at its right end, with the slashes after
-// it. The title is at the size of a heading, 96px, when it fits beside the chip and the slashes, and 60px,
-// the size of a Monday card's title, when it does not. Beside a longer name than the room has, the title is
-// cut off with an ellipsis (the stylesheet of the panel). A header with no chip leaves the room of the chip
-// to the title.
-const headerRoom = 1036;
-const slashesRoom = 84;
+// How wide the chip is, with the padding the stylesheet gives it (base.css, .team-chip). A header with no chip
+// has none.
 const chipPadding = 28;
-const gap = 24;
 
-export function titleClass(title, chip) {
-  const chipRoom = hasText(chip) ? gap + textWidth(chip, 700, 44) + chipPadding : 0;
-  const taken = textWidth(title, 700, 96) + chipRoom + slashesRoom;
-  return taken <= headerRoom ? 'title' : 'title title-small';
+export function chipWidth(chip) {
+  return hasText(chip) ? textWidth(chip, 700, 44) + chipPadding : 0;
+}
+
+// The class of the title of a header that has the chip of a team at its right end. The title is at the size of
+// a heading, 96px, when it fits in the room before the line that ends the tab (core/header-room.js), and 60px,
+// the size of a Monday card's title, when it does not. A department as long as PROGRAMMING TEAM, which is 685
+// wide at 60px, is 56px (title-tight). A title that is longer than the room even then is cut off with an
+// ellipsis (the stylesheet of the panel). The chip is on the other side of the line, so its size does not matter
+// here.
+export function titleClass(title) {
+  if (textWidth(title, 700, 96) <= titleRoom) return 'title';
+  return textWidth(title, 700, 60) <= titleRoom ? 'title title-small' : 'title title-tight';
+}
+
+// The class of the title of a Monday card, which is at 60px, or at 56px when 60px does not fit
+export function smallTitleClass(title) {
+  return textWidth(title, 700, 60) <= titleRoom ? 'title' : 'title title-tight';
 }

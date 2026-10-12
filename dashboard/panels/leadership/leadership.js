@@ -2,12 +2,12 @@
 // portrait size and fewer at a bigger one, and each time the panel comes round it
 // shows the next page, so everyone is shown (core/leadership.js).
 
-import { doubleSlash } from '../../core/marks.js';
+import { markBeside } from '../../core/marks.js';
 import { makePages } from '../../core/turns.js';
 import { portraitPercentOf } from '../../core/content.js';
 import { chipOf, leaders } from '../../core/leadership.js';
 import { photoAddress, portraitLook, preloadPhotos, rowLayout, rowsMarkup, rowsPerPage, watchPhotos } from '../../core/portrait.js';
-import { pageTeamName, teamChipMarkup, teamNameOf, titleClass } from '../../core/team-title.js';
+import { chipWidth, pageTeamName, teamChipMarkup, teamNameOf, titleClass } from '../../core/team-title.js';
 import { wantedTeam } from '../../core/teams.js';
 
 const nextPage = makePages(rowsPerPage);
@@ -27,10 +27,10 @@ export function mount(host, content) {
   host.innerHTML = `
     <section class="page leadership">
       <div class="header">
-        <h2 class="${titleClass('LEADERSHIP', chip)}" data-slat="title">LEADERSHIP</h2>
+        <h2 class="${titleClass('LEADERSHIP')}" data-slat="title">LEADERSHIP</h2>
         <div class="tag" data-slat="tag">
           ${teamChipMarkup(chip)}
-          ${doubleSlash()}
+          ${markBeside(chipWidth(chip))}
         </div>
       </div>
 

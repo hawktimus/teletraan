@@ -155,7 +155,8 @@ test('the panel draws the photo in the body, with the hotspot when it is cut and
   assert.ok(html.includes('<div class="photo-body" data-slat="item" style="--hold: 16s">'));
   assert.ok(html.includes('<figure class="shot" data-fit="fill" style="--shot: 0">'));
   assert.ok(html.includes('<img src="data/sample/photo-1.svg" style="object-position: 30% 40%" alt="">'));
-  assert.ok(html.includes('PHOTOS'));
+  assert.equal(html.includes('PHOTOS'), false, 'the panel has no title');
+  assert.equal(html.includes('class="header"'), false, 'and no header, so no mark either');
 
   // shown whole, nothing is cut, so the hotspot is not used
   const whole = mount({ photoFit: 'whole' }, photo);

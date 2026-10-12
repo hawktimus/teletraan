@@ -571,7 +571,7 @@ test('both panels draw their rows at their own portrait size, and at 100 without
 test('the panels draw through the shared rows and the header mark, have no animation code, and the Roster panel is as it was', () => {
   [['panels/leadership/leadership.js', 'photoAddress(', 'preloadPhotos('], ['panels/team-leads/team-leads.js', 'leadAddress(', 'preloadLeadPhotos(']].forEach(([file, address, preload]) => {
     const code = read(file);
-    ['rowsMarkup(', 'watchPhotos(', 'doubleSlash()', 'rowLayout(', address, preload].forEach(piece => assert.ok(code.includes(piece), file + ' does not use ' + piece));
+    ['rowsMarkup(', 'watchPhotos(', 'markBeside(', 'rowLayout(', address, preload].forEach(piece => assert.ok(code.includes(piece), file + ' does not use ' + piece));
     assert.equal(/slotMarkup|slotsPerPage|MAX_CARDS|splitEvenly|leadershipPages/.test(code), false, file + ' still draws the cards');
     assert.equal(/setTimeout|setInterval|requestAnimationFrame|animate\(/.test(code), false, file + ' has animation code');
     assert.ok(code.includes('makePages(rowsPerPage)'), file + ' does not show a page at a time');

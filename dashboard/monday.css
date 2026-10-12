@@ -4,8 +4,10 @@
    its header 120 high. Nothing here moves: a card that scrolls is moved by frame.js (scrollCard). */
 
 /* The header sits on top of the two header plates of the area's frame. The title is the department and
-   TEAM at 60px. At the right end are the words about the board, the chip with the name of the team (in
-   base.css) and the slashes. The words are left out by core/monday-draw.js when they do not fit. */
+   TEAM at 60px, and is cut off with an ellipsis before it reaches the line that ends the tab. At the right
+   end are the words about the board, the chip with the name of the team (in base.css) and the slashes. The
+   words are left out by core/monday-draw.js when they do not fit, and then the slashes when they do not fit
+   beside the chip. */
 .monday .header {
   position: absolute;
   left: 0;
@@ -22,12 +24,14 @@
 .monday .title {
   flex: 0 1 auto;
   min-width: 0;
+  max-width: 656px;
   margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font: 700 var(--size-team)/64px var(--font-display);
 }
+.monday .title-tight { font: 700 var(--size-body)/64px var(--font-display); }
 .monday .tag {
   flex: none;
   display: flex;
@@ -39,6 +43,10 @@
   white-space: nowrap;
   font: 600 var(--size-label)/44px var(--font-display);
 }
+/* Beside the chip the words need more than the 289px at the right end of a header 1152 wide. The header of
+   the bar layout is as wide as the panel (layouts/bar.css), and has the room. */
+.monday .tag-with-chip .ago { display: none; }
+html[data-layout="bar"] .monday .tag-with-chip .ago { display: inline; }
 .monday .tag .double-slash { flex: none; }
 
 /* The body is 1104 x 544, 24px in from the frame and 132px down. The rows end 420px down and what is
