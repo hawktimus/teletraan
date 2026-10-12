@@ -129,7 +129,7 @@ follows Seconds per photo).
 - Panel: the large panels (Tasks, Upcoming events, Daily Agenda, Subteam
   spotlight, Sponsor feature, Photo, Leadership, Team leads, Subteam roster and
   Extra panel) and three Monday rows: Monday: Build team, Monday: Milestones and
-  Monday: Progress. Upcoming events is one row that plays its two pages.
+  Monday: Progress. Upcoming events is one row that scrolls from its first four events to the next four.
 - Team: shown with the choices the panel allows. A panel for one team can be left
   on Keep the team on the screen, or set to Prime or Nova. Photo and Upcoming
   events are for both teams and have no team. A Monday row needs a team. Milestones
@@ -274,8 +274,9 @@ documents of the Mini, Monday and the competition feed are public in the same wa
 
 ## The Events panel
 
-The Events panel shows the next 4 events, and the page that follows it in the
-rotation shows the 4 after them. With 4 events or fewer there is no second page.
+The Events panel shows the next 4 events. After its seconds the list scrolls up
+and shows the 4 after them for the same seconds. With 4 events or fewer there is no
+second page and no scroll.
 
 - Kind: each calendar row in Dashboard Settings, Calendars can have a kind
   (Meetings, Competitions, Outreach or Deadlines), and starts with none. An event

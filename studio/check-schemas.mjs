@@ -5433,7 +5433,7 @@ function checkLookRotation() {
   return problems;
 }
 
-// The Events panel runs in two pages (dashboard/core/event-pages.js). Each calendar in Dashboard Settings has a kind,
+// The Events panel has two pages, which it scrolls between (dashboard/core/event-pages.js). Each calendar in Dashboard Settings has a kind,
 // the switch Group events by kind is in the Calendars tab, and an Always show rule in Calendar filters can pin its events
 // to page one. The choices and the starting values are the ones in dashboard/config.js. None is required, because a
 // calendar or a rule saved before these fields existed has none, and must still publish.
@@ -5480,7 +5480,7 @@ function checkEventPages() {
   need(problems, force && typeof force.hidden === 'function' && force.hidden({ document: undefined }) === true, 'calendarFilter.force should stay hidden while the rule has no document yet');
 
   const events = world.registry.panels.filter(panel => panel.id === 'events')[0];
-  need(problems, events && events.pages === 2, 'the events panel in registry.js should have pages: 2');
+  need(problems, events && events.pages === undefined, 'the events panel in registry.js should not have pages: it draws both of its pages in one list and scrolls from the first to the second (scrollPages in panels/events/events.js)');
   return problems;
 }
 
@@ -6691,7 +6691,7 @@ async function main() {
   check('the Monday cards are panels of the large frame, kept out of Panel order, its starting rows and the lists of config.js', checkMondayCards);
   check('the night times, the speaker wait, the overrun and the booking close time are hidden, keep their starting values and are not read by the dashboard', checkFixedValues);
   check('the look rotation fields offer the styles, teams and swaps the dashboard has, start as its defaults, and the old Style and Team mode are hidden but kept', checkLookRotation);
-  check('the Events panel has two pages: each calendar has a kind, Group events by kind starts off, and an Always show rule can be pinned to page one', checkEventPages);
+  check('the Events panel has two pages that it scrolls between: each calendar has a kind, Group events by kind starts off, and an Always show rule can be pinned to page one', checkEventPages);
   check('a team has the eight trim choices, each a radio list that agrees with dashboard/config.js and starts as Prime, and the seed file and the sample give Nova its own', checkTeamTrim);
   check('every theme and overlay is complete and readable (tools/check-themes.mjs)', checkThemeGuard);
   check('every seasonal pack is complete, and draws only in the empty places (tools/check-seasons.mjs)', checkSeasonGuard);

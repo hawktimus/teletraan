@@ -195,9 +195,9 @@ function holdFor(stay, arrivedAfter) {
   return Math.max(stay - arrivedAfter - frame.turnMs(), shortestHold);
 }
 
-// How many pages a card is held for. A card with more rows than fit (the Monday cards, panels/monday-*)
-// says so with scrollPages(content, page) in its script: it is held for its time, then its list moves up
-// by a page of rows and it is held for the same time again. Every other panel is one page. A problem
+// How many pages a card is held for. A card with more rows than fit (the Monday cards, panels/monday-*, and
+// the Events panel) says so with scrollPages(content, page) in its script: it is held for its time, then its
+// list moves up by a page of rows and it is held for the same time again. Every other panel is one page. A problem
 // in the panel's answer is one page.
 function pagesOfCard(id, content, page) {
   const module = moduleOf(id);

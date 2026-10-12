@@ -74,6 +74,14 @@ html[data-layout="bar"] .monday .tag-with-chip .ago { display: inline; }
   font: 500 var(--size-body)/72px var(--font-text);
 }
 
+/* The bar layout (Minimal) gives the large panel a page 1427 wide, where every other panel keeps the 1152 it was
+   written for (docs/layouts.md, "The width of the main panel"). The Monday cards use all of it: the header and the
+   body are as wide as the area, with the same 24px at each side. layouts/bar.css gives the header of every panel that
+   width, and the rule here says it for the cards. styles/minimal.css leaves out the weld seam, which
+   stands where the narrow page ends. The standard layout and the sidebar layout have no rule here. */
+html[data-layout="bar"] .monday .header { width: var(--bar-area-width); }
+html[data-layout="bar"] .monday .body { width: calc(var(--bar-area-width) - 48px); }
+
 /* Five rows of 84 are in the window. A card with more rows is moved up in it by five rows at a time
    (frame.js, scrollCard, and frame.css, which has the position of the list). The two tags are the colors
    of the teams on the cards of both teams, the same on every team's screen. */

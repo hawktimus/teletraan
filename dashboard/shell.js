@@ -476,7 +476,8 @@ function startWhatComesAndGoes() {
   }
 
   // The large panel plays the rows of the Screen that is on the screen, and the small panel its side rows
-  // (core/screens.js). A panel with two pages, the Events panel, is two steps one after the other (withPages).
+  // (core/screens.js). A panel that says it has pages in registry.js is a step for each page (withPages). None does now: the
+  // Events panel draws both of its pages and scrolls from the first to the next (core/schedule.js, scrollPages).
   // The competition cards that are due are mixed into the large panel's list each time it is read (core/competition.js)
   startRotation('grid1', () => (onlyTasks ? [{ panel: 'tasks', show: true, seconds: 12 }] : withPages(withCompetition(mainPlaylist(content, new Date()), content, new Date()))), getContent);
   if (!onlyTasks) {

@@ -14,7 +14,9 @@
 //             round, 1 if it does not say. Each page is a step of its own in the
 //             rotation (withPages in core/panel-order.js). The panel's hasContent
 //             and mount are given the page, counting from 1, and a page with nothing
-//             on it is skipped.
+//             on it is skipped. No panel has it now: the Events panel draws its pages
+//             in one list and scrolls from the first to the next (scrollPages in
+//             panels/events/events.js), as the Monday cards do.
 //   competition  a competition card (core/competition.js). It is not in Panel order or in the
 //             rotation lists of config.js: the Competition tab of Dashboard Settings switches it,
 //             and core/competition.js puts the cards that are due in the large panel's rotation.
@@ -43,7 +45,7 @@ export const panels = [
   { id: 'ticker', region: 'ticker' },
 
   { id: 'tasks', region: 'grid1', topic: 'tasks' },
-  { id: 'events', region: 'grid1', topic: 'events', pages: 2 },
+  { id: 'events', region: 'grid1', topic: 'events' },
   { id: 'tonight', region: 'grid1', topic: 'plan' },
   { id: 'spotlight', region: 'grid1', topic: 'subteams' },
   { id: 'sponsor-feature', region: 'grid1', topic: 'sponsors' },

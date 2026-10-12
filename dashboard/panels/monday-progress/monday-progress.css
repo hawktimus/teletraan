@@ -36,6 +36,17 @@
   top: 56px;
   width: 700px;
 }
+/* In the bar layout (monday.css) the body is 275px wider than the 1104 these cards are drawn for. The line moves to the
+   right, ending 24px short of where the body ends so that its last date is clear of the rust on the frame, and the bars take
+   the room it leaves, so the bar is 251px longer. It is stretched along its length only, and its edges keep their width. */
+html[data-layout="bar"] .monday-progress .chart { left: calc(var(--bar-area-width) - 48px - 1104px - 24px); }
+html[data-layout="bar"] .monday-progress .bars { width: calc(var(--bar-area-width) - 48px - 404px - 24px); }
+html[data-layout="bar"] .monday-progress .stack {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+}
+html[data-layout="bar"] .monday-progress .seg { vector-effect: non-scaling-stroke; }
 .monday-progress .bar-row {
   display: flex;
   align-items: center;

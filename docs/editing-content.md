@@ -218,11 +218,15 @@ What the screen does with them:
 
 ### The two pages of the Events panel
 
-The Events panel comes round twice in a row. Page one shows the next 4 events and
-page two the 4 after them, both in order of start. Both pages have the same rows
-as before: the date on the left, the title, and under it the time and the place.
-With four or fewer events there is no page two, and the panel runs once. With no
-events the panel does not run.
+The Events panel has two pages. Page one shows the next 4 events and page two the 4
+after them, both in order of start. Both pages have the same rows as before: the
+date on the left, the title, and under it the time and the place. The panel shows
+page one for its seconds, then the list scrolls up, the four rows of page one
+going out at the top and the four of page two coming in, and it shows page two for
+the same seconds. It is one step of the Screen and does not change page in
+between, so the frame stays still. With the motion on Calm or None the list moves
+at once and does not scroll. With four or fewer events there is no page two, and
+the panel does not scroll. With no events the panel does not run.
 
 - A row has a small chip before the title when the calendar the event comes from
   has a kind. The chip is in the team's accent color: MEETING, COMP, OUTREACH or
@@ -241,14 +245,16 @@ events the panel does not run.
   Outreach events. An event from a calendar with no kind counts as Other and goes
   with page one, so it never waits on a page that may not run. Within a page the events are in
   order of start. If one kind has more than four events, the later ones are not
-  shown. A page with none of its kinds does not run.
+  shown. A page with none of its kinds is left out, so the panel shows the other
+  page and does not scroll.
 - A coach can pin an event to page one with an Always show rule that has Pin to
   page one on (docs/calendar-filters.md, "Pinning an event"). A pinned event is
   first on page one, with a small pin after its title. At most three events are
   pinned, and the other places on page one fill by date. This holds when Group
   events by kind is on too.
-- In the main panel rows of a Screen (in Screens) Upcoming events is still one
-  row. Its seconds are for both pages.
+- In the main panel rows of a Screen (in Screens) Upcoming events is one
+  row. Its seconds are for each page, the same for the first four and for the next
+  four.
 
 ### The old Events Calendar entries
 

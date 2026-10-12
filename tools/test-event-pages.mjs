@@ -1,9 +1,9 @@
 // Tests for the two pages of the Events panel (dashboard/core/event-pages.js, panels/events and the
-// step for each page in core/panel-order.js): four events a page, no second page for four or fewer,
-// the kind chip of each row, Group events by kind, and the pinned events of an Always show rule. The
-// plain functions are run for real. The panel is run against a fake page that records what it draws,
-// and core/schedule.js is run with stand-ins for the page. The stylesheet is checked by reading it,
-// because the sizes need a browser to be seen.
+// scroll from page one to page two in core/schedule.js): four events a page, no second page for four
+// or fewer, the kind chip of each row, Group events by kind, and the pinned events of an Always show
+// rule. The plain functions are run for real. The panel is run against a fake page that records what it
+// draws, and core/schedule.js is run with stand-ins for the page. The stylesheet is checked by reading
+// it, because the sizes need a browser to be seen. The scroll is tested in tools/test-events-scroll.mjs.
 //
 //   node tools/test-event-pages.mjs
 
@@ -126,12 +126,12 @@ function withFakePage(run) {
   }
 }
 
-// What the Events panel draws for a page. pageRows() judges by the clock, so the events here are
+// What the Events panel draws, both pages in one list. pageRows() judges by the clock, so the events here are
 // ahead of it, and the clock of the test is the same one.
-function drawn(content, page) {
+function drawn(content) {
   const host = { innerHTML: '' };
   return withFakePage(() => {
-    eventsPanel.mount(host, content, page);
+    eventsPanel.mount(host, content);
     return host.innerHTML;
   });
 }
@@ -166,22 +166,23 @@ test('events go by date whatever order the list is in, and two on the same day k
   assert.deepEqual(numbersOn(together, 1).sort(), [1, 2]);
 });
 
-test('with four events or fewer the second page does not run, with five it has one row, and with none there is no page', () => {
+test('with four events or fewer there is one page and no scroll, with five the second page has one row, and with none the panel has no content', () => {
   [0, 1, 3, 4].forEach(count => {
     const content = contentFor(inOrder(count));
     assert.equal(pageRows(content, 2, now).length, 0, count + ' events');
-    assert.equal(eventsPanel.hasContent(content, 2), false, count + ' events: page two has no content');
-    assert.equal(eventsPanel.hasContent(content, 1), count > 0, count + ' events: page one');
+    assert.equal(eventsPanel.scrollPages(content), 1, count + ' events: one page, so the list does not scroll');
+    assert.equal(eventsPanel.hasContent(content), count > 0, count + ' events: the panel has content');
   });
 
   const five = contentFor(inOrder(5));
   assert.deepEqual(numbersOn(five, 2), [5]);
-  assert.equal(eventsPanel.hasContent(five, 2), true);
+  assert.equal(eventsPanel.scrollPages(five), 2);
+  assert.equal(eventsPanel.hasContent(five), true);
 
   const none = contentFor([]);
   assert.deepEqual(eventPages(none, now), [[], []]);
-  assert.equal(eventsPanel.hasContent(none, 1), false);
-  assert.equal(eventsPanel.hasContent({}, 1), false, 'a screen with no events and no settings yet');
+  assert.equal(eventsPanel.hasContent(none), false);
+  assert.equal(eventsPanel.hasContent({}), false, 'a screen with no events and no settings yet');
 });
 
 test('an event that has finished is on no page, and one that is happening now stays', () => {
@@ -201,23 +202,23 @@ test('an all-day event lasts to the end of its day, and an event with no usable 
   assert.deepEqual(numbersOn(content, 1), [1, 2]);
 });
 
-test('the panel draws the page it is given, four rows to a page, with the same header on both and a bar under every row but the last', () => {
+test('the panel draws both pages in one list, four rows to a page, with one header and a bar under every row but the last of a page', () => {
   const content = contentFor(inOrder(10));
-  const first = drawn(content, 1);
-  const second = drawn(content, 2);
+  const html = drawn(content);
 
-  assert.deepEqual(titlesIn(first), ['Event 1', 'Event 2', 'Event 3', 'Event 4']);
-  assert.deepEqual(titlesIn(second), ['Event 5', 'Event 6', 'Event 7', 'Event 8']);
-  [first, second].forEach(html => {
-    assert.equal(countOf(html, 'class="row"'), 4);
-    assert.equal(countOf(html, 'class="row-bar"'), 3);
-    assert.ok(html.includes('<h2 class="title" data-slat="title">EVENTS</h2>'));
-    assert.equal(countOf(html, 'class="day-name"'), 4, 'the weekday and the date stay in their own column');
-    assert.equal(countOf(html, 'class="month-day"'), 4);
-  });
+  assert.deepEqual(titlesIn(html), ['Event 1', 'Event 2', 'Event 3', 'Event 4', 'Event 5', 'Event 6', 'Event 7', 'Event 8']);
+  assert.equal(countOf(html, 'class="row" data-slat="item"'), 8);
+  assert.equal(countOf(html, 'class="row-bar"'), 6, 'a bar under each row but the fourth and the eighth: the frame is there');
+  assert.equal(countOf(html, '<h2 class="title" data-slat="title">EVENTS</h2>'), 1);
+  assert.equal(countOf(html, 'class="day-name"'), 8, 'the weekday and the date stay in their own column');
+  assert.equal(countOf(html, 'class="month-day"'), 8);
+  assert.ok(html.includes('<div class="rows"><div data-scroll-list>'), 'the rows are the list that frame.js moves');
+  html.split('class="row" data-slat="item"').slice(1).forEach((row, index) => assert.equal(row.includes('class="row-bar"'), index !== 3 && index !== 7, 'row ' + (index + 1)));
 
-  assert.equal(drawn(content).includes('Event 1'), true, 'no page is page one');
-  assert.deepEqual(titlesIn(drawn(contentFor(inOrder(6)), 2)), ['Event 5', 'Event 6'], 'a short second page keeps its rows at the top');
+  const six = drawn(contentFor(inOrder(6)));
+  assert.deepEqual(titlesIn(six), ['Event 1', 'Event 2', 'Event 3', 'Event 4', 'Event 5', 'Event 6']);
+  assert.equal(countOf(six, 'row-blank'), 0, 'the last page is not filled up: nothing is drawn under it');
+  assert.equal(countOf(six, 'class="row-bar"'), 4, 'the fifth row has a bar and the sixth, the last, has none');
 });
 
 // The kind
@@ -246,29 +247,29 @@ test('each kind has a chip word and a name, and other and anything else has no c
 
 test('a row has a chip with the word of its calendar kind, before the title, and no chip when the calendar has no kind', () => {
   const events = ['meetings', 'competitions', 'outreach', 'deadlines', 'other', 'plain'].map((id, index) => band(index + 1, index + 1, id));
-  const html = drawn(contentFor(events), 1);
+  const html = drawn(contentFor(events.slice(0, 4)));
 
   assert.deepEqual(chipsIn(html), ['MEETING', 'COMP', 'OUTREACH', 'DEADLINE']);
   assert.equal(countOf(html, 'class="kind-chip"'), countOf(html, 'class="row"'), 'one chip in each row');
   assert.ok(html.indexOf('class="kind-chip"') < html.indexOf('class="event-name"'), 'the chip comes before the title');
   assert.equal(/<span class="kind-chip">[^<]*<\/span>\s*<span class="event-name">/.test(html), true);
 
-  // the calendar that says other, the one that is not in the list and the one with no kind: no chip, and no empty one
-  const second = drawn(contentFor(events), 2);
+  // the calendar that says other and the one with no kind: no chip, and no empty one
+  const second = drawn(contentFor(events.slice(4)));
   assert.deepEqual(titlesIn(second), ['Event 5', 'Event 6']);
   assert.equal(countOf(second, 'class="row"'), 2);
   assert.equal(countOf(second, 'kind-chip'), 0);
   assert.ok(/<div class="event-title">\s*<span class="event-name">Event 5<\/span>/.test(second), 'the title is the first thing on its line');
 
   // a calendar with a kind and one without, together on a page
-  const mixed = drawn(contentFor([band(1, 1, 'odd'), band(2, 2, 'meetings'), band(3, 3, 'plain'), band(4, 4, 'outreach')]), 1);
+  const mixed = drawn(contentFor([band(1, 1, 'odd'), band(2, 2, 'meetings'), band(3, 3, 'plain'), band(4, 4, 'outreach')]));
   assert.deepEqual(titlesIn(mixed), ['Event 1', 'Event 2', 'Event 3', 'Event 4']);
   assert.deepEqual(chipsIn(mixed), ['MEETING', 'OUTREACH']);
   assert.equal(countOf(mixed, 'class="row"'), 4);
 });
 
 test('what editors typed in the title is escaped, and the chip is plain words the editors cannot change', () => {
-  const html = drawn(contentFor([band(1, 1, 'meetings', { title: '<b>Pizza</b> & more' })]), 1);
+  const html = drawn(contentFor([band(1, 1, 'meetings', { title: '<b>Pizza</b> & more' })]));
 
   assert.ok(html.includes('&lt;b&gt;Pizza&lt;/b&gt; &amp; more') && !html.includes('<b>'));
   assert.deepEqual(chipsIn(html), ['MEETING']);
@@ -313,15 +314,20 @@ test('with the grouping on, a kind with more than four events leaves the later o
   assert.deepEqual(numbersOn(content, 2), [1, 2, 3, 4], 'the fifth and sixth competitions are not shown');
 });
 
-test('with the grouping on, a page with none of its kinds does not run, and the other page still does', () => {
+test('with the grouping on, a page with none of its kinds is left out, and the other page is the only page', () => {
   const onlyCompetitions = contentFor(inOrder(3, 'competitions'), { settings: { groupEventsByKind: true } });
-  assert.equal(eventsPanel.hasContent(onlyCompetitions, 1), false, 'no meetings, deadlines or other events: page one is skipped');
-  assert.equal(eventsPanel.hasContent(onlyCompetitions, 2), true);
+  assert.deepEqual(numbersOn(onlyCompetitions, 1), [], 'no meetings, deadlines or other events: page one has none');
   assert.deepEqual(numbersOn(onlyCompetitions, 2), [1, 2, 3]);
+  assert.equal(eventsPanel.hasContent(onlyCompetitions), true);
+  assert.equal(eventsPanel.scrollPages(onlyCompetitions), 1, 'one page, so the list does not scroll');
+  assert.deepEqual(titlesIn(drawn(onlyCompetitions)), ['Event 1', 'Event 2', 'Event 3'], 'and it is at the top, with no empty page above it');
+  assert.equal(countOf(drawn(onlyCompetitions), 'row-blank'), 0);
 
   const onlyMeetings = contentFor(inOrder(3, 'meetings'), { settings: { groupEventsByKind: true } });
-  assert.equal(eventsPanel.hasContent(onlyMeetings, 2), false);
-  assert.equal(eventsPanel.hasContent(onlyMeetings, 1), true);
+  assert.deepEqual(numbersOn(onlyMeetings, 2), []);
+  assert.equal(eventsPanel.hasContent(onlyMeetings), true);
+  assert.equal(eventsPanel.scrollPages(onlyMeetings), 1);
+  assert.deepEqual(pages.shownPages(onlyMeetings, now).map(rows => rows.length), [3]);
 });
 
 // Pinned events
@@ -414,14 +420,14 @@ test('an Always show rule with Pin to page one also keeps an event that a Hide r
 
 test('only a pinned row has the pin mark, and the mark is 44 square', () => {
   const content = contentFor(inOrder(10), { rules: [pin('Event 10')] });
-  const first = drawn(content, 1);
-  const second = drawn(content, 2);
+  const html = drawn(content);
 
-  assert.equal(countOf(first, 'class="pin-mark"'), 1);
-  assert.equal(countOf(second, 'class="pin-mark"'), 0);
-  assert.ok(first.includes('viewBox="0 0 44 44" width="44" height="44"'));
-  assert.ok(first.indexOf('class="event-name">Event 10') < first.indexOf('class="pin-mark"'), 'the mark comes after the title');
-  assert.equal(countOf(drawn(contentFor(inOrder(10)), 1), 'pin-mark'), 0, 'with no rule there is no mark');
+  assert.deepEqual(titlesIn(html), ['Event 10', 'Event 1', 'Event 2', 'Event 3', 'Event 4', 'Event 5', 'Event 6', 'Event 7'], 'the pinned event is the first row of page one');
+  assert.equal(countOf(html, 'class="pin-mark"'), 1);
+  assert.ok(html.indexOf('class="pin-mark"') < html.indexOf('class="event-name">Event 1<'), 'and it is in the first row');
+  assert.ok(html.includes('viewBox="0 0 44 44" width="44" height="44"'));
+  assert.ok(html.indexOf('class="event-name">Event 10') < html.indexOf('class="pin-mark"'), 'the mark comes after the title');
+  assert.equal(countOf(drawn(contentFor(inOrder(10))), 'pin-mark'), 0, 'with no rule there is no mark');
 });
 
 // What the reader and the settings give
@@ -473,40 +479,33 @@ test('the sample content has a kind on its calendar and enough events for both p
   assert.equal(first.concat(second).every(item => item.kind === row.kind), true);
 });
 
-// The step for each page in the rotation
+// The step in the rotation
 
-test('the registry gives the Events panel two pages and every other panel one', () => {
-  registry.panels.forEach(panel => {
-    if (panel.id === 'events') assert.equal(panel.pages, 2);
-    else assert.equal(panel.pages, undefined, panel.id);
-  });
+test('the registry gives no panel pages: the Events panel draws its two pages in one list and scrolls from the first to the second', () => {
+  registry.panels.forEach(panel => assert.equal(panel.pages, undefined, panel.id));
+  assert.equal(typeof eventsPanel.scrollPages, 'function', 'the panel says how many pages it holds for, and core/schedule.js reads it');
 });
 
-test('the Events row of the list is two steps one after the other, page 1 and page 2, each with the row\'s switch and seconds', () => {
+test('the Events row of the list is one step with the row\'s switch and seconds, and withPages leaves it as it is', () => {
   const list = [{ panel: 'tasks', show: true }, { panel: 'events', show: true, seconds: 15 }, { panel: 'photo', show: false }];
   const steps = withPages(list);
 
-  assert.deepEqual(steps, [
-    { panel: 'tasks', show: true },
-    { panel: 'events', show: true, seconds: 15, page: 1 },
-    { panel: 'events', show: true, seconds: 15, page: 2 },
-    { panel: 'photo', show: false },
-  ]);
+  assert.deepEqual(steps, list);
+  assert.equal('page' in steps[1], false, 'the step has no page: the panel draws both');
   assert.deepEqual(list[1], { panel: 'events', show: true, seconds: 15 }, 'the list that was given is not changed');
 
   const off = withPages([{ panel: 'events', show: false }]);
-  assert.deepEqual(off.map(step => step.show), [false, false], 'a row that is off switches both pages off');
+  assert.deepEqual(off.map(step => step.show), [false], 'a row that is off switches the panel off');
 });
 
-test('the steps are the same however many events there are, and the default order has the Events panel twice in a row', () => {
-  const steps = withPages(panelOrder.playlistOf(config.defaultSettings.rotation, 'grid1'));
+test('the default order has the Events panel once, and withPages leaves every row of the large and the small panels as it is', () => {
+  const large = panelOrder.playlistOf(config.defaultSettings.rotation, 'grid1');
+  const steps = withPages(large);
   const ids = steps.map(step => step.panel);
-  const at = ids.indexOf('events');
 
-  assert.deepEqual(ids.slice(at, at + 2), ['events', 'events']);
-  assert.deepEqual(steps.slice(at, at + 2).map(step => step.page), [1, 2]);
-  assert.equal(ids.filter(id => id === 'events').length, 2);
-  assert.equal(steps.filter(step => step.panel !== 'events').every(step => !('page' in step)), true);
+  assert.equal(ids.filter(id => id === 'events').length, 1);
+  assert.deepEqual(steps, large);
+  assert.equal(steps.every(step => !('page' in step)), true);
 
   assert.deepEqual(withPages([]), []);
   assert.deepEqual(withPages(panelOrder.playlistOf(config.defaultSettings.rotation, 'grid2')).map(step => step.panel), panelOrder.playlistOf(config.defaultSettings.rotation, 'grid2').map(step => step.panel), 'the small panels have one page each');
@@ -515,7 +514,7 @@ test('the steps are the same however many events there are, and the default orde
 test('shell.js gives the rotation of the large and the small panels through withPages', () => {
   const shell = read('shell.js');
   assert.ok(shell.includes("import { withPages, withStandIns } from './core/panel-order.js';"));
-  assert.ok(shell.includes("withPages(withCompetition(mainPlaylist(content, new Date()), content, new Date()))"), 'the competition cards are mixed in first and then every panel with two pages becomes two steps');
+  assert.ok(shell.includes("withPages(withCompetition(mainPlaylist(content, new Date()), content, new Date()))"), 'the competition cards are mixed in first and then every panel that says it has pages becomes a step for each');
   assert.ok(shell.includes("withPages(sidePlaylist(content, new Date()))"));
   assert.ok(read('core/schedule.js').includes('buildPage(step.panel, getContent(), step.page)'));
   assert.ok(read('core/schedule.js').includes('canShow(step.panel, content, step.page)'));
@@ -535,6 +534,7 @@ fs.writeFileSync(path.join(scheduleTree, 'dashboard/frame.js'), [
   'export const turnMs = () => 0;',
   'export const isPaused = () => false;',
   'export const wait = () => new Promise(resolve => globalThis.scheduleWorld.waits.push(resolve));',
+  "export const scrollCard = (card, index) => globalThis.scheduleWorld.log.push('scroll ' + index);",
 ].join('\n') + '\n');
 fs.writeFileSync(path.join(scheduleTree, 'dashboard/core/panels.js'), [
   'export function buildPage(id, content, page) {',
@@ -543,7 +543,7 @@ fs.writeFileSync(path.join(scheduleTree, 'dashboard/core/panels.js'), [
   '  return { id: name, element: {} };',
   '}',
   'export const canShow = (id, content, page) => globalThis.scheduleWorld.canShow(id, page);',
-  'export const moduleOf = () => null;',
+  'export const moduleOf = id => globalThis.scheduleWorld.modules[id] || null;',
   "export const regionOf = id => (id === 'forecast' ? 'grid2' : 'grid1');",
   'export const topicOf = () => null;',
 ].join('\n') + '\n');
@@ -565,7 +565,7 @@ fs.writeFileSync(path.join(scheduleTree, 'dashboard/core/areas.js'), [
 let scheduleRuns = 0;
 
 async function inRotation(run) {
-  const world = { log: [], waits: [], canShow: () => true };
+  const world = { log: [], waits: [], canShow: () => true, modules: {} };
   globalThis.scheduleWorld = world;
 
   try {
@@ -591,34 +591,38 @@ async function inRotation(run) {
 
 const rotationRows = [{ panel: 'tasks', show: true }, { panel: 'events', show: true }, { panel: 'photo', show: true }];
 
-test('the large panel shows the Events panel as page one and then page two, in the place of its one row', async () => {
+test('the large panel shows the Events panel once, in the place of its one row, and scrolls it to page two while it is on screen', async () => {
   await inRotation(async world => {
+    world.modules.events = { scrollPages: () => 2 };
     world.module.startRotation('grid1', () => withPages(rotationRows), () => world.content);
     await world.settle();
     for (let page = 0; page < 5; page++) await world.pass(20);
 
-    assert.deepEqual(world.pagesOf('grid1'), ['tasks', 'events 1', 'events 2', 'photo', 'tasks', 'events 1']);
-    assert.deepEqual(world.log.filter(line => line.startsWith('build events')), ['build events 1', 'build events 2', 'build events 1']);
+    assert.deepEqual(world.pagesOf('grid1'), ['tasks', 'events', 'photo', 'tasks', 'events'], 'one step for the panel');
+    assert.deepEqual(world.log.filter(line => line.startsWith('build events')), ['build events', 'build events']);
+    assert.deepEqual(world.log.filter(line => line.startsWith('scroll')), ['scroll 1'], 'one scroll to page two, 20 seconds after the panel came, and the second time it has come it has not scrolled yet');
+    assert.ok(world.log.indexOf('grid1 events') < world.log.indexOf('scroll 1') && world.log.indexOf('scroll 1') < world.log.indexOf('grid1 photo'), 'the scroll is between the panel arriving and the next panel');
   });
 });
 
-test('a page with nothing on it is skipped, so with four events or fewer the rotation goes from page one to the next panel', async () => {
+test('with four events or fewer the panel has one page, so the rotation goes from it to the next panel and nothing scrolls', async () => {
   await inRotation(async world => {
-    world.canShow = (id, page) => !(id === 'events' && page === 2);
+    world.modules.events = { scrollPages: () => 1 };
     world.module.startRotation('grid1', () => withPages(rotationRows), () => world.content);
     await world.settle();
     for (let page = 0; page < 4; page++) await world.pass(20);
 
-    assert.deepEqual(world.pagesOf('grid1'), ['tasks', 'events 1', 'photo', 'tasks', 'events 1']);
+    assert.deepEqual(world.pagesOf('grid1'), ['tasks', 'events', 'photo', 'tasks', 'events']);
+    assert.deepEqual(world.log.filter(line => line.startsWith('scroll')), []);
   });
 });
 
-test('page two is asked about with its own page number, and a panel with one page is asked with none', async () => {
+test('no step is asked about with a page number, the Events panel included, and a panel with no events is skipped', async () => {
   await inRotation(async world => {
     const asked = [];
     world.canShow = (id, page) => {
       asked.push(id + ' ' + page);
-      return true;
+      return id !== 'events';
     };
     world.module.startRotation('grid1', () => withPages(rotationRows), () => world.content);
     await world.settle();
@@ -626,20 +630,25 @@ test('page two is asked about with its own page number, and a panel with one pag
     await world.pass(20);
 
     assert.ok(asked.includes('tasks undefined'));
-    assert.ok(asked.includes('events 1'));
-    assert.ok(asked.includes('events 2'));
+    assert.ok(asked.includes('events undefined'));
+    assert.equal(asked.some(line => /events \d/.test(line)), false);
+    assert.deepEqual(world.pagesOf('grid1').slice(0, 2), ['tasks', 'photo'], 'the panel is skipped when it has no events');
   });
 });
 
-test('both pages of the Events panel stay on screen as long as the row says', async () => {
+test('the Events panel stays on screen as long as the row says for each page', async () => {
   await inRotation(async world => {
+    world.modules.events = { scrollPages: () => 2 };
     const rows = [{ panel: 'events', show: true, seconds: 8 }, { panel: 'photo', show: true }];
     world.module.startRotation('grid1', () => withPages(rows), () => world.content);
     await world.settle();
+    await world.pass(7);
+    assert.deepEqual(world.log.filter(line => line.startsWith('scroll')), [], 'the first page is held 8 seconds');
+    await world.pass(1);
+    assert.deepEqual(world.log.filter(line => line.startsWith('scroll')), ['scroll 1']);
+    assert.deepEqual(world.pagesOf('grid1'), ['events']);
     await world.pass(8);
-    assert.deepEqual(world.pagesOf('grid1'), ['events 1', 'events 2']);
-    await world.pass(8);
-    assert.deepEqual(world.pagesOf('grid1'), ['events 1', 'events 2', 'photo']);
+    assert.deepEqual(world.pagesOf('grid1'), ['events', 'photo'], 'and the second page 8 more');
   });
 });
 

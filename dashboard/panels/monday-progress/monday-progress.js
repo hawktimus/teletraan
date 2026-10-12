@@ -113,7 +113,7 @@ function stackMarkup(row, widest) {
     if (end > left) parts.push(`<rect class="seg seg-${stack.id}" x="${left}" y="0" width="${end - left}" height="${BAR.height}"/>`);
     left = end;
   });
-  return `<svg class="stack" width="${BAR.width}" height="${BAR.height}" viewBox="0 0 ${BAR.width} ${BAR.height}" aria-hidden="true">${parts.join('')}</svg>`;
+  return `<svg class="stack" width="${BAR.width}" height="${BAR.height}" viewBox="0 0 ${BAR.width} ${BAR.height}" preserveAspectRatio="none" aria-hidden="true">${parts.join('')}</svg>`;
 }
 
 function rowMarkup(row, widest) {

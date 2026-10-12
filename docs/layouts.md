@@ -672,10 +672,11 @@ their own and would drop a scale set on it.
 
 The panels keep their rows, their line limits and their rules, and show no more
 content than they did: only the text is bigger, by 3.95 percent. **No panel stretches
-to the extra width.** The page keeps the width it was written for, 1152, which is 1197
-on the screen, at the left of the panel, and the 286 px at the right of it are not
-used by any panel. This is the least invasive way, because no panel has to change, and
-it is the only one that never shows a panel in two widths. A width variable could
+to the extra width, except the Monday cards.** The page keeps the width it was written for, 1152, which is 1197
+on the screen, at the left of the panel, and the 286 px at the right of it are used by nothing but the header of every panel
+and the Monday cards. This is the least invasive way, because no panel has to change, and
+it is the only one that never shows a panel in two widths. The Monday cards are the one
+exception, because the owner asked for them to fill the panel: see "The width of the Monday cards" below. A width variable could
 stretch a panel's boxes, but every panel has a part that is drawn by the code at a
 fixed length, and a variable cannot reach that:
 
@@ -691,7 +692,7 @@ fixed length, and a variable cannot reach that:
 | Roster | header 1152, the body in a box 1096 wide, in the middle of it | portrait card 292 square |
 | Custom | header 1152, page 1096, blocks 1056 and 1034 | block cards and bars 1056 (`custom.js`) |
 
-The one box that does use the width is the header. In the bar layout it is as wide as the area, 1427 before the
+The one box of every panel that does use the width is the header. In the bar layout it is as wide as the area, 1427 before the
 scale (`layouts/bar.css`), and not 1152 like the page it sits on, so what is at the right end of a header, the chip of a team,
 the date, the tier and the words about the board, is at the right end of the panel. The title and the line that ends the tab
 stay where they are. A Monday card has the room there for the words about the board beside the chip (see "What is on every card").
@@ -951,7 +952,7 @@ of a panel's header is off, as the pictures of Minimal have none and the ticks s
 | Hex bolt | the same bolt as Cybertron's | the four joints: both ends of the top left and of the bottom right cut corner |
 | Rivets | dots of 5 px radius with a dark rim, one every 90 px, as Original's | every straight edge of 180 px or more |
 | Rust | rust at the two bottom corners of every frame: an arc of 4 px, `--style-rust`, with a soft patch under it that is a radial gradient (`wear-rust` in `index.html`) | one arc on the left edge just above the step, bulging into the frame, and one on the bottom edge just before the cut corner |
-| Weld seam | a dark 3 px line with a faint light 3 px line 4 px beside it | the main panel only, at x = 1188, from under the header to just above the bottom. It is 36 px past the 1152 the pages are written for, so it crosses no text |
+| Weld seam | a dark 3 px line with a faint light 3 px line 4 px beside it | the main panel only, at x = 1188, from under the header to just above the bottom. It is 36 px past the 1152 the pages are written for, so it crosses no text. It is not drawn while a Monday card is on screen (`data-page` on the area, `styles/minimal.css`) |
 | Header line | a 3 px neon line, 5 px for a team with Glow, which also has the two wide lines behind it | along the foot of the header, with 33 ticks standing on it: every 18, 4 wide and 10 high, from 60 past the slanted end of the tab to the right edge |
 
 The armor tab is the same as Cybertron's, with the team's plate color inset and two colors of
@@ -1234,7 +1235,7 @@ Screen, so no style is stored. A Screen holds, with the starting values in `conf
 - `mainRows`: the rows of the main panel (area B). A row is a panel from `registry.js`, a team and, if wanted, seconds from 6 to
   120. The team is a team code (`prime`, `nova`), `both` or nothing. The three Monday cards are the panels `monday-tasks`,
   `monday-milestones` and `monday-progress`. A Monday row has a team, and `both` on the milestones or progress row means the
-  card of both teams (`monday-milestones-both`, `monday-progress-both`). The Events panel is one row that plays its two pages.
+  card of both teams (`monday-milestones-both`, `monday-progress-both`). The Events panel is one row that scrolls from its first four events to the next four.
 - `sideRows`: the rows of the side panel (area D), a panel and, if wanted, seconds. A row has no team. Minimal has no side panel.
 - `nameEffectEveryMinutes` (10), `hawkEveryMinutes` (5) and `swapSeconds` (1.25): how often the name effect and the flying hawk
   play, and how long the swap takes. Every timing of the swap scales with `swapSeconds` over 1.25, the length it had before.
@@ -1456,7 +1457,7 @@ lists of `config.js`: they are the Monday rows of a Screen, and a saved Panel or
 (`core/panel-order.js`). `withCompetition` in `core/competition.js` never held them, and a Monday row has no competition cards in it. They have the topic
 monday, as the competition cards have the topic competition, so a Monday row never waits for the small frame to leave the topic tasks, which it
 would if all the cards had to avoid the task counts. Every card is drawn for a frame of 1152 by 708, as every panel is, and the bar
-layout scales the frame.
+layout scales the frame and gives the cards the whole width of it ("The width of the Monday cards").
 
 **The team.** The cards take their tasks the way every panel does, through `visibleItems`, so they are the tasks of the
 team on the screen and of both teams. A Monday row can ask about the team of the next row before it is on the screen, so
@@ -1469,6 +1470,33 @@ name of the team is a chip of 44 px in the accent of the team at the right end o
 Leadership and Team leads headers have the same chip, with BUILD TEAM, LEADERSHIP and TEAM LEADS as their titles, which are at the size of a heading
 (96 px) when they fit before the line that ends the tab and at 60 px when they do not (`titleClass` in `core/team-title.js`, and "The header of a
 large panel" above). Leadership and Team leads have no chip only when everyone on their list is for both teams, and Roster asks about the subteam of its page.
+
+### The width of the Monday cards
+
+In the standard layout a card is 1152 wide, with a header of 1152 and a body of 1104, 24 px in from each edge. In the bar layout
+(Minimal) the area is 1427 wide before the scale (`--bar-area-width`, "The width of the main panel"), and the card uses all of it:
+`monday.css` makes the header as wide as the area, as `layouts/bar.css` does for the header of every panel ("The header of a large panel"), and the body 48 px less, which is 1379, with the same 24 px at each side. There is
+no second copy of a card and no markup that depends on the layout: the rules are `html[data-layout="bar"]` and nothing else changes in
+the standard layout or the sidebar layout, where a card is drawn exactly as it was.
+
+The weld seam, the vertical line that Minimal draws on the main panel at x = 1188, stands where a 1152 page ends. A card is wider than
+that, so the seam is not drawn while one is on screen. `core/areas.js` writes the id of the page in the area as `data-page` each time a
+page goes in (`markPage`), and `styles/minimal.css` hides the two seam paths under a `data-page` that starts with `monday-`. The seam is
+in the frame and not in the card, so it comes back with the next panel that is not a Monday card, and the swap and the page change have
+nothing to do. The other panels keep the width they were written for and keep the seam.
+
+What the wider body does to each card:
+
+| Card | Standard layout | Bar layout |
+|------|-----------------|------------|
+| Tasks | the title takes what the status, the owner and the priority leave | the same rule, so the title has 275 px more |
+| Milestones | 330 for the department, two cells of 254, 230 for the chip | the two cells are 391 each |
+| Progress | bars in 700 px, the bar 206 long, the line in the 1096 at the left of its 1104 | the line moves 251 px to the right (it ends 56 px short of the frame, clear of its rust), the bars have 951 px and the bar is 457 long |
+| Milestones and Progress of both teams | the rows fill the body, the bar is 400 long | the rows fill the body, the bar is 689 long |
+
+The bar is stretched along its length only: the svg of a bar has `preserveAspectRatio="none"`, so its stacks keep their proportions, and
+`vector-effect: non-scaling-stroke` keeps the dark edge between two stacks at 3 px. The size of the bar in the standard layout is the size
+it was, so the pictures of Original and Cybertron are the same to the pixel. `node tools/test-monday-fill.mjs` checks the numbers.
 
 ### The tasks card
 
@@ -1493,6 +1521,11 @@ in `frame.js` between them. The move is transform only, 600 ms with the easing o
 place at once. The frame does not move. A page marker at the bottom right shows a filled square for the page in view and an
 outline for the other, and its place in words, such as 1 OF 2 · 10 TASKS. A card of five rows or fewer has no marker and does not scroll. Ten rows
 at the most make two pages, which is all the marker has room for.
+
+The Events panel scrolls with the same machinery, four rows at a time and with no marker (`panels/events`, and "The two pages of the
+Events panel" in docs/editing-content.md). Its window is four rows, `--scroll-step` is the height of the window, and Cybertron has rows of
+132 where Original and Minimal have 144, so its step is 528 and the others are 576 (`styles/cybertron.css`). A step that is not the height of
+the window shows the second page cut off at the top.
 
 ### The milestones card
 
@@ -2025,7 +2058,7 @@ and in the mirror:
 4. There is rust at the bottom left and the bottom right of each frame, and it holds still.
    The Flat look takes it away.
 5. There is no stamped id and no serial text anywhere, in any style. The weld seam stands to the right of the
-   pages, and it crosses no text on any large panel. The ticks stand on the
+   pages, and it crosses no text on any large panel. A Monday card is as wide as the panel and has no seam. The ticks stand on the
    neon line at the foot of the header and do not touch the title.
 6. With the screen open, change Style in Dashboard Settings between Cybertron and Minimal. The
    screen does not reload: the next page change of the large frame is a swap, and the pieces re-form in the

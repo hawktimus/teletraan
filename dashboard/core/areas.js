@@ -14,7 +14,7 @@
 // data-frame is the kind of frame that was drawn (frameKind in plate.js). The style and the
 // team's trim decide it, so when a style with other frames goes on while the screen runs, or a
 // team with other corners or another tab, redrawFrames() puts the new frame round each area and
-// leaves its page where it is.
+// leaves its page where it is. data-page is the id of the panel in the page-host (markPage below).
 //
 // changePage() is the one call that moves a region from the page it shows to
 // the next. The scheduler decides which page and when; frame.js does the
@@ -71,6 +71,12 @@ function makeArea(region) {
   document.getElementById('region-' + region).appendChild(element);
   areaOf[region] = element;
   return element;
+}
+
+// The panel on screen is written on its area as data-page, so that a stylesheet can tell which panel the frame is round
+// (Minimal leaves out the weld seam under a Monday card, styles/minimal.css)
+function markPage(area, page) {
+  area.dataset.page = page.id || '';
 }
 
 // Draws the frame of every area on the screen again, for the frames the page has now
@@ -217,6 +223,7 @@ function swapUnseen(region, next) {
   }
   const made = area || makeArea(region);
   made.dataset.state = 'shown'; // a new area would start its first assembly, and nobody is there to see it
+  markPage(made, next);
   const host = made.querySelector('.page-host');
   host.innerHTML = '';
   host.appendChild(next.element);
@@ -303,6 +310,7 @@ export async function changePage(region, next) {
   const arrivalStart = performance.now();
   const first = !areaOf[region];
   const host = (areaOf[region] || makeArea(region)).querySelector('.page-host');
+  markPage(areaOf[region], next);
   host.innerHTML = ''; // the old page, with its elements and listeners, is gone for good
   host.appendChild(next.element);
   await frame.arrive(areaOf[region], first);

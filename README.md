@@ -75,7 +75,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - Countdown timer to FRC Kickoff (January 9, 2027), then to Rollout
 - Team tasks, which the Mini makes from the team's Monday boards, each with an optional point of contact, a priority and a due date. A Show on TV switch keeps a task off the screen, and a task typed by hand is never shown
 - The Daily Agenda panel, headed AGENDA: the schedule for today's meeting, with the talks booked for today
-- Upcoming events and the next event, from the team's BAND calendars, with Calendar filters that hide or keep events, such as a meeting that repeats every week. The Events panel has two pages of four, each event has a chip for the kind of its calendar, and a coach can pin an event to page one
+- Upcoming events and the next event, from the team's BAND calendars, with Calendar filters that hide or keep events, such as a meeting that repeats every week. The Events panel has two pages of four that it scrolls between, each event has a chip for the kind of its calendar, and a coach can pin an event to page one
 - Sponsors, with sponsor logos and thank-yous
 - Photos, uploaded in Sanity and shown at random or newest first
 - Subteam spotlight, leadership, and team leads

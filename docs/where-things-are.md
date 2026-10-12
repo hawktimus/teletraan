@@ -151,7 +151,7 @@ editors can sign in from anywhere.
                               look.js turns the Polish setting (polished, flat or plain) into the page
                               switches the stylesheets read (data-finish, data-glint and data-look),
                               events.js filters and sorts the BAND events, and writes the dates of an event,
-                              event-pages.js splits those events into the two pages of the Events panel,
+                              event-pages.js splits those events into the two pages of the Events panel (which scrolls from one to the next),
                               with the kind of each and the pinned ones first (docs/calendar-filters.md),
                               connection.js decides why Sanity could not be read and writes the
                               connection status text at the bottom right, device.js reads the Mini's
@@ -363,6 +363,9 @@ editors can sign in from anywhere.
       test-event-pages.mjs    checks for the two pages of the Events panel (core/event-pages.js): four events
                               to a page, no second page for four or fewer, the kind chips, Group events by
                               kind, the pinned events, and the step for each page in the rotation
+      test-events-scroll.mjs  checks the scroll of the Events panel: both pages in one list, eight events two pages, five a page
+                              of four and a page of one, the step of the list in Original, Minimal and Cybertron, the holds
+                              (core/schedule.js with stand-ins) and calm and none (frame.js)
       test-status-write.mjs   checks for deploy/scripts/status-write.sh, with a fake curl, that the services and
                               kiosk.sh run it, and that the dashboard never reads the status document
       test-calendar-status.mjs  checks for what the Mini writes for the Calendars page: the sync file of
@@ -401,6 +404,9 @@ editors can sign in from anywhere.
       test-monday-rows.mjs    checks for the rows of the tasks card and the cards of both teams: the mix of ten rows, the page marker
                               and the scroll (frame.js and core/schedule.js with stand-ins), the two cards of both teams, the
                               words beside the chip in a header, the names of a team (core/team-title.js)
+      test-monday-fill.mjs    checks that the Monday cards fill the main panel of the bar layout (monday.css and the
+                              progress cards), that the standard layout is as it was, and that no weld seam or other
+                              vertical line is drawn under a card (core/areas.js, styles/minimal.css)
       test-blank-team.mjs     checks for a blank team: an item with no team shows for either team, a header has no team chip
                               for things that are for both teams, the cards of both teams read MILESTONES or PROGRESS alone,
                               a row from a board with no team has no label, and no panel has a Prime or Nova flavor
@@ -1030,6 +1036,7 @@ exceptions are `test-slides-script.mjs`, `test-frc-script.mjs` and `test-monday-
     node tools/test-install-calendars.mjs
     node tools/test-calendars-script.mjs
     node tools/test-event-pages.mjs
+    node tools/test-events-scroll.mjs
     node tools/test-status-write.mjs
     node tools/test-frc-script.mjs
     node tools/test-monday-script.mjs
@@ -1038,6 +1045,7 @@ exceptions are `test-slides-script.mjs`, `test-frc-script.mjs` and `test-monday-
     node tools/test-blank-team.mjs
     node tools/test-competition.mjs
     node tools/test-monday-cards.mjs
+    node tools/test-monday-fill.mjs
     node tools/test-cybertron.mjs
     node tools/test-minimal.mjs
     node tools/test-team-trim.mjs

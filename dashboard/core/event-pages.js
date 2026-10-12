@@ -1,13 +1,13 @@
 // The pages of the Events panel: which events are on page one, which are on page two, and the kind
-// each one is. The panel shows four events on a page and comes round twice in a row in the rotation,
-// page one and then page two (registry.js, withPages in core/panel-order.js). The plain functions
-// only, so tools/test-event-pages.mjs can run them.
+// each one is. The panel shows four events at a time. It draws both pages in one list, holds page one,
+// scrolls up by four rows to page two and holds that (scrollPages in panels/events/events.js, and
+// scrollCard in frame.js). The plain functions only, so tools/test-event-pages.mjs can run them.
 //
 // With Group events by kind off the pages go by date. Page one is the pinned events first, then the
 // next ones until it has four, and page two is the four after those. With it on, page one is the next
 // Meetings, Deadlines and events with no kind, and page two the next Competitions and Outreach events,
 // four on each. An event with no kind goes with page one so that an event from a calendar nobody gave a
-// kind to is never left to page two, which does not run when it is empty.
+// kind to is never left to page two, which is not shown when it is empty.
 //
 // A pinned event is one that an Always show rule with Pin to page one switched on matches (core/events.js,
 // forcingRule). It comes first on page one, the earliest first, whatever its kind. At most three events are
@@ -80,7 +80,7 @@ function byStart(first, second) {
 
 // Both pages, as a list of two lists of rows. A row is { event, kind, forced }. The events are
 // content.events, which core/events.js has filtered and sorted. One that has finished is not shown,
-// so an event that is happening now stays. A page with no rows does not run.
+// so an event that is happening now stays. A page with no rows is not shown (shownPages).
 export function eventPages(content, now = new Date()) {
   const settings = content.settings || {};
   const zone = (content.theme || {}).timeZone;
@@ -109,4 +109,11 @@ export function eventPages(content, now = new Date()) {
 // The rows of one page, counting from 1. A page that does not exist has none.
 export function pageRows(content, page, now = new Date()) {
   return eventPages(content, now)[page - 1] || [];
+}
+
+// The pages that have rows, in order. A page with none is left out: with four events or fewer there is one page and
+// the panel does not scroll, and with Group events by kind on and no Competitions or Outreach event the first page is
+// the only one. When the first page has none, the second is the only page.
+export function shownPages(content, now = new Date()) {
+  return eventPages(content, now).filter(rows => rows.length > 0);
 }

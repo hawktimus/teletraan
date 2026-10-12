@@ -351,8 +351,8 @@ test('the steps of the large panel are the rows in order, with the team, the sec
     { panel: 'photo', show: true, team: '', seconds: 8, row: 3 },
   ]);
   const pages = withPages(steps);
-  assert.deepEqual(pages.map(step => step.panel + (step.page || '')), ['tasks', 'events1', 'events2', 'tonight', 'photo'], 'Events is one row and two pages');
-  assert.deepEqual(pages.filter(step => step.panel === 'events').map(step => step.row), [1, 1], 'both pages are the one row');
+  assert.deepEqual(pages.map(step => step.panel + (step.page || '')), ['tasks', 'events', 'tonight', 'photo'], 'Events is one row and one step: it scrolls from its first page to its second');
+  assert.deepEqual(pages.filter(step => step.panel === 'events').map(step => step.row), [1], 'the step is the one row');
 });
 
 test('the Screen on the screen is the one of the style that is held, and the one of the day before anything is held', () => {
