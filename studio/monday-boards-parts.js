@@ -113,7 +113,7 @@ export function rowsOf(status, entries, now) {
 // The words after the name of a row: how many items, when it was last read, and whether it is chosen
 export function chosenText(row) {
   if (!row.chosen) return 'Not chosen';
-  return row.team ? 'Chosen for ' + row.team : 'Chosen, with no team';
+  return row.team ? 'Chosen for ' + row.team : 'Chosen for both teams';
 }
 
 // When the Mini last read Monday at all, in words, or nothing when the document has no time

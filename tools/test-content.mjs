@@ -4184,7 +4184,7 @@ test('the Subteam roster panel draws the subteam and TEAM as the heading, the na
 
   assert.ok(live.rosterPanel.hasContent(content));
   assert.ok(html.includes('data-slat="title">[BUILD] TEAM</h2>'));
-  assert.ok(html.includes('<span class="team-chip">BOTH TEAMS</span>'), 'a subteam that is for both teams says so');
+  assert.ok(!html.includes('team-chip'), 'a subteam that is for both teams has no chip');
   assert.ok(html.includes('<div class="slot-name">[Lead A]</div>'));
   assert.ok(html.includes('<div class="slot-role">TEAM LEAD</div>'));
   assert.equal(countOf(html, 'class="column"'), 2);

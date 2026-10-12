@@ -21,7 +21,7 @@ export function mount(host, content) {
   const turn = nextTurn(content.subteams);
   const page = turn.page || { subteam: '', lead: '', members: [], pageNumber: 1, pageCount: 1 };
 
-  // the header names the department and the team: BUILD TEAM and PRIME, or BOTH TEAMS when the subteam is for both
+  // the header names the department and the team: BUILD TEAM and PRIME, and has no chip when the subteam is for both teams
   const owner = visibleItems(content.subteams).filter(item => String(item.name || '').trim() === page.subteam);
   const chip = pageTeamName(owner.slice(0, 1), teamNameOf(wantedTeam()));
   const title = departmentTitle(page.subteam);

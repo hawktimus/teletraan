@@ -383,10 +383,11 @@ counts of at least two days, which the Mini adds once a day. With fewer it says 
 
 ### Cards of both teams
 
-Once in each cycle, after the last team, the milestones card and the progress card show both teams together, with BOTH TEAMS in the chip. Each
+Once in each cycle, after the last team, the milestones card and the progress card show both teams together, with no chip in the header. Each
 row starts with PRIME in gold or NOVA in silver, then the department, and the rows of a department follow each other, Prime and then Nova. The progress
 row has one bar of done, in progress and backlog, and done out of all. The milestones row has the next task with a due date and its date. Up to ten rows
-show, five at a time, and the list moves up by five rows after the card has been held.
+show, five at a time, and the list moves up by five rows after the card has been held. A department whose tasks all come from boards with no
+team is one row with no label.
 
 ### Hiding a task, and empty cards
 
@@ -672,7 +673,7 @@ columns on the right. The subteam's name is the title of the page.
   members and no lead shows the names alone. A subteam with neither is left
   out, and so is one that is hidden or has passed its "Hide after" date.
 - The heading is the name of the subteam in capital letters and TEAM, such as BUILD TEAM. The name of the team is in a chip at
-  the right end of the header: PRIME or NOVA, or BOTH TEAMS when the subteam is for both teams. A long name is drawn at 60 px
+  the right end of the header: PRIME or NOVA, and no chip when the subteam is for both teams. A long name is drawn at 60 px
   when it does not fit beside the chip. The Leadership and Team Leads headers have the chip too.
 
 To put the panel on the screen, open Dashboard Settings, then the Screen tab,

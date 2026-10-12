@@ -21,7 +21,7 @@ export function mount(host, content) {
   const page = nextPage(leaders(content.people), rowLayout(scale).rows);
   const rows = page.items.map(personRow);
 
-  // the header names the team: the team on the screen, or both teams when everyone on the list is for both
+  // the header names the team on the screen, and has no chip when everyone on the list is for both teams
   const chip = pageTeamName(leaders(content.people), teamNameOf(wantedTeam()));
 
   host.innerHTML = `

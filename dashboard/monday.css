@@ -137,3 +137,5 @@
 }
 .monday .team-tag-prime { background: var(--prime-tag); }
 .monday .team-tag-nova { background: var(--nova-tag); }
+/* The room of a label for a row with no team, when other rows of the card have one */
+.monday .team-tag-blank { background: none; }

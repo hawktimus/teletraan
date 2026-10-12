@@ -419,13 +419,14 @@ test('the rows of both teams are one for each department and each team that has 
   const content = contentWith();
   const rows = monday.bothRows(content, teamsOf(content), monday12);
 
-  assert.deepEqual(rows.map(row => row.team.code + ' ' + row.lead), [
+  assert.deepEqual(rows.map(row => (row.team ? row.team.code : 'none') + ' ' + row.lead), [
     'prime [Subteam A]', 'nova [Subteam A]', 'prime [Subteam B]', 'nova [Subteam B]', 'prime [Subteam C]', 'nova [Subteam C]',
-    'prime [Subteam D]', 'nova [Subteam D]', 'prime [Subteam E]', 'nova [Subteam E]', 'prime [Subteam F]', 'nova [Subteam F]',
+    'prime [Subteam D]', 'nova [Subteam D]', 'prime [Subteam E]', 'nova [Subteam E]', 'none [Subteam F]',
   ]);
   assert.equal(rows[0].tasks.length, 6, 'the five tasks of Prime for Subteam A and the one for both teams');
   assert.equal(rows[1].tasks.length, 3, 'the two tasks of Nova for Subteam A and the same one for both teams');
-  assert.ok(rows.every(row => row.tasks.every(task => task.team === row.team.code || task.team === undefined)), 'a row has the tasks of its own team and those for both');
+  assert.ok(rows.slice(0, 10).every(row => row.tasks.every(task => task.team === row.team.code || task.team === undefined)), 'a row has the tasks of its own team and those for both');
+  assert.equal(rows[10].tasks.length, 1, 'Subteam F has one task, for both teams, from a board with no team: it is one row, and the row has no team');
 
   const swapped = monday.bothRows(content, teamsOf(content).reverse(), monday12);
   assert.deepEqual(swapped.slice(0, 4).map(row => row.team.code), ['nova', 'prime', 'nova', 'prime'], 'the teams are in the order given');
@@ -455,7 +456,7 @@ test('the progress card of both teams has a row for each department and team: th
   const html = panels['progress-both'].markupFor(contentWith(), monday12);
   const found = panels['progress-both'].progressFor(contentWith(), monday12);
 
-  assert.equal(found.total, 12, 'six departments for each of the two teams');
+  assert.equal(found.total, 11, 'five departments for each of the two teams, and Subteam F once, with no team');
   assert.equal(found.rows.length, 10, 'and the card keeps ten');
   assert.deepEqual(found.rows[0], { team: found.rows[0].team, lead: '[Subteam A]', backlog: 2, progress: 3, done: 1, total: 6 });
   assert.deepEqual(textOf(html, 'team-tag'), ['PRIME', 'NOVA', 'PRIME', 'NOVA', 'PRIME', 'NOVA', 'PRIME', 'NOVA', 'PRIME', 'NOVA'], 'the teams alternate while both have a department');
@@ -469,7 +470,7 @@ test('the progress card of both teams has a row for each department and team: th
   assert.deepEqual(first, [['done', 0, 67], ['progress', 67, 200], ['backlog', 267, 133]]);
   assert.deepEqual(['DONE', 'IN PROGRESS', 'BACKLOG'].map(label => html.includes('</span>' + label + '</span>')), [true, true, true], 'the legend names them in the same order');
   assert.equal(titleOf(html), 'PROGRESS');
-  assert.equal(/<span class="team-chip">([^<]*)<\/span>/.exec(html)[1], 'BOTH TEAMS');
+  assert.equal(html.includes('team-chip'), false, 'the header has no chip: it reads PROGRESS alone');
   assert.ok(html.includes('1 OF 2 · 10 ROWS'));
 });
 
@@ -485,7 +486,7 @@ test('the milestones card of both teams has a row for each department and team w
   assert.deepEqual(textOf(html, 'date'), ['OCT 8', 'OCT 15', 'OCT 16', 'OCT 20', 'OCT 13', 'NOV 2']);
   assert.ok(html.includes('<span class="date late">OCT 8</span>'), 'a date that is past is marked late');
   assert.ok(html.includes('1 OF 2 · 6 MILESTONES'));
-  assert.equal(/<span class="team-chip">([^<]*)<\/span>/.exec(html)[1], 'BOTH TEAMS');
+  assert.equal(html.includes('team-chip'), false, 'the header has no chip: it reads MILESTONES alone');
   assert.equal(titleOf(html), 'MILESTONES');
 
   const none = panels['milestones-both'].markupFor(contentOf([board({ title: 'a' }), board({ title: 'b', team: 'nova' })]), monday12);
@@ -640,14 +641,14 @@ test('a title that fits beside the chip has the words BOARD and how long ago, th
   // whatever is chosen fits, and nothing is left out that would have fitted
   const titles = ['A', 'IT TEAM', 'BUILD TEAM', 'DESIGN TEAM', 'BUSINESS TEAM', 'ELECTRICAL TEAM', 'PROGRAMMING TEAM', 'MECHANICAL TEAM', 'PROGRESS', 'MILESTONES', 'TASKS'];
   const words = ['NOW', '4 MIN AGO', '59 MIN AGO', '47 HR AGO', '12 DAYS AGO', 'SAMPLE'];
-  titles.forEach(title => ['PRIME', 'NOVA', 'BOTH TEAMS'].forEach(chip => words.forEach(text => {
+  titles.forEach(title => ['PRIME', 'NOVA'].forEach(chip => words.forEach(text => {
     const chosen = draw.wordsBesideChip(title, chip, text);
     if (chosen !== '') assert.ok(longest(title, chip, chosen) <= room, title + ' ' + chip + ' ' + chosen + ' fits');
     if (chosen === '') assert.ok(longest(title, chip, text) > room, title + ' ' + chip + ' ' + text + ' would not have fit');
     if (chosen !== 'BOARD · ' + text && chosen !== '') assert.ok(longest(title, chip, 'BOARD · ' + text) > room, title + ' ' + chip + ': BOARD would not have fit');
   })));
-  // with no words, the title and the chip fit in the styles that hide the slashes (Cybertron and Minimal), even PROGRAMMING TEAM beside BOTH TEAMS
-  assert.ok(titles.every(title => textWidthModule.textWidth(title, 700, 60) + 24 + textWidthModule.textWidth('BOTH TEAMS', 700, 44) + 28 <= room), 'the title and the longest chip fit with no words at all');
+  // with no words, the title and the chip fit in the styles that hide the slashes (Cybertron and Minimal), even PROGRAMMING TEAM beside PRIME
+  assert.ok(titles.every(title => textWidthModule.textWidth(title, 700, 60) + 24 + textWidthModule.textWidth('PRIME', 700, 44) + 28 <= room), 'the title and the longest chip fit with no words at all');
 });
 
 test('the header has the title, the words, the chip and the slashes in that order, and a long title is cut off with an ellipsis rather than pushed over the chip', () => {
@@ -666,12 +667,12 @@ test('the header has the title, the words, the chip and the slashes in that orde
 
 // Team names
 
-test('a team is named by its short name, a department by itself and TEAM, and a page of shared items says BOTH TEAMS', () => {
+test('a team is named by its short name, a department by itself and TEAM, and a page of shared items names no team', () => {
   assert.equal(teamTitle.teamNameOf({ shortName: 'prime', name: 'Hawktimus Prime', code: 'prime' }), 'PRIME');
   assert.equal(teamTitle.teamNameOf({ name: 'Hawktimus Nova', code: 'nova' }), 'HAWKTIMUS NOVA');
   assert.equal(teamTitle.teamNameOf({ code: 'nova' }), 'NOVA');
   assert.equal(teamTitle.teamNameOf(null), '');
-  assert.equal(teamTitle.bothTeamsName, 'BOTH TEAMS');
+  assert.equal(teamTitle.bothTeamsName, undefined, 'there is no name for both teams');
 
   assert.equal(teamTitle.departmentTitle('Build'), 'BUILD TEAM');
   assert.equal(teamTitle.departmentTitle(' programming '), 'PROGRAMMING TEAM');
@@ -680,12 +681,13 @@ test('a team is named by its short name, a department by itself and TEAM, and a 
   assert.equal(teamTitle.departmentTitle(''), 'TEAM');
   assert.equal(teamTitle.departmentTitle(undefined), 'TEAM');
 
-  assert.equal(teamTitle.pageTeamName([{ team: '' }, {}], 'PRIME'), 'BOTH TEAMS');
+  assert.equal(teamTitle.pageTeamName([{ team: '' }, {}], 'PRIME'), '');
   assert.equal(teamTitle.pageTeamName([{ team: 'prime' }, { team: '' }], 'PRIME'), 'PRIME', 'one item of the team makes it the team\'s');
   assert.equal(teamTitle.pageTeamName([{ team: 'nova' }], 'NOVA'), 'NOVA');
   assert.equal(teamTitle.pageTeamName([], 'PRIME'), 'PRIME', 'a page with no items is the team on the screen');
   assert.equal(teamTitle.pageTeamName(null, 'PRIME'), 'PRIME');
   assert.equal(teamTitle.teamChipMarkup('<b>x'), '<span class="team-chip">&lt;b&gt;x</span>');
+  assert.equal(teamTitle.teamChipMarkup(''), '', 'no name, no chip');
 });
 
 test('the text width is the sum of the advance widths of the display font, and a character that is not known is counted wide', () => {
@@ -769,14 +771,14 @@ const headerOf = html => ({
   chip: (/<span class="team-chip">([^<]*)<\/span>/.exec(html) || [])[1],
 });
 
-test('the Leadership and Team leads headers name the team: PRIME or NOVA, and BOTH TEAMS when everything on the list is for both', async () => {
+test('the Leadership and Team leads headers name the team: PRIME or NOVA, and have no chip when everything on the list is for both', async () => {
   await withFakePage(async () => {
     const person = fields => Object.assign({ name: '[Alex]', role: 'Captain' }, fields);
     const department = fields => Object.assign({ name: '[Build]', lead: '[Lead A]', members: [] }, fields);
 
     const shared = { people: [person({}), person({ name: '[Sam]' })], subteams: [department({})], settings: {} };
-    assert.deepEqual(headerOf(mounted(people.leadership, shared)), { title: 'LEADERSHIP', titleClass: 'title title-small', chip: 'BOTH TEAMS' });
-    assert.deepEqual(headerOf(mounted(people['team-leads'], shared)), { title: 'TEAM LEADS', titleClass: 'title title-small', chip: 'BOTH TEAMS' });
+    assert.deepEqual(headerOf(mounted(people.leadership, shared)), { title: 'LEADERSHIP', titleClass: 'title', chip: undefined });
+    assert.deepEqual(headerOf(mounted(people['team-leads'], shared)), { title: 'TEAM LEADS', titleClass: 'title', chip: undefined });
 
     const mixed = { people: [person({}), person({ name: '[Sam]', team: 'prime' })], subteams: [department({}), department({ name: '[Wiring]', team: 'prime' })], settings: {} };
     assert.deepEqual(headerOf(mounted(people.leadership, mixed)), { title: 'LEADERSHIP', titleClass: 'title', chip: 'PRIME' }, 'one person for the team makes it the team\'s, and the heading keeps its size');
@@ -799,22 +801,23 @@ test('the Roster header is the subteam and TEAM with the name of the team in a c
     const seen = [];
 
     for (let visit = 0; visit < 4; visit++) seen.push(headerOf(mounted(people.roster, content)));
-    assert.deepEqual(seen.map(header => [header.title, header.chip]), [['BUILD TEAM', 'BOTH TEAMS'], ['PROGRAMMING TEAM', 'PRIME'], ['BUILD TEAM', 'BOTH TEAMS'], ['PROGRAMMING TEAM', 'PRIME']], 'the subteam of the other team has no page on this screen, and each of the others says its own team');
+    assert.deepEqual(seen.map(header => [header.title, header.chip]), [['BUILD TEAM', undefined], ['PROGRAMMING TEAM', 'PRIME'], ['BUILD TEAM', undefined], ['PROGRAMMING TEAM', 'PRIME']], 'the subteam of the other team has no page on this screen, a subteam for both teams has no chip, and each of the others says its own team');
   });
 });
 
 test('a title is at the size of a heading when it fits beside the chip and the slashes, and at 60px when it does not', () => {
   assert.equal(teamTitle.titleClass('LEADERSHIP', 'PRIME'), 'title');
   assert.equal(teamTitle.titleClass('LEADERSHIP', 'NOVA'), 'title');
-  assert.equal(teamTitle.titleClass('LEADERSHIP', 'BOTH TEAMS'), 'title title-small');
-  assert.equal(teamTitle.titleClass('TEAM LEADS', 'BOTH TEAMS'), 'title title-small');
+  assert.equal(teamTitle.titleClass('LEADERSHIP', ''), 'title', 'with no chip the title has the room of the chip');
+  assert.equal(teamTitle.titleClass('TEAM LEADS', ''), 'title');
+  assert.equal(teamTitle.titleClass('PROGRAMMING TEAM', ''), 'title title-small');
   assert.equal(teamTitle.titleClass('BUILD TEAM', 'PRIME'), 'title');
   assert.equal(teamTitle.titleClass('PROGRAMMING TEAM', 'PRIME'), 'title title-small');
 
   // the choice is by the room: whatever is at 96px fits, and what is at 60px did not fit at 96px
   const room = 1036;
   const taken = (title, chip, size) => textWidthModule.textWidth(title, 700, size) + 24 + textWidthModule.textWidth(chip, 700, 44) + 28 + 84;
-  ['LEADERSHIP', 'TEAM LEADS', 'BUILD TEAM', 'DESIGN TEAM', 'PROGRAMMING TEAM', 'ELECTRICAL TEAM', 'A TEAM'].forEach(title => ['PRIME', 'NOVA', 'BOTH TEAMS'].forEach(chip => {
+  ['LEADERSHIP', 'TEAM LEADS', 'BUILD TEAM', 'DESIGN TEAM', 'PROGRAMMING TEAM', 'ELECTRICAL TEAM', 'A TEAM'].forEach(title => ['PRIME', 'NOVA'].forEach(chip => {
     const big = teamTitle.titleClass(title, chip) === 'title';
     assert.equal(taken(title, chip, 96) <= room, big, title + ' ' + chip);
   }));

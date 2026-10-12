@@ -1762,6 +1762,57 @@ test('with no board chosen there are no readings, and a run that cannot list the
   assert.deepEqual(Object.keys(body.mutations[1].patch.set), ['lastError'], 'only the reason is written, so the readings stay');
 });
 
+test('a board with no team is read, and its tasks are made with no team, so they show for both teams', () => {
+  [null, ''].forEach(blank => {
+    const place = setup('no-team-' + String(blank), { tools: true });
+    world(place, { boards: [Object.assign({}, boardEntry, { team: blank })] });
+    const result = place.run();
+
+    assert.equal(result.status, 0, result.errors);
+    assert.equal(result.errors, '', 'a board with no team is not a problem');
+    assert.ok(result.text.includes('monday: 1 board(s) chosen in Dashboard Settings'), result.text);
+    const patches = place.taskMutations().filter(mutation => mutation.patch);
+    assert.equal(patches.length, 6);
+    patches.forEach(mutation => {
+      assert.ok(!('team' in mutation.patch.set), mutation.patch.id + ' has no team to set');
+      assert.ok(mutation.patch.unset.includes('team'), mutation.patch.id + ' keeps no team');
+    });
+  });
+});
+
+test('tasks with no team are left alone on the next run, and a task that had a team loses it once when its board has none', () => {
+  const settled = setup('no-team-settled', { tools: true });
+  const none = { team: null };
+  world(settled, { boards: [Object.assign({}, boardEntry, none)], tasks: [1001, 1002, 1003, 1004, 1005, 1006].map(id => stored(id, none)) });
+  const result = settled.run();
+  assert.equal(result.status, 0, result.errors);
+  assert.equal(settled.taskMutations().length, 0, 'a task with no team is what the board says, so nothing is written');
+  assert.ok(result.text.includes('6 task(s) wanted, 0 new, 0 changed, 0 switched off'), result.text);
+
+  const moved = setup('no-team-moved', { tools: true });
+  world(moved, { boards: [Object.assign({}, boardEntry, none)], tasks: [1001, 1002, 1003, 1004, 1005, 1006].map(id => stored(id)) });
+  moved.run();
+  const changes = moved.taskMutations().filter(mutation => mutation.patch);
+  assert.equal(changes.length, 6, 'every task still had the team of the board before');
+  changes.forEach(mutation => assert.ok(mutation.patch.unset.includes('team') && !('team' in mutation.patch.set)));
+});
+
+test('a board that names a team still gives its tasks that team, and a team that is gone still skips the board', () => {
+  const place = setup('team-named', { tools: true });
+  world(place, { boards: [boardEntry] });
+  place.run();
+  place.taskMutations().filter(mutation => mutation.patch).forEach(mutation => {
+    assert.deepEqual(mutation.patch.set.team, { _type: 'reference', _ref: 'team-prime' });
+    assert.ok(!mutation.patch.unset || !mutation.patch.unset.includes('team'));
+  });
+
+  const gone = setup('team-gone', { tools: true });
+  world(gone, { boards: [Object.assign({}, boardEntry, { team: 'team-gone' })] });
+  const result = gone.run();
+  assert.ok(result.errors.includes('monday: Board 111 has no team that exists, so it was skipped.'), result.errors);
+  assert.equal(gone.taskMutations().length, 0);
+});
+
 let failures = 0;
 try {
   for (const entry of tests) {

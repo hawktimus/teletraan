@@ -54,7 +54,8 @@ item's number. Its fields:
   the board or group when the cell is empty. An item that matches nobody goes to a Team
   lead called [Unmatched], which the script makes once, with the id `subteam-unmatched`,
   and switches off on the screen
-- `team`: the team of the board entry
+- `team`: the team of the board entry. An entry with no team makes tasks with no team, which
+  show for both teams
 - `mondayBoardId` and `mondayBoardName`: the number and the name of the board, which
   Monday Tasks sorts by and Monday Boards uses to list the tasks of one board
 - `show`: on. `source` is `monday` and `mondayId` is the item's number
@@ -172,7 +173,7 @@ going stops at once.
    top says who the token belongs to, when the Mini last read Monday, how many boards
    are chosen and how many tasks the Mini has made. Until then it says No connection
    yet. Monday Boards, under TASKS in the sidebar, lists the boards the token can see.
-5. Add an entry under Boards. Pick the board by name, pick the team, and choose where the
+5. Add an entry under Boards. Pick the board by name, pick the team (leave it blank when the board is for both teams), and choose where the
    status comes from. Group names is the starting choice: the group an item is in, such as
    To Do, In Progress or Done, gives its status. For A status column, pick the column, and
    change the two labels, which start as Working on it and Done, to the words the board uses.
@@ -186,8 +187,10 @@ going stops at once.
    on TV off on a row to keep it off the screen. Monday Boards, under TASKS in the
    sidebar, lists every board the token can see and which ones are chosen.
 
-Up to 10 boards can be read. An entry needs its board, its team and its status column.
-An entry that is missing one is skipped, and the last error says which.
+Up to 10 boards can be read. An entry needs its board, and its status column when the
+status comes from a column. Its team is optional. An entry that is missing a board or a
+column it needs is skipped, and the last error says which. An entry that names a team
+that does not exist is skipped too.
 
 ## Trying it
 
@@ -212,7 +215,8 @@ Go down the list. Each step rules out one cause.
    yet, the token is not in `local.env` on the Mini or the timer is not installed
    (Setting it up, steps 2 and 3).
 2. A board is chosen. Boards chosen in the block is not None. Under Boards, an entry
-   needs a board and a team, and its Status column when the status comes from a column.
+   needs a board, and its Status column when the status comes from a column. The team is
+   optional.
    With no entry the block says "No board is chosen yet, so the Mini writes no tasks",
    and the Mini only writes the list of boards. Click Publish after you add the entry,
    because the Mini reads the published settings. A line under the block for the entry
