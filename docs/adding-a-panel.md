@@ -202,10 +202,15 @@ It needs no `hasContent`, because it always has something to show.
 
 A line may also have `pages: 2`. The panel then comes round that many times in a
 row, once for each page, and `hasContent` and `mount` get the page as a second
-argument, counting from 1. A page with nothing on it is skipped. The Events
-panel is the one example: page one has the next 4 events and page two the 4
-after them (`core/event-pages.js`). The rotation list in Studio still has one row
-for the panel.
+argument, counting from 1. A page with nothing on it is skipped. No panel has it
+now. A panel with more rows than fit does what the Events panel does: `mount` draws
+all the rows in one list inside a window, `[data-scroll-list]`, and the script
+exports `scrollPages(content, page)`, the number of pages it needs. The schedule
+holds the panel for its seconds, `scrollCard` in `frame.js` moves the list up by
+one page, which is `--scroll-step` in the panel's stylesheet, and the schedule holds
+it again for the same seconds. The Events panel has page one with the next 4 events
+and page two with the 4 after them (`core/event-pages.js`), and the Monday cards
+scroll five rows at a time. The rotation list in Studio has one row for the panel.
 
 ## 8. Put it in the rotation
 

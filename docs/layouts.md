@@ -1230,7 +1230,7 @@ Screen, so no style is stored. A Screen holds, with the starting values in `conf
 - `mainRows`: the rows of the main panel (area B). A row is a panel from `registry.js`, a team and, if wanted, seconds from 6 to
   120. The team is a team code (`prime`, `nova`), `both` or nothing. The three Monday cards are the panels `monday-tasks`,
   `monday-milestones` and `monday-progress`. A Monday row has a team, and `both` on the milestones or progress row means the
-  card of both teams (`monday-milestones-both`, `monday-progress-both`). The Events panel is one row that plays its two pages.
+  card of both teams (`monday-milestones-both`, `monday-progress-both`). The Events panel is one row that scrolls from its first four events to the next four.
 - `sideRows`: the rows of the side panel (area D), a panel and, if wanted, seconds. A row has no team. Minimal has no side panel.
 - `nameEffectEveryMinutes` (10), `hawkEveryMinutes` (15) and `swapSeconds` (1.25): how often the name effect and the flying hawk
   play, and how long the swap takes. Every timing of the swap scales with `swapSeconds` over 1.25, the length it had before.
@@ -1464,6 +1464,11 @@ in `frame.js` between them. The move is transform only, 600 ms with the easing o
 place at once. The frame does not move. A page marker at the bottom right shows a filled square for the page in view and an
 outline for the other, and its place in words, such as 1 OF 2 · 10 TASKS. A card of five rows or fewer has no marker and does not scroll. Ten rows
 at the most make two pages, which is all the marker has room for.
+
+The Events panel scrolls with the same machinery, four rows at a time and with no marker (`panels/events`, and "The two pages of the
+Events panel" in docs/editing-content.md). Its window is four rows, `--scroll-step` is the height of the window, and Cybertron has rows of
+132 where Original and Minimal have 144, so its step is 528 and the others are 576 (`styles/cybertron.css`). A step that is not the height of
+the window shows the second page cut off at the top.
 
 ### The milestones card
 

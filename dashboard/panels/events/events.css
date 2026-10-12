@@ -16,13 +16,17 @@
   font: 700 var(--size-heading)/96px var(--font-display);
 }
 
-/* Four rows of 144px. Each row carries the thin metal bar under it. */
+/* Four rows of 144px are the window. Each row carries the thin metal bar under it. The rows of the next four are
+   in the same list, under the window. frame.js (scrollCard) puts the page in view in --scroll-page on the panel, and
+   frame.css moves the list up by that many steps of --scroll-step, which is the four rows, 576px. */
+.events { --scroll-step: 576px; }
 .events .rows {
   position: absolute;
   left: 0;
   top: 124px;
   width: 1152px;
   height: 576px;
+  overflow: hidden;
 }
 .events .row {
   position: relative;
@@ -40,9 +44,9 @@
   top: 134px;
 }
 
-/* The cut corner at the bottom right crosses the end of the last row's second
-   line, so that row stops sooner. */
-.events .row:nth-child(4) { padding-right: 88px; }
+/* The cut corner at the bottom right crosses the end of the second line of the row at the foot of the
+   window, the fourth of a page, so that row stops sooner. */
+.events .row:nth-child(4n) { padding-right: 88px; }
 
 /* The weekday and the month and day sit in a column of their own, centred.
    The widest date at this size, MAR 30, is 224px, so the column has room to spare. */

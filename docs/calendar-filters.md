@@ -83,7 +83,7 @@ or Hide all: come from the Calendars page.
 
 ## Pinning an event
 
-The Events panel has two pages that come one after the other. Page one shows the
+The Events panel has two pages, and the list scrolls from the first to the second. Page one shows the
 next 4 events and page two the 4 after them. An event that is later than the
 eighth is on neither page yet. An Always show rule with Pin to page one on puts
 its events on page one anyway.

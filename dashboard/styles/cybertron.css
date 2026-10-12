@@ -232,6 +232,7 @@ html[data-style="cybertron"] .events .rows {
 }
 html[data-style="cybertron"] .events .row { height: 132px; }
 html[data-style="cybertron"] .events .row-bar { top: 122px; }
+html[data-style="cybertron"] .events { --scroll-step: 528px; }
 html[data-style="cybertron"] .person-rows {
   top: 136px;
   height: 528px;
