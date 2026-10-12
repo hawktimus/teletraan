@@ -2867,10 +2867,10 @@ function checkPortraitSettings() {
   return problems;
 }
 
-// The rows of Leadership and Team leads: a line under the role (person.line and subteam.line, up to 48
-// characters) and the chip at the right end of a Leadership row (person.group). Each is optional and
-// has no starting value, so what is saved before they existed stays as it is. The choices of the group
-// are the names in core/leadership.js, and the sample people and team leads have a line.
+// The rows of Leadership and Team leads: a line under the name (person.line and subteam.line, up to 48
+// characters). Each is optional and has no starting value, so what is saved before they existed stays as
+// it is. The chip of a Leadership row is the Role (person.title, required), so the group radio is hidden
+// and keeps its choices, and the sample people and team leads have a line.
 function checkPersonRows() {
   const problems = [];
   const leadership = world.leadershipModule;
@@ -2880,7 +2880,7 @@ function checkPersonRows() {
     const words = field ? field.description || '' : '';
 
     need(problems, field && field.type === 'string' && !constraintNamed(constraintsOf(field), 'required') && field.initialValue === undefined, pathText + ' should be an optional string with no starting value');
-    need(problems, words.indexOf('One short line under ') === 0 && words.indexOf(wanted) !== -1, pathText + ' should say it is one short line under the role and ' + wanted);
+    need(problems, words.indexOf('One short line under ') === 0 && words.indexOf(wanted) !== -1, pathText + ' should say it is one short line under the name or the role and ' + wanted);
   };
 
   checkLine('person.line', 'Leave blank to hide.');
@@ -2888,22 +2888,35 @@ function checkPersonRows() {
   need(problems, /3 people or fewer/.test((fieldAt('person.line') || {}).description || '') && /3 people or fewer/.test((fieldAt('subteam.line') || {}).description || ''), 'the line descriptions should say that it shows on pages of 3 people or fewer, because a row of four has no room for it');
   need(problems, personNames.indexOf('line') === personNames.indexOf('title') + 1 && personNames.indexOf('group') === personNames.indexOf('line') + 1, 'person.line and person.group should come right after person.title, not ' + personNames.join(', '));
 
+  // The group is not read by the screen. It stays in the schema with its choices, so a saved value is still valid
   const group = fieldAt('person.group');
-  const rules = group ? constraintsOf(group) : [];
-  const allowed = constraintNamed(rules, 'valid');
-  need(problems, group && group.type === 'string' && group.options && group.options.layout === 'radio', 'person.group should be a radio list');
-  need(problems, choicesOf('person.group').map(item => item.value).join() === leadership.groupNames.join(), 'person.group should offer the names in core/leadership.js: ' + leadership.groupNames.join(', '));
-  need(problems, allowed && allowed.args[0].join() === leadership.groupNames.join(), 'person.group should only allow: ' + leadership.groupNames.join(', '));
-  need(problems, !constraintNamed(rules, 'required') && group && group.initialValue === undefined, 'person.group should not be required and should have no starting value, so that the role gives it');
-  need(problems, group && /Leave blank to follow the role/.test(group.description || ''), 'the person.group description should say that a blank follows the role');
+  const allowed = group ? constraintNamed(constraintsOf(group), 'valid') : null;
+  need(problems, group && group.type === 'string' && group.options && group.options.layout === 'radio', 'person.group should stay a radio list');
+  need(problems, group && group.hidden === true && group.description === 'Not used any more', 'person.group should be hidden with the description "Not used any more"');
+  need(problems, choicesOf('person.group').map(item => item.value).join() === 'COACH,CAPTAIN,MENTOR' && allowed && allowed.args[0].join() === 'COACH,CAPTAIN,MENTOR', 'person.group should keep COACH, CAPTAIN and MENTOR, so a saved value stays valid');
+  need(problems, group && !constraintNamed(constraintsOf(group), 'required'), 'person.group should not be required, because nobody can fill in a hidden field');
 
-  // What a blank group gives, from the role: the words of the description
-  [['Coach', 'COACH'], ['Mentor', 'MENTOR'], ['Captain', 'CAPTAIN'], ['Head Coach', 'COACH'], ['', 'CAPTAIN']].forEach(([role, chip]) => {
-    need(problems, leadership.groupOf({ role: role }) === chip, 'a person with the role "' + role + '" and no group should have the chip ' + chip);
+  // The chip is the Role: person.title, required, with the words of the order
+  const role = fieldAt('person.title');
+  const roleRules = role ? constraintsOf(role) : [];
+  const roleHelp = 'Shown in the chip at the right of the row, for example Coach, Co-President, Mentor, Parent. Up to 22 characters fit.';
+  need(problems, role && role.title === 'Role' && role.type === 'string', 'person.title should be titled Role');
+  need(problems, role && role.description === roleHelp, 'the person.title description should be: ' + roleHelp);
+  need(problems, constraintNamed(roleRules, 'required') && messageAfter(roleRules, 'required') === roleHelp, 'person.title should be required, with the description as its message');
+  need(problems, constraintNamed(roleRules, 'max') && constraintNamed(roleRules, 'max').args[0] === 22, 'person.title should allow up to 22 characters');
+  const listedWith = fieldAt('person.role');
+  need(problems, listedWith && listedWith.title !== 'Role' && constraintNamed(constraintsOf(listedWith), 'required'), 'person.role should be required and not titled Role, because the field titled Role is person.title');
+
+  // The chip is the Role in capitals, and an entry with no Role shows its role
+  need(problems, leadership.chipOf({ role: 'Captain', title: 'Co-President' }) === 'CO-PRESIDENT', 'a person with the Role Co-President should have the chip CO-PRESIDENT');
+  [['Coach', 'COACH'], ['Mentor', 'MENTOR'], ['Captain', 'CAPTAIN'], ['Head Coach', 'HEAD COACH']].forEach(([roleText, chip]) => {
+    need(problems, leadership.chipOf({ role: roleText }) === chip, 'a person with the role "' + roleText + '" and no Role should have the chip ' + chip);
   });
-  need(problems, leadership.groupOf({ role: 'Coach', group: 'MENTOR' }) === 'MENTOR' && leadership.groupOf({ role: 'Coach', group: 'chief' }) === 'COACH', 'the group should win when it is one of the choices, and be ignored otherwise');
+  need(problems, leadership.chipOf({ role: 'Coach', group: 'MENTOR' }) === 'COACH', 'the group should not change the chip');
 
   world.sample.people.forEach(person => need(problems, typeof person.line === 'string' && person.line.length > 0 && person.line.length <= 48, 'every sample person should have a line of up to 48 characters, ' + person.name + ' has none'));
+  world.sample.people.forEach(person => need(problems, typeof person.title === 'string' && person.title.length > 0 && person.title.length <= 22, 'every sample person should have a Role of up to 22 characters, ' + person.name + ' has none'));
+  need(problems, ['Mentor', 'Parent'].every(word => world.sample.people.some(person => person.title === word)), 'the sample people should have a Mentor and a Parent');
   world.sample.subteams.forEach(subteam => need(problems, typeof subteam.line === 'string' && subteam.line.length > 0 && subteam.line.length <= 48, 'every sample team lead should have a line of up to 48 characters, ' + subteam.name + ' has none'));
   return problems;
 }
@@ -6170,7 +6183,7 @@ async function main() {
   check('a person has an optional photo and a switch that starts on, as in dashboard/config.js', checkPersonPhoto);
   check('a team lead has an optional photo right after the lead and a switch that starts on, and the dashboard asks Sanity for the photo', checkLeadPhoto);
   check('the Portraits box has two sizes from 60 to 220, a shape and a frame, agrees with dashboard/config.js, and its descriptions give the people a page holds', checkPortraitSettings);
-  check('a person and a team lead have an optional line under the role, and a person has an optional chip that follows the role', checkPersonRows);
+  check('a person and a team lead have an optional line, a person has a required Role that is the chip, and the old group is hidden', checkPersonRows);
   check('a photo has a picture, a short caption and a first name credit, and the photo settings agree with dashboard/config.js', checkPhotos);
   check('the themes and overlays in studio/themes.js are the ones in the dashboard registries', checkThemeLists);
   check('the Look page agrees with dashboard/config.js, needs a start and an end for each rule, and checks the time zone', checkTheme);

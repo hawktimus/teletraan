@@ -771,8 +771,10 @@ alone.
   Events panel. A row is the portrait, then the name (72 pixels), the role (44, in
   the team accent) and the line (36, quiet) stacked beside it, and a chip at the
   right end; a 2 pixel rule in the team's plate color is under each row but the last.
-  Leadership's chip is `groupOf` in `core/leadership.js`: the Group field of the
-  person, or what the role says. The Team Leads chip is the subteam name, and its
+  Leadership's chip is `chipOf` in `core/leadership.js`: the Role of the person
+  (the field `title`), in capitals, or the role when no Role is typed. A Leadership
+  row has no second line and no metal on the frame, and the Group field is hidden
+  and not read. The Team Leads chip is the subteam name, and its
   third line is the Line field of the subteam, or the subteam name. In a row the portrait is 120 pixels square at 100 (`rowSizes` in
   `core/portrait.js`), up to 264 at 220, and on the Subteam roster panel it is 292 pixels square with the
   280 pixel photo 6 pixels in from the edge (`portraitSize`). The photo is

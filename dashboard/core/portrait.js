@@ -1,7 +1,8 @@
 // A portrait: a framed picture of a person. The Roster panel draws one slot for its
 // team lead, with the name and role under it. The Leadership and Team Leads panels
 // draw rows instead (rowsMarkup below): the portrait at the left, the name, the role
-// and a quiet line stacked beside it, and a chip at the right end.
+// and a quiet line stacked beside it, and a chip at the right end. Leadership leaves
+// the role empty, because its Role is the chip.
 //
 // The picture is the person's photo, or the silhouette when there is no photo,
 // the photo is hidden, or it cannot be loaded. The silhouette is drawn once

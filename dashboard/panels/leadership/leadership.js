@@ -5,17 +5,12 @@
 import { doubleSlash } from '../../core/marks.js';
 import { makePages } from '../../core/turns.js';
 import { portraitPercentOf } from '../../core/content.js';
-import { groupOf, leaders } from '../../core/leadership.js';
+import { chipOf, leaders } from '../../core/leadership.js';
 import { photoAddress, portraitLook, preloadPhotos, rowLayout, rowsMarkup, rowsPerPage, watchPhotos } from '../../core/portrait.js';
 import { pageTeamName, teamChipMarkup, teamNameOf, titleClass } from '../../core/team-title.js';
 import { wantedTeam } from '../../core/teams.js';
 
 const nextPage = makePages(rowsPerPage);
-
-// The role also decides the metal of the frame round the picture: gold, silver
-// or red. To change a colour, change a word here. A role that is not in this
-// list keeps the colour of the panel's own frame.
-const roleMetals = { coach: 'red', captain: 'gold', mentor: 'silver' };
 
 export function hasContent(content) {
   return leaders(content.people).length > 0;
@@ -46,16 +41,15 @@ export function mount(host, content) {
   preloadPhotos(page.upcoming);
 }
 
-// The second line is the typed title, or the role if there is none. The third is the typed line, and
-// the chip at the right end is the group.
+// The Role is the chip at the right end, and nothing is under the name but the typed line. The line is
+// hidden on a page of four rows, which has no room for it (base.css). The frame of the picture is the
+// panel's own, in the team's colours, for everyone.
 function personRow(person) {
-  const role = String(person.role || '').trim().toLowerCase();
   return {
     name: person.name,
-    role: String(person.title || person.role || '').toUpperCase(),
+    role: '',
     line: String(person.line || '').trim(),
-    chip: groupOf(person),
+    chip: chipOf(person),
     address: photoAddress(person),
-    metal: roleMetals[role],
   };
 }

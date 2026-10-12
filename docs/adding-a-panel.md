@@ -154,7 +154,7 @@ panel. A panel that needs a line, a card or a bar uses one of these:
 - **Rows of people.** `rowsMarkup(rows, scale, look)` in `core/portrait.js` draws up
   to `rowLayout(scale).rows` rows, each `{ name, role, line, chip, address, metal }`: the
   photo at the left, the name, the role and the line stacked beside it, and the chip
-  at the right end. `line` and `chip` may be empty. That is
+  at the right end. `role`, `line` and `chip` may be empty (Leadership leaves `role` empty). That is
   4 rows up to a portrait size of 100, then 3, 2 and 1, because a bigger portrait
   needs a taller row. `scale` is the size setting of the panel and `look` is
   `portraitLook(content.settings)`. The rows have no animation code: each is a slat.

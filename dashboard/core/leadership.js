@@ -17,18 +17,11 @@ function roleOf(person) {
   return String(person.role || '').trim().toLowerCase();
 }
 
-// The words that can be in the chip at the right end of a row, the choices of the Group field
-export const groupNames = ['COACH', 'CAPTAIN', 'MENTOR'];
-
-// The chip of a row: the Group field when it has one of the choices, and otherwise what the role
-// says. A role with coach in it is COACH, one with mentor in it is MENTOR, and the rest are CAPTAIN.
-export function groupOf(person) {
-  const typed = String(person.group || '').trim().toUpperCase();
-  if (groupNames.includes(typed)) return typed;
-
-  const role = roleOf(person);
-  if (role.includes('coach')) return 'COACH';
-  return role.includes('mentor') ? 'MENTOR' : 'CAPTAIN';
+// The chip at the right end of a row is the Role the editor typed, in capitals. An old entry with
+// no Role shows its role (Coach, Captain or Mentor), so a chip is never blank.
+export function chipOf(person) {
+  const typed = String(person.title || '').trim();
+  return (typed || roleOf(person)).toUpperCase();
 }
 
 // The people in a list as groups, one group for each role, in the order of

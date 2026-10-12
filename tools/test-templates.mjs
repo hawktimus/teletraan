@@ -194,7 +194,7 @@ test('a few rows become documents with fixed ids, and a second run gives the sam
 
 test('an empty switch gets the value Studio gives a new item, and a needed field never does', () => {
   assert.equal(rowsOf(templates.subteam)[1][rowsOf(templates.subteam)[0].indexOf('show')], 'yes/no; default yes');
-  const result = runImporter({ 'person.csv': csvFor('person', [{ role: 'Coach', name: 'Pat' }]) });
+  const result = runImporter({ 'person.csv': csvFor('person', [{ role: 'Coach', name: 'Pat', title: 'Coach' }]) });
   assert.equal(result.status, 0, result.message);
   assert.equal(result.docs[0].show, true);
   assert.equal(result.docs[0].showPhoto, true);
@@ -373,7 +373,7 @@ test('a row points at a team by its code, capitals ignored, and a CSV made befor
     sponsor: { name: 'A' },
     tipOrNews: { kind: 'tip', text: 'A' },
     subteam: { name: 'A' },
-    person: { role: 'Coach', name: 'A' },
+    person: { role: 'Coach', name: 'A', title: 'Coach' },
     customPanel: { title: 'A' },
   };
   Object.keys(rowFor).forEach(type => {
