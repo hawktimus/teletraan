@@ -138,7 +138,7 @@ The scripts are in `deploy/scripts/`, and the units that start them are in `depl
 - docs/editing-content.md: using the Studio
 - docs/publish-all.md: publishing many drafts at once, and what skipped and failed mean
 - docs/switch-the-look.md: the four steps that change the style, the team and the seasonal pack
-- docs/add-the-nova-team.md: importing the teams, filling in the Nova team and setting the team mode
+- docs/add-the-nova-team.md: importing the teams and filling in the Nova team
 - docs/team-on-an-item.md: how the Team choice on an item works, and how to add it to another kind of content
 - docs/presentations.md: booking talks, the Sanity token, the clicker keys and what to do when slides are not ready
 - docs/up-next.md: the schedule and the talks in the Daily Agenda panel

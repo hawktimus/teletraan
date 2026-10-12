@@ -55,7 +55,7 @@ has the rest of the trim.
 
 ## The logo settings
 
-The Look tab of Dashboard Settings has all of this, after Style and Team mode.
+The Look tab of Dashboard Settings has all of this, after the Weekday schedule.
 Everything in it is about the logo and its name, so it can all be taken out
 later in one go (see the end of this page).
 
