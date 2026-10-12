@@ -410,7 +410,8 @@ only adds items and never changes one that is already there.
 ## Photos
 
 The Photo panel shows one photo at a time, and the photo fills the whole panel
-under the header, up to the frame. The caption and the photographer's first name
+under the header, up to the frame. The panel has no title: the header of the
+frame stays empty above the photo. The caption and the photographer's first name
 ("Photo: Sam") are on a plate at the lower left of the photo. Photos are uploaded
 to Studio. Nothing is kept on the Mini. A photo is either cut to fill the panel,
 or shown whole with the color of the panel round it. Photo fit in Dashboard

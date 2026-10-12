@@ -64,13 +64,27 @@
 // the banner of the bar layout. frameMarkup() is the full screen frame of the
 // alert and the announcement.
 
+// Where the colored tab of the large frame's header ends along the top edge. The tab is where a title stands,
+// so this is what a title has room for (core/header-room.js has the rooms and tools/test-title-plate.mjs
+// holds them to the shapes). The notch of Original reaches 16 left of it and 24 right of it, and the steel
+// frames end the tab in a line that leans 22 to the left over the header. slantTop is where a tab with one
+// slant of 60 degrees starts: it leans 55 to the left by the foot of the capitals of a title (y = 100), so
+// it starts that much further right to be at the left end of the notch there.
+const tabTop = 772;
+const slantTop = 811;
+
+// The header of the large frames of the steel styles and of the bar layout: 120 high, the tab ending in a line
+// that leans 22 to the left
+const largeHeader = { bottom: 120, tabTop: tabTop, tabBottom: tabTop - 22, slantTop: slantTop };
+
 // the large panel on the left (1152 x 708)
 const grid1 = {
   width: 1152,
   height: 708,
   body: [[4, 120], [1148, 120], [1148, 640], [1068, 704], [4, 704]],
-  headerLeft: [[84, 4], [664, 4], [648, 52], [688, 52], [665.3, 120], [4, 120], [4, 68]],
-  headerRight: [[664, 4], [1148, 4], [1148, 120], [665.3, 120], [688, 52], [648, 52]],
+  headerLeft: [[84, 4], [tabTop, 4], [tabTop - 16, 52], [tabTop + 24, 52], [tabTop + 1.3, 120], [4, 120], [4, 68]],
+  headerRight: [[tabTop, 4], [1148, 4], [1148, 120], [tabTop + 1.3, 120], [tabTop + 24, 52], [tabTop - 16, 52]],
+  slantTop: slantTop,
   // The frame, clockwise from the bottom left. The halves meet at point
   // number split (counting from 0) and at the first point.
   outline: [[4, 704], [4, 68], [84, 4], [1148, 4], [1148, 640], [1068, 704]],
@@ -78,7 +92,7 @@ const grid1 = {
   // the line under the header, and the notch shape between the two header plates
   seams: [
     [[4, 120], [1148, 120]],
-    [[664, 4], [648, 52], [688, 52], [665.3, 120]],
+    [[tabTop, 4], [tabTop - 16, 52], [tabTop + 24, 52], [tabTop + 1.3, 120]],
   ],
   // screws on the ends of the cut corners, shared out between the halves
   screws: { a: [[4, 68], [84, 4]], b: [[1148, 640], [1068, 704]] },
@@ -119,8 +133,8 @@ grid1.pieces = [
   { name: 'plate-body-right', fill: 'body', points: [[576, 120], [1148, 120], [1148, 640], [1068, 704], [576, 704]] },
   { name: 'seam-line', line: [[4, 120], [1148, 120]] },
   { name: 'seam-notch', line: grid1.seams[1] },
-  { name: 'edge-top-left', line: [[230, 4], [664, 4]] },
-  { name: 'edge-top-right', line: [[664, 4], [1148, 4], [1148, 170]] },
+  { name: 'edge-top-left', line: [[230, 4], [tabTop, 4]] },
+  { name: 'edge-top-right', line: [[tabTop, 4], [1148, 4], [1148, 170]] },
   { name: 'edge-right', line: [[1148, 170], [1148, 520]] },
   { name: 'edge-bottom', line: [[480, 704], [930, 704]] },
   { name: 'edge-bottom-left', line: [[4, 230], [4, 704], [480, 704]] },
@@ -243,11 +257,12 @@ function giveRivets(shape) {
 // The frames of a team's trim
 
 // One slant of 60 degrees in place of the line that ends a header tab. The line is a list of points from the
-// top of the header down. The slant starts where the line starts, and leans the way the tabs of the bar frames do
+// top of the header down. The slant starts where the line starts, or at x when a frame says so, and leans the way
+// the tabs of the bar frames do
 const slantDegrees = 60;
 
-function slantOf(line) {
-  const top = line[0];
+function slantOf(line, x = line[0][0]) {
+  const top = [x, line[0][1]];
   const bottom = line[line.length - 1];
   return [top, [tenth(top[0] - (bottom[1] - top[1]) / Math.tan(slantDegrees * Math.PI / 180)), bottom[1]]];
 }
@@ -287,7 +302,7 @@ function trimmedFrame(prime, corner, notch) {
   const box = boxOf(prime);
   const { left, top, right, bottom, cutX, cutY } = box;
   const header = prime.body[0][1];
-  const tabEnd = notch === 'slant' ? slantOf(prime.seams[1]) : prime.seams[1];
+  const tabEnd = notch === 'slant' ? slantOf(prime.seams[1], prime.slantTop) : prime.seams[1];
   const cutTopRight = corner === 'tr';
 
   const shape = Object.assign({}, prime, {
@@ -548,7 +563,7 @@ function wearOf(outline, span, turned) {
 //   bolts           the points of the outline that carry a bolt
 //   legs            how long the brackets are: down the side and along the top. A frame
 //                   with no legs has no brackets
-//   header          { bottom, tabTop, tabBottom } for a frame with a header band and a
+//   header          { bottom, tabTop, tabBottom, slantTop } for a frame with a header band and a
 //                   tab, or nothing
 //   seams           the heights of the plate seams across the body
 //   hazard, conduit, slashes, pieces, still   which of those the frame has. A frame that is
@@ -631,14 +646,15 @@ export function makeBarShape(options) {
   const conduit = [];
   if (options.header) {
     const header = options.header;
-    const tabBottom = options.slant ? tenth(header.tabTop - (header.bottom - top) / Math.tan(slantDegrees * Math.PI / 180)) : header.tabBottom;
+    const tabTopAt = options.slant && header.slantTop !== undefined ? header.slantTop : header.tabTop;
+    const tabBottom = options.slant ? tenth(tabTopAt - (header.bottom - top) / Math.tan(slantDegrees * Math.PI / 180)) : header.tabBottom;
     shape.tab = turned ?
-      [outline[2], outline[3], outline[4], [header.tabTop, top], [tabBottom, header.bottom], [left, header.bottom]] :
-      [outline[1], outline[2], [header.tabTop, top], [tabBottom, header.bottom], [left, header.bottom]];
+      [outline[2], outline[3], outline[4], [tabTopAt, top], [tabBottom, header.bottom], [left, header.bottom]] :
+      [outline[1], outline[2], [tabTopAt, top], [tabBottom, header.bottom], [left, header.bottom]];
     shape.headerLeft = shape.tab;
     shape.headerRight = turned ?
-      [[tabBottom, header.bottom], [header.tabTop, top], outline[5], outline[6], [right, header.bottom]] :
-      [[tabBottom, header.bottom], [header.tabTop, top], outline[3], outline[4], outline[5], [right, header.bottom]];
+      [[tabBottom, header.bottom], [tabTopAt, top], outline[5], outline[6], [right, header.bottom]] :
+      [[tabBottom, header.bottom], [tabTopAt, top], outline[3], outline[4], outline[5], [right, header.bottom]];
     shape.body = turned ?
       [[left, header.bottom], [right, header.bottom], outline[7], outline[8], outline[9], outline[0], outline[1]] :
       [[left, header.bottom], [right, header.bottom], outline[6], outline[7], outline[8], outline[9], outline[0]];
@@ -783,7 +799,7 @@ const barOptions = {
   'bar-main': {
     width: 1427, height: 708, chamfer: 56, step: 24, run: 150,
     bolts: [1, 2, 5, 6, 7, 0], legs: [60, 70],
-    header: { bottom: 120, tabTop: 664, tabBottom: 642 },
+    header: largeHeader,
     hazard: true, seams: [264, 408, 552], conduit: true, slashes: true, pieces: true,
   },
   'bar-banner': {
@@ -803,7 +819,7 @@ const barOptions = {
   'bar-main-minimal': {
     width: 1427, height: 708, chamfer: 34, step: 16, run: 100,
     bolts: [1, 2, 6, 7], rivets: true, wear: 70,
-    header: { bottom: 120, tabTop: 664, tabBottom: 642 },
+    header: largeHeader,
     headerLine: true, weld: 1188, pieces: true,
   },
   'bar-banner-minimal': {
@@ -827,7 +843,7 @@ const barOptions = {
   'cybertron-grid1': {
     width: 1152, height: 708, chamfer: 56, step: 24, run: 150,
     bolts: [1, 2, 5, 6, 7, 0], legs: [60, 70],
-    header: { bottom: 120, tabTop: 664, tabBottom: 642 },
+    header: largeHeader,
     hazard: true, seams: [264, 408, 552], conduit: true, slashes: true,
     pieces: { top: [230, 750], right: [170, 520], bottom: [480, 930], left: 230 },
   },

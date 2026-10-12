@@ -7,8 +7,9 @@
 // the Extra panels use (panels/custom). An SVG chart is that size, and its numbers are pixels, so a
 // font size in the stylesheet is the size on the screen. No chart has more than 8 bars or 12 points.
 
-import { doubleSlash } from './marks.js';
+import { markBeside } from './marks.js';
 import { escapeHtml } from './text.js';
+import { textWidth } from './text-width.js';
 import { minutesIn } from './night.js';
 import { pad } from './time.js';
 import { frcOf, todayOf, zoneOf } from './competition.js';
@@ -72,7 +73,7 @@ export function pageMarkup(cardId, title, tag, inner) {
     <section class="page competition ${cardId}">
       <div class="header">
         <h2 class="title" data-slat="title">${escapeHtml(title)}</h2>
-        <div class="tag" data-slat="tag">${tagText}${doubleSlash()}</div>
+        <div class="tag" data-slat="tag">${tagText}${markBeside(textWidth(tag || '', 600, 44))}</div>
       </div>
 
       <div class="body" data-slat="item">${inner}</div>

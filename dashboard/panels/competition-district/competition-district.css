@@ -25,7 +25,7 @@
 /* The words are cut off with an ellipsis before they can reach the notch in the middle of the header. */
 .competition-district .tag-text {
   min-width: 0;
-  max-width: 316px;
+  max-width: 289px;
   overflow: hidden;
   text-overflow: ellipsis;
 }

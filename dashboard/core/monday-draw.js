@@ -5,9 +5,10 @@
 // panels/monday-*, and core/monday.js decides what it draws.
 
 import { teamsOf } from './screens.js';
-import { doubleSlash } from './marks.js';
+import { markBeside } from './marks.js';
+import { wordsRoom } from './header-room.js';
 import { pagesOf, rowsPerPage } from './monday.js';
-import { departmentTitle, teamChipMarkup, teamNameOf } from './team-title.js';
+import { chipWidth, departmentTitle, smallTitleClass, teamChipMarkup, teamNameOf } from './team-title.js';
 import { escapeHtml, hasText } from './text.js';
 import { textWidth } from './text-width.js';
 import { wantedTeam } from './teams.js';
@@ -21,15 +22,9 @@ export function teamNameShown() {
 
 // The header
 
-// The room the header has for its words: the width of the large panel less 76 at the left and 40 at the
-// right, then the slashes at the right end with the gap before them. Sizes are those of the stylesheets.
-const headerRoom = 1036;
-const markRoom = 84;
-const titleGap = 24;
-const chipGap = 20;
-const chipPadding = 28;
-const titleSize = 60;
-const chipSize = 44;
+// The words about the board have the room at the right end of every header, past the line that ends the tab
+// (core/header-room.js). The size is the one in the stylesheet.
+const wordsSize = 44;
 
 // How long ago the board was read, as words: 4 MIN AGO, 3 HR AGO, 2 DAYS AGO. A sample says SAMPLE, and
 // nothing is said when the time is not known.
@@ -48,27 +43,27 @@ export function agoWords(status, now) {
   return hours < 48 ? hours + ' HR AGO' : Math.floor(hours / 24) + ' DAYS AGO';
 }
 
-// The words beside the chip, BOARD · 4 MIN AGO, as long as the title, the words and the chip fit in the
-// header together. When they do not, the words go without BOARD, and when they still do not, they are left out.
-// A header with no chip, because the card is for both teams, has the room of the chip for the words.
-export function wordsBesideChip(title, chip, words) {
-  if (words === '') return '';
-
-  const chipRoom = hasText(chip) ? chipGap + textWidth(chip, 700, chipSize) + chipPadding : 0;
-  const taken = textWidth(title, 700, titleSize) + titleGap + chipRoom + markRoom;
-  return ['BOARD · ' + words, words].find(text => taken + textWidth(text, 600, chipSize) <= headerRoom) || '';
+// The words about the board, such as 4 MIN AGO, when they fit in the room at the right end of the header
+// (core/header-room.js), and nothing when they do not.
+export function wordsAtRight(words) {
+  return words !== '' && textWidth(words, 600, wordsSize) <= wordsRoom ? words : '';
 }
 
-// The header: the title at the left and, at the right end, the words about the board, the chip with the
-// name of the team and the slashes. now is a Date, and status is content.monday.
+// The header: the title at the left and, at the right end, the words about the board, the chip with the name
+// of the team and the slashes. A header that has a chip is marked tag-with-chip: the words do not fit beside
+// the chip in a header 1152 wide, and monday.css shows them only where the header is wider, in the bar layout.
+// The slashes are left out when they would not fit beside the chip, or beside the words when there is no chip.
+// now is a Date, and status is content.monday.
 export function headerMarkup(title, chip, status, now) {
-  const words = wordsBesideChip(title, chip, agoWords(status, now));
+  const words = wordsAtRight(agoWords(status, now));
   const ago = words ? `<span class="ago">${escapeHtml(words)}</span>` : '';
+  const withChip = hasText(chip) ? ' tag-with-chip' : '';
+  const beside = hasText(chip) ? chipWidth(chip) : textWidth(words, 600, wordsSize);
 
   return `
       <div class="header">
-        <h2 class="title" data-slat="title">${escapeHtml(title)}</h2>
-        <div class="tag" data-slat="tag">${ago}${teamChipMarkup(chip)}${doubleSlash()}</div>
+        <h2 class="${smallTitleClass(title)}" data-slat="title">${escapeHtml(title)}</h2>
+        <div class="tag${withChip}" data-slat="tag">${ago}${teamChipMarkup(chip)}${markBeside(beside)}</div>
       </div>`;
 }
 

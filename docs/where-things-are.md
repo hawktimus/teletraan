@@ -202,6 +202,8 @@ editors can sign in from anywhere.
                               monday.js picks and ranks the board tasks for the Monday cards and monday-draw.js
                               draws their header and rows (docs/layouts.md, "The Monday cards"), team-title.js writes
                               the name of a team on a header, text-width.js counts the width of a line of capitals,
+                              header-room.js has the room a header leaves for its title and for the words at its right
+                              end (docs/layouts.md, "The header of a large panel"),
                               tick.js is the one clock of the screen: it tells every panel when a real
                               second starts by reading the time, not by counting, so the digits never
                               drift, and a panel should write to the page only what has changed
@@ -463,6 +465,10 @@ editors can sign in from anywhere.
       test-mini-tool.mjs      checks for the Mac tool in tools/mini/ and for merge-env.sh, with fake ssh, scp
                               and rsync: the masking, webcal to https, the merge into local.env, the menu
                               choices, and that no key or calendar link is printed or put on a command line
+      test-title-plate.mjs    checks for the header of a large panel: where the line that ends the tab is in every frame
+                              (Original, Cybertron and Minimal, both teams, the slanted tab), that the title has its room
+                              before it and the words theirs after it, the widest titles and dates, the slashes left out
+                              when the words need the room, and that the Photo panel has no title
       test-plate-edges.mjs    checks for the thin plate edge: its widths against the other frames', the TEAM plate and
                               the ticker's tag and frame, and that the text on them (TEAM and the number, the name
                               above, TELETRAAN I under, the ticker's line and its word) has 2 px clear of the metal
@@ -1036,6 +1042,7 @@ exceptions are `test-slides-script.mjs`, `test-frc-script.mjs` and `test-monday-
     node tools/test-calendars-view.mjs
     node tools/test-mini-tool.mjs
     node tools/test-plate-edges.mjs
+    node tools/test-title-plate.mjs
     node tools/test-countdown-title.mjs
     node tools/check-themes.mjs
     node tools/check-seasons.mjs

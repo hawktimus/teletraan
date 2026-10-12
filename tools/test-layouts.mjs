@@ -50,7 +50,7 @@ const withoutComments = text => text.replace(/\/\*[\s\S]*?\*\//g, '');
 const mainTree = makeTree('main', [
   'dashboard/config.js', 'dashboard/registry.js', 'dashboard/themes/registry.js', 'dashboard/themes/overlays/registry.js',
   'dashboard/core/layout.js', 'dashboard/core/layout-apply.js', 'dashboard/core/theme.js', 'dashboard/core/style.js',
-  'dashboard/core/season.js', 'dashboard/core/marks.js', 'dashboard/core/corner-art.js', 'dashboard/core/pack-extras.js',
+  'dashboard/core/season.js', 'dashboard/core/marks.js', 'dashboard/core/header-room.js', 'dashboard/core/corner-art.js', 'dashboard/core/pack-extras.js',
 ]);
 const layout = await import(urlOf(mainTree, 'dashboard/core/layout.js'));
 const apply = await import(urlOf(mainTree, 'dashboard/core/layout-apply.js'));
@@ -4025,9 +4025,9 @@ test('the rust, the weld seam and the header line of Minimal are where the order
   assert.equal(main.art.headerLine, 'M14 120L1413 120');
   const ticks = main.art.ticks.split('Z').filter(Boolean).map(text => /^M(\d+) (\d+)h4v10h-4$/.exec(text));
   assert.ok(ticks.every(Boolean), 'each tick is a bar 4 wide and 10 high');
-  assert.equal(ticks.length, 39);
+  assert.equal(ticks.length, 33);
   ticks.forEach((found, index) => {
-    assert.equal(Number(found[1]), 702 + 18 * index, 'a tick every 18');
+    assert.equal(Number(found[1]), main.tab[3][0] + 60 + 18 * index, 'a tick every 18, the first 60 past the end of the tab');
     assert.equal(Number(found[2]) + 10, 118, 'standing on the line');
   });
   assert.ok(Number(ticks[0][1]) > main.tab[3][0], 'the first is past the slanted end of the tab');
@@ -4244,7 +4244,7 @@ test('the numbers in the Frames section of docs/layouts.md for the frames of Min
   assert.ok(!section.includes('| Stamped id |') && !/HP-0[12]/.test(section), 'and it has no stamped id for Minimal');
   const main = plate.barShape('bar-main-minimal');
   assert.ok(section.includes('x = 1188') && main.art.weldDark.startsWith('M1188 '), 'the seam is at 1188');
-  assert.ok(section.includes('39 ticks') && main.art.ticks.split('Z').filter(Boolean).length === 39);
+  assert.ok(section.includes('33 ticks') && main.art.ticks.split('Z').filter(Boolean).length === 33);
   assert.ok(section.includes('every 18') && section.includes('4 wide and 10 high'));
 });
 

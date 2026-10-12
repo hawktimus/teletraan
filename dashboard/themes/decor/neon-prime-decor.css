@@ -234,9 +234,9 @@ html.theme-neon-prime .area[data-area="grid1"] .page .header::before {
 html.theme-neon-prime .area[data-area="grid1"] .page .header::after {
   content: "";
   position: absolute;
-  left: 712px;
+  left: 826px;
   top: 94px;
-  width: 330px;
+  width: 210px;
   height: 14px;
   background:
     repeating-linear-gradient(90deg, var(--neon-cyan) 0, var(--neon-cyan) 3px, transparent 3px, transparent 15px) 0 0 / 100% 14px no-repeat;

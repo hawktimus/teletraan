@@ -11,10 +11,11 @@
   justify-content: space-between;
   align-items: center;
 }
-/* LEADERSHIP at the size of a heading, or at 60px when it does not fit beside the chip with the name of the
-   team (core/team-title.js, titleClass). A longer title is cut off with an ellipsis before it reaches the chip. */
+/* LEADERSHIP at the size of a heading, or at 60px when it does not fit before the line that ends the tab
+   (core/team-title.js, titleClass). A longer title is cut off with an ellipsis before it reaches the line. */
 .leadership .title {
   min-width: 0;
+  max-width: 656px;
   margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;

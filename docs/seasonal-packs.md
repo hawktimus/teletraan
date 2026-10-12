@@ -184,7 +184,7 @@ picture, so it shows in calm motion too.
 A mark may be **at most 60 pixels wide and 76 pixels high** (width x height). `markBox` in
 `dashboard/core/marks.js` holds the numbers, and `tools/check-seasons.mjs` fails for a mark that is bigger.
 They were measured on the large panel's header on the full sample board at 1920 x 1080, with the sample
-content showing. Every header of the large panel is the same plate, 116 px high, so one box fits all ten panels:
+content showing. Every header of the large panel is the same plate, 116 px high, so one box fits all nine panels that have a header mark:
 
 - **Height.** On the right half of the header the plate colour is free from y 274 to y 367 on the screen: 94 px,
   between the metal edge above and the one below. The slashes are 54 x 72 and sit in the middle (y 282 to 354).
@@ -195,8 +195,9 @@ content showing. Every header of the large panel is the same plate, 116 px high,
   The free plate colour goes on 27 px past the slashes (to x 1179, where the metal edge begins), so a mark
   may be 6 px wider than the slashes without moving the text: `.pack-mark` in `base.css` has
   `margin-right: -6px`, which lets the extra 6 px hang out to the right over the header's empty right padding.
-  The text sits exactly where it sits with the slashes. The widest it could become, with 11 capital letters in
-  Roster, already comes close to the notch with the slashes, and the mark does not make that worse.
+  The text sits exactly where it sits with the slashes. The words have 289 px after the notch, and the mark and the
+  gap before it take 78 of them, so a mark goes the way the slashes do: it is left out of a header whose words are
+  wider than 211 (`markBeside` in `core/marks.js`, "The header of a large panel" in docs/layouts.md).
 
 If you change a header (its height, its padding, the plate), measure again the same way as the zones: take a
 screenshot of a header with the slashes hidden, and find the biggest rectangle of plain plate colour round the

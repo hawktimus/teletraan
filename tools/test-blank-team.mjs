@@ -151,22 +151,21 @@ test('a header names no team for things that are for both teams, and the name of
   });
 });
 
-test('a title has the room of the chip when there is no chip, and no chip is written for no name', () => {
+test('no chip is written for no name, and a title is at the size of a heading when it fits before the line that ends the tab', () => {
   assert.equal(teamTitle.pageTeamName([{}, { team: '' }], 'PRIME'), '');
   assert.equal(teamTitle.pageTeamName([{}, { team: 'nova' }], 'NOVA'), 'NOVA');
   assert.equal(teamTitle.teamChipMarkup(''), '');
   assert.equal(teamTitle.teamChipMarkup(undefined), '');
   assert.equal(teamTitle.teamChipMarkup('PRIME'), '<span class="team-chip">PRIME</span>');
 
-  // the choice is by the room: 1036 less the slashes (84), and the chip with its gap and padding when there is one
-  const room = 1036;
+  // the choice is by the room before the line, whatever the chip: it is on the other side of the line
+  const room = 656;
   ['LEADERSHIP', 'TEAM LEADS', 'BUILD TEAM', 'DESIGN TEAM', 'PROGRAMMING TEAM', 'ELECTRICAL TEAM', 'A TEAM'].forEach(title => {
-    assert.equal(teamTitle.titleClass(title, '') === 'title', textWidth(title, 700, 96) + 84 <= room, title + ' beside no chip');
+    assert.equal(teamTitle.titleClass(title) === 'title', textWidth(title, 700, 96) <= room, title);
   });
-  assert.equal(teamTitle.titleClass('LEADERSHIP', ''), 'title');
-  assert.equal(teamTitle.titleClass('TEAM LEADS', ''), 'title');
-  assert.equal(teamTitle.titleClass('LEADERSHIP', 'PRIME'), 'title');
-  assert.equal(teamTitle.titleClass('PROGRAMMING TEAM', ''), 'title title-small', 'a long title is still smaller');
+  assert.equal(teamTitle.titleClass('LEADERSHIP'), 'title');
+  assert.equal(teamTitle.titleClass('TEAM LEADS'), 'title');
+  assert.equal(teamTitle.titleClass('PROGRAMMING TEAM'), 'title title-tight', 'a long title is still smaller');
 });
 
 
@@ -184,13 +183,14 @@ test('the cards of both teams read MILESTONES or PROGRESS alone, with the words 
   });
   assert.ok(milestones.includes('data-slat="title">MILESTONES</h2>') && progress.includes('data-slat="title">PROGRESS</h2>'));
 
-  // the words beside a chip that is not there have its room
+  // the words have the room of the chip that is not there, and the slashes go when the words need the room
   const status = { lastSyncAt: '2026-10-12T15:56:00Z' };
-  assert.equal(draw.wordsBesideChip('MILESTONES', '', '4 MIN AGO'), 'BOARD · 4 MIN AGO');
-  assert.equal(draw.wordsBesideChip('MILESTONES', 'PRIME', '4 MIN AGO'), '4 MIN AGO', 'beside a chip there is less room');
   const header = draw.headerMarkup('PROGRESS', '', status, monday12);
   assert.equal(header.includes('team-chip'), false);
-  assert.ok(header.indexOf('<span class="ago">BOARD · 4 MIN AGO</span>') !== -1 && header.indexOf('class="ago"') < header.indexOf('class="double-slash"'), 'the words come before the slashes');
+  assert.equal(header.includes('tag-with-chip'), false, 'there is no chip for the words to fit beside');
+  assert.ok(header.includes('<span class="ago">4 MIN AGO</span>') && !header.includes('class="double-slash"'), 'the words are there and the slashes are not');
+  const sample = draw.headerMarkup('PROGRESS', '', { sample: true }, monday12);
+  assert.ok(sample.indexOf('<span class="ago">SAMPLE</span>') !== -1 && sample.indexOf('class="ago"') < sample.indexOf('class="double-slash"'), 'SAMPLE is short, so the slashes come after it');
 });
 
 test('a row is labeled with the team of its board, and a department whose tasks come only from boards with no team is one row with no label', () => {

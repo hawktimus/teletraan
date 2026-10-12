@@ -623,7 +623,7 @@ test('the swap waits as long as 8 seconds for the areas to be at rest, and gives
 const layoutTree = makeTree('layout', [
   'config.js', 'registry.js', 'themes/registry.js', 'themes/overlays/registry.js',
   'core/layout.js', 'core/layout-apply.js', 'core/theme.js', 'core/style.js',
-  'core/season.js', 'core/marks.js', 'core/corner-art.js', 'core/pack-extras.js',
+  'core/season.js', 'core/marks.js', 'core/header-room.js', 'core/corner-art.js', 'core/pack-extras.js',
 ]);
 const layout = await import(urlOf(layoutTree, 'core/layout.js'));
 

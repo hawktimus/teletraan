@@ -31,7 +31,7 @@ function copyInto(folder, from, to) {
 function makeTree(folder) {
   fs.mkdirSync(folder, { recursive: true });
   fs.writeFileSync(path.join(folder, 'package.json'), '{ "type": "module" }\n');
-  ['dashboard/core/season.js', 'dashboard/core/marks.js', 'dashboard/core/corner-art.js', 'dashboard/core/pack-extras.js', 'dashboard/base.css', 'dashboard/themes/overlays/registry.js', 'dashboard/index.html', 'tools/check-seasons.mjs', 'docs/seasonal-packs.md'].forEach(file => copyInto(folder, file, file));
+  ['dashboard/core/season.js', 'dashboard/core/marks.js', 'dashboard/core/header-room.js', 'dashboard/core/corner-art.js', 'dashboard/core/pack-extras.js', 'dashboard/base.css', 'dashboard/themes/overlays/registry.js', 'dashboard/index.html', 'tools/check-seasons.mjs', 'docs/seasonal-packs.md'].forEach(file => copyInto(folder, file, file));
   fs.readdirSync(path.join(dashboardFolder, 'seasons')).forEach(name => copyInto(folder, 'dashboard/seasons/' + name, 'dashboard/seasons/' + name));
 }
 
@@ -477,15 +477,16 @@ test('a mark that cannot be drawn, or is bigger than the box, leaves the slashes
   }
 });
 
-test('the box for a mark is 60 x 76, and every panel with a header mark draws it through doubleSlash', () => {
+test('the box for a mark is 60 x 76, and every panel with a header mark draws it through doubleSlash or markBeside', () => {
   assert.deepEqual(marks.markBox, { width: 60, height: 76 });
 
   // a panel that drew its own picture would keep the slashes while a pack is on
-  ['tasks', 'events', 'photo', 'leadership', 'roster', 'tonight', 'spotlight', 'team-leads', 'sponsor-feature', 'custom'].forEach(name => {
+  ['tasks', 'events', 'leadership', 'roster', 'tonight', 'spotlight', 'team-leads', 'sponsor-feature', 'custom'].forEach(name => {
     const code = fs.readFileSync(path.join(dashboardFolder, 'panels', name, name + '.js'), 'utf8');
-    assert.ok(code.includes('import { doubleSlash') && code.includes('${doubleSlash()}'), name + ' should draw its mark with doubleSlash()');
+    assert.ok(/import \{[^}]*\b(doubleSlash|markBeside)\b/.test(code) && (code.includes('${doubleSlash()}') || code.includes('${markBeside(')), name + ' should draw its mark with doubleSlash() or markBeside()');
     assert.ok(!code.includes('class="double-slash"'), name + ' should not draw the slashes itself');
   });
+  assert.equal(fs.readFileSync(path.join(dashboardFolder, 'panels', 'photo', 'photo.js'), 'utf8').includes('doubleSlash'), false, 'the Photo panel has no header, so it has no mark');
 });
 
 test('every kind of mistake in a mark is named in plain words', () => {

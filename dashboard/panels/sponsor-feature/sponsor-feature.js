@@ -2,8 +2,9 @@
 // time the panel comes round it is the next sponsor in the list.
 
 import { cardMarkup } from '../../core/plate.js';
-import { doubleSlash } from '../../core/marks.js';
+import { markBeside } from '../../core/marks.js';
 import { escapeHtml, hasText } from '../../core/text.js';
+import { textWidth } from '../../core/text-width.js';
 import { visibleItems } from '../../core/content.js';
 import { makeTurns } from '../../core/turns.js';
 
@@ -28,7 +29,7 @@ export function mount(host, content) {
     <section class="page sponsor-feature">
       <div class="header">
         <h2 class="title" data-slat="title">SPONSOR</h2>
-        <div class="tag" data-slat="tag">${tier}${doubleSlash()}</div>
+        <div class="tag" data-slat="tag">${tier}${markBeside(textWidth(sponsor.tier || '', 600, 44))}</div>
       </div>
 
       <div class="story">
