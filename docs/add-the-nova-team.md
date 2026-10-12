@@ -22,7 +22,7 @@ colors back. The parts of the command are explained in docs/editing-content.md,
 "Importing the starting list".
 
 A Studio with no team documents works too. The TV then shows the built-in Prime
-team, and Nova only and Alternate stay on Prime.
+team, and the Nova rows of a Screen stay on Prime.
 
 ## 2. Fill in the Nova team
 
@@ -54,7 +54,7 @@ In Studio open Settings, then Teams, then Hawktimus Nova. These are the fields.
   Prime has it off.
 - Mirror the layout: on to start with. The whole screen is flipped left to right
   while Nova is showing.
-- Trim: eight choices that make Nova look like its own team and not Prime in other colors.
+- Trim: seven choices that make Nova look like its own team and not Prime in other colors.
   Each is one of two. The first of each is how Prime looks, and the file starts Nova on the
   second:
   - Bolts: hex nuts, or round rivets with a slot. Nova has round rivets.
@@ -64,16 +64,18 @@ In Studio open Settings, then Teams, then Hawktimus Nova. These are the fields.
     60 degrees. Nova has the slant.
   - Page grid: lines or dots, on the page behind Cybertron and Minimal. Nova has dots.
   - Bird pose: auto is the emblem, and flight is the hawk with its wings up. Nova has flight.
-  - Team name look: solid letters, or outlined letters with a line under them in the accent
-    color. Nova has outline.
   - Ticker label: the cut plate, or a thin bar with a block of the accent color in front of it.
     Nova has the bar.
   - Countdown color: red, or the neon color of the team. Nova has neon.
 
+  Outlined name is a switch in the same box. Off draws the team name solid. It is off on
+  both teams to start with, and turning it on draws outlined letters with a line under them in
+  the accent color. The older choice Team name look is hidden and the screen does not read it.
+
   A team with none of them stored, such as one saved before the trim existed, looks like Prime.
   The frames change shape when the team goes on, in the same moment as the colors and the
   mirror. docs/layouts.md, "Team trim", says how each one is drawn.
-- Active: on. Turn it off to leave the team out of Team order and out of the
+- Active: on. Turn it off to leave the team out of the team pickers of a Screen and out of the
   Team choice on items.
 - Order: a lower number comes first. Prime is 10 and Nova is 20.
 
@@ -81,24 +83,26 @@ Click Publish. A change to the team that is on the screen goes on within a few
 seconds, without waiting for a page change. A change of the colors or the trim of the team on
 the screen draws the frames again, so give it a moment.
 
-## 3. Put Nova in Team order
+## 3. Put Nova in the rows of a Screen
 
-Open Dashboard Settings, then the Look tab.
+Open Settings, then Screens, then a Screen, and click B on the map. Each row of the main
+panel has a Team. The rows of Prime and the rows of Nova are separate: keep the Prime rows
+together and the Nova rows together, because the screen transforms every time the team
+changes. A Screen that was filled from the old Panel order already has the rows of Prime,
+then the three Monday rows of Prime, then the same for Nova, then the panels for both teams.
+Add the Nova rows if they are not there. Take the Nova rows out to show Prime all the time.
 
-- Team order: a list of the teams. Prime and then Nova are in it to start with. Add Nova
-  if it is not there. Each team takes the screen for a pass of the panels, in the order of
-  the list. Take Prime out to show Nova all the time.
-
-Click Publish. The swap from one team to the next waits for the end of a pass. The name, the number, the logo, the
-colors and the mirror change together, and nothing changes in the middle of a panel.
+Click Publish. The swap from one team to the next comes when the next row is for the other
+team. The name, the number, the logo, the colors and the mirror change together, and nothing
+changes in the middle of a panel.
 
 ## 4. Check the TV
 
 Open the menu next to Publish on Dashboard Settings (the three dots) and click
-Preview Nova. The TV shows Nova for 2 minutes whatever Team order says, then goes
+Preview Nova. The TV shows Nova for 2 minutes whatever the rows of the Screen say, then goes
 back. Look at the name, the number, the colors and which side the columns are on. Then look at the
 trim: the round bolts, the corners cut at the top right and the bottom left of every panel, the
-slanted end of each header tab, the outlined name, the bar at the start of the ticker and the
+slanted end of each header tab, the solid name, the bar at the start of the ticker and the
 neon countdown. The bird has its wings up. Cybertron and Minimal have dots on the page, in place
 of lines.
 With the sample content showing, `?team=nova` on the end of the address does the
@@ -110,9 +114,9 @@ that are for both.
 
 ## Afterwards
 
-- To stop showing Nova, take it out of Team order. The Nova team and its content
+- To stop showing Nova, take its rows out of the Screens. The Nova team and its content
   stay in Studio.
 - To change the colors or the trim later, edit the Nova team and publish. Style and pack are
   separate settings (docs/switch-the-look.md).
-- A third team can be added as another document in Teams, and then added to Team
-  order, where it takes its turn.
+- A third team can be added as another document in Teams, and then given rows in a Screen,
+  where it takes its turn.

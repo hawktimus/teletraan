@@ -264,22 +264,22 @@ one of three:
 
 Each card has a switch of its own, all on to start with. A card that is switched
 off is never put in the rotation, in any mode (Preview competition shows all of
-them). The Panel order list does not have the cards:
+them). The rows of a Screen do not have the cards:
 they come in and go out by the mode, the switches and the data. How long a card
 stays follows Seconds per page, like every other panel. The small panel and the
 ticker are not touched, and the cards look the same in every style and layout,
 because they are drawn at the size of the large panel and scaled with it.
 
 `withCompetition` in `dashboard/core/competition.js` is called each time the large
-panel chooses its next page, with the list of panels from Panel order. It returns
+panel chooses its next page, with the list of panels from the main panel rows. It returns
 the list with the due cards in it. A problem with the data leaves the list as it
 was and is written once to the console, so the rotation never stops because of
 the competition data.
 
-The look rotation (docs/layouts.md, "The look rotation") follows the same list.
-The cards come in the pass of panels of each team, once in each pass, with the
-data of the team that has the pass. A Monday pass has its own list, so no
-competition card comes in it.
+The rows of a Screen (docs/layouts.md, "The Screens") follow the same list.
+The cards come in with the rows of the team that is on the banner, with the
+data of that team. A Monday row has its own list, so no competition card comes
+in it.
 
 The first block of the tab shows what the Mini last did: when it last read the
 data, how many events it found for each team, any note and the last error. With

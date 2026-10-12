@@ -23,11 +23,11 @@ decides this, `visibleItems` in `dashboard/core/content.js`, and every panel tak
 its items through it. It leaves out hidden items and expired items in the same
 step. No panel checks the team itself.
 
-- With Prime alone in Team order, the screen shows the items for Prime and for Both.
-- With Nova alone, it shows the items for Nova and for Both.
-- With both in Team order, the items change with the team. They change in the same step as
-  the name and the colors, at a page change, so a panel is never rebuilt in the
-  middle of a page.
+- While Prime is on the banner, the screen shows the items for Prime and for Both.
+- While Nova is, it shows the items for Nova and for Both.
+- When the team of the next row of a Screen is another team, the items change with the team.
+  They change in the same step as the name and the colors, in the swap, so a panel is never
+  rebuilt in the middle of a page.
 
 Items with Both keep the screen full for either team. Put the things the whole
 club needs, such as a sponsor or a safety tip, on Both.

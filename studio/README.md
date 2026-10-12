@@ -32,7 +32,15 @@ TV. The dashboard reads what they publish.
     frc-status-input.js   the block at the top of the Competition tab of Dashboard Settings: when the Mini last read the competition data
     monday-status-input.js  the block at the top of the Monday tab of Dashboard Settings: who the token belongs to, when the Mini last read Monday, the boards chosen and the tasks made, and a line for each board entry
     monday-pickers.js     the board list and the column lists of a board entry on the Monday tab, which show names and store numbers and ids
-    panel-order-input.js  the Panel order list in Dashboard Settings, which fills itself from the two older panel lists when it is empty
+    panel-order-input.js  the Panel order list in Dashboard Settings, which is hidden now and fills itself from the two older panel lists when it is empty
+    screen-input.js       the form of a Screen (Settings, Screens): the Editing switch, the map with the letters A to E, and the first fill of the rows
+    screen-map.js         the boxes and the words of the map in the arrangement of each Screen, with no Studio in it
+    screen-fields.js      the inputs inside the sections of a Screen: the team document button, the countdown, the Tips and News link and the team of a row
+    screen-context.js     what the form of a Screen shares with the inputs inside it
+    screen-parts.js       the words of the Screen form and what it reads from Sanity, with no Studio in it
+    screen-panels.js      the panels a row of a Screen can name and the rules for the team of a row, with no Studio in it
+    screen-seed.js        the first rows of a Screen, worked out from the Panel order, with no Studio in it (tools/test-screen-seed.mjs)
+    screen-ids.js         the ids of the three Screens and the style each one stands for
     schemas/              one file per kind of content
     scripts/              make-templates.mjs writes the CSV templates from the schemas,
                           import-csv.mjs turns filled-in CSVs into a file for sanity dataset import

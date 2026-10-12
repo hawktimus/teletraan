@@ -219,19 +219,21 @@ The panel's id is written in two more places. They have to match
 
        { panel: 'my-panel', show: true },
 
-2. `studio/schemas/settingsRotation.js`, in `largePanels` (Grid 1) or
+2. `studio/screen-panels.js`, in `largePanels` (Grid 1) or
    `smallPanels` (Grid 2). The title is the name editors see in the list:
 
        { title: 'My panel', value: 'my-panel' },
 
-Put both lines at the same position in their lists. The Studio starts with the
-list in `settingsRotation.js`, and the check compares it with `config.js`.
+Put both lines at the same position in their lists. The pickers of a row in a
+Screen use these lists, and the check compares them with `config.js` and
+`registry.js`.
 
-These lists build the Panel order list that a new Studio starts with. A page
-that already has a Panel order list in Dashboard Settings (Screen tab) keeps its
-own list, so the new panel stays off the screen until an editor opens the list,
-uses "Add item", picks the panel and drags the row into place
-(`core/panel-order.js`).
+A Screen that already has rows keeps them, so the new panel stays off the screen
+until an editor opens a Screen (Settings, Screens), clicks B or D on the map, uses
+"Add item", picks the panel and drags the row into place. If the panel is for one
+team (its items have a Team field), add its name to `teamSpecificPanels` in the same
+file and to the list of the same name in the dashboard, so that the first rows of a
+Screen put it with the right team (`studio/screen-seed.js`).
 
 Then run this in the `studio` folder. It needs nothing installed:
 

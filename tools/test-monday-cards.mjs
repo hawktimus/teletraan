@@ -1017,10 +1017,10 @@ test('the docs say what each card shows, where the code is, and what the rotatio
   const where = fs.readFileSync(path.join(docsFolder, 'where-things-are.md'), 'utf8').replace(/\s+/g, ' ');
 
   assert.ok(layouts.includes('## The Monday cards'));
-  ['monday-tasks', 'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both', 'core/monday.js', 'BUILD TEAM', 'BOTH TEAMS', 'This week', '+3 later', '+N more', 'items left', 'mondayCards', 'bothCards', 'Monday to Sunday', 'two cards', 'showOnTv', 'scrollPages', 'scrollCard'].forEach(word => assert.ok(layouts.includes(word), 'layouts.md names ' + word));
+  ['monday-tasks', 'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both', 'core/monday.js', 'BUILD TEAM', 'BOTH TEAMS', 'This week', '+3 later', '+N more', 'items left', 'Monday rows', 'Monday to Sunday', 'showOnTv', 'scrollPages', 'scrollCard'].forEach(word => assert.ok(layouts.includes(word), 'layouts.md names ' + word));
   assert.equal(layouts.includes('There are no Monday cards yet'), false, 'the old sentence that said there were none is gone');
   assert.ok(editing.includes('## The Monday cards'));
-  ['Tasks card', 'Milestones card', 'Progress card', 'Show on TV', 'Panel order', 'Monday pass'].forEach(word => assert.ok(editing.includes(word), 'editing-content.md names ' + word));
+  ['Tasks card', 'Milestones card', 'Progress card', 'Show on TV', 'Monday rows', 'Both teams'].forEach(word => assert.ok(editing.includes(word), 'editing-content.md names ' + word));
   ['monday-tasks', 'monday-milestones', 'monday-progress', 'core/monday.js', 'test-monday-cards.mjs'].forEach(word => assert.ok(where.includes(word), 'where-things-are.md names ' + word));
 });
 

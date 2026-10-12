@@ -11,8 +11,8 @@
 // Trim box that make a team look like itself beyond its colors and the mirror (teamTrim in
 // dashboard/config.js, and "Team trim" in docs/layouts.md). The first choice of each is the one
 // Prime has, and a team made before the trim existed has none stored and reads as Prime.
-// Outlined name is a switch in the same box. Off draws the name solid, and both starting teams
-// are solid.
+// Team name look, one of the eight, is hidden and the screen ignores it: Outlined name, a switch in the
+// same box, replaces it. Off draws the name solid, and both starting teams are solid.
 
 import { defineType, defineField } from 'sanity';
 import { tooLong, byOrder, aToZ, subtitleFor } from './fields.js';
@@ -39,10 +39,9 @@ const trimChoices = {
 // The values are the names in teamMetals in dashboard/config.js
 const metalChoices = [{ title: 'Gold', value: 'gold' }, { title: 'Steel', value: 'steel' }];
 
-function trimField(name, title, description) {
+function trimField(name, title, description, hidden) {
   const list = trimChoices[name];
-
-  return defineField({
+  const field = {
     name: name,
     title: title,
     type: 'string',
@@ -51,7 +50,9 @@ function trimField(name, title, description) {
     options: { list: list, layout: 'radio', direction: 'horizontal' },
     initialValue: list[0].value,
     validation: Rule => Rule.valid(list.map(item => item.value)).error('Pick ' + list.map(item => item.title.toLowerCase()).join(' or ') + '.'),
-  });
+  };
+  if (hidden) field.hidden = true;
+  return defineField(field);
 }
 
 function colorField(name, title, description, start) {
@@ -162,7 +163,7 @@ export default defineType({
     trimField('headerNotch', 'Header end', 'How the colored tab at the top of a panel ends. Notch is the usual step. Slant is one cut at 60 degrees.'),
     trimField('grid', 'Page grid', 'The grid on the page behind Cybertron and Minimal. Lines cross the page. Dots are one in each square.'),
     trimField('logoPose', 'Bird pose', 'How the bird sits in the banner when it is not moving. Auto is the emblem. Flight is the hawk with its wings up.'),
-    trimField('nameStyle', 'Team name look', 'The team name in the banner. Outline has letters with no fill, and a line under them in the accent color.'),
+    trimField('nameStyle', 'Team name look', 'Not used any more. Outlined name replaces it.', true),
     defineField({
       name: 'outlinedName',
       title: 'Outlined name',

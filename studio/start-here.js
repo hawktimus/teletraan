@@ -12,7 +12,7 @@
 
 import { createElement, useState } from 'react';
 import { useClient } from 'sanity';
-import { screen, areas, labelsOf, buttons, sentLine, problemWith } from './start-here-parts.js';
+import { screen, areas, labelsOf, buttons, clickLine, sentLine, problemWith } from './start-here-parts.js';
 import { sendWithClient } from './screen-requests.js';
 
 const h = createElement;
@@ -113,7 +113,7 @@ function pictureOfTheScreen() {
         h('rect', { x: 4, y: 4, width: screen.width - 8, height: screen.height - 8, rx: 24, style: styles.screenEdge }),
         areas.map(areaShapes)
       ),
-      h('figcaption', { style: styles.caption }, 'Each box is a part of the screen. The words in a box are the sidebar items that fill it.')
+      h('figcaption', { style: styles.caption }, 'Each box is a part of the screen. The words in a box are the sidebar items that fill it. ' + clickLine)
     )
   );
 }

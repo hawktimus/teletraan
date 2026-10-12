@@ -113,7 +113,8 @@ editors can sign in from anywhere.
                               four of Cybertron ("Cybertron"), and the housing of the war clock, areas.js keeps
                               the frames in place while pages change and draws them again when a style with other frames
                               goes on, schedule.js says what shows when,
-                              panel-order.js says in what order (the Panel order list in Dashboard Settings),
+                              panel-order.js holds the older Panel order list in Dashboard Settings, which is hidden now,
+                              and the rows of the small frame,
                               logo.js and name.js draw the hawk and the team name (name.js can also put the
                               name on two lines, which nothing uses now), countdown.js is the countdown's parts and
                               the code that writes its numbers, for every layout and for the war clock, source.js
@@ -236,7 +237,8 @@ editors can sign in from anywhere.
                               days, presentation.js the booked talks and settingsPresentations.js the
                               Presentations tab of Dashboard Settings (docs/presentations.md). team.js is the
                               Teams list and settingsTeams.js the team fields of the Look tab, which are hidden now. settingsLook.js is
-                              Styles by day, Monday style, Team order and the hidden How the look changes. status.js is the
+                              the Weekday schedule and the hidden Styles by day, Monday style, Team order and How the look changes.
+                              screen.js is the three Screens (docs/coaches-guide.md, "Screens"). status.js is the
                               document the Mini writes (the status block, settingsStatus.js and status-input.js), and calendarStatus.js
                               the one it writes for the Calendars page. time-text.js has the ages in words that
                               both use. frcStatus.js is the document the Mini writes for the competition cards,
@@ -244,8 +246,13 @@ editors can sign in from anywhere.
                               mondayStatus.js is the document the Mini writes for the Monday tab, settingsMonday.js
                               the Monday tab, monday-status-input.js its connection block and monday-pickers.js
                               the board and column lists of a board entry (docs/monday.md).
-                              settingsRotation.js is the Panels
-                              box of Dashboard Settings, and panel-order-input.js fills its Panel order list when it is empty. The Team radio on tasks, sponsors and
+                              The form of a Screen is screen-input.js: the Editing switch, the map (screen-map.js is its
+                              boxes) and the first fill of the rows from the Panel order (screen-seed.js). screen-fields.js has the
+                              inputs inside the sections, screen-context.js what the form shares with them, screen-parts.js
+                              the words and what the form reads from Sanity, screen-panels.js the panels a row can name and the
+                              rules for its team, and screen-ids.js the three ids and the style each stands for.
+                              settingsRotation.js is the ticker seconds of Dashboard Settings and the hidden Panel order list, and
+                              panel-order-input.js fills that list when it is empty. The Team radio on tasks, sponsors and
                               the other kinds of content is team-input.js, put on each by teamField in fields.js
                               scripts/ has make-templates.mjs, which writes the CSV templates from the
                               schemas, and import-csv.mjs, which checks filled-in CSVs and makes a file
@@ -319,6 +326,9 @@ editors can sign in from anywhere.
       test-presentation.mjs   checks for presentation mode (core/presentation.js): when a talk is due, how it
                               goes from the title card to the thanks card, which talks are skipped, and what
                               each key of the clicker does
+      test-screen-seed.mjs    checks for the first rows of a Screen (studio/screen-seed.js): the owner's Panel order
+                              becomes 16 main rows and five side rows, seconds carry over, a row switched off is left out,
+                              and the rules for the team of a row (studio/screen-panels.js)
       test-panel-order.mjs    checks for the Panel order list (core/panel-order.js): the list built from the
                               two older lists, and what each area of the screen follows
       test-panel-b.mjs        checks that the small frame under the countdown is never empty in the standard layout:
@@ -467,7 +477,7 @@ editors can sign in from anywhere.
                               http://localhost:8080/tools/perf/plates.html
     docs/                     how-to guides: using-the-studio.md (the students' page, with the parts of the
                               Start here page), coaches-guide.md (the coaches' page: the tabs, the status block, the
-                              three keys, the look rotation and the feeds, with links to the detail),
+                              three keys, the Screens and the feeds, with links to the detail),
                               editing-content.md, adding-a-field.md, adding-a-panel.md,
                               adding-a-theme.md, layouts.md, adding-a-holiday-overlay.md, seasonal-packs.md, rebuilding-the-mini.md,
                               try-it-on-the-mini.md, the-logo.md, page-transitions.md, night-mode.md,
@@ -499,12 +509,13 @@ alone.
 - **How long a panel stays, and in what order.** Dashboard Settings, Screen
   tab. "Seconds per page" is the time for the whole board (`pageSeconds` in
   `dashboard/config.js`, 20 to start). The small panel stays three quarters as
-  long and the ticker one and a half times as long. A panel in the lists can
-  have seconds of its own, and then that is used instead. The order is the
-  Panel order list in Dashboard Settings (`rotation.order`). While that list is
-  empty the screen builds it from the lists in `defaultSettings.rotation`
-  (`core/panel-order.js`). The panels it offers are in
-  `studio/schemas/settingsRotation.js`.
+  long and the ticker one and a half times as long. A row of a Screen can
+  have seconds of its own, and then that is used instead. The order is the rows of
+  the three Screens (Settings, Screens, `studio/schemas/screen.js`): `mainRows` and `sideRows`.
+  A Screen with no rows gets them from the older Panel order list (`rotation.order`, hidden now),
+  and while that is empty from the lists in `defaultSettings.rotation` (`core/panel-order.js`,
+  `studio/screen-seed.js`). The panels a row can name are in `studio/screen-panels.js`.
+  The Weekday schedule (`screenSchedule` in `defaultSettings`) picks the Screen of each day.
   The Photo panel is the exception: with no seconds of its own it follows
   "Seconds per photo" in the Screen tab (`photoSeconds`, 16 to start).
 - **The colour of the frame edges.** Dashboard Settings, Screen tab, Frame
@@ -867,14 +878,13 @@ alone.
   the sizes.
 - **The teams, and the team on the screen.** Teams in the Studio sidebar, under Settings
   (`studio/schemas/team.js`): a name, a short name, a number, a code, an optional logo, seven
-  colors, Mirror the layout, the eight trim choices (bolts, cut corners, header end, page grid,
-  bird pose, team name look, ticker label and countdown color), Active and Order. The two starting teams are in
+  colors, Mirror the layout, seven trim choices (bolts, cut corners, header end, page grid,
+  bird pose, ticker label and countdown color), the Outlined name switch (the older Team name look is hidden), Active and Order. The two starting teams are in
   `docs/seed/teams.ndjson`, and the command to import them is in docs/add-the-nova-team.md.
   Dashboard Settings, Look tab: Team mode (`teamMode`, Prime only to start with, from
   `teamModes`) and Minutes for each team (`alternateMinutes`, 5 to start with, 1 to 30), in
   `studio/schemas/settingsTeams.js`, so the whole section can be removed by deleting that file. Both
-  are hidden now, and the screen uses them only when Team order is empty (docs/layouts.md, "The look
-  rotation"). The starting values, the limits and the built-in Prime team (`primeTeam`, which the screen uses
+  are hidden now (docs/layouts.md, "The Screens"). The starting values, the limits and the built-in Prime team (`primeTeam`, which the screen uses
   when the Studio has no teams) are in `dashboard/config.js`. `teamsFrom` in `core/sanity.js`
   cleans the documents, `core/teams.js` chooses the team (`chooseTeam`) and puts it on the page
   (`applyTeamLook`), and `core/areas.js` calls `changeTeamNow` while the large frame is apart, so

@@ -1084,16 +1084,14 @@ test('the rotation is not asked again right after a restart, and starts the new 
 
 // The docs
 
-test('the docs name the settings, the one swap and the rule for an empty list', () => {
+test('the docs name the Screens, the weekday schedule, the hidden fields and the one swap', () => {
   const layouts = fs.readFileSync(path.join(docsFolder, 'layouts.md'), 'utf8').replace(/\s+/g, ' ');
   const editing = fs.readFileSync(path.join(docsFolder, 'editing-content.md'), 'utf8').replace(/\s+/g, ' ');
 
-  assert.ok(layouts.includes('## The look rotation'), 'layouts.md has the section');
+  assert.ok(layouts.includes('## The Screens'), 'layouts.md has the section');
   assert.ok(layouts.includes('## The swap'), 'and the swap');
-  ['Styles by day', 'Monday style', 'Team order', 'How the look changes', 'lookSwap', 'is hidden', 'lookResumeSeconds', 'lookShortestSeconds', 'teletraan-look-pass', 'withoutMondayCards', 'styleCanGoOn'].forEach(word => assert.ok(layouts.includes(word), 'layouts.md names ' + word));
-  ['Styles by day', 'Monday style', 'Team order', 'How the look changes', 'Next look now', 'hidden and the screen ignores it'].forEach(word => assert.ok(editing.includes(word), 'editing-content.md names ' + word));
-  assert.ok(layouts.includes('empty') && editing.includes('is empty'), 'both say what an empty list does');
-  assert.ok(layouts.includes(String(config.lookResumeSeconds)) && layouts.includes(String(config.lookShortestSeconds)), 'layouts.md gives the two times');
+  ['screenSchedule', 'mainRows', 'sideRows', 'swapSeconds', 'nameEffectEveryMinutes', 'hawkEveryMinutes', 'mondayStyle', 'dailyStyles', 'teamOrder', 'lookSwap', 'rotation.order', 'hidden'].forEach(word => assert.ok(layouts.includes(word), 'layouts.md names ' + word));
+  ['Weekday schedule', 'Styles by day', 'Monday style', 'Team order', 'How the look changes', 'Next look now', 'Settings, Screens', 'hidden and keep what was saved'].forEach(word => assert.ok(editing.includes(word), 'editing-content.md names ' + word));
   ['coaches-guide.md', 'switch-the-look.md', 'add-the-nova-team.md'].forEach(file => {
     assert.ok(!/Assemble, Slats or Cut/.test(fs.readFileSync(path.join(docsFolder, file), 'utf8')), file + ' no longer offers the three swaps');
   });

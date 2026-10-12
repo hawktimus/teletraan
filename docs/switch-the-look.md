@@ -3,17 +3,18 @@
 For the students who edit the Studio. The look of the TV has three parts, and
 each is its own setting: the style (the layout and the frames), the team (the
 name, the number, the colors and whether the screen is flipped left to right) and
-the seasonal pack (a holiday overlay). The style and the team take turns by
-themselves: one style a day, and each team for a pass of the panels
-(docs/layouts.md, "The look rotation"). Do the four steps in order. Nothing here
-needs a change to the code.
+the seasonal pack (a holiday overlay). The style is the Screen of the day, and the
+team is the team of the row that is playing (docs/layouts.md, "The Screens"). Do the
+four steps in order. Nothing here needs a change to the code.
 
-## 1. Pick the style
+## 1. Pick the Screen of each day
 
-In Studio open Dashboard Settings, then the Look tab, and find Styles by day. It is a
-list, and the screen uses one style a day, in the order of the list, and then starts
-over. Put one style in it to keep that style all the time. Monday style is the style
-while the Monday cards of a team are on the screen. The styles are:
+A style is a Screen. In Studio open Dashboard Settings, then the Look tab, and find
+Weekday schedule. It has a picker for each day, Monday to Sunday. Original plays
+on Monday, Wednesday, Friday and Sunday, and Cybertron on Tuesday, Thursday and
+Saturday. Minimal is not scheduled to start with. Pick Minimal for a day to use it.
+What plays on each Screen is set in Settings, Screens, in the sidebar. The Screen
+of a day goes on at the first row change after midnight. The styles are:
 
 - Original is the screen as it has always been. Its layout comes from the theme.
 - Cybertron has the same layout as Original: the banner, the large frame, the
@@ -28,33 +29,38 @@ while the Monday cards of a team are on the screen. The styles are:
 
 The war clock is the countdown to Kickoff, then to Rollout, in a steel housing. It
 uses the dates and the label from the Countdown tab. Minimal has no small frame, so
-the next event, task counts, safety days and sponsor logo do not show with it, and the
-main panel shows the large panels of the Panel order list, one after another, with the
-rows and the line limits each panel always had. Cybertron shows every panel Original does.
+the next event, task counts, safety days and sponsor logo do not show with it. The
+main panel plays the rows of the Screen Minimal, one after another, and each panel
+keeps the rows and the line limits it always had. Cybertron shows every panel Original does.
 
-When the style gives another layout than the one on the TV, the layout changes at the next
-page change, in the same move as the look: the frames pull apart and re-form in the new
-layout. The screen does not reload.
+While a Monday row plays, the screen takes the Monday style of the Screen, which is
+Minimal to start with, and goes back to the Screen of the day when the Monday rows
+are over.
+
+When the style gives another layout than the one on the TV, the layout changes in the
+same move as the look: the frames pull apart and re-form in the new layout. The screen
+does not reload.
 
 ## 2. Pick the team
 
-Still in the Look tab of Dashboard Settings, find Team order. It is a list of the
-teams, Prime and then Nova to start with.
+The team changes by the rows of a Screen. In Settings, Screens, open a Screen and click
+B on the map. Each row has a Team. A row with a team other than the one on the banner
+swaps the screen to that team. A row with no team keeps the team that is on the banner.
 
-- Each team in the list takes the screen for a pass of the panels, and then the next
-  team does. Drag a team to change the order. A team that is switched off is left out.
-- One team in the list shows that team all the time.
+- Keep the Prime rows together and the Nova rows together. The screen transforms every
+  time the team changes, so a list that goes Prime, Nova, Prime, Nova transforms four times.
+- A Monday row needs a team. Milestones and Progress can also be Both teams.
 - The screen goes from one team or style to the next in one move: the frames pull apart, the new look
   goes on while they are apart, and they re-form, with the hawk flying to the logo's new place. The
   move is the same for every change, so there is nothing to pick (docs/layouts.md, "The swap").
+  Swap time on A changes how long it takes.
 
 The team sets the name, the number, the logo, the colors, the mirror and the trim
 (the bolts, the cut corners and a few more small things, docs/add-the-nova-team.md). A team
 with Mirror the layout on has the whole screen flipped left to right: the
 columns, the banner and the tag on the ticker change sides. The sidebar layout of
-the theme Neon Prime is not flipped. A swap waits for the end of a pass and
-then everything changes together, so nothing changes in the middle of a panel. The Monday
-cards are always in the Monday style, and only in the Monday pass.
+the theme Neon Prime is not flipped. Everything changes together in one swap, so nothing
+changes in the middle of a panel.
 
 Items that have a Team show only for that team. Items with Both, the countdown, the
 weather, the BAND events and the photos show for every team
@@ -84,7 +90,7 @@ standard layout, when the screen is not flipped.
 
 ## 4. Publish and look at the TV
 
-Click Publish. A change of style, team or pack does not happen in front of people.
+Click Publish. A change of Screen, row or pack does not happen in front of people.
 It waits for the next page change of the large panel, which takes up to a minute.
 
 To see a look first, open the menu next to Publish on Dashboard Settings (the
@@ -98,9 +104,9 @@ both teams (docs/try-it-on-the-mini.md lists every switch).
 
 ## Afterwards
 
-- To go back to the screen as it was, put only Original in Styles by day and only
-  Prime in Team order, and turn the pack rule off, or pick No seasonal pack under Use
-  a theme now.
+- To go back to the screen as it was, pick Original for every day of the Weekday
+  schedule, take the Nova rows and the Monday rows out of the main panel rows of
+  Original, and turn the pack rule off, or pick No seasonal pack under Use a theme now.
 - The team gives its main, accent, background and text colors to the theme
   Hawktimus. The other themes keep their own colors. The plate, neon and second
   bright colors of a team are read by Cybertron and Minimal only.

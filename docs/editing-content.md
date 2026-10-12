@@ -24,7 +24,8 @@ received.
 
 The sidebar is in groups, by how often you touch them. Start here is at the top.
 The group names, such as TASKS, are headings. Daily Agenda, Monday Tasks and Settings
-are folders: click one and its lines open beside it. Each line has an icon.
+are folders, and so are Presentations inside Daily Agenda and Screens inside Settings:
+click one and its lines open beside it. Each line has an icon.
 
 A row in a list reads like the TV: the name or text, then what goes with it, such as
 the subteam and status of a task or the time and first name of a talk. Hidden or
@@ -115,8 +116,11 @@ last step of every change. See "The Start here page" below.
 
 If you are not a coach, leave these alone and ask a coach.
 
-- Settings: a folder with three lines.
+- Settings: a folder with four lines.
   - Dashboard Settings: the settings for the whole screen, described below.
+  - Screens: a folder with three pages, Original, Cybertron and Minimal. Each is what plays
+    on the TV on the days it is picked for: the rows of the main panel, the rows of the side
+    panel and the settings of the banner. See "Screens" below.
   - Look: the colours of the whole screen, and holiday colours for set dates.
     See "Look" below.
   - Teams: the teams the TV can show, each with a name, a number, a logo, seven
@@ -154,7 +158,8 @@ to publish on it. It has five parts, top to bottom:
    change.
 2. A picture of the screen. The boxes A to E are the banner, the main panel, the
    countdown, the side panel and the ticker, drawn in the shape of the screen.
-   Each box names the sidebar items that fill it.
+   Each box names the sidebar items that fill it. The line under it says: Click a
+   letter in Settings, Screens to change what plays there.
 3. The three steps of every meeting: open Daily Agenda or Monday Tasks, make the
    change, click Publish all in the top bar. You edit on Draft, and the screen
    shows Published.
@@ -169,9 +174,8 @@ The buttons try the screen without waiting for a time or for a booked talk:
 - Run presentation test: starts the sample talk with its six sample slides. It
   does what Run presentation test in the same menu does. Run presentations in
   the Presentations tab of Dashboard Settings must be on.
-- Next look now: moves the screen on to the next pass of the look rotation: the next team, or the
-  Monday cards of the team on the screen if it has any. A second press while the Monday cards
-  are up moves past them to the next team.
+- Next look now: moves the main panel on to its next row, whatever that row is. If the next row is
+  for another team, or is a Monday row, the screen swaps as it does when the row comes by itself.
 - Preview competition: shows the competition cards for 2 minutes, with sample
   competition data (docs/frc-feed.md).
 - Preview the screen: opens the screen in a new tab with the sample content, which
@@ -244,8 +248,8 @@ events the panel does not run.
   first on page one, with a small pin after its title. At most three events are
   pinned, and the other places on page one fill by date. This holds when Group
   events by kind is on too.
-- In Panel order (Dashboard Settings, Screen tab) Upcoming events is still one
-  row. Its Show on screen switch and its seconds are for both pages.
+- In the main panel rows of a Screen (Settings, Screens) Upcoming events is still one
+  row. Its seconds are for both pages.
 
 ### The old Events Calendar entries
 
@@ -354,11 +358,10 @@ signing in, and Sanity keeps a document whose id has a dot private.
 
 ## The Monday cards
 
-When a team has tasks from the team board that show on the TV, its pass of the look rotation ends with three cards
-that are drawn from them, in the Monday style (Dashboard Settings, Look tab). A team with none has no Monday pass. The
-cards are the tasks card, the milestones card and the progress card. After the last team there is one more pass, the milestones card and the
-progress card of both teams, when two teams or more have tasks from the board. The cards are not in the Panel order list: they come in the
-Monday pass, and the Panel order list does not control them. Every card counts the same tasks, the ones from the board that show on the TV.
+The cards are drawn from the tasks from the team board that show on the TV. They are three rows of a Screen: Monday: Build team,
+Monday: Milestones and Monday: Progress, each with a team, and the milestones and progress rows can also be Both teams. While a
+Monday row plays the screen is in the Monday style of the Screen. A team with no tasks from the board has nothing to show, so its
+Monday rows are skipped. The older Panel order list never had the cards. Every card counts the same tasks, the ones from the board that show on the TV.
 
 ### Tasks card
 
@@ -385,7 +388,7 @@ counts of at least two days, which the Mini adds once a day. With fewer it says 
 
 ### Cards of both teams
 
-Once in each cycle, after the last team, the milestones card and the progress card show both teams together, with BOTH TEAMS in the chip. Each
+When a milestones row or a progress row has the team Both teams, the card shows both teams together, with BOTH TEAMS in the chip. Each
 row starts with PRIME in gold or NOVA in silver, then the department, and the rows of a department follow each other, Prime and then Nova. The progress
 row has one bar of done, in progress and backlog, and done out of all. The milestones row has the next task with a due date and its date. Up to ten rows
 show, five at a time, and the list moves up by five rows after the card has been held.
@@ -475,8 +478,8 @@ for the people panels (see "Portraits" below):
   added to Studio, not the time it was taken. A photo added while the screen
   is running comes at the start of the next round.
 - Seconds per photo is how long the Photo panel stays up each time it comes
-  round, from 6 to 120, and starts at 16. A Photo row in Panel order, in the
-  Screen tab, that has seconds of its own wins over it. With the row's seconds
+  round, from 6 to 120, and starts at 16. A Photo row of a Screen (Settings,
+  Screens) that has seconds of its own wins over it. With the row's seconds
   empty, the Photo panel follows Seconds per photo and not Seconds per page.
   With more than one photo the panel shares that time between them, evenly,
   and no photo is up for less than 8 seconds. Three photos at 30 seconds are
@@ -678,12 +681,11 @@ columns on the right. The subteam's name is the title of the page.
   the right end of the header: PRIME or NOVA, or BOTH TEAMS when the subteam is for both teams. A long name is drawn at 60 px
   when it does not fit beside the chip. The Leadership and Team Leads headers have the chip too.
 
-To put the panel on the screen, open Dashboard Settings, then the Screen tab,
-then "Panel order". A Studio set up before this panel existed has a saved list
-without it, and a saved list is shown as it is, so the panel stays off until you
-add it. Use "Add item", pick Subteam roster, and drag the row to where you want
-it in the list. A row that is already there only needs "Show on screen" turned
-on. Click Publish.
+To put the panel on the screen, open Settings, then Screens, pick a Screen and
+click B on the map. A Screen has only the rows that are in its list, so the panel
+stays off until you add it. Use "Add item", pick Subteam roster, pick the team if
+the panel is for one team, and drag the row to where you want it in the list.
+Click Publish.
 
 ## Teams
 
@@ -705,18 +707,44 @@ Publish. The fields:
 - Glow: a switch for a soft glow round the neon lines. It starts off.
 - Mirror the layout: off to start with. On, the whole screen is flipped left to
   right while this team is showing.
-- Trim: eight choices in a box, each one of two, such as round rivets in place of
+- Trim: seven choices in a box, each one of two, such as round rivets in place of
   hex nuts or the top right and bottom left corners cut in place of the top left
   and bottom right. The first choice of each is how Prime looks, and each starts
-  on it. docs/add-the-nova-team.md has the list.
-- Active: on to start with. Off leaves the team out of Team order and out of the
-  Team choice on items.
+  on it. docs/add-the-nova-team.md has the list. The box also has Outlined name,
+  a switch that is off to start with: off draws the team name solid, on draws
+  outlined letters with a line under them. The older choice Team name look is
+  hidden and the screen does not read it.
+- Active: on to start with. Off leaves the team out of the team pickers of a Screen
+  and out of the Team choice on items.
 - Order: a lower number comes first. It starts at 10.
 
-Which team is on the screen is Team order in the Look tab of Dashboard Settings
-(see below). The two starting teams, Hawktimus Prime and Hawktimus Nova, are in
+Which team is on the screen is set by the team of the rows of a Screen
+(see "Screens" below). The two starting teams, Hawktimus Prime and Hawktimus Nova, are in
 `docs/seed/teams.ndjson`, and docs/add-the-nova-team.md has the import and the
 steps. With no Teams at all the TV shows the built-in Prime team, as it always has.
+
+## Screens
+
+Settings, Screens has three pages, Original, Cybertron and Minimal. Each is one document that always
+exists: nothing adds, copies or deletes one. A page opens on a map of the screen with the letters of Start
+here. Click a letter or its box to open that part below the map. Editing, Prime or Nova, above the map only
+changes which team document A opens. The detail for coaches is in docs/coaches-guide.md, "Screens".
+
+- A Banner: a button that opens the team document of the team in Editing. Name effect every (minutes, from
+  1 to 240, 10 to start with), Flying hawk every (minutes, from 1 to 240, 15 to start with) and Swap time
+  (seconds, from 0.5 to 3, 1.25 to start with).
+- B Main panel: the rows. Each row has a panel, a team and, if you want, seconds from 6 to 120. The panel is one
+  of the large panels or one of three Monday rows. A team shows only when the panel can have one: leave it on Keep
+  the team on the screen, or pick a team. A Monday row needs a team, and Milestones and Progress can be Both
+  teams. Keep the Prime rows together and the Nova rows together. The screen transforms every time the team changes.
+  Monday style is the style while a Monday row plays.
+- C Countdown: the title and dates of Kickoff and Rollout, shown from Dashboard Settings, Countdown tab. They are
+  the same on every Screen and for both teams.
+- D Side panel: the rows of the small panels, with no team. Minimal has no side panel, so it has no D.
+- E Ticker: a link that opens Tips and News. The ticker shows every published tip and news item in order.
+
+The first time a Screen is opened with no rows, it fills them from the old Panel order, the large rows for each
+team and then the Monday rows of the team, and the panels for both teams last (docs/layouts.md, "The Screens").
 
 ## Order
 
@@ -803,34 +831,28 @@ problem would touch.
   new field.
 - Alert: turn it on to cover the whole screen with a headline and a message.
   Turn it off to take it down, or set "Take down at" to do it automatically.
-- Panels: which panels appear, in what order and for how long. In Dashboard
-  Settings open the Screen tab. "Panel order" is one list with every panel in
-  it, large and small: point at the dots on the left of a row, then drag the row
-  up or down. Each row says Large panel or Small panel under its name. The large
-  panels show in the order they have in the list, top first, and the small panels
-  too, each on its own timer, and the order applies on the next page change. Turn
-  off "Show on screen" to skip a panel. A page saved before the list existed
-  shows it already filled in, from the two older lists, "Large panels" and "Small
-  panels", which are hidden now. "Seconds per page" is just above the list. It is how long a large panel stays up, from 8 to 120, and the starting
+- Seconds: how long a page stays up. In Dashboard Settings open the Screen tab.
+  "Seconds per page" is how long a large panel stays up, from 8 to 120, and the starting
   value is 20. A small panel stays three quarters as long and a ticker line one
   and a half times as long, so at 20 seconds a small panel stays 15 and a
-  ticker line 30. A row can have seconds of its own, from 6 to 120. Leave the
+  ticker line 30. A row of a Screen can have seconds of its own, from 6 to 120. Leave the
   field empty and the row follows "Seconds per page" (the Photo row follows
   "Seconds per photo" lower down in this tab). The ticker has its own
   "Seconds per ticker line" that works the same way. A row that already has
   seconds keeps them until you clear the field. Speed is applied after all of
   this, so Slow makes every page stay longer than the number you typed. This tab
   also has how many days finished tasks stay, and the date the safety day count
-  starts. If you delete every row of the list, the screen goes back to the two
-  older lists, so to show nothing, turn off "Show on screen" on each row. While
-  the theme Neon Prime is on there is no small frame, so the small panels in the
-  list are not used and the large panels are the rotation of the one big frame.
+  starts. Which panels appear and in what order is not here any more: it is the
+  rows of a Screen (Settings, Screens). The old list "Panel order" and its two older
+  lists are hidden and keep what was saved in them.
+  While the theme Neon Prime is on there is no small frame, so the side panel rows
+  are not used and the large panels are the rotation of the one big frame.
   In Original and Cybertron the small frame under the countdown is never empty.
-  It follows the small rows of the list, and a row that is off stays off. When none
-  of its rows has anything to show, it shows another small panel that has
+  It follows the side panel rows of the Screen. When none of its rows has anything to
+  show, it shows another small panel that has
   content, even one that has no row in the list, and when no small panel has
-  anything it shows the team's logo, number, name and school. Turning off every
-  small row therefore shows that team panel and not an empty frame.
+  anything it shows the team's logo, number, name and school. Taking out every
+  side panel row therefore shows that team panel and not an empty frame.
 - Photos: how the Photo panel works. "Photo order" is Random or Newest first,
   "Seconds per photo" is from 6 to 120 and starts at 16, and "Photo fit" is Fill
   the frame or Show the whole photo. See "Photos" above.
@@ -848,32 +870,27 @@ problem would touch.
 - Note: the line at the top points to the Look page in the sidebar, which sets
   the colors, the seasonal packs and the time zone. The Look page has a line
   that points back here.
-- Styles by day: the styles the screen goes through, one for each day, in this order and then over
-  again. Original and Cybertron to start with, so the screen is in Original one day and in Cybertron
-  the next. Original is the screen as it is now, in the layout of its theme. Cybertron has the same
-  layout, drawn in plates in the team's body color with the team's metal. Minimal has a banner across the top, a thin side
+- Weekday schedule: a picker for each day, Monday to Sunday, that chooses the Screen
+  that plays that day. Original on Monday, Wednesday, Friday and Sunday and Cybertron on
+  Tuesday, Thursday and Saturday to start with, so the screen is in Original one day and in
+  Cybertron the next. Minimal is not scheduled to start with. Original is the screen as it is now, in
+  the layout of its theme. Cybertron has the same layout, drawn in plates in the team's body color with
+  the team's metal. Minimal has a banner across the top, a thin side
   column and one main panel, whatever the theme says (docs/layouts.md, "Styles"). The day starts at
-  midnight in the Time zone on the Look page, and the style of the day is picked at the first
-  change of look after midnight, or when the screen starts, so a screen that restarts is in the
-  same style. One style in the list holds all the time. If the list is empty, the screen uses the old
-  Style setting, which is hidden and keeps what was saved in it. A page published before the list
-  existed has it empty, so the screen keeps its style until someone fills the list in.
-- Monday style: the style while the Monday cards of a team are on the screen. Minimal to start with.
-  A team with no Monday cards skips them.
-- Team order: the teams, in the order they take the screen. Prime and then Nova to start with. Drag to
-  change the order. Only teams that are switched on count. One team holds all the time. When the team
-  changes, the name, the number, the logo, the colors and the mirror change together. If the list
-  is empty, the screen uses the old Team mode setting, which is hidden too, with Minutes for each team,
-  and so it does on a page published before the list existed.
-- A change of look is one move: the frames pull apart, the new look goes on, and they re-form. It waits
-  until the large panel has been through its panels once, and never happens while an alert, an announcement
-  or a talk has the screen. A change to or from Minimal changes the layout in the same move, and the screen does not reload
-  (docs/layouts.md, "The swap").
-  The old setting How the look changes is hidden and the screen ignores it.
-  To see the next look now, click Next look now on the Start here page. To see a style or a team
+  midnight in the Time zone on the Look page, and the Screen of the day is picked when the screen
+  starts and at the first row change after midnight, so a screen that restarts plays the same
+  Screen. What plays on a Screen is set in Settings, Screens (see "Screens" below).
+- The old Styles by day, Monday style and Team order are hidden and keep what was saved in
+  them. The Monday style is a field of each Screen now, copied from the old one the first time the
+  Screen was opened. How the look changes is hidden too, and the screen ignores it.
+- A change of look is one move: the frames pull apart, the new look goes on, and they re-form. It
+  comes when the next row of the main panel is for another team, or a Monday row begins or ends, and
+  never happens while an alert, an announcement or a talk has the screen. A change to or from Minimal changes
+  the layout in the same move, and the screen does not reload (docs/layouts.md, "The swap").
+  To see the next row now, click Next look now on the Start here page. To see a style or a team
   for 2 minutes without saving anything, open the menu next to Publish (the three dots) and click Preview
   Prime, Preview Nova, Preview Cybertron or Preview Minimal, or add `?style=cybertron`, `?style=minimal`
-  or `?team=nova` to the address, which stops the rotation on that page (docs/switch-the-look.md,
+  or `?team=nova` to the address, which stops the rows on that page (docs/switch-the-look.md,
   docs/hidden-transitions.md, "Preview a look").
 - Logo: everything the logo and the team name do. "Logo
   animations" is the master switch, and comes first. Turn it off and nothing in
@@ -1035,7 +1052,7 @@ Sanity, and the screen draws it.
 - One switch for each card, all on to start with: Season timeline, Last season at
   a glance, Live rank, Next match, Results strip, Alliance board and District
   points. A card that is off is never shown, except in Preview competition.
-- The cards are not in Panel order. The mode, the switches and the data decide
+- The cards are not rows of a Screen. The mode, the switches and the data decide
   when they come. Preview competition on the Start here page shows all seven
   for 2 minutes on made-up data.
 - The data itself is a document the Mini writes, FRC data from the Mini. It has no
@@ -1104,8 +1121,7 @@ Hawktimus and the placeholder Alternate
 change colours only: nothing moves or changes size. One theme, Neon Prime, also
 changes where things sit: a column on the left with the team name, the clock,
 the countdown and the logo, one big frame on the right and the ticker under it.
-It has no small frame, so the small panels in the Panel order list in Dashboard
-Settings are not used while it is on (the large panels are the whole rotation), and it has
+It has no small frame, so the side panel rows of a Screen are not used while it is on (the large panels are the whole rotation), and it has
 frames of dark steel whatever Frame metal says. When the screen changes to or
 from Neon Prime the layout changes at the next page change of the large frame, in the same move
 as a change of style, and the screen does not reload.

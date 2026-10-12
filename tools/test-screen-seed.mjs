@@ -14,6 +14,7 @@ const seed = await import(pathToFileURL(studioFolder + 'screen-seed.js').href);
 const panelLists = await import(pathToFileURL(studioFolder + 'screen-panels.js').href);
 const ids = await import(pathToFileURL(studioFolder + 'screen-ids.js').href);
 const registry = await import(pathToFileURL(dashboardFolder + 'registry.js').href);
+const config = await import(pathToFileURL(dashboardFolder + 'config.js').href);
 
 const { seedRows, seedScreen, currentOrder, needsSeed, withKeys } = seed;
 const { teamKindOf, teamChoices, teamProblem, teamWord, largePanels, smallPanels, mondayPanels, teamSpecificPanels } = panelLists;
@@ -222,6 +223,12 @@ test('the words for a team in a list line', () => {
   assert.equal(teamWord('both'), 'Both teams');
   assert.equal(teamWord(''), '');
   assert.equal(teamWord(undefined), '');
+});
+
+test('the starting values of the seeding are the ones in dashboard/config.js', () => {
+  assert.equal(seed.startingMondayStyle, config.defaultSettings.mondayStyle);
+  assert.equal(seed.builtInTeam, config.primeTeam.code);
+  assert.deepEqual(ids.screenStyles, config.styles);
 });
 
 test('the style of a Screen comes from its id, with or without drafts. in front', () => {

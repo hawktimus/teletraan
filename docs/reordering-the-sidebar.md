@@ -5,8 +5,8 @@ The list on the left of the Studio is one list in `studio/structure.js`, called
 order, move a line.
 
 The sidebar reads like this. A heading in capitals is a divider with a title, not
-a folder. Daily Agenda, Monday Tasks and Settings are folders, and Presentations is a folder
-inside Daily Agenda:
+a folder. Daily Agenda, Monday Tasks and Settings are folders, Presentations is a folder
+inside Daily Agenda, and Screens is a folder inside Settings:
 
     Start here
     TASKS
@@ -30,6 +30,10 @@ inside Daily Agenda:
     COACHES ONLY
       Settings
         Dashboard Settings
+        Screens
+          Original
+          Cybertron
+          Minimal
         Look
         Teams
       Extra panels
@@ -55,12 +59,15 @@ inside Daily Agenda:
   which both lists of Monday Tasks do, because the Mini makes the tasks.
 - `page` opens the one document of its type, which has a fixed id: Dashboard
   Settings and Look. A page opens the document itself, with no list of one in
-  between. Demo is the third page that exists once, and it has no line.
+  between. Demo is the third page that exists once, and it has no line. The three
+  Screens are three pages of one type, `screen`, each with an id of its own:
+  `screen-original`, `screen-cybertron` and `screen-minimal` (`studio/screen-ids.js`).
+  Nothing can copy, delete or add one, and the New menu does not offer the type.
 - `group` is a folder. It opens a list of the lines under `entries`, one line
   each. A folder holds lists and pages, and one more folder, which holds lists
-  only. Daily Agenda holds Agenda items, Presentations (Upcoming and Past) and
+  or pages. Daily Agenda holds Agenda items, Presentations (Upcoming and Past) and
   Meeting days. Monday Tasks holds On the TV and Hidden. Settings holds
-  Dashboard Settings, Look and Teams.
+  Dashboard Settings, Screens (Original, Cybertron and Minimal), Look and Teams.
 - `component` opens a page that is not a document. `component` is a plain
   function that draws it. Start here is `StartHere` in `studio/start-here.js`
   and Calendars is `CalendarsView` in `studio/calendars-view.js`. A component

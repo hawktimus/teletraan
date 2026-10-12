@@ -122,7 +122,7 @@ large frame and the small frame, and the ticker. Neon Prime has the sidebar
 layout: a strip across the top with the team name on one line, under it a column on
 the left with the clock, countdown and logo, and one big frame on the right, and the
 ticker across the whole bottom. **It has no small frame**, so the
-small panels in the Panel order list are not shown while it is on, and the large
+the side panel rows of a Screen are not shown while it is on, and the large
 panels are the rotation of the one frame.
 
 Put `layout: 'sidebar'` in the line in `dashboard/themes/registry.js` and in the

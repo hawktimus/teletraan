@@ -13,8 +13,9 @@ shows. Publish all is the last step of every change.
 ## The screen
 
 The Start here page draws the screen as five boxes, A to E. Each box lists the
-sidebar items that fill it. Some looks of the screen leave a box out or move it,
-and a coach sets the looks. The boxes and what feeds them stay the same.
+sidebar items that fill it. Some Screens leave a box out or move it. A coach
+chooses which Screen plays each day and which panels play in each box, in
+Settings, Screens. The boxes and what feeds them stay the same.
 
 | Box | Area | What it shows | Where you change it |
 |-----|------|---------------|---------------------|
@@ -22,7 +23,7 @@ and a coach sets the looks. The boxes and what feeds them stay the same.
 | B | Main panel | The big panel. It takes turns showing the tasks, the agenda, the events, the team leads, the leadership, the sponsors, the photos and the extra panels | Monday Tasks, Daily Agenda, Calendars, Team leads, Leadership, Sponsors, Photos, Extra panels |
 | C | Countdown | The time left to Kickoff, then to Rollout | Dashboard Settings, which is for coaches |
 | D | Side panel | The small panel under the countdown. It takes turns showing the next event, the task counts, the safety days, a sponsor logo and the forecast. When none of them has anything to show it shows the team's logo, number and name | Monday Tasks, Sponsors, Calendars, Dashboard Settings |
-| E | Ticker | One tip, news item, reminder or sponsor thanks at a time along the bottom | Tips and News, Sponsors |
+| E | Ticker | The ticker is Tips and News: every published tip, news item and reminder, one at a time along the bottom. A sponsor's thank you line comes with them | Tips and News, Sponsors |
 
 ## Every meeting
 

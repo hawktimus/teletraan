@@ -1871,6 +1871,8 @@ function checkStartHere() {
   need(problems, picture && picture.props.viewBox === '0 0 ' + size.width + ' ' + size.height, 'the picture should be an inline svg drawn on the 1920 by 1080 of the screen');
   need(problems, size.width * 9 === size.height * 16, 'the picture should have the 16 to 9 shape of the screen');
   need(problems, picture && picture.props.role === 'img' && String(picture.props['aria-label'] || '') !== '', 'the picture should have role img and a label for a screen reader');
+  const caption = nodesWhere(page, node => node.type === 'figcaption').map(wordsIn)[0] || '';
+  need(problems, parts.clickLine === 'Click a letter in Settings, Screens to change what plays there.' && caption.indexOf(parts.clickLine) !== -1, 'the line under the picture should say: Click a letter in Settings, Screens to change what plays there.');
   const shown = picture ? nodesWhere(picture, node => node.type === 'text').map(wordsIn) : [];
   need(problems, shown.filter(text => /^[A-Z]$/.test(text)).join('') === 'ABCDE', 'the picture should have the letters A to E, in order, one for each area. It has: ' + shown.filter(text => /^[A-Z]$/.test(text)).join(''));
   need(problems, parts.areas.map(area => area.letter + ' ' + area.name).join() === startAreas.join(), 'the picture should have the areas ' + startAreas.join(', '));
@@ -4534,9 +4536,8 @@ function checkPanelOrder() {
 
   const order = at('order');
   need(problems, order && order.type === 'array' && order.title === 'Panel order', 'rotation.order should be a list titled Panel order');
-  need(problems, order && !order.hidden, 'rotation.order should show in the form');
+  need(problems, order && order.hidden === true && /^Not used any more\./.test(order.description || ''), 'rotation.order should be hidden but stay in the schema, with a description that begins Not used any more: the rows of the Screens replace it');
   need(problems, order && !constraintNamed(constraintsOf(order), 'required') && !constraintNamed(constraintsOf(order), 'min'), 'rotation.order should have no rules: a page saved before it existed has none, and must still publish');
-  need(problems, order && /Drag/.test(order.description || ''), 'the rotation.order description should say to drag');
 
   // One list with every panel the registry has for the large and the small frame, the large panels first. The Monday
   // cards are not in it: they are the Monday block of the look rotation
@@ -5319,7 +5320,8 @@ function checkLookRotation() {
       need(problems, at(name) && at(name).hidden === true, 'lookSwap should be hidden but stay in the schema: every change of look is one swap now, and a saved value is kept');
       need(problems, /^No longer used/.test((at(name) && at(name).description) || ''), 'the lookSwap description should begin by saying that it is no longer used');
     } else {
-      need(problems, at(name) && !at(name).hidden, name + ' should show in the form');
+      need(problems, at(name) && at(name).hidden === true, name + ' should be hidden but stay in the schema: the Screens replace it, and a saved value is kept');
+      need(problems, /^Not used any more\./.test((at(name) && at(name).description) || ''), 'the ' + name + ' description should begin Not used any more');
     }
     need(problems, !constraintNamed(rulesOf(at(name)), 'required'), name + ' should not be required: an empty one gives the choice back to the old setting, and the page must still publish');
     need(problems, rulesOf(at(name)).some(rule => rule.name === 'error' && rule.args[0]) || (at(name).of || []).some(member => constraintsOf(member).some(rule => rule.name === 'error' && rule.args[0])), name + ' has rules and no error message in plain words');
@@ -5373,7 +5375,9 @@ function checkLookRotation() {
 
   // The notes say what the tab does
   const cycle = at('cycleNote');
-  need(problems, cycle && /cycle/.test(cycle.description || '') && /Monday/.test(cycle.description || ''), 'the second note on the Look tab should say what a cycle is, and mention the Monday cards');
+  need(problems, cycle && /Settings, Screens/.test(cycle.description || '') && /swaps/.test(cycle.description || ''), 'the second note on the Look tab should say that the rows are set in Settings, Screens, and that the screen swaps when the team changes');
+  need(problems, at('lookNote') && /Which Screen plays on each day/.test(at('lookNote').description || ''), 'the first note on the Look tab should say that it sets which Screen plays on each day');
+  need(problems, at('screenSchedule') && !at('screenSchedule').hidden, 'screenSchedule should show in the form');
 
   // The sample content carries the four settings, with values the dashboard accepts
   const sample = world.sample.settings;
@@ -5442,8 +5446,6 @@ function checkEventPages() {
 // Prime the first choice of each and Nova the values of the work order. The first choice has no class, and the others
 // have the one the dashboard puts on the page: plain lower case words with hyphens, and no two the same.
 const trimOfNova = { bolts: 'round', cornerCut: 'tr-bl', headerNotch: 'slant', grid: 'dots', logoPose: 'flight', nameStyle: 'outline', tickerLabel: 'bar', countAccent: 'neon' };
-// Outlined name replaces the Team name look: both starting teams draw the name solid
-const solidInSeed = { nameStyle: 'solid' };
 
 function checkTeamTrim() {
   const problems = [];
@@ -5491,17 +5493,25 @@ function checkTeamTrim() {
   names.forEach(name => {
     const values = Object.keys(config.teamTrim[name]);
     need(problems, docs['team-prime'] && docs['team-prime'][name] === values[0], 'team-prime in docs/seed/teams.ndjson should have ' + name + ' ' + values[0]);
-    const nova = solidInSeed[name] || trimOfNova[name];
-    need(problems, docs['team-nova'] && docs['team-nova'][name] === nova, 'team-nova in docs/seed/teams.ndjson should have ' + name + ' ' + nova);
+    need(problems, docs['team-nova'] && docs['team-nova'][name] === trimOfNova[name], 'team-nova in docs/seed/teams.ndjson should have ' + name + ' ' + trimOfNova[name]);
   });
 
   // and so do the two teams of the sample content
   names.forEach(name => {
     const sample = world.sample.teams.reduce((all, team) => Object.assign(all, { [team.code]: team }), {});
     need(problems, sample.prime && sample.prime[name] === config.primeTeam[name], 'the Prime team of the sample content should have ' + name + ' ' + config.primeTeam[name]);
-    if (!solidInSeed[name]) need(problems, sample.nova && sample.nova[name] === trimOfNova[name], 'the Nova team of the sample content should have ' + name + ' ' + trimOfNova[name]);
+    need(problems, sample.nova && sample.nova[name] === trimOfNova[name], 'the Nova team of the sample content should have ' + name + ' ' + trimOfNova[name]);
   });
+  // Team name look is not read any more, so Nova keeps its stored value; the switch Outlined name is off on both teams, which draws the name solid
   ['team-prime', 'team-nova'].forEach(id => need(problems, docs[id] && docs[id].outlinedName === false, id + ' in docs/seed/teams.ndjson should have outlinedName false: both starting teams draw the name solid'));
+
+  // Team name look is hidden and kept, and Outlined name, a switch in the Trim box that starts off, replaces it
+  const look = fieldAt('team.nameStyle');
+  need(problems, look && look.hidden === true && /^Not used any more\./.test(look.description || ''), 'team.nameStyle should be hidden but stay in the schema, with a description that begins Not used any more');
+  const outlined = fieldAt('team.outlinedName');
+  need(problems, outlined && outlined.type === 'boolean' && outlined.initialValue === false && outlined.fieldset === 'trim' && !outlined.hidden, 'team.outlinedName should be a switch in the Trim box that starts off');
+  need(problems, outlined && outlined.description === 'Off draws the name solid' && !constraintNamed(outlined ? constraintsOf(outlined) : [], 'required'), 'the team.outlinedName description should be: Off draws the name solid. It is optional');
+  need(problems, world.dashboard.primeTeam.outlinedName === undefined || world.dashboard.primeTeam.outlinedName === false, 'the built-in Prime team should draw its name solid');
   return problems;
 }
 
@@ -6210,6 +6220,13 @@ function checkScreenType() {
   const actions = ['publish', 'discardChanges', 'delete', 'duplicate', 'unpublish'].map(action => ({ action: action }));
   need(problems, world.config.document.actions(actions, { schemaType: 'screen' }).map(item => item.action).join() === 'publish,discardChanges', 'a Screen should have these actions: publish,discardChanges. Nothing copies it or takes it away');
   need(problems, world.config.document.newDocumentOptions([{ templateId: 'screen' }, { templateId: 'plan' }], { creationContext: { type: 'document' } }).map(item => item.templateId).join() === 'plan', 'the New menu should not offer a Screen, not even while a document is open');
+
+  // the fields the Screens replace: hidden, kept in the schema with their starting values, and described as not used
+  [['dashboardSettings.rotation.order', true], ['dashboardSettings.dailyStyles', true], ['dashboardSettings.mondayStyle', true], ['dashboardSettings.teamOrder', true], ['team.nameStyle', false]].forEach(entry => {
+    const field = fieldAt(entry[0]);
+    need(problems, field && field.hidden === true && /^Not used any more\./.test(field.description || ''), entry[0] + ' should be hidden, kept in the schema, and described as Not used any more');
+    need(problems, !entry[1] || (field && field.initialValue !== undefined), entry[0] + ' should keep its starting value');
+  });
 
   // the weekday schedule: Monday to Sunday, each one of the Screens, and the starting week of config.js
   const schedule = fieldAt('dashboardSettings.screenSchedule');
