@@ -91,7 +91,8 @@ export function planShots(panels) {
   screens.forEach(screen => shots.push({ name: 'countdown-' + screen, kind: 'still', url: address({ panel: 'countdown', screen: screen }) }));
 
   // The swaps run on the moving screen, so these two have no still=1. previewRequest (core/preview.js) starts them
-  const moving = '/index.html?sample=1&motion=full&team=prime&style=original';
+  // They have no team or style in the address, because those win over a preview (takeSwap puts Prime and Original in the sample settings), and night=off because the wall clock may be inside the night hours
+  const moving = '/index.html?sample=1&motion=full&night=off';
   shots.push({ name: 'swap-team', kind: 'swap', url: moving, request: 'nova', frames: swapTimes });
   shots.push({ name: 'swap-style', kind: 'swap', url: moving, request: 'cybertron', frames: swapTimes });
 
@@ -170,15 +171,17 @@ async function takeSwap(page, base, shot, folder, limits, log) {
   await page.route('**/data/sample/content.json', async route => {
     const response = await route.fetch();
     const content = await response.json();
-    content.settings = Object.assign({}, content.settings, { previewRequest: request });
+    const allOriginal = { monday: 'original', tuesday: 'original', wednesday: 'original', thursday: 'original', friday: 'original', saturday: 'original', sunday: 'original' };
+    content.settings = Object.assign({}, content.settings, { teamMode: 'prime', screenSchedule: allOriginal, previewRequest: request });
     await route.fulfill({ response: response, json: content });
   });
   await page.addInitScript(() => {
+    // A timer and not an observer: this script runs before the page has a root element to watch
     window.__swapStartedAt = 0;
-    new MutationObserver(() => {
+    setInterval(() => {
       const world = document.getElementById('world');
       if (world && world.hasAttribute('data-pieces') && !window.__swapStartedAt) window.__swapStartedAt = performance.now();
-    }).observe(document.documentElement, { attributes: true, subtree: true, attributeFilter: ['data-pieces'] });
+    }, 20);
   });
 
   await page.goto(base + shot.url, { waitUntil: 'load' });
@@ -214,7 +217,7 @@ async function takePlate(page, base, shot, file, limits) {
 // Runs the plan. playwright is the module (or a stand-in): { chromium: { launch() } }. Resolves to
 // { written: [file], skipped: [{ name, reason }], failed: [{ name, reason }] }.
 export async function runShots(options) {
-  const limits = Object.assign({ drawMs: 20000, settleMs: 500, swapMs: 30000 }, options.limits);
+  const limits = Object.assign({ drawMs: 20000, settleMs: 500, swapMs: 90000 }, options.limits);
   const log = options.log || (() => {});
   const result = { written: [], skipped: [], failed: [] };
 

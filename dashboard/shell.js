@@ -171,6 +171,9 @@ async function run() {
     // Alerts and announcements do not need the weather or events, so they
     // start looking at the clock at once. An announcement must never be
     // missed because the screen was still loading.
+    // The announcement bar can be asked for on a held panel (?panel=tasks&notice=1), which is how the screenshot tool draws it
+    if (params.get('show') && params.has('notice')) startOptional('./core/notice-run.js', module => module.startNoticeRunner(getContent));
+
     if (!params.get('show') && !stress) {
       startTakeovers(getContent);
 
