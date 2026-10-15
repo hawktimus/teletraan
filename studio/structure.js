@@ -62,7 +62,7 @@ import { TokenIcon } from '@sanity/icons/Token';
 import { UsersIcon } from '@sanity/icons/Users';
 import { StartHere } from './start-here.js';
 import { CalendarsView } from './calendars-view.js';
-import { MondayBoardsView } from './monday-boards-view.js';
+import { MondayBoardsTabs } from './preview-panels-view.js';
 import { screenType, screenStyles, screenTitles, screenIdOf } from './screen-ids.js';
 
 // Pages that exist once. Each is a single document with a fixed id.
@@ -147,7 +147,7 @@ export const sidebarEntries = [
       { kind: 'list', title: 'Hidden', icon: EyeClosedIcon, id: 'tasksHidden', type: 'task', sort: byBoard, thenBy: oldestFirst, filter: tasksHidden, add: [] },
     ],
   },
-  { kind: 'component', title: 'Monday Boards', id: 'mondayBoards', icon: ThListIcon, component: MondayBoardsView, children: tasksOfBoard },
+  { kind: 'component', title: 'Monday Boards', id: 'mondayBoards', icon: ThListIcon, component: MondayBoardsTabs, children: tasksOfBoard },
   { kind: 'list', title: 'Tips and News', icon: BulbOutlineIcon, type: 'tipOrNews', sort: byOrder, add: ['newTip'] },
   { kind: 'divider', title: 'EVENTS' },
   { kind: 'component', title: 'Calendars', id: 'calendars', icon: SyncIcon, component: CalendarsView },

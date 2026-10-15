@@ -515,7 +515,7 @@ function iconImportsOf(source) {
 
 function makeSandbox() {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-studio-'));
-  ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'calendars-view.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'publish-all.js', 'publish-all-tool.js', 'team-input.js', 'note-field.js', 'show-on-tv-input.js', 'status-input.js', 'frc-status-input.js', 'monday-status-input.js', 'monday-pickers.js', 'time-text.js', 'calendars-view-parts.js', 'monday-boards-view.js', 'monday-boards-parts.js', 'panel-order-input.js', 'add-templates.js', 'screen-ids.js', 'screen-panels.js', 'screen-seed.js', 'screen-parts.js', 'screen-map.js', 'screen-context.js', 'screen-fields.js', 'screen-input.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
+  ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'calendars-view.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'publish-all.js', 'publish-all-tool.js', 'team-input.js', 'note-field.js', 'show-on-tv-input.js', 'status-input.js', 'frc-status-input.js', 'monday-status-input.js', 'monday-pickers.js', 'time-text.js', 'calendars-view-parts.js', 'monday-boards-view.js', 'monday-boards-parts.js', 'panel-order-input.js', 'add-templates.js', 'screen-ids.js', 'screen-panels.js', 'screen-seed.js', 'screen-parts.js', 'screen-map.js', 'screen-context.js', 'screen-fields.js', 'screen-input.js', 'preview-panels.js', 'panel-preview.js', 'row-preview-input.js', 'preview-panels-view.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
     fs.cpSync(path.join(here, name), path.join(folder, name), { recursive: true });
   });
   fs.writeFileSync(path.join(folder, 'package.json'), JSON.stringify({ type: 'module' }));
@@ -6030,7 +6030,7 @@ function checkMondayBoardsPage() {
   const now = new Date('2026-10-09T15:00:00.000Z');
   const ago = minutes => new Date(now.getTime() - minutes * 60000).toISOString();
 
-  need(problems, line && line.kind === 'component' && line.component === view.MondayBoardsView && typeof line.children === 'function', 'the Monday Boards line of the sidebar should open MondayBoardsView and give it the function that builds the tasks of a board');
+  need(problems, line && line.kind === 'component' && line.component === world.previewPanelsView.MondayBoardsTabs && typeof line.children === 'function', 'the Monday Boards line of the sidebar should open MondayBoardsTabs (the Boards tab is MondayBoardsView) and give it the function that builds the tasks of a board');
   need(problems, typeof view.boardsPage === 'function' && typeof parts.readBoardsPage === 'function', 'the Monday Boards files should export boardsPage and readBoardsPage');
 
   // Choose boards goes to the board rows, which sit on the Monday tab
@@ -6620,6 +6620,7 @@ async function main() {
     world.calendarsPartsSource = fs.readFileSync(path.join(here, 'calendars-view-parts.js'), 'utf8');
     world.mondayBoardsParts = await load(path.join(folder, 'monday-boards-parts.js'));
     world.mondayBoardsView = await load(path.join(folder, 'monday-boards-view.js'));
+    world.previewPanelsView = await load(path.join(folder, 'preview-panels-view.js'));
     world.mondayBoardsViewSource = fs.readFileSync(path.join(here, 'monday-boards-view.js'), 'utf8');
     world.mondayBoardsPartsSource = fs.readFileSync(path.join(here, 'monday-boards-parts.js'), 'utf8');
     world.calendarStatusScript = fs.readFileSync(path.join(here, '..', 'deploy', 'scripts', 'calendar-status.sh'), 'utf8');

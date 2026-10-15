@@ -161,8 +161,14 @@ export function start(options) {
   setMotion(options.motion);
   setSpeed(options.speed || 'normal');
   page.dataset.draw = options.draw === 'fade' ? 'fade' : 'stroke';
+  if (options.still) return; // the still preview draws one picture and holds it (core/still.js)
   secondClock.start();
   startLookingAtEffects();
+}
+
+// One tick of the clock, for the still preview: the time is drawn once and then holds
+export function tickOnce() {
+  secondClock.tickOnce();
 }
 
 // 'full', 'calm' or 'none'. Anything else is ignored, because a wall

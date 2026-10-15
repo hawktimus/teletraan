@@ -36,16 +36,16 @@ export function makeSecondTimer(clock) {
     listeners.push({ listener: listener, element: element || null });
   }
 
-  function tick() {
+  function tick(once = false) {
     const nowMs = real.now();
 
     // Set the next tick first, so a listener that fails cannot stop the clock
-    real.setTimeout(tick, msToNextSecond(nowMs));
+    if (!once) real.setTimeout(tick, msToNextSecond(nowMs));
 
     // A tick that came before the second changed (a timer that woke early)
     // has nothing to tell anyone
     const second = Math.floor(nowMs / 1000);
-    if (second === lastSecond) return;
+    if (second === lastSecond && !once) return;
     lastSecond = second;
 
     const now = new Date(nowMs);
@@ -70,5 +70,10 @@ export function makeSecondTimer(clock) {
     tick();
   }
 
-  return { onSecond: onSecond, start: start };
+  // One tick and no more, for the still preview (core/still.js): the clock is drawn once and holds
+  function tickOnce() {
+    tick(true);
+  }
+
+  return { onSecond: onSecond, start: start, tickOnce: tickOnce };
 }

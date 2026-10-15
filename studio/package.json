@@ -7,8 +7,11 @@
     "node": ">=22.12"
   },
   "scripts": {
+    "predev": "node scripts/copy-dashboard.mjs",
     "dev": "sanity dev",
+    "prebuild": "node scripts/copy-dashboard.mjs",
     "build": "sanity build",
+    "predeploy": "node scripts/copy-dashboard.mjs",
     "deploy": "sanity deploy"
   },
   "dependencies": {
