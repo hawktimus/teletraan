@@ -111,6 +111,17 @@ test('a board entry keeps where its status comes from as it was saved, and nothi
   assert.deepEqual(read(dashboardFolder), [], 'no dashboard file names the choice: the Mini reads it');
 });
 
+test('the two Monday blocks and the read interval: the Mini reads the blocks and the screen keeps only the minutes', () => {
+  assert.equal(config.defaultSettings.mondayEveryMinutes, 30);
+  assert.equal(withDefaults({}).settings.mondayEveryMinutes, 30);
+  const saved = normalizeContent({ settings: { mondayEveryMinutes: 60, mondayTaskBoard: { boardId: '1', teamLabels: [{ index: 1, team: { _type: 'reference', _ref: 'team-prime' } }] }, mondayMilestoneBoard: { boardId: '2' } } }).settings;
+  assert.equal(saved.mondayEveryMinutes, 60, 'the minutes are kept for the stale chip');
+  assert.equal('mondayTaskBoard' in saved, false);
+  assert.equal('mondayMilestoneBoard' in saved, false);
+  assert.equal('mondayTaskBoard' in withDefaults({}).settings, false);
+  assert.equal('mondayTaskBoard' in withDefaults({ settings: { mondayTaskBoard: { boardId: '1' } } }).settings, false);
+});
+
 test('the Monday settings change nothing else on the screen: every other setting is as it was', () => {
   const plain = normalizeContent({ settings: { pageSeconds: 30, speed: 'fast' } }).settings;
   const withBoards = normalizeContent({ settings: { pageSeconds: 30, speed: 'fast', mondayBoards: [entry], mondayShowOwners: true } }).settings;

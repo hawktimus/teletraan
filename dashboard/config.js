@@ -481,12 +481,67 @@ export const defaultSettings = {
   competitionAlliance: true,
   competitionDistrict: true,
   // The Monday tab in the Studio (docs/monday.md). The Mini reads these (deploy/scripts/monday-sync.sh) and writes the
-  // tasks, which carry what the cards need, so the screen only keeps them tidy.
-  //   mondayBoards      the boards the Mini reads, one entry for each: the board, its team, where the status comes
-  //                     from (the group names of the board, or a status column with the In progress and Done
-  //                     labels, and any other status is Backlog), and the optional priority, due date, owner and
-  //                     team columns. None to start with
-  //   mondayShowOwners  keeps the first name of the owner of an item. Off to start with
+  // tasks and milestones, which carry what the panels need. The screen reads only mondayEveryMinutes (for the stale
+  // chip) and mondayShowOwners.
+  //   mondayEveryMinutes    how often the Mini reads the boards, 5 to 120 minutes
+  //   mondayTaskBoard       the task board: its number, the column of each field, the label tables (a label is read by its
+  //                         index, not its text), and the Hide label text. A team label row names a Team, none meaning both
+  //                         teams. A department row names a Team lead, or is matched to the Team lead with the same name
+  //   mondayMilestoneBoard  the milestones board, the same way
+  //   mondayBoards          not used any more: the rows of the older Monday tab, kept so that nothing typed is lost
+  //   mondayShowOwners      keeps the first names of the people in Assigned. Off to start with
+  mondayEveryMinutes: 30,
+  mondayTaskBoard: {
+    boardId: '18435126893',
+    departmentColumn: 'color_mm82nvea',
+    statusColumn: 'color_mkv6tatz',
+    teamColumn: 'color_mm82jgxg',
+    priorityColumn: 'color_mm82wfy',
+    showColumn: 'color_mm83p12x',
+    assignedColumn: 'multiple_person_mm82cqbx',
+    pocColumn: 'multiple_person_mm8331h1',
+    timelineColumn: 'timerange_mkyp8kx7',
+    hoursColumn: 'numeric_mm82pw1a',
+    completedColumn: 'date_mm82kn5v',
+    milestoneColumn: 'board_relation_mm83phwy',
+    teamLabels: [{ index: 1, team: { _type: 'reference', _ref: 'team-prime' } }, { index: 0, team: { _type: 'reference', _ref: 'team-nova' } }, { index: 5 }],
+    statusIndexes: { todo: 5, inProgress: 0, inReview: 3, stuck: 2, done: 1 },
+    priorityIndexes: { high: 2, medium: 0, low: 1 },
+    hideLabel: 'Hide',
+    departmentLabels: [
+      { index: 0, name: 'Electrical' },
+      { index: 1, name: 'Build' },
+      { index: 2, name: 'Programming' },
+      { index: 3, name: 'Design' },
+      { index: 4, name: 'CNC' },
+      { index: 5, name: 'Unassigned', neverShown: true },
+      { index: 6, name: 'Strategy' },
+      { index: 7, name: 'Business' },
+      { index: 8, name: 'Marketing' },
+      { index: 9, name: 'Operations' },
+    ],
+  },
+  mondayMilestoneBoard: {
+    boardId: '18435272887',
+    dateColumn: 'date_mm83y6zw',
+    teamColumn: 'color_mm83be52',
+    departmentColumn: 'color_mm83f77w',
+    statusColumn: 'color_mm83ndkf',
+    teamLabels: [{ index: 109, team: { _type: 'reference', _ref: 'team-prime' } }, { index: 8, team: { _type: 'reference', _ref: 'team-nova' } }, { index: 5 }],
+    statusIndexes: { notStarted: 5, onTrack: 1, atRisk: 2, done: 3 },
+    departmentLabels: [
+      { index: 107, name: 'Build' },
+      { index: 9, name: 'Electrical' },
+      { index: 19, name: 'Programming' },
+      { index: 1, name: 'Design' },
+      { index: 11, name: 'CNC' },
+      { index: 104, name: 'Strategy' },
+      { index: 0, name: 'Business' },
+      { index: 18, name: 'Marketing' },
+      { index: 7, name: 'Operations' },
+      { index: 5, name: 'All Departments' },
+    ],
+  },
   mondayBoards: [],
   mondayShowOwners: false,
 };

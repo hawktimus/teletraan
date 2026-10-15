@@ -37,7 +37,7 @@ function actionsFor(actions, context) {
 // A place is offered only while a document is open, which is where the Location field of a task
 // offers Create new, and that is how a place is added now. A template of add-templates.js, such
 // as Agenda item, is offered by the folder or list that names it, and by nothing else.
-const notOffered = ['extraEvent', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus', 'task'].concat(addTemplates.map(template => template.id));
+const notOffered = ['extraEvent', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus', 'task', 'milestone'].concat(addTemplates.map(template => template.id));
 const offeredInDocuments = ['place'];
 
 function newDocumentChoices(templates, context) {

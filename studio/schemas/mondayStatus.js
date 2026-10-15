@@ -1,10 +1,10 @@
 // What the Mini read from Monday, in one document with the fixed id 'monday-status'.
-// deploy/scripts/monday-sync.sh writes it as a whole, so editors never open it: it is
+// deploy/scripts/monday-sync.sh writes it, so editors never open it: it is
 // not in the sidebar or the New menu (structure.js, sanity.config.js). The Monday tab
 // of Dashboard Settings shows when it was written and offers its boards and columns in
-// the lists of a board entry (settingsMonday.js, ../monday-status-input.js and
+// the lists of the board blocks (settingsMonday.js, ../monday-status-input.js and
 // ../monday-pickers.js), the Monday Boards page lists its boards (../monday-boards-view.js),
-// and the screen reads its daily counts of open items.
+// and the screen reads its daily counts of open items and the time of the last read.
 //
 // The dataset is public, so anyone who asks for this document can read the name of every
 // board the token of the Mini can see, and the titles of their columns, whether or not
@@ -102,6 +102,10 @@ export default defineType({
     defineField({ name: 'boards', title: 'Boards', type: 'array', of: [board], description: 'Every board the token can see, with its columns.' }),
     defineField({ name: 'readings', title: 'Board readings', type: 'array', of: [reading], description: 'One entry for each board chosen in Dashboard Settings: how many items the Mini read from it, when, and why a board gave none.' }),
     defineField({ name: 'snapshots', title: 'Daily counts', type: 'array', of: [snapshot], description: 'One count a day of the open items, 120 at most.' }),
+    numberField('taskCount', 'Tasks', 'How many parent items the Mini read from the task board the last time, hidden ones included.'),
+    numberField('hiddenUnassigned', 'Hidden, no department', 'How many of those tasks have no department, so they are kept off the TV.'),
+    numberField('callsToday', 'Reads today', 'How many requests the Mini has made to Monday today. Past 900 it waits for midnight.'),
+    defineField({ name: 'callsDate', title: 'Reads counted for', type: 'date', description: 'The day of the count of reads, in the time zone of the screen.' }),
   ],
   preview: {
     prepare: () => ({ title: 'Monday data from the Mini' }),

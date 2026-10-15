@@ -12,6 +12,7 @@ function firstNameOnly(value) {
 const statuses = [
   { title: 'Blocked', value: 'blocked' },
   { title: 'In progress', value: 'in-progress' },
+  { title: 'In review', value: 'in-review' },
   { title: 'Up next', value: 'up-next' },
   { title: 'Done', value: 'done' },
 ];
@@ -38,6 +39,8 @@ function fromBoard({ document }) {
 
 // The fields of a task that an editor can still change. The others open read only.
 const editable = ['boardNote', 'manualNote', 'source', 'mondayId', 'mondayBoardId', 'mondayBoardName', 'showOnTv'];
+
+const reading = ' The board sync sets it.';
 
 const fields = [
   Object.assign(noteField('boardNote', boardNote), { hidden: context => !fromBoard(context) }),
@@ -99,6 +102,54 @@ const fields = [
     title: 'Due date',
     type: 'date',
     description: 'Optional. The day the task is due. A task from the team board takes it from the board.',
+  }),
+  defineField({
+    name: 'startDate',
+    title: 'Start date',
+    type: 'date',
+    description: 'Optional. The first day of the Timeline of the task.' + reading,
+  }),
+  defineField({
+    name: 'estHours',
+    title: 'Estimated hours',
+    type: 'number',
+    description: 'Optional. How many hours the task needs. They weight the progress, and a task with no hours counts as 1.' + reading,
+  }),
+  defineField({
+    name: 'completedOn',
+    title: 'Completed on',
+    type: 'date',
+    description: 'Optional. The day the task was finished, from the Date Completed column.' + reading,
+  }),
+  defineField({
+    name: 'owners',
+    title: 'Owners',
+    type: 'array',
+    of: [{ type: 'string', validation: Rule => tooLong(Rule, 12) }],
+    description: 'Optional. First names from Assigned, kept when owner names are on. Up to 6 names of 12 characters.' + reading,
+    validation: Rule => Rule.max(6).error('Up to 6 names.'),
+  }),
+  defineField({
+    name: 'milestoneIds',
+    title: 'Milestones',
+    type: 'array',
+    of: [{ type: 'string', validation: Rule => tooLong(Rule, 20) }],
+    description: 'Optional. The numbers of the milestone items the task is linked to. Up to 50.' + reading,
+    validation: Rule => Rule.max(50).error('Up to 50 milestones.'),
+  }),
+  defineField({
+    name: 'showOnBoard',
+    title: 'Show on TV in Monday',
+    type: 'boolean',
+    description: 'On unless the Show on TV column holds the Hide label. Both this and Show on TV must be on.' + reading,
+    initialValue: true,
+  }),
+  defineField({
+    name: 'hiddenReason',
+    title: 'Why it is hidden',
+    type: 'string',
+    description: 'Optional. Unassigned means the task has no department, so it is kept off the TV until it has one.' + reading,
+    options: { list: [{ title: 'No department', value: 'unassigned' }] },
   }),
   teamField(),
   orderField(),
@@ -164,16 +215,16 @@ export default defineType({
   fields: fields,
   orderings: [byOrder, aToZ('title')],
   preview: {
-    select: { title: 'title', status: 'status', contact: 'contact', due: 'dueDate', board: 'mondayBoardName', source: 'source', priority: 'priority', showOnTv: 'showOnTv', show: 'show', expires: 'expires' },
+    select: { title: 'title', status: 'status', contact: 'contact', due: 'dueDate', board: 'mondayBoardName', source: 'source', priority: 'priority', showOnTv: 'showOnTv', show: 'show', expires: 'expires', showOnBoard: 'showOnBoard', reason: 'hiddenReason' },
     prepare(item) {
       const priority = titleOf(priorities, item.priority);
       const due = dayText(item.due);
-      const text = [titleOf(statuses, item.status), priority ? priority + ' priority' : '', item.contact, due ? 'Due ' + due : '', item.board].filter(Boolean).join(' · ');
+      const text = [titleOf(statuses, item.status), priority ? priority + ' priority' : '', item.contact, due ? 'Due ' + due : '', item.board, item.reason === 'unassigned' ? 'No department' : ''].filter(Boolean).join(' · ');
       // a task typed by hand is never on the screen, whatever its switches say
       const line = item.source === 'monday' ? text : ['Manual (not shown)', text].filter(Boolean).join(' · ');
 
       // a task kept off the TV is hidden, however it is listed
-      const hidden = item.show === false || item.showOnTv === false;
+      const hidden = item.show === false || item.showOnTv === false || item.showOnBoard === false;
       return { title: item.title || 'Task with no name', subtitle: subtitleFor(line, { show: hidden ? false : item.show, expires: item.expires }) };
     },
   },

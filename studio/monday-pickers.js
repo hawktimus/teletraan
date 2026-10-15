@@ -1,4 +1,4 @@
-// The lists of a board entry on the Monday tab of Dashboard Settings
+// The lists of the board blocks on the Monday tab of Dashboard Settings
 // (schemas/settingsMonday.js): a board picker that shows the names of the boards and
 // stores the number of the one picked, and a column picker for each column field of the
 // entry that lists the columns of that board only and stores the id of the one picked. Both
@@ -40,6 +40,10 @@ export const columnKinds = {
   due: ['date', 'timeline'],
   owner: ['people', 'multiple-person'],
   team: ['status', 'color', 'dropdown', 'text'],
+  timeline: ['timeline'],
+  hours: ['numbers', 'numeric'],
+  date: ['date'],
+  relation: ['board_relation', 'board-relation'],
 };
 
 // The type of a column in words. Monday has used two names for some types, and the other types are
@@ -70,6 +74,10 @@ const emptyChoices = {
   due: 'No due date column',
   owner: 'No owner column',
   team: 'Use the group names',
+  timeline: 'Pick the column',
+  hours: 'Pick the column',
+  date: 'Pick the column',
+  relation: 'Pick the column',
 };
 
 const styles = {
@@ -278,3 +286,7 @@ export const PriorityColumnInput = columnInput('priority');
 export const DueColumnInput = columnInput('due');
 export const OwnerColumnInput = columnInput('owner');
 export const TeamColumnInput = columnInput('team');
+export const TimelineColumnInput = columnInput('timeline');
+export const HoursColumnInput = columnInput('hours');
+export const DateColumnInput = columnInput('date');
+export const RelationColumnInput = columnInput('relation');

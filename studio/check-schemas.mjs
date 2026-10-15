@@ -54,7 +54,15 @@ const contract = {
     showOnTv: 'boolean',
     team: teamRef,
     order: 'number',
+    startDate: 'date',
+    estHours: 'number',
+    completedOn: 'date',
+    owners: strings(12, 6),
+    milestoneIds: strings(20, 50),
+    showOnBoard: 'boolean',
+    hiddenReason: 'string',
   }),
+  milestone: { name: text(40), targetDate: 'date', team: teamRef, subteam: { kind: 'reference', to: 'subteam' }, status: 'string', show: 'boolean' },
   place: { name: text(16), show: 'boolean' },
   plan: withFlags({
     heading: text(26),
@@ -236,6 +244,36 @@ const contract = {
       teamColumn: text(50),
     }, 10),
     mondayShowOwners: 'boolean',
+    mondayEveryMinutes: number(5, 120),
+    mondayTaskBoard: object({
+      boardId: text(20),
+      departmentColumn: text(50),
+      statusColumn: text(50),
+      teamColumn: text(50),
+      priorityColumn: text(50),
+      showColumn: text(50),
+      assignedColumn: text(50),
+      pocColumn: text(50),
+      timelineColumn: text(50),
+      hoursColumn: text(50),
+      completedColumn: text(50),
+      milestoneColumn: text(50),
+      teamLabels: rows({ index: number(0, 999), team: teamRef }, 10),
+      statusIndexes: object({ todo: number(0, 999), inProgress: number(0, 999), inReview: number(0, 999), stuck: number(0, 999), done: number(0, 999) }),
+      priorityIndexes: object({ high: number(0, 999), medium: number(0, 999), low: number(0, 999) }),
+      hideLabel: text(30),
+      departmentLabels: rows({ index: number(0, 999), name: text(30), subteam: { kind: 'reference', to: 'subteam' }, neverShown: 'boolean' }, 30),
+    }),
+    mondayMilestoneBoard: object({
+      boardId: text(20),
+      dateColumn: text(50),
+      teamColumn: text(50),
+      departmentColumn: text(50),
+      statusColumn: text(50),
+      teamLabels: rows({ index: number(0, 999), team: teamRef }, 10),
+      statusIndexes: object({ notStarted: number(0, 999), onTrack: number(0, 999), atRisk: number(0, 999), done: number(0, 999) }),
+      departmentLabels: rows({ index: number(0, 999), name: text(30), subteam: { kind: 'reference', to: 'subteam' } }, 30),
+    }),
   },
   theme: {
     defaultTheme: 'string',
@@ -316,7 +354,7 @@ const writtenByTheMini = {
 const itemTypes = ['task', 'plan', 'sponsor', 'tipOrNews', 'subteam', 'person', 'photo', 'customPanel'];
 
 const choices = {
-  'task.status': ['blocked', 'in-progress', 'up-next', 'done'],
+  'task.status': ['blocked', 'in-progress', 'in-review', 'up-next', 'done'],
   'task.source': ['manual', 'monday'],
   'task.priority': ['high', 'medium', 'low'],
   'tipOrNews.kind': ['tip', 'news', 'reminder'],
@@ -387,6 +425,7 @@ const notInSidebar = {
   calendarStatus: 'the Mini writes it, and the Calendars page shows it',
   frcStatus: 'the Mini writes it, and Dashboard Settings shows it in the block at the top of the Competition tab',
   mondayStatus: 'the Mini writes it, and Dashboard Settings shows it in the block at the top of the Monday tab',
+  milestone: 'the Mini writes it, and the Monday Boards page opens it as its second list, Milestones',
 };
 
 // The sidebar titles that people look for by name
@@ -963,7 +1002,7 @@ function checkChoices() {
 
   const statuses = ((fieldAt('task.status') || {}).options || {}).list || [];
   const titles = statuses.map(item => item.title).join();
-  need(problems, titles === 'Blocked,In progress,Up next,Done', 'task.status titles should be Blocked, In progress, Up next, Done');
+  need(problems, titles === 'Blocked,In progress,In review,Up next,Done', 'task.status titles should be Blocked, In progress, In review, Up next, Done');
   return problems;
 }
 
@@ -4022,7 +4061,7 @@ function checkTeamSeed(type) {
 // The Team field: the same on every kind of content that can be for one team. It is
 // optional and has no starting value, so empty means Both, and every item that exists
 // keeps showing with no change. It uses the radio in team-input.js.
-const teamTypes = ['task', 'plan', 'subteam', 'person', 'sponsor', 'presentation', 'presentationDay', 'customPanel', 'tipOrNews', 'extraEvent'];
+const teamTypes = ['task', 'milestone', 'plan', 'subteam', 'person', 'sponsor', 'presentation', 'presentationDay', 'customPanel', 'tipOrNews', 'extraEvent'];
 
 function checkTeamField() {
   const problems = [];
@@ -4192,7 +4231,7 @@ const settingsTabs = {
   countdown: ['countdown'],
   calendars: ['calendars', 'groupEventsByKind'],
   presentations: presentationNames.concat('presentationTestRequest'),
-  monday: ['mondayConnection', 'mondayBoards', 'mondayShowOwners'],
+  monday: ['mondayConnection', 'mondayEveryMinutes', 'mondayTaskBoard', 'mondayMilestoneBoard', 'mondayShowOwners', 'mondayBoards'],
   competition: ['frcConnection', 'competitionMode'].concat(competitionNames),
   advanced: nightNames.concat(hiddenNames, ['contentSource', 'switchBackAt', 'showConnectionStatus']),
 };
@@ -4723,8 +4762,8 @@ function filterOf(filter) {
     .replace(/defined\((\w+)\)/g, '($1 !== undefined && $1 !== null)')
     .replace(/\$now/g, 'now')
     .replace(/\$board/g, 'board');
-  const test = new Function('source', 'showOnTv', 'show', 'expires', 'mondayBoardId', 'now', 'board', 'return ' + js + ';');
-  return (task, now, board) => test(task.source, task.showOnTv, task.show, task.expires, task.mondayBoardId, now, board);
+  const test = new Function('source', 'showOnTv', 'showOnBoard', 'show', 'expires', 'mondayBoardId', 'now', 'board', 'return ' + js + ';');
+  return (task, now, board) => test(task.source, task.showOnTv, task.showOnBoard, task.show, task.expires, task.mondayBoardId, now, board);
 }
 
 function checkBoardTasks() {
@@ -4783,6 +4822,8 @@ function checkBoardTasks() {
   says({ board: undefined }, 'In progress');
   says({ showOnTv: false }, 'Hidden · In progress · Build board');
   says({ show: false }, 'Hidden · In progress · Build board');
+  says({ showOnBoard: false }, 'Hidden · In progress · Build board');
+  says({ show: false, reason: 'unassigned' }, 'Hidden · In progress · Build board · No department');
   says({ showOnTv: true }, 'In progress · Build board');
   says({ source: 'manual' }, 'Manual (not shown) · In progress · Build board');
   says({ source: undefined, board: undefined }, 'Manual (not shown) · In progress');
@@ -4833,6 +4874,8 @@ function checkBoardTasks() {
     { name: 'from the board, expiring later', task: { source: 'monday', expires: future }, where: 'On the TV' },
     { name: 'typed by hand and off the TV', task: { source: 'manual', showOnTv: false }, where: 'Hidden' },
     { name: 'from the board and off the TV', task: { source: 'monday', showOnTv: false }, where: 'Hidden' },
+    { name: 'from the board and hidden by the Show on TV column of the board', task: { source: 'monday', showOnBoard: false }, where: 'Hidden' },
+    { name: 'from the board with the column on', task: { source: 'monday', showOnBoard: true }, where: 'On the TV' },
     { name: 'switched off on screen', task: { show: false }, where: 'Hidden' },
     { name: 'from the board and switched off on screen', task: { source: 'monday', show: false }, where: 'Hidden' },
     { name: 'expired', task: { expires: past }, where: 'Hidden' },
@@ -4957,7 +5000,7 @@ function checkListAdds() {
   need(problems, sameData(given.slice(0, plain.length), plain), 'sanity.config.js should keep the templates the Studio makes for every type, and add its own after them');
   need(problems, given.slice(plain.length).map(template => template.id).join() === templates.map(template => template.id).join(), 'sanity.config.js should add the templates of add-templates.js, and no others');
 
-  const hidden = pageTypes.concat(['extraEvent', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus', 'task']);
+  const hidden = pageTypes.concat(['extraEvent', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus', 'task', 'milestone']);
   const choicesIn = (list, creationContext) => world.config.document.newDocumentOptions(list, { creationContext: creationContext }).map(item => item.templateId).join();
   const plainChoices = plain.map(template => ({ templateId: template.id }));
   const allChoices = plainChoices.concat(templates.map(template => ({ templateId: template.id })));
@@ -5604,111 +5647,139 @@ function checkTeamTrim() {
   return problems;
 }
 
-// The Monday tab of Dashboard Settings (schemas/settingsMonday.js): the connection block, the list of
-// boards and the owner switch. The names and the starting values are the ones in dashboard/config.js.
-// A board entry is picked from lists that the Mini fills in (monday-pickers.js), and each entry needs
-// its board, its team and its status column.
+// The Monday tab of Dashboard Settings (schemas/settingsMonday.js): the connection block, how often the Mini reads, the
+// task board and the milestones board, the owner switch and the older board rows, which are hidden. The names and the
+// starting values are the ones in dashboard/config.js and at the top of deploy/scripts/monday-sync.sh. The boards and the
+// columns are picked from lists that the Mini fills in (monday-pickers.js).
+const mondayTabNames = ['mondayConnection', 'mondayEveryMinutes', 'mondayTaskBoard', 'mondayMilestoneBoard', 'mondayShowOwners', 'mondayBoards'];
+const taskBlockNames = ['boardId', 'departmentColumn', 'statusColumn', 'teamColumn', 'priorityColumn', 'showColumn', 'assignedColumn', 'pocColumn', 'timelineColumn', 'hoursColumn', 'completedColumn', 'milestoneColumn', 'teamLabels', 'statusIndexes', 'priorityIndexes', 'hideLabel', 'departmentLabels'];
+const milestoneBlockNames = ['boardId', 'dateColumn', 'teamColumn', 'departmentColumn', 'statusColumn', 'teamLabels', 'statusIndexes', 'departmentLabels'];
 const mondayEntryNames = ['boardId', 'team', 'statusFrom', 'statusColumn', 'backlogLabel', 'progressLabel', 'doneLabel', 'priorityColumn', 'priorityHigh', 'priorityMedium', 'priorityLow', 'dueColumn', 'ownerColumn', 'teamColumn'];
 
 function checkMondayTab() {
   const problems = [];
   const config = world.dashboard;
   const settings = typeByName('dashboardSettings');
-  const at = name => fieldAt('dashboardSettings.mondayBoards.' + name);
+  const at = pathText => fieldAt('dashboardSettings.' + pathText);
   const rulesOf = field => (field ? constraintsOf(field) : []);
   const inTab = fieldsIn(settings).filter(field => field.group === 'monday').map(field => field.name);
+  const namesOf = field => fieldsIn(field || {}).map(item => item.name).join();
 
-  need(problems, inTab.join() === 'mondayConnection,mondayBoards,mondayShowOwners', 'the Monday tab should hold mondayConnection, mondayBoards and mondayShowOwners, in that order, not ' + inTab.join());
-  need(problems, fieldsIn(fieldAt('dashboardSettings.mondayBoards')).map(field => field.name).join() === mondayEntryNames.join(), 'a board entry should have these fields, in this order: ' + mondayEntryNames.join(', '));
+  need(problems, inTab.join() === mondayTabNames.join(), 'the Monday tab should hold ' + mondayTabNames.join(', ') + ', in that order, not ' + inTab.join());
 
   // The connection block stores nothing, and its input never changes the value
-  const block = fieldAt('dashboardSettings.mondayConnection');
+  const block = at('mondayConnection');
   need(problems, block && block.type === 'string' && block.readOnly === true, 'mondayConnection should be a read only string');
   need(problems, block && block.initialValue === undefined && !block.validation, 'mondayConnection should store nothing: no starting value and no rules');
   need(problems, block && block.components && block.components.input === world.mondayStatusInput.MondayStatusInput, 'mondayConnection should draw itself with MondayStatusInput (monday-status-input.js)');
   const source = fs.readFileSync(path.join(here, 'monday-status-input.js'), 'utf8');
   need(problems, !/onChange|\bset\(|unset\(|patch/.test(source), 'monday-status-input.js should never change the value: no onChange, set, unset or patch');
 
-  // The list: up to 10 entries, none required on the page, and a board needs its board, and its status column when the status comes from a column. Its team is optional
-  const list = fieldAt('dashboardSettings.mondayBoards');
-  need(problems, list && list.type === 'array' && list.group === 'monday', 'mondayBoards should be a list in the Monday tab');
-  need(problems, list && !list.initialValue && !constraintNamed(rulesOf(list), 'required'), 'mondayBoards should start empty and not be required: a page saved before it existed must still publish');
-  need(problems, constraintNamed(rulesOf(at('boardId')), 'required'), 'boardId should be required in a board entry');
-  mondayEntryNames.filter(name => name !== 'boardId').forEach(name => need(problems, !constraintNamed(rulesOf(at(name)), 'required'), name + ' should not be required on its own in a board entry'));
-  need(problems, at('team') && at('team').description === 'Leave blank when it is for both teams.', 'the team of a board entry should say: Leave blank when it is for both teams.');
+  // How often: 5 to 120 whole minutes, starting at 30, in the words of the order
+  const every = at('mondayEveryMinutes');
+  need(problems, every && every.type === 'number' && every.title === 'How often' && every.initialValue === 30 && every.group === 'monday', 'mondayEveryMinutes should be a number titled How often that starts at 30, in the Monday tab');
+  need(problems, every && every.description === 'How often the Mini reads the boards. The free plan allows about 1,000 reads a day; 30 minutes uses about 150.', 'mondayEveryMinutes should say how often the Mini reads, and what the free plan allows');
+  ['min', 'max'].forEach(name => need(problems, constraintNamed(rulesOf(every), name) && constraintNamed(rulesOf(every), name).args[0] === (name === 'min' ? 5 : 120), 'mondayEveryMinutes needs ' + name + ' ' + (name === 'min' ? 5 : 120)));
+  need(problems, constraintNamed(rulesOf(every), 'integer') && !constraintNamed(rulesOf(every), 'required'), 'mondayEveryMinutes should take whole minutes and not be required');
+  need(problems, config.defaultSettings.mondayEveryMinutes === 30, 'config.js should start at 30 minutes');
 
-  // Where the status comes from: a radio of Group names and A status column that starts on Group names. The status column is needed, and
-  // shown, only for A status column, and so are the In progress and Done labels. An entry with no choice reads the group names.
-  const from = at('statusFrom');
-  need(problems, from && from.type === 'string' && from.title === 'Status comes from' && from.options && from.options.layout === 'radio' && from.initialValue === 'groups', 'statusFrom should be a radio titled Status comes from that starts on groups');
-  need(problems, from && sameData(from.options.list, [{ title: 'Group names', value: 'groups' }, { title: 'A status column', value: 'column' }]), 'statusFrom should offer Group names (groups) and A status column (column)');
-  need(problems, from && /group names/i.test(from.description || '') && /status column/i.test(from.description || '') && /with no choice, the group names are read/i.test(from.description || ''), 'the statusFrom description should explain both choices and say that with no choice the group names are read');
-  const ofColumn = { parent: { statusFrom: 'column' } };
-  const ofGroups = { parent: { statusFrom: 'groups' } };
-  ['statusColumn', 'progressLabel', 'doneLabel'].forEach(name => {
-    const field = at(name);
-    const hide = field && field.hidden;
-    need(problems, typeof hide === 'function' && hide(ofGroups) === true && hide({ parent: {} }) === true && hide({}) === true && hide({ parent: undefined }) === true && hide(ofColumn) === false, name + ' should be hidden unless the status comes from a column');
+  // The two blocks: the fields, in order, and the starting values equal the ones in defaultSettings
+  const task = at('mondayTaskBoard');
+  const milestones = at('mondayMilestoneBoard');
+  need(problems, task && task.type === 'object' && task.group === 'monday' && task.title === 'Task board' && namesOf(task) === taskBlockNames.join(), 'mondayTaskBoard should be a block titled Task board with these fields, in this order: ' + taskBlockNames.join(', '));
+  need(problems, milestones && milestones.type === 'object' && milestones.group === 'monday' && milestones.title === 'Milestones board' && namesOf(milestones) === milestoneBlockNames.join(), 'mondayMilestoneBoard should be a block titled Milestones board with these fields, in this order: ' + milestoneBlockNames.join(', '));
+  need(problems, task && sameData(task.initialValue, config.defaultSettings.mondayTaskBoard), 'the Task board block starts as ' + JSON.stringify(task && task.initialValue) + ' but config.js says ' + JSON.stringify(config.defaultSettings.mondayTaskBoard));
+  need(problems, milestones && sameData(milestones.initialValue, config.defaultSettings.mondayMilestoneBoard), 'the Milestones board block starts as ' + JSON.stringify(milestones && milestones.initialValue) + ' but config.js says ' + JSON.stringify(config.defaultSettings.mondayMilestoneBoard));
+  need(problems, task && !constraintNamed(rulesOf(task), 'required') && milestones && !constraintNamed(rulesOf(milestones), 'required'), 'the two blocks should not be required: a page saved before they existed must still publish');
+
+  // The seeds are the rebuilt workspace of the brief (docs/monday.md, "The contract")
+  const seed = config.defaultSettings.mondayTaskBoard;
+  const labelRows = rows => rows.map(row => row.index + '=' + (row.team ? row.team._ref : 'both')).join();
+  need(problems, seed.boardId === '18435126893' && config.defaultSettings.mondayMilestoneBoard.boardId === '18435272887', 'the boards should start as the task board 18435126893 and the milestones board 18435272887');
+  need(problems, labelRows(seed.teamLabels) === '1=team-prime,0=team-nova,5=both', 'the team labels of the task board should start as 1 for Prime, 0 for Nova and 5 for both teams');
+  need(problems, labelRows(config.defaultSettings.mondayMilestoneBoard.teamLabels) === '109=team-prime,8=team-nova,5=both', 'the team labels of the milestones board should start as 109 for Prime, 8 for Nova and 5 for both teams');
+  need(problems, sameData(seed.statusIndexes, { todo: 5, inProgress: 0, inReview: 3, stuck: 2, done: 1 }), 'the status indexes should start as To Do 5, In Progress 0, In Review 3, Stuck 2, Done 1');
+  need(problems, sameData(seed.priorityIndexes, { high: 2, medium: 0, low: 1 }) && seed.hideLabel === 'Hide', 'the priority indexes should start as High 2, Medium 0, Low 1, and the Hide label as Hide');
+  need(problems, sameData(config.defaultSettings.mondayMilestoneBoard.statusIndexes, { notStarted: 5, onTrack: 1, atRisk: 2, done: 3 }), 'the milestone status indexes should start as Not Started 5, On Track 1, At Risk 2, Done 3');
+  need(problems, seed.departmentLabels.map(row => row.index + '=' + row.name).join() === '0=Electrical,1=Build,2=Programming,3=Design,4=CNC,5=Unassigned,6=Strategy,7=Business,8=Marketing,9=Operations', 'the department labels of the task board should start as the table of the brief');
+  need(problems, seed.departmentLabels.filter(row => row.neverShown).map(row => row.name).join() === 'Unassigned', 'only Unassigned should be marked never shown');
+  need(problems, config.defaultSettings.mondayMilestoneBoard.departmentLabels.map(row => row.index + '=' + row.name).join() === '107=Build,9=Electrical,19=Programming,1=Design,11=CNC,104=Strategy,0=Business,18=Marketing,7=Operations,5=All Departments', 'the department labels of the milestones board should start as the table of the brief');
+
+  // Every column is picked from the columns of the board in its block, and takes only the letters, digits, hyphens and underscores of a column id
+  const columnNames = ['departmentColumn', 'statusColumn', 'teamColumn', 'priorityColumn', 'showColumn', 'assignedColumn', 'pocColumn', 'timelineColumn', 'hoursColumn', 'completedColumn', 'milestoneColumn'];
+  const inputs = { departmentColumn: 'StatusColumnInput', statusColumn: 'StatusColumnInput', teamColumn: 'StatusColumnInput', priorityColumn: 'PriorityColumnInput', showColumn: 'StatusColumnInput', assignedColumn: 'OwnerColumnInput', pocColumn: 'OwnerColumnInput', timelineColumn: 'TimelineColumnInput', hoursColumn: 'HoursColumnInput', completedColumn: 'DateColumnInput', milestoneColumn: 'RelationColumnInput' };
+  columnNames.forEach(name => {
+    const field = at('mondayTaskBoard.' + name);
+    need(problems, field && field.type === 'string' && field.components && field.components.input === world.mondayPickers[inputs[name]], 'mondayTaskBoard.' + name + ' should be a string drawn by ' + inputs[name] + ' (monday-pickers.js)');
+    const pattern = constraintNamed(rulesOf(field), 'regex');
+    need(problems, pattern && pattern.args[0].test('color_mkx12abc') && pattern.args[0].test('date4') && !pattern.args[0].test('a b') && !pattern.args[0].test('a;b'), 'mondayTaskBoard.' + name + ' should only take the letters, digits, hyphens and underscores of a column id');
+    need(problems, field && /cannot be read/.test(field.description || '') && /type/.test(field.description || ''), 'mondayTaskBoard.' + name + ' should say in its description what to do when the list cannot be read');
   });
-  ['priorityColumn', 'priorityHigh', 'priorityMedium', 'priorityLow', 'dueColumn', 'ownerColumn', 'teamColumn'].forEach(name => need(problems, !at(name) || at(name).hidden === undefined, name + ' should always be shown'));
-  const needsColumn = constraintNamed(rulesOf(at('statusColumn')), 'custom');
-  need(problems, needsColumn && needsColumn.args[0]('', ofColumn) === 'Pick the status column.' && needsColumn.args[0](undefined, ofColumn) === 'Pick the status column.' && needsColumn.args[0]('status', ofColumn) === true && needsColumn.args[0]('', ofGroups) === true && needsColumn.args[0]('', {}) === true, 'the status column should be needed when the status comes from a column, and not otherwise');
-  need(problems, at('team') && at('team').type === 'reference' && at('team').to[0].type === 'team', 'a board entry should name its team with a reference to team');
-
-  // The pickers: the board and every column field have the input of monday-pickers.js
-  const inputs = { boardId: 'BoardInput', statusColumn: 'StatusColumnInput', priorityColumn: 'PriorityColumnInput', dueColumn: 'DueColumnInput', ownerColumn: 'OwnerColumnInput', teamColumn: 'TeamColumnInput' };
-  Object.keys(inputs).forEach(name => {
+  const milestoneInputs = { dateColumn: 'DateColumnInput', teamColumn: 'StatusColumnInput', departmentColumn: 'StatusColumnInput', statusColumn: 'StatusColumnInput' };
+  Object.keys(milestoneInputs).forEach(name => {
+    const field = at('mondayMilestoneBoard.' + name);
+    need(problems, field && field.type === 'string' && field.components && field.components.input === world.mondayPickers[milestoneInputs[name]], 'mondayMilestoneBoard.' + name + ' should be a string drawn by ' + milestoneInputs[name]);
+  });
+  ['mondayTaskBoard.boardId', 'mondayMilestoneBoard.boardId'].forEach(name => {
     const field = at(name);
-    need(problems, field && field.type === 'string' && field.components && field.components.input === world.mondayPickers[inputs[name]], name + ' should be a string drawn by ' + inputs[name] + ' (monday-pickers.js)');
+    need(problems, field && field.type === 'string' && field.components && field.components.input === world.mondayPickers.BoardInput, name + ' should be a string drawn by BoardInput (monday-pickers.js)');
+    const pattern = constraintNamed(rulesOf(field), 'regex');
+    need(problems, pattern && pattern.args[0].test('123456789') && !pattern.args[0].test('12 34'), name + ' should be digits only');
     need(problems, field && /cannot be read/.test(field.description || '') && /type/.test(field.description || ''), name + ' should say in its description what to do when the list cannot be read');
   });
-  need(problems, at('boardId') && constraintNamed(rulesOf(at('boardId')), 'regex') && constraintNamed(rulesOf(at('boardId')), 'regex').args[0].test('123456789') && !constraintNamed(rulesOf(at('boardId')), 'regex').args[0].test('12 34'), 'a board number should be digits only');
-  ['statusColumn', 'priorityColumn', 'dueColumn', 'ownerColumn', 'teamColumn'].forEach(name => {
-    const pattern = constraintNamed(rulesOf(at(name)), 'regex');
-    need(problems, pattern && pattern.args[0].test('color_mkx12abc') && pattern.args[0].test('date4') && !pattern.args[0].test('a b') && !pattern.args[0].test('a;b'), name + ' should only take the letters, digits, hyphens and underscores of a column id');
+
+  // The tables: an index is a whole number from 0 to 999, a team is a reference to a team and blank means both, a department row names a Team lead
+  const rowNames = (pathText, expected) => need(problems, namesOf(at(pathText)) === expected, pathText + ' should have these fields in a row, in this order: ' + expected);
+  rowNames('mondayTaskBoard.teamLabels', 'index,team');
+  rowNames('mondayTaskBoard.departmentLabels', 'index,name,subteam,neverShown');
+  rowNames('mondayMilestoneBoard.teamLabels', 'index,team');
+  rowNames('mondayMilestoneBoard.departmentLabels', 'index,name,subteam');
+  ['mondayTaskBoard.teamLabels.index', 'mondayTaskBoard.departmentLabels.index', 'mondayMilestoneBoard.teamLabels.index', 'mondayMilestoneBoard.departmentLabels.index', 'mondayTaskBoard.statusIndexes.todo', 'mondayTaskBoard.statusIndexes.inProgress', 'mondayTaskBoard.statusIndexes.inReview', 'mondayTaskBoard.statusIndexes.stuck', 'mondayTaskBoard.statusIndexes.done', 'mondayTaskBoard.priorityIndexes.high', 'mondayTaskBoard.priorityIndexes.medium', 'mondayTaskBoard.priorityIndexes.low', 'mondayMilestoneBoard.statusIndexes.notStarted', 'mondayMilestoneBoard.statusIndexes.onTrack', 'mondayMilestoneBoard.statusIndexes.atRisk', 'mondayMilestoneBoard.statusIndexes.done'].forEach(name => {
+    const field = at(name);
+    const min = constraintNamed(rulesOf(field), 'min');
+    const max = constraintNamed(rulesOf(field), 'max');
+    need(problems, field && field.type === 'number' && constraintNamed(rulesOf(field), 'integer') && min && min.args[0] === 0 && max && max.args[0] === 999, name + ' should be a whole number from 0 to 999');
   });
+  ['mondayTaskBoard.teamLabels.team', 'mondayMilestoneBoard.teamLabels.team'].forEach(name => {
+    const field = at(name);
+    need(problems, field && field.type === 'reference' && field.to[0].type === 'team' && /blank/.test(field.description || ''), name + ' should be a reference to team that says blank means both teams');
+  });
+  ['mondayTaskBoard.departmentLabels.subteam', 'mondayMilestoneBoard.departmentLabels.subteam'].forEach(name => {
+    const field = at(name);
+    need(problems, field && field.type === 'reference' && field.to[0].type === 'subteam', name + ' should be a reference to a Team lead');
+  });
+  const never = at('mondayTaskBoard.departmentLabels.neverShown');
+  need(problems, never && never.type === 'boolean' && never.initialValue === false, 'neverShown should be a switch that starts off');
+  const hide = at('mondayTaskBoard.hideLabel');
+  need(problems, hide && hide.title === 'Hide label text' && hide.initialValue === 'Hide' && constraintNamed(rulesOf(hide), 'max') && constraintNamed(rulesOf(hide), 'max').args[0] === 30, 'hideLabel should be titled Hide label text, start as Hide, and take up to 30 characters');
+  const rowsFor = name => (at(name).of || [])[0];
+  need(problems, rowsFor('mondayTaskBoard.departmentLabels').preview.prepare({ index: 5, name: 'Unassigned', never: true }).subtitle === 'Never shown', 'the row of Unassigned should read Never shown');
+  need(problems, rowsFor('mondayTaskBoard.teamLabels').preview.prepare({ index: 5 }).subtitle === 'Both teams' && rowsFor('mondayTaskBoard.teamLabels').preview.prepare({ index: 1, team: 'Prime' }).subtitle === 'Prime', 'a team label row with no team should read Both teams');
 
-  // The labels start as Monday's own, the priority labels as High, Medium and Low
-  const starts = { backlogLabel: 'Backlog', progressLabel: 'Working on it', doneLabel: 'Done', priorityHigh: 'High', priorityMedium: 'Medium', priorityLow: 'Low' };
-  Object.keys(starts).forEach(name => need(problems, at(name) && at(name).initialValue === starts[name], name + ' should start as ' + starts[name]));
-  need(problems, at('statusColumn') && at('statusColumn').initialValue === undefined, 'a column should start empty');
+  // The older board rows are hidden and ignored, and the fields stay so that nothing typed is lost
+  const list = at('mondayBoards');
+  need(problems, list && list.type === 'array' && list.group === 'monday' && list.hidden === true && /^Not used any more\./.test(list.description || ''), 'mondayBoards should be hidden, with a description that begins Not used any more.');
+  need(problems, namesOf(list) === mondayEntryNames.join(), 'a board row of the older tab should keep these fields: ' + mondayEntryNames.join(', '));
+  need(problems, list && !list.initialValue && !constraintNamed(rulesOf(list), 'required'), 'mondayBoards should start empty and not be required');
+  need(problems, config.defaultSettings.mondayShowOwners === false && sameData(config.defaultSettings.mondayBoards, []), 'config.js should start with no older board rows and the owner names off');
+  need(problems, sameData(world.sample.settings.mondayBoards, []) && world.sample.settings.mondayShowOwners === false, 'the sample settings should have no older board rows and the owner names off');
+  need(problems, world.mondayScript.indexOf('mondayBoards') === -1 && world.mondayScript.indexOf('backlogLabel') === -1, 'monday-sync.sh should never read the older board rows');
 
-  // Every status that is not In progress or Done is Backlog, so the Backlog label is hidden and kept, and the Mini ignores it
-  need(problems, at('backlogLabel') && at('backlogLabel').hidden === true, 'backlogLabel should be hidden: the Mini no longer reads it, and a value saved earlier must still open and publish');
-  need(problems, world.mondayScript.indexOf('backlogLabel') === -1, 'monday-sync.sh should never read backlogLabel');
-  ['progressLabel', 'doneLabel'].forEach(name => need(problems, at(name) && /every status that is not/i.test(at(name).description || '') && /Backlog/.test(at(name).description || ''), name + ' should say in its description that every other status is Backlog'));
-
-  // The due date column takes a date column or a timeline column, and says which day it uses
-  need(problems, at('dueColumn') && /timeline/.test(at('dueColumn').description || '') && /end date/.test(at('dueColumn').description || ''), 'dueColumn should say that a timeline column gives its end date');
-  need(problems, world.mondayPickers.columnKinds.due.indexOf('date') !== -1 && world.mondayPickers.columnKinds.due.indexOf('timeline') !== -1, 'the due date list should offer date columns and timeline columns as the ones that fit');
-
-  // The owner switch starts off, and so do the starting values of config.js
-  const owners = fieldAt('dashboardSettings.mondayShowOwners');
+  // The owner switch starts off
+  const owners = at('mondayShowOwners');
   need(problems, owners && owners.type === 'boolean' && owners.initialValue === false && owners.group === 'monday' && owners.title === 'Show owner first names on the TV', 'mondayShowOwners should be a switch titled Show owner first names on the TV that starts off, in the Monday tab');
-  need(problems, config.defaultSettings.mondayShowOwners === false && sameData(config.defaultSettings.mondayBoards, []), 'config.js should start with no boards and the owner names off');
-  need(problems, sameData(world.sample.settings.mondayBoards, []) && world.sample.settings.mondayShowOwners === false, 'the sample settings should have no boards and the owner names off');
   need(problems, rulesOf(owners).length === 0, 'mondayShowOwners should have no rules');
 
-  // The line of a board entry in the list
-  const entry = (list.of || [])[0];
-  const line = fields => entry.preview.prepare(fields);
-  need(problems, entry && entry.preview && entry.preview.select.team === 'team.name', 'a board entry should select the name of its team');
-  need(problems, line({ board: '123456', team: 'Prime', from: 'column', progress: 'Working on it', done: 'Done' }).title === 'Board 123456', 'a board entry should read "Board 123456"');
-  need(problems, line({ board: '123456', team: 'Prime', from: 'column', progress: 'Working on it', done: 'Done' }).subtitle === 'Prime · Working on it / Done', 'the second line of a board entry with a status column should read "Prime · Working on it / Done": the Backlog label does not count any more');
-  need(problems, line({ board: '123456', team: 'Prime', from: 'groups', progress: 'Working on it', done: 'Done' }).subtitle === 'Prime · Group names' && line({ board: '123456', team: 'Prime' }).subtitle === 'Prime · Group names', 'the second line of a board entry that reads group names, or has no choice, should read "Prime · Group names"');
-  need(problems, entry.preview.select.from === 'statusFrom', 'a board entry should select statusFrom');
-  need(problems, line({}).title === 'Board with no number' && line({}).subtitle === 'Both teams · Group names', 'an empty board entry should read "Board with no number" and "Both teams · Group names"');
-
-  // Tasks: the due date is optional and the board sync writes it. The fixed rows per card are not a field.
+  // Tasks: the due date is optional and the board sync writes it
   const due = fieldAt('task.dueDate');
   need(problems, due && due.type === 'date' && due.initialValue === undefined && !constraintNamed(rulesOf(due), 'required') && /optional/i.test(due.description || ''), 'task.dueDate should be an optional date with no starting value');
-  need(problems, !fieldsIn(settings).some(field => /rows/i.test(field.name) && /monday/i.test(field.name)), 'rows per card are fixed at 2, 2 and 2 and are not a field');
+  need(problems, !fieldsIn(settings).some(field => /rows/i.test(field.name) && /monday/i.test(field.name)), 'rows per card are fixed and are not a field');
   return problems;
 }
 
 // The Monday data document the Mini writes (schemas/mondayStatus.js, deploy/scripts/monday-sync.sh), the block
 // that shows it and the task fields the script writes
-const mondayStatusFields = ['connectedAs', 'lastSyncAt', 'lastError', 'boards', 'readings', 'snapshots'];
+const mondayStatusFields = ['connectedAs', 'lastSyncAt', 'lastError', 'boards', 'readings', 'snapshots', 'taskCount', 'hiddenUnassigned', 'callsToday', 'callsDate'];
 
 function checkMondayStatus() {
   const problems = [];
@@ -5723,7 +5794,7 @@ function checkMondayStatus() {
   need(problems, names(fieldAt('mondayStatus.boards.columns')) === 'id,title,type', 'a column of mondayStatus should have these fields, in this order: id, title, type');
   need(problems, names(fieldAt('mondayStatus.snapshots')) === 'date,open', 'a count of mondayStatus should have these fields, in this order: date, open');
   need(problems, names(fieldAt('mondayStatus.readings')) === 'boardId,boardName,itemsRead,readAt,note', 'a reading of mondayStatus should have these fields, in this order: boardId, boardName, itemsRead, readAt, note');
-  const kinds = { connectedAs: 'string', lastSyncAt: 'datetime', lastError: 'string', boards: 'array', readings: 'array', 'readings.boardId': 'string', 'readings.boardName': 'string', 'readings.itemsRead': 'number', 'readings.readAt': 'datetime', 'readings.note': 'string', snapshots: 'array', 'boards.id': 'string', 'boards.name': 'string', 'boards.itemCount': 'number', 'boards.columns': 'array', 'boards.columns.id': 'string', 'boards.columns.title': 'string', 'boards.columns.type': 'string', 'snapshots.date': 'date', 'snapshots.open': 'number' };
+  const kinds = { connectedAs: 'string', lastSyncAt: 'datetime', lastError: 'string', boards: 'array', readings: 'array', 'readings.boardId': 'string', 'readings.boardName': 'string', 'readings.itemsRead': 'number', 'readings.readAt': 'datetime', 'readings.note': 'string', snapshots: 'array', taskCount: 'number', hiddenUnassigned: 'number', callsToday: 'number', callsDate: 'date', 'boards.id': 'string', 'boards.name': 'string', 'boards.itemCount': 'number', 'boards.columns': 'array', 'boards.columns.id': 'string', 'boards.columns.title': 'string', 'boards.columns.type': 'string', 'snapshots.date': 'date', 'snapshots.open': 'number' };
   Object.keys(kinds).forEach(name => need(problems, fieldAt('mondayStatus.' + name) && fieldAt('mondayStatus.' + name).type === kinds[name], 'mondayStatus.' + name + ' should be a ' + kinds[name]));
   need(problems, type && type.readOnly === true, 'mondayStatus should be read only: the Mini writes it');
   need(problems, type && type.__experimental_omnisearch_visibility === false, 'mondayStatus should be kept out of Studio search');
@@ -5740,25 +5811,29 @@ function checkMondayStatus() {
   // The script writes the same document, with the same fields, and the tasks with fields that a task has
   need(problems, input.mondayStatusId === 'monday-status', 'the Monday data document should have the fixed id monday-status');
   need(problems, script.indexOf('_id: "monday-status"') !== -1 && script.indexOf('_type: "mondayStatus"') !== -1, 'monday-sync.sh should write the document monday-status of the type mondayStatus');
-  ['connectedAs', 'lastSyncAt', 'lastError', 'boards', 'readings', 'snapshots', 'itemCount', 'columns', 'title', 'type', 'date', 'open', 'boardId', 'boardName', 'itemsRead', 'readAt', 'note'].forEach(name => need(problems, script.indexOf(name + ':') !== -1, 'monday-sync.sh should write the field ' + name));
+  ['connectedAs', 'lastSyncAt', 'lastError', 'boards', 'readings', 'snapshots', 'taskCount', 'hiddenUnassigned', 'callsToday', 'callsDate', 'itemCount', 'columns', 'title', 'type', 'date', 'open', 'boardId', 'boardName', 'itemsRead', 'readAt', 'note'].forEach(name => need(problems, script.indexOf(name + ':') !== -1, 'monday-sync.sh should write the field ' + name));
   const task = typeByName('task');
-  const written = ['title', 'subteam', 'team', 'status', 'priority', 'dueDate', 'contact', 'show', 'source', 'mondayId', 'mondayBoardId', 'mondayBoardName'];
+  const written = ['title', 'subteam', 'team', 'status', 'priority', 'showOnBoard', 'contact', 'owners', 'startDate', 'dueDate', 'estHours', 'completedOn', 'milestoneIds', 'hiddenReason', 'show', 'source', 'mondayId', 'mondayBoardId', 'mondayBoardName'];
   written.forEach(name => {
     need(problems, fieldsIn(task).some(field => field.name === name), 'monday-sync.sh writes task.' + name + ', which the task does not have');
     need(problems, script.indexOf(name) !== -1, 'monday-sync.sh should write the field ' + name + ' of a task');
   });
   need(problems, script.indexOf('showOnTv') === -1, 'monday-sync.sh should never write showOnTv: an editor owns it');
-  need(problems, script.indexOf('statusFrom') !== -1 && script.indexOf('groups_in_progress=') !== -1 && script.indexOf('groups_done=') !== -1, 'monday-sync.sh should read statusFrom and keep the group titles for In progress and Done at the top');
+  need(problems, script.indexOf('statusIndexes') !== -1 && script.indexOf('group_status') === -1 && script.indexOf('groups_done') === -1, 'monday-sync.sh should read the status by index and never by the title of the group');
+  need(problems, script.indexOf('item_group') === -1 && script.indexOf('group {') === -1, 'monday-sync.sh should never ask for the group of an item');
+  const milestone = typeByName('milestone');
+  ['name', 'targetDate', 'team', 'subteam', 'status', 'show'].forEach(name => need(problems, fieldsIn(milestone).some(field => field.name === name) && script.indexOf(name) !== -1, 'monday-sync.sh should write the field ' + name + ' of a milestone'));
+  need(problems, script.indexOf('task-monday-') !== -1 && script.indexOf('milestone-monday-') !== -1, 'monday-sync.sh should write the ids task-monday-<item> and milestone-monday-<item>');
+  need(problems, script.indexOf('daily_limit=900') !== -1 && script.indexOf('Daily read limit reached; reads resume at midnight.') !== -1 && script.indexOf('max_requests=4') !== -1, 'monday-sync.sh should stop at 900 reads a day with the words Daily read limit reached; reads resume at midnight., and make at most 4 requests');
   need(problems, script.indexOf('\ntitle_limit=' + contract.task.title.max + '\n') !== -1, 'title_limit in monday-sync.sh should be the limit of the task title, ' + contract.task.title.max);
   need(problems, script.indexOf('\ncontact_limit=' + contract.task.contact.max + '\n') !== -1, 'contact_limit in monday-sync.sh should be the limit of the task contact, ' + contract.task.contact.max);
   need(problems, script.indexOf('\nsnapshots_kept=120\n') !== -1, 'snapshots_kept in monday-sync.sh should be 120, as the description of mondayStatus.snapshots says');
   const statuses = choicesOf('task.status').map(item => item.value);
   ['up-next', 'in-progress', 'done'].forEach(value => need(problems, statuses.indexOf(value) !== -1 && script.indexOf('"' + value + '"') !== -1, 'monday-sync.sh should write the task status ' + value));
-  need(problems, script.indexOf('"blocked"') === -1, 'monday-sync.sh should never write the task status blocked');
+  ['blocked', 'in-review'].forEach(value => need(problems, statuses.indexOf(value) !== -1 && script.indexOf('"' + value + '"') !== -1, 'monday-sync.sh should write the task status ' + value));
   choicesOf('task.priority').forEach(item => need(problems, script.indexOf('"' + item.value + '"') !== -1, 'monday-sync.sh should write the task priority ' + item.value));
-  const subteam = typeByName('subteam');
-  need(problems, script.indexOf("unmatched_name='[Unmatched]'") !== -1 && '[Unmatched]'.length <= contract.subteam.name.max, 'the subteam for items that match nobody should be [Unmatched], and fit the subteam name limit of ' + contract.subteam.name.max);
-  need(problems, fieldsIn(subteam).some(field => field.name === 'show'), 'the subteam made by the script needs the switch show, to stay off the screen');
+  need(problems, script.indexOf('subteam-unmatched') === -1 && script.indexOf('[Unmatched]') === -1, 'monday-sync.sh should make no Team lead for tasks that match nobody: they are hidden with the reason unassigned');
+  need(problems, script.indexOf('\nmilestone_limit=' + contract.milestone.name.max + '\n') !== -1, 'milestone_limit in monday-sync.sh should be the limit of the milestone name, ' + contract.milestone.name.max);
 
   // The lines of the block, in plain words, and a document that is missing or cannot be read
   const now = new Date('2027-01-12T15:00:00.000Z');
@@ -5771,7 +5846,7 @@ function checkMondayStatus() {
   need(problems, input.describeMondayStatus({ boards: 1 }, now)[2].text === '1 board', 'one board should read 1 board');
   need(problems, JSON.stringify(input.mondayStatusView(null, now)).indexOf('Reading the connection to Monday') !== -1, 'the block should say it is reading while it waits');
   const missing = JSON.stringify(input.mondayStatusView({ doc: null, unreadable: false }, now));
-  need(problems, missing.indexOf('No connection yet') !== -1 && missing.indexOf('MONDAY_API_TOKEN') !== -1 && missing.indexOf('local.env') !== -1 && missing.indexOf('10 minutes') !== -1, 'the block should say No connection yet, with the token to add to local.env on the Mini and the 10 minutes to wait, when the document is missing');
+  need(problems, missing.indexOf('No connection yet') !== -1 && missing.indexOf('MONDAY_API_TOKEN') !== -1 && missing.indexOf('local.env') !== -1 && missing.indexOf('5 minutes') !== -1, 'the block should say No connection yet, with the token to add to local.env on the Mini and the 5 minutes to wait, when the document is missing');
   need(problems, JSON.stringify(input.mondayStatusView({ doc: null, unreadable: true }, now)).indexOf('could not be read') !== -1, 'the block should say so when the document cannot be read');
   need(problems, JSON.stringify(input.mondayStatusView({ doc: { lastSyncAt: ago(5) }, unreadable: false }, now)).indexOf('Last sync') !== -1, 'the block should show the lines when there is a document');
   need(problems, typeof input.MondayStatusInput === 'function' && JSON.stringify(input.MondayStatusInput()).indexOf('Reading the connection to Monday') !== -1, 'MondayStatusInput should start by saying it is reading');
@@ -5795,8 +5870,8 @@ async function checkMondayRead() {
   return problems;
 }
 
-// The lines under the connection block: the boards the form has chosen, the tasks the Mini has made, and the
-// plain line when no board is chosen. A number that cannot be read leaves its line out.
+// The lines under the connection block: how often the Mini reads, the reads used today, and the tasks made with how many are
+// hidden for want of a department. A number that cannot be read leaves its line out.
 function checkMondayCounts() {
   const problems = [];
   const input = world.mondayStatusInput;
@@ -5805,30 +5880,30 @@ function checkMondayCounts() {
   const words = node => JSON.stringify(node);
 
   need(problems, input.describeMondayStatus(doc, now).map(line => line.label).join() === 'Connected as,Last sync,Boards the token can see,Last error', 'the four lines of the block should not change');
-  const some = input.describeMondayWork(2, 12);
-  need(problems, some.map(line => line.label).join() === 'Boards chosen,Tasks from the board' && some[0].text === '2 boards' && some[1].text === '12 tasks', 'the work lines should read Boards chosen: 2 boards and Tasks from the board: 12 tasks');
-  const one = input.describeMondayWork(1, 1);
-  need(problems, one[0].text === '1 board' && one[1].text === '1 task', 'one board and one task should read 1 board and 1 task');
-  const none = input.describeMondayWork(0, 0);
-  need(problems, none[0].text === 'None' && none[1].text === 'None', 'no boards and no tasks should read None');
-  need(problems, input.describeMondayWork(null, 3).map(line => line.label).join() === 'Tasks from the board' && input.describeMondayWork(2, null).map(line => line.label).join() === 'Boards chosen' && input.describeMondayWork(null, null).length === 0, 'a number that could not be read should leave its line out');
-  need(problems, input.describeMondayWork(undefined, 'text').length === 0, 'a value that is not a number should leave its line out');
+  const some = input.describeMondayWork({ every: 30, tasks: 12, hidden: 2, calls: 6, callsDate: '2027-01-12' });
+  need(problems, some.map(line => line.label).join() === 'Reads every,Reads today,Tasks from the board', 'the work lines should be Reads every, Reads today and Tasks from the board, in that order');
+  need(problems, some[0].text === '30 minutes' && some[1].text === '6 of 900 on 2027-01-12' && some[2].text === '12 tasks, 2 hidden (no department)', 'the work lines should read "Reads every 30 minutes", "6 of 900 on 2027-01-12" and "12 tasks, 2 hidden (no department)"');
+  const one = input.describeMondayWork({ every: 1, tasks: 1, hidden: 0 });
+  need(problems, one[0].text === '1 minute' && one[1].text === '1 task, 0 hidden (no department)', 'one minute and one task should read 1 minute and 1 task');
+  need(problems, input.describeMondayWork({ every: 5, tasks: 0 })[1].text === 'None', 'no tasks should read None');
+  need(problems, input.describeMondayWork({ tasks: 3 }).map(line => line.label).join() === 'Tasks from the board' && input.describeMondayWork({ tasks: 3 })[0].text === '3 tasks', 'a number that could not be read should leave its line out, and a hidden count that is not known should leave its words out');
+  need(problems, input.describeMondayWork(null).length === 0 && input.describeMondayWork({ every: 'x', tasks: 'y', calls: null }).length === 0 && input.describeMondayWork(undefined).length === 0, 'a value that is not a number should leave its line out');
+  need(problems, input.dailyReads === 900 && input.startingMinutes === 30, 'the block should know the daily limit of 900 reads and the starting 30 minutes');
 
-  // How the boards of the form are counted
-  need(problems, input.boardsChosen([{ boardId: '1' }, { boardId: '2' }]) === 2 && input.boardsChosen([]) === 0, 'boardsChosen should count the entries of the list');
-  need(problems, input.boardsChosen(undefined) === 0 && input.boardsChosen(null) === 0, 'a list nobody has filled in should count as no boards');
-  need(problems, input.boardsChosen('text') === null && input.boardsChosen({ 0: 1 }) === null && input.boardsChosen(7) === null, 'a value that is not a list cannot be counted');
+  // The two boards of the form
+  need(problems, sameData(input.boardRowsOf({ boardId: '1' }, { boardId: '2' }), [{ boardId: '1' }, { boardId: '2' }]), 'boardRowsOf should give the task board and the milestones board of the form');
+  need(problems, sameData(input.boardRowsOf(undefined, null), [{ boardId: '18435126893' }, { boardId: '18435272887' }]) && sameData(input.boardRowsOf({ boardId: '' }, 'text'), [{ boardId: '18435126893' }, { boardId: '18435272887' }]), 'a block nobody has filled in should be the starting board');
 
-  // The view: the lines come after the four, and the plain line shows only when the form has no board
-  const noBoard = words(input.mondayStatusView({ doc: doc, unreadable: false }, now, { chosen: 0, tasks: 0 }));
-  need(problems, noBoard.indexOf('Boards chosen') !== -1 && noBoard.indexOf('Tasks from the board') !== -1 && noBoard.indexOf('Last error') < noBoard.indexOf('Boards chosen'), 'the work lines should come below the four lines');
-  need(problems, noBoard.indexOf('No board is chosen yet, so the Mini writes no tasks. Add a board under Boards below.') !== -1 && input.noBoardNote === 'No board is chosen yet, so the Mini writes no tasks. Add a board under Boards below.', 'with no board chosen the block should say so, in the words of docs/monday.md');
-  const chosen = words(input.mondayStatusView({ doc: doc, unreadable: false }, now, { chosen: 2, tasks: 12 }));
-  need(problems, chosen.indexOf('2 boards') !== -1 && chosen.indexOf('12 tasks') !== -1 && chosen.indexOf('No board is chosen') === -1, 'with boards chosen the block should show the numbers and not the plain line');
-  const unknown = words(input.mondayStatusView({ doc: doc, unreadable: false }, now, { chosen: null, tasks: null }));
-  need(problems, unknown.indexOf('Boards chosen') === -1 && unknown.indexOf('Tasks from the board') === -1 && unknown.indexOf('No board is chosen') === -1 && unknown.indexOf('Last error') !== -1, 'numbers that cannot be read should leave out their lines and the plain line, and keep the four');
-  need(problems, words(input.mondayStatusView({ doc: doc, unreadable: false }, now)).indexOf('Boards chosen') === -1, 'a view with no work argument should show the four lines only');
-  need(problems, words(input.mondayStatusView({ doc: null, unreadable: false }, now, { chosen: 0, tasks: 0 })).indexOf('No board is chosen') === -1, 'with no connection yet the block should say so and nothing else');
+  // The view: the lines come after the four, taken from the document when it has them
+  const full = Object.assign({ taskCount: 9, hiddenUnassigned: 1, callsToday: 7, callsDate: '2027-01-12' }, doc);
+  const view = words(input.mondayStatusView({ doc: full, unreadable: false }, now, { every: 30, tasks: 12 }));
+  need(problems, view.indexOf('Reads every') !== -1 && view.indexOf('30 minutes') !== -1 && view.indexOf('9 tasks, 1 hidden (no department)') !== -1 && view.indexOf('7 of 900 on 2027-01-12') !== -1 && view.indexOf('Last error') < view.indexOf('Reads every'), 'the work lines should come below the four lines, and the counts of the document win');
+  const older = words(input.mondayStatusView({ doc: doc, unreadable: false }, now, { every: 30, tasks: 12 }));
+  need(problems, older.indexOf('12 tasks') !== -1 && older.indexOf('hidden (no department)') === -1 && older.indexOf('Reads today') === -1, 'a document with no counts should show the tasks that were counted, and no hidden words');
+  const unknown = words(input.mondayStatusView({ doc: doc, unreadable: false }, now, { every: null, tasks: null }));
+  need(problems, unknown.indexOf('Reads every') === -1 && unknown.indexOf('Tasks from the board') === -1 && unknown.indexOf('Last error') !== -1, 'numbers that cannot be read should leave out their lines and keep the four');
+  need(problems, words(input.mondayStatusView({ doc: doc, unreadable: false }, now)).indexOf('Reads every') === -1, 'a view with no work argument should show the four lines only');
+  need(problems, input.noBoardNote === undefined && input.boardsChosen === undefined, 'the block has two fixed boards, so it needs no line for a form with no board');
 
   // A line for each board row of the form: the name, the items read, the tasks on the TV, when it was read, and why a board gave nothing
   const ago = minutes => new Date(now.getTime() - minutes * 60000).toISOString();
@@ -5852,10 +5927,10 @@ function checkMondayCounts() {
   need(problems, input.describeBoardRows([{ boardId: '111' }], { readings: [{ boardId: '111', itemsRead: 1, readAt: ago(1) }] }, [], now)[0].reason === '' && input.describeBoardRows([{ boardId: '111' }], null, [], now)[0].reason === 'The Mini has not read this board yet. Wait for the next sync.', 'a document with no list of boards cannot say a board is unseen');
   need(problems, input.describeBoardRows([{ boardId: '111' }], { names: [{ id: '111', name: 'Empty' }], readings: [{ boardId: '111', itemsRead: 0, readAt: ago(1) }] }, [], now)[0].reason === 'The board has no items.', 'a board with no items and no note should say it has none');
   need(problems, input.describeBoardRows('text', 'text', 'text', now).length === 0 && input.describeBoardRows(undefined, undefined, undefined, now).length === 0, 'answers of an odd shape should give no lines');
-  const withRows = JSON.stringify(input.mondayStatusView({ doc: doc, unreadable: false }, now, { chosen: 4, tasks: 12, boards: rows }));
+  const withRows = JSON.stringify(input.mondayStatusView({ doc: doc, unreadable: false }, now, { every: 30, tasks: 12, boards: rows }));
   need(problems, withRows.indexOf('Build board') !== -1 && withRows.indexOf('12 items read') !== -1 && withRows.indexOf('The token cannot see this board') !== -1 && withRows.indexOf('Last error') < withRows.indexOf('Build board'), 'the block should show the lines of the boards below its other lines');
-  need(problems, JSON.stringify(input.mondayStatusView({ doc: doc, unreadable: false }, now, { chosen: 1, tasks: 1 })).indexOf('data-board') === -1, 'a block given no board lines should show none');
-  need(problems, words(input.mondayStatusView(null, now, { chosen: 0, tasks: 0 })).indexOf('Boards chosen') === -1 && words(input.mondayStatusView({ doc: null, unreadable: true }, now, { chosen: 0, tasks: 0 })).indexOf('Boards chosen') === -1, 'while reading, or when the document cannot be read, the block should show no work lines');
+  need(problems, JSON.stringify(input.mondayStatusView({ doc: doc, unreadable: false }, now, { every: 30, tasks: 1 })).indexOf('data-board') === -1, 'a block given no board lines should show none');
+  need(problems, words(input.mondayStatusView(null, now, { every: 30, tasks: 0 })).indexOf('Reads every') === -1 && words(input.mondayStatusView({ doc: null, unreadable: true }, now, { every: 30, tasks: 0 })).indexOf('Reads every') === -1, 'while reading, or when the document cannot be read, the block should show no work lines');
   return problems;
 }
 
@@ -5867,7 +5942,7 @@ async function checkMondayShownBoards() {
   const answering = value => ({ fetch: async (...args) => { asked.push(args); return value; } });
 
   need(problems, sameData(await read(answering(['111', null, '222', 7])), ['111', '222']), 'the board numbers of the tasks on the TV should be handed over, and what is not a number should be left out');
-  need(problems, asked.length === 1 && /source == "monday"/.test(asked[0][0]) && /showOnTv != false/.test(asked[0][0]) && /show != false/.test(asked[0][0]) && /drafts/.test(asked[0][0]) && /mondayBoardId/.test(asked[0][0]) && asked[0][2].perspective === 'published', 'the question should ask for the published tasks from the board that are on the TV, and their board numbers');
+  need(problems, asked.length === 1 && /source == "monday"/.test(asked[0][0]) && /showOnTv != false/.test(asked[0][0]) && /showOnBoard != false/.test(asked[0][0]) && /show != false/.test(asked[0][0]) && /drafts/.test(asked[0][0]) && /mondayBoardId/.test(asked[0][0]) && asked[0][2].perspective === 'published', 'the question should ask for the published tasks from the board that are on the TV, and their board numbers');
   need(problems, (await read(answering(null))) === null && (await read(answering('text'))) === null, 'an answer that is not a list cannot be counted');
   need(problems, (await read({ fetch: async () => { throw new Error('offline'); } })) === null && (await read({})) === null, 'a client that fails should give null');
   return problems;
@@ -5930,7 +6005,8 @@ function checkMondayPickers() {
   need(problems, pickers.columnChoices(boards, '111', 'owner', '').filter(choice => choice.group === 'fits').map(choice => choice.id).join() === 'person', 'the owner list should put the people column first');
   need(problems, sameData(pickers.columnChoices(boards, '999', 'status', ''), []) && sameData(pickers.columnChoices(boards, '', 'status', ''), []), 'a board that is not in the list gives no columns');
   need(problems, labels(pickers.columnChoices(boards, '111', 'status', 'gone')).endsWith('gone (not on the board)'), 'a stored column that is not on the board should stay, with a note');
-  need(problems, Object.keys(pickers.columnKinds).join() === 'status,priority,due,owner,team', 'the kinds of column field should be status, priority, due, owner and team');
+  need(problems, Object.keys(pickers.columnKinds).join() === 'status,priority,due,owner,team,timeline,hours,date,relation', 'the kinds of column field should be status, priority, due, owner, team, timeline, hours, date and relation');
+  need(problems, pickers.columnChoices(boards, '111', 'date', '')[0].label === 'Pick the column' && pickers.columnChoices(boards, '111', 'date', '').filter(choice => choice.group === 'fits').map(choice => choice.id).join() === 'date4', 'the date list should put the date columns first');
 
   // The path of the board in the same entry, and what a pick writes
   need(problems, sameData(pickers.siblingPath(['mondayBoards', { _key: 'k1' }, 'statusColumn'], 'boardId'), ['mondayBoards', { _key: 'k1' }, 'boardId']) && sameData(pickers.siblingPath('text', 'boardId'), ['boardId']), 'siblingPath should swap the last name of the path');
@@ -5976,9 +6052,9 @@ function checkMondayPickers() {
   need(problems, onlyOthers.children.map(child => child.type + ':' + (child.props.label || child.props.value)).join() === 'option:,optgroup:Other', 'with no column that fits, the others are one group called Other');
 
   // The inputs: one for the board and one for each kind of column, reading the board of the same entry
-  ['BoardInput', 'StatusColumnInput', 'PriorityColumnInput', 'DueColumnInput', 'OwnerColumnInput', 'TeamColumnInput'].forEach(name => {
+  ['BoardInput', 'StatusColumnInput', 'PriorityColumnInput', 'DueColumnInput', 'OwnerColumnInput', 'TeamColumnInput', 'TimelineColumnInput', 'HoursColumnInput', 'DateColumnInput', 'RelationColumnInput'].forEach(name => {
     need(problems, typeof pickers[name] === 'function', name + ' should be a component');
-    const drawn = pickers[name]({ id: 'x', value: '', path: ['mondayBoards', 'k1', 'statusColumn'], onChange: () => {} });
+    const drawn = pickers[name]({ id: 'x', value: '', path: ['mondayTaskBoard', 'statusColumn'], onChange: () => {} });
     need(problems, JSON.stringify(drawn).indexOf('Reading the list of') !== -1, name + ' should start by saying it is reading');
   });
 
@@ -6073,9 +6149,9 @@ function checkMondayBoardsPage() {
   need(problems, typeof view.boardsPage === 'function' && typeof parts.readBoardsPage === 'function', 'the Monday Boards files should export boardsPage and readBoardsPage');
 
   // Choose boards goes to the board rows, which sit on the Monday tab
-  const rows = fieldAt('dashboardSettings.mondayBoards');
-  need(problems, parts.chooseTarget.id === 'dashboardSettings' && parts.chooseTarget.type === 'dashboardSettings' && parts.chooseTarget.path === 'mondayBoards', 'Choose boards should open the field mondayBoards of the document dashboardSettings');
-  need(problems, rows && rows.group === 'monday', 'the field mondayBoards should be on the Monday tab, because Choose boards opens it');
+  const rows = fieldAt('dashboardSettings.mondayTaskBoard');
+  need(problems, parts.chooseTarget.id === 'dashboardSettings' && parts.chooseTarget.type === 'dashboardSettings' && parts.chooseTarget.path === 'mondayTaskBoard', 'Choose boards should open the field mondayTaskBoard of the document dashboardSettings');
+  need(problems, rows && rows.group === 'monday', 'the field mondayTaskBoard should be on the Monday tab, because Choose boards opens it');
 
   const status = {
     lastSyncAt: ago(3),
@@ -6090,7 +6166,7 @@ function checkMondayBoardsPage() {
   const page = view.boardsPage(read, now, links);
   need(problems, wordsIn(nodesWhere(page, node => node.type === 'h1')) === 'Monday Boards', 'the page should open with the heading Monday Boards');
   const paragraphs = nodesWhere(page, node => node.type === 'p').map(wordsIn);
-  need(problems, paragraphs[0] === parts.helpLine && /pick the board, the team, and how the status is read/.test(parts.helpLine), 'the first line under the heading should say: pick the board, the team, and how the status is read');
+  need(problems, paragraphs[0] === parts.helpLine && /task board and the milestones board/.test(parts.helpLine), 'the first line under the heading should name the task board and the milestones board');
   const button = nodesWhere(page, node => node.type === 'button')[0];
   need(problems, button && wordsIn(button) === 'Choose boards' && button.props.onClick === links.choose, 'the page should have a Choose boards button');
   need(problems, nodesWhere(page, node => node.type === 'h1' || node.type === 'p' || node.type === 'button').findIndex(node => node.type === 'button') === 2, 'the button should come right after the heading and the first line');
@@ -6101,8 +6177,10 @@ function checkMondayBoardsPage() {
   need(problems, items[0] === 'Build board 12 items · Read 5 minutes ago · Chosen for PRIME', 'a chosen board should say its items, when it was read and its team. It reads "' + items[0] + '"');
   need(problems, items[1] === 'Board 999 Items not counted · Not read yet · Chosen for NOVA The token cannot see this board, or the board number is wrong.', 'a chosen board the token cannot see should say so. It reads "' + items[1] + '"');
   need(problems, items[2] === 'Outreach board 1 item · Not read · Not chosen' && items[3] === 'Parts board 0 items · Not read · Not chosen', 'a board that is not chosen should say Not read and Not chosen. They read "' + items[2] + '" and "' + items[3] + '"');
-  const linked = nodesWhere(page, node => node.type === 'ChildLink');
+  const linked = nodesWhere(page, node => node.type === 'ChildLink').filter(node => node.props.childId !== parts.milestonesChild);
   need(problems, linked.length === 1 && linked[0].props.childId === '111' && wordsIn(linked[0]) === 'Build board', 'only the name of the chosen board that the token can see should open its tasks, with the board number as the child');
+  const milestoneLinks = nodesWhere(page, node => node.type === 'ChildLink').filter(node => node.props.childId === parts.milestonesChild);
+  need(problems, parts.milestonesChild === 'milestones' && milestoneLinks.length === 1 && wordsIn(milestoneLinks[0]) === 'Milestones', 'the page should link to the second list, Milestones, with the child id milestones');
   const noted = view.boardsPage({ status: status, entries: [{ boardId: '111', team: '' }], statusUnreadable: false, entriesUnreadable: false }, now, links);
   need(problems, /Chosen for both teams/.test(wordsIn(noted)), 'a chosen board with no team should say it is for both teams');
   const reasons = view.boardsPage({ status: Object.assign({}, status, { readings: [{ boardId: '111', itemsRead: 0, readAt: ago(2), note: 'monday gave no items for this board' }] }), entries: entries, statusUnreadable: false, entriesUnreadable: false }, now, links);
@@ -6125,19 +6203,23 @@ function checkMondayBoardsPage() {
   const start = view.MondayBoardsView();
   need(problems, wordsIn(start).indexOf('Reading the boards') !== -1, 'MondayBoardsView should start by saying it is reading');
   nodesWhere(start, node => node.type === 'button')[0].props.onClick();
-  need(problems, sameData(globalThis.studioIntents, [['edit', parts.chooseTarget]]), 'Choose boards should ask the pane router for the edit intent of Dashboard Settings at mondayBoards. It asked for ' + JSON.stringify(globalThis.studioIntents));
+  need(problems, sameData(globalThis.studioIntents, [['edit', parts.chooseTarget]]), 'Choose boards should ask the pane router for the edit intent of Dashboard Settings at mondayTaskBoard. It asked for ' + JSON.stringify(globalThis.studioIntents));
   globalThis.studioIntents = undefined;
 
   // The page shows and never writes
   need(problems, !/\.patch\(|\.create\(|\.createIfNotExists\(|\.createOrReplace\(|\.delete\(|\.mutate\(|\.transaction\(|useDocumentOperation/.test(world.mondayBoardsViewSource + world.mondayBoardsPartsSource), 'the Monday Boards page should not write anything');
 
   // What a student reads is short plain sentences
-  [parts.helpLine, parts.nothingYet, parts.noBoardsLine, parts.openLine, parts.publicLine, parts.unreadableLine, parts.settingsUnreadableLine].forEach(text => checkPlainSentences(problems, 'the Monday Boards page ("' + text.slice(0, 30) + '")', text));
+  [parts.helpLine, parts.nothingYet, parts.noBoardsLine, parts.openLine, parts.publicLine, parts.unreadableLine, parts.settingsUnreadableLine, parts.milestonesLine].forEach(text => checkPlainSentences(problems, 'the Monday Boards page ("' + text.slice(0, 30) + '")', text));
 
   // A board of the page opens its tasks in the same two lists as Monday Tasks, kept to that board
   const built = world.structure.structure(fakeBuilder()).made.items.map(item => item.made).filter(item => item.title === 'Monday Boards')[0];
   const resolver = built && built.child && built.child.made && built.child.made.child;
   if (typeof resolver !== 'function') return problems.concat('the Monday Boards page should be given a function that builds the tasks of a board');
+
+  // the second list: the milestones the Mini made, by target date, with no plus button
+  const milestonePane = resolver(parts.milestonesChild, {}).made;
+  need(problems, milestonePane.type === 'milestone' && milestonePane.title === 'Milestones' && sameData(milestonePane.defaultOrdering, [{ field: 'targetDate', direction: 'asc' }]) && Array.isArray(milestonePane.initialValueTemplates) && milestonePane.initialValueTemplates.length === 0, 'the second list under Monday Boards should list milestones by target date, with no plus button');
 
   const opened = resolver('111', {}).made;
   const lists = (opened.items || []).map(item => item.made);
@@ -6188,7 +6270,7 @@ async function checkMondayBoardsPageRead() {
   need(problems, found.status && found.entries.length === 1 && !found.statusUnreadable && !found.entriesUnreadable, 'both answers that are there should be handed over');
   need(problems, asked.length === 2 && asked.every(call => call[2].perspective === 'published' && /_id == \$id/.test(call[0])), 'readBoardsPage should ask for the published documents by their ids');
   need(problems, asked.map(call => call[1].id).join() === 'monday-status,dashboardSettings', 'readBoardsPage should ask for monday-status and dashboardSettings');
-  need(problems, /readings\[\]/.test(asked[0][0]) && /boards\[\]/.test(asked[0][0]) && /mondayBoards\[\]/.test(asked[1][0]), 'readBoardsPage should ask for the boards, the readings and the board rows');
+  need(problems, /readings\[\]/.test(asked[0][0]) && /boards\[\]/.test(asked[0][0]) && /mondayTaskBoard/.test(asked[1][0]) && /mondayMilestoneBoard/.test(asked[1][0]), 'readBoardsPage should ask for the boards, the readings and the two boards of the Monday tab');
 
   need(problems, sameData(await read(answering({ 'monday-status': null, dashboardSettings: null })), { status: null, entries: [], statusUnreadable: false, entriesUnreadable: false }), 'no documents are a good answer, not a failure');
   need(problems, sameData(await read(answering({ 'monday-status': 'text', dashboardSettings: { entries: 'text' } })), { status: null, entries: [], statusUnreadable: false, entriesUnreadable: false }), 'answers that are not documents should be read as no documents');
@@ -6745,7 +6827,7 @@ async function main() {
   check('the Monday tab has the connection block, up to 10 board entries with pickers and a choice of group names or a status column, the labels for in progress and done (the Backlog label is hidden and ignored) and the owner switch, as in dashboard/config.js', checkMondayTab);
   check('the Monday data document has the fields the Mini writes, is kept out of the sidebar and the New menu, the script writes the same fields and task fields, and the connection block shows its lines in plain words', checkMondayStatus);
   results.push({ name: 'the connection block asks for the published Monday data document by its id, and survives a client that fails', problems: await checkMondayRead().catch(error => ['the check stopped: ' + error.message]) });
-  check('the connection block shows the boards chosen and the tasks made below its four lines, a line for each board row with its items, tasks on the TV and last read, says so when no board is chosen, and leaves out a number it cannot read', checkMondayCounts);
+  check('the connection block shows how often the Mini reads, the reads used today and the tasks made with the hidden ones below its four lines, a line for each of the two boards, and leaves out a number it cannot read', checkMondayCounts);
   results.push({ name: 'the connection block counts the published tasks from the board, and survives a client that fails', problems: await checkMondayTaskCount().catch(error => ['the check stopped: ' + error.message]) });
   results.push({ name: 'the connection block asks for the board of each published task that is on the TV, and survives a client that fails', problems: await checkMondayShownBoards().catch(error => ['the check stopped: ' + error.message]) });
   check('the board and column pickers list the boards and the columns of that board only, with their types in words, clear a column when the board changes, say to wait for the sync when a board has no columns yet, and write only the id', checkMondayPickers);

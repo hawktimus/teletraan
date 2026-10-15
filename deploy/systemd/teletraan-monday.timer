@@ -1,9 +1,12 @@
 [Unit]
-Description=Read the Monday boards every 10 minutes
+Description=Wake the Monday sync every 5 minutes
 
 [Timer]
+# The script itself decides whether to read Monday: it reads "How often" on the Monday tab
+# of Dashboard Settings (5 to 120 minutes) and ends quietly when the last read is newer.
+# Changing that setting needs no change here.
 OnBootSec=2min
-OnUnitActiveSec=10min
+OnUnitActiveSec=5min
 
 [Install]
 WantedBy=timers.target

@@ -1,12 +1,12 @@
 // The connection block at the top of the Monday tab of Dashboard Settings
 // (schemas/settingsMonday.js). It reads the document monday-status, which the Mini writes
 // with deploy/scripts/monday-sync.sh, and says who the token belongs to, when the Mini
-// last read Monday, how many boards it can see, and what went wrong last. Below those it
-// says how many boards the form has chosen and how many tasks the Mini has made, and when
-// no board is chosen it says that the Mini writes no tasks. Under those is a line for each board
-// row of the form: the name of the board, how many items the Mini read, how many of its tasks are on
-// the TV, and when it was last read. A board that gave no items says why, such as a board number the
-// token cannot see. The field stores nothing: this input never changes the value.
+// last read Monday, how many boards it can see, and what went wrong last. Below those it says
+// how often the Mini reads, how many reads it has used today, and how many tasks it made and how
+// many of them have no department and are kept off the TV. Under those is a line for each of the
+// two boards of the form: the name of the board, how many items the Mini read, how many of its
+// tasks are on the TV, and when it was last read. A board that gave no items says why, such as a
+// board number the token cannot see. The field stores nothing: this input never changes the value.
 //
 // If the document is missing it says No connection yet and what to do, and if it
 // cannot be read it says so. A number that cannot be read is left out. None of this
@@ -28,17 +28,24 @@ const apiVersion = '2025-02-19';
 export const mondayStatusId = 'monday-status';
 
 // Only what the block shows, so the question stays small. names are the boards the token can
-// see, and readings are what the Mini read from each board the form has chosen.
-const question = '*[_id == $id][0] { connectedAs, lastSyncAt, lastError, "boards": count(boards), "names": boards[] { id, name }, "readings": readings[] { boardId, boardName, itemsRead, readAt, note } }';
+// see, and readings are what the Mini read from each of the two boards of the form.
+const question = '*[_id == $id][0] { connectedAs, lastSyncAt, lastError, taskCount, hiddenUnassigned, callsToday, callsDate, "boards": count(boards), "names": boards[] { id, name }, "readings": readings[] { boardId, boardName, itemsRead, readAt, note } }';
 
 // The tasks the Mini made from the boards, whether or not they are on the screen
 const taskQuestion = 'count(*[_type == "task" && source == "monday" && !(_id in path("drafts.**"))])';
 
 // The board of each task from the board that is on the TV, so the block can count them for each board
-const shownQuestion = '*[_type == "task" && source == "monday" && showOnTv != false && show != false && !(_id in path("drafts.**"))].mondayBoardId';
+const shownQuestion = '*[_type == "task" && source == "monday" && showOnTv != false && showOnBoard != false && show != false && !(_id in path("drafts.**"))].mondayBoardId';
 
-// What to do when no board is chosen. The Mini writes a task only for a chosen board.
-export const noBoardNote = 'No board is chosen yet, so the Mini writes no tasks. Add a board under Boards below.';
+// The reads a day may use before the Mini waits for midnight (deploy/scripts/monday-sync.sh, daily_limit)
+export const dailyReads = 900;
+
+// The boards of the Monday tab when the form has not named them yet, the same as the starting values
+// in dashboard/config.js
+export const startingBoards = ['18435126893', '18435272887'];
+
+// How often the Mini reads when the form has no number yet
+export const startingMinutes = 30;
 
 const styles = {
   note: { margin: 0, fontSize: 14, color: 'var(--card-muted-fg-color, inherit)' },
@@ -80,12 +87,18 @@ export function describeMondayStatus(doc, now) {
   ];
 }
 
-// The lines below those: the boards the form has chosen and the tasks the Mini has made.
-// Either is null when it could not be read, and its line is left out.
-export function describeMondayWork(chosen, tasks) {
+// The lines below those, from { every, tasks, hidden, calls, callsDate }: how often the Mini reads, the reads
+// used today, and the tasks it made with how many have no department. A number that could not be read leaves
+// its line out, and the hidden count is added only when it is known.
+export function describeMondayWork(counts) {
+  const found = isRecord(counts) ? counts : {};
   const lines = [];
-  if (typeof chosen === 'number') lines.push({ label: 'Boards chosen', text: boardsText(chosen) });
-  if (typeof tasks === 'number') lines.push({ label: 'Tasks from the board', text: tasksText(tasks) });
+  if (typeof found.every === 'number') lines.push({ label: 'Reads every', text: found.every + (found.every === 1 ? ' minute' : ' minutes') });
+  if (typeof found.calls === 'number') lines.push({ label: 'Reads today', text: found.calls + ' of ' + dailyReads + (typeof found.callsDate === 'string' && found.callsDate !== '' ? ' on ' + found.callsDate : '') });
+  if (typeof found.tasks === 'number') {
+    const hidden = typeof found.hidden === 'number' ? ', ' + found.hidden + ' hidden (no department)' : '';
+    lines.push({ label: 'Tasks from the board', text: tasksText(found.tasks) + hidden });
+  }
   return lines;
 }
 
@@ -134,11 +147,11 @@ export function describeBoardRows(entries, doc, shown, now) {
   return rows;
 }
 
-// How many boards the form being edited has chosen. A field nobody has filled in has none.
-// Anything that is not a list cannot be counted, so it gives null.
-export function boardsChosen(value) {
-  if (Array.isArray(value)) return value.length;
-  return value === undefined || value === null ? 0 : null;
+// The boards of the form being edited, as the rows describeBoardRows takes: the task board and the milestones
+// board. A block nobody has filled in has the starting board.
+export function boardRowsOf(taskBoard, milestoneBoard) {
+  const idOf = (block, start) => (isRecord(block) && typeof block.boardId === 'string' && block.boardId !== '' ? block.boardId : start);
+  return [{ boardId: idOf(taskBoard, startingBoards[0]) }, { boardId: idOf(milestoneBoard, startingBoards[1]) }];
 }
 
 // The numbers of the boards of the tasks that are on the TV, one for each task, or null when they cannot be read
@@ -174,21 +187,22 @@ export async function readMondayTaskCount(client) {
 
 // What the block shows for what was read: null while it is being read, then
 // { doc, unreadable }. now is the time to count the ages from. work is optional:
-// { chosen, tasks, boards } with the boards chosen in the form and the tasks made, each a
+// { every, tasks, boards } with the minutes of the form and the tasks made, each a
 // number or null, and the lines of describeBoardRows.
 export function mondayStatusView(read, now, work) {
   if (!read) return h('p', { style: styles.note }, 'Reading the connection to Monday.');
   if (read.unreadable) return h('p', { style: styles.note }, 'The connection to Monday could not be read.');
-  if (!read.doc) return h('p', { style: styles.note }, 'No connection yet. Add MONDAY_API_TOKEN to local.env on the Mini, then wait 10 minutes.');
+  if (!read.doc) return h('p', { style: styles.note }, 'No connection yet. Add MONDAY_API_TOKEN to local.env on the Mini, then wait 5 minutes.');
 
   const counts = work || {};
-  const lines = describeMondayStatus(read.doc, now).concat(describeMondayWork(counts.chosen, counts.tasks));
+  const doc = read.doc;
+  const tasks = typeof doc.taskCount === 'number' ? doc.taskCount : counts.tasks;
+  const lines = describeMondayStatus(doc, now).concat(describeMondayWork({ every: counts.every, tasks: tasks, hidden: doc.hiddenUnassigned, calls: doc.callsToday, callsDate: doc.callsDate }));
 
   return h(
     'div',
     null,
     lines.map(line => h('p', { key: line.label, style: styles.line }, h('span', { style: styles.label }, line.label), h('span', null, line.text))),
-    counts.chosen === 0 ? h('p', { style: styles.advice }, noBoardNote) : null,
     (counts.boards || []).map(row =>
       h(
         'div',
@@ -200,28 +214,28 @@ export function mondayStatusView(read, now, work) {
   );
 }
 
-// Reading the form can fail while it opens. Then the number is null and its line is left out.
-function useBoardsChosen() {
+// Reading the form can fail while it opens. Then the value is empty and its line is left out.
+function useFormNumber(name) {
   try {
-    return boardsChosen(useFormValue(['mondayBoards']));
+    const found = useFormValue([name]);
+    return typeof found === 'number' ? found : null;
   } catch (error) {
     return null;
   }
 }
 
-// The board rows of the form being edited, or an empty list when they cannot be read
+// The two boards of the form being edited
 function useBoardRows() {
   try {
-    const found = useFormValue(['mondayBoards']);
-    return Array.isArray(found) ? found : [];
+    return boardRowsOf(useFormValue(['mondayTaskBoard']), useFormValue(['mondayMilestoneBoard']));
   } catch (error) {
-    return [];
+    return boardRowsOf(null, null);
   }
 }
 
 export function MondayStatusInput() {
   const client = useClient({ apiVersion: apiVersion });
-  const chosen = useBoardsChosen();
+  const minutes = useFormNumber('mondayEveryMinutes');
   const rows = useBoardRows();
   const [read, setRead] = useState(null);
   const [tasks, setTasks] = useState(null);
@@ -246,5 +260,5 @@ export function MondayStatusInput() {
   }, []);
 
   const now = new Date();
-  return mondayStatusView(read, now, { chosen: chosen, tasks: tasks, boards: describeBoardRows(rows, read && read.doc, shown, now) });
+  return mondayStatusView(read, now, { every: minutes === null ? startingMinutes : minutes, tasks: tasks, boards: describeBoardRows(rows, read && read.doc, shown, now) });
 }
