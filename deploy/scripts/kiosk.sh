@@ -91,6 +91,11 @@ profile="$HOME/.config/teletraan-kiosk"
 # (chrome://gpu, for example).
 curl --fail --silent --output /dev/null --retry 30 --retry-delay 2 --retry-connrefused "$dashboard"
 
+# Find the screen and make the framebuffer 1920 by 1080 (display.sh). The
+# browser window below follows that size, not the size of the TV.
+. "$deploy/scripts/display.sh"
+set_display || true
+
 # No screen saver, no blank screen, no power saving
 xset s off
 xset s noblank
@@ -128,6 +133,7 @@ rm -f "$data"/device.json.tmp.* 2> /dev/null || true
 ) > /dev/null 2>&1 &
 
 # --kiosk: full screen with no address bar or tabs
+# --window-size: the 1920 by 1080 framebuffer that display.sh set, not the TV's own size
 # --force-device-scale-factor=1: never zoomed, one dashboard pixel is one TV pixel
 # --disable-features=Translate: no translate prompt
 # --password-store=basic: never asks for a keyring password
