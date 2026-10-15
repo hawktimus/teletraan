@@ -3,7 +3,7 @@
 // the panel or shown whole, and the Portraits box for the people panels. Nine fields:
 //
 //   photoOrder          random (the default) or newest first
-//   photoSeconds        seconds the panel stays up, from 6 to 120, starting at 16
+//   photoSeconds        not used any more: a Photos row of a Screen sets its own photos and seconds each. Kept, hidden
 //   portraitScale       the old size of the portraits. Hidden: the screen reads it only while
 //                       neither of the two sizes below has a value, and then both take it
 //   photoScale          hidden: the size of the picture, which is not used since a photo fills the panel
@@ -92,7 +92,8 @@ export function photosFields() {
       title: 'Seconds per photo',
       type: 'number',
       group: 'screen',
-      description: 'How long the Photo panel stays up each turn, from 6 to 120 seconds. Photos share it, 8 seconds each at least. A row in Panels with its own seconds wins.',
+      hidden: true,
+      description: 'Not used any more. A Photos row of a Screen has its own number of photos and seconds for each. This stays so that a saved value is kept.',
       initialValue: 16,
       validation: Rule => [
         Rule.required().error('Enter the number of seconds.'),

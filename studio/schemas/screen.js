@@ -21,7 +21,7 @@
 
 import { defineType, defineField, defineArrayMember } from 'sanity';
 import { ScreenInput } from '../screen-input.js';
-import { BannerTeamInput, CountdownInput, TickerInput, RowTeamInput } from '../screen-fields.js';
+import { BannerTeamInput, CountdownInput, TickerInput, RowTeamInput, PhotoTotalInput } from '../screen-fields.js';
 import { largePanels, smallPanels, mondayPanels, panelTitle, teamKindOf, teamProblem, teamWord } from '../screen-panels.js';
 import { screenStyles, screenTitles, styleOfScreenId } from '../screen-ids.js';
 
@@ -43,18 +43,54 @@ function hasNoSidePanel(context) {
 }
 
 // A row with its own seconds stays up that long. With none it follows Seconds per page (Screen tab
-// of Dashboard Settings), and the Photo panel follows Seconds per photo.
+// of Dashboard Settings). A Photos row has no seconds of its own: it stays for its number of photos times the
+// seconds of each, which are the fields below.
 const secondsRule = Rule => Rule.integer().min(6).max(120).error('Use a whole number from 6 to 120.');
 
-function secondsField() {
-  return defineField({
+const isPhotoRow = context => Boolean(context.parent) && context.parent.panel === 'photo';
+
+function secondsField(hiddenForPhotos) {
+  const field = {
     name: 'seconds',
     title: 'Seconds on screen',
     type: 'number',
-    description: 'Optional. Leave empty and the row follows Seconds per page (Photo follows Seconds per photo). Otherwise from 6 to 120.',
+    description: 'Optional. Leave empty and the row follows Seconds per page. Otherwise from 6 to 120.',
     validation: secondsRule,
-  });
+  };
+  if (hiddenForPhotos) field.hidden = isPhotoRow;
+  return defineField(field);
 }
+
+// The three fields of a Photos row, which show only on that row. The third stores nothing: it shows the product.
+const photoFields = [
+  defineField({
+    name: 'photoCount',
+    title: 'Photos',
+    type: 'number',
+    description: 'How many photos the row shows each time it plays, from 1 to 20. Starts at 4. The next time carries on with the next photos.',
+    initialValue: 4,
+    hidden: context => !isPhotoRow(context),
+    validation: Rule => Rule.integer().min(1).max(20).error('Use a whole number from 1 to 20.'),
+  }),
+  defineField({
+    name: 'secondsPerPhoto',
+    title: 'Seconds per photo',
+    type: 'number',
+    description: 'How long each photo stays, from 5 to 60 seconds. Starts at 10.',
+    initialValue: 10,
+    hidden: context => !isPhotoRow(context),
+    validation: Rule => Rule.integer().min(5).max(60).error('Use a whole number from 5 to 60.'),
+  }),
+  defineField({
+    name: 'photoTotal',
+    title: 'Time on screen',
+    type: 'string',
+    readOnly: true,
+    description: 'The photos times the seconds of each. This is how long the row stays up.',
+    hidden: context => !isPhotoRow(context),
+    components: { input: PhotoTotalInput },
+  }),
+];
 
 function panelField(panels, description) {
   return defineField({
@@ -67,9 +103,14 @@ function panelField(panels, description) {
   });
 }
 
-function secondsWords(row) {
-  if (row.seconds) return row.seconds + ' seconds';
-  return row.panel === 'photo' ? 'Follows Seconds per photo' : 'Follows Seconds per page';
+// The words for the seconds of a row. A Photos row says its photos and their seconds, and the total.
+export function secondsWords(row) {
+  if (row.panel === 'photo') {
+    const count = row.photoCount || 4;
+    const each = row.secondsPerPhoto || 10;
+    return count + (count === 1 ? ' photo' : ' photos') + ' of ' + each + ' seconds, ' + count * each + ' seconds';
+  }
+  return row.seconds ? row.seconds + ' seconds' : 'Follows Seconds per page';
 }
 
 const mainRow = defineArrayMember({
@@ -88,10 +129,10 @@ const mainRow = defineArrayMember({
         return problem === '' ? true : problem;
       }),
     }),
-    secondsField(),
-  ],
+    secondsField(true),
+  ].concat(photoFields),
   preview: {
-    select: { panel: 'panel', team: 'team', seconds: 'seconds' },
+    select: { panel: 'panel', team: 'team', seconds: 'seconds', photoCount: 'photoCount', secondsPerPhoto: 'secondsPerPhoto' },
     prepare(row) {
       const team = row.team ? teamWord(row.team) : teamKindOf(row.panel) === 'optional' ? 'Keeps the team on the screen' : '';
       return { title: panelTitle(row.panel) || 'Panel not chosen', subtitle: [team, secondsWords(row)].filter(Boolean).join(' · ') };
@@ -102,7 +143,7 @@ const mainRow = defineArrayMember({
 const sideRow = defineArrayMember({
   type: 'object',
   title: 'Row',
-  fields: [panelField(smallPanels, 'Which small panel this row plays in the side panel.'), secondsField()],
+  fields: [panelField(smallPanels, 'Which small panel this row plays in the side panel.'), secondsField(false)],
   preview: {
     select: { panel: 'panel', seconds: 'seconds' },
     prepare(row) {

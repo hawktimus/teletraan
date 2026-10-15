@@ -102,7 +102,7 @@ test('a row of the large panel keeps its panel, team and seconds, and a panel th
     ],
   }, 'original', 'minimal');
 
-  assert.deepEqual(screen.mainRows, [{ panel: 'tasks', team: 'prime', seconds: 30 }, { panel: 'events', team: '' }, { panel: 'photo', team: '' }]);
+  assert.deepEqual(screen.mainRows, [{ panel: 'tasks', team: 'prime', seconds: 30 }, { panel: 'events', team: '' }, { panel: 'photo', team: '', photoCount: 4, secondsPerPhoto: 10, seconds: 40 }]);
 });
 
 test('a row of the small panel keeps its panel and seconds and never a team, and the last resort is not a row', () => {
@@ -137,7 +137,7 @@ test('only a panel that follows the team has a team, and a Monday row needs a te
     ],
   }, 'original', 'minimal');
 
-  assert.deepEqual(rowsOf(screen.mainRows), ['tasks nova', 'events', 'photo', 'tonight', 'monday-tasks prime', 'monday-milestones both', 'monday-progress nova']);
+  assert.deepEqual(rowsOf(screen.mainRows), ['tasks nova', 'events', 'photo 40s', 'tonight', 'monday-tasks prime', 'monday-milestones both', 'monday-progress nova']);
   assert.deepEqual(config.teamPanels, ['tasks', 'tonight', 'spotlight', 'team-leads', 'roster', 'leadership', 'sponsor-feature', 'custom']);
   config.teamPanels.forEach(id => assert.equal(registry.panels.find(panel => panel.id === id).region, 'grid1', id + ' is a large panel'));
 });
@@ -148,7 +148,7 @@ test('a team code is lowercase letters and digits, and anything else is no team'
 });
 
 test('seconds are 6 to 120, and a row with seconds that are not a number has none', () => {
-  const rows = [3, 6, 20.5, 120, 500, 0, -4, '30', null, NaN].map(seconds => ({ panel: 'photo', seconds: seconds }));
+  const rows = [3, 6, 20.5, 120, 500, 0, -4, '30', null, NaN].map(seconds => ({ panel: 'events', seconds: seconds }));
   const found = screens.tidyScreen({ mainRows: rows }, 'original', 'minimal').mainRows.map(row => row.seconds);
   assert.deepEqual(found, [6, 6, 20.5, 120, 120, undefined, undefined, undefined, undefined, undefined]);
 });
@@ -312,7 +312,7 @@ test('a Screen with an empty list of rows is built from the Panel order, each li
   });
 
   const original = screens.resolveScreen(content, 'original');
-  assert.deepEqual(rowsOf(original.mainRows), ['photo', 'events'], 'its own rows');
+  assert.deepEqual(rowsOf(original.mainRows), ['photo 40s', 'events'], 'its own rows');
   assert.deepEqual(rowsOf(original.sideRows), ['forecast', 'next-event', 'task-counts', 'sponsor-logo', 'task-counts'], 'and the small ones it did not have');
 
   const cybertron = screens.resolveScreen(content, 'cybertron');
@@ -340,7 +340,7 @@ test('content that is not content, or has no settings, still gives a Screen and 
 test('the steps of the large panel are the rows in order, with the team, the seconds and the number of the row', () => {
   clean();
   const content = contentWith(raw => {
-    raw.screens = [doc('original', { mainRows: [{ panel: 'tasks', team: 'prime', seconds: 30 }, { panel: 'events' }, { panel: 'tonight', team: 'nova' }, { panel: 'photo', seconds: 8 }] })];
+    raw.screens = [doc('original', { mainRows: [{ panel: 'tasks', team: 'prime', seconds: 30 }, { panel: 'events' }, { panel: 'tonight', team: 'nova' }, { panel: 'photo', photoCount: 2, secondsPerPhoto: 8 }] })];
   });
   const steps = screens.mainPlaylist(content, mondayNoon);
 
@@ -348,7 +348,7 @@ test('the steps of the large panel are the rows in order, with the team, the sec
     { panel: 'tasks', show: true, team: 'prime', seconds: 30, row: 0 },
     { panel: 'events', show: true, team: '', row: 1 },
     { panel: 'tonight', show: true, team: 'nova', row: 2 },
-    { panel: 'photo', show: true, team: '', seconds: 8, row: 3 },
+    { panel: 'photo', show: true, team: '', seconds: 16, photoCount: 2, secondsPerPhoto: 8, row: 3 },
   ]);
   const pages = withPages(steps);
   assert.deepEqual(pages.map(step => step.panel + (step.page || '')), ['tasks', 'events', 'tonight', 'photo'], 'Events is one row and one step: it scrolls from its first page to its second');

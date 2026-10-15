@@ -118,7 +118,7 @@ export function makePhotoQueue(random = Math.random) {
     return { photo: photo, next: next };
   }
 
-  return {
+  const queue = {
     // list is photosToShow(). Gives { photo, next }, or both null with no photos.
     take: take,
 
@@ -137,7 +137,22 @@ export function makePhotoQueue(random = Math.random) {
       }
       return { photos: photos, next: next };
     },
+
+    // One turn of a Photos row of a Screen (core/screens.js): up to count photos, in the order of the setting.
+    // In the published order (newest-first) a turn stops at the end of the list instead of going round to
+    // the first photo, so 7 photos with a count of 4 show 1 to 4, then 5 to 7, then 1 to 4 again: the next
+    // turn carries on where this one left off. In random order the photos are dealt as takeTurn deals them.
+    takeRun(list, order, count) {
+      const wanted = Math.max(0, Math.min(count, list.length));
+      if (order !== 'newest-first' || list.length === 0) return queue.takeTurn(list, order, wanted);
+
+      const ordered = newestFirst(list);
+      let first = ordered.findIndex(photo => photoKey(photo) === shownKey) + 1;
+      if (first >= ordered.length) first = 0;
+      return queue.takeTurn(list, order, Math.min(wanted, ordered.length - first));
+    },
   };
+  return queue;
 }
 
 // A photo stays up at least this many seconds
@@ -154,6 +169,14 @@ export function turnPlan(photoCount, seconds) {
 
   const photos = Math.max(1, Math.min(photoCount, Math.floor(seconds / shortestHold)));
   return { photos: photos, hold: seconds / photos };
+}
+
+// How a Photos row of a Screen shares its stay: each photo stays secondsPerPhoto seconds, however many the
+// turn has, so a turn of the 4 photos that fit takes 40 seconds with 10 each, and a turn cut short by the end
+// of the list is shorter. shortestHold does not apply: the row asks for at least 5 seconds a photo itself.
+// count is how many photos the turn really has.
+export function rowPlan(count, secondsPerPhoto) {
+  return { photos: count, hold: secondsPerPhoto, seconds: count * secondsPerPhoto };
 }
 
 // The seconds a row of the Panels list has of its own, or 0 when it has none and

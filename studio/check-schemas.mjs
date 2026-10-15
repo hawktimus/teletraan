@@ -266,7 +266,7 @@ const contract = {
     nameEffectEveryMinutes: number(1, 240),
     hawkEveryMinutes: number(1, 240),
     swapSeconds: number(0.5, 3),
-    mainRows: rows({ panel: 'string', team: { kind: 'plainString' }, seconds: number(6, 120) }),
+    mainRows: rows({ panel: 'string', team: { kind: 'plainString' }, seconds: number(6, 120), photoCount: number(1, 20), secondsPerPhoto: number(5, 60), photoTotal: { kind: 'plainString' } }),
     mondayStyle: 'string',
     sideRows: rows({ panel: 'string', seconds: number(6, 120) }),
   },
@@ -2725,8 +2725,8 @@ function checkPhotos() {
   need(problems, allowed && allowed.args[0].join() === config.photoOrders.join(), 'photoOrder should only allow: ' + config.photoOrders.join(', '));
   need(problems, config.defaultSettings.photoOrder === 'random', 'the default photoOrder in config.js should be random');
 
-  // A row in the Panels list with no seconds of its own: the Photo row follows Seconds per photo
-  need(problems, setting('photoSeconds') && /Panels/.test(setting('photoSeconds').description || ''), 'the photoSeconds description should say that a row in Panels with its own seconds wins');
+  // Seconds per photo is not used any more: a Photos row of a Screen has its own photos and seconds each
+  need(problems, setting('photoSeconds') && setting('photoSeconds').hidden === true && /^Not used any more\./.test(setting('photoSeconds').description || ''), 'the photoSeconds field should be hidden, with a description that starts Not used any more.');
 
   // The sample content carries the settings and a list of photos with addresses
   const sample = world.sample;
@@ -6236,7 +6236,7 @@ function checkScreenType() {
   const rows = at('mainRows');
   need(problems, rows && rows.type === 'array' && rows.description === mainRowTip, 'screen.mainRows should have the tip as its description: ' + mainRowTip);
   need(problems, listOf('screen.mainRows.panel') === registered('grid1').map(id => id + '=' + titleFor(id)).concat(monday).join(), 'a row of the main panel should offer the large panels of registry.js and then the three Monday rows: ' + registered('grid1').concat(['monday-tasks', 'monday-milestones', 'monday-progress']).join(', '));
-  need(problems, fieldsIn(rows || {}).map(field => field.name).join() === 'panel,team,seconds', 'a row of the main panel should have a panel, a team and seconds');
+  need(problems, fieldsIn(rows || {}).map(field => field.name).join() === 'panel,team,seconds,photoCount,secondsPerPhoto,photoTotal', 'a row of the main panel should have a panel, a team, seconds and, for the Photos row, a count, the seconds of each photo and the total');
   const panelRules = rulesOf(fieldAt('screen.mainRows.panel'));
   need(problems, constraintNamed(panelRules, 'required') && messageAfter(panelRules, 'required') === 'Pick a panel.', 'the panel of a row should be required, with the message Pick a panel.');
   need(problems, fieldAt('screen.mainRows.team') && fieldAt('screen.mainRows.team').components && fieldAt('screen.mainRows.team').components.input === world.screenFields.RowTeamInput, 'the team of a row should be drawn by RowTeamInput (screen-fields.js)');
@@ -6249,7 +6249,19 @@ function checkScreenType() {
   const mainLine = fields => mainRow.preview.prepare(fields);
   need(problems, mainRow && mainLine({}).title === 'Panel not chosen' && mainLine({ panel: 'tasks', team: 'prime' }).title === 'Tasks' && mainLine({ panel: 'tasks', team: 'prime' }).subtitle === 'Prime · Follows Seconds per page', 'a row of the main panel should read the panel, then the team and the seconds');
   need(problems, mainRow && mainLine({ panel: 'tasks' }).subtitle === 'Keeps the team on the screen · Follows Seconds per page' && mainLine({ panel: 'events', seconds: 30 }).subtitle === '30 seconds' && mainLine({ panel: 'monday-progress', team: 'both' }).subtitle === 'Both teams · Follows Seconds per page', 'a row with no team should say whether it keeps the team on the screen, and a row for both teams should say Both teams');
-  need(problems, mainRow && mainLine({ panel: 'photo' }).subtitle === 'Follows Seconds per photo', 'the Photo row should say that it follows Seconds per photo');
+  need(problems, mainRow && mainLine({ panel: 'photo' }).subtitle === '4 photos of 10 seconds, 40 seconds' && mainLine({ panel: 'photo', photoCount: 7, secondsPerPhoto: 12 }).subtitle === '7 photos of 12 seconds, 84 seconds' && mainLine({ panel: 'photo', photoCount: 1, secondsPerPhoto: 5 }).subtitle === '1 photo of 5 seconds, 5 seconds', 'the Photo row should say its photos, the seconds of each and the total');
+
+  // A Photos row has a count (1 to 20, starting at 4), the seconds of each photo (5 to 60, starting at 10) and the total, read only
+  const photoRowField = name => fieldAt('screen.mainRows.' + name);
+  const countRules = rulesOf(photoRowField('photoCount'));
+  const eachRules = rulesOf(photoRowField('secondsPerPhoto'));
+  need(problems, photoRowField('photoCount') && photoRowField('photoCount').initialValue === config.defaultPhotoRow.photoCount && config.defaultPhotoRow.photoCount === 4 && constraintNamed(countRules, 'integer') && constraintNamed(countRules, 'min').args[0] === config.limits.photoCount.min && constraintNamed(countRules, 'max').args[0] === config.limits.photoCount.max && config.limits.photoCount.min === 1 && config.limits.photoCount.max === 20, 'photoCount of a Photos row should be a whole number from 1 to 20, starting at 4, as config.js says');
+  need(problems, photoRowField('secondsPerPhoto') && photoRowField('secondsPerPhoto').initialValue === config.defaultPhotoRow.secondsPerPhoto && config.defaultPhotoRow.secondsPerPhoto === 10 && constraintNamed(eachRules, 'integer') && constraintNamed(eachRules, 'min').args[0] === config.limits.secondsPerPhoto.min && constraintNamed(eachRules, 'max').args[0] === config.limits.secondsPerPhoto.max && config.limits.secondsPerPhoto.min === 5 && config.limits.secondsPerPhoto.max === 60, 'secondsPerPhoto of a Photos row should be a whole number from 5 to 60, starting at 10, as config.js says');
+  const total = photoRowField('photoTotal');
+  need(problems, total && total.readOnly === true && total.components && total.components.input === world.screenFields.PhotoTotalInput, 'the total of a Photos row should be read only and drawn by PhotoTotalInput (screen-fields.js)');
+  const forRow = panel => ({ parent: { panel: panel } });
+  need(problems, ['photoCount', 'secondsPerPhoto', 'photoTotal'].every(name => photoRowField(name).hidden(forRow('events')) === true && photoRowField(name).hidden(forRow('photo')) === false) && photoRowField('seconds').hidden(forRow('photo')) === true && photoRowField('seconds').hidden(forRow('events')) !== true, 'the three photo fields should show on a Photos row only, and the plain seconds should be hidden on it');
+  need(problems, world.screenFields.photoTotalText(4, 10) === '40 seconds' && world.screenFields.photoTotalText(20, 60) === '1200 seconds' && world.screenFields.photoTotalText(undefined, undefined) === '40 seconds', 'the total of a Photos row should read the photos times the seconds, such as 40 seconds');
 
   // Monday style: one of the styles, and no starting value, so that the form can copy the old setting into it
   const mondayStyle = at('mondayStyle');

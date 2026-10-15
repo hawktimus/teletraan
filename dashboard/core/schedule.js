@@ -350,7 +350,7 @@ function runRotation(region, getPlaylist, getContent) {
 
       askScreens('begin', step);
       try {
-        const page = buildPage(step.panel, getContent(), step.page);
+        const page = buildPage(step.panel, getContent(), step.page, step);
         const topic = topicOf(step.panel);
         if (topic) onScreen[region].push(topic); // at once, so the other region sees it
         return { page: page, step: step, topic: topic, pages: pagesOfCard(step.panel, getContent(), step.page) };
@@ -396,7 +396,9 @@ function runRotation(region, getPlaylist, getContent) {
 
         if (next) {
           const settings = getContent().settings;
-          const held = holdFor(stayFor(region, ownSeconds(next.step, settings), settings), arrivedAfter);
+          // The Photo panel of a Screen row knows how long its turn is: the photos it has times the seconds each stays
+          const turnSeconds = Number(next.page.element.dataset.stay);
+          const held = holdFor(stayFor(region, turnSeconds > 0 ? turnSeconds : ownSeconds(next.step, settings), settings), arrivedAfter);
           await hold(held, since, region);
 
           // a card with more rows than fit moves its list up and is held again, for the same time. A

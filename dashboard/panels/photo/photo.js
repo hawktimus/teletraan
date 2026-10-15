@@ -7,7 +7,8 @@
 
 import { escapeHtml, hasText } from '../../core/text.js';
 import { preloadImages } from '../../core/images.js';
-import { creditText, fitOf, makePhotoQueue, photoStay, photosToShow, turnPlan } from '../../core/photos.js';
+import { speeds } from '../../config.js';
+import { creditText, fitOf, makePhotoQueue, photoStay, photosToShow, rowPlan, turnPlan } from '../../core/photos.js';
 
 const missingMarkup = '<div class="missing">[Photo not available]</div>';
 
@@ -58,16 +59,31 @@ function skipShot(shot) {
   if (left.length === 0) body.innerHTML = missingMarkup;
 }
 
-// The body is one slat, and the photos inside it come and go on their own
-export function mount(host, content) {
+// How many photos this turn has and how long each stays. A Photos row of a Screen (step has photoCount and
+// secondsPerPhoto, core/screens.js) shows that many, each for secondsPerPhoto, and the turn is as long as the
+// photos it really has. Anything else shares the stay of the panel between its photos (turnPlan).
+function planFor(content, settings, step) {
+  const list = photosToShow(content);
+  if (step && step.photoCount > 0 && step.secondsPerPhoto > 0) {
+    const turn = queue.takeRun(list, settings.photoOrder, step.photoCount);
+    return { turn: turn, plan: rowPlan(turn.photos.length, step.secondsPerPhoto), pace: speeds[settings.speed] || speeds.normal };
+  }
+
+  const plan = turnPlan(list.length, photoStay(settings));
+  return { turn: queue.takeTurn(list, settings.photoOrder, plan.photos), plan: plan, pace: 1 };
+}
+
+// The body is one slat, and the photos inside it come and go on their own. page is not used. The step is the
+// step of the playlist that the panel is drawn for, and the schedule reads data-stay from the panel to hold it.
+export function mount(host, content, page, step) {
   const settings = content.settings || {};
-  const plan = turnPlan(photosToShow(content).length, photoStay(settings));
-  const turn = queue.takeTurn(photosToShow(content), settings.photoOrder, plan.photos);
+  const { turn, plan, pace } = planFor(content, settings, step);
   const shots = turn.photos.map((photo, shot) => shotMarkup(photo, shot, settings.photoFit)).join('');
-  const hold = Math.round(plan.hold * 100) / 100;
+  const hold = Math.round(plan.hold * pace * 100) / 100;
+  const stay = step && plan.seconds ? ` data-stay="${plan.seconds}"` : '';
 
   host.innerHTML = `
-    <section class="page photo">
+    <section class="page photo"${stay}>
       <div class="photo-body" data-slat="item" style="--hold: ${hold}s">
       ${shots || missingMarkup}
       </div>

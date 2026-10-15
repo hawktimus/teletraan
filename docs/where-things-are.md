@@ -564,8 +564,10 @@ alone.
   and while that is empty from the lists in `defaultSettings.rotation` (`core/panel-order.js`,
   `studio/screen-seed.js`). The panels a row can name are in `studio/screen-panels.js`.
   The Weekday schedule (`screenSchedule` in `defaultSettings`) picks the Screen of each day.
-  The Photo panel is the exception: with no seconds of its own it follows
-  "Seconds per photo" in the Screen tab (`photoSeconds`, 16 to start).
+  The Photo row is the exception: it has `photoCount` (1 to 20, 4 to start) and
+  `secondsPerPhoto` (5 to 60, 10 to start) in place of its seconds, which are their product
+  (`photoRowOf` in `dashboard/core/screens.js`, `takeRun` and `rowPlan` in `dashboard/core/photos.js`).
+  `photoSeconds` in the Screen tab is hidden and not used any more.
 - **The colour of the frame edges.** Dashboard Settings, Screen tab, Frame
   metal: Gold or Silver. It is the metal of the banner, the countdown and the
   logo, which never change. Glint turns the bright spark that runs round each
@@ -734,8 +736,8 @@ alone.
 - **Photos for the Photo panel.** Photos in the Studio sidebar
   (`studio/schemas/photo.js`): a picture, an optional caption, a first name
   credit, "Show on screen" and "Hide after". Dashboard Settings, Screen tab: Photo
-  order (random or newest first) and Seconds per photo (`photoOrder` and
-  `photoSeconds` in `dashboard/config.js`), the Portraits box below and
+  order (random or newest first) (`photoOrder` in `dashboard/config.js`; the old
+  Seconds per photo, `photoSeconds`, is hidden and a Photo row of a Screen sets its own), the Portraits box below and
   Photo fit (`photoFit`, with `photoFits` in `dashboard/config.js`).
   The screen reads them with the rest of
   the content (`photos` in `core/sanity.js`) and asks Sanity for each at no more

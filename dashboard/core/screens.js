@@ -20,7 +20,7 @@
 //
 // Next look now (a button on the Start here page) moves the large panel to the next row at once.
 
-import { defaultScreen, defaultSchedule, defaultSettings, defaultThemeSettings, limits, mondayBothCards, mondayRows, primeTeam, screenIds, standardSwapSeconds, styles, teamPanels, weekdays } from '../config.js';
+import { defaultPhotoRow, defaultScreen, defaultSchedule, defaultSettings, defaultThemeSettings, limits, mondayBothCards, mondayRows, primeTeam, screenIds, standardSwapSeconds, styles, teamPanels, weekdays } from '../config.js';
 import { panels } from '../registry.js';
 import { keepInRange } from './content.js';
 import { readHandled, rememberHandled, shouldRunDemo } from './demo.js';
@@ -88,7 +88,17 @@ function tidyMainRow(raw) {
   const row = { panel: panel.id, team: team };
   const seconds = tidySeconds(raw.seconds);
   if (seconds) row.seconds = seconds;
+  if (panel.id === 'photo') Object.assign(row, photoRowOf(raw));
   return row;
+}
+
+// A Photos row shows photoCount photos, each for secondsPerPhoto seconds, and stays up for the product. That
+// product is its seconds, in place of the seconds a row has of its own. A row saved before these fields existed
+// gets four photos of ten seconds. A number out of range is brought into range.
+function photoRowOf(raw) {
+  const photoCount = Math.round(keepInRange(raw.photoCount, limits.photoCount, defaultPhotoRow.photoCount));
+  const secondsPerPhoto = Math.round(keepInRange(raw.secondsPerPhoto, limits.secondsPerPhoto, defaultPhotoRow.secondsPerPhoto));
+  return { photoCount: photoCount, secondsPerPhoto: secondsPerPhoto, seconds: photoCount * secondsPerPhoto };
 }
 
 // A row of the small panel becomes { panel, seconds }. It never has a team: the small panels take the colors of
@@ -293,6 +303,7 @@ export function mainPlaylist(content, now = new Date(), screen = planFor(content
 function stepsOfRow(row, content, now, teams) {
   const step = { show: true, team: row.team };
   if (row.seconds) step.seconds = row.seconds;
+  if (row.photoCount) Object.assign(step, { photoCount: row.photoCount, secondsPerPhoto: row.secondsPerPhoto });
   if (!isMondayPanel(row.panel)) return [Object.assign({ panel: row.panel }, step)];
 
   // A team that has no board tasks has no steps, and the cards of both teams need two teams with board tasks, as the

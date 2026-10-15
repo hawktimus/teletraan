@@ -101,7 +101,7 @@ docs/where-things-are.md).
    17:00, must be there, because a settings page saved without them plays no
    announcements. It should show Frame metal on Gold with Glint on
    and Screen glitch on every 240 seconds, Seconds per page at 20,
-   Photo order on Random, Seconds per photo 16,
+   Photo order on Random,
    Photo fit on Fill the frame, and the Portraits box with
    both portrait sizes at 100, the shape on Square and the frame on Metal.
    The Look tab should show the Weekday schedule with Original on Monday,
@@ -247,8 +247,7 @@ photo that asks Sanity for the part the editor kept, no wider than 1920 pixels,
 never enlarged, in a small format (`screenPhotoUrl` in
 `dashboard/core/images.js`), and needs no CORS origin beyond the one in step 6.
 The photo settings in the Screen tab of Dashboard Settings (`schemas/settingsPhotos.js`) have Photo
-order (Random or Newest first), Seconds per photo (6 to 120, starting at
-16, the time the panel stays up each turn, shared between its photos), Photo fit
+order (Random or Newest first), Photo fit
 (Fill the frame or Show the whole photo, which a photo can override with its own
 Fit field) and Photo size (hidden and not used, because a photo fills the panel).
 The same file has the Portraits box: the Leadership portrait size and the Team leads and

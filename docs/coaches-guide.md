@@ -123,8 +123,10 @@ and both teams are off to start with.
 ### The rows of the main panel
 
 A row is a panel, a team and, if you want, the seconds. Without seconds the row
-follows Seconds per page on the Screen tab of Dashboard Settings (the Photo row
-follows Seconds per photo).
+follows Seconds per page on the Screen tab of Dashboard Settings. The Photo row
+has no seconds of its own. It has Photos (1 to 20, starting at 4) and Seconds per
+photo (5 to 60, starting at 10), and the time it stays up is the two multiplied,
+shown beside them. Four photos of 10 seconds stay up 40 seconds.
 
 - Panel: the large panels (Tasks, Upcoming events, Daily Agenda, Subteam
   spotlight, Sponsor feature, Photo, Leadership, Team leads, Subteam roster and
