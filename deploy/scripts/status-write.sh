@@ -113,7 +113,7 @@ host="https://$project.api.sanity.io"
 # write would be the newest change. The dataset is public, so no token is sent.
 # Gives nothing when Sanity cannot be asked or has no such document.
 newest_update() {
-  query='*[!(_type in ["status", "calendarStatus", "mondayStatus", "frcStatus"]) && !(_id match "task-monday-*")] | order(_updatedAt desc)[0]._updatedAt'
+  query='*[!(_type in ["status", "calendarStatus", "mondayStatus", "frcStatus"]) && !(_id match "task-monday-*") && !(_id match "milestone-monday-*")] | order(_updatedAt desc)[0]._updatedAt'
   status=0
   answer=$(curl --silent --max-time 20 --connect-timeout 10 --get "$host/v$version/data/query/$dataset" \
     --data-urlencode "query=$query" --data-urlencode 'perspective=published' 2> /dev/null) || status=$?

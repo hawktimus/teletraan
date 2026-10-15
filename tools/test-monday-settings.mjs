@@ -80,7 +80,7 @@ test('a list of boards and an owner switch that is on are kept, and the shared s
   assert.equal(settings.mondayBoards.length, 1);
   assert.equal(settings.mondayBoards[0].boardId, '111');
   assert.equal(settings.mondayShowOwners, true);
-  assert.equal(JSON.stringify(settings).includes('_type'), false, 'the names that start with an underscore are dropped');
+  assert.equal(JSON.stringify(settings.mondayBoards).includes('_type'), false, 'the names that start with an underscore are dropped from the rows that were saved');
 
   settings.mondayBoards.push({ boardId: '222' });
   assert.deepEqual(config.defaultSettings.mondayBoards, []);

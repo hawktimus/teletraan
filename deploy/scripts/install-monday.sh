@@ -1,6 +1,7 @@
 #!/bin/sh
 # Installs the Monday sync: copies its two systemd unit files and turns on its
-# timer, which starts monday-sync.sh every 10 minutes. It checks that the packages
+# timer, which wakes monday-sync.sh every 5 minutes (the script reads Monday only as
+# often as the Monday tab of Dashboard Settings says). It checks that the packages
 # the script needs are installed. It does not install them.
 set -eu
 
@@ -65,7 +66,7 @@ echo "  1. copy these files to $target, set to run as the account $account:"
 echo "       teletraan-monday.service"
 echo "       teletraan-monday.timer"
 echo "  2. reload systemd"
-echo "  3. turn on teletraan-monday.timer (every 10 minutes), and restart it so a"
+echo "  3. turn on teletraan-monday.timer (every 5 minutes), and restart it so a"
 echo "     changed schedule is used"
 echo
 printf 'Press Enter to go ahead, or Ctrl+C to stop. '

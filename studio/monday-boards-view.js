@@ -21,6 +21,9 @@ import {
   helpLine,
   chooseLabel,
   chooseTarget,
+  milestonesChild,
+  milestonesLabel,
+  milestonesLine,
   nothingYet,
   noBoardsLine,
   openLine,
@@ -109,6 +112,7 @@ export function boardsPage(read, now, links) {
       error ? h('p', { key: 'error', style: styles.note }, error) : null,
       rows.length === 0 ? h('p', { key: 'none', style: styles.muted }, noBoardsLine) : h('ul', { key: 'rows', style: styles.rows, 'data-list': 'boards' }, rows.map(row => boardItem(row, links.ChildLink))),
       rows.some(row => row.opens) ? h('p', { key: 'open', style: styles.muted }, openLine) : null,
+      links.ChildLink ? h('p', { key: 'milestones', style: styles.muted }, h(links.ChildLink, { childId: milestonesChild }, milestonesLabel), ' · ' + milestonesLine) : null,
       h('p', { key: 'public', style: styles.muted }, publicLine),
     ];
   }

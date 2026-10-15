@@ -114,20 +114,22 @@ test('the page says when the Mini last read Monday and what went wrong last, and
 });
 
 test('Choose boards goes to the board rows of Dashboard Settings, and the words are plain', () => {
-  assert.deepEqual(parts.chooseTarget, { id: 'dashboardSettings', type: 'dashboardSettings', path: 'mondayBoards' });
+  assert.deepEqual(parts.chooseTarget, { id: 'dashboardSettings', type: 'dashboardSettings', path: 'mondayTaskBoard' });
   assert.equal(parts.chooseLabel, 'Choose boards');
   assert.equal(parts.mondayStatusId, 'monday-status');
 
-  [parts.helpLine, parts.nothingYet, parts.noBoardsLine, parts.openLine, parts.publicLine, parts.unreadableLine, parts.settingsUnreadableLine].forEach(text => {
+  [parts.helpLine, parts.nothingYet, parts.noBoardsLine, parts.openLine, parts.publicLine, parts.unreadableLine, parts.settingsUnreadableLine, parts.milestonesLine].forEach(text => {
     assert.ok(!/[\u2014\u2013!]/.test(text), text);
     text.split(/[.?]\s+|[.?]$/).forEach(sentence => assert.ok(sentence.trim().split(/\s+/).length <= 20, sentence));
   });
 });
 
-test('the questions ask only for what the page shows, and the board rows come with the short name of the team', () => {
+test('the questions ask only for what the page shows, and the board rows are the two boards of the Monday tab', () => {
   assert.ok(parts.statusQuestion.includes('boards[]') && parts.statusQuestion.includes('readings[]') && parts.statusQuestion.includes('itemCount'));
   assert.ok(!parts.statusQuestion.includes('columns'), 'the columns of a board are not needed here');
-  assert.ok(parts.entriesQuestion.includes('mondayBoards[]') && parts.entriesQuestion.includes('shortName'));
+  assert.ok(parts.entriesQuestion.includes('mondayTaskBoard.boardId') && parts.entriesQuestion.includes('mondayMilestoneBoard.boardId'));
+  assert.ok(parts.entriesQuestion.includes(parts.taskBoardStart) && parts.entriesQuestion.includes(parts.milestoneBoardStart), 'a page saved before the tab had the blocks reads as the starting boards');
+  assert.equal(parts.milestonesChild, 'milestones');
 });
 
 let failures = 0;

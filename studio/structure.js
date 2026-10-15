@@ -63,6 +63,7 @@ import { UsersIcon } from '@sanity/icons/Users';
 import { StartHere } from './start-here.js';
 import { CalendarsView } from './calendars-view.js';
 import { MondayBoardsView } from './monday-boards-view.js';
+import { milestonesChild } from './monday-boards-parts.js';
 import { screenType, screenStyles, screenTitles, screenIdOf } from './screen-ids.js';
 
 // Pages that exist once. Each is a single document with a fixed id.
@@ -94,6 +95,7 @@ const soonestStart = { field: 'start', direction: 'asc' };
 const latestStart = { field: 'start', direction: 'desc' };
 const oldestFirst = { field: '_createdAt', direction: 'asc' };
 const byBoard = { field: 'mondayBoardName', direction: 'asc' };
+const byTargetDate = { field: 'targetDate', direction: 'asc' };
 
 // What a filter keeps. $since is a day ago and $now is the time the sidebar opened. Both are
 // worked out when the sidebar opens in structure() below: Studio keeps a list live, and a live
@@ -104,12 +106,12 @@ const startedRecently = '!defined(start) || start >= $since';
 const startedEarlier = 'defined(start) && start < $since';
 
 // The two lists of Monday Tasks. Each task is in exactly one of them. A task is on the TV when
-// it comes from the board and is not switched off. Every other task is hidden, including a task
+// it comes from the board and is not switched off, here or by the Show on TV column of the board. Every other task is hidden, including a task
 // typed by hand, which the screen no longer shows: a task with no source counts as typed by hand,
 // so every task made before the team board is under Hidden. A task that expires while the Studio
 // is open moves when the page is loaded again, because $now is fixed until then.
-const tasksOnTv = 'source == "monday" && showOnTv != false && show != false && (!defined(expires) || expires > $now)';
-const tasksHidden = 'source != "monday" || showOnTv == false || show == false || (defined(expires) && expires <= $now)';
+const tasksOnTv = 'source == "monday" && showOnTv != false && showOnBoard != false && show != false && (!defined(expires) || expires > $now)';
+const tasksHidden = 'source != "monday" || showOnTv == false || showOnBoard == false || show == false || (defined(expires) && expires <= $now)';
 
 export const sidebarEntries = [
   { kind: 'component', title: 'Start here', id: 'startHere', icon: HomeIcon, component: StartHere },
@@ -172,8 +174,8 @@ export const sidebarEntries = [
   { kind: 'list', title: 'Extra panels', icon: ThLargeIcon, type: 'customPanel', sort: byOrder },
 ];
 
-// A sidebar entry that opens the list of one kind of document. times is { since, now }.
-function listOf(S, entry, times) {
+// The list of one kind of document that a sidebar entry opens. times is { since, now }.
+function paneOf(S, entry, times) {
   const id = entry.id || entry.type;
   const ordering = entry.thenBy ? [entry.sort, entry.thenBy] : [entry.sort];
   let list = S.documentTypeList(entry.type).title(entry.title).defaultOrdering(ordering);
@@ -186,13 +188,24 @@ function listOf(S, entry, times) {
   }
   // Last, because every change to the list works the templates out again from the type
   if (entry.add) list = list.initialValueTemplates(entry.add.map(name => S.initialValueTemplateItem(name)));
-  return S.listItem().title(entry.title).id(id).icon(entry.icon).child(list);
+  return list;
 }
+
+// A sidebar entry that opens the list of one kind of document
+function listOf(S, entry, times) {
+  const id = entry.id || entry.type;
+  return S.listItem().title(entry.title).id(id).icon(entry.icon).child(paneOf(S, entry, times));
+}
+
+// The second list under Monday Boards: the milestones the Mini made. The page links to it with this
+// id (milestonesChild, in monday-boards-parts.js) in place of a board number. Nobody adds one.
+const milestoneList = { kind: 'list', title: 'Milestones', id: 'milestones', type: 'milestone', sort: byTargetDate, add: [] };
 
 // What a board on the Monday Boards page opens: the tasks of that board in the same two lists as
 // Monday Tasks. The function it gives back is handed the board number by the link on the page.
 function tasksOfBoard(S, times) {
   return boardId => {
+    if (boardId === milestonesChild) return paneOf(S, milestoneList, times);
     const kept = filter => 'mondayBoardId == $board && (' + filter + ')';
     const lists = [
       { kind: 'list', title: 'On the TV', icon: DashboardIcon, id: 'board' + boardId + 'OnTv', type: 'task', sort: byBoard, thenBy: oldestFirst, filter: kept(tasksOnTv), params: { board: boardId }, add: [] },

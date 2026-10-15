@@ -1,6 +1,6 @@
 // The parts of the Monday Boards page that need no Studio: its words, the question it asks of
 // Sanity, and the rows it shows for the boards the token of the Mini can see and the boards
-// chosen in Dashboard Settings. monday-boards-view.js draws them. check-schemas.mjs and
+// chosen in Dashboard Settings (the two of the Monday tab). monday-boards-view.js draws them. check-schemas.mjs and
 // tools/test-monday-boards.mjs read this file with node.
 
 import { ageText } from './time-text.js';
@@ -11,11 +11,20 @@ export const mondayStatusId = 'monday-status';
 // The id of Dashboard Settings, the same as settingsId in structure.js
 export const settingsId = 'dashboardSettings';
 
-// Where Choose boards goes: the field of Dashboard Settings that holds the board rows, which sits on
-// the Monday tab. Studio opens the tab that holds the field.
-export const chooseTarget = { id: settingsId, type: 'dashboardSettings', path: 'mondayBoards' };
+// Where Choose boards goes: the Task board block of Dashboard Settings, which sits on the Monday tab. Studio
+// opens the tab that holds the field.
+export const chooseTarget = { id: settingsId, type: 'dashboardSettings', path: 'mondayTaskBoard' };
 
-export const helpLine = 'Dashboard Settings has one row for each board the screen reads. In a row, pick the board, the team, and how the status is read.';
+// The id the link to the list of milestones carries in place of a board number (structure.js)
+export const milestonesChild = 'milestones';
+export const milestonesLabel = 'Milestones';
+export const milestonesLine = 'The milestones the Mini made are a second list. Nothing in it can be changed.';
+
+// The two boards of the Monday tab, with what each is for, when Dashboard Settings has not named them yet
+export const taskBoardStart = '18435126893';
+export const milestoneBoardStart = '18435272887';
+
+export const helpLine = 'The Monday tab of Dashboard Settings names two boards: the task board and the milestones board. Pick them there.';
 export const chooseLabel = 'Choose boards';
 export const nothingYet = 'Nothing yet. The Mini writes this after it has read Monday. See the Monday tab of Dashboard Settings.';
 export const noBoardsLine = 'The token of the Mini can see no boards.';
@@ -27,7 +36,8 @@ export const settingsUnreadableLine = 'The boards chosen in Dashboard Settings c
 // Only what the page shows, so the question stays small. The boards of the status document come
 // with their item counts, and the readings with when each chosen board was last read.
 export const statusQuestion = '*[_id == $id][0] { lastSyncAt, lastError, "boards": boards[] { id, name, itemCount }, "readings": readings[] { boardId, itemsRead, readAt, note } }';
-export const entriesQuestion = '*[_id == $id][0] { "entries": mondayBoards[] { boardId, "team": coalesce(team->shortName, team->name) } }';
+// The two boards of the Monday tab, each with what it is for. A page saved before the tab had them reads as the starting boards.
+export const entriesQuestion = '*[_id == $id][0] { "entries": [ { "boardId": coalesce(mondayTaskBoard.boardId, "' + taskBoardStart + '"), "team": "the task board" }, { "boardId": coalesce(mondayMilestoneBoard.boardId, "' + milestoneBoardStart + '"), "team": "the milestones board" } ] }';
 
 function isRecord(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
