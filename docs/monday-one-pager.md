@@ -50,7 +50,7 @@ a new id, and the Mini stops finding it.
 In the Studio, Settings, Dashboard Settings, the **Monday** tab belongs to the coaches.
 Leave all of it as it is:
 
-- the two board ids, and the column pickers
+- the two board ids, and the column of each field
 - Team labels, Status indexes, Priority indexes and Department labels
 - the Hide label text
 - how often the Mini reads, and the switch that shows owners

@@ -1233,9 +1233,10 @@ Screen, so no style is stored. A Screen holds, with the starting values in `conf
 (`defaultScreen`, `screenLimits`):
 
 - `mainRows`: the rows of the main panel (area B). A row is a panel from `registry.js`, a team and, if wanted, seconds from 6 to
-  120. The team is a team code (`prime`, `nova`), `both` or nothing. The three Monday cards are the panels `monday-tasks`,
-  `monday-milestones` and `monday-progress`. A Monday row has a team, and `both` on the milestones or progress row means the
-  card of both teams (`monday-milestones-both`, `monday-progress-both`). The Events panel is one row that scrolls from its first four events to the next four.
+  120. The team is a team code (`prime`, `nova`) or nothing. The six Monday panels are `monday-tasks`, `monday-done`,
+  `monday-status-depts`, `monday-overall`, `monday-timeline` and `monday-board` (docs/monday.md). A Monday row has a team, except the
+  status by department and overall progress panels, which are for both teams, and a tasks row also has a department (a Team lead). The older
+  cards (`monday-milestones`, `monday-progress` and the two for both teams) are not offered. The Events panel is one row that scrolls from its first four events to the next four.
 - `sideRows`: the rows of the side panel (area D), a panel and, if wanted, seconds. A row has no team. Minimal has no side panel.
 - `nameEffectEveryMinutes` (10), `hawkEveryMinutes` (5) and `swapSeconds` (1.25): how often the name effect and the flying hawk
   play, and how long the swap takes. Every timing of the swap scales with `swapSeconds` over 1.25, the length it had before.
@@ -1269,7 +1270,7 @@ swap makes in the page.
 (`rotation.order`, or `rotation.grid1` and `rotation.grid2` while that is empty, and an older list that was never saved is the
 starting list of `defaultSettings.rotation`). For each active team, in the order of the Team documents, they are the
 panels for one team (Tasks, Daily Agenda, Subteam spotlight, Sponsor feature, Leadership, Team leads, Subteam roster and Extra
-panel) as rows with that team, then the three Monday rows of that team. After the last team come the panels for both teams
+panel) as rows with that team, then the three Monday rows of that team (tasks, done and board). After the last team come the panels for both teams
 (Upcoming events and Photo), with no team. Seconds carry over, a panel that was in the order twice has a row for each place, and a
 row that was switched off is left out. The side rows are the small rows of the same order. Minimal has no side rows. The Studio
 fills a Screen this way the first time it is opened (`studio/screen-seed.js`, checked by `tools/test-screen-seed.mjs`), and the
@@ -1436,9 +1437,12 @@ because the page lies over the frame and the header plates would be covered with
 
 ## The Monday cards
 
-The Monday rows of a Screen are three cards, one after the other, in the Monday style: the tasks card, the milestones card and
-the progress card. A milestones or a progress row for both teams plays the card of both teams. They are
-panels of the large frame, `monday-tasks`, `monday-milestones`, `monday-progress`, `monday-milestones-both` and `monday-progress-both`,
+A Monday row of a Screen plays one of six panels in the Monday style: tasks, done, status by department, overall progress, timeline
+and board (docs/monday.md, "The eleven panels", has what each one shows and `core/monday-views.js` works out what they draw). The rest of
+this section is about the first cards, which stay in the code. A saved row that names one of the older cards plays as the tasks panel.
+
+The older Monday cards are the tasks card, the milestones card and the progress card, and the milestones and progress cards of both
+teams. They are panels of the large frame, `monday-tasks`, `monday-milestones`, `monday-progress`, `monday-milestones-both` and `monday-progress-both`,
 each a folder in `dashboard/panels/` with a script and a stylesheet. What they share is in `dashboard/monday.css`. They draw the tasks that the
 board sync on the Mini keeps in Sanity: a task with the source `monday` (docs/editing-content.md, "The Monday cards"). The plain
 functions that pick and rank the tasks are in `core/monday.js`, and `core/monday-draw.js` has the header, the rows and the page marker.
@@ -1452,7 +1456,7 @@ entry that has tasks. A team with no board tasks gets none, and its Monday rows 
 board tasks and nothing else (`boardTasksFor`), whatever its status, so the cards always agree on how many rows there are. A task that is
 not from the board is never on a Monday card, and a task with `showOnTv` off never shows on any card.
 
-The registry flags the five panels `monday: true`. They are not in the older Panel order list of Dashboard Settings and not in the
+The registry flags the six panels of the task board and the four older cards `monday: true`. They are not in the older Panel order list of Dashboard Settings and not in the
 lists of `config.js`: they are the Monday rows of a Screen, and a saved Panel order that still names one is ignored
 (`core/panel-order.js`). `withCompetition` in `core/competition.js` never held them, and a Monday row has no competition cards in it. They have the topic
 monday, as the competition cards have the topic competition, so a Monday row never waits for the small frame to leave the topic tasks, which it

@@ -388,11 +388,25 @@ editors can sign in from anywhere.
       test-frc-script.mjs     checks for deploy/scripts/frc-sync.sh and install-frc.sh, with a fake curl and made-up
                               answers: the requests, the status document, the ETags, the limit of 60 requests, the
                               snapshots, and that the key and the token are never printed or saved
-      test-monday-script.mjs  checks for deploy/scripts/monday-sync.sh and install-monday.sh, with a fake curl and
-                              made-up boards: the statuses (every other status is Backlog) and priorities, the due
-                              dates from date and timeline columns, the owner names, the subteam that matches
-                              nobody, Show on TV that is never written, a task that goes, the daily counts, the
-                              limit of 500 items, errors from Monday, and that the tokens are never printed or saved
+      test-monday-sync.mjs    checks for deploy/scripts/monday-sync.sh and install-monday.sh, with a fake curl and
+                              made-up boards: the statuses and priorities by label number, the department that
+                              gives the Team lead, the dates, the hours, the owner names, the milestones, Show on TV
+                              that is never written, a task or milestone that goes, the daily counts, the budget of
+                              reads, errors from Monday, and that the tokens are never printed or saved
+      test-monday-docs.mjs    checks docs/monday.md and that no other document still describes the old setup
+      test-team-name.mjs      checks that a team's name and number come from the Team document only
+      test-build-version.mjs  checks the build on the wall (core/build-stamp.js, status-write.sh version)
+      test-sweep.mjs          checks tools/sweep.sh, which keeps the words in tools/sweep-words.txt out of the repository
+      test-watchdog-script.mjs, test-backup-script.mjs  check deploy/scripts/watchdog.sh and backup-dataset.sh
+                              with a fake curl and a fake browser page list
+      test-notice.mjs         checks the announcement bar under the banner (core/notice.js, core/notice-run.js)
+      test-photo-row.mjs      checks the Photos row: its count, the seconds of each photo and the total
+      test-booking.mjs        checks the talk booking path with fixtures
+      test-still.mjs, test-previews.mjs  check the panel preview address and the Studio side of it;
+                              check-preview.mjs checks the list of preview panels against registry.js
+      test-screenshots.mjs    checks tools/screenshots.mjs, which takes a picture of every panel
+                              (node tools/screenshots.mjs, needs Playwright on a laptop, never on the Mini)
+      test-integration-round5.mjs  checks where the Monday sync, the preview, the Photos row and the announcement plate meet
       test-monday-settings.mjs  checks for the two Monday settings on the screen's side: the list of boards and the
                               owner switch, and their starting values
       test-monday-boards.mjs  checks for the rows and lines of the Monday Boards page in Studio
@@ -675,26 +689,31 @@ alone.
   Preview competition button on Start here writes `competitionPreviewRequest`, and
   `core/competition-preview.js` and `core/competition-preview-run.js` show the cards on the sample data in
   `dashboard/data/sample/content.json`. The block at the top of the tab is `studio/frc-status-input.js`.
-- **The Monday board.** Dashboard Settings, Monday tab (docs/monday.md). The boards, as entries with their
-  team, where the status comes from (group names or a status column, with its labels), and the owner switch, are in `studio/schemas/settingsMonday.js`, with the
-  starting values `mondayBoards` and `mondayShowOwners` in `defaultSettings` in `dashboard/config.js`. The
-  Mini reads them, and `fixSettingValues` in `dashboard/core/content.js` only keeps them tidy.
-  `deploy/scripts/monday-sync.sh` writes the tasks (id `task-monday-` and the item number, `source` monday,
-  `mondayBoardId` and `mondayBoardName`, `dueDate` the one field only these tasks have) and the document
-  `monday-status` (type `mondayStatus`, `studio/schemas/mondayStatus.js`, with the boards the token can see and
-  a reading for each chosen board). The questions to Monday and the places in its answers are in one
-  block at the top of the script, and the group titles that mean In progress and Done are the two lists
-  after it. The block at the top of the tab is `studio/monday-status-input.js`, with a line for each board entry, and the
-  lists of an entry are `studio/monday-pickers.js`, which read `monday-status`. The CSV template of a task
-  has no column for `dueDate` or the board.
-- **The Monday cards.** The panels `dashboard/panels/monday-tasks`, `monday-milestones` and `monday-progress`, and
-  `monday-milestones-both` and `monday-progress-both` for both teams (docs/layouts.md, "The Monday cards"), flagged `monday: true`
-  in `registry.js`, in no Panel order list and in no starting list. `dashboard/monday.css` has what they share, and `dashboard/core/team-title.js`
-  has the names of a team on a header. `mondaySteps` and `bothSteps` in `dashboard/core/monday.js` give the steps of
-  the cards to the Monday rows of a Screen (`dashboard/core/screens.js`) for a team that has tasks with the source monday,
-  and for both teams, and `dashboard/core/monday.js` picks and ranks the tasks. A card with more than five rows scrolls: `scrollPages` in its script, `core/schedule.js` and `scrollCard` in `dashboard/frame.js`. The tasks are the ones the board sync writes (`source` monday, `mondayId`, `priority`, `dueDate`, `showOnTv`),
-  and the daily counts are in the document `monday-status`, which `core/sanity.js` reads and `tidyMondayStatus` cleans.
-  `dashboard/data/sample/content.json` has board tasks for both teams and a `monday` document.
+- **The Monday board.** Dashboard Settings, Monday tab (docs/monday.md). The task board, the milestones board, how
+  often the Mini reads and the owner switch are in `studio/schemas/settingsMonday.js`, with the starting values
+  `mondayTaskBoard`, `mondayMilestoneBoard`, `mondayEveryMinutes` and `mondayShowOwners` in `defaultSettings` in
+  `dashboard/config.js` and at the top of `deploy/scripts/monday-sync.sh`; `studio/check-schemas.mjs` and
+  `tools/test-monday-sync.mjs` fail when the three differ. The older `mondayBoards` list is hidden and not read. The
+  Mini reads the settings, and `fixSettingValues` in `dashboard/core/content.js` only keeps them tidy.
+  `deploy/scripts/monday-sync.sh` writes the tasks (id `task-monday-` and the item number, `source` monday, the
+  status, priority, `showOnBoard`, `contact`, `owners`, `startDate`, `dueDate`, `estHours`, `completedOn`,
+  `milestoneIds` and `hiddenReason`, `mondayBoardId` and `mondayBoardName`), the milestones (id `milestone-monday-` and
+  the item number, type `milestone`, `studio/schemas/milestone.js`) and the document `monday-status` (type
+  `mondayStatus`, `studio/schemas/mondayStatus.js`, with the boards the token can see, `taskCount`,
+  `hiddenUnassigned` and the count of reads, `callsToday` and `callsDate`). The block at the top of the tab is
+  `studio/monday-status-input.js`, and the board and column lists of the pickers are `studio/monday-pickers.js`, which read
+  `monday-status`. The CSV template of a task has no column for the fields the sync writes.
+- **The Monday panels.** The six panels of the task board are `dashboard/panels/monday-tasks`, `monday-done`,
+  `monday-status-depts`, `monday-overall`, `monday-timeline` and `monday-board` (docs/monday.md, "The eleven panels"),
+  flagged `monday: true` in `registry.js`, in no Panel order list and in no starting list. `dashboard/core/monday.js` has the
+  rules (which task is visible, its team and department, overdue, rank, hours, the stale chip), `core/monday-views.js`
+  works out what each panel draws, and `dashboard/monday.css` has what they share. A Monday row of a Screen (`core/screens.js`)
+  gets its department from the row. The older cards (`monday-milestones`, `monday-progress` and the two for both teams,
+  docs/layouts.md, "The Monday cards") stay in the registry and `mondaySteps` and `bothSteps` still give their steps; a saved
+  row that names one plays as the tasks panel. A card with more than five rows scrolls: `scrollPages` in its script,
+  `core/schedule.js` and `scrollCard` in `dashboard/frame.js`. The daily counts and `lastSyncAt` are in the document
+  `monday-status`, which `core/sanity.js` reads and `tidyMondayStatus` cleans.
+  `dashboard/data/sample/content.json` has board tasks and milestones for both teams and a `monday` document.
 - **The demo.** The Demo page in Studio (docs/demo.md), which has no buttons and no line in the sidebar now:
   the Steps and the Demo announcement text. The starting values
   are `defaultDemo` in `dashboard/config.js` and their copy in
@@ -1026,7 +1045,7 @@ alone.
 
 Run these in the terminal, from this folder. They need Node.js, the same
 version as the Studio (22.12 or newer), and nothing else installed. The
-exceptions are `test-slides-script.mjs`, `test-frc-script.mjs` and `test-monday-script.mjs`, which need `jq`.
+exceptions are `test-slides-script.mjs`, `test-frc-script.mjs`, `test-monday-sync.mjs` and `test-backup-script.mjs`, which need `jq`.
 
     node tools/test-calendar.mjs
     node tools/test-weather.mjs
@@ -1051,7 +1070,7 @@ exceptions are `test-slides-script.mjs`, `test-frc-script.mjs` and `test-monday-
     node tools/test-events-scroll.mjs
     node tools/test-status-write.mjs
     node tools/test-frc-script.mjs
-    node tools/test-monday-script.mjs
+    node tools/test-monday-sync.mjs
     node tools/test-monday-settings.mjs
     node tools/test-monday-boards.mjs
     node tools/test-blank-team.mjs

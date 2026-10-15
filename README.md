@@ -126,7 +126,7 @@ The scripts are in `deploy/scripts/`, and the units that start them are in `depl
 - `monday-sync.sh`: woken every 5 minutes, reads the two Monday boards named in Dashboard Settings as often as How often says and keeps their items in Sanity as tasks and milestones
 - `status-write.sh`: writes the time of a job into the status block at the top of Dashboard Settings. `status-write.sh --print` reads the block back and shows each time with its age
 - `kiosk.sh`: starts the browser full screen when the Mini boots, and writes `device.json` every minute
-- `install-timers.sh`, `install-calendars.sh`, `install-slides.sh`, `install-frc.sh`, `install-monday.sh` and `install-console.sh`: copy the unit files into place and turn on the timers, or the boot and shutdown screens. Run each once by hand, and again when its unit files change
+- `install-timers.sh`, `install-calendars.sh`, `install-slides.sh`, `install-frc.sh`, `install-monday.sh`, `install-watchdog.sh`, `install-backup.sh` and `install-console.sh`: copy the unit files into place and turn on the timers, or the boot and shutdown screens. Run each once by hand, and again when its unit files change
 - `check-connection.sh`: one OK or FAIL line each for the Mini's connection to Sanity, BAND, Docker and the kiosk
 - `check-calendars.sh`: lists the next 30 days of events and says which ones the Calendar filters hide. It needs Node, so it runs on a computer that has it
 

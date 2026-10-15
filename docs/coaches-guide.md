@@ -130,21 +130,23 @@ shown beside them. Four photos of 10 seconds stay up 40 seconds.
 
 - Panel: the large panels (Tasks, Upcoming events, Daily Agenda, Subteam
   spotlight, Sponsor feature, Photo, Leadership, Team leads, Subteam roster and
-  Extra panel) and three Monday rows: Monday: Build team, Monday: Milestones and
-  Monday: Progress. Upcoming events is one row that scrolls from its first four events to the next four.
+  Extra panel) and six Monday rows: Monday: Tasks by team and department, Done by
+  team, Status by department, Overall progress, Timeline by team and Board by team
+  (docs/monday.md, "The eleven panels"). Upcoming events is one row that scrolls from its first four events to the next four.
 - Team: shown with the choices the panel allows. A panel for one team can be left
   on Keep the team on the screen, or set to Prime or Nova. Photo and Upcoming
-  events are for both teams and have no team. A Monday row needs a team. Milestones
-  and Progress can also be Both teams, which draws the card of both teams. The
-  Build team card is for one team.
+  events are for both teams and have no team. A Monday row needs a team, except
+  Status by department and Overall progress, which are for both teams. The tasks
+  row also has a Department, a Team lead, and starts on the first department that
+  has tasks.
 - The screen swaps when the team of the next row is another team than the one
   on the banner, and when a Monday row begins and ends. A row with no team keeps
   the team on the banner. So keep the Prime rows together and the Nova rows
   together: the screen transforms every time the team changes.
 - Monday style: the style the Screen takes while a Monday row plays. The screen
   swaps into it when the first Monday row begins and back to the day's Screen
-  when the next row is not a Monday row. A team with no tasks from the board
-  has no Monday cards, so its Monday rows are skipped (docs/layouts.md, "The Monday cards").
+  when the next row is not a Monday row. A Monday row with nothing to show, such
+  as a department with no tasks, is skipped (docs/monday.md).
 - The competition cards still come in by themselves from two days before an event,
   as the Competition tab says. They are not rows.
 
@@ -165,7 +167,7 @@ that the screen followed before Screens existed:
 1. For each active team, Prime first: its team-specific panels (Tasks, Daily
    Agenda, Subteam spotlight, Sponsor feature, Leadership, Team leads, Subteam
    roster and Extra panel) as rows with that team, in the order they had, and
-   then its three Monday rows.
+   then its three Monday rows: Tasks, Done and Board.
 2. After the last team, the panels for both teams (Upcoming events and Photo),
    with no team.
 3. Seconds carry over. A panel that was in the order twice has two rows.
@@ -231,8 +233,8 @@ from an item on a Monday board, and the screen shows only those.
   Settings, at the Task board block of its Monday tab. A second list, Milestones, holds the
   milestones the Mini made. Nobody can change them there.
 
-A team gets the Monday cards only when it has tasks from the board (docs/layouts.md,
-"The Monday cards").
+A Monday row shows only when it has something to draw, so a team with no tasks from
+the board has no Monday rows (docs/monday.md, "The eleven panels").
 
 ## The Calendars page
 

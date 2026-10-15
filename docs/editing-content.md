@@ -362,10 +362,17 @@ signing in, and Sanity keeps a document whose id has a dot private.
 
 ## The Monday cards
 
-The cards are drawn from the tasks from the team board that show on the TV. They are three rows of a Screen: Monday: Build team,
-Monday: Milestones and Monday: Progress, each with a team, and the milestones and progress rows can also be Both teams. While a
-Monday row plays the screen is in the Monday style of the Screen. A team with no tasks from the board has nothing to show, so its
-Monday rows are skipped. The older Panel order list never had the cards. Every card counts the same tasks, the ones from the board that show on the TV.
+Six panels draw the tasks of the one task board that show on the TV: Monday: Tasks by team and department, Done by team, Status by
+department, Overall progress, Timeline by team and Board by team. They are rows of a Screen, and each row picks its team (and, for the
+tasks panel, its department). While a Monday row plays the screen is in the Monday style of the Screen. A row with nothing to show is
+skipped. The older Panel order list never had them. docs/monday.md has what each one shows, and the Preview button on a Monday row of the
+Screens builder draws it before you publish.
+
+### The older cards
+
+The cards below are the first three Monday panels, with the two for both teams. They stay in the code and in the registry, but the
+picker does not offer them. A saved row that names one plays as the tasks panel for the first department of its team. Every card
+counts the same tasks, the ones from the board that show on the TV.
 
 ### Tasks card
 
@@ -375,7 +382,7 @@ backlog and the rest in progress, with the highest priority first and then the e
 name of the owner when the board gives one, and the priority as a triangle. When there are more than five rows the card holds, the list moves up
 by five rows and the card holds again, and a marker at the bottom right says 1 OF 2 or 2 OF 2. Under the rows are the number of overdue tasks, the
 number that are not done and the number that are done. A task needs a subteam whose name is the name of a Team lead entry, with or without
-capitals, or it is on no card. The sync matches the board's team column, or its group names, to the names of the Team leads, so spell them the same.
+capitals, or it is on no card. The sync matches the Department column of the board to the names of the Team leads, so spell them the same.
 
 ### Milestones card
 

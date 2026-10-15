@@ -373,8 +373,9 @@ see studio/README.md.
     `monday: status written`. Until a board is chosen it only writes the list of
     boards. In Studio, open Dashboard Settings, Monday tab: the block at the top
     says who the token belongs to and when the Mini last read Monday, and the lists
-    of an entry under Boards offer the boards and their columns. The timer starts
-    the script 2 minutes after the Mini boots and then every 10 minutes. The token
+    of the Task board and the Milestones board offer the boards and their columns. The timer
+    wakes the script 2 minutes after the Mini boots and then every 5 minutes, and the script
+    reads the boards as often as How often says (30 minutes to start with). The token
     is never printed or saved anywhere but `local.env`. Without it the script does
     nothing, says so in one line, and ends without an error.
 
