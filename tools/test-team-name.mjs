@@ -66,12 +66,16 @@ function contentOf(tasks, leads) {
   raw.team = { name: 'Built In Name', number: '55555', school: '[School]' };
   raw.teams.forEach(team => Object.assign(team, nonsense[team.code]));
   raw.tasks = tasks;
-  raw.subteams = leads.map(name => ({ name: name }));
+  raw.subteams = leads.map(name => ({ id: leadId(name), name: name }));
   return sanity.normalizeSample(raw);
 }
 
+// The Monday panels find the department of a task by the id of its Team lead
+const leadId = name => 'lead-' + name.replace(/[^A-Za-z0-9]+/g, '-');
+
 function board(fields) {
-  return Object.assign({ title: '[Task]', subteam: '[Subteam A]', status: 'up-next', team: 'prime', source: 'monday', mondayId: '[item]', showOnTv: true, dueDate: '2026-10-20' }, fields);
+  const task = Object.assign({ title: '[Task]', subteam: '[Subteam A]', status: 'up-next', team: 'prime', source: 'monday', mondayId: '[item]', showOnTv: true, dueDate: '2026-10-20' }, fields);
+  return Object.assign(task, { subteamId: leadId(task.subteam) });
 }
 
 async function withFakePage(run) {
@@ -120,7 +124,7 @@ const textOf = (html, cssClass) => Array.from(html.matchAll(new RegExp('<span cl
       const person = fields => Object.assign({ name: '[Alex]', role: 'Captain', title: 'Captain', team: code }, fields);
       const content = contentOf([board({ team: code }), board({ team: code, status: 'done' })], ['[Subteam A]']);
       content.people = [person({}), person({ name: '[Sam]' })];
-      content.subteams = [{ name: '[Subteam A]', lead: '[Lead A]', members: ['[Sam]'], team: code }];
+      content.subteams = [{ id: leadId('[Subteam A]'), name: '[Subteam A]', lead: '[Lead A]', members: ['[Sam]'], team: code }];
 
       onTeamScreen(content, code, () => {
         // the banner and the sidebar draw teamShown(); its name is the document's
@@ -135,7 +139,7 @@ const textOf = (html, cssClass) => Array.from(html.matchAll(new RegExp('<span cl
           roster: mounted(panels.roster, content),
           'team-leads': mounted(panels['team-leads'], content),
           leadership: mounted(panels.leadership, content),
-          'monday-tasks': panels['monday-tasks'].markupFor(content, monday12, 1),
+          'monday-tasks': panels['monday-tasks'].markupFor(content, monday12, { team: code, department: '' }),
         };
         ['roster', 'team-leads', 'leadership', 'monday-tasks'].forEach(id => assert.equal(chipOf(rendered[id]), mine.shortName, id));
         Object.keys(rendered).forEach(id => assert.equal(fromSeed.test(words(rendered[id])), false, id + ' writes something from the seed'));
