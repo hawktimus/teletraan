@@ -214,7 +214,7 @@ function checkRegistries() {
   if (!world.themes.some(entry => entry.id === defaultId)) problems.push('defaultThemeSettings.defaultTheme in config.js is "' + defaultId + '", which is not in the theme registry');
 
   const index = fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8');
-  if (index.indexOf('href="themes/' + defaultId + '.css"') === -1) problems.push('index.html should link themes/' + defaultId + '.css, the default theme, because the screen needs it before anything is drawn');
+  if (index.indexOf('href="themes/' + defaultId + '.css?v=0"') === -1) problems.push('index.html should link themes/' + defaultId + '.css, the default theme, because the screen needs it before anything is drawn');
   return problems;
 }
 
@@ -541,7 +541,7 @@ function checkKit() {
   defined.filter(name => played.indexOf(name) === -1).forEach(name => problems.push('the keyframes "' + name + '" in ' + kitFile + ' are never played. Play them with a rule that starts with ' + kitGate + ', or delete them'));
 
   const index = fs.existsSync(path.join(dashboardFolder, 'index.html')) ? fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8') : '';
-  if (index.indexOf('href="' + kitFile + '"') === -1) problems.push('index.html should link ' + kitFile);
+  if (index.indexOf('href="' + kitFile + '?v=0"') === -1) problems.push('index.html should link ' + kitFile);
   return problems;
 }
 

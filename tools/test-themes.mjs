@@ -696,7 +696,7 @@ function gradientsIn(text) {
 test('the Neon Prime decor file is linked once, after the sidebar layout, and only touches Neon Prime', () => {
   assert.ok(decorText.length > 0, 'dashboard/themes/decor/neon-prime-decor.css is missing');
   const index = fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8');
-  assert.equal(index.split('href="themes/decor/neon-prime-decor.css"').length - 1, 1, 'index.html links it once');
+  assert.equal(index.split('href="themes/decor/neon-prime-decor.css?v=0"').length - 1, 1, 'index.html links it once');
   assert.ok(index.indexOf('themes/decor/neon-prime-decor.css') > index.indexOf('layouts/sidebar.css'));
 
   let blocks = 0;
@@ -865,8 +865,8 @@ test('the kit check passes on the real files, and the kit file is linked once, a
   assert.ok(/PASS  keyframes are only in the shared motion files/.test(run.text));
 
   const index = fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8');
-  assert.equal(index.split('href="neon-kit.css"').length - 1, 1, 'index.html links it once');
-  assert.ok(index.indexOf('href="neon-kit.css"') > index.indexOf('themes/decor/neon-prime-decor.css'));
+  assert.equal(index.split('href="neon-kit.css?v=0"').length - 1, 1, 'index.html links it once');
+  assert.ok(index.indexOf('href="neon-kit.css?v=0"') > index.indexOf('themes/decor/neon-prime-decor.css'));
 });
 
 const kitMistakes = [
@@ -886,7 +886,7 @@ const kitMistakes = [
   ['a keyframe in the decor file', 'themes/decor/neon-prime-decor.css', before => before + '\n@keyframes wiggle { to { opacity: 0; } }\n', /neon-prime-decor\.css has @keyframes/],
   ['a keyframe in the sidebar layout', 'layouts/sidebar.css', before => before + '\n@keyframes wiggle { to { opacity: 0; } }\n', /layouts\/sidebar\.css has @keyframes/],
   ['a keyframe in the season styles', 'seasons/season.css', before => before + '\n@keyframes wiggle { to { opacity: 0; } }\n', /seasons\/season\.css has @keyframes/],
-  ['the kit stylesheet not linked', 'index.html', before => before.replace('  <link rel="stylesheet" href="neon-kit.css">\n', ''), /index\.html should link neon-kit\.css/],
+  ['the kit stylesheet not linked', 'index.html', before => before.replace('  <link rel="stylesheet" href="neon-kit.css?v=0">\n', ''), /index\.html should link neon-kit\.css/],
   ['a green in the kit', kitFile, before => before + '\nhtml.theme-neon-prime .kit-strip { background: #3dff7a; }\n', /neon-kit\.css line \d+: #3dff7a is a green/],
 ];
 
@@ -1246,10 +1246,10 @@ test('the Alternate and Neon Prime themes and every overlay set their colors wit
   });
 
   const index = fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8');
-  assert.equal(index.split('href="teams.css"').length - 1, 1);
-  assert.ok(index.indexOf('themes/hawktimus.css') < index.indexOf('href="teams.css"'), 'after the default theme, so its rule wins');
-  assert.ok(index.indexOf('href="teams.css"') < index.indexOf('href="base.css"'));
-  assert.ok(index.indexOf('href="tokens.css"') < index.indexOf('href="teams.css"'));
+  assert.equal(index.split('href="teams.css?v=0"').length - 1, 1);
+  assert.ok(index.indexOf('themes/hawktimus.css') < index.indexOf('href="teams.css?v=0"'), 'after the default theme, so its rule wins');
+  assert.ok(index.indexOf('href="teams.css?v=0"') < index.indexOf('href="base.css?v=0"'));
+  assert.ok(index.indexOf('href="tokens.css?v=0"') < index.indexOf('href="teams.css?v=0"'));
   // an overlay is linked from theme-apply.js, later than anything in index.html, so it wins over the team
   assert.ok(fs.readFileSync(path.join(dashboardFolder, 'core/theme-apply.js'), 'utf8').includes('document.head.appendChild(link);'));
 });

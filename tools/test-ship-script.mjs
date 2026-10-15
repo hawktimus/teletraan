@@ -267,7 +267,7 @@ test('the old word all-restart does the same as all', () => {
   const a = first.run(['all'], { message: 'x' });
   const b = second.run(['all-restart'], { message: 'x' });
   assert.equal(b.status, 0, b.errors);
-  const kinds = (calls, place) => lines(calls).map(line => line.split(place.root).join('PLACE'));
+  const kinds = (calls, place) => lines(calls).map(line => line.split(place.root).join('PLACE').replace(/t\d{14}/g, 'TIME'));
   assert.deepEqual(kinds(b.calls, second), kinds(a.calls, first));
 });
 

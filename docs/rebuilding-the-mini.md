@@ -150,7 +150,7 @@ see studio/README.md.
        curl -I http://localhost:3229/dashboard/
 
    The curl answer should start with `200` and include `Cache-Control:
-   no-store`. The server starts by itself after every reboot.
+   no-cache`. The server starts by itself after every reboot.
 
 10. **Turn on the timers.** Run the two scripts once by hand first, to see
     that they work.

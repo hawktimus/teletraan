@@ -31,7 +31,7 @@
 //   night=on|off                      show the night screen (the screensaver) now, or never, whatever the time
 //   seasonover=on|off                 show or hide the seasonal pieces over the panels, whatever the Look page says
 //   hidden=desktop|redEyes|off        play that hidden transition at the next page change of the large panel, or never play any
-//   debug                             show the hash of the build in the bottom left corner, at 20 px (core/build-stamp.js)
+//   debug                             show the build in the bottom left corner, at 20 px (core/build-stamp.js)
 //   kit=off                           switch the neon kit (Neon Prime's moving neon, docs/layouts.md) off, to see what it costs
 
 import * as frame from './frame.js';
@@ -662,13 +662,14 @@ async function startOptional(path, use) {
 function watchVersion() {
   let known = null;
 
+  showStamp(window.teletraanBuild, params, screen);
+
   async function check() {
     try {
       const response = await fetch(liveFolder + 'version.txt', { cache: 'no-store' });
       if (!response.ok) return;
 
       const version = (await response.text()).trim();
-      showStamp(version, params, screen);
       if (known === null) {
         known = version;
       } else if (version !== known && !takeoverRunning()) {

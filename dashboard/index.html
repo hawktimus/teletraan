@@ -3,24 +3,24 @@
 <head>
   <meta charset="utf-8">
   <title>Teletraan I</title>
-  <link rel="stylesheet" href="fonts/fonts.css">
-  <link rel="stylesheet" href="themes/hawktimus.css">
-  <link rel="stylesheet" href="tokens.css">
-  <link rel="stylesheet" href="teams.css">
-  <link rel="stylesheet" href="base.css">
-  <link rel="stylesheet" href="frame.css">
-  <link rel="stylesheet" href="monday.css">
-  <link rel="stylesheet" href="notice.css">
-  <link rel="stylesheet" href="layouts/sidebar.css">
-  <link rel="stylesheet" href="layouts/bar.css">
-  <link rel="stylesheet" href="styles/original.css">
-  <link rel="stylesheet" href="styles/cybertron.css">
-  <link rel="stylesheet" href="styles/minimal.css">
-  <link rel="stylesheet" href="trim.css">
-  <link rel="stylesheet" href="themes/decor/neon-prime-decor.css">
-  <link rel="stylesheet" href="neon-kit.css">
-  <link rel="stylesheet" href="seasons/season.css">
-  <link rel="stylesheet" href="seasons/motion.css">
+  <link rel="stylesheet" href="fonts/fonts.css?v=0">
+  <link rel="stylesheet" href="themes/hawktimus.css?v=0">
+  <link rel="stylesheet" href="tokens.css?v=0">
+  <link rel="stylesheet" href="teams.css?v=0">
+  <link rel="stylesheet" href="base.css?v=0">
+  <link rel="stylesheet" href="frame.css?v=0">
+  <link rel="stylesheet" href="monday.css?v=0">
+  <link rel="stylesheet" href="notice.css?v=0">
+  <link rel="stylesheet" href="layouts/sidebar.css?v=0">
+  <link rel="stylesheet" href="layouts/bar.css?v=0">
+  <link rel="stylesheet" href="styles/original.css?v=0">
+  <link rel="stylesheet" href="styles/cybertron.css?v=0">
+  <link rel="stylesheet" href="styles/minimal.css?v=0">
+  <link rel="stylesheet" href="trim.css?v=0">
+  <link rel="stylesheet" href="themes/decor/neon-prime-decor.css?v=0">
+  <link rel="stylesheet" href="neon-kit.css?v=0">
+  <link rel="stylesheet" href="seasons/season.css?v=0">
+  <link rel="stylesheet" href="seasons/motion.css?v=0">
 </head>
 <body>
   <!-- The metal kit. The gradients and the screw are drawn here once, and every
@@ -481,6 +481,31 @@
       setTimeout(function () { window.location.reload(); }, 30000);
     }, 25000);
   </script>
-  <script type="module" src="shell.js"></script>
+  <!-- The files are asked for as name?v=<build>. The build comes from build.js,
+       which kiosk.sh and the Mac tool write on the Mini. The stylesheets above
+       start with ?v=0 and are changed to the build here, before shell.js
+       starts. With no build.js (a plain web server on a laptop) the time is
+       used, so a refresh still loads everything again. -->
+  <script>
+    (function () {
+      function start(build) {
+        window.teletraanBuild = String(build);
+        var links = document.querySelectorAll('link[rel="stylesheet"]');
+        for (var i = 0; i < links.length; i++) {
+          links[i].setAttribute('href', links[i].getAttribute('href').replace(/\?v=.*$/, '?v=' + build));
+        }
+        var script = document.createElement('script');
+        script.type = 'module';
+        script.src = 'shell.js?v=' + build;
+        document.body.appendChild(script);
+      }
+
+      import('./build.js').then(function (loaded) {
+        start(loaded.build);
+      }).catch(function () {
+        start(Date.now());
+      });
+    })();
+  </script>
 </body>
 </html>

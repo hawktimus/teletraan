@@ -1015,7 +1015,7 @@ test('shell.js gives theme-apply the decorations callback, and index.html links 
   assert.ok(shell.includes("startOptional('./core/season.js'"), 'the module is optional, so a problem in it cannot stop the screen');
 
   const index = fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8');
-  assert.ok(index.includes('href="seasons/season.css"') && index.includes('href="seasons/motion.css"'));
+  assert.ok(index.includes('href="seasons/season.css?v=0"') && index.includes('href="seasons/motion.css?v=0"'));
 });
 
 // The check really fails
@@ -1092,7 +1092,7 @@ const mistakes = [
   ['a transition in motion.css', { [motionFile]: before => before + '\n.season-piece { transition: opacity 1s; }\n' }, /has a transition/],
   ['a decorations flag with no file', { 'dashboard/themes/overlays/registry.js': before => before.replace("id: 'example',\n    name: 'Example overlay (placeholder)',\n    description: 'Placeholder. A paler yellow and quiet text, to show how an overlay is written.',\n    decorations: false,", "id: 'example',\n    name: 'Example overlay (placeholder)',\n    description: 'Placeholder. A paler yellow and quiet text, to show how an overlay is written.',\n    decorations: true,") }, /example.*does not exist/],
   ['zones that overlap', { 'dashboard/core/season.js': before => before.replace("'corner-b': { x: 1198, y: 238,", "'corner-b': { x: 1198, y: 270,") }, /overlap/],
-  ['the stylesheets not linked', { 'dashboard/index.html': before => before.replace('<link rel="stylesheet" href="seasons/motion.css">', '') }, /should link seasons\/motion.css/],
+  ['the stylesheets not linked', { 'dashboard/index.html': before => before.replace('<link rel="stylesheet" href="seasons/motion.css?v=0">', '') }, /should link seasons\/motion.css/],
 ];
 
 mistakes.forEach(entry => {

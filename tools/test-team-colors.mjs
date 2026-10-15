@@ -177,7 +177,7 @@ function matchesChain(compounds, element) {
 }
 
 // Every stylesheet index.html links, in order, apart from the fonts. The order is what the cascade breaks a tie with
-const sheets = Array.from(read('dashboard/index.html').matchAll(/<link rel="stylesheet" href="([^"]+)">/g)).map(match => match[1]).filter(href => href !== 'fonts/fonts.css');
+const sheets = Array.from(read('dashboard/index.html').matchAll(/<link rel="stylesheet" href="([^"?]+)\?v=0">/g)).map(match => match[1]).filter(href => href !== 'fonts/fonts.css');
 const panelSheets = fs.readdirSync(path.join(dashboardFolder, 'panels'), { withFileTypes: true }).filter(entry => entry.isDirectory())
   .reduce((all, entry) => all.concat(fs.readdirSync(path.join(dashboardFolder, 'panels', entry.name)).filter(file => file.endsWith('.css')).map(file => 'panels/' + entry.name + '/' + file)), []);
 
