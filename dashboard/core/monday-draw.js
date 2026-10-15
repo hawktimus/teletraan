@@ -7,7 +7,7 @@
 import { teamsOf } from './screens.js';
 import { markBeside } from './marks.js';
 import { wordsRoom } from './header-room.js';
-import { pagesOf, rowsPerPage } from './monday.js';
+import { everyMinutesOf, minutesSince, pagesOf, rowsPerPage, stale, staleWords } from './monday.js';
 import { chipWidth, departmentTitle, smallTitleClass, teamChipMarkup, teamNameOf } from './team-title.js';
 import { escapeHtml, hasText } from './text.js';
 import { textWidth } from './text-width.js';
@@ -66,6 +66,43 @@ export function headerMarkup(title, chip, status, now) {
         <div class="tag${withChip}" data-slat="tag">${ago}${teamChipMarkup(chip)}${markBeside(beside)}</div>
       </div>`;
 }
+
+// The header of the panels that read the one task board (docs/monday.md): the title, and at the right end the
+// words about the board, the chip of the team and the slashes. lead is what the words start with, BOARD for
+// most, and the words are lead · N MIN AGO. A lead of nothing says only the age, and a lead with no age
+// (the age is not known) says only the lead. When the board has not been read for twice the read interval,
+// or Sanity cannot be reached, an amber chip STALE · N MIN stands in the place of the words (monday.stale),
+// and it is there on every one of these panels. content is the whole content, for the status and the interval.
+export function boardWords(lead, status, now) {
+  const age = agoWords(status, now);
+  return [lead, age].filter(part => hasText(part)).join(' · ');
+}
+
+export function boardHeader(title, chip, content, now, lead = 'BOARD') {
+  const status = content ? content.monday : null;
+  const late = stale(status, now, everyMinutesOf(content));
+  const words = late ? '' : boardWords(lead, status, now);
+  const chipText = late ? staleWords(status, now) : '';
+
+  // 30px letters in the amber chip, 44px ones in the words. The words need the room beside the chip: in the
+  // 1152 wide panel they get it only when the title is short, and in the bar layout there is always room.
+  const staleWidth = late ? textWidth(chipText, 700, 30) + 28 : 0;
+  const titleWidth = Math.min(textWidth(title, 700, 60), 656);
+  const wordsWidth = words === '' ? 0 : textWidth(words, 600, wordsSize);
+  const wordsFit = 76 + titleWidth + 24 + wordsWidth + 20 + chipWidth(chip) <= 1112;
+
+  const wordsMarkup = words === '' ? '' : `<span class="ago${wordsFit ? '' : ' ago-wide'}">${escapeHtml(words)}</span>`;
+  const staleMarkup = late ? `<span class="stale-chip">${escapeHtml(chipText)}</span>` : '';
+  const beside = chipWidth(chip) + staleWidth + (wordsFit ? wordsWidth : 0);
+
+  return `
+      <div class="header">
+        <h2 class="${smallTitleClass(title)}" data-slat="title">${escapeHtml(title)}</h2>
+        <div class="tag" data-slat="tag">${wordsMarkup}${staleMarkup}${teamChipMarkup(chip)}${markBeside(beside)}</div>
+      </div>`;
+}
+
+export { minutesSince };
 
 // The teams of the cards of both teams, in the order of the Teams in the Studio. Only teams that are switched on
 // are in it.

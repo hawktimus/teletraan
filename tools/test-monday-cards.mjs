@@ -757,7 +757,7 @@ const pixels = (rule, property) => Number(new RegExp('(?:^|[;\\s])' + property +
 // The sizes under 44px that the order for the Monday cards sets, and only these. The status of a row is a colored
 // label and not text to read, the first name of the owner is 40, and the labels of the numbers and of a department are 36. The date
 // in a cell of the milestones card is 36 as well, muted like the date of a legend row of the season timeline.
-const smaller = { '.monday-tasks .status': 30, '.monday-tasks .owner': 40, '.monday-tasks .fact-label': 36, '.monday .department': 36, '.monday-milestones .milestone-lead': 36, '.monday-milestones .cell-date': 36 };
+const smaller = { '.monday-tasks .status': 30, '.monday-tasks .owner': 40, '.monday-tasks .fact-label': 36, '.monday .department': 36, '.monday .stale-chip': 30, '.monday-milestones .milestone-lead': 36, '.monday-milestones .cell-date': 36 };
 
 test('nothing on a card is smaller than 44px except the sizes the order sets, no line is thinner than 3px, and the stylesheets have no animation, blur or shadow', () => {
   assert.equal(tokens['size-label'], 44);

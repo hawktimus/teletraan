@@ -11,7 +11,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
 const sampleFile = path.join(dashboardFolder, 'data/sample/content.json');
-const storageKey = 'teletraan-content';
+const storageKey = 'teletraan-last-content';
 const start = Date.UTC(2026, 9, 2, 15, 0, 0);
 const today = new Date(2026, 9, 2, 11, 0); // 2 October 2026 on this computer's own clock
 const second = 1000;
@@ -2090,7 +2090,8 @@ test('sanity: a saved copy and no network shows the saved copy, says offline aft
     assert.equal(world.changes[0].status.source, 'cache');
     assert.equal(world.changes[0].status.offline, true);
     assert.equal(world.changes[0].status.reason, 'network');
-    assert.deepEqual(world.changes[0].content, normalizeContent(saved));
+    // the Monday panels read the marked status as stale (core/monday.js, markUnreachable)
+    assert.deepEqual(world.changes[0].content, Object.assign({}, normalizeContent(saved), { monday: { lastSyncAt: '', lastError: '', snapshots: [], unreachable: true } }));
 
     world.handler = async () => sanityReply(saved);
     await world.advance(30 * second);
@@ -2120,7 +2121,7 @@ test('sanity: no saved copy and no network gives empty content, never the sample
     assert.equal(world.changes.length, 1);
     assert.equal(world.changes[0].status.offline, true);
     assert.equal(world.changes[0].status.updated, null);
-    assert.deepEqual(world.changes[0].content, withDefaults({}));
+    assert.deepEqual(world.changes[0].content, Object.assign({}, withDefaults({}), { monday: { lastSyncAt: '', lastError: '', snapshots: [], unreachable: true } }));
 
     world.handler = async () => sanityReply(sanityFixture());
     await world.advance(30 * second);
@@ -2150,7 +2151,7 @@ test('sanity: offline comes 2 minutes after the first failed read, and clears on
     assert.equal(world.changes[0].status.reason, 'network');
     assert.equal(world.changes[0].status.source, 'sanity');
     assert.equal(world.changes[0].status.updated.getTime(), start);
-    assert.deepEqual(world.changes[0].content, normalizeContent(fixture));
+    assert.deepEqual(world.changes[0].content, Object.assign({}, normalizeContent(fixture), { monday: { lastSyncAt: '', lastError: '', snapshots: [], unreachable: true } }));
 
     await world.advance(30 * second);
     assert.equal(world.changes.length, 1);
@@ -5590,8 +5591,8 @@ function onTeamScreen(code, run) {
 
 test('the query asks for the teams, and for the team code of every kind of content that has a Team field', () => {
   assert.ok(contentQuery.includes('"teams": *[_type == "team"] | order(order asc, _createdAt asc) {'));
-  // tasks, sponsors, tips and news, subteams, people, talks, plans and extra panels
-  assert.equal(contentQuery.split('"team": team->code').length - 1, 8);
+  // tasks, milestones, sponsors, tips and news, subteams, people, talks, plans and extra panels
+  assert.equal(contentQuery.split('"team": team->code').length - 1, 9);
 
   ['"tasks"', '"sponsors"', '"tipsAndNews"', '"subteams"', '"people"', '"presentations"', '"plans"', '"customPanels"'].forEach(name => {
     const start = contentQuery.indexOf(name + ': *[');

@@ -49,6 +49,20 @@
 html[data-layout="bar"] .monday .tag-with-chip .ago { display: inline; }
 .monday .tag .double-slash { flex: none; }
 
+/* The panels of the task board (core/monday-draw.js, boardHeader): the words of the header that do not fit beside
+   the chip of a header 1152 wide are shown only in the bar layout, which has the room. The amber chip says the
+   board is stale. Its 30px text is the size of every chip. */
+.monday .ago-wide { display: none; }
+html[data-layout="bar"] .monday .ago-wide { display: inline; }
+.monday .stale-chip {
+  flex: none;
+  padding: 0 14px;
+  white-space: nowrap;
+  color: var(--ground);
+  background: var(--stale);
+  font: 700 30px/44px var(--font-display);
+}
+
 /* The body is 1104 x 544, 24px in from the frame and 132px down. The rows end 420px down and what is
    under them stays clear of the cut corner at the bottom right. */
 .monday .body {

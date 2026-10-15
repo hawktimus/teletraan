@@ -14,8 +14,12 @@ import { tidyNextLookRequest, tidySchedule } from './screens.js';
 import { fetchResult, liveEventsUrl, normalizeContent, normalizeSample } from './sanity.js';
 import { reasons } from './connection.js';
 import { showsForTeam } from './teams.js';
+import { markUnreachable } from './monday.js';
 
-const storageKey = 'teletraan-content';
+// The last content read from Sanity, written after every good read. A screen that was last run before this name
+// has its copy under the old one, which is read once and not written again.
+const storageKey = 'teletraan-last-content';
+const olderStorageKey = 'teletraan-content';
 const sampleRecheck = 30 * 1000;
 const waitForMoreEdits = 1500;
 const pollEvery = 5 * 60 * 1000;
@@ -46,7 +50,7 @@ export function visibleItems(list, now = new Date(), teamCode) {
 // whether settings exist.
 export function withDefaults(raw) {
   const source = raw || {};
-  const content = Object.assign({ tasks: [], plan: null, plans: [], teams: [], sponsors: [], tipsAndNews: [], subteams: [], people: [], photos: [], presentations: [], customPanels: [], calendarFilters: [], frc: null, monday: null, screens: [] }, source);
+  const content = Object.assign({ tasks: [], plan: null, plans: [], teams: [], sponsors: [], tipsAndNews: [], subteams: [], people: [], photos: [], presentations: [], customPanels: [], calendarFilters: [], milestones: [], frc: null, monday: null, screens: [] }, source);
   content.team = Object.assign({}, defaultTeam, source.team);
   content.settings = Object.assign({}, defaultSettings, source.settings);
   content.settings.countdown = Object.assign({}, defaultSettings.countdown, content.settings.countdown);
@@ -278,9 +282,13 @@ export async function startSampleContent(onChange) {
 
 // The copy from the last good read, so the screen can start with something
 // when the network is down
+function storedText() {
+  return localStorage.getItem(storageKey) || localStorage.getItem(olderStorageKey);
+}
+
 function readSavedCopy() {
   try {
-    const text = localStorage.getItem(storageKey);
+    const text = storedText();
     if (!text) return null;
 
     const saved = JSON.parse(text);
@@ -302,7 +310,7 @@ export function savedTheme() {
   try {
     if (chosenSource() !== 'production') return null;
 
-    const text = localStorage.getItem(storageKey);
+    const text = storedText();
     const saved = text ? JSON.parse(text) : null;
     return saved && saved.raw && typeof saved.raw === 'object' ? saved.raw.theme || null : null;
   } catch (error) {
@@ -318,7 +326,7 @@ export function savedStyle() {
   try {
     if (chosenSource() !== 'production') return null;
 
-    const text = localStorage.getItem(storageKey);
+    const text = storedText();
     const saved = text ? JSON.parse(text) : null;
     const settings = saved && saved.raw && typeof saved.raw === 'object' ? saved.raw.settings : null;
     return settings && typeof settings === 'object' ? settings.style || null : null;
@@ -417,7 +425,8 @@ export async function startSanityContent(onChange) {
 
   function current() {
     const date = updated === null ? null : new Date(updated);
-    return { content: content, status: { source: source, updated: date, offline: offline, reason: offline ? reason : '' } };
+    // Out of reach, the Monday panels say the board is stale, whatever its age (core/monday.js)
+    return { content: offline ? markUnreachable(content) : content, status: { source: source, updated: date, offline: offline, reason: offline ? reason : '' } };
   }
 
   // The timer is real time from the first failed read. A good read stops it,

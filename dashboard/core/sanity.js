@@ -60,15 +60,25 @@ export const contentQuery = `{
   "tasks": *[_type == "task"] | order(_createdAt asc) {
     ...,
     "subteam": subteam->name,
+    "subteamId": subteam._ref,
     "location": location->name,
     "locationShown": location->show != false,
     "team": team->code,
     "finishedOn": coalesce(finishedOn, _updatedAt)
   },
+  "milestones": *[_type == "milestone"] | order(targetDate asc) {
+    "id": _id,
+    name,
+    targetDate,
+    status,
+    "team": team->code,
+    "subteamId": subteam._ref
+  },
   "sponsors": *[_type == "sponsor"] | order(_createdAt asc) { ..., "team": team->code },
   "tipsAndNews": *[_type == "tipOrNews"] | order(_createdAt asc) { ..., "team": team->code },
   "subteams": *[_type == "subteam"] | order(_createdAt asc) {
     ...,
+    "id": _id,
     "team": team->code,
     "photo": photo {
       "url": asset->url,
@@ -250,6 +260,7 @@ export function normalizeContent(result, now = new Date()) {
     theme: data.theme,
     demo: data.demo,
     tasks: fromBoardOnly(itemsFrom(data.tasks).map(normalizeTask)),
+    milestones: milestonesFrom(data.milestones),
     plan: plans[0] || null,
     plans: plans,
     sponsors: itemsFrom(data.sponsors),
@@ -283,6 +294,7 @@ export function normalizeSample(raw) {
     content[name] = itemsFrom(data[name]);
   });
   content.tasks = fromBoardOnly(content.tasks.map(normalizeTask));
+  content.milestones = milestonesFrom(data.milestones);
   content.subteams = content.subteams.map(normalizeSubteam);
   content.people = content.people.map(normalizePerson);
   content.photos = itemsFrom(data.photos).filter(photo => typeof photo.address === 'string');
@@ -391,7 +403,49 @@ function normalizeTask(raw) {
     if (text === '' || (name === 'location' && placeHidden)) delete task[name];
     else task[name] = text;
   });
+  return normalizeBoardFields(task);
+}
+
+// The first name in a text: the part before the first space. A text with an at sign is an address and
+// is never a name, so it is nothing. The screen shows first names only, whatever the board holds.
+export function firstNameOf(text) {
+  const word = typeof text === 'string' ? text.trim().split(/\s+/)[0] : '';
+  return word.indexOf('@') === -1 ? word : '';
+}
+
+// The fields the board sync writes on a task (docs/monday.md). A task written before them lacks them, and
+// is left as it was. A date that is not a plain date, hours that are not a number and a list that is not a
+// list are left out. Notes are never read.
+function normalizeBoardFields(task) {
+  ['startDate', 'dueDate', 'completedOn'].forEach(name => {
+    if (task[name] !== undefined && !(typeof task[name] === 'string' && plainDate.test(task[name]))) delete task[name];
+  });
+  if (task.estHours !== undefined && !(typeof task.estHours === 'number' && isFinite(task.estHours) && task.estHours >= 0)) delete task.estHours;
+  if (task.showOnBoard !== undefined && typeof task.showOnBoard !== 'boolean') delete task.showOnBoard;
+  ['subteamId', 'hiddenReason'].forEach(name => {
+    if (task[name] !== undefined && !(typeof task[name] === 'string' && task[name].trim() !== '')) delete task[name];
+  });
+  if (task.milestoneIds !== undefined) {
+    task.milestoneIds = Array.isArray(task.milestoneIds) ? task.milestoneIds.filter(id => typeof id === 'string' && id !== '') : [];
+  }
+  if (task.owners !== undefined) {
+    task.owners = Array.isArray(task.owners) ? task.owners.map(firstNameOf).filter(name => name !== '') : [];
+  }
+  delete task.notes;
   return task;
+}
+
+const milestoneStatuses = ['not-started', 'on-track', 'at-risk', 'done'];
+
+// The milestones the Mini wrote, by target date. One with no target date, one whose name starts with EXAMPLE (the
+// placeholder row of the board) and one with no name are left out.
+function milestonesFrom(list) {
+  return objectsIn(list)
+    .map(cleanObject)
+    .map(withTeamCode)
+    .filter(item => typeof item.name === 'string' && item.name.trim() !== '' && !/^EXAMPLE/i.test(item.name.trim()) && typeof item.targetDate === 'string' && plainDate.test(item.targetDate))
+    .map(item => Object.assign({}, item, { id: String(item.id === undefined ? '' : item.id), name: item.name.trim(), status: milestoneStatuses.includes(item.status) ? item.status : 'not-started' }))
+    .sort((first, second) => (first.targetDate < second.targetDate ? -1 : first.targetDate > second.targetDate ? 1 : 0));
 }
 
 // A person with no photo, or one that cannot be used, has no photo at all.

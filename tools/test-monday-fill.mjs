@@ -166,6 +166,7 @@ test('every rule that makes a card wider, and the one that shows the words about
   });
 
   assert.deepEqual(forBar.sort(), [
+    bar('.monday .ago-wide'),
     bar('.monday .body'),
     bar('.monday .header'),
     bar('.monday .tag-with-chip .ago'),
