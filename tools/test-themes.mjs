@@ -983,7 +983,7 @@ test('the screen starts on the team the settings ask for, at once: the nine colo
 
     assert.deepEqual(world.root.properties, {
       '--team-primary': '#6C18B6', '--team-plate': '#3B2A7A', '--team-accent': '#FACA2A', '--team-neon': '#FACA2A',
-      '--team-pink': '#B23CFF', '--team-background': '#09060F', '--team-text': '#FFFFFF', '--team-body': '#1A0F2E', '--team-label': '#FACA2A',
+      '--team-pink': '#B23CFF', '--team-background': '#0B0714', '--team-text': '#FFFFFF', '--team-body': '#1A0F2E', '--team-label': '#FACA2A',
     });
     assert.equal(world.classes(), '');
     assert.equal(world.teams.mirrorClass, 'mirrored');

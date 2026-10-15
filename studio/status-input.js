@@ -35,6 +35,15 @@ export const statusLines = [
   { field: 'kioskStartedAt', label: 'Screen started' },
 ];
 
+// The build on the wall, from buildCommit and buildDate (the job version of status-write.sh)
+export function buildLine(doc) {
+  const source = doc && typeof doc === 'object' ? doc : {};
+  const commit = typeof source.buildCommit === 'string' ? source.buildCommit.trim() : '';
+  const built = typeof source.buildDate === 'string' ? source.buildDate.trim() : '';
+  if (commit === '') return 'On the wall: not yet';
+  return 'On the wall: ' + commit + (built === '' ? '' : ' · ' + built);
+}
+
 const styles = {
   note: { margin: 0, fontSize: 14, color: 'var(--card-muted-fg-color, inherit)' },
   line: { display: 'flex', flexWrap: 'wrap', gap: '4px 16px', margin: '0 0 4px', fontSize: 14 },
@@ -76,7 +85,7 @@ export function statusView(read, now) {
     null,
     describeStatus(read.doc, now).map(line =>
       h('p', { key: line.label, style: styles.line }, h('span', { style: styles.label }, line.label), h('span', null, line.text))
-    )
+    ).concat(h('p', { key: 'build', style: styles.line }, buildLine(read.doc)))
   );
 }
 

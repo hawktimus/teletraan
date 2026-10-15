@@ -342,11 +342,11 @@ test('the sample content, the seed file and the built-in team have the colors, t
   });
   assert.equal(byCode('nova').colors.background, wanted.nova.background);
 
-  // Prime keeps the background Original has always had, which is the theme's own: the table's #0B0714 would change Original by a shade
-  assert.equal(byCode('prime').colors.background, '#09060F');
-  assert.equal(seeded[0].colors.background, '#09060F');
-  assert.equal(config.primeTeam.colors.background, '#09060F');
-  assert.ok(/--ground: #09060f;/.test(read('dashboard/themes/hawktimus.css')));
+  // Prime keeps the background Original has always had, which is the theme's own and the same as the seed
+  assert.equal(byCode('prime').colors.background, '#0B0714');
+  assert.equal(seeded[0].colors.background, '#0B0714');
+  assert.equal(config.primeTeam.colors.background, '#0B0714');
+  assert.ok(/--ground: #0B0714;/.test(read('dashboard/themes/hawktimus.css')));
 
   // The built-in team is Prime as the sample has it
   assert.deepEqual(config.primeTeam.colors, byCode('prime').colors);
@@ -450,7 +450,7 @@ test('Prime in Original is what it has always been: the colors of the theme, the
   ['original'].forEach(style => {
     const page = pageWith('prime', style);
     assert.deepEqual(page.classes, []);
-    assert.equal(lower(page.html['--ground']), '#09060f');
+    assert.equal(lower(page.html['--ground']), '#0b0714');
     assert.equal(lower(page.html['--purple']), '#6c18b6');
     assert.equal(lower(page.html['--yellow']), '#faca2a');
     assert.equal(lower(page.html['--white']), '#ffffff');

@@ -1700,14 +1700,14 @@ the Prime values). The metal and the glow come after the box.
 | Accent color | `--team-accent` | `#FACA2A` | `#8FF0FF` | small marks, key words and the hazard stripe |
 | Neon color | `--team-neon` | `#FACA2A` | `#3FD8FF` | the neon lines, the page grid at .07 and the digits of the war clock in Minimal |
 | Second bright color | `--team-pink` | `#B23CFF` | `#9BF0FF` | the conduit lines and the brackets of Cybertron |
-| Background color | `--team-background` | `#09060F` | `#050910` | the page, and the theme Hawktimus |
+| Background color | `--team-background` | `#0B0714` | `#050910` | the page, and the theme Hawktimus |
 | Text color | `--team-text` | `#FFFFFF` | `#FFFFFF` | the main text |
 | Body color | `--team-body` | `#1A0F2E` | `#07131F` | the inside of the panels in Cybertron and Minimal |
 | Label color | `--team-label` | `#FACA2A` | `#C58CFF` | the department names in rows |
 
 The status colors (in progress, backlog and done) are the same for both teams. A team document that has no
 Body or Label has Prime's, and one with no Metal or Glow has gold and no glow, so a team made before they existed
-looks as Prime does. The Prime background is the one it always had, `#09060F`, because Original takes its page
+looks as Prime does. The Prime background is `#0B0714`, because Original takes its page
 color from the team and Prime must look in Original as it always has. It is the same as the `--ground` of
 `themes/hawktimus.css`, and `studio/check-schemas.mjs` holds the two together. The neon and the second bright
 color of Prime are not drawn by Original, so they could change: Prime has gold neon with a purple conduit and no

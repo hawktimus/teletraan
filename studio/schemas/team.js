@@ -71,11 +71,12 @@ export default defineType({
   name: 'team',
   title: 'Teams',
   type: 'document',
+  description: 'Change the name or number here and the screen follows. The Monday board is not connected to this name; a rename there is done by hand.',
   fieldsets: [
     {
       name: 'trim',
       title: 'Trim',
-      description: 'How the team looks on the screen beyond its colors. The first choice of each is how Hawktimus Prime looks.',
+      description: 'How the team looks on the screen beyond its colors. The first choice of each is how the first team looks.',
       options: { collapsible: true, collapsed: false },
     },
   ],
@@ -84,21 +85,21 @@ export default defineType({
       name: 'name',
       title: 'Team name',
       type: 'string',
-      description: 'The team name shown in the banner, such as Hawktimus Prime. Up to 20 characters fit.',
+      description: 'The team name shown in the banner, for example Team Name. Up to 20 characters fit.',
       validation: Rule => [Rule.required().error('Give the team a name.'), tooLong(Rule, 20)],
     }),
     defineField({
       name: 'shortName',
       title: 'Short name',
       type: 'string',
-      description: 'A short name for the panel headers, such as PRIME. Up to 8 characters fit.',
+      description: 'A short name for the panel headers, for example NAME. Up to 8 characters fit.',
       validation: Rule => [Rule.required().error('Give the team a short name.'), tooLong(Rule, 8)],
     }),
     defineField({
       name: 'number',
       title: 'Team number',
       type: 'string',
-      description: 'Optional. The FRC team number, such as 3229. Up to 6 characters fit.',
+      description: 'Optional. The FRC team number, for example 1234. Up to 6 characters fit.',
       validation: Rule => tooLong(Rule, 6),
     }),
     defineField({
@@ -130,7 +131,7 @@ export default defineType({
         colorField('accent', 'Accent color', 'The accent, for small marks and key words.', '#FACA2A'),
         colorField('neon', 'Neon color', 'The bright color of thin lines, the page grid and clock digits.', '#FACA2A'),
         colorField('pink', 'Second bright color', 'A second bright color, for the conduit lines and small marks.', '#B23CFF'),
-        colorField('background', 'Background color', 'The color behind everything, such as the page and the banner.', '#09060F'),
+        colorField('background', 'Background color', 'The color behind everything, such as the page and the banner.', '#0B0714'),
         colorField('text', 'Text color', 'The color of the main text.', '#FFFFFF'),
         colorField('body', 'Body color', 'The color inside the panels in Cybertron and Minimal.', '#1A0F2E'),
         colorField('label', 'Label color', 'The color of department names in rows, such as the left column of Milestones and Progress.', '#FACA2A'),
@@ -195,9 +196,10 @@ export default defineType({
   preview: {
     select: { title: 'name', number: 'number', mirror: 'mirror', active: 'active', media: 'logo' },
     prepare(item) {
-      const text = [item.number, item.mirror ? 'Mirror on' : 'Mirror off'].filter(Boolean).join(' · ');
+      const named = item.title || 'Team with no name';
+      const title = [named, item.number].filter(Boolean).join(' · ');
       // a team that is not active is left out of the rotation, like an item that is hidden
-      return { title: item.title || 'Team with no name', subtitle: subtitleFor(text, { show: item.active }), media: item.media };
+      return { title: title, subtitle: subtitleFor(item.mirror ? 'Mirror on' : 'Mirror off', { show: item.active }), media: item.media };
     },
   },
 });

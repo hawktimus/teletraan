@@ -506,7 +506,7 @@ test('the banner draws the team that is on the screen: its name and number, and 
     document.documentElement.classList = { add() {}, remove() {} };
 
     const team = { team: { name: '[Team]', number: '[0000]', school: '[School]' }, weather: null, status: {} };
-    const nova = { code: 'nova', name: 'HAWKTIMUS NOVA', shortName: 'NOVA', number: '3230', logo: '', colors: { primary: '#1F7AE0', plate: '#1E3A6E', accent: '#9BF0FF', neon: '#FF2E8C', pink: '#35F0FF', background: '#060D1A', text: '#FFFFFF' }, mirror: true, active: true, order: 20 };
+    const nova = { code: 'nova', name: 'HAWKTIMUS NOVA', shortName: 'NOVA', number: '3426', logo: '', colors: { primary: '#1F7AE0', plate: '#1E3A6E', accent: '#9BF0FF', neon: '#FF2E8C', pink: '#35F0FF', background: '#060D1A', text: '#FFFFFF' }, mirror: true, active: true, order: 20 };
 
     // with no team documents it is the Team box, as it always was
     teams.useTeams(team, new Date());
@@ -522,7 +522,7 @@ test('the banner draws the team that is on the screen: its name and number, and 
     teams.changeTeamNow();
     banner.update(page.element, withNova);
     assert.equal(page.nodes['.team-name'].dataset.name, 'HAWKTIMUS NOVA');
-    assert.equal(page.nodes['.team-number'].textContent, '3230');
+    assert.equal(page.nodes['.team-number'].textContent, '3426');
     assert.equal(page.nodes['.school'].textContent, '[School]');
   });
 });

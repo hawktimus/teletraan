@@ -67,6 +67,10 @@ Mini are never touched or overwritten. It then restarts the screen, which is bla
 for about ten seconds. A screen that is open does not reload by itself after a
 copy, so the restart is part of the update.
 
+After the copy the tool leaves the hash, the day and the branch of this repository in
+the file `build.txt` in the deploy folder of the Mini and runs `status-write.sh version`, so the status block says
+which build is on the wall. A folder with no git history skips this and says so.
+
 The tool refuses to copy from a folder that is not the Teletraan repository,
 because the copy removes files on the Mini.
 

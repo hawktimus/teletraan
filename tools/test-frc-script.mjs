@@ -649,7 +649,7 @@ test('a team that The Blue Alliance does not know is skipped without an error, a
   world(place, {
     teams: [
       { code: 'prime', number: '3229' },
-      { code: 'nova', number: '3230' },
+      { code: 'nova', number: '3426' },
       { code: 'blank', number: '' },
       { code: 'ghost' },
       { code: 'letters', number: '32x9' },
@@ -660,7 +660,7 @@ test('a team that The Blue Alliance does not know is skipped without an error, a
 
   assert.equal(result.status, 0, result.errors);
   assert.equal(result.errors, '');
-  assert.deepEqual(requestsOf(result.calls).filter(request => request.includes('3230') || request.includes('blank') || request.includes('ghost')), ['tba /team/frc3230/events/2027']);
+  assert.deepEqual(requestsOf(result.calls).filter(request => request.includes('3426') || request.includes('blank') || request.includes('ghost')), ['tba /team/frc3426/events/2027']);
   assert.ok(result.text.includes('team nova: not found on The Blue Alliance, skipped'), result.text);
   ['blank', 'ghost', 'letters', 'long'].forEach(code => assert.ok(result.text.includes('team ' + code + ': no team number, skipped'), code + '\n' + result.text));
   assert.deepEqual(place.document().teams.map(team => team.team), ['prime']);
@@ -670,20 +670,20 @@ test('a team that The Blue Alliance does not know is skipped without an error, a
 
 test('two teams are read one after the other, a number with spaces is trimmed, and an event both attend is read once', () => {
   const place = setup('two-teams', { tools: true });
-  world(place, { teams: [{ code: 'prime', number: '3229' }, { code: 'nova', number: ' 3230 ' }] });
-  place.tba('/team/frc3230/events/2027', [
+  world(place, { teams: [{ code: 'prime', number: '3229' }, { code: 'nova', number: ' 3426 ' }] });
+  place.tba('/team/frc3426/events/2027', [
     { key: eventKey, name: '[Sample Regional]', city: '[City]', start_date: '2027-03-12', end_date: '2027-03-14', event_type: 1 },
   ]);
-  place.tba('/team/frc3230/event/' + eventKey + '/matches', [matchOf(1, true)]);
-  place.tba('/team/frc3230/awards/2027', []);
-  place.statbotics('/team_year/3230/2027', { team: '3230', epa: { total_points: { mean: 40 } } });
+  place.tba('/team/frc3426/event/' + eventKey + '/matches', [matchOf(1, true)]);
+  place.tba('/team/frc3426/awards/2027', []);
+  place.statbotics('/team_year/3426/2027', { team: '3426', epa: { total_points: { mean: 40 } } });
   const result = place.run();
   const requests = requestsOf(result.calls);
 
   assert.equal(result.status, 0, result.errors);
   assert.equal(requests.filter(request => request === 'tba /event/' + eventKey + '/rankings').length, 1, 'shared answers are read once');
-  assert.ok(requests.includes('tba /team/frc3230/event/' + eventKey + '/matches'));
-  assert.deepEqual(place.document().teams.map(team => [team.team, team.number, team.epa]), [['prime', 3229, 55.12], ['nova', 3230, 40]]);
+  assert.ok(requests.includes('tba /team/frc3426/event/' + eventKey + '/matches'));
+  assert.deepEqual(place.document().teams.map(team => [team.team, team.number, team.epa]), [['prime', 3229, 55.12], ['nova', 3426, 40]]);
 });
 
 test('an event that has a short name keeps it in the status, and one that has none has no field for it', () => {
@@ -1191,7 +1191,7 @@ test('text from the services never reaches a shell or an address: an odd event k
 
 test('a team code or number that is not plain never reaches an address', () => {
   const place = setup('odd-team', { tools: true });
-  world(place, { teams: [{ code: 'prime', number: '3229' }, { code: 'bad;code', number: '3230' }, { code: 'ok', number: '3230; touch PWNED' }, { code: 'UPPER', number: '3231' }, { code: 'trail\n', number: '3232' }, { code: 'line', number: '3233\n' }] });
+  world(place, { teams: [{ code: 'prime', number: '3229' }, { code: 'bad;code', number: '3426' }, { code: 'ok', number: '3426; touch PWNED' }, { code: 'UPPER', number: '3231' }, { code: 'trail\n', number: '3232' }, { code: 'line', number: '3233\n' }] });
   const result = place.run();
 
   assert.equal(result.status, 0, result.errors);

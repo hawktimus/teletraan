@@ -441,6 +441,27 @@ A card with nothing to show is left out of the rotation, so a Mini with no key
 shows no competition card. The data is public: team numbers, nicknames, match
 numbers and times, scores, ranks, award names and ratings, and no person's name.
 
+## The version on the wall and the sweep
+
+The last line of the status block, On the wall, says which build the screen runs: the
+short hash and the day of the commit, such as `a1b2c3d · 2026-10-14`. The Mini writes it
+when the screen starts, and the Mac tool writes it at the end of an update (it leaves the
+hash in the file `build.txt` in the deploy folder of the Mini, because the copy does not bring the `.git` folder).
+A Mini that pulls reads it from git. To see the same hash on the TV, open the address
+with `?debug=1` on the end: it shows in the bottom left corner at 20 px, the one text
+smaller than the usual smallest size.
+
+The sweep keeps names out of the repository that do not belong there: AI tools, films,
+shows and franchises, and lines that credit a tool or a co-author. `tools/sweep.sh` looks
+through the files git tracks for each word in `tools/sweep-words.txt` and exits with 1 and
+the file and line of each hit. The word list is the only file that may hold them. Run it
+by hand, or turn on the check before every push, once on each computer you push from:
+
+    git config core.hooksPath .githooks
+
+After that a push stops when the sweep finds something. Take the word out and push again.
+A test that has to name a word builds it from pieces, so the sweep does not find it there.
+
 ## Where the detail is
 
 - docs/editing-content.md: every field, kind of content and tab

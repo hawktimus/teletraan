@@ -41,7 +41,8 @@
   --size-body: 56px;
   --size-body-large: 64px;
   --size-person: 72px; /* the name in a Leadership or Team Leads row */
-  --size-team: 60px; /* TEAM 3229 on the team plate, which is only 46px of clear purple high */
+  --size-stamp: 20px; /* the build stamp of ?debug=1, the one text below the smallest size (core/build-stamp.js) */
+  --size-team: 60px; /* TEAM and the number on the team plate, which is only 46px of clear purple high */
   --size-clock: 84px; /* the clock in the side column of the bar layout */
   --size-heading: 96px;
   --size-days: 184px;

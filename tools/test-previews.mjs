@@ -89,8 +89,8 @@ const lines = {
     { document: { title: 'SAFETY', blocks: [{}] }, title: 'SAFETY', subtitle: '1 block' },
   ],
   team: [
-    { document: { name: 'Hawktimus Prime', number: '3229', mirror: false }, title: 'Hawktimus Prime', subtitle: '3229 · Mirror off' },
-    { document: { name: 'Hawktimus Nova', number: '3230', mirror: true }, title: 'Hawktimus Nova', subtitle: '3230 · Mirror on' },
+    { document: { name: 'Hawktimus Prime', number: '3229', mirror: false }, title: 'Hawktimus Prime · 3229', subtitle: 'Mirror off' },
+    { document: { name: 'Hawktimus Nova', number: '3426', mirror: true }, title: 'Hawktimus Nova · 3426', subtitle: 'Mirror on' },
     { document: { name: 'Hawktimus Nova', active: true }, title: 'Hawktimus Nova', subtitle: 'Mirror off' },
   ],
 };
@@ -152,8 +152,8 @@ test('a calendar filter that is switched off starts with Off, and one that has r
 
 test('a team that is not active starts with Hidden', () => {
   const document = lines.team[0].document;
-  assert.equal(lineOf('team', Object.assign({}, document, { active: false })).subtitle, 'Hidden · 3229 · Mirror off');
-  assert.equal(lineOf('team', Object.assign({}, document, { active: true })).subtitle, '3229 · Mirror off');
+  assert.equal(lineOf('team', Object.assign({}, document, { active: false })).subtitle, 'Hidden · Mirror off');
+  assert.equal(lineOf('team', Object.assign({}, document, { active: true })).subtitle, 'Mirror off');
 });
 
 test('a talk that is not scheduled and a meeting day that is closed say so first', () => {

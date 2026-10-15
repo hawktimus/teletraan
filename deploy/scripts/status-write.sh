@@ -10,6 +10,9 @@
 #   status-write.sh monday     the Monday boards were read
 #   status-write.sh frc        the FRC data was read
 #   status-write.sh kiosk      the screen started
+#   status-write.sh version    the build on the wall: the short hash, the date and the branch
+#                              of the repository on the Mini (buildCommit, buildDate, buildBranch),
+#                              from deploy/build.txt when the Mac tool copied the files, else from git
 #   status-write.sh calendar-status
 #                              sends the document that the Calendars page in Studio
 #                              shows, which calendar-status.sh made in the data folder
@@ -32,7 +35,7 @@ env_file="$deploy/local.env"
 document=status-mini
 
 usage() {
-  echo "Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|calendar-status|--print" >&2
+  echo "Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|--print" >&2
   exit 2
 }
 
@@ -46,6 +49,7 @@ case $1 in
   monday) field=lastMondaySyncAt ;;
   frc) field=lastFrcSyncAt ;;
   kiosk) field=kioskStartedAt ;;
+  version) field=version ;;
   calendar-status) field=calendar-status ;;
   --print) field=print ;;
   *) usage ;;
@@ -219,6 +223,29 @@ elif [ "$field" = lastContentSeenAt ]; then
     echo "status: could not find the newest change to the content, so nothing was written." >&2
     exit 1
   fi
+elif [ "$field" = version ]; then
+  # The Mac tool copies the files without the .git folder, so it leaves deploy/build.txt with the
+  # hash, the date and the branch of the repository it copied. A Mini that pulls has no such file
+  # (pull.sh removes it) and git is asked. Each answer is checked, because it goes into a JSON body.
+  stamp="$deploy/build.txt"
+  if [ -f "$stamp" ]; then
+    commit=$(sed -n 's/^commit=//p' "$stamp" | head -n 1)
+    built=$(sed -n 's/^date=//p' "$stamp" | head -n 1)
+    branch=$(sed -n 's/^branch=//p' "$stamp" | head -n 1)
+  else
+    commit=$(git -C "$repo" rev-parse --short HEAD 2> /dev/null) || exit 0
+    built=$(git -C "$repo" log -1 --format=%cs 2> /dev/null) || exit 0
+    branch=$(git -C "$repo" rev-parse --abbrev-ref HEAD 2> /dev/null) || exit 0
+  fi
+  if ! printf '%s' "$commit" | grep -Eq '^[0-9a-f]{4,40}$' ||
+    ! printf '%s' "$built" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' ||
+    ! printf '%s' "$branch" | grep -Eq '^[A-Za-z0-9._/-]{1,100}$'; then
+    echo "status: git did not give a hash, a date and a branch, so nothing was written." >&2
+    exit 1
+  fi
+  field=buildCommit
+  body=$(printf '{"mutations":[{"createIfNotExists":{"_id":"%s","_type":"status"}},{"patch":{"id":"%s","set":{"buildCommit":"%s","buildDate":"%s","buildBranch":"%s"}}}]}' \
+    "$document" "$document" "$commit" "$built" "$branch")
 else
   value=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 fi
@@ -240,4 +267,4 @@ if [ "$status" -ne 0 ]; then
   echo "status: could not write $field, $(explain "$status")." >&2
   exit 1
 fi
-echo "status: wrote $field"
+if [ "$field" = buildCommit ]; then echo "status: wrote the build"; else echo "status: wrote $field"; fi
