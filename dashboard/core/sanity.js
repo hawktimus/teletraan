@@ -67,7 +67,7 @@ export const contentQuery = `{
     "team": team->code,
     "finishedOn": coalesce(finishedOn, _updatedAt)
   },
-  "milestones": *[_type == "milestone"] | order(targetDate asc) {
+  "milestones": *[_type == "milestone" && show != false] | order(targetDate asc) {
     "id": _id,
     name,
     targetDate,
