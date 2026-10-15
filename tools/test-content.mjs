@@ -922,6 +922,8 @@ test('the new settings have the defaults the Studio starts with', () => {
     nameEffectEveryMinutes: { min: 1, max: 240 },
     hawkEveryMinutes: { min: 1, max: 240 },
     swapSeconds: { min: 0.5, max: 3 },
+    photoCount: { min: 1, max: 20 },
+    secondsPerPhoto: { min: 5, max: 60 },
   });
 
   // the photo settings: random order, and 16 seconds a photo

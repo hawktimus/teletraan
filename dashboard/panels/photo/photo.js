@@ -70,7 +70,7 @@ function planFor(content, settings, step) {
   }
 
   const plan = turnPlan(list.length, photoStay(settings));
-  return { turn: queue.takeTurn(list, settings.photoOrder, plan.photos), plan: plan, pace: 1 };
+  return { turn: queue.takeTurn(photosToShow(content), settings.photoOrder, plan.photos), plan: plan, pace: 1 };
 }
 
 // The body is one slat, and the photos inside it come and go on their own. page is not used. The step is the

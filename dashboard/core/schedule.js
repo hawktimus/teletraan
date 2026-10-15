@@ -397,8 +397,9 @@ function runRotation(region, getPlaylist, getContent) {
         if (next) {
           const settings = getContent().settings;
           // The Photo panel of a Screen row knows how long its turn is: the photos it has times the seconds each stays
-          const turnSeconds = Number(next.page.element.dataset.stay);
-          const held = holdFor(stayFor(region, turnSeconds > 0 ? turnSeconds : ownSeconds(next.step, settings), settings), arrivedAfter);
+          const turnSeconds = next.page.element && next.page.element.dataset ? Number(next.page.element.dataset.stay) : 0;
+          if (turnSeconds > 0) next.step = Object.assign({}, next.step, { seconds: turnSeconds });
+          const held = holdFor(stayFor(region, ownSeconds(next.step, settings), settings), arrivedAfter);
           await hold(held, since, region);
 
           // a card with more rows than fit moves its list up and is held again, for the same time. A
