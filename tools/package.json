@@ -1,0 +1,8 @@
+{
+  "name": "teletraan-tools",
+  "private": true,
+  "description": "For tools/screenshots.mjs on a laptop. Never installed on the Mini.",
+  "devDependencies": {
+    "playwright": "^1.61.1"
+  }
+}
