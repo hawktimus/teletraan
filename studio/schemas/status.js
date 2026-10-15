@@ -34,6 +34,10 @@ export default defineType({
     textField('buildCommit', 'Build on the wall', 'The short hash of the files the screen runs. The Mini writes this.'),
     textField('buildDate', 'Build date', 'The day of that build. The Mini writes this.'),
     textField('buildBranch', 'Build branch', 'The branch of that build. The Mini writes this.'),
+    // The watchdog (deploy/scripts/watchdog.sh) and the nightly backup (backup-dataset.sh)
+    defineField({ name: 'kioskRestarts', title: 'Screen restarts today', type: 'number', description: 'How many times the watchdog restarted the screen on the day of the last restart. The Mini writes this.' }),
+    defineField({ name: 'lastKioskRestartAt', title: 'Last screen restart', type: 'datetime', description: 'When the watchdog last restarted the screen, or stopped restarting it. The Mini writes this.' }),
+    defineField({ name: 'lastBackupAt', title: 'Last backup', type: 'datetime', description: 'When the nightly backup of the dataset last finished. The Mini writes this.' }),
   ],
   preview: {
     prepare: () => ({ title: 'Status of the Mini' }),

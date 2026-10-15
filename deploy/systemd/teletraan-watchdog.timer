@@ -1,0 +1,10 @@
+[Unit]
+Description=Check that the Teletraan I screen is alive every 2 minutes
+
+[Timer]
+# The screen has the first minutes of a boot to start and draw its first beat
+OnBootSec=5min
+OnUnitActiveSec=2min
+
+[Install]
+WantedBy=timers.target

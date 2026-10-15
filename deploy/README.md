@@ -35,6 +35,15 @@ installing anything on the Mini, and whenever a step needs a login or a key.
   5 minutes while a team has an event on (`docs/frc-feed.md`).
 - A timer runs `monday-sync.sh` every 10 minutes. It reads the Monday boards named in
   Dashboard Settings and writes their items into Sanity as tasks (`docs/monday.md`).
+- A timer runs `watchdog.sh` every 2 minutes. It reads the page title that the
+  dashboard refreshes every 30 seconds, from the browser's page list on
+  127.0.0.1:9222, and restarts the kiosk service when the title is more than 3
+  minutes old, the page is missing or the browser is gone. At most one restart
+  in 10 minutes, and a third in an hour stops it until the next boot. Its count
+  is the file `watchdog-state` in the data folder (`docs/coaches-guide.md`).
+- A timer runs `backup-dataset.sh` at 03:15 every night. It exports the Sanity
+  dataset to `/var/backups/teletraan/production-<date>.tar.gz` and keeps the
+  newest 14 (`docs/coaches-guide.md`, Backups).
 - The kiosk service starts a browser full screen when the Mini boots. A kiosk
   is a browser with no address bar, tabs or menus.
 - Two text drawings, `console/startup.txt` and `console/shutdown.txt`, fill the
@@ -82,6 +91,10 @@ to attach the data folder to.
 | `scripts/install-calendars.sh` | Copies the two calendar unit files into place and turns on the calendar timer. Installs nothing else, so it leaves the pull timer off |
 | `scripts/install-slides.sh` | Copies the two slides unit files into place and turns on the slides timer. Does not install the packages, it prints the `apt install` line when one is missing |
 | `scripts/install-frc.sh` | Copies the two FRC unit files into place and turns on the FRC timer. Does not install the packages, it prints the `apt install` line when one is missing |
+| `scripts/watchdog.sh` | Restarts the kiosk service when the screen has frozen (see above). Runs as root. Needs `curl`, `pgrep` and `awk`. Keeps its count in `watchdog-state` in the data folder |
+| `scripts/install-watchdog.sh` | Copies the two watchdog unit files into place and turns on the watchdog timer. Does not install the packages, it prints the `apt install` line when one is missing |
+| `scripts/backup-dataset.sh` | Exports the dataset with the Sanity tool in `studio/node_modules`, using `SANITY_WRITE_TOKEN` from `local.env` without printing it, keeps the newest 14 files and writes `lastBackupAt` to `status-mini`. Does nothing useful without the token |
+| `scripts/install-backup.sh` | Makes `/var/backups/teletraan`, copies the two backup unit files into place and turns on the backup timer. Stops with the `npm install` line when the Sanity tool is missing from `studio/` |
 | `scripts/install-monday.sh` | Copies the two Monday unit files into place and turns on the Monday timer. Does not install the packages, it prints the `apt install` line when one is missing |
 | `scripts/install-console.sh` | Keeps a copy of `/etc/issue` once, writes the startup drawing above that text, copies `teletraan-console.service` and turns it on. Installs no package and is safe to run twice. The way back is in `docs/rebuilding-the-mini.md`, step 13 |
 | `console/startup.txt`, `console/shutdown.txt` | The drawing shown above the login prompt while the Mini starts, and the same drawing with the words "shutting down" for when it stops. Plain 7 bit text, at most 100 columns by 56 rows, with no backslash because the login prompt reads one as a code |
@@ -123,6 +136,8 @@ Run these on the Mini. A command that starts with `sudo` needs administrator rig
     sudo journalctl -u teletraan-slides.service -n 30      what did the last slide downloads do?
     sudo journalctl -u teletraan-frc.service -n 30         what did the last FRC runs do?
     sudo journalctl -u teletraan-monday.service -n 30      what did the last Monday runs do?
+    sudo journalctl -u teletraan-watchdog.service -n 30    why did the screen restart?
+    sudo journalctl -u teletraan-backup.service -n 30      did last night's backup work?
     sudo journalctl -u teletraan-kiosk.service -n 30       why is the screen black?
     sudo systemctl restart teletraan-kiosk.service         restart the browser
     sudo systemctl stop teletraan-kiosk.service            stop the screen, to use the Mini's terminal
@@ -150,6 +165,10 @@ happens.
   `sudo /opt/teletraan/deploy/scripts/install-frc.sh`
 - a Monday file in `systemd/` changed: run
   `sudo /opt/teletraan/deploy/scripts/install-monday.sh`
+- a watchdog file in `systemd/` changed: run
+  `sudo /opt/teletraan/deploy/scripts/install-watchdog.sh`
+- a backup file in `systemd/` changed: run
+  `sudo /opt/teletraan/deploy/scripts/install-backup.sh`
 - `console/startup.txt` changed: run
   `sudo /opt/teletraan/deploy/scripts/install-console.sh`, because `/etc/issue`
   is a copy of it. `console/shutdown.txt` changed: nothing to do, the unit
@@ -172,7 +191,7 @@ the step that uses each one, is the table at the top of
 
 The unit files use the repository location `/opt/teletraan`.
 `install-timers.sh`, `install-calendars.sh`, `install-slides.sh`, `install-frc.sh`,
-`install-monday.sh` and `install-console.sh` stop with an explanation if the repository is somewhere
+`install-monday.sh`, `install-watchdog.sh`, `install-backup.sh` and `install-console.sh` stop with an explanation if the repository is somewhere
 else. The account is not named
 in the unit files: they say `ACCOUNT`, and the install script fills in the
 account that owns the repository, so it works whatever the Mini's user is

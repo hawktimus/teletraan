@@ -44,6 +44,29 @@ export function buildLine(doc) {
   return 'On the wall: ' + commit + (built === '' ? '' : ' · ' + built);
 }
 
+// The watchdog and backup lines (deploy/scripts/watchdog.sh, backup-dataset.sh). They are kept apart from
+// the times above because one of them is a count and not a time.
+export const watchdogFields = ['kioskRestarts', 'lastKioskRestartAt', 'lastBackupAt'];
+
+// The restarts count for the day of the last restart, so the day after it reads 0
+function sameDay(isoText, now) {
+  const then = typeof isoText === 'string' ? new Date(isoText) : null;
+  return Boolean(then) && !isNaN(then.getTime()) && then.toDateString() === now.toDateString();
+}
+
+export function describeWatchdog(doc, now) {
+  const source = doc && typeof doc === 'object' ? doc : {};
+  const count = typeof source.kioskRestarts === 'number' && sameDay(source.lastKioskRestartAt, now) ? source.kioskRestarts : 0;
+  const restartAge = ageText(source.lastKioskRestartAt, now);
+  const backupAge = ageText(source.lastBackupAt, now);
+  const backupClock = clockText(source.lastBackupAt);
+
+  return [
+    { label: 'Screen restarts today', text: count > 0 && restartAge ? count + ' (last ' + restartAge + ')' : String(count) },
+    { label: 'Last backup', text: backupAge && backupClock ? backupAge + ' (' + backupClock + ')' : 'Not yet' },
+  ];
+}
+
 const styles = {
   note: { margin: 0, fontSize: 14, color: 'var(--card-muted-fg-color, inherit)' },
   line: { display: 'flex', flexWrap: 'wrap', gap: '4px 16px', margin: '0 0 4px', fontSize: 14 },
@@ -83,7 +106,7 @@ export function statusView(read, now) {
   return h(
     'div',
     null,
-    describeStatus(read.doc, now).map(line =>
+    describeStatus(read.doc, now).concat(describeWatchdog(read.doc, now)).map(line =>
       h('p', { key: line.label, style: styles.line }, h('span', { style: styles.label }, line.label), h('span', null, line.text))
     ).concat(h('p', { key: 'build', style: styles.line }, buildLine(read.doc)))
   );

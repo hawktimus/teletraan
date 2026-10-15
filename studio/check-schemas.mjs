@@ -4254,6 +4254,36 @@ function checkSettingsTabs() {
   return problems;
 }
 
+// The watchdog and backup lines of the status block (status-input.js, watchdog.sh, backup-dataset.sh)
+function checkStatusWatchdog() {
+  const problems = [];
+  const type = typeByName('status');
+  const input = world.statusInput;
+  const names = ['kioskRestarts', 'lastKioskRestartAt', 'lastBackupAt'];
+  const at = name => fieldsIn(type || {}).find(field => field.name === name);
+
+  need(problems, input.watchdogFields.join() === names.join(), 'the watchdog lines should read these fields: ' + names.join(', '));
+  need(problems, at('kioskRestarts') && at('kioskRestarts').type === 'number', 'status.kioskRestarts should be a number');
+  need(problems, at('lastKioskRestartAt') && at('lastKioskRestartAt').type === 'datetime', 'status.lastKioskRestartAt should be a datetime');
+  need(problems, at('lastBackupAt') && at('lastBackupAt').type === 'datetime', 'status.lastBackupAt should be a datetime');
+  names.forEach(name => {
+    need(problems, at(name) && !constraintNamed(constraintsOf(at(name)), 'required'), 'status.' + name + ' should not be required');
+    need(problems, world.statusScript.indexOf(name) !== -1, 'status-write.sh should write the field ' + name);
+  });
+
+  const now = new Date('2026-10-09T15:00:00.000Z');
+  const ago = minutes => new Date(now.getTime() - minutes * 60000).toISOString();
+  const none = input.describeWatchdog(null, now);
+  need(problems, none.length === 2 && none[0].label === 'Screen restarts today' && none[0].text === '0' && none[1].label === 'Last backup' && none[1].text === 'Not yet', 'a missing document should say 0 restarts and Not yet for the backup');
+  const some = input.describeWatchdog({ kioskRestarts: 2, lastKioskRestartAt: ago(5), lastBackupAt: ago(600) }, now);
+  need(problems, some[0].text === '2 (last 5 minutes ago)', 'two restarts today should read 2 and when the last was, not ' + some[0].text);
+  need(problems, /^10 hours ago \(/.test(some[1].text), 'a backup ten hours ago should read 10 hours ago, not ' + some[1].text);
+  const old = input.describeWatchdog({ kioskRestarts: 3, lastKioskRestartAt: ago(3 * 24 * 60) }, now);
+  need(problems, old[0].text === '0', 'restarts from an earlier day should not count as today');
+  need(problems, JSON.stringify(input.statusView({ doc: {}, unreadable: false }, now)).indexOf('Last backup') !== -1, 'the block should show the Last backup line');
+  return problems;
+}
+
 // The status document the Mini writes (schemas/status.js, deploy/scripts/status-write.sh) and the block that shows it
 function checkStatusBlock() {
   const problems = [];
@@ -4263,8 +4293,8 @@ function checkStatusBlock() {
 
   need(problems, type && type.type === 'document', 'status should be a document type');
   const build = ['buildCommit', 'buildDate', 'buildBranch'];
-  need(problems, type && fieldsIn(type).map(field => field.name).join() === wanted.concat(build).join(), 'status should have these fields, in this order: ' + wanted.concat(build).join(', '));
-  fieldsIn(type || {}).forEach(field => {
+  need(problems, type && fieldsIn(type).map(field => field.name).slice(0, wanted.length + build.length).join() === wanted.concat(build).join(), 'status should start with these fields, in this order: ' + wanted.concat(build).join(', '));
+  fieldsIn(type || {}).filter(field => wanted.concat(build).includes(field.name)).forEach(field => {
     if (build.indexOf(field.name) !== -1) return need(problems, field.type === 'string', 'status.' + field.name + ' should be a string');
     need(problems, field.type === 'datetime', 'status.' + field.name + ' should be a datetime');
     need(problems, !constraintNamed(constraintsOf(field), 'required'), 'status.' + field.name + ' should not be required: the Mini writes each one after its own job');
@@ -6692,6 +6722,7 @@ async function main() {
   check('the Publish all tool is in the top bar and keeps the pages that exist once on their fixed ids', checkPublishAll);
   check('Dashboard Settings has its eight tabs, every field is in the tab the table says, and the notes and the status block store nothing', checkSettingsTabs);
   check('the status document has the fields the Mini writes, is kept out of the sidebar and the New menu, and the block shows its lines in plain words', checkStatusBlock);
+  check('the status block shows the screen restarts of the day and the last backup', checkStatusWatchdog);
   results.push({ name: 'the status block asks for the published document by its id, and survives a client that fails', problems: await checkStatusRead().catch(error => ['the check stopped: ' + error.message]) });
   check('the Competition tab has the mode, one switch for each card and the connection block, as in dashboard/config.js, core/competition.js and registry.js', checkCompetitionTab);
   check('the FRC data document has the fields the Mini writes and the dashboard reads, is kept out of the sidebar and the New menu, and the connection block shows its lines in plain words', checkFrcStatus);
