@@ -1,0 +1,431 @@
+{
+  "placeholder": true,
+  "note": "PLACEHOLDER. Made up numbers and names so the competition cards draw full in ?sample=1. The owner replaces this file: run frc-sync.sh --event <key of a 2026 North Carolina district event> --to <file> on the Mini, then node tools/frc-fixture.mjs <file>.",
+  "event": "2026ncdemo",
+  "source": "placeholder",
+  "frc": {
+    "sample": true,
+    "season": 2026,
+    "lastSyncAt": "2026-03-08T23:00:00Z",
+    "notes": [],
+    "districtEvents": [
+      {
+        "key": "2026ncdemo",
+        "name": "[2026 NC district event]",
+        "city": "[City]",
+        "startDate": "2026-03-06",
+        "endDate": "2026-03-08",
+        "shortName": "[District event]",
+        "championship": false
+      }
+    ],
+    "teams": [
+      {
+        "team": "prime",
+        "number": "[9001]",
+        "events": [
+          {
+            "key": "2026ncdemo",
+            "name": "[2026 NC district event]",
+            "city": "[City]",
+            "startDate": "2026-03-06",
+            "endDate": "2026-03-08",
+            "shortName": "[District event]",
+            "rank": 1,
+            "teamsRanked": 8,
+            "matchesPlayed": 8,
+            "record": {
+              "wins": 8,
+              "losses": 0,
+              "ties": 0
+            },
+            "rankingPoints": 2.8,
+            "epa": null
+          }
+        ],
+        "focusEvent": "2026ncdemo",
+        "nextMatch": {
+          "match": "2026ncdemo_f1m1",
+          "label": "F1-1",
+          "level": "f",
+          "number": 1,
+          "time": "2026-03-08T23:16:40Z",
+          "alliance": "red",
+          "red": [
+            {
+              "number": "[9001]",
+              "nickname": "[Nickname A]",
+              "epa": null
+            },
+            {
+              "number": "[9002]",
+              "nickname": "[Nickname B]",
+              "epa": null
+            },
+            {
+              "number": "[9003]",
+              "nickname": "[Nickname C]",
+              "epa": null
+            }
+          ],
+          "blue": [
+            {
+              "number": "[9004]",
+              "nickname": "[Nickname D]",
+              "epa": null
+            },
+            {
+              "number": "[9005]",
+              "nickname": "[Nickname E]",
+              "epa": null
+            },
+            {
+              "number": "[9006]",
+              "nickname": "[Nickname F]",
+              "epa": null
+            }
+          ],
+          "redWinProbability": null
+        },
+        "results": [
+          {
+            "match": "2026ncdemo_qm5",
+            "label": "Q5",
+            "alliance": "blue",
+            "scoreFor": 70,
+            "scoreAgainst": 75,
+            "won": false
+          },
+          {
+            "match": "2026ncdemo_qm6",
+            "label": "Q6",
+            "alliance": "red",
+            "scoreFor": 78,
+            "scoreAgainst": 58,
+            "won": true
+          },
+          {
+            "match": "2026ncdemo_qm7",
+            "label": "Q7",
+            "alliance": "red",
+            "scoreFor": 81,
+            "scoreAgainst": 61,
+            "won": true
+          },
+          {
+            "match": "2026ncdemo_qm8",
+            "label": "Q8",
+            "alliance": "red",
+            "scoreFor": 84,
+            "scoreAgainst": 64,
+            "won": true
+          },
+          {
+            "match": "2026ncdemo_qf1m1",
+            "label": "QF1-1",
+            "alliance": "red",
+            "scoreFor": 88,
+            "scoreAgainst": 74,
+            "won": true
+          },
+          {
+            "match": "2026ncdemo_qf2m1",
+            "label": "QF2-1",
+            "alliance": "blue",
+            "scoreFor": 81,
+            "scoreAgainst": 70,
+            "won": true
+          },
+          {
+            "match": "2026ncdemo_sf1m1",
+            "label": "SF1-1",
+            "alliance": "red",
+            "scoreFor": 90,
+            "scoreAgainst": 85,
+            "won": true
+          },
+          {
+            "match": "2026ncdemo_f1m1",
+            "label": "F1-1",
+            "alliance": "red",
+            "scoreFor": 95,
+            "scoreAgainst": 91,
+            "won": true
+          }
+        ],
+        "ranking": {
+          "event": "2026ncdemo",
+          "rank": 1,
+          "teamsRanked": 8,
+          "matchesPlayed": 8,
+          "record": {
+            "wins": 8,
+            "losses": 0,
+            "ties": 0
+          },
+          "rankingPoints": 2.8
+        },
+        "alliance": {
+          "event": "2026ncdemo",
+          "number": 1,
+          "picks": [
+            {
+              "number": "[9001]",
+              "nickname": "[Nickname A]",
+              "epa": null
+            },
+            {
+              "number": "[9002]",
+              "nickname": "[Nickname B]",
+              "epa": null
+            },
+            {
+              "number": "[9003]",
+              "nickname": "[Nickname C]",
+              "epa": null
+            }
+          ]
+        },
+        "awards": [
+          {
+            "name": "[Award name]",
+            "event": "2026ncdemo"
+          }
+        ],
+        "epa": null,
+        "districtPoints": {
+          "total": 47,
+          "rank": 5,
+          "cutoff": null
+        },
+        "snapshots": [],
+        "lastSeason": {
+          "season": 2026,
+          "events": [
+            {
+              "key": "2026ncdemo",
+              "name": "[2026 NC district event]",
+              "city": "[City]",
+              "startDate": "2026-03-06",
+              "endDate": "2026-03-08",
+              "shortName": "[District event]",
+              "rank": 1,
+              "teamsRanked": 8,
+              "matchesPlayed": 8,
+              "record": {
+                "wins": 8,
+                "losses": 0,
+                "ties": 0
+              },
+              "rankingPoints": 2.8,
+              "epa": null
+            }
+          ]
+        }
+      },
+      {
+        "team": "nova",
+        "number": "[9002]",
+        "events": [
+          {
+            "key": "2026ncdemo",
+            "name": "[2026 NC district event]",
+            "city": "[City]",
+            "startDate": "2026-03-06",
+            "endDate": "2026-03-08",
+            "shortName": "[District event]",
+            "rank": 2,
+            "teamsRanked": 8,
+            "matchesPlayed": 8,
+            "record": {
+              "wins": 7,
+              "losses": 1,
+              "ties": 0
+            },
+            "rankingPoints": 2.6,
+            "epa": null
+          }
+        ],
+        "focusEvent": "2026ncdemo",
+        "nextMatch": {
+          "match": "2026ncdemo_f1m1",
+          "label": "F1-1",
+          "level": "f",
+          "number": 1,
+          "time": "2026-03-08T23:16:40Z",
+          "alliance": "red",
+          "red": [
+            {
+              "number": "[9001]",
+              "nickname": "[Nickname A]",
+              "epa": null
+            },
+            {
+              "number": "[9002]",
+              "nickname": "[Nickname B]",
+              "epa": null
+            },
+            {
+              "number": "[9003]",
+              "nickname": "[Nickname C]",
+              "epa": null
+            }
+          ],
+          "blue": [
+            {
+              "number": "[9004]",
+              "nickname": "[Nickname D]",
+              "epa": null
+            },
+            {
+              "number": "[9005]",
+              "nickname": "[Nickname E]",
+              "epa": null
+            },
+            {
+              "number": "[9006]",
+              "nickname": "[Nickname F]",
+              "epa": null
+            }
+          ],
+          "redWinProbability": null
+        },
+        "results": [
+          {
+            "match": "2026ncdemo_qm5",
+            "label": "Q5",
+            "alliance": "blue",
+            "scoreFor": 70,
+            "scoreAgainst": 75,
+            "won": false
+          },
+          {
+            "match": "2026ncdemo_qm6",
+            "label": "Q6",
+            "alliance": "blue",
+            "scoreFor": 58,
+            "scoreAgainst": 78,
+            "won": false
+          },
+          {
+            "match": "2026ncdemo_qm7",
+            "label": "Q7",
+            "alliance": "red",
+            "scoreFor": 81,
+            "scoreAgainst": 61,
+            "won": true
+          },
+          {
+            "match": "2026ncdemo_qm8",
+            "label": "Q8",
+            "alliance": "red",
+            "scoreFor": 84,
+            "scoreAgainst": 64,
+            "won": true
+          },
+          {
+            "match": "2026ncdemo_qf1m1",
+            "label": "QF1-1",
+            "alliance": "red",
+            "scoreFor": 88,
+            "scoreAgainst": 74,
+            "won": true
+          },
+          {
+            "match": "2026ncdemo_qf2m1",
+            "label": "QF2-1",
+            "alliance": "blue",
+            "scoreFor": 81,
+            "scoreAgainst": 70,
+            "won": true
+          },
+          {
+            "match": "2026ncdemo_sf1m1",
+            "label": "SF1-1",
+            "alliance": "red",
+            "scoreFor": 90,
+            "scoreAgainst": 85,
+            "won": true
+          },
+          {
+            "match": "2026ncdemo_f1m1",
+            "label": "F1-1",
+            "alliance": "red",
+            "scoreFor": 95,
+            "scoreAgainst": 91,
+            "won": true
+          }
+        ],
+        "ranking": {
+          "event": "2026ncdemo",
+          "rank": 2,
+          "teamsRanked": 8,
+          "matchesPlayed": 8,
+          "record": {
+            "wins": 7,
+            "losses": 1,
+            "ties": 0
+          },
+          "rankingPoints": 2.6
+        },
+        "alliance": {
+          "event": "2026ncdemo",
+          "number": 1,
+          "picks": [
+            {
+              "number": "[9001]",
+              "nickname": "[Nickname A]",
+              "epa": null
+            },
+            {
+              "number": "[9002]",
+              "nickname": "[Nickname B]",
+              "epa": null
+            },
+            {
+              "number": "[9003]",
+              "nickname": "[Nickname C]",
+              "epa": null
+            }
+          ]
+        },
+        "awards": [
+          {
+            "name": "[Other award]",
+            "event": "2026ncdemo"
+          }
+        ],
+        "epa": null,
+        "districtPoints": {
+          "total": 39,
+          "rank": 9,
+          "cutoff": null
+        },
+        "snapshots": [],
+        "lastSeason": {
+          "season": 2026,
+          "events": [
+            {
+              "key": "2026ncdemo",
+              "name": "[2026 NC district event]",
+              "city": "[City]",
+              "startDate": "2026-03-06",
+              "endDate": "2026-03-08",
+              "shortName": "[District event]",
+              "rank": 2,
+              "teamsRanked": 8,
+              "matchesPlayed": 8,
+              "record": {
+                "wins": 7,
+                "losses": 1,
+                "ties": 0
+              },
+              "rankingPoints": 2.6,
+              "epa": null
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

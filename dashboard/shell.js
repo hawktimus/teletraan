@@ -57,11 +57,13 @@ import { withCompetition } from './core/competition.js';
 import { askForTeam, changeTeamNow, currentTeam, frameTrim, onTeamChange, recordTrim, trimNow, useTeams } from './core/teams.js';
 import { showPagesNow, startRotation, startRotationForLayouts, startTicker, startTogether } from './core/schedule.js';
 import { readStill, useStillSwitches } from './core/still.js';
+import { readCompetitionAsk } from './core/competition-address.js';
 import { startTakeovers, runAnnouncement, takeoverRunning } from './core/takeover.js';
 
 const params = new URLSearchParams(window.location.search);
 const stillAsk = readStill(params); // ?panel= draws that one panel and holds it (core/still.js)
 if (stillAsk) useStillSwitches(params, stillAsk);
+const competitionAsk = readCompetitionAsk(params); // ?competition=1&event= puts the competition cards on (core/competition-address.js)
 const stress = params.has('stress');
 const onlyTasks = params.get('only') === 'tasks';
 
@@ -161,6 +163,7 @@ async function run() {
     }
 
     startWhatStays();
+    if (competitionAsk) await startOptional('./core/competition-address-run.js', module => module.startCompetitionAddress(competitionAsk, getContent, showingSample));
 
     // Alerts and announcements do not need the weather or events, so they
     // start looking at the clock at once. An announcement must never be

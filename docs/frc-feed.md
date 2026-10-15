@@ -307,6 +307,27 @@ within a few seconds:
 `core/competition-preview.js` decides, and `core/competition-preview-run.js` gives
 it the real screen. `tools/test-competition.mjs` checks it.
 
+## Try a card on a past event
+
+To see every card full, with real numbers, use an event that is over. Nothing here is written to Sanity.
+
+1. On the Mini, read one event into a file. The key of an event is the year and its code, such as `2026ncwak`:
+
+       deploy/scripts/frc-sync.sh --event 2026ncwak --to /tmp/event.json
+
+   It needs `TBA_AUTH_KEY` in `local.env` and prints no key.
+2. On the Mac, with that file copied over, make the fixture:
+
+       node tools/frc-fixture.mjs /tmp/event.json
+
+   It writes `dashboard/data/sample/frc-event.json`. Team numbers and team names are kept as The Blue Alliance has
+   them. Prime and Nova take the places of the two best ranked teams. `--prime 1234 --nova 5678` chooses two others.
+3. Commit the file. The placeholder that is there now says PLACEHOLDER at its top.
+
+Open `index.html?sample=1&competition=1` to see the cards on the fixture. With `&event=2026ncwak` the screen reads
+the fixture only if it is for that event. Without `?sample=1`, `?competition=1&event=<key>` cuts the live card data
+down to that event. Either way the cards come whatever the Competition cards setting and the date say.
+
 ## Changing a card
 
 Each card is a folder with a script and a stylesheet in `dashboard/panels/`, and
