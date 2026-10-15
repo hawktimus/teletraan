@@ -42,4 +42,6 @@
   top: 480px;
   color: var(--lilac);
   font: 600 44px/52px var(--font-display);
+  display: none; /* the legend is 1050 wide, so in the 1152 panel there is no room for it */
 }
+html[data-layout="bar"] .monday-status-depts .age { display: block; }
