@@ -1,0 +1,34 @@
+/* The announcement bar (core/notice-run.js, docs/announcements.md): a plate under the banner, 80 high with a
+   3 px rule above and below in the team accent. A notice is the team plate color and an important one is red.
+   Its place and width are set by the script from the layout, in the 1920 by 1080 screen. It is in #stage,
+   before #talk, #overlay and #night, so a presentation, an alert and the night screen cover it. */
+#notice {
+  position: absolute;
+  box-sizing: border-box;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 32px;
+  border-top: 3px solid var(--team-accent);
+  border-bottom: 3px solid var(--team-accent);
+  background: var(--team-plate);
+  color: var(--team-text);
+  opacity: 0;
+}
+#notice[hidden] { display: none; }
+#notice[data-level="important"] { background: var(--red-3); }
+
+#notice .notice-text {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 72px;
+}
+
+/* A hidden transition (docs/hidden-transitions.md) has the frames apart, and the bar waits */
+#world[data-hidden] #notice { visibility: hidden; }

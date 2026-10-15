@@ -5590,10 +5590,10 @@ function onTeamScreen(code, run) {
 
 test('the query asks for the teams, and for the team code of every kind of content that has a Team field', () => {
   assert.ok(contentQuery.includes('"teams": *[_type == "team"] | order(order asc, _createdAt asc) {'));
-  // tasks, sponsors, tips and news, subteams, people, talks, plans and extra panels
-  assert.equal(contentQuery.split('"team": team->code').length - 1, 8);
+  // tasks, sponsors, tips and news, announcements, subteams, people, talks, plans and extra panels
+  assert.equal(contentQuery.split('"team": team->code').length - 1, 9);
 
-  ['"tasks"', '"sponsors"', '"tipsAndNews"', '"subteams"', '"people"', '"presentations"', '"plans"', '"customPanels"'].forEach(name => {
+  ['"tasks"', '"sponsors"', '"tipsAndNews"', '"notices"', '"subteams"', '"people"', '"presentations"', '"plans"', '"customPanels"'].forEach(name => {
     const start = contentQuery.indexOf(name + ': *[');
     assert.ok(start !== -1, name);
     const next = contentQuery.indexOf('\n  "', start + 1);

@@ -166,6 +166,9 @@ editors can sign in from anywhere.
                               announce.js decides when the Play announcements button plays every
                               announcement that is switched on, and announce-run.js starts it
                               (docs/hidden-transitions.md),
+                              notice.js decides which Announcement documents are live and which one
+                              is up, and notice-run.js draws the bar under the banner
+                              (docs/announcements.md),
                               hidden.js decides when a hidden transition replaces a page change,
                               hidden-transitions.js lists them, hidden-run.js plays them,
                               hidden-pile.js finds the frames that fall at their end and writes where

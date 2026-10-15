@@ -96,6 +96,7 @@ const contract = {
   },
   sponsor: withFlags({ name: text(19), tier: text(12), blurb: text(80), thankYou: text(54), logoAddress: 'url', team: teamRef, order: 'number' }),
   tipOrNews: withFlags({ kind: 'string', text: text(52), team: teamRef, order: 'number' }),
+  announcement: { text: text(90), start: 'datetime', end: 'datetime', team: teamRef, level: 'string' },
   subteam: withFlags({
     name: text(11),
     lead: text(17),
@@ -417,7 +418,7 @@ const typeTitles = {
 // the colon, and the lines under it come after. The first group has no heading.
 const sidebarGroups = [
   'Start here, Screens',
-  'TASKS: Daily Agenda, Monday Tasks, Monday Boards, Tips and News',
+  'TASKS: Daily Agenda, Monday Tasks, Monday Boards, Tips and News, Announcements',
   'EVENTS: Calendars, Calendar filters',
   'ROSTER: Leadership, Team leads, Sponsors, Photos',
   'COACHES ONLY: Settings, Extra panels',
@@ -488,8 +489,8 @@ const standIns = {
       "export const usePaneRouter = () => globalThis.studioPaneRouter || { ChildLink: 'ChildLink', navigateIntent: (...given) => { (globalThis.studioIntents = globalThis.studioIntents || []).push(given); } };",
     ].join('\n'),
     'cli.js': 'export const defineCliConfig = config => config;',
-    // the link of the Ticker section (screen-fields.js)
-    'router.js': "export const Link = 'a';",
+    // the link of the Ticker section (screen-fields.js) and the link that posts an announcement (start-here.js)
+    'router.js': "export const Link = 'a'; export const IntentLink = 'a';",
   },
   react: {
     'package.json': JSON.stringify({ name: 'react', type: 'module', exports: { '.': './index.js' } }),
@@ -1811,9 +1812,9 @@ function checkPreviewButtons() {
 }
 
 // The Start here page (start-here.js, with its words and numbers in start-here-parts.js): five
-// blocks in this order, a picture of the screen with the areas A to E, and a row of five buttons.
+// blocks in this order, a picture of the screen with the areas A to E, and a row of six buttons.
 const startBlocks = ['what', 'picture', 'steps', 'buttons', 'coaches'];
-const startButtons = ['Play announcement', 'Run presentation test', 'Next look now', 'Preview competition', 'Preview the screen'];
+const startButtons = ['Play announcement', 'Run presentation test', 'Next look now', 'Preview competition', 'Post an announcement', 'Preview the screen'];
 const startAreas = ['A Banner', 'B Main panel', 'C Countdown', 'D Side panel', 'E Ticker'];
 
 // Every element of a tree that the createElement stand-in made, in the order they are drawn,
@@ -1941,14 +1942,20 @@ function checkStartHere() {
     });
   });
 
-  // 4. the row of five buttons: the four that send a request, and the one that opens the screen in a new tab
+  // 4. the row of six buttons: the four that send a request, the one that opens a new announcement, and the one that opens the screen in a new tab
   const row = block('buttons') ? nodesWhere(block('buttons'), node => (node.type === 'button' || node.type === 'a')) : [];
   need(problems, row.map(wordsIn).join() === startButtons.join(), 'the buttons should be, in this order: ' + startButtons.join(', ') + '. They are: ' + row.map(wordsIn).join(', '));
   need(problems, parts.buttons.map(item => item.label).join() === startButtons.join(), 'the buttons in start-here-parts.js should be, in this order: ' + startButtons.join(', '));
   need(problems, row.every(item => item.props.style && item.props.style.minHeight >= 64 && item.props.style.fontSize >= 16), 'the buttons should be large: at least 64 high with text of 16 or more');
   need(problems, row.slice(0, 4).every(item => item.type === 'button' && item.props.type === 'button' && typeof item.props.onClick === 'function'), 'the first four buttons should be buttons that send a request when clicked');
-  need(problems, parts.buttons.slice(0, 4).every(item => typeof item.request === 'function' && item.address === undefined) && parts.buttons[4].address !== undefined && parts.buttons[4].request === undefined, 'in start-here-parts.js the first four buttons should have a request and the last one an address');
-  const preview = row[4];
+  need(problems, parts.buttons.slice(0, 4).every(item => typeof item.request === 'function' && item.address === undefined) && parts.buttons[5].address !== undefined && parts.buttons[5].request === undefined, 'in start-here-parts.js the first four buttons should have a request and the last one an address');
+  const post = row[4];
+  const template = world.addTemplates.filter(item => item.id === 'newAnnouncement')[0];
+  need(problems, parts.buttons[4].create && parts.buttons[4].create.type === 'announcement' && parts.buttons[4].create.template === 'newAnnouncement' && parts.buttons[4].request === undefined, 'in start-here-parts.js Post an announcement should name the type announcement and the template newAnnouncement');
+  need(problems, post && post.type === 'a' && post.props.intent === 'create' && post.props.params && post.props.params.template === 'newAnnouncement', 'Post an announcement should be a link that opens a new announcement from the template newAnnouncement');
+  const started = template && template.value ? template.value() : {};
+  need(problems, started.level === 'notice' && Date.parse(started.end) - Date.parse(started.start) === 2 * 60 * 60 * 1000 && Math.abs(Date.parse(started.start) - Date.now()) < 5000, 'the template newAnnouncement should start now and end in two hours, as a notice');
+  const preview = row[5];
   const address = world.dashboardAddress.dashboardAddress;
   need(problems, /^https?:\/\/[^\s/]+\/dashboard\/\?sample=1$/.test(address), 'dashboardAddress in dashboard-address.js should be the address of the dashboard with the sample content, ending in /dashboard/?sample=1');
   need(problems, preview && preview.type === 'a' && preview.props.href === address && preview.props.target === '_blank' && /noopener/.test(preview.props.rel || ''), 'Preview the screen should open the address in dashboard-address.js in a new tab, with rel noopener');
@@ -4020,7 +4027,7 @@ function checkTeamSeed(type) {
 // The Team field: the same on every kind of content that can be for one team. It is
 // optional and has no starting value, so empty means Both, and every item that exists
 // keeps showing with no change. It uses the radio in team-input.js.
-const teamTypes = ['task', 'plan', 'subteam', 'person', 'sponsor', 'presentation', 'presentationDay', 'customPanel', 'tipOrNews', 'extraEvent'];
+const teamTypes = ['task', 'plan', 'subteam', 'person', 'sponsor', 'presentation', 'presentationDay', 'customPanel', 'tipOrNews', 'announcement', 'extraEvent'];
 
 function checkTeamField() {
   const problems = [];
@@ -4825,6 +4832,7 @@ const listAdds = {
   'On the TV': '',
   Hidden: '',
   'Tips and News': 'newTip',
+  Announcements: 'newAnnouncement',
   'Calendar filters': 'newCalendarFilter',
   Leadership: 'newPerson',
   'Team leads': 'newSubteam',
@@ -4833,7 +4841,7 @@ const listAdds = {
 };
 
 // The switch that puts a new document on the screen, when it is not called show
-const onSwitches = { presentation: ['status', 'scheduled'], presentationDay: ['open', true] };
+const onSwitches = { presentation: ['status', 'scheduled'], presentationDay: ['open', true], announcement: ['level', 'notice'] };
 
 // Every line of the sidebar with the heading it sits under, the lines inside the folders too
 function linesUnderHeadings() {
@@ -4870,7 +4878,7 @@ function checkListAdds() {
     if (!type) return problems.push(where + ' makes the type "' + template.schemaType + '", which is not a kind of document');
 
     const fields = fieldsIn(type);
-    const value = template.value || {};
+    const value = (typeof template.value === 'function' ? template.value() : template.value) || {};
     Object.keys(value).forEach(name => {
       const field = fields.filter(item => item.name === name)[0];
       if (!field) return problems.push(where + ' sets ' + name + ', which is not a field of ' + template.schemaType);
@@ -6648,7 +6656,7 @@ async function main() {
   check('Play announcements has its hidden field, its button and its Demo step', checkPlayAnnouncements);
   check('Run presentation test has its hidden field and its button', checkRunPresentationTest);
   check('the Preview buttons have their hidden field and the list the dashboard has, and each one writes its kind and the time', checkPreviewButtons);
-  check('the Start here page has its five blocks in order, a picture of the screen with the areas A to E, and five buttons', checkStartHere);
+  check('the Start here page has its five blocks in order, a picture of the screen with the areas A to E, and six buttons', checkStartHere);
   results.push({ name: 'the Start here buttons and the buttons beside Publish write the same request fields, through screen-requests.js', problems: await checkScreenRequests().catch(error => ['the check stopped: ' + error.message]) });
   check('Next look now and Preview competition have their hidden request fields and starting values', checkNewRequests);
   check('Content source and the switch back time are hidden, kept in the schema and ignored by the dashboard, and the two buttons are gone', checkContentSource);

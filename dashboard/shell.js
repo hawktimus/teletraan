@@ -174,6 +174,7 @@ async function run() {
 
       // The Play announcements button in the Studio. Last, because it asks the ones above whether they have the screen
       startOptional('./core/announce-run.js', module => module.startAnnounceRunner(getContent));
+      startOptional('./core/notice-run.js', module => module.startNoticeRunner(getContent));
 
       // A booked talk takes the whole screen when its time comes. After the takeovers, so that an announcement
       // that comes due on the same second plays first, and the title card waits for it

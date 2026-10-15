@@ -441,11 +441,21 @@ A card with nothing to show is left out of the rotation, so a Mini with no key
 shows no competition card. The data is public: team numbers, nicknames, match
 numbers and times, scores, ranks, award names and ratings, and no person's name.
 
+## Announcements
+
+TASKS, Announcements holds the lines for the bar under the banner. Start here has a Post an
+announcement button that opens a new one starting now and ending in two hours. Each has a text
+of up to 90 characters, a start, an end, an optional team and a level (Notice or Important).
+It shows while it is live and the team on the banner matches. With two live, the bar swaps
+every 12 seconds. This is not the full-screen announcement of Dashboard Settings, which Play
+announcements plays. docs/announcements.md has both.
+
 ## Where the detail is
 
 - docs/editing-content.md: every field, kind of content and tab
 - docs/rebuilding-the-mini.md: setting up the Mini, the steps for each key and the
   boot screen
+- docs/announcements.md: the announcement bar, and how it differs from Play announcements
 - docs/monday.md: the Monday boards, how an item becomes a task and what is public
 - docs/frc-feed.md: the competition data, the seven cards and the Preview button
 - docs/calendars-page.md: the Calendars page and what the Mini writes for it

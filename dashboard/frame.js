@@ -461,6 +461,40 @@ export function scrollCard(card, index) {
 }
 
 
+// The announcement bar (core/notice-run.js) takes room from the panels under the banner. The panels
+// are moved with the scale and translate properties, which do not touch the transform that the
+// layouts and the hidden transitions already put on the same elements. In full motion the move takes
+// the milliseconds given; in calm and none it is made at once. to is { scale, x, y }, x and y in pixels.
+export function moveArea(element, to, milliseconds) {
+  const from = { scale: element.style.scale || '1', translate: element.style.translate || '0px 0px' };
+  const end = { scale: String(to.scale), translate: to.x + 'px ' + to.y + 'px' };
+
+  element.style.scale = end.scale;
+  element.style.translate = end.translate;
+  if (motion !== 'full' || !element.animate) return;
+
+  element.animate([from, end], { duration: milliseconds, easing: 'cubic-bezier(.5, 0, .2, 1)' });
+}
+
+// The bar comes in and goes out, and one announcement gives way to the other, by opacity alone.
+// change is called when the bar is fully out, and the bar comes back to the opacity given.
+// With calm or no motion it all happens at once.
+export function fadeNotice(element, to, milliseconds, change) {
+  if (motion !== 'full' || !element.animate) {
+    if (change) change();
+    element.style.opacity = String(to);
+    return;
+  }
+
+  const out = element.animate([{ opacity: Number(element.style.opacity || 0) }, { opacity: 0 }], { duration: milliseconds / 2 });
+  out.onfinish = () => {
+    if (change) change();
+    element.animate([{ opacity: 0 }, { opacity: to }], { duration: milliseconds / 2 });
+    element.style.opacity = String(to);
+  };
+}
+
+
 // Effects that play now and then
 //
 // Four effects play on a timer. Dashboard Settings has the same three

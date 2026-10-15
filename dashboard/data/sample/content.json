@@ -175,6 +175,10 @@
     { "kind": "reminder", "text": "[A reminder for everyone.]" }
   ],
 
+  "notices": [
+    { "_id": "sample-notice-1", "text": "[Meeting moved to 5 pm today.]", "start": "2000-01-01T00:00:00Z", "end": "2999-01-01T00:00:00Z", "level": "notice", "sample": true }
+  ],
+
   "subteams": [
     { "name": "[Subteam A]", "lead": "[Lead name]", "line": "[A year or a short note]", "members": ["[Student A]", "[Student B]", "[Student C]", "[Student D]", "[Student E]", "[Student F]"], "spotlight": true, "spotlightHeadline": "[What this subteam did this week]", "spotlightText": "[Two or three short sentences about the subteam's work go here.]" },
     { "name": "[Subteam B]", "lead": "[Lead name]", "line": "[A year or a short note]", "members": ["[Student A]", "[Student B]", "[Student C]", "[Student D]", "[Student E]", "[Student F]", "[Student G]", "[Student H]", "[Student I]", "[Student J]"] },

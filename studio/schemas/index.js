@@ -6,6 +6,7 @@ import extraEvent from './extraEvent.js';
 import calendarFilter from './calendarFilter.js';
 import sponsor from './sponsor.js';
 import tipOrNews from './tipOrNews.js';
+import announcement from './announcement.js';
 import subteam from './subteam.js';
 import place from './place.js';
 import person from './person.js';
@@ -31,6 +32,7 @@ export const schemaTypes = [
   calendarFilter,
   sponsor,
   tipOrNews,
+  announcement,
   subteam,
   place,
   person,
