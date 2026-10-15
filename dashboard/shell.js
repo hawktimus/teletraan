@@ -58,10 +58,15 @@ import { withPages, withStandIns } from './core/panel-order.js';
 import { withCompetition } from './core/competition.js';
 import { askForTeam, changeTeamNow, currentTeam, frameTrim, onTeamChange, recordTrim, trimNow, useTeams } from './core/teams.js';
 import { showPagesNow, startRotation, startRotationForLayouts, startTicker, startTogether } from './core/schedule.js';
+import { readStill, useStillSwitches } from './core/still.js';
+import { readCompetitionAsk } from './core/competition-address.js';
 import { startTakeovers, runAnnouncement, takeoverRunning } from './core/takeover.js';
 import { startHeartbeat } from './core/heartbeat.js';
 
 const params = new URLSearchParams(window.location.search);
+const stillAsk = readStill(params); // ?panel= draws that one panel and holds it (core/still.js)
+if (stillAsk) useStillSwitches(params, stillAsk);
+const competitionAsk = readCompetitionAsk(params); // ?competition=1&event= puts the competition cards on (core/competition-address.js)
 const stress = params.has('stress');
 const onlyTasks = params.get('only') === 'tasks';
 
@@ -125,7 +130,7 @@ async function run() {
   if (metals.includes(metal)) document.documentElement.dataset.metal = metal;
 
   try {
-    frame.start({ motion: params.get('motion') || 'full', speed: params.get('speed') || 'normal', draw: params.get('draw') });
+    frame.start({ motion: params.get('motion') || 'full', speed: params.get('speed') || 'normal', draw: params.get('draw'), still: Boolean(stillAsk && stillAsk.still) });
 
     // A font problem should not stop the screen, so only wait a few seconds
     await Promise.race([waitForFonts(), frame.wait(4000)]);
@@ -160,6 +165,7 @@ async function run() {
       await startOptional('./core/night-screen.js', module => module.startNight(getContent, params.get('night')));
     }
 
+    if (competitionAsk) await startOptional('./core/competition-address-run.js', module => module.startCompetitionAddress(competitionAsk, getContent, showingSample));
     startWhatStays();
 
     // Alerts and announcements do not need the weather or events, so they
@@ -469,6 +475,11 @@ function redrawPlates() {
 
 // The panels that come and go
 function startWhatComesAndGoes() {
+  if (stillAsk) {
+    startOptional('./core/still-run.js', module => module.holdPanel(stillAsk, getContent));
+    return;
+  }
+
   if (params.get('show')) {
     startTogether([params.get('show')], getContent, 30);
     return;

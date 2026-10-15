@@ -23,3 +23,9 @@ dashboard/data/live/*
 
 # a CSV made by studio/scripts/import-csv.mjs, ready for sanity dataset import
 studio/import.ndjson
+
+# the dashboard copied into the Studio for the panel preview (studio/scripts/copy-dashboard.mjs)
+studio/static/dashboard/
+
+# the pictures made by tools/screenshots.mjs
+_outputs/

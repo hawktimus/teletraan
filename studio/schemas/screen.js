@@ -23,6 +23,7 @@
 import { defineType, defineField, defineArrayMember } from 'sanity';
 import { ScreenInput } from '../screen-input.js';
 import { BannerTeamInput, CountdownInput, TickerInput, RowTeamInput, RowDepartmentInput, PhotoTotalInput } from '../screen-fields.js';
+import { RowWithPreview } from '../row-preview-input.js';
 import { largePanels, smallPanels, mondayPanels, panelTitle, takesDepartment, teamKindOf, teamProblem, teamWord } from '../screen-panels.js';
 import { screenStyles, screenTitles, styleOfScreenId } from '../screen-ids.js';
 
@@ -117,6 +118,7 @@ export function secondsWords(row) {
 const mainRow = defineArrayMember({
   type: 'object',
   title: 'Row',
+  components: { input: RowWithPreview }, // the form of the row and, for a Monday row, a Preview button below it
   fields: [
     panelField(largePanels.concat(mondayPanels), 'Which panel this row plays. Put Monday: Board by team in two rows in a row and the second shows cards three and four.'),
     defineField({
