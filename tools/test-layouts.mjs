@@ -932,8 +932,8 @@ test('core/content.js and core/source.js give the saved theme only when the scre
 
 test('index.html links the sidebar stylesheet after frame.css, so its rules come later in the cascade', () => {
   const html = read('dashboard/index.html');
-  assert.ok(html.indexOf('href="layouts/sidebar.css"') > html.indexOf('href="frame.css"'));
-  assert.equal(countOf(html, 'href="layouts/sidebar.css"'), 1);
+  assert.ok(html.indexOf('href="layouts/sidebar.css?v=0"') > html.indexOf('href="frame.css?v=0"'));
+  assert.equal(countOf(html, 'href="layouts/sidebar.css\\?v=0"'), 1);
   assert.ok(fs.existsSync(path.join(dashboardFolder, 'layouts/sidebar.css')));
 });
 
@@ -1849,7 +1849,7 @@ test('the kit moves few things at once: at most 12 parts play all the time, and 
 
 test('the kit stylesheet is linked after the sidebar layout and the decor, so its rules come later in the cascade', () => {
   const html = read('dashboard/index.html');
-  const kit = html.indexOf('href="neon-kit.css"');
+  const kit = html.indexOf('href="neon-kit.css?v=0"');
   assert.ok(kit !== -1, 'index.html links it');
   assert.ok(kit > html.indexOf('layouts/sidebar.css') && kit > html.indexOf('themes/decor/neon-prime-decor.css'));
 });
@@ -2482,9 +2482,9 @@ test('index.html has the bar row hidden, with the side column in it, links the b
   assert.ok(/<div id="bar-middle" hidden>\s*<div id="region-column" hidden><\/div>\s*<\/div>\s*<div id="region-grid1" data-block><\/div>/.test(html), 'the row is hidden, holds the column, and the large frame follows it');
   assert.ok(!/<div id="bar-middle"[^>]*data-block|<div id="region-column"[^>]*data-block/.test(html), 'only layout-apply.js makes the column a block');
 
-  const link = name => html.indexOf('href="' + name + '"');
+  const link = name => html.indexOf('href="' + name + '?v=0"');
   ['layouts/bar.css', 'styles/original.css', 'styles/cybertron.css', 'styles/minimal.css'].forEach(name => {
-    assert.equal(countOf(html, 'href="' + name + '"'), 1, name);
+    assert.equal(countOf(html, 'href="' + name + '\\?v=0"'), 1, name);
     assert.ok(fs.existsSync(path.join(dashboardFolder, name)), name + ' exists');
     assert.ok(link(name) > link('frame.css'), name + ' comes after frame.css, so its rules come later in the cascade');
     assert.ok(link(name) > link('teams.css'), name + ' comes after the team colors, which it reads');
@@ -2698,7 +2698,7 @@ test('the three style files each set their own custom properties for their own s
 // the bar layout in Original and Cybertron (which have the layout of their theme), and not one for the sidebar layout in Minimal, which has the bar layout.
 
 function stylesheetsOf(style) {
-  const linked = Array.from(read('dashboard/index.html').matchAll(/<link rel="stylesheet" href="([^"]+)">/g)).map(match => match[1])
+  const linked = Array.from(read('dashboard/index.html').matchAll(/<link rel="stylesheet" href="([^"?]+)\?v=0">/g)).map(match => match[1])
     .filter(href => href !== 'fonts/fonts.css' && (!href.startsWith('styles/') || href === 'styles/' + style + '.css'));
   const panels = fs.readdirSync(path.join(dashboardFolder, 'panels'), { withFileTypes: true }).filter(entry => entry.isDirectory())
     .reduce((all, entry) => all.concat(fs.readdirSync(path.join(dashboardFolder, 'panels', entry.name)).filter(file => file.endsWith('.css')).map(file => 'panels/' + entry.name + '/' + file)), []);

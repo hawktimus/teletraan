@@ -178,7 +178,7 @@ function checkFilesMatchRegistry() {
   ['motion.css', 'season.css'].filter(name => !fs.existsSync(path.join(seasonsFolder, name))).forEach(name => problems.push('dashboard/seasons/' + name + ' does not exist'));
 
   const index = read(path.join(dashboardFolder, 'index.html'));
-  ['seasons/season.css', 'seasons/motion.css'].filter(href => index.indexOf('href="' + href + '"') === -1).forEach(href => problems.push('index.html should link ' + href));
+  ['seasons/season.css', 'seasons/motion.css'].filter(href => index.indexOf('href="' + href + '?v=0"') === -1).forEach(href => problems.push('index.html should link ' + href));
   return problems;
 }
 

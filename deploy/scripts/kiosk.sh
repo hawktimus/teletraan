@@ -19,6 +19,32 @@ dashboard="http://localhost:${port:-8080}/dashboard/"
 data=$(setting TELETRAAN_DATA)
 data=${data:-/var/lib/teletraan/data}
 
+# The build the page asks its files for (?v=<build> in index.html). The same
+# order as status-write.sh version: the stamp the Mac tool leaves (this folder
+# is copied without .git), then git, then the time. Written in one step, so the
+# web server never sends half a line. A failure is ignored: the page falls back
+# to the time by itself when dashboard/build.js is missing.
+write_build() {
+  repo=$(cd "$deploy/.." && pwd)
+  build=""
+  if [ -f "$deploy/build.txt" ]; then
+    build=$(sed -n 's/^commit=//p' "$deploy/build.txt" | head -n 1)
+  fi
+  if ! printf '%s' "$build" | grep -Eq '^[0-9a-f]{4,40}$'; then
+    build=$(git -C "$repo" rev-parse --short HEAD 2> /dev/null || true)
+  fi
+  if ! printf '%s' "$build" | grep -Eq '^[0-9a-f]{4,40}$'; then
+    build="t$(date -u +%Y%m%d%H%M%S)"
+  fi
+  temporary="$repo/dashboard/.build.js.new"
+  if printf 'export const build = "%s";\n' "$build" > "$temporary" 2> /dev/null; then
+    chmod 644 "$temporary" 2> /dev/null || true
+    mv -f "$temporary" "$repo/dashboard/build.js" 2> /dev/null || rm -f "$temporary"
+  fi
+  return 0
+}
+write_build || true
+
 # Tell Studio that the screen has started. It runs in the background with its
 # output thrown away, so a slow or missing network never holds the screen back.
 # It does nothing without a write token in local.env.
@@ -116,6 +142,15 @@ fi
 # Chromium then waits or refuses to start. Only this script uses the profile
 # and the service runs one copy of it, so a lock found here is always stale.
 rm -f "$profile/SingletonLock" "$profile/SingletonCookie" "$profile/SingletonSocket"
+
+# An update must never leave old files in the browser. Only the cache folders
+# go. Cookies and Local Storage stay, because the dashboard keeps its last
+# known content in Local Storage.
+for cache in "$profile/Default/Cache" "$profile/Default/Code Cache" "$profile/Default/GPUCache" \
+  "$profile/Default/Service Worker/CacheStorage" "$profile/Default/Service Worker/ScriptCache" \
+  "$profile/ShaderCache" "$profile/GrShaderCache"; do
+  rm -rf "$cache"
+done
 
 # Every minute, in the background, write device.json (see write_device_info
 # above). The first write is now. exec keeps this script's process number for

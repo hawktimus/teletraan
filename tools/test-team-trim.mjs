@@ -550,9 +550,9 @@ test('the shapes of the screw and of the bolt hold a round rivet with a slot as 
     const shape = html.slice(start, html.indexOf('</g>', start));
     ['rivet-rim', 'rivet-face', 'rivet-slot'].forEach(name => assert.equal((shape.match(new RegExp('class="' + name + '"', 'g')) || []).length, 1, id + ' has one ' + name));
   });
-  const link = name => html.indexOf('href="' + name + '"');
+  const link = name => html.indexOf('href="' + name + '?v=0"');
   assert.ok(link('trim.css') > link('styles/minimal.css') && link('trim.css') > link('base.css') && link('trim.css') > link('teams.css'), 'it reads the team colors, and wins over the styles it is as strong as');
-  assert.equal(html.split('href="trim.css"').length - 1, 1);
+  assert.equal(html.split('href="trim.css?v=0"').length - 1, 1);
 });
 
 

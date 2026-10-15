@@ -18,6 +18,9 @@ local.env*
 # the build stamp the Mac tool leaves on the Mini (deploy/scripts/status-write.sh version)
 deploy/build.txt
 
+# the build the page asks its files for, written by kiosk.sh and the Mac tool (dashboard/build.example.js)
+dashboard/build.js
+
 dashboard/data/live/*
 !dashboard/data/live/.gitkeep
 

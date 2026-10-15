@@ -512,9 +512,16 @@ choose_mini() {
   esac
 }
 
+# Writes dashboard/build.js on the Mini with the build $1 (a hash or a time), in one step
+write_build_js() {
+  mini_run "printf 'export const build = \"%s\";\\n' '$1' > $MINI_REPO/dashboard/.build.js.new && mv -f $MINI_REPO/dashboard/.build.js.new $MINI_REPO/dashboard/build.js"
+}
+
 # Tells the Mini which build it was given. rsync leaves the .git folder of the Mini alone, so the
 # hash, the date and the branch are read here, from this repository, and left in deploy/build.txt for
-# status-write.sh version. A failure here is only said: the screen still updates.
+# status-write.sh version. It also leaves dashboard/build.js, the build the page asks its files for
+# (index.html): the hash when there is one, else the time. A failure here is only said: the screen
+# still updates.
 stamp_build() {
   local commit built branch
   commit=$(git -C "$repo" rev-parse --short HEAD 2> /dev/null)
@@ -524,8 +531,10 @@ stamp_build() {
     ! printf '%s' "$built" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' ||
     ! printf '%s' "$branch" | grep -Eq '^[A-Za-z0-9._/-]{1,100}$'; then
     say "This folder has no git history, so the build shown on the wall is not updated."
+    write_build_js "t$(date -u +%Y%m%d%H%M%S)" || say "The file the page reads its build from could not be written."
     return 0
   fi
+  write_build_js "$commit" || say "The file the page reads its build from could not be written."
   if mini_run "printf 'commit=%s\\ndate=%s\\nbranch=%s\\n' '$commit' '$built' '$branch' > $MINI_REPO/deploy/build.txt" &&
     mini_run "$MINI_REPO/deploy/scripts/status-write.sh version"; then
     say "The build on the wall is $commit, $built."
