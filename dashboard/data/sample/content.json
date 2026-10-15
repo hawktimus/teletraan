@@ -16,7 +16,7 @@
       "active": true, "order": 10
     },
     {
-      "code": "nova", "name": "Hawktimus Nova", "shortName": "NOVA", "number": "3230",
+      "code": "nova", "name": "Hawktimus Nova", "shortName": "NOVA", "number": "3426",
       "colors": { "primary": "#1B6FD6", "plate": "#0E2A4A", "accent": "#8FF0FF", "neon": "#3FD8FF", "pink": "#9BF0FF", "background": "#050910", "text": "#FFFFFF", "body": "#07131F", "label": "#C58CFF" },
       "metal": "steel", "glow": true,
       "mirror": true,
@@ -403,7 +403,7 @@
         }
       },
       {
-        "team": "nova", "number": 3230,
+        "team": "nova", "number": 3426,
         "events": [
           { "key": "2027ncsa1", "name": "[District event one]", "shortName": "[Event one]", "city": "[City A]", "startDate": "2027-03-11", "endDate": "2027-03-13", "rank": 11, "teamsRanked": 36, "matchesPlayed": 12, "record": { "wins": 6, "losses": 6, "ties": 0 }, "rankingPoints": 1.6, "epa": 22.7 }
         ],
@@ -416,7 +416,7 @@
             { "number": "[1143]", "nickname": "[Nickname H]", "epa": 18.4 }
           ],
           "blue": [
-            { "number": 3230, "nickname": "[Nickname]", "epa": 22.7 },
+            { "number": 3426, "nickname": "[Nickname]", "epa": 22.7 },
             { "number": "[1151]", "nickname": "[Nickname I]", "epa": 25.5 },
             { "number": "[1152]", "nickname": "[Nickname J]", "epa": 21.2 }
           ],

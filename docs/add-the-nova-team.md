@@ -5,6 +5,10 @@ number, logo and colors. The team starts as a document in the Teams list. The
 colors in the starting file are placeholders until the team has chosen its own. Do
 the four steps in order.
 
+The name, short name and number of a team are read from its Team document and nowhere else. To
+rename a team or change its number, change them in Settings, Teams. The Monday board is not
+connected to the name, so a rename there is done by hand.
+
 ## 1. Import the two teams
 
 The file `docs/seed/teams.ndjson` holds Hawktimus Prime, with the colors and the trim the
@@ -30,7 +34,7 @@ In Studio open Settings, then Teams, then Hawktimus Nova. These are the fields.
 
 - Team name: up to 20 characters. It is the name in the banner.
 - Short name: up to 8 characters, such as NOVA.
-- Team number: up to 6 characters. The file starts with 3230. Check that it is the
+- Team number: up to 6 characters. The file starts with 3426. Check that it is the
   right number.
 - Team code: nova. The data uses it, so do not change it.
 - Logo: optional. A picture for the banner. Leave it empty to use the shared

@@ -742,7 +742,7 @@ map. Editing, Prime or Nova, above the map only changes which team document A op
 - B Main panel: the rows. Each row has a panel, a team and, if you want, seconds from 6 to 120. The panel is one
   of the large panels or one of three Monday rows. A team shows only when the panel can have one: leave it on Keep
   the team on the screen, or pick a team. A Monday row needs a team, and Milestones and Progress can be Both
-  teams. Keep the Prime rows together and the Nova rows together. The screen transforms every time the team changes.
+  teams. Keep the rows of one team together. The screen transforms every time the team changes.
   Monday style is the style while a Monday row plays.
 - C Countdown: the title and dates of Kickoff and Rollout, shown from Dashboard Settings, Countdown tab. They are
   the same on every Screen and for both teams.

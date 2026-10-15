@@ -3929,17 +3929,19 @@ function checkTeams() {
   need(problems, (type.orderings || []).some(item => item.by && item.by[0].field === 'name' && item.by[0].direction === 'asc'), 'team needs an ordering by name, A to Z');
   checkPlainMessages('team', problems);
 
-  // The list line: the name, then the number and Mirror on or off. A team that is not active says Hidden first.
-  const line = fields => type.preview.prepare(Object.assign({ title: 'Hawktimus Prime', number: '3229', mirror: false }, fields));
+  // The list line: the name and the number, then Mirror on or off. A team that is not active says Hidden first.
+  const line = fields => type.preview.prepare(Object.assign({ title: 'Team Name', number: '1234', mirror: false }, fields));
   [
-    [line({}).subtitle, '3229 · Mirror off'],
-    [line({ active: true }).subtitle, '3229 · Mirror off'],
-    [line({ mirror: true }).subtitle, '3229 · Mirror on'],
-    [line({ mirror: undefined }).subtitle, '3229 · Mirror off'],
-    [line({ active: false }).subtitle, 'Hidden · 3229 · Mirror off'],
-    [line({ number: undefined }).subtitle, 'Mirror off'],
+    [line({}).title, 'Team Name · 1234'],
+    [line({}).subtitle, 'Mirror off'],
+    [line({ active: true }).subtitle, 'Mirror off'],
+    [line({ mirror: true }).subtitle, 'Mirror on'],
+    [line({ mirror: undefined }).subtitle, 'Mirror off'],
+    [line({ active: false }).subtitle, 'Hidden · Mirror off'],
+    [line({ number: undefined }).title, 'Team Name'],
     [type.preview.prepare({}).title, 'Team with no name'],
   ].forEach(entry => need(problems, entry[0] === entry[1], 'the team list should read "' + entry[1] + '", it reads "' + entry[0] + '"'));
+  need(problems, /Change the name or number here and the screen follows\. The Monday board is not connected to this name; a rename there is done by hand\./.test(type.description || ''), 'the team document should open with its description about the name and number');
   need(problems, type.preview.select && type.preview.select.media === 'logo', 'the team list should show each logo (select media: logo)');
 
   // The Teams line is right after Look, in the Settings folder, and is a list sorted by order
@@ -3962,7 +3964,7 @@ function checkTeamSeed(type) {
 
   const wanted = {
     'team-prime': { number: '3229', code: 'prime', mirror: false, metal: 'gold', glow: false, colors: { primary: '#6C18B6', plate: '#3B2A7A', accent: '#FACA2A', neon: '#FACA2A', pink: '#B23CFF', body: '#1A0F2E', label: '#FACA2A' } },
-    'team-nova': { number: '3230', code: 'nova', mirror: true, metal: 'steel', glow: true, colors: { primary: '#1B6FD6', plate: '#0E2A4A', accent: '#8FF0FF', neon: '#3FD8FF', pink: '#9BF0FF', background: '#050910', body: '#07131F', label: '#C58CFF' } },
+    'team-nova': { number: '3426', code: 'nova', mirror: true, metal: 'steel', glow: true, colors: { primary: '#1B6FD6', plate: '#0E2A4A', accent: '#8FF0FF', neon: '#3FD8FF', pink: '#9BF0FF', background: '#050910', body: '#07131F', label: '#C58CFF' } },
   };
   need(problems, lines.length === 2, 'docs/seed/teams.ndjson should have two teams, Prime and Nova, it has ' + lines.length);
 
@@ -4416,9 +4418,9 @@ function checkFrcStatus() {
   const ago = minutes => new Date(now.getTime() - minutes * 60000).toISOString();
   const none = input.describeFrcStatus(null, now);
   need(problems, none.length === 3 && none[0].text === 'Not yet' && none[1].text === 'No team was read' && none[2].label === 'Last error' && none[2].text === 'None', 'a missing document should say Not yet, that no team was read, and no error');
-  const some = input.describeFrcStatus({ lastSyncAt: ago(5), lastError: 'a key was refused', notes: ['A source was skipped.'], teams: [{ team: 'prime', number: 3229, events: 3 }, { team: 'nova', number: 3230, events: 0 }] }, now);
+  const some = input.describeFrcStatus({ lastSyncAt: ago(5), lastError: 'a key was refused', notes: ['A source was skipped.'], teams: [{ team: 'prime', number: 3229, events: 3 }, { team: 'nova', number: 3426, events: 0 }] }, now);
   need(problems, /^5 minutes ago \(/.test(some[0].text), 'the first line should say how long ago the Mini last read the data');
-  need(problems, some[1].label === 'Events found, prime 3229' && some[1].text === '3 events' && some[2].label === 'Events found, nova 3230' && some[2].text === 'None', 'each team should have a line with the number of events the Mini found');
+  need(problems, some[1].label === 'Events found, prime 3229' && some[1].text === '3 events' && some[2].label === 'Events found, nova 3426' && some[2].text === 'None', 'each team should have a line with the number of events the Mini found');
   need(problems, some[3].label === 'Notes' && some[3].text === 'A source was skipped.' && some[4].label === 'Last error' && some[4].text === 'a key was refused', 'the notes and the last error should be lines of their own');
   need(problems, input.describeFrcStatus({ lastSyncAt: ago(5), teams: [{ team: 'prime', number: 3229, events: 1 }] }, now)[1].text === '1 event', 'one event should read 1 event');
   need(problems, JSON.stringify(input.frcStatusView(null, now)).indexOf('Reading the competition data') !== -1, 'the block should say it is reading while it waits');
@@ -6174,7 +6176,7 @@ const screenGroupFields = {
   side: ['sideRows'],
   ticker: ['tickerLink'],
 };
-const mainRowTip = 'Keep the Prime rows together and the Nova rows together. The screen transforms every time the team changes.';
+const mainRowTip = 'Keep the rows of one team together. The screen transforms every time the team changes.';
 const weekdayStarts = { monday: 'original', tuesday: 'cybertron', wednesday: 'original', thursday: 'cybertron', friday: 'original', saturday: 'cybertron', sunday: 'original' };
 
 function checkScreenType() {

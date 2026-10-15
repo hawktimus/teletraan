@@ -1707,7 +1707,7 @@ the Prime values). The metal and the glow come after the box.
 
 The status colors (in progress, backlog and done) are the same for both teams. A team document that has no
 Body or Label has Prime's, and one with no Metal or Glow has gold and no glow, so a team made before they existed
-looks as Prime does. The Prime background is `#0B0714` (it was `#09060F` before the screens of round 5), because Original takes its page
+looks as Prime does. The Prime background is `#0B0714`, because Original takes its page
 color from the team and Prime must look in Original as it always has. It is the same as the `--ground` of
 `themes/hawktimus.css`, and `studio/check-schemas.mjs` holds the two together. The neon and the second bright
 color of Prime are not drawn by Original, so they could change: Prime has gold neon with a purple conduit and no

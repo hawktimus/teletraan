@@ -160,7 +160,7 @@ export default defineType({
       title: 'Main panel rows',
       type: 'array',
       group: 'main',
-      description: 'Keep the Prime rows together and the Nova rows together. The screen transforms every time the team changes.',
+      description: 'Keep the rows of one team together. The screen transforms every time the team changes.',
       of: [mainRow],
     }),
     defineField({

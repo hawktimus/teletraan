@@ -563,7 +563,7 @@ async function tileOn(content, setUp) {
 }
 
 const nova = {
-  code: 'nova', name: 'HAWKTIMUS NOVA', shortName: 'NOVA', number: '3230', logo: '', active: true, order: 20,
+  code: 'nova', name: 'HAWKTIMUS NOVA', shortName: 'NOVA', number: '3426', logo: '', active: true, order: 20,
   colors: config.primeTeam.colors, metal: 'steel', glow: true, mirror: true,
 };
 
@@ -588,7 +588,7 @@ test('team-tile draws the team that is about to go on the screen, as the items o
     assert.equal(teams.currentTeam().code, 'prime');
   });
 
-  assert.ok(drawn.html.includes('<div class="number">3230</div>'));
+  assert.ok(drawn.html.includes('<div class="number">3426</div>'));
   assert.ok(drawn.html.includes('<div class="name">HAWKTIMUS NOVA</div>'));
 });
 

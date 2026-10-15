@@ -47,7 +47,7 @@ The team changes by the rows of a Screen. In Screens, under Start here, open a S
 click B on the map. Each row has a Team. A row with a team other than the one on the banner
 swaps the screen to that team. A row with no team keeps the team that is on the banner.
 
-- Keep the Prime rows together and the Nova rows together. The screen transforms every
+- Keep the rows of one team together. The screen transforms every
   time the team changes, so a list that goes Prime, Nova, Prime, Nova transforms four times.
 - A Monday row needs a team. Milestones and Progress can also be Both teams.
 - The screen goes from one team or style to the next in one move: the frames pull apart, the new look

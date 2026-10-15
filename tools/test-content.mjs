@@ -5622,7 +5622,7 @@ test('the two starting teams become the teams the screen uses, and the built-in 
     bolts: 'hex', cornerCut: 'tl-br', headerNotch: 'step', grid: 'lines', logoPose: 'auto', nameStyle: 'solid', tickerLabel: 'plate', countAccent: 'red',
   });
   assert.deepEqual(nova, {
-    code: 'nova', name: 'HAWKTIMUS NOVA', shortName: 'NOVA', number: '3230', logo: '',
+    code: 'nova', name: 'HAWKTIMUS NOVA', shortName: 'NOVA', number: '3426', logo: '',
     colors: { primary: '#1B6FD6', plate: '#0E2A4A', accent: '#8FF0FF', neon: '#3FD8FF', pink: '#9BF0FF', background: '#050910', text: '#FFFFFF', body: '#07131F', label: '#C58CFF' },
     metal: 'steel', glow: true,
     mirror: true, active: true, order: 20,
@@ -5980,7 +5980,7 @@ test('with no team documents the screen is the starting Prime: its colors, its n
   onTeamScreen('nova', () => {
     teamsModule.useTeams(withTeams, atMinute(0));
     assert.equal(teamShown(withTeams).name, 'HAWKTIMUS NOVA');
-    assert.equal(teamShown(withTeams).number, '3230');
+    assert.equal(teamShown(withTeams).number, '3426');
     assert.equal(teamShown(withTeams).shortName, 'NOVA');
   });
 
@@ -5995,7 +5995,7 @@ test('the sample content has the two starting teams, and every style with every 
 
   // the same two teams as docs/seed/teams.ndjson, cleaned the same way as the editors' teams
   assert.deepEqual(sample.teams, startingTeams());
-  assert.deepEqual(sample.teams.map(team => [team.code, team.number, team.mirror]), [['prime', '3229', false], ['nova', '3230', true]]);
+  assert.deepEqual(sample.teams.map(team => [team.code, team.number, team.mirror]), [['prime', '3229', false], ['nova', '3426', true]]);
   assert.deepEqual(Object.assign({}, sample.teams[0], { builtIn: undefined }), Object.assign({}, live.config.primeTeam, { builtIn: undefined }), 'the sample Prime is the built-in Prime');
   assert.ok(live.config.styles.includes(sample.settings.style) && live.config.teamModes.includes(sample.settings.teamMode), 'the sample settings pick a style and a team mode');
   assert.deepEqual([sample.settings.style, sample.settings.teamMode], ['original', 'prime'], 'and show Prime in the Original style, as the screen always has');
@@ -6032,7 +6032,7 @@ test('the sample content has the two starting teams, and every style with every 
     teamsModule.useTeams(shown('nova'), today);
     teamsModule.changeTeamNow();
     assert.equal(teamsModule.currentTeam().code, 'nova');
-    assert.deepEqual([teamsModule.teamShown(shown('nova')).name, teamsModule.teamShown(shown('nova')).number], ['HAWKTIMUS NOVA', '3230']);
+    assert.deepEqual([teamsModule.teamShown(shown('nova')).name, teamsModule.teamShown(shown('nova')).number], ['HAWKTIMUS NOVA', '3426']);
     teamsModule.useTeams(shown('prime'), today);
     teamsModule.changeTeamNow();
     assert.deepEqual([teamsModule.currentTeam().code, teamsModule.teamShown(shown('prime')).number], ['prime', '3229']);

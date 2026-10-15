@@ -179,7 +179,7 @@ test('tidyFrc gives a complete shape, keeps nothing it cannot use, caps the list
       { team: 'bad code!', number: 1 },
       { number: 5 },
       null,
-      { team: 'nova', number: '  3230 ', results: new Array(12).fill({ label: 'Q1', alliance: 'purple', scoreFor: '5', scoreAgainst: 4, won: 'yes' }) },
+      { team: 'nova', number: '  3426 ', results: new Array(12).fill({ label: 'Q1', alliance: 'purple', scoreFor: '5', scoreAgainst: 4, won: 'yes' }) },
     ],
   });
 
@@ -191,7 +191,7 @@ test('tidyFrc gives a complete shape, keeps nothing it cannot use, caps the list
   assert.deepEqual(messy.teams.map(team => team.team), ['prime', 'nova'], 'a team needs a code of lowercase letters and digits');
   assert.equal(messy.teams[0].events.length, 12, 'at most 12 events');
   assert.equal(messy.teams[0].epa, null);
-  assert.equal(messy.teams[1].number, '3230');
+  assert.equal(messy.teams[1].number, '3426');
   assert.equal(messy.teams[1].results.length, 8, 'at most 8 results');
   assert.deepEqual(messy.teams[1].results[0], { match: '', label: 'Q1', alliance: '', scoreFor: null, scoreAgainst: 4, won: null });
   assert.equal(messy.teams[1].nextMatch, null);
@@ -245,8 +245,8 @@ test('the sample content has frc data with made up numbers in brackets, a team e
     [team.nextMatch, team.alliance].filter(Boolean).forEach(part => ['red', 'blue', 'picks'].forEach(name => (part[name] || []).forEach(person => people.push(person))));
   });
   assert.ok(people.length >= 15);
-  people.filter(person => ![3229, 3230].includes(person.number)).forEach(person => assert.ok(/^\[\d+\]$/.test(person.number), 'team number ' + person.number));
-  people.forEach(person => assert.ok([3229, 3230].includes(person.number) || /^\[.*\]$/.test(person.nickname), 'nickname ' + person.nickname));
+  people.filter(person => ![3229, 3426].includes(person.number)).forEach(person => assert.ok(/^\[\d+\]$/.test(person.number), 'team number ' + person.number));
+  people.forEach(person => assert.ok([3229, 3426].includes(person.number) || /^\[.*\]$/.test(person.nickname), 'nickname ' + person.nickname));
 
   const content = sanity.normalizeSample(sample);
   assert.equal(content.frc.sample, true);
@@ -391,7 +391,7 @@ test('the cards are for the team on the screen: Nova has its own entry, and a te
   assert.deepEqual(idsOf(competition.competitionPlan(content, day)), prime);
   onTeamScreen('nova', () => {
     assert.deepEqual(idsOf(competition.competitionPlan(content, day)), ['next-match', 'rank', 'results', 'timeline', 'district'], 'Nova has no alliance and no last season');
-    assert.equal(frcModule.teamEntry(content.frc).number, '3230');
+    assert.equal(frcModule.teamEntry(content.frc).number, '3426');
     assert.ok(panels.rank.markupFor(content, day).includes('class="rank">11</text>'), 'and the cards draw Nova\'s rank');
   });
   assert.deepEqual(idsOf(competition.competitionPlan(content, day)), prime, 'and Prime again after');

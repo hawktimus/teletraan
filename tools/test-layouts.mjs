@@ -1328,7 +1328,7 @@ test('the team number, the school and the SAMPLE CONTENT label follow the conten
 });
 
 // A team document as core/sanity.js hands it over
-const novaDocument = { code: 'nova', name: 'HAWKTIMUS NOVA', shortName: 'NOVA', number: '3230', logo: '', colors: { primary: '#1F7AE0', plate: '#1E3A6E', accent: '#9BF0FF', neon: '#FF2E8C', pink: '#35F0FF', background: '#060D1A', text: '#FFFFFF' }, mirror: true, active: true, order: 20 };
+const novaDocument = { code: 'nova', name: 'HAWKTIMUS NOVA', shortName: 'NOVA', number: '3426', logo: '', colors: { primary: '#1F7AE0', plate: '#1E3A6E', accent: '#9BF0FF', neon: '#FF2E8C', pink: '#35F0FF', background: '#060D1A', text: '#FFFFFF' }, mirror: true, active: true, order: 20 };
 
 test('the sidebar draws the team that is on the screen: its name and number, the school of the Team box, and its logo in place of the hawk, which comes back when there is none', async () => {
   await onSidebar(async world => {
@@ -1343,7 +1343,7 @@ test('the sidebar draws the team that is on the screen: its name and number, the
     const shown = selector => world.element.nodes[selector].textContent;
 
     assert.equal(world.element.nodes['.side-name'].dataset.name, 'HAWKTIMUS NOVA');
-    assert.equal(shown('.team-number'), '3230');
+    assert.equal(shown('.team-number'), '3426');
     assert.equal(shown('.school-text'), 'HOLLY SPRINGS HIGH SCHOOL', 'the school is the same for both teams');
 
     // the logo is a picture put in the logo box, and the hawk is hidden by the stylesheet while it shows
@@ -3143,7 +3143,7 @@ test('the banner has the name and the war clock in its slot, draws the name as l
     world.module.update(world.element, teamContent());
     assert.deepEqual(world.log, [], 'the same name is not drawn again, which would start the name effect again');
 
-    world.module.update(world.element, teamContent({ team: { name: 'HAWKTIMUS NOVA', number: '3230', school: 'HOLLY SPRINGS HIGH SCHOOL' } }));
+    world.module.update(world.element, teamContent({ team: { name: 'HAWKTIMUS NOVA', number: '3426', school: 'HOLLY SPRINGS HIGH SCHOOL' } }));
     assert.equal(name.dataset.name, 'HAWKTIMUS NOVA');
     assert.equal(countOf(name.innerHTML, 'class="letter"'), 'HAWKTIMUS NOVA'.length);
     assert.ok(name.innerHTML.includes('data-letter="N"'));

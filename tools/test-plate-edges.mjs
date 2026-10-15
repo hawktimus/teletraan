@@ -281,7 +281,7 @@ test('the TEAM text has 2 px clear of the metal, and of the dark inside the plat
 });
 
 test('the TEAM text has 2 px clear at both ends for the numbers each plate holds: six digits of the widest kind in the banner, five in the sidebar and four in the bar layout', async () => {
-  const holds = [['banner', '999999'], ['banner', '123456'], ['banner', '3229'], ['side', '99999'], ['side', '3229'], ['bar', '3229'], ['bar', '3230']];
+  const holds = [['banner', '999999'], ['banner', '123456'], ['banner', '3229'], ['side', '99999'], ['side', '3229'], ['bar', '3229'], ['bar', '3426']];
   for (const [name, number] of holds) {
     const found = await layoutOf(name, number);
     assert.ok(found.ink.left - found.plain.left >= clear - known, name + ' ' + number + ': ' + (found.ink.left - found.plain.left).toFixed(1) + ' clear at the left');
