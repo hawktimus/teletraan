@@ -33,12 +33,12 @@ const defaultOutput = path.join(studioFolder, '..', 'docs', 'content-templates')
 // that a sheet does not hold, so the type screen has no template. Events Calendar
 // entries and places have no line in the sidebar, but they keep their templates,
 // since the importer still reads them.
-const skippedTypes = ['photo', 'presentationDay', 'presentation', 'calendarFilter', 'team', 'screen', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus'];
+const skippedTypes = ['photo', 'presentationDay', 'presentation', 'calendarFilter', 'team', 'screen', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus', 'milestone'];
 
 // Fields that are not columns. The board sync sets the source, the board item number, the board and
 // the due date of a task, and the two notes at the top of a task store nothing.
 const notColumns = {
-  task: ['source', 'mondayId', 'mondayBoardId', 'mondayBoardName', 'boardNote', 'manualNote', 'dueDate'],
+  task: ['source', 'mondayId', 'mondayBoardId', 'mondayBoardName', 'boardNote', 'manualNote', 'dueDate', 'startDate', 'estHours', 'completedOn', 'owners', 'milestoneIds', 'showOnBoard', 'hiddenReason'],
 };
 
 // The columns whose words make the id of a row, in order. The id is the type

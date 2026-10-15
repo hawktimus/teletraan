@@ -74,7 +74,7 @@ test('the files in docs/content-templates are what the schemas give', () => {
 });
 
 test('there is a template for every kind of content, and none for photos, meeting days, presentations, calendar filters, teams, the status documents or the settings pages', () => {
-  const noTemplate = ['photo', 'presentationDay', 'presentation', 'calendarFilter', 'team', 'screen', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus'];
+  const noTemplate = ['photo', 'presentationDay', 'presentation', 'calendarFilter', 'team', 'screen', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus', 'milestone'];
   const documents = types.filter(type => type.type === 'document' && singletons.indexOf(type.name) === -1 && noTemplate.indexOf(type.name) === -1);
   assert.deepEqual(Object.keys(templates).sort(), documents.map(type => type.name).sort());
   knownTypes.forEach(type => assert.ok(templates[type], 'no template for ' + type));
@@ -101,7 +101,7 @@ test('row 1 names the columns, row 2 gives the type and the limits, row 3 is the
   assert.deepEqual(task[0], ['example', 'title', 'subteam', 'status', 'finishedOn', 'order', 'show', 'expires', 'contact', 'location', 'team', 'priority', 'showOnTv']);
   assert.equal(task[1][1], 'text; required; max 22; id 1');
   assert.equal(task[1][2], 'name of subteam');
-  assert.equal(task[1][3], 'one of blocked/in-progress/up-next/done; required');
+  assert.equal(task[1][3], 'one of blocked/in-progress/in-review/up-next/done; required');
   assert.equal(task[1][5], 'whole number');
   assert.equal(task[1][8], 'text; max 12');
   assert.equal(task[1][9], 'name of place');
@@ -266,7 +266,7 @@ test('a missing required field, a wrong choice, a wrong date and a number out of
     assert.ok(result.message.includes(text), result.message);
   };
   refuse('task', { status: 'up-next' }, 'task.csv, row 3, column title: is needed');
-  refuse('task', { title: 'A', status: 'finished' }, 'column status: write one of: blocked, in-progress, up-next, done');
+  refuse('task', { title: 'A', status: 'finished' }, 'column status: write one of: blocked, in-progress, in-review, up-next, done');
   refuse('task', { title: 'A', status: 'up-next', order: '1.5' }, 'column order: write a whole number');
   refuse('task', { title: 'A', status: 'up-next', expires: '3/4/2027' }, 'column expires: write a date and time such as 2027-03-04 18:30');
   refuse('task', { title: 'A', status: 'up-next', show: 'maybe' }, 'column show: write yes or no');
@@ -351,7 +351,7 @@ test('a task CSV made before contact and location existed still imports', () => 
   // the template as it was, with its eight columns and no contact or location
   const old = [
     'example,title,subteam,status,finishedOn,order,show,expires',
-    'type task,text; required; max 22; id 1,name of subteam,one of blocked/in-progress/up-next/done; required,datetime,whole number,yes/no; default yes,datetime',
+    'type task,text; required; max 22; id 1,name of subteam,one of blocked/in-progress/in-review/up-next/done; required,datetime,whole number,yes/no; default yes,datetime',
     'EXAMPLE,[Task name],[Subteam A],in-progress,,1,yes,2027-03-01 18:00',
     ',Wire the robot,Alpha,in-progress,,2,yes,',
     ',Paint the sign,,up-next,,,,',
@@ -405,7 +405,7 @@ test('a row points at a team by its code, capitals ignored, and a CSV made befor
   // a task CSV from before the team column, with contact and location, still imports
   const old = [
     'example,title,subteam,status,finishedOn,order,show,expires,contact,location',
-    'type task,text; required; max 22; id 1,name of subteam,one of blocked/in-progress/up-next/done; required,datetime,whole number,yes/no; default yes,datetime,text; max 12,name of place',
+    'type task,text; required; max 22; id 1,name of subteam,one of blocked/in-progress/in-review/up-next/done; required,datetime,whole number,yes/no; default yes,datetime,text; max 12,name of place',
     'EXAMPLE,[Task name],[Subteam A],in-progress,,1,yes,2027-03-01 18:00,[First name],[Place name]',
     ',Wire the robot,,in-progress,,2,yes,,Sam,Classroom',
   ].join('\n') + '\n';
@@ -466,7 +466,7 @@ test('a task row can have a priority and a Show on TV cell, and a CSV made befor
   // the template before priority and showOnTv: eleven columns, with the team last
   const old = [
     'example,title,subteam,status,finishedOn,order,show,expires,contact,location,team',
-    'type task,text; required; max 22; id 1,name of subteam,one of blocked/in-progress/up-next/done; required,datetime,whole number,yes/no; default yes,datetime,text; max 12,name of place,name of team',
+    'type task,text; required; max 22; id 1,name of subteam,one of blocked/in-progress/in-review/up-next/done; required,datetime,whole number,yes/no; default yes,datetime,text; max 12,name of place,name of team',
     'EXAMPLE,[Task name],[Subteam A],in-progress,,1,yes,2027-03-01 18:00,[First name],[Place name],',
     ',Wire the robot,,in-progress,,2,yes,,Sam,Classroom,nova',
   ].join('\n') + '\n';

@@ -184,45 +184,32 @@ Publish on Dashboard Settings (the three dots) and click one of the Preview butt
 
 ## Monday setup
 
-The Mini reads the team's Monday boards every 10 minutes and keeps their items in
-Sanity as tasks (docs/monday.md). It needs the team mentor's yes at the first step.
+The Mini reads the team's two Monday boards, Robotics Tasks and Milestones, as often as How
+often on the Monday tab says (5 to 120 minutes, 30 to start with), and keeps their items in
+Sanity (docs/monday.md). It needs the team mentor's yes at the first step.
 
-1. Make the token in Monday: click your picture at the top right, open Developers,
-   then My access tokens. Use the token of an account that can see only the team's
-   boards.
-2. Add it to `deploy/local.env` on the Mini as `MONDAY_API_TOKEN`, in single quotes
-   on its own line (docs/rebuilding-the-mini.md, step 18).
-3. On the Mini, install the packages if they are missing (ask the team mentor
-   first), then the timer, then check the token:
+1. Make the token in Monday and add it to `deploy/local.env` on the Mini as
+   `MONDAY_API_TOKEN` (docs/rebuilding-the-mini.md, step 18).
+2. On the Mini, install the packages if they are missing (ask the team mentor first), then
+   the timer, then check the token. Run the timer line again after every update that changes
+   `deploy/systemd`, because the timer now wakes the script every 5 minutes:
 
        sudo apt install curl jq
        sudo /opt/teletraan/deploy/scripts/install-monday.sh
        /opt/teletraan/deploy/scripts/monday-sync.sh --check
 
-4. Wait 10 minutes. Open Dashboard Settings, Monday tab. The block at the top says
-   who the token belongs to, when the Mini last read Monday, how many boards are
-   chosen and how many tasks the Mini has made.
-5. Under Boards click Add item. Pick the board by name, the team (leave it blank when the
-   board is for both teams), and where the status comes from. Group names is the starting choice: the group an item is in, such as To Do,
-   In Progress or Done, gives its status, and every other group name is Backlog. With A
-   status column, pick the column and change the In progress and Done labels to the words
-   the board uses. The priority, due date, owner and subteam columns are optional, and
-   each list shows only the columns of the board you picked. If a list cannot be read, the
-   box is a plain one: type the board number or the column id. Once the Mini has read the
-   board, the block at the top has a line for the entry with the items read, the tasks on
-   the TV and when it was read.
-6. Click Publish. Within 10 minutes the tasks are in Monday Tasks, On the TV. If they
-   do not show up, go down "If nothing shows up" in docs/monday.md.
+3. Wait 5 minutes. Open Dashboard Settings, Monday tab. The block at the top says who the
+   token belongs to, when the Mini last read Monday, how often, how many reads it used today
+   and how many tasks it made. The two boards and every column are already set. If tasks do
+   not show up, go down "If nothing shows up" in docs/monday.md.
 
-Show on TV is the one thing you can change on a task: turn it off and the task
-leaves the TV and the three Monday cards and moves to Hidden, and the Mini keeps
-your choice. Show owner first names on the
-TV starts off. On, a task keeps the first name of the first owner of its item.
+What each column does, when a task shows on the TV, the daily read budget and the eleven
+panels are all in docs/monday.md. Show on TV is the one thing you can change on a task in
+Studio: turn it off and the task leaves the TV and moves to Hidden, and the Mini keeps your
+choice. Show owner first names on the TV starts off.
 
-The tasks and the board names are public, like the rest of the dataset. Anyone who
-asks Sanity can read the task names, the names of every board the token can see
-and, with the owner switch on, the first names (docs/monday.md, "The dataset is
-public").
+The tasks and the board names are public, like the rest of the dataset (docs/monday.md, "The
+dataset is public").
 
 ## Monday Tasks and Monday Boards
 
@@ -239,7 +226,8 @@ from an item on a Monday board, and the screen shows only those.
 - Monday Boards lists every board the token can see, with its items and when the
   Mini last read it, and says which boards Dashboard Settings has chosen. The name of
   a chosen board opens its tasks in the same two lists. Choose boards opens Dashboard
-  Settings, and the board rows are on its Monday tab.
+  Settings, at the Task board block of its Monday tab. A second list, Milestones, holds the
+  milestones the Mini made. Nobody can change them there.
 
 A team gets the Monday cards only when it has tasks from the board (docs/layouts.md,
 "The Monday cards").

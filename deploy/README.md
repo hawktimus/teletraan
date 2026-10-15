@@ -33,8 +33,9 @@ installing anything on the Mini, and whenever a step needs a login or a key.
 - A timer wakes `frc-sync.sh` every 5 minutes. The script reads the public FRC
   data of each team and writes it into Sanity, about once an hour, or about every
   5 minutes while a team has an event on (`docs/frc-feed.md`).
-- A timer runs `monday-sync.sh` every 10 minutes. It reads the Monday boards named in
-  Dashboard Settings and writes their items into Sanity as tasks (`docs/monday.md`).
+- A timer wakes `monday-sync.sh` every 5 minutes. The script reads the task board and the
+  milestones board of the Monday tab only as often as How often says, and writes the items
+  into Sanity as tasks and milestones (`docs/monday.md`).
 - The kiosk service starts a browser full screen when the Mini boots. A kiosk
   is a browser with no address bar, tabs or menus.
 - Two text drawings, `console/startup.txt` and `console/shutdown.txt`, fill the
@@ -75,7 +76,7 @@ to attach the data folder to.
 | `scripts/check-calendars.mjs` | The part of `check-calendars.sh` that runs the dashboard's own calendar code |
 | `scripts/slides-sync.sh` | Downloads the slides of the coming talks from Google Slides, turns them into pictures, and saves them with a `manifest.json`. `slides-sync.sh --test <link>` tries one deck and deletes what it made. Needs `poppler-utils`, `curl` and `jq` |
 | `scripts/frc-sync.sh` | Reads the public FRC data of each team from The Blue Alliance and Statbotics and writes the document `frc-status` in Sanity. Every address and every place in an answer is in one block at its top. `frc-sync.sh --check` tries the key, `--now` does a run whatever the time. Needs `curl` and `jq`, `TBA_AUTH_KEY` and `SANITY_WRITE_TOKEN` in `local.env`, and does nothing without them. See `docs/frc-feed.md` |
-| `scripts/monday-sync.sh` | Reads the Monday boards named in Dashboard Settings and writes their items into Sanity as tasks, and the document `monday-status` with the boards the token can see and what it read from each chosen board. Every address, question and place in an answer is in one block at its top. `monday-sync.sh --check` tries the token. Needs `curl` and `jq`, `MONDAY_API_TOKEN` and `SANITY_WRITE_TOKEN` in `local.env`, and does nothing without them. See `docs/monday.md` |
+| `scripts/monday-sync.sh` | Reads the task board and the milestones board named in Dashboard Settings, at most 4 requests a run and 900 a day, and writes their items into Sanity as tasks and milestones, and the document `monday-status` with the boards the token can see and what it read from each. Every address, question and place in an answer is in one block at its top. `monday-sync.sh --check` tries the token. Needs `curl` and `jq`, `MONDAY_API_TOKEN` and `SANITY_WRITE_TOKEN` in `local.env`, and does nothing without them. See `docs/monday.md` |
 | `scripts/status-write.sh` | Writes the time of a job into the document `status-mini` in Sanity, which Studio shows at the top of the Screen tab of Dashboard Settings. `status-write.sh calendar-status` sends the Calendars page document the same way. Needs `SANITY_WRITE_TOKEN` in `local.env` and does nothing without it. `status-write.sh --print` needs no key: it reads the document back and shows each time with its age. The calendar and slides services and `kiosk.sh` run it, see "Showing what the Mini did in Studio" in `docs/rebuilding-the-mini.md` |
 | `scripts/kiosk.sh` | Opens the browser full screen with the right settings, or any page given after its name. Also writes `device.json` every minute while the browser runs, and starts `status-write.sh kiosk` in the background |
 | `scripts/install-timers.sh` | Copies the unit files into place and turns on the calendar timer and the pull timer |

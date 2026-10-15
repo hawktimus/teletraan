@@ -49,6 +49,8 @@ export function withDefaults(raw) {
   const content = Object.assign({ tasks: [], plan: null, plans: [], teams: [], sponsors: [], tipsAndNews: [], subteams: [], people: [], photos: [], presentations: [], customPanels: [], calendarFilters: [], frc: null, monday: null, screens: [] }, source);
   content.team = Object.assign({}, defaultTeam, source.team);
   content.settings = Object.assign({}, defaultSettings, source.settings);
+  // The Mini reads the two Monday blocks and the screen has no use for them
+  ['mondayTaskBoard', 'mondayMilestoneBoard'].forEach(name => delete content.settings[name]);
   content.settings.countdown = Object.assign({}, defaultSettings.countdown, content.settings.countdown);
   content.settings.alert = Object.assign({}, defaultSettings.alert, content.settings.alert);
   content.settings.rotation = Object.assign({}, defaultSettings.rotation, content.settings.rotation);
