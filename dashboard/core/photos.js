@@ -174,7 +174,7 @@ export function turnPlan(photoCount, seconds) {
 // How a Photos row of a Screen shares its stay: each photo stays secondsPerPhoto seconds, however many the
 // turn has, so a turn of the 4 photos that fit takes 40 seconds with 10 each, and a turn cut short by the end
 // of the list is shorter. shortestHold does not apply: the row asks for at least 5 seconds a photo itself.
-// count is how many photos the turn really has.
+// count is how many photos the turn has.
 export function rowPlan(count, secondsPerPhoto) {
   return { photos: count, hold: secondsPerPhoto, seconds: count * secondsPerPhoto };
 }

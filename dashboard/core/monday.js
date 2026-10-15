@@ -421,7 +421,7 @@ export function stale(status, now, everyMinutes = defaultEveryMinutes) {
   return minutes === null || minutes > everyMinutes * 2;
 }
 
-// The words of the amber chip: STALE · 75 MIN, or just STALE when the age is not known
+// The words of the amber chip: STALE · 75 MIN, or STALE alone when the age is not known
 export function staleWords(status, now) {
   const minutes = minutesSince(status, now);
   return minutes === null ? 'STALE' : 'STALE · ' + minutes + ' MIN';

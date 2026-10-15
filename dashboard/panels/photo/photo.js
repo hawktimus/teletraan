@@ -61,7 +61,7 @@ function skipShot(shot) {
 
 // How many photos this turn has and how long each stays. A Photos row of a Screen (step has photoCount and
 // secondsPerPhoto, core/screens.js) shows that many, each for secondsPerPhoto, and the turn is as long as the
-// photos it really has. Anything else shares the stay of the panel between its photos (turnPlan).
+// photos it has. Anything else shares the stay of the panel between its photos (turnPlan).
 function planFor(content, settings, step) {
   const list = photosToShow(content);
   if (step && step.photoCount > 0 && step.secondsPerPhoto > 0) {
