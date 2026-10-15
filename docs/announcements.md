@@ -20,7 +20,7 @@ The Teletraan has two things that are called announcements. They are not the sam
 1. On Start here click **Post an announcement**. A new announcement opens that starts now and
    ends in two hours. You can also open TASKS, Announcements and click the plus button.
 2. Write the **Text**. Up to 90 characters. About 45 fit at full size. A longer line is drawn
-   smaller, and a very long one is cut with three dots, so keep it short.
+   smaller, and a long one is cut with three dots, so keep it short.
 3. Change **Starts at** and **Ends at** if you need to. The times are in the time zone of the TV.
 4. Leave **Team** blank for both teams, or pick one team. The bar shows only while that team is
    on the banner.

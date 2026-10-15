@@ -2,7 +2,7 @@
 
 For the coaches. This page says where each coach setting is, what to know before
 you change it, and which page has the detail. Students use
-docs/using-the-studio.md. Everything under Coaches only in the sidebar is here:
+docs/students.md. Everything under Coaches only in the sidebar is here:
 Settings (Dashboard Settings, Look and Teams) and Extra panels. So is Screens,
 the second line of the sidebar, under Start here.
 

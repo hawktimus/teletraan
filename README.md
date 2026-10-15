@@ -46,7 +46,7 @@ The list on the left is what you can change. It opens with Start here and has fo
         Teams
       Extra panels
 
-Click the one you want, change it, and press **Publish**. Nothing shows on the TV until it is published, and it gets there within a few seconds. Students start with docs/using-the-studio.md, which has the same parts as the Start here page. Coaches have docs/coaches-guide.md.
+Click the one you want, change it, and press **Publish**. Nothing shows on the TV until it is published, and it gets there within a few seconds. Students start with docs/students.md, which has the same parts as the Start here page. Coaches have docs/coaches-guide.md.
 
 - Every item has a **Show on screen** switch and an optional **Hide after** date, so things come down on their own.
 - Every field says how many characters fit on the screen. Studio will not let you publish text that is too long.
@@ -108,7 +108,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - Presentations: a student books a short talk in a Google Form, and the talk appears in Studio. At its time the TV shows a title card, then the student's Google Slides one picture at a time, moved by a clicker, then a thank you card. The Mini turns each deck into pictures before the talk (docs/presentations.md)
 - A Run presentation test button in Studio that plays a sample talk with six sample slides, with no internet
 - Preview buttons in Studio (Prime, Nova, Cybertron, Minimal and the next seasonal pack) that show that look on the TV for 2 minutes and then go back to the saved settings, without changing any setting. `?team=`, `?style=` and `?overlay=` on the address try any combination with the sample content
-- A Start here page in Studio, the first line of the sidebar: a picture of the screen with its five areas, the three steps of every meeting and five buttons that try the screen (Play announcement, Run presentation test, Next look now, Preview competition and Preview the screen). docs/using-the-studio.md is the same page in words. What is left of the old demo is in docs/demo.md
+- A Start here page in Studio, the first line of the sidebar: a picture of the screen with its five areas, the three steps of every meeting and six buttons that try the screen (Play announcement, Run presentation test, Next look now, Preview competition, Post an announcement and Preview the screen). docs/students.md is the same page in words. What is left of the old demo is in docs/demo.md
 - A calendar check (deploy/scripts/check-calendars.sh) that lists the next 30 days of events, says which ones the Calendar filters hide, and gives the Events page and the kind of each one that shows
 - A connection check for the Mini (deploy/scripts/check-connection.sh) and a small text on the screen that says why when Sanity cannot be reached
 - A boot and shutdown screen: a text drawing of a person pointing two fingers at each other, with TELETRAAN I under it, shows on the TV above the login prompt while the Mini starts and again while it shuts down (deploy/console, docs/rebuilding-the-mini.md, step 13)
@@ -134,7 +134,8 @@ The scripts are in `deploy/scripts/`, and the units that start them are in `depl
 
 ## More guides
 
-- docs/using-the-studio.md: the students' page, with the same parts as the Start here page
+- docs/students.md: the students' page, with the same parts as the Start here page (docs/using-the-studio.md points to it)
+- docs/monday-one-pager.md: one page for the project manager, with the Monday board rules and the settings not to touch
 - docs/coaches-guide.md: the coaches' page, with the tabs of Dashboard Settings, the status block, the keys, the Screens, Monday, the Calendars page and the competition feed
 - docs/editing-content.md: using the Studio
 - docs/publish-all.md: publishing many drafts at once, and what skipped and failed mean
