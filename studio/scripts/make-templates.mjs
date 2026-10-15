@@ -23,7 +23,7 @@ const studioFolder = path.join(path.dirname(fileURLToPath(import.meta.url)), '..
 const defaultOutput = path.join(studioFolder, '..', 'docs', 'content-templates');
 
 // Not rows of content. A photo is a picture that has to be uploaded in Studio,
-// so it has no CSV template. Meeting days and presentations are added in Studio
+// so it has no CSV template. Meeting days, presentations and announcements are added in Studio
 // or by the booking form. Calendar filters have day checkboxes and a list of
 // words, which a sheet does not hold well, so they are added in Studio. A team has
 // colors and a logo, so it is added in Studio too (the two starting teams are in
@@ -33,7 +33,7 @@ const defaultOutput = path.join(studioFolder, '..', 'docs', 'content-templates')
 // that a sheet does not hold, so the type screen has no template. Events Calendar
 // entries and places have no line in the sidebar, but they keep their templates,
 // since the importer still reads them.
-const skippedTypes = ['photo', 'presentationDay', 'presentation', 'calendarFilter', 'team', 'screen', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus', 'milestone'];
+const skippedTypes = ['photo', 'presentationDay', 'presentation', 'announcement', 'calendarFilter', 'team', 'screen', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus', 'milestone'];
 
 // Fields that are not columns. The board sync sets the source, the board item number, the board and
 // the due date of a task, and the two notes at the top of a task store nothing.
@@ -122,7 +122,7 @@ export async function loadSchemas() {
     // the Monday Boards page takes its links from the pane router of sanity/structure
     fs.writeFileSync(path.join(folder, 'node_modules', 'sanity', 'structure.js'), 'export const usePaneRouter = value => value;');
     // the Ticker section of a Screen takes its link from sanity/router
-    fs.writeFileSync(path.join(folder, 'node_modules', 'sanity', 'router.js'), 'export const Link = value => value;');
+    fs.writeFileSync(path.join(folder, 'node_modules', 'sanity', 'router.js'), 'export const Link = value => value; export const IntentLink = value => value;');
 
     // structure.js imports each icon from its own file of @sanity/icons, such as '@sanity/icons/Home'
     const iconFolder = path.join(folder, 'node_modules', '@sanity', 'icons');

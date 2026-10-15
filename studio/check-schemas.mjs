@@ -104,6 +104,7 @@ const contract = {
   },
   sponsor: withFlags({ name: text(19), tier: text(12), blurb: text(80), thankYou: text(54), logoAddress: 'url', team: teamRef, order: 'number' }),
   tipOrNews: withFlags({ kind: 'string', text: text(52), team: teamRef, order: 'number' }),
+  announcement: { text: text(90), start: 'datetime', end: 'datetime', team: teamRef, level: 'string' },
   subteam: withFlags({
     name: text(11),
     lead: text(17),
@@ -303,7 +304,7 @@ const contract = {
     nameEffectEveryMinutes: number(1, 240),
     hawkEveryMinutes: number(1, 240),
     swapSeconds: number(0.5, 3),
-    mainRows: rows({ panel: 'string', team: { kind: 'plainString' }, department: { kind: 'plainString' }, seconds: number(6, 120) }),
+    mainRows: rows({ panel: 'string', team: { kind: 'plainString' }, department: { kind: 'plainString' }, seconds: number(6, 120), photoCount: number(1, 20), secondsPerPhoto: number(5, 60), photoTotal: { kind: 'plainString' } }),
     mondayStyle: 'string',
     sideRows: rows({ panel: 'string', seconds: number(6, 120) }),
   },
@@ -456,7 +457,7 @@ const typeTitles = {
 // the colon, and the lines under it come after. The first group has no heading.
 const sidebarGroups = [
   'Start here, Screens',
-  'TASKS: Daily Agenda, Monday Tasks, Monday Boards, Tips and News',
+  'TASKS: Daily Agenda, Monday Tasks, Monday Boards, Tips and News, Announcements',
   'EVENTS: Calendars, Calendar filters',
   'ROSTER: Leadership, Team leads, Sponsors, Photos',
   'COACHES ONLY: Settings, Extra panels',
@@ -527,8 +528,8 @@ const standIns = {
       "export const usePaneRouter = () => globalThis.studioPaneRouter || { ChildLink: 'ChildLink', navigateIntent: (...given) => { (globalThis.studioIntents = globalThis.studioIntents || []).push(given); } };",
     ].join('\n'),
     'cli.js': 'export const defineCliConfig = config => config;',
-    // the link of the Ticker section (screen-fields.js)
-    'router.js': "export const Link = 'a';",
+    // the link of the Ticker section (screen-fields.js) and the link that posts an announcement (start-here.js)
+    'router.js': "export const Link = 'a'; export const IntentLink = 'a';",
   },
   react: {
     'package.json': JSON.stringify({ name: 'react', type: 'module', exports: { '.': './index.js' } }),
@@ -1850,9 +1851,9 @@ function checkPreviewButtons() {
 }
 
 // The Start here page (start-here.js, with its words and numbers in start-here-parts.js): five
-// blocks in this order, a picture of the screen with the areas A to E, and a row of five buttons.
+// blocks in this order, a picture of the screen with the areas A to E, and a row of six buttons.
 const startBlocks = ['what', 'picture', 'steps', 'buttons', 'coaches'];
-const startButtons = ['Play announcement', 'Run presentation test', 'Next look now', 'Preview competition', 'Preview the screen'];
+const startButtons = ['Play announcement', 'Run presentation test', 'Next look now', 'Preview competition', 'Post an announcement', 'Preview the screen'];
 const startAreas = ['A Banner', 'B Main panel', 'C Countdown', 'D Side panel', 'E Ticker'];
 
 // Every element of a tree that the createElement stand-in made, in the order they are drawn,
@@ -1980,14 +1981,20 @@ function checkStartHere() {
     });
   });
 
-  // 4. the row of five buttons: the four that send a request, and the one that opens the screen in a new tab
+  // 4. the row of six buttons: the four that send a request, the one that opens a new announcement, and the one that opens the screen in a new tab
   const row = block('buttons') ? nodesWhere(block('buttons'), node => (node.type === 'button' || node.type === 'a')) : [];
   need(problems, row.map(wordsIn).join() === startButtons.join(), 'the buttons should be, in this order: ' + startButtons.join(', ') + '. They are: ' + row.map(wordsIn).join(', '));
   need(problems, parts.buttons.map(item => item.label).join() === startButtons.join(), 'the buttons in start-here-parts.js should be, in this order: ' + startButtons.join(', '));
   need(problems, row.every(item => item.props.style && item.props.style.minHeight >= 64 && item.props.style.fontSize >= 16), 'the buttons should be large: at least 64 high with text of 16 or more');
   need(problems, row.slice(0, 4).every(item => item.type === 'button' && item.props.type === 'button' && typeof item.props.onClick === 'function'), 'the first four buttons should be buttons that send a request when clicked');
-  need(problems, parts.buttons.slice(0, 4).every(item => typeof item.request === 'function' && item.address === undefined) && parts.buttons[4].address !== undefined && parts.buttons[4].request === undefined, 'in start-here-parts.js the first four buttons should have a request and the last one an address');
-  const preview = row[4];
+  need(problems, parts.buttons.slice(0, 4).every(item => typeof item.request === 'function' && item.address === undefined) && parts.buttons[5].address !== undefined && parts.buttons[5].request === undefined, 'in start-here-parts.js the first four buttons should have a request and the last one an address');
+  const post = row[4];
+  const template = world.addTemplates.filter(item => item.id === 'newAnnouncement')[0];
+  need(problems, parts.buttons[4].create && parts.buttons[4].create.type === 'announcement' && parts.buttons[4].create.template === 'newAnnouncement' && parts.buttons[4].request === undefined, 'in start-here-parts.js Post an announcement should name the type announcement and the template newAnnouncement');
+  need(problems, post && post.type === 'a' && post.props.intent === 'create' && post.props.params && post.props.params.template === 'newAnnouncement', 'Post an announcement should be a link that opens a new announcement from the template newAnnouncement');
+  const started = template && template.value ? template.value() : {};
+  need(problems, started.level === 'notice' && Date.parse(started.end) - Date.parse(started.start) === 2 * 60 * 60 * 1000 && Math.abs(Date.parse(started.start) - Date.now()) < 5000, 'the template newAnnouncement should start now and end in two hours, as a notice');
+  const preview = row[5];
   const address = world.dashboardAddress.dashboardAddress;
   need(problems, /^https?:\/\/[^\s/]+\/dashboard\/\?sample=1$/.test(address), 'dashboardAddress in dashboard-address.js should be the address of the dashboard with the sample content, ending in /dashboard/?sample=1');
   need(problems, preview && preview.type === 'a' && preview.props.href === address && preview.props.target === '_blank' && /noopener/.test(preview.props.rel || ''), 'Preview the screen should open the address in dashboard-address.js in a new tab, with rel noopener');
@@ -2759,8 +2766,8 @@ function checkPhotos() {
   need(problems, allowed && allowed.args[0].join() === config.photoOrders.join(), 'photoOrder should only allow: ' + config.photoOrders.join(', '));
   need(problems, config.defaultSettings.photoOrder === 'random', 'the default photoOrder in config.js should be random');
 
-  // A row in the Panels list with no seconds of its own: the Photo row follows Seconds per photo
-  need(problems, setting('photoSeconds') && /Panels/.test(setting('photoSeconds').description || ''), 'the photoSeconds description should say that a row in Panels with its own seconds wins');
+  // Seconds per photo is not used any more: a Photos row of a Screen has its own photos and seconds each
+  need(problems, setting('photoSeconds') && setting('photoSeconds').hidden === true && /^Not used any more\./.test(setting('photoSeconds').description || ''), 'the photoSeconds field should be hidden, with a description that starts Not used any more.');
 
   // The sample content carries the settings and a list of photos with addresses
   const sample = world.sample;
@@ -4063,7 +4070,7 @@ function checkTeamSeed(type) {
 // The Team field: the same on every kind of content that can be for one team. It is
 // optional and has no starting value, so empty means Both, and every item that exists
 // keeps showing with no change. It uses the radio in team-input.js.
-const teamTypes = ['task', 'milestone', 'plan', 'subteam', 'person', 'sponsor', 'presentation', 'presentationDay', 'customPanel', 'tipOrNews', 'extraEvent'];
+const teamTypes = ['task', 'milestone', 'plan', 'subteam', 'person', 'sponsor', 'presentation', 'presentationDay', 'customPanel', 'tipOrNews', 'announcement', 'extraEvent'];
 
 function checkTeamField() {
   const problems = [];
@@ -4910,6 +4917,7 @@ const listAdds = {
   'On the TV': '',
   Hidden: '',
   'Tips and News': 'newTip',
+  Announcements: 'newAnnouncement',
   'Calendar filters': 'newCalendarFilter',
   Leadership: 'newPerson',
   'Team leads': 'newSubteam',
@@ -4918,7 +4926,7 @@ const listAdds = {
 };
 
 // The switch that puts a new document on the screen, when it is not called show
-const onSwitches = { presentation: ['status', 'scheduled'], presentationDay: ['open', true] };
+const onSwitches = { presentation: ['status', 'scheduled'], presentationDay: ['open', true], announcement: ['level', 'notice'] };
 
 // Every line of the sidebar with the heading it sits under, the lines inside the folders too
 function linesUnderHeadings() {
@@ -4955,7 +4963,7 @@ function checkListAdds() {
     if (!type) return problems.push(where + ' makes the type "' + template.schemaType + '", which is not a kind of document');
 
     const fields = fieldsIn(type);
-    const value = template.value || {};
+    const value = (typeof template.value === 'function' ? template.value() : template.value) || {};
     Object.keys(value).forEach(name => {
       const field = fields.filter(item => item.name === name)[0];
       if (!field) return problems.push(where + ' sets ' + name + ', which is not a field of ' + template.schemaType);
@@ -6352,7 +6360,7 @@ function checkScreenType() {
   const rows = at('mainRows');
   need(problems, rows && rows.type === 'array' && rows.description === mainRowTip, 'screen.mainRows should have the tip as its description: ' + mainRowTip);
   need(problems, listOf('screen.mainRows.panel') === registered('grid1').map(id => id + '=' + titleFor(id)).concat(monday).join(), 'a row of the main panel should offer the large panels of registry.js and then the six Monday panels of the task board: ' + registered('grid1').concat(monday.map(line => line.split('=')[0])).join(', '));
-  need(problems, fieldsIn(rows || {}).map(field => field.name).join() === 'panel,team,department,seconds', 'a row of the main panel should have a panel, a team, a department (shown for the Monday tasks panel only) and seconds');
+  need(problems, fieldsIn(rows || {}).map(field => field.name).join() === 'panel,team,department,seconds,photoCount,secondsPerPhoto,photoTotal', 'a row of the main panel should have a panel, a team, a department (shown for the Monday tasks panel only) seconds and, for the Photos row, a count, the seconds of each photo and the total');
   const departmentField = fieldAt('screen.mainRows.department');
   need(problems, departmentField && departmentField.type === 'string' && departmentField.components && departmentField.components.input === world.screenFields.RowDepartmentInput && typeof departmentField.hidden === 'function' && departmentField.hidden({ parent: { panel: 'monday-tasks' } }) === false && departmentField.hidden({ parent: { panel: 'monday-board' } }) === true && departmentField.hidden({ parent: { panel: 'photo' } }) === true, 'the department of a row should be drawn by RowDepartmentInput and shown for the Monday tasks panel only');
   const panelRules = rulesOf(fieldAt('screen.mainRows.panel'));
@@ -6367,7 +6375,19 @@ function checkScreenType() {
   const mainLine = fields => mainRow.preview.prepare(fields);
   need(problems, mainRow && mainLine({}).title === 'Panel not chosen' && mainLine({ panel: 'tasks', team: 'prime' }).title === 'Tasks' && mainLine({ panel: 'tasks', team: 'prime' }).subtitle === 'Prime · Follows Seconds per page', 'a row of the main panel should read the panel, then the team and the seconds');
   need(problems, mainRow && mainLine({ panel: 'tasks' }).subtitle === 'Keeps the team on the screen · Follows Seconds per page' && mainLine({ panel: 'events', seconds: 30 }).subtitle === '30 seconds' && mainLine({ panel: 'monday-tasks', team: 'prime' }).subtitle === 'Prime · First department with tasks · Follows Seconds per page' && mainLine({ panel: 'monday-tasks', team: 'prime', department: 'subteam-build' }).subtitle === 'Prime · One department · Follows Seconds per page', 'a row with no team should say whether it keeps the team on the screen, and a tasks row should say whether it names a department');
-  need(problems, mainRow && mainLine({ panel: 'photo' }).subtitle === 'Follows Seconds per photo', 'the Photo row should say that it follows Seconds per photo');
+  need(problems, mainRow && mainLine({ panel: 'photo' }).subtitle === '4 photos of 10 seconds, 40 seconds' && mainLine({ panel: 'photo', photoCount: 7, secondsPerPhoto: 12 }).subtitle === '7 photos of 12 seconds, 84 seconds' && mainLine({ panel: 'photo', photoCount: 1, secondsPerPhoto: 5 }).subtitle === '1 photo of 5 seconds, 5 seconds', 'the Photo row should say its photos, the seconds of each and the total');
+
+  // A Photos row has a count (1 to 20, starting at 4), the seconds of each photo (5 to 60, starting at 10) and the total, read only
+  const photoRowField = name => fieldAt('screen.mainRows.' + name);
+  const countRules = rulesOf(photoRowField('photoCount'));
+  const eachRules = rulesOf(photoRowField('secondsPerPhoto'));
+  need(problems, photoRowField('photoCount') && photoRowField('photoCount').initialValue === config.defaultPhotoRow.photoCount && config.defaultPhotoRow.photoCount === 4 && constraintNamed(countRules, 'integer') && constraintNamed(countRules, 'min').args[0] === config.limits.photoCount.min && constraintNamed(countRules, 'max').args[0] === config.limits.photoCount.max && config.limits.photoCount.min === 1 && config.limits.photoCount.max === 20, 'photoCount of a Photos row should be a whole number from 1 to 20, starting at 4, as config.js says');
+  need(problems, photoRowField('secondsPerPhoto') && photoRowField('secondsPerPhoto').initialValue === config.defaultPhotoRow.secondsPerPhoto && config.defaultPhotoRow.secondsPerPhoto === 10 && constraintNamed(eachRules, 'integer') && constraintNamed(eachRules, 'min').args[0] === config.limits.secondsPerPhoto.min && constraintNamed(eachRules, 'max').args[0] === config.limits.secondsPerPhoto.max && config.limits.secondsPerPhoto.min === 5 && config.limits.secondsPerPhoto.max === 60, 'secondsPerPhoto of a Photos row should be a whole number from 5 to 60, starting at 10, as config.js says');
+  const total = photoRowField('photoTotal');
+  need(problems, total && total.readOnly === true && total.components && total.components.input === world.screenFields.PhotoTotalInput, 'the total of a Photos row should be read only and drawn by PhotoTotalInput (screen-fields.js)');
+  const forRow = panel => ({ parent: { panel: panel } });
+  need(problems, ['photoCount', 'secondsPerPhoto', 'photoTotal'].every(name => photoRowField(name).hidden(forRow('events')) === true && photoRowField(name).hidden(forRow('photo')) === false) && photoRowField('seconds').hidden(forRow('photo')) === true && photoRowField('seconds').hidden(forRow('events')) !== true, 'the three photo fields should show on a Photos row only, and the plain seconds should be hidden on it');
+  need(problems, world.screenFields.photoTotalText(4, 10) === '40 seconds' && world.screenFields.photoTotalText(20, 60) === '1200 seconds' && world.screenFields.photoTotalText(undefined, undefined) === '40 seconds', 'the total of a Photos row should read the photos times the seconds, such as 40 seconds');
 
   // Monday style: one of the styles, and no starting value, so that the form can copy the old setting into it
   const mondayStyle = at('mondayStyle');
@@ -6774,7 +6794,7 @@ async function main() {
   check('Play announcements has its hidden field, its button and its Demo step', checkPlayAnnouncements);
   check('Run presentation test has its hidden field and its button', checkRunPresentationTest);
   check('the Preview buttons have their hidden field and the list the dashboard has, and each one writes its kind and the time', checkPreviewButtons);
-  check('the Start here page has its five blocks in order, a picture of the screen with the areas A to E, and five buttons', checkStartHere);
+  check('the Start here page has its five blocks in order, a picture of the screen with the areas A to E, and six buttons', checkStartHere);
   results.push({ name: 'the Start here buttons and the buttons beside Publish write the same request fields, through screen-requests.js', problems: await checkScreenRequests().catch(error => ['the check stopped: ' + error.message]) });
   check('Next look now and Preview competition have their hidden request fields and starting values', checkNewRequests);
   check('Content source and the switch back time are hidden, kept in the schema and ignored by the dashboard, and the two buttons are gone', checkContentSource);

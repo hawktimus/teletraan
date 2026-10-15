@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="base.css">
   <link rel="stylesheet" href="frame.css">
   <link rel="stylesheet" href="monday.css">
+  <link rel="stylesheet" href="notice.css">
   <link rel="stylesheet" href="layouts/sidebar.css">
   <link rel="stylesheet" href="layouts/bar.css">
   <link rel="stylesheet" href="styles/original.css">
@@ -398,6 +399,10 @@
           <div id="region-grid2" data-block></div>
         </div>
         <div id="region-ticker" data-block></div>
+        <!-- The announcement bar (core/notice-run.js, docs/announcements.md). It is hidden until an
+             Announcement of Studio is live. It is placed by the script, and the panels under the banner
+             give up its height. -->
+        <div id="notice" hidden></div>
       </div>
       <!-- The flat red layer of the red glitches. It is above the stage and hidden
            except while that transition plays. -->

@@ -12,6 +12,7 @@
 
 import { createElement, useState } from 'react';
 import { useClient } from 'sanity';
+import { IntentLink } from 'sanity/router';
 import { screen, areas, labelsOf, buttons, clickLine, sentLine, problemWith } from './start-here-parts.js';
 import { sendWithClient } from './screen-requests.js';
 
@@ -138,6 +139,16 @@ function threeSteps() {
 // One button and the line under it. The one that opens the screen is a link in a new tab.
 function buttonCell(button, busy, send) {
   const words = h('p', { style: styles.says }, button.says);
+
+  if (button.create) {
+    const style = Object.assign({}, styles.button, styles.link);
+    return h(
+      'div',
+      { key: button.id, style: styles.cell },
+      h(IntentLink, { intent: 'create', params: button.create, style: style }, button.label),
+      words
+    );
+  }
 
   if (button.address) {
     const style = Object.assign({}, styles.button, styles.link);

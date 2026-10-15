@@ -483,20 +483,18 @@ for the people panels (see "Portraits" below):
   the one uploaded first, then starts over. "Newest" is the time the photo was
   added to Studio, not the time it was taken. A photo added while the screen
   is running comes at the start of the next round.
-- Seconds per photo is how long the Photo panel stays up each time it comes
-  round, from 6 to 120, and starts at 16. A Photo row of a Screen (Settings,
-  Screens) that has seconds of its own wins over it. With the row's seconds
-  empty, the Photo panel follows Seconds per photo and not Seconds per page.
-  With more than one photo the panel shares that time between them, evenly,
-  and no photo is up for less than 8 seconds. Three photos at 30 seconds are
-  10 seconds each. Seven photos at 30 seconds would be under 8 seconds each, so
-  the panel shows three, 10 seconds each, and the next time it comes round it
-  carries on with the next three, then the last one and the first two, and so
-  on until every photo has had its turn. At 16 seconds, the starting value, it
-  shows two photos of 8 seconds. A stay under 8 seconds shows one photo. The
-  photos are in the order of Photo order. The Speed setting stretches the time
-  as it does for every panel. One photo takes the place of the one before it by
-  fading in over it.
+- How many photos and how long each stays are set on the Photo row of a Screen
+  (Settings, Screens, Main panel rows). The row has Photos, from 1 to 20, starting
+  at 4, and Seconds per photo, from 5 to 60, starting at 10. The time the row
+  stays up is the two multiplied, such as 40 seconds, and it is shown beside
+  them. Each time the row comes round it shows that many photos, one after the
+  other, in the order of Photo order. The next time it carries on where it left
+  off. With 7 photos and a count of 4, the row shows photos 1 to 4, then 5 to 7
+  (a shorter turn, 3 times the seconds), then 1 to 4 again. In Random order the
+  photos are dealt like cards, so every photo comes once before any comes again.
+  The Speed setting stretches the time as it does for every panel. One photo
+  takes the place of the one before it by fading in over it. The old Seconds per
+  photo setting in Dashboard Settings is hidden and is not used any more.
 - Photo fit is Fill the frame (the starting choice) or Show the whole photo. It
   applies to every photo that has Same as Dashboard Settings in its Fit field.
   Dashboard Settings saved before Photo fit existed shows no choice marked, and
@@ -841,8 +839,8 @@ problem would touch.
   value is 20. A small panel stays three quarters as long and a ticker line one
   and a half times as long, so at 20 seconds a small panel stays 15 and a
   ticker line 30. A row of a Screen can have seconds of its own, from 6 to 120. Leave the
-  field empty and the row follows "Seconds per page" (the Photo row follows
-  "Seconds per photo" lower down in this tab). The ticker has its own
+  field empty and the row follows "Seconds per page" (the Photo row has Photos and
+  Seconds per photo of its own, see "Order, time on screen and size" under Photos). The ticker has its own
   "Seconds per ticker line" that works the same way. A row that already has
   seconds keeps them until you clear the field. Speed is applied after all of
   this, so Slow makes every page stay longer than the number you typed. This tab
@@ -859,8 +857,9 @@ problem would touch.
   anything it shows the team's logo, number, name and school. Taking out every
   side panel row therefore shows that team panel and not an empty frame.
 - Photos: how the Photo panel works. "Photo order" is Random or Newest first,
-  "Seconds per photo" is from 6 to 120 and starts at 16, and "Photo fit" is Fill
-  the frame or Show the whole photo. See "Photos" above.
+  and "Photo fit" is Fill the frame or Show the whole photo. "Seconds per photo"
+  is hidden and is not used any more: the Photo row of a Screen sets its own.
+  See "Photos" above.
 - Announcements: full screen messages at set times. Give the time in 24 hour
   form, such as 14:30, and tick the days it should play. Tick at least one day.
   The second line is optional: leave it empty and only the first line plays.

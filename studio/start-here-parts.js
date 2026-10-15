@@ -1,5 +1,5 @@
 // The parts of the Start here page that need no Studio: the five areas of the picture of the
-// screen, where their words sit, the five buttons, and the words for a request that fails.
+// screen, where their words sit, the six buttons, and the words for a request that fails.
 // start-here.js draws them. check-schemas.mjs reads them with node and fails if the picture,
 // the sidebar or the buttons stop agreeing.
 
@@ -78,7 +78,8 @@ export function labelsOf(area) {
 }
 
 // The row of buttons. A button that sends a request has request, which gives the fields to
-// set (screen-requests.js). The one that opens the screen has an address instead.
+// set (screen-requests.js). The one that opens the screen has an address instead, and the one that
+// posts an announcement has create, the type and template of the new document it opens.
 // says is the line under the button.
 export const buttons = [
   {
@@ -104,6 +105,12 @@ export const buttons = [
     label: 'Preview competition',
     says: 'Shows the competition cards for 2 minutes.',
     request: competitionPreviewRequest,
+  },
+  {
+    id: 'post-announcement',
+    label: 'Post an announcement',
+    says: 'Opens a new announcement for the bar under the banner. It starts now and ends in two hours.',
+    create: { type: 'announcement', template: 'newAnnouncement' },
   },
   {
     id: 'preview',

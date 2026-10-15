@@ -10,6 +10,7 @@ import { fromBoardOnly } from './task-source.js';
 import { tidyFrc } from './frc.js';
 import { tidyMondayStatus } from './monday.js';
 import { tidyScreens } from './screens.js';
+import { tidyNotices } from './notice.js';
 
 // Everything the screen needs, in one request. Lists come back in the order
 // they were created, and normalizeContent puts the ones with an Order first.
@@ -76,6 +77,7 @@ export const contentQuery = `{
   },
   "sponsors": *[_type == "sponsor"] | order(_createdAt asc) { ..., "team": team->code },
   "tipsAndNews": *[_type == "tipOrNews"] | order(_createdAt asc) { ..., "team": team->code },
+  "notices": *[_type == "announcement"] | order(start asc) { _id, text, start, end, level, "team": team->code },
   "subteams": *[_type == "subteam"] | order(_createdAt asc) {
     ...,
     "id": _id,
@@ -265,6 +267,7 @@ export function normalizeContent(result, now = new Date()) {
     plans: plans,
     sponsors: itemsFrom(data.sponsors),
     tipsAndNews: itemsFrom(data.tipsAndNews),
+    notices: tidyNotices(data.notices),
     subteams: itemsFrom(data.subteams).map(normalizeSubteam),
     people: itemsFrom(data.people).map(normalizePerson),
     photos: photosFrom(data.photos),
@@ -293,6 +296,7 @@ export function normalizeSample(raw) {
   ['tasks', 'sponsors', 'tipsAndNews', 'subteams', 'people', 'customPanels'].forEach(name => {
     content[name] = itemsFrom(data[name]);
   });
+  content.notices = tidyNotices(data.notices);
   content.tasks = fromBoardOnly(content.tasks.map(normalizeTask));
   content.milestones = milestonesFrom(data.milestones);
   content.subteams = content.subteams.map(normalizeSubteam);

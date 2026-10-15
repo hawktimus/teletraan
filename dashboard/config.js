@@ -253,7 +253,13 @@ export const limits = {
   nameEffectEveryMinutes: { min: 1, max: 240 },
   hawkEveryMinutes: { min: 1, max: 240 },
   swapSeconds: { min: 0.5, max: 3 },
+  // A Photos row of a Screen: how many photos a turn of the row shows and how many seconds each stays
+  photoCount: { min: 1, max: 20 },
+  secondsPerPhoto: { min: 5, max: 60 },
 };
+
+// What a Photos row has until its photoCount and secondsPerPhoto are set: four photos of ten seconds, forty seconds
+export const defaultPhotoRow = { photoCount: 4, secondsPerPhoto: 10 };
 
 // The limits of the banner settings of a Screen, the three that sit beside defaultScreen. The Studio uses the same
 // numbers (studio/schemas/screen.js), and studio/check-schemas.mjs compares them

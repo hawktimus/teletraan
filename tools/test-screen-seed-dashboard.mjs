@@ -117,7 +117,7 @@ test('a panel has a team when the list of items it draws has the Team field, and
   query.split(/\n  "(?=[A-Za-z]+": \*\[_type == )/).slice(1).forEach(block => {
     lists[block.slice(0, block.indexOf('"'))] = block.includes('"team": team->code');
   });
-  assert.deepEqual(Object.keys(lists).filter(name => lists[name]).sort(), ['customPanels', 'milestones', 'people', 'plans', 'presentations', 'sponsors', 'subteams', 'tasks', 'tipsAndNews']);
+  assert.deepEqual(Object.keys(lists).filter(name => lists[name]).sort(), ['customPanels', 'milestones', 'notices', 'people', 'plans', 'presentations', 'sponsors', 'subteams', 'tasks', 'tipsAndNews']);
 
   const drawn = { tasks: 'tasks', tonight: 'plans', spotlight: 'subteams', 'team-leads': 'subteams', roster: 'subteams', leadership: 'people', 'sponsor-feature': 'sponsors', custom: 'customPanels', photo: 'photos', events: null };
   const followTeam = Object.keys(drawn).filter(panel => drawn[panel] && lists[drawn[panel]]).sort();

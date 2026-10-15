@@ -34,6 +34,7 @@
 // A new kind of document needs a line here: check-schemas.mjs fails without it.
 
 import { ArchiveIcon } from '@sanity/icons/Archive';
+import { BellIcon } from '@sanity/icons/Bell';
 import { BoltIcon } from '@sanity/icons/Bolt';
 import { BulbOutlineIcon } from '@sanity/icons/BulbOutline';
 import { CalendarIcon } from '@sanity/icons/Calendar';
@@ -151,6 +152,7 @@ export const sidebarEntries = [
   },
   { kind: 'component', title: 'Monday Boards', id: 'mondayBoards', icon: ThListIcon, component: MondayBoardsView, children: tasksOfBoard },
   { kind: 'list', title: 'Tips and News', icon: BulbOutlineIcon, type: 'tipOrNews', sort: byOrder, add: ['newTip'] },
+  { kind: 'list', title: 'Announcements', icon: BellIcon, type: 'announcement', sort: latestStart, add: ['newAnnouncement'] },
   { kind: 'divider', title: 'EVENTS' },
   { kind: 'component', title: 'Calendars', id: 'calendars', icon: SyncIcon, component: CalendarsView },
   { kind: 'list', title: 'Calendar filters', icon: FilterIcon, type: 'calendarFilter', sort: byName, add: ['newCalendarFilter'] },

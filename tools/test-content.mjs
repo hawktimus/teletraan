@@ -922,6 +922,8 @@ test('the new settings have the defaults the Studio starts with', () => {
     nameEffectEveryMinutes: { min: 1, max: 240 },
     hawkEveryMinutes: { min: 1, max: 240 },
     swapSeconds: { min: 0.5, max: 3 },
+    photoCount: { min: 1, max: 20 },
+    secondsPerPhoto: { min: 5, max: 60 },
   });
 
   // the photo settings: random order, and 16 seconds a photo
@@ -5591,10 +5593,10 @@ function onTeamScreen(code, run) {
 
 test('the query asks for the teams, and for the team code of every kind of content that has a Team field', () => {
   assert.ok(contentQuery.includes('"teams": *[_type == "team"] | order(order asc, _createdAt asc) {'));
-  // tasks, milestones, sponsors, tips and news, subteams, people, talks, plans and extra panels
-  assert.equal(contentQuery.split('"team": team->code').length - 1, 9);
+  // tasks, milestones, sponsors, tips and news, announcements, subteams, people, talks, plans and extra panels
+  assert.equal(contentQuery.split('"team": team->code').length - 1, 10);
 
-  ['"tasks"', '"sponsors"', '"tipsAndNews"', '"subteams"', '"people"', '"presentations"', '"plans"', '"customPanels"'].forEach(name => {
+  ['"tasks"', '"milestones"', '"sponsors"', '"tipsAndNews"', '"notices"', '"subteams"', '"people"', '"presentations"', '"plans"', '"customPanels"'].forEach(name => {
     const start = contentQuery.indexOf(name + ': *[');
     assert.ok(start !== -1, name);
     const next = contentQuery.indexOf('\n  "', start + 1);

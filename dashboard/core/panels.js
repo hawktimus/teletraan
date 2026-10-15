@@ -78,14 +78,15 @@ export function canShow(id, content, page = 1) {
 //   { id, region, element }
 // element is the panel's own root element, not on the screen yet. If the
 // panel fails, this throws and whatever is on screen is left alone.
-// page is the page of a panel that has more than one (registry.js), counting from 1.
-export function buildPage(id, content, page = 1) {
+// page is the page of a panel that has more than one (registry.js), counting from 1. step is the step of
+// the playlist the page is for, which the Photo panel reads for its count and its seconds a photo.
+export function buildPage(id, content, page = 1, step = undefined) {
   const panel = findPanel(id);
   const module = modules[id];
   if (!module) throw new Error('Panel "' + id + '" is not loaded');
 
   const workbench = document.createElement('div');
-  module.mount(workbench, content, page);
+  module.mount(workbench, content, page, step);
 
   const element = workbench.firstElementChild;
   if (!element) throw new Error('Panel "' + id + '" drew nothing');

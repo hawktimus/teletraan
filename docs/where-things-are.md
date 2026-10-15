@@ -166,6 +166,9 @@ editors can sign in from anywhere.
                               announce.js decides when the Play announcements button plays every
                               announcement that is switched on, and announce-run.js starts it
                               (docs/hidden-transitions.md),
+                              notice.js decides which Announcement documents are live and which one
+                              is up, and notice-run.js draws the bar under the banner
+                              (docs/announcements.md),
                               hidden.js decides when a hidden transition replaces a page change,
                               hidden-transitions.js lists them, hidden-run.js plays them,
                               hidden-pile.js finds the frames that fall at their end and writes where
@@ -524,8 +527,9 @@ editors can sign in from anywhere.
       perf/                   the comparison page for the speed test: the Tasks panel built
                               from plain plates, in metal or flat, at
                               http://localhost:8080/tools/perf/plates.html
-    docs/                     how-to guides: using-the-studio.md (the students' page, with the parts of the
-                              Start here page), coaches-guide.md (the coaches' page: the tabs, the status block, the
+    docs/                     how-to guides: students.md (the students' page, with the parts of the
+                              Start here page; using-the-studio.md points to it), monday-one-pager.md (the
+                              project manager's page for the Monday boards), announcements.md (the bar under the banner), coaches-guide.md (the coaches' page: the tabs, the status block, the
                               three keys, the Screens and the feeds, with links to the detail),
                               editing-content.md, adding-a-field.md, adding-a-panel.md,
                               adding-a-theme.md, layouts.md, adding-a-holiday-overlay.md, seasonal-packs.md, rebuilding-the-mini.md,
@@ -566,8 +570,10 @@ alone.
   and while that is empty from the lists in `defaultSettings.rotation` (`core/panel-order.js`,
   `studio/screen-seed.js`). The panels a row can name are in `studio/screen-panels.js`.
   The Weekday schedule (`screenSchedule` in `defaultSettings`) picks the Screen of each day.
-  The Photo panel is the exception: with no seconds of its own it follows
-  "Seconds per photo" in the Screen tab (`photoSeconds`, 16 to start).
+  The Photo row is the exception: it has `photoCount` (1 to 20, 4 to start) and
+  `secondsPerPhoto` (5 to 60, 10 to start) in place of its seconds, which are their product
+  (`photoRowOf` in `dashboard/core/screens.js`, `takeRun` and `rowPlan` in `dashboard/core/photos.js`).
+  `photoSeconds` in the Screen tab is hidden and not used any more.
 - **The colour of the frame edges.** Dashboard Settings, Screen tab, Frame
   metal: Gold or Silver. It is the metal of the banner, the countdown and the
   logo, which never change. Glint turns the bright spark that runs round each
@@ -736,8 +742,8 @@ alone.
 - **Photos for the Photo panel.** Photos in the Studio sidebar
   (`studio/schemas/photo.js`): a picture, an optional caption, a first name
   credit, "Show on screen" and "Hide after". Dashboard Settings, Screen tab: Photo
-  order (random or newest first) and Seconds per photo (`photoOrder` and
-  `photoSeconds` in `dashboard/config.js`), the Portraits box below and
+  order (random or newest first) (`photoOrder` in `dashboard/config.js`; the old
+  Seconds per photo, `photoSeconds`, is hidden and a Photo row of a Screen sets its own), the Portraits box below and
   Photo fit (`photoFit`, with `photoFits` in `dashboard/config.js`).
   The screen reads them with the rest of
   the content (`photos` in `core/sanity.js`) and asks Sanity for each at no more

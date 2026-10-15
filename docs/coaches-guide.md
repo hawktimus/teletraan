@@ -2,7 +2,7 @@
 
 For the coaches. This page says where each coach setting is, what to know before
 you change it, and which page has the detail. Students use
-docs/using-the-studio.md. Everything under Coaches only in the sidebar is here:
+docs/students.md. Everything under Coaches only in the sidebar is here:
 Settings (Dashboard Settings, Look and Teams) and Extra panels. So is Screens,
 the second line of the sidebar, under Start here.
 
@@ -123,8 +123,10 @@ and both teams are off to start with.
 ### The rows of the main panel
 
 A row is a panel, a team and, if you want, the seconds. Without seconds the row
-follows Seconds per page on the Screen tab of Dashboard Settings (the Photo row
-follows Seconds per photo).
+follows Seconds per page on the Screen tab of Dashboard Settings. The Photo row
+has no seconds of its own. It has Photos (1 to 20, starting at 4) and Seconds per
+photo (5 to 60, starting at 10), and the time it stays up is the two multiplied,
+shown beside them. Four photos of 10 seconds stay up 40 seconds.
 
 - Panel: the large panels (Tasks, Upcoming events, Daily Agenda, Subteam
   spotlight, Sponsor feature, Photo, Leadership, Team leads, Subteam roster and
@@ -486,11 +488,21 @@ Open the new dataset to check it. Moving the screen to it means changing the
 dataset name in `dashboard/config.js` and `studio/project.js`, which is a change
 for the team mentor.
 
+## Announcements
+
+TASKS, Announcements holds the lines for the bar under the banner. Start here has a Post an
+announcement button that opens a new one starting now and ending in two hours. Each has a text
+of up to 90 characters, a start, an end, an optional team and a level (Notice or Important).
+It shows while it is live and the team on the banner matches. With two live, the bar swaps
+every 12 seconds. This is not the full-screen announcement of Dashboard Settings, which Play
+announcements plays. docs/announcements.md has both.
+
 ## Where the detail is
 
 - docs/editing-content.md: every field, kind of content and tab
 - docs/rebuilding-the-mini.md: setting up the Mini, the steps for each key and the
   boot screen
+- docs/announcements.md: the announcement bar, and how it differs from Play announcements
 - docs/monday.md: the Monday boards, how an item becomes a task and what is public
 - docs/frc-feed.md: the competition data, the seven cards and the Preview button
 - docs/calendars-page.md: the Calendars page and what the Mini writes for it

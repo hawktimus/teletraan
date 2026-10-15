@@ -98,6 +98,20 @@ export function CountdownInput() {
   return countdownView(context, () => paneRouter.navigateIntent('edit', countdownTarget));
 }
 
+// The time on screen of a Photos row: the photos times the seconds of each, read only. It stores nothing.
+export function photoTotalText(count, each) {
+  const photos = Number.isFinite(count) ? count : 4;
+  const seconds = Number.isFinite(each) ? each : 10;
+  return photos * seconds + ' seconds';
+}
+
+export function PhotoTotalInput(props) {
+  const row = props.path.slice(0, -1);
+  const count = useFormValue(row.concat('photoCount'));
+  const each = useFormValue(row.concat('secondsPerPhoto'));
+  return h('p', { style: Object.assign({}, styles.note, { fontWeight: 600 }) }, photoTotalText(count, each));
+}
+
 export function TickerInput() {
   return h(Link, { href: tipsAndNewsPath, style: Object.assign({}, styles.button, styles.link) }, words.openTips);
 }

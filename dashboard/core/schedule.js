@@ -350,7 +350,7 @@ function runRotation(region, getPlaylist, getContent) {
 
       askScreens('begin', step);
       try {
-        const page = buildPage(step.panel, getContent(), step.page);
+        const page = buildPage(step.panel, getContent(), step.page, step);
         const topic = topicOf(step.panel);
         if (topic) onScreen[region].push(topic); // at once, so the other region sees it
         return { page: page, step: step, topic: topic, pages: pagesOfCard(step.panel, getContent(), step.page) };
@@ -396,6 +396,9 @@ function runRotation(region, getPlaylist, getContent) {
 
         if (next) {
           const settings = getContent().settings;
+          // The Photo panel of a Screen row knows how long its turn is: the photos it has times the seconds each stays
+          const turnSeconds = next.page.element && next.page.element.dataset ? Number(next.page.element.dataset.stay) : 0;
+          if (turnSeconds > 0) next.step = Object.assign({}, next.step, { seconds: turnSeconds });
           const held = holdFor(stayFor(region, ownSeconds(next.step, settings), settings), arrivedAfter);
           await hold(held, since, region);
 
