@@ -400,7 +400,7 @@ counts of at least two days, which the Mini adds once a day. With fewer it says 
 ### Cards of both teams
 
 When a milestones row or a progress row has the team Both teams, the card shows both teams together, with no chip in the header. Each
-row starts with PRIME in gold or NOVA in silver, then the department, and the rows of a department follow each other, Prime and then Nova. The progress
+row starts with PRIME in gold or NOVA in light purple, then the department, and the rows of a department follow each other, Prime and then Nova. The progress
 row has one bar of done, in progress and backlog, and done out of all. The milestones row has the next task with a due date and its date. Up to ten rows
 show, five at a time, and the list moves up by five rows after the card has been held. A department whose tasks all come from boards with no
 team is one row with no label.

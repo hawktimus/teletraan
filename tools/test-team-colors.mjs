@@ -272,9 +272,12 @@ const layoutOf = { original: 'standard', cybertron: 'standard', minimal: 'bar' }
 
 // What the page works out for a team in a style: the html element, an area with the metal the page change gave it, and a neon line in it.
 // finish is data-finish of the html element, metal is the Frame metal setting and areaMetal the metal of the area
+// Nova is gold now, like Prime. The steel metal is still a choice of a team, so in this file 'nova' is the sample Nova with
+// steel, which the steel tests need, and 'goldnova' is the Nova of the sample as it is
 function pageWith(code, style, details = {}) {
   const page = makePage();
-  teams.applyTeamLook(byCode(code), page);
+  const team = code === 'nova' ? Object.assign({}, byCode('nova'), { metal: 'steel' }) : byCode(code === 'goldnova' ? 'nova' : code);
+  teams.applyTeamLook(team, page);
 
   const html = element('html', {
     classes: page.classes().concat(['theme-hawktimus']),
@@ -329,7 +332,7 @@ test('the sample content, the seed file and the built-in team have the colors, t
   const seeded = read('docs/seed/teams.ndjson').split('\n').filter(line => line.trim() !== '').map(line => JSON.parse(line));
   const wanted = {
     prime: { primary: '#6C18B6', plate: '#3B2A7A', body: '#1A0F2E', accent: '#FACA2A', neon: '#FACA2A', pink: '#B23CFF', label: '#FACA2A', metal: 'gold', glow: false },
-    nova: { primary: '#1B6FD6', plate: '#0E2A4A', body: '#07131F', accent: '#8FF0FF', neon: '#3FD8FF', pink: '#9BF0FF', label: '#C58CFF', metal: 'steel', glow: true, background: '#050910' },
+    nova: { primary: '#FACA2A', plate: '#6B4F0C', body: '#2A1F07', accent: '#C58CFF', neon: '#B23CFF', pink: '#FACA2A', label: '#C58CFF', metal: 'gold', glow: true, background: '#130E03' },
   };
 
   Object.keys(wanted).forEach(code => {
@@ -368,7 +371,7 @@ test('the sample content, the seed file and the built-in team have the colors, t
 
 // Both teams in each style
 
-test('in Cybertron and Minimal the edge gradient and the body color are not the same for the two teams: gold on dark purple for Prime, steel on dark blue for Nova', () => {
+test('in Cybertron and Minimal the edge gradient and the body color are not the same for the two teams: gold on dark purple for Prime, steel on dark gold for a team with steel', () => {
   steelStyles.forEach(style => {
     const prime = pageWith('prime', style);
     const nova = pageWith('nova', style);
@@ -385,20 +388,20 @@ test('in Cybertron and Minimal the edge gradient and the body color are not the 
 
     // the body of a plate is the team's body color, and a plate of the frame reads it
     assert.equal(lower(prime.area['--panel-face']), '#1a0f2e', style + ': the body of Prime');
-    assert.equal(lower(nova.area['--panel-face']), '#07131f', style + ': the body of Nova');
+    assert.equal(lower(nova.area['--panel-face']), '#2a1f07', style + ': the body of Nova');
     assert.notEqual(prime.area['--panel-face'], nova.area['--panel-face']);
 
     // the neon and the conduit, the page grid, the digits and the label are the team's
     assert.equal(lower(prime.html['--style-neon']), '#faca2a');
-    assert.equal(lower(nova.html['--style-neon']), '#3fd8ff');
+    assert.equal(lower(nova.html['--style-neon']), '#b23cff');
     assert.equal(lower(prime.html['--style-pink']), '#b23cff', style + ': a purple conduit for Prime');
-    assert.equal(lower(nova.html['--style-pink']), '#9bf0ff', style + ': an ice conduit for Nova');
+    assert.equal(lower(nova.html['--style-pink']), '#faca2a', style + ': a gold conduit for Nova');
     assert.equal(lower(prime.html['--team-label']), '#faca2a');
     assert.equal(lower(nova.html['--team-label']), '#c58cff');
   });
 
   assert.equal(lower(pageWith('prime', 'minimal').html['--style-digits']), '#faca2a', 'the digits of Minimal are the team\'s neon');
-  assert.equal(lower(pageWith('nova', 'minimal').html['--style-digits']), '#3fd8ff');
+  assert.equal(lower(pageWith('nova', 'minimal').html['--style-digits']), '#b23cff');
   assert.equal(lower(pageWith('prime', 'cybertron').html['--style-grid-opacity']), '.07', 'the page grid is the neon at .07');
 });
 
@@ -465,9 +468,18 @@ test('Prime in Original is what it has always been: the colors of the theme, the
 
   // Only the page's own colors differ between the teams in Original: Nova has its colors in the four places the theme takes them from
   const nova = pageWith('nova', 'original');
-  assert.equal(lower(nova.html['--ground']), '#050910');
-  assert.equal(lower(nova.html['--purple']), '#1b6fd6');
-  assert.equal(lower(nova.html['--yellow']), '#8ff0ff');
+  assert.equal(lower(nova.html['--ground']), '#130e03');
+  assert.equal(lower(nova.html['--purple']), '#faca2a');
+  assert.equal(lower(nova.html['--yellow']), '#c58cff');
+});
+
+test('the Nova of the sample has gold metal: no steel class, and the gold frames in every style, like Prime', () => {
+  styles.forEach(style => {
+    const gold = pageWith('goldnova', style);
+    assert.ok(!gold.classes.includes('metal-steel'), style + ': no steel class');
+    assert.equal(gradientOf(gold.area['--edge-face']), 'edge-gold', style + ': gold edge');
+    assert.equal(lower(gold.area['--metal-3']), '#a98f43', style + ': the gold tokens');
+  });
 });
 
 test('the glow: a team with it has a neon line of 5 px and the two wider lines of 12 px at .35 and 26 px at .12, in Cybertron and Minimal, and Prime has none', () => {
@@ -485,7 +497,7 @@ test('the glow: a team with it has a neon line of 5 px and the two wider lines o
     assert.deepEqual([nova.wideOne.display, nova.wideOne['stroke-width'], nova.wideOne['stroke-opacity']], ['inline', '12px', '.35'], style + ': the first wider line');
     assert.deepEqual([nova.wideTwo.display, nova.wideTwo['stroke-width'], nova.wideTwo['stroke-opacity']], ['inline', '26px', '.12'], style + ': the second');
     assert.deepEqual([nova.headerGlow.display, nova.headerGlow['stroke-width'], nova.headerGlow['stroke-opacity']], ['inline', '12px', '.35'], style + ': and the same behind the header line');
-    [nova.line, nova.wideOne, nova.wideTwo].forEach(computed => assert.equal(lower(computed.stroke), '#3fd8ff', 'the same color as the line'));
+    [nova.line, nova.wideOne, nova.wideTwo].forEach(computed => assert.equal(lower(computed.stroke), '#b23cff', 'the same color as the line'));
     assert.equal(prime.line.stroke, '#FACA2A');
 
     // the flat finish has none of it, whatever the team

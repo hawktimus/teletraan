@@ -40,8 +40,8 @@ In Studio open Settings, then Teams, then Hawktimus Nova. These are the fields.
 - Logo: optional. A picture for the banner. Leave it empty to use the shared
   Hawktimus bird.
 - Colors: nine colors, each # and six characters from 0 to 9 and A to F, such as
-  #1B6FD6. The file starts Nova on the blue set: main #1B6FD6, plate #0E2A4A, accent #8FF0FF,
-  neon #3FD8FF, second bright #9BF0FF, background #050910, body #07131F and label #C58CFF.
+  #FACA2A. The file starts Nova on the inverse of Prime, gold and purple: main #FACA2A, plate #6B4F0C,
+  accent #C58CFF, neon #B23CFF, second bright #FACA2A, background #130E03, body #2A1F07 and label #C58CFF.
   - Main color: the header tabs and the bird.
   - Plate color: the team plate, the inset of the header tab and the cards.
   - Accent color: small marks and key words.
@@ -53,7 +53,7 @@ In Studio open Settings, then Teams, then Hawktimus Nova. These are the fields.
   - Label color: the department names in rows. It is light purple on Nova, because light blue
     is lost against the blue frame.
 - Metal: gold or steel. It is the metal of the frame edges, the bolts and the war clock in
-  Cybertron and Minimal. Nova has steel, and Prime has gold.
+  Cybertron and Minimal. Both teams start on gold, so Nova stays metallic.
 - Glow: on for Nova. A soft glow round the neon lines of the frames in Cybertron and Minimal.
   Prime has it off.
 - Mirror the layout: on to start with. The whole screen is flipped left to right

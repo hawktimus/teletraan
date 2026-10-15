@@ -941,9 +941,9 @@ function propertiesOf(team) {
 }
 
 // The classes the page has with Nova on it: the mirror, the seven trim classes that are not Prime's (teamTrim in config.js),
-// and the steel metal and the glow. Nova draws its name solid, like Prime: the seed stores the name look as solid, so there is
+// and the glow (Nova has gold metal, so no steel class). Nova draws its name solid, like Prime: the seed stores the name look as solid, so there is
 // no name-outline class
-const novaClasses = 'accent-neon bolts-round corner-cut-tr grid-dots header-slant metal-steel mirrored neon-glow ticker-bar';
+const novaClasses = 'accent-neon bolts-round corner-cut-tr grid-dots header-slant mirrored neon-glow ticker-bar';
 
 // The properties the page has with a team on it: the nine colors
 function onThePage(team) {
@@ -974,7 +974,7 @@ async function onTeamPage(run) {
   }
 }
 
-test('the screen starts on the team the settings ask for, at once: the nine colors are on the html element, and only Nova has the mirror class, the trim classes, the steel metal and the glow', async () => {
+test('the screen starts on the team the settings ask for, at once: the nine colors are on the html element, and only Nova has the mirror class, the trim classes and the glow', async () => {
   const names = ['--team-primary', '--team-plate', '--team-accent', '--team-neon', '--team-pink', '--team-background', '--team-text', '--team-body', '--team-label'];
 
   await onTeamPage(async world => {
@@ -993,8 +993,8 @@ test('the screen starts on the team the settings ask for, at once: the nine colo
     world.teams.useTeams(teamContent('nova'), new Date(noon));
 
     assert.deepEqual(world.root.properties, {
-      '--team-primary': '#1B6FD6', '--team-plate': '#0E2A4A', '--team-accent': '#8FF0FF', '--team-neon': '#3FD8FF',
-      '--team-pink': '#9BF0FF', '--team-background': '#050910', '--team-text': '#FFFFFF', '--team-body': '#07131F', '--team-label': '#C58CFF',
+      '--team-primary': '#FACA2A', '--team-plate': '#6B4F0C', '--team-accent': '#C58CFF', '--team-neon': '#B23CFF',
+      '--team-pink': '#FACA2A', '--team-background': '#130E03', '--team-text': '#FFFFFF', '--team-body': '#2A1F07', '--team-label': '#C58CFF',
     });
     assert.equal(world.classes(), novaClasses);
   });

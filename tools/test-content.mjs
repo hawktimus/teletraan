@@ -5626,8 +5626,8 @@ test('the two starting teams become the teams the screen uses, and the built-in 
   });
   assert.deepEqual(nova, {
     code: 'nova', name: 'HAWKTIMUS NOVA', shortName: 'NOVA', number: '3426', logo: '',
-    colors: { primary: '#1B6FD6', plate: '#0E2A4A', accent: '#8FF0FF', neon: '#3FD8FF', pink: '#9BF0FF', background: '#050910', text: '#FFFFFF', body: '#07131F', label: '#C58CFF' },
-    metal: 'steel', glow: true,
+    colors: { primary: '#FACA2A', plate: '#6B4F0C', accent: '#C58CFF', neon: '#B23CFF', pink: '#FACA2A', background: '#130E03', text: '#FFFFFF', body: '#2A1F07', label: '#C58CFF' },
+    metal: 'gold', glow: true,
     mirror: true, active: true, order: 20,
     bolts: 'round', cornerCut: 'tr-bl', headerNotch: 'slant', grid: 'dots', logoPose: 'auto', nameStyle: 'solid', tickerLabel: 'bar', countAccent: 'neon',
   });
