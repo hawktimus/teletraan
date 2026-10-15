@@ -110,7 +110,7 @@ export function teamsForBoth(content) {
   return teamsOf(content);
 }
 
-// The label at the start of a row of the cards of both teams: PRIME in gold and NOVA in silver. The class
+// The label at the start of a row of the cards of both teams: PRIME in gold and NOVA in light purple. The class
 // carries the code of the team, which is letters and digits and nothing else. A row of tasks from a board
 // with no team has no team, and so no label. It keeps the room of one when other rows of the card have a
 // label (kept), so the columns line up.

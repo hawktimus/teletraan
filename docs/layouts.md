@@ -1564,7 +1564,7 @@ is still to come. With fewer than two counts a sentence stands in the place of t
 The milestones card and the progress card of both teams play when a milestones or a progress row of a Screen has the team Both teams. Their headers read MILESTONES and PROGRESS
 with no chip. They have a row for each department and each team that has board tasks for it, and the rows alternate between the teams: a department's rows
 together, Prime first and then Nova, in the order of the active teams. A department whose tasks all come from boards with no team is one row with no team. No columns side by side. Every row starts with a label of the team, PRIME
-in gold and NOVA in silver. There are ten rows at the most, five at a time, which scroll and have a page marker as the tasks card does
+in gold and NOVA in light purple. There are ten rows at the most, five at a time, which scroll and have a page marker as the tasks card does
 (`scrollPages`).
 
 The progress card of both teams has a row of the team, the department in 36 px letters in 330 px, one bar of the team's board tasks in
@@ -1699,14 +1699,14 @@ the Prime values). The metal and the glow come after the box.
 
 | Color | Property | Prime | Nova | What it paints |
 |-------|----------|-------|------|----------------|
-| Main color | `--team-primary` | `#6C18B6` | `#1B6FD6` | header tabs and the bird, and the theme Hawktimus |
-| Plate color | `--team-plate` | `#3B2A7A` | `#0E2A4A` | the TEAM plate, the ticker's tag, the header inset and the cards |
-| Accent color | `--team-accent` | `#FACA2A` | `#8FF0FF` | small marks, key words and the hazard stripe |
-| Neon color | `--team-neon` | `#FACA2A` | `#3FD8FF` | the neon lines, the page grid at .07 and the digits of the war clock in Minimal |
-| Second bright color | `--team-pink` | `#B23CFF` | `#9BF0FF` | the conduit lines and the brackets of Cybertron |
-| Background color | `--team-background` | `#0B0714` | `#050910` | the page, and the theme Hawktimus |
+| Main color | `--team-primary` | `#6C18B6` | `#FACA2A` | header tabs and the bird, and the theme Hawktimus |
+| Plate color | `--team-plate` | `#3B2A7A` | `#6B4F0C` | the TEAM plate, the ticker's tag, the header inset and the cards |
+| Accent color | `--team-accent` | `#FACA2A` | `#C58CFF` | small marks, key words and the hazard stripe |
+| Neon color | `--team-neon` | `#FACA2A` | `#B23CFF` | the neon lines, the page grid at .07 and the digits of the war clock in Minimal |
+| Second bright color | `--team-pink` | `#B23CFF` | `#FACA2A` | the conduit lines and the brackets of Cybertron |
+| Background color | `--team-background` | `#0B0714` | `#130E03` | the page, and the theme Hawktimus |
 | Text color | `--team-text` | `#FFFFFF` | `#FFFFFF` | the main text |
-| Body color | `--team-body` | `#1A0F2E` | `#07131F` | the inside of the panels in Cybertron and Minimal |
+| Body color | `--team-body` | `#1A0F2E` | `#2A1F07` | the inside of the panels in Cybertron and Minimal |
 | Label color | `--team-label` | `#FACA2A` | `#C58CFF` | the department names in rows |
 
 The status colors (in progress, backlog and done) are the same for both teams. A team document that has no
@@ -1722,7 +1722,9 @@ element, and `tokens.css` gives it the steel `--metal` tokens and the steel edge
 and on every area, whatever Frame metal and the page change say. In Cybertron and Minimal a team with no steel
 has gold the same way. The hex bolts and the rivets read the same metal through `--screw-` tokens that those two styles set
 on the html element. In Original a team with gold changes nothing, so Prime is drawn as it always was, and a
-team with steel has steel in place of the gold and silver.
+team with steel has steel in place of the gold and silver. Neither built-in team has steel now; it stays as a choice for a third team.
+
+**Nova.** Nova is the inverse of Prime: where Prime is purple with gold, Nova is gold with purple, in the same gold metal. Its glow strokes are purple. The plate is a dark gold so that white text on it reads, and the accent and label are a light purple so that they read on the dark gold body.
 
 **Glow.** A switch, off for Prime and on for Nova (`glowClass` in `config.js`). A team with it has the class
 `neon-glow`, and `base.css` then draws the neon line at 5 px with two wider strokes of the same color behind it, at

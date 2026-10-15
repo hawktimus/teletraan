@@ -102,7 +102,7 @@ html[data-layout="bar"] .monday .body { width: calc(var(--bar-area-width) - 48px
 .monday {
   --scroll-step: 420px;
   --prime-tag: #faca2a;
-  --nova-tag: var(--silver);
+  --nova-tag: #c58cff;
 }
 .monday .rows-window {
   height: 420px;
@@ -157,7 +157,7 @@ html[data-layout="bar"] .monday .place-more { display: inline; }
   font: 700 36px/44px var(--font-text);
 }
 
-/* The team of a row of the cards of both teams: PRIME in gold and NOVA in silver. A team that is neither has
+/* The team of a row of the cards of both teams: PRIME in gold and NOVA in light purple. A team that is neither has
    the accent of the screen. */
 .monday .team-tag {
   flex: none;

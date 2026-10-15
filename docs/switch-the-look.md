@@ -19,7 +19,7 @@ under Start here. The Screen of a day goes on at the first row change after midn
 - Original is the screen as it has always been. Its layout comes from the theme.
 - Cybertron has the same layout as Original: the banner, the large frame, the
   countdown over the small frame and the ticker. The frames are plates in the team's
-  body color with the team's metal for the edge (gold for Prime, steel for Nova), a neon
+  body color with the team's metal for the edge (gold for both teams), a neon
   line inside the edge, bolts at the joints and a hazard stripe under each header. The
   countdown is the war clock in place of the red frame.
 - Minimal has a banner across the top with the team name at one end and the war

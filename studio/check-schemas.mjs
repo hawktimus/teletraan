@@ -3989,7 +3989,7 @@ function checkTeams() {
     [line({ number: undefined }).title, 'Team Name'],
     [type.preview.prepare({}).title, 'Team with no name'],
   ].forEach(entry => need(problems, entry[0] === entry[1], 'the team list should read "' + entry[1] + '", it reads "' + entry[0] + '"'));
-  need(problems, /Change the name or number here and the screen follows\. The Monday board is not connected to this name; a rename there is done by hand\./.test(type.description || ''), 'the team document should open with its description about the name and number');
+  need(problems, /Change the name, number or colors here and the screen follows\. The Monday board is not connected to this name; a rename there is done by hand\./.test(type.description || ''), 'the team document should open with its description about the name and number');
   need(problems, type.preview.select && type.preview.select.media === 'logo', 'the team list should show each logo (select media: logo)');
 
   // The Teams line is right after Look, in the Settings folder, and is a list sorted by order
@@ -4012,7 +4012,7 @@ function checkTeamSeed(type) {
 
   const wanted = {
     'team-prime': { number: '3229', code: 'prime', mirror: false, metal: 'gold', glow: false, colors: { primary: '#6C18B6', plate: '#3B2A7A', accent: '#FACA2A', neon: '#FACA2A', pink: '#B23CFF', body: '#1A0F2E', label: '#FACA2A' } },
-    'team-nova': { number: '3426', code: 'nova', mirror: true, metal: 'steel', glow: true, colors: { primary: '#1B6FD6', plate: '#0E2A4A', accent: '#8FF0FF', neon: '#3FD8FF', pink: '#9BF0FF', background: '#050910', body: '#07131F', label: '#C58CFF' } },
+    'team-nova': { number: '3426', code: 'nova', mirror: true, metal: 'gold', glow: true, colors: { primary: '#FACA2A', plate: '#6B4F0C', accent: '#C58CFF', neon: '#B23CFF', pink: '#FACA2A', background: '#130E03', body: '#2A1F07', label: '#C58CFF' } },
   };
   need(problems, lines.length === 2, 'docs/seed/teams.ndjson should have two teams, Prime and Nova, it has ' + lines.length);
 

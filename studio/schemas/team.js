@@ -71,7 +71,7 @@ export default defineType({
   name: 'team',
   title: 'Teams',
   type: 'document',
-  description: 'Change the name or number here and the screen follows. The Monday board is not connected to this name; a rename there is done by hand.',
+  description: 'Change the name, number or colors here and the screen follows. The Monday board is not connected to this name; a rename there is done by hand.',
   fieldsets: [
     {
       name: 'trim',
