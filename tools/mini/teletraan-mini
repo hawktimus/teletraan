@@ -855,13 +855,13 @@ pull_from_mini() {
 install_services() {
   local status remote
   step "Install the services on the Mini $mini_name"
-  say "This runs install-calendars.sh, install-slides.sh, install-monday.sh, install-frc.sh and install-console.sh on the Mini. They turn on the timers and the boot and shutdown screens, and install no packages."
+  say "This runs install-calendars.sh, install-slides.sh, install-monday.sh, install-frc.sh, install-console.sh, install-watchdog.sh and install-backup.sh on the Mini. They turn on the timers (the watchdog and the nightly backup too) and the boot and shutdown screens, and install no packages."
   say "Each one says what it will do and waits for Enter. install-console.sh changes /etc/issue, and a missing package stops its script with the apt line to run."
   ask_yes "Has the team mentor said yes?" no || { say "Nothing was installed."; return 0; }
 
   remote="dir='$MINI_REPO/deploy/scripts'
 $(cat <<'EOF'
-for name in calendars slides monday frc console; do
+for name in calendars slides monday frc console watchdog backup; do
   echo
   echo "== install-$name.sh"
   sudo "$dir/install-$name.sh" || echo "install-$name.sh stopped (exit $?)."

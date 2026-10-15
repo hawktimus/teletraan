@@ -10,6 +10,8 @@
 #   status-write.sh monday     the Monday boards were read
 #   status-write.sh frc        the FRC data was read
 #   status-write.sh kiosk      the screen started
+#   status-write.sh backup     the nightly dataset backup finished (backup-dataset.sh)
+#   status-write.sh restart N  the watchdog restarted the screen, N times today (watchdog.sh)
 #   status-write.sh calendar-status
 #                              sends the document that the Calendars page in Studio
 #                              shows, which calendar-status.sh made in the data folder
@@ -32,11 +34,17 @@ env_file="$deploy/local.env"
 document=status-mini
 
 usage() {
-  echo "Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|calendar-status|--print" >&2
+  echo "Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|calendar-status|--print|backup|restart N" >&2
   exit 2
 }
 
-[ "$#" -eq 1 ] || usage
+[ "$#" -ge 1 ] || usage
+if [ "$1" = restart ]; then
+  [ "$#" -eq 2 ] || usage
+  printf '%s' "$2" | grep -Eq '^[0-9]{1,4}$' || usage
+else
+  [ "$#" -eq 1 ] || usage
+fi
 
 # The field of the document that each job writes
 case $1 in
@@ -46,6 +54,8 @@ case $1 in
   monday) field=lastMondaySyncAt ;;
   frc) field=lastFrcSyncAt ;;
   kiosk) field=kioskStartedAt ;;
+  backup) field=lastBackupAt ;;
+  restart) field=lastKioskRestartAt ;;
   calendar-status) field=calendar-status ;;
   --print) field=print ;;
   *) usage ;;
@@ -221,6 +231,12 @@ elif [ "$field" = lastContentSeenAt ]; then
   fi
 else
   value=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+fi
+
+# The watchdog also sets the number of restarts today, a number and not a time
+if [ "$1" = restart ]; then
+  body=$(printf '{"mutations":[{"createIfNotExists":{"_id":"%s","_type":"status"}},{"patch":{"id":"%s","set":{"kioskRestarts":%s,"%s":"%s"}}}]}' \
+    "$document" "$document" "$2" "$field" "$value")
 fi
 
 # Make the document if it is not there yet, then set the one time. Everything

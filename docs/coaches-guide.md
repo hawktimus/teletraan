@@ -441,6 +441,42 @@ A card with nothing to show is left out of the rotation, so a Mini with no key
 shows no competition card. The data is public: team numbers, nicknames, match
 numbers and times, scores, ranks, award names and ratings, and no person's name.
 
+## The watchdog
+
+The screen puts the time in its page title every 30 seconds. Every 2 minutes the
+Mini asks the browser for that title (on the Mini's own address 127.0.0.1:9222,
+which nothing else can reach). If the title is more than 3 minutes old, the page
+is gone or the browser is not running, the Mini restarts the screen. The status
+block in Dashboard Settings, Screen tab, shows Screen restarts today.
+
+- It restarts at most once in 10 minutes.
+- When a third restart would fall inside one hour, it does not restart again. It
+  writes the count and the time to the status block and waits until the Mini boots.
+  That means something is broken, such as a bad deploy. Look at
+  `sudo journalctl -u teletraan-watchdog.service -n 30`, fix it, then reboot the
+  Mini or delete `/var/lib/teletraan/data/watchdog-state`.
+- The count is kept in `watchdog-state` in the data folder.
+- A browser started less than 3 minutes ago is left alone while it loads.
+
+## Backups
+
+Every night at 03:15 (the Mini's time) the Mini exports the whole dataset to
+`/var/backups/teletraan/production-<date>.tar.gz`, keeps the newest 14 and deletes
+the older ones. The status block shows Last backup. It needs the write token in
+`local.env` and the Sanity tool in `studio/` (`npm install` there once). A failed
+export keeps the old backups.
+
+Restoring a backup. Never import straight over production. Import into a new
+dataset first, look at it, and only then decide what to do:
+
+    cd /opt/teletraan/studio
+    npx sanity dataset create restore-test
+    npx sanity dataset import /var/backups/teletraan/production-<date>.tar.gz restore-test
+
+Open the new dataset to check it. Moving the screen to it means changing the
+dataset name in `dashboard/config.js` and `studio/project.js`, which is a change
+for the team mentor.
+
 ## Where the detail is
 
 - docs/editing-content.md: every field, kind of content and tab

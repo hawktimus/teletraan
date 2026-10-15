@@ -140,8 +140,12 @@ does not look like a key or a link.
 ### 4. Install the services on the Mini
 
 Runs `install-calendars.sh`, `install-slides.sh`, `install-monday.sh`,
-`install-frc.sh` and `install-console.sh` on the Mini, one after another. They turn
-on the timers and the boot and shutdown screens. They install no packages: one
+`install-frc.sh`, `install-console.sh`, `install-watchdog.sh` and `install-backup.sh`
+on the Mini, one after another. They turn on the timers (the watchdog and the
+nightly backup among them) and the boot and shutdown screens. After the first
+`install-watchdog.sh`, restart the screen once (choose 6, or `teletraan-mini
+restart`), because the browser only opens the page list for the watchdog when
+`kiosk.sh` starts it. They install no packages: one
 that finds a package missing stops and prints the `apt install` line to run. The
 tool goes on to the next script.
 

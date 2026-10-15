@@ -26,6 +26,10 @@ export default defineType({
     timeField('lastMondaySyncAt', 'Last Monday sync', 'When the Mini last read the Monday boards. The Mini writes this.'),
     timeField('lastFrcSyncAt', 'Last FRC data sync', 'When the Mini last read the FRC competition data. The Mini writes this.'),
     timeField('kioskStartedAt', 'Screen started', 'When the browser on the Mini last started the screen. The Mini writes this.'),
+    // The watchdog (deploy/scripts/watchdog.sh) and the nightly backup (backup-dataset.sh)
+    defineField({ name: 'kioskRestarts', title: 'Screen restarts today', type: 'number', description: 'How many times the watchdog restarted the screen on the day of the last restart. The Mini writes this.' }),
+    defineField({ name: 'lastKioskRestartAt', title: 'Last screen restart', type: 'datetime', description: 'When the watchdog last restarted the screen, or stopped restarting it. The Mini writes this.' }),
+    defineField({ name: 'lastBackupAt', title: 'Last backup', type: 'datetime', description: 'When the nightly backup of the dataset last finished. The Mini writes this.' }),
   ],
   preview: {
     prepare: () => ({ title: 'Status of the Mini' }),

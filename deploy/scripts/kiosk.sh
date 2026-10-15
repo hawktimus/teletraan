@@ -130,6 +130,9 @@ rm -f "$data"/device.json.tmp.* 2> /dev/null || true
 # --force-device-scale-factor=1: never zoomed, one dashboard pixel is one TV pixel
 # --disable-features=Translate: no translate prompt
 # --password-store=basic: never asks for a keyring password
+# --remote-debugging-port, --remote-debugging-address: the page list at
+#   http://127.0.0.1:9222/json, for watchdog.sh. This machine only: nothing else
+#   on the network can reach it
 exec chromium \
   --kiosk \
   --user-data-dir="$profile" \
@@ -144,6 +147,8 @@ exec chromium \
   --hide-crash-restore-bubble \
   --disable-features=Translate \
   --password-store=basic \
+  --remote-debugging-port=9222 \
+  --remote-debugging-address=127.0.0.1 \
   --enable-gpu-rasterization \
   --ignore-gpu-blocklist \
   "$url"

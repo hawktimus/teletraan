@@ -57,6 +57,7 @@ import { withCompetition } from './core/competition.js';
 import { askForTeam, changeTeamNow, currentTeam, frameTrim, onTeamChange, recordTrim, trimNow, useTeams } from './core/teams.js';
 import { showPagesNow, startRotation, startRotationForLayouts, startTicker, startTogether } from './core/schedule.js';
 import { startTakeovers, runAnnouncement, takeoverRunning } from './core/takeover.js';
+import { startHeartbeat } from './core/heartbeat.js';
 
 const params = new URLSearchParams(window.location.search);
 const stress = params.has('stress');
@@ -515,6 +516,7 @@ async function startExtras() {
   }, 60 * 1000);
 
   watchVersion();
+  startHeartbeat();
   await Promise.race([Promise.all(ready), frame.wait(3000)]);
 }
 
