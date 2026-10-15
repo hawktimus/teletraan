@@ -7,6 +7,7 @@
 //   dept    the _id of a Team lead document, for the Monday rows that take a department
 //   screen  the Screen whose style the panel is drawn in, passed on to the ?style= switch
 //   still   1 stops the clock and every movement, so the picture holds still
+//   photos, each   for the Photos row: how many photos and the seconds of each (the row's starting values without them)
 
 export const stillScreens = ['original', 'cybertron', 'minimal'];
 
@@ -22,13 +23,18 @@ export function readStill(search) {
   if (panel === '') return null;
 
   const screen = clean(params.get('screen'));
-  return {
+  const ask = {
     panel: panel,
     team: clean(params.get('team')),
     department: clean(params.get('dept')),
     screen: stillScreens.includes(screen) ? screen : '',
     still: params.get('still') === '1',
   };
+  if (panel === 'photo') {
+    ask.photoCount = Number(clean(params.get('photos'))) || 0;
+    ask.secondsPerPhoto = Number(clean(params.get('each'))) || 0;
+  }
+  return ask;
 }
 
 // Changes the switches that the rest of the page already reads, so that a panel address needs no
@@ -46,5 +52,7 @@ export function useStillSwitches(params, ask) {
 export function stillRow(ask) {
   const row = { panel: ask.panel, team: ask.team, seconds: 60 };
   if (ask.department !== '') row.department = ask.department;
+  if (ask.panel === 'photo' && ask.photoCount > 0) row.photoCount = ask.photoCount;
+  if (ask.panel === 'photo' && ask.secondsPerPhoto > 0) row.secondsPerPhoto = ask.secondsPerPhoto;
   return row;
 }

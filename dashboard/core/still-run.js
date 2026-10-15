@@ -23,7 +23,7 @@ function pageFor(ask, content) {
   const steps = mainPlaylist(content, new Date(), screen);
   const step = steps.length > 0 ? steps[0] : { panel: ask.panel };
 
-  return asTeam(ask.team, () => buildPage(step.panel, content, step.page));
+  return asTeam(ask.team, () => buildPage(step.panel, content, step.page, step));
 }
 
 // getContent() returns the newest content. Call after the fixed panels are drawn.

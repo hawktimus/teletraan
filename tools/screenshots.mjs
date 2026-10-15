@@ -15,7 +15,8 @@
 //   countdown-<screen>.png                 the countdown in the three Screens
 //   swap-team-200ms.png (and 400, 800)     one frame of the swap from Prime to Nova
 //   swap-style-200ms.png (and 400, 800)    one frame of the swap from Original to Cybertron
-//   announcement-plate.png                 the plate of an announcement (skipped while the dashboard lacks it)
+//   announcement-plate-<screen>.png        the plate of an announcement, in the three Screens (skipped when the page draws none)
+//   photos-row-<screen>.png                a Photos row of three photos of eight seconds, in the three Screens
 //
 // Playwright is a development dependency of tools/ only (tools/package.json). It is loaded with
 // import() when the run starts, so the plan and the run can be tested with a stand-in
@@ -34,12 +35,13 @@ export const swapTimes = [200, 400, 800];
 // A Monday panel that is for both teams has no team in its address
 const mondayWithoutTeam = ['monday-status-depts', 'monday-overall'];
 
-// What the announcement plate is called on the page (B3). The picture is skipped when the address
-// shows no element with this selector, so the tool works before the plate exists.
+// The announcement plate of the page (core/notice-run.js): the element #notice, which has the attribute hidden
+// until an announcement is live. ?notice=1 makes the sample announcement live. The picture is skipped when the
+// address shows no plate.
 export const announcement = {
-  address: '?sample=1&still=1&panel=tasks&announcement=sample',
-  selector: '.announcement-plate',
-  seconds: 4,
+  address: '?sample=1&still=1&panel=tasks&notice=1',
+  selector: '#notice:not([hidden]) .notice-text',
+  seconds: 6,
 };
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -93,7 +95,10 @@ export function planShots(panels) {
   shots.push({ name: 'swap-team', kind: 'swap', url: moving, request: 'nova', frames: swapTimes });
   shots.push({ name: 'swap-style', kind: 'swap', url: moving, request: 'cybertron', frames: swapTimes });
 
-  shots.push({ name: 'announcement-plate', kind: 'announcement', url: '/index.html' + announcement.address });
+  screens.forEach(screen => shots.push({ name: 'announcement-plate-' + screen, kind: 'announcement', url: '/index.html' + announcement.address + '&screen=' + screen }));
+
+  // A Photos row of three photos of eight seconds, in the three Screens
+  screens.forEach(screen => shots.push({ name: 'photos-row-' + screen, kind: 'still', url: address({ panel: 'photo', screen: screen, photos: '3', each: '8' }) }));
   return shots;
 }
 

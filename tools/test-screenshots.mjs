@@ -68,7 +68,8 @@ test('the swaps have a frame at 200, 400 and 800 ms and the announcement plate i
   const swaps = shots.filter(shot => shot.kind === 'swap');
   assert.equal(swaps.length, 2);
   swaps.forEach(shot => assert.deepEqual(shot.frames, [200, 400, 800]));
-  assert.ok(names(shots).includes('announcement-plate'));
+  assert.deepEqual(names(shots).filter(name => name.startsWith('announcement-plate')), ['announcement-plate-original', 'announcement-plate-cybertron', 'announcement-plate-minimal']);
+  assert.deepEqual(names(shots).filter(name => name.startsWith('photos-row-')), ['photos-row-original', 'photos-row-cybertron', 'photos-row-minimal']);
 });
 
 test('the real registry gives a plan with a name for each picture, and no name twice', () => {
@@ -152,12 +153,12 @@ test('a panel that throws is listed, and the run goes on to the next picture', (
 
 test('the announcement plate is skipped, not failed, while the page does not draw it', () => inTemp(async folder => {
   const { playwright } = standIn({ noPlate: true });
-  const shots = tool.planShots(small).filter(shot => shot.name === 'announcement-plate');
+  const shots = tool.planShots(small).filter(shot => shot.name === 'announcement-plate-original');
   const result = await tool.runShots({ playwright: playwright, shots: shots, base: 'http://x', outFolder: folder, limits: { settleMs: 0 } });
 
   assert.equal(result.failed.length, 0);
-  assert.deepEqual(result.skipped.map(item => item.name), ['announcement-plate']);
-  assert.match(tool.summaryLine(result), /0 pictures written, 1 skipped \(announcement-plate\)/);
+  assert.deepEqual(result.skipped.map(item => item.name), ['announcement-plate-original']);
+  assert.match(tool.summaryLine(result), /0 pictures written, 1 skipped \(announcement-plate-original\)/);
 }));
 
 test('Playwright is loaded when asked for, through import and then through require', async () => {
