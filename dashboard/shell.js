@@ -162,8 +162,8 @@ async function run() {
       await startOptional('./core/night-screen.js', module => module.startNight(getContent, params.get('night')));
     }
 
-    startWhatStays();
     if (competitionAsk) await startOptional('./core/competition-address-run.js', module => module.startCompetitionAddress(competitionAsk, getContent, showingSample));
+    startWhatStays();
 
     // Alerts and announcements do not need the weather or events, so they
     // start looking at the clock at once. An announcement must never be
