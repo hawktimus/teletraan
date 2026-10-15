@@ -825,7 +825,7 @@ function checkHex(field, want, say) {
   if (field.type !== 'string') say('should be a string');
   if (!pattern) return say('should be checked with a pattern');
 
-  ['#6C18B6', '#6c18b6', '#000000', '#FFFFFF', '#09060F'].forEach(good => {
+  ['#6C18B6', '#6c18b6', '#000000', '#FFFFFF', '#0B0714'].forEach(good => {
     if (!pattern.args[0].test(good)) say('the pattern refuses ' + good);
   });
   ['6C18B6', '#6C18B', '#6C18B6F', '#GGGGGG', '#12345', 'purple', '#6C18B6 ', ' #6C18B6', '#6C18B6\n', ''].forEach(bad => {

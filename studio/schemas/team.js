@@ -130,7 +130,7 @@ export default defineType({
         colorField('accent', 'Accent color', 'The accent, for small marks and key words.', '#FACA2A'),
         colorField('neon', 'Neon color', 'The bright color of thin lines, the page grid and clock digits.', '#FACA2A'),
         colorField('pink', 'Second bright color', 'A second bright color, for the conduit lines and small marks.', '#B23CFF'),
-        colorField('background', 'Background color', 'The color behind everything, such as the page and the banner.', '#09060F'),
+        colorField('background', 'Background color', 'The color behind everything, such as the page and the banner.', '#0B0714'),
         colorField('text', 'Text color', 'The color of the main text.', '#FFFFFF'),
         colorField('body', 'Body color', 'The color inside the panels in Cybertron and Minimal.', '#1A0F2E'),
         colorField('label', 'Label color', 'The color of department names in rows, such as the left column of Milestones and Progress.', '#FACA2A'),

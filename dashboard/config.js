@@ -646,7 +646,7 @@ export const primeTeam = {
     accent: '#FACA2A',
     neon: '#FACA2A',
     pink: '#B23CFF',
-    background: '#09060F',
+    background: '#0B0714',
     text: '#FFFFFF',
     body: '#1A0F2E',
     label: '#FACA2A',
