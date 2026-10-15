@@ -512,6 +512,28 @@ choose_mini() {
   esac
 }
 
+# Tells the Mini which build it was given. rsync leaves the .git folder of the Mini alone, so the
+# hash, the date and the branch are read here, from this repository, and left in deploy/build.txt for
+# status-write.sh version. A failure here is only said: the screen still updates.
+stamp_build() {
+  local commit built branch
+  commit=$(git -C "$repo" rev-parse --short HEAD 2> /dev/null)
+  built=$(git -C "$repo" log -1 --format=%cs 2> /dev/null)
+  branch=$(git -C "$repo" rev-parse --abbrev-ref HEAD 2> /dev/null)
+  if ! printf '%s' "$commit" | grep -Eq '^[0-9a-f]{4,40}$' ||
+    ! printf '%s' "$built" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' ||
+    ! printf '%s' "$branch" | grep -Eq '^[A-Za-z0-9._/-]{1,100}$'; then
+    say "This folder has no git history, so the build shown on the wall is not updated."
+    return 0
+  fi
+  if mini_run "printf 'commit=%s\\ndate=%s\\nbranch=%s\\n' '$commit' '$built' '$branch' > $MINI_REPO/deploy/build.txt" &&
+    mini_run "$MINI_REPO/deploy/scripts/status-write.sh version"; then
+    say "The build on the wall is $commit, $built."
+  else
+    say "The build on the wall could not be written. The update itself is done."
+  fi
+}
+
 # 1. Copy the repository to the Mini and restart the screen
 update_mini() {
   local timer status
@@ -555,6 +577,7 @@ update_mini() {
     return 1
   fi
   say "The files are copied."
+  stamp_build
 
   mini_run -t "sudo systemctl restart $MINI_KIOSK"
   status=$?

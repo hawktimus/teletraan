@@ -4,12 +4,17 @@
 // sanity.config.js), and Dashboard Settings shows it in the status block at the
 // top of the Screen tab (settingsStatus.js). The dashboard never reads it.
 //
-// Every time is optional. A job the Mini has not run yet has no time.
+// Every time is optional. A job the Mini has not run yet has no time. buildCommit, buildDate and
+// buildBranch are the build on the wall, written by the job version of status-write.sh.
 
 import { defineType, defineField } from 'sanity';
 
 function timeField(name, title, description) {
   return defineField({ name: name, title: title, type: 'datetime', description: description });
+}
+
+function textField(name, title, description) {
+  return defineField({ name: name, title: title, type: 'string', description: description });
 }
 
 export default defineType({
@@ -26,6 +31,9 @@ export default defineType({
     timeField('lastMondaySyncAt', 'Last Monday sync', 'When the Mini last read the Monday boards. The Mini writes this.'),
     timeField('lastFrcSyncAt', 'Last FRC data sync', 'When the Mini last read the FRC competition data. The Mini writes this.'),
     timeField('kioskStartedAt', 'Screen started', 'When the browser on the Mini last started the screen. The Mini writes this.'),
+    textField('buildCommit', 'Build on the wall', 'The short hash of the files the screen runs. The Mini writes this.'),
+    textField('buildDate', 'Build date', 'The day of that build. The Mini writes this.'),
+    textField('buildBranch', 'Build branch', 'The branch of that build. The Mini writes this.'),
   ],
   preview: {
     prepare: () => ({ title: 'Status of the Mini' }),

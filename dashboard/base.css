@@ -834,3 +834,18 @@ html.neon-glow:not([data-finish="flat"]) .art-glow { display: inline; }
   background: var(--yellow);
   font: 700 var(--size-label)/52px var(--font-display);
 }
+
+/* The build on the wall (core/build-stamp.js), only with ?debug=1. 20px is the one size below the smallest text on
+   the screen, and it is the only exception to it. It never moves or fades. */
+.build-stamp {
+  position: absolute;
+  left: 8px;
+  bottom: 4px;
+  z-index: 100;
+  font-family: var(--font-text);
+  font-size: var(--size-stamp);
+  line-height: 24px;
+  color: #FFFFFF;
+  opacity: 0.6;
+  pointer-events: none;
+}

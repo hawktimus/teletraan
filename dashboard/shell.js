@@ -31,6 +31,7 @@
 //   night=on|off                      show the night screen (the screensaver) now, or never, whatever the time
 //   seasonover=on|off                 show or hide the seasonal pieces over the panels, whatever the Look page says
 //   hidden=desktop|redEyes|off        play that hidden transition at the next page change of the large panel, or never play any
+//   debug                             show the hash of the build in the bottom left corner, at 20 px (core/build-stamp.js)
 //   kit=off                           switch the neon kit (Neon Prime's moving neon, docs/layouts.md) off, to see what it costs
 
 import * as frame from './frame.js';
@@ -43,6 +44,7 @@ import { connectionLines, drawConnection } from './core/connection.js';
 import { pageSwitchesFor } from './core/look.js';
 import { makeSilverGradients } from './core/plate.js';
 import { showDeviceInfo } from './core/device.js';
+import { showStamp } from './core/build-stamp.js';
 import { checkTheme, holdLooksFor, showThemeNow, startThemes } from './core/theme-apply.js';
 import { overlayShown, ruleExtras } from './core/theme.js';
 import { changeLayout, holdForLayout, startLayout } from './core/layout-apply.js';
@@ -649,6 +651,7 @@ function watchVersion() {
       if (!response.ok) return;
 
       const version = (await response.text()).trim();
+      showStamp(version, params, screen);
       if (known === null) {
         known = version;
       } else if (version !== known && !takeoverRunning()) {

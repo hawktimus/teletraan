@@ -1,0 +1,4 @@
+#!/bin/sh
+# Runs the sweep before a push (docs/coaches-guide.md). Turn it on once with
+#   git config core.hooksPath .githooks
+exec "$(git rev-parse --show-toplevel)/tools/sweep.sh"

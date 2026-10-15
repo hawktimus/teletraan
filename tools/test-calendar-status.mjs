@@ -641,7 +641,7 @@ test('the other jobs of status-write.sh are written as they were, and the usage 
   const place = setup('usage', { localEnv: [] });
   const result = place.run('status-write.sh', ['tv']);
   assert.equal(result.status, 2);
-  assert.ok(result.errors.includes('Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|calendar-status'), result.errors);
+  assert.ok(result.errors.includes('Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status'), result.errors);
 
   const job = setup('job', { localEnv: [] });
   assert.equal(job.run('status-write.sh', ['calendar']).status, 0);

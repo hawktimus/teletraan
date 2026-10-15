@@ -4262,8 +4262,10 @@ function checkStatusBlock() {
   const input = world.statusInput;
 
   need(problems, type && type.type === 'document', 'status should be a document type');
-  need(problems, type && fieldsIn(type).map(field => field.name).join() === wanted.join(), 'status should have these fields, in this order: ' + wanted.join(', '));
+  const build = ['buildCommit', 'buildDate', 'buildBranch'];
+  need(problems, type && fieldsIn(type).map(field => field.name).join() === wanted.concat(build).join(), 'status should have these fields, in this order: ' + wanted.concat(build).join(', '));
   fieldsIn(type || {}).forEach(field => {
+    if (build.indexOf(field.name) !== -1) return need(problems, field.type === 'string', 'status.' + field.name + ' should be a string');
     need(problems, field.type === 'datetime', 'status.' + field.name + ' should be a datetime');
     need(problems, !constraintNamed(constraintsOf(field), 'required'), 'status.' + field.name + ' should not be required: the Mini writes each one after its own job');
   });
@@ -4280,7 +4282,12 @@ function checkStatusBlock() {
   // The script on the Mini writes the same document and fields
   const script = world.statusScript;
   need(problems, script.indexOf("'" + input.statusId + "'") !== -1 || script.indexOf('"' + input.statusId + '"') !== -1 || script.indexOf('=' + input.statusId) !== -1, 'status-write.sh should write the document ' + input.statusId);
-  wanted.forEach(name => need(problems, script.indexOf(name) !== -1, 'status-write.sh should write the field ' + name));
+  wanted.concat(build).forEach(name => need(problems, script.indexOf(name) !== -1, 'status-write.sh should write the field ' + name));
+
+  // The build on the wall: a hash and a date, or not yet
+  need(problems, input.buildLine({ buildCommit: 'abc1234', buildDate: '2026-10-14' }) === 'On the wall: abc1234 · 2026-10-14', 'the build line should read On the wall: <hash> · <date>');
+  need(problems, input.buildLine({ buildCommit: 'abc1234' }) === 'On the wall: abc1234' && input.buildLine(null) === 'On the wall: not yet' && input.buildLine({ buildCommit: 5 }) === 'On the wall: not yet', 'the build line should survive a missing date, a missing document and a bad value');
+  need(problems, JSON.stringify(input.statusView({ doc: { buildCommit: 'abc1234', buildDate: '2026-10-14' }, unreadable: false }, new Date())).indexOf('On the wall: abc1234') !== -1, 'the block should show the build on the wall');
 
   // The ages in words, the lines, and a document that is missing or cannot be read
   const now = new Date('2026-10-09T15:00:00.000Z');

@@ -2795,6 +2795,9 @@ Object.keys(smallTextOf).forEach(style => smallTextOf[style].push({ file: 'base.
 const photoCredit = { file: 'panels/photo/photo.css', selector: '.photo .credit', size: 30 };
 Object.keys(smallTextOf).forEach(style => smallTextOf[style].push(photoCredit));
 
+// and the build stamp of ?debug=1, 20 px, the one size the order for the version on the wall allows below the rest
+Object.keys(smallTextOf).forEach(style => smallTextOf[style].push({ file: 'base.css', selector: '.build-stamp', size: 20 }));
+
 // The Monday cards and the season timeline have the sizes under 44 px that the order for them sets, in every style: the
 // status of a row at 30 (a colored label), the first name of the owner at 40, the labels of the numbers and of a department
 // at 36, the city and the day in a row of the timeline's legend at 36, and the department and the date in a row of the

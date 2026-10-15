@@ -472,7 +472,7 @@ test('the usage line lists --print, and --print takes no second word', () => {
   const place = setup('print-usage', { localEnv: goodEnv });
   const result = place.run(['--print', 'content']);
   assert.equal(result.status, 2);
-  assert.ok(result.errors.includes('content|calendar|slides|monday|frc|kiosk|calendar-status|--print'), result.errors);
+  assert.ok(result.errors.includes('content|calendar|slides|monday|frc|kiosk|version|calendar-status|--print'), result.errors);
   assert.equal(result.calls, '');
 });
 

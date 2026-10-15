@@ -15,6 +15,9 @@ local.env*
 !local.example.env
 !*.example.env
 
+# the build stamp the Mac tool leaves on the Mini (deploy/scripts/status-write.sh version)
+deploy/build.txt
+
 dashboard/data/live/*
 !dashboard/data/live/.gitkeep
 

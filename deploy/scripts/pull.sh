@@ -51,6 +51,9 @@ fi
 
 after=$(git rev-parse HEAD)
 
+# A copy from the Mac tool leaves a build stamp. After a pull git knows better.
+rm -f "$deploy/build.txt"
+
 # Also written when version.txt is missing or names another commit, which
 # happens after a rebuild and after someone moves the Mini to a commit by
 # hand. An open dashboard reloads only when version.txt changes.

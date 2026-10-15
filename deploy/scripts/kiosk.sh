@@ -23,6 +23,7 @@ data=${data:-/var/lib/teletraan/data}
 # output thrown away, so a slow or missing network never holds the screen back.
 # It does nothing without a write token in local.env.
 "$deploy/scripts/status-write.sh" kiosk > /dev/null 2>&1 &
+"$deploy/scripts/status-write.sh" version > /dev/null 2>&1 &
 
 # The text of $1 made safe to put between the quotes of a JSON string
 json_text() {
