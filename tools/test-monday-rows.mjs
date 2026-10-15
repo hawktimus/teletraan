@@ -64,7 +64,13 @@ function test(name, run) {
 }
 
 const at = text => new Date(text); // always written with a Z, so it means the same on every computer
-const sampleRaw = () => JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+// The sample also holds the tasks of the one task board (showOnBoard), which these tests were not written for and which
+// tools/test-monday-panels.mjs uses. They run on the tasks that came before.
+const sampleRaw = () => {
+  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  raw.tasks = raw.tasks.filter(task => task.showOnBoard === undefined);
+  return raw;
+};
 const countOf = (text, piece) => text.split(piece).length - 1;
 const titlesOf = tasks => tasks.map(task => task.title);
 
@@ -79,9 +85,13 @@ function contentWith(change) {
   return sanity.normalizeSample(raw);
 }
 
+// The id a Team lead has in these tests, made from its name, so that a task names its department by id as the sync writes it
+const slug = name => 'lead-' + String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
 // A task from the board, the way the board sync makes it, with what a test changes
 function board(fields) {
-  return Object.assign({ title: '[Task]', subteam: '[Subteam A]', status: 'up-next', team: 'prime', source: 'monday', mondayId: '[item]', showOnTv: true }, fields);
+  const task = Object.assign({ title: '[Task]', subteam: '[Subteam A]', status: 'up-next', team: 'prime', source: 'monday', mondayId: '[item]', showOnTv: true }, fields);
+  return Object.assign({ subteamId: slug(task.subteam) }, task);
 }
 
 // The sample with these tasks in place of its own, and these lead entries when there are some
@@ -89,6 +99,9 @@ function contentOf(tasks, leads, change) {
   return contentWith(raw => {
     raw.tasks = tasks;
     if (leads) raw.subteams = leads.map(name => ({ name: name }));
+    raw.subteams.forEach(lead => {
+      lead.id = slug(lead.name);
+    });
     if (change) change(raw);
   });
 }
@@ -161,10 +174,10 @@ test('a row is the status, the title, the first name of the owner when there is 
   ]);
   const html = panels.tasks.markupFor(content, monday12, 1);
 
-  assert.equal(countOf(html, 'class="row"'), 4);
-  assert.deepEqual(textOf(html, 'status'), ['IN PROGRESS', 'BACKLOG', 'DONE', 'IN PROGRESS'], 'high, medium, low and then the one whose priority is not one of them, and each row says its status in words');
-  assert.ok(html.includes('<span class="row-title">with all</span><span class="owner">Sam</span>'));
-  assert.ok(html.includes('<span class="row-title">medium</span><span class="owner"></span>'), 'no owner leaves the place empty');
+  assert.equal(html.match(/class="row[ "]/g).length, 4);
+  assert.deepEqual(textOf(html, 'chip'), ['IN PROGRESS', 'IN PROGRESS', 'TO DO', 'DONE'], 'in progress first, then to do, then done, and each row says its status in words');
+  assert.ok(html.includes('<span class="row-title">with all</span><span class="poc">Sam</span>'));
+  assert.ok(html.includes('<span class="row-title">medium</span><span class="poc"></span>'), 'no one to ask leaves the place empty');
   assert.equal(countOf(html, 'triangle-high'), 1);
   assert.equal(countOf(html, 'triangle-medium'), 1);
   assert.equal(countOf(html, 'class="triangle-'), 2, 'low and none have no shape');
@@ -178,10 +191,10 @@ test('the numbers under the rows count all the tasks of the lead, not only the r
   const content = contentOf(many(4, 'done').concat(many(6, 'up-next', { dueDate: '2026-10-05' }), many(8, 'in-progress')));
   const html = panels.tasks.markupFor(content, monday12, 1);
 
-  assert.equal(countOf(html, 'class="row"'), 10);
-  assert.ok(html.includes('<div class="fact-label">OVERDUE</div><div class="fact-number">6</div>'));
-  assert.ok(html.includes('<div class="fact-label">OPEN</div><div class="fact-number">14</div>'));
-  assert.ok(html.includes('<div class="fact-label">DONE</div><div class="fact-number">4</div>'));
+  assert.equal(html.match(/class="row[ "]/g).length, 10);
+  assert.ok(html.includes('<span class="fact-number">6</span><span class="fact-label">OVERDUE</span>'));
+  assert.ok(html.includes('<span class="fact-number">14</span><span class="fact-label">OPEN</span>'));
+  assert.ok(html.includes('<span class="fact-number">4</span><span class="fact-label">DONE</span>'));
 });
 
 
@@ -197,7 +210,7 @@ test('a card with more than five rows has a page marker and holds for two pages,
   [6, 7, 10, 14].forEach(count => {
     const shown = Math.min(count, 10);
     assert.equal(panels.tasks.scrollPages(contentOf(many(count, 'in-progress')), 1), 2, count + ' tasks');
-    assert.ok(html(count).includes('<span class="place place-1">1 OF 2 · ' + shown + ' TASKS</span><span class="place place-2">2 OF 2 · ' + shown + ' TASKS</span>'), count + ' tasks');
+    assert.ok(html(count).includes('<span class="place place-1">1 OF 2<span class="place-more"> · ' + shown + ' TASKS</span></span><span class="place place-2">2 OF 2<span class="place-more"> · ' + shown + ' TASKS</span></span>'), count + ' tasks');
     assert.equal(countOf(html(count), 'class="square square-'), 2, 'a square for each page');
   });
   assert.equal(panels.tasks.scrollPages(contentOf([]), 1), 1, 'a page that does not exist is one page');
@@ -211,7 +224,7 @@ test('a card that scrolls says so on its section, starting at page 1, and the li
 
   assert.ok(html.includes('<section class="page monday monday-tasks" data-scroll-page="1">'));
   assert.equal(countOf(html, 'data-scroll-list'), 1);
-  assert.ok(html.indexOf('data-scroll-list') < html.indexOf('class="row"'), 'the rows are in the list');
+  assert.ok(html.indexOf('data-scroll-list') < html.search(/class="row[ "]/), 'the rows are in the list');
   assert.equal(panels.milestones.markupFor(contentWith(), monday12).includes('data-scroll'), false, 'the card of one team that does not scroll has none of it');
 });
 
@@ -614,7 +627,7 @@ test('the progress card counts the same rows the tasks card shows: one board tas
   const tasks = panels.tasks.markupFor(one, monday12, 1);
   const progress = panels.progress.markupFor(one, monday12);
 
-  assert.equal(countOf(tasks, 'class="row"'), 1);
+  assert.equal(tasks.match(/class="row[ "]/g).length, 1);
   assert.equal(countOf(progress, 'class="bar-row"'), 1, 'the card that said No board items are showing yet while the tasks card had a row');
   assert.ok(progress.includes('<span class="count">0/1</span>') && progress.includes('1 OPEN · 0 OVERDUE'));
   assert.equal(progress.includes('class="empty"'), false);
@@ -624,10 +637,9 @@ test('the progress card counts the same rows the tasks card shows: one board tas
   assert.equal(panels.progress.markupFor(pinned, monday12).includes('class="empty"'), true, 'and the progress card has nothing either');
   assert.equal(monday.groupsFor(pinned, monday12).length, 0);
 
-  // for every content, the leads that have a page of the tasks card are the leads that have a bar
+  // for every content, the leads that have tasks are the leads that have a bar
   [contentWith(), contentOf(many(3, 'done').concat(many(3, 'in-progress', { subteam: '[Subteam B]' }), many(1, 'up-next', { subteam: '[Subteam C]', showOnTv: false }))), contentOf([board({ team: '' })])].forEach(content => {
-    const pages = [];
-    for (let page = 1; panels.tasks.hasContent(content, page); page++) pages.push(/data-slat="title">([^<]*)<\/h2>/.exec(panels.tasks.markupFor(content, monday12, page))[1]);
+    const pages = monday.groupsFor(content, monday12).map(group => group.name.toUpperCase() + ' TEAM');
     const bars = Array.from(panels.progress.markupFor(content, monday12).matchAll(/<span class="department">([^<]*)<\/span>/g)).map(match => match[1] + ' TEAM');
     assert.deepEqual(bars, pages);
   });

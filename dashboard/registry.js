@@ -20,6 +20,8 @@
 //   competition  a competition card (core/competition.js). It is not in Panel order or in the
 //             rotation lists of config.js: the Competition tab of Dashboard Settings switches it,
 //             and core/competition.js puts the cards that are due in the large panel's rotation.
+//   older     an older Monday card: it is registered so a saved row keeps working, and the Studio does not offer it
+//             (a saved row that names it plays as the tasks panel, core/screens.js)
 //   monday    a Monday card (core/monday.js). It is not in Panel order and not in the rotation lists of
 //             config.js: the cards are Monday rows of a Screen (core/screens.js). A row names the card and a team,
 //             or both teams for the milestones and progress cards, and plays when the team has board tasks. The
@@ -62,10 +64,15 @@ export const panels = [
   { id: 'competition-district', region: 'grid1', topic: 'competition', competition: true },
   { id: 'competition-last-season', region: 'grid1', topic: 'competition', competition: true },
   { id: 'monday-tasks', region: 'grid1', topic: 'monday', monday: true },
-  { id: 'monday-milestones', region: 'grid1', topic: 'monday', monday: true },
-  { id: 'monday-progress', region: 'grid1', topic: 'monday', monday: true },
-  { id: 'monday-milestones-both', region: 'grid1', topic: 'monday', monday: true },
-  { id: 'monday-progress-both', region: 'grid1', topic: 'monday', monday: true },
+  { id: 'monday-done', region: 'grid1', topic: 'monday', monday: true },
+  { id: 'monday-status-depts', region: 'grid1', topic: 'monday', monday: true },
+  { id: 'monday-overall', region: 'grid1', topic: 'monday', monday: true },
+  { id: 'monday-timeline', region: 'grid1', topic: 'monday', monday: true },
+  { id: 'monday-board', region: 'grid1', topic: 'monday', monday: true },
+  { id: 'monday-milestones', region: 'grid1', topic: 'monday', monday: true, older: true },
+  { id: 'monday-progress', region: 'grid1', topic: 'monday', monday: true, older: true },
+  { id: 'monday-milestones-both', region: 'grid1', topic: 'monday', monday: true, older: true },
+  { id: 'monday-progress-both', region: 'grid1', topic: 'monday', monday: true, older: true },
 
   { id: 'task-counts', region: 'grid2', topic: 'tasks' },
   { id: 'next-event', region: 'grid2', topic: 'events' },

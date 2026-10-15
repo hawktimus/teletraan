@@ -119,7 +119,7 @@ test('a row of the small panel keeps its panel and seconds and never a team, and
   assert.deepEqual(screen.sideRows, [{ panel: 'forecast', seconds: 12 }, { panel: 'task-counts' }]);
 });
 
-test('only a panel that follows the team has a team, and a Monday row needs a team or both', () => {
+test('only a panel that follows the team has a team, and a Monday row needs a team unless its panel is for both teams', () => {
   const screen = screens.tidyScreen({
     mainRows: [
       { panel: 'tasks', team: 'nova' },
@@ -137,7 +137,7 @@ test('only a panel that follows the team has a team, and a Monday row needs a te
     ],
   }, 'original', 'minimal');
 
-  assert.deepEqual(rowsOf(screen.mainRows), ['tasks nova', 'events', 'photo', 'tonight', 'monday-tasks prime', 'monday-milestones both', 'monday-progress nova']);
+  assert.deepEqual(rowsOf(screen.mainRows), ['tasks nova', 'events', 'photo', 'tonight', 'monday-tasks prime', 'monday-tasks nova'], 'a row of an older Monday panel is the tasks panel of its team, one for both teams is dropped, and the same row twice is one');
   assert.deepEqual(config.teamPanels, ['tasks', 'tonight', 'spotlight', 'team-leads', 'roster', 'leadership', 'sponsor-feature', 'custom']);
   config.teamPanels.forEach(id => assert.equal(registry.panels.find(panel => panel.id === id).region, 'grid1', id + ' is a large panel'));
 });
@@ -380,60 +380,63 @@ test('the rows of the large panel are the ones of the Screen of the day, also wh
   clean();
 });
 
-test('a Monday row has a step for each page of the tasks card, one for each of the other cards, and none for a team with no board tasks', () => {
+test('a Monday row is one step with the team, the department and the turn, and a row of an older panel plays as the tasks panel of its team', () => {
   clean();
   const content = contentWith(raw => {
     raw.screens = [doc('original', { mainRows: [
-      { panel: 'monday-tasks', team: 'prime' }, { panel: 'monday-milestones', team: 'prime', seconds: 20 }, { panel: 'monday-progress', team: 'prime' },
+      { panel: 'monday-tasks', team: 'prime', department: 'subteam-b' }, { panel: 'monday-milestones', team: 'prime', seconds: 20 }, { panel: 'monday-progress', team: 'prime' },
       { panel: 'monday-tasks', team: 'nova' },
+      { panel: 'monday-board', team: 'prime' }, { panel: 'monday-board', team: 'prime' }, { panel: 'monday-overall' },
     ] })];
-    raw.tasks = raw.tasks.filter(task => task.team === 'prime'); // a board task with no team is for both teams
   });
   const steps = screens.mainPlaylist(content, mondayNoon);
-  const pagesOfTasks = steps.filter(step => step.panel === 'monday-tasks');
 
-  assert.ok(pagesOfTasks.length >= 2, 'a page for each Team lead entry that has tasks');
-  assert.deepEqual(pagesOfTasks.map(step => step.page), pagesOfTasks.map((step, index) => index + 1));
-  assert.ok(pagesOfTasks.every(step => step.team === 'prime' && step.row === 0));
-  assert.deepEqual(steps.slice(pagesOfTasks.length).map(step => [step.panel, step.team, step.seconds, step.row]), [['monday-milestones', 'prime', 20, 1], ['monday-progress', 'prime', undefined, 2]]);
-  assert.equal(steps.some(step => step.team === 'nova'), false, 'Nova has no board tasks, and its row is left out');
+  assert.deepEqual(steps.map(step => [step.panel, step.team, step.seconds, step.row]), [
+    ['monday-tasks', 'prime', undefined, 0],
+    ['monday-tasks', 'prime', 20, 1],
+    ['monday-tasks', 'nova', undefined, 2],
+    ['monday-board', 'prime', undefined, 3],
+    ['monday-board', 'prime', undefined, 4],
+    ['monday-overall', '', undefined, 5],
+  ]);
+  assert.deepEqual(steps.map(step => step.page), [
+    { team: 'prime', department: 'subteam-b', turn: 1 },
+    { team: 'prime', department: '', turn: 1 },
+    { team: 'nova', department: '', turn: 1 },
+    { team: 'prime', department: '', turn: 1 },
+    { team: 'prime', department: '', turn: 2 },
+    { team: '', department: '', turn: 1 },
+  ]);
 });
 
-test('a Monday row for both teams plays the card for both, and only while two teams have board tasks', () => {
+test('a Monday row for both teams of an older panel is left out, and the panels for both teams take no team', () => {
   clean();
-  const rows = [{ panel: 'monday-milestones', team: 'both' }, { panel: 'monday-progress', team: 'both', seconds: 25 }];
   const content = contentWith(raw => {
-    raw.screens = [doc('original', { mainRows: rows })];
+    raw.screens = [doc('original', { mainRows: [{ panel: 'monday-milestones', team: 'both' }, { panel: 'monday-progress', team: 'both', seconds: 25 }, { panel: 'monday-status-depts', team: 'nova', seconds: 25 }] })];
   });
-  assert.deepEqual(screens.mainPlaylist(content, mondayNoon).map(step => [step.panel, step.team, step.seconds]), [['monday-milestones-both', 'both', undefined], ['monday-progress-both', 'both', 25]]);
-
-  const onlyPrime = contentWith(raw => {
-    raw.screens = [doc('original', { mainRows: rows })];
-    raw.tasks = raw.tasks.filter(task => task.team === 'prime');
-  });
-  assert.deepEqual(screens.mainPlaylist(onlyPrime, mondayNoon), [], 'one team alone has its own cards');
+  assert.deepEqual(screens.mainPlaylist(content, mondayNoon).map(step => [step.panel, step.team, step.seconds]), [['monday-status-depts', '', 25]]);
 });
 
 test('a row for a team that is switched off or is not there is left out, and ?team= leaves out the rows of the other team', () => {
   clean();
-  const mainRows = [{ panel: 'tasks', team: 'prime' }, { panel: 'tasks', team: 'nova' }, { panel: 'tonight', team: 'ghost' }, { panel: 'photo' }, { panel: 'monday-milestones', team: 'both' }];
+  const mainRows = [{ panel: 'tasks', team: 'prime' }, { panel: 'tasks', team: 'nova' }, { panel: 'tonight', team: 'ghost' }, { panel: 'photo' }, { panel: 'monday-overall' }];
   const content = contentWith(raw => {
     raw.screens = [doc('original', { mainRows: mainRows })];
   });
   const names = steps => steps.map(step => step.panel + (step.team ? ' ' + step.team : ''));
 
-  assert.deepEqual(names(screens.mainPlaylist(content, mondayNoon)), ['tasks prime', 'tasks nova', 'photo', 'monday-milestones-both both']);
+  assert.deepEqual(names(screens.mainPlaylist(content, mondayNoon)), ['tasks prime', 'tasks nova', 'photo', 'monday-overall']);
 
   const off = contentWith(raw => {
     raw.screens = [doc('original', { mainRows: mainRows })];
     raw.teams.forEach(team => { if (team.code === 'nova') team.active = false; });
   });
-  assert.deepEqual(names(screens.mainPlaylist(off, mondayNoon)), ['tasks prime', 'photo']);
+  assert.deepEqual(names(screens.mainPlaylist(off, mondayNoon)), ['tasks prime', 'photo', 'monday-overall']);
 
   teamsModule.askForTeam('nova');
-  assert.deepEqual(names(screens.mainPlaylist(content, mondayNoon)), ['tasks nova', 'photo', 'monday-milestones-both both']);
+  assert.deepEqual(names(screens.mainPlaylist(content, mondayNoon)), ['tasks nova', 'photo', 'monday-overall']);
   teamsModule.askForTeam('prime');
-  assert.deepEqual(names(screens.mainPlaylist(content, mondayNoon)), ['tasks prime', 'photo', 'monday-milestones-both both']);
+  assert.deepEqual(names(screens.mainPlaylist(content, mondayNoon)), ['tasks prime', 'photo', 'monday-overall']);
   teamsModule.askForTeam('alternate');
   assert.equal(screens.mainPlaylist(content, mondayNoon).length, 4, 'Alternate mode leaves out nothing');
   clean();

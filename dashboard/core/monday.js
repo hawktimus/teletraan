@@ -9,7 +9,7 @@
 // the Screens (core/screens.js) play for it. mondaySteps below gives the steps of its three cards, one
 // page of the tasks card for each Team lead entry that has tasks, and bothSteps the two cards of both teams.
 
-import { visibleItems } from './content.js';
+import { isVisible, visibleItems } from './content.js';
 import { isFromBoard } from './task-source.js';
 import { hasText } from './text.js';
 
@@ -251,4 +251,185 @@ export function bothSteps(content, codes, now = new Date()) {
   const withRows = codes.filter(code => boardTasksFor(content, now, code).length > 0);
   if (withRows.length < 2) return [];
   return [{ panel: 'monday-milestones-both', show: true }, { panel: 'monday-progress-both', show: true }];
+}
+
+
+// The rules of the Monday panels (docs/monday.md)
+//
+// The Mini writes the one task board into Sanity (deploy/scripts/monday-sync.sh) and every Monday panel
+// asks these functions, so the panels agree on which task is where. A task is a document with a status
+// (up-next, in-progress, in-review, blocked or done), a team code or none (General), the id of its Team
+// lead (subteamId, the department), a priority, dates as plain dates (startDate, dueDate, completedOn),
+// estHours, milestoneIds and a showOnBoard switch that comes from the board. showOnTv is the editors'
+// switch. None of these functions changes what it is given.
+
+export const taskStatuses = ['up-next', 'in-progress', 'in-review', 'blocked', 'done'];
+
+// The words and the order of the five statuses wherever a panel writes them
+export const statusWords = { 'up-next': 'TO DO', 'in-progress': 'IN PROGRESS', 'in-review': 'IN REVIEW', blocked: 'STUCK', done: 'DONE' };
+
+// The tasks a Monday panel may draw, whatever team is on the screen (forTeam says the team): from the board, switched on in Studio (show, showOnTv and the expiry)
+// and on the board (Show on TV is Show), with a department, and not a subitem. A task the Mini wrote
+// before the board had Show on TV has no showOnBoard, and counts as shown. A task with no department
+// (Unassigned is written hidden, with hiddenReason unassigned) never renders.
+export function visibleTasks(content, now = new Date()) {
+  return (Array.isArray(content && content.tasks) ? content.tasks : []).filter(task => {
+    if (!isVisible(task, now) || !isFromBoard(task) || task.showOnBoard === false) return false;
+    if (task.hiddenReason === 'unassigned' || task.isSubitem === true || hasText(task.parentId)) return false;
+
+    return hasText(task.subteamId);
+  });
+}
+
+// The tasks of a team. General (no team) counts for every team, and no code means everything.
+export function forTeam(tasks, code) {
+  if (code === null || code === undefined || code === '') return tasks.slice();
+  return tasks.filter(task => !hasText(task.team) || task.team === code);
+}
+
+// The tasks of a department, which is a Team lead entry given by its id
+export function forDepartment(tasks, subteamId) {
+  return tasks.filter(task => hasText(subteamId) && task.subteamId === subteamId);
+}
+
+// today is a plain date in the time zone of the Look page (todayOf in core/competition.js)
+export function overdue(task, today) {
+  return dueDateOf(task) !== '' && dueDateOf(task) < today && task.status !== 'done';
+}
+
+// The number of the day of a plain date, so that two dates can be subtracted. NaN for anything else.
+export function dayNumber(date) {
+  if (typeof date !== 'string' || !plainDate.test(date)) return NaN;
+
+  const parts = date.split('-').map(Number);
+  return Math.round(Date.UTC(parts[0], parts[1] - 1, parts[2]) / 86400000);
+}
+
+export function plainDateOf(task, name) {
+  return typeof task[name] === 'string' && plainDate.test(task[name]) ? task[name] : '';
+}
+
+function byDate(first, second, name, descending) {
+  const a = plainDateOf(first, name);
+  const b = plainDateOf(second, name);
+  if (a === b) return 0;
+  if (a === '') return 1;
+  if (b === '') return -1;
+  return (a < b ? -1 : 1) * (descending ? -1 : 1);
+}
+
+function group(task) {
+  if (task.status === 'done') return 3;
+  if (task.status === 'up-next') return 2;
+  return task.status === 'blocked' ? 0 : 1;
+}
+
+// In progress, in review and stuck first (stuck first of them), then To Do by priority (high, medium,
+// low, none) and then by the start of the Timeline, and Done last, the one finished last first. Tasks that
+// are the same in all of it stay in the order they came.
+export function rank(tasks) {
+  return tasks
+    .map((task, position) => ({ task: task, position: position }))
+    .sort((first, second) => {
+      const a = first.task;
+      const b = second.task;
+      if (group(a) !== group(b)) return group(a) - group(b);
+      if (group(a) === 3) return byDate(a, b, 'completedOn', true) || first.position - second.position;
+
+      return priorityRank(a) - priorityRank(b) || byDate(a, b, 'startDate', false) || first.position - second.position;
+    })
+    .map(entry => entry.task);
+}
+
+// The hours of a task as the progress counts them: a task with none counts as one hour
+export function hoursOf(task) {
+  return typeof task.estHours === 'number' && isFinite(task.estHours) && task.estHours > 0 ? task.estHours : 1;
+}
+
+// { done, total, unestimated, percent }: the hours of the done tasks over all the hours. unestimated is how many tasks
+// have no hours. percent is a whole number, 0 for no tasks.
+export function progressHours(tasks) {
+  let done = 0;
+  let total = 0;
+  let unestimated = 0;
+
+  tasks.forEach(task => {
+    const hours = hoursOf(task);
+    total += hours;
+    if (task.status === 'done') done += hours;
+    if (!(typeof task.estHours === 'number' && task.estHours > 0)) unestimated += 1;
+  });
+  return { done: done, total: total, unestimated: unestimated, percent: total > 0 ? Math.round((done / total) * 100) : 0 };
+}
+
+// What the Mini wrote for a milestone has the id milestone-monday-<id>, and a task lists the plain <id>
+export function milestoneKey(milestone) {
+  return String(milestone.id || '').replace(/^milestone-monday-/, '');
+}
+
+export function linkedTasks(milestone, tasks) {
+  const key = milestoneKey(milestone);
+  return tasks.filter(task => Array.isArray(task.milestoneIds) && (task.milestoneIds.includes(key) || task.milestoneIds.includes(milestone.id)));
+}
+
+// { percent, daysLeft, done, total } for a milestone: the hours-weighted progress of the tasks that name it
+// and the days from today to its target date (negative when it has passed). A milestone with no tasks
+// is 100 when it is done and 0 when it is not. today is a plain date.
+export function milestoneProgress(milestone, tasks, today) {
+  const linked = linkedTasks(milestone, tasks);
+  const hours = progressHours(linked);
+  const percent = linked.length === 0 ? (milestone.status === 'done' ? 100 : 0) : hours.percent;
+
+  return { percent: percent, daysLeft: dayNumber(milestone.targetDate) - dayNumber(today), done: linked.filter(task => task.status === 'done').length, total: linked.length };
+}
+
+// The next milestones for a team (or all with no code): not done, by target date, the earliest first
+export function nextMilestones(content, code, count = 3) {
+  const list = Array.isArray(content && content.milestones) ? content.milestones : [];
+
+  return list
+    .filter(milestone => milestone.status !== 'done' && (code === null || code === undefined || !hasText(milestone.team) || milestone.team === code))
+    .sort((first, second) => (first.targetDate < second.targetDate ? -1 : first.targetDate > second.targetDate ? 1 : 0))
+    .slice(0, count);
+}
+
+
+// How old the board read is
+
+// How many minutes the Mini reads the boards apart. Dashboard Settings, Monday tab, 5 to 120, 30 when it is not set.
+export const defaultEveryMinutes = 30;
+
+export function everyMinutesOf(content) {
+  const value = content && content.settings ? content.settings.mondayEveryMinutes : undefined;
+  return typeof value === 'number' && isFinite(value) ? Math.min(120, Math.max(5, Math.round(value))) : defaultEveryMinutes;
+}
+
+// Whole minutes since the Mini last read the boards, or null when that is not known
+export function minutesSince(status, now) {
+  const read = status && typeof status.lastSyncAt === 'string' ? Date.parse(status.lastSyncAt) : NaN;
+  return isNaN(read) ? null : Math.max(0, Math.floor((now.getTime() - read) / 60000));
+}
+
+// True when the last read is older than twice the read interval, so a 30 minute setting is stale after an hour.
+// It is also true while Sanity cannot be reached (markUnreachable), and for a board that has never been read.
+// A sample is never stale.
+export function stale(status, now, everyMinutes = defaultEveryMinutes) {
+  if (status && status.sample === true) return false;
+  if (!status || status.unreachable === true) return true;
+
+  const minutes = minutesSince(status, now);
+  return minutes === null || minutes > everyMinutes * 2;
+}
+
+// The words of the amber chip: STALE · 75 MIN, or just STALE when the age is not known
+export function staleWords(status, now) {
+  const minutes = minutesSince(status, now);
+  return minutes === null ? 'STALE' : 'STALE · ' + minutes + ' MIN';
+}
+
+// The content with its Monday status marked as read from the saved copy while Sanity cannot be reached. content.js
+// uses it, so every Monday panel shows the chip at once.
+export function markUnreachable(content) {
+  const status = content && content.monday ? content.monday : { lastSyncAt: '', lastError: '', snapshots: [] };
+  return Object.assign({}, content, { monday: Object.assign({}, status, { unreachable: true }) });
 }

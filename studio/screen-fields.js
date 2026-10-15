@@ -6,6 +6,7 @@
 //                    button that opens them there
 //   TickerInput      E Ticker: the link that opens Tips and News in the sidebar
 //   RowTeamInput     B Main panel: the team of a row, with the choices its panel allows
+//   RowDepartmentInput  B Main panel: the department of a row of the tasks panel, one of the Team leads, beside the team
 //
 // The first three store nothing. The team of a row is the code of a team, Both teams, or nothing.
 // The teams and the settings come from screen-context.js. The words and the plain functions are in
@@ -14,12 +15,12 @@
 // It is written without JSX, so it reads as plain JavaScript:
 // h(tag, props, ...children) is React's createElement.
 
-import { createElement, useContext } from 'react';
-import { set, unset, useFormValue } from 'sanity';
+import { createElement, useContext, useEffect, useState } from 'react';
+import { set, unset, useClient, useFormValue } from 'sanity';
 import { Link } from 'sanity/router';
 import { usePaneRouter } from 'sanity/structure';
 import { ScreenContext } from './screen-context.js';
-import { words, countdownLines, teamTarget, countdownTarget, tipsAndNewsPath } from './screen-parts.js';
+import { words, countdownLines, departmentChoices, leadsQuestion, teamTarget, countdownTarget, tipsAndNewsPath } from './screen-parts.js';
 import { teamChoices } from './screen-panels.js';
 
 const h = createElement;
@@ -139,5 +140,39 @@ export function RowTeamInput(props) {
         h('span', null, choice.label)
       )
     )
+  );
+}
+
+// The department of a row: the Team leads, as a list beside the team. It is stored as the id of the Team lead. The
+// list is read when the row is drawn.
+export function RowDepartmentInput(props) {
+  const client = useClient({ apiVersion: '2025-02-19' });
+  const team = useFormValue(props.path.slice(0, -1).concat('team'));
+  const [leads, setLeads] = useState(null);
+  const current = typeof props.value === 'string' ? props.value : '';
+
+  useEffect(() => {
+    let stopped = false;
+
+    client
+      .fetch(leadsQuestion, {}, { perspective: 'published' })
+      .then(found => {
+        if (!stopped) setLeads(Array.isArray(found) ? found : []);
+      })
+      .catch(() => {
+        if (!stopped) setLeads([]);
+      });
+    return () => {
+      stopped = true;
+    };
+  }, []);
+
+  if (leads === null) return h('p', { style: styles.note }, words.readingDepartments);
+
+  const choices = departmentChoices(leads, typeof team === 'string' ? team : '', current);
+  return h(
+    'select',
+    { id: props.id, value: current, disabled: Boolean(props.readOnly), style: styles.button, onChange: event => props.onChange(event.target.value ? set(event.target.value) : unset()) },
+    choices.map(choice => h('option', { key: choice.value || 'first', value: choice.value }, choice.label))
   );
 }

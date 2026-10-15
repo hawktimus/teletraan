@@ -1,66 +1,41 @@
-// The tasks card of a Monday row: the tasks of one Team lead entry as rows, up to ten, five at a time.
-// The step of the Screen says which entry: page 1 is the first entry that has tasks, page 2 the
-// next, and so on (core/monday.js, mondaySteps). The rows are ranked by priority, then due date, then
-// title, in a mix of done, backlog and in progress tasks (pickRows). With more than five rows the card
-// holds, then the list scrolls up by five rows and holds again (scrollPages, which core/schedule.js reads,
-// and scrollCard in frame.js). A task with Show on TV off never shows (visibleItems, through tasksFor), and
-// only tasks from the board count (boardTasksFor).
+// The tasks panel of a Monday row: the tasks of one team and one department, up to ten, five at a time. The row of
+// the Screen says the team and the department (a Team lead): page is { team, department }. A department of ''
+// is the first one that has tasks, and a number is the page of an older row, the nth department with tasks. Which
+// tasks and in what order are the rules in core/monday.js (visibleTasks, forTeam, forDepartment, rank), and
+// core/monday-views.js works out the rows. With more than five rows the panel holds, then the list scrolls up by
+// five rows and holds again (scrollPages, which core/schedule.js reads, and scrollCard in frame.js). A department
+// with no visible task has nothing to show, and the Screens leave the row out.
 
-import { emptyMarkup } from '../../core/competition-draw.js';
-import { todayOf } from '../../core/competition.js';
-import { dueDateOf, groupsFor, pickRows, pagesOf } from '../../core/monday.js';
-import { departmentHeader, headerMarkup, markerMarkup, noRowsSentence, pageMarkup, priorityMark, rowsWindow, statusChip, teamNameShown } from '../../core/monday-draw.js';
-import { pageTeamName } from '../../core/team-title.js';
-import { escapeHtml, hasText } from '../../core/text.js';
+import { boardEmptyMarkup, boardHeader, chipMarkup, countersMarkup, markerMarkup, pageMarkup, priorityMark, rowsWindow } from '../../core/monday-draw.js';
+import { tasksView } from '../../core/monday-views.js';
+import { escapeHtml } from '../../core/text.js';
 
 export function hasContent(content, page = 1) {
-  return groupsFor(content, new Date())[page - 1] !== undefined;
+  return tasksView(content, new Date(), page) !== null;
 }
 
-// How many pages the card has to hold for: one, and one more for each five rows past the first five
+// How many pages the panel has to hold for: one, and one more for each five rows past the first five
 export function scrollPages(content, page = 1) {
-  const group = groupsFor(content, new Date())[page - 1];
-  return group ? pagesOf(pickRows(group.tasks).length) : 1;
+  const view = tasksView(content, new Date(), page);
+  return view ? view.pages : 1;
 }
 
-// The three numbers under the rows, for the tasks of one lead: how many open tasks are past their due date,
-// how many are open at all (everything that is not done), and how many are done. today is a plain date in
-// the time zone of the Look page.
-export function factsOf(tasks, today) {
-  const open = tasks.filter(task => task.status !== 'done');
-  const late = open.filter(task => dueDateOf(task) !== '' && dueDateOf(task) < today);
-
-  return [
-    { label: 'OVERDUE', value: late.length },
-    { label: 'OPEN', value: open.length },
-    { label: 'DONE', value: tasks.length - open.length },
-  ];
+// A row: the status, the title on one line, who to ask, the due date (with OVERDUE before it when it is past) and the priority
+function rowMarkup(row) {
+  const late = row.overdue ? '<span class="chip chip-overdue">OVERDUE</span>' : '';
+  return `<div class="row${row.overdue ? ' row-overdue' : ''}">${chipMarkup(row.status)}<span class="row-title">${escapeHtml(row.title)}</span><span class="poc">${escapeHtml(row.poc)}</span><span class="due">${late}<span class="due-date">${escapeHtml(row.due)}</span></span>${priorityMark(row.priority)}</div>`;
 }
 
-// A row: the status, the title on one line, the first name of the owner when there is one, and the priority
-function rowMarkup(task) {
-  const owner = hasText(task.contact) ? escapeHtml(task.contact) : '';
-
-  return `<div class="row">${statusChip(task.status)}<span class="row-title">${escapeHtml(task.title)}</span><span class="owner">${owner}</span>${priorityMark(task.priority)}</div>`;
-}
-
-function factsMarkup(facts) {
-  return facts.map(fact => `<div class="fact"><div class="fact-label">${fact.label}</div><div class="fact-number">${fact.value}</div></div>`).join('');
-}
-
-// The page as markup, for the time given and the page of the step. now is a Date.
 export function markupFor(content, now, page = 1) {
-  const group = groupsFor(content, now)[page - 1];
-  if (!group) return pageMarkup('monday-tasks', headerMarkup('TASKS', teamNameShown(), content.monday, now), emptyMarkup(noRowsSentence(content)));
+  const view = tasksView(content, now, page);
+  if (!view) return pageMarkup('monday-tasks', boardHeader('TASKS', '', content, now), boardEmptyMarkup(content));
 
-  const rows = pickRows(group.tasks);
   const inner = `
-      ${rowsWindow(rows.map(rowMarkup))}
-      <div class="facts">${factsMarkup(factsOf(group.tasks, todayOf(content, now)))}</div>
-      ${markerMarkup(rows.length, 'TASKS')}`;
+      ${rowsWindow(view.rows.map(rowMarkup))}
+      ${countersMarkup([{ label: 'OVERDUE', value: view.counts.overdue }, { label: 'OPEN', value: view.counts.open }, { label: 'DONE', value: view.counts.done }])}
+      ${markerMarkup(view.rows.length, 'TASKS', true)}`;
 
-  const header = departmentHeader(group.name, pageTeamName(group.tasks, teamNameShown()), content.monday, now);
-  return pageMarkup('monday-tasks', header, inner, true);
+  return pageMarkup('monday-tasks', boardHeader(view.title, view.team.name, content, now), inner, true);
 }
 
 export function mount(host, content, page = 1) {

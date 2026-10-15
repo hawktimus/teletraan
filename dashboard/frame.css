@@ -610,6 +610,11 @@ html[data-style="cybertron"] .area[data-area="ticker"] .screw { animation-name: 
   transform: translateY(calc(var(--scroll-page, 0) * var(--scroll-step, 0px) * -1));
 }
 
+/* The ring of the Overall progress panel (panels/monday-overall) draws itself in over 600 ms while the page arrives, in
+   full motion only. Its arc is a path 100 long, and the dash it ends with is its percent. */
+[data-motion="full"] .area[data-state="in"] .ring-arc { animation: ring-draw 600ms cubic-bezier(.5, 0, .2, 1) both; }
+@keyframes ring-draw { from { stroke-dasharray: 0 100; } }
+
 
 /* The logo. px in this section means the logo's own 1100 x 884 drawing
    units, not screen pixels: the banner shows it about a fifth of that size.

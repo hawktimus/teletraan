@@ -59,7 +59,13 @@ function test(name, run) {
 }
 
 const at = text => new Date(text); // always written with a Z, so it means the same on every computer
-const sampleRaw = () => JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+// The sample also holds the tasks of the one task board (showOnBoard), which these tests were not written for and which
+// tools/test-monday-panels.mjs uses. They run on the tasks that came before.
+const sampleRaw = () => {
+  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  raw.tasks = raw.tasks.filter(task => task.showOnBoard === undefined);
+  return raw;
+};
 const countOf = (text, piece) => text.split(piece).length - 1;
 const titlesOf = tasks => tasks.map(task => task.title);
 
@@ -125,13 +131,14 @@ const dashes = /[\u2013\u2014]/;
 test('the five cards are panels of the large frame, flagged monday in registry.js, with a script and a stylesheet each, and none is in the rotation lists of config.js', () => {
   const source = read('registry.js');
   cardIds.forEach(id => {
-    assert.ok(source.includes("{ id: '" + id + "', region: 'grid1', topic: 'monday', monday: true },"), id);
+    // the older cards are marked older: they stay registered, and the Studio does not offer them (the panels of the one task board are in tools/test-monday-panels.mjs)
+    assert.ok(source.includes("{ id: '" + id + "', region: 'grid1', topic: 'monday', monday: true" + (id === 'monday-tasks' ? '' : ', older: true') + ' },'), id);
     assert.ok(fs.existsSync(path.join(dashboardFolder, 'panels', id, id + '.js')) && fs.existsSync(path.join(dashboardFolder, 'panels', id, id + '.css')), id);
     assert.ok(!config.defaultSettings.rotation.grid1.some(step => step.panel === id), id + ' is not in a rotation list');
     assert.ok(!read('core/panel-order.js').includes(id), id);
   });
-  assert.equal(countOf(source, 'monday: true'), 5);
-  assert.deepEqual(registry.panels.filter(panel => panel.monday).map(panel => panel.id), cardIds);
+  assert.equal(countOf(source, 'monday: true'), 10);
+  assert.deepEqual(registry.panels.filter(panel => panel.monday).map(panel => panel.id), ['monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board', 'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both']);
   registry.panels.filter(panel => panel.monday).forEach(panel => assert.equal(panel.pages, undefined, panel.id + ' has no fixed pages: the tasks card has one for each lead entry'));
 });
 
@@ -186,10 +193,12 @@ test('tidyMondayStatus keeps the sync time, the last error and one count of open
   assert.equal(monday.tidyMondayStatus({ sample: true }).sample, true);
 });
 
-test('the sample has only board tasks, six for both teams, nine for Prime and six for Nova, all in brackets and short enough for the Studio, and a status with 14 counts that ends at the open tasks', () => {
+test('the sample has only board tasks, the first 21 six for both teams, nine for Prime and six for Nova, all in brackets and short enough for the Studio, and a status with 14 counts that ends at their open tasks', () => {
   const raw = sampleRaw();
-  const boardTasks = raw.tasks.filter(task => task.source === 'monday');
-  assert.equal(boardTasks.length, raw.tasks.length, 'the screen shows no other task');
+  // the tasks of the one task board (showOnBoard, a department by id) come after these and have their tests in tools/test-monday-panels.mjs
+  const boardTasks = raw.tasks.filter(task => task.source === 'monday' && task.showOnBoard === undefined);
+  assert.equal(raw.tasks.every(task => task.source === 'monday'), true, 'the screen shows no other task');
+  assert.equal(boardTasks.length, 21);
   assert.deepEqual(Array.from(new Set(boardTasks.map(task => task.subteam))), ['[Subteam A]', '[Subteam C]', '[Subteam B]', '[Subteam E]', '[Subteam D]', '[Subteam F]']);
   assert.deepEqual([boardTasks.filter(task => task.team === 'prime').length, boardTasks.filter(task => task.team === 'nova').length, boardTasks.filter(task => task.team === undefined).length], [9, 6, 6]);
   const leadsOf = code => Array.from(new Set(boardTasks.filter(task => task.team === code).map(task => task.subteam)));
@@ -255,21 +264,9 @@ test('the due soonest list puts the earliest date first, and equal dates in rank
   assert.deepEqual(titlesOf(monday.dueSoonestFirst(list)), ['sooner', 'soon high', 'soon low', 'late low']);
 });
 
-test('the card ranks the tasks of its page, and a task typed by hand is not one of them', () => {
-  const content = contentOf([
-    board({ title: 'board low', status: 'up-next', priority: 'low' }),
-    board({ title: 'board high', status: 'up-next', priority: 'high' }),
-    { title: 'typed', subteam: '[Subteam A]', status: 'up-next', team: 'prime' },
-    board({ title: 'board med', status: 'up-next', priority: 'medium' }),
-  ]);
-  const html = panels.tasks.markupFor(content, monday12, 1);
-
-  assert.ok(html.indexOf('>board high<') < html.indexOf('>board med<') && html.indexOf('>board med<') < html.indexOf('>board low<'));
-  assert.equal(html.includes('typed'), false, 'the screen shows no task typed by hand');
-  assert.equal(countOf(html, 'class="row"'), 3);
-});
-
-test('a task with Show on TV off, switched off, expired or for the other team never shows, and neither does one typed by hand', () => {
+// The tasks card that these three tests drew was replaced by the tasks panel of the one task board (panels/monday-tasks, which
+// tools/test-monday-panels.mjs and tools/test-monday-acceptance.mjs test). What is left here is what core/monday.js still does for the older cards.
+test('the older cards count a task with Show on TV off, switched off, expired or for the other team, and one typed by hand, as no task of the board', () => {
   const content = contentOf([
     board({ title: 'shown' }),
     board({ title: 'off tv', showOnTv: false }),
@@ -279,15 +276,7 @@ test('a task with Show on TV off, switched off, expired or for the other team ne
     { title: 'pinned', subteam: '[Subteam A]', status: 'up-next' },
   ]);
 
-  const html = panels.tasks.markupFor(content, monday12, 1);
-  assert.ok(html.includes('>shown<'));
-  ['off tv', 'off', 'expired', 'nova only', 'pinned'].forEach(title => assert.equal(html.includes('>' + title + '<'), false, title));
-
-  onTeamScreen('nova', () => {
-    const nova = panels.tasks.markupFor(content, monday12, 1);
-    assert.ok(nova.includes('>nova only<'), 'a task for Nova shows on the Nova screen');
-    ['shown', 'pinned'].forEach(title => assert.equal(nova.includes('>' + title + '<'), false, title));
-  });
+  assert.deepEqual(titlesOf(monday.boardTasksFor(content, monday12)), ['shown']);
   assert.equal(monday.boardTasksFor(content, monday12, 'nova').length, 1, 'the question can be asked about a team that is not on the screen');
   assert.equal(monday.tasksFor(content, monday12).length, 1, 'the reader drops the task typed by hand, so only the one shown is left for Prime');
 });
@@ -302,10 +291,6 @@ test('there is one page for each lead entry that has tasks, in the order of the 
   ], ['[Subteam A]', '[Subteam B]', '[Subteam C]', '[Subteam D]', '[Subteam E]']);
 
   assert.deepEqual(monday.groupByLead(monday.tasksFor(content, monday12), monday.leadEntries(content, monday12)).map(group => group.name), ['[Subteam A]', '[Subteam C]']);
-  assert.equal(panels.tasks.hasContent(content, 1) && panels.tasks.hasContent(content, 2), true);
-  assert.equal(panels.tasks.hasContent(content, 3), false);
-  assert.ok(panels.tasks.markupFor(content, monday12, 1).includes('>a task<'));
-  assert.ok(panels.tasks.markupFor(content, monday12, 2).includes('>c task<'));
   assert.deepEqual(monday.mondaySteps(content, 'prime'), [
     { panel: 'monday-tasks', show: true, page: 1 },
     { panel: 'monday-tasks', show: true, page: 2 },
@@ -329,57 +314,21 @@ test('a lead entry that is switched off, expired, for the other team, or has the
   assert.deepEqual(monday.leadEntries(content, monday12).map(entry => entry.name), ['[Subteam A]']);
 });
 
-test('the header reads the department and TEAM, the name of the team is in a chip, and tasks for both teams have no chip', () => {
-  const content = contentOf([board({ title: 'a', subteam: 'Build' }), board({ title: 'b', subteam: 'Electrical' }), board({ title: 'c', subteam: 'Safety Team' })], ['Build', 'Electrical', 'Safety Team']);
-  const chipOf = html => /<span class="team-chip">([^<]*)<\/span>/.exec(html)[1];
-
-  assert.deepEqual([1, 2, 3].map(page => titleOf(panels.tasks.markupFor(content, monday12, page))), ['BUILD TEAM', 'ELECTRICAL TEAM', 'SAFETY TEAM']);
-  assert.deepEqual([1, 2, 3].map(page => chipOf(panels.tasks.markupFor(content, monday12, page))), ['PRIME', 'PRIME', 'PRIME']);
-  assert.equal(draw.teamNameShown(), 'PRIME');
-
-  const nova = contentOf([board({ title: 'a', subteam: 'Build', team: 'nova' })], ['Build']);
-  onTeamScreen('nova', () => assert.equal(chipOf(panels.tasks.markupFor(nova, monday12, 1)), 'NOVA'));
-
-  const shared = contentOf([board({ title: 'a', subteam: 'Build', team: '' })], ['Build']);
-  assert.equal(panels.tasks.markupFor(shared, monday12, 1).includes('team-chip'), false, 'a board task for both teams makes a page for both, with no chip');
-  assert.ok(panels.tasks.markupFor(content, monday12, 1).includes('<h2 class="title" data-slat="title">BUILD TEAM</h2>'), 'a name is never markup, and the title is plain text');
+test('the header of an older card reads the department and TEAM, a name is never markup, and the dot is a middle dot', () => {
   assert.ok(draw.departmentHeader('<b>x', 'PRIME', null, monday12).includes('&lt;B&gt;X TEAM'), 'a name is never markup');
   assert.equal(dashes.test(draw.departmentHeader('Build', 'PRIME', { lastSyncAt: '2026-10-12T15:56:00Z' }, monday12)), false, 'the dot is a middle dot, and no dash is used');
+  assert.equal(draw.teamNameShown(), 'PRIME');
 });
 
-test('the numbers under the columns count the lead\'s open tasks, the open tasks that are past due, and the done ones', () => {
-  const tasks = [
-    board({ status: 'up-next', dueDate: '2026-10-11' }),
-    board({ status: 'in-progress', dueDate: '2026-10-12' }),
-    board({ status: 'in-progress', dueDate: '2026-10-01' }),
-    board({ status: 'blocked' }),
-    board({ status: 'done', dueDate: '2026-09-01' }),
-    board({ status: 'up-next' }),
-  ];
-  assert.deepEqual(panels.tasks.factsOf(tasks, '2026-10-12'), [{ label: 'OVERDUE', value: 2 }, { label: 'OPEN', value: 5 }, { label: 'DONE', value: 1 }]);
-  assert.deepEqual(panels.tasks.factsOf([], '2026-10-12').map(fact => fact.value), [0, 0, 0]);
-
-  const html = panels.tasks.markupFor(contentOf(tasks), monday12, 1);
-  assert.ok(html.includes('<div class="fact-label">OVERDUE</div><div class="fact-number">2</div>'));
-});
-
-test('a card with no tasks says so in one plain sentence that says why', () => {
+test('an older card with no tasks says so in one plain sentence that says why', () => {
   const content = contentOf([]);
-  const html = panels.tasks.markupFor(content, monday12, 1);
-
-  assert.ok(html.includes('<p class="empty">No board is chosen yet.</p>'));
-  assert.equal(titleOf(html), 'TASKS');
-  assert.equal(panels.tasks.hasContent(content, 1), false);
-  assert.equal(countOf(html, 'class="row"'), 0);
+  assert.equal(draw.noRowsSentence(content), 'No board is chosen yet.');
 
   const chosen = contentOf([], null, raw => { raw.settings.mondayBoards = [{ boardId: '[board]' }]; delete raw.monday; });
-  assert.ok(panels.tasks.markupFor(chosen, monday12, 1).includes('<p class="empty">Waiting for the first sync from the board.</p>'));
+  assert.equal(draw.noRowsSentence(chosen), 'Waiting for the first sync from the board.');
   const synced = contentOf([], null, raw => { raw.settings.mondayBoards = [{ boardId: '[board]' }]; });
-  assert.ok(panels.tasks.markupFor(synced, monday12, 1).includes('<p class="empty">Nothing on the chosen boards is showing yet.</p>'));
+  assert.equal(draw.noRowsSentence(synced), 'Nothing on the chosen boards is showing yet.');
 });
-
-
-// The milestones card
 
 test('a due date is in this week, next week or later, counting weeks from Monday, and a date before this week is in this week', () => {
   const week = panels.milestones.weekIndexOf;
@@ -709,7 +658,8 @@ test('a team has the Monday cards when it has board tasks that show on the TV, a
   assert.deepEqual(monday.mondaySteps(content, 'prime', monday12), steps);
 });
 
-test('the Monday rows of a team with board rows have a page of the tasks card for each lead entry that has tasks, and every step is one the screen can show', () => {
+// The Screens do not use these steps any more: a Monday row is one step and its panel says whether it has anything to show (core/screens.js)
+test('the older steps of a team with board rows have a page of the tasks card for each lead entry that has tasks, and every step is a panel of the large frame', () => {
   const content = contentWith();
   const steps = monday.mondaySteps(content, 'prime');
 
@@ -721,10 +671,8 @@ test('the Monday rows of a team with board rows have a page of the tasks card fo
     const entry = registry.panels.filter(panel => panel.id === step.panel)[0];
     assert.ok(entry && entry.region === 'grid1', step.panel + ' is a panel of the large frame');
     assert.equal(step.show, true);
-    assert.ok(step.page === undefined || panels.tasks.hasContent(content, step.page), step.panel + ' ' + step.page + ' has a lead entry');
     assert.ok(typeof panels[step.panel.replace('monday-', '')].mount === 'function');
   });
-  assert.equal(panels.tasks.hasContent(content, 7), false, 'and there is no page past the last');
 });
 
 
@@ -757,7 +705,7 @@ const pixels = (rule, property) => Number(new RegExp('(?:^|[;\\s])' + property +
 // The sizes under 44px that the order for the Monday cards sets, and only these. The status of a row is a colored
 // label and not text to read, the first name of the owner is 40, and the labels of the numbers and of a department are 36. The date
 // in a cell of the milestones card is 36 as well, muted like the date of a legend row of the season timeline.
-const smaller = { '.monday-tasks .status': 30, '.monday-tasks .owner': 40, '.monday-tasks .fact-label': 36, '.monday .department': 36, '.monday-milestones .milestone-lead': 36, '.monday-milestones .cell-date': 36 };
+const smaller = { '.monday .department': 36, '.monday .stale-chip': 30, '.monday .chip': 30, '.monday .poc': 40, '.monday .fact-label': 36, '.monday .legend': 36, '.monday-tasks .due': 36, '.monday-tasks .chip-overdue': 30, '.monday-milestones .milestone-lead': 36, '.monday-milestones .cell-date': 36 };
 
 test('nothing on a card is smaller than 44px except the sizes the order sets, no line is thinner than 3px, and the stylesheets have no animation, blur or shadow', () => {
   assert.equal(tokens['size-label'], 44);
@@ -800,7 +748,7 @@ test('nothing on a card is smaller than 44px except the sizes the order sets, no
   assert.equal(/style="/.test(read('core/monday-draw.js')), false);
 });
 
-test('the tasks card fits the large panel: five rows of 84 and the numbers inside its body, which is clear of the frame and the cut corner', async () => {
+test('the tasks panel fits the large panel: five rows of 84 and the numbers inside its body, which is clear of the frame and the cut corner', async () => {
   const shared = rulesOf(read('monday.css'));
   const rules = rulesOf(read('panels/monday-tasks/monday-tasks.css'));
   const body = shared['.monday .body'];
@@ -815,26 +763,28 @@ test('the tasks card fits the large panel: five rows of 84 and the numbers insid
   assert.equal(pixels(shared['.monday .rows-window'], 'height'), 5 * row);
   assert.equal(pixels(shared['.monday'], '--scroll-step'), 5 * row, 'a step of the list is five rows');
 
-  // a row: the status 236 by 44, the title, the owner of 200 at the most and the priority of 36, with 16 between
+  // a row of the tasks panel of the one task board: the chip 262 by 48, the title, who to ask (140), the due date (290) and the
+  // priority of 36, with 16 between. The sizes are the order's, so the title has what is left of the body
   const gap = pixels(rules['.monday-tasks .row'], 'gap');
-  const title = pixels(body, 'width') - pixels(rules['.monday-tasks .status'], 'width') - pixels(rules['.monday-tasks .owner'], 'max-width') - pixels(rules['.monday-tasks .priority'], 'width') - 3 * gap;
-  assert.deepEqual([pixels(rules['.monday-tasks .status'], 'width'), pixels(rules['.monday-tasks .status'], 'height')], [236, 44]);
-  assert.ok(title >= 550, 'the title has ' + title + 'px at least, which is 20 letters at 52px');
+  const chip = rulesOf(read('monday.css'))['.monday .chip'];
+  const title = pixels(body, 'width') - pixels(chip, 'width') - pixels(rules['.monday-tasks .poc'], 'width') - pixels(rules['.monday-tasks .due'], 'width') - pixels(rules['.monday-tasks .priority'], 'width') - 4 * gap;
+  assert.deepEqual([pixels(chip, 'width'), pixels(chip, 'height')], [262, 48]);
+  assert.ok(title >= 300, 'the title has ' + title + 'px at least');
   assert.equal(fontOf(rules['.monday-tasks .row-title']).size, 52);
-  assert.ok(fontOf(rules['.monday-tasks .status']).line <= 44);
-  assert.ok(236 >= textWidth('IN PROGRESS', 700, 30) + 12, 'IN PROGRESS fits its label with 6px each side');
+  assert.ok(fontOf(chip).line <= 48);
+  assert.ok(262 >= textWidth('IN PROGRESS', 700, 30) + 12, 'IN PROGRESS fits its label with 6px each side');
 
   // the numbers are under the rows and end inside the body, and the page marker is at the right
   const factsTop = pixels(rules['.monday-tasks .facts'], 'top');
-  const factsHeight = fontOf(rules['.monday-tasks .fact-label']).line + fontOf(rules['.monday-tasks .fact-number']).line;
+  const sharedFact = shared['.monday .fact-number'];
   assert.ok(factsTop >= 5 * row, 'the numbers are under the rows');
-  assert.ok(factsTop + factsHeight <= pixels(body, 'height'), 'and end inside the body');
-  assert.equal(fontOf(rules['.monday-tasks .fact-number']).size, 72);
-  assert.equal(fontOf(rules['.monday-tasks .fact-label']).size, 36);
+  assert.ok(factsTop + fontOf(sharedFact).line <= pixels(body, 'height'), 'and end inside the body');
+  assert.equal(fontOf(sharedFact).size, 72);
+  assert.equal(fontOf(shared['.monday .fact-label']).size, 36);
 
-  const labelsWidth = ['OVERDUE', 'OPEN', 'DONE'].map(label => 16 + 4 + Math.max(textWidth(label, 600, 36), textWidth('100', 700, 72)));
-  const factsRight = labelsWidth.reduce((sum, width) => sum + width, 0) + 2 * pixels(rules['.monday-tasks .facts'], 'gap');
-  const markerLeft = pixels(body, 'width') - pixels(shared['.monday .marker'], 'right') - textWidth('1 OF 2 · 10 TASKS', 600, 44);
+  const labelsWidth = ['OVERDUE', 'OPEN', 'DONE'].map(label => 16 + 4 + textWidth('88', 700, 72) + 12 + textWidth(label, 600, 36));
+  const factsRight = labelsWidth.reduce((sum, width) => sum + width, 0) + 2 * pixels(shared['.monday .facts'], 'gap');
+  const markerLeft = pixels(body, 'width') - pixels(shared['.monday .marker'], 'right') - textWidth('1 OF 2', 600, 44);
   assert.ok(factsRight <= markerLeft, 'the numbers (' + Math.round(factsRight) + ') end before the page marker (' + Math.round(markerLeft) + ')');
 
   // the cut corner at the bottom right of the frame runs from (1148, 640) to (1068, 704): the marker is clear of it
@@ -979,7 +929,11 @@ test('every class a card writes has a rule in its own stylesheet or in monday.cs
   // the page, the double slash, the status marks and the chip with the name of a team are drawn by the screen's own stylesheets
   const shared = ['page', 'double-slash', 'monday', 'mark', 'outlined', 'cut', 'mark-up-next', 'mark-in-progress', 'mark-done', 'mark-blocked', 'team-chip'];
   const used = new Set();
-  const contents = [contentWith(), contentOf([board({ priority: 'high', contact: 'Sam', dueDate: '2026-10-05' })]), contentOf([]), contentWith(raw => { raw.monday.snapshots = []; })];
+  // the tasks panel of the one task board draws tasks that name a department by id (subteamId), so two of those are here as well
+  const withIds = contentWith(raw => {
+    raw.tasks = [board({ priority: 'high', contact: 'Sam', dueDate: '2026-10-05', subteamId: 'subteam-a', status: 'blocked' }), board({ status: 'done', completedOn: '2026-10-01', subteamId: 'subteam-a' }), board({ priority: 'medium', dueDate: '2026-10-30', subteamId: 'subteam-a' })];
+  });
+  const contents = [contentWith(), contentOf([board({ priority: 'high', contact: 'Sam', dueDate: '2026-10-05' })]), contentOf([]), contentWith(raw => { raw.monday.snapshots = []; }), withIds];
   cardNames.forEach(name => {
     const own = new Set();
     contents.forEach(content => [1, 2].forEach(page => {
@@ -994,7 +948,7 @@ test('every class a card writes has a rule in its own stylesheet or in monday.cs
       assert.ok(new RegExp('\\.' + token + '(?![\\w-])').test(css), 'monday-' + name + '.css and monday.css have no rule for ' + token);
     });
   });
-  assert.ok(used.has('status') && used.has('seg') && used.has('empty') && used.has('row-title') && used.has('marker') && used.size > 40);
+  assert.ok(used.has('chip') && used.has('seg') && used.has('empty') && used.has('row-title') && used.has('marker') && used.size > 40);
 
   const alone = [];
   sheets.forEach(file => {

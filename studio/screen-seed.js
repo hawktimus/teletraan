@@ -4,7 +4,7 @@
 // before anyone opens Studio.
 //
 // The main panel rows come in this order: for each active team, in order, the team-specific large
-// panels as rows with that team, then the three Monday rows of that team; and after the last
+// panels as rows with that team, then three Monday rows of that team (tasks, done and board); and after the last
 // team, the large panels that are for both teams, with no team. Seconds carry over, and a row with
 // none has none. A panel that is in the Panel order twice has two rows. A row that was switched
 // off in the Panel order is left out: a row of a Screen has no switch, and it would start to show.
@@ -19,7 +19,7 @@
 //
 // Plain functions only, so that tools/test-screen-seed.mjs can run them with node.
 
-import { largePanels, smallPanels, mondayPanels, teamSpecificPanels, idsOf } from './screen-panels.js';
+import { largePanels, smallPanels, seededMondayPanels, teamSpecificPanels, idsOf } from './screen-panels.js';
 import { screenStyles } from './screen-ids.js';
 
 const largeIds = idsOf(largePanels);
@@ -66,7 +66,7 @@ export function seedRows(rotation, teamCodes) {
     large.filter(step => teamSpecificPanels.indexOf(step.panel) !== -1).forEach(step => {
       mainRows.push(Object.assign({ panel: step.panel, team: code }, secondsOf(step)));
     });
-    mondayPanels.forEach(panel => mainRows.push({ panel: panel.value, team: code }));
+    seededMondayPanels.forEach(panel => mainRows.push({ panel: panel, team: code }));
   });
   large.filter(step => teamSpecificPanels.indexOf(step.panel) === -1).forEach(step => {
     mainRows.push(Object.assign({ panel: step.panel }, secondsOf(step)));

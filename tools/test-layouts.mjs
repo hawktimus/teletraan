@@ -2798,19 +2798,27 @@ Object.keys(smallTextOf).forEach(style => smallTextOf[style].push(photoCredit));
 // and the build stamp of ?debug=1, 20 px, the one size the order for the version on the wall allows below the rest
 Object.keys(smallTextOf).forEach(style => smallTextOf[style].push({ file: 'base.css', selector: '.build-stamp', size: 20 }));
 
-// The Monday cards and the season timeline have the sizes under 44 px that the order for them sets, in every style: the
-// status of a row at 30 (a colored label), the first name of the owner at 40, the labels of the numbers and of a department
-// at 36, the city and the day in a row of the timeline's legend at 36, and the department and the date in a row of the
-// milestones card at 36
+// The Monday panels and the season timeline have the sizes under 44 px that the order for them sets, in every style: the
+// chips at 30 (the status of a row, the count of a column, STALE and OVERDUE), the first name of who to ask at 40, the labels
+// of the numbers, of a department and of the legend at 36, the weeks and TODAY of the Monday timeline at 28, and
+// the other labels the order names for the board and the overall progress (26 to 40, listed here). The city and the
+// day in a row of the season timeline's legend are 36, and the department and the date in a row of the milestones card
+// (an older card, still registered) are 36
+const mondaySmall = (file, entries) => Object.keys(entries).map(selector => ({ file: file, selector: selector, size: entries[selector] }));
 const orderSmall = [
   { file: 'monday.css', selector: '.monday .department', size: 36 },
-  { file: 'panels/monday-tasks/monday-tasks.css', selector: '.monday-tasks .status', size: 30 },
-  { file: 'panels/monday-tasks/monday-tasks.css', selector: '.monday-tasks .owner', size: 40 },
-  { file: 'panels/monday-tasks/monday-tasks.css', selector: '.monday-tasks .fact-label', size: 36 },
   { file: 'panels/competition-timeline/competition-timeline.css', selector: '.competition-timeline .where', size: 36 },
   { file: 'panels/monday-milestones/monday-milestones.css', selector: '.monday-milestones .milestone-lead', size: 36 },
   { file: 'panels/monday-milestones/monday-milestones.css', selector: '.monday-milestones .cell-date', size: 36 },
-];
+].concat(
+  mondaySmall('monday.css', { '.monday .chip': 30, '.monday .stale-chip': 30, '.monday .poc': 40, '.monday .fact-label': 36, '.monday .legend': 36 }),
+  mondaySmall('panels/monday-tasks/monday-tasks.css', { '.monday-tasks .due': 36, '.monday-tasks .chip-overdue': 30 }),
+  mondaySmall('panels/monday-done/monday-done.css', { '.monday-done .date': 36 }),
+  mondaySmall('panels/monday-status-depts/monday-status-depts.css', { '.monday-status-depts .share': 40 }),
+  mondaySmall('panels/monday-overall/monday-overall.css', { '.monday-overall .hours-of': 32, '.monday-overall .milestone-name': 40, '.monday-overall .milestone-date': 32, '.monday-overall .milestone-days': 36, '.monday-overall .milestones-head': 36, '.monday-overall .hours': 40 }),
+  mondaySmall('panels/monday-timeline/monday-timeline.css', { '.monday-timeline .week': 28, '.monday-timeline .dept': 36, '.monday-timeline .bar text': 32, '.monday-timeline .today-label': 28, '.monday-timeline .gamedrop-label': 28 }),
+  mondaySmall('panels/monday-board/monday-board.css', { '.monday-board .column-name': 34, '.monday-board .count': 30, '.monday-board .card-department': 28, '.monday-board .card-title': 40, '.monday-board .card-poc': 32, '.monday-board .stuck-tag': 26, '.monday-board .more': 30 })
+);
 Object.keys(smallTextOf).forEach(style => { smallTextOf[style] = smallTextOf[style].concat(orderSmall); });
 
 function checkStylesheetsOf(style) {

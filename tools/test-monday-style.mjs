@@ -70,7 +70,13 @@ function test(name, body) {
 
 // The content: the sample, with the Screens it has, every day of the week on Original
 
-const sampleRaw = () => JSON.parse(fs.readFileSync(path.join(dashboardFolder, 'data/sample/content.json'), 'utf8'));
+// The sample also holds the tasks of the one task board (showOnBoard), which these tests were not written for and which
+// tools/test-monday-panels.mjs uses. They run on the tasks that came before.
+const sampleRaw = () => {
+  const raw = JSON.parse(fs.readFileSync(path.join(dashboardFolder, 'data/sample/content.json'), 'utf8'));
+  raw.tasks = raw.tasks.filter(task => task.showOnBoard === undefined);
+  return raw;
+};
 function contentWith(change) {
   const raw = sampleRaw();
   raw.settings.countdown = { kickoffLabel: 'KICKOFF IN', kickoff: '2027-01-09T17:00:00.000Z', rolloutLabel: 'ROLLOUT IN', rollout: '' };
@@ -127,11 +133,11 @@ const step = (panel, team) => ({ panel: panel, show: true, team: team || '' });
 
 // The cards and the style
 
-test('the Monday cards are the five panels the registry flags, and the rows name the three of a team', () => {
+test('the Monday cards are the six panels of the task board and the four older ones the registry flags, and a team is seeded with three rows', () => {
   const cards = registry.panels.filter(panel => panel.monday).map(panel => panel.id);
-  assert.deepEqual(cards, ['monday-tasks', 'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both']);
-  assert.deepEqual(config.mondayRows, cards.slice(0, 3));
-  assert.deepEqual(Object.values(config.mondayBothCards), cards.slice(3));
+  assert.deepEqual(cards, ['monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board', 'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both']);
+  assert.deepEqual(config.mondayRows, ['monday-tasks', 'monday-done', 'monday-board']);
+  assert.deepEqual(config.mondayOldPanels, cards.slice(6));
   cards.forEach(id => assert.equal(screens.isMondayPanel(id), true, id));
   ['tasks', 'events', 'photo', 'forecast', 'no-such-panel'].forEach(id => assert.equal(screens.isMondayPanel(id), false, id));
 });

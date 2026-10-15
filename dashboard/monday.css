@@ -49,6 +49,20 @@
 html[data-layout="bar"] .monday .tag-with-chip .ago { display: inline; }
 .monday .tag .double-slash { flex: none; }
 
+/* The panels of the task board (core/monday-draw.js, boardHeader): the words of the header that do not fit beside
+   the chip of a header 1152 wide are shown only in the bar layout, which has the room. The amber chip says the
+   board is stale. Its 30px text is the size of every chip. */
+.monday .ago-wide { display: none; }
+html[data-layout="bar"] .monday .ago-wide { display: inline; }
+.monday .stale-chip {
+  flex: none;
+  padding: 0 14px;
+  white-space: nowrap;
+  color: var(--ground);
+  background: var(--stale);
+  font: 700 30px/44px var(--font-display);
+}
+
 /* The body is 1104 x 544, 24px in from the frame and 132px down. The rows end 420px down and what is
    under them stays clear of the cut corner at the bottom right. */
 .monday .body {
@@ -126,6 +140,9 @@ html[data-layout="bar"] .monday .body { width: calc(var(--bar-area-width) - 48px
 }
 .monday[data-scroll-page="1"] .place-1,
 .monday[data-scroll-page="2"] .place-2 { display: block; }
+/* The count of rows after the page of the tasks panel of the one task board, where the panel is wide enough for it */
+.monday .place-more { display: none; }
+html[data-layout="bar"] .monday .place-more { display: inline; }
 
 /* The name of a department in a row, in the label color of the team, 330px wide and cut off with an ellipsis
    if it is longer. PROGRAMMING and ELECTRICAL fit at this size. */
@@ -155,3 +172,72 @@ html[data-layout="bar"] .monday .body { width: calc(var(--bar-area-width) - 48px
 .monday .team-tag-nova { background: var(--nova-tag); }
 /* The room of a label for a row with no team, when other rows of the card have one */
 .monday .team-tag-blank { background: none; }
+
+
+/* The panels of the one task board (core/monday-views.js says what they draw). They share the five status colors, the
+   numbers along the bottom, the legend and the first name of who to ask. A status chip and the squares of the legend
+   are the same colors. In review is the gold that the Prime tag has, and stuck is the red. The 30px text of a chip is
+   the one size under 44px that a chip has, and the word is there for anyone who cannot tell the colors apart. */
+.monday .chip {
+  flex: none;
+  box-sizing: border-box;
+  width: 262px;
+  height: 48px;
+  text-align: center;
+  color: var(--ground);
+  font: 700 30px/48px var(--font-display);
+}
+.monday .chip-up-next { background: var(--status-next); }
+.monday .chip-in-progress { background: var(--status-progress); }
+.monday .chip-in-review { background: var(--prime-tag); }
+.monday .chip-blocked { background: var(--danger); }
+.monday .chip-done { background: var(--status-done); }
+
+.monday .poc {
+  flex: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--lilac);
+  font: 500 40px/48px var(--font-text);
+}
+
+/* The numbers along the bottom: a 72px number and its word beside it, each with a rule at its left. The top is in the
+   stylesheet of the panel. */
+.monday .facts {
+  position: absolute;
+  left: 0;
+  display: flex;
+  gap: 20px;
+}
+.monday .fact {
+  box-sizing: border-box;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding-left: 16px;
+  border-left: 4px solid var(--yellow);
+}
+.monday .fact-number { font: 700 72px/76px var(--font-display); }
+.monday .fact-label {
+  color: var(--yellow);
+  font: 600 36px/40px var(--font-display);
+}
+
+/* The five statuses as a legend: a square and the word, at 36px like the other labels */
+.monday .legend {
+  display: flex;
+  gap: 24px;
+  white-space: nowrap;
+  font: 600 36px/36px var(--font-display);
+}
+.monday .key {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.monday .swatch {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+}

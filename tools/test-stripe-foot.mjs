@@ -161,8 +161,20 @@ const mondayBody = style => {
   const top = pixels(valueIn(style, sheets.monday, '.monday .body', 'top'));
   return { top: top, height: pixels(valueIn(style, sheets.monday, '.monday .body', 'height')) };
 };
+const factNumber = () => lineOf(rule(sheets.monday, '.monday .fact-number').font);
+// The panels of the one task board (docs/monday.md) are in the same body. The numbers of the tasks, done and overall panels are
+// under their rows, the legend and the age of the status panel are at its foot, the timeline is its svg (40 over the rows, six rows of 72
+// and 24 for TODAY, which is what the script draws) and its legend, and the board is its head and two cards in each column
 const mondayLowest = {
-  'monday-tasks': (style, body) => body.top + pixels(valueIn(style, panelCss('monday-tasks'), '.monday-tasks .facts', 'top')) + lineIn(style, panelCss('monday-tasks'), '.monday-tasks .fact-label') + lineIn(style, panelCss('monday-tasks'), '.monday-tasks .fact-number'),
+  'monday-tasks': (style, body) => body.top + pixels(valueIn(style, panelCss('monday-tasks'), '.monday-tasks .facts', 'top')) + factNumber(),
+  'monday-done': (style, body) => body.top + pixels(valueIn(style, panelCss('monday-done'), '.monday-done .facts', 'top')) + factNumber(),
+  'monday-status-depts': (style, body) => body.top + Math.max(pixels(rule(panelCss('monday-status-depts'), '.monday-status-depts .legend').top) + lineOf(rule(sheets.monday, '.monday .legend').font), pixels(rule(panelCss('monday-status-depts'), '.monday-status-depts .age').top) + lineOf(rule(panelCss('monday-status-depts'), '.monday-status-depts .age').font)),
+  'monday-overall': (style, body) => body.top + pixels(valueIn(style, panelCss('monday-overall'), '.monday-overall .facts', 'top')) + factNumber(),
+  'monday-timeline': (style, body) => body.top + (40 + 6 * 72 + 24) + lineOf(rule(sheets.monday, '.monday .legend').font),
+  'monday-board': (style, body) => {
+    const css = panelCss('monday-board');
+    return body.top + pixels(rule(css, '.monday-board .column-head').height) + pixels(rule(css, '.monday-board .column-head')['margin-bottom']) + 2 * (pixels(rule(css, '.monday-board .card').height) + 14) + lineOf(rule(css, '.monday-board .more').font);
+  },
   'monday-milestones': (style, body) => body.top + pixels(valueIn(style, panelCss('monday-milestones'), '.monday-milestones .more', 'top')) + lineOf(rule(panelCss('monday-milestones'), '.monday-milestones .more').font),
   'monday-progress': (style, body) => body.top + pixels(valueIn(style, panelCss('monday-progress'), '.monday-progress .totals', 'top')) + lineOf(rule(panelCss('monday-progress'), '.monday-progress .totals').font),
   'monday-milestones-both': (style, body) => body.top + pixels(rule(sheets.monday, '.monday .rows-window').height),

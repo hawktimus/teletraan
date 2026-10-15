@@ -12,8 +12,9 @@
 //   E Ticker      a link to Tips and News. The ticker has no settings on the Screen
 //
 // A row of the main panel names a panel and, for a panel that is for one team, the team: a team
-// code, Both teams (Milestones and Progress only) or nothing, which keeps the team that is on the
-// screen. The screen swaps when the team of the next row is another. The rows are filled once from
+// code or nothing, which keeps the team that is on the screen. A row of the Monday tasks panel also names a
+// department, one of the Team leads (department). Status by department and Overall progress have neither.
+// The screen swaps when the team of the next row is another. The rows are filled once from
 // the Panel order of Dashboard Settings the first time the Screen is opened (screen-seed.js).
 //
 // The starting values are the same as defaultScreen in dashboard/config.js, and check-schemas.mjs
@@ -21,8 +22,8 @@
 
 import { defineType, defineField, defineArrayMember } from 'sanity';
 import { ScreenInput } from '../screen-input.js';
-import { BannerTeamInput, CountdownInput, TickerInput, RowTeamInput } from '../screen-fields.js';
-import { largePanels, smallPanels, mondayPanels, panelTitle, teamKindOf, teamProblem, teamWord } from '../screen-panels.js';
+import { BannerTeamInput, CountdownInput, TickerInput, RowTeamInput, RowDepartmentInput } from '../screen-fields.js';
+import { largePanels, smallPanels, mondayPanels, panelTitle, takesDepartment, teamKindOf, teamProblem, teamWord } from '../screen-panels.js';
 import { screenStyles, screenTitles, styleOfScreenId } from '../screen-ids.js';
 
 // The letters of the map, in order. The names are the ones in letterGroups in screen-map.js.
@@ -76,25 +77,34 @@ const mainRow = defineArrayMember({
   type: 'object',
   title: 'Row',
   fields: [
-    panelField(largePanels.concat(mondayPanels), 'Which panel this row plays in the main panel. The Monday rows are the cards from the Monday boards.'),
+    panelField(largePanels.concat(mondayPanels), 'Which panel this row plays. Put Monday: Board by team in two rows in a row and the second shows cards three and four.'),
     defineField({
       name: 'team',
       title: 'Team',
       type: 'string',
-      description: 'Leave blank to keep the team on the screen. A Monday row needs a team, or Both teams for Milestones and Progress.',
+      description: 'Leave blank to keep the team on the screen. A Monday row needs a team, except Status by department and Overall progress, which are for both teams.',
       components: { input: RowTeamInput },
       validation: Rule => Rule.custom((team, context) => {
         const problem = teamProblem(context.parent && context.parent.panel, team);
         return problem === '' ? true : problem;
       }),
     }),
+    defineField({
+      name: 'department',
+      title: 'Department',
+      type: 'string',
+      description: 'Which Team lead, which department, the tasks panel shows. Leave it on the first one to play the first department that has tasks.',
+      components: { input: RowDepartmentInput },
+      hidden: ({ parent }) => !takesDepartment(parent && parent.panel),
+    }),
     secondsField(),
   ],
   preview: {
-    select: { panel: 'panel', team: 'team', seconds: 'seconds' },
+    select: { panel: 'panel', team: 'team', seconds: 'seconds', department: 'department' },
     prepare(row) {
       const team = row.team ? teamWord(row.team) : teamKindOf(row.panel) === 'optional' ? 'Keeps the team on the screen' : '';
-      return { title: panelTitle(row.panel) || 'Panel not chosen', subtitle: [team, secondsWords(row)].filter(Boolean).join(' · ') };
+      const department = takesDepartment(row.panel) ? (row.department ? 'One department' : 'First department with tasks') : '';
+      return { title: panelTitle(row.panel) || 'Panel not chosen', subtitle: [team, department, secondsWords(row)].filter(Boolean).join(' · ') };
     },
   },
 });
