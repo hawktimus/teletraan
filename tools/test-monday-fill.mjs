@@ -169,6 +169,7 @@ test('every rule that makes a card wider, and the one that shows the words about
     bar('.monday .ago-wide'),
     bar('.monday .body'),
     bar('.monday .header'),
+    bar('.monday .place-more'),
     bar('.monday .tag-with-chip .ago'),
     bar('.monday-progress .bars'),
     bar('.monday-progress .chart'),
@@ -266,10 +267,12 @@ test('the tasks card and the cards of both teams of milestones take the wider bo
   assert.ok(/flex:\s*1 1 0;/.test(both['.monday-milestones-both .milestone']), 'the milestone takes what the label, the department and the date leave');
   assert.equal(Object.keys(tasks).concat(Object.keys(both)).some(selector => selector.includes('data-layout')), false);
 
-  // 20 letters of 52px still fit the title of a task: the room only grew
-  const title = areaWidth - 48 - pixels(tasks['.monday-tasks .status'], 'width') - pixels(tasks['.monday-tasks .owner'], 'max-width') - pixels(tasks['.monday-tasks .priority'], 'width') - 3 * pixels(tasks['.monday-tasks .row'], 'gap');
-  assert.equal(title, 1379 - 236 - 200 - 36 - 48);
-  assert.ok(title > 1104 - 236 - 200 - 36 - 48);
+  // the title of a task has what the chip (262), who to ask (140), the due date (290) and the priority (36) leave: the room only grew
+  const gap = pixels(tasks['.monday-tasks .row'], 'gap');
+  const fixed = 262 + pixels(tasks['.monday-tasks .poc'], 'width') + pixels(tasks['.monday-tasks .due'], 'width') + pixels(tasks['.monday-tasks .priority'], 'width') + 4 * gap;
+  const title = areaWidth - 48 - fixed;
+  assert.equal(title, 1379 - 262 - 140 - 290 - 36 - 64);
+  assert.ok(title > 1104 - fixed);
 
   cardIds.forEach(id => {
     const css = withoutComments(read('panels/' + id + '/' + id + '.css'));
@@ -303,8 +306,8 @@ test('the weld seam of Minimal is not drawn while a Monday card is on screen, an
 
   // every id of a Monday card starts with monday-, and no other panel does
   const registry = read('registry.js');
-  cardIds.forEach(id => assert.ok(registry.includes("{ id: '" + id + "', region: 'grid1', topic: 'monday', monday: true }"), id));
-  assert.deepEqual(Array.from(registry.matchAll(/\{ id: '(monday-[a-z-]+)'/g)).map(match => match[1]), cardIds, 'the cards are the panels with the prefix');
+  cardIds.forEach(id => assert.ok(registry.includes("{ id: '" + id + "', region: 'grid1', topic: 'monday', monday: true"), id));
+  assert.deepEqual(Array.from(registry.matchAll(/\{ id: '(monday-[a-z-]+)'/g)).map(match => match[1]), ['monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board'].concat(cardIds.slice(1)), 'the cards are the panels with the prefix: the six of the one task board and the older ones');
 
   // the seam is still in the frame of the main panel, which is where the other panels see it
   assert.ok(/html\[data-style="minimal"\] \.art-weld-dark \{/.test(css) && /html\[data-style="minimal"\] \.art-weld-light \{/.test(css), 'the seam is still painted');

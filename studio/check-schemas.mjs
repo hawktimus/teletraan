@@ -265,7 +265,7 @@ const contract = {
     nameEffectEveryMinutes: number(1, 240),
     hawkEveryMinutes: number(1, 240),
     swapSeconds: number(0.5, 3),
-    mainRows: rows({ panel: 'string', team: { kind: 'plainString' }, seconds: number(6, 120) }),
+    mainRows: rows({ panel: 'string', team: { kind: 'plainString' }, department: { kind: 'plainString' }, seconds: number(6, 120) }),
     mondayStyle: 'string',
     sideRows: rows({ panel: 'string', seconds: number(6, 120) }),
   },
@@ -2248,7 +2248,9 @@ function checkDashboardNames() {
   const lists = { tasks: 'task', sponsors: 'sponsor', tipsAndNews: 'tipOrNews', subteams: 'subteam', people: 'person', calendarFilters: 'calendarFilter', presentationDays: 'presentationDay', presentations: 'presentation' };
   Object.keys(lists).forEach(key => {
     // a talk has its Sanity id under the plain name id, the way the query sends it
-    sample[key].forEach(item => add(unknownKeys(without(item, 'id'), fieldsIn(typeByName(lists[key])), 'sample ' + key)));
+    // a task also has the id of its Team lead (subteamId, which the query takes from the reference) and, in the sample, a Notes
+    // text of the board, which the screen never reads and which proves that no name or address reaches it
+    sample[key].forEach(item => add(unknownKeys(key === 'tasks' ? without(without(without(item, 'id'), 'subteamId'), 'notes') : without(item, 'id'), fieldsIn(typeByName(lists[key])), 'sample ' + key)));
   });
 
   sample.customPanels.forEach(panel => {
@@ -4645,10 +4647,11 @@ function checkPanelOrder() {
 
 // The Monday cards. Each is a panel of the large frame with the monday flag in registry.js, not offered in Panel order
 // and in neither its starting rows nor the rotation lists of config.js, and each has its script and its stylesheet
-// (dashboard/core/monday.js, docs/layouts.md, "The Monday cards"). Two of them are the cards of both teams.
+// (dashboard/core/monday.js, docs/layouts.md, "The Monday cards"). The last four are the older cards, which stay registered and
+// are marked older: the Studio does not offer them.
 function checkMondayCards() {
   const problems = [];
-  const ids = ['monday-tasks', 'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both'];
+  const ids = ['monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board', 'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both'];
   const flagged = world.registry.panels.filter(panel => panel.monday).map(panel => panel.id);
   need(problems, flagged.join() === ids.join(), 'registry.js should have the panels ' + ids.join(', ') + ' with monday: true, in that order');
 
@@ -6188,7 +6191,7 @@ function checkScreenType() {
   const registered = area => world.registry.panels.filter(panel => panel.region === area && !panel.testOnly && !panel.competition && !panel.monday && !panel.lastResort).map(panel => panel.id);
   const listOf = pathText => choicesOf(pathText).map(item => item.value + '=' + item.title).join();
   const titleFor = id => ({ tasks: 'Tasks', events: 'Upcoming events', tonight: 'Daily Agenda', spotlight: 'Subteam spotlight', 'sponsor-feature': 'Sponsor feature', photo: 'Photo', leadership: 'Leadership', 'team-leads': 'Team leads', roster: 'Subteam roster', custom: 'Extra panel', 'task-counts': 'Task counts', 'next-event': 'Next event', forecast: 'Weather forecast', 'safety-days': 'Safety days', 'sponsor-logo': 'Sponsor logo' }[id]);
-  const monday = ['monday-tasks=Monday: Build team', 'monday-milestones=Monday: Milestones', 'monday-progress=Monday: Progress'];
+  const monday = ['monday-tasks=Monday: Tasks by team and department', 'monday-done=Monday: Done by team', 'monday-status-depts=Monday: Status by department', 'monday-overall=Monday: Overall progress', 'monday-timeline=Monday: Timeline by team', 'monday-board=Monday: Board by team'];
 
   // the tabs are the five letters of the map, in order
   need(problems, type.type === 'document' && type.title === 'Screen', 'screen should be a document titled Screen');
@@ -6227,8 +6230,10 @@ function checkScreenType() {
   // B Main panel: the tip, then rows of a panel, a team and seconds. The Monday rows are offered like any other panel.
   const rows = at('mainRows');
   need(problems, rows && rows.type === 'array' && rows.description === mainRowTip, 'screen.mainRows should have the tip as its description: ' + mainRowTip);
-  need(problems, listOf('screen.mainRows.panel') === registered('grid1').map(id => id + '=' + titleFor(id)).concat(monday).join(), 'a row of the main panel should offer the large panels of registry.js and then the three Monday rows: ' + registered('grid1').concat(['monday-tasks', 'monday-milestones', 'monday-progress']).join(', '));
-  need(problems, fieldsIn(rows || {}).map(field => field.name).join() === 'panel,team,seconds', 'a row of the main panel should have a panel, a team and seconds');
+  need(problems, listOf('screen.mainRows.panel') === registered('grid1').map(id => id + '=' + titleFor(id)).concat(monday).join(), 'a row of the main panel should offer the large panels of registry.js and then the six Monday panels of the task board: ' + registered('grid1').concat(monday.map(line => line.split('=')[0])).join(', '));
+  need(problems, fieldsIn(rows || {}).map(field => field.name).join() === 'panel,team,department,seconds', 'a row of the main panel should have a panel, a team, a department (shown for the Monday tasks panel only) and seconds');
+  const departmentField = fieldAt('screen.mainRows.department');
+  need(problems, departmentField && departmentField.type === 'string' && departmentField.components && departmentField.components.input === world.screenFields.RowDepartmentInput && typeof departmentField.hidden === 'function' && departmentField.hidden({ parent: { panel: 'monday-tasks' } }) === false && departmentField.hidden({ parent: { panel: 'monday-board' } }) === true && departmentField.hidden({ parent: { panel: 'photo' } }) === true, 'the department of a row should be drawn by RowDepartmentInput and shown for the Monday tasks panel only');
   const panelRules = rulesOf(fieldAt('screen.mainRows.panel'));
   need(problems, constraintNamed(panelRules, 'required') && messageAfter(panelRules, 'required') === 'Pick a panel.', 'the panel of a row should be required, with the message Pick a panel.');
   need(problems, fieldAt('screen.mainRows.team') && fieldAt('screen.mainRows.team').components && fieldAt('screen.mainRows.team').components.input === world.screenFields.RowTeamInput, 'the team of a row should be drawn by RowTeamInput (screen-fields.js)');
@@ -6236,11 +6241,11 @@ function checkScreenType() {
   need(problems, constraintNamed(secondsRules, 'integer') && constraintNamed(secondsRules, 'min').args[0] === 6 && constraintNamed(secondsRules, 'max').args[0] === 120 && !constraintNamed(secondsRules, 'required'), 'the seconds of a row should be a whole number from 6 to 120, and optional');
   const teamRule = constraintNamed(rulesOf(fieldAt('screen.mainRows.team')), 'custom');
   const teamSays = (panel, team) => (teamRule ? teamRule.args[0](team, { parent: { panel: panel } }) : 'no rule');
-  need(problems, teamSays('monday-tasks', '') === 'Pick the team for this Monday row.' && teamSays('monday-milestones', 'both') === true && teamSays('monday-tasks', 'both') !== true && teamSays('photo', 'nova') === 'This panel is for both teams. Clear the team.' && teamSays('tasks', '') === true && teamSays('tasks', 'nova') === true, 'the team of a row should follow the rules of its panel: a Monday row needs a team, Milestones and Progress may be for both, and a panel for both teams has none');
+  need(problems, teamSays('monday-tasks', '') === 'Pick the team for this Monday row.' && teamSays('monday-overall', '') === true && teamSays('monday-board', 'both') !== true && teamSays('monday-tasks', 'both') !== true && teamSays('photo', 'nova') === 'This panel is for both teams. Clear the team.' && teamSays('tasks', '') === true && teamSays('tasks', 'nova') === true, 'the team of a row should follow the rules of its panel: a Monday row needs a team, Status by department and Overall progress have none, and a panel for both teams has none');
   const mainRow = rows && rows.of && rows.of[0];
   const mainLine = fields => mainRow.preview.prepare(fields);
   need(problems, mainRow && mainLine({}).title === 'Panel not chosen' && mainLine({ panel: 'tasks', team: 'prime' }).title === 'Tasks' && mainLine({ panel: 'tasks', team: 'prime' }).subtitle === 'Prime · Follows Seconds per page', 'a row of the main panel should read the panel, then the team and the seconds');
-  need(problems, mainRow && mainLine({ panel: 'tasks' }).subtitle === 'Keeps the team on the screen · Follows Seconds per page' && mainLine({ panel: 'events', seconds: 30 }).subtitle === '30 seconds' && mainLine({ panel: 'monday-progress', team: 'both' }).subtitle === 'Both teams · Follows Seconds per page', 'a row with no team should say whether it keeps the team on the screen, and a row for both teams should say Both teams');
+  need(problems, mainRow && mainLine({ panel: 'tasks' }).subtitle === 'Keeps the team on the screen · Follows Seconds per page' && mainLine({ panel: 'events', seconds: 30 }).subtitle === '30 seconds' && mainLine({ panel: 'monday-tasks', team: 'prime' }).subtitle === 'Prime · First department with tasks · Follows Seconds per page' && mainLine({ panel: 'monday-tasks', team: 'prime', department: 'subteam-build' }).subtitle === 'Prime · One department · Follows Seconds per page', 'a row with no team should say whether it keeps the team on the screen, and a tasks row should say whether it names a department');
   need(problems, mainRow && mainLine({ panel: 'photo' }).subtitle === 'Follows Seconds per photo', 'the Photo row should say that it follows Seconds per photo');
 
   // Monday style: one of the styles, and no starting value, so that the form can copy the old setting into it

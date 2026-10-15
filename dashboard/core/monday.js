@@ -9,7 +9,7 @@
 // the Screens (core/screens.js) play for it. mondaySteps below gives the steps of its three cards, one
 // page of the tasks card for each Team lead entry that has tasks, and bothSteps the two cards of both teams.
 
-import { visibleItems } from './content.js';
+import { isVisible, visibleItems } from './content.js';
 import { isFromBoard } from './task-source.js';
 import { hasText } from './text.js';
 
@@ -268,13 +268,13 @@ export const taskStatuses = ['up-next', 'in-progress', 'in-review', 'blocked', '
 // The words and the order of the five statuses wherever a panel writes them
 export const statusWords = { 'up-next': 'TO DO', 'in-progress': 'IN PROGRESS', 'in-review': 'IN REVIEW', blocked: 'STUCK', done: 'DONE' };
 
-// The tasks a Monday panel may draw: from the board, switched on in Studio (show, showOnTv and the expiry)
+// The tasks a Monday panel may draw, whatever team is on the screen (forTeam says the team): from the board, switched on in Studio (show, showOnTv and the expiry)
 // and on the board (Show on TV is Show), with a department, and not a subitem. A task the Mini wrote
 // before the board had Show on TV has no showOnBoard, and counts as shown. A task with no department
 // (Unassigned is written hidden, with hiddenReason unassigned) never renders.
 export function visibleTasks(content, now = new Date()) {
-  return visibleItems(content && content.tasks, now).filter(task => {
-    if (!isFromBoard(task) || task.showOnBoard === false) return false;
+  return (Array.isArray(content && content.tasks) ? content.tasks : []).filter(task => {
+    if (!isVisible(task, now) || !isFromBoard(task) || task.showOnBoard === false) return false;
     if (task.hiddenReason === 'unassigned' || task.isSubitem === true || hasText(task.parentId)) return false;
 
     return hasText(task.subteamId);

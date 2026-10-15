@@ -31,7 +31,7 @@ fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith(
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file));
 });
 
-const cardIds = ['monday-tasks', 'monday-milestones-both', 'monday-progress-both', 'leadership', 'team-leads', 'roster'];
+const cardIds = ['monday-tasks', 'monday-status-depts', 'monday-overall', 'monday-milestones-both', 'monday-progress-both', 'leadership', 'team-leads', 'roster'];
 cardIds.forEach(id => {
   fs.mkdirSync(path.join(root, 'panels', id), { recursive: true });
   fs.copyFileSync(path.join(dashboardFolder, 'panels', id, id + '.js'), path.join(root, 'panels', id, id + '.js'));
@@ -226,14 +226,25 @@ test('a row is labeled with the team of its board, and a department whose tasks 
   assert.ok(/\.monday \.team-tag-blank \{ background: none; \}/.test(read('dashboard/monday.css')), 'the blank has no color');
 });
 
-test('the tasks card of a department for both teams has no chip, and one with a team of its own has', () => {
-  const shared = contentOf([board({ title: '[a]', team: '' })], ['[Subteam A]']);
-  const html = panels['monday-tasks'].markupFor(shared, monday12, 1);
-  noChip(html);
-  assert.ok(html.includes('data-slat="title">[SUBTEAM A] TEAM</h2>'));
+test('the tasks panel of a department has the chip of its team, also with General tasks, and the panels for both teams have none', () => {
+  const content = (tasks, leads = ['[Subteam A]']) => {
+    const raw = JSON.parse(read('dashboard/data/sample/content.json'));
+    raw.settings.countdown = { kickoffLabel: 'KICKOFF IN', kickoff: '2027-01-09T17:00:00.000Z', rolloutLabel: 'ROLLOUT IN', rollout: '' };
+    raw.tasks = tasks;
+    raw.subteams = leads.map((name, index) => ({ name: name, id: 'lead-' + (index + 1) }));
+    return sanity.normalizeSample(raw);
+  };
 
-  const own = contentOf([board({ title: '[a]', team: 'prime' }), board({ title: '[b]', team: '' })], ['[Subteam A]']);
-  assert.equal(chipOf(panels['monday-tasks'].markupFor(own, monday12, 1)), 'PRIME');
+  const general = content([board({ title: '[a]', team: '', subteamId: 'lead-1' })]);
+  const html = panels['monday-tasks'].markupFor(general, monday12, { team: 'prime', department: 'lead-1' });
+  assert.equal(chipOf(html), 'PRIME');
+  assert.ok(html.includes('data-slat="title">PRIME [SUBTEAM A] TASKS</h2>'));
+  assert.equal(chipOf(panels['monday-tasks'].markupFor(general, monday12, { team: 'nova', department: 'lead-1' })), 'NOVA', 'a General task is on the panel of the other team too');
+
+  const own = content([board({ title: '[a]', team: 'prime', subteamId: 'lead-1' }), board({ title: '[b]', team: '', subteamId: 'lead-1' })]);
+  assert.equal(chipOf(panels['monday-tasks'].markupFor(own, monday12, { team: 'prime', department: 'lead-1' })), 'PRIME');
+  noChip(panels['monday-status-depts'].markupFor(own, monday12));
+  noChip(panels['monday-overall'].markupFor(own, monday12));
 });
 
 

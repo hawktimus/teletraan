@@ -1,0 +1,126 @@
+/* On the left a column of 340: the ring of 300 with 28 of stroke, and under it the hours. On the right the bar of each team
+   (64 high), the next milestones with a bar of 10 under each, and across the bottom the three numbers. The ring is
+   one arc of a path that is 100 long (pathLength), the team accent on the rule color. frame.css draws it in. */
+.monday-overall .left {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 340px;
+  text-align: center;
+}
+.monday-overall .ring {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  margin: 0 20px;
+}
+.monday-overall .ring svg { display: block; }
+.monday-overall .ring-rule {
+  fill: none;
+  stroke: var(--plate);
+  stroke-width: 28;
+}
+.monday-overall .ring-arc {
+  fill: none;
+  stroke: var(--yellow);
+  stroke-width: 28;
+}
+.monday-overall .ring-percent {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 300px;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 700 84px/84px var(--font-display);
+}
+.monday-overall .hours-done {
+  color: var(--yellow);
+  font: 700 44px/48px var(--font-display);
+}
+.monday-overall .hours-of {
+  color: var(--lilac);
+  font: 600 32px/36px var(--font-display);
+}
+
+.monday-overall .right {
+  position: absolute;
+  left: 364px;
+  top: 0;
+  right: 0;
+}
+.monday-overall .team-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 64px;
+  margin-bottom: 6px;
+}
+.monday-overall .team-name {
+  flex: none;
+  padding: 0 14px;
+  color: var(--ground);
+  font: 700 44px/52px var(--font-display);
+}
+.monday-overall .track {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 36px;
+  background: var(--plate);
+}
+.monday-overall .fill {
+  display: block;
+  height: 100%;
+}
+.monday-overall .hours {
+  flex: none;
+  width: 230px;
+  text-align: right;
+  font: 600 40px/48px var(--font-display);
+}
+
+.monday-overall .milestones-head {
+  box-sizing: border-box;
+  margin-top: 10px;
+  height: 44px;
+  border-bottom: 3px solid var(--yellow);
+  font: 700 36px/40px var(--font-display);
+}
+.monday-overall .milestone {
+  display: grid;
+  grid-template-columns: 1fr auto 150px;
+  column-gap: 16px;
+  align-items: center;
+  height: 76px;
+}
+.monday-overall .milestone-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 500 40px/48px var(--font-text);
+}
+.monday-overall .milestone-date {
+  color: var(--yellow);
+  font: 700 32px/40px var(--font-display);
+}
+.monday-overall .milestone-days {
+  text-align: right;
+  font: 700 36px/40px var(--font-display);
+}
+.monday-overall .milestone-days.soon { color: var(--danger); }
+.monday-overall .milestone-track {
+  grid-column: 1 / 4;
+  height: 10px;
+  background: var(--plate);
+}
+.monday-overall .milestone-fill {
+  display: block;
+  height: 10px;
+  background: var(--yellow);
+}
+.monday-overall .milestone-fill.green { background: var(--status-done); }
+
+.monday-overall .facts { top: 440px; }

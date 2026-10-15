@@ -1,0 +1,45 @@
+/* One row of 58 for each department, eight at the most: the name (300), a bar in a track that is at most 900 wide and
+   done out of all (170). The longest bar fills its track and the others are in proportion. The bar is made of five
+   segments, to do at 55 percent so that it reads as not started. The legend and the age of the read are at the foot. */
+.monday-status-depts .rows { height: 464px; }
+.monday-status-depts .row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 58px;
+}
+.monday.monday-status-depts .department { width: 300px; }
+.monday-status-depts .track {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 900px;
+}
+.monday-status-depts .bar {
+  display: flex;
+  height: 36px;
+}
+.monday-status-depts .segment {
+  display: block;
+  box-sizing: border-box;
+  height: 36px;
+  border-right: 3px solid var(--ground);
+}
+.monday-status-depts .segment.chip-up-next { opacity: .55; }
+.monday-status-depts .share {
+  flex: none;
+  width: 170px;
+  text-align: right;
+  font: 700 40px/48px var(--font-display);
+}
+.monday-status-depts .legend {
+  position: absolute;
+  left: 0;
+  top: 488px;
+}
+.monday-status-depts .age {
+  position: absolute;
+  right: 68px;
+  top: 480px;
+  color: var(--lilac);
+  font: 600 44px/52px var(--font-display);
+}

@@ -1,6 +1,6 @@
-/* The header, the body, the sentence, the page marker and the cut of the rows are in monday.css. This card is
-   five rows of 84 in the window, and under them the three numbers. Each row is the status, the title on one
-   line, the first name of the owner and the priority. */
+/* The header, the body, the sentence, the page marker, the chips and the numbers are in monday.css. This panel is five
+   rows of 84 in the window, and under them the three numbers. A row is the status chip (262 by 48), the title on one
+   line, who to ask (140), the due date in a column of 290 and the priority. */
 .monday-tasks .row {
   box-sizing: border-box;
   display: flex;
@@ -10,22 +10,6 @@
   border-bottom: 3px solid var(--plate);
 }
 
-/* The status is a colored label. Its 30px text is the one size on a card under 44px: it is a label and
-   not text to read, and the word is also in the color's place for anyone who cannot tell the colors apart. */
-.monday-tasks .status {
-  flex: none;
-  box-sizing: border-box;
-  width: 236px;
-  height: 44px;
-  text-align: center;
-  color: var(--ground);
-  font: 700 30px/44px var(--font-display);
-}
-.monday-tasks .status-up-next { background: var(--status-next); }
-.monday-tasks .status-in-progress { background: var(--status-progress); }
-.monday-tasks .status-done { background: var(--status-done); }
-
-/* The title is on one line and is cut off with an ellipsis. The first name of the owner is muted. */
 .monday-tasks .row-title {
   flex: 1 1 0;
   min-width: 0;
@@ -34,14 +18,28 @@
   white-space: nowrap;
   font: 500 52px/60px var(--font-text);
 }
-.monday-tasks .owner {
+.monday-tasks .poc { width: 140px; }
+
+/* The due date is in the accent of the team, and in red with OVERDUE before it when it has passed */
+.monday-tasks .due {
   flex: none;
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--lilac);
-  font: 500 40px/48px var(--font-text);
+  box-sizing: border-box;
+  width: 290px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  color: var(--yellow);
+  font: 700 36px/44px var(--font-display);
+}
+.monday-tasks .due-date { white-space: nowrap; }
+.monday-tasks .row-overdue .due { color: var(--danger); }
+.monday-tasks .chip-overdue {
+  width: auto;
+  height: 44px;
+  padding: 0 12px;
+  background: var(--danger);
+  font: 700 30px/44px var(--font-display);
 }
 
 /* The priority is a shape: a filled red triangle for high, an outlined one in the accent for medium, and
@@ -60,21 +58,4 @@
   stroke-linejoin: round;
 }
 
-/* The numbers at the bottom left, under the rows: 36px labels and 72px numbers, each with a rule at its left */
-.monday-tasks .facts {
-  position: absolute;
-  left: 0;
-  top: 424px;
-  display: flex;
-  gap: 20px;
-}
-.monday-tasks .fact {
-  box-sizing: border-box;
-  padding-left: 16px;
-  border-left: 4px solid var(--yellow);
-}
-.monday-tasks .fact-label {
-  color: var(--yellow);
-  font: 600 36px/40px var(--font-display);
-}
-.monday-tasks .fact-number { font: 700 72px/76px var(--font-display); }
+.monday-tasks .facts { top: 428px; }

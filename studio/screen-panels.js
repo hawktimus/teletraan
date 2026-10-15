@@ -27,19 +27,44 @@ export const smallPanels = [
   { title: 'Sponsor logo', value: 'sponsor-logo' },
 ];
 
-// In the order a team plays them: the Build team card, then Milestones, then Progress
+// The panels of the one task board, in the order the Studio offers them. The ids are the ones of dashboard/config.js
+// (mondayKinds). The older Monday panels are not offered: a saved row that names one plays as the tasks panel.
 export const mondayPanels = [
-  { title: 'Monday: Build team', value: 'monday-tasks' },
-  { title: 'Monday: Milestones', value: 'monday-milestones' },
-  { title: 'Monday: Progress', value: 'monday-progress' },
+  { title: 'Monday: Tasks by team and department', value: 'monday-tasks' },
+  { title: 'Monday: Done by team', value: 'monday-done' },
+  { title: 'Monday: Status by department', value: 'monday-status-depts' },
+  { title: 'Monday: Overall progress', value: 'monday-overall' },
+  { title: 'Monday: Timeline by team', value: 'monday-timeline' },
+  { title: 'Monday: Board by team', value: 'monday-board' },
 ];
+
+// The older Monday panels, only so that a saved row can still be named in a list line
+export const olderMondayPanels = [
+  { title: 'Monday: Milestones (older)', value: 'monday-milestones' },
+  { title: 'Monday: Progress (older)', value: 'monday-progress' },
+  { title: 'Monday: Milestones, both teams (older)', value: 'monday-milestones-both' },
+  { title: 'Monday: Progress, both teams (older)', value: 'monday-progress-both' },
+];
+
+// The Monday rows an empty Screen is filled with for each team (mondayRows in dashboard/config.js)
+export const seededMondayPanels = ['monday-tasks', 'monday-done', 'monday-board'];
+
+// What a row of each Monday panel says about the team and the department (mondayKinds in dashboard/config.js)
+export const mondayKinds = {
+  'monday-tasks': 'department',
+  'monday-done': 'team',
+  'monday-status-depts': 'none',
+  'monday-overall': 'none',
+  'monday-timeline': 'team',
+  'monday-board': 'team',
+};
 
 // The large panels whose items carry a Team field and are filtered by the team on the screen
 // (visibleItems in dashboard/core/content.js). Photo and Upcoming events are for both teams:
 // a photo has no team, and the events come from the calendars. The dashboard has the same list.
 export const teamSpecificPanels = ['tasks', 'tonight', 'spotlight', 'team-leads', 'roster', 'leadership', 'sponsor-feature', 'custom'];
 
-// The team of a row that is for both teams. Only the Milestones and Progress cards have one.
+// The team of a row of the older Monday panels that was for both teams. A row cannot be set to it now.
 export const bothTeams = 'both';
 
 export function idsOf(list) {
@@ -48,19 +73,24 @@ export function idsOf(list) {
 
 // The title of a panel in the pickers, or nothing for a panel that is not in them
 export function panelTitle(panel) {
-  const found = largePanels.concat(smallPanels, mondayPanels).filter(item => item.value === panel)[0];
+  const found = largePanels.concat(smallPanels, mondayPanels, olderMondayPanels).filter(item => item.value === panel)[0];
   return found ? found.title : '';
 }
 
 // What a row of the main panel may say about the team:
 //   none       the panel is for both teams, so the row has no team
 //   optional   a team, or blank to keep the team that is on the screen
-//   one        a team (the Build team card is for one team)
-//   oneOrBoth  a team or Both teams (Milestones and Progress)
+//   one        a team (the Monday panels of one team)
 export function teamKindOf(panel) {
-  if (panel === 'monday-tasks') return 'one';
-  if (idsOf(mondayPanels).indexOf(panel) !== -1) return 'oneOrBoth';
+  if (mondayKinds[panel] === 'none') return 'none';
+  if (mondayKinds[panel]) return 'one';
+  if (olderMondayPanels.some(item => item.value === panel)) return 'one';
   return teamSpecificPanels.indexOf(panel) !== -1 ? 'optional' : 'none';
+}
+
+// Whether a row of this panel takes a department, a Team lead
+export function takesDepartment(panel) {
+  return mondayKinds[panel] === 'department';
 }
 
 // The lines of the team picker of a row: { value, label }. teams is [{ code, label }], the active
@@ -71,7 +101,7 @@ export function teamChoices(panel, teams) {
 
   if (kind === 'none') return [];
   if (kind === 'optional') return [{ value: '', label: 'Keep the team on the screen' }].concat(named);
-  return kind === 'oneOrBoth' ? named.concat([{ value: bothTeams, label: 'Both teams' }]) : named;
+  return named;
 }
 
 // Why the team of a row is wrong, in plain words, or nothing when it is right
@@ -82,8 +112,8 @@ export function teamProblem(panel, team) {
   if (!panel) return '';
   if (kind === 'none') return value ? 'This panel is for both teams. Clear the team.' : '';
   if (kind === 'optional') return value === bothTeams ? 'Both teams is only for Monday rows. Pick a team or clear it.' : '';
-  if (value === '') return kind === 'one' ? 'Pick the team for this Monday row.' : 'Pick a team, or Both teams, for this Monday row.';
-  return kind === 'one' && value === bothTeams ? 'The Build team card is for one team. Pick a team.' : '';
+  if (value === '') return 'Pick the team for this Monday row.';
+  return value === bothTeams ? 'This Monday panel is for one team. Pick a team.' : '';
 }
 
 // A team code in words, for the list line of a row

@@ -86,11 +86,27 @@ export const defaultScreen = { nameEffectEveryMinutes: 10, hawkEveryMinutes: 5, 
 // copies this list for the Team field of a row.
 export const teamPanels = ['tasks', 'tonight', 'spotlight', 'team-leads', 'roster', 'leadership', 'sponsor-feature', 'custom'];
 
-// The Monday cards a team has, in the order they play. A Monday row of a Screen names one of them and a team.
-export const mondayRows = ['monday-tasks', 'monday-milestones', 'monday-progress'];
+// The Monday rows a team is seeded with, in the order they play: the tasks of its first department, what it finished and its
+// board. A Screen that nobody has opened in the Studio plays them (core/screen-seed.js), and the Studio fills an empty Screen with
+// the same ones (studio/screen-seed.js).
+export const mondayRows = ['monday-tasks', 'monday-done', 'monday-board'];
 
-// The card that stands for each of two of them when a Monday row says both teams. The Build team card has none.
-export const mondayBothCards = { 'monday-milestones': 'monday-milestones-both', 'monday-progress': 'monday-progress-both' };
+// The panels of the one task board, in the order the Studio offers them (docs/monday.md), and what a row of each says
+// about the team and the department:
+//   department  a team and a department (a Team lead): the tasks panel
+//   team        a team: done, timeline and board
+//   none        neither: the panels for both teams, status by department and overall progress
+export const mondayKinds = {
+  'monday-tasks': 'department',
+  'monday-done': 'team',
+  'monday-status-depts': 'none',
+  'monday-overall': 'none',
+  'monday-timeline': 'team',
+  'monday-board': 'team',
+};
+
+// The older Monday panels: still in the registry, so that a saved row keeps working, and not in the picker
+export const mondayOldPanels = ['monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both'];
 
 // The team settings in Dashboard Settings (Look tab): which team the screen shows. The Studio copies this list.
 //   prime      the Prime team all the time

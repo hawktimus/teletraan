@@ -199,8 +199,10 @@ editors can sign in from anywhere.
                               large panel, competition-draw.js is what the cards share, and competition-preview.js
                               decides when the Preview competition button shows the cards on sample data and
                               competition-preview-run.js starts it (docs/frc-feed.md),
-                              monday.js picks and ranks the board tasks for the Monday cards and monday-draw.js
-                              draws their header and rows (docs/layouts.md, "The Monday cards"), team-title.js writes
+                              monday.js picks and ranks the board tasks for the Monday cards and has the rules of the Monday
+                              panels (visible, team, department, overdue, rank, hours, stale), monday-views.js works out
+                              what each of the six panels of the task board draws and monday-draw.js draws their header
+                              (with the amber STALE chip) and rows (docs/layouts.md, "The Monday cards"), team-title.js writes
                               the name of a team on a header, text-width.js counts the width of a line of capitals,
                               header-room.js has the room a header leaves for its title and for the words at its right
                               end (docs/layouts.md, "The header of a large panel"),
@@ -215,8 +217,9 @@ editors can sign in from anywhere.
                               second rendering of the countdown (docs/layouts.md, "The war clock").
                               panels/tonight is the Daily Agenda panel, headed AGENDA (docs/up-next.md).
                               panels/competition-* are the seven competition cards, each plain SVG
-                              (docs/frc-feed.md). panels/monday-* are the three Monday cards
-                              (docs/layouts.md, "The Monday cards"). panels/team-tile is the small frame's last
+                              (docs/frc-feed.md). panels/monday-tasks, monday-done, monday-status-depts, monday-overall,
+                              monday-timeline and monday-board are the six panels of the task board, and the other
+                              panels/monday-* the older cards (docs/layouts.md, "The Monday cards"). panels/team-tile is the small frame's last
                               resort (docs/layouts.md, "Panel B, the small frame")
       fonts/, assets/         fonts and pictures, all served from here
       data/sample/            sample content with marked placeholders, and a sample talk with six slides
@@ -394,7 +397,10 @@ editors can sign in from anywhere.
                               panels/competition-*): the cards due on each day of the season in each mode, the mix into the
                               large panel's list, each card from the sample and with nothing to show, that no text is under
                               44px or runs out of its body, and the guard of Preview competition
-      test-monday-cards.mjs   checks for the Monday cards (core/monday.js and the panels in panels/monday-*): the
+      test-monday-rules.mjs, test-monday-panels.mjs, test-monday-acceptance.mjs  check the rules of the Monday panels and the stale
+                              chip, the six panels and the department picker of the Screens builder, and the acceptance cases of
+                              the order (monday-world.mjs is what they share)
+      test-monday-cards.mjs   checks for the older Monday cards (core/monday.js and the panels in panels/monday-*): the
                               ranking, Show on TV off, the weeks around a Monday and
                               the time zone, five rows and +N more, the line of at most 12 points, the sentences with
                               nothing to show, that no text is under 44px but the sizes the order sets, and that a team has the cards only with board tasks

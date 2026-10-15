@@ -20,11 +20,11 @@
 //
 // Next look now (a button on the Start here page) moves the large panel to the next row at once.
 
-import { defaultScreen, defaultSchedule, defaultSettings, defaultThemeSettings, limits, mondayBothCards, mondayRows, primeTeam, screenIds, standardSwapSeconds, styles, teamPanels, weekdays } from '../config.js';
+import { defaultScreen, defaultSchedule, defaultSettings, defaultThemeSettings, limits, mondayKinds, mondayOldPanels, primeTeam, screenIds, standardSwapSeconds, styles, teamPanels, weekdays } from '../config.js';
 import { panels } from '../registry.js';
 import { keepInRange } from './content.js';
 import { readHandled, rememberHandled, shouldRunDemo } from './demo.js';
-import { bothSteps, mondaySteps } from './monday.js';
+import { viewOf } from './monday-views.js';
 import { seedMainRows, seedSideRows } from './screen-seed.js';
 import { rotateStyle } from './style.js';
 import { activeTeams, addressTeam, rotateTeam } from './teams.js';
@@ -69,8 +69,11 @@ function tidyTeam(value) {
 
 // A row of the large panel becomes { panel, team, seconds }. The seconds are left out when there are none. A row
 // of a panel that is not a large panel is dropped. Only a panel that follows the team has a team, so one
-// stored on any other row is not read. A Monday row is for a team, or for both teams when its card has one, and a
-// Monday row that is for neither is dropped.
+// stored on any other row is not read. A Monday row is for a team, as the kind of its panel says (mondayKinds in
+// config.js): the tasks panel for a team and a department (a Team lead, stored as department), done, timeline and board for a
+// team, and status by department and overall progress for neither. A Monday row that needs a team and has none is
+// dropped. A row that names one of the older Monday panels is the tasks panel of its team, for the first department that has
+// tasks, and a row for both teams that is dropped.
 function tidyMainRow(raw) {
   if (!isRecord(raw) || typeof raw.panel !== 'string') return null;
 
@@ -78,17 +81,39 @@ function tidyMainRow(raw) {
   if (!panel || panel.region !== 'grid1' || panel.testOnly) return null;
 
   let team = tidyTeam(raw.team);
+  let id = panel.id;
+  let older = false;
   if (panel.monday) {
-    const bothAllowed = Boolean(mondayBothCards[panel.id]);
-    if (!mondayRows.includes(panel.id) || team === '' || (team === 'both' && !bothAllowed)) return null;
+    if (mondayOldPanels.includes(id)) {
+      older = true;
+      id = 'monday-tasks';
+    }
+    const kind = mondayKinds[id];
+    if (!kind) return null;
+    if (kind === 'none') team = '';
+    else if (team === '' || team === 'both') return null;
   } else if (!teamPanels.includes(panel.id) || team === 'both') {
     team = '';
   }
 
-  const row = { panel: panel.id, team: team };
+  const row = { panel: id, team: team };
+  if (panel.monday && mondayKinds[id] === 'department') row.department = typeof raw.department === 'string' && !older ? raw.department.trim() : '';
   const seconds = tidySeconds(raw.seconds);
   if (seconds) row.seconds = seconds;
+  if (older) Object.defineProperty(row, 'older', { value: true, enumerable: false });
   return row;
+}
+
+// The rows of the large panel. A row that was one of the older Monday panels and is now the same as an earlier row is left out,
+// so a Screen that had the three older cards for a team plays one tasks panel and not three.
+function tidyMainRows(list) {
+  const rows = [];
+  const same = (a, b) => a.panel === b.panel && a.team === b.team && a.department === b.department;
+
+  tidyRows(list, tidyMainRow).forEach(row => {
+    if (!(row.older === true && rows.some(earlier => same(earlier, row)))) rows.push(row);
+  });
+  return rows;
 }
 
 // A row of the small panel becomes { panel, seconds }. It never has a team: the small panels take the colors of
@@ -121,7 +146,7 @@ export function tidyScreen(raw, style, fallbackMondayStyle) {
 
   return {
     style: style,
-    mainRows: tidyRows(source.mainRows, tidyMainRow),
+    mainRows: tidyMainRows(source.mainRows),
     sideRows: tidyRows(source.sideRows, tidySideRow),
     nameEffectEveryMinutes: keepInRange(source.nameEffectEveryMinutes, limits.nameEffectEveryMinutes, defaultScreen.nameEffectEveryMinutes),
     hawkEveryMinutes: keepInRange(source.hawkEveryMinutes, limits.hawkEveryMinutes, defaultScreen.hawkEveryMinutes),
@@ -285,22 +310,25 @@ export function mainPlaylist(content, now = new Date(), screen = planFor(content
   screen.mainRows.forEach((row, index) => {
     if (isTeamCode(row.team) && (!teams.includes(row.team) || (only !== '' && row.team !== only))) return;
 
-    stepsOfRow(row, content, now, teams).forEach(step => steps.push(Object.assign(step, { row: index })));
+    stepsOfRow(row, index, screen.mainRows, content, now).forEach(step => steps.push(Object.assign(step, { row: index })));
   });
   return steps;
 }
 
-function stepsOfRow(row, content, now, teams) {
+// One step for a row. A Monday row has one step, and none while its panel has nothing to show (viewOf in core/monday-views.js): a
+// department with no visible task is left out as an empty row always was. The page of the step is the team, the department and
+// the turn of the row: how many rows of the same panel, team and department come right before it, plus one, so that a board that
+// plays twice in a row shows the next cards the second time.
+function stepsOfRow(row, index, rows, content, now) {
   const step = { show: true, team: row.team };
   if (row.seconds) step.seconds = row.seconds;
   if (!isMondayPanel(row.panel)) return [Object.assign({ panel: row.panel }, step)];
 
-  // A team that has no board tasks has no steps, and the cards of both teams need two teams with board tasks, as the
-  // cards of both teams always did. The tasks card has a step for each Team lead entry that has tasks (core/monday.js).
-  const cards = row.team === 'both' ? bothSteps(content, teams, now) : mondaySteps(content, row.team, now);
-  const panel = row.team === 'both' ? mondayBothCards[row.panel] : row.panel;
-
-  return cards.filter(card => card.panel === panel).map(card => Object.assign({}, card, step));
+  let turn = 1;
+  const same = other => other.panel === row.panel && other.team === row.team && (other.department || '') === (row.department || '');
+  while (index - turn >= 0 && same(rows[index - turn])) turn += 1;
+  const page = { team: row.team, department: row.department || '', turn: turn };
+  return viewOf(row.panel, content, now, page) === null ? [] : [Object.assign({ panel: row.panel, page: page }, step)];
 }
 
 // The steps of the small panel: the side rows of the Screen that is on the screen, with no team

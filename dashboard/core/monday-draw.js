@@ -7,7 +7,7 @@
 import { teamsOf } from './screens.js';
 import { markBeside } from './marks.js';
 import { wordsRoom } from './header-room.js';
-import { everyMinutesOf, minutesSince, pagesOf, rowsPerPage, stale, staleWords } from './monday.js';
+import { everyMinutesOf, minutesSince, pagesOf, rowsPerPage, stale, staleWords, statusWords as boardStatusWords } from './monday.js';
 import { chipWidth, departmentTitle, smallTitleClass, teamChipMarkup, teamNameOf } from './team-title.js';
 import { escapeHtml, hasText } from './text.js';
 import { textWidth } from './text-width.js';
@@ -73,15 +73,15 @@ export function headerMarkup(title, chip, status, now) {
 // (the age is not known) says only the lead. When the board has not been read for twice the read interval,
 // or Sanity cannot be reached, an amber chip STALE · N MIN stands in the place of the words (monday.stale),
 // and it is there on every one of these panels. content is the whole content, for the status and the interval.
-export function boardWords(lead, status, now) {
-  const age = agoWords(status, now);
+export function boardWords(lead, status, now, noAge = false) {
+  const age = noAge ? '' : agoWords(status, now);
   return [lead, age].filter(part => hasText(part)).join(' · ');
 }
 
-export function boardHeader(title, chip, content, now, lead = 'BOARD') {
+export function boardHeader(title, chip, content, now, lead = 'BOARD', noAge = false) {
   const status = content ? content.monday : null;
   const late = stale(status, now, everyMinutesOf(content));
-  const words = late ? '' : boardWords(lead, status, now);
+  const words = late ? '' : boardWords(lead, status, now, noAge);
   const chipText = late ? staleWords(status, now) : '';
 
   // 30px letters in the amber chip, 44px ones in the words. The words need the room beside the chip: in the
@@ -163,15 +163,17 @@ export function rowsWindow(rows) {
 // The page marker at the bottom right of a card that scrolls: a square for each page, the one in view filled,
 // and its place in words, 1 OF 2 · 10 TASKS. A card of five rows or fewer has none. The stylesheet shows
 // the square and the words of the page named in data-scroll-page.
-export function markerMarkup(rows, noun) {
+export function markerMarkup(rows, noun, longWordsInBar = false) {
   const pages = pagesOf(rows);
   if (rows <= rowsPerPage) return '';
 
+  // The tasks panel of the one task board says 1 OF 2 and, where the main panel is wide enough (the bar layout), the count of
+  // rows after it, so the words stay clear of the numbers at the left of a panel 1152 wide
   const squares = [];
   const words = [];
   for (let page = 1; page <= pages; page++) {
     squares.push(`<span class="square square-${page}"></span>`);
-    words.push(`<span class="place place-${page}">${page} OF ${pages} · ${rows} ${noun}</span>`);
+    words.push(longWordsInBar ? `<span class="place place-${page}">${page} OF ${pages}<span class="place-more"> · ${rows} ${noun}</span></span>` : `<span class="place place-${page}">${page} OF ${pages} · ${rows} ${noun}</span>`);
   }
   return `<div class="marker"><div class="squares">${squares.join('')}</div>${words.join('')}</div>`;
 }
@@ -188,4 +190,30 @@ export function noRowsSentence(content) {
   if (boards.length === 0) return 'No board is chosen yet.';
   if (!content.monday || content.monday.lastSyncAt === '') return 'Waiting for the first sync from the board.';
   return 'Nothing on the chosen boards is showing yet.';
+}
+
+
+// The pieces of the panels of the one task board (core/monday-views.js says what is in them)
+
+// A status as a colored chip with its word, in the five colors. The word is there for anyone who cannot tell
+// the colors apart.
+export function chipMarkup(status) {
+  return `<span class="chip chip-${status}">${boardStatusWords[status] || ''}</span>`;
+}
+
+// The five statuses with their colors, as the legend at the foot of the chart panels: a square and the word of each
+export function legendMarkup() {
+  return `<div class="legend">${['up-next', 'in-progress', 'in-review', 'blocked', 'done'].map(status => `<span class="key"><i class="swatch chip-${status}"></i>${boardStatusWords[status]}</span>`).join('')}</div>`;
+}
+
+// The numbers along the bottom of a panel: a 72px number with its word beside it. facts is [{ label, value }] and
+// value is text or a number.
+export function countersMarkup(facts) {
+  return `<div class="facts">${facts.map(fact => `<div class="fact"><span class="fact-number">${escapeHtml(String(fact.value))}</span><span class="fact-label">${escapeHtml(fact.label)}</span></div>`).join('')}</div>`;
+}
+
+// The sentence a panel of the board says when the screen shows it with nothing to draw (a preview of a department
+// with no task). The Screens leave such a row out.
+export function boardEmptyMarkup(content) {
+  return `<p class="empty">${escapeHtml(content && content.monday && content.monday.lastSyncAt ? 'No task of the board is showing here.' : 'Waiting for the first read of the board.')}</p>`;
 }

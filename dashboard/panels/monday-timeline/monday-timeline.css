@@ -1,0 +1,53 @@
+/* The chart is one SVG, 1104 wide in the page and 1379 wide in the bar layout, where the other one is shown. The text in
+   it is in the sizes of the order: 28px for the weeks and TODAY, 32px for the label of a bar, and the department at 36px. */
+.monday-timeline .picture { display: block; height: auto; }
+.monday-timeline .picture-page { width: 1104px; }
+.monday-timeline .picture-bar { display: none; }
+html[data-layout="bar"] .monday-timeline .picture-page { display: none; }
+html[data-layout="bar"] .monday-timeline .picture-bar {
+  display: block;
+  width: calc(var(--bar-area-width) - 48px);
+}
+
+.monday-timeline .week {
+  fill: var(--lilac);
+  font: 600 28px/28px var(--font-display);
+}
+.monday-timeline .dept {
+  fill: var(--team-label, var(--yellow));
+  font: 700 36px/44px var(--font-display);
+}
+.monday-timeline .rule {
+  stroke: var(--plate);
+  stroke-width: 3;
+}
+.monday-timeline .bar rect { fill: var(--status-next); }
+.monday-timeline .bar text {
+  fill: var(--ground);
+  font: 600 32px/32px var(--font-display);
+}
+.monday-timeline .bar-up-next rect { opacity: .55; }
+.monday-timeline .bar-in-progress rect { fill: var(--status-progress); }
+.monday-timeline .bar-in-review rect { fill: var(--prime-tag); }
+.monday-timeline .bar-blocked rect { fill: var(--danger); }
+.monday-timeline .bar-done rect { fill: var(--status-done); }
+
+.monday-timeline .today {
+  stroke: var(--danger);
+  stroke-width: 5;
+  stroke-dasharray: 14 10;
+}
+.monday-timeline .today-label {
+  fill: var(--danger);
+  text-anchor: middle;
+  font: 700 28px/28px var(--font-display);
+}
+.monday-timeline .gamedrop-label {
+  fill: var(--danger);
+  text-anchor: middle;
+  font: 700 28px/28px var(--font-display);
+}
+.monday-timeline .gamedrop {
+  stroke: var(--danger);
+  stroke-width: 5;
+}

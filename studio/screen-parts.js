@@ -31,6 +31,25 @@ export function teamTarget(team) {
   return { id: team.id, type: 'team' };
 }
 
+// The Team leads a row can name as its department: the published ones in the order of the list, with the team each is
+// for (none means both teams)
+export const leadsQuestion = '*[_type == "subteam" && show != false] | order(order asc, _createdAt asc) { _id, name, "team": team->code }';
+
+// The lines of the department picker of a row: { value, label }. The first is no department, which is the first one
+// that has tasks. leads is what leadsQuestion found, and team the code of the team of the row, so a Team lead of the other team
+// is not offered. A department the row has that the list does not offer stays on it, so it can be seen and changed.
+export function departmentChoices(leads, team, current) {
+  const choices = [{ value: '', label: 'The first department that has tasks' }];
+
+  (Array.isArray(leads) ? leads : []).forEach(lead => {
+    if (!lead || typeof lead._id !== 'string' || typeof lead.name !== 'string' || lead.name.trim() === '') return;
+    if (lead.team && team && lead.team !== team) return;
+    choices.push({ value: lead._id, label: lead.name.trim() });
+  });
+  if (current && !choices.some(choice => choice.value === current)) choices.push({ value: current, label: words.unknownDepartment });
+  return choices;
+}
+
 export const words = {
   editing: 'Editing',
   mapLabel: 'The screen. Click a letter to open that part below.',
@@ -49,6 +68,8 @@ export const words = {
   bothTeamsPanel: 'This panel is for both teams.',
   clearTeam: 'Clear the team',
   unknownTeam: 'A team that is not in the list',
+  unknownDepartment: 'A department that is not in the list',
+  readingDepartments: 'Reading the Team leads.',
 };
 
 // The published settings and the active teams. This never fails: what cannot be read is reported,
