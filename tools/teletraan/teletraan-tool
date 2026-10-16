@@ -186,7 +186,8 @@ main() {
   fi
 
   # Ctrl+C while a hidden value is being typed must not leave the terminal silent
-  trap 'stty echo 2> /dev/null' EXIT
+  trap 'stty echo 2> /dev/null; session_close' EXIT
+  session_open
 
   mkdir -p "$state_dir" && chmod 700 "$state_dir" || { problem "could not make $state_dir."; exit 1; }
   load_config

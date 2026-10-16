@@ -13,6 +13,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { textOf, copyParts } from './helpers/script-parts.mjs';
+import { fakeSudo } from './helpers/tool-fakes.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const toolFile = path.join(repo, 'tools/teletraan/teletraan-tool');
@@ -41,9 +42,13 @@ const hiddenParts = Object.values(secrets).filter(value => !value.startsWith('we
 // Fake tools. Each writes the call it gets to calls.log. The tool never puts a
 // secret on a command line, so nothing secret should ever reach that log.
 const fakeSsh = `#!/bin/sh
+# Closing the shared connection is not a call worth logging
+case " $* " in *" -O "*) exit 0 ;; esac
 echo "ssh $*" >> "$STUB_LOG"
+# The stdin of a call is saved so a test can see that a password never reached a command line
 while [ "$#" -gt 0 ]; do
   case $1 in
+    -O) exit 0 ;;
     -o) shift 2 ;;
     -*) shift ;;
     *) break ;;
@@ -93,12 +98,8 @@ echo "rsync $*" >> "$STUB_LOG"
 exit 0
 `;
 
-const fakeSudo = `#!/bin/sh
-echo "sudo $*" >> "$STUB_LOG"
-# The installer on the Teletraan computer is not run here; its exit code can be set
-case "$*" in *install.sh*) [ -f "$STUB_DIR/install.exit" ] && exit "$(cat "$STUB_DIR/install.exit")"; exit 0 ;; esac
-exec "$@"
-`;
+// A sudo that wants a password when sudo-password.txt exists: -n fails, and -S or -v read one line from the input
+// and compare it. Without that file it needs none. Options are dropped and the rest is run as it is.
 
 const fakeSystemctl = `#!/bin/sh
 echo "systemctl $*" >> "$STUB_LOG"
@@ -156,6 +157,9 @@ function makePlace(name, options = {}) {
     writeTool(path.join(place.computerRepo, 'computer/scripts'), 'install-' + entry + '.sh', '#!/bin/sh\necho "ran install-' + entry + '.sh"\n' + (failing ? 'exit 1\n' : ''));
   });
   fs.writeFileSync(place.log, '');
+  // The installer the staging folder would hold: it logs, and its exit code can be set
+  fs.mkdirSync(path.join(place.computerHome, 'teletraan-staging/computer'), { recursive: true });
+  writeTool(path.join(place.computerHome, 'teletraan-staging/computer'), 'install.sh', '#!/bin/sh\necho "install.sh $*" >> "$STUB_LOG"\n[ -f "$STUB_DIR/install.exit" ] && exit "$(cat "$STUB_DIR/install.exit")"\nexit 0\n');
 
   const stateFolder = path.join(place.home, '.teletraan');
   if (!options.noConfig) {
@@ -289,7 +293,7 @@ test('the first run asks for the address, checks that ssh works and saves it wit
   const result = place.run([computerAddress, '', 'q']);
 
   assert.equal(result.status, 0, result.errors);
-  assert.ok(result.calls.includes('ssh -n -o ConnectTimeout=10 ' + computerAddress + ' true'), result.calls);
+  assert.ok(result.calls.includes('ssh -n -o ConnectTimeout=10 -o ControlMaster=auto') && result.calls.includes(' ' + computerAddress + ' true'), result.calls);
   assert.equal(fs.readFileSync(place.configFile(), 'utf8').split('\n').filter(line => !line.startsWith('#')).join('\n'), 'current=main\nmini.main=' + computerAddress + '\n');
   assert.equal(modeOf(place.configFile()), 0o600);
   assert.equal(modeOf(path.join(place.home, '.teletraan')), 0o700);
@@ -349,9 +353,9 @@ test('update copies the repository with the same excludes as before to the stagi
     assert.ok(line.includes('--exclude ' + name + ' ') || line.includes('--exclude ' + name + ' -e'), 'excludes ' + name + ': ' + line);
   });
   assert.equal((line.match(/--exclude/g) || []).length, 9, 'no other excludes: ' + line);
-  assert.ok(line.includes('-e ssh -o ConnectTimeout=10 '), line);
+  assert.ok(line.includes('-e ssh -o ConnectTimeout=10 -o ControlMaster=auto -o ControlPersist=300 -o ControlPath='), 'rsync uses the shared connection: ' + line);
   assert.ok(line.endsWith(' ' + repo.replace(/\/$/, '') + '/ ' + computerAddress + ':teletraan-staging/'), line);
-  assert.ok(calls[install].startsWith('ssh -t -o ConnectTimeout=10 ' + computerAddress), calls[install]);
+  assert.ok(calls.some(line => line.startsWith('ssh -n ') && line.includes("sudo -S -p '' bash -c")), 'the installer runs as root in one remote shell: ' + calls.join(' / '));
   assertNoLeak(result, 'update');
 });
 
@@ -465,14 +469,14 @@ test('the form shows values masked, takes edit, keep and clear, adds, edits and 
   ].join('\n'));
   assert.equal(modeOf(place.computerEnvFile()), 0o600);
   assert.ok(result.text.includes('replaced SANITY_WRITE_TOKEN') && result.text.includes('removed MONDAY_API_TOKEN') && result.text.includes('added CALENDAR_BUILD_SEASON_URL') && result.text.includes('removed CALENDAR_BUILD_URL'), result.text);
-  assert.deepEqual(fs.readdirSync(place.computerHome), [], 'the merge script and the new values are removed from the Teletraan computer');
+  assert.deepEqual(fs.readdirSync(place.computerHome).filter(name => name !== 'teletraan-staging'), [], 'the merge script and the new values are removed from the Teletraan computer');
   assert.deepEqual(fs.readdirSync(path.join(place.computerRepo, 'computer')).filter(name => name !== 'local.env' && name !== 'scripts'), [], 'no temporary file is left next to local.env');
 
   // The values travel in a file with scp, and then the calendar service runs once
   const calls = lines(result.calls.trim());
   const copy = calls.findIndex(line => line.startsWith('scp '));
   const merge = calls.findIndex(line => line.startsWith('sh teletraan-merge.sh '));
-  const service = calls.findIndex(line => line === 'sudo systemctl start teletraan-calendars.service');
+  const service = calls.findIndex(line => line.startsWith('sudo -S -p ') && line.includes('systemctl start teletraan-calendars.service'));
   assert.ok(copy !== -1 && merge > copy && service > merge, calls.join(' / '));
   assert.ok(calls[copy].endsWith(' ' + computerAddress + ':'), calls[copy]);
   assert.ok(result.text.includes('The calendar service ran once'), result.text);
@@ -572,7 +576,7 @@ test('the calendar service not being installed is said in plain words and the me
   place.stubFile('systemctl.exit', '5');
   const result = place.run(['2', 'e', secrets.newSanity, 'k', 'k', '', '', 'q']);
 
-  assert.ok(result.text.includes('The calendar service did not run. If it is not installed on this computer, choose 4 in the menu.'), result.text);
+  assert.ok(result.text.includes('The calendar service did not run. If it is not installed on this computer, run the install again (Install everything).'), result.text);
   assert.ok(fs.readFileSync(place.computerEnvFile(), 'utf8').includes(secrets.newSanity));
 });
 
@@ -635,9 +639,9 @@ test('installing the services asks for the mentor\'s yes, then runs the eight in
 
   const result = place.run(['4', 'y', 'q']);
   assert.equal(result.status, 0, result.errors);
-  const ran = lines(result.calls).filter(line => line.startsWith('sudo ')).map(line => path.basename(line));
+  const ran = lines(result.text).filter(line => line.startsWith('ran ')).map(line => line.slice(4));
   assert.deepEqual(ran, installNames.map(name => 'install-' + name + '.sh'));
-  assert.ok(result.calls.includes('ssh -t '), 'the install scripts get a terminal for sudo and Enter');
+  assert.equal(lines(result.calls).filter(line => line.startsWith('sudo -S')).length, 1, 'one remote shell for all eight');
   assert.ok(result.text.includes('install-monday.sh stopped (exit 1).'), result.text);
   installNames.filter(name => name !== 'monday').forEach(name => assert.ok(result.text.includes('ran install-' + name + '.sh'), name));
 });
@@ -690,7 +694,7 @@ test('restart runs the restart of the kiosk service with a terminal for the pass
   const place = makePlace('restart');
   const result = place.run(['6', 'q']);
   assert.equal(result.status, 0, result.errors);
-  assert.ok(result.calls.includes('ssh -t -o ConnectTimeout=10 ' + computerAddress + ' sudo systemctl restart teletraan-kiosk.service'), result.calls);
+  assert.ok(result.calls.includes("sudo -S -p '' bash -c 'systemctl restart \"$1\"' bash 'teletraan-kiosk.service'"), result.calls);
   assert.ok(result.text.includes('The screen restarted.'));
 
   const failing = makePlace('restart-fails');
@@ -709,7 +713,7 @@ test('a second computer is added from the menu, picked later, and the choice is 
   place.run(['7', '2', 'q']);
   const later = place.run(['6', 'q']);
   assert.ok(later.text.includes('Teletraan computer in use: spare (hawktimus@teletraan-2.test)'), later.text);
-  assert.ok(later.calls.includes('ssh -t -o ConnectTimeout=10 hawktimus@teletraan-2.test sudo systemctl restart'), later.calls);
+  assert.ok(later.calls.includes(' hawktimus@teletraan-2.test sudo -S -p ') && later.calls.includes('systemctl restart'), later.calls);
 
   const duplicate = place.run(['7', 'a', 'hawktimus@teletraan-3.test', 'spare', 'q']);
   assert.ok(duplicate.errors.includes('there is a computer called spare already'), duplicate.errors);

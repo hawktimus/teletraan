@@ -38,7 +38,7 @@ update_computer() {
   rsync -a --delete \
     --exclude .git --exclude local.env --exclude .env --exclude node_modules \
     --exclude .DS_Store --exclude studio/dist --exclude studio/.sanity --exclude _inputs --exclude _outputs \
-    -e "ssh -o ConnectTimeout=10" "$repo/" "$address:$COMPUTER_STAGING/"
+    -e "ssh ${ssh_options[*]}" "$repo/" "$address:$COMPUTER_STAGING/"
   status=$?
   if [ "$status" -ne 0 ]; then
     explain_failure "$status"
@@ -53,7 +53,9 @@ update_computer() {
     say "This folder has no git history, so the release has no hash."
   fi
 
-  computer_run -t "sudo bash ~/$COMPUTER_STAGING/computer/install.sh --from ~/$COMPUTER_STAGING --yes --note 'From the Mac tool'${commit:+ --commit $commit}"
+  # $1 is the staging folder, $2 the hash. The installer sees the login user in SUDO_USER.
+  computer_sudo 'stage=$1; commit=$2; bash "$stage/computer/install.sh" --from "$stage" --yes --note "From the Mac tool" ${commit:+--commit "$commit"}' \
+    "~/$COMPUTER_STAGING" "'$commit'"
   status=$?
   if [ "$status" -ne 0 ]; then
     explain_failure "$status"
@@ -77,7 +79,7 @@ send_to_computer() {
     return 1
   fi
 
-  scp -q -o ConnectTimeout=10 "$stage/teletraan-incoming.env" "$stage/teletraan-merge.sh" "$address:"
+  scp -q "${ssh_options[@]}" "$stage/teletraan-incoming.env" "$stage/teletraan-merge.sh" "$address:"
   status=$?
   rm -rf "$stage"
   if [ "$status" -ne 0 ]; then
@@ -90,16 +92,18 @@ $(cat <<'EOF'
 sh teletraan-merge.sh "$COMPUTER_REPO/computer/local.env" teletraan-incoming.env
 status=$?
 rm -f teletraan-merge.sh teletraan-incoming.env
-[ "$status" -eq 0 ] || exit "$status"
-if sudo systemctl start teletraan-calendars.service; then
-  echo "The calendar service ran once, so the Calendars page in Studio is up to date."
-else
-  echo "The calendar service did not run. If it is not installed on this computer, choose 4 in the menu."
-fi
+exit "$status"
 EOF
 )"
-  computer_run -t "$remote"
+  computer_run "$remote"
   status=$?
+  if [ "$status" = 0 ]; then
+    if computer_sudo 'systemctl start teletraan-calendars.service'; then
+      say "The calendar service ran once, so the Calendars page in Studio is up to date."
+    else
+      say "The calendar service did not run. If it is not installed on this computer, run the install again (Install everything)."
+    fi
+  fi
   if [ "$status" -ne 0 ]; then
     explain_failure "$status"
     say "The values are saved on this Mac. Choose 2 and save again when the Teletraan computer can be reached."
@@ -150,6 +154,21 @@ pull_from_computer() {
   fi
 }
 
+# The text of the loop that installs the services; $1 is the folder of the scripts. Each script waits for Enter,
+# so it is given one. A script that stops is named at the end and the loop goes on.
+services_script() {
+  cat <<'EOF'
+dir=$1
+stopped=''
+for name in calendars slides monday frc console watchdog backup nightly; do
+  echo
+  echo "== install-$name.sh"
+  echo | "$dir/install-$name.sh" || { echo "install-$name.sh stopped (exit $?)."; stopped="$stopped $name"; }
+done
+[ -z "$stopped" ] || { echo "These stopped:$stopped"; exit 1; }
+EOF
+}
+
 # 4. The install scripts on the Teletraan computer
 install_services() {
   local status remote
@@ -158,16 +177,7 @@ install_services() {
   say "Each one says what it will do and waits for Enter. install-console.sh changes /etc/issue, and a missing package stops its script with the apt line to run."
   ask_yes "Has the team mentor said yes?" no || { say "Nothing was installed."; return 0; }
 
-  remote="dir='$COMPUTER_REPO/computer/scripts'
-$(cat <<'EOF'
-for name in calendars slides monday frc console watchdog backup nightly; do
-  echo
-  echo "== install-$name.sh"
-  sudo "$dir/install-$name.sh" || echo "install-$name.sh stopped (exit $?)."
-done
-EOF
-)"
-  computer_run -t "$remote"
+  computer_sudo "$(services_script)" "$(quote_word "$COMPUTER_REPO/computer/scripts")"
   status=$?
   if [ "$status" -ne 0 ]; then
     explain_failure "$status"
@@ -205,7 +215,7 @@ computer_status() {
 restart_screen() {
   local status
   step "Restart the screen on the Teletraan computer $computer_name"
-  computer_run -t "sudo systemctl restart $COMPUTER_KIOSK"
+  computer_sudo 'systemctl restart "$1"' "$(quote_word "$COMPUTER_KIOSK")"
   status=$?
   if [ "$status" -ne 0 ]; then
     explain_failure "$status"

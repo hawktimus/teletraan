@@ -13,6 +13,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { copyParts } from './helpers/script-parts.mjs';
+import { fakeSudo } from './helpers/tool-fakes.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const toolFile = path.join(repo, 'tools/teletraan/teletraan-tool');
@@ -33,9 +34,12 @@ const hiddenParts = Object.values(secrets).flatMap(value => [value, value.slice(
 
 // Each fake writes the call it gets to calls.log
 const fakeSsh = `#!/bin/sh
+# Closing the shared connection is not a call worth logging
+case " $* " in *" -O "*) exit 0 ;; esac
 echo "ssh $*" >> "$STUB_LOG"
 while [ "$#" -gt 0 ]; do
   case $1 in
+    -O) exit 0 ;;
     -o) shift 2 ;;
     -*) shift ;;
     *) break ;;
@@ -71,12 +75,6 @@ echo "scp $*" >> "$STUB_LOG"
 exit 0
 `;
 
-const fakeSudo = `#!/bin/sh
-echo "sudo $*" >> "$STUB_LOG"
-# The installer on the Teletraan computer is not run here; its exit code can be set
-case "$*" in *install.sh*) [ -f "$STUB_DIR/install.exit" ] && exit "$(cat "$STUB_DIR/install.exit")"; exit 0 ;; esac
-exec "$@"
-`;
 
 const fakeSystemctl = `#!/bin/sh
 echo "systemctl $*" >> "$STUB_LOG"
@@ -96,6 +94,7 @@ function makePlace(name, options = {}) {
     home: path.join(root, 'home'),
     stub: path.join(root, 'stub'),
     fakes: path.join(root, 'fakes'),
+    sessions: path.join(root, 'sessions'),
     computerHome: path.join(root, 'computer-home'),
     log: path.join(root, 'calls.log'),
     configFile: () => path.join(place.home, '.teletraan/config'),
@@ -110,6 +109,7 @@ function makePlace(name, options = {}) {
         STUB_LOG: place.log,
         STUB_DIR: place.stub,
         STUB_FAKES: place.fakes,
+        TELETRAAN_SESSION_BASE: place.sessions,
         COMPUTER_HOME: place.computerHome,
         COMPUTER_REPO: '/opt/teletraan-test',
       };
@@ -119,12 +119,15 @@ function makePlace(name, options = {}) {
     },
   };
 
-  [place.home, place.stub, place.fakes, place.computerHome].forEach(folder => fs.mkdirSync(folder, { recursive: true }));
+  [place.home, place.stub, place.fakes, place.sessions, place.computerHome].forEach(folder => fs.mkdirSync(folder, { recursive: true }));
   writeTool(place.fakes, 'ssh', fakeSsh);
   writeTool(place.fakes, 'scp', fakeScp);
   writeTool(place.fakes, 'rsync', fakeRsync);
   writeTool(place.fakes, 'sudo', fakeSudo);
   writeTool(place.fakes, 'systemctl', fakeSystemctl);
+  fs.mkdirSync(path.join(place.computerHome, 'teletraan-staging/computer'), { recursive: true });
+  writeTool(path.join(place.computerHome, 'teletraan-staging/computer'), 'install.sh', '#!/bin/sh\necho "install.sh $*" >> "$STUB_LOG"\n[ -f "$STUB_DIR/install.exit" ] && exit "$(cat "$STUB_DIR/install.exit")"\nexit 0\n');
+  if (options.sudoPassword) place.stubFile('sudo-password.txt', options.sudoPassword + '\n');
   place.stubFile('status-output.txt', 'Last calendar sync        3 minutes ago (2026-10-10 13:50 UTC)\n');
   place.stubFile('check-output.txt', 'SHOWN   team  Robotics meeting\n');
   fs.writeFileSync(place.log, '');
@@ -173,8 +176,8 @@ test('update --yes copies the files to the staging folder, then runs the install
   assert.ok(calls[copy].includes(' -a --delete '), calls[copy]);
   ['.git', 'local.env', '.env', 'node_modules'].forEach(name => assert.ok(calls[copy].includes('--exclude ' + name + ' '), 'excludes ' + name));
   assert.ok(calls[copy].endsWith(' ' + repo.replace(/\/$/, '') + '/ ' + computerAddress + ':teletraan-staging/'), calls[copy]);
-  assert.ok(calls[install].startsWith('ssh -t -o ConnectTimeout=10 ' + computerAddress), 'the installer gets a terminal for the password: ' + calls[install]);
-  assert.ok(calls[install].includes('sudo bash') && calls[install].includes('--yes'), calls[install]);
+  const remote = calls.find(line => line.startsWith('ssh -n ') && line.includes("sudo -S -p '' bash -c"));
+  assert.ok(remote && remote.includes('--yes') && remote.includes('install.sh'), 'the installer runs as root in one remote shell: ' + calls.join(' / '));
   assert.ok(!calls.some(line => line.includes('systemctl restart')), 'the installer restarts the screen, not the tool');
 
   assert.ok(!result.text.includes('Go ahead?'), 'no question');
@@ -203,7 +206,7 @@ test('update without --yes asks Go ahead, Return means yes, n means nothing was 
   assert.equal(declinedResult.status, 1, 'a script must not think the Teletraan computer was updated');
   assert.ok(declinedResult.text.includes('Nothing was copied.'), declinedResult.text);
   assert.equal(indexOfCall(declinedResult.calls, 'rsync '), -1);
-  assert.equal(indexOfCall(declinedResult.calls, 'ssh -t'), -1, 'the installer was not run');
+  assert.equal(indexOfCall(declinedResult.calls, 'install.sh'), -1, 'the installer was not run');
 });
 
 test('update with nobody to answer counts as no: nothing is copied and the exit code is not zero', () => {
@@ -230,7 +233,7 @@ test('a failing copy gives an exit code that is not zero, says to run it again a
   assert.notEqual(result.status, 0);
   assert.ok(result.errors.includes('exit 23'), result.errors);
   assert.ok(result.text.includes('Run this again'), result.text);
-  assert.equal(indexOfCall(result.calls, 'ssh -t'), -1, 'the installer was not run');
+  assert.equal(indexOfCall(result.calls, 'install.sh'), -1, 'the installer was not run');
   assertNoLeak(result, 'rsync fails');
 });
 
@@ -326,7 +329,7 @@ test('restart restarts the kiosk service with a terminal for the password, and n
   const place = makePlace('restart');
   const result = place.run(['restart']);
   assert.equal(result.status, 0, result.errors);
-  assert.ok(result.calls.includes('ssh -t -o ConnectTimeout=10 ' + computerAddress + ' sudo systemctl restart teletraan-kiosk.service'), result.calls);
+  assert.ok(result.calls.includes("sudo -S -p '' bash -c 'systemctl restart \"$1\"' bash 'teletraan-kiosk.service'"), result.calls);
   assert.ok(result.text.includes('The screen restarted.'));
   assert.ok(!result.calls.includes('rsync') && !result.calls.includes('is-active'), 'nothing was copied');
   assertNoLeak(result, 'restart');
@@ -348,7 +351,7 @@ test('--computer NAME picks a saved computer for one run and does not change the
 
   const spare = place.run(['--computer', 'spare', 'restart']);
   assert.equal(spare.status, 0, spare.errors);
-  assert.ok(spare.calls.includes('ssh -t -o ConnectTimeout=10 ' + spareAddress + ' sudo systemctl restart'), spare.calls);
+  assert.ok(spare.calls.includes(' ' + spareAddress + " sudo -S -p '' bash -c 'systemctl restart"), spare.calls);
 
   const joined = place.run(['restart', '--computer=spare']);
   assert.ok(joined.calls.includes(spareAddress), joined.calls);
@@ -435,6 +438,47 @@ test('no command prints a key or a calendar link, whatever the Teletraan compute
   });
   const status = place.run(['status']);
   assert.ok(status.text.includes('(address hidden)'), status.text);
+});
+
+const fakePassword = 'pw-for-the-test-only-4417';
+
+test('the password is asked once for a run, however many steps need it, and it never reaches a command line or the screen', () => {
+  const place = makePlace('one-password', { sudoPassword: fakePassword });
+  const result = place.run([], ['6', fakePassword, '6', '6', 'q']);
+  assert.equal(result.status, 0, result.errors);
+  assert.equal((result.text.match(/Password of /g) || []).length, 1, 'one question: ' + result.text);
+  assert.equal(result.text.split('The screen restarted.').length - 1, 3, 'all three steps ran');
+  assert.ok(!(result.text + result.errors + result.calls).includes(fakePassword), 'the password is nowhere in the output or in a call');
+  assert.equal(lines(result.calls).filter(line => line.startsWith('sudo -S -p  bash -c')).length, 3);
+});
+
+test('a wrong password says so in one sentence, the step does not run, and the next try asks again', () => {
+  const place = makePlace('wrong-password', { sudoPassword: fakePassword });
+  const result = place.run([], ['6', 'not-the-password', '6', fakePassword, 'q']);
+  assert.ok(result.text.includes('That password was wrong. Choose the same thing again to try another.'), result.text);
+  assert.equal((result.text.match(/Password of /g) || []).length, 2);
+  assert.equal(result.text.split('The screen restarted.').length - 1, 1);
+  assert.ok(!(result.text + result.errors + result.calls).includes('not-the-password'));
+});
+
+test('an account that needs no password is not asked for one', () => {
+  const place = makePlace('no-password');
+  const result = place.run(['restart']);
+  assert.equal(result.status, 0, result.errors);
+  assert.ok(!result.text.includes('Password of'), result.text);
+});
+
+test('every step shares one ssh connection from a private folder that is removed at the end', () => {
+  const place = makePlace('shared-connection');
+  const result = place.run(['update', '--yes']);
+  assert.equal(result.status, 0, result.errors);
+  const folders = new Set((result.calls.match(/ControlPath=(\S+)\/%C/g) || []).map(text => text.slice(12, -3)));
+  assert.equal(folders.size, 1, 'one folder for the whole run');
+  const sshLines = lines(result.calls).filter(line => /^(ssh|scp|rsync) /.test(line));
+  assert.ok(sshLines.length >= 3 && sshLines.every(line => line.includes('ControlMaster=auto') && line.includes('ControlPersist=')), sshLines.join(' / '));
+  assert.ok(lines(result.calls).find(line => line.startsWith('rsync ')).includes('-e ssh -o ConnectTimeout=10 -o ControlMaster=auto'));
+  assert.ok(sshLines.every(line => line.includes(place.sessions + '/tt.')), 'the folder is made under the session base');
+  assert.deepEqual(fs.readdirSync(place.sessions), [], 'nothing is left behind');
 });
 
 test('the tool still has valid bash syntax and starts with set -u', () => {
