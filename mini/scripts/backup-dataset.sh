@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+# Usage: backup-dataset.sh
 # Backs up the Sanity dataset: runs "sanity dataset export" (the command line
 # tool in studio/node_modules) into /var/backups/teletraan/production-<date>.tar.gz,
 # keeps the newest 14 files and deletes the older ones, then tells Studio the
@@ -12,28 +13,11 @@
 #
 # To get a backup back, see "Restoring a backup" in docs/coaches-guide.md:
 # import it into a NEW dataset first, never straight over production.
-set -eu
-
-mini=$(cd "$(dirname "$0")/.." && pwd)
-repo=$(dirname "$mini")
-config="$repo/dashboard/config.js"
-env_file="$mini/local.env"
+set -euo pipefail
+. "$(dirname "$0")/lib.sh"
 
 # How many backups are kept
 keep=14
-
-# The value of a NAME=value line in local.env, without its quotes. Only the
-# name asked for is read, because the other lines hold secrets.
-setting() {
-  [ -f "$env_file" ] || return 0
-  sed -n "s/^$1=//p" "$env_file" | tail -n 1 | sed "s/^['\"]//; s/['\"]\$//"
-}
-
-# The quoted value of "name: 'value'," in dashboard/config.js
-config_value() {
-  [ -f "$config" ] || return 0
-  sed -n "s/^[[:space:]]*$1:[[:space:]]*'\([^']*\)'.*/\1/p" "$config" | head -n 1
-}
 
 fail() {
   echo "backup: $*" >&2

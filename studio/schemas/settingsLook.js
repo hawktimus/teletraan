@@ -132,7 +132,7 @@ export function lookScheduleFields() {
         { _type: 'reference', _ref: 'team-prime' },
         { _type: 'reference', _ref: 'team-nova' },
       ],
-      validation: Rule => Rule.unique().error('Each team can be in the list once.'),
+      validation: Rule => Rule.unique().error('A team can be in the list once. Remove the repeat.'),
     }),
 
     defineField({

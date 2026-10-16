@@ -11,14 +11,7 @@
 // left out and never made up. The fields are described in docs/frc-feed.md.
 
 import { defineType, defineField, defineArrayMember } from 'sanity';
-
-function numberField(name, title, description) {
-  return defineField({ name: name, title: title, type: 'number', description: description });
-}
-
-function textField(name, title, description) {
-  return defineField({ name: name, title: title, type: 'string', description: description });
-}
+import { textField, numberField } from './fields.js';
 
 function dateField(name, title, description) {
   return defineField({ name: name, title: title, type: 'date', description: description });

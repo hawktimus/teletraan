@@ -2,12 +2,12 @@
 
 For the coaches who run the talks. A student books a short talk in a Google
 Form. A script saves the booking into Sanity, the talk appears in Studio, and at
-its time the TV shows the student's slides. The script is
-`tools/presentation-booking/presentation-booking.gs`. The talks of the day also
+its time the TV shows the student's slides. The script lives in the team's Google
+Apps Script project and is not in this repository. The talks of the day also
 show in the Daily Agenda panel (docs/up-next.md).
 
 Talk titles and first names are public. The Sanity dataset can be read by anyone
-(studio/README.md), so anything a student types as a title or a name can be read
+(docs/laptop-setup.md), so anything a student types as a title or a name can be read
 by anyone. Tell students to use a first name only and a title they are happy for
 anyone to read.
 
@@ -62,8 +62,8 @@ replace the value of `sanityToken`.
 
 1. Sign in to the account from step 1, go to script.google.com and click New
    project.
-2. Delete the code in the editor and paste in the whole of
-   `tools/presentation-booking/presentation-booking.gs`.
+2. Delete the code in the editor and paste in the whole of the team's copy of the
+   booking script. Ask the team mentor where it is kept.
 3. Add the token as in step 3.
 4. Pick `setup` in the function list at the top and click Run. Google asks for
    permission. Approve it. Google may warn that the app is not verified, because

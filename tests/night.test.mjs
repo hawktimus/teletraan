@@ -200,7 +200,7 @@ test('night mode is wanted by the clock, forced by the preview switch even when 
   assert.equal(nightWanted(Object.assign({}, settings, { nightPreview: true }), eastern, midnight, 'off'), false, '?night=off beats the preview');
 });
 
-test('the starting settings are the ones the owner asked for', () => {
+test('the starting settings are the agreed ones', () => {
   const defaults = config.defaultSettings;
 
   assert.equal(defaults.nightEnabled, true);

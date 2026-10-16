@@ -1,7 +1,7 @@
 // The one settings page for the whole screen. It is a single document with the
 // fixed id 'dashboardSettings' (see structure.js).
 
-import { defineType, defineField, defineArrayMember } from 'sanity';
+import { defineType, defineField } from 'sanity';
 import { neverOrAtLeast, noteField, tooLong } from './fields.js';
 import { statusBlockField } from './settingsStatus.js';
 import { rotationField } from './settingsRotation.js';
@@ -19,6 +19,8 @@ import { previewRequestField } from './settingsPreview.js';
 import { nextLookRequestField, competitionPreviewRequestField, screenRequestFields } from './settingsRequests.js';
 import { competitionFields } from './settingsCompetition.js';
 import { mondayFields } from './settingsMonday.js';
+import { calendarsField, groupEventsByKindField } from './settingsCalendars.js';
+import { countdownField } from './settingsCountdown.js';
 
 // The tabs, in order. Screen opens first. Studio has no folded tab, so Advanced,
 // for the things only a coach debugging the screen would touch, is the last one.
@@ -105,12 +107,10 @@ const teamField = defineField({
   ],
 });
 
-// Content source and Switch back to production at are kept so that nothing
-// already saved changes, but they are hidden and the screen ignores them: it
-// always shows what the editors published. The made-up content is reached with
-// ?sample=1 on the dashboard address (dashboard/core/source.js). Neither is
-// required, because nobody can fill in a hidden field and a page saved before
-// the fields existed must still publish.
+// Content source is kept so that nothing already saved changes, but it is hidden and the
+// screen ignores it: it always shows what the editors published. The made-up content is
+// reached with ?sample=1 on the dashboard address (dashboard/core/source.js). It is not
+// required, because nobody can fill in a hidden field.
 const contentSources = [
   { title: 'Production', value: 'production' },
   { title: 'Sample', value: 'sample' },
@@ -126,16 +126,6 @@ const contentSourceField = defineField({
   options: { list: contentSources, layout: 'radio', direction: 'horizontal' },
   initialValue: 'production',
   validation: Rule => Rule.valid(contentSources.map(source => source.value)).error('Pick production or sample.'),
-});
-
-const switchBackAtField = defineField({
-  name: 'switchBackAt',
-  title: 'Switch back to production at',
-  type: 'datetime',
-  group: 'advanced',
-  hidden: true,
-  description: 'Not used any more. The screen always shows the content you publish here.',
-  validation: Rule => Rule.min('2020-01-01T00:00:00Z').max('2099-12-31T23:59:00Z').error('Pick a time between the years 2020 and 2099.'),
 });
 
 // The same starting value as defaultSettings.showConnectionStatus in
@@ -277,51 +267,6 @@ const crtField = defineField({
   ],
 });
 
-// The same labels as defaultSettings.countdown in dashboard/config.js. The
-// kickoff time is 12:00 noon in Holly Springs (17:00 UTC in January). A title
-// is never cut off on the screen: over 28 characters it takes a second line
-// (dashboard/core/countdown-title.js), and over 40 it would not fit even at
-// the smallest size it is set in.
-const titleWarning = 'Long titles wrap to two lines on the screen.';
-const countdownField = defineField({
-  name: 'countdown',
-  title: 'Countdown',
-  type: 'object',
-  group: 'countdown',
-  description: 'The countdown on the screen counts to Kickoff first, then to Rollout.',
-  fields: [
-    defineField({
-      name: 'kickoffLabel',
-      title: 'Kickoff label',
-      type: 'string',
-      description: 'The title on the countdown while it counts to Kickoff, for example GAMEDROP. Over 28 characters wrap to two lines, and up to 40 fit.',
-      initialValue: 'KICKOFF IN',
-      validation: Rule => [Rule.max(28).warning(titleWarning), tooLong(Rule, 40)],
-    }),
-    defineField({
-      name: 'kickoff',
-      title: 'Kickoff date and time',
-      type: 'datetime',
-      description: 'When Kickoff starts. Once it has passed, the countdown moves on to Rollout.',
-      initialValue: '2027-01-09T17:00:00.000Z',
-    }),
-    defineField({
-      name: 'rolloutLabel',
-      title: 'Rollout label',
-      type: 'string',
-      description: 'The title on the countdown while it counts to Rollout. Over 28 characters wrap to two lines, and up to 40 fit.',
-      initialValue: 'ROLLOUT IN',
-      validation: Rule => [Rule.max(28).warning(titleWarning), tooLong(Rule, 40)],
-    }),
-    defineField({
-      name: 'rollout',
-      title: 'Rollout date and time',
-      type: 'datetime',
-      description: 'When Rollout is. Leave empty until the date is known.',
-    }),
-  ],
-});
-
 const alertField = defineField({
   name: 'alert',
   title: 'Alert',
@@ -397,91 +342,6 @@ const safetyDaysField = defineField({
   description: 'The date the safety day count starts from. The Safety Days panel counts the days since this date.',
 });
 
-// The Mini saves CALENDAR_BUILD_SEASON_URL as build_season.ics, so a code
-// that is not lowercase letters, digits and underscores never finds its file
-const calendarCode = /^[a-z0-9_]+$/;
-
-// The values are the names in calendarKinds in dashboard/config.js. Other was the starting value once, so
-// the screen counts it as no kind and gives its events no chip. It stays in the list so that a calendar saved
-// as other is still valid, and it is the way to put a kind back to none.
-const calendarKinds = [
-  { title: 'Meetings', value: 'meetings' },
-  { title: 'Competitions', value: 'competitions' },
-  { title: 'Outreach', value: 'outreach' },
-  { title: 'Deadlines', value: 'deadlines' },
-  { title: 'Other (no chip)', value: 'other' },
-];
-
-// The same row as defaultSettings.calendars in dashboard/config.js. It has no kind: a calendar has none until
-// somebody picks one.
-const calendarsField = defineField({
-  name: 'calendars',
-  title: 'Calendars',
-  type: 'array',
-  group: 'calendars',
-  description: 'Name each team calendar, say what kind it is and choose which ones show events on the screen.',
-  initialValue: [{ id: 'team', name: 'Team calendar', show: true }],
-  of: [
-    defineArrayMember({
-      type: 'object',
-      title: 'Calendar',
-      fields: [
-        defineField({
-          name: 'id',
-          title: 'Calendar code',
-          type: 'string',
-          description: 'The code of the calendar on the Mini, in lowercase. Do not change it unless you were told to. Up to 20 characters.',
-          validation: Rule => [
-            Rule.required().error('Enter the calendar code.'),
-            tooLong(Rule, 20),
-            Rule.regex(calendarCode, { name: 'lowercase code' }).error('Use lowercase letters, digits and underscores only, such as team.'),
-          ],
-        }),
-        defineField({
-          name: 'name',
-          title: 'Calendar name',
-          type: 'string',
-          description: 'A name people will recognise. Up to 20 characters.',
-          validation: Rule => [Rule.required().error('Give the calendar a name.'), tooLong(Rule, 20)],
-        }),
-        defineField({
-          name: 'kind',
-          title: 'Kind',
-          type: 'string',
-          description: 'Pick a kind to show a chip on each event from this calendar. Leave it blank for no chip.',
-          options: { list: calendarKinds, layout: 'radio', direction: 'horizontal' },
-          validation: Rule => Rule.valid(calendarKinds.map(kind => kind.value)).error('Pick meetings, competitions, outreach, deadlines or other.'),
-        }),
-        defineField({
-          name: 'show',
-          title: 'Show on screen',
-          type: 'boolean',
-          description: 'Turn this off to leave this calendar out of the events on the screen.',
-          initialValue: true,
-        }),
-      ],
-      preview: {
-        select: { title: 'name', code: 'id', show: 'show', kind: 'kind' },
-        prepare(calendar) {
-          const kind = calendarKinds.filter(item => item.value === calendar.kind).map(item => item.title)[0] || 'No chip';
-          const subtitle = [calendar.show === false ? 'Hidden' : '', calendar.code, kind].filter(Boolean).join(' · ');
-          return { title: calendar.title || 'Calendar with no name', subtitle: subtitle };
-        },
-      },
-    }),
-  ],
-});
-
-// The same starting value as defaultSettings.groupEventsByKind in dashboard/config.js
-const groupEventsByKindField = defineField({
-  name: 'groupEventsByKind',
-  title: 'Group events by kind',
-  type: 'boolean',
-  group: 'calendars',
-  description: 'Off: both Events pages go in date order. On: page one has Meetings, Deadlines and Other, page two Competitions and Outreach.',
-  initialValue: false,
-});
-
 // The note on the Look tab points to the Look page, which points back (theme.js). The second says where the rows are.
 const lookNoteField = noteField('lookNote', 'Which theme plays on each day is set on the Themes page. Colors, seasonal packs and the time zone are in Look, in the sidebar.', 'look');
 const cycleNoteField = noteField('cycleNote', 'What plays in a view is set in Views, under Settings in the sidebar. The views take the screen in the order below, and the screen swaps at each change.', 'look');
@@ -531,7 +391,6 @@ export default defineType({
     ...mondayFields(),
     ...competitionFields(),
     contentSourceField,
-    switchBackAtField,
     showConnectionStatusField,
   ],
   preview: {

@@ -63,8 +63,6 @@ function test(name, run) {
   tests.push({ name: name, run: run });
 }
 
-const countOf = (text, piece) => text.split(piece).length - 1;
-
 // plate.js draws each card and bar shape once into a hidden group of the page. This
 // stands in for the page.
 async function withFakePage(run) {
@@ -143,7 +141,6 @@ const numberIn = (rule, property) => Number(new RegExp('(?:^|[;\\s])' + property
 // The body of the large panel is 576 high and 1152 wide, and the rows start 124 down the frame
 const bodyHeight = 576;
 const bodyWidth = 1152;
-const bodyTop = 124;
 const percents = [];
 for (let percent = 60; percent <= 220; percent++) percents.push(percent);
 

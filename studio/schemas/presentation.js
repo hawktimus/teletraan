@@ -4,16 +4,11 @@
 // The dataset is public, so the first name and the title are public too.
 
 import { defineType, defineField } from 'sanity';
-import { teamField, tooLong, titleOf } from './fields.js';
+import { teamField, tooLong, titleOf, firstNameOnly } from './fields.js';
 import { clockIn, fallbackTimeZone } from './presentationTimes.js';
 
 // The name is a first name, so a space or a digit means a last name or
 // something else is in there. A hyphen is fine, as in Mary-Anne.
-function firstNameOnly(value) {
-  if (typeof value === 'string' && /[\s\d]/.test(value)) return 'Use a first name only, with no spaces or numbers.';
-  return true;
-}
-
 // A Google Slides share link, which has the id of the deck after /d/
 const slidesLink = /^https:\/\/docs\.google\.com\/presentation\/d\/[A-Za-z0-9_-]+/;
 

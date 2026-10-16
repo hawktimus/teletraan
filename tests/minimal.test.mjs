@@ -1,4 +1,4 @@
-// Tests for the Minimal style on the bar layout: what the order says it has (the banner with
+// Tests for the Minimal style on the bar layout: what it is meant to have (the banner with
 // the narrow war clock, the side column and its rail, the one main panel, the ticker, the steel
 // frames with the thin neon line, the 34 px cuts, four hex bolts, rivets, the weld seam, the rust
 // and the ticks), what it must not have (any serial text, hazard
@@ -185,7 +185,7 @@ test('the page of Minimal has no scanlines, no raised plate, no stamped id and n
 
 // What Minimal has
 
-test('the layout of Minimal is the numbers of the order: the banner 1856 x 160 with the war clock 766 x 128 at one end, the rail 12 and the column 300, the main panel 1484 x 736, and the ticker 1856 x 72', () => {
+test('the layout of Minimal has fixed numbers: the banner 1856 x 160 with the war clock 766 x 128 at one end, the rail 12 and the column 300, the main panel 1484 x 736, and the ticker 1856 x 72', () => {
   assert.deepEqual([b.banner.width, b.banner.height], [1856, 160]);
   assert.deepEqual([b.war.width, b.war.height], [766, 128]);
   assert.equal(b.war.x + b.war.width, b.banner.x + b.banner.width - layout.barSettings.bannerPadding, 'the clock is at the right end of the banner');
@@ -211,7 +211,7 @@ test('the layout of Minimal is the numbers of the order: the banner 1856 x 160 w
   assert.deepEqual(parts.slice().sort((one, other) => column.indexOf(one) - column.indexOf(other)), parts, 'the rail, then the clock, the date, the weather, the TEAM plate, the school and the hawk, from the top');
 });
 
-test('the frames of Minimal are the order\'s: steel with a thin neon line 10 inside, cuts of 34, a hex bolt at each of the four joints, rivets along the long edges, one weld seam on the tall panel, rust at two corners and ticks along the header line', async () => {
+test('the frames of Minimal are steel with a thin neon line 10 inside, cuts of 34, a hex bolt at each of the four joints, rivets along the long edges, one weld seam on the tall panel, rust at two corners and ticks along the header line', async () => {
   await withPlatePage(() => {
     ['bar-main-minimal', 'bar-banner-minimal'].forEach(kind => {
       const shape = plate.barShape(kind);
@@ -302,7 +302,7 @@ test('Minimal and Cybertron share an explicit list of rules and of values, and e
   });
   assert.deepEqual(shared, [
     'html[style] #screen::before', // the grid layer: it reads --style-grid-size, which is 96 px in one and 48 px in the other
-    'html[style] .area .plate .header-left', // the armor tab, which the order gives both
+    'html[style] .area .plate .header-left', // the armor tab, which both have
     'html[style] .area .plate .header-right',
     'html[style] .team-fill, html[style] .tag-fill, html[style] .card-fill', // the TEAM plate, the ticker's tag and the cards in the team's plate color
     'html[style] .sponsor-feature .card-fill, html[style] .photo .card-fill', // the cards that only hold a picture have no fill

@@ -3,12 +3,25 @@
 For the coaches. This page says where each coach setting is, what to know before
 you change it, and which page has the detail. Students use
 docs/students.md. Everything under Coaches only in the sidebar is here:
-Settings (Dashboard Settings, Look and Teams) and Extra panels. So is Screens,
-the second line of the sidebar, under Start here.
+Settings (Dashboard Settings, Look, Teams, Views and Themes) and Extra panels.
 
 The Monday feed, the competition feed and the status documents have not been tried
 against the live services, because they need keys that only the Mini holds. Their
 pages say what to change if an answer looks different.
+
+## Where things are
+
+This is the table of the README. A file you want to change is in one of these folders. docs/where-things-are.md names every file, and docs/paths.md says where each file was before the folders were reorganized.
+
+| Folder | What it holds |
+|--------|---------------|
+| `dashboard/` | The TV page: `index.html`, `core/` (the modules with no page in them), `panels/<id>/` (each panel's `panel.js` and `panel.css`), `styles/<theme>/` (original, cybertron and retro), `themes/` (color files and seasonal packs), `layouts/` and `data/` |
+| `studio/` | The Studio: `schemas/` (one file for each kind of content), `inputs/` (custom inputs, pages and the lists that copy the dashboard's), `tools/` (Publish all, the view defaults and the buttons), `structure.js` (the sidebar) and `static/` (made by the build, never committed) |
+| `control/` | The control page service (Node, standard library only) and its pages: updates, rollback, what is on the wall, the keys and the log (docs/control-page.md) |
+| `mini/` | Everything that runs on the Mini: `install.sh`, `scripts/` (every script starts with `lib.sh`), `systemd/`, `nginx/`, `sudoers/`, `git/`, `console/`, `docker-compose.yml` and `local.example.env` |
+| `tools/` | Things a coach runs on a Mac: `mini/` (the Mac tool), `mac/` (the Ship app), `screenshots.mjs`, `sweep.sh` with `sweep-words.txt`, `serve.py`, `frc-fixture.mjs`, the pages `icons.html`, `logo.html` and `zones.html`, and `perf/` |
+| `tests/` | Every test, one file for each module or script, and `run.mjs` to run them all |
+| `docs/` | The guides. `docs/paths.md` lists where every file moved to, `docs/where-things-are.md` is the long map and `docs/changelog.md` says what each round changed |
 
 ## Dashboard Settings
 
@@ -20,7 +33,7 @@ docs/editing-content.md, "Dashboard Settings".
 | Tab | What is in it |
 |-----|---------------|
 | Screen | The status block, the team name, number and school, motion, speed, frame metal, glint, polish, the screen glitch, the alert, the seconds per page and per ticker line, photos, announcements, how many days finished tasks stay and the date the safety day count starts |
-| Look | The Weekday schedule, the logo and name effects and the page changes |
+| Look | The order of the views, the name and title of General, the logo and name effects and the page changes |
 | Countdown | The labels and dates for Kickoff and Rollout |
 | Calendars | A row for each calendar with its code, name, kind and Show on screen switch, and Group events by kind |
 | Presentations | Run presentations, the one switch for booked talks |
@@ -28,8 +41,8 @@ docs/editing-content.md, "Dashboard Settings".
 | Competition | When the competition cards come, and a switch for each card |
 | Advanced | Night mode, hidden transitions and the connection text on the screen |
 
-The Look tab here has the Weekday schedule, which picks the Screen of each day
-(see Screens below). The Look line under Settings in the sidebar is another page:
+The Look tab here has the order of the views and the name of the General view
+(see Views and themes below). The Look line under Settings in the sidebar is another page:
 the colors of the whole screen, the seasonal packs and the time zone
 (docs/switch-the-look.md).
 
@@ -88,103 +101,43 @@ calendar addresses are in the same file, one `CALENDAR_<ID>_URL` line each
 (docs/calendar-links.md). None of them goes in the repository, in Studio or in a
 message.
 
-## Screens
+## Views and themes
 
-A Screen is what plays on the TV. There are three, Original, Cybertron and
-Minimal, in Screens, the second line of the sidebar, under Start here. Each is
-one document that always exists, so you cannot add, copy or delete one. Original
-and Cybertron have the standard arrangement: the banner, the main panel, the
-countdown over the side panel, and the ticker. Cybertron draws it in gunmetal
-plates. Minimal has the banner with the war clock across the top, a thin column
-at the left, one main panel and the ticker, and no side panel.
+A view is what plays on the TV for a few minutes: General, Prime, Nova or Family. A theme is how the screen is drawn. Every view looks the same in every theme. Settings has two lines for them, Views and Themes (docs/views-and-themes.md, docs/views.md).
 
-A Screen opens on a map of the screen. Click a letter or its box and that
-part opens below the map, with its box lit. The letters are the ones on Start
-here. Above the map, Editing, Prime or Nova, changes which team document A opens
-and nothing else. The Screen is the same for both teams.
+A view is one document that always exists, so you cannot add, copy or delete one. General has the standard arrangement: the banner, the main panel, the countdown over the side panel, and the ticker. Prime, Nova and Family have the bar arrangement: the banner with the war clock across the top, a thin column at the left, one main panel and the ticker, and no side panel. Nova is turned left to right because the Nova team has Mirror switched on.
+
+A view opens on a map of the screen. Click a letter or its box and that part opens below the map. The letters are the ones on Start here. Above the map is a picker that moves to another view.
 
 | Letter | Part | What is there |
 |--------|------|---------------|
-| A | Banner | A button that opens the document of the team in the Editing switch (name, number, logo, colors and the Outlined name switch). Under it, Name effect every (10 minutes to start with), Flying hawk every (5) and Swap time (1.25 seconds) |
-| B | Main panel | The rows the main panel plays, top to bottom, and then over again. The Monday style |
-| C | Countdown | The title and the dates of Kickoff and Rollout, shown from Dashboard Settings, Countdown tab. They are the same on every Screen and for both teams, so change them there |
-| D | Side panel | The rows the small panel plays, on its own timer. A row has no team. Minimal has no side panel, so its D opens nothing |
-| E | Ticker | A link that opens Tips and News. The ticker shows every published tip and news item in order, and has no settings on the Screen |
+| A | Banner | The name in the view tag, the team, the arrangement (standard or bar), Mirror, the view tag, the team chip and the colors |
+| B | Main panel | The minutes the view stays (1 to 30) and the rows the main panel plays, top to bottom, and then over again |
+| C | Countdown | Where the countdown sits. The title and the dates of Kickoff and Rollout come from Dashboard Settings, Countdown tab, and are the same in every view |
+| D | Side panel | The rows the small panel plays, on its own timer. Only the standard arrangement has it |
+| E | Ticker | A link that opens Tips and News. The ticker shows every published tip and news item in order |
 
-Name effect every and Flying hawk every are in minutes, from 1 to 240. Swap time
-is how long the frames take to pull apart and re-form when the team or the style
-changes, from 0.5 to 3 seconds. Every other timing of the swap scales with it.
-A Screen that was saved before Flying hawk every started at 5 keeps the number it
-has, which is 15 on the Screens made then, so change it there to 5 if the hawk
-should come every 5 minutes.
-Outlined name is a switch on the team document: off draws the team name solid,
-and both teams are off to start with.
+The order of the views and the name and title of General are on the Look tab of Dashboard Settings (Order of the views, Name of the General view, Title of the General view). A view left out of the order never plays. The swap, the pull apart and re-form of the frames, plays at every change of view, and its length, the name effect and the flying hawk keep the numbers of the Screen documents (Screens, the second line of the sidebar), which are kept for that. Outlined name is a switch on the team document: off draws the team name solid, and both teams are off to start with.
 
 ### The rows of the main panel
 
-A row is a panel, a team and, if you want, the seconds. Without seconds the row
-follows Seconds per page on the Screen tab of Dashboard Settings. The Photo row
-has no seconds of its own. It has Photos (1 to 20, starting at 4) and Seconds per
-photo (5 to 60, starting at 10), and the time it stays up is the two multiplied,
-shown beside them. Four photos of 10 seconds stay up 40 seconds.
+A row is a panel and, if you want, the seconds. Without seconds the row follows Seconds per page on the Screen tab of Dashboard Settings. The Photo row has no seconds of its own. It has Photos (1 to 20, starting at 4) and Seconds per photo (5 to 60, starting at 10), and the time it stays up is the two multiplied, shown beside them. Four photos of 10 seconds stay up 40 seconds.
 
-- Panel: the large panels (Tasks, Upcoming events, Daily Agenda, Subteam
-  spotlight, Sponsor feature, Photo, Leadership, Team leads, Subteam roster and
-  Extra panel) and six Monday rows: Monday: Tasks by team and department, Done by
-  team, Status by department, Overall progress, Timeline by team and Board by team
-  (docs/monday.md, "The eleven panels"). Upcoming events is one row that scrolls from its first four events to the next four.
-- Team: shown with the choices the panel allows. A panel for one team can be left
-  on Keep the team on the screen, or set to Prime or Nova. Photo and Upcoming
-  events are for both teams and have no team. A Monday row needs a team, except
-  Status by department and Overall progress, which are for both teams. The tasks
-  row also has a Department, a Team lead, and starts on the first department that
-  has tasks.
-- The screen swaps when the team of the next row is another team than the one
-  on the banner, and when a Monday row begins and ends. A row with no team keeps
-  the team on the banner. So keep the Prime rows together and the Nova rows
-  together: the screen transforms every time the team changes.
-- Monday style: the style the Screen takes while a Monday row plays. The screen
-  swaps into it when the first Monday row begins and back to the day's Screen
-  when the next row is not a Monday row. A Monday row with nothing to show, such
-  as a department with no tasks, is skipped (docs/monday.md).
-- The competition cards still come in by themselves from two days before an event,
-  as the Competition tab says. They are not rows.
+- Panel: the large panels (Tasks, Upcoming events, Daily Agenda, Subteam spotlight, Sponsor feature, Photo, Leadership, Team leads, Subteam roster and Extra panel) and the Monday rows: Tasks by team and department, Done by team, Status by department, Overall progress, Timeline by team and Board by team (docs/monday.md, "The eleven panels"). Upcoming events is one row that scrolls from its first four events to the next four.
+- The team of a row is the team of its view. A Monday tasks row with no department plays one page for each Team lead that has On the Monday board switched on. A Monday row with nothing to show, such as a department with no tasks, is skipped (docs/monday.md).
+- Monday style: the style the Screen takes while a Monday row plays. It is a field of the Screen documents (Screens, the second line of the sidebar). The screen swaps into it when the first Monday row begins and back to the theme of the day when the next row is not a Monday row.
+- The competition cards still come in by themselves from two days before an event, as the Competition tab says. They are not rows.
+- When an alert, an announcement, a talk or the night screen has the screen, the minutes stand still. The view that was interrupted comes back at the panel that was next.
 
-### Which Screen plays on which day
+### Which theme plays on which day
 
-Dashboard Settings, Look tab, Weekday schedule has a picker for each day,
-Monday to Sunday. Original plays on Monday, Wednesday, Friday and Sunday, and
-Cybertron on Tuesday, Thursday and Saturday. Minimal is not scheduled to start
-with. The day is the calendar day in the time zone on the Look page. The screen
-picks the Screen of the day when it starts and at the first row change after
-midnight, so a screen that restarts lands on the same Screen.
+Settings, Themes has a picker for each day, Monday to Sunday (the field Theme of each weekday). The day is the calendar day in the time zone on the Look page. The screen picks the theme of the day when it starts and at the next change of view after midnight, so a screen that restarts lands on the same theme. Retro is a copy of Original until it is designed.
 
-### The first time a Screen opens
+### The first time a view opens
 
-If the main panel list is empty, the Screen fills it once from the Panel order
-that the screen followed before Screens existed:
+A view with no main panel rows is filled once from the Screens that were in use before the views: rows of Prime go to Prime, rows of Nova to Nova and rows with no team to General. A view that finds no rows starts with the starting rows in `studio/tools/view-defaults.js`. Click Publish all afterwards. The Screens, the Panel order, Styles by day, Team order and Monday style in Dashboard Settings are hidden now, with what was saved in them, and the screen does not read them for the rows.
 
-1. For each active team, Prime first: its team-specific panels (Tasks, Daily
-   Agenda, Subteam spotlight, Sponsor feature, Leadership, Team leads, Subteam
-   roster and Extra panel) as rows with that team, in the order they had, and
-   then its three Monday rows: Tasks, Done and Board.
-2. After the last team, the panels for both teams (Upcoming events and Photo),
-   with no team.
-3. Seconds carry over. A panel that was in the order twice has two rows.
-   A row that was switched off is left out.
-
-The side panel list is filled from the small panels of the same order, with no
-team. Minimal gets the main rows and no side rows. The Monday style is copied from
-the old setting. The screen works out the same rows for a Screen that has none, so
-nothing goes blank before anyone opens Studio. The old Panel order, Styles by day,
-Team order and Monday style in Dashboard Settings, and Flying hawk every and Name
-effect every in seconds on the Look tab, are hidden now, with what was
-saved in them, and the screen does not read them for the rows.
-
-Next look now, on the Start here page, moves the main panel to its next row at once. To
-see a style or a team for 2 minutes without saving anything, open the menu next to
-Publish on Dashboard Settings (the three dots) and click one of the Preview buttons
-(docs/hidden-transitions.md, "Preview a look").
+To see a theme or a team for 2 minutes without saving anything, open the menu next to Publish on Dashboard Settings (the three dots) and click one of the Preview buttons (docs/hidden-transitions.md, "Preview a look"). The Now showing tab of the control page can also show a view, hold a panel or try a theme for a few minutes (docs/control-page.md).
 
 ## Monday setup
 
@@ -435,13 +388,7 @@ numbers and times, scores, ranks, award names and ratings, and no person's name.
 
 ## The version on the wall and the sweep
 
-The last line of the status block, On the wall, says which build the screen runs: the
-short hash and the day of the commit, such as `a1b2c3d · 2026-10-14`. The Mini writes it
-when the screen starts, and the Mac tool writes it at the end of an update (it leaves the
-hash in the file `build.txt` in the mini folder of the Mini, because the copy does not bring the `.git` folder).
-A Mini that pulls reads it from git. To see the same hash on the TV, open the address
-with `?debug=1` on the end: it shows in the bottom left corner at 20 px, the one text
-smaller than the usual smallest size.
+The last line of the status block, On the wall, says which build the screen runs, such as `v14 · a1b2c3d`: the release number and the first seven characters of the commit. The control page makes the number when it installs a release, and the Mac tool does the same through the installer (docs/control-page.md). The control page shows the same text on every tab. A Mini that has no release number, such as a plain checkout, shows the hash and the day of the commit. To see the build on the TV, open the address with `?debug=1` on the end: it shows in the bottom left corner at 20 px, the one text smaller than the usual smallest size.
 
 The sweep keeps names out of the repository that do not belong there: AI tools, films,
 shows and franchises, and lines that credit a tool or a co-author. `tools/sweep.sh` looks

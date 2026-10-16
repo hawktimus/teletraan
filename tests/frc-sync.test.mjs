@@ -14,6 +14,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { textOf, copyWithEdits } from './helpers/script-parts.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const syncFile = path.join(repo, 'mini/scripts/frc-sync.sh');
@@ -166,16 +167,12 @@ function setup(name, options) {
   if (!options.noData) fs.mkdirSync(data);
 
   const scriptCopy = path.join(root, 'mini/scripts/frc-sync.sh');
-  let text = fs.readFileSync(syncFile, 'utf8');
-  (options.edits || []).forEach(edit => {
-    assert.ok(text.includes(edit[0]), 'the script has no ' + edit[0]);
-    text = text.replace(edit[0], edit[1]);
-  });
-  fs.writeFileSync(scriptCopy, text, { mode: fs.statSync(syncFile).mode });
+  copyWithEdits(syncFile, path.join(root, 'mini/scripts'), options.edits);
   const installCopy = path.join(root, 'mini/scripts/install-frc.sh');
   fs.copyFileSync(installFile, installCopy);
   fs.chmodSync(installCopy, fs.statSync(installFile).mode);
   writeTool(path.join(root, 'mini/scripts'), 'status-write.sh', fakeStatusWrite);
+  fs.copyFileSync(path.join(repo, 'mini/scripts/lib.sh'), path.join(root, 'mini/scripts/lib.sh'));
   unitFiles.forEach(unit => fs.copyFileSync(path.join(repo, 'mini/systemd', unit), path.join(root, 'mini/systemd', unit)));
   fs.copyFileSync(path.join(repo, 'dashboard/config.js'), path.join(root, 'dashboard/config.js'));
 
@@ -475,7 +472,7 @@ test('Sanity is asked for the teams, the time zone and the last status without a
   assert.ok(write.includes('--config -'), 'the token comes in on standard input: ' + write);
   assert.equal(fs.readFileSync(path.join(place.stub, 'addresses.txt'), 'utf8').trim(), 'https://' + project + '.api.sanity.io/v' + version + '/data/mutate/' + dataset);
 
-  const script = fs.readFileSync(syncFile, 'utf8');
+  const script = textOf(syncFile);
   [project, dataset, version].forEach(value => assert.ok(!script.includes(value), 'the script should not contain ' + value));
 });
 
@@ -1481,15 +1478,15 @@ test('the work folder is removed after every run, and one a stopped run left beh
   assert.deepEqual(fs.readdirSync(place.temp), []);
 });
 
-test('the script also works under dash, with the same requests and the same status', () => {
-  if (!fs.existsSync('/bin/dash')) return;
-  const reference = setup('dash-reference', { tools: true });
+test('the script also works under bash, with the same requests and the same status', () => {
+  if (!fs.existsSync('/bin/bash')) return;
+  const reference = setup('bash-reference', { tools: true });
   world(reference);
   reference.run();
 
-  const place = setup('dash', { tools: true });
+  const place = setup('bash', { tools: true });
   world(place);
-  const result = place.run([], {}, '/bin/dash');
+  const result = place.run([], {}, '/bin/bash');
 
   assert.equal(result.status, 0, result.errors);
   assert.deepEqual(requestsOf(result.calls), firstSequence);
@@ -1506,15 +1503,15 @@ test('the scripts have valid sh syntax, are executable, and local.env and the se
     }
 
     const text = fs.readFileSync(file, 'utf8');
-    assert.ok(text.startsWith('#!/bin/sh\n'));
-    assert.ok(/^set -eu$/m.test(text), 'the script stops at the first error');
+    assert.ok(text.startsWith('#!/bin/bash\n'));
+    assert.ok(/^set -euo pipefail$/m.test(text), 'the script stops at the first error');
     assert.ok((fs.statSync(file).mode & 0o111) !== 0, path.basename(file) + ' should be executable');
     assert.ok(!/\bcat\b[^\n]*local\.env/.test(text), 'local.env is never printed');
     assert.ok(!/\beval\b/.test(text), 'nothing is run from text');
     assert.ok(!/CALENDAR_|MONDAY_/.test(text), 'the other secrets are not read');
   });
 
-  const text = fs.readFileSync(syncFile, 'utf8');
+  const text = textOf(syncFile);
   assert.ok(!/\becho\b[^\n]*\$(tba_key|write_token)/.test(text), 'a secret is never echoed');
   assert.ok(!/\bprintf\b[^\n]*\$(tba_key|write_token)[^\n]*>&2/.test(text), 'a secret is never printed as an error');
   assert.ok(!/--header[^\n]*(X-TBA-Auth-Key|Authorization)|-H [^\n]*(X-TBA-Auth-Key|Authorization)/.test(text), 'a secret is not an argument of curl');
@@ -1525,7 +1522,7 @@ test('the scripts have valid sh syntax, are executable, and local.env and the se
 });
 
 test('every address and every place in an answer is in the block at the top, and nowhere else', () => {
-  const text = fs.readFileSync(syncFile, 'utf8');
+  const text = textOf(syncFile);
   const start = text.indexOf("tba_host='");
   const end = text.indexOf("\n'\n", start) + 3;
   const block = text.slice(start, end);
@@ -1565,7 +1562,7 @@ test('the unit files name the account ACCOUNT, run the script, and the timer wak
 test('the script tells status-mini through status-write.sh, which knows the job frc', () => {
   const status = fs.readFileSync(path.join(repo, 'mini/scripts/status-write.sh'), 'utf8');
   assert.ok(status.includes('frc) field=lastFrcSyncAt ;;'));
-  assert.ok(fs.readFileSync(syncFile, 'utf8').includes('"$mini/scripts/status-write.sh" frc || true'));
+  assert.ok(textOf(syncFile).includes('"$mini/scripts/status-write.sh" frc || true'));
 });
 
 test('install-frc.sh stops, naming the file, when a unit file is missing or empty', () => {

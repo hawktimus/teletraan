@@ -160,8 +160,8 @@ journal has what the timer's runs said.
 
 ## If an answer looks different
 
-Every address and every place in an answer is in one block near the top of
-`mini/scripts/frc-sync.sh`. The addresses are `tba_` and `statbotics_` lines
+Every address and every place in an answer is in one file,
+`mini/scripts/frc-contract.sh`, which `frc-sync.sh` reads. The addresses are `tba_` and `statbotics_` lines
 with `{team}`, `{year}`, `{event}`, `{match}`, `{number}` and `{district}` where
 the script puts the values. The places are the `def` lines in `paths`, such as
 `def match_red_score: .alliances.red.score;`. They are jq, and each one is given
@@ -177,18 +177,18 @@ The file names are `tba-events-<year>-<team key>`, `tba-matches-<team key>-<even
 `tba-rankings-<event>`, `tba-alliances-<event>`, `tba-teams-<event>`,
 `tba-awards-<year>-<team key>`, `tba-district-events-<year>`,
 `tba-district-rankings-<year>`, `statbotics-team-<year>-<number>` and
-`statbotics-match-<match>`. Compare what is there with the line in the block,
+`statbotics-match-<match>`. Compare what is there with the line in that file,
 correct that one line and run `frc-sync.sh --now`. An address that no longer
 exists is not kept, so for that case read the documentation of the service.
 
 `tests/frc-sync.test.mjs` uses made-up answers with the same places. If a place
-changes in the block, change it in the made-up answers too, and run the test
+changes in that file, change it in the made-up answers too, and run the test
 (docs/where-things-are.md, "Checking your work").
 
 ## The district cutoff
 
 The district rankings give each team's points but not how many points get a team
-into the district championship. `district_slots` in the block is the number of
+into the district championship. `district_slots` in `frc-contract.sh` is the number of
 teams the championship takes. It is empty until that number is known. Once it is
 set, the cutoff is the points of the team at that place in the district list.
 Until then `cutoff` is empty and nothing is shown.
@@ -264,10 +264,10 @@ one of three:
 
 Each card has a switch of its own, all on to start with. A card that is switched
 off is never put in the rotation, in any mode (Preview competition shows all of
-them). The rows of a Screen do not have the cards:
+them). The rows of a view do not have the cards:
 they come in and go out by the mode, the switches and the data. How long a card
 stays follows Seconds per page, like every other panel. The small panel and the
-ticker are not touched, and the cards look the same in every style and layout,
+ticker are not touched, and the cards look the same in every theme and layout,
 because they are drawn at the size of the large panel and scaled with it.
 
 `withCompetition` in `dashboard/core/competition.js` is called each time the large
@@ -276,7 +276,7 @@ the list with the due cards in it. A problem with the data leaves the list as it
 was and is written once to the console, so the rotation never stops because of
 the competition data.
 
-The rows of a Screen (docs/layouts.md, "The Screens") follow the same list.
+The rows of a view (docs/views.md) follow the same list.
 The cards come in with the rows of the team that is on the banner, with the
 data of that team. A Monday row has its own list, so no competition card comes
 in it.

@@ -234,7 +234,7 @@ const scheduleField = defineField({
   type: 'array',
   description: 'Rules that change the theme or add a seasonal pack on certain dates. For each kind, the first rule that covers today is used.',
   of: [ruleMember],
-  validation: Rule => Rule.max(24).error('Too many rules. Up to 24 fit.'),
+  validation: Rule => Rule.max(24).error('Up to 24 rules fit. Remove one.'),
 });
 
 const timeZoneField = defineField({

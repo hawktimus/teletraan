@@ -1,6 +1,6 @@
-# Deploy
+# The Mini
 
-Everything that puts the dashboard on the TV. The steps to set up a Mini from
+Everything that runs on the Mini and puts the dashboard on the TV. The steps to set up a Mini from
 nothing are in `docs/rebuilding-the-mini.md`. This page says what each file
 is for. Ask the team mentor (see docs/where-things-are.md) before
 installing anything on the Mini, and whenever a step needs a login or a key.
@@ -8,8 +8,9 @@ installing anything on the Mini, and whenever a step needs a login or a key.
 ## How it fits together
 
 - A web server container shows the `dashboard` folder at
-  `http://localhost:3229/dashboard/`, the port in `TELETRAAN_PORT` in
-  `local.env`. It can only be reached from the Mini.
+  `http://localhost:8080/dashboard/`, the port in `TELETRAAN_PORT` in
+  `local.env`. It can only be reached from the Mini. A second port, 3229, shows the control
+  page and the Studio to the WiFi and to Tailscale (`docs/control-page.md`).
 - A timer can run `pull.sh` every 5 minutes. A pull is a deploy: the files in the
   repository are the files on the screen. A Mini that gets its files from a Mac
   (below) leaves this timer off and installs only the calendar and slides
@@ -18,7 +19,7 @@ installing anything on the Mini, and whenever a step needs a login or a key.
   instead of pulling, keeps the keys and calendar lines of `local.env`, installs
   the services and shows the status (`docs/updating-the-mini.md`). Its words
   `update`, `status` and `restart` do one thing with no menu.
-- `mac/ship.sh` runs on the Mac you work on, not on the Mini. It checks the code,
+- `tools/mac/ship.sh` runs on the Mac you work on, not on the Mini. It checks the code,
   pushes to GitHub, deploys the Studio and runs `teletraan-mini update --yes`, so
   the Mini gets the files from that Mac and the screen restarts
   (`docs/shipping-from-the-mac.md`). `docs/laptop-setup.md` sets up a second Mac
@@ -61,10 +62,7 @@ and the dashboard reads them at `data/live/slides/<talk id>/`. The scripts
 write the calendars, the slides, `version.txt` and `device.json` (the Mini's
 name and addresses, written every minute by `kiosk.sh`, see "Finding the Mini
 on the network" in `docs/rebuilding-the-mini.md`). The photos are not on the
-Mini: they are uploaded in Studio and come with the rest of the content. The
-dashboard used to read a list of photos from a `photos.json` file in that
-folder. It does not any more, so a file with that name left on an older Mini
-can be deleted.
+Mini: they are uploaded in Studio and come with the rest of the content.
 
 Do not delete `dashboard/data/live/.gitkeep`: Docker needs the empty folder
 to attach the data folder to.
@@ -73,6 +71,12 @@ to attach the data folder to.
 
 | File | What it does |
 |------|--------------|
+| `install.sh` | Installs a release of the repository on the Mini: the one-time move to the releases layout, the helper socket, the sudoers file, the Studio build, the web server and the control service. The control page and the Mac tool run it (`docs/control-page.md`) |
+| `sudoers/teletraan-control` | The few commands the helper may run with sudo |
+| `git/post-receive` | The hook of the optional bare repository that a laptop can push to (`docs/control-page.md`, The git path) |
+| `scripts/lib.sh` | Read by every script: the folders, `setting` (the one reader of `local.env`) and `config_value` (the one reader of `dashboard/config.js`). Every script starts with `#!/bin/bash`, a usage line, `set -euo pipefail` and this file |
+| `scripts/control-helper.sh` | The host side of the control page. It accepts a fixed list of words and nothing else, and logs each one |
+| `scripts/display.sh` | Finds the connected screen with `xrandr` and sets a 1920 by 1080 framebuffer. `kiosk.sh` reads it |
 | `docker-compose.yml` | Starts the web server container, fixed to one nginx version |
 | `nginx/nginx.conf` | The web server's settings: no caching (except 10 seconds for a deck's `manifest.json`), file types, hidden files |
 | `local.example.env` | The template for `local.env`, with placeholders only |
@@ -84,8 +88,8 @@ to attach the data folder to.
 | `scripts/check-calendars.sh` | Lists each event of the next 30 days of every calendar in `local.env`, SHOWN or HIDDEN with the name of the Calendar filter that hides it, and the counts. A KIND line gives the kind of the calendar, or no chip when it has none. A SHOWN line also gives the page of the Events panel and the kind of the calendar. It only reads and prints no address. It needs Node, which the Mini does not have unless it was installed for the Calendars page, so run it on a computer that has Node and a copy of `local.env` |
 | `scripts/check-calendars.mjs` | The part of `check-calendars.sh` that runs the dashboard's own calendar code |
 | `scripts/slides-sync.sh` | Downloads the slides of the coming talks from Google Slides, turns them into pictures, and saves them with a `manifest.json`. `slides-sync.sh --test <link>` tries one deck and deletes what it made. Needs `poppler-utils`, `curl` and `jq` |
-| `scripts/frc-sync.sh` | Reads the public FRC data of each team from The Blue Alliance and Statbotics and writes the document `frc-status` in Sanity. Every address and every place in an answer is in one block at its top. `frc-sync.sh --check` tries the key, `--now` does a run whatever the time. Needs `curl` and `jq`, `TBA_AUTH_KEY` and `SANITY_WRITE_TOKEN` in `local.env`, and does nothing without them. See `docs/frc-feed.md` |
-| `scripts/monday-sync.sh` | Reads the task board and the milestones board named in Dashboard Settings, at most 4 requests a run and 900 a day, and writes their items into Sanity as tasks and milestones, and the document `monday-status` with the boards the token can see and what it read from each. Every address, question and place in an answer is in one block at its top. `monday-sync.sh --check` tries the token. Needs `curl` and `jq`, `MONDAY_API_TOKEN` and `SANITY_WRITE_TOKEN` in `local.env`, and does nothing without them. See `docs/monday.md` |
+| `scripts/frc-sync.sh` | Reads the public FRC data of each team from The Blue Alliance and Statbotics and writes the document `frc-status` in Sanity. Every address and every place in an answer is in `scripts/frc-contract.sh`. The script is in parts that it reads from the same folder: `frc-contract.sh`, `frc-requests.sh`, `frc-modes.sh`, `frc-read.sh` and `frc-programs.sh`. `frc-sync.sh --check` tries the key, `--now` does a run whatever the time. Needs `curl` and `jq`, `TBA_AUTH_KEY` and `SANITY_WRITE_TOKEN` in `local.env`, and does nothing without them. See `docs/frc-feed.md` |
+| `scripts/monday-sync.sh` | Reads the task board and the milestones board named in Dashboard Settings, at most 4 requests a run and 900 a day, and writes their items into Sanity as tasks and milestones, and the document `monday-status` with the boards the token can see and what it read from each. Every address, question and place in an answer is in `scripts/monday-contract.sh`. The script is in parts that it reads from the same folder: `monday-contract.sh`, `monday-requests.sh`, `monday-check.sh` and `monday-programs.sh`. `monday-sync.sh --check` tries the token. Needs `curl` and `jq`, `MONDAY_API_TOKEN` and `SANITY_WRITE_TOKEN` in `local.env`, and does nothing without them. See `docs/monday.md` |
 | `scripts/status-write.sh` | Writes the time of a job into the document `status-mini` in Sanity, which Studio shows at the top of the Screen tab of Dashboard Settings. `status-write.sh calendar-status` sends the Calendars page document the same way. Needs `SANITY_WRITE_TOKEN` in `local.env` and does nothing without it. `status-write.sh --print` needs no key: it reads the document back and shows each time with its age. The calendar and slides services and `kiosk.sh` run it, see "Showing what the Mini did in Studio" in `docs/rebuilding-the-mini.md` |
 | `scripts/kiosk.sh` | Opens the browser full screen with the right settings, or any page given after its name. Also writes `device.json` every minute while the browser runs, and starts `status-write.sh kiosk` in the background |
 | `scripts/install-timers.sh` | Copies the unit files into place and turns on the calendar timer and the pull timer |
@@ -114,9 +118,11 @@ read it:
     cp local.example.env local.env
     chmod 600 local.env
 
-The Mini's dashboard port is 3229. Set `TELETRAAN_PORT='3229'` in `local.env`:
-the template and the fallback in `docker-compose.yml` still say 8080. The screen
-and the Sanity CORS origin (studio/README.md, step 6) both use this port.
+The dashboard's port is `TELETRAAN_PORT` in `local.env`, 8080 to start with, and it
+is open on the Mini itself only. The screen and the Sanity CORS origin
+(docs/control-page.md, First time, step 4) both use this port. Port 3229 is the
+control page and the Studio, open to the WiFi and to Tailscale, so `TELETRAAN_PORT`
+must not be 3229.
 
 Git ignores the file wherever it sits, and also copies an editor leaves next
 to it, such as `local.env.save`. Never paste a feed address into a file that

@@ -212,7 +212,7 @@ function PublishAllTool() {
       })
       .catch(error => {
         setItems(previous => previous || []);
-        setProblem('The drafts could not be loaded. ' + messageOf(error));
+        setProblem('The drafts could not be loaded. Refresh the page to try again. ' + messageOf(error));
       });
   }
 

@@ -14,6 +14,7 @@ import vm from 'node:vm';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { readModule } from './helpers/read-module.mjs';
+import { textOf } from './helpers/script-parts.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-old-code-'));
@@ -128,7 +129,7 @@ function setup(options) {
   fs.mkdirSync(path.join(root, 'dashboard'));
   fs.mkdirSync(bin);
   fs.mkdirSync(home);
-  ['kiosk.sh', 'display.sh'].forEach(file => fs.copyFileSync(path.join(repo, 'mini/scripts', file), path.join(root, 'mini/scripts', file)));
+  ['kiosk.sh', 'display.sh', 'lib.sh'].forEach(file => fs.copyFileSync(path.join(repo, 'mini/scripts', file), path.join(root, 'mini/scripts', file)));
   writeTool(path.join(root, 'mini/scripts'), 'status-write.sh', `#!/bin/sh
 echo "status-write $* build=$(cat "$(dirname "$0")/../../dashboard/build.js" 2> /dev/null)" >> "$STUB_LOG"
 `);
@@ -206,7 +207,7 @@ test('kiosk.sh and the Mac tool pass the syntax check', () => {
   assert.equal(spawnSync('/bin/sh', ['-n', path.join(repo, 'mini/scripts/kiosk.sh')], { encoding: 'utf8' }).status, 0);
   assert.equal(spawnSync('bash', ['-n', path.join(repo, 'tools/mini/teletraan-mini')], { encoding: 'utf8' }).status, 0);
   // The release the installer makes writes build.js from RELEASE.json; the Mac tool hands it the commit
-  assert.ok(/install\.sh[^\n]*--commit/.test(read('tools/mini/teletraan-mini')), 'the Mac tool gives the installer the commit');
+  assert.ok(/install\.sh[^\n]*--commit/.test(textOf(path.join(repo, 'tools/mini/teletraan-mini'))), 'the Mac tool gives the installer the commit');
 });
 
 // The web server settings

@@ -1,6 +1,8 @@
 # Adding a theme
 
-A theme is a set of colours for the whole screen. The example adds a theme
+In the Studio the word theme now means one of original, cybertron and retro, the folders of `dashboard/styles/` that the Themes page lists (docs/views-and-themes.md). This page is about the other kind: the color files in `dashboard/themes/`, which the Look page offers as Use a theme now. The steps and the variables below are for a color file.
+
+A color file is a set of colours for the whole screen. The example adds a theme
 called Ocean. Do the steps in order.
 
 A theme changes colours and nothing else, with one exception: it may name a
@@ -122,7 +124,7 @@ large frame and the small frame, and the ticker. Neon Prime has the sidebar
 layout: a strip across the top with the team name on one line, under it a column on
 the left with the clock, countdown and logo, and one big frame on the right, and the
 ticker across the whole bottom. **It has no small frame**, so the
-the side panel rows of a Screen are not shown while it is on, and the large
+the side panel rows of a view are not shown while it is on, and the large
 panels are the rotation of the one frame.
 
 Put `layout: 'sidebar'` in the line in `dashboard/themes/registry.js` and in the
@@ -134,16 +136,16 @@ new theme would have gone on, in a swap, and the page does not reload. Changing 
 with the same layout is only colours. docs/layouts.md has the numbers, how the big frame is scaled and
 how to add a layout.
 
-The Style setting in Dashboard Settings can name a layout too, and it wins over the
-theme. Original and Cybertron keep the layout of the theme. Minimal has the bar
-layout whatever the theme says, so a theme with the standard layout and one with the
-sidebar layout both get it when that style is on. The theme still gives the
+A view can name a layout too, and it wins over the theme. General has the standard
+layout, and Prime, Nova and Family have the bar layout whatever the theme says, so a
+theme with the standard layout and one with the sidebar layout both get it when that
+view is on. The theme still gives the
 colors and the seasonal packs lie over it as before. A theme needs nothing for this.
 
 The team is a second source of color. `dashboard/teams.css` gives the theme Hawktimus
 its main, accent, background and text colors from the team on the screen, and no other
 theme is touched, so a new theme sets all its own colors in its file as before. The
-plate, neon and second bright colors of a team are read by Cybertron and Minimal
+plate, neon and second bright colors of a team are read by Cybertron and the bar layout
 only. Look at a new theme with `?style=cybertron` and `?team=nova` on the address as
 well as on its own.
 

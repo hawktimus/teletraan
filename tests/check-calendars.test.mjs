@@ -72,6 +72,7 @@ function setup(name, options) {
 
   fs.copyFileSync(scriptFile, path.join(root, 'mini/scripts/check-calendars.sh'));
   fs.copyFileSync(helperFile, path.join(root, 'mini/scripts/check-calendars.mjs'));
+  fs.copyFileSync(path.join(repo, 'mini/scripts/lib.sh'), path.join(root, 'mini/scripts/lib.sh'));
   fs.symlinkSync(path.join(repo, 'dashboard'), path.join(root, 'dashboard'));
   if (options.localEnv) fs.writeFileSync(path.join(root, 'mini/local.env'), options.localEnv);
 
@@ -324,7 +325,7 @@ test('the script has valid sh syntax, is executable, and never prints local.env'
   assert.equal(syntax.status, 0, syntax.stderr);
 
   const text = fs.readFileSync(scriptFile, 'utf8');
-  assert.ok(text.startsWith('#!/bin/sh\n'));
+  assert.ok(text.startsWith('#!/bin/bash\n'));
   assert.ok((fs.statSync(scriptFile).mode & 0o111) !== 0, 'the script should be executable');
   assert.ok(!/\bcat\b[^\n]*local\.env/.test(text), 'local.env is never printed');
   assert.ok(!/^\s*set -[a-z]*x/m.test(text), 'set -x would print every address');

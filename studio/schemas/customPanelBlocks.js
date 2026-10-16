@@ -84,7 +84,7 @@ const listBlock = defineType({
       type: 'array',
       description: 'The lines of the list. Up to 5 lines fit, with up to 34 characters each.',
       of: [defineArrayMember({ type: 'string', validation: Rule => tooLong(Rule, 34) })],
-      validation: Rule => Rule.max(5).error('Only 5 lines fit on the screen.'),
+      validation: Rule => Rule.max(5).error('Only 5 lines fit on the screen. Remove one.'),
     }),
   ],
   preview: {

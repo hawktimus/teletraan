@@ -483,7 +483,7 @@ test('the row description of the board panel says that two rows in a row show ca
 // The stylesheets
 
 // The sizes under 44px that the order sets for the panels of the board, by file and selector. The chips and the keys of a chart are
-// 30 and 36, the owner names 40, the labels 36, the chart axis labels 28 and the labels the order names for the overall and the board.
+// 30 and 36, the owner names 40, the labels 36, the chart axis labels 28 and the labels fixed for the overall and the board.
 const allowed = {
   'monday.css': { '.monday .stale-chip': 30, '.monday .chip': 30, '.monday .poc': 40, '.monday .fact-label': 36, '.monday .legend': 36, '.monday .department': 36 },
   'monday-tasks': { '.monday-tasks .due': 36, '.monday-tasks .chip-overdue': 30 },
@@ -494,7 +494,7 @@ const allowed = {
   'monday-board': { '.monday-board .column-name': 34, '.monday-board .count': 30, '.monday-board .card-department': 28, '.monday-board .card-title': 40, '.monday-board .card-poc': 32, '.monday-board .stuck-tag': 26, '.monday-board .more': 30 },
 };
 
-test('nothing in the stylesheets of the panels is under 44px except the sizes the order names, and no line is thinner than 3px', () => {
+test('nothing in the stylesheets of the panels is under 44px except the sizes allowed, and no line is thinner than 3px', () => {
   const files = [['monday.css', read('monday.css')]].concat(panelIds.map(id => [id, sheet(id)]));
 
   files.forEach(([name, css]) => {
@@ -511,7 +511,7 @@ test('nothing in the stylesheets of the panels is under 44px except the sizes th
   });
 });
 
-test('the measurements of the order are in the stylesheets', () => {
+test('the measurements are in the stylesheets', () => {
   const tasks = sheet('monday-tasks');
   const shared = read('monday.css');
   assert.ok(/\.monday \.chip \{[^}]*width: 262px;[^}]*height: 48px;/.test(shared), 'the status chip is 262 by 48');

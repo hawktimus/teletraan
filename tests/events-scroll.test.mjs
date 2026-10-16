@@ -468,7 +468,7 @@ test('the docs say that the Events panel scrolls from the first four events to t
   const layouts = fs.readFileSync(path.join(docsFolder, 'layouts.md'), 'utf8').replace(/\s+/g, ' ');
   const adding = fs.readFileSync(path.join(docsFolder, 'adding-a-panel.md'), 'utf8').replace(/\s+/g, ' ');
 
-  ['the list scrolls up', 'one step of the Screen', 'Calm or None', 'does not scroll'].forEach(word => assert.ok(editing.includes(word), 'editing-content.md names ' + word));
+  ['the list scrolls up', 'one step of the view', 'Calm or None', 'does not scroll'].forEach(word => assert.ok(editing.includes(word), 'editing-content.md names ' + word));
   assert.ok(coaches.includes('scrolls from its first four events to the next four'), 'the coaches guide says it in the rows of the main panel');
   assert.ok(coaches.includes('the list scrolls up'), 'and in the Events panel section');
   assert.ok(filters.includes('the list scrolls from the first to the second'));

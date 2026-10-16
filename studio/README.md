@@ -16,10 +16,12 @@ TV. The dashboard reads what they publish.
     tools/screen-requests.js        what the request buttons write (Play announcement, Run presentation test, Next look now, Preview competition, the Play and Preview buttons), used by tools/actions.js and the Start here page
     inputs/dashboard-address.js     the address that Preview the screen opens on the Start here page, with ?sample=1 for the sample content
     inputs/calendars-view.js        the Calendars page under Events, written as a plain function (docs/calendars-page.md)
-    inputs/calendars-view-parts.js  the words and rows of the Calendars page and the rules of its Hide buttons, with no Studio in it, so node can test them
+    inputs/calendars-view-parts.js  the words and rows of the Calendars page, with no Studio in it, so node can test them
+    inputs/calendars-hide-rules.js  the rules of the Hide buttons of the Calendars page and how they are read and written
     inputs/monday-boards-view.js    the Monday Boards page under Tasks, written as a plain function (docs/monday.md)
     inputs/monday-boards-parts.js   the words and rows of the Monday Boards page, with no Studio in it, so node can test them
     inputs/time-text.js             ages in words and times as the editor's computer writes them, used by inputs/status-input.js and the Calendars page
+    inputs/plain-values.js          the two checks the status pages share: is it a record, and a reason as a sentence
     tools/actions.js                the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons on Dashboard Settings
     inputs/themes.js                the list of themes and overlays, a copy of the dashboard's
     inputs/demo-screens.js          the list of screens a demo can show, a copy of the dashboard's
@@ -215,9 +217,9 @@ the end of the dashboard address and that page shows it. On the sample the
 screen makes no request to Sanity for content. A SAMPLE CONTENT label shows
 beside the TEAM plate, and never shows on what the editors published.
 
-Dashboard Settings still has Content source and "Switch back to production at"
-in its schema, hidden, so that a value saved earlier is kept. The dashboard does
-not read them, and the two buttons that used to set them are gone.
+Dashboard Settings still has Content source in its schema, hidden, so that a value
+saved earlier is kept. The dashboard does not read it, and the two buttons that used
+to set it are gone. "Switch back to production at" was removed: no document held a value.
 dashboard/core/source.js decides, and shell.js hands it the address.
 
 ## Status of the Mini

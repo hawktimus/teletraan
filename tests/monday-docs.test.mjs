@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { textOf } from './helpers/script-parts.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const read = file => fs.readFileSync(path.join(repo, file), 'utf8');
@@ -26,7 +27,7 @@ function section(title) {
   return doc.slice(start, next === -1 ? doc.length : next);
 }
 
-test('the page has the sections the order names, in plain words', () => {
+test('the page has the sections it should, in plain words', () => {
   ['The one-board setup', 'What each column does on the screen', 'The Show on TV rule', 'Why status is the column and not the group', 'How often it reads', 'The daily read budget', 'The settings', 'What it writes', 'The preview', 'The eleven panels', 'If nothing shows up'].forEach(title => section(title));
   assert.ok(!/[—–!]/.test(doc), 'no em dash, en dash or exclamation mark');
   assert.ok(!/[\u{1F300}-\u{1FAFF}☀-➿]/u.test(doc), 'no emoji');
@@ -53,7 +54,7 @@ test('the page says the index tables and the numbers that the settings start wit
 });
 
 test('the numbers of the read interval and the daily budget are the ones in the script and the settings', () => {
-  const script = read('mini/scripts/monday-sync.sh');
+  const script = textOf(path.join(repo, 'mini/scripts/monday-sync.sh'));
   const how = section('How often it reads');
   const budget = section('The daily read budget');
   assert.ok(how.includes('mondayEveryMinutes') && /5 to 120/.test(how) && /every 5 minutes/.test(how) && how.includes('starting at 30'));

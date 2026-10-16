@@ -5,15 +5,10 @@
 // is published, so check it before you do.
 
 import { defineType, defineField } from 'sanity';
-import { showField, expiresField, tooLong, subtitleFor } from './fields.js';
+import { showField, expiresField, tooLong, subtitleFor, firstNameOnly } from './fields.js';
 
 // The credit is a first name, so a space or a digit means a last name or
 // something else is in there. A hyphen is fine, as in Mary-Anne.
-function firstNameOnly(value) {
-  if (typeof value === 'string' && /[\s\d]/.test(value)) return 'Use a first name only, with no spaces or numbers.';
-  return true;
-}
-
 // The values are the names in photoFits in dashboard/config.js, and setting
 // means the photo follows Photo fit in Dashboard Settings
 const fits = [

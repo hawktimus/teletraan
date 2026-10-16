@@ -135,6 +135,40 @@ export function toPoints(list) {
   return list.map(point => point.join(',')).join(' ');
 }
 
+// A plate of a piece is drawn half a pixel wider on every side, so that two plates that meet overlap by a pixel and no
+// line of the background shows between them at any size of the window. The corners are moved along the line that
+// halves them, never by more than three times the half pixel. The edge of the frame hides the half pixel that
+// ends outside.
+export const overlap = 0.5;
+
+export function grown(points, by = overlap) {
+  const area = points.reduce((sum, point, index) => {
+    const next = points[(index + 1) % points.length];
+    return sum + point[0] * next[1] - next[0] * point[1];
+  }, 0);
+  const side = area > 0 ? 1 : -1; // which side of an edge is the outside, for a polygon that goes this way round
+
+  return points.map((point, index) => {
+    const before = points[(index + points.length - 1) % points.length];
+    const after = points[(index + 1) % points.length];
+    const normal = (from, to) => {
+      const length = Math.hypot(to[0] - from[0], to[1] - from[1]) || 1;
+      return [side * (to[1] - from[1]) / length, side * (from[0] - to[0]) / length];
+    };
+    const first = normal(before, point);
+    const second = normal(point, after);
+    const half = 1 + first[0] * second[0] + first[1] * second[1];
+    let x = (first[0] + second[0]) / Math.max(half, 0.01) * by;
+    let y = (first[1] + second[1]) / Math.max(half, 0.01) * by;
+    const length = Math.hypot(x, y);
+    if (length > by * 3) {
+      x = x / length * by * 3;
+      y = y / length * by * 3;
+    }
+    return [Math.round((point[0] + x) * 100) / 100, Math.round((point[1] + y) * 100) / 100];
+  });
+}
+
 // A list of lines becomes one path: "M4 120L1148 120M664 4L648 52"
 export function pathData(lines) {
   return lines.map(points => 'M' + points.map(point => point.join(' ')).join('L')).join('');

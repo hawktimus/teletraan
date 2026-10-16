@@ -1,10 +1,11 @@
-#!/bin/sh
+#!/bin/bash
+# Usage: sudo install-timers.sh
 # Installs the systemd units for the Mini and turns on the two timers: one
 # downloads the calendars, one pulls the repository. The kiosk unit is copied
 # but not turned on, because it takes over the screen.
-set -eu
+set -euo pipefail
+. "$(dirname "$0")/lib.sh"
 
-mini=$(cd "$(dirname "$0")/.." && pwd)
 units="$mini/systemd"
 repo=$(cd "$mini/.." && pwd -P)
 target=/etc/systemd/system

@@ -13,8 +13,8 @@ const calendarName = /^CALENDAR_[A-Za-z0-9_]+_URL$/;
 
 export function describe(values) {
   return {
-    keys: keyNames.map(name => ({ name: name, label: labels[name], masked: name === 'CONTROL_PIN' ? (values.get(name) ? '........' : 'not set') : mask(values.get(name)) })),
-    calendars: [...values.keys()].filter(name => calendarName.test(name)).map(name => ({ name: name, code: calendarCode(name), masked: mask(values.get(name)) })),
+    keys: keyNames.map(name => ({ name: name, label: labels[name], masked: name === 'CONTROL_PIN' ? (values[name] ? '........' : 'not set') : mask(values[name]) })),
+    calendars: Object.keys(values).filter(name => calendarName.test(name)).map(name => ({ name: name, code: calendarCode(name), masked: mask(values[name]) })),
   };
 }
 
@@ -26,7 +26,7 @@ export function register(router, ctx) {
   mount(router, ctx, 'POST', '/env', async (req, res) => {
     const body = await readJson(req);
     const { lines, changed } = incomingLines(body);
-    if (lines.length === 0) throw new Refusal(400, 'Nothing to change.');
+    if (lines.length === 0) throw new Refusal(400, 'Nothing to change. Type a new value first.');
 
     let existing = '';
     try {

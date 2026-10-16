@@ -61,7 +61,7 @@ export const words = {
   sharedCountdown: 'The countdown title and dates are the same on all three Screens and for both teams.',
   changeCountdown: 'Change them in Dashboard Settings',
   readingCountdown: 'Reading the countdown.',
-  countdownUnreadable: 'The countdown could not be read.',
+  countdownUnreadable: 'The countdown could not be read. Refresh the page to try again.',
   noSettings: 'Dashboard Settings has not been published yet, so the countdown has its starting words.',
   openTips: 'Open Tips and News',
   pickPanelFirst: 'Pick the panel first.',

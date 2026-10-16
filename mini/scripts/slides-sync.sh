@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+# Usage: slides-sync.sh [--test <link>]
 # Downloads the slides of the talks that are coming up and saves each deck as
 # numbered pictures in <data folder>/slides/<talk id>/, with a manifest.json
 # that says whether it worked. The dashboard shows the pictures during the
@@ -8,12 +9,8 @@
 #   slides-sync.sh                  one run, which the timer starts every 2 minutes
 #   slides-sync.sh --test <link>    downloads one deck into a temporary folder,
 #                                   prints what it found and deletes it again
-set -eu
-
-mini=$(cd "$(dirname "$0")/.." && pwd)
-repo=$(dirname "$mini")
-config="$repo/dashboard/config.js"
-env_file="$mini/local.env"
+set -euo pipefail
+. "$(dirname "$0")/lib.sh"
 
 # Seconds. The slides of a talk are downloaded from 36 hours before it starts
 # until 30 minutes after, and once more when it is 20 minutes away. The folder
@@ -29,19 +26,6 @@ max_pages=60
 # A Google Slides link, with the id of the deck after /d/. Anything else is not
 # a deck and is skipped.
 link_pattern='^https://docs\.google\.com/presentation/d/(?<id>[A-Za-z0-9_-]{10,})(?:[/?#].*)?$'
-
-# The value of a NAME=value line in local.env, without its quotes
-setting() {
-  [ -f "$env_file" ] || return 0
-  sed -n "s/^$1=//p" "$env_file" | tail -n 1 | sed "s/^['\"]//; s/['\"]\$//"
-}
-
-# The quoted value of "name: 'value'," in dashboard/config.js. The project
-# ID, the dataset and the API version are kept there and nowhere else.
-config_value() {
-  [ -f "$config" ] || return 0
-  sed -n "s/^[[:space:]]*$1:[[:space:]]*'\([^']*\)'.*/\1/p" "$config" | head -n 1
-}
 
 # curl's exit code in plain words, short enough for manifest.json
 explain() {
@@ -236,7 +220,7 @@ dataset=$(config_value dataset)
 version=$(config_value apiVersion)
 
 if [ -z "$project" ] || [ -z "$dataset" ] || [ -z "$version" ]; then
-  echo "Could not read the project ID, dataset and API version from dashboard/config.js." >&2
+  echo "Could not read the project ID, dataset and API version from dashboard/config.js. Check that projectId, dataset and apiVersion are in that file." >&2
   exit 1
 fi
 
@@ -280,7 +264,7 @@ curl --disable --silent --get --max-time 30 --max-filesize 10000000 --proto '=ht
 
 # Nothing is deleted or changed unless Sanity has answered with a list
 if [ "$status" -ne 0 ] || ! jq -e '.result | arrays' "$work/answer.json" > /dev/null 2>&1; then
-  echo "Could not get the list of talks from Sanity. Nothing was changed." >&2
+  echo "Could not get the list of talks from Sanity. Nothing was changed. Check that the Mini is online; the next run tries again." >&2
   exit 1
 fi
 

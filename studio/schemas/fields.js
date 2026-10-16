@@ -100,3 +100,18 @@ export function subtitleFor(text, item, hiddenWord = 'Hidden') {
 
   return [note, text].filter(Boolean).join(' · ');
 }
+
+// A name on a public screen is a first name: no spaces, no digits
+export function firstNameOnly(value) {
+  if (typeof value === 'string' && /[\s\d]/.test(value)) return 'Use a first name only, with no spaces or numbers.';
+  return true;
+}
+
+// The plain fields of the documents the Mini writes: a name, a title and a one line description
+export function textField(name, title, description) {
+  return defineField({ name: name, title: title, type: 'string', description: description });
+}
+
+export function numberField(name, title, description) {
+  return defineField({ name: name, title: title, type: 'number', description: description });
+}

@@ -21,7 +21,7 @@ export function agoText(iso, now = new Date()) {
   return Math.round(hours / 24) + ' days ago';
 }
 
-export function bytesText(bytes) {
+function bytesText(bytes) {
   if (typeof bytes !== 'number') return 'not known';
   const gigabytes = bytes / (1024 * 1024 * 1024);
   return gigabytes >= 10 ? Math.round(gigabytes) + ' GB' : gigabytes.toFixed(1) + ' GB';

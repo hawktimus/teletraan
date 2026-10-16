@@ -15,7 +15,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
-const scripts = ['fetch-calendars.sh', 'calendar-status.sh', 'calendar-status.mjs', 'status-write.sh'];
+const scripts = ['fetch-calendars.sh', 'calendar-status.sh', 'calendar-status.mjs', 'status-write.sh', 'lib.sh'];
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-calendar-status-'));
 
 // The tools the scripts need that are not the ones being faked
@@ -720,7 +720,7 @@ test('the scripts have valid sh syntax, are executable, never print local.env an
     assert.equal(syntax.status, 0, file + ': ' + syntax.stderr);
 
     const text = fs.readFileSync(full, 'utf8');
-    assert.ok(text.startsWith('#!/bin/sh\n'), file);
+    assert.ok(text.startsWith('#!/bin/bash\n'), file);
     assert.ok((fs.statSync(full).mode & 0o111) !== 0, file + ' should be executable');
     assert.ok(!/\bcat\b[^\n]*local\.env/.test(text), file + ': local.env is never printed');
     assert.ok(!/^\s*set -[a-z]*x/m.test(text), file + ': set -x would print every address');

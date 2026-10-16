@@ -253,7 +253,7 @@ test('a photo that cannot be loaded is taken out and the others move up, and the
 
   all[2].listeners.error();
   assert.equal(shots.length, 0);
-  assert.equal(body.innerHTML, '<div class="missing">[Photo not available]</div>');
+  assert.equal(body.innerHTML, '<div class="missing">NO PHOTO</div>');
 });
 
 test('the first photo of the next turn starts loading while this turn is up, and one that is in this turn does not', () => {

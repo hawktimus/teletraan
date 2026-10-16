@@ -9,7 +9,7 @@ It only adds items. It never changes or deletes an item that is already there.
 
 ## What you need
 
-- The Studio set up and signed in, from a Mac (studio/README.md, steps 1 to 4).
+- The Studio set up and signed in, from a Mac (docs/laptop-setup.md).
   Step 2 there checks Node.js, which the script runs on.
 - A spreadsheet program that can save a CSV file: Numbers, Excel or Google
   Sheets. A CSV file is a table saved as plain text, one row to a line.
@@ -81,8 +81,7 @@ the item for both teams, which is what happens to anything that was added
 before teams existed. A CSV saved from an older template, without the column,
 still imports. The script knows the two starting teams without a file (they are
 in `docs/seed/teams.ndjson`) and refuses any other code. The teams have to be in
-Studio before the import, so import that file first (studio/README.md, "The
-starting teams").
+Studio before the import, so import that file first (docs/add-the-nova-team.md).
 
 task.csv has columns after `team`. They are `priority` (`high`, `medium`
 or `low`) and `showOnTv` (`yes` or `no`, and `yes` when the cell is empty). Both may be left

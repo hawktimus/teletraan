@@ -1,13 +1,12 @@
 # Updating the Mini from a Mac
 
-Since round 6 the control page does the everyday update (docs/control-page.md). This tool is the first install and the way in when the page cannot be reached. Its update now copies the repository to `~/teletraan-staging` on the Mini and runs `mini/install.sh` there, which makes it the next release. Menu 8 sets the PIN of the control page.
+The control page does the everyday update (docs/control-page.md). This tool is the first install and the way in when the page cannot be reached. Its update copies the repository to `~/teletraan-staging` on the Mini and runs `mini/install.sh` there, which makes it the next release. Menu 8 sets the PIN of the control page.
 
 `tools/mini/teletraan-mini` is a menu that runs in Terminal on a Mac. It copies
 the dashboard files to the Mini, keeps the keys and the calendar links, shows what
 the Mini last did and restarts the screen. It works from any Mac that has the
 repository, so a coach with a laptop can use it as well as the Mac in the room.
 
-It replaces the loose update script that used to sit in one person's home folder.
 `tools/mac/ship.sh` uses it too: its last step is `teletraan-mini update --yes`
 (`docs/shipping-from-the-mac.md`). The keys and calendar links are secrets, so they never go in the repository and
 never go in Sanity, which anyone can read. They live on the Mac in `~/.teletraan/`
@@ -51,7 +50,7 @@ calendars serves both Minis, and a save goes to the Mini you picked.
 
 | Choice | What it does |
 |--------|--------------|
-| 1 | Update the Mini: copies the files, then restarts the screen |
+| 1 | Install the files on this Mac as the next release on the Mini, then restart the screen |
 | 2 | Keys and calendars: a form for the three keys and the calendar links |
 | 3 | Copy the Mini's keys and calendars to this Mac |
 | 4 | Install the services on the Mini |
@@ -62,30 +61,15 @@ calendars serves both Minis, and a save goes to the Mini you picked.
 
 ### 1. Update the Mini
 
-Copies this repository to `/opt/teletraan` on the Mini with `rsync`, and removes
-files there that are not here. It leaves alone `.git`, `local.env`, `.env`,
-`node_modules`, `.DS_Store`, `studio/dist` and `studio/.sanity`, so the keys on the
-Mini are never touched or overwritten. It then restarts the screen, which is black
-for about ten seconds. A screen that is open does not reload by itself after a
-copy, so the restart is part of the update.
+Copies this repository to `~/teletraan-staging` on the Mini with `rsync`, then runs `mini/install.sh` there with sudo. The installer makes the files the next release (docs/control-page.md, "How releases work"), builds the Studio and restarts the screen, which is black for about ten seconds. The live tree is never written to, and the last five releases stay on the Mini for a rollback. The copy leaves out `.git`, `local.env`, `.env`, `node_modules`, `.DS_Store`, `studio/dist`, `studio/.sanity`, `_inputs` and `_outputs`, so the keys on the Mini are never touched or overwritten. On a Mini that has no control page yet, the installer also makes the move to the releases layout, which is why this is the first install.
 
-After the copy the tool leaves the hash, the day and the branch of this repository in
-the file `build.txt` in the mini folder of the Mini and runs `status-write.sh version`, so the status block says
-which build is on the wall. A folder with no git history skips this and says so.
+After the copy the tool gives the installer the short hash of this repository. The release number comes from the counter on the Mini, so the build shows as `v14 · a1b2c3d` everywhere. A folder with no git history has no hash and says so.
 
-The tool refuses to copy from a folder that is not the Teletraan repository,
-because the copy removes files on the Mini.
+The tool refuses to copy from a folder that is not the Teletraan repository, and from a copy that still has a `deploy/` folder: "This copy is older than round 6; update it." Nothing is copied then.
 
-If the update changed a file in `mini/systemd/`, choose 4 to install the
-services again. If it changed `docker-compose.yml` or `nginx.conf`, follow
-`mini/README.md`, "When a pull changes this folder".
+If the update changed a file in `mini/systemd/`, choose 4 to install the services again. If it changed `docker-compose.yml` or `nginx.conf`, the installer starts the web server again, and `mini/README.md` says more.
 
-The Mini gets new files in one of two ways. Either this tool copies them, which is
-what `tools/mac/ship.sh` does (`docs/shipping-from-the-mac.md`), or the Mini pulls
-them from GitHub every 5 minutes with its pull timer. Use one. A copy leaves the
-Mini's git folder looking changed, and a later pull stops with an error when a new
-commit changes the same file. The tool asks first when the pull timer is on. To
-make the Mini a copy-only Mini, turn the timer off on the Mini:
+A Mini that pulls from GitHub by itself with the pull timer should not also get files from this tool. Use one. To make the Mini a copy-only Mini, turn the timer off on the Mini:
 
     sudo systemctl disable --now teletraan-pull.timer
 
@@ -188,13 +172,12 @@ with no menu. `tools/mac/ship.sh` runs these.
 
 | Command | Same as | What it does |
 |---------|---------|--------------|
-| `tools/mini/teletraan-mini update` | 1 | copies the files, then restarts the screen |
+| `tools/mini/teletraan-mini update` | 1 | installs the files as the next release, then restarts the screen |
 | `tools/mini/teletraan-mini status` | 5 | shows what the Mini last did and the calendars |
 | `tools/mini/teletraan-mini restart` | 6 | restarts the screen |
 
 - `--yes` skips the Go ahead question of `update`, so nobody has to press Return.
-  It does not answer the Copy anyway question that appears when the Mini's pull
-  timer is on. That one is a warning, and no is its answer if nobody gives one.
+  Without `--yes`, a command word with nobody to answer counts as no and stops.
 - `--mini NAME` uses the saved Mini with that name for this one run. It does not
   change the Mini in use. A name that is not saved stops the run and lists the
   names that are. Example: `tools/mini/teletraan-mini --mini spare restart`.
@@ -226,12 +209,12 @@ Choices 2, 3, 4 and 7 stay in the menu, because they ask questions.
 | What you see | What to do |
 |--------------|------------|
 | could not reach the Mini | Is the Mini on? Is this Mac on the same network, or on Tailscale? Try the address by hand: `ssh user@host`. |
-| The copy stopped (rsync exit code) | Run choice 1 again. The Mini may have some of the new files until then. If the lines above say `rsync: command not found`, the Mini needs `sudo apt install rsync`, after the team mentor's yes. |
+| The copy stopped (rsync exit code) | Run choice 1 again. The staging folder on the Mini may have some of the new files until then, and the live tree is not touched. If the lines above say `rsync: command not found`, the Mini needs `sudo apt install rsync`, after the team mentor's yes. |
 | Line N of the new values is not a key or a calendar | Nothing was changed on the Mini. `~/.teletraan/secrets.env` was edited by hand. Delete the line or use the form. |
 | The calendar service did not run | The service is not installed on this Mini. Choose 4, or see step 11 of `docs/rebuilding-the-mini.md`. |
 | The Mini has an older status-write.sh | Choose 1 to copy the newest files, or run `tools/mini/teletraan-mini update`. |
 | no Mini is saved on this Mac yet | A command word needs a saved Mini. Run `tools/mini/teletraan-mini` with no word, once, and give it the address. |
-| a question needed an answer and none came | The Mini's pull timer is on and the command had nobody to ask. Run the update by hand and answer, or turn the pull timer off. |
+| a question needed an answer and none came | The command had nobody to ask. Add `--yes` to `update`, or run the update by hand and answer. |
 | A calendar was added and the screen shows nothing from it | It needs a row in Dashboard Settings, Calendars, with the code the tool printed. |
 | macOS will not open the .command file | Right-click it, choose Open, and choose Open again. |
 

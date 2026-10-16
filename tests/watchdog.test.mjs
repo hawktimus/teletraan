@@ -82,6 +82,7 @@ function setup(options = {}) {
   if (!options.noData) fs.mkdirSync(data);
 
   fs.copyFileSync(watchdogFile, path.join(root, 'mini/scripts/watchdog.sh'));
+  fs.copyFileSync(path.join(repo, 'mini/scripts/lib.sh'), path.join(root, 'mini/scripts/lib.sh'));
   writeTool(path.join(root, 'mini/scripts'), 'status-write.sh', fakeStatusWrite);
   fs.writeFileSync(path.join(root, 'mini/local.env'), "TELETRAAN_DATA='" + data + "'\nSANITY_WRITE_TOKEN='skTESTtoken0123456789abcdef'\n");
   fs.writeFileSync(path.join(root, 'boot-id'), 'boot-one\n');

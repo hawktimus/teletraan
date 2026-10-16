@@ -29,12 +29,12 @@ sidebar lines that fill each one.
 | D Side panel | The small panel under the countdown. It takes turns showing the next event, the task counts, the safety days, a sponsor logo and the forecast | Monday Tasks, Sponsors, Calendars, Dashboard Settings |
 | E Ticker | One tip, news item or reminder at a time along the bottom | Tips and News, Sponsors |
 
-Two teams use the TV, Prime and Nova. The TV swaps between them. An item with the
+Two teams use the TV, Prime and Nova. The TV plays four views in turn, General, Prime, Nova and Family, and swaps between them. An item with the
 Team field left blank shows for both. An item for one team shows only while that
 team is on the screen.
 
-A coach chooses which Screen plays each day and which panels play in each area, in
-Screens, the second line of the sidebar. You do not need to touch it.
+A coach chooses which theme plays each day, and which panels play in each area of
+each view, under Settings (Themes and Views). You do not need to touch it.
 
 Some things cover the whole TV. A booked talk takes the full screen at its time.
 An alert does too. The night screen is dark from 11:30 pm to 11:30 am.
@@ -63,7 +63,7 @@ Hide after has not passed. The Team choice is Both, or the team that is on the s
 | Today's schedule | Daily Agenda, Agenda items | One for each meeting, with its date. The panel is headed AGENDA (docs/up-next.md) |
 | A talk | Daily Agenda, Presentations | Students book talks in the Form. A coach can change one here |
 | A tip, news item or reminder | Tips and News | One line of up to 52 characters |
-| A notice that people must see today | Announcements, or the Post an announcement button on Start here | A bar under the banner (docs/announcements.md) |
+| A notice that people must see today | Announcements, or the Post an announcement box on the control page | A bar under the banner (docs/announcements.md) |
 | Whether a task shows | Monday Tasks | The task itself is changed in Monday |
 | Events | The team calendars | Not in the Studio. See Events below |
 | A leader or a team lead | Leadership, Team leads | First names only |
@@ -139,24 +139,15 @@ A talk is booked in the Google Form: [link to the Form, added by a coach].
 To cancel or move a talk, ask a coach. They set the status to Cancelled or change
 Starts at (docs/presentations.md).
 
-## The six buttons
+## Trying the screen
 
-The buttons on the Start here page try the screen without waiting for a time or for a
-booked talk. Each sends a request, and the TV answers within a few seconds.
+The Start here page has no buttons. A coach can try the screen from the control page (docs/control-page.md), on the Now showing tab:
 
 - **Play announcement:** plays every full-screen announcement that is switched on, once.
-- **Run presentation test:** runs a sample talk with six sample slides. Press the
-  clicker as at a real talk.
-- **Next look now:** moves the main panel on to its next row, which can change the team
-  or the Screen.
-- **Preview competition:** shows the competition cards for 2 minutes, on sample data.
-- **Post an announcement:** opens a new announcement for the bar under the banner. It
-  starts now and ends in two hours.
-- **Preview the screen:** opens the screen with sample content in a new tab. The address
-  is the Mini's own, so on another computer the tab shows no page.
+- **Post an announcement:** puts a short notice in the bar under the banner. It starts now and ends in two hours.
+- Show a view, hold a panel or try a theme for a few minutes. The screen goes back to its normal turn by itself.
 
-If the page under the buttons says Dashboard Settings has not been published yet, ask a
-coach to open it and click Publish once.
+To run a sample talk with six sample slides, a coach opens the menu beside Publish on Dashboard Settings (the three dots) and clicks Run presentation test. Press the clicker as at a real talk. To see the screen with sample content, add `?sample=1` to the address of the screen.
 
 ## Who to ask
 

@@ -19,6 +19,7 @@
 
 import { createElement, useEffect, useRef, useState } from 'react';
 import { set, unset, useClient, useFormValue } from 'sanity';
+import { isRecord } from './plain-values.js';
 
 const h = createElement;
 
@@ -84,10 +85,6 @@ const styles = {
   note: { margin: '8px 0 0', fontSize: 12, color: 'var(--card-muted-fg-color, inherit)' },
   list: { minWidth: 280, padding: 8, fontSize: 14 },
 };
-
-function isRecord(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
 
 // The boards of the document, each with an id and a name and a list of columns. A board with no id, and a
 // column with no id, cannot be picked and are left out.

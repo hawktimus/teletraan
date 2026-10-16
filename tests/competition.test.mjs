@@ -845,7 +845,7 @@ test('nothing on a card is smaller than 44px, no line is thinner than 3px, and t
       if (declaration.startsWith('font:')) {
         const font = fontOf(declaration);
         assert.ok(font, name + ' has a font line that cannot be read: ' + declaration);
-        // the one size under 44 is the order's: the city and the day in a row of the legend of the season timeline, 36px and muted
+        // the one size under 44 is allowed: the city and the day in a row of the legend of the season timeline, 36px and muted
         const legendSize = name === 'timeline' && Object.keys(rules).some(selector => selector === '.competition-timeline .where' && rules[selector].includes(declaration));
         assert.ok(font.size >= 44 || (legendSize && font.size === 36), name + ' has text of ' + font.size + 'px: ' + declaration);
         assert.ok(font.line >= font.size, name + ' has a line height under its size: ' + declaration);

@@ -230,8 +230,10 @@ test('ages are in words, and a time that cannot be read gives nothing', () => {
 test('the helpers need nothing installed: they import only each other', () => {
   const imports = file => Array.from(fs.readFileSync(path.join(studio, file), 'utf8').matchAll(/^import .* from '([^']+)';$/gm)).map(match => match[1]);
 
-  assert.deepEqual(imports('inputs/calendars-view-parts.js'), ['./time-text.js']);
+  assert.deepEqual(imports('inputs/calendars-view-parts.js'), ['./time-text.js', './plain-values.js', './calendars-hide-rules.js']);
+  assert.deepEqual(imports('inputs/calendars-hide-rules.js'), ['./plain-values.js']);
   assert.deepEqual(imports('inputs/time-text.js'), []);
+  assert.deepEqual(imports('inputs/plain-values.js'), []);
 });
 
 let failures = 0;

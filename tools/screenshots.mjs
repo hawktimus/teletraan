@@ -50,7 +50,7 @@ export const announcement = {
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.join(here, '..');
 
-export function takesTeam(id) {
+function takesTeam(id) {
   return !id.endsWith('-both') && !mondayWithoutTeam.includes(id);
 }
 
@@ -233,7 +233,7 @@ async function takeView(page, base, shot, file, limits) {
   return [file];
 }
 
-// The plate of an announcement (B3). Skipped, with the reason, when the page does not draw it.
+// The plate of an announcement. Skipped, with the reason, when the page does not draw it.
 async function takePlate(page, base, shot, file, limits) {
   await page.goto(base + shot.url, { waitUntil: 'load' });
   try {

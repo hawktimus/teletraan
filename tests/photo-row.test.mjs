@@ -1,4 +1,4 @@
-// Tests for the Photos row of a Screen (round 5, B9): a row has photoCount photos (1 to 20, starting at 4) and
+// Tests for the Photos row of a Screen: a row has photoCount photos (1 to 20, starting at 4) and
 // secondsPerPhoto (5 to 60, starting at 10), stays up for their product, shows that many photos in the published
 // order (newest first) or dealt at random, one for each secondsPerPhoto, and the next turn carries on where
 // the last one left off. dashboard/core/screens.js reads the row, dashboard/core/photos.js (takeRun, rowPlan)

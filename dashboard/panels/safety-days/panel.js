@@ -32,7 +32,8 @@ export function mount(host, content) {
   const since = sinceDate(content);
   const days = since ? daysSince(since) : null;
 
-  const number = days === null ? PLACEHOLDER : String(days);
+  // The marked placeholder is for the sample. A screen that has no date says so with dashes.
+  const number = days !== null ? String(days) : isSample(content) ? PLACEHOLDER : '--';
   const caption = (days === 1 ? 'DAY' : 'DAYS') + ' SINCE<br>LAST INCIDENT';
 
   const stacked = days === null || days >= BIG_NUMBER_LIMIT;

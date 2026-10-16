@@ -2678,7 +2678,7 @@ test('the three style files each set their own custom properties for their own s
     assert.ok(!/(^|[^-])font(-size)?:/.test(read2(name)), name + ' has no text of its own');
   });
 
-  // The numbers the order gives
+  // The fixed numbers
   const value = (name, property) => new RegExp(property + ': ([^;]+);').exec(read2(name))[1];
   assert.equal(value('cybertron', '--style-chamfer'), '56px');
   assert.equal(value('minimal', '--style-chamfer'), '34px');
@@ -2811,7 +2811,7 @@ smallTextOf.minimal.push({ file: 'view-tag.css', selector: 'html[data-layout="ba
 // The Monday panels and the season timeline have the sizes under 44 px that the order for them sets, in every style: the
 // chips at 30 (the status of a row, the count of a column, STALE and OVERDUE), the first name of who to ask at 40, the labels
 // of the numbers, of a department and of the legend at 36, the weeks and TODAY of the Monday timeline at 28, and
-// the other labels the order names for the board and the overall progress (26 to 40, listed here). The city and the
+// the other labels fixed for the board and the overall progress (26 to 40, listed here). The city and the
 // day in a row of the season timeline's legend are 36, and the department and the date in a row of the milestones card
 // (an older card, still registered) are 36
 const mondaySmall = (file, entries) => Object.keys(entries).map(selector => ({ file: file, selector: selector, size: entries[selector] }));
@@ -4329,13 +4329,6 @@ const warNumber = (selector, name) => {
   return found ? Number(found[1]) : null;
 };
 
-// Where each part of the war clock is, in the housing's own pixels, from the stylesheet. The plates share their top and height
-const warParts = () => ({
-  'war-status': { top: warNumber('.war-status', 'top'), height: warNumber('.war-status', 'height'), left: warNumber('.war-status', 'left'), width: warNumber('.war-status', 'width') },
-  'war-lines': { top: warNumber('.war-lines', 'top'), height: warNumber('.war-lines', 'height'), left: warNumber('.war-lines', 'left'), width: warNumber('.war-lines', 'width') },
-  'war-days-plate': { top: warNumber('.war-plate', 'top'), height: warNumber('.war-plate', 'height'), left: warNumber('.war-days-plate', 'left'), width: warNumber('.war-days-plate', 'width') },
-  'war-time-plate': { top: warNumber('.war-plate', 'top'), height: warNumber('.war-plate', 'height'), left: warNumber('.war-time-plate', 'left'), width: warNumber('.war-time-plate', 'width') },
-});
 const boxOf = part => ({ x: part.left, y: part.top, width: part.width, height: part.height });
 
 // The rivets of the housing: the centres in the path
@@ -4564,7 +4557,7 @@ test('a fault in the war clock leaves the name on the banner', async () => {
   });
 });
 
-test('the war clock\'s plates, sizes and colors are the ones the order gives, and only Cybertron and Minimal show it', () => {
+test('the war clock\'s plates, sizes and colors are the fixed ones, and only Cybertron and Minimal show it', () => {
   const section = warSection();
 
   // The housing is the slot: 766 by 128, as barSettings has it, and 144 high for a title on two lines, 8 above the slot and 8 below it

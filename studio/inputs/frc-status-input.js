@@ -12,7 +12,8 @@
 
 import { createElement, useEffect, useState } from 'react';
 import { useClient } from 'sanity';
-import { ageText } from './status-input.js';
+import { ageText, clockText } from './time-text.js';
+import { isRecord } from './plain-values.js';
 
 const h = createElement;
 
@@ -30,17 +31,6 @@ const styles = {
   line: { display: 'flex', flexWrap: 'wrap', gap: '4px 16px', margin: '0 0 4px', fontSize: 14 },
   label: { minWidth: 220, fontWeight: 600 },
 };
-
-// The time as the editor's own computer shows it, such as Oct 9, 2026, 2:14 PM
-function clockText(isoText) {
-  const date = new Date(isoText);
-  if (typeof isoText !== 'string' || isNaN(date.getTime())) return '';
-  return date.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
-}
-
-function isRecord(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
 
 // 1 event, 3 events, or None
 function eventsText(count) {
@@ -85,7 +75,7 @@ export async function readFrcStatus(client) {
 // { doc, unreadable }. now is the time to count the ages from.
 export function frcStatusView(read, now) {
   if (!read) return h('p', { style: styles.note }, 'Reading the competition data.');
-  if (read.unreadable) return h('p', { style: styles.note }, 'The competition data could not be read.');
+  if (read.unreadable) return h('p', { style: styles.note }, 'The competition data could not be read. Refresh the page to try again.');
   if (!read.doc) return h('p', { style: styles.note }, 'No connection yet. Add TBA_AUTH_KEY to local.env on the Mini, then wait up to an hour.');
 
   return h(

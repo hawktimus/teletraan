@@ -1,4 +1,4 @@
-// The booking path, checked with fixtures and not live (round 5, B8): three Meeting days (one closed), the
+// The booking path, checked with fixtures and not live: three Meeting days (one closed), the
 // talks the booking script saves, the Daily Agenda showing them, a talk starting at its time on the screen,
 // and the no-show rule at 5 minutes.
 //

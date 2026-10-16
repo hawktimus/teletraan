@@ -73,7 +73,7 @@ const stepsField = defineField({
   description: 'The screens a demo shows, one after the other. The demo plays once, then the screen goes back to normal.',
   of: [stepMember],
   initialValue: startingSteps,
-  validation: Rule => Rule.max(10).error('Too many steps. Up to 10 are allowed.'),
+  validation: Rule => Rule.max(10).error('Up to 10 steps fit. Remove one.'),
 });
 
 const announcementTextField = defineField({

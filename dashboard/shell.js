@@ -53,6 +53,7 @@ import { startTakeovers, takeoverRunning } from './core/takeover.js';
 import { getContent, holdSavedScreen, rebuild, resumeSavedPreview, setBase, startWhatComesAndGoes, startWhatStays, useLogoSettings, useLookSetting, useTrim } from './shell-content.js';
 import { fitToScreen, showDecorations, showFatal, startDemo, startExtras, startOptional, startPerf, waitForFonts } from './shell-extras.js';
 import { params, stillAsk, competitionAsk, stress, onlyTasks, shellState } from './shell-state.js';
+import './core/test-hook.js'; // does nothing without ?sample=1&clock=fixed
 
 window.teletraanStarted = true; // index.html reloads the page if this never happens
 

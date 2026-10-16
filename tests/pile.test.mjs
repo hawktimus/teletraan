@@ -251,7 +251,7 @@ test('no pieces make an empty plan that is over when the pieces would rise', () 
   assert.deepEqual(plan, { pieces: [], merged: [], fellMs: 0, riseMs: 0 });
 });
 
-test('the numbers the plan is made from are the ones of the order: 1.7 s, 45 ms, 30 px and a small second bounce', () => {
+test('the numbers the plan is made from are the fixed ones: 1.7 s, 45 ms, 30 px and a small second bounce', () => {
   assert.equal(pileShape.bounceHeight, 30);
   assert.equal(pileShape.secondBounceHeight, 8);
   assert.equal(pileTimes.gapMs, 45);

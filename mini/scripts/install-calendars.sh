@@ -1,11 +1,12 @@
-#!/bin/sh
+#!/bin/bash
+# Usage: sudo install-calendars.sh
 # Installs the calendar service: copies its two systemd unit files and turns on
 # its timer, which runs fetch-calendars.sh every 15 minutes. It installs
 # nothing else. install-timers.sh installs this timer too, with the pull timer
 # and the kiosk, so use this one on a Mini that must not pull by itself.
-set -eu
+set -euo pipefail
+. "$(dirname "$0")/lib.sh"
 
-mini=$(cd "$(dirname "$0")/.." && pwd)
 units="$mini/systemd"
 repo=$(cd "$mini/.." && pwd -P)
 target=/etc/systemd/system

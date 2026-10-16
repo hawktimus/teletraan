@@ -1,12 +1,13 @@
-#!/bin/sh
+#!/bin/bash
+# Usage: sudo install-nightly.sh
 # Installs the nightly restarts: copies the two systemd unit files and turns on the
 # timer, which starts nightly.sh at 04:00 every day and at 04:10 on Sundays. The script
 # restarts the screen at 04:00 and reboots the Mini on Sunday, and skips either when a
 # presentation is booked within the hour. It runs as root, so the unit file names no
 # account. It checks that curl is installed. It does not install anything.
-set -eu
+set -euo pipefail
+. "$(dirname "$0")/lib.sh"
 
-mini=$(cd "$(dirname "$0")/.." && pwd)
 units="$mini/systemd"
 repo=$(cd "$mini/.." && pwd -P)
 target=/etc/systemd/system

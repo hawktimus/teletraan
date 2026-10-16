@@ -14,7 +14,7 @@ import { createElement, useEffect, useState } from 'react';
 import { useClient } from 'sanity';
 import { ageText, clockText } from './time-text.js';
 
-// ageText used to be written here, so it is still found here
+// Also exported here, where tests/schemas.test.mjs reads it
 export { ageText };
 
 const h = createElement;
@@ -100,7 +100,7 @@ export async function readStatus(client) {
 // { doc, unreadable }. now is the time to count the ages from.
 export function statusView(read, now) {
   if (!read) return h('p', { style: styles.note }, 'Reading the status of the Mini.');
-  if (read.unreadable) return h('p', { style: styles.note }, 'The status of the Mini could not be read.');
+  if (read.unreadable) return h('p', { style: styles.note }, 'The status of the Mini could not be read. Refresh the page to try again.');
   if (!read.doc) return h('p', { style: styles.note }, 'No status yet. The Mini writes it after its first job, once it has a write token.');
 
   return h(

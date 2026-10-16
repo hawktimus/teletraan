@@ -60,6 +60,7 @@ function setup(options = {}) {
   fs.mkdirSync(backups);
 
   fs.copyFileSync(scriptFile, path.join(root, 'mini/scripts/backup-dataset.sh'));
+  fs.copyFileSync(path.join(repo, 'mini/scripts/lib.sh'), path.join(root, 'mini/scripts/lib.sh'));
   fs.copyFileSync(path.join(repo, 'dashboard/config.js'), path.join(root, 'dashboard/config.js'));
   writeTool(path.join(root, 'mini/scripts'), 'status-write.sh', fakeStatusWrite);
   if (!options.noSanity) writeTool(path.join(root, 'studio/node_modules/.bin'), 'sanity', fakeSanity);

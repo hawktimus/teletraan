@@ -1,7 +1,7 @@
 // The pieces of a frame, the war clock housing and the markup each frame, card and plate returns (part of plate.js).
 
 import { allLayers, areaHalves, barFillsMarkup, define, defineBar, defineFrame, edgeLayers, edgedShape, fillsMarkup, frameHalves, glintMarkup, neonLayers, screwHeadMarkup, screwShadowMarkup, shapeFor } from './plate-draw.js';
-import { otherCorners, pathData, screenFrame, toPoints } from './plate-shapes.js';
+import { otherCorners, pathData, grown, screenFrame, toPoints } from './plate-shapes.js';
 import { liesOn, rivetsMarkup, trimmedScreenFrame, wearMarkup, weldGap } from './plate-trim.js';
 
 // One piece of a frame, as an svg of its own just big enough to hold it. Its
@@ -32,7 +32,7 @@ function pieceMarkup(kind, shape, piece, rivets, wear) {
     }
     art = edgeLayers(id, undefined, allLayers, neon) + (rivets ? rivetsMarkup(rivets, false) : '') + wearMarkup(wear);
   } else {
-    art = (piece.fill ? `<polygon class="${piece.fill}" points="${toPoints(piece.points)}"/>` : '') + (piece.art ? piece.art() : '');
+    art = (piece.fill ? `<polygon class="${piece.fill}" points="${toPoints(grown(piece.points))}"/>` : '') + (piece.art ? piece.art() : '');
   }
 
   // The screws are numbered as they are in the frame at rest, a's first. A piece

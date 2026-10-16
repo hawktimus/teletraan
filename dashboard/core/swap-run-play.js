@@ -160,8 +160,6 @@ async function perform(run, screen, swapPage, icon) {
   await screen.waitForRegions(otherRegions, regionWait); // they are in place, which matters when the layout gives them or takes them away
 
   // 2. The look goes on and the pages swap, in one step, so that nothing is drawn in between
-  const atMs = elapsed();
-  const endMs = Math.max(swapTimes.reformEndMs, atMs + swapReform.reformDelayMostMs + swapReform.travelLeastMs);
   swapPage();
   screen.apart();
   if (layoutIsReloading()) await frame.wait(reloadWait);
@@ -174,6 +172,9 @@ async function perform(run, screen, swapPage, icon) {
 
   const place = screenPlace();
   const after = capture(stage, place);
+  // Counted after the new look is measured, so the time that takes is not added to the end
+  const atMs = elapsed();
+  const endMs = Math.max(swapTimes.reformEndMs, atMs + swapReform.reformDelayMostMs + swapReform.travelLeastMs);
   const reform = planReform(pull, before.pieces, after.pieces, atMs, seed + 1, endMs);
   const afterById = {};
   after.pieces.forEach(piece => { afterById[piece.id] = piece; });

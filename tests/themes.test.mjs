@@ -859,7 +859,6 @@ test('a green in a comment, or in a selector, is not a colour written', () => {
 // of the files with one mistake in them, and says what it is
 
 const kitFile = 'neon-kit.css';
-const kitCheckName = /FAIL  keyframes are only in the shared motion files/;
 
 test('the kit check passes on the real files, and the kit file is linked once, after the decor file', () => {
   const run = greenCheckAfter('kit-real', null);

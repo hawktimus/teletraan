@@ -233,6 +233,9 @@ test('Leadership, Team leads and a department stay at 96 px when they fit before
   });
   assert.equal(teamTitle.smallTitleClass('MILESTONES'), 'title');
   assert.equal(teamTitle.smallTitleClass('PROGRAMMING TEAM'), 'title title-tight', 'a Monday card, which starts at 60 px');
+  assert.equal(teamTitle.smallTitleClass('STATUS BY DEPARTMENT'), 'title title-tighter', 'a Monday title that does not fit at 56 px is 44 px, the smallest size');
+  assert.ok(textWidth('STATUS BY DEPARTMENT', 700, 44) <= titleRoom - 8, 'and it keeps 8 px of the room at 44 px');
+  assert.ok(/\.monday \.title-tighter \{ font: 700 var\(--size-label\)\/64px/.test(withoutComments(read('dashboard/monday.css'))), 'the Monday cards write the 44 px title');
   assert.equal(teamTitle.titleClass.length, 1, 'the chip is on the other side of the line, so the title does not ask about it');
 });
 
