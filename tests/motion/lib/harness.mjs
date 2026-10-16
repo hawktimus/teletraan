@@ -11,6 +11,24 @@ const probeFile = path.join(here, 'probe.js');
 
 export const canvas = { width: 1920, height: 1080 };
 
+// The looks the rules run in. A theme is held the way the control page holds it (previewTheme in the settings, which
+// is for an hour of the fixed clock), and a view that has the bar layout is held the way showView holds it.
+// The fixed clock of the page starts at 14:00 on 14 October 2026 (dashboard/core/test-hook.js).
+export const looks = {
+  original: { theme: 'original', view: 'general' },
+  cybertron: { theme: 'cybertron', view: 'general' },
+  retro: { theme: 'retro', view: 'general' },
+  bar: { theme: 'original', view: 'prime' },
+};
+
+function holdLook(content, look) {
+  const until = new Date(2026, 9, 14, 15, 30).toISOString();
+  content.settings = Object.assign({}, content.settings, {
+    previewTheme: { theme: looks[look].theme, until: until },
+    showView: { key: looks[look].view, until: until },
+  });
+}
+
 // The address every test opens: the sample content, the clock fixed, full motion and no night screen
 export function addressFor(extra = {}) {
   const query = new URLSearchParams({ sample: '1', clock: 'fixed', motion: 'full', night: 'off' });
@@ -29,11 +47,12 @@ export function makeContext(browser, base) {
     page.on('pageerror', error => errors.push(error.message));
     // The page tells the control service what it shows. There is none here.
     await page.route('**/control/api/**', route => route.fulfill({ status: 204 }));
-    if (options.content) {
+    if (options.content || options.look) {
       await page.route('**/data/sample/content.json', async route => {
         const response = await route.fetch();
         const content = await response.json();
-        options.content(content);
+        if (options.look) holdLook(content, options.look);
+        if (options.content) options.content(content);
         await route.fulfill({ response: response, json: content });
       });
     }

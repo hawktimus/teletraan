@@ -7,7 +7,7 @@
 // computer is doing, and not the frame that happened to come near 200 ms.
 
 (function () {
-  const motion = window.__motion = { animations: [], swap: null, properties: [], recording: false };
+  const motion = window.__motion = { animations: [], swap: null, properties: [], recording: false, collecting: false, created: [] };
   const realAnimate = Element.prototype.animate;
   const canvas = { width: 1920, height: 1080 };
 
@@ -18,6 +18,7 @@
 
   Element.prototype.animate = function (keyframes, options) {
     const animation = realAnimate.call(this, keyframes, options);
+    if (motion.collecting) motion.created.push({ animation: animation, element: this, at: performance.now() });
     if (motion.recording) {
       batch.push({ animation: animation, element: this, keyframes: keyframes, options: options, at: performance.now() });
       if (!flushing) {
@@ -318,6 +319,191 @@
       requestAnimationFrame(loop);
     };
     requestAnimationFrame(loop);
+  };
+
+  // Every animation that runs, by the CSS or by a script, with the properties it animates. For an element that is
+  // animated, the box and the effects of its computed style are read each time it is seen: they must not change.
+  const ignored = ['offset', 'computedOffset', 'easing', 'composite'];
+  const watchedStyle = ['filter', 'backdropFilter', 'boxShadow', 'textShadow', 'width', 'height'];
+
+  motion.collect = function () {
+    const seen = motion.seen = { animations: {}, changes: [] };
+    const firstStyle = new WeakMap();
+    motion.collecting = true;
+
+    function see(animation, now) {
+      const effect = animation.effect;
+      if (!effect || !effect.target || !effect.target.isConnected) return;
+
+      const kind = animation.animationName ? 'css ' + animation.animationName : animation.transitionProperty ? 'transition ' + animation.transitionProperty : 'script';
+      const target = effect.target;
+      const names = Array.from(new Set(effect.getKeyframes().flatMap(keyframe => Object.keys(keyframe)).filter(name => !ignored.includes(name))));
+      const key = kind + ' on ' + nameOf(target);
+      if (!seen.animations[key]) seen.animations[key] = { kind: kind, name: nameOf(target), properties: names, at: Math.round(now) };
+
+      const style = window.getComputedStyle(target);
+      const now_ = {};
+      watchedStyle.forEach(name => { now_[name] = style[name]; });
+      const before = firstStyle.get(animation);
+      if (!before) {
+        firstStyle.set(animation, now_);
+        ['filter', 'backdropFilter'].forEach(name => {
+          if (now_[name] !== 'none' && now_[name] !== '') seen.changes.push({ name: nameOf(target), kind: kind, at: Math.round(now), what: name + ' is ' + now_[name] });
+        });
+        return;
+      }
+      watchedStyle.forEach(name => {
+        if (before[name] !== now_[name] && !seen.changes.some(change => change.name === nameOf(target) && change.what.startsWith(name))) {
+          seen.changes.push({ name: nameOf(target), kind: kind, at: Math.round(now), what: name + ' changed from ' + before[name] + ' to ' + now_[name] });
+        }
+      });
+    }
+
+    setInterval(() => {
+      const now = performance.now();
+      document.getAnimations().forEach(animation => see(animation, now));
+      motion.created.splice(0).forEach(item => see(item.animation, item.at));
+    }, 30);
+  };
+
+  // The seams of the frames. With the pieces shown (#world has data-pieces) each piece is painted on a canvas as it is on
+  // the screen at this window size: plates as filled polygons, and edges as lines with their width. Where the pieces
+  // meet the paint has to be solid. A pixel that is not solid, with solid pixels on both sides of it within two pixels,
+  // is a seam: the pieces touch, or leave a gap, and do not overlap by a pixel.
+  const solid = 250;
+
+  function paint(context, shapes) {
+    shapes.forEach(shape => {
+      context.beginPath();
+      shape.points.forEach((point, index) => (index === 0 ? context.moveTo(point.x, point.y) : context.lineTo(point.x, point.y)));
+      if (shape.fill) {
+        context.closePath();
+        context.fillStyle = '#000';
+        context.fill();
+      } else {
+        context.lineWidth = shape.width;
+        context.lineCap = shape.cap;
+        context.lineJoin = shape.join;
+        context.strokeStyle = '#000';
+        context.stroke();
+      }
+    });
+  }
+
+  // The shapes of one piece in window pixels: its filled polygons, and the widest line of each of its edges
+  function shapesOf(piece) {
+    const shapes = [];
+    const toWindow = (element, list) => {
+      const matrix = element.getScreenCTM();
+      return Array.from(list).map(point => {
+        const moved = new DOMPoint(point.x, point.y).matrixTransform(matrix);
+        return { x: moved.x, y: moved.y };
+      });
+    };
+
+    piece.querySelectorAll('polygon').forEach(polygon => {
+      const style = window.getComputedStyle(polygon);
+      if (style.fill === 'none' || Number(style.opacity) === 0) return;
+      shapes.push({ fill: true, points: toWindow(polygon, polygon.points) });
+    });
+
+    const edges = {};
+    piece.querySelectorAll('use').forEach(use => {
+      const style = window.getComputedStyle(use);
+      const width = parseFloat(style.strokeWidth);
+      if (style.stroke === 'none' || !(width >= 4) || /shadow|glint|neon|glow/.test(String(use.getAttribute('class')))) return;
+      const target = document.querySelector(use.getAttribute('href'));
+      if (!target || !target.points) return;
+      const id = use.getAttribute('href');
+      if (edges[id] && edges[id].width >= width) return;
+
+      const matrix = use.getScreenCTM();
+      edges[id] = { fill: false, width: width * Math.hypot(matrix.a, matrix.b), cap: style.strokeLinecap, join: style.strokeLinejoin, points: toWindow(use, target.points) };
+    });
+    Object.keys(edges).forEach(id => shapes.push(edges[id]));
+    return shapes;
+  }
+
+  motion.seams = function () {
+    const world = document.getElementById('world');
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const had = world.hasAttribute('data-pieces');
+    world.dataset.pieces = '';
+
+    try {
+      const where = place();
+      window.teletraanTest.sample(); // marks the areas whose frames are cut up, as the swap does, so that their pieces show
+      const pieces = Array.from(document.querySelectorAll('#stage svg.plate.piece')).filter(piece => piece.getBoundingClientRect().width > 0);
+      const canvasOf = () => {
+        const element = document.createElement('canvas');
+        element.width = width;
+        element.height = height;
+        return element.getContext('2d', { willReadFrequently: true });
+      };
+      const all = canvasOf();
+      const own = pieces.map(piece => ({ piece: piece, shapes: shapesOf(piece) }));
+      own.forEach(item => paint(all, item.shapes));
+
+      motion.union = all.canvas;
+      const alpha = all.getImageData(0, 0, width, height).data;
+      const at = (x, y) => (x < 0 || y < 0 || x >= width || y >= height ? 0 : alpha[(y * width + x) * 4 + 3]);
+      const inside = (x, y) => at(x, y) >= solid;
+      const seam = new Uint8Array(width * height);
+
+      // Only where the pieces are
+      const room = pieces.map(piece => piece.getBoundingClientRect());
+      const from = { x: Math.max(2, Math.floor(Math.min(...room.map(box => box.left))) - 4), y: Math.max(2, Math.floor(Math.min(...room.map(box => box.top))) - 4) };
+      const to = { x: Math.min(width - 2, Math.ceil(Math.max(...room.map(box => box.right))) + 4), y: Math.min(height - 2, Math.ceil(Math.max(...room.map(box => box.bottom))) + 4) };
+
+      for (let y = from.y; y < to.y; y++) {
+        for (let x = from.x; x < to.x; x++) {
+          if (inside(x, y)) continue;
+          const crossing = [[1, 0], [0, 1], [1, 1], [1, -1]].some(([dx, dy]) => [1, 2].some(near => [1, 2].some(far => inside(x - dx * near, y - dy * near) && inside(x + dx * far, y + dy * far))));
+          if (crossing) seam[y * width + x] = 1;
+        }
+      }
+
+      // Seam pixels that touch each other are one seam
+      const found = [];
+      for (let start = 0; start < seam.length; start++) {
+        if (seam[start] !== 1) continue;
+        const stack = [start];
+        const box = { left: width, top: height, right: 0, bottom: 0, count: 0 };
+        seam[start] = 2;
+        while (stack.length > 0) {
+          const index = stack.pop();
+          const x = index % width;
+          const y = (index - x) / width;
+          box.left = Math.min(box.left, x);
+          box.right = Math.max(box.right, x);
+          box.top = Math.min(box.top, y);
+          box.bottom = Math.max(box.bottom, y);
+          box.count++;
+          for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+              const next = (y + dy) * width + (x + dx);
+              if (x + dx >= 0 && x + dx < width && y + dy >= 0 && y + dy < height && seam[next] === 1) {
+                seam[next] = 2;
+                stack.push(next);
+              }
+            }
+          }
+        }
+        found.push(box);
+      }
+
+      // The pieces whose paint reaches the seam are the ones that meet there
+      return found.filter(box => box.count >= 3).map(box => {
+        const names = own.filter(item => {
+          const bounds = item.piece.getBoundingClientRect();
+          return bounds.left <= box.right + 3 && bounds.right >= box.left - 3 && bounds.top <= box.bottom + 3 && bounds.bottom >= box.top - 3;
+        }).map(item => (item.piece.closest('[id^="region-"]') ? '#' + item.piece.closest('[id^="region-"]').id + ' ' : '') + (item.piece.dataset.piece || 'piece'));
+        return { left: (box.left - where.left) / where.scale, top: (box.top - where.top) / where.scale, width: (box.right - box.left + 1) / where.scale, height: (box.bottom - box.top + 1) / where.scale, count: box.count, pieces: names };
+      });
+    } finally {
+      if (!had) delete world.dataset.pieces;
+    }
   };
 
   // A hidden transition (core/hidden-run.js): the state of the screen at each change of it, and where the pieces are at
