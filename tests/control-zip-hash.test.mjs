@@ -68,7 +68,7 @@ test('the exclusion list leaves out the repository history, packages, keys and g
     'dashboard/build.js', 'computer/build.txt', 'studio-dist/index.html', 'studio/static/dashboard/index.html', 'dashboard/data/live/x.json', 'RELEASE.json'].forEach(name => {
     assert.equal(isExcluded(name), true, name);
   });
-  ['dashboard/index.html', 'computer/local.example.env', 'dashboard/build.example.js', 'studio/package.json', 'control/static/vendor/README-fflate.txt'].forEach(name => {
+  ['dashboard/index.html', 'computer/local.example.env', 'dashboard/build.example.js', 'studio/package.json', 'control/static/vendor/LICENSE-fflate.txt'].forEach(name => {
     assert.equal(isExcluded(name), false, name);
   });
 });
