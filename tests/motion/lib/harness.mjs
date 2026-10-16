@@ -65,6 +65,8 @@ export function makeContext(browser, base) {
       throw new Error('the dashboard did not start in 90 seconds (' + JSON.stringify(state) + '). ' + (errors.length > 0 ? 'The page said: ' + errors[0] : 'The page said nothing.'));
     }
     await page.waitForTimeout(options.settleMs === undefined ? 2500 : options.settleMs);
+    // A look that was asked for in the address is put on by a swap, and a play made during it is lost
+    await page.waitForFunction(() => !window.teletraanTest.busy(), null, { timeout: 20000 }).catch(() => {});
     // A held still page says when it has drawn its panel (dashboard/core/still-run.js)
     if (extra.still === '1') await page.waitForFunction(() => document.documentElement.dataset.stillReady === '1', null, { timeout: 30000 });
     if (extra.style) {

@@ -19,7 +19,7 @@ async function runScroll(ctx, panel, look) {
     await page.waitForFunction(() => window.__motion.scroll.done, null, { timeout: 5000 });
     return await page.evaluate(() => window.__motion.scroll);
   } catch (error) {
-    return { error: 'the ' + panel + ' card did not scroll within 5 seconds of the play' };
+    return { error: 'the ' + panel + ' card did not scroll within 5 seconds of the play (' + String(error.message).split('\n')[0] + ')' };
   } finally {
     await page.close();
   }
