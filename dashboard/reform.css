@@ -51,19 +51,13 @@
   height: 1080px;
 }
 
-/* a square: a drop shadow drawn once, a face, a back that is turned over, and a shade over both */
+/* a square: a face, a back that is turned over, and a shade over both */
 .reform-square {
   position: absolute;
   transform-style: preserve-3d;
 }
-.reform-drop {
-  position: absolute;
-  left: 8px;
-  top: 10px;
-  right: -8px;
-  bottom: -10px;
-  background: var(--reform-shade);
-  opacity: .45;
+.reform-square[hidden] {
+  display: none;
 }
 .reform-face,
 .reform-back {
@@ -94,7 +88,7 @@
 }
 .reform-new { opacity: 0; }
 
-/* The hawk of the view transition: four plates on the logo's 1100 x 884 grid, two faces each */
+/* The hawk of the view transition: four plates on the logo's 1100 x 884 grid, two faces each, drawn at the size of the logo on the screen */
 .reform-hawk {
   position: absolute;
   transform-style: preserve-3d;
@@ -103,8 +97,6 @@
   position: absolute;
   left: 0;
   top: 0;
-  width: 1100px;
-  height: 884px;
   transform-style: preserve-3d;
 }
 .reform-plate-front,

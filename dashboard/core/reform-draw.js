@@ -5,8 +5,8 @@
 //
 // The layer of a run, from the back:
 //
-//   .reform-layer-back for each region: the dark chassis, then the squares. A square is a box with a face
-//                      (old content), a back (new content), a shade and a drop shadow drawn once
+//   .reform-layer-back for each region: the dark chassis, then the squares. A square is a box with a face (old content), a
+//                      back (new content) and a shade
 //   .reform-covers     the flat copy of the old content over the squares until the turn starts, and the flat copy
 //                      of the new content over them from the moment the last has seated
 //   .reform-layer-front for each region: the four folding edges (each two chains of four segments) and the hardware
@@ -17,10 +17,11 @@
 
 import { slice } from './reform-bake.js';
 import {
-  chainsOf, chassisStops, coverNewStops, coverOldStops, hardwareList, jointShadeStops, jointStops, movedStops, relocateMs, squareShadeStops,
-  squareStops, squaresOf, strapFadeStops, windowOf,
+  chainsOf, chassisStops, coverEdgesStops, coverNewStops, coverOldStops, easePop, hardwareList, isStrip, jointShadeStops, jointStops, movedStops, reformTimes, relocateMs,
+  squareShadeStops, squareStops, squaresOf, windowOf,
 } from './reform-plan.js';
 
+const growMs = 260; // the edges and the hardware come out of the corners in this long, and go back into them in this long
 const cameraOrigin = { x: 960, y: 486 }; // 50% 45% of the screen, which is the origin of the perspective
 const chassisDepth = 200; // the chassis is this far behind the squares, and is made larger to look the size of the window
 
@@ -39,7 +40,7 @@ const box = rect => 'left:' + px(rect.x) + ';top:' + px(rect.y) + ';width:' + px
 // The list of what moves: { element, property, stops }
 export function makeTracks() {
   const list = [];
-  return { list: list, add: (element, property, stops) => list.push({ element: element, property: property, stops: stops }) };
+  return { list: list, add: (element, property, stops, windowed = false) => list.push({ element: element, property: property, stops: stops, windowed: windowed }) };
 }
 
 
@@ -69,49 +70,59 @@ function chainElement(chain, there, tracks) {
       tracks.add(segment, 'transform', jointStops(chain.axis, joint));
       tracks.add(shade, 'opacity', jointShadeStops(chain.axis, joint));
     }
-    segment.appendChild(make('reform-pin'));
     parent.appendChild(segment);
     parent = segment;
   }
 
-  if (there) {
-    const scale = size => (along ? 'scaleX(' : 'scaleY(') + round(size) + ')';
-    const before = 'translate(0px,0px) ' + scale(1);
-    const after = 'translate(' + round(there.x - chain.x) + 'px,' + round(there.y - chain.y) + 'px) ' + scale(there.length / chain.length);
+  // The chain grows out of its corner as the transition starts and goes back into it at the end, which is how it comes and
+  // goes: a group that fades is drawn into a surface of its own every frame, and a part that grows is only moved
+  const scale = size => (along ? 'scaleX(' : 'scaleY(') + round(size) + ')';
+  const place = there ? { x: round(there.x - chain.x), y: round(there.y - chain.y), by: there.length / chain.length } : { x: 0, y: 0, by: 1 };
+  const here = 'translate(0px,0px) ' + scale(1);
+  const gone = 'translate(0px,0px) ' + scale(0);
+  const moved = 'translate(' + place.x + 'px,' + place.y + 'px) ' + scale(place.by);
+  const goneThere = 'translate(' + place.x + 'px,' + place.y + 'px) ' + scale(0);
+  const stops = [[0, gone, easePop], [growMs, here], [relocateMs - 1, here, 'linear'], [relocateMs, moved], [reformTimes.totalMs - growMs, moved, easePop], [reformTimes.totalMs, goneThere]];
 
-    tracks.add(root, 'transform', [[0, before], [relocateMs - 1, before, 'linear'], [relocateMs, after]]);
-  }
+  tracks.add(root, 'transform', stops);
   return root;
 }
 
-function strapsOf(from, to, tracks) {
+function strapsOf(from, to, tracks, strip) {
   const straps = make('reform-straps');
-  const there = chainsOf(to);
+  const there = chainsOf(to, strip);
 
-  chainsOf(from).forEach((chain, index) => {
+  chainsOf(from, strip).forEach((chain, index) => {
     const moves = Math.abs(there[index].x - chain.x) > 0.5 || Math.abs(there[index].y - chain.y) > 0.5 || Math.abs(there[index].length - chain.length) > 0.5;
     straps.appendChild(chainElement(chain, moves ? there[index] : null, tracks));
   });
-  tracks.add(straps, 'opacity', strapFadeStops());
   return straps;
 }
 
 
 // The hardware
 
-function hardwareOf(from, to, tracks, kit) {
-  const layer = make('reform-hardware');
-  const there = hardwareList(to);
+// A piece of hardware grows from nothing as the transition starts, and shrinks to nothing at the end. Every transform of its track
+// gets scale(1) in front, so the track has the same functions all through and the browser can blend it.
+function grown(stops) {
+  const first = stops[0][1];
+  const last = stops[stops.length - 1][1];
+  const middle = stops.filter(stop => stop[0] > growMs && stop[0] < reformTimes.totalMs - growMs).map(stop => [stop[0], 'scale(1) ' + stop[1], stop[2]]);
 
-  hardwareList(from).forEach((item, index) => {
+  return [[0, 'scale(0) ' + first, easePop], [growMs, 'scale(1) ' + first]].concat(middle, [[reformTimes.totalMs - growMs, 'scale(1) ' + last, easePop], [reformTimes.totalMs, 'scale(0) ' + last]]);
+}
+
+function hardwareOf(from, to, tracks, kit, strip) {
+  const layer = make('reform-hardware');
+  const there = hardwareList(to, strip);
+
+  hardwareList(from, strip).forEach((item, index) => {
     const target = there[index];
     const element = make('reform-part reform-' + item.role, box({ x: item.x - item.w / 2, y: item.y - item.h / 2, w: item.w, h: item.h }), kit.draw(item.role));
     if (item.axis) element.dataset.axis = item.axis;
     layer.appendChild(element);
-    tracks.add(element, 'transform', movedStops(item.stops, { dx: round(target.x - item.x), dy: round(target.y - item.y) }));
+    tracks.add(element, 'transform', grown(movedStops(item.stops, { dx: round(target.x - item.x), dy: round(target.y - item.y) })));
   });
-  // the hardware comes over the frame as the edges do, and goes back to it as they do
-  tracks.add(layer, 'opacity', strapFadeStops());
   return layer;
 }
 
@@ -131,7 +142,8 @@ function squaresFor(region, tracks) {
     const back = make('reform-back ' + (square.axis === 'y' ? 'reform-back-y' : 'reform-back-x'));
     const shade = make('reform-shade');
 
-    element.append(make('reform-drop'), face, back, shade);
+    element.append(face, back, shade);
+    element.hidden = true; // it is shown when it has its content (fillSquares), a few at a time
     tracks.add(element, 'transform', squareStops(square, move));
     tracks.add(shade, 'opacity', squareShadeStops(square));
     return { square: square, before: before, element: element, face: face, back: back };
@@ -161,18 +173,23 @@ export function drawRun(regions, cover, kit) {
 
     squares.forEach(item => grid.appendChild(item.element));
     back.append(chassis, grid);
-    front.append(strapsOf(region.from, region.to, tracks), hardwareOf(region.from, region.to, tracks, kit));
+    // a strip in the old place or in the new is a strip in both, so that the pieces of the two places match one by one
+    const strip = isStrip(region.from) || isStrip(region.to);
+    front.append(strapsOf(region.from, region.to, tracks, strip), hardwareOf(region.from, region.to, tracks, kit, strip));
     drawn.push({ region: region, squares: squares });
   });
 
   const covers = make('reform-covers');
   const coverOld = make('reform-cover reform-old', box(cover.from));
   const coverNew = make('reform-cover reform-new', box(cover.to));
-  covers.append(coverOld, coverNew);
-  tracks.add(coverOld, 'opacity', coverOldStops());
-  tracks.add(coverNew, 'opacity', coverNewStops(cover.fadeOut === true));
+  // the old frames, until the edges that fold have covered them (the view transition, whose old page is a copy)
+  const coverEdges = cover.edges === true ? make('reform-cover reform-edges', box(cover.from)) : null;
+  covers.append(...[coverEdges, coverOld, coverNew].filter(item => item !== null));
+  if (coverEdges) tracks.add(coverEdges, 'opacity', coverEdgesStops(), true);
+  tracks.add(coverOld, 'opacity', coverOldStops(), true);
+  tracks.add(coverNew, 'opacity', coverNewStops(cover.fadeOut === true), true);
 
-  return { tracks: tracks, back: back, covers: covers, front: front, drawn: drawn, coverOld: coverOld, coverNew: coverNew, cover: cover };
+  return { tracks: tracks, back: back, covers: covers, front: front, drawn: drawn, coverOld: coverOld, coverNew: coverNew, coverEdges: coverEdges, cover: cover };
 }
 
 // The flat copies of the old and the new content
@@ -181,28 +198,36 @@ export function fillCover(run, which, copy) {
   (which === 'old' ? run.coverOld : run.coverNew).appendChild(slice(copy, place));
 }
 
-// The faces (the old content) or the backs (the new content) of the squares, a few at a time. wait() gives the screen a
-// frame. A face is cut from the old copy at the cell of the old region and is made to fit the square.
-export async function fillSquares(run, which, copy, budgetMs, wait) {
+// The faces (the old content) and the backs (the new content) of the squares. The squares stay hidden: a square that is shown is
+// drawn every frame, and this is done long before the turn. It is made in turns of budgetMs, with a frame given to the screen
+// between them. A face is cut from the old copy at the cell of the old region and is made to fit the square.
+export async function fillSquares(run, before, after, budgetMs, wait) {
+  const items = run.drawn.reduce((all, region) => all.concat(region.squares), []);
   let turnEnds = performance.now() + budgetMs;
 
-  for (const region of run.drawn) {
-    for (const item of region.squares) {
-      if (which === 'old') {
-        const cell = item.before;
-        const holder = slice(copy, cell);
-        const fit = item.square.w / cell.w;
-        const fitDown = item.square.h / cell.h;
-        if (Math.abs(fit - 1) > 0.001 || Math.abs(fitDown - 1) > 0.001) holder.style.cssText += 'transform-origin:0 0;transform:scale(' + round(fit) + ',' + round(fitDown) + ');';
-        item.face.appendChild(holder);
-      } else {
-        item.back.appendChild(slice(copy, item.square));
-      }
-      if (performance.now() > turnEnds) {
-        await wait();
-        turnEnds = performance.now() + budgetMs;
-      }
+  for (const item of items) {
+    const cell = item.before;
+    const holder = slice(before, cell);
+    const fit = item.square.w / cell.w;
+    const fitDown = item.square.h / cell.h;
+    if (Math.abs(fit - 1) > 0.001 || Math.abs(fitDown - 1) > 0.001) holder.style.cssText += 'transform-origin:0 0;transform:scale(' + round(fit) + ',' + round(fitDown) + ');';
+    item.face.appendChild(holder);
+    item.back.appendChild(slice(after, item.square));
+    if (performance.now() > turnEnds) {
+      await wait();
+      turnEnds = performance.now() + budgetMs;
     }
+  }
+}
+
+// The squares are shown shortly before the turn, the ones that turn first first, a few in a frame: a square that is shown is drawn
+// once and then only moved, and many at once are a long frame.
+export async function revealSquares(run, perFrame, wait) {
+  const items = run.drawn.reduce((all, region) => all.concat(region.squares), []).sort((a, b) => a.square.startMs - b.square.startMs);
+
+  for (let index = 0; index < items.length; index += 1) {
+    items[index].element.hidden = false;
+    if ((index + 1) % perFrame === 0) await wait();
   }
 }
 

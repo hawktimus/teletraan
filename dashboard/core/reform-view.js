@@ -11,12 +11,14 @@
 
 import * as frame from '../frame.js';
 import { bake, rectOf, screenOrigin, slice } from './reform-bake.js';
-import { drawRun, fillCover, fillSquares } from './reform-draw.js';
+import { drawRun, fillCover, fillSquares, revealSquares } from './reform-draw.js';
 import { drawHawk, teamOfLogo } from './reform-hawk.js';
 import { gridNameOf, randomOf, reformTimes } from './reform-plan.js';
 import { kitNow, layerOf, markReady, mount, nextFrame, playTracks, scaleNow, takeRun, until } from './reform-run.js';
 
 const turnMs = 4; // milliseconds of one turn of the copying, so that no frame is long
+const squaresMs = 4; // milliseconds of one turn of giving the squares their content and showing them
+const squaresPerFrame = 8; // and the most squares shown in one frame, shortly before the turn
 const otherRegions = ['grid2', 'ticker']; // the areas that wait for the page to be changed under the cover
 const regionWait = 1200; // milliseconds to wait for them to have chosen their pages
 const restWait = 8000; // milliseconds to wait for the areas to stop changing page
@@ -70,7 +72,7 @@ function logoBox(origin) {
 
 // The stage is out of sight until the edges start to go back, and is then whole under the cover, which goes after
 export function stageStops() {
-  return [[0, 0], [reformTimes.tighten[0] - 1, 0, 'linear'], [reformTimes.tighten[0], 1], [reformTimes.totalMs, 1]];
+  return [[0, 0.001], [reformTimes.tighten[0] - 1, 0.001, 'linear'], [reformTimes.tighten[0], 1], [reformTimes.totalMs, 1]];
 }
 
 async function waitForRest(busyNow) {
@@ -91,6 +93,7 @@ export async function playView(swapPage, context) {
   const screen = context.wholeScreen(false);
   const scale = scaleNow();
   let cleanup = () => {};
+  let restore = () => {};
   let swapped = false;
 
   frame.setSwapPlaying(true);
@@ -100,7 +103,7 @@ export async function playView(swapPage, context) {
     const kit = await kitNow();
     const origin = screenOrigin();
     const hide = '.logo';
-    const before = await bake(stage, { origin: origin, budgetMs: turnMs, wait: nextFrame, hide: hide });
+    const before = await bake(stage, { origin: origin, budgetMs: turnMs, wait: nextFrame, hide: hide, edges: true });
     if (context.busyNow()) return 0;
 
     const rolesBefore = rolesOnPage(origin);
@@ -112,15 +115,16 @@ export async function playView(swapPage, context) {
     // The old stage covers the page, and the page is out of sight: the same frame
     const layer = layerOf();
     const camera = layer.firstElementChild;
-    const cover = { from: { x: 0, y: 0, w: 1920, h: 1080 }, to: { x: 0, y: 0, w: 1920, h: 1080 }, fadeOut: true };
+    const cover = { from: { x: 0, y: 0, w: 1920, h: 1080 }, to: { x: 0, y: 0, w: 1920, h: 1080 }, fadeOut: true, edges: true };
     const precover = slice(before, cover.from);
+    const precoverEdges = slice(before, cover.from, 'edges');
     const covers = document.createElement('div');
 
     covers.className = 'reform-covers';
-    covers.appendChild(precover);
+    covers.append(precoverEdges, precover);
     camera.replaceChildren(covers);
     layer.hidden = false;
-    stage.style.opacity = '0';
+    stage.style.opacity = '0.001'; // not quite 0: what is out of sight is not drawn, and it would be drawn again all at once when it comes back
 
     // The look goes on under the cover, with the pages of the other areas, as the swap does it
     context.moveOn(otherRegions);
@@ -143,13 +147,17 @@ export async function playView(swapPage, context) {
       hawk.tracks.forEach(track => extra.push(track));
     }
     drawn.coverOld.appendChild(precover);
+    drawn.coverEdges.appendChild(precoverEdges);
     cleanup = mount(drawn);
     const clock = playTracks(drawn, scale, extra);
     drawn.animations = clock.animations;
+    restore = clock.restore;
 
     fillCover(drawn, 'new', after);
-    await fillSquares(drawn, 'old', before, turnMs, nextFrame);
-    await fillSquares(drawn, 'new', after, turnMs, nextFrame);
+    await fillSquares(drawn, before, after, squaresMs, nextFrame);
+    // shown shortly before the turn, so that nothing is drawn under the flat copy for longer than it has to be
+    await until(clock, reformTimes.turn[0] - 350, scale);
+    await revealSquares(drawn, squaresPerFrame, nextFrame);
     markReady(drawn);
 
     await until(clock, reformTimes.totalMs, scale);
@@ -160,6 +168,7 @@ export async function playView(swapPage, context) {
   } finally {
     stage.style.removeProperty('opacity');
     cleanup();
+    restore();
     layerOf().hidden = true;
     screen.together();
     screen.end();

@@ -9,7 +9,7 @@
 import * as frame from '../frame.js';
 import { setBusy } from './busy.js';
 import { countsOf } from './reform-draw.js';
-import { framesOf, reformScale, reformTimes, cameraStops } from './reform-plan.js';
+import { cameraStops, framesOf, reformScale, reformTimes, windowsOf } from './reform-plan.js';
 
 let secondsOf = () => 3; // transitionSeconds of Dashboard Settings, 2 to 4 (core/rotation.js, transitionSecondsOf)
 let kindOf = () => ''; // the kind the rotation says the next change is (core/rotation.js, transitionKindNow). None plays until the views have started
@@ -20,10 +20,34 @@ let layerNow = null;
 export function startReforms(getSeconds, getKind) {
   secondsOf = getSeconds;
   kindOf = getKind;
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(watchFrame);
 }
 
 export function reformKind() {
   return kindOf();
+}
+
+// How fast the screen draws now: the length of the last frames, while no transition plays. A screen that cannot hold 25 frames
+// a second (a median frame over 40 ms) gets the plain change, because a transition would only make it worse. Nothing is
+// known about a screen that has not been watched for a second yet, and it is not slow.
+const lastFrames = [];
+let lastFrameAt = 0;
+
+function watchFrame(now) {
+  if (lastFrameAt > 0 && !running) {
+    const gap = now - lastFrameAt;
+    if (gap < 1000) lastFrames.push(gap);
+    if (lastFrames.length > 60) lastFrames.shift();
+  }
+  lastFrameAt = now;
+  requestAnimationFrame(watchFrame);
+}
+
+export function screenIsSlow() {
+  if (lastFrames.length < 30) return false;
+
+  const sorted = lastFrames.slice().sort((a, b) => a - b);
+  return sorted[Math.floor(sorted.length / 2)] > 40;
 }
 
 export function reformRunning() {
@@ -63,28 +87,53 @@ export function nextFrame() {
   return new Promise(resolve => requestAnimationFrame(() => resolve()));
 }
 
-// Starts every track of a run on one clock. A part made late starts part way through, and a test that sets the time of all of
-// them sets the same time everywhere.
+// Starts every track of a run on one clock: one animation for each track, as long as the transition, all with the same start time, so
+// a part that is made late starts part way through and a test that sets the time of all of them sets the same time everywhere.
+// An animation that comes and goes while the transition plays changes the layers the screen is drawn from, and a frame is
+// long when that happens, so every part has its animation from the first frame to the last, except the flat copies of the
+// content, which are drawn into a surface each frame while they have one (a track with windows). restore() takes back what was
+// written on the real elements of the page (extra).
 export function playTracks(run, scale, extra = []) {
   const duration = reformTimes.totalMs * scale;
   const start = document.timeline.currentTime;
   const animations = [];
-  const begin = (element, property, stops) => {
-    const animation = element.animate(framesOf(property, stops), { duration: duration, fill: 'both', easing: 'linear' });
-    animation.startTime = start;
-    animations.push(animation);
+  const written = [];
+
+  const begin = (element, property, stops, real, windowed) => {
+    const frames = framesOf(property, stops);
+    if (real || windowed) {
+      element.style.setProperty(property, String(frames[0][property]));
+      if (real) written.push([element, property]);
+    }
+    // a track with windows is played as one animation for each of its changes, and keeps its value between them
+    const parts = windowed ? windowsOf(stops).map(window => ({ delay: window.from, length: window.to - window.from, frames: framesOf(property, window.stops.map(stop => [stop[0] - window.from, stop[1], stop[2]]), window.to - window.from) })) : [{ delay: 0, length: reformTimes.totalMs, frames: frames }];
+
+    parts.forEach(part => {
+      const animation = element.animate(part.frames, { delay: part.delay * scale, duration: part.length * scale, fill: windowed ? 'forwards' : 'both', easing: 'linear' });
+      animation.id = 'reform';
+      animation.startTime = start;
+      animations.push(animation);
+    });
   };
 
-  run.tracks.list.forEach(item => begin(item.element, item.property, item.stops));
-  begin(layerOf().firstElementChild, 'transform', cameraStops());
-  extra.forEach(item => begin(item.element, item.property, item.stops));
-  return { animations: animations, start: start, duration: duration, at: () => (document.timeline.currentTime - start) / scale };
+  run.tracks.list.forEach(item => begin(item.element, item.property, item.stops, false, item.windowed === true));
+  begin(layerOf().firstElementChild, 'transform', cameraStops(), false, false);
+  extra.forEach(item => begin(item.element, item.property, item.stops, item.element.closest('#reform') === null, false));
+  return {
+    animations: animations,
+    start: start,
+    duration: duration,
+    at: () => (document.timeline.currentTime - start) / scale,
+    restore: () => written.forEach(([element, property]) => element.style.removeProperty(property)),
+  };
 }
 
-// Resolves when the run has lasted this many milliseconds
-export function until(clock, normalMs, scale) {
+// Resolves when the run has lasted this many milliseconds. A test that looks at a run with its animations held sets
+// window.__reformHold, and the run stays on the screen until it lets go (tests/motion/reform.mjs).
+export async function until(clock, normalMs, scale) {
   const left = clock.start + normalMs * scale - document.timeline.currentTime;
-  return left > 0 ? new Promise(resolve => setTimeout(resolve, left)) : Promise.resolve();
+  if (left > 0) await new Promise(resolve => setTimeout(resolve, left));
+  while (window.__reformHold === true && normalMs >= reformTimes.totalMs) await new Promise(resolve => setTimeout(resolve, 50));
 }
 
 // Takes the lock for a run, and gives back the way to let it go. hold(on) stops and starts the clock of the rotation.

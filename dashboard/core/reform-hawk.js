@@ -16,6 +16,7 @@ import { hawkPieces } from './logo.js';
 import { easePop, easeStandard, reformTimes } from './reform-plan.js';
 
 const svgNamespace = 'http://www.w3.org/2000/svg';
+const round = value => Math.round(value * 100) / 100;
 export const hawkWidth = 1100;
 export const hawkHeight = 884;
 
@@ -43,9 +44,12 @@ export function poseOf(text) {
 
 const pose = (value, flip) => 'translate(' + value.x + 'px,' + value.y + 'px) rotate(' + value.turn + 'deg) scale(' + value.size + ') rotateY(' + flip + 'deg)';
 
-// The tracks of one plate
-export function plateStops(plate) {
+// The tracks of one plate. k is the size of the hawk on the screen as a share of its grid of 1100 pixels, because the hawk is drawn at its
+// size on the screen (a hawk drawn at 1100 pixels and made small by a transform is a layer a hundred times larger than it shows)
+export function plateStops(plate, k = 1) {
   const robot = poseOf(plate.robot);
+  robot.x *= k;
+  robot.y *= k;
   const rest = { x: 0, y: 0, turn: 0, size: 1 };
   const [robotAt, robotEnd] = [800, 1150];
   const [turnEnd, standEnd] = [1450, reformTimes.rideEnd];
@@ -61,9 +65,9 @@ export function plateStops(plate) {
 }
 
 // The place of the whole hawk: where the old logo was until the robot is turned, and the new place from the time it has
-// ridden across. from and to are { x, y, w } on the screen.
+// ridden across. from and to are { x, y, w } on the screen. The hawk is as large as the old logo, and becomes as large as the new one.
 export function rideStops(from, to) {
-  const place = box => 'translate(' + Math.round(box.x * 100) / 100 + 'px,' + Math.round(box.y * 100) / 100 + 'px) scale(' + Math.round(box.w / hawkWidth * 10000) / 10000 + ')';
+  const place = box => 'translate(' + Math.round(box.x * 100) / 100 + 'px,' + Math.round(box.y * 100) / 100 + 'px) scale(' + Math.round(box.w / from.w * 10000) / 10000 + ')';
 
   return [[0, place(from)], [1300, place(from), easeStandard], [reformTimes.rideEnd, place(to)], [reformTimes.totalMs, place(to)]];
 }
@@ -77,11 +81,11 @@ function shapeMarkup(plate, side) {
     plate.stripes.map(points => polygon(points, 'fill:' + side.edge + ';')).join('');
 }
 
-// One face of a plate: an svg on the logo's grid
-function face(plate, side, className, flipped) {
+// One face of a plate: an svg on the logo's grid, as large as the hawk is on the screen
+function face(plate, side, className, flipped, k) {
   const element = document.createElement('div');
   element.className = className;
-  element.style.cssText = 'transform-origin:' + plate.pivot.x + 'px ' + plate.pivot.y + 'px;' + (flipped ? 'transform:rotateY(180deg);' : '');
+  element.style.cssText = 'transform-origin:' + round(plate.pivot.x * k) + 'px ' + round(plate.pivot.y * k) + 'px;' + (flipped ? 'transform:rotateY(180deg);' : '');
   element.innerHTML = '<svg viewBox="0 0 ' + hawkWidth + ' ' + hawkHeight + '" xmlns="' + svgNamespace + '">' + shapeMarkup(plate, side) + '</svg>';
   return element;
 }
@@ -95,16 +99,17 @@ export function drawHawk(from, to, oldTeam, newTeam) {
   const side = value => ({ fill: colorOf(value.fill, style), edge: colorOf(value.edge, style), shadow: colorOf(value.shadow, style) });
   const root = document.createElement('div');
   const tracks = [{ element: root, property: 'transform', stops: rideStops(from, to) }];
+  const k = from.w / hawkWidth;
 
   root.className = 'reform-hawk';
-  root.style.cssText = 'left:0;top:0;width:' + hawkWidth + 'px;height:' + hawkHeight + 'px;transform-origin:0 0;';
+  root.style.cssText = 'left:0;top:0;width:' + round(hawkWidth * k) + 'px;height:' + round(hawkHeight * k) + 'px;transform-origin:0 0;';
   pieces.plates.forEach((plate, index) => {
     const element = document.createElement('div');
     element.className = 'reform-plate';
-    element.style.cssText = 'transform-origin:' + plate.pivot.x + 'px ' + plate.pivot.y + 'px;';
-    element.append(face(plate, side(plate.front), 'reform-plate-front', false), face(plate, side(next.plates[index].front), 'reform-plate-back', true));
+    element.style.cssText = 'width:' + round(hawkWidth * k) + 'px;height:' + round(hawkHeight * k) + 'px;transform-origin:' + round(plate.pivot.x * k) + 'px ' + round(plate.pivot.y * k) + 'px;';
+    element.append(face(plate, side(plate.front), 'reform-plate-front', false, k), face(plate, side(next.plates[index].front), 'reform-plate-back', true, k));
     root.appendChild(element);
-    tracks.push({ element: element, property: 'transform', stops: plateStops(plate) });
+    tracks.push({ element: element, property: 'transform', stops: plateStops(plate, k) });
   });
   return { element: root, tracks: tracks };
 }

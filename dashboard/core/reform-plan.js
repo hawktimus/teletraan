@@ -134,6 +134,33 @@ export function framesOf(property, stops, totalMs = reformTimes.totalMs) {
   });
 }
 
+// The parts of a track where its value changes, each { from, to, stops } in milliseconds of the skeleton. A flat copy of a whole
+// panel with an animation of opacity is drawn into a surface of its own every frame, which costs a great deal, and it only
+// changes for a moment. So such a track is played as one short animation for each of its changes (a track with windows).
+export function windowsOf(stops, totalMs = reformTimes.totalMs) {
+  const list = stops.slice();
+  if (list[list.length - 1][0] < totalMs) list.push([totalMs, list[list.length - 1][1]]);
+
+  const windows = [];
+  let current = null;
+
+  for (let index = 0; index < list.length - 1; index += 1) {
+    const here = list[index];
+    const next = list[index + 1];
+
+    if (here[1] === next[1] || next[0] <= here[0]) {
+      if (current) windows.push(current);
+      current = null;
+      continue;
+    }
+    if (!current) current = { from: here[0], to: next[0], stops: [here] };
+    current.to = next[0];
+    current.stops.push(next);
+  }
+  if (current) windows.push(current);
+  return windows;
+}
+
 // The value of a track at a time (linear between stops), for tests of the plan. Only numbers.
 export function trackAt(stops, ms) {
   if (ms <= stops[0][0]) return stops[0][1];
@@ -239,7 +266,13 @@ export function jointShadeStops(axis, joint) {
 
 // The chains of a region. Each is { edge, from, axis, x, y, length, thickness, segments, tx, ty }: the box the chain
 // fills at rest, for a horizontal edge the left or right half of it. Segments are of equal length.
-export function chainsOf(rect) {
+// A region that is a thin strip (the banner and the ticker) has no room for the pieces that sit inside the frame, and its short
+// edges are too short to fold. It keeps the long edges, the screws and the latches.
+export function isStrip(rect) {
+  return rect.h < 230 || rect.w < 230;
+}
+
+export function chainsOf(rect, strip = isStrip(rect)) {
   const edge = strapThickness(rect);
   const halfW = rect.w / 2;
   const halfH = (rect.h - 2 * edge) / 2;
@@ -253,7 +286,7 @@ export function chainsOf(rect) {
     chains.push({ edge: name, from: 'start', axis: 'v', x: x, y: rect.y + edge, length: halfH, thickness: edge });
     chains.push({ edge: name, from: 'end', axis: 'v', x: x, y: rect.y + edge + halfH, length: halfH, thickness: edge });
   });
-  return chains.map(chain => Object.assign({ segments: 4, segment: chain.length / 4 }, chain));
+  return chains.filter(chain => !strip || chain.axis === (rect.h < rect.w ? 'h' : 'v')).map(chain => Object.assign({ segments: 4, segment: chain.length / 4 }, chain));
 }
 
 
@@ -274,12 +307,13 @@ export function cornersOf(rect) {
 
 // The rivets along the inside of an edge: two runs, from the two corners to the middle. A run pops in order, one a
 // little after the one before it, and seats in the opposite order.
-export function rivetsOf(rect) {
+export function rivetsOf(rect, strip = isStrip(rect)) {
   const edge = strapThickness(rect);
   const rivets = [];
   const fractions = [0.14, 0.3];
+  const edges = [['top', 'h'], ['bottom', 'h'], ['left', 'v'], ['right', 'v']].filter(item => !strip || item[1] === (rect.h < rect.w ? 'h' : 'v'));
 
-  [['top', 'h'], ['bottom', 'h'], ['left', 'v'], ['right', 'v']].forEach(([name, axis]) => {
+  edges.forEach(([name, axis]) => {
     [0, 1].forEach(end => {
       fractions.forEach((fraction, order) => {
         const along = end === 0 ? fraction : 1 - fraction;
@@ -294,8 +328,8 @@ export function rivetsOf(rect) {
 
 // Screws: out two turns and up toward the camera in loosen, in two turns last in tighten
 export function screwStops() {
-  const lifted = 'translate3d(0px,-14px,90px) rotate(-720deg)';
-  const seated = 'translate3d(0px,0px,0px) rotate(0deg)';
+  const lifted = 'translate(0px,-14px) scale(1.35) rotate(-720deg)';
+  const seated = 'translate(0px,0px) scale(1) rotate(0deg)';
 
   return [[0, seated, easePop], [380, lifted], [2750, lifted, easePop], [3000, seated]];
 }
@@ -344,32 +378,33 @@ export function coverOldStops() {
   return [[0, 1], [reformTimes.coverOldOut - 40, 1, 'linear'], [reformTimes.coverOldOut, 0], [3000, 0]];
 }
 
+// The old frames of a page that is a copy: they stay until the edges that fold have covered them, and go then
+export function coverEdgesStops() {
+  return [[0, 1], [reformTimes.loosen[1] - 20, 1, 'linear'], [reformTimes.loosen[1], 0], [3000, 0]];
+}
+
 // The flat copy of the new content. A cover that fills the whole stage (the view transition) lies over the real frames too, so
-// it goes in the last part and shows the real page, which is in place by then (fadeOut).
+// it goes as the edges start to go back, and shows the real page, which is in place by then (fadeOut).
 export function coverNewStops(fadeOut = false) {
   const stops = [[0, 0], [reformTimes.coverNewIn[0], 0, 'linear'], [reformTimes.coverNewIn[1], 1]];
   if (!fadeOut) return stops.concat([[3000, 1]]);
-  return stops.concat([[reformTimes.tighten[0], 1, 'linear'], [3000, 0]]);
-}
-
-// The cross fade of the metal chassis frame over the real frame at the start, and back at the end
-export function strapFadeStops() {
-  return [[0, 0, 'linear'], [400, 1], [2450, 1, 'linear'], [3000, 0]];
+  return stops.concat([[reformTimes.tighten[0], 1, 'linear'], [reformTimes.tighten[0] + 40, 0], [3000, 0]]);
 }
 
 // Every piece of hardware of a region, in a fixed order, so the same piece of the old rectangle and of the new one
 // (a view transition that moves a region) are the same index. role is the drawing the kit gives it.
-export function hardwareList(rect) {
+export function hardwareList(rect, strip = isStrip(rect)) {
   const edge = strapThickness(rect);
   const list = [];
 
   cornersOf(rect).forEach((corner, index) => {
-    list.push({ role: 'brace', x: corner.x + corner.sx * edge * 1.1, y: corner.y + corner.sy * edge * 1.1, w: edge * 2.4, h: edge * 2.4, stops: braceStops(corner) });
+    if (!strip) list.push({ role: 'brace', x: corner.x + corner.sx * edge * 1.1, y: corner.y + corner.sy * edge * 1.1, w: edge * 2.4, h: edge * 2.4, stops: braceStops(corner) });
     list.push({ role: 'latch', x: corner.x + corner.sx * edge * 2.4, y: corner.y, w: edge * 1.6, h: edge * 1.6, stops: latchStops(corner.sx * -70) });
-    list.push({ role: 'gear', x: corner.x + corner.sx * edge * 3.4, y: corner.y + corner.sy * edge * 3.4, w: edge * 2.4, h: edge * 2.4, stops: gearStops(index % 2 === 0 ? 1 : -1) });
+    if (!strip) list.push({ role: 'gear', x: corner.x + corner.sx * edge * 3.4, y: corner.y + corner.sy * edge * 3.4, w: edge * 2.4, h: edge * 2.4, stops: gearStops(index % 2 === 0 ? 1 : -1) });
     list.push({ role: 'screw', x: corner.x, y: corner.y, w: edge * 1.9, h: edge * 1.9, stops: screwStops() });
   });
-  rivetsOf(rect).forEach(rivet => list.push({ role: 'rivet', x: rivet.x, y: rivet.y, w: edge * 0.8, h: edge * 0.8, stops: rivetStops(rivet.order) }));
+  rivetsOf(rect, strip).forEach(rivet => list.push({ role: 'rivet', x: rivet.x, y: rivet.y, w: edge * 0.8, h: edge * 0.8, stops: rivetStops(rivet.order) }));
+  if (strip) return list;
 
   [['top', 'h', rect.x + rect.w / 2, rect.y + edge * 1.9], ['bottom', 'h', rect.x + rect.w / 2, rect.y + rect.h - edge * 1.9],
     ['left', 'v', rect.x + edge * 1.9, rect.y + rect.h / 2], ['right', 'v', rect.x + rect.w - edge * 1.9, rect.y + rect.h / 2]].forEach(([name, axis, x, y]) => {
@@ -409,23 +444,16 @@ export function movedStops(stops, delta, more = '') {
 // The real thing under the overlay is out of sight from when the edges have covered it until they uncover it again. It is
 // opacity on the same clock as every other part, so a test can set the time and see it.
 export function hiddenStops() {
-  return [[0, 1], [reformTimes.fold[0] - 1, 1, 'linear'], [reformTimes.fold[0], 0], [reformTimes.tighten[0], 0, 'linear'], [reformTimes.tighten[0] + 1, 1], [reformTimes.totalMs, 1]];
+  // not quite 0: a thing that is out of sight is not drawn, and the page would be drawn again all at once when it comes back
+  return [[0, 1], [reformTimes.fold[0] - 1, 1, 'linear'], [reformTimes.fold[0], 0.001], [reformTimes.tighten[0], 0.001, 'linear'], [reformTimes.tighten[0] + 1, 1], [reformTimes.totalMs, 1]];
 }
-
-// How many parts of one region move (a part is an element that has an animation of its own)
-export function partsOf(rect, gridName) {
-  const grid = grids[gridName] || grids.main;
-
-  return { squares: grid.cols * grid.rows * 2, chains: chainsOf(rect).length * 6, hardware: hardwareList(rect).length, covers: 3 };
-}
-
 
 // Which transition a page change of the large panel gets, from the kind the rotation noted and what the screen is doing. It is
 // the name of the kind, or '' for the older way of changing (the page change, or the swap). A transition is drawn in full
-// motion only, never while something else has the screen or another one plays. A look that is waiting to go on (a preview,
+// motion only, never while something else has the screen or another one plays, and never on a screen that is drawing slowly. A look that is waiting to go on (a preview,
 // a team, a theme) and a Monday card are the swap's, and a view transition only goes with a look that is held for it.
 export function kindToPlay(kind, context) {
-  if (context.motion !== 'full' || context.busy || context.running) return '';
+  if (context.motion !== 'full' || context.busy || context.running || context.slow) return '';
   if (kind === 'reform') return context.looked || context.monday ? '' : 'reform';
   if (kind === 'reformView') return context.looked ? 'reformView' : '';
   return '';
