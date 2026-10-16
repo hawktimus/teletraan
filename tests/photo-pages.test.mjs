@@ -320,7 +320,7 @@ test('the panel draws nothing but the plate of a missing picture when there are 
   const turn = turnOf(panel, [], { photoSeconds: 30 });
 
   assert.deepEqual(turn.shown, []);
-  assert.ok(turn.html.includes('[Photo not available]'));
+  assert.ok(turn.html.includes('NO PHOTO'));
   assert.equal(panel.hasContent({ photos: [] }), false);
   assert.equal(panel.hasContent({ photos: photoList(2) }), true);
 });

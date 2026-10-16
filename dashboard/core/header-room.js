@@ -11,6 +11,7 @@
 
 export const titleLeft = 76;
 export const titleRoom = 656;
+export const titleSpare = 8; // a Monday title keeps this much of its room free
 export const wordsRoom = 289;
 
 // The slashes at the right end of a header, with the gap before them. A seasonal pack's mark is no wider.

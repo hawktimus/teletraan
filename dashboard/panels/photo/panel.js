@@ -10,7 +10,7 @@ import { preloadImages } from '../../core/images.js';
 import { speeds } from '../../config.js';
 import { creditText, fitOf, makePhotoQueue, photoStay, photosToShow, rowPlan, turnPlan } from '../../core/photos.js';
 
-const missingMarkup = '<div class="missing">[Photo not available]</div>';
+const missingMarkup = '<div class="missing">NO PHOTO</div>';
 
 // The queue remembers the last photo shown, from one turn of the panel to the next
 const queue = makePhotoQueue();

@@ -91,8 +91,9 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 
     node tests/run.mjs             every test, three at a time, and the syntax of every shell file
     node tests/run.mjs calendar    only the tests whose file name has "calendar" in it
+    node tests/run.mjs motion      only the motion tests, which need Playwright (tests/motion/README.md)
 
-It prints one line for each file and a total, and exits with 1 when anything failed. A test is a Node file that exits 0 when it passes. A test of a shell script is a Node file too: it runs the script with fake `curl`, `ssh` and the like.
+It prints one line for each file and a total, and exits with 1 when anything failed. Without Playwright the motion tests print one line that says they were skipped. A test is a Node file that exits 0 when it passes. A test of a shell script is a Node file too: it runs the script with fake `curl`, `ssh` and the like.
 
 ## What's included
 

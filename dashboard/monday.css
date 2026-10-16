@@ -32,6 +32,7 @@
   font: 700 var(--size-team)/64px var(--font-display);
 }
 .monday .title-tight { font: 700 var(--size-body)/64px var(--font-display); }
+.monday .title-tighter { font: 700 var(--size-label)/64px var(--font-display); }
 .monday .tag {
   flex: none;
   display: flex;
