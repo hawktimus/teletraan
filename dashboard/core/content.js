@@ -1,7 +1,7 @@
 // Where the screen gets what it shows: startContent() hands over the content
 // once it has it, and again every time it changes. Same shape as data/sample/content.json.
 
-import { competitionModes, competitionSwitches, defaultSettings, defaultTeam, frameFinishes, limits, looks, lookSwaps, metals, nightSpeeds, nightStyles, pageChangeStyles, photoFits, photoOrders, portraitFrames, portraitShapes, sampleFolder, sanity, speeds, styles, teamModes } from '../config.js';
+import { competitionModes, competitionSwitches, defaultSettings, defaultThemeByWeekday, scheduledThemeIds, viewKeys, defaultTeam, frameFinishes, limits, looks, lookSwaps, metals, nightSpeeds, nightStyles, pageChangeStyles, photoFits, photoOrders, portraitFrames, portraitShapes, sampleFolder, sanity, speeds, styles, teamModes } from '../config.js';
 import { parseLocalDateTime } from './time.js';
 import { chosenSource } from './source.js';
 import { tidyTheme } from './theme.js';
@@ -15,6 +15,7 @@ import { fetchResult, liveEventsUrl, normalizeContent, normalizeSample } from '.
 import { reasons } from './connection.js';
 import { showsForTeam } from './teams.js';
 import { markUnreachable } from './monday.js';
+import { tidyScreenRequests } from './screen-requests.js';
 
 // The last content read from Sanity, written after every good read. A screen that was last run before this name
 // has its copy under the old one, which is read once and not written again.
@@ -50,7 +51,7 @@ export function visibleItems(list, now = new Date(), teamCode) {
 // whether settings exist.
 export function withDefaults(raw) {
   const source = raw || {};
-  const content = Object.assign({ tasks: [], plan: null, plans: [], teams: [], sponsors: [], tipsAndNews: [], notices: [], subteams: [], people: [], photos: [], presentations: [], customPanels: [], calendarFilters: [], milestones: [], frc: null, monday: null, screens: [] }, source);
+  const content = Object.assign({ tasks: [], plan: null, plans: [], teams: [], sponsors: [], tipsAndNews: [], notices: [], subteams: [], people: [], photos: [], presentations: [], customPanels: [], calendarFilters: [], milestones: [], frc: null, monday: null, mini: { lastCalendarSyncAt: '', calendarErrors: 0 }, screens: [] }, source);
   content.team = Object.assign({}, defaultTeam, source.team);
   content.settings = Object.assign({}, defaultSettings, source.settings);
   // The Mini reads the two Monday blocks and the screen has no use for them
@@ -72,6 +73,21 @@ export function withDefaults(raw) {
   // defaults went under them, say whether the two portrait sizes were ever set.
   fixSettingValues(content.settings, source.settings || {});
   return content;
+}
+
+// The view settings, always complete: a name and a title for the General view, the views in an order, and a theme for each
+// weekday. A view left out of the order is not played; an empty or unusable order is the starting one.
+export function tidyViewSettings(settings) {
+  ['generalViewName', 'generalViewTitle'].forEach(name => {
+    if (typeof settings[name] !== 'string' || settings[name].trim() === '') settings[name] = defaultSettings[name];
+  });
+  const listed = Array.isArray(settings.viewOrder) ? settings.viewOrder.filter((key, index, all) => viewKeys.includes(key) && all.indexOf(key) === index) : [];
+  settings.viewOrder = listed.length > 0 ? listed : viewKeys.slice();
+  const saved = settings.themeByWeekday && typeof settings.themeByWeekday === 'object' ? settings.themeByWeekday : {};
+  settings.themeByWeekday = {};
+  Object.keys(defaultThemeByWeekday).forEach(day => {
+    settings.themeByWeekday[day] = scheduledThemeIds.includes(saved[day]) ? saved[day] : defaultThemeByWeekday[day];
+  });
 }
 
 // Settings that are one of a few words, an on/off switch, or a number in a
@@ -98,6 +114,8 @@ export function fixSettingValues(settings, saved = settings) {
   settings.screenSchedule = tidySchedule(settings.screenSchedule);
   if (!styles.includes(settings.mondayStyle)) settings.mondayStyle = defaultSettings.mondayStyle;
   if (!lookSwaps.includes(settings.lookSwap)) settings.lookSwap = defaultSettings.lookSwap;
+  // The Views: names kept as text, the order a list of the four views each once, the theme of each weekday complete
+  tidyViewSettings(settings);
   // The competition cards: the mode here, and a switch for each card in the list of booleans below
   if (!competitionModes.includes(settings.competitionMode)) settings.competitionMode = defaultSettings.competitionMode;
   // The night mode settings: two choices, a switch each way and the logo width. The times are fixed (constants.js)
@@ -141,6 +159,8 @@ export function fixSettingValues(settings, saved = settings) {
   // The last click of Next look now and of Preview competition (Start here page, hidden from editors): a time, or empty
   settings.nextLookRequest = tidyNextLookRequest(settings.nextLookRequest);
   settings.competitionPreviewRequest = tidyRequestTime(settings.competitionPreviewRequest);
+  // The requests of the control page: a panel, a view, a theme or a pause, each with an until time
+  Object.assign(settings, tidyScreenRequests(settings));
   settings.crt = tidyGlitch(settings.crt);
   // The Events panel: Group events by kind (Calendars tab) is a switch that starts off
   if (typeof settings.groupEventsByKind !== 'boolean') settings.groupEventsByKind = defaultSettings.groupEventsByKind;
@@ -202,6 +222,14 @@ function tidyGlitch(raw) {
     everySeconds: keepInRange(everySeconds, limits.crtEvery, defaultSettings.crt.everySeconds),
     durationSeconds: keepInRange(glitch.durationSeconds, limits.crtDuration, defaultSettings.crt.durationSeconds),
   };
+}
+
+// The latest read from Sanity, for the status dots: when the last good one ended and whether the newest one threw.
+// A copy taken from localStorage is not a read.
+let lastRead = { at: null, failed: false };
+
+export function lastContentRead() {
+  return { at: lastRead.at, failed: lastRead.failed };
 }
 
 // Resolves with { content, status } as soon as there is something to show.
@@ -457,6 +485,7 @@ export async function startSanityContent(onChange) {
       const raw = await fetchResult(sanity);
       content = normalizeContent(raw);
       updated = Date.now();
+      lastRead = { at: new Date(updated), failed: false };
       source = 'sanity';
       failed = false;
       offline = false;
@@ -466,6 +495,7 @@ export async function startSanityContent(onChange) {
     } catch (error) {
       console.error('Could not read content from Sanity', error);
       failed = true;
+      lastRead = { at: lastRead.at, failed: true };
       reason = error && reasons.includes(error.reason) ? error.reason : 'other';
       startAlarm();
     }

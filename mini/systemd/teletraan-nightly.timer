@@ -1,0 +1,12 @@
+[Unit]
+Description=Restart the Teletraan I screen at 04:00 and reboot the Mini at 04:10 on Sundays
+
+[Timer]
+# The time zone of the Mini, which is the kiosk time. Not Persistent: a run
+# that was missed because the Mini was off must not restart the screen later in the day.
+OnCalendar=*-*-* 04:00:00
+OnCalendar=Sun *-*-* 04:10:00
+Persistent=false
+
+[Install]
+WantedBy=timers.target

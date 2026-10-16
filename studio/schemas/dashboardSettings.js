@@ -14,8 +14,9 @@ import { hiddenFields } from './settingsHidden.js';
 import { presentationsFields, presentationTestRequestField } from './settingsPresentations.js';
 import { teamsFields } from './settingsTeams.js';
 import { lookScheduleFields } from './settingsLook.js';
+import { viewsFields } from './settingsViews.js';
 import { previewRequestField } from './settingsPreview.js';
-import { nextLookRequestField, competitionPreviewRequestField } from './settingsRequests.js';
+import { nextLookRequestField, competitionPreviewRequestField, screenRequestFields } from './settingsRequests.js';
 import { competitionFields } from './settingsCompetition.js';
 import { mondayFields } from './settingsMonday.js';
 
@@ -482,8 +483,8 @@ const groupEventsByKindField = defineField({
 });
 
 // The note on the Look tab points to the Look page, which points back (theme.js). The second says where the rows are.
-const lookNoteField = noteField('lookNote', 'Which Screen plays on each day is set here. Colors, seasonal packs and the time zone are in Look, in the sidebar.', 'look');
-const cycleNoteField = noteField('cycleNote', 'What plays on a Screen is set in Screens, under Start here in the sidebar. Its rows play top to bottom, and the screen swaps when the team changes.', 'look');
+const lookNoteField = noteField('lookNote', 'Which theme plays on each day is set on the Themes page. Colors, seasonal packs and the time zone are in Look, in the sidebar.', 'look');
+const cycleNoteField = noteField('cycleNote', 'What plays in a view is set in Views, under Settings in the sidebar. The views take the screen in the order below, and the screen swaps at each change.', 'look');
 
 export default defineType({
   name: 'dashboardSettings',
@@ -496,6 +497,7 @@ export default defineType({
     teamField,
     lookNoteField,
     cycleNoteField,
+    ...viewsFields(),
     ...lookScheduleFields(),
     styleField,
     motionField,
@@ -507,6 +509,7 @@ export default defineType({
     previewRequestField(),
     nextLookRequestField(),
     competitionPreviewRequestField(),
+    ...screenRequestFields(),
     ...teamsFields(),
     ...logoFields(),
     ...transitionsFields(),

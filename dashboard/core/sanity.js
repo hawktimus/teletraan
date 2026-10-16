@@ -1,7 +1,7 @@
 // Talks to Sanity: the two queries, the addresses, and turning what comes back
 // into the content shape in data/sample/content.json. The sample is cleaned the same way.
 
-import { defaultFilter, defaultPerson, defaultSettings, defaultTalk, filterActions, limits, photoFits, primeTeam, talkStatuses, teamMetals, teamTrim } from '../config.js';
+import { defaultFilter, defaultPerson, defaultSettings, defaultTalk, filterActions, limits, photoFits, primeTeam, talkStatuses, teamMetals, teamPalettes, teamTrim } from '../config.js';
 import { parseLocalDateTime, sameDay } from './time.js';
 import { fixSettingValues, isVisible, keepInRange, withDefaults } from './content.js';
 import { keptSize, logoUrl, photoFocus, screenPhotoUrl, tidyPhoto } from './images.js';
@@ -11,6 +11,7 @@ import { tidyFrc } from './frc.js';
 import { tidyMondayStatus } from './monday.js';
 import { tidyScreens } from './screens.js';
 import { tidyNotices } from './notice.js';
+import { tidyMini } from './dots.js';
 
 // Everything the screen needs, in one request. Lists come back in the order
 // they were created, and normalizeContent puts the ones with an Order first.
@@ -151,7 +152,8 @@ export const contentQuery = `{
     mondayStyle
   },
   "frc": *[_id == "frc-status"][0],
-  "monday": *[_id == "monday-status"][0] { lastSyncAt, lastError, "snapshots": coalesce(snapshots, []) }
+  "monday": *[_id == "monday-status"][0] { lastSyncAt, lastError, "snapshots": coalesce(snapshots, []) },
+  "mini": *[_id == "status-mini"][0] { lastCalendarSyncAt }
 }`;
 
 const requestSeconds = 15;
@@ -276,6 +278,7 @@ export function normalizeContent(result, now = new Date()) {
     customPanels: customPanelsFrom(data.customPanels),
     frc: tidyFrc(data.frc),
     monday: tidyMondayStatus(data.monday),
+    mini: tidyMini(data.mini),
     screens: tidyScreens(data.screens, settings.mondayStyle),
   });
 }
@@ -650,6 +653,7 @@ function normalizeTeamDocument(raw) {
     logo: typeof raw.logo === 'string' ? raw.logo.trim() : logoUrl(raw.logo),
     colors: colors,
     metal: Object.prototype.hasOwnProperty.call(teamMetals, trimmed(raw.metal)) ? trimmed(raw.metal) : primeTeam.metal,
+    palette: Object.prototype.hasOwnProperty.call(teamPalettes, trimmed(raw.palette)) ? trimmed(raw.palette) : primeTeam.palette,
     glow: raw.glow === true,
     mirror: raw.mirror === true,
     bolts: trimValue(raw, 'bolts'),

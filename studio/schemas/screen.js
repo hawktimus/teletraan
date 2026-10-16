@@ -3,6 +3,9 @@
 // (screen-original, screen-cybertron, screen-minimal). The id says which style the Screen is, so
 // no style is stored. They are the second line of the sidebar, Screens, under Start here (structure.js).
 //
+// The rows of the main panel and the side panel are hidden now: the four Views (schemas/view.js) hold them, and the dashboard
+// reads them there. The Screen keeps its banner settings and its Monday style, and the rows it was saved with.
+//
 // The form opens on a map of the screen (screen-input.js). Its five letters are the five tabs:
 //   A Banner      the Team document of the team chosen in the Editing switch, and how often the
 //                 name effect and the flying hawk play and how long the swap takes
@@ -38,11 +41,6 @@ const groups = [
 
 // The values are the names in styles in dashboard/config.js
 const styles = screenStyles.map(style => ({ title: screenTitles[style], value: style }));
-
-// Minimal has no side panel, so its form has no rows for one and no tab
-function hasNoSidePanel(context) {
-  return styleOfScreenId(context.document && context.document._id) === 'minimal';
-}
 
 // A row with its own seconds stays up that long. With none it follows Seconds per page (Screen tab
 // of Dashboard Settings). A Photos row has no seconds of its own: it stays for its number of photos times the
@@ -115,7 +113,7 @@ export function secondsWords(row) {
   return row.seconds ? row.seconds + ' seconds' : 'Follows Seconds per page';
 }
 
-const mainRow = defineArrayMember({
+export const mainRow = defineArrayMember({
   type: 'object',
   title: 'Row',
   components: { input: RowWithPreview }, // the form of the row and, for a Monday row, a Preview button below it
@@ -152,7 +150,7 @@ const mainRow = defineArrayMember({
   },
 });
 
-const sideRow = defineArrayMember({
+export const sideRow = defineArrayMember({
   type: 'object',
   title: 'Row',
   fields: [panelField(smallPanels, 'Which small panel this row plays in the side panel.'), secondsField(false)],
@@ -213,7 +211,8 @@ export default defineType({
       title: 'Main panel rows',
       type: 'array',
       group: 'main',
-      description: 'Keep the rows of one team together. The screen transforms every time the team changes.',
+      hidden: true,
+      description: 'Not used any more. The rows of each View (Views under Settings) replace this list. It stays so that a saved list is kept.',
       of: [mainRow],
     }),
     defineField({
@@ -241,8 +240,8 @@ export default defineType({
       title: 'Side panel rows',
       type: 'array',
       group: 'side',
-      hidden: hasNoSidePanel,
-      description: 'The small panels, one after the other, on their own timer. A row has no team: the panel takes the colors of the team on the screen.',
+      hidden: true,
+      description: 'Not used any more. The rows of each View (Views under Settings) replace this list. It stays so that a saved list is kept.',
       of: [sideRow],
     }),
 

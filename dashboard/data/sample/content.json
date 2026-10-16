@@ -18,7 +18,7 @@
     {
       "code": "nova", "name": "Hawktimus Nova", "shortName": "NOVA", "number": "3426",
       "colors": { "primary": "#FACA2A", "plate": "#6B4F0C", "accent": "#C58CFF", "neon": "#B23CFF", "pink": "#FACA2A", "background": "#130E03", "text": "#FFFFFF", "body": "#2A1F07", "label": "#C58CFF" },
-      "metal": "gold", "glow": true,
+      "metal": "gold", "palette": "inverted", "glow": true,
       "mirror": true,
       "bolts": "round", "cornerCut": "tr-bl", "headerNotch": "slant", "grid": "dots",
       "logoPose": "auto", "nameStyle": "solid", "outlinedName": false, "tickerLabel": "bar", "countAccent": "neon",

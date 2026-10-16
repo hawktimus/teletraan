@@ -1,0 +1,41 @@
+/* The four tabs of the control page. Phone first: one column, targets 44px high. From 900px two
+   columns. The colors come from the page when it sets them. */
+.tab { max-width: 1100px; margin: 0 auto; padding: 16px; color: var(--page-text, #f3eefc); font-family: 'Tomorrow', system-ui, sans-serif; }
+.tab .grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+.tab .card { background: var(--card-bg, #1a1228); border: 2px solid var(--card-edge, #3a2c55); border-radius: 8px; padding: 16px; }
+.tab .card.grey { background: #2a2a2a; border-color: #555; color: #bbb; }
+.tab h2 { margin: 0 0 12px; font-size: 20px; letter-spacing: .04em; text-transform: uppercase; color: var(--accent, #faca2a); }
+.tab dl { margin: 0; }
+.tab .row { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--card-edge, #3a2c55); }
+.tab .row:first-child { border-top: 0; }
+.tab dt { color: #b9afcf; }
+.tab dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
+.tab .buttons { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+.tab .act { min-height: 44px; min-width: 44px; padding: 8px 16px; font: inherit; color: #1a1228; background: var(--accent, #faca2a); border: 0; border-radius: 6px; cursor: pointer; }
+.tab .act.quiet { color: var(--page-text, #f3eefc); background: transparent; border: 2px solid var(--card-edge, #3a2c55); }
+.tab .act:disabled { opacity: .5; cursor: default; }
+.tab .buttons.small .act { font-size: 14px; }
+.tab .pick { display: block; margin-top: 8px; }
+.tab .pick span { display: block; margin-bottom: 4px; color: #b9afcf; }
+.tab select, .tab input { box-sizing: border-box; width: 100%; min-height: 44px; padding: 8px 12px; font: inherit; color: inherit; background: #0b0714; border: 2px solid var(--card-edge, #3a2c55); border-radius: 6px; }
+.tab .rows { margin: 12px 0 0; padding-left: 20px; }
+.tab .dot-row { display: flex; gap: 12px; padding: 8px 0; }
+.tab .dot-row p { margin: 4px 0 0; color: #b9afcf; }
+.tab .dot { flex: none; width: 16px; height: 16px; margin-top: 4px; border-radius: 50%; background: #9a9a9a; }
+.tab .dot[data-color="green"] { background: #2fd27a; }
+.tab .dot[data-color="amber"] { background: #ffb300; }
+.tab .dot[data-color="red"] { background: #ff3b3b; }
+.tab .word { color: #b9afcf; }
+.tab .key { display: grid; gap: 8px; padding: 12px 0; border-top: 1px solid var(--card-edge, #3a2c55); }
+.tab .key:first-child { border-top: 0; }
+.tab .key .name, .tab .key .masked { display: block; color: #b9afcf; font-size: 14px; }
+.tab .keyform { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.tab .countdown { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; flex-basis: 100%; }
+.tab .note { min-height: 24px; margin: 12px 0 0; }
+.tab .note[data-bad="yes"], .tab .warn { color: #ff8a8a; }
+.tab .quiet { color: #bbb; }
+.tab .log { max-height: 70vh; margin: 0; padding: 12px; overflow: auto; font: 14px/1.4 ui-monospace, monospace; white-space: pre-wrap; overflow-wrap: anywhere; background: #0b0714; }
+@media (min-width: 900px) {
+  .tab .grid { grid-template-columns: 1fr 1fr; }
+  .tab .keyform { grid-template-columns: 1fr auto; }
+}

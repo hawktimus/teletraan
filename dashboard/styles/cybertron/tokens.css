@@ -1,0 +1,16 @@
+/* The custom properties of the Cybertron theme. What each one is for is listed at the top of theme.css. */
+
+html[data-style="cybertron"] {
+  --style-body: var(--team-body);
+  --style-raised: #262b33;
+  --style-armor-top: #323843;
+  --style-armor-bottom: #1d2128;
+  --style-chamfer: 56px;
+  --style-neon: var(--team-neon);
+  --style-pink: var(--team-pink);
+  --style-digits: #ffb327;
+  --style-rust: #b4672d;
+  --style-grid-size: 96px;
+  --style-grid-opacity: .07;
+  --style-scan-opacity: .035;
+}

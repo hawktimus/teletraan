@@ -1,0 +1,72 @@
+// Reading and writing Sanity for the control routes. Reads use the public dataset and send no key.
+// Writes use SANITY_WRITE_TOKEN from local.env, which is read at the moment of the write and never
+// kept, printed or logged.
+
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { envPath, envValue } from './env-file.js';
+import { Refusal } from './http.js';
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const timeout = 15000;
+
+export function repoRoot(ctx) {
+  return ctx.root || path.resolve(here, '..', '..');
+}
+
+// projectId, dataset and apiVersion are kept in dashboard/config.js and nowhere else
+export function configFrom(text) {
+  const read = name => {
+    const match = new RegExp("^\\s*" + name + ":\\s*'([^']*)'", 'm').exec(text);
+    return match ? match[1] : '';
+  };
+  return { projectId: read('projectId'), dataset: read('dataset'), apiVersion: read('apiVersion') };
+}
+
+export function readConfig(ctx) {
+  const config = configFrom(fs.readFileSync(path.join(repoRoot(ctx), 'dashboard', 'config.js'), 'utf8'));
+  if (!/^[a-z0-9]+$/.test(config.projectId) || !/^[A-Za-z0-9_-]+$/.test(config.dataset) || !/^\d{4}-\d{2}-\d{2}$/.test(config.apiVersion)) {
+    throw new Refusal(500, 'The Sanity project could not be read from dashboard/config.js.');
+  }
+  return config;
+}
+
+export function makeSanity(ctx) {
+  const doFetch = ctx.fetch || globalThis.fetch;
+  const config = readConfig(ctx);
+  const host = 'https://' + config.projectId + '.api.sanity.io/v' + config.apiVersion;
+
+  return {
+    config: config,
+
+    // The published result of a GROQ query, or throws
+    async query(groq) {
+      const url = host + '/data/query/' + config.dataset + '?perspective=published&query=' + encodeURIComponent(groq);
+      const response = await doFetch(url, { signal: AbortSignal.timeout(timeout) });
+      if (!response.ok) throw new Error('Sanity answered ' + response.status);
+      const body = await response.json();
+      return body.result;
+    },
+
+    hasToken() {
+      return envValue(envPath(ctx), 'SANITY_WRITE_TOKEN') !== '';
+    },
+
+    // Applies mutations. Refused with a plain message when there is no write token.
+    async mutate(mutations) {
+      const token = envValue(envPath(ctx), 'SANITY_WRITE_TOKEN');
+      if (token === '') throw new Refusal(503, 'SANITY_WRITE_TOKEN is not set on the Mini. Add it on the Keys tab.');
+
+      const response = await doFetch(host + '/data/mutate/' + config.dataset, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ mutations: mutations }),
+        signal: AbortSignal.timeout(timeout),
+      });
+      if (response.status === 401 || response.status === 403) throw new Refusal(502, 'Sanity refused the write key. Check SANITY_WRITE_TOKEN on the Keys tab.');
+      if (!response.ok) throw new Refusal(502, 'Sanity could not take the change (' + response.status + ').');
+      return response.json();
+    },
+  };
+}

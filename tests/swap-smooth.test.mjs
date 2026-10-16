@@ -1221,7 +1221,7 @@ test('the page does not reload for a change of look: only a layout change that f
   const apply = withoutComments(read('core/layout-apply.js'));
   assert.equal((apply.match(/location\.reload\(\)/g) || []).length, 1, 'the one reload is the fallback');
   assert.ok(/function reloadFor\(wanted, onPage, look\) \{\s*if \(!mustReload\(onPage, wanted, savedStorage\(\)\)\)/.test(apply), 'and it asks the guard first');
-  assert.ok(apply.includes('const wanted = drawnFor(layoutFor(look.style, layoutOf(look.theme)), shapesFor(look.style));'), 'the layout is worked out as it always was');
+  assert.ok(apply.includes('const wanted = drawnFor(wantedLayout, shapesFor(look.style, wantedLayout));'), 'the layout is worked out as it always was');
 });
 
 test('shell.js puts the layout on in the step that puts the look on, before the style, and keeps the swap in charge of when', () => {

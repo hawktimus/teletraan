@@ -1932,7 +1932,9 @@ test('the decor names only elements the page has: a class or id that nothing in 
 const everyTheme = themes.map(theme => theme.id);
 
 test('the styles are original, cybertron and minimal, and original is the default', () => {
-  assert.deepEqual(config.styles, ['original', 'cybertron', 'minimal']);
+  assert.deepEqual(config.themeIds, ['original', 'cybertron', 'retro']);
+  assert.deepEqual(config.styles, ['original', 'cybertron', 'minimal'], 'minimal is no theme: it is the old name for the bar layout');
+  assert.equal(styles.isStyle('retro'), true, 'a theme the lists of the Studio do not name yet is still a style');
   assert.equal(config.defaultSettings.style, 'original');
   config.styles.forEach(name => assert.ok(styles.isStyle(name), name));
   ['', 'Original', 'sidebar', 'bar', 'toString', undefined, null, 7].forEach(odd => assert.equal(styles.isStyle(odd), false, String(odd)));
@@ -2379,7 +2381,7 @@ test('the mirror in the bar layout is one rule for every flex row of the layout,
   assert.ok(/html\.mirrored\[data-layout="bar"\] \.mirror-art \{\s*transform: scaleX\(-1\);\s*\}/.test(css));
   const panelFolders = fs.readdirSync(path.join(dashboardFolder, 'panels'), { withFileTypes: true }).filter(entry => entry.isDirectory()).map(entry => 'panels/' + entry.name);
   panelFolders.forEach(folder => fs.readdirSync(path.join(dashboardFolder, folder)).forEach(file => assert.ok(!/mirror-art/.test(read('dashboard/' + folder + '/' + file)), folder + '/' + file + ' has text in it, or may have, and carries mirror-art')));
-  assert.ok(!/scaleX|scale\(-|rotateY/.test(read('dashboard/styles/original.css')), 'the standard layout\'s mirror turns no picture either');
+  assert.ok(!/scaleX|scale\(-|rotateY/.test(read('dashboard/styles/original/theme.css')), 'the standard layout\'s mirror turns no picture either');
 
   // The same answer as the numbers: the row is [side, main] and turns to [main, side], the banner [name, war] to [war, name]
   const m = layout.mirrorGeometry(b);
@@ -2389,7 +2391,7 @@ test('the mirror in the bar layout is one rule for every flex row of the layout,
 });
 
 test('the mirror of the standard layout is in original.css: the columns change places and the banner and the ticker turn, as the numbers of base.css say', () => {
-  const css = withoutComments(read('dashboard/styles/original.css'));
+  const css = withoutComments(read('dashboard/styles/original/theme.css'));
   const base = withoutComments(read('dashboard/base.css'));
   const prefix = 'html.mirrored[data-layout="standard"]';
 
@@ -2483,16 +2485,16 @@ test('index.html has the bar row hidden, with the side column in it, links the b
   assert.ok(!/<div id="bar-middle"[^>]*data-block|<div id="region-column"[^>]*data-block/.test(html), 'only layout-apply.js makes the column a block');
 
   const link = name => html.indexOf('href="' + name + '?v=0"');
-  ['layouts/bar.css', 'styles/original.css', 'styles/cybertron.css', 'styles/minimal.css'].forEach(name => {
+  ['layouts/bar.css', 'styles/original/theme.css', 'styles/cybertron/theme.css', 'layouts/bar-minimal.css'].forEach(name => {
     assert.equal(countOf(html, 'href="' + name + '\\?v=0"'), 1, name);
     assert.ok(fs.existsSync(path.join(dashboardFolder, name)), name + ' exists');
     assert.ok(link(name) > link('frame.css'), name + ' comes after frame.css, so its rules come later in the cascade');
     assert.ok(link(name) > link('teams.css'), name + ' comes after the team colors, which it reads');
   });
   assert.ok(link('layouts/bar.css') > link('layouts/sidebar.css'));
-  assert.ok(link('styles/original.css') > link('layouts/bar.css'), 'the styles come after the layouts');
-  assert.ok(link('styles/minimal.css') > link('styles/cybertron.css') && link('styles/cybertron.css') > link('styles/original.css'));
-  assert.ok(link('themes/decor/neon-prime-decor.css') > link('styles/minimal.css'), 'a theme\'s own decoration still comes after a style');
+  assert.ok(link('styles/original/theme.css') > link('layouts/bar.css'), 'the styles come after the layouts');
+  assert.ok(link('layouts/bar-minimal.css') > link('styles/cybertron/theme.css') && link('styles/cybertron/theme.css') > link('styles/original/theme.css'));
+  assert.ok(link('themes/decor/neon-prime-decor.css') > link('layouts/bar-minimal.css'), 'a theme\'s own decoration still comes after a style');
   assert.ok(layout.blocksOf('bar').every(block => layout.everyBlock.indexOf(block) !== -1));
   assert.deepEqual(layout.blocksOf('bar'), ['banner', 'column', 'grid1', 'ticker']);
   assert.ok(layout.areasOf('bar').indexOf('grid2') === -1 && layout.hasRegion('bar', 'column') && !layout.hasRegion('bar', 'grid2') && !layout.hasRegion('bar', 'countdown'));
@@ -2639,7 +2641,7 @@ test('every literal text size under 44 px in the dashboard stylesheets is on a l
 });
 
 test('the mirror leaves the frames and their rivets as they are, and the rivets are drawn for Original whether the layout is mirrored or not', () => {
-  const css = withoutComments(read('dashboard/styles/original.css'));
+  const css = withoutComments(read('dashboard/styles/original/theme.css'));
   assert.equal(/rivets|\.plate\b|\.area|scaleX|rotateY\(180/.test(css), false, 'the mirror of the standard layout moves the regions and never turns a frame round');
 
   const base = withoutComments(read('dashboard/base.css'));
@@ -2649,7 +2651,7 @@ test('the mirror leaves the frames and their rivets as they are, and the rivets 
 });
 
 test('the three style files each set their own custom properties for their own style only', () => {
-  const read2 = name => withoutComments(read('dashboard/styles/' + name + '.css'));
+  const read2 = name => withoutComments(name === 'minimal' ? read('dashboard/layouts/bar-minimal.css') : read('dashboard/styles/' + name + '/tokens.css') + read('dashboard/styles/' + name + '/theme.css'));
   const rules = css => {
     const found = [];
     css.replace(/([^{}]+)\{([^{}]*)\}/g, (all, list, body) => {
@@ -2661,8 +2663,9 @@ test('the three style files each set their own custom properties for their own s
 
   ['cybertron', 'minimal'].forEach(name => {
     const own = rules(read2(name));
-    assert.deepEqual(own[0].selectors, ['html[data-style="' + name + '"]'], name + ' starts with the rule that sets its custom properties');
-    own.slice(1).forEach(rule => rule.selectors.forEach(selector => assert.ok(selector.startsWith('html[data-style="' + name + '"]'), name + ': a rule that is not for its own style would change the other: ' + selector)));
+    const head = name === 'minimal' ? 'html[data-layout="bar"]' : 'html[data-style="' + name + '"]';
+    assert.deepEqual(own[0].selectors, [head], name + ' starts with the rule that sets its custom properties');
+    own.slice(1).forEach(rule => rule.selectors.forEach(selector => assert.ok(selector.startsWith(head), name + ': a rule that is not for its own style would change the other: ' + selector)));
 
     const properties = own[0].body.split(';').map(line => line.trim()).filter(Boolean).map(line => line.split(':')[0].trim());
     assert.ok(properties.length >= 5 && properties.every(property => /^--style-[a-z-]+$/.test(property)), name + ' only sets --style- custom properties: ' + properties.join(', '));
@@ -2699,7 +2702,7 @@ test('the three style files each set their own custom properties for their own s
 
 function stylesheetsOf(style) {
   const linked = Array.from(read('dashboard/index.html').matchAll(/<link rel="stylesheet" href="([^"?]+)\?v=0">/g)).map(match => match[1])
-    .filter(href => href !== 'fonts/panel.css' && (!href.startsWith('styles/') || href === 'styles/' + style + '.css'));
+    .filter(href => href !== 'fonts/panel.css' && (!href.startsWith('styles/') || href.startsWith('styles/' + style + '/')));
   const panels = fs.readdirSync(path.join(dashboardFolder, 'panels'), { withFileTypes: true }).filter(entry => entry.isDirectory())
     .reduce((all, entry) => all.concat(fs.readdirSync(path.join(dashboardFolder, 'panels', entry.name)).filter(file => file.endsWith('.css')).map(file => 'panels/' + entry.name + '/' + file)), []);
 
@@ -2824,8 +2827,8 @@ Object.keys(smallTextOf).forEach(style => { smallTextOf[style] = smallTextOf[sty
 function checkStylesheetsOf(style) {
   const sheets = stylesheetsOf(style);
   const rules = rulesOf(style, sheets);
-  assert.ok(sheets.some(sheet => sheet.file === 'styles/' + style + '.css'), 'the style\'s own file is loaded');
-  assert.equal(sheets.filter(sheet => sheet.file.startsWith('styles/')).length, 1, 'and the files of the other two styles are not');
+  assert.ok(style === 'minimal' ? sheets.some(sheet => sheet.file === 'layouts/bar-minimal.css') : sheets.some(sheet => sheet.file === 'styles/' + style + '/theme.css'), 'the style\'s own file is loaded');
+  assert.equal(sheets.filter(sheet => sheet.file.startsWith('styles/')).length, style === 'minimal' ? 0 : 3, 'and the files of the other themes are not');
   assert.ok(sheets.length >= 30 && sheets.some(sheet => sheet.file === 'base.css') && sheets.some(sheet => sheet.file === 'themes/hawktimus.css'), 'the css it overrides is loaded');
 
   const scripted = Object.assign({}, layout.barCssVariables(), layout.cssVariables());
@@ -2906,7 +2909,7 @@ test('Minimal with the css it overrides: every custom property that is read has 
 test('the mirror of the standard layout turns every flex row the layout declares, and a row that keeps its order is named with the reason', () => {
   const prefix = 'html.mirrored[data-layout="standard"] ';
   const turned = [];
-  withoutComments(read('dashboard/styles/original.css')).replace(/([^{}]+)\{([^{}]*)\}/g, (all, selectors, body) => {
+  withoutComments(read('dashboard/styles/original/theme.css')).replace(/([^{}]+)\{([^{}]*)\}/g, (all, selectors, body) => {
     if (/flex-direction: row-reverse;/.test(body)) selectors.split(',').forEach(selector => turned.push(selector.trim()));
     return all;
   });
@@ -3301,7 +3304,7 @@ test('the standard banner puts the line in place of DASHBOARD and the bar on its
 });
 
 // The frames of the bar layout (core/plate.js, "The frames of the bar layout"), and the steel, the neon and
-// the page background of Cybertron (tokens.css, index.html, base.css, styles/cybertron.css)
+// the page background of Cybertron (tokens.css, index.html, base.css, styles/cybertron/theme.css)
 
 const plateTree = makeTree('plate', ['dashboard/core/plate.js']);
 const plate = await import(urlOf(plateTree, 'dashboard/core/plate.js'));
@@ -3414,7 +3417,7 @@ test('every bar frame is a rectangle with ten corners, 4 inside its box (1 insid
   });
 
   // The cut corner of Cybertron is the one the style names
-  const css = withoutComments(read('dashboard/styles/cybertron.css'));
+  const css = withoutComments((read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css')));
   assert.equal(Number(/--style-chamfer: (\d+)px;/.exec(css)[1]), plate.barShape('bar-main').outline[2][0] - plate.barShape('bar-main').outline[1][0], '--style-chamfer is the cut corner of the large frame and the banner');
 });
 
@@ -3616,7 +3619,7 @@ test('on the screen every frame stays inside 0 to 1920 by 0 to 1080 with its bol
   });
 
   // A frame has the same shape in both: the mirror turns the regions and not the pictures in them, as the pictures of Nova show
-  const css = withoutComments(read('dashboard/layouts/bar.css') + read('dashboard/styles/cybertron.css'));
+  const css = withoutComments(read('dashboard/layouts/bar.css') + (read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css')));
   assert.ok(!/mirrored[^{}]*\.(area|plate)\b|\.(area|plate)\b[^{}]*mirrored/.test(css), 'no rule turns an area or a frame');
   assert.ok(!/mirror-art/.test(read('dashboard/core/plate.js')), 'and plate.js does not ask for it');
 });
@@ -3656,7 +3659,7 @@ test('the numbers in the Frames section of docs/layouts.md are the numbers of th
   });
 
   // The parts and their sizes, as plate.js and the stylesheets have them
-  const css = withoutComments(read('dashboard/base.css') + read('dashboard/styles/cybertron.css'));
+  const css = withoutComments(read('dashboard/base.css') + (read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css')));
   ['4 px, `--style-neon`', '12 px and .35 opacity', '26 px and .12', '12 px high, slanted bars 22 px wide every 44', 'six slanted bars in the neon, 22 px wide every 40', 'a leg of 60 px down the side and 70 px along the top', '3 px pink line'].forEach(text => assert.ok(section.includes(text), text));
   assert.ok(/stroke-width: 4px;/.test(css) && /stroke-width: 12px;/.test(css) && /stroke-width: 26px;/.test(css));
   const main = plate.barShape('bar-main');
@@ -3689,7 +3692,7 @@ test('steel is one more metal next to gold and silver: its tokens, its three gra
   // Gold and silver keep their rules: the steel never reaches the selectors the others have
   assert.ok(/:root,\s*\[data-metal="gold"\],[^{}]*\{\s*--metal-1: #efe6c4;/.test(tokens));
   const goldOnly = /:root,\s*\[data-metal="gold"\],([^{}]*)\{\s*--metal-1: #efe6c4;/.exec(tokens)[1].split(',').map(selector => selector.trim());
-  assert.deepEqual(goldOnly, ['html[data-style="cybertron"]:not(.metal-steel)', 'html[data-style="cybertron"]:not(.metal-steel) [data-metal]', 'html[data-style="minimal"]:not(.metal-steel)', 'html[data-style="minimal"]:not(.metal-steel) [data-metal]'], 'Cybertron and Minimal have gold for a team with no steel, and Original is not named');
+  assert.deepEqual(goldOnly, ['html[data-style="cybertron"]:not(.metal-steel):not(.metal-purple)', 'html[data-style="cybertron"]:not(.metal-steel):not(.metal-purple) [data-metal]', 'html[data-layout="bar"]:not(.metal-steel):not(.metal-purple)', 'html[data-layout="bar"]:not(.metal-steel):not(.metal-purple) [data-metal]'], 'Cybertron and Minimal have gold for a team with no steel, and Original is not named');
   assert.ok(/\[data-metal="silver"\] \{\s*--metal-1: #c3c4c3;/.test(tokens));
 
   // The brightest stop is below pure white and the metal is cool: more blue than red at every stop
@@ -3750,7 +3753,7 @@ test('the neon and the bolt are shared by both styles in base.css: the neon line
 // What Cybertron paints
 
 test('the Cybertron stylesheet paints with the team\'s colors and gradients and no picture: the page background, the plates and what it draws on a frame, in lines of 3px or more, for its own style only', () => {
-  const css = withoutComments(read('dashboard/styles/cybertron.css'));
+  const css = withoutComments((read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css')));
   const rules = [];
   css.replace(/([^{}]+)\{([^{}]*)\}/g, (all, list, body) => {
     rules.push({ selectors: list.split(',').map(selector => selector.trim()), body: body });
@@ -3779,7 +3782,7 @@ test('the Cybertron stylesheet paints with the team\'s colors and gradients and 
   assert.ok(/background-size|\/ var\(--style-grid-size\) var\(--style-grid-size\)/.test(grid) && /opacity: var\(--style-grid-opacity\);/.test(grid) && /pointer-events: none;/.test(grid));
   assert.ok(/width: 1920px;/.test(grid) && /height: 1080px;/.test(grid), 'as big as the screen');
   assert.ok(/#screen::before/.test(css) && !/#screen::after/.test(css), 'both are behind the stage: a layer after it would be over the text');
-  const properties = withoutComments(read('dashboard/styles/cybertron.css'));
+  const properties = withoutComments((read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css')));
   assert.ok(/--style-grid-size: 96px;/.test(properties) && /--style-grid-opacity: \.07;/.test(properties) && /--style-scan-opacity: \.035;/.test(properties));
 
   // Every line it draws is 3px or more (the strokes the two styles share are checked with them, in base.css)
@@ -3803,34 +3806,34 @@ test('the Cybertron stylesheet paints with the team\'s colors and gradients and 
 });
 
 test('the page background of Cybertron is the grid at 96px and the scanlines, nothing else on the screen is drawn behind the stage, and Original has none of it', () => {
-  const originalCss = withoutComments(read('dashboard/styles/original.css'));
+  const originalCss = withoutComments(read('dashboard/styles/original/theme.css'));
   const base = withoutComments(read('dashboard/base.css'));
   assert.ok(!/#screen/.test(originalCss), 'Original does not touch the page background');
   assert.ok(/#screen \{[^}]*background: var\(--ground\);/.test(base), 'it is the team\'s background color, as it was');
   assert.ok(!/#screen::(before|after)/.test(base), 'and base.css draws nothing over it');
-  assert.ok(/--style-scan-opacity: \.035;/.test(withoutComments(read('dashboard/styles/cybertron.css'))));
-  assert.equal(/--style-scan-opacity/.test(withoutComments(read('dashboard/styles/minimal.css'))), false, 'Minimal has a grid and no scanlines');
+  assert.ok(/--style-scan-opacity: \.035;/.test(withoutComments((read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css')))));
+  assert.equal(/--style-scan-opacity/.test(withoutComments(read('dashboard/layouts/bar-minimal.css'))), false, 'Minimal has a grid and no scanlines');
 });
 
 test('the steel and the bolts reach the frames of Cybertron through the tokens: the edge, the row bars and the banner follow the style, the logo has the team accent, and the standard layout\'s frames are untouched', () => {
-  const css = withoutComments(read('dashboard/styles/cybertron.css'));
+  const css = withoutComments((read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css')));
   assert.ok(css.includes('html[data-style="cybertron"] .banner .logo .drawing,\nhtml[data-style="cybertron"] .side-logo .drawing { --logo-edge: var(--team-accent); }'), 'the hawk of the banner and of the sidebar has the team accent');
 
   // The tokens file gives the metal of the team to the html element and to each element with a data-metal: that is the banner and every area
   const tokens = withoutComments(read('dashboard/tokens.css'));
-  assert.ok(tokens.includes('html.metal-steel [data-metal]') && tokens.includes('html[data-style="cybertron"]:not(.metal-steel) [data-metal]'), 'every area, whichever metal the page change gave it');
+  assert.ok(tokens.includes('html.metal-steel [data-metal]') && tokens.includes('html[data-style="cybertron"]:not(.metal-steel):not(.metal-purple) [data-metal]'), 'every area, whichever metal the page change gave it');
   assert.ok(/:root,\s*\[data-metal\] \{\s*--edge-rim: var\(--metal-rim\);/.test(tokens), 'the rim is worked out on each of them from the steel');
 
   // The code that picks the metal of a page change never has to know: the steel styles make no finish change at all
   const areas = read('dashboard/core/areas.js');
-  assert.ok(/function planFor\(area\) \{\s*const change = frame\.planChange\(area\);\s*return hasSteel\(styleNow\(\)\) \? \{ style: change\.style, finish: null \} : change;\s*\}/.test(areas));
+  assert.ok(/function planFor\(area\) \{\s*const change = frame\.planChange\(area\);\s*return hasSteel\(styleNow\(\), layoutNow\(\)\) \? \{ style: change\.style, finish: null \} : change;\s*\}/.test(areas));
   assert.equal(countOf(areas, 'frame\\.planChange\\(area\\)'), 1, 'planFor is the one place that asks');
   assert.equal(countOf(areas, 'const change = planFor\\(area\\);'), 2, 'and areas.js calls it for the two changes, the page change and the swap of a hidden transition');
   assert.ok(/frameKind\(region, layoutNow\(\), shapesNow\(\), trimNow\(\)\)/.test(areas) && /kind === 'ticker' \? '' : areaMarkup\(kind\)/.test(areas), 'the ticker has a frame in the bar layout and in Cybertron and none in the others, with the corners of the page\'s style');
 });
 
 // Minimal: the frames with corners of their own, and what the style paints
-// (core/plate.js, core/style.js, styles/minimal.css)
+// (core/plate.js, core/style.js, layouts/bar-minimal.css)
 
 const minimalKinds = ['bar-main-minimal', 'bar-banner-minimal', 'bar-ticker-minimal'];
 const usualKind = { 'bar-main-minimal': 'bar-main', 'bar-banner-minimal': 'bar-banner', 'bar-ticker-minimal': 'bar-ticker' };
@@ -3943,7 +3946,7 @@ test('when the layout cannot be changed in the page, a style with other corners 
     assert.equal(reloads, 4);
     assert.equal(store.data[layout.reloadKey], 'bar-minimal');
   });
-  assert.ok(read('dashboard/core/layout-apply.js').includes('drawnFor(layoutFor(look.style, layoutOf(look.theme)), shapesFor(look.style))'), 'holdForLayout asks for the layout and the corners of the look');
+  assert.ok(read('dashboard/core/layout-apply.js').includes('drawnFor(wantedLayout, shapesFor(look.style, wantedLayout))'), 'holdForLayout asks for the layout and the corners of the look');
 });
 
 test('the Minimal frames are the same ten-cornered plates with smaller cuts, 34 on the main panel and the banner and 20 on the ticker, with a bolt at each of the four joints', () => {
@@ -4137,12 +4140,12 @@ test('the rust sits behind the steel of its frame: it is a patch and an arc insi
   const frameRules = withoutComments(read('dashboard/frame.css'));
   assert.ok(/\[data-motion="full"\] \.area\[data-state="in"\] \[data-part="wear"\] \{\s*animation: fade-in var\(--time-fade-in\) linear calc\(var\(--assemble-draw\) \* var\(--pace\) \+ var\(--time-draw-in\)\) backwards;\s*\}/.test(frameRules), 'the rust fades in after the lines are drawn, like the rivets');
 
-  const css = withoutComments(read('dashboard/styles/minimal.css'));
-  assert.ok(/html\[data-style="minimal"\]\[data-finish="flat"\] \.art-smudge,\s*html\[data-style="minimal"\]\[data-finish="flat"\] \.art-wear \{ display: none; \}/.test(css), 'the flat finish has no rust');
+  const css = withoutComments(read('dashboard/layouts/bar-minimal.css'));
+  assert.ok(/html\[data-layout="bar"\]\[data-finish="flat"\] \.art-smudge,\s*html\[data-layout="bar"\]\[data-finish="flat"\] \.art-wear \{ display: none; \}/.test(css), 'the flat finish has no rust');
 });
 
 test('the Minimal stylesheet paints with the team\'s colors and gradients and no picture: the grid, the plates, the rail, the rivets and what it draws on a frame, in lines of 3px or more, for its own style only', () => {
-  const css = withoutComments(read('dashboard/styles/minimal.css'));
+  const css = withoutComments(read('dashboard/layouts/bar-minimal.css'));
   const rules = [];
   css.replace(/([^{}]+)\{([^{}]*)\}/g, (all, list, body) => {
     rules.push({ selectors: list.split(',').map(selector => selector.trim()), body: body });
@@ -4150,7 +4153,7 @@ test('the Minimal stylesheet paints with the team\'s colors and gradients and no
   });
 
   assert.ok(rules.length >= 20, 'the style has its rules');
-  rules.forEach(rule => rule.selectors.forEach(selector => assert.ok(selector.startsWith('html[data-style="minimal"]'), 'for Minimal only: ' + selector)));
+  rules.forEach(rule => rule.selectors.forEach(selector => assert.ok(selector.startsWith('html[data-layout="bar"]'), 'for Minimal only: ' + selector)));
   assert.ok(!/(animation|transition|@keyframes|filter|box-shadow|text-shadow|blur\(|will-change|font(-size)?:)/.test(css), 'nothing moves or glows, and it has no text of its own');
   assert.ok(!/mirrored/.test(css), 'the frames are never turned by the mirror, so nothing here changes with it');
 
@@ -4169,10 +4172,10 @@ test('the Minimal stylesheet paints with the team\'s colors and gradients and no
   assert.ok(!/--style-raised|--style-scan-opacity/.test(css), 'Minimal has no raised plate and no scanlines');
 
   // The page background is the team's, with the grid at 48px in a layer behind the stage, and no scanlines
-  const grid = rules.filter(rule => rule.selectors[0] === 'html[data-style="minimal"] #screen::before')[0].body;
+  const grid = rules.filter(rule => rule.selectors[0] === 'html[data-layout="bar"] #screen::before')[0].body;
   assert.ok(/\/ var\(--style-grid-size\) var\(--style-grid-size\)/.test(grid) && /opacity: var\(--style-grid-opacity\);/.test(grid) && /pointer-events: none;/.test(grid));
   assert.ok(/width: 1920px;/.test(grid) && /height: 1080px;/.test(grid), 'as big as the screen');
-  assert.ok(!/#screen \{|#screen::after|repeating-linear-gradient/.test(css), 'the color of the page is the team\'s background, as base.css has it, and nothing is drawn over the stage');
+  assert.ok(!/#screen::after|repeating-linear-gradient/.test(css) && css.includes('html[data-layout="bar"] #screen { background: var(--ground); }'), 'the color of the page is the team\'s background, as base.css has it, whatever a theme paints, and nothing is drawn over the stage');
   assert.ok(/--style-grid-size: 48px;/.test(first) && /--style-grid-opacity: \.07;/.test(first));
 
   // Every line it draws is 3px or more
@@ -4183,34 +4186,34 @@ test('the Minimal stylesheet paints with the team\'s colors and gradients and no
 
   // The plates: the body is the team's background, the tab an armor plate, the team plate and the tag in the plate color
   assert.ok(/--panel-face: var\(--style-body\);/.test(css) && css.includes('fill: url(#armor-face);'));
-  assert.ok(/\.team-fill,\s*html\[data-style="minimal"\] \.tag-fill,\s*html\[data-style="minimal"\] \.card-fill \{ fill: var\(--team-plate\); \}/.test(css));
-  assert.ok(css.includes('html[data-style="minimal"] .bar-logo .drawing { --logo-edge: var(--team-accent); }'));
+  assert.ok(/\.team-fill,\s*html\[data-layout="bar"\] \.tag-fill,\s*html\[data-layout="bar"\] \.card-fill \{ fill: var\(--team-plate\); \}/.test(css));
+  assert.ok(css.includes('html[data-layout="bar"] .bar-logo .drawing { --logo-edge: var(--team-accent); }'));
 
   // The rivets are shown and the id is not, the // mark of the header is off, the weld seam is dark with a faint light line, the ticks are neon and the rust is a patch and an arc
-  assert.ok(css.includes('html[data-style="minimal"] .rivets { display: inline; }') && !/plate-id/.test(css), 'the rivets, and no id');
-  assert.ok(css.includes('html[data-style="minimal"] .header svg.double-slash { display: none; }'));
-  const paint = name => rules.filter(rule => rule.selectors[0] === 'html[data-style="minimal"] .art-' + name)[0].body;
+  assert.ok(css.includes('html[data-layout="bar"] .rivets { display: inline; }') && !/plate-id/.test(css), 'the rivets, and no id');
+  assert.ok(css.includes('html[data-layout="bar"] .header svg.double-slash { display: none; }'));
+  const paint = name => rules.filter(rule => rule.selectors[0] === 'html[data-layout="bar"] .art-' + name)[0].body;
   assert.ok(/stroke: #05070a;/.test(paint('weld-dark')) && /stroke-opacity: \.7;/.test(paint('weld-dark')));
   assert.ok(/stroke: var\(--metal-ridge\);/.test(paint('weld-light')) && /stroke-opacity: \.2;/.test(paint('weld-light')), 'faint');
   assert.ok(/stroke: var\(--style-neon\);/.test(paint('header-line')) && /fill: var\(--style-neon\);/.test(paint('ticks')));
   assert.ok(/fill: url\(#wear-rust\);/.test(paint('smudge')) && /stroke: var\(--style-rust\);/.test(paint('wear')) && /fill: none;/.test(paint('wear')));
-  assert.ok(css.includes('html[data-style="minimal"] .art-minimal { display: inline; }'));
+  assert.ok(css.includes('html[data-layout="bar"] .art-minimal { display: inline; }'));
 
   // Each style paints its own: Minimal does not draw Cybertron\'s decoration, and Cybertron does not draw Minimal\'s
   assert.ok(!/art-(hazard|conduit|slashes|brackets|seams)|edge-neon-wide|art-cybertron/.test(css));
-  assert.ok(!/art-(minimal|weld|header-line|ticks|smudge|wear)|rivets|plate-id/.test(withoutComments(read('dashboard/styles/cybertron.css'))));
+  assert.ok(!/art-(minimal|weld|header-line|ticks|smudge|wear)|rivets|plate-id/.test(withoutComments((read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css')))));
   assert.ok(/\.art-minimal \{ display: none; \}/.test(withoutComments(read('dashboard/base.css'))), 'what only Minimal draws is off until it is on');
 });
 
 test('Minimal and the mirror: the frames, the rivets, the rust and the seam are drawn in the coordinates of the frame and are never turned, so only the regions change places', () => {
-  const css = withoutComments(read('dashboard/layouts/bar.css') + read('dashboard/styles/cybertron.css') + read('dashboard/styles/minimal.css'));
+  const css = withoutComments(read('dashboard/layouts/bar.css') + (read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css')) + read('dashboard/layouts/bar-minimal.css'));
   assert.ok(!/mirrored[^{}]*\.(area|plate|rivets|plate-id|art-[a-z-]+)\b|\.(area|plate|rivets|plate-id|art-[a-z-]+)\b[^{}]*mirrored/.test(css), 'no rule turns a frame or anything drawn on it');
   assert.ok(!/mirror-art|scaleX/.test(read('dashboard/core/plate.js')));
 
   // The rivets are shown in Minimal whether the layout is mirrored or not, as they are in Original
   const base = withoutComments(read('dashboard/base.css'));
   assert.equal(/\.mirrored[^{]*(rivets|plate-id)/.test(base), false);
-  assert.ok(/html\[data-style="minimal"\] \.rivets \{ display: inline; \}/.test(withoutComments(read('dashboard/styles/minimal.css'))));
+  assert.ok(/html\[data-layout="bar"\] \.rivets \{ display: inline; \}/.test(withoutComments(read('dashboard/layouts/bar-minimal.css'))));
 
   // Placed on the screen, every Minimal frame stays inside it in the layout and in its mirror, with its bolts and rust
   const place = (kind, box, scale) => {
@@ -4599,13 +4602,13 @@ test('the war clock\'s plates, sizes and colors are the ones the order gives, an
   assert.ok(/--war-ink: var\(--danger-bright\);/.test(warRule('.war-clock[data-level="tense"]')));
   assert.ok(/--war-ink: var\(--white\);/.test(warRule('.war-clock[data-level="critical"]')) && /--war-plate-border: var\(--danger\);/.test(warRule('.war-clock[data-level="critical"]')));
   assert.ok(/background: var\(--danger\);/.test(warRule('.war-status')), 'the red status square');
-  const style = name => withoutComments(read('dashboard/styles/' + name + '.css'));
+  const style = name => withoutComments(name === 'minimal' ? read('dashboard/layouts/bar-minimal.css') : read('dashboard/styles/' + name + '/tokens.css') + read('dashboard/styles/' + name + '/theme.css'));
   assert.ok(/--style-digits: #ffb327;/.test(style('cybertron')) && /--style-digits: var\(--team-neon\);/.test(style('minimal')));
   assert.ok(/--style-rust: #[0-9a-f]{6};/.test(style('cybertron')) && /--style-rust: #[0-9a-f]{6};/.test(style('minimal')), 'both styles have the rust of the housing');
 
   // Hidden unless a style shows it, and only these two do
   assert.ok(section.startsWith('.war-clock { display: none; }'));
-  assert.ok(style('cybertron').includes('html[data-style="cybertron"] .war-clock { display: block; }') && style('minimal').includes('html[data-style="minimal"] .war-clock { display: block; }'));
+  assert.ok(style('cybertron').includes('html[data-style="cybertron"] .war-clock { display: block; }') && style('minimal').includes('html[data-layout="bar"] .war-clock { display: block; }'));
   const mentions = [];
   const walk = folder => fs.readdirSync(path.join(root, folder), { withFileTypes: true }).forEach(entry => {
     const relative = folder + '/' + entry.name;
@@ -4613,8 +4616,8 @@ test('the war clock\'s plates, sizes and colors are the ones the order gives, an
     else if (entry.name.endsWith('.css') && /\.war-/.test(withoutComments(read(relative)))) mentions.push(relative);
   });
   walk('dashboard');
-  assert.deepEqual(mentions.sort(), [warCssFile, 'dashboard/styles/cybertron.css', 'dashboard/styles/minimal.css', 'dashboard/trim.css'], 'trim.css gives the war clock the team\'s neon in place of its red, for a team that has Countdown color on Neon');
-  assert.ok(!/war-/.test(withoutComments(read('dashboard/styles/original.css'))), 'Original has no war clock');
+  assert.deepEqual(mentions.sort(), ['dashboard/layouts/bar-minimal.css', warCssFile, 'dashboard/styles/cybertron/theme.css', 'dashboard/trim.css'], 'trim.css gives the war clock the team\'s neon in place of its red, for a team that has Countdown color on Neon');
+  assert.ok(!/war-/.test(withoutComments(read('dashboard/styles/original/theme.css'))), 'Original has no war clock');
 });
 
 test('the war clock\'s parts are inside the housing, clear of each other and of the rivets, for a title on one line and on two, and the budgets in docs/layouts.md are the numbers in panels/countdown/panel.css', async () => {

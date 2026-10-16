@@ -330,8 +330,8 @@ test('the page side names the cards through the screens, asks the layout the way
   const file = read('core/screens-run.js');
 
   assert.ok(file.includes("return !isMondayPanel(step.panel) || mondayStyleFits(planFor(getContent(), new Date()).mondayStyle);"));
-  assert.ok(file.includes('const wanted = drawnFor(layoutFor(style, layoutOf(theme)), shapesFor(style));'), 'the layout is worked out as layout-apply.js does');
-  assert.ok(read('core/layout-apply.js').includes('const wanted = drawnFor(layoutFor(look.style, layoutOf(look.theme)), shapesFor(look.style));'));
+  assert.ok(file.includes('const wanted = drawnFor(wantedLayout, shapesFor(style, wantedLayout));'), 'the layout is worked out as layout-apply.js does');
+  assert.ok(read('core/layout-apply.js').includes('const wanted = drawnFor(wantedLayout, shapesFor(look.style, wantedLayout));'));
   assert.ok(file.includes('window.sessionStorage.getItem(reloadKey) !== wanted'), 'the note of mustReload');
   assert.ok(file.includes("canReload = false; // a note that cannot be kept"), 'and a note that cannot be kept stops the reload');
   assert.ok(file.includes('asTeam(lookOf(step).team, run)'));

@@ -1,25 +1,24 @@
-/* The Minimal style (core/style.js, Style in Dashboard Settings): the industrial
-   style. It has the bar layout (layouts/bar.css) whatever the theme says, and any
-   team's colors. The first rule sets custom properties, which the bar panels and the
-   frame drawing read. They have the same names as the ones in cybertron.css, where
-   each is described, and Minimal does not set the ones for what only Cybertron has
-   (the raised plate, the scanlines). The rules after it paint the page background and
-   the parts of the frames that only this style has. Everything it paints is still:
-   the grid, the rivets and the rust never move.
+/* The drawing of the bar layout (core/style.js). It is the drawing that was the Minimal style, and
+   it is the same in every theme: this file is a placeholder for the look of the views, and a theme
+   does not change it. It comes after the themes in index.html, so its custom properties win. The first
+   rule sets custom properties, which the bar panels and the frame drawing read. They have the same
+   names as the ones in styles/cybertron/tokens.css, where each is described, and the bar layout does
+   not set the ones for what only Cybertron has (the raised plate, the scanlines). The rules after it
+   paint the page background and the parts of the frames that only the bar layout has. Everything it
+   paints is still: the grid, the rivets and the rust never move.
 
      --style-rust            the rust at two corners of every frame, and the patch under it, and
                              the rust on the war clock's housing
 
-   The frames are drawn by core/plate.js with shapes of their own for this style, cut
-   at 34 px (bar-main-minimal and the other two, "The frames of the bar layout"). What
-   only Cybertron has is not here: no hazard stripe, no conduit, no
-   slashes, no brackets, no plate seams, no scanlines and no raised plate. What it has on a
-   frame is a thin neon line just inside the metal edge (steel or gold, tokens.css), a hex bolt at each of the four joints, the
-   rivets that Original also has, rust, a weld seam on the main panel, and a line with ticks
-   along the foot of its header. The plates are the team's body color, and the header tab is an
-   armor plate with the team's plate color inset. */
+   The frames are drawn by core/plate.js with shapes of their own, cut at 34 px (bar-main-minimal and
+   the other two, "The frames of the bar layout"). What only Cybertron has is not here: no hazard
+   stripe, no conduit, no slashes, no brackets, no plate seams, no scanlines and no raised plate. What it
+   has on a frame is a thin neon line just inside the metal edge (steel or gold, tokens.css), a hex bolt
+   at each of the four joints, the rivets that Original also has, rust, a weld seam on the main panel,
+   and a line with ticks along the foot of its header. The plates are the team's body color, and the
+   header tab is an armor plate with the team's plate color inset. */
 
-html[data-style="minimal"] {
+html[data-layout="bar"] {
   --style-body: var(--team-body);
   --style-armor-top: #323843;
   --style-armor-bottom: #1d2128;
@@ -38,7 +37,8 @@ html[data-style="minimal"] {
    there is no picture to load, and it is behind everything on the screen. The grid has its
    own layer because its color is a team color, which can only be made fainter by fading the
    layer. The layer is as big as the screen and lets every click through. */
-html[data-style="minimal"] #screen::before {
+html[data-layout="bar"] #screen { background: var(--ground); }
+html[data-layout="bar"] #screen::before {
   content: "";
   position: absolute;
   left: 0;
@@ -57,34 +57,34 @@ html[data-style="minimal"] #screen::before {
    color. The header tab is a raised armor plate: a gradient, with the bevel, the bright line
    and the team's plate color inset that plate.js draws on it (base.css). The rest of the
    header is the same as the body. */
-html[data-style="minimal"] .area,
-html[data-style="minimal"] .bar-banner {
+html[data-layout="bar"] .area,
+html[data-layout="bar"] .bar-banner {
   --panel-face: var(--style-body);
 }
-html[data-style="minimal"] .area .plate .header-left { fill: url(#armor-face); }
-html[data-style="minimal"] .area .plate .header-right { fill: var(--style-body); }
+html[data-layout="bar"] .area .plate .header-left { fill: url(#armor-face); }
+html[data-layout="bar"] .area .plate .header-right { fill: var(--style-body); }
 
 /* The TEAM plate, the ticker's tag and the cards are plates in the team's plate color. The
    cards that only hold a picture have no fill */
-html[data-style="minimal"] .team-fill,
-html[data-style="minimal"] .tag-fill,
-html[data-style="minimal"] .card-fill { fill: var(--team-plate); }
-html[data-style="minimal"] .sponsor-feature .card-fill,
-html[data-style="minimal"] .photo .card-fill { fill: none; }
+html[data-layout="bar"] .team-fill,
+html[data-layout="bar"] .tag-fill,
+html[data-layout="bar"] .card-fill { fill: var(--team-plate); }
+html[data-layout="bar"] .sponsor-feature .card-fill,
+html[data-layout="bar"] .photo .card-fill { fill: none; }
 
 /* The hawk has the team's accent for its outline, and keeps the colors the theme gives its
    plates */
-html[data-style="minimal"] .bar-logo .drawing { --logo-edge: var(--team-accent); }
+html[data-layout="bar"] .bar-logo .drawing { --logo-edge: var(--team-accent); }
 
 
 /* The rivets are the Original style's (base.css, plate.js): they are in the markup of every
    frame that has them, and are shown here and for Original only */
-html[data-style="minimal"] .rivets { display: inline; }
+html[data-layout="bar"] .rivets { display: inline; }
 
 /* The // mark at the right end of a header is left off, as the pictures have none. The ticks
    along the foot of the header are there instead. A seasonal pack's mark is another picture
    (pack-mark) and stays. */
-html[data-style="minimal"] .header svg.double-slash { display: none; }
+html[data-layout="bar"] .header svg.double-slash { display: none; }
 
 
 /* What only Minimal draws on a frame (plate.js, decorMarkup and wearMarkup). The weld seam
@@ -92,14 +92,14 @@ html[data-style="minimal"] .header svg.double-slash { display: none; }
    the ticks stand on it. The rust is an arc with a soft patch under it that is a gradient
    (index.html, wear-rust), and the flat finish leaves it off, like the other worn parts of
    the metal (base.css). */
-html[data-style="minimal"] .art-minimal { display: inline; }
-html[data-style="minimal"] .art-weld-dark {
+html[data-layout="bar"] .art-minimal { display: inline; }
+html[data-layout="bar"] .art-weld-dark {
   fill: none;
   stroke: #05070a;
   stroke-opacity: .7;
   stroke-width: 3px;
 }
-html[data-style="minimal"] .art-weld-light {
+html[data-layout="bar"] .art-weld-light {
   fill: none;
   stroke: var(--metal-ridge);
   stroke-opacity: .2;
@@ -107,24 +107,24 @@ html[data-style="minimal"] .art-weld-light {
 }
 /* The weld seam stands 36px past the 1152 the pages are written for. A Monday card is as wide as the area and
    has no such place, so the seam is not drawn while one is on screen (core/areas.js writes the panel in data-page). */
-html[data-style="minimal"] .area[data-page^="monday-"] .art-weld-dark,
-html[data-style="minimal"] .area[data-page^="monday-"] .art-weld-light { display: none; }
-html[data-style="minimal"] .art-header-line {
+html[data-layout="bar"] .area[data-page^="monday-"] .art-weld-dark,
+html[data-layout="bar"] .area[data-page^="monday-"] .art-weld-light { display: none; }
+html[data-layout="bar"] .art-header-line {
   fill: none;
   stroke: var(--style-neon);
   stroke-width: 3px;
 }
-html[data-style="minimal"] .art-ticks { fill: var(--style-neon); }
-html[data-style="minimal"] .art-smudge { fill: url(#wear-rust); }
-html[data-style="minimal"] .art-wear {
+html[data-layout="bar"] .art-ticks { fill: var(--style-neon); }
+html[data-layout="bar"] .art-smudge { fill: url(#wear-rust); }
+html[data-layout="bar"] .art-wear {
   fill: none;
   stroke: var(--style-rust);
   stroke-opacity: .55;
   stroke-linecap: round;
   stroke-width: 4px;
 }
-html[data-style="minimal"][data-finish="flat"] .art-smudge,
-html[data-style="minimal"][data-finish="flat"] .art-wear { display: none; }
+html[data-layout="bar"][data-finish="flat"] .art-smudge,
+html[data-layout="bar"][data-finish="flat"] .art-wear { display: none; }
 
 
 /* The rail beside the side column (panels/bar-column): a line down the middle in the team's
@@ -132,8 +132,8 @@ html[data-style="minimal"][data-finish="flat"] .art-wear { display: none; }
    the top, and a pink and a neon one lower down. The row of the layout turns round with the
    mirror, so the rail is at the right edge for a team that has it on. The numbers are
    measured on the 12 by 736 box of the rail. */
-html[data-style="minimal"] .bar-rail { position: relative; }
-html[data-style="minimal"] .bar-rail::before {
+html[data-layout="bar"] .bar-rail { position: relative; }
+html[data-layout="bar"] .bar-rail::before {
   content: "";
   position: absolute;
   left: 4px;
@@ -143,7 +143,7 @@ html[data-style="minimal"] .bar-rail::before {
   background: var(--style-neon);
   opacity: .5;
 }
-html[data-style="minimal"] .bar-rail::after {
+html[data-layout="bar"] .bar-rail::after {
   content: "";
   position: absolute;
   left: 0;
@@ -161,4 +161,4 @@ html[data-style="minimal"] .bar-rail::after {
 
 /* The war clock in the banner (panels/countdown) is shown by this style and by Cybertron, and by no
    other. Here it is the narrow form, 766 by 128. Its digits are --style-digits, the team's neon here. */
-html[data-style="minimal"] .war-clock { display: block; }
+html[data-layout="bar"] .war-clock { display: block; }

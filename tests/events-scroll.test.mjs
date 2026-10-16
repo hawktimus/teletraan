@@ -203,7 +203,7 @@ test('a bar is under every row but the fourth of a page and the last of the list
 
 test('the rows are a window of four rows and the list moves up by the height of the window: 576 for rows of 144, and 528 in Cybertron for rows of 132', () => {
   const css = read('panels/events/panel.css').replace(/\/\*[\s\S]*?\*\//g, '');
-  const cybertron = read('styles/cybertron.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  const cybertron = (read('styles/cybertron/tokens.css') + read('styles/cybertron/theme.css')).replace(/\/\*[\s\S]*?\*\//g, '');
 
   const windowRule = ruleOf(css, '.events .rows');
   const row = pixels(ruleOf(css, '.events .row'), 'height');
@@ -219,7 +219,7 @@ test('the rows are a window of four rows and the list moves up by the height of 
   assert.equal(cybertronWindow, 528);
 
   // the style sheets that restyle the rows of the Events panel are these two and no other
-  const others = ['original.css', 'minimal.css'].filter(file => /\.events\b/.test(read('styles/' + file)));
+  const others = ['styles/original/theme.css', 'layouts/bar-minimal.css'].filter(file => /\.events\b/.test(read(file)));
   assert.deepEqual(others, [], 'Original and Minimal use the rows of panels/events/panel.css');
   ['layouts', 'themes'].forEach(folder => fs.readdirSync(path.join(dashboardFolder, folder)).filter(file => file.endsWith('.css')).forEach(file => {
     assert.equal(/\.events\b/.test(read(folder + '/' + file)), false, folder + '/' + file + ' has no rule for the Events panel');

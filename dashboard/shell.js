@@ -51,7 +51,8 @@ import { overlayShown, ruleExtras } from './core/theme.js';
 import { changeLayout, holdForLayout, startLayout } from './core/layout-apply.js';
 import { decorationLayers, hasKit, layoutNow } from './core/layout.js';
 import { redrawFrames } from './core/areas.js';
-import { applyStyle, recordShapes, shapesFor, shapesNow, startStyle } from './core/style.js';
+import { ensureThemeSheets } from './core/style-loader.js';
+import { applyStyle, recordShapes, shapesFor, shapesNow, startStyle, themeOf } from './core/style.js';
 import { cadenceOf, currentScreen, holdBootScreen, mainPlaylist, onScreenChange, sidePlaylist } from './core/screens.js';
 import { resumePreview } from './core/preview.js';
 import { loadPanel, mountPanel, updatePanel } from './core/panels.js';
@@ -112,7 +113,9 @@ async function run() {
   askForTeam(params.get('team'));
   holdSavedScreen();
   const style = startStyle(params.get('style'), savedStyle);
+  ensureThemeSheets(themeOf(style));
   startLayout(params.get('theme'), savedTheme, document.documentElement, style);
+  recordShapes(style, document.documentElement, layoutNow()); // the frames of the bar layout are Minimal's in every theme
 
   try {
     makeSilverGradients(); // before any frame is drawn, so a silver frame has its gradients
@@ -204,6 +207,10 @@ async function run() {
 
       // The team on the screen, which in Alternate mode changes with the clock (core/teams.js)
       startOptional('./core/team-run.js', module => module.startTeams(getContent));
+
+      // The three dots and the report to the control page. The report asks the team of the page
+      startOptional('./core/dots-run.js', module => module.startDots(getContent, showingSample));
+      startOptional('./core/now-report.js', module => module.startNowReport(getContent, currentTeam));
 
       // The Screens: the look of each row of the large panel, the swaps, and the Next look now button in the Studio.
       // After the ones they ask about. ?style= and ?team= in the address win over them, so then they do nothing
@@ -582,9 +589,9 @@ function useKit(look) {
 function useStyle(look) {
   try {
     applyStyle(look.style);
-    if (shapesFor(look.style) === shapesNow()) return;
+    if (shapesFor(look.style, layoutNow()) === shapesNow()) return;
 
-    recordShapes(look.style);
+    recordShapes(look.style, document.documentElement, layoutNow());
     redrawFrames();
     redrawWhatStays();
   } catch (error) {
