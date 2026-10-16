@@ -21,7 +21,7 @@ function wordOrEmpty(value, allowed) {
 }
 
 function panelOrEmpty(value) {
-  return typeof value === 'string' && /^[a-z0-9][a-z0-9-]{0,59}$/.test(value) ? value : '';
+  return typeof value === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9-]{0,59}$/.test(value) ? value : '';
 }
 
 function pieces(raw, name, clean) {
@@ -36,7 +36,8 @@ function tidyHoldPanel(raw) {
 }
 
 function tidyShowView(raw) {
-  return pieces(raw, 'key', value => wordOrEmpty(value, viewKeys));
+  // robotics is the other name of general
+  return pieces(raw, 'key', value => wordOrEmpty(value === 'robotics' ? 'general' : value, viewKeys));
 }
 
 function tidyPreviewTheme(raw) {

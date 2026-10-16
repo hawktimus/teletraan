@@ -1,6 +1,6 @@
 // The tidy functions of the content: defaults, ranges and settings (part of content.js).
 
-import { competitionModes, competitionSwitches, defaultSettings, defaultThemeByWeekday, scheduledThemeIds, viewKeys, defaultTeam, frameFinishes, limits, looks, lookSwaps, metals, nightSpeeds, nightStyles, pageChangeStyles, photoFits, photoOrders, portraitFrames, portraitShapes, speeds, styles, teamModes } from '../config.js';
+import { transitionSecondsRange, competitionModes, competitionSwitches, defaultSettings, defaultThemeByWeekday, scheduledThemeIds, viewKeys, defaultTeam, frameFinishes, limits, looks, lookSwaps, metals, nightSpeeds, nightStyles, pageChangeStyles, photoFits, photoOrders, portraitFrames, portraitShapes, speeds, styles, teamModes } from '../config.js';
 import { parseLocalDateTime } from './time.js';
 import { tidyTheme } from './theme.js';
 import { tidyDemo } from './demo.js';
@@ -72,6 +72,13 @@ export function tidyViewSettings(settings) {
   });
 }
 
+// The rotation list and the length of the transitions (core/rotation.js tidies each row when it is read). A list that is
+// missing is empty and the screen plays the lists of the views. transitionSeconds is 2 to 4.
+function tidyRotationSettings(settings) {
+  settings.rotationRows = Array.isArray(settings.rotationRows) ? settings.rotationRows : [];
+  settings.transitionSeconds = keepInRange(settings.transitionSeconds, transitionSecondsRange, transitionSecondsRange.start);
+}
+
 // Settings that are one of a few words, an on/off switch, or a number in a
 // range. Anything that does not fit becomes the default, so the panels never
 // have to check. A number outside its range is moved to the nearest end. saved is the settings as
@@ -98,6 +105,7 @@ export function fixSettingValues(settings, saved = settings) {
   if (!lookSwaps.includes(settings.lookSwap)) settings.lookSwap = defaultSettings.lookSwap;
   // The Views: names kept as text, the order a list of the four views each once, the theme of each weekday complete
   tidyViewSettings(settings);
+  tidyRotationSettings(settings);
   // The competition cards: the mode here, and a switch for each card in the list of booleans below
   if (!competitionModes.includes(settings.competitionMode)) settings.competitionMode = defaultSettings.competitionMode;
   // The night mode settings: two choices, a switch each way and the logo width. The times are fixed (constants.js)

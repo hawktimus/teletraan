@@ -3,12 +3,13 @@
 import { barStyle, defaultThemeByWeekday, scheduledThemeIds, viewKeys, weekdays } from '../config.js';
 import { forTeam, visibleTasks } from './monday.js';
 import { departmentEntries, departmentsOf } from './monday-views.js';
-import { holdScreenLook, isMondayPanel, isTeamCode, planFor, stepsOfRow, teamsOf, weekdayIn } from './screens.js';
+import { holdScreenLook, isMondayPanel, isTeamCode, planFor, stepsOfRow, teamsOf, tidyMainRow, weekdayIn } from './screens.js';
 import { rotateLayout } from './style.js';
 import { addressTeam } from './teams.js';
 import { heldView, holdView } from './view-apply.js';
 import { isRecord } from './text.js';
 import { timeZoneOf } from './theme.js';
+import { mainRowOf, rotationBlocks, rotationOn, rotationRowsOf } from './rotation.js';
 import { resolveView, viewOrderOf } from './views-tidy.js';
 
 // The Monday rows
@@ -43,14 +44,37 @@ export function expandRows(rows, content, now = new Date()) {
 
 // The lists
 
+// The rotation list, when the Studio has one that is played (core/rotation.js): the blocks of its shown rows, or null
+function listBlocks(content) {
+  return rotationOn(content) ? rotationBlocks(rotationRowsOf(content)) : null;
+}
+
+// The rows of the large panel of a view. With a rotation list they are the rows of its blocks of that view (one block when
+// block is a number), as rows of the large panel. Without one they are the rows of the view document.
+function rowsOfView(content, key, block) {
+  const blocks = listBlocks(content);
+  if (blocks === null) return resolveView(content, key).panels;
+
+  const wanted = blocks.filter((item, at) => item.key === key && (block < 0 || at === block));
+  return [].concat(...wanted.map(item => item.rows.map(row => tidyMainRow(mainRowOf(row, content))).filter(row => row !== null)));
+}
+
+// The order the views play in: the order of the list's blocks (each view once), or viewOrder
+function playOrder(content) {
+  const blocks = listBlocks(content);
+  if (blocks === null) return viewOrderOf(content);
+
+  return blocks.map(item => item.key).filter((key, at, all) => all.indexOf(key) === at);
+}
+
 // The steps of the large panel of a view, in order, as { panel, show, team, seconds, row, view }. The team of a step is
 // the team of the view for a team view, and the team of the row otherwise. A step is left out when its row is for a team
 // that is not switched on or for another team than ?team= asks for, and a Monday row while it has nothing to show.
-export function viewSteps(content, key, now = new Date()) {
+export function viewSteps(content, key, now = new Date(), block = -1) {
   const view = resolveView(content, key);
   const teams = teamsOf(content).map(team => team.code);
   const only = addressTeam();
-  const rows = expandRows(view.panels, content, now);
+  const rows = expandRows(rowsOfView(content, key, block), content, now);
   const steps = [];
 
   if (view.team !== '' && (!teams.includes(view.team) || (only !== '' && view.team !== only))) return steps;
@@ -82,7 +106,7 @@ function viewIsPlayable(content, key, now = new Date(), canShow = () => true) {
 
 // The views of the order that have something to show
 function playableViews(content, now = new Date(), canShow = () => true) {
-  return viewOrderOf(content).filter(key => viewIsPlayable(content, key, now, canShow));
+  return playOrder(content).filter(key => viewIsPlayable(content, key, now, canShow));
 }
 
 // The key that follows current in the order among the playable ones, going round. When current is not in the order, it
@@ -135,7 +159,7 @@ export function drawStyleFor(layout, monday, plan) {
 export function stepInView(step, content, fallbackKey) {
   if (viewKeys.includes(step.view)) return step;
 
-  const key = viewKeys.includes(fallbackKey) ? fallbackKey : viewOrderOf(content)[0];
+  const key = viewKeys.includes(fallbackKey) ? fallbackKey : playOrder(content)[0];
   return Object.assign({}, step, { view: key, team: isTeamCode(step.team) ? step.team : resolveView(content, key).team });
 }
 
@@ -151,10 +175,15 @@ export function lookForViewStep(step, plan, layout) {
 // The view on the screen
 
 // The view the clock of the minutes is on, and how many seconds it has been there
-const cycle = { key: '', seconds: 0, ticks: 0 };
+const cycle = { key: '', block: -1, seconds: 0, ticks: 0 };
 
 export function cycleKey() {
   return cycle.key;
+}
+
+// The number of the block of the rotation list the clock is on, or -1 when the views play their own lists
+export function cycleBlock() {
+  return cycle.block;
 }
 
 // How many seconds the clock has counted in the view it is on
@@ -165,11 +194,12 @@ export function cycleSeconds() {
 
 // The view the lists are read for: the one the clock is on, or the first of the order before it has started
 function listedView(content) {
-  return viewKeys.includes(cycle.key) ? cycle.key : viewOrderOf(content)[0];
+  return viewKeys.includes(cycle.key) ? cycle.key : playOrder(content)[0];
 }
 
 export function resetViews() {
   cycle.key = '';
+  cycle.block = -1;
   cycle.seconds = 0;
   cycle.ticks = 0;
   holdView('');
@@ -186,12 +216,12 @@ export function holdPanelId(id) {
 
 // The first view in the order that has a step of this panel, or ''
 export function findViewWithPanel(content, panel, now = new Date()) {
-  return viewOrderOf(content).find(key => viewSteps(content, key, now).some(step => step.panel === panel)) || '';
+  return playOrder(content).find(key => viewSteps(content, key, now).some(step => step.panel === panel)) || '';
 }
 
 // The steps of the large panel: the view the clock is on
 export function viewPlaylist(content, now = new Date()) {
-  const steps = viewSteps(content, listedView(content), now);
+  const steps = viewSteps(content, listedView(content), now, cycle.block);
   return heldPanel === '' ? steps : steps.filter(step => step.panel === heldPanel);
 }
 
@@ -201,9 +231,72 @@ export function viewSidePlaylist(content) {
   return viewSideSteps(content, heldView() !== '' ? heldView() : listedView(content));
 }
 
-function startView(key) {
+function startView(key, block = -1) {
   cycle.key = key;
+  cycle.block = block;
   cycle.seconds = 0;
+}
+
+
+// The blocks of the rotation list
+
+// The numbers of the blocks that have a step to show
+function playableBlocks(content, now, canShow = () => true) {
+  const blocks = listBlocks(content);
+  return blocks.map((item, at) => at).filter(at => viewSteps(content, blocks[at].key, now, at).some(step => canShow(step)));
+}
+
+// How long a block stays: the seconds of its steps that have something to show. A step with no seconds follows pageSeconds.
+function blockSeconds(content, at, now, canShow = () => true) {
+  const blocks = listBlocks(content);
+  const settings = isRecord(content) && isRecord(content.settings) ? content.settings : {};
+  const each = typeof settings.pageSeconds === 'number' && settings.pageSeconds > 0 ? settings.pageSeconds : 20;
+
+  return viewSteps(content, blocks[at].key, now, at).filter(step => canShow(step)).reduce((sum, step) => sum + (step.seconds || each), 0);
+}
+
+// The block after at among the playable ones, going round
+function nextBlock(count, at, playable) {
+  for (let step = 1; step <= count; step += 1) {
+    const found = (at + step + count) % count;
+    if (playable.includes(found)) return found;
+  }
+  return playable.length > 0 ? playable[0] : at;
+}
+
+// One second of the clock over the blocks. The same options as tickView. A block stays for the seconds of its rows, and then
+// the next block with something to show comes; with one block it starts again and nothing changes.
+function tickBlocks(content, now, options) {
+  const blocks = listBlocks(content);
+  const before = { key: cycle.key, block: cycle.block };
+  const moved = () => ({ key: cycle.key, changed: cycle.key !== before.key || cycle.block !== before.block });
+  const forced = viewKeys.includes(options.forced) ? options.forced : '';
+
+  if (forced !== '') {
+    const at = blocks.findIndex(item => item.key === forced);
+    if (cycle.key !== forced && at >= 0) startView(forced, at);
+    return moved();
+  }
+  if (options.frozen === true && cycle.key !== '') return moved();
+
+  cycle.ticks += 1;
+  cycle.seconds += 1;
+  const known = cycle.block >= 0 && cycle.block < blocks.length;
+  const over = known && cycle.seconds >= blockSeconds(content, cycle.block, now, options.canShow);
+
+  if (!known || over || cycle.ticks % checkEvery === 0) {
+    const playable = playableBlocks(content, now, options.canShow);
+
+    if (playable.length > 0) {
+      const go = at => startView(blocks[at].key, at);
+      if (!playable.includes(cycle.block)) go(nextBlock(blocks.length, cycle.block, playable));
+      else if (over && playable.length > 1) go(nextBlock(blocks.length, cycle.block, playable));
+      else if (over) cycle.seconds = 0;
+    } else if (over) {
+      cycle.seconds = 0;
+    }
+  }
+  return moved();
 }
 
 // How often, in ticks, the playable views are worked out when the clock has not run out
@@ -214,6 +307,8 @@ const checkEvery = 10;
 // its minutes are up, or when it has nothing to show any more, to the next one in the order that has something. With one
 // view playable it stays and starts its minutes again. An empty list of playable views leaves the clock as it is.
 export function tickView(content, now, options = {}) {
+  if (listBlocks(content) !== null) return tickBlocks(content, now, options);
+
   const before = cycle.key;
   const forced = viewKeys.includes(options.forced) ? options.forced : '';
 
@@ -229,7 +324,7 @@ export function tickView(content, now, options = {}) {
 
   if (cycle.key === '' || over || cycle.ticks % checkEvery === 0) {
     const playable = playableViews(content, now, options.canShow);
-    const order = viewOrderOf(content);
+    const order = playOrder(content);
 
     if (playable.length > 0) {
       if (!playable.includes(cycle.key)) startView(nextViewKey(order, cycle.key, playable));
@@ -245,6 +340,15 @@ export function tickView(content, now, options = {}) {
 
 // The start
 
+// The view, and the block of the rotation list, the screen starts with: the first that has something to show
+function firstUnit(content, now) {
+  const blocks = listBlocks(content);
+  if (blocks === null) return { key: playableViews(content, now)[0] || playOrder(content)[0], block: -1 };
+
+  const at = playableBlocks(content, now)[0];
+  return at === undefined ? { key: blocks[0].key, block: 0 } : { key: blocks[at].key, block: at };
+}
+
 // The look the screen starts with, before anything is drawn: { team, style, monday }. content is the saved copy of the
 // content, or null when there is none, and then nothing is held and the settings decide. It is the look of the first
 // step of the first view in the order that has one.
@@ -252,8 +356,8 @@ function bootViewLook(content, now = new Date()) {
   if (!isRecord(content)) return { team: '', style: '', monday: false };
 
   const plan = viewPlan(content, now);
-  const key = playableViews(content, now)[0] || viewOrderOf(content)[0];
-  const steps = viewSteps(content, key, now);
+  const { key, block } = firstUnit(content, now);
+  const steps = viewSteps(content, key, now, block);
   const step = steps.length > 0 ? steps[0] : { panel: '', view: key, team: resolveView(content, key).team };
 
   return lookForViewStep(step, plan, viewLayoutOf(content, key));
@@ -265,8 +369,8 @@ export function holdBootView(content, now = new Date()) {
   const look = bootViewLook(content, now);
 
   if (isRecord(content)) {
-    const key = playableViews(content, now)[0] || viewOrderOf(content)[0];
-    startView(key);
+    const { key, block } = firstUnit(content, now);
+    startView(key, block);
     holdView(key);
     rotateLayout(viewLayoutOf(content, key));
   }

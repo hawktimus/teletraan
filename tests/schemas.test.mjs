@@ -212,6 +212,8 @@ const contract = {
     generalViewName: text(16),
     generalViewTitle: text(28),
     viewOrder: { kind: 'choiceList' },
+    transitionSeconds: number(2, 4),
+    rotationRows: rows({ view: 'string', panel: 'string', seconds: number(6, 120), shown: 'boolean', department: { kind: 'plainString' }, photoCount: number(1, 20), secondsPerPhoto: number(5, 60) }),
     themeByWeekday: object({ monday: 'string', tuesday: 'string', wednesday: 'string', thursday: 'string', friday: 'string', saturday: 'string', sunday: 'string' }),
     screenSchedule: object({ monday: 'string', tuesday: 'string', wednesday: 'string', thursday: 'string', friday: 'string', saturday: 'string', sunday: 'string' }),
     announceRequest: object({ requestedAt: 'datetime' }),
@@ -357,6 +359,7 @@ const contract = {
 const studioOnlyFields = {
   'dashboardSettings.miniStatus': 'the status block at the top of the Screen tab. It stores nothing',
   'dashboardSettings.lookNote': 'the note on the Look tab. It stores nothing',
+  'view.rotationNote': 'the note on the Main panel tab of a view, which points to the Rotation list. It stores nothing',
   'dashboardSettings.cycleNote': 'the second note on the Look tab, which says what a cycle is. It stores nothing',
   'dashboardSettings.mondayConnection': 'the block at the top of the Monday tab. It stores nothing',
   'dashboardSettings.mondayTokenTest': 'the Test the token button of the Monday tab. It stores nothing',
@@ -4231,7 +4234,7 @@ const competitionNames = ['competitionTimeline', 'competitionLastSeason', 'compe
 const settingsTabs = {
   screen: ['miniStatus', 'team', 'motion', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'holdPanel', 'showView', 'previewTheme', 'pauseRotation', 'alert', 'pageSeconds', 'rotation', 'doneDays', 'safetyDaysSince']
     .concat(photoNames, ['announcements', 'announceRequest']),
-  look: ['lookNote', 'cycleNote', 'generalViewName', 'generalViewTitle', 'viewOrder', 'themeByWeekday', 'screenSchedule'].concat(rotationNames, ['style'], teamNames, logoNames, transitionNames),
+  look: ['lookNote', 'cycleNote', 'generalViewName', 'generalViewTitle', 'viewOrder', 'themeByWeekday', 'screenSchedule'].concat(rotationNames, ['style'], teamNames, logoNames, transitionNames, ['rotationRows', 'transitionSeconds']),
   countdown: ['countdown'],
   calendars: ['calendars', 'groupEventsByKind'],
   presentations: presentationNames.concat('presentationTestRequest'),
@@ -5508,7 +5511,7 @@ function checkLookRotation() {
 
   // The notes say what the tab does
   const cycle = at('cycleNote');
-  need(problems, cycle && /set in Views, under Settings/.test(cycle.description || '') && /swaps/.test(cycle.description || ''), 'the second note on the Look tab should say that what plays is set in Views, under Settings, and that the screen swaps at each change');
+  need(problems, cycle && /Rotation list/.test(cycle.description || '') && /Views, under Settings/.test(cycle.description || ''), 'the second note on the Look tab should say that what plays is the Rotation list and that a view holds its look in Views, under Settings');
   need(problems, at('lookNote') && /Which theme plays on each day is set on the Themes page/.test(at('lookNote').description || ''), 'the first note on the Look tab should say that the Themes page sets which theme plays on each day');
   need(problems, at('screenSchedule') && at('screenSchedule').hidden === true && /^Not used any more/.test(at('screenSchedule').description || ''), 'screenSchedule should be hidden, kept in the schema, and say Not used any more');
 
@@ -6702,7 +6705,7 @@ async function checkScreenForm() {
 // tools/view-defaults.js, which defaultViews in dashboard/config.js copies once the runtime has it.
 const viewGroupFields = {
   banner: ['key', 'title', 'team', 'layout', 'mirror', 'viewTag', 'teamChip', 'colors'],
-  main: ['minutes', 'panels'],
+  main: ['rotationNote', 'minutes', 'panels'],
   countdown: ['countdownIn', 'countdownShown'],
   side: ['sidePanels'],
   ticker: ['tickerLink'],
@@ -6802,7 +6805,8 @@ function checkViewSettings() {
   need(problems, at('viewOrder') && at('viewOrder').type === 'array' && at('viewOrder').initialValue.join() === 'general,prime,nova,family' && config.defaultSettings.viewOrder.join() === 'general,prime,nova,family' && constraintNamed(rulesOf(at('viewOrder')), 'unique'), 'viewOrder should start as General, Prime, Nova, Family, as config.js says, and hold each view once');
   const member = at('viewOrder') && at('viewOrder').of[0];
   need(problems, member && member.options.list.map(item => item.value).join() === 'general,prime,nova,family' && constraintNamed(constraintsOf(member), 'valid'), 'each row of viewOrder should be one of the four views');
-  ['generalViewName', 'generalViewTitle', 'viewOrder'].forEach(name => need(problems, at(name) && at(name).group === 'look' && !at(name).hidden, name + ' should show in the Look tab'));
+  ['generalViewName', 'generalViewTitle'].forEach(name => need(problems, at(name) && at(name).group === 'look' && !at(name).hidden, name + ' should show in the Look tab'));
+  need(problems, at('viewOrder') && at('viewOrder').group === 'look' && at('viewOrder').hidden === true && /Not used any more/.test(at('viewOrder').description || ''), 'viewOrder should be hidden in the Look tab and say Not used any more');
   need(problems, fieldAt('theme.timeZone') && fieldAt('theme.timeZone').type === 'string', 'the time zone should stay a field of the Look page');
 
   // the weekday themes

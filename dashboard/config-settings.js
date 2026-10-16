@@ -151,6 +151,10 @@ export const defaultSettings = {
   generalViewTitle: 'Hawktimus Dashboard',
   viewOrder: viewKeys,
   themeByWeekday: defaultThemeByWeekday,
+  // The one ordered rotation list, rows of { view, panel, seconds, shown } (core/rotation.js). Empty plays the lists of the
+  // views. transitionSeconds is the length of a whole transition, 2 to 4.
+  rotationRows: [],
+  transitionSeconds: 3,
   // The "Play announcements" button in the Studio (core/announce.js, core/announce-run.js, docs/hidden-transitions.md).
   //   announceRequest  the last click of the button. requestedAt is the time it was clicked and is empty until
   //                    it has been. The screen plays every announcement that is switched on, once, for a request

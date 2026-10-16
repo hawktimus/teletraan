@@ -20,7 +20,7 @@ import { defineType, defineField } from 'sanity';
 import { ViewInput } from '../inputs/view-input.js';
 import { CountdownInput, TickerInput } from '../inputs/screen-fields.js';
 import { mainRow, sideRow } from './screen.js';
-import { tooLong } from './fields.js';
+import { noteField, tooLong } from './fields.js';
 import { viewKeys, viewTitles, viewMinutes, minutesLimits, viewLayouts, keyOfViewId } from '../inputs/view-ids.js';
 
 // The letters of the map, in order. The names are the ones in letterGroups in screen-map.js.
@@ -128,12 +128,14 @@ export default defineType({
       validation: Rule => Rule.valid(colorChoices.map(item => item.value)).error('Pick team or general.'),
     }),
 
+    noteField('rotationNote', 'The order of the panels, their seconds and which view each one plays in is the Rotation list in Dashboard Settings, Look tab.', 'main'),
     defineField({
       name: 'minutes',
       title: 'Minutes on the screen',
       type: 'number',
       group: 'main',
-      description: 'How long the view plays before the screen moves to the next one, from ' + minutesLimits.min + ' to ' + minutesLimits.max + ' minutes. Starts at ' + viewMinutes.general + ' (' + viewMinutes.family + ' on Family).',
+      hidden: true,
+      description: 'Not used any more. A block of the Rotation list stays for the seconds of its rows. The saved number, from 1 to 30 minutes, is kept.',
       validation: Rule => Rule.integer().min(minutesLimits.min).max(minutesLimits.max).error('Use a whole number of minutes from ' + minutesLimits.min + ' to ' + minutesLimits.max + '.'),
     }),
     defineField({
@@ -141,8 +143,9 @@ export default defineType({
       title: 'Main panel rows',
       type: 'array',
       group: 'main',
+      hidden: true,
       readOnly: isFamily,
-      description: 'The panels, top to bottom. Family is locked to Overall progress and Status by department. A tasks row with no department plays every Team lead.',
+      description: 'Not used any more. The Rotation list in Dashboard Settings, Look tab, replaces these rows, and is filled from them the first time it is opened.',
       of: [mainRow],
     }),
 

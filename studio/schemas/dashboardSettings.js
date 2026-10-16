@@ -15,6 +15,7 @@ import { presentationsFields, presentationTestRequestField } from './settingsPre
 import { teamsFields } from './settingsTeams.js';
 import { lookScheduleFields } from './settingsLook.js';
 import { viewsFields } from './settingsViews.js';
+import { rotationRowsFields } from './settingsRotationRows.js';
 import { previewRequestField } from './settingsPreview.js';
 import { nextLookRequestField, competitionPreviewRequestField, screenRequestFields } from './settingsRequests.js';
 import { competitionFields } from './settingsCompetition.js';
@@ -344,7 +345,7 @@ const safetyDaysField = defineField({
 
 // The note on the Look tab points to the Look page, which points back (theme.js). The second says where the rows are.
 const lookNoteField = noteField('lookNote', 'Which theme plays on each day is set on the Themes page. Colors, seasonal packs and the time zone are in Look, in the sidebar.', 'look');
-const cycleNoteField = noteField('cycleNote', 'What plays in a view is set in Views, under Settings in the sidebar. The views take the screen in the order below, and the screen swaps at each change.', 'look');
+const cycleNoteField = noteField('cycleNote', 'What plays, and in which order, is the Rotation list on this tab. A view holds its small panels and its look in Views, under Settings in the sidebar.', 'look');
 
 export default defineType({
   name: 'dashboardSettings',
@@ -373,6 +374,7 @@ export default defineType({
     ...teamsFields(),
     ...logoFields(),
     ...transitionsFields(),
+    ...rotationRowsFields(),
     countdownField,
     alertField,
     pageSecondsField,

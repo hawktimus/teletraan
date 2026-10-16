@@ -43,3 +43,7 @@ export {
   defaultFilter, calendarKinds, noCalendarKind, teamTrim, teamMetals, teamPalettes, glowClass, defaultTeam,
   primeTeam,
 } from './config-more.js';
+export {
+  rotationViews, rotationAliases, rotationKeyOfView, roboticsTitle, roboticsPlate, olderGeneralTitle,
+  transitionSecondsRange, placeholderPanels, designDepartment, bothTeamDepartments, rosterPageRows,
+} from './config-rotation.js';

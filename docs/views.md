@@ -19,11 +19,16 @@ The starting rows hold the panels listed above and no more. Other panels are not
 
 ## The rotation
 
-- `viewOrder` (Dashboard Settings, Look tab) is the order. A view left out of it never plays. The starting order is General, Prime, Nova, Family.
-- A view stays for its minutes (1 to 30). Then the next view in the order that has something to show comes. A view with nothing to show, or whose team has no document, is skipped. If only one view has something to show, it stays and no swap plays.
-- The swap (the pull apart and re-form) plays at every change of view. Inside a view the panels change with the plain page change.
-- The minutes stand still while an alert, an announcement, a talk, a demo, the night screen or a hidden transition has the screen. The view that was interrupted comes back at the panel that was next, because the lists are not touched.
-- The control page can hold a view (`showView`), hold a panel (`holdPanel`), preview a theme (`previewTheme`) or pause the rotation (`pauseRotation`). The runtime reads them once a second through `activeRequests()` in `core/screen-requests.js`. A held panel is the only one the large panel plays, in the first view that has it. With `?style=` or `?team=` in the address the screen plays the first view and holds nothing.
+One ordered list says what the large panel plays: Dashboard Settings, Look tab, Rotation (stored as `rotationRows`, because `rotation` is the name of the Ticker block on the same page). Each row is a view (Robotics, Prime or Nova), a panel, the seconds it stays and a Shown switch. Drag a row to move it. A row that is not Shown keeps its place in the order and plays nothing, so it can be turned back on without sorting again.
+
+- The screen walks the list from the top and starts again at the end. Rows that follow each other in one view are a block. The view changes only between blocks, with the swap. Inside a block the panels change with the plain page change.
+- A row whose panel has nothing to show right now (no Monday tasks, no photos, no events) is skipped, with no change and no gap. A block with nothing to show is skipped whole. If only one block has something to show, it stays and starts again.
+- A block stays for the seconds of its rows that have something to show. A row with no seconds follows Seconds per page.
+- The first time Dashboard Settings is opened with the list empty, the Studio fills it from the lists of the views, in the order of the views and of each list, with Daily Agenda first in every Robotics block, and the Family rows become Robotics rows. Click Publish all to keep it. Until the list has a Shown row the screen plays the lists of the views as it did, so an untouched Studio changes nothing on the wall.
+- `viewOrder`, the minutes of a view and the rows of a view are hidden and marked Not used any more. They are kept, and the first fill reads them.
+- `core/rotation.js` has `transitionKindFor(previousRow, nextRow)`. It says `reformView` when the view changes and `reform` inside a view. Until those two transitions are drawn, the screen plays the swap for the first and the page change for the second. `transitionSeconds` (Look tab, 2 to 4, starts at 3) is the length of a whole transition.
+- The minutes stand still while an alert, an announcement, a talk, a demo, the night screen or a hidden transition has the screen. The view that was interrupted comes back at the panel that was next.
+- The control page can hold a view (`showView`, robotics or general), hold a panel (`holdPanel`), preview a theme (`previewTheme`) or pause the rotation (`pauseRotation`). The runtime reads them once a second through `activeRequests()` in `core/screen-requests.js`. A held panel is the only one the large panel plays, in the first view that has it. With `?style=` or `?team=` in the address the screen plays the first view and holds nothing.
 
 ## Monday rows
 
@@ -47,4 +52,6 @@ The weather comes from Open-Meteo, which needs no key, so nothing about it is in
 - `core/views.js`: the documents, the lists, the clock and the look of a step (no page).
 - `core/views-run.js`: gives them the real screen.
 - `core/view-apply.js`: the view held and the view written on the page.
+- `core/rotation.js`: the rows, the blocks, the kind of transition and the migration.
+- `tests/rotation.test.mjs`.
 - `tests/views.test.mjs`.

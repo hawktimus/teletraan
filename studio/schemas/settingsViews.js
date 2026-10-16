@@ -59,7 +59,8 @@ export function viewsFields() {
       title: 'Order of the views',
       type: 'array',
       group: 'look',
-      description: 'The views in the order they take the screen, each for its own minutes. A view with nothing to show is skipped. Starts at General, Prime, Nova, Family.',
+      hidden: true,
+      description: 'Not used any more. The Rotation list sets the order. It stays so that a saved order is kept, and the Rotation list is filled from it.',
       of: [
         defineArrayMember({
           type: 'string',

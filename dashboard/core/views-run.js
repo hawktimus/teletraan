@@ -28,6 +28,7 @@ import { takeoverRunning } from './takeover.js';
 import { asTeam, useTeams } from './teams.js';
 import { checkTheme } from './theme-apply.js';
 import { resolveTheme } from './theme.js';
+import { noteTransition } from './rotation.js';
 import { heldView, holdView } from './view-apply.js';
 import { cycleKey, findViewWithPanel, holdPanelId, lookForViewStep, stepInView, tickView, viewLayoutOf, viewPlan } from './views.js';
 
@@ -132,6 +133,7 @@ function begin(step) {
   const view = placed(step).view;
   const moved = heldView() !== '' && view !== heldView();
 
+  noteTransition({ view: heldView() }, { view: view });
   holdView(view);
   rotateLayout(viewLayoutOf(getContent(), view));
   if (!changes.team && !changes.style && !changes.monday && !moved) return;

@@ -19,7 +19,7 @@ export {
 } from './views-tidy.js';
 export {
   expandRows, viewSteps, viewSideSteps, dayThemeFor, viewPlan, viewLayoutOf, drawStyleFor, stepInView,
-  lookForViewStep, cycleKey, cycleSeconds, resetViews, holdPanelId, findViewWithPanel, viewPlaylist,
+  lookForViewStep, cycleKey, cycleBlock, cycleSeconds, resetViews, holdPanelId, findViewWithPanel, viewPlaylist,
   viewSidePlaylist, tickView, holdBootView,
 } from './views-play.js';
 export { heldView, holdView } from './view-apply.js';
