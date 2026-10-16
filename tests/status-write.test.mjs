@@ -551,9 +551,12 @@ test('the dashboard never reads the status document: its id, its fields and its 
   assert.ok(files.length > 50, 'the scan found the dashboard files');
 
   const words = ['status-mini'].concat(Object.values(fieldOf), ['_type == "status"', "_type == 'status'", '_type=="status"']);
+  // The status dots read the time of the last calendar download from status-mini, and only that field.
+  const dotFiles = ['core/content.js', 'core/dots.js', 'core/dots-run.js', 'core/now-report.js', 'core/sanity.js'].map(name => path.join(repo, 'dashboard', name));
   files.forEach(file => {
     const text = fs.readFileSync(file, 'utf8');
-    words.forEach(word => assert.ok(!text.includes(word), path.relative(repo, file) + ' mentions ' + word));
+    const allowed = dotFiles.includes(file) ? ['status-mini', 'lastCalendarSyncAt'] : [];
+    words.filter(word => !allowed.includes(word)).forEach(word => assert.ok(!text.includes(word), path.relative(repo, file) + ' mentions ' + word));
   });
 });
 

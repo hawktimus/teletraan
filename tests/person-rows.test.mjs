@@ -607,7 +607,7 @@ test('four rows of 144 fill the 576 body, the name is 72px, the role 44px in the
   assert.ok(/color: var\(--yellow\);/.test(role), 'the role is in the team accent');
   assert.ok(/font: 500 36px\/40px var\(--font-text\);/.test(line) && /color: var\(--lilac\);/.test(line), 'the line is 36px in the quiet color');
   assert.ok(/font: 700 var\(--size-label\)\/52px var\(--font-display\);/.test(chip), 'the chip is 44px');
-  assert.ok(/background: var\(--yellow\);/.test(chip) && /color: var\(--ground\);/.test(chip) && /padding: 0 14px;/.test(chip), 'the chip is the accent plate the Events panel has for its kind');
+  assert.ok(/background: var\(--team-chip\);/.test(chip) && /color: var\(--team-chip-text\);/.test(chip) && /padding: 0 14px;/.test(chip), 'the chip is the accent plate the Events panel has for its kind');
   const group = ruleOf(css, '.person-name,\n.person-role,\n.person-line');
   assert.ok(/overflow: hidden;/.test(group) && /text-overflow: ellipsis;/.test(group) && /white-space: nowrap;/.test(group), 'a long name, role or line is cut, not wrapped');
 
