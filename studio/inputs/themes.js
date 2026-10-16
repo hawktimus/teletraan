@@ -97,4 +97,5 @@ export const cornerArts = [
 export const subthemePresets = [
   { id: 'halloween', name: 'Halloween' },
   { id: 'winter', name: 'Winter' },
+  { id: 'kickoff', name: 'Kickoff' },
 ];

@@ -41,7 +41,7 @@ the bolts and the brackets of its plates are where some zones were measured to b
 (`styles/cybertron/theme.css`). The header mark and the over layer show in every
 layout, and a pack needs nothing extra for that (`decorationLayers` in `core/layout.js`).
 
-A rule can also add a ticker prefix, a banner line and a corner art. See "Extras on a rule".
+A rule can also add a ticker prefix, a banner line and a corner art. See "Extras on a rule". It can also name a subtheme, the pictures the screen draws on the frames: Halloween for the Halloween pack and Winter for the Christmas pack unless the rule says otherwise (docs/subthemes.md).
 
 A pack lies over whatever style and team are on the screen. It changes no layout and no
 team setting, and its accent colors come after the team's, so on the theme Hawktimus the

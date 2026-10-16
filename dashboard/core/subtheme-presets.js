@@ -9,7 +9,7 @@
 import { frameAnchorBox } from './anchors.js';
 import * as art from './subtheme-shapes.js';
 
-export const presetIds = ['halloween', 'winter'];
+export const presetIds = ['halloween', 'winter', 'kickoff'];
 
 // The seasonal packs that bring a preset when the schedule rule says nothing about subthemes
 export const packSubthemes = { halloween: 'halloween', christmas: 'winter' };
@@ -18,6 +18,7 @@ export const packSubthemes = { halloween: 'halloween', christmas: 'winter' };
 export const presetChoices = [
   { id: 'halloween', name: 'Halloween' },
   { id: 'winter', name: 'Winter' },
+  { id: 'kickoff', name: 'Kickoff' },
 ];
 
 export function isPreset(id) {
@@ -51,6 +52,11 @@ const presets = {
     { anchor: 'margin-left', draw: art.snowfall },
     { anchor: 'margin-right', draw: art.snowfall },
     { anchor: 'corner-bolt', draw: art.snowman },
+  ],
+  kickoff: [
+    { anchor: 'banner-cut', draw: art.ribbon },
+    { anchor: 'ticker-bar-top', draw: art.confetti },
+    { anchor: 'side-corner', draw: art.flagsAndGear },
   ],
 };
 

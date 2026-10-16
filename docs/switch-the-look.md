@@ -35,7 +35,7 @@ A rule has three more fields that only a pack uses. Ticker prefix is a word befo
 
 A pack lies over every theme and every team. Its accent colors, its header mark and its slow pieces drifting over the screen show with all of them. The decorations along the edges and the corner art draw only in Original with the standard arrangement, when the screen is not flipped.
 
-A subtheme is a different thing: a dated layer of small pictures at fixed places (docs/subthemes.md).
+A subtheme is a different thing: a dated layer of pictures on the frames (docs/subthemes.md). Halloween and Winter come with their packs, and a rule of a pack has a Subtheme field to change that.
 
 ## 4. Publish and look at the TV
 

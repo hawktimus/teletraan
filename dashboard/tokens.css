@@ -419,7 +419,7 @@ html.palette-inverted {
   --kit-pale: #d9fbff; /* the head of a packet and the sweeping line */
   --subtheme-accent: #d9b24a;
 
-  /* the shipped subthemes (core/subtheme-presets.js, subthemes.css): halloween and winter */
+  /* the shipped subthemes (core/subtheme-presets.js, subthemes.css): winter, halloween and kickoff */
   --subtheme-snow: #f4f9ff;
   --subtheme-snow-shade: #b3c8de;
   --subtheme-ice: #c4e6f6;
@@ -441,6 +441,15 @@ html.palette-inverted {
   --subtheme-stem: #5f9b3a;
   --subtheme-web: #d3cde0;
   --subtheme-bat: #1a1424;
+  --subtheme-ribbon: #d9363e;
+  --subtheme-gold: #f2c230;
+  --subtheme-flag-a: #d9363e;
+  --subtheme-flag-b: #2f6fde;
+  --subtheme-pole: #c9ced6;
+  --subtheme-steel: #9aa6b2;
+  --subtheme-confetti-a: #f2c230;
+  --subtheme-confetti-b: #e5484d;
+  --subtheme-confetti-c: #4c9bef;
 
   /* the backing of the pictures of the hidden transitions, the color of the edge of each (core/hidden-pictures.js) */
   --hidden-fill-red-eyes: #000000;

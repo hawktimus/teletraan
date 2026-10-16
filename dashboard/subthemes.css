@@ -84,3 +84,14 @@
 .sb-spider { fill: var(--subtheme-ink); stroke: var(--subtheme-web); stroke-width: 1.2px; stroke-linecap: round; }
 .sb-bat { fill: var(--subtheme-bat); stroke: var(--subtheme-web); stroke-width: 1.2px; stroke-linejoin: round; }
 
+.sb-ribbon-band { fill: none; stroke: var(--subtheme-ribbon); stroke-width: 9px; }
+.sb-ribbon-line { fill: none; stroke: var(--subtheme-gold); stroke-width: 2px; }
+.sb-ribbon { fill: var(--subtheme-ribbon); stroke: var(--subtheme-gold); stroke-width: 1px; stroke-linejoin: round; }
+.sb-gold { fill: var(--subtheme-gold); }
+.sb-confetti-a { fill: var(--subtheme-confetti-a); }
+.sb-confetti-b { fill: var(--subtheme-confetti-b); }
+.sb-confetti-c { fill: var(--subtheme-confetti-c); }
+.sb-pole { fill: none; stroke: var(--subtheme-pole); stroke-width: 2.4px; stroke-linecap: round; }
+.sb-flag-a { fill: var(--subtheme-flag-a); }
+.sb-flag-b { fill: var(--subtheme-flag-b); }
+.sb-steel { fill: var(--subtheme-steel); }

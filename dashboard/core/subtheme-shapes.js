@@ -274,3 +274,68 @@ export function bats(w, h) {
     return '<g transform="translate(' + x + ' ' + tenth(h - 3 - scale * 3) + ') scale(' + tenth(scale) + ')"><path class="sb-bat" data-move="flutter" style="--flutter-seconds:' + (3.4 + index * 0.9) + 's;--flutter-delay:' + tenth(index * -1.3) + 's" d="' + batShape + '"/></g>';
   }).join('');
 }
+
+// ---- Kickoff
+
+// A ribbon laid across the cut, with a bow at its middle. The box is the two legs of the cut, and
+// the drawing is made for the top left corner.
+export function ribbon(w, h) {
+  const mx = w * 0.5;
+  const my = h * 0.5;
+  const u = Math.min(w, h) / 34;
+  const loop = 17 * u;
+  const band = 'M' + w + ' 0L0 ' + h;
+  const loops = 'M' + tenth(mx) + ' ' + tenth(my) + 'C' + tenth(mx - loop) + ' ' + tenth(my - loop * 0.95) + ' ' + tenth(mx - loop * 1.15) + ' ' + tenth(my + loop * 0.25) + ' ' + tenth(mx) + ' ' + tenth(my) + 'Z'
+    + 'M' + tenth(mx) + ' ' + tenth(my) + 'C' + tenth(mx + loop * 0.25) + ' ' + tenth(my + loop * 1.15) + ' ' + tenth(mx + loop * 1.15) + ' ' + tenth(my + loop * 0.95) + ' ' + tenth(mx) + ' ' + tenth(my) + 'Z';
+  const tails = 'M' + tenth(mx) + ' ' + tenth(my) + 'l' + tenth(-loop * 0.3) + ' ' + tenth(loop * 1.1) + 'l' + tenth(loop * 0.35) + ' ' + tenth(-loop * 0.2) + 'l' + tenth(loop * 0.3) + ' ' + tenth(loop * 0.3) + 'l' + tenth(loop * 0.1) + ' ' + tenth(-loop * 1.2) + 'Z';
+  return '<path class="sb-ribbon-band" style="stroke-width:' + tenth(Math.max(9, u * 9)) + 'px" d="' + band + '"/>' + path('sb-ribbon-line', band) + path('sb-ribbon', loops + tails) + path('sb-gold', dot(mx, my, 3.4 * u));
+}
+
+const confettiColors = ['sb-confetti-a', 'sb-confetti-b', 'sb-confetti-c'];
+
+// Small paper pieces scattered along a bar, each color a shape that brightens and dims
+export function confetti(w, h) {
+  const groups = confettiColors.map(() => '');
+  const turns = [[3, 5], [5, 2], [2, 5], [5, -3], [4, 4]];
+  const k = Math.max(1, h / 20);
+  const count = Math.round(w / 34);
+
+  for (let i = 0; i < count; i++) {
+    const x = (i * 53.7 + 17) % (w - 14) + 4;
+    const y = 4 + ((i * 11) % Math.max(1, Math.round(h - 4 - 8 * k)));
+    const turn = turns[i % turns.length];
+    const a = tenth(turn[0] * k * 1.1);
+    const b = tenth(turn[1] * k * 1.1);
+    groups[i % confettiColors.length] += 'M' + tenth(x) + ' ' + tenth(y) + 'l' + a + ' ' + b + 'l' + tenth(-b * 0.55) + ' ' + tenth(a * 0.55 + 1) + 'l' + (-a) + ' ' + (-b) + 'Z';
+  }
+  return confettiColors.map((cls, index) => path(cls, groups[index], ' data-move="twinkle" style="--twinkle-seconds:' + tenth(2.4 + index * 0.8) + 's;--twinkle-delay:' + tenth(index * -0.9) + 's"')).join('');
+}
+
+// A gear of eight teeth around (cx, cy)
+function gearPath(cx, cy, outer, inner, teeth) {
+  const steps = teeth * 4;
+  const points = [];
+  for (let i = 0; i < steps; i++) {
+    const angle = (Math.PI * 2 * i) / steps;
+    const radius = i % 4 === 1 || i % 4 === 2 ? outer : inner;
+    points.push(tenth(cx + Math.cos(angle) * radius) + ' ' + tenth(cy + Math.sin(angle) * radius));
+  }
+  return 'M' + points.join('L') + 'Z';
+}
+
+// Two flags crossed on their poles and a small gear under them, for a box about 38 by 104
+export function flagsAndGear(w, h) {
+  const cx = w / 2;
+  const u = w / 34;
+  const top = 6;
+  const cross = tenth(top + 52 * u);
+  const reach = tenth(14 * u);
+  const poles = 'M' + tenth(cx - reach) + ' ' + tenth(Number(cross) + 26 * u) + 'L' + tenth(cx + 10 * u) + ' ' + top + 'M' + tenth(cx + reach) + ' ' + tenth(Number(cross) + 26 * u) + 'L' + tenth(cx - 10 * u) + ' ' + top;
+  const flag = side => 'M' + tenth(cx + side * 9 * u) + ' ' + (top + 1) + 'L' + tenth(cx + side * 19 * u) + ' ' + tenth(top + 6 * u) + 'L' + tenth(cx + side * 16 * u) + ' ' + tenth(top + 16 * u) + 'L' + tenth(cx + side * 5 * u) + ' ' + tenth(top + 21 * u) + 'Z';
+  const gearY = h - 15 * u;
+
+  return path('sb-pole', poles)
+    + path('sb-flag-a', flag(1), ' data-move="wave" style="--wave-seconds:3.2s"')
+    + path('sb-flag-b', flag(-1), ' data-move="wave" style="--wave-seconds:4.1s;--wave-delay:-1.4s;transform-origin:right center"')
+    + path('sb-steel', gearPath(cx, gearY, 12 * u, 9 * u, 8) + dot(cx, gearY, 3.4 * u), ' data-move="spin" fill-rule="evenodd"');
+}

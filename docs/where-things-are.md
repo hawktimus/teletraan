@@ -221,10 +221,13 @@ editors can sign in from anywhere.
                               views-run.js gives it the real screen, and view-apply.js writes the view
                               on the page
         style-loader.js       finds the folder of a theme in styles/ from its id
-        anchors.js            the boxes a subtheme can draw in, for each layout
+        anchors.js            the boxes a subtheme can draw in, for each layout, and the frame anchors of the shipped ones
         subthemes.js          picks the live subtheme and its pictures; subthemes-layer.js draws them
                               over the stage once; subtheme-art.js has the drawings the screen has of
                               its own (docs/subthemes.md)
+        subtheme-presets.js   the three subthemes the screen ships (halloween, winter, kickoff) and their anchors
+        subtheme-shapes.js    the drawings of those three, as text, sized to an anchor
+        subtheme-preset-layer.js  draws the chosen one over the frames, and again when the theme or layout changes
         version-label.js      the text of a build, "v14 · a1b2c3d", from build.js
         now-report.js         tells the control page what is on the wall every 10 seconds;
                               now-report-parts.js is the plain half of the report
@@ -411,6 +414,7 @@ editors can sign in from anywhere.
       no-old-code.test.mjs    checks that the TV never runs old code after an update (the ?v=<build> on every file)
       dots.test.mjs           checks the three dots (core/dots.js)
       subthemes.test.mjs      checks subthemes: the live window, priority, rules, anchors and the layer
+      subthemes-part5.test.mjs  checks the three shipped subthemes: frame anchors on every theme and layout, no drawing inside a frame, counts, calm
       theme-folders.test.mjs  checks the four files of each theme folder and the loader
       nova-palette.test.mjs   checks the Nova palette (gold main, purple accent, gold metal)
       small-foot.test.mjs     checks the last line of a page of the small frame in Cybertron against the slashes
