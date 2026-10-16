@@ -30,7 +30,7 @@ test('the README table has a line for each folder of the repository', () => {
 
 test('the line for tools/ names everything in tools/', () => {
   const line = tableOf(readme).split('\n').find(row => row.startsWith('| `tools/` |'));
-  fs.readdirSync(path.join(repo, 'tools')).filter(name => name !== 'package.json').forEach(name => {
+  fs.readdirSync(path.join(repo, 'tools')).filter(name => name !== 'package.json' && name !== '.DS_Store').forEach(name => {
     assert.ok(line.includes(name), 'the tools line names ' + name);
   });
 });
