@@ -64,11 +64,13 @@ await test('the Studio lists, the weekday schedule and the settings accept Found
   assert.equal(settings.themeByWeekday.monday, 'foundry');
 });
 
-await test('every theme exports its swap and a kit with its id, for the transitions to fill in', async () => {
+await test('every theme exports its swap and a kit with its id and its drawing of the hardware', async () => {
   for (const id of ids) {
     const module = await load('styles/' + id + '/transitions.js');
     assert.equal(module.swapVariant.name, 'pull-apart');
-    assert.deepEqual(module.kit, { id: id });
+    assert.equal(module.kit.id, id);
+    assert.equal(typeof module.kit.draw, 'function', id + ' draws its hardware, or plays the Original kit');
+    assert.ok(module.kit.draw('screw').includes('<svg'), id + ' draws a screw');
   }
 });
 

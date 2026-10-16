@@ -28,7 +28,8 @@ import { takeoverRunning } from './takeover.js';
 import { asTeam, useTeams } from './teams.js';
 import { checkTheme } from './theme-apply.js';
 import { resolveTheme } from './theme.js';
-import { noteTransition } from './rotation.js';
+import { noteTransition, transitionKindNow, transitionSecondsOf } from './rotation.js';
+import { startReforms } from './reform-run.js';
 import { heldView, holdView } from './view-apply.js';
 import { cycleKey, findViewWithPanel, holdPanelId, layoutOfStep, lookForViewStep, pairSide, stepInView, tickView, viewPlan } from './views.js';
 
@@ -231,6 +232,7 @@ export async function startViews(contentGetter, addressAsks) {
   hiddenPlaying = await askOptional('./hidden-run.js', 'hiddenPlaying');
 
   startSwaps(busyElsewhere, swapScaleNow);
+  startReforms(() => transitionSecondsOf(getContent()), transitionKindNow);
   setLookHooks({ viewAs: viewAs, fits: fits, begin: begin });
 
   const button = makeNextLookRunner({ getContent: getContent, storage: savedStorage(), busy: busy, next: pressed });

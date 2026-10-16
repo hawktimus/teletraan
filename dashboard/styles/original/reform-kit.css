@@ -1,0 +1,67 @@
+/* The Original kit of the reform transitions (styles/original/transitions.js, core/reform-draw.js): the chassis behind the
+   squares, the folding straps and the hardware. Every other theme plays this kit until it has its own. The colors are
+   the metal tokens, so the metal of the team reaches the pieces. */
+
+/* the chassis: a dark lattice of struts, drawn with two sets of lines at an angle */
+.reform-chassis {
+  position: absolute;
+  background-color: var(--reform-chassis);
+  background-image:
+    repeating-linear-gradient(55deg, transparent 0 46px, var(--reform-strut) 46px 49px),
+    repeating-linear-gradient(-55deg, transparent 0 46px, var(--reform-strut) 46px 49px),
+    repeating-linear-gradient(0deg, transparent 0 150px, var(--reform-strut-dim) 150px 156px);
+}
+
+/* the folding edges */
+.reform-seg {
+  background-image: linear-gradient(180deg, var(--metal-1), var(--metal-3) 28%, var(--metal-5) 52%, var(--metal-3) 76%, var(--metal-2));
+  box-shadow: inset 0 0 0 2px var(--metal-rim);
+}
+.reform-chain-v > .reform-seg,
+.reform-chain-v .reform-seg {
+  background-image: linear-gradient(90deg, var(--metal-1), var(--metal-3) 28%, var(--metal-5) 52%, var(--metal-3) 76%, var(--metal-2));
+}
+.reform-pin {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin: -6px -6px 0 0;
+  border-radius: 50%;
+  background: var(--metal-rim);
+  box-shadow: inset 0 0 0 3px var(--metal-4);
+}
+.reform-chain-v .reform-pin {
+  right: auto;
+  left: 50%;
+  top: auto;
+  bottom: 0;
+  margin: 0 0 -6px -6px;
+}
+.reform-seg > .reform-shade { z-index: 1; }
+
+/* the hardware, every piece of it is drawn on a 40 x 40 grid */
+.reform-part {
+  position: absolute;
+  transform-origin: 50% 50%;
+}
+.reform-part > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.rk-rim { fill: var(--metal-rim); }
+.rk-metal { fill: var(--metal-3); }
+.rk-lit { fill: var(--metal-1); }
+.rk-slot { fill: var(--metal-rim); }
+.rk-teeth {
+  fill: none;
+  stroke: var(--metal-4);
+  stroke-width: 7px;
+  stroke-dasharray: 6 6;
+}
+.reform-piston[data-axis="h"] { transform-origin: 0 50%; }
+.reform-piston[data-axis="v"] { transform-origin: 50% 0; }
+.reform-tooth { transform-origin: 50% 100%; }

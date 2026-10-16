@@ -425,6 +425,15 @@ html.palette-inverted {
   --hidden-fill-blue-screen-2: #0000aa;
 }
 
+/* The reform transitions (core/reform-run.js, reform.css): the dark chassis that shows between the squares of a turn, and
+   the struts of its lattice */
+:root {
+  --reform-chassis: #0e1116;
+  --reform-strut: #2b313b;
+  --reform-strut-dim: #1a1e25;
+  --reform-shade: #000000;
+}
+
 /* The bar layout draws its armor plates a little darker (layouts/bar-minimal.css) */
 html[data-layout="bar"] {
   --style-armor-top: #323843;
