@@ -3,9 +3,11 @@
 import { registerTab } from './tabs.js';
 import { api, shortDate } from './api.js';
 import { treeHashOfFiles } from './tree-hash.js';
+import { githubCard } from './github-card.js';
 import { describeFolder, folderFiles, folderName, readCommit, shortCommit, versionLabel, zipCandidates, zipLimit } from './update-lib.js';
 
 const stepNames = {
+  download: 'Download from GitHub',
   unpack: 'Unpack the files',
   files: 'Check the files',
   schemas: 'Check the schemas',
@@ -86,7 +88,8 @@ registerTab({
     const push = element('section', '', 'card');
     const back = element('section', '', 'card');
     columns.append(push, back);
-    page.append(columns);
+    // The GitHub card is first; the folder upload stays below it
+    page.append(githubCard(stepNames, () => loadReleases().catch(() => {})), columns);
 
     const wall = element('p', 'Loading the releases...');
     const pick = element('label', 'Pick the repository folder', 'action');
@@ -110,7 +113,7 @@ registerTab({
     const steps = element('ol', '', 'steps');
     const problem = element('p', '', 'bad');
 
-    push.append(element('h2', 'Update from this computer'), wall, pick, remembered, folderLine, note, element('div', '', 'row'), problem, bar, steps);
+    push.append(element('h2', 'From a folder on this computer'), wall, pick, remembered, folderLine, note, element('div', '', 'row'), problem, bar, steps);
     push.children[6].append(button);
 
     let releases = [];

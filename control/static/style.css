@@ -104,3 +104,5 @@ ol.steps li.start::before { content: "working  "; color: var(--warn); font-weigh
 ol.steps li.info::before { content: "note  "; color: var(--warn); font-weight: 600; }
 
 .sign-in { max-width: 420px; margin: 48px auto; }
+
+button.link { background: none; border: 0; color: var(--purple-dark); text-decoration: underline; font: inherit; min-height: 44px; min-width: 44px; padding: 0 12px; cursor: pointer; }
