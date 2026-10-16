@@ -9,8 +9,8 @@ installing anything on the computer, and whenever a step needs a login or a key.
 
 - A web server container shows the `dashboard` folder at
   `http://localhost:8080/dashboard/`, the port in `TELETRAAN_PORT` in
-  `local.env`. It can only be reached from the Teletraan computer. A second port, 3229, shows the control
-  page and the Studio to the WiFi and to Tailscale (`docs/control-page.md`).
+  `local.env`. It can only be reached from the Teletraan computer. A second port, 3229, shows a landing page, the control
+  page and the Studio to the WiFi and to Tailscale, and port 3426 goes straight to the Studio (`docs/control-page.md`).
 - A timer can run `pull.sh` every 5 minutes. A pull is a deploy: the files in the
   repository are the files on the screen. A computer that gets its files from a Mac
   (below) leaves this timer off and installs only the calendar and slides

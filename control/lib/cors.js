@@ -3,6 +3,12 @@
 // few minutes.
 
 const keepFor = 5 * 60 * 1000;
+export const studioPort = '3426';
+
+// The same address on the Studio's own port. Sanity wants each address typed as it is in the browser.
+export function studioOrigin(origin) {
+  return String(origin).replace(/^(https?:\/\/[^/:]+|https?:\/\/\[[^\]]+\])(:\d+)?$/, '$1:' + studioPort);
+}
 
 export function createCorsCheck(options) {
   const fetchFn = options.fetch || globalThis.fetch;
@@ -20,7 +26,7 @@ export function createCorsCheck(options) {
       if (allowed === origin || allowed === '*') {
         result = { ok: true, origin: origin, credentials: credentials === 'true', message: 'The origin is allowed.' };
       } else {
-        result = { ok: false, origin: origin, missing: true, message: 'CORS origin missing', link: 'https://www.sanity.io/manage/project/' + options.projectId + '/api#cors-origins' };
+        result = { ok: false, origin: origin, missing: true, message: 'CORS origin missing', also: studioOrigin(origin), link: 'https://www.sanity.io/manage/project/' + options.projectId + '/api#cors-origins' };
       }
     } catch (error) {
       result = { ok: false, origin: origin, unreachable: true, message: 'Sanity could not be reached to check the origin.' };

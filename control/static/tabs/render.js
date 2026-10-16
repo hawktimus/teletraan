@@ -50,7 +50,7 @@ export function statusHtml(data, now = new Date()) {
   const mini = data.mini || {};
   const previous = data.versions && data.versions.previous && data.versions.previous.length ? data.versions.previous.map(n => 'v' + n).join(', ') : 'none kept';
   const current = data.versions && data.versions.current !== null && data.versions.current !== undefined ? 'v' + data.versions.current : 'not known';
-  const cors = data.cors ? (data.cors.ok ? 'Allowed' : 'Blocked: ' + esc(data.cors.message || 'Studio cannot reach this page')) : 'Not checked';
+  const cors = data.cors ? (data.cors.ok ? 'Allowed' : 'Blocked: ' + esc(data.cors.message || 'Studio cannot reach this page') + (data.cors.also ? '. Add ' + esc(data.cors.origin) + '. If you open the Studio on port 3426, add ' + esc(data.cors.also) + ' too' : '')) : 'Not checked';
   const disk = data.disk ? bytesText(data.disk.freeBytes) + ' free of ' + bytesText(data.disk.totalBytes) : 'not known';
 
   const dots = card('The three dots on the TV',

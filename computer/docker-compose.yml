@@ -21,8 +21,10 @@ services:
     ports:
       # 127.0.0.1 keeps the dashboard reachable from this computer only
       - "127.0.0.1:${TELETRAAN_PORT:-8080}:80"
-      # The control page and the Studio, for the WiFi and for Tailscale. The dashboard is not served here.
+      # The landing page, the control page, the Studio and for the WiFi and for Tailscale
       - "3229:3229"
+      # The Studio alone
+      - "3426:3426"
     volumes:
       - ${TELETRAAN_ROOT:-/opt/teletraan}/current/dashboard:/srv/web/dashboard:ro
       # The Studio built by the last install (control/lib/studio-build.js)
@@ -38,6 +40,8 @@ services:
         bind:
           create_host_path: false
       - ${TELETRAAN_ROOT:-/opt/teletraan}/current/computer/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      # The page at http://teletraan.local:3229/
+      - ${TELETRAAN_ROOT:-/opt/teletraan}/current/computer/nginx/landing.html:/srv/landing/index.html:ro
     # Keeps the log from filling the disk of a machine that runs for years
     logging:
       driver: json-file

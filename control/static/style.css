@@ -38,7 +38,12 @@ header {
 header h1 { margin: 0; font: 700 24px/1.2 var(--display); }
 header .on-wall { margin: 2px 0 8px; font-size: 16px; opacity: .9; }
 
-nav { display: flex; gap: 4px; overflow-x: auto; }
+nav { display: flex; gap: 4px; overflow-x: auto; flex: 1; }
+.bar { display: flex; align-items: flex-end; gap: 8px; }
+.studio {
+  display: inline-flex; flex: none; align-items: center; min-height: 44px; margin-bottom: 6px; padding: 0 16px;
+  border: 2px solid var(--yellow); border-radius: 8px; color: var(--yellow); font: 600 18px var(--display); text-decoration: none;
+}
 nav button {
   min-height: 44px;
   padding: 0 16px;

@@ -269,11 +269,12 @@ test('the web server shows the whole dashboard folder as it is, so one more file
   const nginx = fs.readFileSync(path.join(repo, 'computer/nginx/nginx.conf'), 'utf8');
   assert.ok(/application\/json\s+json;/.test(nginx), 'a .json file has a type');
   assert.ok(!/rewrite|\ballow\b/.test(nginx), 'no rule limits the files to a list');
-  // try_files is only the Studio's fallback to its index page, and deny only keeps the dashboard's report off the WiFi port
-  assert.equal((nginx.match(/try_files/g) || []).length, 2);
+  // try_files is the Studio's fallback to its index page (on 3229 and on 3426) and the landing page, and deny only keeps the dashboard's report off the WiFi port
+  assert.equal((nginx.match(/try_files/g) || []).length, 4);
   assert.deepEqual(nginx.match(/^\s*location [^{]+\{/gm).map(line => line.trim()), [
     'location ~ /\\. {', 'location = / {', 'location /control/ {', 'location /studio/ {', 'location ~ ^/dashboard/data/live/slides/[^/]+/manifest\\.json$ {',
     'location ~ /\\. {', 'location = / {', 'location /control/ {', 'location = /control/api/now {', 'location /studio/ {',
+    'location ~ /\\. {', 'location = / {', 'location /studio/ {',
   ]);
 });
 

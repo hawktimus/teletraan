@@ -2,7 +2,9 @@
 
 The control page runs on the Teletraan computer. Coaches use it from a phone or a laptop on the WiFi to update the dashboard and the Studio, see what is running and roll back. Nobody needs SSH for it.
 
-Address: `http://teletraan.local:3229/control/`. The Tailscale name of the Teletraan computer works the same way: `http://<tailscale name>:3229/control/`. If the school WiFi blocks traffic between devices, `teletraan.local` will not open. Use the Tailscale name then.
+Address: `http://teletraan.local:3229/`. It opens a small page with two big buttons, Control page and Studio. The control page itself is `http://teletraan.local:3229/control/`. The Tailscale name of the Teletraan computer works the same way: `http://<tailscale name>:3229/`. If the school WiFi blocks traffic between devices, `teletraan.local` will not open. Use the Tailscale name then.
+
+The Studio has two ways in: the Studio button on the landing page and in the header of the control page (both open `/studio/` on port 3229), and port 3426, which goes straight to the Studio: `http://teletraan.local:3426/`. Port 3426 serves the Studio and nothing else.
 
 The page has five tabs: Update, Now showing, Status, Keys and Log. This page covers the service itself and the Update tab. The other tabs have their own notes in the page. The Now showing tab has a Play announcement button, which plays the announcements of Dashboard Settings through the request route, and a box to post a short announcement.
 
@@ -18,7 +20,7 @@ Do these once, in this order. The team mentor says yes to the Docker downloads i
    - starts the web server and the control service with `docker compose`, run as root, and turns on the nightly timer.
 
    The tool then installs the services and timers and restarts the screen (docs/updating-the-computer.md).
-2. Allow the computer's address in Sanity, so the Studio on the computer can read the dataset. Open sanity.io/manage, choose the project, then API, then CORS origins, then Add CORS origin. Add `http://teletraan.local:3229` with Allow credentials ticked, and do the same for `http://<tailscale name>:3229`. The Status tab says "CORS origin missing" until this is done.
+2. Allow the computer's address in Sanity, so the Studio on the computer can read the dataset. Open sanity.io/manage, choose the project, then API, then CORS origins, then Add CORS origin. Add `http://teletraan.local:3229` with Allow credentials ticked, and do the same for `http://<tailscale name>:3229`. If you open the Studio on port 3426, add `http://teletraan.local:3426` and `http://<tailscale name>:3426` too, because Sanity checks the address exactly as the browser shows it. The Status tab says "CORS origin missing" until this is done, and then names the 3426 address as well.
 3. Open the address above and type the PIN: 3229 or 3426. Nothing has to be set up for it.
 
 Release 1 is the old tree. It stays in the list as a record. It cannot be switched back to, because its folders are from before round 6.
