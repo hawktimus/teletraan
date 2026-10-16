@@ -1,7 +1,7 @@
 // Tests for the Screens (dashboard/core/screens.js): the three documents read, the Screen of each weekday, the rows
 // built from the Panel order, the list of the large panel, and the swaps between rows. The modules that hold the style
 // and the team (core/style.js and core/teams.js) are run too. Nothing is drawn and no clock runs. The page side
-// (core/screens-run.js) is in tests/look-rotation.test.mjs.
+// (core/views-run.js) is in tests/look-rotation.test.mjs.
 //
 //   node tests/screens.test.mjs
 

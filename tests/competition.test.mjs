@@ -1176,7 +1176,7 @@ test('requestTimeOf reads the time of the request and nothing else, and the hand
 test('the screen starts the preview runner after the other runners, hands the large panel its list through withCompetition, and the page glue asks the right questions', () => {
   const shell = read('shell.js');
   assert.ok(shell.includes("import { withCompetition } from './core/competition.js';"));
-  assert.ok(shell.includes("withCompetition(mainPlaylist(content, new Date()), content, new Date())"));
+  assert.ok(shell.includes("withCompetition(viewPlaylist(content, new Date()), content, new Date())"));
   assert.ok(shell.indexOf("./core/preview-run.js") < shell.indexOf("./core/competition-preview-run.js") && shell.indexOf('./core/competition-preview-run.js') < shell.indexOf('./core/team-run.js'));
   assert.ok(shell.includes("startOptional('./core/competition-preview-run.js', module => module.startCompetitionPreviewRunner(getContent));"));
   assert.ok(!shell.includes('withCompetition(sidePlaylist('), 'the small panel has no cards');

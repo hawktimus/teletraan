@@ -514,8 +514,8 @@ test('the default order has the Events panel once, and withPages leaves every ro
 test('shell.js gives the rotation of the large and the small panels through withPages', () => {
   const shell = read('shell.js');
   assert.ok(shell.includes("import { withPages, withStandIns } from './core/panel-order.js';"));
-  assert.ok(shell.includes("withPages(withCompetition(mainPlaylist(content, new Date()), content, new Date()))"), 'the competition cards are mixed in first and then every panel that says it has pages becomes a step for each');
-  assert.ok(shell.includes("withPages(sidePlaylist(content, new Date()))"));
+  assert.ok(shell.includes("withPages(withCompetition(viewPlaylist(content, new Date()), content, new Date()))"), 'the competition cards are mixed in first and then every panel that says it has pages becomes a step for each');
+  assert.ok(shell.includes("withPages(viewSidePlaylist(content))"));
   assert.ok(read('core/schedule.js').includes('buildPage(step.panel, getContent(), step.page, step)'));
   assert.ok(read('core/schedule.js').includes('canShow(step.panel, content, step.page)'));
 });

@@ -17,7 +17,7 @@
 // know about them: it tells whoever asked (the onLook of startThemes) each time
 // a look goes on, and they follow the overlay from there.
 //
-// A look is { theme, overlay, style }. The style (core/style.js) is the Style
+// A look is { theme, overlay, style, view }. The view (core/view-apply.js) is the one the views hold. The style (core/style.js) is the Style
 // setting, or ?style=, and it waits for the same moment as the theme. This file
 // only carries it: onLook puts data-style on the page, in the same step as the
 // classes. A style or theme with another layout waits for a swap (core/swap-run.js), which
@@ -30,6 +30,7 @@ import { themes } from '../themes/registry.js';
 import { overlays } from '../themes/overlays/registry.js';
 import { isKnownOverlay, isKnownTheme, previewedPack, resolveTheme } from './theme.js';
 import { chooseStyle } from './style.js';
+import { heldView } from './view-apply.js';
 
 const page = document.documentElement;
 const checkEvery = 60 * 1000;
@@ -38,7 +39,7 @@ const stylesheetWait = 2000;
 
 let readContent = null; // gives the newest content, set by startThemes
 let asked = { theme: null, overlay: null, style: null }; // ?theme=, ?overlay= and ?style= in the address, for trying a look
-let showing = { theme: '', overlay: '', style: '' }; // what the classes and data-style on the page say now
+let showing = { theme: '', overlay: '', style: '', view: '' }; // what the classes and data-style on the page say now
 let waiting = null; // { look, since }: a look that is not on screen yet
 let followLook = null; // called with the look each time it goes on the page. shell.js gives it, to show the overlay's decorations
 let holdLook = null; // asked before a look goes on the page, with the milliseconds it has waited: true means not now. shell.js gives it, for a theme with another layout (core/layout-apply.js)
@@ -70,7 +71,7 @@ function addStylesheets() {
 }
 
 function sameLook(a, b) {
-  return a.theme === b.theme && a.overlay === b.overlay && a.style === b.style;
+  return a.theme === b.theme && a.overlay === b.overlay && a.style === b.style && a.view === b.view;
 }
 
 // The theme and overlay the Look document asks for now, and the style Dashboard
@@ -84,6 +85,7 @@ function wantedLook() {
     if (asked.overlay === 'none') look.overlay = '';
     look.overlay = previewedPack() || look.overlay; // a preview wins over the address, like the style
     look.style = chooseStyle(content.settings ? content.settings.style : null, asked.style);
+    look.view = heldView(); // a view change goes on at the same moment, in the same swap
     return look;
   } catch (error) {
     console.error('Could not work out the theme', error);

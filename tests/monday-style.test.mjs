@@ -1,7 +1,7 @@
 // Tests for the Monday rows in the Monday style (docs/layouts.md, "The Screens" and "The swap"): a Monday row is in
 // the Monday style or it waits, going into the Monday cards and out of them is a swap, and a held look goes on in
 // a swap. The choices between rows are in dashboard/core/screens.js and tests/screens.test.mjs. Here the page side of
-// them, dashboard/core/screens-run.js, is run for real, with stand-ins for the swap, the schedule and the other parts
+// them, dashboard/core/views-run.js, is run for real, with stand-ins for the swap, the schedule and the other parts
 // of the screen, and a small page that says which layout it is drawn for. The swap itself is in tests/swap.test.mjs.
 //
 //   node tests/monday-style.test.mjs
@@ -37,7 +37,10 @@ const standIns = {
   'core/schedule.js': [
     'export const setLookHooks = hooks => { globalThis.mondayWorld.hooks = hooks; };',
     "export const skipRow = () => globalThis.mondayWorld.log.push('skipRow');",
+    "export const startListsOver = () => globalThis.mondayWorld.log.push('startListsOver');",
+    "export const moveOn = regions => globalThis.mondayWorld.log.push('moveOn ' + regions.join(' '));",
   ],
+  'core/panels.js': ['export const canShow = () => true;'],
   'core/swap-run.js': [
     "export const queueSwap = () => globalThis.mondayWorld.log.push('queueSwap');",
     "export const startSwaps = (busy, scale) => { globalThis.mondayWorld.swapBusy = busy; globalThis.mondayWorld.swapScale = scale; };",
@@ -59,6 +62,7 @@ const layoutModule = await import(base + 'core/layout.js');
 const sanity = await import(base + 'core/sanity.js');
 const registry = await import(base + 'registry.js');
 const teamsModule = await import(base + 'core/teams.js');
+const views = await import(base + 'core/views.js');
 
 const { styleCanGoOn } = screens;
 
@@ -117,18 +121,19 @@ async function start(options = {}) {
   globalThis.mondayWorld = world;
   setPage(options.page || 'standard');
   globalThis.window = { localStorage: fakeStorage(), sessionStorage: options.session === undefined ? fakeStorage() : options.session };
+  views.resetViews();
   screens.holdScreenLook({ team: '', style: '', monday: false });
   teamsModule.rotateTeam('');
 
-  const file = pathToFileURL(path.join(root, 'core/screens-run.js')).href + '?' + Math.random();
+  const file = pathToFileURL(path.join(root, 'core/views-run.js')).href + '?' + Math.random();
   const module = await import(file);
-  await module.startScreens(() => content, options.addressAsks === true);
+  await module.startViews(() => content, options.addressAsks === true);
 
   world.content = content;
   return world;
 }
 
-const step = (panel, team) => ({ panel: panel, show: true, team: team || '' });
+const step = (panel, team, view) => ({ panel: panel, show: true, team: team || '', view: view || 'general' });
 
 
 // The cards and the style
@@ -173,108 +178,103 @@ test('when the address asks for a style or a team the Screens hold nothing and a
 
 // A step is chosen: the look it needs is held
 
-test('a Monday row goes into the Monday style with a swap, the cards between hold one look, and the next row comes out with a swap', async () => {
+test('a step of a bar view is in the style of the bar with a swap into the view, the cards between hold one look, and the next view comes out with a swap', async () => {
   const world = await start();
 
-  world.hooks.begin(step('tasks', 'prime'));
-  assert.deepEqual(world.log, ['checkTheme'], 'the first row holds its look, and there is nothing to swap from');
-  assert.deepEqual(screens.heldLook(), { team: 'prime', style: 'original', monday: false });
+  world.hooks.begin(step('tasks', '', 'general'));
+  assert.deepEqual(world.log, ['checkTheme'], 'the first step holds its look, and there is nothing to swap from');
+  assert.deepEqual(screens.heldLook(), { team: '', style: 'original', monday: false });
 
   world.log.length = 0;
-  world.hooks.begin(step('monday-tasks', 'prime'));
-  assert.deepEqual(world.log, ['checkTheme', 'queueSwap'], 'Prime in Minimal: the look is held and the next page change is a swap');
+  world.hooks.begin(step('monday-tasks', 'prime', 'prime'));
+  assert.deepEqual(world.log, ['checkTheme', 'queueSwap'], 'Prime in the bar layout: the look is held and the next page change is a swap');
   assert.deepEqual(screens.heldLook(), { team: 'prime', style: 'minimal', monday: true });
 
   world.log.length = 0;
-  world.hooks.begin(step('monday-milestones', 'prime'));
-  world.hooks.begin(step('monday-progress', 'prime'));
+  world.hooks.begin(step('monday-done', 'prime', 'prime'));
+  world.hooks.begin(step('monday-board', 'prime', 'prime'));
   assert.deepEqual(world.log, [], 'the cards between are one look');
 
-  world.hooks.begin(step('tasks', 'nova'));
-  assert.deepEqual(world.log, ['checkTheme', 'queueSwap'], 'Nova back in the style of the day');
-  assert.deepEqual(screens.heldLook(), { team: 'nova', style: 'original', monday: false });
+  world.hooks.begin(step('tasks', '', 'general'));
+  assert.deepEqual(world.log, ['checkTheme', 'queueSwap'], 'General back in the standard layout and the style of the day');
+  assert.deepEqual(screens.heldLook(), { team: '', style: 'original', monday: false });
 });
 
-test('a Monday row in the style of the day holds no new style and queues no swap: the cards are a swap by themselves in full motion', async () => {
-  const world = await start({ content: contentWith(raw => { raw.screens.forEach(screen => { screen.mondayStyle = 'original'; }); }) });
-
-  world.hooks.begin(step('tasks', 'prime'));
+test('a Monday card in the General view is never in the bar style: the standard layout keeps the style of the day, and a Monday style of the standard layout is kept', async () => {
+  const world = await start();
+  world.hooks.begin(step('tasks'));
   world.log.length = 0;
-  world.hooks.begin(step('monday-progress', 'prime'));
-  assert.deepEqual(world.log, ['checkTheme'], 'the look is the same, so nothing is queued');
+  world.hooks.begin(step('monday-overall'));
+  assert.deepEqual(world.log, ['checkTheme'], 'the style is the same, so no swap is queued here');
   assert.equal(screens.heldLook().style, 'original');
   assert.equal(screens.heldLook().monday, true, 'but the screen knows it is in the Monday cards');
 
+  const same = await start({ content: contentWith(raw => { raw.screens.forEach(screen => { screen.mondayStyle = 'cybertron'; }); }) });
+  same.hooks.begin(step('tasks'));
+  same.hooks.begin(step('monday-overall'));
+  assert.equal(screens.heldLook().style, 'cybertron', 'the Monday style of a standard layout');
+
   world.log.length = 0;
   world.hooks.begin(step('photo'));
-  assert.deepEqual(world.log, ['checkTheme'], 'and out again');
-  assert.equal(screens.heldLook().monday, false);
+  assert.equal(screens.heldLook().monday, false, 'and out again');
 
   const swap = read('core/swap-run.js');
   assert.ok(swap.includes("if (!looked && (frame.motionNow() !== 'full' || (!isMondayCard(old.id) && !isMondayCard(next.id)))) return null;"), 'a Monday card on either side is a swap in full motion');
 });
 
-test('a row with no team, and a row for both teams, keep the team and hold no look when the style is the same', async () => {
+test('a step that comes from outside the views, a competition card, plays in the view on the screen and in its team', async () => {
   const world = await start();
 
-  world.hooks.begin(step('tasks', 'nova'));
+  world.hooks.begin(step('monday-tasks', 'nova', 'nova'));
   world.log.length = 0;
-  world.hooks.begin(step('photo'));
-  world.hooks.begin(step('events'));
   world.hooks.begin({ panel: 'competition-rank', show: true });
-  assert.deepEqual(world.log, []);
-  assert.equal(screens.heldLook().team, 'nova');
-
-  world.hooks.begin(step('monday-milestones-both', 'both'));
-  assert.deepEqual(world.log, ['checkTheme', 'queueSwap'], 'the cards of both teams are in the Monday style');
-  assert.deepEqual(screens.heldLook(), { team: 'nova', style: 'minimal', monday: true }, 'in the colors of the team that was on the screen');
+  assert.deepEqual(world.log, ['checkTheme'], 'the Monday cards end, and no swap is queued');
+  assert.deepEqual(screens.heldLook(), { team: 'nova', style: 'minimal', monday: false }, 'in the team and the style of the view');
+});
 });
 
 test('a step is asked about as the team it is drawn for, without that team being held', async () => {
   const world = await start();
-  world.hooks.begin(step('tasks', 'prime'));
+  world.hooks.begin(step('monday-tasks', 'prime', 'prime'));
   teamsModule.useTeams(world.content, new Date());
 
   const items = [{ team: 'nova' }, { team: 'prime' }, {}];
-  const asked = team => world.hooks.viewAs(step('tasks', team), () => items.map(item => teamsModule.showsForTeam(item)));
-  assert.deepEqual(asked('nova'), [true, false, true]);
-  assert.deepEqual(asked('prime'), [false, true, true]);
-  assert.deepEqual(asked(''), [false, true, true], 'a step with no team is asked as the team on the screen');
-  assert.deepEqual(asked('both'), [false, true, true]);
+  const asked = (team, view) => world.hooks.viewAs(step('tasks', team, view), () => items.map(item => teamsModule.showsForTeam(item)));
+  assert.deepEqual(asked('nova', 'nova'), [true, false, true]);
+  assert.deepEqual(asked('prime', 'prime'), [false, true, true]);
+  assert.deepEqual(asked('', 'general'), [false, true, true], 'a step with no team is asked as the team on the screen');
   assert.deepEqual(screens.heldLook().team, 'prime');
   assert.equal(teamsModule.wantedTeam().code, 'prime');
 });
 
-test('the Screen of the day decides the style of the plain rows, and the Monday style of that Screen the style of the Monday rows', async () => {
+test('the Screen of the day decides the style of the standard view', async () => {
   const world = await start({ content: contentWith(raw => {
     Object.keys(raw.settings.screenSchedule).forEach(day => { raw.settings.screenSchedule[day] = 'cybertron'; });
-    raw.screens.filter(screen => screen._id === 'screen-cybertron')[0].mondayStyle = 'original';
   }) });
 
-  world.hooks.begin(step('tasks', 'prime'));
+  world.hooks.begin(step('tasks'));
   assert.equal(screens.heldLook().style, 'cybertron');
-  world.hooks.begin(step('monday-tasks', 'prime'));
-  assert.equal(screens.heldLook().style, 'original', 'the Monday style of Cybertron, which is Original');
-  world.hooks.begin(step('tasks', 'prime'));
+  world.hooks.begin(step('monday-tasks', 'prime', 'prime'));
+  assert.equal(screens.heldLook().style, 'minimal', 'a bar view is in the bar style whatever the day says');
+  world.hooks.begin(step('tasks'));
   assert.equal(screens.heldLook().style, 'cybertron');
 });
 
 
-// Monday rows wait when their style cannot go on the page
+// A step waits when its style cannot go on the page
 
-test('a Monday row waits while the Monday style cannot go on the page, and is back when it can; every other row always fits', async () => {
+test('a step waits while its style cannot go on the page, and is back when it can', async () => {
   const world = await start();
-  const fits = id => world.hooks.fits(step(id, 'prime'));
+  const fits = (id, view) => world.hooks.fits(step(id, view === 'prime' ? 'prime' : '', view));
   const noted = fakeStorage();
   noted.setItem(layoutModule.reloadKey, 'bar-minimal');
 
-  ['tasks', 'events', 'photo', 'competition-rank'].forEach(id => assert.equal(fits(id), true, id));
-  ['monday-tasks', 'monday-milestones', 'monday-progress', 'monday-milestones-both'].forEach(id => assert.equal(fits(id), true, id + ' fits a page that changes layout as it runs'));
+  ['tasks', 'events', 'photo', 'competition-rank'].forEach(id => assert.equal(fits(id, 'general'), true, id));
+  ['monday-tasks', 'monday-done', 'monday-board'].forEach(id => assert.equal(fits(id, 'prime'), true, id + ' fits a page that changes layout as it runs'));
 
-  // a page that changes layout as it runs takes the Monday style whatever the note of a reload says
   for (const session of [noted, brokenStorage, null]) {
     const again = await start({ session: session });
-    assert.equal(again.hooks.fits(step('monday-tasks', 'prime')), true);
+    assert.equal(again.hooks.fits(step('monday-tasks', 'prime', 'prime')), true);
   }
 
   // a change of layout fails once: the page then reloads for a layout, and the old rules about the note come back
@@ -291,15 +291,15 @@ test('a Monday row waits while the Monday style cannot go on the page, and is ba
   }
   assert.equal(apply.layoutsChangeLive(), false);
 
-  const monday = async options => (await start(options)).hooks.fits(step('monday-tasks', 'prime'));
-  assert.equal(await monday({}), true, 'a page that may reload goes into Minimal and out of it');
-  assert.equal(await monday({ session: noted }), false, 'a page that reloaded a moment ago for that layout does not reload again, so Minimal does not come');
-  assert.equal(await monday({ session: brokenStorage }), false, 'nor does a page that cannot keep the note');
-  assert.equal(await monday({ session: null }), false, 'or has no storage');
-  assert.equal(await monday({ session: noted, page: 'bar-minimal' }), true, 'a page that is drawn for Minimal already needs no reload, whatever the note says');
+  const bar = async options => (await start(options)).hooks.fits(step('monday-tasks', 'prime', 'prime'));
+  assert.equal(await bar({}), true, 'a page that may reload goes into the bar layout and out of it');
+  assert.equal(await bar({ session: noted }), false, 'a page that reloaded a moment ago for that layout does not reload again, so the bar layout does not come');
+  assert.equal(await bar({ session: brokenStorage }), false, 'nor does a page that cannot keep the note');
+  assert.equal(await bar({ session: null }), false, 'or has no storage');
+  assert.equal(await bar({ session: noted, page: 'bar-minimal' }), true, 'a page that is drawn for the bar layout already needs no reload, whatever the note says');
 
   const plain = await start({ session: noted });
-  assert.equal(plain.hooks.fits(step('tasks', 'prime')), true, 'and the rows of the style of the day are never asked about');
+  assert.equal(plain.hooks.fits(step('tasks')), true, 'and the steps of the standard layout fit a standard page');
 });
 
 
@@ -307,6 +307,7 @@ test('a Monday row waits while the Monday style cannot go on the page, and is ba
 
 test('Next look now moves the large panel to the next row, once for each click, and holds no look of its own', async () => {
   const world = await start();
+  world.seconds(new Date()); // the clock takes its first view
   const request = at => { world.content.settings.nextLookRequest = { requestedAt: new Date(at).toISOString() }; };
   world.log.length = 0;
 
@@ -327,9 +328,9 @@ test('Next look now moves the large panel to the next row, once for each click, 
 // The page file
 
 test('the page side names the cards through the screens, asks the layout the way holdForLayout does, and leaves the look to the swap', () => {
-  const file = read('core/screens-run.js');
+  const file = read('core/views-run.js');
 
-  assert.ok(file.includes("return !isMondayPanel(step.panel) || mondayStyleFits(planFor(getContent(), new Date()).mondayStyle);"));
+  assert.ok(file.includes("return styleFits(lookOf(step).style);"));
   assert.ok(file.includes('const wanted = drawnFor(layoutFor(style, layoutOf(theme)), shapesFor(style));'), 'the layout is worked out as layout-apply.js does');
   assert.ok(read('core/layout-apply.js').includes('const wanted = drawnFor(layoutFor(look.style, layoutOf(look.theme)), shapesFor(look.style));'));
   assert.ok(file.includes('window.sessionStorage.getItem(reloadKey) !== wanted'), 'the note of mustReload');

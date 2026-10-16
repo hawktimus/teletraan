@@ -517,7 +517,7 @@ test('the sidebar and the bar layouts still give the large frame its pages, and 
 
 test('shell.js gives the small frame the list with its spares and its last resort', () => {
   const shell = read('dashboard/shell.js');
-  assert.ok(shell.includes("startRotationForLayouts('grid2', () => withStandIns(withPages(sidePlaylist(content, new Date()))), getContent);"));
+  assert.ok(shell.includes("startRotationForLayouts('grid2', () => withStandIns(withPages(viewSidePlaylist(content))), getContent);"));
   assert.ok(shell.includes("withStandIns } from './core/panel-order.js';"));
 });
 

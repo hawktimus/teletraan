@@ -1,5 +1,5 @@
 // Tests for the page side of the Screens: what the large panel asks the Screens (core/schedule.js, run for
-// real with stand-ins for the page), the files that hand a look to the screen (core/screens-run.js), the style
+// real with stand-ins for the page), the files that hand a look to the screen (core/views-run.js), the style
 // and the team being held the way a preview holds them, the Next look now guard, and the swap being the one way a
 // look goes on. The Screens themselves (the documents, the weekday, the rows and the choices between rows) are in
 // tests/screens.test.mjs. Nothing is drawn and no clock runs.
@@ -125,14 +125,14 @@ test('a team the Screens hold wins over Team mode and loses to a preview and the
 });
 
 test('the style and the team go on the page only through the modules a preview uses, and the page change puts both on in one step', () => {
-  const run = read('core/screens-run.js');
+  const run = read('core/views-run.js');
   const held = read('core/screens.js');
   const areas = read('core/areas.js');
 
   assert.ok(/function holdLook\(look\) \{\s*holdScreenLook\(look\);\s*useTeams\(getContent\(\), new Date\(\)\);\s*noteWantedTeam\(\);\s*checkTheme\(\);\s*\}/.test(run));
   assert.ok(/held = \{ team: look\.team, style: look\.style, monday: look\.monday === true \};\s*rotateStyle\(held\.style\);\s*rotateTeam\(held\.team\);/.test(held), 'holdScreenLook hands both to the modules a preview uses');
   ['applyStyle', 'applyTeamLook', 'dataset.style', 'classList', 'setProperty'].forEach(name => {
-    assert.ok(!run.includes(name), 'screens-run.js should not touch the page with ' + name);
+    assert.ok(!run.includes(name), 'views-run.js should not touch the page with ' + name);
     assert.ok(!held.includes(name), 'screens.js should not touch the page with ' + name);
   });
   assert.ok(areas.includes('if (region === themeRegion) changeThemeNow();\n    if (region === themeRegion) changeTeamNow();'), 'the page change still puts the style and the team on together');
@@ -242,21 +242,21 @@ test('a click in the settings of content that has none is no click', () => {
 });
 
 test('a press moves the large panel to the next row, and the page gives the runner nothing else to do', () => {
-  const run = read('core/screens-run.js');
+  const run = read('core/views-run.js');
 
   assert.ok(/function pressed\(\) \{\s*skipRow\(\);\s*\}/.test(run));
   assert.ok(run.includes('makeNextLookRunner({ getContent: getContent, storage: savedStorage(), busy: busy, next: pressed })'));
-  assert.ok(/function begin\(step\) \{[\s\S]*?holdLook\(to\);\s*if \(changes\.swap\) queueSwap\(\);\s*\}/.test(run), 'a look that is held is a swap at the next page change of the large panel');
+  assert.ok(/function begin\(step\) \{[\s\S]*?holdLook\(to\);\s*if \(changes\.swap \|\| moved\) queueSwap\(\);\s*\}/.test(run), 'a look that is held is a swap at the next page change of the large panel');
   assert.ok(run.includes('setLookHooks({ viewAs: viewAs, fits: fits, begin: begin });'));
   assert.ok(run.includes('startSwaps(busyElsewhere, swapScaleNow);'));
 });
 
 test('the page asks for the screen through one busy check that has every one of those, and the swap itself', () => {
-  const run = read('core/screens-run.js');
+  const run = read('core/views-run.js');
   const busy = /function busy\(\) \{\s*return ([^;]+);/.exec(run);
   const elsewhere = /function busyElsewhere\(\) \{\s*return ([^;]+);/.exec(run);
 
-  assert.ok(busy && elsewhere, 'screens-run.js has a busy function and one for what is not the swap');
+  assert.ok(busy && elsewhere, 'views-run.js has a busy function and one for what is not the swap');
   assert.ok(busy[1].includes('swapRunning()') && busy[1].includes('busyElsewhere()'), 'busy checks the swap and the rest');
   ['takeoverRunning()', 'demoRunning()', 'nightIsUp()', 'hiddenPlaying()'].forEach(name => assert.ok(elsewhere[1].includes(name), 'busy checks ' + name));
   assert.ok(!elsewhere[1].includes('swapRunning'), 'a swap asks about everything but itself');
@@ -272,7 +272,7 @@ test('a swap never starts while something else has the screen: swap-run.js refus
 test('the swap holds the clock of the pages with its own count, and gives it back whatever happens', () => {
   const run = read('core/swap-run.js');
   const schedule = read('core/schedule.js');
-  assert.ok(!read('core/screens-run.js').includes('pauseRotation'), 'the Screens pause nothing: the swap holds the clock');
+  assert.ok(!/\bpauseRotation\(|\bresumeRotation\(/.test(read('core/views-run.js')), 'the views pause nothing: the swap holds the clock');
   assert.ok(/holdClock\(true\);\s*try \{[\s\S]*\} finally \{[\s\S]*holdClock\(false\);/.test(run), 'the clock is held in play() and let go in finally');
   assert.equal((run.match(/holdClock\(true\)/g) || []).length, 1);
   assert.equal((run.match(/holdClock\(false\)/g) || []).length, 1);
@@ -315,7 +315,7 @@ test('the swap is the page change of the large panel: areas.js asks for it first
 });
 
 test('the swaps move only transform, opacity and lines: the new code has no animation of its own', () => {
-  ['core/screens.js', 'core/screens-run.js'].forEach(file => {
+  ['core/screens.js', 'core/views-run.js'].forEach(file => {
     const source = read(file);
     ['blur', 'box-shadow', 'drop-shadow', 'requestAnimationFrame', '.animate(', 'keyframes', 'style.transform', 'style.opacity'].forEach(word => assert.ok(!source.includes(word), file + ' should not contain ' + word));
   });
@@ -328,17 +328,17 @@ test('the page holds the Screen of the day before it draws, starts the Screens a
   const style = shell.indexOf("startStyle(params.get('style'), savedStyle);");
   assert.ok(team !== -1 && held > team && style > held, 'the look is held after the team is asked for and before the style is chosen');
   assert.ok(shell.includes("if (params.get('show') || stress || onlyTasks) return;"));
-  assert.ok(shell.includes('holdBootScreen(savedContent(), new Date());'));
-  assert.ok(shell.includes("module.startScreens(getContent, params.has('style') || params.has('team'))"));
-  assert.ok(shell.indexOf("'./core/screens-run.js'") > shell.indexOf("'./core/team-run.js'"), 'after the ones it asks about');
-  assert.ok(/if \(addressAsks\) return;/.test(read('core/screens-run.js')));
+  assert.ok(shell.includes('holdBootView(savedContent(), new Date());'));
+  assert.ok(shell.includes("module.startViews(getContent, params.has('style') || params.has('team'))"));
+  assert.ok(shell.indexOf("'./core/views-run.js'") > shell.indexOf("'./core/team-run.js'"), 'after the ones it asks about');
+  assert.ok(/if \(addressAsks\) return;/.test(read('core/views-run.js')));
 });
 
 test('the lists come from the Screen on the screen, and the name effect and the hawk follow its minutes', () => {
   const shell = read('shell.js');
 
-  assert.ok(shell.includes("withPages(withCompetition(mainPlaylist(content, new Date()), content, new Date()))"), 'the competition cards are mixed in first and then every panel with more than one page becomes its steps');
-  assert.ok(shell.includes("startRotationForLayouts('grid2', () => withStandIns(withPages(sidePlaylist(content, new Date()))), getContent);"), 'the small frame has its list in every layout, with its spares and its last resort');
+  assert.ok(shell.includes("withPages(withCompetition(viewPlaylist(content, new Date()), content, new Date()))"), 'the competition cards are mixed in first and then every panel with more than one page becomes its steps');
+  assert.ok(shell.includes("startRotationForLayouts('grid2', () => withStandIns(withPages(viewSidePlaylist(content))), getContent);"), 'the small frame has its list in every layout, with its spares and its last resort');
   assert.ok(shell.includes('frame.setHawk(settings.logoHawk, cadence.hawkEverySeconds, settings.logoHawkDuration);'));
   assert.ok(shell.includes('frame.setNameEffect(settings.nameTransform, cadence.nameEverySeconds, settings.nameDuration);'));
   assert.ok(shell.includes('useLogoSettings(content.settings, currentScreen(content));'));

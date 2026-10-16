@@ -15,9 +15,9 @@
 // setting (frame.pace()). Announcements and alerts do not: the editors give
 // their seconds directly.
 //
-// The list of the large panel is the rows of the Screen that plays (core/screens.js). When a row is chosen, before its
-// page is built, the Screens are asked what look the row needs: the team and the style it plays in
-// (setLookHooks below, core/screens-run.js).
+// The list of the large panel is the rows of the view that plays (core/views.js). When a row is chosen, before its
+// page is built, the views are asked what look the row needs: the team, the style and the view it plays in
+// (setLookHooks below, core/views-run.js).
 
 import * as frame from '../frame.js';
 import { defaultSettings } from '../config.js';
@@ -68,10 +68,20 @@ let pagesRefreshed = 0;
 // from the first panel.
 let restarts = 0;
 
+// Counts the calls to startListsOver(). A loop that sees a new number plays its list from the first step, and
+// nothing on screen is cleared.
+let listResets = 0;
+
+// The views (core/views-run.js) move to the next view: both lists begin again at the first step of the view
+// that comes, at the next page change, while the frames and the page on screen stay as they are
+export function startListsOver() {
+  listResets += 1;
+}
+
 // Counts the calls to skipRow(). The loop of the large panel that sees a new number leaves the row it is on.
 let rowSkips = 0;
 
-// Next look now (core/screens-run.js): the large panel leaves the row on screen, with every step of it, and plays
+// Next look now (core/views-run.js): the large panel leaves the row on screen, with every step of it, and plays
 // the first step of the next row within a quarter of a second
 export function skipRow() {
   rowSkips += 1;
@@ -92,7 +102,7 @@ function changeCount(region) {
 // holding a page still. A region that is changing page has no entry.
 const holdLeft = {};
 
-// The Screens give these, once, when they start (core/screens-run.js). The large panel asks them about its steps:
+// The Screens give these, once, when they start (core/views-run.js). The large panel asks them about its steps:
 //   viewAs(step, run)  runs run() as the team the step is drawn for: its own, or the team on the screen when it has none.
 //                  It is how a step is asked whether it has content, because the team goes on the screen only when the
 //                  step is chosen
@@ -313,6 +323,15 @@ function runRotation(region, getPlaylist, getContent) {
     return found.step;
   }
 
+  let seenListResets = listResets;
+
+  function followListResets() {
+    if (seenListResets === listResets) return;
+
+    seenListResets = listResets;
+    position = -1;
+  }
+
   // A restart has been asked for: the list begins again at its first panel
   function followRestarts() {
     if (seenRestarts === restarts) return;
@@ -380,6 +399,7 @@ function runRotation(region, getPlaylist, getContent) {
         await waitForLayout();
         await waitWhilePaused();
         followRestarts();
+        followListResets();
         followRowSkips();
         const since = changeCount(region);
         const next = pickPage();

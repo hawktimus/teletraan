@@ -215,7 +215,7 @@ test('the screen plays the rows of a Screen, and only the Screens read the Panel
   const seed = read('core/screen-seed.js');
 
   assert.ok(shell.includes("import { withPages, withStandIns } from './core/panel-order.js';"));
-  assert.ok(shell.includes('mainPlaylist(content, new Date())') && shell.includes('sidePlaylist(content, new Date())'));
+  assert.ok(shell.includes('viewPlaylist(content, new Date())') && shell.includes('viewSidePlaylist(content)'));
   assert.ok(!/playlistOf|rotation\(\)/.test(shell), 'shell.js should not read the Panel order');
   assert.ok(seed.includes("playlistOf(rotation, 'grid1')") && seed.includes("playlistOf(rotation, 'grid2')"));
   assert.ok(!/rotation\.grid[12]|\.grid[12]\b/.test(seed + read('core/screens.js')), 'the Screens should not read the older lists themselves');

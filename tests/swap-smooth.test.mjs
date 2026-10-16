@@ -1215,7 +1215,7 @@ test('the Screen of the day changes once a day, at midnight, and follows the wee
 // The page side
 
 test('the page does not reload for a change of look: only a layout change that failed does, in core/layout-apply.js', () => {
-  ['core/swap-run.js', 'core/swap-plan.js', 'core/screens-run.js', 'core/areas.js', 'core/schedule.js', 'core/theme-apply.js'].forEach(file => {
+  ['core/swap-run.js', 'core/swap-plan.js', 'core/views-run.js', 'core/areas.js', 'core/schedule.js', 'core/theme-apply.js'].forEach(file => {
     assert.ok(!/location\.reload/.test(withoutComments(read(file))), file + ' does not reload the page');
   });
   const apply = withoutComments(read('core/layout-apply.js'));
@@ -1232,13 +1232,13 @@ test('shell.js puts the layout on in the step that puts the look on, before the 
   assert.ok(body.includes('catch'), 'a problem never stops the colors');
   assert.ok(/holdLooksFor\(\(look, waitedMs\) => holdForLayout\(look, takeoverRunning, waitedMs, \(\) => !stayStarted \|\| swapIsPlaying\(\)\)\);/.test(shell), 'a look with another layout goes on when a swap has the screen, or before anything is drawn');
   assert.ok(shell.includes("startOptional('./core/swap-run.js', module => { swapIsPlaying = module.swapRunning; });"));
-  assert.ok(shell.includes("startRotationForLayouts('grid2', () => withStandIns(withPages(sidePlaylist(content, new Date()))), getContent);"), 'the small frame has its list in every layout, with its spares and its last resort');
+  assert.ok(shell.includes("startRotationForLayouts('grid2', () => withStandIns(withPages(viewSidePlaylist(content))), getContent);"), 'the small frame has its list in every layout, with its spares and its last resort');
   assert.ok(shell.includes("['banner', 'countdown', 'column'].forEach(region => { document.getElementById('region-' + region).innerHTML = ''; });"), 'the panels of the old layout are taken away');
   assert.ok(/fixedPanels\(layoutNow\(\)\)\.forEach\(id => showFixedPanel\(id, false\)\);\n\}/.test(shell), 'and the panels of the new one are drawn');
 });
 
 test('the Screens take the Monday style as one a page can always show while its layout changes live', () => {
-  const run = read('core/screens-run.js');
+  const run = read('core/views-run.js');
   assert.ok(run.includes("import { layoutsChangeLive } from './layout-apply.js';"));
   assert.ok(run.includes('if (wanted === onPage || layoutsChangeLive()) return true;'));
   assert.ok(run.includes('window.sessionStorage.getItem(reloadKey) !== wanted'), 'the old answer is still there for a page whose change has failed');

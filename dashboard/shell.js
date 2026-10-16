@@ -51,7 +51,9 @@ import { changeLayout, holdForLayout, startLayout } from './core/layout-apply.js
 import { decorationLayers, hasKit, layoutNow } from './core/layout.js';
 import { redrawFrames } from './core/areas.js';
 import { applyStyle, recordShapes, shapesFor, shapesNow, startStyle } from './core/style.js';
-import { cadenceOf, currentScreen, holdBootScreen, mainPlaylist, onScreenChange, sidePlaylist } from './core/screens.js';
+import { cadenceOf, currentScreen, onScreenChange } from './core/screens.js';
+import { applyView } from './core/view-apply.js';
+import { holdBootView, viewPlaylist, viewSidePlaylist } from './core/views.js';
 import { resumePreview } from './core/preview.js';
 import { loadPanel, mountPanel, updatePanel } from './core/panels.js';
 import { withPages, withStandIns } from './core/panel-order.js';
@@ -204,11 +206,11 @@ async function run() {
       // The team on the screen, which in Alternate mode changes with the clock (core/teams.js)
       startOptional('./core/team-run.js', module => module.startTeams(getContent));
 
-      // The Screens: the look of each row of the large panel, the swaps, and the Next look now button in the Studio.
+      // The views: the look of each step of the large panel, the swaps, and the Next look now button in the Studio.
       // After the ones they ask about. ?style= and ?team= in the address win over them, so then they do nothing
       if (!onlyTasks) {
         startOptional('./core/swap-run.js', module => { swapIsPlaying = module.swapRunning; });
-        startOptional('./core/screens-run.js', module => module.startScreens(getContent, params.has('style') || params.has('team')));
+        startOptional('./core/views-run.js', module => module.startViews(getContent, params.has('style') || params.has('team')));
       }
     }
 
@@ -228,13 +230,13 @@ async function run() {
   }
 }
 
-// The Screens (core/screens.js) hold the style and the team of the first row of the Screen of the day, from the
+// The views (core/views.js) hold the view, the style and the team of the first step of the first view, from the
 // saved copy of the content, so that the screen starts in them. The test views leave the Screens out.
 function holdSavedScreen() {
   if (params.get('show') || stress || onlyTasks) return;
 
   try {
-    holdBootScreen(savedContent(), new Date());
+    holdBootView(savedContent(), new Date());
   } catch (error) {
     console.error('Could not work out the look to start with', error);
   }
@@ -493,13 +495,13 @@ function startWhatComesAndGoes() {
     return;
   }
 
-  // The large panel plays the rows of the Screen that is on the screen, and the small panel its side rows
-  // (core/screens.js). A panel that says it has pages in registry.js is a step for each page (withPages). None does now: the
+  // The large panel plays the rows of the view that is on the screen, and the small panel its side rows
+  // (core/views.js). A panel that says it has pages in registry.js is a step for each page (withPages). None does now: the
   // Events panel draws both of its pages and scrolls from the first to the next (core/schedule.js, scrollPages).
   // The competition cards that are due are mixed into the large panel's list each time it is read (core/competition.js)
-  startRotation('grid1', () => (onlyTasks ? [{ panel: 'tasks', show: true, seconds: 12 }] : withPages(withCompetition(mainPlaylist(content, new Date()), content, new Date()))), getContent);
+  startRotation('grid1', () => (onlyTasks ? [{ panel: 'tasks', show: true, seconds: 12 }] : withPages(withCompetition(viewPlaylist(content, new Date()), content, new Date()))), getContent);
   if (!onlyTasks) {
-    startRotationForLayouts('grid2', () => withStandIns(withPages(sidePlaylist(content, new Date()))), getContent); // waits while the layout has no small frame
+    startRotationForLayouts('grid2', () => withStandIns(withPages(viewSidePlaylist(content))), getContent); // waits while the layout has no small frame
 
     startTicker(getContent);
   }
@@ -591,6 +593,19 @@ function useStyle(look) {
   }
 }
 
+// The view of the look (core/view-apply.js). It goes on in the same step as the layout and the style, and the two banners,
+// which carry the name of the view, are drawn again when it changes. A problem here never stops the colors.
+function useView(look) {
+  try {
+    if (!applyView(look.view) || !content) return;
+
+    updatePanel('banner', content);
+    updatePanel('bar-banner', content);
+  } catch (error) {
+    console.error('Could not put the view on the page', error);
+  }
+}
+
 // What goes with each look that goes on the page: the style, the neon kit, and the
 // decorations of the overlay's seasonal pack (core/season.js,
 // docs/seasonal-packs.md). theme-apply.js calls this each time a look goes on
@@ -599,6 +614,7 @@ function useStyle(look) {
 function showDecorations(look) {
   useLayout(look);
   useStyle(look);
+  useView(look);
   useKit(look);
   if (!look.overlay && !decorationsUsed) return;
 
