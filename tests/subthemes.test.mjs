@@ -120,7 +120,8 @@ check('the layer makes one symbol for each slot and points at it with use', () =
 });
 
 check('the stylesheet moves only transform and opacity, and only in full motion', () => {
-  const css = read('dashboard/subthemes.css');
+  const all = read('dashboard/frame.css');
+  const css = all.slice(all.indexOf('/* The subtheme layer'));
   subthemeMotions.filter(name => name !== 'none').forEach(name => {
     assert.ok(css.includes('html[data-motion="full"] .subtheme-sprite[data-motion="' + name + '"]'), name + ' should play only in full motion');
     assert.ok(css.includes('@keyframes subtheme-' + name));
@@ -131,7 +132,7 @@ check('the stylesheet moves only transform and opacity, and only in full motion'
   const playing = css.split('\n').filter(line => line.includes('animation:'));
   assert.equal(playing.length, 3);
   playing.forEach(line => assert.ok(line.startsWith('html[data-motion="full"] '), 'an animation outside full motion: ' + line));
-  assert.ok(read('dashboard/index.html').includes('subthemes.css'));
+  assert.ok(read('dashboard/index.html').includes('subthemes.css') && !read('dashboard/subthemes.css').includes('animation'));
 });
 
 check('the Studio type offers the same places, motions and sizes as the dashboard', () => {

@@ -1810,3 +1810,14 @@ html:not([data-motion="full"]) .logo[data-act="fly"] .hawk-far-wing { transform:
 [data-motion="none"] .panel [data-idle] { animation: none; }
 [data-motion="none"] .panel[data-state="out"] [data-part] { opacity: 0; }
 [data-motion="none"] #crt { display: none; }
+
+
+
+/* The subtheme layer (core/subthemes-layer.js): transform and opacity only, in full motion only */
+@keyframes subtheme-drift { 0%, 100% { transform: translateX(-3px); } 50% { transform: translateX(3px); } }
+@keyframes subtheme-blink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+@keyframes subtheme-fall  { from { transform: translateY(-100%); } to { transform: translateY(100%); } }
+
+html[data-motion="full"] .subtheme-sprite[data-motion="drift"] { animation: subtheme-drift 4s ease-in-out infinite; }
+html[data-motion="full"] .subtheme-sprite[data-motion="blink"] { animation: subtheme-blink 2s ease-in-out infinite; }
+html[data-motion="full"] .subtheme-sprite[data-motion="fall"]  { animation: subtheme-fall 20s linear infinite; }
