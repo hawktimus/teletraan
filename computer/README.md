@@ -18,7 +18,7 @@ installing anything on the computer, and whenever a step needs a login or a key.
 - `tools/teletraan/teletraan-tool` runs on a Mac. It copies the files to the computer
   instead of pulling, keeps the keys and calendar lines of `local.env`, installs
   the services and shows the status (`docs/updating-the-computer.md`). Its words
-  `update`, `status` and `restart` do one thing with no menu.
+  `update` (the same as the menu's Install everything), `status` and `restart` do one thing with no menu.
 - `tools/mac/ship.sh` runs on the Mac you work on, not on the computer. It checks the code,
   pushes to GitHub, deploys the Studio and runs `teletraan-tool update --yes`, so
   the computer gets the files from that Mac and the screen restarts

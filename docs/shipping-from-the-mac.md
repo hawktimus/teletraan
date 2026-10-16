@@ -4,7 +4,7 @@
 one window: it checks the code, commits and pushes it to GitHub, deploys the
 Studio, and has the Mac tool copy the files to the Teletraan computer and restart the screen.
 It stores no password. Git, Sanity, ssh and sudo each ask you for theirs, in the
-same window, when they need it.
+same window, when they need it. The Mac tool asks for the sudo password once per run.
 
 The Teletraan computer gets its files from the Mac, not from GitHub. The Mac tool
 (`tools/teletraan/teletraan-tool`, `docs/updating-the-computer.md`) copies the folder you
@@ -87,10 +87,10 @@ and goes on.
    hosted Studio, and Sanity reads it. If it says you are not logged in, stop and
    run `npx sanity login` in the `studio` folder, then start again.
 4. **The Teletraan computer.** Runs `tools/teletraan/teletraan-tool update --yes`. The Mac tool
-   copies this folder to `/opt/teletraan` on the computer with `rsync`, leaves the
-   computer's `local.env`, `.git` and `node_modules` alone, and restarts the screen
-   with `sudo systemctl restart teletraan-kiosk.service`. The screen is black for
-   about ten seconds. `ssh -t` lets `sudo` ask for the computer's password in this
+   copies this folder to a staging folder on the computer with `rsync`, leaves the
+   computer's `local.env`, `.git` and `node_modules` alone, installs the files as the
+   next release, installs the services and restarts the screen. The screen is black for
+   about ten seconds. The tool asks for the computer's password once in this
    window. `--yes` skips the Go ahead question only. A screen that is open does
    not reload by itself after a copy, which is why the restart is part of the
    update. If a file in `computer/` changed, follow `computer/README.md`.
@@ -116,7 +116,7 @@ computer:
 The script says "could not reach". Check that the Teletraan computer is on and that this Mac is
 on the same network, or on Tailscale. If the name does not resolve, find the
 computer's IP address (`docs/rebuilding-the-computer.md`, "Finding the computer on the
-network") and save it with the Mac tool (choice 7, then `a`).
+network") and save it with the Mac tool (choice `c`, then `a`).
 
 To stop typing the Teletraan computer's ssh password, set up a key once with
 `ssh-copy-id hawktimus@teletraan.local` (it asks for the password one last time).
@@ -125,7 +125,7 @@ To stop typing the Teletraan computer's ssh password, set up a key once with
 ## Changing the settings
 
 The Teletraan computer's address is not in `ship.sh` any more. The Mac tool keeps it in
-`~/.teletraan/config`, and choice 7 of the tool picks another computer or adds one.
+`~/.teletraan/config`, and choice `c` of the tool picks another computer or adds one.
 Ship uses the computer that is in use. The computer's repository folder and the name of
 the screen's service are two lines at the top of `tools/teletraan/teletraan-tool`:
 `COMPUTER_REPO` and `COMPUTER_KIOSK`. They are not secrets, so they are written in the

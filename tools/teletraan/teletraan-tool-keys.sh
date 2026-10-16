@@ -151,7 +151,7 @@ edit_calendars() {
   done
 }
 
-# 2. The form for the keys and the calendars
+# The form for the keys and the calendars
 keys_and_calendars() {
   local i=0
   step "Keys and calendars for the Teletraan computer $computer_name"
@@ -160,7 +160,7 @@ keys_and_calendars() {
   change_count=0
 
   say "Each value is shown as its first 4 characters and dots. For a key, press e to edit it, k to keep it or c to clear it."
-  say "A Mac that has no saved values yet should use choice 3 first, so the Teletraan computer's values are shown here."
+  say "A Mac that has no saved values yet should copy the Teletraan computer's values first (choice 2 of Keys and calendars), so they are shown here."
 
   while [ "$i" -lt "$form_key_count" ]; do
     edit_key "$i"

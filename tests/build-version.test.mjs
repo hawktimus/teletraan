@@ -152,6 +152,7 @@ test('a pull removes the stamp, so git is the truth again', () => {
 // The Mac tool, with the Teletraan computer as a folder
 
 const fakeSsh = `#!/bin/sh
+case " $* " in *" -O "*) exit 0 ;; esac
 echo "ssh $*" >> "$STUB_LOG"
 while [ "$#" -gt 0 ]; do
   case $1 in
@@ -204,10 +205,10 @@ test('the Mac tool update hands the installer the commit of this repository, aft
   assert.equal(result.status, 0, result.errors);
 
   const copy = result.calls.findIndex(line => line.startsWith('rsync '));
-  const install = result.calls.findIndex(line => line.includes('install.sh'));
+  const install = result.calls.findIndex(line => line.startsWith('ssh ') && line.includes("sudo -S -p '' bash -c"));
   assert.ok(copy !== -1 && install > copy, result.calls.join(' / '));
   const git = args => spawnSync('git', ['-C', repo].concat(args), { encoding: 'utf8' }).stdout.trim();
-  assert.ok(result.calls[install].includes('--commit ' + git(['rev-parse', '--short', 'HEAD'])), result.calls[install]);
+  assert.ok(result.calls.join('\n').includes(' bash ~/teletraan-staging \'' + git(['rev-parse', '--short', 'HEAD']) + '\' '), 'the hash is the second word given to the installer shell: ' + result.calls.join(' / '));
 });
 
 test('the Mac tool says so and goes on when the folder has no git history, and the installer still runs', () => {
@@ -226,8 +227,7 @@ test('the Mac tool says so and goes on when the folder has no git history, and t
   const result = place.run(['update', '--yes']);
   assert.equal(result.status, 0, result.errors);
   assert.ok(result.text.includes('no git history'), result.text);
-  const install = result.calls.find(line => line.includes('install.sh'));
-  assert.ok(install && !install.includes('--commit'), 'the release has no hash: ' + install);
+  assert.ok(result.calls.join('\n').includes(" bash ~/teletraan-staging '' "), 'the release has no hash: ' + result.calls.join(' / '));
 });
 
 test('the status document and the Studio block carry the three fields and the line On the wall', () => {

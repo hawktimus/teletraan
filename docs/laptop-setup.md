@@ -194,15 +194,15 @@ If it says there is no key to send, make one, press Return at the questions
 ssh-keygen -t ed25519
 ```
 
-`sudo` on the Teletraan computer still asks for its password when the screen restarts. That
+`sudo` on the Teletraan computer still asks for its password, once for each run of the tool. That
 is on purpose. Nothing stores a password.
 
 ## 8. Keys and calendars (only if this laptop will change them)
 
 The three keys and the calendar links live on the Teletraan computer, in `computer/local.env`.
 They are not in GitHub, and shipping never touches them. This laptop needs them
-only to change a key or a calendar with choice 2 of the Mac tool. To bring
-them over, start the tool, choose 3, and answer `y`:
+only to change a key or a calendar with choice 3, then 1, of the Mac tool. To bring
+them over, start the tool, choose 3, then 2, and answer `y`:
 
 ```
 tools/teletraan/teletraan-tool
@@ -221,7 +221,7 @@ Open `Ship Teletraan.app`. It opens Terminal and shows a menu:
 | 1 | Ship everything: the three steps below, in order, after a look at this Mac and at GitHub |
 | 2 | Push only: runs the checks, commits and pushes to GitHub |
 | 3 | Studio only: puts the Studio's forms on sanity.io |
-| 4 | Update the Teletraan computer only: copies the files and restarts the screen |
+| 4 | Update the Teletraan computer only: installs everything and restarts the screen |
 | 5 | Status of the Teletraan computer: what it last did |
 
 Choice 1 does these in order. Each step stops the whole run when it fails:
@@ -230,9 +230,9 @@ Choice 1 does these in order. Each step stops the whole run when it fails:
    commits it and pushes it to GitHub (`git push`).
 2. **Studio.** Runs `npm run deploy` in `studio/`. It asks nothing about a
    hostname, because `studio/sanity.cli.js` names the team's Studio.
-3. **Teletraan computer.** Runs `tools/teletraan/teletraan-tool update --yes`. It copies this
-   folder to the Teletraan computer and restarts the screen. It asks for the computer's password
-   here in the window.
+3. **Teletraan computer.** Runs `tools/teletraan/teletraan-tool update --yes`, the same as
+   choice 1 of the Mac tool. It copies this folder to the Teletraan computer, installs it, installs
+   the services and restarts the screen. It asks for the computer's password once, here in the window.
 
 `docs/shipping-from-the-mac.md` explains each step.
 

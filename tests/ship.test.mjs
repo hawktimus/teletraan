@@ -163,7 +163,7 @@ function makePlace(name, options = {}) {
         STUB_LOG: place.log,
         STUB_DIR: place.stub,
         STUB_FAKES: place.bin,
-        COMPUTER_REPO: '/opt/teletraan-test',
+        COMPUTER_REPO: path.join(place.stub, 'computer-repo'),
       };
       if (run.message) env.SHIP_MESSAGE = run.message;
       const input = run.input && run.input.length ? run.input.join('\n') + '\n' : '';
@@ -175,6 +175,7 @@ function makePlace(name, options = {}) {
   [place.home, place.stub, place.bin].forEach(folder => fs.mkdirSync(folder, { recursive: true }));
   Object.keys(fakes).filter(program => !(options.without || []).includes(program)).forEach(program => writeExecutable(path.join(place.bin, program), fakes[program]));
   fs.writeFileSync(place.log, '');
+  ['calendars', 'slides', 'monday', 'frc', 'console', 'watchdog', 'backup', 'nightly'].forEach(entry => writeExecutable(path.join(place.stub, 'computer-repo/computer/scripts/install-' + entry + '.sh'), '#!/bin/sh\nexit 0\n'));
   writeExecutable(path.join(place.stub, 'computer-home/teletraan-staging/computer/install.sh'), '#!/bin/sh\necho "install.sh $*" >> "$STUB_LOG"\n[ -f "$STUB_DIR/install.exit" ] && exit "$(cat "$STUB_DIR/install.exit")"\nexit 0\n');
 
   writeExecutable(path.join(place.repo, 'tools/mac/ship.sh'), fs.readFileSync(shipSource, 'utf8'));

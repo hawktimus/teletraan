@@ -320,14 +320,16 @@ test('the first run saves nothing when the address is not user@host or ssh canno
   assert.ok(!leading.calls().includes('ProxyCommand'));
 });
 
-test('the menu lists the six choices and the extras, names the Teletraan computer in use, and stops on q or when the input ends', () => {
+test('the menu lists three choices, the small line to choose another computer and quit, names the Teletraan computer in use, and stops on q or when the input ends', () => {
   const place = makePlace('menu');
   const result = place.run(['x', '', 'q']);
 
   assert.equal(result.status, 0, result.errors);
-  ['1  Install the files on this Mac', '2  Keys and calendars', '3  Copy the Teletraan computer', '4  Install the services', '5  Status of the Teletraan computer', '6  Restart the screen', '7  Choose another computer', 'q  Quit'].forEach(entry => {
+  ['1  Install everything on the Teletraan computer and restart the screen', '2  Status of the Teletraan computer', '3  Keys and calendars', 'q  Quit', 'c  Choose another computer'].forEach(entry => {
     assert.ok(result.text.includes(entry), 'the menu has: ' + entry);
   });
+  assert.ok(!/^ {2}[4-8] /m.test(result.text), 'no fourth choice');
+  assert.ok(!result.text.includes('Set the PIN') && !result.text.includes('Install the services'), result.text);
   assert.ok(result.text.includes('Teletraan computer in use: main (' + computerAddress + ')'));
   assert.ok(result.text.includes('That is not one of the choices.'), 'x is not a choice');
   assert.equal(result.calls, '', 'looking at the menu runs nothing');
@@ -420,7 +422,7 @@ const macSecrets = [
 test('the form shows values masked, takes edit, keep and clear, adds, edits and removes calendars, and sends the result to the Teletraan computer', () => {
   const place = makePlace('form', { secrets: macSecrets, computerEnv: computerEnv });
   const result = place.run([
-    '2',
+    '3', '1',
     'e', secrets.newSanity,
     'c',
     'e', secrets.newTba,
@@ -429,7 +431,7 @@ test('the form shows values masked, takes edit, keep and clear, adds, edits and 
     'r', '2', 'y',
     '',
     '',
-    'q',
+    'b', 'q',
   ]);
 
   assert.equal(result.status, 0, result.errors);
@@ -484,7 +486,7 @@ test('the form shows values masked, takes edit, keep and clear, adds, edits and 
 
 test('a link typed as webcal:// is stored as https:// on the Mac and on the Teletraan computer', () => {
   const place = makePlace('webcal', { secrets: '', computerEnv: "TELETRAAN_PORT='3229'\n" });
-  const result = place.run(['2', 'k', 'k', 'k', 'a', 'team', secrets.webcal, '', '', 'q']);
+  const result = place.run(['3', '1', 'k', 'k', 'k', 'a', 'team', secrets.webcal, '', '', 'b', 'q']);
   assert.equal(result.status, 0, result.errors);
 
   const expected = "CALENDAR_TEAM_URL='" + secrets.stored + "'\n";
@@ -498,7 +500,7 @@ test('a link typed as webcal:// is stored as https:// on the Mac and on the Tele
 test('a key or a link that is not usable is refused with a reason that does not hold it, and the old value is kept', () => {
   const place = makePlace('form-refused', { secrets: macSecrets, computerEnv: computerEnv });
   const result = place.run([
-    '2',
+    '3', '1',
     'e', 'has a space ' + secrets.newSanity,
     'k',
     'k',
@@ -506,7 +508,7 @@ test('a key or a link that is not usable is refused with a reason that does not 
     'a', '???',
     '',
     '',
-    'q',
+    'b', 'q',
   ]);
 
   assert.equal(result.status, 0, result.errors);
@@ -522,12 +524,12 @@ test('a key or a link that is not usable is refused with a reason that does not 
 test('a name of more than 20 characters is refused, and a name that exists replaces the link of that calendar', () => {
   const place = makePlace('form-names', { secrets: macSecrets, computerEnv: computerEnv });
   const result = place.run([
-    '2', 'k', 'k', 'k',
+    '3', '1', 'k', 'k', 'k',
     'a', 'a calendar with a very long name indeed',
     'a', 'GROUP', secrets.newGroup,
     '',
     '',
-    'q',
+    'b', 'q',
   ]);
 
   assert.ok(result.text.includes('A name has letters and digits, up to 20 of them.'), result.text);
@@ -541,7 +543,7 @@ test('a name of more than 20 characters is refused, and a name that exists repla
 test('when the values cannot be sent, they stay saved on the Mac with what was cleared, and a second try sends them and tidies the file', () => {
   const place = makePlace('form-retry', { secrets: macSecrets, computerEnv: computerEnv });
   place.stubFile('scp.exit', '1');
-  const first = place.run(['2', 'k', 'c', 'k', '', '', 'q']);
+  const first = place.run(['3', '1', 'k', 'c', 'k', '', '', 'b', 'q']);
 
   assert.ok(first.errors.includes('could not send the values to ' + computerAddress + ' (exit 1)'), first.errors);
   assert.ok(first.errors.includes('Nothing on the Teletraan computer changed.'));
@@ -551,7 +553,7 @@ test('when the values cannot be sent, they stay saved on the Mac with what was c
   assertNoLeak(first, 'first try');
 
   fs.rmSync(path.join(place.stub, 'scp.exit'));
-  const second = place.run(['2', 'k', 'k', 'k', '', 'y', 'q']);
+  const second = place.run(['3', '1', 'k', 'k', 'k', '', 'y', 'b', 'q']);
   assert.ok(second.text.includes('Monday token') && second.text.includes('cleared, not sent yet'), second.text);
   assert.ok(second.text.includes('Nothing changed.'));
   assert.ok(!fs.readFileSync(place.computerEnvFile(), 'utf8').includes('MONDAY_API_TOKEN'), 'the Teletraan computer lost the line');
@@ -562,7 +564,7 @@ test('when the values cannot be sent, they stay saved on the Mac with what was c
 test('when ssh fails after the copy, the Mac keeps the values and says so, and no temporary file stays on the Mac', () => {
   const place = makePlace('form-ssh-down', { secrets: macSecrets, computerEnv: computerEnv });
   place.stubFile('ssh.exit', '255');
-  const result = place.run(['2', 'e', secrets.newSanity, 'k', 'k', '', '', 'q']);
+  const result = place.run(['3', '1', 'e', secrets.newSanity, 'k', 'k', '', '', 'b', 'q']);
 
   assert.ok(result.errors.includes('could not reach ' + computerAddress), result.errors);
   assert.ok(result.text.includes('The values are saved on this Mac.'), result.text);
@@ -574,7 +576,7 @@ test('when ssh fails after the copy, the Mac keeps the values and says so, and n
 test('the calendar service not being installed is said in plain words and the merge still happened', () => {
   const place = makePlace('form-no-service', { secrets: macSecrets, computerEnv: computerEnv });
   place.stubFile('systemctl.exit', '5');
-  const result = place.run(['2', 'e', secrets.newSanity, 'k', 'k', '', '', 'q']);
+  const result = place.run(['3', '1', 'e', secrets.newSanity, 'k', 'k', '', '', 'b', 'q']);
 
   assert.ok(result.text.includes('The calendar service did not run. If it is not installed on this computer, run the install again (Install everything).'), result.text);
   assert.ok(fs.readFileSync(place.computerEnvFile(), 'utf8').includes(secrets.newSanity));
@@ -595,12 +597,12 @@ test('copying from the Teletraan computer asks first, replaces the saved values 
   ].join('\n');
   const place = makePlace('pull', { secrets: "TBA_AUTH_KEY='" + secrets.newTba + "'\n", computerEnv: env });
 
-  const declined = place.run(['3', '', 'q']);
+  const declined = place.run(['3', '2', '', 'b', 'q']);
   assert.ok(declined.text.includes('Nothing changed.'));
   assert.equal(fs.readFileSync(place.secretsFile(), 'utf8'), "TBA_AUTH_KEY='" + secrets.newTba + "'\n", 'Return means no');
   assert.ok(!declined.calls.includes('grep'), 'nothing was asked of the Teletraan computer');
 
-  const result = place.run(['3', 'y', 'q']);
+  const result = place.run(['3', '2', 'y', 'b', 'q']);
   assert.equal(result.status, 0, result.errors);
   assert.equal(fs.readFileSync(place.secretsFile(), 'utf8'), [
     "SANITY_WRITE_TOKEN='" + secrets.newSanity + "'",
@@ -619,31 +621,31 @@ test('copying from the Teletraan computer asks first, replaces the saved values 
 
 test('copying from the Teletraan computer changes nothing when the computer has none of them or cannot be reached', () => {
   const none = makePlace('pull-none', { secrets: macSecrets, computerEnv: "TELETRAAN_PORT='3229'\n" });
-  const noneResult = none.run(['3', 'y', 'q']);
+  const noneResult = none.run(['3', '2', 'y', 'b', 'q']);
   assert.ok(noneResult.text.includes('Nothing changed.'), noneResult.text);
   assert.equal(fs.readFileSync(none.secretsFile(), 'utf8'), macSecrets);
 
   const down = makePlace('pull-down', { secrets: macSecrets, computerEnv: computerEnv });
   down.stubFile('ssh.exit', '255');
-  const downResult = down.run(['3', 'y', 'q']);
+  const downResult = down.run(['3', '2', 'y', 'b', 'q']);
   assert.ok(downResult.errors.includes('could not reach'), downResult.errors);
   assert.equal(fs.readFileSync(down.secretsFile(), 'utf8'), macSecrets);
   assert.ok(!fs.existsSync(path.join(down.home, '.teletraan/pulled.tmp')));
 });
 
-test('installing the services asks for the mentor\'s yes, then runs the eight install scripts in order and goes on after one stops', () => {
+test('install everything runs the installer, then the eight install scripts in order, then restarts the screen, and goes on after one script stops', () => {
   const place = makePlace('install', { failInstall: 'monday' });
-  const declined = place.run(['4', '', 'q']);
-  assert.ok(declined.text.includes('Nothing was installed.'));
-  assert.equal(declined.calls, '', 'Return means no, and nothing runs');
-
-  const result = place.run(['4', 'y', 'q']);
+  const result = place.run(['1', '', 'q']);
   assert.equal(result.status, 0, result.errors);
   const ran = lines(result.text).filter(line => line.startsWith('ran ')).map(line => line.slice(4));
   assert.deepEqual(ran, installNames.map(name => 'install-' + name + '.sh'));
-  assert.equal(lines(result.calls).filter(line => line.startsWith('sudo -S')).length, 1, 'one remote shell for all eight');
-  assert.ok(result.text.includes('install-monday.sh stopped (exit 1).'), result.text);
-  installNames.filter(name => name !== 'monday').forEach(name => assert.ok(result.text.includes('ran install-' + name + '.sh'), name));
+  assert.ok(result.text.includes('install-monday.sh stopped (exit 1).') && result.text.includes('These did not install: monday.'), result.text);
+  const calls = lines(result.calls);
+  const installer = calls.findIndex(line => line.startsWith('install.sh '));
+  const restart = calls.findIndex(line => line.startsWith('systemctl restart teletraan-kiosk.service'));
+  assert.ok(installer !== -1 && restart > installer, 'the installer runs first and the screen restarts last: ' + calls.join(' / '));
+  assert.equal(calls.filter(line => line.startsWith('sudo -S')).length, 1, 'one remote shell for all of it');
+  assert.ok(result.errors.includes('exit 1'), result.errors);
 });
 
 test('status runs status-write.sh --print and check-calendars.sh on the Teletraan computer, and hides any key or address in what comes back', () => {
@@ -658,7 +660,7 @@ test('status runs status-write.sh --print and check-calendars.sh on the Teletraa
     'FAIL    group  download failed from ' + secrets.oldGroup + ' today',
     '',
   ].join('\n'));
-  const result = place.run(['5', 'q']);
+  const result = place.run(['2', 'q']);
 
   assert.equal(result.status, 0, result.errors);
   assert.ok(result.calls.includes(place.computerRepo + '/computer/scripts/status-write.sh --print'), result.calls);
@@ -671,7 +673,7 @@ test('status runs status-write.sh --print and check-calendars.sh on the Teletraa
   const other = makePlace('status-address', { secrets: '' });
   other.stubFile('status-output.txt', 'No status yet.\n');
   other.stubFile('check-output.txt', 'FAIL    group  see https://api.band.us/ical?token=ANOTHERLINK0123 now\n');
-  const otherResult = other.run(['5', 'q']);
+  const otherResult = other.run(['2', 'q']);
   assert.ok(otherResult.text.includes('see (address hidden) now'), otherResult.text);
   assert.ok(!otherResult.text.includes('ANOTHERLINK0123'));
 });
@@ -681,41 +683,29 @@ test('status points to menu 1 when the Teletraan computer has an older status-wr
   old.stubFile('status-output.txt', 'Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|calendar-status\n');
   old.stubFile('status.exit', '2');
   old.stubFile('check-output.txt', 'Node is not installed.\n');
-  const oldResult = old.run(['5', 'q']);
+  const oldResult = old.run(['2', 'q']);
   assert.ok(oldResult.text.includes('The Teletraan computer has an older status-write.sh. Choose 1 to update it.'), oldResult.text);
 
   const down = makePlace('status-down');
   down.stubFile('ssh.exit', '255');
-  const downResult = down.run(['5', 'q']);
+  const downResult = down.run(['2', 'q']);
   assert.ok(downResult.errors.includes('could not reach'), downResult.errors);
-});
-
-test('restart runs the restart of the kiosk service with a terminal for the password, and reports a failure', () => {
-  const place = makePlace('restart');
-  const result = place.run(['6', 'q']);
-  assert.equal(result.status, 0, result.errors);
-  assert.ok(result.calls.includes("sudo -S -p '' bash -c 'systemctl restart \"$1\"' bash 'teletraan-kiosk.service'"), result.calls);
-  assert.ok(result.text.includes('The screen restarted.'));
-
-  const failing = makePlace('restart-fails');
-  failing.stubFile('systemctl.exit', '1');
-  assert.ok(failing.run(['6', 'q']).errors.includes('exit 1'));
 });
 
 test('a second computer is added from the menu, picked later, and the choice is remembered', () => {
   const place = makePlace('second-computer');
-  const added = place.run(['7', 'a', 'hawktimus@teletraan-2.test', '', '7', '1', 'q']);
+  const added = place.run(['c', 'a', 'hawktimus@teletraan-2.test', '', 'c', '1', 'q']);
   assert.equal(added.status, 0, added.errors);
   assert.ok(added.text.includes('The Teletraan computer in use is spare.'), added.text);
   assert.ok(added.text.includes('The Teletraan computer in use is main.'), added.text);
   assert.equal(fs.readFileSync(place.configFile(), 'utf8').split('\n').filter(line => !line.startsWith('#')).join('\n'), 'current=main\nmini.main=' + computerAddress + '\nmini.spare=hawktimus@teletraan-2.test\n');
 
-  place.run(['7', '2', 'q']);
-  const later = place.run(['6', 'q']);
+  place.run(['c', '2', 'q']);
+  const later = place.run(['2', 'q']);
   assert.ok(later.text.includes('Teletraan computer in use: spare (hawktimus@teletraan-2.test)'), later.text);
-  assert.ok(later.calls.includes(' hawktimus@teletraan-2.test sudo -S -p ') && later.calls.includes('systemctl restart'), later.calls);
+  assert.ok(later.calls.includes(' hawktimus@teletraan-2.test ') && later.calls.includes('status-write.sh --print'), later.calls);
 
-  const duplicate = place.run(['7', 'a', 'hawktimus@teletraan-3.test', 'spare', 'q']);
+  const duplicate = place.run(['c', 'a', 'hawktimus@teletraan-3.test', 'spare', 'q']);
   assert.ok(duplicate.errors.includes('there is a computer called spare already'), duplicate.errors);
 });
 
@@ -878,9 +868,10 @@ test('docs/updating-the-computer.md is written around the tool, and the other do
   ['Teletraan Tool.command', 'tools/teletraan/teletraan-tool', '~/.teletraan/secrets.env', '~/.teletraan/config', 'SANITY_WRITE_TOKEN', 'MONDAY_API_TOKEN', 'TBA_AUTH_KEY', 'CALENDAR_<ID>_URL', 'status-write.sh --print', 'check-calendars.sh', 'webcal://', 'rsync'].forEach(word => {
     assert.ok(doc.includes(word), 'docs/updating-the-computer.md should mention ' + word);
   });
-  ['Update the Teletraan computer', 'Keys and calendars', 'Copy the computer', 'Install the services', 'Status of the Teletraan computer', 'Restart the screen', 'Choose another computer'].forEach(word => {
+  ['Install everything', 'Keys and calendars', 'Copy the Teletraan computer', 'Status of the Teletraan computer', 'Choose another computer'].forEach(word => {
     assert.ok(doc.includes(word), 'docs/updating-the-computer.md should name the menu choice ' + word);
   });
+  ['Set the PIN', 'Install the services on the computer', 'Menu 8'].forEach(word => assert.ok(!doc.includes(word), 'the doc no longer names ' + word));
 
   const rebuild = fs.readFileSync(path.join(repo, 'docs/rebuilding-the-computer.md'), 'utf8');
   assert.ok(rebuild.includes('docs/updating-the-computer.md'), 'the rebuild doc points to the tool for keys');

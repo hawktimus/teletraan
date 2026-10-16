@@ -3,9 +3,9 @@
 # Run it by double-clicking "Teletraan Tool.command" in Finder, or in a terminal:
 #
 #   tools/teletraan/teletraan-tool                 the menu
-#   tools/teletraan/teletraan-tool update          copy the files, then restart the screen
+#   tools/teletraan/teletraan-tool update          the same as menu choice 1: install everything
 #   tools/teletraan/teletraan-tool status          show what the Teletraan computer last did
-#   tools/teletraan/teletraan-tool restart         restart the screen
+#   tools/teletraan/teletraan-tool restart         restart the screen only
 #
 # A word after the name does what the same choice in the menu does, with no menu,
 # and the exit code is not zero when a step fails, so tools/mac/ship.sh can rely on
@@ -61,7 +61,7 @@ key_labels=('Sanity write token' 'Monday token' 'The Blue Alliance key' 'Control
 key_uses=('lets the Teletraan computer write its status and the Monday tasks into Sanity' 'lets the computer read the Monday boards' 'lets the computer read the competition data' 'lets coaches sign in to the control page, 6 to 12 digits')
 key_values=('' '' '' '')
 key_states=(0 0 0 0)
-# The form of choice 2 asks for the first three. The PIN of the control page has choice 8.
+# The form of Keys and calendars asks for the first three. The PIN of the control page has choice 8.
 form_key_count=3
 cal_names=()
 cal_values=()
@@ -102,25 +102,45 @@ show_menu() {
   say ""
   say "Teletraan computer in use: $computer_name ($address)"
   say ""
-  say "  1  Install the files on this Mac as the next release on the Teletraan computer, then restart the screen"
-  say "  2  Keys and calendars"
-  say "  3  Copy the Teletraan computer's keys and calendars to this Mac"
-  say "  4  Install the services on the Teletraan computer"
-  say "  5  Status of the Teletraan computer"
-  say "  6  Restart the screen"
-  say "  7  Choose another computer, or add one"
-  say "  8  Set the PIN of the control page"
+  say "  1  Install everything on the Teletraan computer and restart the screen"
+  say "  2  Status of the Teletraan computer"
+  say "  3  Keys and calendars"
   say "  q  Quit"
   say ""
+  say "  c  Choose another computer, or add one"
+  say ""
+}
+
+show_keys_menu() {
+  say ""
+  say "Keys and calendars"
+  say ""
+  say "  1  Change the keys and the calendar links"
+  say "  2  Copy the Teletraan computer's keys and calendars to this Mac"
+  say "  b  Back"
+  say ""
+}
+
+keys_menu() {
+  while true; do
+    show_keys_menu
+    prompt "Choose: "
+    case $answer in
+      1) keys_and_calendars ;;
+      2) pull_from_computer ;;
+      b|B|'') return 0 ;;
+      *) say "That is not one of the choices." ;;
+    esac
+  done
 }
 
 usage() {
   say "Usage: teletraan-tool [--computer NAME] [--yes] [update | status | restart]"
   say ""
   say "  (no word)  show the menu"
-  say "  update     copy the files to the Teletraan computer and install them as the next release (the first time it also sets up the control page)"
+  say "  update     the same as choice 1: copy the files, install them as the next release, install the services and timers, restart the screen"
   say "  status     show what the Teletraan computer last did"
-  say "  restart    restart the screen"
+  say "  restart    restart the screen only"
   say "  --yes      with update, do not ask Go ahead?"
   say "  --computer     use the saved computer with this name instead of the one in use"
 }
@@ -228,13 +248,9 @@ main() {
     prompt "Choose: "
     case $answer in
       1) update_computer ;;
-      2) keys_and_calendars ;;
-      3) pull_from_computer ;;
-      4) install_services ;;
-      5) computer_status ;;
-      6) restart_screen ;;
-      7) choose_computer ;;
-      8) set_pin ;;
+      2) computer_status ;;
+      3) keys_menu ;;
+      c|C) choose_computer ;;
       q|Q) say "Done."; exit 0 ;;
       '') ;;
       *) say "That is not one of the choices." ;;

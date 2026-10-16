@@ -96,6 +96,7 @@ function makePlace(name, options = {}) {
     fakes: path.join(root, 'fakes'),
     sessions: path.join(root, 'sessions'),
     computerHome: path.join(root, 'computer-home'),
+    computerRepo: path.join(root, 'computer-repo'),
     log: path.join(root, 'calls.log'),
     configFile: () => path.join(place.home, '.teletraan/config'),
     calls: () => fs.readFileSync(place.log, 'utf8'),
@@ -111,7 +112,7 @@ function makePlace(name, options = {}) {
         STUB_FAKES: place.fakes,
         TELETRAAN_SESSION_BASE: place.sessions,
         COMPUTER_HOME: place.computerHome,
-        COMPUTER_REPO: '/opt/teletraan-test',
+        COMPUTER_REPO: place.computerRepo,
       };
       const text = input.length ? input.join('\n') + '\n' : '';
       const result = spawnSync('/bin/bash', [tool].concat(words), { env: env, input: text, encoding: 'utf8' });
@@ -125,6 +126,8 @@ function makePlace(name, options = {}) {
   writeTool(place.fakes, 'rsync', fakeRsync);
   writeTool(place.fakes, 'sudo', fakeSudo);
   writeTool(place.fakes, 'systemctl', fakeSystemctl);
+  fs.mkdirSync(path.join(place.computerRepo, 'computer/scripts'), { recursive: true });
+  ['calendars', 'slides', 'monday', 'frc', 'console', 'watchdog', 'backup', 'nightly'].forEach(entry => writeTool(path.join(place.computerRepo, 'computer/scripts'), 'install-' + entry + '.sh', '#!/bin/sh\necho "ran install-' + entry + '.sh"\n'));
   fs.mkdirSync(path.join(place.computerHome, 'teletraan-staging/computer'), { recursive: true });
   writeTool(path.join(place.computerHome, 'teletraan-staging/computer'), 'install.sh', '#!/bin/sh\necho "install.sh $*" >> "$STUB_LOG"\n[ -f "$STUB_DIR/install.exit" ] && exit "$(cat "$STUB_DIR/install.exit")"\nexit 0\n');
   if (options.sudoPassword) place.stubFile('sudo-password.txt', options.sudoPassword + '\n');
@@ -176,9 +179,9 @@ test('update --yes copies the files to the staging folder, then runs the install
   assert.ok(calls[copy].includes(' -a --delete '), calls[copy]);
   ['.git', 'local.env', '.env', 'node_modules'].forEach(name => assert.ok(calls[copy].includes('--exclude ' + name + ' '), 'excludes ' + name));
   assert.ok(calls[copy].endsWith(' ' + repo.replace(/\/$/, '') + '/ ' + computerAddress + ':teletraan-staging/'), calls[copy]);
-  const remote = calls.find(line => line.startsWith('ssh -n ') && line.includes("sudo -S -p '' bash -c"));
-  assert.ok(remote && remote.includes('--yes') && remote.includes('install.sh'), 'the installer runs as root in one remote shell: ' + calls.join(' / '));
-  assert.ok(!calls.some(line => line.includes('systemctl restart')), 'the installer restarts the screen, not the tool');
+  assert.ok(result.calls.includes("sudo -S -p '' bash -c 'stage=$1;") && result.calls.includes('install.sh" --from "$stage" --yes'), 'the installer runs as root in one remote shell: ' + result.calls);
+  assert.ok(result.calls.indexOf('install.sh --from') > result.calls.indexOf('rsync '), 'the stub installer ran after the copy');
+  assert.equal(calls.filter(line => line === 'systemctl restart teletraan-kiosk.service').length, 1, 'the screen restarts once, at the end of the same remote shell');
 
   assert.ok(!result.text.includes('Go ahead?'), 'no question');
   assert.ok(result.text.includes('Going ahead (--yes).'), result.text);
@@ -293,8 +296,8 @@ test('status runs status-write.sh --print and check-calendars.sh, hides any key 
   assert.equal(result.status, 0, result.errors);
 
   const calls = lines(result.calls);
-  const print = calls.findIndex(line => line.includes('/opt/teletraan-test/computer/scripts/status-write.sh --print'));
-  const check = calls.findIndex(line => line.includes('/opt/teletraan-test/computer/scripts/check-calendars.sh'));
+  const print = calls.findIndex(line => line.includes(place.computerRepo + '/computer/scripts/status-write.sh --print'));
+  const check = calls.findIndex(line => line.includes(place.computerRepo + '/computer/scripts/check-calendars.sh'));
   assert.ok(print !== -1 && check > print, calls.join(' / '));
   assert.ok(result.text.includes('Last calendar sync        3 minutes ago'));
   assert.ok(result.text.includes('printed (hidden)') && result.text.includes('failed from (hidden) today'), result.text);
@@ -394,7 +397,7 @@ test('a word the tool does not know prints the usage and exits 2, without repeat
     const result = place.run(words);
     assert.equal(result.status, 2, words.join(' '));
     assert.ok(result.errors.includes('Usage: teletraan-tool [--computer NAME] [--yes] [update | status | restart]'), result.errors);
-    ['update     copy the files', 'status     show what', 'restart    restart the screen'].forEach(entry => assert.ok(result.errors.includes(entry), entry));
+    ['update     the same as choice 1', 'status     show what', 'restart    restart the screen only'].forEach(entry => assert.ok(result.errors.includes(entry), entry));
     assert.ok(!result.errors.includes(secrets.stray) && !result.text.includes(secrets.stray), 'the word typed is not repeated');
     assert.equal(result.calls, '', words.join(' ') + ' called nothing');
   });
@@ -409,7 +412,7 @@ test('with no word the menu still comes up, and --computer picks the Teletraan c
   const place = makePlace('menu', { config: twoComputers });
   const result = place.run([], ['q']);
   assert.equal(result.status, 0, result.errors);
-  ['1  Install the files on this Mac', '2  Keys and calendars', '3  Copy the Teletraan computer', '4  Install the services', '5  Status of the Teletraan computer', '6  Restart the screen', '7  Choose another computer'].forEach(entry => assert.ok(result.text.includes(entry), entry));
+  ['1  Install everything', '2  Status of the Teletraan computer', '3  Keys and calendars', 'c  Choose another computer'].forEach(entry => assert.ok(result.text.includes(entry), entry));
   assert.ok(result.text.includes('Teletraan computer in use: main (' + computerAddress + ')'));
 
   const spare = place.run(['--computer', 'spare'], ['q']);
@@ -421,7 +424,7 @@ test('the menu keeps its own wording for the hints, and the end of the input sti
   const place = makePlace('menu-wording');
   place.stubFile('status-output.txt', 'Usage: status-write.sh\n');
   place.stubFile('status.exit', '2');
-  const result = place.run([], ['5', 'q']);
+  const result = place.run([], ['2', 'q']);
   assert.ok(result.text.includes('The Teletraan computer has an older status-write.sh. Choose 1 to update it.'), result.text);
 
   const ended = place.run([]);
@@ -444,20 +447,20 @@ const fakePassword = 'pw-for-the-test-only-4417';
 
 test('the password is asked once for a run, however many steps need it, and it never reaches a command line or the screen', () => {
   const place = makePlace('one-password', { sudoPassword: fakePassword });
-  const result = place.run([], ['6', fakePassword, '6', '6', 'q']);
+  const result = place.run([], ['1', '', fakePassword, '1', '', '1', '', 'q']);
   assert.equal(result.status, 0, result.errors);
   assert.equal((result.text.match(/Password of /g) || []).length, 1, 'one question: ' + result.text);
-  assert.equal(result.text.split('The screen restarted.').length - 1, 3, 'all three steps ran');
+  assert.equal(result.text.split('Done. The control page is at').length - 1, 3, 'all three installs ran');
   assert.ok(!(result.text + result.errors + result.calls).includes(fakePassword), 'the password is nowhere in the output or in a call');
-  assert.equal(lines(result.calls).filter(line => line.startsWith('sudo -S -p  bash -c')).length, 3);
+  assert.equal(lines(result.calls).filter(line => line.startsWith('sudo -S -p  bash -c')).length, 3, 'one remote shell for each install');
 });
 
 test('a wrong password says so in one sentence, the step does not run, and the next try asks again', () => {
   const place = makePlace('wrong-password', { sudoPassword: fakePassword });
-  const result = place.run([], ['6', 'not-the-password', '6', fakePassword, 'q']);
+  const result = place.run([], ['1', '', 'not-the-password', '1', '', fakePassword, 'q']);
   assert.ok(result.text.includes('That password was wrong. Choose the same thing again to try another.'), result.text);
   assert.equal((result.text.match(/Password of /g) || []).length, 2);
-  assert.equal(result.text.split('The screen restarted.').length - 1, 1);
+  assert.equal(result.text.split('Done. The control page is at').length - 1, 1);
   assert.ok(!(result.text + result.errors + result.calls).includes('not-the-password'));
 });
 

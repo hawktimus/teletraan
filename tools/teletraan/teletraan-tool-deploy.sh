@@ -1,5 +1,6 @@
 # Read by teletraan-tool, never run. Copying to the Teletraan computer, installing, status and restart.
-# 1. Copy the repository to a staging folder on the Teletraan computer and let the installer there make it the next release.
+# 1. Install everything: copy the repository to a staging folder on the Teletraan computer, let the installer there make
+# it the next release, install the services and timers, and restart the screen, all in one run with one password.
 # The installer (computer/install.sh) also does the one-time move to the releases layout, so this is the way in
 # for a computer that has no control page yet, and for one whose page cannot be reached. The live tree is never
 # written to: the releases keep the last five versions.
@@ -18,9 +19,13 @@ update_computer() {
     return 1
   fi
 
-  say "This copies the files in this repository to $address:$COMPUTER_STAGING and runs the installer there with sudo."
-  say "The installer makes them the next release, builds the Studio and restarts the screen, which is black for about ten seconds."
-  say "The Teletraan computer keeps its local.env, and the last five releases stay on it for a rollback (docs/control-page.md)."
+  say "This copies the files in this repository to $address:$COMPUTER_STAGING and runs the installer there as root. The installer"
+  say "makes them the next release, builds the Studio, starts the containers and turns on the nightly timer. Then the services run:"
+  say "calendars, slides, Monday, competition, boot and shutdown screens (/etc/issue), watchdog, backup and nightly restart."
+  say "They install no packages. If one needs a package, it stops and says which, and the rest go on."
+  say "The screen restarts at the end and is black for about ten seconds. The Teletraan computer keeps its local.env,"
+  say "and the last five releases stay on it for a rollback (docs/control-page.md)."
+  say "The password of the login user is asked once, only if the computer needs it."
 
   computer_run "true"
   status=$?
@@ -34,6 +39,9 @@ update_computer() {
   else
     ask_yes "Go ahead?" yes || { say "Nothing was copied."; return "$declined_status"; }
   fi
+
+  # Ask for the password before anything is copied, so a wrong one costs nothing
+  ensure_sudo || return 1
 
   rsync -a --delete \
     --exclude .git --exclude local.env --exclude .env --exclude node_modules \
@@ -53,9 +61,7 @@ update_computer() {
     say "This folder has no git history, so the release has no hash."
   fi
 
-  # $1 is the staging folder, $2 the hash. The installer sees the login user in SUDO_USER.
-  computer_sudo 'stage=$1; commit=$2; bash "$stage/computer/install.sh" --from "$stage" --yes --note "From the Mac tool" ${commit:+--commit "$commit"}' \
-    "~/$COMPUTER_STAGING" "'$commit'"
+  computer_sudo "$(install_script)" "~/$COMPUTER_STAGING" "'$commit'" "$(quote_word "$COMPUTER_REPO/computer/scripts")" "$(quote_word "$COMPUTER_KIOSK")"
   status=$?
   if [ "$status" -ne 0 ]; then
     explain_failure "$status"
@@ -106,13 +112,13 @@ EOF
   fi
   if [ "$status" -ne 0 ]; then
     explain_failure "$status"
-    say "The values are saved on this Mac. Choose 2 and save again when the Teletraan computer can be reached."
+    say "The values are saved on this Mac. Choose 3, then 1, and save again when the Teletraan computer can be reached."
     return 1
   fi
   return 0
 }
 
-# 3. Copy what the Teletraan computer holds to this Mac, for a second computer
+# Copy what the Teletraan computer holds to this Mac, for a second computer
 pull_from_computer() {
   local raw=$state_dir/pulled.tmp status names
   step "Copy the Teletraan computer's keys and calendars to this Mac"
@@ -154,38 +160,28 @@ pull_from_computer() {
   fi
 }
 
-# The text of the loop that installs the services; $1 is the folder of the scripts. Each script waits for Enter,
-# so it is given one. A script that stops is named at the end and the loop goes on.
-services_script() {
+# The text that runs on the Teletraan computer as root. $1 is the staging folder, $2 the commit hash (may be empty),
+# $3 the folder of the install scripts and $4 the name of the screen service. Each install script waits for Enter, so it
+# is given one. A script that stops is named at the end and the loop goes on.
+install_script() {
   cat <<'EOF'
-dir=$1
+stage=$1; commit=$2; dir=$3; kiosk=$4
+echo "== the installer"
+bash "$stage/computer/install.sh" --from "$stage" --yes --note "From the Mac tool" ${commit:+--commit "$commit"} || exit $?
 stopped=''
 for name in calendars slides monday frc console watchdog backup nightly; do
   echo
   echo "== install-$name.sh"
   echo | "$dir/install-$name.sh" || { echo "install-$name.sh stopped (exit $?)."; stopped="$stopped $name"; }
 done
-[ -z "$stopped" ] || { echo "These stopped:$stopped"; exit 1; }
+echo
+echo "== the screen"
+systemctl restart "$kiosk" || exit $?
+[ -z "$stopped" ] || { echo "These did not install:$stopped. The lines above say why."; exit 1; }
 EOF
 }
 
-# 4. The install scripts on the Teletraan computer
-install_services() {
-  local status remote
-  step "Install the services on the Teletraan computer $computer_name"
-  say "This runs install-calendars.sh, install-slides.sh, install-monday.sh, install-frc.sh, install-console.sh, install-watchdog.sh, install-backup.sh and install-nightly.sh on the Teletraan computer. They turn on the timers (the watchdog, the nightly backup and the nightly restart too) and the boot and shutdown screens, and install no packages."
-  say "Each one says what it will do and waits for Enter. install-console.sh changes /etc/issue, and a missing package stops its script with the apt line to run."
-  ask_yes "Has the team mentor said yes?" no || { say "Nothing was installed."; return 0; }
-
-  computer_sudo "$(services_script)" "$(quote_word "$COMPUTER_REPO/computer/scripts")"
-  status=$?
-  if [ "$status" -ne 0 ]; then
-    explain_failure "$status"
-    return 1
-  fi
-}
-
-# 5. What the Teletraan computer last did, and what the screen does with each calendar
+# What the Teletraan computer last did, and what the screen does with each calendar
 computer_status() {
   local status result=0
   step "Status of the Teletraan computer $computer_name"
@@ -211,7 +207,7 @@ computer_status() {
   return "$result"
 }
 
-# 6. Restart the browser that fills the TV
+# Restart the browser that fills the TV
 restart_screen() {
   local status
   step "Restart the screen on the Teletraan computer $computer_name"

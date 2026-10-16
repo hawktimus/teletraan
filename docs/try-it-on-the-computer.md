@@ -16,7 +16,7 @@ shows it at `http://localhost:8080/dashboard/` (8080 is `TELETRAAN_PORT` in
 has been pushed. To test a change, push it, then wait up to 5 minutes or run
 `/opt/teletraan/computer/scripts/pull.sh`. A computer that does not pull gets the files
 from a Mac instead: choice 1 of the tool in `docs/updating-the-computer.md` copies
-them and restarts the screen. Do not push or copy while a test is running: the
+them, installs them and restarts the screen. Do not push or copy while a test is running: the
 screen reloads itself on every update, and the readout starts again.
 
 ## 2. Open the dashboard the way the screen does

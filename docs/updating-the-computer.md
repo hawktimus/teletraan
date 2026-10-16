@@ -1,10 +1,10 @@
 # Updating the Teletraan computer from a Mac
 
-The control page does the everyday update (docs/control-page.md). This tool is the first install and the way in when the page cannot be reached. Its update copies the repository to `~/teletraan-staging` on the Teletraan computer and runs `computer/install.sh` there, which makes it the next release. Menu 8 sets the PIN of the control page.
+The control page does the everyday update (docs/control-page.md). This tool is the first install and the way in when the page cannot be reached. Its install copies the repository to `~/teletraan-staging` on the Teletraan computer, runs `computer/install.sh` there, which makes it the next release, installs the services and restarts the screen. It does all of that in one run and asks for the computer's password once.
 
-`tools/teletraan/teletraan-tool` is a menu that runs in Terminal on a Mac. It copies
-the dashboard files to the Teletraan computer, keeps the keys and the calendar links, shows what
-the computer last did and restarts the screen. It works from any Mac that has the
+`tools/teletraan/teletraan-tool` is a menu that runs in Terminal on a Mac. It installs
+the dashboard files and the services on the Teletraan computer, keeps the keys and the calendar links,
+and shows what the computer last did. It works from any Mac that has the
 repository, so a coach with a laptop can use it as well as the Mac in the room.
 
 `tools/mac/ship.sh` uses it too: its last step is `teletraan-tool update --yes`
@@ -20,9 +20,11 @@ and on the Teletraan computer in `computer/local.env`.
   example `hawktimus@teletraan`. On the school network the name the computer has there
   works, or its address from `docs/rebuilding-the-computer.md`, "Finding the computer on
   the network".
-- The computer's password. ssh asks for it, and so does sudo for the restart. The tool
-  stores no password. To stop typing the ssh password, run
-  `ssh-copy-id user@host` once. sudo still asks, which is on purpose.
+- The computer's password. A run uses one ssh connection, so ssh asks for the login password at most once.
+  The tool then asks once, with the typing hidden, for the password that sudo needs, and sends it to the computer
+  through the connection. It is never on a command line, never in a file and never printed, and the tool forgets it
+  when the run ends. A computer whose login user needs no sudo password is not asked. To stop typing the ssh
+  password, run `ssh-copy-id user@host` once.
 
 ## Start it
 
@@ -42,7 +44,7 @@ asks for a short name for the computer, such as `main`. It saves them in
 `~/.teletraan/config`. That folder is private to your Mac account and is not part
 of the repository. Nothing is saved if ssh cannot connect.
 
-To add a second computer, choose 7, then `a`. Choose 7 again to pick which computer the
+To add a second computer, choose `c`, then `a`. Choose `c` again to pick which computer the
 other choices use. The menu names the one in use. One saved set of keys and
 calendars serves both computers, and a save goes to the Teletraan computer you picked.
 
@@ -50,30 +52,50 @@ calendars serves both computers, and a save goes to the Teletraan computer you p
 
 | Choice | What it does |
 |--------|--------------|
-| 1 | Install the files on this Mac as the next release on the Teletraan computer, then restart the screen |
-| 2 | Keys and calendars: a form for the three keys and the calendar links |
-| 3 | Copy the computer's keys and calendars to this Mac |
-| 4 | Install the services on the computer |
-| 5 | Status of the Teletraan computer |
-| 6 | Restart the screen |
-| 7 | Choose another computer, or add one |
+| 1 | Install everything on the Teletraan computer and restart the screen |
+| 2 | Status of the Teletraan computer |
+| 3 | Keys and calendars: change them, or copy them from the computer to this Mac |
+| c | Choose another computer, or add one (a small line under the choices) |
 | q | Quit |
 
-### 1. Update the Teletraan computer
+### 1. Install everything
 
-Copies this repository to `~/teletraan-staging` on the Teletraan computer with `rsync`, then runs `computer/install.sh` there with sudo. The installer makes the files the next release (docs/control-page.md, "How releases work"), builds the Studio and restarts the screen, which is black for about ten seconds. The live tree is never written to, and the last five releases stay on the computer for a rollback. The copy leaves out `.git`, `local.env`, `.env`, `node_modules`, `.DS_Store`, `studio/dist`, `studio/.sanity`, `_inputs` and `_outputs`, so the keys on the computer are never touched or overwritten. On a computer that has no control page yet, the installer also makes the move to the releases layout, which is why this is the first install.
+One run, one password. The tool copies this repository to `~/teletraan-staging` on the Teletraan computer with `rsync`, then runs one root shell on the computer that does all of this in order:
+
+1. `computer/install.sh`. It makes the files the next release (docs/control-page.md, "How releases work"), builds the Studio, starts the containers and turns on the nightly timer. It pulls the Node image or the web server image first when the computer does not have it (a download from the internet, which the installer says). On a computer that has no control page yet it also makes the move to the releases layout, which is why this is the first install.
+2. `install-calendars.sh`, `install-slides.sh`, `install-monday.sh`, `install-frc.sh`, `install-console.sh`, `install-watchdog.sh`, `install-backup.sh` and `install-nightly.sh`, one after another. They turn on the timers (the watchdog, the nightly backup and the nightly restart among them) and the boot and shutdown screens. Each one says what it will do and is given the Enter it waits for. They install no packages: one that finds a package missing stops and prints the `apt install` line to run, and the tool goes on to the next script and names the ones that stopped at the end. `install-console.sh` changes `/etc/issue`, so the team mentor should have said yes (`docs/rebuilding-the-computer.md`, the list at the top).
+3. A restart of the screen, which is black for about ten seconds.
+
+The live tree is never written to, and the last five releases stay on the computer for a rollback. The copy leaves out `.git`, `local.env`, `.env`, `node_modules`, `.DS_Store`, `studio/dist`, `studio/.sanity`, `_inputs` and `_outputs`, so the keys on the computer are never touched or overwritten.
 
 After the copy the tool gives the installer the short hash of this repository. The release number comes from the counter on the Teletraan computer, so the build shows as `v14 · a1b2c3d` everywhere. A folder with no git history has no hash and says so.
 
-The tool refuses to copy from a folder that is not the Teletraan repository, and from a copy that still has a `deploy/` folder: "This copy is older than round 6; update it." Nothing is copied then.
-
-If the update changed a file in `computer/systemd/`, choose 4 to install the services again. If it changed `docker-compose.yml` or `nginx.conf`, the installer starts the web server again, and `computer/README.md` says more.
+The tool refuses to copy from a folder that is not the Teletraan repository, and from a copy that still has a `deploy/` folder: "This copy is older than round 6; update it." Nothing is copied then. The password is asked before anything is copied, so a wrong one costs nothing: "That password was wrong. Choose the same thing again to try another."
 
 A computer that pulls from GitHub by itself with the pull timer should not also get files from this tool. Use one. To make the Teletraan computer a copy-only computer, turn the timer off on the computer:
 
     sudo systemctl disable --now teletraan-pull.timer
 
-### 2. Keys and calendars
+### 2. Status of the Teletraan computer
+
+Runs two scripts on the Teletraan computer and shows what they print:
+
+- `status-write.sh --print` gives each time the Teletraan computer wrote into Studio's status
+  block, and how long ago: the content update it saw, the calendars, the slides,
+  Monday, the competition data and the start of the screen. It needs no key.
+- `check-calendars.sh` lists the coming events of each calendar, SHOWN or HIDDEN
+  (`docs/rebuilding-the-computer.md`, "Adding or changing a calendar"). It needs Node
+  on the computer (step 19 there). Without Node it says so.
+
+Everything that comes back passes through a filter that hides every saved key and
+link, and anything that looks like a web address, so a script that goes wrong
+cannot put one on your screen.
+
+### 3. Keys and calendars
+
+Choice 3 opens a small menu: 1 changes the keys and the calendar links (the form below), 2 copies the computer's values to this Mac, and `b` goes back.
+
+#### 1. The form
 
 A form in the terminal. Each key shows as its first 4 characters and dots, or not
 set. For each of `SANITY_WRITE_TOKEN`, `MONDAY_API_TOKEN` and `TBA_AUTH_KEY` press
@@ -112,14 +134,14 @@ write token in "Showing what the Teletraan computer did in Studio", the Blue All
 step 17 and the Monday token in step 18. A calendar link comes from BAND
 (`docs/calendar-links.md`).
 
-If the values cannot be sent, they stay saved on the Mac. Choose 2 again, leave
+If the values cannot be sent, they stay saved on the Mac. Choose 3, then 1 again, leave
 everything as it is, and answer yes to sending the saved values.
 
-A Mac that has no saved values yet should choose 3 first. Otherwise the form shows
+A Mac that has no saved values yet should copy the computer's values first (3, then 2). Otherwise the form shows
 every key as not set, and a key or a calendar that only the Teletraan computer has cannot be
 changed or removed from here.
 
-### 3. Copy the Teletraan computer's keys and calendars to this Mac
+#### 2. Copy the Teletraan computer's keys and calendars to this Mac
 
 For a second computer, or after a Mac is replaced. It asks first, because it
 replaces what the Mac has saved. It reads only the three keys and the
@@ -127,54 +149,16 @@ replaces what the Mac has saved. It reads only the three keys and the
 them. A placeholder that still starts with `[` is left out, and so is a value that
 does not look like a key or a link.
 
-### 4. Install the services on the Teletraan computer
-
-Runs `install-calendars.sh`, `install-slides.sh`, `install-monday.sh`,
-`install-frc.sh`, `install-console.sh`, `install-watchdog.sh` and `install-backup.sh`
-on the Teletraan computer, one after another. They turn on the timers (the watchdog and the
-nightly backup among them) and the boot and shutdown screens. After the first
-`install-watchdog.sh`, restart the screen once (choose 6, or `teletraan-tool
-restart`), because the browser only opens the page list for the watchdog when
-`kiosk.sh` starts it. They install no packages: one
-that finds a package missing stops and prints the `apt install` line to run. The
-tool goes on to the next script.
-
-Each script says what it will do and waits for Enter, and the Teletraan computer asks for its
-password. `install-console.sh` changes `/etc/issue`. The tool asks whether the
-team mentor has said yes before it starts (`docs/rebuilding-the-computer.md`, the list
-at the top).
-
-### 5. Status of the Teletraan computer
-
-Runs two scripts on the Teletraan computer and shows what they print:
-
-- `status-write.sh --print` gives each time the Teletraan computer wrote into Studio's status
-  block, and how long ago: the content update it saw, the calendars, the slides,
-  Monday, the competition data and the start of the screen. It needs no key.
-- `check-calendars.sh` lists the coming events of each calendar, SHOWN or HIDDEN
-  (`docs/rebuilding-the-computer.md`, "Adding or changing a calendar"). It needs Node
-  on the computer (step 19 there). Without Node it says so.
-
-Everything that comes back passes through a filter that hides every saved key and
-link, and anything that looks like a web address, so a script that goes wrong
-cannot put one on your screen.
-
-### 6. Restart the screen
-
-Restarts the browser that fills the TV. Use it when the screen looks stuck or
-wrong. The screen is black for about ten seconds. It does not restart the web
-server container.
-
 ## From the command line
 
 A word after the name does what the same menu choice does, for the Teletraan computer in use,
-with no menu. `tools/mac/ship.sh` runs these.
+with no menu. `restart` has no menu choice; it is only a word. `tools/mac/ship.sh` runs these.
 
 | Command | Same as | What it does |
 |---------|---------|--------------|
-| `tools/teletraan/teletraan-tool update` | 1 | installs the files as the next release, then restarts the screen |
-| `tools/teletraan/teletraan-tool status` | 5 | shows what the Teletraan computer last did and the calendars |
-| `tools/teletraan/teletraan-tool restart` | 6 | restarts the screen |
+| `tools/teletraan/teletraan-tool update` | 1 | the same as choice 1: installs the files as the next release, installs the services and restarts the screen |
+| `tools/teletraan/teletraan-tool status` | 2 | shows what the Teletraan computer last did and the calendars |
+| `tools/teletraan/teletraan-tool restart` | none | restarts the screen only. The screen is black for about ten seconds and the web server container is not restarted |
 
 - `--yes` skips the Go ahead question of `update`, so nobody has to press Return.
   Without `--yes`, a command word with nobody to answer counts as no and stops.
@@ -190,7 +174,7 @@ with no menu. `tools/mac/ship.sh` runs these.
 - With no computer saved yet it stops and says to run the tool once with no word, to
   give it the computer's address. It does not ask for the address in a command.
 
-Choices 2, 3, 4 and 7 stay in the menu, because they ask questions.
+Choices 3 and `c` stay in the menu, because they ask questions.
 
 ## What stays secret
 
@@ -201,8 +185,8 @@ Choices 2, 3, 4 and 7 stay in the menu, because they ask questions.
 - Values travel in a file with `scp`, not on a command line, so they are not in
   the list of running programs on either computer.
 - Do not copy `~/.teletraan/` to another Mac by email or chat. A second Mac gets
-  the values with choice 3. If a Mac is lost, make new keys and send them with
-  choice 2.
+  the values with 3, then 2. If a Mac is lost, make new keys and send them with
+  3, then 1.
 
 ## When something stops
 
@@ -211,7 +195,9 @@ Choices 2, 3, 4 and 7 stay in the menu, because they ask questions.
 | could not reach the Teletraan computer | Is the computer on? Is this Mac on the same network, or on Tailscale? Try the address by hand: `ssh user@host`. |
 | The copy stopped (rsync exit code) | Run choice 1 again. The staging folder on the computer may have some of the new files until then, and the live tree is not touched. If the lines above say `rsync: command not found`, the computer needs `sudo apt install rsync`, after the team mentor's yes. |
 | Line N of the new values is not a key or a calendar | Nothing was changed on the computer. `~/.teletraan/secrets.env` was edited by hand. Delete the line or use the form. |
-| The calendar service did not run | The service is not installed on this computer. Choose 4, or see step 11 of `docs/rebuilding-the-computer.md`. |
+| The calendar service did not run | The service is not installed on this computer. Choose 1 to install everything, or see step 11 of `docs/rebuilding-the-computer.md`. |
+| That password was wrong | The password for sudo on the computer was not accepted. Choose the same thing again and type it again. |
+| These did not install: and a list of names | An install script stopped, usually because a package is missing. The lines above print the `apt install` line to run, after the team mentor's yes. Then choose 1 again. |
 | The computer has an older status-write.sh | Choose 1 to copy the newest files, or run `tools/teletraan/teletraan-tool update`. |
 | no computer is saved on this Mac yet | A command word needs a saved computer. Run `tools/teletraan/teletraan-tool` with no word, once, and give it the address. |
 | a question needed an answer and none came | The command had nobody to ask. Add `--yes` to `update`, or run the update by hand and answer. |
