@@ -1,7 +1,7 @@
 // Talks to Sanity: the two queries, the addresses, and turning what comes back
 // into the content shape in data/sample/content.json. The sample is cleaned the same way.
 
-import { defaultFilter, defaultPerson, defaultSettings, defaultTalk, filterActions, limits, photoFits, primeTeam, talkStatuses, teamMetals, teamTrim } from '../config.js';
+import { defaultFilter, defaultPerson, defaultSettings, defaultTalk, filterActions, limits, photoFits, primeTeam, talkStatuses, teamMetals, teamPalettes, teamTrim } from '../config.js';
 import { parseLocalDateTime, sameDay } from './time.js';
 import { fixSettingValues, isVisible, keepInRange, withDefaults } from './content.js';
 import { keptSize, logoUrl, photoFocus, screenPhotoUrl, tidyPhoto } from './images.js';
@@ -650,6 +650,7 @@ function normalizeTeamDocument(raw) {
     logo: typeof raw.logo === 'string' ? raw.logo.trim() : logoUrl(raw.logo),
     colors: colors,
     metal: Object.prototype.hasOwnProperty.call(teamMetals, trimmed(raw.metal)) ? trimmed(raw.metal) : primeTeam.metal,
+    palette: Object.prototype.hasOwnProperty.call(teamPalettes, trimmed(raw.palette)) ? trimmed(raw.palette) : primeTeam.palette,
     glow: raw.glow === true,
     mirror: raw.mirror === true,
     bolts: trimValue(raw, 'bolts'),

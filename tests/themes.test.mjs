@@ -943,7 +943,7 @@ function propertiesOf(team) {
 // The classes the page has with Nova on it: the mirror, the seven trim classes that are not Prime's (teamTrim in config.js),
 // and the glow (Nova has gold metal, so no steel class). Nova draws its name solid, like Prime: the seed stores the name look as solid, so there is
 // no name-outline class
-const novaClasses = 'accent-neon bolts-round corner-cut-tr grid-dots header-slant mirrored neon-glow ticker-bar';
+const novaClasses = 'accent-neon bolts-round corner-cut-tr grid-dots header-slant mirrored neon-glow palette-inverted ticker-bar';
 
 // The properties the page has with a team on it: the nine colors
 function onThePage(team) {

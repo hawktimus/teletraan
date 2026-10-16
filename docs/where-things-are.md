@@ -446,7 +446,7 @@ editors can sign in from anywhere.
                               words beside the chip in a header, the names of a team (core/team-title.js)
       monday-fill.test.mjs    checks that the Monday cards fill the main panel of the bar layout (monday.css and the
                               progress cards), that the standard layout is as it was, and that no weld seam or other
-                              vertical line is drawn under a card (core/areas.js, styles/minimal.css)
+                              vertical line is drawn under a card (core/areas.js, layouts/bar-minimal.css)
       blank-team.test.mjs     checks for a blank team: an item with no team shows for either team, a header has no team chip
                               for things that are for both teams, the cards of both teams read MILESTONES or PROGRESS alone,
                               a row from a board with no team has no label, and no panel has a Prime or Nova flavor

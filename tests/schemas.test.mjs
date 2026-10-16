@@ -127,6 +127,7 @@ const contract = {
     logo: 'image',
     colors: object({ primary: hexColor, plate: hexColor, accent: hexColor, neon: hexColor, pink: hexColor, background: hexColor, text: hexColor, body: hexColor, label: hexColor }),
     metal: 'string',
+    palette: 'string',
     glow: 'boolean',
     mirror: 'boolean',
     bolts: 'string',
@@ -3912,7 +3913,7 @@ function checkTeams() {
 
   need(problems, type.title === 'Teams', 'the team type should have the title Teams');
   const titles = {
-    name: 'Team name', shortName: 'Short name', number: 'Team number', code: 'Team code', logo: 'Logo', colors: 'Colors', metal: 'Metal', glow: 'Glow', mirror: 'Mirror the layout',
+    name: 'Team name', shortName: 'Short name', number: 'Team number', code: 'Team code', logo: 'Logo', colors: 'Colors', metal: 'Metal', palette: 'Palette', glow: 'Glow', mirror: 'Mirror the layout',
     bolts: 'Bolts', cornerCut: 'Cut corners', headerNotch: 'Header end', grid: 'Page grid', logoPose: 'Bird pose', nameStyle: 'Team name look', outlinedName: 'Outlined name', tickerLabel: 'Ticker label', countAccent: 'Countdown color',
     active: 'Active', order: 'Order',
   };

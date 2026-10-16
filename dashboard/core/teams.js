@@ -20,7 +20,7 @@
 // core/team-run.js asks useTeams() once a second and moves the pages on when the team changes.
 // The one place that touches the page is applyTeamLook(), and it is given the page.
 
-import { defaultSettings, glowClass, primeTeam, teamMetals, teamModes, teamTrim } from '../config.js';
+import { defaultSettings, glowClass, primeTeam, teamMetals, teamModes, teamPalettes, teamTrim } from '../config.js';
 
 // The class on the html element while the team on the screen has Mirror the layout on. It does
 // nothing by itself: the stylesheets that flip the layout read it.
@@ -88,6 +88,14 @@ export const metalClasses = Object.values(teamMetals).filter(Boolean);
 export function metalClassOf(team) {
   const metal = team ? team.metal : undefined;
   return Object.prototype.hasOwnProperty.call(teamMetals, metal) ? teamMetals[metal] : '';
+}
+
+// The class for the palette of a team, which has none for the standard one
+export const paletteClasses = Object.values(teamPalettes).filter(Boolean);
+
+export function paletteClassOf(team) {
+  const palette = team ? team.palette : undefined;
+  return Object.prototype.hasOwnProperty.call(teamPalettes, palette) ? teamPalettes[palette] : '';
 }
 
 const waitedTooLong = 60 * 1000;
@@ -214,6 +222,10 @@ export function applyTeamLook(team, page = typeof document === 'undefined' ? nul
   const metal = metalClassOf(team);
   metalClasses.filter(name => name !== metal).forEach(name => page.classList.remove(name));
   if (metal) page.classList.add(metal);
+
+  const palette = paletteClassOf(team);
+  paletteClasses.filter(name => name !== palette).forEach(name => page.classList.remove(name));
+  if (palette) page.classList.add(palette);
 
   if (team.glow === true) page.classList.add(glowClass);
   else page.classList.remove(glowClass);

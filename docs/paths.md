@@ -325,3 +325,11 @@ Files that did not move: `dashboard/` outside `panels/`, `studio/schemas/`, `stu
 | `tools/test-title-plate.mjs` | `tests/title-plate.test.mjs` |
 | `tools/test-watchdog-script.mjs` | `tests/watchdog.test.mjs` |
 | `tools/test-weather.mjs` | `tests/weather.test.mjs` |
+
+## Themes
+
+| Old path | New path |
+|----------|----------|
+| `dashboard/styles/original.css` | `dashboard/styles/original/theme.css` |
+| `dashboard/styles/cybertron.css` | `dashboard/styles/cybertron/theme.css` (its `--style-*` rule is in `tokens.css` beside it) |
+| `dashboard/styles/minimal.css` | `dashboard/layouts/bar-minimal.css` |
