@@ -15,7 +15,7 @@ import { presentationsFields, presentationTestRequestField } from './settingsPre
 import { teamsFields } from './settingsTeams.js';
 import { lookScheduleFields } from './settingsLook.js';
 import { previewRequestField } from './settingsPreview.js';
-import { nextLookRequestField, competitionPreviewRequestField } from './settingsRequests.js';
+import { nextLookRequestField, competitionPreviewRequestField, screenRequestFields } from './settingsRequests.js';
 import { competitionFields } from './settingsCompetition.js';
 import { mondayFields } from './settingsMonday.js';
 
@@ -507,6 +507,7 @@ export default defineType({
     previewRequestField(),
     nextLookRequestField(),
     competitionPreviewRequestField(),
+    ...screenRequestFields(),
     ...teamsFields(),
     ...logoFields(),
     ...transitionsFields(),
