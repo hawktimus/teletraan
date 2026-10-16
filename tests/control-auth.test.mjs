@@ -116,7 +116,7 @@ async function serve(files = {}) {
     port: 0, host: '127.0.0.1', rootDir: root, releasesDir: path.join(root, 'releases'), dataDir: root, envFile: path.join(root, 'local.env'),
     secretFile: path.join(root, 'control-secret'), socket: path.join(root, 'none.sock'), logFile: path.join(root, 'logs/control.log'),
   }, Object.assign({
-    helper: async (word, args) => { helperCalls.push(word + (args && args.length ? ' ' + args.join(' ') : '')); return { ok: true, output: 'user=hawktimus\nhost=teletraan' }; },
+    helper: async (word, args) => { helperCalls.push(word + (args && args.length ? ' ' + args.join(' ') : '')); return 'user: hawktimus\nhost: teletraan'; },
     waitForBuild: async () => true,
   }, files));
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -157,6 +157,8 @@ test('a wrong PIN is 401, the right one sets the cookie, and the pages and calls
     assert.equal(releases.releases[0].commit, 'abc1234');
     const tabs = await (await fetch(s.base + '/control/api/tabs', { headers: headers })).json();
     assert.ok(tabs.tabs.includes('tab-update.js'));
+    ['now', 'status', 'keys', 'log'].forEach(name => assert.ok(tabs.tabs.includes('tabs/' + name + '.js'), name));
+    assert.ok(!tabs.tabs.includes('tabs/api.js') && !tabs.tabs.includes('tabs/render.js'));
     assert.equal((await fetch(s.base + '/control/..%2f..%2fserver.js', { headers: headers })).status, 404);
     assert.equal((await fetch(s.base + '/control/.hidden', { headers: headers })).status, 404);
   } finally { s.server.close(); }
@@ -173,14 +175,17 @@ test('with no PIN in local.env the form says to set one with the Mac tool', asyn
   } finally { s.server.close(); }
 });
 
-test('the dashboard report is let in only with the local header that the local nginx sets', async () => {
+test('POST /now needs no PIN at the door but every other call does, and pinCheck itself only knows the cookie', async () => {
   const s = await serve();
   try {
-    const local = s.ctx.pinCheck({ method: 'POST', url: '/control/api/now', headers: { 'x-teletraan-local': '1' } });
-    assert.equal(local, true);
     assert.equal(s.ctx.pinCheck({ method: 'POST', url: '/control/api/now', headers: {} }), false);
-    assert.equal(s.ctx.pinCheck({ method: 'GET', url: '/control/api/now', headers: { 'x-teletraan-local': '1' } }), false, 'reading still needs the cookie');
-    assert.equal(s.ctx.pinCheck({ method: 'POST', url: '/control/api/releases', headers: { 'x-teletraan-local': '1' } }), false);
+    const post = await fetch(s.base + '/control/api/now', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+    assert.equal(post.status, 403, 'the door is open, and the route itself refuses an address that is not the Mini');
+    const local = await fetch(s.base + '/control/api/now', { method: 'POST', headers: { 'content-type': 'application/json', 'x-real-ip': '127.0.0.1' }, body: '{}' });
+    assert.notEqual(local.status, 401);
+    assert.notEqual(local.status, 403);
+    assert.equal((await fetch(s.base + '/control/api/now')).status, 401, 'reading still needs the cookie');
+    assert.equal((await fetch(s.base + '/control/api/releases', { method: 'POST', headers: { 'x-real-ip': '127.0.0.1' } })).status, 401);
   } finally { s.server.close(); }
 });
 

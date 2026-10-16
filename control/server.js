@@ -93,15 +93,25 @@ export async function createService(config, overrides = {}) {
     log: log,
     run: run,
     helper: createHelper(config.socket),
+    root: config.rootDir,
+    logLines: async count => {
+      const lines = readText(config.logFile).split('\n').filter(Boolean);
+      return lines.slice(-count);
+    },
+    listReleases: () => {
+      const list = releases.list();
+      return { releases: list.map(item => Object.assign({ number: item.version }, item)), current: releases.currentNumber() || null };
+    },
+    corsResult: () => ctx.state.cors || null,
     cors: createCorsCheck({ projectId: project.projectId, dataset: project.dataset, apiVersion: project.apiVersion }),
-    pinCheck: req => auth.isAuthed(req) || isLocalReport(req),
+    pinCheck: req => auth.isAuthed(req),
   };
   Object.assign(ctx, overrides);
 
-  // nginx sets this header on the port that only this computer can reach, and clears it on the other port
-  function isLocalReport(req) {
-    return req.method === 'POST' && req.url.split('?')[0] === '/control/api/now' && req.headers['x-teletraan-local'] === '1';
-  }
+  // The Status tab reads the last answer; it is asked again every five minutes
+  ctx.refreshCors = async () => {
+    ctx.state.cors = await ctx.cors.check(process.env.CONTROL_ORIGIN || 'http://teletraan.local:3229');
+  };
 
   // The build the install waits for: the dashboard posts it every 10 seconds (routes/now.js keeps ctx.state.now)
   ctx.waitForBuild = overrides.waitForBuild || (async (build, milliseconds) => {
@@ -114,11 +124,23 @@ export async function createService(config, overrides = {}) {
     return false;
   });
 
-  router.get('/control/api/session', (req, res) => {
+  // The tab files in static/: tab-*.js here and the tabs of the other pages in tabs/
+  function tabFiles() {
+    const found = fs.readdirSync(staticFolder).filter(name => /^tab-[a-z-]+\.js$/.test(name));
+    const folder = path.join(staticFolder, 'tabs');
+    if (fs.existsSync(folder)) {
+      fs.readdirSync(folder).filter(name => name.endsWith('.js')).forEach(name => {
+        if (fs.readFileSync(path.join(folder, name), 'utf8').includes('registerTab(')) found.push('tabs/' + name);
+      });
+    }
+    return found.sort();
+  }
+
+  router.get('/session', (req, res) => {
     sendJson(res, 200, { pinSet: auth.hasPin(), signedIn: auth.isAuthed(req) });
   });
 
-  router.post('/control/api/login', async (req, res) => {
+  router.post('/login', async (req, res) => {
     const body = await readJson(req);
     const result = auth.attempt(clientAddress(req), body.pin);
     if (result.noPin) {
@@ -133,21 +155,19 @@ export async function createService(config, overrides = {}) {
     }
   });
 
-  router.post('/control/api/logout', (req, res) => {
+  router.post('/logout', (req, res) => {
     sendJson(res, 200, { ok: true }, { 'Set-Cookie': auth.cookieHeader('gone').replace(/Max-Age=\d+/, 'Max-Age=0') });
   });
 
-  // The tab files in static/, so a new tab needs no change to the page
-  router.get('/control/api/tabs', (req, res) => {
-    const tabs = fs.readdirSync(staticFolder).filter(name => /^tab-[a-z-]+\.js$/.test(name)).sort();
-    sendJson(res, 200, { tabs: tabs });
+  router.get('/tabs', (req, res) => {
+    sendJson(res, 200, { tabs: tabFiles() });
   });
 
   await registerRoutes(router, ctx);
 
   function serveStatic(req, res, pathname) {
     let name = pathname === '/control/' || pathname === '/control' ? 'index.html' : pathname.replace(/^\/control\//, '');
-    const signedIn = ctx.pinCheck(req);
+    const signedIn = auth.isAuthed(req);
     if (!signedIn) name = openFiles.includes(name) || name.startsWith('fonts/') ? name : 'login.html';
     const file = path.join(staticFolder, name);
     const inside = path.relative(staticFolder, file);
@@ -174,17 +194,21 @@ export async function createService(config, overrides = {}) {
     const pathname = req.url.split('?')[0];
     try {
       if (pathname.startsWith('/control/api/')) {
-        const open = (req.method === 'GET' && pathname === '/control/api/session') || (req.method === 'POST' && (pathname === '/control/api/login' || pathname === '/control/api/logout'));
-        if (!open && !ctx.pinCheck(req)) {
+        // The routes are written after /control/api. The dashboard's own report (POST /now) carries no PIN; its
+        // route accepts it only when nginx says it came from this computer (X-Real-IP).
+        const route = pathname.slice('/control/api'.length);
+        const open = (req.method === 'GET' && route === '/session') || (req.method === 'POST' && (route === '/login' || route === '/logout' || route === '/now'));
+        if (!open && !(await ctx.pinCheck(req))) {
           sendJson(res, 401, { error: 'Sign in with the PIN first.' });
           return;
         }
-        const found = router.match(req.method, pathname);
+        const found = router.match(req.method, route);
         if (!found) {
-          const allowed = router.methodsFor(pathname);
+          const allowed = router.methodsFor(route);
           sendJson(res, allowed.length ? 405 : 404, { error: allowed.length ? 'That method is not allowed here.' : 'Not found.' });
           return;
         }
+        req.params = found.params;
         await found.handler(req, res, found.params);
         return;
       }
@@ -213,5 +237,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   server.requestTimeout = 0;
   // Docker starts the service again, now on the code of the release that current points at
   ctx.restartSelf = () => setTimeout(() => process.exit(0), 5000);
+  ctx.refreshCors().catch(() => {});
+  setInterval(() => ctx.refreshCors().catch(() => {}), 5 * 60 * 1000).unref();
   server.listen(config.port, config.host, () => ctx.log('control service listening on port ' + config.port));
 }

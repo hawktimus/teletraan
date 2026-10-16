@@ -80,13 +80,13 @@ case $word in
     finish 0
     ;;
   status)
-    echo "user=$(id -un)"
-    echo "host=$(hostname 2> /dev/null | tr -c 'A-Za-z0-9.-' '?')"
-    echo "kiosk=$(systemctl is-active teletraan-kiosk.service 2> /dev/null || true)"
-    echo "uptime=$(cut -d' ' -f1 /proc/uptime 2> /dev/null || true)"
-    echo "diskFreeKb=$(df -Pk "$root" 2> /dev/null | awk 'NR == 2 { print $4 }')"
-    echo "tailscale=$(tailscale ip -4 2> /dev/null | head -n 1)"
-    echo "display=$(journalctl -u teletraan-kiosk.service -n 300 --no-pager 2> /dev/null | grep 'display:' | tail -n 1 | cut -c 1-200)"
+    echo "user: $(id -un)"
+    echo "host: $(hostname 2> /dev/null | tr -c 'A-Za-z0-9.-' '?')"
+    echo "kiosk: $(systemctl is-active teletraan-kiosk.service 2> /dev/null || true)"
+    echo "uptime: $(cut -d' ' -f1 /proc/uptime 2> /dev/null || true)"
+    echo "diskFreeKb: $(df -Pk "$root" 2> /dev/null | awk 'NR == 2 { print $4 }')"
+    echo "tailscale: $(tailscale ip -4 2> /dev/null | head -n 1)"
+    echo "display: $(journalctl -u teletraan-kiosk.service -n 300 --no-pager 2> /dev/null | grep 'display:' | tail -n 1 | sed 's/^.*display: //' | cut -c 1-200)"
     finish 0
     ;;
   sync-now)

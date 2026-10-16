@@ -65,7 +65,7 @@ The Mac tool is the way in. `tools/mini/teletraan-mini update` does the same ins
 
 ## The helper and restarts
 
-The page cannot restart anything by itself. It asks a helper on the host through a Unix socket, `/run/teletraan/control.sock`, which only the login user can use. The helper (`mini/scripts/control-helper.sh`) knows these words and nothing else: `restart-kiosk`, `restart-services`, `reboot`, `status`, `sync-now calendars`, `sync-now monday`, `sync-now frc`, `write-env` and `monday-check`. Each one is written to `/opt/teletraan/logs/helper.log` with the time. Anything else is refused and logged.
+The page cannot restart anything by itself. It asks a helper on the host through a Unix socket, `/run/teletraan/control.sock`, which only the login user can use. The helper (`mini/scripts/control-helper.sh`) knows these words and nothing else: `restart-kiosk`, `restart-services`, `reboot`, `status`, `sync-now calendars`, `sync-now monday`, `sync-now frc`, `write-env` and `monday-check`. `status` prints `kiosk:`, `display:`, `tailscale:` and other `name: value` lines. Each one is written to `/opt/teletraan/logs/helper.log` with the time. Anything else is refused and logged.
 
 The sudoers file `/etc/sudoers.d/teletraan-control` lets the login user run `systemctl restart teletraan-*`, `systemctl restart nginx`, `systemctl start teletraan-*.service` and `/sbin/reboot` without a password, and nothing more.
 
@@ -78,6 +78,6 @@ The control container mounts `/opt/teletraan` (read and write), the `/run/teletr
 ## Where the code is
 
 - `control/server.js`, `control/lib/` and `control/routes/`: the service. Every file in `routes/` is loaded by name order, so a new route needs only a new file.
-- `control/static/`: the pages. A file named `tab-<name>.js` is a tab and registers itself.
+- `control/static/`: the pages. A file named `tab-<name>.js`, and each file in `control/static/tabs/` that calls `registerTab`, is a tab and registers itself.
 - `mini/install.sh`, `mini/git/post-receive`, `mini/sudoers/`, `mini/systemd/teletraan-control.socket` and `teletraan-control@.service`: the installer and the host side.
 - `control/bin/install-tree.js`: the install steps from a folder. The installer and the git hook run it in the Node image.

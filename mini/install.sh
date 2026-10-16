@@ -10,7 +10,7 @@
 #   2. migrate: today's /opt/teletraan becomes releases/1, local.env moves up to /opt/teletraan/local.env
 #   3. install the helper socket, its service and the sudoers file
 #   4. install the tree as the next release (control/bin/install-tree.js in the Node image), which builds the Studio
-#   5. start the containers, start the screen again
+#   5. start the containers, start the screen again, install the nightly timer
 #   6. make the bare git repository for the optional git path
 # It installs no package. The Node image and git have to be there already (the lines say what to run).
 #
@@ -184,6 +184,14 @@ docker run --rm -u "$account_uid:$account_gid" \
 step "Start the containers and the screen"
 (cd "$root/current/mini" && sudo -u "$account" docker compose --env-file local.env up -d --force-recreate)
 systemctl restart teletraan-kiosk.service 2> /dev/null || say "The screen service is not installed here; skipped."
+
+# The nightly restart timer belongs to the control page's idea of a Mini that looks after itself; its script asks for Enter
+step "Install the nightly timer"
+if [ -x "$root/mini/scripts/install-nightly.sh" ]; then
+  echo | "$root/mini/scripts/install-nightly.sh" || say "install-nightly.sh stopped (exit $?). Run it again by hand."
+else
+  say "This release has no install-nightly.sh, so the nightly timer was skipped."
+fi
 
 # 6. The optional git path
 step "Make the bare git repository"

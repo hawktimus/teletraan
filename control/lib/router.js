@@ -1,4 +1,5 @@
-// A small router: a method, a path with :names in it, and a handler. Handlers get (req, res, params).
+// A small router: a method, a path with :names in it, and a handler. Paths are written after /control/api. Handlers
+// get (req, res) and req.params holds the :names.
 // The helpers at the bottom send JSON and read a body with a size limit.
 
 export function createRouter() {

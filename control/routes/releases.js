@@ -8,11 +8,11 @@ import { limits } from '../lib/zip.js';
 import { shortCommit } from '../lib/releases.js';
 
 export function register(router, ctx) {
-  router.get('/control/api/releases', (req, res) => {
+  router.get('/releases', (req, res) => {
     sendJson(res, 200, { current: ctx.releases.currentNumber(), releases: ctx.releases.list() });
   });
 
-  router.post('/control/api/releases', async (req, res) => {
+  router.post('/releases', async (req, res) => {
     const body = await readBody(req, limits.zipBytes + 1024 * 1024);
     const form = parseMultipart(body, req.headers['content-type']);
     const file = form.files.zip;
@@ -37,13 +37,18 @@ export function register(router, ctx) {
     res.end();
   });
 
-  router.post('/control/api/releases/:n/activate', async (req, res, params) => {
-    const n = Number(params.n);
+  router.post('/releases/:n/activate', async (req, res) => {
+    const n = Number(req.params.n);
     const release = ctx.releases.activate(n);
     ctx.log('activated release ' + n);
     if (ctx.restartSelf) ctx.restartSelf();
-    const services = await ctx.helper('restart-services');
-    const kiosk = await ctx.helper('restart-kiosk');
-    sendJson(res, 200, { ok: true, release: release, restarted: services.ok && kiosk.ok, message: services.ok && kiosk.ok ? '' : 'The wall switched, but the helper did not restart the screen.' });
+    let message = '';
+    try {
+      await ctx.helper('restart-services');
+      await ctx.helper('restart-kiosk');
+    } catch (error) {
+      message = 'The wall switched, but the helper did not restart the screen.';
+    }
+    sendJson(res, 200, { ok: true, release: release, restarted: message === '', message: message });
   });
 }

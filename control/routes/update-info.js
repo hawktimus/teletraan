@@ -3,15 +3,20 @@
 import { sendJson } from '../lib/router.js';
 
 function field(text, name) {
-  const found = new RegExp('^' + name + '=([A-Za-z0-9._-]+)$', 'm').exec(text);
+  const found = new RegExp('^' + name + ': ([A-Za-z0-9._-]+)$', 'm').exec(text);
   return found ? found[1] : '';
 }
 
 export function register(router, ctx) {
-  router.get('/control/api/update-info', async (req, res) => {
-    const answer = await ctx.helper('status');
-    const user = field(answer.output, 'user') || '<user>';
-    const hostName = String(req.headers.host || '').split(':')[0].replace(/[^A-Za-z0-9.-]/g, '') || field(answer.output, 'host') || 'teletraan.local';
+  router.get('/update-info', async (req, res) => {
+    let answer = '';
+    try {
+      answer = await ctx.helper('status');
+    } catch (error) {
+      answer = '';
+    }
+    const user = field(answer, 'user') || '<user>';
+    const hostName = String(req.headers.host || '').split(':')[0].replace(/[^A-Za-z0-9.-]/g, '') || field(answer, 'host') || 'teletraan.local';
     const remote = user + '@' + hostName + ':/srv/teletraan.git';
     sendJson(res, 200, {
       user: user,

@@ -90,8 +90,9 @@ test('status prints plain name=value lines, and monday-check runs the check of t
   const h = setup();
   const status = h.ask('status\n');
   assert.equal(status.status, 'ok');
-  assert.match(status.output, /^user=\S+$/m);
-  assert.match(status.output, /^host=\S*$/m);
+  assert.match(status.output, /^user: \S+$/m);
+  assert.match(status.output, /^host: \S*$/m);
+  ['kiosk', 'display', 'tailscale'].forEach(label => assert.match(status.output, new RegExp('^' + label + ':', 'm'), label));
   const check = h.ask('monday-check\n');
   assert.equal(check.status, 'ok');
   assert.ok(check.calls.includes('monday --check'), check.calls);

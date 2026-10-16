@@ -33,7 +33,7 @@ function place(options = {}) {
       calls.push(command + ' ' + args.join(' '));
       return options.schemaFails && args[0].endsWith('schemas.test.mjs') ? { code: 1, output: 'schema Foo is wrong' } : { code: 0, output: '' };
     },
-    helper: async word => { calls.push('helper ' + word); return { ok: true, output: '' }; },
+    helper: async word => { calls.push('helper ' + word); return ''; },
     waitForBuild: async build => { calls.push('wait ' + build); return true; },
   };
   return { root: root, releasesDir: releasesDir, ctx: ctx, calls: calls, events: events, emit: event => events.push(event) };

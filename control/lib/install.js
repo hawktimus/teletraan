@@ -115,9 +115,12 @@ export async function installRelease(ctx, options) {
 
     if (options.restart !== false) {
       await step('restart', 'Restart the screen', async () => {
-        const services = await ctx.helper('restart-services');
-        const kiosk = await ctx.helper('restart-kiosk');
-        if (!services.ok || !kiosk.ok) throw stop('The helper did not restart the screen: ' + (kiosk.output || services.output || 'no answer'));
+        try {
+          await ctx.helper('restart-services');
+          await ctx.helper('restart-kiosk');
+        } catch (error) {
+          throw stop('The helper did not restart the screen: ' + error.message);
+        }
       }).catch(() => {});
 
       await step('wait', 'Wait for the screen to report', async () => {

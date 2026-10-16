@@ -109,7 +109,7 @@ function writeTool(folder, name, text) {
   fs.writeFileSync(path.join(folder, name), text, { mode: 0o755 });
 }
 
-const installNames = ['calendars', 'slides', 'monday', 'frc', 'console', 'watchdog', 'backup'];
+const installNames = ['calendars', 'slides', 'monday', 'frc', 'console', 'watchdog', 'backup', 'nightly'];
 
 // Makes the Mac's home, the fake tools and the folder that stands for the Mini,
 // and returns how to run the tool in them.
@@ -625,7 +625,7 @@ test('copying from the Mini changes nothing when the Mini has none of them or ca
   assert.ok(!fs.existsSync(path.join(down.home, '.teletraan/pulled.tmp')));
 });
 
-test('installing the services asks for the mentor\'s yes, then runs the seven install scripts in order and goes on after one stops', () => {
+test('installing the services asks for the mentor\'s yes, then runs the eight install scripts in order and goes on after one stops', () => {
   const place = makePlace('install', { failInstall: 'monday' });
   const declined = place.run(['4', '', 'q']);
   assert.ok(declined.text.includes('Nothing was installed.'));
