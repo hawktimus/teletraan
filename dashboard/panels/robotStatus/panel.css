@@ -1,0 +1,7 @@
+/* A dashed inner frame inside the body, 12px from its edge. The page is the one the Monday cards use (monday.css). */
+.placeholder .placeholder-frame {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  border: 4px dashed var(--team-plate);
+}

@@ -514,7 +514,7 @@ const folderLines = {
   'Screens': 'Original, Cybertron, Minimal',
   'Daily Agenda': 'Agenda items, Presentations (Upcoming, Past), Meeting days',
   'Monday Tasks': 'On the TV, Hidden',
-  'Settings': 'Dashboard Settings, Look, Teams, Views (General, Prime, Nova, Family), Themes',
+  'Settings': 'Dashboard Settings, Look, Teams, Views (Robotics, Prime, Nova, Family), Themes',
 };
 
 // The types, or the templates of add-templates.js, that the plus button of a folder offers
@@ -1068,7 +1068,7 @@ function differences(expected, actual, expectedName, actualName, problems) {
 // way round, or a new panel can never be switched on
 function checkPanelIds() {
   const problems = [];
-  const registered = world.registry.panels.filter(panel => !panel.testOnly && !panel.competition && !panel.monday && !panel.lastResort);
+  const registered = world.registry.panels.filter(panel => !panel.testOnly && !panel.competition && !panel.monday && !panel.lastResort && !panel.placeholder);
 
   rotationAreas.forEach(area => {
     const inRegistry = registered.filter(panel => panel.region === area).map(panel => panel.id);
@@ -1989,7 +1989,7 @@ function checkStartHere() {
   // The words of that line are lines of the sidebar: Settings is a folder that holds the Views folder
   const settingsFolder = world.structure.sidebarEntries.filter(entry => entry.title === 'Settings')[0];
   const viewsFolder = settingsFolder && settingsFolder.entries.filter(entry => entry.title === 'Views')[0];
-  need(problems, world.structure.sidebarEntries[0] && world.structure.sidebarEntries[0].title === 'Start here' && viewsFolder && viewsFolder.kind === 'group' && viewsFolder.entries.map(entry => entry.title).join() === 'General,Prime,Nova,Family' && parts.clickLine.indexOf('Views') !== -1 && parts.clickLine.indexOf('Settings') !== -1, 'the line under the picture names Views, under Settings, which should be a folder that holds General, Prime, Nova and Family');
+  need(problems, world.structure.sidebarEntries[0] && world.structure.sidebarEntries[0].title === 'Start here' && viewsFolder && viewsFolder.kind === 'group' && viewsFolder.entries.map(entry => entry.title).join() === 'Robotics,Prime,Nova,Family' && parts.clickLine.indexOf('Views') !== -1 && parts.clickLine.indexOf('Settings') !== -1, 'the line under the picture names Views, under Settings, which should be a folder that holds Robotics, Prime, Nova and Family');
   const shown = picture ? nodesWhere(picture, node => node.type === 'text').map(wordsIn) : [];
   need(problems, shown.filter(text => /^[A-Z]$/.test(text)).join('') === 'ABCDE', 'the picture should have the letters A to E, in order, one for each area. It has: ' + shown.filter(text => /^[A-Z]$/.test(text)).join(''));
   need(problems, parts.areas.map(area => area.letter + ' ' + area.name).join() === startAreas.join(), 'the picture should have the areas ' + startAreas.join(', '));
@@ -4660,7 +4660,7 @@ function checkPanelOrder() {
   const problems = [];
   const config = world.dashboard;
   const at = name => fieldAt('dashboardSettings.rotation.' + name);
-  const registered = world.registry.panels.filter(panel => !panel.testOnly && !panel.competition && !panel.monday && !panel.lastResort);
+  const registered = world.registry.panels.filter(panel => !panel.testOnly && !panel.competition && !panel.monday && !panel.lastResort && !panel.placeholder);
   const ids = rotationAreas.reduce((all, area) => all.concat(registered.filter(panel => panel.region === area).map(panel => panel.id)), []);
 
   const order = at('order');
@@ -6316,7 +6316,7 @@ function checkScreenType() {
 
   const at = name => fieldAt('screen.' + name);
   const rulesOf = field => (field ? constraintsOf(field) : []);
-  const registered = area => world.registry.panels.filter(panel => panel.region === area && !panel.testOnly && !panel.competition && !panel.monday && !panel.lastResort).map(panel => panel.id);
+  const registered = area => world.registry.panels.filter(panel => panel.region === area && !panel.testOnly && !panel.competition && !panel.monday && !panel.lastResort && !panel.placeholder).map(panel => panel.id);
   const listOf = pathText => choicesOf(pathText).map(item => item.value + '=' + item.title).join();
   const titleFor = id => ({ tasks: 'Tasks', events: 'Upcoming events', tonight: 'Daily Agenda', spotlight: 'Subteam spotlight', 'sponsor-feature': 'Sponsor feature', photo: 'Photo', leadership: 'Leadership', 'team-leads': 'Team leads', roster: 'Subteam roster', custom: 'Extra panel', 'task-counts': 'Task counts', 'next-event': 'Next event', forecast: 'Weather forecast', 'safety-days': 'Safety days', 'sponsor-logo': 'Sponsor logo' }[id]);
   const monday = ['monday-tasks=Monday: Tasks by team and department', 'monday-done=Monday: Done by team', 'monday-status-depts=Monday: Status by department', 'monday-overall=Monday: Overall progress', 'monday-timeline=Monday: Timeline by team', 'monday-board=Monday: Board by team'];
@@ -6779,7 +6779,7 @@ function checkViewType() {
   // the pages: four, in a folder under Settings, each of the type view with an id of its own
   const settings = world.structure.sidebarEntries.filter(entry => entry.title === 'Settings')[0];
   const folder = settings && settings.entries.filter(entry => entry.title === 'Views')[0];
-  need(problems, folder && folder.entries.map(entry => entry.title + '=' + entry.id + '=' + entry.type).join() === 'General=view-general=view,Prime=view-prime=view,Nova=view-nova=view,Family=view-family=view', 'Views, under Settings, should list the pages General, Prime, Nova and Family, each of the type view with the id view- and its key');
+  need(problems, folder && folder.entries.map(entry => entry.title + '=' + entry.id + '=' + entry.type).join() === 'Robotics=view-general=view,Prime=view-prime=view,Nova=view-nova=view,Family=view-family=view', 'Views, under Settings, should list the pages Robotics (id view-general), Prime, Nova and Family, each of the type view with the id view- and its key');
   need(problems, world.structure.viewIds.join() === viewPageIds.join(), 'the ids of the Views in structure.js should be ' + viewPageIds.join(', '));
   const actions = ['publish', 'discardChanges', 'delete', 'duplicate', 'unpublish'].map(action => ({ action: action }));
   need(problems, world.config.document.actions(actions, { schemaType: 'view' }).map(item => item.action).join() === 'publish,discardChanges', 'a View should have these actions: publish,discardChanges. Nothing copies it or takes it away');
@@ -6801,7 +6801,7 @@ function checkViewSettings() {
 
   // the Look tab: name, title and order of the views, and the theme of each weekday
   need(problems, at('generalViewName') && at('generalViewName').initialValue === 'General' && config.defaultSettings.generalViewName === 'General', 'generalViewName should start as General, as config.js says');
-  need(problems, at('generalViewTitle') && at('generalViewTitle').initialValue === 'Hawktimus Dashboard' && config.defaultSettings.generalViewTitle === 'Hawktimus Dashboard', 'generalViewTitle should start as Hawktimus Dashboard, as config.js says');
+  need(problems, at('generalViewTitle') && at('generalViewTitle').initialValue === 'HAWKTIMUS ROBOTICS' && config.defaultSettings.generalViewTitle === 'HAWKTIMUS ROBOTICS', 'generalViewTitle should start as HAWKTIMUS ROBOTICS, as config.js says');
   need(problems, at('viewOrder') && at('viewOrder').type === 'array' && at('viewOrder').initialValue.join() === 'general,prime,nova,family' && config.defaultSettings.viewOrder.join() === 'general,prime,nova,family' && constraintNamed(rulesOf(at('viewOrder')), 'unique'), 'viewOrder should start as General, Prime, Nova, Family, as config.js says, and hold each view once');
   const member = at('viewOrder') && at('viewOrder').of[0];
   need(problems, member && member.options.list.map(item => item.value).join() === 'general,prime,nova,family' && constraintNamed(constraintsOf(member), 'valid'), 'each row of viewOrder should be one of the four views');
@@ -6827,7 +6827,7 @@ function checkViewSettings() {
   // the dashboard keeps the values tidy
   const tidy = { viewOrder: ['nova', 'bogus', 'nova', 'general'], generalViewName: '  ', themeByWeekday: { monday: 'retro', tuesday: 'minimal' } };
   world.dashboardContent.tidyViewSettings(tidy);
-  need(problems, tidy.viewOrder.join() === 'nova,general' && tidy.generalViewName === 'General' && tidy.generalViewTitle === 'Hawktimus Dashboard' && tidy.themeByWeekday.monday === 'retro' && tidy.themeByWeekday.tuesday === 'cybertron' && Object.keys(tidy.themeByWeekday).join() === days.join(), 'the dashboard should keep the view settings tidy: known views once, words kept, a theme for every day');
+  need(problems, tidy.viewOrder.join() === 'nova,general' && tidy.generalViewName === 'General' && tidy.generalViewTitle === 'HAWKTIMUS ROBOTICS' && tidy.themeByWeekday.monday === 'retro' && tidy.themeByWeekday.tuesday === 'cybertron' && Object.keys(tidy.themeByWeekday).join() === days.join(), 'the dashboard should keep the view settings tidy: known views once, words kept, a theme for every day');
   const bare = {};
   world.dashboardContent.tidyViewSettings(bare);
   need(problems, bare.viewOrder.join() === 'general,prime,nova,family' && sameData(bare.themeByWeekday, config.defaultThemeByWeekday), 'view settings that are missing should be the starting ones');
@@ -6989,7 +6989,7 @@ async function checkViewSeed() {
   await Promise.all(globalThis.studioEffects.map(effect => effect())).then(wait);
   need(problems, changes.length === 1 && Array.isArray(changes[0]) && patchOf(changes[0], 'key').value === 'nova' && patchOf(changes[0], 'team').value._ref === 'team-nova', 'opening an empty View should fill it once, in one change');
   const radios = nodesWhere(tree, node => node.type === 'input' && node.props.type === 'radio');
-  need(problems, wordsIn(nodesWhere(tree, node => node.props && node.props['data-block'] === 'picker')) === 'Editing view: General Prime Nova Family' && radios.map(node => node.props.checked).join() === 'false,false,true,false', 'the picker should show the four views with the open one picked');
+  need(problems, wordsIn(nodesWhere(tree, node => node.props && node.props['data-block'] === 'picker')) === 'Editing view: Robotics Prime Nova Family' && radios.map(node => node.props.checked).join() === 'false,false,true,false', 'the picker should show the four views with the open one picked');
   radios[1].props.onChange();
   need(problems, JSON.stringify(navigated[0]) === JSON.stringify(['edit', { id: 'view-prime', type: 'view' }]), 'a choice in the picker should open that view (' + JSON.stringify(navigated[0]) + ')');
   const boxes = node => nodesWhere(node, item => item.type === 'g' && item.props && item.props['data-letter'] !== undefined);

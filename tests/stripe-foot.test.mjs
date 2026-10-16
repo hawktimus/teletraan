@@ -189,6 +189,14 @@ Object.keys(mondayLowest).forEach(name => {
   };
 });
 
+// The placeholders draw the body of a Monday card and a dashed frame that fills it
+['robotStatus', 'wireframe'].forEach(name => {
+  panels[name] = style => {
+    const body = mondayBody(style);
+    return { bottom: body.top + body.height, box: body.top + body.height, top: body.top };
+  };
+});
+
 // The rows of Leadership and Team leads, for a page of this many rows
 const personRows = (style, count) => {
   const top = pixels(valueIn(style, sheets.base, '.person-rows', 'top'));

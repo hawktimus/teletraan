@@ -1,6 +1,6 @@
 # Views
 
-The screen plays four views in turn: General, Prime, Nova and Family. A view is a layout, a team, the minutes it stays, the rows of the large panel and the rows of the small panel. Each is a document in the Studio (ids view-general, view-prime, view-nova, view-family). A document that is missing, or has an empty list, plays the starting view in `dashboard/config.js` (`defaultViews`), which has the shape of `studio/tools/view-defaults.js`. A view also carries `layout`, `mirror`, `countdownIn`, `viewTag`, `teamChip` and `colors`.
+The screen plays three views: Robotics, Prime and Nova. Robotics is the new name of General, which is kept as its other name in stored data, config and addresses (`general` still works in addresses and in the control page's requests). The Family view is not played any more: its two panels are Robotics rows, and its document is kept. A view is a layout, a team, the minutes it stays, the rows of the large panel and the rows of the small panel. Each is a document in the Studio (ids view-general, view-prime, view-nova, view-family). A document that is missing, or has an empty list, plays the starting view in `dashboard/config.js` (`defaultViews`), which has the shape of `studio/tools/view-defaults.js`. A view also carries `layout`, `mirror`, `countdownIn`, `viewTag`, `teamChip` and `colors`.
 
 ## What each view is
 
@@ -30,14 +30,29 @@ One ordered list says what the large panel plays: Dashboard Settings, Look tab, 
 - The minutes stand still while an alert, an announcement, a talk, a demo, the night screen or a hidden transition has the screen. The view that was interrupted comes back at the panel that was next.
 - The control page can hold a view (`showView`, robotics or general), hold a panel (`holdPanel`), preview a theme (`previewTheme`) or pause the rotation (`pauseRotation`). The runtime reads them once a second through `activeRequests()` in `core/screen-requests.js`. A held panel is the only one the large panel plays, in the first view that has it. With `?style=` or `?team=` in the address the screen plays the first view and holds nothing.
 
+## Robotics
+
+- The banner title is HAWKTIMUS ROBOTICS (Look tab, Title of the Robotics view; the older default title reads as the new one). There is no team number anywhere on the view. The team plate says TWO TEAMS and ONE FAMILY on two lines, the first in the label color and the second in the second accent, at 30px because two lines do not fit the plate at 44px (`family-line.css`).
+- The look is the Prime look: its logo and colors. Items that are for one team show for Prime and the shared ones for both.
+- Two layouts, chosen for each row by its panel (`roboticsWidePanels` in `config-rotation.js`). Split is the standard layout: the main panel at the left, the Gamedrop countdown with its red clock frame at the top right and Panel B at the bottom right. Wide is the bar layout: the countdown in the banner and the side column at the left. The Monday cards, the roster and the two placeholders are wide, and every other panel is split. A change of layout between two rows is a swap.
+- Prime and Nova keep their structure. Nova is mirrored.
+- There are no view chips, and a team's name is in the banner once on a page: the panel titles do not repeat it (BUILD TASKS, DONE, TIMELINE, BOARD) and the panels draw no team chip. The stored `viewTag` and `teamChip` fields are hidden and not read.
+- Daily Agenda is the first row of every Robotics block that the migration makes.
+
+## Departments, rosters and placeholders
+
+- Design and CNC are one department on the screen, DESIGN · CNC, with the tasks of both Team leads. Business, Operations and Marketing are departments of both teams: a Monday tasks row of the Robotics view with no department plays each of them that has tasks, with no team in the title. A team view leaves them out.
+- The roster comes from the Monday board, not from Sanity: the people are the owners of a department's tasks (the person column) and their hours are the hours of those tasks (the hours number column), shared equally when a task has several owners. A page is one department and six rows. Only while the board has no owner at all does the roster show the older Team leads pages.
+- Robot status (ROBOT STATUS) and Wireframe view (3D VIEW) are panels of the Rotation list that draw their title and a dashed inner frame, until they are designed.
+
 ## Monday rows
 
 A Monday tasks row of a team view with no department stands for every Team lead that has tasks for the team. A Team lead with `monday: false` is left out, and one with no mark is on. It is worked out each time the list is read, so a new department needs no edit. A department with no tasks is left out. A row with a department of its own plays that department only.
 
 ## Names and the tag
 
-- `generalViewName` (default General) and `generalViewTitle` (default Hawktimus Dashboard) are in Dashboard Settings, Look tab. The General and Family banners carry the title. A team view carries its team's name.
-- The view tag is the name of the view at 30px in the team label color, at the far end of the banner. A team view is named for the short name of its team. Family has no tag.
+- `generalViewName` and `generalViewTitle` (default HAWKTIMUS ROBOTICS) are in Dashboard Settings, Look tab. The Robotics banner carries the title. A team view carries its team's name.
+- The view tag is not drawn any more. The name of a view is still worked out (`viewNameOf`) and written on the page for the control page.
 
 ## The look
 

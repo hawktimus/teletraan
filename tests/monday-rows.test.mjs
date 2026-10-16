@@ -13,6 +13,9 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { copyModule } from './helpers/copy-module.mjs';
 
+// the drawing of the team chip is kept and tested here; the screen draws none (tests/chips-off.test.mjs)
+globalThis.teletraanTeamChips = true;
+
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
 const sampleFile = path.join(dashboardFolder, 'data/sample/content.json');
 const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');

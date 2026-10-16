@@ -27,9 +27,20 @@ export function pageTeamName(items, teamName) {
   return list.length > 0 && list.every(item => !hasText(item && item.team)) ? '' : teamName;
 }
 
-// The chip at the right end of a header, in the accent of the team. With no name there is no chip.
+// A team's name is in the banner once on a page, so the headers of the panels draw no chip with it. The code that draws the
+// chip is kept: tests/chips-off.test.mjs checks that it is off, and the tests of the chip's drawing turn it on with
+// globalThis.teletraanTeamChips = true. With no name there is no chip either way.
+function chipsOn() {
+  return globalThis.teletraanTeamChips === true;
+}
+
+// The chip text a header may use: the name, or nothing while the chips are off
+export function chipShown(name) {
+  return chipsOn() ? name : '';
+}
+
 export function teamChipMarkup(name) {
-  return hasText(name) ? `<span class="team-chip">${escapeHtml(name)}</span>` : '';
+  return chipsOn() && hasText(name) ? `<span class="team-chip">${escapeHtml(name)}</span>` : '';
 }
 
 // How wide the chip is, with the padding the stylesheet gives it (base.css, .team-chip). A header with no chip
@@ -37,7 +48,7 @@ export function teamChipMarkup(name) {
 const chipPadding = 28;
 
 export function chipWidth(chip) {
-  return hasText(chip) ? textWidth(chip, 700, 44) + chipPadding : 0;
+  return chipsOn() && hasText(chip) ? textWidth(chip, 700, 44) + chipPadding : 0;
 }
 
 // The class of the title of a header that has the chip of a team at its right end. The title is at the size of

@@ -59,6 +59,11 @@ function address(parts) {
   return '/index.html?' + query.join('&');
 }
 
+// A panel id as a file name: robotStatus is robot-status
+function fileId(id) {
+  return id.replace(/[A-Z]/g, letter => '-' + letter.toLowerCase());
+}
+
 // The list of pictures to take, from the panels of dashboard/registry.js. Each is { name, kind, url }.
 // kind is still (a panel held by ?panel=), swap, view or announcement.
 export function planShots(panels) {
@@ -67,27 +72,27 @@ export function planShots(panels) {
 
   usable.filter(panel => panel.region === 'grid1' && !panel.monday && !panel.competition).forEach(panel => {
     screens.forEach(screen => teams.forEach(team => {
-      shots.push({ name: 'large-' + panel.id + '-' + screen + '-' + team, kind: 'still', url: address({ panel: panel.id, screen: screen, team: team }) });
+      shots.push({ name: 'large-' + fileId(panel.id) + '-' + screen + '-' + team, kind: 'still', url: address({ panel: panel.id, screen: screen, team: team }) });
     }));
   });
 
   usable.filter(panel => panel.region === 'grid2').forEach(panel => {
-    screens.forEach(screen => shots.push({ name: 'small-' + panel.id + '-' + screen, kind: 'still', url: address({ panel: panel.id, screen: screen }) }));
+    screens.forEach(screen => shots.push({ name: 'small-' + fileId(panel.id) + '-' + screen, kind: 'still', url: address({ panel: panel.id, screen: screen }) }));
   });
 
   usable.filter(panel => panel.monday).forEach(panel => {
     screens.forEach(screen => {
       if (!takesTeam(panel.id)) {
-        shots.push({ name: panel.id + '-' + screen, kind: 'still', url: address({ panel: panel.id, screen: screen }) });
+        shots.push({ name: fileId(panel.id) + '-' + screen, kind: 'still', url: address({ panel: panel.id, screen: screen }) });
         return;
       }
-      teams.forEach(team => shots.push({ name: panel.id + '-' + screen + '-' + team, kind: 'still', url: address({ panel: panel.id, screen: screen, team: team }) }));
+      teams.forEach(team => shots.push({ name: fileId(panel.id) + '-' + screen + '-' + team, kind: 'still', url: address({ panel: panel.id, screen: screen, team: team }) }));
     });
   });
 
   usable.filter(panel => panel.competition).forEach(panel => {
     screens.forEach(screen => teams.forEach(team => {
-      shots.push({ name: panel.id + '-' + screen + '-' + team, kind: 'still', url: address({ panel: panel.id, screen: screen, team: team, competition: '1' }) });
+      shots.push({ name: fileId(panel.id) + '-' + screen + '-' + team, kind: 'still', url: address({ panel: panel.id, screen: screen, team: team, competition: '1' }) });
     }));
   });
 

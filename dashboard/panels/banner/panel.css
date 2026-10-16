@@ -75,10 +75,6 @@
   width: 520px;
   height: 76px;
 }
-.banner[data-plate="both"] .team-plate { width: 940px; }
-.banner .team-plate svg + svg,
-.banner[data-plate="both"] .team-plate svg:first-of-type { display: none; }
-.banner[data-plate="both"] .team-plate svg + svg { display: block; }
 .banner .team-plate svg {
   position: absolute;
   left: 0;
@@ -106,12 +102,6 @@
   margin-left: 16px;
   color: var(--yellow);
 }
-.banner .team-plate .team-more {
-  display: none;
-  font-style: normal;
-  margin-left: 16px;
-}
-.banner[data-plate="both"] .team-plate .team-more { display: inline; }
 
 .banner .banner-right {
   display: flex;

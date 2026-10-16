@@ -11,6 +11,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { config, contentOf, dashboardFolder, htmlOf, leads, monday, now, panelIds, panels, read, registry, runTests, screens, task, test, views, wordsOf } from './helpers/monday-world.mjs';
 
+// the drawing of the team chip is kept and tested here; the screen draws none (tests/chips-off.test.mjs)
+globalThis.teletraanTeamChips = true;
+
 const studioFolder = fileURLToPath(new URL('../studio/', import.meta.url));
 const sheet = id => read('panels/' + id + '/panel.css');
 const olderIds = ['monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both'];
@@ -97,7 +100,7 @@ test('the tasks panel has ten rows at the most and two pages, stuck first, with 
   assert.equal(view.rows.length, 10);
   assert.equal(view.pages, 2);
   assert.equal(panels['monday-tasks'].scrollPages(content, { team: 'prime', department: 'lead-build' }), 2);
-  assert.equal(view.title, 'PRIME [BUILD] TASKS');
+  assert.equal(view.title, '[BUILD] TASKS');
   assert.equal(view.rows[0].title, '[Stuck one]');
   assert.equal(view.rows[0].status, 'blocked');
   assert.deepEqual(view.counts, { overdue: view.counts.overdue, open: 14, done: 1 });
@@ -126,11 +129,11 @@ test('the tasks panel for a department of no value is the first department that 
 test('the header title is the short name of the team and the department, and a panel for both teams has no chip', () => {
   const content = rich();
   const tasks = htmlOf('monday-tasks', content, { team: 'prime', department: 'lead-build' });
-  assert.ok(tasks.includes('data-slat="title">PRIME [BUILD] TASKS</h2>'));
+  assert.ok(tasks.includes('data-slat="title">[BUILD] TASKS</h2>'));
   assert.ok(tasks.includes('<span class="team-chip">PRIME</span>'));
-  assert.ok(htmlOf('monday-done', content, { team: 'prime' }).includes('>PRIME DONE</h2>'));
-  assert.ok(htmlOf('monday-timeline', content, { team: 'prime' }).includes('>PRIME TIMELINE</h2>'));
-  assert.ok(htmlOf('monday-board', content, { team: 'prime' }).includes('>PRIME BOARD</h2>'));
+  assert.ok(htmlOf('monday-done', content, { team: 'prime' }).includes('>DONE</h2>'));
+  assert.ok(htmlOf('monday-timeline', content, { team: 'prime' }).includes('>TIMELINE</h2>'));
+  assert.ok(htmlOf('monday-board', content, { team: 'prime' }).includes('>BOARD</h2>'));
 
   ['monday-status-depts', 'monday-overall'].forEach(id => assert.equal(htmlOf(id, content).includes('team-chip'), false, id));
   assert.ok(htmlOf('monday-status-depts', content).includes('>STATUS BY DEPARTMENT</h2>'));
@@ -141,7 +144,7 @@ test('a panel for a team takes the name of its chip from the Team document, so a
   const content = contentOf([task({ status: 'done', completedOn: '2026-10-12' })], raw => {
     raw.teams[0].shortName = 'NONSENSE';
   });
-  assert.ok(htmlOf('monday-done', content, { team: 'prime' }).includes('>NONSENSE DONE</h2>'));
+  assert.ok(htmlOf('monday-done', content, { team: 'prime' }).includes('>DONE</h2>'));
   assert.ok(htmlOf('monday-done', content, { team: 'prime' }).includes('<span class="team-chip">NONSENSE</span>'));
 });
 

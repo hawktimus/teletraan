@@ -15,6 +15,9 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { copyModule } from './helpers/copy-module.mjs';
 
+// the drawing of the team chip is kept and tested here; the screen draws none (tests/chips-off.test.mjs)
+globalThis.teletraanTeamChips = true;
+
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const dashboardFolder = path.join(repo, 'dashboard');
 const read = file => fs.readFileSync(path.join(repo, file), 'utf8');
@@ -239,7 +242,7 @@ test('the tasks panel of a department has the chip of its team, also with Genera
   const general = content([board({ title: '[a]', team: '', subteamId: 'lead-1' })]);
   const html = panels['monday-tasks'].markupFor(general, monday12, { team: 'prime', department: 'lead-1' });
   assert.equal(chipOf(html), 'PRIME');
-  assert.ok(html.includes('data-slat="title">PRIME [SUBTEAM A] TASKS</h2>'));
+  assert.ok(html.includes('data-slat="title">[SUBTEAM A] TASKS</h2>'));
   assert.equal(chipOf(panels['monday-tasks'].markupFor(general, monday12, { team: 'nova', department: 'lead-1' })), 'NOVA', 'a General task is on the panel of the other team too');
 
   const own = content([board({ title: '[a]', team: 'prime', subteamId: 'lead-1' }), board({ title: '[b]', team: '', subteamId: 'lead-1' })]);

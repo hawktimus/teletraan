@@ -19,6 +19,13 @@ export const largePanels = [
   { title: 'Extra panel', value: 'custom' },
 ];
 
+// The two panels that are placed in the Rotation list now and designed later. They draw their title and a dashed frame, and are
+// not in the older lists (Panel order, the rows of a Screen), so a list built from those never holds them.
+export const placeholderPanels = [
+  { title: 'Robot status', value: 'robotStatus' },
+  { title: 'Wireframe view', value: 'wireframe' },
+];
+
 export const smallPanels = [
   { title: 'Task counts', value: 'task-counts' },
   { title: 'Next event', value: 'next-event' },
@@ -73,7 +80,7 @@ export function idsOf(list) {
 
 // The title of a panel in the pickers, or nothing for a panel that is not in them
 export function panelTitle(panel) {
-  const found = largePanels.concat(smallPanels, mondayPanels, olderMondayPanels).filter(item => item.value === panel)[0];
+  const found = largePanels.concat(smallPanels, placeholderPanels, mondayPanels, olderMondayPanels).filter(item => item.value === panel)[0];
   return found ? found.title : '';
 }
 

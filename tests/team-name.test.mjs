@@ -15,6 +15,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { copyModule } from './helpers/copy-module.mjs';
 import { readModule } from './helpers/read-module.mjs';
 
+// the drawing of the team chip is kept and tested here; the screen draws none (tests/chips-off.test.mjs)
+globalThis.teletraanTeamChips = true;
+
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const dashboardFolder = path.join(repo, 'dashboard');
 const read = file => readModule(path.join(repo, file), 'utf8');

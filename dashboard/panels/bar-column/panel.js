@@ -7,6 +7,8 @@
 // each).
 
 import * as frame from '../../frame.js';
+import { roboticsPlate } from '../../config.js';
+import { viewNow } from '../../core/view-apply.js';
 import { formatClock, formatDate } from '../../core/time.js';
 import { weatherIcon } from '../../core/weather-icons.js';
 import { logoMarkup, showTeamLogo } from '../../core/logo.js';
@@ -42,7 +44,8 @@ export function mount(host, content) {
 
         <div class="bar-team" data-part="team-plate">
           ${teamPlateMarkup(TEAM_PLATE_WIDTH)}
-          <span>TEAM <b class="team-number"></b></span>
+          <span class="team-line">TEAM <b class="team-number"></b></span>
+          <span class="family-line"><em>${roboticsPlate[0]}</em><em>${roboticsPlate[1]}</em></span>
         </div>
         <div class="bar-school" data-part="school"><span class="school-text"></span></div>
         <span class="bar-sample" data-part="sample-badge"></span>
@@ -92,6 +95,9 @@ export function update(element, content) {
   const icon = element.querySelector('.weather-icon');
   const markup = weather ? weatherIcon(weather.code, weather.isDay, ICON_SIZE) : '';
   if (icon.innerHTML !== markup) icon.innerHTML = markup;
+
+  const plate = viewNow() === 'general' ? 'family' : 'one';
+  if (element.dataset.plate !== plate) element.dataset.plate = plate;
 
   const status = content.status || {};
   setText(element, '.bar-sample', status.source === 'sample' ? 'SAMPLE CONTENT' : '');

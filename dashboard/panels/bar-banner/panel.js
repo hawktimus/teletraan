@@ -21,7 +21,6 @@ export function mount(host, content) {
       ${plateMarkup(frameKind('banner', 'bar', shapesNow(), trimNow()))}
       <h1 class="bar-name" data-part="title" data-name-effect></h1>
       <div class="bar-war" data-part="war">${warMarkup()}</div>
-      <span class="view-tag"></span>
     </section>`;
 
   const element = host.firstElementChild;
@@ -43,10 +42,6 @@ export function update(element, content) {
   updateWar(element.querySelector('.war-clock'), content);
 
   const view = viewLabelsNow();
-  const tag = element.querySelector('.view-tag');
-  const tagText = view.tag ? view.name : '';
-  if (tag.textContent !== tagText) tag.textContent = tagText;
-
   const heading = element.querySelector('.bar-name');
   const name = view.title !== '' ? view.title : teamShown(content).name;
   if (heading.dataset.name === name) return;

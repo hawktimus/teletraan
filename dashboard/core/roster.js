@@ -6,6 +6,9 @@ import { hasText } from './text.js';
 import { visibleItems } from './content.js';
 import { makePages } from './turns.js';
 import { leadPhotoOf } from './team-leads.js';
+import { rosterPageRows } from '../config.js';
+import { departmentsOf, tasksOfDepartment } from './monday-views.js';
+import { forTeam, visibleTasks } from './monday.js';
 
 export const rowsPerColumn = 8;
 export const membersPerPage = rowsPerColumn * 2;
@@ -56,5 +59,59 @@ export function makeRosterTurns() {
   return function next(subteams) {
     const turn = nextTurn(rosterPages(subteams));
     return { page: turn.items[0] || null, upcoming: turn.upcoming[0] || null };
+  };
+}
+
+
+// The roster from the Monday board
+//
+// A roster page is one department: the people who own its tasks (the person column of the board) and the hours of those
+// tasks (the hours number column), six rows to a page. A task with several owners gives each an equal share of its hours.
+// Design and CNC are one department. The panel draws these pages while the board has any, and the pages of the Team leads
+// above only when it has none. The Robotics view counts the tasks of both teams, and a team view the tasks of its team.
+
+function ownersOf(task) {
+  const owners = Array.isArray(task.owners) ? task.owners.filter(hasText) : [];
+  return owners.length > 0 ? owners : hasText(task.contact) ? [String(task.contact).trim()] : [];
+}
+
+// The people of a list of tasks, as { name, hours }, the most hours first and then by name
+export function peopleOf(tasks) {
+  const hours = {};
+
+  tasks.forEach(task => {
+    const owners = ownersOf(task);
+    const each = typeof task.estHours === 'number' && task.estHours > 0 && owners.length > 0 ? task.estHours / owners.length : 0;
+    owners.forEach(name => {
+      hours[name] = (hours[name] || 0) + each;
+    });
+  });
+  return Object.keys(hours)
+    .map(name => ({ name: name, hours: Math.round(hours[name]) }))
+    .sort((a, b) => b.hours - a.hours || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+}
+
+// Every page: { department, rows: [{ name, hours }], pageNumber, pageCount }, department by department in the order of the
+// Team leads list. team is the code of the team on the screen, or '' for both teams.
+export function mondayRosterPages(content, now = new Date(), team = '') {
+  const tasks = forTeam(visibleTasks(content, now), team);
+  const pages = [];
+
+  departmentsOf(content, tasks, now).forEach(department => {
+    const people = peopleOf(tasksOfDepartment(tasks, department));
+    const pageCount = Math.ceil(people.length / rosterPageRows);
+
+    for (let index = 0; index < pageCount; index++) {
+      pages.push({ department: department.name, rows: people.slice(index * rosterPageRows, (index + 1) * rosterPageRows), pageNumber: index + 1, pageCount: pageCount });
+    }
+  });
+  return pages;
+}
+
+export function makeMondayRosterTurns() {
+  const nextTurn = makePages(1);
+
+  return function next(content, now, team) {
+    return nextTurn(mondayRosterPages(content, now, team)).items[0] || null;
   };
 }

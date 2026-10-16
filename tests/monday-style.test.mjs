@@ -209,14 +209,14 @@ test('a Monday card in the General view is never in the bar style: the standard 
   world.hooks.begin(step('tasks'));
   world.log.length = 0;
   world.hooks.begin(step('monday-overall'));
-  assert.deepEqual(world.log, ['checkTheme'], 'the style is the same, so no swap is queued here');
+  assert.deepEqual(world.log, ['checkTheme', 'queueSwap'], 'the style is the same, but Robotics draws this card in the wide layout and the tasks in the split one, so the change of layout is a swap');
   assert.equal(screens.heldLook().style, 'original');
   assert.equal(screens.heldLook().monday, true, 'but the screen knows it is in the Monday cards');
 
   const same = await start({ content: contentWith(raw => { raw.screens.forEach(screen => { screen.mondayStyle = 'cybertron'; }); }) });
   same.hooks.begin(step('tasks'));
   same.hooks.begin(step('monday-overall'));
-  assert.equal(screens.heldLook().style, 'cybertron', 'the Monday style of a standard layout');
+  assert.equal(screens.heldLook().style, 'original', 'Robotics draws its Monday cards in the wide layout, which is the bar layout in the style of the day');
 
   world.log.length = 0;
   world.hooks.begin(step('photo'));
@@ -334,7 +334,7 @@ test('Next look now moves the large panel to the next row, once for each click, 
 test('the page side names the cards through the screens, asks the layout the way holdForLayout does, and leaves the look to the swap', () => {
   const file = read('core/views-run.js');
 
-  assert.ok(file.includes("return styleFits(lookOf(step).style, viewLayoutOf(getContent(), placed(step).view));"));
+  assert.ok(file.includes("return styleFits(lookOf(step).style, layoutOfStep(getContent(), placed(step)));"));
   assert.ok(file.includes('const wanted = drawnFor(wantedLayout, shapesFor(style, wantedLayout));'), 'the layout is worked out as layout-apply.js does');
   assert.ok(read('core/layout-apply.js').includes('const wanted = drawnFor(wantedLayout, shapesFor(look.style, wantedLayout));'));
   assert.ok(file.includes('window.sessionStorage.getItem(reloadKey) !== wanted'), 'the note of mustReload');

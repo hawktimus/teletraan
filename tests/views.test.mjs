@@ -152,7 +152,7 @@ test('there are four views with a fixed layout, team and number of minutes, and 
   });
   assert.deepEqual(config.defaultSettings.viewOrder, config.viewKeys);
   assert.equal(config.defaultSettings.generalViewName, 'General');
-  assert.equal(config.defaultSettings.generalViewTitle, 'Hawktimus Dashboard');
+  assert.equal(config.defaultSettings.generalViewTitle, 'HAWKTIMUS ROBOTICS');
 });
 
 test('the General view starts with the agenda, events, leadership, four photos of ten seconds and sponsors, and five small panels', () => {
@@ -240,18 +240,17 @@ test('the General name and title and the order are read from Dashboard Settings'
 });
 
 
-test('General is named by its setting, a team view by the short name of its team, Family has no tag, and the title is General\'s', () => {
+test('General is named by its setting, a team view by the short name of its team, no view draws a tag, and the title of General is HAWKTIMUS ROBOTICS', () => {
   const content = contentWith(raw => { raw.settings.generalViewName = 'Shop'; });
   assert.equal(views.viewNameOf(content, 'general'), 'Shop');
   assert.equal(views.viewNameOf(content, 'prime'), 'PRIME');
   assert.equal(views.viewNameOf(content, 'nova'), 'NOVA');
   assert.equal(views.viewNameOf(content, 'family'), 'Family');
-  assert.equal(views.viewShowsTag(content, 'family'), false);
-  ['general', 'prime', 'nova'].forEach(key => assert.equal(views.viewShowsTag(content, key), true, key));
-  const quiet = contentWith(raw => { raw.views = [{ _id: 'view-prime', viewTag: false }]; });
-  assert.equal(views.viewShowsTag(quiet, 'prime'), false, 'a view can switch its tag off');
-  assert.equal(views.viewTitleOf(content, 'general'), 'Hawktimus Dashboard');
-  assert.equal(views.viewTitleOf(content, 'family'), 'Hawktimus Dashboard');
+  ['general', 'prime', 'nova', 'family'].forEach(key => assert.equal(views.viewShowsTag(content, key), false, 'no view chips: ' + key));
+  assert.equal(views.viewTitleOf(content, 'general'), 'HAWKTIMUS ROBOTICS');
+  assert.equal(views.viewTitleOf(contentWith(raw => { raw.settings.generalViewTitle = 'Hawktimus Dashboard'; }), 'general'), 'HAWKTIMUS ROBOTICS', 'the older default title reads as the new one');
+  assert.equal(views.viewTitleOf(contentWith(raw => { raw.settings.generalViewTitle = 'Our Shop'; }), 'general'), 'Our Shop');
+  assert.equal(views.viewTitleOf(content, 'family'), 'HAWKTIMUS ROBOTICS');
   assert.equal(views.viewTitleOf(content, 'prime'), '', 'a team view carries the name of its team');
   assert.equal(views.viewNameOf({ settings: {}, teams: [] }, 'nova'), 'NOVA', 'with no team document the name is the key');
 });
@@ -730,19 +729,14 @@ test('weather: a source that fails never throws at the screen, and a reading ove
 
 // The files
 
-test('the views do not draw or animate: the new files hold no animation of their own and the tags are 30 pixels', () => {
+test('the views do not draw or animate: the new files hold no animation of their own and no view tag is drawn', () => {
   ['core/views.js', 'core/views-run.js', 'core/view-apply.js'].forEach(file => {
     const source = withoutComments(read(file));
     ['blur', 'box-shadow', 'drop-shadow', 'requestAnimationFrame', '.animate(', 'keyframes', 'style.transform', 'style.opacity'].forEach(word => assert.ok(!source.includes(word), file + ' should not contain ' + word));
     assert.ok(!/localStorage\.|sessionStorage\./.test(source.replace(/window\.sessionStorage\.getItem\(reloadKey\)/g, '')) || file === 'core/views-run.js');
   });
-  const barCss = read('view-tag.css');
-  const bannerCss = read('view-tag.css');
-  assert.ok(/\.view-tag \{[^}]*font: 700 30px\/30px/.test(barCss));
-  assert.ok(/\.view-tag \{[^}]*font: 700 30px\/30px/.test(bannerCss));
-  assert.ok(/\.view-tag \{[^}]*color: var\(--team-label\)/.test(barCss));
-  assert.ok(/\.view-tag \{[^}]*color: var\(--team-label\)/.test(bannerCss));
-  assert.ok(/html\.mirrored\[data-layout="bar"\] \.bar-banner \.view-tag \{\s*right: auto;\s*left: 0;/.test(barCss), 'the tag goes to the other end when the layout is mirrored');
+  assert.ok(!fs.existsSync(path.join(dashboardFolder, 'view-tag.css')), 'the view tag is not drawn any more');
+  ['panels/banner/panel.js', 'panels/bar-banner/panel.js'].forEach(file => assert.ok(!read(file).includes('view-tag'), file + ' draws no view tag'));
 });
 
 test('the shell starts the views in place of the Screens, holds the first view before it draws, and puts the view on in the step of the look', () => {

@@ -2,6 +2,7 @@
 // it stands on a plate (frameKind in core/plate.js, with the corners the page's style has).
 
 import * as frame from '../../frame.js';
+import { roboticsPlate } from '../../config.js';
 import { formatClock, formatDate } from '../../core/time.js';
 import { weatherIcon } from '../../core/weather-icons.js';
 import { logoMarkup, showTeamLogo } from '../../core/logo.js';
@@ -26,8 +27,9 @@ export function mount(host, content) {
           <div class="banner-left">
             <h1 class="team-name" data-part="title" data-name-effect></h1>
             <div class="team-plate" data-part="team-plate">
-              ${teamPlateMarkup()}${teamPlateMarkup(940)}
-              <span>TEAM <b class="team-number"></b><i class="team-more">&amp; TEAM <b class="team-number-more"></b></i></span>
+              ${teamPlateMarkup()}
+              <span class="team-line">TEAM <b class="team-number"></b></span>
+              <span class="family-line"><em>${roboticsPlate[0]}</em><em>${roboticsPlate[1]}</em></span>
             </div>
             <span class="sample-badge" data-part="sample-badge"></span>
           </div>
@@ -52,7 +54,6 @@ export function mount(host, content) {
           <span class="rule bar" data-part="rule"></span>
           <span class="banner-line" data-part="line"></span>
           <span class="school" data-part="school"></span>
-          <span class="view-tag"></span>
         </div>
       </div>
     </section>`;
@@ -105,9 +106,8 @@ export function update(element, content) {
   // A name that already says Dashboard does not need the word again beside the wordmark
   const subtitle = /\bdashboard\b/i.test(name) ? 'off' : 'on';
   if (element.dataset.subtitle !== subtitle) element.dataset.subtitle = subtitle;
-  setText(element, '.view-tag', view.tag ? view.name : '');
   setText(element, '.team-number', team.number);
-  setSecondTeam(element, content, team);
+  setPlate(element);
   setText(element, '.school', content.team.school);
   showTeamLogo(element.querySelector('.logo'), team.logo);
 
@@ -127,12 +127,11 @@ export function update(element, content) {
   setLine(element, line);
 }
 
-// The General view belongs to both teams, so its plate names both numbers. Any other view shows the one team.
-function setSecondTeam(element, content, team) {
-  const others = (Array.isArray(content.teams) ? content.teams : []).filter(other => other.code !== team.code && typeof other.number === 'string' && other.number !== '');
-  const both = viewNow() === 'general' && others.length > 0;
-  setText(element, '.team-number-more', both ? others[0].number : '');
-  if (element.dataset.plate !== (both ? 'both' : 'one')) element.dataset.plate = both ? 'both' : 'one';
+// The Robotics view belongs to both teams, so its plate has no number: it says TWO TEAMS and ONE FAMILY on two lines.
+// Any other view shows the one team.
+function setPlate(element) {
+  const wanted = viewNow() === 'general' ? 'family' : 'one';
+  if (element.dataset.plate !== wanted) element.dataset.plate = wanted;
 }
 
 // panels/banner/panel.css reads data-line to give the line its place

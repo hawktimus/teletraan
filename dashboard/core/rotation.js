@@ -10,7 +10,7 @@
 // the list from them the first time Dashboard Settings is opened (migrateRotation here, and the same in
 // studio/tools/rotation-migrate.js).
 
-import { olderGeneralTitle, rotationAliases, rotationKeyOfView, rotationViews, transitionSecondsRange } from '../config.js';
+import { rotationAliases, rotationKeyOfView, rotationViews, transitionSecondsRange } from '../config.js';
 import { panels } from '../registry.js';
 import { keepInRange } from './content.js';
 import { isRecord } from './text.js';
@@ -182,4 +182,3 @@ export function tidyRotationSettings(settings) {
   settings.transitionSeconds = transitionSecondsOf({ settings: settings });
 }
 
-export { olderGeneralTitle };

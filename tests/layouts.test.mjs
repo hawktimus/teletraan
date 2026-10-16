@@ -2637,8 +2637,7 @@ test('every literal text size under 44 px in the dashboard stylesheets is on a l
   // the third line of a row of Leadership or Team leads, 36 px, which the order for those rows sets
   allowed.push({ file: 'dashboard/base.css', selector: '.person-line', size: 36 });
   allowed.push({ file: 'dashboard/panels/photo/panel.css', selector: '.photo .credit', size: 30 }); // the credit under the caption of a photo
-  allowed.push({ file: 'dashboard/view-tag.css', selector: '.banner .view-tag', size: 30 }); // the name of the view
-  allowed.push({ file: 'dashboard/view-tag.css', selector: 'html[data-layout="bar"] .bar-banner .view-tag', size: 30 });
+  allowed.push({ file: 'dashboard/family-line.css', selector: '.family-line em', size: 30 }); // the two lines on the team plate of the Robotics view
   // and the sizes the order sets for the Monday cards and the season timeline (orderSmall, below)
   allowed.push.apply(allowed, orderSmall.map(item => ({ file: 'dashboard/' + item.file, selector: item.selector, size: item.size })));
   const order = list => list.map(item => item.file + ' ' + item.selector + ' ' + item.size).sort();
@@ -2803,10 +2802,11 @@ Object.keys(smallTextOf).forEach(style => smallTextOf[style].push({ file: 'base.
 const photoCredit = { file: 'panels/photo/panel.css', selector: '.photo .credit', size: 30 };
 Object.keys(smallTextOf).forEach(style => smallTextOf[style].push(photoCredit));
 
+// and the two lines on the team plate of the Robotics view, 30 px, which every style draws
+Object.keys(smallTextOf).forEach(style => smallTextOf[style].push({ file: 'family-line.css', selector: '.family-line em', size: 30 }));
+
 // and the build stamp of ?debug=1, 20 px, the one size the order for the version on the wall allows below the rest
 Object.keys(smallTextOf).forEach(style => smallTextOf[style].push({ file: 'base.css', selector: '.build-stamp', size: 20 }));
-Object.keys(smallTextOf).forEach(style => smallTextOf[style].push({ file: 'view-tag.css', selector: '.banner .view-tag', size: 30 }));
-smallTextOf.minimal.push({ file: 'view-tag.css', selector: 'html[data-layout="bar"] .bar-banner .view-tag', size: 30 });
 
 // The Monday panels and the season timeline have the sizes under 44 px that the order for them sets, in every style: the
 // chips at 30 (the status of a row, the count of a column, STALE and OVERDUE), the first name of who to ask at 40, the labels

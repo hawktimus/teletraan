@@ -24,3 +24,11 @@ export const bothTeamDepartments = ['business', 'operations', 'marketing'];
 
 // Rosters come from the Monday board and page at this many rows
 export const rosterPageRows = 6;
+
+// The Robotics view has two layouts, chosen for each row by its panel. wide is the bar layout (the countdown in the banner,
+// the side column at the left) and every other panel is split (the main panel at the left, the countdown at the top right and
+// Panel B at the bottom right, which is the standard layout).
+export const roboticsWidePanels = [
+  'monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board', 'roster',
+  'robotStatus', 'wireframe',
+];

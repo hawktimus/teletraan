@@ -1,7 +1,7 @@
 // The view and theme fields of Dashboard Settings, in the Look tab.
 //
 //   generalViewName   the name of the General view in the view tag, "General" to start with
-//   generalViewTitle  the title across the banner while the General view is on, "Hawktimus Dashboard" to start with
+//   generalViewTitle  the title across the banner while the Robotics view (stored as general) is on, "HAWKTIMUS ROBOTICS" to start with
 //   viewOrder         the views in the order they take the screen, General, Prime, Nova, Family to start with
 //   themeByWeekday    the theme of each day of the week: original, cybertron or retro. It is edited on the
 //                     Themes page (sidebar, Settings, Themes), so the field is hidden here. It replaces screenSchedule.
@@ -38,7 +38,7 @@ export function viewsFields() {
   return [
     defineField({
       name: 'generalViewName',
-      title: 'Name of the General view',
+      title: 'Name of the Robotics view',
       type: 'string',
       group: 'look',
       description: 'The name in the view tag at the edge of the banner while the General view is on. Starts at General. Up to 16 characters fit.',
@@ -47,11 +47,11 @@ export function viewsFields() {
     }),
     defineField({
       name: 'generalViewTitle',
-      title: 'Title of the General view',
+      title: 'Title of the Robotics view',
       type: 'string',
       group: 'look',
-      description: 'The title across the banner while the General view is on. Starts at Hawktimus Dashboard. Up to 28 characters fit.',
-      initialValue: 'Hawktimus Dashboard',
+      description: 'The title across the banner while the Robotics view is on. Starts at HAWKTIMUS ROBOTICS. Up to 28 characters fit.',
+      initialValue: 'HAWKTIMUS ROBOTICS',
       validation: Rule => tooLong(Rule, 28),
     }),
     defineField({

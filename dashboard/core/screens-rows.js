@@ -45,9 +45,9 @@ function tidyTeam(value) {
 // stored on any other row is not read. A Monday row is for a team, as the kind of its panel says (mondayKinds in
 // config.js): the tasks panel for a team and a department (a Team lead, stored as department), done, timeline and board for a
 // team, and status by department and overall progress for neither. A Monday row that needs a team and has none is
-// dropped. A row that names one of the older Monday panels is the tasks panel of its team, for the first department that has
+// dropped, except a tasks row of the Robotics view (bothTeams), which is for the departments of both teams. A row that names one of the older Monday panels is the tasks panel of its team, for the first department that has
 // tasks, and a row for both teams that is dropped.
-export function tidyMainRow(raw) {
+export function tidyMainRow(raw, bothTeams = false) {
   if (!isRecord(raw) || typeof raw.panel !== 'string') return null;
 
   const panel = panelOf(raw.panel.trim());
@@ -64,7 +64,8 @@ export function tidyMainRow(raw) {
     const kind = mondayKinds[id];
     if (!kind) return null;
     if (kind === 'none') team = '';
-    else if (team === '' || team === 'both') return null;
+    // a tasks row with no team is a department of both teams, which only the Robotics view plays (bothTeams)
+    else if (team === 'both' || (team === '' && !(bothTeams && kind === 'department'))) return null;
   } else if (!teamPanels.includes(panel.id) || team === 'both') {
     team = '';
   }
@@ -84,7 +85,7 @@ function tidyMainRows(list) {
   const rows = [];
   const same = (a, b) => a.panel === b.panel && a.team === b.team && a.department === b.department;
 
-  tidyRows(list, tidyMainRow).forEach(row => {
+  tidyRows(list, raw => tidyMainRow(raw)).forEach(row => {
     if (!(row.older === true && rows.some(earlier => same(earlier, row)))) rows.push(row);
   });
   return rows;

@@ -8,7 +8,7 @@ export const viewKeys = ['general', 'prime', 'nova', 'family'];
 
 // The words of the sidebar and the picker. The two team views take their names from the Team
 // documents on the screen; these are the names the Studio shows.
-export const viewTitles = { general: 'General', prime: 'Prime', nova: 'Nova', family: 'Family' };
+export const viewTitles = { general: 'Robotics', prime: 'Prime', nova: 'Nova', family: 'Family' };
 
 // The minutes each view stays on the screen, to start with
 export const viewMinutes = { general: 6, prime: 6, nova: 6, family: 2 };

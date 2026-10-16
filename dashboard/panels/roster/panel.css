@@ -71,3 +71,18 @@
   text-overflow: ellipsis;
   font: 500 var(--size-body)/60px var(--font-text);
 }
+
+/* The roster from the Monday board: up to six rows, the person at the left and the hours at the right. The rows are 80px
+   high, so six fill 480 of the 516 in the body, clear of the cut corner of the frame. */
+.roster-board .body { justify-content: center; }
+.roster-board .people { width: 880px; }
+.roster-board .person {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  height: 80px;
+  border-bottom: 2px solid var(--team-plate);
+  font: 500 var(--size-body)/80px var(--font-text);
+}
+.roster-board .person-hours { color: var(--team-label); font-weight: 700; }
+.roster-board .page-count { font: 700 var(--size-label)/44px var(--font-display); color: var(--team-label); }

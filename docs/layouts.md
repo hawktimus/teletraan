@@ -19,7 +19,7 @@ A layout is where the regions of the screen sit. A view names one (docs/views.md
 In this page a **theme** is one of the folders of `dashboard/styles/` (original, cybertron and retro),
 chosen for each day of the week on the Themes page, and "style" is the older word for the same
 thing in the code (`data-style`, `core/style.js`, `?style=`). A **color file** is one of the CSS files
-of `dashboard/themes/`. A **view** is what plays (General, Prime, Nova or Family). "Minimal" is the name the
+of `dashboard/themes/`. A **view** is what plays (Robotics, which is stored as general, Prime or Nova). Robotics chooses between the standard layout (split) and the bar layout (wide) for each row, by the panel (docs/views.md). "Minimal" is the name the
 bar layout's drawing had when it was a theme, and its stylesheet is `layouts/bar-minimal.css`.
 
 Original and Cybertron draw the same arrangement. Cybertron draws it in plates in the team's body color,

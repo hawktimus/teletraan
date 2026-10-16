@@ -14,7 +14,7 @@
 
 import { defineField, defineArrayMember } from 'sanity';
 import { RotationInput } from '../inputs/rotation-input.js';
-import { largePanels, mondayPanels, olderMondayPanels, panelTitle } from '../inputs/screen-panels.js';
+import { largePanels, mondayPanels, olderMondayPanels, panelTitle, placeholderPanels } from '../inputs/screen-panels.js';
 import { rotationViewNames } from '../tools/rotation-migrate.js';
 
 const viewChoices = [
@@ -23,7 +23,7 @@ const viewChoices = [
   { title: 'Nova', value: 'nova' },
 ];
 
-const panelChoices = largePanels.concat(mondayPanels);
+const panelChoices = largePanels.concat(placeholderPanels, mondayPanels);
 
 const isPhoto = context => Boolean(context.parent) && context.parent.panel === 'photo';
 

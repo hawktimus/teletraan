@@ -248,7 +248,7 @@ test('a press moves the large panel to the next row, and the page gives the runn
 
   assert.ok(/function pressed\(\) \{\s*skipRow\(\);\s*\}/.test(run));
   assert.ok(run.includes('makeNextLookRunner({ getContent: getContent, storage: savedStorage(), busy: busy, next: pressed })'));
-  assert.ok(/function begin\(step\) \{[\s\S]*?holdLook\(to\);\s*if \(changes\.swap \|\| moved\) queueSwap\(\);\s*\}/.test(run), 'a look that is held is a swap at the next page change of the large panel');
+  assert.ok(/function begin\(step\) \{[\s\S]*?holdLook\(to\);\s*if \(changes\.swap \|\| moved \|\| reshaped\) queueSwap\(\);\s*\}/.test(run), 'a look that is held is a swap at the next page change of the large panel');
   assert.ok(run.includes('setLookHooks({ viewAs: viewAs, fits: fits, begin: begin });'));
   assert.ok(run.includes('startSwaps(busyElsewhere, swapScaleNow);'));
 });

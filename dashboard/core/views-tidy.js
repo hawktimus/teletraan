@@ -1,6 +1,6 @@
 // Tidying the views that are stored, and the names and titles of a view (part of views.js).
 
-import { countdownPlaces, defaultSettings, defaultViews, familyPanels, viewColors, viewIds, viewKeys, viewLayoutNames, viewLimits, viewTeams } from '../config.js';
+import { countdownPlaces, defaultSettings, olderGeneralTitle, roboticsTitle, defaultViews, familyPanels, viewColors, viewIds, viewKeys, viewLayoutNames, viewLimits, viewTeams } from '../config.js';
 import { keepInRange } from './content.js';
 import { tidyMainRow, tidySideRow } from './screens.js';
 import { hasText, isRecord } from './text.js';
@@ -38,7 +38,7 @@ export function viewOrderOf(content) {
 function tidyPanels(rows, key, team) {
   const wanted = (Array.isArray(rows) ? rows : []).map(raw => {
     if (!isRecord(raw)) return null;
-    return tidyMainRow(team === '' ? raw : Object.assign({}, raw, { team: team }));
+    return tidyMainRow(team === '' ? raw : Object.assign({}, raw, { team: team }), key === 'general');
   }).filter(row => row !== null);
 
   if (key !== 'family') return wanted;
@@ -123,10 +123,14 @@ export function viewTitleOf(content, key) {
   if (key !== 'general' && key !== 'family') return '';
 
   const settings = isRecord(content) && isRecord(content.settings) ? content.settings : {};
-  return trimmed(settings.generalViewTitle, longestTitle, defaultSettings.generalViewTitle);
+  const title = trimmed(settings.generalViewTitle, longestTitle, roboticsTitle);
+
+  // the title the General view had before Robotics is the same as no title
+  return title === olderGeneralTitle ? roboticsTitle : title;
 }
 
-// Whether the tag with the name of the view is drawn. Family is not named on the screen, and a view can switch it off.
-export function viewShowsTag(content, key) {
-  return key !== 'family' && resolveView(content, key).viewTag;
+// Whether the tag with the name of the view is drawn. It is not drawn on any view now: the banners carry the title or the
+// name of the team, and the stored viewTag field is kept and not read.
+export function viewShowsTag() {
+  return false;
 }

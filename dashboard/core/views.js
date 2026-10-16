@@ -18,7 +18,7 @@ export {
   longestName, viewOrderOf, tidyView, tidyViews, resolveView, viewNameOf, viewTitleOf, viewShowsTag,
 } from './views-tidy.js';
 export {
-  expandRows, viewSteps, viewSideSteps, dayThemeFor, viewPlan, viewLayoutOf, drawStyleFor, stepInView,
+  expandRows, viewSteps, viewSideSteps, dayThemeFor, viewPlan, viewLayoutOf, layoutOfStep, drawStyleFor, stepInView,
   lookForViewStep, cycleKey, cycleBlock, cycleSeconds, resetViews, holdPanelId, findViewWithPanel, viewPlaylist,
   viewSidePlaylist, tickView, holdBootView,
 } from './views-play.js';

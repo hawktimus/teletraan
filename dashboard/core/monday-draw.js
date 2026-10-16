@@ -8,7 +8,7 @@ import { teamsOf } from './screens.js';
 import { markBeside } from './marks.js';
 import { wordsRoom } from './header-room.js';
 import { everyMinutesOf, minutesSince, pagesOf, rowsPerPage, stale, staleWords, statusWords as boardStatusWords } from './monday.js';
-import { chipWidth, departmentTitle, smallTitleClass, teamChipMarkup, teamNameOf } from './team-title.js';
+import { chipShown, chipWidth, departmentTitle, smallTitleClass, teamChipMarkup, teamNameOf } from './team-title.js';
 import { escapeHtml, hasText } from './text.js';
 import { textWidth } from './text-width.js';
 import { wantedTeam } from './teams.js';
@@ -54,7 +54,8 @@ export function wordsAtRight(words) {
 // the chip in a header 1152 wide, and monday.css shows them only where the header is wider, in the bar layout.
 // The slashes are left out when they would not fit beside the chip, or beside the words when there is no chip.
 // now is a Date, and status is content.monday.
-export function headerMarkup(title, chip, status, now) {
+export function headerMarkup(title, rawChip, status, now) {
+  const chip = chipShown(rawChip);
   const words = wordsAtRight(agoWords(status, now));
   const ago = words ? `<span class="ago">${escapeHtml(words)}</span>` : '';
   const withChip = hasText(chip) ? ' tag-with-chip' : '';
@@ -78,7 +79,8 @@ function boardWords(lead, status, now, noAge = false) {
   return [lead, age].filter(part => hasText(part)).join(' · ');
 }
 
-export function boardHeader(title, chip, content, now, lead = 'BOARD', noAge = false) {
+export function boardHeader(title, rawChip, content, now, lead = 'BOARD', noAge = false) {
+  const chip = chipShown(rawChip);
   const status = content ? content.monday : null;
   const late = stale(status, now, everyMinutesOf(content));
   const words = late ? '' : boardWords(lead, status, now, noAge);

@@ -8,6 +8,9 @@
 import assert from 'node:assert/strict';
 import { contentModule, contentOf, draw, monday, now, panels, read, runTests, sanity, task, test, today } from './helpers/monday-world.mjs';
 
+// the drawing of the team chip is kept and tested here; the screen draws none (tests/chips-off.test.mjs)
+globalThis.teletraanTeamChips = true;
+
 const titles = list => list.map(item => item.title);
 
 test('visibleTasks keeps a task from the board that is shown on the board and in Studio, has a department and is not a subitem', () => {

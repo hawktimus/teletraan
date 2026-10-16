@@ -22,6 +22,8 @@
 //             and core/competition.js puts the cards that are due in the large panel's rotation.
 //   older     an older Monday card: it is registered so a saved row keeps working, and the Studio does not offer it
 //             (a saved row that names it plays as the tasks panel, core/screens.js)
+//   placeholder  a panel that draws its title and a dashed frame and is designed later (core/placeholder.js). It is a row of
+//             the Rotation list and in no older list (Panel order, the rows of a Screen)
 //   monday    a Monday card (core/monday.js). It is not in Panel order and not in the rotation lists of
 //             config.js: the cards are Monday rows of a Screen (core/screens.js). A row names the card and a team,
 //             or both teams for the milestones and progress cards, and plays when the team has board tasks. The
@@ -56,6 +58,9 @@ export const panels = [
   { id: 'team-leads', region: 'grid1', topic: 'subteams' },
   { id: 'roster', region: 'grid1', topic: 'subteams' },
   { id: 'custom', region: 'grid1', topic: 'custom' },
+  // placeholders: a title and a dashed frame, to be designed (core/placeholder.js)
+  { id: 'robotStatus', region: 'grid1', topic: 'robot', placeholder: true },
+  { id: 'wireframe', region: 'grid1', topic: 'wireframe', placeholder: true },
   { id: 'competition-next-match', region: 'grid1', topic: 'competition', competition: true },
   { id: 'competition-rank', region: 'grid1', topic: 'competition', competition: true },
   { id: 'competition-results', region: 'grid1', topic: 'competition', competition: true },

@@ -148,7 +148,7 @@ export const defaultSettings = {
   // The Views: the name and the title of the General view, the order the views take the screen, and the theme of
   // each weekday (the Themes page). screenSchedule above is not read any more
   generalViewName: 'General',
-  generalViewTitle: 'Hawktimus Dashboard',
+  generalViewTitle: 'HAWKTIMUS ROBOTICS',
   viewOrder: viewKeys,
   themeByWeekday: defaultThemeByWeekday,
   // The one ordered rotation list, rows of { view, panel, seconds, shown } (core/rotation.js). Empty plays the lists of the

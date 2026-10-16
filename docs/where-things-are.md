@@ -107,7 +107,6 @@ editors can sign in from anywhere.
                               and transitions.js. core/style-loader.js finds the folder from the theme id
                               (docs/layouts.md, "Cybertron"; docs/views-and-themes.md)
       subthemes.css           the layer of pictures over a theme and a view (docs/subthemes.md)
-      view-tag.css            the name of the view at the far end of the banner (docs/views.md)
       status-dots.css         the three dots at the foot of the screen (core/dots.js)
       build.example.js        the shape of build.js, which the control service writes for each release and
                               kiosk.sh writes when the screen starts. Git ignores build.js itself

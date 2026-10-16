@@ -1,8 +1,8 @@
 // The steps of a view, the view of the day and the held view (part of views.js).
 
-import { barStyle, defaultThemeByWeekday, scheduledThemeIds, viewKeys, weekdays } from '../config.js';
+import { barStyle, defaultThemeByWeekday, roboticsWidePanels, scheduledThemeIds, viewKeys, weekdays } from '../config.js';
 import { forTeam, visibleTasks } from './monday.js';
-import { departmentEntries, departmentsOf } from './monday-views.js';
+import { departmentEntries, departmentsOf, isBothTeamDepartment } from './monday-views.js';
 import { holdScreenLook, isMondayPanel, isTeamCode, planFor, stepsOfRow, teamsOf, tidyMainRow, weekdayIn } from './screens.js';
 import { rotateLayout } from './style.js';
 import { addressTeam } from './teams.js';
@@ -14,15 +14,19 @@ import { resolveView, viewOrderOf } from './views-tidy.js';
 
 // The Monday rows
 
-// The ids of the Team leads a team view plays Monday tasks for: the ones with tasks for the team, except those with
-// Monday switched off (monday: false on the Team lead). A Team lead with no mark is on. A new department is a new row
-// without any edit.
+// The ids of the Team leads a Monday tasks row plays for: the ones with tasks for the team, except those with Monday
+// switched off (monday: false on the Team lead). A Team lead with no mark is on. A new department is a new row without any
+// edit. Design and CNC are one row. A team view plays the departments of its team, and a row with no team (Robotics) plays
+// the departments of both teams (Business, Operations, Marketing), which a team view leaves out.
 function mondayDepartments(content, team, now = new Date()) {
   const entries = departmentEntries(content, now);
   const wanted = entries.filter(entry => entry.monday !== false).map(entry => entry.id);
-  const withTasks = departmentsOf(content, forTeam(visibleTasks(content, now), team), now).map(entry => entry.id);
+  const both = team === '';
+  const withTasks = departmentsOf(content, forTeam(visibleTasks(content, now), team), now);
 
-  return wanted.filter(id => withTasks.includes(id));
+  return withTasks
+    .filter(group => group.ids.some(id => wanted.includes(id)) && isBothTeamDepartment(group.name) === both)
+    .map(group => group.id);
 }
 
 // The rows with each Monday tasks row that has no department replaced by one row for every department that Monday
@@ -56,7 +60,7 @@ function rowsOfView(content, key, block) {
   if (blocks === null) return resolveView(content, key).panels;
 
   const wanted = blocks.filter((item, at) => item.key === key && (block < 0 || at === block));
-  return [].concat(...wanted.map(item => item.rows.map(row => tidyMainRow(mainRowOf(row, content))).filter(row => row !== null)));
+  return [].concat(...wanted.map(item => item.rows.map(row => tidyMainRow(mainRowOf(row, content), item.key === 'general')).filter(row => row !== null)));
 }
 
 // The order the views play in: the order of the list's blocks (each view once), or viewOrder
@@ -83,7 +87,7 @@ export function viewSteps(content, key, now = new Date(), block = -1) {
     if (isTeamCode(row.team) && (!teams.includes(row.team) || (only !== '' && row.team !== only))) return;
 
     stepsOfRow(row, index, rows, content, now).forEach(step => {
-      steps.push(Object.assign(step, { row: index, view: key, team: view.team !== '' ? view.team : step.team }));
+      steps.push(Object.assign(step, { row: index, view: key, team: view.team !== '' ? view.team : key === 'general' ? teams[0] : step.team }));
     });
   });
   return steps;
@@ -143,6 +147,15 @@ export function viewPlan(content, now = new Date()) {
 // The layout of a view
 export function viewLayoutOf(content, key) {
   return resolveView(content, key).layout;
+}
+
+// The layout a step is drawn in. Robotics has two, chosen by the panel of the row: wide (the bar layout) for the panels in
+// roboticsWidePanels, and split (the standard layout) for the others. The other views have the layout of their document.
+export function layoutOfStep(content, step) {
+  const key = viewKeys.includes(step.view) ? step.view : '';
+  if (key === 'general') return roboticsWidePanels.includes(step.panel) ? 'bar' : 'standard';
+
+  return key === '' ? 'standard' : viewLayoutOf(content, key);
 }
 
 // The style a view is drawn in. A bar view is the theme of the day in the bar layout, whose frames are the same in every
@@ -349,6 +362,10 @@ function firstUnit(content, now) {
   return at === undefined ? { key: blocks[0].key, block: 0 } : { key: blocks[at].key, block: at };
 }
 
+function firstStepOf(content, key, block, now) {
+  return viewSteps(content, key, now, block)[0] || { panel: '' };
+}
+
 // The look the screen starts with, before anything is drawn: { team, style, monday }. content is the saved copy of the
 // content, or null when there is none, and then nothing is held and the settings decide. It is the look of the first
 // step of the first view in the order that has one.
@@ -360,7 +377,7 @@ function bootViewLook(content, now = new Date()) {
   const steps = viewSteps(content, key, now, block);
   const step = steps.length > 0 ? steps[0] : { panel: '', view: key, team: resolveView(content, key).team };
 
-  return lookForViewStep(step, plan, viewLayoutOf(content, key));
+  return lookForViewStep(step, plan, layoutOfStep(content, Object.assign({ view: key }, step)));
 }
 
 // Works out the look the screen starts with and holds it, with the view, in the same modules a preview holds a look in.
@@ -372,7 +389,7 @@ export function holdBootView(content, now = new Date()) {
     const { key, block } = firstUnit(content, now);
     startView(key, block);
     holdView(key);
-    rotateLayout(viewLayoutOf(content, key));
+    rotateLayout(layoutOfStep(content, Object.assign({ view: key }, firstStepOf(content, key, block, now))));
   }
   holdScreenLook(look);
   return look;

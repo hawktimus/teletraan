@@ -11,7 +11,8 @@
 
 import { todayOf } from './competition.js';
 import { isVisible } from './content.js';
-import { dayNumber, forDepartment, forTeam, nextMilestones, milestoneProgress, overdue, plainDateOf, progressHours, rank, visibleTasks } from './monday.js';
+import { bothTeamDepartments, designDepartment } from '../config.js';
+import { dayNumber, forTeam, nextMilestones, milestoneProgress, overdue, plainDateOf, progressHours, rank, visibleTasks } from './monday.js';
 import { teamsOf } from './screens.js';
 import { teamNameOf } from './team-title.js';
 import { wantedTeam } from './teams.js';
@@ -60,11 +61,55 @@ export function departmentEntries(content, now) {
   return (Array.isArray(content && content.subteams) ? content.subteams : []).filter(entry => isVisible(entry, now) && hasText(entry.name) && hasText(entry.id));
 }
 
-// The entries that have tasks among the ones given, as { id, name }, in the order of the Team leads list
+// Design and CNC are one department on the screen, DESIGN · CNC
+function isDesignOrCnc(name) {
+  const text = String(name).trim().toLowerCase();
+  return text === 'design' || text === 'cnc' || (/\bdesign\b/.test(text) && /\bcnc\b/.test(text));
+}
+
+// True for a department that belongs to both teams (Business, Operations, Marketing): its panels sit in the Robotics view
+export function isBothTeamDepartment(name) {
+  return bothTeamDepartments.includes(String(name).trim().toLowerCase());
+}
+
+// The departments of the Team leads list as they are on the screen: { id, ids, name, entry }. Design and CNC are one, with
+// the id of the first and the ids of both.
+function groupedEntries(entries) {
+  const groups = [];
+  let design = null;
+
+  entries.forEach(entry => {
+    if (!isDesignOrCnc(entry.name)) {
+      groups.push({ id: entry.id, ids: [entry.id], name: String(entry.name).trim(), entry: entry });
+    } else if (design) {
+      design.ids.push(entry.id);
+    } else {
+      design = { id: entry.id, ids: [entry.id], name: designDepartment, entry: entry };
+      groups.push(design);
+    }
+  });
+  return groups;
+}
+
+// The tasks of a department as departmentsOf gives it: the tasks of any of its ids
+export function tasksOfDepartment(tasks, department) {
+  return tasks.filter(task => department.ids.includes(task.subteamId));
+}
+
+// The departments that have tasks among the ones given, as { id, ids, name }, in the order of the Team leads list
 export function departmentsOf(content, tasks, now) {
-  return departmentEntries(content, now)
-    .filter(entry => tasks.some(task => task.subteamId === entry.id))
-    .map(entry => ({ id: entry.id, name: String(entry.name).trim() }));
+  return groupedEntries(departmentEntries(content, now))
+    .filter(group => tasksOfDepartment(tasks, group).length > 0)
+    .map(group => ({ id: group.id, ids: group.ids, name: group.name }));
+}
+
+// The name of the department of each id, for the cards that name the department of a task
+function departmentNames(content, now, shape) {
+  const names = {};
+  groupedEntries(departmentEntries(content, now)).forEach(group => group.ids.forEach(id => {
+    names[id] = shape(group.name);
+  }));
+  return names;
 }
 
 // The tasks of a team that a panel may draw, and the department the page asks for
@@ -83,12 +128,14 @@ function pocOf(task) {
 export function tasksView(content, now, page) {
   const options = pageOptions(page);
   const team = teamOfPage(content, options);
-  const tasks = teamTasks(content, now, team.code);
+  // a row with a department and no team is a department of both teams: all its tasks, with no team in the title
+  const bothTeams = options.team === '' && options.department !== '';
+  const tasks = teamTasks(content, now, bothTeams ? '' : team.code);
   const departments = departmentsOf(content, tasks, now);
-  const department = options.department !== '' ? departments.find(entry => entry.id === options.department) : departments[options.number - 1];
+  const department = options.department !== '' ? departments.find(entry => entry.ids.includes(options.department)) : departments[options.number - 1];
   if (!department) return null;
 
-  const own = forDepartment(tasks, department.id);
+  const own = tasksOfDepartment(tasks, department);
   const today = todayOf(content, now);
   const ranked = rank(own).slice(0, mostTaskRows);
   const open = own.filter(task => task.status !== 'done');
@@ -96,7 +143,7 @@ export function tasksView(content, now, page) {
   return {
     team: team,
     department: department,
-    title: team.name + ' ' + department.name.toUpperCase() + ' TASKS',
+    title: department.name.toUpperCase() + ' TASKS',
     rows: ranked.map(task => ({
       status: task.status,
       title: task.title || '',
@@ -120,10 +167,7 @@ export function doneView(content, now, page) {
   const done = rank(teamTasks(content, now, team.code).filter(task => task.status === 'done'));
   if (done.length === 0) return null;
 
-  const names = {};
-  departmentEntries(content, now).forEach(entry => {
-    names[entry.id] = String(entry.name).trim();
-  });
+  const names = departmentNames(content, now, name => name);
   const week = done.filter(task => {
     const gone = dayNumber(today) - dayNumber(plainDateOf(task, 'completedOn'));
     return gone >= 0 && gone < 7;
@@ -131,7 +175,7 @@ export function doneView(content, now, page) {
 
   return {
     team: team,
-    title: team.name + ' DONE',
+    title: 'DONE',
     rows: done.slice(0, doneRows).map(task => ({ department: names[task.subteamId] || '', title: task.title || '', poc: pocOf(task), date: dateWords(plainDateOf(task, 'completedOn')) })),
     counts: {
       week: week.length,
@@ -159,10 +203,10 @@ function countStatuses(tasks) {
 export function statusView(content, now) {
   const tasks = visibleTasks(content, now);
   const departments = departmentsOf(content, tasks, now);
-  const shown = tasks.filter(task => departments.some(entry => entry.id === task.subteamId));
+  const shown = tasks.filter(task => departments.some(entry => entry.ids.includes(task.subteamId)));
   if (shown.length === 0) return null;
 
-  const rows = departments.map(entry => ({ name: entry.name.toUpperCase(), tasks: forDepartment(shown, entry.id) }));
+  const rows = departments.map(entry => ({ name: entry.name.toUpperCase(), tasks: tasksOfDepartment(shown, entry) }));
   if (rows.length > statusRowsMost) {
     const rest = rows.splice(statusRowsMost - 1);
     rows.push({ name: 'OTHER', tasks: [].concat(...rest.map(row => row.tasks)) });
@@ -234,13 +278,13 @@ export function timelineView(content, now, page) {
   const rows = departmentsOf(content, inside, now).slice(0, timelineRowsMost).map(entry => ({
     id: entry.id,
     name: entry.name.toUpperCase(),
-    bars: laneBars(forDepartment(inside, entry.id), first, days),
+    bars: laneBars(tasksOfDepartment(inside, entry), first, days),
   }));
 
   const weeks = [];
   for (let week = 0; week < timelineWeeks; week++) weeks.push(dateWords(new Date((first + week * 7) * 86400000).toISOString().slice(0, 10)));
 
-  return rows.length === 0 && without === 0 ? null : { team: team, title: team.name + ' TIMELINE', weeks: weeks, rows: rows, without: without, todayAt: (dayNumber(today) - first) / days, days: days, first: first };
+  return rows.length === 0 && without === 0 ? null : { team: team, title: 'TIMELINE', weeks: weeks, rows: rows, without: without, todayAt: (dayNumber(today) - first) / days, days: days, first: first };
 }
 
 // Where each bar of a department goes, as fractions of the eight weeks, and in which of two lanes. A task that
@@ -281,10 +325,7 @@ export function boardView(content, now, page) {
   const tasks = teamTasks(content, now, team.code);
   if (tasks.length === 0) return null;
 
-  const names = {};
-  departmentEntries(content, now).forEach(entry => {
-    names[entry.id] = String(entry.name).trim().toUpperCase();
-  });
+  const names = departmentNames(content, now, name => name.toUpperCase());
   const ranked = rank(tasks);
   const columns = [
     { id: 'up-next', name: 'TO DO', list: ranked.filter(task => task.status === 'up-next') },
@@ -296,7 +337,7 @@ export function boardView(content, now, page) {
 
   return {
     team: team,
-    title: team.name + ' BOARD',
+    title: 'BOARD',
     columns: columns.map(column => {
       const cards = column.list.slice(skip, skip + boardCardsPerColumn);
       return {

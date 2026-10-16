@@ -30,9 +30,12 @@ import { checkTheme } from './theme-apply.js';
 import { resolveTheme } from './theme.js';
 import { noteTransition } from './rotation.js';
 import { heldView, holdView } from './view-apply.js';
-import { cycleKey, findViewWithPanel, holdPanelId, lookForViewStep, stepInView, tickView, viewLayoutOf, viewPlan } from './views.js';
+import { cycleKey, findViewWithPanel, holdPanelId, layoutOfStep, lookForViewStep, stepInView, tickView, viewPlan } from './views.js';
 
 let getContent = null;
+
+// The layout of the step that began last, so that a change of layout inside a view is a swap too (Robotics rows choose theirs)
+let heldLayout = '';
 
 // The demo, the night screen and the hidden transitions are optional parts of the
 // screen. If one did not start, it is never in the way.
@@ -110,7 +113,7 @@ function placed(step) {
 
 function lookOf(step) {
   const content = getContent();
-  return lookForViewStep(placed(step), viewPlan(content, new Date()), viewLayoutOf(content, placed(step).view));
+  return lookForViewStep(placed(step), viewPlan(content, new Date()), layoutOfStep(content, placed(step)));
 }
 
 // Runs the question as the team the step is drawn for, which is not yet the team on the screen
@@ -120,7 +123,7 @@ function viewAs(step, run) {
 
 // A step waits while its style cannot go on the page
 function fits(step) {
-  return styleFits(lookOf(step).style, viewLayoutOf(getContent(), placed(step).view));
+  return styleFits(lookOf(step).style, layoutOfStep(getContent(), placed(step)));
 }
 
 // A step is chosen and its page is about to be built. When its look is not the one held, it is held now, and when the
@@ -134,12 +137,16 @@ function begin(step) {
   const moved = heldView() !== '' && view !== heldView();
 
   noteTransition({ view: heldView() }, { view: view });
+  const layout = layoutOfStep(getContent(), placed(step));
+  const reshaped = heldLayout !== '' && layout !== heldLayout;
+
+  heldLayout = layout;
   holdView(view);
-  rotateLayout(viewLayoutOf(getContent(), view));
-  if (!changes.team && !changes.style && !changes.monday && !moved) return;
+  rotateLayout(layout);
+  if (!changes.team && !changes.style && !changes.monday && !moved && !reshaped) return;
 
   holdLook(to);
-  if (changes.swap || moved) queueSwap();
+  if (changes.swap || moved || reshaped) queueSwap();
 }
 
 // The length of the swap that is about to play, as a scale of the standard one: the Screen that is held is the one it goes to
