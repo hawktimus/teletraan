@@ -264,12 +264,17 @@ test('calendar-status.sh uses Node from version 18 and says so, and nothing in t
 
 test('the web server shows the whole dashboard folder as it is, so one more file there is only one more file to show', () => {
   const compose = fs.readFileSync(path.join(repo, 'mini/docker-compose.yml'), 'utf8');
-  assert.ok(compose.includes('- ../dashboard:/srv/web/dashboard:ro'), 'the folder is mounted whole, read only');
+  assert.ok(compose.includes('/current/dashboard:/srv/web/dashboard:ro'), 'the folder is mounted whole, read only');
 
   const nginx = fs.readFileSync(path.join(repo, 'mini/nginx/nginx.conf'), 'utf8');
   assert.ok(/application\/json\s+json;/.test(nginx), 'a .json file has a type');
-  assert.ok(!/try_files|rewrite|\ballow\b|\bdeny\b/.test(nginx), 'no rule limits the files to a list');
-  assert.deepEqual(nginx.match(/^\s*location [^{]+\{/gm).map(line => line.trim()), ['location ~ /\\. {', 'location = / {', 'location ~ ^/dashboard/data/live/slides/[^/]+/manifest\\.json$ {']);
+  assert.ok(!/rewrite|\ballow\b/.test(nginx), 'no rule limits the files to a list');
+  // try_files is only the Studio's fallback to its index page, and deny only keeps the dashboard's report off the WiFi port
+  assert.equal((nginx.match(/try_files/g) || []).length, 2);
+  assert.deepEqual(nginx.match(/^\s*location [^{]+\{/gm).map(line => line.trim()), [
+    'location ~ /\\. {', 'location = / {', 'location /control/ {', 'location /studio/ {', 'location ~ ^/dashboard/data/live/slides/[^/]+/manifest\\.json$ {',
+    'location ~ /\\. {', 'location = / {', 'location /control/ {', 'location = /control/api/now {', 'location /studio/ {',
+  ]);
 });
 
 test('the Mini document says how to install Node as a numbered step, with the checks and the page', () => {

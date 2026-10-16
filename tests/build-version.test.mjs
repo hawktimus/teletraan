@@ -196,38 +196,35 @@ function toolPlace(name, options = {}) {
   return place;
 }
 
-test('the Mac tool update leaves the stamp of this repository on the Mini and runs the version job after the copy and before the restart', () => {
+test('the Mac tool update hands the installer the commit of this repository, after the copy', () => {
   const place = toolPlace('tool');
   const result = place.run(['update', '--yes']);
   assert.equal(result.status, 0, result.errors);
 
   const copy = result.calls.findIndex(line => line.startsWith('rsync '));
-  const stamp = result.calls.findIndex(line => line.includes('build.txt'));
-  const version = result.calls.findIndex(line => line.includes('status-write.sh version'));
-  const restart = result.calls.findIndex(line => line.includes('sudo systemctl restart'));
-  assert.ok(copy !== -1 && stamp > copy && version > stamp && restart > version, result.calls.join(' / '));
-
+  const install = result.calls.findIndex(line => line.includes('install.sh'));
+  assert.ok(copy !== -1 && install > copy, result.calls.join(' / '));
   const git = args => spawnSync('git', ['-C', repo].concat(args), { encoding: 'utf8' }).stdout.trim();
-  const written = fs.readFileSync(path.join(place.miniRepo, 'mini/build.txt'), 'utf8');
-  assert.equal(written, 'commit=' + git(['rev-parse', '--short', 'HEAD']) + '\ndate=' + git(['log', '-1', '--format=%cs']) + '\nbranch=' + git(['rev-parse', '--abbrev-ref', 'HEAD']) + '\n');
-  assert.ok(result.text.includes('The build on the wall is '), result.text);
+  assert.ok(result.calls[install].includes('--commit ' + git(['rev-parse', '--short', 'HEAD'])), result.calls[install]);
 });
 
-test('the Mac tool says so and goes on when the folder has no git history, and the update still restarts the screen', () => {
+test('the Mac tool says so and goes on when the folder has no git history, and the installer still runs', () => {
   const bare = path.join(work, 'bare-repo');
   fs.mkdirSync(path.join(bare, 'tools/mini'), { recursive: true });
   fs.mkdirSync(path.join(bare, 'dashboard'), { recursive: true });
-  fs.mkdirSync(path.join(bare, 'mini/scripts'), { recursive: true });
+  fs.mkdirSync(path.join(bare, 'mini'), { recursive: true });
+  fs.mkdirSync(path.join(bare, 'control'), { recursive: true });
   fs.copyFileSync(path.join(repo, 'tools/mini/teletraan-mini'), path.join(bare, 'tools/mini/teletraan-mini'));
   fs.writeFileSync(path.join(bare, 'dashboard/index.html'), '');
-  fs.writeFileSync(path.join(bare, 'mini/scripts/pull.sh'), '');
+  fs.writeFileSync(path.join(bare, 'mini/install.sh'), '');
+  fs.writeFileSync(path.join(bare, 'control/server.js'), '');
 
   const place = toolPlace('tool-bare', { tool: path.join(bare, 'tools/mini') });
   const result = place.run(['update', '--yes']);
   assert.equal(result.status, 0, result.errors);
   assert.ok(result.text.includes('no git history'), result.text);
-  assert.ok(!result.calls.some(line => line.includes('status-write.sh version')));
-  assert.ok(result.calls.some(line => line.includes('sudo systemctl restart')));
+  const install = result.calls.find(line => line.includes('install.sh'));
+  assert.ok(install && !install.includes('--commit'), 'the release has no hash: ' + install);
 });
 
 test('the status document and the Studio block carry the three fields and the line On the wall', () => {

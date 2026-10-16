@@ -1,7 +1,11 @@
-# The web server that shows the dashboard. Run these from this folder:
+# The web server that shows the dashboard and the Studio, and the control service. Run these from this folder:
 #   docker compose --env-file local.env up -d    start it, or apply a change to this file
 #   docker compose down                           stop it
-# --env-file is what lets local.env set the port and the data folder below.
+# --env-file is what lets local.env set the port and the data folder below. mini/install.sh runs the first one.
+#
+# Everything is read through /opt/teletraan/current, the link to the live release (docs/control-page.md).
+# A bind mount is resolved when the container starts, so the control page restarts the web server after it
+# switches release.
 
 name: teletraan
 
@@ -17,8 +21,12 @@ services:
     ports:
       # 127.0.0.1 keeps the dashboard reachable from this computer only
       - "127.0.0.1:${TELETRAAN_PORT:-8080}:80"
+      # The control page and the Studio, for the WiFi and for Tailscale. The dashboard is not served here.
+      - "3229:3229"
     volumes:
-      - ../dashboard:/srv/web/dashboard:ro
+      - ${TELETRAAN_ROOT:-/opt/teletraan}/current/dashboard:/srv/web/dashboard:ro
+      # The Studio built by the last install (control/lib/studio-build.js)
+      - ${TELETRAAN_ROOT:-/opt/teletraan}/current/studio-dist:/srv/web/studio:ro
       # Calendars, slides and version.txt. The scripts on the Mini write this
       # folder, the web server only reads it. Without create_host_path: false,
       # Docker would quietly make a missing folder owned by root, and then the
@@ -29,8 +37,44 @@ services:
         read_only: true
         bind:
           create_host_path: false
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ${TELETRAAN_ROOT:-/opt/teletraan}/current/mini/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     # Keeps the log from filling the disk of a machine that runs for years
+    logging:
+      driver: json-file
+      options:
+        max-size: "2m"
+        max-file: "3"
+
+  control:
+    # The official Node image. It runs the control service and, for each release, npm and the Studio build.
+    # Needs the team mentor's approval before it is downloaded, like the web server.
+    image: node:22-alpine
+    container_name: teletraan-control
+    restart: unless-stopped
+    # The login user, so the files it makes are the user's. mini/install.sh writes both numbers to local.env.
+    user: "${TELETRAAN_UID:-1000}:${TELETRAAN_GID:-1000}"
+    working_dir: /opt/teletraan/current/control
+    command: ["node", "server.js"]
+    environment:
+      CONTROL_ROOT: /opt/teletraan
+      CONTROL_DATA: /var/lib/teletraan/data
+      HOME: /opt/teletraan/cache/home
+      NPM_CONFIG_CACHE: /opt/teletraan/cache/npm
+    # Reached by nginx on this Docker network only. No port is published.
+    expose:
+      - "3230"
+    volumes:
+      - ${TELETRAAN_ROOT:-/opt/teletraan}:/opt/teletraan
+      # The keys can be read here but only the helper on the host writes them
+      - ${TELETRAAN_ROOT:-/opt/teletraan}/local.env:/opt/teletraan/local.env:ro
+      # The folder that holds the helper socket and nothing else
+      - /run/teletraan:/run/teletraan
+      - type: bind
+        source: ${TELETRAAN_DATA:-/var/lib/teletraan/data}
+        target: /var/lib/teletraan/data
+        read_only: true
+        bind:
+          create_host_path: false
     logging:
       driver: json-file
       options:

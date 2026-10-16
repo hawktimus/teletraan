@@ -9,6 +9,7 @@ export const stampLength = 7;
 // The text of the stamp for a build, or '' when it is nothing a build could be
 export function stampText(version) {
   const text = String(version === undefined || version === null ? '' : version).trim();
+  if (/^v[0-9]{1,9}( · [0-9a-f]{7})?$/.test(text)) return text;
   if (/^[0-9a-f]{7,40}$/.test(text)) return text.slice(0, stampLength);
   return /^[0-9A-Za-z._-]{1,20}$/.test(text) ? text : '';
 }

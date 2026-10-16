@@ -200,11 +200,14 @@ test('the sample content carries both drawings, written as JSON text, equal to t
 
 test('the drawings are not served: the web server shows the dashboard folder and no copy of them is in it', () => {
   const compose = read(path.join(repo, 'mini/docker-compose.yml'));
-  const sources = compose.split('\n')
-    .map(line => line.match(/^\s*- ([^:\s]+):\/srv\/web\//) || line.match(/^\s*source: (\S+)/))
+  // Only the web server's part of the file; the control service has its own mounts
+  const web = compose.slice(compose.indexOf('  web:'), compose.indexOf('  control:'));
+  const sources = web.split('\n')
+    .map(line => line.match(/^\s*- (\S+?):\/srv\/web\//) || line.match(/^\s*source: (\S+)/))
     .filter(Boolean)
     .map(match => match[1]);
-  assert.deepEqual(sources, ['../dashboard', '${TELETRAAN_DATA:-/var/lib/teletraan/data}']);
+  const live = '${TELETRAAN_ROOT:-/opt/teletraan}/current';
+  assert.deepEqual(sources, [live + '/dashboard', live + '/studio-dist', '${TELETRAAN_DATA:-/var/lib/teletraan/data}']);
 
   const nginx = read(path.join(repo, 'mini/nginx/nginx.conf'));
   assert.ok(/root \/srv\/web;/.test(nginx));

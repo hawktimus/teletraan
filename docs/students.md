@@ -164,3 +164,4 @@ coach to open it and click Publish once.
 - The TV is dark, frozen or shows an old page: [mentor name, added when chosen].
 - Anything under Coaches only (Settings and Extra panels): a coach. The coaches page is
   docs/coaches-guide.md.
+- Coaches control the TV from the control page (docs/control-page.md): updates, restarts and rollbacks.

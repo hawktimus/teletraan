@@ -97,7 +97,7 @@ test('the corner stamp shows the build: a hash cut to seven characters, or a tim
   assert.equal(stamp.stampText('0123456789abcdef'), '0123456');
   assert.equal(stamp.stampText('t20261015120000'), 't20261015120000');
   assert.equal(stamp.stampText('<b>'), '');
-  assert.ok(/showStamp\(window\.teletraanBuild/.test(read('dashboard/shell.js')));
+  assert.ok(/showStamp\([^;]*window\.teletraanBuild/.test(read('dashboard/shell.js')));
 });
 
 // kiosk.sh
@@ -170,18 +170,18 @@ echo "status-write $* build=$(cat "$(dirname "$0")/../../dashboard/build.js" 2> 
 
 test('kiosk.sh writes build.js from the stamp the Mac tool leaves', () => {
   const run = setup({ stamp: 'commit=abc1234\ndate=2026-10-15\nbranch=main\n', git: 'ffffff0' });
-  assert.equal(run.buildFile(), 'export const build = "abc1234";\n');
+  assert.equal(run.buildFile(), 'export const build = "abc1234";\n' + 'export const version = 0;\nexport const commit = "";\nexport const date = "";\n');
   assert.deepEqual(run.leftovers(), ['build.js'], 'no temporary file is left');
 });
 
 test('kiosk.sh asks git when there is no stamp', () => {
   const run = setup({ git: 'deadbee' });
-  assert.equal(run.buildFile(), 'export const build = "deadbee";\n');
+  assert.equal(run.buildFile(), 'export const build = "deadbee";\n' + 'export const version = 0;\nexport const commit = "";\nexport const date = "";\n');
 });
 
 test('kiosk.sh uses the time when there is neither', () => {
   const run = setup({});
-  assert.ok(/^export const build = "t\d{14}";\n$/.test(run.buildFile()), run.buildFile());
+  assert.ok(/^export const build = "t\d{14}";\n/.test(run.buildFile()), run.buildFile());
 });
 
 test('kiosk.sh calls the version job after build.js is written, and starts the browser', () => {
@@ -204,7 +204,8 @@ test('kiosk.sh clears the browser cache folders and leaves cookies and Local Sto
 test('kiosk.sh and the Mac tool pass the syntax check', () => {
   assert.equal(spawnSync('/bin/sh', ['-n', path.join(repo, 'mini/scripts/kiosk.sh')], { encoding: 'utf8' }).status, 0);
   assert.equal(spawnSync('bash', ['-n', path.join(repo, 'tools/mini/teletraan-mini')], { encoding: 'utf8' }).status, 0);
-  assert.ok(read('tools/mini/teletraan-mini').includes('write_build_js "$commit"'), 'the Mac tool leaves build.js after the copy');
+  // The release the installer makes writes build.js from RELEASE.json; the Mac tool hands it the commit
+  assert.ok(/install\.sh[^\n]*--commit/.test(read('tools/mini/teletraan-mini')), 'the Mac tool gives the installer the commit');
 });
 
 // The web server settings

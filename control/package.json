@@ -1,0 +1,5 @@
+{
+  "private": true,
+  "type": "module",
+  "description": "Tells Node that the .js files in this folder are ES modules. The control service uses only what Node ships with."
+}

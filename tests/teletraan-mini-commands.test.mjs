@@ -72,6 +72,8 @@ exit 0
 
 const fakeSudo = `#!/bin/sh
 echo "sudo $*" >> "$STUB_LOG"
+# The installer on the Mini is not run here; its exit code can be set
+case "$*" in *install.sh*) [ -f "$STUB_DIR/install.exit" ] && exit "$(cat "$STUB_DIR/install.exit")"; exit 0 ;; esac
 exec "$@"
 `;
 
@@ -158,21 +160,21 @@ function indexOfCall(calls, start) {
   return lines(calls).findIndex(line => line.startsWith(start));
 }
 
-test('update --yes looks at the pull timer, copies the files, then restarts the screen, in that order, and asks nothing', () => {
+test('update --yes copies the files to the staging folder, then runs the installer there, in that order, and asks nothing', () => {
   const place = makePlace('update-yes');
   const result = place.run(['update', '--yes']);
   assert.equal(result.status, 0, result.errors);
 
   const calls = lines(result.calls);
-  const timer = calls.findIndex(line => line.includes('systemctl is-active teletraan-pull.timer'));
   const copy = calls.findIndex(line => line.startsWith('rsync '));
-  const restart = calls.findIndex(line => line.includes('sudo systemctl restart teletraan-kiosk.service'));
-  assert.ok(timer !== -1 && copy > timer && restart > copy, calls.join(' / '));
+  const install = calls.findIndex(line => line.includes('install.sh'));
+  assert.ok(copy !== -1 && install > copy, calls.join(' / '));
   assert.ok(calls[copy].includes(' -a --delete '), calls[copy]);
   ['.git', 'local.env', '.env', 'node_modules'].forEach(name => assert.ok(calls[copy].includes('--exclude ' + name + ' '), 'excludes ' + name));
-  assert.ok(calls[copy].endsWith(' ' + repo.replace(/\/$/, '') + '/ ' + miniAddress + ':/opt/teletraan-test/'), calls[copy]);
-  assert.ok(calls[restart].startsWith('ssh -t -o ConnectTimeout=10 ' + miniAddress), 'the restart gets a terminal for the password: ' + calls[restart]);
-  assert.ok(calls.some(line => line === 'systemctl restart teletraan-kiosk.service'), 'the restart reached systemctl');
+  assert.ok(calls[copy].endsWith(' ' + repo.replace(/\/$/, '') + '/ ' + miniAddress + ':teletraan-staging/'), calls[copy]);
+  assert.ok(calls[install].startsWith('ssh -t -o ConnectTimeout=10 ' + miniAddress), 'the installer gets a terminal for the password: ' + calls[install]);
+  assert.ok(calls[install].includes('sudo bash') && calls[install].includes('--yes'), calls[install]);
+  assert.ok(!calls.some(line => line.includes('systemctl restart')), 'the installer restarts the screen, not the tool');
 
   assert.ok(!result.text.includes('Go ahead?'), 'no question');
   assert.ok(result.text.includes('Going ahead (--yes).'), result.text);
@@ -200,7 +202,7 @@ test('update without --yes asks Go ahead, Return means yes, n means nothing was 
   assert.equal(declinedResult.status, 1, 'a script must not think the Mini was updated');
   assert.ok(declinedResult.text.includes('Nothing was copied.'), declinedResult.text);
   assert.equal(indexOfCall(declinedResult.calls, 'rsync '), -1);
-  assert.equal(indexOfCall(declinedResult.calls, 'ssh -t'), -1, 'the screen was not restarted');
+  assert.equal(indexOfCall(declinedResult.calls, 'ssh -t'), -1, 'the installer was not run');
 });
 
 test('update with nobody to answer counts as no: nothing is copied and the exit code is not zero', () => {
@@ -211,48 +213,35 @@ test('update with nobody to answer counts as no: nothing is copied and the exit 
   assert.equal(indexOfCall(result.calls, 'rsync '), -1);
 });
 
-test('when the Mini also pulls by itself, --yes does not answer that question: it is asked, and no is the default', () => {
-  const asked = makePlace('update-timer-yes');
-  asked.stubFile('pull-timer.txt', 'active\n');
-  const copied = asked.run(['update', '--yes'], ['y']);
-  assert.equal(copied.status, 0, copied.errors);
-  assert.ok(copied.text.includes('also pulls from GitHub by itself') && copied.text.includes('Copy anyway? [y/N]'), copied.text);
-  assert.ok(indexOfCall(copied.calls, 'rsync ') !== -1, 'a yes copies');
-
-  const returned = makePlace('update-timer-return');
-  returned.stubFile('pull-timer.txt', 'active\n');
-  const returnedResult = returned.run(['update', '--yes'], ['']);
-  assert.equal(returnedResult.status, 1);
-  assert.equal(indexOfCall(returnedResult.calls, 'rsync '), -1, 'Return means no');
-
-  const silent = makePlace('update-timer-silent');
-  silent.stubFile('pull-timer.txt', 'active\n');
-  const silentResult = silent.run(['update', '--yes']);
-  assert.equal(silentResult.status, 1, 'with nobody to answer it is no');
-  assert.equal(indexOfCall(silentResult.calls, 'rsync '), -1);
+test('update asks nothing about the pull timer: the installer turns it off when it moves the Mini to releases', () => {
+  const place = makePlace('update-timer');
+  place.stubFile('pull-timer.txt', 'active\n');
+  const result = place.run(['update', '--yes']);
+  assert.equal(result.status, 0, result.errors);
+  assert.ok(!result.text.includes('also pulls from GitHub'), result.text);
+  assert.equal(indexOfCall(result.calls, 'is-active'), -1);
 });
 
-test('a failing copy gives an exit code that is not zero, says to run it again and does not restart the screen', () => {
+test('a failing copy gives an exit code that is not zero, says to run it again and does not run the installer', () => {
   const place = makePlace('update-rsync-fails');
   place.stubFile('rsync.exit', '23');
   const result = place.run(['update', '--yes']);
   assert.notEqual(result.status, 0);
   assert.ok(result.errors.includes('exit 23'), result.errors);
   assert.ok(result.text.includes('Run this again'), result.text);
-  assert.equal(indexOfCall(result.calls, 'ssh -t'), -1, 'the screen was not restarted');
-  assert.ok(!result.calls.includes('systemctl restart'));
+  assert.equal(indexOfCall(result.calls, 'ssh -t'), -1, 'the installer was not run');
   assertNoLeak(result, 'rsync fails');
 });
 
-test('a failing restart gives an exit code that is not zero, after the files were copied, and names the word that restarts again', () => {
-  const place = makePlace('update-restart-fails');
-  place.stubFile('systemctl.exit', '5');
+test('a failing installer gives an exit code that is not zero, after the files were copied, and names the word that tries again', () => {
+  const place = makePlace('update-install-fails');
+  place.stubFile('install.exit', '5');
   const result = place.run(['update', '--yes']);
   assert.notEqual(result.status, 0);
   assert.ok(result.text.includes('The files are copied.'));
   assert.ok(result.errors.includes('exit 5'), result.errors);
-  assert.ok(result.text.includes('Run teletraan-mini restart to restart the screen again.'), result.text);
-  assert.ok(!result.text.includes('Choose 6'), 'the hint names a word, not a menu choice');
+  assert.ok(result.text.includes('Run teletraan-mini update to try again.'), result.text);
+  assert.ok(!result.text.includes('Choose 1'), 'the hint names a word, not a menu choice');
 });
 
 test('update stops before it copies when the Mini cannot be reached, and when the folder is not the repository', () => {
@@ -288,12 +277,6 @@ test('update refuses a tree that still has deploy/, copies nothing and says to u
   assert.notEqual(result.status, 0);
   assert.ok(result.errors.includes('This copy is older than round 6; update it.'), result.errors);
   assert.equal(indexOfCall(result.calls, 'rsync '), -1, 'nothing is copied from an old tree');
-});
-
-test('the hint after an update names the menu in words, because there is no menu choice to press', () => {
-  const place = makePlace('update-hint');
-  const result = place.run(['update', '--yes']);
-  assert.ok(result.text.includes('run teletraan-mini with no word after it and choose 4 to install the services again.'), result.text);
 });
 
 test('status runs status-write.sh --print and check-calendars.sh, hides any key or address in what comes back, and exits 0', () => {
@@ -420,7 +403,7 @@ test('with no word the menu still comes up, and --mini picks the Mini it uses', 
   const place = makePlace('menu', { config: twoMinis });
   const result = place.run([], ['q']);
   assert.equal(result.status, 0, result.errors);
-  ['1  Update the Mini', '2  Keys and calendars', '3  Copy the Mini', '4  Install the services', '5  Status of the Mini', '6  Restart the screen', '7  Choose another Mini'].forEach(entry => assert.ok(result.text.includes(entry), entry));
+  ['1  Install the files on this Mac', '2  Keys and calendars', '3  Copy the Mini', '4  Install the services', '5  Status of the Mini', '6  Restart the screen', '7  Choose another Mini'].forEach(entry => assert.ok(result.text.includes(entry), entry));
   assert.ok(result.text.includes('Mini in use: main (' + miniAddress + ')'));
 
   const spare = place.run(['--mini', 'spare'], ['q']);
