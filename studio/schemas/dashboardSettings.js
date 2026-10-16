@@ -323,6 +323,15 @@ const pageSecondsField = defineField({
   ],
 });
 
+const partsRequestUrlField = defineField({
+  name: 'partsRequestUrl',
+  title: 'Parts request address',
+  type: 'string',
+  group: 'screen',
+  description: 'The address the Parts request QR code opens. Start with https://, 200 characters at most. Empty shows LINK NOT SET.',
+  validation: Rule => Rule.max(200).error('Use 200 characters or fewer.').custom(value => (value === undefined || value === '' || /^https:\/\/\S+$/i.test(value) ? true : 'Start with https:// and use no spaces.')),
+});
+
 const doneDaysField = defineField({
   name: 'doneDays',
   title: 'Days finished tasks stay',
@@ -380,6 +389,7 @@ export default defineType({
     countdownField,
     alertField,
     pageSecondsField,
+    partsRequestUrlField,
     rotationField(),
     doneDaysField,
     safetyDaysField,

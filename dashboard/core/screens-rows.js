@@ -14,7 +14,7 @@ const teamCode = /^[a-z0-9]+$/;
 // The large panels that can name a department, the ones that can be one half of a list (a first and a second part), and the
 // small panels a row can pair with (core/rotation.js, the side of a row)
 const departmentPanels = ['roster'];
-const halfPanels = ['events', 'roster'];
+const halfPanels = ['events', 'roster', 'team-leads'];
 const sideIds = panels.filter(item => item.region === 'grid2' && !item.testOnly && !item.lastResort).map(item => item.id);
 
 function panelOf(id) {
@@ -51,16 +51,18 @@ function tidyTeam(value) {
 // stored on any other row is not read. A Monday row is for a team, as the kind of its panel says (mondayKinds in
 // config.js): the tasks panel for a team and a department (a Team lead, stored as department), done, timeline and board for a
 // team, and status by department and overall progress for neither. A Monday row that needs a team and has none is
-// dropped, except a tasks row of the Robotics view (bothTeams), which is for the departments of both teams. A row that names one of the older Monday panels is the tasks panel of its team, for the first department that has
+// dropped, except a tasks row of the Robotics view (bothTeams), which is for the departments of both teams. rotating is true for a row of
+// the rotation list. A row that names one of the older Monday panels is the tasks panel of its team, for the first department that has
 // tasks, and a row for both teams that is dropped.
-export function tidyMainRow(raw, bothTeams = false) {
+export function tidyMainRow(raw, bothTeams = false, rotating = false) {
   if (!isRecord(raw) || typeof raw.panel !== 'string') return null;
 
   const panel = panelOf(raw.panel.trim());
   if (!panel || panel.region !== 'grid1' || panel.testOnly) return null;
 
   let team = tidyTeam(raw.team);
-  const named = typeof raw.department === 'string' && raw.department.trim() !== '';
+  // a row of the rotation (core/rotation.js, mainRowOf) can also name a department on any Monday card, a part and a side
+  const named = rotating && typeof raw.department === 'string' && raw.department.trim() !== '';
   let id = panel.id;
   let older = false;
   if (panel.monday) {
@@ -78,10 +80,10 @@ export function tidyMainRow(raw, bothTeams = false) {
   }
 
   const row = { panel: id, team: team };
-  if (panel.monday && mondayKinds[id] === 'department') row.department = named && !older ? raw.department.trim() : '';
+  if (panel.monday && mondayKinds[id] === 'department') row.department = typeof raw.department === 'string' && !older ? raw.department.trim() : '';
   else if (named && !older && (panel.monday || departmentPanels.includes(panel.id))) row.department = raw.department.trim();
-  if (halfPanels.includes(panel.id) && (raw.part === 1 || raw.part === 2)) row.part = raw.part;
-  if (typeof raw.side === 'string' && sideIds.includes(raw.side.trim())) row.side = raw.side.trim();
+  if (rotating && halfPanels.includes(panel.id) && (raw.part === 1 || raw.part === 2)) row.part = raw.part;
+  if (rotating && typeof raw.side === 'string' && sideIds.includes(raw.side.trim())) row.side = raw.side.trim();
   const seconds = tidySeconds(raw.seconds);
   if (seconds) row.seconds = seconds;
   if (older) Object.defineProperty(row, 'older', { value: true, enumerable: false });

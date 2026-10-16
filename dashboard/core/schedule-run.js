@@ -165,7 +165,8 @@ function runRotation(region, getPlaylist, getContent) {
         if (!hasContentFor(step, content)) continue;
 
         const topic = topicOf(step.panel);
-        if (topic && !round.sameTopic && onScreen[otherRegion].includes(topic)) continue;
+        // a small panel a row of the rotation pairs with the large panel is shown whatever the topic of the page that is leaving
+        if (topic && !round.sameTopic && step.paired !== true && onScreen[otherRegion].includes(topic)) continue;
 
         return { index: index, step: step };
       }

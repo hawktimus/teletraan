@@ -1,0 +1,41 @@
+.qr-parts .label {
+  position: absolute;
+  left: 60px;
+  top: 4px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+
+/* The code at the left and the words beside it, clear of the cut corner at the bottom right. The code sits on a light square
+   with its quiet zone, because a reader needs light round it. */
+.qr-parts .content {
+  position: absolute;
+  left: 48px;
+  top: 100px;
+  width: 552px;
+  height: 240px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.qr-parts .qr {
+  flex: none;
+  display: block;
+  width: 224px;
+  height: 224px;
+}
+.qr-parts .qr-light { fill: var(--pure-white); }
+.qr-parts .qr-dark { fill: var(--plate-ink); }
+.qr-parts .caption {
+  flex: 1;
+  color: var(--yellow);
+  font: 700 var(--size-label)/48px var(--font-display);
+}
+.qr-parts .not-set {
+  width: 100%;
+  text-align: center;
+  color: var(--lilac);
+  font: 600 var(--size-label)/48px var(--font-display);
+}

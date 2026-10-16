@@ -129,7 +129,7 @@ export function stepsOfRow(row, index, rows, content, now) {
   if (!isMondayPanel(row.panel)) {
     // a panel that is one half of a list, or one department's, is told so in its page
     const named = row.part || row.department;
-    return [Object.assign({ panel: row.panel }, step, named ? { page: { team: row.team, department: row.department || '', part: row.part || 1 } } : {})];
+    return [Object.assign({ panel: row.panel }, step, named ? { page: { team: row.team, department: row.department || '', part: row.part || 0 } } : {})];
   }
 
   let turn = 1;

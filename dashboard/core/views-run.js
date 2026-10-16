@@ -30,7 +30,7 @@ import { checkTheme } from './theme-apply.js';
 import { resolveTheme } from './theme.js';
 import { noteTransition } from './rotation.js';
 import { heldView, holdView } from './view-apply.js';
-import { cycleKey, findViewWithPanel, holdPanelId, layoutOfStep, lookForViewStep, stepInView, tickView, viewPlan } from './views.js';
+import { cycleKey, findViewWithPanel, holdPanelId, layoutOfStep, lookForViewStep, pairSide, stepInView, tickView, viewPlan } from './views.js';
 
 let getContent = null;
 
@@ -137,6 +137,7 @@ function begin(step) {
   const moved = heldView() !== '' && view !== heldView();
 
   noteTransition({ view: heldView() }, { view: view });
+  if (pairSide(step)) moveOn(['grid2']);
   const layout = layoutOfStep(getContent(), placed(step));
   const reshaped = heldLayout !== '' && layout !== heldLayout;
 

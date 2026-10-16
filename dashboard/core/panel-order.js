@@ -97,7 +97,7 @@ export function withStandIns(steps) {
   const named = steps.map(step => step.panel);
   const small = panels.filter(panel => panel.region === 'grid2' && !panel.testOnly);
   const spares = small
-    .filter(panel => !panel.lastResort && !named.includes(panel.id))
+    .filter(panel => !panel.lastResort && !panel.rotationOnly && !named.includes(panel.id))
     .sort((first, second) => spareRank(first) - spareRank(second))
     .map(panel => ({ panel: panel.id, show: true, standIn: 'spare' }));
   const last = small.filter(panel => panel.lastResort).map(panel => ({ panel: panel.id, show: true, standIn: 'last' }));

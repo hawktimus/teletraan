@@ -182,7 +182,7 @@ test('every row gets a key of its own', () => {
 });
 
 test('the lists of panels are the panels of the registry, and the Monday rows are the six panels of the task board', () => {
-  const registered = area => registry.panels.filter(panel => panel.region === area && !panel.testOnly && !panel.competition && !panel.monday && !panel.lastResort && !panel.placeholder).map(panel => panel.id);
+  const registered = area => registry.panels.filter(panel => panel.region === area && !panel.testOnly && !panel.competition && !panel.monday && !panel.lastResort && !panel.placeholder && !panel.rotationOnly).map(panel => panel.id);
   assert.deepEqual(largePanels.map(panel => panel.value), registered('grid1'));
   assert.deepEqual(smallPanels.map(panel => panel.value), registered('grid2'));
   const monday = registry.panels.filter(panel => panel.monday).map(panel => panel.id);

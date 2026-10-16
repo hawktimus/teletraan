@@ -118,8 +118,8 @@ export function makeMondayRosterTurns() {
 
 
 // A roster row of the rotation: one department (or a few, written with commas, such as business,marketing), on the Monday board.
-// part 1 is the first six people. part 2 is the people after them, which the panel scrolls through six at a time. With no part the
-// panel plays the pages above. Null when there is no one to show.
+// part 1 is the first six people. part 2 is the people after them, which the panel scrolls through six at a time. With no part
+// it is all of them, scrolled six at a time. Null when there is no one to show.
 // { title, rows, part, parts, pages } where rows are every row of the part and pages is how many windows of six it fills.
 export function rosterRowView(content, now, team, department, part) {
   const tasks = forTeam(visibleTasks(content, now), team);
@@ -129,14 +129,21 @@ export function rosterRowView(content, now, team, department, part) {
   if (unique.length === 0) return null;
 
   const people = peopleOf([].concat(...unique.map(item => tasksOfDepartment(tasks, item))));
-  const rows = part === 2 ? people.slice(rosterPageRows) : people.slice(0, rosterPageRows);
+  const rows = part === 2 ? people.slice(rosterPageRows) : part === 1 ? people.slice(0, rosterPageRows) : people;
   if (rows.length === 0) return null;
 
   return {
     title: unique.map(item => item.name).join(' · ').toUpperCase() + ' ROSTER',
     rows: rows,
-    part: part === 2 ? 2 : 1,
-    parts: people.length > rosterPageRows ? 2 : 1,
+    part: part === 2 ? 2 : part === 1 ? 1 : 0,
+    parts: part > 0 && people.length > rosterPageRows ? 2 : 1,
     pages: Math.ceil(rows.length / rosterPageRows),
   };
+}
+
+// DRIVE HOURS (panels/driveHours): every person who owns a task of the team (both teams for ''), with the hours of those tasks
+// added up, the most hours first. A person with no hours is left out. { rows, pages } where pages is the windows of six rows.
+export function driveHoursPages(content, now = new Date(), team = '') {
+  const rows = peopleOf(forTeam(visibleTasks(content, now), team)).filter(person => person.hours > 0);
+  return { rows: rows, pages: Math.max(1, Math.ceil(rows.length / rosterPageRows)) };
 }

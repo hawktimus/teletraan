@@ -9,7 +9,7 @@ import { addressTeam } from './teams.js';
 import { heldView, holdView } from './view-apply.js';
 import { isRecord } from './text.js';
 import { timeZoneOf } from './theme.js';
-import { mainRowOf, rotationBlocks, rotationOn, rotationRowsOf } from './rotation.js';
+import { mainRowOf, rotationBlocks, rotationRowsOf } from './rotation.js';
 import { resolveView, viewOrderOf } from './views-tidy.js';
 
 // The Monday rows
@@ -48,9 +48,11 @@ export function expandRows(rows, content, now = new Date()) {
 
 // The lists
 
-// The rotation list, when the Studio has one that is played (core/rotation.js): the blocks of its shown rows, or null
+// The rotation list (core/rotation.js): the blocks of its shown rows, which are the default rotation while the Studio has no
+// shown row. The lists of the views are played only when the list has no block at all, which cannot happen with the default.
 function listBlocks(content) {
-  return rotationOn(content) ? rotationBlocks(rotationRowsOf(content)) : null;
+  const blocks = rotationBlocks(rotationRowsOf(content));
+  return blocks.length > 0 ? blocks : null;
 }
 
 // The rows of the large panel of a view. With a rotation list they are the rows of its blocks of that view (one block when
@@ -60,7 +62,7 @@ function rowsOfView(content, key, block) {
   if (blocks === null) return resolveView(content, key).panels;
 
   const wanted = blocks.filter((item, at) => item.key === key && (block < 0 || at === block));
-  return [].concat(...wanted.map(item => item.rows.map(row => tidyMainRow(mainRowOf(row, content), item.key === 'general')).filter(row => row !== null)));
+  return [].concat(...wanted.map(item => item.rows.map(row => tidyMainRow(mainRowOf(row, content), item.key === 'general', true)).filter(row => row !== null)));
 }
 
 // The order the views play in: the order of the list's blocks (each view once), or viewOrder
@@ -218,6 +220,7 @@ export function resetViews() {
   holdView('');
   rotateLayout('');
   heldPanel = '';
+  paired.panel = '';
 }
 
 // The panel the control page holds on the screen, or ''. While one is held the large panel plays that panel only.
@@ -238,9 +241,27 @@ export function viewPlaylist(content, now = new Date()) {
   return heldPanel === '' ? steps : steps.filter(step => step.panel === heldPanel);
 }
 
-// The steps of the small panel: the view whose look is held, which is the one on the screen. The clock may be on the
-// next view for a moment before its first page comes, and the small panel does not change before the swap.
+// The small panel a row of the rotation pairs with the panel of the large frame (the side of the row), while that row is on
+// the screen. views-run.js notes it each time a step of the large panel is chosen.
+const paired = { panel: '', seconds: 0 };
+
+// A step of the large panel has been chosen. Returns true when the small panel has to change with it: the step has a side, or
+// the one before it did. The side stays longer than the step, because the next step moves it on.
+export function pairSide(step) {
+  const side = step && typeof step.side === 'string' ? step.side : '';
+  const moves = side !== '' || paired.panel !== '';
+
+  paired.panel = side;
+  paired.seconds = (step && step.seconds ? step.seconds : 20) + 120;
+  return moves;
+}
+
+// The steps of the small panel: the panel paired with the row on the screen, or else the view whose look is held, which is the
+// one on the screen. The clock may be on the next view for a moment before its first page comes, and the small panel does not
+// change before the swap.
 export function viewSidePlaylist(content) {
+  if (paired.panel !== '') return [{ panel: paired.panel, show: true, seconds: paired.seconds, paired: true }];
+
   return viewSideSteps(content, heldView() !== '' ? heldView() : listedView(content));
 }
 

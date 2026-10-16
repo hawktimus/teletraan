@@ -24,6 +24,8 @@
 //             (a saved row that names it plays as the tasks panel, core/screens.js)
 //   placeholder  a panel that draws its title and a dashed frame and is designed later (core/placeholder.js). It is a row of
 //             the Rotation list and in no older list (Panel order, the rows of a Screen)
+//   rotationOnly  a panel that is drawn only when a row of the rotation names it (core/rotation.js), as a large panel or as the side
+//             of a row. It is not a spare for the small frame, not in Panel order and not in the rows of a Screen
 //   monday    a Monday card (core/monday.js). It is not in Panel order and not in the rotation lists of
 //             config.js: the cards are Monday rows of a Screen (core/screens.js). A row names the card and a team,
 //             or both teams for the milestones and progress cards, and plays when the team has board tasks. The
@@ -57,6 +59,7 @@ export const panels = [
   { id: 'leadership', region: 'grid1', topic: 'people' },
   { id: 'team-leads', region: 'grid1', topic: 'subteams' },
   { id: 'roster', region: 'grid1', topic: 'subteams' },
+  { id: 'driveHours', region: 'grid1', topic: 'subteams', rotationOnly: true },
   { id: 'custom', region: 'grid1', topic: 'custom' },
   // placeholders: a title and a dashed frame, to be designed (core/placeholder.js)
   { id: 'robotStatus', region: 'grid1', topic: 'robot', placeholder: true },
@@ -74,11 +77,11 @@ export const panels = [
   { id: 'monday-overall', region: 'grid1', topic: 'monday', monday: true },
   { id: 'monday-timeline', region: 'grid1', topic: 'monday', monday: true },
   { id: 'monday-board', region: 'grid1', topic: 'monday', monday: true },
-  { id: 'monday-pie', region: 'grid1', topic: 'monday', monday: true },
   { id: 'monday-milestones', region: 'grid1', topic: 'monday', monday: true, older: true },
   { id: 'monday-progress', region: 'grid1', topic: 'monday', monday: true, older: true },
   { id: 'monday-milestones-both', region: 'grid1', topic: 'monday', monday: true, older: true },
   { id: 'monday-progress-both', region: 'grid1', topic: 'monday', monday: true, older: true },
+  { id: 'monday-pie', region: 'grid1', topic: 'monday', monday: true },
 
   { id: 'task-counts', region: 'grid2', topic: 'tasks' },
   { id: 'next-event', region: 'grid2', topic: 'events' },
@@ -86,6 +89,9 @@ export const panels = [
   { id: 'safety-days', region: 'grid2', topic: 'safety' },
   { id: 'sponsor-logo', region: 'grid2', topic: 'sponsors' },
   { id: 'team-tile', region: 'grid2', lastResort: true },
+  // rotationOnly: only a row of the rotation names it (as the side of a row). It is never a spare stand-in for the small frame.
+  { id: 'miniIdea1', region: 'grid2', topic: 'mini', placeholder: true, rotationOnly: true },
+  { id: 'qrParts', region: 'grid2', topic: 'parts', rotationOnly: true },
 
   { id: 'alert', region: 'overlay' },
   { id: 'announcement', region: 'overlay' },

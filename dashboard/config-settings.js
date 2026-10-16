@@ -22,6 +22,9 @@ export const defaultSettings = {
   // seconds of its own, or a ticker with its own, uses those instead. The
   // rows below have none, so they follow this.
   pageSeconds: 20,
+  // The address the QR code of the Parts request panel opens (panels/qrParts). https only, up to 200 characters. Empty shows
+  // LINK NOT SET and the rotation skips the panel.
+  partsRequestUrl: '',
   // The logo settings in the Studio (Look tab). logoAnimations is the master switch: off, and
   // nothing in the logo moves (the entrance, the spin, the flying hawk and the
   // name effect), whatever the switches below say. Every animation that plays

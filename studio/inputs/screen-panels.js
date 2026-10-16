@@ -26,6 +26,14 @@ export const placeholderPanels = [
   { title: 'Wireframe view', value: 'wireframe' },
 ];
 
+// The panels a row of the rotation can name that no older list holds: the competition rank card, which the row plays for the team
+// of its view, Drive hours, the Monday status pie, and the two small panels that only a row can pair with a large one (rotationOnly in dashboard/registry.js)
+export const rotationPanels = [{ title: 'Competition: Rank', value: 'competition-rank' }, { title: 'Drive hours', value: 'driveHours' }, { title: 'Monday: Status pie by team', value: 'monday-pie' }];
+export const pairedPanels = [
+  { title: 'Mini panel idea 1', value: 'miniIdea1' },
+  { title: 'Parts request (QR code)', value: 'qrParts' },
+];
+
 export const smallPanels = [
   { title: 'Task counts', value: 'task-counts' },
   { title: 'Next event', value: 'next-event' },
@@ -43,7 +51,6 @@ export const mondayPanels = [
   { title: 'Monday: Overall progress', value: 'monday-overall' },
   { title: 'Monday: Timeline by team', value: 'monday-timeline' },
   { title: 'Monday: Board by team', value: 'monday-board' },
-  { title: 'Monday: Status pie by team', value: 'monday-pie' },
 ];
 
 // The older Monday panels, only so that a saved row can still be named in a list line
@@ -82,7 +89,7 @@ export function idsOf(list) {
 
 // The title of a panel in the pickers, or nothing for a panel that is not in them
 export function panelTitle(panel) {
-  const found = largePanels.concat(smallPanels, placeholderPanels, mondayPanels, olderMondayPanels).filter(item => item.value === panel)[0];
+  const found = largePanels.concat(smallPanels, pairedPanels, rotationPanels, placeholderPanels, mondayPanels, olderMondayPanels).filter(item => item.value === panel)[0];
   return found ? found.title : '';
 }
 

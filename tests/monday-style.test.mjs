@@ -144,9 +144,9 @@ const step = (panel, team, view) => ({ panel: panel, show: true, team: team || '
 
 test('the Monday cards are the six panels of the task board and the four older ones the registry flags, and a team is seeded with three rows', () => {
   const cards = registry.panels.filter(panel => panel.monday).map(panel => panel.id);
-  assert.deepEqual(cards, ['monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board', 'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both']);
+  assert.deepEqual(cards, ['monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board', 'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both', 'monday-pie']);
   assert.deepEqual(config.mondayRows, ['monday-tasks', 'monday-done', 'monday-board']);
-  assert.deepEqual(config.mondayOldPanels, cards.slice(6));
+  assert.deepEqual(config.mondayOldPanels, cards.slice(6, 10));
   cards.forEach(id => assert.equal(screens.isMondayPanel(id), true, id));
   ['tasks', 'events', 'photo', 'forecast', 'no-such-panel'].forEach(id => assert.equal(screens.isMondayPanel(id), false, id));
 });

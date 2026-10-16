@@ -91,3 +91,4 @@
    frame.js (scrollCard) puts the page in view in --scroll-page, and frame.css moves the list by --scroll-step. */
 .roster-board { --scroll-step: 480px; }
 .roster-board .people-window { height: 480px; overflow: hidden; }
+.roster-board .person-blank { border-bottom-color: transparent; }

@@ -79,6 +79,20 @@ function tidyRotationSettings(settings) {
   settings.transitionSeconds = keepInRange(settings.transitionSeconds, transitionSecondsRange, transitionSecondsRange.start);
 }
 
+// The address of the Parts request QR code: an https address of up to 200 characters with no space, or nothing
+export const longestPartsUrl = 200;
+
+export function tidyPartsUrl(value) {
+  const text = typeof value === 'string' ? value.trim() : '';
+  if (text === '' || text.length > longestPartsUrl || /\s/.test(text) || !/^https:\/\//i.test(text)) return '';
+
+  try {
+    return new URL(text).protocol === 'https:' ? text : '';
+  } catch (error) {
+    return '';
+  }
+}
+
 // Settings that are one of a few words, an on/off switch, or a number in a
 // range. Anything that does not fit becomes the default, so the panels never
 // have to check. A number outside its range is moved to the nearest end. saved is the settings as
@@ -128,6 +142,7 @@ export function fixSettingValues(settings, saved = settings) {
   ['pageSeconds', 'photoSeconds', 'nightLogoWidth'].concat(logoNumbers, transitionNumbers, hiddenNumbers, teamNumbers).forEach(name => {
     settings[name] = keepInRange(settings[name], limits[name], defaultSettings[name]);
   });
+  settings.partsRequestUrl = tidyPartsUrl(settings.partsRequestUrl);
   ['portraitScale', 'photoScale'].forEach(name => {
     settings[name] = tidyScale(name, settings[name]);
   });

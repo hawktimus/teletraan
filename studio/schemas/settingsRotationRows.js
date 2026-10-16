@@ -6,15 +6,15 @@
 //                 and the screen changes view only between blocks.
 //
 // The stored name rotation is the Ticker block of the same page, so the list has its own name. The panel is the id of
-// dashboard/registry.js, as in every other list. While the list is empty the screen plays the lists of the views, and the
-// first time the page is opened the list is filled from them (inputs/rotation-input.js).
+// dashboard/registry.js, as in every other list. While the list has no Shown row the screen plays the default rotation, and the
+// first time the page is opened the list is filled with it (inputs/rotation-input.js, tools/default-rotation.js).
 //
 // To take the section out later: delete this file, its import and the line in dashboardSettings.js, and the same names in
 // tests/schemas.test.mjs and config.js.
 
 import { defineField, defineArrayMember } from 'sanity';
 import { RotationInput } from '../inputs/rotation-input.js';
-import { largePanels, mondayPanels, olderMondayPanels, panelTitle, placeholderPanels } from '../inputs/screen-panels.js';
+import { rotationPanels, largePanels, mondayPanels, olderMondayPanels, pairedPanels, panelTitle, placeholderPanels, smallPanels } from '../inputs/screen-panels.js';
 import { rotationViewNames } from '../tools/rotation-migrate.js';
 
 const viewChoices = [
@@ -23,7 +23,8 @@ const viewChoices = [
   { title: 'Nova', value: 'nova' },
 ];
 
-const panelChoices = largePanels.concat(placeholderPanels, mondayPanels);
+const panelChoices = largePanels.concat(rotationPanels, placeholderPanels, mondayPanels);
+const sideChoices = smallPanels.concat(pairedPanels);
 
 const isPhoto = context => Boolean(context.parent) && context.parent.panel === 'photo';
 
@@ -62,7 +63,16 @@ const rotationRow = defineArrayMember({
       description: 'Turn this off to skip the row without taking it out of the list.',
       initialValue: true,
     }),
-    defineField({ name: 'department', title: 'Department', type: 'string', hidden: true, description: 'The Team lead a Monday tasks row plays. Empty plays every one.' }),
+    defineField({
+      name: 'side',
+      title: 'Small panel beside it',
+      type: 'string',
+      description: 'The small panel shown beside this row in the split layout. Empty follows the small panels of the view.',
+      options: { list: sideChoices },
+      validation: Rule => Rule.valid(sideChoices.map(panel => panel.value).concat([undefined, ''])).error('Pick a small panel from the list.'),
+    }),
+    defineField({ name: 'part', title: 'Part', type: 'number', hidden: true, description: 'For Events, Subteam roster and Team leads: 1 plays the first page and 2 the next pages. Empty plays all.', validation: Rule => Rule.integer().min(1).max(2).error('Use 1 or 2.') }),
+    defineField({ name: 'department', title: 'Department', type: 'string', hidden: true, description: 'The department a row plays: a Team lead name such as build, or two with a comma. Empty plays every one of a Monday tasks row.' }),
     defineField({ name: 'photoCount', title: 'Photos', type: 'number', hidden: true, description: 'How many photos a Photo row shows.', validation: Rule => Rule.integer().min(1).max(20).error('Use a whole number from 1 to 20.') }),
     defineField({ name: 'secondsPerPhoto', title: 'Seconds per photo', type: 'number', hidden: true, description: 'How long each photo stays.', validation: Rule => Rule.integer().min(5).max(60).error('Use a whole number from 5 to 60.') }),
   ],
@@ -84,7 +94,7 @@ export function rotationRowsFields() {
       title: 'Rotation',
       type: 'array',
       group: 'look',
-      description: 'What the large panel plays, top to bottom, then again. Drag a row to move it. Rows of one view in a row are a block. Empty plays the lists of the views.',
+      description: 'What the large panel plays, top to bottom, then again. Drag a row to move it. Rows of one view in a row are a block. Empty plays the default rotation.',
       of: [rotationRow],
       components: { input: RotationInput },
     }),
