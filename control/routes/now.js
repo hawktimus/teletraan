@@ -19,7 +19,7 @@ export function ageSeconds(received, now) {
   return received ? Math.max(0, Math.round((now.getTime() - received.getTime()) / 1000)) : null;
 }
 
-export function fromLocalhost(req) {
+function fromLocalhost(req) {
   const header = req.headers && req.headers['x-real-ip'];
   return typeof header === 'string' && localAddresses.includes(header.trim());
 }

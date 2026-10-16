@@ -318,7 +318,7 @@ function checkPairsExist() {
 }
 
 // Neon Prime has no green. It is dark purple and gunmetal with cyan, magenta and
-// amber, and the owner asked for the green to go. A colour written in any of
+// amber, and the green is gone. A colour written in any of
 // these three files, as #hex, rgb(), rgba(), hsl(), hsla() or a colour word, fails
 // when its hue is in this range (yellow green, through green, to teal green) and
 // it is not a grey. The seasonal packs are not these files: a pack recolours

@@ -1,23 +1,15 @@
-#!/bin/sh
+#!/bin/bash
+# Usage: pull.sh
 # Brings the repository up to date. A pull is a deploy: the web server shows
 # the files in the repository as they are. When something new arrives, the
 # commit is written to <data folder>/version.txt, and a dashboard that is
 # open sees it change within a minute and reloads itself.
-set -eu
-
-mini=$(cd "$(dirname "$0")/.." && pwd)
-repo=$(cd "$mini/.." && pwd)
-env_file="$mini/local.env"
+set -euo pipefail
+. "$(dirname "$0")/lib.sh"
 
 # Fail with a message instead of waiting for a password nobody can type
 GIT_TERMINAL_PROMPT=0
 export GIT_TERMINAL_PROMPT
-
-# The value of a NAME=value line in local.env, without its quotes
-setting() {
-  [ -f "$env_file" ] || return 0
-  sed -n "s/^$1=//p" "$env_file" | tail -n 1 | sed "s/^['\"]//; s/['\"]\$//"
-}
 
 data=$(setting TELETRAAN_DATA)
 data=${data:-/var/lib/teletraan/data}

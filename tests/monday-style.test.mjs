@@ -1,4 +1,4 @@
-// Tests for the Monday rows in the Monday style (docs/layouts.md, "The Screens" and "The swap"): a Monday row is in
+// Tests for the Monday rows in the Monday style (docs/views.md and docs/layouts.md, "The swap"): a Monday row is in
 // the Monday style or it waits, going into the Monday cards and out of them is a swap, and a held look goes on in
 // a swap. The choices between rows are in dashboard/core/screens.js and tests/screens.test.mjs. Here the page side of
 // them, dashboard/core/views-run.js, is run for real, with stand-ins for the swap, the schedule and the other parts
@@ -344,7 +344,7 @@ test('the page side names the cards through the screens, asks the layout the way
 
 test('the docs say where the Monday cards come and in what style, and the Panel order rows that name them are ignored', () => {
   const layouts = fs.readFileSync(path.join(docsFolder, 'layouts.md'), 'utf8').replace(/\s+/g, ' ');
-  ['Monday style', 'Monday rows of a Screen', 'a saved Panel order that still names one is ignored'].forEach(word => assert.ok(layouts.includes(word), 'layouts.md names ' + word));
+  ['Monday style', 'Monday rows of a view', 'a saved Panel order that still names one is ignored'].forEach(word => assert.ok(layouts.includes(word), 'layouts.md names ' + word));
   assert.ok(fs.readFileSync(path.join(docsFolder, 'switch-the-look.md'), 'utf8').includes('takes the Monday style of the Screen'));
   assert.ok(fs.readFileSync(path.join(docsFolder, 'coaches-guide.md'), 'utf8').includes('Monday style: the style the Screen takes while a Monday row plays'));
 });

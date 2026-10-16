@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+# Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|backup|--print|restart N
 # Writes the time of a job that has just finished into the document status-mini
 # in Sanity, so that Dashboard Settings can show what the Mini last did. The
 # calendar and slides services run it after each job, and kiosk.sh runs it when
@@ -26,12 +27,8 @@
 # shows No status yet. The token is never printed, and it is handed to curl on
 # standard input so it never shows in the process list. --print needs no token,
 # because the dataset is public.
-set -eu
-
-mini=$(cd "$(dirname "$0")/.." && pwd)
-repo=$(dirname "$mini")
-config="$repo/dashboard/config.js"
-env_file="$mini/local.env"
+set -euo pipefail
+. "$(dirname "$0")/lib.sh"
 
 # The document the Studio shows (studio/inputs/status-input.js has the same id)
 document=status-mini
@@ -64,20 +61,6 @@ case $1 in
   --print) field=print ;;
   *) usage ;;
 esac
-
-# The value of a NAME=value line in local.env, without its quotes. Only the
-# name asked for is read, because the other lines hold secrets.
-setting() {
-  [ -f "$env_file" ] || return 0
-  sed -n "s/^$1=//p" "$env_file" | tail -n 1 | sed "s/^['\"]//; s/['\"]\$//"
-}
-
-# The quoted value of "name: 'value'," in dashboard/config.js. The project
-# ID, the dataset and the API version are kept there and nowhere else.
-config_value() {
-  [ -f "$config" ] || return 0
-  sed -n "s/^[[:space:]]*$1:[[:space:]]*'\([^']*\)'.*/\1/p" "$config" | head -n 1
-}
 
 # curl's exit code in plain words. curl's own messages can include the
 # address, so they are not shown.
@@ -116,7 +99,7 @@ version=$(config_value apiVersion)
 if ! printf '%s' "$project" | grep -Eq '^[a-z0-9]+$' ||
   ! printf '%s' "$dataset" | grep -Eq '^[A-Za-z0-9_-]+$' ||
   ! printf '%s' "$version" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
-  echo "Could not read the project ID, dataset and API version from dashboard/config.js." >&2
+  echo "Could not read the project ID, dataset and API version from dashboard/config.js. Check that projectId, dataset and apiVersion are in that file." >&2
   exit 1
 fi
 

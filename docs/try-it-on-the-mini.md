@@ -11,7 +11,7 @@ the kiosk uses.
 
 Nothing needs copying. The dashboard is already on the Mini: the pull timer
 keeps `/opt/teletraan` up to date from the repository, and the web server
-shows it at `http://localhost:3229/dashboard/` (3229 is `TELETRAAN_PORT` in
+shows it at `http://localhost:8080/dashboard/` (8080 is `TELETRAAN_PORT` in
 `mini/local.env`, so use the number that file has). The test runs the code that
 has been pushed. To test a change, push it, then wait up to 5 minutes or run
 `/opt/teletraan/mini/scripts/pull.sh`. A Mini that does not pull gets the files
@@ -27,7 +27,7 @@ text screen, log in as `hawktimus`, stop the service, and start the kiosk
 script with an address that ends in `?perf`:
 
     sudo systemctl stop teletraan-kiosk.service
-    xinit /opt/teletraan/mini/scripts/kiosk.sh 'http://localhost:3229/dashboard/?perf' -- :1 vt8
+    xinit /opt/teletraan/mini/scripts/kiosk.sh 'http://localhost:8080/dashboard/?perf' -- :1 vt8
 
 Keep the quotes. Without them the shell would end the command at the first `&`
 in an address.
@@ -69,8 +69,8 @@ for example `?perf&stress`.
 | `finish=metal` | the normal look: purple plates with polished metal edges (a banded gradient, a shadow, a shade and a ridge on every line) |
 | `finish=flat` | the same screen with every edge one plain colour, no shadow, shade, ridge or glint. The shapes, text and movement do not change (the rows still turn over and the frame halves still lift), so any difference in the numbers is the cost of the metal |
 | `look=polished`, `flat`, `plain` | the Polish setting from Dashboard Settings, for this page only. The address wins over Dashboard Settings. `polished` is the normal look, the same as `finish=metal`. `flat` is `finish=flat` with the glint off. `plain` is `flat` with no screws on the frames and no // in the panel headers, so it draws the least. A `finish=` or `glint=` in the same address wins over the look for that one thing |
-| `style=original`, `cybertron`, `minimal` | the style, in place of the Screen of the day in Dashboard Settings, for this page only. The address wins over Dashboard Settings and stops the rows from changing the style on that page. `minimal` has the bar layout whatever the theme says, so the page reloads once if it started in another layout. `cybertron` has the layout of the theme and draws its frames again without a reload (docs/layouts.md, "Styles") |
-| `team=prime`, `nova`, `alternate` | the team, in place of the team of the rows of a Screen, for this page only. The address wins over Dashboard Settings and stops the rows from changing the team on that page. `nova` shows the Nova team with its colors and its mirror, from the team documents or from the sample content, which has both. A team the Studio has no document for is the built-in Prime. A Preview button wins over it while the preview lasts (docs/hidden-transitions.md, "Preview a look") |
+| `style=original`, `cybertron`, `retro` | the theme, in place of the theme of the day on the Themes page, for this page only. The address wins over Dashboard Settings and stops the views from changing on that page. The old word `minimal` still works and asks for the bar layout, so the page reloads once if it started in another layout (docs/layouts.md) |
+| `team=prime`, `nova`, `alternate` | the team, in place of the team of the view, for this page only. The address wins over Dashboard Settings and stops the views from changing the team on that page. `nova` shows the Nova team with its colors and its mirror, from the team documents or from the sample content, which has both. A team the Studio has no document for is the built-in Prime. A Preview button wins over it while the preview lasts (docs/hidden-transitions.md, "Preview a look") |
 | `sample=1` | shows the sample content from `dashboard/data/sample/` instead of what the editors published, for this page only. Nothing in Studio switches the content, and any other value is ignored (docs/editing-content.md, "Sample content") |
 | `metal=gold`, `silver` | the metal of the permanent frame edges (the banner, the countdown and the logo), for this page only. The address wins over Dashboard Settings |
 | `change=alternate`, `slat`, `mechanical` | how the large and small panels change page, for this page only. `mechanical` breaks the frame into pieces and rebuilds it, `slat` turns the rows over and lifts the frame (docs/page-transitions.md). Add `stress` to see a change every few seconds |
@@ -127,7 +127,7 @@ Then go back with Ctrl+Alt+F1 and start the kiosk script with this address:
 
     xinit /opt/teletraan/mini/scripts/kiosk.sh 'http://localhost:8081/tools/perf/plates.html?perf' -- :1 vt8
 
-Compare it with `'http://localhost:3229/dashboard/?only=tasks&perf'`, and add
+Compare it with `'http://localhost:8080/dashboard/?only=tasks&perf'`, and add
 the same `finish` to both addresses so the two pages are painted the same way.
 Stop the small server with Ctrl+C in the second text screen when you are done.
 
@@ -148,7 +148,7 @@ Stop the small server with Ctrl+C in the second text screen when you are done.
 
        cp /opt/teletraan/mini/scripts/kiosk.sh /tmp/kiosk-no-gpu.sh
        nano /tmp/kiosk-no-gpu.sh
-       xinit /tmp/kiosk-no-gpu.sh 'http://localhost:3229/dashboard/?perf' -- :1 vt8
+       xinit /tmp/kiosk-no-gpu.sh 'http://localhost:8080/dashboard/?perf' -- :1 vt8
 
    If the run without the flags is smoother, or the picture glitches with
    them, remove the two lines from `mini/scripts/kiosk.sh` and push. Never
@@ -203,7 +203,7 @@ below picks the theme for that page only.
 
 Start the kiosk script as in section 2, with the theme in the address:
 
-    xinit /opt/teletraan/mini/scripts/kiosk.sh 'http://localhost:3229/dashboard/?theme=neon-prime&perf' -- :1 vt8
+    xinit /opt/teletraan/mini/scripts/kiosk.sh 'http://localhost:8080/dashboard/?theme=neon-prime&perf' -- :1 vt8
 
 Run each of these for 30 minutes, write down typical, p95, worst, late and
 "animations running" at the end, and run the same address with `theme=hawktimus`

@@ -46,6 +46,7 @@ function run(when, booked) {
   fs.mkdirSync(bin);
   fs.mkdirSync(stub);
   fs.copyFileSync(path.join(repo, 'mini/scripts/nightly.sh'), path.join(root, 'mini/scripts/nightly.sh'));
+  fs.copyFileSync(path.join(repo, 'mini/scripts/lib.sh'), path.join(root, 'mini/scripts/lib.sh'));
   fs.writeFileSync(path.join(root, 'dashboard/config.js'), "export const sanity = {\n  projectId: 'abc123',\n  dataset: 'production',\n  apiVersion: '2024-01-01',\n};\n");
   ['sed', 'head', 'grep', 'date', 'dirname', 'cat'].forEach(tool => fs.symlinkSync(findTool(tool), path.join(bin, tool)));
   writeTool(bin, 'curl', fakeCurl);

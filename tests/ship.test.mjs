@@ -12,6 +12,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { copyParts } from './helpers/script-parts.mjs';
 
 const repoRoot = fileURLToPath(new URL('../', import.meta.url));
 const shipSource = path.join(repoRoot, 'tools/mac/ship.sh');
@@ -180,6 +181,7 @@ function makePlace(name, options = {}) {
 
   writeExecutable(path.join(place.repo, 'tools/mac/ship.sh'), fs.readFileSync(shipSource, 'utf8'));
   writeExecutable(path.join(place.repo, 'tools/mini/teletraan-mini'), fs.readFileSync(toolSource, 'utf8'));
+  copyParts(toolSource, path.join(place.repo, 'tools/mini'));
   fs.mkdirSync(path.join(place.repo, 'mini/scripts'), { recursive: true });
   fs.mkdirSync(path.join(place.repo, 'dashboard'), { recursive: true });
   fs.writeFileSync(path.join(place.repo, 'dashboard/index.html'), '');

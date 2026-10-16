@@ -233,7 +233,7 @@ effects:
 
     /dashboard/?panel=monday-tasks&team=prime&dept=<Team lead id>&screen=original&still=1
 
-Each Monday row in the Screens builder has a Preview button. It opens the panel in a 960 by 540
+Each Monday row of a view has a Preview button. It opens the panel in a 960 by 540
 frame below the row, which is the 1920 by 1080 canvas at half size. The Monday Boards page has a
 Preview the panels tab that lists all eleven the same way. The preview reads the published
 dataset, the same as the TV, so a draft shows only after Publish.
@@ -242,7 +242,7 @@ dataset, the same as the TV, so a draft shows only after Publish.
 
 All are large panels, drawn in the Monday style. Headers show the team short name at the right
 end of the title, and none when the panel is for both teams. A panel with nothing to show is
-skipped by the Screens builder, as an empty Monday row is.
+skipped by the view, as an empty Monday row is.
 
 | Panel | Registry id | Picker row | What it shows |
 |---|---|---|---|
@@ -355,8 +355,8 @@ document or file.
 
 ## If an answer looks different
 
-The address, the version, the four questions and the places in the answers are in one block at
-the top of `mini/scripts/monday-sync.sh`: `monday_address`, `monday_version`,
+The address, the version, the four questions and the places in the answers are in one file,
+`mini/scripts/monday-contract.sh`, which `monday-sync.sh` reads: `monday_address`, `monday_version`,
 `monday_query_me`, `monday_query_boards`, `monday_query_items`, `monday_query_more`, and the
 `paths` block of jq functions. Correct a line there and nowhere else. The questions use typed
 fragments (`... on StatusValue { label index }` and the like), because a plain question gave
@@ -367,7 +367,7 @@ browser, so the token is never typed into a command line or a file. Compare the 
 names in the `paths` block.
 
 `tests/monday-sync.test.mjs` checks the script with made-up answers of the same shape. Change the
-made-up answer there when the block at the top changes.
+made-up answer there when `monday-contract.sh` changes.
 
 ## What the tests cover
 

@@ -13,7 +13,7 @@ connected to the name, so a rename there is done by hand.
 
 The file `docs/seed/teams.ndjson` holds Hawktimus Prime, with the colors and the trim the
 screen has today, and Hawktimus Nova. Import it once, from a Mac, with the Studio set up
-and signed in (studio/README.md, steps 1 to 4). It changes the real content that
+and signed in (docs/laptop-setup.md). It changes the real content that
 the TV shows, so ask the team mentor first. From the `studio` folder, run this one
 command:
 
@@ -26,7 +26,7 @@ colors back. The parts of the command are explained in docs/editing-content.md,
 "Importing the starting list".
 
 A Studio with no team documents works too. The TV then shows the built-in Prime
-team, and the Nova rows of a Screen stay on Prime.
+team, and the Nova view stays on Prime.
 
 ## 2. Fill in the Nova team
 
@@ -45,16 +45,16 @@ In Studio open Settings, then Teams, then Hawktimus Nova. These are the fields.
   - Main color: the header tabs and the bird.
   - Plate color: the team plate, the inset of the header tab and the cards.
   - Accent color: small marks and key words.
-  - Neon color: the thin neon lines, the page grid and the digits of the war clock in Minimal.
+  - Neon color: the thin neon lines, the page grid and the digits of the war clock in the bar layout.
   - Second bright color: the conduit line and the corner brackets of Cybertron.
   - Background color: the color behind everything.
   - Text color: the main text.
-  - Body color: the inside of the panels in Cybertron and Minimal.
+  - Body color: the inside of the panels in Cybertron and the bar layout.
   - Label color: the department names in rows. It is light purple on Nova, because light blue
     is lost against the blue frame.
 - Metal: gold or steel. It is the metal of the frame edges, the bolts and the war clock in
-  Cybertron and Minimal. Both teams start on gold, so Nova stays metallic.
-- Glow: on for Nova. A soft glow round the neon lines of the frames in Cybertron and Minimal.
+  Cybertron and the bar layout. Both teams start on gold, so Nova stays metallic.
+- Glow: on for Nova. A soft glow round the neon lines of the frames in Cybertron and the bar layout.
   Prime has it off.
 - Mirror the layout: on to start with. The whole screen is flipped left to right
   while Nova is showing.
@@ -66,7 +66,7 @@ In Studio open Settings, then Teams, then Hawktimus Nova. These are the fields.
     and bottom left.
   - Header end: the notch at the end of the colored tab on every panel header, or one slant at
     60 degrees. Nova has the slant.
-  - Page grid: lines or dots, on the page behind Cybertron and Minimal. Nova has dots.
+  - Page grid: lines or dots, on the page behind Cybertron and the bar layout. Nova has dots.
   - Ticker label: the cut plate, or a thin bar with a block of the accent color in front of it.
     Nova has the bar.
   - Countdown color: red, or the neon color of the team. Nova has neon.
@@ -78,7 +78,7 @@ In Studio open Settings, then Teams, then Hawktimus Nova. These are the fields.
   A team with none of them stored, such as one saved before the trim existed, looks like Prime.
   The frames change shape when the team goes on, in the same moment as the colors and the
   mirror. docs/layouts.md, "Team trim", says how each one is drawn.
-- Active: on. Turn it off to leave the team out of the team pickers of a Screen and out of the
+- Active: on. Turn it off to leave the team out of the team picker of a view and out of the
   Team choice on items.
 - Order: a lower number comes first. Prime is 10 and Nova is 20.
 
@@ -86,27 +86,26 @@ Click Publish. A change to the team that is on the screen goes on within a few
 seconds, without waiting for a page change. A change of the colors or the trim of the team on
 the screen draws the frames again, so give it a moment.
 
-## 3. Put Nova in the rows of a Screen
+## 3. Put Nova in the Nova view
 
-Open Screens, under Start here, then a Screen, and click B on the map. Each row of the main
-panel has a Team. The rows of Prime and the rows of Nova are separate: keep the Prime rows
-together and the Nova rows together, because the screen transforms every time the team
-changes. A Screen that was filled from the old Panel order already has the rows of Prime,
-then the three Monday rows of Prime, then the same for Nova, then the panels for both teams.
-Add the Nova rows if they are not there. Take the Nova rows out to show Prime all the time.
+Open Settings, then Views, then Nova, and click B on the map. The Nova view plays as the Nova
+team, and the Prime view plays as Prime, so the rows of the two teams are separate documents.
+A view that was filled from the old Panel order already has its rows. Add rows if they are not
+there. Take Nova out of the order of the views (Dashboard Settings, Look tab) to show Prime all
+the time.
 
-Click Publish. The swap from one team to the next comes when the next row is for the other
+Click Publish. The swap from one team to the next comes when the next view is for the other
 team. The name, the number, the logo, the colors and the mirror change together, and nothing
 changes in the middle of a panel.
 
 ## 4. Check the TV
 
 Open the menu next to Publish on Dashboard Settings (the three dots) and click
-Preview Nova. The TV shows Nova for 2 minutes whatever the rows of the Screen say, then goes
+Preview Nova. The TV shows Nova for 2 minutes whatever the views say, then goes
 back. Look at the name, the number, the colors and which side the columns are on. Then look at the
 trim: the round bolts, the corners cut at the top right and the bottom left of every panel, the
 slanted end of each header tab, the solid name, the bar at the start of the ticker and the
-neon countdown. The bird has its wings up. Cybertron and Minimal have dots on the page, in place
+neon countdown. The bird has its wings up. Cybertron and the bar arrangement have dots on the page, in place
 of lines.
 With the sample content showing, `?team=nova` on the end of the address does the
 same for one page.
@@ -117,9 +116,9 @@ that are for both.
 
 ## Afterwards
 
-- To stop showing Nova, take its rows out of the Screens. The Nova team and its content
+- To stop showing Nova, take it out of the order of the views. The Nova team and its content
   stay in Studio.
-- To change the colors or the trim later, edit the Nova team and publish. Style and pack are
+- To change the colors or the trim later, edit the Nova team and publish. Theme and pack are
   separate settings (docs/switch-the-look.md).
-- A third team can be added as another document in Teams, and then given rows in a Screen,
+- A third team can be added as another document in Teams, and then given a view of its own,
   where it takes its turn.

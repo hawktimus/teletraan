@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+# Usage: sudo install-watchdog.sh
 # Installs the watchdog: copies its two systemd unit files and turns on its
 # timer, which starts watchdog.sh every 2 minutes. The watchdog restarts the
 # screen when it has frozen. It runs as root, so the unit file names no account.
@@ -6,9 +7,9 @@
 # them. Run it again after kiosk.sh changes, and restart the screen once
 # (tools/mini/teletraan-mini restart), because the browser only opens its page
 # list for the watchdog when kiosk.sh has started it.
-set -eu
+set -euo pipefail
+. "$(dirname "$0")/lib.sh"
 
-mini=$(cd "$(dirname "$0")/.." && pwd)
 units="$mini/systemd"
 repo=$(cd "$mini/.." && pwd -P)
 target=/etc/systemd/system

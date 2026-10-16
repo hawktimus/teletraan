@@ -1,11 +1,13 @@
-#!/bin/sh
+#!/bin/bash
+# Usage: control-helper.sh   (started by teletraan-control.socket; reads one command line from standard input)
 # The host side of the control page. teletraan-control.socket starts one copy of this for each connection,
 # as the login user, with the connection as standard input and output. The first line is a word and an optional
 # argument. write-env also reads the new local.env from the rest of the input. Anything that is not one of the
 # words below is refused with one line in the log. The last line of the answer is ok, refused or failed <code>.
 #
 # Only the commands the sudoers drop-in allows are run with sudo (mini/sudoers/teletraan-control).
-set -u
+set -euo pipefail
+. "$(dirname "$0")/lib.sh"
 
 root=${TELETRAAN_ROOT:-/opt/teletraan}
 log_file="$root/logs/helper.log"
@@ -59,8 +61,9 @@ log "$word${argument:+ $argument}"
 
 case $word in
   restart-kiosk)
-    sudo -n systemctl restart teletraan-kiosk.service
-    finish $?
+    code=0
+    sudo -n systemctl restart teletraan-kiosk.service || code=$?
+    finish "$code"
     ;;
   restart-services)
     # The web server is a container here, and a restart makes it read the release that current points at
@@ -85,17 +88,19 @@ case $word in
     echo "kiosk: $(systemctl is-active teletraan-kiosk.service 2> /dev/null || true)"
     echo "uptime: $(cut -d' ' -f1 /proc/uptime 2> /dev/null || true)"
     echo "diskFreeKb: $(df -Pk "$root" 2> /dev/null | awk 'NR == 2 { print $4 }')"
-    echo "tailscale: $(tailscale ip -4 2> /dev/null | head -n 1)"
+    echo "tailscale: $(tailscale ip -4 2> /dev/null | head -n 1 || true)"
     echo "display: $(journalctl -u teletraan-kiosk.service -n 300 --no-pager 2> /dev/null | grep 'display:' | tail -n 1 | sed 's/^.*display: //' | cut -c 1-200)"
     finish 0
     ;;
   sync-now)
-    sudo -n systemctl start "teletraan-$argument.service"
-    finish $?
+    code=0
+    sudo -n systemctl start "teletraan-$argument.service" || code=$?
+    finish "$code"
     ;;
   monday-check)
-    "$root/mini/scripts/monday-sync.sh" --check
-    finish $?
+    code=0
+    "$root/mini/scripts/monday-sync.sh" --check || code=$?
+    finish "$code"
     ;;
   write-env)
     temporary="$root/local.env.new"
@@ -109,7 +114,8 @@ case $word in
     fi
     chmod 600 "$temporary"
     [ ! -f "$root/local.env" ] || cp -p "$root/local.env" "$root/local.env.previous" 2> /dev/null || true
-    mv -f "$temporary" "$root/local.env"
-    finish $?
+    code=0
+    mv -f "$temporary" "$root/local.env" || code=$?
+    finish "$code"
     ;;
 esac

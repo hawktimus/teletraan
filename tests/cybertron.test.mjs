@@ -1099,7 +1099,7 @@ test('the frames are drawn again in the same step that puts the style on the pag
 
 // What Cybertron paints
 
-test('Cybertron paints the plates in the team\'s body color, the metal edge and the page the order gives, on the layout of Original, and the metal reaches the frames through the tokens', () => {
+test('Cybertron paints the plates in the team\'s body color, the metal edge and the page color, on the layout of Original, and the metal reaches the frames through the tokens', () => {
   const css = withoutComments((read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css')));
   const value = property => new RegExp(property + ': ([^;]+);').exec(css)[1];
   assert.equal(value('--style-body'), 'var(--team-body)', 'the body of a plate is the team\'s body color');
@@ -1162,7 +1162,7 @@ test('docs/layouts.md describes the two styles and which layout each uses, and t
 
   // the layouts and the styles
   const flat = text => text.replace(/\s+/g, ' ');
-  assert.ok(/The style Minimal has it/.test(flat(doc.slice(0, doc.indexOf('## How a layout is chosen')))), 'the list of layouts says which style has the bar layout');
+  assert.ok(/The Prime, Nova and Family views have it/.test(flat(doc.slice(0, doc.indexOf('## How a layout is chosen')))), 'the list of layouts says which style has the bar layout');
   assert.ok(/Original and Cybertron keep the layout of the theme/.test(flat(doc.slice(doc.indexOf('## How a layout is chosen'), doc.indexOf('## The screen is a fixed canvas')))), 'the choice of the layout says Cybertron keeps the layout of the theme');
   assert.ok(section.includes('redrawFrames') && section.includes('?style=cybertron'));
   assert.ok(section.includes('616 by 200') && section.includes('The wide war clock') && doc.includes('### The wide war clock'));

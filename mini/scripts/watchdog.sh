@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+# Usage: watchdog.sh   (started by teletraan-watchdog.timer)
 # Restarts the screen when it has frozen. teletraan-watchdog.timer runs it every
 # 2 minutes as root, because restarting teletraan-kiosk needs that.
 #
@@ -24,16 +25,8 @@
 # Each restart, and the stop, tells Studio through status-write.sh (the status
 # block on Start here shows Screen restarts today). That is best effort and
 # never stops a restart. Nothing here reads a key.
-set -eu
-
-mini=$(cd "$(dirname "$0")/.." && pwd)
-env_file="$mini/local.env"
-
-# The value of a NAME=value line in local.env, without its quotes
-setting() {
-  [ -f "$env_file" ] || return 0
-  sed -n "s/^$1=//p" "$env_file" | tail -n 1 | sed "s/^['\"]//; s/['\"]\$//"
-}
+set -euo pipefail
+. "$(dirname "$0")/lib.sh"
 
 data=$(setting TELETRAAN_DATA)
 data=${data:-/var/lib/teletraan/data}

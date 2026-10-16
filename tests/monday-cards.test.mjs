@@ -95,20 +95,6 @@ function contentOf(tasks, leads, change) {
   });
 }
 
-// Runs a check with a team on the screen, and puts the built-in team back after it. The
-// module is shared by every test in this file, so it has to be left as it was found.
-function onTeamScreen(code, run) {
-  const list = contentWith().teams;
-  teams.useTeams({ teams: list, settings: { teamMode: code, alternateMinutes: 5 } });
-  teams.changeTeamNow();
-  try {
-    run();
-  } finally {
-    teams.useTeams(null);
-    teams.changeTeamNow();
-  }
-}
-
 function hostFor(panel, content, page) {
   const host = { innerHTML: '' };
   panel.mount(host, content, page);
@@ -764,7 +750,7 @@ test('the tasks panel fits the large panel: five rows of 84 and the numbers insi
   assert.equal(pixels(shared['.monday'], '--scroll-step'), 5 * row, 'a step of the list is five rows');
 
   // a row of the tasks panel of the one task board: the chip 262 by 48, the title, who to ask (140), the due date (290) and the
-  // priority of 36, with 16 between. The sizes are the order's, so the title has what is left of the body
+  // priority of 36, with 16 between. The sizes are fixed, so the title has what is left of the body
   const gap = pixels(rules['.monday-tasks .row'], 'gap');
   const chip = rulesOf(read('monday.css'))['.monday .chip'];
   const title = pixels(body, 'width') - pixels(chip, 'width') - pixels(rules['.monday-tasks .poc'], 'width') - pixels(rules['.monday-tasks .due'], 'width') - pixels(rules['.monday-tasks .priority'], 'width') - 4 * gap;

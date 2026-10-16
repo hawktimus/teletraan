@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+# Usage: nightly.sh   (started by teletraan-nightly.timer)
 # The nightly restarts. teletraan-nightly.timer runs it as root at 04:00 every
 # day and again at 04:10 on Sundays (kiosk time, the time zone of the Mini).
 #   about 04:00   restarts the screen (teletraan-kiosk)
@@ -9,11 +10,8 @@
 # restart goes ahead: it is the middle of the night. A skipped restart is not
 # made up later; the next night's run does it. Each decision is one line on
 # standard output, which the journal keeps.
-set -eu
-
-mini=$(cd "$(dirname "$0")/.." && pwd)
-repo=$(dirname "$mini")
-config="$repo/dashboard/config.js"
+set -euo pipefail
+. "$(dirname "$0")/lib.sh"
 
 # Seconds. A talk that began up to this long ago may still be running.
 look_ahead=3600
@@ -21,12 +19,6 @@ look_back=7200
 
 say() {
   echo "nightly: $*"
-}
-
-# The quoted value of "name: 'value'," in dashboard/config.js
-config_value() {
-  [ -f "$config" ] || return 0
-  sed -n "s/^[[:space:]]*$1:[[:space:]]*'\([^']*\)'.*/\1/p" "$config" | head -n 1
 }
 
 # Weekday number (1 is Monday) and HHMM. The test sets NIGHTLY_NOW to "7 0410".

@@ -16,7 +16,7 @@ export function repoRoot(ctx) {
 }
 
 // projectId, dataset and apiVersion are kept in dashboard/config.js and nowhere else
-export function configFrom(text) {
+function configFrom(text) {
   const read = name => {
     const match = new RegExp("^\\s*" + name + ":\\s*'([^']*)'", 'm').exec(text);
     return match ? match[1] : '';
@@ -27,7 +27,7 @@ export function configFrom(text) {
 export function readConfig(ctx) {
   const config = configFrom(fs.readFileSync(path.join(repoRoot(ctx), 'dashboard', 'config.js'), 'utf8'));
   if (!/^[a-z0-9]+$/.test(config.projectId) || !/^[A-Za-z0-9_-]+$/.test(config.dataset) || !/^\d{4}-\d{2}-\d{2}$/.test(config.apiVersion)) {
-    throw new Refusal(500, 'The Sanity project could not be read from dashboard/config.js.');
+    throw new Refusal(500, 'The Sanity project could not be read from dashboard/config.js. Check that projectId, dataset and apiVersion are in that file.');
   }
   return config;
 }

@@ -43,6 +43,7 @@ function setup(name) {
   fs.mkdirSync(bin);
 
   fs.copyFileSync(installFile, path.join(root, 'mini/scripts/install-calendars.sh'));
+  fs.copyFileSync(path.join(repo, 'mini/scripts/lib.sh'), path.join(root, 'mini/scripts/lib.sh'));
   fs.chmodSync(path.join(root, 'mini/scripts/install-calendars.sh'), fs.statSync(installFile).mode);
   fs.copyFileSync(path.join(repo, 'mini/scripts/fetch-calendars.sh'), path.join(root, 'mini/scripts/fetch-calendars.sh'));
   fs.chmodSync(path.join(root, 'mini/scripts/fetch-calendars.sh'), 0o755);
@@ -144,7 +145,7 @@ test('it fills in the account the way install-timers.sh does, and the units it c
 test('the script has valid sh syntax and is executable', () => {
   const syntax = spawnSync('/bin/sh', ['-n', installFile], { encoding: 'utf8' });
   assert.equal(syntax.status, 0, syntax.stderr);
-  assert.ok(fs.readFileSync(installFile, 'utf8').startsWith('#!/bin/sh\n'));
+  assert.ok(fs.readFileSync(installFile, 'utf8').startsWith('#!/bin/bash\n'));
   assert.ok((fs.statSync(installFile).mode & 0o111) !== 0, 'the script should be executable');
 });
 

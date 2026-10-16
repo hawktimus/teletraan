@@ -6,14 +6,14 @@
 import { Refusal, mount, paramOf, readJson, send } from '../support/http.js';
 
 export const words = ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'monday-check'];
-export const syncTargets = ['calendars', 'monday', 'frc'];
+const syncTargets = ['calendars', 'monday', 'frc'];
 
 // These stop or restart something people are watching, so the request must say it was confirmed
 const needsConfirm = ['restart-kiosk', 'restart-services', 'reboot'];
 
-export function checkRequest(word, body) {
+function checkRequest(word, body) {
   if (!words.includes(word)) throw new Refusal(400, 'The Mini does not know that word.');
-  if (needsConfirm.includes(word) && body.confirmed !== true) throw new Refusal(400, 'Confirm first.');
+  if (needsConfirm.includes(word) && body.confirmed !== true) throw new Refusal(400, 'Confirm first, then press the button again.');
 
   if (word === 'sync-now') {
     if (!syncTargets.includes(body.target)) throw new Refusal(400, 'Sync one of: ' + syncTargets.join(', ') + '.');

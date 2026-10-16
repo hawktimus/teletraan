@@ -4,7 +4,7 @@
 // content, each followed by a line break. It is how the page tells whether the folder on this computer is
 // the one on the wall.
 
-export const hashRoots = ['dashboard/', 'studio/schemas/', 'mini/', 'control/'];
+const hashRoots = ['dashboard/', 'studio/schemas/', 'mini/', 'control/'];
 
 // Names left out at any depth, and the generated files left out by path. The same list decides what the page
 // zips and what the Mini copies.
@@ -39,7 +39,7 @@ function hex(buffer) {
   return Array.from(new Uint8Array(buffer), byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
-export async function sha256Hex(bytes) {
+async function sha256Hex(bytes) {
   return hex(await globalThis.crypto.subtle.digest('SHA-256', bytes));
 }
 

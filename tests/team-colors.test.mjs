@@ -326,9 +326,9 @@ test('the cascade picks the strongest selector, then the later rule, takes custo
 });
 
 
-// The teams of the sample content, and the table of the order
+// The teams of the sample content, and the table of the teams
 
-test('the sample content, the seed file and the built-in team have the colors, the metal and the glow of the order', () => {
+test('the sample content, the seed file and the built-in team have the colors, the metal and the glow of the design', () => {
   const seeded = read('docs/seed/teams.ndjson').split('\n').filter(line => line.trim() !== '').map(line => JSON.parse(line));
   const wanted = {
     prime: { primary: '#6C18B6', plate: '#3B2A7A', body: '#1A0F2E', accent: '#FACA2A', neon: '#FACA2A', pink: '#B23CFF', label: '#FACA2A', metal: 'gold', glow: false },

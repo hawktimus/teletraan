@@ -72,7 +72,7 @@ function upload(blob, note, commit, onUpload, onEvent) {
       take();
       resolve();
     };
-    request.onerror = () => reject(new Error('The Mini could not be reached.'));
+    request.onerror = () => reject(new Error('The Mini could not be reached. Check the WiFi, or use the Tailscale name, then try again.'));
     request.send(form);
   });
 }

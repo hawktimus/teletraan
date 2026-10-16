@@ -18,13 +18,13 @@ export function createHelper(socketPath, timeout = 30000) {
       const socket = net.createConnection(socketPath);
       const timer = setTimeout(() => {
         socket.destroy();
-        reject(new Error('The helper did not answer in time.'));
+        reject(new Error('The helper did not answer in time. Look at the Log tab, then try again. If it keeps happening, restart the Mini.'));
       }, timeout);
       socket.on('connect', () => socket.end([word].concat(args).join(' ') + '\n' + body));
       socket.on('data', chunk => { answer += chunk; });
       socket.on('error', error => {
         clearTimeout(timer);
-        reject(new Error('The helper socket cannot be reached (' + error.code + ').'));
+        reject(new Error('The helper socket cannot be reached (' + error.code + '). Run tools/mini/teletraan-mini update from the Mac to set the control page up again.'));
       });
       socket.on('close', () => {
         clearTimeout(timer);

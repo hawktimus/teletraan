@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { textOf } from './helpers/script-parts.mjs';
 
 const here = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'studio');
 const dashboardFolder = path.join(here, '..', 'dashboard');
@@ -494,7 +495,7 @@ const typeTitles = {
   extraEvent: 'Events Calendar',
 };
 
-// The sidebar as the owner asked for it. A heading is the first thing before
+// The sidebar as agreed. A heading is the first thing before
 // the colon, and the lines under it come after. The first group has no heading.
 const sidebarGroups = [
   'Start here, Screens',
@@ -2995,7 +2996,7 @@ function checkPersonRows() {
 
   need(problems, personNames.indexOf('group') === -1, 'person.group should be gone from the schema: no document held a value');
 
-  // The chip is the Role: person.title, required, with the words of the order
+  // The chip is the Role: person.title, required, with the words given
   const role = fieldAt('person.title');
   const roleRules = role ? constraintsOf(role) : [];
   const roleHelp = 'Shown in the chip at the right of the row, for example Coach, Co-President, Mentor, Parent. Up to 22 characters fit.';
@@ -5680,7 +5681,7 @@ function checkMondayTab() {
   const source = fs.readFileSync(path.join(here, 'inputs', 'monday-status-input.js'), 'utf8');
   need(problems, !/onChange|\bset\(|unset\(|patch/.test(source), 'monday-status-input.js should never change the value: no onChange, set, unset or patch');
 
-  // How often: 5 to 120 whole minutes, starting at 30, in the words of the order
+  // How often: 5 to 120 whole minutes, starting at 30, in the words given
   const every = at('mondayEveryMinutes');
   need(problems, every && every.type === 'number' && every.title === 'How often' && every.initialValue === 30 && every.group === 'monday', 'mondayEveryMinutes should be a number titled How often that starts at 30, in the Monday tab');
   need(problems, every && every.description === 'How often the Mini reads the boards. The free plan allows about 1,000 reads a day; 30 minutes uses about 150.', 'mondayEveryMinutes should say how often the Mini reads, and what the free plan allows');
@@ -7097,8 +7098,8 @@ async function main() {
     world.mondayPickers = await load(path.join(folder, 'inputs', 'monday-pickers.js'));
     world.competition = await load(path.join(dashboardFolder, 'core', 'competition.js'));
     world.sanitySource = fs.readFileSync(path.join(dashboardFolder, 'core', 'sanity.js'), 'utf8');
-    world.frcScript = fs.readFileSync(path.join(here, '..', 'mini', 'scripts', 'frc-sync.sh'), 'utf8');
-    world.mondayScript = fs.readFileSync(path.join(here, '..', 'mini', 'scripts', 'monday-sync.sh'), 'utf8');
+    world.frcScript = textOf(path.join(here, '..', 'mini', 'scripts', 'frc-sync.sh'));
+    world.mondayScript = textOf(path.join(here, '..', 'mini', 'scripts', 'monday-sync.sh'));
     world.panelOrderInput = await load(path.join(folder, 'inputs', 'panel-order-input.js'));
     world.screenIds = await load(path.join(folder, 'inputs', 'screen-ids.js'));
     world.screenMap = await load(path.join(folder, 'tools', 'screen-map.js'));

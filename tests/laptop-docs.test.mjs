@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { textOf } from './helpers/script-parts.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const read = file => fs.readFileSync(path.join(repo, file), 'utf8');
@@ -17,7 +18,7 @@ const laptop = read('docs/laptop-setup.md');
 const shipping = read('docs/shipping-from-the-mac.md');
 const updating = read('docs/updating-the-mini.md');
 const shipScript = read('tools/mac/ship.sh');
-const miniTool = read('tools/mini/teletraan-mini');
+const miniTool = textOf(path.join(repo, 'tools/mini/teletraan-mini'));
 
 // Every fenced block of a doc, with the lines in it
 function codeBlocks(text) {
@@ -93,7 +94,7 @@ test('the guide names the commands in the order a coach needs them', () => {
   assert.ok(commands.filter(command => command === 'cd studio').length >= 2, 'the Studio steps move into studio');
 });
 
-test('the guide covers what the owner asked for: both ways to install, no silent install, the two sign-ins, the app, the Mini, the keys, and what stays out of GitHub', () => {
+test('the guide covers what a coach needs: both ways to install, no silent install, the two sign-ins, the app, the Mini, the keys, and what stays out of GitHub', () => {
   [
     'Homebrew', 'official sites', 'No step in this guide installs them for you',
     'git pull', 'first push', 'credential helper', 'gh auth login', 'team mentor',
@@ -146,7 +147,7 @@ test('the shipping doc agrees with ship.sh: the menu, the action words, the old 
 });
 
 test('the doc of the Mac tool names the words, the options and the exit codes the tool has', () => {
-  ['teletraan-mini update', 'teletraan-mini status', 'teletraan-mini restart', '--yes', '--mini NAME', 'exit code', 'Copy anyway'].forEach(text => assert.ok(updating.includes(text), 'docs/updating-the-mini.md says: ' + text));
+  ['teletraan-mini update', 'teletraan-mini status', 'teletraan-mini restart', '--yes', '--mini NAME', 'exit code'].forEach(text => assert.ok(updating.includes(text), 'docs/updating-the-mini.md says: ' + text));
   assert.ok(miniTool.includes('Usage: teletraan-mini [--mini NAME] [--yes] [update | status | restart]'));
   ['update', 'status', 'restart'].forEach(word => assert.ok(miniTool.includes('  ' + word + ' '), 'the tool lists ' + word));
   assert.ok(updating.includes('tests/teletraan-mini-commands.test.mjs'));

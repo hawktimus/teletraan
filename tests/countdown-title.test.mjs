@@ -498,7 +498,7 @@ test('every part of the countdown that writes the title does it through core/cou
 
 // The Studio field
 
-test('the Kickoff and Rollout labels warn above 28 characters with the words of the order, refuse more than 40, and keep their stored names and starting values', () => {
+test('the Kickoff and Rollout labels warn above 28 characters with the words given, refuse more than 40, and keep their stored names and starting values', () => {
   const schema = withoutComments(read('studio/schemas/settingsCountdown.js'));
   assert.ok(schema.includes("const titleWarning = 'Long titles wrap to two lines on the screen.';"));
   assert.equal((schema.match(/Rule\.max\(28\)\.warning\(titleWarning\), tooLong\(Rule, 40\)/g) || []).length, 2, 'both labels');

@@ -73,6 +73,7 @@ function setup(name, options) {
   fs.mkdirSync(bin);
 
   fs.copyFileSync(scriptFile, path.join(root, 'mini/scripts/check-connection.sh'));
+  fs.copyFileSync(path.join(repo, 'mini/scripts/lib.sh'), path.join(root, 'mini/scripts/lib.sh'));
   fs.copyFileSync(path.join(repo, 'mini/docker-compose.yml'), path.join(root, 'mini/docker-compose.yml'));
   fs.copyFileSync(path.join(repo, 'dashboard/config.js'), path.join(root, 'dashboard/config.js'));
   if (options.localEnv) fs.writeFileSync(path.join(root, 'mini/local.env'), options.localEnv);
@@ -217,8 +218,8 @@ test('the script has valid sh syntax, is executable, and does not stop at the fi
   assert.equal(syntax.status, 0, syntax.stderr);
 
   const text = fs.readFileSync(scriptFile, 'utf8');
-  assert.ok(text.startsWith('#!/bin/sh\n'));
-  assert.ok(!/^\s*set -[a-z]*e/m.test(text), 'set -e would stop the script at the first failing check');
+  assert.ok(text.startsWith('#!/bin/bash\n'));
+  assert.ok(/^set -euo pipefail\n(.*\n)*?set \+e$/m.test(text), 'set -e is turned off again, so a failing check does not stop the script');
   assert.ok((fs.statSync(scriptFile).mode & 0o111) !== 0, 'the script should be executable');
   assert.ok(!/\bcat\b[^\n]*local\.env/.test(text), 'local.env is never printed');
 });

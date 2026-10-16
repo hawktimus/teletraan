@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+# Usage: calendar-status.sh
 # Makes <data folder>/calendar-status.json, the document that the Calendars page
 # in Studio shows, from what fetch-calendars.sh left in calendar-sync.txt: for
 # each calendar, when it was last downloaded and why a download failed. With Node
@@ -10,18 +11,10 @@
 #
 # The feed addresses are secrets and this script never sees one: the sync file
 # and the calendar files hold none. Nothing here prints one.
-set -eu
+set -euo pipefail
+. "$(dirname "$0")/lib.sh"
 
-mini=$(cd "$(dirname "$0")/.." && pwd)
-env_file="$mini/local.env"
 helper="$mini/scripts/calendar-status.mjs"
-
-# The value of a NAME=value line in local.env, without its quotes. Only the
-# name asked for is read, because the other lines hold secrets.
-setting() {
-  [ -f "$env_file" ] || return 0
-  sed -n "s/^$1=//p" "$env_file" | tail -n 1 | sed "s/^['\"]//; s/['\"]\$//"
-}
 
 data=$(setting TELETRAAN_DATA)
 data=${data:-/var/lib/teletraan/data}

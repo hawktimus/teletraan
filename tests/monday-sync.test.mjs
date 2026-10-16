@@ -14,6 +14,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { textOf, copyWithEdits } from './helpers/script-parts.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const syncFile = path.join(repo, 'mini/scripts/monday-sync.sh');
@@ -148,16 +149,12 @@ function setup(name, options) {
   if (!options.noData) fs.mkdirSync(data);
 
   const scriptCopy = path.join(root, 'mini/scripts/monday-sync.sh');
-  let text = fs.readFileSync(syncFile, 'utf8');
-  (options.edits || []).forEach(edit => {
-    assert.ok(text.includes(edit[0]), 'the script has no ' + edit[0]);
-    text = text.replace(edit[0], edit[1]);
-  });
-  fs.writeFileSync(scriptCopy, text, { mode: fs.statSync(syncFile).mode });
+  copyWithEdits(syncFile, path.join(root, 'mini/scripts'), options.edits);
   const installCopy = path.join(root, 'mini/scripts/install-monday.sh');
   fs.copyFileSync(installFile, installCopy);
   fs.chmodSync(installCopy, fs.statSync(installFile).mode);
   writeTool(path.join(root, 'mini/scripts'), 'status-write.sh', fakeStatusWrite);
+  fs.copyFileSync(path.join(repo, 'mini/scripts/lib.sh'), path.join(root, 'mini/scripts/lib.sh'));
   unitFiles.forEach(unit => fs.copyFileSync(path.join(repo, 'mini/systemd', unit), path.join(root, 'mini/systemd', unit)));
   fs.copyFileSync(path.join(repo, 'dashboard/config.js'), path.join(root, 'dashboard/config.js'));
 
@@ -518,7 +515,7 @@ test('the requests go to the address and version of the block at the top, https 
   assert.deepEqual(variables[1].columns, ['color_mkv6tatz', 'color_mm82jgxg', 'color_mm82nvea', 'color_mm82wfy', 'color_mm83p12x', 'date_mm82kn5v', 'multiple_person_mm82cqbx', 'multiple_person_mm8331h1', 'numeric_mm82pw1a', 'timerange_mkyp8kx7', 'board_relation_mm83phwy'].sort());
   assert.deepEqual(variables[2], { board: [milestoneBoardId], columns: ['color_mm83be52', 'color_mm83f77w', 'color_mm83ndkf', 'date_mm83y6zw'], limit: 200 });
 
-  const script = fs.readFileSync(syncFile, 'utf8');
+  const script = textOf(syncFile);
   ['... on StatusValue { label index }', '... on BoardRelationValue { linked_item_ids }', '... on DateValue { date }', '... on TimelineValue { from to }', '... on PeopleValue { persons_and_teams { id } }'].forEach(fragment => {
     assert.ok(script.split(fragment).length >= 3, 'both item questions use the typed fragment ' + fragment);
   });
@@ -552,7 +549,7 @@ test('Sanity is asked for the settings, the teams, the Team leads, what the Mini
   const addresses = fs.readFileSync(path.join(place.stub, 'addresses.txt'), 'utf8').trim().split('\n');
   addresses.forEach(address => assert.equal(address, 'https://' + project + '.api.sanity.io/v' + version + '/data/mutate/' + dataset));
 
-  const script = fs.readFileSync(syncFile, 'utf8');
+  const script = textOf(syncFile);
   [project, dataset, version].forEach(value => assert.ok(!script.includes(value), 'the script should not contain ' + value));
 });
 
@@ -1299,15 +1296,15 @@ test('the work folder is removed after every run, and one a stopped run left beh
   assert.deepEqual(fs.readdirSync(place.temp), []);
 });
 
-test('the script also works under dash, with the same requests and the same documents', () => {
-  if (!fs.existsSync('/bin/dash')) return;
-  const reference = setup('dash-reference', { tools: true });
+test('the script also works under bash, with the same requests and the same documents', () => {
+  if (!fs.existsSync('/bin/bash')) return;
+  const reference = setup('bash-reference', { tools: true });
   world(reference, { owners: true });
   reference.run();
 
-  const place = setup('dash', { tools: true });
+  const place = setup('bash', { tools: true });
   world(place, { owners: true });
-  const result = place.run([], {}, '/bin/dash');
+  const result = place.run([], {}, '/bin/bash');
 
   assert.equal(result.status, 0, result.errors);
   assert.deepEqual(requestsOf(result.calls), firstSequence);
@@ -1324,15 +1321,15 @@ test('the scripts have valid sh syntax, are executable, and local.env and the se
     }
 
     const text = fs.readFileSync(file, 'utf8');
-    assert.ok(text.startsWith('#!/bin/sh\n'));
-    assert.ok(/^set -eu$/m.test(text), 'the script stops at the first error');
+    assert.ok(text.startsWith('#!/bin/bash\n'));
+    assert.ok(/^set -euo pipefail$/m.test(text), 'the script stops at the first error');
     assert.ok((fs.statSync(file).mode & 0o111) !== 0, path.basename(file) + ' should be executable');
     assert.ok(!/\bcat\b[^\n]*local\.env/.test(text), 'local.env is never printed');
     assert.ok(!/\beval\b/.test(text), 'nothing is run from text');
     assert.ok(!/CALENDAR_|TBA_/.test(text), 'the other secrets are not read');
   });
 
-  const text = fs.readFileSync(syncFile, 'utf8');
+  const text = textOf(syncFile);
   assert.ok(!/\becho\b[^\n]*\$(monday_token|write_token)/.test(text), 'a secret is never echoed');
   assert.ok(!/\bprintf\b[^\n]*\$(monday_token|write_token)[^\n]*>&2/.test(text), 'a secret is never printed as an error');
   assert.ok(!/--header[^\n]*(Authorization)|-H [^\n]*(Authorization)/.test(text), 'a secret is not an argument of curl');
@@ -1346,7 +1343,7 @@ test('the scripts have valid sh syntax, are executable, and local.env and the se
 });
 
 test('every address, version, question and place in an answer is in the block at the top, and nowhere else', () => {
-  const text = fs.readFileSync(syncFile, 'utf8');
+  const text = textOf(syncFile);
   const start = text.indexOf("monday_address='");
   const end = text.indexOf("\n'\n", start) + 3;
   const block = text.slice(start, end);
@@ -1370,7 +1367,7 @@ test('every address, version, question and place in an answer is in the block at
 });
 
 test('the limits of the script are the limits of the Studio fields and the contract: a title of 22, a first name of 12, a milestone name of 40, four requests, 900 reads a day, 120 snapshots', () => {
-  const text = fs.readFileSync(syncFile, 'utf8');
+  const text = textOf(syncFile);
   const task = fs.readFileSync(path.join(repo, 'studio/schemas/task.js'), 'utf8');
   const milestone = fs.readFileSync(path.join(repo, 'studio/schemas/milestone.js'), 'utf8');
 
@@ -1384,7 +1381,7 @@ test('the limits of the script are the limits of the Studio fields and the contr
 });
 
 test('the starting values of the script are the starting values of Dashboard Settings: the same boards, columns, indexes and every', async () => {
-  const text = fs.readFileSync(syncFile, 'utf8');
+  const text = textOf(syncFile);
   const block = text.slice(text.indexOf("defaults='") + "defaults='".length, text.indexOf("\n}'\n", text.indexOf("defaults='")) + 2);
   const script = JSON.parse(block);
   const { defaultSettings } = await import(pathToFileURL(path.join(repo, 'dashboard/config.js')).href);
@@ -1419,7 +1416,7 @@ test('the unit files name the account ACCOUNT, run the script, and the timer wak
 test('the script tells status-mini through status-write.sh, which knows the job monday', () => {
   const status = fs.readFileSync(path.join(repo, 'mini/scripts/status-write.sh'), 'utf8');
   assert.ok(status.includes('monday) field=lastMondaySyncAt ;;'));
-  assert.ok(fs.readFileSync(syncFile, 'utf8').includes('"$mini/scripts/status-write.sh" monday || true'));
+  assert.ok(textOf(syncFile).includes('"$mini/scripts/status-write.sh" monday || true'));
 });
 
 test('install-monday.sh stops, naming the file, when a unit file is missing or empty', () => {

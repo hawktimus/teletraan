@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-export const keepReleases = 5;
+const keepReleases = 5;
 
 // A name that is a release number, not a release being built
 function isNumber(name) {

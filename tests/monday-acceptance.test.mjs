@@ -1,4 +1,4 @@
-// The acceptance cases of the order for the Monday panels (docs/monday.md), the ones the screen decides, run on made-up
+// The acceptance cases for the Monday panels (docs/monday.md), the ones the screen decides, run on made-up
 // boards: a task of the right team and department shows on its panel and on no panel of the other team, General shows on
 // both, Hide takes a task off, the status decides where a task is and not its group, a task with no department never
 // shows, no last name or address reaches a panel, a stale board says so, and tasks whose Timeline is over are overdue.
