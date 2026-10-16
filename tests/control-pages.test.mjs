@@ -90,8 +90,8 @@ check('buttons and fields are 44px high or more, and the tabs are one column unt
   const css = fs.readFileSync(path.join(folder, 'tabs.css'), 'utf8');
   assert.match(css, /\.tab \.act \{ min-height: 44px; min-width: 44px/);
   assert.match(css, /select, \.tab input \{[^}]*min-height: 44px/);
-  assert.match(css, /\.tab \.grid \{ display: grid; grid-template-columns: 1fr;/);
-  assert.match(css, /@media \(min-width: 900px\)[\s\S]*grid-template-columns: 1fr 1fr/);
+  assert.match(css, /\.tab \.grid \{ display: grid; grid-template-columns: minmax\(0, 1fr\);/);
+  assert.match(css, /@media \(min-width: 900px\)[\s\S]*grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\)/);
 });
 
 console.log(passed + ' of ' + passed + ' checks passed.');
