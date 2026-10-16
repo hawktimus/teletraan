@@ -118,6 +118,9 @@ export const defaultTeam = {
   school: 'HOLLY SPRINGS HIGH SCHOOL',
 };
 
+// The header text color of a team with the inverted palette (Nova) that has none typed in the Studio yet
+export const invertedHeaderInk = '#1A1200';
+
 // The team the screen shows when the Studio has no Teams, and the colors that a team
 // document with a missing or mistyped color falls back to (core/sanity.js). It is Prime
 // with the colors the screen has always had in Original: teams.css starts at the same nine.
@@ -128,6 +131,8 @@ export const defaultTeam = {
 //                takes it from the team, and Prime in Original has to look as it always has
 //   body         the inside of the panels in Cybertron and Minimal
 //   label        the department names in the rows of the Monday cards and the people panels
+//   headerInk    the text that sits on the main color: panel titles, the team plate, the ticker label
+//   dark, retro  the darkest shade of the main color, and the main color of the Retro theme
 //   metal        see teamMetals above
 //   glow         see glowClass above
 export const primeTeam = {
@@ -146,6 +151,9 @@ export const primeTeam = {
     text: '#FFFFFF',
     body: '#1A0F2E',
     label: '#FACA2A',
+    headerInk: '#FFFFFF',
+    dark: '#29054A',
+    retro: '#FACA2A',
   },
   metal: 'gold',
   palette: 'standard',

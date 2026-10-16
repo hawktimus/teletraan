@@ -333,7 +333,7 @@ test('the sample content, the seed file and the built-in team have the colors, t
   const seeded = read('docs/seed/teams.ndjson').split('\n').filter(line => line.trim() !== '').map(line => JSON.parse(line));
   const wanted = {
     prime: { primary: '#6C18B6', plate: '#3B2A7A', body: '#1A0F2E', accent: '#FACA2A', neon: '#FACA2A', pink: '#B23CFF', label: '#FACA2A', metal: 'gold', glow: false },
-    nova: { primary: '#FACA2A', plate: '#6B4F0C', body: '#2A1F07', accent: '#C58CFF', neon: '#B23CFF', pink: '#FACA2A', label: '#C58CFF', metal: 'gold', glow: true, background: '#130E03' },
+    nova: { primary: '#D4A017', plate: '#6B4C08', body: '#241A04', accent: '#C86BFF', neon: '#B23CFF', pink: '#D4A017', label: '#D9A6FF', metal: 'gold', glow: true, background: '#17110A' },
   };
 
   Object.keys(wanted).forEach(code => {
@@ -389,16 +389,16 @@ test('in Cybertron and Minimal the edge gradient and the body color are not the 
 
     // the body of a plate is the team's body color, and a plate of the frame reads it
     assert.equal(lower(prime.area['--panel-face']), '#1a0f2e', style + ': the body of Prime');
-    assert.equal(lower(nova.area['--panel-face']), '#2a1f07', style + ': the body of Nova');
+    assert.equal(lower(nova.area['--panel-face']), '#241a04', style + ': the body of Nova');
     assert.notEqual(prime.area['--panel-face'], nova.area['--panel-face']);
 
     // the neon and the conduit, the page grid, the digits and the label are the team's
     assert.equal(lower(prime.html['--style-neon']), '#faca2a');
     assert.equal(lower(nova.html['--style-neon']), '#b23cff');
     assert.equal(lower(prime.html['--style-pink']), '#b23cff', style + ': a purple conduit for Prime');
-    assert.equal(lower(nova.html['--style-pink']), '#faca2a', style + ': a gold conduit for Nova');
+    assert.equal(lower(nova.html['--style-pink']), '#d4a017', style + ': a gold conduit for Nova');
     assert.equal(lower(prime.html['--team-label']), '#faca2a');
-    assert.equal(lower(nova.html['--team-label']), '#c58cff');
+    assert.equal(lower(nova.html['--team-label']), '#d9a6ff');
   });
 
   assert.equal(lower(pageWith('prime', 'minimal').html['--style-digits']), '#faca2a', 'the digits of Minimal are the team\'s neon');
@@ -469,9 +469,9 @@ test('Prime in Original is what it has always been: the colors of the theme, the
 
   // Only the page's own colors differ between the teams in Original: Nova has its colors in the four places the theme takes them from
   const nova = pageWith('nova', 'original');
-  assert.equal(lower(nova.html['--ground']), '#130e03');
-  assert.equal(lower(nova.html['--purple']), '#faca2a');
-  assert.equal(lower(nova.html['--yellow']), '#c58cff');
+  assert.equal(lower(nova.html['--ground']), '#17110a');
+  assert.equal(lower(nova.html['--purple']), '#d4a017');
+  assert.equal(lower(nova.html['--yellow']), '#c86bff');
 });
 
 test('the Nova of the sample has gold metal: no steel class, and the gold frames in every style, like Prime', () => {

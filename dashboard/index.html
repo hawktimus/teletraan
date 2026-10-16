@@ -23,6 +23,9 @@
   <link rel="stylesheet" href="styles/retro/tokens.css?v=0">
   <link rel="stylesheet" href="styles/retro/theme.css?v=0">
   <link rel="stylesheet" href="styles/retro/frame.css?v=0">
+  <link rel="stylesheet" href="styles/foundry/tokens.css?v=0">
+  <link rel="stylesheet" href="styles/foundry/theme.css?v=0">
+  <link rel="stylesheet" href="styles/foundry/frame.css?v=0">
   <link rel="stylesheet" href="layouts/bar-minimal.css?v=0">
   <link rel="stylesheet" href="trim.css?v=0">
   <link rel="stylesheet" href="themes/decor/neon-prime-decor.css?v=0">
@@ -289,6 +292,15 @@
         <stop offset="1" style="stop-color: var(--metal-4)"/>
       </linearGradient>
 
+      <!-- The same band of light for the Nova logo, in purple metal (--logo-nova-edge in tokens.css). -->
+      <linearGradient id="logo-metal-nova" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="260" y2="884">
+        <stop offset="0" style="stop-color: var(--logo-nova-edge-1)"/>
+        <stop offset=".3" style="stop-color: var(--logo-nova-edge-3)"/>
+        <stop offset=".52" style="stop-color: var(--logo-nova-edge-4)"/>
+        <stop offset=".56" style="stop-color: var(--logo-nova-edge-1)"/>
+        <stop offset="1" style="stop-color: var(--logo-nova-edge-4)"/>
+      </linearGradient>
+
       <!-- A screw is centred on 0,0. It is a slotted head, an octagon like the
            frame's own cut corners, with a dark slot straight across so that a
            turn can be seen. frame.css turns it and nothing else here moves. The
@@ -342,12 +354,45 @@
         <polygon class="bust-slash" points="754,796 754,826 624,926 624,896"/>
       </symbol>
 
+      <!-- The patterns and gradients of the themes (styles/<theme>/theme.css). Their colors are the custom
+           properties of the theme, so they follow the team. theme-hair is the double hairline of Cybertron, theme-hex
+           its faint hex field, theme-retro-dots the halftone of Retro, and the other three the steel, the hazard
+           stripes and the grain of Foundry. -->
+      <linearGradient id="theme-hair" gradientUnits="userSpaceOnUse" spreadMethod="reflect" x1="0" y1="0" x2="760" y2="420">
+        <stop offset="0" style="stop-color: var(--style-neon)"/>
+        <stop offset="1" style="stop-color: var(--style-pink)"/>
+      </linearGradient>
+      <pattern id="theme-hex" width="42" height="24.25" patternUnits="userSpaceOnUse">
+        <path d="M14 0L7.0 12.12L-7.0 12.12L-14 0L-7.0 -12.12L7.0 -12.12ZM56 0L49.0 12.12L35.0 12.12L28 0L35.0 -12.12L49.0 -12.12ZM14 24.25L7.0 36.37L-7.0 36.37L-14 24.25L-7.0 12.13L7.0 12.13ZM56 24.25L49.0 36.37L35.0 36.37L28 24.25L35.0 12.13L49.0 12.13ZM35 12.12L28.0 24.24L14.0 24.24L7 12.12L14.0 -0.0L28.0 -0.0Z" style="fill: none; stroke: var(--style-neon); stroke-width: 1.5px"/>
+      </pattern>
+      <pattern id="theme-retro-dots" width="14" height="14" patternUnits="userSpaceOnUse">
+        <circle cx="7" cy="7" r="2.6" style="fill: var(--style-ink)"/>
+      </pattern>
+      <linearGradient id="theme-steel" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" style="stop-color: var(--style-steel-1)"/>
+        <stop offset=".2" style="stop-color: var(--style-steel-2)"/>
+        <stop offset=".45" style="stop-color: var(--style-steel-3)"/>
+        <stop offset=".6" style="stop-color: var(--style-steel-4)"/>
+        <stop offset=".8" style="stop-color: var(--style-steel-5)"/>
+        <stop offset="1" style="stop-color: var(--style-steel-6)"/>
+      </linearGradient>
+      <pattern id="theme-hazard" width="28" height="28" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="14" height="28" style="fill: var(--style-hazard)"/>
+        <rect x="14" width="14" height="28" style="fill: var(--style-hazard-ink)"/>
+      </pattern>
+      <pattern id="theme-grain" width="60" height="60" patternUnits="userSpaceOnUse">
+        <path d="M0 30H60M30 0V60" style="fill: none; stroke: var(--style-steel-hi); stroke-opacity: .05; stroke-width: 1px"/>
+      </pattern>
+
       <g id="metal-shapes"></g>
     </defs>
   </svg>
 
   <div id="screen">
     <div id="world">
+      <!-- The background of the theme on the screen (core/theme-bg.js, and background.js in each folder of
+           styles/). It is behind the stage and fills the screen. -->
+      <div id="theme-bg" aria-hidden="true"></div>
       <!-- The decorations of a seasonal pack (core/season.js, docs/seasonal-packs.md)
            are added here by the script while a pack is on, and are gone the rest of
            the time: #season-back goes in just before #backdrop, so the backdrop

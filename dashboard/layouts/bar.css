@@ -175,3 +175,10 @@ html[data-layout="bar"] #region-column { --tx: -1000px; --ty: 60px;   --tz: -600
 html[data-layout="bar"] #region-grid1  { --tx: 1100px;  --ty: -140px; --tz: -500px; --rx: -10deg; --ry: -85deg; --rz: 8deg;  --hold: .16; }
 html.mirrored[data-layout="bar"] #region-column { --tx: 1000px;  --ry: -80deg; --rz: 6deg; }
 html.mirrored[data-layout="bar"] #region-grid1  { --tx: -1100px; --ry: 85deg;  --rz: -8deg; }
+
+/* The plates of the bar layout are armor and the team plate color, not the main color, so the text on them is the team's
+   text and accent (base.css, the header ink) */
+html[data-layout="bar"] body {
+  --head-ink: var(--white);
+  --head-number: var(--yellow);
+}

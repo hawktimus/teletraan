@@ -5681,14 +5681,14 @@ test('the two starting teams become the teams the screen uses, and the built-in 
 
   assert.deepEqual(prime, {
     code: 'prime', name: 'HAWKTIMUS PRIME', shortName: 'PRIME', number: '3229', logo: '',
-    colors: { primary: '#6C18B6', plate: '#3B2A7A', accent: '#FACA2A', neon: '#FACA2A', pink: '#B23CFF', background: '#0B0714', text: '#FFFFFF', body: '#1A0F2E', label: '#FACA2A' },
+    colors: { primary: '#6C18B6', plate: '#3B2A7A', accent: '#FACA2A', neon: '#FACA2A', pink: '#B23CFF', background: '#0B0714', text: '#FFFFFF', body: '#1A0F2E', label: '#FACA2A', headerInk: '#FFFFFF', dark: '#29054A', retro: '#FACA2A' },
     metal: 'gold', palette: 'standard', glow: false,
     mirror: false, active: true, order: 10,
     bolts: 'hex', cornerCut: 'tl-br', headerNotch: 'step', grid: 'lines', logoPose: 'auto', nameStyle: 'solid', tickerLabel: 'plate', countAccent: 'red',
   });
   assert.deepEqual(nova, {
     code: 'nova', name: 'HAWKTIMUS NOVA', shortName: 'NOVA', number: '3426', logo: '',
-    colors: { primary: '#FACA2A', plate: '#6B4F0C', accent: '#C58CFF', neon: '#B23CFF', pink: '#FACA2A', background: '#130E03', text: '#FFFFFF', body: '#2A1F07', label: '#C58CFF' },
+    colors: { primary: '#D4A017', plate: '#6B4C08', accent: '#C86BFF', neon: '#B23CFF', pink: '#D4A017', background: '#17110A', text: '#FFFFFF', body: '#241A04', label: '#D9A6FF', headerInk: '#1A1200', dark: '#3D2A05', retro: '#E0A400' },
     metal: 'gold', palette: 'inverted', glow: true,
     mirror: true, active: true, order: 20,
     bolts: 'round', cornerCut: 'tr-bl', headerNotch: 'slant', grid: 'dots', logoPose: 'auto', nameStyle: 'solid', tickerLabel: 'bar', countAccent: 'neon',
@@ -5721,7 +5721,7 @@ test('a team document is cleaned: the code is lowercase, the names are capitals,
   assert.equal(blue.name, '[BLUE TEAM]');
   assert.equal(blue.shortName, 'BLUE');
   assert.equal(blue.number, '12');
-  assert.deepEqual(blue.colors, { primary: '#0000FF', plate: '#3B2A7A', accent: '#FACA2A', neon: '#FACA2A', pink: '#ABCDEF', background: '#0B0714', text: '#FFFFFF', body: '#1A0F2E', label: '#FACA2A' }, 'only #rrggbb is a color, and a team made before Body and Label existed has Prime\'s');
+  assert.deepEqual(blue.colors, { primary: '#0000FF', plate: '#3B2A7A', accent: '#FACA2A', neon: '#FACA2A', pink: '#ABCDEF', background: '#0B0714', text: '#FFFFFF', body: '#1A0F2E', label: '#FACA2A', headerInk: '#FFFFFF', dark: '#29054A', retro: '#FACA2A' }, 'only #rrggbb is a color, and a team made before Body and Label existed has Prime\'s');
   assert.equal(blue.order, 5);
 
   assert.deepEqual([plain.name, plain.shortName, plain.number, plain.logo, plain.mirror, plain.active, plain.order], ['PLAIN', 'PLAIN', '', '', false, true, 10], 'a team with only a code');

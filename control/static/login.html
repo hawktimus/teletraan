@@ -2,8 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Teletraan I control</title>
+  <style>
+    /* First paint if style.css has not loaded yet or does not load; style.css comes later and wins */
+    body { margin: 0; background: #1d1a24; color: #f3eefc; font: 18px/1.45 system-ui, sans-serif; }
+    header { background: #6c18b6; color: #fff; padding: 12px 16px 0; border-bottom: 4px solid #faca2a; }
+    header h1 { margin: 0; font: 700 24px/1.2 system-ui, sans-serif; }
+    a { color: #faca2a; }
+    main { padding: 16px; }
+  </style>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -17,6 +25,7 @@
         <input id="pin" type="password" inputmode="numeric" autocomplete="current-password" pattern="[0-9]*">
         <div class="row"><button class="action" type="submit">Sign in</button></div>
       </form>
+      <noscript><p>This page needs JavaScript. Turn it on in the browser settings, then <a href="./">reload</a>.</p></noscript>
     </div>
   </main>
   <script type="module" src="login.js"></script>

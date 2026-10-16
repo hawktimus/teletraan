@@ -46,14 +46,15 @@ let holdLook = null; // asked before a look goes on the page, with the milliseco
 
 // The one stylesheet index.html links itself is hawktimus.css, because the
 // screen needs it before anything is drawn. Every other theme and overlay is
-// linked here from the registries. Overlays go last, so when an overlay and a
+// linked here from the registries. index.html adds ?v= to the address of its link, so the check
+// matches the start of the address. Overlays go last, so when an overlay and a
 // theme set the same variable the overlay wins.
 function addStylesheets() {
   const files = themes.map(theme => 'themes/' + theme.id + '.css')
     .concat(overlays.map(overlay => 'themes/overlays/' + overlay.id + '.css'));
 
   const loading = files
-    .filter(file => !document.querySelector('link[href="' + file + '"]'))
+    .filter(file => !document.querySelector('link[href^="' + file + '"]'))
     .map(file => new Promise(resolve => {
       const link = document.createElement('link');
       link.rel = 'stylesheet';

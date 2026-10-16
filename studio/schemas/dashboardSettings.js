@@ -16,6 +16,7 @@ import { teamsFields } from './settingsTeams.js';
 import { lookScheduleFields } from './settingsLook.js';
 import { viewsFields } from './settingsViews.js';
 import { rotationRowsFields } from './settingsRotationRows.js';
+import { backgroundFields } from './settingsBackground.js';
 import { previewRequestField } from './settingsPreview.js';
 import { nextLookRequestField, competitionPreviewRequestField, screenRequestFields } from './settingsRequests.js';
 import { competitionFields } from './settingsCompetition.js';
@@ -359,6 +360,7 @@ export default defineType({
     lookNoteField,
     cycleNoteField,
     ...viewsFields(),
+    ...backgroundFields(),
     ...lookScheduleFields(),
     styleField,
     motionField,

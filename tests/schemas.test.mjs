@@ -137,7 +137,7 @@ const contract = {
     number: text(6),
     code: text(10),
     logo: 'image',
-    colors: object({ primary: hexColor, plate: hexColor, accent: hexColor, neon: hexColor, pink: hexColor, background: hexColor, text: hexColor, body: hexColor, label: hexColor }),
+    colors: object({ primary: hexColor, plate: hexColor, accent: hexColor, neon: hexColor, pink: hexColor, background: hexColor, text: hexColor, body: hexColor, label: hexColor, headerInk: hexColor, dark: hexColor, retro: hexColor }),
     metal: 'string',
     palette: 'string',
     glow: 'boolean',
@@ -215,6 +215,7 @@ const contract = {
     transitionSeconds: number(2, 4),
     rotationRows: rows({ view: 'string', panel: 'string', seconds: number(6, 120), shown: 'boolean', department: { kind: 'plainString' }, photoCount: number(1, 20), secondsPerPhoto: number(5, 60) }),
     themeByWeekday: object({ monday: 'string', tuesday: 'string', wednesday: 'string', thursday: 'string', friday: 'string', saturday: 'string', sunday: 'string' }),
+    background: 'string',
     screenSchedule: object({ monday: 'string', tuesday: 'string', wednesday: 'string', thursday: 'string', friday: 'string', saturday: 'string', sunday: 'string' }),
     announceRequest: object({ requestedAt: 'datetime' }),
     previewRequest: object({ kind: 'string', requestedAt: 'datetime' }),
@@ -401,7 +402,7 @@ const choices = {
   'task.priority': ['high', 'medium', 'low'],
   'tipOrNews.kind': ['tip', 'news', 'reminder'],
   'calendarFilter.action': ['hide', 'show'],
-  'subtheme.rules.theme': ['', 'original', 'cybertron', 'retro'],
+  'subtheme.rules.theme': ['', 'original', 'cybertron', 'retro', 'foundry'],
   'subtheme.rules.view': ['', 'general', 'prime', 'nova', 'family'],
   'subtheme.rules.anchor': ['banner-left', 'banner-right', 'countdown-top', 'ticker-end', 'side-bottom', 'main-corner'],
   'subtheme.rules.motion': ['none', 'drift', 'blink', 'fall'],
@@ -3899,7 +3900,9 @@ function checkPresentations() {
 // the Prime ones, which are the colors of the screen today (themes/hawktimus.css). The
 // seed file docs/seed/teams.ndjson holds the two teams, and the Teams list comes right
 // after Look in the sidebar.
-const teamColorNames = ['primary', 'plate', 'accent', 'neon', 'pink', 'background', 'text', 'body', 'label'];
+const teamColorNames = ['primary', 'plate', 'accent', 'neon', 'pink', 'background', 'text', 'body', 'label', 'headerInk', 'dark', 'retro'];
+// the colors added later are optional, because a team document made before has none and falls back on the screen
+const optionalTeamColors = ['headerInk', 'dark', 'retro'];
 
 function checkTeams() {
   const problems = [];
@@ -3949,7 +3952,8 @@ function checkTeams() {
   need(problems, fieldsIn(at('colors') || {}).map(field => field.name).join() === teamColorNames.join(), 'team.colors should hold, in this order: ' + teamColorNames.join(', '));
   teamColorNames.forEach(name => {
     const field = fieldAt('team.colors.' + name);
-    need(problems, field && constraintNamed(rulesOf(field), 'required'), 'team.colors.' + name + ' should be required');
+    const optional = optionalTeamColors.includes(name);
+    need(problems, field && Boolean(constraintNamed(rulesOf(field), 'required')) === !optional, 'team.colors.' + name + (optional ? ' should be optional' : ' should be required'));
     need(problems, field && field.initialValue === prime.colors[name], 'team.colors.' + name + ' should start as ' + prime.colors[name] + ', the Prime value in the seed file, and it starts as ' + (field && field.initialValue));
   });
 
@@ -4009,8 +4013,8 @@ function checkTeamSeed(type) {
   const hex = /^#[0-9A-Fa-f]{6}$/;
 
   const wanted = {
-    'team-prime': { number: '3229', code: 'prime', mirror: false, metal: 'gold', glow: false, colors: { primary: '#6C18B6', plate: '#3B2A7A', accent: '#FACA2A', neon: '#FACA2A', pink: '#B23CFF', body: '#1A0F2E', label: '#FACA2A' } },
-    'team-nova': { number: '3426', code: 'nova', mirror: true, metal: 'gold', glow: true, colors: { primary: '#FACA2A', plate: '#6B4F0C', accent: '#C58CFF', neon: '#B23CFF', pink: '#FACA2A', background: '#130E03', body: '#2A1F07', label: '#C58CFF' } },
+    'team-prime': { number: '3229', code: 'prime', mirror: false, metal: 'gold', glow: false, colors: { primary: '#6C18B6', plate: '#3B2A7A', accent: '#FACA2A', neon: '#FACA2A', pink: '#B23CFF', body: '#1A0F2E', label: '#FACA2A', headerInk: '#FFFFFF', dark: '#29054A', retro: '#FACA2A' } },
+    'team-nova': { number: '3426', code: 'nova', mirror: true, metal: 'gold', glow: true, colors: { primary: '#D4A017', plate: '#6B4C08', accent: '#C86BFF', neon: '#B23CFF', pink: '#D4A017', background: '#17110A', body: '#241A04', label: '#D9A6FF', headerInk: '#1A1200', dark: '#3D2A05', retro: '#E0A400' } },
   };
   need(problems, lines.length === 2, 'docs/seed/teams.ndjson should have two teams, Prime and Nova, it has ' + lines.length);
 
@@ -4234,7 +4238,7 @@ const competitionNames = ['competitionTimeline', 'competitionLastSeason', 'compe
 const settingsTabs = {
   screen: ['miniStatus', 'team', 'motion', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'holdPanel', 'showView', 'previewTheme', 'pauseRotation', 'alert', 'pageSeconds', 'rotation', 'doneDays', 'safetyDaysSince']
     .concat(photoNames, ['announcements', 'announceRequest']),
-  look: ['lookNote', 'cycleNote', 'generalViewName', 'generalViewTitle', 'viewOrder', 'themeByWeekday', 'screenSchedule'].concat(rotationNames, ['style'], teamNames, logoNames, transitionNames, ['rotationRows', 'transitionSeconds']),
+  look: ['lookNote', 'cycleNote', 'generalViewName', 'generalViewTitle', 'viewOrder', 'themeByWeekday', 'background', 'screenSchedule'].concat(rotationNames, ['style'], teamNames, logoNames, transitionNames, ['rotationRows', 'transitionSeconds']),
   countdown: ['countdown'],
   calendars: ['calendars', 'groupEventsByKind'],
   presentations: presentationNames.concat('presentationTestRequest'),
@@ -5449,7 +5453,7 @@ function checkLookRotation() {
 
   const names = fieldsIn(typeByName('dashboardSettings')).map(field => field.name);
   const from = names.indexOf('lookNote');
-  need(problems, names.slice(from, from + 7 + rotationNames.length).join() === ['lookNote', 'cycleNote', 'generalViewName', 'generalViewTitle', 'viewOrder', 'themeByWeekday', 'screenSchedule'].concat(rotationNames).join(), 'the Look tab should start with lookNote, cycleNote, the view fields, screenSchedule and then ' + rotationNames.join(', '));
+  need(problems, names.slice(from, from + 8 + rotationNames.length).join() === ['lookNote', 'cycleNote', 'generalViewName', 'generalViewTitle', 'viewOrder', 'themeByWeekday', 'background', 'screenSchedule'].concat(rotationNames).join(), 'the Look tab should start with lookNote, cycleNote, the view fields, screenSchedule and then ' + rotationNames.join(', '));
   rotationNames.forEach(name => {
     need(problems, at(name) && at(name).group === 'look', name + ' should be in the Look tab');
     if (name === 'lookSwap') {
@@ -6812,14 +6816,14 @@ function checkViewSettings() {
   // the weekday themes
   const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
   const themes = world.themeIds;
-  need(problems, themes.themeIds.join() === 'original,cybertron,retro' && config.scheduledThemeIds.join() === themes.themeIds.join(), 'the themes should be original, cybertron and retro, in the Studio and in config.js');
+  need(problems, themes.themeIds.join() === 'original,cybertron,retro,foundry' && config.scheduledThemeIds.join() === themes.themeIds.join(), 'the themes should be original, cybertron, retro and foundry, in the Studio and in config.js');
   need(problems, themes.themeWeekdays.map(day => day.name).join() === days.join() && sameData(themes.startingThemeByWeekday, config.defaultThemeByWeekday) && sameData(config.defaultSettings.themeByWeekday, config.defaultThemeByWeekday), 'the weekday themes should start the same in the Studio and in config.js');
-  need(problems, Object.keys(themes.startingThemeByWeekday).every(day => themes.startingThemeByWeekday[day] === (['monday', 'wednesday', 'friday', 'sunday'].indexOf(day) !== -1 ? 'original' : 'cybertron')), 'Original should start on Monday, Wednesday, Friday and Sunday and Cybertron on Tuesday, Thursday and Saturday, with Retro unscheduled');
+  need(problems, Object.keys(themes.startingThemeByWeekday).every(day => themes.startingThemeByWeekday[day] === (['monday', 'wednesday', 'friday', 'sunday'].indexOf(day) !== -1 ? 'original' : 'cybertron')), 'Original should start on Monday, Wednesday, Friday and Sunday and Cybertron on Tuesday, Thursday and Saturday, with Retro and Foundry unscheduled');
   const schedule = at('themeByWeekday');
   need(problems, schedule && schedule.type === 'object' && schedule.hidden === true && schedule.group === 'look' && /Themes page/.test(schedule.description || ''), 'themeByWeekday should be hidden in the Look tab, and say the Themes page sets it');
   days.forEach(day => {
     const field = fieldAt('dashboardSettings.themeByWeekday.' + day);
-    need(problems, field && field.initialValue === config.defaultThemeByWeekday[day] && field.options.list.map(item => item.value).join() === 'original,cybertron,retro' && constraintNamed(constraintsOf(field), 'valid'), 'themeByWeekday.' + day + ' should start as in config.js and offer the three themes');
+    need(problems, field && field.initialValue === config.defaultThemeByWeekday[day] && field.options.list.map(item => item.value).join() === 'original,cybertron,retro,foundry' && constraintNamed(constraintsOf(field), 'valid'), 'themeByWeekday.' + day + ' should start as in config.js and offer the four themes');
   });
   const old = at('screenSchedule');
   need(problems, old && old.hidden === true && days.every(day => /^Not used any more/.test(fieldAt('dashboardSettings.screenSchedule.' + day).description || '')), 'screenSchedule should be hidden, with every day saying Not used any more');
@@ -6833,12 +6837,10 @@ function checkViewSettings() {
   need(problems, bare.viewOrder.join() === 'general,prime,nova,family' && sameData(bare.themeByWeekday, config.defaultThemeByWeekday), 'view settings that are missing should be the starting ones');
   need(problems, sameData(themes.tidyThemeByWeekday({ monday: 'retro', friday: 'nope' }), Object.assign({}, config.defaultThemeByWeekday, { monday: 'retro' })), 'the Themes page should keep the schedule tidy the same way');
 
-  // Retro is a placeholder until its marker file is gone
-  const marker = path.join(dashboardFolder, 'styles', 'retro', 'PLACEHOLDER');
-  const retro = themes.themeChoices.filter(theme => theme.id === 'retro')[0];
-  need(problems, retro && retro.placeholder === true && /Retro is not designed yet; it looks like Original\./.test(retro.description), 'Retro should be marked as a placeholder, saying: Retro is not designed yet; it looks like Original.');
-  if (fs.existsSync(path.join(dashboardFolder, 'styles', 'retro'))) need(problems, fs.existsSync(marker) === Boolean(retro && retro.placeholder), 'Retro should be a placeholder in the Studio exactly while dashboard/styles/retro/PLACEHOLDER exists');
-  need(problems, themes.themeChoices.filter(theme => theme.id !== 'retro').every(theme => !theme.placeholder), 'only Retro should be a placeholder');
+  // No theme is a placeholder
+  need(problems, themes.themeChoices.every(theme => !theme.placeholder) && !fs.existsSync(path.join(dashboardFolder, 'styles', 'retro', 'PLACEHOLDER')), 'no theme should be marked as a placeholder, and Retro has no marker file');
+  const bgField = at('background');
+  need(problems, bgField && bgField.group === 'look' && bgField.initialValue === 'sweep' && bgField.options.list.map(item => item.value).join() === config.backgrounds.join() && typeof bgField.hidden === 'function', 'the background field should be in the Look tab, start on sweep, offer the dashboard\'s five words and hide itself');
 
   // the old look lists stay
   need(problems, fieldAt('theme.schedule') && fieldAt('dashboardSettings.teamOrder') && fieldAt('dashboardSettings.dailyStyles'), 'the stored schedule of the Look page and the older lists should stay in the schema');
@@ -6854,15 +6856,15 @@ async function checkThemesPage() {
   // what the page shows: the draft first, then the published document, and nothing when there is neither
   need(problems, view.scheduleFrom([published, draft]).monday === 'retro' && view.scheduleFrom([published]).monday === 'cybertron' && view.scheduleFrom([published]).tuesday === 'cybertron' && view.scheduleFrom([]) === null && view.scheduleFrom('text') === null, 'the page should show the draft schedule, then the published one, and nothing when Dashboard Settings does not exist');
 
-  // the page: three themes with the Retro note, seven pickers in order, and a message for each state
+  // the page: four themes, seven pickers in order, and a message for each state
   const wordsOf = node => wordsIn(node);
   const schedule = world.themeIds.tidyThemeByWeekday({});
   const page = view.pageOf({ read: true, schedule: schedule, busy: false, text: '', failed: false }, () => {});
   need(problems, wordsOf(nodesWhere(page, node => node.type === 'h1')) === 'Themes', 'the Themes page should open with the heading Themes');
   const listed = nodesWhere(page, node => node.type === 'li').map(wordsOf);
-  need(problems, listed.length === 3 && listed[0].indexOf('Original') === 0 && listed[1].indexOf('Cybertron') === 0 && /Retro is not designed yet; it looks like Original\./.test(listed[2]), 'the page should list Original, Cybertron and Retro, and say that Retro is not designed yet');
+  need(problems, listed.length === 4 && listed[0].indexOf('Original') === 0 && listed[1].indexOf('Cybertron') === 0 && listed[2].indexOf('Retro') === 0 && listed[3].indexOf('Foundry') === 0, 'the page should list Original, Cybertron, Retro and Foundry');
   const selects = nodesWhere(page, node => node.type === 'select');
-  need(problems, selects.length === 7 && selects.map(node => node.props['aria-label']).join() === 'Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday' && selects.every(node => nodesWhere(node, option => option.type === 'option').map(wordsOf).join() === 'Original,Cybertron,Retro'), 'the page should have a picker for each day, Monday first, offering the three themes');
+  need(problems, selects.length === 7 && selects.map(node => node.props['aria-label']).join() === 'Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday' && selects.every(node => nodesWhere(node, option => option.type === 'option').map(wordsOf).join() === 'Original,Cybertron,Retro,Foundry'), 'the page should have a picker for each day, Monday first, offering the four themes');
   need(problems, selects.map(node => node.props.value).join() === 'original,cybertron,original,cybertron,original,cybertron,original', 'the pickers should show the starting themes');
   const changes = [];
   const picked = nodesWhere(view.pageOf({ read: true, schedule: schedule, busy: false, text: '', failed: false }, (day, theme) => changes.push(day + '=' + theme)), node => node.type === 'select');
@@ -7228,7 +7230,7 @@ async function main() {
   check('the map of a Screen has the boxes of its layout, words that fit them and no overlap, and Minimal has a dashed D under the screen', checkScreenMap);
   results.push({ name: 'the form of a Screen has the Editing switch and the map, a click or a key on a letter opens its tab, an empty Screen is filled once from the Panel order, and the inputs of the sections work', problems: await checkScreenForm().catch(error => ['the check stopped: ' + error.message]) });
   check('a View has the five tabs of the map, a team on Prime and Nova, rows that are the rows of a Screen, Family locked, and starting values that agree with the order', checkViewType);
-  check('the Look tab has the name, title and order of the views, the weekday themes start as in dashboard/config.js and are kept tidy, and Retro is marked as a placeholder', checkViewSettings);
+  check('the Look tab has the name, title and order of the views, the weekday themes start as in dashboard/config.js and are kept tidy, and no theme is a placeholder', checkViewSettings);
   results.push({ name: 'the Themes page lists the themes, has a picker for each weekday, and writes only themeByWeekday to the draft of Dashboard Settings', problems: await checkThemesPage().catch(error => ['the check stopped: ' + error.stack]) });
   results.push({ name: 'a View is filled once from the Screens split by team, Family keeps its two panels, and the form has the picker and the map', problems: await checkViewSeed().catch(error => ['the check stopped: ' + error.stack]) });
   results.push({ name: 'Test the token asks the control page for the monday-check word and shows the account name or the error', problems: await checkMondayToken().catch(error => ['the check stopped: ' + error.stack]) });

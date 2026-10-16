@@ -175,7 +175,7 @@ export const defaultSettings = {
   // Requests from the control page (core/screen-requests.js). Each ends at its until time.
   //   holdPanel      keep one panel on the large frame
   //   showView       show one view (general, prime, nova or family)
-  //   previewTheme   show one theme (original, cybertron or retro)
+  //   previewTheme   show one theme (original, cybertron, retro or foundry)
   //   pauseRotation  stop the rotation
   holdPanel: { panel: '', until: '' },
   showView: { key: '', until: '' },
@@ -318,6 +318,8 @@ export const defaultSettings = {
   },
   mondayBoards: [],
   mondayShowOwners: false,
+  // The background behind the panels of the Original theme (see backgrounds in config-lists.js)
+  background: 'sweep',
 };
 
 // Used for anything missing from the Look document in the Studio. The

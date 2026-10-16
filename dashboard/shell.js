@@ -45,6 +45,7 @@ import { holdLooksFor, showThemeNow, startThemes } from './core/theme-apply.js';
 import { holdForLayout, startLayout } from './core/layout-apply.js';
 import { layoutNow } from './core/layout.js';
 import { ensureThemeSheets } from './core/style-loader.js';
+import { fillBackground } from './core/theme-bg.js';
 import { recordShapes, startStyle, themeOf } from './core/style.js';
 import { currentScreen, onScreenChange } from './core/screens.js';
 import { loadPanel } from './core/panels.js';
@@ -94,6 +95,7 @@ async function run() {
   // The look, the finish and the glint. index.html has the polished ones. The
   // address wins, then rebuild() applies Look and Glint from Dashboard Settings.
   useLookSetting(defaultSettings);
+  fillBackground();
 
   // The metal of the frame edges. The address wins, then rebuild() applies
   // Frame metal from Dashboard Settings to the same attribute.

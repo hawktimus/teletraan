@@ -14,11 +14,13 @@ import { startNowReport } from '../dashboard/core/now-report.js';
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const read = name => fs.readFileSync(repo + name, 'utf8');
 
-test('the card holds a 1920 by 1080 frame of /dashboard/ with no added parameter, and says what it is', () => {
+test('the card names /dashboard/ with no added parameter, holds no frame yet, and says what it is', () => {
   const html = previewCardHtml();
   assert.ok(html.includes('<h2>Live preview</h2>'));
-  assert.ok(html.includes('src="/dashboard/"'), 'no parameter, because the dashboard has no preview switch');
-  assert.ok(html.includes('width="1920"') && html.includes('height="1080"'));
+  assert.ok(html.includes('data-src="/dashboard/"') && !/ src=/.test(html), 'no src until the person asks, and no parameter on the address');
+  assert.ok(!html.includes('<iframe'), 'the page makes the frame when the person asks (tabs/now.js)');
+  assert.ok(/<button[^>]*data-preview-toggle[^>]*>Show live preview<\/button>/.test(html));
+  assert.ok(read('control/static/tabs/now.js').includes('frame.width = previewWidth') && read('control/static/tabs/now.js').includes('frame.height = previewHeight'));
   assert.ok(html.includes('A copy of the screen on this device. It runs by itself, so it may show a different panel than the TV at this moment. The card above says what the TV shows.'));
   assert.ok(!html.includes('!'));
   assert.equal(previewWidth / previewHeight, 16 / 9);

@@ -56,14 +56,17 @@ function trimField(name, title, description, hidden) {
   return defineField(field);
 }
 
-function colorField(name, title, description, start) {
+// optional is for a color that older team documents do not have: an empty one falls back on the screen
+function colorField(name, title, description, start, optional) {
   return defineField({
     name: name,
     title: title,
     type: 'string',
     description: description,
     initialValue: start,
-    validation: Rule => [Rule.required().error('Add the color.'), Rule.regex(hexColor, { name: 'hex color' }).error(hexMessage)],
+    validation: Rule => (optional
+      ? [Rule.regex(hexColor, { name: 'hex color' }).error(hexMessage)]
+      : [Rule.required().error('Add the color.'), Rule.regex(hexColor, { name: 'hex color' }).error(hexMessage)]),
   });
 }
 
@@ -135,6 +138,9 @@ export default defineType({
         colorField('text', 'Text color', 'The color of the main text.', '#FFFFFF'),
         colorField('body', 'Body color', 'The color inside the panels in Cybertron and Minimal.', '#1A0F2E'),
         colorField('label', 'Label color', 'The color of department names in rows, such as the left column of Milestones and Progress.', '#FACA2A'),
+        colorField('headerInk', 'Header text color', 'Optional. The color of text on the main color: panel titles, the team plate and the ticker label. Use a dark color on a light main color.', '#FFFFFF', true),
+        colorField('dark', 'Dark color', 'Optional. The darkest shade of the main color.', '#29054A', true),
+        colorField('retro', 'Retro color', 'Optional. The main color of the Retro theme.', '#FACA2A', true),
       ],
     }),
     defineField({

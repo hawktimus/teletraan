@@ -1,6 +1,6 @@
 // The Style setting of Dashboard Settings (the names are in `styles` in config.js).
-// A style is one word that picks the theme of the whole screen: original, cybertron or
-// retro (themeIds in config.js). The old name minimal still works as a request for the
+// A style is one word that picks the theme of the whole screen: original, cybertron,
+// retro or foundry (themeIds in config.js). The old name minimal still works as a request for the
 // bar layout in the Original theme. Three things follow from it:
 //
 //   data-style   set on the html element: the id of the theme (or the old name minimal, which no
@@ -47,7 +47,7 @@ const forcedLayout = { minimal: 'bar' };
 // The corners of the frames a theme draws, or '' for the usual ones. Frames are drawn
 // once for each area, so a theme that goes on while the screen runs has them drawn again
 // (core/areas.js, redrawFrames).
-const shapeOf = { original: '', cybertron: 'cybertron', retro: '' };
+const shapeOf = { original: '', cybertron: 'cybertron', retro: '', foundry: '' };
 
 // The frames of the bar layout are Minimal's, in every theme. A page that goes to the bar layout or from
 // it changes layout too (core/layout-apply.js, changeLayout)

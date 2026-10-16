@@ -3,7 +3,7 @@
 //   generalViewName   the name of the General view in the view tag, "General" to start with
 //   generalViewTitle  the title across the banner while the Robotics view (stored as general) is on, "HAWKTIMUS ROBOTICS" to start with
 //   viewOrder         the views in the order they take the screen, General, Prime, Nova, Family to start with
-//   themeByWeekday    the theme of each day of the week: original, cybertron or retro. It is edited on the
+//   themeByWeekday    the theme of each day of the week: original, cybertron, retro or foundry. It is edited on the
 //                     Themes page (sidebar, Settings, Themes), so the field is hidden here. It replaces screenSchedule.
 //
 // The time zone the days are read in is a field of the Look page (theme.js), where it has always been.
@@ -30,7 +30,7 @@ function themeDayField(day) {
     description: 'The theme that plays on ' + day.title + '. It is set on the Themes page.',
     options: { list: themeChoices.map(theme => ({ title: theme.title, value: theme.id })), layout: 'radio', direction: 'horizontal' },
     initialValue: day.start,
-    validation: Rule => Rule.valid(themeChoices.map(theme => theme.id)).error('Pick original, cybertron or retro.'),
+    validation: Rule => Rule.valid(themeChoices.map(theme => theme.id)).error('Pick original, cybertron, retro or foundry.'),
   });
 }
 

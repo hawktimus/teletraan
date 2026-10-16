@@ -12,11 +12,12 @@
 import * as frame from '../../frame.js';
 import { formatClock, formatDate } from '../../core/time.js';
 import { weatherIcon } from '../../core/weather-icons.js';
-import { logoMarkup, showTeamLogo } from '../../core/logo.js';
+import { logoMarkup, logoTeamOf, showLogoTeam, showTeamLogo } from '../../core/logo.js';
 import { nameMarkup } from '../../core/name.js';
 import { teamPlateMarkup } from '../../core/plate.js';
 import { countdownParts, startCountdown, updateCountdown } from '../../core/countdown.js';
 import { teamShown } from '../../core/teams.js';
+import { viewNow } from '../../core/view-apply.js';
 
 // Sizes that the stylesheet repeats. Change them together.
 const TEAM_PLATE_WIDTH = 384; // .side-team in panels/side/panel.css: the whole column
@@ -149,6 +150,7 @@ export function update(element, content) {
   setText(element, '.team-number', team.number);
   setText(element, '.school-text', content.team.school);
   showTeamLogo(element.querySelector('.side-logo'), team.logo);
+  showLogoTeam(element.querySelector('.side-logo'), logoTeamOf(team.code, viewNow()));
 
   const weather = content.weather;
   setText(element, '.temperature', weather ? weather.temperature + '°F' : '--°F');

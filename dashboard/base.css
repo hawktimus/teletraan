@@ -861,3 +861,58 @@ html.neon-glow:not([data-finish="flat"]) .art-glow { display: inline; }
   font: 700 96px/120px sans-serif;
   text-align: center;
 }
+
+/* Text that sits on the main color takes the team's header ink: the panel titles, the team plate and the
+   ticker label. Cybertron and the bar layout paint those plates in the team plate color and armor, not
+   the main color, so they set --head-ink and --head-number back to the text and the accent (their
+   stylesheets). The number on the team plate is the accent for a standard palette, and the header ink for
+   the inverted one, because the accent is as light as the main color there. */
+.header .title,
+.banner .team-plate span,
+.ticker .tag span {
+  color: var(--head-ink, var(--team-header-ink));
+}
+html.palette-inverted .banner .team-plate b {
+  color: var(--head-number, var(--team-header-ink));
+}
+
+/* The background of the theme (core/theme-bg.js) and the drawing a theme puts on the frames (core/theme-art.js).
+   #theme-bg is the first thing in the world, so the stage and everything over it covers it. Each theme has a group
+   in it that its own stylesheet shows (styles/<theme>/), and the groups are hidden until then. Calm and no motion
+   draw every layer still. */
+#theme-bg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  pointer-events: none;
+}
+#theme-bg > .bg-group {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+}
+html:not([data-motion="full"]) #theme-bg * { animation: none; }
+
+.theme-art {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.theme-art > div {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}

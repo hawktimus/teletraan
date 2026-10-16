@@ -36,12 +36,13 @@ export {
   defaultPhotoRow, screenLimits, viewKeys, scheduledThemeIds, defaultThemeByWeekday, viewIds, viewTeams,
   viewLimits, viewLayoutNames, countdownPlaces, viewColors, defaultViews, familyPanels,
 } from './config-lists.js';
+export { backgrounds } from './config-lists.js';
 export { defaultSettings, defaultThemeSettings } from './config-settings.js';
 export {
   demoWindowSeconds, demoSkewSeconds, demoMaxSteps, demoDefaultSeconds, demoPlaceholderText, hiddenAdvanceSeconds,
   hiddenGapHours, previewSeconds, defaultDemo, defaultPerson, talkStatuses, defaultTalk, filterActions,
   defaultFilter, calendarKinds, noCalendarKind, teamTrim, teamMetals, teamPalettes, glowClass, defaultTeam,
-  primeTeam,
+  primeTeam, invertedHeaderInk,
 } from './config-more.js';
 export {
   rotationViews, rotationAliases, rotationKeyOfView, roboticsTitle, roboticsPlate, olderGeneralTitle,

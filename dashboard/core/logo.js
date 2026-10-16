@@ -19,6 +19,9 @@
 
 import { define } from './plate-draw.js';
 
+// The class that gives a drawing the Nova colors (frame.css)
+const novaClass = 'logo-nova';
+
 // id -> points. shape() writes a polygon into this list and hands back its id
 const polygons = {};
 function shape(id, points) {
@@ -117,13 +120,63 @@ function hawkMarkup() {
 }
 
 // The inside of an element with class logo. The element sets the size, and
-// --k in its stylesheet says how much smaller than 1100 wide it is.
-export function logoMarkup() {
+// --k in its stylesheet is that width divided by 1100. team is 'prime' (the usual drawing: purple
+// plates, gold metal) or 'nova' (every pair of colors swapped: gold plates, purple metal). The colors
+// are in tokens.css and frame.css, so the markup of 'prime' is the same as it was before there was a team.
+export function logoMarkup(team = 'prime') {
   const plates = emblem
     .map(([name, shapes, stripes]) => plate('emblem ' + name, drawn(shapes, 'fill-purple') + slashes(stripes)))
     .join('');
+  const drawing = team === 'nova' ? 'drawing ' + novaClass : 'drawing';
 
-  return `<div class="drawing"><div class="bob">${plates}<div class="hawk">${hawkMarkup()}</div></div></div>`;
+  return `<div class="${drawing}"><div class="bob">${plates}<div class="hawk">${hawkMarkup()}</div></div></div>`;
+}
+
+// The team of the logo a screen shows: Nova's team gets the Nova logo, and every other team, and the
+// Robotics view (key general), get the Prime one
+export function logoTeamOf(code, view) {
+  return code === 'nova' && view !== 'general' && view !== 'robotics' ? 'nova' : 'prime';
+}
+
+// Changes the colors of a logo that is already drawn. box is the element with class logo
+export function showLogoTeam(box, team) {
+  const drawing = box && box.querySelector ? box.querySelector('.drawing') : null;
+  if (drawing) drawing.classList.toggle(novaClass, team === 'nova');
+}
+
+// The four plates of the emblem for the swap between the teams (core/swap-*): the shapes on the 1100 x 884
+// grid, the point each plate turns about, the pose it takes as part of the robot (the same transforms as
+// .logo[data-act="robot"] in frame.css, without the lens), and the colors of the front, which are the team's,
+// and of the back, which are the other team's. The colors are CSS values, so a theme and a finish still reach them.
+const logoColors = {
+  prime: { fill: 'var(--logo-purple)', edge: 'url(#logo-metal)', shadow: 'var(--metal-rim)' },
+  nova: { fill: 'var(--logo-nova-plate)', edge: 'url(#logo-metal-nova)', shadow: 'var(--logo-nova-shadow)' },
+};
+const plateMoves = {
+  'wing-left': { pivot: { x: 346, y: 430 }, robot: 'translate(23px, 92px) rotate(-153.4deg) scale(.7)' },
+  'wing-right': { pivot: { x: 754, y: 430 }, robot: 'translate(-23px, 92px) rotate(153.4deg) scale(.7)' },
+  body: { pivot: { x: 550, y: 659 }, robot: 'translate(0px, -351px)' },
+  head: { pivot: { x: 550, y: 461 }, robot: 'translate(0px, -330px) scale(.72)' },
+};
+
+export function hawkPieces(team = 'prime') {
+  const front = team === 'nova' ? 'nova' : 'prime';
+  const back = front === 'nova' ? 'prime' : 'nova';
+
+  return {
+    team: front,
+    width: 1100,
+    height: 884,
+    plates: emblem.map(([name, shapes, stripes]) => ({
+      name: name,
+      shapes: shapes.map(id => polygons[id]),
+      stripes: stripes.map(id => polygons[id]),
+      pivot: plateMoves[name].pivot,
+      robot: plateMoves[name].robot,
+      front: Object.assign({}, logoColors[front]),
+      back: Object.assign({}, logoColors[back]),
+    })),
+  };
 }
 
 // A team that has a logo of its own shows that picture in the box in place of the hawk. The hawk

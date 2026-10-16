@@ -1935,7 +1935,7 @@ test('the decor names only elements the page has: a class or id that nothing in 
 const everyTheme = themes.map(theme => theme.id);
 
 test('the styles are original, cybertron and minimal, and original is the default', () => {
-  assert.deepEqual(config.themeIds, ['original', 'cybertron', 'retro']);
+  assert.deepEqual(config.themeIds, ['original', 'cybertron', 'retro', 'foundry']);
   assert.deepEqual(config.styles, ['original', 'cybertron', 'minimal'], 'minimal is no theme: it is the old name for the bar layout');
   assert.equal(styles.isStyle('retro'), true, 'a theme the lists of the Studio do not name yet is still a style');
   assert.equal(config.defaultSettings.style, 'original');
@@ -2683,10 +2683,10 @@ test('the three style files each set their own custom properties for their own s
   assert.equal(value('minimal', '--style-chamfer'), '34px');
   assert.equal(value('cybertron', '--style-digits'), '#ffb327', 'amber in Cybertron');
   assert.equal(value('minimal', '--style-digits'), 'var(--team-neon)', 'the team\'s neon in Minimal');
-  assert.equal(value('cybertron', '--style-grid-size'), '96px');
+  assert.equal(value('cybertron', '--style-grid-size'), '64px');
   assert.equal(value('minimal', '--style-grid-size'), '48px');
   ['cybertron', 'minimal'].forEach(name => assert.equal(value(name, '--style-grid-opacity'), '.07', name));
-  assert.equal(value('cybertron', '--style-scan-opacity'), '.035');
+  assert.equal(value('cybertron', '--style-scan-opacity'), '.09');
   assert.equal(value('cybertron', '--style-body'), 'var(--team-body)');
   assert.equal(value('cybertron', '--style-raised'), '#262b33');
 
@@ -3608,8 +3608,9 @@ test('the frames are small: a handful of svg elements and five new gradients, an
   const html = read('dashboard/index.html');
   const gradients = html.match(/<linearGradient id="[a-z-]+"/g) || [];
   ['edge-steel', 'edge-ridge-steel', 'edge-shade-steel', 'armor-face'].forEach(id => assert.ok(gradients.some(text => text.includes('"' + id + '"')), id));
-  assert.equal(gradients.length, 12, 'gold 3, red 3, the screw, the logo, steel 3 and the armor plate: ' + gradients.length);
-  assert.ok(!/<(filter|image|pattern|mask|clipPath|animate|set)\b/i.test(html), 'no filter, image, pattern, mask, clip or SMIL in the page\'s own drawing');
+  assert.equal(gradients.length, 15, 'gold 3, red 3, the screw, the logo, the Nova logo, steel 3, the armor plate, and the hairline and the steel of the themes: ' + gradients.length);
+  assert.ok(!/<(filter|image|mask|clipPath|animate|set)\b/i.test(html), 'no filter, image, mask, clip or SMIL in the page\'s own drawing');
+  assert.deepEqual(html.match(/<pattern id="[a-z-]+"/g), ['<pattern id="theme-hex"', '<pattern id="theme-retro-dots"', '<pattern id="theme-hazard"', '<pattern id="theme-grain"'], 'the patterns are the four of the themes');
   assert.deepEqual(html.match(/<radialGradient id="[a-z-]+"/g), ['<radialGradient id="wear-rust"'], 'the one radial gradient is the patch of rust under a Minimal frame\'s wear');
   assert.ok(!/(feGaussianBlur|feDropShadow|box-shadow|text-shadow|backdrop-filter|filter=|filter:)/.test(read('dashboard/core/plate.js')), 'plate.js draws no glow');
 });
@@ -3771,56 +3772,57 @@ test('the Cybertron stylesheet paints with the team\'s colors and gradients and 
 
   assert.ok(rules.length >= 15, 'the style has its rules');
   rules.forEach(rule => rule.selectors.forEach(selector => assert.ok(selector.startsWith('html[data-style="cybertron"]'), 'for Cybertron only: ' + selector)));
-  assert.ok(!/(animation|transition|@keyframes|filter|box-shadow|text-shadow|blur\(|will-change|font(-size)?:)/.test(css), 'nothing moves, glows or has text of its own');
+  assert.ok(!/(transition|@keyframes|filter|box-shadow|text-shadow|blur\(|font(-size)?:)/.test(css), 'nothing glows or has text of its own');
+  rules.filter(rule => /(animation|will-change)/.test(rule.body)).forEach(rule => rule.selectors.forEach(selector => assert.ok(selector.includes('#theme-bg'), 'only the background moves: ' + selector)));
 
   // Static, and drawn with gradients and paths: the only url is the armor plate's gradient
-  const urls = css.match(/url\([^)]*\)/g) || [];
-  assert.deepEqual(urls, ['url(#armor-face)']);
+  const urls = [...new Set(css.match(/url\([^)]*\)/g) || [])].sort();
+  assert.deepEqual(urls, ['url(#theme-hair)', 'url(#theme-hex)']);
   assert.ok(!/\.(png|jpe?g|gif|webp|svg)\b/.test(css), 'no picture');
 
   // Every color is a team color, a style color or the dark of the plate seams
   const hexes = css.slice(css.indexOf('}') + 1).match(/#[0-9a-fA-F]{3,8}\b/g) || [];
   hexes.forEach(hex => assert.ok(hex === '#05070a', 'a color of its own after the first rule: ' + hex));
   ['#6c18b6', '#3b2a7a', '#faca2a', '#35f0ff', '#ff2e8c', '#1f7ae0', '#1e3a6e', '#9bf0ff'].forEach(team => assert.ok(!css.toLowerCase().includes(team), 'a team color written out: ' + team));
-  ['--team-accent', '--team-plate', '--style-neon', '--style-pink', '--style-body', '--style-grid-size', '--style-grid-opacity', '--style-scan-opacity'].forEach(name => assert.ok(css.includes('var(' + name + ')'), 'it reads ' + name));
+  ['--team-accent', '--team-plate', '--style-neon', '--style-body', '--style-grid-size', '--style-grid-opacity', '--style-scan-opacity', '--style-panel-opacity'].forEach(name => assert.ok(css.includes('var(' + name + ')'), 'it reads ' + name));
+  assert.ok(read('dashboard/index.html').includes('stop-color: var(--style-pink)'), 'the pink is read by the hairline gradient in index.html');
 
-  // The page background: scanlines over the team's background, and a grid in a layer behind the stage, both faint
-  const screen = rules.filter(rule => rule.selectors[0] === 'html[data-style="cybertron"] #screen')[0].body;
-  assert.ok(/repeating-linear-gradient\(to bottom, rgba\(255, 255, 255, var\(--style-scan-opacity\)\)/.test(screen) && /var\(--ground\)/.test(screen));
-  const grid = rules.filter(rule => rule.selectors[0] === 'html[data-style="cybertron"] #screen::before')[0].body;
-  assert.ok(/background-size|\/ var\(--style-grid-size\) var\(--style-grid-size\)/.test(grid) && /opacity: var\(--style-grid-opacity\);/.test(grid) && /pointer-events: none;/.test(grid));
-  assert.ok(/width: 1920px;/.test(grid) && /height: 1080px;/.test(grid), 'as big as the screen');
-  assert.ok(/#screen::before/.test(css) && !/#screen::after/.test(css), 'both are behind the stage: a layer after it would be over the text');
+  // The page background: a layer behind the stage, in #theme-bg, with the near black ground, the grid and the scan line
+  const grid = rules.filter(rule => rule.selectors[0] === 'html[data-style="cybertron"] #theme-bg .cy-grid')[0].body;
+  assert.ok(/\/ var\(--style-grid-size\) var\(--style-grid-size\)/.test(grid) && /opacity: var\(--style-grid-opacity\);/.test(grid) && /animation: cy-drift 16s linear infinite;/.test(grid));
+  const scan = rules.filter(rule => rule.selectors[0] === 'html[data-style="cybertron"] #theme-bg .cy-scan')[0].body;
+  assert.ok(/animation: cy-scan 9s linear infinite;/.test(scan) && /opacity: var\(--style-scan-opacity\);/.test(scan));
+  assert.ok(/background: var\(--style-ground\);/.test(rules.filter(rule => rule.selectors[0] === 'html[data-style="cybertron"] #theme-bg .cy-ground')[0].body));
+  assert.ok(!/#screen::after/.test(css), 'nothing is drawn over the stage');
   const properties = withoutComments((read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css')));
-  assert.ok(/--style-grid-size: 96px;/.test(properties) && /--style-grid-opacity: \.07;/.test(properties) && /--style-scan-opacity: \.035;/.test(properties));
+  assert.ok(/--style-grid-size: 64px;/.test(properties) && /--style-grid-opacity: \.07;/.test(properties) && /--style-scan-opacity: \.09;/.test(properties));
 
-  // Every line it draws is 3px or more (the strokes the two styles share are checked with them, in base.css)
+  // The border is a hairline of 2px, as the order says; the brackets are 3px
   const widths = css.match(/(stroke-width|border-[a-z]*-width|outline-width): [\d.]+px/g) || [];
   assert.ok(widths.length >= 3);
-  widths.forEach(text => assert.ok(parseFloat(/[\d.]+px/.exec(text)[0]) >= 3, text));
+  widths.forEach(text => assert.ok(parseFloat(/[\d.]+px/.exec(text)[0]) >= 2, text));
   assert.ok(!/bar-rail|bar-logo|bar-banner/.test(css), 'the bar layout is Minimal\'s, and Cybertron has no part of it');
 
   // The hazard stripe is the team's accent, the conduit and the brackets are pink and the slashes are neon
   const paint = name => rules.filter(rule => rule.selectors[0] === 'html[data-style="cybertron"] .art-' + name)[0].body;
-  assert.ok(/fill: var\(--team-accent\);/.test(paint('hazard')));
-  assert.ok(/stroke: var\(--style-pink\);/.test(paint('conduit')) && /stroke: var\(--style-pink\);/.test(paint('brackets')));
-  assert.ok(/fill: var\(--style-neon\);/.test(paint('slashes')));
-  assert.ok(/stroke-opacity: \.6;/.test(paint('seams')), 'the seams are faint');
+  assert.ok(/display: none;/.test(css.slice(css.indexOf('.art-hazard'))), 'the hazard stripe, the conduit, the slashes and the seams are not drawn');
+  assert.ok(/stroke: var\(--style-neon\);/.test(paint('brackets')));
+  assert.ok(/fill: var\(--style-neon\);/.test(paint('ruler')) && /stroke: var\(--style-neon\);/.test(paint('link')) && /url\(#theme-hex\)/.test(paint('hex')));
 
   // The wide neon lines are not the style's: they are the glow of a team that has it (base.css)
   assert.ok(!css.includes('edge-neon-wide'));
   // and the plates are in the team's body color: the body is the style's, the tab an armor plate, the TEAM plate, the tag and the cards the team's plate color
-  assert.ok(/--panel-face: var\(--style-body\);/.test(css) && css.includes('fill: url(#armor-face);'));
-  assert.ok(/\.team-fill,\s*html\[data-style="cybertron"\] \.tag-fill,\s*html\[data-style="cybertron"\] \.card-fill \{ fill: var\(--team-plate\); \}/.test(css));
+  assert.ok(/--panel-face: var\(--style-body\);/.test(css) && css.includes('fill: var(--team-accent);'), 'the header is a wedge of the accent');
+  assert.ok(/\.team-fill,\s*html\[data-style="cybertron"\] \.tag-fill,\s*html\[data-style="cybertron"\] \.card-fill \{\s*fill: var\(--team-plate\);/.test(css));
 });
 
-test('the page background of Cybertron is the grid at 96px and the scanlines, nothing else on the screen is drawn behind the stage, and Original has none of it', () => {
+test('the page background of Cybertron is the grid at 64px and the scan line, in the layer behind the stage, and Original draws none of it', () => {
   const originalCss = withoutComments(read('dashboard/styles/original/theme.css'));
   const base = withoutComments(read('dashboard/base.css'));
   assert.ok(!/#screen/.test(originalCss), 'Original does not touch the page background');
   assert.ok(/#screen \{[^}]*background: var\(--ground\);/.test(base), 'it is the team\'s background color, as it was');
   assert.ok(!/#screen::(before|after)/.test(base), 'and base.css draws nothing over it');
-  assert.ok(/--style-scan-opacity: \.035;/.test(withoutComments((read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css')))));
+  assert.ok(/--style-scan-opacity: \.09;/.test(withoutComments((read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css')))));
   assert.equal(/--style-scan-opacity/.test(withoutComments(read('dashboard/layouts/bar-minimal.css'))), false, 'Minimal has a grid and no scanlines');
 });
 

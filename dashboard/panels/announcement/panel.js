@@ -4,8 +4,9 @@
 import * as frame from '../../frame.js';
 import { frameMarkup, rowBarMarkup } from '../../core/plate.js';
 import { escapeHtml } from '../../core/text.js';
-import { logoMarkup } from '../../core/logo.js';
+import { logoMarkup, logoTeamOf } from '../../core/logo.js';
 import { teamShown, trimNow } from '../../core/teams.js';
+import { viewNow } from '../../core/view-apply.js';
 
 const fallback = { text: 'WHAT TIME IS IT?', phase: 'title' };
 
@@ -77,9 +78,8 @@ export function mount(host, content) {
     return markup;
   }).join('');
 
-  const logo = withLogo ? `<div class="logo" data-part="logo">${logoMarkup()}</div>` : '';
-
   const team = teamShown(content);
+  const logo = withLogo ? `<div class="logo" data-part="logo">${logoMarkup(logoTeamOf(team.code, viewNow()))}</div>` : '';
 
   host.innerHTML = `
     <section class="panel announcement ${info.phase}" data-sequence="announce">

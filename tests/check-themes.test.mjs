@@ -493,7 +493,8 @@ function checkKit() {
   const problems = [];
   const withoutComments = text => text.replace(/\/\*[\s\S]*?\*\//g, '');
 
-  stylesheets('').filter(file => motionFiles.indexOf(file) === -1).forEach(file => {
+  // the frame.css of a theme folder holds the keyframes of that theme (its background, its gears), which themes-part5.test.mjs holds to transform and opacity
+  stylesheets('').filter(file => motionFiles.indexOf(file) === -1 && !/^styles\/[a-z]+\/frame\.css$/.test(file)).forEach(file => {
     if (/@keyframes/.test(withoutComments(fs.readFileSync(path.join(dashboardFolder, file), 'utf8')))) {
       problems.push('dashboard/' + file + ' has @keyframes. Every keyframe belongs in ' + motionFiles.join(', ') + ' (a panel holds no animation)');
     }

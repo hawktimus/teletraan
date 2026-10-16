@@ -158,7 +158,8 @@ test('without the cookie a page is the sign-in form, an API call is 401, and the
     const page = await fetch(s.base + '/control/');
     assert.equal(page.status, 200);
     assert.ok((await page.text()).includes('Sign in'));
-    assert.equal((await fetch(s.base + '/control/app.js')).headers.get('content-type').startsWith('text/html'), true, 'any other file is the form too');
+    assert.equal((await fetch(s.base + '/control/other.html')).headers.get('content-type').startsWith('text/html'), true, 'any other page is the form too');
+    assert.equal((await fetch(s.base + '/control/app.js')).status, 401, 'a script is refused, never answered with a page');
     assert.equal((await fetch(s.base + '/control/login.js')).headers.get('content-type').startsWith('text/javascript'), true);
     assert.equal((await fetch(s.base + '/control/api/releases')).status, 401);
     assert.equal((await fetch(s.base + '/control/api/helper/status', { method: 'POST' })).status, 401);

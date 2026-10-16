@@ -235,6 +235,33 @@ export function tickPath(from, to, y) {
   return data;
 }
 
+// The LINK 04 readout of Cybertron's tall frames, drawn as line art and not as text: the glyphs are strokes on a
+// grid of 8 by 14, 13 apart, and it is a decorative mark that says nothing a reader needs. x and y are the top left
+const linkGlyphs = {
+  L: 'M0 0V14H8',
+  I: 'M4 0V14',
+  N: 'M0 14V0L8 14V0',
+  K: 'M0 0V14M8 0L0 8M2.5 6L8 14',
+  0: 'M0 0H8V14H0Z',
+  4: 'M6 14V0L0 10H8',
+};
+export const linkMarkWidth = 93;
+
+export function linkMarkPath(x, y) {
+  let data = '';
+  let left = x;
+  'LINK 04'.split('').forEach(letter => {
+    if (linkGlyphs[letter]) data += linkGlyphs[letter].replace(/([MLHV])([-\d. ]*)/g, (all, command, numbers) => {
+      const values = numbers.trim().split(/\s+/).filter(Boolean).map(Number);
+      if (command === 'H') return 'H' + (left + values[0]);
+      if (command === 'V') return 'V' + (y + values[0]);
+      return command + values.map((value, index) => (index % 2 === 0 ? left + value : y + value)).join(' ');
+    });
+    left += letter === ' ' ? 14 : 13;
+  });
+  return data;
+}
+
 // The rust at the two bottom corners of a frame, drawn as stroked arcs with a soft
 // smudge under each, which is a radial gradient (index.html, wear-rust). One arc stands on
 // the left edge just above the step, bulging into the frame, and one on the bottom edge

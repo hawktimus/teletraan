@@ -11,9 +11,10 @@ import { roboticsPlate } from '../../config.js';
 import { viewNow } from '../../core/view-apply.js';
 import { formatClock, formatDate } from '../../core/time.js';
 import { weatherIcon } from '../../core/weather-icons.js';
-import { logoMarkup, showTeamLogo } from '../../core/logo.js';
+import { logoMarkup, logoTeamOf, showLogoTeam, showTeamLogo } from '../../core/logo.js';
 import { teamPlateMarkup } from '../../core/plate.js';
 import { teamShown } from '../../core/teams.js';
+import { viewNow } from '../../core/view-apply.js';
 import { packExtras } from '../../core/theme.js';
 
 // Sizes that the stylesheet repeats. Change them together.
@@ -88,6 +89,7 @@ export function update(element, content) {
   setText(element, '.team-number', team.number);
   setText(element, '.school-text', content.team.school);
   showTeamLogo(element.querySelector('.bar-logo'), team.logo);
+  showLogoTeam(element.querySelector('.bar-logo'), logoTeamOf(team.code, viewNow()));
 
   const weather = content.weather;
   setText(element, '.temperature', weather ? weather.temperature + '°F' : '--°F');

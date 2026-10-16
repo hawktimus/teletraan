@@ -1,6 +1,6 @@
 // Teams, settings, the rotation, announcements and custom panels (part of sanity.js).
 
-import { defaultSettings, primeTeam, teamMetals, teamPalettes, teamTrim } from '../config.js';
+import { defaultSettings, invertedHeaderInk, primeTeam, teamMetals, teamPalettes, teamTrim } from '../config.js';
 import { fixSettingValues } from './content.js';
 import { logoUrl } from './images.js';
 import { isRecord, trimText } from './text.js';
@@ -32,6 +32,8 @@ function normalizeTeamDocument(raw) {
     const value = isRecord(raw.colors) ? trimText(raw.colors[color]) : '';
     colors[color] = hexColor.test(value) ? value : primeTeam.colors[color];
   });
+  // A team with the inverted palette that has no header text color yet gets the dark one, because white on its main color is too faint
+  if (!(isRecord(raw.colors) && hexColor.test(trimText(raw.colors.headerInk))) && trimText(raw.palette) === 'inverted') colors.headerInk = invertedHeaderInk;
 
   return {
     code: code,

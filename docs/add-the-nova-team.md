@@ -39,9 +39,10 @@ In Studio open Settings, then Teams, then Hawktimus Nova. These are the fields.
 - Team code: nova. The data uses it, so do not change it.
 - Logo: optional. A picture for the banner. Leave it empty to use the shared
   Hawktimus bird.
-- Colors: nine colors, each # and six characters from 0 to 9 and A to F, such as
-  #FACA2A. The file starts Nova on the inverse of Prime, gold and purple: main #FACA2A, plate #6B4F0C,
-  accent #C58CFF, neon #B23CFF, second bright #FACA2A, background #130E03, body #2A1F07 and label #C58CFF.
+- Colors: twelve colors, each # and six characters from 0 to 9 and A to F, such as
+  #D4A017. The file starts Nova on the inverse of Prime, gold and purple: main #D4A017, plate #6B4C08,
+  accent #C86BFF, neon #B23CFF, second bright #D4A017, background #17110A, body #241A04, label #D9A6FF,
+  header text #1A1200, dark #3D2A05 and retro #E0A400.
   - Main color: the header tabs and the bird.
   - Plate color: the team plate, the inset of the header tab and the cards.
   - Accent color: small marks and key words.
@@ -49,6 +50,9 @@ In Studio open Settings, then Teams, then Hawktimus Nova. These are the fields.
   - Second bright color: the conduit line and the corner brackets of Cybertron.
   - Background color: the color behind everything.
   - Text color: the main text.
+  - Header text color: optional. Text that sits on the main color, such as the panel titles. It is dark on Nova,
+    because white on the gold is too faint from across the room.
+  - Dark color and Retro color: optional. The darkest shade of the main color, and the main color of the Retro theme.
   - Body color: the inside of the panels in Cybertron and the bar layout.
   - Label color: the department names in rows. It is light purple on Nova, because light blue
     is lost against the blue frame.
