@@ -176,7 +176,7 @@ export function writeReleaseFiles(dir, info) {
     version: info.version,
     commit: shortCommit(info.commit),
     date: info.date,
-    from: info.from === 'git' ? 'git' : 'upload',
+    from: info.from === 'git' || info.from === 'github' ? info.from : 'upload',
     note: String(info.note || ''),
     treeHash: info.treeHash || '',
   };

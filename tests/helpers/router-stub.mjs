@@ -46,6 +46,7 @@ export function makeRouter() {
       const done = new Promise(resolve => {
         const res = {
           writeHead(status, headers) { out.status = status; out.headers = headers || {}; },
+          write(chunk) { out.text += chunk; return true; },
           end(chunk) { out.text += chunk === undefined ? '' : chunk; resolve(); },
         };
         Promise.resolve(route.handler(req, res)).catch(error => { out.status = 599; out.text = String(error && error.stack); resolve(); });

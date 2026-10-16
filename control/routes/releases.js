@@ -6,6 +6,7 @@ import { parseMultipart } from '../lib/multipart.js';
 import { installRelease } from '../lib/install.js';
 import { limits } from '../lib/zip.js';
 import { shortCommit } from '../lib/releases.js';
+import { startSteps } from '../lib/stream.js';
 
 export function register(router, ctx) {
   router.get('/releases', (req, res) => {
@@ -27,8 +28,7 @@ export function register(router, ctx) {
     const note = String(form.fields.note || '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 200);
     const commit = shortCommit(form.fields.commit);
 
-    res.writeHead(200, { 'Content-Type': 'application/x-ndjson; charset=utf-8', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no' });
-    const emit = event => res.write(JSON.stringify(event) + '\n');
+    const emit = startSteps(res);
     try {
       await installRelease(ctx, { zip: file.data, note: note, commit: commit, from: 'upload', emit: emit });
     } catch (error) {
