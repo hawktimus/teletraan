@@ -648,7 +648,7 @@ test('the menu has the five choices, each runs its action, and anything else doe
   const place = makePlace('menu');
   const quit = place.run([], { input: ['q'] });
   assert.equal(quit.status, 0, quit.errors);
-  ['1  Ship everything: check the code, commit, push, deploy the Studio,', 'update the Teletraan computer and restart the screen', '2  Push only', '3  Studio only', '4  Update the computer only, and restart the screen', '5  Status of the computer', 'q  Quit'].forEach(entry => assert.ok(quit.text.includes(entry), 'the menu has: ' + entry));
+  ['1  Ship everything: check the code, commit, push, deploy the Studio,', 'update the Teletraan computer and restart the screen', '2  Push only', '3  Studio only', '4  Update the Teletraan computer only, and restart the screen', '5  Status of the Teletraan computer', 'q  Quit'].forEach(entry => assert.ok(quit.text.includes(entry), 'the menu has: ' + entry));
   assert.ok(quit.text.includes('Nothing done.'));
   assert.equal(quit.calls, '', 'looking at the menu runs nothing');
 

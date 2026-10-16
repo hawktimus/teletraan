@@ -54,7 +54,7 @@ calendars serves both computers, and a save goes to the Teletraan computer you p
 | 2 | Keys and calendars: a form for the three keys and the calendar links |
 | 3 | Copy the computer's keys and calendars to this Mac |
 | 4 | Install the services on the computer |
-| 5 | Status of the computer |
+| 5 | Status of the Teletraan computer |
 | 6 | Restart the screen |
 | 7 | Choose another computer, or add one |
 | q | Quit |

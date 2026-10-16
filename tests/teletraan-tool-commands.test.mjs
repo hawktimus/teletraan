@@ -110,7 +110,7 @@ function makePlace(name, options = {}) {
         STUB_LOG: place.log,
         STUB_DIR: place.stub,
         STUB_FAKES: place.fakes,
-        COMPUTER_HOME: place.miniHome,
+        COMPUTER_HOME: place.computerHome,
         COMPUTER_REPO: '/opt/teletraan-test',
       };
       const text = input.length ? input.join('\n') + '\n' : '';
@@ -119,7 +119,7 @@ function makePlace(name, options = {}) {
     },
   };
 
-  [place.home, place.stub, place.fakes, place.miniHome].forEach(folder => fs.mkdirSync(folder, { recursive: true }));
+  [place.home, place.stub, place.fakes, place.computerHome].forEach(folder => fs.mkdirSync(folder, { recursive: true }));
   writeTool(place.fakes, 'ssh', fakeSsh);
   writeTool(place.fakes, 'scp', fakeScp);
   writeTool(place.fakes, 'rsync', fakeRsync);
@@ -406,7 +406,7 @@ test('with no word the menu still comes up, and --computer picks the Teletraan c
   const place = makePlace('menu', { config: twoComputers });
   const result = place.run([], ['q']);
   assert.equal(result.status, 0, result.errors);
-  ['1  Install the files on this Mac', '2  Keys and calendars', '3  Copy the Teletraan computer', '4  Install the services', '5  Status of the computer', '6  Restart the screen', '7  Choose another computer'].forEach(entry => assert.ok(result.text.includes(entry), entry));
+  ['1  Install the files on this Mac', '2  Keys and calendars', '3  Copy the Teletraan computer', '4  Install the services', '5  Status of the Teletraan computer', '6  Restart the screen', '7  Choose another computer'].forEach(entry => assert.ok(result.text.includes(entry), entry));
   assert.ok(result.text.includes('Teletraan computer in use: main (' + computerAddress + ')'));
 
   const spare = place.run(['--computer', 'spare'], ['q']);

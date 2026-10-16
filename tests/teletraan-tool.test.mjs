@@ -124,7 +124,7 @@ function makePlace(name, options = {}) {
     computerHome: path.join(root, 'computer-home'),
     computerRepo: path.join(root, 'computer-repo'),
     log: path.join(root, 'calls.log'),
-    computerEnvFile: () => path.join(place.miniRepo, 'computer/local.env'),
+    computerEnvFile: () => path.join(place.computerRepo, 'computer/local.env'),
     secretsFile: () => path.join(place.home, '.teletraan/secrets.env'),
     configFile: () => path.join(place.home, '.teletraan/config'),
     calls: () => fs.readFileSync(place.log, 'utf8'),
@@ -137,15 +137,15 @@ function makePlace(name, options = {}) {
         STUB_LOG: place.log,
         STUB_DIR: place.stub,
         STUB_FAKES: place.fakes,
-        COMPUTER_HOME: place.miniHome,
-        COMPUTER_REPO: place.miniRepo,
+        COMPUTER_HOME: place.computerHome,
+        COMPUTER_REPO: place.computerRepo,
       };
       const result = spawnSync('/bin/bash', [tool], { env: env, input: input.join('\n') + '\n', encoding: 'utf8' });
       return { text: result.stdout, errors: result.stderr, status: result.status, calls: place.calls() };
     },
   };
 
-  [place.home, place.stub, place.fakes, place.miniHome, path.join(place.miniRepo, 'computer/scripts')].forEach(folder => fs.mkdirSync(folder, { recursive: true }));
+  [place.home, place.stub, place.fakes, place.computerHome, path.join(place.computerRepo, 'computer/scripts')].forEach(folder => fs.mkdirSync(folder, { recursive: true }));
   writeTool(place.fakes, 'ssh', fakeSsh);
   writeTool(place.fakes, 'scp', fakeScp);
   writeTool(place.fakes, 'rsync', fakeRsync);
@@ -153,7 +153,7 @@ function makePlace(name, options = {}) {
   writeTool(place.fakes, 'systemctl', fakeSystemctl);
   installNames.forEach(entry => {
     const failing = options.failInstall === entry;
-    writeTool(path.join(place.miniRepo, 'computer/scripts'), 'install-' + entry + '.sh', '#!/bin/sh\necho "ran install-' + entry + '.sh"\n' + (failing ? 'exit 1\n' : ''));
+    writeTool(path.join(place.computerRepo, 'computer/scripts'), 'install-' + entry + '.sh', '#!/bin/sh\necho "ran install-' + entry + '.sh"\n' + (failing ? 'exit 1\n' : ''));
   });
   fs.writeFileSync(place.log, '');
 
@@ -166,7 +166,7 @@ function makePlace(name, options = {}) {
     fs.mkdirSync(stateFolder, { recursive: true, mode: 0o700 });
     fs.writeFileSync(place.secretsFile(), options.secrets, { mode: 0o600 });
   }
-  if (options.miniEnv !== undefined) fs.writeFileSync(place.miniEnvFile(), options.miniEnv, { mode: 0o644 });
+  if (options.computerEnv !== undefined) fs.writeFileSync(place.computerEnvFile(), options.computerEnv, { mode: 0o644 });
   return place;
 }
 
@@ -321,7 +321,7 @@ test('the menu lists the six choices and the extras, names the Teletraan compute
   const result = place.run(['x', '', 'q']);
 
   assert.equal(result.status, 0, result.errors);
-  ['1  Install the files on this Mac', '2  Keys and calendars', '3  Copy the Teletraan computer', '4  Install the services', '5  Status of the computer', '6  Restart the screen', '7  Choose another computer', 'q  Quit'].forEach(entry => {
+  ['1  Install the files on this Mac', '2  Keys and calendars', '3  Copy the Teletraan computer', '4  Install the services', '5  Status of the Teletraan computer', '6  Restart the screen', '7  Choose another computer', 'q  Quit'].forEach(entry => {
     assert.ok(result.text.includes(entry), 'the menu has: ' + entry);
   });
   assert.ok(result.text.includes('Teletraan computer in use: main (' + computerAddress + ')'));
@@ -450,7 +450,7 @@ test('the form shows values masked, takes edit, keep and clear, adds, edits and 
   assert.ok(!fs.existsSync(path.join(place.home, '.teletraan/stage')), 'the staging folder is removed');
 
   // The Teletraan computer replaces the lines that match, keeps every other line, and is private
-  assert.equal(fs.readFileSync(place.miniEnvFile(), 'utf8'), [
+  assert.equal(fs.readFileSync(place.computerEnvFile(), 'utf8'), [
     '# Settings for the Teletraan computer',
     "TELETRAAN_PORT='3229'",
     "TELETRAAN_DATA='/var/lib/teletraan/data'",
@@ -463,10 +463,10 @@ test('the form shows values masked, takes edit, keep and clear, adds, edits and 
     "CALENDAR_BUILD_SEASON_URL='" + secrets.stored + "'",
     '',
   ].join('\n'));
-  assert.equal(modeOf(place.miniEnvFile()), 0o600);
+  assert.equal(modeOf(place.computerEnvFile()), 0o600);
   assert.ok(result.text.includes('replaced SANITY_WRITE_TOKEN') && result.text.includes('removed MONDAY_API_TOKEN') && result.text.includes('added CALENDAR_BUILD_SEASON_URL') && result.text.includes('removed CALENDAR_BUILD_URL'), result.text);
-  assert.deepEqual(fs.readdirSync(place.miniHome), [], 'the merge script and the new values are removed from the Teletraan computer');
-  assert.deepEqual(fs.readdirSync(path.join(place.miniRepo, 'computer')).filter(name => name !== 'local.env' && name !== 'scripts'), [], 'no temporary file is left next to local.env');
+  assert.deepEqual(fs.readdirSync(place.computerHome), [], 'the merge script and the new values are removed from the Teletraan computer');
+  assert.deepEqual(fs.readdirSync(path.join(place.computerRepo, 'computer')).filter(name => name !== 'local.env' && name !== 'scripts'), [], 'no temporary file is left next to local.env');
 
   // The values travel in a file with scp, and then the calendar service runs once
   const calls = lines(result.calls.trim());
@@ -485,9 +485,9 @@ test('a link typed as webcal:// is stored as https:// on the Mac and on the Tele
 
   const expected = "CALENDAR_TEAM_URL='" + secrets.stored + "'\n";
   assert.equal(fs.readFileSync(place.secretsFile(), 'utf8'), expected);
-  assert.equal(fs.readFileSync(place.miniEnvFile(), 'utf8'), "TELETRAAN_PORT='3229'\n" + expected);
+  assert.equal(fs.readFileSync(place.computerEnvFile(), 'utf8'), "TELETRAAN_PORT='3229'\n" + expected);
   assert.ok(!fs.readFileSync(place.secretsFile(), 'utf8').includes('webcal'));
-  assert.ok(!fs.readFileSync(place.miniEnvFile(), 'utf8').includes('webcal'));
+  assert.ok(!fs.readFileSync(place.computerEnvFile(), 'utf8').includes('webcal'));
   assertNoLeak(result, 'webcal');
 });
 
@@ -542,7 +542,7 @@ test('when the values cannot be sent, they stay saved on the Mac with what was c
   assert.ok(first.errors.includes('could not send the values to ' + computerAddress + ' (exit 1)'), first.errors);
   assert.ok(first.errors.includes('Nothing on the Teletraan computer changed.'));
   assert.ok(fs.readFileSync(place.secretsFile(), 'utf8').includes("MONDAY_API_TOKEN=''\n"), 'the clear waits in the saved file');
-  assert.equal(fs.readFileSync(place.miniEnvFile(), 'utf8'), computerEnv, 'the Teletraan computer was not touched');
+  assert.equal(fs.readFileSync(place.computerEnvFile(), 'utf8'), computerEnv, 'the Teletraan computer was not touched');
   assert.ok(!fs.existsSync(path.join(place.home, '.teletraan/stage')));
   assertNoLeak(first, 'first try');
 
@@ -550,7 +550,7 @@ test('when the values cannot be sent, they stay saved on the Mac with what was c
   const second = place.run(['2', 'k', 'k', 'k', '', 'y', 'q']);
   assert.ok(second.text.includes('Monday token') && second.text.includes('cleared, not sent yet'), second.text);
   assert.ok(second.text.includes('Nothing changed.'));
-  assert.ok(!fs.readFileSync(place.miniEnvFile(), 'utf8').includes('MONDAY_API_TOKEN'), 'the Teletraan computer lost the line');
+  assert.ok(!fs.readFileSync(place.computerEnvFile(), 'utf8').includes('MONDAY_API_TOKEN'), 'the Teletraan computer lost the line');
   assert.ok(!fs.readFileSync(place.secretsFile(), 'utf8').includes('MONDAY_API_TOKEN'), 'the Mac forgot it after the Teletraan computer did');
   assertNoLeak(second, 'second try');
 });
@@ -573,7 +573,7 @@ test('the calendar service not being installed is said in plain words and the me
   const result = place.run(['2', 'e', secrets.newSanity, 'k', 'k', '', '', 'q']);
 
   assert.ok(result.text.includes('The calendar service did not run. If it is not installed on this computer, choose 4 in the menu.'), result.text);
-  assert.ok(fs.readFileSync(place.miniEnvFile(), 'utf8').includes(secrets.newSanity));
+  assert.ok(fs.readFileSync(place.computerEnvFile(), 'utf8').includes(secrets.newSanity));
 });
 
 test('copying from the Teletraan computer asks first, replaces the saved values with the ones in local.env, and leaves out placeholders, odd values and other lines', () => {
@@ -608,7 +608,7 @@ test('copying from the Teletraan computer asks first, replaces the saved values 
   assert.equal(modeOf(place.secretsFile()), 0o600);
   assert.ok(result.text.includes('These lines on the Teletraan computer did not look like a key or a link and were left out: CALENDAR_BAD_URL'), result.text);
   assert.ok(!fs.existsSync(path.join(place.home, '.teletraan/pulled.tmp')), 'the temporary copy is removed');
-  assert.ok(result.calls.includes("grep -E '^(SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|CONTROL_PIN|CALENDAR_[A-Za-z0-9_]+_URL)=' '" + place.miniRepo + "/computer/local.env'"), 'only the names it needs are asked for: ' + result.calls);
+  assert.ok(result.calls.includes("grep -E '^(SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|CONTROL_PIN|CALENDAR_[A-Za-z0-9_]+_URL)=' '" + place.computerRepo + "/computer/local.env'"), 'only the names it needs are asked for: ' + result.calls);
   assertNoLeak(result, 'pull');
   assert.ok(!result.text.includes('NOTSECURE0123'));
 });
@@ -657,8 +657,8 @@ test('status runs status-write.sh --print and check-calendars.sh on the Teletraa
   const result = place.run(['5', 'q']);
 
   assert.equal(result.status, 0, result.errors);
-  assert.ok(result.calls.includes(place.miniRepo + '/computer/scripts/status-write.sh --print'), result.calls);
-  assert.ok(result.calls.includes(place.miniRepo + '/computer/scripts/check-calendars.sh'), result.calls);
+  assert.ok(result.calls.includes(place.computerRepo + '/computer/scripts/status-write.sh --print'), result.calls);
+  assert.ok(result.calls.includes(place.computerRepo + '/computer/scripts/check-calendars.sh'), result.calls);
   assert.ok(result.text.includes('Last calendar sync        3 minutes ago'));
   assert.ok(result.text.includes('a script that went wrong printed (hidden)'), result.text);
   assert.ok(result.text.includes('download failed from (hidden) today'), result.text);
@@ -874,7 +874,7 @@ test('docs/updating-the-computer.md is written around the tool, and the other do
   ['Teletraan Tool.command', 'tools/teletraan/teletraan-tool', '~/.teletraan/secrets.env', '~/.teletraan/config', 'SANITY_WRITE_TOKEN', 'MONDAY_API_TOKEN', 'TBA_AUTH_KEY', 'CALENDAR_<ID>_URL', 'status-write.sh --print', 'check-calendars.sh', 'webcal://', 'rsync'].forEach(word => {
     assert.ok(doc.includes(word), 'docs/updating-the-computer.md should mention ' + word);
   });
-  ['Update the Teletraan computer', 'Keys and calendars', 'Copy the computer', 'Install the services', 'Status of the computer', 'Restart the screen', 'Choose another computer'].forEach(word => {
+  ['Update the Teletraan computer', 'Keys and calendars', 'Copy the computer', 'Install the services', 'Status of the Teletraan computer', 'Restart the screen', 'Choose another computer'].forEach(word => {
     assert.ok(doc.includes(word), 'docs/updating-the-computer.md should name the menu choice ' + word);
   });
 

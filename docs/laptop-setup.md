@@ -222,7 +222,7 @@ Open `Ship Teletraan.app`. It opens Terminal and shows a menu:
 | 2 | Push only: runs the checks, commits and pushes to GitHub |
 | 3 | Studio only: puts the Studio's forms on sanity.io |
 | 4 | Update the Teletraan computer only: copies the files and restarts the screen |
-| 5 | Status of the computer: what it last did |
+| 5 | Status of the Teletraan computer: what it last did |
 
 Choice 1 does these in order. Each step stops the whole run when it fails:
 

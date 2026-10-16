@@ -11,7 +11,7 @@
 #   tools/mac/ship.sh all         check, commit, push, Studio, update the Teletraan computer and restart the screen
 #   tools/mac/ship.sh push        check, commit and push only
 #   tools/mac/ship.sh studio      update the Studio only
-#   tools/mac/ship.sh computer       update the Teletraan computer and restart the screen only
+#   tools/mac/ship.sh computer    update the Teletraan computer and restart the screen only
 #   tools/mac/ship.sh status      show the status of the Teletraan computer
 #
 # Older words still work: all-restart is the same as all, and restart restarts

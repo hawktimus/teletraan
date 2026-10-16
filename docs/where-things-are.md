@@ -848,7 +848,7 @@ alone.
   decide, and `shell.js` passes them the address. Content source and Switch back
   to production at are still hidden fields in `studio/schemas/dashboardSettings.js`,
   so that nothing saved is lost, and the dashboard does not read them.
-- **What the computer last did.** Dashboard Settings, Screen tab, Status of the computer.
+- **What the computer last did.** Dashboard Settings, Screen tab, Status of the Teletraan computer.
   The computer writes the document `status-mini` with `computer/scripts/status-write.sh`,
   which the calendar and slides services and `kiosk.sh` start, and which needs
   `SANITY_WRITE_TOKEN` in `computer/local.env` (docs/rebuilding-the-computer.md, "Showing

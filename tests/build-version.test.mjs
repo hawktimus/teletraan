@@ -179,7 +179,7 @@ function toolPlace(name, options = {}) {
     computerRepo: path.join(root, 'computer-repo'),
     log: path.join(root, 'calls.log'),
   };
-  [place.home, place.fakes, place.miniHome, path.join(place.miniRepo, 'computer/scripts'), path.join(place.home, '.teletraan')].forEach(folder => fs.mkdirSync(folder, { recursive: true }));
+  [place.home, place.fakes, place.computerHome, path.join(place.computerRepo, 'computer/scripts'), path.join(place.home, '.teletraan')].forEach(folder => fs.mkdirSync(folder, { recursive: true }));
   writeTool(place.fakes, 'ssh', fakeSsh);
   writeTool(place.fakes, 'rsync', '#!/bin/sh\necho "rsync $*" >> "$STUB_LOG"\nexit 0\n');
   writeTool(place.fakes, 'sudo', '#!/bin/sh\necho "sudo $*" >> "$STUB_LOG"\nexit 0\n');
@@ -190,7 +190,7 @@ function toolPlace(name, options = {}) {
   place.run = words => {
     const env = {
       HOME: place.home, PATH: place.fakes + ':/usr/bin:/bin:/usr/sbin:/sbin', TERM: 'dumb',
-      STUB_LOG: place.log, STUB_FAKES: place.fakes, COMPUTER_HOME: place.miniHome, COMPUTER_REPO: place.miniRepo,
+      STUB_LOG: place.log, STUB_FAKES: place.fakes, COMPUTER_HOME: place.computerHome, COMPUTER_REPO: place.computerRepo,
     };
     const result = spawnSync('/bin/bash', [path.join(toolFolder, 'teletraan-tool')].concat(words), { env: env, encoding: 'utf8', input: '' });
     return { text: result.stdout, errors: result.stderr, status: result.status, calls: fs.readFileSync(place.log, 'utf8').split('\n').filter(Boolean) };

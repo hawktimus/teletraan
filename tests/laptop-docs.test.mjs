@@ -136,7 +136,7 @@ test('the shipping doc agrees with ship.sh: the menu, the action words, the old 
   assert.deepEqual(choices, [['1', 'all'], ['2', 'push'], ['3', 'studio'], ['4', 'computer'], ['5', 'status']]);
   choices.forEach(([number, word]) => assert.ok(shipping.includes('| ' + number + ' | `' + word + '` |'), 'the shipping doc has choice ' + number + ' with `' + word + '`'));
   ['`all-restart`', '`restart`', '`--dry-run`', 'tools/teletraan/teletraan-tool update --yes', 'sudo systemctl disable --now teletraan-pull.timer', 'deployment: { appId: ... }', 'git pull --no-rebase', '`git fetch`', '~/.teletraan/config', 'COMPUTER_REPO', 'COMPUTER_KIOSK'].forEach(text => assert.ok(shipping.includes(text), 'the shipping doc says: ' + text));
-  ['Ship everything', 'Push only', 'Studio only', 'Update the Teletraan computer only', 'Status of the computer'].forEach(name => {
+  ['Ship everything', 'Push only', 'Studio only', 'Update the Teletraan computer only', 'Status of the Teletraan computer'].forEach(name => {
     assert.ok(shipScript.includes(name), 'ship.sh has the menu entry ' + name);
     assert.ok(laptop.includes(name), 'the laptop guide has ' + name);
   });
