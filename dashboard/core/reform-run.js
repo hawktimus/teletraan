@@ -110,6 +110,7 @@ export function markReady(run) {
   layer.dataset.ready = '1';
   layer.dataset.elements = String(counts.elements);
   layer.dataset.animated = String(counts.animated);
+  layer.dataset.regions = JSON.stringify(run.drawn.map(item => ({ role: item.region.role, from: item.region.from, to: item.region.to, grid: item.region.grid })));
 }
 
 // The layer shows while a run plays and is empty after it

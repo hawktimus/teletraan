@@ -76,13 +76,17 @@ function copyStyle(copy, source, style) {
 
 // Copies one element and, one turn at a time, everything under it. The walk keeps its place in a list, so it can stop
 // after budgetMs and be asked to go on (bakeOnce).
-function copyElement(source, origin, skip, hidden) {
+function copyElement(source, origin, hidden) {
   const style = window.getComputedStyle(source);
   if (style.display === 'none') return null;
 
   const copy = source.cloneNode(false);
   copy.removeAttribute('class');
   copy.removeAttribute('style');
+  // A copy is never found by the code that looks a part of the page up (data-panel, an id): only svg ids stay, which gradients need
+  for (const attribute of Array.from(copy.attributes)) {
+    if (attribute.name.startsWith('data-') || (attribute.name === 'id' && copy.namespaceURI !== svgNamespace)) copy.removeAttribute(attribute.name);
+  }
   if (source.tagName.toLowerCase() === 'canvas') return null;
   copyStyle(copy, source, style);
   if (hidden || style.visibility === 'hidden') copy.style.setProperty('visibility', 'hidden');
@@ -96,11 +100,12 @@ function copyElement(source, origin, skip, hidden) {
 export async function bake(source, options = {}) {
   const origin = options.origin || screenOrigin();
   const skip = options.skip || defaultSkip;
+  const hide = options.hide || '';
   const budget = options.budgetMs || 0;
   const frameWait = options.wait || (() => new Promise(resolve => requestAnimationFrame(() => resolve())));
   let turnEnds = budget > 0 ? performance.now() + budget : Infinity;
 
-  async function walk(from, copy) {
+  async function walk(from, copy, covered = false) {
     for (const child of Array.from(from.childNodes)) {
       if (child.nodeType === 3) {
         copy.appendChild(child.cloneNode(false));
@@ -108,10 +113,10 @@ export async function bake(source, options = {}) {
       }
       if (child.nodeType !== 1 || child.matches(skip)) continue;
 
-      const made = copyElement(child, origin, skip, false);
+      const made = copyElement(child, origin, covered || (hide !== '' && child.matches(hide)));
       if (!made) continue;
       copy.appendChild(made);
-      await walk(child, made);
+      await walk(child, made, covered || (hide !== '' && child.matches(hide)));
       const fact = facts.get(made);
       fact.all = union(fact.own, childrenOf(made));
       if (performance.now() > turnEnds) {
@@ -121,7 +126,7 @@ export async function bake(source, options = {}) {
     }
   }
 
-  const root = copyElement(source, origin, skip, false);
+  const root = copyElement(source, origin, false);
   await walk(source, root);
   const rect = rectOf(source, origin);
   const fact = facts.get(root);

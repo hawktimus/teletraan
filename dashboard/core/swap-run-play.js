@@ -68,7 +68,7 @@ function offer(old, next) {
 
   if (playing || takeoverRunning() || askBusy()) return null;
   // The panel and view transitions come first (core/transition-kinds.js)
-  const reformed = reformOffer({ motion: frame.motionNow(), looked: looked, monday: isMondayCard(old.id) || isMondayCard(next.id), busy: false, busyNow: () => takeoverRunning() || askBusy(), hold: holdClock });
+  const reformed = reformOffer({ motion: frame.motionNow(), looked: looked, monday: isMondayCard(old.id) || isMondayCard(next.id), busy: false, busyNow: () => takeoverRunning() || askBusy(), hold: holdClock, moveOn: moveOn, wholeScreen: startWholeScreen, reloading: layoutIsReloading });
   if (reformed) return reformed;
   // One Monday card to the next has no look to change, so in calm motion and with none it is the usual page change
   if (!looked && (frame.motionNow() !== 'full' || (!isMondayCard(old.id) && !isMondayCard(next.id)))) return null;

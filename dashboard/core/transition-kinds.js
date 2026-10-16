@@ -3,12 +3,14 @@
 // (core/hidden-run.js) are older and stay where they are; core/swap-run-play.js asks this file first.
 
 import { playPanel } from './reform-panel.js';
+import { playView } from './reform-view.js';
 import { reformKind, reformRunning } from './reform-run.js';
 
 // The kinds. play(swapPage, context) draws the transition, calls swapPage() while the page is covered, and resolves with how
 // many milliseconds it took to come back, or 0 when it did not start.
 export const transitionKinds = {
   reform: { name: 'panel', play: playPanel },
+  reformView: { name: 'view', play: playView },
 };
 
 // Asked at each page change of the large panel, with the page on screen and the page to come. Answers null, which is the old

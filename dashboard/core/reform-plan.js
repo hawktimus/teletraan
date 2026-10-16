@@ -344,8 +344,12 @@ export function coverOldStops() {
   return [[0, 1], [reformTimes.coverOldOut - 40, 1, 'linear'], [reformTimes.coverOldOut, 0], [3000, 0]];
 }
 
-export function coverNewStops() {
-  return [[0, 0], [reformTimes.coverNewIn[0], 0, 'linear'], [reformTimes.coverNewIn[1], 1], [3000, 1]];
+// The flat copy of the new content. A cover that fills the whole stage (the view transition) lies over the real frames too, so
+// it goes in the last part and shows the real page, which is in place by then (fadeOut).
+export function coverNewStops(fadeOut = false) {
+  const stops = [[0, 0], [reformTimes.coverNewIn[0], 0, 'linear'], [reformTimes.coverNewIn[1], 1]];
+  if (!fadeOut) return stops.concat([[3000, 1]]);
+  return stops.concat([[reformTimes.tighten[0], 1, 'linear'], [3000, 0]]);
 }
 
 // The cross fade of the metal chassis frame over the real frame at the start, and back at the end

@@ -124,7 +124,8 @@ function squaresFor(region, tracks) {
 
   return to.map((square, index) => {
     const before = from[index];
-    const move = { dx: before.x - square.x, dy: before.y - square.y, sx: before.w / square.w, sy: before.h / square.h };
+    // a square scales about its middle, so it moves by the distance between the middles of the two cells
+    const move = { dx: before.x + before.w / 2 - (square.x + square.w / 2), dy: before.y + before.h / 2 - (square.y + square.h / 2), sx: before.w / square.w, sy: before.h / square.h };
     const element = make('reform-square', box(square));
     const face = make('reform-face');
     const back = make('reform-back ' + (square.axis === 'y' ? 'reform-back-y' : 'reform-back-x'));
@@ -169,7 +170,7 @@ export function drawRun(regions, cover, kit) {
   const coverNew = make('reform-cover reform-new', box(cover.to));
   covers.append(coverOld, coverNew);
   tracks.add(coverOld, 'opacity', coverOldStops());
-  tracks.add(coverNew, 'opacity', coverNewStops());
+  tracks.add(coverNew, 'opacity', coverNewStops(cover.fadeOut === true));
 
   return { tracks: tracks, back: back, covers: covers, front: front, drawn: drawn, coverOld: coverOld, coverNew: coverNew, cover: cover };
 }
