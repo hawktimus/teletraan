@@ -1,4 +1,4 @@
-// Animation uses only transform and opacity, and line drawing (CLAUDE.md). Two views of it: the keyframes written
+// Animation uses only transform and opacity, and line drawing (the rules of the screen). Two views of it: the keyframes written
 // in the stylesheets, and the animations that really run on the screen, with the computed style of what they move.
 
 import fs from 'node:fs';

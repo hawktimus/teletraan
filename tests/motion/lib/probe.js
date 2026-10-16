@@ -555,9 +555,9 @@
         const cut = element.scrollWidth > element.clientWidth + 1;
         const base = { kind: kind, name: nameOf(element), text: text.slice(0, 30), size: style.fontSize, width: advance };
 
-        if (room !== null && room - advance < spare) found.push(Object.assign(base, { problem: 'the text is ' + Math.round(advance * 10) / 10 + 'px wide in a box of ' + Math.round(room * 10) / 10 + 'px, which leaves ' + Math.round((room - advance) * 10) / 10 + 'px (needs ' + spare + ')' }, rectOf(element, where)));
-        else if (cut && style.overflow === 'visible') found.push(Object.assign(base, { problem: 'the text runs ' + (element.scrollWidth - element.clientWidth) + 'px past its box' }, rectOf(element, where)));
-        else if (outside > 1 / where.scale) found.push(Object.assign(base, { problem: 'the box runs ' + Math.round(outside / where.scale * 10) / 10 + 'px past its parent' }, rectOf(element, where)));
+        if (room !== null && room - advance < spare) found.push(Object.assign(base, { kind: 'room', amount: room - advance, problem: 'the text is ' + Math.round(advance * 10) / 10 + 'px wide in a box of ' + Math.round(room * 10) / 10 + 'px, which leaves ' + Math.round((room - advance) * 10) / 10 + 'px (needs ' + spare + ')' }, rectOf(element, where)));
+        else if (cut && style.overflow === 'visible') found.push(Object.assign(base, { kind: 'cut', amount: element.scrollWidth - element.clientWidth, problem: 'the text runs ' + (element.scrollWidth - element.clientWidth) + 'px past its box' }, rectOf(element, where)));
+        else if (outside > 1 / where.scale) found.push(Object.assign(base, { kind: 'parent', amount: outside / where.scale, problem: 'the box runs ' + Math.round(outside / where.scale * 10) / 10 + 'px past its parent' }, rectOf(element, where)));
       });
     });
     return found;
