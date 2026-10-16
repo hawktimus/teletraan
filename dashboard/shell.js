@@ -53,7 +53,7 @@ import { redrawFrames } from './core/areas.js';
 import { ensureThemeSheets } from './core/style-loader.js';
 import { applyStyle, recordShapes, shapesFor, shapesNow, startStyle, themeOf } from './core/style.js';
 import { cadenceOf, currentScreen, onScreenChange } from './core/screens.js';
-import { applyView } from './core/view-apply.js';
+import { applyTheme, applyView } from './core/view-apply.js';
 import { holdBootView, viewPlaylist, viewSidePlaylist } from './core/views.js';
 import { resumePreview } from './core/preview.js';
 import { loadPanel, mountPanel, updatePanel } from './core/panels.js';
@@ -604,6 +604,7 @@ function useStyle(look) {
 // which carry the name of the view, are drawn again when it changes. A problem here never stops the colors.
 function useView(look) {
   try {
+    applyTheme(themeOf(look.style));
     if (!applyView(look.view) || !content) return;
 
     updatePanel('banner', content);

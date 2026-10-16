@@ -103,7 +103,7 @@ export function update(element, content) {
   const view = viewNow();
   const title = view === '' ? '' : viewTitleOf(content, view);
   setName(element, title !== '' ? title : team.name);
-  setText(element, '.view-tag', view !== '' && viewShowsTag(view) ? viewNameOf(content, view) : '');
+  setText(element, '.view-tag', view !== '' && viewShowsTag(content, view) ? viewNameOf(content, view) : '');
   setText(element, '.team-number', team.number);
   setText(element, '.school', content.team.school);
   showTeamLogo(element.querySelector('.logo'), team.logo);

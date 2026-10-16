@@ -11,8 +11,16 @@ export function heldView() {
   return held;
 }
 
-export function holdView(key) {
+// The layout of the held view. core/style.js asks for it, so that a bar view is in the bar layout whatever theme is on.
+let heldLayoutName = '';
+
+export function heldLayout() {
+  return heldLayoutName;
+}
+
+export function holdView(key, layout = '') {
   held = viewKeys.includes(key) ? key : '';
+  heldLayoutName = held !== '' && (layout === 'bar' || layout === 'standard') ? layout : '';
 }
 
 function pageOrNone() {
@@ -31,5 +39,14 @@ export function applyView(key, page = pageOrNone()) {
   if (!page || !page.dataset || !viewKeys.includes(key) || page.dataset.view === key) return false;
 
   page.dataset.view = key;
+  return true;
+}
+
+// The theme written on the page for the control page's report (core/now-report.js reads data-theme). Written only when
+// it changes.
+export function applyTheme(theme, page = pageOrNone()) {
+  if (!page || !page.dataset || typeof theme !== 'string' || theme === '' || page.dataset.theme === theme) return false;
+
+  page.dataset.theme = theme;
   return true;
 }

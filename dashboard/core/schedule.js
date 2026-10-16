@@ -78,6 +78,14 @@ export function startListsOver() {
   listResets += 1;
 }
 
+// The large area says which page of its card is on screen (data-page-number), for the report to the control page
+function notePageNumber(region, number) {
+  if (region !== 'grid1' || typeof document === 'undefined') return;
+
+  const area = document.querySelector('.area[data-area="grid1"]');
+  if (area && area.dataset) area.dataset.pageNumber = String(number);
+}
+
 // Counts the calls to skipRow(). The loop of the large panel that sees a new number leaves the row it is on.
 let rowSkips = 0;
 
@@ -412,6 +420,7 @@ function runRotation(region, getPlaylist, getContent) {
 
         // the old page leaves and the next arrives, or the region empties
         const arrivedAfter = await changePage(region, next ? next.page : null);
+        notePageNumber(region, 1);
         onScreen[region] = next && next.topic && hasRegion(layoutNow(), region) ? [next.topic] : [];
 
         if (next) {
@@ -426,6 +435,7 @@ function runRotation(region, getPlaylist, getContent) {
           // page that was ended early (changeCount moved) does not go on.
           for (let shown = 1; shown < next.pages && changeCount(region) === since; shown++) {
             frame.scrollCard(next.page.element, shown);
+            notePageNumber(region, shown + 1);
             await hold(held, since, region);
           }
         } else {

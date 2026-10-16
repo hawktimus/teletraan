@@ -14,11 +14,11 @@
 //   5. The minutes stand still while an alert, an announcement, a talk, a demo or the night screen has the screen, so
 //      the view that was interrupted is the view that comes back, at the panel that was next.
 
-import { barDrawStyle, defaultSettings, defaultViews, familyPanels, viewIds, viewKeys, viewLayouts, viewLimits, viewTeams } from '../config.js';
+import { barStyle, countdownPlaces, defaultSettings, defaultThemeByWeekday, defaultViews, familyPanels, scheduledThemeIds, viewColors, viewIds, viewKeys, viewLayoutNames, viewLimits, viewTeams, weekdays } from '../config.js';
 import { keepInRange } from './content.js';
 import { forTeam, visibleTasks } from './monday.js';
 import { departmentEntries, departmentsOf } from './monday-views.js';
-import { holdScreenLook, isMondayPanel, isTeamCode, planFor, stepsOfRow, teamsOf, tidyMainRow, tidySideRow } from './screens.js';
+import { holdScreenLook, isMondayPanel, isTeamCode, planFor, stepsOfRow, teamsOf, tidyMainRow, tidySideRow, weekdayIn } from './screens.js';
 import { addressTeam } from './teams.js';
 import { heldView, holdView } from './view-apply.js';
 import { hasText } from './text.js';
@@ -44,19 +44,6 @@ function trimmed(value, longest, fallback) {
 
 export const longestName = 24;
 export const longestTitle = 40;
-
-// generalViewName, generalViewTitle and viewOrder of Dashboard Settings, always complete. A name that is not a key
-// is dropped and so is a key that comes twice. An order with no key in it is the starting order.
-export function tidyViewSettings(settings) {
-  settings.generalViewName = trimmed(settings.generalViewName, longestName, defaultSettings.generalViewName);
-  settings.generalViewTitle = trimmed(settings.generalViewTitle, longestTitle, defaultSettings.generalViewTitle);
-
-  const order = [];
-  (Array.isArray(settings.viewOrder) ? settings.viewOrder : []).forEach(key => {
-    if (viewKeys.includes(key) && !order.includes(key)) order.push(key);
-  });
-  settings.viewOrder = order.length > 0 ? order : viewKeys.slice();
-}
 
 export function viewOrderOf(content) {
   const settings = isRecord(content) && isRecord(content.settings) ? content.settings : {};
@@ -85,21 +72,28 @@ function tidyRows(list) {
   return (Array.isArray(list) ? list : []).map(tidySideRow).filter(row => row !== null);
 }
 
-// One view document, always complete: { key, title, team, layout, minutes, panels, sidePanels }. A list of rows that is
+// One view document, always complete: { key, title, team, layout, mirror, countdownIn, viewTag, teamChip, colors, minutes, panels,
+// sidePanels }. A list of rows that is
 // empty is the starting one. The small panel exists in the standard layout only, so the other views have no side rows.
 export function tidyView(raw, key) {
   const source = isRecord(raw) ? raw : {};
   const start = defaultViews[key];
   const team = viewTeams[key] === '' ? '' : tidyTeam(source.team) || viewTeams[key];
   const panels = tidyPanels(source.panels, key, team);
-  const layout = viewLayouts[key];
+  const layout = viewLayoutNames.includes(source.layout) ? source.layout : start.layout;
   const sidePanels = tidyRows(source.sidePanels);
+  const flag = (value, fallback) => (typeof value === 'boolean' ? value : fallback);
 
   return {
     key: key,
     title: typeof source.title === 'string' ? source.title.trim() : '',
     team: team,
     layout: layout,
+    mirror: flag(source.mirror, start.mirror),
+    countdownIn: countdownPlaces.includes(source.countdownIn) ? source.countdownIn : start.countdownIn,
+    viewTag: key === 'family' ? false : flag(source.viewTag, start.viewTag),
+    teamChip: flag(source.teamChip, start.teamChip),
+    colors: viewColors.includes(source.colors) ? source.colors : start.colors,
     minutes: Math.round(keepInRange(source.minutes, viewLimits.minutes, start.minutes)),
     panels: panels.length > 0 ? panels : tidyPanels(start.panels, key, team),
     sidePanels: layout !== 'standard' ? [] : sidePanels.length > 0 ? sidePanels : tidyRows(start.sidePanels),
@@ -154,23 +148,23 @@ export function viewTitleOf(content, key) {
   return trimmed(settings.generalViewTitle, longestTitle, defaultSettings.generalViewTitle);
 }
 
-// Whether the tag with the name of the view is drawn. Family is not named on the screen.
-export function viewShowsTag(key) {
-  return key !== 'family';
+// Whether the tag with the name of the view is drawn. Family is not named on the screen, and a view can switch it off.
+export function viewShowsTag(content, key) {
+  return key !== 'family' && resolveView(content, key).viewTag;
 }
 
 
 // The Monday rows
 
-// The ids of the Team leads a team view plays Monday tasks for: the ones marked for Monday (monday: true on the Team
-// lead), and when none is marked, every department that has tasks for the team. A new department is a new row without
-// any edit.
+// The ids of the Team leads a team view plays Monday tasks for: the ones with tasks for the team, except those with
+// Monday switched off (monday: false on the Team lead). A Team lead with no mark is on. A new department is a new row
+// without any edit.
 export function mondayDepartments(content, team, now = new Date()) {
   const entries = departmentEntries(content, now);
-  const marked = entries.filter(entry => entry.monday === true);
-  if (marked.length > 0) return marked.map(entry => entry.id);
+  const wanted = entries.filter(entry => entry.monday !== false).map(entry => entry.id);
+  const withTasks = departmentsOf(content, forTeam(visibleTasks(content, now), team), now).map(entry => entry.id);
 
-  return departmentsOf(content, forTeam(visibleTasks(content, now), team), now).map(entry => entry.id);
+  return wanted.filter(id => withTasks.includes(id));
 }
 
 // The rows with each Monday tasks row that has no department replaced by one row for every department that Monday
@@ -249,13 +243,34 @@ export function nextViewKey(order, current, playable) {
 
 // The look of a step
 
-// The style a view is drawn in. A bar view is drawn in the style of the bar layout, whatever the day says. A standard
-// view takes the day's style, and the Monday style while a Monday card plays unless that style is the bar one.
-export function drawStyleFor(key, monday, plan) {
-  if (viewLayouts[key] === 'bar') return barDrawStyle;
+// The theme of the day for a time: the weekday of the Look time zone picks one of themeByWeekday of Dashboard Settings
+export function dayThemeFor(content, now = new Date()) {
+  const settings = isRecord(content) && isRecord(content.settings) ? content.settings : {};
+  const zone = isRecord(content) && isRecord(content.theme) ? content.theme.timeZone : undefined;
+  const day = weekdays[(weekdayIn(zone, now) + 6) % 7];
+  const chosen = isRecord(settings.themeByWeekday) ? settings.themeByWeekday[day] : '';
 
-  const wanted = monday ? plan.mondayStyle : plan.style;
-  return wanted === barDrawStyle ? (plan.style === barDrawStyle ? 'original' : plan.style) : wanted;
+  return scheduledThemeIds.includes(chosen) ? chosen : defaultThemeByWeekday[day];
+}
+
+// The plan of the day: { style, mondayStyle }. The style is the theme of the day. The Monday style comes from the Screen
+// documents, which are kept for it.
+export function viewPlan(content, now = new Date()) {
+  return { style: dayThemeFor(content, now), mondayStyle: planFor(content, now).mondayStyle };
+}
+
+// The layout of a view
+export function viewLayoutOf(content, key) {
+  return resolveView(content, key).layout;
+}
+
+// The style a view is drawn in. A bar view is the theme of the day in the bar layout, whose frames are the same in every
+// theme (core/style.js). A standard view takes the Monday style while a Monday card plays, unless that is the old
+// name that stands for the bar layout.
+export function drawStyleFor(layout, monday, plan) {
+  if (layout === 'bar' || !monday || plan.mondayStyle === barStyle) return plan.style === barStyle ? 'original' : plan.style;
+
+  return plan.mondayStyle;
 }
 
 // A step that came from outside the views (a competition card is mixed into the large panel's list) plays in the view
@@ -268,11 +283,11 @@ export function stepInView(step, content, fallbackKey) {
 }
 
 // The look the screen has while a step plays: { team, style, monday }. A team view is in its team. A view with no team is
-// in the team the Team mode asks for, which an empty team holds.
-export function lookForViewStep(step, plan) {
+// in the team the Team mode asks for, which an empty team holds. layout is the layout of the view of the step.
+export function lookForViewStep(step, plan, layout) {
   const monday = isMondayPanel(step.panel);
 
-  return { team: isTeamCode(step.team) ? step.team : '', style: drawStyleFor(step.view, monday, plan), monday: monday };
+  return { team: isTeamCode(step.team) ? step.team : '', style: drawStyleFor(layout, monday, plan), monday: monday };
 }
 
 
@@ -302,11 +317,25 @@ export function resetViews() {
   cycle.seconds = 0;
   cycle.ticks = 0;
   holdView('');
+  heldPanel = '';
+}
+
+// The panel the control page holds on the screen, or ''. While one is held the large panel plays that panel only.
+let heldPanel = '';
+
+export function holdPanelId(id) {
+  heldPanel = typeof id === 'string' ? id : '';
+}
+
+// The first view in the order that has a step of this panel, or ''
+export function findViewWithPanel(content, panel, now = new Date()) {
+  return viewOrderOf(content).find(key => viewSteps(content, key, now).some(step => step.panel === panel)) || '';
 }
 
 // The steps of the large panel: the view the clock is on
 export function viewPlaylist(content, now = new Date()) {
-  return viewSteps(content, listedView(content), now);
+  const steps = viewSteps(content, listedView(content), now);
+  return heldPanel === '' ? steps : steps.filter(step => step.panel === heldPanel);
 }
 
 // The steps of the small panel: the view whose look is held, which is the one on the screen. The clock may be on the
@@ -365,12 +394,12 @@ export function tickView(content, now, options = {}) {
 export function bootViewLook(content, now = new Date()) {
   if (!isRecord(content)) return { team: '', style: '', monday: false };
 
-  const plan = planFor(content, now);
+  const plan = viewPlan(content, now);
   const key = playableViews(content, now)[0] || viewOrderOf(content)[0];
   const steps = viewSteps(content, key, now);
   const step = steps.length > 0 ? steps[0] : { panel: '', view: key, team: resolveView(content, key).team };
 
-  return lookForViewStep(step, plan);
+  return lookForViewStep(step, plan, viewLayoutOf(content, key));
 }
 
 // Works out the look the screen starts with and holds it, with the view, in the same modules a preview holds a look in.
@@ -381,7 +410,7 @@ export function holdBootView(content, now = new Date()) {
   if (isRecord(content)) {
     const key = playableViews(content, now)[0] || viewOrderOf(content)[0];
     startView(key);
-    holdView(key);
+    holdView(key, viewLayoutOf(content, key));
   }
   holdScreenLook(look);
   return look;

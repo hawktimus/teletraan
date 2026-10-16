@@ -38,6 +38,8 @@ const standIns = {
     'export const setLookHooks = hooks => { globalThis.viewsWorld.hooks = hooks; };',
     "export const skipRow = () => globalThis.viewsWorld.log.push('skipRow');",
     "export const startListsOver = () => globalThis.viewsWorld.log.push('startListsOver');",
+    'export const pauseRotation = () => globalThis.viewsWorld.log.push("pauseRotation");',
+    'export const resumeRotation = () => globalThis.viewsWorld.log.push("resumeRotation");',
     "export const moveOn = regions => globalThis.viewsWorld.log.push('moveOn ' + regions.join(' '));",
   ],
   'core/swap-run.js': [
@@ -51,7 +53,6 @@ const standIns = {
   'core/demo-runner.js': ['export const demoRunning = () => false;'],
   'core/night-screen.js': ['export const nightIsUp = () => false;'],
   'core/hidden-run.js': ['export const hiddenPlaying = () => false;'],
-  'core/screen-requests.js': ['export const screenRequests = () => globalThis.viewsWorld.requests;'],
   'core/panels.js': ['export const canShow = (panel, content, page) => globalThis.viewsWorld.canShow(panel, page);'],
 };
 Object.keys(standIns).forEach(file => fs.writeFileSync(path.join(root, file), standIns[file].join('\n') + '\n'));
@@ -105,7 +106,7 @@ function setPage(layout) {
 // Starts the page side of the views over this content and gives back what it hands to the schedule and the swap
 async function start(options = {}) {
   const content = options.content || contentWith();
-  const world = { log: [], hooks: null, seconds: null, swapBusy: null, swapScale: null, swapping: false, takeover: false, requests: {}, canShow: () => true, content: content };
+  const world = { log: [], hooks: null, seconds: null, swapBusy: null, swapScale: null, swapping: false, takeover: false, canShow: () => true, content: content };
   globalThis.viewsWorld = world;
   setPage('standard');
   globalThis.window = { localStorage: fakeStorage(), sessionStorage: fakeStorage() };
@@ -136,14 +137,15 @@ const startMinutes = { general: 6, prime: 6, nova: 6, family: 2 };
 
 test('there are four views with a fixed layout, team and number of minutes, and the order starts General, Prime, Nova, Family', () => {
   assert.deepEqual(config.viewKeys, ['general', 'prime', 'nova', 'family']);
-  assert.deepEqual(config.viewLayouts, { general: 'standard', prime: 'bar', nova: 'bar', family: 'bar' });
   assert.deepEqual(config.viewTeams, { general: '', prime: 'prime', nova: 'nova', family: '' });
   assert.deepEqual(config.viewLimits.minutes, { min: 1, max: 30 });
   config.viewKeys.forEach(key => {
     const view = views.tidyView(null, key);
     assert.equal(view.key, key);
     assert.equal(view.minutes, startMinutes[key], key + ' minutes');
-    assert.equal(view.layout, config.viewLayouts[key]);
+    assert.equal(view.layout, config.defaultViews[key].layout);
+    assert.equal(view.mirror, config.defaultViews[key].mirror);
+    assert.equal(view.viewTag, config.defaultViews[key].viewTag);
     assert.equal(view.team, config.viewTeams[key]);
   });
   assert.deepEqual(config.defaultSettings.viewOrder, config.viewKeys);
@@ -153,7 +155,7 @@ test('there are four views with a fixed layout, team and number of minutes, and 
 
 test('the General view starts with the agenda, events, leadership, four photos of ten seconds and sponsors, and five small panels', () => {
   const view = views.tidyView(null, 'general');
-  assert.deepEqual(view.panels.map(row => [row.panel, row.seconds]), [['tonight', 45], ['events', 30], ['leadership', 20], ['photo', 40], ['sponsor-feature', 15]]);
+  assert.deepEqual(view.panels.map(row => [row.panel, row.seconds]), [['tonight', 45], ['events', 60], ['leadership', 20], ['photo', 40], ['sponsor-feature', 15]]);
   assert.equal(view.panels[3].photoCount, 4);
   assert.equal(view.panels[3].secondsPerPhoto, 10);
   assert.deepEqual(view.sidePanels.map(row => [row.panel, row.seconds]), [['next-event', 30], ['task-counts', 20], ['safety-days', 20], ['forecast', 15], ['sponsor-logo', 15]]);
@@ -226,24 +228,15 @@ test('the stored Screens are still read: their rows, their banner minutes and th
 
 // The settings and the order
 
-test('the General name and title and the order are read from Dashboard Settings, with the starting values for anything that does not fit', () => {
-  const settings = { generalViewName: '  ', generalViewTitle: 'T'.repeat(80), viewOrder: ['nova', 'bogus', 'nova', 'general'] };
-  views.tidyViewSettings(settings);
-  assert.equal(settings.generalViewName, 'General');
-  assert.equal(settings.generalViewTitle.length, views.longestTitle);
-  assert.deepEqual(settings.viewOrder, ['nova', 'general'], 'a name that is not a view and a view that comes twice are dropped');
-
-  const empty = { viewOrder: [] };
-  views.tidyViewSettings(empty);
-  assert.deepEqual(empty.viewOrder, config.viewKeys);
-  const missing = {};
-  views.tidyViewSettings(missing);
-  assert.deepEqual(missing.viewOrder, config.viewKeys);
-
-  const content = contentWith(raw => { raw.settings.viewOrder = ['family', 'prime']; raw.settings.generalViewTitle = 'Our Dashboard'; });
+test('the General name and title and the order are read from Dashboard Settings', () => {
+  const content = contentWith(raw => { raw.settings.viewOrder = ['family', 'prime']; raw.settings.generalViewTitle = 'Our Dashboard'; raw.settings.generalViewName = 'Shop'; });
   assert.deepEqual(content.settings.viewOrder, ['family', 'prime']);
   assert.equal(content.settings.generalViewTitle, 'Our Dashboard');
+  assert.equal(views.viewNameOf(content, 'general'), 'Shop');
+  assert.deepEqual(views.viewOrderOf(contentWith()), config.viewKeys);
+  assert.deepEqual(views.viewOrderOf(null), config.viewKeys);
 });
+
 
 test('General is named by its setting, a team view by the short name of its team, Family has no tag, and the title is General\'s', () => {
   const content = contentWith(raw => { raw.settings.generalViewName = 'Shop'; });
@@ -251,8 +244,10 @@ test('General is named by its setting, a team view by the short name of its team
   assert.equal(views.viewNameOf(content, 'prime'), 'PRIME');
   assert.equal(views.viewNameOf(content, 'nova'), 'NOVA');
   assert.equal(views.viewNameOf(content, 'family'), 'Family');
-  assert.equal(views.viewShowsTag('family'), false);
-  ['general', 'prime', 'nova'].forEach(key => assert.equal(views.viewShowsTag(key), true, key));
+  assert.equal(views.viewShowsTag(content, 'family'), false);
+  ['general', 'prime', 'nova'].forEach(key => assert.equal(views.viewShowsTag(content, key), true, key));
+  const quiet = contentWith(raw => { raw.views = [{ _id: 'view-prime', viewTag: false }]; });
+  assert.equal(views.viewShowsTag(quiet, 'prime'), false, 'a view can switch its tag off');
   assert.equal(views.viewTitleOf(content, 'general'), 'Hawktimus Dashboard');
   assert.equal(views.viewTitleOf(content, 'family'), 'Hawktimus Dashboard');
   assert.equal(views.viewTitleOf(content, 'prime'), '', 'a team view carries the name of its team');
@@ -276,34 +271,28 @@ test('a team view plays every one of its steps in its team, and General plays th
   assert.deepEqual(views.viewSteps(content, 'family', monday12).map(step => step.panel), ['monday-overall', 'monday-status-depts']);
 });
 
-test('the Monday tasks row of a team view becomes one step for each Team lead marked for Monday', () => {
-  const content = contentWith(raw => {
-    raw.subteams.forEach(lead => { delete lead.monday; });
-    raw.subteams.find(lead => lead.id === 'subteam-b').monday = true;
-    raw.subteams.find(lead => lead.id === 'subteam-a').monday = true;
-  });
+test('the Monday tasks row of a team view becomes one step for each Team lead that has tasks, in the order of the Team leads list', () => {
+  const content = contentWith(raw => { raw.subteams.forEach(lead => { delete lead.monday; }); });
   const steps = views.viewSteps(content, 'prime', monday12).filter(step => step.panel === 'monday-tasks');
-  assert.deepEqual(steps.map(step => step.page.department), ['subteam-a', 'subteam-b'], 'in the order of the Team leads list');
+  assert.deepEqual(steps.map(step => step.page.department), ['subteam-a', 'subteam-b', 'subteam-c']);
   steps.forEach(step => assert.equal(step.page.team, 'prime'));
 });
 
-test('a department marked for Monday that is added later is played without any edit to the view', () => {
-  const before = contentWith(raw => { raw.subteams.forEach(lead => { delete lead.monday; }); raw.subteams.find(lead => lead.id === 'subteam-a').monday = true; });
-  assert.equal(views.viewSteps(before, 'prime', monday12).filter(step => step.panel === 'monday-tasks').length, 1);
-
-  const after = contentWith(raw => {
+test('a Team lead with Monday switched off is left out, and one with no mark is on', () => {
+  const content = contentWith(raw => {
     raw.subteams.forEach(lead => { delete lead.monday; });
-    ['subteam-a', 'subteam-b', 'subteam-c'].forEach(id => { raw.subteams.find(lead => lead.id === id).monday = true; });
+    raw.subteams.find(lead => lead.id === 'subteam-b').monday = false;
+    raw.subteams.find(lead => lead.id === 'subteam-a').monday = true;
   });
-  assert.equal(views.viewSteps(after, 'prime', monday12).filter(step => step.panel === 'monday-tasks').length, 3);
+  const steps = views.viewSteps(content, 'prime', monday12).filter(step => step.panel === 'monday-tasks');
+  assert.deepEqual(steps.map(step => step.page.department), ['subteam-a', 'subteam-c']);
 });
 
-test('with no Team lead marked, the tasks row plays every department that has tasks for the team, and one with none is left out', () => {
-  const content = contentWith(raw => { raw.subteams.forEach(lead => { delete lead.monday; }); });
-  const prime = views.viewSteps(content, 'prime', monday12).filter(step => step.panel === 'monday-tasks').map(step => step.page.department);
-  const nova = views.viewSteps(content, 'nova', monday12).filter(step => step.panel === 'monday-tasks').map(step => step.page.department);
-  assert.deepEqual(prime, ['subteam-a', 'subteam-b', 'subteam-c']);
-  assert.deepEqual(nova, ['subteam-a', 'subteam-c', 'subteam-d']);
+test('a department added later is played without any edit to the view', () => {
+  const before = contentWith(raw => { raw.tasks = raw.tasks.filter(task => task.subteamId !== 'subteam-c'); });
+  const after = contentWith();
+  const count = content => views.viewSteps(content, 'prime', monday12).filter(step => step.panel === 'monday-tasks').length;
+  assert.equal(count(before) + 1, count(after));
 });
 
 test('a Monday tasks row with a department of its own plays that department only, and a department marked with no tasks is skipped', () => {
@@ -348,25 +337,32 @@ test('the competition card that the schedule mixes in plays in the view on the s
 
 // The layouts and the look
 
-test('General is the standard layout and the others are the bar layout, which is drawn in the style of the bar whatever the day says', () => {
-  const plan = { style: 'cybertron', mondayStyle: 'minimal' };
-  assert.equal(views.drawStyleFor('general', false, plan), 'cybertron');
-  assert.equal(views.drawStyleFor('prime', false, plan), config.barDrawStyle);
-  assert.equal(views.drawStyleFor('nova', true, plan), config.barDrawStyle);
-  assert.equal(views.drawStyleFor('family', false, { style: 'original', mondayStyle: 'original' }), config.barDrawStyle);
+test('a bar view is the theme of the day in the bar layout, and a standard view takes the day and the Monday style', () => {
+  const plan = { style: 'cybertron', mondayStyle: 'original' };
+  assert.equal(views.drawStyleFor('standard', false, plan), 'cybertron');
+  assert.equal(views.drawStyleFor('bar', false, plan), 'cybertron', 'the theme stays, the layout is the view\'s');
+  assert.equal(views.drawStyleFor('bar', true, plan), 'cybertron');
+  assert.equal(views.drawStyleFor('standard', true, plan), 'original', 'a Monday style of a standard layout is kept');
 });
 
-test('a standard view never takes the bar style: a Monday style of the bar is the style of the day instead', () => {
-  assert.equal(views.drawStyleFor('general', true, { style: 'original', mondayStyle: 'minimal' }), 'original');
-  assert.equal(views.drawStyleFor('general', true, { style: 'cybertron', mondayStyle: 'original' }), 'original', 'a Monday style of a standard layout is kept');
-  assert.equal(views.drawStyleFor('general', false, { style: 'minimal', mondayStyle: 'minimal' }), 'original', 'and a day on the bar style is the original one');
+test('a standard view never takes the old bar name: that Monday style and that day are the original theme', () => {
+  assert.equal(views.drawStyleFor('standard', true, { style: 'original', mondayStyle: 'minimal' }), 'original');
+  assert.equal(views.drawStyleFor('standard', false, { style: 'minimal', mondayStyle: 'minimal' }), 'original');
 });
 
-test('the look of a step is the team of its view and the style of its layout, and the team is empty for a view with none', () => {
+test('the layout of a view is its field, and the theme of the day is the weekday of Dashboard Settings', () => {
+  const content = contentWith(raw => { raw.views = [{ _id: 'view-nova', layout: 'standard' }]; raw.settings.themeByWeekday = { monday: 'retro' }; });
+  assert.equal(views.viewLayoutOf(content, 'nova'), 'standard');
+  assert.equal(views.viewLayoutOf(content, 'prime'), 'bar');
+  assert.equal(views.dayThemeFor(content, monday12), 'retro');
+  assert.equal(views.dayThemeFor(content, at('2026-10-13T16:00:00Z')), 'cybertron', 'Tuesday');
+  assert.equal(views.tidyView({ layout: 'bar' }, 'general').sidePanels.length, 0, 'the bar layout has no small panel');
+});
+
+test('the look of a step is the team of its view and the theme of the day, and the team is empty for a view with none', () => {
   const plan = { style: 'original', mondayStyle: 'minimal' };
-  assert.deepEqual(views.lookForViewStep({ panel: 'monday-tasks', view: 'prime', team: 'prime' }, plan), { team: 'prime', style: 'minimal', monday: true });
-  assert.deepEqual(views.lookForViewStep({ panel: 'tonight', view: 'general', team: '' }, plan), { team: '', style: 'original', monday: false });
-  assert.deepEqual(views.lookForViewStep({ panel: 'monday-overall', view: 'family', team: '' }, plan), { team: '', style: 'minimal', monday: true });
+  assert.deepEqual(views.lookForViewStep({ panel: 'monday-tasks', view: 'prime', team: 'prime' }, plan, 'bar'), { team: 'prime', style: 'original', monday: true });
+  assert.deepEqual(views.lookForViewStep({ panel: 'tonight', view: 'general', team: '' }, plan, 'standard'), { team: '', style: 'original', monday: false });
 });
 
 test('Nova is the mirrored view: the Nova team carries the mirror switch, and the bar layout turns round with it', () => {
@@ -496,7 +492,7 @@ test('the screen starts in the first view that has something to show, in its tea
   screens.holdScreenLook({ team: '', style: '', monday: false });
   const content = contentWith(raw => { raw.settings.viewOrder = ['prime', 'general']; });
   const look = views.holdBootView(content, monday12);
-  assert.deepEqual(look, { team: 'prime', style: 'minimal', monday: true });
+  assert.deepEqual(look, { team: 'prime', style: 'original', monday: true });
   assert.equal(views.cycleKey(), 'prime');
   assert.equal(viewApply.heldView(), 'prime');
   assert.deepEqual(screens.heldLook(), look);
@@ -612,7 +608,7 @@ test('an alert, an announcement or a talk stops the clock: the view comes back a
 test('the large panel does not lose its place in a view over an interruption: the lists are paused by their own count, and the views only stop their clock', () => {
   const run = read('core/views-run.js');
   const schedule = read('core/schedule.js');
-  assert.ok(!/\bpauseRotation\(|\bresumeRotation\(/.test(withoutComments(run)), 'the views pause nothing');
+  assert.equal((withoutComments(run).match(/\bpauseRotation\(\)/g) || []).length, 1, 'only the pause the control page asks for pauses the pages');
   assert.ok(!withoutComments(run).includes('restartRotation'), 'and restart nothing');
   assert.ok(run.includes('frozen: busyElsewhere() || asked.paused'));
   assert.ok(/function rotationPaused\(\) \{\s*return pauses > 0 \|\| frame\.isPaused\(\);\s*\}/.test(schedule));
@@ -628,19 +624,20 @@ test('a view that the control page holds stays while the hold lasts, and a pause
   const counted = views.cycleSeconds();
   assert.ok(counted > 0);
 
-  world.requests = { pauseRotation: { until: at.getTime() + 10 * 60 * 1000 } };
+  world.content.settings.pauseRotation = { until: new Date(at.getTime() + 100 * 60 * 1000).toISOString() };
   for (let second = 0; second < 100; second += 1) world.seconds(new Date(at.getTime() + second * 1000));
   assert.equal(views.cycleSeconds(), counted, 'a paused clock counts nothing');
 
-  world.requests = { showView: { key: 'nova', until: new Date(at.getTime() + 10 * 3600 * 1000).toISOString() } };
+  delete world.content.settings.pauseRotation;
+  world.content.settings.showView = { key: 'nova', until: new Date(at.getTime() + 100 * 60 * 1000).toISOString() };
   world.log.length = 0;
   world.seconds(at);
   assert.equal(views.cycleKey(), 'nova');
-  assert.deepEqual(world.log, ['startListsOver', 'moveOn grid1 grid2']);
+  assert.deepEqual(world.log, ['resumeRotation', 'startListsOver', 'moveOn grid1 grid2'], 'the pause ends, and the view moves');
   for (let second = 0; second < 2000; second += 1) world.seconds(new Date(at.getTime() + second * 1000));
   assert.equal(views.cycleKey(), 'nova', 'held for as long as the request lasts');
 
-  world.requests = { showView: { key: 'nova', until: at.getTime() - 1000 } };
+  world.content.settings.showView = { key: 'nova', until: new Date(at.getTime() - 1000).toISOString() };
   for (let second = 0; second < 361; second += 1) world.seconds(new Date(at.getTime() + second * 1000));
   assert.equal(views.cycleKey(), 'family', 'a request that has run out holds nothing, and Nova runs its minutes');
 });
@@ -657,6 +654,44 @@ test('a step the clock asks about is judged as the team it is drawn for, and one
   for (let second = 0; second < 5000; second += 1) world.seconds(new Date(at.getTime() + second * 1000));
   assert.ok(asked.length > 0);
   assert.ok(asked.every(panel => panel !== undefined));
+});
+
+
+test('a panel the control page holds is the only one the large panel plays, in the first view that has it, and the page reports the theme and the page number', async () => {
+  const world = await start();
+  views.holdBootView(world.content, new Date());
+  const at = new Date();
+  world.content.settings.holdPanel = { panel: 'monday-board', until: new Date(at.getTime() + 30 * 60 * 1000).toISOString() };
+  world.log.length = 0;
+  world.seconds(at);
+  assert.equal(views.cycleKey(), 'prime');
+  assert.deepEqual(views.viewPlaylist(world.content, at).map(step => step.panel), ['monday-board']);
+  assert.ok(world.log.includes('moveOn grid1'));
+
+  world.content.settings.holdPanel = { panel: '', until: '' };
+  world.seconds(new Date(at.getTime() + 1000));
+  assert.ok(views.viewPlaylist(world.content, at).length > 1, 'the hold is over');
+
+  const page = { dataset: {} };
+  assert.equal(viewApply.applyTheme('cybertron', page), true);
+  assert.equal(page.dataset.theme, 'cybertron');
+  assert.equal(viewApply.applyTheme('cybertron', page), false);
+  assert.ok(read('core/schedule.js').includes("area.dataset.pageNumber = String(number);"));
+});
+
+test('a bar view asks for the bar layout in any theme, and a standard view leaves the layout to the theme', async () => {
+  const style = await import(base + 'core/style.js');
+  viewApply.holdView('prime', 'bar');
+  try {
+    ['original', 'cybertron', 'retro'].forEach(theme => assert.equal(style.layoutFor(theme, 'standard'), 'bar', theme));
+    viewApply.holdView('general', 'standard');
+    assert.equal(style.layoutFor('cybertron', 'standard'), 'standard');
+    assert.equal(style.layoutFor('original', 'sidebar'), 'sidebar');
+    viewApply.holdView('');
+    assert.equal(style.layoutFor('retro', 'standard'), 'standard');
+  } finally {
+    viewApply.holdView('');
+  }
 });
 
 
@@ -722,7 +757,7 @@ test('the shell starts the views in place of the Screens, holds the first view b
 
 test('the docs say how the views go', () => {
   const text = fs.readFileSync(path.join(docsFolder, 'views.md'), 'utf8').replace(/\s+/g, ' ');
-  ['viewOrder', 'minutes', 'swap', 'generalViewTitle', 'two hours', 'Open-Meteo', 'monday: true', 'comes back', 'Family'].forEach(word => assert.ok(text.includes(word), 'views.md names ' + word));
+  ['viewOrder', 'minutes', 'swap', 'generalViewTitle', 'two hours', 'Open-Meteo', 'monday: false', 'comes back', 'Family'].forEach(word => assert.ok(text.includes(word), 'views.md names ' + word));
   assert.ok(!/[—–]/.test(text) && !/!/.test(text), 'written plainly');
 });
 

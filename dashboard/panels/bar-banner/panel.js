@@ -45,7 +45,7 @@ export function update(element, content) {
 
   const view = viewNow();
   const tag = element.querySelector('.view-tag');
-  const tagText = view !== '' && viewShowsTag(view) ? viewNameOf(content, view) : '';
+  const tagText = view !== '' && viewShowsTag(content, view) ? viewNameOf(content, view) : '';
   if (tag.textContent !== tagText) tag.textContent = tagText;
 
   const heading = element.querySelector('.bar-name');

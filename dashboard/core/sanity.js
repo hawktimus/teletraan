@@ -156,6 +156,12 @@ export const contentQuery = `{
     _id,
     title,
     "team": coalesce(team->code, team),
+    layout,
+    mirror,
+    countdownIn,
+    viewTag,
+    teamChip,
+    colors,
     minutes,
     "panels": coalesce(panels, []),
     "sidePanels": coalesce(sidePanels, [])
