@@ -18,7 +18,7 @@ export const sanity = {
 
 // Calendar files and sample content live in one of these folders. The sample
 // folder is kept in git. The live folder is filled in
-// by the Mini and is never committed.
+// by the Teletraan computer and is never committed.
 export const sampleFolder = 'data/sample/';
 export const liveFolder = 'data/live/';
 

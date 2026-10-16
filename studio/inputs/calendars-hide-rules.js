@@ -5,7 +5,7 @@
 import { isRecord, sentence } from './plain-values.js';
 
 // Words the Hide buttons show when they cannot make a rule
-export const noDayLine = 'This list has no day for the event yet, so only Hide all like this works. The Mini adds the day on its next run.';
+export const noDayLine = 'This list has no day for the event yet, so only Hide all like this works. The Teletraan computer adds the day on its next run.';
 export const longCodeLine = 'The code of this calendar is too long for a rule made here. Use Calendar filters.';
 
 // The id of a rule made on this page starts like this, and the id of no other rule does. The page
@@ -22,7 +22,7 @@ const latestDay = '2099-12-31';
 const codePattern = /^[a-z0-9_]+$/;
 const plainDay = /^\d{4}-\d{2}-\d{2}$/;
 
-// What the Mini lists for an event that has no title (mini/scripts/calendar-status.mjs)
+// What the Teletraan computer lists for an event that has no title (computer/scripts/calendar-status.mjs)
 const noTitle = 'No title';
 
 // The text cut to at most limit characters, without splitting a character in two
@@ -49,7 +49,7 @@ function isDay(text) {
 }
 
 // The day of a listed event, or nothing for an event from a document that was written before the
-// Mini listed days
+// computer listed days
 export function dayOf(event) {
   return isDay(event.day) ? event.day : '';
 }
@@ -72,7 +72,7 @@ function shortHash(text) {
   return first.toString(16).padStart(8, '0') + second.toString(16).padStart(8, '0');
 }
 
-// The words a rule looks for in a title: the title without the three dots the Mini adds to a long
+// The words a rule looks for in a title: the title without the three dots the Teletraan computer adds to a long
 // one, cut to 30 characters. An event with no title gives none.
 export function titleWords(title) {
   const text = typeof title === 'string' ? title.trim().replace(/\.\.\.$/, '').trim() : '';

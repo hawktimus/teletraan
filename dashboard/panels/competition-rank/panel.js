@@ -1,6 +1,6 @@
 // The live rank: the rank of the team at the event that is on, as a big number, with its record and
 // its ranking points under it. It comes from the ranking part of the team's entry in frc-status, which
-// the Mini keeps up to date every 5 minutes while an event is on (docs/frc-feed.md).
+// the Teletraan computer keeps up to date every 5 minutes while an event is on (docs/frc-feed.md).
 
 import { cardState, chartMarkup, cut, emptyMarkup, numberFor, pageMarkup, tagTextFor, textAt } from '../../core/competition-draw.js';
 import { recordText } from '../../core/frc.js';

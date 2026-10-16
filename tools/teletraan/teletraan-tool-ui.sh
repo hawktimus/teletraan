@@ -1,4 +1,4 @@
-# Read by teletraan-mini, never run. Printing, asking and checking what was typed.
+# Read by teletraan-tool, never run. Printing, asking and checking what was typed.
 say() { printf '%s\n' "$*"; }
 
 step() { printf '\n\033[1m==> %s\033[0m\n' "$*"; }

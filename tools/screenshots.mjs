@@ -21,7 +21,7 @@
 //
 // Playwright is a development dependency of tools/ only (tools/package.json). It is loaded with
 // import() when the run starts, so the plan and the run can be tested with a stand-in
-// (tests/screenshots.test.mjs). Install it on a laptop, never on the Mini.
+// (tests/screenshots.test.mjs). Install it on a laptop, never on the Teletraan computer.
 
 import fs from 'node:fs';
 import http from 'node:http';

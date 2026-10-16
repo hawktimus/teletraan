@@ -55,7 +55,7 @@ partial="$final.partial"
 rm -f "$backups/$dataset"-*.partial 2> /dev/null || true
 
 # The tool finds the project in studio/sanity.cli.js, so it runs from there.
-# DO_NOT_TRACK keeps it from sending usage figures from the Mini.
+# DO_NOT_TRACK keeps it from sending usage figures from the Teletraan computer.
 status=0
 (cd "$repo/studio" && SANITY_AUTH_TOKEN="$token" DO_NOT_TRACK=1 "$sanity" dataset export "$dataset" "$partial" --overwrite > /dev/null 2>&1) || status=$?
 if [ "$status" -ne 0 ]; then
@@ -79,4 +79,4 @@ ls -1 "$backups" | grep -E "^$dataset-[0-9]{4}-[0-9]{2}-[0-9]{2}\.tar\.gz\$" | s
 echo "backup: wrote $final"
 
 # Best effort: Studio may be unreachable, and the backup is done either way
-"$mini/scripts/status-write.sh" backup > /dev/null 2>&1 || echo "backup: could not tell Studio the time." >&2
+"$computer/scripts/status-write.sh" backup > /dev/null 2>&1 || echo "backup: could not tell Studio the time." >&2

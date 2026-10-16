@@ -18,7 +18,7 @@ import { dateIn, timeZoneOf } from './theme.js';
 
 export const bodySize = { width: 1096, height: 512 };
 
-// The data is called old after this many hours. The Mini writes it about every 45 minutes at the
+// The data is called old after this many hours. The Teletraan computer writes it about every 45 minutes at the
 // least, and every 5 minutes while an event is on.
 const staleHours = 2;
 
@@ -29,12 +29,12 @@ export function cut(text, longest) {
   return letters.length <= longest ? letters.join('') : letters.slice(0, longest - 1).join('').replace(/\s+$/, '') + '…';
 }
 
-// A number for the screen: 31.2, 34, or a dash when the Mini did not find it
+// A number for the screen: 31.2, 34, or a dash when the Teletraan computer did not find it
 export function numberFor(value) {
   return typeof value === 'number' && isFinite(value) ? String(Math.round(value * 10) / 10) : '-';
 }
 
-// The EPA of a team on a card. The team on the screen has its own in its entry when the Mini did not
+// The EPA of a team on a card. The team on the screen has its own in its entry when the Teletraan computer did not
 // write it beside the team.
 export function epaOf(person, entry) {
   if (person.epa !== null) return person.epa;

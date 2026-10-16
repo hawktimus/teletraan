@@ -1,14 +1,14 @@
 // The FRC data: the plain functions that clean the frc-status document and read it.
 // They know nothing about the page, so tests/competition.test.mjs can run them.
 //
-// The Mini writes the document with mini/scripts/frc-sync.sh (docs/frc-feed.md), and
+// The Teletraan computer writes the document with computer/scripts/frc-sync.sh (docs/frc-feed.md), and
 // the screen reads it with the rest of the content (core/sanity.js). tidyFrc() turns it
-// into the shape the competition cards use, always complete: a value the Mini did not find
+// into the shape the competition cards use, always complete: a value the Teletraan computer did not find
 // is null, an empty text or an empty list, and nothing is ever filled in with a made up
 // number. Cleaning an already clean document changes nothing, so the sample content in
 // data/sample/content.json, which is written in this shape, goes through the same function.
 //
-// A team number is kept as text, because a number from the Mini and a made up one in the
+// A team number is kept as text, because a number from the Teletraan computer and a made up one in the
 // sample, such as [1234], are both just what the card writes.
 
 import { visibleItems } from './content.js';
@@ -17,7 +17,7 @@ import { isRecord } from './text.js';
 const plainDate = /^\d{4}-\d{2}-\d{2}$/;
 const teamCode = /^[a-z0-9]+$/;
 
-// How many of each the cards can draw. The Mini keeps at most these as well.
+// How many of each the cards can draw. The Teletraan computer keeps at most these as well.
 const most = { events: 12, districtEvents: 30, results: 8, people: 4, picks: 4, awards: 20, snapshots: 120, notes: 5 };
 
 function listOf(value) {
@@ -33,7 +33,7 @@ function textOf(value, longest) {
   return typeof value === 'string' ? value.trim().slice(0, longest) : '';
 }
 
-// A team number is digits from the Mini, or a few characters of text in the sample
+// A team number is digits from the Teletraan computer, or a few characters of text in the sample
 function numberText(value) {
   if (typeof value === 'number' && isFinite(value)) return String(Math.round(value));
   return textOf(value, 8);
@@ -217,7 +217,7 @@ export function teamEntry(frc) {
   return visibleItems(frc.teams)[0] || null;
 }
 
-// Dates. The Mini writes the days of an event as plain dates, in the time zone of the
+// Dates. The Teletraan computer writes the days of an event as plain dates, in the time zone of the
 // screen, so the cards compare plain dates and never clock times. These work on text
 // such as 2027-03-12 and are the same on every computer.
 

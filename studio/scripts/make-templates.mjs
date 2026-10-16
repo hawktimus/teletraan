@@ -27,7 +27,7 @@ const defaultOutput = path.join(studioFolder, '..', 'docs', 'content-templates')
 // or by the booking form. Calendar filters have day checkboxes and a list of
 // words, which a sheet does not hold well, so they are added in Studio. A team has
 // colors and a logo, so it is added in Studio too (the two starting teams are in
-// docs/seed/teams.ndjson). The status documents are written by the Mini, so they
+// docs/seed/teams.ndjson). The status documents are written by the Teletraan computer, so they
 // have no template. The pages that exist once (Dashboard Settings, Look, Demo) are
 // listed in structure.js. The three Screens exist once each too, with lists of rows
 // that a sheet does not hold, so the type screen has no template. Events Calendar

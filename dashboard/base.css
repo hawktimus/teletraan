@@ -325,7 +325,7 @@ html, body {
 }
 
 /* Under the night screen the dashboard carries on but is not drawn, which saves
-   the old Mini the work. night-screen.js sets data-night once the screen has
+   the old computer the work. night-screen.js sets data-night once the screen has
    faded in, and takes it away as it starts to fade out. */
 html[data-night="on"] #stage { visibility: hidden; }
 

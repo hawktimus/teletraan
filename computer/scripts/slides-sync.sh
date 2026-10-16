@@ -3,8 +3,8 @@
 # Downloads the slides of the talks that are coming up and saves each deck as
 # numbered pictures in <data folder>/slides/<talk id>/, with a manifest.json
 # that says whether it worked. The dashboard shows the pictures during the
-# talk. The talks are read from Sanity, so the Mini needs the internet. Needs
-# poppler-utils, curl and jq (docs/rebuilding-the-mini.md).
+# talk. The talks are read from Sanity, so the Teletraan computer needs the internet. Needs
+# poppler-utils, curl and jq (docs/rebuilding-the-computer.md).
 #
 #   slides-sync.sh                  one run, which the timer starts every 2 minutes
 #   slides-sync.sh --test <link>    downloads one deck into a temporary folder,
@@ -211,7 +211,7 @@ data=${data:-/var/lib/teletraan/data}
 slides="$data/slides"
 
 if [ ! -d "$data" ]; then
-  echo "The data folder $data does not exist. See docs/rebuilding-the-mini.md." >&2
+  echo "The data folder $data does not exist. See docs/rebuilding-the-computer.md." >&2
   exit 1
 fi
 
@@ -264,7 +264,7 @@ curl --disable --silent --get --max-time 30 --max-filesize 10000000 --proto '=ht
 
 # Nothing is deleted or changed unless Sanity has answered with a list
 if [ "$status" -ne 0 ] || ! jq -e '.result | arrays' "$work/answer.json" > /dev/null 2>&1; then
-  echo "Could not get the list of talks from Sanity. Nothing was changed. Check that the Mini is online; the next run tries again." >&2
+  echo "Could not get the list of talks from Sanity. Nothing was changed. Check that the Teletraan computer is online; the next run tries again." >&2
   exit 1
 fi
 

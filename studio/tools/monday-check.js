@@ -1,7 +1,7 @@
 // Test the token, on the Monday tab of Dashboard Settings (inputs/monday-token-input.js). It asks the
-// control page of the Mini to run the helper word monday-check, which asks Monday who the token belongs
+// control page of the Teletraan computer to run the helper word monday-check, which asks Monday who the token belongs
 // to. The answer is the name of the account or the reason it failed. The token itself never reaches the
-// Studio: the Mini reads it from its own settings file and the answer holds a name only.
+// Studio: the Teletraan computer reads it from its own settings file and the answer holds a name only.
 //
 // Plain functions only, so that tests/schemas.test.mjs can run them with node.
 
@@ -12,10 +12,10 @@ export const checkWord = 'monday-check';
 export const words = {
   asking: 'Asking Monday.',
   unreachable: 'The control page could not be reached. Open ' + controlAddress + ' on the WiFi of the shop and try again.',
-  noAnswer: 'The Mini gave no answer.',
+  noAnswer: 'The Teletraan computer gave no answer.',
 };
 
-// What the Mini answered, as a line: { text, failed }. The answer is { ok, account, output, error }; the
+// What the Teletraan computer answered, as a line: { text, failed }. The answer is { ok, account, output, error }; the
 // account name is the first line of output when account is missing.
 export function answerLine(answer) {
   const source = answer && typeof answer === 'object' ? answer : {};

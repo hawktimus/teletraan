@@ -14,7 +14,7 @@
 //           the event they take priority: the rotation alternates a card and an ordinary panel
 //   always  every card that is switched on and has something to show, whatever the date
 //
-// A card with nothing to show is not due, so a screen with no key on the Mini shows no
+// A card with nothing to show is not due, so a screen with no key on the Teletraan computer shows no
 // competition card at all. The cards still say so in one plain sentence when they are asked
 // to draw with nothing to show (the ?show= address, and Preview competition).
 //

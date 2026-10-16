@@ -1,19 +1,19 @@
 #!/bin/bash
 # Usage: sudo install-console.sh
-# Installs the boot and shutdown screens. The login prompt on the Mini's text
+# Installs the boot and shutdown screens. The login prompt on the Teletraan computer's text
 # screen prints /etc/issue before it asks for a name, so this puts the startup
 # drawing there. It also copies teletraan-console.service and turns it on: when
-# the Mini shuts down or reboots, that unit shows the shutdown drawing on the
+# the Teletraan computer shuts down or reboots, that unit shows the shutdown drawing on the
 # TV. It installs no packages and leaves the timers and the kiosk alone.
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 
-console="$mini/console"
-units="$mini/systemd"
-repo=$(cd "$mini/.." && pwd -P)
+console="$computer/console"
+units="$computer/systemd"
+repo=$(cd "$computer/.." && pwd -P)
 unit=teletraan-console.service
 
-# Empty on the Mini. The test sets it to a temporary folder, so the script can
+# Empty on the Teletraan computer. The test sets it to a temporary folder, so the script can
 # run there without touching the computer.
 root=${CONSOLE_ROOT:-}
 target=$root/etc/systemd/system
@@ -39,7 +39,7 @@ for file in "$console/startup.txt" "$console/shutdown.txt" "$units/$unit"; do
 done
 
 # The login prompt reads a backslash in /etc/issue as a code, such as \n for
-# the name of the Mini, so a drawing with one would come out wrong
+# the name of the Teletraan computer, so a drawing with one would come out wrong
 if grep -qF -- '\' "$console/startup.txt"; then
   echo "The file $console/startup.txt has a backslash in it. Use another character." >&2
   exit 1
@@ -84,7 +84,7 @@ echo "     unless that copy is already there"
 echo "  2. write $issue again: the drawing from console/startup.txt,"
 echo "     then the saved text, so the login prompt still works"
 echo "  3. copy $unit to $target, reload systemd and turn"
-echo "     it on. When the Mini stops, it shows console/shutdown.txt on the TV"
+echo "     it on. When the Teletraan computer stops, it shows console/shutdown.txt on the TV"
 echo "It leaves the timers and the kiosk alone."
 echo
 printf 'Press Enter to go ahead, or Ctrl+C to stop. '

@@ -1,6 +1,6 @@
 {
   "placeholder": true,
-  "note": "PLACEHOLDER. Made up numbers and names so the competition cards draw full in ?sample=1. The owner replaces this file: run frc-sync.sh --event <key of a 2026 North Carolina district event> --to <file> on the Mini, then node tools/frc-fixture.mjs <file>.",
+  "note": "PLACEHOLDER. Made up numbers and names so the competition cards draw full in ?sample=1. The owner replaces this file: run frc-sync.sh --event <key of a 2026 North Carolina district event> --to <file> on the Teletraan computer, then node tools/frc-fixture.mjs <file>.",
   "event": "2026ncdemo",
   "source": "placeholder",
   "frc": {

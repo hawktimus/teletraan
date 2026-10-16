@@ -1,4 +1,4 @@
-# Read by teletraan-mini, never run. The keys and calendar links saved on this Mac.
+# Read by teletraan-tool, never run. The keys and calendar links saved on this Mac.
 # "Build season" becomes BUILD_SEASON, which is the middle of
 # CALENDAR_BUILD_SEASON_URL
 calendar_id() {
@@ -52,7 +52,7 @@ set_key() {
 }
 
 # The value of a NAME=value line without its quotes, the way the scripts on the
-# Mini read it
+# computer read it
 unquote() {
   local value=$1
   case $value in [\'\"]*) value=${value#?} ;; esac
@@ -133,8 +133,8 @@ write_secrets() {
   ) && chmod 600 "$temp" && mv -f "$temp" "$secrets_file"
 }
 
-# After the Mini has the values, a cleared key and a removed calendar are gone
-# for good, so the saved file matches the Mini
+# After the Teletraan computer has the values, a cleared key and a removed calendar are gone
+# for good, so the saved file matches the Teletraan computer
 forget_cleared() {
   local i=0 names=() values=() count=0
   while [ "$i" -lt "${#key_names[@]}" ]; do
@@ -162,7 +162,7 @@ forget_cleared() {
   cal_count=$count
 }
 
-# Everything in the output of the Mini goes through this, so that a script that
+# Everything in the output of the Teletraan computer goes through this, so that a script that
 # one day prints a link or a key still cannot show one on this screen. It hides
 # every saved value and anything that looks like a web address.
 hide_secrets() {

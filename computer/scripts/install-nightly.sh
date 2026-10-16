@@ -2,14 +2,14 @@
 # Usage: sudo install-nightly.sh
 # Installs the nightly restarts: copies the two systemd unit files and turns on the
 # timer, which starts nightly.sh at 04:00 every day and at 04:10 on Sundays. The script
-# restarts the screen at 04:00 and reboots the Mini on Sunday, and skips either when a
+# restarts the screen at 04:00 and reboots the Teletraan computer on Sunday, and skips either when a
 # presentation is booked within the hour. It runs as root, so the unit file names no
 # account. It checks that curl is installed. It does not install anything.
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 
-units="$mini/systemd"
-repo=$(cd "$mini/.." && pwd -P)
+units="$computer/systemd"
+repo=$(cd "$computer/.." && pwd -P)
 target=/etc/systemd/system
 
 # The unit files name the repository location directly
@@ -25,8 +25,8 @@ for unit in teletraan-nightly.service teletraan-nightly.timer; do
   fi
 done
 
-if [ ! -x "$mini/scripts/nightly.sh" ]; then
-  echo "$mini/scripts/nightly.sh is missing or cannot be run." >&2
+if [ ! -x "$computer/scripts/nightly.sh" ]; then
+  echo "$computer/scripts/nightly.sh is missing or cannot be run." >&2
   exit 1
 fi
 

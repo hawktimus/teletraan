@@ -6,7 +6,7 @@ import { dotNames } from './dots.js';
 export const reportSeconds = 10;
 export const reportAddress = '/control/api/now';
 
-// A page on this computer: the Mini's own kiosk. A laptop that opens the dashboard must not report.
+// A page on this computer: the Teletraan computer's own kiosk. A laptop that opens the dashboard must not report.
 export function isLocalHost(hostname) {
   return ['localhost', '127.0.0.1', '[::1]', '::1'].includes(String(hostname));
 }

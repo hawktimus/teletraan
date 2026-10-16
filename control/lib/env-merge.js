@@ -1,5 +1,5 @@
 // Reads and changes the text of local.env without losing its comments or the order of its lines.
-// A value is written between single quotes, the way the scripts on the Mini read it. This file
+// A value is written between single quotes, the way the scripts on the Teletraan computer read it. This file
 // never logs a value.
 
 const namePattern = /^[A-Z][A-Z0-9_]{0,63}$/;

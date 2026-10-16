@@ -107,7 +107,7 @@ export function firstNameOnly(value) {
   return true;
 }
 
-// The plain fields of the documents the Mini writes: a name, a title and a one line description
+// The plain fields of the documents the Teletraan computer writes: a name, a title and a one line description
 export function textField(name, title, description) {
   return defineField({ name: name, title: title, type: 'string', description: description });
 }

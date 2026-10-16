@@ -1,5 +1,5 @@
 // The parts of the Update tab that need no page: reading the git head of a picked folder, naming the folder
-// against the releases on the Mini, and the "v14 · a1b2c3d" label. The tests run this file in Node.
+// against the releases on the Teletraan computer, and the "v14 · a1b2c3d" label. The tests run this file in Node.
 
 import { isExcluded } from './tree-hash.js';
 
@@ -59,7 +59,7 @@ export async function readCommit(files) {
   return '';
 }
 
-// What to say about the folder. releases are the kept releases from the Mini (with treeHash and commit).
+// What to say about the folder. releases are the kept releases from the Teletraan computer (with treeHash and commit).
 // Returns { text, same } where same is true when the folder is exactly what is on the wall.
 export function describeFolder(releases, hash, commit) {
   const live = releases.find(release => release.current);

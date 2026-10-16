@@ -1,6 +1,6 @@
 // The district points: the points of the team in the district, as a big number, and a bar that fills
 // as the points come up to the cutoff for the state championship. The points come from the districtPoints
-// part of the team's entry in frc-status. The cutoff is empty until the script on the Mini has been told how
+// part of the team's entry in frc-status. The cutoff is empty until the script on the Teletraan computer has been told how
 // many teams the state championship takes (docs/frc-feed.md, "The district cutoff"), and then the bar is left
 // out and a sentence says so.
 

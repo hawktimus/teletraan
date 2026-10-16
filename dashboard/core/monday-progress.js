@@ -32,7 +32,7 @@ export function progressHours(tasks) {
   return { done: done, total: total, unestimated: unestimated, percent: total > 0 ? Math.round((done / total) * 100) : 0 };
 }
 
-// What the Mini wrote for a milestone has the id milestone-monday-<id>, and a task lists the plain <id>
+// What the Teletraan computer wrote for a milestone has the id milestone-monday-<id>, and a task lists the plain <id>
 function milestoneKey(milestone) {
   return String(milestone.id || '').replace(/^milestone-monday-/, '');
 }
@@ -66,7 +66,7 @@ export function nextMilestones(content, code, count = 3) {
 
 // How old the board read is
 
-// How many minutes the Mini reads the boards apart. Dashboard Settings, Monday tab, 5 to 120, 30 when it is not set.
+// How many minutes the Teletraan computer reads the boards apart. Dashboard Settings, Monday tab, 5 to 120, 30 when it is not set.
 const defaultEveryMinutes = 30;
 
 export function everyMinutesOf(content) {
@@ -74,7 +74,7 @@ export function everyMinutesOf(content) {
   return typeof value === 'number' && isFinite(value) ? Math.min(120, Math.max(5, Math.round(value))) : defaultEveryMinutes;
 }
 
-// Whole minutes since the Mini last read the boards, or null when that is not known
+// Whole minutes since the Teletraan computer last read the boards, or null when that is not known
 export function minutesSince(status, now) {
   const read = status && typeof status.lastSyncAt === 'string' ? Date.parse(status.lastSyncAt) : NaN;
   return isNaN(read) ? null : Math.max(0, Math.floor((now.getTime() - read) / 60000));

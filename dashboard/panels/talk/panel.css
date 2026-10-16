@@ -14,7 +14,7 @@
 }
 #talk[data-ground="black"] { background: var(--pure-black); }
 
-/* Under a card or the slides the dashboard is not drawn, which saves the old Mini
+/* Under a card or the slides the dashboard is not drawn, which saves the old computer
    the work. presentation-run.js sets data-talk once the picture covers it. */
 html[data-talk="on"] #stage { visibility: hidden; }
 

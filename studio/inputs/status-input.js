@@ -1,7 +1,7 @@
-// The Status of the Mini block at the top of the Screen tab of Dashboard
+// The Status of the Teletraan computer block at the top of the Screen tab of Dashboard
 // Settings (schemas/settingsStatus.js). It reads the document status-mini,
-// which the Mini writes with mini/scripts/status-write.sh, and shows what the
-// Mini last did in plain words. The field stores nothing: this input never
+// which the Teletraan computer writes with computer/scripts/status-write.sh, and shows what the
+// computer last did in plain words. The field stores nothing: this input never
 // changes the value.
 //
 // If the document is missing it says No status yet, and if it cannot be read it
@@ -22,7 +22,7 @@ const h = createElement;
 // The same version as the screen's own questions to Sanity
 const apiVersion = '2025-02-19';
 
-// The id the Mini writes to. mini/scripts/status-write.sh has the same one.
+// The id the Teletraan computer writes to. computer/scripts/status-write.sh has the same one.
 export const statusId = 'status-mini';
 
 // The lines in the order they are shown: the field of the document, and the words before its time
@@ -44,7 +44,7 @@ export function buildLine(doc) {
   return 'On the wall: ' + commit + (built === '' ? '' : ' · ' + built);
 }
 
-// The watchdog and backup lines (mini/scripts/watchdog.sh, backup-dataset.sh). They are kept apart from
+// The watchdog and backup lines (computer/scripts/watchdog.sh, backup-dataset.sh). They are kept apart from
 // the times above because one of them is a count and not a time.
 export const watchdogFields = ['kioskRestarts', 'lastKioskRestartAt', 'lastBackupAt'];
 
@@ -74,7 +74,7 @@ const styles = {
 };
 
 // The lines for a status document: a label and the words after it. A time the
-// Mini has not written yet says Not yet.
+// computer has not written yet says Not yet.
 export function describeStatus(doc, now) {
   const source = doc && typeof doc === 'object' ? doc : {};
 
@@ -99,9 +99,9 @@ export async function readStatus(client) {
 // What the block shows for what was read: null while it is being read, then
 // { doc, unreadable }. now is the time to count the ages from.
 export function statusView(read, now) {
-  if (!read) return h('p', { style: styles.note }, 'Reading the status of the Mini.');
-  if (read.unreadable) return h('p', { style: styles.note }, 'The status of the Mini could not be read. Refresh the page to try again.');
-  if (!read.doc) return h('p', { style: styles.note }, 'No status yet. The Mini writes it after its first job, once it has a write token.');
+  if (!read) return h('p', { style: styles.note }, 'Reading the status of the Teletraan computer.');
+  if (read.unreadable) return h('p', { style: styles.note }, 'The status of the Teletraan computer could not be read. Refresh the page to try again.');
+  if (!read.doc) return h('p', { style: styles.note }, 'No status yet. The Teletraan computer writes it after its first job, once it has a write token.');
 
   return h(
     'div',

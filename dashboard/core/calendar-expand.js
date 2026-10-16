@@ -54,7 +54,7 @@ function zonedInstant(clock, formatter) {
 }
 
 // The moment a date and time means. fallbackZone is used when the stamp has
-// no zone of its own. A zone name Intl does not know is read as the Mini's
+// no zone of its own. A zone name Intl does not know is read as the Teletraan computer's
 // own time zone.
 function toDate(stamp, fallbackZone) {
   const zone = stamp.zone || fallbackZone || null;

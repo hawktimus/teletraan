@@ -2,12 +2,12 @@
 #   . "$(dirname "$0")/lib.sh"
 # right after "set -euo pipefail". It is read, never run.
 #
-# mini is the mini/ folder, repo the repository above it, config the dashboard
+# computer is the computer/ folder, repo the repository above it, config the dashboard
 # settings file and env_file the keys file.
-mini=$(cd "$(dirname "$0")/.." && pwd)
-repo=$(dirname "$mini")
+computer=$(cd "$(dirname "$0")/.." && pwd)
+repo=$(dirname "$computer")
 config="$repo/dashboard/config.js"
-env_file="$mini/local.env"
+env_file="$computer/local.env"
 
 # The value of a NAME=value line in local.env, without its quotes. Only the
 # name asked for is read, because the other lines hold secrets. The last line

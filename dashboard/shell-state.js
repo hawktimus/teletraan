@@ -23,7 +23,7 @@ export const shellState = {
   showingSample: false, // true while the page shows the sample content (?sample=1)
   extrasStarted: false, // the events are being read, so a change of source has to redo them
   calendarsReadAt: null, // when every calendar file was last read well, for the connection status text
-  deviceText: [], // the Mini's name and ssh line, read only while Sanity cannot be reached
+  deviceText: [], // the Teletraan computer's name and ssh line, read only while Sanity cannot be reached
   decorationsUsed: false, // core/season.js has been asked for a pack, so it has to be asked again when the pack goes
   choosingTeam: false, // rebuild() is choosing the team, so a change of team that it finds does not start another rebuild
   stayStarted: false, // startWhatStays() has drawn the panels that stay, so a style with other frames has to draw them again

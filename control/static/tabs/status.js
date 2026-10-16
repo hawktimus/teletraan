@@ -7,7 +7,7 @@ import { statusHtml } from './render.js';
 const restarts = [
   { word: 'restart-kiosk', label: 'Restart screen', doing: 'Restarting the screen' },
   { word: 'restart-services', label: 'Restart services', doing: 'Restarting the services' },
-  { word: 'reboot', label: 'Reboot Mini', doing: 'Rebooting the Mini' },
+  { word: 'reboot', label: 'Reboot the computer', doing: 'Rebooting the Teletraan computer' },
 ];
 const syncs = [
   { target: 'calendars', label: 'Sync calendars now' },

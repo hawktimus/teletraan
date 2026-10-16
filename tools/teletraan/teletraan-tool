@@ -1,19 +1,19 @@
 #!/bin/bash
-# Updates the Mini from this Mac, and keeps its keys and its calendar links.
-# Run it by double-clicking "Teletraan Mini.command" in Finder, or in a terminal:
+# Updates the Teletraan computer from this Mac, and keeps its keys and its calendar links.
+# Run it by double-clicking "Teletraan Tool.command" in Finder, or in a terminal:
 #
-#   tools/mini/teletraan-mini                 the menu
-#   tools/mini/teletraan-mini update          copy the files, then restart the screen
-#   tools/mini/teletraan-mini status          show what the Mini last did
-#   tools/mini/teletraan-mini restart         restart the screen
+#   tools/teletraan/teletraan-tool                 the menu
+#   tools/teletraan/teletraan-tool update          copy the files, then restart the screen
+#   tools/teletraan/teletraan-tool status          show what the Teletraan computer last did
+#   tools/teletraan/teletraan-tool restart         restart the screen
 #
 # A word after the name does what the same choice in the menu does, with no menu,
 # and the exit code is not zero when a step fails, so tools/mac/ship.sh can rely on
-# it. --yes skips the "Go ahead?" question of update, and --mini NAME picks a saved
-# Mini other than the one in use. docs/updating-the-mini.md explains each choice.
+# it. --yes skips the "Go ahead?" question of update, and --computer NAME picks a saved
+# computer other than the one in use. docs/updating-the-computer.md explains each choice.
 #
 # The keys and the calendar links are secrets. They live in ~/.teletraan/secrets.env
-# on this Mac and in mini/local.env on the Mini, and nowhere else. This script
+# on this Mac and in computer/local.env on the Teletraan computer, and nowhere else. This script
 # never prints one: it shows the first 4 characters and dots, and it sends the
 # values with scp, so no command line carries one.
 #
@@ -22,12 +22,12 @@
 
 set -u
 
-# The Mini's repository folder and the name of the screen's service. These are
-# not secrets; change them here if the Mini changes.
-MINI_REPO=${MINI_REPO:-/opt/teletraan}
-MINI_KIOSK=${MINI_KIOSK:-teletraan-kiosk.service}
-# The folder in the login user's home on the Mini where the files are put before the installer runs
-MINI_STAGING=${MINI_STAGING:-teletraan-staging}
+# The Teletraan computer's repository folder and the name of the screen's service. These are
+# not secrets; change them here if the Teletraan computer changes.
+COMPUTER_REPO=${COMPUTER_REPO:-/opt/teletraan}
+COMPUTER_KIOSK=${COMPUTER_KIOSK:-teletraan-kiosk.service}
+# The folder in the login user's home on the Teletraan computer where the files are put before the installer runs
+COMPUTER_STAGING=${COMPUTER_STAGING:-teletraan-staging}
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 repo=$(cd "$here/../.." && pwd)
@@ -37,7 +37,7 @@ config_file=$state_dir/config
 secrets_file=$state_dir/secrets.env
 
 # What a key, a link, an address and a name may look like. The keys use the rule
-# the scripts on the Mini use. A link is checked for the characters a calendar
+# the scripts on the Teletraan computer use. A link is checked for the characters a calendar
 # address has, because it is written between quotes in two other files.
 key_pattern='^[A-Za-z0-9_.-]+$'
 link_pattern='^[A-Za-z0-9._~:/?#@!&()*+,;=%-]+$'
@@ -45,20 +45,20 @@ address_pattern='^[A-Za-z0-9][A-Za-z0-9._-]*@[A-Za-z0-9][A-Za-z0-9._-]*$'
 name_pattern='^[a-z0-9][a-z0-9_-]{0,19}$'
 folder_pattern='^/[A-Za-z0-9/._-]+$'
 
-# The Minis this Mac knows, and the one in use
-mini_names=()
-mini_addresses=()
-mini_count=0
+# The computers this Mac knows, and the one in use
+computer_names=()
+computer_addresses=()
+computer_count=0
 current_name=''
-mini_name=''
+computer_name=''
 address=''
 
 # The keys and calendars saved on this Mac. A key is 0 when it is not set, 1 when
-# it has a value and 2 when it was cleared and the Mini has not been told yet. A
-# calendar with an empty value was removed and the Mini has not been told yet.
+# it has a value and 2 when it was cleared and the Teletraan computer has not been told yet. A
+# calendar with an empty value was removed and the Teletraan computer has not been told yet.
 key_names=(SANITY_WRITE_TOKEN MONDAY_API_TOKEN TBA_AUTH_KEY CONTROL_PIN)
 key_labels=('Sanity write token' 'Monday token' 'The Blue Alliance key' 'Control page PIN')
-key_uses=('lets the Mini write its status and the Monday tasks into Sanity' 'lets the Mini read the Monday boards' 'lets the Mini read the competition data' 'lets coaches sign in to the control page, 6 to 12 digits')
+key_uses=('lets the Teletraan computer write its status and the Monday tasks into Sanity' 'lets the computer read the Monday boards' 'lets the computer read the competition data' 'lets coaches sign in to the control page, 6 to 12 digits')
 key_values=('' '' '' '')
 key_states=(0 0 0 0)
 # The form of choice 2 asks for the first three. The PIN of the control page has choice 8.
@@ -74,7 +74,7 @@ answer=''
 
 # The functions are in the files beside this one
 for part in ui secrets config deploy keys; do
-  source "$here/teletraan-mini-$part.sh"
+  source "$here/teletraan-tool-$part.sh"
 done
 
 # Set when a command word is given instead of the menu. The steps are the same.
@@ -98,31 +98,31 @@ visible_count=0
 
 show_menu() {
   say ""
-  say "Teletraan Mini"
+  say "Teletraan Tool"
   say ""
-  say "Mini in use: $mini_name ($address)"
+  say "Teletraan computer in use: $computer_name ($address)"
   say ""
-  say "  1  Install the files on this Mac as the next release on the Mini, then restart the screen"
+  say "  1  Install the files on this Mac as the next release on the Teletraan computer, then restart the screen"
   say "  2  Keys and calendars"
-  say "  3  Copy the Mini's keys and calendars to this Mac"
-  say "  4  Install the services on the Mini"
-  say "  5  Status of the Mini"
+  say "  3  Copy the Teletraan computer's keys and calendars to this Mac"
+  say "  4  Install the services on the Teletraan computer"
+  say "  5  Status of the Teletraan computer"
   say "  6  Restart the screen"
-  say "  7  Choose another Mini, or add one"
+  say "  7  Choose another computer, or add one"
   say "  8  Set the PIN of the control page"
   say "  q  Quit"
   say ""
 }
 
 usage() {
-  say "Usage: teletraan-mini [--mini NAME] [--yes] [update | status | restart]"
+  say "Usage: teletraan-tool [--computer NAME] [--yes] [update | status | restart]"
   say ""
   say "  (no word)  show the menu"
-  say "  update     copy the files to the Mini and install them as the next release (the first time it also sets up the control page)"
-  say "  status     show what the Mini last did"
+  say "  update     copy the files to the Teletraan computer and install them as the next release (the first time it also sets up the control page)"
+  say "  status     show what the Teletraan computer last did"
   say "  restart    restart the screen"
   say "  --yes      with update, do not ask Go ahead?"
-  say "  --mini     use the saved Mini with this name instead of the one in use"
+  say "  --computer     use the saved computer with this name instead of the one in use"
 }
 
 # A wrong word is not repeated back, in case it was a key or an address typed by mistake
@@ -134,16 +134,16 @@ bad_arguments() {
 
 saved_names() {
   local i=0 list=''
-  while [ "$i" -lt "$mini_count" ]; do
+  while [ "$i" -lt "$computer_count" ]; do
     if [ -n "$list" ]; then list="$list, "; fi
-    list="$list${mini_names[$i]}"
+    list="$list${computer_names[$i]}"
     i=$((i + 1))
   done
   printf '%s' "$list"
 }
 
 main() {
-  local command command_word='' wanted_mini='' wanted i=0 found=no
+  local command command_word='' wanted_computer='' wanted i=0 found=no
   while [ "$#" -gt 0 ]; do
     case $1 in
       update|status|restart)
@@ -151,12 +151,12 @@ main() {
         command_word=$1
         ;;
       --yes|-y) assume_yes=yes ;;
-      --mini)
-        if [ "$#" -lt 2 ]; then bad_arguments "--mini needs the name of a saved Mini."; fi
-        wanted_mini=$2
+      --computer)
+        if [ "$#" -lt 2 ]; then bad_arguments "--computer needs the name of a saved computer."; fi
+        wanted_computer=$2
         shift
         ;;
-      --mini=*) wanted_mini=${1#--mini=} ;;
+      --computer=*) wanted_computer=${1#--computer=} ;;
       -h|--help|help) usage; exit 0 ;;
       *) bad_arguments "that is not a word this tool knows." ;;
     esac
@@ -172,16 +172,16 @@ main() {
       exit 1
     fi
   done
-  if ! printf '%s' "$MINI_REPO" | grep -Eq "$folder_pattern"; then
-    problem "MINI_REPO must be a plain folder path such as /opt/teletraan."
+  if ! printf '%s' "$COMPUTER_REPO" | grep -Eq "$folder_pattern"; then
+    problem "COMPUTER_REPO must be a plain folder path such as /opt/teletraan."
     exit 1
   fi
-  if ! printf '%s' "$MINI_STAGING" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9._-]*$'; then
-    problem "MINI_STAGING must be a plain folder name such as teletraan-staging."
+  if ! printf '%s' "$COMPUTER_STAGING" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9._-]*$'; then
+    problem "COMPUTER_STAGING must be a plain folder name such as teletraan-staging."
     exit 1
   fi
-  if ! printf '%s' "$MINI_KIOSK" | grep -Eq "$key_pattern"; then
-    problem "MINI_KIOSK must be the name of a service such as teletraan-kiosk.service."
+  if ! printf '%s' "$COMPUTER_KIOSK" | grep -Eq "$key_pattern"; then
+    problem "COMPUTER_KIOSK must be the name of a service such as teletraan-kiosk.service."
     exit 1
   fi
 
@@ -194,31 +194,31 @@ main() {
     command_mode=yes
     declined_status=1
   fi
-  if [ "$mini_count" = 0 ]; then
+  if [ "$computer_count" = 0 ]; then
     if [ "$command_mode" = yes ]; then
-      problem "no Mini is saved on this Mac yet. Run tools/mini/teletraan-mini with no word after it, once, and give it the Mini's address."
+      problem "no computer is saved on this Mac yet. Run tools/teletraan/teletraan-tool with no word after it, once, and give it the Teletraan computer's address."
       exit 1
     fi
     first_run || exit 1
   fi
 
-  wanted=${wanted_mini:-$current_name}
-  use_mini 0
-  while [ "$i" -lt "$mini_count" ]; do
-    if [ "${mini_names[$i]}" = "$wanted" ]; then
-      use_mini "$i"
+  wanted=${wanted_computer:-$current_name}
+  use_computer 0
+  while [ "$i" -lt "$computer_count" ]; do
+    if [ "${computer_names[$i]}" = "$wanted" ]; then
+      use_computer "$i"
       found=yes
     fi
     i=$((i + 1))
   done
-  if [ -n "$wanted_mini" ] && [ "$found" = no ]; then
-    problem "no saved Mini has that name. The saved names are: $(saved_names)."
+  if [ -n "$wanted_computer" ] && [ "$found" = no ]; then
+    problem "no saved computer has that name. The saved names are: $(saved_names)."
     exit 1
   fi
 
   case $command_word in
-    update) update_mini; exit $? ;;
-    status) mini_status; exit $? ;;
+    update) update_computer; exit $? ;;
+    status) computer_status; exit $? ;;
     restart) restart_screen; exit $? ;;
   esac
 
@@ -226,13 +226,13 @@ main() {
     show_menu
     prompt "Choose: "
     case $answer in
-      1) update_mini ;;
+      1) update_computer ;;
       2) keys_and_calendars ;;
-      3) pull_from_mini ;;
+      3) pull_from_computer ;;
       4) install_services ;;
-      5) mini_status ;;
+      5) computer_status ;;
       6) restart_screen ;;
-      7) choose_mini ;;
+      7) choose_computer ;;
       8) set_pin ;;
       q|Q) say "Done."; exit 0 ;;
       '') ;;

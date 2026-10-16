@@ -9,7 +9,7 @@
 //
 // A set alternates. Each play shows the picture after the one shown last, and
 // the first again at the end of the list. The one shown last is kept in
-// localStorage, so a Mini that restarts carries on with the other picture and
+// localStorage, so a computer that restarts carries on with the other picture and
 // does not start from the first every time. If the storage cannot be used the
 // screen still alternates, from its own memory, until the page is reloaded.
 //

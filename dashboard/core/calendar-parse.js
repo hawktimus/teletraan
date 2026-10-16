@@ -91,7 +91,7 @@ function unescapeText(text) {
 
 // 20270112T180000Z, 20270112T180000 and 20270112 become the parts of that
 // date and time, plus the zone the calendar wrote it in. A time with no zone
-// (zone is null) is on the Mini's own clock.
+// (zone is null) is on the Teletraan computer's own clock.
 function readStamp(value, zone) {
   const cleaned = String(value).trim().replace(/[-:]/g, '');
   const match = cleaned.match(/^(\d{4})(\d\d)(\d\d)(?:T(\d\d)(\d\d)(\d\d)?(?:\.\d+)?)?(Z)?$/i);

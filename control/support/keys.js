@@ -1,5 +1,5 @@
 // The Keys tab: what is shown of a key, how a form is checked, and how it is merged into local.env.
-// The rules are those of tools/mini/merge-env.sh and the Mac tool's key menu, so the two ways in
+// The rules are those of tools/teletraan/merge-env.sh and the Mac tool's key menu, so the two ways in
 // treat the file alike. Nothing here logs or returns a value except the merged file that goes to
 // the helper.
 
@@ -102,7 +102,7 @@ function isEmptyValue(value) {
   return value === '' || value === "''" || value === '""';
 }
 
-// The same merge as tools/mini/merge-env.sh. A name in the new lines replaces the first place of
+// The same merge as tools/teletraan/merge-env.sh. A name in the new lines replaces the first place of
 // that name in the file, repeats of it are dropped, an empty value takes the name out, a new name is
 // added at the end, and every other line stays.
 export function mergeEnv(existing, lines) {

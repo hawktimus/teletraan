@@ -1,18 +1,18 @@
 #!/bin/bash
 # Ships a change from this Mac to the screen: checks the code, commits and
 # pushes it to GitHub, updates the Studio, then has the Mac tool copy the files
-# to the Mini and restart the screen. docs/shipping-from-the-mac.md explains each
+# to the Teletraan computer and restart the screen. docs/shipping-from-the-mac.md explains each
 # step and what to do when one stops.
 #
 # Run it by double-clicking "Ship Teletraan.command" in Finder, from
 # "Ship Teletraan.app" (tools/mac/make-app.sh makes it), or in a terminal:
 #
 #   tools/mac/ship.sh             a menu
-#   tools/mac/ship.sh all         check, commit, push, Studio, update the Mini and restart the screen
+#   tools/mac/ship.sh all         check, commit, push, Studio, update the Teletraan computer and restart the screen
 #   tools/mac/ship.sh push        check, commit and push only
 #   tools/mac/ship.sh studio      update the Studio only
-#   tools/mac/ship.sh mini        update the Mini and restart the screen only
-#   tools/mac/ship.sh status      show the status of the Mini
+#   tools/mac/ship.sh computer       update the Teletraan computer and restart the screen only
+#   tools/mac/ship.sh status      show the status of the Teletraan computer
 #
 # Older words still work: all-restart is the same as all, and restart restarts
 # the screen without copying anything.
@@ -22,15 +22,15 @@
 # a broken step, and the last lines say what had worked. No password is stored
 # anywhere: git, Sanity, ssh and sudo ask you in this window.
 #
-# The Mini's address is not here. The Mac tool keeps it in ~/.teletraan/config
-# (tools/mini/teletraan-mini, docs/updating-the-mini.md).
+# The Teletraan computer's address is not here. The Mac tool keeps it in ~/.teletraan/config
+# (tools/teletraan/teletraan-tool, docs/updating-the-computer.md).
 
 set -u
 
 here=$(cd "$(dirname "$0")" && pwd)
 repo=$(cd "$here/../.." && pwd)
-mini_tool=$repo/tools/mini/teletraan-mini
-mini_config=$HOME/.teletraan/config
+computer_tool=$repo/tools/teletraan/teletraan-tool
+computer_config=$HOME/.teletraan/config
 
 dry_run=no
 action=''
@@ -102,12 +102,12 @@ node_is_new_enough() {
 # sent, so a missing piece cannot leave the run half done. All the gaps are
 # listed together, each with the one command that fills it.
 preflight() {
-  local tools='' modules=no identity=no mini=no tool
+  local tools='' modules=no identity=no computer=no tool
   case $1 in
-    all)            tools='git node npm ssh rsync'; modules=yes; identity=yes; mini=yes ;;
+    all)            tools='git node npm ssh rsync'; modules=yes; identity=yes; computer=yes ;;
     push)           tools='git node'; identity=yes ;;
     studio)         tools='node npm'; modules=yes ;;
-    mini|status|restart) tools='ssh rsync'; mini=yes ;;
+    computer|status|restart) tools='ssh rsync'; computer=yes ;;
   esac
 
   step "Checking this Mac"
@@ -135,11 +135,11 @@ preflight() {
     [ -n "$(git -C "$repo" config user.email 2>/dev/null)" ] || missing "git does not know your email. Run once: git config --global user.email \"you@example.com\""
   fi
 
-  if [ "$mini" = yes ]; then
-    if [ ! -x "$mini_tool" ]; then
-      missing "the Mac tool is missing or cannot run: $mini_tool"
-    elif ! grep -Eq '^mini\.[a-z0-9_-]+=' "$mini_config" 2>/dev/null; then
-      missing "this Mac has no saved Mini yet. Run once, and give it the Mini's address: \"$mini_tool\""
+  if [ "$computer" = yes ]; then
+    if [ ! -x "$computer_tool" ]; then
+      missing "the Mac tool is missing or cannot run: $computer_tool"
+    elif ! grep -Eq '^mini\.[a-z0-9_-]+=' "$computer_config" 2>/dev/null; then
+      missing "this Mac has no saved computer yet. Run once, and give it the Teletraan computer's address: \"$computer_tool\""
     fi
   fi
 
@@ -153,7 +153,7 @@ preflight() {
 
 # The Mac tool copies this folder as it is, so a folder that is behind GitHub
 # (the other computer pushed since the last git pull) would put older files on
-# the Mini. This looks first and stops before anything is sent.
+# the Teletraan computer. This looks first and stops before anything is sent.
 check_up_to_date() {
   step "Comparing this folder with GitHub"
   command -v git >/dev/null 2>&1 || return 0
@@ -164,7 +164,7 @@ check_up_to_date() {
   local behind
   behind=$(git -C "$repo" rev-list --count 'HEAD..@{u}' 2>/dev/null || echo 0)
   if [ "$behind" != 0 ]; then
-    say "GitHub has $behind newer commit(s) that this folder does not have. Shipping now would put older files on the Mini. Run:"
+    say "GitHub has $behind newer commit(s) that this folder does not have. Shipping now would put older files on the Teletraan computer. Run:"
     say "  cd \"$repo\" && git pull --no-rebase"
     say "and then run this again."
     fail "this folder is behind GitHub."
@@ -284,26 +284,26 @@ update_studio() {
   finished="$finished Studio,"
 }
 
-# Step 4: the Mac tool copies this folder to the Mini and restarts the screen.
-# It asks for the Mini's passwords here, in this window, and stores none.
-update_mini() {
-  step "Updating the Mini and restarting the screen"
-  if ! run "$mini_tool" update --yes; then
-    fail "the Mini was not updated. The lines above say why."
+# Step 4: the Mac tool copies this folder to the Teletraan computer and restarts the screen.
+# It asks for the Teletraan computer's passwords here, in this window, and stores none.
+update_computer() {
+  step "Updating the Teletraan computer and restarting the screen"
+  if ! run "$computer_tool" update --yes; then
+    fail "the Teletraan computer was not updated. The lines above say why."
   fi
-  finished="$finished Mini update and restart,"
+  finished="$finished Teletraan computer update and restart,"
 }
 
-status_mini() {
-  step "Status of the Mini"
-  run "$mini_tool" status || fail "the status could not be read. The lines above say why."
-  finished="$finished Mini status,"
+status_computer() {
+  step "Status of the Teletraan computer"
+  run "$computer_tool" status || fail "the status could not be read. The lines above say why."
+  finished="$finished Teletraan computer status,"
 }
 
 # Only the restart, for a screen that looks wrong
-restart_mini() {
-  step "Restarting the screen on the Mini"
-  run "$mini_tool" restart || fail "the screen was not restarted. The lines above say why."
+restart_computer() {
+  step "Restarting the screen on the Teletraan computer"
+  run "$computer_tool" restart || fail "the screen was not restarted. The lines above say why."
   finished="$finished restart,"
 }
 
@@ -311,11 +311,11 @@ menu() {
   say "Ship Teletraan I"
   say ""
   say "  1  Ship everything: check the code, commit, push, deploy the Studio,"
-  say "     update the Mini and restart the screen"
+  say "     update the Teletraan computer and restart the screen"
   say "  2  Push only: check the code, commit and push"
   say "  3  Studio only"
-  say "  4  Update the Mini only, and restart the screen"
-  say "  5  Status of the Mini"
+  say "  4  Update the Teletraan computer only, and restart the screen"
+  say "  5  Status of the Teletraan computer"
   say "  q  Quit"
   say ""
   local choice
@@ -324,7 +324,7 @@ menu() {
     1) action=all ;;
     2) action=push ;;
     3) action=studio ;;
-    4) action=mini ;;
+    4) action=computer ;;
     5) action=status ;;
     *) say "Nothing done."; exit 0 ;;
   esac
@@ -333,19 +333,19 @@ menu() {
 [ -n "$action" ] || menu
 if [ "$action" = all-restart ]; then action=all; fi
 case "$action" in
-  all|push|studio|mini|status|restart) ;;
-  *) fail "I do not know that word. Use all, push, studio, mini or status." ;;
+  all|push|studio|computer|status|restart) ;;
+  *) fail "I do not know that word. Use all, push, studio, computer or status." ;;
 esac
 if [ "$dry_run" = yes ]; then say "Dry run: nothing below is run."; fi
 
 preflight "$action"
 case "$action" in
-  all)     check_up_to_date; run_checks; commit_and_push; update_studio; update_mini ;;
+  all)     check_up_to_date; run_checks; commit_and_push; update_studio; update_computer ;;
   push)    run_checks; commit_and_push ;;
   studio)  update_studio ;;
-  mini)    check_up_to_date; update_mini ;;
-  status)  status_mini ;;
-  restart) restart_mini ;;
+  computer) check_up_to_date; update_computer ;;
+  status)  status_computer ;;
+  restart) restart_computer ;;
 esac
 
 step "Finished"
@@ -354,6 +354,6 @@ if [ "$dry_run" = yes ]; then
 else
   say "Done:$finished" | sed 's/,$//'
   case "$action" in
-    all|mini|restart) say "The screen was restarted, so it shows the new files." ;;
+    all|computer|restart) say "The screen was restarted, so it shows the new files." ;;
   esac
 fi

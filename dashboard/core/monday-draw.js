@@ -175,7 +175,7 @@ export function markerMarkup(rows, noun, longWordsInBar = false) {
 // When there is nothing to draw
 
 // The sentence a card says when the cards have no rows, and why. content.settings.mondayBoards are the
-// boards that were chosen in Dashboard Settings, and content.monday is the status the Mini wrote.
+// boards that were chosen in Dashboard Settings, and content.monday is the status the Teletraan computer wrote.
 export function noRowsSentence(content) {
   const settings = content && content.settings ? content.settings : {};
   const boards = Array.isArray(settings.mondayBoards) ? settings.mondayBoards : [];

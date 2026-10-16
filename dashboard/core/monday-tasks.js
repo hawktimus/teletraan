@@ -24,7 +24,7 @@ export const statuses = [
 // Most urgent first. A task with no priority, or one that is not in the list, comes after all of them.
 export const priorities = ['high', 'medium', 'low'];
 
-// The monday-status document as the cards use it, or null when there is none. The Mini writes more
+// The monday-status document as the cards use it, or null when there is none. The Teletraan computer writes more
 // into it (the boards and their columns for the Studio): only the sync time and the daily counts are
 // kept. A sample may say sample: true, which the cards then write in their header.
 export function tidyMondayStatus(raw) {
@@ -279,7 +279,7 @@ export function bothSteps(content, codes, now = new Date()) {
 
 // The rules of the Monday panels (docs/monday.md)
 //
-// The Mini writes the one task board into Sanity (mini/scripts/monday-sync.sh) and every Monday panel
+// The Teletraan computer writes the one task board into Sanity (computer/scripts/monday-sync.sh) and every Monday panel
 // asks these functions, so the panels agree on which task is where. A task is a document with a status
 // (up-next, in-progress, in-review, blocked or done), a team code or none (General), the id of its Team
 // lead (subteamId, the department), a priority, dates as plain dates (startDate, dueDate, completedOn),
@@ -290,7 +290,7 @@ export function bothSteps(content, codes, now = new Date()) {
 export const statusWords = { 'up-next': 'TO DO', 'in-progress': 'IN PROGRESS', 'in-review': 'IN REVIEW', blocked: 'STUCK', done: 'DONE' };
 
 // The tasks a Monday panel may draw, whatever team is on the screen (forTeam says the team): from the board, switched on in Studio (show, showOnTv and the expiry)
-// and on the board (Show on TV is Show), with a department, and not a subitem. A task the Mini wrote
+// and on the board (Show on TV is Show), with a department, and not a subitem. A task the Teletraan computer wrote
 // before the board had Show on TV has no showOnBoard, and counts as shown. A task with no department
 // (Unassigned is written hidden, with hiddenReason unassigned) never renders.
 export function visibleTasks(content, now = new Date()) {

@@ -1,4 +1,4 @@
-// The tree hash of a folder on the Mini. The rules and the text that is hashed are in
+// The tree hash of a folder on the Teletraan computer. The rules and the text that is hashed are in
 // control/static/tree-hash.js, which the page runs too, and tests/control-tree-hash.test.mjs checks that the
 // two give the same answer for the same folder.
 

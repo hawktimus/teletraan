@@ -5,7 +5,7 @@
 // with one switch each, Show on TV. Three types are kept in the schema with no line
 // here, so the documents already typed keep opening: extraEvent (Events Calendar,
 // which the screen no longer reads), place (a task's Location field adds and opens
-// them) and demo (its buttons are on Start here). The status documents, which the Mini
+// them) and demo (its buttons are on Start here). The status documents, which the Teletraan computer
 // writes, have no line either: status, which the status block in Dashboard Settings
 // shows, calendarStatus, which the Calendars page shows, and frcStatus and mondayStatus,
 // which the connection blocks of the Competition and Monday tabs show. tests/schemas.test.mjs
@@ -218,7 +218,7 @@ function listOf(S, entry, times) {
   return S.listItem().title(entry.title).id(id).icon(entry.icon).child(paneOf(S, entry, times));
 }
 
-// The second list under Monday Boards: the milestones the Mini made. The page links to it with this
+// The second list under Monday Boards: the milestones the Teletraan computer made. The page links to it with this
 // id (milestonesChild, in monday-boards-parts.js) in place of a board number. Nobody adds one.
 const milestoneList = { kind: 'list', title: 'Milestones', id: 'milestones', type: 'milestone', sort: byTargetDate, add: [] };
 

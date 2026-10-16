@@ -44,7 +44,7 @@ function minutesOfDay(text) {
 const formatters = {}; // one per time zone, because making one is slow
 
 // Minutes since midnight in a time zone, by the clock on the wall there. The
-// parts are read by name and the zone is always given, so the Mini's own time
+// parts are read by name and the zone is always given, so the Teletraan computer's own time
 // zone never matters. A zone that Intl does not know falls back to the Theme
 // page's default, so a slip cannot stop the screen.
 export function minutesIn(timeZone, now) {

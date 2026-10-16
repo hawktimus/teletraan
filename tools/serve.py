@@ -21,7 +21,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         super().end_headers()
 
     # Only the dashboard and the test pages are served. Everything else in
-    # the folder (the git history, the settings of the Mini) answers 404, and so does
+    # the folder (the git history, the settings of the Teletraan computer) answers 404, and so does
     # any request that does not come from this computer's own address.
     def send_head(self):
         parts = [part for part in self.path.split('?')[0].split('/') if part]

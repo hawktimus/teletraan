@@ -36,7 +36,7 @@ export function withDefaults(raw) {
   const content = Object.assign({ tasks: [], plan: null, plans: [], teams: [], sponsors: [], tipsAndNews: [], notices: [], subteams: [], people: [], photos: [], presentations: [], customPanels: [], calendarFilters: [], milestones: [], frc: null, monday: null, mini: { lastCalendarSyncAt: '', calendarErrors: 0 }, screens: [], views: [], subthemes: [] }, source);
   content.team = Object.assign({}, defaultTeam, source.team);
   content.settings = Object.assign({}, defaultSettings, source.settings);
-  // The Mini reads the two Monday blocks and the screen has no use for them
+  // The Teletraan computer reads the two Monday blocks and the screen has no use for them
   ['mondayTaskBoard', 'mondayMilestoneBoard'].forEach(name => delete content.settings[name]);
   content.settings.countdown = Object.assign({}, defaultSettings.countdown, content.settings.countdown);
   content.settings.alert = Object.assign({}, defaultSettings.alert, content.settings.alert);
@@ -146,7 +146,7 @@ export function fixSettingValues(settings, saved = settings) {
   settings.crt = tidyGlitch(settings.crt);
   // The Events panel: Group events by kind (Calendars tab) is a switch that starts off
   if (typeof settings.groupEventsByKind !== 'boolean') settings.groupEventsByKind = defaultSettings.groupEventsByKind;
-  // The Monday tab: the boards are a list and the owner names a switch. The Mini reads both, and the screen has no use for them
+  // The Monday tab: the boards are a list and the owner names a switch. The Teletraan computer reads both, and the screen has no use for them
   if (!Array.isArray(settings.mondayBoards)) settings.mondayBoards = defaultSettings.mondayBoards.slice();
   if (typeof settings.mondayShowOwners !== 'boolean') settings.mondayShowOwners = defaultSettings.mondayShowOwners;
 }

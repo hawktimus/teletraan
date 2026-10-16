@@ -1,4 +1,4 @@
-# Read by teletraan-mini, never run. The menus for keys, calendar links and the PIN.
+# Read by teletraan-tool, never run. The menus for keys, calendar links and the PIN.
 show_keys() {
   local i=0
   while [ "$i" -lt "$form_key_count" ]; do
@@ -154,13 +154,13 @@ edit_calendars() {
 # 2. The form for the keys and the calendars
 keys_and_calendars() {
   local i=0
-  step "Keys and calendars for the Mini $mini_name"
+  step "Keys and calendars for the Teletraan computer $computer_name"
   load_secrets
   change_notes=()
   change_count=0
 
   say "Each value is shown as its first 4 characters and dots. For a key, press e to edit it, k to keep it or c to clear it."
-  say "A Mac that has no saved values yet should use choice 3 first, so the Mini's values are shown here."
+  say "A Mac that has no saved values yet should use choice 3 first, so the Teletraan computer's values are shown here."
 
   while [ "$i" -lt "$form_key_count" ]; do
     edit_key "$i"
@@ -171,7 +171,7 @@ keys_and_calendars() {
   say ""
   if [ "$change_count" = 0 ]; then
     say "Nothing changed."
-    ask_yes "Send the saved values to the Mini anyway?" no || return 0
+    ask_yes "Send the saved values to the Teletraan computer anyway?" no || return 0
   else
     say "Changes:"
     i=0
@@ -179,7 +179,7 @@ keys_and_calendars() {
       say "  ${change_notes[$i]}"
       i=$((i + 1))
     done
-    ask_yes "Save these on this Mac and send them to the Mini $mini_name?" yes || { say "Nothing was saved."; return 0; }
+    ask_yes "Save these on this Mac and send them to the Teletraan computer $computer_name?" yes || { say "Nothing was saved."; return 0; }
   fi
 
   if ! write_secrets; then
@@ -187,16 +187,16 @@ keys_and_calendars() {
     return 1
   fi
   say "Saved on this Mac in $secrets_file."
-  send_to_mini || return 1
+  send_to_computer || return 1
   forget_cleared
   write_secrets || problem "could not tidy $secrets_file."
-  say "Done. The Mini has the new values."
+  say "Done. The Teletraan computer has the new values."
 }
 
 # 8. The PIN of the control page. It travels like a key and is shown as dots.
 set_pin() {
   local last=$((${#key_names[@]} - 1))
-  step "PIN of the control page on the Mini $mini_name"
+  step "PIN of the control page on the Teletraan computer $computer_name"
   load_secrets
   change_notes=()
   change_count=0
@@ -209,7 +209,7 @@ set_pin() {
     problem "could not save $secrets_file."
     return 1
   fi
-  send_to_mini || return 1
+  send_to_computer || return 1
   forget_cleared
   write_secrets || problem "could not tidy $secrets_file."
   say "Done. Open the control page and sign in with the PIN."

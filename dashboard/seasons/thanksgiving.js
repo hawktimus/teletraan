@@ -28,7 +28,7 @@
 // and no gradient.
 
 import { shape } from '../core/svg-pieces.js';
-import { acorn, brown, drawn, elm, ginkgo, gold, hanging, maple, miniLeaf, oak, olive, orange, red, sceneMarkup, vine } from './art/thanksgiving-scene.js';
+import { acorn, brown, drawn, elm, ginkgo, gold, hanging, maple, computerLeaf, oak, olive, orange, red, sceneMarkup, vine } from './art/thanksgiving-scene.js';
 import { cluster, mark, spray } from './art/thanksgiving-marks.js';
 
 const shapes = {
@@ -47,8 +47,8 @@ const shapes = {
   'hang-oak-orange': drawn(hanging(oak, orange), null),
   'hang-ginkgo-gold': drawn(hanging(ginkgo, gold), null),
   'hang-elm-olive': drawn(hanging(elm, olive), null),
-  'blown-leaf-red': { viewBox: '0 0 12 8', markup: miniLeaf(0.5, 4, 11, 0, red) },
-  'blown-leaf-gold': { viewBox: '0 0 12 8', markup: miniLeaf(0.5, 4, 11, 0, gold) },
+  'blown-leaf-red': { viewBox: '0 0 12 8', markup: computerLeaf(0.5, 4, 11, 0, red) },
+  'blown-leaf-gold': { viewBox: '0 0 12 8', markup: computerLeaf(0.5, 4, 11, 0, gold) },
   'vine-top': vine(1920, 26, 9, 1.5, 30, 11, 330, 10),
   'vine-a': vine(836, 14, 6, 1, 26, 7, 190, 6),
   'vine-b': vine(654, 14, 6, 1, 26, 7, 170, 6),

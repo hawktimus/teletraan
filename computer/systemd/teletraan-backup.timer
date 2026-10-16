@@ -2,7 +2,7 @@
 Description=Back up the Teletraan I Sanity dataset every night
 
 [Timer]
-# 03:15 in the time zone of the Mini, which is the kiosk time. A Mini that was
+# 03:15 in the time zone of the Teletraan computer, which is the kiosk time. A computer that was
 # off at that time makes the backup when it next starts.
 OnCalendar=*-*-* 03:15:00
 Persistent=true

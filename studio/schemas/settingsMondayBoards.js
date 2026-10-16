@@ -1,5 +1,5 @@
 // The rows of the older Monday tab. The field that holds them is hidden in Dashboard Settings
-// and kept so that nothing typed is lost; the Mini ignores it. settingsMonday.js uses board
+// and kept so that nothing typed is lost; the Teletraan computer ignores it. settingsMonday.js uses board
 // and mostBoards for that field.
 
 import { defineField, defineArrayMember } from 'sanity';
@@ -25,7 +25,7 @@ function fromGroups(context) {
   return !fromColumn(context);
 }
 
-// The longest board entry the Mini reads in one run, with 500 items each (mini/scripts/monday-sync.sh)
+// The longest board entry the Teletraan computer reads in one run, with 500 items each (computer/scripts/monday-sync.sh)
 export const mostBoards = 10;
 
 // The status column is needed only when the status comes from a column, so its rule is a custom one
@@ -88,7 +88,7 @@ export const board = defineArrayMember({
       initialValue: 'groups',
     }),
     columnField('statusColumn', 'Status column', 'The column with the status of each item, needed when the status comes from a column. If the list cannot be read, type the column id, up to 50 characters.', StatusColumnInput, true),
-    // Kept, and hidden, so that a value saved earlier still opens and publishes. The Mini no longer reads it.
+    // Kept, and hidden, so that a value saved earlier still opens and publishes. The Teletraan computer no longer reads it.
     defineField({
       name: 'backlogLabel',
       title: 'Backlog label',

@@ -31,7 +31,7 @@ export function reasonText(reason) {
 
 // What to do about each reason, in a sentence for the coach who reads the screen
 const reasonFixes = {
-  network: 'Check the cable and the router of the Mini',
+  network: 'Check the cable and the router of the Teletraan computer',
   cors: 'Add this address under API, CORS origins in Sanity',
   denied: 'Check that the dataset in Sanity is public',
   other: 'Sanity may be down. The last content stays on screen',
@@ -89,7 +89,7 @@ function countLine(pairs) {
 //   always           the Show connection status switch
 //   content          the content on screen, for the counts
 //   calendarsReadAt  a Date, or null while the calendars have not been read
-//   deviceLines      the Mini's name and ssh line (core/device.js), which only exist while offline
+//   deviceLines      the Teletraan computer's name and ssh line (core/device.js), which only exist while offline
 // The text shows when Sanity is out of reach (status.offline) or the switch is on.
 // Every time is a time of day, so the text never goes out of date on its own.
 export function connectionLines(info) {

@@ -33,9 +33,9 @@ import { classifyFailure } from './connection.js';
 // The Teams come with the rest. Every kind of content that has a Team field is sent
 // with the code of its team, or nothing when it is for both teams. A team that was
 // deleted has no code either. A team's logo is sent like a person's photo.
-// The FRC data (frc-status) is one document that the Mini writes. It is sent as it is and
+// The FRC data (frc-status) is one document that the Teletraan computer writes. It is sent as it is and
 // core/frc.js cleans it. No document means no competition cards.
-// The board status (monday-status) is one document that the Mini writes. Only the sync time and the
+// The board status (monday-status) is one document that the Teletraan computer writes. Only the sync time and the
 // daily counts of open items are asked for, and core/monday.js cleans them. No document means the
 // progress card has no line to draw. The tasks from the board come with the other tasks, above, and
 // normalizeContent keeps only those (core/task-source.js).

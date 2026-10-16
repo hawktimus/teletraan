@@ -1,5 +1,5 @@
 // The first rows of the data behind a panel, for the Now on the wall card. They come from the
-// published dataset, the way the dashboard reads it. Panels that draw from files on the Mini
+// published dataset, the way the dashboard reads it. Panels that draw from files on the Teletraan computer
 // (events, weather) or from the competition feed have no rows here.
 
 import fs from 'node:fs';

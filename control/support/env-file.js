@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import { parseEnv } from '../lib/env-merge.js';
 
 export function envPath(ctx) {
-  return ctx.envFile || process.env.TELETRAAN_ENV_FILE || '/opt/teletraan/mini/local.env';
+  return ctx.envFile || process.env.TELETRAAN_ENV_FILE || '/opt/teletraan/computer/local.env';
 }
 
 // { NAME: 'value' } of the file, or nothing when it cannot be read. A placeholder that starts with [ is left out.

@@ -1,5 +1,5 @@
 // What each calendar brought in, in one document with the fixed id 'calendar-status'.
-// The Mini writes it with mini/scripts/status-write.sh calendar-status after each
+// The Teletraan computer writes it with computer/scripts/status-write.sh calendar-status after each
 // calendar download, so editors never open it: it is not in the sidebar or the New
 // menu (structure.js, sanity.config.js), and the Calendars page shows it
 // (calendars-view.js). The dashboard never reads it.
@@ -8,7 +8,7 @@
 // the coming events, including the ones a Calendar filter hides from the screen. It
 // holds no calendar address (docs/calendars-page.md).
 //
-// Everything but the code is optional. A calendar the Mini has not downloaded yet has no
+// Everything but the code is optional. A calendar the Teletraan computer has not downloaded yet has no
 // time, and one with no file has no events.
 
 import { defineType, defineField, defineArrayMember } from 'sanity';
@@ -36,8 +36,8 @@ const calendar = defineArrayMember({
   type: 'object',
   title: 'Calendar',
   fields: [
-    defineField({ name: 'code', title: 'Calendar code', type: 'string', description: 'The code of the calendar on the Mini, the same as in Dashboard Settings.' }),
-    defineField({ name: 'fetchedAt', title: 'Last download', type: 'datetime', description: 'When the Mini last downloaded this calendar properly.' }),
+    defineField({ name: 'code', title: 'Calendar code', type: 'string', description: 'The code of the calendar on the Teletraan computer, the same as in Dashboard Settings.' }),
+    defineField({ name: 'fetchedAt', title: 'Last download', type: 'datetime', description: 'When the Teletraan computer last downloaded this calendar properly.' }),
     defineField({ name: 'error', title: 'Last error', type: 'string', description: 'Why the last download failed, in plain words. Empty when it worked.' }),
     defineField({ name: 'eventCount', title: 'Events in 30 days', type: 'number', description: 'How many events fall in the next 30 days, hidden ones included.' }),
     defineField({ name: 'hiddenCount', title: 'Hidden events', type: 'number', description: 'How many of those a Calendar filter hides from the screen.' }),
@@ -59,9 +59,9 @@ export default defineType({
   // Keeps it out of Studio's search, so it is not found by accident
   __experimental_omnisearch_visibility: false,
   fields: [
-    defineField({ name: 'updatedAt', title: 'Written at', type: 'datetime', description: 'When the Mini made this document. The Mini writes this.' }),
-    defineField({ name: 'eventsNote', title: 'Why no events are listed', type: 'string', description: 'Set when the Mini could not list the coming events, such as when Node is not installed on it.' }),
-    defineField({ name: 'calendars', title: 'Calendars', type: 'array', of: [calendar], description: 'One entry for each calendar line in local.env on the Mini.' }),
+    defineField({ name: 'updatedAt', title: 'Written at', type: 'datetime', description: 'When the Teletraan computer made this document. The computer writes this.' }),
+    defineField({ name: 'eventsNote', title: 'Why no events are listed', type: 'string', description: 'Set when the Teletraan computer could not list the coming events, such as when Node is not installed on it.' }),
+    defineField({ name: 'calendars', title: 'Calendars', type: 'array', of: [calendar], description: 'One entry for each calendar line in local.env on the Teletraan computer.' }),
   ],
   preview: {
     prepare: () => ({ title: 'Calendar status' }),

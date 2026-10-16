@@ -133,7 +133,7 @@ function normalizeBoardFields(task) {
 
 const milestoneStatuses = ['not-started', 'on-track', 'at-risk', 'done'];
 
-// The milestones the Mini wrote, by target date. One with no target date, one whose name starts with EXAMPLE (the
+// The milestones the Teletraan computer wrote, by target date. One with no target date, one whose name starts with EXAMPLE (the
 // placeholder row of the board) and one with no name are left out.
 export function milestonesFrom(list) {
   return objectsIn(list)

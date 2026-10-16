@@ -83,7 +83,7 @@ export const docsAddress = 'https://github.com/Hawktimus/teletraan/tree/main/doc
 
 export const links = [
   { id: 'control', label: 'The control page', says: 'Updates the screen, shows what is on the wall and restarts things. It works on the WiFi of the shop.', address: controlAddress },
-  { id: 'studio', label: 'The Studio on the web', says: 'The same Studio, for when the one on the Mini is not reachable.', address: studioAddress },
+  { id: 'studio', label: 'The Studio on the web', says: 'The same Studio, for when the one on the Teletraan computer is not reachable.', address: studioAddress },
   { id: 'docs', label: 'The guides', says: 'Short pages on how each part works.', address: docsAddress },
 ];
 

@@ -69,9 +69,10 @@ export function createReleases(releasesDir) {
     return numbers().map(n => Object.assign(readRelease(n), { current: n === live, legacy: isLegacy(n) }));
   }
 
-  // A tree from before the folder move cannot run under the new units, so it is kept as a record only
+  // A tree from before the folder move (deploy/ or mini/) cannot run under the new units, so it is kept as a record only
   function isLegacy(n) {
-    return fs.existsSync(path.join(releasesDir, String(n), 'deploy', 'scripts'));
+    const folder = path.join(releasesDir, String(n));
+    return fs.existsSync(path.join(folder, 'deploy', 'scripts')) || fs.existsSync(path.join(folder, 'mini', 'scripts'));
   }
 
   // Points current at release n. The link is made beside the old one and renamed over it, so there is no moment without one.
@@ -84,7 +85,7 @@ export function createReleases(releasesDir) {
     linkTopLevel();
   }
 
-  // The scripts, units and compose file name /opt/teletraan/mini, /opt/teletraan/dashboard and so on. These links
+  // The scripts, units and compose file name /opt/teletraan/computer, /opt/teletraan/dashboard and so on. These links
   // keep those names working: each one goes through current, so a flip moves them all.
   function linkTopLevel() {
     const live = path.join(currentLink);
@@ -106,6 +107,14 @@ export function createReleases(releasesDir) {
       if (kind && !kind.isSymbolicLink()) continue;
       if (kind) fs.rmSync(link, { force: true });
       fs.symlinkSync(path.join('current', name), link);
+    }
+    // The old name of the computer/ folder: a link left from before the rename points at nothing
+    if (!names.includes('mini')) {
+      try {
+        if (fs.lstatSync(path.join(root, 'mini')).isSymbolicLink()) fs.rmSync(path.join(root, 'mini'), { force: true });
+      } catch (error) {
+        // no old link
+      }
     }
   }
 

@@ -11,7 +11,7 @@ const CHIP_GAP = 24;
 const PER_ROW = 4;
 const MOST = 8;
 
-// The two scores of a chip, ours big and the other one under it. A score the Mini did not find is a dash.
+// The two scores of a chip, ours big and the other one under it. A score the Teletraan computer did not find is a dash.
 function scoresText(result) {
   return {
     ours: result.scoreFor === null ? '-' : String(result.scoreFor),

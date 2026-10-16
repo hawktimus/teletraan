@@ -10,7 +10,7 @@
 //      every second (makePreviewRunner().look).
 //   3. A request starts a preview only if it is less than a minute old and is not the
 //      one handled before, the same guard as a demo (shouldRunDemo in core/demo.js).
-//      The one handled before is kept in localStorage, so a Mini that restarts never
+//      The one handled before is kept in localStorage, so a computer that restarts never
 //      starts it again.
 //   4. It waits while an alert, an announcement, a talk, night mode, a demo or a hidden
 //      transition has the screen.

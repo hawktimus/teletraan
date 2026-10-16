@@ -1,4 +1,4 @@
-// Times in words, for the Studio pages that show what the Mini did: the status block
+// Times in words, for the Studio pages that show what the Teletraan computer did: the status block
 // (status-input.js) and the Calendars page (calendars-view-parts.js). Plain functions
 // only, so tests/schemas.test.mjs can run them with node.
 

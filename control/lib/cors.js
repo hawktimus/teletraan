@@ -1,4 +1,4 @@
-// Asks Sanity whether the origin of the control page may read the dataset from a browser. The Studio on the Mini
+// Asks Sanity whether the origin of the control page may read the dataset from a browser. The Studio on the Teletraan computer
 // needs it: the owner adds the address under CORS origins at sanity.io/manage once. The answer is kept for a
 // few minutes.
 

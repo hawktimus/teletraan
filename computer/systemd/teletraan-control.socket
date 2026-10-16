@@ -3,7 +3,7 @@ Description=Socket of the Teletraan I control helper
 
 [Socket]
 # The control container mounts this folder and reaches the helper through the socket in it.
-# ACCOUNT is replaced by mini/install.sh with the login user, so the container can write to it.
+# ACCOUNT is replaced by computer/install.sh with the login user, so the container can write to it.
 ListenStream=/run/teletraan/control.sock
 SocketMode=0660
 SocketUser=ACCOUNT

@@ -1,5 +1,5 @@
-// What the Mini read about the competition, in one document with the fixed id
-// 'frc-status'. mini/scripts/frc-sync.sh writes it as a whole, so editors never
+// What the Teletraan computer read about the competition, in one document with the fixed id
+// 'frc-status'. computer/scripts/frc-sync.sh writes it as a whole, so editors never
 // open it: it is not in the sidebar or the New menu (structure.js,
 // sanity.config.js). The connection block on the Competition tab of Dashboard
 // Settings shows when it was last written (settingsCompetition.js), and the
@@ -7,7 +7,7 @@
 //
 // It holds team numbers, team nicknames, match numbers and times, scores, ranks,
 // award names and ratings, and no person's name. The dataset is public, so anyone
-// can read it. Every field is optional, because a value the Mini did not find is
+// can read it. Every field is optional, because a value the Teletraan computer did not find is
 // left out and never made up. The fields are described in docs/frc-feed.md.
 
 import { defineType, defineField, defineArrayMember } from 'sanity';
@@ -119,14 +119,14 @@ const teamFields = [
 
 export default defineType({
   name: 'frcStatus',
-  title: 'FRC data from the Mini',
+  title: 'FRC data from the Teletraan computer',
   type: 'document',
   readOnly: true,
   // Keeps it out of Studio's search, so it is not found by accident
   __experimental_omnisearch_visibility: false,
   fields: [
     numberField('season', 'Season', 'The year of the season that was read.'),
-    defineField({ name: 'lastSyncAt', title: 'Last sync', type: 'datetime', description: 'When the Mini last wrote this. The Mini writes it.' }),
+    defineField({ name: 'lastSyncAt', title: 'Last sync', type: 'datetime', description: 'When the Teletraan computer last wrote this. The computer writes it.' }),
     textField('lastError', 'Last error', 'What went wrong in the last run, in plain words. Empty when nothing did.'),
     defineField({
       name: 'notes',
@@ -147,6 +147,6 @@ export default defineType({
     listOf('teams', 'Teams', 'One entry for each team that was read.', teamFields),
   ],
   preview: {
-    prepare: () => ({ title: 'FRC data from the Mini' }),
+    prepare: () => ({ title: 'FRC data from the Teletraan computer' }),
   },
 });

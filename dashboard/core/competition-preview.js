@@ -9,13 +9,13 @@
 //      (makeCompetitionPreviewRunner().look).
 //   3. A request starts the preview only if it is less than a minute old and is not the one handled
 //      before, the same guard as a demo (shouldRunDemo in core/demo.js). The one handled before is
-//      kept in localStorage, so a Mini that restarts never runs it again.
+//      kept in localStorage, so a computer that restarts never runs it again.
 //   4. It waits while an alert, an announcement, a talk, night mode, a demo or a hidden transition
 //      has the screen.
 //   5. It reads the sample frc-status from data/sample/content.json, which has made up team numbers
 //      in [brackets], and for competitionPreviewSeconds the large panel shows every card with that
 //      data, one after the other (previewCompetition in core/competition.js). Nothing is read from
-//      Sanity or from the Mini, and nothing is written. When the time is up the large panel goes
+//      Sanity or from the Teletraan computer, and nothing is written. When the time is up the large panel goes
 //      back to its own list.
 
 import { competitionPreviewSeconds } from '../config.js';

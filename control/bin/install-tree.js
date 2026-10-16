@@ -1,4 +1,4 @@
-// Installs a folder as the next release, with the same steps as the Update tab. mini/install.sh runs it for the
+// Installs a folder as the next release, with the same steps as the Update tab. computer/install.sh runs it for the
 // first install and for the Mac tool, and the post-receive hook of the git path runs it for a push.
 //
 //   node control/bin/install-tree.js <folder> [--note "text"] [--commit abc1234] [--from git] [--no-restart] [--no-studio]

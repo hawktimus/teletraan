@@ -1,7 +1,7 @@
 // The next match: its number and time, the three teams on each alliance with their EPA, which side
 // is the team's own, and the chance that red wins as one bar split red and blue. The match is the nextMatch
 // part of the team's entry in frc-status. During an event it is the first card (core/competition.js).
-// The win chance and the EPA of a team are left out when the Mini did not find them, and a sentence
+// The win chance and the EPA of a team are left out when the Teletraan computer did not find them, and a sentence
 // says so where the bar would be.
 
 import { cardState, chartMarkup, clockText, cut, emptyMarkup, epaOf, numberFor, pageMarkup, tagTextFor, textAt, whenText } from '../../core/competition-draw.js';

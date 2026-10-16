@@ -44,7 +44,7 @@ export function slidePages(manifest) {
 }
 
 // The address of the folder that holds a talk's manifest.json and its pictures
-// (mini/scripts/slides-sync.sh), with the slash at the end. The sample content has
+// (computer/scripts/slides-sync.sh), with the slash at the end. The sample content has
 // its own folder, like its calendars.
 export function slidesFolder(sample, talk) {
   return (sample ? sampleFolder : liveFolder) + 'slides/' + encodeURIComponent(talk.id) + '/';

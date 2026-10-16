@@ -250,10 +250,10 @@ export const defaultSettings = {
   competitionResults: true,
   competitionAlliance: true,
   competitionDistrict: true,
-  // The Monday tab in the Studio (docs/monday.md). The Mini reads these (mini/scripts/monday-sync.sh) and writes the
+  // The Monday tab in the Studio (docs/monday.md). The Teletraan computer reads these (computer/scripts/monday-sync.sh) and writes the
   // tasks and milestones, which carry what the panels need. The screen reads only mondayEveryMinutes (for the stale
   // chip) and mondayShowOwners.
-  //   mondayEveryMinutes    how often the Mini reads the boards, 5 to 120 minutes
+  //   mondayEveryMinutes    how often the Teletraan computer reads the boards, 5 to 120 minutes
   //   mondayTaskBoard       the task board: its number, the column of each field, the label tables (a label is read by its
   //                         index, not its text), and the Hide label text. A team label row names a Team, none meaning both
   //                         teams. A department row names a Team lead, or is matched to the Team lead with the same name

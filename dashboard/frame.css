@@ -136,7 +136,7 @@ svg [data-fx] { transform-box: fill-box; }
 /* The glint is in an svg of its own (class glint-layer), so while the dash moves
    only that svg is redrawn, not the plate and the text under it. Measured over
    one 9 second cycle in Chromium on a Mac, the three glints cost about 80 ms
-   of drawing and 70 ms of style work in all. Measure it again on the Mini with
+   of drawing and 70 ms of style work in all. Measure it again on the Teletraan computer with
    ?glint=off. */
 [data-state="shown"] .glint {
   animation: glint var(--time-glint) linear calc(var(--glint-delay, 2s) * var(--pace)) infinite;

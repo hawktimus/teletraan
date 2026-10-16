@@ -51,7 +51,7 @@ export function mondayEvery(settings) {
   return typeof value === 'number' && isFinite(value) ? Math.min(120, Math.max(5, Math.round(value))) : 30;
 }
 
-// The three dots from what the Mini and Sanity say. Each field of facts is optional.
+// The three dots from what the Teletraan computer and Sanity say. Each field of facts is optional.
 //   monday         { lastSyncAt, lastError } the monday-status document
 //   everyMinutes   mondayEveryMinutes
 //   calendarAt     when the calendars were last downloaded (status-mini lastCalendarSyncAt)

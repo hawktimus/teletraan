@@ -1,7 +1,7 @@
 #!/bin/sh
-# Merges a file of NAME='value' lines into mini/local.env on the Mini.
-# teletraan-mini sends this script and the new lines with scp, runs it on the
-# Mini and removes both afterwards.
+# Merges a file of NAME='value' lines into computer/local.env on the Teletraan computer.
+# teletraan-tool sends this script and the new lines with scp, runs it on the
+# computer and removes both afterwards.
 #
 #   sh teletraan-merge.sh <local.env> <new lines>
 #
@@ -15,7 +15,7 @@ set -eu
 env_file=${1:-}
 incoming=${2:-}
 
-# On a Mini with releases, mini/local.env is a link to the real file; the new file replaces the real one
+# On a computer with releases, computer/local.env is a link to the real file; the new file replaces the real one
 if [ -L "$env_file" ]; then
   env_file=$(readlink -f "$env_file")
 fi

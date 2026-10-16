@@ -45,7 +45,7 @@ export function monthName(date) {
 
 // Reads a date and time that an editor typed, and returns a Date, or null
 // when it makes no sense. Write 2027-01-09T12:00 and it means that time on
-// the Mini's own clock. A date with no time means the start of that day.
+// the Teletraan computer's own clock. A date with no time means the start of that day.
 // Text that already carries a time zone (ending in Z, or +01:00) is taken
 // as it is.
 export function parseLocalDateTime(text) {

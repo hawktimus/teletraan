@@ -1,4 +1,4 @@
-// POST /control/api/helper/<word>: asks the host helper (mini/scripts/control-helper.sh) to do one
+// POST /control/api/helper/<word>: asks the host helper (computer/scripts/control-helper.sh) to do one
 // thing. The helper accepts exactly the words below and refuses anything else, and so does this
 // route, before the helper is asked. write-env is left out on purpose: only the Keys route
 // (routes/env.js) may send it, with a merged file.
@@ -12,7 +12,7 @@ const syncTargets = ['calendars', 'monday', 'frc'];
 const needsConfirm = ['restart-kiosk', 'restart-services', 'reboot'];
 
 function checkRequest(word, body) {
-  if (!words.includes(word)) throw new Refusal(400, 'The Mini does not know that word.');
+  if (!words.includes(word)) throw new Refusal(400, 'The Teletraan computer does not know that word.');
   if (needsConfirm.includes(word) && body.confirmed !== true) throw new Refusal(400, 'Confirm first, then press the button again.');
 
   if (word === 'sync-now') {

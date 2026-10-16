@@ -95,7 +95,7 @@ export function normalizeSettings(raw) {
   // The Studio keeps these four, hidden, but the screen uses the fixed values in constants.js
   ['nightStart', 'nightEnd', 'noShowMinutes', 'graceMinutes'].forEach(name => delete settings[name]);
 
-  // The Mini reads the two Monday blocks (mini/scripts/monday-sync.sh). The screen has no use for them
+  // The Teletraan computer reads the two Monday blocks (computer/scripts/monday-sync.sh). The screen has no use for them
   ['mondayTaskBoard', 'mondayMilestoneBoard'].forEach(name => delete settings[name]);
 
   tidyList(settings, 'announcements', normalizeAnnouncements);

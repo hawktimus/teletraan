@@ -1,19 +1,19 @@
-// The Monday tab of Dashboard Settings: how the Mini reads the two boards of the Monday
+// The Monday tab of Dashboard Settings: how the Teletraan computer reads the two boards of the Monday
 // workspace and how an item becomes a task or a milestone (docs/monday.md). It has:
 //
-//   mondayConnection       a read only block that says who the token belongs to, when the Mini last
+//   mondayConnection       a read only block that says who the token belongs to, when the Teletraan computer last
 //                          read Monday, how often it reads and how many tasks it made
 //                          (../monday-status-input.js). It stores nothing
 //   mondayTokenTest        the Test the token button (../monday-token-input.js). It stores nothing
-//   mondayEveryMinutes     how often the Mini reads, 5 to 120 minutes
+//   mondayEveryMinutes     how often the Teletraan computer reads, 5 to 120 minutes
 //   mondayTaskBoard        the task board: its number, the column of each field, the tables that say
 //                          what each label index means, and the text of the Hide label
 //   mondayMilestoneBoard   the milestones board, the same way
 //   mondayShowOwners       whether the first names of the people in Assigned are kept, off to start with
 //   mondayBoards           not used any more: the rows of the older tab, hidden and kept so that nothing
-//                          typed is lost. The Mini ignores them
+//                          typed is lost. The Teletraan computer ignores them
 //
-// The boards and the columns are picked from lists that the Mini fills in (../monday-pickers.js), so
+// The boards and the columns are picked from lists that the Teletraan computer fills in (../monday-pickers.js), so
 // nobody types a number. Each column list shows only the columns of the board picked in the same block.
 // The lists fall back to a plain box when they cannot be read.
 //
@@ -23,10 +23,10 @@
 //
 // The names and the starting values are the same as mondayEveryMinutes, mondayTaskBoard, mondayMilestoneBoard
 // and mondayShowOwners in defaultSettings in dashboard/config.js, and the same as the values at the top of
-// mini/scripts/monday-sync.sh. tests/schemas.test.mjs and tests/monday-sync.test.mjs fail if they differ.
+// computer/scripts/monday-sync.sh. tests/schemas.test.mjs and tests/monday-sync.test.mjs fail if they differ.
 //
 // None of the fields is required on the page: Dashboard Settings published before these fields existed has
-// none, and the Mini then reads the boards with the starting values.
+// none, and the Teletraan computer then reads the boards with the starting values.
 //
 
 import { defineField, defineArrayMember } from 'sanity';
@@ -104,7 +104,7 @@ function blockColumn(name, title, description, input) {
   });
 }
 
-// The index of a label. Monday numbers its labels, and the number is what the Mini reads.
+// The index of a label. Monday numbers its labels, and the number is what the Teletraan computer reads.
 function indexField(name, title, description) {
   return defineField({
     name: name,
@@ -282,11 +282,11 @@ export function mondayFields() {
   return [
     defineField({
       name: 'mondayConnection',
-      title: 'Monday connection from the Mini',
+      title: 'Monday connection from the Teletraan computer',
       type: 'string',
       group: 'monday',
       readOnly: true,
-      description: 'Who the token belongs to, when the Mini last read, how often, the reads used today and the tasks made. There is nothing to type here.',
+      description: 'Who the token belongs to, when the Teletraan computer last read, how often, the reads used today and the tasks made. There is nothing to type here.',
       components: { input: MondayStatusInput },
     }),
 
@@ -296,7 +296,7 @@ export function mondayFields() {
       type: 'string',
       group: 'monday',
       readOnly: true,
-      description: 'Asks the Mini, through the control page, who the Monday token belongs to. It shows the account name or the error. It stores nothing.',
+      description: 'Asks the Teletraan computer, through the control page, who the Monday token belongs to. It shows the account name or the error. It stores nothing.',
       components: { input: MondayTokenInput },
     }),
 
@@ -305,7 +305,7 @@ export function mondayFields() {
       title: 'How often',
       type: 'number',
       group: 'monday',
-      description: 'How often the Mini reads the boards. The free plan allows about 1,000 reads a day; 30 minutes uses about 150.',
+      description: 'How often the Teletraan computer reads the boards. The free plan allows about 1,000 reads a day; 30 minutes uses about 150.',
       initialValue: 30,
       validation: Rule => [Rule.integer().error('Use a whole number of minutes.'), Rule.min(5).error('Use 5 minutes or more.'), Rule.max(120).error('Use 120 minutes or less.')],
     }),
@@ -322,14 +322,14 @@ export function mondayFields() {
       initialValue: false,
     }),
 
-    // Kept, and hidden, so that rows typed earlier still open and publish. The Mini ignores them.
+    // Kept, and hidden, so that rows typed earlier still open and publish. The Teletraan computer ignores them.
     defineField({
       name: 'mondayBoards',
       title: 'Boards',
       type: 'array',
       group: 'monday',
       hidden: true,
-      description: 'Not used any more. The task board and the milestones board above replace these rows. The Mini ignores them.',
+      description: 'Not used any more. The task board and the milestones board above replace these rows. The Teletraan computer ignores them.',
       of: [board],
       validation: Rule => Rule.max(mostBoards).error('Up to ' + mostBoards + ' boards can be read.'),
     }),

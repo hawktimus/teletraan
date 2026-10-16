@@ -1,5 +1,5 @@
-// What the Mini read from Monday, in one document with the fixed id 'monday-status'.
-// mini/scripts/monday-sync.sh writes it, so editors never open it: it is
+// What the Teletraan computer read from Monday, in one document with the fixed id 'monday-status'.
+// computer/scripts/monday-sync.sh writes it, so editors never open it: it is
 // not in the sidebar or the New menu (structure.js, sanity.config.js). The Monday tab
 // of Dashboard Settings shows when it was written and offers its boards and columns in
 // the lists of the board blocks (settingsMonday.js, ../monday-status-input.js and
@@ -7,9 +7,9 @@
 // and the screen reads its daily counts of open items and the time of the last read.
 //
 // The dataset is public, so anyone who asks for this document can read the name of every
-// board the token of the Mini can see, and the titles of their columns, whether or not
+// board the token of the Teletraan computer can see, and the titles of their columns, whether or not
 // the screen reads the board (docs/monday.md). It holds the first name of the account
-// and no token. Every field is optional, because a value the Mini did not find is left
+// and no token. Every field is optional, because a value the Teletraan computer did not find is left
 // out and never made up.
 
 import { defineType, defineField, defineArrayMember } from 'sanity';
@@ -54,8 +54,8 @@ const reading = defineArrayMember({
   fields: [
     textField('boardId', 'Board number', 'The number of a board chosen in Dashboard Settings.'),
     textField('boardName', 'Board name', 'The name of the board as Monday shows it, when the token can see it.'),
-    numberField('itemsRead', 'Items read', 'How many items the Mini read from the board the last time it could.'),
-    defineField({ name: 'readAt', title: 'Read at', type: 'datetime', description: 'When the Mini last read the board.' }),
+    numberField('itemsRead', 'Items read', 'How many items the Teletraan computer read from the board the last time it could.'),
+    defineField({ name: 'readAt', title: 'Read at', type: 'datetime', description: 'When the Teletraan computer last read the board.' }),
     textField('note', 'Note', 'Why the board gave no items or fewer than it has, in plain words. Empty when nothing went wrong.'),
   ],
   preview: {
@@ -83,24 +83,24 @@ const snapshot = defineArrayMember({
 
 export default defineType({
   name: 'mondayStatus',
-  title: 'Monday data from the Mini',
+  title: 'Monday data from the Teletraan computer',
   type: 'document',
   readOnly: true,
   // Keeps it out of Studio's search, so it is not found by accident
   __experimental_omnisearch_visibility: false,
   fields: [
-    textField('connectedAs', 'Connected as', 'The first name of the account the token belongs to. The Mini writes it.'),
-    defineField({ name: 'lastSyncAt', title: 'Last sync', type: 'datetime', description: 'When the Mini last read Monday. The Mini writes it.' }),
+    textField('connectedAs', 'Connected as', 'The first name of the account the token belongs to. The Teletraan computer writes it.'),
+    defineField({ name: 'lastSyncAt', title: 'Last sync', type: 'datetime', description: 'When the Teletraan computer last read Monday. The computer writes it.' }),
     textField('lastError', 'Last error', 'What went wrong in the last run, in plain words. Empty when nothing did.'),
     defineField({ name: 'boards', title: 'Boards', type: 'array', of: [board], description: 'Every board the token can see, with its columns.' }),
-    defineField({ name: 'readings', title: 'Board readings', type: 'array', of: [reading], description: 'One entry for each board chosen in Dashboard Settings: how many items the Mini read from it, when, and why a board gave none.' }),
+    defineField({ name: 'readings', title: 'Board readings', type: 'array', of: [reading], description: 'One entry for each board chosen in Dashboard Settings: how many items the Teletraan computer read from it, when, and why a board gave none.' }),
     defineField({ name: 'snapshots', title: 'Daily counts', type: 'array', of: [snapshot], description: 'One count a day of the open items, 120 at most.' }),
-    numberField('taskCount', 'Tasks', 'How many parent items the Mini read from the task board the last time, hidden ones included.'),
+    numberField('taskCount', 'Tasks', 'How many parent items the Teletraan computer read from the task board the last time, hidden ones included.'),
     numberField('hiddenUnassigned', 'Hidden, no department', 'How many of those tasks have no department, so they are kept off the TV.'),
-    numberField('callsToday', 'Reads today', 'How many requests the Mini has made to Monday today. Past 900 it waits for midnight.'),
+    numberField('callsToday', 'Reads today', 'How many requests the Teletraan computer has made to Monday today. Past 900 it waits for midnight.'),
     defineField({ name: 'callsDate', title: 'Reads counted for', type: 'date', description: 'The day of the count of reads, in the time zone of the screen.' }),
   ],
   preview: {
-    prepare: () => ({ title: 'Monday data from the Mini' }),
+    prepare: () => ({ title: 'Monday data from the Teletraan computer' }),
   },
 });

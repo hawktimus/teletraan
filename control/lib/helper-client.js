@@ -1,4 +1,4 @@
-// Talks to the host helper (mini/scripts/control-helper.sh) over its Unix socket. One request is one line,
+// Talks to the host helper (computer/scripts/control-helper.sh) over its Unix socket. One request is one line,
 // "word" or "word argument", followed by a body for write-env, then the end of the stream. The answer is the
 // output of the word and a last line: ok, refused, or failed <exit code>. The call gives the output as text, and
 // throws an Error with a plain sentence when the helper refused, failed or could not be reached.
@@ -18,13 +18,13 @@ export function createHelper(socketPath, timeout = 30000) {
       const socket = net.createConnection(socketPath);
       const timer = setTimeout(() => {
         socket.destroy();
-        reject(new Error('The helper did not answer in time. Look at the Log tab, then try again. If it keeps happening, restart the Mini.'));
+        reject(new Error('The helper did not answer in time. Look at the Log tab, then try again. If it keeps happening, restart the Teletraan computer.'));
       }, timeout);
       socket.on('connect', () => socket.end([word].concat(args).join(' ') + '\n' + body));
       socket.on('data', chunk => { answer += chunk; });
       socket.on('error', error => {
         clearTimeout(timer);
-        reject(new Error('The helper socket cannot be reached (' + error.code + '). Run tools/mini/teletraan-mini update from the Mac to set the control page up again.'));
+        reject(new Error('The helper socket cannot be reached (' + error.code + '). Run tools/teletraan/teletraan-tool update from the Mac to set the control page up again.'));
       });
       socket.on('close', () => {
         clearTimeout(timer);

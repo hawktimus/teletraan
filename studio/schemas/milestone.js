@@ -1,5 +1,5 @@
-// A milestone of the season, made by the Mini from the milestones board of Monday
-// (mini/scripts/monday-sync.sh, docs/monday.md). Nobody types one: it is read only here, and
+// A milestone of the season, made by the Teletraan computer from the milestones board of Monday
+// (computer/scripts/monday-sync.sh, docs/monday.md). Nobody types one: it is read only here, and
 // listed under Monday Boards, Milestones. The screen shows the next three on the Overall
 // progress panel and weighs each by the hours of the tasks that link to it.
 //
@@ -32,10 +32,10 @@ export default defineType({
       name: 'name',
       title: 'Name',
       type: 'string',
-      description: 'What is due, in a few words. The Mini writes it from the board. Up to 40 characters fit.',
+      description: 'What is due, in a few words. The Teletraan computer writes it from the board. Up to 40 characters fit.',
       validation: Rule => tooLong(Rule, 40),
     }),
-    defineField({ name: 'targetDate', title: 'Target date', type: 'date', description: 'The day the milestone is due. The Mini writes it from the board.' }),
+    defineField({ name: 'targetDate', title: 'Target date', type: 'date', description: 'The day the milestone is due. The Teletraan computer writes it from the board.' }),
     teamField(),
     defineField({ name: 'subteam', title: 'Team lead', type: 'reference', to: [{ type: 'subteam' }], description: 'Which department the milestone is for. Empty means all departments.' }),
     defineField({
@@ -46,7 +46,7 @@ export default defineType({
       options: { list: statuses },
       initialValue: 'not-started',
     }),
-    defineField({ name: 'show', title: 'Show on screen', type: 'boolean', description: 'Off when the milestone has gone from the board. The Mini sets it.', initialValue: true }),
+    defineField({ name: 'show', title: 'Show on screen', type: 'boolean', description: 'Off when the milestone has gone from the board. The Teletraan computer sets it.', initialValue: true }),
   ],
   orderings: [byDate, aToZ('name')],
   preview: {

@@ -16,10 +16,10 @@ export async function api(method, path, body) {
       data = null;
     }
     if (response.status === 401) return { ok: false, data: null, error: 'Enter the PIN first. Reload the page.' };
-    if (!response.ok) return { ok: false, data: data, error: (data && data.error) || 'The Mini answered with a problem (' + response.status + ').' };
+    if (!response.ok) return { ok: false, data: data, error: (data && data.error) || 'The Teletraan computer answered with a problem (' + response.status + ').' };
     return { ok: true, data: data, error: '' };
   } catch (error) {
-    return { ok: false, data: null, error: 'The Mini could not be reached. Check the WiFi, or use the Tailscale name.' };
+    return { ok: false, data: null, error: 'The Teletraan computer could not be reached. Check the WiFi, or use the Tailscale name.' };
   }
 }
 

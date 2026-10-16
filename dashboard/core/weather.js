@@ -1,4 +1,4 @@
-// Live weather from Open-Meteo, which is free and needs no key, so nothing about it is in mini/local.env. The newest
+// Live weather from Open-Meteo, which is free and needs no key, so nothing about it is in computer/local.env. The newest
 // good reading is saved in the browser, so the screen has weather after a restart. Nothing in here throws at the
 // screen: a read that fails keeps the last reading until it is over two hours old, and then the temperature and the
 // icon are blank.

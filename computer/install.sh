@@ -1,9 +1,9 @@
 #!/bin/bash
-# Installs the control page on the Mini and moves the Mini to the releases layout (docs/control-page.md).
+# Installs the control page on the Teletraan computer and moves the computer to the releases layout (docs/control-page.md).
 #
-#   sudo mini/install.sh [--from FOLDER] [--commit HASH] [--note TEXT] [--yes]
+#   sudo computer/install.sh [--from FOLDER] [--commit HASH] [--note TEXT] [--yes]
 #
-# It runs from the Mac tool for the first install (tools/mini/teletraan-mini bootstrap copies the tree to a staging
+# It runs from the Mac tool for the first install (tools/teletraan/teletraan-tool bootstrap copies the tree to a staging
 # folder in the home folder of the login user and runs this from there), and again when the units change. With no
 # --from it installs the tree it is part of. Steps, in order:
 #   1. refuse a tree that still has deploy/
@@ -26,7 +26,7 @@ sudoers_dir=${TELETRAAN_SUDOERS:-/etc/sudoers.d}
 git_repo=${TELETRAAN_GIT:-/srv/teletraan.git}
 node_image=node:22-alpine
 commit=''
-note='Installed with mini/install.sh'
+note='Installed with computer/install.sh'
 assume_yes=no
 
 say() { printf '%s\n' "$*"; }
@@ -48,7 +48,7 @@ done
 if [ -d "$tree/deploy/scripts" ]; then
   stop "This copy is older than round 6; update it."
 fi
-for needed in dashboard/index.html mini/scripts/kiosk.sh control/server.js; do
+for needed in dashboard/index.html computer/scripts/kiosk.sh control/server.js; do
   [ -f "$tree/$needed" ] || stop "$tree has no $needed. Give the folder of the Teletraan repository."
 done
 case $tree in
@@ -65,9 +65,9 @@ fi
 account_uid=$(id -u "$account")
 account_gid=$(id -g "$account")
 
-command -v docker > /dev/null 2>&1 || stop "docker is not installed. See docs/rebuilding-the-mini.md."
+command -v docker > /dev/null 2>&1 || stop "docker is not installed. See docs/rebuilding-the-computer.md."
 if ! docker image inspect "$node_image" > /dev/null 2>&1; then
-  say "The Node image is not on this Mini. The team mentor has to say yes to the download, then run:"
+  say "The Node image is not on this computer. The team mentor has to say yes to the download, then run:"
   say "  docker pull $node_image"
   stop "$node_image is missing."
 fi
@@ -116,7 +116,7 @@ migrate() {
     "$first" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$root/releases/1/RELEASE.json"
   printf '1\n' > "$root/releases/COUNTER"
   ln -sfn releases/1 "$root/current"
-  # The units and scripts name /opt/teletraan/mini and so on; these links keep those names working (control/lib/releases.js)
+  # The units and scripts name /opt/teletraan/computer and so on; these links keep those names working (control/lib/releases.js)
   for folder in "$root"/releases/1/*/; do
     name=$(basename "$folder")
     [ -e "$root/$name" ] || ln -s "current/$name" "$root/$name"
@@ -124,14 +124,16 @@ migrate() {
   say "Release 1 is the old tree. It stays as a record and cannot be switched back to, because its folders are from before round 6."
   systemctl disable --now teletraan-pull.timer > /dev/null 2>&1 || true
 }
-step "Move the Mini to the releases layout"
+step "Move the Teletraan computer to the releases layout"
 migrate
+# The folder was called mini/ before it was called computer/; the link of the old name points at nothing
+[ -L "$root/mini" ] && rm -f "$root/mini"
 
 mkdir -p "$root/releases" "$root/logs" "$root/cache"
 
 # local.env stays at the root, mode 600, and is linked into each release
 if [ ! -f "$root/local.env" ]; then
-  cp "$tree/mini/local.example.env" "$root/local.env"
+  cp "$tree/computer/local.example.env" "$root/local.env"
   say "Made $root/local.env from the example. The Mac tool fills in the keys."
 fi
 chmod 600 "$root/local.env"
@@ -161,12 +163,12 @@ chown -R "$account:$(id -gn "$account")" "$root"
 step "Install the helper socket and the sudoers file"
 group=$(id -gn "$account")
 mkdir -p "$systemd_dir" "$sudoers_dir"
-sed "s/ACCOUNT/$account/g" "$tree/mini/systemd/teletraan-control.socket" | sed "s/^SocketGroup=.*/SocketGroup=$group/" > "$systemd_dir/teletraan-control.socket"
-sed "s/ACCOUNT/$account/g" "$tree/mini/systemd/teletraan-control@.service" > "$systemd_dir/teletraan-control@.service"
+sed "s/ACCOUNT/$account/g" "$tree/computer/systemd/teletraan-control.socket" | sed "s/^SocketGroup=.*/SocketGroup=$group/" > "$systemd_dir/teletraan-control.socket"
+sed "s/ACCOUNT/$account/g" "$tree/computer/systemd/teletraan-control@.service" > "$systemd_dir/teletraan-control@.service"
 chmod 644 "$systemd_dir/teletraan-control.socket" "$systemd_dir/teletraan-control@.service"
 
 sudoers_new=$(mktemp)
-sed "s/ACCOUNT/$account/g" "$tree/mini/sudoers/teletraan-control" > "$sudoers_new"
+sed "s/ACCOUNT/$account/g" "$tree/computer/sudoers/teletraan-control" > "$sudoers_new"
 if command -v visudo > /dev/null 2>&1 && ! visudo -cf "$sudoers_new" > /dev/null; then
   rm -f "$sudoers_new"
   stop "the sudoers file did not pass visudo, so it was not installed."
@@ -187,13 +189,13 @@ docker run --rm -u "$account_uid:$account_gid" \
 
 # 5. The containers read through current, so they are made again, and the screen starts on the new build
 step "Start the containers and the screen"
-(cd "$root/current/mini" && sudo -u "$account" docker compose --env-file local.env up -d --force-recreate)
+(cd "$root/current/computer" && sudo -u "$account" docker compose --env-file local.env up -d --force-recreate)
 systemctl restart teletraan-kiosk.service 2> /dev/null || say "The screen service is not installed here; skipped."
 
-# The nightly restart timer belongs to the control page's idea of a Mini that looks after itself; its script asks for Enter
+# The nightly restart timer belongs to the control page's idea of a computer that looks after itself; its script asks for Enter
 step "Install the nightly timer"
-if [ -x "$root/mini/scripts/install-nightly.sh" ]; then
-  echo | "$root/mini/scripts/install-nightly.sh" || say "install-nightly.sh stopped (exit $?). Run it again by hand."
+if [ -x "$root/computer/scripts/install-nightly.sh" ]; then
+  echo | "$root/computer/scripts/install-nightly.sh" || say "install-nightly.sh stopped (exit $?). Run it again by hand."
 else
   say "This release has no install-nightly.sh, so the nightly timer was skipped."
 fi
@@ -205,7 +207,7 @@ if command -v git > /dev/null 2>&1; then
     git init --bare --initial-branch=main "$git_repo" > /dev/null
   fi
   hook="$git_repo/hooks/post-receive"
-  sed "s|^root=ROOT|root=$root|; s|^ids=UID_GID|ids=$account_uid:$account_gid|; s|^image=IMAGE|image=$node_image|" "$tree/mini/git/post-receive" > "$hook"
+  sed "s|^root=ROOT|root=$root|; s|^ids=UID_GID|ids=$account_uid:$account_gid|; s|^image=IMAGE|image=$node_image|" "$tree/computer/git/post-receive" > "$hook"
   chmod 755 "$hook"
   chown -R "$account:$group" "$git_repo"
   say "A push to $git_repo installs main as the next release."

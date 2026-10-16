@@ -78,7 +78,7 @@ max_requests=60
 # Seconds. The timer starts the script every 5 minutes. With no event on, a run
 # is made when the last one was this long ago, and during an event when the last
 # was the shorter time ago. The status is written again after refresh_gap even if
-# nothing changed, so that the time in it shows the Mini is still looking.
+# nothing changed, so that the time in it shows the Teletraan computer is still looking.
 quiet_gap=$((50 * 60))
 event_gap=$((4 * 60))
 refresh_gap=$((45 * 60))

@@ -1,12 +1,12 @@
 // The parts of the Monday Boards page that need no Studio: its words, the question it asks of
-// Sanity, and the rows it shows for the boards the token of the Mini can see and the boards
+// Sanity, and the rows it shows for the boards the token of the Teletraan computer can see and the boards
 // chosen in Dashboard Settings (the two of the Monday tab). monday-boards-view.js draws them. tests/schemas.test.mjs and
 // tests/monday-boards.test.mjs read this file with node.
 
 import { ageText } from './time-text.js';
 import { isRecord, sentence } from './plain-values.js';
 
-// The id the Mini writes to. mini/scripts/monday-sync.sh has the same one.
+// The id the Teletraan computer writes to. computer/scripts/monday-sync.sh has the same one.
 export const mondayStatusId = 'monday-status';
 
 // The id of Dashboard Settings, the same as settingsId in structure.js
@@ -19,7 +19,7 @@ export const chooseTarget = { id: settingsId, type: 'dashboardSettings', path: '
 // The id the link to the list of milestones carries in place of a board number (structure.js)
 export const milestonesChild = 'milestones';
 export const milestonesLabel = 'Milestones';
-export const milestonesLine = 'The milestones the Mini made are a second list. Nothing in it can be changed.';
+export const milestonesLine = 'The milestones the Teletraan computer made are a second list. Nothing in it can be changed.';
 
 // The two boards of the Monday tab, with what each is for, when Dashboard Settings has not named them yet
 export const taskBoardStart = '18435126893';
@@ -27,8 +27,8 @@ export const milestoneBoardStart = '18435272887';
 
 export const helpLine = 'The Monday tab of Dashboard Settings names two boards: the task board and the milestones board. Pick them there.';
 export const chooseLabel = 'Choose boards';
-export const nothingYet = 'Nothing yet. The Mini writes this after it has read Monday. See the Monday tab of Dashboard Settings.';
-export const noBoardsLine = 'The token of the Mini can see no boards.';
+export const nothingYet = 'Nothing yet. The Teletraan computer writes this after it has read Monday. See the Monday tab of Dashboard Settings.';
+export const noBoardsLine = 'The token of the Teletraan computer can see no boards.';
 export const openLine = 'Click the name of a chosen board to open its tasks.';
 export const publicLine = 'These names are saved in the dataset, which anyone can read. That includes the boards the screen does not use.';
 export const unreadableLine = 'The list of boards could not be read. Refresh the page to try again.';
@@ -69,7 +69,7 @@ export async function readBoardsPage(client) {
   return read;
 }
 
-// The rows of the page: the chosen boards first, then the others, each group in the order the Mini
+// The rows of the page: the chosen boards first, then the others, each group in the order the Teletraan computer
 // wrote. A board that is chosen in Dashboard Settings and that the token cannot see has a row too, with
 // the reason, because that is the board whose number is probably wrong. status is the document or
 // null, entries is the board rows of Dashboard Settings, and now is the time to count the ages from.
@@ -117,13 +117,13 @@ export function chosenText(row) {
   return row.team ? 'Chosen for ' + row.team : 'Chosen for both teams';
 }
 
-// When the Mini last read Monday at all, in words, or nothing when the document has no time
+// When the Teletraan computer last read Monday at all, in words, or nothing when the document has no time
 export function updatedText(status, now) {
   const age = isRecord(status) ? ageText(status.lastSyncAt, now) : '';
-  return age ? 'The Mini last read Monday ' + age + '.' : '';
+  return age ? 'The Teletraan computer last read Monday ' + age + '.' : '';
 }
 
-// The last error of the Mini as a sentence, or nothing
+// The last error of the Teletraan computer as a sentence, or nothing
 export function errorText(status) {
   return isRecord(status) && typeof status.lastError === 'string' && status.lastError.trim() !== '' ? sentence(status.lastError) : '';
 }

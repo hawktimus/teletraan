@@ -2,12 +2,12 @@
 // a document. On the left are the calendars of Dashboard Settings, with their kind, how many events
 // each has and when it was last downloaded. On the right are the next 40 events of the calendar
 // picked on the left, SHOWN or HIDDEN, with the name of the Calendar filter that hides it.
-// The Mini writes what it shows into the document calendar-status (schemas/calendarStatus.js,
-// mini/scripts/calendar-status.sh).
+// The Teletraan computer writes what it shows into the document calendar-status (schemas/calendarStatus.js,
+// computer/scripts/calendar-status.sh).
 //
 // Each event has buttons that hide it. A button makes a Hide rule in Calendar filters, with an id
 // that starts calendarFilter-hide-, and Show again deletes that rule. Nothing else is changed here:
-// the names, kinds and switches of the calendars are edited in Dashboard Settings. The Mini lists
+// the names, kinds and switches of the calendars are edited in Dashboard Settings. The Teletraan computer lists
 // the events every 15 minutes, so the page also reads the rules it made and judges the events by
 // them at once.
 //

@@ -1,8 +1,8 @@
-// The Mini's name and addresses, shown on the wall inside the connection
+// The Teletraan computer's name and addresses, shown on the wall inside the connection
 // status text (core/connection.js) while Sanity cannot be reached. With no
-// network access at the school, this is how someone finds the Mini to log in
-// to it. The kiosk script on the Mini writes data/live/device.json every
-// minute (mini/scripts/kiosk.sh). Nothing is read while the status text is
+// network access at the school, this is how someone finds the Teletraan computer to log in
+// to it. The kiosk script on the Teletraan computer writes data/live/device.json every
+// minute (computer/scripts/kiosk.sh). Nothing is read while the status text is
 // not showing, and a missing file or bad JSON gives no lines.
 
 import { liveFolder } from '../config.js';
@@ -14,7 +14,7 @@ export const refreshSeconds = 60;
 const loginName = 'hawktimus';
 
 // What a name or address must look like to be shown. device.json is written by
-// the Mini, but an odd value is dropped here, so the ssh line is always one
+// the Teletraan computer, but an odd value is dropped here, so the ssh line is always one
 // that can be copied and run.
 const hostnamePattern = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 const addressPattern = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/;

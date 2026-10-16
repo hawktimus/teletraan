@@ -11,7 +11,7 @@ monday_version='2025-07'
 monday_query_me='query { me { name } }'
 
 # Who the token belongs to, and the boards it can see with their columns. It is asked for on the
-# first read of a day, and when the Mini has no list yet, so the pickers of the Monday tab have it.
+# first read of a day, and when the Teletraan computer has no list yet, so the pickers of the Monday tab have it.
 monday_query_boards='query { me { name } boards(limit: 100, state: active, order_by: used_at) { id name type items_count columns { id title type } } }'
 
 # The first page of the parent items of one board, and the pages after it. $columns lists the
@@ -141,7 +141,7 @@ rows_per_write=100
 # Sanity has been asked.
 default_zone=America/New_York
 
-# What the settings say, the teams, the Team leads, what the Mini wrote earlier and what it
+# What the settings say, the teams, the Team leads, what the Teletraan computer wrote earlier and what it
 # knows of its own last read. The dataset is public, so no token is sent. The ordinary host is
 # used and not the cached one, because the answer must be the newest.
 query='{

@@ -23,7 +23,7 @@ function element(tag, text, className) {
   return made;
 }
 
-// The zip of the folder, built in memory with the same exclusions the Mini uses
+// The zip of the folder, built in memory with the same exclusions the Teletraan computer uses
 async function makeZip(files) {
   let fflate;
   try {
@@ -72,7 +72,7 @@ function upload(blob, note, commit, onUpload, onEvent) {
       take();
       resolve();
     };
-    request.onerror = () => reject(new Error('The Mini could not be reached. Check the WiFi, or use the Tailscale name, then try again.'));
+    request.onerror = () => reject(new Error('The Teletraan computer could not be reached. Check the WiFi, or use the Tailscale name, then try again.'));
     request.send(form);
   });
 }
@@ -229,7 +229,7 @@ registerTab({
 
     // The git path
     const git = element('section', '', 'card');
-    git.append(element('h2', 'Push with git (optional)'), element('p', 'No GitHub is needed. The Mini keeps a bare repository, and a push to it installs the new version the same way.', 'muted'));
+    git.append(element('h2', 'Push with git (optional)'), element('p', 'No GitHub is needed. The Teletraan computer keeps a bare repository, and a push to it installs the new version the same way.', 'muted'));
     const gitLines = element('pre', 'Loading...');
     git.append(gitLines);
     columns.append(git);

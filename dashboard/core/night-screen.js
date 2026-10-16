@@ -2,8 +2,8 @@
 // in core/constants.js, in the time zone of the Look page) the screen is black
 // with the team logo and the team number under it. The switch and the style are
 // in the night mode settings of Dashboard Settings, in the Advanced tab. The
-// signal is never turned off: the Mini keeps sending a picture, and the kiosk
-// script keeps the TV from blanking (mini/scripts/kiosk.sh).
+// signal is never turned off: the Teletraan computer keeps sending a picture, and the kiosk
+// script keeps the TV from blanking (computer/scripts/kiosk.sh).
 //
 // This file only shows, hides and tells the stylesheet what to do. When it is
 // night comes from core/night.js, and every move is in frame.css ("Night mode").
@@ -13,7 +13,7 @@
 //
 // Behind the night screen the dashboard carries on: the content keeps being
 // read and the pages keep changing. The stage is not drawn while the screen
-// covers it, and no logo effect or screen glitch starts, to spare the Mini.
+// covers it, and no logo effect or screen glitch starts, to spare the Teletraan computer.
 //
 // The address switch ?night=on shows the screen whatever the time, ?night=off
 // never shows it. A demo (core/demo-screens.js) shows it for a while with

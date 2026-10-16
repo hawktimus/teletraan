@@ -3,8 +3,8 @@
 // The Demo page in the Studio (core/demo.js, core/demo-screens.js and core/demo-runner.js).
 // "Run demo" writes the time into requestedAt and publishes. The screen plays the steps once when
 // it sees a request that is no more than demoWindowSeconds old and is not the one it handled last,
-// so a Mini that restarts never plays an old request again. A request up to demoSkewSeconds in
-// the future still counts, because the Studio's clock may be a little ahead of the Mini's.
+// so a computer that restarts never plays an old request again. A request up to demoSkewSeconds in
+// the future still counts, because the Studio's clock may be a little ahead of the Teletraan computer's.
 //   steps            the screens to show, one after the other. screen is an id from
 //                    demoScreens in core/demo-screens.js. seconds is how long it stays, in
 //                    the range limits.demoSeconds. At most demoMaxSteps steps.

@@ -1,29 +1,29 @@
 #!/bin/bash
 # Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|backup|--print|restart N
 # Writes the time of a job that has just finished into the document status-mini
-# in Sanity, so that Dashboard Settings can show what the Mini last did. The
+# in Sanity, so that Dashboard Settings can show what the Teletraan computer last did. The
 # calendar and slides services run it after each job, and kiosk.sh runs it when
 # the screen starts. One argument says which job:
 #
-#   status-write.sh content    the newest change to published content that the Mini can see
+#   status-write.sh content    the newest change to published content that the Teletraan computer can see
 #   status-write.sh calendar   the calendars were downloaded
 #   status-write.sh slides     the slides were downloaded
 #   status-write.sh monday     the Monday boards were read
 #   status-write.sh frc        the FRC data was read
 #   status-write.sh kiosk      the screen started
 #   status-write.sh version    the build on the wall: the short hash, the date and the branch
-#                              of the repository on the Mini (buildCommit, buildDate, buildBranch),
-#                              from mini/build.txt when the Mac tool copied the files, else from git
+#                              of the repository on the Teletraan computer (buildCommit, buildDate, buildBranch),
+#                              from computer/build.txt when the Mac tool copied the files, else from git
 #   status-write.sh backup     the nightly dataset backup finished (backup-dataset.sh)
 #   status-write.sh restart N  the watchdog restarted the screen, N times today (watchdog.sh)
 #   status-write.sh calendar-status
 #                              sends the document that the Calendars page in Studio
 #                              shows, which calendar-status.sh made in the data folder
 #   status-write.sh --print    writes nothing: prints each time in the document and how
-#                              long ago it was, which tools/mini/teletraan-mini shows
+#                              long ago it was, which tools/teletraan/teletraan-tool shows
 #
 # Writing needs a token with Editor access, SANITY_WRITE_TOKEN in local.env
-# (docs/rebuilding-the-mini.md). With no token this exits quietly, and Studio
+# (docs/rebuilding-the-computer.md). With no token this exits quietly, and Studio
 # shows No status yet. The token is never printed, and it is handed to curl on
 # standard input so it never shows in the process list. --print needs no token,
 # because the dataset is public.
@@ -106,7 +106,7 @@ fi
 host="https://$project.api.sanity.io"
 
 # The newest change to a published document, which is what "content update
-# seen" means. The documents the Mini writes itself are left out, or every
+# seen" means. The documents the Teletraan computer writes itself are left out, or every
 # write would be the newest change. The dataset is public, so no token is sent.
 # Gives nothing when Sanity cannot be asked or has no such document.
 newest_update() {
@@ -141,7 +141,7 @@ age_text() {
   }'
 }
 
-# One line of --print: the label, how long ago, and the time. A time the Mini
+# One line of --print: the label, how long ago, and the time. A time the Teletraan computer
 # has not written yet says Not yet.
 time_line() {
   value=$(printf '%s' "$answer" | sed -n "s/.*\"$1\":\"\([^\"]*\)\".*/\1/p" | head -n 1)
@@ -217,10 +217,10 @@ elif [ "$field" = lastContentSeenAt ]; then
     exit 1
   fi
 elif [ "$field" = version ]; then
-  # The Mac tool copies the files without the .git folder, so it leaves mini/build.txt with the
-  # hash, the date and the branch of the repository it copied. A Mini that pulls has no such file
+  # The Mac tool copies the files without the .git folder, so it leaves computer/build.txt with the
+  # hash, the date and the branch of the repository it copied. A computer that pulls has no such file
   # (pull.sh removes it) and git is asked. Each answer is checked, because it goes into a JSON body.
-  stamp="$mini/build.txt"
+  stamp="$computer/build.txt"
   if [ -f "$stamp" ]; then
     commit=$(sed -n 's/^commit=//p' "$stamp" | head -n 1)
     built=$(sed -n 's/^date=//p' "$stamp" | head -n 1)

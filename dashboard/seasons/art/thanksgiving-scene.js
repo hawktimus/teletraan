@@ -90,7 +90,7 @@ export function drawn(leaf, colours) {
 
 // A small leaf for the vines, as a lit and a shaded triangle, starting at (x, y) and
 // reaching length in the direction of angle degrees
-export function miniLeaf(x, y, length, angle, colours) {
+export function computerLeaf(x, y, length, angle, colours) {
   const a = angle * Math.PI / 180;
   const along = (distance, across) => [x + distance * Math.cos(a) - across * Math.sin(a), y + distance * Math.sin(a) + across * Math.cos(a)];
   const tip = along(length, 0);
@@ -122,7 +122,7 @@ export function vine(width, height, base, wave, gap, size, gourdGap, gourdSize) 
   for (let x = gap / 2; x < width; x += gap) {
     const y = at(x);
     const down = n % 2 === 0;
-    leaves += miniLeaf(x, y, size, down ? 55 + (n % 3) * 8 : -30 - (n % 3) * 6, leafColours[n % leafColours.length]);
+    leaves += computerLeaf(x, y, size, down ? 55 + (n % 3) * 8 : -30 - (n % 3) * 6, leafColours[n % leafColours.length]);
     n += 1;
   }
 

@@ -49,7 +49,7 @@ export async function startExtras() {
 }
 
 // The sample content has its own calendar file in data/sample. The editors'
-// content uses the files the Mini downloads into data/live. Each reads only
+// content uses the files the Teletraan computer downloads into data/live. Each reads only
 // its own folder, so the two never mix. A read that finishes after the source
 // has switched belongs to the old source, and is dropped.
 async function readEvents(module) {
@@ -196,7 +196,7 @@ export async function startOptional(path, use) {
   }
 }
 
-// When the Mini downloads a new version of the dashboard it also writes a
+// When the Teletraan computer downloads a new version of the dashboard it also writes a
 // new number into version.txt. Seeing the number change, reload the page.
 function watchVersion() {
   let known = null;

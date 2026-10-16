@@ -1,3 +1,3 @@
-# What the control page's helper may do as root, and nothing else. mini/install.sh installs this file as
+# What the control page's helper may do as root, and nothing else. computer/install.sh installs this file as
 # /etc/sudoers.d/teletraan-control after checking it with visudo, and puts the login user in place of ACCOUNT.
 ACCOUNT ALL=(root) NOPASSWD: /usr/bin/systemctl restart teletraan-*, /usr/bin/systemctl restart nginx, /usr/bin/systemctl start teletraan-*.service, /sbin/reboot

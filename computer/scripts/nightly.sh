@@ -1,9 +1,9 @@
 #!/bin/bash
 # Usage: nightly.sh   (started by teletraan-nightly.timer)
 # The nightly restarts. teletraan-nightly.timer runs it as root at 04:00 every
-# day and again at 04:10 on Sundays (kiosk time, the time zone of the Mini).
+# day and again at 04:10 on Sundays (kiosk time, the time zone of the Teletraan computer).
 #   about 04:00   restarts the screen (teletraan-kiosk)
-#   about 04:10   on a Sunday, reboots the Mini
+#   about 04:10   on a Sunday, reboots the Teletraan computer
 # Either is skipped when a presentation is booked to start within the next hour
 # or is running now, so a talk is never cut off. The booking is asked from
 # Sanity, which is public and needs no key. When Sanity cannot be asked, the
@@ -72,6 +72,6 @@ if [ "$job" = kiosk ]; then
   say "restarting teletraan-kiosk."
   systemctl restart teletraan-kiosk
 else
-  say "rebooting the Mini."
+  say "rebooting the Teletraan computer."
   systemctl reboot
 fi

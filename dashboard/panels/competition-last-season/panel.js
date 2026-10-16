@@ -1,6 +1,6 @@
 // Last season at a glance, for the weeks before the first event: the record of the whole season, the rank
 // at each event, and the EPA after each event as a short line. It is all in the lastSeason part of the
-// team's entry, which the Mini keeps when the year changes (docs/frc-feed.md). In Auto it is hidden once
+// team's entry, which the Teletraan computer keeps when the year changes (docs/frc-feed.md). In Auto it is hidden once
 // the first event of the new season starts (core/competition.js).
 
 import { cardState, chartMarkup, cut, emptyMarkup, numberFor, pageMarkup, tagTextFor, textAt } from '../../core/competition-draw.js';

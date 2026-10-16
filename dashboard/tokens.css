@@ -332,7 +332,7 @@ html[data-layout="bar"]:not(.metal-steel):not(.metal-purple) [data-metal] {
 /* The flat finish (?finish=flat, or data-finish="flat" on the html element).
    Every edge becomes one plain stroke and every screw a plain silver octagon
    with a dark slot, with no shadow, ridge, banding or glint. The layers are
-   switched off in base.css. The Mini is an old machine, so if the screen is
+   switched off in base.css. The Teletraan computer is an old machine, so if the screen is
    slow, try the flat finish first.
 
    The Look setting in Dashboard Settings (core/look.js) sets this finish:

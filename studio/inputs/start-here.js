@@ -1,7 +1,7 @@
 // The Start here page, the first line of the sidebar (structure.js). It is a
 // page of its own, not a document. It has six blocks, top to bottom: what the
 // screen is, a picture of the screen, the three steps of every meeting, the
-// status of the Mini, links to the control page, the Studio on the web and the
+// status of the Teletraan computer, links to the control page, the Studio on the web and the
 // guides, and a line for the coaches' pages. It has no buttons that act on the
 // screen: those are on the control page.
 //
@@ -129,9 +129,9 @@ function threeSteps() {
   );
 }
 
-// Block 4: when the Mini last did each job. The same lines as the status block of Dashboard Settings.
-function statusOfTheMini() {
-  return h('div', { 'data-block': 'status' }, h('h2', { style: styles.subheading }, 'The Mini'), h(StatusInput, null));
+// Block 4: when the Teletraan computer last did each job. The same lines as the status block of Dashboard Settings.
+function statusOfTheComputer() {
+  return h('div', { 'data-block': 'status' }, h('h2', { style: styles.subheading }, 'The Teletraan computer'), h(StatusInput, null));
 }
 
 // One link and the line under it. A link whose address is not known yet is plain words.
@@ -168,7 +168,7 @@ export function StartHere() {
       whatItIs(),
       pictureOfTheScreen(),
       threeSteps(),
-      statusOfTheMini(),
+      statusOfTheComputer(),
       linksOut(),
       forCoaches()
     )

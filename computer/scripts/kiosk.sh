@@ -14,15 +14,15 @@ data=${data:-/var/lib/teletraan/data}
 
 # The build the page asks its files for (?v=<build> in index.html), and the version
 # label of core/version-label.js. A release made by the control service has a
-# RELEASE.json next to its mini/ folder: the build is then "<version>-<hash>".
+# RELEASE.json next to its computer/ folder: the build is then "<version>-<hash>".
 # Without one (a copy by the Mac tool, a plain checkout) the order of
 # status-write.sh version applies: the stamp the Mac tool leaves, then git, then
 # the time. Written in one step, so the web server never sends half a line. A
 # failure is ignored: the page falls back to the time by itself when
 # dashboard/build.js is missing.
 write_build() {
-  repo=$(cd "$mini/.." && pwd)
-  release="$(cd "$mini" && pwd -P)/../RELEASE.json"
+  repo=$(cd "$computer/.." && pwd)
+  release="$(cd "$computer" && pwd -P)/../RELEASE.json"
   version=0
   commit=""
   built=""
@@ -40,8 +40,8 @@ write_build() {
     fi
   fi
   if [ -z "$build" ]; then
-    if [ -f "$mini/build.txt" ]; then
-      build=$(sed -n 's/^commit=//p' "$mini/build.txt" | head -n 1)
+    if [ -f "$computer/build.txt" ]; then
+      build=$(sed -n 's/^commit=//p' "$computer/build.txt" | head -n 1)
     fi
     if ! printf '%s' "$build" | grep -Eq '^[0-9a-f]{4,40}$'; then
       build=$(git -C "$repo" rev-parse --short HEAD 2> /dev/null || true)
@@ -62,24 +62,24 @@ write_build || true
 # Tell Studio that the screen has started. It runs in the background with its
 # output thrown away, so a slow or missing network never holds the screen back.
 # It does nothing without a write token in local.env.
-"$mini/scripts/status-write.sh" kiosk > /dev/null 2>&1 &
-"$mini/scripts/status-write.sh" version > /dev/null 2>&1 &
+"$computer/scripts/status-write.sh" kiosk > /dev/null 2>&1 &
+"$computer/scripts/status-write.sh" version > /dev/null 2>&1 &
 
 # The text of $1 made safe to put between the quotes of a JSON string
 json_text() {
   printf '%s' "$1" | sed 's/[[:cntrl:]]//g; s/\\/\\\\/g; s/"/\\"/g'
 }
 
-# Writes device.json in the data folder: the Mini's name, its Wi-Fi and
+# Writes device.json in the data folder: the Teletraan computer's name, its Wi-Fi and
 # Tailscale addresses and the time. With nothing else to go on, this is how
-# someone finds the Mini on a school network they cannot look at. The
+# someone finds the Teletraan computer on a school network they cannot look at. The
 # dashboard shows it only while its connection status text says Sanity is
 # unreachable (core/connection.js).
 #
 # Written the way pull.sh writes version.txt: a temporary file in the same
 # folder, then mv, so the web server never reads half a file.
 #
-# Every command here may be missing or may fail on a given Mini. A value that
+# Every command here may be missing or may fail on a given computer. A value that
 # cannot be found stays empty, and the function never fails, because a
 # missing address must not stop the screen from starting.
 write_device_info() {
@@ -117,8 +117,8 @@ write_device_info() {
 
 # An address after the script name opens that page instead of the dashboard.
 # To try the script by hand with no desktop, stop the service, log in at the
-# Mini's own text screen (Ctrl+Alt+F1) and run:
-#   xinit /opt/teletraan/mini/scripts/kiosk.sh [address] -- :1 vt8
+# computer's own text screen (Ctrl+Alt+F1) and run:
+#   xinit /opt/teletraan/computer/scripts/kiosk.sh [address] -- :1 vt8
 url="${1:-$dashboard}"
 
 # The profile is kept between runs because the dashboard saves its last known
@@ -133,7 +133,7 @@ curl --fail --silent --output /dev/null --retry 30 --retry-delay 2 --retry-connr
 
 # Find the screen and make the framebuffer 1920 by 1080 (display.sh). The
 # browser window below follows that size, not the size of the TV.
-. "$mini/scripts/display.sh"
+. "$computer/scripts/display.sh"
 set_display || true
 
 # No screen saver, no blank screen, no power saving

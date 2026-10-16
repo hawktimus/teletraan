@@ -1,4 +1,4 @@
-// The Test the token button of the Monday tab (schemas/settingsMonday.js). It asks the Mini, through the
+// The Test the token button of the Monday tab (schemas/settingsMonday.js). It asks the Teletraan computer, through the
 // control page, who the token belongs to (tools/monday-check.js) and shows the account name or the error. The
 // field stores nothing.
 //

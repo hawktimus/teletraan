@@ -7,8 +7,8 @@
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 
-units="$mini/systemd"
-repo=$(cd "$mini/.." && pwd -P)
+units="$computer/systemd"
+repo=$(cd "$computer/.." && pwd -P)
 target=/etc/systemd/system
 backups=/var/backups/teletraan
 
@@ -25,8 +25,8 @@ for unit in teletraan-backup.service teletraan-backup.timer; do
   fi
 done
 
-if [ ! -x "$mini/scripts/backup-dataset.sh" ]; then
-  echo "$mini/scripts/backup-dataset.sh is missing or cannot be run." >&2
+if [ ! -x "$computer/scripts/backup-dataset.sh" ]; then
+  echo "$computer/scripts/backup-dataset.sh is missing or cannot be run." >&2
   exit 1
 fi
 
@@ -48,9 +48,9 @@ if [ -n "$missing" ]; then
 fi
 
 # The token is only looked for, never shown
-if ! grep -Eq "^SANITY_WRITE_TOKEN=['\"]?[A-Za-z0-9_.-]+" "$mini/local.env" 2> /dev/null; then
-  echo "SANITY_WRITE_TOKEN is not in $mini/local.env, and the export needs it." >&2
-  echo "Add it (docs/rebuilding-the-mini.md, the write token) and run this again." >&2
+if ! grep -Eq "^SANITY_WRITE_TOKEN=['\"]?[A-Za-z0-9_.-]+" "$computer/local.env" 2> /dev/null; then
+  echo "SANITY_WRITE_TOKEN is not in $computer/local.env, and the export needs it." >&2
+  echo "Add it (docs/rebuilding-the-computer.md, the write token) and run this again." >&2
   exit 1
 fi
 
@@ -72,7 +72,7 @@ fi
 account=$(stat -c %U "$repo")
 if [ "$account" = root ] || [ "$account" = UNKNOWN ] || ! id "$account" > /dev/null 2>&1; then
   echo "The repository at $repo is owned by $account, and the timer should not run as that." >&2
-  echo "Give it to the account the Mini logs in with. If that account is called hawktimus:" >&2
+  echo "Give it to the account the Teletraan computer logs in with. If that account is called hawktimus:" >&2
   echo "  sudo chown -R hawktimus:hawktimus $repo" >&2
   exit 1
 fi

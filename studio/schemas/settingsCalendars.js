@@ -3,7 +3,7 @@
 import { defineField, defineArrayMember } from 'sanity';
 import { tooLong } from './fields.js';
 
-// The Mini saves CALENDAR_BUILD_SEASON_URL as build_season.ics, so a code
+// The Teletraan computer saves CALENDAR_BUILD_SEASON_URL as build_season.ics, so a code
 // that is not lowercase letters, digits and underscores never finds its file
 const calendarCode = /^[a-z0-9_]+$/;
 
@@ -36,7 +36,7 @@ export const calendarsField = defineField({
           name: 'id',
           title: 'Calendar code',
           type: 'string',
-          description: 'The code of the calendar on the Mini, in lowercase. Do not change it unless you were told to. Up to 20 characters.',
+          description: 'The code of the calendar on the Teletraan computer, in lowercase. Do not change it unless you were told to. Up to 20 characters.',
           validation: Rule => [
             Rule.required().error('Enter the calendar code.'),
             tooLong(Rule, 20),

@@ -22,7 +22,7 @@ folder="$data/calendars"
 sync_file="$data/calendar-sync.txt"
 
 if [ ! -d "$data" ]; then
-  echo "The data folder $data does not exist. See docs/rebuilding-the-mini.md." >&2
+  echo "The data folder $data does not exist. See docs/rebuilding-the-computer.md." >&2
   exit 1
 fi
 

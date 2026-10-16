@@ -238,7 +238,7 @@ export function packProblems(pack) {
   });
 
   const counts = countPieces(pack);
-  if (counts.moving > mostMovingPieces) problems.push('the pack has ' + counts.moving + ' pieces that move, and the most is ' + mostMovingPieces + '. The Mini would struggle');
+  if (counts.moving > mostMovingPieces) problems.push('the pack has ' + counts.moving + ' pieces that move, and the most is ' + mostMovingPieces + '. The Teletraan computer would struggle');
   if (counts.all > mostPieces) problems.push('the pack has ' + counts.all + ' pieces, and the most is ' + mostPieces);
   if (counts.over > overRules.mostPieces) problems.push('the pack has ' + counts.over + ' over pieces, and the most is ' + overRules.mostPieces + '. They cross the panels, so few is better');
   return problems;

@@ -9,7 +9,7 @@
 //      it every second (makeDemoRunner().look).
 //   3. A request starts a demo only if it is recent and is not the one handled
 //      before (shouldRunDemo). The one handled before is kept in localStorage,
-//      so a Mini that restarts a minute after a demo does not play it again.
+//      so a computer that restarts a minute after a demo does not play it again.
 //   4. The steps play once, in order. The normal pages stop changing while they
 //      play, and the normal screen comes back when the last one ends.
 

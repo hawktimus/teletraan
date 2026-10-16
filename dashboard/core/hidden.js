@@ -16,7 +16,7 @@
 //      push ignores the chances and the gap, but not the rules in holdReason below, and it
 //      plays only once and only while it is less than a minute old, the same
 //      guard as a demo (shouldRunDemo in core/demo.js). The one handled before
-//      is kept in localStorage, so a Mini that restarts never plays it again.
+//      is kept in localStorage, so a computer that restarts never plays it again.
 //   3. It replaces the normal page change. It never plays in calm or no
 //      motion, with the master switch off, or while an alert, an announcement,
 //      a demo, night mode or another hidden transition has the screen.

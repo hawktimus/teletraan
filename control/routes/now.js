@@ -1,8 +1,8 @@
-// The Now on the wall card. The dashboard on the Mini posts its state here every 10 seconds
+// The Now on the wall card. The dashboard on the Teletraan computer posts its state here every 10 seconds
 // (dashboard/core/now-report.js); the tab reads it back. A report that is older than 40 seconds
 // means the dashboard has gone quiet.
 //
-// The POST comes through nginx from the Mini itself and carries no PIN. nginx sets X-Real-IP, and
+// The POST comes through nginx from the Teletraan computer itself and carries no PIN. nginx sets X-Real-IP, and
 // this route accepts only 127.0.0.1 and ::1 in it (nginx must also refuse every other address for
 // this one path). The report is checked and cut to size before it is kept.
 
@@ -30,10 +30,10 @@ export function register(router, ctx) {
   let rows = { panel: '', at: 0, lines: [] };
 
   mount(router, ctx, 'POST', '/now', async (req, res) => {
-    if (!fromLocalhost(req)) throw new Refusal(403, 'Only the Mini reports what is on the wall.');
+    if (!fromLocalhost(req)) throw new Refusal(403, 'Only the Teletraan computer reports what is on the wall.');
     const body = await readJson(req, 8 * 1024);
     report = cleanReport(body, new Date());
-    // The time is the Mini's own, so a wrong clock on the page cannot make a report look fresh
+    // The time is the Teletraan computer's own, so a wrong clock on the page cannot make a report look fresh
     received = new Date();
     send(res, 200, { ok: true });
   }, { open: true });

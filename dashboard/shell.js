@@ -129,7 +129,7 @@ async function run() {
       console.error('The theme could not be started. The screen keeps the default look.', error);
     }
 
-    // The night screen goes up before the panels are drawn, so a Mini that
+    // The night screen goes up before the panels are drawn, so a computer that
     // restarts in the middle of the night does not show the dashboard first.
     // It is left out of the test views (?show and ?stress) unless asked for.
     if (params.has('night') || (!params.get('show') && !stress)) {

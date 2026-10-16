@@ -67,7 +67,7 @@ export async function installRelease(ctx, options) {
 
     await step('files', 'Check the files', () => {
       if (fs.existsSync(path.join(temporary, 'deploy', 'scripts'))) throw stop(oldTreeMessage);
-      for (const needed of ['dashboard/index.html', 'mini/scripts/kiosk.sh']) {
+      for (const needed of ['dashboard/index.html', 'computer/scripts/kiosk.sh']) {
         if (!fs.existsSync(path.join(temporary, needed))) throw stop('The folder has no ' + needed + '. Pick the Teletraan repository folder.');
       }
     });
@@ -89,7 +89,7 @@ export async function installRelease(ctx, options) {
     const info = await step('release', 'Write the release files', () => {
       const keys = path.join(ctx.rootDir, 'local.env');
       if (fs.existsSync(keys)) {
-        const link = path.join(temporary, 'mini', 'local.env');
+        const link = path.join(temporary, 'computer', 'local.env');
         fs.rmSync(link, { force: true });
         fs.symlinkSync(keys, link);
       }

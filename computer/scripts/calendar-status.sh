@@ -3,7 +3,7 @@
 # Makes <data folder>/calendar-status.json, the document that the Calendars page
 # in Studio shows, from what fetch-calendars.sh left in calendar-sync.txt: for
 # each calendar, when it was last downloaded and why a download failed. With Node
-# on the Mini it also lists the coming events of each calendar, SHOWN or HIDDEN
+# on the Teletraan computer it also lists the coming events of each calendar, SHOWN or HIDDEN
 # with the name of the Calendar filter that hides it, using the dashboard's own
 # calendar code, so the list is what the screen does. Without Node it writes the
 # first part and says so in the document. status-write.sh calendar-status sends
@@ -14,7 +14,7 @@
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 
-helper="$mini/scripts/calendar-status.mjs"
+helper="$computer/scripts/calendar-status.mjs"
 
 data=$(setting TELETRAAN_DATA)
 data=${data:-/var/lib/teletraan/data}
@@ -83,15 +83,15 @@ document_with_events() {
 
 reason=""
 if ! command -v node > /dev/null 2>&1; then
-  reason="Node is not installed on the Mini, so it does not list the coming events"
+  reason="Node is not installed on the Teletraan computer, so it does not list the coming events"
 elif ! node_is_new_enough; then
-  reason="Node on the Mini is too old to read the dashboard code, so it does not list the coming events. It needs version 18 or newer"
+  reason="Node on the Teletraan computer is too old to read the dashboard code, so it does not list the coming events. It needs version 18 or newer"
 else
   outcome=0
   document_with_events || outcome=$?
   case $outcome in
     0) ;;
-    1) reason="The Mini could not read the Calendar filters from Sanity, so it did not list the coming events" ;;
+    1) reason="The Teletraan computer could not read the Calendar filters from Sanity, so it did not list the coming events" ;;
     *) reason="Node could not list the coming events, and the log of the calendar service says why" ;;
   esac
 fi

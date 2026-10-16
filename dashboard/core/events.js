@@ -48,7 +48,7 @@ function weekdayNumber(day) {
 }
 
 // Capitals do not matter and a run of spaces or line breaks counts as one space.
-// The Mini lists a title that way on the Calendars page, so a rule made from that
+// The Teletraan computer lists a title that way on the Calendars page, so a rule made from that
 // list must find the title as BAND wrote it.
 function squeezed(text) {
   return String(text || '').replace(/[\s\u0000-\u001f\u007f]+/g, ' ').trim().toLowerCase();
@@ -184,7 +184,7 @@ function daysOf(event, timeZone) {
 }
 
 // The first day of an event like 2027-04-02, found the way the Calendar filters
-// find it, or empty when the event has no date that can be read. The Mini writes
+// find it, or empty when the event has no date that can be read. The Teletraan computer writes
 // it for the Calendars page, so a rule made there matches the same day.
 export function firstDayOf(event, timeZone) {
   const days = daysOf(event || {}, timeZone);

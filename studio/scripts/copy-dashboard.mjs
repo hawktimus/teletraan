@@ -2,7 +2,7 @@
 // /dashboard/ on its own origin (the preview of the panels, docs/monday.md). npm runs it before
 // sanity build and sanity deploy (predeploy and prebuild in package.json). The copy is ignored by git.
 //
-// The live folder is left out: it holds files the Mini makes, and the preview reads Sanity.
+// The live folder is left out: it holds files the Teletraan computer makes, and the preview reads Sanity.
 
 import fs from 'node:fs';
 import path from 'node:path';

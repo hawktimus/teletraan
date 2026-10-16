@@ -1,6 +1,6 @@
 // Tells the control page what is on the wall, every 10 seconds (control/routes/now.js keeps the
-// last report and shows it on the Now showing tab). Only a page opened on the Mini itself reports,
-// because the control service answers on this address only through the Mini's own web server. The
+// last report and shows it on the Now showing tab). Only a page opened on the Teletraan computer itself reports,
+// because the control service answers on this address only through the Teletraan computer's own web server. The
 // report is { at, view, theme, team, panel, build, page }, plus hold, pause and dots.
 //
 // The view and the theme are read from the page: the runtime puts them on the root element as
@@ -45,7 +45,7 @@ function readParts(doc, getContent, getTeam, now = new Date()) {
 }
 
 // The report is sent and forgotten. A control service that is not there, or a page that is not
-// on the Mini, is not a problem of the screen.
+// on the Teletraan computer, is not a problem of the screen.
 export function startNowReport(getContent, getTeam, hostname = window.location.hostname) {
   if (!isLocalHost(hostname)) return;
 

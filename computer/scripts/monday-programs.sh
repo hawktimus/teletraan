@@ -82,7 +82,7 @@ $sanity[0].result as $found
 '
 
 # The patch of the document that Studio reads to offer the boards and columns, and to say when
-# the Mini last looked and how many reads it has used today. The daily count is added only when
+# the Teletraan computer last looked and how many reads it has used today. The daily count is added only when
 # the task board was read to its end, so a run that missed it cannot write a count that is too low.
 # A reading that failed keeps the figures of the run before.
 status_patch='

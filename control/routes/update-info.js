@@ -1,4 +1,4 @@
-// GET update-info: the lines the Update tab shows for the git path, with the user and host of this Mini.
+// GET update-info: the lines the Update tab shows for the git path, with the user and host of this computer.
 
 import { sendJson } from '../lib/router.js';
 

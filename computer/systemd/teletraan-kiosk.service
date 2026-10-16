@@ -7,7 +7,7 @@ Wants=docker.service
 
 [Service]
 # ACCOUNT is replaced by install-timers.sh with the account that owns the
-# repository, so this file does not depend on what the Mini's user is called.
+# repository, so this file does not depend on what the Teletraan computer's user is called.
 User=ACCOUNT
 # These make systemd treat the service as a login on a console screen. X needs
 # that before it will start for a normal user.
@@ -25,7 +25,7 @@ Environment=XDG_SESSION_TYPE=x11
 ExecStartPre=/usr/bin/chvt 7
 # xinit starts X and then kiosk.sh. When kiosk.sh ends, X stops and so does
 # this service. -nocursor hides the mouse pointer.
-ExecStart=/usr/bin/xinit /opt/teletraan/mini/scripts/kiosk.sh -- :0 vt7 -keeptty -nocursor
+ExecStart=/usr/bin/xinit /opt/teletraan/computer/scripts/kiosk.sh -- :0 vt7 -keeptty -nocursor
 Restart=always
 RestartSec=10
 

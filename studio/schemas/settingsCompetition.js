@@ -1,7 +1,7 @@
 // The Competition tab of Dashboard Settings: the competition cards that show the
 // season, the next match, the rank and the results (docs/frc-feed.md). It has:
 //
-//   frcConnection      a read only block that says when the Mini last read the competition
+//   frcConnection      a read only block that says when the Teletraan computer last read the competition
 //                      data (../frc-status-input.js). It stores nothing
 //   competitionMode    auto (the cards come two days before a team event and take priority
 //                      during it), always or off, auto to start with
@@ -45,11 +45,11 @@ export function competitionFields() {
   const fields = [
     defineField({
       name: 'frcConnection',
-      title: 'Competition data from the Mini',
+      title: 'Competition data from the Teletraan computer',
       type: 'string',
       group: 'competition',
       readOnly: true,
-      description: 'When the Mini last read the competition data. The Mini writes this by itself, so there is nothing to type here.',
+      description: 'When the Teletraan computer last read the competition data. The computer writes this by itself, so there is nothing to type here.',
       components: { input: FrcStatusInput },
     }),
 

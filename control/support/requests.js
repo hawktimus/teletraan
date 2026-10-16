@@ -82,7 +82,7 @@ export function buildRequest(action, input, now = new Date()) {
     }
 
     default:
-      throw new Refusal(400, 'The Mini does not know that request.');
+      throw new Refusal(400, 'The Teletraan computer does not know that request.');
   }
 }
 

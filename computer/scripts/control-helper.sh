@@ -5,7 +5,7 @@
 # argument. write-env also reads the new local.env from the rest of the input. Anything that is not one of the
 # words below is refused with one line in the log. The last line of the answer is ok, refused or failed <code>.
 #
-# Only the commands the sudoers drop-in allows are run with sudo (mini/sudoers/teletraan-control).
+# Only the commands the sudoers drop-in allows are run with sudo (computer/sudoers/teletraan-control).
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 
@@ -78,7 +78,7 @@ case $word in
     finish 0
     ;;
   reboot)
-    echo "The Mini reboots in 3 seconds."
+    echo "The Teletraan computer reboots in 3 seconds."
     ( sleep 3; sudo -n /sbin/reboot ) > /dev/null 2>&1 &
     finish 0
     ;;
@@ -99,7 +99,7 @@ case $word in
     ;;
   monday-check)
     code=0
-    "$root/mini/scripts/monday-sync.sh" --check || code=$?
+    "$root/computer/scripts/monday-sync.sh" --check || code=$?
     finish "$code"
     ;;
   write-env)

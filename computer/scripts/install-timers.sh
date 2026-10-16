@@ -1,13 +1,13 @@
 #!/bin/bash
 # Usage: sudo install-timers.sh
-# Installs the systemd units for the Mini and turns on the two timers: one
+# Installs the systemd units for the Teletraan computer and turns on the two timers: one
 # downloads the calendars, one pulls the repository. The kiosk unit is copied
 # but not turned on, because it takes over the screen.
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 
-units="$mini/systemd"
-repo=$(cd "$mini/.." && pwd -P)
+units="$computer/systemd"
+repo=$(cd "$computer/.." && pwd -P)
 target=/etc/systemd/system
 
 # The unit files name the repository location directly
@@ -31,7 +31,7 @@ fi
 account=$(stat -c %U "$repo")
 if [ "$account" = root ] || [ "$account" = UNKNOWN ] || ! id "$account" > /dev/null 2>&1; then
   echo "The repository at $repo is owned by $account, and the timers should not run as that." >&2
-  echo "Give it to the account the Mini logs in with. If that account is called hawktimus:" >&2
+  echo "Give it to the account the Teletraan computer logs in with. If that account is called hawktimus:" >&2
   echo "  sudo chown -R hawktimus:hawktimus $repo" >&2
   exit 1
 fi

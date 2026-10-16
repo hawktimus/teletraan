@@ -116,7 +116,7 @@ export function rebuild() {
   updatePanel('bar-banner', shellState.content); // nor do these two
   updatePanel('bar-column', shellState.content);
 
-  // The connection status text, and the Mini's address inside it while Sanity cannot be reached
+  // The connection status text, and the Teletraan computer's address inside it while Sanity cannot be reached
   try {
     showDeviceInfo(Boolean(shellState.status && shellState.status.offline), useDeviceLines);
     drawConnectionText();

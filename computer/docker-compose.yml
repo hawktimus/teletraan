@@ -1,7 +1,7 @@
 # The web server that shows the dashboard and the Studio, and the control service. Run these from this folder:
 #   docker compose --env-file local.env up -d    start it, or apply a change to this file
 #   docker compose down                           stop it
-# --env-file is what lets local.env set the port and the data folder below. mini/install.sh runs the first one.
+# --env-file is what lets local.env set the port and the data folder below. computer/install.sh runs the first one.
 #
 # Everything is read through /opt/teletraan/current, the link to the live release (docs/control-page.md).
 # A bind mount is resolved when the container starts, so the control page restarts the web server after it
@@ -12,7 +12,7 @@ name: teletraan
 services:
   web:
     # Needs the team mentor's approval before it is downloaded, see
-    # docs/rebuilding-the-mini.md. The version is fixed so a rebuild years from
+    # docs/rebuilding-the-computer.md. The version is fixed so a rebuild years from
     # now runs the same server this nginx.conf was written for. To move to a
     # newer one, change the tag and run the up command above.
     image: nginx:1.28-alpine
@@ -27,7 +27,7 @@ services:
       - ${TELETRAAN_ROOT:-/opt/teletraan}/current/dashboard:/srv/web/dashboard:ro
       # The Studio built by the last install (control/lib/studio-build.js)
       - ${TELETRAAN_ROOT:-/opt/teletraan}/current/studio-dist:/srv/web/studio:ro
-      # Calendars, slides and version.txt. The scripts on the Mini write this
+      # Calendars, slides and version.txt. The scripts on the Teletraan computer write this
       # folder, the web server only reads it. Without create_host_path: false,
       # Docker would quietly make a missing folder owned by root, and then the
       # scripts could not write to it.
@@ -37,7 +37,7 @@ services:
         read_only: true
         bind:
           create_host_path: false
-      - ${TELETRAAN_ROOT:-/opt/teletraan}/current/mini/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ${TELETRAAN_ROOT:-/opt/teletraan}/current/computer/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     # Keeps the log from filling the disk of a machine that runs for years
     logging:
       driver: json-file
@@ -51,7 +51,7 @@ services:
     image: node:22-alpine
     container_name: teletraan-control
     restart: unless-stopped
-    # The login user, so the files it makes are the user's. mini/install.sh writes both numbers to local.env.
+    # The login user, so the files it makes are the user's. computer/install.sh writes both numbers to local.env.
     user: "${TELETRAAN_UID:-1000}:${TELETRAAN_GID:-1000}"
     working_dir: /opt/teletraan/current/control
     command: ["node", "server.js"]

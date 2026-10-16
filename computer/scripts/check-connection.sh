@@ -4,7 +4,7 @@
 # OK or FAIL, then what was found. The last line is OK if every check passed,
 # FAIL if any did not. Run it over SSH from any computer:
 #
-#   ssh hawktimus@<address> /opt/teletraan/mini/scripts/check-connection.sh
+#   ssh hawktimus@<address> /opt/teletraan/computer/scripts/check-connection.sh
 #
 # Add -t after ssh if Docker needs sudo and sudo needs a password.
 #
@@ -18,7 +18,7 @@ set -euo pipefail
 # A failed check prints FAIL and the next one still runs
 set +e
 
-compose_file="$mini/docker-compose.yml"
+compose_file="$computer/docker-compose.yml"
 
 failures=0
 
@@ -86,7 +86,7 @@ if have getent; then
   if [ -n "$address" ]; then
     ok "DNS: api.sanity.io is found at $address"
   else
-    fail "DNS: api.sanity.io was not found, so the Mini has no working DNS"
+    fail "DNS: api.sanity.io was not found, so the Teletraan computer has no working DNS"
   fi
 else
   fail "DNS: the getent command is missing, so DNS could not be checked"
@@ -119,13 +119,13 @@ else
   fail "Dataset: the project ID, dataset or API version is missing"
 fi
 
-# 4. CORS. The browser on the Mini asks from http://localhost:<port>, and
+# 4. CORS. The browser on the Teletraan computer asks from http://localhost:<port>, and
 # Sanity only lets it read the answer if it has that address in its CORS
 # origins list. Sanity answers a wrong origin with 403, or leaves the
 # access-control-allow-origin line out.
 origin="http://localhost:$port"
 if [ -z "$port" ]; then
-  fail "CORS: could not find the port in mini/local.env or mini/docker-compose.yml"
+  fail "CORS: could not find the port in computer/local.env or computer/docker-compose.yml"
 elif ! have curl; then
   fail "CORS: the curl command is missing, so CORS could not be checked"
 elif [ -z "$project" ] || [ -z "$dataset" ] || [ -z "$version" ]; then
@@ -152,7 +152,7 @@ fi
 # a made up address, means it can be reached.
 code=$(http_code https://api.band.us/)
 if [ "$code" = 000 ]; then
-  fail "BAND: no answer from api.band.us (HTTP 000), the Mini cannot download the calendars"
+  fail "BAND: no answer from api.band.us (HTTP 000), the Teletraan computer cannot download the calendars"
 else
   ok "BAND: api.band.us answered HTTP $code"
 fi
@@ -175,7 +175,7 @@ if have docker; then
   if [ -n "$container" ]; then
     ok "Web container: $container"
   elif run_docker ps > /dev/null; then
-    fail "Web container: teletraan-web is not running. See step 9 in docs/rebuilding-the-mini.md."
+    fail "Web container: teletraan-web is not running. See step 9 in docs/rebuilding-the-computer.md."
   else
     fail "Web container: could not ask Docker. Check that Docker is running, or try ssh -t so sudo can ask for a password."
   fi
@@ -202,7 +202,7 @@ if have timedatectl; then
   if [ "$synced" = yes ]; then
     ok "Time: the clock is in sync, now $now"
   else
-    fail "Time: the clock is not in sync (now $now). See step 3 in docs/rebuilding-the-mini.md."
+    fail "Time: the clock is not in sync (now $now). See step 3 in docs/rebuilding-the-computer.md."
   fi
 else
   fail "Time: the timedatectl command is missing"

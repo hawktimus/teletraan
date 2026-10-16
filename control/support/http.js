@@ -69,7 +69,7 @@ export function paramOf(req, pattern, name) {
 }
 
 // Puts a handler on the router. options.open skips the PIN check, for the one call that the
-// dashboard makes from the Mini itself.
+// dashboard makes from the Teletraan computer itself.
 export function mount(router, ctx, method, path, handler, options = {}) {
   router[method.toLowerCase()](path, async (req, res) => {
     try {
@@ -81,7 +81,7 @@ export function mount(router, ctx, method, path, handler, options = {}) {
     } catch (error) {
       if (error instanceof Refusal) return send(res, error.status, { error: error.message });
       if (typeof ctx.log === 'function') ctx.log('error in ' + method + ' ' + path + ': ' + String(error && error.message).slice(0, 200));
-      send(res, 500, { error: 'Something went wrong on the Mini. The Log tab has the reason.' });
+      send(res, 500, { error: 'Something went wrong on the Teletraan computer. The Log tab has the reason.' });
     }
   });
 }

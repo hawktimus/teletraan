@@ -1,10 +1,10 @@
 // The connection block at the top of the Monday tab of Dashboard Settings
-// (schemas/settingsMonday.js). It reads the document monday-status, which the Mini writes
-// with mini/scripts/monday-sync.sh, and says who the token belongs to, when the Mini
+// (schemas/settingsMonday.js). It reads the document monday-status, which the Teletraan computer writes
+// with computer/scripts/monday-sync.sh, and says who the token belongs to, when the Teletraan computer
 // last read Monday, how many boards it can see, and what went wrong last. Below those it says
-// how often the Mini reads, how many reads it has used today, and how many tasks it made and how
+// how often the Teletraan computer reads, how many reads it has used today, and how many tasks it made and how
 // many of them have no department and are kept off the TV. Under those is a line for each of the
-// two boards of the form: the name of the board, how many items the Mini read, how many of its
+// two boards of the form: the name of the board, how many items the Teletraan computer read, how many of its
 // tasks are on the TV, and when it was last read. A board that gave no items says why, such as a
 // board number the token cannot see. The field stores nothing: this input never changes the value.
 //
@@ -25,27 +25,27 @@ const h = createElement;
 // The same version as the screen's own questions to Sanity
 const apiVersion = '2025-02-19';
 
-// The id the Mini writes to. mini/scripts/monday-sync.sh has the same one.
+// The id the Teletraan computer writes to. computer/scripts/monday-sync.sh has the same one.
 export const mondayStatusId = 'monday-status';
 
 // Only what the block shows, so the question stays small. names are the boards the token can
-// see, and readings are what the Mini read from each of the two boards of the form.
+// see, and readings are what the Teletraan computer read from each of the two boards of the form.
 const question = '*[_id == $id][0] { connectedAs, lastSyncAt, lastError, taskCount, hiddenUnassigned, callsToday, callsDate, "boards": count(boards), "names": boards[] { id, name }, "readings": readings[] { boardId, boardName, itemsRead, readAt, note } }';
 
-// The tasks the Mini made from the boards, whether or not they are on the screen
+// The tasks the Teletraan computer made from the boards, whether or not they are on the screen
 const taskQuestion = 'count(*[_type == "task" && source == "monday" && !(_id in path("drafts.**"))])';
 
 // The board of each task from the board that is on the TV, so the block can count them for each board
 const shownQuestion = '*[_type == "task" && source == "monday" && showOnTv != false && showOnBoard != false && show != false && !(_id in path("drafts.**"))].mondayBoardId';
 
-// The reads a day may use before the Mini waits for midnight (mini/scripts/monday-sync.sh, daily_limit)
+// The reads a day may use before the Teletraan computer waits for midnight (computer/scripts/monday-sync.sh, daily_limit)
 export const dailyReads = 900;
 
 // The boards of the Monday tab when the form has not named them yet, the same as the starting values
 // in dashboard/config.js
 export const startingBoards = ['18435126893', '18435272887'];
 
-// How often the Mini reads when the form has no number yet
+// How often the Teletraan computer reads when the form has no number yet
 export const startingMinutes = 30;
 
 const styles = {
@@ -84,7 +84,7 @@ export function describeMondayStatus(doc, now) {
   ];
 }
 
-// The lines below those, from { every, tasks, hidden, calls, callsDate }: how often the Mini reads, the reads
+// The lines below those, from { every, tasks, hidden, calls, callsDate }: how often the Teletraan computer reads, the reads
 // used today, and the tasks it made with how many have no department. A number that could not be read leaves
 // its line out, and the hidden count is added only when it is known.
 export function describeMondayWork(counts) {
@@ -104,7 +104,7 @@ function itemsRead(count) {
 }
 
 // The line of each board row of the form, as { key, label, text, reason }: the name of the board, how many
-// items the Mini read, how many of its tasks are on the TV, and when it was last read. reason says why a
+// items the Teletraan computer read, how many of its tasks are on the TV, and when it was last read. reason says why a
 // board gave no items, or nothing. entries are the board rows of the form, doc is the status document
 // or null, shown is the board numbers of the tasks on the TV or null when they could not be read, and now
 // is the time to count the ages from. A row with no board yet has no line.
@@ -129,7 +129,7 @@ export function describeBoardRows(entries, doc, shown, now) {
     let reason = '';
     if (unseen) reason = 'The token cannot see this board, or the board number is wrong.';
     else if (reading && typeof reading.note === 'string' && reading.note !== '') reason = sentence(reading.note);
-    else if (!reading) reason = 'The Mini has not read this board yet. Wait for the next sync.';
+    else if (!reading) reason = 'The Teletraan computer has not read this board yet. Wait for the next sync.';
     else if (read === 0) reason = 'The board has no items.';
 
     const text = [itemsRead(read === null ? 0 : read), onTv === null ? '' : onTv + ' shown on the TV', age ? 'Read ' + age : 'Not read yet'].filter(Boolean).join(' · ');
@@ -166,7 +166,7 @@ export async function readMondayStatus(client) {
   }
 }
 
-// The number of tasks the Mini has made, or null when it cannot be read
+// The number of tasks the Teletraan computer has made, or null when it cannot be read
 export async function readMondayTaskCount(client) {
   try {
     const found = await client.fetch(taskQuestion, {}, { perspective: 'published' });
@@ -183,7 +183,7 @@ export async function readMondayTaskCount(client) {
 export function mondayStatusView(read, now, work) {
   if (!read) return h('p', { style: styles.note }, 'Reading the connection to Monday.');
   if (read.unreadable) return h('p', { style: styles.note }, 'The connection to Monday could not be read. Refresh the page to try again.');
-  if (!read.doc) return h('p', { style: styles.note }, 'No connection yet. Add MONDAY_API_TOKEN to local.env on the Mini, then wait 5 minutes.');
+  if (!read.doc) return h('p', { style: styles.note }, 'No connection yet. Add MONDAY_API_TOKEN to local.env on the Teletraan computer, then wait 5 minutes.');
 
   const counts = work || {};
   const doc = read.doc;

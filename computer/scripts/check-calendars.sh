@@ -8,18 +8,18 @@
 # later when it is not one of the first eight) and the kind of its calendar, or
 # no chip. It only reads: nothing is saved and nothing is changed. The filters
 # are read from Sanity the way the screen reads them, and the events are
-# expanded by the dashboard's own calendar code, which needs Node. The Mini does
+# expanded by the dashboard's own calendar code, which needs Node. The Teletraan computer does
 # not have Node, so run this on a computer that has Node, a copy of the
-# repository and a mini/local.env with the calendar addresses:
+# repository and a computer/local.env with the calendar addresses:
 #
-#   mini/scripts/check-calendars.sh
+#   computer/scripts/check-calendars.sh
 #
 # The feed addresses are secrets, so nothing here prints one. Every line
 # names a calendar by its code only.
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 
-helper="$mini/scripts/check-calendars.mjs"
+helper="$computer/scripts/check-calendars.mjs"
 
 if [ ! -f "$env_file" ]; then
   echo "No local.env at $env_file. Copy local.example.env to local.env first." >&2
@@ -32,8 +32,8 @@ if ! command -v curl > /dev/null 2>&1; then
 fi
 
 if ! command -v node > /dev/null 2>&1; then
-  echo "Node is not installed. This check needs it, and the Mini does not have it." >&2
-  echo "Run it on a computer that has Node, a copy of the repository and a mini/local.env with the calendar addresses." >&2
+  echo "Node is not installed. This check needs it, and the Teletraan computer does not have it." >&2
+  echo "Run it on a computer that has Node, a copy of the repository and a computer/local.env with the calendar addresses." >&2
   exit 1
 fi
 

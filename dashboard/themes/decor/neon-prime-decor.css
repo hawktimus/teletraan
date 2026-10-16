@@ -73,7 +73,7 @@ html.theme-neon-prime {
 /* The steel bars that are not frame edges (the rail and the countdown's frame,
    below) are the banner's bar (base.css, .bar) drawn along or across: the rim,
    the neon ridge and the shade, over the banded face. They are written once
-   here, and the flat finish (?finish=flat, which the Mini may need) swaps them
+   here, and the flat finish (?finish=flat, which the Teletraan computer may need) swaps them
    for one plain colour, as it does the banner's bars. A bar is 8px thick or 16. */
 html.theme-neon-prime {
   --bar-across-8: linear-gradient(180deg, var(--metal-rim) 0, var(--metal-rim) 1px, var(--metal-ridge) 1px, var(--metal-ridge) 3px, transparent 3px, transparent 5px, var(--metal-shade) 5px, var(--metal-shade) 7px, var(--metal-rim) 7px, var(--metal-rim) 8px);

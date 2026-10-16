@@ -1,5 +1,5 @@
 // The text of the four tabs (Now showing, Status, Keys, Log) as HTML strings. They take the answers
-// of the control API and give markup, with every value from the Mini escaped. The tab files
+// of the control API and give markup, with every value from the Teletraan computer escaped. The tab files
 // (now.js, status.js, keys.js, log.js) put the markup in the page and wire the buttons. Nothing
 // here touches the page, so Node can try it.
 
@@ -46,7 +46,7 @@ function dotRow(name, dot) {
 
 // The Status tab
 export function statusHtml(data, now = new Date()) {
-  if (!data) return card('Status', '<p>The Mini did not answer.</p>');
+  if (!data) return card('Status', '<p>The Teletraan computer did not answer.</p>');
   const mini = data.mini || {};
   const previous = data.versions && data.versions.previous && data.versions.previous.length ? data.versions.previous.map(n => 'v' + n).join(', ') : 'none kept';
   const current = data.versions && data.versions.current !== null && data.versions.current !== undefined ? 'v' + data.versions.current : 'not known';
@@ -74,7 +74,7 @@ export function statusHtml(data, now = new Date()) {
     row('Screen started', esc(agoText(mini.screenStarted, now))) +
     row('Last backup', esc(agoText(data.lastBackupAt, now))) + '</dl>');
 
-  const around = card('The Mini', '<dl>' +
+  const around = card('The Teletraan computer', '<dl>' +
     row('Sanity', data.sanity && data.sanity.reachable ? 'Reachable' : 'Not reachable' + (data.sanity && data.sanity.error ? ': ' + esc(data.sanity.error) : '')) +
     row('Studio can reach this page', cors) +
     row('Disk', esc(disk)) +

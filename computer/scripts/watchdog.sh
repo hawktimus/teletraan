@@ -15,7 +15,7 @@
 # So that a broken deploy is not restarted in a loop:
 #   - at most one restart in 10 minutes,
 #   - when a third restart would fall inside one hour, nothing is restarted and
-#     the watchdog stops until the Mini boots again.
+#     the watchdog stops until the Teletraan computer boots again.
 # What it has done is kept in the file watchdog-state in the data folder
 # (/var/lib/teletraan/data, or TELETRAAN_DATA in local.env), one NAME=value
 # line each: boot (the id of this boot), day and today (restarts counted for
@@ -151,7 +151,7 @@ save_state() {
 }
 
 tell_studio() {
-  "$mini/scripts/status-write.sh" restart "$1" > /dev/null 2>&1 || true
+  "$computer/scripts/status-write.sh" restart "$1" > /dev/null 2>&1 || true
 }
 
 if [ "$newest" -gt 0 ] && [ $((now - newest)) -lt "$restart_gap" ]; then

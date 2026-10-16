@@ -7,7 +7,7 @@
 # used. A TV that lists only 3840x2160 is shown at that mode, scaled by half,
 # so the dashboard still draws 1920 by 1080 pixels.
 #
-# Two settings for tests, with the defaults the Mini uses:
+# Two settings for tests, with the defaults the Teletraan computer uses:
 #   DISPLAY_POLL_INTERVAL   seconds between looks for a connected screen (2)
 #   DISPLAY_POLL_LIMIT      seconds to look before giving up (20)
 

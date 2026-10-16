@@ -5,7 +5,7 @@
 # the document frc-status in Sanity: each team's events, next match, last
 # results, rank, alliance, awards, rating and district points. The screen reads
 # that document with the rest of the content. Needs curl and jq
-# (docs/rebuilding-the-mini.md, step 17, and docs/frc-feed.md).
+# (docs/rebuilding-the-computer.md, step 17, and docs/frc-feed.md).
 #
 #   frc-sync.sh           one run, which the timer starts every 5 minutes. A run
 #                         does its work about once an hour, and every 5 minutes
@@ -19,11 +19,11 @@
 #                         past event"). It needs only the key, and writes nothing to Sanity
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
-. "$mini/scripts/frc-contract.sh"
-. "$mini/scripts/frc-requests.sh"
-. "$mini/scripts/frc-modes.sh"
-. "$mini/scripts/frc-read.sh"
-. "$mini/scripts/frc-programs.sh"
+. "$computer/scripts/frc-contract.sh"
+. "$computer/scripts/frc-requests.sh"
+. "$computer/scripts/frc-modes.sh"
+. "$computer/scripts/frc-read.sh"
+. "$computer/scripts/frc-programs.sh"
 
 usage() {
   echo "Usage: $0 [--now | --check | --event <key> --to <file>]" >&2
@@ -84,7 +84,7 @@ frc="$data/frc"
 cache="$frc/cache"
 
 if [ ! -d "$data" ]; then
-  echo "The data folder $data does not exist. See docs/rebuilding-the-mini.md." >&2
+  echo "The data folder $data does not exist. See docs/rebuilding-the-computer.md." >&2
   exit 1
 fi
 
@@ -114,7 +114,7 @@ fi
 now=$(date +%s)
 case $now in
   ''|*[!0-9]*)
-    echo "Could not read the clock. Check that the date command works on the Mini." >&2
+    echo "Could not read the clock. Check that the date command works on the Teletraan computer." >&2
     exit 1
     ;;
 esac
@@ -174,7 +174,7 @@ curl --disable --silent --get --max-time 30 --connect-timeout 10 --max-filesize 
   --output "$work/sanity.json" "$host/v$version/data/query/$dataset" 2> /dev/null || status=$?
 
 if [ "$status" -ne 0 ] || ! jq -e '.result | objects' "$work/sanity.json" > /dev/null 2>&1; then
-  echo "Could not get the teams from Sanity. Nothing was changed. Check that the Mini is online; the next run tries again." >&2
+  echo "Could not get the teams from Sanity. Nothing was changed. Check that the Teletraan computer is online; the next run tries again." >&2
   exit 1
 fi
 
@@ -344,7 +344,7 @@ echo "frc: $requests request(s) to the two services"
 # The time of this run goes to status-mini, unless the services turned the run
 # away or the status could not be written. status-write.sh never stops this script.
 if [ "$failed" -eq 0 ] && [ "$stopped" != refused ] && [ "$stopped" != network ]; then
-  "$mini/scripts/status-write.sh" frc || true
+  "$computer/scripts/status-write.sh" frc || true
 fi
 
 # What went wrong is also in the status, for Studio. Here it is for the journal.

@@ -9,7 +9,7 @@
 //      every second (makeAnnounceRunner().look).
 //   3. A request plays only if it is less than a minute old and is not the one handled
 //      before, the same guard as a demo (shouldRunDemo in core/demo.js). The one handled
-//      before is kept in localStorage, so a Mini that restarts never plays it again.
+//      before is kept in localStorage, so a computer that restarts never plays it again.
 //   4. It waits while an alert, an announcement, night mode, a demo or a hidden
 //      transition has the screen.
 //   5. It plays every announcement that is switched on, once, one after another, each

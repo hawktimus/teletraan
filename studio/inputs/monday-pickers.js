@@ -2,15 +2,15 @@
 // (schemas/settingsMonday.js): a board picker that shows the names of the boards and
 // stores the number of the one picked, and a column picker for each column field of the
 // entry that lists the columns of that board only and stores the id of the one picked. Both
-// read the document monday-status that the Mini writes (mini/scripts/monday-sync.sh),
+// read the document monday-status that the Teletraan computer writes (computer/scripts/monday-sync.sh),
 // so nobody types a number or an id.
 //
 // A column is listed with its title and its type in words, such as Due (Date), the columns
 // that fit the field under Fits and the others under Other. When the board is changed, the
 // column fields of the entry are cleared, because a column belongs to one board. If the
-// Mini has not listed the columns of the board yet, the picker says to wait for the next sync.
+// computer has not listed the columns of the board yet, the picker says to wait for the next sync.
 //
-// If the list of boards cannot be read, or the Mini has not listed any board, a picker is the
+// If the list of boards cannot be read, or the Teletraan computer has not listed any board, a picker is the
 // plain box of the field and says why. Nothing is lost: a value that is stored but not in the
 // list stays in the list, with a note.
 //
@@ -26,7 +26,7 @@ const h = createElement;
 // The same version as the screen's own questions to Sanity
 const apiVersion = '2025-02-19';
 
-// The id the Mini writes to. mini/scripts/monday-sync.sh has the same one.
+// The id the Teletraan computer writes to. computer/scripts/monday-sync.sh has the same one.
 const mondayStatusId = 'monday-status';
 
 // Only the boards and their columns, so the question stays small
@@ -142,7 +142,7 @@ export function boardChoices(boards, currentId) {
 // The lines of the column list of one board for one kind of column field: the empty line, the
 // columns that fit the kind, then the other columns, each with its type in words. A column that is
 // stored but not on the board stays, with a note. Nothing is given when the board is not in the list
-// or the Mini has not listed its columns yet, and never the columns of another board.
+// or the Teletraan computer has not listed its columns yet, and never the columns of another board.
 export function columnChoices(boards, boardId, kind, currentId) {
   const board = boards.filter(item => item.id === boardId)[0];
   if (!board || board.columns.length === 0) return [];
@@ -220,12 +220,12 @@ function plainView(props, reason) {
 export function boardPickerView(read, props) {
   if (!read) return h('p', { style: styles.note }, 'Reading the list of boards.');
   if (read.unreadable) return plainView(props, 'The list of boards could not be read, so type the board number.');
-  if (read.boards.length === 0) return plainView(props, 'The Mini has not listed any boards yet, so type the board number.');
+  if (read.boards.length === 0) return plainView(props, 'The Teletraan computer has not listed any boards yet, so type the board number.');
 
   return listView(props, boardChoices(read.boards, typeof props.value === 'string' ? props.value : ''));
 }
 
-// What a column picker says when the Mini has not listed the columns of the board it is for
+// What a column picker says when the Teletraan computer has not listed the columns of the board it is for
 export const waitForSync = 'Read the board first: wait for the next sync.';
 
 // The same for a column picker. boardId is the board picked in the same entry, kind is a name in columnKinds.

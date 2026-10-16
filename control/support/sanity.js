@@ -56,7 +56,7 @@ export function makeSanity(ctx) {
     // Applies mutations. Refused with a plain message when there is no write token.
     async mutate(mutations) {
       const token = envValue(envPath(ctx), 'SANITY_WRITE_TOKEN');
-      if (token === '') throw new Refusal(503, 'SANITY_WRITE_TOKEN is not set on the Mini. Add it on the Keys tab.');
+      if (token === '') throw new Refusal(503, 'SANITY_WRITE_TOKEN is not set on the Teletraan computer. Add it on the Keys tab.');
 
       const response = await doFetch(host + '/data/mutate/' + config.dataset, {
         method: 'POST',

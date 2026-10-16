@@ -5,13 +5,13 @@
 # screen when it has frozen. It runs as root, so the unit file names no account.
 # It checks that the tools the script needs are installed. It does not install
 # them. Run it again after kiosk.sh changes, and restart the screen once
-# (tools/mini/teletraan-mini restart), because the browser only opens its page
+# (tools/teletraan/teletraan-tool restart), because the browser only opens its page
 # list for the watchdog when kiosk.sh has started it.
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 
-units="$mini/systemd"
-repo=$(cd "$mini/.." && pwd -P)
+units="$computer/systemd"
+repo=$(cd "$computer/.." && pwd -P)
 target=/etc/systemd/system
 
 # The unit files name the repository location directly
@@ -27,8 +27,8 @@ for unit in teletraan-watchdog.service teletraan-watchdog.timer; do
   fi
 done
 
-if [ ! -x "$mini/scripts/watchdog.sh" ]; then
-  echo "$mini/scripts/watchdog.sh is missing or cannot be run." >&2
+if [ ! -x "$computer/scripts/watchdog.sh" ]; then
+  echo "$computer/scripts/watchdog.sh is missing or cannot be run." >&2
   exit 1
 fi
 

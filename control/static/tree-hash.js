@@ -1,15 +1,15 @@
-// The tree hash, for the browser and for the Mini. The Mini's copy is control/lib/tree-hash.js, which imports
+// The tree hash, for the browser and for the Teletraan computer. The computer's copy is control/lib/tree-hash.js, which imports
 // the rules in this file, so the two cannot drift apart. The hash is the SHA-256 of one line for every file
-// under dashboard/, studio/schemas/, mini/ and control/, sorted by path: path, size and the SHA-256 of the
+// under dashboard/, studio/schemas/, computer/ and control/, sorted by path: path, size and the SHA-256 of the
 // content, each followed by a line break. It is how the page tells whether the folder on this computer is
 // the one on the wall.
 
-const hashRoots = ['dashboard/', 'studio/schemas/', 'mini/', 'control/'];
+const hashRoots = ['dashboard/', 'studio/schemas/', 'computer/', 'control/'];
 
 // Names left out at any depth, and the generated files left out by path. The same list decides what the page
-// zips and what the Mini copies.
+// zips and what the Teletraan computer copies.
 const skippedNames = ['.git', 'node_modules', '.DS_Store', '.env', '_inputs', '_outputs'];
-const skippedPaths = ['dashboard/build.js', 'mini/build.txt', 'studio-dist', 'studio/static/dashboard', 'dashboard/data/live', 'RELEASE.json'];
+const skippedPaths = ['dashboard/build.js', 'computer/build.txt', 'studio-dist', 'studio/static/dashboard', 'dashboard/data/live', 'RELEASE.json'];
 
 export function isExcluded(path) {
   const parts = path.split('/');

@@ -5,7 +5,7 @@
 # parent item (published documents with the ids task-monday-<item number>) and a
 # milestone for each milestone (milestone-monday-<item number>). It also writes the
 # document monday-status, which the Monday tab uses to offer the boards and their columns
-# and to say what was read. Needs curl and jq (docs/rebuilding-the-mini.md, step 18, and
+# and to say what was read. Needs curl and jq (docs/rebuilding-the-computer.md, step 18, and
 # docs/monday.md).
 #
 #   monday-sync.sh           one run, which the timer starts every 5 minutes. The run reads
@@ -14,10 +14,10 @@
 #   monday-sync.sh --check   asks Monday who the token belongs to, and writes nothing
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
-. "$mini/scripts/monday-contract.sh"
-. "$mini/scripts/monday-requests.sh"
-. "$mini/scripts/monday-check.sh"
-. "$mini/scripts/monday-programs.sh"
+. "$computer/scripts/monday-contract.sh"
+. "$computer/scripts/monday-requests.sh"
+. "$computer/scripts/monday-check.sh"
+. "$computer/scripts/monday-programs.sh"
 
 usage() {
   echo "Usage: $0 [--check]" >&2
@@ -63,7 +63,7 @@ data=${data:-/var/lib/teletraan/data}
 monday="$data/monday"
 
 if [ ! -d "$data" ]; then
-  echo "The data folder $data does not exist. See docs/rebuilding-the-mini.md." >&2
+  echo "The data folder $data does not exist. See docs/rebuilding-the-computer.md." >&2
   exit 1
 fi
 
@@ -103,7 +103,7 @@ curl --disable --silent --get --max-time 30 --connect-timeout 10 --max-filesize 
   --output "$work/sanity.json" "$host/v$version/data/query/$dataset" 2> /dev/null || status=$?
 
 if [ "$status" -ne 0 ] || ! jq -e '.result | objects' "$work/sanity.json" > /dev/null 2>&1; then
-  echo "Could not get the settings from Sanity. Nothing was changed. Check that the Mini is online; the next run tries again." >&2
+  echo "Could not get the settings from Sanity. Nothing was changed. Check that the Teletraan computer is online; the next run tries again." >&2
   exit 1
 fi
 
@@ -114,7 +114,7 @@ esac
 today=$(TZ="$zone" date +%Y-%m-%d)
 now_iso=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
-# How often the Mini reads, from 5 to 120 minutes, and how old the last read is. The timer wakes
+# How often the Teletraan computer reads, from 5 to 120 minutes, and how old the last read is. The timer wakes
 # this script every 5 minutes, and a run that comes before the setting says so ends without a word.
 every=$(jq -r --argjson defaults "$defaults" '.result.every | if type == "number" and . >= 5 and . <= 120 then floor else $defaults.every end' "$work/sanity.json")
 due=$(jq -r --arg now "$now_iso" --argjson every "$every" --argjson slack "$slack_seconds" '
@@ -193,7 +193,7 @@ elif [ "$(jq -r '.milestoneBoard | if .dateColumn == null then "no" else "yes" e
 fi
 
 # The boards the token can see, with their columns, and who the token belongs to. It is asked for on the
-# first read of a day and when the Mini has no list yet, and is one of the requests of the run.
+# first read of a day and when the Teletraan computer has no list yet, and is one of the requests of the run.
 boards_listed=no
 if [ "$calls_before" -eq 0 ] || [ "$(jq -r '.result.known.boards // 0' "$work/sanity.json")" -eq 0 ]; then
   jq -n --arg query "$monday_query_boards" '{query: $query}' > "$work/body.json"
@@ -361,7 +361,7 @@ fi
 # The time of this run goes to status-mini, when the task board was read and the status could
 # be written. status-write.sh never stops this script.
 if [ "$tasks_read" = yes ] && [ "$status_written" = yes ]; then
-  "$mini/scripts/status-write.sh" monday || true
+  "$computer/scripts/status-write.sh" monday || true
 fi
 
 # What went wrong is also in the status, for Studio. Here it is for the journal.

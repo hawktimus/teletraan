@@ -3,12 +3,12 @@
 # Installs the calendar service: copies its two systemd unit files and turns on
 # its timer, which runs fetch-calendars.sh every 15 minutes. It installs
 # nothing else. install-timers.sh installs this timer too, with the pull timer
-# and the kiosk, so use this one on a Mini that must not pull by itself.
+# and the kiosk, so use this one on a computer that must not pull by itself.
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 
-units="$mini/systemd"
-repo=$(cd "$mini/.." && pwd -P)
+units="$computer/systemd"
+repo=$(cd "$computer/.." && pwd -P)
 target=/etc/systemd/system
 
 # The unit files name the repository location directly
@@ -24,8 +24,8 @@ for unit in teletraan-calendars.service teletraan-calendars.timer; do
   fi
 done
 
-if [ ! -x "$mini/scripts/fetch-calendars.sh" ]; then
-  echo "$mini/scripts/fetch-calendars.sh is missing or cannot be run." >&2
+if [ ! -x "$computer/scripts/fetch-calendars.sh" ]; then
+  echo "$computer/scripts/fetch-calendars.sh is missing or cannot be run." >&2
   exit 1
 fi
 
@@ -47,7 +47,7 @@ fi
 account=$(stat -c %U "$repo")
 if [ "$account" = root ] || [ "$account" = UNKNOWN ] || ! id "$account" > /dev/null 2>&1; then
   echo "The repository at $repo is owned by $account, and the timer should not run as that." >&2
-  echo "Give it to the account the Mini logs in with. If that account is called hawktimus:" >&2
+  echo "Give it to the account the Teletraan computer logs in with. If that account is called hawktimus:" >&2
   echo "  sudo chown -R hawktimus:hawktimus $repo" >&2
   exit 1
 fi

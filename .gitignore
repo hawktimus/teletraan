@@ -15,8 +15,8 @@ local.env*
 !local.example.env
 !*.example.env
 
-# the build stamp the Mac tool leaves on the Mini (mini/scripts/status-write.sh version)
-mini/build.txt
+# the build stamp the Mac tool leaves on the Teletraan computer (computer/scripts/status-write.sh version)
+computer/build.txt
 
 # the build the page asks its files for, written by kiosk.sh and the Mac tool (dashboard/build.example.js)
 dashboard/build.js

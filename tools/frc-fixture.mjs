@@ -1,4 +1,4 @@
-// Turns one past event, read by mini/scripts/frc-sync.sh --event <key> --to <file>, into the fixture
+// Turns one past event, read by computer/scripts/frc-sync.sh --event <key> --to <file>, into the fixture
 // the competition cards draw in ?sample=1 (dashboard/data/sample/frc-event.json). Team numbers are kept
 // and team names are left as The Blue Alliance has them: both are public.
 //
@@ -6,7 +6,7 @@
 //
 // The two teams of the screen take the places of two teams at the event: --prime and --nova say which,
 // and without them the two best ranked teams at the event are used. The answer holds no ratings, so the
-// ratings and the win chance stay empty, as they do on the Mini before Statbotics answers.
+// ratings and the win chance stay empty, as they do on the Teletraan computer before Statbotics answers.
 //
 // The shape is the one core/frc.js reads, with { placeholder, event, source, frc } around it.
 
