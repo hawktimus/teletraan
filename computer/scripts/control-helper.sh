@@ -5,15 +5,33 @@
 # argument. write-env also reads the new local.env from the rest of the input. Anything that is not one of the
 # words below is refused with one line in the log. The last line of the answer is ok, refused or failed <code>.
 #
-# Only the commands the sudoers drop-in allows are run with sudo (computer/sudoers/teletraan-control).
+# Only the commands the sudoers drop-in allows are run with sudo (computer/sudoers/teletraan-control). They are
+# run by full path, because sudo matches the path it finds, and the same path is in that file.
+#
+# Nothing started here may be left running after the answer: when this script ends, systemd stops the whole
+# service, and a background job goes with it. That is why the reboot is asked for before the answer is sent.
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 
 root=${TELETRAAN_ROOT:-/opt/teletraan}
 log_file="$root/logs/helper.log"
+systemctl_bin=${TELETRAAN_SYSTEMCTL:-/usr/bin/systemctl}
+docker_bin=${TELETRAAN_DOCKER:-/usr/bin/docker}
 
 log() {
   printf '%s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" >> "$log_file" 2> /dev/null || true
+}
+
+# Runs a command as root through sudo. When it fails, its first lines go into the answer and the log, so the page
+# can say why ("a password is required" means the sudoers file is not installed or does not allow the command).
+as_root() {
+  local said code=0
+  said=$(sudo -n "$@" 2>&1) || code=$?
+  if [ "$code" -ne 0 ]; then
+    [ -z "$said" ] || printf '%s\n' "$said" | head -n 3 | cut -c 1-160
+    log "failed $code: $(printf '%s' "$said" | head -n 1 | tr -c 'A-Za-z0-9 .:/_-' '?' | cut -c 1-100)"
+  fi
+  return "$code"
 }
 
 refuse() {
@@ -62,21 +80,24 @@ log "$word${argument:+ $argument}"
 case $word in
   restart-kiosk)
     code=0
-    sudo -n systemctl restart teletraan-kiosk.service || code=$?
+    as_root "$systemctl_bin" restart teletraan-kiosk.service || code=$?
     finish "$code"
     ;;
   restart-services)
-    # The web server is a container here, and a restart makes it read the release that current points at
-    sudo -n docker restart teletraan-web > /dev/null 2>&1 || true
+    # The web server is a container here, and a restart makes it read the release that current points at. It goes
+    # last, because the page reaches this helper through it and loses its connection when it restarts.
     for timer in calendars monday slides watchdog nightly; do
-      sudo -n systemctl restart "teletraan-$timer.timer" > /dev/null 2>&1 || true
+      sudo -n "$systemctl_bin" restart "teletraan-$timer.timer" > /dev/null 2>&1 || true
     done
-    finish 0
+    code=0
+    as_root "$docker_bin" restart teletraan-web || code=$?
+    finish "$code"
     ;;
   reboot)
-    echo "The Teletraan computer reboots in 3 seconds."
-    ( sleep 3; sudo -n /sbin/reboot ) > /dev/null 2>&1 &
-    finish 0
+    code=0
+    as_root "$systemctl_bin" reboot || code=$?
+    [ "$code" -ne 0 ] || echo "The Teletraan computer is rebooting."
+    finish "$code"
     ;;
   status)
     echo "user: $(id -un)"
@@ -90,7 +111,7 @@ case $word in
     ;;
   sync-now)
     code=0
-    sudo -n systemctl start "teletraan-$argument.service" || code=$?
+    as_root "$systemctl_bin" start "teletraan-$argument.service" || code=$?
     finish "$code"
     ;;
   monday-check)

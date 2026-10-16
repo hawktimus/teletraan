@@ -32,6 +32,10 @@
 .tab .keyform { display: grid; grid-template-columns: 1fr; gap: 8px; }
 .tab .countdown { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; flex-basis: 100%; }
 .tab .note { min-height: 24px; margin: 12px 0 0; }
+.tab .result { margin: 8px 0 0; font-weight: 700; color: #b9afcf; overflow-wrap: anywhere; }
+.tab .result[data-state="done"] { color: #2fd27a; }
+.tab .result[data-state="bad"] { color: #ff8a8a; }
+.tab .result[data-state="wait"] { color: #ffb300; }
 .tab .note[data-bad="yes"], .tab .warn { color: #ff8a8a; }
 .tab .quiet { color: #bbb; }
 .tab .log { max-height: 70vh; margin: 0; padding: 12px; overflow: auto; font: 14px/1.4 ui-monospace, monospace; white-space: pre-wrap; overflow-wrap: anywhere; background: #0b0714; }

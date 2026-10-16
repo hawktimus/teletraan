@@ -7,7 +7,7 @@ import net from 'node:net';
 
 export const words = ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'write-env', 'monday-check'];
 
-export function createHelper(socketPath, timeout = 30000) {
+export function createHelper(socketPath, timeout = 30000, connect = net.createConnection) {
   return function helper(word, args = [], body = '') {
     return new Promise((resolve, reject) => {
       if (!words.includes(word) || !args.every(arg => /^[a-z]{1,20}$/.test(arg))) {
@@ -15,7 +15,7 @@ export function createHelper(socketPath, timeout = 30000) {
         return;
       }
       let answer = '';
-      const socket = net.createConnection(socketPath);
+      const socket = connect(socketPath);
       const timer = setTimeout(() => {
         socket.destroy();
         reject(new Error('The helper did not answer in time. Look at the Log tab, then try again. If it keeps happening, restart the Teletraan computer.'));
@@ -24,7 +24,9 @@ export function createHelper(socketPath, timeout = 30000) {
       socket.on('data', chunk => { answer += chunk; });
       socket.on('error', error => {
         clearTimeout(timer);
-        reject(new Error('The helper socket cannot be reached (' + error.code + '). Run tools/teletraan/teletraan-tool update from the Mac to set the control page up again.'));
+        const failure = new Error('The control page could not reach the helper on this computer. Run the installer again.');
+        failure.code = error.code;
+        reject(failure);
       });
       socket.on('close', () => {
         clearTimeout(timer);

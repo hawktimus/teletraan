@@ -1,8 +1,8 @@
 // The Status tab: the three dots with their reasons, what runs, and the restart and sync buttons.
 
 import { registerTab } from '../tabs.js';
-import { api, confirmed, useStyles } from './api.js';
-import { statusHtml } from './render.js';
+import { api, confirmed, showResult, useStyles } from './api.js';
+import { outcome, statusHtml } from './render.js';
 
 const restarts = [
   { word: 'restart-kiosk', label: 'Restart screen', doing: 'Restarting the screen' },
@@ -15,11 +15,12 @@ const syncs = [
   { target: 'frc', label: 'Sync competition now' },
 ];
 
-function buttons(box, say) {
-  const run = async (word, body, doing) => {
-    say(doing + '.', false);
+function buttons(box) {
+  const run = async (button, word, body, doing) => {
+    showResult(button, 'working', doing + '.');
     const result = await api('POST', '/helper/' + word, body);
-    say(result.ok ? 'Done.' : result.error, !result.ok);
+    const shown = outcome(result, word, body);
+    showResult(button, shown.state, shown.words);
   };
 
   const big = document.createElement('div');
@@ -30,7 +31,7 @@ function buttons(box, say) {
     button.className = 'act';
     button.textContent = item.label;
     big.appendChild(button);
-    confirmed(button, 10, item.doing, () => run(item.word, { confirmed: true }, item.doing));
+    confirmed(button, 10, item.doing, () => run(button, item.word, { confirmed: true }, item.doing));
   });
 
   const small = document.createElement('div');
@@ -40,7 +41,7 @@ function buttons(box, say) {
     button.type = 'button';
     button.className = 'act quiet';
     button.textContent = item.label;
-    button.addEventListener('click', () => run('sync-now', { target: item.target }, 'Syncing ' + item.target));
+    button.addEventListener('click', () => run(button, 'sync-now', { target: item.target }, 'Syncing ' + item.target));
     small.appendChild(button);
   });
   box.append(big, small);
@@ -52,10 +53,9 @@ registerTab({
   order: 30,
   async render(container) {
     useStyles();
-    container.innerHTML = '<div class="tab"><div data-body></div><section class="card"><h2>Restart and sync</h2><div data-buttons></div><p class="note" data-note></p></section></div>';
+    container.innerHTML = '<div class="tab"><div data-body></div><section class="card"><h2>Restart and sync</h2><div data-buttons></div></section></div>';
     const body = container.querySelector('[data-body]');
-    const note = container.querySelector('[data-note]');
-    buttons(container.querySelector('[data-buttons]'), (words, bad) => { note.textContent = words; note.dataset.bad = bad ? 'yes' : 'no'; });
+    buttons(container.querySelector('[data-buttons]'));
 
     async function refresh() {
       const answer = await api('GET', '/status');

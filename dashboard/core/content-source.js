@@ -2,7 +2,8 @@
 
 import { sampleFolder, sanity } from '../config.js';
 import { chosenSource } from './source.js';
-import { fetchResult, liveEventsUrl, normalizeContent, normalizeSample } from './sanity.js';
+import { fetchRequests, fetchResult, liveEventsUrl, normalizeContent, normalizeSample } from './sanity.js';
+import { pickRequests, requestPollSeconds, sameRequests } from './request-poll.js';
 import { reasons } from './connection.js';
 import { markUnreachable } from './monday.js';
 import { withDefaults } from './content-tidy.js';
@@ -248,6 +249,7 @@ export async function startSanityContent(onChange) {
   let nextRead = null;
   let waiting = null;
   let stopped = false;
+  let latestRaw = null; // the last answer of the full read, as Sanity sent it, for the request poll below
 
   function current() {
     const date = updated === null ? null : new Date(updated);
@@ -279,6 +281,7 @@ export async function startSanityContent(onChange) {
   async function readOnce() {
     try {
       const raw = await fetchResult(sanity);
+      latestRaw = raw;
       content = normalizeContent(raw);
       updated = Date.now();
       lastRead = { at: new Date(updated), failed: false };
@@ -334,11 +337,29 @@ export async function startSanityContent(onChange) {
     }, waitForMoreEdits);
   }
 
+  // Only the request fields, every 10 seconds (core/request-poll.js). A failure is left to the full read to report.
+  async function pollRequests() {
+    if (stopped || busy || !latestRaw) return;
+
+    let found = null;
+    try {
+      found = await fetchRequests(sanity);
+    } catch (error) {
+      return;
+    }
+    if (!found || stopped || busy || sameRequests(found, latestRaw.settings)) return;
+
+    latestRaw = Object.assign({}, latestRaw, { settings: Object.assign({}, latestRaw.settings, pickRequests(found)) });
+    content = normalizeContent(latestRaw);
+    announcer.announce(current());
+  }
+
   if (!saved) await readOnce();
   const first = current();
   announcer.announce(first);
 
   const closeStream = watchStream(onLiveChange);
+  const requestTimer = setInterval(pollRequests, requestPollSeconds * 1000);
 
   // With a saved copy the first read starts a moment later, so the caller
   // has the first content before any change arrives
@@ -353,6 +374,7 @@ export async function startSanityContent(onChange) {
       stopAlarm();
       clearTimeout(nextRead);
       clearTimeout(waiting);
+      clearInterval(requestTimer);
       closeStream();
     },
   };

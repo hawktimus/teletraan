@@ -119,8 +119,8 @@ await check('the helper route passes only its word list, asks for a confirm on r
 await check('a helper that fails gives a plain error and logs the reason without any request body', async () => {
   const world = await makeWorld([helper], { helperFails: ['reboot'] });
   const answer = await world.router.call('POST', '/helper/reboot', { body: { confirmed: true } });
-  assert.equal(answer.status, 500);
-  assert.match(answer.json.error, /Log tab/);
+  assert.equal(answer.status, 502);
+  assert.equal(answer.json.error, 'the helper refused reboot', 'the helper has plain sentences, and the page shows them');
   assert.ok(world.logged.some(line => line.includes('the helper refused reboot')));
 });
 

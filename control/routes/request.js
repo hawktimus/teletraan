@@ -4,7 +4,7 @@
 // names of the Team documents, the themes, the panels that can be held, the announcements that are
 // live and the talks booked for the next day.
 
-import { mount, readJson, send } from '../support/http.js';
+import { Refusal, mount, readJson, send } from '../support/http.js';
 import { makeSanity } from '../support/sanity.js';
 import { actions, buildRequest, mutationsFor, themeIds, viewKeys } from '../support/requests.js';
 import { gridPanels, registryText } from '../support/now-rows.js';
@@ -21,6 +21,20 @@ function viewNames(teams, generalName) {
     if (team && typeof team.code === 'string') named[team.code] = team.shortName || team.name || team.code;
   });
   return viewKeys.map(key => ({ key: key, name: key === 'general' ? (generalName || 'General') : named[key] || (key.charAt(0).toUpperCase() + key.slice(1)) }));
+}
+
+// The screen ignores the test while Run presentations is off, so the page says so instead of reporting a send that does nothing.
+// A read that fails is not a reason to stop: the write will say what is wrong.
+async function checkPresentationsOn(ctx) {
+  let enabled;
+  try {
+    enabled = await makeSanity(ctx).query('*[_id == "dashboardSettings"][0].presentationsEnabled');
+  } catch (error) {
+    return;
+  }
+  if (enabled === false) {
+    throw new Refusal(409, 'Run presentations is switched off, so the screen would ignore the test. Switch it on under Dashboard Settings, Presentations in the Studio, publish, then press the button again.');
+  }
 }
 
 export function register(router, ctx) {
@@ -48,6 +62,7 @@ export function register(router, ctx) {
   mount(router, ctx, 'POST', '/request', async (req, res) => {
     const body = await readJson(req);
     const built = buildRequest(body.action, body, new Date());
+    if (body.action === 'presentation-test') await checkPresentationsOn(ctx);
     await makeSanity(ctx).mutate(mutationsFor(built));
     send(res, 200, { ok: true, action: body.action });
   });

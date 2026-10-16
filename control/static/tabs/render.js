@@ -152,7 +152,7 @@ export function nowControlsHtml(options) {
       '<label class="pick"><span>Post an announcement (90 characters, two hours, both teams)</span><input name="text" maxlength="90" autocomplete="off"></label>' +
       '<div class="buttons">' + button('post-announcement', 'Post it') + '</div>') +
     card('Presentation', (talks ? '<ul class="rows">' + talks + '</ul>' : '<p>No talks booked in the next day.</p>') + '<div class="buttons">' + button('presentation-test', 'Run presentation test') + '</div>') +
-    '</div><p class="note" data-note></p>';
+    '</div>';
 }
 
 // The Keys tab. describe is GET env.
@@ -182,4 +182,38 @@ export function logHtml(lines) {
   const list = Array.isArray(lines) ? lines : [];
   if (list.length === 0) return card('Log', '<p>The log is empty.</p>');
   return card('Log', '<pre class="log">' + list.map(esc).join('\n') + '</pre>');
+}
+
+// What a button says when it is done. Every button shows a result: Done in green, or the reason in red.
+// body is what was sent. A helper word has a name of its own in the first argument.
+export function doneWords(action, body = {}) {
+  const minutes = body.minutes ? ' for ' + body.minutes + (body.minutes === 1 ? ' minute' : ' minutes') : '';
+  const words = {
+    next: 'The screen moves to its next panel within about 10 seconds.',
+    pause: 'The rotation is paused.',
+    resume: 'The rotation runs again.',
+    schedule: 'The screen goes back to its schedule.',
+    hold: 'The panel is held' + minutes + '. The screen takes it in within about 10 seconds.',
+    view: 'The view is shown' + minutes + '. The screen takes it in within about 10 seconds.',
+    theme: 'The theme is previewed for 10 minutes.',
+    announce: 'The announcements play within about 10 seconds. They wait if something else has the screen.',
+    'post-announcement': 'The announcement is posted for two hours.',
+    'presentation-test': 'The test talk starts within about 10 seconds. It waits if something else has the screen.',
+    'restart-kiosk': 'The screen is restarting.',
+    'restart-services': 'The services restarted.',
+    reboot: 'The Teletraan computer is rebooting. This page is back in about a minute.',
+    'sync-now': 'The ' + (body.target || 'sync') + ' sync has started.',
+    refresh: 'The log is up to date.',
+  };
+  return words[action] || 'It worked.';
+}
+
+// { state, words } for the line under the buttons: done (green), bad (red) or wait (amber). A restart cuts the
+// connection of the page, so for those words a lost connection is expected and the line says to wait.
+export function outcome(result, action, body = {}) {
+  if (result && result.ok) return { state: 'done', words: 'Done. ' + doneWords(action, body) };
+  if (result && result.unreachable && ['reboot', 'restart-services'].includes(action)) {
+    return { state: 'wait', words: 'Sent. The connection dropped, which is normal while the computer restarts. Wait about a minute, then reload this page.' };
+  }
+  return { state: 'bad', words: (result && result.error) || 'That did not work, and the Teletraan computer gave no reason. The Log tab may have one.' };
 }

@@ -2,8 +2,8 @@
 // 10 seconds, the length of the dashboard's own report.
 
 import { registerTab } from '../tabs.js';
-import { api, useStyles } from './api.js';
-import { nowCardHtml, nowControlsHtml, previewCardHtml, previewScale } from './render.js';
+import { api, showResult, useStyles } from './api.js';
+import { nowCardHtml, nowControlsHtml, outcome, previewCardHtml, previewScale } from './render.js';
 
 // The sentence for a minutes field that holds no whole number inside its own limits, or '' when it is fine
 function fieldProblem(field) {
@@ -15,7 +15,7 @@ function fieldProblem(field) {
   return '';
 }
 
-function wire(root, options, say) {
+function wire(root) {
   root.addEventListener('click', async event => {
     const button = event.target.closest('button[data-action]');
     if (!button) return;
@@ -31,16 +31,18 @@ function wire(root, options, say) {
     if (button.dataset.minutesFrom) {
       const field = root.querySelector('[name="' + button.dataset.minutesFrom + '"]');
       const bad = fieldProblem(field);
-      if (bad) { say(bad, true); return; }
+      if (bad) { showResult(button, 'bad', bad); return; }
       body.minutes = Number(field.value);
     }
     if (action === 'theme') body.theme = value('theme');
     if (action === 'post-announcement') body.text = value('text');
 
     button.disabled = true;
+    showResult(button, 'working', 'Sending.');
     const result = await api('POST', '/request', body);
     button.disabled = false;
-    say(result.ok ? 'Sent. The screen answers within a few seconds.' : result.error, !result.ok);
+    const shown = outcome(result, action, body);
+    showResult(button, shown.state, shown.words);
   });
 }
 
@@ -69,8 +71,7 @@ registerTab({
 
     const options = await api('GET', '/request');
     controls.innerHTML = nowControlsHtml(options.ok ? options.data : null);
-    const note = () => controls.querySelector('[data-note]');
-    wire(controls, options.data, (words, bad) => { const line = note(); if (line) { line.textContent = words; line.dataset.bad = bad ? 'yes' : 'no'; } });
+    wire(controls);
 
     async function refresh() {
       const answer = await api('GET', '/now');

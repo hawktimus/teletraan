@@ -1,3 +1,5 @@
 # What the control page's helper may do as root, and nothing else. computer/install.sh installs this file as
 # /etc/sudoers.d/teletraan-control after checking it with visudo, and puts the login user in place of ACCOUNT.
-ACCOUNT ALL=(root) NOPASSWD: /usr/bin/systemctl restart teletraan-*, /usr/bin/docker restart teletraan-web, /usr/bin/systemctl start teletraan-*.service, /sbin/reboot
+# The helper runs these by the first path of each. On Debian /bin is a link to /usr/bin and /sbin to /usr/sbin, and
+# reboot is a link to systemctl, so the other spellings of the reboot are listed in case sudo compares the path as typed.
+ACCOUNT ALL=(root) NOPASSWD: /usr/bin/systemctl restart teletraan-*, /usr/bin/docker restart teletraan-web, /usr/bin/systemctl start teletraan-*.service, /usr/bin/systemctl reboot, /bin/systemctl reboot, /usr/sbin/reboot, /sbin/reboot

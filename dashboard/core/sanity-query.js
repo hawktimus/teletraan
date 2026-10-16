@@ -1,6 +1,7 @@
 // The query for the content, the addresses and the fetch from Sanity (part of sanity.js).
 
 import { classifyFailure } from './connection.js';
+import { requestsQuery } from './request-poll.js';
 
 // Everything the screen needs, in one request. Lists come back in the order
 // they were created, and normalizeContent puts the ones with an Order first.
@@ -172,6 +173,15 @@ function addressOf(sanity, query) {
     '&perspective=published';
 }
 
+// Only the request fields of Dashboard Settings (core/request-poll.js), asked every 10 seconds. This one goes
+// to the cached host, so the 8,640 reads a day are counted as cached requests, which the plan has far more of.
+export function requestsUrl(sanity) {
+  return 'https://' + sanity.projectId + '.apicdn.sanity.io/v' + sanity.apiVersion +
+    '/data/query/' + sanity.dataset +
+    '?query=' + encodeURIComponent(requestsQuery) +
+    '&perspective=published';
+}
+
 export function queryUrl(sanity) {
   return addressOf(sanity, contentQuery);
 }
@@ -246,4 +256,10 @@ export async function fetchResult(sanity) {
     throw new Error('Sanity sent no result');
   }
   return body.result;
+}
+
+// The request fields of Dashboard Settings as they are now, or null when there is no answer. Throws like fetchResult.
+export async function fetchRequests(sanity) {
+  const body = await fetchBody(requestsUrl(sanity), requestSeconds, null);
+  return body && body.result && typeof body.result === 'object' ? body.result : null;
 }

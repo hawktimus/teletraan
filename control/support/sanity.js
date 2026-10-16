@@ -58,15 +58,23 @@ export function makeSanity(ctx) {
       const token = envValue(envPath(ctx), 'SANITY_WRITE_TOKEN');
       if (token === '') throw new Refusal(503, 'SANITY_WRITE_TOKEN is not set on the Teletraan computer. Add it on the Keys tab.');
 
-      const response = await doFetch(host + '/data/mutate/' + config.dataset, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-        body: JSON.stringify({ mutations: mutations }),
-        signal: AbortSignal.timeout(timeout),
-      });
-      if (response.status === 401 || response.status === 403) throw new Refusal(502, 'Sanity refused the write key. Check SANITY_WRITE_TOKEN on the Keys tab.');
+      let response;
+      try {
+        response = await doFetch(host + '/data/mutate/' + config.dataset, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ mutations: mutations }),
+          signal: AbortSignal.timeout(timeout),
+        });
+      } catch (error) {
+        throw new Refusal(502, 'The Teletraan computer could not reach Sanity. Check its internet connection, then press the button again.');
+      }
+      if (response.status === 401 || response.status === 403) throw new Refusal(502, 'Sanity refused the write. Check SANITY_WRITE_TOKEN on the Keys tab.');
       if (!response.ok) throw new Refusal(502, 'Sanity could not take the change (' + response.status + ').');
-      return response.json();
+      const body = await response.json();
+      // Sanity answers 200 with a result for each mutation. An empty list means nothing was written.
+      if (body && Array.isArray(body.results) && body.results.length === 0) throw new Refusal(502, 'Sanity took the request but changed no document. Open Dashboard Settings in the Studio and publish it once.');
+      return body;
     },
   };
 }

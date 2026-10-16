@@ -187,6 +187,8 @@ function makeWorld() {
     timers: [],
     nextTimerId: 1,
     fetches: [],
+    polls: [], // the 10 second reads of the request fields (core/request-poll.js), kept apart from the full reads
+    pollHandler: async () => sanityReply(null),
     inFlight: 0,
     mostInFlight: 0,
     handler: async () => sanityReply({}),
@@ -200,6 +202,10 @@ function makeWorld() {
   world.onChange = change => world.changes.push(change);
 
   world.fetch = async (url, options) => {
+    if (String(url).includes('.apicdn.sanity.io')) {
+      world.polls.push({ url: String(url), options: options || {} });
+      return world.pollHandler(String(url), options || {});
+    }
     world.fetches.push({ url: String(url), options: options || {} });
     world.inFlight += 1;
     world.mostInFlight = Math.max(world.mostInFlight, world.inFlight);
@@ -2007,6 +2013,53 @@ test('sanity: with no saved copy it waits for Sanity, saves the answer and liste
     assert.deepEqual(JSON.parse(world.storage.get(storageKey)), { savedAt: start, raw: fixture });
     assert.equal(world.changes.length, 0);
     assert.equal(world.errors.length, 0);
+  });
+});
+
+test('sanity: the request fields alone are read every 10 seconds, and a new request reaches the screen at once', async () => {
+  await inWorld(async world => {
+    const fixture = sanityFixture();
+    world.handler = async () => sanityReply(copyOf(fixture));
+    await readSanity(world.onChange);
+
+    await world.advance(10 * second);
+    assert.equal(world.polls.length, 1);
+    assert.equal(world.fetches.length, 1, 'the full read is still every 5 minutes');
+    assert.ok(world.polls[0].url.startsWith('https://' + live.config.sanity.projectId + '.apicdn.sanity.io/'), 'the cached host');
+    assert.ok(decodeURIComponent(world.polls[0].url).includes('presentationTestRequest') && !decodeURIComponent(world.polls[0].url).includes('"tasks"'), 'only the request fields');
+    assert.equal(world.changes.length, 0, 'no answer, nothing changes');
+
+    const requestedAt = new Date(world.now - 2000).toISOString();
+    world.pollHandler = async () => sanityReply({ presentationTestRequest: { requestedAt: requestedAt } });
+    await world.advance(10 * second);
+    assert.equal(world.changes.length, 1);
+    assert.equal(world.changes[0].content.settings.presentationTestRequest.requestedAt, requestedAt);
+    assert.equal(world.changes[0].status.source, 'sanity');
+
+    await world.advance(30 * second);
+    assert.equal(world.changes.length, 1, 'the same request again is not a change');
+
+    world.pollHandler = () => unreachable();
+    await world.advance(30 * second);
+    assert.equal(world.changes.length, 1);
+    assert.equal(world.errors.length, 0, 'a failed poll is quiet; the full read reports failures');
+    assert.equal(world.changes.every(change => change.status.offline === false), true);
+  });
+});
+
+test('sanity: a full read keeps the request that the poll brought in until Sanity says otherwise', async () => {
+  await inWorld(async world => {
+    const fixture = sanityFixture();
+    const requestedAt = new Date(world.now + 1000).toISOString();
+    world.handler = async () => sanityReply(copyOf(fixture));
+    world.pollHandler = async () => sanityReply({ announceRequest: { requestedAt: requestedAt } });
+    await readSanity(world.onChange);
+    await world.advance(10 * second);
+    assert.equal(world.changes.at(-1).content.settings.announceRequest.requestedAt, requestedAt);
+
+    fixture.settings = Object.assign({}, fixture.settings, { announceRequest: { requestedAt: requestedAt } });
+    await world.advance(5 * minute);
+    assert.equal(world.changes.at(-1).content.settings.announceRequest.requestedAt, requestedAt);
   });
 });
 

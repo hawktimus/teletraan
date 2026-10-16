@@ -93,9 +93,27 @@ The Mac tool is the way in. `tools/teletraan/teletraan-tool update` does the sam
 
 The page cannot restart anything by itself. It asks a helper on the host through a Unix socket, `/run/teletraan/control.sock`, which only the login user can use. The helper (`computer/scripts/control-helper.sh`) knows these words and nothing else: `restart-kiosk`, `restart-services`, `reboot`, `status`, `sync-now calendars`, `sync-now monday`, `sync-now frc`, `write-env` and `monday-check`. `status` prints `kiosk:`, `display:`, `tailscale:` and other `name: value` lines. Each one is written to `/opt/teletraan/logs/helper.log` with the time. Anything else is refused and logged.
 
-The sudoers file `/etc/sudoers.d/teletraan-control` lets the login user run `systemctl restart teletraan-*`, `docker restart teletraan-web`, `systemctl start teletraan-*.service` and `/sbin/reboot` without a password, and nothing more.
+The sudoers file `/etc/sudoers.d/teletraan-control` lets the login user run `systemctl restart teletraan-*`, `docker restart teletraan-web`, `systemctl start teletraan-*.service` and `systemctl reboot` without a password, and nothing more. The helper runs each by its full path, `/usr/bin/systemctl` and `/usr/bin/docker`, and the file lists the same paths. The reboot is also listed as `/bin/systemctl reboot`, `/usr/sbin/reboot` and `/sbin/reboot`, in case `sudo` compares the path as typed.
 
-The control container mounts `/opt/teletraan` (read and write), the `/run/teletraan` folder that holds the socket, and `local.env` read only. It does not mount the Docker socket or anything under `/etc`.
+The control container mounts `/opt/teletraan` (read and write, which includes `local.env`) and the `/run/teletraan` folder that holds the socket. It reads `local.env` through the folder and not as a mount of its own file, so a key saved on the Keys tab is seen at once. It does not mount the Docker socket or anything under `/etc`.
+
+## When a button does nothing
+
+Every button on the Now showing, Status and Log tabs shows a line under it: Done in green, or the reason in red. A reboot or a services restart cuts the page's own connection, so those show an amber line that says to wait a minute and reload.
+
+- "The control page could not reach the helper on this computer. Run the installer again." The socket `/run/teletraan/control.sock` is missing or the control container cannot use it. Run `sudo computer/install.sh` again (from the Mac tool, choose 1).
+- "Sanity refused the write. Check SANITY_WRITE_TOKEN on the Keys tab." The key is missing the write right, or is wrong.
+- "Run presentations is switched off" means the screen would ignore the test.
+- "The helper did not finish (failed 1). sudo: a password is required" means the sudoers file does not allow the command. Run the installer again.
+
+Two commands on the Teletraan computer show what really happened:
+
+    tail -n 40 /opt/teletraan/logs/helper.log
+    sudo journalctl -u teletraan-control@* -n 40 --no-pager
+
+The first has one line for each word the helper was asked, and a `failed` line with the reason from `sudo` when a command did not run. The second has what the helper printed to the journal.
+
+The screen sees a request from the control page or the Studio (Run presentation test, Play announcement, Next look now, Hold, Show a view) within about 10 seconds: it reads only those fields of Dashboard Settings every 10 seconds, besides the full read every 5 minutes and the live change stream. A test request counts for one minute, so a screen that only read every 5 minutes would usually miss it.
 
 ## The PIN
 

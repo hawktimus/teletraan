@@ -16,10 +16,11 @@ export async function api(method, path, body) {
       data = null;
     }
     if (response.status === 401) return { ok: false, data: null, error: 'Enter the PIN first. Reload the page.' };
+    if ([502, 503, 504].includes(response.status) && !(data && data.error)) return { ok: false, data: data, error: 'The control service on the Teletraan computer is not answering. Wait a minute and press the button again.' };
     if (!response.ok) return { ok: false, data: data, error: (data && data.error) || 'The Teletraan computer answered with a problem (' + response.status + ').' };
     return { ok: true, data: data, error: '' };
   } catch (error) {
-    return { ok: false, data: null, error: 'The Teletraan computer could not be reached. Check the WiFi, or use the Tailscale name.' };
+    return { ok: false, unreachable: true, data: null, error: 'The Teletraan computer could not be reached. Check the WiFi, or use the Tailscale name.' };
   }
 }
 
@@ -31,6 +32,21 @@ export function useStyles() {
   link.rel = 'stylesheet';
   link.href = new URL('./tabs.css', import.meta.url).href;
   document.head.appendChild(link);
+}
+
+// The line right under the buttons that were pressed, so the result is on the screen where the finger is. It is
+// made the first time and reused. state is working, done, bad or wait; the CSS gives each a color.
+export function showResult(button, state, words) {
+  const holder = button.closest('.buttons') || button.parentElement;
+  let line = holder.nextElementSibling;
+  if (!line || !line.classList.contains('result')) {
+    line = document.createElement('p');
+    line.className = 'result';
+    line.setAttribute('role', 'status');
+    holder.after(line);
+  }
+  line.dataset.state = state;
+  line.textContent = words;
 }
 
 // A button that needs a confirm. A click opens a line under the button with a countdown; the action

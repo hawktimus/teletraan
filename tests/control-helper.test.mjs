@@ -26,14 +26,16 @@ function setup() {
   fs.mkdirSync(path.join(root, 'computer/scripts'), { recursive: true });
   fs.copyFileSync(path.join(repo, 'computer/scripts/lib.sh'), path.join(root, 'computer/scripts/lib.sh'));
   const log = path.join(root, 'calls.log');
-  const fake = `#!/bin/sh\necho "$(basename "$0") $*" >> "${log}"\n[ "$(basename "$0")" = sudo ] && { "$@" 2>/dev/null; exit 0; }\nexit 0\n`;
+  const fake = `#!/bin/sh\necho "$(basename "$0") $*" >> "${log}"\n[ "$(basename "$0")" = sudo ] && { [ -n "\${FAKE_SUDO_SAYS:-}" ] && { echo "$FAKE_SUDO_SAYS" >&2; exit 1; }; "$@" 2>/dev/null; exit 0; }\nexit 0\n`;
   for (const name of ['sudo', 'systemctl', 'docker']) fs.writeFileSync(path.join(bin, name), fake, { mode: 0o755 });
   fs.writeFileSync(path.join(root, 'computer/scripts/monday-sync.sh'), '#!/bin/sh\necho "monday $*" >> "' + log + '"\nexit 0\n', { mode: 0o755 });
   fs.writeFileSync(path.join(root, 'local.env'), "CONTROL_PIN='123456'\n", { mode: 0o600 });
   return {
     root: root,
-    ask(input) {
-      const result = spawnSync('sh', [script], { input: input, encoding: 'utf8', env: { PATH: bin + ':/usr/bin:/bin', TELETRAAN_ROOT: root } });
+    bin: bin,
+    ask(input, extra = {}) {
+      const env = Object.assign({ PATH: bin + ':/usr/bin:/bin', TELETRAAN_ROOT: root, TELETRAAN_SYSTEMCTL: path.join(bin, 'systemctl'), TELETRAAN_DOCKER: path.join(bin, 'docker') }, extra);
+      const result = spawnSync('sh', [script], { input: input, encoding: 'utf8', env: env });
       const lines = result.stdout.trimEnd().split('\n');
       return { status: lines[lines.length - 1], output: lines.slice(0, -1).join('\n'), calls: fs.existsSync(log) ? fs.readFileSync(log, 'utf8') : '' };
     },
@@ -51,7 +53,7 @@ test('restart-kiosk restarts the screen service and nothing else, and the log ha
   const h = setup();
   const answer = h.ask('restart-kiosk\n');
   assert.equal(answer.status, 'ok');
-  assert.equal(answer.calls.trim(), 'sudo -n systemctl restart teletraan-kiosk.service');
+  assert.equal(answer.calls.trim(), 'sudo -n ' + path.join(h.bin, 'systemctl') + ' restart teletraan-kiosk.service');
   assert.match(h.log(), /^\d{4}-\d{2}-\d{2}T[\d:]+Z restart-kiosk\n$/);
 });
 
@@ -59,7 +61,7 @@ test('restart-services restarts the web container and the timers, and goes on wh
   const h = setup();
   assert.equal(h.ask('restart-services\n').status, 'ok');
   const calls = h.ask('status\n').calls;
-  assert.ok(calls.includes('sudo -n docker restart teletraan-web'), calls);
+  assert.ok(calls.includes('sudo -n ' + path.join(h.bin, 'docker') + ' restart teletraan-web'), calls);
   assert.ok(!calls.includes('nginx'), 'no fallback to the nginx service');
   ['calendars', 'monday', 'slides', 'watchdog', 'nightly'].forEach(name => assert.ok(calls.includes('restart teletraan-' + name + '.timer'), name));
 });
@@ -100,11 +102,36 @@ test('status prints plain name=value lines, and monday-check runs the check of t
   assert.ok(check.calls.includes('monday --check'), check.calls);
 });
 
-test('reboot answers first and asks sudo for the reboot after a pause', () => {
+test('reboot asks sudo for the reboot itself, before the answer, and leaves no job in the background', () => {
   const h = setup();
   const answer = h.ask('reboot\n');
   assert.equal(answer.status, 'ok');
-  assert.ok(answer.output.includes('reboots in 3 seconds'));
+  assert.equal(answer.calls.trim(), 'sudo -n ' + path.join(h.bin, 'systemctl') + ' reboot', 'the call is made before the helper ends');
+  assert.ok(answer.output.includes('is rebooting'));
+  const text = fs.readFileSync(script, 'utf8');
+  assert.ok(!/\bsleep\b/.test(text) && !/\) *(> *\/dev\/null)?( *2>&1)? *&\s*$/m.test(text), 'systemd stops the whole service when the helper ends, so a background job would never run');
+  assert.ok(!text.includes('/sbin/reboot'));
+});
+
+test('when sudo refuses, the answer says failed with the reason and the log keeps it', () => {
+  for (const word of ['reboot', 'restart-kiosk', 'restart-services', 'sync-now calendars']) {
+    const h = setup();
+    const answer = h.ask(word + '\n', { FAKE_SUDO_SAYS: 'sudo: a password is required' });
+    assert.equal(answer.status, 'failed 1', word);
+    assert.ok(answer.output.includes('a password is required'), word + ': ' + answer.output);
+    assert.match(h.log(), /failed 1: sudo: a password is required/, word);
+  }
+});
+
+test('the sudoers file allows exactly the commands the helper runs, by the same full paths', () => {
+  const sudoers = fs.readFileSync(path.join(repo, 'computer/sudoers/teletraan-control'), 'utf8');
+  const rule = sudoers.split('\n').find(line => line.includes('NOPASSWD:'));
+  const allowed = rule.split('NOPASSWD:')[1].split(',').map(item => item.trim());
+  const text = fs.readFileSync(script, 'utf8');
+  assert.ok(text.includes('TELETRAAN_SYSTEMCTL:-/usr/bin/systemctl') && text.includes('TELETRAAN_DOCKER:-/usr/bin/docker'));
+  ['/usr/bin/systemctl restart teletraan-*', '/usr/bin/systemctl start teletraan-*.service', '/usr/bin/systemctl reboot', '/usr/bin/docker restart teletraan-web'].forEach(item => assert.ok(allowed.includes(item), item));
+  assert.ok(allowed.every(item => /^\/(usr\/)?s?bin\//.test(item)), 'only full paths');
+  assert.ok(!allowed.some(item => /\bALL\b|\*\s*$/.test(item) && !/teletraan-\*/.test(item)), 'no open wildcard');
 });
 
 test('write-env replaces local.env with mode 600 and keeps the old one, and refuses text that is not an env file', () => {

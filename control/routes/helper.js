@@ -28,7 +28,14 @@ export function register(router, ctx) {
     const body = await readJson(req);
     const args = checkRequest(word, body);
 
-    const output = await ctx.helper(word, args);
+    let output;
+    try {
+      output = await ctx.helper(word, args);
+    } catch (error) {
+      // The helper's own sentences are plain, so the page shows them. The code goes to the log for the person at the computer.
+      if (typeof ctx.log === 'function') ctx.log('helper ' + word + ' failed' + (error && error.code ? ' (' + error.code + ')' : '') + ': ' + String(error && error.message).slice(0, 200));
+      throw new Refusal(502, String((error && error.message) || 'The helper did not answer.'));
+    }
     send(res, 200, { ok: true, word: word, output: String(output === undefined ? '' : output).slice(0, 2000) });
   });
 }
