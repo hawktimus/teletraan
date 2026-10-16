@@ -12,6 +12,8 @@ const round = value => Math.round(value * 10) / 10;
 async function runScroll(ctx, panel, look) {
   const page = await ctx.open({ panel: panel, style: look });
   try {
+    // A look asked for in the address is put on by a swap, and a play made during it is lost
+    await page.waitForFunction(() => !window.teletraanTest.busy(), null, { timeout: 20000 }).catch(() => {});
     await page.evaluate(() => {
       window.__motion.armScroll();
       window.teletraanTest.play('monday-scroll');
