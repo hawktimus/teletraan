@@ -135,6 +135,7 @@ test('an install from a zip runs the steps in order, writes RELEASE.json and bui
   assert.match(fs.readFileSync(path.join(p.releasesDir, '2', 'dashboard/build.js'), 'utf8'), /^export const build = "2-a1b2c3d";/);
   assert.equal(fs.readlinkSync(path.join(p.releasesDir, '2', 'computer/local.env')), path.join(p.root, 'local.env'));
   assert.ok(fs.existsSync(path.join(p.releasesDir, '2', 'studio-dist')));
+  assert.ok(fs.existsSync(path.join(p.releasesDir, '2', 'dashboard', 'data', 'live')), 'the mount point of the data folder is in the release');
   assert.ok(!fs.existsSync(path.join(p.releasesDir, '2.tmp')));
   assert.ok(p.calls.some(c => c.startsWith('node ') && c.endsWith('schemas.test.mjs')), p.calls.join(' | '));
   assert.deepEqual(p.calls.filter(c => c.startsWith('helper') || c.startsWith('wait')), ['helper restart-services', 'helper restart-kiosk', 'wait 2-a1b2c3d']);

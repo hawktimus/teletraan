@@ -82,6 +82,8 @@ export async function installRelease(ctx, options) {
     await step('studio', 'Build the Studio', async () => {
       // The web server mounts this folder, so it has to exist even when nothing was built
       fs.mkdirSync(path.join(temporary, 'studio-dist'), { recursive: true });
+      // The data folder of the computer is mounted inside the read-only dashboard, and Docker cannot make that mount point itself
+      fs.mkdirSync(path.join(temporary, 'dashboard', 'data', 'live'), { recursive: true });
       if (options.studio === false || process.env.CONTROL_SKIP_STUDIO === '1') return 'The Studio build was skipped';
       return buildStudio(ctx, temporary);
     });
