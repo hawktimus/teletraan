@@ -78,6 +78,11 @@ export function hiddenPlaying() {
   return playing;
 }
 
+// Plays that transition at the next page change of the large panel, as ?hidden=<kind> does. The motion tests ask.
+export function askHidden(kind) {
+  if (Object.prototype.hasOwnProperty.call(hiddenTransitions, kind)) addressKind = kind;
+}
+
 // Even asking for localStorage can throw, for example when the browser has storage switched off
 function savedStorage() {
   try {

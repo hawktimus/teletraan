@@ -66,6 +66,7 @@ import { readStill, useStillSwitches } from './core/still.js';
 import { readCompetitionAsk } from './core/competition-address.js';
 import { startTakeovers, runAnnouncement, takeoverRunning } from './core/takeover.js';
 import { startHeartbeat } from './core/heartbeat.js';
+import './core/test-hook.js'; // does nothing without ?sample=1&clock=fixed
 
 const params = new URLSearchParams(window.location.search);
 const stillAsk = readStill(params); // ?panel= draws that one panel and holds it (core/still.js)
