@@ -106,7 +106,7 @@ Every button on the Now showing, Status and Log tabs shows a line under it: Done
 - "Run presentations is switched off" means the screen would ignore the test.
 - "The helper did not finish (failed 1). sudo: a password is required" means the sudoers file does not allow the command. Run the installer again.
 
-Two commands on the Teletraan computer show what really happened:
+Two commands on the Teletraan computer show what happened:
 
     tail -n 40 /opt/teletraan/logs/helper.log
     sudo journalctl -u teletraan-control@* -n 40 --no-pager
