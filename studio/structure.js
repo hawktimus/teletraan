@@ -60,6 +60,7 @@ import { SparkleIcon } from '@sanity/icons/Sparkle';
 import { SquareIcon } from '@sanity/icons/Square';
 import { StackIcon } from '@sanity/icons/Stack';
 import { StarIcon } from '@sanity/icons/Star';
+import { SunIcon } from '@sanity/icons/Sun';
 import { SyncIcon } from '@sanity/icons/Sync';
 import { TaskIcon } from '@sanity/icons/Task';
 import { ThLargeIcon } from '@sanity/icons/ThLarge';
@@ -171,6 +172,7 @@ export const sidebarEntries = [
   { kind: 'divider', title: 'EVENTS' },
   { kind: 'component', title: 'Calendars', id: 'calendars', icon: SyncIcon, component: CalendarsView },
   { kind: 'list', title: 'Calendar filters', icon: FilterIcon, type: 'calendarFilter', sort: byName, add: ['newCalendarFilter'] },
+  { kind: 'list', title: 'Subthemes', icon: SunIcon, type: 'subtheme', sort: byName, add: ['newSubtheme'] },
   { kind: 'divider', title: 'ROSTER' },
   { kind: 'list', title: 'Leadership', icon: StarIcon, type: 'person', sort: byOrder, add: ['newPerson'] },
   { kind: 'list', title: 'Team leads', icon: UsersIcon, type: 'subteam', sort: byOrder, add: ['newSubteam'] },

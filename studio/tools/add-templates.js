@@ -21,6 +21,7 @@ export const addTemplates = [
   { id: 'newTip', title: 'Tip', schemaType: 'tipOrNews', value: { kind: 'tip', show: true } },
   { id: 'newAnnouncement', title: 'Announcement', schemaType: 'announcement', value: () => announcementStart() },
   { id: 'newCalendarFilter', title: 'Calendar filter', schemaType: 'calendarFilter', value: { show: true } },
+  { id: 'newSubtheme', title: 'Subtheme', schemaType: 'subtheme', value: { enabled: true } },
   { id: 'newPerson', title: 'Person', schemaType: 'person', value: { show: true } },
   { id: 'newSubteam', title: 'Team lead', schemaType: 'subteam', value: { show: true } },
   { id: 'newSponsor', title: 'Sponsor', schemaType: 'sponsor', value: { show: true } },
