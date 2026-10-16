@@ -54,7 +54,7 @@ const headerRoom = await import(base + 'core/header-room.js');
 const textWidthModule = await import(base + 'core/text-width.js');
 const panelOrder = await import(base + 'core/panel-order.js');
 const panels = {};
-for (const name of cardNames) panels[name] = await import(base + 'panels/monday-' + name + '/monday-' + name + '.js');
+for (const name of cardNames) panels[name] = await import(base + 'panels/monday-' + name + '/panel.js');
 const people = {};
 for (const name of ['leadership', 'team-leads', 'roster']) people[name] = await import(base + 'panels/' + name + '/panel.js');
 

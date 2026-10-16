@@ -1227,7 +1227,7 @@ test('the rules for Plain never match a pack mark or a status shape, and the pan
   const panelsFolder = path.join(dashboardFolder, 'panels');
   let drawn = 0;
   fs.readdirSync(panelsFolder).forEach(name => {
-    const file = path.join(panelsFolder, name, name + '.js');
+    const file = path.join(panelsFolder, name, 'panel.js');
     if (!fs.existsSync(file)) return;
 
     const code = fs.readFileSync(file, 'utf8');
@@ -5409,9 +5409,9 @@ let tasksPanelCopies = 0;
 async function freshTasksPanel() {
   const folder = path.join(workFolder, 'live', 'dashboard', 'panels', 'tasks');
   fs.mkdirSync(folder, { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, 'panels', 'tasks', 'panel.js'), path.join(folder, 'panels/tasks/panel.js'));
+  fs.copyFileSync(path.join(dashboardFolder, 'panels', 'tasks', 'panel.js'), path.join(folder, 'panel.js'));
   tasksPanelCopies += 1;
-  return import(pathToFileURL(path.join(folder, 'panels/tasks/panel.js')).href + '?copy=' + tasksPanelCopies);
+  return import(pathToFileURL(path.join(folder, 'panel.js')).href + '?copy=' + tasksPanelCopies);
 }
 
 function taskCalled(title, status, extra) {

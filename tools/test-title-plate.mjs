@@ -237,7 +237,7 @@ test('Leadership, Team leads and a department stay at 96 px when they fit before
 
 test('a title that is longer than its room is cut off with an ellipsis before the line, in the panels that write a name', () => {
   [['custom', 'custom'], ['leadership', 'leadership'], ['team-leads', 'team-leads'], ['roster', 'roster']].forEach(([panel, folder]) => {
-    const css = withoutComments(read('dashboard/panels/' + folder + '/' + panel + '.css'));
+    const css = withoutComments(read('dashboard/panels/' + folder + '/panel.css'));
     const title = new RegExp('\\.' + panel + ' \\.title \\{([^}]*)\\}').exec(css);
     assert.ok(title, panel + ' has a rule for its title');
     assert.ok(title[1].includes('max-width: ' + titleRoom + 'px;') && title[1].includes('text-overflow: ellipsis;'), panel + ' cuts its title off at ' + titleRoom);

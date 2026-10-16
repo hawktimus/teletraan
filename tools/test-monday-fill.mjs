@@ -47,7 +47,7 @@ const base = pathToFileURL(root).href + '/';
 const layout = await import(base + 'core/layout.js');
 const sanity = await import(base + 'core/sanity.js');
 const panels = {};
-for (const name of cardNames) panels[name] = await import(base + 'panels/monday-' + name + '/monday-' + name + '.js');
+for (const name of cardNames) panels[name] = await import(base + 'panels/monday-' + name + '/panel.js');
 
 const tests = [];
 function test(name, run) {
@@ -81,7 +81,7 @@ const areaWidth = layout.barGeometry.areaWidth;
 const bar = selector => 'html[data-layout="bar"] ' + selector;
 
 const shared = rulesOf(read('monday.css'));
-const sheetOf = name => rulesOf(read('panels/monday-' + name + '/monday-' + name + '.css'));
+const sheetOf = name => rulesOf(read('panels/monday-' + name + '/panel.css'));
 
 // The sample, cleaned as the screen cleans it, with the Monday tasks kept or taken out
 function contentWith(change) {

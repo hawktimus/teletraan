@@ -50,7 +50,7 @@ const sanity = await import(base + 'core/sanity.js');
 const contentModule = await import(base + 'core/content.js');
 const teams = await import(base + 'core/teams.js');
 const panels = {};
-for (const name of cardNames) panels[name] = await import(base + 'panels/competition-' + name + '/competition-' + name + '.js');
+for (const name of cardNames) panels[name] = await import(base + 'panels/competition-' + name + '/panel.js');
 
 const tests = [];
 function test(name, run) {
@@ -833,7 +833,7 @@ function fontOf(rule) {
 test('nothing on a card is smaller than 44px, no line is thinner than 3px, and the stylesheets have no animation, blur or shadow', () => {
   assert.equal(tokens['size-label'], 44);
   cardNames.forEach(name => {
-    const css = read('panels/competition-' + name + '/competition-' + name + '.css');
+    const css = read('panels/competition-' + name + '/panel.css');
     const rules = rulesOf(css);
     const declarations = Array.from(css.matchAll(/font[a-z-]*:[^;]*;/g)).map(match => match[0]);
 
@@ -853,7 +853,7 @@ test('nothing on a card is smaller than 44px, no line is thinner than 3px, and t
     assert.equal(/@keyframes|transition:|animation:|box-shadow|text-shadow|filter|blur|drop-shadow|background-image|url\(/.test(css), false, name + ' has an effect that is not allowed');
 
     // every class a card writes into its chart has a rule with a font, a fill or a stroke
-    const js = read('panels/competition-' + name + '/competition-' + name + '.js');
+    const js = read('panels/competition-' + name + '/panel.js');
     assert.equal(/setTimeout|setInterval|requestAnimationFrame|animate\(|@keyframes|transform/.test(js), false, name + ' has animation code');
     assert.equal(/font-size|style="/.test(js), false, name + ' sets a size or a style in its markup');
     assert.ok(rules['.competition-' + name + ' .header'] && rules['.competition-' + name + ' .body'] && rules['.competition-' + name + ' .empty'], name + ' styles its header, body and empty sentence');
@@ -966,7 +966,7 @@ test('the text of every card stays inside the body and does not run into the tex
 
   Object.keys(contents).forEach(label => {
     cardNames.forEach(name => {
-      const rules = rulesOf(read('panels/competition-' + name + '/competition-' + name + '.css'));
+      const rules = rulesOf(read('panels/competition-' + name + '/panel.css'));
       const html = panels[name].markupFor(contents[label], noon('2026-10-09'));
       const reaches = textsIn(html).map(text => {
         const font = fontOf(rules['.competition-' + name + ' .' + text.cssClass.split(' ')[0]] || '');

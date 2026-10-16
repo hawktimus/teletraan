@@ -51,7 +51,7 @@ const sanity = await import(base + 'core/sanity.js');
 const contentModule = await import(base + 'core/content.js');
 const teams = await import(base + 'core/teams.js');
 const panels = {};
-for (const name of cardNames) panels[name] = await import(base + 'panels/monday-' + name + '/monday-' + name + '.js');
+for (const name of cardNames) panels[name] = await import(base + 'panels/monday-' + name + '/panel.js');
 
 const tests = [];
 function test(name, run) {
@@ -942,7 +942,7 @@ test('every class a card writes has a rule in its own stylesheet or in monday.cs
         own.add(token);
       }));
     }));
-    const css = read('panels/monday-' + name + '/monday-' + name + '.css') + read('monday.css');
+    const css = read('panels/monday-' + name + '/panel.css') + read('monday.css');
     own.forEach(token => {
       if (shared.includes(token) || token === 'monday-' + name) return;
       assert.ok(new RegExp('\\.' + token + '(?![\\w-])').test(css), 'monday-' + name + '.css and monday.css have no rule for ' + token);
