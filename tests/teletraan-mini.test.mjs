@@ -12,6 +12,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { textOf, copyParts } from './helpers/script-parts.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const toolFile = path.join(repo, 'tools/mini/teletraan-mini');
@@ -380,6 +381,7 @@ test('update refuses to copy from a folder that is not the repository, because -
   const copy = path.join(place.root, 'elsewhere/tools/mini');
   fs.mkdirSync(copy, { recursive: true });
   fs.copyFileSync(toolFile, path.join(copy, 'teletraan-mini'));
+  copyParts(toolFile, copy);
   fs.copyFileSync(mergeFile, path.join(copy, 'merge-env.sh'));
   fs.chmodSync(path.join(copy, 'teletraan-mini'), 0o755);
 
@@ -835,7 +837,7 @@ test('the three files are executable, have valid syntax, and the tool starts wit
   assert.equal(spawnSync('/bin/bash', ['-n', commandFile], { encoding: 'utf8' }).status, 0);
   assert.equal(spawnSync('/bin/sh', ['-n', mergeFile], { encoding: 'utf8' }).status, 0, 'merge-env.sh has valid sh syntax');
 
-  const tool = fs.readFileSync(toolFile, 'utf8');
+  const tool = textOf(toolFile);
   assert.ok(tool.startsWith('#!/bin/bash\n'));
   assert.ok(/^set -u$/m.test(tool), 'set -u');
   assert.ok(fs.readFileSync(mergeFile, 'utf8').startsWith('#!/bin/sh\n'));
@@ -846,17 +848,18 @@ test('the three files are executable, have valid syntax, and the tool starts wit
 });
 
 test('the tool runs on the bash 3.2 of macOS: none of the newer features are used', () => {
-  const code = stripComments(fs.readFileSync(toolFile, 'utf8'));
+  const code = stripComments(textOf(toolFile));
   [/declare -A/, /\bmapfile\b/, /\breadarray\b/, /\$\{[A-Za-z_]+(,,|\^\^)\}/, /\|&/, /&>>/, /\bcoproc\b/, /\[\[ .* =~ /, /read [^\n]*-i /].forEach(pattern => {
     assert.ok(!pattern.test(code), 'uses ' + pattern);
   });
 });
 
 test('the tool never evaluates text, never reads a secrets file on this Mac with the shell, and quotes the values it moves', () => {
-  const code = stripComments(fs.readFileSync(toolFile, 'utf8'));
+  const code = stripComments(textOf(toolFile));
   const here = code.replace(/<<'EOF'\n[\s\S]*?\nEOF\n/g, '').replace(/stty echo/g, '');
   assert.ok(!/\beval\b/.test(code), 'no eval');
-  assert.ok(!/^\s*(source|\.) /m.test(code), 'the tool sources nothing');
+  const sourced = code.split('\n').filter(line => /^\s*(source|\.) /.test(line));
+  assert.deepEqual(sourced, ['  source "$here/teletraan-mini-$part.sh"'], 'the tool sources only its own parts, never a secrets file');
   assert.ok(!/\becho\b/.test(here), 'only say and printf print on this Mac');
   assert.ok(!/ssh[^\n]*\$\{?(clean_value|key_values|cal_values|answer)/.test(code), 'no value goes on an ssh command line');
   assert.ok(!/scp[^\n]*\$\{?(clean_value|key_values|cal_values|answer)/.test(code), 'no value goes on an scp command line');

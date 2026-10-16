@@ -1099,7 +1099,7 @@ test('the frames are drawn again in the same step that puts the style on the pag
 
 // What Cybertron paints
 
-test('Cybertron paints the plates in the team\'s body color, the metal edge and the page the order gives, on the layout of Original, and the metal reaches the frames through the tokens', () => {
+test('Cybertron paints the plates in the team\'s body color, the metal edge and the page color, on the layout of Original, and the metal reaches the frames through the tokens', () => {
   const css = withoutComments((read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css')));
   const value = property => new RegExp(property + ': ([^;]+);').exec(css)[1];
   assert.equal(value('--style-body'), 'var(--team-body)', 'the body of a plate is the team\'s body color');

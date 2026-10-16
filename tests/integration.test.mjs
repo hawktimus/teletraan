@@ -1,4 +1,4 @@
-// Tests for the places where the lanes of round 5 meet: the preview address of a Photos row, the
+// Tests for the places where the parts meet: the preview address of a Photos row, the
 // milestone query that the Monday sync writes for, and the announcement plate that the screenshot
 // tool looks for.
 //

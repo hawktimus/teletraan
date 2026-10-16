@@ -69,7 +69,7 @@ const looks = JSON.parse(fs.readFileSync(path.join(root, 'tests/data/swap-pieces
 const middleOf = piece => ({ x: piece.left + piece.width / 2, y: piece.top + piece.height / 2 });
 const seeds = [3, 17, 4242];
 
-// The cases the owner asked about, as [old look, new look]. Prime to Nova is the same layout turned round, Original to
+// The cases that matter, as [old look, new look]. Prime to Nova is the same layout turned round, Original to
 // Cybertron the same layout with other frames, and the rest change the layout
 const cases = {
   'Prime to Nova in Original (the mirror)': ['original-prime', 'original-nova'],

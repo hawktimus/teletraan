@@ -5107,7 +5107,6 @@ fs.writeFileSync(path.join(talkTree, 'dashboard/core/panels.js'), [
   '  return { id: id, region: "overlay", element: element };',
   '}',
 ].join('\n') + '\n');
-let talkPages = 0;
 
 class TalkElement {
   constructor(kind) {

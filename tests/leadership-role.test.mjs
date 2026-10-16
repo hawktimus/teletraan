@@ -192,7 +192,7 @@ test('the chip is 44px with 14px each side, up to 400px wide, and a longer Role 
   assert.ok(/box-sizing: border-box;/.test(chip) && /max-width: 400px;/.test(chip) && /white-space: normal;/.test(chip) && /overflow-wrap: anywhere;/.test(chip) && /text-align: center;/.test(chip));
   assert.ok(/font: 700 var\(--size-label\)\/52px var\(--font-display\);/.test(chip), 'the text is 44px with a line of 52');
 
-  assert.equal(chipLines('CO-PRESIDENT', inner), 1, 'the Role of the order is one line');
+  assert.equal(chipLines('CO-PRESIDENT', inner), 1, 'the longest Role is one line');
   ['HEAD COACH', 'COACH', 'MENTOR', 'PARENT', 'CAPTAIN', 'CO-CAPTAIN'].forEach(role => assert.equal(chipLines(role, inner), 1, role));
   // 22 characters of ordinary words are at most two lines. Two lines of 52 are 104, which fit the shortest
   // row of a page of four, 144 less its 2px rule, and leave the name its 516px

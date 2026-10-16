@@ -28,7 +28,7 @@ const shown = panels => panels.map(panel => ({ panel: panel, show: true }));
 const flat = rows => rows.map(row => ({ panel: row.panel, team: row.team || '', seconds: row.seconds || 0 }));
 const words = rows => flat(rows).map(row => row.panel + (row.team ? ':' + row.team : '') + (row.seconds ? ':' + row.seconds + 's' : ''));
 
-// The Panel order the owner saved: 11 rows, all shown, none with seconds
+// The Panel order saved: 11 rows, all shown, none with seconds
 const ownersOrder = shown(['tonight', 'forecast', 'leadership', 'team-leads', 'photo', 'next-event', 'task-counts', 'sponsor-logo', 'task-counts', 'events', 'tasks']);
 
 // The Team documents as the Studio reads them: the active ones, in order. The dashboard reads all of them and keeps the active

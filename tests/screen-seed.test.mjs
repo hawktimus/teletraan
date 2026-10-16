@@ -32,7 +32,7 @@ const row = (panel, team, seconds) => {
 };
 const shown = panels => panels.map(panel => ({ panel: panel, show: true }));
 
-// The Panel order the owner saved: 11 rows, all shown, none with seconds
+// The Panel order saved: 11 rows, all shown, none with seconds
 const ownersOrder = shown(['tonight', 'forecast', 'leadership', 'team-leads', 'photo', 'next-event', 'task-counts', 'sponsor-logo', 'task-counts', 'events', 'tasks']);
 const prime = 'prime';
 const nova = 'nova';

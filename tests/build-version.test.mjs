@@ -11,6 +11,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { copyParts } from './helpers/script-parts.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-build-version-'));
@@ -57,6 +58,7 @@ function miniPlace(name, options = {}) {
   fs.mkdirSync(bin);
   fs.mkdirSync(stub);
   fs.copyFileSync(path.join(repo, 'mini/scripts/status-write.sh'), path.join(root, 'mini/scripts/status-write.sh'));
+  fs.copyFileSync(path.join(repo, 'mini/scripts/lib.sh'), path.join(root, 'mini/scripts/lib.sh'));
   fs.copyFileSync(path.join(repo, 'dashboard/config.js'), path.join(root, 'dashboard/config.js'));
   fs.writeFileSync(path.join(root, 'mini/local.env'), "SANITY_WRITE_TOKEN='" + (options.noToken ? '' : token) + "'\n");
   ['sed', 'tail', 'head', 'grep', 'date', 'dirname', 'cat', 'awk'].concat(options.git ? ['git'] : []).forEach(tool => fs.symlinkSync(findTool(tool), path.join(bin, tool)));
@@ -215,6 +217,7 @@ test('the Mac tool says so and goes on when the folder has no git history, and t
   fs.mkdirSync(path.join(bare, 'mini'), { recursive: true });
   fs.mkdirSync(path.join(bare, 'control'), { recursive: true });
   fs.copyFileSync(path.join(repo, 'tools/mini/teletraan-mini'), path.join(bare, 'tools/mini/teletraan-mini'));
+  copyParts(path.join(repo, 'tools/mini/teletraan-mini'), path.join(bare, 'tools/mini'));
   fs.writeFileSync(path.join(bare, 'dashboard/index.html'), '');
   fs.writeFileSync(path.join(bare, 'mini/install.sh'), '');
   fs.writeFileSync(path.join(bare, 'control/server.js'), '');

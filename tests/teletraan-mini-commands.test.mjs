@@ -12,6 +12,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { copyParts } from './helpers/script-parts.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const toolFile = path.join(repo, 'tools/mini/teletraan-mini');
@@ -256,6 +257,7 @@ test('update stops before it copies when the Mini cannot be reached, and when th
   const copy = path.join(place.root, 'elsewhere/tools/mini');
   fs.mkdirSync(copy, { recursive: true });
   fs.copyFileSync(toolFile, path.join(copy, 'teletraan-mini'));
+  copyParts(toolFile, copy);
   fs.chmodSync(path.join(copy, 'teletraan-mini'), 0o755);
   const result = place.run(['update', '--yes'], [], path.join(copy, 'teletraan-mini'));
   assert.notEqual(result.status, 0);
@@ -272,6 +274,7 @@ test('update refuses a tree that still has deploy/, copies nothing and says to u
   fs.writeFileSync(path.join(tree, 'dashboard/index.html'), '');
   fs.writeFileSync(path.join(tree, 'deploy/scripts/pull.sh'), '');
   fs.copyFileSync(toolFile, path.join(tree, 'tools/mini/teletraan-mini'));
+  copyParts(toolFile, path.join(tree, 'tools/mini'));
   fs.chmodSync(path.join(tree, 'tools/mini/teletraan-mini'), 0o755);
   const result = place.run(['update', '--yes'], [], path.join(tree, 'tools/mini/teletraan-mini'));
   assert.notEqual(result.status, 0);

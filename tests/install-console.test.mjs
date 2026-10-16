@@ -58,6 +58,7 @@ function setup(name, options) {
   fs.mkdirSync(bin);
 
   fs.copyFileSync(installFile, path.join(home, 'mini/scripts/install-console.sh'));
+  fs.copyFileSync(path.join(repo, 'mini/scripts/lib.sh'), path.join(home, 'mini/scripts/lib.sh'));
   fs.chmodSync(path.join(home, 'mini/scripts/install-console.sh'), fs.statSync(installFile).mode);
   fs.copyFileSync(unitFile, path.join(home, 'mini/systemd/teletraan-console.service'));
   ['startup.txt', 'shutdown.txt'].forEach(file => fs.copyFileSync(path.join(consoleFolder, file), path.join(home, 'mini/console', file)));
@@ -409,7 +410,7 @@ test('it installs and turns on the console unit only, never runs apt, and never 
 test('the script has valid sh syntax and is executable', () => {
   const syntax = spawnSync('/bin/sh', ['-n', installFile], { encoding: 'utf8' });
   assert.equal(syntax.status, 0, syntax.stderr);
-  assert.ok(read(installFile).startsWith('#!/bin/sh\n'));
+  assert.ok(read(installFile).startsWith('#!/bin/bash\n'));
   assert.ok((fs.statSync(installFile).mode & 0o111) !== 0, 'the script should be executable');
 });
 

@@ -924,7 +924,7 @@ test('a pack may carry defaults for the three extras, and every mistake in them 
   assert.match(packProblems(makePack({ defaults: 'gears' })).join(), /the defaults should be/);
 });
 
-test('the four packs that carry a corner art have the one the order names, and the other three have none of their own', async () => {
+test('the four packs that carry a corner art have the one assigned, and the other three have none of their own', async () => {
   const folder = pathToFileURL(path.join(mainTree, 'dashboard', 'seasons')).href + '/';
   const expected = { christmas: 'snowflakes', thanksgiving: 'leaves', 'competition-day': 'gears', 'new-years': 'fireworks' };
 

@@ -66,7 +66,7 @@ function somePieces(plates, bolts) {
 const byId = (list, id) => list.find(item => item.id === id);
 const middleOf = piece => ({ x: piece.left + piece.width / 2, y: piece.top + piece.height / 2 });
 
-test('the times are the ones of the order: pull apart, re-form, content, and the landing of the icon', () => {
+test('the times are the fixed ones: pull apart, re-form, content, and the landing of the icon', () => {
   assert.deepEqual(swapTimes, { fadeMs: 250, delayMostMs: 180, pullMs: 450, switchMs: 450, reformEndMs: 1250, landMs: 150 });
   assert.equal(swapShape.outwardShare, 0.18);
   assert.deepEqual([swapShape.tipLeast, swapShape.tipMost, swapShape.twistMost], [20, 70, 25]);

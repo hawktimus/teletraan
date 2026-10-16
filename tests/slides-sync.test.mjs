@@ -103,6 +103,7 @@ function setup(name, options) {
     fs.chmodSync(copy, fs.statSync(file).mode);
   });
   unitFiles.forEach(unit => fs.copyFileSync(path.join(repo, 'mini/systemd', unit), path.join(root, 'mini/systemd', unit)));
+  fs.copyFileSync(path.join(repo, 'mini/scripts/lib.sh'), path.join(root, 'mini/scripts/lib.sh'));
   fs.copyFileSync(path.join(repo, 'dashboard/config.js'), path.join(root, 'dashboard/config.js'));
   if (!options.noEnv) {
     fs.writeFileSync(path.join(root, 'mini/local.env'), "TELETRAAN_DATA='" + data + "'\nCALENDAR_TEAM_URL='" + secret + "'\n");
@@ -636,8 +637,8 @@ test('the scripts have valid sh syntax, are executable, and never print or read 
     }
 
     const text = fs.readFileSync(file, 'utf8');
-    assert.ok(text.startsWith('#!/bin/sh\n'));
-    assert.ok(/^set -eu$/m.test(text), 'the script stops at the first error');
+    assert.ok(text.startsWith('#!/bin/bash\n'));
+    assert.ok(/^set -euo pipefail$/m.test(text), 'the script stops at the first error');
     assert.ok((fs.statSync(file).mode & 0o111) !== 0, path.basename(file) + ' should be executable');
     assert.ok(!/\bcat\b[^\n]*local\.env/.test(text), 'local.env is never printed');
     assert.ok(!/\beval\b/.test(text), 'nothing is run from text');
