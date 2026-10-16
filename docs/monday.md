@@ -159,7 +159,7 @@ nothing. Below it:
   with a task. The first name of the POC is always kept.
 
 Every value starts as the table above, in Studio, in `dashboard/config.js` and at the top of
-`deploy/scripts/monday-sync.sh`. `studio/check-schemas.mjs` and `tools/test-monday-sync.mjs`
+`mini/scripts/monday-sync.sh`. `studio/check-schemas.mjs` and `tools/test-monday-sync.mjs`
 fail when the three differ. The older Boards rows are hidden ("Not used any more") and the script
 ignores them. What was typed in them is kept.
 
@@ -259,7 +259,7 @@ as `monday-tasks` for the first department of its team.
 
 ## The keys
 
-- `MONDAY_API_TOKEN` in `deploy/local.env` on the Mini. Monday wants it in a header on every
+- `MONDAY_API_TOKEN` in `mini/local.env` on the Mini. Monday wants it in a header on every
   request. The script hands it to curl on standard input, so it never shows in the process
   list, and it is never printed or saved. How to make one: below, and
   docs/rebuilding-the-mini.md, step 18.
@@ -278,8 +278,8 @@ service does not show as failed.
    (docs/rebuilding-the-mini.md, step 18).
 3. Install the timer with `install-monday.sh`, and try the token with
    `monday-sync.sh --check`. The unit files changed with this version: the timer now wakes the
-   script every 5 minutes, so run `sudo /opt/teletraan/deploy/scripts/install-monday.sh` again
-   after every update that touches `deploy/systemd`.
+   script every 5 minutes, so run `sudo /opt/teletraan/mini/scripts/install-monday.sh` again
+   after every update that touches `mini/systemd`.
 4. Wait 5 minutes. Open Dashboard Settings, Monday tab. The block at the top says who the token
    belongs to, when the Mini last read Monday, how often, how many reads it used today, and how
    many tasks it made. Until then it says No connection yet.
@@ -293,8 +293,8 @@ service does not show as failed.
 
 On the Mini:
 
-    /opt/teletraan/deploy/scripts/monday-sync.sh --check
-    /opt/teletraan/deploy/scripts/monday-sync.sh
+    /opt/teletraan/mini/scripts/monday-sync.sh --check
+    /opt/teletraan/mini/scripts/monday-sync.sh
 
 `--check` asks Monday who the token belongs to and writes nothing. The second line is one run.
 It reads only when the last read is old enough, so a run right after a good one prints nothing.
@@ -356,7 +356,7 @@ document or file.
 ## If an answer looks different
 
 The address, the version, the four questions and the places in the answers are in one block at
-the top of `deploy/scripts/monday-sync.sh`: `monday_address`, `monday_version`,
+the top of `mini/scripts/monday-sync.sh`: `monday_address`, `monday_version`,
 `monday_query_me`, `monday_query_boards`, `monday_query_items`, `monday_query_more`, and the
 `paths` block of jq functions. Correct a line there and nowhere else. The questions use typed
 fragments (`... on StatusValue { label index }` and the like), because a plain question gave

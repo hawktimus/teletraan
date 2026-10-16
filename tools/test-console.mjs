@@ -1,5 +1,5 @@
-// Tests for the boot and shutdown screens: the two drawings in deploy/console,
-// deploy/scripts/install-console.sh and deploy/systemd/teletraan-console.service.
+// Tests for the boot and shutdown screens: the two drawings in mini/console,
+// mini/scripts/install-console.sh and mini/systemd/teletraan-console.service.
 // The script is run in a temporary folder that stands for the Mini's root, and
 // the tools it uses on the Mini (id, systemctl) are replaced with small fake
 // ones, so nothing touches the machine.
@@ -14,9 +14,9 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
-const consoleFolder = path.join(repo, 'deploy/console');
-const installFile = path.join(repo, 'deploy/scripts/install-console.sh');
-const unitFile = path.join(repo, 'deploy/systemd/teletraan-console.service');
+const consoleFolder = path.join(repo, 'mini/console');
+const installFile = path.join(repo, 'mini/scripts/install-console.sh');
+const unitFile = path.join(repo, 'mini/systemd/teletraan-console.service');
 const sampleFile = path.join(repo, 'dashboard/data/sample/content.json');
 const work = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-console-')));
 
@@ -46,21 +46,21 @@ function lines(file) {
   return text.slice(0, -1).split('\n');
 }
 
-// Makes a copy of the deploy folder inside a fake root, with an /etc/issue like
+// Makes a copy of the mini folder inside a fake root, with an /etc/issue like
 // Debian's, and returns how to run the script and what it left behind.
 function setup(name, options) {
   const settings = Object.assign({ place: 'opt/teletraan', issue: debianIssue, fakePr: false }, options || {});
   const root = path.join(work, name);
   const home = path.join(root, settings.place);
   const bin = path.join(root, 'bin');
-  ['deploy/scripts', 'deploy/systemd', 'deploy/console'].forEach(folder => fs.mkdirSync(path.join(home, folder), { recursive: true }));
+  ['mini/scripts', 'mini/systemd', 'mini/console'].forEach(folder => fs.mkdirSync(path.join(home, folder), { recursive: true }));
   fs.mkdirSync(path.join(root, 'etc/systemd/system'), { recursive: true });
   fs.mkdirSync(bin);
 
-  fs.copyFileSync(installFile, path.join(home, 'deploy/scripts/install-console.sh'));
-  fs.chmodSync(path.join(home, 'deploy/scripts/install-console.sh'), fs.statSync(installFile).mode);
-  fs.copyFileSync(unitFile, path.join(home, 'deploy/systemd/teletraan-console.service'));
-  ['startup.txt', 'shutdown.txt'].forEach(file => fs.copyFileSync(path.join(consoleFolder, file), path.join(home, 'deploy/console', file)));
+  fs.copyFileSync(installFile, path.join(home, 'mini/scripts/install-console.sh'));
+  fs.chmodSync(path.join(home, 'mini/scripts/install-console.sh'), fs.statSync(installFile).mode);
+  fs.copyFileSync(unitFile, path.join(home, 'mini/systemd/teletraan-console.service'));
+  ['startup.txt', 'shutdown.txt'].forEach(file => fs.copyFileSync(path.join(consoleFolder, file), path.join(home, 'mini/console', file)));
   if (settings.issue !== null) fs.writeFileSync(path.join(root, 'etc/issue'), settings.issue);
 
   ordinaryTools.filter(tool => !(settings.fakePr && tool === 'pr')).forEach(tool => fs.symlinkSync(findTool(tool), path.join(bin, tool)));
@@ -79,7 +79,7 @@ function setup(name, options) {
     unit: path.join(root, 'etc/systemd/system/teletraan-console.service'),
     install(extra) {
       const env = Object.assign({ PATH: bin, CONSOLE_ROOT: root, STUB_LOG: log, STUB_UID: '0' }, extra || {});
-      const result = spawnSync('/bin/sh', [path.join(home, 'deploy/scripts/install-console.sh')], { env: env, encoding: 'utf8', input: '\n', cwd: root });
+      const result = spawnSync('/bin/sh', [path.join(home, 'mini/scripts/install-console.sh')], { env: env, encoding: 'utf8', input: '\n', cwd: root });
       return { text: result.stdout, errors: result.stderr, status: result.status, calls: fs.readFileSync(log, 'utf8') };
     },
     // Every file under etc, with its text, so a run that must change nothing can be compared
@@ -199,14 +199,14 @@ test('the sample content carries both drawings, written as JSON text, equal to t
 });
 
 test('the drawings are not served: the web server shows the dashboard folder and no copy of them is in it', () => {
-  const compose = read(path.join(repo, 'deploy/docker-compose.yml'));
+  const compose = read(path.join(repo, 'mini/docker-compose.yml'));
   const sources = compose.split('\n')
     .map(line => line.match(/^\s*- ([^:\s]+):\/srv\/web\//) || line.match(/^\s*source: (\S+)/))
     .filter(Boolean)
     .map(match => match[1]);
   assert.deepEqual(sources, ['../dashboard', '${TELETRAAN_DATA:-/var/lib/teletraan/data}']);
 
-  const nginx = read(path.join(repo, 'deploy/nginx.conf'));
+  const nginx = read(path.join(repo, 'mini/nginx/nginx.conf'));
   assert.ok(/root \/srv\/web;/.test(nginx));
   assert.ok(!/console/.test(nginx + compose), 'neither file names the console folder');
 
@@ -238,9 +238,9 @@ test('the unit is ordered before shutdown, counts as running, and clears, switch
   assert.deepEqual(values('ExecStop'), [
     '/usr/bin/clear',
     '/usr/bin/chvt 1',
-    '/usr/bin/pr -t -o ' + margin + ' /opt/teletraan/deploy/console/shutdown.txt',
+    '/usr/bin/pr -t -o ' + margin + ' /opt/teletraan/mini/console/shutdown.txt',
   ]);
-  assert.ok(fs.existsSync(path.join(repo, 'deploy/console/shutdown.txt')));
+  assert.ok(fs.existsSync(path.join(repo, 'mini/console/shutdown.txt')));
 });
 
 test('the unit names no account and no user, and the script and the unit use the same margin', () => {
@@ -254,7 +254,7 @@ test('the unit names no account and no user, and the script and the unit use the
 // The script
 
 test('it stops, naming the file, when a file it installs is missing or empty, and changes nothing', () => {
-  ['deploy/console/startup.txt', 'deploy/console/shutdown.txt', 'deploy/systemd/teletraan-console.service'].forEach(file => {
+  ['mini/console/startup.txt', 'mini/console/shutdown.txt', 'mini/systemd/teletraan-console.service'].forEach(file => {
     const missing = setup('missing-' + path.basename(file));
     const before = missing.snapshot();
     fs.rmSync(path.join(missing.home, file));
@@ -277,7 +277,7 @@ test('it stops, naming the file, when a file it installs is missing or empty, an
 test('it stops when the startup drawing has a backslash, which the login prompt would read as a code', () => {
   const place = setup('backslash');
   const before = place.snapshot();
-  fs.appendFileSync(path.join(place.home, 'deploy/console/startup.txt'), 'a \\ b\n');
+  fs.appendFileSync(path.join(place.home, 'mini/console/startup.txt'), 'a \\ b\n');
   const result = place.install();
   assert.equal(result.status, 1);
   assert.ok(result.errors.includes('has a backslash in it'), result.errors);

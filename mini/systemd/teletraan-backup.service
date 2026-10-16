@@ -1,0 +1,14 @@
+[Unit]
+Description=Back up the Teletraan I Sanity dataset
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# ACCOUNT is replaced by install-backup.sh with the account that owns the
+# repository, so this file does not depend on what the Mini's user is called.
+User=ACCOUNT
+# The script tells Studio the time (status-write.sh backup) only after an export that worked.
+ExecStart=/opt/teletraan/mini/scripts/backup-dataset.sh
+# The export downloads every photo too
+TimeoutStartSec=1h

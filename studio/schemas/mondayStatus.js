@@ -1,5 +1,5 @@
 // What the Mini read from Monday, in one document with the fixed id 'monday-status'.
-// deploy/scripts/monday-sync.sh writes it, so editors never open it: it is
+// mini/scripts/monday-sync.sh writes it, so editors never open it: it is
 // not in the sidebar or the New menu (structure.js, sanity.config.js). The Monday tab
 // of Dashboard Settings shows when it was written and offers its boards and columns in
 // the lists of the board blocks (settingsMonday.js, ../monday-status-input.js and

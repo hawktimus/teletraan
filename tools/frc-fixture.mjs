@@ -1,4 +1,4 @@
-// Turns one past event, read by deploy/scripts/frc-sync.sh --event <key> --to <file>, into the fixture
+// Turns one past event, read by mini/scripts/frc-sync.sh --event <key> --to <file>, into the fixture
 // the competition cards draw in ?sample=1 (dashboard/data/sample/frc-event.json). Team numbers are kept
 // and team names are left as The Blue Alliance has them: both are public.
 //

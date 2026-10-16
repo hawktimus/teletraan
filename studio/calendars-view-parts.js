@@ -7,7 +7,7 @@
 
 import { ageText, clockText } from './time-text.js';
 
-// The id the Mini writes to. deploy/scripts/status-write.sh and calendar-status.sh have the same one.
+// The id the Mini writes to. mini/scripts/status-write.sh and calendar-status.sh have the same one.
 export const calendarStatusId = 'calendar-status';
 
 // The one line at the top of the page
@@ -228,7 +228,7 @@ const latestDay = '2099-12-31';
 const codePattern = /^[a-z0-9_]+$/;
 const plainDay = /^\d{4}-\d{2}-\d{2}$/;
 
-// What the Mini lists for an event that has no title (deploy/scripts/calendar-status.mjs)
+// What the Mini lists for an event that has no title (mini/scripts/calendar-status.mjs)
 const noTitle = 'No title';
 
 // The text cut to at most limit characters, without splitting a character in two

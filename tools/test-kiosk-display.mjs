@@ -1,4 +1,4 @@
-// Tests for deploy/scripts/display.sh, which kiosk.sh calls to find the connected screen and make the framebuffer
+// Tests for mini/scripts/display.sh, which kiosk.sh calls to find the connected screen and make the framebuffer
 // 1920 by 1080. xrandr is a fake in a temporary folder that prints a saved answer, so nothing touches a real screen.
 // The wait is made short through the two settings the script reads from the environment.
 //
@@ -12,7 +12,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
-const displayFile = path.join(repo, 'deploy/scripts/display.sh');
+const displayFile = path.join(repo, 'mini/scripts/display.sh');
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-display-'));
 const ordinaryTools = ['sed', 'head', 'awk', 'sleep', 'cat'];
 
@@ -160,8 +160,8 @@ test('the script never adds a mode and does not replace the address kiosk.sh was
 });
 
 test('kiosk.sh calls it before the browser starts, and the window follows the 1920 by 1080 framebuffer', () => {
-  const text = fs.readFileSync(path.join(repo, 'deploy/scripts/kiosk.sh'), 'utf8');
-  assert.ok(text.includes('. "$deploy/scripts/display.sh"'));
+  const text = fs.readFileSync(path.join(repo, 'mini/scripts/kiosk.sh'), 'utf8');
+  assert.ok(text.includes('. "$mini/scripts/display.sh"'));
   assert.ok(text.indexOf('set_display') < text.indexOf('exec chromium'));
   assert.ok(text.includes('--window-size=1920,1080'));
   assert.ok(!/xrandr/.test(text), 'the detection lives in display.sh');

@@ -8,7 +8,7 @@ the repository, the content from Sanity (the service the editors type into)
 and the calendars from BAND. Three things live only on the Mini and are lost
 when its disk is wiped:
 
-- `deploy/local.env`, which holds the calendar feed addresses
+- `mini/local.env`, which holds the calendar feed addresses
 - the deploy key in `/home/hawktimus/.ssh`, if the repository is private
 - the password of the `hawktimus` account
 
@@ -112,7 +112,7 @@ see studio/README.md.
 
 8. **Make local.env.** Lock the file before the addresses go in.
 
-       cd /opt/teletraan/deploy
+       cd /opt/teletraan/mini
        cp local.example.env local.env
        chmod 600 local.env
        nano local.env
@@ -145,7 +145,7 @@ see studio/README.md.
 
 9. **Start the web server.**
 
-       cd /opt/teletraan/deploy
+       cd /opt/teletraan/mini
        sudo docker compose --env-file local.env up -d
        curl -I http://localhost:3229/dashboard/
 
@@ -155,9 +155,9 @@ see studio/README.md.
 10. **Turn on the timers.** Run the two scripts once by hand first, to see
     that they work.
 
-        /opt/teletraan/deploy/scripts/pull.sh
-        /opt/teletraan/deploy/scripts/fetch-calendars.sh
-        sudo /opt/teletraan/deploy/scripts/install-timers.sh
+        /opt/teletraan/mini/scripts/pull.sh
+        /opt/teletraan/mini/scripts/fetch-calendars.sh
+        sudo /opt/teletraan/mini/scripts/install-timers.sh
 
     `fetch-calendars.sh` prints one line for each calendar and never prints an
     address. `install-timers.sh` turns on the pull timer as well as the
@@ -173,9 +173,9 @@ see studio/README.md.
     `install-calendars.sh` below.
 
         sudo apt install poppler-utils curl jq
-        /opt/teletraan/deploy/scripts/fetch-calendars.sh
-        sudo /opt/teletraan/deploy/scripts/install-calendars.sh
-        sudo /opt/teletraan/deploy/scripts/install-slides.sh
+        /opt/teletraan/mini/scripts/fetch-calendars.sh
+        sudo /opt/teletraan/mini/scripts/install-calendars.sh
+        sudo /opt/teletraan/mini/scripts/install-slides.sh
 
     The packages need the team mentor's yes first, see the table at the top.
     Each install script says what it will do and waits for Enter. Both use
@@ -195,7 +195,7 @@ see studio/README.md.
     To try the slides fetcher, give it the link of a deck that is shared with
     Anyone with the link:
 
-        /opt/teletraan/deploy/scripts/slides-sync.sh --test '[link of the deck]'
+        /opt/teletraan/mini/scripts/slides-sync.sh --test '[link of the deck]'
 
     It prints `OK` and the number of pages, or `FAIL` and the reason, and
     deletes what it made.
@@ -214,7 +214,7 @@ see studio/README.md.
     is already running, stop it first with
     `sudo systemctl stop teletraan-kiosk.service`.
 
-        xinit /opt/teletraan/deploy/scripts/kiosk.sh -- :1 vt8
+        xinit /opt/teletraan/mini/scripts/kiosk.sh -- :1 vt8
 
     If it says `Only console users are allowed to run the X server`, the
     command was not run from the Mini's own text screen. It does not work over
@@ -231,18 +231,18 @@ see studio/README.md.
     The TV now shows the dashboard. To get a terminal back, press Ctrl+Alt+F1
     (hold the Fn key too on a Mac keyboard) and log in. To stop the screen,
     run `sudo systemctl stop teletraan-kiosk.service`. To use Firefox instead
-    of Chromium, see the comments at the end of `deploy/scripts/kiosk.sh`.
+    of Chromium, see the comments at the end of `mini/scripts/kiosk.sh`.
 
 13. **Show the boot and shutdown screens.** While the Mini starts, the text
     screen shows a drawing above the login prompt, until the kiosk takes
     over. When the Mini shuts down or reboots, the TV switches to the text
     screen and shows a second drawing. The drawings are the files
-    `deploy/console/startup.txt` and `deploy/console/shutdown.txt`. They are
+    `mini/console/startup.txt` and `mini/console/shutdown.txt`. They are
     plain text, at most 100 columns wide and 56 rows tall, made for the text
     screen of 240 columns and 67 rows that a 1920 by 1080 TV gets with the
     default 8 by 16 font.
 
-        sudo /opt/teletraan/deploy/scripts/install-console.sh
+        sudo /opt/teletraan/mini/scripts/install-console.sh
 
     The script says what it will do and waits for Enter. It installs no
     packages and uses `chvt`, `clear` and `pr`, which are already on the Mini
@@ -311,7 +311,7 @@ see studio/README.md.
     Keys with a short description such as `Teletraan Mini`. Copy it. Then add it
     to `local.env`, in single quotes, on its own line:
 
-        nano /opt/teletraan/deploy/local.env
+        nano /opt/teletraan/mini/local.env
 
         TBA_AUTH_KEY='[paste the read key here]'
 
@@ -319,8 +319,8 @@ see studio/README.md.
     Install the timer and check that the key works:
 
         sudo apt install curl jq
-        sudo /opt/teletraan/deploy/scripts/install-frc.sh
-        /opt/teletraan/deploy/scripts/frc-sync.sh --check
+        sudo /opt/teletraan/mini/scripts/install-frc.sh
+        /opt/teletraan/mini/scripts/frc-sync.sh --check
 
     The `apt` line only installs what is missing and needs the team mentor's yes.
     `install-frc.sh` says what it will do and waits for Enter, like the other
@@ -329,7 +329,7 @@ see studio/README.md.
     the reason. It asks one question and writes nothing. To read the data once
     now, at any time of the day:
 
-        /opt/teletraan/deploy/scripts/frc-sync.sh --now
+        /opt/teletraan/mini/scripts/frc-sync.sh --now
 
     It prints a line for each team and `frc: status written`. In Studio, open
     Dashboard Settings: the status block shows the time of the last FRC data
@@ -349,7 +349,7 @@ see studio/README.md.
     the boards it sees are written to Sanity, which anyone can read. Then add it
     to `local.env`, in single quotes, on its own line:
 
-        nano /opt/teletraan/deploy/local.env
+        nano /opt/teletraan/mini/local.env
 
         MONDAY_API_TOKEN='[paste the Monday token here]'
 
@@ -357,8 +357,8 @@ see studio/README.md.
     Install the timer and check that the token works:
 
         sudo apt install curl jq
-        sudo /opt/teletraan/deploy/scripts/install-monday.sh
-        /opt/teletraan/deploy/scripts/monday-sync.sh --check
+        sudo /opt/teletraan/mini/scripts/install-monday.sh
+        /opt/teletraan/mini/scripts/monday-sync.sh --check
 
     The `apt` line only installs what is missing and needs the team mentor's yes.
     `install-monday.sh` says what it will do and waits for Enter, like the other
@@ -367,7 +367,7 @@ see studio/README.md.
     `FAIL` and the reason. It asks one question and writes nothing. To read the
     boards once now:
 
-        /opt/teletraan/deploy/scripts/monday-sync.sh
+        /opt/teletraan/mini/scripts/monday-sync.sh
 
     It prints how many boards are chosen and how many items it read, and
     `monday: status written`. Until a board is chosen it only writes the list of
@@ -418,7 +418,7 @@ its settings. The Mini can keep running.
 ## What to check
 
 - The dashboard is on the screen within two minutes of the Mini starting.
-- `ssh hawktimus@<address> /opt/teletraan/deploy/scripts/check-connection.sh`
+- `ssh hawktimus@<address> /opt/teletraan/mini/scripts/check-connection.sh`
   ends with `OK` (see Checking the connection below).
 - Choice 5 of the tool in `docs/updating-the-mini.md` shows when the Mini last
   wrote each time in the status block, and the check of the calendars.
@@ -438,11 +438,11 @@ its settings. The Mini can keep running.
   shows `updated` for every calendar. If a calendar says `updated` but its
   events never show, it has no row in Dashboard Settings, Calendars (step 8).
 - The FRC feed, if step 17 was done, runs. `systemctl list-timers 'teletraan-frc*'`
-  lists `teletraan-frc.timer`, and `/opt/teletraan/deploy/scripts/frc-sync.sh --check`
+  lists `teletraan-frc.timer`, and `/opt/teletraan/mini/scripts/frc-sync.sh --check`
   prints `OK` twice. `sudo journalctl -u teletraan-frc.service -n 20` is empty
   most of the time, because the script ends at once when it is not time.
 - The Monday board, if step 18 was done, runs. `systemctl list-timers 'teletraan-monday*'`
-  lists `teletraan-monday.timer`, and `/opt/teletraan/deploy/scripts/monday-sync.sh --check`
+  lists `teletraan-monday.timer`, and `/opt/teletraan/mini/scripts/monday-sync.sh --check`
   prints `OK` twice. `sudo journalctl -u teletraan-monday.service -n 20` has the lines of the last
   runs, and no `monday:` line on stderr when the last run worked.
 - The slides service runs. `systemctl list-timers 'teletraan-*'` lists
@@ -508,7 +508,7 @@ One command checks everything the screen needs to get its content. Run it from
 any computer that can reach the Mini, with the Mini's address (the screen shows
 it, see the next section):
 
-    ssh hawktimus@<address> /opt/teletraan/deploy/scripts/check-connection.sh
+    ssh hawktimus@<address> /opt/teletraan/mini/scripts/check-connection.sh
 
 It prints one line for each check, `OK` or `FAIL` and then what it found, and
 the last line is `OK` if every check passed or `FAIL` if any did not. A missing
@@ -535,7 +535,7 @@ tool or a failed check only fails its own line, so the others still run. Add
   dataset needs a login. It must stay public (studio/README.md).
 - CORS: Sanity gives the browser permission to read its answer for
   `http://localhost:<port>`. The port is read from `TELETRAAN_PORT` in
-  `deploy/local.env`, and from `deploy/docker-compose.yml` if `local.env` has
+  `mini/local.env`, and from `mini/docker-compose.yml` if `local.env` has
   none. A FAIL says to add that address to the project's CORS origins at
   sanity.io/manage.
 - BAND: `api.band.us` answers. Any answer, even "not found", means it can be
@@ -611,7 +611,7 @@ The Screen tab of Dashboard Settings starts with a block that says when the
 Mini last saw a change to the content, downloaded the calendars, downloaded the
 slides, read the Monday boards and the FRC data, and started the screen. The
 Mini writes those times into one document in Sanity, `status-mini`, with
-`deploy/scripts/status-write.sh`. That needs a token that is allowed to write.
+`mini/scripts/status-write.sh`. That needs a token that is allowed to write.
 Without one the Mini works as before and the block says No status yet.
 
 1. Make the token. Open sanity.io/manage and sign in, open the project, then
@@ -620,7 +620,7 @@ Without one the Mini works as before and the block says No status yet.
 
 2. Add it to `local.env` on the Mini, in single quotes, on its own line:
 
-       nano /opt/teletraan/deploy/local.env
+       nano /opt/teletraan/mini/local.env
 
        SANITY_WRITE_TOKEN='[paste the token here]'
 
@@ -637,8 +637,8 @@ Without one the Mini works as before and the block says No status yet.
    calendar service has two more, which run `calendar-status.sh` and
    `status-write.sh calendar-status` for the Calendars page:
 
-       sudo /opt/teletraan/deploy/scripts/install-calendars.sh
-       sudo /opt/teletraan/deploy/scripts/install-slides.sh
+       sudo /opt/teletraan/mini/scripts/install-calendars.sh
+       sudo /opt/teletraan/mini/scripts/install-slides.sh
 
    A Mini that was set up with `install-timers.sh` (step 10) runs that script
    again instead, which copies every unit file.
@@ -668,7 +668,7 @@ download too, because the page has to show why a download failed.
 
 To try it by hand:
 
-    /opt/teletraan/deploy/scripts/status-write.sh kiosk
+    /opt/teletraan/mini/scripts/status-write.sh kiosk
 
 It prints `status: wrote kioskStartedAt`, or says in plain words why not, and
 prints nothing at all when there is no token. Then open Dashboard Settings in
@@ -764,7 +764,7 @@ Reboot and repeat the test with the Mini first.
 
 ## Adding or changing a calendar
 
-Each BAND calendar is one line in `deploy/local.env` on the Mini. From a Mac,
+Each BAND calendar is one line in `mini/local.env` on the Mini. From a Mac,
 choice 2 of the tool in `docs/updating-the-mini.md` does steps 2 and 4 below: it
 writes the line into `local.env` on the Mini and runs the calendar service once.
 Getting the link from BAND and adding the row in Studio stay with you. To do it by
@@ -775,7 +775,7 @@ hand:
 2. Choose an ID for it in capital letters, such as `GROUP` or `BUILD_SEASON`.
    Digits and underscores are fine too. Open the file on the Mini:
 
-       cd /opt/teletraan/deploy
+       cd /opt/teletraan/mini
        nano local.env
 
    Add one line, `CALENDAR_`, then the ID, then `_URL`, with the address in
@@ -792,17 +792,17 @@ hand:
 4. The calendar service reads `local.env` each time it runs, so nothing needs
    restarting. To get the calendar now and not within 15 minutes, run:
 
-       /opt/teletraan/deploy/scripts/fetch-calendars.sh
+       /opt/teletraan/mini/scripts/fetch-calendars.sh
 
    It prints `calendar group: updated`, or the reason it could not download
    the calendar, and then keeps the old file. It never prints the address.
 5. To see what the screen will do with the calendar, open Calendars under
    Events in Studio after the next run (docs/calendars-page.md). To see every
    event at once, run `check-calendars.sh` on a computer that has Node, a copy
-   of the repository and a `deploy/local.env` with the same line. The Mini has
+   of the repository and a `mini/local.env` with the same line. The Mini has
    no Node, unless it was installed for the Calendars page.
 
-       deploy/scripts/check-calendars.sh
+       mini/scripts/check-calendars.sh
 
    It prints a KIND line with the kind of the calendar (no chip when it has none),
    a line for each event in the next 30 days, SHOWN or HIDDEN, and
@@ -833,7 +833,7 @@ Start with the log for the part that is wrong.
 | Black screen, nothing | `sudo journalctl -u teletraan-kiosk.service -n 50`. A line about X or a missing package means step 12 is not finished. `sudo systemctl restart teletraan-kiosk.service` starts it again. |
 | "Teletraan I could not start. Trying again in 30 seconds." | The browser works but the dashboard could not start, for example a file would not load or a panel failed. It retries by itself, and a fix that has been pulled is picked up on the next try. To see why, run the same commit on a laptop (`python3 tools/serve.py`) and read the browser console there. |
 | The screen says SANITY UNREACHABLE | Run `check-connection.sh` (see Checking the connection). Its FAIL lines say which part is wrong, and the reason on the screen says which kind of fault it is. |
-| The browser says it cannot connect | `sudo docker compose ps` in `/opt/teletraan/deploy`. If it is not running, run step 9 again. |
+| The browser says it cannot connect | `sudo docker compose ps` in `/opt/teletraan/mini`. If it is not running, run step 9 again. |
 | Calendars are old | Open Calendars under Events in Studio: each calendar says when it was last downloaded and why a download failed. Or `sudo journalctl -u teletraan-calendars.service -n 30`. "The server said no" usually means BAND changed the address. Get a new one and edit `CALENDAR_<ID>_URL` in `local.env`, see Adding or changing a calendar. The old file stays on screen until a download works. |
 | The TV says "Slides are not ready. Ask a coach." | `sudo journalctl -u teletraan-slides.service -n 30`. A line such as `talk [id]: no slides, not shared` gives the reason. A deck that is not shared is the usual one, see docs/presentations.md. If there are no lines for the talk at all, check that `sudo systemctl status teletraan-slides.timer` says active, and run step 11 again if it does not. |
 | A change never arrives | `sudo journalctl -u teletraan-pull.service -n 30`, then see the next three rows. |
@@ -844,8 +844,8 @@ Start with the log for the part that is wrong.
 | The screen is blank or frozen | `sudo systemctl restart teletraan-kiosk.service`. If it keeps happening, note the time and tell the team mentor. |
 | Nothing works | Do this page again from step 1. |
 
-When anything under `deploy/` changes, someone has to apply it by hand. How
-is in `deploy/README.md`.
+When anything under `mini/` changes, someone has to apply it by hand. How
+is in `mini/README.md`.
 
 ## Upkeep
 
@@ -859,7 +859,7 @@ run these and check that the screen comes back:
 Tell the team mentor when you do it. Chromium and Docker are the parts that
 reach the internet, so they matter most.
 
-The web server image is fixed to one version in `deploy/docker-compose.yml`.
+The web server image is fixed to one version in `mini/docker-compose.yml`.
 To move to a newer one, ask the team mentor first, change the tag, and run
 step 9 again.
 

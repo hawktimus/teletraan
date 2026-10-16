@@ -1,6 +1,6 @@
 // Tests that the screen keeps the Monday tab of Dashboard Settings tidy: the boards are
 // a list that starts empty, and the owner names are a switch that starts off. The Mini
-// reads both (deploy/scripts/monday-sync.sh), the screen has no use for them, and a page
+// reads both (mini/scripts/monday-sync.sh), the screen has no use for them, and a page
 // saved before the fields existed must load. The fields themselves are checked in
 // studio/check-schemas.mjs, and the script in tools/test-monday-script.mjs. Nothing is
 // drawn and nothing touches the network.

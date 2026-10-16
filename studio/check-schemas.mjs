@@ -4332,7 +4332,7 @@ function checkStatusWatchdog() {
   return problems;
 }
 
-// The status document the Mini writes (schemas/status.js, deploy/scripts/status-write.sh) and the block that shows it
+// The status document the Mini writes (schemas/status.js, mini/scripts/status-write.sh) and the block that shows it
 function checkStatusBlock() {
   const problems = [];
   const type = typeByName('status');
@@ -4460,7 +4460,7 @@ function checkCompetitionTab() {
   return problems;
 }
 
-// The FRC data document the Mini writes (schemas/frcStatus.js, deploy/scripts/frc-sync.sh) and the
+// The FRC data document the Mini writes (schemas/frcStatus.js, mini/scripts/frc-sync.sh) and the
 // block that shows it. The dashboard reads the document with the rest of the content (core/sanity.js).
 function checkFrcStatus() {
   const problems = [];
@@ -5025,7 +5025,7 @@ function checkListAdds() {
 }
 
 // The document the Mini writes for the Calendars page (schemas/calendarStatus.js, written by
-// deploy/scripts/calendar-status.sh and status-write.sh calendar-status), and the page under
+// mini/scripts/calendar-status.sh and status-write.sh calendar-status), and the page under
 // Events that shows it beside the calendars of Dashboard Settings (calendars-view.js, with its
 // words and rows in calendars-view-parts.js).
 const calendarStatusFields = ['updatedAt', 'eventsNote', 'calendars'];
@@ -5660,7 +5660,7 @@ function checkTeamTrim() {
 
 // The Monday tab of Dashboard Settings (schemas/settingsMonday.js): the connection block, how often the Mini reads, the
 // task board and the milestones board, the owner switch and the older board rows, which are hidden. The names and the
-// starting values are the ones in dashboard/config.js and at the top of deploy/scripts/monday-sync.sh. The boards and the
+// starting values are the ones in dashboard/config.js and at the top of mini/scripts/monday-sync.sh. The boards and the
 // columns are picked from lists that the Mini fills in (monday-pickers.js).
 const mondayTabNames = ['mondayConnection', 'mondayEveryMinutes', 'mondayTaskBoard', 'mondayMilestoneBoard', 'mondayShowOwners', 'mondayBoards'];
 const taskBlockNames = ['boardId', 'departmentColumn', 'statusColumn', 'teamColumn', 'priorityColumn', 'showColumn', 'assignedColumn', 'pocColumn', 'timelineColumn', 'hoursColumn', 'completedColumn', 'milestoneColumn', 'teamLabels', 'statusIndexes', 'priorityIndexes', 'hideLabel', 'departmentLabels'];
@@ -5788,7 +5788,7 @@ function checkMondayTab() {
   return problems;
 }
 
-// The Monday data document the Mini writes (schemas/mondayStatus.js, deploy/scripts/monday-sync.sh), the block
+// The Monday data document the Mini writes (schemas/mondayStatus.js, mini/scripts/monday-sync.sh), the block
 // that shows it and the task fields the script writes
 const mondayStatusFields = ['connectedAs', 'lastSyncAt', 'lastError', 'boards', 'readings', 'snapshots', 'taskCount', 'hiddenUnassigned', 'callsToday', 'callsDate'];
 
@@ -6740,8 +6740,8 @@ async function main() {
     world.mondayPickers = await load(path.join(folder, 'monday-pickers.js'));
     world.competition = await load(path.join(dashboardFolder, 'core', 'competition.js'));
     world.sanitySource = fs.readFileSync(path.join(dashboardFolder, 'core', 'sanity.js'), 'utf8');
-    world.frcScript = fs.readFileSync(path.join(here, '..', 'deploy', 'scripts', 'frc-sync.sh'), 'utf8');
-    world.mondayScript = fs.readFileSync(path.join(here, '..', 'deploy', 'scripts', 'monday-sync.sh'), 'utf8');
+    world.frcScript = fs.readFileSync(path.join(here, '..', 'mini', 'scripts', 'frc-sync.sh'), 'utf8');
+    world.mondayScript = fs.readFileSync(path.join(here, '..', 'mini', 'scripts', 'monday-sync.sh'), 'utf8');
     world.panelOrderInput = await load(path.join(folder, 'panel-order-input.js'));
     world.screenIds = await load(path.join(folder, 'screen-ids.js'));
     world.screenMap = await load(path.join(folder, 'screen-map.js'));
@@ -6752,7 +6752,7 @@ async function main() {
     world.constants = await load(path.join(dashboardFolder, 'core', 'constants.js'));
     world.portrait = await load(path.join(dashboardFolder, 'core', 'portrait.js'));
     world.leadershipModule = await load(path.join(dashboardFolder, 'core', 'leadership.js'));
-    world.statusScript = fs.readFileSync(path.join(here, '..', 'deploy', 'scripts', 'status-write.sh'), 'utf8');
+    world.statusScript = fs.readFileSync(path.join(here, '..', 'mini', 'scripts', 'status-write.sh'), 'utf8');
     world.sample = JSON.parse(fs.readFileSync(path.join(dashboardFolder, 'data', 'sample', 'content.json'), 'utf8'));
     world.seed = fs.readFileSync(path.join(here, '..', 'docs', 'seed', 'extra-events.ndjson'), 'utf8');
     world.placeSeed = fs.readFileSync(path.join(here, '..', 'docs', 'seed', 'places.ndjson'), 'utf8');
@@ -6769,8 +6769,8 @@ async function main() {
     world.previewPanelsView = await load(path.join(folder, 'preview-panels-view.js'));
     world.mondayBoardsViewSource = fs.readFileSync(path.join(here, 'monday-boards-view.js'), 'utf8');
     world.mondayBoardsPartsSource = fs.readFileSync(path.join(here, 'monday-boards-parts.js'), 'utf8');
-    world.calendarStatusScript = fs.readFileSync(path.join(here, '..', 'deploy', 'scripts', 'calendar-status.sh'), 'utf8');
-    world.calendarStatusHelper = fs.readFileSync(path.join(here, '..', 'deploy', 'scripts', 'calendar-status.mjs'), 'utf8');
+    world.calendarStatusScript = fs.readFileSync(path.join(here, '..', 'mini', 'scripts', 'calendar-status.sh'), 'utf8');
+    world.calendarStatusHelper = fs.readFileSync(path.join(here, '..', 'mini', 'scripts', 'calendar-status.mjs'), 'utf8');
   } finally {
     fs.rmSync(folder, { recursive: true, force: true });
   }

@@ -121,7 +121,7 @@ function makePlace(name, options = {}) {
     miniHome: path.join(root, 'mini-home'),
     miniRepo: path.join(root, 'mini-repo'),
     log: path.join(root, 'calls.log'),
-    miniEnvFile: () => path.join(place.miniRepo, 'deploy/local.env'),
+    miniEnvFile: () => path.join(place.miniRepo, 'mini/local.env'),
     secretsFile: () => path.join(place.home, '.teletraan/secrets.env'),
     configFile: () => path.join(place.home, '.teletraan/config'),
     calls: () => fs.readFileSync(place.log, 'utf8'),
@@ -142,7 +142,7 @@ function makePlace(name, options = {}) {
     },
   };
 
-  [place.home, place.stub, place.fakes, place.miniHome, path.join(place.miniRepo, 'deploy/scripts')].forEach(folder => fs.mkdirSync(folder, { recursive: true }));
+  [place.home, place.stub, place.fakes, place.miniHome, path.join(place.miniRepo, 'mini/scripts')].forEach(folder => fs.mkdirSync(folder, { recursive: true }));
   writeTool(place.fakes, 'ssh', fakeSsh);
   writeTool(place.fakes, 'scp', fakeScp);
   writeTool(place.fakes, 'rsync', fakeRsync);
@@ -150,7 +150,7 @@ function makePlace(name, options = {}) {
   writeTool(place.fakes, 'systemctl', fakeSystemctl);
   installNames.forEach(entry => {
     const failing = options.failInstall === entry;
-    writeTool(path.join(place.miniRepo, 'deploy/scripts'), 'install-' + entry + '.sh', '#!/bin/sh\necho "ran install-' + entry + '.sh"\n' + (failing ? 'exit 1\n' : ''));
+    writeTool(path.join(place.miniRepo, 'mini/scripts'), 'install-' + entry + '.sh', '#!/bin/sh\necho "ran install-' + entry + '.sh"\n' + (failing ? 'exit 1\n' : ''));
   });
   fs.writeFileSync(place.log, '');
 
@@ -478,7 +478,7 @@ test('the form shows values masked, takes edit, keep and clear, adds, edits and 
   assert.equal(modeOf(place.miniEnvFile()), 0o600);
   assert.ok(result.text.includes('replaced SANITY_WRITE_TOKEN') && result.text.includes('removed MONDAY_API_TOKEN') && result.text.includes('added CALENDAR_BUILD_SEASON_URL') && result.text.includes('removed CALENDAR_BUILD_URL'), result.text);
   assert.deepEqual(fs.readdirSync(place.miniHome), [], 'the merge script and the new values are removed from the Mini');
-  assert.deepEqual(fs.readdirSync(path.join(place.miniRepo, 'deploy')).filter(name => name !== 'local.env' && name !== 'scripts'), [], 'no temporary file is left next to local.env');
+  assert.deepEqual(fs.readdirSync(path.join(place.miniRepo, 'mini')).filter(name => name !== 'local.env' && name !== 'scripts'), [], 'no temporary file is left next to local.env');
 
   // The values travel in a file with scp, and then the calendar service runs once
   const calls = lines(result.calls.trim());
@@ -620,7 +620,7 @@ test('copying from the Mini asks first, replaces the saved values with the ones 
   assert.equal(modeOf(place.secretsFile()), 0o600);
   assert.ok(result.text.includes('These lines on the Mini did not look like a key or a link and were left out: CALENDAR_BAD_URL'), result.text);
   assert.ok(!fs.existsSync(path.join(place.home, '.teletraan/pulled.tmp')), 'the temporary copy is removed');
-  assert.ok(result.calls.includes("grep -E '^(SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|CALENDAR_[A-Za-z0-9_]+_URL)=' '" + place.miniRepo + "/deploy/local.env'"), 'only the names it needs are asked for: ' + result.calls);
+  assert.ok(result.calls.includes("grep -E '^(SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|CALENDAR_[A-Za-z0-9_]+_URL)=' '" + place.miniRepo + "/mini/local.env'"), 'only the names it needs are asked for: ' + result.calls);
   assertNoLeak(result, 'pull');
   assert.ok(!result.text.includes('NOTSECURE0123'));
 });
@@ -669,8 +669,8 @@ test('status runs status-write.sh --print and check-calendars.sh on the Mini, an
   const result = place.run(['5', 'q']);
 
   assert.equal(result.status, 0, result.errors);
-  assert.ok(result.calls.includes(place.miniRepo + '/deploy/scripts/status-write.sh --print'), result.calls);
-  assert.ok(result.calls.includes(place.miniRepo + '/deploy/scripts/check-calendars.sh'), result.calls);
+  assert.ok(result.calls.includes(place.miniRepo + '/mini/scripts/status-write.sh --print'), result.calls);
+  assert.ok(result.calls.includes(place.miniRepo + '/mini/scripts/check-calendars.sh'), result.calls);
   assert.ok(result.text.includes('Last calendar sync        3 minutes ago'));
   assert.ok(result.text.includes('a script that went wrong printed (hidden)'), result.text);
   assert.ok(result.text.includes('download failed from (hidden) today'), result.text);
@@ -891,7 +891,7 @@ test('docs/updating-the-mini.md is written around the tool, and the other docs p
 
   const rebuild = fs.readFileSync(path.join(repo, 'docs/rebuilding-the-mini.md'), 'utf8');
   assert.ok(rebuild.includes('docs/updating-the-mini.md'), 'the rebuild doc points to the tool for keys');
-  ['README.md', 'deploy/README.md', 'docs/shipping-from-the-mac.md', 'docs/try-it-on-the-mini.md'].forEach(file => {
+  ['README.md', 'mini/README.md', 'docs/shipping-from-the-mac.md', 'docs/try-it-on-the-mini.md'].forEach(file => {
     assert.ok(fs.readFileSync(path.join(repo, file), 'utf8').includes('updating-the-mini.md'), file + ' points to docs/updating-the-mini.md');
   });
 });
@@ -905,7 +905,7 @@ function markdownFiles(folder) {
 }
 
 test('no doc or README still names the old update-mini.sh, and the new doc and the tool files have the team\'s plain style', () => {
-  const files = markdownFiles(path.join(repo, 'docs')).concat([path.join(repo, 'README.md'), path.join(repo, 'deploy/README.md')]);
+  const files = markdownFiles(path.join(repo, 'docs')).concat([path.join(repo, 'README.md'), path.join(repo, 'mini/README.md')]);
   files.forEach(file => assert.ok(!fs.readFileSync(file, 'utf8').includes('update-mini'), path.relative(repo, file) + ' names update-mini.sh'));
 
   const filler = /\b(simply|just|basically|really|very|actually|easily|seamless|robust|leverage|ensure|comprehensive)\b/i;

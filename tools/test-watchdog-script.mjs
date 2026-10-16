@@ -1,4 +1,4 @@
-// Tests for deploy/scripts/watchdog.sh, the unit files and installer of the
+// Tests for mini/scripts/watchdog.sh, the unit files and installer of the
 // watchdog, the browser flags in kiosk.sh and the heartbeat in the dashboard.
 // The browser's page list, pgrep, ps, systemctl and status-write.sh are fakes in
 // a temporary folder, so nothing touches a real browser or service.
@@ -50,7 +50,7 @@ const fakeStatusWrite = `#!/bin/sh
 echo "status-write $*" >> "$STUB_LOG"
 `;
 
-const watchdogFile = path.join(repo, 'deploy/scripts/watchdog.sh');
+const watchdogFile = path.join(repo, 'mini/scripts/watchdog.sh');
 let counter = 0;
 
 // Two digits
@@ -75,14 +75,14 @@ function setup(options = {}) {
   const bin = path.join(root, 'bin');
   const stub = path.join(root, 'stub');
   const data = path.join(root, 'data');
-  fs.mkdirSync(path.join(root, 'deploy/scripts'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'mini/scripts'), { recursive: true });
   fs.mkdirSync(bin);
   fs.mkdirSync(stub);
   if (!options.noData) fs.mkdirSync(data);
 
-  fs.copyFileSync(watchdogFile, path.join(root, 'deploy/scripts/watchdog.sh'));
-  writeTool(path.join(root, 'deploy/scripts'), 'status-write.sh', fakeStatusWrite);
-  fs.writeFileSync(path.join(root, 'deploy/local.env'), "TELETRAAN_DATA='" + data + "'\nSANITY_WRITE_TOKEN='skTESTtoken0123456789abcdef'\n");
+  fs.copyFileSync(watchdogFile, path.join(root, 'mini/scripts/watchdog.sh'));
+  writeTool(path.join(root, 'mini/scripts'), 'status-write.sh', fakeStatusWrite);
+  fs.writeFileSync(path.join(root, 'mini/local.env'), "TELETRAAN_DATA='" + data + "'\nSANITY_WRITE_TOKEN='skTESTtoken0123456789abcdef'\n");
   fs.writeFileSync(path.join(root, 'boot-id'), 'boot-one\n');
 
   ordinaryTools.forEach(tool => fs.symlinkSync(findTool(tool), path.join(bin, tool)));
@@ -124,7 +124,7 @@ function setup(options = {}) {
     },
     run() {
       const env = { PATH: bin, TZ: 'UTC', STUB_LOG: log, STUB_DIR: stub, WATCHDOG_BOOT_FILE: path.join(root, 'boot-id') };
-      const result = spawnSync('/bin/sh', [path.join(root, 'deploy/scripts/watchdog.sh')], { env: env, encoding: 'utf8', input: '' });
+      const result = spawnSync('/bin/sh', [path.join(root, 'mini/scripts/watchdog.sh')], { env: env, encoding: 'utf8', input: '' });
       const calls = fs.readFileSync(log, 'utf8').split('\n').filter(Boolean);
       return {
         status: result.status,
@@ -293,21 +293,21 @@ test('the script has valid sh syntax, is executable, and reads no key from local
 });
 
 test('kiosk.sh opens the debugging port on this machine only', () => {
-  const text = fs.readFileSync(path.join(repo, 'deploy/scripts/kiosk.sh'), 'utf8');
+  const text = fs.readFileSync(path.join(repo, 'mini/scripts/kiosk.sh'), 'utf8');
   assert.ok(text.includes('--remote-debugging-port=9222'));
   assert.ok(text.includes('--remote-debugging-address=127.0.0.1'));
   assert.ok(!/0\.0\.0\.0/.test(text));
 });
 
 test('the watchdog units run the script every 2 minutes, the installer checks them, and none is empty', () => {
-  const service = fs.readFileSync(path.join(repo, 'deploy/systemd/teletraan-watchdog.service'), 'utf8');
-  const timer = fs.readFileSync(path.join(repo, 'deploy/systemd/teletraan-watchdog.timer'), 'utf8');
-  assert.ok(service.includes('ExecStart=/opt/teletraan/deploy/scripts/watchdog.sh'));
+  const service = fs.readFileSync(path.join(repo, 'mini/systemd/teletraan-watchdog.service'), 'utf8');
+  const timer = fs.readFileSync(path.join(repo, 'mini/systemd/teletraan-watchdog.timer'), 'utf8');
+  assert.ok(service.includes('ExecStart=/opt/teletraan/mini/scripts/watchdog.sh'));
   assert.ok(!/^User=/m.test(service), 'it runs as root and names no account');
   assert.ok(/^OnUnitActiveSec=2min$/m.test(timer));
   assert.ok(/^WantedBy=timers.target$/m.test(timer));
 
-  const installer = path.join(repo, 'deploy/scripts/install-watchdog.sh');
+  const installer = path.join(repo, 'mini/scripts/install-watchdog.sh');
   const text = fs.readFileSync(installer, 'utf8');
   assert.equal(spawnSync('/bin/sh', ['-n', installer], { encoding: 'utf8' }).status, 0);
   assert.ok(fs.statSync(installer).mode & 0o100);

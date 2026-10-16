@@ -1,4 +1,4 @@
-// Tests for deploy/scripts/slides-sync.sh and deploy/scripts/install-slides.sh.
+// Tests for mini/scripts/slides-sync.sh and mini/scripts/install-slides.sh.
 // The tools they use on the Mini (curl, pdftoppm, flock, timeout, id,
 // systemctl) are replaced with small fake ones in a temporary folder, so
 // nothing touches the network or the machine. jq is the real one, because the
@@ -14,8 +14,8 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
-const syncFile = path.join(repo, 'deploy/scripts/slides-sync.sh');
-const installFile = path.join(repo, 'deploy/scripts/install-slides.sh');
+const syncFile = path.join(repo, 'mini/scripts/slides-sync.sh');
+const installFile = path.join(repo, 'mini/scripts/install-slides.sh');
 const unitFiles = ['teletraan-slides.service', 'teletraan-slides.timer'];
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-slides-'));
 
@@ -83,7 +83,7 @@ function writeTool(folder, name, text) {
   fs.writeFileSync(path.join(folder, name), text, { mode: 0o755 });
 }
 
-// Makes a copy of the deploy folder and config.js to run in, a folder of tools
+// Makes a copy of the mini folder and config.js to run in, a folder of tools
 // to run with, and returns how to run the scripts.
 function setup(name, options) {
   const root = path.join(work, name);
@@ -91,21 +91,21 @@ function setup(name, options) {
   const stub = path.join(root, 'stub');
   const data = path.join(root, 'data');
   const temp = path.join(root, 'tmp');
-  fs.mkdirSync(path.join(root, 'deploy/scripts'), { recursive: true });
-  fs.mkdirSync(path.join(root, 'deploy/systemd'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'mini/scripts'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'mini/systemd'), { recursive: true });
   fs.mkdirSync(path.join(root, 'dashboard'), { recursive: true });
   [bin, stub, temp].forEach(folder => fs.mkdirSync(folder));
   if (!options.noData) fs.mkdirSync(data);
 
   [syncFile, installFile].forEach(file => {
-    const copy = path.join(root, 'deploy/scripts', path.basename(file));
+    const copy = path.join(root, 'mini/scripts', path.basename(file));
     fs.copyFileSync(file, copy);
     fs.chmodSync(copy, fs.statSync(file).mode);
   });
-  unitFiles.forEach(unit => fs.copyFileSync(path.join(repo, 'deploy/systemd', unit), path.join(root, 'deploy/systemd', unit)));
+  unitFiles.forEach(unit => fs.copyFileSync(path.join(repo, 'mini/systemd', unit), path.join(root, 'mini/systemd', unit)));
   fs.copyFileSync(path.join(repo, 'dashboard/config.js'), path.join(root, 'dashboard/config.js'));
   if (!options.noEnv) {
-    fs.writeFileSync(path.join(root, 'deploy/local.env'), "TELETRAAN_DATA='" + data + "'\nCALENDAR_TEAM_URL='" + secret + "'\n");
+    fs.writeFileSync(path.join(root, 'mini/local.env'), "TELETRAAN_DATA='" + data + "'\nCALENDAR_TEAM_URL='" + secret + "'\n");
   }
 
   ordinaryTools.forEach(tool => fs.symlinkSync(findTool(tool), path.join(bin, tool)));
@@ -135,12 +135,12 @@ function setup(name, options) {
     log: log,
     run(args, extra) {
       const env = Object.assign({ PATH: bin, STUB_LOG: log, STUB_DIR: stub, TMPDIR: temp, STUB_UID: '1000' }, extra || {});
-      const result = spawnSync('/bin/sh', [path.join(root, 'deploy/scripts/slides-sync.sh')].concat(args || []), { env: env, encoding: 'utf8', input: '', cwd: root });
+      const result = spawnSync('/bin/sh', [path.join(root, 'mini/scripts/slides-sync.sh')].concat(args || []), { env: env, encoding: 'utf8', input: '', cwd: root });
       return { text: result.stdout, errors: result.stderr, status: result.status, calls: fs.readFileSync(log, 'utf8') };
     },
     install(extra) {
       const env = Object.assign({ PATH: bin, STUB_LOG: log, STUB_DIR: stub, TMPDIR: temp, STUB_UID: '1000' }, extra || {});
-      const result = spawnSync('/bin/sh', [path.join(root, 'deploy/scripts/install-slides.sh')], { env: env, encoding: 'utf8', input: '\n', cwd: root });
+      const result = spawnSync('/bin/sh', [path.join(root, 'mini/scripts/install-slides.sh')], { env: env, encoding: 'utf8', input: '\n', cwd: root });
       return { text: result.stdout, errors: result.stderr, status: result.status, calls: fs.readFileSync(log, 'utf8') };
     },
     // What Sanity answers: the list of talks
@@ -646,12 +646,12 @@ test('the scripts have valid sh syntax, are executable, and never print or read 
 });
 
 test('the unit files name the account ACCOUNT, run the script, and the timer runs every 2 minutes and 1 minute after boot', () => {
-  const service = fs.readFileSync(path.join(repo, 'deploy/systemd/teletraan-slides.service'), 'utf8');
-  const timer = fs.readFileSync(path.join(repo, 'deploy/systemd/teletraan-slides.timer'), 'utf8');
+  const service = fs.readFileSync(path.join(repo, 'mini/systemd/teletraan-slides.service'), 'utf8');
+  const timer = fs.readFileSync(path.join(repo, 'mini/systemd/teletraan-slides.timer'), 'utf8');
 
   assert.deepEqual(service.match(/^User=.*$/gm), ['User=ACCOUNT']);
   assert.ok(/^Type=oneshot$/m.test(service));
-  assert.ok(/^ExecStart=\/opt\/teletraan\/deploy\/scripts\/slides-sync\.sh$/m.test(service));
+  assert.ok(/^ExecStart=\/opt\/teletraan\/mini\/scripts\/slides-sync\.sh$/m.test(service));
   assert.ok(fs.existsSync(syncFile), 'the script the unit runs exists');
   assert.ok(/^OnBootSec=1min$/m.test(timer));
   assert.ok(/^OnUnitActiveSec=2min$/m.test(timer));
@@ -661,13 +661,13 @@ test('the unit files name the account ACCOUNT, run the script, and the timer run
 
 test('install-slides.sh stops, naming the file, when a unit file is missing or empty', () => {
   const missing = setup('install-missing', { tools: true, install: true });
-  fs.rmSync(path.join(missing.root, 'deploy/systemd/teletraan-slides.service'));
+  fs.rmSync(path.join(missing.root, 'mini/systemd/teletraan-slides.service'));
   const first = missing.install();
   assert.equal(first.status, 1);
   assert.ok(first.errors.includes('teletraan-slides.service is missing or empty'), first.errors);
 
   const empty = setup('install-empty', { tools: true, install: true });
-  fs.writeFileSync(path.join(empty.root, 'deploy/systemd/teletraan-slides.timer'), '');
+  fs.writeFileSync(path.join(empty.root, 'mini/systemd/teletraan-slides.timer'), '');
   const second = empty.install();
   assert.equal(second.status, 1);
   assert.ok(second.errors.includes('teletraan-slides.timer is missing or empty'), second.errors);

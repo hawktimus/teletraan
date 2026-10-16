@@ -152,11 +152,11 @@ cd ..
 ## 6. Make the Ship app
 
 ```
-deploy/mac/make-app.sh
+tools/mac/make-app.sh
 ```
 
 It writes `Ship Teletraan.app` to the Desktop. To put it somewhere else, give
-the folder after the command, for example `deploy/mac/make-app.sh ~/Applications`.
+the folder after the command, for example `tools/mac/make-app.sh ~/Applications`.
 Drag the app into the Dock. The first time, macOS may say it cannot check the
 app. Right-click it, choose Open, and choose Open again.
 
@@ -199,7 +199,7 @@ is on purpose. Nothing stores a password.
 
 ## 8. Keys and calendars (only if this laptop will change them)
 
-The three keys and the calendar links live on the Mini, in `deploy/local.env`.
+The three keys and the calendar links live on the Mini, in `mini/local.env`.
 They are not in GitHub, and shipping never touches them. This laptop needs them
 only to change a key or a calendar with choice 2 of the Mac tool. To bring
 them over, start the tool, choose 3, and answer `y`:
@@ -270,7 +270,7 @@ and restarts the screen.
 Only the `teletraan` folder is on GitHub. These are not, and a fresh clone does
 not have them:
 
-- `deploy/local.env`, the keys and calendar links. They stay on the Mini. Step 8
+- `mini/local.env`, the keys and calendar links. They stay on the Mini. Step 8
   brings them to the laptop when needed.
 - `~/.teletraan/`, the Mini's address and the saved keys. Each Mac makes its
   own with steps 7 and 8. Never copy that folder by email or chat.

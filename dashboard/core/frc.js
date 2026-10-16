@@ -1,7 +1,7 @@
 // The FRC data: the plain functions that clean the frc-status document and read it.
 // They know nothing about the page, so tools/test-competition.mjs can run them.
 //
-// The Mini writes the document with deploy/scripts/frc-sync.sh (docs/frc-feed.md), and
+// The Mini writes the document with mini/scripts/frc-sync.sh (docs/frc-feed.md), and
 // the screen reads it with the rest of the content (core/sanity.js). tidyFrc() turns it
 // into the shape the competition cards use, always complete: a value the Mini did not find
 // is null, an empty text or an empty list, and nothing is ever filled in with a made up

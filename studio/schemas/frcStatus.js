@@ -1,5 +1,5 @@
 // What the Mini read about the competition, in one document with the fixed id
-// 'frc-status'. deploy/scripts/frc-sync.sh writes it as a whole, so editors never
+// 'frc-status'. mini/scripts/frc-sync.sh writes it as a whole, so editors never
 // open it: it is not in the sidebar or the New menu (structure.js,
 // sanity.config.js). The connection block on the Competition tab of Dashboard
 // Settings shows when it was last written (settingsCompetition.js), and the

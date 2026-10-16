@@ -2,7 +2,7 @@
 // status text (core/connection.js) while Sanity cannot be reached. With no
 // network access at the school, this is how someone finds the Mini to log in
 // to it. The kiosk script on the Mini writes data/live/device.json every
-// minute (deploy/scripts/kiosk.sh). Nothing is read while the status text is
+// minute (mini/scripts/kiosk.sh). Nothing is read while the status text is
 // not showing, and a missing file or bad JSON gives no lines.
 
 import { liveFolder } from '../config.js';

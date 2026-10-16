@@ -1,4 +1,4 @@
-// Tests for deploy/mac/ship.sh, the window that checks the code, commits, pushes,
+// Tests for tools/mac/ship.sh, the window that checks the code, commits, pushes,
 // deploys the Studio and updates the Mini. git, node, npm, ssh, scp, rsync, sudo
 // and systemctl are small fake ones in a temporary folder, and the PATH holds
 // nothing else that could reach a real one, so no test can touch GitHub, Sanity
@@ -14,9 +14,9 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = fileURLToPath(new URL('../', import.meta.url));
-const shipSource = path.join(repoRoot, 'deploy/mac/ship.sh');
-const commandSource = path.join(repoRoot, 'deploy/mac/Ship Teletraan.command');
-const makeAppSource = path.join(repoRoot, 'deploy/mac/make-app.sh');
+const shipSource = path.join(repoRoot, 'tools/mac/ship.sh');
+const commandSource = path.join(repoRoot, 'tools/mac/Ship Teletraan.command');
+const makeAppSource = path.join(repoRoot, 'tools/mac/make-app.sh');
 const toolSource = path.join(repoRoot, 'tools/mini/teletraan-mini');
 const cliSource = path.join(repoRoot, 'studio/sanity.cli.js');
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-ship-'));
@@ -167,7 +167,7 @@ function makePlace(name, options = {}) {
       };
       if (run.message) env.SHIP_MESSAGE = run.message;
       const input = run.input && run.input.length ? run.input.join('\n') + '\n' : '';
-      const result = spawnSync('/bin/bash', [path.join(place.repo, 'deploy/mac/ship.sh')].concat(args), { env: env, input: input, encoding: 'utf8' });
+      const result = spawnSync('/bin/bash', [path.join(place.repo, 'tools/mac/ship.sh')].concat(args), { env: env, input: input, encoding: 'utf8' });
       return { text: result.stdout, errors: result.stderr, status: result.status, calls: place.calls() };
     },
   };
@@ -176,19 +176,19 @@ function makePlace(name, options = {}) {
   Object.keys(fakes).filter(program => !(options.without || []).includes(program)).forEach(program => writeExecutable(path.join(place.bin, program), fakes[program]));
   fs.writeFileSync(place.log, '');
 
-  writeExecutable(path.join(place.repo, 'deploy/mac/ship.sh'), fs.readFileSync(shipSource, 'utf8'));
+  writeExecutable(path.join(place.repo, 'tools/mac/ship.sh'), fs.readFileSync(shipSource, 'utf8'));
   writeExecutable(path.join(place.repo, 'tools/mini/teletraan-mini'), fs.readFileSync(toolSource, 'utf8'));
-  fs.mkdirSync(path.join(place.repo, 'deploy/scripts'), { recursive: true });
+  fs.mkdirSync(path.join(place.repo, 'mini/scripts'), { recursive: true });
   fs.mkdirSync(path.join(place.repo, 'dashboard'), { recursive: true });
   fs.writeFileSync(path.join(place.repo, 'dashboard/index.html'), '');
-  fs.writeFileSync(path.join(place.repo, 'deploy/scripts/pull.sh'), '');
+  fs.writeFileSync(path.join(place.repo, 'mini/scripts/pull.sh'), '');
   ['tools/test-one.mjs', 'tools/check-two.mjs', 'studio/check-schemas.mjs'].forEach(file => {
     fs.mkdirSync(path.dirname(path.join(place.repo, file)), { recursive: true });
     fs.writeFileSync(path.join(place.repo, file), '');
   });
   fs.writeFileSync(path.join(place.repo, 'studio/sanity.cli.js'), options.cli || fs.readFileSync(cliSource, 'utf8'));
   if (!options.noModules) fs.mkdirSync(path.join(place.repo, 'studio/node_modules'));
-  fs.writeFileSync(path.join(place.repo, 'deploy/local.env'), "SANITY_WRITE_TOKEN='" + secrets.sanity + "'\nCALENDAR_TEAM_URL='" + secrets.calendar + "'\n", { mode: 0o600 });
+  fs.writeFileSync(path.join(place.repo, 'mini/local.env'), "SANITY_WRITE_TOKEN='" + secrets.sanity + "'\nCALENDAR_TEAM_URL='" + secrets.calendar + "'\n", { mode: 0o600 });
 
   const stateFolder = path.join(place.home, '.teletraan');
   fs.mkdirSync(stateFolder, { recursive: true, mode: 0o700 });
@@ -293,18 +293,18 @@ test('the commit has the description and nothing else on its line, and nothing i
 
 test('a changed local.env or key file stops the run before anything is committed, without printing a value', () => {
   const place = makePlace('secret-file');
-  place.stubFile('changes.txt', ' M deploy/local.env\n');
-  place.stubFile('diff-names.txt', 'deploy/local.env\n');
+  place.stubFile('changes.txt', ' M mini/local.env\n');
+  place.stubFile('diff-names.txt', 'mini/local.env\n');
   const result = place.run(['all'], { message: 'Oops' });
   assert.notEqual(result.status, 0);
-  assert.ok(result.text.includes('These look like secrets and will not be committed:') && result.text.includes('deploy/local.env'), result.text);
+  assert.ok(result.text.includes('These look like secrets and will not be committed:') && result.text.includes('mini/local.env'), result.text);
   assert.ok(!hasCall(result.calls, 'git add') && !hasCall(result.calls, 'git commit') && !hasCall(result.calls, 'git push'));
   assert.ok(!hasCall(result.calls, 'npm') && !hasCall(result.calls, 'rsync'));
   assertNoLeak(result, 'secret file');
 
   const example = makePlace('example-env');
-  example.stubFile('changes.txt', ' M deploy/local.example.env\n');
-  example.stubFile('diff-names.txt', 'deploy/local.example.env\n');
+  example.stubFile('changes.txt', ' M mini/local.example.env\n');
+  example.stubFile('diff-names.txt', 'mini/local.example.env\n');
   assert.equal(example.run(['push'], { message: 'Change the example' }).status, 0, 'the example file is allowed');
 });
 
@@ -483,6 +483,17 @@ test('studio only deploys the Studio: no git, no checks, no Mini', () => {
   assert.ok(result.calls.includes('npm run deploy (in studio)\n'), result.calls);
   assert.ok(!hasCall(result.calls, 'git add') && !hasCall(result.calls, 'git push') && !hasCall(result.calls, 'ssh') && !hasCall(result.calls, 'rsync'));
   assert.ok(!lines(result.calls).some(line => line.startsWith('node ') && !line.startsWith('node --version')), 'no check ran');
+});
+
+test('a tree that still has deploy/ is refused for every word, before anything is committed or sent', () => {
+  ['all', 'push', 'studio', 'mini', 'status', 'restart'].forEach(action => {
+    const place = makePlace('old-tree-' + action);
+    fs.mkdirSync(path.join(place.repo, 'deploy/scripts'), { recursive: true });
+    const result = place.run([action]);
+    assert.notEqual(result.status, 0, action);
+    assert.ok(result.errors.includes('This copy is older than round 6; update it.'), action + ': ' + result.errors);
+    assert.deepEqual(changes(result.calls), [], action + ' changed nothing');
+  });
 });
 
 test('mini only runs the Mac tool to update the Mini and restart the screen, and nothing else', () => {

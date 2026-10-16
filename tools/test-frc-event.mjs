@@ -1,5 +1,5 @@
 // Tests for the competition preview (B5): ?competition=1&event=<key> in the dashboard
-// (core/competition-address.js), deploy/scripts/frc-sync.sh --event <key> --to <file> with a fake curl, and
+// (core/competition-address.js), mini/scripts/frc-sync.sh --event <key> --to <file> with a fake curl, and
 // tools/frc-fixture.mjs. The answer of The Blue Alliance is made up (tools/testdata/frc-event-answer.json),
 // in the shape of the public v3 answers. The key is made up. Nothing touches the network. Needs jq.
 //
@@ -134,10 +134,10 @@ test('the placeholder fixture in the sample content says it is a placeholder and
 // The script, with a fake curl
 
 function setUpScript(work) {
-  const scripts = path.join(work, 'tree', 'deploy', 'scripts');
+  const scripts = path.join(work, 'tree', 'mini', 'scripts');
   fs.mkdirSync(scripts, { recursive: true });
-  fs.copyFileSync(path.join(root, 'deploy/scripts/frc-sync.sh'), path.join(scripts, 'frc-sync.sh'));
-  fs.writeFileSync(path.join(work, 'tree', 'deploy', 'local.env'), 'TBA_AUTH_KEY=fakekeyforthetest123\nSANITY_WRITE_TOKEN=faketokenforthetest\n');
+  fs.copyFileSync(path.join(root, 'mini/scripts/frc-sync.sh'), path.join(scripts, 'frc-sync.sh'));
+  fs.writeFileSync(path.join(work, 'tree', 'mini', 'local.env'), 'TBA_AUTH_KEY=fakekeyforthetest123\nSANITY_WRITE_TOKEN=faketokenforthetest\n');
 
   // The fake curl: the address decides the file, the key comes in on standard input and goes to configs.txt
   const stub = path.join(work, 'stub');

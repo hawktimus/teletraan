@@ -69,7 +69,7 @@ Requested at reaches it within a few seconds. Then:
   A request up to 5 seconds in the future counts too, in case the clock of the
   computer that clicked is a little ahead. The Mini's clock must be right for
   this: if it is more than a minute out, a demo never starts. The Time line of
-  `deploy/scripts/check-connection.sh` shows it (docs/rebuilding-the-mini.md).
+  `mini/scripts/check-connection.sh` shows it (docs/rebuilding-the-mini.md).
 - **The steps play once, in order.** While they play, the normal pages stop
   changing and the logo effects and the screen glitch do not start by themselves.
   When the last step ends, the pages change again and the screen is back where

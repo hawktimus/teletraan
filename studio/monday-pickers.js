@@ -2,7 +2,7 @@
 // (schemas/settingsMonday.js): a board picker that shows the names of the boards and
 // stores the number of the one picked, and a column picker for each column field of the
 // entry that lists the columns of that board only and stores the id of the one picked. Both
-// read the document monday-status that the Mini writes (deploy/scripts/monday-sync.sh),
+// read the document monday-status that the Mini writes (mini/scripts/monday-sync.sh),
 // so nobody types a number or an id.
 //
 // A column is listed with its title and its type in words, such as Due (Date), the columns
@@ -25,7 +25,7 @@ const h = createElement;
 // The same version as the screen's own questions to Sanity
 const apiVersion = '2025-02-19';
 
-// The id the Mini writes to. deploy/scripts/monday-sync.sh has the same one.
+// The id the Mini writes to. mini/scripts/monday-sync.sh has the same one.
 const mondayStatusId = 'monday-status';
 
 // Only the boards and their columns, so the question stays small

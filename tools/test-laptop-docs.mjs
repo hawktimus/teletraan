@@ -1,6 +1,6 @@
 // Tests for docs/laptop-setup.md and the docs about shipping: the steps are all
 // there and in order, each command sits in a code block of its own, the commands
-// and files the guide names exist, the docs agree with deploy/mac/ship.sh, and the
+// and files the guide names exist, the docs agree with tools/mac/ship.sh, and the
 // words are plain. Nothing here runs a command from a guide.
 //
 //   node tools/test-laptop-docs.mjs
@@ -16,7 +16,7 @@ const read = file => fs.readFileSync(path.join(repo, file), 'utf8');
 const laptop = read('docs/laptop-setup.md');
 const shipping = read('docs/shipping-from-the-mac.md');
 const updating = read('docs/updating-the-mini.md');
-const shipScript = read('deploy/mac/ship.sh');
+const shipScript = read('tools/mac/ship.sh');
 const miniTool = read('tools/mini/teletraan-mini');
 
 // Every fenced block of a doc, with the lines in it
@@ -75,13 +75,13 @@ test('the guide names the commands in the order a coach needs them', () => {
     'npm ci',
     'npx sanity login',
     'npx sanity projects list',
-    'deploy/mac/make-app.sh',
+    'tools/mac/make-app.sh',
     'tools/mini/teletraan-mini',
     'ssh-copy-id hawktimus@teletraan.local',
     'ssh-keygen -t ed25519',
   ];
   let at = 0;
-  const firstOrder = ['git --version', 'node --version', 'git clone https://github.com/Hawktimus/teletraan.git', 'npm ci', 'npx sanity login', 'deploy/mac/make-app.sh', 'tools/mini/teletraan-mini'];
+  const firstOrder = ['git --version', 'node --version', 'git clone https://github.com/Hawktimus/teletraan.git', 'npm ci', 'npx sanity login', 'tools/mac/make-app.sh', 'tools/mini/teletraan-mini'];
   firstOrder.forEach(command => {
     const found = commands.indexOf(command, at);
     assert.ok(found !== -1, 'comes in this order: ' + command);
@@ -114,15 +114,15 @@ test('the three steps of choice 1 are named in order, with the command each one 
 });
 
 test('the commands and files the docs name exist', () => {
-  const made = new Set(['studio/node_modules', 'studio/dist', 'studio/.sanity', 'deploy/local.env']);
+  const made = new Set(['studio/node_modules', 'studio/dist', 'studio/.sanity', 'mini/local.env']);
   [laptop, shipping, updating].forEach(text => {
-    for (const match of text.matchAll(/`((?:docs|deploy|tools|studio)\/[A-Za-z0-9_.\/-]+)`/g)) {
+    for (const match of text.matchAll(/`((?:docs|mini|tools|studio)\/[A-Za-z0-9_.\/-]+)`/g)) {
       const file = match[1].replace(/[.,]$/, '');
       if (made.has(file) || file.endsWith('/') || file.includes('*')) continue;
       assert.ok(fs.existsSync(path.join(repo, file)), 'the docs name ' + file + ' and it does not exist');
     }
   });
-  ['deploy/mac/make-app.sh', 'deploy/mac/ship.sh', 'tools/mini/teletraan-mini'].forEach(file => assert.ok((fs.statSync(path.join(repo, file)).mode & 0o111) !== 0, file + ' is executable'));
+  ['tools/mac/make-app.sh', 'tools/mac/ship.sh', 'tools/mini/teletraan-mini'].forEach(file => assert.ok((fs.statSync(path.join(repo, file)).mode & 0o111) !== 0, file + ' is executable'));
   const manifest = JSON.parse(read('studio/package.json'));
   assert.equal(manifest.scripts.deploy, 'sanity deploy', 'npm run deploy is the Studio deploy');
   assert.ok(Number(/>=(\d+)/.exec(manifest.engines.node)[1]) === 22 && manifest.engines.node.includes('22.12'), 'the guide says Node 22.12 and so does the Studio');
@@ -153,14 +153,14 @@ test('the doc of the Mac tool names the words, the options and the exit codes th
 });
 
 test('the other docs point to the new guide and no longer say the Mini pulls after a ship', () => {
-  ['README.md', 'deploy/README.md', 'docs/where-things-are.md'].forEach(file => {
+  ['README.md', 'mini/README.md', 'docs/where-things-are.md'].forEach(file => {
     const text = read(file);
     assert.ok(text.includes('docs/laptop-setup.md'), file + ' points to docs/laptop-setup.md');
     assert.ok(text.includes('shipping-from-the-mac.md'), file + ' points to docs/shipping-from-the-mac.md');
     assert.ok(!/tells the Mini to pull|and tells the Mini/.test(text), file + ' still says ship tells the Mini to pull');
   });
   assert.ok(read('README.md').includes('Ship Teletraan.app') && read('README.md').includes('update, status and restart'));
-  assert.ok(read('deploy/README.md').includes('teletraan-mini update --yes'));
+  assert.ok(read('mini/README.md').includes('teletraan-mini update --yes'));
   const places = read('docs/where-things-are.md');
   ['test-mini-tool-commands.mjs', 'test-ship-script.mjs', 'test-laptop-docs.mjs'].forEach(name => assert.ok(places.includes(name), 'where-things-are.md lists ' + name));
   assert.ok(laptop.includes('docs/shipping-from-the-mac.md') && laptop.includes('docs/updating-the-mini.md'));
@@ -181,12 +181,12 @@ test('the docs are plain: no em or en dash, no exclamation mark, no emoji, no fi
     assert.ok(!filler.test(text), file + ' has a filler word');
     assert.ok(!traces.test(text), file + ' mentions a tool');
   });
-  ['README.md', 'deploy/README.md', 'docs/where-things-are.md'].forEach(file => {
+  ['README.md', 'mini/README.md', 'docs/where-things-are.md'].forEach(file => {
     const text = read(file);
     assert.ok(!dashes.test(text), file + ' has an em or en dash');
     assert.ok(!traces.test(text), file + ' mentions a tool');
   });
-  assert.ok(!filler.test(read('deploy/README.md')), 'deploy/README.md has a filler word');
+  assert.ok(!filler.test(read('mini/README.md')), 'mini/README.md has a filler word');
   const self = fs.readFileSync(new URL(import.meta.url), 'utf8');
   assert.ok(!dashes.test(self), 'this test has an em or en dash');
   assert.ok(!traces.test(self), 'this test mentions a tool');
@@ -197,7 +197,7 @@ test('the guide keeps no secret: no key, token or calendar address is written in
   assert.ok(!/https:\/\/api\.band\.us\/[^\s`]*token=[A-Za-z0-9]{8,}/.test(text), 'a calendar address');
   assert.ok(!/\b(sk[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})\b/.test(text), 'a key or token');
   assert.ok(!/(SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY)\s*=\s*['"]?[A-Za-z0-9]{8,}/.test(text), 'a key written with a value');
-  assert.ok(laptop.includes('deploy/local.env'), 'the guide says where the keys live');
+  assert.ok(laptop.includes('mini/local.env'), 'the guide says where the keys live');
 });
 
 let failures = 0;

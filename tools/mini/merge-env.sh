@@ -1,5 +1,5 @@
 #!/bin/sh
-# Merges a file of NAME='value' lines into deploy/local.env on the Mini.
+# Merges a file of NAME='value' lines into mini/local.env on the Mini.
 # teletraan-mini sends this script and the new lines with scp, runs it on the
 # Mini and removes both afterwards.
 #

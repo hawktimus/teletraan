@@ -106,7 +106,7 @@ the page is for.
    nothing without it.
 
 To turn it on, once the new files are on the Mini, run
-`sudo /opt/teletraan/deploy/scripts/install-calendars.sh`, or `install-timers.sh`
+`sudo /opt/teletraan/mini/scripts/install-calendars.sh`, or `install-timers.sh`
 on a Mini that pulls by itself. systemd reads a changed unit file only when the
 script copies it again. The write token is explained in
 docs/rebuilding-the-mini.md, "Showing what the Mini did in Studio".
@@ -130,8 +130,8 @@ mentor before installing Node any other way.
 Nothing else changes. The next run lists the events. To try it at once, run
 these on the Mini and open the page again:
 
-    /opt/teletraan/deploy/scripts/calendar-status.sh
-    /opt/teletraan/deploy/scripts/status-write.sh calendar-status
+    /opt/teletraan/mini/scripts/calendar-status.sh
+    /opt/teletraan/mini/scripts/status-write.sh calendar-status
 
 `calendar-status.sh` prints what it did and never prints an address.
 
@@ -152,14 +152,14 @@ of each calendar do not fit, the Mini lists fewer events of each calendar, and t
 page says how many it shows.
 
 To stop the Mini writing it, take the two `ExecStopPost` lines out of
-`deploy/systemd/teletraan-calendars.service`, run `install-calendars.sh` again,
+`mini/systemd/teletraan-calendars.service`, run `install-calendars.sh` again,
 and ask a coach to delete the document `calendar-status` from the dataset.
 
 ## Where the code is
 
-- `deploy/scripts/fetch-calendars.sh`, `calendar-status.sh`,
+- `mini/scripts/fetch-calendars.sh`, `calendar-status.sh`,
   `calendar-status.mjs` and `status-write.sh`.
-- `deploy/systemd/teletraan-calendars.service`: the two `ExecStopPost` lines. They
+- `mini/systemd/teletraan-calendars.service`: the two `ExecStopPost` lines. They
   are stop steps because systemd skips `ExecStartPost` after a failed download.
 - `dashboard/package.json`: tells Node that the dashboard files are modules.
 - `studio/schemas/calendarStatus.js`: the document, kept out of the sidebar and

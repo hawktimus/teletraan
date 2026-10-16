@@ -1,4 +1,4 @@
-// The watchdog on the Mini (deploy/scripts/watchdog.sh) cannot read the page,
+// The watchdog on the Mini (mini/scripts/watchdog.sh) cannot read the page,
 // but it can ask the browser for the page title. So every 30 seconds the page
 // puts the time in its title. A title that stops changing means the page has
 // frozen. The time is also kept in localStorage, which nginx cannot read but

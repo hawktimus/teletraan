@@ -109,15 +109,15 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 - A Run presentation test button in Studio that plays a sample talk with six sample slides, with no internet
 - Preview buttons in Studio (Prime, Nova, Cybertron, Minimal and the next seasonal pack) that show that look on the TV for 2 minutes and then go back to the saved settings, without changing any setting. `?team=`, `?style=` and `?overlay=` on the address try any combination with the sample content
 - A Start here page in Studio, the first line of the sidebar: a picture of the screen with its five areas, the three steps of every meeting and six buttons that try the screen (Play announcement, Run presentation test, Next look now, Preview competition, Post an announcement and Preview the screen). docs/students.md is the same page in words. What is left of the old demo is in docs/demo.md
-- A calendar check (deploy/scripts/check-calendars.sh) that lists the next 30 days of events, says which ones the Calendar filters hide, and gives the Events page and the kind of each one that shows
-- A connection check for the Mini (deploy/scripts/check-connection.sh) and a small text on the screen that says why when Sanity cannot be reached
-- A boot and shutdown screen: a text drawing of a person pointing two fingers at each other, with TELETRAAN I under it, shows on the TV above the login prompt while the Mini starts and again while it shuts down (deploy/console, docs/rebuilding-the-mini.md, step 13)
-- A Mac tool, tools/mini/teletraan-mini, that copies the files to the Mini and restarts the screen, keeps the three keys and the calendar links in a form (saved on the Mac in ~/.teletraan/, merged into deploy/local.env on the Mini, never printed), installs the services, and shows what the Mini last did. Double-click tools/mini/Teletraan Mini.command (docs/updating-the-mini.md). The words update, status and restart after its name do one thing with no menu and give an exit code, which is how the Ship app uses it
-- A Ship app for a Mac, deploy/mac/ship.sh (Ship Teletraan.app opens it): one window that checks the code, commits and pushes to GitHub, deploys the Studio without a question and has the Mac tool update the Mini and restart the screen. Each step stops the run when it fails, and it looks at the Mac and at GitHub before it starts (docs/shipping-from-the-mac.md). A second Mac is set up with docs/laptop-setup.md
+- A calendar check (mini/scripts/check-calendars.sh) that lists the next 30 days of events, says which ones the Calendar filters hide, and gives the Events page and the kind of each one that shows
+- A connection check for the Mini (mini/scripts/check-connection.sh) and a small text on the screen that says why when Sanity cannot be reached
+- A boot and shutdown screen: a text drawing of a person pointing two fingers at each other, with TELETRAAN I under it, shows on the TV above the login prompt while the Mini starts and again while it shuts down (mini/console, docs/rebuilding-the-mini.md, step 13)
+- A Mac tool, tools/mini/teletraan-mini, that copies the files to the Mini and restarts the screen, keeps the three keys and the calendar links in a form (saved on the Mac in ~/.teletraan/, merged into mini/local.env on the Mini, never printed), installs the services, and shows what the Mini last did. Double-click tools/mini/Teletraan Mini.command (docs/updating-the-mini.md). The words update, status and restart after its name do one thing with no menu and give an exit code, which is how the Ship app uses it
+- A Ship app for a Mac, tools/mac/ship.sh (Ship Teletraan.app opens it): one window that checks the code, commits and pushes to GitHub, deploys the Studio without a question and has the Mac tool update the Mini and restart the screen. Each step stops the run when it fails, and it looks at the Mac and at GitHub before it starts (docs/shipping-from-the-mac.md). A second Mac is set up with docs/laptop-setup.md
 
 ## What runs on the Mini
 
-The scripts are in `deploy/scripts/`, and the units that start them are in `deploy/systemd/`. A change to a unit file takes effect only when its install script is run again (deploy/README.md, "When a pull changes this folder").
+The scripts are in `mini/scripts/`, and the units that start them are in `mini/systemd/`. A change to a unit file takes effect only when its install script is run again (mini/README.md, "When a pull changes this folder").
 
 - `pull.sh`: every 5 minutes on a Mini that pulls by itself, gets new commits and writes `version.txt`, so an open screen reloads. A pull is a deploy. A Mini that gets its files from a Mac (docs/shipping-from-the-mac.md) leaves this timer off
 - `fetch-calendars.sh`: every 15 minutes, downloads the BAND calendars named in `local.env`. After each run `calendar-status.sh` and `status-write.sh calendar-status` write the document for the Calendars page
@@ -130,7 +130,7 @@ The scripts are in `deploy/scripts/`, and the units that start them are in `depl
 - `check-connection.sh`: one OK or FAIL line each for the Mini's connection to Sanity, BAND, Docker and the kiosk
 - `check-calendars.sh`: lists the next 30 days of events and says which ones the Calendar filters hide. It needs Node, so it runs on a computer that has it
 
-`deploy/local.env` holds three keys, `SANITY_WRITE_TOKEN`, `MONDAY_API_TOKEN` and `TBA_AUTH_KEY`, and one `CALENDAR_<ID>_URL` line for each calendar. It is never committed. A script that does not find its key does nothing and says so in one line. docs/coaches-guide.md says what each key is for, and the Mac tool in docs/updating-the-mini.md can write these lines from a form.
+`mini/local.env` holds three keys, `SANITY_WRITE_TOKEN`, `MONDAY_API_TOKEN` and `TBA_AUTH_KEY`, and one `CALENDAR_<ID>_URL` line for each calendar. It is never committed. A script that does not find its key does nothing and says so in one line. docs/coaches-guide.md says what each key is for, and the Mac tool in docs/updating-the-mini.md can write these lines from a form.
 
 ## More guides
 

@@ -131,10 +131,10 @@ calendar, SHOWN or HIDDEN, with the name of the rule that hides each one
 minutes, and it lists the events only when Node is installed on the Mini.
 
 To see every event of the next 30 days at once, run this on a computer that has
-Node, a copy of the repository and a `deploy/local.env` with the calendar links.
+Node, a copy of the repository and a `mini/local.env` with the calendar links.
 The Mini has no Node, unless a coach installed it for the Calendars page.
 
-    deploy/scripts/check-calendars.sh
+    mini/scripts/check-calendars.sh
 
 It prints the kind of each calendar on a KIND line (no chip when the calendar has
 none), a line for each event, SHOWN or HIDDEN, and for a hidden one the name of
@@ -163,7 +163,7 @@ docs/rebuilding-the-mini.md, "Adding or changing a calendar".
   and which are pinned. In the code a pinned event is called forced, as the field
   is in Studio.
 - `dashboard/core/sanity.js`: reads the rules with the rest of the content.
-- `deploy/scripts/calendar-status.mjs`: judges the next events with the same code
+- `mini/scripts/calendar-status.mjs`: judges the next events with the same code
   and the published rules, for the Calendars page.
 - `studio/calendars-view-parts.js`: makes, matches and deletes the rules of the
   Hide buttons. `ruleMatchesEvent` there reads a rule the way `ruleMatches` does.

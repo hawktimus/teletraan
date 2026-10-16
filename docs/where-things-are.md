@@ -22,7 +22,7 @@ the folder and choose Open in Terminal. Then run:
 The terminal will say `Serving HTTP on 127.0.0.1 port 8080`. That is normal.
 Leave it open. Then open http://localhost:8080/dashboard/ in a browser. Press
 Ctrl+C in the terminal to stop the server. This server is for trying things
-on a computer. On the Mini the web server in `deploy/` does the same job.
+on a computer. On the Mini the web server in `mini/` does the same job.
 
 The screen shows the editors' own content (production). To try things out with
 the sample instead, put `?sample=1` on the end of the address, such as
@@ -267,7 +267,7 @@ editors can sign in from anywhere.
                               scripts/ has make-templates.mjs, which writes the CSV templates from the
                               schemas, and import-csv.mjs, which checks filled-in CSVs and makes a file
                               for sanity dataset import (docs/importing-from-csv.md)
-    deploy/                   how the Mini runs it: web server, timers, scripts. scripts/check-connection.sh
+    mini/                   how the Mini runs it: web server, timers, scripts. scripts/check-connection.sh
                               checks the Mini's connection to Sanity, BAND, Docker and the kiosk with one
                               OK or FAIL line each (docs/rebuilding-the-mini.md, "Checking the connection").
                               scripts/fetch-calendars.sh downloads the BAND calendars in local.env into the
@@ -361,18 +361,18 @@ editors can sign in from anywhere.
       test-publish-all.mjs    checks for the logic of the Publish all tool: which drafts are listed, the
                               transaction for each, the order, the skipped reasons and the summary
       test-templates.mjs      checks that the CSV templates match the schemas, and the CSV importer
-      test-connection-script.mjs  checks for deploy/scripts/check-connection.sh, with fake tools
-      test-slides-script.mjs  checks for deploy/scripts/slides-sync.sh and install-slides.sh, with fake tools
-      test-install-calendars.mjs  checks for deploy/scripts/install-calendars.sh: that it stops before it changes
+      test-connection-script.mjs  checks for mini/scripts/check-connection.sh, with fake tools
+      test-slides-script.mjs  checks for mini/scripts/slides-sync.sh and install-slides.sh, with fake tools
+      test-install-calendars.mjs  checks for mini/scripts/install-calendars.sh: that it stops before it changes
                               anything, and that it installs the calendar units only
-      test-calendars-script.mjs  checks for deploy/scripts/check-calendars.sh, with a fake curl
+      test-calendars-script.mjs  checks for mini/scripts/check-calendars.sh, with a fake curl
       test-event-pages.mjs    checks for the two pages of the Events panel (core/event-pages.js): four events
                               to a page, no second page for four or fewer, the kind chips, Group events by
                               kind, the pinned events, and the step for each page in the rotation
       test-events-scroll.mjs  checks the scroll of the Events panel: both pages in one list, eight events two pages, five a page
                               of four and a page of one, the step of the list in Original, Minimal and Cybertron, the holds
                               (core/schedule.js with stand-ins) and calm and none (frame.js)
-      test-status-write.mjs   checks for deploy/scripts/status-write.sh, with a fake curl, that the services and
+      test-status-write.mjs   checks for mini/scripts/status-write.sh, with a fake curl, that the services and
                               kiosk.sh run it, and that the dashboard never reads the status document
       test-calendar-status.mjs  checks for what the Mini writes for the Calendars page: the sync file of
                               fetch-calendars.sh, the document of calendar-status.sh and calendar-status.mjs
@@ -385,10 +385,10 @@ editors can sign in from anywhere.
       test-calendar-node.mjs  checks that the calendar scripts run on Node 18: dashboard/package.json makes the
                               dashboard files modules, nothing in their imports needs a newer Node, and both
                               scripts list events with the newer built-ins taken away
-      test-frc-script.mjs     checks for deploy/scripts/frc-sync.sh and install-frc.sh, with a fake curl and made-up
+      test-frc-script.mjs     checks for mini/scripts/frc-sync.sh and install-frc.sh, with a fake curl and made-up
                               answers: the requests, the status document, the ETags, the limit of 60 requests, the
                               snapshots, and that the key and the token are never printed or saved
-      test-monday-sync.mjs    checks for deploy/scripts/monday-sync.sh and install-monday.sh, with a fake curl and
+      test-monday-sync.mjs    checks for mini/scripts/monday-sync.sh and install-monday.sh, with a fake curl and
                               made-up boards: the statuses and priorities by label number, the department that
                               gives the Team lead, the dates, the hours, the owner names, the milestones, Show on TV
                               that is never written, a task or milestone that goes, the daily counts, the budget of
@@ -397,7 +397,7 @@ editors can sign in from anywhere.
       test-team-name.mjs      checks that a team's name and number come from the Team document only
       test-build-version.mjs  checks the build on the wall (core/build-stamp.js, status-write.sh version)
       test-sweep.mjs          checks tools/sweep.sh, which keeps the words in tools/sweep-words.txt out of the repository
-      test-watchdog-script.mjs, test-backup-script.mjs  check deploy/scripts/watchdog.sh and backup-dataset.sh
+      test-watchdog-script.mjs, test-backup-script.mjs  check mini/scripts/watchdog.sh and backup-dataset.sh
                               with a fake curl and a fake browser page list
       test-notice.mjs         checks the announcement bar under the banner (core/notice.js, core/notice-run.js)
       test-photo-row.mjs      checks the Photos row: its count, the seconds of each photo and the total
@@ -499,7 +499,7 @@ editors can sign in from anywhere.
       test-mini-tool-commands.mjs  checks for the words of the Mac tool (update, status, restart, --yes and
                               --mini), with the same fake tools: the steps in order, the exit code of a failing
                               step, and that nothing secret is printed
-      test-ship-script.mjs    checks for deploy/mac/ship.sh, with a fake git, node, npm, ssh and rsync on a PATH
+      test-ship-script.mjs    checks for tools/mac/ship.sh, with a fake git, node, npm, ssh and rsync on a PATH
                               that holds no real one: the steps in order, a failing step stops the rest, --dry-run
                               runs nothing, no question about a hostname, the look at this Mac and at GitHub
                               first, and that no key is printed
@@ -684,7 +684,7 @@ alone.
   `competitionLeadDays` (2 days) and `competitionPreviewSeconds` (120) in `dashboard/config.js`. The cards
   are the panels `dashboard/panels/competition-*`, flagged `competition: true` in `registry.js`, and the
   list of them with the rule for each is `cards` in `dashboard/core/competition.js`. The data is the
-  document `frc-status` (type `frcStatus`, `studio/schemas/frcStatus.js`), which `deploy/scripts/frc-sync.sh`
+  document `frc-status` (type `frcStatus`, `studio/schemas/frcStatus.js`), which `mini/scripts/frc-sync.sh`
   writes and `core/sanity.js` reads with the rest of the content and `core/frc.js` cleans. It is public. The
   Preview competition button on Start here writes `competitionPreviewRequest`, and
   `core/competition-preview.js` and `core/competition-preview-run.js` show the cards on the sample data in
@@ -692,10 +692,10 @@ alone.
 - **The Monday board.** Dashboard Settings, Monday tab (docs/monday.md). The task board, the milestones board, how
   often the Mini reads and the owner switch are in `studio/schemas/settingsMonday.js`, with the starting values
   `mondayTaskBoard`, `mondayMilestoneBoard`, `mondayEveryMinutes` and `mondayShowOwners` in `defaultSettings` in
-  `dashboard/config.js` and at the top of `deploy/scripts/monday-sync.sh`; `studio/check-schemas.mjs` and
+  `dashboard/config.js` and at the top of `mini/scripts/monday-sync.sh`; `studio/check-schemas.mjs` and
   `tools/test-monday-sync.mjs` fail when the three differ. The older `mondayBoards` list is hidden and not read. The
   Mini reads the settings, and `fixSettingValues` in `dashboard/core/content.js` only keeps them tidy.
-  `deploy/scripts/monday-sync.sh` writes the tasks (id `task-monday-` and the item number, `source` monday, the
+  `mini/scripts/monday-sync.sh` writes the tasks (id `task-monday-` and the item number, `source` monday, the
   status, priority, `showOnBoard`, `contact`, `owners`, `startDate`, `dueDate`, `estHours`, `completedOn`,
   `milestoneIds` and `hiddenReason`, `mondayBoardId` and `mondayBoardName`), the milestones (id `milestone-monday-` and
   the item number, type `milestone`, `studio/schemas/milestone.js`) and the document `monday-status` (type
@@ -753,9 +753,9 @@ alone.
   to production at are still hidden fields in `studio/schemas/dashboardSettings.js`,
   so that nothing saved is lost, and the dashboard does not read them.
 - **What the Mini last did.** Dashboard Settings, Screen tab, Status of the Mini.
-  The Mini writes the document `status-mini` with `deploy/scripts/status-write.sh`,
+  The Mini writes the document `status-mini` with `mini/scripts/status-write.sh`,
   which the calendar and slides services and `kiosk.sh` start, and which needs
-  `SANITY_WRITE_TOKEN` in `deploy/local.env` (docs/rebuilding-the-mini.md, "Showing
+  `SANITY_WRITE_TOKEN` in `mini/local.env` (docs/rebuilding-the-mini.md, "Showing
   what the Mini did in Studio"). The type is `studio/schemas/status.js` and the block
   is `studio/status-input.js`. The dashboard never reads it.
 - **Photos for the Photo panel.** Photos in the Studio sidebar
@@ -918,7 +918,7 @@ alone.
   `dashboard/config.js`, the Studio field in `studio/schemas/dashboardSettings.js`).
   `core/connection.js` works out the lines and the reason, and `shell.js` draws
   them into `#connection-status`. It comes up in red by itself after two minutes
-  without Sanity. The command for the Mini is `deploy/scripts/check-connection.sh`
+  without Sanity. The command for the Mini is `mini/scripts/check-connection.sh`
   (docs/rebuilding-the-mini.md, "Checking the connection").
 - **The theme (the colours of the whole screen), and seasonal packs (holiday
   overlays).** Look in Studio. Its Default theme, "Use a theme now", Schedule and Time zone

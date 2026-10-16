@@ -1,7 +1,7 @@
 // Tests for the Hide buttons of the Calendars page in Studio. The rules they make and read are
 // plain functions in studio/calendars-view-parts.js, so nothing is installed and nothing touches the
 // network: the Studio's client is a small fake one. The same file checks the Node file that the Mini
-// runs for the page (deploy/scripts/calendar-status.mjs): it lists 40 events with their days, and the
+// runs for the page (mini/scripts/calendar-status.mjs): it lists 40 events with their days, and the
 // document stays small enough to send. The page that draws the buttons is checked by
 // studio/check-schemas.mjs, which also runs every rule through the Calendar filters schema.
 //
@@ -443,7 +443,7 @@ test('the list of rules the page keeps is a new list each time', () => {
 
 // The Node file the Mini runs
 
-const helper = path.join(root, 'deploy/scripts/calendar-status.mjs');
+const helper = path.join(root, 'mini/scripts/calendar-status.mjs');
 
 function noon(daysFromToday) {
   const today = new Date();
@@ -603,7 +603,7 @@ test('the docs start with the button and give the rule form second, and name the
 });
 
 test('the docs are plain: no dash, no exclamation mark, no emoji and no filler word', () => {
-  docs.concat(['docs/coaches-guide.md', 'docs/editing-content.md', 'docs/using-the-studio.md', 'deploy/README.md', 'dashboard/package.json']).forEach(file => {
+  docs.concat(['docs/coaches-guide.md', 'docs/editing-content.md', 'docs/using-the-studio.md', 'mini/README.md', 'dashboard/package.json']).forEach(file => {
     const text = fs.readFileSync(path.join(root, file), 'utf8');
     assert.ok(!/[\u2014\u2013]/.test(text), file + ' has a dash');
     assert.ok(!/\p{Extended_Pictographic}/u.test(text), file + ' has an emoji');

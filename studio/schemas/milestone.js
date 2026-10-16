@@ -1,5 +1,5 @@
 // A milestone of the season, made by the Mini from the milestones board of Monday
-// (deploy/scripts/monday-sync.sh, docs/monday.md). Nobody types one: it is read only here, and
+// (mini/scripts/monday-sync.sh, docs/monday.md). Nobody types one: it is read only here, and
 // listed under Monday Boards, Milestones. The screen shows the next three on the Overall
 // progress panel and weighs each by the hours of the tasks that link to it.
 //

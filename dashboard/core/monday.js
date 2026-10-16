@@ -256,7 +256,7 @@ export function bothSteps(content, codes, now = new Date()) {
 
 // The rules of the Monday panels (docs/monday.md)
 //
-// The Mini writes the one task board into Sanity (deploy/scripts/monday-sync.sh) and every Monday panel
+// The Mini writes the one task board into Sanity (mini/scripts/monday-sync.sh) and every Monday panel
 // asks these functions, so the panels agree on which task is where. A task is a document with a status
 // (up-next, in-progress, in-review, blocked or done), a team code or none (General), the id of its Team
 // lead (subteamId, the department), a priority, dates as plain dates (startDate, dueDate, completedOn),

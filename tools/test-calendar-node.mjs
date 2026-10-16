@@ -1,5 +1,5 @@
 // Tests that the calendar scripts on the Mini run on the Node that apt installs. The scripts
-// (deploy/scripts/calendar-status.mjs and check-calendars.mjs) import the dashboard's own files. Those
+// (mini/scripts/calendar-status.mjs and check-calendars.mjs) import the dashboard's own files. Those
 // are modules, and Node 18 treats a .js file as a module only when a package.json beside it or above it
 // says "type": "module". dashboard/package.json says so. This file shows what it does, and reads every
 // file the two scripts import to look for anything that Node 18 does not have.
@@ -18,7 +18,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-calendar-node-'));
-const entries = ['deploy/scripts/calendar-status.mjs', 'deploy/scripts/check-calendars.mjs'];
+const entries = ['mini/scripts/calendar-status.mjs', 'mini/scripts/check-calendars.mjs'];
 
 const tests = [];
 function test(name, run) {
@@ -76,7 +76,7 @@ test('dashboard/package.json says only that the files are modules, and what that
   assert.equal(found.private, true);
   assert.equal(found.type, 'module');
   assert.match(found.description, /ES modules/);
-  assert.match(found.description, /calendar scripts in deploy\/scripts/);
+  assert.match(found.description, /calendar scripts in mini\/scripts/);
   assert.match(found.description, /Browsers do not use this file/);
   assert.ok(!/calendar-status|calendar-sync/.test(text), 'nothing in the dashboard folder names the document the Mini writes (tools/test-calendar-status.mjs)');
 });
@@ -220,7 +220,7 @@ test('both scripts list real events with the newer built-ins taken away, as Node
   const probe = spawnSync(process.execPath, ['--import', pathToFileURL(path.join(folder, 'older.mjs')).href, '-e', 'console.log([typeof [].toSorted, typeof Object.groupBy, typeof Promise.withResolvers, typeof localStorage, typeof new Set().union].join())'], { encoding: 'utf8' });
   assert.equal(probe.stdout.trim(), 'undefined,undefined,undefined,undefined,undefined', 'the built-ins are gone: ' + probe.stderr);
 
-  const built = olderNode('deploy/scripts/calendar-status.mjs', ['build', path.join(folder, 'answer.json'), path.join(folder, 'sync.txt'), path.join(folder, 'calendars')]);
+  const built = olderNode('mini/scripts/calendar-status.mjs', ['build', path.join(folder, 'answer.json'), path.join(folder, 'sync.txt'), path.join(folder, 'calendars')]);
   assert.equal(built.status, 0, built.stderr);
   const [calendar] = JSON.parse(built.stdout).calendars;
   assert.ok(calendar.eventCount > 12 && calendar.occurrences.length === calendar.eventCount, 'the events are listed: ' + calendar.eventCount);
@@ -228,7 +228,7 @@ test('both scripts list real events with the newer built-ins taken away, as Node
   assert.ok(calendar.occurrences.some(event => event.shown === false && event.rule === 'Hide pre-season on Monday') && calendar.occurrences.some(event => event.shown === true), 'the rules are applied');
   assert.ok(calendar.occurrences.some(event => event.time === ''), 'an event that lasts all day has no time');
 
-  const checked = olderNode('deploy/scripts/check-calendars.mjs', [path.join(folder, 'answer.json'), 'team', path.join(folder, 'calendars', 'team.ics'), path.join(folder, 'calendars')]);
+  const checked = olderNode('mini/scripts/check-calendars.mjs', [path.join(folder, 'answer.json'), 'team', path.join(folder, 'calendars', 'team.ics'), path.join(folder, 'calendars')]);
   assert.equal(checked.status, 0, checked.stderr);
   assert.match(checked.stdout, /SHOWN\s+team/);
   assert.match(checked.stdout, /HIDDEN\s+team/);
@@ -236,7 +236,7 @@ test('both scripts list real events with the newer built-ins taken away, as Node
 });
 
 test('calendar-status.sh uses Node from version 18 and says so, and nothing in the repository still asks for 20.19 or 22.7', () => {
-  const script = fs.readFileSync(path.join(repo, 'deploy/scripts/calendar-status.sh'), 'utf8');
+  const script = fs.readFileSync(path.join(repo, 'mini/scripts/calendar-status.sh'), 'utf8');
   assert.ok(script.includes('[ "$major" -ge 18 ]'), 'the check is for version 18 and newer');
   assert.ok(script.includes('It needs version 18 or newer'), 'and the note in the document says 18');
   assert.ok(script.includes('dashboard/package.json'), 'and the comment says why');
@@ -251,7 +251,7 @@ test('calendar-status.sh uses Node from version 18 and says so, and nothing in t
       if (entry.isDirectory()) return walk(relative);
       if (/\.(md|sh|yml|txt|env)$/.test(entry.name) && /20\.19|22\.7\b/.test(fs.readFileSync(path.join(repo, relative), 'utf8'))) found.push(relative);
     });
-  })('deploy');
+  })('mini');
   (function walk(folder) {
     fs.readdirSync(path.join(repo, folder), { withFileTypes: true }).forEach(entry => {
       const relative = path.join(folder, entry.name);
@@ -263,10 +263,10 @@ test('calendar-status.sh uses Node from version 18 and says so, and nothing in t
 });
 
 test('the web server shows the whole dashboard folder as it is, so one more file there is only one more file to show', () => {
-  const compose = fs.readFileSync(path.join(repo, 'deploy/docker-compose.yml'), 'utf8');
+  const compose = fs.readFileSync(path.join(repo, 'mini/docker-compose.yml'), 'utf8');
   assert.ok(compose.includes('- ../dashboard:/srv/web/dashboard:ro'), 'the folder is mounted whole, read only');
 
-  const nginx = fs.readFileSync(path.join(repo, 'deploy/nginx.conf'), 'utf8');
+  const nginx = fs.readFileSync(path.join(repo, 'mini/nginx/nginx.conf'), 'utf8');
   assert.ok(/application\/json\s+json;/.test(nginx), 'a .json file has a type');
   assert.ok(!/try_files|rewrite|\ballow\b|\bdeny\b/.test(nginx), 'no rule limits the files to a list');
   assert.deepEqual(nginx.match(/^\s*location [^{]+\{/gm).map(line => line.trim()), ['location ~ /\\. {', 'location = / {', 'location ~ ^/dashboard/data/live/slides/[^/]+/manifest\\.json$ {']);

@@ -6,10 +6,10 @@ the Mini last did and restarts the screen. It works from any Mac that has the
 repository, so a coach with a laptop can use it as well as the Mac in the room.
 
 It replaces the loose update script that used to sit in one person's home folder.
-`deploy/mac/ship.sh` uses it too: its last step is `teletraan-mini update --yes`
+`tools/mac/ship.sh` uses it too: its last step is `teletraan-mini update --yes`
 (`docs/shipping-from-the-mac.md`). The keys and calendar links are secrets, so they never go in the repository and
 never go in Sanity, which anyone can read. They live on the Mac in `~/.teletraan/`
-and on the Mini in `deploy/local.env`.
+and on the Mini in `mini/local.env`.
 
 ## Before you start
 
@@ -68,18 +68,18 @@ for about ten seconds. A screen that is open does not reload by itself after a
 copy, so the restart is part of the update.
 
 After the copy the tool leaves the hash, the day and the branch of this repository in
-the file `build.txt` in the deploy folder of the Mini and runs `status-write.sh version`, so the status block says
+the file `build.txt` in the mini folder of the Mini and runs `status-write.sh version`, so the status block says
 which build is on the wall. A folder with no git history skips this and says so.
 
 The tool refuses to copy from a folder that is not the Teletraan repository,
 because the copy removes files on the Mini.
 
-If the update changed a file in `deploy/systemd/`, choose 4 to install the
+If the update changed a file in `mini/systemd/`, choose 4 to install the
 services again. If it changed `docker-compose.yml` or `nginx.conf`, follow
-`deploy/README.md`, "When a pull changes this folder".
+`mini/README.md`, "When a pull changes this folder".
 
 The Mini gets new files in one of two ways. Either this tool copies them, which is
-what `deploy/mac/ship.sh` does (`docs/shipping-from-the-mac.md`), or the Mini pulls
+what `tools/mac/ship.sh` does (`docs/shipping-from-the-mac.md`), or the Mini pulls
 them from GitHub every 5 minutes with its pull timer. Use one. A copy leaves the
 Mini's git folder looking changed, and a later pull stops with an error when a new
 commit changes the same file. The tool asks first when the pull timer is on. To
@@ -113,7 +113,7 @@ When you save, the tool:
 
 1. writes `~/.teletraan/secrets.env` on the Mac, readable by you only;
 2. sends the lines to the Mini with `scp` and merges them into
-   `/opt/teletraan/deploy/local.env`: a line with the same name is replaced, a
+   `/opt/teletraan/mini/local.env`: a line with the same name is replaced, a
    cleared key or a removed calendar is taken out, every other line stays as it
    was, and the file keeps mode 600 and belongs to the login user;
 3. removes the copies it made on the Mini;
@@ -182,7 +182,7 @@ server container.
 ## From the command line
 
 A word after the name does what the same menu choice does, for the Mini in use,
-with no menu. `deploy/mac/ship.sh` runs these.
+with no menu. `tools/mac/ship.sh` runs these.
 
 | Command | Same as | What it does |
 |---------|---------|--------------|

@@ -4,7 +4,7 @@ Night mode is the screensaver. From 11:30 pm to 11:30 am the screen
 shows black with the team logo and the team number under it, and the logo drifts
 round the screen. The picture is never turned off: the Mini keeps sending a
 signal, so the TV stays on and nothing has to wake up in the morning. The
-kiosk script (`deploy/scripts/kiosk.sh`) already switches off the screen saver
+kiosk script (`mini/scripts/kiosk.sh`) already switches off the screen saver
 and power saving of the Mini itself.
 
 ## The settings

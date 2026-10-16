@@ -1,0 +1,11 @@
+[Unit]
+Description=Restart the Teletraan I screen when it has frozen
+
+[Service]
+Type=oneshot
+# Runs as root, because restarting teletraan-kiosk needs it. The script reads the
+# page title from the browser on 127.0.0.1:9222 and keeps its count in the data
+# folder (watchdog.sh explains the limits on restarts).
+ExecStart=/opt/teletraan/mini/scripts/watchdog.sh
+# The script's own requests give up after 5 seconds
+TimeoutStartSec=2min

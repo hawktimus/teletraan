@@ -1,5 +1,5 @@
 // Tests for what the Mini writes for the Calendars page in Studio: the sync file that
-// deploy/scripts/fetch-calendars.sh leaves, the document that calendar-status.sh and
+// mini/scripts/fetch-calendars.sh leaves, the document that calendar-status.sh and
 // calendar-status.mjs make from it, and status-write.sh calendar-status, which sends it. curl
 // is replaced with a small fake one in a temporary folder, so nothing touches the network, and
 // the calendar addresses, the token and the project in the test are made up. Node is the real
@@ -78,19 +78,19 @@ function setup(name, options) {
   const bin = path.join(root, 'bin');
   const stub = path.join(root, 'stub');
   const data = path.join(root, 'data');
-  fs.mkdirSync(path.join(root, 'deploy/scripts'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'mini/scripts'), { recursive: true });
   fs.mkdirSync(bin);
   fs.mkdirSync(stub);
   fs.mkdirSync(data);
 
   scripts.forEach(file => {
-    fs.copyFileSync(path.join(repo, 'deploy/scripts', file), path.join(root, 'deploy/scripts', file));
-    fs.chmodSync(path.join(root, 'deploy/scripts', file), fs.statSync(path.join(repo, 'deploy/scripts', file)).mode);
+    fs.copyFileSync(path.join(repo, 'mini/scripts', file), path.join(root, 'mini/scripts', file));
+    fs.chmodSync(path.join(root, 'mini/scripts', file), fs.statSync(path.join(repo, 'mini/scripts', file)).mode);
   });
   fs.symlinkSync(path.join(repo, 'dashboard'), path.join(root, 'dashboard'));
 
   const lines = ["TELETRAAN_DATA='" + data + "'"].concat(options.localEnv || [], options.token === false ? [] : ["SANITY_WRITE_TOKEN='" + token + "'"]);
-  fs.writeFileSync(path.join(root, 'deploy/local.env'), lines.join('\n') + '\n');
+  fs.writeFileSync(path.join(root, 'mini/local.env'), lines.join('\n') + '\n');
 
   ordinaryTools.forEach(tool => fs.symlinkSync(findTool(tool), path.join(bin, tool)));
   if (options.oldNode !== undefined) fs.writeFileSync(path.join(bin, 'node'), '#!/bin/sh\necho "node $*" >> "$STUB_LOG"\n[ "$1" = --version ] && echo ' + options.oldNode + '\nexit 0\n', { mode: 0o755 });
@@ -115,7 +115,7 @@ function setup(name, options) {
     stub: stub,
     run(script, args) {
       const env = { PATH: bin, STUB_LOG: log, STUB_DIR: stub, TZ: 'America/New_York' };
-      const result = spawnSync('/bin/sh', [path.join(root, 'deploy/scripts', script)].concat(args || []), { env: env, encoding: 'utf8', input: '' });
+      const result = spawnSync('/bin/sh', [path.join(root, 'mini/scripts', script)].concat(args || []), { env: env, encoding: 'utf8', input: '' });
       return { text: result.stdout, errors: result.stderr, status: result.status, calls: fs.readFileSync(log, 'utf8') };
     },
     read(file) {
@@ -479,10 +479,10 @@ test('a Node that is too old to read the dashboard files is not used, and the do
 
   ['v18.0.0', 'v18.19.0', 'v20.18.3', 'v22.6.0', 'v22.7.0', 'v23.0.0', 'v26.4.0'].forEach((version, index) => {
     const place = setup('new-node-' + index, { localEnv: secretEnv, files: { 'sanity.json': sanityAnswer }, calendars: { 'group.ics': groupCalendar }, sync: 'group|2026-10-09T15:00:02Z|\n' });
-    const original = fs.readFileSync(path.join(place.root, 'deploy/scripts/calendar-status.sh'), 'utf8');
+    const original = fs.readFileSync(path.join(place.root, 'mini/scripts/calendar-status.sh'), 'utf8');
     const script = original.replace('version=$(node --version 2> /dev/null) || return 1', 'version=' + version);
     assert.notEqual(script, original, 'the line that reads the version of Node is where this test expects it');
-    fs.writeFileSync(path.join(place.root, 'deploy/scripts/calendar-status.sh'), script);
+    fs.writeFileSync(path.join(place.root, 'mini/scripts/calendar-status.sh'), script);
 
     const result = place.run('calendar-status.sh');
     assert.equal(result.status, 0, result.errors);
@@ -651,28 +651,28 @@ test('the other jobs of status-write.sh are written as they were, and the usage 
 });
 
 test('the calendar service runs the status steps after every run, failed or not, and each step is allowed to fail', () => {
-  const text = fs.readFileSync(path.join(repo, 'deploy/systemd/teletraan-calendars.service'), 'utf8');
+  const text = fs.readFileSync(path.join(repo, 'mini/systemd/teletraan-calendars.service'), 'utf8');
   const lines = text.split('\n');
   const stops = lines.filter(line => line.startsWith('ExecStopPost='));
 
   assert.deepEqual(stops, [
-    'ExecStopPost=-/opt/teletraan/deploy/scripts/calendar-status.sh',
-    'ExecStopPost=-/opt/teletraan/deploy/scripts/status-write.sh calendar-status',
+    'ExecStopPost=-/opt/teletraan/mini/scripts/calendar-status.sh',
+    'ExecStopPost=-/opt/teletraan/mini/scripts/status-write.sh calendar-status',
   ], 'the file is made before it is sent, and a leading minus ignores a failure');
   assert.equal(lines.filter(line => line.startsWith('ExecStart=')).length, 1);
-  assert.equal(lines.filter(line => line.startsWith('ExecStart=/opt/teletraan/deploy/scripts/fetch-calendars.sh')).length, 1);
+  assert.equal(lines.filter(line => line.startsWith('ExecStart=/opt/teletraan/mini/scripts/fetch-calendars.sh')).length, 1);
   assert.ok(!lines.some(line => line.startsWith('ExecStartPost=') && /calendar-status/.test(line)), 'systemd skips ExecStartPost after a failed download, and that is when the page is needed');
   assert.deepEqual(text.match(/^User=.*$/gm), ['User=ACCOUNT']);
-  assert.ok(lines.indexOf(stops[0]) > lines.indexOf('ExecStartPost=-/opt/teletraan/deploy/scripts/status-write.sh content'), 'the older steps come first');
+  assert.ok(lines.indexOf(stops[0]) > lines.indexOf('ExecStartPost=-/opt/teletraan/mini/scripts/status-write.sh content'), 'the older steps come first');
 });
 
 test('the installers say when Node is missing, and the note does not stop them', () => {
   ['install-calendars.sh', 'install-timers.sh'].forEach(file => {
-    const text = fs.readFileSync(path.join(repo, 'deploy/scripts', file), 'utf8');
+    const text = fs.readFileSync(path.join(repo, 'mini/scripts', file), 'utf8');
     assert.ok(text.includes('if ! command -v node > /dev/null 2>&1; then'), file);
     assert.ok(text.includes('docs/calendars-page.md'), file);
     assert.ok(text.indexOf('command -v node') < text.indexOf("printf 'Press Enter"), file + ' says it before it waits for Enter');
-    const syntax = spawnSync('/bin/sh', ['-n', path.join(repo, 'deploy/scripts', file)], { encoding: 'utf8' });
+    const syntax = spawnSync('/bin/sh', ['-n', path.join(repo, 'mini/scripts', file)], { encoding: 'utf8' });
     assert.equal(syntax.status, 0, syntax.stderr);
   });
 });
@@ -688,7 +688,7 @@ test('the docs say the titles are readable by anyone who asks the dataset, even 
     assert.ok(mini.includes(words), 'docs/rebuilding-the-mini.md should say: ' + words);
   });
 
-  ['docs/calendars-page.md', 'docs/calendar-filters.md', 'docs/calendar-links.md', 'docs/rebuilding-the-mini.md', 'deploy/README.md'].forEach(file => {
+  ['docs/calendars-page.md', 'docs/calendar-filters.md', 'docs/calendar-links.md', 'docs/rebuilding-the-mini.md', 'mini/README.md'].forEach(file => {
     const text = fs.readFileSync(path.join(repo, file), 'utf8');
     assert.ok(!/[\u2014\u2013]/.test(text), file + ' has a dash');
     assert.ok(!/\p{Extended_Pictographic}/u.test(text), file + ' has an emoji');
@@ -715,7 +715,7 @@ test('the dashboard never reads the calendar status document: its id and its typ
 
 test('the scripts have valid sh syntax, are executable, never print local.env and never trace', () => {
   ['fetch-calendars.sh', 'calendar-status.sh', 'status-write.sh'].forEach(file => {
-    const full = path.join(repo, 'deploy/scripts', file);
+    const full = path.join(repo, 'mini/scripts', file);
     const syntax = spawnSync('/bin/sh', ['-n', full], { encoding: 'utf8' });
     assert.equal(syntax.status, 0, file + ': ' + syntax.stderr);
 
@@ -726,9 +726,9 @@ test('the scripts have valid sh syntax, are executable, never print local.env an
     assert.ok(!/^\s*set -[a-z]*x/m.test(text), file + ': set -x would print every address');
   });
 
-  const status = fs.readFileSync(path.join(repo, 'deploy/scripts/calendar-status.sh'), 'utf8');
+  const status = fs.readFileSync(path.join(repo, 'mini/scripts/calendar-status.sh'), 'utf8');
   assert.ok(!/CALENDAR_|\burl\b/.test(status.replace(/#[^\n]*/g, '')), 'calendar-status.sh never reads an address');
-  const helper = fs.readFileSync(path.join(repo, 'deploy/scripts/calendar-status.mjs'), 'utf8');
+  const helper = fs.readFileSync(path.join(repo, 'mini/scripts/calendar-status.mjs'), 'utf8');
   assert.ok(!/local\.env|CALENDAR_|process\.env/.test(helper), 'the Node file never sees an address or the token');
 });
 

@@ -8,12 +8,12 @@
 #   tools/mini/teletraan-mini restart         restart the screen
 #
 # A word after the name does what the same choice in the menu does, with no menu,
-# and the exit code is not zero when a step fails, so deploy/mac/ship.sh can rely on
+# and the exit code is not zero when a step fails, so tools/mac/ship.sh can rely on
 # it. --yes skips the "Go ahead?" question of update, and --mini NAME picks a saved
 # Mini other than the one in use. docs/updating-the-mini.md explains each choice.
 #
 # The keys and the calendar links are secrets. They live in ~/.teletraan/secrets.env
-# on this Mac and in deploy/local.env on the Mini, and nowhere else. This script
+# on this Mac and in mini/local.env on the Mini, and nowhere else. This script
 # never prints one: it shows the first 4 characters and dots, and it sends the
 # values with scp, so no command line carries one.
 #
@@ -518,7 +518,7 @@ write_build_js() {
 }
 
 # Tells the Mini which build it was given. rsync leaves the .git folder of the Mini alone, so the
-# hash, the date and the branch are read here, from this repository, and left in deploy/build.txt for
+# hash, the date and the branch are read here, from this repository, and left in mini/build.txt for
 # status-write.sh version. It also leaves dashboard/build.js, the build the page asks its files for
 # (index.html): the hash when there is one, else the time. A failure here is only said: the screen
 # still updates.
@@ -535,8 +535,8 @@ stamp_build() {
     return 0
   fi
   write_build_js "$commit" || say "The file the page reads its build from could not be written."
-  if mini_run "printf 'commit=%s\\ndate=%s\\nbranch=%s\\n' '$commit' '$built' '$branch' > $MINI_REPO/deploy/build.txt" &&
-    mini_run "$MINI_REPO/deploy/scripts/status-write.sh version"; then
+  if mini_run "printf 'commit=%s\\ndate=%s\\nbranch=%s\\n' '$commit' '$built' '$branch' > $MINI_REPO/mini/build.txt" &&
+    mini_run "$MINI_REPO/mini/scripts/status-write.sh version"; then
     say "The build on the wall is $commit, $built."
   else
     say "The build on the wall could not be written. The update itself is done."
@@ -548,9 +548,15 @@ update_mini() {
   local timer status
   step "Update the Mini ($mini_name)"
 
+  # An old tree would carry the old folders to the Mini and delete the new ones there
+  if [ -d "$repo/deploy/scripts" ]; then
+    problem "This copy is older than round 6; update it."
+    return 1
+  fi
+
   # --delete removes files on the Mini that are not here, so this must be the
   # real repository
-  if [ ! -f "$repo/dashboard/index.html" ] || [ ! -f "$repo/deploy/scripts/pull.sh" ]; then
+  if [ ! -f "$repo/dashboard/index.html" ] || [ ! -f "$repo/mini/scripts/pull.sh" ]; then
     problem "$repo does not look like the Teletraan repository, so nothing was copied."
     return 1
   fi
@@ -595,7 +601,7 @@ update_mini() {
     say "The files are on the Mini. $(words 'Choose 6 to restart the screen again.' 'Run teletraan-mini restart to restart the screen again.')"
     return 1
   fi
-  say "Done. If this update changed anything in deploy/systemd, $(words 'choose 4' 'run teletraan-mini with no word after it and choose 4') to install the services again."
+  say "Done. If this update changed anything in mini/systemd, $(words 'choose 4' 'run teletraan-mini with no word after it and choose 4') to install the services again."
 }
 
 show_keys() {
@@ -754,7 +760,7 @@ edit_calendars() {
   done
 }
 
-# Sends ~/.teletraan/secrets.env to the Mini and merges it into deploy/local.env
+# Sends ~/.teletraan/secrets.env to the Mini and merges it into mini/local.env
 # there. The values travel in a file with scp; the merge script and the file are
 # copied to a private folder first so they land with fixed names, and are removed
 # on the Mini when the merge is done.
@@ -778,7 +784,7 @@ send_to_mini() {
 
   remote="MINI_REPO='$MINI_REPO'
 $(cat <<'EOF'
-sh teletraan-merge.sh "$MINI_REPO/deploy/local.env" teletraan-incoming.env
+sh teletraan-merge.sh "$MINI_REPO/mini/local.env" teletraan-incoming.env
 status=$?
 rm -f teletraan-merge.sh teletraan-incoming.env
 [ "$status" -eq 0 ] || exit "$status"
@@ -845,11 +851,11 @@ keys_and_calendars() {
 pull_from_mini() {
   local raw=$state_dir/pulled.tmp status names
   step "Copy the Mini's keys and calendars to this Mac"
-  say "This replaces the values saved on this Mac with the ones in deploy/local.env on the Mini. Nothing is printed."
+  say "This replaces the values saved on this Mac with the ones in mini/local.env on the Mini. Nothing is printed."
   ask_yes "Go ahead?" no || { say "Nothing changed."; return 0; }
 
   names='SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|CALENDAR_[A-Za-z0-9_]+_URL'
-  (umask 077; mini_run "grep -E '^($names)=' '$MINI_REPO/deploy/local.env'" > "$raw")
+  (umask 077; mini_run "grep -E '^($names)=' '$MINI_REPO/mini/local.env'" > "$raw")
   status=$?
   if [ "$status" = 255 ]; then
     rm -f "$raw"
@@ -891,7 +897,7 @@ install_services() {
   say "Each one says what it will do and waits for Enter. install-console.sh changes /etc/issue, and a missing package stops its script with the apt line to run."
   ask_yes "Has the team mentor said yes?" no || { say "Nothing was installed."; return 0; }
 
-  remote="dir='$MINI_REPO/deploy/scripts'
+  remote="dir='$MINI_REPO/mini/scripts'
 $(cat <<'EOF'
 for name in calendars slides monday frc console watchdog backup; do
   echo
@@ -912,7 +918,7 @@ EOF
 mini_status() {
   local status result=0
   step "Status of the Mini $mini_name"
-  mini_run "$MINI_REPO/deploy/scripts/status-write.sh --print" 2>&1 | hide_secrets
+  mini_run "$MINI_REPO/mini/scripts/status-write.sh --print" 2>&1 | hide_secrets
   status=${PIPESTATUS[0]}
   if [ "$status" = 255 ]; then
     explain_failure "$status"
@@ -926,7 +932,7 @@ mini_status() {
 
   say ""
   say "Calendars:"
-  mini_run "$MINI_REPO/deploy/scripts/check-calendars.sh" 2>&1 | hide_secrets
+  mini_run "$MINI_REPO/mini/scripts/check-calendars.sh" 2>&1 | hide_secrets
   if [ "${PIPESTATUS[0]}" = 255 ]; then
     explain_failure 255
     return 1

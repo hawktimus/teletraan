@@ -5,7 +5,7 @@ address BAND gives for a calendar. The Mini downloads each link every 15 minutes
 and the TV shows the events.
 
 A link is a secret, because anyone who has it can read the whole calendar. It
-lives in one place: the file `deploy/local.env` on each Mini. Never put it in the
+lives in one place: the file `mini/local.env` on each Mini. Never put it in the
 repository, in Studio, in a doc or in a message. Studio and the dashboard only
 ever see a calendar's code and name.
 
@@ -13,7 +13,7 @@ ever see a calendar's code and name.
 
 Three things that share one short ID, such as GROUP:
 
-1. A line in `deploy/local.env` on the Mini. The name is `CALENDAR_`, the ID in
+1. A line in `mini/local.env` on the Mini. The name is `CALENDAR_`, the ID in
    capital letters and `_URL`. The value is the link, in single quotes.
 
        CALENDAR_GROUP_URL='https://api.band.us/ical?token=PASTE_LINK_HERE'
@@ -32,7 +32,7 @@ Three things that share one short ID, such as GROUP:
 ## Add a calendar
 
 1. Copy the calendar's iCal link from BAND.
-2. Add the line to `deploy/local.env` on the Mini. The commands are in
+2. Add the line to `mini/local.env` on the Mini. The commands are in
    docs/rebuilding-the-mini.md, "Adding or changing a calendar". The spare Mini
    has its own `local.env`, so add the line there too.
 3. In Studio add the row in Dashboard Settings, Calendars, and click Publish.

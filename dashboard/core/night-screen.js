@@ -3,7 +3,7 @@
 // with the team logo and the team number under it. The switch and the style are
 // in the night mode settings of Dashboard Settings, in the Advanced tab. The
 // signal is never turned off: the Mini keeps sending a picture, and the kiosk
-// script keeps the TV from blanking (deploy/scripts/kiosk.sh).
+// script keeps the TV from blanking (mini/scripts/kiosk.sh).
 //
 // This file only shows, hides and tells the stylesheet what to do. When it is
 // night comes from core/night.js, and every move is in frame.css ("Night mode").

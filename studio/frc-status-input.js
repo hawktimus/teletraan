@@ -1,6 +1,6 @@
 // The connection block at the top of the Competition tab of Dashboard Settings
 // (schemas/settingsCompetition.js). It reads the document frc-status, which the
-// Mini writes with deploy/scripts/frc-sync.sh, and says when the Mini last read the
+// Mini writes with mini/scripts/frc-sync.sh, and says when the Mini last read the
 // competition data, how many events it found for each team, and what went wrong
 // last. The field stores nothing: this input never changes the value.
 //
@@ -19,7 +19,7 @@ const h = createElement;
 // The same version as the screen's own questions to Sanity
 const apiVersion = '2025-02-19';
 
-// The id the Mini writes to. deploy/scripts/frc-sync.sh has the same one.
+// The id the Mini writes to. mini/scripts/frc-sync.sh has the same one.
 export const frcStatusId = 'frc-status';
 
 // Only what the block shows, so the question stays small

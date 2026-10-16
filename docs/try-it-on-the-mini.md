@@ -12,9 +12,9 @@ the kiosk uses.
 Nothing needs copying. The dashboard is already on the Mini: the pull timer
 keeps `/opt/teletraan` up to date from the repository, and the web server
 shows it at `http://localhost:3229/dashboard/` (3229 is `TELETRAAN_PORT` in
-`deploy/local.env`, so use the number that file has). The test runs the code that
+`mini/local.env`, so use the number that file has). The test runs the code that
 has been pushed. To test a change, push it, then wait up to 5 minutes or run
-`/opt/teletraan/deploy/scripts/pull.sh`. A Mini that does not pull gets the files
+`/opt/teletraan/mini/scripts/pull.sh`. A Mini that does not pull gets the files
 from a Mac instead: choice 1 of the tool in `docs/updating-the-mini.md` copies
 them and restarts the screen. Do not push or copy while a test is running: the
 screen reloads itself on every update, and the readout starts again.
@@ -27,7 +27,7 @@ text screen, log in as `hawktimus`, stop the service, and start the kiosk
 script with an address that ends in `?perf`:
 
     sudo systemctl stop teletraan-kiosk.service
-    xinit /opt/teletraan/deploy/scripts/kiosk.sh 'http://localhost:3229/dashboard/?perf' -- :1 vt8
+    xinit /opt/teletraan/mini/scripts/kiosk.sh 'http://localhost:3229/dashboard/?perf' -- :1 vt8
 
 Keep the quotes. Without them the shell would end the command at the first `&`
 in an address.
@@ -125,7 +125,7 @@ log in, and run:
 
 Then go back with Ctrl+Alt+F1 and start the kiosk script with this address:
 
-    xinit /opt/teletraan/deploy/scripts/kiosk.sh 'http://localhost:8081/tools/perf/plates.html?perf' -- :1 vt8
+    xinit /opt/teletraan/mini/scripts/kiosk.sh 'http://localhost:8081/tools/perf/plates.html?perf' -- :1 vt8
 
 Compare it with `'http://localhost:3229/dashboard/?only=tasks&perf'`, and add
 the same `finish` to both addresses so the two pages are painted the same way.
@@ -137,7 +137,7 @@ Stop the small server with Ctrl+C in the second text screen when you are done.
    browser's graphics page with the kiosk script, take a photo of the screen,
    and note the browser version (`chromium --version`):
 
-       xinit /opt/teletraan/deploy/scripts/kiosk.sh chrome://gpu -- :1 vt8
+       xinit /opt/teletraan/mini/scripts/kiosk.sh chrome://gpu -- :1 vt8
 
    Lines that say "Hardware accelerated" mean the chip is doing the work.
    "Software only" means the processor is doing all of it.
@@ -146,12 +146,12 @@ Stop the small server with Ctrl+C in the second text screen when you are done.
    removed. Make the copy, delete the lines `--enable-gpu-rasterization \` and
    `--ignore-gpu-blocklist \` from it, and start it the same way:
 
-       cp /opt/teletraan/deploy/scripts/kiosk.sh /tmp/kiosk-no-gpu.sh
+       cp /opt/teletraan/mini/scripts/kiosk.sh /tmp/kiosk-no-gpu.sh
        nano /tmp/kiosk-no-gpu.sh
        xinit /tmp/kiosk-no-gpu.sh 'http://localhost:3229/dashboard/?perf' -- :1 vt8
 
    If the run without the flags is smoother, or the picture glitches with
-   them, remove the two lines from `deploy/scripts/kiosk.sh` and push. Never
+   them, remove the two lines from `mini/scripts/kiosk.sh` and push. Never
    add `--disable-gpu`. If glitches remain, try adding
    `--disable-gpu-compositing`.
 3. Run each of these for 30 minutes and write down typical, p95, worst and late
@@ -203,7 +203,7 @@ below picks the theme for that page only.
 
 Start the kiosk script as in section 2, with the theme in the address:
 
-    xinit /opt/teletraan/deploy/scripts/kiosk.sh 'http://localhost:3229/dashboard/?theme=neon-prime&perf' -- :1 vt8
+    xinit /opt/teletraan/mini/scripts/kiosk.sh 'http://localhost:3229/dashboard/?theme=neon-prime&perf' -- :1 vt8
 
 Run each of these for 30 minutes, write down typical, p95, worst, late and
 "animations running" at the end, and run the same address with `theme=hawktimus`

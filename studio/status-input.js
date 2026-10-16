@@ -1,6 +1,6 @@
 // The Status of the Mini block at the top of the Screen tab of Dashboard
 // Settings (schemas/settingsStatus.js). It reads the document status-mini,
-// which the Mini writes with deploy/scripts/status-write.sh, and shows what the
+// which the Mini writes with mini/scripts/status-write.sh, and shows what the
 // Mini last did in plain words. The field stores nothing: this input never
 // changes the value.
 //
@@ -22,7 +22,7 @@ const h = createElement;
 // The same version as the screen's own questions to Sanity
 const apiVersion = '2025-02-19';
 
-// The id the Mini writes to. deploy/scripts/status-write.sh has the same one.
+// The id the Mini writes to. mini/scripts/status-write.sh has the same one.
 export const statusId = 'status-mini';
 
 // The lines in the order they are shown: the field of the document, and the words before its time
@@ -44,7 +44,7 @@ export function buildLine(doc) {
   return 'On the wall: ' + commit + (built === '' ? '' : ' · ' + built);
 }
 
-// The watchdog and backup lines (deploy/scripts/watchdog.sh, backup-dataset.sh). They are kept apart from
+// The watchdog and backup lines (mini/scripts/watchdog.sh, backup-dataset.sh). They are kept apart from
 // the times above because one of them is a count and not a time.
 export const watchdogFields = ['kioskRestarts', 'lastKioskRestartAt', 'lastBackupAt'];
 

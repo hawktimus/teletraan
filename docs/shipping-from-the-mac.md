@@ -1,6 +1,6 @@
 # Shipping from the Mac
 
-`deploy/mac/ship.sh` does the whole trip from the Mac you work on to the TV in
+`tools/mac/ship.sh` does the whole trip from the Mac you work on to the TV in
 one window: it checks the code, commits and pushes it to GitHub, deploys the
 Studio, and has the Mac tool copy the files to the Mini and restart the screen.
 It stores no password. Git, Sanity, ssh and sudo each ask you for theirs, in the
@@ -16,12 +16,12 @@ computer sets itself up with `docs/laptop-setup.md`.
 
 Pick one:
 
-- Double-click `deploy/mac/Ship Teletraan.command` in Finder.
-- Run `deploy/mac/make-app.sh` once. It writes `Ship Teletraan.app` to the
+- Double-click `tools/mac/Ship Teletraan.command` in Finder.
+- Run `tools/mac/make-app.sh` once. It writes `Ship Teletraan.app` to the
   Desktop (or to the folder you give it, for example
-  `deploy/mac/make-app.sh ~/Applications`). Drag that into the Dock. The app
+  `tools/mac/make-app.sh ~/Applications`). Drag that into the Dock. The app
   only opens Terminal and runs the same `.command` file.
-- In a terminal: `deploy/mac/ship.sh`, with an action after it to skip the menu.
+- In a terminal: `tools/mac/ship.sh`, with an action after it to skip the menu.
 
 The app on a Mac updates by itself. It holds only the path to
 `Ship Teletraan.command` in the repository folder, so when `git pull` or an edit
@@ -46,7 +46,7 @@ Mini and copies nothing.
 
 Add `--dry-run` to any action word to see every command that would run, without
 running anything, asking a question or looking at GitHub. For example
-`deploy/mac/ship.sh --dry-run all`.
+`tools/mac/ship.sh --dry-run all`.
 
 ## Before anything runs
 
@@ -93,7 +93,7 @@ and goes on.
    about ten seconds. `ssh -t` lets `sudo` ask for the Mini's password in this
    window. `--yes` skips the Go ahead question only. A screen that is open does
    not reload by itself after a copy, which is why the restart is part of the
-   update. If a file in `deploy/` changed, follow `deploy/README.md`.
+   update. If a file in `mini/` changed, follow `mini/README.md`.
 
 Each step stops the whole run when it fails, and the last lines say what had
 worked before it stopped. Running it again is safe: a step that has nothing to do

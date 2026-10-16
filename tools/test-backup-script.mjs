@@ -1,4 +1,4 @@
-// Tests for deploy/scripts/backup-dataset.sh, its unit files and its installer.
+// Tests for mini/scripts/backup-dataset.sh, its unit files and its installer.
 // The Sanity tool is a fake that writes a small gzip file, and status-write.sh is a
 // fake that logs its call, so nothing touches Sanity. The token in the test is made up.
 //
@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-backup-'));
-const scriptFile = path.join(repo, 'deploy/scripts/backup-dataset.sh');
+const scriptFile = path.join(repo, 'mini/scripts/backup-dataset.sh');
 const ordinaryTools = ['sed', 'head', 'tail', 'grep', 'date', 'dirname', 'cat', 'mkdir', 'rm', 'mv', 'ls', 'sort', 'gzip', 'basename'];
 const token = 'skTESTtoken0123456789abcdef';
 const config = fs.readFileSync(path.join(repo, 'dashboard/config.js'), 'utf8');
@@ -53,18 +53,18 @@ function setup(options = {}) {
   const bin = path.join(root, 'bin');
   const stub = path.join(root, 'stub');
   const backups = path.join(root, 'backups');
-  fs.mkdirSync(path.join(root, 'deploy/scripts'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'mini/scripts'), { recursive: true });
   fs.mkdirSync(path.join(root, 'dashboard'), { recursive: true });
   fs.mkdirSync(bin);
   fs.mkdirSync(stub);
   fs.mkdirSync(backups);
 
-  fs.copyFileSync(scriptFile, path.join(root, 'deploy/scripts/backup-dataset.sh'));
+  fs.copyFileSync(scriptFile, path.join(root, 'mini/scripts/backup-dataset.sh'));
   fs.copyFileSync(path.join(repo, 'dashboard/config.js'), path.join(root, 'dashboard/config.js'));
-  writeTool(path.join(root, 'deploy/scripts'), 'status-write.sh', fakeStatusWrite);
+  writeTool(path.join(root, 'mini/scripts'), 'status-write.sh', fakeStatusWrite);
   if (!options.noSanity) writeTool(path.join(root, 'studio/node_modules/.bin'), 'sanity', fakeSanity);
   const env = options.env === undefined ? "SANITY_WRITE_TOKEN='" + token + "'\n" : options.env;
-  fs.writeFileSync(path.join(root, 'deploy/local.env'), "TELETRAAN_BACKUP_DIR='" + backups + "'\n" + env);
+  fs.writeFileSync(path.join(root, 'mini/local.env'), "TELETRAAN_BACKUP_DIR='" + backups + "'\n" + env);
 
   ordinaryTools.forEach(tool => fs.symlinkSync(findTool(tool), path.join(bin, tool)));
   const log = path.join(root, 'calls.log');
@@ -84,7 +84,7 @@ function setup(options = {}) {
       return fs.readdirSync(backups).sort();
     },
     run() {
-      const result = spawnSync('/bin/sh', [path.join(root, 'deploy/scripts/backup-dataset.sh')], {
+      const result = spawnSync('/bin/sh', [path.join(root, 'mini/scripts/backup-dataset.sh')], {
         env: { PATH: bin, STUB_LOG: log, STUB_DIR: stub },
         encoding: 'utf8',
         input: '',
@@ -187,7 +187,7 @@ test('no token, an odd token or no Sanity tool stops it with a plain line and ex
 
 test('a failure to tell Studio does not fail the backup', () => {
   const place = setup();
-  fs.writeFileSync(path.join(place.root, 'deploy/scripts/status-write.sh'), '#!/bin/sh\nexit 1\n', { mode: 0o755 });
+  fs.writeFileSync(path.join(place.root, 'mini/scripts/status-write.sh'), '#!/bin/sh\nexit 1\n', { mode: 0o755 });
   const result = place.run();
   assert.equal(result.status, 0, result.errors);
   assert.ok(place.files().includes(todayName()));
@@ -196,14 +196,14 @@ test('a failure to tell Studio does not fail the backup', () => {
 test('the script is valid sh, is executable, and writes at 03:15 through the timer with the units and installer in step', () => {
   assert.equal(spawnSync('/bin/sh', ['-n', scriptFile], { encoding: 'utf8' }).status, 0);
   assert.ok(fs.statSync(scriptFile).mode & 0o100);
-  const service = fs.readFileSync(path.join(repo, 'deploy/systemd/teletraan-backup.service'), 'utf8');
-  const timer = fs.readFileSync(path.join(repo, 'deploy/systemd/teletraan-backup.timer'), 'utf8');
-  assert.ok(service.includes('ExecStart=/opt/teletraan/deploy/scripts/backup-dataset.sh'));
+  const service = fs.readFileSync(path.join(repo, 'mini/systemd/teletraan-backup.service'), 'utf8');
+  const timer = fs.readFileSync(path.join(repo, 'mini/systemd/teletraan-backup.timer'), 'utf8');
+  assert.ok(service.includes('ExecStart=/opt/teletraan/mini/scripts/backup-dataset.sh'));
   assert.ok(/^User=ACCOUNT$/m.test(service), 'the account is filled in by the installer');
   assert.ok(/^OnCalendar=\*-\*-\* 03:15:00$/m.test(timer));
   assert.ok(/^WantedBy=timers.target$/m.test(timer));
 
-  const installer = path.join(repo, 'deploy/scripts/install-backup.sh');
+  const installer = path.join(repo, 'mini/scripts/install-backup.sh');
   const text = fs.readFileSync(installer, 'utf8');
   assert.equal(spawnSync('/bin/sh', ['-n', installer], { encoding: 'utf8' }).status, 0);
   assert.ok(fs.statSync(installer).mode & 0o100);

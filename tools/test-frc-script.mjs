@@ -1,4 +1,4 @@
-// Tests for deploy/scripts/frc-sync.sh and deploy/scripts/install-frc.sh. The
+// Tests for mini/scripts/frc-sync.sh and mini/scripts/install-frc.sh. The
 // tools they use on the Mini (curl, date, flock, id, systemctl) are replaced with
 // small fake ones in a temporary folder, so nothing touches the network or the
 // machine. jq is the real one, because the scripts depend on what it does, so
@@ -16,8 +16,8 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
-const syncFile = path.join(repo, 'deploy/scripts/frc-sync.sh');
-const installFile = path.join(repo, 'deploy/scripts/install-frc.sh');
+const syncFile = path.join(repo, 'mini/scripts/frc-sync.sh');
+const installFile = path.join(repo, 'mini/scripts/install-frc.sh');
 const unitFiles = ['teletraan-frc.service', 'teletraan-frc.timer'];
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-frc-'));
 
@@ -151,7 +151,7 @@ function slugOf(address) {
   return address.replace(/^\//, '').replace(/\//g, '_');
 }
 
-// Makes a copy of the deploy folder and config.js to run in, a folder of tools
+// Makes a copy of the mini folder and config.js to run in, a folder of tools
 // to run with, and returns how to run the scripts.
 function setup(name, options) {
   const root = path.join(work, name);
@@ -159,29 +159,29 @@ function setup(name, options) {
   const stub = path.join(root, 'stub');
   const data = path.join(root, 'data');
   const temp = path.join(root, 'tmp');
-  fs.mkdirSync(path.join(root, 'deploy/scripts'), { recursive: true });
-  fs.mkdirSync(path.join(root, 'deploy/systemd'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'mini/scripts'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'mini/systemd'), { recursive: true });
   fs.mkdirSync(path.join(root, 'dashboard'), { recursive: true });
   [bin, stub, temp, path.join(stub, 'tba'), path.join(stub, 'sb')].forEach(folder => fs.mkdirSync(folder));
   if (!options.noData) fs.mkdirSync(data);
 
-  const scriptCopy = path.join(root, 'deploy/scripts/frc-sync.sh');
+  const scriptCopy = path.join(root, 'mini/scripts/frc-sync.sh');
   let text = fs.readFileSync(syncFile, 'utf8');
   (options.edits || []).forEach(edit => {
     assert.ok(text.includes(edit[0]), 'the script has no ' + edit[0]);
     text = text.replace(edit[0], edit[1]);
   });
   fs.writeFileSync(scriptCopy, text, { mode: fs.statSync(syncFile).mode });
-  const installCopy = path.join(root, 'deploy/scripts/install-frc.sh');
+  const installCopy = path.join(root, 'mini/scripts/install-frc.sh');
   fs.copyFileSync(installFile, installCopy);
   fs.chmodSync(installCopy, fs.statSync(installFile).mode);
-  writeTool(path.join(root, 'deploy/scripts'), 'status-write.sh', fakeStatusWrite);
-  unitFiles.forEach(unit => fs.copyFileSync(path.join(repo, 'deploy/systemd', unit), path.join(root, 'deploy/systemd', unit)));
+  writeTool(path.join(root, 'mini/scripts'), 'status-write.sh', fakeStatusWrite);
+  unitFiles.forEach(unit => fs.copyFileSync(path.join(repo, 'mini/systemd', unit), path.join(root, 'mini/systemd', unit)));
   fs.copyFileSync(path.join(repo, 'dashboard/config.js'), path.join(root, 'dashboard/config.js'));
 
   if (!options.noEnv) {
     const env = options.env !== undefined ? options.env : "TELETRAAN_DATA='" + data + "'\nTBA_AUTH_KEY='" + key + "'\nSANITY_WRITE_TOKEN='" + token + "'\nCALENDAR_TEAM_URL='" + secret + "'\n";
-    fs.writeFileSync(path.join(root, 'deploy/local.env'), env.replace('<data>', data));
+    fs.writeFileSync(path.join(root, 'mini/local.env'), env.replace('<data>', data));
   }
 
   ordinaryTools.forEach(tool => fs.symlinkSync(findTool(tool), path.join(bin, tool)));
@@ -1547,12 +1547,12 @@ test('every address and every place in an answer is in the block at the top, and
 });
 
 test('the unit files name the account ACCOUNT, run the script, and the timer wakes it 2 minutes after boot and every 5 minutes', () => {
-  const service = fs.readFileSync(path.join(repo, 'deploy/systemd/teletraan-frc.service'), 'utf8');
-  const timer = fs.readFileSync(path.join(repo, 'deploy/systemd/teletraan-frc.timer'), 'utf8');
+  const service = fs.readFileSync(path.join(repo, 'mini/systemd/teletraan-frc.service'), 'utf8');
+  const timer = fs.readFileSync(path.join(repo, 'mini/systemd/teletraan-frc.timer'), 'utf8');
 
   assert.deepEqual(service.match(/^User=.*$/gm), ['User=ACCOUNT']);
   assert.ok(/^Type=oneshot$/m.test(service));
-  assert.deepEqual(service.match(/^ExecStart=.*$/gm), ['ExecStart=/opt/teletraan/deploy/scripts/frc-sync.sh']);
+  assert.deepEqual(service.match(/^ExecStart=.*$/gm), ['ExecStart=/opt/teletraan/mini/scripts/frc-sync.sh']);
   assert.ok(!/^ExecStartPost=/m.test(service), 'the script tells status-mini itself, and only after a run that worked');
   assert.ok(fs.existsSync(syncFile), 'the script the unit runs exists');
   assert.ok(/^OnBootSec=2min$/m.test(timer));
@@ -1563,26 +1563,26 @@ test('the unit files name the account ACCOUNT, run the script, and the timer wak
 });
 
 test('the script tells status-mini through status-write.sh, which knows the job frc', () => {
-  const status = fs.readFileSync(path.join(repo, 'deploy/scripts/status-write.sh'), 'utf8');
+  const status = fs.readFileSync(path.join(repo, 'mini/scripts/status-write.sh'), 'utf8');
   assert.ok(status.includes('frc) field=lastFrcSyncAt ;;'));
-  assert.ok(fs.readFileSync(syncFile, 'utf8').includes('"$deploy/scripts/status-write.sh" frc || true'));
+  assert.ok(fs.readFileSync(syncFile, 'utf8').includes('"$mini/scripts/status-write.sh" frc || true'));
 });
 
 test('install-frc.sh stops, naming the file, when a unit file is missing or empty', () => {
   const missing = setup('install-missing', { tools: true, install: true });
-  fs.rmSync(path.join(missing.root, 'deploy/systemd/teletraan-frc.service'));
+  fs.rmSync(path.join(missing.root, 'mini/systemd/teletraan-frc.service'));
   const first = missing.install();
   assert.equal(first.status, 1);
   assert.ok(first.errors.includes('teletraan-frc.service is missing or empty'), first.errors);
 
   const empty = setup('install-empty', { tools: true, install: true });
-  fs.writeFileSync(path.join(empty.root, 'deploy/systemd/teletraan-frc.timer'), '');
+  fs.writeFileSync(path.join(empty.root, 'mini/systemd/teletraan-frc.timer'), '');
   const second = empty.install();
   assert.equal(second.status, 1);
   assert.ok(second.errors.includes('teletraan-frc.timer is missing or empty'), second.errors);
 
   const noScript = setup('install-no-script', { tools: true, install: true });
-  fs.chmodSync(path.join(noScript.root, 'deploy/scripts/frc-sync.sh'), 0o644);
+  fs.chmodSync(path.join(noScript.root, 'mini/scripts/frc-sync.sh'), 0o644);
   const third = noScript.install();
   assert.equal(third.status, 1);
   assert.ok(third.errors.includes('frc-sync.sh is missing or cannot be run'), third.errors);
@@ -1622,7 +1622,7 @@ test('install-frc.sh copies the two frc units only, with ACCOUNT filled in, and 
 });
 
 test('local.example.env has a TBA_AUTH_KEY line with a placeholder, and the docs say where it goes', () => {
-  const example = fs.readFileSync(path.join(repo, 'deploy/local.example.env'), 'utf8');
+  const example = fs.readFileSync(path.join(repo, 'mini/local.example.env'), 'utf8');
   assert.ok(/^TBA_AUTH_KEY='\[[^\n]*\]'$/m.test(example), 'a placeholder that starts with [');
 
   const mini = fs.readFileSync(path.join(repo, 'docs/rebuilding-the-mini.md'), 'utf8');

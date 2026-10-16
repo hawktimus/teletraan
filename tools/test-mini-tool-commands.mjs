@@ -1,5 +1,5 @@
 // Tests for the words of tools/mini/teletraan-mini: update, status and restart,
-// with --yes and --mini NAME, the way deploy/mac/ship.sh runs them. ssh, scp,
+// with --yes and --mini NAME, the way tools/mac/ship.sh runs them. ssh, scp,
 // rsync, sudo and systemctl are small fake ones in a temporary folder, so nothing
 // touches the network or a real Mini. The keys and links in the test are made up.
 // The menu itself is tested in tools/test-mini-tool.mjs.
@@ -274,6 +274,22 @@ test('update stops before it copies when the Mini cannot be reached, and when th
   assert.equal(indexOfCall(result.calls, 'rsync '), -1, '--yes cannot copy from the wrong folder');
 });
 
+test('update refuses a tree that still has deploy/, copies nothing and says to update this copy', () => {
+  const place = makePlace('update-old-tree');
+  const tree = path.join(place.root, 'old');
+  fs.mkdirSync(path.join(tree, 'tools/mini'), { recursive: true });
+  fs.mkdirSync(path.join(tree, 'deploy/scripts'), { recursive: true });
+  fs.mkdirSync(path.join(tree, 'dashboard'), { recursive: true });
+  fs.writeFileSync(path.join(tree, 'dashboard/index.html'), '');
+  fs.writeFileSync(path.join(tree, 'deploy/scripts/pull.sh'), '');
+  fs.copyFileSync(toolFile, path.join(tree, 'tools/mini/teletraan-mini'));
+  fs.chmodSync(path.join(tree, 'tools/mini/teletraan-mini'), 0o755);
+  const result = place.run(['update', '--yes'], [], path.join(tree, 'tools/mini/teletraan-mini'));
+  assert.notEqual(result.status, 0);
+  assert.ok(result.errors.includes('This copy is older than round 6; update it.'), result.errors);
+  assert.equal(indexOfCall(result.calls, 'rsync '), -1, 'nothing is copied from an old tree');
+});
+
 test('the hint after an update names the menu in words, because there is no menu choice to press', () => {
   const place = makePlace('update-hint');
   const result = place.run(['update', '--yes']);
@@ -288,8 +304,8 @@ test('status runs status-write.sh --print and check-calendars.sh, hides any key 
   assert.equal(result.status, 0, result.errors);
 
   const calls = lines(result.calls);
-  const print = calls.findIndex(line => line.includes('/opt/teletraan-test/deploy/scripts/status-write.sh --print'));
-  const check = calls.findIndex(line => line.includes('/opt/teletraan-test/deploy/scripts/check-calendars.sh'));
+  const print = calls.findIndex(line => line.includes('/opt/teletraan-test/mini/scripts/status-write.sh --print'));
+  const check = calls.findIndex(line => line.includes('/opt/teletraan-test/mini/scripts/check-calendars.sh'));
   assert.ok(print !== -1 && check > print, calls.join(' / '));
   assert.ok(result.text.includes('Last calendar sync        3 minutes ago'));
   assert.ok(result.text.includes('printed (hidden)') && result.text.includes('failed from (hidden) today'), result.text);

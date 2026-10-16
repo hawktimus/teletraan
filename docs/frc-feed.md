@@ -37,7 +37,7 @@ zone on the Look page.
 ## What it writes
 
 One document in Sanity with the fixed id `frc-status` and the type `frcStatus`.
-`deploy/scripts/frc-sync.sh` replaces it as a whole. Its fields:
+`mini/scripts/frc-sync.sh` replaces it as a whole. Its fields:
 
 - `season`, `lastSyncAt` (the time of the last write), `lastError` (plain words,
   or nothing) and `notes` (things that are not errors, such as Statbotics being
@@ -82,7 +82,7 @@ key and the token are never written in it or in any file.
 
 ## The keys
 
-- `TBA_AUTH_KEY` in `deploy/local.env` on the Mini. The Blue Alliance wants it in
+- `TBA_AUTH_KEY` in `mini/local.env` on the Mini. The Blue Alliance wants it in
   a header on every request. The script hands it to curl on standard input, so it
   never shows in the process list, and it is never printed or saved. How to make
   one: docs/rebuilding-the-mini.md, step 17.
@@ -136,8 +136,8 @@ nothing. A run by hand with `--now` ignores the time.
 
 On the Mini:
 
-    /opt/teletraan/deploy/scripts/frc-sync.sh --check
-    /opt/teletraan/deploy/scripts/frc-sync.sh --now
+    /opt/teletraan/mini/scripts/frc-sync.sh --check
+    /opt/teletraan/mini/scripts/frc-sync.sh --now
     sudo journalctl -u teletraan-frc.service -n 30
     systemctl list-timers 'teletraan-frc*'
 
@@ -161,7 +161,7 @@ journal has what the timer's runs said.
 ## If an answer looks different
 
 Every address and every place in an answer is in one block near the top of
-`deploy/scripts/frc-sync.sh`. The addresses are `tba_` and `statbotics_` lines
+`mini/scripts/frc-sync.sh`. The addresses are `tba_` and `statbotics_` lines
 with `{team}`, `{year}`, `{event}`, `{match}`, `{number}` and `{district}` where
 the script puts the values. The places are the `def` lines in `paths`, such as
 `def match_red_score: .alliances.red.score;`. They are jq, and each one is given
@@ -313,7 +313,7 @@ To see every card full, with real numbers, use an event that is over. Nothing he
 
 1. On the Mini, read one event into a file. The key of an event is the year and its code, such as `2026ncwak`:
 
-       deploy/scripts/frc-sync.sh --event 2026ncwak --to /tmp/event.json
+       mini/scripts/frc-sync.sh --event 2026ncwak --to /tmp/event.json
 
    It needs `TBA_AUTH_KEY` in `local.env` and prints no key.
 2. On the Mac, with that file copied over, make the fixture:

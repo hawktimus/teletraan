@@ -1,4 +1,4 @@
-// Tests for the build on the wall: the job "version" of deploy/scripts/status-write.sh (the hash, the date and the
+// Tests for the build on the wall: the job "version" of mini/scripts/status-write.sh (the hash, the date and the
 // branch written to status-mini), kiosk.sh calling it at start, the Mac tool calling it after the copy, and the
 // places that show it. curl, ssh, rsync, sudo and systemctl are small fake ones in a temporary folder, so nothing
 // touches the network or a real Mini. The token and the project are made up.
@@ -52,13 +52,13 @@ function miniPlace(name, options = {}) {
   const root = path.join(work, name);
   const bin = path.join(root, 'bin');
   const stub = path.join(root, 'stub');
-  fs.mkdirSync(path.join(root, 'deploy/scripts'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'mini/scripts'), { recursive: true });
   fs.mkdirSync(path.join(root, 'dashboard'), { recursive: true });
   fs.mkdirSync(bin);
   fs.mkdirSync(stub);
-  fs.copyFileSync(path.join(repo, 'deploy/scripts/status-write.sh'), path.join(root, 'deploy/scripts/status-write.sh'));
+  fs.copyFileSync(path.join(repo, 'mini/scripts/status-write.sh'), path.join(root, 'mini/scripts/status-write.sh'));
   fs.copyFileSync(path.join(repo, 'dashboard/config.js'), path.join(root, 'dashboard/config.js'));
-  fs.writeFileSync(path.join(root, 'deploy/local.env'), "SANITY_WRITE_TOKEN='" + (options.noToken ? '' : token) + "'\n");
+  fs.writeFileSync(path.join(root, 'mini/local.env'), "SANITY_WRITE_TOKEN='" + (options.noToken ? '' : token) + "'\n");
   ['sed', 'tail', 'head', 'grep', 'date', 'dirname', 'cat', 'awk'].concat(options.git ? ['git'] : []).forEach(tool => fs.symlinkSync(findTool(tool), path.join(bin, tool)));
   writeTool(bin, 'curl', fakeCurl);
   const log = path.join(root, 'calls.log');
@@ -84,7 +84,7 @@ function miniPlace(name, options = {}) {
     root: root,
     commit: options.commit,
     run() {
-      const result = spawnSync('/bin/sh', [path.join(root, 'deploy/scripts/status-write.sh'), 'version'], {
+      const result = spawnSync('/bin/sh', [path.join(root, 'mini/scripts/status-write.sh'), 'version'], {
         env: { PATH: bin, STUB_LOG: log, STUB_DIR: stub }, encoding: 'utf8', input: '',
       });
       return { text: result.stdout, errors: result.stderr, status: result.status, calls: fs.readFileSync(log, 'utf8') };
@@ -107,9 +107,9 @@ test('version writes the short hash, the date and the branch of the repository t
   assert.ok(!result.text.includes(token) && !result.errors.includes(token) && !result.calls.includes(token), 'the token never shows');
 });
 
-test('version reads deploy/build.txt when the Mac tool left one, because a copy has no git history of its own', () => {
+test('version reads mini/build.txt when the Mac tool left one, because a copy has no git history of its own', () => {
   const place = miniPlace('stamp', { git: true });
-  fs.writeFileSync(path.join(place.root, 'deploy/build.txt'), 'commit=abc1234\ndate=2026-10-13\nbranch=main\n');
+  fs.writeFileSync(path.join(place.root, 'mini/build.txt'), 'commit=abc1234\ndate=2026-10-13\nbranch=main\n');
   assert.equal(place.run().status, 0);
   assert.deepEqual(setOf(place.body()), { buildCommit: 'abc1234', buildDate: '2026-10-13', buildBranch: 'main' });
 });
@@ -117,7 +117,7 @@ test('version reads deploy/build.txt when the Mac tool left one, because a copy 
 test('version refuses a stamp that does not look like a hash, a date and a branch, and writes nothing', () => {
   ['commit=abc"1234\ndate=2026-10-13\nbranch=main\n', 'commit=abc1234\ndate=yesterday\nbranch=main\n', 'commit=abc1234\ndate=2026-10-13\nbranch=a b;c\n', ''].forEach((text, index) => {
     const place = miniPlace('bad-' + index);
-    fs.writeFileSync(path.join(place.root, 'deploy/build.txt'), text);
+    fs.writeFileSync(path.join(place.root, 'mini/build.txt'), text);
     const result = place.run();
     assert.equal(result.status, 1, text);
     assert.equal(place.body(), null, 'nothing was sent for ' + JSON.stringify(text));
@@ -136,15 +136,15 @@ test('version does nothing without a token, and without git or a stamp', () => {
 });
 
 test('kiosk.sh starts the version job at the beginning, in the background, with its output thrown away', () => {
-  const text = read('deploy/scripts/kiosk.sh');
-  const call = '"$deploy/scripts/status-write.sh" version > /dev/null 2>&1 &';
+  const text = read('mini/scripts/kiosk.sh');
+  const call = '"$mini/scripts/status-write.sh" version > /dev/null 2>&1 &';
   assert.equal(text.split(call).length, 2, 'kiosk.sh has the call once');
   assert.ok(text.indexOf(call) < text.indexOf('exec ') || !text.includes('exec '), 'before the browser starts');
 });
 
 test('a pull removes the stamp, so git is the truth again', () => {
-  assert.ok(read('deploy/scripts/pull.sh').includes('rm -f "$deploy/build.txt"'));
-  assert.ok(/^deploy\/build\.txt$/m.test(read('.gitignore')));
+  assert.ok(read('mini/scripts/pull.sh').includes('rm -f "$mini/build.txt"'));
+  assert.ok(/^mini\/build\.txt$/m.test(read('.gitignore')));
 });
 
 // The Mac tool, with the Mini as a folder
@@ -177,7 +177,7 @@ function toolPlace(name, options = {}) {
     miniRepo: path.join(root, 'mini-repo'),
     log: path.join(root, 'calls.log'),
   };
-  [place.home, place.fakes, place.miniHome, path.join(place.miniRepo, 'deploy/scripts'), path.join(place.home, '.teletraan')].forEach(folder => fs.mkdirSync(folder, { recursive: true }));
+  [place.home, place.fakes, place.miniHome, path.join(place.miniRepo, 'mini/scripts'), path.join(place.home, '.teletraan')].forEach(folder => fs.mkdirSync(folder, { recursive: true }));
   writeTool(place.fakes, 'ssh', fakeSsh);
   writeTool(place.fakes, 'rsync', '#!/bin/sh\necho "rsync $*" >> "$STUB_LOG"\nexit 0\n');
   writeTool(place.fakes, 'sudo', '#!/bin/sh\necho "sudo $*" >> "$STUB_LOG"\nexit 0\n');
@@ -208,7 +208,7 @@ test('the Mac tool update leaves the stamp of this repository on the Mini and ru
   assert.ok(copy !== -1 && stamp > copy && version > stamp && restart > version, result.calls.join(' / '));
 
   const git = args => spawnSync('git', ['-C', repo].concat(args), { encoding: 'utf8' }).stdout.trim();
-  const written = fs.readFileSync(path.join(place.miniRepo, 'deploy/build.txt'), 'utf8');
+  const written = fs.readFileSync(path.join(place.miniRepo, 'mini/build.txt'), 'utf8');
   assert.equal(written, 'commit=' + git(['rev-parse', '--short', 'HEAD']) + '\ndate=' + git(['log', '-1', '--format=%cs']) + '\nbranch=' + git(['rev-parse', '--abbrev-ref', 'HEAD']) + '\n');
   assert.ok(result.text.includes('The build on the wall is '), result.text);
 });
@@ -217,10 +217,10 @@ test('the Mac tool says so and goes on when the folder has no git history, and t
   const bare = path.join(work, 'bare-repo');
   fs.mkdirSync(path.join(bare, 'tools/mini'), { recursive: true });
   fs.mkdirSync(path.join(bare, 'dashboard'), { recursive: true });
-  fs.mkdirSync(path.join(bare, 'deploy/scripts'), { recursive: true });
+  fs.mkdirSync(path.join(bare, 'mini/scripts'), { recursive: true });
   fs.copyFileSync(path.join(repo, 'tools/mini/teletraan-mini'), path.join(bare, 'tools/mini/teletraan-mini'));
   fs.writeFileSync(path.join(bare, 'dashboard/index.html'), '');
-  fs.writeFileSync(path.join(bare, 'deploy/scripts/pull.sh'), '');
+  fs.writeFileSync(path.join(bare, 'mini/scripts/pull.sh'), '');
 
   const place = toolPlace('tool-bare', { tool: path.join(bare, 'tools/mini') });
   const result = place.run(['update', '--yes']);

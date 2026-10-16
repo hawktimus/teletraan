@@ -1,5 +1,5 @@
 // What each calendar brought in, in one document with the fixed id 'calendar-status'.
-// The Mini writes it with deploy/scripts/status-write.sh calendar-status after each
+// The Mini writes it with mini/scripts/status-write.sh calendar-status after each
 // calendar download, so editors never open it: it is not in the sidebar or the New
 // menu (structure.js, sanity.config.js), and the Calendars page shows it
 // (calendars-view.js). The dashboard never reads it.

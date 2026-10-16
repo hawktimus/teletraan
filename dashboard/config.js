@@ -502,7 +502,7 @@ export const defaultSettings = {
   competitionResults: true,
   competitionAlliance: true,
   competitionDistrict: true,
-  // The Monday tab in the Studio (docs/monday.md). The Mini reads these (deploy/scripts/monday-sync.sh) and writes the
+  // The Monday tab in the Studio (docs/monday.md). The Mini reads these (mini/scripts/monday-sync.sh) and writes the
   // tasks and milestones, which carry what the panels need. The screen reads only mondayEveryMinutes (for the stale
   // chip) and mondayShowOwners.
   //   mondayEveryMinutes    how often the Mini reads the boards, 5 to 120 minutes

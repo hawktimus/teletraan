@@ -5,7 +5,7 @@
 
 import { ageText } from './time-text.js';
 
-// The id the Mini writes to. deploy/scripts/monday-sync.sh has the same one.
+// The id the Mini writes to. mini/scripts/monday-sync.sh has the same one.
 export const mondayStatusId = 'monday-status';
 
 // The id of Dashboard Settings, the same as settingsId in structure.js

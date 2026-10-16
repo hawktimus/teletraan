@@ -49,7 +49,7 @@ until the Mini has a write token, and a line says Not yet for a job the Mini has
 not done since the token was added.
 
 A line that stays old for much longer than its timer means the job is failing or
-its timer is off. Start with the log of that job (deploy/README.md, "Everyday
+its timer is off. Start with the log of that job (mini/README.md, "Everyday
 commands").
 
 ## The write token
@@ -62,7 +62,7 @@ status block says No status yet.
 - Make it at sanity.io/manage: open the project, then API, Tokens, Add API token.
   Give it Editor access and copy it before you leave the page, because Sanity
   shows it once. The team mentor says yes first.
-- It lives in one place: the file `deploy/local.env` on the Mini, on its own line,
+- It lives in one place: the file `mini/local.env` on the Mini, on its own line,
   in single quotes. Git ignores that file and only the Mini's account can read it.
 - It never goes in the repository, in Studio, in a doc, in a chat or in a message.
   A token with Editor access can change anything in the dataset. If one leaks,
@@ -73,7 +73,7 @@ status block says No status yet.
 
 ## The three keys
 
-`deploy/local.env` on the Mini holds three keys, besides the calendar lines. This
+`mini/local.env` on the Mini holds three keys, besides the calendar lines. This
 page names them and never holds a value.
 
 | Name | What it lets the Mini do | Where it is made | Steps |
@@ -83,7 +83,7 @@ page names them and never holds a value.
 | `TBA_AUTH_KEY` | Read the competition data | The Blue Alliance, Account, Read API Keys | docs/rebuilding-the-mini.md, step 17, and docs/frc-feed.md |
 
 A script that does not find its key does nothing, says so in one line and ends
-without an error. `deploy/local.example.env` has each line with a placeholder. The
+without an error. `mini/local.example.env` has each line with a placeholder. The
 calendar addresses are in the same file, one `CALENDAR_<ID>_URL` line each
 (docs/calendar-links.md). None of them goes in the repository, in Studio or in a
 message.
@@ -192,15 +192,15 @@ The Mini reads the team's two Monday boards, Robotics Tasks and Milestones, as o
 often on the Monday tab says (5 to 120 minutes, 30 to start with), and keeps their items in
 Sanity (docs/monday.md). It needs the team mentor's yes at the first step.
 
-1. Make the token in Monday and add it to `deploy/local.env` on the Mini as
+1. Make the token in Monday and add it to `mini/local.env` on the Mini as
    `MONDAY_API_TOKEN` (docs/rebuilding-the-mini.md, step 18).
 2. On the Mini, install the packages if they are missing (ask the team mentor first), then
    the timer, then check the token. Run the timer line again after every update that changes
-   `deploy/systemd`, because the timer now wakes the script every 5 minutes:
+   `mini/systemd`, because the timer now wakes the script every 5 minutes:
 
        sudo apt install curl jq
-       sudo /opt/teletraan/deploy/scripts/install-monday.sh
-       /opt/teletraan/deploy/scripts/monday-sync.sh --check
+       sudo /opt/teletraan/mini/scripts/install-monday.sh
+       /opt/teletraan/mini/scripts/monday-sync.sh --check
 
 3. Wait 5 minutes. Open Dashboard Settings, Monday tab. The block at the top says who the
    token belongs to, when the Mini last read Monday, how often, how many reads it used today
@@ -367,10 +367,10 @@ takes over for a talk.
 
 A text drawing fills the TV above the login prompt while the Mini starts, until the
 kiosk takes over. A second drawing, with the words "shutting down", shows while the
-Mini shuts down or reboots. They are the files `deploy/console/startup.txt` and
-`deploy/console/shutdown.txt`, plain text made for the console of a 1080p TV.
+Mini shuts down or reboots. They are the files `mini/console/startup.txt` and
+`mini/console/shutdown.txt`, plain text made for the console of a 1080p TV.
 
-`sudo /opt/teletraan/deploy/scripts/install-console.sh` puts the first in
+`sudo /opt/teletraan/mini/scripts/install-console.sh` puts the first in
 `/etc/issue` and turns on the unit that prints the second. Run it again after
 `startup.txt` changes, because `/etc/issue` is a copy of it. A change to
 `shutdown.txt` needs nothing. The steps and the way back are in
@@ -404,11 +404,11 @@ says how each is drawn.
 The Mini reads the public competition data of each team and keeps it in Sanity, and
 the screen draws seven cards from it (docs/frc-feed.md).
 
-- Key: `TBA_AUTH_KEY` in `deploy/local.env` on the Mini. After it is added, install
+- Key: `TBA_AUTH_KEY` in `mini/local.env` on the Mini. After it is added, install
   the timer and check the key (docs/rebuilding-the-mini.md, step 17):
 
-      sudo /opt/teletraan/deploy/scripts/install-frc.sh
-      /opt/teletraan/deploy/scripts/frc-sync.sh --check
+      sudo /opt/teletraan/mini/scripts/install-frc.sh
+      /opt/teletraan/mini/scripts/frc-sync.sh --check
 
 - Teams: a team is read when it is Active and has a Team number in Settings,
   Teams. A team without a number is left out, and that is not an error.
@@ -438,7 +438,7 @@ numbers and times, scores, ranks, award names and ratings, and no person's name.
 The last line of the status block, On the wall, says which build the screen runs: the
 short hash and the day of the commit, such as `a1b2c3d · 2026-10-14`. The Mini writes it
 when the screen starts, and the Mac tool writes it at the end of an update (it leaves the
-hash in the file `build.txt` in the deploy folder of the Mini, because the copy does not bring the `.git` folder).
+hash in the file `build.txt` in the mini folder of the Mini, because the copy does not bring the `.git` folder).
 A Mini that pulls reads it from git. To see the same hash on the TV, open the address
 with `?debug=1` on the end: it shows in the bottom left corner at 20 px, the one text
 smaller than the usual smallest size.
@@ -516,4 +516,4 @@ announcements plays. docs/announcements.md has both.
   back, and the Preview buttons
 - docs/presentations.md: booking talks, the clicker and the mouse
 - docs/add-the-nova-team.md: the Nova team and its trim
-- deploy/README.md: the scripts and timers on the Mini
+- mini/README.md: the scripts and timers on the Mini

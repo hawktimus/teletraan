@@ -1,7 +1,7 @@
 // The Monday Boards page, under TASKS in the sidebar (structure.js). It is a page of its own, not a
 // document. It lists every board the token of the Mini can see, with the number of items, when the
 // Mini last read it and whether Dashboard Settings has chosen it. The Mini writes what it shows into
-// the document monday-status (schemas/mondayStatus.js, deploy/scripts/monday-sync.sh).
+// the document monday-status (schemas/mondayStatus.js, mini/scripts/monday-sync.sh).
 //
 // Nothing is edited here. Choose boards opens Dashboard Settings at the board rows, which are on the
 // Monday tab. The name of a chosen board opens the tasks of that board, in the same two lists as

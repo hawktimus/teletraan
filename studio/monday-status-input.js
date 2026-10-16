@@ -1,6 +1,6 @@
 // The connection block at the top of the Monday tab of Dashboard Settings
 // (schemas/settingsMonday.js). It reads the document monday-status, which the Mini writes
-// with deploy/scripts/monday-sync.sh, and says who the token belongs to, when the Mini
+// with mini/scripts/monday-sync.sh, and says who the token belongs to, when the Mini
 // last read Monday, how many boards it can see, and what went wrong last. Below those it says
 // how often the Mini reads, how many reads it has used today, and how many tasks it made and how
 // many of them have no department and are kept off the TV. Under those is a line for each of the
@@ -24,7 +24,7 @@ const h = createElement;
 // The same version as the screen's own questions to Sanity
 const apiVersion = '2025-02-19';
 
-// The id the Mini writes to. deploy/scripts/monday-sync.sh has the same one.
+// The id the Mini writes to. mini/scripts/monday-sync.sh has the same one.
 export const mondayStatusId = 'monday-status';
 
 // Only what the block shows, so the question stays small. names are the boards the token can
@@ -37,7 +37,7 @@ const taskQuestion = 'count(*[_type == "task" && source == "monday" && !(_id in 
 // The board of each task from the board that is on the TV, so the block can count them for each board
 const shownQuestion = '*[_type == "task" && source == "monday" && showOnTv != false && showOnBoard != false && show != false && !(_id in path("drafts.**"))].mondayBoardId';
 
-// The reads a day may use before the Mini waits for midnight (deploy/scripts/monday-sync.sh, daily_limit)
+// The reads a day may use before the Mini waits for midnight (mini/scripts/monday-sync.sh, daily_limit)
 export const dailyReads = 900;
 
 // The boards of the Monday tab when the form has not named them yet, the same as the starting values

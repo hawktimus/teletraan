@@ -22,7 +22,7 @@
 //
 // The names and the starting values are the same as mondayEveryMinutes, mondayTaskBoard, mondayMilestoneBoard
 // and mondayShowOwners in defaultSettings in dashboard/config.js, and the same as the values at the top of
-// deploy/scripts/monday-sync.sh. check-schemas.mjs and tools/test-monday-sync.mjs fail if they differ.
+// mini/scripts/monday-sync.sh. check-schemas.mjs and tools/test-monday-sync.mjs fail if they differ.
 //
 // None of the fields is required on the page: Dashboard Settings published before these fields existed has
 // none, and the Mini then reads the boards with the starting values.
@@ -56,7 +56,7 @@ function fromGroups(context) {
   return !fromColumn(context);
 }
 
-// The longest board entry the Mini reads in one run, with 500 items each (deploy/scripts/monday-sync.sh)
+// The longest board entry the Mini reads in one run, with 500 items each (mini/scripts/monday-sync.sh)
 const mostBoards = 10;
 
 // The status column is needed only when the status comes from a column, so its rule is a custom one

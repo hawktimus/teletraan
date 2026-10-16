@@ -94,7 +94,7 @@ docs/where-things-are.md).
    rule that lets a web page read data from another website only when that
    website has listed the page's address. The first address is the test server
    on this Mac (`python3 tools/serve.py`) and the second is the Mini, whose web
-   server answers on the port in `TELETRAAN_PORT` in deploy/local.env, 3229. If
+   server answers on the port in `TELETRAAN_PORT` in mini/local.env, 3229. If
    you ever change that port, add the new address as well.
 7. Type some content into the Studio. Open Dashboard Settings first and click
    Publish. Then check the Screen tab: the two starting announcements, 14:30 and
@@ -225,7 +225,7 @@ dashboard/core/source.js decides, and shell.js hands it the address.
 The Screen tab of Dashboard Settings starts with a block that shows when the Mini
 last did each of its jobs (`status-input.js`). It reads the document
 `status-mini`, of the type `status` (`schemas/status.js`), which the Mini writes with
-`deploy/scripts/status-write.sh`. The type is not in the sidebar or the New menu,
+`mini/scripts/status-write.sh`. The type is not in the sidebar or the New menu,
 and the field in Dashboard Settings (`schemas/settingsStatus.js`) stores nothing.
 Without a write token on the Mini the block says No status yet.
 docs/rebuilding-the-mini.md, "Showing what the Mini did in Studio", has the steps for

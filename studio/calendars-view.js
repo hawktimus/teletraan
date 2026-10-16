@@ -3,7 +3,7 @@
 // each has and when it was last downloaded. On the right are the next 40 events of the calendar
 // picked on the left, SHOWN or HIDDEN, with the name of the Calendar filter that hides it.
 // The Mini writes what it shows into the document calendar-status (schemas/calendarStatus.js,
-// deploy/scripts/calendar-status.sh).
+// mini/scripts/calendar-status.sh).
 //
 // Each event has buttons that hide it. A button makes a Hide rule in Calendar filters, with an id
 // that starts calendarFilter-hide-, and Show again deletes that rule. Nothing else is changed here:

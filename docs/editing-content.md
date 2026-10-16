@@ -180,7 +180,7 @@ The buttons try the screen without waiting for a time or for a booked talk:
 - Preview the screen: opens the screen in a new tab with the sample content, which
   is what `?sample=1` on the address does. The address is `dashboardAddress` in
   `studio/dashboard-address.js`. It is the Mini's own address, and the Mini's web
-  server only answers on the Mini (deploy/README.md), so on any other computer
+  server only answers on the Mini (mini/README.md), so on any other computer
   the tab shows no page.
 
 The first four buttons send a request and the screen answers it within a few

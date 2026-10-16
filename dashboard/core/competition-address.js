@@ -8,7 +8,7 @@
 //   event=<key>     keep only that event: the frc-status document is cut down to it, and in ?sample=1
 //                   the fixture of data/sample/frc-event.json is used when it is that event
 //
-// The fixture is made by tools/frc-fixture.mjs from deploy/scripts/frc-sync.sh --event <key> --to <file>.
+// The fixture is made by tools/frc-fixture.mjs from mini/scripts/frc-sync.sh --event <key> --to <file>.
 // Until the owner makes one, the file holds a placeholder that says so.
 
 export const fixtureFile = 'frc-event.json';
