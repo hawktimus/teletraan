@@ -13,6 +13,10 @@ The screen plays four views in turn: General, Prime, Nova and Family. A view is 
 
 The bar layout has no small panel. Nova is mirrored because the Nova team has Mirror switched on.
 
+## Where the older panels are
+
+The starting rows hold the panels listed above and no more. Other panels are not in a starting row, so they appear only when a row for them is added to a view in the Studio: Tasks, Team leads, Subteam spotlight, Roster, the Monday milestone and progress cards, Extra panels, the Season timeline and the team tile. Competition cards are not rows. They are mixed into the large panel of the view on the screen when they are due, in the team of that view. The announcement plate and the alert, talk and night screens come over any view. `tools/screenshots.mjs` takes each view in each theme with each team (`view-<view>-<theme>-<team>.png`).
+
 ## The rotation
 
 - `viewOrder` (Dashboard Settings, Look tab) is the order. A view left out of it never plays. The starting order is General, Prime, Nova, Family.

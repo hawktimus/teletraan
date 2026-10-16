@@ -4,7 +4,7 @@ The control page runs on the Mini. Coaches use it from a phone or a laptop on th
 
 Address: `http://teletraan.local:3229/control/`. The Tailscale name of the Mini works the same way: `http://<tailscale name>:3229/control/`. If the school WiFi blocks traffic between devices, `teletraan.local` will not open. Use the Tailscale name then.
 
-The page has five tabs: Update, Now showing, Status, Keys and Log. This page covers the service itself and the Update tab. The other tabs have their own notes in the page.
+The page has five tabs: Update, Now showing, Status, Keys and Log. This page covers the service itself and the Update tab. The other tabs have their own notes in the page. The Now showing tab has a Play announcement button, which plays the announcements of Dashboard Settings through the request route, and a box to post a short announcement.
 
 ## First time
 
