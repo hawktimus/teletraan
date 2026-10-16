@@ -126,6 +126,8 @@ exit 0
 `,
   sudo: `#!/bin/sh
 echo "sudo $*" >> "$STUB_LOG"
+# The installer on the Mini is not run here
+case "$*" in *install.sh*) [ -f "$STUB_DIR/install.exit" ] && exit "$(cat "$STUB_DIR/install.exit")"; exit 0 ;; esac
 exec "$@"
 `,
   systemctl: `#!/bin/sh
@@ -182,6 +184,9 @@ function makePlace(name, options = {}) {
   fs.mkdirSync(path.join(place.repo, 'dashboard'), { recursive: true });
   fs.writeFileSync(path.join(place.repo, 'dashboard/index.html'), '');
   fs.writeFileSync(path.join(place.repo, 'mini/scripts/pull.sh'), '');
+  fs.writeFileSync(path.join(place.repo, 'mini/install.sh'), '');
+  fs.mkdirSync(path.join(place.repo, 'control'), { recursive: true });
+  fs.writeFileSync(path.join(place.repo, 'control/server.js'), '');
   ['tests/run.mjs'].forEach(file => {
     fs.mkdirSync(path.dirname(path.join(place.repo, file)), { recursive: true });
     fs.writeFileSync(path.join(place.repo, file), '');
@@ -246,7 +251,7 @@ test('all checks, commits, pushes, deploys the Studio, then updates the Mini and
   const push = find('git push');
   const deploy = find('npm run deploy (in studio)');
   const copy = find('rsync ');
-  const restart = find('ssh -t -o ConnectTimeout=10 ' + miniAddress + ' sudo systemctl restart teletraan-kiosk.service');
+  const restart = find('ssh -t -o ConnectTimeout=10 ' + miniAddress + ' sudo bash');
   [fetched, lastCheck, add, commit, push, deploy, copy, restart].forEach((index, position) => assert.ok(index !== -1, 'step ' + position + ' ran: ' + calls.join(' / ')));
   assert.ok(fetched < Math.min(find('node ' + path.join(place.repo, 'tests/run.mjs')), add), 'GitHub is looked at before anything else');
   assert.ok(lastCheck < add && add < commit && commit < push && push < deploy && deploy < copy && copy < restart, 'the order is check, commit, push, Studio, Mini: ' + calls.join(' / '));
@@ -254,7 +259,7 @@ test('all checks, commits, pushes, deploys the Studio, then updates the Mini and
 
   assert.ok(result.text.includes('Done: checks, commit and push, Studio, Mini update and restart'), result.text);
   assert.ok(result.text.includes('The screen was restarted'), result.text);
-  assert.ok(calls[copy].endsWith(' ' + place.repo + '/ ' + miniAddress + ':/opt/teletraan-test/'), 'the Mac tool copies this repository: ' + calls[copy]);
+  assert.ok(calls[copy].endsWith(' ' + place.repo + '/ ' + miniAddress + ':teletraan-staging/'), 'the Mac tool copies this repository: ' + calls[copy]);
   assert.ok(!result.calls.includes('pull.sh') && !result.calls.includes('ls-remote'), 'the Mini is no longer asked to pull');
   assert.ok(!result.text.includes('Go ahead?'), 'the Mini step asks no question');
   assertNoLeak(result, 'all');
@@ -352,8 +357,8 @@ const stops = [
     notSummary: 'Mini update',
   },
   {
-    name: 'the restart of the screen',
-    stub: { 'systemctl.exit': '5' },
+    name: 'the install on the Mini',
+    stub: { 'install.exit': '5' },
     ran: ['rsync ', 'ssh -t'],
     absent: [],
     summary: 'Done before it stopped: checks, commit and push, Studio',
@@ -389,7 +394,7 @@ test('a check that fails can be overruled with a yes, and the run goes on', () =
   assert.ok(hasCall(result.calls, 'rsync '));
 });
 
-test('an unreachable Mini and a Mini that still pulls by itself stop the run after the Studio, and nothing is copied', () => {
+test('an unreachable Mini stops the run after the Studio, and nothing is copied', () => {
   const down = makePlace('mini-down');
   down.stubFile('changes.txt', changed);
   down.stubFile('ssh.exit', '255');
@@ -398,16 +403,6 @@ test('an unreachable Mini and a Mini that still pulls by itself stop the run aft
   assert.ok(downResult.errors.includes('could not reach ' + miniAddress), downResult.errors);
   assert.ok(downResult.errors.includes('Done before it stopped: checks, commit and push, Studio'), downResult.errors);
   assert.ok(!hasCall(downResult.calls, 'rsync '));
-
-  const pulls = makePlace('mini-pulls');
-  pulls.stubFile('pull-timer.txt', 'active\n');
-  const pullsResult = pulls.run(['mini']);
-  assert.notEqual(pullsResult.status, 0, 'the tool asked, nobody answered, so nothing was copied');
-  assert.ok(pullsResult.text.includes('also pulls from GitHub by itself'), pullsResult.text);
-  assert.ok(!hasCall(pullsResult.calls, 'rsync '));
-  const agreed = makePlace('mini-pulls-yes');
-  agreed.stubFile('pull-timer.txt', 'active\n');
-  assert.equal(agreed.run(['mini'], { input: ['y'] }).status, 0, 'a yes copies');
 });
 
 test('a folder that is behind GitHub stops all and mini before anything is sent, and push does not mind', () => {
@@ -501,7 +496,7 @@ test('mini only runs the Mac tool to update the Mini and restart the screen, and
   const place = makePlace('mini-only');
   const result = place.run(['mini']);
   assert.equal(result.status, 0, result.errors);
-  assert.ok(hasCall(result.calls, 'rsync ') && hasCall(result.calls, 'ssh -t -o ConnectTimeout=10 ' + miniAddress + ' sudo systemctl restart teletraan-kiosk.service'), result.calls);
+  assert.ok(hasCall(result.calls, 'rsync ') && hasCall(result.calls, 'ssh -t -o ConnectTimeout=10 ' + miniAddress + ' sudo bash'), result.calls);
   assert.ok(!hasCall(result.calls, 'git add') && !hasCall(result.calls, 'git push') && !hasCall(result.calls, 'npm'));
   assert.ok(result.text.includes('Done: Mini update and restart'), result.text);
 });

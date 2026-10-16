@@ -204,7 +204,8 @@ test('kiosk.sh clears the browser cache folders and leaves cookies and Local Sto
 test('kiosk.sh and the Mac tool pass the syntax check', () => {
   assert.equal(spawnSync('/bin/sh', ['-n', path.join(repo, 'mini/scripts/kiosk.sh')], { encoding: 'utf8' }).status, 0);
   assert.equal(spawnSync('bash', ['-n', path.join(repo, 'tools/mini/teletraan-mini')], { encoding: 'utf8' }).status, 0);
-  assert.ok(read('tools/mini/teletraan-mini').includes('write_build_js "$commit"'), 'the Mac tool leaves build.js after the copy');
+  // The release the installer makes writes build.js from RELEASE.json; the Mac tool hands it the commit
+  assert.ok(/install\.sh[^\n]*--commit/.test(read('tools/mini/teletraan-mini')), 'the Mac tool gives the installer the commit');
 });
 
 // The web server settings
