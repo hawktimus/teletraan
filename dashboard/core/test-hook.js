@@ -10,6 +10,7 @@
 
 import * as frame from '../frame.js';
 import { isBusy, setBusy } from './busy.js';
+import { previewTeam } from './teams.js';
 import { boxOf, findBoxes, findContent, findPlates, screenPlace } from './hidden-pile.js';
 
 const params = new URLSearchParams(window.location.search);
@@ -97,7 +98,11 @@ const plays = {
   },
 
   // The team on the screen changes: Nova is mirrored, Prime is not
-  'team-swap': (options) => changeSettings({ teamMode: options.team || 'nova' }),
+  // A preview wins over the team a step of the rotation holds, which teamMode does not
+  'team-swap': (options) => {
+    previewTeam(options.team || 'nova', Date.now() + hourMs);
+    changeSettings({ teamMode: options.team || 'nova' });
+  },
 
   // The desktop reveal (core/hidden-transitions.js): the blue glitch, the pile, the error screen and the cube
   'blue-screen': () => hiddenAsk('desktop'),
