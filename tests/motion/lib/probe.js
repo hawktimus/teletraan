@@ -328,7 +328,7 @@
 
   motion.collect = function () {
     const seen = motion.seen = { animations: {}, changes: [] };
-    const firstStyle = new WeakMap();
+    const looked = new WeakSet();
     motion.collecting = true;
 
     function see(animation, now) {
@@ -341,22 +341,40 @@
       const key = kind + ' on ' + nameOf(target);
       if (!seen.animations[key]) seen.animations[key] = { kind: kind, name: nameOf(target), properties: names, at: Math.round(now) };
 
-      const style = window.getComputedStyle(target);
-      const now_ = {};
-      watchedStyle.forEach(name => { now_[name] = style[name]; });
-      const before = firstStyle.get(animation);
-      if (!before) {
-        firstStyle.set(animation, now_);
-        ['filter', 'backdropFilter'].forEach(name => {
-          if (now_[name] !== 'none' && now_[name] !== '') seen.changes.push({ name: nameOf(target), kind: kind, at: Math.round(now), what: name + ' is ' + now_[name] });
-        });
-        return;
-      }
-      watchedStyle.forEach(name => {
-        if (before[name] !== now_[name] && !seen.changes.some(change => change.name === nameOf(target) && change.what.startsWith(name))) {
-          seen.changes.push({ name: nameOf(target), kind: kind, at: Math.round(now), what: name + ' changed from ' + before[name] + ' to ' + now_[name] });
+      // The style is read with the animation held at five moments of its run, the last just before its end, one after the other with nothing else
+      // happening between them, so that a change is the animation's own and not new text or a font that came in.
+      // Each animation is looked at once.
+      if (looked.has(animation)) return;
+      looked.add(animation);
+
+      const timing = effect.getComputedTiming();
+      const length = timing.activeDuration;
+      if (!(length > 0) || !isFinite(length)) return;
+
+      const saved = animation.currentTime;
+      const running = animation.playState === 'running';
+      let first = null;
+      animation.pause();
+      [0, 0.25, 0.5, 0.75, 0.99].forEach(share => {
+        animation.currentTime = timing.delay + length * share;
+        const style = window.getComputedStyle(target);
+        const reading = {};
+        watchedStyle.forEach(name => { reading[name] = style[name]; });
+        if (first === null) {
+          first = reading;
+          ['filter', 'backdropFilter'].forEach(name => {
+            if (reading[name] !== 'none' && reading[name] !== '') seen.changes.push({ name: nameOf(target), kind: kind, at: Math.round(now), what: name + ' is ' + reading[name] });
+          });
+          return;
         }
+        watchedStyle.forEach(name => {
+          if (first[name] !== reading[name] && !seen.changes.some(change => change.name === nameOf(target) && change.what.startsWith(name))) {
+            seen.changes.push({ name: nameOf(target), kind: kind, at: Math.round(now + length * share), what: name + ' changed from ' + first[name] + ' to ' + reading[name] });
+          }
+        });
       });
+      animation.currentTime = saved;
+      if (running) animation.play();
     }
 
     setInterval(() => {

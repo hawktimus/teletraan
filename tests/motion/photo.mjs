@@ -10,6 +10,8 @@ const round = value => Math.round(value * 100) / 100;
 async function runPhotos(ctx, look) {
   const page = await ctx.open({ panel: 'photo', photos: String(photos), each: String(secondsEach), style: look }, undefined, { settleMs: 500 });
   try {
+    // The photos come in when they have loaded, which takes longer on a busy computer
+    await page.waitForFunction(() => document.querySelectorAll('.photo .shot').length >= 2, null, { timeout: 30000 }).catch(() => {});
     await page.evaluate(() => window.teletraanTest.play('photo-cross'));
     const found = await page.evaluate(seconds => window.__motion.photos(seconds), photos * secondsEach);
     if (found.shots < 2) return { error: 'the photo panel has ' + found.shots + ' photo on the screen, a cross needs two' };

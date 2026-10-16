@@ -17,7 +17,11 @@ async function watch(ctx, how, seconds) {
       await page.evaluate(() => window.teletraanTest.hold(true));
       await page.waitForTimeout(seconds * 1000);
       await page.evaluate(() => window.teletraanTest.hold(false));
-      await page.waitForTimeout(4000); // free again: they must come back, or the rule would pass by never playing
+      // Free again: they must come back, or the rule would pass by never playing
+      await page.waitForFunction(() => {
+        const events = window.__motion.effects.events;
+        return events.some(event => !event.busy && event.name) && events.some(event => !event.busy && event.hawk !== '');
+      }, null, { timeout: 30000 }).catch(() => {});
     } else {
       // Both effects are running when the transition starts, so it has something to stop
       await page.waitForFunction(() => {
