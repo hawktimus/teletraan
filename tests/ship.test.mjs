@@ -13,6 +13,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { copyParts } from './helpers/script-parts.mjs';
+import { fakeSudo } from './helpers/tool-fakes.mjs';
 
 const repoRoot = fileURLToPath(new URL('../', import.meta.url));
 const shipSource = path.join(repoRoot, 'tools/mac/ship.sh');
@@ -34,7 +35,7 @@ const hiddenParts = Object.values(secrets).flatMap(value => [value, value.slice(
 
 // The few programs the scripts use besides the fakes. They are linked into one
 // folder so the PATH of a run holds these and the fakes, and nothing else.
-const utilityNames = ['awk', 'basename', 'cat', 'chmod', 'cp', 'cut', 'date', 'dirname', 'env', 'grep', 'head', 'ls', 'mkdir', 'mv', 'rm', 'sed', 'sort', 'stty', 'tail', 'tr', 'uniq', 'wc'];
+const utilityNames = ['awk', 'bash', 'basename', 'cat', 'chmod', 'cp', 'cut', 'date', 'dirname', 'env', 'grep', 'head', 'ls', 'mkdir', 'mktemp', 'mv', 'rm', 'sed', 'sort', 'stty', 'tail', 'tr', 'true', 'uniq', 'wc'];
 const utilities = path.join(work, 'utilities');
 fs.mkdirSync(utilities);
 utilityNames.forEach(name => {
@@ -94,6 +95,7 @@ fi
 exit 0
 `,
   ssh: `#!/bin/sh
+case " $* " in *" -O "*) exit 0 ;; esac
 echo "ssh $*" >> "$STUB_LOG"
 while [ "$#" -gt 0 ]; do
   case $1 in
@@ -113,7 +115,7 @@ case $command in
     ;;
   *status-write.sh*) cat "$STUB_DIR/status-output.txt"; exit 0 ;;
   *check-calendars.sh*) cat "$STUB_DIR/check-output.txt"; exit 0 ;;
-  *) PATH="$STUB_FAKES:$PATH" /bin/sh -c "$command" ;;
+  *) HOME="$STUB_DIR/computer-home" PATH="$STUB_FAKES:$PATH" /bin/sh -c "$command" ;;
 esac
 `,
   scp: `#!/bin/sh
@@ -125,12 +127,7 @@ echo "rsync $*" >> "$STUB_LOG"
 [ -f "$STUB_DIR/rsync.exit" ] && exit "$(cat "$STUB_DIR/rsync.exit")"
 exit 0
 `,
-  sudo: `#!/bin/sh
-echo "sudo $*" >> "$STUB_LOG"
-# The installer on the Teletraan computer is not run here
-case "$*" in *install.sh*) [ -f "$STUB_DIR/install.exit" ] && exit "$(cat "$STUB_DIR/install.exit")"; exit 0 ;; esac
-exec "$@"
-`,
+  sudo: fakeSudo,
   systemctl: `#!/bin/sh
 echo "systemctl $*" >> "$STUB_LOG"
 [ -f "$STUB_DIR/systemctl.exit" ] && exit "$(cat "$STUB_DIR/systemctl.exit")"
@@ -178,6 +175,7 @@ function makePlace(name, options = {}) {
   [place.home, place.stub, place.bin].forEach(folder => fs.mkdirSync(folder, { recursive: true }));
   Object.keys(fakes).filter(program => !(options.without || []).includes(program)).forEach(program => writeExecutable(path.join(place.bin, program), fakes[program]));
   fs.writeFileSync(place.log, '');
+  writeExecutable(path.join(place.stub, 'computer-home/teletraan-staging/computer/install.sh'), '#!/bin/sh\necho "install.sh $*" >> "$STUB_LOG"\n[ -f "$STUB_DIR/install.exit" ] && exit "$(cat "$STUB_DIR/install.exit")"\nexit 0\n');
 
   writeExecutable(path.join(place.repo, 'tools/mac/ship.sh'), fs.readFileSync(shipSource, 'utf8'));
   writeExecutable(path.join(place.repo, 'tools/teletraan/teletraan-tool'), fs.readFileSync(toolSource, 'utf8'));
@@ -253,7 +251,7 @@ test('all checks, commits, pushes, deploys the Studio, then updates the Teletraa
   const push = find('git push');
   const deploy = find('npm run deploy (in studio)');
   const copy = find('rsync ');
-  const restart = find('ssh -t -o ConnectTimeout=10 ' + computerAddress + ' sudo bash');
+  const restart = calls.findIndex(line => line.startsWith('ssh -n ') && line.includes("sudo -S -p '' bash -c"));
   [fetched, lastCheck, add, commit, push, deploy, copy, restart].forEach((index, position) => assert.ok(index !== -1, 'step ' + position + ' ran: ' + calls.join(' / ')));
   assert.ok(fetched < Math.min(find('node ' + path.join(place.repo, 'tests/run.mjs')), add), 'GitHub is looked at before anything else');
   assert.ok(lastCheck < add && add < commit && commit < push && push < deploy && deploy < copy && copy < restart, 'the order is check, commit, push, Studio, Mini: ' + calls.join(' / '));
@@ -275,7 +273,7 @@ test('the old word all-restart does the same as all', () => {
   const a = first.run(['all'], { message: 'x' });
   const b = second.run(['all-restart'], { message: 'x' });
   assert.equal(b.status, 0, b.errors);
-  const kinds = (calls, place) => lines(calls).map(line => line.split(place.root).join('PLACE').replace(/t\d{14}/g, 'TIME'));
+  const kinds = (calls, place) => lines(calls).map(line => line.split(place.root).join('PLACE').replace(/t\d{14}/g, 'TIME').replace(/ControlPath=\S+/g, 'ControlPath=SOCKET'));
   assert.deepEqual(kinds(b.calls, second), kinds(a.calls, first));
 });
 
@@ -322,14 +320,14 @@ const stops = [
     stub: { 'node-run.mjs.exit': '1' },
     input: [''],
     ran: [],
-    absent: ['git add', 'git commit', 'git push', 'npm run', 'rsync', 'ssh -t'],
+    absent: ['git add', 'git commit', 'git push', 'npm run', 'rsync', 'install.sh'],
     summary: 'Nothing had been done before it stopped.',
   },
   {
     name: 'the commit',
     stub: { 'git-commit.exit': '1' },
     ran: ['git add -A'],
-    absent: ['git push', 'npm run', 'rsync', 'ssh -t'],
+    absent: ['git push', 'npm run', 'rsync', 'install.sh'],
     summary: 'Done before it stopped: checks',
     notSummary: 'commit and push',
   },
@@ -337,7 +335,7 @@ const stops = [
     name: 'the push',
     stub: { 'git-push.exit': '1' },
     ran: ['git commit'],
-    absent: ['npm run', 'rsync', 'ssh -t'],
+    absent: ['npm run', 'rsync', 'install.sh'],
     summary: 'Done before it stopped: checks',
     notSummary: 'commit and push',
     text: 'The push was refused.',
@@ -346,7 +344,7 @@ const stops = [
     name: 'the Studio deploy',
     stub: { 'npm.exit': '1' },
     ran: ['git push', 'npm run deploy'],
-    absent: ['rsync', 'ssh -t'],
+    absent: ['rsync', 'install.sh'],
     summary: 'Done before it stopped: checks, commit and push',
     notSummary: 'Studio',
   },
@@ -354,14 +352,14 @@ const stops = [
     name: 'the copy to the Teletraan computer',
     stub: { 'rsync.exit': '23' },
     ran: ['npm run deploy', 'rsync '],
-    absent: ['ssh -t'],
+    absent: ['install.sh'],
     summary: 'Done before it stopped: checks, commit and push, Studio',
     notSummary: 'Teletraan computer update',
   },
   {
     name: 'the install on the Teletraan computer',
     stub: { 'install.exit': '5' },
-    ran: ['rsync ', 'ssh -t'],
+    ran: ['rsync ', 'install.sh'],
     absent: [],
     summary: 'Done before it stopped: checks, commit and push, Studio',
     notSummary: 'Teletraan computer update',
@@ -498,7 +496,7 @@ test('computer only runs the Mac tool to update the Teletraan computer and resta
   const place = makePlace('computer-only');
   const result = place.run(['computer']);
   assert.equal(result.status, 0, result.errors);
-  assert.ok(hasCall(result.calls, 'rsync ') && hasCall(result.calls, 'ssh -t -o ConnectTimeout=10 ' + computerAddress + ' sudo bash'), result.calls);
+  assert.ok(hasCall(result.calls, 'rsync ') && hasCall(result.calls, 'install.sh'), result.calls);
   assert.ok(!hasCall(result.calls, 'git add') && !hasCall(result.calls, 'git push') && !hasCall(result.calls, 'npm'));
   assert.ok(result.text.includes('Done: Teletraan computer update and restart'), result.text);
 });
@@ -522,8 +520,8 @@ test('status asks the Mac tool for the status of the Teletraan computer, hides a
 test('the old word restart still restarts the screen and copies nothing', () => {
   const place = makePlace('restart-word');
   const result = place.run(['restart']);
-  assert.equal(result.status, 0, result.errors);
-  assert.ok(result.calls.includes('sudo systemctl restart teletraan-kiosk.service'), result.calls);
+  assert.equal(result.status, 0, result.errors + result.calls);
+  assert.ok(result.calls.includes('systemctl restart teletraan-kiosk.service'), result.calls);
   assert.ok(!hasCall(result.calls, 'rsync') && !hasCall(result.calls, 'git'), result.calls);
   const failing = makePlace('restart-word-fails');
   failing.stubFile('systemctl.exit', '1');
