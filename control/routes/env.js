@@ -13,7 +13,7 @@ const calendarName = /^CALENDAR_[A-Za-z0-9_]+_URL$/;
 
 export function describe(values) {
   return {
-    keys: keyNames.map(name => ({ name: name, label: labels[name], masked: name === 'CONTROL_PIN' ? (values[name] ? '........' : 'not set') : mask(values[name]) })),
+    keys: keyNames.map(name => ({ name: name, label: labels[name], masked: mask(values[name]) })),
     calendars: Object.keys(values).filter(name => calendarName.test(name)).map(name => ({ name: name, code: calendarCode(name), masked: mask(values[name]) })),
   };
 }

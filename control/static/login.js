@@ -1,4 +1,4 @@
-// The sign-in form. With no PIN set in local.env the page says so and shows no form.
+// The sign-in form.
 
 const message = document.getElementById('message');
 const form = document.getElementById('form');
@@ -8,10 +8,6 @@ async function start() {
   if (session.signedIn) {
     location.reload();
     return;
-  }
-  if (!session.pinSet) {
-    message.textContent = 'Set a PIN with the Mac tool first.';
-    form.hidden = true;
   }
 }
 

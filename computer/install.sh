@@ -228,4 +228,4 @@ fi
 
 step "Done"
 say "The control page is at http://$(hostname):3229/control/ (the Tailscale name works too)."
-say "Next: set a PIN with the Mac tool (menu 2), and add the origin to Sanity (docs/control-page.md, First time)."
+say "Next: add the origin to Sanity (docs/control-page.md, First time). The PIN is 3229 or 3426."

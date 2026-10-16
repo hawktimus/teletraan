@@ -8,17 +8,18 @@ The page has five tabs: Update, Now showing, Status, Keys and Log. This page cov
 
 ## First time
 
-Do these once, in this order. The team mentor says yes to the Docker download in step 1.
+Do these once, in this order. The team mentor says yes to the Docker downloads in step 1.
 
-1. On the Teletraan computer, pull the Node image: `docker pull node:22-alpine`. The installer needs it and says so when it is missing.
-2. On the Mac that has the repository, open `Teletraan Tool.command` (or run `tools/teletraan/teletraan-tool`) and choose 8, Set the PIN of the control page. A PIN is 6 to 12 digits. It is saved on the Mac and on the computer in `local.env`.
-3. Choose 1 in the same menu, or run `tools/teletraan/teletraan-tool update`. The Mac copies the repository to `~/teletraan-staging` on the computer and runs `computer/install.sh` there with sudo. The installer:
+1. On the Mac that has the repository, open `Teletraan Tool.command` (or run `tools/teletraan/teletraan-tool`) and choose 1, Install everything, or run `tools/teletraan/teletraan-tool update`. The Mac asks for the computer's password once, copies the repository to `~/teletraan-staging` on the computer and runs `computer/install.sh` there as root. The installer:
+   - pulls the Node image (`node:22-alpine`) and the web server image (`nginx:1.28-alpine`) if the computer does not have them. It says which image and that this is a download. If a download fails, check that the computer is online and that the image name is right, then choose 1 again;
    - moves today's `/opt/teletraan` to `releases/1` and puts `local.env` at `/opt/teletraan/local.env`;
    - installs the helper socket, its service and the sudoers file;
    - installs the repository as the next release (release 2 on a computer that had a tree) and builds the Studio, which takes several minutes the first time;
-   - starts the web server and the control service and restarts the screen.
-4. Allow the computer's address in Sanity, so the Studio on the computer can read the dataset. Open sanity.io/manage, choose the project, then API, then CORS origins, then Add CORS origin. Add `http://teletraan.local:3229` with Allow credentials ticked, and do the same for `http://<tailscale name>:3229`. The Status tab says "CORS origin missing" until this is done.
-5. Open the address above and type the PIN.
+   - starts the web server and the control service with `docker compose`, run as root, and turns on the nightly timer.
+
+   The tool then installs the services and timers and restarts the screen (docs/updating-the-computer.md).
+2. Allow the computer's address in Sanity, so the Studio on the computer can read the dataset. Open sanity.io/manage, choose the project, then API, then CORS origins, then Add CORS origin. Add `http://teletraan.local:3229` with Allow credentials ticked, and do the same for `http://<tailscale name>:3229`. The Status tab says "CORS origin missing" until this is done.
+3. Open the address above and type the PIN: 3229 or 3426. Nothing has to be set up for it.
 
 Release 1 is the old tree. It stays in the list as a record. It cannot be switched back to, because its folders are from before round 6.
 
@@ -73,7 +74,9 @@ The control container mounts `/opt/teletraan` (read and write), the `/run/teletr
 
 ## The PIN
 
-`CONTROL_PIN` in `local.env` is 6 to 12 digits. The page asks for it once and keeps a signed cookie for 30 days. Six wrong tries from one address in ten minutes block that address for an hour. A new PIN ends every cookie. With no PIN set the page only says to set one with the Mac tool.
+The page accepts exactly two PINs, 3229 and 3426. They are a constant list in `control/lib/auth.js`. The page asks once and keeps a signed cookie for 30 days. Six wrong tries from one address in ten minutes block that address for an hour. The Keys tab shows "PIN: fixed" and has no field for it.
+
+To make the page take one other PIN, add the line `CONTROL_PIN='4417'` to `/opt/teletraan/local.env` by hand over SSH (4 to 12 digits, nothing else is checked). The page then accepts only that PIN, the two fixed ones stop working, and every cookie made before is over. Take the line out to go back to the two fixed PINs. A value that is not 4 to 12 digits is ignored. The Mac tool and the Keys tab never write this line and leave it alone.
 
 ## Where the code is
 

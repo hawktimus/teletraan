@@ -614,7 +614,7 @@ test('copying from the Teletraan computer asks first, replaces the saved values 
   assert.equal(modeOf(place.secretsFile()), 0o600);
   assert.ok(result.text.includes('These lines on the Teletraan computer did not look like a key or a link and were left out: CALENDAR_BAD_URL'), result.text);
   assert.ok(!fs.existsSync(path.join(place.home, '.teletraan/pulled.tmp')), 'the temporary copy is removed');
-  assert.ok(result.calls.includes("grep -E '^(SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|CONTROL_PIN|CALENDAR_[A-Za-z0-9_]+_URL)=' '" + place.computerRepo + "/computer/local.env'"), 'only the names it needs are asked for: ' + result.calls);
+  assert.ok(result.calls.includes("grep -E '^(SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|CALENDAR_[A-Za-z0-9_]+_URL)=' '" + place.computerRepo + "/computer/local.env'"), 'only the names it needs are asked for: ' + result.calls);
   assertNoLeak(result, 'pull');
   assert.ok(!result.text.includes('NOTSECURE0123'));
 });
@@ -861,6 +861,17 @@ test('the tool never evaluates text, never reads a secrets file on this Mac with
   const printing = code.split('\n').filter(line => /(say|printf)[^\n]*\$\{?(key_values|cal_values|clean_value)\b/.test(line.replace(/\$\(mask [^)]*\)\)?/g, '')));
   printing.forEach(line => assert.ok(/\| grep -Eq/.test(line) || line.includes('printf "%s=\'%s\'\\n"'), 'a value is printed: ' + line.trim()));
   assert.ok(!/\$HOME\/(?!\.teletraan)/.test(code), 'the tool writes only in ~/.teletraan');
+});
+
+test('the Mac tool has no PIN anywhere: no menu choice, no key, no function, and merge-env.sh does not take the line', () => {
+  const code = textOf(toolFile);
+  assert.ok(!/CONTROL_PIN|set_pin|Set the PIN|PIN of the control/.test(code), 'the tool does not know the PIN');
+  assert.ok(!/CONTROL_PIN/.test(fs.readFileSync(mergeFile, 'utf8')), 'merge-env.sh does not know the PIN');
+  const place = makePlace('no-pin', { secrets: "SANITY_WRITE_TOKEN='" + secrets.oldSanity + "'\nCONTROL_PIN='123456'\n", computerEnv: "CONTROL_PIN='4417'\n" });
+  const result = place.run(['3', '1', 'k', 'k', 'k', '', 'y', 'b', 'q']);
+  assert.ok(!result.text.includes('PIN'), 'the form does not mention a PIN: ' + result.text);
+  assert.ok(fs.readFileSync(place.computerEnvFile(), 'utf8').includes("CONTROL_PIN='4417'"), 'a PIN typed by hand on the computer is left alone');
+  assert.ok(!fs.readFileSync(place.secretsFile(), 'utf8').includes('CONTROL_PIN'), 'an old PIN line on the Mac is dropped');
 });
 
 test('docs/updating-the-computer.md is written around the tool, and the other docs point to it', () => {

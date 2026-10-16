@@ -77,7 +77,7 @@ export async function createService(config, overrides = {}) {
   };
 
   const env = () => parseEnv(readText(config.envFile));
-  const auth = createAuth({ getPin: () => env().CONTROL_PIN, secretFile: config.secretFile });
+  const auth = createAuth({ getOverride: () => env().CONTROL_PIN, secretFile: config.secretFile });
   const project = readProject(config.rootDir);
 
   const ctx = {
@@ -137,15 +137,13 @@ export async function createService(config, overrides = {}) {
   }
 
   router.get('/session', (req, res) => {
-    sendJson(res, 200, { pinSet: auth.hasPin(), signedIn: auth.isAuthed(req) });
+    sendJson(res, 200, { signedIn: auth.isAuthed(req) });
   });
 
   router.post('/login', async (req, res) => {
     const body = await readJson(req);
     const result = auth.attempt(clientAddress(req), body.pin);
-    if (result.noPin) {
-      sendJson(res, 403, { error: 'Set a PIN with the Mac tool first.', noPin: true });
-    } else if (result.ok) {
+    if (result.ok) {
       sendJson(res, 200, { ok: true }, { 'Set-Cookie': auth.cookieHeader(result.cookie) });
     } else if (result.blockedSeconds) {
       log('sign-in blocked for ' + clientAddress(req));

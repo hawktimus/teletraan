@@ -10,32 +10,33 @@ import os from 'node:os';
 import path from 'node:path';
 import { test, finish } from './helpers/runner.mjs';
 import { makeZip, sampleTree } from './helpers/zip-maker.mjs';
-import { createAuth, validPin, triesAllowed, blockTime, triesWindow } from '../control/lib/auth.js';
+import { createAuth, validPin, fixedPins, triesAllowed, blockTime, triesWindow } from '../control/lib/auth.js';
 import { parseEnv, mergeEnv, envProblem } from '../control/lib/env-merge.js';
 import { createService } from '../control/server.js';
 
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-auth-'));
 let clock = 1_800_000_000_000;
-let pin = '123456';
+let override = '';
 const secretFile = path.join(work, 'control-secret');
-const auth = createAuth({ getPin: () => pin, secretFile: secretFile, now: () => clock });
+const auth = createAuth({ getOverride: () => override, secretFile: secretFile, now: () => clock });
 const request = cookie => ({ headers: cookie ? { cookie: 'teletraan_control=' + cookie } : {} });
 
-test('a PIN is 6 to 12 digits', () => {
-  ['123456', '123456789012'].forEach(value => assert.equal(validPin(value), true, value));
-  ['12345', '1234567890123', '12345a', '', undefined, '12 456'].forEach(value => assert.equal(validPin(value), false, String(value)));
+test('the two fixed PINs are the team numbers, and a PIN typed by hand is 4 to 12 digits', () => {
+  assert.deepEqual(fixedPins, ['3229', '3426']);
+  ['1234', '123456789012'].forEach(value => assert.equal(validPin(value), true, value));
+  ['123', '1234567890123', '12345a', '', undefined, '12 456'].forEach(value => assert.equal(validPin(value), false, String(value)));
 });
 
 test('the secret is made on the first start with mode 600 and kept', () => {
-  assert.equal(auth.attempt('1.1.1.1', '123456').ok, true);
+  assert.equal(auth.attempt('1.1.1.1', '3229').ok, true);
   assert.equal(fs.statSync(secretFile).mode & 0o777, 0o600);
   const before = fs.readFileSync(secretFile, 'utf8');
-  createAuth({ getPin: () => pin, secretFile: secretFile }).attempt('1.1.1.1', '123456');
+  createAuth({ getOverride: () => override, secretFile: secretFile }).attempt('1.1.1.1', '3229');
   assert.equal(fs.readFileSync(secretFile, 'utf8'), before);
 });
 
 test('the right PIN gives a cookie good for 30 days, and it is HttpOnly and on /control only', () => {
-  const result = auth.attempt('2.2.2.2', '123456');
+  const result = auth.attempt('2.2.2.2', '3426');
   assert.equal(result.ok, true);
   const value = result.cookie;
   assert.equal(auth.isAuthed(request(value)), true);
@@ -48,17 +49,17 @@ test('the right PIN gives a cookie good for 30 days, and it is HttpOnly and on /
   assert.equal(auth.isAuthed(request(value)), false, 'over after 30 days');
 });
 
-test('a cookie that was changed, copied from another secret, or made before a new PIN does not work', () => {
-  const value = auth.attempt('3.3.3.3', '123456').cookie;
+test('a cookie that was changed, copied from another secret, or made before a typed PIN took over does not work', () => {
+  const value = auth.attempt('3.3.3.3', '3229').cookie;
   assert.equal(auth.isAuthed(request(value)), true);
   assert.equal(auth.isAuthed(request(value.slice(0, -1) + (value.endsWith('0') ? '1' : '0'))), false);
   assert.equal(auth.isAuthed(request('')), false);
   assert.equal(auth.isAuthed(request('garbage')), false);
-  const other = createAuth({ getPin: () => pin, secretFile: path.join(work, 'other-secret'), now: () => clock });
+  const other = createAuth({ getOverride: () => override, secretFile: path.join(work, 'other-secret'), now: () => clock });
   assert.equal(other.isAuthed(request(value)), false);
-  pin = '654321';
-  assert.equal(auth.isAuthed(request(value)), false, 'a new PIN ends every old cookie');
-  pin = '123456';
+  override = '654321';
+  assert.equal(auth.isAuthed(request(value)), false, 'a PIN typed in local.env ends every old cookie');
+  override = '';
 });
 
 test('six wrong tries in ten minutes block the address for an hour, and the right PIN does not get through meanwhile', () => {
@@ -66,12 +67,12 @@ test('six wrong tries in ten minutes block the address for an hour, and the righ
   for (let i = 1; i < triesAllowed; i++) assert.equal(auth.attempt(address, '000000').triesLeft, triesAllowed - i);
   const sixth = auth.attempt(address, '000000');
   assert.equal(sixth.blockedSeconds, blockTime / 1000);
-  assert.equal(auth.attempt(address, '123456').ok, false, 'blocked even with the right PIN');
-  assert.equal(auth.attempt('5.5.5.5', '123456').ok, true, 'another address is not blocked');
+  assert.equal(auth.attempt(address, '3229').ok, false, 'blocked even with the right PIN');
+  assert.equal(auth.attempt('5.5.5.5', '3229').ok, true, 'another address is not blocked');
   clock += blockTime - 1000;
   assert.ok(auth.blockedFor(address) > 0);
   clock += 2000;
-  assert.equal(auth.attempt(address, '123456').ok, true, 'free after an hour');
+  assert.equal(auth.attempt(address, '3229').ok, true, 'free after an hour');
 });
 
 test('tries spread over more than ten minutes do not add up', () => {
@@ -83,12 +84,34 @@ test('tries spread over more than ten minutes do not add up', () => {
   assert.equal(auth.blockedFor(address), 0);
 });
 
-test('with no PIN set, nothing signs in', () => {
-  pin = '';
-  assert.deepEqual(auth.attempt('7.7.7.7', ''), { ok: false, noPin: true });
-  assert.equal(auth.hasPin(), false);
+test('with no CONTROL_PIN exactly 3229 and 3426 sign in, and never a word about setting a PIN', () => {
+  assert.equal(auth.attempt('7.7.7.1', '3229').ok, true);
+  assert.equal(auth.attempt('7.7.7.2', '3426').ok, true);
+  ['', '0000', '3230', '32290', '322', '123456', undefined].forEach((value, index) => {
+    const result = auth.attempt('7.7.8.' + index, value);
+    assert.equal(result.ok, false, String(value));
+    assert.ok(result.triesLeft > 0 && !('noPin' in result), String(value));
+  });
+  assert.equal(auth.hasPin, undefined, 'there is no state of having no PIN');
   assert.equal(auth.isAuthed(request('1800000000000.' + 'a'.repeat(64))), false);
-  pin = '123456';
+});
+
+test('a PIN typed in local.env is the only one that works, 4 to 12 digits and no other rule, and a bad one is ignored', () => {
+  override = '4417';
+  assert.equal(auth.attempt('8.8.8.1', '3229').ok, false, 'the fixed PINs stop working');
+  assert.equal(auth.attempt('8.8.8.1', '3426').ok, false);
+  const good = auth.attempt('8.8.8.2', '4417');
+  assert.equal(good.ok, true);
+  assert.equal(auth.isAuthed(request(good.cookie)), true);
+  override = '000000000001';
+  assert.equal(auth.attempt('8.8.8.3', '000000000001').ok, true, 'no format rule beyond 4 to 12 digits');
+  assert.equal(auth.isAuthed(request(good.cookie)), false, 'the cookie of the other PIN is over');
+  override = '12';
+  assert.equal(auth.attempt('8.8.8.4', '12').ok, false, 'a PIN of two digits is ignored');
+  assert.equal(auth.attempt('8.8.8.4', '3229').ok, true, 'and the fixed ones work');
+  override = 'abcd';
+  assert.equal(auth.attempt('8.8.8.5', '3426').ok, true);
+  override = '';
 });
 
 test('local.env is read and merged without losing comments, and a value with a quote or a line break is refused', () => {
@@ -139,7 +162,7 @@ test('without the cookie a page is the sign-in form, an API call is 401, and the
     assert.equal((await fetch(s.base + '/control/login.js')).headers.get('content-type').startsWith('text/javascript'), true);
     assert.equal((await fetch(s.base + '/control/api/releases')).status, 401);
     assert.equal((await fetch(s.base + '/control/api/helper/status', { method: 'POST' })).status, 401);
-    assert.deepEqual(await (await fetch(s.base + '/control/api/session')).json(), { pinSet: true, signedIn: false });
+    assert.deepEqual(await (await fetch(s.base + '/control/api/session')).json(), { signedIn: false });
   } finally { s.server.close(); }
 });
 
@@ -164,14 +187,27 @@ test('a wrong PIN is 401, the right one sets the cookie, and the pages and calls
   } finally { s.server.close(); }
 });
 
-test('with no PIN in local.env the form says to set one with the Mac tool', async () => {
+test('with no PIN in local.env 3229 and 3426 open the page, nothing else does, and nothing says to set a PIN', async () => {
   const s = await serve();
   try {
     fs.writeFileSync(path.join(s.root, 'local.env'), "SANITY_WRITE_TOKEN='x'\n");
-    assert.deepEqual(await (await fetch(s.base + '/control/api/session')).json(), { pinSet: false, signedIn: false });
-    const result = await signIn(s.base);
-    assert.equal(result.response.status, 403);
-    assert.ok((await result.response.json()).error.includes('Set a PIN with the Mac tool first'));
+    assert.deepEqual(await (await fetch(s.base + '/control/api/session')).json(), { signedIn: false });
+    assert.equal((await signIn(s.base, '3229')).response.status, 200);
+    assert.equal((await signIn(s.base, '3426')).response.status, 200);
+    const wrong = await signIn(s.base, '424242');
+    assert.equal(wrong.response.status, 401);
+    assert.ok(!JSON.stringify(await wrong.response.json()).includes('Set a PIN'));
+    const html = await (await fetch(s.base + '/control/')).text();
+    const script = fs.readFileSync(new URL('../control/static/login.js', import.meta.url), 'utf8');
+    assert.ok(!/set a pin/i.test(html + script), 'neither the page nor its script says to set a PIN');
+  } finally { s.server.close(); }
+});
+
+test('a CONTROL_PIN in local.env replaces the two fixed ones for the whole service', async () => {
+  const s = await serve();
+  try {
+    assert.equal((await signIn(s.base, '3229')).response.status, 401);
+    assert.equal((await signIn(s.base, '424242')).response.status, 200);
   } finally { s.server.close(); }
 });
 

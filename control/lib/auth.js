@@ -1,6 +1,8 @@
-// The PIN, the cookie and the lockout. CONTROL_PIN is 6 to 12 digits in local.env. A good PIN gives a
-// signed cookie (HMAC-SHA-256) that lasts 30 days. Six wrong tries from one address in ten minutes block
-// that address for an hour. The secret is made on the first start and kept in a file with mode 600.
+// The PIN, the cookie and the lockout. The page accepts the two PINs in fixedPins and nothing else. If
+// CONTROL_PIN is in local.env (typed by hand over SSH, 4 to 12 digits), the page accepts only that one.
+// A good PIN gives a signed cookie (HMAC-SHA-256) that lasts 30 days. Six wrong tries from one address in
+// ten minutes block that address for an hour. The secret is made on the first start and kept in a file
+// with mode 600.
 
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -12,7 +14,9 @@ export const triesAllowed = 6;
 export const triesWindow = 10 * 60 * 1000;
 export const blockTime = 60 * 60 * 1000;
 
-const pinPattern = /^[0-9]{6,12}$/;
+// 3229 and 3426 are the two team numbers
+export const fixedPins = ['3229', '3426'];
+const pinPattern = /^[0-9]{4,12}$/;
 
 export function validPin(pin) {
   return pinPattern.test(String(pin || ''));
@@ -24,9 +28,9 @@ function same(a, b) {
   return left.length === right.length && crypto.timingSafeEqual(left, right);
 }
 
-// options: getPin() the PIN now in local.env, secretFile, now() in ms
+// options: getOverride() the CONTROL_PIN now in local.env or nothing, secretFile, now() in ms
 export function createAuth(options) {
-  const getPin = options.getPin;
+  const getOverride = options.getOverride || (() => '');
   const now = options.now || Date.now;
   const failures = new Map();
   const blocked = new Map();
@@ -48,7 +52,14 @@ export function createAuth(options) {
     return secret;
   }
 
-  // The cookie holds the end time and a signature over the end time and the PIN, so a new PIN ends every old cookie
+  // The PINs that open the page now. A usable CONTROL_PIN replaces the two fixed ones; one that is not 4 to 12
+  // digits is ignored, so a typing mistake cannot lock everybody out.
+  function acceptedPins() {
+    const typed = String(getOverride() || '');
+    return validPin(typed) ? [typed] : fixedPins;
+  }
+
+  // The cookie holds the end time and a signature over the end time and the PIN, so a changed CONTROL_PIN ends every old cookie
   function sign(expires, pin) {
     return crypto.createHmac('sha256', readSecret()).update(expires + '.' + pin).digest('hex');
   }
@@ -59,12 +70,14 @@ export function createAuth(options) {
   }
 
   function checkCookie(value) {
-    const pin = getPin();
-    if (!validPin(pin)) return false;
     const found = /^([0-9]{10,16})\.([0-9a-f]{64})$/.exec(String(value || ''));
     if (!found) return false;
     if (Number(found[1]) < now()) return false;
-    return same(found[2], sign(found[1], pin));
+    let good = false;
+    acceptedPins().forEach(pin => {
+      if (same(found[2], sign(found[1], pin))) good = true;
+    });
+    return good;
   }
 
   function cookieOf(req) {
@@ -91,16 +104,19 @@ export function createAuth(options) {
     return Math.ceil((until - now()) / 1000);
   }
 
-  // Tries a PIN. Returns { ok, cookie } or { ok: false, blockedSeconds, triesLeft, noPin }
+  // Tries a PIN. Returns { ok, cookie } or { ok: false, blockedSeconds, triesLeft }
   function attempt(address, pin) {
-    const real = getPin();
-    if (!validPin(real)) return { ok: false, noPin: true };
     const wait = blockedFor(address);
     if (wait > 0) return { ok: false, blockedSeconds: wait };
 
-    if (same(String(pin || ''), real)) {
+    const typed = String(pin || '');
+    let match = '';
+    acceptedPins().forEach(real => {
+      if (same(typed, real)) match = real;
+    });
+    if (match) {
       failures.delete(address);
-      return { ok: true, cookie: makeCookie(real) };
+      return { ok: true, cookie: makeCookie(match) };
     }
     const recent = (failures.get(address) || []).filter(time => time > now() - triesWindow);
     recent.push(now());
@@ -117,7 +133,7 @@ export function createAuth(options) {
     return cookieName + '=' + value + '; Path=/control; HttpOnly; SameSite=Strict; Max-Age=' + cookieDays * 86400;
   }
 
-  return { isAuthed: isAuthed, attempt: attempt, blockedFor: blockedFor, cookieHeader: cookieHeader, cookieOf: cookieOf, hasPin: () => validPin(getPin()) };
+  return { isAuthed: isAuthed, attempt: attempt, blockedFor: blockedFor, cookieHeader: cookieHeader, cookieOf: cookieOf };
 }
 
 // The address a request came from. nginx sets X-Real-IP to the address it saw and nothing else sets it.

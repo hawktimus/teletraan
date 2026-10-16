@@ -64,7 +64,7 @@ take_line() {
   local name=${1%%=*} value
   value=$(unquote "${1#*=}")
   case $name in
-    SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|CONTROL_PIN)
+    SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY)
       case $value in
         '') set_key "$name" '' ;;
         '['*) ;;

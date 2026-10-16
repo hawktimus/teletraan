@@ -1,4 +1,4 @@
-# Read by teletraan-tool, never run. The menus for keys, calendar links and the PIN.
+# Read by teletraan-tool, never run. The menus for keys and calendar links.
 show_keys() {
   local i=0
   while [ "$i" -lt "$form_key_count" ]; do
@@ -35,8 +35,6 @@ edit_key() {
       prompt_hidden "  New value (the typing is hidden): "
       if [ -z "$answer" ]; then
         say "  Nothing typed, so it is kept."
-      elif [ "${key_names[$i]}" = CONTROL_PIN ] && ! printf '%s' "$answer" | grep -Eq '^[0-9]{6,12}$'; then
-        say "  Not saved. A PIN is 6 to 12 digits. It is kept as it was."
       elif check_key "$answer"; then
         set_key "${key_names[$i]}" "$clean_value"
         say "  Now: $(mask "$clean_value")"
@@ -191,26 +189,4 @@ keys_and_calendars() {
   forget_cleared
   write_secrets || problem "could not tidy $secrets_file."
   say "Done. The Teletraan computer has the new values."
-}
-
-# 8. The PIN of the control page. It travels like a key and is shown as dots.
-set_pin() {
-  local last=$((${#key_names[@]} - 1))
-  step "PIN of the control page on the Teletraan computer $computer_name"
-  load_secrets
-  change_notes=()
-  change_count=0
-  edit_key "$last"
-  if [ "$change_count" = 0 ]; then
-    say "Nothing changed."
-    return 0
-  fi
-  if ! write_secrets; then
-    problem "could not save $secrets_file."
-    return 1
-  fi
-  send_to_computer || return 1
-  forget_cleared
-  write_secrets || problem "could not tidy $secrets_file."
-  say "Done. Open the control page and sign in with the PIN."
 }

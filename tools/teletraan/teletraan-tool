@@ -56,12 +56,11 @@ address=''
 # The keys and calendars saved on this Mac. A key is 0 when it is not set, 1 when
 # it has a value and 2 when it was cleared and the Teletraan computer has not been told yet. A
 # calendar with an empty value was removed and the Teletraan computer has not been told yet.
-key_names=(SANITY_WRITE_TOKEN MONDAY_API_TOKEN TBA_AUTH_KEY CONTROL_PIN)
-key_labels=('Sanity write token' 'Monday token' 'The Blue Alliance key' 'Control page PIN')
-key_uses=('lets the Teletraan computer write its status and the Monday tasks into Sanity' 'lets the computer read the Monday boards' 'lets the computer read the competition data' 'lets coaches sign in to the control page, 6 to 12 digits')
-key_values=('' '' '' '')
-key_states=(0 0 0 0)
-# The form of Keys and calendars asks for the first three. The PIN of the control page has choice 8.
+key_names=(SANITY_WRITE_TOKEN MONDAY_API_TOKEN TBA_AUTH_KEY)
+key_labels=('Sanity write token' 'Monday token' 'The Blue Alliance key')
+key_uses=('lets the Teletraan computer write its status and the Monday tasks into Sanity' 'lets the computer read the Monday boards' 'lets the computer read the competition data')
+key_values=('' '' '')
+key_states=(0 0 0)
 form_key_count=3
 cal_names=()
 cal_values=()

@@ -5,18 +5,16 @@
 
 import { Refusal } from './http.js';
 
-export const keyNames = ['SANITY_WRITE_TOKEN', 'MONDAY_API_TOKEN', 'TBA_AUTH_KEY', 'SANITY_AUTH_TOKEN', 'CONTROL_PIN'];
+export const keyNames = ['SANITY_WRITE_TOKEN', 'MONDAY_API_TOKEN', 'TBA_AUTH_KEY', 'SANITY_AUTH_TOKEN'];
 
 export const labels = {
   SANITY_WRITE_TOKEN: 'Sanity write key',
   MONDAY_API_TOKEN: 'Monday token',
   TBA_AUTH_KEY: 'The Blue Alliance key',
   SANITY_AUTH_TOKEN: 'Sanity read key (optional)',
-  CONTROL_PIN: 'PIN of this page',
 };
 
 const keyPattern = /^[A-Za-z0-9_.-]+$/;
-const pinPattern = /^[0-9]{6,12}$/;
 const linkPattern = /^[A-Za-z0-9._~:/?#@!&()*+,;=%-]+$/;
 const calendarName = /^CALENDAR_[A-Za-z0-9_]+_URL$/;
 
@@ -50,10 +48,6 @@ function cleanLink(value) {
 
 function cleanKey(name, value) {
   const text = String(value || '').trim();
-  if (name === 'CONTROL_PIN') {
-    if (!pinPattern.test(text)) throw new Refusal(400, 'The PIN is 6 to 12 digits.');
-    return text;
-  }
   if (!keyPattern.test(text)) throw new Refusal(400, 'A key has letters, digits, dots, dashes and underscores only, with nothing else on the line.');
   return text;
 }
@@ -75,7 +69,6 @@ export function incomingLines(input) {
       lines.push(name + "='" + cleanKey(name, row.value) + "'");
       changed.push({ name: name, did: 'set' });
     } else if (row.action === 'clear') {
-      if (name === 'CONTROL_PIN') throw new Refusal(400, 'The PIN cannot be cleared here, because then nobody could open this page. Set a new one instead.');
       lines.push(name + "=''");
       changed.push({ name: name, did: 'cleared' });
     }

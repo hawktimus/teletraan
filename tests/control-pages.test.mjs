@@ -64,6 +64,7 @@ check('the Keys tab never holds a value, only the mask, and has a field and a cl
   assert.ok(html.includes('abcd........'));
   assert.ok(html.includes('type="password"') && html.includes('data-clear="TBA_AUTH_KEY"') && html.includes('data-clear-calendar="CALENDAR_TEAM_URL"'));
   assert.ok(html.includes('name="new-link"') && html.includes('data-save'));
+  assert.ok(html.includes('PIN: fixed') && !html.includes('name="CONTROL_PIN"'), 'the PIN shows as text and has no field');
 });
 
 check('each tab file registers itself with an id and a title, and parses', () => {

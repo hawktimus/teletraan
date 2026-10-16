@@ -150,7 +150,7 @@ export function keysHtml(data) {
     '<button type="button" class="act quiet" data-clear-calendar="' + esc(calendar.name) + '">Clear</button></div></div>').join('');
 
   return '<div class="grid">' +
-    card('Keys', keyRows || '<p>No keys are known.</p>') +
+    card('Keys', (keyRows || '<p>No keys are known.</p>') + '<p class="note">PIN: fixed</p>') +
     card('Calendars', (calendarRows || '<p>No calendars yet.</p>') +
       '<div class="key newcal"><div><strong>Add a calendar</strong></div><div class="keyform"><input name="new-name" placeholder="Name, such as Build season" autocomplete="off"><input type="password" name="new-link" placeholder="Link (https:// or webcal://)" autocomplete="off"></div></div>') +
     '</div><div class="buttons"><button type="button" class="act" data-save>Save</button></div><p class="note" data-note></p>';

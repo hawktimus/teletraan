@@ -9,7 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import * as env from '../control/routes/env.js';
-import { calendarId, incomingLines, mask, mergeEnv } from '../control/support/keys.js';
+import { calendarId, incomingLines, keyNames, labels, mask, mergeEnv } from '../control/support/keys.js';
 import { makeWorld, repo } from './helpers/control-world.mjs';
 
 let passed = 0;
@@ -29,25 +29,22 @@ await check('a key shows its first four characters then dots at 12 or more, dots
 
 await check('the merge gives the same file as merge-env.sh: replace in place, drop repeats, remove on empty, add at the end, keep every other line', () => {
   const existing = "# a comment\nTELETRAAN_PORT=8080\nSANITY_WRITE_TOKEN='old1'\nCALENDAR_TEAM_URL='https://x/a'\nSANITY_WRITE_TOKEN='old2'\nMONDAY_API_TOKEN='gone'\n\nCALENDAR_BUILD_URL='https://x/b'\n";
-  const lines = ["SANITY_WRITE_TOKEN='new1'", "MONDAY_API_TOKEN=''", "CALENDAR_OUT_URL='https://x/c'", "CONTROL_PIN='123456'", "CALENDAR_TEAM_URL='https://x/z'"];
+  const lines = ["SANITY_WRITE_TOKEN='new1'", "MONDAY_API_TOKEN=''", "CALENDAR_OUT_URL='https://x/c'", "CALENDAR_TEAM_URL='https://x/z'"];
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-keys-'));
   fs.writeFileSync(path.join(folder, 'local.env'), existing);
   fs.writeFileSync(path.join(folder, 'new'), lines.join('\n') + '\n');
-  // merge-env.sh handles only the three keys and calendars, so the PIN line is left out of its run
-  fs.writeFileSync(path.join(folder, 'new'), lines.filter(line => !line.startsWith('CONTROL_PIN')).join('\n') + '\n');
   const run = spawnSync('sh', [path.join(repo, 'tools/teletraan/merge-env.sh'), path.join(folder, 'local.env'), path.join(folder, 'new')], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stderr);
   const expected = fs.readFileSync(path.join(folder, 'local.env'), 'utf8');
-  assert.equal(mergeEnv(existing, lines.filter(line => !line.startsWith('CONTROL_PIN'))), expected);
-  assert.ok(mergeEnv(existing, ["CONTROL_PIN='123456'"]).endsWith("CONTROL_PIN='123456'\n"));
+  assert.equal(mergeEnv(existing, lines), expected);
 });
 
-await check('only known names are accepted, keys and the PIN are checked, and the PIN cannot be cleared', () => {
+await check('only known names are accepted and keys are checked, and the PIN is not a key this page changes', () => {
   assert.throws(() => incomingLines({ keys: { TELETRAAN_PORT: { action: 'set', value: '1' } } }), error => error.status === 400);
   assert.throws(() => incomingLines({ keys: { SANITY_WRITE_TOKEN: { action: 'set', value: 'has space' } } }), error => error.status === 400);
   assert.throws(() => incomingLines({ keys: { SANITY_WRITE_TOKEN: { action: 'set', value: "a'b" } } }), error => error.status === 400);
-  assert.throws(() => incomingLines({ keys: { CONTROL_PIN: { action: 'set', value: '12345' } } }), error => error.status === 400 && /6 to 12/.test(error.message));
-  assert.throws(() => incomingLines({ keys: { CONTROL_PIN: { action: 'clear' } } }), error => error.status === 400);
+  ['set', 'clear'].forEach(action => assert.throws(() => incomingLines({ keys: { CONTROL_PIN: { action: action, value: '123456' } } }), error => error.status === 400 && /not a key this page can change/.test(error.message)));
+  assert.ok(!keyNames.includes('CONTROL_PIN') && !('CONTROL_PIN' in labels), 'the PIN is not in the list of keys');
   assert.deepEqual(incomingLines({ keys: { TBA_AUTH_KEY: { action: 'keep' } } }).lines, []);
 });
 
@@ -66,7 +63,7 @@ await check('GET env shows every key masked, never a value, and lists the calend
   const answer = await world.router.call('GET', '/env');
   const byName = Object.fromEntries(answer.json.keys.map(key => [key.name, key.masked]));
   assert.equal(byName.SANITY_WRITE_TOKEN, 'skFA........');
-  assert.equal(byName.CONTROL_PIN, '........');
+  assert.ok(!('CONTROL_PIN' in byName) && !answer.text.includes('CONTROL_PIN'), 'a PIN typed by hand in local.env is not listed or shown');
   assert.equal(byName.MONDAY_API_TOKEN, 'not set');
   assert.deepEqual(answer.json.calendars.map(calendar => calendar.code), ['team']);
   assert.ok(!answer.text.includes('0123456789') && !answer.text.includes('secretpath') && !answer.text.includes('123456\''));
