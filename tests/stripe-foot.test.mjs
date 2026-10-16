@@ -1,7 +1,7 @@
 // Tests for the foot of the large frame: Cybertron draws a row of neon slashes along it, and the last row of
 // every large panel must end above them, in every style and layout, with both teams. The slashes come from
 // core/plate.js (cybertron-grid1, and its turned form for a team with the other corners cut). The boxes of the
-// pages are in each panel's stylesheet, with the Cybertron numbers in styles/cybertron.css, and the rows of a
+// pages are in each panel's stylesheet, with the Cybertron numbers in styles/cybertron/theme.css, and the rows of a
 // box are added up here the way the page stacks them. Nothing touches the network or a browser.
 //
 //   node tests/stripe-foot.test.mjs
@@ -55,7 +55,7 @@ const pixels = value => (String(value).trim() === '0' ? 0 : Number(/(-?\d+(?:\.\
 // the line height of a font shorthand: 600 44px/48px family
 const lineOf = font => Number(/\/(\d+)px/.exec(font)[1]);
 
-const cybertron = read('dashboard/styles/cybertron.css');
+const cybertron = (read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css'));
 const panelCss = name => read('dashboard/panels/' + name + '/panel.css');
 const sheets = { base: read('dashboard/base.css'), monday: read('dashboard/monday.css') };
 

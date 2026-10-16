@@ -303,7 +303,7 @@ test('the TEAM text is as large as it was: the banner keeps 60 px and the other 
 test('the metal and the shadow of the plate stay clear of the name above it and of TELETRAAN I under it, in Original and in Cybertron', () => {
   const edge = thinEdge();
   const banner = rulesOf('dashboard/panels/banner/panel.css');
-  const cybertron = rulesOf('dashboard/styles/cybertron.css');
+  const cybertron = rulesOf('dashboard/styles/cybertron/theme.css');
   const half = edge.rim / 2;
   const top = 8; // the line of the plate at the top (teamPlateMarkup)
   const foot = 69; // and at the bottom
@@ -379,7 +379,7 @@ test('the ticker\'s line is between the neon lines with 2 px to spare, and the w
 });
 
 test('the message stops before the stepped end of the frame, the end that has no tag, and the mirror puts the margin at the other end', () => {
-  const standard = rulesOf('dashboard/styles/cybertron.css');
+  const standard = rulesOf('dashboard/styles/cybertron/theme.css');
   const bar = rulesOf('dashboard/layouts/bar.css');
   const padding = 16; // the row's own padding in both (cybertron.css, bar.css)
   const cases = [
@@ -406,7 +406,7 @@ test('the Studio\'s 52 characters still have the room beside the longest tag: th
   const row = 1840;
   const tag = Number(/reminder: \{ word: 'REMINDER', width: (\d+) \}/.exec(read('dashboard/panels/ticker/panel.js'))[1]);
   const gap = px(declared(rulesOf('dashboard/panels/ticker/panel.css'), '.ticker', 'gap'));
-  const room = row - 2 * 16 - tag - gap - px(declared(rulesOf('dashboard/styles/cybertron.css'), 'html[data-style="cybertron"] .ticker .message', 'margin-right'));
+  const room = row - 2 * 16 - tag - gap - px(declared(rulesOf('dashboard/styles/cybertron/theme.css'), 'html[data-style="cybertron"] .ticker .message', 'margin-right'));
   assert.ok(room >= 52 * letter, 'the message is ' + room + ' wide and 52 letters are ' + Math.round(52 * letter));
   assert.ok(/Up to 52 characters fit/.test(read('studio/schemas/tipOrNews.js')), 'the Studio says 52');
 });

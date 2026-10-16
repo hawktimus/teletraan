@@ -47,12 +47,22 @@ export const metals = ['gold', 'silver'];
 //   plain     flat, and no screws on the frames and no // in the panel headers
 export const looks = ['polished', 'flat', 'plain'];
 
-// The Style setting in Dashboard Settings: which look the whole screen has.
-// core/style.js turns it into data-style on the page and into a layout. The Studio copies this list.
-//   original   the screen as it has always been. It keeps the layout its theme names
-//   cybertron  the sharp style: the layout of Original, drawn in gunmetal plates with a steel edge and neon
-//   minimal    the industrial style, in the bar layout whatever the theme says
-export const styles = ['original', 'cybertron', 'minimal'];
+// The themes (docs/layouts.md, "Themes"): the look of the frames, the textures and the type. Each one is a
+// folder in styles/ with theme.css, frame.css, tokens.css and transitions.js, and core/style-loader.js finds
+// the folder from the id. The id goes on the page as data-style (core/style.js). The Studio copies this list.
+//   original   the screen as it has always been
+//   cybertron  the sharp theme: gunmetal plates with a steel edge and neon
+//   retro      a placeholder that looks like Original until its folder loses the file PLACEHOLDER
+export const themeIds = ['original', 'cybertron', 'retro'];
+
+// Minimal is not a theme any more: the bar layout draws as Minimal drew, in every theme (layouts/bar-minimal.css).
+// The word stays as a name a Screen or a preview may still hold. It means the Original theme in the bar layout,
+// until the Views (docs/layouts.md) have the layout of their own.
+export const barStyle = 'minimal';
+
+// The names a Screen, a preview and Style in Dashboard Settings hold. Retro is not in the list yet: ?style= and the weekday
+// schedule of themes reach it through themeIds (core/style.js, isStyle), and the Studio lists follow when it is designed.
+export const styles = ['original', 'cybertron', barStyle];
 
 // The Screens (core/screens.js): three documents in the Studio, one for each style. The id of a document says its
 // style, so no field does. Dashboard Settings (Look tab) names the Screen that plays on each day of the week. Original
@@ -687,7 +697,12 @@ export const teamTrim = {
 // The metal of a team's frames (Studio: Teams, Colors, Metal) and the class that core/teams.js puts on the html
 // element while a team with that metal is on the screen, which tokens.css reads. Gold is the metal Prime has and
 // the one a team document with no metal falls back to, so it has no class. The Studio copies the two names.
-export const teamMetals = { gold: '', steel: 'metal-steel' };
+export const teamMetals = { gold: '', steel: 'metal-steel', purple: 'metal-purple' };
+
+// The palette of a team (Studio: Teams, hidden) and the class core/teams.js puts on the html element. Standard has no class.
+// Inverted is the Nova palette: gold as the main color and purple as the accent, and the chips are purple with white text
+// (teams.css, tokens.css). The blue and steel palette stays in the code behind the old values and is not seeded.
+export const teamPalettes = { standard: '', inverted: 'palette-inverted' };
 
 // The class for a team with Glow on (Studio: Teams, Colors, Glow): the neon lines of its frames and header lines get two
 // wider and fainter lines of the same color outside them (base.css). They are strokes, never a filter.
@@ -729,6 +744,7 @@ export const primeTeam = {
     label: '#FACA2A',
   },
   metal: 'gold',
+  palette: 'standard',
   glow: false,
   mirror: false,
   bolts: 'hex',

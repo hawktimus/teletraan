@@ -1393,8 +1393,9 @@ test('the screw is drawn once, as one symbol with a slot across the head, in the
 test('the metal is set by the nearest data-metal, with the colours worked out on that element', () => {
   assert.ok(!/html\[data-metal/.test(tokensCss), 'the metal blocks are not tied to the html element');
   // gold is the page's, and the metal of a team that has no steel in Cybertron and Minimal, whatever Frame metal and the page change say
-  const goldList = ':root,\\s*\\[data-metal="gold"\\],\\s*html\\[data-style="cybertron"\\]:not\\(\\.metal-steel\\),\\s*html\\[data-style="cybertron"\\]:not\\(\\.metal-steel\\) \\[data-metal\\],'
-    + '\\s*html\\[data-style="minimal"\\]:not\\(\\.metal-steel\\),\\s*html\\[data-style="minimal"\\]:not\\(\\.metal-steel\\) \\[data-metal\\] \\{\\s*';
+  const notSteel = ':not\\(\\.metal-steel\\):not\\(\\.metal-purple\\)';
+  const goldList = ':root,\\s*\\[data-metal="gold"\\],\\s*html\\[data-style="cybertron"\\]' + notSteel + ',\\s*html\\[data-style="cybertron"\\]' + notSteel + ' \\[data-metal\\],'
+    + '\\s*html\\[data-layout="bar"\\]' + notSteel + ',\\s*html\\[data-layout="bar"\\]' + notSteel + ' \\[data-metal\\] \\{\\s*';
   assert.ok(new RegExp(goldList + '--metal-1:').test(tokensCss));
   assert.ok(/\[data-metal="silver"\] \{\s*--metal-1:/.test(tokensCss));
   // the variables made from the metal are made on every element that sets one, or an area would keep the page's
@@ -1650,7 +1651,7 @@ test('base.css draws the rivets only while the style is Original, and no other s
   assert.equal(/animation|transition|filter|shadow|blur/.test(rule('.rivets')), false, 'static, with no effect');
 
   // the other stylesheets leave them alone, apart from frame.css, which brings them in and takes them away with the frame,
-  // and styles/minimal.css, which shows the rivets on the frames Minimal draws with them (docs/layouts.md, "Frames")
+  // and layouts/bar-minimal.css, which shows the rivets on the frames Minimal draws with them (docs/layouts.md, "Frames")
   const others = [];
   const walk = folder => fs.readdirSync(folder, { withFileTypes: true }).forEach(entry => {
     const full = path.join(folder, entry.name);
@@ -1658,9 +1659,9 @@ test('base.css draws the rivets only while the style is Original, and no other s
     else if (entry.name.endsWith('.css') && !['base.css', 'frame.css'].includes(entry.name) && /rivets/.test(fs.readFileSync(full, 'utf8'))) others.push(path.relative(dashboardFolder, full));
   });
   walk(dashboardFolder);
-  assert.deepEqual(others, ['styles/minimal.css'], 'a style or theme that draws or hides them');
-  const minimalCss = fs.readFileSync(path.join(dashboardFolder, 'styles/minimal.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
-  assert.deepEqual(minimalCss.match(/[^\n]*(\.rivets)[^\n]*/g), ['html[data-style="minimal"] .rivets { display: inline; }'], 'Minimal shows the rivets');
+  assert.deepEqual(others, ['layouts/bar-minimal.css', 'styles/retro/theme.css'], 'a style or theme that draws or hides them: the bar drawing, and the Retro copy of Original');
+  const minimalCss = fs.readFileSync(path.join(dashboardFolder, 'layouts/bar-minimal.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.deepEqual(minimalCss.match(/[^\n]*(\.rivets)[^\n]*/g), ['html[data-layout="bar"] .rivets { display: inline; }'], 'Minimal shows the rivets');
 });
 
 test('the rivets come in after the lines are drawn, and go with the frame in a page change', () => {

@@ -1,5 +1,5 @@
 // Tests for the width of the Monday cards (dashboard/monday.css and the stylesheets and scripts of panels/monday-*,
-// core/areas.js and styles/minimal.css). The bar layout of Minimal gives the large panel a page 1427 wide, and the
+// core/areas.js and layouts/bar-minimal.css). The bar layout of Minimal gives the large panel a page 1427 wide, and the
 // five cards use all of it: the header and the body are as wide as the area, the cells and the bars take the room, and
 // the weld seam, the vertical line that stands where a 1152 page ends, is not drawn under a card. The standard layout
 // is as it was. The stylesheets are checked by reading them, because the sizes need a browser to be seen. core/areas.js
@@ -296,9 +296,9 @@ test('no card draws a vertical rule of its own at the right end, in any style or
 });
 
 test('the weld seam of Minimal is not drawn while a Monday card is on screen, and is drawn for every other panel', () => {
-  const css = withoutComments(read('styles/minimal.css'));
+  const css = withoutComments(read('layouts/bar-minimal.css'));
   const rules = rulesOf(css);
-  const hidden = 'html[data-style="minimal"] .area[data-page^="monday-"] ';
+  const hidden = 'html[data-layout="bar"] .area[data-page^="monday-"] ';
 
   assert.ok(/display:\s*none;/.test(rules[hidden + '.art-weld-dark']), 'the dark line is hidden');
   assert.ok(/display:\s*none;/.test(rules[hidden + '.art-weld-light']), 'and the light line beside it');
@@ -310,7 +310,7 @@ test('the weld seam of Minimal is not drawn while a Monday card is on screen, an
   assert.deepEqual(Array.from(registry.matchAll(/\{ id: '(monday-[a-z-]+)'/g)).map(match => match[1]), ['monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board'].concat(cardIds.slice(1)), 'the cards are the panels with the prefix: the six of the one task board and the older ones');
 
   // the seam is still in the frame of the main panel, which is where the other panels see it
-  assert.ok(/html\[data-style="minimal"\] \.art-weld-dark \{/.test(css) && /html\[data-style="minimal"\] \.art-weld-light \{/.test(css), 'the seam is still painted');
+  assert.ok(/html\[data-layout="bar"\] \.art-weld-dark \{/.test(css) && /html\[data-layout="bar"\] \.art-weld-light \{/.test(css), 'the seam is still painted');
 });
 
 // core/areas.js, with stand-ins for the files it reads. Elements are objects that keep what is put on them.

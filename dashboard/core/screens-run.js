@@ -78,7 +78,8 @@ function holdLook(look) {
 function mondayStyleFits(style) {
   try {
     const theme = resolveTheme(getContent().theme, new Date()).theme;
-    const wanted = drawnFor(layoutFor(style, layoutOf(theme)), shapesFor(style));
+    const wantedLayout = layoutFor(style, layoutOf(theme));
+    const wanted = drawnFor(wantedLayout, shapesFor(style, wantedLayout));
     const onPage = drawnFor(layoutNow(), shapesNow());
     if (wanted === onPage || layoutsChangeLive()) return true;
 

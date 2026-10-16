@@ -194,7 +194,7 @@ async function changeAtGate(region, next) {
 // that does not change would only flicker.
 function planFor(area) {
   const change = frame.planChange(area);
-  return hasSteel(styleNow()) ? { style: change.style, finish: null } : change;
+  return hasSteel(styleNow(), layoutNow()) ? { style: change.style, finish: null } : change;
 }
 
 // Puts the next page in a region at once, with nothing to see: for a screen that

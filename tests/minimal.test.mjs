@@ -108,7 +108,7 @@ function propertiesOf(file) {
 }
 
 // A selector with the name of its style taken out, so one style's rule can be set beside the other's
-const unstyled = selector => selector.replace(/\[data-style="[a-z]+"\]/, '[style]');
+const unstyled = selector => selector.replace(/\[data-(style|layout)="[a-z]+"\]/, '[style]');
 
 const minimalKinds = ['bar-main-minimal', 'bar-banner-minimal', 'bar-ticker-minimal'];
 const cybertronOnly = ['art-cybertron', 'art-hazard', 'art-conduit', 'art-slashes', 'art-brackets', 'art-seams'];
@@ -153,11 +153,11 @@ test('no frame of Minimal has a stamped plate id or any serial text, a hazard st
 });
 
 test('the page of Minimal has no scanlines, no raised plate, no stamped id and no mark of Cybertron: its stylesheet and the files of the bar layout say so', () => {
-  const css = withoutComments(read('dashboard/styles/minimal.css'));
+  const css = withoutComments(read('dashboard/layouts/bar-minimal.css'));
 
-  assert.ok(!/repeating-linear-gradient|scan-opacity|--style-raised|plate-id|#screen \{|#screen::after/.test(css), 'no scanlines, no raised plate, no id, and nothing painted over the stage');
+  assert.ok(!/repeating-linear-gradient|scan-opacity|--style-raised|plate-id|#screen::after/.test(css), 'no scanlines, no raised plate, no id, and nothing painted over the stage');
   cybertronOnly.forEach(name => assert.ok(!css.includes(name), 'Minimal does not paint ' + name));
-  assert.ok(css.includes('html[data-style="minimal"] .header svg.double-slash { display: none; }'), 'the // mark of a header is off, because the pictures have no slashes');
+  assert.ok(css.includes('html[data-layout="bar"] .header svg.double-slash { display: none; }'), 'the // mark of a header is off, because the pictures have no slashes');
 
   // The bar layout and its panels have no id, serial text, hazard stripe, slash, conduit, bracket or scanline of their own
   const files = ['dashboard/layouts/bar.css', 'dashboard/panels/bar-banner/panel.css', 'dashboard/panels/bar-banner/panel.js', 'dashboard/panels/bar-column/panel.css', 'dashboard/panels/bar-column/panel.js'];
@@ -242,7 +242,7 @@ test('the frames of Minimal are the order\'s: steel with a thin neon line 10 ins
     assert.equal(countOf(markup, 'href="#bolt-shape"'), 4 + 4, 'hex bolts, four in the frame and four in the pieces');
   });
 
-  const properties = propertiesOf('dashboard/styles/minimal.css');
+  const properties = propertiesOf('dashboard/layouts/bar-minimal.css');
   assert.equal(properties['--style-chamfer'], '34px');
   assert.equal(properties['--style-grid-size'], '48px');
   assert.equal(properties['--style-grid-opacity'], '.07');
@@ -261,10 +261,10 @@ test('the war clock is the narrow form, 766 x 128, in Minimal and the wide form,
     assert.ok(hasText(plate.warHousingMarkup('wide', {}, true), 'width="616" height="240" viewBox="0 0 616 240"'), 'and the wide one 40 higher');
   });
 
-  const minimal = withoutComments(read('dashboard/styles/minimal.css'));
-  const cybertron = withoutComments(read('dashboard/styles/cybertron.css'));
-  const original = withoutComments(read('dashboard/styles/original.css'));
-  assert.ok(minimal.includes('html[data-style="minimal"] .war-clock { display: block; }'));
+  const minimal = withoutComments(read('dashboard/layouts/bar-minimal.css'));
+  const cybertron = withoutComments((read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css')));
+  const original = withoutComments(read('dashboard/styles/original/theme.css'));
+  assert.ok(minimal.includes('html[data-layout="bar"] .war-clock { display: block; }'));
   assert.ok(cybertron.includes('html[data-style="cybertron"] .war-clock { display: block; }'));
   assert.ok(!/war-/.test(original), 'Original has no war clock');
 
@@ -278,7 +278,7 @@ test('the mirror turns the regions of Minimal and nothing in them: the rail, the
   assert.deepEqual([m.rail.x, m.column.x, m.main.x, m.war.x], [1876, 1552, 32, 72], 'the rail and the column at the right, the main panel and the war clock at the left');
   assert.deepEqual([m.main.width, m.main.height, m.war.width, m.war.height], [1484, 736, 766, 128], 'the same sizes');
 
-  const css = withoutComments(read('dashboard/layouts/bar.css') + read('dashboard/styles/minimal.css'));
+  const css = withoutComments(read('dashboard/layouts/bar.css') + read('dashboard/layouts/bar-minimal.css'));
   assert.ok(/html\.mirrored\[data-layout="bar"\] #bar-middle/.test(css), 'the row turns with the mirror');
   assert.ok(!/mirrored[^{}]*\.(area|plate|rivets|art-[a-z-]+)\b|scaleX\(-1\)[^}]*\.(area|plate)/.test(css), 'no rule turns a frame or what is drawn on it');
 });
@@ -287,8 +287,8 @@ test('the mirror turns the regions of Minimal and nothing in them: the rail, the
 // What the two steel styles share
 
 test('Minimal and Cybertron share an explicit list of rules and of values, and every other rule and value is one style\'s', () => {
-  const minimal = rulesOf('dashboard/styles/minimal.css');
-  const cybertron = rulesOf('dashboard/styles/cybertron.css');
+  const minimal = rulesOf('dashboard/layouts/bar-minimal.css');
+  const cybertron = rulesOf('dashboard/styles/cybertron/theme.css');
   const bodyOf = (rules, selector) => (rules.filter(rule => rule.selectors.map(unstyled).includes(selector))[0] || {}).body;
 
   // A rule with the same selectors (the style's name left out) and the same body in both stylesheets, apart from the first rule,
@@ -312,8 +312,8 @@ test('Minimal and Cybertron share an explicit list of rules and of values, and e
   assert.equal(bodyOf(cybertron, 'html[style] .banner'), '--panel-face: var(--style-body);');
 
   // The custom properties: what is the same, what differs, and what only Cybertron has
-  const one = propertiesOf('dashboard/styles/minimal.css');
-  const other = propertiesOf('dashboard/styles/cybertron.css');
+  const one = propertiesOf('dashboard/layouts/bar-minimal.css');
+  const other = propertiesOf('dashboard/styles/cybertron/tokens.css');
   const same = Object.keys(one).filter(name => other[name] === one[name]).sort();
   const differ = Object.keys(one).filter(name => other[name] !== undefined && other[name] !== one[name]).sort();
   assert.deepEqual(same, ['--style-armor-bottom', '--style-armor-top', '--style-body', '--style-grid-opacity', '--style-neon', '--style-pink', '--style-rust']);
@@ -332,13 +332,14 @@ test('Minimal and Cybertron share an explicit list of rules and of values, and e
   assert.equal(one['--style-grid-size'], '48px');
 
   // Each paints the parts of a frame that only it has, and neither names the other's
-  const text = { minimal: withoutComments(read('dashboard/styles/minimal.css')), cybertron: withoutComments(read('dashboard/styles/cybertron.css')) };
+  const text = { minimal: withoutComments(read('dashboard/layouts/bar-minimal.css')), cybertron: withoutComments((read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css'))) };
   assert.ok(!/art-(minimal|weld|header-line|ticks|smudge|wear)|rivets|plate-id|bar-rail/.test(text.cybertron), 'Cybertron paints none of Minimal\'s');
   cybertronOnly.forEach(name => assert.ok(!text.minimal.includes(name), 'Minimal paints none of Cybertron\'s: ' + name));
-  ['minimal', 'cybertron'].forEach(name => rulesOf('dashboard/styles/' + name + '.css').forEach(rule => rule.selectors.forEach(selector => assert.ok(selector.startsWith('html[data-style="' + name + '"]'), name + ' only has rules for itself: ' + selector))));
+  rulesOf('dashboard/layouts/bar-minimal.css').forEach(rule => rule.selectors.forEach(selector => assert.ok(selector.startsWith('html[data-layout="bar"]'), 'the bar drawing only has rules for the bar layout: ' + selector)));
+  rulesOf('dashboard/styles/cybertron/theme.css').concat(rulesOf('dashboard/styles/cybertron/tokens.css')).forEach(rule => rule.selectors.forEach(selector => assert.ok(selector.startsWith('html[data-style="cybertron"]'), 'cybertron only has rules for itself: ' + selector)));
 
-  // The sheets that every style loads name a style in only three places: the metal and the screws in tokens.css for both, the rivets
-  // in base.css for Original, and the bolts of Cybertron's ticker in frame.css. Nothing else reaches Minimal from them.
+  // The sheets that every theme loads name a theme in only three places: the metal and the screws in tokens.css for Cybertron, the rivets
+  // in base.css for Original, and the bolts of Cybertron's ticker in frame.css. The bar layout is named by data-layout, not by a style.
   const named = [];
   const walk = folder => fs.readdirSync(path.join(root, folder), { withFileTypes: true }).forEach(entry => {
     const relative = folder + '/' + entry.name;
@@ -356,11 +357,6 @@ test('Minimal and Cybertron share an explicit list of rules and of values, and e
     'dashboard/tokens.css data-style="cybertron"',
     'dashboard/tokens.css data-style="cybertron"',
     'dashboard/tokens.css data-style="cybertron"',
-    'dashboard/tokens.css data-style="minimal"',
-    'dashboard/tokens.css data-style="minimal"',
-    'dashboard/tokens.css data-style="minimal"',
-    'dashboard/tokens.css data-style="minimal"',
-    'dashboard/tokens.css data-style="minimal"',
   ]);
 });
 

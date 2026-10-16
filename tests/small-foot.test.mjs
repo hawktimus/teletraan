@@ -1,7 +1,7 @@
 // Tests for the pages of the small frame in Cybertron: the frame has neon slashes along its foot,
 // and the last line of a page must end above them. The slashes come from core/plate.js
 // (cybertron-grid2). The boxes of the pages are in each panel's stylesheet, with the Cybertron
-// numbers in styles/cybertron.css, and the rows of a box are added up here the way the page stacks
+// numbers in styles/cybertron/theme.css, and the rows of a box are added up here the way the page stacks
 // them. Nothing touches the network or a browser.
 //
 //   node tests/small-foot.test.mjs
@@ -48,7 +48,7 @@ const pixels = value => (String(value).trim() === '0' ? 0 : Number(/(-?\d+(?:\.\
 // the line height of a font shorthand: 600 44px/48px family
 const lineOf = font => Number(/\/(\d+)px/.exec(font)[1]);
 
-const cybertron = read('dashboard/styles/cybertron.css');
+const cybertron = (read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css'));
 const own = (panel, selector, property) => rule(cybertron, 'html[data-style="cybertron"] .' + panel + ' ' + selector)[property];
 const base = (panel, selector, property) => rule(read('dashboard/panels/' + panel + '/panel.css'), '.' + panel + ' ' + selector)[property];
 // the Cybertron value when there is one, the panel's own otherwise
