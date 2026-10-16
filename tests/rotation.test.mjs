@@ -165,6 +165,18 @@ test('a block with nothing to show is skipped, and with a hidden row between vie
   views.resetViews();
 });
 
+test('an untouched Studio changes nothing: with no list the views play their own rows, and the new fields have their starting values', () => {
+  const content = contentWith();
+  ['general', 'prime', 'nova'].forEach(key => {
+    const own = views.resolveView(content, key).panels.map(item => item.panel);
+    const played = views.viewSteps(content, key, monday12).map(step => step.panel);
+    played.forEach(panel => assert.ok(own.includes(panel), key + ' plays ' + panel));
+  });
+  assert.equal(config.defaultSettings.transitionSeconds, 3);
+  assert.deepEqual(config.defaultSettings.rotationRows, []);
+  assert.equal(views.cycleBlock(), -1);
+});
+
 test('the control page can name robotics for a view and gets the general view', () => {
   const requests = fs.readFileSync(path.join(dashboardFolder, 'core/screen-requests.js'), 'utf8');
   assert.ok(requests.includes("'robotics'"));
