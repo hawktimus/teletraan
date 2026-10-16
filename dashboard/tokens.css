@@ -419,6 +419,15 @@ html.palette-inverted {
   --kit-pale: #d9fbff; /* the head of a packet and the sweeping line */
   --subtheme-accent: #d9b24a;
 
+  /* the shipped subthemes (core/subtheme-presets.js, subthemes.css): halloween */
+  --subtheme-orange: #f28c1f;
+  --subtheme-orange-deep: #a8520a;
+  --subtheme-purple: #7b3fb8;
+  --subtheme-ink: #1b1426;
+  --subtheme-stem: #5f9b3a;
+  --subtheme-web: #d3cde0;
+  --subtheme-bat: #1a1424;
+
   /* the backing of the pictures of the hidden transitions, the color of the edge of each (core/hidden-pictures.js) */
   --hidden-fill-red-eyes: #000000;
   --hidden-fill-blue-screen-1: #0177d7;

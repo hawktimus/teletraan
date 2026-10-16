@@ -90,3 +90,10 @@ export const cornerArts = [
   { id: 'fireworks', name: 'Fireworks' },
   { id: 'none', name: 'None' },
 ];
+
+// The three subthemes the screen draws itself (dashboard/core/subtheme-presets.js), in the same order, and
+// None for a rule that wants no subtheme whatever the pack's own is. tests/subthemes-part5.test.mjs fails
+// when the ids differ.
+export const subthemePresets = [
+  { id: 'halloween', name: 'Halloween' },
+];

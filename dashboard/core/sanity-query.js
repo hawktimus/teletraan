@@ -121,7 +121,7 @@ export const contentQuery = `{
   },
   "plans": *[_type == "plan"] | order(date asc, _createdAt asc) { ..., "team": team->code },
   "calendarFilters": *[_type == "calendarFilter"] | order(_createdAt asc),
-  "subthemes": *[_type == "subtheme"] | order(_createdAt asc) { name, enabled, start, end, priority, "assets": assets[] { slot, "url": image.asset->url }, rules },
+  "subthemes": *[_type == "subtheme"] | order(_createdAt asc) { name, enabled, start, end, priority, preset, "assets": assets[] { slot, "url": image.asset->url }, rules },
   "customPanels": *[_type == "customPanel"] | order(_createdAt asc) { ..., "team": team->code },
   "teams": *[_type == "team"] | order(order asc, _createdAt asc) {
     ...,

@@ -25,6 +25,7 @@
 import { defaultThemeSettings } from '../config.js';
 import { themes } from '../themes/registry.js';
 import { overlays } from '../themes/overlays/registry.js';
+import { isPreset } from './subtheme-presets.js';
 import { bannerLineLimit, defaultsOf, mergeExtras, tickerPrefixLimit, tidyArt, tidyText } from './pack-extras.js';
 import { isRecord } from './text.js';
 
@@ -119,6 +120,12 @@ function tidyUseNow(raw) {
   };
 }
 
+// The subtheme a pack rule names: a preset id (core/subtheme-presets.js), none to draw no
+// subtheme, or '' for the pack's own
+function tidySubthemeChoice(raw) {
+  return raw === 'none' || isPreset(raw) ? raw : '';
+}
+
 // A rule that cannot be used is left out, so one slip in a rule never stops
 // the ones after it. A rule with only a month and a day has no year to run
 // out, so it repeats every year whatever its switch says.
@@ -145,6 +152,8 @@ function tidyRule(raw) {
     rule.tickerPrefix = tidyText(raw.tickerPrefix, tickerPrefixLimit);
     rule.bannerLine = tidyText(raw.bannerLine, bannerLineLimit);
     rule.cornerArt = tidyArt(raw.cornerArt);
+    const named = tidySubthemeChoice(raw.subtheme);
+    if (named !== '') rule.subtheme = named;
   }
   return rule;
 }
@@ -229,6 +238,16 @@ export function ruleExtras(settings, overlayId, now) {
     bannerLine: rule ? rule.bannerLine : '',
     cornerArt: rule ? rule.cornerArt : '',
   };
+}
+
+// The subtheme the rule of one pack names, '' when it names none or there is no rule. The rule
+// is chosen as ruleExtras chooses it.
+export function ruleSubtheme(settings, overlayId, now) {
+  const theme = tidyTheme(settings);
+  const today = dateIn(theme.timeZone, now || new Date());
+  const own = theme.schedule.filter(rule => rule.kind === 'overlay' && rule.overlay === overlayId);
+  const rule = own.filter(item => ruleCovers(item, today))[0] || own[0];
+  return rule && rule.subtheme ? rule.subtheme : '';
 }
 
 // A preview (core/preview.js) holds a seasonal pack on the screen for a while without

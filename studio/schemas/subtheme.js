@@ -6,6 +6,7 @@
 
 import { defineType, defineField, defineArrayMember } from 'sanity';
 import { tooLong, titleOf } from './fields.js';
+import { subthemePresets } from '../inputs/themes.js';
 
 const themes = [
   { title: 'Any theme', value: '' },
@@ -38,6 +39,8 @@ const motions = [
   { title: 'Blink (fades in and out)', value: 'blink' },
   { title: 'Fall (a slow descent that loops)', value: 'fall' },
 ];
+
+const presets = [{ title: 'None, my own pictures', value: '' }].concat(subthemePresets.map(preset => ({ title: preset.name, value: preset.id })));
 
 const slotCode = /^[a-z0-9-]+$/;
 const slotMessage = 'Use lowercase letters, digits and hyphens only, such as star.';
@@ -91,6 +94,15 @@ export default defineType({
       type: 'number',
       description: 'Optional. When two subthemes are live at once, the higher number is drawn. Empty counts as 0.',
       validation: Rule => Rule.integer().error('Use a whole number such as 1, 2 or 3.'),
+    }),
+    defineField({
+      name: 'preset',
+      title: 'Subtheme',
+      type: 'string',
+      description: 'Optional. Halloween, Winter or Kickoff, drawn on the frames from the first day to the last. Empty uses your own pictures and rules below.',
+      options: { list: presets },
+      initialValue: '',
+      validation: Rule => Rule.valid(values(presets)).error('Pick a subtheme from the list.'),
     }),
     defineField({
       name: 'assets',

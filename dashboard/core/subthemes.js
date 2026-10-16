@@ -3,7 +3,8 @@
 // can run it. core/subthemes-layer.js draws the result.
 
 import { anchorBox, anchorNames, fitInBox } from './anchors.js';
-import { dateIn, zoneNamed } from './theme.js';
+import { dateIn, overlayShown, ruleSubtheme, zoneNamed } from './theme.js';
+import { isPreset, packSubthemes } from './subtheme-presets.js';
 import { isRecord } from './text.js';
 
 export const subthemeMotions = ['none', 'drift', 'blink', 'fall'];
@@ -53,6 +54,7 @@ export function tidySubthemes(list) {
       start: dayOf(raw.start),
       end: dayOf(raw.end),
       priority: isFinite(Number(raw.priority)) && raw.priority !== null && raw.priority !== '' ? Number(raw.priority) : 0,
+      preset: isPreset(raw.preset) ? raw.preset : '',
       assets: (Array.isArray(raw.assets) ? raw.assets : []).map(tidyAsset).filter(Boolean),
       rules: (Array.isArray(raw.rules) ? raw.rules : []).map(tidyRule).filter(Boolean),
     }));
@@ -100,4 +102,30 @@ export function spritesFor(subtheme, theme, view, layout) {
     sprites.push(Object.assign({ anchor: rule.anchor, slot: rule.slot, motion: rule.motion, box: place, asset: asset }, fitInBox(place, rule.size)));
   });
   return sprites;
+}
+
+// The shipped subtheme to draw (core/subtheme-presets.js): halloween, winter, kickoff, or '' for none.
+// The address wins (?subtheme=winter, or none), then the subtheme the schedule rule of the pack on the
+// screen names, then a live Subtheme document that has a preset, then the pack's own. asked is the
+// address value. The day is the day in the kiosk time zone.
+export function chooseShipped(content, asked, now, page) {
+  if (asked === 'none') return '';
+  if (isPreset(asked)) return asked;
+
+  const settings = content && content.theme ? content.theme : null;
+  const pack = overlayShown(page);
+  const named = pack === '' ? '' : ruleSubtheme(settings, pack, now);
+  if (named === 'none') return '';
+  if (isPreset(named)) return named;
+
+  const zone = settings ? settings.timeZone : '';
+  const day = dateIn(zoneNamed(zone), now);
+  const live = (content && content.subthemes ? content.subthemes : []).filter(item => item.preset !== '' && isLive(item, day));
+  let best = null;
+  live.forEach(item => {
+    if (best === null || item.priority > best.priority) best = item;
+  });
+  if (best) return best.preset;
+
+  return packSubthemes[pack] || '';
 }

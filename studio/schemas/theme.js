@@ -15,11 +15,12 @@
 
 import { defineType, defineField, defineArrayMember } from 'sanity';
 import { noteField, tooLong } from './fields.js';
-import { themes, overlays, cornerArts } from '../inputs/themes.js';
+import { themes, overlays, cornerArts, subthemePresets } from '../inputs/themes.js';
 
 const themeChoices = themes.map(theme => ({ title: theme.name, value: theme.id }));
 const overlayChoices = overlays.map(overlay => ({ title: overlay.name, value: overlay.id }));
 const cornerArtChoices = cornerArts.map(art => ({ title: art.name, value: art.id }));
+const subthemeChoices = subthemePresets.map(preset => ({ title: preset.name, value: preset.id })).concat([{ title: 'None', value: 'none' }]);
 
 // "No seasonal pack" is for Use a theme now only: it hides the pack the schedule would show
 const noOverlay = { title: 'No seasonal pack', value: 'none' };
@@ -212,6 +213,15 @@ const ruleMember = defineArrayMember({
       options: { list: cornerArtChoices },
       hidden: notAPack,
       validation: Rule => Rule.valid(ids(cornerArtChoices)).error('Pick corner art from the list.'),
+    }),
+    defineField({
+      name: 'subtheme',
+      title: 'Subtheme',
+      type: 'string',
+      description: 'Optional. Pictures on the frames while the pack is on. Empty is the pack\'s own (Halloween, or Winter for Christmas). None draws no subtheme.',
+      options: { list: subthemeChoices },
+      hidden: notAPack,
+      validation: Rule => Rule.valid(ids(subthemeChoices)).error('Pick a subtheme from the list.'),
     }),
   ],
   validation: Rule => Rule.custom(endsBeforeStart),

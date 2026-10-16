@@ -161,6 +161,7 @@ async function run() {
       startOptional('./core/announce-run.js', module => module.startAnnounceRunner(getContent));
       startOptional('./core/notice-run.js', module => module.startNoticeRunner(getContent));
       startOptional('./core/subthemes-layer.js', module => module.startSubthemes(getContent));
+      startOptional('./core/subtheme-preset-layer.js', module => module.startPresetSubthemes(getContent));
 
       // A booked talk takes the whole screen when its time comes. After the takeovers, so that an announcement
       // that comes due on the same second plays first, and the title card waits for it

@@ -33,3 +33,38 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+/* The shipped subthemes (core/subtheme-preset-layer.js, core/subtheme-presets.js). Each piece is an svg as big as
+   its anchor, so it clips what it draws and never leaves the frame it belongs to. The colors are the --subtheme-*
+   tokens. The motion is in frame.css, in full motion only: in calm and none motion every piece rests, and the
+   web is drawn. */
+
+.subtheme-frame-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  contain: strict;
+  pointer-events: none;
+}
+
+/* While the frames fly apart in a swap the pieces would be left behind in the air */
+#world[data-pieces] .subtheme-frame-layer { visibility: hidden; }
+
+.sb-piece { position: absolute; overflow: hidden; }
+
+.sb-piece path { transform-box: fill-box; transform-origin: center; }
+
+
+.sb-string { fill: none; stroke: var(--subtheme-ink); stroke-width: 2px; }
+.sb-orange { fill: var(--subtheme-orange); }
+.sb-orange-deep { fill: none; stroke: var(--subtheme-orange-deep); stroke-width: 1.6px; stroke-linecap: round; }
+.sb-purple { fill: var(--subtheme-purple); }
+.sb-stem { fill: var(--subtheme-stem); }
+.sb-ink { fill: var(--subtheme-ink); }
+.sb-web { fill: none; stroke: var(--subtheme-web); stroke-width: 1.8px; stroke-linecap: round; stroke-dasharray: 1; }
+.sb-spider { fill: var(--subtheme-ink); stroke: var(--subtheme-web); stroke-width: 1.2px; stroke-linecap: round; }
+.sb-bat { fill: var(--subtheme-bat); stroke: var(--subtheme-web); stroke-width: 1.2px; stroke-linejoin: round; }
+

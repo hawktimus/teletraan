@@ -1834,6 +1834,13 @@ html:not([data-motion="full"]) .logo[data-act="fly"] .hawk-far-wing { transform:
 
 
 
+/* The shipped subthemes (core/subtheme-presets.js, subthemes.css): transform, opacity and line drawing only, in full motion only */
+@keyframes sb-flutter { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px) scale(1.06, .9); } }
+@keyframes sb-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+
+html[data-motion="full"] .sb-piece [data-move="flutter"] { animation: sb-flutter var(--flutter-seconds, 4s) ease-in-out var(--flutter-delay, 0s) infinite; }
+html[data-motion="full"] .sb-piece [data-move="draw"] { animation: sb-draw 3.5s ease-out 1 both; }
+
 /* The subtheme layer (core/subthemes-layer.js): transform and opacity only, in full motion only */
 @keyframes subtheme-drift { 0%, 100% { transform: translateX(-3px); } 50% { transform: translateX(3px); } }
 @keyframes subtheme-blink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
