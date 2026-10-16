@@ -3,7 +3,7 @@
    nothing changes while the team does not mirror the layout.
 
    What it has is the mirror of the standard layout, which Cybertron has too, because it
-   keeps the same arrangement (styles/cybertron.css only adds what its own banner needs).
+   keeps the same arrangement (styles/cybertron/theme.css only adds what its own banner needs).
    A team can have Mirror switched on (core/teams.js puts the class mirrored on the html
    element), and then the standard layout is turned left to right: the countdown and the
    small frame on the left and the large frame on the right, the clock at the left end of

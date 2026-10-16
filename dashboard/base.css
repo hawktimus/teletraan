@@ -725,8 +725,8 @@ html.neon-glow:not([data-finish="flat"]) .art-glow { display: inline; }
   box-sizing: border-box;
   max-width: 400px;
   padding: 0 14px;
-  background: var(--yellow);
-  color: var(--ground);
+  background: var(--team-chip);
+  color: var(--team-chip-text);
   text-align: center;
   white-space: normal;
   overflow-wrap: anywhere;
@@ -830,8 +830,8 @@ html.neon-glow:not([data-finish="flat"]) .art-glow { display: inline; }
   flex: none;
   padding: 0 14px;
   white-space: nowrap;
-  color: var(--ground);
-  background: var(--yellow);
+  color: var(--team-chip-text);
+  background: var(--team-chip);
   font: 700 var(--size-label)/52px var(--font-display);
 }
 

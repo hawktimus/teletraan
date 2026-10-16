@@ -204,7 +204,7 @@ export function changeLayout(look, page = document.documentElement) {
   const style = styleNow(page);
   try {
     applyStyle(look.style, page);
-    recordShapes(look.style, page);
+    recordShapes(look.style, page, wanted);
     if (was !== defaultLayout) placeStandard(was, page);
     if (wanted !== defaultLayout) placeRegions(wanted, page);
     page.dataset.layout = wanted;
@@ -215,8 +215,8 @@ export function changeLayout(look, page = document.documentElement) {
     const asked = look.style;
     look.style = style;
     applyStyle(style, page);
-    recordShapes(style, page);
-    reloadFor(drawnFor(wanted, shapesFor(asked)), drawnFor(layoutNow(), shapesNow()));
+    recordShapes(style, page, was);
+    reloadFor(drawnFor(wanted, shapesFor(asked, wanted)), drawnFor(layoutNow(), shapesNow()));
     return false;
   }
 }
@@ -243,7 +243,8 @@ function savedStorage() {
 // cannot safely reload, it returns false and the colours go on as usual, with the style the
 // page already has. A look with no style is the original style, which leaves the layout to the theme.
 export function holdForLayout(look, busy, waitedMs = 0, swapPlaying = () => false) {
-  const wanted = drawnFor(layoutFor(look.style, layoutOf(look.theme)), shapesFor(look.style));
+  const wantedLayout = layoutFor(look.style, layoutOf(look.theme));
+  const wanted = drawnFor(wantedLayout, shapesFor(look.style, wantedLayout));
   const onPage = drawnFor(layoutNow(), shapesNow());
   const storage = savedStorage();
 

@@ -50,7 +50,8 @@ import { overlayShown, ruleExtras } from './core/theme.js';
 import { changeLayout, holdForLayout, startLayout } from './core/layout-apply.js';
 import { decorationLayers, hasKit, layoutNow } from './core/layout.js';
 import { redrawFrames } from './core/areas.js';
-import { applyStyle, recordShapes, shapesFor, shapesNow, startStyle } from './core/style.js';
+import { ensureThemeSheets } from './core/style-loader.js';
+import { applyStyle, recordShapes, shapesFor, shapesNow, startStyle, themeOf } from './core/style.js';
 import { cadenceOf, currentScreen, onScreenChange } from './core/screens.js';
 import { applyView } from './core/view-apply.js';
 import { holdBootView, viewPlaylist, viewSidePlaylist } from './core/views.js';
@@ -113,7 +114,9 @@ async function run() {
   askForTeam(params.get('team'));
   holdSavedScreen();
   const style = startStyle(params.get('style'), savedStyle);
+  ensureThemeSheets(themeOf(style));
   startLayout(params.get('theme'), savedTheme, document.documentElement, style);
+  recordShapes(style, document.documentElement, layoutNow()); // the frames of the bar layout are Minimal's in every theme
 
   try {
     makeSilverGradients(); // before any frame is drawn, so a silver frame has its gradients
@@ -583,9 +586,9 @@ function useKit(look) {
 function useStyle(look) {
   try {
     applyStyle(look.style);
-    if (shapesFor(look.style) === shapesNow()) return;
+    if (shapesFor(look.style, layoutNow()) === shapesNow()) return;
 
-    recordShapes(look.style);
+    recordShapes(look.style, document.documentElement, layoutNow());
     redrawFrames();
     redrawWhatStays();
   } catch (error) {

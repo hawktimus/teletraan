@@ -102,6 +102,13 @@ export default defineType({
       hidden: spotlightOff,
       validation: Rule => tooLong(Rule, 100),
     }),
+    defineField({
+      name: 'monday',
+      title: 'On the Monday board',
+      type: 'boolean',
+      description: 'On: the Monday tasks panel plays a page for this Team lead, with the tasks of the department of the same name. Starts on.',
+      initialValue: true,
+    }),
     teamField(),
     orderField(),
     showField(),

@@ -16,6 +16,7 @@ import customPanel from './customPanel.js';
 import dashboardSettings from './dashboardSettings.js';
 import theme from './theme.js';
 import screen from './screen.js';
+import view from './view.js';
 import demo from './demo.js';
 import status from './status.js';
 import calendarStatus from './calendarStatus.js';
@@ -43,6 +44,7 @@ export const schemaTypes = [
   dashboardSettings,
   theme,
   screen,
+  view,
   demo,
   status,
   calendarStatus,

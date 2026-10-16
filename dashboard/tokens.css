@@ -128,10 +128,10 @@
 
 :root,
 [data-metal="gold"],
-html[data-style="cybertron"]:not(.metal-steel),
-html[data-style="cybertron"]:not(.metal-steel) [data-metal],
-html[data-style="minimal"]:not(.metal-steel),
-html[data-style="minimal"]:not(.metal-steel) [data-metal] {
+html[data-style="cybertron"]:not(.metal-steel):not(.metal-purple),
+html[data-style="cybertron"]:not(.metal-steel):not(.metal-purple) [data-metal],
+html[data-layout="bar"]:not(.metal-steel):not(.metal-purple),
+html[data-layout="bar"]:not(.metal-steel):not(.metal-purple) [data-metal] {
   --metal-1: #efe6c4; /* the brightest highlight, a pale cream */
   --metal-2: #cfba7f;
   --metal-3: #a98f43; /* the plain mid tone */
@@ -199,6 +199,31 @@ html.metal-steel [data-metal] {
   --edge-shade: url(#edge-shade-steel);
 }
 
+/* Purple, the optional metal of a team (metal: purple on the Team document, class metal-purple). It is the
+   literal inversion of gold for the Nova palette: the same brushed bands as steel, in purple, so the
+   gradients of steel are used (index.html) and only the colours change. Gold stays the default. */
+[data-metal="purple"],
+html.metal-purple,
+html.metal-purple [data-metal] {
+  --metal-1: #e2d0f5; /* the brightest highlight */
+  --metal-2: #bb98e6;
+  --metal-3: #8f5ccb; /* the plain mid tone */
+  --metal-4: #5f2d96;
+  --metal-5: #2a1245; /* the darkest pit */
+  --metal-6: #6e4a96;
+  --metal-7: #a888d4;
+  --metal-8: #8f5ccb;
+  --metal-grime: #3f2a5a;
+  --metal-rim: #0c0615;
+  --metal-ridge: #eadcfa;
+  --metal-glint: #f6eeff;
+  --metal-shade: rgba(14, 6, 26, .7);
+  --metal-flat: #7d55a8;
+  --edge-face: url(#edge-steel);
+  --edge-ridge: url(#edge-ridge-steel);
+  --edge-shade: url(#edge-shade-steel);
+}
+
 /* Silver as one plain colour, for what is not a metal edge: the logo of the night
    screen. It is the silver metal's second tone above. */
 :root {
@@ -210,7 +235,7 @@ html.metal-steel [data-metal] {
    element, so the gradient of the bolt face (index.html) and the shapes drawn with <use>
    read them. The slot stays dark. */
 html[data-style="cybertron"],
-html[data-style="minimal"] {
+html[data-layout="bar"] {
   --screw-light: var(--metal-1);
   --screw-mid: var(--metal-3);
   --screw-dark: var(--metal-4);
@@ -282,10 +307,10 @@ html[data-style="minimal"] {
 }
 :root,
 [data-metal="gold"],
-html[data-style="cybertron"]:not(.metal-steel),
-html[data-style="cybertron"]:not(.metal-steel) [data-metal],
-html[data-style="minimal"]:not(.metal-steel),
-html[data-style="minimal"]:not(.metal-steel) [data-metal] {
+html[data-style="cybertron"]:not(.metal-steel):not(.metal-purple),
+html[data-style="cybertron"]:not(.metal-steel):not(.metal-purple) [data-metal],
+html[data-layout="bar"]:not(.metal-steel):not(.metal-purple),
+html[data-layout="bar"]:not(.metal-steel):not(.metal-purple) [data-metal] {
   --edge-face: url(#edge-gold);
   --edge-ridge: url(#edge-ridge-gold);
   --edge-shade: url(#edge-shade-gold);
@@ -317,4 +342,16 @@ html[data-style="minimal"]:not(.metal-steel) [data-metal] {
 :root[data-finish="flat"] {
   --screw-face: var(--screw-flat);
   --screw-ridge: transparent;
+}
+
+/* The chips (PRIME, NOVA, a role): the accent of the theme with its dark ground. The inverted palette of a
+   team (palette: inverted on the Team document, class palette-inverted, which is Nova) has purple chips with
+   white text. The colors of the team itself are the Team document's, so a Studio edit still reaches them. */
+:root {
+  --team-chip: var(--yellow);
+  --team-chip-text: var(--ground);
+}
+html.palette-inverted {
+  --team-chip: #6c18b6;
+  --team-chip-text: #ffffff;
 }

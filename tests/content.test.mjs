@@ -5620,14 +5620,14 @@ test('the two starting teams become the teams the screen uses, and the built-in 
   assert.deepEqual(prime, {
     code: 'prime', name: 'HAWKTIMUS PRIME', shortName: 'PRIME', number: '3229', logo: '',
     colors: { primary: '#6C18B6', plate: '#3B2A7A', accent: '#FACA2A', neon: '#FACA2A', pink: '#B23CFF', background: '#0B0714', text: '#FFFFFF', body: '#1A0F2E', label: '#FACA2A' },
-    metal: 'gold', glow: false,
+    metal: 'gold', palette: 'standard', glow: false,
     mirror: false, active: true, order: 10,
     bolts: 'hex', cornerCut: 'tl-br', headerNotch: 'step', grid: 'lines', logoPose: 'auto', nameStyle: 'solid', tickerLabel: 'plate', countAccent: 'red',
   });
   assert.deepEqual(nova, {
     code: 'nova', name: 'HAWKTIMUS NOVA', shortName: 'NOVA', number: '3426', logo: '',
     colors: { primary: '#FACA2A', plate: '#6B4F0C', accent: '#C58CFF', neon: '#B23CFF', pink: '#FACA2A', background: '#130E03', text: '#FFFFFF', body: '#2A1F07', label: '#C58CFF' },
-    metal: 'gold', glow: true,
+    metal: 'gold', palette: 'inverted', glow: true,
     mirror: true, active: true, order: 20,
     bolts: 'round', cornerCut: 'tr-bl', headerNotch: 'slant', grid: 'dots', logoPose: 'auto', nameStyle: 'solid', tickerLabel: 'bar', countAccent: 'neon',
   });

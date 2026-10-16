@@ -667,12 +667,12 @@ test('the rows have no rule for a style or a layout but the foot of the large fr
   const css = read('base.css');
   ['.person-rows', '.person-row', '.person-text', '.person-name', '.person-role', '.person-line', '.person-chip', '.person-row .portrait'].forEach(selector => assert.notEqual(ruleOf(css, selector), '', selector));
 
-  const sheets = ['styles/original.css', 'styles/minimal.css', 'layouts/bar.css', 'layouts/sidebar.css', 'panels/leadership/panel.css', 'panels/team-leads/panel.css'];
+  const sheets = ['styles/original/theme.css', 'layouts/bar-minimal.css', 'layouts/bar.css', 'layouts/sidebar.css', 'panels/leadership/panel.css', 'panels/team-leads/panel.css'];
   sheets.forEach(file => assert.equal(/\.person-|\.slots?\b|\.slot-/.test(read(file).replace(/\/\*[\s\S]*?\*\//g, '')), false, file + ' has a rule for the rows'));
 
   // Cybertron has neon slashes along the foot of the large frame, so its rows are a little shorter (tests/stripe-foot.test.mjs).
   // Those rules move and size the rows and nothing else, and no other rule of the style names a row.
-  const cybertron = read('styles/cybertron.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  const cybertron = (read('styles/cybertron/tokens.css') + read('styles/cybertron/theme.css')).replace(/\/\*[\s\S]*?\*\//g, '');
   const rules = Array.from(cybertron.matchAll(/^html\[data-style="cybertron"\] (\.person-[^{]*)\{([^}]*)\}/gm));
   assert.deepEqual(rules.map(found => found[1].trim()), ['.person-rows', '.person-rows.rows-4 .person-row', '.person-rows.rows-3 .person-row', '.person-rows.rows-2 .person-row', '.person-rows.rows-1 .person-row']);
   rules.forEach(found => assert.ok(/^\s*(top|height): \d+px;\s*(height: \d+px;\s*)?$/.test(found[2]), found[1] + ' sets only the top and the height'));

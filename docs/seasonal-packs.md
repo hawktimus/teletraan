@@ -38,7 +38,7 @@ In calm motion nothing moves, and the over pieces are not drawn at all.
 The zones and the back layer were measured on the standard layout of Original. In the sidebar layout
 (docs/layouts.md) they are not drawn. In Cybertron the back layer is drawn and the zones are not, because
 the bolts and the brackets of its plates are where some zones were measured to be empty
-(`styles/cybertron.css`). The header mark and the over layer show in every
+(`styles/cybertron/theme.css`). The header mark and the over layer show in every
 layout, and a pack needs nothing extra for that (`decorationLayers` in `core/layout.js`).
 
 A rule can also add a ticker prefix, a banner line and a corner art. See "Extras on a rule".

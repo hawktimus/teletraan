@@ -104,7 +104,7 @@ function rulesOf(css) {
   return rules;
 }
 
-// One compound selector, such as html[data-style="minimal"]:not(.metal-steel), or null when it uses something that is not known
+// One compound selector, such as html[data-layout="bar"]:not(.metal-steel):not(.metal-purple), or null when it uses something that is not known
 function compoundOf(text) {
   const compound = { tag: '', id: '', classes: [], attrs: [], not: [], root: false, ids: 0, count: 0, types: 0 };
   let rest = text;
@@ -320,7 +320,7 @@ test('the cascade picks the strongest selector, then the later rule, takes custo
 
   const html = element('html', { attrs: { 'data-style': 'minimal' }, classes: ['metal-steel'] });
   assert.ok(matchesChain(selectorOf('html.metal-steel [data-metal]').compounds, element('div', { attrs: { 'data-metal': 'gold' } }, html)));
-  assert.ok(!matchesChain(selectorOf('html[data-style="minimal"]:not(.metal-steel) [data-metal]').compounds, element('div', { attrs: { 'data-metal': 'gold' } }, html)));
+  assert.ok(!matchesChain(selectorOf('html[data-layout="bar"]:not(.metal-steel):not(.metal-purple) [data-metal]').compounds, element('div', { attrs: { 'data-metal': 'gold' } }, html)));
   assert.ok(matchesChain(selectorOf(':root').compounds, html) && !matchesChain(selectorOf(':root').compounds, element('div', {}, html)));
   assert.ok(allRules.length > 1000, 'the stylesheets were read: ' + allRules.length + ' selectors');
 });
@@ -518,11 +518,12 @@ test('the stylesheets that make the glow and the metal draw no filter, no shadow
 });
 
 test('the Team document, the dashboard and the stylesheets name the same metals, and a team made before the metal existed is gold', () => {
-  assert.deepEqual(Object.keys(config.teamMetals), ['gold', 'steel']);
+  assert.deepEqual(Object.keys(config.teamMetals), ['gold', 'steel', 'purple']);
   assert.equal(config.teamMetals.gold, '', 'gold has no class');
   assert.equal(config.teamMetals.steel, 'metal-steel');
+  assert.equal(config.teamMetals.purple, 'metal-purple');
   assert.equal(config.glowClass, 'neon-glow');
-  assert.deepEqual(teams.metalClasses, ['metal-steel']);
+  assert.deepEqual(teams.metalClasses, ['metal-steel', 'metal-purple']);
 
   const plain = sanity.normalizeContent({ teams: [{ _id: 'a', _type: 'team', code: 'old', colors: { primary: '#112233' } }] }, new Date(0)).teams[0];
   assert.deepEqual([plain.metal, plain.glow, plain.colors.body, plain.colors.label, plain.colors.neon], ['gold', false, '#1A0F2E', '#FACA2A', '#FACA2A']);

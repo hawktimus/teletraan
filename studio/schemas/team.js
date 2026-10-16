@@ -38,7 +38,7 @@ const trimChoices = {
 };
 
 // The values are the names in teamMetals in dashboard/config.js
-const metalChoices = [{ title: 'Gold', value: 'gold' }, { title: 'Steel', value: 'steel' }];
+const metalChoices = [{ title: 'Gold', value: 'gold' }, { title: 'Steel', value: 'steel' }, { title: 'Purple', value: 'purple' }];
 
 function trimField(name, title, description, hidden) {
   const list = trimChoices[name];
@@ -141,10 +141,19 @@ export default defineType({
       name: 'metal',
       title: 'Metal',
       type: 'string',
-      description: 'The metal of the frame edges, the bolts and the war clock in Cybertron and Minimal. In Original, steel takes the place of gold and silver.',
+      description: 'The metal of the frame edges and bolts. Purple is the inverse of gold. In Original, steel takes the place of gold and silver.',
       options: { list: metalChoices, layout: 'radio', direction: 'horizontal' },
       initialValue: 'gold',
-      validation: Rule => Rule.valid(metalChoices.map(item => item.value)).error('Pick gold or steel.'),
+      validation: Rule => Rule.valid(metalChoices.map(item => item.value)).error('Pick gold, steel or purple.'),
+    }),
+    defineField({
+      name: 'palette',
+      title: 'Palette',
+      type: 'string',
+      description: 'Not set by editors. Inverted is the Nova palette: gold as the main color, purple chips with white text.',
+      options: { list: [{ title: 'Standard', value: 'standard' }, { title: 'Inverted', value: 'inverted' }], layout: 'radio', direction: 'horizontal' },
+      initialValue: 'standard',
+      hidden: true,
     }),
     defineField({
       name: 'glow',

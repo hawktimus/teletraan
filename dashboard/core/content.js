@@ -1,7 +1,7 @@
 // Where the screen gets what it shows: startContent() hands over the content
 // once it has it, and again every time it changes. Same shape as data/sample/content.json.
 
-import { competitionModes, competitionSwitches, defaultSettings, defaultTeam, frameFinishes, limits, looks, lookSwaps, metals, nightSpeeds, nightStyles, pageChangeStyles, photoFits, photoOrders, portraitFrames, portraitShapes, sampleFolder, sanity, speeds, styles, teamModes } from '../config.js';
+import { competitionModes, competitionSwitches, defaultSettings, defaultThemeByWeekday, scheduledThemeIds, viewKeys, defaultTeam, frameFinishes, limits, looks, lookSwaps, metals, nightSpeeds, nightStyles, pageChangeStyles, photoFits, photoOrders, portraitFrames, portraitShapes, sampleFolder, sanity, speeds, styles, teamModes } from '../config.js';
 import { parseLocalDateTime } from './time.js';
 import { chosenSource } from './source.js';
 import { tidyTheme } from './theme.js';
@@ -11,7 +11,6 @@ import { tidyAnnounceRequest } from './announce.js';
 import { tidyTestRequest } from './presentation-test.js';
 import { tidyPreviewRequest } from './preview.js';
 import { tidyNextLookRequest, tidySchedule } from './screens.js';
-import { tidyViewSettings } from './views.js';
 import { fetchResult, liveEventsUrl, normalizeContent, normalizeSample } from './sanity.js';
 import { reasons } from './connection.js';
 import { showsForTeam } from './teams.js';
@@ -75,6 +74,21 @@ export function withDefaults(raw) {
   return content;
 }
 
+// The view settings, always complete: a name and a title for the General view, the views in an order, and a theme for each
+// weekday. A view left out of the order is not played; an empty or unusable order is the starting one.
+export function tidyViewSettings(settings) {
+  ['generalViewName', 'generalViewTitle'].forEach(name => {
+    if (typeof settings[name] !== 'string' || settings[name].trim() === '') settings[name] = defaultSettings[name];
+  });
+  const listed = Array.isArray(settings.viewOrder) ? settings.viewOrder.filter((key, index, all) => viewKeys.includes(key) && all.indexOf(key) === index) : [];
+  settings.viewOrder = listed.length > 0 ? listed : viewKeys.slice();
+  const saved = settings.themeByWeekday && typeof settings.themeByWeekday === 'object' ? settings.themeByWeekday : {};
+  settings.themeByWeekday = {};
+  Object.keys(defaultThemeByWeekday).forEach(day => {
+    settings.themeByWeekday[day] = scheduledThemeIds.includes(saved[day]) ? saved[day] : defaultThemeByWeekday[day];
+  });
+}
+
 // Settings that are one of a few words, an on/off switch, or a number in a
 // range. Anything that does not fit becomes the default, so the panels never
 // have to check. A number outside its range is moved to the nearest end. saved is the settings as
@@ -98,9 +112,9 @@ export function fixSettingValues(settings, saved = settings) {
   // not a setting any more (lookSwaps in config.js) and the stored value is only kept tidy
   settings.screenSchedule = tidySchedule(settings.screenSchedule);
   if (!styles.includes(settings.mondayStyle)) settings.mondayStyle = defaultSettings.mondayStyle;
-  // The Views: the name of the General view, its banner title and the order of the rotation
-  tidyViewSettings(settings);
   if (!lookSwaps.includes(settings.lookSwap)) settings.lookSwap = defaultSettings.lookSwap;
+  // The Views: names kept as text, the order a list of the four views each once, the theme of each weekday complete
+  tidyViewSettings(settings);
   // The competition cards: the mode here, and a switch for each card in the list of booleans below
   if (!competitionModes.includes(settings.competitionMode)) settings.competitionMode = defaultSettings.competitionMode;
   // The night mode settings: two choices, a switch each way and the logo width. The times are fixed (constants.js)

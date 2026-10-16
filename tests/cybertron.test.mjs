@@ -141,7 +141,7 @@ test('Original and Cybertron keep the layout of the theme, and Minimal is the on
   assert.ok(themes.some(theme => theme.layout === 'sidebar'));
 
   const code = read('dashboard/core/style.js');
-  assert.ok(code.includes("const forcedLayout = { original: null, cybertron: null, minimal: 'bar' };"));
+  assert.ok(code.includes("const forcedLayout = { minimal: 'bar' };"));
 });
 
 test('each style names the corners its frames have, and Cybertron and Minimal are the styles with steel', () => {
@@ -152,7 +152,8 @@ test('each style names the corners its frames have, and Cybertron and Minimal ar
 
   assert.equal(styles.hasSteel('original'), false);
   assert.equal(styles.hasSteel('cybertron'), true);
-  assert.equal(styles.hasSteel('minimal'), true);
+  assert.equal(styles.hasSteel('original', 'bar'), true, 'the bar layout has steel in every theme');
+  assert.equal(styles.shapesFor('cybertron', 'bar'), 'minimal', 'and Minimal\'s corners');
   ['oops', undefined, null].forEach(odd => assert.equal(styles.hasSteel(odd), false, String(odd)));
 
   // Original and Cybertron are the same page: a change between them is not a reload
@@ -210,7 +211,7 @@ test('the four frames are ten-cornered plates with a cut corner at the top left 
     assert.equal(shape.width - lineIn(kind) - outline[3][0], runs[kind], kind + ': the run');
   });
 
-  assert.equal(plate.barShape('cybertron-grid1').outline[2][0] - plate.barShape('cybertron-grid1').outline[1][0], Number(/--style-chamfer: (\d+)px;/.exec(withoutComments(read('dashboard/styles/cybertron.css')))[1]), '--style-chamfer is the cut corner of the large frame');
+  assert.equal(plate.barShape('cybertron-grid1').outline[2][0] - plate.barShape('cybertron-grid1').outline[1][0], Number(/--style-chamfer: (\d+)px;/.exec(withoutComments((read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css'))))[1]), '--style-chamfer is the cut corner of the large frame');
 });
 
 test('every frame has a hex bolt at each joint of its cut corners and steps, and the ticker the two at the ends of its cut corner', () => {
@@ -411,9 +412,9 @@ test('the frames of Original are the ones they were: the same outlines, the same
 
 // The stage of Cybertron, read from its stylesheet: padding, rows and gaps
 function cybertronStage() {
-  const css = withoutComments(read('dashboard/styles/cybertron.css'));
+  const css = withoutComments((read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css')));
   const rule = /html\[data-style="cybertron"\]\[data-layout="standard"\] #stage \{([^}]*)\}/.exec(css);
-  assert.ok(rule, 'styles/cybertron.css has a rule for the stage');
+  assert.ok(rule, 'styles/cybertron/theme.css has a rule for the stage');
 
   const padding = /padding: (\d+)px (\d+)px (\d+)px;/.exec(rule[1]).slice(1).map(Number);
   const rows = /grid-template-rows: (\d+)px (\d+)px (\d+)px;/.exec(rule[1]).slice(1).map(Number);
@@ -453,7 +454,7 @@ test('the stage of Cybertron gives the banner 228 and takes the 16 from the top 
   assert.equal(own.banner.height, plate.barShape('cybertron-banner').height);
 
   // The standard layout only: the sidebar layout is not touched by it
-  const css = withoutComments(read('dashboard/styles/cybertron.css'));
+  const css = withoutComments((read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css')));
   assert.ok(!/data-layout="sidebar"/.test(css));
   assert.ok(css.includes('html[data-style="cybertron"] #season-front {\n  display: none;\n}'), 'the zones of a seasonal pack were measured on Original, so they are not drawn');
 });
@@ -497,7 +498,7 @@ const numberIn = (rule, name) => {
 };
 
 test('the banner is laid out inside its plate: the steel and the neon are clear of the logo, the name, the TEAM plate, the clock and the bottom row', () => {
-  const css = withoutComments(read('dashboard/styles/cybertron.css'));
+  const css = withoutComments((read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css')));
   const original = withoutComments(read('dashboard/panels/banner/panel.css'));
   const banner = ruleOf(css, 'html[data-style="cybertron"] .banner');
   const shape = plate.barShape('cybertron-banner');
@@ -566,7 +567,7 @@ test('the banner draws its plate only when the page has the frames of Cybertron:
 });
 
 test('the ticker is as high as its plate, which hangs 5 below the row, and has the same 16 at both ends as in the bar layout, and the mirror turns it', () => {
-  const css = withoutComments(read('dashboard/styles/cybertron.css'));
+  const css = withoutComments((read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css')));
   const rule = ruleOf(css, 'html[data-style="cybertron"] .ticker');
   assert.ok(/box-sizing: border-box;/.test(rule) && /padding: 0 16px;/.test(rule));
   const shape = plate.barShape('cybertron-ticker');
@@ -578,13 +579,13 @@ test('the ticker is as high as its plate, which hangs 5 below the row, and has t
   assert.equal(numberIn(ruleOf(tag, '.ticker .tag span'), 'height'), shape.height, 'the word is in the middle of the picture');
 
   // the mirror turns the ticker's row and puts the message against the tag, for Cybertron as for Original
-  const mirror = withoutComments(read('dashboard/styles/original.css'));
+  const mirror = withoutComments(read('dashboard/styles/original/theme.css'));
   assert.ok(/html\.mirrored\[data-layout="standard"\] \.ticker \{\s*flex-direction: row-reverse;/.test(mirror));
   assert.ok(mirror.includes('html.mirrored[data-layout="standard"] .ticker .message { text-align: right; }'));
 });
 
 test('the mirror of the standard layout is the same for Original and Cybertron: no style in its selectors, and Cybertron\'s banner changes the sides of its margins', () => {
-  const mirror = withoutComments(read('dashboard/styles/original.css'));
+  const mirror = withoutComments(read('dashboard/styles/original/theme.css'));
   const selectors = [];
   mirror.replace(/([^{}]+)\{[^{}]*\}/g, (all, list) => {
     list.split(',').forEach(selector => selectors.push(selector.trim()));
@@ -595,7 +596,7 @@ test('the mirror of the standard layout is the same for Original and Cybertron: 
   assert.ok(!/data-style/.test(mirror), 'so the one set of rules turns the standard layout in either style');
 
   // the banner of Cybertron has the hawk first and the name after it, and the margins are the other way round when mirrored
-  const css = withoutComments(read('dashboard/styles/cybertron.css'));
+  const css = withoutComments((read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css')));
   const normal = ruleOf(css, 'html[data-style="cybertron"] .banner');
   const turned = ruleOf(css, 'html[data-style="cybertron"].mirrored[data-layout="standard"] .banner');
   const padding = text => /padding: (\d+)px (\d+)px (\d+)px (\d+)px;/.exec(text).slice(1).map(Number);
@@ -604,7 +605,7 @@ test('the mirror of the standard layout is the same for Original and Cybertron: 
 
   // the stylesheets are in this order in index.html, so the rule of Cybertron wins over the mirror of equal weight
   const page = read('dashboard/index.html');
-  assert.ok(page.indexOf('styles/original.css') < page.indexOf('styles/cybertron.css'));
+  assert.ok(page.indexOf('styles/original/theme.css') < page.indexOf('styles/cybertron/theme.css'));
 });
 
 
@@ -921,7 +922,7 @@ test('the digits and the labels of the wide war clock fit their boxes in the dis
   const small = [];
   (wideSection().match(/font(-size)?: [^;]*/g) || []).forEach(text => (text.match(/(?<![\/\d.])\d+(\.\d+)?px/g) || []).filter(size => parseFloat(size) < 44).forEach(size => small.push(size)));
   assert.deepEqual(small, ['36px'], 'every text of the wide clock is 44 px or more, but the title and the date');
-  assert.ok(!/(^|[^-])font(-size)?:/.test(withoutComments(read('dashboard/styles/cybertron.css'))), 'the style file has no text of its own');
+  assert.ok(!/(^|[^-])font(-size)?:/.test(withoutComments((read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css')))), 'the style file has no text of its own');
 });
 
 test('the wide war clock has the colors of the narrow one: amber digits from the style, orange in the last month, white with red borders in the last week, and nothing in it moves', () => {
@@ -936,7 +937,7 @@ test('the wide war clock has the colors of the narrow one: amber digits from the
   const plateRule = wideRule('.war-plate');
   assert.ok(/border: 3px solid var\(--war-plate-border\);/.test(plateRule) && /box-sizing: border-box;/.test(plateRule));
   assert.ok(/linear-gradient\(180deg, rgba\(255, 255, 255, \.08\) 0, rgba\(255, 255, 255, 0\) 45%, rgba\(0, 0, 0, \.4\) 100%\),\s*var\(--war-plate\);/.test(plateRule), 'the same gradient inside');
-  assert.ok(/--style-digits: #ffb327;/.test(withoutComments(read('dashboard/styles/cybertron.css'))), 'amber in Cybertron');
+  assert.ok(/--style-digits: #ffb327;/.test(withoutComments((read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css')))), 'amber in Cybertron');
 
   // The same strokes as the narrow housing, at least 3 px, and nothing moves or glows
   assert.ok(!/(animation|transition|@keyframes|filter|box-shadow|text-shadow|blur\(|will-change|transform|clip-path)/.test(css), 'no animation, glow, shadow or transform');
@@ -948,7 +949,7 @@ test('the wide war clock has the colors of the narrow one: amber digits from the
   });
 
   // It is shown by Cybertron, and the flat finish leaves the rust of its housing off
-  const style = withoutComments(read('dashboard/styles/cybertron.css'));
+  const style = withoutComments((read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css')));
   assert.ok(style.includes('html[data-style="cybertron"] .war-clock { display: block; }'));
   assert.ok(style.includes('html[data-style="cybertron"][data-finish="flat"] .war-rust { display: none; }'));
   assert.ok(withoutComments(read('dashboard/panels/countdown/panel.css')).indexOf('.war-clock { display: none; }') !== -1, 'and no other style shows it');
@@ -1071,10 +1072,10 @@ test('redrawFrames puts the frame of the style on the page round each area that 
 test('the frames are drawn again in the same step that puts the style on the page, and the banner and the countdown of the standard layout with them', () => {
   const shell = read('dashboard/shell.js');
   assert.ok(shell.includes("import { redrawFrames } from './core/areas.js';"));
-  assert.ok(shell.includes("import { applyStyle, recordShapes, shapesFor, shapesNow, startStyle } from './core/style.js';"));
+  assert.ok(shell.includes("import { applyStyle, recordShapes, shapesFor, shapesNow, startStyle, themeOf } from './core/style.js';"));
   const body = /function useStyle\(look\) \{([\s\S]*?)\n\}/.exec(shell)[1];
-  assert.ok(body.indexOf('applyStyle(look.style);') < body.indexOf('recordShapes(look.style);') && body.indexOf('recordShapes(look.style);') < body.indexOf('redrawFrames();') && body.indexOf('redrawFrames();') < body.indexOf('redrawWhatStays();'), 'the style, then the corners, then the areas, then the panels that stay');
-  assert.ok(body.includes('if (shapesFor(look.style) === shapesNow()) return;'), 'a style with the frames the page has changes nothing');
+  assert.ok(body.indexOf('applyStyle(look.style);') < body.indexOf('recordShapes(look.style, document.documentElement, layoutNow());') && body.indexOf('recordShapes(look.style, document.documentElement, layoutNow());') < body.indexOf('redrawFrames();') && body.indexOf('redrawFrames();') < body.indexOf('redrawWhatStays();'), 'the style, then the corners, then the areas, then the panels that stay');
+  assert.ok(body.includes('if (shapesFor(look.style, layoutNow()) === shapesNow()) return;'), 'a style with the frames the page has changes nothing');
   assert.ok(body.includes('catch'), 'a problem never stops the colors');
 
   const redraw = /function redrawWhatStays\(\) \{([\s\S]*?)\n\}/.exec(shell)[1];
@@ -1092,14 +1093,14 @@ test('the frames are drawn again in the same step that puts the style on the pag
   assert.ok(areas.includes(".filter(child => !child.classList.contains('page-host'))"), 'the page host stays');
 
   // theme-apply.js does not reload for it: holdForLayout only looks at the layout and, in the bar layout, the corners
-  assert.ok(read('dashboard/core/layout-apply.js').includes('drawnFor(layoutFor(look.style, layoutOf(look.theme)), shapesFor(look.style))'));
+  assert.ok(read('dashboard/core/layout-apply.js').includes('drawnFor(wantedLayout, shapesFor(look.style, wantedLayout))'));
 });
 
 
 // What Cybertron paints
 
 test('Cybertron paints the plates in the team\'s body color, the metal edge and the page the order gives, on the layout of Original, and the metal reaches the frames through the tokens', () => {
-  const css = withoutComments(read('dashboard/styles/cybertron.css'));
+  const css = withoutComments((read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css')));
   const value = property => new RegExp(property + ': ([^;]+);').exec(css)[1];
   assert.equal(value('--style-body'), 'var(--team-body)', 'the body of a plate is the team\'s body color');
   assert.equal(value('--style-raised'), '#262b33', 'a raised plate');
@@ -1119,7 +1120,7 @@ test('Cybertron paints the plates in the team\'s body color, the metal edge and 
   // gold to one that has not. The style is not a bar style
   const tokens = withoutComments(read('dashboard/tokens.css'));
   assert.ok(tokens.includes('html.metal-steel [data-metal]') && tokens.includes('html.metal-steel,'));
-  assert.ok(tokens.includes('html[data-style="cybertron"]:not(.metal-steel) [data-metal]') && tokens.includes('html[data-style="cybertron"]:not(.metal-steel),'));
+  assert.ok(tokens.includes('html[data-style="cybertron"]:not(.metal-steel):not(.metal-purple) [data-metal]') && tokens.includes('html[data-style="cybertron"]:not(.metal-steel):not(.metal-purple),'));
   assert.ok(!/bar-/.test(css), 'nothing in the style file is for the bar layout');
 
   // the stylesheet of the style is for its own style only, and Original paints none of it
@@ -1130,7 +1131,7 @@ test('Cybertron paints the plates in the team\'s body color, the metal edge and 
   const base = withoutComments(read('dashboard/base.css'));
   assert.ok(/\.art-cybertron \{ display: none; \}/.test(base), 'what only Cybertron draws is off until it is on');
   assert.ok(/html\[data-style="original"\] \.rivets \{ display: inline; \}/.test(base), 'Original keeps its rivets and ids, and Cybertron has none');
-  assert.ok(!/cybertron/.test(withoutComments(read('dashboard/styles/original.css'))), 'Original has nothing of Cybertron');
+  assert.ok(!/cybertron/.test(withoutComments(read('dashboard/styles/original/theme.css'))), 'Original has nothing of Cybertron');
 });
 
 test('docs/layouts.md describes the two styles and which layout each uses, and the numbers in its Cybertron section are the ones in the code', () => {
@@ -1167,7 +1168,7 @@ test('docs/layouts.md describes the two styles and which layout each uses, and t
   assert.ok(section.includes('616 by 200') && section.includes('The wide war clock') && doc.includes('### The wide war clock'));
 
   // the mirror and the other docs
-  assert.ok(section.includes('styles/original.css'));
+  assert.ok(section.includes('styles/original/theme.css'));
   ['README.md', 'docs/switch-the-look.md', 'docs/editing-content.md', 'docs/where-things-are.md', 'docs/try-it-on-the-mini.md'].forEach(file => assert.ok(!/Cybertron and Minimal have the bar layout|Cybertron and Minimal have a banner|cybertron` and `minimal` have the bar layout/.test(read(file).replace(/\s+/g, ' ')), file + ' still says Cybertron has the bar layout'));
 });
 

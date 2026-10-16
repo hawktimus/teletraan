@@ -4,6 +4,7 @@
 //   mondayConnection       a read only block that says who the token belongs to, when the Mini last
 //                          read Monday, how often it reads and how many tasks it made
 //                          (../monday-status-input.js). It stores nothing
+//   mondayTokenTest        the Test the token button (../monday-token-input.js). It stores nothing
 //   mondayEveryMinutes     how often the Mini reads, 5 to 120 minutes
 //   mondayTaskBoard        the task board: its number, the column of each field, the tables that say
 //                          what each label index means, and the text of the Hide label
@@ -35,6 +36,7 @@
 import { defineField, defineArrayMember } from 'sanity';
 import { tooLong } from './fields.js';
 import { MondayStatusInput } from '../inputs/monday-status-input.js';
+import { MondayTokenInput } from '../inputs/monday-token-input.js';
 import { BoardInput, StatusColumnInput, PriorityColumnInput, DueColumnInput, OwnerColumnInput, TeamColumnInput, TimelineColumnInput, HoursColumnInput, DateColumnInput, RelationColumnInput } from '../inputs/monday-pickers.js';
 
 // Monday gives a column an id of letters, digits, hyphens and underscores
@@ -400,6 +402,16 @@ export function mondayFields() {
       readOnly: true,
       description: 'Who the token belongs to, when the Mini last read, how often, the reads used today and the tasks made. There is nothing to type here.',
       components: { input: MondayStatusInput },
+    }),
+
+    defineField({
+      name: 'mondayTokenTest',
+      title: 'Test the token',
+      type: 'string',
+      group: 'monday',
+      readOnly: true,
+      description: 'Asks the Mini, through the control page, who the Monday token belongs to. It shows the account name or the error. It stores nothing.',
+      components: { input: MondayTokenInput },
     }),
 
     defineField({

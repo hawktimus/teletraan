@@ -47,12 +47,22 @@ export const metals = ['gold', 'silver'];
 //   plain     flat, and no screws on the frames and no // in the panel headers
 export const looks = ['polished', 'flat', 'plain'];
 
-// The Style setting in Dashboard Settings: which look the whole screen has.
-// core/style.js turns it into data-style on the page and into a layout. The Studio copies this list.
-//   original   the screen as it has always been. It keeps the layout its theme names
-//   cybertron  the sharp style: the layout of Original, drawn in gunmetal plates with a steel edge and neon
-//   minimal    the industrial style, in the bar layout whatever the theme says
-export const styles = ['original', 'cybertron', 'minimal'];
+// The themes (docs/layouts.md, "Themes"): the look of the frames, the textures and the type. Each one is a
+// folder in styles/ with theme.css, frame.css, tokens.css and transitions.js, and core/style-loader.js finds
+// the folder from the id. The id goes on the page as data-style (core/style.js). The Studio copies this list.
+//   original   the screen as it has always been
+//   cybertron  the sharp theme: gunmetal plates with a steel edge and neon
+//   retro      a placeholder that looks like Original until its folder loses the file PLACEHOLDER
+export const themeIds = ['original', 'cybertron', 'retro'];
+
+// Minimal is not a theme any more: the bar layout draws as Minimal drew, in every theme (layouts/bar-minimal.css).
+// The word stays as a name a Screen or a preview may still hold. It means the Original theme in the bar layout,
+// until the Views (docs/layouts.md) have the layout of their own.
+export const barStyle = 'minimal';
+
+// The names a Screen, a preview and Style in Dashboard Settings hold. Retro is not in the list yet: ?style= and the weekday
+// schedule of themes reach it through themeIds (core/style.js, isStyle), and the Studio lists follow when it is designed.
+export const styles = ['original', 'cybertron', barStyle];
 
 // The Screens (core/screens.js): three documents in the Studio, one for each style. The id of a document says its
 // style, so no field does. Dashboard Settings (Look tab) names the Screen that plays on each day of the week. Original
@@ -269,34 +279,54 @@ export const screenLimits = {
   swapSeconds: limits.swapSeconds,
 };
 
-// Views (core/views.js, docs/views.md): four documents in the Studio, one for each key. A view is a layout, a team, a
-// number of minutes on the screen, the rows of the large panel and the rows of the small panel. The id of a document
-// says its key. Dashboard Settings (Look tab) names the order they play in (viewOrder), the name of the General view
-// and the title its banner carries. The Studio copies these lists and limits (tests/schemas.test.mjs compares them).
-//   layout   standard is the banner across the top with the countdown and the small panel at the right. bar is the
-//            banner with the war clock, a thin column and one panel. The team views mirror with their team (Nova)
+// The Views and the theme schedule (Studio: Look tab of Dashboard Settings, and the Themes page). The keys are the four
+// Views in the order they take the screen. A day of the week plays one of the scheduled themes; Retro is not scheduled.
 export const viewKeys = ['general', 'prime', 'nova', 'family'];
+export const scheduledThemeIds = ['original', 'cybertron', 'retro'];
+export const defaultThemeByWeekday = {
+  monday: 'original',
+  tuesday: 'cybertron',
+  wednesday: 'original',
+  thursday: 'cybertron',
+  friday: 'original',
+  saturday: 'cybertron',
+  sunday: 'original',
+};
+
+// The Views (core/views.js, docs/views.md): four documents in the Studio, one for each key. The id of a document says its
+// key. A view is a layout, a team, the minutes it stays, the rows of the large panel and the rows of the small panel.
+// defaultViews is what a view has when its document does not say, and has the shape of studio/tools/view-defaults.js
+// (tests/schemas.test.mjs compares them).
+//   layout       standard (banner, main panel, countdown and small panels) or bar (banner across the top, a column, one panel)
+//   mirror       the column on the other side
+//   countdownIn  side or banner
+//   viewTag      the name of the view at the far edge of the banner
+//   teamChip     the team chip on the cards of the view
+//   colors       team or general
 export const viewIds = { general: 'view-general', prime: 'view-prime', nova: 'view-nova', family: 'view-family' };
-export const viewLayouts = { general: 'standard', prime: 'bar', nova: 'bar', family: 'bar' };
 export const viewTeams = { general: '', prime: 'prime', nova: 'nova', family: '' };
 export const viewLimits = { minutes: { min: 1, max: 30 } };
+export const viewLayoutNames = ['standard', 'bar'];
+export const countdownPlaces = ['side', 'banner'];
+export const viewColors = ['team', 'general'];
 
-// A Team lead row of a team view with no department stands for every Team lead marked for Monday, and is worked out
-// each time the view is read, so a new department needs no edit (core/views.js, expandRows)
-const mondayTeamRows = team => [
-  { panel: 'monday-tasks', team: team, department: '', seconds: 30 },
-  { panel: 'monday-done', team: team, seconds: 30 },
-  { panel: 'monday-timeline', team: team, seconds: 30 },
-  { panel: 'monday-board', team: team, seconds: 30 },
-];
+// A tasks row of a team view with no department stands for every Team lead on the Monday board, and is worked out each
+// time the view is read, so a new department needs no edit (core/views.js, expandRows)
+const mondayRow = (panel, team) => ({ panel: panel, team: team, seconds: 30 });
+const teamRows = team => [mondayRow('monday-tasks', team), mondayRow('monday-done', team), mondayRow('monday-timeline', team), mondayRow('monday-board', team)];
 
-// What a view has when its document does not say, or there is no document yet
 export const defaultViews = {
   general: {
     minutes: 6,
+    layout: 'standard',
+    mirror: false,
+    countdownIn: 'side',
+    viewTag: true,
+    teamChip: false,
+    colors: 'general',
     panels: [
       { panel: 'tonight', seconds: 45 },
-      { panel: 'events', seconds: 30 },
+      { panel: 'events', seconds: 60 },
       { panel: 'leadership', seconds: 20 },
       { panel: 'photo', photoCount: 4, secondsPerPhoto: 10 },
       { panel: 'sponsor-feature', seconds: 15 },
@@ -309,10 +339,16 @@ export const defaultViews = {
       { panel: 'sponsor-logo', seconds: 15 },
     ],
   },
-  prime: { minutes: 6, panels: mondayTeamRows('prime'), sidePanels: [] },
-  nova: { minutes: 6, panels: mondayTeamRows('nova'), sidePanels: [] },
+  prime: { minutes: 6, layout: 'bar', mirror: false, countdownIn: 'banner', viewTag: true, teamChip: true, colors: 'team', panels: teamRows('prime'), sidePanels: [] },
+  nova: { minutes: 6, layout: 'bar', mirror: true, countdownIn: 'banner', viewTag: true, teamChip: true, colors: 'team', panels: teamRows('nova'), sidePanels: [] },
   family: {
     minutes: 2,
+    layout: 'bar',
+    mirror: false,
+    countdownIn: 'banner',
+    viewTag: false,
+    teamChip: false,
+    colors: 'general',
     panels: [
       { panel: 'monday-overall', seconds: 30 },
       { panel: 'monday-status-depts', seconds: 30 },
@@ -323,9 +359,6 @@ export const defaultViews = {
 
 // The panels of the Family view are fixed
 export const familyPanels = ['monday-overall', 'monday-status-depts'];
-
-// The style a bar view is drawn in. The bar layout has the drawing of Minimal in every theme for now
-export const barDrawStyle = 'minimal';
 
 // Used for anything the editors have not filled in yet
 export const defaultSettings = {
@@ -464,16 +497,18 @@ export const defaultSettings = {
   //   mondayStyle     the style while a Monday row plays, for a Screen that has not set its own. It seeds the Screens
   screenSchedule: defaultSchedule,
   mondayStyle: 'minimal',
-  // The Views (core/views.js): the name of the General view, the title its banner carries and the order of the rotation
-  generalViewName: 'General',
-  generalViewTitle: 'Hawktimus Dashboard',
-  viewOrder: viewKeys.slice(),
   // The Studio hides these, and the screen does not read them any more. The stored values stay. nameEvery and
   // logoHawkEvery, in seconds, are not read either: the name effect and the flying hawk follow the minutes of the
   // Screen that is on the screen (defaultScreen above)
   dailyStyles: ['original', 'cybertron'],
   teamOrder: ['prime', 'nova'],
   lookSwap: 'assemble',
+  // The Views: the name and the title of the General view, the order the views take the screen, and the theme of
+  // each weekday (the Themes page). screenSchedule above is not read any more
+  generalViewName: 'General',
+  generalViewTitle: 'Hawktimus Dashboard',
+  viewOrder: viewKeys,
+  themeByWeekday: defaultThemeByWeekday,
   // The "Play announcements" button in the Studio (core/announce.js, core/announce-run.js, docs/hidden-transitions.md).
   //   announceRequest  the last click of the button. requestedAt is the time it was clicked and is empty until
   //                    it has been. The screen plays every announcement that is switched on, once, for a request
@@ -749,7 +784,12 @@ export const teamTrim = {
 // The metal of a team's frames (Studio: Teams, Colors, Metal) and the class that core/teams.js puts on the html
 // element while a team with that metal is on the screen, which tokens.css reads. Gold is the metal Prime has and
 // the one a team document with no metal falls back to, so it has no class. The Studio copies the two names.
-export const teamMetals = { gold: '', steel: 'metal-steel' };
+export const teamMetals = { gold: '', steel: 'metal-steel', purple: 'metal-purple' };
+
+// The palette of a team (Studio: Teams, hidden) and the class core/teams.js puts on the html element. Standard has no class.
+// Inverted is the Nova palette: gold as the main color and purple as the accent, and the chips are purple with white text
+// (teams.css, tokens.css). The blue and steel palette stays in the code behind the old values and is not seeded.
+export const teamPalettes = { standard: '', inverted: 'palette-inverted' };
 
 // The class for a team with Glow on (Studio: Teams, Colors, Glow): the neon lines of its frames and header lines get two
 // wider and fainter lines of the same color outside them (base.css). They are strokes, never a filter.
@@ -791,6 +831,7 @@ export const primeTeam = {
     label: '#FACA2A',
   },
   metal: 'gold',
+  palette: 'standard',
   glow: false,
   mirror: false,
   bolts: 'hex',
