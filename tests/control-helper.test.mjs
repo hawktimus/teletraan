@@ -59,7 +59,8 @@ test('restart-services restarts the web container and the timers, and goes on wh
   const h = setup();
   assert.equal(h.ask('restart-services\n').status, 'ok');
   const calls = h.ask('status\n').calls;
-  assert.ok(calls.includes('docker restart teletraan-web'), calls);
+  assert.ok(calls.includes('sudo -n docker restart teletraan-web'), calls);
+  assert.ok(!calls.includes('nginx'), 'no fallback to the nginx service');
   ['calendars', 'monday', 'slides', 'watchdog', 'nightly'].forEach(name => assert.ok(calls.includes('restart teletraan-' + name + '.timer'), name));
 });
 

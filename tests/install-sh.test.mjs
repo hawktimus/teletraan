@@ -43,7 +43,7 @@ function setup(options = {}) {
   const log = path.join(base, 'calls.log');
   fs.mkdirSync(bin, { recursive: true });
   const logger = name => `#!/bin/sh\necho "${name} $*" >> "${log}"\n`;
-  put(path.join(bin, 'docker'), logger('docker') + (options.noImage ? '[ "$1 $2" = "image inspect" ] && exit 1\n' : '') + '# the release install, as far as the script can tell: a new release that current points at\n[ "$1" = run ] && { mkdir -p "$TELETRAAN_ROOT/releases/9/computer" && ln -sfn releases/9 "$TELETRAAN_ROOT/current"; }\nexit 0\n', 0o755);
+  put(path.join(bin, 'docker'), logger('docker') + (options.noImage ? '[ "$1 $2" = "image inspect" ] && exit 1\n' : '') + (options.pullFails ? '[ "$1" = pull ] && exit 1\n' : '') + '# the release install, as far as the script can tell: a new release that current points at\n[ "$1" = run ] && { mkdir -p "$TELETRAAN_ROOT/releases/9/computer" && ln -sfn releases/9 "$TELETRAAN_ROOT/current"; }\nexit 0\n', 0o755);
   put(path.join(bin, 'systemctl'), logger('systemctl') + 'exit 0\n', 0o755);
   put(path.join(bin, 'visudo'), logger('visudo') + (options.badSudoers ? 'exit 1\n' : 'exit 0\n'), 0o755);
   put(path.join(bin, 'chown'), logger('chown') + 'exit 0\n', 0o755);
@@ -81,11 +81,21 @@ test('a tree that still has deploy/ is refused with the plain sentence and nothi
   assert.equal(result.calls, '');
 });
 
-test('without sudo, without the Node image, or inside the root, it stops and says what to do', () => {
+test('a missing image is pulled as root and the line says it is a download; a failed pull says what to check', () => {
   const noImage = setup({ noImage: true });
   const result = noImage.run();
-  assert.equal(result.status, 1);
-  assert.ok(result.text.includes('docker pull node:22-alpine') && result.errors.includes('node:22-alpine is missing'), result.text + result.errors);
+  assert.equal(result.status, 0, result.errors + result.text);
+  assert.ok(result.text.includes('The image node:22-alpine is not on this computer') && result.text.includes('a download'), result.text);
+  assert.ok(result.calls.includes('docker pull node:22-alpine') && result.calls.includes('docker pull nginx:1.28-alpine'), result.calls);
+  assert.ok(!/^sudo /m.test(result.calls), 'docker is called as root, not through sudo');
+
+  const failing = setup({ noImage: true, pullFails: true });
+  const failed = failing.run();
+  assert.equal(failed.status, 1);
+  assert.ok(failed.text.includes('Check that this computer is online') && failed.errors.includes('node:22-alpine is missing'), failed.text + failed.errors);
+});
+
+test('inside the root the installer stops and says what to do', () => {
 
   const inside = setup();
   const moved = path.join(inside.root, 'staging');
@@ -150,6 +160,7 @@ test('the socket, its service and the sudoers file are installed with the login 
   const sudoers = fs.readFileSync(path.join(s.places.sudoers, 'teletraan-control'), 'utf8');
   assert.ok(sudoers.includes(account + ' ALL=(root) NOPASSWD:'));
   assert.ok(sudoers.includes('/usr/bin/systemctl restart teletraan-*') && sudoers.includes('/sbin/reboot'));
+  assert.ok(sudoers.includes('/usr/bin/docker restart teletraan-web,') && !sudoers.includes('restart nginx') && !/docker restart \S*\*/.test(sudoers), sudoers);
   assert.equal(fs.statSync(path.join(s.places.sudoers, 'teletraan-control')).mode & 0o777, 0o440);
   assert.ok(result.calls.includes('visudo -cf'));
   assert.ok(result.calls.includes('systemctl enable --now teletraan-control.socket'));
@@ -167,11 +178,12 @@ test('the release is installed by the Node image with the root and the tree moun
   assert.equal(result.status, 0, result.errors);
   const lines = result.calls.trim().split('\n');
   const run = lines.findIndex(line => line.startsWith('docker run '));
-  const up = lines.findIndex(line => line.startsWith('sudo ') && line.includes('docker compose'));
+  const up = lines.findIndex(line => line.startsWith('docker compose '));
   assert.ok(run !== -1, result.calls);
   assert.ok(lines[run].includes('node:22-alpine') && lines[run].includes(s.root + ':/opt/teletraan') && lines[run].includes(s.tree + ':/staging:ro'), lines[run]);
   assert.ok(lines[run].includes('control/bin/install-tree.js /staging') && lines[run].includes('--commit abc1234') && lines[run].includes('--no-restart'), lines[run]);
-  assert.ok(up === -1 || up > run);
+  assert.ok(up > run, 'compose runs as root, after the release install');
+  assert.ok(lines[up].includes('up -d --force-recreate') && !lines.some(line => line.startsWith('sudo ')), result.calls);
   assert.ok(lines.some(line => line === 'systemctl restart teletraan-kiosk.service'), 'the screen starts again');
 });
 

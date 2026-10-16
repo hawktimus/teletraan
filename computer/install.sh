@@ -25,6 +25,7 @@ systemd_dir=${TELETRAAN_SYSTEMD:-/etc/systemd/system}
 sudoers_dir=${TELETRAAN_SUDOERS:-/etc/sudoers.d}
 git_repo=${TELETRAAN_GIT:-/srv/teletraan.git}
 node_image=node:22-alpine
+web_image=nginx:1.28-alpine
 commit=''
 note='Installed with computer/install.sh'
 assume_yes=no
@@ -66,11 +67,20 @@ account_uid=$(id -u "$account")
 account_gid=$(id -g "$account")
 
 command -v docker > /dev/null 2>&1 || stop "docker is not installed. See docs/rebuilding-the-computer.md."
-if ! docker image inspect "$node_image" > /dev/null 2>&1; then
-  say "The Node image is not on this computer. The team mentor has to say yes to the download, then run:"
-  say "  docker pull $node_image"
-  stop "$node_image is missing."
-fi
+
+# A missing image is downloaded here, as root, because the login user is not in the docker group
+need_image() {
+  if docker image inspect "$1" > /dev/null 2>&1; then
+    return 0
+  fi
+  say "The image $1 is not on this computer. Downloading it now. This is a download from the internet and can take a few minutes."
+  if ! docker pull "$1"; then
+    say "The download of $1 did not work. Check that this computer is online and that the name $1 is right, then run this again."
+    stop "$1 is missing."
+  fi
+}
+need_image "$node_image"
+need_image "$web_image"
 
 ask() {
   [ "$assume_yes" = yes ] && return 0
@@ -189,7 +199,8 @@ docker run --rm -u "$account_uid:$account_gid" \
 
 # 5. The containers read through current, so they are made again, and the screen starts on the new build
 step "Start the containers and the screen"
-(cd "$root/current/computer" && sudo -u "$account" docker compose --env-file local.env up -d --force-recreate)
+# Root runs docker. The compose file sets user: for the control container, so the files it makes belong to the login user.
+(cd "$root/current/computer" && docker compose --env-file local.env up -d --force-recreate)
 systemctl restart teletraan-kiosk.service 2> /dev/null || say "The screen service is not installed here; skipped."
 
 # The nightly restart timer belongs to the control page's idea of a computer that looks after itself; its script asks for Enter

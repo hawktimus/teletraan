@@ -67,11 +67,7 @@ case $word in
     ;;
   restart-services)
     # The web server is a container here, and a restart makes it read the release that current points at
-    if command -v docker > /dev/null 2>&1; then
-      docker restart teletraan-web > /dev/null 2>&1 || sudo -n systemctl restart nginx > /dev/null 2>&1 || true
-    else
-      sudo -n systemctl restart nginx > /dev/null 2>&1 || true
-    fi
+    sudo -n docker restart teletraan-web > /dev/null 2>&1 || true
     for timer in calendars monday slides watchdog nightly; do
       sudo -n systemctl restart "teletraan-$timer.timer" > /dev/null 2>&1 || true
     done
