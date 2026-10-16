@@ -1,0 +1,44 @@
+/* The subtheme layer (core/subthemes-layer.js, docs/subthemes.md). A box is as big as its place on the
+   screen and clips its picture, so a picture never leaves its place and never crosses text. The motions
+   use transform and opacity only, and play only in full motion: in calm and none motion every picture
+   rests. */
+
+.subtheme-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  contain: strict;
+  pointer-events: none;
+}
+
+.subtheme-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.subtheme-box {
+  position: absolute;
+  overflow: hidden;
+}
+
+.subtheme-sprite {
+  position: absolute;
+  color: var(--accent, #d9b24a);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 4px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@keyframes subtheme-drift { 0%, 100% { transform: translateX(-3px); } 50% { transform: translateX(3px); } }
+@keyframes subtheme-blink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+@keyframes subtheme-fall  { from { transform: translateY(-100%); } to { transform: translateY(100%); } }
+
+html[data-motion="full"] .subtheme-sprite[data-motion="drift"] { animation: subtheme-drift 4s ease-in-out infinite; }
+html[data-motion="full"] .subtheme-sprite[data-motion="blink"] { animation: subtheme-blink 2s ease-in-out infinite; }
+html[data-motion="full"] .subtheme-sprite[data-motion="fall"]  { animation: subtheme-fall 20s linear infinite; }

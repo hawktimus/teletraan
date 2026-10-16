@@ -257,6 +257,25 @@
     { "name": "[Always show Kickoff]", "action": "show", "words": ["Kickoff"] }
   ],
 
+  "subthemes": [
+    {
+      "name": "Test star",
+      "enabled": true,
+      "start": "2020-01-01",
+      "end": "2099-12-31",
+      "priority": 0,
+      "assets": [ { "slot": "star", "builtin": "star" } ],
+      "rules": [
+      { "theme": "", "view": "", "slot": "star", "anchor": "banner-left", "size": 80, "motion": "drift" },
+      { "theme": "", "view": "", "slot": "star", "anchor": "banner-right", "size": 80, "motion": "blink" },
+      { "theme": "", "view": "", "slot": "star", "anchor": "countdown-top", "size": 80, "motion": "none" },
+      { "theme": "", "view": "", "slot": "star", "anchor": "ticker-end", "size": 80, "motion": "blink" },
+      { "theme": "", "view": "", "slot": "star", "anchor": "side-bottom", "size": 80, "motion": "fall" },
+      { "theme": "", "view": "", "slot": "star", "anchor": "main-corner", "size": 80, "motion": "drift" }
+      ]
+    }
+  ],
+
   "customPanels": [
     {
       "title": "[Panel]",
