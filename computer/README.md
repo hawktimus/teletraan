@@ -15,6 +15,7 @@ installing anything on the computer, and whenever a step needs a login or a key.
   repository are the files on the screen. A computer that gets its files from a Mac
   (below) leaves this timer off and installs only the calendar and slides
   services (`docs/rebuilding-the-computer.md`, step 11).
+- The control page (`docs/control-page.md`) updates the computer too: its Update from GitHub button downloads the newest commit of the public repository and installs it as the next release, with no login. The ways below stay for the first install and for when the page cannot be reached.
 - `tools/teletraan/teletraan-tool` runs on a Mac. It copies the files to the computer
   instead of pulling, keeps the keys and calendar lines of `local.env`, installs
   the services and shows the status (`docs/updating-the-computer.md`). Its words

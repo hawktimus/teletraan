@@ -29,11 +29,24 @@ Release 1 is the old tree. It stays in the list as a record. It cannot be switch
 
 - The number only goes up. The counter is in `releases/COUNTER`. To start at a higher number, write that number in the file. The next release is one more than it.
 - The last 5 releases are kept. Older ones are removed when a new one is installed. The one on the wall is never removed.
-- Each release has `RELEASE.json` with the version, the commit, the date, where it came from (`upload` or `git`), the note and the tree hash. The tree hash is the SHA-256 over the files in `dashboard/`, `studio/schemas/`, `computer/` and `control/`. The page uses it to tell whether a folder on a laptop is the one on the wall.
+- Each release has `RELEASE.json` with the version, the commit, the date, where it came from (`upload`, `git` or `github`), the note and the tree hash. The tree hash is the SHA-256 over the files in `dashboard/`, `studio/schemas/`, `computer/` and `control/`. The page uses it to tell whether a folder on a laptop is the one on the wall.
 - Everything that shows a build shows it as `v14 · a1b2c3d`: the version number and the first 7 characters of the commit. `dashboard/build.js` holds `build`, `version`, `commit` and `date`. It is written from `RELEASE.json` at install and when the screen starts.
 - `/opt/teletraan/computer`, `/opt/teletraan/dashboard` and the other folder names are links through `current`, so the unit files and the install scripts keep their paths.
 
+## Update from GitHub
+
+The top of the Update tab is the card From GitHub. It needs no login and no key, because the repository (github.com/Hawktimus/teletraan) is public.
+
+1. The card shows `On GitHub: <short hash> <message>` and `On the wall: v14 · a1b2c3d`.
+2. Press Update from GitHub and confirm. The computer downloads the zip of that exact commit (about 100 MB at most, 2 minutes at most), takes off the one top folder GitHub puts in it and installs it with the same steps as the folder upload: download, unpack, check the files, check the schemas, build the Studio, write the release files, switch, restart the screen, wait for the screen. A failure before the switch leaves the wall as it was.
+3. The release note reads `From GitHub <short hash> <message>` and `RELEASE.json` says `from: github`.
+4. The button reads Already on the wall and is off when the newest commit is the one on the wall. Check again asks GitHub once more.
+
+If GitHub answers too often the card says "GitHub is limiting requests. Try again in a few minutes." If the computer is offline it says it could not reach GitHub. Only one update runs at a time. The control container needs outbound HTTPS to `api.github.com` and `codeload.github.com`. No compose or nginx change is needed, because the control service makes the calls itself. The code is `control/lib/github.js` and `control/routes/github.js`; the repository, the branch and the addresses are the constants at the top of the first.
+
 ## The Update tab
+
+The folder upload sits below the GitHub card, headed From a folder on this computer.
 
 1. Choose Pick the repository folder and pick the Teletraan folder on this computer. The page remembers its name.
 2. It reads `.git/HEAD` when the folder has one, works out the tree hash with the same rules as the Teletraan computer and shows one of:
@@ -45,7 +58,7 @@ Release 1 is the old tree. It stays in the list as a record. It cannot be switch
 4. Type a note if you want one. Press the button. The browser zips the folder in memory without `.git`, `node_modules`, `local.env`, `_inputs`, `_outputs` and the generated files, up to 100 MB, and uploads it.
 5. The page then shows one line for each step of the install: unpack, check the files, check the schemas, build the Studio, write the release files, switch, restart the screen, wait for the screen. A failure before the switch removes the half-built folder and leaves the wall as it was. The number is used up either way.
 
-The browser zip needs one file that is not in the repository yet: `control/static/vendor/fflate.js`. `control/static/vendor/README-fflate.txt` says what to add. Until then the page says the zip library is missing, and the Mac tool still works.
+The browser zip uses one vendored file, `control/static/vendor/fflate.js`, with its licence in `control/static/vendor/LICENSE-fflate.txt`. If the file is ever missing, the page says the zip library is missing, and the Mac tool still works.
 
 ### Roll back
 

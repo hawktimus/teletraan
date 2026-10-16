@@ -28,7 +28,8 @@ trap 'rm -f "$patterns" "$found"' EXIT
 
 # Tracked files only, so node_modules and local files are never looked at. -I leaves binary files alone and
 # -w keeps a word from matching inside a longer one.
-git ls-files | grep -v '^tools/sweep-words\.txt$' | while IFS= read -r file; do
+# The vendored library under control/static/vendor/ is not our text; its short variable names match the list
+git ls-files | grep -v -e '^tools/sweep-words\.txt$' -e '^control/static/vendor/' | while IFS= read -r file; do
   [ -f "$file" ] || continue
   grep -IniwF -f "$patterns" -- "$file" 2> /dev/null | cut -c1-160 | sed "s|^|$file:|" >> "$found" || true
 done

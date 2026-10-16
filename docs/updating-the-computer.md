@@ -1,6 +1,6 @@
 # Updating the Teletraan computer from a Mac
 
-The control page does the everyday update (docs/control-page.md). This tool is the first install and the way in when the page cannot be reached. Its install copies the repository to `~/teletraan-staging` on the Teletraan computer, runs `computer/install.sh` there, which makes it the next release, installs the services and restarts the screen. It does all of that in one run and asks for the computer's password once.
+The control page does the everyday update (docs/control-page.md): one button, Update from GitHub, installs the newest commit of the public repository, and a folder upload installs a folder from a laptop. This tool is the first install and the way in when the page cannot be reached. Its install copies the repository to `~/teletraan-staging` on the Teletraan computer, runs `computer/install.sh` there, which makes it the next release, installs the services and restarts the screen. It does all of that in one run and asks for the computer's password once.
 
 `tools/teletraan/teletraan-tool` is a menu that runs in Terminal on a Mac. It installs
 the dashboard files and the services on the Teletraan computer, keeps the keys and the calendar links,
