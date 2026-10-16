@@ -140,9 +140,13 @@
 
     const regions = Array.from(document.querySelectorAll('[id^="region-"]')).map(region => Object.assign({ kind: 'region', name: '#' + region.id }, rectOf(region, where))).filter(box => box.width > 0 && box.height > 0);
 
+    // The middle of every bolt on the frames, which is where a copy of it has to land
+    const screws = Array.from(document.querySelectorAll('.screw')).map(screw => rectOf(screw, where)).filter(box => box.width > 0 && box.height > 0).map(box => ({ x: box.left + box.width / 2, y: box.top + box.height / 2 }));
+
     return {
       pieces: window.teletraanTest.sample(),
       regions: regions,
+      screws: screws,
       blocks: blocks,
       overlaps: overlaps,
       hawk: hawk ? Object.assign({ opacity: shown(hawk) }, rectOf(hawk, where)) : null,
@@ -153,6 +157,11 @@
     return Object.assign({}, snapshot, { blocks: snapshot.blocks.map(block => Object.assign({}, block, { element: undefined })) });
   }
   motion.look = look;
+
+  // Where the pieces and the bolts belong, with nothing moving
+  motion.rest = function () {
+    return { pieces: window.teletraanTest.rest(), screws: look().screws };
+  };
 
   // With the animations paused, the screen at each of these times
   function seek(animations, times) {
@@ -235,4 +244,76 @@
   };
 
   motion.swapDone = () => motion.swap && motion.swap.phase === 'reform';
+
+  // A hidden transition (core/hidden-run.js): the state of the screen at each change of it, and where the pieces are at
+  // the moments that matter. The pieces of the rise are seen at the end of their animation.
+  function state() {
+    const world = document.getElementById('world');
+    const cube = document.getElementById('cube');
+    const backdrop = document.getElementById('backdrop');
+    const picture = backdrop ? backdrop.querySelector('img.picture[data-state]') : null;
+    return {
+      hidden: world.dataset.hidden || '',
+      tint: world.dataset.tint || '',
+      pieces: world.hasAttribute('data-pieces'),
+      lift: world.hasAttribute('data-lift'),
+      cube: Boolean(cube) && !cube.hidden,
+      backdrop: Boolean(backdrop) && !backdrop.hidden,
+      picture: picture ? picture.dataset.state + ' ' + shown(picture).toFixed(2) : '',
+    };
+  }
+
+  motion.armHidden = function () {
+    const world = document.getElementById('world');
+    const hidden = motion.hidden = { events: [], apart: null, lift: null, cubeSeen: null, cube: [], ended: false, startedAt: 0 };
+    let last = '';
+
+    const note = reason => {
+      const now = state();
+      const text = JSON.stringify(now);
+      if (text === last) return;
+      last = text;
+      hidden.events.push(Object.assign({ at: performance.now() - hidden.startedAt, reason: reason }, now));
+      return now;
+    };
+
+    hidden.startedAt = performance.now();
+    new MutationObserver(() => {
+      const now = note('world');
+      if (!now) return;
+      try {
+        if (now.hidden === 'apart' && !hidden.apart) {
+          const content = Array.from(document.querySelectorAll('[data-pile="content"]'));
+          hidden.apart = { at: performance.now() - hidden.startedAt, view: plain(look()), contentShown: content.map(node => ({ name: nameOf(node), opacity: shown(node) })) };
+        }
+        if (now.lift && !hidden.lift) {
+          // The pieces rise by their own animations. Each is looked at at its end.
+          const rising = document.getAnimations().filter(animation => animation.effect && animation.effect.target && animation.effect.target.dataset && animation.effect.target.dataset.pile === 'piece');
+          rising.forEach(animation => animation.pause());
+          const end = Math.max(0, ...rising.map(animation => { const timing = animation.effect.getComputedTiming(); return timing.delay + timing.activeDuration; }));
+          rising.forEach(animation => { animation.currentTime = end; });
+          hidden.lift = { at: performance.now() - hidden.startedAt, animations: rising.length, end: end, view: plain(look()) };
+        }
+        if (!now.hidden && !now.pieces && hidden.lift) {
+          hidden.ended = true;
+          hidden.natural = null;
+        }
+      } catch (error) {
+        hidden.error = String(error && error.stack || error);
+      }
+    }).observe(world, { attributes: true });
+
+    const loop = () => {
+      const now = state();
+      note('frame');
+      if (now.cube) {
+        const mark = document.querySelector('#cube .cube-art');
+        const rect = rectOf(mark, place());
+        if (!hidden.cubeSeen) hidden.cubeSeen = { at: performance.now() - hidden.startedAt };
+        hidden.cube.push(Object.assign({ at: performance.now() - hidden.startedAt }, rect));
+      }
+      if (!hidden.ended) requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+  };
 })();
