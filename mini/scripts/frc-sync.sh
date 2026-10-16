@@ -95,7 +95,7 @@ version=$(config_value apiVersion)
 if ! printf '%s' "$project" | grep -Eq '^[a-z0-9]+$' ||
   ! printf '%s' "$dataset" | grep -Eq '^[A-Za-z0-9_-]+$' ||
   ! printf '%s' "$version" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
-  echo "Could not read the project ID, dataset and API version from dashboard/config.js." >&2
+  echo "Could not read the project ID, dataset and API version from dashboard/config.js. Check that projectId, dataset and apiVersion are in that file." >&2
   exit 1
 fi
 host="https://$project.api.sanity.io"
@@ -114,7 +114,7 @@ fi
 now=$(date +%s)
 case $now in
   ''|*[!0-9]*)
-    echo "Could not read the clock." >&2
+    echo "Could not read the clock. Check that the date command works on the Mini." >&2
     exit 1
     ;;
 esac
@@ -174,7 +174,7 @@ curl --disable --silent --get --max-time 30 --connect-timeout 10 --max-filesize 
   --output "$work/sanity.json" "$host/v$version/data/query/$dataset" 2> /dev/null || status=$?
 
 if [ "$status" -ne 0 ] || ! jq -e '.result | objects' "$work/sanity.json" > /dev/null 2>&1; then
-  echo "Could not get the teams from Sanity. Nothing was changed." >&2
+  echo "Could not get the teams from Sanity. Nothing was changed. Check that the Mini is online; the next run tries again." >&2
   exit 1
 fi
 
@@ -275,7 +275,7 @@ if ! jq -n \
   --argjson results_kept "$results_kept" --argjson snapshots_kept "$snapshots_kept" --argjson awards_kept "$awards_kept" \
   --rawfile notes "$work/notes.txt" --rawfile errors "$work/errors.txt" \
   "$paths$helpers$build" > "$work/status.json"; then
-  echo "Could not build the status from what was read." >&2
+  echo "Could not build the status from what was read. The next run tries again." >&2
   exit 1
 fi
 

@@ -1,6 +1,6 @@
 # Read by frc-sync.sh, never run. The jq programs that build the status document.
 # The helpers the filters share. They are logic and not API paths, so they are
-# not in the block at the top.
+# not in frc-contract.sh.
 helpers='
 def level_rank: if type == "string" then (({"qm": 0, "ef": 1, "qf": 2, "sf": 3, "f": 4})[.] // 5) else 5 end;
 def match_order: [(match_level | level_rank), (match_set // 0), (match_number // 0)];

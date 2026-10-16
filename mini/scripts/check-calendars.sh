@@ -111,7 +111,7 @@ status=0
 curl --fail --silent --show-error --max-time 20 --output "$work/sanity.json" "$address" 2>/dev/null || status=$?
 
 if [ "$status" -ne 0 ] || ! grep -q '"result"' "$work/sanity.json"; then
-  echo "Could not read the Calendar filters from Sanity, so nothing was checked." >&2
+  echo "Could not read the Calendar filters from Sanity, so nothing was checked. Check this computer is online and run it again." >&2
   echo "Run check-connection.sh to see which part is not working." >&2
   exit 1
 fi

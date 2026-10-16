@@ -220,7 +220,7 @@ dataset=$(config_value dataset)
 version=$(config_value apiVersion)
 
 if [ -z "$project" ] || [ -z "$dataset" ] || [ -z "$version" ]; then
-  echo "Could not read the project ID, dataset and API version from dashboard/config.js." >&2
+  echo "Could not read the project ID, dataset and API version from dashboard/config.js. Check that projectId, dataset and apiVersion are in that file." >&2
   exit 1
 fi
 
@@ -264,7 +264,7 @@ curl --disable --silent --get --max-time 30 --max-filesize 10000000 --proto '=ht
 
 # Nothing is deleted or changed unless Sanity has answered with a list
 if [ "$status" -ne 0 ] || ! jq -e '.result | arrays' "$work/answer.json" > /dev/null 2>&1; then
-  echo "Could not get the list of talks from Sanity. Nothing was changed." >&2
+  echo "Could not get the list of talks from Sanity. Nothing was changed. Check that the Mini is online; the next run tries again." >&2
   exit 1
 fi
 

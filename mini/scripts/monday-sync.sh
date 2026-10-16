@@ -74,7 +74,7 @@ version=$(config_value apiVersion)
 if ! printf '%s' "$project" | grep -Eq '^[a-z0-9]+$' ||
   ! printf '%s' "$dataset" | grep -Eq '^[A-Za-z0-9_-]+$' ||
   ! printf '%s' "$version" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
-  echo "Could not read the project ID, dataset and API version from dashboard/config.js." >&2
+  echo "Could not read the project ID, dataset and API version from dashboard/config.js. Check that projectId, dataset and apiVersion are in that file." >&2
   exit 1
 fi
 host="https://$project.api.sanity.io"
@@ -103,7 +103,7 @@ curl --disable --silent --get --max-time 30 --connect-timeout 10 --max-filesize 
   --output "$work/sanity.json" "$host/v$version/data/query/$dataset" 2> /dev/null || status=$?
 
 if [ "$status" -ne 0 ] || ! jq -e '.result | objects' "$work/sanity.json" > /dev/null 2>&1; then
-  echo "Could not get the settings from Sanity. Nothing was changed." >&2
+  echo "Could not get the settings from Sanity. Nothing was changed. Check that the Mini is online; the next run tries again." >&2
   exit 1
 fi
 

@@ -37,7 +37,7 @@ secret_settings() {
 }
 
 # The helpers the filters share. They are logic and not places in an answer, so
-# they are not in the block at the top. \u0027 is the ' sign, which cannot be
+# they are not in monday-contract.sh. \u0027 is the ' sign, which cannot be
 # written inside a string that is in single quotes.
 helpers='
 def plain: explode | map(if . < 32 or . == 127 then 32 else . end) | implode | gsub(" +"; " ") | sub("^ "; "") | sub(" $"; "");
