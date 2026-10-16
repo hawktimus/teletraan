@@ -374,53 +374,48 @@
 
   function paint(context, shapes) {
     shapes.forEach(shape => {
-      context.beginPath();
-      shape.points.forEach((point, index) => (index === 0 ? context.moveTo(point.x, point.y) : context.lineTo(point.x, point.y)));
-      if (shape.fill) {
-        context.closePath();
-        context.fillStyle = '#000';
-        context.fill();
-      } else {
+      context.setTransform(shape.matrix);
+      context.fillStyle = '#000';
+      context.strokeStyle = '#000';
+      if (shape.fill) context.fill(shape.path);
+      if (shape.width > 0) {
         context.lineWidth = shape.width;
         context.lineCap = shape.cap;
         context.lineJoin = shape.join;
-        context.strokeStyle = '#000';
-        context.stroke();
+        context.stroke(shape.path);
       }
     });
+    context.setTransform(1, 0, 0, 1, 0, 0);
   }
 
-  // The shapes of one piece in window pixels: its filled polygons, and the widest line of each of its edges
+  // What a piece paints, as paths in the space of their own elements with the matrix that puts them in the window: the
+  // fill of each polygon and path, and the line of each stroke. A shadow, a glint, a glow or a layer under half strong
+  // is not paint that covers a seam.
   function shapesOf(piece) {
     const shapes = [];
-    const toWindow = (element, list) => {
-      const matrix = element.getScreenCTM();
-      return Array.from(list).map(point => {
-        const moved = new DOMPoint(point.x, point.y).matrixTransform(matrix);
-        return { x: moved.x, y: moved.y };
-      });
+    const strong = style => Number(style.opacity) * (style.strokeOpacity === '' ? 1 : Number(style.strokeOpacity)) >= 0.9;
+    const lineOf = (element, path, matrix) => {
+      const style = window.getComputedStyle(element);
+      const width = style.stroke !== 'none' && strong(style) && !/shadow|glint|neon|glow|wear|rust/.test(String(element.getAttribute('class'))) ? parseFloat(style.strokeWidth) : 0;
+      const filled = style.fill !== 'none' && Number(style.opacity) >= 0.9 && Number(style.fillOpacity) >= 0.9 && !/shadow|glint|neon|glow|wear|rust/.test(String(element.getAttribute('class')));
+      if (!filled && !(width > 0)) return;
+      shapes.push({ path: path, matrix: matrix, fill: filled, width: width, cap: style.strokeLinecap, join: style.strokeLinejoin });
+    };
+    const pathOfPoints = (points, close) => {
+      const path = new Path2D();
+      Array.from(points).forEach((point, index) => (index === 0 ? path.moveTo(point.x, point.y) : path.lineTo(point.x, point.y)));
+      if (close) path.closePath();
+      return path;
     };
 
-    piece.querySelectorAll('polygon').forEach(polygon => {
-      const style = window.getComputedStyle(polygon);
-      if (style.fill === 'none' || Number(style.opacity) === 0) return;
-      shapes.push({ fill: true, points: toWindow(polygon, polygon.points) });
-    });
-
-    const edges = {};
+    piece.querySelectorAll('polygon').forEach(element => lineOf(element, pathOfPoints(element.points, true), element.getScreenCTM()));
+    piece.querySelectorAll('polyline').forEach(element => lineOf(element, pathOfPoints(element.points, false), element.getScreenCTM()));
+    piece.querySelectorAll('path').forEach(element => lineOf(element, new Path2D(element.getAttribute('d')), element.getScreenCTM()));
     piece.querySelectorAll('use').forEach(use => {
-      const style = window.getComputedStyle(use);
-      const width = parseFloat(style.strokeWidth);
-      if (style.stroke === 'none' || !(width >= 4) || /shadow|glint|neon|glow/.test(String(use.getAttribute('class')))) return;
       const target = document.querySelector(use.getAttribute('href'));
       if (!target || !target.points) return;
-      const id = use.getAttribute('href');
-      if (edges[id] && edges[id].width >= width) return;
-
-      const matrix = use.getScreenCTM();
-      edges[id] = { fill: false, width: width * Math.hypot(matrix.a, matrix.b), cap: style.strokeLinecap, join: style.strokeLinejoin, points: toWindow(use, target.points) };
+      lineOf(use, pathOfPoints(target.points, target.tagName === 'polygon'), use.getScreenCTM());
     });
-    Object.keys(edges).forEach(id => shapes.push(edges[id]));
     return shapes;
   }
 
@@ -494,7 +489,8 @@
       }
 
       // The pieces whose paint reaches the seam are the ones that meet there
-      return found.filter(box => box.count >= 3).map(box => {
+      // A seam is a run along an edge. A pinhole of a few pixels where three pieces meet at a corner is not one.
+      return found.filter(box => Math.max(box.right - box.left, box.bottom - box.top) + 1 >= 8).map(box => {
         const names = own.filter(item => {
           const bounds = item.piece.getBoundingClientRect();
           return bounds.left <= box.right + 3 && bounds.right >= box.left - 3 && bounds.top <= box.bottom + 3 && bounds.bottom >= box.top - 3;
@@ -504,6 +500,94 @@
     } finally {
       if (!had) delete world.dataset.pieces;
     }
+  };
+
+  // Chips, labels and headers: does the text fit its box with room to spare. The width of the text is measured with the
+  // font that draws it (the advance of each letter at its size, and the letter spacing). The box is the room the layout
+  // gives the element: its max-width when it has one, the width it was given when it clips or cuts with dots, and
+  // for the rest, the element must at least stay inside its parent.
+  const chipLike = '[class*="chip"]';
+  const labelLike = '[class*="label"], .tag-text, .view-tag, .unit';
+  const headerLike = 'h1, h2, h3, .title, .headline, .heading, .block-heading';
+
+  function ownText(element) {
+    return Array.from(element.childNodes).filter(node => node.nodeType === Node.TEXT_NODE).map(node => node.nodeValue).join(' ').replace(/\s+/g, ' ').trim();
+  }
+
+  // options: spare (px), clearance (extra room a header title has before the metal of its line), only (a selector: look
+  // at those elements and not at chips, labels and headers)
+  motion.textFits = function (options) {
+    const spare = options.spare;
+    const where = place();
+    const found = [];
+    const checked = new Set();
+    const groups = options.only ? [['text', options.only]] : [['chip', chipLike], ['label', labelLike + ', [class*="department"]'], ['header', headerLike]];
+
+    groups.forEach(([kind, selector]) => {
+      document.querySelectorAll('#stage ' + selector.split(', ').join(', #stage ')).forEach(element => {
+        if (checked.has(element) || element.closest('svg, [hidden]')) return;
+        checked.add(element);
+
+        const text = ownText(element);
+        const style = window.getComputedStyle(element);
+        const rect = element.getBoundingClientRect();
+        if (text === '' || rect.width === 0 || style.display === 'none' || shown(element) < 0.5) return;
+
+        measuring.font = style.fontStyle + ' ' + style.fontWeight + ' ' + style.fontSize + ' ' + style.fontFamily;
+        measuring.letterSpacing = style.letterSpacing === 'normal' ? '0px' : style.letterSpacing;
+        const advance = measuring.measureText(style.textTransform === 'uppercase' ? text.toUpperCase() : text).width;
+        const paddings = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) + parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth);
+        const clipping = style.overflow !== 'visible' || style.textOverflow === 'ellipsis';
+        const limited = style.maxWidth !== 'none';
+        const wraps = style.whiteSpace !== 'nowrap' && style.whiteSpace !== 'pre';
+
+        // How much room the text has in this box. null when the layout sets no box for it.
+        let room = null;
+        if (limited) room = parseFloat(style.maxWidth) - (style.boxSizing === 'border-box' ? paddings : 0) + (kind === 'header' ? options.clearance : 0);
+        else if (clipping && !wraps) room = element.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+        // A box that is as wide as its text and nothing more is the box of an element that shrinks to its text
+        if (!limited && room !== null && Math.abs(room - advance) <= 1) room = null;
+        if (wraps && room === null) return;
+
+        const parent = element.parentElement.getBoundingClientRect();
+        // A slanted chip is wider than its box by the slant, so only an element that is not moved is held to its parent
+        const outside = style.transform !== 'none' ? 0 : Math.max(0, rect.right - parent.right, parent.left - rect.left);
+        const cut = element.scrollWidth > element.clientWidth + 1;
+        const base = { kind: kind, name: nameOf(element), text: text.slice(0, 30), size: style.fontSize, width: advance };
+
+        if (room !== null && room - advance < spare) found.push(Object.assign(base, { problem: 'the text is ' + Math.round(advance * 10) / 10 + 'px wide in a box of ' + Math.round(room * 10) / 10 + 'px, which leaves ' + Math.round((room - advance) * 10) / 10 + 'px (needs ' + spare + ')' }, rectOf(element, where)));
+        else if (cut && style.overflow === 'visible') found.push(Object.assign(base, { problem: 'the text runs ' + (element.scrollWidth - element.clientWidth) + 'px past its box' }, rectOf(element, where)));
+        else if (outside > 1 / where.scale) found.push(Object.assign(base, { problem: 'the box runs ' + Math.round(outside / where.scale * 10) / 10 + 'px past its parent' }, rectOf(element, where)));
+      });
+    });
+    return found;
+  };
+
+  // The title of the countdown in whichever clock is on the screen: what it says on each line, at what size, how its box
+  // is placed (data-title), and whether any of it is cut off
+  motion.countdownTitle = function () {
+    const clock = document.querySelector('#stage .war-clock, #stage .countdown');
+    if (!clock) return null;
+
+    const label = clock.querySelector('.label');
+    const date = clock.querySelector('.date');
+    const style = window.getComputedStyle(label);
+    const group = label.closest('.label-group, .war-lines') || label.parentElement;
+    const lines = label.textContent.split('\n');
+
+    measuring.font = style.fontStyle + ' ' + style.fontWeight + ' ' + style.fontSize + ' ' + style.fontFamily;
+    measuring.letterSpacing = style.letterSpacing === 'normal' ? '0px' : style.letterSpacing;
+    return {
+      form: clock.classList.contains('war-wide') ? 'wide' : clock.classList.contains('war-clock') ? 'narrow' : 'original',
+      mode: clock.dataset.title || '',
+      lines: lines,
+      date: date ? date.textContent : '',
+      size: parseFloat(style.fontSize),
+      widest: Math.max(...lines.map(line => measuring.measureText(line).width)),
+      cutWidth: label.scrollWidth - label.clientWidth,
+      cutHeight: group.scrollHeight - group.clientHeight,
+      name: nameOf(label),
+    };
   };
 
   // A hidden transition (core/hidden-run.js): the state of the screen at each change of it, and where the pieces are at
