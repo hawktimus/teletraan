@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Teletraan I control</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header><h1>Teletraan I control</h1></header>
+  <main class="sign-in">
+    <div class="card" id="box">
+      <h2>Sign in</h2>
+      <p id="message" class="muted">Type the PIN.</p>
+      <form id="form">
+        <label for="pin" class="muted">PIN</label>
+        <input id="pin" type="password" inputmode="numeric" autocomplete="current-password" pattern="[0-9]*">
+        <div class="row"><button class="action" type="submit">Sign in</button></div>
+      </form>
+    </div>
+  </main>
+  <script type="module" src="login.js"></script>
+</body>
+</html>
