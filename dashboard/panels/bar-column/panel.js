@@ -14,7 +14,6 @@ import { weatherIcon } from '../../core/weather-icons.js';
 import { logoMarkup, logoTeamOf, showLogoTeam, showTeamLogo } from '../../core/logo.js';
 import { teamPlateMarkup } from '../../core/plate.js';
 import { teamShown } from '../../core/teams.js';
-import { viewNow } from '../../core/view-apply.js';
 import { packExtras } from '../../core/theme.js';
 
 // Sizes that the stylesheet repeats. Change them together.
