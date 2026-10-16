@@ -3,20 +3,21 @@ import { structureTool } from 'sanity/structure';
 import { projectId, dataset } from './project.js';
 import { schemaTypes } from './schemas/index.js';
 import { publishAllTool } from './tools/publish-all-tool.js';
-import { structure, settingsType, singletonTypes } from './structure.js';
+import { structure, settingsType, singletonTypes, viewType } from './structure.js';
 import { addTemplates } from './tools/add-templates.js';
 import { screenType } from './inputs/screen-ids.js';
 import { playHiddenActions, usePlayAnnouncementsAction, useRunPresentationTestAction, previewActions } from './tools/actions.js';
 
 // Dashboard Settings, Look and Demo each exist once (singletonTypes in
-// structure.js), and so does each of the three Screens, which are three pages of the type screen.
+// structure.js), and so does each of the three Screens, which are three pages of the type screen, and each of
+// the four Views, which are four pages of the type view.
 // Their pages are made the long-standing way, by removing the
 // actions that would copy them or take them away, because Sanity's newer
 // singleton option is still in beta. Dashboard Settings also gets a Play button
 // for each hidden transition, Play announcements, Run presentation test and a
 // Preview button for each look (actions.js).
 const removedFromSingletons = ['delete', 'duplicate', 'unpublish'];
-const pageTypes = singletonTypes.concat([screenType]);
+const pageTypes = singletonTypes.concat([screenType, viewType]);
 
 const buttonsOf = {
   [settingsType]: playHiddenActions.concat([usePlayAnnouncementsAction, useRunPresentationTestAction], previewActions),

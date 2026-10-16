@@ -43,14 +43,20 @@ import { CogIcon } from '@sanity/icons/Cog';
 import { ColorWheelIcon } from '@sanity/icons/ColorWheel';
 import { DashboardIcon } from '@sanity/icons/Dashboard';
 import { DesktopIcon } from '@sanity/icons/Desktop';
+import { DiamondIcon } from '@sanity/icons/Diamond';
+import { EarthGlobeIcon } from '@sanity/icons/EarthGlobe';
 import { EyeClosedIcon } from '@sanity/icons/EyeClosed';
+import { FaceHappyIcon } from '@sanity/icons/FaceHappy';
 import { FilterIcon } from '@sanity/icons/Filter';
 import { HeartIcon } from '@sanity/icons/Heart';
+import { HighlightIcon } from '@sanity/icons/Highlight';
 import { HomeIcon } from '@sanity/icons/Home';
 import { ImagesIcon } from '@sanity/icons/Images';
 import { MicrophoneIcon } from '@sanity/icons/Microphone';
 import { PanelLeftIcon } from '@sanity/icons/PanelLeft';
 import { PresentationIcon } from '@sanity/icons/Presentation';
+import { ProjectsIcon } from '@sanity/icons/Projects';
+import { SparkleIcon } from '@sanity/icons/Sparkle';
 import { SquareIcon } from '@sanity/icons/Square';
 import { StackIcon } from '@sanity/icons/Stack';
 import { StarIcon } from '@sanity/icons/Star';
@@ -66,6 +72,8 @@ import { CalendarsView } from './inputs/calendars-view.js';
 import { milestonesChild } from './inputs/monday-boards-parts.js';
 import { MondayBoardsTabs } from './inputs/preview-panels-view.js';
 import { screenType, screenStyles, screenTitles, screenIdOf } from './inputs/screen-ids.js';
+import { ThemesView } from './inputs/themes-view.js';
+import { viewType, viewKeys, viewTitles, viewIdOf } from './inputs/view-ids.js';
 
 // Pages that exist once. Each is a single document with a fixed id.
 export const settingsType = 'dashboardSettings';
@@ -82,6 +90,13 @@ export { screenType };
 export const screenIds = screenStyles.map(screenIdOf);
 const screenIcons = { original: SquareIcon, cybertron: BoltIcon, minimal: PanelLeftIcon };
 const screenPages = screenStyles.map(style => ({ kind: 'page', title: screenTitles[style], icon: screenIcons[style], type: screenType, id: screenIdOf(style) }));
+
+// The four Views, General, Prime, Nova and Family, are pages of one type with an id each. They sit in a folder
+// under Settings, next to Themes.
+export { viewType };
+export const viewIds = viewKeys.map(viewIdOf);
+const viewIcons = { general: EarthGlobeIcon, prime: DiamondIcon, nova: SparkleIcon, family: FaceHappyIcon };
+const viewPages = viewKeys.map(key => ({ kind: 'page', title: viewTitles[key], icon: viewIcons[key], type: viewType, id: viewIdOf(key) }));
 
 // The same version as the screen's own questions to Sanity
 const apiVersion = '2025-02-19';
@@ -171,6 +186,8 @@ export const sidebarEntries = [
       { kind: 'page', title: 'Dashboard Settings', icon: DesktopIcon, type: settingsType, id: settingsId },
       { kind: 'page', title: 'Look', icon: ColorWheelIcon, type: themeType, id: themeId },
       { kind: 'list', title: 'Teams', icon: TokenIcon, type: 'team', sort: byOrder },
+      { kind: 'group', title: 'Views', icon: ProjectsIcon, id: 'views', entries: viewPages },
+      { kind: 'component', title: 'Themes', id: 'themes', icon: HighlightIcon, component: ThemesView },
     ],
   },
   { kind: 'list', title: 'Extra panels', icon: ThLargeIcon, type: 'customPanel', sort: byOrder },

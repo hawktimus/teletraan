@@ -1,9 +1,8 @@
 // The weekday schedule and the fields the Screens replaced, in the Look tab of Dashboard Settings.
 //
-//   screenSchedule  a picker for each day of the week, Monday to Sunday, that chooses the Screen
-//                   (Screens, under Start here) that plays that day: Original on Monday, Wednesday, Friday and
-//                   Sunday and Cybertron on Tuesday, Thursday and Saturday to start with. Minimal is
-//                   not scheduled. The day is the calendar day in the time zone of the Look page.
+//   screenSchedule  a picker for each day of the week, Monday to Sunday, that chose the Screen that played
+//                   that day. It is hidden now: the Themes page picks the theme of each day and stores it in
+//                   themeByWeekday (settingsViews.js). The saved schedule is kept.
 //
 // The four fields the Screens replaced stay in the schema, hidden, with what was saved in them, so
 // that nothing already published is lost, and the screen does not read them for what plays. The only
@@ -60,7 +59,7 @@ function dayField(day) {
     name: day.name,
     title: day.title,
     type: 'string',
-    description: 'The Screen that plays on ' + day.title + '. What plays on it is set in Screens, under Start here in the sidebar.',
+    description: 'Not used any more. The theme of ' + day.title + ' is set on the Themes page.',
     options: { list: styles, layout: 'radio', direction: 'horizontal' },
     initialValue: day.start,
     validation: Rule => Rule.valid(styles.map(style => style.value)).error('Pick original, cybertron or minimal.'),
@@ -74,7 +73,8 @@ function scheduleField() {
     title: 'Weekday schedule',
     type: 'object',
     group: 'look',
-    description: 'Which Screen plays on each day of the week. The day is picked at start-up and at the first row change after midnight.',
+    hidden: true,
+    description: 'Not used any more. The Themes page picks the theme of each day. It stays so that a saved schedule is kept.',
     fields: weekdays.map(dayField),
   });
 }

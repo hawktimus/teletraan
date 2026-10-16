@@ -1,11 +1,11 @@
 // How long each line of the ticker stays, and the older lists of panels. The panels of the main and
-// side area, their order and their seconds are rows of the three Screens now (Screens in the sidebar,
-// schemas/screen.js). The panel names must match the ids in dashboard/registry.js.
+// side area, their order and their seconds are rows of the four Views now (Views under Settings in the
+// sidebar, schemas/view.js). The panel names must match the ids in dashboard/registry.js.
 //
 // The order was one list, Panel order, with every panel in it. It stays in the schema, hidden, with
 // what was saved in it, and so do the two lists before it, Large panels and Small panels. The first
-// time a Screen is opened its rows are worked out from them (studio/tools/screen-seed.js), and the
-// dashboard does the same for a Screen that has none (dashboard/core/panel-order.js).
+// time a View is opened its rows are worked out from the Screens and these lists (studio/tools/view-seed.js), and the
+// dashboard does the same for a View that has none (dashboard/core/panel-order.js).
 
 import { defineField, defineArrayMember } from 'sanity';
 import { titleOf } from './fields.js';
@@ -96,14 +96,14 @@ export function rotationField() {
     title: 'Ticker',
     type: 'object',
     group: 'screen',
-    description: 'How long each ticker line stays. The panels, their order and their seconds are set in Screens, under Start here in the sidebar.',
+    description: 'How long each ticker line stays. The panels, their order and their seconds are set in Views, under Settings in the sidebar.',
     fields: [
       defineField({
         name: 'order',
         title: 'Panel order',
         type: 'array',
         hidden: true,
-        description: 'Not used any more. The rows of each Screen (Screens in the sidebar) replace this list. It stays so that a saved list is kept.',
+        description: 'Not used any more. The rows of each View (Views under Settings in the sidebar) replace this list. It stays so that a saved list is kept.',
         of: [stepMember(allPanels, true)],
         initialValue: startingList(allPanels),
         components: { input: PanelOrderInput },
@@ -115,8 +115,8 @@ export function rotationField() {
         description: 'Optional. Leave empty and each line stays one and a half times Seconds per page. Otherwise from 6 to 120 seconds.',
         validation: secondsRule,
       }),
-      panelList('grid1', 'Large panels', 'The big panels, one at a time. Not used any more: a Screen with no rows builds them from this list.', largePanels),
-      panelList('grid2', 'Small panels', 'The small panels, one at a time. Not used any more: a Screen with no rows builds them from this list.', smallPanels),
+      panelList('grid1', 'Large panels', 'The big panels, one at a time. Not used any more: a View with no rows builds them from this list.', largePanels),
+      panelList('grid2', 'Small panels', 'The small panels, one at a time. Not used any more: a View with no rows builds them from this list.', smallPanels),
     ],
   });
 }
