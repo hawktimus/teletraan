@@ -3,7 +3,7 @@
    the title at 40px on two lines at the most and who to ask at 32px. A stuck task has a red edge and a STUCK tag of 26px. */
 .monday-board .columns {
   display: flex;
-  gap: 24px;
+  gap: 12px;
   height: 100%;
 }
 .monday-board .column {
@@ -36,7 +36,7 @@
   box-sizing: border-box;
   height: 176px;
   margin-bottom: 14px;
-  padding: 8px 16px;
+  padding: 8px 12px;
   overflow: hidden;
   background: var(--plate);
   border-left: 4px solid var(--column-color);
