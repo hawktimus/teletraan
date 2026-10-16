@@ -128,7 +128,7 @@ const contract = {
     team: teamRef,
     order: 'number',
   }),
-  person: withFlags({ role: 'string', name: text(17), title: text(22), line: text(48), group: 'string', photo: 'image', showPhoto: 'boolean', team: teamRef, order: 'number' }),
+  person: withFlags({ role: 'string', name: text(17), title: text(22), line: text(48), photo: 'image', showPhoto: 'boolean', team: teamRef, order: 'number' }),
   team: {
     name: text(20),
     shortName: text(8),
@@ -160,7 +160,6 @@ const contract = {
     speed: 'string',
     frameMetal: 'string',
     contentSource: 'string',
-    switchBackAt: 'datetime',
     glint: 'boolean',
     look: 'string',
     style: 'string',
@@ -427,7 +426,6 @@ const choices = {
   'demo.steps.screen': ['announcement', 'all-announcements', 'night-mode'],
   'dashboardSettings.portraitShape': ['square', 'rounded', 'circle'],
   'dashboardSettings.portraitFrame': ['metal', 'line', 'none'],
-  'person.group': ['COACH', 'CAPTAIN', 'MENTOR'],
 };
 
 // The panels that can be put in each area of the screen. The Studio lists and
@@ -1335,7 +1333,7 @@ function checkLookAndTiming() {
   logoSwitches.forEach(name => {
     need(problems, typeof sample[name] === 'boolean', 'the sample settings need ' + name + ', true or false');
   });
-  need(problems, !('contentSource' in sample) && !('switchBackAt' in sample), 'the sample settings should not carry contentSource or switchBackAt, which the screen ignores');
+  need(problems, !('contentSource' in sample), 'the sample settings should not carry contentSource, which the screen ignores');
   ['pageSeconds'].concat(logoNumbers).forEach(name => {
     const limit = config.limits[name];
     need(problems, sample[name] >= limit.min && sample[name] <= limit.max, 'the sample settings need ' + name + ' from ' + limit.min + ' to ' + limit.max);
@@ -1430,7 +1428,7 @@ function checkContentSource() {
   const config = world.dashboard;
   const at = name => fieldAt('dashboardSettings.' + name);
 
-  ['contentSource', 'switchBackAt'].forEach(name => {
+  ['contentSource'].forEach(name => {
     const field = at(name);
     need(problems, field, name + ' should stay in the schema, so that a saved value is kept');
     need(problems, field && field.hidden === true, name + ' should be hidden (hidden: true)');
@@ -1438,8 +1436,8 @@ function checkContentSource() {
     need(problems, !(name in config.defaultSettings), name + ' should not be in defaultSettings in config.js: the dashboard ignores it');
   });
   need(problems, at('contentSource') && at('contentSource').initialValue === 'production', 'contentSource should still start as production');
-  need(problems, at('switchBackAt') && at('switchBackAt').initialValue === undefined, 'switchBackAt should still start empty');
-  ['contentSource', 'switchBackAt'].forEach(name => need(problems, at(name) && !constraintNamed(constraintsOf(at(name)), 'required'), name + ' should not be required: nobody can fill in a hidden field, and a page saved before it existed must still publish'));
+  need(problems, !at('switchBackAt'), 'switchBackAt should be gone from the schema: no document held a value');
+  ['contentSource'].forEach(name => need(problems, at(name) && !constraintNamed(constraintsOf(at(name)), 'required'), name + ' should not be required: nobody can fill in a hidden field, and a page saved before it existed must still publish'));
   need(problems, choicesOf('dashboardSettings.contentSource').map(item => item.value).join() === 'production,sample', 'contentSource should still offer production and sample, so that a saved value stays valid');
   need(problems, at('contentSource') && /sample=1/.test(at('contentSource').description || ''), 'the contentSource description should say how to see the sample content, with ?sample=1');
   need(problems, !('contentSources' in config) && !('useSampleContent' in config), 'config.js should have no contentSources and no useSampleContent: the screen shows production unless the address has ?sample=1');
@@ -2257,7 +2255,6 @@ function checkStartingValues() {
   const kickoffOk = kickoff && localTime(kickoff) === settings.countdown.kickoff;
   need(problems, kickoffOk, 'countdown.kickoff should start at ' + settings.countdown.kickoff + ' in Holly Springs');
   if (fieldAt('dashboardSettings.countdown.rollout').initialValue) problems.push('countdown.rollout should start empty');
-  if (fieldAt('dashboardSettings.switchBackAt').initialValue) problems.push('switchBackAt should start empty');
   return problems;
 }
 
@@ -2977,8 +2974,8 @@ function checkPortraitSettings() {
 
 // The rows of Leadership and Team leads: a line under the name (person.line and subteam.line, up to 48
 // characters). Each is optional and has no starting value, so what is saved before they existed stays as
-// it is. The chip of a Leadership row is the Role (person.title, required), so the group radio is hidden
-// and keeps its choices, and the sample people and team leads have a line.
+// it is. The chip of a Leadership row is the Role (person.title, required), and the
+// sample people and team leads have a line.
 function checkPersonRows() {
   const problems = [];
   const leadership = world.leadershipModule;
@@ -2994,15 +2991,9 @@ function checkPersonRows() {
   checkLine('person.line', 'Leave blank to hide.');
   checkLine('subteam.line', 'Leave blank to show the subteam name.');
   need(problems, /3 people or fewer/.test((fieldAt('person.line') || {}).description || '') && /3 people or fewer/.test((fieldAt('subteam.line') || {}).description || ''), 'the line descriptions should say that it shows on pages of 3 people or fewer, because a row of four has no room for it');
-  need(problems, personNames.indexOf('line') === personNames.indexOf('title') + 1 && personNames.indexOf('group') === personNames.indexOf('line') + 1, 'person.line and person.group should come right after person.title, not ' + personNames.join(', '));
+  need(problems, personNames.indexOf('line') === personNames.indexOf('title') + 1, 'person.line should come right after person.title, not ' + personNames.join(', '));
 
-  // The group is not read by the screen. It stays in the schema with its choices, so a saved value is still valid
-  const group = fieldAt('person.group');
-  const allowed = group ? constraintNamed(constraintsOf(group), 'valid') : null;
-  need(problems, group && group.type === 'string' && group.options && group.options.layout === 'radio', 'person.group should stay a radio list');
-  need(problems, group && group.hidden === true && group.description === 'Not used any more', 'person.group should be hidden with the description "Not used any more"');
-  need(problems, choicesOf('person.group').map(item => item.value).join() === 'COACH,CAPTAIN,MENTOR' && allowed && allowed.args[0].join() === 'COACH,CAPTAIN,MENTOR', 'person.group should keep COACH, CAPTAIN and MENTOR, so a saved value stays valid');
-  need(problems, group && !constraintNamed(constraintsOf(group), 'required'), 'person.group should not be required, because nobody can fill in a hidden field');
+  need(problems, personNames.indexOf('group') === -1, 'person.group should be gone from the schema: no document held a value');
 
   // The chip is the Role: person.title, required, with the words of the order
   const role = fieldAt('person.title');
@@ -4244,7 +4235,7 @@ const settingsTabs = {
   presentations: presentationNames.concat('presentationTestRequest'),
   monday: ['mondayConnection', 'mondayTokenTest', 'mondayEveryMinutes', 'mondayTaskBoard', 'mondayMilestoneBoard', 'mondayShowOwners', 'mondayBoards'],
   competition: ['frcConnection', 'competitionMode'].concat(competitionNames),
-  advanced: nightNames.concat(hiddenNames, ['contentSource', 'switchBackAt', 'showConnectionStatus']),
+  advanced: nightNames.concat(hiddenNames, ['contentSource', 'showConnectionStatus']),
 };
 
 function checkSettingsTabs() {
@@ -4277,7 +4268,7 @@ function checkSettingsTabs() {
   need(problems, first('competition') && first('competition').name === 'frcConnection', 'the first field of the Competition tab should be the connection block, frcConnection');
 
   // The fields that leave the form stay in the schema
-  ['contentSource', 'switchBackAt'].forEach(name => need(problems, fieldAt('dashboardSettings.' + name) && fieldAt('dashboardSettings.' + name).hidden === true, name + ' should be hidden but stay in the schema'));
+  ['contentSource'].forEach(name => need(problems, fieldAt('dashboardSettings.' + name) && fieldAt('dashboardSettings.' + name).hidden === true, name + ' should be hidden but stay in the schema'));
 
   // The notes store nothing and say one thing each in one line, and the Look tab and the Look page point to each other
   const notes = ['dashboardSettings.lookNote', 'dashboardSettings.cycleNote', 'theme.settingsNote'];
@@ -7129,7 +7120,7 @@ async function main() {
     world.calendarsParts = await load(path.join(folder, 'inputs', 'calendars-view-parts.js'));
     world.calendarsView = await load(path.join(folder, 'inputs', 'calendars-view.js'));
     world.calendarsViewSource = fs.readFileSync(path.join(here, 'inputs', 'calendars-view.js'), 'utf8');
-    world.calendarsPartsSource = fs.readFileSync(path.join(here, 'inputs', 'calendars-view-parts.js'), 'utf8');
+    world.calendarsPartsSource = ['calendars-view-parts.js', 'calendars-hide-rules.js'].map(name => fs.readFileSync(path.join(here, 'inputs', name), 'utf8')).join('\n');
     world.mondayBoardsParts = await load(path.join(folder, 'inputs', 'monday-boards-parts.js'));
     world.mondayBoardsView = await load(path.join(folder, 'inputs', 'monday-boards-view.js'));
     world.previewPanelsView = await load(path.join(folder, 'inputs', 'preview-panels-view.js'));

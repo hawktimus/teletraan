@@ -76,7 +76,7 @@ export default defineType({
         }),
       ],
       initialValue: [],
-      validation: Rule => [Rule.max(24).error('Only 24 names fit on the screen.'), Rule.custom(checkNoRepeats)],
+      validation: Rule => [Rule.max(24).error('Only 24 names fit on the screen. Remove one.'), Rule.custom(checkNoRepeats)],
     }),
     defineField({
       name: 'spotlight',

@@ -1,14 +1,9 @@
 import { defineType, defineField } from 'sanity';
-import { showField, expiresField, orderField, teamField, noteField, tooLong, byOrder, aToZ, titleOf, subtitleFor } from './fields.js';
+import { showField, expiresField, orderField, teamField, noteField, tooLong, byOrder, aToZ, titleOf, subtitleFor, firstNameOnly } from './fields.js';
 import { ShowOnTvInput } from '../inputs/show-on-tv-input.js';
 
 // The contact is a first name, so a space or a digit means a last name or
 // something else is in there. A hyphen is fine, as in Mary-Anne.
-function firstNameOnly(value) {
-  if (typeof value === 'string' && /[\s\d]/.test(value)) return 'Use a first name only, with no spaces or numbers.';
-  return true;
-}
-
 const statuses = [
   { title: 'Blocked', value: 'blocked' },
   { title: 'In progress', value: 'in-progress' },
@@ -127,7 +122,7 @@ const fields = [
     type: 'array',
     of: [{ type: 'string', validation: Rule => tooLong(Rule, 12) }],
     description: 'Optional. First names from Assigned, kept when owner names are on. Up to 6 names of 12 characters.' + reading,
-    validation: Rule => Rule.max(6).error('Up to 6 names.'),
+    validation: Rule => Rule.max(6).error('Up to 6 names fit. Remove one.'),
   }),
   defineField({
     name: 'milestoneIds',
@@ -135,7 +130,7 @@ const fields = [
     type: 'array',
     of: [{ type: 'string', validation: Rule => tooLong(Rule, 20) }],
     description: 'Optional. The numbers of the milestone items the task is linked to. Up to 50.' + reading,
-    validation: Rule => Rule.max(50).error('Up to 50 milestones.'),
+    validation: Rule => Rule.max(50).error('Up to 50 milestones fit. Remove one.'),
   }),
   defineField({
     name: 'showOnBoard',

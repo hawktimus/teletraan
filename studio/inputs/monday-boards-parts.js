@@ -4,6 +4,7 @@
 // tests/monday-boards.test.mjs read this file with node.
 
 import { ageText } from './time-text.js';
+import { isRecord, sentence } from './plain-values.js';
 
 // The id the Mini writes to. mini/scripts/monday-sync.sh has the same one.
 export const mondayStatusId = 'monday-status';
@@ -30,7 +31,7 @@ export const nothingYet = 'Nothing yet. The Mini writes this after it has read M
 export const noBoardsLine = 'The token of the Mini can see no boards.';
 export const openLine = 'Click the name of a chosen board to open its tasks.';
 export const publicLine = 'These names are saved in the dataset, which anyone can read. That includes the boards the screen does not use.';
-export const unreadableLine = 'The list of boards could not be read.';
+export const unreadableLine = 'The list of boards could not be read. Refresh the page to try again.';
 export const settingsUnreadableLine = 'The boards chosen in Dashboard Settings could not be read, so every board reads as not chosen.';
 
 // Only what the page shows, so the question stays small. The boards of the status document come
@@ -39,18 +40,8 @@ export const statusQuestion = '*[_id == $id][0] { lastSyncAt, lastError, "boards
 // The two boards of the Monday tab, each with what it is for. A page saved before the tab had them reads as the starting boards.
 export const entriesQuestion = '*[_id == $id][0] { "entries": [ { "boardId": coalesce(mondayTaskBoard.boardId, "' + taskBoardStart + '"), "team": "the task board" }, { "boardId": coalesce(mondayMilestoneBoard.boardId, "' + milestoneBoardStart + '"), "team": "the milestones board" } ] }';
 
-function isRecord(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
-
 function list(value) {
   return Array.isArray(value) ? value.filter(isRecord) : [];
-}
-
-function sentence(text) {
-  const trimmed = String(text).trim();
-  const capital = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
-  return /[.?]$/.test(capital) ? capital : capital + '.';
 }
 
 function itemsWord(count) {

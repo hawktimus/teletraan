@@ -18,6 +18,7 @@
 import { createElement, useEffect, useState } from 'react';
 import { useClient, useFormValue } from 'sanity';
 import { ageText, clockText } from './time-text.js';
+import { isRecord, sentence } from './plain-values.js';
 
 const h = createElement;
 
@@ -55,10 +56,6 @@ const styles = {
   board: { margin: '12px 0 0' },
   reason: { margin: '0 0 4px 236px', fontSize: 14, color: 'var(--card-badge-caution-fg-color, #92400e)' },
 };
-
-function isRecord(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
 
 // 1 board, 3 boards, or None
 function boardsText(count) {
@@ -100,12 +97,6 @@ export function describeMondayWork(counts) {
     lines.push({ label: 'Tasks from the board', text: tasksText(found.tasks) + hidden });
   }
   return lines;
-}
-
-function sentence(text) {
-  const trimmed = String(text).trim();
-  const capital = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
-  return /[.?]$/.test(capital) ? capital : capital + '.';
 }
 
 function itemsRead(count) {
@@ -191,7 +182,7 @@ export async function readMondayTaskCount(client) {
 // number or null, and the lines of describeBoardRows.
 export function mondayStatusView(read, now, work) {
   if (!read) return h('p', { style: styles.note }, 'Reading the connection to Monday.');
-  if (read.unreadable) return h('p', { style: styles.note }, 'The connection to Monday could not be read.');
+  if (read.unreadable) return h('p', { style: styles.note }, 'The connection to Monday could not be read. Refresh the page to try again.');
   if (!read.doc) return h('p', { style: styles.note }, 'No connection yet. Add MONDAY_API_TOKEN to local.env on the Mini, then wait 5 minutes.');
 
   const counts = work || {};

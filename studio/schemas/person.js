@@ -7,13 +7,6 @@ const roles = [
   { title: 'Mentor', value: 'Mentor' },
 ];
 
-// The screen does not read the group any more, so the choices only keep a saved value valid
-const groups = [
-  { title: 'Coach', value: 'COACH' },
-  { title: 'Captain', value: 'CAPTAIN' },
-  { title: 'Mentor', value: 'MENTOR' },
-];
-
 const roleHelp = 'Shown in the chip at the right of the row, for example Coach, Co-President, Mentor, Parent. Up to 22 characters fit.';
 
 export default defineType({
@@ -49,15 +42,6 @@ export default defineType({
       type: 'string',
       description: 'One short line under the name, such as a year, a department, or a note. Leave blank to hide. Up to 48 characters fit. Shown on pages of 3 people or fewer.',
       validation: Rule => tooLong(Rule, 48),
-    }),
-    defineField({
-      name: 'group',
-      title: 'Chip at the right end',
-      type: 'string',
-      hidden: true,
-      description: 'Not used any more',
-      options: { list: groups, layout: 'radio', direction: 'horizontal' },
-      validation: Rule => Rule.valid(groups.map(group => group.value)).error('Pick coach, captain or mentor.'),
     }),
     defineField({
       name: 'photo',

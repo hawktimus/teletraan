@@ -13,14 +13,7 @@
 // out and never made up.
 
 import { defineType, defineField, defineArrayMember } from 'sanity';
-
-function textField(name, title, description) {
-  return defineField({ name: name, title: title, type: 'string', description: description });
-}
-
-function numberField(name, title, description) {
-  return defineField({ name: name, title: title, type: 'number', description: description });
-}
+import { textField, numberField } from './fields.js';
 
 const column = defineArrayMember({
   type: 'object',

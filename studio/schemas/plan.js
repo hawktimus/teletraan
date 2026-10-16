@@ -69,7 +69,7 @@ export default defineType({
           },
         }),
       ],
-      validation: Rule => Rule.max(5).error('Only 5 rows fit on the screen.'),
+      validation: Rule => Rule.max(5).error('Only 5 rows fit on the screen. Remove one.'),
     }),
     teamField(),
     showField(),

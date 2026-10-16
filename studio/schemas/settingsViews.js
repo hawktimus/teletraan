@@ -69,7 +69,7 @@ export function viewsFields() {
         }),
       ],
       initialValue: viewKeys.slice(),
-      validation: Rule => Rule.unique().error('Each view can be in the list once.'),
+      validation: Rule => Rule.unique().error('A view can be in the list once. Remove the repeat.'),
     }),
     defineField({
       name: 'themeByWeekday',

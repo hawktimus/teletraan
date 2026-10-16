@@ -8,13 +8,10 @@
 // buildBranch are the build on the wall, written by the job version of status-write.sh.
 
 import { defineType, defineField } from 'sanity';
+import { textField } from './fields.js';
 
 function timeField(name, title, description) {
   return defineField({ name: name, title: title, type: 'datetime', description: description });
-}
-
-function textField(name, title, description) {
-  return defineField({ name: name, title: title, type: 'string', description: description });
 }
 
 export default defineType({

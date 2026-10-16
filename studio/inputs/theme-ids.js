@@ -1,4 +1,4 @@
-// The themes the weekday schedule can pick, and the days of the week. A theme is a style: frames,
+// The themes the weekday schedule can pick, and the days of the week. A theme is frames,
 // textures, type treatment and transitions. The ids are the folders of dashboard/styles/ and are stored
 // in themeByWeekday of Dashboard Settings, so never rename one. tests/schemas.test.mjs fails when a
 // list differs from the dashboard's.
@@ -37,9 +37,4 @@ export function tidyThemeByWeekday(raw) {
     schedule[day.name] = themeIds.indexOf(source[day.name]) !== -1 ? source[day.name] : day.start;
   });
   return schedule;
-}
-
-export function themeTitleOf(id) {
-  const found = themeChoices.filter(theme => theme.id === id)[0];
-  return found ? found.title : '';
 }

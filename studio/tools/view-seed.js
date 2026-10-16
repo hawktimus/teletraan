@@ -8,7 +8,7 @@
 //
 // Plain functions only, so that tests/view-seed.test.mjs can run them with node.
 
-import { seedRows } from './screen-seed.js';
+import { seedRows, withKeys } from './screen-seed.js';
 import { defaultViews, familyPanels } from './view-defaults.js';
 
 // The Screens in the order their rows are looked for
@@ -86,7 +86,5 @@ export function needsViewSeed(view) {
   return !view || !Array.isArray(view.panels) || view.panels.length === 0;
 }
 
-// Every row needs a key of its own, such as panels-3
-export function withKeys(rows, prefix) {
-  return rows.map((row, index) => Object.assign({ _key: prefix + '-' + (index + 1) }, row));
-}
+// The same keys as a Screen row has, such as panels-3
+export { withKeys };
