@@ -29,8 +29,8 @@ the sample instead, put `?sample=1` on the end of the address, such as
 `http://localhost:8080/dashboard/?sample=1`. While a page shows the sample,
 every piece of sample text is in [square brackets] and a SAMPLE CONTENT label
 shows on the screen. Nothing in Studio switches it, and `core/source.js` is the
-one place that decides. Until the setup in studio/README.md is finished (step 6,
-the CORS origin, is what lets the screen read Sanity), the screen has nothing
+one place that decides. Until the CORS origin is added in the Sanity project (docs/control-page.md,
+First time, step 4), which is what lets the screen read Sanity, the screen has nothing
 to show on production, so use `?sample=1`. A Studio with nothing published
 shows an empty production screen. The browser console shows a 404 line for
 `data/live/version.txt`. That is expected: the Mini writes that file.
@@ -51,10 +51,10 @@ screen all the time, with the last read from Sanity and the item counts
 The Sanity project exists. Its ID, `ybfqe345`, is in `studio/project.js` and in
 `dashboard/config.js`, and its dataset is called `production`. What is left is
 to run the Studio on a Mac, let the dashboard read from it, type some content
-and look at it on the screen. studio/README.md has every step.
+and look at it on the screen. docs/laptop-setup.md has every step.
 In short, from the `studio` folder in the Terminal app: `npm install`,
-`npx sanity login`, `npm run dev`, then add `http://localhost:8080` (this Mac)
-and `http://localhost:3229` (the Mini) as CORS origins in the Sanity project
+`npx sanity login`, `npm run dev`, then add `http://localhost:8080` (this Mac, and the screen on
+the Mini) and `http://teletraan.local:3229` (the Studio on the Mini) as CORS origins in the Sanity project
 settings, publish some content, and run `npm run deploy` so the
 editors can sign in from anywhere.
 
@@ -85,11 +85,12 @@ editors can sign in from anywhere.
                               the cards, dots on the page, the outlined name, the bar at the
                               start of the ticker and the neon countdown), each for a class that core/teams.js
                               puts on the html element (docs/layouts.md, "Team trim")
-      themes/                 one CSS file of colour variables per theme, and registry.js listing them.
-                              overlays/ has the seasonal packs' colours the same way (the overlays),
-                              and required.js lists the variables a theme must set.
-                              decor/ has what Neon Prime adds to its colours: the gunmetal and the
-                              neon decoration (docs/adding-a-theme.md, "Neon Prime")
+      themes/                 one CSS file of colour variables per colour file (Hawktimus, Neon Prime,
+                              Alternate), and registry.js listing them. These files are not the themes
+                              of the Themes page: those are the folders of styles/. overlays/ has the
+                              seasonal packs' colours the same way, and required.js lists the variables
+                              a colour file must set. decor/ has what Neon Prime adds to its colours
+                              (docs/adding-a-theme.md)
       seasons/                the decorations of the seasonal packs: one file for each pack, with its
                               header mark, its pieces over the panels and its edge decorations
                               (christmas.js is the finished model), motion.css with every keyframe they
@@ -100,11 +101,16 @@ editors can sign in from anywhere.
                               across the whole bottom, with no small frame. bar.css, the placing of the bar layout
                               (a banner, a side column, one main panel and the ticker) and its mirror. The numbers
                               are in core/layout.js (docs/layouts.md)
-      styles/                 one stylesheet for each style (Style in Dashboard Settings): original.css has the
-                              mirror of the standard layout, which Cybertron has too, and cybertron.css and
-                              minimal.css each set custom properties and paint the page background, the plates
-                              and the decoration of the frames that only that style has (docs/layouts.md,
-                              "Styles", "Frames" and "Cybertron")
+      styles/                 one folder for each theme on the Themes page: original, cybertron and retro
+                              (retro is a marked copy of original until it is designed). A folder has
+                              tokens.css (the colors), theme.css (frames, textures and type), frame.css
+                              and transitions.js. core/style-loader.js finds the folder from the theme id
+                              (docs/layouts.md, "Cybertron"; docs/views-and-themes.md)
+      subthemes.css           the layer of pictures over a theme and a view (docs/subthemes.md)
+      view-tag.css            the name of the view at the far end of the banner (docs/views.md)
+      status-dots.css         the three dots at the foot of the screen (core/dots.js)
+      build.example.js        the shape of build.js, which the control service writes for each release and
+                              kiosk.sh writes when the screen starts. Git ignores build.js itself
       base.css                the fixed 1920x1080 screen and the shared metal shapes. Nothing is responsive:
                               shell.js scales the whole screen to the window (docs/layouts.md, "The screen is
                               a fixed canvas")
@@ -186,11 +192,9 @@ editors can sign in from anywhere.
                               pack on the screen for 2 minutes, and preview-run.js starts it. What it holds is
                               kept by previewStyle in style.js, previewTeam in teams.js and previewPack in
                               theme.js (docs/hidden-transitions.md, "Preview a look"),
-                              screens.js decides what plays: the three Screens, the Screen of the day, the
-                              rows of the large panel with the team and the style of each, the Monday rows
-                              and the Next look now guard, screen-seed.js works out the first rows of a Screen
-                              from the Panel order, and screens-run.js hands a look to the screen
-                              (docs/layouts.md, "The Screens"),
+                              screens.js reads the three Screen documents, which are kept for the Monday
+                              style and the banner settings and to give a view its first rows
+                              (docs/views.md),
                               swap-plan.js decides the one swap of every change of look and of Monday card
                               (which piece starts when, which old piece each new one takes over from, where it
                               re-forms, whether the icon of the logo flutters or only goes with them, and how), swap-run.js plays it on the page, in full motion,
@@ -212,6 +216,29 @@ editors can sign in from anywhere.
                               tick.js is the one clock of the screen: it tells every panel when a real
                               second starts by reading the time, not by counting, so the digits never
                               drift, and a panel should write to the page only what has changed
+      core/ (views and themes)
+        views.js              the four views (General, Prime, Nova, Family): their documents, the order,
+                              the minutes, the rows of each step and the look of a step (docs/views.md).
+                              views-run.js gives it the real screen, and view-apply.js writes the view
+                              on the page
+        style-loader.js       finds the folder of a theme in styles/ from its id
+        anchors.js            the boxes a subtheme can draw in, for each layout
+        subthemes.js          picks the live subtheme and its pictures; subthemes-layer.js draws them
+                              over the stage once; subtheme-art.js has the drawings the screen has of
+                              its own (docs/subthemes.md)
+        version-label.js      the text of a build, "v14 · a1b2c3d", from build.js
+        now-report.js         tells the control page what is on the wall every 10 seconds;
+                              now-report-parts.js is the plain half of the report
+        dots.js               the rules of the three dots (Monday, Band, Sanity); dots-run.js draws them
+        heartbeat.js          writes the time in the page title every 30 seconds, which the watchdog
+                              on the Mini reads
+        still.js              the ?panel= preview address; still-run.js draws the one panel
+        competition-address.js  ?competition=1&event= puts the competition cards on with one event's
+                              data; competition-address-run.js gives it the page
+        takeover.js           the alert and the announcements at set times, which cover the screen
+        time.js               turns dates into the text on the screen and reads typed dates
+        weather.js            the weather from Open-Meteo, kept for two hours; weather-icons.js draws
+                              the pictures
       panels/                 one folder per panel: a script and a stylesheet. panels/side is the whole
                               column of the sidebar layout, in place of the banner and the countdown
                               (docs/layouts.md, "The sidebar"). panels/bar-banner and panels/bar-column are
@@ -267,6 +294,32 @@ editors can sign in from anywhere.
                               scripts/ has make-templates.mjs, which writes the CSV templates from the
                               schemas, and import-csv.mjs, which checks filled-in CSVs and makes a file
                               for sanity dataset import (docs/importing-from-csv.md)
+      views and themes        schemas/view.js is the four View documents (General, Prime, Nova, Family),
+                              inputs/view-ids.js their ids and inputs/view-input.js their form, with the
+                              map. tools/view-defaults.js is what each view starts with and tools/view-seed.js
+                              fills a view that has no rows from the Screens. schemas/settingsViews.js has the
+                              view and theme fields of the Look tab. inputs/themes-view.js is the Themes page
+                              and holds the weekday schedule, inputs/theme-ids.js and inputs/theme-styles.js
+                              are the themes it lists (the folders of dashboard/styles/). schemas/subtheme.js
+                              is the Subthemes list (docs/subthemes.md)
+      other files             schemas/announcement.js is the bar under the banner (docs/announcements.md),
+                              schemas/customPanel.js and customPanelBlocks.js the Extra panels, sponsor.js the
+                              Sponsors, tipOrNews.js Tips and News, presentationTimes.js the times in the
+                              lists, and index.js the list of every type. inputs/control-address.js is where the
+                              control page is, inputs/monday-token-input.js with tools/monday-check.js the Test
+                              the token button, inputs/panel-preview.js, preview-panels.js,
+                              preview-panels-view.js and row-preview-input.js the panel previews,
+                              inputs/note-field.js the one line notes in a form, and tools/add-templates.js what
+                              a plus button makes
+    control/                  the control page service (docs/control-page.md). server.js starts it and
+                              lib/ holds the router, auth (PIN, cookie, lockout), releases, the install steps,
+                              the zip reader, the tree hash, the local.env merge, the Studio build, the
+                              CORS probe and the client of the host helper. routes/ has one file for each group
+                              of calls and index.js loads them in alphabetical order. support/ has what the
+                              routes share: http.js, keys.js, requests.js, status-parts.js, now-rows.js,
+                              env-file.js and sanity.js. static/ is the pages (index.html and one file for each
+                              tab) with the browser copy of the tree hash and the fonts. bin/install-tree.js
+                              installs a release from the command line
     mini/                     how the Mini runs it: web server, timers, scripts. scripts/check-connection.sh
                               checks the Mini's connection to Sanity, BAND, Docker and the kiosk with one
                               OK or FAIL line each (docs/rebuilding-the-mini.md, "Checking the connection").
@@ -291,7 +344,24 @@ editors can sign in from anywhere.
                               (docs/frc-feed.md).
                               scripts/monday-sync.sh reads the Monday boards named in Dashboard Settings and
                               writes their items into Sanity as tasks, with the monday-status document, and
-                              install-monday.sh turns on its timer (docs/monday.md).
+                              install-monday.sh turns on its timer (docs/monday.md). Its other parts are
+                              monday-contract.sh (where each value sits in an answer, and the limits),
+                              monday-requests.sh (asking Monday, writing to Sanity, reading a board),
+                              monday-check.sh (--check) and monday-programs.sh (the jq programs).
+                              frc-sync.sh is split the same way into frc-contract.sh, frc-requests.sh,
+                              frc-modes.sh, frc-read.sh and frc-programs.sh.
+                              scripts/lib.sh is read by every script: the folders, the local.env reader
+                              (setting) and the config.js reader (config_value). Every script starts with
+                              bash, a usage line, set -euo pipefail and lib.sh.
+                              scripts/pull.sh, watchdog.sh, nightly.sh, kiosk.sh and display.sh run the
+                              screen: the pull, the 2 minute watchdog, the 04:00 restart and the Sunday
+                              reboot, the browser, and the detection of the connected display.
+                              install-watchdog.sh, install-nightly.sh and install-backup.sh turn on their
+                              timers. scripts/control-helper.sh is the host side of the control page.
+                              install.sh installs a release of the repository and sets the control page
+                              up, sudoers/ lets the helper run the few commands it needs, nginx/ and
+                              docker-compose.yml are the web server, and git/ is the optional bare
+                              repository.
                               scripts/install-timers.sh turns on the calendar timer and the pull timer,
                               install-calendars.sh only the calendar timer and install-slides.sh the slides
                               timer (docs/rebuilding-the-mini.md, step 11). systemd/ has the unit files they
@@ -302,8 +372,9 @@ editors can sign in from anywhere.
                               (docs/rebuilding-the-mini.md, step 13).
     tools/
       serve.py                the server above
-      presentation-booking/   the Apps Script code behind the Google Form where students book a talk
-                              (docs/presentations.md)
+      screenshots.mjs         takes a picture of every panel in each view and theme, into _outputs/screens
+      sweep.sh, sweep-words.txt  look through the files git tracks for names that do not belong there
+      frc-fixture.mjs         turns one past event into the fixture of the competition cards
       zones.html              the zones of the seasonal packs outlined over the dashboard, at
                               http://localhost:8080/tools/zones.html
       mini/                   the Mac tool that updates the Mini and keeps its keys and calendars:
@@ -325,6 +396,27 @@ editors can sign in from anywhere.
                               node tests/run.mjs, or node tests/run.mjs <word> for the files with the word in the name.
                               A test of a shell script is a Node file that runs the script with fakes in a temporary folder.
       run.mjs                 the runner: three files at a time, one line each, a total, and sh -n and bash -n on every shell file
+      mini-scripts.test.mjs   checks that every script in mini/scripts starts the same way (bash, a usage line,
+                              set -euo pipefail, lib.sh) and that lib.sh holds the only readers of local.env and
+                              config.js. helpers/script-parts.mjs gives a test the parts of a split script
+      control-auth, control-keys, control-pages, control-releases, control-request, control-status,
+      control-zip-hash, control-helper (.test.mjs)
+                              check the control service: the PIN, cookie and lockout, the Keys tab, the text of
+                              the tabs, releases and installs, the Now showing requests, the status routes, the
+                              zip check and tree hash, and the host helper (docs/control-page.md)
+      install-sh.test.mjs     checks mini/install.sh: it refuses a tree with deploy/, moves an old tree into
+                              releases/1, installs the helper socket and the sudoers file
+      nightly.test.mjs        checks nightly.sh and its units: the 04:00 restart, the Sunday reboot and the skip
+                              when a talk is booked within the hour
+      display.test.mjs        checks display.sh with a fake xrandr
+      no-old-code.test.mjs    checks that the TV never runs old code after an update (the ?v=<build> on every file)
+      dots.test.mjs           checks the three dots (core/dots.js)
+      subthemes.test.mjs      checks subthemes: the live window, priority, rules, anchors and the layer
+      theme-folders.test.mjs  checks the four files of each theme folder and the loader
+      nova-palette.test.mjs   checks the Nova palette (gold main, purple accent, gold metal)
+      small-foot.test.mjs     checks the last line of a page of the small frame in Cybertron against the slashes
+      check-preview.test.mjs  checks that the panel preview list is in step with the registry
+      frc-event.test.mjs      checks ?competition=1&event= and frc-sync.sh --event with a fake curl
       calendar.test.mjs       checks for the calendar reader, and for the Calendar filters that take events
                               off the screen (core/events.js)
       weather.test.mjs        checks for the weather reader and its pictures
@@ -494,11 +586,11 @@ editors can sign in from anywhere.
                               of the small frame that runs in every layout (core/schedule.js)
       monday-style.test.mjs   checks that the Monday rows are in the Monday style only: the Monday row left out
                               while the style cannot go on the page, and a held look going on in a swap
-                              (core/screens-run.js on a small page)
+                              (core/views-run.js on a small page)
       screens.test.mjs        checks for the Screens (core/screens.js): the three documents as they are read, the
                               Screen of each weekday, the rows built from the Panel order, the list of the large
                               panel, and the swap between two rows
-      look-rotation.test.mjs  checks the page side of the Screens (core/screens-run.js): what the large panel asks
+      look-rotation.test.mjs  checks the page side of the views (core/views-run.js): what the large panel asks
                               schedule.js, a style and a team held the way a preview holds them, the Next look
                               now guard, the swap as the one way a look goes on, and the docs
       screen-seed-dashboard.test.mjs  checks for the first rows of a Screen on the screen side
@@ -971,7 +1063,7 @@ alone.
   Dashboard Settings, Look tab: Team mode (`teamMode`, Prime only to start with, from
   `teamModes`) and Minutes for each team (`alternateMinutes`, 5 to start with, 1 to 30), in
   `studio/schemas/settingsTeams.js`, so the whole section can be removed by deleting that file. Both
-  are hidden now (docs/layouts.md, "The Screens"). The starting values, the limits and the built-in Prime team (`primeTeam`, which the screen uses
+  are hidden now (docs/layouts.md, "The views"). The starting values, the limits and the built-in Prime team (`primeTeam`, which the screen uses
   when the Studio has no teams) are in `dashboard/config.js`. `teamsFrom` in `core/sanity.js`
   cleans the documents, `core/teams.js` chooses the team (`chooseTeam`) and puts it on the page
   (`applyTeamLook`), and `core/areas.js` calls `changeTeamNow` while the large frame is apart, so

@@ -526,7 +526,7 @@ finished. To add an eighth, or to finish one, do these steps in order. The Chris
        export const pack = { shapes: {}, scene: null, mark: null, back: [], front: [], over: [] };
 
 5. **Draw the shapes and the mark.** Flat polygons with hard edges, in the faceted style of the logo
-   (`core/logo.js`, `core/hidden-art.js`). Use two tones, a lit side and a shaded side, and no
+   (`core/logo.js`, `core/hidden-pictures.js`). Use two tones, a lit side and a shaded side, and no
    gradients, glow, blur or shadows. Keep them small: the zones are thin. The **mark** goes in the pack's
    `mark` and must fit 60 x 76 pixels (see "The header mark"); put the shapes that should follow the
    accent colour in `<g class="double-slash">`. The pieces over the panels need a shape too, 18 to 44 px

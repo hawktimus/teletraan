@@ -26,7 +26,7 @@ step. No panel checks the team itself.
 
 - While Prime is on the banner, the screen shows the items for Prime and for Both.
 - While Nova is, it shows the items for Nova and for Both.
-- When the team of the next row of a Screen is another team, the items change with the team.
+- When the next view is for another team, the items change with the team.
   They change in the same step as the name and the colors, in the swap, so a panel is never
   rebuilt in the middle of a page.
 

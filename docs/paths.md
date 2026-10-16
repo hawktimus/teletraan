@@ -2,7 +2,7 @@
 
 Round 6 moved files into the folders of README.md. Every move was made with `git mv`, so `git log --follow <new path>` shows the history of the file under its old path. A move changed nothing in a file except the paths it imports or reads. This page lists every old path and its new one.
 
-A copy of the repository that still has a `deploy/` folder is older than this move. The Mac tool (`tools/mini/teletraan-mini update`) and the Ship app (`tools/mac/ship.sh`) stop with "This copy is older than round 6; update it." and change nothing. The control service and the installer are to do the same when they are written.
+A copy of the repository that still has a `deploy/` folder is older than this move. The Mac tool (`tools/mini/teletraan-mini update`) and the Ship app (`tools/mac/ship.sh`) stop with "This copy is older than round 6; update it." and change nothing. The installer (`mini/install.sh`) and the control page refuse it in the same way.
 
 ## Counts
 
@@ -333,3 +333,15 @@ Files that did not move: `dashboard/` outside `panels/`, `studio/schemas/`, `stu
 | `dashboard/styles/original.css` | `dashboard/styles/original/theme.css` |
 | `dashboard/styles/cybertron.css` | `dashboard/styles/cybertron/theme.css` (its `--style-*` rule is in `tokens.css` beside it) |
 | `dashboard/styles/minimal.css` | `dashboard/layouts/bar-minimal.css` |
+
+## Files split in the review
+
+These files kept their names and their functions and variables. Part of each was moved into a file beside it, which the first file reads.
+
+| File | Parts |
+|------|-------|
+| `mini/scripts/monday-sync.sh` | `monday-contract.sh`, `monday-requests.sh`, `monday-check.sh`, `monday-programs.sh` |
+| `mini/scripts/frc-sync.sh` | `frc-contract.sh`, `frc-requests.sh`, `frc-modes.sh`, `frc-read.sh`, `frc-programs.sh` |
+| `tools/mini/teletraan-mini` | `teletraan-mini-ui.sh`, `-secrets.sh`, `-config.sh`, `-deploy.sh`, `-keys.sh` |
+
+`mini/scripts/lib.sh` is new. It holds the readers of `local.env` and `dashboard/config.js` that each script had its own copy of.

@@ -5,9 +5,9 @@ The list on the left of the Studio is one list in `studio/structure.js`, called
 order, move a line.
 
 The sidebar reads like this. A heading in capitals is a divider with a title, not
-a folder. Screens, Daily Agenda, Monday Tasks and Settings are folders, and
+a folder. Screens, Daily Agenda, Monday Tasks, Settings and Views are folders, and
 Presentations is a folder inside Daily Agenda. Screens is the second line, right
-under Start here:
+under Start here, and is kept for older settings:
 
     Start here
     Screens
@@ -27,6 +27,7 @@ under Start here:
     EVENTS
       Calendars
       Calendar filters
+      Subthemes
     ROSTER
       Leadership
       Team leads
@@ -37,6 +38,12 @@ under Start here:
         Dashboard Settings
         Look
         Teams
+        Views
+          General
+          Prime
+          Nova
+          Family
+        Themes
       Extra panels
 
 ## The five kinds of line
@@ -63,12 +70,14 @@ under Start here:
   between. Demo is the third page that exists once, and it has no line. The three
   Screens are three pages of one type, `screen`, each with an id of its own:
   `screen-original`, `screen-cybertron` and `screen-minimal` (`studio/inputs/screen-ids.js`).
+  The four Views are four pages of the type `view` (`studio/inputs/view-ids.js`).
   Nothing can copy, delete or add one, and the New menu does not offer the type.
 - `group` is a folder. It opens a list of the lines under `entries`, one line
   each. A folder holds lists and pages, and one more folder, which holds lists
   or pages. Daily Agenda holds Agenda items, Presentations (Upcoming and Past) and
   Meeting days. Monday Tasks holds On the TV and Hidden. Screens holds Original,
-  Cybertron and Minimal. Settings holds Dashboard Settings, Look and Teams.
+  Cybertron and Minimal. Settings holds Dashboard Settings, Look, Teams, Views (General, Prime,
+  Nova and Family) and Themes. Themes is a `component`, the page of the weekday schedule.
 - `component` opens a page that is not a document. `component` is a plain
   function that draws it. Start here is `StartHere` in `studio/inputs/start-here.js`
   and Calendars is `CalendarsView` in `studio/inputs/calendars-view.js`. A component
@@ -134,7 +143,7 @@ Settings, and `calendarStatus` by the Calendars page.
    order is the one you want, change `sidebarGroups` and `folderLines` in
    `tests/schemas.test.mjs` to match.
 5. To see the new order, run `npm run dev` in the `studio` folder. Editors get
-   it after the Studio is deployed (studio/README.md).
+   it after the Studio is deployed (docs/laptop-setup.md).
 
 ## Change a title
 

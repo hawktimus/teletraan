@@ -49,9 +49,11 @@ said yes.**
 The repository host needs an account that the team mentor holds. This page does
 not create it. The Sanity project already exists, and its ID is in
 dashboard/config.js. Setting up the Studio is done on a Mac, not on the Mini:
-see studio/README.md.
+see docs/laptop-setup.md.
 
 ## Steps
+
+Step 6 below is the older way to get the repository onto the Mini: a clone in `/opt/teletraan` that the pull timer keeps up to date. A Mini that is set up now gets its files from the installer instead. Do steps 1 to 5 and 7, then run `tools/mini/teletraan-mini update` from a Mac (docs/updating-the-mini.md). The installer puts each version in `/opt/teletraan/releases/<n>`, links `current` to the one on the wall and keeps `local.env` at `/opt/teletraan/local.env`, linked into `mini/` (docs/control-page.md). The scripts are at `/opt/teletraan/mini/scripts` either way, so the later steps do not change.
 
 1. **Turn on power-on after a power cut.** Do this before wiping macOS. Start
    the Mini in macOS once, open System Preferences (System Settings on a
@@ -117,10 +119,10 @@ see studio/README.md.
        chmod 600 local.env
        nano local.env
 
-   Set `TELETRAAN_PORT` to `'3229'`. That is the port the dashboard uses on
-   this team's Mini, so the screen is at `http://localhost:3229/dashboard/`,
-   and that address must be a CORS origin in the Sanity project (studio/README.md,
-   step 6). The template says 8080, so change it.
+   Leave `TELETRAAN_PORT` at `'8080'`. That is the port the dashboard uses on
+   this Mini, on the Mini itself only, so the screen is at `http://localhost:8080/dashboard/`,
+   and that address must be a CORS origin in the Sanity project (docs/control-page.md,
+   First time, step 4). Port 3229 is the control page and the Studio, so do not use it here.
 
    Replace the placeholder with the real calendar address. Add one
    `CALENDAR_<ID>_URL` line for each calendar. Keep each address in single
@@ -147,7 +149,7 @@ see studio/README.md.
 
        cd /opt/teletraan/mini
        sudo docker compose --env-file local.env up -d
-       curl -I http://localhost:3229/dashboard/
+       curl -I http://localhost:8080/dashboard/
 
    The curl answer should start with `200` and include `Cache-Control:
    no-cache`. The server starts by itself after every reboot.
@@ -487,7 +489,7 @@ its settings. The Mini can keep running.
 The screen always shows what the editors published. Nothing in Studio switches
 it to the sample content. To try things out with made-up content, add
 `?sample=1` to the end of the dashboard address, for example
-`http://localhost:3229/dashboard/?sample=1`, in a browser. That one page then
+`http://localhost:8080/dashboard/?sample=1`, in a browser. That one page then
 shows the sample content in `dashboard/data/sample/` (the content, with its
 three sample photos, and the calendar) and does not read the calendars that the
 Mini downloads or any other content from Sanity. A SAMPLE CONTENT label shows
@@ -498,7 +500,7 @@ The kiosk opens the address without `?sample=1`, so the TV never shows it.
 
 The Mini asks Sanity from the address `http://localhost:<port>`, with the port in
 `TELETRAAN_PORT` in `local.env`, so that address must be a CORS origin in the
-Sanity project settings (studio/README.md, step 6). If the screen says SANITY
+Sanity project settings (docs/control-page.md, First time, step 4). If the screen says SANITY
 UNREACHABLE: CORS BLOCKED, the origin is the first thing to check (see Checking
 the connection, next).
 
@@ -532,7 +534,7 @@ tool or a failed check only fails its own line, so the others still run. Add
 - Sanity: the Sanity host answers at all. Any answer under 500 counts, and the
   line gives the HTTP code. Code 000 means no answer: the network or a firewall.
 - Dataset: a plain query, with no login, gets a number back. A FAIL says the
-  dataset needs a login. It must stay public (studio/README.md).
+  dataset needs a login. It must stay public (docs/laptop-setup.md).
 - CORS: Sanity gives the browser permission to read its answer for
   `http://localhost:<port>`. The port is read from `TELETRAAN_PORT` in
   `mini/local.env`, and from `mini/docker-compose.yml` if `local.env` has
