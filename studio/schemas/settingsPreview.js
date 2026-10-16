@@ -6,11 +6,11 @@
 //
 // The kinds are the ones in previews.js, a copy of previewKinds in dashboard/core/preview.js.
 // The starting value is the same as defaultSettings.previewRequest in dashboard/config.js,
-// and a missing one means no request. check-schemas.mjs fails if any of them differ.
+// and a missing one means no request. tests/schemas.test.mjs fails if any of them differ.
 //
 // To take the whole section out later: delete this file, remove its import and the line that
 // uses previewRequestField in dashboardSettings.js, remove the buttons in actions.js and
-// sanity.config.js, and remove the same names from check-schemas.mjs and config.js.
+// sanity.config.js, and remove the same names from tests/schemas.test.mjs and config.js.
 
 import { defineField } from 'sanity';
 import { previews } from '../inputs/previews.js';

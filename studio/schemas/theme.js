@@ -4,7 +4,7 @@
 // the same as defaultThemeSettings in dashboard/config.js.
 //
 // The lists of themes and overlays come from ../themes.js, a copy of the
-// dashboard's registries that check-schemas.mjs keeps in step.
+// dashboard's registries that tests/schemas.test.mjs keeps in step.
 //
 // The editors see an overlay as a "seasonal pack": its accent colours and,
 // for most of them, decorations along the edges of the screen

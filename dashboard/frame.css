@@ -1192,7 +1192,7 @@ html:not([data-motion="full"]) .logo[data-act="fly"] .hawk-far-wing { transform:
    (data-hidden="build"), while the panels bring in their own parts (frame.js, enter).
 
    The times here are the same numbers as pileTimes in core/transitions.js, and
-   tools/test-pile.mjs holds the two together. Only transform and opacity change. The perspective
+   tests/pile.test.mjs holds the two together. Only transform and opacity change. The perspective
    is in the transform of each piece, so nothing is promoted or given a lens of its own. */
 
 /* In their place, until core/hidden-pile.js writes the numbers of a piece or of the cube */

@@ -1,4 +1,4 @@
-// The Screens: the plain functions. They know nothing about the page, so tools/test-screens.mjs can run
+// The Screens: the plain functions. They know nothing about the page, so tests/screens.test.mjs can run
 // them. core/screens-run.js gives them the real screen, and core/schedule.js asks them at every page of the
 // large panel.
 //

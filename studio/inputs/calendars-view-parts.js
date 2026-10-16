@@ -2,8 +2,8 @@
 // shows for the calendars of Dashboard Settings and the document the Mini writes
 // (schemas/calendarStatus.js), and the rules the Hide buttons make and read. calendars-view.js
 // draws them. The functions that write take the Studio's client as an argument, so node can
-// test them with a fake one. check-schemas.mjs, tools/test-calendars-view.mjs and
-// tools/test-calendars-hide.mjs read this file with node.
+// test them with a fake one. tests/schemas.test.mjs, tests/calendars-view.test.mjs and
+// tests/calendars-hide.test.mjs read this file with node.
 
 import { ageText, clockText } from './time-text.js';
 
@@ -37,7 +37,7 @@ export function askText(calendarName, word) {
 }
 
 // The kinds of a calendar and their titles, the same as calendarKinds in schemas/dashboardSettings.js.
-// check-schemas.mjs fails if they differ.
+// tests/schemas.test.mjs fails if they differ.
 export const calendarKinds = [
   { title: 'Meetings', value: 'meetings' },
   { title: 'Competitions', value: 'competitions' },
@@ -219,7 +219,7 @@ export function notesFor(read) {
 export const hideIdPrefix = 'calendarFilter-hide-';
 
 // The limits of schemas/calendarFilter.js, so that every rule made here can be published.
-// check-schemas.mjs runs the rules through the schema's own checks.
+// tests/schemas.test.mjs runs the rules through the schema's own checks.
 const longestWord = 30;
 const longestName = 40;
 const longestCode = 20;
@@ -334,7 +334,7 @@ function squeezed(text) {
 // Whether a rule matches a listed event of the calendar with this code, read as ruleMatches in
 // dashboard/core/events.js reads it: every condition the rule has must match, and a rule with no
 // condition matches nothing. An event with no day cannot match a rule that asks for days or dates.
-// tools/test-calendars-hide.mjs runs both on the same cases.
+// tests/calendars-hide.test.mjs runs both on the same cases.
 export function ruleMatchesEvent(rule, code, event) {
   const typed = (Array.isArray(rule.words) ? rule.words : []).filter(word => typeof word === 'string' && word.trim() !== '');
   const words = typed.map(squeezed).filter(word => word !== '');

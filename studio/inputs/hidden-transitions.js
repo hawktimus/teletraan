@@ -1,7 +1,7 @@
 // The hidden transitions the Dashboard Settings page can play now. This is a copy
 // of the ids, names and hours and chance fields in dashboard/core/hidden-transitions.js. The
 // Studio is built on its own and cannot read files from the dashboard folder, so
-// the list is written out here too. check-schemas.mjs fails if they differ, so
+// the list is written out here too. tests/schemas.test.mjs fails if they differ, so
 // change both when you add one (docs/hidden-transitions.md).
 //
 // id          what is stored in hiddenRequest.kind

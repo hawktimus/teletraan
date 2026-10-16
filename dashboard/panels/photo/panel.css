@@ -10,7 +10,7 @@
    area says which one is drawn (frameKind in core/plate.js) and is changed with the frame, so the
    cut always follows the frame on screen. The -tr frames are the ones a team turns across, and
    the -slant frames only end the header tab differently, so they share the cut of the frame
-   they come from. tools/test-photo-fit.mjs works the shapes out from core/plate.js and holds
+   they come from. tests/photo-fit.test.mjs works the shapes out from core/plate.js and holds
    these rules to them. Any other frame gets a plain rectangle. */
 .photo .photo-body {
   --hold: 8s;

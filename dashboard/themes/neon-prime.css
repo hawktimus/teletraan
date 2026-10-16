@@ -15,9 +15,9 @@
      hot magenta     #ff2bd6   the decor file only (the glint and the blocks), never text
      amber           #ffae2b   --yellow, for headings, numerals and small marks, and the hazard stripes
    There is no green in this theme and no hue from 65 to 175 degrees:
-   tools/check-themes.mjs fails for one in this file or in the decor file.
+   tests/check-themes.test.mjs fails for one in this file or in the decor file.
    Text is only ever white, lilac, amber or a status colour, and each reaches 7
-   to 1 contrast on the plate it sits on (tools/check-themes.mjs). */
+   to 1 contrast on the plate it sits on (tests/check-themes.test.mjs). */
 
 html.theme-neon-prime {
   --ground: #06030d;

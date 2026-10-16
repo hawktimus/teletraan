@@ -1,5 +1,5 @@
 // The hidden transitions: the plain functions. They know nothing about the
-// page, so tools/test-effects.mjs can run them. core/hidden-run.js gives them
+// page, so tests/effects.test.mjs can run them. core/hidden-run.js gives them
 // the real screen, and core/hidden-transitions.js lists the transitions.
 //
 // When one plays:

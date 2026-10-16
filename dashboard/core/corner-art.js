@@ -96,7 +96,7 @@ function arcPoints(from, to, radius, large, sweep) {
 }
 
 // Every point along the paths of one ornament, as [x, y], with the arcs sampled. The
-// tests and tools/check-seasons.mjs use it to see that the lines stay inside the box.
+// tests and tests/check-seasons.test.mjs use it to see that the lines stay inside the box.
 // Only absolute M, L, A (a circle) and Z are used.
 export function cornerArtPoints(id) {
   const points = [];

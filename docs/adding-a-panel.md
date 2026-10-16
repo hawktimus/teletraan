@@ -201,7 +201,7 @@ one example (docs/layouts.md, "The sidebar").
 A line may also have `lastResort: true`. Only a small panel (`grid2`) can have it, and
 `team-tile` is the one example. The small frame shows such a panel when no other small panel has
 content, so the frame is never empty (docs/layouts.md, "Panel B, the small frame"). It is not in Panel
-order, in `config.js` or in the Studio's list, and `check-schemas.mjs` leaves it out of the comparison.
+order, in `config.js` or in the Studio's list, and `tests/schemas.test.mjs` leaves it out of the comparison.
 It needs no `hasContent`, because it always has something to show.
 
 A line may also have `pages: 2`. The panel then comes round that many times in a
@@ -219,7 +219,7 @@ scroll five rows at a time. The rotation list in Studio has one row for the pane
 ## 8. Put it in the rotation
 
 The panel's id is written in two more places. They have to match
-`registry.js`, and `check-schemas.mjs` fails when they do not.
+`registry.js`, and `tests/schemas.test.mjs` fails when they do not.
 
 1. `dashboard/config.js`, in `defaultSettings.rotation`, in the list for its
    region. A row has no seconds: it follows Seconds per page in Dashboard
@@ -246,7 +246,7 @@ Screen put it with the right team (`studio/tools/screen-seed.js`).
 
 Then run this in the `studio` folder. It needs nothing installed:
 
-    node check-schemas.mjs
+    node tests/schemas.test.mjs
 
 Every line must say PASS. A FAIL line names the list that is missing the
 panel.
@@ -419,7 +419,7 @@ small panel or the ticker never needs any of this.
   by the theme files in `themes/`. If no size token fits, add one to
   `tokens.css`. A new colour is a new variable in every theme file
   (docs/adding-a-theme.md). Do not write a size or a colour code in a panel.
-  Text on a plate must be one of the pairs `tools/check-themes.mjs` tests.
+  Text on a plate must be one of the pairs `tests/check-themes.test.mjs` tests.
   Add the pair there if your panel puts a colour on a background it does not
   have yet.
 - **Escape editors' text.** Anything an editor typed goes through

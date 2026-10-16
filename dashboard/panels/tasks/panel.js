@@ -42,7 +42,7 @@ function showsDetail(task) {
 }
 
 // All the rows, in order, for every page. A row is { group, tasks, lines }.
-// This is exported for tools/test-content.mjs.
+// This is exported for tests/content.test.mjs.
 export function rowsFor(content, now = new Date()) {
   const doneDays = content.settings.doneDays;
 

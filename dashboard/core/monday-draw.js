@@ -1,6 +1,6 @@
 // What the Monday cards share: the page with its header, the pieces of a row, the page marker of a card that
 // scrolls and the sentence a card says when it has no rows. They are plain functions that return markup, so
-// tools/test-monday-cards.mjs can run them. The sentence a card says when it has nothing else to show, the
+// tests/monday-cards.test.mjs can run them. The sentence a card says when it has nothing else to show, the
 // text in a chart are the competition cards' too (core/competition-draw.js). A card is a panel in
 // panels/monday-*, and core/monday.js decides what it draws.
 

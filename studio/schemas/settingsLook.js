@@ -16,14 +16,14 @@
 //   lookSwap     assemble, slats or cut: every change of look is the same swap (dashboard/core/swap-run.js)
 //
 // The choices are the names in styles and lookSwaps in dashboard/config.js, and the starting values
-// are the same as defaultSettings there. check-schemas.mjs fails if they differ. The starting teams are
+// are the same as defaultSettings there. tests/schemas.test.mjs fails if they differ. The starting teams are
 // the two in docs/seed/teams.ndjson.
 //
 // None of them is required: Dashboard Settings published before these fields existed has none, and
 // the screen uses the starting week.
 //
 // To take the whole section out later: delete this file, remove its import and the line that uses
-// lookScheduleFields in dashboardSettings.js, and remove the same names from check-schemas.mjs and
+// lookScheduleFields in dashboardSettings.js, and remove the same names from tests/schemas.test.mjs and
 // config.js. The dashboard uses the starting values for anything missing from the published settings.
 
 import { defineField, defineArrayMember } from 'sanity';

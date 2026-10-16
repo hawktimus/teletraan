@@ -90,7 +90,7 @@ The code is in four places.
 
 - `core/transitions.js` has the two choices, as plain functions that touch no
   page: `chooseStyle(setting, last)` and `chooseFinish(mode, chance, last,
-  random)`. The tests are in `tools/test-effects.mjs`. `random` is passed in so
+  random)`. The tests are in `tests/effects.test.mjs`. `random` is passed in so
   a test can say which number comes up.
 - `frame.js` keeps the settings (`setPageChange`, called from `shell.js`),
   chooses the next change for an area (`planChange(area)`) and starts it
@@ -156,7 +156,7 @@ To change where a piece goes, edit its line in the table in `frame.css`
 (`[data-piece="name"]`). `--tx`, `--ty` and `--tz` are how far it moves, `--rx`,
 `--ry` and `--rz` are how far it turns about each axis, and `--hold` is how late it
 starts, from 0 to .3 of the break time. The small frame moves 0.6 times as far.
-`tools/test-effects.mjs` checks that every piece has a line there and that the
+`tests/effects.test.mjs` checks that every piece has a line there and that the
 whole change fits inside the break time.
 
 ## Adding a third change
@@ -164,10 +164,10 @@ whole change fits inside the break time.
 1. Pick a name, for example `fold`, and add it to `pageChangeStyles` in
    `dashboard/config.js`. Add it to the list in
    `studio/schemas/settingsTransitions.js` with a title, and to the `choices` and
-   `checkTransitionsTab` tables in `studio/check-schemas.mjs`.
+   `checkTransitionsTab` tables in `tests/schemas.test.mjs`.
 2. Teach `chooseStyle` in `core/transitions.js` about it. Alternate takes turns
    between two. For three, make it step through a list, and change the tests in
-   `tools/test-effects.mjs` to match.
+   `tests/effects.test.mjs` to match.
 3. Give it a time in `leaveMs()` in `frame.js` if it is not a second. Everything
    it waits for is in `leave` and `arrive`.
 4. Write the motion in `frame.css` under `[data-motion="full"]

@@ -7,7 +7,7 @@
 //
 // To take the whole section out later: delete this file, remove its import and
 // the line that uses statusBlockField in dashboardSettings.js, and remove the
-// same name from check-schemas.mjs.
+// same name from tests/schemas.test.mjs.
 
 import { defineField } from 'sanity';
 import { StatusInput } from '../inputs/status-input.js';

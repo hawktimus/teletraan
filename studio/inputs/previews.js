@@ -1,7 +1,7 @@
 // The previews the Dashboard Settings page can show now. This is a copy of the ids and
 // names in previewKinds in dashboard/core/preview.js. The Studio is built on its own and
 // cannot read files from the dashboard folder, so the list is written out here too.
-// check-schemas.mjs fails if the ids or names differ, so change both when you add one
+// tests/schemas.test.mjs fails if the ids or names differ, so change both when you add one
 // (docs/hidden-transitions.md).
 //
 // id      what is stored in previewRequest.kind

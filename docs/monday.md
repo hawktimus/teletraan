@@ -159,7 +159,7 @@ nothing. Below it:
   with a task. The first name of the POC is always kept.
 
 Every value starts as the table above, in Studio, in `dashboard/config.js` and at the top of
-`mini/scripts/monday-sync.sh`. `studio/check-schemas.mjs` and `tools/test-monday-sync.mjs`
+`mini/scripts/monday-sync.sh`. `tests/schemas.test.mjs` and `tests/monday-sync.test.mjs`
 fail when the three differ. The older Boards rows are hidden ("Not used any more") and the script
 ignores them. What was typed in them is kept.
 
@@ -366,17 +366,17 @@ To see what Monday really sends, use the API playground in Monday's developer ce
 browser, so the token is never typed into a command line or a file. Compare the answer with the
 names in the `paths` block.
 
-`tools/test-monday-sync.mjs` checks the script with made-up answers of the same shape. Change the
+`tests/monday-sync.test.mjs` checks the script with made-up answers of the same shape. Change the
 made-up answer there when the block at the top changes.
 
 ## What the tests cover
 
-`tools/test-monday-sync.mjs` runs the script with a fake `curl`, the real `jq` and made-up
+`tests/monday-sync.test.mjs` runs the script with a fake `curl`, the real `jq` and made-up
 boards: one task for each status number, a General task, an Unassigned task, a Hide task, a
 subitem, an EXAMPLE milestone and a milestone with no date, the settings that win over the
 starting values, the owner names on and off, the hours and the dates, the quiet exit before
 How often, the 900 reads a day, the four requests, a task or milestone that goes, errors from
 Monday, and that no token is printed or saved. It does not touch the network.
-`tools/test-monday-settings.mjs` checks the settings on the screen's side,
-`tools/test-monday-boards.mjs` the rows of the Monday Boards page, and
-`tools/test-monday-docs.mjs` this page.
+`tests/monday-settings.test.mjs` checks the settings on the screen's side,
+`tests/monday-boards.test.mjs` the rows of the Monday Boards page, and
+`tests/monday-docs.test.mjs` this page.

@@ -1,7 +1,7 @@
 // The pages of the Events panel: which events are on page one, which are on page two, and the kind
 // each one is. The panel shows four events at a time. It draws both pages in one list, holds page one,
 // scrolls up by four rows to page two and holds that (scrollPages in panels/events/panel.js, and
-// scrollCard in frame.js). The plain functions only, so tools/test-event-pages.mjs can run them.
+// scrollCard in frame.js). The plain functions only, so tests/event-pages.test.mjs can run them.
 //
 // With Group events by kind off the pages go by date. Page one is the pinned events first, then the
 // next ones until it has four, and page two is the four after those. With it on, page one is the next

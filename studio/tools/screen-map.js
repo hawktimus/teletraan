@@ -8,7 +8,7 @@
 // the screen and opens nothing.
 //
 // Every number is a pixel of the screen's own 1920 by 1080, like the picture of Start here.
-// check-schemas.mjs fails if the boxes differ from base.css and layout.js, or if the words do not
+// tests/schemas.test.mjs fails if the boxes differ from base.css and layout.js, or if the words do not
 // fit their boxes. Plain functions only. screen-input.js draws the picture.
 
 import { areas as standardAreas, widthOf } from '../inputs/start-here-parts.js';

@@ -6,12 +6,12 @@
 //
 // The starting values are the same as defaultSettings.nextLookRequest and
 // defaultSettings.competitionPreviewRequest in dashboard/config.js, and a missing one means
-// no request. check-schemas.mjs fails if they differ.
+// no request. tests/schemas.test.mjs fails if they differ.
 //
 // To take the section out later: delete this file, remove its import and the two lines that
 // use nextLookRequestField and competitionPreviewRequestField in dashboardSettings.js, remove
 // the buttons in start-here-parts.js and the functions in screen-requests.js, and remove the
-// same names from check-schemas.mjs and config.js.
+// same names from tests/schemas.test.mjs and config.js.
 
 import { defineField } from 'sanity';
 

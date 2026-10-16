@@ -58,17 +58,17 @@ and show the field.
 
 ## 4. The check
 
-Open studio/check-schemas.mjs and add the field to the contract:
+Open tests/schemas.test.mjs and add the field to the contract:
 
     task: withFlags({ title: text(22), room: text(12), ... }),
 
 Then run this in the studio folder:
 
-    node check-schemas.mjs
+    node tests/schemas.test.mjs
 
 Every line must say PASS. It fails if a field has no description, a limit is
 missing or different from the contract, or the dashboard reads a name that has
-no field. It also runs `tools/check-themes.mjs`, the colour check, and fails if
+no field. It also runs `tests/check-themes.test.mjs`, the colour check, and fails if
 that fails.
 
 ## 5. The CSV templates
@@ -81,12 +81,12 @@ new field needs a new column. Still in the studio folder, run:
 A field that editors must fill in (`Rule.required()`) also needs a sample value
 in `examples` in studio/scripts/make-templates.mjs, under the field's name, or
 the script stops and names the missing one. A new kind of content also needs a
-line in `idColumns` there. Run `node tools/test-templates.mjs` from the top
+line in `idColumns` there. Run `node tests/templates.test.mjs` from the top
 folder. It fails if the templates are out of date. docs/importing-from-csv.md
 explains the templates.
 
 A new kind of content (a new file in `studio/schemas/`) also needs a line in
-the sidebar, in `studio/structure.js`. `node check-schemas.mjs` fails until it
+the sidebar, in `studio/structure.js`. `node tests/schemas.test.mjs` fails until it
 has one. See docs/reordering-the-sidebar.md.
 
 ## Where defaults live
@@ -136,7 +136,7 @@ starting values are `defaultThemeSettings` in dashboard/config.js. The screen
 reads the whole document, and `tidyTheme` in dashboard/core/theme.js copies
 only the fields it knows, so a new field on the Look page must be added there as well as
 to the schema, to `defaultThemeSettings` and to `theme` in the contract in
-studio/check-schemas.mjs. The list of themes and overlays in the schema comes
+tests/schemas.test.mjs. The list of themes and overlays in the schema comes
 from studio/inputs/themes.js (docs/adding-a-theme.md).
 
 When editors delete every row of a list, Sanity removes the list, and the
@@ -157,7 +157,7 @@ status called `review`, change all of these:
    for in-progress and `--status-next` for up-next.) Add it to every other
    theme file in dashboard/themes/ too, add its name to `requiredVariables` in
    dashboard/themes/required.js, and add the pair "`--status-review` on
-   `--plate`" to `pairs` in tools/check-themes.mjs.
+   `--plate`" to `pairs` in tests/check-themes.test.mjs.
 2. dashboard/core/marks.js: add a shape for `review` to `statusShapes`.
    Without one the task has an empty mark.
 3. dashboard/base.css: add a `.mark-review` rule next to the other `.mark-`
@@ -172,7 +172,7 @@ status called `review`, change all of these:
    panels/task-counts/panel.css if it needs one.
 7. studio/schemas/task.js: add `{ title: 'In review', value: 'review' }` to
    `statuses`. The order of that list is the order editors see.
-8. studio/check-schemas.mjs: add `review` to the list for `task.status` in
+8. tests/schemas.test.mjs: add `review` to the list for `task.status` in
    `choices`, and its title to the titles checked in `checkChoices`.
 9. The content shape: sanity.js passes the status through as plain text, so
    nothing changes there. Add a task with the new status to

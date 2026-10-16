@@ -1,5 +1,5 @@
 // The competition cards: which of them are in the rotation right now, and where. These are
-// the plain functions. They know nothing about the page, so tools/test-competition.mjs can
+// the plain functions. They know nothing about the page, so tests/competition.test.mjs can
 // run them. The cards themselves are the panels whose id starts with competition- in
 // registry.js, and core/competition-draw.js has what they share. docs/frc-feed.md says what
 // each card shows.

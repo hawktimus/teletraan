@@ -14,7 +14,7 @@
 // Dates are read in the Time zone on the Look page, so "today" is the same
 // day for the editors and for the screen. eventDate() at the bottom writes the
 // date of an event for the screen, and every panel that shows one uses it, so
-// they all agree. Plain functions only, so tools/test-content.mjs can run them.
+// they all agree. Plain functions only, so tests/content.test.mjs can run them.
 
 import { defaultThemeSettings } from '../config.js';
 import { visibleItems } from './content.js';

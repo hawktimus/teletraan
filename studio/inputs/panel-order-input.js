@@ -6,7 +6,7 @@
 // screen already follows and can drag it from there.
 //
 // dashboard/core/panel-order.js builds the same list for a screen whose page was
-// never opened in Studio. check-schemas.mjs compares the two.
+// never opened in Studio. tests/schemas.test.mjs compares the two.
 //
 // It is written without JSX, so it reads as plain JavaScript.
 

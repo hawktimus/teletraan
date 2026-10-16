@@ -65,7 +65,7 @@
 // alert and the announcement.
 
 // Where the colored tab of the large frame's header ends along the top edge. The tab is where a title stands,
-// so this is what a title has room for (core/header-room.js has the rooms and tools/test-title-plate.mjs
+// so this is what a title has room for (core/header-room.js has the rooms and tests/title-plate.test.mjs
 // holds them to the shapes). The notch of Original reaches 16 left of it and 24 right of it, and the steel
 // frames end the tab in a line that leans 22 to the left over the header. slantTop is where a tab with one
 // slant of 60 degrees starts: it leans 55 to the left by the foot of the capitals of a title (y = 100), so
@@ -436,7 +436,7 @@ function wearMarkup(items, labelled) {
 // The neon line, the line of pink conduit and the pink brackets are made by moving
 // points of the outline in or out (offsetPoint), so they follow it round every
 // corner. The sizes below are the ones in docs/layouts.md ("Frames"), and
-// tools/test-layouts.mjs holds them to the numbers of the layout.
+// tests/layouts.test.mjs holds them to the numbers of the layout.
 const barNeonInset = 10; // the neon line, from the line of the edge
 const barConduitInset = 16; // the pink conduit line, just inside the neon
 const barBracketOutset = 22; // the pink brackets, outside the edge

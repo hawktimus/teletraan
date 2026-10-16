@@ -1,5 +1,5 @@
 // The four pictures of the hidden transitions, and which one plays next. These are
-// plain functions with nothing from the page in them, so tools/test-effects.mjs can
+// plain functions with nothing from the page in them, so tests/effects.test.mjs can
 // run them. core/hidden-run.js loads the pictures and puts them on the screen, and
 // core/hidden-transitions.js says when.
 //
@@ -19,7 +19,7 @@
 //
 //   file     the name of the file in the folder
 //   width    its size in pixels. Nothing draws from these two: they say what the
-//   height   file is, and tools/test-effects.mjs checks that they are right
+//   height   file is, and tests/effects.test.mjs checks that they are right
 //   fit      how it fills the 1920 x 1080 screen without stretching:
 //              cover    fills the whole screen, and cuts off at most a sliver
 //                       when the proportions are a little different

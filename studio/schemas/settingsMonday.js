@@ -22,13 +22,13 @@
 //
 // The names and the starting values are the same as mondayEveryMinutes, mondayTaskBoard, mondayMilestoneBoard
 // and mondayShowOwners in defaultSettings in dashboard/config.js, and the same as the values at the top of
-// mini/scripts/monday-sync.sh. check-schemas.mjs and tools/test-monday-sync.mjs fail if they differ.
+// mini/scripts/monday-sync.sh. tests/schemas.test.mjs and tests/monday-sync.test.mjs fail if they differ.
 //
 // None of the fields is required on the page: Dashboard Settings published before these fields existed has
 // none, and the Mini then reads the boards with the starting values.
 //
 // To take the whole section out later: delete this file, remove its import and the line that
-// uses mondayFields in dashboardSettings.js, and remove the same names from check-schemas.mjs
+// uses mondayFields in dashboardSettings.js, and remove the same names from tests/schemas.test.mjs
 // and config.js. The dashboard uses the starting values for anything missing from the
 // published settings.
 

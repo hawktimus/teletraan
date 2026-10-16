@@ -167,7 +167,7 @@ docs/rebuilding-the-mini.md, "Adding or changing a calendar".
   and the published rules, for the Calendars page.
 - `studio/inputs/calendars-view-parts.js`: makes, matches and deletes the rules of the
   Hide buttons. `ruleMatchesEvent` there reads a rule the way `ruleMatches` does.
-- `tools/test-calendars-hide.mjs`: runs both on the same cases.
-- `tools/test-calendar.mjs`: the tests, run with `node tools/test-calendar.mjs`.
-- `tools/test-event-pages.mjs`: the tests for the two pages, the kinds and the
+- `tests/calendars-hide.test.mjs`: runs both on the same cases.
+- `tests/calendar.test.mjs`: the tests, run with `node tests/calendar.test.mjs`.
+- `tests/event-pages.test.mjs`: the tests for the two pages, the kinds and the
   pins.

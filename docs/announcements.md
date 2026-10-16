@@ -42,7 +42,7 @@ or past. Delete a past one when you like. Nothing else needs cleaning up.
 ## For the code
 
 - `dashboard/core/notice.js`: which announcements are live, which one is up, and the size of
-  the text. It has no page in it, and `tools/test-notice.mjs` tests it.
+  the text. It has no page in it, and `tests/notice.test.mjs` tests it.
 - `dashboard/core/notice-run.js` draws the bar and makes the room. `dashboard/notice.css` styles
   it. `frame.js` has the two moves (`moveArea`, `fadeNotice`).
 - The content has `notices`, from the query in `dashboard/core/sanity.js`. The sample content has

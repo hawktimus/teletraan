@@ -1,6 +1,6 @@
 // The swap: the one move the screen makes for every change of style, team or Monday panel, and for
 // entering or leaving the Monday block (docs/layouts.md, "The swap"). These are plain functions with
-// no page in them, so tools/test-swap.mjs can run them. core/swap-run.js measures the pieces on the
+// no page in them, so tests/swap.test.mjs can run them. core/swap-run.js measures the pieces on the
 // page, hands them to the functions here and plays the answer.
 //
 // The pieces pull apart, the look goes on while they are apart, and they re-form in the new look. It is
@@ -62,12 +62,12 @@ export const swapShape = {
 };
 
 // The easing of the first assembly (--ease-in in tokens.css). frame.css and this file say it twice,
-// and tools/test-swap.mjs holds the two together. The swap does not use it: it starts too fast to follow.
+// and tests/swap.test.mjs holds the two together. The swap does not use it: it starts too fast to follow.
 export const standardEase = [0.2, 0.8, 0.2, 1];
 export const standardEaseText = 'cubic-bezier(.2, .8, .2, 1)';
 
 // The easing of the pull and of the travel. Both start slowly and end softly: a piece that has just come to
-// rest leaves again from rest, and settles into its place. tools/test-swap-smooth.mjs checks their shape.
+// rest leaves again from rest, and settles into its place. tests/swap-smooth.test.mjs checks their shape.
 export const pullEase = [0.25, 0, 0.15, 1];
 export const pullEaseText = 'cubic-bezier(.25, 0, .15, 1)';
 export const reformEase = [0.35, 0, 0.15, 1];

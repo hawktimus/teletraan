@@ -1,7 +1,7 @@
 // The three Screen documents: Original, Cybertron and Minimal (schemas/screen.js). Each has a
 // fixed id, and the id says which style the Screen is. No style field is stored: the dashboard
 // reads the style from the id. Plain names and functions only, so that structure.js, the input
-// of the form and check-schemas.mjs all use the same words.
+// of the form and tests/schemas.test.mjs all use the same words.
 
 export const screenType = 'screen';
 

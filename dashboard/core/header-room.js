@@ -1,7 +1,7 @@
 // How the header of a large panel is shared between its title, the line that ends the colored tab (core/plate.js
 // draws it) and the words at the right end. The numbers are pixels of the 1152 wide panel that every page is written
 // for. The stylesheets of the panels repeat the two rooms as max-width, so change them together, and
-// tools/test-title-plate.mjs holds them to the shapes of the frames.
+// tests/title-plate.test.mjs holds them to the shapes of the frames.
 //
 // The title starts titleLeft in, and has titleRoom: it stops 16 short of the metal of the line, which is at its
 // leftmost in the notch of Original (x = 756, with 8 of metal). The words have wordsRoom: they start 14 past the

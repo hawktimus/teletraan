@@ -252,6 +252,6 @@ If the new field is required, add a sample value for it to `examples` in
 make-templates.mjs, or the script stops and says which one is missing. A new
 kind of content also needs a line in `idColumns`, the columns that name an item.
 
-The test `node tools/test-templates.mjs` fails if the files in
+The test `node tests/templates.test.mjs` fails if the files in
 `docs/content-templates/` are out of date, and it checks the importer with a
 few good rows, a rejected row and cells that hold commas and quotation marks.

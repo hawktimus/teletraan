@@ -7,11 +7,11 @@
 // Two places send them, so the work is written once, here:
 //   actions.js     the buttons in the menu beside Publish on Dashboard Settings
 //   start-here.js  the buttons on the Start here page
-// check-schemas.mjs fails if the two stop writing the same fields.
+// tests/schemas.test.mjs fails if the two stop writing the same fields.
 
 // The one Dashboard Settings page. These are the same type and id as settingsType and
 // settingsId in structure.js. This file cannot import them, because structure.js imports
-// the Start here page and the page imports this file. check-schemas.mjs fails if they differ.
+// the Start here page and the page imports this file. tests/schemas.test.mjs fails if they differ.
 export const settingsDocument = { type: 'dashboardSettings', id: 'dashboardSettings' };
 
 // The fields to set for each request. The kind is the id of a hidden transition in

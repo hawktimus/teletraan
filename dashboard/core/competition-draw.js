@@ -1,6 +1,6 @@
 // What the competition cards share: the page with its header, the sentence a card says when it has
 // nothing to show, the small pieces of SVG text, and the clock. They are plain functions that return
-// markup, so tools/test-competition.mjs can run them. A card is a panel in panels/competition-*, and
+// markup, so tests/competition.test.mjs can run them. A card is a panel in panels/competition-*, and
 // core/competition.js decides which of them are in the rotation.
 //
 // Every card draws on a body of 1096 x 512, 28 px in from the frame and 136 px down, which is the room

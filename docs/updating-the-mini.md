@@ -242,6 +242,6 @@ three keys and the `CALENDAR_<ID>_URL` lines, so it cannot change the port or th
 data folder.
 
 The tool runs on the bash that comes with macOS, version 3.2, so it uses no newer
-shell features. `node tools/test-mini-tool.mjs` checks the menu and
-`node tools/test-mini-tool-commands.mjs` checks the command words, both with fake
+shell features. `node tests/teletraan-mini.test.mjs` checks the menu and
+`node tests/teletraan-mini-commands.test.mjs` checks the command words, both with fake
 `ssh`, `scp` and `rsync`. Nothing in those tests touches a real Mini.

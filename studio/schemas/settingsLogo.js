@@ -7,7 +7,7 @@
 // effect).
 //
 // The starting values and limits are the same as defaultSettings and limits in
-// dashboard/config.js, and check-schemas.mjs fails if they differ. How often the flying hawk and
+// dashboard/config.js, and tests/schemas.test.mjs fails if they differ. How often the flying hawk and
 // the name effect play is set on each Screen now, so logoHawkEvery and nameEvery are hidden and not
 // read. The name effect keeps its old names (nameTransform, nameEvery, nameDuration) so the
 // content already published still works. nameDuration is how long the effect takes on HAWKTIMUS
@@ -15,7 +15,7 @@
 //
 // To take the whole section out later: delete this file, remove its import and
 // the line that uses logoFields in dashboardSettings.js, and remove the same
-// names from check-schemas.mjs and config.js. The dashboard uses the starting
+// names from tests/schemas.test.mjs and config.js. The dashboard uses the starting
 // values for anything missing from the published settings.
 
 import { defineField } from 'sanity';

@@ -11,12 +11,12 @@
 // them still opens and publishes, and they keep their starting values. The
 // screen never reads what they hold. They have no rules, because nobody can fix
 // a value in a hidden field. The starting value of the switch is the same as in
-// defaultSettings in dashboard/config.js. check-schemas.mjs fails if they differ.
+// defaultSettings in dashboard/config.js. tests/schemas.test.mjs fails if they differ.
 // The talks and the meeting days are in presentation.js and presentationDay.js.
 //
 // To take the whole section out later: delete this file, remove its import and
 // the lines that use presentationsFields and presentationTestRequestField in
-// dashboardSettings.js, and remove the same names from check-schemas.mjs and
+// dashboardSettings.js, and remove the same names from tests/schemas.test.mjs and
 // config.js. The dashboard uses the starting values for anything missing from
 // the published settings.
 

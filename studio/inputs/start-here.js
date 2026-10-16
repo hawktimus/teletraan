@@ -4,7 +4,7 @@
 // buttons that try the screen, and a line for the coaches' pages.
 //
 // The words and numbers that need no Studio are in start-here-parts.js, so that
-// check-schemas.mjs can read them with node. The buttons send their requests
+// tests/schemas.test.mjs can read them with node. The buttons send their requests
 // through screen-requests.js, which the buttons beside Publish use as well.
 //
 // It is written without JSX, so it reads as plain JavaScript:

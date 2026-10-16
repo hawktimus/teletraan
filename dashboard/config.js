@@ -71,7 +71,7 @@ export const defaultSchedule = {
 };
 
 // What a Screen has when its document does not say, or there is no document yet. The Studio starts at the same values
-// and has the same limits (studio/schemas/screen.js), and studio/check-schemas.mjs compares them.
+// and has the same limits (studio/schemas/screen.js), and tests/schemas.test.mjs compares them.
 //   nameEffectEveryMinutes  minutes between plays of the team name effect in the banner
 //   hawkEveryMinutes        minutes between changes of the logo into the flying hawk
 //   swapSeconds             how long a swap takes. 1.25 is the length the swap was built for (core/swap-plan.js), and every
@@ -188,7 +188,7 @@ export const portraitFrames = ['metal', 'line', 'none'];
 //                movements only meet at a corner once in across x down seconds. The
 //                arithmetic is in docs/night-mode.md. A corner hit comes about every
 //                713 seconds (slow), 391 (normal) or 221 (fast). Change one of these
-//                numbers and the docs and tools/test-night.mjs need the new figures.
+//                numbers and the docs and tests/night.test.mjs need the new figures.
 //   nightFirstHit  the first corner hit comes this many seconds after night mode starts,
 //                a whole number picked at random from the range
 export const nightStyles = ['bounce', 'black'];
@@ -262,7 +262,7 @@ export const limits = {
 export const defaultPhotoRow = { photoCount: 4, secondsPerPhoto: 10 };
 
 // The limits of the banner settings of a Screen, the three that sit beside defaultScreen. The Studio uses the same
-// numbers (studio/schemas/screen.js), and studio/check-schemas.mjs compares them
+// numbers (studio/schemas/screen.js), and tests/schemas.test.mjs compares them
 export const screenLimits = {
   nameEffectEveryMinutes: limits.nameEffectEveryMinutes,
   hawkEveryMinutes: limits.hawkEveryMinutes,
@@ -569,7 +569,7 @@ export const defaultSettings = {
 };
 
 // Used for anything missing from the Look document in the Studio. The
-// Studio starts at the same values, and check-schemas.mjs fails if they differ.
+// Studio starts at the same values, and tests/schemas.test.mjs fails if they differ.
 //   defaultTheme  the id of a theme in themes/registry.js
 //   useNow        a theme and an overlay to show now, whatever the schedule says. Each is empty
 //                 (follow the schedule), an id, or for the overlay 'none'. until is a time, or empty.

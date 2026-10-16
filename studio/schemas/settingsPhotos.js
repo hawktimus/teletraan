@@ -15,7 +15,7 @@
 //
 // The choices are the names in photoOrders, photoFits, portraitShapes and portraitFrames in
 // dashboard/config.js, and the starting values and limits are the same as defaultSettings and
-// limits there. check-schemas.mjs fails if they differ. The photos themselves are in
+// limits there. tests/schemas.test.mjs fails if they differ. The photos themselves are in
 // photo.js. For the portraits 100 is a portrait of 120 pixels, which fills a row of four, and
 // 220 is 264, which fills the page: a bigger portrait needs a taller row, so fewer rows fit on
 // a page (core/portrait.js, rowLayout).
@@ -27,7 +27,7 @@
 //
 // To take the whole section out later: delete this file, remove its import and
 // the line that uses photosFields in dashboardSettings.js, and remove the same
-// names from check-schemas.mjs and config.js. The dashboard uses the starting
+// names from tests/schemas.test.mjs and config.js. The dashboard uses the starting
 // values for anything missing from the published settings.
 
 import { defineField } from 'sanity';
@@ -68,7 +68,7 @@ export const portraitFieldsets = [
 ];
 
 // The most people that fit on a page at a size, for the descriptions. The table is the one in
-// dashboard/core/portrait.js (rowSteps), and check-schemas.mjs fails if the words drift from it.
+// dashboard/core/portrait.js (rowSteps), and tests/schemas.test.mjs fails if the words drift from it.
 const peopleFit = '4 up to 100, 3 up to 138, 2 up to 200, 1 up to 220.';
 
 export function photosFields() {

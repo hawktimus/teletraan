@@ -106,7 +106,7 @@ If you change a panel size, a margin or the ticker (`base.css`, `core/plate.js`)
 3. For each zone, check that every pixel of its rectangle is the ground colour (`--ground`).
    Any other colour is ink: a letter, an edge, a screw. Shrink the rectangle until none is left,
    then pull it in 2 pixels more.
-4. Change the rectangle in `core/season.js`. `node tools/check-seasons.mjs` fails if two zones overlap
+4. Change the rectangle in `core/season.js`. `node tests/check-seasons.test.mjs` fails if two zones overlap
    or one leaves the screen.
 
 `tools/zones.html` shows every zone as an outline over the live dashboard, which makes step 3 quick:
@@ -182,7 +182,7 @@ picture, so it shows in calm motion too.
 ### The size box: 60 x 76 pixels
 
 A mark may be **at most 60 pixels wide and 76 pixels high** (width x height). `markBox` in
-`dashboard/core/marks.js` holds the numbers, and `tools/check-seasons.mjs` fails for a mark that is bigger.
+`dashboard/core/marks.js` holds the numbers, and `tests/check-seasons.test.mjs` fails for a mark that is bigger.
 They were measured on the large panel's header on the full sample board at 1920 x 1080, with the sample
 content showing. Every header of the large panel is the same plate, 116 px high, so one box fits all nine panels that have a header mark:
 
@@ -263,7 +263,7 @@ The numbers are `overRules` in `dashboard/core/season.js`. Only these motions ar
 refused by the check and left out of the screen, so a slip in a pack cannot put a fast piece over the panels.
 (`flutter` was added for this layer: a fall that sways 30 px to each side, for snow, leaves and confetti. The
 motions are described under "The motions".) Each of the seven packs has at least 8 over pieces:
-`tools/check-seasons.mjs` fails for a pack that has fewer, or more than 14. A list called `stillToDo` at the top of
+`tests/check-seasons.test.mjs` fails for a pack that has fewer, or more than 14. A list called `stillToDo` at the top of
 that file excuses a pack while it is being finished, and is empty once all seven are done.
 
 ### The data
@@ -403,7 +403,7 @@ Every motion is measured from the piece's resting place, the x and y in the pack
 
 To add a motion, write its keyframes in `motion.css` using only `transform`, `opacity` and `stroke-dashoffset`,
 give it a rule in "One rule for each motion", add its name to `motions` in `core/season.js`, and add
-its line to the list at the top of `motion.css`. `tools/check-seasons.mjs` fails if any of those is missing.
+its line to the list at the top of `motion.css`. `tests/check-seasons.test.mjs` fails if any of those is missing.
 
 ## Extras on a rule
 
@@ -437,7 +437,7 @@ have none:
     };
 
 `defaults` may also hold `tickerPrefix` and `bannerLine`. No pack has one yet, so a prefix or a line
-has to be typed on the rule. `node tools/check-seasons.mjs` names a default that is not allowed.
+has to be typed on the rule. `node tests/check-seasons.test.mjs` names a default that is not allowed.
 
 Where the screen finds them: `ruleExtras()` in `core/theme.js` reads the rule, the first one for the pack
 that covers today (when Use a theme now shows a pack on a day no rule covers, the first rule for that
@@ -494,7 +494,7 @@ stops there. In calm and none motion nothing animates, so the ornament is drawn 
 
 To add an ornament: add its paths to `ornaments` in `core/corner-art.js` (only `M`, `L`, `A` and `Z`, with a
 3 px line kept 1.5 px inside the box), add its id and name to `cornerArts` in `studio/inputs/themes.js` before None, and run
-`node tools/check-seasons.mjs` and `node studio/check-schemas.mjs`. The check names an ornament that leaves its
+`node tests/check-seasons.test.mjs` and `node tests/schemas.test.mjs`. The check names an ornament that leaves its
 box, has a fill or uses an effect.
 
 ## How to add a pack
@@ -505,7 +505,7 @@ finished. To add an eighth, or to finish one, do these steps in order. The Chris
 
 1. **Colours.** `dashboard/themes/overlays/<id>.css` holds the three accent variables: `--yellow`,
    `--yellow-faint` and `--lilac`. For a new pack, copy `christmas.css` and change the selector to
-   `html.overlay-<id>`. A very pale colour is safe on the dark plates. Run `node tools/check-themes.mjs`:
+   `html.overlay-<id>`. A very pale colour is safe on the dark plates. Run `node tests/check-themes.test.mjs`:
    it tries the colours on every theme and fails if any text is under 7 to 1 contrast.
 2. **Registry.** Add the pack to `dashboard/themes/overlays/registry.js` with `decorations: true`:
 
@@ -518,7 +518,7 @@ finished. To add an eighth, or to finish one, do these steps in order. The Chris
 
    The description is one line of up to 120 characters. The id is stored in Studio, so choose it
    once.
-3. **Studio's copy.** Add the same entry to `studio/inputs/themes.js`. `node studio/check-schemas.mjs` fails if the
+3. **Studio's copy.** Add the same entry to `studio/inputs/themes.js`. `node tests/schemas.test.mjs` fails if the
    two lists differ, including the `decorations` flag.
 4. **The pack file.** Copy `dashboard/seasons/christmas.js` to `dashboard/seasons/<id>.js`, or start from an empty
    pack:
@@ -539,10 +539,10 @@ finished. To add an eighth, or to finish one, do these steps in order. The Chris
    move over all layers: a pack may have at most 24.
 7. **Check it.** From the top folder:
 
-       node tools/check-seasons.mjs
-       node tools/test-seasons.mjs
-       node tools/check-themes.mjs
-       node studio/check-schemas.mjs
+       node tests/check-seasons.test.mjs
+       node tests/seasons.test.mjs
+       node tests/check-themes.test.mjs
+       node tests/schemas.test.mjs
 
    `check-seasons.mjs` loads every pack and says in plain words what is wrong: a missing file, a motion or
    zone that does not exist, a piece outside its zone, too many pieces, a forbidden word, a keyframe in the wrong

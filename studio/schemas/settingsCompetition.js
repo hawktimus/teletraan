@@ -9,7 +9,7 @@
 //
 // The mode and the switches are the same names, choices and starting values as the
 // competitionModes list, competitionSwitches and defaultSettings in dashboard/config.js.
-// check-schemas.mjs fails if they differ.
+// tests/schemas.test.mjs fails if they differ.
 //
 // None of the fields is required. Dashboard Settings published before these fields existed
 // has none, and the screen reads that as Auto with every card on. A required field would
@@ -17,7 +17,7 @@
 //
 // To take the whole section out later: delete this file, remove its import and the line that
 // uses competitionFields in dashboardSettings.js, and remove the same names from
-// check-schemas.mjs and config.js. The dashboard uses the starting values for anything
+// tests/schemas.test.mjs and config.js. The dashboard uses the starting values for anything
 // missing from the published settings.
 
 import { defineField } from 'sanity';

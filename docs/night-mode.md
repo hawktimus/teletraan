@@ -146,7 +146,7 @@ or an announcement still shows over it. `showNightNow` and `endNightNow` in
   easy way), or the logo meets the walls at the same moment more often, or never.
   The repeat is the two numbers multiplied. After a change, update the table
   above, the descriptions in `studio/schemas/settingsNight.js` and the numbers in
-  `tools/test-night.mjs`, which checks them.
+  `tests/night.test.mjs`, which checks them.
 - **The colours.** `#night .night-block[data-pair="..."]` in `dashboard/base.css`:
   one rule for each pair, made of theme colours (`--yellow`, `--lilac`, `--white`)
   and `--silver` in `dashboard/tokens.css`. Add a rule for a new pair and raise
@@ -159,7 +159,7 @@ or an announcement still shows over it. `showNightNow` and `endNightNow` in
 - **When it is night.** `inNightWindow` in `dashboard/core/night.js`, with its
   tests, and the two times in `dashboard/core/constants.js`.
 
-`node tools/test-night.mjs` runs the checks: midnight, other time zones (it asks
+`node tests/night.test.mjs` runs the checks: midnight, other time zones (it asks
 computers set to other zones too), the days the clocks change, that the logo is
 in a corner at the first hit and every 391 seconds after it and at no other
 moment, that it never starts in a corner, how a corner hit is told from a

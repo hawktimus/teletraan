@@ -14,7 +14,7 @@
 // If a document is missing it says Nothing yet, and if one cannot be read it says so. Neither
 // stops the page from opening.
 //
-// The words, the rows and the rules are in calendars-view-parts.js, so that check-schemas.mjs can
+// The words, the rows and the rules are in calendars-view-parts.js, so that tests/schemas.test.mjs can
 // read them with node. It is written without JSX, so it reads as plain JavaScript:
 // h(tag, props, ...children) is React's createElement.
 

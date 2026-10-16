@@ -15,9 +15,9 @@
 // that was never saved is the starting list, every panel of its area in the order of the pickers,
 // because the page puts the starting settings under the saved ones (withDefaults in
 // dashboard/core/content.js). A list that was saved empty stays empty. The dashboard works the rows
-// out the same way (dashboard/core/screen-seed.js) and tools/test-screen-seed-parity.mjs checks both.
+// out the same way (dashboard/core/screen-seed.js) and tests/screen-seed-parity.test.mjs checks both.
 //
-// Plain functions only, so that tools/test-screen-seed.mjs can run them with node.
+// Plain functions only, so that tests/screen-seed.test.mjs can run them with node.
 
 import { largePanels, smallPanels, seededMondayPanels, teamSpecificPanels, idsOf } from '../inputs/screen-panels.js';
 import { screenStyles } from '../inputs/screen-ids.js';

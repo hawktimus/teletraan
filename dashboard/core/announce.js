@@ -1,5 +1,5 @@
 // Play announcements: the plain functions. They know nothing about the page, so
-// tools/test-effects.mjs can run them. core/announce-run.js hands them the real
+// tests/effects.test.mjs can run them. core/announce-run.js hands them the real
 // screen, and runAnnouncement in core/takeover.js draws each announcement.
 //
 // How it goes (docs/hidden-transitions.md, "Play announcements"):

@@ -1,5 +1,5 @@
 // The Demo page: the plain functions. They know nothing about the page, so
-// tools/test-effects.mjs can run them. core/demo-runner.js hands them the real
+// tests/effects.test.mjs can run them. core/demo-runner.js hands them the real
 // screen, and core/demo-screens.js lists the screens a demo can show.
 //
 // How a demo goes:

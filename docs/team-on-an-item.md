@@ -66,7 +66,7 @@ The example gives Photos a Team field. Do the steps in order.
 1. In `studio/schemas/photo.js`, import `teamField` from `./fields.js` and add
    `teamField()` to the end of `fields`. It carries its own description and the
    Both radio.
-2. In `studio/check-schemas.mjs`, add `photo` to `teamTypes`. The check fails for a
+2. In `tests/schemas.test.mjs`, add `photo` to `teamTypes`. The check fails for a
    kind that has the field and is not in the list, and for one in the list that has
    no field.
 3. In `contentQuery` in `dashboard/core/sanity.js`, add `"team": team->code` to the
@@ -94,4 +94,4 @@ item, then use `?team=prime`.
 - `dashboard/core/content.js`: `visibleItems`.
 - `dashboard/core/sanity.js`: `withTeamCode`, which turns the code into the item's
   `team` or leaves it out.
-- `tools/test-content.mjs`: the tests for the filter on every kind of content.
+- `tests/content.test.mjs`: the tests for the filter on every kind of content.

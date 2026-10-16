@@ -14,7 +14,7 @@
 //   cancelled()    true once the demo has been stopped, or a real alert has the screen
 //   waitSeconds(n) waits n seconds, and ends early when cancelled() turns true
 //
-// This file imports nothing from the page, so the tests and check-schemas.mjs
+// This file imports nothing from the page, so the tests and tests/schemas.test.mjs
 // can read it. The code that needs the page is loaded inside run().
 
 import { demoPlaceholderText } from '../config.js';

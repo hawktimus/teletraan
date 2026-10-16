@@ -5,7 +5,7 @@
 // calendar time.
 //
 // The first half of this file is plain functions that take values and give
-// back values, so tools/test-content.mjs can try them. The second half puts
+// back values, so tests/content.test.mjs can try them. The second half puts
 // the lines on the page.
 
 import { formatTimeOfDay } from './time.js';

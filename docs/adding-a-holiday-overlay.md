@@ -45,7 +45,7 @@ Open `dashboard/themes/overlays/registry.js` and add a block to the list:
 
 `decorations` says whether the overlay has a pack file in `dashboard/seasons/`. Write `false` for
 colours only. To give it decorations, write `true` and add the pack file
-(docs/seasonal-packs.md, "How to add a pack"). `tools/check-seasons.mjs` fails when the flag and the
+(docs/seasonal-packs.md, "How to add a pack"). `tests/check-seasons.test.mjs` fails when the flag and the
 file disagree.
 
 The screen links `themes/overlays/winter.css` itself. Overlay files are linked
@@ -58,10 +58,10 @@ id, name, description and `decorations`. The Studio cannot read the dashboard fo
 
 ## 4. Check it
 
-    node tools/check-themes.mjs
-    node tools/check-seasons.mjs
-    node tools/test-themes.mjs
-    node studio/check-schemas.mjs
+    node tests/check-themes.test.mjs
+    node tests/check-seasons.test.mjs
+    node tests/themes.test.mjs
+    node tests/schemas.test.mjs
 
 `check-themes.mjs` lays the overlay over every theme and fails if any text
 colour is under 7 to 1 contrast against its background. A pale accent is the

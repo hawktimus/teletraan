@@ -1,0 +1,568 @@
+{
+ "source": "Made up for tests/frc-event.test.mjs, in the shape of The Blue Alliance v3 answers",
+ "event": {
+  "key": "2026ncdemo",
+  "name": "[2026 NC district event]",
+  "short_name": "[District event]",
+  "city": "[City]",
+  "state_prov": "NC",
+  "start_date": "2026-03-06",
+  "end_date": "2026-03-08",
+  "event_type": 1,
+  "year": 2026,
+  "district": {
+   "key": "2026nc",
+   "abbreviation": "nc",
+   "display_name": "[North Carolina]",
+   "year": 2026
+  }
+ },
+ "matches": [
+  {
+   "key": "2026ncdemo_qm1",
+   "comp_level": "qm",
+   "set_number": 1,
+   "match_number": 1,
+   "alliances": {
+    "red": {
+     "team_keys": [
+      "frc9002",
+      "frc9003",
+      "frc9004"
+     ],
+     "score": 63
+    },
+    "blue": {
+     "team_keys": [
+      "frc9005",
+      "frc9006",
+      "frc9007"
+     ],
+     "score": 73
+    }
+   },
+   "winning_alliance": "blue",
+   "time": 1773000600
+  },
+  {
+   "key": "2026ncdemo_qm2",
+   "comp_level": "qm",
+   "set_number": 1,
+   "match_number": 2,
+   "alliances": {
+    "red": {
+     "team_keys": [
+      "frc9003",
+      "frc9004",
+      "frc9005"
+     ],
+     "score": 66
+    },
+    "blue": {
+     "team_keys": [
+      "frc9006",
+      "frc9007",
+      "frc9008"
+     ],
+     "score": 76
+    }
+   },
+   "winning_alliance": "blue",
+   "time": 1773001200
+  },
+  {
+   "key": "2026ncdemo_qm3",
+   "comp_level": "qm",
+   "set_number": 1,
+   "match_number": 3,
+   "alliances": {
+    "red": {
+     "team_keys": [
+      "frc9004",
+      "frc9005",
+      "frc9006"
+     ],
+     "score": 69
+    },
+    "blue": {
+     "team_keys": [
+      "frc9007",
+      "frc9008",
+      "frc9001"
+     ],
+     "score": 64
+    }
+   },
+   "winning_alliance": "red",
+   "time": 1773001800
+  },
+  {
+   "key": "2026ncdemo_qm4",
+   "comp_level": "qm",
+   "set_number": 1,
+   "match_number": 4,
+   "alliances": {
+    "red": {
+     "team_keys": [
+      "frc9005",
+      "frc9006",
+      "frc9007"
+     ],
+     "score": 72
+    },
+    "blue": {
+     "team_keys": [
+      "frc9008",
+      "frc9001",
+      "frc9002"
+     ],
+     "score": 67
+    }
+   },
+   "winning_alliance": "red",
+   "time": 1773002400
+  },
+  {
+   "key": "2026ncdemo_qm5",
+   "comp_level": "qm",
+   "set_number": 1,
+   "match_number": 5,
+   "alliances": {
+    "red": {
+     "team_keys": [
+      "frc9006",
+      "frc9007",
+      "frc9008"
+     ],
+     "score": 75
+    },
+    "blue": {
+     "team_keys": [
+      "frc9001",
+      "frc9002",
+      "frc9003"
+     ],
+     "score": 70
+    }
+   },
+   "winning_alliance": "red",
+   "time": 1773003000
+  },
+  {
+   "key": "2026ncdemo_qm6",
+   "comp_level": "qm",
+   "set_number": 1,
+   "match_number": 6,
+   "alliances": {
+    "red": {
+     "team_keys": [
+      "frc9007",
+      "frc9008",
+      "frc9001"
+     ],
+     "score": 78
+    },
+    "blue": {
+     "team_keys": [
+      "frc9002",
+      "frc9003",
+      "frc9004"
+     ],
+     "score": 58
+    }
+   },
+   "winning_alliance": "red",
+   "time": 1773003600
+  },
+  {
+   "key": "2026ncdemo_qm7",
+   "comp_level": "qm",
+   "set_number": 1,
+   "match_number": 7,
+   "alliances": {
+    "red": {
+     "team_keys": [
+      "frc9008",
+      "frc9001",
+      "frc9002"
+     ],
+     "score": 81
+    },
+    "blue": {
+     "team_keys": [
+      "frc9003",
+      "frc9004",
+      "frc9005"
+     ],
+     "score": 61
+    }
+   },
+   "winning_alliance": "red",
+   "time": 1773004200
+  },
+  {
+   "key": "2026ncdemo_qm8",
+   "comp_level": "qm",
+   "set_number": 1,
+   "match_number": 8,
+   "alliances": {
+    "red": {
+     "team_keys": [
+      "frc9001",
+      "frc9002",
+      "frc9003"
+     ],
+     "score": 84
+    },
+    "blue": {
+     "team_keys": [
+      "frc9004",
+      "frc9005",
+      "frc9006"
+     ],
+     "score": 64
+    }
+   },
+   "winning_alliance": "red",
+   "time": 1773004800
+  },
+  {
+   "key": "2026ncdemo_qf1m1",
+   "comp_level": "qf",
+   "set_number": 1,
+   "match_number": 1,
+   "alliances": {
+    "red": {
+     "team_keys": [
+      "frc9001",
+      "frc9002",
+      "frc9003"
+     ],
+     "score": 88
+    },
+    "blue": {
+     "team_keys": [
+      "frc9004",
+      "frc9005",
+      "frc9006"
+     ],
+     "score": 74
+    }
+   },
+   "winning_alliance": "red",
+   "time": 1773010000
+  },
+  {
+   "key": "2026ncdemo_qf2m1",
+   "comp_level": "qf",
+   "set_number": 2,
+   "match_number": 1,
+   "alliances": {
+    "red": {
+     "team_keys": [
+      "frc9007",
+      "frc9008",
+      "frc9004"
+     ],
+     "score": 70
+    },
+    "blue": {
+     "team_keys": [
+      "frc9001",
+      "frc9002",
+      "frc9003"
+     ],
+     "score": 81
+    }
+   },
+   "winning_alliance": "blue",
+   "time": 1773010600
+  },
+  {
+   "key": "2026ncdemo_sf1m1",
+   "comp_level": "sf",
+   "set_number": 1,
+   "match_number": 1,
+   "alliances": {
+    "red": {
+     "team_keys": [
+      "frc9001",
+      "frc9002",
+      "frc9003"
+     ],
+     "score": 90
+    },
+    "blue": {
+     "team_keys": [
+      "frc9007",
+      "frc9008",
+      "frc9005"
+     ],
+     "score": 85
+    }
+   },
+   "winning_alliance": "red",
+   "time": 1773011200
+  },
+  {
+   "key": "2026ncdemo_f1m1",
+   "comp_level": "f",
+   "set_number": 1,
+   "match_number": 1,
+   "alliances": {
+    "red": {
+     "team_keys": [
+      "frc9001",
+      "frc9002",
+      "frc9003"
+     ],
+     "score": 95
+    },
+    "blue": {
+     "team_keys": [
+      "frc9004",
+      "frc9005",
+      "frc9006"
+     ],
+     "score": 91
+    }
+   },
+   "winning_alliance": "red",
+   "time": 1773011800
+  }
+ ],
+ "rankings": {
+  "rankings": [
+   {
+    "rank": 1,
+    "team_key": "frc9001",
+    "matches_played": 8,
+    "record": {
+     "wins": 8,
+     "losses": 0,
+     "ties": 0
+    },
+    "sort_orders": [
+     2.8,
+     0.0
+    ]
+   },
+   {
+    "rank": 2,
+    "team_key": "frc9002",
+    "matches_played": 8,
+    "record": {
+     "wins": 7,
+     "losses": 1,
+     "ties": 0
+    },
+    "sort_orders": [
+     2.6,
+     0.0
+    ]
+   },
+   {
+    "rank": 3,
+    "team_key": "frc9003",
+    "matches_played": 8,
+    "record": {
+     "wins": 6,
+     "losses": 2,
+     "ties": 0
+    },
+    "sort_orders": [
+     2.4,
+     0.0
+    ]
+   },
+   {
+    "rank": 4,
+    "team_key": "frc9004",
+    "matches_played": 8,
+    "record": {
+     "wins": 5,
+     "losses": 3,
+     "ties": 0
+    },
+    "sort_orders": [
+     2.2,
+     0.0
+    ]
+   },
+   {
+    "rank": 5,
+    "team_key": "frc9005",
+    "matches_played": 8,
+    "record": {
+     "wins": 4,
+     "losses": 4,
+     "ties": 0
+    },
+    "sort_orders": [
+     2.0,
+     0.0
+    ]
+   },
+   {
+    "rank": 6,
+    "team_key": "frc9006",
+    "matches_played": 8,
+    "record": {
+     "wins": 3,
+     "losses": 5,
+     "ties": 0
+    },
+    "sort_orders": [
+     1.8,
+     0.0
+    ]
+   },
+   {
+    "rank": 7,
+    "team_key": "frc9007",
+    "matches_played": 8,
+    "record": {
+     "wins": 2,
+     "losses": 6,
+     "ties": 0
+    },
+    "sort_orders": [
+     1.6,
+     0.0
+    ]
+   },
+   {
+    "rank": 8,
+    "team_key": "frc9008",
+    "matches_played": 8,
+    "record": {
+     "wins": 1,
+     "losses": 7,
+     "ties": 0
+    },
+    "sort_orders": [
+     1.4,
+     0.0
+    ]
+   }
+  ],
+  "sort_order_info": [
+   {
+    "name": "Ranking Score",
+    "precision": 2
+   }
+  ]
+ },
+ "alliances": [
+  {
+   "name": "Alliance 1",
+   "picks": [
+    "frc9001",
+    "frc9002",
+    "frc9003"
+   ]
+  },
+  {
+   "name": "Alliance 2",
+   "picks": [
+    "frc9004",
+    "frc9005",
+    "frc9006"
+   ]
+  }
+ ],
+ "teams": [
+  {
+   "key": "frc9001",
+   "team_number": 9001,
+   "nickname": "[Nickname A]",
+   "name": "[Long sponsor names for team 9001]",
+   "city": "[City]"
+  },
+  {
+   "key": "frc9002",
+   "team_number": 9002,
+   "nickname": "[Nickname B]",
+   "name": "[Long sponsor names for team 9002]",
+   "city": "[City]"
+  },
+  {
+   "key": "frc9003",
+   "team_number": 9003,
+   "nickname": "[Nickname C]",
+   "name": "[Long sponsor names for team 9003]",
+   "city": "[City]"
+  },
+  {
+   "key": "frc9004",
+   "team_number": 9004,
+   "nickname": "[Nickname D]",
+   "name": "[Long sponsor names for team 9004]",
+   "city": "[City]"
+  },
+  {
+   "key": "frc9005",
+   "team_number": 9005,
+   "nickname": "[Nickname E]",
+   "name": "[Long sponsor names for team 9005]",
+   "city": "[City]"
+  },
+  {
+   "key": "frc9006",
+   "team_number": 9006,
+   "nickname": "[Nickname F]",
+   "name": "[Long sponsor names for team 9006]",
+   "city": "[City]"
+  },
+  {
+   "key": "frc9007",
+   "team_number": 9007,
+   "nickname": "[Nickname G]",
+   "name": "[Long sponsor names for team 9007]",
+   "city": "[City]"
+  },
+  {
+   "key": "frc9008",
+   "team_number": 9008,
+   "nickname": "[Nickname H]",
+   "name": "[Long sponsor names for team 9008]",
+   "city": "[City]"
+  }
+ ],
+ "awards": [
+  {
+   "name": "[Award name]",
+   "event_key": "2026ncdemo",
+   "award_type": 1,
+   "recipient_list": [
+    {
+     "team_key": "frc9001",
+     "awardee": null
+    }
+   ]
+  },
+  {
+   "name": "[Other award]",
+   "event_key": "2026ncdemo",
+   "award_type": 2,
+   "recipient_list": [
+    {
+     "team_key": "frc9002",
+     "awardee": "[Person name]"
+    }
+   ]
+  }
+ ],
+ "districtRankings": [
+  {
+   "team_key": "frc9001",
+   "rank": 5,
+   "point_total": 47
+  },
+  {
+   "team_key": "frc9002",
+   "rank": 9,
+   "point_total": 39
+  }
+ ]
+}

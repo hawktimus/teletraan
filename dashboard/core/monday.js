@@ -1,5 +1,5 @@
 // The Monday cards: the plain functions that pick and rank what the cards draw. They know nothing
-// about the page, so tools/test-monday-cards.mjs can run them. The board sync on the Mini
+// about the page, so tests/monday-cards.test.mjs can run them. The board sync on the Mini
 // (docs/editing-content.md, "The Monday cards") writes the rows of the team board into Sanity as
 // tasks with the source monday, and keeps one count of open items a day in the document
 // monday-status. The cards are the panels monday-tasks, monday-milestones and monday-progress, and

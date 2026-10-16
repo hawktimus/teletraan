@@ -173,12 +173,12 @@ check_up_to_date() {
 }
 
 # Step 1: the same checks a student can run by hand (docs/where-things-are.md).
-# They take a few seconds. A failing check is a warning you can overrule.
+# They take a few minutes. A failing check is a warning you can overrule.
 run_checks() {
   step "Checking the code"
 
   local failed='' file name count=0
-  for file in "$repo"/tools/test-*.mjs "$repo"/tools/check-*.mjs "$repo"/studio/check-schemas.mjs; do
+  for file in "$repo"/tests/run.mjs; do
     [ -f "$file" ] || continue
     name=${file#"$repo"/}
     count=$((count + 1))
@@ -192,7 +192,7 @@ run_checks() {
   done
 
   if [ "$dry_run" = yes ]; then
-    say "  [dry run] would run $count checks with node"
+    say "  [dry run] would run the tests with node"
   elif [ -n "$failed" ]; then
     say ""
     say "To see why one failed, run it in a terminal, for example: node $(printf '%s' "$failed" | awk '{print $1}')"

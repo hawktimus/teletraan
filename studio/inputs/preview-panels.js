@@ -1,5 +1,5 @@
 // The panels the Studio can preview, and the address of a preview (docs/monday.md, "Preview").
-// Plain functions and numbers only, so that tools/check-preview.mjs can read it with node.
+// Plain functions and numbers only, so that tests/check-preview.test.mjs can read it with node.
 //
 // The Studio build copies dashboard/ to /dashboard/ beside the Studio (scripts/copy-dashboard.mjs), so the
 // preview is the real screen on the Studio's own origin, reading the published dataset. The

@@ -1,6 +1,6 @@
 // Which theme and which holiday overlay the screen should show right now.
 // Everything here is plain functions with no page in sight, so the tests in
-// tools/test-themes.mjs can run them. core/theme-apply.js puts the answer on
+// tests/themes.test.mjs can run them. core/theme-apply.js puts the answer on
 // the page.
 //
 // The Look document in the Studio holds five things (defaultThemeSettings in

@@ -4,7 +4,7 @@
 // sidebarEntries in structure.js names a template in its add. sanity.config.js gives the
 // templates to the Studio and keeps them out of the New menus, so only the line that
 // names one offers it. Every type already has a plain template with its own name, so a
-// template here needs an id of its own. check-schemas.mjs fails when a list has no template,
+// template here needs an id of its own. tests/schemas.test.mjs fails when a list has no template,
 // when a template makes another type than its list shows, or when a value is not a field.
 
 // A new announcement starts now and ends in two hours, which is what the Post an announcement button on

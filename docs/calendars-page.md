@@ -166,6 +166,6 @@ and ask a coach to delete the document `calendar-status` from the dataset.
   the New menu.
 - `studio/inputs/calendars-view.js` draws the page. `studio/inputs/calendars-view-parts.js` has
   its words, its rows, and the functions that make, read and delete the rules.
-- `tools/test-calendar-status.mjs`, `tools/test-calendars-view.mjs`,
-  `tools/test-calendars-hide.mjs`, `tools/test-calendar-node.mjs` and
-  `studio/check-schemas.mjs`: the tests.
+- `tests/calendar-status.test.mjs`, `tests/calendars-view.test.mjs`,
+  `tests/calendars-hide.test.mjs`, `tests/calendar-node.test.mjs` and
+  `tests/schemas.test.mjs`: the tests.

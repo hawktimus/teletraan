@@ -230,18 +230,18 @@ editors can sign in from anywhere.
       data/live/              files the Mini downloads (never committed)
     studio/                   the Sanity editing screen, its sidebar (structure.js: one list with a line
                               for each entry, so changing the order means moving a line,
-                              docs/reordering-the-sidebar.md), its buttons (actions.js: the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons),
-                              its three pages that are not documents (start-here.js, calendars-view.js and
-                              monday-boards-view.js, whose rows and words are in calendars-view-parts.js,
-                              docs/calendars-page.md, and monday-boards-parts.js),
-                              the words and picture of Start here (start-here-parts.js), what its request
-                              buttons write, shared with actions.js (screen-requests.js), and the address
-                              that Preview the screen opens (dashboard-address.js),
-                              its copy of the theme lists (themes.js), its copy of the demo screens
-                              (demo-screens.js), its copy of the hidden transitions (hidden-transitions.js),
-                              its copy of the previews (previews.js),
-                              the Publish all tool in the top bar (publish-all-tool.js is the page and
-                              publish-all.js is its logic, docs/publish-all.md), and check-schemas.mjs.
+                              docs/reordering-the-sidebar.md), its buttons (tools/actions.js: the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons),
+                              its three pages that are not documents (inputs/start-here.js, inputs/calendars-view.js and
+                              inputs/monday-boards-view.js, whose rows and words are in inputs/calendars-view-parts.js,
+                              docs/calendars-page.md, and inputs/monday-boards-parts.js),
+                              the words and picture of Start here (inputs/start-here-parts.js), what its request
+                              buttons write, shared with tools/actions.js (tools/screen-requests.js), and the address
+                              that Preview the screen opens (inputs/dashboard-address.js),
+                              its copy of the theme lists (inputs/themes.js), its copy of the demo screens
+                              (inputs/demo-screens.js), its copy of the hidden transitions (inputs/hidden-transitions.js),
+                              its copy of the previews (inputs/previews.js),
+                              the Publish all tool in the top bar (tools/publish-all-tool.js is the page and
+                              tools/publish-all.js is its logic, docs/publish-all.md), and tests/schemas.test.mjs.
                               schemas/ has a file for each kind of content. calendarFilter.js is the
                               Calendar filters (docs/calendar-filters.md), presentationDay.js the Meeting
                               days, presentation.js the booked talks and settingsPresentations.js the
@@ -249,25 +249,25 @@ editors can sign in from anywhere.
                               Teams list and settingsTeams.js the team fields of the Look tab, which are hidden now. settingsLook.js is
                               the Weekday schedule and the hidden Styles by day, Monday style, Team order and How the look changes.
                               screen.js is the three Screens (docs/coaches-guide.md, "Screens"). status.js is the
-                              document the Mini writes (the status block, settingsStatus.js and status-input.js), and calendarStatus.js
-                              the one it writes for the Calendars page. time-text.js has the ages in words that
+                              document the Mini writes (the status block, settingsStatus.js and inputs/status-input.js), and calendarStatus.js
+                              the one it writes for the Calendars page. inputs/time-text.js has the ages in words that
                               both use. frcStatus.js is the document the Mini writes for the competition cards,
-                              settingsCompetition.js the Competition tab and frc-status-input.js its connection block.
+                              settingsCompetition.js the Competition tab and inputs/frc-status-input.js its connection block.
                               mondayStatus.js is the document the Mini writes for the Monday tab, settingsMonday.js
-                              the Monday tab, monday-status-input.js its connection block and monday-pickers.js
+                              the Monday tab, inputs/monday-status-input.js its connection block and inputs/monday-pickers.js
                               the board and column lists of a board entry (docs/monday.md).
-                              The form of a Screen is screen-input.js: the Editing switch, the map (screen-map.js is its
-                              boxes) and the first fill of the rows from the Panel order (screen-seed.js). screen-fields.js has the
-                              inputs inside the sections, screen-context.js what the form shares with them, screen-parts.js
-                              the words and what the form reads from Sanity, screen-panels.js the panels a row can name and the
-                              rules for its team, and screen-ids.js the three ids and the style each stands for.
+                              The form of a Screen is inputs/screen-input.js: the Editing switch, the map (tools/screen-map.js is its
+                              boxes) and the first fill of the rows from the Panel order (tools/screen-seed.js). inputs/screen-fields.js has the
+                              inputs inside the sections, inputs/screen-context.js what the form shares with them, inputs/screen-parts.js
+                              the words and what the form reads from Sanity, inputs/screen-panels.js the panels a row can name and the
+                              rules for its team, and inputs/screen-ids.js the three ids and the style each stands for.
                               settingsRotation.js is the ticker seconds of Dashboard Settings and the hidden Panel order list, and
-                              panel-order-input.js fills that list when it is empty. The Team radio on tasks, sponsors and
-                              the other kinds of content is team-input.js, put on each by teamField in fields.js
+                              inputs/panel-order-input.js fills that list when it is empty. The Team radio on tasks, sponsors and
+                              the other kinds of content is inputs/team-input.js, put on each by teamField in fields.js
                               scripts/ has make-templates.mjs, which writes the CSV templates from the
                               schemas, and import-csv.mjs, which checks filled-in CSVs and makes a file
                               for sanity dataset import (docs/importing-from-csv.md)
-    mini/                   how the Mini runs it: web server, timers, scripts. scripts/check-connection.sh
+    mini/                     how the Mini runs it: web server, timers, scripts. scripts/check-connection.sh
                               checks the Mini's connection to Sanity, BAND, Docker and the kiosk with one
                               OK or FAIL line each (docs/rebuilding-the-mini.md, "Checking the connection").
                               scripts/fetch-calendars.sh downloads the BAND calendars in local.env into the
@@ -300,240 +300,16 @@ editors can sign in from anywhere.
                               /etc/issue and turns on teletraan-console.service, which shows the shutdown
                               drawing. The two drawings are console/startup.txt and console/shutdown.txt
                               (docs/rebuilding-the-mini.md, step 13).
-                              mac/ is for the Mac you work on: ship.sh checks the code, commits, pushes,
-                              deploys the Studio and has the Mac tool update the Mini and restart the screen;
-                              make-app.sh makes Ship Teletraan.app (docs/shipping-from-the-mac.md,
-                              docs/laptop-setup.md for a second Mac)
     tools/
       serve.py                the server above
       presentation-booking/   the Apps Script code behind the Google Form where students book a talk
                               (docs/presentations.md)
-      test-calendar.mjs       checks for the calendar reader, and for the Calendar filters that take events
-                              off the screen (core/events.js)
-      test-weather.mjs        checks for the weather reader and its pictures
-      test-content.mjs        checks for the code that reads the editors' content, the photo
-                              addresses, which photos show and in what order, the pages of
-                              portraits, of the subteam roster, the subteam members, the events list and the
-                              lines of the Mini's address, and the reasons and the lines of the
-                              connection status text, for the Polish setting: its cleaning, the
-                              switches each look sets and the rules for Plain in base.css, and for
-                              teams: the cleaning of a team, the team each mode asks for, which items
-                              show for which team in every panel, and the Teams settings
-      test-themes.mjs         checks for which theme and overlay apply, for putting them on the page, for the
-                              ticker prefix, banner line and corner art that a seasonal pack rule can carry, and
-                              for putting the team on the page: its nine colors, the mirror class,
-                              the classes of its trim, its metal and its glow
-      test-layouts.mjs        checks for the layouts: which layout a theme and a style have, the numbers of the
-                              sidebar and bar layouts, the mirror, that the screen is always 1920 x 1080,
-                              the reload that a failed change of layout falls back to and that it cannot loop, that the scheduler leaves
-                              out the small frame, the blocks of a hidden transition, that a seasonal pack
-                              draws only what a layout allows, and the war clock: its housing, its digits and
-                              labels, its sizes and that it does not move
-      test-seasons.mjs        checks for choosing, loading and drawing a seasonal pack (core/season.js), for its
-                              header mark (core/marks.js), its over layer and the Look switch that turns that off,
-                              for its corner art (core/corner-art.js), for a pack that is missing, broken or slow,
-                              and that check-seasons.mjs fails for each kind of mistake
-      test-night.mjs          checks for night mode: when it is night in a time zone, where the bouncing
-                              logo starts and how often it hits a corner, and the night stylesheet
-      test-presentation.mjs   checks for presentation mode (core/presentation.js): when a talk is due, how it
-                              goes from the title card to the thanks card, which talks are skipped, and what
-                              each key of the clicker does
-      test-screen-seed.mjs    checks for the first rows of a Screen (studio/tools/screen-seed.js): the owner's Panel order
-                              becomes 16 main rows and five side rows, seconds carry over, a row switched off is left out,
-                              and the rules for the team of a row (studio/inputs/screen-panels.js)
-      test-panel-order.mjs    checks for the Panel order list (core/panel-order.js): the list built from the
-                              two older lists, and what each area of the screen follows
-      test-panel-b.mjs        checks that the small frame under the countdown is never empty in the standard layout:
-                              the list with its spares and its last resort (core/panel-order.js), the order the real
-                              scheduler chooses in, that a row that is off stays off, that the sidebar and bar layouts
-                              have no small frame, and the team tile (panels/team-tile)
-      test-fixed-values.mjs   checks that the screen ignores the stored night times, speaker wait and overrun,
-                              and uses the fixed values in core/constants.js
-      test-effects.mjs        checks for when the logo animations, the name effect and the screen glitch may start
-                              (frame.js), for choosing the page change style and the metal of the frames, and
-                              for when a demo plays and what stops it (core/demo.js), and for when a hidden
-                              transition plays (core/hidden.js) and what its stylesheet moves
-      test-hidden-hours.mjs   checks that a hidden transition comes about once every so many hours of screen
-                              time (core/hidden.js): the chance of one page change, the older percent, the
-                              cleaning of the hours and the gap after a transition has played
-      test-tick.mjs           checks for the clock of the screen (tick.js) with a fake clock, and that the
-                              countdown and the banner write only what changed each second
-      test-publish-all.mjs    checks for the logic of the Publish all tool: which drafts are listed, the
-                              transaction for each, the order, the skipped reasons and the summary
-      test-templates.mjs      checks that the CSV templates match the schemas, and the CSV importer
-      test-connection-script.mjs  checks for mini/scripts/check-connection.sh, with fake tools
-      test-slides-script.mjs  checks for mini/scripts/slides-sync.sh and install-slides.sh, with fake tools
-      test-install-calendars.mjs  checks for mini/scripts/install-calendars.sh: that it stops before it changes
-                              anything, and that it installs the calendar units only
-      test-calendars-script.mjs  checks for mini/scripts/check-calendars.sh, with a fake curl
-      test-event-pages.mjs    checks for the two pages of the Events panel (core/event-pages.js): four events
-                              to a page, no second page for four or fewer, the kind chips, Group events by
-                              kind, the pinned events, and the step for each page in the rotation
-      test-events-scroll.mjs  checks the scroll of the Events panel: both pages in one list, eight events two pages, five a page
-                              of four and a page of one, the step of the list in Original, Minimal and Cybertron, the holds
-                              (core/schedule.js with stand-ins) and calm and none (frame.js)
-      test-status-write.mjs   checks for mini/scripts/status-write.sh, with a fake curl, that the services and
-                              kiosk.sh run it, and that the dashboard never reads the status document
-      test-calendar-status.mjs  checks for what the Mini writes for the Calendars page: the sync file of
-                              fetch-calendars.sh, the document of calendar-status.sh and calendar-status.mjs
-                              (SHOWN or HIDDEN with the rule, the error case, no address anywhere, with and
-                              without Node), and status-write.sh calendar-status, with a fake curl
-      test-calendars-view.mjs checks for the rows and lines of the Calendars page in Studio
-      test-calendars-hide.mjs checks for the Hide buttons of the Calendars page: the rules they make, the same
-                              id for the same rule, the matching that follows the screen's, Show again, the
-                              day and the 40 events the Mini lists, and the size of the document
-      test-calendar-node.mjs  checks that the calendar scripts run on Node 18: dashboard/package.json makes the
-                              dashboard files modules, nothing in their imports needs a newer Node, and both
-                              scripts list events with the newer built-ins taken away
-      test-frc-script.mjs     checks for mini/scripts/frc-sync.sh and install-frc.sh, with a fake curl and made-up
-                              answers: the requests, the status document, the ETags, the limit of 60 requests, the
-                              snapshots, and that the key and the token are never printed or saved
-      test-monday-sync.mjs    checks for mini/scripts/monday-sync.sh and install-monday.sh, with a fake curl and
-                              made-up boards: the statuses and priorities by label number, the department that
-                              gives the Team lead, the dates, the hours, the owner names, the milestones, Show on TV
-                              that is never written, a task or milestone that goes, the daily counts, the budget of
-                              reads, errors from Monday, and that the tokens are never printed or saved
-      test-monday-docs.mjs    checks docs/monday.md and that no other document still describes the old setup
-      test-team-name.mjs      checks that a team's name and number come from the Team document only
-      test-build-version.mjs  checks the build on the wall (core/build-stamp.js, status-write.sh version)
-      test-sweep.mjs          checks tools/sweep.sh, which keeps the words in tools/sweep-words.txt out of the repository
-      test-watchdog-script.mjs, test-backup-script.mjs  check mini/scripts/watchdog.sh and backup-dataset.sh
-                              with a fake curl and a fake browser page list
-      test-notice.mjs         checks the announcement bar under the banner (core/notice.js, core/notice-run.js)
-      test-photo-row.mjs      checks the Photos row: its count, the seconds of each photo and the total
-      test-booking.mjs        checks the talk booking path with fixtures
-      test-still.mjs, test-previews.mjs  check the panel preview address and the Studio side of it;
-                              check-preview.mjs checks the list of preview panels against registry.js
-      test-screenshots.mjs    checks tools/screenshots.mjs, which takes a picture of every panel
-                              (node tools/screenshots.mjs, needs Playwright on a laptop, never on the Mini)
-      test-integration-round5.mjs  checks where the Monday sync, the preview, the Photos row and the announcement plate meet
-      test-monday-settings.mjs  checks for the two Monday settings on the screen's side: the list of boards and the
-                              owner switch, and their starting values
-      test-monday-boards.mjs  checks for the rows and lines of the Monday Boards page in Studio
-      test-competition.mjs    checks for the competition cards (core/frc.js, core/competition.js and the panels in
-                              panels/competition-*): the cards due on each day of the season in each mode, the mix into the
-                              large panel's list, each card from the sample and with nothing to show, that no text is under
-                              44px or runs out of its body, and the guard of Preview competition
-      test-monday-rules.mjs, test-monday-panels.mjs, test-monday-acceptance.mjs  check the rules of the Monday panels and the stale
-                              chip, the six panels and the department picker of the Screens builder, and the acceptance cases of
-                              the order (monday-world.mjs is what they share)
-      test-monday-cards.mjs   checks for the older Monday cards (core/monday.js and the panels in panels/monday-*): the
-                              ranking, Show on TV off, the weeks around a Monday and
-                              the time zone, five rows and +N more, the line of at most 12 points, the sentences with
-                              nothing to show, that no text is under 44px but the sizes the order sets, and that a team has the cards only with board tasks
-      test-season-timeline.mjs  checks for the season timeline card: the names of the events (the short name, without a year),
-                              the numbered dots, TODAY and the countdown on the line, the legend of six rows, +N more events, and
-                              that it fits its body
-      test-monday-rows.mjs    checks for the rows of the tasks card and the cards of both teams: the mix of ten rows, the page marker
-                              and the scroll (frame.js and core/schedule.js with stand-ins), the two cards of both teams, the
-                              words beside the chip in a header, the names of a team (core/team-title.js)
-      test-monday-fill.mjs    checks that the Monday cards fill the main panel of the bar layout (monday.css and the
-                              progress cards), that the standard layout is as it was, and that no weld seam or other
-                              vertical line is drawn under a card (core/areas.js, styles/minimal.css)
-      test-blank-team.mjs     checks for a blank team: an item with no team shows for either team, a header has no team chip
-                              for things that are for both teams, the cards of both teams read MILESTONES or PROGRESS alone,
-                              a row from a board with no team has no label, and no panel has a Prime or Nova flavor
-      test-cybertron.mjs      checks for Cybertron on the layout of Original: which layout each style has, its four
-                              frames, the stage, the banner and the ticker on their plates, the wide war clock, and
-                              that the frames are drawn again when the style changes
-      test-minimal.mjs        checks for Minimal on the bar layout: what the order gives it, what it must not have
-                              (serial text, hazard stripes, scanlines, slashes, conduit, brackets), and the list of
-                              what it shares with Cybertron
-      test-team-trim.mjs      checks for the trim of a team: both teams of the sample content on a fake page, the
-                              classes of every field, the frames with the other corners cut and the slanted tab
-                              (the Prime frame turned across, the 60 degree line, the pieces), and the rules of trim.css
-      test-team-colors.mjs    checks for the colors, the metal and the glow of a team: both teams in each style, with the
-                              edge gradient and the body color worked out from the stylesheets, and that Prime is as it was in Original
-      test-pile.mjs           checks for the hidden transitions' pile: the plan of the collapse, the pile and the
-                              rise (at most 40 pieces, 5.5 seconds, every piece back in its place), the stylesheet
-                              that moves them, the cube, and the script that finds the pieces on a fake page
-      test-person-rows.mjs    checks for the rows of the Team Leads and Leadership panels: four rows to a
-                              panel, who is in them, the portrait size, and the sizes in base.css
-      test-photo-fit.mjs      checks for the Photo fit setting and the Fit of a photo: which mode a photo
-                              has, the photo that fills the body of the panel and the cut that panels/photo/panel.css makes
-                              for each frame (worked out from core/plate.js), the plate of the caption and
-                              the credit, the fade in frame.css, and the sample photos
-      test-photo-pages.mjs    checks for the pages of the Photo panel: how a stay is shared between photos
-                              (3 photos at 30 seconds, 7 photos at 30 seconds), the stay worked out from the
-                              Panel order row and the Speed setting, and the turns of both orders
-      test-portrait-size.mjs  checks for a portrait size above 100: the rows a page holds, the height of a row,
-                              the classes that say how many rows are on a page, that Leadership and Team Leads page through everyone and a
-                              change of the setting skips nobody (core/turns.js), and the table in the docs
-      test-portrait-settings.mjs  checks for the Portraits settings: the two sizes set apart, the old Portrait
-                              size copied into both while neither is set, and the shape and the frame
-      test-lead-photo.mjs     checks for the photo of a team lead: which address a lead gets (its own photo, the
-                              silhouette, or the photo of the person with the same name), the reader, and the
-                              Team Leads and Subteam roster panels with their early loading
-      test-presentation-mouse.mjs  checks for the mouse in presentation mode: what each button does, the second
-                              click of a double click, a click on the card that says the slides are not ready,
-                              the context menu, the hidden cursor, and the rotation that starts again
-      test-swap.mjs           checks for the swap (core/swap-plan.js): the pull apart, the re-form, the match of old and
-                              new pieces and the path of the icon of the logo, and core/swap-run.js against a small stand-in
-                              for the page and a clock moved by hand
-      test-swap-smooth.mjs    checks that the swap is one gesture: every piece of the old look has a place in the new one
-                              (the pieces of seven looks are in testdata/swap-pieces.json), nothing jumps at the switch,
-                              something always moves, and the calm and no motion paths; also the layout changed on the
-                              running page (core/layout-apply.js), the regions at the gate (core/areas.js) and the list
-                              of the small frame that runs in every layout (core/schedule.js)
-      test-monday-style.mjs   checks that the Monday rows are in the Monday style only: the Monday row left out
-                              while the style cannot go on the page, and a held look going on in a swap
-                              (core/screens-run.js on a small page)
-      test-screens.mjs        checks for the Screens (core/screens.js): the three documents as they are read, the
-                              Screen of each weekday, the rows built from the Panel order, the list of the large
-                              panel, and the swap between two rows
-      test-look-rotation.mjs  checks the page side of the Screens (core/screens-run.js): what the large panel asks
-                              schedule.js, a style and a team held the way a preview holds them, the Next look
-                              now guard, the swap as the one way a look goes on, and the docs
-      test-screen-seed-dashboard.mjs  checks for the first rows of a Screen on the screen side
-                              (core/screen-seed.js): the same Panel order and the same rows as the Studio side
-      test-screen-seed-parity.mjs  runs the Studio rule (studio/tools/screen-seed.js) and the screen rule (core/screens.js,
-                              core/screen-seed.js) on the same Panel orders and the same Team documents, and checks
-                              that the main rows, the side rows and the Monday style come out the same
-      test-console.mjs        checks for the boot and shutdown drawings (plain 7 bit text, the size, the
-                              symmetry of the figure, the same text in the sample content), for
-                              install-console.sh in a fake root (it stops before it changes anything, keeps the
-                              copy of /etc/issue, and does nothing the second time) and for the unit
-      test-mini-tool.mjs      checks for the Mac tool in tools/mini/ and for merge-env.sh, with fake ssh, scp
-                              and rsync: the masking, webcal to https, the merge into local.env, the menu
-                              choices, and that no key or calendar link is printed or put on a command line
-      test-mini-tool-commands.mjs  checks for the words of the Mac tool (update, status, restart, --yes and
-                              --mini), with the same fake tools: the steps in order, the exit code of a failing
-                              step, and that nothing secret is printed
-      test-ship-script.mjs    checks for tools/mac/ship.sh, with a fake git, node, npm, ssh and rsync on a PATH
-                              that holds no real one: the steps in order, a failing step stops the rest, --dry-run
-                              runs nothing, no question about a hostname, the look at this Mac and at GitHub
-                              first, and that no key is printed
-      test-laptop-docs.mjs    checks for docs/laptop-setup.md and the shipping docs: the steps, one command in
-                              each code block, the plain style, and that the commands the guide names exist
-      test-title-plate.mjs    checks for the header of a large panel: where the line that ends the tab is in every frame
-                              (Original, Cybertron and Minimal, both teams, the slanted tab), that the title has its room
-                              before it and the words theirs after it, the widest titles and dates, the slashes left out
-                              when the words need the room, and that the Photo panel has no title
-      test-plate-edges.mjs    checks for the thin plate edge: its widths against the other frames', the TEAM plate and
-                              the ticker's tag and frame, and that the text on them (TEAM and the number, the name
-                              above, TELETRAAN I under, the ticker's line and its word) has 2 px clear of the metal
-      test-countdown-title.mjs  checks for the title of the countdown: how wide it is in the display font and where it
-                              breaks, what the red countdown and the two war clocks write for it (one line at 36 px,
-                              two lines, a smaller size), the room in panels/countdown/panel.css, and the Studio field that warns
-                              above 28 characters
-      test-hawk-cadence.mjs   checks for the Hawktimus icon: the usual mark at rest for both teams, the flying hawk every
-                              5 minutes with a swap not starting the count again, and what the icon does in a swap
-                              (a slight flutter, only carried by a Monday card, none in calm and no motion)
-      check-seasons.mjs       fails if a seasonal pack is not in the data format, has a piece outside its zone, too
-                              many pieces, a forbidden word, no header mark, a mark bigger than its box (60 x 76),
-                              fewer than 8 or more than 14 pieces over the panels, an over piece that is too big,
-                              solid or quick, an ornament of corner art that leaves its box or has a fill, or
-                              animation anywhere but seasons/motion.css
       zones.html              the zones of the seasonal packs outlined over the dashboard, at
                               http://localhost:8080/tools/zones.html
-      check-themes.mjs        fails if a theme or overlay is missing a variable or has text that is
-                              hard to read
       mini/                   the Mac tool that updates the Mini and keeps its keys and calendars:
                               teletraan-mini (the menu, and the words update, status and restart),
                               Teletraan Mini.command (double-click it) and merge-env.sh, which runs on the
                               Mini (docs/updating-the-mini.md)
-      testdata/               the calendar files test-calendar.mjs reads, and the pieces of seven looks that
-                              test-swap-smooth.mjs reads (swap-pieces.json, measured in a render at 1920 x 1080)
       icons.html              every weather picture on one page, at
                               http://localhost:8080/tools/icons.html
       logo.html               the hawk logo large, with every act and key pose, at
@@ -541,6 +317,234 @@ editors can sign in from anywhere.
       perf/                   the comparison page for the speed test: the Tasks panel built
                               from plain plates, in metal or flat, at
                               http://localhost:8080/tools/perf/plates.html
+      mac/                    for the Mac you work on: ship.sh checks the code, commits, pushes,
+                              deploys the Studio and has the Mac tool update the Mini and restart the screen;
+                              make-app.sh makes Ship Teletraan.app (docs/shipping-from-the-mac.md,
+                              docs/laptop-setup.md for a second Mac)
+    tests/                  every test, one file for each module or script (<module>.test.mjs). run.mjs runs them all:
+                              node tests/run.mjs, or node tests/run.mjs <word> for the files with the word in the name.
+                              A test of a shell script is a Node file that runs the script with fakes in a temporary folder.
+      run.mjs                 the runner: three files at a time, one line each, a total, and sh -n and bash -n on every shell file
+      calendar.test.mjs       checks for the calendar reader, and for the Calendar filters that take events
+                              off the screen (core/events.js)
+      weather.test.mjs        checks for the weather reader and its pictures
+      content.test.mjs        checks for the code that reads the editors' content, the photo
+                              addresses, which photos show and in what order, the pages of
+                              portraits, of the subteam roster, the subteam members, the events list and the
+                              lines of the Mini's address, and the reasons and the lines of the
+                              connection status text, for the Polish setting: its cleaning, the
+                              switches each look sets and the rules for Plain in base.css, and for
+                              teams: the cleaning of a team, the team each mode asks for, which items
+                              show for which team in every panel, and the Teams settings
+      themes.test.mjs         checks for which theme and overlay apply, for putting them on the page, for the
+                              ticker prefix, banner line and corner art that a seasonal pack rule can carry, and
+                              for putting the team on the page: its nine colors, the mirror class,
+                              the classes of its trim, its metal and its glow
+      layouts.test.mjs        checks for the layouts: which layout a theme and a style have, the numbers of the
+                              sidebar and bar layouts, the mirror, that the screen is always 1920 x 1080,
+                              the reload that a failed change of layout falls back to and that it cannot loop, that the scheduler leaves
+                              out the small frame, the blocks of a hidden transition, that a seasonal pack
+                              draws only what a layout allows, and the war clock: its housing, its digits and
+                              labels, its sizes and that it does not move
+      seasons.test.mjs        checks for choosing, loading and drawing a seasonal pack (core/season.js), for its
+                              header mark (core/marks.js), its over layer and the Look switch that turns that off,
+                              for its corner art (core/corner-art.js), for a pack that is missing, broken or slow,
+                              and that check-seasons.mjs fails for each kind of mistake
+      night.test.mjs          checks for night mode: when it is night in a time zone, where the bouncing
+                              logo starts and how often it hits a corner, and the night stylesheet
+      presentation.test.mjs   checks for presentation mode (core/presentation.js): when a talk is due, how it
+                              goes from the title card to the thanks card, which talks are skipped, and what
+                              each key of the clicker does
+      screen-seed.test.mjs    checks for the first rows of a Screen (studio/tools/screen-seed.js): the owner's Panel order
+                              becomes 16 main rows and five side rows, seconds carry over, a row switched off is left out,
+                              and the rules for the team of a row (studio/inputs/screen-panels.js)
+      panel-order.test.mjs    checks for the Panel order list (core/panel-order.js): the list built from the
+                              two older lists, and what each area of the screen follows
+      panel-b.test.mjs        checks that the small frame under the countdown is never empty in the standard layout:
+                              the list with its spares and its last resort (core/panel-order.js), the order the real
+                              scheduler chooses in, that a row that is off stays off, that the sidebar and bar layouts
+                              have no small frame, and the team tile (panels/team-tile)
+      fixed-values.test.mjs   checks that the screen ignores the stored night times, speaker wait and overrun,
+                              and uses the fixed values in core/constants.js
+      effects.test.mjs        checks for when the logo animations, the name effect and the screen glitch may start
+                              (frame.js), for choosing the page change style and the metal of the frames, and
+                              for when a demo plays and what stops it (core/demo.js), and for when a hidden
+                              transition plays (core/hidden.js) and what its stylesheet moves
+      hidden-hours.test.mjs   checks that a hidden transition comes about once every so many hours of screen
+                              time (core/hidden.js): the chance of one page change, the older percent, the
+                              cleaning of the hours and the gap after a transition has played
+      tick.test.mjs           checks for the clock of the screen (tick.js) with a fake clock, and that the
+                              countdown and the banner write only what changed each second
+      publish-all.test.mjs    checks for the logic of the Publish all tool: which drafts are listed, the
+                              transaction for each, the order, the skipped reasons and the summary
+      templates.test.mjs      checks that the CSV templates match the schemas, and the CSV importer
+      check-connection.test.mjs  checks for mini/scripts/check-connection.sh, with fake tools
+      slides-sync.test.mjs  checks for mini/scripts/slides-sync.sh and install-slides.sh, with fake tools
+      install-calendars.test.mjs  checks for mini/scripts/install-calendars.sh: that it stops before it changes
+                              anything, and that it installs the calendar units only
+      check-calendars.test.mjs  checks for mini/scripts/check-calendars.sh, with a fake curl
+      event-pages.test.mjs    checks for the two pages of the Events panel (core/event-pages.js): four events
+                              to a page, no second page for four or fewer, the kind chips, Group events by
+                              kind, the pinned events, and the step for each page in the rotation
+      events-scroll.test.mjs  checks the scroll of the Events panel: both pages in one list, eight events two pages, five a page
+                              of four and a page of one, the step of the list in Original, Minimal and Cybertron, the holds
+                              (core/schedule.js with stand-ins) and calm and none (frame.js)
+      status-write.test.mjs   checks for mini/scripts/status-write.sh, with a fake curl, that the services and
+                              kiosk.sh run it, and that the dashboard never reads the status document
+      calendar-status.test.mjs  checks for what the Mini writes for the Calendars page: the sync file of
+                              fetch-calendars.sh, the document of calendar-status.sh and calendar-status.mjs
+                              (SHOWN or HIDDEN with the rule, the error case, no address anywhere, with and
+                              without Node), and status-write.sh calendar-status, with a fake curl
+      calendars-view.test.mjs checks for the rows and lines of the Calendars page in Studio
+      calendars-hide.test.mjs checks for the Hide buttons of the Calendars page: the rules they make, the same
+                              id for the same rule, the matching that follows the screen's, Show again, the
+                              day and the 40 events the Mini lists, and the size of the document
+      calendar-node.test.mjs  checks that the calendar scripts run on Node 18: dashboard/package.json makes the
+                              dashboard files modules, nothing in their imports needs a newer Node, and both
+                              scripts list events with the newer built-ins taken away
+      frc-sync.test.mjs     checks for mini/scripts/frc-sync.sh and install-frc.sh, with a fake curl and made-up
+                              answers: the requests, the status document, the ETags, the limit of 60 requests, the
+                              snapshots, and that the key and the token are never printed or saved
+      monday-sync.test.mjs    checks for mini/scripts/monday-sync.sh and install-monday.sh, with a fake curl and
+                              made-up boards: the statuses and priorities by label number, the department that
+                              gives the Team lead, the dates, the hours, the owner names, the milestones, Show on TV
+                              that is never written, a task or milestone that goes, the daily counts, the budget of
+                              reads, errors from Monday, and that the tokens are never printed or saved
+      monday-docs.test.mjs    checks docs/monday.md and that no other document still describes the old setup
+      team-name.test.mjs      checks that a team's name and number come from the Team document only
+      build-version.test.mjs  checks the build on the wall (core/build-stamp.js, status-write.sh version)
+      sweep.test.mjs          checks tools/sweep.sh, which keeps the words in tools/sweep-words.txt out of the repository
+      watchdog.test.mjs, backup-dataset.test.mjs  check mini/scripts/watchdog.sh and backup-dataset.sh
+                              with a fake curl and a fake browser page list
+      notice.test.mjs         checks the announcement bar under the banner (core/notice.js, core/notice-run.js)
+      photo-row.test.mjs      checks the Photos row: its count, the seconds of each photo and the total
+      booking.test.mjs        checks the talk booking path with fixtures
+      still.test.mjs, previews.test.mjs  check the panel preview address and the Studio side of it;
+                              check-preview.mjs checks the list of preview panels against registry.js
+      screenshots.test.mjs    checks tools/screenshots.mjs, which takes a picture of every panel
+                              (node tools/screenshots.mjs, needs Playwright on a laptop, never on the Mini)
+      integration.test.mjs  checks where the Monday sync, the preview, the Photos row and the announcement plate meet
+      monday-settings.test.mjs  checks for the two Monday settings on the screen's side: the list of boards and the
+                              owner switch, and their starting values
+      monday-boards.test.mjs  checks for the rows and lines of the Monday Boards page in Studio
+      competition.test.mjs    checks for the competition cards (core/frc.js, core/competition.js and the panels in
+                              panels/competition-*): the cards due on each day of the season in each mode, the mix into the
+                              large panel's list, each card from the sample and with nothing to show, that no text is under
+                              44px or runs out of its body, and the guard of Preview competition
+      monday-rules.test.mjs, monday-panels.test.mjs, monday-acceptance.test.mjs  check the rules of the Monday panels and the stale
+                              chip, the six panels and the department picker of the Screens builder, and the acceptance cases of
+                              the order (monday-world.mjs is what they share)
+      monday-cards.test.mjs   checks for the older Monday cards (core/monday.js and the panels in panels/monday-*): the
+                              ranking, Show on TV off, the weeks around a Monday and
+                              the time zone, five rows and +N more, the line of at most 12 points, the sentences with
+                              nothing to show, that no text is under 44px but the sizes the order sets, and that a team has the cards only with board tasks
+      season-timeline.test.mjs  checks for the season timeline card: the names of the events (the short name, without a year),
+                              the numbered dots, TODAY and the countdown on the line, the legend of six rows, +N more events, and
+                              that it fits its body
+      monday-rows.test.mjs    checks for the rows of the tasks card and the cards of both teams: the mix of ten rows, the page marker
+                              and the scroll (frame.js and core/schedule.js with stand-ins), the two cards of both teams, the
+                              words beside the chip in a header, the names of a team (core/team-title.js)
+      monday-fill.test.mjs    checks that the Monday cards fill the main panel of the bar layout (monday.css and the
+                              progress cards), that the standard layout is as it was, and that no weld seam or other
+                              vertical line is drawn under a card (core/areas.js, styles/minimal.css)
+      blank-team.test.mjs     checks for a blank team: an item with no team shows for either team, a header has no team chip
+                              for things that are for both teams, the cards of both teams read MILESTONES or PROGRESS alone,
+                              a row from a board with no team has no label, and no panel has a Prime or Nova flavor
+      cybertron.test.mjs      checks for Cybertron on the layout of Original: which layout each style has, its four
+                              frames, the stage, the banner and the ticker on their plates, the wide war clock, and
+                              that the frames are drawn again when the style changes
+      minimal.test.mjs        checks for Minimal on the bar layout: what the order gives it, what it must not have
+                              (serial text, hazard stripes, scanlines, slashes, conduit, brackets), and the list of
+                              what it shares with Cybertron
+      team-trim.test.mjs      checks for the trim of a team: both teams of the sample content on a fake page, the
+                              classes of every field, the frames with the other corners cut and the slanted tab
+                              (the Prime frame turned across, the 60 degree line, the pieces), and the rules of trim.css
+      team-colors.test.mjs    checks for the colors, the metal and the glow of a team: both teams in each style, with the
+                              edge gradient and the body color worked out from the stylesheets, and that Prime is as it was in Original
+      pile.test.mjs           checks for the hidden transitions' pile: the plan of the collapse, the pile and the
+                              rise (at most 40 pieces, 5.5 seconds, every piece back in its place), the stylesheet
+                              that moves them, the cube, and the script that finds the pieces on a fake page
+      person-rows.test.mjs    checks for the rows of the Team Leads and Leadership panels: four rows to a
+                              panel, who is in them, the portrait size, and the sizes in base.css
+      photo-fit.test.mjs      checks for the Photo fit setting and the Fit of a photo: which mode a photo
+                              has, the photo that fills the body of the panel and the cut that panels/photo/panel.css makes
+                              for each frame (worked out from core/plate.js), the plate of the caption and
+                              the credit, the fade in frame.css, and the sample photos
+      photo-pages.test.mjs    checks for the pages of the Photo panel: how a stay is shared between photos
+                              (3 photos at 30 seconds, 7 photos at 30 seconds), the stay worked out from the
+                              Panel order row and the Speed setting, and the turns of both orders
+      portrait-size.test.mjs  checks for a portrait size above 100: the rows a page holds, the height of a row,
+                              the classes that say how many rows are on a page, that Leadership and Team Leads page through everyone and a
+                              change of the setting skips nobody (core/turns.js), and the table in the docs
+      portrait-settings.test.mjs  checks for the Portraits settings: the two sizes set apart, the old Portrait
+                              size copied into both while neither is set, and the shape and the frame
+      lead-photo.test.mjs     checks for the photo of a team lead: which address a lead gets (its own photo, the
+                              silhouette, or the photo of the person with the same name), the reader, and the
+                              Team Leads and Subteam roster panels with their early loading
+      presentation-mouse.test.mjs  checks for the mouse in presentation mode: what each button does, the second
+                              click of a double click, a click on the card that says the slides are not ready,
+                              the context menu, the hidden cursor, and the rotation that starts again
+      swap.test.mjs           checks for the swap (core/swap-plan.js): the pull apart, the re-form, the match of old and
+                              new pieces and the path of the icon of the logo, and core/swap-run.js against a small stand-in
+                              for the page and a clock moved by hand
+      swap-smooth.test.mjs    checks that the swap is one gesture: every piece of the old look has a place in the new one
+                              (the pieces of seven looks are in tests/data/swap-pieces.json), nothing jumps at the switch,
+                              something always moves, and the calm and no motion paths; also the layout changed on the
+                              running page (core/layout-apply.js), the regions at the gate (core/areas.js) and the list
+                              of the small frame that runs in every layout (core/schedule.js)
+      monday-style.test.mjs   checks that the Monday rows are in the Monday style only: the Monday row left out
+                              while the style cannot go on the page, and a held look going on in a swap
+                              (core/screens-run.js on a small page)
+      screens.test.mjs        checks for the Screens (core/screens.js): the three documents as they are read, the
+                              Screen of each weekday, the rows built from the Panel order, the list of the large
+                              panel, and the swap between two rows
+      look-rotation.test.mjs  checks the page side of the Screens (core/screens-run.js): what the large panel asks
+                              schedule.js, a style and a team held the way a preview holds them, the Next look
+                              now guard, the swap as the one way a look goes on, and the docs
+      screen-seed-dashboard.test.mjs  checks for the first rows of a Screen on the screen side
+                              (core/screen-seed.js): the same Panel order and the same rows as the Studio side
+      screen-seed-parity.test.mjs  runs the Studio rule (studio/tools/screen-seed.js) and the screen rule (core/screens.js,
+                              core/screen-seed.js) on the same Panel orders and the same Team documents, and checks
+                              that the main rows, the side rows and the Monday style come out the same
+      install-console.test.mjs        checks for the boot and shutdown drawings (plain 7 bit text, the size, the
+                              symmetry of the figure, the same text in the sample content), for
+                              install-console.sh in a fake root (it stops before it changes anything, keeps the
+                              copy of /etc/issue, and does nothing the second time) and for the unit
+      teletraan-mini.test.mjs      checks for the Mac tool in tools/mini/ and for merge-env.sh, with fake ssh, scp
+                              and rsync: the masking, webcal to https, the merge into local.env, the menu
+                              choices, and that no key or calendar link is printed or put on a command line
+      teletraan-mini-commands.test.mjs  checks for the words of the Mac tool (update, status, restart, --yes and
+                              --mini), with the same fake tools: the steps in order, the exit code of a failing
+                              step, and that nothing secret is printed
+      ship.test.mjs    checks for tools/mac/ship.sh, with a fake git, node, npm, ssh and rsync on a PATH
+                              that holds no real one: the steps in order, a failing step stops the rest, --dry-run
+                              runs nothing, no question about a hostname, the look at this Mac and at GitHub
+                              first, and that no key is printed
+      laptop-docs.test.mjs    checks for docs/laptop-setup.md and the shipping docs: the steps, one command in
+                              each code block, the plain style, and that the commands the guide names exist
+      title-plate.test.mjs    checks for the header of a large panel: where the line that ends the tab is in every frame
+                              (Original, Cybertron and Minimal, both teams, the slanted tab), that the title has its room
+                              before it and the words theirs after it, the widest titles and dates, the slashes left out
+                              when the words need the room, and that the Photo panel has no title
+      plate-edges.test.mjs    checks for the thin plate edge: its widths against the other frames', the TEAM plate and
+                              the ticker's tag and frame, and that the text on them (TEAM and the number, the name
+                              above, TELETRAAN I under, the ticker's line and its word) has 2 px clear of the metal
+      countdown-title.test.mjs  checks for the title of the countdown: how wide it is in the display font and where it
+                              breaks, what the red countdown and the two war clocks write for it (one line at 36 px,
+                              two lines, a smaller size), the room in panels/countdown/panel.css, and the Studio field that warns
+                              above 28 characters
+      hawk-cadence.test.mjs   checks for the Hawktimus icon: the usual mark at rest for both teams, the flying hawk every
+                              5 minutes with a swap not starting the count again, and what the icon does in a swap
+                              (a slight flutter, only carried by a Monday card, none in calm and no motion)
+      check-seasons.test.mjs    fails if a seasonal pack is not in the data format, has a piece outside its zone, too
+                              many pieces, a forbidden word, no header mark, a mark bigger than its box (60 x 76),
+                              fewer than 8 or more than 14 pieces over the panels, an over piece that is too big,
+                              solid or quick, an ornament of corner art that leaves its box or has a fill, or
+                              animation anywhere but seasons/motion.css
+      check-themes.test.mjs     fails if a theme or overlay is missing a variable or has text that is
+                              hard to read
+      data/                   the calendar files calendar.test.mjs reads, and the pieces of seven looks that
+                              swap-smooth.test.mjs reads (swap-pieces.json, measured in a render at 1920 x 1080)
     docs/                     how-to guides: students.md (the students' page, with the parts of the
                               Start here page; using-the-studio.md points to it), monday-one-pager.md (the
                               project manager's page for the Monday boards), announcements.md (the bar under the banner), coaches-guide.md (the coaches' page: the tabs, the status block, the
@@ -563,7 +567,7 @@ editors can sign in from anywhere.
 Values saved in Dashboard Settings (in the editing screen) win. The file
 `dashboard/config.js` only fills in what the editors have not set. The Studio
 has a copy of each starting value in `studio/schemas/`, and
-`studio/check-schemas.mjs` fails if the two copies differ, so change both. To
+`tests/schemas.test.mjs` fails if the two copies differ, so change both. To
 change what is on the TV today, use Dashboard Settings and leave the files
 alone.
 
@@ -692,8 +696,8 @@ alone.
 - **The Monday board.** Dashboard Settings, Monday tab (docs/monday.md). The task board, the milestones board, how
   often the Mini reads and the owner switch are in `studio/schemas/settingsMonday.js`, with the starting values
   `mondayTaskBoard`, `mondayMilestoneBoard`, `mondayEveryMinutes` and `mondayShowOwners` in `defaultSettings` in
-  `dashboard/config.js` and at the top of `mini/scripts/monday-sync.sh`; `studio/check-schemas.mjs` and
-  `tools/test-monday-sync.mjs` fail when the three differ. The older `mondayBoards` list is hidden and not read. The
+  `dashboard/config.js` and at the top of `mini/scripts/monday-sync.sh`; `tests/schemas.test.mjs` and
+  `tests/monday-sync.test.mjs` fail when the three differ. The older `mondayBoards` list is hidden and not read. The
   Mini reads the settings, and `fixSettingValues` in `dashboard/core/content.js` only keeps them tidy.
   `mini/scripts/monday-sync.sh` writes the tasks (id `task-monday-` and the item number, `source` monday, the
   status, priority, `showOnBoard`, `contact`, `owners`, `startDate`, `dueDate`, `estHours`, `completedOn`,
@@ -819,12 +823,12 @@ alone.
   frame on screen: the rules in `panels/photo/panel.css` are written for each frame the large
   panel can have, found by the `data-frame` of the area (`frameKind` in
   `core/plate.js`), a little in from the metal because the page lies over the
-  frame. `tools/test-photo-fit.mjs` works the shapes out from `core/plate.js`
+  frame. `tests/photo-fit.test.mjs` works the shapes out from `core/plate.js`
   and holds the stylesheet to them, so when a frame changes, that test says which
   rule to change. The fade from one photo to the next is in `frame.css` (`.photo
   .shot`), and `--hold` and `--shot` on the page time it. The caption and the credit
   are on one plate (`.note`, in the color of the team's plates) in each shot.
-  `tools/test-photo-fit.mjs` and `tools/test-photo-pages.mjs` have the tests.
+  `tests/photo-fit.test.mjs` and `tests/photo-pages.test.mjs` have the tests.
 - **Photos of people.** Leadership in Studio, Photo and "Show photo on
   screen" (docs/editing-content.md). A Team lead (`studio/schemas/subteam.js`)
   has the same two fields, right after Lead. The screen asks Sanity for each
@@ -869,11 +873,11 @@ alone.
   always asked for at 280, whatever the portrait size setting says, so the copy
   loaded ahead of time is the one shown. `showcaseOf` in `core/team-leads.js` is
   there for a later mode that shows one subteam's lead and its members. Nothing
-  calls it yet. `tools/test-person-rows.mjs`, `tools/test-leadership-role.mjs`,
-  `tools/test-portrait-size.mjs`, `tools/test-portrait-settings.mjs` and
-  `tools/test-lead-photo.mjs` have the tests of the rows and the photos.
+  calls it yet. `tests/person-rows.test.mjs`, `tests/leadership-role.test.mjs`,
+  `tests/portrait-size.test.mjs`, `tests/portrait-settings.test.mjs` and
+  `tests/lead-photo.test.mjs` have the tests of the rows and the photos.
   In Cybertron the rows end above the slashes of the frame
-  (`tools/test-stripe-foot.mjs`).
+  (`tests/stripe-foot.test.mjs`).
   The starting value of the switch is `defaultPerson.showPhoto` in
   `dashboard/config.js` and its copy in `studio/schemas/person.js`, which
   `studio/schemas/subteam.js` follows.
@@ -1032,7 +1036,7 @@ alone.
   out a task that is off. `core/sanity.js` keeps only the tasks from the board with
   `fromBoardOnly` from `core/task-source.js`, and they keep their Order. `priority`,
   `mondayId`, `mondayBoardId` and `mondayBoardName` are not read by the screen.
-  `tools/test-task-board.mjs` tests the screen side. In the CSV templates `priority`
+  `tests/task-board.test.mjs` tests the screen side. In the CSV templates `priority`
   and `showOnTv` are the last two columns of task.csv, and `source` and `mondayId`
   have no column.
 - **A new field on something editors fill in.** See docs/adding-a-field.md.
@@ -1045,74 +1049,79 @@ alone.
 
 Run these in the terminal, from this folder. They need Node.js, the same
 version as the Studio (22.12 or newer), and nothing else installed. The
-exceptions are `test-slides-script.mjs`, `test-frc-script.mjs`, `test-monday-sync.mjs` and `test-backup-script.mjs`, which need `jq`.
+exceptions are `slides-sync.test.mjs`, `frc-sync.test.mjs`, `monday-sync.test.mjs` and `backup-dataset.test.mjs`, which need `jq`.
 
-    node tools/test-calendar.mjs
-    node tools/test-weather.mjs
-    node tools/test-content.mjs
-    node tools/test-themes.mjs
-    node tools/test-layouts.mjs
-    node tools/test-seasons.mjs
-    node tools/test-effects.mjs
-    node tools/test-hidden-hours.mjs
-    node tools/test-tick.mjs
-    node tools/test-night.mjs
-    node tools/test-presentation.mjs
-    node tools/test-panel-order.mjs
-    node tools/test-fixed-values.mjs
-    node tools/test-templates.mjs
-    node tools/test-publish-all.mjs
-    node tools/test-connection-script.mjs
-    node tools/test-slides-script.mjs
-    node tools/test-install-calendars.mjs
-    node tools/test-calendars-script.mjs
-    node tools/test-event-pages.mjs
-    node tools/test-events-scroll.mjs
-    node tools/test-status-write.mjs
-    node tools/test-frc-script.mjs
-    node tools/test-monday-sync.mjs
-    node tools/test-monday-settings.mjs
-    node tools/test-monday-boards.mjs
-    node tools/test-blank-team.mjs
-    node tools/test-competition.mjs
-    node tools/test-monday-cards.mjs
-    node tools/test-monday-fill.mjs
-    node tools/test-cybertron.mjs
-    node tools/test-minimal.mjs
-    node tools/test-team-trim.mjs
-    node tools/test-team-colors.mjs
-    node tools/test-pile.mjs
-    node tools/test-person-rows.mjs
-    node tools/test-photo-fit.mjs
-    node tools/test-presentation-mouse.mjs
-    node tools/test-look-rotation.mjs
-    node tools/test-screens.mjs
-    node tools/test-screen-seed.mjs
-    node tools/test-screen-seed-dashboard.mjs
-    node tools/test-swap.mjs
-    node tools/test-swap-smooth.mjs
-    node tools/test-monday-style.mjs
-    node tools/test-console.mjs
-    node tools/test-calendar-status.mjs
-    node tools/test-calendars-view.mjs
-    node tools/test-mini-tool.mjs
-    node tools/test-mini-tool-commands.mjs
-    node tools/test-ship-script.mjs
-    node tools/test-laptop-docs.mjs
-    node tools/test-plate-edges.mjs
-    node tools/test-title-plate.mjs
-    node tools/test-countdown-title.mjs
-    node tools/check-themes.mjs
-    node tools/check-seasons.mjs
-    node studio/check-schemas.mjs
+    node tests/run.mjs             every test, three at a time, and the syntax of every shell file
+    node tests/run.mjs calendar    only the tests with "calendar" in the file name
+
+A test of a shell script is a Node file that runs the script with fake `curl`, `ssh` and the like. Each file can also be run by itself:
+
+    node tests/calendar.test.mjs
+    node tests/weather.test.mjs
+    node tests/content.test.mjs
+    node tests/themes.test.mjs
+    node tests/layouts.test.mjs
+    node tests/seasons.test.mjs
+    node tests/effects.test.mjs
+    node tests/hidden-hours.test.mjs
+    node tests/tick.test.mjs
+    node tests/night.test.mjs
+    node tests/presentation.test.mjs
+    node tests/panel-order.test.mjs
+    node tests/fixed-values.test.mjs
+    node tests/templates.test.mjs
+    node tests/publish-all.test.mjs
+    node tests/check-connection.test.mjs
+    node tests/slides-sync.test.mjs
+    node tests/install-calendars.test.mjs
+    node tests/check-calendars.test.mjs
+    node tests/event-pages.test.mjs
+    node tests/events-scroll.test.mjs
+    node tests/status-write.test.mjs
+    node tests/frc-sync.test.mjs
+    node tests/monday-sync.test.mjs
+    node tests/monday-settings.test.mjs
+    node tests/monday-boards.test.mjs
+    node tests/blank-team.test.mjs
+    node tests/competition.test.mjs
+    node tests/monday-cards.test.mjs
+    node tests/monday-fill.test.mjs
+    node tests/cybertron.test.mjs
+    node tests/minimal.test.mjs
+    node tests/team-trim.test.mjs
+    node tests/team-colors.test.mjs
+    node tests/pile.test.mjs
+    node tests/person-rows.test.mjs
+    node tests/photo-fit.test.mjs
+    node tests/presentation-mouse.test.mjs
+    node tests/look-rotation.test.mjs
+    node tests/screens.test.mjs
+    node tests/screen-seed.test.mjs
+    node tests/screen-seed-dashboard.test.mjs
+    node tests/swap.test.mjs
+    node tests/swap-smooth.test.mjs
+    node tests/monday-style.test.mjs
+    node tests/install-console.test.mjs
+    node tests/calendar-status.test.mjs
+    node tests/calendars-view.test.mjs
+    node tests/teletraan-mini.test.mjs
+    node tests/teletraan-mini-commands.test.mjs
+    node tests/ship.test.mjs
+    node tests/laptop-docs.test.mjs
+    node tests/plate-edges.test.mjs
+    node tests/title-plate.test.mjs
+    node tests/countdown-title.test.mjs
+    node tests/check-themes.test.mjs
+    node tests/check-seasons.test.mjs
+    node tests/schemas.test.mjs
 
 Each one ends with a total such as `24 of 24 passed` and says FAIL beside
 anything that went wrong. If anything fails, the command ends with an error.
 Run all of them after you change code under `dashboard/core/` or a file under
-`studio/schemas/`. `check-schemas.mjs` runs `check-themes.mjs` and `check-seasons.mjs`
+`studio/schemas/`. `tests/schemas.test.mjs` runs `check-themes.mjs` and `check-seasons.mjs`
 itself, so after you change a file in `dashboard/themes/` or `dashboard/seasons/` it is
-enough to run `check-schemas.mjs`.
-`test-templates.mjs` fails when the CSV templates are out of date, so after a
+enough to run `tests/schemas.test.mjs`.
+`templates.test.mjs` fails when the CSV templates are out of date, so after a
 schema change run `node scripts/make-templates.mjs` in the `studio` folder.
 
 `check-themes.mjs` needs 7 to 1 contrast for every text colour on the

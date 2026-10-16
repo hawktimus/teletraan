@@ -249,7 +249,7 @@ after you fix the cause. A step that has nothing to do says so.
 | The Studio did not deploy | If it is a login, run `npx sanity login` in `studio/`. Otherwise the lines above say why. |
 | could not reach the Mini | Is the Mini on? Is the laptop on the school network or on Tailscale? Try `ssh user@host` by hand. |
 | The Mini asks Copy anyway | The Mini also pulls from GitHub by itself. `docs/updating-the-mini.md` says how to turn that off. |
-| A check failed | Run it by itself, for example `node tools/test-content.mjs`, and read why. You may go on anyway, but look first. |
+| A check failed | Run it by itself, for example `node tests/content.test.mjs`, and read why. You may go on anyway, but look first. |
 
 ## 11. Check that it works
 

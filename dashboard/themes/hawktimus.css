@@ -8,7 +8,7 @@
    These are set with ":root" as well as with the class, so the screen has its
    colours before any theme is chosen, and a variable a newer theme leaves out
    falls back to the one below. Every theme file should still set every
-   required variable, because tools/check-themes.mjs fails if one is missing.
+   required variable, because tests/check-themes.test.mjs fails if one is missing.
    That check also needs 7 to 1 contrast for the text and background pairs it
    lists, and it reads the list of required names from required.js.
 

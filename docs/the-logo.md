@@ -205,7 +205,7 @@ by `pace()`.
 - To change how long an act of the flying hawk takes, change its seconds in
   `hawkActs` in frame.js, and change `logoHawkDuration` in config.js and in
   `studio/schemas/settingsLogo.js` to the new total, because the setting is
-  that total (`tools/test-effects.mjs` fails if they differ). An act has to be
+  that total (`tests/effects.test.mjs` fails if they differ). An act has to be
   at least as long as the animations in it, or the next act cuts them off. The
   animations of an act are the ones with that act's name in frame.css, and each
   rule says how long it takes and how long it waits.
@@ -225,7 +225,7 @@ by `pace()`.
 - To take the logo settings out of the Studio, delete
   `studio/schemas/settingsLogo.js` and the lines in `dashboardSettings.js` that
   import it and use `logoFields()`. Remove the same names from
-  `studio/check-schemas.mjs`. The dashboard keeps working: it uses the starting
+  `tests/schemas.test.mjs`. The dashboard keeps working: it uses the starting
   values in `dashboard/config.js` for anything the published settings do not
   have, so the logo goes on with its old behaviour.
 - Parts reach past the edge of the logo while the show plays: about 28 pixels

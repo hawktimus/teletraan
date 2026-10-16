@@ -128,11 +128,11 @@ Settings, and `calendarStatus` by the Calendars page.
 2. Cut a line and paste it where it should go. Keep the comma at the end.
 3. To start a new group, add `{ kind: 'divider', title: 'A HEADING' },` before
    its first line.
-4. In the `studio` folder, run `node check-schemas.mjs`. It should report no
+4. In the `studio` folder, run `node tests/schemas.test.mjs`. It should report no
    failures. It also checks that the groups, the headings and their order are
    the ones above, so it fails when the order no longer matches. If the new
    order is the one you want, change `sidebarGroups` and `folderLines` in
-   `studio/check-schemas.mjs` to match.
+   `tests/schemas.test.mjs` to match.
 5. To see the new order, run `npm run dev` in the `studio` folder. Editors get
    it after the Studio is deployed (studio/README.md).
 
@@ -146,21 +146,21 @@ leads is `subteam`, Extra panels is `customPanel` and Look is `theme`.
 Words in the schema that name a list, such as a description that says "the
 Team leads list", change with it. The title of the type, which the New menu and
 the plus button show, follows the sidebar in the singular: Agenda item, Team
-lead, Extra panel. `node check-schemas.mjs` fails when a title or a description
+lead, Extra panel. `node tests/schemas.test.mjs` fails when a title or a description
 still uses a name the sidebar had before, and when the title of a type is not the
-one it expects (`typeTitles` in `studio/check-schemas.mjs`).
+one it expects (`typeTitles` in `tests/schemas.test.mjs`).
 
 ## Add a new kind of content
 
 A new document type needs a line in `sidebarEntries`, or editors cannot reach it.
-`node check-schemas.mjs` fails and names the type when the line is missing. It
+`node tests/schemas.test.mjs` fails and names the type when the line is missing. It
 also fails when a line names a type that does not exist, such as one with a
 spelling slip, and when a line has no icon.
 
 A type that is only an object inside another document, such as the blocks of an
 Extra panel, is not a document and has no line. If a document type should stay
 out of the sidebar on purpose, add it to `notInSidebar` in
-`studio/check-schemas.mjs`, with the reason. A type left out of the sidebar is
+`tests/schemas.test.mjs`, with the reason. A type left out of the sidebar is
 also left out of the New menu in the top bar: add it to `notOffered` in
 `studio/sanity.config.js`. A type that a reference field must still be able to
 create, as the Location field of a task does for a place, goes in

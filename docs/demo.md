@@ -122,13 +122,13 @@ list. Nothing else needs to know about it.
 
    `context` also has `getContent()`, the newest content. Load code that touches
    the page with `import()` inside `run`, as the entries above do, so that the
-   file can still be read by the tests and by `check-schemas.mjs`.
+   file can still be read by the tests and by `tests/schemas.test.mjs`.
 
 2. Add the same id and name, in the same place in the list, to
    `studio/inputs/demo-screens.js`. The Studio is built on its own and cannot read the
    dashboard folder, which is why the list is written twice.
 
-3. Run `node tools/test-effects.mjs` and `node studio/check-schemas.mjs`. The
+3. Run `node tests/effects.test.mjs` and `node tests/schemas.test.mjs`. The
    second one fails if the two lists differ. Then run `npm run deploy` in the
    `studio` folder so the editors see the new screen in the Screen list.
 
@@ -146,8 +146,8 @@ back in the function it returns, or when `context.cancelled()` says so.
 - `dashboard/core/demo.js`: the plain functions, with no page in them. They tidy
   the Demo page into `content.demo`, decide whether a request should run
   (`shouldRunDemo`), remember the handled request, and run the steps
-  (`makeDemoRunner`). The tests for them are in `tools/test-effects.mjs`, and the
-  tests for `content.demo` are in `tools/test-content.mjs`.
+  (`makeDemoRunner`). The tests for them are in `tests/effects.test.mjs`, and the
+  tests for `content.demo` are in `tests/content.test.mjs`.
 - `dashboard/core/demo-runner.js`: gives `makeDemoRunner` the real screen and
   looks once a second. `shell.js` starts it after the alerts and announcements.
 - Small hooks in other files: `pauseRotation` and `resumeRotation` in

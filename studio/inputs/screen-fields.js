@@ -10,7 +10,7 @@
 //
 // The first three store nothing. The team of a row is the code of a team, Both teams, or nothing.
 // The teams and the settings come from screen-context.js. The words and the plain functions are in
-// screen-parts.js and screen-panels.js, so that check-schemas.mjs can read them with node.
+// screen-parts.js and screen-panels.js, so that tests/schemas.test.mjs can read them with node.
 //
 // It is written without JSX, so it reads as plain JavaScript:
 // h(tag, props, ...children) is React's createElement.

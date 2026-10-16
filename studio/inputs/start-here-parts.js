@@ -1,6 +1,6 @@
 // The parts of the Start here page that need no Studio: the five areas of the picture of the
 // screen, where their words sit, the six buttons, and the words for a request that fails.
-// start-here.js draws them. check-schemas.mjs reads them with node and fails if the picture,
+// start-here.js draws them. tests/schemas.test.mjs reads them with node and fails if the picture,
 // the sidebar or the buttons stop agreeing.
 
 import { dashboardAddress } from './dashboard-address.js';
@@ -10,7 +10,7 @@ import { messageOf } from '../tools/publish-all.js';
 // The picture is drawn on the screen's own 1920 by 1080, so it has the shape of the screen.
 // The boxes are the standard layout in dashboard/base.css: the banner across the top, the
 // main panel on the left, the countdown over the side panel on the right, and the ticker
-// across the bottom. check-schemas.mjs fails if the numbers differ from base.css.
+// across the bottom. tests/schemas.test.mjs fails if the numbers differ from base.css.
 //
 // feeds are the sidebar items that fill the area, one list for each line of words in the
 // box. Each name is the title of a line in the sidebar (structure.js). Events come from the

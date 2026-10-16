@@ -17,7 +17,7 @@
 //             The style Minimal uses it
 //
 // Everything here is plain functions and numbers with no page in sight, so
-// tools/test-layouts.mjs can run them. core/layout-apply.js puts the answer on
+// tests/layouts.test.mjs can run them. core/layout-apply.js puts the answer on
 // the page, before any region is drawn, and the stylesheets layouts/sidebar.css
 // and layouts/bar.css do the placing, from the numbers below.
 //
@@ -163,7 +163,7 @@ export const kitMarkup = {
 // The sidebar layout's numbers. Every length is a pixel of the 1920 x 1080
 // screen. They are written once, here, and layout-apply.js hands them to
 // layouts/sidebar.css as variables (cssVariables below), so a change here is
-// all it takes. tools/test-layouts.mjs fails if they stop fitting the screen.
+// all it takes. tests/layouts.test.mjs fails if they stop fitting the screen.
 
 export const screen = { width: 1920, height: 1080 };
 
@@ -311,7 +311,7 @@ export function cssVariables(geometry, settings) {
 // from 3840 x 2160 to the 1920 x 1080 screen, and they are written once, here.
 // layout-apply.js hands them to layouts/bar.css and the two bar panels as
 // variables (barCssVariables below), so a change here is all it takes.
-// tools/test-layouts.mjs fails if they stop fitting the screen.
+// tests/layouts.test.mjs fails if they stop fitting the screen.
 
 export const barSettings = {
   // The same margin all round. Every row is as wide as the screen less the two

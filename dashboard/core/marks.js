@@ -6,7 +6,7 @@ import { markFits } from './header-room.js';
 // The biggest a seasonal pack's header mark may be, in pixels. It was measured
 // on the large panel's header (docs/seasonal-packs.md, "The header mark"): the
 // free space round the slashes is 94 px high and the tag text beside them has
-// to stay clear of the notch in the middle of the header. tools/check-seasons.mjs
+// to stay clear of the notch in the middle of the header. tests/check-seasons.test.mjs
 // fails for a mark that is bigger.
 export const markBox = { width: 60, height: 76 };
 

@@ -1,5 +1,5 @@
 // The order the panels come and go in: the plain functions. They know nothing
-// about the page, so tools/test-panel-order.mjs can run them.
+// about the page, so tests/panel-order.test.mjs can run them.
 //
 // Dashboard Settings keeps the order as one list, rotation.order. Each row names
 // a panel from registry.js and may switch it off or give it seconds. The large

@@ -2,7 +2,7 @@
 // folder, named after the id, and one line here (docs/adding-a-theme.md).
 //
 // The Studio keeps its own copy of this list in studio/inputs/themes.js, because the
-// Studio cannot read files from the dashboard folder. check-schemas.mjs fails
+// Studio cannot read files from the dashboard folder. tests/schemas.test.mjs fails
 // when the two lists differ, so change both.
 //
 // defaultThemeSettings.defaultTheme in config.js must be one of these ids. It

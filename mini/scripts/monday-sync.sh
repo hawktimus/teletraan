@@ -75,7 +75,7 @@ def error_messages: [(.errors[]?.message?), .error_message?] | map(strings);
 # What the Monday tab says when it says nothing: the boards, columns and index tables of the
 # rebuilt workspace (docs/monday.md). It is the same data as mondayTaskBoard, mondayMilestoneBoard and
 # mondayEveryMinutes in defaultSettings in dashboard/config.js, with a team written as its document id,
-# and tools/test-monday-sync.mjs fails if they differ. An index is the contract and a label is not,
+# and tests/monday-sync.test.mjs fails if they differ. An index is the contract and a label is not,
 # because students rename labels. A department row with no Team lead is matched to the Team lead
 # with the same name.
 defaults='{

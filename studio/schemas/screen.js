@@ -17,7 +17,7 @@
 // The screen swaps when the team of the next row is another. The rows are filled once from
 // the Panel order of Dashboard Settings the first time the Screen is opened (screen-seed.js).
 //
-// The starting values are the same as defaultScreen in dashboard/config.js, and check-schemas.mjs
+// The starting values are the same as defaultScreen in dashboard/config.js, and tests/schemas.test.mjs
 // fails if they differ. None of the numbers is required: a Screen with none uses the starting values.
 
 import { defineType, defineField, defineArrayMember } from 'sanity';

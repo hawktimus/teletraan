@@ -1,5 +1,5 @@
 // Preview competition: the plain functions. They know nothing about the page, so
-// tools/test-competition.mjs can run them. core/competition-preview-run.js hands them the real
+// tests/competition.test.mjs can run them. core/competition-preview-run.js hands them the real
 // screen.
 //
 // How it goes (docs/frc-feed.md, "Preview competition"):

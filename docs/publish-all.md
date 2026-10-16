@@ -85,20 +85,20 @@ done so far stay published.
 
 - `studio/tools/publish-all.js`: the logic, with no Studio or React in it. Choosing and
   naming the drafts, building each transaction, the order, the reasons and the
-  summary. `tools/test-publish-all.mjs` runs it with node
-  (`node tools/test-publish-all.mjs`).
+  summary. `tests/publish-all.test.mjs` runs it with node
+  (`node tests/publish-all.test.mjs`).
 - `studio/tools/publish-all-tool.js`: the page itself, written without JSX, and the
   calls to Sanity. It reads the drafts with `client.fetch` (raw perspective, which
   is what includes drafts), checks each one with `validateDocument` from `sanity`
   and writes with `client.mutate`.
 - `studio/sanity.config.js` adds the tool to the top bar.
-- `studio/check-schemas.mjs` checks that the tool is registered, that the three
+- `tests/schemas.test.mjs` checks that the tool is registered, that the three
   pages that exist once keep their fixed ids, and that every kind of document has
   a title in the list.
 
 To add a new page that exists once, add it to `singletonTypes` in
 `studio/structure.js` and to the list in `studio/tools/publish-all-tool.js`, which
-`check-schemas.mjs` compares.
+`tests/schemas.test.mjs` compares.
 
 The Studio is not started by the tests, so the page itself has been checked only
 by reading the code and by running it against a pretend Sanity. After a deploy,

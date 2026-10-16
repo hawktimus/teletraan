@@ -1,7 +1,7 @@
 // The parts of the Monday Boards page that need no Studio: its words, the question it asks of
 // Sanity, and the rows it shows for the boards the token of the Mini can see and the boards
-// chosen in Dashboard Settings (the two of the Monday tab). monday-boards-view.js draws them. check-schemas.mjs and
-// tools/test-monday-boards.mjs read this file with node.
+// chosen in Dashboard Settings (the two of the Monday tab). monday-boards-view.js draws them. tests/schemas.test.mjs and
+// tests/monday-boards.test.mjs read this file with node.
 
 import { ageText } from './time-text.js';
 

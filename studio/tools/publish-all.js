@@ -1,5 +1,5 @@
 // The logic behind the Publish all tool (publish-all-tool.js). Nothing in this
-// file needs Sanity or React, so tools/test-publish-all.mjs runs it with node.
+// file needs Sanity or React, so tests/publish-all.test.mjs runs it with node.
 //
 // A draft is a document whose id starts with "drafts.". Publishing one is what
 // the Publish button on the document does: write a copy under the id without

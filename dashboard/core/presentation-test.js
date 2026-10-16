@@ -1,5 +1,5 @@
 // Run presentation test: the plain functions. They know nothing about the page, so
-// tools/test-effects.mjs can run them. core/presentation-test-run.js hands them the real
+// tests/effects.test.mjs can run them. core/presentation-test-run.js hands them the real
 // screen, and startTestTalk in core/presentation-run.js puts the talk on it.
 //
 // How it goes (docs/hidden-transitions.md, "Run presentation test"):

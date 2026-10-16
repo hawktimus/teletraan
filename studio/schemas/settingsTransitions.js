@@ -8,13 +8,13 @@
 //
 // The choices are the names in pageChangeStyles and frameFinishes in
 // dashboard/config.js, and the starting values and limits are the same as
-// defaultSettings and limits there. check-schemas.mjs fails if they differ.
+// defaultSettings and limits there. tests/schemas.test.mjs fails if they differ.
 // Frame metal (Screen tab) is separate: it is the metal of the banner, the
 // countdown and the logo, which never change with the page.
 //
 // To take the whole section out later: delete this file, remove its import and
 // the line that uses transitionsFields in dashboardSettings.js, and remove the
-// same names from check-schemas.mjs and config.js. The dashboard uses the
+// same names from tests/schemas.test.mjs and config.js. The dashboard uses the
 // starting values for anything missing from the published settings.
 
 import { defineField } from 'sanity';

@@ -68,6 +68,24 @@ You need Python 3. In a terminal, from this folder:
 
 Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh the page, and you will see the change. The screen shows the real content, which is covered in studio/README.md. Add `?sample=1` to the address, such as http://localhost:8080/dashboard/?sample=1, to see made-up sample content instead (everything in [square brackets]).
 
+## What each folder is
+
+| Folder | What it holds |
+|--------|---------------|
+| `dashboard/` | The TV page: `index.html`, `core/` (the modules with no page in them), `panels/<id>/` (each panel's `panel.js` and `panel.css`), `styles/`, `themes/` and `data/` |
+| `studio/` | The Studio: `schemas/` (one file for each kind of content), `inputs/` (custom inputs, pages and the lists that copy the dashboard's), `tools/` (Publish all, the Screens map and the buttons), `structure.js` (the sidebar) and `static/` (made by the build, never committed) |
+| `mini/` | Everything that runs on the Mini: `scripts/`, `systemd/`, `nginx/`, `console/`, `docker-compose.yml` and `local.example.env` |
+| `tools/` | Things a coach runs on a Mac: `mini/` (the Mac tool), `mac/` (the Ship app), `screenshots.mjs`, `sweep.sh`, `serve.py` and the fixtures |
+| `tests/` | Every test, one file for each module or script, and `run.mjs` to run them all |
+| `docs/` | The guides. `docs/paths.md` lists where every file moved to, and `docs/where-things-are.md` is the long map |
+
+## Running the checks
+
+    node tests/run.mjs             every test, three at a time, and the syntax of every shell file
+    node tests/run.mjs calendar    only the tests whose file name has "calendar" in it
+
+It prints one line for each file and a total, and exits with 1 when anything failed. A test is a Node file that exits 0 when it passes. A test of a shell script is a Node file too: it runs the script with fake `curl`, `ssh` and the like.
+
 ## What's included
 
 - Team name, number, and school, with the animated hawk logo

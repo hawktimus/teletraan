@@ -34,7 +34,7 @@
 // over layer is gone.
 //
 // The functions that decide and draw markup have no page in sight, so
-// tools/test-seasons.mjs can run them. tools/check-seasons.mjs uses the same
+// tests/seasons.test.mjs can run them. tests/check-seasons.test.mjs uses the same
 // functions to check every pack.
 
 import { overlays } from '../themes/overlays/registry.js';
@@ -73,13 +73,13 @@ export const cornerPlaces = [
 ];
 
 // The motions a piece may name. seasons/motion.css has the keyframes of each,
-// and tools/check-seasons.mjs fails if the two lists differ.
+// and tests/check-seasons.test.mjs fails if the two lists differ.
 export const motions = ['fall', 'sway', 'drift', 'rise', 'twinkle', 'bob', 'spin', 'pulse', 'draw', 'sweep', 'slide', 'flutter'];
 
 // What the over layer allows. Its pieces cross the panels, and so cross words,
 // so they are small, faint, slow and few: a piece only touches a letter for a
 // moment and never hides a word. The seconds are the fewest one round of that
-// motion may take. tools/check-seasons.mjs also asks every finished pack for a
+// motion may take. tests/check-seasons.test.mjs also asks every finished pack for a
 // mark and for at least leastPieces pieces here.
 export const overRules = {
   size: { least: 18, most: 44 },

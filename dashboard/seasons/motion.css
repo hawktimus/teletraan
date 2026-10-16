@@ -1,7 +1,7 @@
 /* The only animation the seasonal packs have. A pack (seasons/<id>.js) names a
    motion and says how long it takes. It never holds keyframes: they are all
    here, so the cost of a pack is easy to judge and a motion is written once.
-   tools/check-seasons.mjs fails if a keyframe is anywhere else.
+   tests/check-seasons.test.mjs fails if a keyframe is anywhere else.
 
    Only transform, opacity and stroke-dashoffset (line drawing) are animated. No
    blur, no glow, no shadow, no gradient and no 3D. Every rule that plays a

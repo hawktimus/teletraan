@@ -73,7 +73,7 @@ ends and the screen comes back.
    pulls it on its next timer.
 3. If the size or the kind of picture is different (a different shape, or a new name), change its
    line in `core/hidden-pictures.js` (`file`, `width`, `height`, `fit`, `fill` and `crisp`, which
-   the comment at the top of that file explains) and run `node tools/test-effects.mjs`. The test
+   the comment at the top of that file explains) and run `node tests/effects.test.mjs`. The test
    checks that every file exists and is the size the list says.
 4. Try it with `?hidden=desktop` or `?hidden=redEyes` in the address (see "Try one"). The
    address always plays the next picture, so add it twice to see both.
@@ -283,9 +283,9 @@ What the screen does with it:
   (docs/try-it-on-the-mini.md). The sample content has both teams.
 
 To add a preview, add an entry to `previewKinds` in `dashboard/core/preview.js`, the same id and name to
-`studio/inputs/previews.js`, and the id to the choices in `studio/check-schemas.mjs` (search it for
+`studio/inputs/previews.js`, and the id to the choices in `tests/schemas.test.mjs` (search it for
 `previewRequest.kind`). A kind holds one thing: a team mode, a style or the next pack. Then run
-`node tools/test-effects.mjs` and `node studio/check-schemas.mjs`, and run `npm run deploy` in the
+`node tests/effects.test.mjs` and `node tests/schemas.test.mjs`, and run `npm run deploy` in the
 `studio` folder so the editors see the button.
 
 ## Try one
@@ -320,7 +320,7 @@ and the effect plays between the first and the second.
    fades in over .25 seconds, while the banner and the countdown bring in their own parts.
 
 The collapse, the cube and the rebuild take 5.5 seconds, so the transition takes the length of the effect and
-5.5 seconds, and never more than the 6 that tools/test-pile.mjs allows. Nothing else on the screen moves meanwhile,
+5.5 seconds, and never more than the 6 that tests/pile.test.mjs allows. Nothing else on the screen moves meanwhile,
 and the rotation clock is held from the cube on, so no panel changes page until the content is back.
 
 What falls is every piece of metal the page draws as a separate element:
@@ -340,12 +340,12 @@ the frame hides until the pieces are home. The Original banner and ticker have n
 fade.
 
 Each run uses a new random seed, so the order and the pile are different every time. A seed always gives the
-same run, which is how `tools/test-pile.mjs` tests it. The test checks that every piece comes home to its
+same run, which is how `tests/pile.test.mjs` tests it. The test checks that every piece comes home to its
 origin, with no tip, no turn and no offset, and that the whole stays under the 6 seconds.
 
 The numbers are in `pileTimes` and `pileShape` in `dashboard/core/transitions.js`. The same times are in
-`frame.css` (the section "The frames collapse and come back"), and `tools/test-pile.mjs` fails when the two
-differ. After a change run `node tools/test-pile.mjs` and `node tools/test-effects.mjs`.
+`frame.css` (the section "The frames collapse and come back"), and `tests/pile.test.mjs` fails when the two
+differ. After a change run `node tests/pile.test.mjs` and `node tests/effects.test.mjs`.
 
 ## How it works
 
@@ -381,7 +381,7 @@ The blue glitch (`scene.glitch(seconds, 'blue')`) is the red glitch made rough. 
 (old blue, new blue and a pale blue) and six torn pieces, thin flat bands. All of it
 moves in steps, never in a smooth slide, at times that are not evenly spaced. At most three
 big flashes happen in one glitch, so never more than three in a second, and the pale blue
-is never more than a fifth opaque. A test in `tools/test-effects.mjs` counts them.
+is never more than a fifth opaque. A test in `tests/effects.test.mjs` counts them.
 
 Nothing is promoted to a layer and nothing is given a perspective of its own: the perspective is in the
 `transform` of each piece. The backdrop, the picture and, for the glitches, the red layer or the blue layers
@@ -446,9 +446,9 @@ chance setting.
 4. In `studio/schemas/settingsHidden.js` add the hours field, a copy of
    `desktopEveryHours`, and the hidden chance field, a copy of `desktopChance`. Add
    their names to `hiddenNames` and the number tables in
-   `studio/check-schemas.mjs` (search it for `desktopEveryHours`).
-5. Run `node tools/test-effects.mjs`, `node tools/test-content.mjs`,
-   `node tools/test-hidden-hours.mjs` and `node studio/check-schemas.mjs`. Then run `npm run deploy` in the `studio` folder so
+   `tests/schemas.test.mjs` (search it for `desktopEveryHours`).
+5. Run `node tests/effects.test.mjs`, `node tests/content.test.mjs`,
+   `node tests/hidden-hours.test.mjs` and `node tests/schemas.test.mjs`. Then run `npm run deploy` in the `studio` folder so
    the editors see the new field and button.
 
 ## Where the code is
@@ -458,8 +458,8 @@ chance setting.
   what happens at a page change (`chooseHidden`: the hours and the pace, the older
   percent, the gap after a transition, the master switch, calm motion, what blocks it,
   a push), and tidy and remember a push and the time of the last transition. The tests
-  are in `tools/test-effects.mjs`, and the hours and the gap are in
-  `tools/test-hidden-hours.mjs`.
+  are in `tests/effects.test.mjs`, and the hours and the gap are in
+  `tests/hidden-hours.test.mjs`.
 - `dashboard/core/hidden-run.js`: plays a transition: asks at each page change, sets
   the attributes, waits, and puts the screen back whatever happens. `scene.collapse()` in it
   times the collapse, and `scene.rebuild()` the cube, the rise and the content. The rebuild holds the
@@ -470,21 +470,21 @@ chance setting.
   exported too, and the swap (`core/swap-run.js`) uses them.
 - `dashboard/core/transitions.js` (the second half): `planPile`, `mergeSmall`, `boxInPose`,
   `seededRandom` and the numbers `pileTimes`, `pileExtraMs` and `pileShape`. They have no page in them.
-  The tests are in `tools/test-pile.mjs`.
+  The tests are in `tests/pile.test.mjs`.
 - `dashboard/core/hidden-pictures.js`: the four pictures (file name, size, how each fills the
-  screen) and which one plays next. Plain functions, tested in `tools/test-effects.mjs`.
+  screen) and which one plays next. Plain functions, tested in `tests/effects.test.mjs`.
 - `dashboard/assets/hidden/`: the four picture files.
 - `dashboard/core/images.js`: `preloadImages`, which loads the four pictures when the screen starts.
 - `dashboard/core/announce.js`: the plain functions behind Play announcements, with no page
   in them: tidying `announceRequest`, which announcements play (`enabledAnnouncements`),
   playing them one after another (`playEach`), and the runner that applies the guard and
-  waits for the screen (`makeAnnounceRunner`). The tests are in `tools/test-effects.mjs`.
+  waits for the screen (`makeAnnounceRunner`). The tests are in `tests/effects.test.mjs`.
 - `dashboard/core/announce-run.js`: gives that runner the real screen, and plays each
   announcement with `runAnnouncement` in `core/takeover.js`. `hiddenPlaying` in
   `core/hidden-run.js` is how it knows a hidden transition has the screen.
 - `dashboard/core/presentation-test.js`: the plain functions behind Run presentation test, with no
   page in them: tidying `presentationTestRequest` and the runner that applies the guard and waits for
-  the screen (`makePresentationTestRunner`). The tests are in `tools/test-effects.mjs`.
+  the screen (`makePresentationTestRunner`). The tests are in `tests/effects.test.mjs`.
 - `dashboard/core/presentation-test-run.js`: gives that runner the real screen, reads the sample talk
   from `dashboard/data/sample/content.json` and hands it to `startTestTalk` in
   `core/presentation-run.js`. Its slides and manifest.json are in
@@ -492,7 +492,7 @@ chance setting.
 - `dashboard/core/preview.js`: the plain functions behind the Preview buttons, with no page in them: the
   kinds, tidying `previewRequest`, which pack is next (`nextPack`), the saved preview that survives a reload
   (`resumePreview`) and the runner that applies the guard and waits for the screen
-  (`makePreviewRunner`). The tests are in `tools/test-effects.mjs`.
+  (`makePreviewRunner`). The tests are in `tests/effects.test.mjs`.
 - `dashboard/core/preview-run.js`: gives that runner the real screen and asks the page to work out its
   look again. What it holds is three small functions: `previewStyle` in `core/style.js`, `previewTeam` in
   `core/teams.js` and `previewPack` in `core/theme.js`. Each keeps a value and a time in memory and is

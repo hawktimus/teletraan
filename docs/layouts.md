@@ -29,14 +29,14 @@ The code is `dashboard/core/layout.js` (the numbers and the rules, with no page
 in it), `dashboard/core/layout-apply.js` (puts the layout on the page),
 `dashboard/core/style.js` (which style, and the layout it asks for) and
 `dashboard/layouts/sidebar.css` and `dashboard/layouts/bar.css` (the placing).
-`node tools/test-layouts.mjs` checks them.
+`node tests/layouts.test.mjs` checks them.
 
 ## How a layout is chosen
 
 The theme registry (`dashboard/themes/registry.js`) says which layout a theme
 has. `layout: 'sidebar'` on a line gives it the sidebar layout. A line with no
 layout has the standard one. The Studio's copy of the list (`studio/inputs/themes.js`)
-says the same, and `node studio/check-schemas.mjs` fails if the two differ.
+says the same, and `node tests/schemas.test.mjs` fails if the two differ.
 
 The style is the second thing that counts, and it wins. Style in Dashboard Settings
 (Look tab) is Original, Cybertron or Minimal. Original and Cybertron keep the layout
@@ -99,7 +99,7 @@ the canvas. This holds for the standard, sidebar and bar layouts, for the mirror
 for the war clock. A new layout does the same (see "Adding a layout"), and gives
 its numbers in one place in `core/layout.js`.
 
-`node tools/test-layouts.mjs` has two tests for this. One reads `index.html`,
+`node tests/layouts.test.mjs` has two tests for this. One reads `index.html`,
 `base.css`, `shell.js` and the size constants of every layout, and fails when one
 of them is not 1920 by 1080 or when a layout stylesheet is responsive. The other
 works out the bar layout, its mirror and the mirror of the mirror, and fails when
@@ -318,7 +318,7 @@ by hand, with the top it starts at, counted from the top of the column, and the
 height it has. Nothing is moved by what is in another part, so a long school name or
 a three digit day count cannot push anything. The parts inside the brand count from
 the top of the brand, and the parts of the countdown from the top of the countdown.
-`panels/side/panel.css` has the same numbers, and `node tools/test-layouts.mjs` fails if the two
+`panels/side/panel.css` has the same numbers, and `node tests/layouts.test.mjs` fails if the two
 differ.
 
 **In the strip**, at its right end, in the slot `#strip-clock` (the Clock slot row
@@ -550,7 +550,7 @@ highlight at the top to a shade at the foot. The digits are the team's neon in M
 (`#ffb327`) in Cybertron, which is `--style-digits`. The date, DAYS and the small labels are a little
 fainter. The rivets are 5 px, in the corners, clear of the plates. The title and the date are 36 px
 and the labels 24 px, which are text under 44 px, and the only text under 44 px that the clock has.
-The list is in `tools/test-layouts.mjs`.
+The list is in `tests/layouts.test.mjs`.
 
 **A title on two lines.** The title is never cut off and has no ellipsis. When it does not fit
 beside the date on the first line, `core/countdown.js` writes it on two lines and sets `data-title="two"`
@@ -572,7 +572,7 @@ the clock, in the second rule:
 A title that two lines at 36 px do not hold is set at 32, then 28, 24 and 20 px until it fits, so that
 nothing is cut off. The Studio warns above 28 characters (Dashboard Settings, Countdown) and refuses
 more than 40. Titles of ordinary words fit at 32 px or more up to 28 characters and at 24 px or more up to 40
-(`tools/test-countdown-title.mjs`). A single word wider than a line is clipped and has no ellipsis.
+(`tests/countdown-title.test.mjs`). A single word wider than a line is clipped and has no ellipsis.
 
 **What it shows.** The title is the label from Dashboard Settings in capitals, with no IN, and the
 date is at the right end of its first line, as `JAN 9`, or `NOW` for the rest of the day when the time has come. The days
@@ -614,7 +614,7 @@ It reads from the left like every plate, and nothing turns it round.
 together, 336 wide. The rail is a box of its own size that the style draws. Every part
 of the column is placed by hand, with the top it starts at, counted from the top of the
 column, and the height it has, so a long school name cannot push anything. The numbers
-are in `panels/bar-column/panel.css`, and `node tools/test-layouts.mjs` fails if they differ.
+are in `panels/bar-column/panel.css`, and `node tests/layouts.test.mjs` fails if they differ.
 
 | Part | Top | Height | Left | Width | What it holds |
 |------|-----|--------|------|-------|---------------|
@@ -720,7 +720,7 @@ rules in `layouts/bar.css` that start with `html.mirrored[data-layout="bar"]`.
 - **The text** that has a box of its own goes to the other end of it: the name, the
   time, and the ticker's message, which ends at the tag. A part that is read in one
   order, the letters of the name, the time and AM or PM, the picture and the
-  temperature, is never turned: `tools/test-layouts.mjs` names each of them.
+  temperature, is never turned: `tests/layouts.test.mjs` names each of them.
 - **Decoration** that has no text and no transform of its own, such as a cut corner
   or a notch, turns with the class `mirror-art`, which is `transform: scaleX(-1)`.
   Text is never turned round.
@@ -785,7 +785,7 @@ each long straight edge of the large frame, the small frame and the countdown. A
 none, so the cut corners and the countdown's teeth have none. A mirrored screen has the same
 frames, so the same rivets. Alerts and announcements have none. No frame has a stamped id.
 
-`tools/test-layouts.mjs` has one test for each style. It loads the stylesheet of the style
+`tests/layouts.test.mjs` has one test for each style. It loads the stylesheet of the style
 with the css it overrides, which is every stylesheet `index.html` links apart from the other
 two styles, and the stylesheet of every panel. It fails when a custom property that a rule
 for that style reads has no value in those files, in a script (the numbers of the layouts,
@@ -916,7 +916,7 @@ of ordinary text still fit beside the longest tag (REMINDER). The mirror puts th
 To change a size, change it in `barOptions` in `core/plate.js`, and the same number in this
 section. The cut corner of Cybertron is also `--style-chamfer` in `styles/cybertron.css`, and
 Minimal's is the one in `styles/minimal.css`.
-Run `node tools/test-layouts.mjs`: it holds the shapes to the sizes of the layout, finds
+Run `node tests/layouts.test.mjs`: it holds the shapes to the sizes of the layout, finds
 every frame inside the 1920 x 1080 screen, in the layout and in its mirror, and checks the
 numbers in the table above.
 
@@ -974,7 +974,7 @@ clock, which is the same clock in two forms. Everything else is one style's. In
 `styles/minimal.css`: the rivets, the rust, the weld seam, the header line and its ticks, the rail,
 the 34 px cuts and the digits in the team's neon. In `styles/cybertron.css`: the
 raised plate, the hazard stripe, the conduit, the slashes, the brackets, the
-plate seams, the scanlines, the 56 px cuts and the amber digits. `tools/test-minimal.mjs` lists
+plate seams, the scanlines, the 56 px cuts and the amber digits. `tests/minimal.test.mjs` lists
 what is shared, so a new shared rule fails it until the list says so.
 
 The main panel shows the same rows the panel always showed. Neither style adds a colored
@@ -1054,7 +1054,7 @@ off in the flat finish.
 The slashes of the small frame are 332 to 346 down it. The pages of the small panels were laid out for the plainer
 foot of Original, so in Cybertron the forecast, the sponsor, the safety days and the next event have a shorter box
 (`styles/cybertron.css`, "The foot of the small frame"), and the team tile is laid out for it. The last line of each
-ends above the slashes, with the same words at the same sizes. `tools/test-small-foot.mjs` adds up the rows of each
+ends above the slashes, with the same words at the same sizes. `tests/small-foot.test.mjs` adds up the rows of each
 box and compares them with the slashes.
 
 The slashes of the large frame are 668 to 682 down it, at the right end for Prime and at the left end for a team with
@@ -1062,7 +1062,7 @@ the other corners cut. The pages of the large panels were laid out for the foot 
 Cybertron every box ends at 664 (`styles/cybertron.css`, "The foot of the large frame"). The rows of Tasks, Events,
 Leadership and Team leads start at 136 and are shorter, and the Tonight rows, the Spotlight, the Sponsor and the
 Monday cards have shorter boxes, with the same words at the same sizes. Original and Minimal have no stripe and keep
-their numbers. `tools/test-stripe-foot.mjs` adds up the last row of every page and compares it with the slashes, for
+their numbers. `tests/stripe-foot.test.mjs` adds up the last row of every page and compares it with the slashes, for
 every style, layout and team.
 
 The `//` mark at the right end of a panel's header is not drawn in Cybertron (`.header
@@ -1158,7 +1158,7 @@ The name and the TEAM plate are 148 and the bottom row is 44, which are the 192.
 corner is about 27 from the line of the cut corner at the top left, and the end of the bottom row is
 about 18 from the line of the cut corner at the bottom right, where 16 is the neon, its width and 4
 more. The clock ends before the bolt at the top right. The numbers are worked out and held by
-`tools/test-cybertron.mjs`, and have not been looked at on a screen. The SAMPLE CONTENT badge
+`tests/cybertron.test.mjs`, and have not been looked at on a screen. The SAMPLE CONTENT badge
 stays level with the TEAM plate, as it is in Original. The banner line of a seasonal pack takes
 the place of DASHBOARD and the bar, as it does in Original.
 
@@ -1192,7 +1192,7 @@ layout, which is changed in the same step (`useLayout` in `shell.js`, which runs
 
 Look at it with `?style=cybertron&night=off&hidden=off` on the address, with `?team=nova` for the
 mirror, and with Style in Dashboard Settings changed between Original and Cybertron on the open
-screen ("Looking at a layout" has the list of what to check). `node tools/test-cybertron.mjs` checks
+screen ("Looking at a layout" has the list of what to check). `node tests/cybertron.test.mjs` checks
 the numbers in this section against the code.
 
 ## The title of the countdown
@@ -1222,7 +1222,7 @@ clocks have no IN. The countdown in the sidebar layout (Neon Prime) is as it was
 A title that two lines at 36 px do not hold is set at 32, then 28, 24 and 20 px until it fits, and the size is
 written on the title and the date. The Studio warns above 28 characters ("Long titles wrap to two lines on the
 screen") and refuses more than 40. Titles of ordinary words fit at 32 px or more up to 28 characters and at 24 px or
-more up to 40 in all three clocks. `tools/test-countdown-title.mjs` has the widths. The numbers have been worked
+more up to 40 in all three clocks. `tests/countdown-title.test.mjs` has the widths. The numbers have been worked
 out from the font and not looked at on a screen.
 
 ## The Screens
@@ -1273,9 +1273,9 @@ panels for one team (Tasks, Daily Agenda, Subteam spotlight, Sponsor feature, Le
 panel) as rows with that team, then the three Monday rows of that team (tasks, done and board). After the last team come the panels for both teams
 (Upcoming events and Photo), with no team. Seconds carry over, a panel that was in the order twice has a row for each place, and a
 row that was switched off is left out. The side rows are the small rows of the same order. Minimal has no side rows. The Studio
-fills a Screen this way the first time it is opened (`studio/tools/screen-seed.js`, checked by `tools/test-screen-seed.mjs`), and the
+fills a Screen this way the first time it is opened (`studio/tools/screen-seed.js`, checked by `tests/screen-seed.test.mjs`), and the
 screen works out the same rows for a Screen that has none, so nothing goes blank before anyone opens Studio. The two copies of the
-rule are run on the same input by `tools/test-screen-seed-parity.mjs`.
+rule are run on the same input by `tests/screen-seed-parity.test.mjs`.
 
 **What is not read any more.** Styles by day (`dailyStyles`), Team order (`teamOrder`), Monday style in Dashboard Settings
 (`mondayStyle`), How the look changes (`lookSwap`), Panel order (`rotation.order`) and Team name look (`nameStyle`) stay in the schema, hidden, with what was saved in
@@ -1392,8 +1392,8 @@ goes on at the next page change.
 
 Look at it with `?sample=1`, with Next look now on the Start here page, with the Monday style set to another style than the one of the
 day in the Weekday schedule (the layout changes), with Preview Minimal and Preview Cybertron, and with `?motion=calm` and `?motion=none`.
-`node tools/test-swap.mjs` checks the plan, and runs `swap-run.js` against a small stand-in for the page and a clock it moves by
-hand. `node tools/test-swap-smooth.mjs` checks that every piece of the old look has a place in the new one, that nothing jumps at the
+`node tests/swap.test.mjs` checks the plan, and runs `swap-run.js` against a small stand-in for the page and a clock it moves by
+hand. `node tests/swap-smooth.test.mjs` checks that every piece of the old look has a place in the new one, that nothing jumps at the
 moment between the pull and the travel, and the calm and no motion paths.
 
 ## The header of a large panel
@@ -1418,7 +1418,7 @@ is measured against:
 The line is at x = 772 along the top of the tab (`tabTop` in `core/plate.js`). The notch of Original goes from 772 at the top to 756, steps across to 796 and ends at
 773 at the foot. The line of Cybertron and Minimal leans 22 px to the left over the header, from 772 at the top to 750 at the foot. A tab with one slant of 60
 degrees (Header end in the trim of a team) starts at 811 and is at 756 by the foot of the capitals of a title, so the title has the same room in every frame.
-`tools/test-title-plate.mjs` works the line out of the plates of every frame the large panel can have, for every layout, style and trim, and holds the two rooms to it.
+`tests/title-plate.test.mjs` works the line out of the plates of every frame the large panel can have, for every layout, style and trim, and holds the two rooms to it.
 The small frame is not changed: the labels of its panels are short.
 
 A title is at the size of a heading, 96 px, when it fits in the 656, and at 60 px when it does not (`titleClass` in `core/team-title.js`). A department as long as
@@ -1447,7 +1447,7 @@ each a folder in `dashboard/panels/` with a script and a stylesheet. What they s
 board sync on the Mini keeps in Sanity: a task with the source `monday` (docs/editing-content.md, "The Monday cards"). The plain
 functions that pick and rank the tasks are in `core/monday.js`, and `core/monday-draw.js` has the header, the rows and the page marker.
 The sentence a card says when it has nothing else to show and the text in a chart are the ones the competition cards use
-(`core/competition-draw.js`). `node tools/test-monday-cards.mjs` and `node tools/test-monday-rows.mjs` check them.
+(`core/competition-draw.js`). `node tests/monday-cards.test.mjs` and `node tests/monday-rows.test.mjs` check them.
 
 **Who has the cards.** A team has board tasks when a task with the source `monday` shows on the TV for it:
 Show on TV and Show on screen are on, it has not expired, and it is for the team or for both. `mondaySteps` in
@@ -1500,7 +1500,7 @@ What the wider body does to each card:
 
 The bar is stretched along its length only: the svg of a bar has `preserveAspectRatio="none"`, so its stacks keep their proportions, and
 `vector-effect: non-scaling-stroke` keeps the dark edge between two stacks at 3 px. The size of the bar in the standard layout is the size
-it was, so the pictures of Original and Cybertron are the same to the pixel. `node tools/test-monday-fill.mjs` checks the numbers.
+it was, so the pictures of Original and Cybertron are the same to the pixel. `node tests/monday-fill.test.mjs` checks the numbers.
 
 ### The tasks card
 
@@ -1673,7 +1673,7 @@ place of the dark reds. The edge of the red metal is the plain neon. A blocked t
 the countdown, so they keep their red.
 
 **Prime is unchanged.** The frames of Prime are the ones that were there, with the same markup, and the
-tests hold `trim.css` to rules that name a class. `node tools/test-team-trim.mjs` renders both teams of the
+tests hold `trim.css` to rules that name a class. `node tests/team-trim.test.mjs` renders both teams of the
 sample content on a fake page and checks that the classes differ on every field, that every frame for
 the other corners is the Prime frame turned across, that the slanted tab is at 60 degrees, and that the
 pieces, the screws, the rivets and the rust are all there.
@@ -1686,7 +1686,7 @@ frames come back in the other corners at the moment the large frame is apart.
 
 **Adding a field.** Add its name and values to `teamTrim` in `config.js` and to `primeTeam`, give each value
 except the first a class, add the field to `normalizeTeamDocument` in `core/sanity.js`, to
-`studio/schemas/team.js` and to the contract and the trim check in `studio/check-schemas.mjs`, write the rules
+`studio/schemas/team.js` and to the contract and the trim check in `tests/schemas.test.mjs`, write the rules
 in `trim.css` for the class, and give the sample content and `docs/seed/teams.ndjson` the values. If the field
 changes the shape of a frame, add it to `frameTrim` in `core/teams.js` and to the names in `core/plate.js`.
 
@@ -1713,7 +1713,7 @@ The status colors (in progress, backlog and done) are the same for both teams. A
 Body or Label has Prime's, and one with no Metal or Glow has gold and no glow, so a team made before they existed
 looks as Prime does. The Prime background is `#0B0714`, because Original takes its page
 color from the team and Prime must look in Original as it always has. It is the same as the `--ground` of
-`themes/hawktimus.css`, and `studio/check-schemas.mjs` holds the two together. The neon and the second bright
+`themes/hawktimus.css`, and `tests/schemas.test.mjs` holds the two together. The neon and the second bright
 color of Prime are not drawn by Original, so they could change: Prime has gold neon with a purple conduit and no
 cyan anywhere.
 
@@ -1732,11 +1732,11 @@ team with steel has steel in place of the gold and silver. Neither built-in team
 and never a filter. They are in the markup of every frame and hidden unless the class is there, and the flat finish has none.
 
 **Looking at it.** `?sample=1&team=nova&style=minimal` and `?sample=1&team=prime&style=cybertron` show the four
-that differ most. `node tools/test-team-colors.mjs` works out the edge gradient and the body color for both teams
+that differ most. `node tests/team-colors.test.mjs` works out the edge gradient and the body color for both teams
 in each style from the stylesheets, and checks that they differ.
 
 **Adding a color.** Add it to `primeTeam` in `config.js` and to `colorProperties` in `core/teams.js`, give `teams.css` the
-Prime value, add the field to `studio/schemas/team.js`, to `studio/check-schemas.mjs` and to `docs/seed/teams.ndjson`,
+Prime value, add the field to `studio/schemas/team.js`, to `tests/schemas.test.mjs` and to `docs/seed/teams.ndjson`,
 and give the sample content the values. A team with none of it falls back to the Prime value in `core/sanity.js`.
 
 ## Panel B, the small frame
@@ -1786,7 +1786,7 @@ from Minimal or from the sidebar layout, the swap asks the list to move on as it
 page by the same five steps, and that page is drawn in the step that brings the frame. Panel B has a panel the
 moment it comes, and with no content anywhere it is the team tile.
 
-`tools/test-panel-b.mjs` runs the real `schedule.js` with stand-ins for the page and tries every
+`tests/panel-b.test.mjs` runs the real `schedule.js` with stand-ins for the page and tries every
 set of small panels that have content with five kinds of list. It checks that the small frame is never empty,
 that a row that is off stays off, that the sidebar and bar layouts never start Panel B, and that a live change
 from either of them to the standard layout starts it with a panel at once.
@@ -1872,7 +1872,7 @@ flat colour and thin lines. Nothing glows, blurs or casts a shadow, and only
 | `dashboard/frame.js`, the section "The Neon Prime kit" | puts `data-kit="on"` on the html element while the kit may move, and times the two effects that are events |
 | `dashboard/core/layout.js` (`kitMarkup`, `hasKit`) and `core/layout-apply.js` | the six empty boxes and four bars the kit draws in, added inside the four blocks so that they fly apart with them in a hidden transition |
 | `dashboard/shell.js` and `core/takeover.js` | tell `frame.js` which theme is on, and when an alert or an announcement has the screen |
-| `tools/check-themes.mjs` | fails for a keyframe outside the three motion files, and for anything else that breaks the rules above (it runs inside `studio/check-schemas.mjs` too) |
+| `tests/check-themes.test.mjs` | fails for a keyframe outside the three motion files, and for anything else that breaks the rules above (it runs inside `tests/schemas.test.mjs` too) |
 
 ### The effects
 
@@ -1889,7 +1889,7 @@ flat colour and thin lines. Nothing glows, blurs or casts a shadow, and only
 Nine parts move all the time (the packets, the sweeps, the flicker, the brackets
 and the tick chase). Everything else is a short event. No two parts have the same
 time, and each starts part of the way in (a negative delay), so the kit never falls
-into a loop. `tools/test-layouts.mjs` fails if two times are the same, if a part
+into a loop. `tests/layouts.test.mjs` fails if two times are the same, if a part
 has no negative delay, or if more than 12 parts play all the time.
 
 Where the shapes sit. The three lines are in the gaps between the blocks (the 20
@@ -1923,7 +1923,7 @@ gives the page, so a change of the numbers there moves the kit too.
 - **`?kit=off`** in the address switches the whole kit off for that page, to see
   what it costs (docs/try-it-on-the-mini.md).
 
-`tools/test-effects.mjs` tests all of this with a fake clock.
+`tests/effects.test.mjs` tests all of this with a fake clock.
 
 ### What it was not
 
@@ -1939,7 +1939,7 @@ when the screen starts (they draw themselves in).
    box inside that block, so that it flies apart with the block in a hidden
    transition. Use one of the boxes in `kitMarkup` (`core/layout.js`), or its
    `::before` and `::after`, before adding an element. The few elements are the
-   point: `tools/test-layouts.mjs` counts them.
+   point: `tests/layouts.test.mjs` counts them.
 2. Write its shape in `dashboard/neon-kit.css`, with a selector that starts
    `html.theme-neon-prime[data-layout="sidebar"]`, in flat colour. Take its place
    from the layout variables, not from numbers.
@@ -1952,8 +1952,8 @@ when the screen starts (they draw themselves in).
 5. If it is an event, put its timing in `frame.js`, in the section "The Neon Prime
    kit": the gap, the blocked states (call `kitMayFire()`), the timer that is
    cleared in `setKit(false)`, and a class that the stylesheet plays. Add its tests
-   to `tools/test-effects.mjs`.
-6. Run every test. `node tools/check-themes.mjs` says which rule was broken, and
+   to `tests/effects.test.mjs`.
+6. Run every test. `node tests/check-themes.test.mjs` says which rule was broken, and
    in which line. Count what moves with `?perf` ("animations running"), write the
    new count in the tables here, and keep the parts that play all the time to about
    a dozen.
@@ -2117,10 +2117,10 @@ Then run every test (docs/where-things-are.md, "Checking your work").
    `layout-apply.js` set it up (`placeRegions`) when the layout is chosen.
 4. Write `dashboard/layouts/wide.css`, link it in `index.html` after
    `frame.css`, and start every selector with `html[data-layout="wide"]`, so the
-   other layouts are never touched. `tools/test-layouts.mjs` fails for a rule
+   other layouts are never touched. `tests/layouts.test.mjs` fails for a rule
    that does not.
 5. Give a theme `layout: 'wide'` in `dashboard/themes/registry.js` and in
-   `studio/inputs/themes.js`, and add it to the checks in `tools/test-layouts.mjs`,
+   `studio/inputs/themes.js`, and add it to the checks in `tests/layouts.test.mjs`,
    including the two that keep a layout inside the screen ("The screen is a fixed
    canvas").
 6. Or, if a style should have the layout, add the style's name to `forcedLayout` in

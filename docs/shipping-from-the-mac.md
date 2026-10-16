@@ -70,10 +70,10 @@ and goes on.
 
 ## What each step does
 
-1. **Checks.** Runs every `tools/test-*.mjs`, every `tools/check-*.mjs` and
-   `studio/check-schemas.mjs`, each with `node`. A failure is listed by name. You
-   can go on anyway or stop. To see why one failed, run it by itself, for
-   example `node tools/test-content.mjs`.
+1. **Checks.** Runs `node tests/run.mjs`, which runs every test in `tests/` and
+   checks the syntax of every shell file. It takes a few minutes. A failure is
+   listed by name. You can go on anyway or stop. To see why one failed, run it
+   by itself, for example `node tests/run.mjs content`.
 2. **Commit and push.** Shows what changed, asks for a short description, commits
    everything and runs `git push`. It refuses to commit a file that looks like a
    secret (`local.env`, any `.env` file, a `.pem` or `.key` file, an ssh key). It

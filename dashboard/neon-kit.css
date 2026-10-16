@@ -1,6 +1,6 @@
 /* The Neon Prime kit: the moving neon of the sidebar layout, in one file. It is
    one of the three places where something moves (frame.css, seasons/motion.css
-   and this file), and the only place for the kit's keyframes. tools/check-themes.mjs
+   and this file), and the only place for the kit's keyframes. tests/check-themes.test.mjs
    fails for a keyframe that is anywhere else, and for one in this file that
    animates anything but transform, opacity and stroke-dashoffset. docs/layouts.md,
    "The kit", has the table of the effects and how to add one.
@@ -37,7 +37,7 @@
 
 /* The colours. The cyan and the magenta (--neon-cyan and --neon-magenta) are the
    theme's own, in themes/decor/neon-prime-decor.css. There is no green here
-   (tools/check-themes.mjs reads this file too). */
+   (tests/check-themes.test.mjs reads this file too). */
 html.theme-neon-prime {
   --kit-dim: #17808f; /* a dull cyan: a line at rest, the tail of a packet */
   --kit-pale: #d9fbff; /* the head of a packet and the sweeping line */

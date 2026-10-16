@@ -218,7 +218,7 @@ html[data-style="cybertron"].mirrored .ticker .message {
    with its row. The label of the tasks is 40 high, so two plain tasks and the label (168) fit a row of
    176. The Extra panels, the competition cards, the roster and the photo caption already end above 664.
    The boxes of the pages are in each panel's stylesheet and the numbers of Original stay there
-   (tools/test-stripe-foot.mjs adds them up). */
+   (tests/stripe-foot.test.mjs adds them up). */
 html[data-style="cybertron"] .tasks .rows {
   top: 136px;
   height: 528px;

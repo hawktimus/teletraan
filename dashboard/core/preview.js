@@ -1,5 +1,5 @@
 // Preview a look: the plain functions. They know nothing about the page, so
-// tools/test-effects.mjs can run them. core/preview-run.js hands them the real
+// tests/effects.test.mjs can run them. core/preview-run.js hands them the real
 // screen.
 //
 // How it goes (docs/hidden-transitions.md, "Preview a look"):

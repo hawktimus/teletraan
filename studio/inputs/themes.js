@@ -1,7 +1,7 @@
 // The themes and seasonal packs the Look page offers. This is a copy of
 // dashboard/themes/registry.js and dashboard/themes/overlays/registry.js. The
 // Studio is built on its own and cannot read files from the dashboard folder,
-// so the lists are written out here too. check-schemas.mjs fails if the ids,
+// so the lists are written out here too. tests/schemas.test.mjs fails if the ids,
 // names, descriptions or decorations flags differ, so change both when you add
 // a theme or a pack (docs/adding-a-theme.md, docs/seasonal-packs.md). A theme
 // that has a layout other than the standard one says so, as the registry does.
@@ -82,7 +82,7 @@ export const overlays = [
 
 // The corner art a rule for a seasonal pack can ask for: the four ornaments in
 // dashboard/core/corner-art.js, in the same order, and None for a rule that wants
-// no corner art whatever the pack's own is. check-schemas.mjs fails when the ids differ.
+// no corner art whatever the pack's own is. tests/schemas.test.mjs fails when the ids differ.
 export const cornerArts = [
   { id: 'leaves', name: 'Leaves' },
   { id: 'snowflakes', name: 'Snowflakes' },

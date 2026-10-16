@@ -79,9 +79,9 @@ its own copy of the list. Open `studio/inputs/themes.js` and add the same entry 
 
 Run these in the terminal, from the top folder:
 
-    node tools/check-themes.mjs
-    node tools/test-themes.mjs
-    node studio/check-schemas.mjs
+    node tests/check-themes.test.mjs
+    node tests/themes.test.mjs
+    node tests/schemas.test.mjs
 
 `check-themes.mjs` fails if the file is missing a variable, holds anything but
 variables, or has no entry in the registry. It also fails if any text colour is
@@ -92,7 +92,7 @@ colour that fails is printed with its ratio. Make the text lighter or the
 background darker. A screen is read from 20 feet away, so this is not a
 suggestion.
 
-`check-schemas.mjs` fails if `studio/inputs/themes.js` and the dashboard registry say
+`tests/schemas.test.mjs` fails if `studio/inputs/themes.js` and the dashboard registry say
 different things. It also runs `check-themes.mjs`, so it fails when that does.
 
 ## 5. Look at it
@@ -169,19 +169,19 @@ It is made of four files:
 | `dashboard/themes/neon-prime.css` | the 18 required colours, the three logo colours and the four silhouette colours. Nothing else, like every theme file |
 | `dashboard/themes/decor/neon-prime-decor.css` | the neon colours that are not text, the gunmetal, the neon trim on the metal, the steel frame of the strip across the top, the marks on a page's header, the ticker tag's hazard bar, and the rail and the countdown's frame in the sidebar |
 | `dashboard/layouts/sidebar.css` | where everything sits (docs/layouts.md). The theme does not move anything |
-| `dashboard/neon-kit.css` | the kit: the lines, ticks and brackets that move, and every keyframe that moves them. It is a motion file and not a theme file, so it is next to `frame.css` and not in `themes/`. `tools/check-themes.mjs` guards it (docs/layouts.md, "The kit") |
+| `dashboard/neon-kit.css` | the kit: the lines, ticks and brackets that move, and every keyframe that moves them. It is a motion file and not a theme file, so it is next to `frame.css` and not in `themes/`. `tests/check-themes.test.mjs` guards it (docs/layouts.md, "The kit") |
 
 The decoration is in its own file because a file in `dashboard/themes/` is a
-list of colours and nothing else, and `tools/check-themes.mjs` fails for any
+list of colours and nothing else, and `tests/check-themes.test.mjs` fails for any
 rule in it. `index.html` links the decor file, and every rule in it starts with
-`html.theme-neon-prime`, so no other theme is touched. `node tools/test-themes.mjs`
+`html.theme-neon-prime`, so no other theme is touched. `node tests/themes.test.mjs`
 fails for a rule that does not, and for a glow, blur, shadow, filter, text or
 animation in it.
 
 ### The colours
 
 The text colours reach at least 7 to 1 contrast on the plate they sit on, which
-`node tools/check-themes.mjs` checks. The ratios below are on the plate.
+`node tests/check-themes.test.mjs` checks. The ratios below are on the plate.
 
 | Colour | Value | Used for | Contrast |
 |--------|-------|----------|----------|
@@ -229,11 +229,11 @@ design: the pack is not the theme).
 Neon Prime reads as dark purple and gunmetal with cyan and magenta neon and
 amber marks. It has no green: no colour in `neon-prime.css` or in
 `neon-prime-decor.css` has a hue from 65 to 175 degrees (yellow green, green and
-teal green), unless it is a grey. `node tools/check-themes.mjs` reads both files
+teal green), unless it is a grey. `node tests/check-themes.test.mjs` reads both files
 (hex colours, `rgb()`, `rgba()`, `hsl()`, `hsla()` and the colour words such as
 `lime`) and fails with the file, the line, the colour and its hue, for example
 `themes/neon-prime.css line 43: #4dffa6 is a green (hue 150 degrees, teal green)`.
-`node tools/test-themes.mjs` makes sure the check does fail, on a copy of the
+`node tests/themes.test.mjs` makes sure the check does fail, on a copy of the
 files with a green added. When a theme needs a third colour next to cyan and
 magenta, use amber or orange (hue 15 to 55), or violet or white. The seasonal
 packs recolour the accent on purpose (Christmas is green) and are not these

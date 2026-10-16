@@ -23,11 +23,11 @@
 // ones in hidden-transitions.js, a copy of the dashboard's registry. The starting
 // percents are the same as defaultSettings there. The starting hours are not: there
 // they start at 0, which means not set, so that an old page keeps its percent.
-// check-schemas.mjs fails if any of this differs.
+// tests/schemas.test.mjs fails if any of this differs.
 //
 // To take the whole section out later: delete this file, remove its import and the
 // line that uses hiddenFields in dashboardSettings.js, and remove the same names
-// from check-schemas.mjs and config.js. The dashboard uses the starting values
+// from tests/schemas.test.mjs and config.js. The dashboard uses the starting values
 // for anything missing from the published settings.
 
 import { defineField } from 'sanity';

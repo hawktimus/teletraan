@@ -1,6 +1,6 @@
 // Times in words, for the Studio pages that show what the Mini did: the status block
 // (status-input.js) and the Calendars page (calendars-view-parts.js). Plain functions
-// only, so check-schemas.mjs can run them with node.
+// only, so tests/schemas.test.mjs can run them with node.
 
 // How long ago a time was, in words. A time that cannot be read gives nothing.
 export function ageText(isoText, now) {

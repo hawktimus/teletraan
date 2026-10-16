@@ -6,7 +6,7 @@
 //               rebuilds)
 //   the finish  'gold' or 'silver', the metal of the frame after the change
 //
-// These are plain functions with no page in them, so tools/test-effects.mjs can
+// These are plain functions with no page in them, so tests/effects.test.mjs can
 // test them. frame.js calls them and keeps the memory they need: the style and
 // the finish the frame had last.
 //
@@ -61,7 +61,7 @@ export const pieceLimit = 40;
 
 // Milliseconds at normal speed. fallMs is the one time that core/hidden-run.js and
 // --hidden-seconds in tokens.css also have (flySeconds). frame.css has the times of the cube and
-// of one piece flying back, and tools/test-pile.mjs holds the two together.
+// of one piece flying back, and tests/pile.test.mjs holds the two together.
 //   fallMs      the collapse: from the start to the last piece at rest in the pile
 //   letGoMs     a piece lets go at a random moment from 0 to this
 //   cubeMs      the cube: it rises, turns, pulses and shrinks to a point, in this time

@@ -1,5 +1,5 @@
 // Night mode, the screensaver: the plain functions. They know nothing about
-// the page, so tools/test-night.mjs can run them. core/night-screen.js draws
+// the page, so tests/night.test.mjs can run them. core/night-screen.js draws
 // the screen and frame.css moves the logo.
 //
 // Two questions are answered here.

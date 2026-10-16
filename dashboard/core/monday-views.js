@@ -1,5 +1,5 @@
 // What each panel of the one task board draws, worked out and with no markup: the plain functions that
-// tools/test-monday-panels.mjs runs. A panel (panels/monday-tasks, monday-done, monday-status-depts,
+// tests/monday-panels.test.mjs runs. A panel (panels/monday-tasks, monday-done, monday-status-depts,
 // monday-overall, monday-timeline and monday-board) asks for its view, and draws it with core/monday-draw.js.
 // The rules that say which task is where are in core/monday.js. A view is null when the panel has nothing to show,
 // and the Screens leave the row out then.

@@ -57,5 +57,5 @@ talks, the panel is left out of the rotation, as it was.
   `mount` draws them.
 - `dashboard/core/presentation.js`: `canRun` says which talks count, the same
   ones that start on the TV.
-- `tools/test-content.mjs`: the tests for the lines, the cutting and the empty
+- `tests/content.test.mjs`: the tests for the lines, the cutting and the empty
   panel.

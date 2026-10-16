@@ -1,6 +1,6 @@
 // The parts of the Screen form that need no Studio: the words, the question the form asks Sanity
 // when a Screen is opened, the teams for the pickers, and the lines that show the countdown.
-// screen-input.js and screen-fields.js draw them. check-schemas.mjs reads them with node.
+// screen-input.js and screen-fields.js draw them. tests/schemas.test.mjs reads them with node.
 
 import { clockText } from './time-text.js';
 

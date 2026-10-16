@@ -6,7 +6,7 @@
 // dashboard/config.js.
 //
 // The list of screens comes from ../demo-screens.js, a copy of the dashboard's
-// registry that check-schemas.mjs keeps in step.
+// registry that tests/schemas.test.mjs keeps in step.
 
 import { defineType, defineField, defineArrayMember } from 'sanity';
 import { tooLong } from './fields.js';

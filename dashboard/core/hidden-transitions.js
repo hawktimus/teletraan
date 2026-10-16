@@ -34,7 +34,7 @@
 // A show must always end with rebuild(), or the screen would stay in the pile. The
 // runner puts the screen back by itself if a show fails.
 //
-// This file imports nothing from the page, so the tests and check-schemas.mjs
+// This file imports nothing from the page, so the tests and tests/schemas.test.mjs
 // can read it. Seconds are at normal speed: the Speed setting stretches them.
 
 export const hiddenTransitions = {

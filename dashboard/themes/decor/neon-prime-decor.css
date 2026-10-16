@@ -2,7 +2,7 @@
    themes/neon-prime.css. Every rule starts with html.theme-neon-prime, so no
    other theme is touched. It is linked in index.html and does nothing until
    that theme is on. It is here and not in themes/ because a file in themes/ is
-   a list of colours and nothing else (tools/check-themes.mjs). docs/layouts.md,
+   a list of colours and nothing else (tests/check-themes.test.mjs). docs/layouts.md,
    "Neon Prime", has the picture and the table of colours.
 
    Rules for this file, the same as for the rest of the screen:
@@ -25,7 +25,7 @@
 /* The colours that are not text. The cyan and the magenta, and the dark that
    fills the gaps between them. The amber of the hazard stripes is the theme's own
    --yellow, so a seasonal pack that recolours the accent recolours them too.
-   There is no green anywhere in this file (tools/check-themes.mjs checks). */
+   There is no green anywhere in this file (tests/check-themes.test.mjs checks). */
 html.theme-neon-prime {
   --neon-cyan: #2de6ff;
   --neon-magenta: #ff2bd6;

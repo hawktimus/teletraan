@@ -5,7 +5,7 @@
 // is cut off. The widths come from the advance table in text-width.js, which has no kerning and
 // so only overstates a width: what fits here fits on the screen.
 //
-// These are plain functions, so tools/test-countdown-title.mjs can run them.
+// These are plain functions, so tests/countdown-title.test.mjs can run them.
 
 import { textWidth } from './text-width.js';
 

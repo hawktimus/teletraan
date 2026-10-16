@@ -8,7 +8,7 @@
 // them) and demo (its buttons are on Start here). The status documents, which the Mini
 // writes, have no line either: status, which the status block in Dashboard Settings
 // shows, calendarStatus, which the Calendars page shows, and frcStatus and mondayStatus,
-// which the connection blocks of the Competition and Monday tabs show. check-schemas.mjs
+// which the connection blocks of the Competition and Monday tabs show. tests/schemas.test.mjs
 // lists them with the reason.
 //
 // One line is one entry:
@@ -31,7 +31,7 @@
 // Every entry except a divider needs an icon, and no two entries share one.
 // The icons come from @sanity/icons. Each is imported from its own file, such as
 // '@sanity/icons/Home', because the package no longer lists them in its main file.
-// A new kind of document needs a line here: check-schemas.mjs fails without it.
+// A new kind of document needs a line here: tests/schemas.test.mjs fails without it.
 
 import { ArchiveIcon } from '@sanity/icons/Archive';
 import { BellIcon } from '@sanity/icons/Bell';

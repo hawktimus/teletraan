@@ -1,6 +1,6 @@
 # Finds the connected screen and sets it so that the framebuffer is 1920 by
 # 1080, whatever the TV offers. kiosk.sh sources this file and calls
-# set_display. It is a file of its own so that tools/test-kiosk-display.mjs can
+# set_display. It is a file of its own so that tests/display.test.mjs can
 # run it with a fake xrandr.
 #
 # The TV is never renegotiated: no mode is added, only a mode the TV lists is

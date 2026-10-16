@@ -4,11 +4,11 @@
 // Adding one is the steps in docs/seasonal-packs.md.
 //
 // decorations says whether the pack has a file in seasons/. The screen loads
-// that file only for a pack that says true, and tools/check-seasons.mjs fails
+// that file only for a pack that says true, and tests/check-seasons.test.mjs fails
 // when the flag and the file disagree.
 //
 // The Studio keeps its own copy of this list in studio/inputs/themes.js.
-// check-schemas.mjs fails when the two lists differ, so change both.
+// tests/schemas.test.mjs fails when the two lists differ, so change both.
 //
 // The ids are stored in Studio, in the Look schedule, so never rename one.
 // The order here is the order of the Studio's list.

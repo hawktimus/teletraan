@@ -39,14 +39,14 @@ TV. The dashboard reads what they publish.
     inputs/screen-context.js        what the form of a Screen shares with the inputs inside it
     inputs/screen-parts.js          the words of the Screen form and what it reads from Sanity, with no Studio in it
     inputs/screen-panels.js         the panels a row of a Screen can name and the rules for the team of a row, with no Studio in it
-    tools/screen-seed.js            the first rows of a Screen, worked out from the Panel order, with no Studio in it (tools/test-screen-seed.mjs; the dashboard has the same rule, and tools/test-screen-seed-parity.mjs runs both)
+    tools/screen-seed.js            the first rows of a Screen, worked out from the Panel order, with no Studio in it (tests/screen-seed.test.mjs; the dashboard has the same rule, and tests/screen-seed-parity.test.mjs runs both)
     inputs/screen-ids.js            the ids of the three Screens and the style each one stands for
     schemas/                        one file per kind of content
     scripts/                        make-templates.mjs writes the CSV templates from the schemas,
                                     import-csv.mjs turns filled-in CSVs into a file for sanity dataset import
     tools/publish-all-tool.js       the Publish all page in the top bar (docs/publish-all.md)
     tools/publish-all.js            the logic of Publish all, with no Studio in it, so node can test it
-    check-schemas.mjs               a check that needs nothing installed
+    tests/schemas.test.mjs               a check that needs nothing installed
     package.json                    the packages the Studio needs
 
 Each file in schemas/ describes one kind of content: its fields, the text
@@ -57,7 +57,7 @@ docs/adding-a-field.md for how to change one.
 
 The Sanity project already exists. Its ID is `ybfqe345` and its dataset is
 called `production`. The ID is in project.js and in dashboard/config.js, and
-`node check-schemas.mjs` fails if the two differ. A project ID is public (it
+`node tests/schemas.test.mjs` fails if the two differ. A project ID is public (it
 is part of every address the dashboard asks for), so it is fine to keep it in
 the repository.
 
@@ -293,7 +293,7 @@ docs/hidden-transitions.md explains how it works and how to add a transition.
 
 The Studio is built on its own and cannot read the dashboard folder, so
 `inputs/hidden-transitions.js` is a copy of the ids, names, hours fields and chance fields in
-`dashboard/core/hidden-transitions.js`. `check-schemas.mjs` fails if they differ.
+`dashboard/core/hidden-transitions.js`. `tests/schemas.test.mjs` fails if they differ.
 
 ## Play announcements
 
@@ -327,7 +327,7 @@ is a hidden field in the Screen tab (`previewRequestField` in `schemas/settingsP
 holds that team, style or seasonal pack for 2 minutes, for a request that is under a minute old, and then
 goes back to the saved settings (`dashboard/core/preview.js`). Nothing is saved to Dashboard Settings or
 the Look page. `inputs/previews.js` is a copy of the ids and names in `previewKinds` in
-`dashboard/core/preview.js`, and `check-schemas.mjs` fails if they differ. Run `npm run deploy` after you
+`dashboard/core/preview.js`, and `tests/schemas.test.mjs` fails if they differ. Run `npm run deploy` after you
 change `schemas/settingsPreview.js` or `inputs/previews.js`, so the editors see the buttons.
 docs/hidden-transitions.md explains how it works.
 
@@ -353,7 +353,7 @@ or `inputs/themes.js`, so the editors see the change.
 The lists of themes and overlays come from `inputs/themes.js`. The Studio is built on
 its own and cannot read the dashboard folder, so `inputs/themes.js` is a copy of
 `dashboard/themes/registry.js` and `dashboard/themes/overlays/registry.js`.
-`check-schemas.mjs` fails if the ids, names or descriptions differ. A theme that
+`tests/schemas.test.mjs` fails if the ids, names or descriptions differ. A theme that
 has the sidebar layout (Neon Prime) has `layout: 'sidebar'` in both copies, the
 check fails if they differ, and its description must say it has a sidebar and no
 small frame (docs/layouts.md). The Look page lists show the theme names only, so
@@ -384,7 +384,7 @@ change. docs/demo.md explains how it works and how to add a screen.
 
 The list of screens comes from `inputs/demo-screens.js`. The Studio is built on its own and
 cannot read the dashboard folder, so `inputs/demo-screens.js` is a copy of the ids and
-names in `dashboard/core/demo-screens.js`. `check-schemas.mjs` fails if they differ.
+names in `dashboard/core/demo-screens.js`. `tests/schemas.test.mjs` fails if they differ.
 
 ## The packages
 
@@ -401,7 +401,7 @@ package.json. structure.js imports each icon from its own file.
 
 ## Checking the schemas
 
-    node check-schemas.mjs
+    node tests/schemas.test.mjs
 
 This needs no install. It loads every schema and checks it against what the
 dashboard reads: every field exists with the right name and limit, every field
@@ -422,12 +422,12 @@ the one in dashboard/config.js. It prints PASS or
 FAIL for each check and exits with an error if any fails. Run it after every
 change to a schema.
 
-The colours of the themes are checked by `tools/check-themes.mjs` in the top
-folder, and `check-schemas.mjs` runs it too, so a theme that is missing a
+The colours of the themes are checked by `tests/check-themes.test.mjs` in the top
+folder, and `tests/schemas.test.mjs` runs it too, so a theme that is missing a
 colour or is hard to read fails here as well. It can also be run alone with
-`node tools/check-themes.mjs` from the top folder.
+`node tests/check-themes.test.mjs` from the top folder.
 
-The decorations of the seasonal packs are checked by `tools/check-seasons.mjs`,
-and `check-schemas.mjs` runs that too, so an overlay that says it has decorations
+The decorations of the seasonal packs are checked by `tests/check-seasons.test.mjs`,
+and `tests/schemas.test.mjs` runs that too, so an overlay that says it has decorations
 and has no pack file fails here as well. It can be run alone with
-`node tools/check-seasons.mjs` from the top folder (docs/seasonal-packs.md).
+`node tests/check-seasons.test.mjs` from the top folder (docs/seasonal-packs.md).

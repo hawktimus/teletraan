@@ -1,5 +1,5 @@
 // The variables a theme file must set, and the ones an overlay may set.
-// Only tools/check-themes.mjs reads this file. The dashboard does not need it.
+// Only tests/check-themes.test.mjs reads this file. The dashboard does not need it.
 // What each variable is for is written at the top of hawktimus.css.
 
 // Every theme file sets all of these.

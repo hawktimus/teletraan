@@ -19,7 +19,7 @@
 // page in the same step as a preview does.
 //
 // chooseStyle and layoutFor are plain functions with no page in sight, so the tests in
-// tools/test-layouts.mjs can run them. applyStyle and startStyle put the answer on the
+// tests/layouts.test.mjs can run them. applyStyle and startStyle put the answer on the
 // page. To add a style: add its name to `styles` in config.js, a line to `forcedLayout`
 // and one to `shapeOf` below, a stylesheet in styles/ linked from index.html, and a title
 // to the list in studio/schemas/dashboardSettings.js.

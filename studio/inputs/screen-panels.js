@@ -1,10 +1,10 @@
 // The panels a row of a Screen can name, and what a row may say about the team. The values are
 // the ids in dashboard/registry.js: the large panels go in the main panel (B) and the small
 // panels in the side panel (D). The Monday cards are offered as three rows, and the cards of
-// both teams are the same rows with the team Both teams. check-schemas.mjs fails if a list
+// both teams are the same rows with the team Both teams. tests/schemas.test.mjs fails if a list
 // differs from the registry.
 //
-// Plain functions and numbers only, so that tools/test-screen-seed.mjs can run them with node.
+// Plain functions and numbers only, so that tests/screen-seed.test.mjs can run them with node.
 
 export const largePanels = [
   { title: 'Tasks', value: 'tasks' },

@@ -181,7 +181,7 @@ The file names are `tba-events-<year>-<team key>`, `tba-matches-<team key>-<even
 correct that one line and run `frc-sync.sh --now`. An address that no longer
 exists is not kept, so for that case read the documentation of the service.
 
-`tools/test-frc-script.mjs` uses made-up answers with the same places. If a place
+`tests/frc-sync.test.mjs` uses made-up answers with the same places. If a place
 changes in the block, change it in the made-up answers too, and run the test
 (docs/where-things-are.md, "Checking your work").
 
@@ -305,7 +305,7 @@ within a few seconds:
   Mini that restarts never runs it again.
 
 `core/competition-preview.js` decides, and `core/competition-preview-run.js` gives
-it the real screen. `tools/test-competition.mjs` checks it.
+it the real screen. `tests/competition.test.mjs` checks it.
 
 ## Try a card on a past event
 
@@ -333,6 +333,6 @@ down to that event. Either way the cards come whatever the Competition cards set
 Each card is a folder with a script and a stylesheet in `dashboard/panels/`, and
 `core/competition-draw.js` has what they share. The numbers in the script are
 pixels in a body of 1096 by 512. If you change a size or a word, run
-`node tools/test-competition.mjs`: it checks that no text is under 44px, that no
+`node tests/competition.test.mjs`: it checks that no text is under 44px, that no
 text leaves the body or runs into the text beside it even with the longest names,
 and that every card is in `registry.js`, in `competition.js` and in the Studio.

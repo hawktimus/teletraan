@@ -51,7 +51,7 @@ function makePlayHiddenAction(kind) {
       },
     };
   }
-  // Studio and check-schemas.mjs tell actions apart by this name: playDesktop, playRedEyes
+  // Studio and tests/schemas.test.mjs tell actions apart by this name: playDesktop, playRedEyes
   usePlayHiddenAction.action = 'play' + kind.id.charAt(0).toUpperCase() + kind.id.slice(1);
   return usePlayHiddenAction;
 }
@@ -75,7 +75,7 @@ export function usePlayAnnouncementsAction(props) {
     },
   };
 }
-// Studio and check-schemas.mjs tell actions apart by this name
+// Studio and tests/schemas.test.mjs tell actions apart by this name
 usePlayAnnouncementsAction.action = 'playAnnouncements';
 
 // The Run presentation test button. Like Play announcements it is always allowed, so a
@@ -95,7 +95,7 @@ export function useRunPresentationTestAction(props) {
     },
   };
 }
-// Studio and check-schemas.mjs tell actions apart by this name
+// Studio and tests/schemas.test.mjs tell actions apart by this name
 useRunPresentationTestAction.action = 'runPresentationTest';
 
 // The Preview buttons, one for each entry in previews.js, so adding a preview there adds its
@@ -118,7 +118,7 @@ function makePreviewAction(kind) {
       },
     };
   }
-  // Studio and check-schemas.mjs tell actions apart by this name: previewPrime, previewNextPack
+  // Studio and tests/schemas.test.mjs tell actions apart by this name: previewPrime, previewNextPack
   usePreviewAction.action = 'preview' + kind.id.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('');
   return usePreviewAction;
 }
