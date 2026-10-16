@@ -1,7 +1,8 @@
 // Runs every test of the repository and prints one line for each file and a total.
 //
-//   node tests/run.mjs            every tests/**/*.test.mjs, and the syntax of every shell file
+//   node tests/run.mjs            every tests/**/*.test.mjs, the syntax of every shell file, and the motion tests
 //   node tests/run.mjs calendar   only the files whose path holds "calendar"
+//   node tests/run.mjs motion     only the motion tests (tests/motion/README.md)
 //
 // A test is a Node file that exits 0 when it passes. Files in tests/helpers and tests/data are
 // not tests. At most three run at the same time. The exit code is 1 when anything failed.
@@ -9,6 +10,7 @@
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -16,6 +18,7 @@ const testsFolder = path.join(root, 'tests');
 const filter = process.argv[2] || '';
 const most = 3;
 const timeLimit = 600 * 1000;
+const motionTimeLimit = 3600 * 1000; // a real browser plays every transition
 
 function walk(folder, found, skip) {
   for (const entry of fs.readdirSync(folder, { withFileTypes: true })) {
@@ -39,7 +42,7 @@ function passCount(text) {
   return lines.filter(line => /^(ok|PASS)\b/.test(line)).length;
 }
 
-function runTest(file) {
+function runTest(file, limit = timeLimit) {
   return new Promise(resolve => {
     const started = Date.now();
     const child = spawn(process.execPath, [file], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -47,9 +50,9 @@ function runTest(file) {
     child.stdout.on('data', chunk => { output += chunk; });
     child.stderr.on('data', chunk => { output += chunk; });
     const timer = setTimeout(() => {
-      output += '\nStopped after ' + timeLimit / 1000 + ' seconds.\n';
+      output += '\nStopped after ' + limit / 1000 + ' seconds.\n';
       child.kill('SIGKILL');
-    }, timeLimit);
+    }, limit);
     child.on('close', code => {
       clearTimeout(timer);
       resolve({ name: path.relative(testsFolder, file), code: code, output: output, seconds: (Date.now() - started) / 1000 });
@@ -96,8 +99,40 @@ async function checkShell() {
   return { name: 'shell syntax (sh -n and bash -n)', count: files.length, problems: problems, seconds: (Date.now() - started) / 1000 };
 }
 
+// True when Playwright can be loaded here, in tools/node_modules or in a folder that NODE_PATH names. The Mini and a
+// computer that never installed it skip the motion tests and stay green.
+function playwrightIsHere() {
+  try {
+    createRequire(path.join(root, 'tools', 'x.js'))('playwright');
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+// The motion tests are one file that prints a line for each rule. A failure prints every line of it.
+async function runMotion(wide) {
+  if (!playwrightIsHere()) {
+    console.log('skip  ' + 'motion tests'.padEnd(wide) + '  Playwright is not installed here (tests/motion/README.md)');
+    return { failed: 0, checks: 0 };
+  }
+
+  const result = await runTest(path.join(testsFolder, 'motion', 'run.mjs'), motionTimeLimit);
+  const lines = result.output.trim().split('\n');
+  const rules = lines.filter(line => /^(ok|FAIL)\b/.test(line)).length;
+  if (result.code === 0) {
+    console.log('ok    ' + 'motion/run.mjs'.padEnd(wide) + '  ' + String(rules).padStart(5) + ' passed  ' + result.seconds.toFixed(1) + 's');
+    return { failed: 0, checks: lines.filter(line => /^ok\b/.test(line)).length };
+  }
+
+  console.log('FAIL  ' + 'motion/run.mjs'.padEnd(wide) + '  exit ' + result.code + '  ' + result.seconds.toFixed(1) + 's');
+  lines.filter(line => !/^ok\b/.test(line)).slice(0, 60).forEach(line => console.log('      ' + line));
+  return { failed: 1, checks: lines.filter(line => /^ok\b/.test(line)).length };
+}
+
 async function main() {
-  const files = walk(testsFolder, [], ['helpers', 'data'])
+  const motionOnly = filter === 'motion';
+  const files = motionOnly ? [] : walk(testsFolder, [], ['helpers', 'data'])
     .filter(file => file.endsWith('.test.mjs') && path.relative(testsFolder, file).includes(filter))
     .sort();
   const wide = Math.max(...files.map(file => path.relative(testsFolder, file).length), 30);
@@ -140,6 +175,12 @@ async function main() {
       console.log('FAIL  ' + shell.name);
       shell.problems.forEach(problem => console.log('      ' + problem.split('\n').join('\n      ')));
     }
+  }
+
+  if (filter === '' || motionOnly) {
+    const motion = await runMotion(wide);
+    failed += motion.failed;
+    checks += motion.checks;
   }
 
   const seconds = ((Date.now() - started) / 1000).toFixed(1);
