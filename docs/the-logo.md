@@ -179,6 +179,13 @@ in `frame.css` is multiplied by it.
   and `--logo-far` in `dashboard/themes/hawktimus.css`. They are written out as
   plain colours, so a theme that recolours the plates leaves the logo in its
   brand colours unless the theme sets those three itself.
+- `logoMarkup(team)` in `dashboard/core/logo.js` draws the logo for `'prime'` (the default) or `'nova'`. Nova is the
+  same drawing with the class `logo-nova` on `.drawing`: gold plates and purple metal, where Prime has purple plates
+  and gold metal. Its colors are the `--logo-nova-*` variables in `tokens.css` and the gradient `logo-metal-nova` in
+  `index.html`. `logoTeamOf(code, view)` picks the logo of a team (the Robotics view, key `general`, always gets
+  Prime's) and `showLogoTeam(box, team)` changes a logo that is already drawn. `hawkPieces(team)` returns the four
+  plates (wings, body, head) on the 1100 x 884 grid with their pivots, their robot poses and the colors of the front
+  and of the back, which are the other team's, for the swap between teams.
 - The size of each logo is in the stylesheet of the panel that shows it
   (`panels/banner/panel.css`, `panels/announcement/panel.css`). `--k` is the box's width divided by 1100.
 - `tools/logo.html` shows the logo large with a button for each act, a slider

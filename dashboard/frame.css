@@ -725,6 +725,19 @@ html[data-style="cybertron"] .area[data-area="ticker"] .screw { animation-name: 
 .logo .fill-tail { fill: var(--logo-tail); }
 .logo .fill-far { fill: var(--logo-far); } /* the far wing is the darkest because it is the furthest away */
 
+/* The Nova logo: the plates are gold and the edge is purple metal (tokens.css). Where a style sets the edge
+   itself (Cybertron and the bar layout use the accent of the team), that rule is more exact and wins. */
+.logo .drawing.logo-nova {
+  --logo-purple: var(--logo-nova-plate);
+  --logo-tail: var(--logo-nova-tail);
+  --logo-far: var(--logo-nova-far);
+  --logo-edge: url(#logo-metal-nova);
+}
+.logo .drawing.logo-nova .shadow {
+  fill: var(--logo-nova-shadow);
+  stroke: var(--logo-nova-shadow);
+}
+
 .logo .emblem .shadow,
 .logo .emblem .outline { stroke-width: 52px; }
 .logo .emblem .shadow { transform: translate(12px, 18px); }
@@ -735,6 +748,7 @@ html[data-style="cybertron"] .area[data-area="ticker"] .screw { animation-name: 
 /* The flat finish: one plain colour and no shadow copy */
 :root[data-finish="flat"] .logo .drawing { --logo-edge: var(--metal-flat); }
 :root[data-finish="flat"] .logo .shadow { display: none; }
+:root[data-finish="flat"] .logo .drawing.logo-nova { --logo-edge: var(--logo-nova-flat); }
 
 
 /* Rest. Each plate is in its drawn place and turns about the point named by

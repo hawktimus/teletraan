@@ -373,7 +373,7 @@ function makeClassList() {
 }
 
 function makeDocument() {
-  const links = [{ href: 'themes/hawktimus.css' }]; // index.html links this one itself
+  const links = [{ href: 'themes/hawktimus.css?v=1' }]; // index.html links this one itself
   return {
     links: links,
     documentElement: { classList: makeClassList() },
@@ -384,7 +384,10 @@ function makeDocument() {
       },
     },
     createElement: () => ({ listeners: {}, addEventListener(type, run) { this.listeners[type] = run; } }),
-    querySelector: selector => links.filter(link => link.href === /href="([^"]+)"/.exec(selector)[1])[0] || null,
+    querySelector: selector => {
+      const [, starts, address] = /href(\^?)="([^"]+)"/.exec(selector);
+      return links.filter(link => (starts ? link.href.startsWith(address) : link.href === address))[0] || null;
+    },
   };
 }
 
@@ -926,7 +929,7 @@ function makeRoot() {
   };
 }
 
-// The nine properties as a team has them, in the order of the list
+// The twelve properties as a team has them, in the order of the list
 function propertiesOf(team) {
   return {
     '--team-primary': team.colors.primary,
@@ -938,6 +941,9 @@ function propertiesOf(team) {
     '--team-text': team.colors.text,
     '--team-body': team.colors.body,
     '--team-label': team.colors.label,
+    '--team-header-ink': team.colors.headerInk,
+    '--team-dark': team.colors.dark,
+    '--team-retro': team.colors.retro,
   };
 }
 
@@ -946,7 +952,7 @@ function propertiesOf(team) {
 // no name-outline class
 const novaClasses = 'accent-neon bolts-round corner-cut-tr grid-dots header-slant mirrored neon-glow palette-inverted ticker-bar';
 
-// The properties the page has with a team on it: the nine colors
+// The properties the page has with a team on it: the twelve colors
 function onThePage(team) {
   return propertiesOf(team);
 }
@@ -975,8 +981,8 @@ async function onTeamPage(run) {
   }
 }
 
-test('the screen starts on the team the settings ask for, at once: the nine colors are on the html element, and only Nova has the mirror class, the trim classes and the glow', async () => {
-  const names = ['--team-primary', '--team-plate', '--team-accent', '--team-neon', '--team-pink', '--team-background', '--team-text', '--team-body', '--team-label'];
+test('the screen starts on the team the settings ask for, at once: the twelve colors are on the html element, and only Nova has the mirror class, the trim classes and the glow', async () => {
+  const names = ['--team-primary', '--team-plate', '--team-accent', '--team-neon', '--team-pink', '--team-background', '--team-text', '--team-body', '--team-label', '--team-header-ink', '--team-dark', '--team-retro'];
 
   await onTeamPage(async world => {
     assert.deepEqual(Object.keys(world.teams.colorProperties).map(name => world.teams.colorProperties[name]), names);
@@ -985,6 +991,7 @@ test('the screen starts on the team the settings ask for, at once: the nine colo
     assert.deepEqual(world.root.properties, {
       '--team-primary': '#6C18B6', '--team-plate': '#3B2A7A', '--team-accent': '#FACA2A', '--team-neon': '#FACA2A',
       '--team-pink': '#B23CFF', '--team-background': '#0B0714', '--team-text': '#FFFFFF', '--team-body': '#1A0F2E', '--team-label': '#FACA2A',
+      '--team-header-ink': '#FFFFFF', '--team-dark': '#29054A', '--team-retro': '#FACA2A',
     });
     assert.equal(world.classes(), '');
     assert.equal(world.teams.mirrorClass, 'mirrored');
@@ -994,14 +1001,15 @@ test('the screen starts on the team the settings ask for, at once: the nine colo
     world.teams.useTeams(teamContent('nova'), new Date(noon));
 
     assert.deepEqual(world.root.properties, {
-      '--team-primary': '#FACA2A', '--team-plate': '#6B4F0C', '--team-accent': '#C58CFF', '--team-neon': '#B23CFF',
-      '--team-pink': '#FACA2A', '--team-background': '#130E03', '--team-text': '#FFFFFF', '--team-body': '#2A1F07', '--team-label': '#C58CFF',
+      '--team-primary': '#D4A017', '--team-plate': '#6B4C08', '--team-accent': '#C86BFF', '--team-neon': '#B23CFF',
+      '--team-pink': '#D4A017', '--team-background': '#17110A', '--team-text': '#FFFFFF', '--team-body': '#241A04', '--team-label': '#D9A6FF',
+      '--team-header-ink': '#1A1200', '--team-dark': '#3D2A05', '--team-retro': '#E0A400',
     });
     assert.equal(world.classes(), novaClasses);
   });
 });
 
-test('the properties of a team are its nine colors, whatever team it is, and the built-in team has the starting Prime ones', () => {
+test('the properties of a team are its twelve colors, whatever team it is, and the built-in team has the starting Prime ones', () => {
   [seededPrime, seededNova].forEach(team => assert.deepEqual(teamProperties(team), propertiesOf(team)));
   assert.deepEqual(teamProperties(config.primeTeam), propertiesOf(seededPrime));
   assert.equal(config.primeTeam.mirror, seededPrime.mirror);
@@ -1204,14 +1212,14 @@ function blocksOf(text) {
   return blocks;
 }
 
-test('tokens.css starts the nine team colors at the Prime ones, and teams.css has no other rule than the four the default theme follows', () => {
+test('tokens.css starts the twelve team colors at the Prime ones, and teams.css has no other rule than the four the default theme follows', () => {
   const blocks = blocksOf(teamsCss);
   assert.equal(blocks.length, 1);
 
   const start = blocksOf(readModule(path.join(dashboardFolder, 'tokens.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')).find(block => '--team-primary' in block.declarations);
   assert.deepEqual(start.selectors, [':root']);
   const colors = config.primeTeam.colors;
-  assert.deepEqual(Object.keys(start.declarations), ['--team-primary', '--team-plate', '--team-accent', '--team-neon', '--team-pink', '--team-background', '--team-text', '--team-body', '--team-label']);
+  assert.deepEqual(Object.keys(start.declarations), ['--team-primary', '--team-plate', '--team-accent', '--team-neon', '--team-pink', '--team-background', '--team-text', '--team-body', '--team-label', '--team-header-ink', '--team-dark', '--team-retro']);
   Object.keys(propertiesOf(config.primeTeam)).forEach(name => {
     assert.equal(start.declarations[name].toLowerCase(), propertiesOf(config.primeTeam)[name].toLowerCase(), name);
   });

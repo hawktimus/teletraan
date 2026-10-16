@@ -4,7 +4,7 @@
 import * as frame from '../../frame.js';
 import { formatClock, formatDate } from '../../core/time.js';
 import { weatherIcon } from '../../core/weather-icons.js';
-import { logoMarkup, showTeamLogo } from '../../core/logo.js';
+import { logoMarkup, logoTeamOf, showLogoTeam, showTeamLogo } from '../../core/logo.js';
 import { nameMarkup } from '../../core/name.js';
 import { frameKind, plateMarkup, teamPlateMarkup } from '../../core/plate.js';
 import { layoutNow } from '../../core/layout.js';
@@ -110,6 +110,7 @@ export function update(element, content) {
   setSecondTeam(element, content, team);
   setText(element, '.school', content.team.school);
   showTeamLogo(element.querySelector('.logo'), team.logo);
+  showLogoTeam(element.querySelector('.logo'), logoTeamOf(team.code, viewNow()));
 
   const weather = content.weather;
   setText(element, '.temperature', weather ? weather.temperature + '°F' : '--°F');

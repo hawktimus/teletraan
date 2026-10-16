@@ -3608,7 +3608,7 @@ test('the frames are small: a handful of svg elements and five new gradients, an
   const html = read('dashboard/index.html');
   const gradients = html.match(/<linearGradient id="[a-z-]+"/g) || [];
   ['edge-steel', 'edge-ridge-steel', 'edge-shade-steel', 'armor-face'].forEach(id => assert.ok(gradients.some(text => text.includes('"' + id + '"')), id));
-  assert.equal(gradients.length, 12, 'gold 3, red 3, the screw, the logo, steel 3 and the armor plate: ' + gradients.length);
+  assert.equal(gradients.length, 13, 'gold 3, red 3, the screw, the logo and the Nova logo, steel 3 and the armor plate: ' + gradients.length);
   assert.ok(!/<(filter|image|pattern|mask|clipPath|animate|set)\b/i.test(html), 'no filter, image, pattern, mask, clip or SMIL in the page\'s own drawing');
   assert.deepEqual(html.match(/<radialGradient id="[a-z-]+"/g), ['<radialGradient id="wear-rust"'], 'the one radial gradient is the patch of rust under a Minimal frame\'s wear');
   assert.ok(!/(feGaussianBlur|feDropShadow|box-shadow|text-shadow|backdrop-filter|filter=|filter:)/.test(read('dashboard/core/plate.js')), 'plate.js draws no glow');

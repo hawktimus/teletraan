@@ -361,7 +361,7 @@ html.palette-inverted {
    or in a theme file, and nowhere else (tests/graphics.test.mjs). */
 
 /* The team colors start at the Prime values, the same as primeTeam in config.js, so the screen has them before
-   any team is chosen. core/teams.js sets all nine on the html element from the team on the screen. */
+   any team is chosen. core/teams.js sets all twelve on the html element from the team on the screen. */
 :root {
   --team-primary: #6c18b6;
   --team-plate: #3b2a7a;
@@ -372,6 +372,23 @@ html.palette-inverted {
   --team-text: #ffffff;
   --team-body: #1a0f2e;
   --team-label: #faca2a;
+  --team-header-ink: #ffffff; /* text on the main color: panel titles, the team plate, the ticker label */
+  --team-dark: #29054a;
+  --team-retro: #faca2a;
+}
+
+/* The Nova logo: every color of the Prime logo swapped for its pair (core/logo.js, frame.css). The plates are
+   gold where Prime's are purple, and the edge is purple metal where Prime's is gold. The Prime colors are the
+   --logo variables of the theme (themes/hawktimus.css). */
+:root {
+  --logo-nova-plate: #faca2a;
+  --logo-nova-tail: #c18c07;
+  --logo-nova-far: #9b6c06;
+  --logo-nova-shadow: #1a0530;
+  --logo-nova-flat: #6c18b6; /* the one plain color of the edge in the flat finish */
+  --logo-nova-edge-1: #c8a7ff; /* the brightest highlight, and the band where the light catches */
+  --logo-nova-edge-3: #8c44dc; /* the plain mid tone */
+  --logo-nova-edge-4: #53048f; /* the dark tone */
 }
 
 :root {

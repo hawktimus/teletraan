@@ -6,7 +6,7 @@
 //   filtering   showsForTeam() says whether an item belongs on the screen of that team.
 //               visibleItems() in content.js asks it, so a panel that leaves out hidden and
 //               expired items leaves out the other team's items too. No panel asks it itself
-//   putting on  applyTeamLook() sets the nine colors, the mirror class, the eight trim classes,
+//   putting on  applyTeamLook() sets the twelve colors, the mirror class, the eight trim classes,
 //               the metal class and the glow class on the html element
 //
 // A different team never goes on the page where people can watch it happen. useTeams() sees the
@@ -26,7 +26,7 @@ import { defaultSettings, glowClass, primeTeam, teamMetals, teamModes, teamPalet
 // nothing by itself: the stylesheets that flip the layout read it.
 export const mirrorClass = 'mirrored';
 
-// The nine colors of a team and the custom property each one sets. teams.css starts them at the
+// The twelve colors of a team and the custom property each one sets. teams.css starts them at the
 // Prime values and has the rules that the default theme follows them with.
 export const colorProperties = {
   primary: '--team-primary',
@@ -38,6 +38,9 @@ export const colorProperties = {
   text: '--team-text',
   body: '--team-body',
   label: '--team-label',
+  headerInk: '--team-header-ink',
+  dark: '--team-dark',
+  retro: '--team-retro',
 };
 
 // The trim of a team (docs/layouts.md, "Team trim"): a class on the html element for each of the eight fields

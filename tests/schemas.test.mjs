@@ -137,7 +137,7 @@ const contract = {
     number: text(6),
     code: text(10),
     logo: 'image',
-    colors: object({ primary: hexColor, plate: hexColor, accent: hexColor, neon: hexColor, pink: hexColor, background: hexColor, text: hexColor, body: hexColor, label: hexColor }),
+    colors: object({ primary: hexColor, plate: hexColor, accent: hexColor, neon: hexColor, pink: hexColor, background: hexColor, text: hexColor, body: hexColor, label: hexColor, headerInk: hexColor, dark: hexColor, retro: hexColor }),
     metal: 'string',
     palette: 'string',
     glow: 'boolean',
@@ -3896,7 +3896,9 @@ function checkPresentations() {
 // the Prime ones, which are the colors of the screen today (themes/hawktimus.css). The
 // seed file docs/seed/teams.ndjson holds the two teams, and the Teams list comes right
 // after Look in the sidebar.
-const teamColorNames = ['primary', 'plate', 'accent', 'neon', 'pink', 'background', 'text', 'body', 'label'];
+const teamColorNames = ['primary', 'plate', 'accent', 'neon', 'pink', 'background', 'text', 'body', 'label', 'headerInk', 'dark', 'retro'];
+// the colors added later are optional, because a team document made before has none and falls back on the screen
+const optionalTeamColors = ['headerInk', 'dark', 'retro'];
 
 function checkTeams() {
   const problems = [];
@@ -3946,7 +3948,8 @@ function checkTeams() {
   need(problems, fieldsIn(at('colors') || {}).map(field => field.name).join() === teamColorNames.join(), 'team.colors should hold, in this order: ' + teamColorNames.join(', '));
   teamColorNames.forEach(name => {
     const field = fieldAt('team.colors.' + name);
-    need(problems, field && constraintNamed(rulesOf(field), 'required'), 'team.colors.' + name + ' should be required');
+    const optional = optionalTeamColors.includes(name);
+    need(problems, field && Boolean(constraintNamed(rulesOf(field), 'required')) === !optional, 'team.colors.' + name + (optional ? ' should be optional' : ' should be required'));
     need(problems, field && field.initialValue === prime.colors[name], 'team.colors.' + name + ' should start as ' + prime.colors[name] + ', the Prime value in the seed file, and it starts as ' + (field && field.initialValue));
   });
 
@@ -4006,8 +4009,8 @@ function checkTeamSeed(type) {
   const hex = /^#[0-9A-Fa-f]{6}$/;
 
   const wanted = {
-    'team-prime': { number: '3229', code: 'prime', mirror: false, metal: 'gold', glow: false, colors: { primary: '#6C18B6', plate: '#3B2A7A', accent: '#FACA2A', neon: '#FACA2A', pink: '#B23CFF', body: '#1A0F2E', label: '#FACA2A' } },
-    'team-nova': { number: '3426', code: 'nova', mirror: true, metal: 'gold', glow: true, colors: { primary: '#FACA2A', plate: '#6B4F0C', accent: '#C58CFF', neon: '#B23CFF', pink: '#FACA2A', background: '#130E03', body: '#2A1F07', label: '#C58CFF' } },
+    'team-prime': { number: '3229', code: 'prime', mirror: false, metal: 'gold', glow: false, colors: { primary: '#6C18B6', plate: '#3B2A7A', accent: '#FACA2A', neon: '#FACA2A', pink: '#B23CFF', body: '#1A0F2E', label: '#FACA2A', headerInk: '#FFFFFF', dark: '#29054A', retro: '#FACA2A' } },
+    'team-nova': { number: '3426', code: 'nova', mirror: true, metal: 'gold', glow: true, colors: { primary: '#D4A017', plate: '#6B4C08', accent: '#C86BFF', neon: '#B23CFF', pink: '#D4A017', background: '#17110A', body: '#241A04', label: '#D9A6FF', headerInk: '#1A1200', dark: '#3D2A05', retro: '#E0A400' } },
   };
   need(problems, lines.length === 2, 'docs/seed/teams.ndjson should have two teams, Prime and Nova, it has ' + lines.length);
 

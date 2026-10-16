@@ -1679,21 +1679,24 @@ changes the shape of a frame, add it to `frameTrim` in `core/teams.js` and to th
 ## Team colors, metal and glow
 
 A team sets its plates, its metal and its neon, and not only an accent, so the two teams can be told apart
-from across the room in every style. The nine colors are in the Colors box of the Team document in the Studio,
+from across the room in every style. The twelve colors are in the Colors box of the Team document in the Studio,
 and `core/teams.js` writes each one on the html element as a `--team-` custom property (`teams.css` starts them at
 the Prime values). The metal and the glow come after the box.
 
 | Color | Property | Prime | Nova | What it paints |
 |-------|----------|-------|------|----------------|
-| Main color | `--team-primary` | `#6C18B6` | `#FACA2A` | header tabs and the bird, and the theme Hawktimus |
-| Plate color | `--team-plate` | `#3B2A7A` | `#6B4F0C` | the TEAM plate, the ticker's tag, the header inset and the cards |
-| Accent color | `--team-accent` | `#FACA2A` | `#C58CFF` | small marks, key words and the hazard stripe |
+| Main color | `--team-primary` | `#6C18B6` | `#D4A017` | header tabs and the bird, and the theme Hawktimus |
+| Plate color | `--team-plate` | `#3B2A7A` | `#6B4C08` | the TEAM plate, the ticker's tag, the header inset and the cards |
+| Accent color | `--team-accent` | `#FACA2A` | `#C86BFF` | small marks, key words and the hazard stripe |
 | Neon color | `--team-neon` | `#FACA2A` | `#B23CFF` | the neon lines, the page grid at .07 and the digits of the war clock in Minimal |
-| Second bright color | `--team-pink` | `#B23CFF` | `#FACA2A` | the conduit lines and the brackets of Cybertron |
-| Background color | `--team-background` | `#0B0714` | `#130E03` | the page, and the theme Hawktimus |
+| Second bright color | `--team-pink` | `#B23CFF` | `#D4A017` | the conduit lines and the brackets of Cybertron |
+| Background color | `--team-background` | `#0B0714` | `#17110A` | the page, and the theme Hawktimus |
 | Text color | `--team-text` | `#FFFFFF` | `#FFFFFF` | the main text |
-| Body color | `--team-body` | `#1A0F2E` | `#2A1F07` | the inside of the panels in Cybertron and Minimal |
-| Label color | `--team-label` | `#FACA2A` | `#C58CFF` | the department names in rows |
+| Body color | `--team-body` | `#1A0F2E` | `#241A04` | the inside of the panels in Cybertron and Minimal |
+| Label color | `--team-label` | `#FACA2A` | `#D9A6FF` | the department names in rows |
+| Header text color | `--team-header-ink` | `#FFFFFF` | `#1A1200` | text on the main color: the panel titles, the TEAM plate and the ticker label, in Original and Retro (Cybertron and the bar layout paint those plates in the plate color, so their text stays the text color) |
+| Dark color | `--team-dark` | `#29054A` | `#3D2A05` | the darkest shade of the main color. Not drawn yet |
+| Retro color | `--team-retro` | `#FACA2A` | `#E0A400` | the main color of the Retro theme. Not drawn yet |
 
 The status colors (in progress, backlog and done) are the same for both teams. A team document that has no
 Body or Label has Prime's, and one with no Metal or Glow has gold and no glow, so a team made before they existed

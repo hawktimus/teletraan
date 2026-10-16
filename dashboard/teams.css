@@ -1,4 +1,4 @@
-/* Team colors. core/teams.js sets these nine on the html element from the team on the
+/* Team colors. core/teams.js sets these twelve on the html element from the team on the
    screen (the Teams list in the Studio). They start at the Prime values (tokens.css), the same
    as primeTeam in config.js, so the screen has them before any team is chosen.
 

@@ -59,6 +59,11 @@ html[data-style="cybertron"] .area,
 html[data-style="cybertron"] .banner {
   --panel-face: var(--style-body);
 }
+/* The plates are armor and the team plate color, not the main color, so the text on them is the team's text and accent (base.css, the header ink) */
+html[data-style="cybertron"] {
+  --head-ink: var(--white);
+  --head-number: var(--yellow);
+}
 html[data-style="cybertron"] .area .plate .header-left { fill: url(#armor-face); }
 html[data-style="cybertron"] .area .plate .header-right { fill: var(--style-body); }
 
