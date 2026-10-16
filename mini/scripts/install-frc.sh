@@ -1,12 +1,13 @@
-#!/bin/sh
+#!/bin/bash
+# Usage: sudo install-frc.sh
 # Installs the FRC feed: copies its two systemd unit files and turns on its
 # timer, which starts frc-sync.sh every 5 minutes. The script itself does its
 # work about once an hour, and every 5 minutes while a team has an event on. It
 # checks that the packages the script needs are installed. It does not install
 # them.
-set -eu
+set -euo pipefail
+. "$(dirname "$0")/lib.sh"
 
-mini=$(cd "$(dirname "$0")/.." && pwd)
 units="$mini/systemd"
 repo=$(cd "$mini/.." && pwd -P)
 target=/etc/systemd/system

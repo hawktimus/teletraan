@@ -1,17 +1,10 @@
-#!/bin/sh
+#!/bin/bash
+# Usage: kiosk.sh [address]   (started by teletraan-kiosk.service through xinit)
 # Opens the dashboard full screen in Chromium. teletraan-kiosk.service runs it
 # through xinit. When the browser closes, this script ends and the service
 # starts everything again.
-set -eu
-
-mini=$(cd "$(dirname "$0")/.." && pwd)
-env_file="$mini/local.env"
-
-# The value of a NAME=value line in local.env, without its quotes
-setting() {
-  [ -f "$env_file" ] || return 0
-  sed -n "s/^$1=//p" "$env_file" | tail -n 1 | sed "s/^['\"]//; s/['\"]\$//"
-}
+set -euo pipefail
+. "$(dirname "$0")/lib.sh"
 
 port=$(setting TELETRAAN_PORT)
 dashboard="http://localhost:${port:-8080}/dashboard/"

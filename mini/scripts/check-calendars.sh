@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+# Usage: check-calendars.sh
 # Shows what the screen does with each calendar in local.env. It prints a KIND
 # line with the kind of the calendar, or no chip when it has none, and for every
 # event in the next 30 days one line, SHOWN, or HIDDEN with the name of the
@@ -15,10 +16,9 @@
 #
 # The feed addresses are secrets, so nothing here prints one. Every line
 # names a calendar by its code only.
-set -eu
+set -euo pipefail
+. "$(dirname "$0")/lib.sh"
 
-mini=$(cd "$(dirname "$0")/.." && pwd)
-env_file="$mini/local.env"
 helper="$mini/scripts/check-calendars.mjs"
 
 if [ ! -f "$env_file" ]; then
@@ -36,12 +36,6 @@ if ! command -v node > /dev/null 2>&1; then
   echo "Run it on a computer that has Node, a copy of the repository and a mini/local.env with the calendar addresses." >&2
   exit 1
 fi
-
-# The value of a NAME=value line in local.env, without its quotes.
-# The last line wins if a name is repeated.
-setting() {
-  sed -n "s/^$1=//p" "$env_file" | tail -n 1 | sed "s/^['\"]//; s/['\"]\$//"
-}
 
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT

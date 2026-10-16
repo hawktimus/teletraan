@@ -1,11 +1,12 @@
-#!/bin/sh
+#!/bin/bash
+# Usage: sudo install-backup.sh
 # Installs the nightly backup: copies its two systemd unit files, makes the
 # folder /var/backups/teletraan, and turns on the timer, which starts
 # backup-dataset.sh at 03:15. It checks that the Sanity tool is installed in
 # studio/ and that local.env has the write token. It does not install anything.
-set -eu
+set -euo pipefail
+. "$(dirname "$0")/lib.sh"
 
-mini=$(cd "$(dirname "$0")/.." && pwd)
 units="$mini/systemd"
 repo=$(cd "$mini/.." && pwd -P)
 target=/etc/systemd/system

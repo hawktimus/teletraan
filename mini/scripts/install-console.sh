@@ -1,12 +1,13 @@
-#!/bin/sh
+#!/bin/bash
+# Usage: sudo install-console.sh
 # Installs the boot and shutdown screens. The login prompt on the Mini's text
 # screen prints /etc/issue before it asks for a name, so this puts the startup
 # drawing there. It also copies teletraan-console.service and turns it on: when
 # the Mini shuts down or reboots, that unit shows the shutdown drawing on the
 # TV. It installs no packages and leaves the timers and the kiosk alone.
-set -eu
+set -euo pipefail
+. "$(dirname "$0")/lib.sh"
 
-mini=$(cd "$(dirname "$0")/.." && pwd)
 console="$mini/console"
 units="$mini/systemd"
 repo=$(cd "$mini/.." && pwd -P)

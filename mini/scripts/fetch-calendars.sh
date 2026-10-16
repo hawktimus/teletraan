@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+# Usage: fetch-calendars.sh
 # Downloads every calendar listed in local.env into <data folder>/calendars.
 # The feed addresses are secrets, so nothing here prints one. Messages name a
 # calendar by its id only.
@@ -7,21 +8,13 @@
 # its id, when its file was last downloaded properly, and why the last try
 # failed, with a | between them. calendar-status.sh turns that into the
 # document for the Calendars page in Studio. The file holds no address.
-set -eu
-
-mini=$(cd "$(dirname "$0")/.." && pwd)
-env_file="$mini/local.env"
+set -euo pipefail
+. "$(dirname "$0")/lib.sh"
 
 if [ ! -f "$env_file" ]; then
   echo "No local.env at $env_file. Copy local.example.env to local.env first." >&2
   exit 1
 fi
-
-# The value of a NAME=value line in local.env, without its quotes.
-# The last line wins if a name is repeated.
-setting() {
-  sed -n "s/^$1=//p" "$env_file" | tail -n 1 | sed "s/^['\"]//; s/['\"]\$//"
-}
 
 data=$(setting TELETRAAN_DATA)
 data=${data:-/var/lib/teletraan/data}

@@ -1,10 +1,11 @@
-#!/bin/sh
+#!/bin/bash
+# Usage: sudo install-slides.sh
 # Installs the slides fetcher: copies its two systemd unit files and turns on
 # its timer, which runs slides-sync.sh every 2 minutes. It checks that the
 # packages the fetcher needs are installed. It does not install them.
-set -eu
+set -euo pipefail
+. "$(dirname "$0")/lib.sh"
 
-mini=$(cd "$(dirname "$0")/.." && pwd)
 units="$mini/systemd"
 repo=$(cd "$mini/.." && pwd -P)
 target=/etc/systemd/system

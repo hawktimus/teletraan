@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+# Usage: check-connection.sh
 # Checks everything the screen needs to get its content, one plain line each:
 # OK or FAIL, then what was found. The last line is OK if every check passed,
 # FAIL if any did not. Run it over SSH from any computer:
@@ -7,15 +8,16 @@
 #
 # Add -t after ssh if Docker needs sudo and sudo needs a password.
 #
-# There is no "set -e" here on purpose. A tool that is missing, or a check that
-# fails, must print FAIL for its own line and let the others run. Nothing is
-# printed from local.env except what is asked for below, and calendar
-# addresses are never read.
+# "set -e" is turned off again after the header on purpose. A tool that is
+# missing, or a check that fails, must print FAIL for its own line and let
+# the others run. Nothing is printed from local.env except what is asked for
+# below, and calendar addresses are never read.
 
-mini=$(cd "$(dirname "$0")/.." && pwd)
-repo=$(dirname "$mini")
-config="$repo/dashboard/config.js"
-env_file="$mini/local.env"
+set -euo pipefail
+. "$(dirname "$0")/lib.sh"
+# A failed check prints FAIL and the next one still runs
+set +e
+
 compose_file="$mini/docker-compose.yml"
 
 failures=0
@@ -33,27 +35,13 @@ have() {
   command -v "$1" > /dev/null 2>&1
 }
 
-# The quoted value of "name: 'value'," in dashboard/config.js. The project
-# ID, the dataset and the API version are kept there and nowhere else.
-config_value() {
-  [ -f "$config" ] || return 0
-  sed -n "s/^[[:space:]]*$1:[[:space:]]*'\([^']*\)'.*/\1/p" "$config" | head -n 1
-}
-
-# The value of one NAME=value line in local.env, without its quotes. Only the
-# name asked for is read, because the other lines hold secrets.
-env_value() {
-  [ -f "$env_file" ] || return 0
-  sed -n "s/^$1=//p" "$env_file" | tail -n 1 | sed "s/^['\"]//; s/['\"]\$//"
-}
-
 project=$(config_value projectId)
 dataset=$(config_value dataset)
 version=$(config_value apiVersion)
 
 # The port the web container is published on. local.env says, and when it does
 # not, docker-compose.yml has the default after ":-".
-port=$(env_value TELETRAAN_PORT)
+port=$(setting TELETRAAN_PORT)
 if [ -z "$port" ] && [ -f "$compose_file" ]; then
   port=$(sed -n 's/.*TELETRAAN_PORT:-\([0-9][0-9]*\)}.*/\1/p' "$compose_file" | head -n 1)
 fi

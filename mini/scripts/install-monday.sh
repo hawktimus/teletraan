@@ -1,11 +1,12 @@
-#!/bin/sh
+#!/bin/bash
+# Usage: sudo install-monday.sh
 # Installs the Monday sync: copies its two systemd unit files and turns on its
 # timer, which wakes monday-sync.sh every 5 minutes (the script reads Monday only as
 # often as the Monday tab of Dashboard Settings says). It checks that the packages
 # the script needs are installed. It does not install them.
-set -eu
+set -euo pipefail
+. "$(dirname "$0")/lib.sh"
 
-mini=$(cd "$(dirname "$0")/.." && pwd)
 units="$mini/systemd"
 repo=$(cd "$mini/.." && pwd -P)
 target=/etc/systemd/system
