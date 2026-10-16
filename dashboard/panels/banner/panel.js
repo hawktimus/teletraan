@@ -11,6 +11,8 @@ import { layoutNow } from '../../core/layout.js';
 import { shapesNow } from '../../core/style.js';
 import { teamShown, trimNow } from '../../core/teams.js';
 import { packExtras } from '../../core/theme.js';
+import { viewNow } from '../../core/view-apply.js';
+import { viewNameOf, viewShowsTag, viewTitleOf } from '../../core/views.js';
 
 export function mount(host, content) {
   const kind = frameKind('banner', layoutNow(), shapesNow(), trimNow());
@@ -51,6 +53,7 @@ export function mount(host, content) {
           <span class="rule bar" data-part="rule"></span>
           <span class="banner-line" data-part="line"></span>
           <span class="school" data-part="school"></span>
+          <span class="view-tag"></span>
         </div>
       </div>
     </section>`;
@@ -97,7 +100,10 @@ function setName(element, name) {
 // (core/connection.js).
 export function update(element, content) {
   const team = teamShown(content);
-  setName(element, team.name);
+  const view = viewNow();
+  const title = view === '' ? '' : viewTitleOf(content, view);
+  setName(element, title !== '' ? title : team.name);
+  setText(element, '.view-tag', view !== '' && viewShowsTag(view) ? viewNameOf(content, view) : '');
   setText(element, '.team-number', team.number);
   setText(element, '.school', content.team.school);
   showTeamLogo(element.querySelector('.logo'), team.logo);

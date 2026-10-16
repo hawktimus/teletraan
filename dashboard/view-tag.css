@@ -1,0 +1,31 @@
+/* The name of the view (core/views.js, viewNameOf): the view tag, 30px in the team label color, which is one of the
+   sizes the order names. It sits at the end of the banner away from the title. */
+
+.banner .view-tag {
+  flex: none;
+  margin-left: 24px;
+  font: 700 30px/30px var(--font-display);
+  letter-spacing: .04em;
+  color: var(--team-label);
+  white-space: nowrap;
+}
+.banner .view-tag:empty { display: none; }
+
+/* In the bar layout it is in the 32px margin above the banner. The mirror turns the banner round, so the tag goes to
+   the other end with it. */
+html[data-layout="bar"] .bar-banner .view-tag {
+  position: absolute;
+  top: -32px;
+  right: 0;
+  height: 30px;
+  margin: 0;
+  font: 700 30px/30px var(--font-display);
+  letter-spacing: .04em;
+  color: var(--team-label);
+  white-space: nowrap;
+}
+html[data-layout="bar"] .bar-banner .view-tag:empty { display: none; }
+html.mirrored[data-layout="bar"] .bar-banner .view-tag {
+  right: auto;
+  left: 0;
+}

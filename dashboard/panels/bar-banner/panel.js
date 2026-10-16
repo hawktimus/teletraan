@@ -10,6 +10,8 @@ import { nameMarkup } from '../../core/name.js';
 import { frameKind, plateMarkup } from '../../core/plate.js';
 import { shapesNow } from '../../core/style.js';
 import { teamShown, trimNow } from '../../core/teams.js';
+import { viewNow } from '../../core/view-apply.js';
+import { viewNameOf, viewShowsTag, viewTitleOf } from '../../core/views.js';
 import { startWar, updateWar, warMarkup } from '../countdown/panel.js';
 
 // The war clock's slot is 766 by 128 (barSettings.warClock in core/layout.js), and its place
@@ -20,6 +22,7 @@ export function mount(host, content) {
       ${plateMarkup(frameKind('banner', 'bar', shapesNow(), trimNow()))}
       <h1 class="bar-name" data-part="title" data-name-effect></h1>
       <div class="bar-war" data-part="war">${warMarkup()}</div>
+      <span class="view-tag"></span>
     </section>`;
 
   const element = host.firstElementChild;
@@ -40,8 +43,14 @@ export function mount(host, content) {
 export function update(element, content) {
   updateWar(element.querySelector('.war-clock'), content);
 
+  const view = viewNow();
+  const tag = element.querySelector('.view-tag');
+  const tagText = view !== '' && viewShowsTag(view) ? viewNameOf(content, view) : '';
+  if (tag.textContent !== tagText) tag.textContent = tagText;
+
   const heading = element.querySelector('.bar-name');
-  const name = teamShown(content).name;
+  const title = view === '' ? '' : viewTitleOf(content, view);
+  const name = title !== '' ? title : teamShown(content).name;
   if (heading.dataset.name === name) return;
 
   heading.dataset.name = name;
