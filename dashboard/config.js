@@ -269,6 +269,20 @@ export const screenLimits = {
   swapSeconds: limits.swapSeconds,
 };
 
+// The Views and the theme schedule (Studio: Look tab of Dashboard Settings, and the Themes page). The keys are the four
+// Views in the order they take the screen. A day of the week plays one of the scheduled themes; Retro is not scheduled.
+export const viewKeys = ['general', 'prime', 'nova', 'family'];
+export const scheduledThemeIds = ['original', 'cybertron', 'retro'];
+export const defaultThemeByWeekday = {
+  monday: 'original',
+  tuesday: 'cybertron',
+  wednesday: 'original',
+  thursday: 'cybertron',
+  friday: 'original',
+  saturday: 'cybertron',
+  sunday: 'original',
+};
+
 // Used for anything the editors have not filled in yet
 export const defaultSettings = {
   motion: 'full',
@@ -412,6 +426,12 @@ export const defaultSettings = {
   dailyStyles: ['original', 'cybertron'],
   teamOrder: ['prime', 'nova'],
   lookSwap: 'assemble',
+  // The Views: the name and the title of the General view, the order the views take the screen, and the theme of
+  // each weekday (the Themes page). screenSchedule above is not read any more
+  generalViewName: 'General',
+  generalViewTitle: 'Hawktimus Dashboard',
+  viewOrder: viewKeys,
+  themeByWeekday: defaultThemeByWeekday,
   // The "Play announcements" button in the Studio (core/announce.js, core/announce-run.js, docs/hidden-transitions.md).
   //   announceRequest  the last click of the button. requestedAt is the time it was clicked and is empty until
   //                    it has been. The screen plays every announcement that is switched on, once, for a request
