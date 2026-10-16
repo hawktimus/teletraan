@@ -4,8 +4,8 @@
 // the sidebar or the buttons stop agreeing.
 
 import { dashboardAddress } from './dashboard-address.js';
-import { announceRequest, presentationTestRequest, nextLookRequest, competitionPreviewRequest } from './screen-requests.js';
-import { messageOf } from './publish-all.js';
+import { announceRequest, presentationTestRequest, nextLookRequest, competitionPreviewRequest } from '../tools/screen-requests.js';
+import { messageOf } from '../tools/publish-all.js';
 
 // The picture is drawn on the screen's own 1920 by 1080, so it has the shape of the screen.
 // The boxes are the standard layout in dashboard/base.css: the banner across the top, the

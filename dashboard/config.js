@@ -88,7 +88,7 @@ export const teamPanels = ['tasks', 'tonight', 'spotlight', 'team-leads', 'roste
 
 // The Monday rows a team is seeded with, in the order they play: the tasks of its first department, what it finished and its
 // board. A Screen that nobody has opened in the Studio plays them (core/screen-seed.js), and the Studio fills an empty Screen with
-// the same ones (studio/screen-seed.js).
+// the same ones (studio/tools/screen-seed.js).
 export const mondayRows = ['monday-tasks', 'monday-done', 'monday-board'];
 
 // The panels of the one task board, in the order the Studio offers them (docs/monday.md), and what a row of each says

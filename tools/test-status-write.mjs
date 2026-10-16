@@ -493,7 +493,7 @@ test('the status document and the fields in the script are the ones the Studio h
   const studioFields = Array.from(schema.matchAll(/timeField\('(\w+)'/g)).map(match => match[1]);
   assert.deepEqual(studioFields.slice().sort(), Object.values(fieldOf).sort());
 
-  const input = fs.readFileSync(path.join(repo, 'studio/status-input.js'), 'utf8');
+  const input = fs.readFileSync(path.join(repo, 'studio/inputs/status-input.js'), 'utf8');
   assert.ok(input.includes("export const statusId = 'status-mini';"));
   assert.ok(fs.readFileSync(scriptFile, 'utf8').includes('document=status-mini'));
   assert.ok(schema.includes("name: 'status'"));

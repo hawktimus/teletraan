@@ -33,7 +33,7 @@ export const handledKey = 'teletraan-preview-handled';
 export const activeKey = 'teletraan-preview-active';
 
 // One entry for each button. The key is the id the Studio stores in previewRequest.kind,
-// and name is the words after Preview on the button (studio/previews.js has a copy).
+// and name is the words after Preview on the button (studio/inputs/previews.js has a copy).
 // A kind holds one thing: a team mode from teamModes in config.js, a style from styles,
 // or the pack after the one on the screen ('next').
 export const previewKinds = {

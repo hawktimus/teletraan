@@ -137,7 +137,7 @@ reads the whole document, and `tidyTheme` in dashboard/core/theme.js copies
 only the fields it knows, so a new field on the Look page must be added there as well as
 to the schema, to `defaultThemeSettings` and to `theme` in the contract in
 studio/check-schemas.mjs. The list of themes and overlays in the schema comes
-from studio/themes.js (docs/adding-a-theme.md).
+from studio/inputs/themes.js (docs/adding-a-theme.md).
 
 When editors delete every row of a list, Sanity removes the list, and the
 dashboard would then use the default list. To make an empty list mean none,

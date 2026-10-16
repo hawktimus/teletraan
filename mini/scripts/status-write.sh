@@ -33,7 +33,7 @@ repo=$(dirname "$mini")
 config="$repo/dashboard/config.js"
 env_file="$mini/local.env"
 
-# The document the Studio shows (studio/status-input.js has the same id)
+# The document the Studio shows (studio/inputs/status-input.js has the same id)
 document=status-mini
 
 usage() {
@@ -136,7 +136,7 @@ newest_update() {
 }
 
 # The words after a time: how long ago it was, counted the way the Studio counts
-# it (studio/time-text.js). $1 is the time, $2 is now in seconds.
+# it (studio/inputs/time-text.js). $1 is the time, $2 is now in seconds.
 age_text() {
   awk -v text="$1" -v now="$2" 'BEGIN {
     year = substr(text, 1, 4) + 0

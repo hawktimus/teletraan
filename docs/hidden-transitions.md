@@ -283,7 +283,7 @@ What the screen does with it:
   (docs/try-it-on-the-mini.md). The sample content has both teams.
 
 To add a preview, add an entry to `previewKinds` in `dashboard/core/preview.js`, the same id and name to
-`studio/previews.js`, and the id to the choices in `studio/check-schemas.mjs` (search it for
+`studio/inputs/previews.js`, and the id to the choices in `studio/check-schemas.mjs` (search it for
 `previewRequest.kind`). A kind holds one thing: a team mode, a style or the next pack. Then run
 `node tools/test-effects.mjs` and `node studio/check-schemas.mjs`, and run `npm run deploy` in the
 `studio` folder so the editors see the button.
@@ -439,10 +439,10 @@ chance setting.
    (`myEveryHours: 0`, which means not set, and `myChance: 1`) and to `limits`
    (`myEveryHours: { min: 1, max: 1000 }` and `myChance: { min: 0, max: 100 }`). Add
    the hours to the sample content, `dashboard/data/sample/content.json`.
-3. In `studio/hidden-transitions.js` add the same id, name, hours field and chance field, in the
+3. In `studio/inputs/hidden-transitions.js` add the same id, name, hours field and chance field, in the
    same place in the list. The Studio is built on its own and cannot read the
    dashboard folder, which is why the list is written twice. The Play button comes from
-   this list, so there is nothing to add in `actions.js`.
+   this list, so there is nothing to add in `studio/tools/actions.js`.
 4. In `studio/schemas/settingsHidden.js` add the hours field, a copy of
    `desktopEveryHours`, and the hidden chance field, a copy of `desktopChance`. Add
    their names to `hiddenNames` and the number tables in
@@ -512,19 +512,19 @@ chance setting.
   still while one plays, and `playGlitch` gives it its red glitches. `enter(panel, true)`
   brings in the content of a panel without drawing its frame again, which is what the build does.
 - `studio/schemas/settingsAnnouncements.js` has the hidden `announceRequest` field
-  (`announceRequestField`), and `usePlayAnnouncementsAction` in `studio/actions.js` is the
+  (`announceRequestField`), and `usePlayAnnouncementsAction` in `studio/tools/actions.js` is the
   button. The starting value is `announceRequest` in `defaultSettings` in
   `dashboard/config.js`.
 - `studio/schemas/settingsPresentations.js` has the hidden `presentationTestRequest` field
-  (`presentationTestRequestField`), and `useRunPresentationTestAction` in `studio/actions.js` is the
+  (`presentationTestRequestField`), and `useRunPresentationTestAction` in `studio/tools/actions.js` is the
   button. The starting value is `presentationTestRequest` in `defaultSettings` in
   `dashboard/config.js`.
 - `studio/schemas/settingsPreview.js` has the hidden `previewRequest` field (`previewRequestField`, in the
-  Screen tab), `studio/previews.js` is the Studio's copy of the kinds, and `previewActions` in
-  `studio/actions.js` are the buttons. The starting value is `previewRequest` in `defaultSettings` in
+  Screen tab), `studio/inputs/previews.js` is the Studio's copy of the kinds, and `previewActions` in
+  `studio/tools/actions.js` are the buttons. The starting value is `previewRequest` in `defaultSettings` in
   `dashboard/config.js`, and `previewSeconds` there is the 2 minutes.
-- `studio/schemas/settingsHidden.js` is the tab, `studio/actions.js` has the Play
-  buttons, and `studio/hidden-transitions.js` is the Studio's copy of the list. The
+- `studio/schemas/settingsHidden.js` is the tab, `studio/tools/actions.js` has the Play
+  buttons, and `studio/inputs/hidden-transitions.js` is the Studio's copy of the list. The
   starting values are `hiddenEnabled`, `desktopEveryHours`, `redEyesEveryHours`,
   `desktopChance`, `redEyesChance` and `hiddenRequest` in `defaultSettings` in
   `dashboard/config.js`. The hours start at 0 there, which means not set, and at 60 in

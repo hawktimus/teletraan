@@ -555,7 +555,7 @@ function iconImportsOf(source) {
 
 function makeSandbox() {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-studio-'));
-  ['schemas', 'structure.js', 'start-here.js', 'start-here-parts.js', 'screen-requests.js', 'dashboard-address.js', 'calendars-view.js', 'project.js', 'actions.js', 'themes.js', 'demo-screens.js', 'hidden-transitions.js', 'previews.js', 'publish-all.js', 'publish-all-tool.js', 'team-input.js', 'note-field.js', 'show-on-tv-input.js', 'status-input.js', 'frc-status-input.js', 'monday-status-input.js', 'monday-pickers.js', 'time-text.js', 'calendars-view-parts.js', 'monday-boards-view.js', 'monday-boards-parts.js', 'panel-order-input.js', 'add-templates.js', 'screen-ids.js', 'screen-panels.js', 'screen-seed.js', 'screen-parts.js', 'screen-map.js', 'screen-context.js', 'screen-fields.js', 'screen-input.js', 'preview-panels.js', 'panel-preview.js', 'row-preview-input.js', 'preview-panels-view.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
+  ['schemas', 'structure.js', 'inputs', 'tools', 'project.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
     fs.cpSync(path.join(here, name), path.join(folder, name), { recursive: true });
   });
   fs.writeFileSync(path.join(folder, 'package.json'), JSON.stringify({ type: 'module' }));
@@ -1561,16 +1561,16 @@ function checkHiddenTab() {
   const copy = world.studioHidden.hiddenTransitions;
   const ids = Object.keys(registry);
   need(problems, ids.length > 0, 'the registry in dashboard/core/hidden-transitions.js has no transitions');
-  need(problems, copy.length === ids.length, 'studio/hidden-transitions.js has ' + copy.length + ' transitions and the dashboard registry has ' + ids.length);
+  need(problems, copy.length === ids.length, 'studio/inputs/hidden-transitions.js has ' + copy.length + ' transitions and the dashboard registry has ' + ids.length);
   ids.forEach((id, index) => {
     const entry = registry[id];
     need(problems, typeof entry.name === 'string' && entry.name !== '', 'the hidden transition "' + id + '" needs a name');
     need(problems, typeof entry.run === 'function', 'the hidden transition "' + id + '" needs a run function');
     const other = copy[index];
-    if (!other || other.id !== id) return problems.push('hidden transition number ' + (index + 1) + ' is "' + id + '" in the dashboard registry but "' + (other && other.id) + '" in studio/hidden-transitions.js');
-    need(problems, other.name === entry.name, 'the hidden transition "' + id + '" has name "' + entry.name + '" in the dashboard registry but "' + other.name + '" in studio/hidden-transitions.js');
-    need(problems, other.hoursField === entry.hoursField, 'the hidden transition "' + id + '" has hours field "' + entry.hoursField + '" in the dashboard registry but "' + other.hoursField + '" in studio/hidden-transitions.js');
-    need(problems, other.chanceField === entry.chanceField, 'the hidden transition "' + id + '" has chance field "' + entry.chanceField + '" in the dashboard registry but "' + other.chanceField + '" in studio/hidden-transitions.js');
+    if (!other || other.id !== id) return problems.push('hidden transition number ' + (index + 1) + ' is "' + id + '" in the dashboard registry but "' + (other && other.id) + '" in studio/inputs/hidden-transitions.js');
+    need(problems, other.name === entry.name, 'the hidden transition "' + id + '" has name "' + entry.name + '" in the dashboard registry but "' + other.name + '" in studio/inputs/hidden-transitions.js');
+    need(problems, other.hoursField === entry.hoursField, 'the hidden transition "' + id + '" has hours field "' + entry.hoursField + '" in the dashboard registry but "' + other.hoursField + '" in studio/inputs/hidden-transitions.js');
+    need(problems, other.chanceField === entry.chanceField, 'the hidden transition "' + id + '" has chance field "' + entry.chanceField + '" in the dashboard registry but "' + other.chanceField + '" in studio/inputs/hidden-transitions.js');
   });
   const offered = choicesOf('dashboardSettings.hiddenRequest.kind');
   need(problems, offered.map(item => item.title).join() === ids.map(id => registry[id].name).join(), 'hiddenRequest.kind should show the names in the dashboard registry');
@@ -1672,7 +1672,7 @@ function checkPlayAnnouncements() {
   const registry = world.demoRegistry.demoScreens;
   const copy = world.studioDemoScreens.demoScreens.filter(entry => entry.id === 'all-announcements')[0];
   need(problems, registry['all-announcements'] && registry['all-announcements'].name === 'All announcements', 'the dashboard demo screens should have all-announcements, named All announcements');
-  need(problems, copy && copy.name === 'All announcements', 'studio/demo-screens.js should have all-announcements, named All announcements');
+  need(problems, copy && copy.name === 'All announcements', 'studio/inputs/demo-screens.js should have all-announcements, named All announcements');
 
   // The button comes after the Play buttons of the hidden transitions, and nowhere else. Run presentation test and the Preview buttons are the ones after it.
   const played = Object.keys(world.hiddenRegistry.hiddenTransitions).length;
@@ -1795,13 +1795,13 @@ function checkPreviewButtons() {
 
   // The Studio's list is the dashboard's registry: the same ids and names, in the same order, and each kind holds something that exists
   need(problems, ids.length === 5, 'the registry in dashboard/core/preview.js should have five previews, not ' + ids.length);
-  need(problems, copy.length === ids.length, 'studio/previews.js has ' + copy.length + ' previews and the dashboard registry has ' + ids.length);
+  need(problems, copy.length === ids.length, 'studio/inputs/previews.js has ' + copy.length + ' previews and the dashboard registry has ' + ids.length);
   ids.forEach((id, index) => {
     const entry = registry[id];
     const other = copy[index];
-    if (!other || other.id !== id) return problems.push('preview number ' + (index + 1) + ' is "' + id + '" in the dashboard registry but "' + (other && other.id) + '" in studio/previews.js');
-    need(problems, other.name === entry.name, 'the preview "' + id + '" has name "' + entry.name + '" in the dashboard registry but "' + other.name + '" in studio/previews.js');
-    need(problems, typeof other.shows === 'string' && other.shows !== '', 'the preview "' + id + '" needs words for what it shows in studio/previews.js');
+    if (!other || other.id !== id) return problems.push('preview number ' + (index + 1) + ' is "' + id + '" in the dashboard registry but "' + (other && other.id) + '" in studio/inputs/previews.js');
+    need(problems, other.name === entry.name, 'the preview "' + id + '" has name "' + entry.name + '" in the dashboard registry but "' + other.name + '" in studio/inputs/previews.js');
+    need(problems, typeof other.shows === 'string' && other.shows !== '', 'the preview "' + id + '" needs words for what it shows in studio/inputs/previews.js');
 
     const holds = ['team', 'style', 'pack'].filter(name => entry[name] !== undefined);
     need(problems, holds.length === 1, 'the preview "' + id + '" should hold one thing: a team, a style or a pack');
@@ -3031,22 +3031,22 @@ function checkPersonRows() {
 // (themes.js) must say the same as the dashboard's registries, because the
 // editors pick from the Studio's list and the screen looks the ids up in its own.
 function sameRegistry(name, dashboardList, studioList, problems) {
-  need(problems, studioList.length === dashboardList.length, 'studio/themes.js has ' + studioList.length + ' ' + name + ' and the dashboard registry has ' + dashboardList.length);
+  need(problems, studioList.length === dashboardList.length, 'studio/inputs/themes.js has ' + studioList.length + ' ' + name + ' and the dashboard registry has ' + dashboardList.length);
 
   dashboardList.forEach((entry, index) => {
     const copy = studioList[index];
-    if (!copy) return problems.push('studio/themes.js is missing the ' + name + ' "' + entry.id + '"');
+    if (!copy) return problems.push('studio/inputs/themes.js is missing the ' + name + ' "' + entry.id + '"');
 
     // decorations is on the overlays only: whether the pack has a file in dashboard/seasons/
     const keys = ['id', 'name', 'description'].concat(name === 'overlays' ? ['decorations'] : []);
     keys.forEach(key => {
-      if (copy[key] !== entry[key]) problems.push('the ' + name + ' number ' + (index + 1) + ' has ' + key + ' "' + copy[key] + '" in studio/themes.js but "' + entry[key] + '" in the dashboard registry');
+      if (copy[key] !== entry[key]) problems.push('the ' + name + ' number ' + (index + 1) + ' has ' + key + ' "' + copy[key] + '" in studio/inputs/themes.js but "' + entry[key] + '" in the dashboard registry');
     });
 
     // layout is on the themes only, and a theme that says nothing has the standard layout (dashboard/core/layout.js)
     if (name === 'themes') {
       const layoutOf = item => (item.layout === undefined ? world.layoutModule.defaultLayout : item.layout);
-      if (layoutOf(copy) !== layoutOf(entry)) problems.push('the themes number ' + (index + 1) + ' has layout "' + layoutOf(copy) + '" in studio/themes.js but "' + layoutOf(entry) + '" in the dashboard registry');
+      if (layoutOf(copy) !== layoutOf(entry)) problems.push('the themes number ' + (index + 1) + ' has layout "' + layoutOf(copy) + '" in studio/inputs/themes.js but "' + layoutOf(entry) + '" in the dashboard registry');
       need(problems, world.layoutModule.isLayout(layoutOf(entry)), 'the theme "' + entry.id + '" has the layout "' + layoutOf(entry) + '", which is not one of: ' + world.layoutModule.layouts.join(', '));
       if (layoutOf(entry) === 'sidebar') {
         need(problems, /sidebar/i.test(copy.description || '') && /no small frame/i.test(copy.description || ''), 'the Studio description of the theme "' + entry.id + '" should say it has a sidebar and no small frame, so editors know what they are picking');
@@ -3245,8 +3245,8 @@ function checkDemoScreens() {
   const copy = world.studioDemoScreens.demoScreens;
 
   need(problems, ids.length > 0, 'the registry in dashboard/core/demo-screens.js has no screens');
-  need(problems, copy.length === ids.length, 'studio/demo-screens.js has ' + copy.length + ' screens and the dashboard registry has ' + ids.length);
-  need(problems, new Set(copy.map(entry => entry.id)).size === copy.length, 'studio/demo-screens.js lists a screen twice');
+  need(problems, copy.length === ids.length, 'studio/inputs/demo-screens.js has ' + copy.length + ' screens and the dashboard registry has ' + ids.length);
+  need(problems, new Set(copy.map(entry => entry.id)).size === copy.length, 'studio/inputs/demo-screens.js lists a screen twice');
 
   ids.forEach((id, index) => {
     const entry = registry[id];
@@ -3254,9 +3254,9 @@ function checkDemoScreens() {
     need(problems, typeof entry.run === 'function', 'the dashboard demo screen "' + id + '" needs a run function');
 
     const other = copy[index];
-    if (!other) return problems.push('studio/demo-screens.js is missing the demo screen "' + id + '"');
-    if (other.id !== id) problems.push('demo screen number ' + (index + 1) + ' has id "' + id + '" in the dashboard registry but "' + other.id + '" in studio/demo-screens.js');
-    if (other.name !== entry.name) problems.push('the demo screen "' + id + '" has name "' + entry.name + '" in the dashboard registry but "' + other.name + '" in studio/demo-screens.js');
+    if (!other) return problems.push('studio/inputs/demo-screens.js is missing the demo screen "' + id + '"');
+    if (other.id !== id) problems.push('demo screen number ' + (index + 1) + ' has id "' + id + '" in the dashboard registry but "' + other.id + '" in studio/inputs/demo-screens.js');
+    if (other.name !== entry.name) problems.push('the demo screen "' + id + '" has name "' + entry.name + '" in the dashboard registry but "' + other.name + '" in studio/inputs/demo-screens.js');
   });
 
   // What the editors are offered on a step is the registry's list, in order, in plain words
@@ -4086,7 +4086,7 @@ function checkTeamField() {
     need(problems, !constraintNamed(constraintsOf(field), 'required'), where + ' should be optional, because empty means Both');
     need(problems, field.initialValue === undefined, where + ' should have no starting value, so it starts on Both');
     need(problems, words === 'Leave blank when it is for both teams.', 'the ' + where + ' description should be "Leave blank when it is for both teams."');
-    need(problems, field.components && field.components.input === world.teamInput.TeamInput, where + ' should use the radio input, TeamInput in studio/team-input.js (components.input)');
+    need(problems, field.components && field.components.input === world.teamInput.TeamInput, where + ' should use the radio input, TeamInput in studio/inputs/team-input.js (components.input)');
     need(problems, !(field.options && (field.options.disableNew || field.options.filter)), where + ' should be an ordinary reference to a team');
   });
 
@@ -4297,7 +4297,7 @@ function checkSettingsTabs() {
   need(problems, status && status.type === 'string' && status.readOnly === true, 'miniStatus should be a read only string');
   need(problems, status && status.initialValue === undefined && !status.validation, 'miniStatus should store nothing: no starting value and no rules');
   need(problems, status && status.components && typeof status.components.input === 'function', 'miniStatus should have an input component (status-input.js)');
-  const source = fs.readFileSync(path.join(here, 'status-input.js'), 'utf8');
+  const source = fs.readFileSync(path.join(here, 'inputs', 'status-input.js'), 'utf8');
   need(problems, !/onChange|\bset\(|unset\(|patch/.test(source), 'status-input.js should never change the value: no onChange, set, unset or patch');
   return problems;
 }
@@ -4455,7 +4455,7 @@ function checkCompetitionTab() {
   need(problems, block && block.type === 'string' && block.readOnly === true, 'frcConnection should be a read only string');
   need(problems, block && block.initialValue === undefined && !block.validation, 'frcConnection should store nothing: no starting value and no rules');
   need(problems, block && block.components && block.components.input === world.frcStatusInput.FrcStatusInput, 'frcConnection should draw itself with FrcStatusInput (frc-status-input.js)');
-  const source = fs.readFileSync(path.join(here, 'frc-status-input.js'), 'utf8');
+  const source = fs.readFileSync(path.join(here, 'inputs', 'frc-status-input.js'), 'utf8');
   need(problems, !/onChange|\bset\(|unset\(|patch/.test(source), 'frc-status-input.js should never change the value: no onChange, set, unset or patch');
   return problems;
 }
@@ -4558,7 +4558,7 @@ function report() {
   return failed;
 }
 
-// Publish all (studio/publish-all-tool.js) is a tool in the top bar. What it
+// Publish all (studio/tools/publish-all-tool.js) is a tool in the top bar. What it
 // publishes comes from publish-all.js, whose logic tools/test-publish-all.mjs
 // runs. Here: the tool is registered, the pages that exist once keep their
 // fixed ids, and every kind of document has a name in its list.
@@ -4749,7 +4749,7 @@ function checkMondayCards() {
     need(problems, rotation.indexOf(id) === -1, id + ' should not be in the rotation lists of config.js');
     need(problems, choices.indexOf(id) === -1, id + ' should not be offered in Panel order, because it runs in the Monday block of the look rotation');
     need(problems, field && field.initialValue.every(row => row.panel !== id), id + ' should not be in the starting rows of Panel order');
-    ['js', 'css'].forEach(kind => need(problems, fs.existsSync(path.join(dashboardFolder, 'panels', id, id + '.' + kind)), 'panels/' + id + '/' + id + '.' + kind + ' is missing'));
+    ['js', 'css'].forEach(kind => need(problems, fs.existsSync(path.join(dashboardFolder, 'panels', id, 'panel.' + kind)), 'panels/' + id + '/panel.' + kind + ' is missing'));
   });
   return problems;
 }
@@ -4793,7 +4793,7 @@ function checkBoardTasks() {
   need(problems, priority && /optional/i.test(priority.description || ''), 'the task.priority description should say it is optional');
   const showOnTv = at('showOnTv');
   need(problems, showOnTv && showOnTv.type === 'boolean' && showOnTv.title === 'Show on TV' && showOnTv.initialValue === true && showOnTv.hidden === undefined, 'task.showOnTv should be a switch titled Show on TV that starts on');
-  need(problems, showOnTv && showOnTv.components && showOnTv.components.input === world.showOnTvInput.ShowOnTvInput, 'task.showOnTv should use the input in studio/show-on-tv-input.js, which draws a task with no value as on');
+  need(problems, showOnTv && showOnTv.components && showOnTv.components.input === world.showOnTvInput.ShowOnTvInput, 'task.showOnTv should use the input in studio/inputs/show-on-tv-input.js, which draws a task with no value as on');
 
   // the two lines at the top: one for a task from the board and one for any other, each shown for its own tasks and storing nothing
   const names = fieldsIn(typeByName('task')).map(field => field.name);
@@ -5683,7 +5683,7 @@ function checkMondayTab() {
   need(problems, block && block.type === 'string' && block.readOnly === true, 'mondayConnection should be a read only string');
   need(problems, block && block.initialValue === undefined && !block.validation, 'mondayConnection should store nothing: no starting value and no rules');
   need(problems, block && block.components && block.components.input === world.mondayStatusInput.MondayStatusInput, 'mondayConnection should draw itself with MondayStatusInput (monday-status-input.js)');
-  const source = fs.readFileSync(path.join(here, 'monday-status-input.js'), 'utf8');
+  const source = fs.readFileSync(path.join(here, 'inputs', 'monday-status-input.js'), 'utf8');
   need(problems, !/onChange|\bset\(|unset\(|patch/.test(source), 'monday-status-input.js should never change the value: no onChange, set, unset or patch');
 
   // How often: 5 to 120 whole minutes, starting at 30, in the words of the order
@@ -6070,7 +6070,7 @@ function checkMondayPickers() {
   });
 
   // Read only: the pickers write only what the person picks, and only through onChange
-  const text = fs.readFileSync(path.join(here, 'monday-pickers.js'), 'utf8');
+  const text = fs.readFileSync(path.join(here, 'inputs', 'monday-pickers.js'), 'utf8');
   need(problems, !/\.patch\(|\.create\(|\.createOrReplace\(|\.delete\(|\.mutate\(|\.transaction\(|useDocumentOperation/.test(text), 'monday-pickers.js should never change a document itself: no patch, create, delete or mutate');
   return problems;
 }
@@ -6712,42 +6712,42 @@ async function main() {
     world.themeRegistry = await load(path.join(dashboardFolder, 'themes', 'registry.js'));
     world.layoutModule = await load(path.join(dashboardFolder, 'core', 'layout.js'));
     world.overlayRegistry = await load(path.join(dashboardFolder, 'themes', 'overlays', 'registry.js'));
-    world.studioThemes = await load(path.join(folder, 'themes.js'));
+    world.studioThemes = await load(path.join(folder, 'inputs', 'themes.js'));
     world.cornerArt = await load(path.join(dashboardFolder, 'core', 'corner-art.js'));
     world.packExtras = await load(path.join(dashboardFolder, 'core', 'pack-extras.js'));
     world.demoRegistry = await load(path.join(dashboardFolder, 'core', 'demo-screens.js'));
-    world.studioDemoScreens = await load(path.join(folder, 'demo-screens.js'));
+    world.studioDemoScreens = await load(path.join(folder, 'inputs', 'demo-screens.js'));
     world.hiddenRegistry = await load(path.join(dashboardFolder, 'core', 'hidden-transitions.js'));
-    world.studioHidden = await load(path.join(folder, 'hidden-transitions.js'));
+    world.studioHidden = await load(path.join(folder, 'inputs', 'hidden-transitions.js'));
     world.previewModule = await load(path.join(dashboardFolder, 'core', 'preview.js'));
-    world.studioPreviews = await load(path.join(folder, 'previews.js'));
-    world.publishAll = await load(path.join(folder, 'publish-all.js'));
-    world.publishAllTool = await load(path.join(folder, 'publish-all-tool.js'));
-    world.teamInput = await load(path.join(folder, 'team-input.js'));
-    world.startHere = await load(path.join(folder, 'start-here.js'));
-    world.startHereParts = await load(path.join(folder, 'start-here-parts.js'));
-    world.screenRequests = await load(path.join(folder, 'screen-requests.js'));
-    world.dashboardAddress = await load(path.join(folder, 'dashboard-address.js'));
-    world.startHereSource = fs.readFileSync(path.join(here, 'start-here.js'), 'utf8');
-    world.startHerePartsSource = fs.readFileSync(path.join(here, 'start-here-parts.js'), 'utf8');
-    world.actionsSource = fs.readFileSync(path.join(here, 'actions.js'), 'utf8');
+    world.studioPreviews = await load(path.join(folder, 'inputs', 'previews.js'));
+    world.publishAll = await load(path.join(folder, 'tools', 'publish-all.js'));
+    world.publishAllTool = await load(path.join(folder, 'tools', 'publish-all-tool.js'));
+    world.teamInput = await load(path.join(folder, 'inputs', 'team-input.js'));
+    world.startHere = await load(path.join(folder, 'inputs', 'start-here.js'));
+    world.startHereParts = await load(path.join(folder, 'inputs', 'start-here-parts.js'));
+    world.screenRequests = await load(path.join(folder, 'tools', 'screen-requests.js'));
+    world.dashboardAddress = await load(path.join(folder, 'inputs', 'dashboard-address.js'));
+    world.startHereSource = fs.readFileSync(path.join(here, 'inputs', 'start-here.js'), 'utf8');
+    world.startHerePartsSource = fs.readFileSync(path.join(here, 'inputs', 'start-here-parts.js'), 'utf8');
+    world.actionsSource = fs.readFileSync(path.join(here, 'tools', 'actions.js'), 'utf8');
     world.baseCss = fs.readFileSync(path.join(dashboardFolder, 'base.css'), 'utf8');
-    world.noteField = await load(path.join(folder, 'note-field.js'));
-    world.showOnTvInput = await load(path.join(folder, 'show-on-tv-input.js'));
-    world.statusInput = await load(path.join(folder, 'status-input.js'));
-    world.frcStatusInput = await load(path.join(folder, 'frc-status-input.js'));
-    world.mondayStatusInput = await load(path.join(folder, 'monday-status-input.js'));
-    world.mondayPickers = await load(path.join(folder, 'monday-pickers.js'));
+    world.noteField = await load(path.join(folder, 'inputs', 'note-field.js'));
+    world.showOnTvInput = await load(path.join(folder, 'inputs', 'show-on-tv-input.js'));
+    world.statusInput = await load(path.join(folder, 'inputs', 'status-input.js'));
+    world.frcStatusInput = await load(path.join(folder, 'inputs', 'frc-status-input.js'));
+    world.mondayStatusInput = await load(path.join(folder, 'inputs', 'monday-status-input.js'));
+    world.mondayPickers = await load(path.join(folder, 'inputs', 'monday-pickers.js'));
     world.competition = await load(path.join(dashboardFolder, 'core', 'competition.js'));
     world.sanitySource = fs.readFileSync(path.join(dashboardFolder, 'core', 'sanity.js'), 'utf8');
     world.frcScript = fs.readFileSync(path.join(here, '..', 'mini', 'scripts', 'frc-sync.sh'), 'utf8');
     world.mondayScript = fs.readFileSync(path.join(here, '..', 'mini', 'scripts', 'monday-sync.sh'), 'utf8');
-    world.panelOrderInput = await load(path.join(folder, 'panel-order-input.js'));
-    world.screenIds = await load(path.join(folder, 'screen-ids.js'));
-    world.screenMap = await load(path.join(folder, 'screen-map.js'));
-    world.screenParts = await load(path.join(folder, 'screen-parts.js'));
-    world.screenFields = await load(path.join(folder, 'screen-fields.js'));
-    world.screenInput = await load(path.join(folder, 'screen-input.js'));
+    world.panelOrderInput = await load(path.join(folder, 'inputs', 'panel-order-input.js'));
+    world.screenIds = await load(path.join(folder, 'inputs', 'screen-ids.js'));
+    world.screenMap = await load(path.join(folder, 'tools', 'screen-map.js'));
+    world.screenParts = await load(path.join(folder, 'inputs', 'screen-parts.js'));
+    world.screenFields = await load(path.join(folder, 'inputs', 'screen-fields.js'));
+    world.screenInput = await load(path.join(folder, 'inputs', 'screen-input.js'));
     world.panelOrder = await load(path.join(dashboardFolder, 'core', 'panel-order.js'));
     world.constants = await load(path.join(dashboardFolder, 'core', 'constants.js'));
     world.portrait = await load(path.join(dashboardFolder, 'core', 'portrait.js'));
@@ -6758,17 +6758,17 @@ async function main() {
     world.placeSeed = fs.readFileSync(path.join(here, '..', 'docs', 'seed', 'places.ndjson'), 'utf8');
     world.teamSeed = fs.readFileSync(path.join(here, '..', 'docs', 'seed', 'teams.ndjson'), 'utf8');
     world.hawktimusCss = fs.readFileSync(path.join(dashboardFolder, 'themes', 'hawktimus.css'), 'utf8');
-    world.addTemplates = (await load(path.join(folder, 'add-templates.js'))).addTemplates;
-    world.timeText = await load(path.join(folder, 'time-text.js'));
-    world.calendarsParts = await load(path.join(folder, 'calendars-view-parts.js'));
-    world.calendarsView = await load(path.join(folder, 'calendars-view.js'));
-    world.calendarsViewSource = fs.readFileSync(path.join(here, 'calendars-view.js'), 'utf8');
-    world.calendarsPartsSource = fs.readFileSync(path.join(here, 'calendars-view-parts.js'), 'utf8');
-    world.mondayBoardsParts = await load(path.join(folder, 'monday-boards-parts.js'));
-    world.mondayBoardsView = await load(path.join(folder, 'monday-boards-view.js'));
-    world.previewPanelsView = await load(path.join(folder, 'preview-panels-view.js'));
-    world.mondayBoardsViewSource = fs.readFileSync(path.join(here, 'monday-boards-view.js'), 'utf8');
-    world.mondayBoardsPartsSource = fs.readFileSync(path.join(here, 'monday-boards-parts.js'), 'utf8');
+    world.addTemplates = (await load(path.join(folder, 'tools', 'add-templates.js'))).addTemplates;
+    world.timeText = await load(path.join(folder, 'inputs', 'time-text.js'));
+    world.calendarsParts = await load(path.join(folder, 'inputs', 'calendars-view-parts.js'));
+    world.calendarsView = await load(path.join(folder, 'inputs', 'calendars-view.js'));
+    world.calendarsViewSource = fs.readFileSync(path.join(here, 'inputs', 'calendars-view.js'), 'utf8');
+    world.calendarsPartsSource = fs.readFileSync(path.join(here, 'inputs', 'calendars-view-parts.js'), 'utf8');
+    world.mondayBoardsParts = await load(path.join(folder, 'inputs', 'monday-boards-parts.js'));
+    world.mondayBoardsView = await load(path.join(folder, 'inputs', 'monday-boards-view.js'));
+    world.previewPanelsView = await load(path.join(folder, 'inputs', 'preview-panels-view.js'));
+    world.mondayBoardsViewSource = fs.readFileSync(path.join(here, 'inputs', 'monday-boards-view.js'), 'utf8');
+    world.mondayBoardsPartsSource = fs.readFileSync(path.join(here, 'inputs', 'monday-boards-parts.js'), 'utf8');
     world.calendarStatusScript = fs.readFileSync(path.join(here, '..', 'mini', 'scripts', 'calendar-status.sh'), 'utf8');
     world.calendarStatusHelper = fs.readFileSync(path.join(here, '..', 'mini', 'scripts', 'calendar-status.mjs'), 'utf8');
   } finally {
@@ -6806,9 +6806,9 @@ async function main() {
   check('the Portraits box has two sizes from 60 to 220, a shape and a frame, agrees with dashboard/config.js, and its descriptions give the people a page holds', checkPortraitSettings);
   check('a person and a team lead have an optional line, a person has a required Role that is the chip, and the old group is hidden', checkPersonRows);
   check('a photo has a picture, a short caption and a first name credit, and the photo settings agree with dashboard/config.js', checkPhotos);
-  check('the themes and overlays in studio/themes.js are the ones in the dashboard registries', checkThemeLists);
+  check('the themes and overlays in studio/inputs/themes.js are the ones in the dashboard registries', checkThemeLists);
   check('the Look page agrees with dashboard/config.js, needs a start and an end for each rule, and checks the time zone', checkTheme);
-  check('the demo screens in studio/demo-screens.js are the ones in the dashboard registry', checkDemoScreens);
+  check('the demo screens in studio/inputs/demo-screens.js are the ones in the dashboard registry', checkDemoScreens);
   check('the Demo page agrees with dashboard/config.js and has no buttons', checkDemo);
   check('an Events Calendar entry needs a title and a start date, and the seed file can be imported', checkExtraEvents);
   check('a calendar filter has a name, an action, title words, days, a calendar and dates, and needs at least one of them', checkCalendarFilters);

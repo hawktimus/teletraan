@@ -21,11 +21,11 @@
 // fails if they differ. None of the numbers is required: a Screen with none uses the starting values.
 
 import { defineType, defineField, defineArrayMember } from 'sanity';
-import { ScreenInput } from '../screen-input.js';
-import { BannerTeamInput, CountdownInput, TickerInput, RowTeamInput, RowDepartmentInput, PhotoTotalInput } from '../screen-fields.js';
-import { RowWithPreview } from '../row-preview-input.js';
-import { largePanels, smallPanels, mondayPanels, panelTitle, takesDepartment, teamKindOf, teamProblem, teamWord } from '../screen-panels.js';
-import { screenStyles, screenTitles, styleOfScreenId } from '../screen-ids.js';
+import { ScreenInput } from '../inputs/screen-input.js';
+import { BannerTeamInput, CountdownInput, TickerInput, RowTeamInput, RowDepartmentInput, PhotoTotalInput } from '../inputs/screen-fields.js';
+import { RowWithPreview } from '../inputs/row-preview-input.js';
+import { largePanels, smallPanels, mondayPanels, panelTitle, takesDepartment, teamKindOf, teamProblem, teamWord } from '../inputs/screen-panels.js';
+import { screenStyles, screenTitles, styleOfScreenId } from '../inputs/screen-ids.js';
 
 // The letters of the map, in order. The names are the ones in letterGroups in screen-map.js.
 const groups = [

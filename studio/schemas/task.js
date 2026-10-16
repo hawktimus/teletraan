@@ -1,6 +1,6 @@
 import { defineType, defineField } from 'sanity';
 import { showField, expiresField, orderField, teamField, noteField, tooLong, byOrder, aToZ, titleOf, subtitleFor } from './fields.js';
-import { ShowOnTvInput } from '../show-on-tv-input.js';
+import { ShowOnTvInput } from '../inputs/show-on-tv-input.js';
 
 // The contact is a first name, so a space or a digit means a last name or
 // something else is in there. A hyphen is fine, as in Mary-Anne.

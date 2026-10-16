@@ -48,4 +48,4 @@ or past. Delete a past one when you like. Nothing else needs cleaning up.
 - The content has `notices`, from the query in `dashboard/core/sanity.js`. The sample content has
   one, which shows only with `?sample=1&notice=1`.
 - The Studio type is `announcement` (`studio/schemas/announcement.js`). Its template
-  `newAnnouncement` is in `studio/add-templates.js`.
+  `newAnnouncement` is in `studio/tools/add-templates.js`.

@@ -14,7 +14,7 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 const load = file => import(pathToFileURL(path.join(root, file)).href);
 const { readStill, useStillSwitches, stillRow } = await load('dashboard/core/still.js');
 const { makeSecondTimer } = await load('dashboard/core/tick.js');
-const preview = await load('studio/preview-panels.js');
+const preview = await load('studio/inputs/preview-panels.js');
 const { copyDashboard } = await load('studio/scripts/copy-dashboard.mjs');
 
 const tests = [];

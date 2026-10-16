@@ -72,7 +72,7 @@ links `themes/ocean.css` itself. Only `hawktimus.css` is linked in
 ## 3. The Studio's copy of the registry
 
 The Studio is built on its own and cannot read the dashboard folder, so it has
-its own copy of the list. Open `studio/themes.js` and add the same entry to
+its own copy of the list. Open `studio/inputs/themes.js` and add the same entry to
 `themes`, with the same id, name and description.
 
 ## 4. Check it
@@ -92,7 +92,7 @@ colour that fails is printed with its ratio. Make the text lighter or the
 background darker. A screen is read from 20 feet away, so this is not a
 suggestion.
 
-`check-schemas.mjs` fails if `studio/themes.js` and the dashboard registry say
+`check-schemas.mjs` fails if `studio/inputs/themes.js` and the dashboard registry say
 different things. It also runs `check-themes.mjs`, so it fails when that does.
 
 ## 5. Look at it
@@ -126,7 +126,7 @@ the side panel rows of a Screen are not shown while it is on, and the large
 panels are the rotation of the one frame.
 
 Put `layout: 'sidebar'` in the line in `dashboard/themes/registry.js` and in the
-same line in `studio/themes.js`, and say in the description that the theme has a
+same line in `studio/inputs/themes.js`, and say in the description that the theme has a
 sidebar and no small frame, so editors know what they are picking. The layout is
 set before anything is drawn. When the screen is running in one layout and the
 theme changes to a theme with another, the layout is changed in the page, in the moment the

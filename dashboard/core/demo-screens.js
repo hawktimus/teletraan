@@ -1,5 +1,5 @@
 // The screens a demo can show. One entry for each, so adding a screen is one
-// entry here and the same id and name in studio/demo-screens.js (docs/demo.md).
+// entry here and the same id and name in studio/inputs/demo-screens.js (docs/demo.md).
 //
 // The key is the id the Studio stores. name is the words the editors pick it
 // by. run(context) puts the screen up. It does one of two things:

@@ -169,7 +169,7 @@ function checkFilesMatchRegistry() {
   decorated.filter(id => files.indexOf(id) === -1).forEach(id => problems.push('the overlay "' + id + '" says decorations: true in its registry entry, but dashboard/seasons/' + id + '.js does not exist'));
   files.filter(id => decorated.indexOf(id) === -1).forEach(id => {
     const entry = world.overlays.filter(overlay => overlay.id === id)[0];
-    problems.push('dashboard/seasons/' + id + '.js has no overlay that says decorations: true. ' + (entry ? 'Set decorations: true on "' + id + '" in dashboard/themes/overlays/registry.js (and in studio/themes.js)' : 'Add the overlay to the registry, or delete the file'));
+    problems.push('dashboard/seasons/' + id + '.js has no overlay that says decorations: true. ' + (entry ? 'Set decorations: true on "' + id + '" in dashboard/themes/overlays/registry.js (and in studio/inputs/themes.js)' : 'Add the overlay to the registry, or delete the file'));
   });
   world.overlays.forEach(overlay => {
     if (typeof overlay.decorations !== 'boolean') problems.push('the overlay "' + overlay.id + '" should say decorations: true or decorations: false in the registry');

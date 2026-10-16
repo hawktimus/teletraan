@@ -1,6 +1,6 @@
 // The hidden transitions: rare surprises that replace a normal page change of
 // the large panel. One entry for each, so adding another is one entry here, the
-// same id and name in studio/hidden-transitions.js, and an hours field and a
+// same id and name in studio/inputs/hidden-transitions.js, and an hours field and a
 // chance field in Dashboard Settings (docs/hidden-transitions.md).
 //
 // The key is the id the Studio stores in hiddenRequest.kind. name is the words

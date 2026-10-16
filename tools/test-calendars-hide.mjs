@@ -1,5 +1,5 @@
 // Tests for the Hide buttons of the Calendars page in Studio. The rules they make and read are
-// plain functions in studio/calendars-view-parts.js, so nothing is installed and nothing touches the
+// plain functions in studio/inputs/calendars-view-parts.js, so nothing is installed and nothing touches the
 // network: the Studio's client is a small fake one. The same file checks the Node file that the Mini
 // runs for the page (mini/scripts/calendar-status.mjs): it lists 40 events with their days, and the
 // document stays small enough to send. The page that draws the buttons is checked by
@@ -15,7 +15,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const parts = await import(pathToFileURL(path.join(root, 'studio/calendars-view-parts.js')).href);
+const parts = await import(pathToFileURL(path.join(root, 'studio/inputs/calendars-view-parts.js')).href);
 const dashboardEvents = await import(pathToFileURL(path.join(root, 'dashboard/core/events.js')).href);
 const dashboardSanity = await import(pathToFileURL(path.join(root, 'dashboard/core/sanity.js')).href);
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-calendars-hide-'));

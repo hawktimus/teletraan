@@ -34,8 +34,8 @@
 
 import { defineField, defineArrayMember } from 'sanity';
 import { tooLong } from './fields.js';
-import { MondayStatusInput } from '../monday-status-input.js';
-import { BoardInput, StatusColumnInput, PriorityColumnInput, DueColumnInput, OwnerColumnInput, TeamColumnInput, TimelineColumnInput, HoursColumnInput, DateColumnInput, RelationColumnInput } from '../monday-pickers.js';
+import { MondayStatusInput } from '../inputs/monday-status-input.js';
+import { BoardInput, StatusColumnInput, PriorityColumnInput, DueColumnInput, OwnerColumnInput, TeamColumnInput, TimelineColumnInput, HoursColumnInput, DateColumnInput, RelationColumnInput } from '../inputs/monday-pickers.js';
 
 // Monday gives a column an id of letters, digits, hyphens and underscores
 const columnId = /^[A-Za-z0-9_-]+$/;

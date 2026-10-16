@@ -6,48 +6,48 @@ TV. The dashboard reads what they publish.
 
 ## What is here
 
-    project.js            the project ID and dataset
-    sanity.config.js      the Studio's main settings
-    sanity.cli.js         settings for the command line tool
-    structure.js          the sidebar, one list with a line for each entry, so changing the order means moving a line (a folder holds lines of its own, and Events Calendar, Places and Demo have no line)
-    add-templates.js      what the plus button of each folder and list makes: a new document of its type, with the starting values of its group
-    start-here.js         the Start here page, the first line of the sidebar, written as a plain function
-    start-here-parts.js   the picture of the screen, the five buttons and their words, with no Studio in it, so node can test them
-    screen-requests.js    what the request buttons write (Play announcement, Run presentation test, Next look now, Preview competition, the Play and Preview buttons), used by actions.js and the Start here page
-    dashboard-address.js  the address that Preview the screen opens on the Start here page, with ?sample=1 for the sample content
-    calendars-view.js     the Calendars page under Events, written as a plain function (docs/calendars-page.md)
-    calendars-view-parts.js  the words and rows of the Calendars page and the rules of its Hide buttons, with no Studio in it, so node can test them
-    monday-boards-view.js the Monday Boards page under Tasks, written as a plain function (docs/monday.md)
-    monday-boards-parts.js  the words and rows of the Monday Boards page, with no Studio in it, so node can test them
-    time-text.js          ages in words and times as the editor's computer writes them, used by status-input.js and the Calendars page
-    actions.js            the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons on Dashboard Settings
-    themes.js             the list of themes and overlays, a copy of the dashboard's
-    demo-screens.js       the list of screens a demo can show, a copy of the dashboard's
-    hidden-transitions.js the list of hidden transitions, a copy of the dashboard's
-    previews.js           the list of Preview buttons (Prime, Nova, Cybertron, Minimal, next pack), a copy of the dashboard's
-    team-input.js         the Team radio (Both, then each active team) that the Team field of each kind of content uses
-    note-field.js         the one plain line of a note in a form (fields.js, noteField)
-    show-on-tv-input.js   the Show on TV switch of a task, which draws a task with no value as on
-    status-input.js       the Status of the Mini block at the top of the Screen tab of Dashboard Settings
-    frc-status-input.js   the block at the top of the Competition tab of Dashboard Settings: when the Mini last read the competition data
-    monday-status-input.js  the block at the top of the Monday tab of Dashboard Settings: who the token belongs to, when the Mini last read Monday, the boards chosen and the tasks made, and a line for each board entry
-    monday-pickers.js     the board list and the column lists of a board entry on the Monday tab, which show names and store numbers and ids
-    panel-order-input.js  the Panel order list in Dashboard Settings, which is hidden now and fills itself from the two older panel lists when it is empty
-    screen-input.js       the form of a Screen (Screens, the second line of the sidebar): the Editing switch, the map with the letters A to E, and the first fill of the rows
-    screen-map.js         the boxes and the words of the map in the arrangement of each Screen, with no Studio in it
-    screen-fields.js      the inputs inside the sections of a Screen: the team document button, the countdown, the Tips and News link and the team of a row
-    screen-context.js     what the form of a Screen shares with the inputs inside it
-    screen-parts.js       the words of the Screen form and what it reads from Sanity, with no Studio in it
-    screen-panels.js      the panels a row of a Screen can name and the rules for the team of a row, with no Studio in it
-    screen-seed.js        the first rows of a Screen, worked out from the Panel order, with no Studio in it (tools/test-screen-seed.mjs; the dashboard has the same rule, and tools/test-screen-seed-parity.mjs runs both)
-    screen-ids.js         the ids of the three Screens and the style each one stands for
-    schemas/              one file per kind of content
-    scripts/              make-templates.mjs writes the CSV templates from the schemas,
-                          import-csv.mjs turns filled-in CSVs into a file for sanity dataset import
-    publish-all-tool.js   the Publish all page in the top bar (docs/publish-all.md)
-    publish-all.js        the logic of Publish all, with no Studio in it, so node can test it
-    check-schemas.mjs     a check that needs nothing installed
-    package.json          the packages the Studio needs
+    project.js                      the project ID and dataset
+    sanity.config.js                the Studio's main settings
+    sanity.cli.js                   settings for the command line tool
+    structure.js                    the sidebar, one list with a line for each entry, so changing the order means moving a line (a folder holds lines of its own, and Events Calendar, Places and Demo have no line)
+    tools/add-templates.js          what the plus button of each folder and list makes: a new document of its type, with the starting values of its group
+    inputs/start-here.js            the Start here page, the first line of the sidebar, written as a plain function
+    inputs/start-here-parts.js      the picture of the screen, the five buttons and their words, with no Studio in it, so node can test them
+    tools/screen-requests.js        what the request buttons write (Play announcement, Run presentation test, Next look now, Preview competition, the Play and Preview buttons), used by tools/actions.js and the Start here page
+    inputs/dashboard-address.js     the address that Preview the screen opens on the Start here page, with ?sample=1 for the sample content
+    inputs/calendars-view.js        the Calendars page under Events, written as a plain function (docs/calendars-page.md)
+    inputs/calendars-view-parts.js  the words and rows of the Calendars page and the rules of its Hide buttons, with no Studio in it, so node can test them
+    inputs/monday-boards-view.js    the Monday Boards page under Tasks, written as a plain function (docs/monday.md)
+    inputs/monday-boards-parts.js   the words and rows of the Monday Boards page, with no Studio in it, so node can test them
+    inputs/time-text.js             ages in words and times as the editor's computer writes them, used by inputs/status-input.js and the Calendars page
+    tools/actions.js                the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons on Dashboard Settings
+    inputs/themes.js                the list of themes and overlays, a copy of the dashboard's
+    inputs/demo-screens.js          the list of screens a demo can show, a copy of the dashboard's
+    inputs/hidden-transitions.js    the list of hidden transitions, a copy of the dashboard's
+    inputs/previews.js              the list of Preview buttons (Prime, Nova, Cybertron, Minimal, next pack), a copy of the dashboard's
+    inputs/team-input.js            the Team radio (Both, then each active team) that the Team field of each kind of content uses
+    inputs/note-field.js            the one plain line of a note in a form (fields.js, noteField)
+    inputs/show-on-tv-input.js      the Show on TV switch of a task, which draws a task with no value as on
+    inputs/status-input.js          the Status of the Mini block at the top of the Screen tab of Dashboard Settings
+    inputs/frc-status-input.js      the block at the top of the Competition tab of Dashboard Settings: when the Mini last read the competition data
+    inputs/monday-status-input.js   the block at the top of the Monday tab of Dashboard Settings: who the token belongs to, when the Mini last read Monday, the boards chosen and the tasks made, and a line for each board entry
+    inputs/monday-pickers.js        the board list and the column lists of a board entry on the Monday tab, which show names and store numbers and ids
+    inputs/panel-order-input.js     the Panel order list in Dashboard Settings, which is hidden now and fills itself from the two older panel lists when it is empty
+    inputs/screen-input.js          the form of a Screen (Screens, the second line of the sidebar): the Editing switch, the map with the letters A to E, and the first fill of the rows
+    tools/screen-map.js             the boxes and the words of the map in the arrangement of each Screen, with no Studio in it
+    inputs/screen-fields.js         the inputs inside the sections of a Screen: the team document button, the countdown, the Tips and News link and the team of a row
+    inputs/screen-context.js        what the form of a Screen shares with the inputs inside it
+    inputs/screen-parts.js          the words of the Screen form and what it reads from Sanity, with no Studio in it
+    inputs/screen-panels.js         the panels a row of a Screen can name and the rules for the team of a row, with no Studio in it
+    tools/screen-seed.js            the first rows of a Screen, worked out from the Panel order, with no Studio in it (tools/test-screen-seed.mjs; the dashboard has the same rule, and tools/test-screen-seed-parity.mjs runs both)
+    inputs/screen-ids.js            the ids of the three Screens and the style each one stands for
+    schemas/                        one file per kind of content
+    scripts/                        make-templates.mjs writes the CSV templates from the schemas,
+                                    import-csv.mjs turns filled-in CSVs into a file for sanity dataset import
+    tools/publish-all-tool.js       the Publish all page in the top bar (docs/publish-all.md)
+    tools/publish-all.js            the logic of Publish all, with no Studio in it, so node can test it
+    check-schemas.mjs               a check that needs nothing installed
+    package.json                    the packages the Studio needs
 
 Each file in schemas/ describes one kind of content: its fields, the text
 shown beside each field, and the limits on length. See
@@ -223,7 +223,7 @@ dashboard/core/source.js decides, and shell.js hands it the address.
 ## Status of the Mini
 
 The Screen tab of Dashboard Settings starts with a block that shows when the Mini
-last did each of its jobs (`status-input.js`). It reads the document
+last did each of its jobs (`inputs/status-input.js`). It reads the document
 `status-mini`, of the type `status` (`schemas/status.js`), which the Mini writes with
 `mini/scripts/status-write.sh`. The type is not in the sidebar or the New menu,
 and the field in Dashboard Settings (`schemas/settingsStatus.js`) stores nothing.
@@ -282,35 +282,35 @@ time, 1 to 1000, both 60 to start with), and Last push. The old Desktop reveal c
 Red eyes chance (percent of page changes) are still in the schema, hidden, for a page
 saved before the hours existed. Last push has two read only fields, kind and requestedAt, that the
 Play buttons fill in. The menu beside Publish on Dashboard Settings has one button for
-each transition, "Play desktop reveal" and "Play red eyes", from `actions.js`. Each
+each transition, "Play desktop reveal" and "Play red eyes", from `tools/actions.js`. Each
 sets Last push to its kind and the time now, and publishes. They are plain functions
-that use `useDocumentOperation`, made from the list in `hidden-transitions.js`, and
+that use `useDocumentOperation`, made from the list in `inputs/hidden-transitions.js`, and
 `sanity.config.js` puts them first on Dashboard Settings. The screen plays a push once, at its next page change or within about 20
 seconds, while it is less than a minute old (`dashboard/core/hidden.js`). Nothing
 needs setting up for it beyond the steps above. Run `npm run deploy` after you change
-`schemas/settingsHidden.js` or `hidden-transitions.js`, so the editors see the change.
+`schemas/settingsHidden.js` or `inputs/hidden-transitions.js`, so the editors see the change.
 docs/hidden-transitions.md explains how it works and how to add a transition.
 
 The Studio is built on its own and cannot read the dashboard folder, so
-`hidden-transitions.js` is a copy of the ids, names, hours fields and chance fields in
+`inputs/hidden-transitions.js` is a copy of the ids, names, hours fields and chance fields in
 `dashboard/core/hidden-transitions.js`. `check-schemas.mjs` fails if they differ.
 
 ## Play announcements
 
 The menu beside Publish on Dashboard Settings has one more button after the two Play
-buttons: "Play announcements", `usePlayAnnouncementsAction` in `actions.js`. It sets
+buttons: "Play announcements", `usePlayAnnouncementsAction` in `tools/actions.js`. It sets
 `announceRequest` to the time now and publishes. `announceRequest` is a hidden field
 (`announceRequestField` in `schemas/settingsAnnouncements.js`): editors never see it, and
 its value stays in the page. The screen plays every announcement that is switched on, once,
 whatever its time and days, for a request that is under a minute old (`dashboard/core/announce.js`).
 The Demo page has a step "All announcements" that does the same, which comes from the list in
-`demo-screens.js`. Run `npm run deploy` after you change `schemas/settingsAnnouncements.js`, so
+`inputs/demo-screens.js`. Run `npm run deploy` after you change `schemas/settingsAnnouncements.js`, so
 the editors see the button. docs/hidden-transitions.md explains how it works.
 
 ## Run presentation test
 
 The last button on Dashboard Settings is "Run presentation test", `useRunPresentationTestAction`
-in `actions.js`. It sets `presentationTestRequest` to the time now and publishes.
+in `tools/actions.js`. It sets `presentationTestRequest` to the time now and publishes.
 `presentationTestRequest` is a hidden field in the Presentations tab
 (`presentationTestRequestField` in `schemas/settingsPresentations.js`). The screen runs the
 sample talk with its six sample slides, for a request that is under a minute old
@@ -321,14 +321,14 @@ explains how it works.
 ## Preview buttons
 
 The last five buttons on Dashboard Settings are "Preview Prime", "Preview Nova", "Preview Cybertron",
-"Preview Minimal" and "Preview next pack", `previewActions` in `actions.js`, made from the list in
-`previews.js`. Each sets `previewRequest` to its kind and the time now, and publishes. `previewRequest`
+"Preview Minimal" and "Preview next pack", `previewActions` in `tools/actions.js`, made from the list in
+`inputs/previews.js`. Each sets `previewRequest` to its kind and the time now, and publishes. `previewRequest`
 is a hidden field in the Screen tab (`previewRequestField` in `schemas/settingsPreview.js`). The screen
 holds that team, style or seasonal pack for 2 minutes, for a request that is under a minute old, and then
 goes back to the saved settings (`dashboard/core/preview.js`). Nothing is saved to Dashboard Settings or
-the Look page. `previews.js` is a copy of the ids and names in `previewKinds` in
+the Look page. `inputs/previews.js` is a copy of the ids and names in `previewKinds` in
 `dashboard/core/preview.js`, and `check-schemas.mjs` fails if they differ. Run `npm run deploy` after you
-change `schemas/settingsPreview.js` or `previews.js`, so the editors see the buttons.
+change `schemas/settingsPreview.js` or `inputs/previews.js`, so the editors see the buttons.
 docs/hidden-transitions.md explains how it works.
 
 ## Photos of people
@@ -348,10 +348,10 @@ Dashboard Settings. It has the Default theme, "Use a theme now", a Schedule of
 rules, a Time zone and a switch, "Seasonal pieces over the panels" (it starts on). The screen reads it with the rest of the content and
 works out the theme in `dashboard/core/theme.js`. Nothing needs setting up for
 it beyond the steps above. Run `npm run deploy` after you change `schemas/theme.js`
-or `themes.js`, so the editors see the change.
+or `inputs/themes.js`, so the editors see the change.
 
-The lists of themes and overlays come from `themes.js`. The Studio is built on
-its own and cannot read the dashboard folder, so `themes.js` is a copy of
+The lists of themes and overlays come from `inputs/themes.js`. The Studio is built on
+its own and cannot read the dashboard folder, so `inputs/themes.js` is a copy of
 `dashboard/themes/registry.js` and `dashboard/themes/overlays/registry.js`.
 `check-schemas.mjs` fails if the ids, names or descriptions differ. A theme that
 has the sidebar layout (Neon Prime) has `layout: 'sidebar'` in both copies, the
@@ -379,11 +379,11 @@ Stop demo were taken out, and the Start here page has the buttons that try the s
 that the documents already in Studio open and publish as they were. The screen reads
 the page with the rest of the content and plays a demo when Requested at is recent
 (`dashboard/core/demo.js`), but nothing in Studio sets it now. Run `npm run deploy`
-after you change `schemas/demo.js` or `demo-screens.js`, so the editors see the
+after you change `schemas/demo.js` or `inputs/demo-screens.js`, so the editors see the
 change. docs/demo.md explains how it works and how to add a screen.
 
-The list of screens comes from `demo-screens.js`. The Studio is built on its own and
-cannot read the dashboard folder, so `demo-screens.js` is a copy of the ids and
+The list of screens comes from `inputs/demo-screens.js`. The Studio is built on its own and
+cannot read the dashboard folder, so `inputs/demo-screens.js` is a copy of the ids and
 names in `dashboard/core/demo-screens.js`. `check-schemas.mjs` fails if they differ.
 
 ## The packages
@@ -408,11 +408,11 @@ dashboard reads: every field exists with the right name and limit, every field
 has a description, the starting values match dashboard/config.js, the two
 content source fields are hidden and ignored by the dashboard, the Look page
 agrees with `defaultThemeSettings` and needs a start and an end for every rule,
-`themes.js` matches the dashboard's registries, the Demo page agrees with
-`defaultDemo` and has no buttons, and `demo-screens.js` matches the dashboard's
+`inputs/themes.js` matches the dashboard's registries, the Demo page agrees with
+`defaultDemo` and has no buttons, and `inputs/demo-screens.js` matches the dashboard's
 list of demo screens, the hidden transition fields agree with
 `defaultSettings`, has a working Play button for each hidden transition, and
-`hidden-transitions.js` matches the dashboard's list, Play announcements has its hidden
+`inputs/hidden-transitions.js` matches the dashboard's list, Play announcements has its hidden
 field, its button and its Demo step, Run presentation test has its hidden field and its button,
 the Preview buttons have their hidden field and a list that matches the dashboard's,
 the sidebar has the headings, folders and icons it should, every kind of

@@ -1,6 +1,6 @@
 // Tests for the six panels of the one task board (dashboard/panels/monday-tasks, monday-done, monday-status-depts,
 // monday-overall, monday-timeline and monday-board), what they draw (core/monday-views.js), the registry and the Screens
-// that play them (core/screens.js), and the department picker of the Screens builder (studio/screen-parts.js and
+// that play them (core/screens.js), and the department picker of the Screens builder (studio/inputs/screen-parts.js and
 // screen-panels.js). The sizes need a browser to be seen, so the stylesheets are read.
 //
 //   node tools/test-monday-panels.mjs
@@ -57,7 +57,7 @@ test('the six panels of the board are flagged monday in registry.js with a scrip
 });
 
 test('the older Monday panels are still registered and still draw, and the Studio does not offer them', async () => {
-  const picker = await import(path.join(studioFolder, 'screen-panels.js'));
+  const picker = await import(path.join(studioFolder, 'inputs', 'screen-panels.js'));
   const offered = picker.mondayPanels.map(panel => panel.value);
 
   assert.deepEqual(offered, panelIds);
@@ -434,7 +434,7 @@ test('an empty Screen is seeded with the tasks, done and board rows of each team
 // The Screens builder
 
 test('the builder offers the six panels under Monday, asks for the department beside the team for the tasks row only, and none for a row with no team', async () => {
-  const picker = await import(path.join(studioFolder, 'screen-panels.js'));
+  const picker = await import(path.join(studioFolder, 'inputs', 'screen-panels.js'));
 
   assert.deepEqual(picker.mondayPanels.map(panel => panel.title), [
     'Monday: Tasks by team and department',
@@ -456,7 +456,7 @@ test('the builder offers the six panels under Monday, asks for the department be
 });
 
 test('the department picker lists the Team leads of the team of the row, the first department that has tasks, and keeps a department that is not in the list', async () => {
-  const parts = await import(path.join(studioFolder, 'screen-parts.js'));
+  const parts = await import(path.join(studioFolder, 'inputs', 'screen-parts.js'));
   const found = [
     { _id: 'lead-build', name: 'Build', team: 'prime' },
     { _id: 'lead-design', name: 'Design', team: 'nova' },

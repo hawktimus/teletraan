@@ -164,7 +164,7 @@ and ask a coach to delete the document `calendar-status` from the dataset.
 - `dashboard/package.json`: tells Node that the dashboard files are modules.
 - `studio/schemas/calendarStatus.js`: the document, kept out of the sidebar and
   the New menu.
-- `studio/calendars-view.js` draws the page. `studio/calendars-view-parts.js` has
+- `studio/inputs/calendars-view.js` draws the page. `studio/inputs/calendars-view-parts.js` has
   its words, its rows, and the functions that make, read and delete the rules.
 - `tools/test-calendar-status.mjs`, `tools/test-calendars-view.mjs`,
   `tools/test-calendars-hide.mjs`, `tools/test-calendar-node.mjs` and

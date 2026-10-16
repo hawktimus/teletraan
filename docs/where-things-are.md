@@ -338,9 +338,9 @@ editors can sign in from anywhere.
       test-presentation.mjs   checks for presentation mode (core/presentation.js): when a talk is due, how it
                               goes from the title card to the thanks card, which talks are skipped, and what
                               each key of the clicker does
-      test-screen-seed.mjs    checks for the first rows of a Screen (studio/screen-seed.js): the owner's Panel order
+      test-screen-seed.mjs    checks for the first rows of a Screen (studio/tools/screen-seed.js): the owner's Panel order
                               becomes 16 main rows and five side rows, seconds carry over, a row switched off is left out,
-                              and the rules for the team of a row (studio/screen-panels.js)
+                              and the rules for the team of a row (studio/inputs/screen-panels.js)
       test-panel-order.mjs    checks for the Panel order list (core/panel-order.js): the list built from the
                               two older lists, and what each area of the screen follows
       test-panel-b.mjs        checks that the small frame under the countdown is never empty in the standard layout:
@@ -486,7 +486,7 @@ editors can sign in from anywhere.
                               now guard, the swap as the one way a look goes on, and the docs
       test-screen-seed-dashboard.mjs  checks for the first rows of a Screen on the screen side
                               (core/screen-seed.js): the same Panel order and the same rows as the Studio side
-      test-screen-seed-parity.mjs  runs the Studio rule (studio/screen-seed.js) and the screen rule (core/screens.js,
+      test-screen-seed-parity.mjs  runs the Studio rule (studio/tools/screen-seed.js) and the screen rule (core/screens.js,
                               core/screen-seed.js) on the same Panel orders and the same Team documents, and checks
                               that the main rows, the side rows and the Monday style come out the same
       test-console.mjs        checks for the boot and shutdown drawings (plain 7 bit text, the size, the
@@ -582,7 +582,7 @@ alone.
   the three Screens (Screens, under Start here, `studio/schemas/screen.js`): `mainRows` and `sideRows`.
   A Screen with no rows gets them from the older Panel order list (`rotation.order`, hidden now),
   and while that is empty from the lists in `defaultSettings.rotation` (`core/panel-order.js`,
-  `studio/screen-seed.js`). The panels a row can name are in `studio/screen-panels.js`.
+  `studio/tools/screen-seed.js`). The panels a row can name are in `studio/inputs/screen-panels.js`.
   The Weekday schedule (`screenSchedule` in `defaultSettings`) picks the Screen of each day.
   The Photo row is the exception: it has `photoCount` (1 to 20, 4 to start) and
   `secondsPerPhoto` (5 to 60, 10 to start) in place of its seconds, which are their product
@@ -638,8 +638,8 @@ alone.
   and `hiddenRequest` in `defaultSettings` in `dashboard/config.js`, with `limits` there. The two chances
   are hidden and only a page saved before the hours existed uses them, and `hiddenGapHours` there is the
   4 hours after one has played in which none comes about by chance. The Studio fields are all in
-  `studio/schemas/settingsHidden.js`, the buttons are made in `studio/actions.js` from
-  `studio/hidden-transitions.js`, a copy of `hiddenTransitions` in
+  `studio/schemas/settingsHidden.js`, the buttons are made in `studio/tools/actions.js` from
+  `studio/inputs/hidden-transitions.js`, a copy of `hiddenTransitions` in
   `dashboard/core/hidden-transitions.js`. A new transition is one entry in each, plus an hours
   field and a chance field. `core/hidden.js` decides, `core/hidden-run.js` plays, and `frame.css` ("Hidden
   transitions" and "The blue glitch") moves the glitches. Both collapse the frames into a pile
@@ -651,16 +651,16 @@ alone.
   (docs/hidden-transitions.md) that plays every announcement that is switched on, once, whatever
   its time and days. It writes the hidden `announceRequest` field (`announceRequestField` in
   `studio/schemas/settingsAnnouncements.js`, the button is `usePlayAnnouncementsAction` in
-  `studio/actions.js`). The starting value is `announceRequest` in `defaultSettings` in
+  `studio/tools/actions.js`). The starting value is `announceRequest` in `defaultSettings` in
   `dashboard/config.js`. `core/announce.js` decides and `core/announce-run.js` plays it. A Demo step
   can use it too: All announcements in `demoScreens`. The Start here page has this button too, and
-  both write what `announceRequest` in `studio/screen-requests.js` gives.
+  both write what `announceRequest` in `studio/tools/screen-requests.js` gives.
 - **Preview buttons.** The last five buttons in the same menu (docs/hidden-transitions.md, "Preview a look"):
   Preview Prime, Preview Nova, Preview Cybertron, Preview Minimal and Preview next pack. Each shows its look on
   the screen for `previewSeconds` (2 minutes) in `dashboard/config.js` and then the saved settings come back,
   and none writes a setting. They write the hidden `previewRequest` field (`previewRequestField` in
-  `studio/schemas/settingsPreview.js`, the buttons are `previewActions` in `studio/actions.js`, made from the
-  list in `studio/previews.js`, a copy of `previewKinds` in `dashboard/core/preview.js`). The starting value is
+  `studio/schemas/settingsPreview.js`, the buttons are `previewActions` in `studio/tools/actions.js`, made from the
+  list in `studio/inputs/previews.js`, a copy of `previewKinds` in `dashboard/core/preview.js`). The starting value is
   `previewRequest` in `defaultSettings` in `dashboard/config.js`. `core/preview.js` decides and
   `core/preview-run.js` runs it.
 - **Run presentation test.** The button after Play announcements in the same menu
@@ -668,14 +668,14 @@ alone.
   `dashboard/data/sample/slides/presentation-sample/`, and needs no internet. It writes the hidden
   `presentationTestRequest` field (`presentationTestRequestField` in
   `studio/schemas/settingsPresentations.js`, the button is `useRunPresentationTestAction` in
-  `studio/actions.js`). The starting value is `presentationTestRequest` in `defaultSettings` in
+  `studio/tools/actions.js`). The starting value is `presentationTestRequest` in `defaultSettings` in
   `dashboard/config.js`. `core/presentation-test.js` decides, `core/presentation-test-run.js` reads the
   sample talk and `startTestTalk` in `core/presentation-run.js` puts it on the screen. The Start here
   page has this button too, and both write what `presentationTestRequest` in
-  `studio/screen-requests.js` gives.
+  `studio/tools/screen-requests.js` gives.
 - **Next look now and Preview competition.** Two buttons on the Start here page only. Each writes a hidden
   field of Dashboard Settings, `nextLookRequest` and `competitionPreviewRequest` (`nextLookRequestField` and
-  `competitionPreviewRequestField` in `studio/schemas/settingsRequests.js`), through `studio/screen-requests.js`.
+  `competitionPreviewRequestField` in `studio/schemas/settingsRequests.js`), through `studio/tools/screen-requests.js`.
   The starting values are in `defaultSettings` in `dashboard/config.js`, and `fixSettingValues` in
   `dashboard/core/content.js` keeps each one a time or empty.
 - **The competition cards.** Dashboard Settings, Competition tab (docs/frc-feed.md). The mode, Auto, Always or
@@ -688,7 +688,7 @@ alone.
   writes and `core/sanity.js` reads with the rest of the content and `core/frc.js` cleans. It is public. The
   Preview competition button on Start here writes `competitionPreviewRequest`, and
   `core/competition-preview.js` and `core/competition-preview-run.js` show the cards on the sample data in
-  `dashboard/data/sample/content.json`. The block at the top of the tab is `studio/frc-status-input.js`.
+  `dashboard/data/sample/content.json`. The block at the top of the tab is `studio/inputs/frc-status-input.js`.
 - **The Monday board.** Dashboard Settings, Monday tab (docs/monday.md). The task board, the milestones board, how
   often the Mini reads and the owner switch are in `studio/schemas/settingsMonday.js`, with the starting values
   `mondayTaskBoard`, `mondayMilestoneBoard`, `mondayEveryMinutes` and `mondayShowOwners` in `defaultSettings` in
@@ -701,7 +701,7 @@ alone.
   the item number, type `milestone`, `studio/schemas/milestone.js`) and the document `monday-status` (type
   `mondayStatus`, `studio/schemas/mondayStatus.js`, with the boards the token can see, `taskCount`,
   `hiddenUnassigned` and the count of reads, `callsToday` and `callsDate`). The block at the top of the tab is
-  `studio/monday-status-input.js`, and the board and column lists of the pickers are `studio/monday-pickers.js`, which read
+  `studio/inputs/monday-status-input.js`, and the board and column lists of the pickers are `studio/inputs/monday-pickers.js`, which read
   `monday-status`. The CSV template of a task has no column for the fields the sync writes.
 - **The Monday panels.** The six panels of the task board are `dashboard/panels/monday-tasks`, `monday-done`,
   `monday-status-depts`, `monday-overall`, `monday-timeline` and `monday-board` (docs/monday.md, "The eleven panels"),
@@ -719,7 +719,7 @@ alone.
   are `defaultDemo` in `dashboard/config.js` and their copy in
   `studio/schemas/demo.js`, with `limits.demoSeconds` and `demoMaxSteps` there.
   The screens a demo can show are `demoScreens` in `dashboard/core/demo-screens.js`
-  with a copy in `studio/demo-screens.js`. A new screen is one entry in each
+  with a copy in `studio/inputs/demo-screens.js`. A new screen is one entry in each
   (docs/demo.md). `core/demo.js` decides when a demo plays and runs the steps.
 - **The logo animations and the team name effect.** Dashboard Settings, Look
   tab (docs/the-logo.md). A master switch, the entrance, and for the spin, the
@@ -757,7 +757,7 @@ alone.
   which the calendar and slides services and `kiosk.sh` start, and which needs
   `SANITY_WRITE_TOKEN` in `mini/local.env` (docs/rebuilding-the-mini.md, "Showing
   what the Mini did in Studio"). The type is `studio/schemas/status.js` and the block
-  is `studio/status-input.js`. The dashboard never reads it.
+  is `studio/inputs/status-input.js`. The dashboard never reads it.
 - **Photos for the Photo panel.** Photos in the Studio sidebar
   (`studio/schemas/photo.js`): a picture, an optional caption, a first name
   credit, "Show on screen" and "Hide after". Dashboard Settings, Screen tab: Photo
@@ -924,7 +924,7 @@ alone.
   overlays).** Look in Studio. Its Default theme, "Use a theme now", Schedule and Time zone
   decide which theme and overlay show. The themes are the files in
   `dashboard/themes/` and the lists are `registry.js` there and in
-  `dashboard/themes/overlays/`, with a copy in `studio/themes.js`. The starting
+  `dashboard/themes/overlays/`, with a copy in `studio/inputs/themes.js`. The starting
   values are `defaultThemeSettings` in `dashboard/config.js` and their copy in
   `studio/schemas/theme.js`. A new theme is docs/adding-a-theme.md and a new
   overlay is docs/adding-a-holiday-overlay.md. An overlay may also have
@@ -976,14 +976,14 @@ alone.
   with `?team=prime|nova|alternate`, or with the Preview Prime and Preview Nova buttons.
 - **Which team an item is for.** The Team field of a task, plan, subteam, person, sponsor, talk,
   meeting day, extra panel and tip or news line (`teamField` in
-  `studio/schemas/fields.js`, the radio in `studio/team-input.js`). Leave it blank when it is for both teams. The query in
+  `studio/schemas/fields.js`, the radio in `studio/inputs/team-input.js`). Leave it blank when it is for both teams. The query in
   `core/sanity.js` asks for `team->code`, and every panel takes its items through `visibleItems` in
   `core/content.js`, which asks `showsForTeam` in `core/teams.js`. docs/team-on-an-item.md says
   how it works and how to give another kind of content the field. In the CSV templates `team` is
   the last column (docs/importing-from-csv.md).
 - **Where the regions of the screen sit (the layout).** A theme may have the
   sidebar layout (`layout: 'sidebar'` in `dashboard/themes/registry.js` and
-  `studio/themes.js`): Neon Prime has it. A style may have the bar layout. The numbers are in
+  `studio/inputs/themes.js`): Neon Prime has it. A style may have the bar layout. The numbers are in
   `dashboard/core/layout.js`, the placing in `dashboard/layouts/sidebar.css`, the
   column's content in `dashboard/panels/side/`, and docs/layouts.md has the
   sizes, how the big frame is scaled, what does not show, and how to add a layout.
@@ -1022,10 +1022,10 @@ alone.
   and `showOnTv`. The Monday Tasks line of the sidebar is a folder of two lists, On the
   TV and Hidden, whose filters are at the top of `studio/structure.js`. Every task is in
   one list, and a task typed by hand is in Hidden. Every task opens read only except
-  Show on TV, with one line at the top, and `studio/show-on-tv-input.js` draws a task
+  Show on TV, with one line at the top, and `studio/inputs/show-on-tv-input.js` draws a task
   with no value as on. There is no plus button and no template, and
   `sanity.config.js` keeps `task` out of the New menus. Monday Boards is a page,
-  `studio/monday-boards-view.js` with its rows in `studio/monday-boards-parts.js`: the
+  `studio/inputs/monday-boards-view.js` with its rows in `studio/inputs/monday-boards-parts.js`: the
   name of a chosen board opens the same two lists kept to that board, which
   `tasksOfBoard` in `studio/structure.js` builds. On the screen, `isVisible` in
   `core/content.js` is the one place that reads `showOnTv`, so both task panels leave

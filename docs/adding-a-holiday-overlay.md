@@ -53,7 +53,7 @@ after the theme files, so an overlay wins when it sets the same variable.
 
 ## 3. The Studio's copy
 
-Open `studio/themes.js` and add the same entry to `overlays`, with the same
+Open `studio/inputs/themes.js` and add the same entry to `overlays`, with the same
 id, name, description and `decorations`. The Studio cannot read the dashboard folder.
 
 ## 4. Check it

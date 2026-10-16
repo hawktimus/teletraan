@@ -233,7 +233,7 @@ test('the Mac tool says so and goes on when the folder has no git history, and t
 test('the status document and the Studio block carry the three fields and the line On the wall', () => {
   const schema = read('studio/schemas/status.js');
   ['buildCommit', 'buildDate', 'buildBranch'].forEach(name => assert.ok(schema.includes("'" + name + "'"), 'status.js has ' + name));
-  assert.ok(/On the wall: /.test(read('studio/status-input.js')), 'the block says On the wall');
+  assert.ok(/On the wall: /.test(read('studio/inputs/status-input.js')), 'the block says On the wall');
 });
 
 test('the corner stamp is the first seven characters of version.txt, 20px, and is drawn only with ?debug=1', async () => {

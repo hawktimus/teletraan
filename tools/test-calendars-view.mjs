@@ -1,4 +1,4 @@
-// Tests for the rows and lines of the Calendars page in Studio (studio/calendars-view-parts.js):
+// Tests for the rows and lines of the Calendars page in Studio (studio/inputs/calendars-view-parts.js):
 // what the left side says about each calendar of Dashboard Settings, what the right side says
 // about the one picked, and what each says before the Mini has written anything. The helpers
 // are plain functions, so nothing is installed and nothing touches the network. The page that
@@ -13,8 +13,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const studio = path.join(root, 'studio');
-const parts = await import(pathToFileURL(path.join(studio, 'calendars-view-parts.js')).href);
-const { ageText, clockText } = await import(pathToFileURL(path.join(studio, 'time-text.js')).href);
+const parts = await import(pathToFileURL(path.join(studio, 'inputs', 'calendars-view-parts.js')).href);
+const { ageText, clockText } = await import(pathToFileURL(path.join(studio, 'inputs', 'time-text.js')).href);
 
 const tests = [];
 function test(name, run) {
@@ -230,8 +230,8 @@ test('ages are in words, and a time that cannot be read gives nothing', () => {
 test('the helpers need nothing installed: they import only each other', () => {
   const imports = file => Array.from(fs.readFileSync(path.join(studio, file), 'utf8').matchAll(/^import .* from '([^']+)';$/gm)).map(match => match[1]);
 
-  assert.deepEqual(imports('calendars-view-parts.js'), ['./time-text.js']);
-  assert.deepEqual(imports('time-text.js'), []);
+  assert.deepEqual(imports('inputs/calendars-view-parts.js'), ['./time-text.js']);
+  assert.deepEqual(imports('inputs/time-text.js'), []);
 });
 
 let failures = 0;

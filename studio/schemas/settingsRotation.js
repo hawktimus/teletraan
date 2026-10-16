@@ -4,13 +4,13 @@
 //
 // The order was one list, Panel order, with every panel in it. It stays in the schema, hidden, with
 // what was saved in it, and so do the two lists before it, Large panels and Small panels. The first
-// time a Screen is opened its rows are worked out from them (studio/screen-seed.js), and the
+// time a Screen is opened its rows are worked out from them (studio/tools/screen-seed.js), and the
 // dashboard does the same for a Screen that has none (dashboard/core/panel-order.js).
 
 import { defineField, defineArrayMember } from 'sanity';
 import { titleOf } from './fields.js';
-import { PanelOrderInput } from '../panel-order-input.js';
-import { largePanels, smallPanels } from '../screen-panels.js';
+import { PanelOrderInput } from '../inputs/panel-order-input.js';
+import { largePanels, smallPanels } from '../inputs/screen-panels.js';
 
 // The one list that Panel order starts with, the large panels first
 const allPanels = largePanels.concat(smallPanels);

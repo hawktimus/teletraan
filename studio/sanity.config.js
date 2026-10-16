@@ -2,11 +2,11 @@ import { defineConfig } from 'sanity';
 import { structureTool } from 'sanity/structure';
 import { projectId, dataset } from './project.js';
 import { schemaTypes } from './schemas/index.js';
-import { publishAllTool } from './publish-all-tool.js';
+import { publishAllTool } from './tools/publish-all-tool.js';
 import { structure, settingsType, singletonTypes } from './structure.js';
-import { addTemplates } from './add-templates.js';
-import { screenType } from './screen-ids.js';
-import { playHiddenActions, usePlayAnnouncementsAction, useRunPresentationTestAction, previewActions } from './actions.js';
+import { addTemplates } from './tools/add-templates.js';
+import { screenType } from './inputs/screen-ids.js';
+import { playHiddenActions, usePlayAnnouncementsAction, useRunPresentationTestAction, previewActions } from './tools/actions.js';
 
 // Dashboard Settings, Look and Demo each exist once (singletonTypes in
 // structure.js), and so does each of the three Screens, which are three pages of the type screen.

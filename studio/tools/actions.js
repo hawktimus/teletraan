@@ -27,8 +27,8 @@
 // It gives back a label and what to do when it is clicked.
 
 import { useDocumentOperation } from 'sanity';
-import { hiddenTransitions } from './hidden-transitions.js';
-import { previews } from './previews.js';
+import { hiddenTransitions } from '../inputs/hidden-transitions.js';
+import { previews } from '../inputs/previews.js';
 import { announceRequest, presentationTestRequest, hiddenRequest, previewRequest, sendWithOperations } from './screen-requests.js';
 
 // The buttons of the hidden transitions, one for each transition in hidden-transitions.js, so

@@ -14,7 +14,7 @@ import { createElement, useState } from 'react';
 import { useClient } from 'sanity';
 import { IntentLink } from 'sanity/router';
 import { screen, areas, labelsOf, buttons, clickLine, sentLine, problemWith } from './start-here-parts.js';
-import { sendWithClient } from './screen-requests.js';
+import { sendWithClient } from '../tools/screen-requests.js';
 
 const h = createElement;
 

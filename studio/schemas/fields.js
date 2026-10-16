@@ -1,8 +1,8 @@
 // Pieces that every kind of content shares, so they look and work the same.
 
 import { defineField } from 'sanity';
-import { TeamInput } from '../team-input.js';
-import { NoteField } from '../note-field.js';
+import { TeamInput } from '../inputs/team-input.js';
+import { NoteField } from '../inputs/note-field.js';
 
 export function showField() {
   return defineField({

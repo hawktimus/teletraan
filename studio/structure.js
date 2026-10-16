@@ -61,11 +61,11 @@ import { ThListIcon } from '@sanity/icons/ThList';
 import { TimelineIcon } from '@sanity/icons/Timeline';
 import { TokenIcon } from '@sanity/icons/Token';
 import { UsersIcon } from '@sanity/icons/Users';
-import { StartHere } from './start-here.js';
-import { CalendarsView } from './calendars-view.js';
-import { milestonesChild } from './monday-boards-parts.js';
-import { MondayBoardsTabs } from './preview-panels-view.js';
-import { screenType, screenStyles, screenTitles, screenIdOf } from './screen-ids.js';
+import { StartHere } from './inputs/start-here.js';
+import { CalendarsView } from './inputs/calendars-view.js';
+import { milestonesChild } from './inputs/monday-boards-parts.js';
+import { MondayBoardsTabs } from './inputs/preview-panels-view.js';
+import { screenType, screenStyles, screenTitles, screenIdOf } from './inputs/screen-ids.js';
 
 // Pages that exist once. Each is a single document with a fixed id.
 export const settingsType = 'dashboardSettings';

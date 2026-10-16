@@ -1,8 +1,8 @@
-// Tests for the logic of the Publish all tool (studio/publish-all.js): which
+// Tests for the logic of the Publish all tool (studio/tools/publish-all.js): which
 // drafts are listed and how they are named, the transaction that publishes one,
 // the order, the reasons a document is skipped, and the summary. The plain
 // functions are run for real, with a stand-in for Studio's validation and for
-// the write to Sanity. The screen (studio/publish-all-tool.js) needs the
+// the write to Sanity. The screen (studio/tools/publish-all-tool.js) needs the
 // Studio, so it is checked only by reading the source. Nothing is sent to Sanity.
 //
 //   node tools/test-publish-all.mjs
@@ -13,7 +13,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const studioFolder = fileURLToPath(new URL('../studio/', import.meta.url));
-const logic = await import(pathToFileURL(path.join(studioFolder, 'publish-all.js')).href);
+const logic = await import(pathToFileURL(path.join(studioFolder, 'tools', 'publish-all.js')).href);
 
 const tests = [];
 function test(name, run) {
@@ -471,18 +471,18 @@ test('the headline counts in plain words', () => {
 // The files
 
 test('the logic file imports nothing, so node can run it, and the tool file is plain functions without JSX', () => {
-  const logicSource = fs.readFileSync(path.join(studioFolder, 'publish-all.js'), 'utf8');
+  const logicSource = fs.readFileSync(path.join(studioFolder, 'tools', 'publish-all.js'), 'utf8');
   assert.equal(/^import /m.test(logicSource), false, 'publish-all.js should not import anything');
 
-  const toolSource = fs.readFileSync(path.join(studioFolder, 'publish-all-tool.js'), 'utf8');
+  const toolSource = fs.readFileSync(path.join(studioFolder, 'tools', 'publish-all-tool.js'), 'utf8');
   const imported = (toolSource.match(/^import[\s\S]*?from '([^']+)';$/gm) || []).map(line => line.match(/from '([^']+)'/)[1]);
-  assert.deepEqual(imported.sort(), ['./publish-all.js', './structure.js', 'react', 'sanity']);
+  assert.deepEqual(imported.sort(), ['../structure.js', './publish-all.js', 'react', 'sanity']);
   const code = toolSource.replace(/\/\/.*$/gm, '').replace(/'[^'\n]*'/g, "''");
   assert.equal(/<\/?[A-Za-z][A-Za-z0-9.]*(\s[^<>]*)?\/?>/.test(code), false, 'publish-all-tool.js should have no JSX');
 });
 
 test('the tool uses the Studio validation and one call for each document, and deletes through the logic file only', () => {
-  const toolSource = fs.readFileSync(path.join(studioFolder, 'publish-all-tool.js'), 'utf8');
+  const toolSource = fs.readFileSync(path.join(studioFolder, 'tools', 'publish-all-tool.js'), 'utf8');
   assert.ok(toolSource.includes('validateDocument('), 'it should call the Studio validation');
   assert.ok(toolSource.includes('client.mutate(mutations)'), 'it should send each list of changes as one transaction');
   assert.equal(/\.delete\(|\.createOrReplace\(|\.transaction\(/.test(toolSource), false, 'writes are built in publish-all.js');

@@ -10,7 +10,7 @@
 
 import { createElement, useEffect, useState } from 'react';
 import { useClient, useCurrentUser, useSchema, useWorkspace, validateDocument } from 'sanity';
-import { settingsType, settingsId, themeType, themeId, demoType, demoId } from './structure.js';
+import { settingsType, settingsId, themeType, themeId, demoType, demoId } from '../structure.js';
 import {
   draftQuery,
   chooseDrafts,

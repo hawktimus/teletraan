@@ -1,5 +1,5 @@
-// Tests for the first rows of a Screen (studio/screen-seed.js) and for the rules a row of a Screen
-// follows about its panel and its team (studio/screen-panels.js). The seeding turns the Panel order
+// Tests for the first rows of a Screen (studio/tools/screen-seed.js) and for the rules a row of a Screen
+// follows about its panel and its team (studio/inputs/screen-panels.js). The seeding turns the Panel order
 // that the screen follows now into the rows of the main panel (B) and the side panel (D). Plain
 // functions only: nothing is drawn and nothing touches the network.
 //
@@ -10,9 +10,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const studioFolder = fileURLToPath(new URL('../studio/', import.meta.url));
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
-const seed = await import(pathToFileURL(studioFolder + 'screen-seed.js').href);
-const panelLists = await import(pathToFileURL(studioFolder + 'screen-panels.js').href);
-const ids = await import(pathToFileURL(studioFolder + 'screen-ids.js').href);
+const seed = await import(pathToFileURL(studioFolder + 'tools/screen-seed.js').href);
+const panelLists = await import(pathToFileURL(studioFolder + 'inputs/screen-panels.js').href);
+const ids = await import(pathToFileURL(studioFolder + 'inputs/screen-ids.js').href);
 const registry = await import(pathToFileURL(dashboardFolder + 'registry.js').href);
 const config = await import(pathToFileURL(dashboardFolder + 'config.js').href);
 

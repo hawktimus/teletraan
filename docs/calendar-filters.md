@@ -165,7 +165,7 @@ docs/rebuilding-the-mini.md, "Adding or changing a calendar".
 - `dashboard/core/sanity.js`: reads the rules with the rest of the content.
 - `mini/scripts/calendar-status.mjs`: judges the next events with the same code
   and the published rules, for the Calendars page.
-- `studio/calendars-view-parts.js`: makes, matches and deletes the rules of the
+- `studio/inputs/calendars-view-parts.js`: makes, matches and deletes the rules of the
   Hide buttons. `ruleMatchesEvent` there reads a rule the way `ruleMatches` does.
 - `tools/test-calendars-hide.mjs`: runs both on the same cases.
 - `tools/test-calendar.mjs`: the tests, run with `node tools/test-calendar.mjs`.

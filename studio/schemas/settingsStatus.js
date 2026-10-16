@@ -10,7 +10,7 @@
 // same name from check-schemas.mjs.
 
 import { defineField } from 'sanity';
-import { StatusInput } from '../status-input.js';
+import { StatusInput } from '../inputs/status-input.js';
 
 export function statusBlockField() {
   return defineField({

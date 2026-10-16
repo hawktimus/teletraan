@@ -1,5 +1,5 @@
 // Tests that the Studio and the dashboard fill an empty Screen with the same rows. The Studio fills the list when a Screen
-// is opened (studio/screen-seed.js) and the dashboard works the list out for a Screen that has none (core/screens.js,
+// is opened (studio/tools/screen-seed.js) and the dashboard works the list out for a Screen that has none (core/screens.js,
 // core/screen-seed.js). Each side has its own copy of the rule, so this file runs both on the same Panel order and the same
 // Team documents and compares what they make. Nothing is drawn and nothing touches the network.
 //
@@ -10,9 +10,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const studioFolder = fileURLToPath(new URL('../studio/', import.meta.url));
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
-const studioSeed = await import(pathToFileURL(studioFolder + 'screen-seed.js').href);
-const studioPanels = await import(pathToFileURL(studioFolder + 'screen-panels.js').href);
-const studioParts = await import(pathToFileURL(studioFolder + 'screen-parts.js').href);
+const studioSeed = await import(pathToFileURL(studioFolder + 'tools/screen-seed.js').href);
+const studioPanels = await import(pathToFileURL(studioFolder + 'inputs/screen-panels.js').href);
+const studioParts = await import(pathToFileURL(studioFolder + 'inputs/screen-parts.js').href);
 const config = await import(pathToFileURL(dashboardFolder + 'config.js').href);
 const screens = await import(pathToFileURL(dashboardFolder + 'core/screens.js').href);
 const { withDefaults } = await import(pathToFileURL(dashboardFolder + 'core/content.js').href);

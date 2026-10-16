@@ -89,7 +89,7 @@ item, then use `?team=prime`.
 ## Where the code is
 
 - `studio/schemas/fields.js`: `teamField`.
-- `studio/team-input.js`: the radio.
+- `studio/inputs/team-input.js`: the radio.
 - `dashboard/core/teams.js`: `showsForTeam`, which compares the code.
 - `dashboard/core/content.js`: `visibleItems`.
 - `dashboard/core/sanity.js`: `withTeamCode`, which turns the code into the item's

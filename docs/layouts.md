@@ -35,7 +35,7 @@ in it), `dashboard/core/layout-apply.js` (puts the layout on the page),
 
 The theme registry (`dashboard/themes/registry.js`) says which layout a theme
 has. `layout: 'sidebar'` on a line gives it the sidebar layout. A line with no
-layout has the standard one. The Studio's copy of the list (`studio/themes.js`)
+layout has the standard one. The Studio's copy of the list (`studio/inputs/themes.js`)
 says the same, and `node studio/check-schemas.mjs` fails if the two differ.
 
 The style is the second thing that counts, and it wins. Style in Dashboard Settings
@@ -1273,7 +1273,7 @@ panels for one team (Tasks, Daily Agenda, Subteam spotlight, Sponsor feature, Le
 panel) as rows with that team, then the three Monday rows of that team (tasks, done and board). After the last team come the panels for both teams
 (Upcoming events and Photo), with no team. Seconds carry over, a panel that was in the order twice has a row for each place, and a
 row that was switched off is left out. The side rows are the small rows of the same order. Minimal has no side rows. The Studio
-fills a Screen this way the first time it is opened (`studio/screen-seed.js`, checked by `tools/test-screen-seed.mjs`), and the
+fills a Screen this way the first time it is opened (`studio/tools/screen-seed.js`, checked by `tools/test-screen-seed.mjs`), and the
 screen works out the same rows for a Screen that has none, so nothing goes blank before anyone opens Studio. The two copies of the
 rule are run on the same input by `tools/test-screen-seed-parity.mjs`.
 
@@ -2120,7 +2120,7 @@ Then run every test (docs/where-things-are.md, "Checking your work").
    other layouts are never touched. `tools/test-layouts.mjs` fails for a rule
    that does not.
 5. Give a theme `layout: 'wide'` in `dashboard/themes/registry.js` and in
-   `studio/themes.js`, and add it to the checks in `tools/test-layouts.mjs`,
+   `studio/inputs/themes.js`, and add it to the checks in `tools/test-layouts.mjs`,
    including the two that keep a layout inside the screen ("The screen is a fixed
    canvas").
 6. Or, if a style should have the layout, add the style's name to `forcedLayout` in

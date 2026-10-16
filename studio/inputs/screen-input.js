@@ -20,9 +20,9 @@
 import { createElement, useEffect, useRef, useState } from 'react';
 import { set, useClient, useFormValue } from 'sanity';
 import { ScreenContext } from './screen-context.js';
-import { mapFor, labelsFor, letterGroups } from './screen-map.js';
+import { mapFor, labelsFor, letterGroups } from '../tools/screen-map.js';
 import { words, readSources, pickerTeams, teamCodes } from './screen-parts.js';
-import { seedScreen, needsSeed, withKeys } from './screen-seed.js';
+import { seedScreen, needsSeed, withKeys } from '../tools/screen-seed.js';
 import { styleOfScreenId } from './screen-ids.js';
 
 const h = createElement;

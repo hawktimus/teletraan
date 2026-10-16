@@ -62,7 +62,7 @@ under Start here:
   Settings and Look. A page opens the document itself, with no list of one in
   between. Demo is the third page that exists once, and it has no line. The three
   Screens are three pages of one type, `screen`, each with an id of its own:
-  `screen-original`, `screen-cybertron` and `screen-minimal` (`studio/screen-ids.js`).
+  `screen-original`, `screen-cybertron` and `screen-minimal` (`studio/inputs/screen-ids.js`).
   Nothing can copy, delete or add one, and the New menu does not offer the type.
 - `group` is a folder. It opens a list of the lines under `entries`, one line
   each. A folder holds lists and pages, and one more folder, which holds lists
@@ -70,10 +70,10 @@ under Start here:
   Meeting days. Monday Tasks holds On the TV and Hidden. Screens holds Original,
   Cybertron and Minimal. Settings holds Dashboard Settings, Look and Teams.
 - `component` opens a page that is not a document. `component` is a plain
-  function that draws it. Start here is `StartHere` in `studio/start-here.js`
-  and Calendars is `CalendarsView` in `studio/calendars-view.js`. A component
+  function that draws it. Start here is `StartHere` in `studio/inputs/start-here.js`
+  and Calendars is `CalendarsView` in `studio/inputs/calendars-view.js`. A component
   line needs an `id`. Monday Boards is `MondayBoardsView` in
-  `studio/monday-boards-view.js`, and its line has `children`, a function that builds
+  `studio/inputs/monday-boards-view.js`, and its line has `children`, a function that builds
   the two lists of the tasks of a board, which the name of a board on the page opens.
 - `divider` is a thin line between groups. Give it a `title` and it is a
   heading, such as TASKS. Every divider in the sidebar has a title.
@@ -85,7 +85,7 @@ Presentation. Each type needs a list inside the folder, so that the new document
 is found there. The words in the menu are the titles of the types in
 `studio/schemas/`, one document at a time: Agenda item and Presentation.
 
-The `add` of a folder can also name a template from `studio/add-templates.js`,
+The `add` of a folder can also name a template from `studio/tools/add-templates.js`,
 which is a new document with its own words and starting values. `sanity.config.js` gives
 the templates to the Studio and keeps them out of the New menus, so only the folder or list
 that names one offers it. Every list under TASKS, EVENTS and ROSTER has an `add` with one

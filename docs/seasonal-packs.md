@@ -493,7 +493,7 @@ The lines draw in once, in about 3 seconds, when the pack appears, and then hold
 stops there. In calm and none motion nothing animates, so the ornament is drawn whole and still.
 
 To add an ornament: add its paths to `ornaments` in `core/corner-art.js` (only `M`, `L`, `A` and `Z`, with a
-3 px line kept 1.5 px inside the box), add its id and name to `cornerArts` in `studio/themes.js` before None, and run
+3 px line kept 1.5 px inside the box), add its id and name to `cornerArts` in `studio/inputs/themes.js` before None, and run
 `node tools/check-seasons.mjs` and `node studio/check-schemas.mjs`. The check names an ornament that leaves its
 box, has a fill or uses an effect.
 
@@ -518,7 +518,7 @@ finished. To add an eighth, or to finish one, do these steps in order. The Chris
 
    The description is one line of up to 120 characters. The id is stored in Studio, so choose it
    once.
-3. **Studio's copy.** Add the same entry to `studio/themes.js`. `node studio/check-schemas.mjs` fails if the
+3. **Studio's copy.** Add the same entry to `studio/inputs/themes.js`. `node studio/check-schemas.mjs` fails if the
    two lists differ, including the `decorations` flag.
 4. **The pack file.** Copy `dashboard/seasons/christmas.js` to `dashboard/seasons/<id>.js`, or start from an empty
    pack:

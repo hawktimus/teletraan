@@ -31,7 +31,7 @@
 // for anything missing from the published settings.
 
 import { defineField } from 'sanity';
-import { hiddenTransitions } from '../hidden-transitions.js';
+import { hiddenTransitions } from '../inputs/hidden-transitions.js';
 
 // The kinds a push can ask for: the ones in hidden-transitions.js. The list is
 // only there to show which one was pushed, because the field is read only.

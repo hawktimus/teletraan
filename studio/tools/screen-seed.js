@@ -19,8 +19,8 @@
 //
 // Plain functions only, so that tools/test-screen-seed.mjs can run them with node.
 
-import { largePanels, smallPanels, seededMondayPanels, teamSpecificPanels, idsOf } from './screen-panels.js';
-import { screenStyles } from './screen-ids.js';
+import { largePanels, smallPanels, seededMondayPanels, teamSpecificPanels, idsOf } from '../inputs/screen-panels.js';
+import { screenStyles } from '../inputs/screen-ids.js';
 
 const largeIds = idsOf(largePanels);
 const smallIds = idsOf(smallPanels);

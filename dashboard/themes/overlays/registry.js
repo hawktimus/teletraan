@@ -7,7 +7,7 @@
 // that file only for a pack that says true, and tools/check-seasons.mjs fails
 // when the flag and the file disagree.
 //
-// The Studio keeps its own copy of this list in studio/themes.js.
+// The Studio keeps its own copy of this list in studio/inputs/themes.js.
 // check-schemas.mjs fails when the two lists differ, so change both.
 //
 // The ids are stored in Studio, in the Look schedule, so never rename one.

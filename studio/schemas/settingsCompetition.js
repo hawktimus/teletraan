@@ -21,7 +21,7 @@
 // missing from the published settings.
 
 import { defineField } from 'sanity';
-import { FrcStatusInput } from '../frc-status-input.js';
+import { FrcStatusInput } from '../inputs/frc-status-input.js';
 
 // The values are the names in competitionModes in dashboard/config.js
 const modes = [

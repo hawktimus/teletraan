@@ -132,11 +132,11 @@ test('every layout the registry names is a layout, and the registry and the Stud
   themes.forEach(theme => assert.ok(theme.layout === undefined || layout.isLayout(theme.layout), theme.id));
   assert.ok(themes.some(theme => theme.layout === 'sidebar'), 'at least one theme has the sidebar layout');
 
-  const studio = read('studio/themes.js');
+  const studio = read('studio/inputs/themes.js');
   themes.forEach(theme => {
     const entry = studio.slice(studio.indexOf("id: '" + theme.id + "'"));
     const own = entry.slice(0, entry.indexOf('},'));
-    assert.equal(/layout: '([a-z]+)'/.exec(own) ? /layout: '([a-z]+)'/.exec(own)[1] : 'standard', theme.layout || 'standard', theme.id + ' in studio/themes.js');
+    assert.equal(/layout: '([a-z]+)'/.exec(own) ? /layout: '([a-z]+)'/.exec(own)[1] : 'standard', theme.layout || 'standard', theme.id + ' in studio/inputs/themes.js');
   });
 });
 

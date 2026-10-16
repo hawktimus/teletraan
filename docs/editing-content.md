@@ -179,7 +179,7 @@ The buttons try the screen without waiting for a time or for a booked talk:
   competition data (docs/frc-feed.md).
 - Preview the screen: opens the screen in a new tab with the sample content, which
   is what `?sample=1` on the address does. The address is `dashboardAddress` in
-  `studio/dashboard-address.js`. It is the Mini's own address, and the Mini's web
+  `studio/inputs/dashboard-address.js`. It is the Mini's own address, and the Mini's web
   server only answers on the Mini (mini/README.md), so on any other computer
   the tab shows no page.
 
@@ -194,8 +194,8 @@ The requests are hidden fields of Dashboard Settings that hold the time of the
 last click: `announceRequest`, `presentationTestRequest`, `nextLookRequest` and
 `competitionPreviewRequest`. The buttons in the menu beside Publish and the
 buttons here write the same fields, and the work is written once in
-`studio/screen-requests.js`. The page is `studio/start-here.js`, and its picture
-and button list are in `studio/start-here-parts.js`.
+`studio/tools/screen-requests.js`. The page is `studio/inputs/start-here.js`, and its picture
+and button list are in `studio/inputs/start-here-parts.js`.
 
 ## Events
 

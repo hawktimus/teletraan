@@ -83,11 +83,11 @@ done so far stay published.
 
 ## Where the code is
 
-- `studio/publish-all.js`: the logic, with no Studio or React in it. Choosing and
+- `studio/tools/publish-all.js`: the logic, with no Studio or React in it. Choosing and
   naming the drafts, building each transaction, the order, the reasons and the
   summary. `tools/test-publish-all.mjs` runs it with node
   (`node tools/test-publish-all.mjs`).
-- `studio/publish-all-tool.js`: the page itself, written without JSX, and the
+- `studio/tools/publish-all-tool.js`: the page itself, written without JSX, and the
   calls to Sanity. It reads the drafts with `client.fetch` (raw perspective, which
   is what includes drafts), checks each one with `validateDocument` from `sanity`
   and writes with `client.mutate`.
@@ -97,7 +97,7 @@ done so far stay published.
   a title in the list.
 
 To add a new page that exists once, add it to `singletonTypes` in
-`studio/structure.js` and to the list in `studio/publish-all-tool.js`, which
+`studio/structure.js` and to the list in `studio/tools/publish-all-tool.js`, which
 `check-schemas.mjs` compares.
 
 The Studio is not started by the tests, so the page itself has been checked only

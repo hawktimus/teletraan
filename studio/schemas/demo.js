@@ -10,7 +10,7 @@
 
 import { defineType, defineField, defineArrayMember } from 'sanity';
 import { tooLong } from './fields.js';
-import { demoScreens } from '../demo-screens.js';
+import { demoScreens } from '../inputs/demo-screens.js';
 
 const screenChoices = demoScreens.map(screen => ({ title: screen.name, value: screen.id }));
 

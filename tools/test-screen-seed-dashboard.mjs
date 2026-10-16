@@ -1,6 +1,6 @@
 // Tests for the rows that a Screen is built from the Panel order (dashboard/core/screen-seed.js): the order of the rows,
 // which panels have a team, what carries over from the old rows, and the Panel order the team saved before the Screens.
-// The Studio builds the same rows with a copy of the rule (studio/screen-seed.js, checked by tools/test-screen-seed.mjs).
+// The Studio builds the same rows with a copy of the rule (studio/tools/screen-seed.js, checked by tools/test-screen-seed.mjs).
 // Nothing is drawn and nothing touches the network.
 //
 //   node tools/test-screen-seed-dashboard.mjs

@@ -267,7 +267,7 @@ test('the registry and the panel choices of a Screen row have no Prime or Nova f
   assert.ok(small.length >= 5);
   registry.panels.forEach(panel => assert.equal(/prime|nova/i.test(panel.id), false, panel.id + ' is not a flavor of a team'));
 
-  const order = read('studio/screen-panels.js');
+  const order = read('studio/inputs/screen-panels.js');
   const values = Array.from(order.matchAll(/value: '([^']+)'/g)).map(match => match[1]);
   assert.ok(values.length >= 15);
   values.forEach(value => assert.equal(/prime|nova/i.test(value), false, value));

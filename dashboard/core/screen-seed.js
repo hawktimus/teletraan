@@ -13,7 +13,7 @@ import { mondayRows, teamPanels } from '../config.js';
 import { panels } from '../registry.js';
 import { playlistOf } from './panel-order.js';
 
-// The panels the pickers of a row offer (studio/screen-panels.js): not a Monday card, which a Monday row
+// The panels the pickers of a row offer (studio/inputs/screen-panels.js): not a Monday card, which a Monday row
 // makes, not a competition card, which the competition mode mixes in, and not the spare tile or a test panel.
 function isOffered(step) {
   const panel = panels.find(item => item.id === step.panel);

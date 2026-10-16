@@ -125,7 +125,7 @@ list. Nothing else needs to know about it.
    file can still be read by the tests and by `check-schemas.mjs`.
 
 2. Add the same id and name, in the same place in the list, to
-   `studio/demo-screens.js`. The Studio is built on its own and cannot read the
+   `studio/inputs/demo-screens.js`. The Studio is built on its own and cannot read the
    dashboard folder, which is why the list is written twice.
 
 3. Run `node tools/test-effects.mjs` and `node studio/check-schemas.mjs`. The
@@ -155,7 +155,7 @@ back in the function it returns, or when `context.cancelled()` says so.
   rotation; `setEffectsPaused` in `frame.js`; `showNightNow` and `endNightNow` in
   `core/night-screen.js`; `alertsStarted` and the third argument of
   `runAnnouncement` in `core/takeover.js`.
-- `studio/schemas/demo.js` is the page, and `studio/demo-screens.js` is the
+- `studio/schemas/demo.js` is the page, and `studio/inputs/demo-screens.js` is the
   Studio's copy of the list. The
   starting values are `defaultDemo` in `dashboard/config.js` and their copy in
   `studio/schemas/demo.js`.

@@ -1,5 +1,5 @@
 // Checks the panel preview is in step with the rest (docs/monday.md, "Preview"):
-//   - every registry id that studio/preview-panels.js lists is in dashboard/registry.js. An id that is
+//   - every registry id that studio/inputs/preview-panels.js lists is in dashboard/registry.js. An id that is
 //     missing is named, because lane work that adds the panel may not be merged yet
 //   - studio/package.json copies the dashboard before sanity build, deploy and dev
 //   - the copy is ignored by git and no file of it is committed inside studio/
@@ -15,7 +15,7 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 const problems = [];
 
 const { panels } = await import(pathToFileURL(path.join(root, 'dashboard', 'registry.js')).href);
-const { previewPanels, previewRegistryIds } = await import(pathToFileURL(path.join(root, 'studio', 'preview-panels.js')).href);
+const { previewPanels, previewRegistryIds } = await import(pathToFileURL(path.join(root, 'studio', 'inputs', 'preview-panels.js')).href);
 
 const registered = panels.map(panel => panel.id);
 const missing = previewRegistryIds(previewPanels).filter(id => !registered.includes(id));

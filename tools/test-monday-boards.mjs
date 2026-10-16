@@ -1,4 +1,4 @@
-// Tests for the rows and lines of the Monday Boards page in Studio (studio/monday-boards-parts.js):
+// Tests for the rows and lines of the Monday Boards page in Studio (studio/inputs/monday-boards-parts.js):
 // which boards are listed and in what order, what a row says about its items, its last read and
 // whether Dashboard Settings has chosen it, and what the page does with a document of an odd shape.
 // The helpers are plain functions, so nothing is installed and nothing touches the network. The page
@@ -12,7 +12,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const studio = path.join(root, 'studio');
-const parts = await import(pathToFileURL(path.join(studio, 'monday-boards-parts.js')).href);
+const parts = await import(pathToFileURL(path.join(studio, 'inputs', 'monday-boards-parts.js')).href);
 
 const tests = [];
 function test(name, run) {

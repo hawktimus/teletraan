@@ -13,7 +13,7 @@
 // sanity.config.js, and remove the same names from check-schemas.mjs and config.js.
 
 import { defineField } from 'sanity';
-import { previews } from '../previews.js';
+import { previews } from '../inputs/previews.js';
 
 // The kinds a click can ask for: the ones in previews.js. The list is only there to show
 // which one was asked for, because the field is read only.

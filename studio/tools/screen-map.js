@@ -11,8 +11,8 @@
 // check-schemas.mjs fails if the boxes differ from base.css and layout.js, or if the words do not
 // fit their boxes. Plain functions only. screen-input.js draws the picture.
 
-import { areas as standardAreas, widthOf } from './start-here-parts.js';
-import { rowsWord, words } from './screen-parts.js';
+import { areas as standardAreas, widthOf } from '../inputs/start-here-parts.js';
+import { rowsWord, words } from '../inputs/screen-parts.js';
 
 // The tab of the form that each letter opens. The names are the groups of schemas/screen.js.
 export const letterGroups = { A: 'banner', B: 'main', C: 'countdown', D: 'side', E: 'ticker' };

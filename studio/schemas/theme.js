@@ -15,7 +15,7 @@
 
 import { defineType, defineField, defineArrayMember } from 'sanity';
 import { noteField, tooLong } from './fields.js';
-import { themes, overlays, cornerArts } from '../themes.js';
+import { themes, overlays, cornerArts } from '../inputs/themes.js';
 
 const themeChoices = themes.map(theme => ({ title: theme.name, value: theme.id }));
 const overlayChoices = overlays.map(overlay => ({ title: overlay.name, value: overlay.id }));
