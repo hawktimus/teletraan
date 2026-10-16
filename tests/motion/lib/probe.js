@@ -282,6 +282,22 @@
     };
   };
 
+  // The photos of one turn lie on top of each other and fade in one after the other with CSS animations. They are
+  // paused and looked at every 50 ms of the whole turn: the opacity of each photo, and what each one animates.
+  motion.photos = function (seconds) {
+    const shots = Array.from(document.querySelectorAll('.photo .shot'));
+    const animations = shots.flatMap(shot => shot.getAnimations());
+    const found = { shots: shots.length, properties: [], samples: [] };
+
+    found.properties = Array.from(new Set(animations.flatMap(animation => animation.effect.getKeyframes().flatMap(keyframe => Object.keys(keyframe))).filter(name => !['offset', 'computedOffset', 'easing', 'composite'].includes(name))));
+    animations.forEach(animation => animation.pause());
+    for (let time = 0; time <= seconds * 1000; time += 50) {
+      animations.forEach(animation => { animation.currentTime = time; });
+      found.samples.push({ time: time, opacity: shots.map(shot => Number(window.getComputedStyle(shot).opacity)) });
+    }
+    return found;
+  };
+
   // A hidden transition (core/hidden-run.js): the state of the screen at each change of it, and where the pieces are at
   // the moments that matter. The pieces of the rise are seen at the end of their animation.
   function state() {
