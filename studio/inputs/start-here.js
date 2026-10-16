@@ -1,31 +1,26 @@
 // The Start here page, the first line of the sidebar (structure.js). It is a
-// page of its own, not a document. It has five blocks, top to bottom: what the
-// screen is, a picture of the screen, the three steps of every meeting, five
-// buttons that try the screen, and a line for the coaches' pages.
+// page of its own, not a document. It has six blocks, top to bottom: what the
+// screen is, a picture of the screen, the three steps of every meeting, the
+// status of the Mini, links to the control page, the Studio on the web and the
+// guides, and a line for the coaches' pages. It has no buttons that act on the
+// screen: those are on the control page.
 //
 // The words and numbers that need no Studio are in start-here-parts.js, so that
-// tests/schemas.test.mjs can read them with node. The buttons send their requests
-// through screen-requests.js, which the buttons beside Publish use as well.
+// tests/schemas.test.mjs can read them with node.
 //
 // It is written without JSX, so it reads as plain JavaScript:
 // h(tag, props, ...children) is React's createElement.
 
-import { createElement, useState } from 'react';
-import { useClient } from 'sanity';
-import { IntentLink } from 'sanity/router';
-import { screen, areas, labelsOf, buttons, clickLine, sentLine, problemWith } from './start-here-parts.js';
-import { sendWithClient } from '../tools/screen-requests.js';
+import { createElement } from 'react';
+import { screen, areas, labelsOf, links, isReal, clickLine } from './start-here-parts.js';
+import { StatusInput } from './status-input.js';
 
 const h = createElement;
-
-// The same version as the screen's own questions to Sanity
-const apiVersion = '2025-02-19';
 
 // Plain styles. The colours are the Studio's own variables, so the page follows
 // the Studio's light and dark themes, and each has a fallback.
 const border = '1px solid var(--card-border-color, rgba(128, 128, 128, 0.4))';
 const muted = 'var(--card-muted-fg-color, inherit)';
-const critical = 'var(--card-badge-critical-fg-color, #b91c1c)';
 const primaryBackground = 'var(--card-badge-primary-bg-color, #dbeafe)';
 const primaryText = 'var(--card-badge-primary-fg-color, #1e40af)';
 
@@ -65,9 +60,7 @@ const styles = {
     cursor: 'pointer',
   },
   link: { display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' },
-  disabled: { opacity: 0.5, cursor: 'not-allowed' },
   says: { color: muted, fontSize: 14, lineHeight: 1.4, margin: '8px 0 0' },
-  failed: { color: critical, lineHeight: 1.5, margin: '0 0 16px' },
 };
 
 // Block 1
@@ -136,51 +129,26 @@ function threeSteps() {
   );
 }
 
-// One button and the line under it. The one that opens the screen is a link in a new tab.
-function buttonCell(button, busy, send) {
-  const words = h('p', { style: styles.says }, button.says);
-
-  if (button.create) {
-    const style = Object.assign({}, styles.button, styles.link);
-    return h(
-      'div',
-      { key: button.id, style: styles.cell },
-      h(IntentLink, { intent: 'create', params: button.create, style: style }, button.label),
-      words
-    );
-  }
-
-  if (button.address) {
-    const style = Object.assign({}, styles.button, styles.link);
-    return h(
-      'div',
-      { key: button.id, style: styles.cell },
-      h('a', { href: button.address, target: '_blank', rel: 'noopener noreferrer', title: 'Opens ' + button.address, style: style }, button.label),
-      words
-    );
-  }
-
-  const style = Object.assign({}, styles.button, busy ? styles.disabled : {});
-  return h(
-    'div',
-    { key: button.id, style: styles.cell },
-    h('button', { type: 'button', disabled: busy, style: style, onClick: () => send(button) }, button.label),
-    words
-  );
+// Block 4: when the Mini last did each job. The same lines as the status block of Dashboard Settings.
+function statusOfTheMini() {
+  return h('div', { 'data-block': 'status' }, h('h2', { style: styles.subheading }, 'The Mini'), h(StatusInput, null));
 }
 
-// Block 4. status is what happened to the last request: { text, failed, busy }
-function tryTheScreen(status, send) {
-  return h(
-    'div',
-    { 'data-block': 'buttons' },
-    h('h2', { style: styles.subheading }, 'Try the screen'),
-    h('div', { style: styles.row }, buttons.map(button => buttonCell(button, status.busy, send))),
-    status.text ? h('p', { role: status.failed ? 'alert' : undefined, 'aria-live': 'polite', style: status.failed ? styles.failed : styles.muted }, status.text) : null
-  );
+// One link and the line under it. A link whose address is not known yet is plain words.
+function linkCell(link) {
+  const words = h('p', { style: styles.says }, link.says);
+  const label = isReal(link)
+    ? h('a', { href: link.address, target: '_blank', rel: 'noopener noreferrer', title: 'Opens ' + link.address, style: Object.assign({}, styles.button, styles.link) }, link.label)
+    : h('p', { style: styles.muted }, link.label + ': the address has not been set yet.');
+  return h('div', { key: link.id, style: styles.cell }, label, words);
 }
 
 // Block 5
+function linksOut() {
+  return h('div', { 'data-block': 'links' }, h('h2', { style: styles.subheading }, 'Links'), h('div', { style: styles.row }, links.map(linkCell)));
+}
+
+// Block 6
 function forCoaches() {
   return h(
     'div',
@@ -190,19 +158,6 @@ function forCoaches() {
 }
 
 export function StartHere() {
-  const client = useClient({ apiVersion: apiVersion });
-  const [status, setStatus] = useState({ text: '', failed: false, busy: false });
-
-  // Sends the request of a button. It gives back a promise that is done when the answer is on the page.
-  function send(button) {
-    setStatus({ text: 'Sending...', failed: false, busy: true });
-
-    return Promise.resolve()
-      .then(() => sendWithClient(client, button.request()))
-      .then(() => setStatus({ text: sentLine, failed: false, busy: false }))
-      .catch(error => setStatus({ text: problemWith(error), failed: true, busy: false }));
-  }
-
   return h(
     'div',
     { style: styles.page },
@@ -213,7 +168,8 @@ export function StartHere() {
       whatItIs(),
       pictureOfTheScreen(),
       threeSteps(),
-      tryTheScreen(status, send),
+      statusOfTheMini(),
+      linksOut(),
       forCoaches()
     )
   );

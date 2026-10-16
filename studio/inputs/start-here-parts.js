@@ -1,11 +1,9 @@
 // The parts of the Start here page that need no Studio: the five areas of the picture of the
-// screen, where their words sit, the six buttons, and the words for a request that fails.
+// screen, where their words sit, and the links to the control page, the Studio on the web and the guides.
 // start-here.js draws them. tests/schemas.test.mjs reads them with node and fails if the picture,
 // the sidebar or the buttons stop agreeing.
 
-import { dashboardAddress } from './dashboard-address.js';
-import { announceRequest, presentationTestRequest, nextLookRequest, competitionPreviewRequest } from '../tools/screen-requests.js';
-import { messageOf } from '../tools/publish-all.js';
+import { controlAddress } from './control-address.js';
 
 // The picture is drawn on the screen's own 1920 by 1080, so it has the shape of the screen.
 // The boxes are the standard layout in dashboard/base.css: the banner across the top, the
@@ -42,8 +40,8 @@ export const areas = [
 ];
 
 // The line under the picture that says where the letters can be clicked. The picture on this page has
-// no links: the map at the top of each Screen (Screens, under Start here) has them.
-export const clickLine = 'Click a letter in Screens to change what plays there.';
+// no links: the map at the top of each View (Views, under Settings) has them.
+export const clickLine = 'Click a letter in Views, under Settings, to change what plays there.';
 
 // A wide guess at the width of some text, since the page cannot measure it before it is drawn.
 // A letter is about 0.55 of its size wide, so 0.6 leaves room.
@@ -77,55 +75,19 @@ export function labelsOf(area) {
   return { badge: badge, letter: letter, name: name, feeds: feeds };
 }
 
-// The row of buttons. A button that sends a request has request, which gives the fields to
-// set (screen-requests.js). The one that opens the screen has an address instead, and the one that
-// posts an announcement has create, the type and template of the new document it opens.
-// says is the line under the button.
-export const buttons = [
-  {
-    id: 'announcement',
-    label: 'Play announcement',
-    says: 'Plays every announcement that is switched on.',
-    request: announceRequest,
-  },
-  {
-    id: 'presentation',
-    label: 'Run presentation test',
-    says: 'Runs a sample talk with six sample slides.',
-    request: presentationTestRequest,
-  },
-  {
-    id: 'next-look',
-    label: 'Next look now',
-    says: 'Moves the main panel on to its next row.',
-    request: nextLookRequest,
-  },
-  {
-    id: 'competition',
-    label: 'Preview competition',
-    says: 'Shows the competition cards for 2 minutes.',
-    request: competitionPreviewRequest,
-  },
-  {
-    id: 'post-announcement',
-    label: 'Post an announcement',
-    says: 'Opens a new announcement for the bar under the banner. It starts now and ends in two hours.',
-    create: { type: 'announcement', template: 'newAnnouncement' },
-  },
-  {
-    id: 'preview',
-    label: 'Preview the screen',
-    says: 'Opens the screen with sample content in a new tab.',
-    address: dashboardAddress,
-  },
+// The links under the status. The control page and the docs are not part of the Studio, so the page only points to them.
+// studioAddress is the address of the Studio hosted by Sanity. It is marked as a placeholder until the owner
+// types it: a link whose address still holds a bracket is shown as plain words, not as a link.
+export const studioAddress = '[address of the hosted Studio]';
+export const docsAddress = 'https://github.com/Hawktimus/teletraan/tree/main/docs';
+
+export const links = [
+  { id: 'control', label: 'The control page', says: 'Updates the screen, shows what is on the wall and restarts things. It works on the WiFi of the shop.', address: controlAddress },
+  { id: 'studio', label: 'The Studio on the web', says: 'The same Studio, for when the one on the Mini is not reachable.', address: studioAddress },
+  { id: 'docs', label: 'The guides', says: 'Short pages on how each part works.', address: docsAddress },
 ];
 
-// The line under the buttons after a request was sent
-export const sentLine = 'Sent. The screen starts it within a few seconds.';
-
-// The line under the buttons when a request could not be sent
-export function problemWith(error) {
-  const message = messageOf(error);
-  if (/not found/i.test(message)) return 'Dashboard Settings has not been published yet. Open it, click Publish once, and try again.';
-  return 'The request was not sent. ' + message;
+// A link is real when its address has no bracket in it
+export function isReal(link) {
+  return link.address.indexOf('[') === -1;
 }
