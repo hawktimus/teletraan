@@ -108,6 +108,12 @@ const plays = {
   'blue-screen': () => hiddenAsk('desktop'),
   'red-eyes': () => hiddenAsk('redEyes'),
 
+  // The panel transition (core/reform-panel.js): the large panel goes to the next row of its view
+  'reform-panel': () => import('./schedule.js').then(module => module.skipRow()),
+
+  // The view transition (core/reform-view.js): the view changes
+  'reform-view': options => plays['view-swap'](options),
+
   'monday-scroll': scrollMonday,
   'photo-cross': restartPhotos,
 

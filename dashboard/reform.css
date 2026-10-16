@@ -1,0 +1,116 @@
+/* The reform transitions (core/reform-run.js, docs/transitions.md): the layer they draw in, the squares, the folding
+   edges and the hardware of the Original kit (styles/original/transitions.js). Nothing here moves by itself: every move is an
+   animation that core/reform-run.js makes, and only transform and opacity change. There is one camera, #reform, with
+   one perspective. No part carries a perspective of its own. Only the parts that have a back or a chain keep their 3D
+   (preserve-3d), and those are the parts on the way from the camera to them. */
+
+#reform {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  perspective: 1600px;
+  perspective-origin: 50% 45%;
+  pointer-events: none;
+}
+#reform[hidden] {
+  display: none;
+}
+.reform-camera {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  transform-origin: 50% 45%;
+  transform-style: preserve-3d;
+}
+.reform-layer-back,
+.reform-layer-front,
+.reform-grid,
+.reform-straps,
+.reform-hardware {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  transform-style: preserve-3d;
+}
+.reform-chain,
+.reform-seg {
+  position: absolute;
+  transform-style: preserve-3d;
+}
+.reform-covers {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+}
+
+/* a square: a face, a back that is turned over, and a shade over both */
+.reform-square {
+  position: absolute;
+  transform-style: preserve-3d;
+}
+.reform-square[hidden] {
+  display: none;
+}
+.reform-face,
+.reform-back {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  backface-visibility: hidden;
+}
+.reform-back-y { transform: rotateY(180deg); }
+.reform-back-x { transform: rotateX(180deg); }
+.reform-shade {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--reform-shade);
+  opacity: 0;
+}
+
+/* the flat copies of the content over the squares */
+.reform-cover {
+  position: absolute;
+  overflow: hidden;
+}
+.reform-new { opacity: 0; }
+
+/* The hawk of the view transition: four plates on the logo's 1100 x 884 grid, two faces each, drawn at the size of the logo on the screen */
+.reform-hawk {
+  position: absolute;
+  transform-style: preserve-3d;
+}
+.reform-plate {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-style: preserve-3d;
+}
+.reform-plate-front,
+.reform-plate-back {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+}
+.reform-plate svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}

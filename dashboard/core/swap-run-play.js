@@ -12,6 +12,8 @@ import { lookIsWaiting } from './theme-apply.js';
 import { contentFade, hawkMotionFor, planPull, planReform, poseFrames, pullEaseText, reformEaseText, restPose, swapReform, swapTimes } from './swap-plan.js';
 import { takeoverRunning } from './takeover.js';
 import { capture, flyHawk, landHawk, startHawk, targetOf } from './swap-run-copy.js';
+import { reformRunning } from './reform-run.js';
+import { reformOffer } from './transition-kinds.js';
 
 const longestRest = 8000; // milliseconds to wait for the three areas to stop moving before giving up. A page change takes two seconds and the small areas may be in one
 const regionWait = 1200; // milliseconds to wait, once the pieces are out, for the other areas to have chosen their pages
@@ -38,7 +40,7 @@ function paceNow() {
 
 // True while a swap plays. The hidden transitions ask, so they wait for it to be over.
 export function swapRunning() {
-  return playing;
+  return playing || reformRunning();
 }
 
 // busyElsewhere() is true while something else has the screen, and scaleNow() is the scale of the swap into the Screen
@@ -65,6 +67,9 @@ function offer(old, next) {
   queued = false;
 
   if (playing || takeoverRunning() || askBusy()) return null;
+  // The panel and view transitions come first (core/transition-kinds.js)
+  const reformed = reformOffer({ motion: frame.motionNow(), looked: looked, monday: isMondayCard(old.id) || isMondayCard(next.id), busy: false, busyNow: () => takeoverRunning() || askBusy(), hold: holdClock, moveOn: moveOn, wholeScreen: startWholeScreen, reloading: layoutIsReloading });
+  if (reformed) return reformed;
   // One Monday card to the next has no look to change, so in calm motion and with none it is the usual page change
   if (!looked && (frame.motionNow() !== 'full' || (!isMondayCard(old.id) && !isMondayCard(next.id)))) return null;
 

@@ -11,7 +11,7 @@ const tolerance = 1; // pixels
 const round = value => Math.round(value * 10) / 10;
 
 async function runSwap(ctx, play, options = {}) {
-  const page = await ctx.open();
+  const page = await ctx.open({ reform: 'off' }); // the older swap, which the view change used to play
   try {
     await page.evaluate(([name, extra, at]) => {
       window.__motion.armSwap(at);

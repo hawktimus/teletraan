@@ -263,10 +263,17 @@ export async function changePage(region, next) {
     return changePage(region, next);
   }
 
-  // The page change of the large panel may become a swap, or a hidden transition
+  // The page change of the large panel may become a swap, or a hidden transition. A panel transition (docs/transitions.md) gives way to a
+  // hidden transition that is due, which is asked once.
+  let hidden;
+  const hiddenDue = () => {
+    if (hidden === undefined) hidden = old && next && region === hiddenRegion && hiddenOffer ? hiddenOffer() : null;
+    return hidden;
+  };
+
   if (old && next && region === hiddenRegion && swapOffer) {
     const offered = swapOffer(old, next);
-    if (offered) {
+    if (offered && !(offered.yields === true && hiddenDue())) {
       let swapped = false;
       const took = await offered.play(() => {
         swapped = true;
@@ -277,7 +284,7 @@ export async function changePage(region, next) {
     }
   }
   if (old && next && region === hiddenRegion && hiddenOffer) {
-    const offered = hiddenOffer();
+    const offered = hidden === undefined ? hiddenOffer() : hidden;
     if (offered) {
       let swapped = false;
       const took = await offered.play(() => {
@@ -288,7 +295,6 @@ export async function changePage(region, next) {
       if (swapped) return took;
     }
   }
-
   if (old && next) {
     // The old page leaves, in the style planChange picked. The frame stays, or
     // breaks into pieces, depending on the style.
